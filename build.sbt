@@ -1,6 +1,6 @@
 name := "commons"
 
-version in Global := "1.0.SNAPSHOT"
+version in Global := "1.0-SNAPSHOT"
 scalaVersion in Global := "2.11.7"
 organization in Global := "com.avsystem.commons"
 crossPaths in Global := false
