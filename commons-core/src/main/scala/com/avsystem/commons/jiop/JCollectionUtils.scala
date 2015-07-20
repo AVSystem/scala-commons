@@ -4,9 +4,11 @@ package jiop
 import java.{lang => jl, util => ju}
 
 import scala.collection.JavaConverters._
+import scala.collection.generic.CanBuildFrom
+import scala.collection.mutable
 import scala.language.{higherKinds, implicitConversions}
 
-trait JCollectionUtils {
+trait JCollectionUtils extends JIterableCBF {
   type JIterator[T] = ju.Iterator[T]
   type JIterable[T] = jl.Iterable[T]
   type JCollection[T] = ju.Collection[T]
@@ -19,12 +21,14 @@ trait JCollectionUtils {
   type JSortedSet[T] = ju.SortedSet[T]
   type JNavigableSet[T] = ju.NavigableSet[T]
   type JTreeSet[T] = ju.TreeSet[T]
+  type JEnumSet[E <: Enum[E]] = ju.EnumSet[E]
   type JMap[K, V] = ju.Map[K, V]
   type JHashMap[K, V] = ju.HashMap[K, V]
   type JLinkedHashMap[K, V] = ju.LinkedHashMap[K, V]
   type JSortedMap[K, V] = ju.SortedMap[K, V]
   type JNavigableMap[K, V] = ju.NavigableMap[K, V]
   type JTreeMap[K, V] = ju.TreeMap[K, V]
+  type JEnumMap[K <: Enum[K], V] = ju.EnumMap[K, V]
 
   trait JCollectionCreator[C[T] <: JCollection[T]] {
     protected def instantiate[T]: C[T]
@@ -132,9 +136,62 @@ trait JCollectionUtils {
   implicit def iteratorOps[A](it: JIterator[A]): iteratorOps[A] = new iteratorOps(it)
   implicit def iterableOps[A](it: JIterable[A]): iterableOps[A] = new iterableOps(it)
   implicit def collectionOps[A](it: JCollection[A]): collectionOps[A] = new collectionOps(it)
+  implicit def intCollectionOps(it: JCollection[Int]): intCollectionOps = new intCollectionOps(it)
+  implicit def longCollectionOps(it: JCollection[Long]): longCollectionOps = new longCollectionOps(it)
+  implicit def doubleCollectionOps(it: JCollection[Double]): doubleCollectionOps = new doubleCollectionOps(it)
 }
 
-object JCollectionUtils extends JCollectionUtils with JFunctionUtils {
+trait JIterableCBF extends JSetCBF with JLinkedListCBF {
+  this: JCollectionUtils =>
+  // for JIterable, JCollection, JList and JArrayList
+  implicit def jArrayListCBF[A]: CanBuildFrom[Nothing, A, JArrayList[A]] =
+    new JCollectionUtils.JCollectionCBF(new JArrayList)
+}
+
+trait JSetCBF extends JSortedSetCBF {
+  this: JCollectionUtils =>
+  // for JSet and JHashSet
+  implicit def jHashSetCBF[A]: CanBuildFrom[Nothing, A, JHashSet[A]] =
+    new JCollectionUtils.JCollectionCBF(new JHashSet)
+
+  implicit def jLinkedHashSetCBF[A]: CanBuildFrom[Nothing, A, JLinkedHashSet[A]] =
+    new JCollectionUtils.JCollectionCBF(new JLinkedHashSet)
+}
+
+trait JSortedSetCBF {
+  this: JCollectionUtils =>
+  // for JSortedSet, JNavigableSet and JTreeSet
+  implicit def jTreeSetCBF[A]: CanBuildFrom[Nothing, A, JTreeSet[A]] =
+    new JCollectionUtils.JCollectionCBF(new JTreeSet)
+}
+
+trait JLinkedListCBF {
+  this: JCollectionUtils =>
+  implicit def jLinkedListCBF[A]: CanBuildFrom[Nothing, A, JLinkedList[A]] =
+    new JCollectionUtils.JCollectionCBF(new JLinkedList)
+}
+
+object JCollectionUtils {
+  import JavaInterop._
+
+  private[jiop] class JCollectionCBF[A, C <: JCollection[A]](creator: => C) extends CanBuildFrom[Nothing, A, C] {
+    def apply(from: Nothing) = apply()
+    def apply() = new mutable.Builder[A, C] {
+      val coll = creator
+
+      def +=(elem: A): this.type = {
+        coll.add(elem)
+        this
+      }
+
+      def clear(): Unit =
+        coll.clear()
+
+      def result(): C =
+        coll
+    }
+  }
+
   class iteratorOps[A](private val it: JIterator[A]) extends AnyVal {
     def forEachRemaining(code: A => Any): Unit =
       it.forEachRemaining(jConsumer(code))
@@ -148,5 +205,23 @@ object JCollectionUtils extends JCollectionUtils with JFunctionUtils {
   class collectionOps[A](private val coll: JCollection[A]) extends AnyVal {
     def removeIf(pred: A => Boolean): Unit =
       coll.removeIf(jPredicate(pred))
+
+    def scalaStream: ScalaJStream[A] =
+      coll.stream.asScala
+  }
+
+  class intCollectionOps(private val coll: JCollection[Int]) extends AnyVal {
+    def scalaIntStream: ScalaJIntStream =
+      coll.stream.asScalaIntStream
+  }
+
+  class longCollectionOps(private val coll: JCollection[Long]) extends AnyVal {
+    def scalaLongStream: ScalaJLongStream =
+      coll.stream.asScalaLongStream
+  }
+
+  class doubleCollectionOps(private val coll: JCollection[Double]) extends AnyVal {
+    def scalaDoubleStream: ScalaJDoubleStream =
+      coll.stream.asScalaDoubleStream
   }
 }

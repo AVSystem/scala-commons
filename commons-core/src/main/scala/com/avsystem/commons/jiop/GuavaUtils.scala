@@ -23,5 +23,3 @@ trait GuavaUtils {
       def apply(input: T): Boolean = pred(input)
     }
 }
-
-

@@ -1,130 +1,138 @@
 package com.avsystem.commons
 package jiop
 
-import java.util.{IntSummaryStatistics, Spliterator}
+import java.util.IntSummaryStatistics
 
 import com.avsystem.commons.jiop.JavaInterop._
+
+import scala.collection.generic.CanBuildFrom
+import scala.language.higherKinds
 
 /**
  * Author: ghik
  * Created: 15/07/15.
  */
-final class ScalaJIntStream(val asJava: JIntStream) extends AnyVal {
-  def close(): Unit =
-    asJava.close()
+final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
+  def asJava = jStream
 
-  def spliterator: Spliterator[Int] =
-    asJava.spliterator().asInstanceOf[Spliterator[Int]]
+  def close(): Unit =
+    jStream.close()
 
   def isParallel: Boolean =
-    asJava.isParallel
+    jStream.isParallel
 
   def iterator: Iterator[Int] =
-    asJava.iterator().asInstanceOf[JIterator[Int]].asScala
+    jStream.iterator().asInstanceOf[JIterator[Int]].asScala
 
   def onClose(closeHandler: => Any): ScalaJIntStream =
-    new ScalaJIntStream(asJava.onClose(jRunnable(closeHandler)))
+    new ScalaJIntStream(jStream.onClose(jRunnable(closeHandler)))
 
   def parallel: ScalaJIntStream =
-    new ScalaJIntStream(asJava.parallel())
+    new ScalaJIntStream(jStream.parallel())
 
   def sequential: ScalaJIntStream =
-    new ScalaJIntStream(asJava.sequential())
+    new ScalaJIntStream(jStream.sequential())
 
   def unordered: ScalaJIntStream =
-    new ScalaJIntStream(asJava.unordered())
+    new ScalaJIntStream(jStream.unordered())
 
   def allMatch(predicate: Int => Boolean): Boolean =
-    asJava.allMatch(jIntPredicate(predicate))
+    jStream.allMatch(jIntPredicate(predicate))
 
   def anyMatch(predicate: Int => Boolean): Boolean =
-    asJava.allMatch(jIntPredicate(predicate))
+    jStream.allMatch(jIntPredicate(predicate))
 
   def asDoubleStream: ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.asDoubleStream())
+    new ScalaJDoubleStream(jStream.asDoubleStream())
 
   def asLongStream: ScalaJLongStream =
-    new ScalaJLongStream(asJava.asLongStream())
+    new ScalaJLongStream(jStream.asLongStream())
 
   def average: Option[Double] =
-    asJava.average.asScala
+    jStream.average.asScala
 
   def boxed: ScalaJStream[Int] =
-    new ScalaJStream(asJava.boxed.asInstanceOf[JStream[Int]])
+    new ScalaJStream(jStream.boxed.asInstanceOf[JStream[Int]])
 
   def collect[R](supplier: => R)(accumulator: (R, Int) => Any, combiner: (R, R) => Any): R =
-    asJava.collect(jSupplier(supplier), jObjIntConsumer(accumulator), jBiConsumer(combiner))
+    jStream.collect(jSupplier(supplier), jObjIntConsumer(accumulator), jBiConsumer(combiner))
 
   def count: Long =
-    asJava.count
+    jStream.count
 
   def distinct: ScalaJIntStream =
-    new ScalaJIntStream(asJava.distinct)
+    new ScalaJIntStream(jStream.distinct)
 
   def filter(predicate: Int => Boolean): ScalaJIntStream =
-    new ScalaJIntStream(asJava.filter(jIntPredicate(predicate)))
+    new ScalaJIntStream(jStream.filter(jIntPredicate(predicate)))
 
   def findAny: Option[Int] =
-    asJava.findAny().asScala
+    jStream.findAny().asScala
 
   def findFirst: Option[Int] =
-    asJava.findFirst.asScala
+    jStream.findFirst.asScala
 
   def flatMap(mapper: Int => ScalaJIntStream): ScalaJIntStream =
-    new ScalaJIntStream(asJava.flatMap(jIntFunction(d => mapper(d).asJava)))
+    new ScalaJIntStream(jStream.flatMap(jIntFunction(d => mapper(d).jStream)))
 
   def forEach(action: Int => Any): Unit =
-    asJava.forEach(jIntConsumer(action))
+    jStream.forEach(jIntConsumer(action))
 
   def forEachOrdered(action: Int => Any): Unit =
-    asJava.forEachOrdered(jIntConsumer(action))
+    jStream.forEachOrdered(jIntConsumer(action))
 
   def limit(maxSize: Long): ScalaJIntStream =
-    new ScalaJIntStream(asJava.limit(maxSize))
+    new ScalaJIntStream(jStream.limit(maxSize))
 
   def map(mapper: Int => Int): ScalaJIntStream =
-    new ScalaJIntStream(asJava.map(jIntUnaryOperator(mapper)))
+    new ScalaJIntStream(jStream.map(jIntUnaryOperator(mapper)))
 
   def mapToDouble(mapper: Int => Double): ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.mapToDouble(jIntToDoubleFunction(mapper)))
+    new ScalaJDoubleStream(jStream.mapToDouble(jIntToDoubleFunction(mapper)))
 
   def mapToLong(mapper: Int => Long): ScalaJLongStream =
-    new ScalaJLongStream(asJava.mapToLong(jIntToLongFunction(mapper)))
+    new ScalaJLongStream(jStream.mapToLong(jIntToLongFunction(mapper)))
 
   def mapToObj[U](mapper: Int => U): ScalaJStream[U] =
-    new ScalaJStream(asJava.mapToObj(jIntFunction(mapper)))
+    new ScalaJStream(jStream.mapToObj(jIntFunction(mapper)))
 
   def max: Option[Int] =
-    asJava.max.asScala
+    jStream.max.asScala
 
   def min: Option[Int] =
-    asJava.min.asScala
+    jStream.min.asScala
 
   def noneMatch(predicate: Int => Boolean): Boolean =
-    asJava.noneMatch(jIntPredicate(predicate))
+    jStream.noneMatch(jIntPredicate(predicate))
 
   def peek(action: Int => Any): ScalaJIntStream =
-    new ScalaJIntStream(asJava.peek(jIntConsumer(action)))
+    new ScalaJIntStream(jStream.peek(jIntConsumer(action)))
 
   def reduce(identity: Int)(op: (Int, Int) => Int): Int =
-    asJava.reduce(identity, jIntBinaryOperator(op))
+    jStream.reduce(identity, jIntBinaryOperator(op))
 
   def reduce(op: (Int, Int) => Int): Option[Int] =
-    asJava.reduce(jIntBinaryOperator(op)).asScala
+    jStream.reduce(jIntBinaryOperator(op)).asScala
 
   def skip(n: Long): ScalaJIntStream =
-    new ScalaJIntStream(asJava.skip(n))
+    new ScalaJIntStream(jStream.skip(n))
 
   def sorted: ScalaJIntStream =
-    new ScalaJIntStream(asJava.sorted)
+    new ScalaJIntStream(jStream.sorted)
 
   def sum: Int =
-    asJava.sum
+    jStream.sum
 
   def summaryStatistics: IntSummaryStatistics =
-    asJava.summaryStatistics()
+    jStream.summaryStatistics()
 
   def toArray: Array[Int] =
-    asJava.toArray
+    jStream.toArray
+
+  def to[Col[_]](implicit cbf: CanBuildFrom[Nothing, Int, Col[Int]]): Col[Int] = {
+    val b = cbf.apply()
+    forEachOrdered(b += _)
+    b.result()
+  }
 
 }

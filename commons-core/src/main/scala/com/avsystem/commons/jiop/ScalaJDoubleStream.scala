@@ -1,124 +1,136 @@
 package com.avsystem.commons
 package jiop
 
-import java.util.{DoubleSummaryStatistics, Spliterator}
+import java.util.DoubleSummaryStatistics
 
 import com.avsystem.commons.jiop.JavaInterop._
+
+import scala.collection.generic.CanBuildFrom
+import scala.language.higherKinds
 
 /**
  * Author: ghik
  * Created: 15/07/15.
  */
-final class ScalaJDoubleStream(val asJava: JDoubleStream) extends AnyVal {
-  def close(): Unit =
-    asJava.close()
+final class ScalaJDoubleStream(val jStream: JDoubleStream) extends AnyVal {
+  def asJava = jStream
 
-  def spliterator: Spliterator[Double] =
-    asJava.spliterator().asInstanceOf[Spliterator[Double]]
+  def close(): Unit =
+    jStream.close()
 
   def isParallel: Boolean =
-    asJava.isParallel
+    jStream.isParallel
 
   def iterator: Iterator[Double] =
-    asJava.iterator().asInstanceOf[JIterator[Double]].asScala
+    jStream.iterator().asInstanceOf[JIterator[Double]].asScala
 
   def onClose(closeHandler: => Any): ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.onClose(jRunnable(closeHandler)))
+    new ScalaJDoubleStream(jStream.onClose(jRunnable(closeHandler)))
 
   def parallel: ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.parallel())
+    new ScalaJDoubleStream(jStream.parallel())
 
   def sequential: ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.sequential())
+    new ScalaJDoubleStream(jStream.sequential())
 
   def unordered: ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.unordered())
+    new ScalaJDoubleStream(jStream.unordered())
 
   def allMatch(predicate: Double => Boolean): Boolean =
-    asJava.allMatch(jDoublePredicate(predicate))
+    jStream.allMatch(jDoublePredicate(predicate))
 
   def anyMatch(predicate: Double => Boolean): Boolean =
-    asJava.allMatch(jDoublePredicate(predicate))
+    jStream.allMatch(jDoublePredicate(predicate))
 
   def average: Option[Double] =
-    asJava.average.asScala
+    jStream.average.asScala
 
   def boxed: ScalaJStream[Double] =
-    new ScalaJStream(asJava.boxed.asInstanceOf[JStream[Double]])
+    new ScalaJStream(jStream.boxed.asInstanceOf[JStream[Double]])
 
   def collect[R](supplier: => R)(accumulator: (R, Double) => Any, combiner: (R, R) => Any): R =
-    asJava.collect(jSupplier(supplier), jObjDoubleConsumer(accumulator), jBiConsumer(combiner))
+    jStream.collect(jSupplier(supplier), jObjDoubleConsumer(accumulator), jBiConsumer(combiner))
 
   def count: Long =
-    asJava.count
+    jStream.count
 
   def distinct: ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.distinct)
+    new ScalaJDoubleStream(jStream.distinct)
 
   def filter(predicate: Double => Boolean): ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.filter(jDoublePredicate(predicate)))
+    new ScalaJDoubleStream(jStream.filter(jDoublePredicate(predicate)))
 
   def findAny: Option[Double] =
-    asJava.findAny().asScala
+    jStream.findAny().asScala
 
   def findFirst: Option[Double] =
-    asJava.findFirst.asScala
+    jStream.findFirst.asScala
 
   def flatMap(mapper: Double => ScalaJDoubleStream): ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.flatMap(jDoubleFunction(d => mapper(d).asJava)))
+    new ScalaJDoubleStream(jStream.flatMap(jDoubleFunction(d => mapper(d).jStream)))
 
   def forEach(action: Double => Any): Unit =
-    asJava.forEach(jDoubleConsumer(action))
+    jStream.forEach(jDoubleConsumer(action))
 
   def forEachOrdered(action: Double => Any): Unit =
-    asJava.forEachOrdered(jDoubleConsumer(action))
+    jStream.forEachOrdered(jDoubleConsumer(action))
 
   def limit(maxSize: Long): ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.limit(maxSize))
+    new ScalaJDoubleStream(jStream.limit(maxSize))
 
   def map(mapper: Double => Double): ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.map(jDoubleUnaryOperator(mapper)))
+    new ScalaJDoubleStream(jStream.map(jDoubleUnaryOperator(mapper)))
 
   def mapToInt(mapper: Double => Int): ScalaJIntStream =
-    new ScalaJIntStream(asJava.mapToInt(jDoubleToIntFunction(mapper)))
+    new ScalaJIntStream(jStream.mapToInt(jDoubleToIntFunction(mapper)))
 
   def mapToLong(mapper: Double => Long): ScalaJLongStream =
-    new ScalaJLongStream(asJava.mapToLong(jDoubleToLongFunction(mapper)))
+    new ScalaJLongStream(jStream.mapToLong(jDoubleToLongFunction(mapper)))
 
   def mapToObj[U](mapper: Double => U): ScalaJStream[U] =
-    new ScalaJStream(asJava.mapToObj(jDoubleFunction(mapper)))
+    new ScalaJStream(jStream.mapToObj(jDoubleFunction(mapper)))
 
   def max: Option[Double] =
-    asJava.max.asScala
+    jStream.max.asScala
 
   def min: Option[Double] =
-    asJava.min.asScala
+    jStream.min.asScala
 
   def noneMatch(predicate: Double => Boolean): Boolean =
-    asJava.noneMatch(jDoublePredicate(predicate))
+    jStream.noneMatch(jDoublePredicate(predicate))
 
   def peek(action: Double => Any): ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.peek(jDoubleConsumer(action)))
+    new ScalaJDoubleStream(jStream.peek(jDoubleConsumer(action)))
 
   def reduce(identity: Double)(op: (Double, Double) => Double): Double =
-    asJava.reduce(identity, jDoubleBinaryOperator(op))
+    jStream.reduce(identity, jDoubleBinaryOperator(op))
 
   def reduce(op: (Double, Double) => Double): Option[Double] =
-    asJava.reduce(jDoubleBinaryOperator(op)).asScala
+    jStream.reduce(jDoubleBinaryOperator(op)).asScala
 
   def skip(n: Long): ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.skip(n))
+    new ScalaJDoubleStream(jStream.skip(n))
 
   def sorted: ScalaJDoubleStream =
-    new ScalaJDoubleStream(asJava.sorted)
+    new ScalaJDoubleStream(jStream.sorted)
 
   def sum: Double =
-    asJava.sum
+    jStream.sum
 
   def summaryStatistics: DoubleSummaryStatistics =
-    asJava.summaryStatistics()
+    jStream.summaryStatistics()
 
   def toArray: Array[Double] =
-    asJava.toArray
+    jStream.toArray
+
+  def to[Col[_]](implicit cbf: CanBuildFrom[Nothing, Double, Col[Double]]): Col[Double] = {
+    val b = cbf.apply()
+    forEachOrdered(b += _)
+    b.result()
+  }
+
+  def toList = to[List]
+  def toVector = to[Vector]
+
 
 }
