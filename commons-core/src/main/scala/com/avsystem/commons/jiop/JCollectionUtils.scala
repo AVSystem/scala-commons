@@ -30,7 +30,7 @@ trait JCollectionUtils extends JIterableCBF {
   type JTreeMap[K, V] = ju.TreeMap[K, V]
   type JEnumMap[K <: Enum[K], V] = ju.EnumMap[K, V]
 
-  trait JCollectionCreator[C[T] <: JCollection[T]] {
+  abstract class JCollectionCreator[C[T] <: JCollection[T]] {
     protected def instantiate[T]: C[T]
 
     def apply[T](values: T*): C[T] = {
@@ -40,23 +40,47 @@ trait JCollectionUtils extends JIterableCBF {
     }
   }
 
-  object JList {
-    def unapplySeq[T](list: JList[T]): Option[Seq[T]] =
+  abstract class JListCreator[C[T] <: JList[T]] extends JCollectionCreator[C] {
+    def unapplySeq[T](list: C[T]): Option[Seq[T]] =
       Some(list.asScala)
   }
 
-  object JArrayList extends JCollectionCreator[JArrayList] {
+  abstract class JSortedSetCreator[C[T] <: JSortedSet[T]] {
+    protected def instantiate[T](ord: Ordering[T]): C[T]
+
+    def apply[T: Ordering](values: T*): C[T] = {
+      val result = instantiate[T](Ordering[T])
+      result.addAll(values.asJava)
+      result
+    }
+
+    def unapplySeq[T](set: C[T]): Option[Seq[T]] =
+      Some(set.iterator.asScala.toStream)
+  }
+
+  object JIterable {
+    def apply[T](values: T*): JIterable[T] =
+      JArrayList(values: _*)
+  }
+
+  object JCollection extends JCollectionCreator[JCollection] {
+    protected def instantiate[T]: JCollection[T] = new JArrayList[T]
+  }
+
+  object JList extends JListCreator[JList] {
+    protected def instantiate[T]: JList[T] = new JArrayList[T]
+  }
+
+  object JArrayList extends JListCreator[JArrayList] {
     protected def instantiate[T]: JArrayList[T] = new JArrayList[T]
-
-    def unapplySeq[T](list: JArrayList[T]): Option[Seq[T]] =
-      Some(list.asScala)
   }
 
-  object JLinkedList extends JCollectionCreator[JLinkedList] {
+  object JLinkedList extends JListCreator[JLinkedList] {
     protected def instantiate[T]: JLinkedList[T] = new JLinkedList[T]
+  }
 
-    def unapplySeq[T](list: JLinkedList[T]): Option[Seq[T]] =
-      Some(list.asScala)
+  object JSet extends JCollectionCreator[JSet] {
+    protected def instantiate[T]: JSet[T] = new JHashSet[T]
   }
 
   object JHashSet extends JCollectionCreator[JHashSet] {
@@ -70,65 +94,66 @@ trait JCollectionUtils extends JIterableCBF {
       Some(set.iterator.asScala.toStream)
   }
 
-  object JSortedSet {
-    def unapplySeq[T](set: JSortedSet[T]): Option[Seq[T]] =
-      Some(set.iterator.asScala.toStream)
+  object JSortedSet extends JSortedSetCreator[JSortedSet] {
+    protected def instantiate[T](ord: Ordering[T]): JSortedSet[T] = new JTreeSet[T](ord)
   }
 
-  object JNavigableSet {
-    def unapplySeq[T](set: JNavigableSet[T]): Option[Seq[T]] =
-      Some(set.iterator.asScala.toStream)
+  object JNavigableSet extends JSortedSetCreator[JNavigableSet] {
+    protected def instantiate[T](ord: Ordering[T]): JNavigableSet[T] = new JTreeSet[T](ord)
   }
 
-  object JTreeSet {
-    def apply[T: Ordering](values: T*): JTreeSet[T] = {
-      val result = new JTreeSet[T](Ordering[T])
-      result.addAll(values.asJava)
-      result
-    }
-
-    def unapplySeq[T](set: JTreeSet[T]): Option[Seq[T]] =
-      Some(set.iterator.asScala.toStream)
+  object JTreeSet extends JSortedSetCreator[JTreeSet] {
+    protected def instantiate[T](ord: Ordering[T]): JTreeSet[T] = new JTreeSet[T](ord)
   }
 
-  object JHashMap {
-    def apply[K, V](entries: (K, V)*): JHashMap[K, V] = {
-      val result = new JHashMap[K, V]
+  abstract class JMapCreator[M[K, V] <: JMap[K, V]] {
+    protected def instantiate[K, V]: M[K, V]
+
+    def apply[K, V](entries: (K, V)*): M[K, V] = {
+      val result = instantiate[K, V]
       entries.foreach { case (k, v) => result.put(k, v) }
       result
     }
   }
 
-  object JLinkedHashMap {
-    def apply[K, V](entries: (K, V)*): JLinkedHashMap[K, V] = {
-      val result = new JLinkedHashMap[K, V]
+  abstract class JSortedMapCreator[M[K, V] <: JSortedMap[K, V]] {
+    protected def instantiate[K, V](ord: Ordering[K]): M[K, V]
+
+    def apply[K: Ordering, V](entries: (K, V)*): M[K, V] = {
+      val result = instantiate[K, V](Ordering[K])
       entries.foreach { case (k, v) => result.put(k, v) }
       result
     }
+
+    def unapplySeq[K, V](map: M[K, V]): Option[Seq[(K, V)]] =
+      Some(map.asScala.iterator.toStream)
+  }
+
+  object JMap extends JMapCreator[JMap] {
+    protected def instantiate[K, V]: JMap[K, V] = new JHashMap[K, V]
+  }
+
+  object JHashMap extends JMapCreator[JHashMap] {
+    protected def instantiate[K, V]: JHashMap[K, V] = new JHashMap[K, V]
+  }
+
+  object JLinkedHashMap extends JMapCreator[JLinkedHashMap] {
+    protected def instantiate[K, V]: JLinkedHashMap[K, V] = new JLinkedHashMap[K, V]
 
     def unapplySeq[K, V](map: JLinkedHashMap[K, V]): Option[Seq[(K, V)]] =
       Some(map.asScala.iterator.toStream)
   }
 
-  object JSortedMap {
-    def unapplySeq[K, V](map: JSortedMap[K, V]): Option[Seq[(K, V)]] =
-      Some(map.asScala.iterator.toStream)
+  object JSortedMap extends JSortedMapCreator[JSortedMap] {
+    protected def instantiate[K, V](ord: Ordering[K]): JSortedMap[K, V] = new JTreeMap[K, V](ord)
   }
 
-  object JNavigableMap {
-    def unapplySeq[K, V](map: JNavigableMap[K, V]): Option[Seq[(K, V)]] =
-      Some(map.asScala.iterator.toStream)
+  object JNavigableMap extends JSortedMapCreator[JNavigableMap] {
+    protected def instantiate[K, V](ord: Ordering[K]): JNavigableMap[K, V] = new JTreeMap[K, V](ord)
   }
 
-  object JTreeMap {
-    def apply[K: Ordering, V](entries: (K, V)*): JTreeMap[K, V] = {
-      val result = new JTreeMap[K, V](Ordering[K])
-      entries.foreach { case (k, v) => result.put(k, v) }
-      result
-    }
-
-    def unapplySeq[K, V](map: JTreeMap[K, V]): Option[Seq[(K, V)]] =
-      Some(map.asScala.iterator.toStream)
+  object JTreeMap extends JSortedMapCreator[JTreeMap] {
+    protected def instantiate[K, V](ord: Ordering[K]): JTreeMap[K, V] = new JTreeMap[K, V](ord)
   }
 
   import JCollectionUtils._
@@ -139,42 +164,8 @@ trait JCollectionUtils extends JIterableCBF {
   implicit def intCollectionOps(it: JCollection[Int]): intCollectionOps = new intCollectionOps(it)
   implicit def longCollectionOps(it: JCollection[Long]): longCollectionOps = new longCollectionOps(it)
   implicit def doubleCollectionOps(it: JCollection[Double]): doubleCollectionOps = new doubleCollectionOps(it)
-}
 
-trait JIterableCBF extends JSetCBF with JLinkedListCBF {
-  this: JCollectionUtils =>
-  // for JIterable, JCollection, JList and JArrayList
-  implicit def jArrayListCBF[A]: CanBuildFrom[Nothing, A, JArrayList[A]] =
-    new JCollectionUtils.JCollectionCBF(new JArrayList)
-}
-
-trait JSetCBF extends JSortedSetCBF {
-  this: JCollectionUtils =>
-  // for JSet and JHashSet
-  implicit def jHashSetCBF[A]: CanBuildFrom[Nothing, A, JHashSet[A]] =
-    new JCollectionUtils.JCollectionCBF(new JHashSet)
-
-  implicit def jLinkedHashSetCBF[A]: CanBuildFrom[Nothing, A, JLinkedHashSet[A]] =
-    new JCollectionUtils.JCollectionCBF(new JLinkedHashSet)
-}
-
-trait JSortedSetCBF {
-  this: JCollectionUtils =>
-  // for JSortedSet, JNavigableSet and JTreeSet
-  implicit def jTreeSetCBF[A]: CanBuildFrom[Nothing, A, JTreeSet[A]] =
-    new JCollectionUtils.JCollectionCBF(new JTreeSet)
-}
-
-trait JLinkedListCBF {
-  this: JCollectionUtils =>
-  implicit def jLinkedListCBF[A]: CanBuildFrom[Nothing, A, JLinkedList[A]] =
-    new JCollectionUtils.JCollectionCBF(new JLinkedList)
-}
-
-object JCollectionUtils {
-  import JavaInterop._
-
-  private[jiop] class JCollectionCBF[A, C <: JCollection[A]](creator: => C) extends CanBuildFrom[Nothing, A, C] {
+  final class JCollectionCBF[A, C <: JCollection[A]](creator: => C) extends CanBuildFrom[Nothing, A, C] {
     def apply(from: Nothing) = apply()
     def apply() = new mutable.Builder[A, C] {
       val coll = creator
@@ -191,6 +182,45 @@ object JCollectionUtils {
         coll
     }
   }
+}
+
+trait JIterableCBF extends JSetCBF with JLinkedListCBF {
+  this: JCollectionUtils =>
+  // for JIterable, JCollection, JList and JArrayList
+  implicit def jArrayListCBF[A]: JCollectionCBF[A, JArrayList[A]] =
+    new JCollectionCBF(new JArrayList)
+}
+
+trait JSetCBF extends JSortedSetCBF with JLinkedHashSetCBF {
+  this: JCollectionUtils =>
+  // for JSet and JHashSet
+  implicit def jHashSetCBF[A]: JCollectionCBF[A, JHashSet[A]] =
+    new JCollectionCBF(new JHashSet)
+}
+
+trait JLinkedHashSetCBF {
+  this: JCollectionUtils =>
+
+  implicit def jLinkedHashSetCBF[A]: JCollectionCBF[A, JLinkedHashSet[A]] =
+    new JCollectionCBF(new JLinkedHashSet)
+}
+
+trait JSortedSetCBF {
+  this: JCollectionUtils =>
+  // for JSortedSet, JNavigableSet and JTreeSet
+  implicit def jTreeSetCBF[A]: JCollectionCBF[A, JTreeSet[A]] =
+    new JCollectionCBF(new JTreeSet)
+}
+
+trait JLinkedListCBF {
+  this: JCollectionUtils =>
+  implicit def jLinkedListCBF[A]: JCollectionCBF[A, JLinkedList[A]] =
+    new JCollectionCBF(new JLinkedList)
+}
+
+object JCollectionUtils {
+
+  import JavaInterop._
 
   class iteratorOps[A](private val it: JIterator[A]) extends AnyVal {
     def forEachRemaining(code: A => Any): Unit =

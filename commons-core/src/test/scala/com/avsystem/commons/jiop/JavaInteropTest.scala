@@ -12,6 +12,34 @@ class JavaInteropTest extends FunSuite {
   def assertSame[A](s1: JStream[A], s2: JStream[A]): Unit =
     assert(s1.collect(Collectors.toList[A]) === s2.collect(Collectors.toList[A]))
 
+  def assertSameTypeValue(v1: Any, v2: Any): Unit = {
+    assert(v1 === v2)
+    assert(v1.getClass === v2.getClass)
+  }
+
+  def col[T <: JCollection[Int]](col: T): T = {
+    col.add(1)
+    col.add(2)
+    col.add(3)
+    col
+  }
+
+  def map[M <: JMap[Int, String]](map: M): M = {
+    map.put(1, "1")
+    map.put(2, "2")
+    map.put(3, "3")
+    map
+  }
+
+  val arrayList = col(new JArrayList[Int])
+  val linkedList = col(new JLinkedList[Int])
+  val hashSet = col(new JHashSet[Int])
+  val linkedHashSet = col(new JLinkedHashSet[Int])
+  val treeSet = col(new JTreeSet[Int])
+  val hashMap = map(new JHashMap[Int, String])
+  val linkedHashMap = map(new JLinkedHashMap[Int, String])
+  val treeMap = map(new JTreeMap[Int, String])
+
   test("adapted java stream api should work") {
     val input = JArrayList("a", "b", "c", "d", "e", "f", "g")
     assertSame(
@@ -46,35 +74,93 @@ class JavaInteropTest extends FunSuite {
   test("streams should be collectible to scala collections") {
     import JavaInterop._
 
-    assert(JArrayList(1, 2, 3).scalaStream.to[Traversable] === Traversable(1, 2, 3))
-    assert(JArrayList(1, 2, 3).scalaStream.to[Iterable] === Iterable(1, 2, 3))
-    assert(JArrayList(1, 2, 3).scalaStream.to[Seq] === Seq(1, 2, 3))
-    assert(JArrayList(1, 2, 3).scalaStream.to[List] === List(1, 2, 3))
-    assert(JArrayList(1, 2, 3).scalaStream.to[Vector] === Vector(1, 2, 3))
-    assert(JArrayList(1, 2, 3).scalaStream.to[Set] === Set(1, 2, 3))
+    assertSameTypeValue(arrayList.scalaStream.to[Traversable], Iterator(1, 2, 3).to[Traversable])
+    assertSameTypeValue(arrayList.scalaStream.to[Iterable], Iterator(1, 2, 3).to[Iterable])
+    assertSameTypeValue(arrayList.scalaStream.to[Seq], Iterator(1, 2, 3).to[Seq])
+    assertSameTypeValue(arrayList.scalaStream.to[List], Iterator(1, 2, 3).to[List])
+    assertSameTypeValue(arrayList.scalaStream.to[Vector], Iterator(1, 2, 3).to[Vector])
+    assertSameTypeValue(arrayList.scalaStream.to[Set], Iterator(1, 2, 3).to[Set])
   }
 
   test("streams should be collectible to java collections") {
-    import JavaInterop._
-
-    assert(JArrayList(1, 2, 3).scalaStream.to[JIterable] === JArrayList(1, 2, 3))
-    assert(JArrayList(1, 2, 3).scalaStream.to[JArrayList] === JArrayList(1, 2, 3))
+    assertSameTypeValue(arrayList.scalaStream.to[JIterable], arrayList)
+    assertSameTypeValue(arrayList.scalaStream.to[JArrayList], arrayList)
   }
 
   test("java collection CanBuildFroms should have proper priority") {
     import JavaInterop._
 
-    assert(List(1, 2, 3).to[TraversableOnce] === List(1, 2, 3))
-    assert(List(1, 2, 3).to[JArrayList] === JArrayList(1, 2, 3))
-    assert(List(1, 2, 3).to[JLinkedList] === JLinkedList(1, 2, 3))
-    assert(List(1, 2, 3).to[JList] === JArrayList(1, 2, 3))
-    assert(List(1, 2, 3).to[JLinkedHashSet] === JLinkedHashSet(1, 2, 3))
-    assert(List(1, 2, 3).to[JHashSet] === JHashSet(1, 2, 3))
-    assert(List(1, 2, 3).to[JTreeSet] === JTreeSet(1, 2, 3))
-    assert(List(1, 2, 3).to[JNavigableSet] === JTreeSet(1, 2, 3))
-    assert(List(1, 2, 3).to[JSortedSet] === JTreeSet(1, 2, 3))
-    assert(List(1, 2, 3).to[JSet] === JHashSet(1, 2, 3))
-    assert(List(1, 2, 3).to[JCollection] === JArrayList(1, 2, 3))
-    assert(List(1, 2, 3).to[JIterable] === JArrayList(1, 2, 3))
+    val intList = List(1, 2, 3)
+    assertSameTypeValue(intList.to[TraversableOnce], Vector(1, 2, 3))
+    assertSameTypeValue(intList.to[JArrayList], arrayList)
+    assertSameTypeValue(intList.to[JLinkedList], linkedList)
+    assertSameTypeValue(intList.to[JList], arrayList)
+    assertSameTypeValue(intList.to[JLinkedHashSet], linkedHashSet)
+    assertSameTypeValue(intList.to[JHashSet], hashSet)
+    assertSameTypeValue(intList.to[JTreeSet], treeSet)
+    assertSameTypeValue(intList.to[JNavigableSet], treeSet)
+    assertSameTypeValue(intList.to[JSortedSet], treeSet)
+    assertSameTypeValue(intList.to[JSet], hashSet)
+    assertSameTypeValue(intList.to[JCollection], arrayList)
+    assertSameTypeValue(intList.to[JIterable], arrayList)
+  }
+
+  test("java collection creators should work") {
+    assertSameTypeValue(JIterable(1, 2, 3), arrayList)
+    assertSameTypeValue(JCollection(1, 2, 3), arrayList)
+    assertSameTypeValue(JList(1, 2, 3), arrayList)
+    assertSameTypeValue(JArrayList(1, 2, 3), arrayList)
+    assertSameTypeValue(JLinkedList(1, 2, 3), linkedList)
+    assertSameTypeValue(JSet(1, 2, 3), hashSet)
+    assertSameTypeValue(JHashSet(1, 2, 3), hashSet)
+    assertSameTypeValue(JLinkedHashSet(1, 2, 3), linkedHashSet)
+    assertSameTypeValue(JSortedSet(1, 2, 3), treeSet)
+    assertSameTypeValue(JNavigableSet(1, 2, 3), treeSet)
+    assertSameTypeValue(JTreeSet(1, 2, 3), treeSet)
+    assertSameTypeValue(JMap(1 -> "1", 2 -> "2", 3 -> "3"), hashMap)
+    assertSameTypeValue(JHashMap(1 -> "1", 2 -> "2", 3 -> "3"), hashMap)
+    assertSameTypeValue(JLinkedHashMap(1 -> "1", 2 -> "2", 3 -> "3"), linkedHashMap)
+    assertSameTypeValue(JSortedMap(1 -> "1", 2 -> "2", 3 -> "3"), treeMap)
+    assertSameTypeValue(JNavigableMap(1 -> "1", 2 -> "2", 3 -> "3"), treeMap)
+    assertSameTypeValue(JTreeMap(1 -> "1", 2 -> "2", 3 -> "3"), treeMap)
+  }
+
+  test("java collection extractors should work") {
+    arrayList match {
+      case JList(1, 2, 3) =>
+    }
+    arrayList match {
+      case JArrayList(1, 2, 3) =>
+    }
+    linkedList match {
+      case JList(1, 2, 3) =>
+    }
+    linkedList match {
+      case JLinkedList(1, 2, 3) =>
+    }
+    linkedHashSet match {
+      case JLinkedHashSet(1, 2, 3) =>
+    }
+    treeSet match {
+      case JSortedSet(1, 2, 3) =>
+    }
+    treeSet match {
+      case JNavigableSet(1, 2, 3) =>
+    }
+    treeSet match {
+      case JTreeSet(1, 2, 3) =>
+    }
+    linkedHashMap match {
+      case JLinkedHashMap((1, "1"), (2, "2"), (3, "3")) =>
+    }
+    treeMap match {
+      case JSortedMap((1, "1"), (2, "2"), (3, "3")) =>
+    }
+    treeMap match {
+      case JNavigableMap((1, "1"), (2, "2"), (3, "3")) =>
+    }
+    treeMap match {
+      case JTreeMap((1, "1"), (2, "2"), (3, "3")) =>
+    }
   }
 }
