@@ -1,0 +1,4 @@
+<plugin>
+    <name>avsAnalyzer</name>
+    <classname>com.avsystem.commons.analyzer.AnalyzerPlugin</classname>
+</plugin>
