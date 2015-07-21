@@ -91,7 +91,6 @@ class JavaInteropTest extends FunSuite {
     import JavaInterop._
 
     val intList = List(1, 2, 3)
-    assertSameTypeValue(intList.to[TraversableOnce], Vector(1, 2, 3))
     assertSameTypeValue(intList.to[JArrayList], arrayList)
     assertSameTypeValue(intList.to[JLinkedList], linkedList)
     assertSameTypeValue(intList.to[JList], arrayList)

@@ -4,13 +4,12 @@ package jiop
 import java.util.Collections
 import java.{util => ju}
 
-import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
 
 trait JStreamUtils {
-  type JBaseStream[+T, S <: JBaseStream[T, S]] = ju.stream.BaseStream[T@uncheckedVariance, S]
-  type JStream[+T] = ju.stream.Stream[T@uncheckedVariance]
+  type JBaseStream[T, S <: JBaseStream[T, S]] = ju.stream.BaseStream[T, S]
+  type JStream[T] = ju.stream.Stream[T]
   type JDoubleStream = ju.stream.DoubleStream
   type JIntStream = ju.stream.IntStream
   type JLongStream = ju.stream.LongStream
