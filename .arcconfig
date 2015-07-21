@@ -1,0 +1,6 @@
+{
+  "project_id" : "commons",
+  "conduit_uri" : "http://phabricator.avsystem.com/",
+  "base" : "hg:gca(default)"
+}
+

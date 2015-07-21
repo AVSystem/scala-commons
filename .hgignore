@@ -16,4 +16,4 @@ target
 *~
 *.scss.cache
 *.scssc
-*.arcconfig
+
