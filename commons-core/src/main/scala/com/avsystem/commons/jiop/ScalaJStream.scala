@@ -95,7 +95,7 @@ final class ScalaJStream[+A](private val jStream: JStream[A@uV]) extends AnyVal 
     new ScalaJStream(jStream.limit(maxSize))
 
   def map[R](mapper: A => R): ScalaJStream[R] =
-    new ScalaJStream(jStream.map(jFunction(mapper)))
+    new ScalaJStream(jStream.map[R](jFunction(mapper)))
 
   def mapToDouble(mapper: A => Double): ScalaJDoubleStream =
     new ScalaJDoubleStream(jStream.mapToDouble(jToDoubleFunction(mapper)))
