@@ -129,8 +129,4 @@ final class ScalaJDoubleStream(val jStream: JDoubleStream) extends AnyVal {
     b.result()
   }
 
-  def toList = to[List]
-  def toVector = to[Vector]
-
-
 }

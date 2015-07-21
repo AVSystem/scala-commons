@@ -16,16 +16,16 @@ trait JOptionalUtils {
   type JOptionalInt = ju.OptionalInt
   type JOptionalLong = ju.OptionalLong
 
-  @inline implicit def optional2AsScala[T](optional: JOptional[T]): optional2AsScala[T] =
+  implicit def optional2AsScala[T](optional: JOptional[T]): optional2AsScala[T] =
     new optional2AsScala(optional)
 
-  @inline implicit def optionalDouble2AsScala(optional: JOptionalDouble): optionalDouble2AsScala =
+  implicit def optionalDouble2AsScala(optional: JOptionalDouble): optionalDouble2AsScala =
     new optionalDouble2AsScala(optional)
 
-  @inline implicit def optionalInt2AsScala(optional: JOptionalInt): optionalInt2AsScala =
+  implicit def optionalInt2AsScala(optional: JOptionalInt): optionalInt2AsScala =
     new optionalInt2AsScala(optional)
 
-  @inline implicit def optionalLong2AsScala(optional: JOptionalLong): optionalLong2AsScala =
+  implicit def optionalLong2AsScala(optional: JOptionalLong): optionalLong2AsScala =
     new optionalLong2AsScala(optional)
 }
 
