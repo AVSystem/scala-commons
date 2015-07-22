@@ -1,11 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import java.util.Collections
 import java.{util => ju}
-
-import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable
 
 trait JStreamUtils {
   type JBaseStream[T, S <: JBaseStream[T, S]] = ju.stream.BaseStream[T, S]
@@ -69,42 +65,6 @@ object JStreamUtils {
 
   final class JLongStream2AsScala(private val jStream: JLongStream) extends AnyVal {
     def asScala: ScalaJLongStream = new ScalaJLongStream(jStream)
-  }
-
-  /**
-   * A [[java.util.stream.Collector]] implementation based on [[CanBuildFrom]] instance.
-   */
-  final class CanBuildFromCollector[Elem, To](cbf: CanBuildFrom[Nothing, Elem, To])(implicit ato: AsTraversableOnce[To, Elem])
-    extends JCollector[Elem, mutable.Builder[Elem, To], To] {
-
-    def accumulator() = jBiConsumer(_ += _)
-    def characteristics() = Collections.emptySet()
-    def combiner() = jBinaryOperator { (b1, b2) =>
-      b1 ++= ato.asTraversableOnce(b2.result())
-    }
-    def finisher() = jFunction(_.result())
-    def supplier() = jSupplier(cbf.apply())
-  }
-
-  trait AsTraversableOnce[C, A] {
-    def asTraversableOnce(coll: C): TraversableOnce[A]
-  }
-
-  object AsTraversableOnce {
-    implicit def trivialAsTraversableOnce[A]: AsTraversableOnce[TraversableOnce[A], A] =
-      new AsTraversableOnce[TraversableOnce[A], A] {
-        def asTraversableOnce(coll: TraversableOnce[A]) = coll
-      }
-
-    implicit def jIterableAsTraversableOnce[A]: AsTraversableOnce[JIterable[A], A] =
-      new AsTraversableOnce[JIterable[A], A] {
-        def asTraversableOnce(coll: JIterable[A]) = coll.iterator.asScala
-      }
-
-    implicit def jIteratorAsTraversableOnce[A]: AsTraversableOnce[JIterator[A], A] =
-      new AsTraversableOnce[JIterator[A], A] {
-        def asTraversableOnce(coll: JIterator[A]) = coll.asScala
-      }
   }
 
 }
