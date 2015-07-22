@@ -12,7 +12,7 @@ import scala.language.higherKinds
  * Author: ghik
  * Created: 15/07/15.
  */
-final class ScalaJDoubleStream(val jStream: JDoubleStream) extends AnyVal {
+final class ScalaJDoubleStream(private val jStream: JDoubleStream) extends AnyVal {
   def asJava = jStream
 
   def close(): Unit =
