@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import java.{lang => jl, math => jm}
+import java.{lang => jl, math => jm, util => ju}
 
 /**
  * Author: ghik
@@ -18,4 +18,5 @@ trait JBasicUtils {
   type JCharacter = jl.Character
   type JBigInteger = jm.BigInteger
   type JBigDecimal = jm.BigDecimal
+  type JDate = ju.Date
 }
