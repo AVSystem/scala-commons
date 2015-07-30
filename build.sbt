@@ -1,6 +1,6 @@
 name := "commons"
 
-version in ThisBuild := "1.3"
+version in ThisBuild := "1.4"
 scalaVersion in ThisBuild := "2.11.7"
 organization in ThisBuild := "com.avsystem.commons"
 crossPaths in ThisBuild := false
