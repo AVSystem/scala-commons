@@ -77,7 +77,7 @@ final class ScalaJStream[+A](private val jStream: JStream[A@uV]) extends AnyVal 
     new ScalaJStream(jStream.flatMap(jFunction(t => mapper(t).jStream)))
 
   def flatMapToDouble(mapper: A => ScalaJDoubleStream): ScalaJDoubleStream =
-    new ScalaJDoubleStream(jStream.flatMapToDouble(jFunction(t => mapper(t).jStream)))
+    new ScalaJDoubleStream(jStream.flatMapToDouble(jFunction(t => mapper(t).asJava)))
 
   def flatMapToInt(mapper: A => ScalaJIntStream): ScalaJIntStream =
     new ScalaJIntStream(jStream.flatMapToInt(jFunction(t => mapper(t).asJava)))
