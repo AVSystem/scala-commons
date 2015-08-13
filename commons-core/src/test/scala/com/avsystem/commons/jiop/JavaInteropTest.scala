@@ -3,7 +3,12 @@ package jiop
 
 import java.util.stream.{Collectors, DoubleStream, IntStream, LongStream}
 
+import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.FunSuite
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Promise}
+import scala.util.{Random, Success}
 
 class JavaInteropTest extends FunSuite {
 
@@ -161,5 +166,43 @@ class JavaInteropTest extends FunSuite {
     treeMap match {
       case JTreeMap((1, "1"), (2, "2"), (3, "3")) =>
     }
+  }
+
+  test("scala to guava Future conversion should work") {
+    val promise = Promise[Int]()
+    val sfut = promise.future
+    val gfut = sfut.asGuava
+    var listenerCalled: Boolean = false
+
+    assert(gfut.isDone === sfut.isCompleted)
+
+    gfut.addListener(jRunnable(listenerCalled = true), MoreExecutors.sameThreadExecutor())
+    promise.success(123)
+
+    assert(Await.result(sfut, Duration.Inf) === gfut.get)
+    assert(gfut.isDone === sfut.isCompleted)
+    assert(listenerCalled)
+  }
+
+  test("guava to scala Future conversion should work") {
+    implicit object ec extends ExecutionContext {
+      def execute(runnable: Runnable): Unit = runnable.run()
+      def reportFailure(cause: Throwable): Unit = cause.printStackTrace()
+    }
+
+    val gfut = SettableFuture.create[Int]
+    val sfut = gfut.asScala
+    var listenerCalled: Boolean = false
+
+    assert(gfut.isDone === sfut.isCompleted)
+    assert(None === sfut.value)
+
+    sfut.onComplete(_ => listenerCalled = true)
+    gfut.set(123)
+
+    assert(Await.result(sfut, Duration.Inf) === gfut.get)
+    assert(gfut.isDone === sfut.isCompleted)
+    assert(sfut.value === Some(Success(123)))
+    assert(listenerCalled)
   }
 }
