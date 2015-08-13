@@ -58,18 +58,24 @@ object GuavaUtils {
     def isCompleted: Boolean =
       gfut.isDone
 
-    def onComplete[U](f: Try[T] => U)(implicit executor: ExecutionContext): Unit =
-      Futures.addCallback(gfut, new FutureCallback[T] {
+    def onComplete[U](f: Try[T] => U)(implicit ec: ExecutionContext): Unit = {
+      val callback = new FutureCallback[T] {
         def onFailure(t: Throwable): Unit = f(Failure(t))
         def onSuccess(result: T): Unit = f(Success(result))
-      })
+      }
+      val executor = new Executor {
+        def execute(command: Runnable): Unit =
+          ec.execute(command)
+      }
+      Futures.addCallback(gfut, callback, executor)
+    }
 
     def value: Option[Try[T]] =
       if (gfut.isDone) Some(Try(gfut.get)) else None
 
     @throws(classOf[Exception])
     def result(atMost: Duration)(implicit permit: CanAwait): T =
-      if(atMost.isFinite())
+      if (atMost.isFinite())
         gfut.get(atMost.length, atMost.unit)
       else
         gfut.get()
