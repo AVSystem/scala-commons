@@ -49,7 +49,8 @@ val commonSettings = Seq(
     "com.github.ghik" % "silencer-lib" % silencerVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % Test
   ),
-  ideBasePackages := Seq(organization.value)
+  ideBasePackages := Seq(organization.value),
+  fork in Test := true
 )
 
 lazy val commons = project.in(file("."))
