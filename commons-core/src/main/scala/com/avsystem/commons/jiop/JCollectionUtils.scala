@@ -33,6 +33,8 @@ trait JCollectionUtils extends JIterableCBF {
   abstract class JCollectionCreator[C[T] <: JCollection[T]] {
     protected def instantiate[T]: C[T]
 
+    def empty[T]: C[T] = instantiate[T]
+
     def apply[T](values: T*): C[T] = {
       val result = instantiate[T]
       result.addAll(values.asJava)
@@ -47,6 +49,8 @@ trait JCollectionUtils extends JIterableCBF {
 
   abstract class JSortedSetCreator[C[T] <: JSortedSet[T]] {
     protected def instantiate[T](ord: Ordering[T]): C[T]
+
+    def empty[T: Ordering]: C[T] = instantiate(Ordering[T])
 
     def apply[T: Ordering](values: T*): C[T] = {
       val result = instantiate[T](Ordering[T])
@@ -109,6 +113,8 @@ trait JCollectionUtils extends JIterableCBF {
   abstract class JMapCreator[M[K, V] <: JMap[K, V]] {
     protected def instantiate[K, V]: M[K, V]
 
+    def empty[K, V]: M[K, V] = instantiate[K, V]
+
     def apply[K, V](entries: (K, V)*): M[K, V] = {
       val result = instantiate[K, V]
       entries.foreach { case (k, v) => result.put(k, v) }
@@ -164,6 +170,8 @@ trait JCollectionUtils extends JIterableCBF {
   implicit def intCollectionOps(it: JCollection[Int]): intCollectionOps = new intCollectionOps(it)
   implicit def longCollectionOps(it: JCollection[Long]): longCollectionOps = new longCollectionOps(it)
   implicit def doubleCollectionOps(it: JCollection[Double]): doubleCollectionOps = new doubleCollectionOps(it)
+
+  implicit def pairTraversableOps[A, B](coll: TraversableOnce[(A, B)]): pairTraversableOps[A, B] = new pairTraversableOps(coll)
 
   final class JCollectionCBF[A, C <: JCollection[A]](creator: => C) extends CanBuildFrom[Nothing, A, C] {
     def apply(from: Nothing) = apply()
@@ -253,5 +261,13 @@ object JCollectionUtils {
   class doubleCollectionOps(private val coll: JCollection[Double]) extends AnyVal {
     def scalaDoubleStream: ScalaJDoubleStream =
       coll.stream.asScalaDoubleStream
+  }
+
+  class pairTraversableOps[A, B](private val coll: TraversableOnce[(A, B)]) extends AnyVal {
+    def toJMap: JMap[A, B] = {
+      val result = JMap.empty[A,B]
+      coll.foreach { case (k, v) => result.put(k, v) }
+      result
+    }
   }
 }

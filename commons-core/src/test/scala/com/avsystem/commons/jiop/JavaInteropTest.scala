@@ -205,4 +205,9 @@ class JavaInteropTest extends FunSuite {
     assert(sfut.value === Some(Success(123)))
     assert(listenerCalled)
   }
+
+  test("toJMap should work") {
+    val jmap = Iterator(1 -> "jeden", 2 -> "dwa").toJMap
+    assert(jmap === JMap(1 -> "jeden", 2 -> "dwa"))
+  }
 }
