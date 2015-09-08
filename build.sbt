@@ -1,6 +1,6 @@
 name := "commons"
 
-version in ThisBuild := "1.5.3"
+version in ThisBuild := "1.5.4"
 scalaVersion in ThisBuild := "2.11.7"
 organization in ThisBuild := "com.avsystem.commons"
 crossPaths in ThisBuild := false
@@ -95,6 +95,7 @@ lazy val `commons-vaadin` = project.in(file("commons-vaadin")).dependsOn(`common
   )
 
 lazy val `commons-analyzer` = project.in(file("commons-analyzer"))
+  .dependsOn(`commons-core` % Test)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value

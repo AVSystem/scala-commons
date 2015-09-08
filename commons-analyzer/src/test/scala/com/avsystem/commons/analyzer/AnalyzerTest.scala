@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package analyzer
 
-import org.scalatest.FunSuite
+import org.scalatest.{Assertions, FunSuite}
 
 import scala.reflect.internal.util.BatchSourceFile
 import scala.tools.nsc.plugins.Plugin
@@ -11,16 +11,18 @@ import scala.tools.nsc.{Global, Settings}
  * Author: ghik
  * Created: 21/08/15.
  */
-class AnalyzerTest extends FunSuite {
+trait AnalyzerTest { this: Assertions =>
   val settings = new Settings
   settings.usejavacp.value = true
   val compiler = new Global(settings) {
     global =>
+
     override protected def loadRoughPluginsList(): List[Plugin] =
       new AnalyzerPlugin(global) :: super.loadRoughPluginsList()
   }
 
   def compile(source: String): Unit = {
+    compiler.reporter.reset()
     val run = new compiler.Run
     run.compileSources(List(new BatchSourceFile("test.scala", source)))
   }
@@ -30,13 +32,8 @@ class AnalyzerTest extends FunSuite {
     assert(compiler.reporter.hasErrors)
   }
 
-  test("import java.util should be rejected") {
-    assertErrors(
-      """
-        |import java.util
-        |
-        |object whatever
-      """.stripMargin
-    )
+  def assertNoErrors(source: String): Unit = {
+    compile(source)
+    assert(!compiler.reporter.hasErrors)
   }
 }
