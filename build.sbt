@@ -1,6 +1,6 @@
 name := "commons"
 
-version in ThisBuild := "1.5.5"
+version in ThisBuild := "1.5.6"
 scalaVersion in ThisBuild := "2.11.7"
 organization in ThisBuild := "com.avsystem.commons"
 crossPaths in ThisBuild := false
@@ -54,7 +54,7 @@ val commonSettings = Seq(
 )
 
 lazy val commons = project.in(file("."))
-  .aggregate(`commons-macros`, `commons-core`, `commons-spring`, `commons-vaadin`, `commons-analyzer`)
+  .aggregate(`commons-macros`, `commons-core`, `commons-analyzer`)
   .settings(
     publishArtifact := false
   )
@@ -71,26 +71,6 @@ lazy val `commons-core` = project.in(file("commons-core")).dependsOn(`commons-ma
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
       "com.google.guava" % "guava" % guavaVersion
-    )
-  )
-
-lazy val `commons-spring` = project.in(file("commons-spring")).dependsOn(`commons-core`)
-  .settings(commonSettings: _*)
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.springframework" % "spring-core" % springVersion,
-      "org.springframework" % "spring-beans" % springVersion,
-      "org.springframework" % "spring-context" % springVersion,
-      "org.springframework" % "spring-context-support" % springVersion
-    )
-  )
-
-lazy val `commons-vaadin` = project.in(file("commons-vaadin")).dependsOn(`commons-core`)
-  .settings(commonSettings: _*)
-  .settings(
-    libraryDependencies ++= Seq(
-      "javax.servlet" % "javax.servlet-api" % servletApiVersion,
-      "com.vaadin" % "vaadin-server" % vaadinVersion
     )
   )
 
