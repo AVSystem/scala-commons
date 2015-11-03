@@ -63,9 +63,12 @@ object GuavaUtils {
         def onFailure(t: Throwable): Unit = f(Failure(t))
         def onSuccess(result: T): Unit = f(Success(result))
       }
-      val executor = new Executor {
-        def execute(command: Runnable): Unit =
-          ec.execute(command)
+      val executor = ec match {
+        case executor: Executor => executor
+        case _ => new Executor {
+          def execute(command: Runnable): Unit =
+            ec.execute(command)
+        }
       }
       Futures.addCallback(gfut, callback, executor)
     }
@@ -90,12 +93,14 @@ object GuavaUtils {
 
   private case class FutureAsListenableFuture[T](fut: Future[T]) extends ListenableFuture[T] {
     def addListener(listener: Runnable, executor: Executor): Unit = {
-      val ec = new ExecutionContext {
-        def reportFailure(cause: Throwable): Unit =
-          cause.printStackTrace()
-
-        def execute(runnable: Runnable): Unit =
-          executor.execute(runnable)
+      val ec = executor match {
+        case ec: ExecutionContext => ec
+        case _ => new ExecutionContext {
+          def reportFailure(cause: Throwable): Unit =
+            cause.printStackTrace()
+          def execute(runnable: Runnable): Unit =
+            executor.execute(runnable)
+        }
       }
       fut.onComplete(_ => listener.run())(ec)
     }
