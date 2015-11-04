@@ -32,10 +32,11 @@ object RunInQueueEC extends ExecutionContext {
     queue += runnable
     if (shouldRun) {
       while (queue.nonEmpty) {
-        val task = queue.dequeue()
+        val task = queue.head
         try task.run() catch {
           case NonFatal(t) => reportFailure(t)
         }
+        queue.dequeue()
       }
     }
   }
