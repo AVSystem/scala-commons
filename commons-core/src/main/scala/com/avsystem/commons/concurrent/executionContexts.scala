@@ -2,10 +2,12 @@ package com.avsystem.commons
 package concurrent
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.util.control.NonFatal
 
-object RunNowEC extends ExecutionContext {
+object RunNowEC extends ExecutionContextExecutor {
+  def get: ExecutionContextExecutor = this
+
   object Implicits {
     implicit val executionContext: ExecutionContext = RunNowEC
   }
@@ -17,7 +19,9 @@ object RunNowEC extends ExecutionContext {
     cause.printStackTrace()
 }
 
-object RunInQueueEC extends ExecutionContext {
+object RunInQueueEC extends ExecutionContextExecutor {
+  def get: ExecutionContextExecutor = this
+
   object Implicits {
     implicit val executionContext: ExecutionContext = RunInQueueEC
   }
