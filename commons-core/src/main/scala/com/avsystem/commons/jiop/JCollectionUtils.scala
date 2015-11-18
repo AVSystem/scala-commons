@@ -5,10 +5,9 @@ import java.{lang => jl, util => ju}
 
 import scala.collection.JavaConverters._
 import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable
 import scala.language.{higherKinds, implicitConversions}
 
-trait JCollectionUtils extends JIterableCBF {
+trait JCollectionUtils extends JCanBuildFroms {
   type JIterator[T] = ju.Iterator[T]
   type JIterable[T] = jl.Iterable[T]
   type JCollection[T] = ju.Collection[T]
@@ -172,58 +171,6 @@ trait JCollectionUtils extends JIterableCBF {
   implicit def doubleCollectionOps(it: JCollection[Double]): doubleCollectionOps = new doubleCollectionOps(it)
 
   implicit def pairTraversableOps[A, B](coll: TraversableOnce[(A, B)]): pairTraversableOps[A, B] = new pairTraversableOps(coll)
-
-  final class JCollectionCBF[A, C <: JCollection[A]](creator: => C) extends CanBuildFrom[Nothing, A, C] {
-    def apply(from: Nothing) = apply()
-    def apply() = new mutable.Builder[A, C] {
-      val coll = creator
-
-      def +=(elem: A): this.type = {
-        coll.add(elem)
-        this
-      }
-
-      def clear(): Unit =
-        coll.clear()
-
-      def result(): C =
-        coll
-    }
-  }
-}
-
-trait JIterableCBF extends JSetCBF with JLinkedListCBF {
-  this: JCollectionUtils =>
-  // for JIterable, JCollection, JList and JArrayList
-  implicit def jArrayListCBF[A]: JCollectionCBF[A, JArrayList[A]] =
-    new JCollectionCBF(new JArrayList)
-}
-
-trait JSetCBF extends JSortedSetCBF with JLinkedHashSetCBF {
-  this: JCollectionUtils =>
-  // for JSet and JHashSet
-  implicit def jHashSetCBF[A]: JCollectionCBF[A, JHashSet[A]] =
-    new JCollectionCBF(new JHashSet)
-}
-
-trait JLinkedHashSetCBF {
-  this: JCollectionUtils =>
-
-  implicit def jLinkedHashSetCBF[A]: JCollectionCBF[A, JLinkedHashSet[A]] =
-    new JCollectionCBF(new JLinkedHashSet)
-}
-
-trait JSortedSetCBF {
-  this: JCollectionUtils =>
-  // for JSortedSet, JNavigableSet and JTreeSet
-  implicit def jTreeSetCBF[A]: JCollectionCBF[A, JTreeSet[A]] =
-    new JCollectionCBF(new JTreeSet)
-}
-
-trait JLinkedListCBF {
-  this: JCollectionUtils =>
-  implicit def jLinkedListCBF[A]: JCollectionCBF[A, JLinkedList[A]] =
-    new JCollectionCBF(new JLinkedList)
 }
 
 object JCollectionUtils {
@@ -264,10 +211,10 @@ object JCollectionUtils {
   }
 
   class pairTraversableOps[A, B](private val coll: TraversableOnce[(A, B)]) extends AnyVal {
-    def toJMap: JMap[A, B] = {
-      val result = JMap.empty[A,B]
-      coll.foreach { case (k, v) => result.put(k, v) }
-      result
+    def toJMap[M[K, V] <: JMap[K, V]](implicit cbf: CanBuildFrom[Nothing, (A, B), M[A, B]]): M[A, B] = {
+      val b = cbf()
+      coll.foreach(b += _)
+      b.result()
     }
   }
 }

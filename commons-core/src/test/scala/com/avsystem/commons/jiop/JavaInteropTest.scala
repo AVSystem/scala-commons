@@ -96,6 +96,7 @@ class JavaInteropTest extends FunSuite {
     import JavaInterop._
 
     val intList = List(1, 2, 3)
+    val pairList = intList.map(i => (i, i.toString))
     assertSameTypeValue(intList.to[JArrayList], arrayList)
     assertSameTypeValue(intList.to[JLinkedList], linkedList)
     assertSameTypeValue(intList.to[JList], arrayList)
@@ -107,6 +108,13 @@ class JavaInteropTest extends FunSuite {
     assertSameTypeValue(intList.to[JSet], hashSet)
     assertSameTypeValue(intList.to[JCollection], arrayList)
     assertSameTypeValue(intList.to[JIterable], arrayList)
+    assertSameTypeValue(pairList.toJMap, hashMap)
+    assertSameTypeValue(pairList.toJMap[JMap], hashMap)
+    assertSameTypeValue(pairList.toJMap[JHashMap], hashMap)
+    assertSameTypeValue(pairList.toJMap[JLinkedHashMap], linkedHashMap)
+    assertSameTypeValue(pairList.toJMap[JSortedMap], treeMap)
+    assertSameTypeValue(pairList.toJMap[JNavigableMap], treeMap)
+    assertSameTypeValue(pairList.toJMap[JTreeMap], treeMap)
   }
 
   test("java collection creators should work") {
