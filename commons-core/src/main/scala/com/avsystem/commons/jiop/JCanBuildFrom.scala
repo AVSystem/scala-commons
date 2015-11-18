@@ -6,7 +6,7 @@ import com.avsystem.commons.jiop.JavaInterop._
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
 
-trait JCanBuildFrom[A, C] extends CanBuildFrom[Nothing, A, C]
+trait JCanBuildFrom[-Elem, +To] extends CanBuildFrom[Nothing, Elem, To]
 object JCanBuildFrom extends JCanBuildFroms
 
 final class JCollectionCBF[A, C <: JCollection[A]](creator: => C) extends JCanBuildFrom[A, C] {
