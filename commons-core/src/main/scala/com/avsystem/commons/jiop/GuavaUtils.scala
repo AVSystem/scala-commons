@@ -4,6 +4,7 @@ package jiop
 import java.util.concurrent.{Executor, TimeUnit}
 
 import com.avsystem.commons.jiop.GuavaUtils.{DecorateFutureAsGuava, DecorateFutureAsScala}
+import com.avsystem.commons.misc.Sam
 import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture}
 import com.google.common.{base => gbase}
 
@@ -17,20 +18,9 @@ trait GuavaUtils {
   type GSupplier[T] = gbase.Supplier[T]
   type GPredicate[T] = gbase.Predicate[T]
 
-  def gFunction[F, T](fun: F => T): GFunction[F, T] =
-    new GFunction[F, T] {
-      def apply(input: F): T = fun(input)
-    }
-
-  def gSupplier[T](expr: => T): GSupplier[T] =
-    new GSupplier[T] {
-      def get(): T = expr
-    }
-
-  def gPredicate[T](pred: T => Boolean): GPredicate[T] =
-    new GPredicate[T] {
-      def apply(input: T): Boolean = pred(input)
-    }
+  def gFunction[F, T](fun: F => T) = Sam[GFunction[F, T]](fun)
+  def gSupplier[T](expr: => T) = Sam[GSupplier[T]](expr)
+  def gPredicate[T](pred: T => Boolean) = Sam[GPredicate[T]](pred)
 
   implicit def toDecorateAsScala[T](gfut: ListenableFuture[T]): DecorateFutureAsScala[T] =
     new DecorateFutureAsScala(gfut)
