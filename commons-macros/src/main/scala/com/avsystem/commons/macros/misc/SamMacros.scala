@@ -11,6 +11,11 @@ class SamMacros(val c: blackbox.Context) {
 
   import c.universe._
 
+  def validateSam[T: c.WeakTypeTag, F: c.WeakTypeTag]: c.Tree = {
+    validateSam(weakTypeOf[T], weakTypeOf[F])
+    q"null"
+  }
+
   def createSam[T: c.WeakTypeTag](fun: c.Expr[Any]): c.Tree =
     createSam(weakTypeOf[T], fun.actualType, fun.tree)
 
@@ -70,10 +75,5 @@ class SamMacros(val c: blackbox.Context) {
       case _ =>
         c.abort(c.enclosingPosition, "Target trait/class must have exactly one public, abstract, non-generic method")
     }
-  }
-
-  def validateSam[T: c.WeakTypeTag, F: c.WeakTypeTag]: c.Tree = {
-    validateSam(weakTypeOf[T], weakTypeOf[F])
-    q"null"
   }
 }
