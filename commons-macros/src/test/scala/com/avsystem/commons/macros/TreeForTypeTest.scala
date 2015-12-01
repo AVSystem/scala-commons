@@ -5,7 +5,7 @@ import scala.language.experimental.macros
 import scala.language.higherKinds
 
 object TreeForTypeTest {
-  def testTreeForType(tpeRepr: String): Unit = macro com.avsystem.commons.macros.TreeForTypeTestMacros.testTreeForType
+  def testTreeForType(tpeRepr: String): Nothing = macro com.avsystem.commons.macros.TestMacros.testTreeForType
 
   val x = "x"
 

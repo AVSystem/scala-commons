@@ -1,0 +1,84 @@
+package com.avsystem.commons
+package rpc
+
+import com.github.ghik.silencer.silent
+
+import scala.concurrent.Future
+
+case class Record(i: Int, fuu: String)
+
+trait TestRPC extends RPC {
+  @silent
+  def handle: Unit
+
+  def handleMore(): Unit
+
+  def doStuff(lol: Int, fuu: String)(cos: Option[Boolean]): Unit
+
+  def doStuff(yes: Boolean): Future[String]
+
+  @RPCName("doStuffInt")
+  def doStuff(num: Int): Unit
+
+  def takeCC(r: Record): Unit
+
+  def srslyDude(): Unit
+
+  def innerRpc(name: String): InnerRPC
+}
+
+trait InnerRPC extends RPC {
+  def proc(): Unit
+
+  def func(arg: Int): Future[String]
+}
+
+object TestRPC {
+  def rpcImpl(onInvocation: (String, List[List[Any]], Option[Any]) => Any) = new TestRPC {
+    private def onProcedure(methodName: String, args: List[List[Any]]): Unit =
+      onInvocation(methodName, args, None)
+
+    private def onCall[T](methodName: String, args: List[List[Any]], result: T): Future[T] = {
+      onInvocation(methodName, args, Some(result))
+      Future.successful(result)
+    }
+
+    private def onGet[T <: RPC](methodName: String, args: List[List[Any]], result: T): T = {
+      onInvocation(methodName, args, None)
+      result
+    }
+
+    def handleMore(): Unit =
+      onProcedure("handleMore", List(Nil))
+
+    def doStuff(lol: Int, fuu: String)(cos: Option[Boolean]): Unit =
+      onProcedure("doStuff", List(List(lol, fuu), List(cos)))
+
+    def doStuff(yes: Boolean): Future[String] =
+      onCall("doStuff", List(List(yes)), "doStuffResult")
+
+    def doStuff(num: Int): Unit =
+      onProcedure("doStuffInt", List(List(num)))
+
+    @silent
+    def handle: Unit =
+      onProcedure("handle", Nil)
+
+    def takeCC(r: Record): Unit =
+      onProcedure("recordCC", List(List(r)))
+
+    def srslyDude(): Unit =
+      onProcedure("srslyDude", List(Nil))
+
+    def innerRpc(name: String): InnerRPC = {
+      onInvocation("innerRpc", List(List(name)), None)
+      new InnerRPC {
+        def func(arg: Int): Future[String] =
+          onCall("innerRpc.func", List(List(arg)), "innerRpc.funcResult")
+
+        def proc(): Unit =
+          onProcedure("innerRpc.proc", List(Nil))
+      }
+    }
+  }
+}

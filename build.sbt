@@ -1,6 +1,6 @@
 name := "commons"
 
-version in ThisBuild := "1.6.3"
+version in ThisBuild := "1.7.0"
 scalaVersion in ThisBuild := "2.11.7"
 organization in ThisBuild := "com.avsystem.commons"
 crossPaths in ThisBuild := false
@@ -37,10 +37,8 @@ credentials in ThisBuild +=
 val silencerVersion = "0.3"
 val guavaVersion = "14.0.1"
 val jsr305Version = "3.0.0"
-val vaadinVersion = "7.4.6"
-val servletApiVersion = "3.1.0"
-val springVersion = "4.1.4.RELEASE"
 val scalatestVersion = "2.2.5"
+val upickleVersion = "0.3.6"
 
 val commonSettings = Seq(
   (publishArtifact in packageDoc) := false,
@@ -65,7 +63,22 @@ lazy val `commons-macros` = project.in(file("commons-macros"))
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
   )
 
-lazy val `commons-core` = project.in(file("commons-core")).dependsOn(`commons-macros`)
+lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
+  .jsConfigure(_.dependsOn(`commons-macros`))
+  .jvmConfigure(_.dependsOn(`commons-macros`))
+  .settings(commonSettings: _*)
+  .settings(
+    libraryDependencies += "com.lihaoyi" %%% "upickle" % upickleVersion
+  )
+  .jsSettings(
+    test := {},
+    fork in Test := false
+  )
+
+lazy val `commons-sharedJVM` = `commons-shared`.jvm
+lazy val `commons-sharedJS` = `commons-shared`.js
+
+lazy val `commons-core` = project.in(file("commons-core")).dependsOn(`commons-macros`, `commons-sharedJVM`)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(

@@ -3,13 +3,9 @@ package jiop
 
 import scala.collection.convert.{DecorateAsJava, DecorateAsScala}
 
-object JavaInterop
+object BasicJavaInterop
   extends JBasicUtils
-    with JFunctionUtils
-    with JOptionalUtils
-    with JStreamUtils
-    with GuavaUtils
-    with Java8CollectionUtils
+    with JCollectionUtils
     // contents of scala.collection.JavaConverters
     with DecorateAsJava
     with DecorateAsScala
