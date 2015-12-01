@@ -128,19 +128,19 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
         sys.error("Not a proxyable member")
     }
 
-    def defaultCase = cq"_ => fail(${rpcTpe.toString}, methodName, args)"
-    def methodMatch(methods: Iterable[ProxyableMember]) =
-      Match(q"(methodName, args)", (methods.iterator.map(m => methodCase(m)) ++ Iterator(defaultCase)).toList)
+    def defaultCase(memberType: MemberType) = cq"_ => fail(${rpcTpe.toString}, ${memberType.toString.toLowerCase}, methodName, args)"
+    def methodMatch(methods: Iterable[ProxyableMember], memberType: MemberType) =
+      Match(q"(methodName, args)", (methods.iterator.map(m => methodCase(m)) ++ Iterator(defaultCase(memberType))).toList)
 
     q"""
       new $AsRawRPCCls[$rpcTpe] {
         def asRaw($implName: $rpcTpe) =
           new $RawRPCCls {
-            def fire(methodName: String, args: $ListCls[$ListCls[$Upickle.Js.Value]]) = ${methodMatch(procedures)}
+            def fire(methodName: String, args: $ListCls[$ListCls[$Upickle.Js.Value]]) = ${methodMatch(procedures, Procedure)}
 
-            def call(methodName: String, args: $ListCls[$ListCls[$Upickle.Js.Value]]) = ${methodMatch(functions)}
+            def call(methodName: String, args: $ListCls[$ListCls[$Upickle.Js.Value]]) = ${methodMatch(functions, Function)}
 
-            def get(methodName: String, args: $ListCls[$ListCls[$Upickle.Js.Value]]) = ${methodMatch(getters)}
+            def get(methodName: String, args: $ListCls[$ListCls[$Upickle.Js.Value]]) = ${methodMatch(getters, Getter)}
           }
       }
      """

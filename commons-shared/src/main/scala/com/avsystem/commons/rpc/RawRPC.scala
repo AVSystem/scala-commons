@@ -10,9 +10,9 @@ import scala.concurrent.Future
   * Created: 27/05/15.
   */
 trait RawRPC {
-  protected def fail(rpcTpe: String, methodName: String, args: List[List[Js.Value]]) = {
-    val argsRepr = args.mkString("[", ", ", "]")
-    throw new Exception(s"Don't know how to invoke method named $methodName with arguments $argsRepr on $rpcTpe")
+  protected def fail(rpcTpe: String, memberType: String, methodName: String, args: List[List[Js.Value]]) = {
+    val argsRepr = args.map(_.mkString("[", ",", "]")).mkString("[", ",", "]")
+    throw new Exception(s"Cannot find $memberType $methodName in $rpcTpe which could be invoked with arguments $argsRepr")
   }
 
   def fire(rpcName: String, argLists: List[List[Js.Value]]): Unit
