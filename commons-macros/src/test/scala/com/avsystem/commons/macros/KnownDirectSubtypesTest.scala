@@ -21,7 +21,7 @@ object KnownDirectSubtypesTest {
 
   testKnownDirectSubtypes[Int, Nothing]
   testKnownDirectSubtypes[Base, (Stuff, OtherStuff.type)]
-//  testKnownDirectSubtypes[Gadt[List[_]], ListSomething[_]]
+  testKnownDirectSubtypes[Gadt[List[T]] forSome {type T}, (Something[List[T]] forSome {type T}, ListSomething[_])]
   testKnownDirectSubtypes[Gadt[Int], Something[Int]]
   testKnownDirectSubtypes[Gadt[String], (Something[String], StringSomething.type)]
   testKnownDirectSubtypes[Gadt[List[Int]], (Something[List[Int]], ListSomething[Int])]

@@ -163,8 +163,10 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
       })
 
       val paramLists = m.paramLists
-      val params = paramLists.map(_.map(ps =>
-        ValDef(Modifiers(Flag.PARAM), ps.name.toTermName, TypeTree(ps.typeSignature), EmptyTree)))
+      val params = paramLists.map(_.map { ps =>
+        val implicitFlag = if (ps.isImplicit) Flag.IMPLICIT else NoFlags
+        ValDef(Modifiers(Flag.PARAM | implicitFlag), ps.name.toTermName, TypeTree(ps.typeSignature), EmptyTree)
+      })
 
       val args = reifyList(paramLists.map(paramList =>
         reifyList(paramList.map(ps => q"$UpickleDefault.writeJs[${ps.typeSignature}](${ps.name.toTermName})"))))

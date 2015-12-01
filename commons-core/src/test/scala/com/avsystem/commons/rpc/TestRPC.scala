@@ -13,7 +13,7 @@ trait TestRPC extends RPC {
 
   def handleMore(): Unit
 
-  def doStuff(lol: Int, fuu: String)(cos: Option[Boolean]): Unit
+  def doStuff(lol: Int, fuu: String)(implicit cos: Option[Boolean]): Unit
 
   def doStuff(yes: Boolean): Future[String]
 
@@ -51,7 +51,7 @@ object TestRPC {
     def handleMore(): Unit =
       onProcedure("handleMore", List(Nil))
 
-    def doStuff(lol: Int, fuu: String)(cos: Option[Boolean]): Unit =
+    def doStuff(lol: Int, fuu: String)(implicit cos: Option[Boolean]): Unit =
       onProcedure("doStuff", List(List(lol, fuu), List(cos)))
 
     def doStuff(yes: Boolean): Future[String] =
