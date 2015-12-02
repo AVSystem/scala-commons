@@ -15,7 +15,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
   import c.universe._
 
   val Upickle = q"_root_.upickle"
-  val UpickleDefault = q"$Upickle.default"
+  val UpickleDefault = Upickle
   val RpcPackage = q"$CommonsPackage.rpc"
   val ListObj = q"_root_.scala.collection.immutable.List"
   val ListCls = tq"_root_.scala.collection.immutable.List"

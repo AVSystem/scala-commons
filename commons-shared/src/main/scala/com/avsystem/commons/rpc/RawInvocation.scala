@@ -1,8 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import upickle.Js
-import upickle.default._
+import upickle._
 
 case class RawInvocation(rpcName: String, argLists: List[List[Js.Value]])
 
