@@ -44,7 +44,7 @@ val upickleVersion = "0.2.8"
 val jettyVersion = "8.1.17.v20150415"
 
 val commonSettings = Seq(
-  name := name.value + "_up0.2",
+  name := name.value + "_up02",
   (publishArtifact in packageDoc) := false,
   libraryDependencies += compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion),
   libraryDependencies ++= Seq(
