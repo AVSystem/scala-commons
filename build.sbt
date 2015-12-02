@@ -56,7 +56,7 @@ val commonSettings = Seq(
 )
 
 lazy val commons = project.in(file("."))
-  .aggregate(`commons-macros`, `commons-sharedJVM`, `commons-sharedJS`, `commons-core`, `commons-analyzer`)
+  .aggregate(`commons-macros`, `commons-sharedJVM`, `commons-sharedJS`, `commons-core`, `commons-analyzer`, `commons-jetty`)
   .settings(
     publishArtifact := false
   )
