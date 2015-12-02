@@ -13,6 +13,17 @@ trait MacroCommons {
   import c.universe._
 
   val CommonsPackage = q"_root_.com.avsystem.commons"
+  val OptionCls = tq"_root_.scala.Option"
+
+  implicit class treeOps[T <: Tree](t: T) {
+    def debug: T = {
+      c.echo(c.enclosingPosition, show(t))
+      t
+    }
+  }
+
+  def getType(typeTree: Tree): Type =
+    c.typecheck(typeTree, c.TYPEmode).tpe
 
   def pathTo(sym: Symbol): Tree =
     if (sym == rootMirror.RootClass) Ident(termNames.ROOTPKG)
@@ -142,6 +153,71 @@ trait MacroCommons {
     TypeDef(mods, ts.name, typeParams.map(typeSymbolToTypeDef), treeForType(signature))
   }
 
+  def alternatives(sym: Symbol): List[Symbol] = sym match {
+    case ts: TermSymbol => ts.alternatives
+    case NoSymbol => Nil
+    case _ => List(sym)
+  }
+
+  case class ApplyUnapply(companion: Symbol, params: List[Symbol])
+
+  def applyUnapplyFor(tpe: Type): ApplyUnapply = {
+    val ts = tpe.typeSymbol.asType
+    val companion = ts.companion
+
+    if (companion == NoSymbol) {
+      c.abort(c.enclosingPosition, s"$ts has no companion object")
+    }
+    val companionTpe = companion.asModule.moduleClass.asType.toType
+
+    val applyUnapplyPairs = for {
+      apply <- alternatives(companionTpe.member(TermName("apply")))
+      unapply <- alternatives(companionTpe.member(TermName("unapply")))
+    } yield (apply, unapply)
+
+    def setTypeArgs(sig: Type) = sig match {
+      case PolyType(params, resultType) => resultType.substituteTypes(params, tpe.typeArgs)
+      case _ => sig
+    }
+
+    def typeParamsMatch(apply: Symbol, unapply: Symbol) = {
+      val expected = tpe.typeArgs.length
+      apply.typeSignature.typeParams.length == expected && unapply.typeSignature.typeParams.length == expected
+    }
+
+    val applicableResults = applyUnapplyPairs.flatMap {
+      case (apply, unapply) if typeParamsMatch(apply, unapply) =>
+        val applySig = setTypeArgs(apply.typeSignature)
+        val unapplySig = setTypeArgs(unapply.typeSignature)
+
+        applySig.paramLists match {
+          case List(params) if applySig.finalResultType =:= tpe =>
+            val expectedUnapplyTpe = params match {
+              case Nil => typeOf[Boolean]
+              case args => getType(tq"$OptionCls[(..${args.map(_.typeSignature)})]")
+            }
+            unapplySig.paramLists match {
+              case List(List(soleArg)) if soleArg.typeSignature =:= tpe &&
+                unapplySig.finalResultType =:= expectedUnapplyTpe =>
+
+                Some(ApplyUnapply(companion, params))
+              case _ => None
+            }
+          case _ => None
+        }
+      case _ => None
+    }
+
+    applicableResults match {
+      case List(result) =>
+        result
+      case Nil => c.abort(c.enclosingPosition,
+        s"No suitable pair of apply/unapply methods found in companion object for $tpe")
+      case _ => c.abort(c.enclosingPosition,
+        s"Multiple suitable pairs of apply/unapply methods found in companion object for $tpe")
+    }
+  }
+
   def typeOfTypeSymbol(sym: TypeSymbol) = sym.toType match {
     case t@TypeRef(pre, s, Nil) if t.takesTypeArgs =>
       internal.typeRef(pre, s, t.typeParams.map(ts => internal.typeRef(NoPrefix, ts, Nil)))
@@ -159,107 +235,131 @@ trait MacroCommons {
         val undetSubTpe = typeOfTypeSymbol(subSym.asType)
         val undetBaseTpe = undetSubTpe.baseType(sym)
 
-        val (existentialParams, underlyingTpe) = tpe match {
-          case ExistentialType(quantified, underlying) => (quantified, underlying)
-          case _ => (Nil, tpe)
-        }
-        determineTypeParams(underlyingTpe, undetBaseTpe, undetparams, existentialParams).map { typeArgs =>
-          internal.existentialAbstraction(undetparams ++ existentialParams,
-            undetSubTpe.substituteTypes(undetparams, typeArgs))
-        }
+        determineTypeParams(tpe, undetBaseTpe, undetparams, Nil)
+          .map(typeArgs => undetSubTpe.substituteTypes(undetparams, typeArgs))
       }
     }
+
+  sealed trait Variance {
+    def *(other: Variance): Variance = (this, other) match {
+      case (Covariant, Covariant) | (Contravariant, Contravariant) => Covariant
+      case (Covariant, Contravariant) | (Contravariant, Covariant) => Contravariant
+      case _ => Invariant
+    }
+  }
+  object Variance {
+    def apply(sym: TypeSymbol): Variance =
+      if (sym.isCovariant) Covariant
+      else if (sym.isContravariant) Contravariant
+      else Invariant
+  }
+  case object Invariant extends Variance
+  case object Covariant extends Variance
+  case object Contravariant extends Variance
 
   /**
     * Matches two types with each other to determine what are the "values" of some `typeParams` that occur
     * in `undetTpe`. [[None]] is returned when the types don't match each other or some of the type parameters
     * cannot be determined.
+    *
+    * This is a "best-effort" implementation - there may be some cases not supported by it.
     */
   def determineTypeParams(detTpe: Type, undetTpe: Type, typeParams: List[Symbol], existentials: List[Symbol]): Option[List[Type]] = {
+
+    def checkConflict(m1: Map[Symbol, Type], m2: Map[Symbol, Type]): Unit =
+      (m1.keySet intersect m2.keySet).foreach { k =>
+        val tpe1 = m1(k)
+        val tpe2 = m2(k)
+        if (!(tpe1 =:= tpe2)) {
+          c.abort(c.enclosingPosition, s"Type param $k could not be determined because it matches both $tpe1 and $tpe2")
+        }
+      }
+
+    def merge(m1: Option[Map[Symbol, Type]], m2: Option[Map[Symbol, Type]]): Option[Map[Symbol, Type]] =
+      for {
+        fromM1 <- m1
+        fromM2 <- m2
+      } yield {
+        checkConflict(fromM1, fromM2)
+        fromM1 ++ fromM2
+      }
 
     def determineListTypeParams(detTpes: List[Type], undetTpes: List[Type], existentials: List[Symbol]): Option[Map[Symbol, Type]] =
       detTpes.zipAll(undetTpes, NoType, NoType).foldLeft(Option(Map.empty[Symbol, Type])) {
         case (_, (NoType, _) | (_, NoType)) => None
-        case (acc, (detArg, undetArg)) =>
-          for {
-            fromAcc <- acc
-            fromArg <- determineTypeParamsIn(detArg, undetArg, existentials)
-          } yield fromAcc ++ fromArg
+        case (acc, (detArg, undetArg)) => merge(acc, determineTypeParamsIn(detArg, undetArg, existentials))
       }
 
     def determineTypeParamsIn(detTpe: Type, undetTpe: Type, existentials: List[Symbol]): Option[Map[Symbol, Type]] = {
-      lazy val existentialDetTpe = internal.existentialAbstraction(existentials, detTpe)
-      lazy val existentialUndetTpe = internal.existentialAbstraction(typeParams, undetTpe)
-
       (detTpe.dealias, undetTpe.dealias) match {
-        case (tpe, TypeRef(NoPrefix, sym, Nil)) if typeParams.contains(sym) =>
+        case (tpe, TypeRef(NoPrefix, sym, Nil)) if typeParams.contains(sym) && !existentials.contains(tpe.typeSymbol) =>
           Some(Map(sym -> tpe))
         case (TypeRef(detPre, detSym, detArgs), TypeRef(undetPre, undetSym, undetArgs)) if detSym == undetSym =>
-          for {
-            fromPre <- determineTypeParamsIn(detPre, undetPre, existentials)
-            fromArgs <- determineListTypeParams(detArgs, undetArgs, existentials)
-          } yield fromArgs ++ fromPre
+          merge(
+            determineTypeParamsIn(detPre, undetPre, existentials),
+            determineListTypeParams(detArgs, undetArgs, existentials)
+          )
         case (SingleType(detPre, detSym), SingleType(undetPre, undetSym)) if detSym == undetSym =>
           determineTypeParamsIn(detPre, undetPre, existentials)
         case (SuperType(detThistpe, detSupertpe), SuperType(undetThistpe, undetSupertpe)) =>
-          for {
-            fromThistpe <- determineTypeParamsIn(detThistpe, undetThistpe, existentials)
-            fromSupertpe <- determineTypeParamsIn(detSupertpe, undetSupertpe, existentials)
-          } yield fromThistpe ++ fromSupertpe
+          merge(
+            determineTypeParamsIn(detThistpe, undetThistpe, existentials),
+            determineTypeParamsIn(detSupertpe, undetSupertpe, existentials)
+          )
         case (TypeBounds(detLo, detHi), TypeBounds(undetLo, undetHi)) =>
-          for {
-            fromLo <- determineTypeParamsIn(detLo, undetLo, existentials)
-            fromHi <- determineTypeParamsIn(detHi, undetHi, existentials)
-          } yield fromLo ++ fromHi
+          merge(
+            determineTypeParamsIn(detLo, undetLo, existentials),
+            determineTypeParamsIn(detHi, undetHi, existentials)
+          )
         case (BoundedWildcardType(detBounds), BoundedWildcardType(undetBounds)) =>
           determineTypeParamsIn(detBounds, undetBounds, existentials)
         case (MethodType(detParams, detResultType), MethodType(undetParams, undetResultType)) =>
-          for {
-            fromParams <- determineListTypeParams(detParams.map(_.typeSignature), undetParams.map(_.typeSignature), existentials)
-            fromResultType <- determineTypeParamsIn(detResultType, undetResultType, existentials)
-          } yield fromParams ++ fromResultType
+          merge(
+            determineListTypeParams(detParams.map(_.typeSignature), undetParams.map(_.typeSignature), existentials),
+            determineTypeParamsIn(detResultType, undetResultType, existentials)
+          )
         case (NullaryMethodType(detResultType), NullaryMethodType(undetResultType)) =>
           determineTypeParamsIn(detResultType, undetResultType, existentials)
         case (PolyType(typeParamsForDet, detResultType), undet@PolyType(typeParamsForUndet, undetResultType)) =>
-          for {
-            fromTypeParams <- determineListTypeParams(typeParamsForDet.map(_.typeSignature),
-              typeParamsForUndet.map(_.typeSignature), existentials)
-            detResultTypeSubst = detResultType.substituteSymbols(typeParamsForDet, typeParamsForUndet)
-            fromResultType <- determineTypeParamsIn(detResultTypeSubst, undetResultType, existentials)
-          } yield fromTypeParams ++ fromResultType
+          merge(
+            determineListTypeParams(typeParamsForDet.map(_.typeSignature),
+              typeParamsForUndet.map(_.typeSignature), existentials),
+            determineTypeParamsIn(detResultType.substituteSymbols(typeParamsForDet, typeParamsForUndet),
+              undetResultType, existentials)
+          )
         case (ExistentialType(quantifiedForDet, detUnderlying), ExistentialType(quantifiedForUndet, undetUnderlying)) =>
-          for {
-            fromQuantified <- determineListTypeParams(quantifiedForDet.map(_.typeSignature),
-              quantifiedForUndet.map(_.typeSignature), existentials)
-            detUnderlyingSubst = detUnderlying.substituteSymbols(quantifiedForDet, quantifiedForUndet)
-            fromUnderlying <- determineTypeParamsIn(detUnderlyingSubst, undetUnderlying, quantifiedForUndet ++ existentials)
-          } yield fromQuantified ++ fromUnderlying
+          merge(
+            determineListTypeParams(quantifiedForDet.map(_.typeSignature),
+              quantifiedForUndet.map(_.typeSignature), existentials),
+            determineTypeParamsIn(detUnderlying.substituteSymbols(quantifiedForDet, quantifiedForUndet),
+              undetUnderlying, quantifiedForUndet ++ existentials)
+          )
         case (RefinedType(detParents, detScope), RefinedType(undetParents, undetScope)) =>
-          for {
-            fromParents <- determineListTypeParams(detParents, undetParents, existentials)
-            fromScope <- {
-              val detMembersByName = detScope.toList.groupBy(_.name)
-              val undetMembersByName = undetScope.toList.groupBy(_.name)
-              val zero = Option(Map.empty[Symbol, Type])
-              (detMembersByName.keySet ++ undetMembersByName.keySet).foldLeft(zero) { (acc, name) =>
-                for {
-                  fromAcc <- acc
-                  detMembers <- detMembersByName.get(name)
-                  undetMembers <- undetMembersByName.get(name)
-                  // for overloaded members - find first permutation where overloads match each other
-                  fromMembers <- undetMembers.permutations.toStream
-                    .flatMap { undetMembersPerm =>
-                      determineListTypeParams(detMembers.map(_.typeSignature), undetMembersPerm.map(_.typeSignature), existentials)
-                    }.headOption
-                } yield fromAcc ++ fromMembers
-              }
+          val fromParents = determineListTypeParams(detParents, undetParents, existentials)
+          val fromScope = {
+            val detMembersByName = detScope.toList.groupBy(_.name)
+            val undetMembersByName = undetScope.toList.groupBy(_.name)
+            val zero = Option(Map.empty[Symbol, Type])
+            (detMembersByName.keySet ++ undetMembersByName.keySet).foldLeft(zero) { (acc, name) =>
+              val fromMembers = for {
+                fromAcc <- acc
+                detMembers <- detMembersByName.get(name)
+                undetMembers <- undetMembersByName.get(name)
+                // for overloaded members - find first permutation where overloads match each other
+                res <- undetMembers.permutations.toStream
+                  .flatMap { undetMembersPerm =>
+                    determineListTypeParams(detMembers.map(_.typeSignature), undetMembersPerm.map(_.typeSignature), existentials)
+                  }.headOption
+              } yield res
+              merge(acc, fromMembers)
             }
-          } yield fromParents ++ fromScope
+          }
+          merge(fromParents, fromScope)
         case (AnnotatedType(_, detUnderlying), AnnotatedType(_, undetUnderlying)) =>
           determineTypeParamsIn(detUnderlying, undetUnderlying, existentials)
         case _ if detTpe =:= undetTpe =>
           Some(Map.empty)
-        case _ if !(existentialUndetTpe <:< existentialDetTpe) =>
+        case _ if !(internal.existentialAbstraction(typeParams, undetTpe) <:< detTpe) =>
           // the types can never match
           None
         case _ =>
@@ -283,28 +383,63 @@ class TestMacros(val c: blackbox.Context) extends MacroCommons {
 
   import c.universe._
 
+  def assertSameTypes(expected: Type, actual: Type): Unit = {
+    if (!(expected =:= actual)) {
+      c.abort(c.enclosingPosition, s"Types don't match, expected $expected")
+    }
+  }
+
   def testTreeForType(tpeRepr: c.Tree): c.Tree = {
     val Literal(Constant(repr)) = tpeRepr
 
     val Typed(_, tpt) = c.parse(s"(??? : $repr)")
-    val tpe = c.typecheck(tpt, mode = c.TYPEmode).tpe
+    val tpe = getType(tpt)
     val newTree = treeForType(tpe)
-    val newTpe = c.typecheck(newTree, mode = c.TYPEmode).tpe
+    val newTpe = getType(newTree)
 
-    if (!(tpe =:= newTpe)) {
-      c.error(c.enclosingPosition, s"Types don't match: $tpe and $newTpe")
-    }
+    assertSameTypes(tpe, newTpe)
     q"???"
   }
 
   def testKnownDirectSubtypes[T: c.WeakTypeTag, R: c.WeakTypeTag]: c.Tree = {
     val expectedResultTpe = knownDirectSubtypes(weakTypeOf[T])
-      .map(types => c.typecheck(tq"(..$types)", c.TYPEmode).tpe)
+      .map(types => getType(tq"(..$types)"))
       .getOrElse(typeOf[Nothing])
 
-    if (!(expectedResultTpe =:= weakTypeOf[R])) {
-      c.abort(c.enclosingPosition, s"Types don't match, expected $expectedResultTpe")
-    }
+    assertSameTypes(expectedResultTpe, weakTypeOf[R])
     q"???"
+  }
+
+  val ApplierUnapplierCls = tq"$CommonsPackage.macros.ApplierUnapplier"
+
+  def applierUnapplier[T: c.WeakTypeTag, F: c.WeakTypeTag]: c.Tree = {
+    val ttpe = weakTypeOf[T]
+    val ftpe = weakTypeOf[F]
+
+    val ApplyUnapply(companion, params) = applyUnapplyFor(ttpe)
+
+    val expectedTpe = params match {
+      case Nil => typeOf[Unit]
+      case List(single) => single.typeSignature
+      case _ => getType(tq"(..${params.map(_.typeSignature)})")
+    }
+    assertSameTypes(expectedTpe, ftpe)
+
+    val applyParams = params match {
+      case List(single) => List(Ident(TermName("f")))
+      case _ => params.indices.map(i => q"f.${TermName(s"_${i + 1}")}")
+    }
+
+    val unapplyResult = params match {
+      case Nil => q"()"
+      case _ => q"$companion.unapply(t).get"
+    }
+
+    q"""
+       new $ApplierUnapplierCls[$ttpe,$ftpe] {
+         def apply(f: $ftpe): $ttpe = $companion.apply(..$applyParams)
+         def unapply(t: $ttpe): $ftpe = $unapplyResult
+       }
+     """
   }
 }
