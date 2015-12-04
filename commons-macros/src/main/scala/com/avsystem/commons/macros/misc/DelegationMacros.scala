@@ -35,7 +35,7 @@ class DelegationMacros(val c: blackbox.Context) extends MacroCommons {
           val name = m.name.toTermName
           val mtpe = m.typeSignatureIn(targetTpe)
           val typeNames = mtpe.typeParams.map(_.name.toTypeName)
-          val typeDefs = mtpe.typeParams.map(typeSymbolToTypeDef)
+          val typeDefs = mtpe.typeParams.map(typeSymbolToTypeDef(_))
           val paramNames = mtpe.paramLists.map(_.map(_.name.toTermName))
           val paramLists = mtpe.paramLists.map(_.map(paramSymbolToValDef))
           val resultTpeTree = treeForType(mtpe.finalResultType)

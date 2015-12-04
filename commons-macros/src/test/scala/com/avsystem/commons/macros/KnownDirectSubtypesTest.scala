@@ -20,9 +20,10 @@ object KnownDirectSubtypesTest {
   sealed trait Gadt[T]
   case class Something[T](t: T) extends Gadt[T]
   case class ListSomething[T](t: T) extends Gadt[List[T]]
+  case class RandomGenericSomething[A](a: A) extends Gadt[Int]
   case object StringSomething extends Gadt[String]
 
-  testKnownDirectSubtypes[Gadt[Int], Something[Int]]
+  testKnownDirectSubtypes[Gadt[Int], (Something[Int], RandomGenericSomething[Nothing])]
   testKnownDirectSubtypes[Gadt[String], (Something[String], StringSomething.type)]
   testKnownDirectSubtypes[Gadt[List[Int]], (Something[List[Int]], ListSomething[Int])]
 
@@ -55,5 +56,5 @@ object KnownDirectSubtypesTest {
 
   testKnownDirectSubtypes[CovGeneric[List[Int]], ListCovGeneric[Int]]
   testKnownDirectSubtypes[CovGeneric[Seq[Int]], ListCovGeneric[Int]]
-//  testKnownDirectSubtypes[CovGeneric[Any], ListCovGeneric[Any]]
+  testKnownDirectSubtypes[CovGeneric[Any], ListCovGeneric[Any]]
 }

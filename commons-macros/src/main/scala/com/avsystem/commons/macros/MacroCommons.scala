@@ -107,7 +107,7 @@ trait MacroCommons {
     val ms = sym.asMethod
     val mods = Modifiers(Flag.DEFERRED, typeNames.EMPTY, Nil)
     val sig = ms.typeSignature
-    val typeParams = sig.typeParams.map(typeSymbolToTypeDef)
+    val typeParams = sig.typeParams.map(typeSymbolToTypeDef(_, forMethod = true))
     val paramss = sig.paramLists.map(_.map(paramSymbolToValDef))
     DefDef(mods, ms.name, typeParams, paramss, treeForType(sig.finalResultType), EmptyTree)
   }
@@ -131,7 +131,7 @@ trait MacroCommons {
     ValDef(mods, name, treeForType(tpe), EmptyTree)
   }
 
-  def typeSymbolToTypeDef(sym: Symbol): TypeDef = {
+  def typeSymbolToTypeDef(sym: Symbol, forMethod: Boolean = false): TypeDef = {
     val ts = sym.asType
 
     val paramOrDeferredFlag =
@@ -140,7 +140,8 @@ trait MacroCommons {
       else NoFlags
     val syntheticFlag = if (ts.isSynthetic) Flag.SYNTHETIC else NoFlags
     val varianceFlag =
-      if (ts.isCovariant) Flag.COVARIANT
+      if (forMethod) NoFlags
+      else if (ts.isCovariant) Flag.COVARIANT
       else if (ts.isContravariant) Flag.CONTRAVARIANT
       else NoFlags
 
@@ -150,7 +151,7 @@ trait MacroCommons {
       case PolyType(polyParams, resultType) => (polyParams, resultType)
       case sig => (ts.typeParams, sig)
     }
-    TypeDef(mods, ts.name, typeParams.map(typeSymbolToTypeDef), treeForType(signature))
+    TypeDef(mods, ts.name, typeParams.map(typeSymbolToTypeDef(_)), treeForType(signature))
   }
 
   def alternatives(sym: Symbol): List[Symbol] = sym match {
@@ -240,124 +241,21 @@ trait MacroCommons {
       }
     }
 
-  sealed trait Variance {
-    def *(other: Variance): Variance = (this, other) match {
-      case (Covariant, Covariant) | (Contravariant, Contravariant) => Covariant
-      case (Covariant, Contravariant) | (Contravariant, Covariant) => Contravariant
-      case _ => Invariant
-    }
-  }
-  object Variance {
-    def apply(sym: Symbol): Variance =
-      if (sym.isType) {
-        val ts = sym.asType
-        if (ts.isCovariant) Covariant
-        else if (ts.isContravariant) Contravariant
-        else Invariant
-      } else Invariant
-  }
-  case object Invariant extends Variance
-  case object Covariant extends Variance
-  case object Contravariant extends Variance
-
-  /**
-    * Matches two types with each other to determine what are the "values" of some `typeParams` that occur
-    * in `undetTpe`. [[None]] is returned when the types don't match each other or some of the type parameters
-    * cannot be determined.
-    *
-    * This implementation only supports simple types, i.e. it only descends into type parameters. Things like
-    * e.g. type refinements are not understood.
-    */
   def determineTypeParams(undetTpe: Type, detTpe: Type, typeParams: List[Symbol]): Option[List[Type]] = {
+    val methodName = c.freshName(TermName("m"))
+    val typeDefs = typeParams.map(typeSymbolToTypeDef(_, forMethod = true))
 
-    def checkConflict(m1: Map[Symbol, Type], m2: Map[Symbol, Type]): Unit =
-      (m1.keySet intersect m2.keySet).foreach { k =>
-        val tpe1 = m1(k)
-        val tpe2 = m2(k)
-        if (!(tpe1 =:= tpe2)) {
-          c.abort(c.enclosingPosition, s"Type param $k could not be determined because it matches both $tpe1 and $tpe2")
-        }
-      }
+    val tree = c.typecheck(
+      q"""
+        def $methodName[..$typeDefs](f: ${treeForType(undetTpe)} => Unit): Unit = ()
+        $methodName((_: ${treeForType(detTpe)}) => ())
+      """, silent = true
+    )
 
-    def merge(m1: Option[Map[Symbol, Type]], m2: Option[Map[Symbol, Type]]): Option[Map[Symbol, Type]] =
-      for {
-        fromM1 <- m1
-        fromM2 <- m2
-      } yield {
-        checkConflict(fromM1, fromM2)
-        fromM1 ++ fromM2
-      }
-
-    def isDetermined(tpe: Type) =
-      !tpe.exists(t => typeParams.contains(t.typeSymbol))
-
-    def withoutAnnotations(tpe: Type): Type = tpe match {
-      case AnnotatedType(_, underlying) => withoutAnnotations(underlying)
-      case _ => tpe
-    }
-
-    def baseType(tpe: Type, otherTpe: Type): Type =
-      if (tpe <:< otherTpe && (tpe <:< typeOf[Nothing] || tpe <:< typeOf[Null])) otherTpe
-      else tpe.baseType(otherTpe.typeSymbol)
-
-    def determineTypeParamsIn(undetTpe: Type, detTpe: Type, variance: Variance): Option[Map[Symbol, Type]] =
-      if (isDetermined(undetTpe)) {
-        val typesMatch = variance match {
-          case Covariant => undetTpe <:< detTpe
-          case Contravariant => detTpe <:< undetTpe
-          case Invariant => undetTpe =:= detTpe
-        }
-        if (typesMatch) Some(Map.empty) else None
-      } else {
-        def canMatch(tr1: TypeRef, tr2: TypeRef) = {
-          val argsLength = tr1.args.length
-          val typeParams1 = tr1.typeConstructor.typeParams
-          val typeParams2 = tr2.typeConstructor.typeParams
-          List(tr2.args, typeParams1, typeParams2).forall(_.length == argsLength)
-        }
-
-        def matchArgs = {
-          val (undetBase, detBase) = variance match {
-            case Covariant => (baseType(undetTpe, detTpe), detTpe)
-            case Contravariant => (undetTpe, baseType(detTpe, undetTpe))
-            case Invariant => (baseType(undetTpe, detTpe), baseType(detTpe, undetTpe))
-          }
-          (withoutAnnotations(undetBase), withoutAnnotations(detBase)) match {
-            case (undetRef@TypeRef(_, _, undetArgs), detRef@TypeRef(_, _, detArgs)) if canMatch(undetRef, detRef) =>
-              val undetTypeParams = undetRef.typeConstructor.typeParams
-              val detTypeParams = detRef.typeConstructor.typeParams
-              val variances = (undetTypeParams.map(Variance(_)) zip detTypeParams.map(Variance(_))).map {
-                case (v1, v2) if v1 == v2 => variance * v1
-                case _ => Invariant
-              }
-              (undetArgs, detArgs, variances).zipped.map {
-                case (undetArg, detArg, newVariance) =>
-                  determineTypeParamsIn(undetArg, detArg, newVariance)
-              }.reduceOption(merge).getOrElse(Some(Map.empty[Symbol, Type]))
-            case (NoType, _) | (_, NoType) =>
-              None
-            case (undet, det) =>
-              c.abort(c.enclosingPosition,
-                s"Could not determine type parameters in $undet when matching it against $det")
-          }
-        }
-
-        withoutAnnotations(undetTpe) match {
-          case TypeRef(NoPrefix, sym, Nil) if typeParams.contains(sym) =>
-            Some(Map(sym -> detTpe))
-          case _ => matchArgs
-        }
-      }
-
-    val result = determineTypeParamsIn(undetTpe, detTpe, Covariant)
-    result.map { mapping =>
-      val stillUndetermined = (typeParams.toSet -- mapping.keySet).map(_.name)
-      if (stillUndetermined.nonEmpty) {
-        c.abort(c.enclosingPosition,
-          s"Could not determine type parameters ${stillUndetermined.mkString(", ")} in $undetTpe when matching against $detTpe"
-        )
-      }
-      typeParams.map(mapping)
+    tree match {
+      case Block(_, Apply(TypeApply(_, args), _)) => Some(args.map(_.tpe))
+      case Block(_, Apply(_, _)) => Some(Nil)
+      case EmptyTree => None
     }
   }
 }
