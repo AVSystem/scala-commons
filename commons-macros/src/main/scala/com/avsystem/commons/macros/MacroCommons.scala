@@ -235,7 +235,7 @@ trait MacroCommons {
         val undetSubTpe = typeOfTypeSymbol(subSym.asType)
         val undetBaseTpe = undetSubTpe.baseType(sym)
 
-        determineTypeParams(tpe, undetBaseTpe, undetparams, Nil)
+        determineTypeParams(undetBaseTpe, tpe, undetparams)
           .map(typeArgs => undetSubTpe.substituteTypes(undetparams, typeArgs))
       }
     }
@@ -248,10 +248,13 @@ trait MacroCommons {
     }
   }
   object Variance {
-    def apply(sym: TypeSymbol): Variance =
-      if (sym.isCovariant) Covariant
-      else if (sym.isContravariant) Contravariant
-      else Invariant
+    def apply(sym: Symbol): Variance =
+      if (sym.isType) {
+        val ts = sym.asType
+        if (ts.isCovariant) Covariant
+        else if (ts.isContravariant) Contravariant
+        else Invariant
+      } else Invariant
   }
   case object Invariant extends Variance
   case object Covariant extends Variance
@@ -262,9 +265,10 @@ trait MacroCommons {
     * in `undetTpe`. [[None]] is returned when the types don't match each other or some of the type parameters
     * cannot be determined.
     *
-    * This is a "best-effort" implementation - there may be some cases not supported by it.
+    * This implementation only supports simple types, i.e. it only descends into type parameters. Things like
+    * e.g. type refinements are not understood.
     */
-  def determineTypeParams(detTpe: Type, undetTpe: Type, typeParams: List[Symbol], existentials: List[Symbol]): Option[List[Type]] = {
+  def determineTypeParams(undetTpe: Type, detTpe: Type, typeParams: List[Symbol]): Option[List[Type]] = {
 
     def checkConflict(m1: Map[Symbol, Type], m2: Map[Symbol, Type]): Unit =
       (m1.keySet intersect m2.keySet).foreach { k =>
@@ -284,97 +288,76 @@ trait MacroCommons {
         fromM1 ++ fromM2
       }
 
-    def determineListTypeParams(detTpes: List[Type], undetTpes: List[Type], existentials: List[Symbol]): Option[Map[Symbol, Type]] =
-      detTpes.zipAll(undetTpes, NoType, NoType).foldLeft(Option(Map.empty[Symbol, Type])) {
-        case (_, (NoType, _) | (_, NoType)) => None
-        case (acc, (detArg, undetArg)) => merge(acc, determineTypeParamsIn(detArg, undetArg, existentials))
-      }
+    def isDetermined(tpe: Type) =
+      !tpe.exists(t => typeParams.contains(t.typeSymbol))
 
-    def determineTypeParamsIn(detTpe: Type, undetTpe: Type, existentials: List[Symbol]): Option[Map[Symbol, Type]] = {
-      (detTpe.dealias, undetTpe.dealias) match {
-        case (tpe, TypeRef(NoPrefix, sym, Nil)) if typeParams.contains(sym) && !existentials.contains(tpe.typeSymbol) =>
-          Some(Map(sym -> tpe))
-        case (TypeRef(detPre, detSym, detArgs), TypeRef(undetPre, undetSym, undetArgs)) if detSym == undetSym =>
-          merge(
-            determineTypeParamsIn(detPre, undetPre, existentials),
-            determineListTypeParams(detArgs, undetArgs, existentials)
-          )
-        case (SingleType(detPre, detSym), SingleType(undetPre, undetSym)) if detSym == undetSym =>
-          determineTypeParamsIn(detPre, undetPre, existentials)
-        case (SuperType(detThistpe, detSupertpe), SuperType(undetThistpe, undetSupertpe)) =>
-          merge(
-            determineTypeParamsIn(detThistpe, undetThistpe, existentials),
-            determineTypeParamsIn(detSupertpe, undetSupertpe, existentials)
-          )
-        case (TypeBounds(detLo, detHi), TypeBounds(undetLo, undetHi)) =>
-          merge(
-            determineTypeParamsIn(detLo, undetLo, existentials),
-            determineTypeParamsIn(detHi, undetHi, existentials)
-          )
-        case (BoundedWildcardType(detBounds), BoundedWildcardType(undetBounds)) =>
-          determineTypeParamsIn(detBounds, undetBounds, existentials)
-        case (MethodType(detParams, detResultType), MethodType(undetParams, undetResultType)) =>
-          merge(
-            determineListTypeParams(detParams.map(_.typeSignature), undetParams.map(_.typeSignature), existentials),
-            determineTypeParamsIn(detResultType, undetResultType, existentials)
-          )
-        case (NullaryMethodType(detResultType), NullaryMethodType(undetResultType)) =>
-          determineTypeParamsIn(detResultType, undetResultType, existentials)
-        case (PolyType(typeParamsForDet, detResultType), undet@PolyType(typeParamsForUndet, undetResultType)) =>
-          merge(
-            determineListTypeParams(typeParamsForDet.map(_.typeSignature),
-              typeParamsForUndet.map(_.typeSignature), existentials),
-            determineTypeParamsIn(detResultType.substituteSymbols(typeParamsForDet, typeParamsForUndet),
-              undetResultType, existentials)
-          )
-        case (ExistentialType(quantifiedForDet, detUnderlying), ExistentialType(quantifiedForUndet, undetUnderlying)) =>
-          merge(
-            determineListTypeParams(quantifiedForDet.map(_.typeSignature),
-              quantifiedForUndet.map(_.typeSignature), existentials),
-            determineTypeParamsIn(detUnderlying.substituteSymbols(quantifiedForDet, quantifiedForUndet),
-              undetUnderlying, quantifiedForUndet ++ existentials)
-          )
-        case (RefinedType(detParents, detScope), RefinedType(undetParents, undetScope)) =>
-          val fromParents = determineListTypeParams(detParents, undetParents, existentials)
-          val fromScope = {
-            val detMembersByName = detScope.toList.groupBy(_.name)
-            val undetMembersByName = undetScope.toList.groupBy(_.name)
-            val zero = Option(Map.empty[Symbol, Type])
-            (detMembersByName.keySet ++ undetMembersByName.keySet).foldLeft(zero) { (acc, name) =>
-              val fromMembers = for {
-                fromAcc <- acc
-                detMembers <- detMembersByName.get(name)
-                undetMembers <- undetMembersByName.get(name)
-                // for overloaded members - find first permutation where overloads match each other
-                res <- undetMembers.permutations.toStream
-                  .flatMap { undetMembersPerm =>
-                    determineListTypeParams(detMembers.map(_.typeSignature), undetMembersPerm.map(_.typeSignature), existentials)
-                  }.headOption
-              } yield res
-              merge(acc, fromMembers)
-            }
-          }
-          merge(fromParents, fromScope)
-        case (AnnotatedType(_, detUnderlying), AnnotatedType(_, undetUnderlying)) =>
-          determineTypeParamsIn(detUnderlying, undetUnderlying, existentials)
-        case _ if detTpe =:= undetTpe =>
-          Some(Map.empty)
-        case _ if !(internal.existentialAbstraction(typeParams, undetTpe) <:< detTpe) =>
-          // the types can never match
-          None
-        case _ =>
-          // the types can match, but we are unable to determine type params
-          c.abort(c.enclosingPosition, s"Could not determine type params in $undetTpe assuming it matches $detTpe")
-      }
+    def withoutAnnotations(tpe: Type): Type = tpe match {
+      case AnnotatedType(_, underlying) => withoutAnnotations(underlying)
+      case _ => tpe
     }
 
-    determineTypeParamsIn(detTpe, undetTpe, existentials).flatMap { mapping =>
-      typeParams.foldRight(Option(List.empty[Type])) { (sym, accOpt) =>
-        for {
-          tpe <- mapping.get(sym)
-          acc <- accOpt
-        } yield tpe :: acc
+    def baseType(tpe: Type, otherTpe: Type): Type =
+      if (tpe <:< otherTpe && (tpe <:< typeOf[Nothing] || tpe <:< typeOf[Null])) otherTpe
+      else tpe.baseType(otherTpe.typeSymbol)
+
+    def determineTypeParamsIn(undetTpe: Type, detTpe: Type, variance: Variance): Option[Map[Symbol, Type]] =
+      if (isDetermined(undetTpe)) {
+        val typesMatch = variance match {
+          case Covariant => undetTpe <:< detTpe
+          case Contravariant => detTpe <:< undetTpe
+          case Invariant => undetTpe =:= detTpe
+        }
+        if (typesMatch) Some(Map.empty) else None
+      } else {
+        def canMatch(tr1: TypeRef, tr2: TypeRef) = {
+          val argsLength = tr1.args.length
+          val typeParams1 = tr1.typeConstructor.typeParams
+          val typeParams2 = tr2.typeConstructor.typeParams
+          List(tr2.args, typeParams1, typeParams2).forall(_.length == argsLength)
+        }
+
+        def matchArgs = {
+          val (undetBase, detBase) = variance match {
+            case Covariant => (baseType(undetTpe, detTpe), detTpe)
+            case Contravariant => (undetTpe, baseType(detTpe, undetTpe))
+            case Invariant => (baseType(undetTpe, detTpe), baseType(detTpe, undetTpe))
+          }
+          (withoutAnnotations(undetBase), withoutAnnotations(detBase)) match {
+            case (undetRef@TypeRef(_, _, undetArgs), detRef@TypeRef(_, _, detArgs)) if canMatch(undetRef, detRef) =>
+              val undetTypeParams = undetRef.typeConstructor.typeParams
+              val detTypeParams = detRef.typeConstructor.typeParams
+              val variances = (undetTypeParams.map(Variance(_)) zip detTypeParams.map(Variance(_))).map {
+                case (v1, v2) if v1 == v2 => variance * v1
+                case _ => Invariant
+              }
+              (undetArgs, detArgs, variances).zipped.map {
+                case (undetArg, detArg, newVariance) =>
+                  determineTypeParamsIn(undetArg, detArg, newVariance)
+              }.reduceOption(merge).getOrElse(Some(Map.empty[Symbol, Type]))
+            case (NoType, _) | (_, NoType) =>
+              None
+            case (undet, det) =>
+              c.abort(c.enclosingPosition,
+                s"Could not determine type parameters in $undet when matching it against $det")
+          }
+        }
+
+        withoutAnnotations(undetTpe) match {
+          case TypeRef(NoPrefix, sym, Nil) if typeParams.contains(sym) =>
+            Some(Map(sym -> detTpe))
+          case _ => matchArgs
+        }
       }
+
+    val result = determineTypeParamsIn(undetTpe, detTpe, Covariant)
+    result.map { mapping =>
+      val stillUndetermined = (typeParams.toSet -- mapping.keySet).map(_.name)
+      if (stillUndetermined.nonEmpty) {
+        c.abort(c.enclosingPosition,
+          s"Could not determine type parameters ${stillUndetermined.mkString(", ")} in $undetTpe when matching against $detTpe"
+        )
+      }
+      typeParams.map(mapping)
     }
   }
 }
