@@ -101,7 +101,7 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
     }
 
     "rpc should work with parameterized interface types" in {
-      trait BaseRPC[T] extends RPC {
+      @RPC trait BaseRPC[T] {
         def accept(t: T): Unit
       }
 
@@ -112,7 +112,7 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
     }
 
     "rpc should work with empty interface types" in {
-      trait EmptyRPC extends RPC
+      @RPC trait EmptyRPC
 
       AsRawRPC[EmptyRPC]: @silent
       AsRealRPC[EmptyRPC]: @silent

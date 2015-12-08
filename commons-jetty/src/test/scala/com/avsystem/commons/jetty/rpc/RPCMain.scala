@@ -11,13 +11,13 @@ import scala.concurrent.Future
   * @author MKej
   */
 object RPCMain {
-  trait SomeApi extends RPC {
+  @RPC trait SomeApi {
     def keks: Future[Int]
     def isTop(keks: Int): Future[Boolean]
     def topper: Topper
   }
 
-  trait Topper extends RPC {
+  @RPC trait Topper {
     def initialize: Future[Unit]
     def topKeks: Future[Int]
   }

@@ -26,8 +26,17 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
   val AsRawRPCCls = tq"$RpcPackage.AsRawRPC"
   val AsRealRPCObj = q"$RpcPackage.AsRealRPC"
   val AsRealRPCCls = tq"$RpcPackage.AsRealRPC"
-  val RPCNameAnnotType = c.mirror.staticClass("com.avsystem.commons.rpc.RPCName").toType
-  val RPCType = c.mirror.staticClass("com.avsystem.commons.rpc.RPC").toType
+  val RPCNameAnnotType = getType(tq"$RpcPackage.RPCName")
+  val RPCType = getType(tq"$RpcPackage.RPC")
+
+  def allAnnotations(tpe: Type) = {
+    val ts = tpe.typeSymbol
+    if (ts.isClass) ts.asClass.baseClasses.flatMap(_.annotations)
+    else Nil
+  }
+
+  def hasRpcAnnot(tpe: Type) =
+    allAnnotations(tpe).exists(_.tree.tpe <:< RPCType)
 
   sealed trait MemberType
 
@@ -47,7 +56,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
     val memberType =
       if (returnType =:= typeOf[Unit]) Procedure
       else if (returnType.typeSymbol == FutureSym) Function
-      else if (returnType <:< RPCType) Getter
+      else if (hasRpcAnnot(returnType)) Getter
       else Invalid
 
     val rpcName = (method :: method.overrides).flatMap(_.annotations).find(_.tree.tpe <:< RPCNameAnnotType).map { annot =>
@@ -62,8 +71,8 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
     def invalidProxyableMsg(pm: ProxyableMember): String =
       s"All abstract members in RPC interface must be non-generic methods that return Unit, Future or another RPC interface, ${pm.method} in $tpe does not."
 
-    if (!tpe.typeSymbol.isClass || tpe <:< typeOf[AnyVal] || tpe <:< typeOf[Null]) {
-      c.abort(c.enclosingPosition, s"RPC type must be a class or trait with abstract members, $tpe is not.")
+    if (!hasRpcAnnot(tpe) || !tpe.typeSymbol.isClass || tpe <:< typeOf[AnyVal] || tpe <:< typeOf[Null]) {
+      c.abort(c.enclosingPosition, s"RPC type must be a trait or abstract class annotated as @RPC, $tpe is not.")
     }
 
     val proxyables = tpe.members.filter(m => m.isTerm && m.isAbstract).map { m =>

@@ -7,7 +7,7 @@ import scala.concurrent.Future
 
 case class Record(i: Int, fuu: String)
 
-trait TestRPC extends RPC {
+@RPC trait TestRPC {
   @silent
   def handle: Unit
 
@@ -27,7 +27,7 @@ trait TestRPC extends RPC {
   def innerRpc(name: String): InnerRPC
 }
 
-trait InnerRPC extends RPC {
+@RPC trait InnerRPC {
   def proc(): Unit
 
   def func(arg: Int): Future[String]
@@ -43,7 +43,7 @@ object TestRPC {
       Future.successful(result)
     }
 
-    private def onGet[T <: RPC](methodName: String, args: List[List[Any]], result: T): T = {
+    private def onGet[T](methodName: String, args: List[List[Any]], result: T): T = {
       onInvocation(methodName, args, None)
       result
     }

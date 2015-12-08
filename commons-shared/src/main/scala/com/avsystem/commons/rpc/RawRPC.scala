@@ -27,7 +27,7 @@ trait RawRPC {
     }
 }
 
-trait AsRawRPC[T <: RPC] {
+trait AsRawRPC[T] {
   def asRaw(rpcImpl: T): RawRPC
 }
 
@@ -39,12 +39,12 @@ object AsRawRPC {
     *
     * Only calls to non-generic, abstract methods returning `Unit` or `Future` are supported.
     */
-  implicit def materialize[T <: RPC]: AsRawRPC[T] = macro com.avsystem.commons.macros.rpc.RPCMacros.asRawImpl[T]
+  implicit def materialize[T]: AsRawRPC[T] = macro com.avsystem.commons.macros.rpc.RPCMacros.asRawImpl[T]
 
-  def apply[T <: RPC](implicit asRawRPC: AsRawRPC[T]): AsRawRPC[T] = asRawRPC
+  def apply[T](implicit asRawRPC: AsRawRPC[T]): AsRawRPC[T] = asRawRPC
 }
 
-trait AsRealRPC[T <: RPC] {
+trait AsRealRPC[T] {
   def asReal(rawRpc: RawRPC): T
 }
 
@@ -56,8 +56,8 @@ object AsRealRPC {
     *
     * All abstract methods of `T` must be non-generic and return `Unit` or `Future`.
     */
-  implicit def materialize[T <: RPC]: AsRealRPC[T] = macro com.avsystem.commons.macros.rpc.RPCMacros.asRealImpl[T]
+  implicit def materialize[T]: AsRealRPC[T] = macro com.avsystem.commons.macros.rpc.RPCMacros.asRealImpl[T]
 
-  def apply[T <: RPC](implicit asRealRPC: AsRealRPC[T]): AsRealRPC[T] = asRealRPC
+  def apply[T](implicit asRealRPC: AsRealRPC[T]): AsRealRPC[T] = asRealRPC
 }
 

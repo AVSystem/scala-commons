@@ -2,7 +2,7 @@ import sbt._
 
 name := "commons"
 
-version in ThisBuild := "1.7.4"
+version in ThisBuild := "1.8.0"
 scalaVersion in ThisBuild := "2.11.7"
 organization in ThisBuild := "com.avsystem.commons"
 crossPaths in ThisBuild := false
@@ -55,12 +55,16 @@ val commonSettings = Seq(
 )
 
 lazy val commons = project.in(file("."))
-  .aggregate(`commons-macros`, `commons-sharedJVM`, `commons-sharedJS`, `commons-core`, `commons-analyzer`, `commons-jetty`)
+  .aggregate(`commons-annotations`, `commons-macros`, `commons-sharedJVM`, `commons-sharedJS`, `commons-core`, `commons-analyzer`, `commons-jetty`)
   .settings(
     publishArtifact := false
   )
 
-lazy val `commons-macros` = project.in(file("commons-macros"))
+lazy val `commons-annotations` = project
+  .settings(commonSettings: _*)
+
+lazy val `commons-macros` = project
+  .dependsOn(`commons-annotations`)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
@@ -81,7 +85,7 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
 lazy val `commons-sharedJVM` = `commons-shared`.jvm
 lazy val `commons-sharedJS` = `commons-shared`.js
 
-lazy val `commons-core` = project.in(file("commons-core")).dependsOn(`commons-macros`, `commons-sharedJVM`)
+lazy val `commons-core` = project.dependsOn(`commons-macros`, `commons-sharedJVM`)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
@@ -90,14 +94,14 @@ lazy val `commons-core` = project.in(file("commons-core")).dependsOn(`commons-ma
     )
   )
 
-lazy val `commons-analyzer` = project.in(file("commons-analyzer"))
+lazy val `commons-analyzer` = project
   .dependsOn(`commons-core` % Test)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
   )
 
-lazy val `commons-jetty` = project.in(file("commons-jetty"))
+lazy val `commons-jetty` = project
   .dependsOn(`commons-sharedJVM`)
   .settings(commonSettings: _*)
   .settings(
