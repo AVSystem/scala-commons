@@ -58,16 +58,13 @@ trait TypeClassDerivation extends MacroCommons {
         } else super.transform(tree)
       }
     }
-    val res = Some(transformer.transform(result)).filter(_ => transformer.changed).map { guardedResult =>
+    Some(transformer.transform(result)).filter(_ => transformer.changed).map { guardedResult =>
       q"""
          $deferredVal
          ${deferredIdent.duplicate}.underlying = $guardedResult
          ${deferredIdent.duplicate}.underlying
          """
     }.getOrElse(result)
-
-    c.echo(c.enclosingPosition, show(res))
-    res
   }
 
   def autoDerive[T: c.WeakTypeTag]: Tree =

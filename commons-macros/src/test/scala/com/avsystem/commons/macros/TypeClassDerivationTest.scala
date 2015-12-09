@@ -26,7 +26,9 @@ object TypeClassDerivationTest {
   case class ApplyUnapplyTC[T](tpe: String, subs: List[(String, TC[_])]) extends TC[T]
   case class SealedHierarchyTC[T](tpe: String, subs: List[(String, TC[_])]) extends TC[T]
   case class UnknownTC[T](tpe: String) extends TC[T]
-  case class ForList[T](tpe: String, elementTc: TC[T]) extends TC[List[T]]
+  case class ForList[T](elementTc: TC[T]) extends TC[List[T]] {
+    def tpe: String = s"List[${elementTc.tpe}]"
+  }
 
   object TC {
     final class Deferred[T] extends DeferredInstance[TC[T]] with TC[T] {
@@ -46,7 +48,7 @@ object TypeClassDerivationTest {
     }
     implicit val forInt: TC[Int] = UnknownTC(typeRepr[Int])
     implicit val forString: TC[String] = UnknownTC(typeRepr[String])
-    implicit def forList[T](implicit tct: TC[T]): TC[List[T]] = ForList(typeRepr[List[T]], tct)
+    implicit def forList[T](implicit tct: TC[T]): TC[List[T]] = ForList(tct)
   }
 }
 
@@ -115,7 +117,7 @@ class TypeClassDerivationTest extends FunSuite {
 
   test("indirectly recursive case class test") {
     assert(IndiRec.tc == ApplyUnapplyTC(typeRepr[IndiRec], List(
-      ("children", ForList(typeRepr[List[IndiRec]], TC.Deferred(IndiRec.tc)))
+      ("children", ForList(TC.Deferred(IndiRec.tc)))
     )))
   }
 
