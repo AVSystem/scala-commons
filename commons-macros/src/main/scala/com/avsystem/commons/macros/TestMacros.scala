@@ -7,9 +7,37 @@ import scala.reflect.macros.blackbox
   * Author: ghik
   * Created: 02/12/15.
   */
-class TestMacros(val c: blackbox.Context) extends MacroCommons {
+class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   import c.universe._
+
+  val TestObj = q"$CommonsPackage.macros.TypeClassDerivationTest"
+  val SingletonTCObj = q"$TestObj.SingletonTC"
+  val ApplyUnapplyTCObj = q"$TestObj.ApplyUnapplyTC"
+  val SealedHierarchyTCObj = q"$TestObj.SealedHierarchyTC"
+  val UnknownTCObj = q"$TestObj.UnknownTC"
+
+  def typeClass(tpe: Type) = getType(tq"$TestObj.TC[$tpe]")
+  def implementDeferredInstance(tpe: Type): Tree = q"new $TestObj.TC.Deferred[$tpe]"
+
+  private def reifyRuntimeType(tpe: Type) =
+    q"${c.reifyType(internal.gen.mkRuntimeUniverseRef, EmptyTree, tpe)}.tpe"
+
+  def forSingleton(tpe: Type, singleValueTree: Tree): Tree =
+    q"$SingletonTCObj[$tpe](${tpe.toString}, $singleValueTree)"
+
+  def forApplyUnapply(tpe: Type, companion: Symbol, paramsWithInstances: List[(Symbol, Tree)]): Tree = {
+    val deps = paramsWithInstances.map({ case (s, t) => q"(${s.name.toString}, $t)" })
+    q"$ApplyUnapplyTCObj[$tpe](${tpe.toString}, List(..$deps))"
+  }
+
+  def forSealedHierarchy(tpe: Type, subtypesWithInstances: List[(Type, Tree)]): Tree = {
+    val deps = subtypesWithInstances.map({ case (st, tree) => q"(${st.typeSymbol.name.toString}, $tree)" })
+    q"$SealedHierarchyTCObj[$tpe](${tpe.toString}, List(..$deps))"
+  }
+
+  def forUnknown(tpe: Type): Tree =
+    q"$UnknownTCObj[$tpe](${tpe.toString})"
 
   def assertSameTypes(expected: Type, actual: Type): Unit = {
     if (!(expected =:= actual)) {
@@ -29,8 +57,8 @@ class TestMacros(val c: blackbox.Context) extends MacroCommons {
     q"???"
   }
 
-  def testKnownDirectSubtypes[T: c.WeakTypeTag, R: c.WeakTypeTag]: c.Tree = {
-    val expectedResultTpe = knownDirectSubtypes(weakTypeOf[T])
+  def testKnownSubtypes[T: c.WeakTypeTag, R: c.WeakTypeTag]: c.Tree = {
+    val expectedResultTpe = knownSubtypes(weakTypeOf[T])
       .map(types => getType(tq"(..$types)"))
       .getOrElse(typeOf[Nothing])
 
@@ -45,6 +73,7 @@ class TestMacros(val c: blackbox.Context) extends MacroCommons {
     val ftpe = weakTypeOf[F]
 
     val ApplyUnapply(companion, params) = applyUnapplyFor(ttpe)
+      .getOrElse(c.abort(c.enclosingPosition, s"Could not find unambiguous, matching pair of apply/unapply methods for $ttpe"))
 
     val expectedTpe = params match {
       case Nil => typeOf[Unit]

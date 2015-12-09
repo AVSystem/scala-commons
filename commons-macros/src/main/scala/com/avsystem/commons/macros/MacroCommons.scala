@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package macros
 
-import scala.reflect.macros.blackbox
+import scala.collection.mutable
+import scala.reflect.macros.{TypecheckException, blackbox}
 
 /**
   * Author: ghik
@@ -15,12 +16,58 @@ trait MacroCommons {
   val CommonsPackage = q"_root_.com.avsystem.commons"
   val OptionCls = tq"_root_.scala.Option"
 
+  lazy val ownerChain = {
+    val sym = c.typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
+    Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).drop(1).toList
+  }
+
   implicit class treeOps[T <: Tree](t: T) {
     def debug: T = {
       c.echo(c.enclosingPosition, show(t))
       t
     }
   }
+
+  case class TypeKey(tpe: Type) {
+    override def equals(obj: Any) = obj match {
+      case TypeKey(otherTpe) => tpe =:= otherTpe
+      case _ => false
+    }
+    override lazy val hashCode = {
+      val dealiased = tpe.map(_.dealias)
+      val innerSymbols = new mutable.HashSet[Symbol]
+      def collectInnerSymbols(tpe: Type): Unit = tpe match {
+        case PolyType(ts, _) =>
+          innerSymbols ++= ts
+        case ExistentialType(ts, _) =>
+          innerSymbols ++= ts
+        case rt@RefinedType(_, scope) =>
+          innerSymbols += rt.typeSymbol
+          innerSymbols ++= scope
+          innerSymbols ++= scope.flatMap(_.typeSignature.typeParams)
+          innerSymbols ++= scope.flatMap(_.typeSignature.paramLists.flatten)
+        case _ =>
+      }
+      dealiased.foreach(collectInnerSymbols)
+      val hashCodeSymbols = new mutable.ListBuffer[Symbol]
+      dealiased.foreach {
+        case ThisType(sym) if !innerSymbols(sym) =>
+          hashCodeSymbols += sym
+        case SingleType(_, sym) if !innerSymbols(sym) =>
+          hashCodeSymbols += sym
+        case TypeRef(_, sym, _) if !innerSymbols(sym) =>
+          hashCodeSymbols += sym
+        case _ =>
+      }
+      hashCodeSymbols.result().hashCode
+    }
+  }
+
+  def implicitValue(tpe: Type): Tree =
+    try c.typecheck(q"implicitly[$tpe]") catch {
+      case te: TypecheckException =>
+        c.abort(c.enclosingPosition, te.msg)
+    }
 
   def getType(typeTree: Tree): Type =
     c.typecheck(typeTree, c.TYPEmode).tpe
@@ -70,10 +117,10 @@ trait MacroCommons {
     case TypeRef(NoPrefix, sym, Nil) =>
       Ident(sym.name)
     case TypeRef(pre, sym, Nil) =>
-      select(treeForType(pre), sym.name)
+      select(treeForType(pre), if (sym.isModuleClass) sym.name.toTermName else sym.name)
     case TypeRef(pre, sym, args) =>
       AppliedTypeTree(treeForType(internal.typeRef(pre, sym, Nil)), args.map(treeForType))
-    case ThisType(sym) if sym.isPackage =>
+    case ThisType(sym) if sym.isStatic && sym.isModuleClass =>
       pathTo(sym)
     case ThisType(sym) =>
       SingletonTypeTree(This(sym.name.toTypeName))
@@ -162,61 +209,73 @@ trait MacroCommons {
 
   case class ApplyUnapply(companion: Symbol, params: List[Symbol])
 
-  def applyUnapplyFor(tpe: Type): ApplyUnapply = {
+  def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] = {
     val ts = tpe.typeSymbol.asType
     val companion = ts.companion
 
-    if (companion == NoSymbol) {
-      c.abort(c.enclosingPosition, s"$ts has no companion object")
-    }
-    val companionTpe = companion.asModule.moduleClass.asType.toType
+    if (companion != NoSymbol) {
+      val companionTpe = companion.asModule.moduleClass.asType.toType
 
-    val applyUnapplyPairs = for {
-      apply <- alternatives(companionTpe.member(TermName("apply")))
-      unapply <- alternatives(companionTpe.member(TermName("unapply")))
-    } yield (apply, unapply)
+      val applyUnapplyPairs = for {
+        apply <- alternatives(companionTpe.member(TermName("apply")))
+        unapply <- alternatives(companionTpe.member(TermName("unapply")))
+      } yield (apply, unapply)
 
-    def setTypeArgs(sig: Type) = sig match {
-      case PolyType(params, resultType) => resultType.substituteTypes(params, tpe.typeArgs)
-      case _ => sig
-    }
+      def setTypeArgs(sig: Type) = sig match {
+        case PolyType(params, resultType) => resultType.substituteTypes(params, tpe.typeArgs)
+        case _ => sig
+      }
 
-    def typeParamsMatch(apply: Symbol, unapply: Symbol) = {
-      val expected = tpe.typeArgs.length
-      apply.typeSignature.typeParams.length == expected && unapply.typeSignature.typeParams.length == expected
-    }
+      def typeParamsMatch(apply: Symbol, unapply: Symbol) = {
+        val expected = tpe.typeArgs.length
+        apply.typeSignature.typeParams.length == expected && unapply.typeSignature.typeParams.length == expected
+      }
 
-    val applicableResults = applyUnapplyPairs.flatMap {
-      case (apply, unapply) if typeParamsMatch(apply, unapply) =>
-        val applySig = setTypeArgs(apply.typeSignature)
-        val unapplySig = setTypeArgs(unapply.typeSignature)
+      val applicableResults = applyUnapplyPairs.flatMap {
+        case (apply, unapply) if typeParamsMatch(apply, unapply) =>
+          val applySig = setTypeArgs(apply.typeSignature)
+          val unapplySig = setTypeArgs(unapply.typeSignature)
 
-        applySig.paramLists match {
-          case List(params) if applySig.finalResultType =:= tpe =>
-            val expectedUnapplyTpe = params match {
-              case Nil => typeOf[Boolean]
-              case args => getType(tq"$OptionCls[(..${args.map(_.typeSignature)})]")
-            }
-            unapplySig.paramLists match {
-              case List(List(soleArg)) if soleArg.typeSignature =:= tpe &&
-                unapplySig.finalResultType =:= expectedUnapplyTpe =>
+          applySig.paramLists match {
+            case List(params) if applySig.finalResultType =:= tpe =>
+              val expectedUnapplyTpe = params match {
+                case Nil => typeOf[Boolean]
+                case args => getType(tq"$OptionCls[(..${args.map(_.typeSignature)})]")
+              }
+              unapplySig.paramLists match {
+                case List(List(soleArg)) if soleArg.typeSignature =:= tpe &&
+                  unapplySig.finalResultType =:= expectedUnapplyTpe =>
 
-                Some(ApplyUnapply(companion, params))
-              case _ => None
-            }
-          case _ => None
-        }
-      case _ => None
-    }
+                  Some(ApplyUnapply(companion, params))
+                case _ => None
+              }
+            case _ => None
+          }
+        case _ => None
+      }
 
-    applicableResults match {
-      case List(result) =>
-        result
-      case Nil => c.abort(c.enclosingPosition,
-        s"No suitable pair of apply/unapply methods found in companion object for $tpe")
-      case _ => c.abort(c.enclosingPosition,
-        s"Multiple suitable pairs of apply/unapply methods found in companion object for $tpe")
-    }
+      applicableResults match {
+        case List(result) =>
+          Some(result)
+        case _ =>
+          None
+      }
+    } else None
+  }
+
+  def singleValueFor(tpe: Type): Option[Tree] = tpe match {
+    case ThisType(sym) if sym.isStatic && sym.isModuleClass =>
+      Some(Ident(tpe.termSymbol))
+    case ThisType(sym) =>
+      Some(This(sym))
+    case SingleType(pre, sym) =>
+      singleValueFor(pre).map(prefix => Select(prefix, sym))
+    case ConstantType(value) =>
+      Some(Literal(value))
+    case TypeRef(pre, sym, Nil) if sym.isModuleClass =>
+      singleValueFor(pre).map(prefix => Select(prefix, sym.asClass.module))
+    case _ =>
+      None
   }
 
   def typeOfTypeSymbol(sym: TypeSymbol) = sym.toType match {
@@ -225,18 +284,26 @@ trait MacroCommons {
     case t => t
   }
 
-  def knownDirectSubtypes(tpe: Type): Option[List[Type]] =
-    Option(tpe.typeSymbol).filter(s => s.isClass && s.isAbstract).map(_.asClass).filter(_.isSealed).map { sym =>
-      val subclasses = sym.knownDirectSubclasses.toList
+  def isSealedHierarchyRoot(sym: Symbol) =
+    sym.isClass && sym.isAbstract && sym.asClass.isSealed
+
+  def knownNonAbstractSubclasses(sym: Symbol): Set[Symbol] =
+    sym.asClass.knownDirectSubclasses.flatMap { s =>
+      if (isSealedHierarchyRoot(s)) knownNonAbstractSubclasses(s) else Set(s)
+    }
+
+  def knownSubtypes(tpe: Type): Option[List[Type]] =
+    Option(tpe.typeSymbol).filter(isSealedHierarchyRoot).map { sym =>
+      val subclasses = knownNonAbstractSubclasses(sym).toList
       if (subclasses.isEmpty) {
-        c.abort(c.enclosingPosition, s"No subclasses found for sealed $sym. This may be caused by SI-7046")
+        c.abort(c.enclosingPosition, s"No subclasses found for sealed $sym. This may be caused by SI-7046.\n" +
+          s"Common workaround is to move the macro invocation to the end of the file (after entire hierarchy).")
       }
       subclasses.flatMap { subSym =>
         val undetparams = subSym.asType.typeParams
         val undetSubTpe = typeOfTypeSymbol(subSym.asType)
-        val undetBaseTpe = undetSubTpe.baseType(sym)
 
-        determineTypeParams(undetBaseTpe, tpe, undetparams)
+        determineTypeParams(undetSubTpe, tpe, undetparams)
           .map(typeArgs => undetSubTpe.substituteTypes(undetparams, typeArgs))
       }
     }
