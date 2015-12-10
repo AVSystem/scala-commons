@@ -207,14 +207,19 @@ trait MacroCommons {
     case _ => List(sym)
   }
 
-  case class ApplyUnapply(companion: Symbol, params: List[Symbol])
+  def unwrapNullaryMt(tpe: Type): Type = tpe match {
+    case NullaryMethodType(underlying) => unwrapNullaryMt(underlying)
+    case _ => tpe
+  }
+
+  case class ApplyUnapply(companion: Symbol, params: List[(Symbol, Tree)])
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] = {
     val ts = tpe.typeSymbol.asType
     val companion = ts.companion
 
     if (companion != NoSymbol) {
-      val companionTpe = companion.asModule.moduleClass.asType.toType
+      val companionTpe = getType(tq"$companion.type")
 
       val applyUnapplyPairs = for {
         apply <- alternatives(companionTpe.member(TermName("apply")))
@@ -237,16 +242,23 @@ trait MacroCommons {
           val unapplySig = setTypeArgs(unapply.typeSignature)
 
           applySig.paramLists match {
-            case List(params) if applySig.finalResultType =:= tpe =>
+            case params :: implicits if implicits.flatten.forall(_.isImplicit) && applySig.finalResultType =:= tpe =>
               val expectedUnapplyTpe = params match {
                 case Nil => typeOf[Boolean]
                 case args => getType(tq"$OptionCls[(..${args.map(_.typeSignature)})]")
               }
+              def defaultValueFor(param: Symbol, idx: Int): Tree = {
+                Option(companionTpe.member(TermName("apply$default$" + (idx + 1))))
+                  .filter(s => s.isMethod && s.isSynthetic && unwrapNullaryMt(setTypeArgs(s.typeSignature)) <:< param.typeSignature)
+                  .map(s => q"$companion.$s[..${tpe.typeArgs}]").getOrElse(EmptyTree)
+              }
+
               unapplySig.paramLists match {
                 case List(List(soleArg)) if soleArg.typeSignature =:= tpe &&
                   unapplySig.finalResultType =:= expectedUnapplyTpe =>
 
-                  Some(ApplyUnapply(companion, params))
+                  val paramsWithDefaults = params.zipWithIndex.map({ case (p, i) => (p, defaultValueFor(p, i)) })
+                  Some(ApplyUnapply(companion, paramsWithDefaults))
                 case _ => None
               }
             case _ => None

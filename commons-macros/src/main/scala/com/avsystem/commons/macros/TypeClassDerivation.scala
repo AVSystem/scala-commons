@@ -14,9 +14,12 @@ trait TypeClassDerivation extends MacroCommons {
   def typeClass(tpe: Type): Type
   def implementDeferredInstance(tpe: Type): Tree
 
+  case class ApplyParam(sym: Symbol, defaultValue: Tree, instance: Tree)
+  case class KnownSubtype(tpe: Type, instance: Tree)
+
   def forSingleton(tpe: Type, singleValueTree: Tree): Tree
-  def forApplyUnapply(tpe: Type, companion: Symbol, paramsWithInstances: List[(Symbol, Tree)]): Tree
-  def forSealedHierarchy(tpe: Type, subtypesWithInstances: List[(Type, Tree)]): Tree
+  def forApplyUnapply(tpe: Type, companion: Symbol, params: List[ApplyParam]): Tree
+  def forSealedHierarchy(tpe: Type, subtypes: List[KnownSubtype]): Tree
   def forUnknown(tpe: Type): Tree
 
   def autoDeriveFor(tpe: Type): Tree = {
@@ -25,8 +28,8 @@ trait TypeClassDerivation extends MacroCommons {
     def singleTypeTc = singleValueFor(tpe).map(tree => forSingleton(tpe, tree))
     def applyUnapplyTc = applyUnapplyFor(tpe).map {
       case ApplyUnapply(companion, params) =>
-        val dependencies = params.map { s =>
-          (s, implicitValue(typeClass(s.typeSignature)))
+        val dependencies = params.map { case (s, defaultValue) =>
+          ApplyParam(s, defaultValue, implicitValue(typeClass(s.typeSignature)))
         }
         forApplyUnapply(tpe, companion, dependencies)
     }
@@ -37,7 +40,7 @@ trait TypeClassDerivation extends MacroCommons {
           case EmptyTree => autoDeriveFor(depTpe)
           case tree => tree
         }
-        (depTpe, depTree)
+        KnownSubtype(depTpe, depTree)
       }
       forSealedHierarchy(tpe, dependencies)
     }
@@ -45,7 +48,7 @@ trait TypeClassDerivation extends MacroCommons {
 
     val deferredName = c.freshName(TermName("deferred"))
     lazy val Block(List(deferredVal), deferredIdent) =
-      c.typecheck(q"val $deferredName = ${implementDeferredInstance(tpe)}; $deferredName")
+      c.typecheck(q"val $deferredName: $DeferredInstanceCls[$tcTpe] with $tcTpe = ${implementDeferredInstance(tpe)}; $deferredName")
 
     object transformer extends Transformer {
       var changed = false

@@ -16,6 +16,19 @@ object TypeClassDerivationTest {
 
   def typeRepr[T: ru.WeakTypeTag] = ru.weakTypeOf[T].toString
 
+  class DefVal(v: => Any) {
+    lazy val value = v
+    override def equals(other: Any) = other match {
+      case otherDef: DefVal => value == otherDef.value
+      case _ => false
+    }
+    override def hashCode() = value.hashCode
+  }
+  object DefVal {
+    def apply(value: => Any) = new DefVal(value)
+    def unapply(ddef: DefVal): Option[Any] = Some(ddef.value)
+  }
+
   trait TC[T] {
     def tpe: String
 
@@ -23,7 +36,7 @@ object TypeClassDerivationTest {
       pf.isDefinedAt(this)
   }
   case class SingletonTC[T](tpe: String, value: T) extends TC[T]
-  case class ApplyUnapplyTC[T](tpe: String, subs: List[(String, TC[_])]) extends TC[T]
+  case class ApplyUnapplyTC[T](tpe: String, subs: List[(String, TC[_], Option[DefVal])]) extends TC[T]
   case class SealedHierarchyTC[T](tpe: String, subs: List[(String, TC[_])]) extends TC[T]
   case class UnknownTC[T](tpe: String) extends TC[T]
   case class ForList[T](elementTc: TC[T]) extends TC[List[T]] {
@@ -68,15 +81,15 @@ class TypeClassDerivationTest extends FunSuite {
     assert(SomeSingleton.tc == SingletonTC(typeRepr[SomeSingleton.type], SomeSingleton))
   }
 
-  case class Whatever(str: String, int: Int)
+  case class Whatever(str: String, int: Int = 42)
   object Whatever {
     implicit val tc: TC[Whatever] = autoDeriveFor[Whatever]
   }
 
   test("case class test") {
     assert(Whatever.tc == ApplyUnapplyTC(typeRepr[Whatever], List(
-      ("str", TC.forString),
-      ("int", TC.forInt)
+      ("str", TC.forString, None),
+      ("int", TC.forInt, Some(DefVal(42)))
     )))
   }
 
@@ -92,9 +105,9 @@ class TypeClassDerivationTest extends FunSuite {
 
   test("sealed hierarchy test") {
     assert(SealedRoot.tc == SealedHierarchyTC(typeRepr[SealedRoot], List(
-      ("SealedCase", ApplyUnapplyTC(typeRepr[SealedCase], List(("i", TC.forInt)))),
+      ("SealedCase", ApplyUnapplyTC(typeRepr[SealedCase], List(("i", TC.forInt, None)))),
       ("SealedObj", SingletonTC(typeRepr[SealedObj.type], SealedObj)),
-      ("SubSealedCase", ApplyUnapplyTC(typeRepr[SubSealedCase], List(("i", TC.forInt), ("w", Whatever.tc))))
+      ("SubSealedCase", ApplyUnapplyTC(typeRepr[SubSealedCase], List(("i", TC.forInt, None), ("w", Whatever.tc ,None))))
     )))
   }
 
@@ -105,8 +118,8 @@ class TypeClassDerivationTest extends FunSuite {
 
   test("recursive case class test") {
     assert(Recursive.tc == ApplyUnapplyTC(typeRepr[Recursive], List(
-      ("str", TC.forString),
-      ("next", TC.Deferred(Recursive.tc))
+      ("str", TC.forString, None),
+      ("next", TC.Deferred(Recursive.tc), None)
     )))
   }
 
@@ -117,7 +130,7 @@ class TypeClassDerivationTest extends FunSuite {
 
   test("indirectly recursive case class test") {
     assert(IndiRec.tc == ApplyUnapplyTC(typeRepr[IndiRec], List(
-      ("children", ForList(TC.Deferred(IndiRec.tc)))
+      ("children", ForList(TC.Deferred(IndiRec.tc)), None)
     )))
   }
 
@@ -133,8 +146,11 @@ class TypeClassDerivationTest extends FunSuite {
     def doTest[T](implicit tct: TC[T]): Unit = {
       val tc = Tree.tc[T]
       assert(tc == SealedHierarchyTC(typeRepr[Tree[T]], List(
-        ("Leaf", ApplyUnapplyTC(typeRepr[Leaf[T]], List(("value", tct)))),
-        ("Branch", ApplyUnapplyTC(typeRepr[Branch[T]], List(("left", TC.Deferred(tc)), ("right", TC.Deferred(tc)))))
+        ("Leaf", ApplyUnapplyTC(typeRepr[Leaf[T]], List(("value", tct, None)))),
+        ("Branch", ApplyUnapplyTC(typeRepr[Branch[T]], List(
+          ("left", TC.Deferred(tc), None),
+          ("right", TC.Deferred(tc), None)
+        )))
       )))
     }
     doTest[String]
