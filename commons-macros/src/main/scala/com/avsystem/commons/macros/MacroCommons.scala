@@ -247,11 +247,10 @@ trait MacroCommons {
                 case Nil => typeOf[Boolean]
                 case args => getType(tq"$OptionCls[(..${args.map(_.typeSignature)})]")
               }
-              def defaultValueFor(param: Symbol, idx: Int): Tree = {
-                Option(companionTpe.member(TermName("apply$default$" + (idx + 1))))
-                  .filter(s => s.isMethod && s.isSynthetic && unwrapNullaryMt(setTypeArgs(s.typeSignature)) <:< param.typeSignature)
-                  .map(s => q"$companion.$s[..${tpe.typeArgs}]").getOrElse(EmptyTree)
-              }
+              def defaultValueFor(param: Symbol, idx: Int): Tree =
+                if (param.asTerm.isParamWithDefault)
+                  q"$companion.${TermName("apply$default$" + (idx + 1))}[..${tpe.typeArgs}]"
+                else EmptyTree
 
               unapplySig.paramLists match {
                 case List(List(soleArg)) if soleArg.typeSignature =:= tpe &&
