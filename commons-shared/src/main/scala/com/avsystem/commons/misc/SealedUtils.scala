@@ -8,3 +8,9 @@ package misc
 object SealedUtils {
   def caseObjectsFor[T]: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
 }
+
+trait SealedEnumCompanion[T] {
+  def values: List[T]
+
+  lazy val byName = values.iterator.map(t => (t.toString, t)).toMap
+}

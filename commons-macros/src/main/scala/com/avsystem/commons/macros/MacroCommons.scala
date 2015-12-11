@@ -21,6 +21,11 @@ trait MacroCommons {
     Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).drop(1).toList
   }
 
+  lazy val enclosingClasses = {
+    val sym = c.typecheck(q"this").tpe.typeSymbol
+    Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).toList
+  }
+
   implicit class treeOps[T <: Tree](t: T) {
     def debug: T = {
       c.echo(c.enclosingPosition, show(t))
@@ -75,7 +80,7 @@ trait MacroCommons {
     c.typecheck(typeTree, c.TYPEmode).tpe
 
   def pathTo(sym: Symbol): Tree =
-    if (sym == rootMirror.RootClass) Ident(termNames.ROOTPKG)
+    if (enclosingClasses.contains(sym)) This(sym)
     else if (sym.isModuleClass) Select(pathTo(sym.owner), if (sym.isModuleClass) sym.name.toTermName else sym.name)
     else This(sym)
 
@@ -278,8 +283,8 @@ trait MacroCommons {
   }
 
   def singleValueFor(tpe: Type): Option[Tree] = tpe match {
-    case ThisType(sym) if sym.isStatic && sym.isModuleClass =>
-      Some(Ident(tpe.termSymbol))
+    case ThisType(sym) if enclosingClasses.contains(sym) =>
+      Some(This(sym))
     case ThisType(sym) if sym.isModuleClass =>
       singleValueFor(internal.thisType(sym.owner)).map(pre => Select(pre, tpe.termSymbol))
     case ThisType(sym) =>

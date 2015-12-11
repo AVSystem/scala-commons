@@ -5,15 +5,13 @@ import org.scalatest.FunSuite
 
 class SealedUtilsTest extends FunSuite {
   sealed trait SomeEnum
-  object SomeEnum extends SomeEnumValues {
+  object SomeEnum extends SealedEnumCompanion[SomeEnum] {
     case object First extends SomeEnum
     case object Second extends SomeEnum
     case object Third extends SomeEnum
     case object Fourth extends SomeEnum
-  }
 
-  trait SomeEnumValues {
-    lazy val values = SealedUtils.caseObjectsFor[SomeEnum]
+    val values: List[SomeEnum] = SealedUtils.caseObjectsFor[SomeEnum]
   }
 
   test("case objects listing test") {
