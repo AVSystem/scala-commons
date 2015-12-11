@@ -29,7 +29,7 @@ trait TypeClassDerivation extends MacroCommons {
     def applyUnapplyTc = applyUnapplyFor(tpe).map {
       case ApplyUnapply(companion, params) =>
         val dependencies = params.map { case (s, defaultValue) =>
-          ApplyParam(s, defaultValue, implicitValue(typeClass(s.typeSignature)))
+          ApplyParam(s, defaultValue, implicitValue(tpe, typeClass(s.typeSignature)))
         }
         forApplyUnapply(tpe, companion, dependencies)
     }

@@ -63,10 +63,12 @@ trait MacroCommons {
     }
   }
 
-  def implicitValue(tpe: Type): Tree =
-    try c.typecheck(q"implicitly[$tpe]") catch {
+  def implicitValue(tpe: Type, depTpe: Type): Tree =
+    try c.typecheck(q"implicitly[$depTpe]") match {
+      case Apply(_, List(arg)) => arg
+    } catch {
       case te: TypecheckException =>
-        c.abort(c.enclosingPosition, te.msg)
+        c.abort(c.enclosingPosition, s"Auto derivation failed for $tpe: ${te.msg}")
     }
 
   def getType(typeTree: Tree): Type =
@@ -74,7 +76,8 @@ trait MacroCommons {
 
   def pathTo(sym: Symbol): Tree =
     if (sym == rootMirror.RootClass) Ident(termNames.ROOTPKG)
-    else Select(pathTo(sym.owner), if (sym.isModuleClass) sym.name.toTermName else sym.name)
+    else if (sym.isModuleClass) Select(pathTo(sym.owner), if (sym.isModuleClass) sym.name.toTermName else sym.name)
+    else This(sym)
 
   def isTypeTree(tree: Tree) = tree match {
     case Ident(TypeName(_)) | Select(_, TypeName(_)) => true
@@ -120,7 +123,7 @@ trait MacroCommons {
       select(treeForType(pre), if (sym.isModuleClass) sym.name.toTermName else sym.name)
     case TypeRef(pre, sym, args) =>
       AppliedTypeTree(treeForType(internal.typeRef(pre, sym, Nil)), args.map(treeForType))
-    case ThisType(sym) if sym.isStatic && sym.isModuleClass =>
+    case ThisType(sym) if sym.isModuleClass =>
       pathTo(sym)
     case ThisType(sym) =>
       SingletonTypeTree(This(sym.name.toTypeName))
@@ -277,6 +280,8 @@ trait MacroCommons {
   def singleValueFor(tpe: Type): Option[Tree] = tpe match {
     case ThisType(sym) if sym.isStatic && sym.isModuleClass =>
       Some(Ident(tpe.termSymbol))
+    case ThisType(sym) if sym.isModuleClass =>
+      singleValueFor(internal.thisType(sym.owner)).map(pre => Select(pre, tpe.termSymbol))
     case ThisType(sym) =>
       Some(This(sym))
     case SingleType(pre, sym) =>
@@ -298,19 +303,20 @@ trait MacroCommons {
   def isSealedHierarchyRoot(sym: Symbol) =
     sym.isClass && sym.isAbstract && sym.asClass.isSealed
 
-  def knownNonAbstractSubclasses(sym: Symbol): Set[Symbol] =
-    sym.asClass.knownDirectSubclasses.flatMap { s =>
+  def knownNonAbstractSubclasses(sym: Symbol): Set[Symbol] = {
+    val directSubclasses = sym.asClass.knownDirectSubclasses
+    if (directSubclasses.isEmpty) {
+      c.abort(c.enclosingPosition, s"No subclasses found for sealed $sym. This may be caused by SI-7046.\n" +
+        s"Common workaround is to move the macro invocation to the end of the file (after entire hierarchy).")
+    }
+    directSubclasses.flatMap { s =>
       if (isSealedHierarchyRoot(s)) knownNonAbstractSubclasses(s) else Set(s)
     }
+  }
 
   def knownSubtypes(tpe: Type): Option[List[Type]] =
     Option(tpe.typeSymbol).filter(isSealedHierarchyRoot).map { sym =>
-      val subclasses = knownNonAbstractSubclasses(sym).toList
-      if (subclasses.isEmpty) {
-        c.abort(c.enclosingPosition, s"No subclasses found for sealed $sym. This may be caused by SI-7046.\n" +
-          s"Common workaround is to move the macro invocation to the end of the file (after entire hierarchy).")
-      }
-      subclasses.flatMap { subSym =>
+      knownNonAbstractSubclasses(sym).toList.flatMap { subSym =>
         val undetparams = subSym.asType.typeParams
         val undetSubTpe = typeOfTypeSymbol(subSym.asType)
 
