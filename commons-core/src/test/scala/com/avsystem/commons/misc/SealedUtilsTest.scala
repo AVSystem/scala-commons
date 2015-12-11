@@ -11,7 +11,7 @@ class SealedUtilsTest extends FunSuite {
     case object Third extends SomeEnum
     case object Fourth extends SomeEnum
 
-    val values: List[SomeEnum] = SealedUtils.caseObjectsFor[SomeEnum]
+    val values: List[SomeEnum] = caseObjects
   }
 
   test("case objects listing test") {
