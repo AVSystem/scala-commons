@@ -1,13 +1,15 @@
 package com.avsystem.commons
 package macros.misc
 
+import com.avsystem.commons.macros.MacroCommons
+
 import scala.reflect.macros.blackbox
 
 /**
   * Author: ghik
   * Created: 23/11/15.
   */
-class SamMacros(val c: blackbox.Context) {
+class SamMacros(val c: blackbox.Context) extends MacroCommons {
 
   import c.universe._
 
@@ -54,7 +56,7 @@ class SamMacros(val c: blackbox.Context) {
   private def validateSam(targetTpe: Type, funTpe: Type): Boolean = {
     val targetSymbol = targetTpe.dealias.typeSymbol
     if (!targetSymbol.isClass && !targetSymbol.asClass.isAbstract) {
-      c.abort(c.enclosingPosition, s"$targetTpe is not a trait or abstract class")
+      abort(s"$targetTpe is not a trait or abstract class")
     }
 
     targetTpe.members.iterator.filter(m => m.isAbstract).map(m => (m, m.typeSignatureIn(targetTpe))).toList match {
@@ -69,11 +71,11 @@ class SamMacros(val c: blackbox.Context) {
         val byName = arity == 0 && funTpe <:< resultType
         if (!byName && !(funTpe <:< requiredFunTpe)) {
           val requiredMsg = (if (arity == 0) s"$resultType or " else "") + s"$requiredFunTpe"
-          c.abort(c.enclosingPosition, s"$funTpe does not match signature of $m in $targetTpe: expected $requiredMsg")
+          abort(s"$funTpe does not match signature of $m in $targetTpe: expected $requiredMsg")
         }
         byName
       case _ =>
-        c.abort(c.enclosingPosition, "Target trait/class must have exactly one public, abstract, non-generic method")
+        abort("Target trait/class must have exactly one public, abstract, non-generic method")
     }
   }
 }

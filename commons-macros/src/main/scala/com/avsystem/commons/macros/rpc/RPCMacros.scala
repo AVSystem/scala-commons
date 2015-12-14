@@ -17,9 +17,6 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
   val Upickle = q"_root_.upickle"
   val UpickleDefault = q"$Upickle.default"
   val RpcPackage = q"$CommonsPackage.rpc"
-  val ListObj = q"_root_.scala.collection.immutable.List"
-  val ListCls = tq"_root_.scala.collection.immutable.List"
-  val FutureSym = typeOf[Future[_]].typeSymbol
   val RunNowEC = q"$CommonsPackage.concurrent.RunNowEC"
   val RawRPCCls = tq"$RpcPackage.RawRPC"
   val AsRawRPCObj = q"$RpcPackage.AsRawRPC"
@@ -72,7 +69,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
       s"All abstract members in RPC interface must be non-generic methods that return Unit, Future or another RPC interface, ${pm.method} in $tpe does not."
 
     if (!hasRpcAnnot(tpe) || !tpe.typeSymbol.isClass || tpe <:< typeOf[AnyVal] || tpe <:< typeOf[Null]) {
-      c.abort(c.enclosingPosition, s"RPC type must be a trait or abstract class annotated as @RPC, $tpe is not.")
+      abort(s"RPC type must be a trait or abstract class annotated as @RPC, $tpe is not.")
     }
 
     val proxyables = tpe.members.filter(m => m.isTerm && m.isAbstract).map { m =>
@@ -81,14 +78,14 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
     }.groupBy(_.memberType).withDefaultValue(Iterable.empty)
 
     proxyables(Invalid).foreach { pm =>
-      c.error(c.enclosingPosition, invalidProxyableMsg(pm))
+      error(invalidProxyableMsg(pm))
     }
 
     def validateShapes(members: Iterable[ProxyableMember]): Unit = {
       def shape(pm: ProxyableMember) = (pm.rpcName, pm.paramLists.map(_.map(_ => ())))
       members.groupBy(shape).values.filter(_.size > 1).foreach { overloads =>
         val name = overloads.head.method.name.decodedName.toString
-        c.abort(c.enclosingPosition, s"Overloaded variants of $name in $tpe have the same shape " +
+        abort(s"Overloaded variants of $name in $tpe have the same shape " +
           s"(the same number of arguments in every parameter list)\n" +
           s"You can give each variant different @RPCName to resolve such conflicts.")
       }
@@ -103,7 +100,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
     validateShapes(getters)
 
     if (proxyables.isEmpty) {
-      c.warning(c.enclosingPosition, s"$tpe has no abstract members that could represent remote methods.")
+      warning(s"$tpe has no abstract members that could represent remote methods.")
     }
 
     (procedures, functions, getters)

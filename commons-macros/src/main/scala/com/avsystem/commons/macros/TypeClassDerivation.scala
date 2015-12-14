@@ -15,7 +15,9 @@ trait TypeClassDerivation extends MacroCommons {
   def implementDeferredInstance(tpe: Type): Tree
 
   case class ApplyParam(sym: Symbol, defaultValue: Tree, instance: Tree)
-  case class KnownSubtype(tpe: Type, instance: Tree)
+  case class KnownSubtype(tpe: Type, instance: Tree) {
+    def sym = tpe.typeSymbol
+  }
 
   def forSingleton(tpe: Type, singleValueTree: Tree): Tree
   def forApplyUnapply(tpe: Type, companion: Symbol, params: List[ApplyParam]): Tree
@@ -53,7 +55,7 @@ trait TypeClassDerivation extends MacroCommons {
     object transformer extends Transformer {
       var changed = false
       override def transform(tree: Tree): Tree = {
-        if(tree.symbol != null && tree.tpe != null) {
+        if (tree.symbol != null && tree.tpe != null) {
           if (!tree.isDef && tree.symbol.isImplicit && tree.tpe.widen =:= tcTpe) {
             changed = true
             deferredIdent.duplicate

@@ -2,6 +2,7 @@ package com.avsystem.commons
 package macros
 
 import scala.collection.mutable
+import scala.concurrent.Future
 import scala.reflect.macros.{TypecheckException, blackbox}
 
 /**
@@ -15,6 +16,10 @@ trait MacroCommons {
 
   val CommonsPackage = q"_root_.com.avsystem.commons"
   val OptionCls = tq"_root_.scala.Option"
+  val CollectionPkg = q"_root_.scala.collection"
+  val ListObj = q"$CollectionPkg.immutable.List"
+  val ListCls = tq"$CollectionPkg.immutable.List"
+  val FutureSym = typeOf[Future[_]].typeSymbol
 
   lazy val ownerChain = {
     val sym = c.typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
@@ -32,6 +37,18 @@ trait MacroCommons {
       t
     }
   }
+
+  def abort(msg: String) =
+    c.abort(c.enclosingPosition, msg)
+
+  def echo(msg: String) =
+    c.echo(c.enclosingPosition, msg)
+
+  def error(msg: String) =
+    c.error(c.enclosingPosition, msg)
+
+  def warning(msg: String) =
+    c.warning(c.enclosingPosition, msg)
 
   case class TypeKey(tpe: Type) {
     override def equals(obj: Any) = obj match {
@@ -73,7 +90,7 @@ trait MacroCommons {
       case Apply(_, List(arg)) => arg
     } catch {
       case te: TypecheckException =>
-        c.abort(c.enclosingPosition, s"Auto derivation failed for $tpe: ${te.msg}")
+        abort(s"Auto derivation failed for $tpe: ${te.msg}")
     }
 
   def getType(typeTree: Tree): Type =
@@ -311,7 +328,7 @@ trait MacroCommons {
   def knownNonAbstractSubclasses(sym: Symbol): Set[Symbol] = {
     val directSubclasses = sym.asClass.knownDirectSubclasses
     if (directSubclasses.isEmpty) {
-      c.abort(c.enclosingPosition, s"No subclasses found for sealed $sym. This may be caused by SI-7046.\n" +
+      abort(s"No subclasses found for sealed $sym. This may be caused by SI-7046.\n" +
         s"Common workaround is to move the macro invocation to the end of the file (after entire hierarchy).")
     }
     directSubclasses.flatMap { s =>

@@ -22,7 +22,7 @@ class DelegationMacros(val c: blackbox.Context) extends MacroCommons {
 
     val targetSymbol = targetTpe.dealias.typeSymbol
     if (!targetSymbol.isClass && !targetSymbol.asClass.isAbstract) {
-      c.abort(c.enclosingPosition, s"$targetTpe is not a trait or abstract class")
+      abort(s"$targetTpe is not a trait or abstract class")
     }
 
     val wrappedName = c.freshName(TermName("w"))
@@ -47,7 +47,7 @@ class DelegationMacros(val c: blackbox.Context) extends MacroCommons {
 
           Some(result)
         } else {
-          c.error(c.enclosingPosition, s"Can't delegate ${m.name} - only public defs and vals can be delegated")
+          error(s"Can't delegate ${m.name} - only public defs and vals can be delegated")
           None
         }
       }.toList

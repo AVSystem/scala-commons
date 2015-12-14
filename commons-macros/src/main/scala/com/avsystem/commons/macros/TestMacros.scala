@@ -42,7 +42,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   def assertSameTypes(expected: Type, actual: Type): Unit = {
     if (!(expected =:= actual)) {
-      c.abort(c.enclosingPosition, s"Types don't match, expected $expected")
+      abort(s"Types don't match, expected $expected")
     }
   }
 

@@ -13,13 +13,11 @@ class SealedMacros(val c: blackbox.Context) extends MacroCommons {
 
   import c.universe._
 
-  val ListObj = q"_root_.scala.collection.immutable.List"
-
   def caseObjectsFor[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
     knownSubtypes(tpe).map { subtypes =>
       val objects = subtypes.flatMap(singleValueFor)
       q"$ListObj(..$objects)"
-    }.getOrElse(c.abort(c.enclosingPosition, s"$tpe is not a sealed trait or class"))
+    }.getOrElse(abort(s"$tpe is not a sealed trait or class"))
   }
 }
