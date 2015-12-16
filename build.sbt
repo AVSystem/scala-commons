@@ -2,7 +2,7 @@ import sbt._
 
 name := "commons"
 
-version in ThisBuild := "1.8.7"
+version in ThisBuild := "1.9.0"
 scalaVersion in ThisBuild := "2.11.7"
 organization in ThisBuild := "com.avsystem.commons"
 crossPaths in ThisBuild := false
@@ -74,9 +74,6 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
   .jsConfigure(_.dependsOn(`commons-macros`))
   .jvmConfigure(_.dependsOn(`commons-macros`))
   .settings(commonSettings: _*)
-  .settings(
-    libraryDependencies += "com.lihaoyi" %%% "upickle" % upickleVersion
-  )
   .jsSettings(
     test := {},
     fork in Test := false
@@ -107,6 +104,7 @@ lazy val `commons-jetty` = project
   .settings(
     libraryDependencies ++= Seq(
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
-      "org.eclipse.jetty" % "jetty-server" % jettyVersion
+      "org.eclipse.jetty" % "jetty-server" % jettyVersion,
+      "com.lihaoyi" %% "upickle" % upickleVersion
     )
   )

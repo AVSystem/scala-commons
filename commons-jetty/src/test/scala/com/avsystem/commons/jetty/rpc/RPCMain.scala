@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package jetty.rpc
 
-import com.avsystem.commons.rpc.{AsRawRPC, AsRealRPC, RPC}
+import com.avsystem.commons.rpc.RPC
+import UPickleRPC._
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.server.Server
 

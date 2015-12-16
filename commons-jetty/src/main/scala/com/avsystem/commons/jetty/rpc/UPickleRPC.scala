@@ -1,22 +1,27 @@
 package com.avsystem.commons
-package rpc
+package jetty.rpc
 
-import upickle.Js
-import upickle.default._
+import com.avsystem.commons.rpc.RPCFramework
+import upickle._
 
-case class RawInvocation(rpcName: String, argLists: List[List[Js.Value]])
+object UPickleRPC extends RPCFramework {
+  type RawValue = Js.Value
+  type Reader[T] = default.Reader[T]
+  type Writer[T] = default.Writer[T]
 
-object RawInvocation {
-  implicit val RawInvocationWriter = Writer[RawInvocation] {
+  def read[T: Reader](raw: RawValue): T = default.readJs[T](raw)
+  def write[T: Writer](value: T): RawValue = default.writeJs[T](value)
+
+  implicit val RawInvocationWriter: Writer[RawInvocation] = default.Writer[RawInvocation] {
     case inv => Js.Obj(
       ("rpcName", Js.Str(inv.rpcName)),
       ("argLists", argsToJsArr(inv.argLists))
     )
   }
 
-  implicit val RawInvocationReader = Reader[RawInvocation] {
+  implicit val RawInvocationReader: Reader[RawInvocation] = default.Reader[RawInvocation] {
     case obj: Js.Obj =>
-      val name: String = readJs[String](obj("rpcName"))
+      val name: String = default.readJs[String](obj("rpcName"))
       val args: List[List[Js.Value]] = jsArrToArgs(obj("argLists"))
       RawInvocation(name, args)
   }

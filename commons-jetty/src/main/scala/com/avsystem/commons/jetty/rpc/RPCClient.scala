@@ -3,7 +3,6 @@ package jetty.rpc
 
 import java.nio.charset.StandardCharsets
 
-import com.avsystem.commons.rpc.{RawInvocation, RawRPC}
 import org.eclipse.jetty.client.{ContentExchange, HttpClient}
 import org.eclipse.jetty.http.{HttpException, HttpMethods, HttpStatus}
 import org.eclipse.jetty.io.ByteArrayBuffer
@@ -14,7 +13,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 /**
   * @author MKej
   */
-class RPCClient(httpClient: HttpClient, urlPrefix: String, pathPrefix: String)(implicit ec: ExecutionContext) extends RawRPC {
+class RPCClient(httpClient: HttpClient, urlPrefix: String, pathPrefix: String)(implicit ec: ExecutionContext) extends UPickleRPC.RawRPC {
 
   import RPCClient._
 
@@ -52,12 +51,12 @@ class RPCClient(httpClient: HttpClient, urlPrefix: String, pathPrefix: String)(i
   def call(rpcName: String, argLists: List[List[Js.Value]]): Future[Js.Value] =
     post(pathPrefix + rpcName, argsToJson(argLists)).map(upickle.json.read)
 
-  def get(rpcName: String, argLists: List[List[Js.Value]]): RawRPC = argLists match {
+  def get(rpcName: String, argLists: List[List[Js.Value]]): UPickleRPC.RawRPC = argLists match {
     case Nil => new RPCClient(httpClient, urlPrefix, s"$pathPrefix$rpcName/")
     case _ => throw new IllegalArgumentException("Only no-arg list sub-RPCs are supported (without parenthesis)")
   }
 }
 
 object RPCClient {
-  def argsToJson(args: List[List[Js.Value]]): String = upickle.json.write(RawInvocation.argsToJsArr(args))
+  def argsToJson(args: List[List[Js.Value]]): String = upickle.json.write(UPickleRPC.argsToJsArr(args))
 }

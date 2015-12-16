@@ -3,7 +3,6 @@ package macros.rpc
 
 import com.avsystem.commons.macros.MacroCommons
 
-import scala.concurrent.Future
 import scala.reflect.macros.blackbox
 
 /**
@@ -14,15 +13,21 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
 
   import c.universe._
 
-  val Upickle = q"_root_.upickle"
-  val UpickleDefault = q"$Upickle.default"
   val RpcPackage = q"$CommonsPackage.rpc"
+  val RPCFrameworkType = getType(tq"$RpcPackage.RPCFramework")
+
+  val FrameworkObj = c.prefix.tree match {
+    case Select(framework, _) if framework.tpe <:< RPCFrameworkType => framework
+    case t => abort(s"Bad RPC macro prefix: $t")
+  }
+
   val RunNowEC = q"$CommonsPackage.concurrent.RunNowEC"
-  val RawRPCCls = tq"$RpcPackage.RawRPC"
-  val AsRawRPCObj = q"$RpcPackage.AsRawRPC"
-  val AsRawRPCCls = tq"$RpcPackage.AsRawRPC"
-  val AsRealRPCObj = q"$RpcPackage.AsRealRPC"
-  val AsRealRPCCls = tq"$RpcPackage.AsRealRPC"
+  val RawRPCCls = tq"$FrameworkObj.RawRPC"
+  val AsRawRPCObj = q"$FrameworkObj.AsRawRPC"
+  val AsRawRPCCls = tq"$FrameworkObj.AsRawRPC"
+  val AsRealRPCObj = q"$FrameworkObj.AsRealRPC"
+  val AsRealRPCCls = tq"$FrameworkObj.AsRealRPC"
+  val RawValueTpe = tq"$FrameworkObj.RawValue"
   val RPCNameAnnotType = getType(tq"$RpcPackage.RPCName")
   val RPCType = getType(tq"$RpcPackage.RPC")
 
@@ -119,7 +124,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
     def methodCase(member: ProxyableMember) = {
       val paramLists = member.signature.paramLists
       val matchedArgs = reifyListPat(paramLists.map(paramList => reifyListPat(paramList.map(ps => pq"${ps.name.toTermName}"))))
-      val methodArgs = paramLists.map(_.map(ps => q"$UpickleDefault.readJs[${ps.typeSignature}](${ps.name.toTermName})"))
+      val methodArgs = paramLists.map(_.map(ps => q"$FrameworkObj.read[${ps.typeSignature}](${ps.name.toTermName})"))
       cq"(${member.rpcName.toString}, $matchedArgs) => ${adjustResult(member, q"$implName.${member.method}(...$methodArgs)")}"
     }
 
@@ -127,7 +132,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
       case Procedure => result
       case Function =>
         val TypeRef(_, _, List(resultTpe)) = member.returnType
-        q"$result.map($UpickleDefault.writeJs[$resultTpe])($RunNowEC)"
+        q"$result.map($FrameworkObj.write[$resultTpe])($RunNowEC)"
       case Getter =>
         q"$AsRawRPCObj[${member.returnType}].asRaw($result)"
       case Invalid =>
@@ -142,11 +147,11 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
       new $AsRawRPCCls[$rpcTpe] {
         def asRaw($implName: $rpcTpe) =
           new $RawRPCCls {
-            def fire(methodName: String, args: $ListCls[$ListCls[$Upickle.Js.Value]]) = ${methodMatch(procedures, Procedure)}
+            def fire(methodName: String, args: $ListCls[$ListCls[$FrameworkObj.RawValue]]) = ${methodMatch(procedures, Procedure)}
 
-            def call(methodName: String, args: $ListCls[$ListCls[$Upickle.Js.Value]]) = ${methodMatch(functions, Function)}
+            def call(methodName: String, args: $ListCls[$ListCls[$FrameworkObj.RawValue]]) = ${methodMatch(functions, Function)}
 
-            def get(methodName: String, args: $ListCls[$ListCls[$Upickle.Js.Value]]) = ${methodMatch(getters, Getter)}
+            def get(methodName: String, args: $ListCls[$ListCls[$FrameworkObj.RawValue]]) = ${methodMatch(getters, Getter)}
           }
       }
      """
@@ -175,14 +180,14 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
       })
 
       val args = reifyList(paramLists.map(paramList =>
-        reifyList(paramList.map(ps => q"$UpickleDefault.writeJs[${ps.typeSignature}](${ps.name.toTermName})"))))
+        reifyList(paramList.map(ps => q"$FrameworkObj.write[${ps.typeSignature}](${ps.name.toTermName})"))))
 
       val body = q"$rawRpcName.$rawRpcMethod(${m.rpcName.toString}, $args)"
       val adjustedBody = m.memberType match {
         case Procedure => body
         case Function =>
           val TypeRef(_, _, List(resultTpe)) = m.returnType
-          q"$body.map($UpickleDefault.readJs[$resultTpe])($RunNowEC)"
+          q"$body.map($FrameworkObj.read[$resultTpe])($RunNowEC)"
         case Getter =>
           q"$AsRealRPCObj[${m.returnType}].asReal($body)"
         case Invalid =>

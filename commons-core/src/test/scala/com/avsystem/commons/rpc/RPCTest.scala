@@ -4,10 +4,10 @@ package rpc
 import com.avsystem.commons.concurrent.{HasExecutionContext, RunNowEC}
 import com.github.ghik.silencer.silent
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
-import upickle.Js
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{ExecutionContext, Future}
+import DummyRPC._
 
 class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
 
@@ -27,14 +27,14 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       }))
 
       rawRpc.fire("handleMore", List(Nil))
-      rawRpc.fire("doStuff", List(List(Js.Num(42), Js.Str("omgsrsly")), List(Js.Arr(Js.True))))
-      assert(Js.Str("doStuffResult") === get(rawRpc.call("doStuff", List(List(Js.True)))))
-      rawRpc.fire("doStuffInt", List(List(Js.Num(5))))
+      rawRpc.fire("doStuff", List(List(42, "omgsrsly"), List(Some(true))))
+      assert("doStuffResult" === get(rawRpc.call("doStuff", List(List(true)))))
+      rawRpc.fire("doStuffInt", List(List(5)))
       rawRpc.fire("handleMore", List(Nil))
       rawRpc.fire("handle", Nil)
       rawRpc.fire("srslyDude", List(Nil))
-      rawRpc.get("innerRpc", List(List(Js.Str("innerName")))).fire("proc", List(Nil))
-      assert(Js.Str("innerRpc.funcResult") === get(rawRpc.get("innerRpc", List(List(Js.Str("innerName")))).call("func", List(List(Js.Num(42))))))
+      rawRpc.get("innerRpc", List(List("innerName"))).fire("proc", List(Nil))
+      assert("innerRpc.funcResult" === get(rawRpc.get("innerRpc", List(List("innerName"))).call("func", List(List(42)))))
 
       assert(invocations.toList === List(
         ("handleMore", List(Nil)),
@@ -60,15 +60,15 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       val invocations = new ArrayBuffer[(String, List[List[Any]])]
 
       object rawRpc extends RawRPC with RunNowFutureCallbacks {
-        def fire(rpcName: String, args: List[List[Js.Value]]): Unit =
+        def fire(rpcName: String, args: List[List[Any]]): Unit =
           invocations += ((rpcName, args))
 
-        def call(rpcName: String, args: List[List[Js.Value]]): Future[Js.Value] = {
+        def call(rpcName: String, args: List[List[Any]]): Future[Any] = {
           invocations += ((rpcName, args))
-          Future.successful(Js.Str(rpcName + "Result"))
+          Future.successful(rpcName + "Result")
         }
 
-        def get(rpcName: String, args: List[List[Js.Value]]): RawRPC = {
+        def get(rpcName: String, args: List[List[Any]]): RawRPC = {
           invocations += ((rpcName, args))
           this
         }
@@ -88,15 +88,15 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
 
       assert(invocations.toList === List(
         ("handleMore", List(Nil)),
-        ("doStuff", List(List(Js.Num(42), Js.Str("omgsrsly")), List(Js.Arr(Js.True)))),
-        ("doStuff", List(List(Js.True))),
-        ("doStuffInt", List(List(Js.Num(5)))),
+        ("doStuff", List(List(42, "omgsrsly"), List(Some(true)))),
+        ("doStuff", List(List(true))),
+        ("doStuffInt", List(List(5))),
         ("handleMore", List(Nil)),
         ("handle", Nil),
-        ("innerRpc", List(List(Js.Str("innerName")))),
+        ("innerRpc", List(List("innerName"))),
         ("proc", List(Nil)),
-        ("innerRpc", List(List(Js.Str("innerName")))),
-        ("func", List(List(Js.Num(42))))
+        ("innerRpc", List(List("innerName"))),
+        ("func", List(List(42)))
       ))
     }
 

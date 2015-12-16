@@ -3,7 +3,6 @@ package jetty.rpc
 
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
-import com.avsystem.commons.rpc.{RawInvocation, RawRPC}
 import org.eclipse.jetty.http.{HttpMethods, HttpStatus}
 import org.eclipse.jetty.server.Request
 import org.eclipse.jetty.server.handler.AbstractHandler
@@ -15,7 +14,7 @@ import scala.util.{Failure, Success}
 /**
   * @author MKej
   */
-class RPCHandler(rootRpc: RawRPC)(implicit ec: ExecutionContext) extends AbstractHandler {
+class RPCHandler(rootRpc: UPickleRPC.RawRPC)(implicit ec: ExecutionContext) extends AbstractHandler {
 
   import RPCHandler._
 
@@ -48,7 +47,7 @@ class RPCHandler(rootRpc: RawRPC)(implicit ec: ExecutionContext) extends Abstrac
     }
   }
 
-  type InvokeFunction[T] = (RawRPC, String, List[List[Js.Value]]) => T
+  type InvokeFunction[T] = (UPickleRPC.RawRPC, String, List[List[Js.Value]]) => T
 
   def invoke[T](path: String, content: String)(f: InvokeFunction[T]): T = {
     val parts = path.split('/')
@@ -71,5 +70,5 @@ class RPCHandler(rootRpc: RawRPC)(implicit ec: ExecutionContext) extends Abstrac
 }
 
 object RPCHandler {
-  def jsonToArgs(json: String): List[List[Js.Value]] = RawInvocation.jsArrToArgs(upickle.json.read(json))
+  def jsonToArgs(json: String): List[List[Js.Value]] = UPickleRPC.jsArrToArgs(upickle.json.read(json))
 }
