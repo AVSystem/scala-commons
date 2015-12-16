@@ -42,32 +42,32 @@ trait RPCFramework {
   }
 
   object AsRawRPC {
-    /**
-      * Materializes a factory of implementations of [[RawRPC]] which translate invocations of its `call` and `fire` methods
-      * to invocations of actual methods on `rpcImpl`. Method arguments and results are serialized and deserialized
-      * from/to JSON using `uPickle` library.
-      *
-      * Only calls to non-generic, abstract methods returning `Unit` or `Future` are supported.
-      */
-    implicit def materialize[T]: AsRawRPC[T] = macro com.avsystem.commons.macros.rpc.RPCMacros.asRawImpl[T]
-
     def apply[T](implicit asRawRPC: AsRawRPC[T]): AsRawRPC[T] = asRawRPC
   }
+
+  /**
+    * Materializes a factory of implementations of [[RawRPC]] which translate invocations of its `call` and `fire` methods
+    * to invocations of actual methods on `rpcImpl`. Method arguments and results are serialized and deserialized
+    * from/to JSON using `uPickle` library.
+    *
+    * Only calls to non-generic, abstract methods returning `Unit` or `Future` are supported.
+    */
+  implicit def materializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCMacros.asRawImpl[T]
 
   trait AsRealRPC[T] {
     def asReal(rawRpc: RawRPC): T
   }
 
   object AsRealRPC {
-    /**
-      * Materializes a factory of implementations of `T` which are proxies that implement all abstract methods of `T`
-      * by forwarding them to `rawRpc`. Method arguments and results are serialized and deserialized
-      * from/to JSON using `uPickle` library.
-      *
-      * All abstract methods of `T` must be non-generic and return `Unit` or `Future`.
-      */
-    implicit def materialize[T]: AsRealRPC[T] = macro com.avsystem.commons.macros.rpc.RPCMacros.asRealImpl[T]
-
     def apply[T](implicit asRealRPC: AsRealRPC[T]): AsRealRPC[T] = asRealRPC
   }
+
+  /**
+    * Materializes a factory of implementations of `T` which are proxies that implement all abstract methods of `T`
+    * by forwarding them to `rawRpc`. Method arguments and results are serialized and deserialized
+    * from/to JSON using `uPickle` library.
+    *
+    * All abstract methods of `T` must be non-generic and return `Unit` or `Future`.
+    */
+  implicit def materializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCMacros.asRealImpl[T]
 }

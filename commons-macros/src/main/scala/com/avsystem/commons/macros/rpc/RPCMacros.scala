@@ -15,12 +15,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
 
   val RpcPackage = q"$CommonsPackage.rpc"
   val RPCFrameworkType = getType(tq"$RpcPackage.RPCFramework")
-
-  val FrameworkObj = c.prefix.tree match {
-    case Select(framework, _) if framework.tpe <:< RPCFrameworkType => framework
-    case t => abort(s"Bad RPC macro prefix: $t")
-  }
-
+  val FrameworkObj = c.prefix.tree
   val RunNowEC = q"$CommonsPackage.concurrent.RunNowEC"
   val RawRPCCls = tq"$FrameworkObj.RawRPC"
   val AsRawRPCObj = q"$FrameworkObj.AsRawRPC"
