@@ -2,7 +2,7 @@ import sbt._
 
 name := "commons"
 
-version in ThisBuild := "1.9.0"
+version in ThisBuild := "1.9.1"
 scalaVersion in ThisBuild := "2.11.7"
 organization in ThisBuild := "com.avsystem.commons"
 crossPaths in ThisBuild := false
