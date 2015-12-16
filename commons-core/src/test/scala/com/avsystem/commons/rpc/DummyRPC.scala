@@ -8,14 +8,9 @@ package rpc
 object DummyRPC extends RPCFramework {
   type RawValue = Any
 
-  type Reader[T] = DummyRW[T]
-  type Writer[T] = DummyRW[T]
+  type Reader[T] = DummyImplicit
+  type Writer[T] = DummyImplicit
 
-  def read[T: DummyRW](raw: Any): T = raw.asInstanceOf[T]
-  def write[T: DummyRW](value: T): Any = value
-
-  sealed trait DummyRW[T]
-  object DummyRW {
-    implicit def dummyRW[T]: DummyRW[T] = null
-  }
+  def read[T: Reader](raw: Any): T = raw.asInstanceOf[T]
+  def write[T: Writer](value: T): Any = value
 }

@@ -14,10 +14,10 @@ trait RPCFramework {
   type Reader[T]
   type Writer[T]
 
-  case class RawInvocation(rpcName: String, argLists: List[List[RawValue]])
-
   def read[T: Reader](raw: RawValue): T
   def write[T: Writer](value: T): RawValue
+
+  case class RawInvocation(rpcName: String, argLists: List[List[RawValue]])
 
   trait RawRPC {
     protected def fail(rpcTpe: String, memberType: String, methodName: String, args: List[List[RawValue]]) = {

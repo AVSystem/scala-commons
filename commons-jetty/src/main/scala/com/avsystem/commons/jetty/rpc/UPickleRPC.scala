@@ -12,20 +12,6 @@ object UPickleRPC extends RPCFramework {
   def read[T: Reader](raw: RawValue): T = default.readJs[T](raw)
   def write[T: Writer](value: T): RawValue = default.writeJs[T](value)
 
-  implicit val RawInvocationWriter: Writer[RawInvocation] = default.Writer[RawInvocation] {
-    case inv => Js.Obj(
-      ("rpcName", Js.Str(inv.rpcName)),
-      ("argLists", argsToJsArr(inv.argLists))
-    )
-  }
-
-  implicit val RawInvocationReader: Reader[RawInvocation] = default.Reader[RawInvocation] {
-    case obj: Js.Obj =>
-      val name: String = default.readJs[String](obj("rpcName"))
-      val args: List[List[Js.Value]] = jsArrToArgs(obj("argLists"))
-      RawInvocation(name, args)
-  }
-
   def argsToJsArr(argLists: List[List[Js.Value]]): Js.Value = {
     Js.Arr(argLists map { args => Js.Arr(args: _*) }: _*)
   }
