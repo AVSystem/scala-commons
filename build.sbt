@@ -113,6 +113,6 @@ lazy val `commons-jetty` = project
     libraryDependencies ++= Seq(
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
       "org.eclipse.jetty" % "jetty-server" % jettyVersion,
-      "com.lihaoyi" %% "upickle" % upickleVersion
+      "com.lihaoyi" %% "upickle" % upickleVersion % Test
     )
   )
