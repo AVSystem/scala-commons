@@ -11,11 +11,6 @@ class VarargsAtLeast[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
 
   import global._
 
-  def classType(fullName: String) =
-    try rootMirror.staticClass(fullName).asType.toType catch {
-      case _: ScalaReflectionException => NoType
-    }
-
   val atLeastAnnotTpe = classType("com.avsystem.commons.annotation.atLeast")
 
   def analyze(unit: CompilationUnit): Unit = if (atLeastAnnotTpe != NoType) {

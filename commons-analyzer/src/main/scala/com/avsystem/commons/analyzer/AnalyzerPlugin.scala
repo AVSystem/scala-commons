@@ -9,7 +9,8 @@ final class AnalyzerPlugin(val global: Global) extends Plugin {
 
   val rules = List[AnalyzerRule[global.type]](
     new ImportJavaUtil[global.type](global),
-    new VarargsAtLeast[global.type](global)
+    new VarargsAtLeast[global.type](global),
+    new DetectSI7046[global.type](global)
   )
 
   val name = "AVSystemAnalyzer"

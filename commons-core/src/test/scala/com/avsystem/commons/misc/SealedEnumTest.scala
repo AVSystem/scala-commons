@@ -3,7 +3,7 @@ package misc
 
 import org.scalatest.FunSuite
 
-class SealedUtilsTest extends FunSuite {
+class SealedEnumTest extends FunSuite {
   sealed trait SomeEnum
   object SomeEnum extends SealedEnumCompanion[SomeEnum] {
     case object First extends SomeEnum

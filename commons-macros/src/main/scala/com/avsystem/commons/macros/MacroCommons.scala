@@ -325,16 +325,19 @@ trait MacroCommons {
   def isSealedHierarchyRoot(sym: Symbol) =
     sym.isClass && sym.isAbstract && sym.asClass.isSealed
 
-  def knownNonAbstractSubclasses(sym: Symbol): Set[Symbol] = {
-    val directSubclasses = sym.asClass.knownDirectSubclasses
-    if (directSubclasses.isEmpty) {
-      abort(s"No subclasses found for sealed $sym. This may be caused by SI-7046.\n" +
-        s"Common workaround is to move the macro invocation to the end of the file (after entire hierarchy).")
-    }
-    directSubclasses.flatMap { s =>
+  def knownNonAbstractSubclasses(sym: Symbol): Set[Symbol] =
+    sym.asClass.knownDirectSubclasses.flatMap { s =>
       if (isSealedHierarchyRoot(s)) knownNonAbstractSubclasses(s) else Set(s)
     }
-  }
+
+  def allCurrentlyKnownSubclasses(sym: Symbol): Set[Symbol] =
+    if (sym.isClass) {
+      val directSubclasses = sym.asClass.knownDirectSubclasses
+      directSubclasses.flatMap(allCurrentlyKnownSubclasses) + sym
+    } else Set.empty
+
+  def withKnownSubclassesCheck(tree: Tree, tpe: Type): Tree =
+    q"$tree: @$CommonsPackage.annotation.checkKnownSubtypes[$tpe](${allCurrentlyKnownSubclasses(tpe.typeSymbol).size})"
 
   def knownSubtypes(tpe: Type): Option[List[Type]] =
     Option(tpe.typeSymbol).filter(isSealedHierarchyRoot).map { sym =>

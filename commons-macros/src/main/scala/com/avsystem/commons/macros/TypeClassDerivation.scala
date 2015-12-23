@@ -44,7 +44,7 @@ trait TypeClassDerivation extends MacroCommons {
         }
         KnownSubtype(depTpe, depTree)
       }
-      forSealedHierarchy(tpe, dependencies)
+      withKnownSubclassesCheck(forSealedHierarchy(tpe, dependencies), tpe)
     }
     val result = singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown(tpe)
 

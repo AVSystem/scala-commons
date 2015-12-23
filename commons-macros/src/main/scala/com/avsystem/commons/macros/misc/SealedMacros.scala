@@ -17,7 +17,7 @@ class SealedMacros(val c: blackbox.Context) extends MacroCommons {
     val tpe = weakTypeOf[T]
     knownSubtypes(tpe).map { subtypes =>
       val objects = subtypes.flatMap(singleValueFor)
-      q"$ListObj(..$objects)"
+      withKnownSubclassesCheck(q"$ListObj(..$objects)", tpe)
     }.getOrElse(abort(s"$tpe is not a sealed trait or class"))
   }
 }
