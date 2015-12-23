@@ -30,7 +30,7 @@ class DetectSI7046[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
       tree <- unit.body if tree.tpe != null
       annot <- tree.tpe.annotations
     } annot.tree match {
-      case tree@Apply(Select(New(pre), termNames.CONSTRUCTOR), List(Literal(Constant(actualSize: Int))))
+      case annotTree@Apply(Select(New(pre), termNames.CONSTRUCTOR), List(Literal(Constant(actualSize: Int))))
         if pre.symbol == checkKnownSubtypesSym =>
 
         val hierarchyRoot = pre.tpe.typeArgs.head.typeSymbol
@@ -39,7 +39,7 @@ class DetectSI7046[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
           if (expectedSize != actualSize) {
             reporter.error(tree.pos,
               s"""`knownDirectSubclasses` for $hierarchyRoot used in a macro did not correctly detect all subclasses.
-                  |This is caused probably by a limitation of the Scala compiler described in SI-7046.
+                  |This is caused by a limitation of Scala macro engine described in SI-7046.
                   |Common workaround is to move the macro invocation to the end of the file (after entire sealed hierarchy has been defined).
                """.stripMargin)
           }
