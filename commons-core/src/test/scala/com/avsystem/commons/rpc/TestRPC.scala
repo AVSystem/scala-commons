@@ -31,6 +31,8 @@ case class Record(i: Int, fuu: String)
   def proc(): Unit
 
   def func(arg: Int): Future[String]
+
+  def moreInner(name: String): InnerRPC
 }
 
 object TestRPC {
@@ -78,6 +80,9 @@ object TestRPC {
 
         def proc(): Unit =
           onProcedure("innerRpc.proc", List(Nil))
+
+        def moreInner(name: String) =
+          this
       }
     }
   }

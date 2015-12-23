@@ -84,7 +84,7 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       realRpc.handleMore()
       realRpc.handle
       realRpc.innerRpc("innerName").proc()
-      realRpc.innerRpc("innerName").func(42)
+      realRpc.innerRpc("innerName").moreInner("moreInner").moreInner("evenMoreInner").func(42)
 
       assert(invocations.toList === List(
         ("handleMore", List(Nil)),
@@ -93,9 +93,13 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
         ("doStuffInt", List(List(5))),
         ("handleMore", List(Nil)),
         ("handle", Nil),
+
         ("innerRpc", List(List("innerName"))),
         ("proc", List(Nil)),
+
         ("innerRpc", List(List("innerName"))),
+        ("moreInner", List(List("moreInner"))),
+        ("moreInner", List(List("evenMoreInner"))),
         ("func", List(List(42)))
       ))
     }

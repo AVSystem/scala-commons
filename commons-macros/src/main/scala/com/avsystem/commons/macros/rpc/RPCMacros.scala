@@ -140,6 +140,8 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
 
     q"""
       new $AsRawRPCCls[$rpcTpe] {
+        implicit val ${c.freshName(TermName("self"))}: $AsRawRPCCls[$rpcTpe] = this
+
         def asRaw($implName: $rpcTpe) =
           new $RawRPCCls {
             def fire(methodName: String, args: $ListCls[$ListCls[$FrameworkObj.RawValue]]) = ${methodMatch(procedures, Procedure)}
@@ -194,6 +196,8 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
 
     q"""
       new $AsRealRPCCls[$rpcTpe] {
+        implicit val ${c.freshName(TermName("self"))}: $AsRealRPCCls[$rpcTpe] = this
+
         def asReal($rawRpcName: $RawRPCCls) = new $rpcTpe { ..$implementations; () }
       }
      """
