@@ -11,7 +11,11 @@ class DetectSI7046[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
 
   import global._
 
-  val checkKnownSubtypesSym = rootMirror.staticClass("com.avsystem.commons.annotation.checkKnownSubtypes")
+  val checkKnownSubtypesSym =
+    try rootMirror.staticClass("com.avsystem.commons.annotation.checkKnownSubtypes")
+    catch {
+      case _: ScalaReflectionException => NoSymbol
+    }
 
   def allCurrentlyKnownSubclasses(sym: Symbol): Set[Symbol] =
     if (sym.isClass) {
@@ -19,7 +23,7 @@ class DetectSI7046[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
       directSubclasses.flatMap(allCurrentlyKnownSubclasses) + sym
     } else Set.empty
 
-  def analyze(unit: CompilationUnit) = {
+  def analyze(unit: CompilationUnit) = if (checkKnownSubtypesSym != NoSymbol) {
     val alreadyCheckedFor: mutable.Set[Position] = new mutable.HashSet[Position]
 
     for {
