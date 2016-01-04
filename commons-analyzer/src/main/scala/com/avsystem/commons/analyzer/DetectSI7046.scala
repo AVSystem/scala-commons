@@ -26,25 +26,25 @@ class DetectSI7046[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
   def analyze(unit: CompilationUnit) = if (checkKnownSubtypesSym != NoSymbol) {
     val alreadyCheckedFor: mutable.Set[Position] = new mutable.HashSet[Position]
 
-    for {
-      tree <- unit.body if tree.tpe != null
-      annot <- tree.tpe.annotations
-    } annot.tree match {
-      case annotTree@Apply(Select(New(pre), termNames.CONSTRUCTOR), List(Literal(Constant(actualSize: Int))))
-        if pre.symbol == checkKnownSubtypesSym =>
+    unit.body.foreach(analyzeTree {
+      case tree if tree.tpe != null => tree.tpe.annotations.map(_.tree).foreach {
+        case annotTree@Apply(Select(New(pre), termNames.CONSTRUCTOR), List(Literal(Constant(actualSize: Int))))
+          if pre.symbol == checkKnownSubtypesSym =>
 
-        val hierarchyRoot = pre.tpe.typeArgs.head.typeSymbol
-        if (alreadyCheckedFor.add(tree.pos)) {
-          val expectedSize = allCurrentlyKnownSubclasses(hierarchyRoot).size
-          if (expectedSize != actualSize) {
-            reporter.error(tree.pos,
-              s"""`knownDirectSubclasses` for $hierarchyRoot used in a macro did not correctly detect all subclasses.
-                  |This is caused by a limitation of Scala macro engine described in SI-7046.
-                  |Common workaround is to move the macro invocation to the end of the file (after entire sealed hierarchy has been defined).
-               """.stripMargin)
+          val hierarchyRoot = pre.tpe.typeArgs.head.typeSymbol
+          if (alreadyCheckedFor.add(tree.pos)) {
+            val expectedSize = allCurrentlyKnownSubclasses(hierarchyRoot).size
+            if (expectedSize != actualSize) {
+              reporter.error(tree.pos,
+                s"""`knownDirectSubclasses` for $hierarchyRoot used in a macro did not correctly detect all subclasses.
+                    |This is caused by a limitation of Scala macro engine described in SI-7046.
+                    |Common workaround is to move the macro invocation after entire sealed hierarchy has been defined
+                    |(e.g. at the end of the file) so that the macro sees the entire hierarchy already typechecked.
+                 """.stripMargin)
+            }
           }
-        }
-      case _ =>
-    }
+        case _ =>
+      }
+    })
   }
 }

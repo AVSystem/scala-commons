@@ -4,9 +4,9 @@ package analyzer
 import scala.tools.nsc.Global
 
 /**
- * Author: ghik
- * Created: 08/09/15.
- */
+  * Author: ghik
+  * Created: 08/09/15.
+  */
 class VarargsAtLeast[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
 
   import global._
@@ -19,7 +19,7 @@ class VarargsAtLeast[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
       case _ => false
     }
 
-    unit.body.foreach {
+    unit.body.foreach(analyzeTree {
       case t@Apply(fun, args)
         if fun.tpe.params.lastOption.map(_.tpe.typeSymbol).contains(definitions.RepeatedParamClass) &&
           !args.lastOption.exists(isVarargParam) =>
@@ -35,8 +35,6 @@ class VarargsAtLeast[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
           reporter.error(t.pos,
             s"This method requires at least $required arguments for its repeated parameter, $actual passed.")
         }
-
-      case _ =>
-    }
+    })
   }
 }
