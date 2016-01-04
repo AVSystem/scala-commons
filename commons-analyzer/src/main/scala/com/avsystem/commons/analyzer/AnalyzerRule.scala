@@ -24,4 +24,6 @@ abstract class AnalyzerRule[C <: Global with Singleton](val global: C) {
     }
 
   def analyze(unit: CompilationUnit): Unit
+
+  override def toString = getClass.getSimpleName
 }
