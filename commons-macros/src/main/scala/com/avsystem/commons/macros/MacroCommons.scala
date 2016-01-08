@@ -16,9 +16,12 @@ trait MacroCommons {
 
   val CommonsPackage = q"_root_.com.avsystem.commons"
   val OptionCls = tq"_root_.scala.Option"
+  val SomeObj = q"_root_.scala.Some"
+  val NoneObj = q"_root_.scala.None"
   val CollectionPkg = q"_root_.scala.collection"
   val ListObj = q"$CollectionPkg.immutable.List"
   val ListCls = tq"$CollectionPkg.immutable.List"
+  val NilObj = q"$CollectionPkg.immutable.Nil"
   val FutureSym = typeOf[Future[_]].typeSymbol
 
   lazy val ownerChain = {
