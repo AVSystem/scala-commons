@@ -4,9 +4,9 @@ package jiop
 import java.{lang => jl, math => jm, util => ju}
 
 /**
- * Author: ghik
- * Created: 10/07/15.
- */
+  * Author: ghik
+  * Created: 10/07/15.
+  */
 trait JBasicUtils {
   type JByte = jl.Byte
   type JShort = jl.Short
@@ -19,4 +19,6 @@ trait JBasicUtils {
   type JBigInteger = jm.BigInteger
   type JBigDecimal = jm.BigDecimal
   type JDate = ju.Date
+  type JNumber = jl.Number
+  type JVoid = jl.Void
 }

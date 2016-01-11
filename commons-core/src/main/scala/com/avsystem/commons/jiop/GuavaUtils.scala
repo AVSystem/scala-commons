@@ -3,6 +3,7 @@ package jiop
 
 import java.util.concurrent.{Executor, TimeUnit}
 
+import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.jiop.GuavaUtils.{DecorateFutureAsGuava, DecorateFutureAsScala}
 import com.avsystem.commons.misc.Sam
 import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture}
@@ -35,12 +36,20 @@ object GuavaUtils {
       case FutureAsListenableFuture(fut) => fut
       case _ => ListenableFutureAsScala(gfut)
     }
+
+    def asScalaUnit: Future[Unit] =
+      asScala.toUnit
   }
 
   class DecorateFutureAsGuava[T](private val fut: Future[T]) extends AnyVal {
     def asGuava: ListenableFuture[T] = fut match {
       case ListenableFutureAsScala(gfut) => gfut
       case _ => FutureAsListenableFuture(fut)
+    }
+
+    def asGuavaVoid: ListenableFuture[Void] = {
+      import JavaInterop.toDecorateAsGuava
+      fut.toVoid.asGuava
     }
   }
 
