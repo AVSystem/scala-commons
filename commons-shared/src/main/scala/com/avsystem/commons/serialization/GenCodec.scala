@@ -108,7 +108,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     protected def readNonNull(input: Input) = {
       val li = input.readList().get
       val result = readList(li)
-      li.skipAll()
+      li.skipRemaining()
       result
     }
   }
@@ -125,7 +125,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     protected def readNonNull(input: Input) = {
       val oi = input.readObject().get
       val result = readObject(oi)
-      oi.skipAll()
+      oi.skipRemaining()
       result
     }
   }
