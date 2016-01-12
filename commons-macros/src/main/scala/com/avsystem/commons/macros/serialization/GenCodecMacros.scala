@@ -45,9 +45,6 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   def mkTupleCodec[T: c.WeakTypeTag](elementCodecs: c.Tree*): c.Tree = {
     val tupleTpe = weakTypeOf[T]
-    val rname = c.freshName(TermName("raw"))
-    val vname = c.freshName(TermName("value"))
-    val lname = c.freshName(TermName("list"))
     val indices = elementCodecs.indices
     q"""
         new $GenCodecObj.ListCodec[$tupleTpe] {
