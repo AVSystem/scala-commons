@@ -8,7 +8,7 @@ object Opt {
   def unapply[A](opt: Opt[A]) = opt //name-based extractor
 
   def some[A](value: A): Opt[A] =
-    if(value != null) new Opt[A](value)
+    if (value != null) new Opt[A](value)
     else throw new NullPointerException
 
   implicit def opt2Iterable[A](xo: Opt[A]): Iterable[A] = xo.toList
@@ -52,6 +52,9 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal {
 
   @inline def toOption: Option[A] =
     if (isEmpty) None else Some(value)
+
+  @inline def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
+    if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
 
   @inline def getOrElse[B >: A](default: => B): B =
     if (isEmpty) default else value

@@ -2,7 +2,7 @@ package com.avsystem.commons
 
 import com.avsystem.commons.SharedExtensions._
 import com.avsystem.commons.concurrent.RunNowEC
-import com.avsystem.commons.misc.{Opt, OptRef}
+import com.avsystem.commons.misc.{Boxing, Opt, OptRef}
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
@@ -20,6 +20,8 @@ trait SharedExtensions {
   implicit def futureOps[A](fut: Future[A]): FutureOps[A] = new FutureOps(fut)
 
   implicit def lazyFutureOps[A](fut: Future[A]): LazyFutureOps[A] = new LazyFutureOps(fut)
+
+  implicit def optionOps[A](option: Option[A]): OptionOps[A] = new OptionOps(option)
 }
 
 object SharedExtensions extends SharedExtensions {
@@ -100,5 +102,13 @@ object SharedExtensions extends SharedExtensions {
       }
       if (result != null) result else Future.failed(new NullPointerException("null Future"))
     }
+  }
+
+  class OptionOps[A](private val option: Option[A]) extends AnyVal {
+    def toOpt: Opt[A] =
+      if (option.isEmpty) Opt.Empty else Opt(option.get)
+
+    def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
+      if (option.isEmpty) OptRef.Empty else OptRef(boxing.fun(option.get))
   }
 }
