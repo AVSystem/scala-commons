@@ -62,7 +62,8 @@ lazy val commons = project.in(file("."))
     `commons-sharedJS`,
     `commons-core`,
     `commons-analyzer`,
-    `commons-jetty`
+    `commons-jetty`,
+    `commons-benchmark`
   )
   .settings(
     publishArtifact := false
@@ -120,4 +121,9 @@ lazy val `commons-jetty` = project
 lazy val `commons-benchmark` = project
   .dependsOn(`commons-core`)
   .settings(commonSettings: _*)
+  .settings(
+    publishArtifact in `packageBin` := false,
+    publishArtifact in `packageSrc` := false,
+    publishArtifact in `packageDoc` := false
+  )
   .enablePlugins(JmhPlugin)
