@@ -37,7 +37,7 @@ object Opt {
 final class Opt[+A] private(private val rawValue: Any) extends AnyVal {
   private def value: A = rawValue.asInstanceOf[A]
 
-  @inline def isEmpty: Boolean = value == null
+  @inline def isEmpty: Boolean = rawValue == null
   @inline def isDefined: Boolean = !isEmpty
   @inline def nonEmpty: Boolean = isDefined
 
