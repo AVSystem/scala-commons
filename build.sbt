@@ -122,8 +122,6 @@ lazy val `commons-benchmark` = project
   .dependsOn(`commons-core`)
   .settings(commonSettings: _*)
   .settings(
-    publishArtifact in `packageBin` := false,
-    publishArtifact in `packageSrc` := false,
-    publishArtifact in `packageDoc` := false
+    publishArtifact := false
   )
   .enablePlugins(JmhPlugin)
