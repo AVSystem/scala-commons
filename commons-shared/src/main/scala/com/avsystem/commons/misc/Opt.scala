@@ -5,7 +5,7 @@ import scala.language.implicitConversions
 
 object Opt {
   def apply[A](value: A): Opt[A] = new Opt[A](value)
-  def unapply[A](opt: Opt[A]) = opt //name-based extractor
+  def unapply[A](opt: Opt[A]): Opt[A] = opt //name-based extractor
 
   def some[A](value: A): Opt[A] =
     if (value != null) new Opt[A](value)

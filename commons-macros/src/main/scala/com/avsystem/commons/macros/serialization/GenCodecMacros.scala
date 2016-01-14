@@ -24,6 +24,8 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
   val BMapCls = tq"$CollectionPkg.Map"
   val GenCodecObj = q"$SerializationPkg.GenCodec"
   val GenCodecCls = tq"$SerializationPkg.GenCodec"
+  val NOptObj = q"$CommonsPackage.misc.NOpt"
+  val NOptCls = tq"$CommonsPackage.misc.NOpt"
 
   def tupleGet(i: Int) = TermName(s"_${i + 1}")
 
@@ -144,10 +146,10 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
           protected def typeRepr = ${tpe.toString}
           protected def nullable = ${typeOf[Null] <:< tpe}
           protected def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
-            ..${params.map(p => q"var ${optName(p)}: $OptionCls[${p.sym.typeSignature}] = $NoneObj")}
+            ..${params.map(p => q"var ${optName(p)}: $NOptCls[${p.sym.typeSignature}] = $NOptObj.Empty")}
             while(input.hasNext) {
               input.nextField() match {
-                case ..${params.map(p => cq"(${nameBySym(p.sym)}, fi) => ${optName(p)} = $SomeObj(${depNames(p.sym)}.read(fi))")}
+                case ..${params.map(p => cq"(${nameBySym(p.sym)}, fi) => ${optName(p)} = $NOptObj.some(${depNames(p.sym)}.read(fi))")}
                 case (_, fi) => fi.skip()
               }
             }

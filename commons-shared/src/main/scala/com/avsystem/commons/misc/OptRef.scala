@@ -78,9 +78,6 @@ final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with
   @inline def flatMap[B >: Null](f: A => OptRef[B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else f(value)
 
-  @inline def flatten[B >: Null](implicit ev: A <:< OptRef[B]): OptRef[B] =
-    if (isEmpty) OptRef.Empty else ev(value)
-
   @inline def filter(p: A => Boolean): OptRef[A] =
     if (isEmpty || p(value)) this else OptRef.Empty
 

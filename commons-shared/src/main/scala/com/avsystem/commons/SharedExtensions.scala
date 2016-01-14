@@ -2,7 +2,7 @@ package com.avsystem.commons
 
 import com.avsystem.commons.SharedExtensions._
 import com.avsystem.commons.concurrent.RunNowEC
-import com.avsystem.commons.misc.{Boxing, Opt, OptRef}
+import com.avsystem.commons.misc.{Boxing, NOpt, Opt, OptRef}
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
@@ -110,5 +110,8 @@ object SharedExtensions extends SharedExtensions {
 
     def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
       if (option.isEmpty) OptRef.Empty else OptRef(boxing.fun(option.get))
+
+    def toNOpt: NOpt[A] =
+      if (option.isEmpty) NOpt.Empty else NOpt.some(option.get)
   }
 }

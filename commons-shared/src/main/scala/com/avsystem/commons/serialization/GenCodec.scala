@@ -5,6 +5,7 @@ import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.jiop.BasicJavaInterop._
 import com.avsystem.commons.jiop.JCanBuildFrom
 import com.avsystem.commons.macros.DeferredInstance
+import com.avsystem.commons.misc.NOpt
 
 import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
@@ -242,12 +243,12 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   */
 trait FallbackMapCodecs {this: GenCodec.type =>
   private def readKVPair[K: GenCodec, V: GenCodec](input: ObjectInput): (K, V) = {
-    var keyOpt: Option[K] = None
-    var valueOpt: Option[V] = None
+    var keyOpt: NOpt[K] = NOpt.empty
+    var valueOpt: NOpt[V] = NOpt.empty
     while (input.hasNext) {
       input.nextField() match {
-        case ("k", i) => keyOpt = Some(read[K](i))
-        case ("v", i) => valueOpt = Some(read[V](i))
+        case ("k", i) => keyOpt = NOpt.some(read[K](i))
+        case ("v", i) => valueOpt = NOpt.some(read[V](i))
         case _ =>
       }
     }

@@ -2,7 +2,7 @@ import sbt._
 
 name := "commons"
 
-version in ThisBuild := "1.10.2"
+version in ThisBuild := "1.10.3"
 scalaVersion in ThisBuild := "2.11.7"
 organization in ThisBuild := "com.avsystem.commons"
 crossPaths in ThisBuild := false
@@ -116,3 +116,8 @@ lazy val `commons-jetty` = project
       "com.lihaoyi" %% "upickle" % upickleVersion % Test
     )
   )
+
+lazy val `commons-benchmark` = project
+  .dependsOn(`commons-core`)
+  .settings(commonSettings: _*)
+  .enablePlugins(JmhPlugin)

@@ -1,9 +1,8 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.FunSuite
-
 import com.avsystem.commons.jiop.JavaInterop._
+import org.scalatest.FunSuite
 
 /**
   * Author: ghik
@@ -34,5 +33,12 @@ class OptTest extends FunSuite {
     val boxedOpt: Opt[JInteger] = opt.boxed
     val unboxedOpt: Opt[Int] = boxedOpt.unboxed
     assert(opt == unboxedOpt)
+  }
+
+  test("nesting test") {
+    val opt: Opt[Opt[String]] = Opt(Opt.empty)
+    opt match {
+      case Opt(Opt.Empty) =>
+    }
   }
 }

@@ -163,6 +163,7 @@ class GenCodecTest extends FunSuite {
   test("case class with default values test") {
     testWriteRead(HasDefaults(str = "lol"))
     testWriteRead(HasDefaults(43, "lol"))
+    testWriteRead(HasDefaults(str = null))
   }
 
   case class Node[T](value: T, children: List[Node[T]] = Nil)
