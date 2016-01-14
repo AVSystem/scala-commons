@@ -49,7 +49,7 @@ object OptRef {
   * Author: ghik
   * Created: 07/01/16.
   */
-final class OptRef[+A >: Null] private(private val value: A) extends AnyVal {
+final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with Serializable {
   @inline def isEmpty: Boolean = value == null
   @inline def isDefined: Boolean = !isEmpty
   @inline def nonEmpty: Boolean = isDefined
@@ -120,4 +120,7 @@ final class OptRef[+A >: Null] private(private val value: A) extends AnyVal {
 
   @inline def toLeft[X](right: => X) =
     if (isEmpty) Right(right) else Left(value)
+
+  override def toString =
+    if (isEmpty) "OptRef.Empty" else s"OptRef($value)"
 }
