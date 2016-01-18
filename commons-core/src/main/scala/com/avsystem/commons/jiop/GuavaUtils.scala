@@ -72,20 +72,27 @@ object GuavaUtils {
       Futures.addCallback(gfut, callback, executor)
     }
 
+    private[this] def unwrapFailures(expr: => T): T =
+      try expr catch {
+        case ee: ExecutionException => throw ee.getCause
+      }
+
     def value: Option[Try[T]] =
-      if (gfut.isDone) Some(Try(gfut.get)) else None
+      if (gfut.isDone) Some(Try(unwrapFailures(gfut.get))) else None
 
     @throws(classOf[Exception])
     def result(atMost: Duration)(implicit permit: CanAwait): T =
       if (atMost.isFinite())
-        gfut.get(atMost.length, atMost.unit)
+        unwrapFailures(gfut.get(atMost.length, atMost.unit))
       else
-        gfut.get()
+        unwrapFailures(gfut.get())
 
     @throws(classOf[InterruptedException])
     @throws(classOf[TimeoutException])
     def ready(atMost: Duration)(implicit permit: CanAwait): this.type = {
-      result(atMost)
+      try result(atMost) catch {
+        case NonFatal(_) =>
+      }
       this
     }
   }
@@ -108,7 +115,7 @@ object GuavaUtils {
     def isCancelled: Boolean =
       false
 
-    private def wrapFailures(expr: => T): T =
+    private[this] def wrapFailures(expr: => T): T =
       try expr catch {
         case NonFatal(e) => throw new ExecutionException(e)
       }
@@ -125,6 +132,4 @@ object GuavaUtils {
     def isDone: Boolean =
       fut.isCompleted
   }
-
 }
-
