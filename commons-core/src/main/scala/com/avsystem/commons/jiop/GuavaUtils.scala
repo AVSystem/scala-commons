@@ -3,7 +3,6 @@ package jiop
 
 import java.util.concurrent.{Executor, TimeUnit}
 
-import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.jiop.GuavaUtils.{DecorateFutureAsGuava, DecorateFutureAsScala}
 import com.avsystem.commons.misc.Sam
 import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture}
@@ -12,6 +11,7 @@ import com.google.common.{base => gbase}
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent._
 import scala.concurrent.duration.Duration
+import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 trait GuavaUtils {
@@ -92,6 +92,7 @@ object GuavaUtils {
 
   private case class FutureAsListenableFuture[T](fut: Future[T]) extends ListenableFuture[T] {
     def addListener(listener: Runnable, executor: Executor): Unit = {
+      listener.checkNotNull("listener is null")
       val ec = executor match {
         case ec: ExecutionContext => ec
         case _ => new ExecutionContext {
@@ -107,11 +108,16 @@ object GuavaUtils {
     def isCancelled: Boolean =
       false
 
+    private def wrapFailures(expr: => T): T =
+      try expr catch {
+        case NonFatal(e) => throw new ExecutionException(e)
+      }
+
     def get(): T =
-      Await.result(fut, Duration.Inf)
+      wrapFailures(Await.result(fut, Duration.Inf))
 
     def get(timeout: Long, unit: TimeUnit): T =
-      Await.result(fut, Duration(timeout, unit))
+      wrapFailures(Await.result(fut, Duration(timeout, unit)))
 
     def cancel(mayInterruptIfRunning: Boolean): Boolean =
       throw new UnsupportedOperationException
