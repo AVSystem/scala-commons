@@ -131,7 +131,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     }
   }
 
-  trait RichObjectCodec[T] extends ObjectCodec[T] {
+  trait ErrorReportingCodec[T] extends GenCodec[T] {
     protected def typeRepr: String
 
     protected def fieldMissing(field: String) =

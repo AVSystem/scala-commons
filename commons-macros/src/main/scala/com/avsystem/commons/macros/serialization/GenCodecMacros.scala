@@ -42,7 +42,7 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
     val syms =
       if (sym.isClass) sym.asClass.baseClasses
       else sym :: sym.overrides
-    syms.flatMap(_.annotations).filter(_.tree.tpe <:< NameAnnotType)
+    syms.flatMap(_.annotations).filter(_.tree.tpe <:< annotTpe)
   }
 
   def mkTupleCodec[T: c.WeakTypeTag](elementCodecs: c.Tree*): c.Tree = {
@@ -118,13 +118,15 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
     if (isTransparent(tpe.typeSymbol)) params match {
       case List(p) =>
         q"""
-           new $GenCodecObj.NullSafeCodec[$tpe] {
+           new $GenCodecObj.NullSafeCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
              ${depDeclaration(p)}
+             protected def typeRepr = ${tpe.toString}
              protected def nullable = ${typeOf[Null] <:< tpe}
-             protected def read(input: $SerializationPkg.Input): $tpe =
+             protected def readNonNull(input: $SerializationPkg.Input): $tpe =
                $companion.apply[..${tpe.typeArgs}](${depNames(p.sym)}.read(input))
-             protected def write(output: $SerializationPkg.Output, value: $tpe): Unit =
-               $companion.unapply[..${tpe.typeArgs}](value).map(${depNames(p.sym)}.write(output, _)).getOrElse(unapplyFailed)
+             protected def writeNonNull(output: $SerializationPkg.Output, value: $tpe): Unit =
+               $companion.unapply[..${tpe.typeArgs}](value).map(${depNames(p.sym)}.write(output, _))
+               .getOrElse(unapplyFailed)
            }
          """
       case _ =>
@@ -141,7 +143,7 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
       }
 
       q"""
-        new $GenCodecObj.RichObjectCodec[$tpe] {
+        new $GenCodecObj.ObjectCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
           ..${params.map(depDeclaration)}
           protected def typeRepr = ${tpe.toString}
           protected def nullable = ${typeOf[Null] <:< tpe}
@@ -173,7 +175,7 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
       q"val ${depNames(subtype.sym)} = ${subtype.instance}"
 
     q"""
-      new $GenCodecObj.RichObjectCodec[$tpe] {
+      new $GenCodecObj.ObjectCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
         ..${subtypes.map(depDeclaration)}
         protected def typeRepr = ${tpe.toString}
         protected def nullable = ${typeOf[Null] <:< tpe}
