@@ -280,7 +280,7 @@ trait FallbackMapCodecs {this: GenCodec.type =>
   * Typeclass which expresses ability to convert between MongoDB JSON object keys and values of some type.
   * Every type which has a natural, unambiguous string representation should have a DBKeyCodec.
   */
-@implicitNotFound("Can't convert between database key and ${T} - DBKeyCodec not found")
+@implicitNotFound("Can't convert between database key and ${T} - GenKeyCodec not found")
 trait GenKeyCodec[T] {
   def read(key: String): T
   def write(value: T): String
