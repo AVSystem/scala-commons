@@ -5,7 +5,7 @@ import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.jiop.BasicJavaInterop._
 import com.avsystem.commons.jiop.JCanBuildFrom
 import com.avsystem.commons.macros.DeferredInstance
-import com.avsystem.commons.misc.NOpt
+import com.avsystem.commons.misc.{NOpt, Opt, OptRef}
 
 import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
@@ -235,6 +235,21 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
       li => if (li.hasNext) Some(read[T](li.nextElement())) else None,
       (lo, opt) => opt.iterator.writeToList(lo)
     )
+
+  implicit def nOptCodec[T: GenCodec]: GenCodec[NOpt[T]] =
+    new TransformedCodec[NOpt[T], Option[T]](optionCodec[T], _.toOption, _.toNOpt)
+
+  implicit def optCodec[T: GenCodec]: GenCodec[Opt[T]] =
+    create[Opt[T]](
+      i => i.readNull().map(_ => Opt.Empty).getOrElse(_ => Opt(read[T](i))),
+      locally {
+        case (o, Opt(t)) => write[T](o, t)
+        case (o, Opt.Empty) => o.writeNull()
+      }
+    )
+
+  implicit def optRefCodec[T >: Null : GenCodec]: GenCodec[OptRef[T]] =
+    new TransformedCodec[OptRef[T], Opt[T]](optCodec[T], _.toOpt, opt => OptRef(opt.orNull))
 }
 
 /**
