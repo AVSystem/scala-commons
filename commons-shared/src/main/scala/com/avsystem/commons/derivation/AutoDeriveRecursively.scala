@@ -8,3 +8,6 @@ import scala.language.higherKinds
   * Created: 04/02/16.
   */
 sealed trait AutoDeriveRecursively[TC[_]]
+object AutoDeriveRecursively {
+  def apply[TC[_]]: AutoDeriveRecursively[TC] = null
+}

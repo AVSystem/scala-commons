@@ -13,6 +13,7 @@ trait TypeClassDerivation extends MacroCommons {
 
   val DeferredInstanceCls = tq"$CommonsPackage.derivation.DeferredInstance"
   val AutoDeriveRecursivelyCls = tq"$CommonsPackage.derivation.AutoDeriveRecursively"
+  val AutoDeriveRecursivelyObj = q"$CommonsPackage.derivation.AutoDeriveRecursively"
   val RecursiveImplicitMarkerObj = q"$CommonsPackage.macros.RecursiveImplicitMarker"
 
   /**
@@ -216,7 +217,8 @@ trait TypeClassDerivation extends MacroCommons {
   def autoDeriveWrapped[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
     q"""
-       implicit val ${c.freshName(TermName("allow"))}: $AutoDeriveRecursivelyCls[$typeClass] = null
+       implicit val ${c.freshName(TermName("allow"))}: $AutoDeriveRecursivelyCls[$typeClass] =
+         $AutoDeriveRecursivelyObj[$typeClass]
        ${wrapInAuto(q"implicitly[${typeClassInstance(tpe)}]")}
      """
   }
