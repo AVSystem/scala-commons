@@ -7,7 +7,7 @@ package serialization
   * reused. This means that [[Output]] instance can be used only to write a single value. However, if the value
   * to write is complex, one can use `writeList`/`writeSet` or `writeObject`/`writeMap`.
   */
-trait Output {
+trait Output extends Any {
   def writeNull(): Unit
   def writeUnit(): Unit = writeNull()
   def writeString(str: String): Unit
@@ -29,7 +29,7 @@ trait Output {
 /**
   * Base trait for outputs which allow writing of multiple values in sequence, i.e. [[ListOutput]] and [[ObjectOutput]].
   */
-trait SequentialOutput {
+trait SequentialOutput extends Any {
   /**
     * Indicates that all elements or fields in this [[SequentialOutput]] have been written. This method MUST always
     * be called after list/object writing has been finished.
@@ -79,7 +79,7 @@ trait ObjectOutput extends SequentialOutput {
   * successful value or by calling `skip()`. Also, [[ListInput]] and [[ObjectInput]] instances returned from this
   * [[Input]] must also be fully exhausted on their own.
   */
-trait Input {
+trait Input extends Any {
   def readNull(): ValueRead[Null]
   def readUnit(): ValueRead[Unit] = readNull().map(_ => ())
   def readString(): ValueRead[String]
@@ -99,7 +99,7 @@ trait Input {
   def readMap(): ValueRead[ObjectInput] = readObject()
   def skip(): Unit
 }
-trait SequentialInput {
+trait SequentialInput extends Any {
   def hasNext: Boolean
   def skipRemaining(): Unit
 }
