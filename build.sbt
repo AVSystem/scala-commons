@@ -2,7 +2,7 @@ import sbt._
 
 name := "commons"
 
-version in ThisBuild := "1.10.7"
+version in ThisBuild := "1.11.0"
 scalaVersion in ThisBuild := "2.11.7"
 organization in ThisBuild := "com.avsystem.commons"
 scalacOptions in ThisBuild ++= Seq(
@@ -53,6 +53,8 @@ val commonSettings = Seq(
   fork in Test := true
 )
 
+val CompileAndTest = "compile->compile;test->test"
+
 lazy val commons = project.in(file("."))
   .aggregate(
     `commons-annotations`,
@@ -90,7 +92,7 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
 lazy val `commons-sharedJVM` = `commons-shared`.jvm
 lazy val `commons-sharedJS` = `commons-shared`.js
 
-lazy val `commons-core` = project.dependsOn(`commons-macros`, `commons-sharedJVM`)
+lazy val `commons-core` = project.dependsOn(`commons-macros` % CompileAndTest, `commons-sharedJVM`)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(

@@ -14,11 +14,12 @@ trait MacroCommons {
 
   import c.universe._
 
+  val ScalaPkg = q"_root_.scala"
   val CommonsPackage = q"_root_.com.avsystem.commons"
-  val OptionCls = tq"_root_.scala.Option"
-  val SomeObj = q"_root_.scala.Some"
-  val NoneObj = q"_root_.scala.None"
-  val CollectionPkg = q"_root_.scala.collection"
+  val OptionCls = tq"$ScalaPkg.Option"
+  val SomeObj = q"$ScalaPkg.Some"
+  val NoneObj = q"$ScalaPkg.None"
+  val CollectionPkg = q"$ScalaPkg.collection"
   val ListObj = q"$CollectionPkg.immutable.List"
   val ListCls = tq"$CollectionPkg.immutable.List"
   val NilObj = q"$CollectionPkg.immutable.Nil"
@@ -87,14 +88,6 @@ trait MacroCommons {
       hashCodeSymbols.result().hashCode
     }
   }
-
-  def implicitValue(tpe: Type, depTpe: Type): Tree =
-    try c.typecheck(q"implicitly[$depTpe]") match {
-      case Apply(_, List(arg)) => arg
-    } catch {
-      case te: TypecheckException =>
-        abort(s"Auto derivation failed for $tpe: ${te.msg}")
-    }
 
   def getType(typeTree: Tree): Type =
     c.typecheck(typeTree, c.TYPEmode).tpe
@@ -246,7 +239,7 @@ trait MacroCommons {
     val ts = tpe.typeSymbol.asType
     val companion = ts.companion
 
-    if (companion != NoSymbol) {
+    if (companion != NoSymbol && !companion.isJava) {
       val companionTpe = getType(tq"$companion.type")
 
       val applyUnapplyPairs = for {
@@ -370,4 +363,12 @@ trait MacroCommons {
       case EmptyTree => None
     }
   }
+
+  def abortOnTypecheckException[T](expr: => T): T =
+    try expr catch {
+      case TypecheckException(pos, msg) => abort(msg)
+    }
+
+  def typecheckException(msg: String) =
+    throw new TypecheckException(c.enclosingPosition, msg)
 }

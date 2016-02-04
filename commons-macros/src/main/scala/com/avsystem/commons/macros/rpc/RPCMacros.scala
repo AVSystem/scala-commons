@@ -38,11 +38,8 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
   sealed trait MemberType
 
   case object Procedure extends MemberType
-
   case object Function extends MemberType
-
   case object Getter extends MemberType
-
   case object Invalid extends MemberType
 
   case class ProxyableMember(method: MethodSymbol, signature: Type) {

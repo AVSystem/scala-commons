@@ -4,7 +4,6 @@ package serialization
 import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.jiop.JavaInterop._
 import com.avsystem.commons.serialization.GenCodecTest.ValueClass
-import org.scalatest.FunSuite
 
 /**
   * Author: ghik
@@ -13,116 +12,56 @@ import org.scalatest.FunSuite
 object GenCodecTest {
   case class ValueClass(str: String) extends AnyVal
   object ValueClass {
-    implicit val codec = GenCodec.auto[ValueClass]
+    implicit val codec: GenCodec[ValueClass] = GenCodec.auto[ValueClass]
   }
 }
 
-class GenCodecTest extends FunSuite {
-  def assertSameTypeValue[T](v1: T, v2: T): Unit = {
-    assert(v1 == v2)
-    assert(v1.getClass == v2.getClass)
-  }
-
-  def col[T <: JCollection[Int]](col: T): T = {
-    col.add(1)
-    col.add(2)
-    col.add(3)
-    col
-  }
-
-  def map[M <: JMap[Int, Int]](map: M): M = {
-    map.put(1, 1)
-    map.put(2, 2)
-    map.put(3, 3)
-    map
-  }
-
-  def stringMap[M <: JMap[String, Int]](map: M): M = {
-    map.put("1", 1)
-    map.put("2", 2)
-    map.put("3", 3)
-    map
-  }
-
-  def doubleMap[M <: JMap[Double, Int]](map: M): M = {
-    map.put(1.0, 1)
-    map.put(2.0, 2)
-    map.put(3.0, 3)
-    map
-  }
-
-  val option = Option(42)
-  val list = List(1, 2, 3)
-  val set = Set(1, 2, 3)
-  val map = Map("1" -> 1, "2" -> 2, "3" -> 3)
-  val hashMap = IHashMap("1" -> 1, "2" -> 2, "3" -> 3)
-  val intMap = Map(1 -> 1, 2 -> 2, 3 -> 3)
-  val doubleMap = Map(1.0 -> 1, 2.0 -> 2, 3.0 -> 3)
-
-  val jArrayList = col(new JArrayList[Int])
-  val jLinkedList = col(new JLinkedList[Int])
-  val jHashSet = col(new JHashSet[Int])
-  val jLinkedHashSet = col(new JLinkedHashSet[Int])
-  val jTreeSet = col(new JTreeSet[Int])
-  val jHashMap = stringMap(new JHashMap[String, Int])
-  val jIntHashMap = map(new JHashMap[Int, Int])
-  val jDoubleHashMap = doubleMap(new JHashMap[Double, Int])
-  val jLinkedHashMap = stringMap(new JLinkedHashMap[String, Int])
-  val jTreeMap = stringMap(new JTreeMap[String, Int])
-
-  def testWriteRead[T: GenCodec](value: T, expectedRepr: Any): Unit = {
-    var written: Any = null
-    GenCodec.write[T](new SimpleValueOutput(written = _), value)
-    assert(written == expectedRepr)
-    val readBack = GenCodec.read[T](new SimpleValueInput(written))
-    assertSameTypeValue(value, readBack)
-  }
-
+class GenCodecTest extends CodecTestBase {
   test("NoState test") {
     type NoState = Nothing {type Dummy = Nothing}
     assert(implicitly[GenCodec[NoState]] == GenCodec.NothingCodec)
   }
 
   test("collection test") {
-    testWriteRead[Option[Int]](option, List(42))
-    testWriteRead[List[Int]](list, list)
-    testWriteRead[Set[Int]](set, set.toList)
-    testWriteRead[Map[String, Int]](map, map)
-    testWriteRead[Map[Int, Int]](intMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteRead[Map[Double, Int]](doubleMap,
+    testWriteReadAndAutoWriteRead[Option[Int]](option, List(42))
+    testWriteReadAndAutoWriteRead[List[Int]](list, list)
+    testWriteReadAndAutoWriteRead[Set[Int]](set, set.toList)
+    testWriteReadAndAutoWriteRead[Map[String, Int]](map, map)
+    testWriteReadAndAutoWriteRead[Map[Int, Int]](intMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[Map[Double, Int]](doubleMap,
       List(Map[String, Any]("k" -> 1.0, "v" -> 1), Map[String, Any]("k" -> 2.0, "v" -> 2), Map[String, Any]("k" -> 3.0, "v" -> 3)))
-    testWriteRead[IHashMap[String, Int]](hashMap, hashMap)
+    testWriteReadAndAutoWriteRead[IHashMap[String, Int]](hashMap, hashMap)
   }
 
   test("java colleciton test") {
-    testWriteRead[JCollection[Int]](jArrayList, List(1,2,3))
-    testWriteRead[JList[Int]](jArrayList, List(1,2,3))
-    testWriteRead[JArrayList[Int]](jArrayList, List(1,2,3))
-    testWriteRead[JLinkedList[Int]](jLinkedList, List(1,2,3))
-    testWriteRead[JSet[Int]](jHashSet, List(1,2,3))
-    testWriteRead[JHashSet[Int]](jHashSet, List(1,2,3))
-    testWriteRead[JLinkedHashSet[Int]](jLinkedHashSet, List(1,2,3))
-    testWriteRead[JSortedSet[Int]](jTreeSet, List(1,2,3))
-    testWriteRead[JNavigableSet[Int]](jTreeSet, List(1,2,3))
-    testWriteRead[JTreeSet[Int]](jTreeSet, List(1,2,3))
-    testWriteRead[JMap[String, Int]](jHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteRead[JHashMap[String, Int]](jHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteRead[JLinkedHashMap[String, Int]](jLinkedHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteRead[JHashMap[Int, Int]](jIntHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteRead[JHashMap[Double, Int]](jDoubleHashMap,
+    testWriteReadAndAutoWriteRead[JCollection[Int]](jArrayList, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JList[Int]](jArrayList, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JArrayList[Int]](jArrayList, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JLinkedList[Int]](jLinkedList, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JSet[Int]](jHashSet, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JHashSet[Int]](jHashSet, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JLinkedHashSet[Int]](jLinkedHashSet, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JSortedSet[Int]](jTreeSet, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JNavigableSet[Int]](jTreeSet, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JTreeSet[Int]](jTreeSet, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JMap[String, Int]](jHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JHashMap[String, Int]](jHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JLinkedHashMap[String, Int]](jLinkedHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JHashMap[Int, Int]](jIntHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JHashMap[Double, Int]](jDoubleHashMap,
       List(Map[String, Any]("k" -> 1.0, "v" -> 1), Map[String, Any]("k" -> 2.0, "v" -> 2), Map[String, Any]("k" -> 3.0, "v" -> 3))
     )
-    testWriteRead[JSortedMap[String, Int]](jTreeMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteRead[JNavigableMap[String, Int]](jTreeMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteRead[JTreeMap[String, Int]](jTreeMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JSortedMap[String, Int]](jTreeMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JNavigableMap[String, Int]](jTreeMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JTreeMap[String, Int]](jTreeMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
   }
 
   test("tuple test") {
-    testWriteRead((1, 2, 3),
+    testWriteReadAndAutoWriteRead((1, 2, 3),
       List(1, 2, 3))
-    testWriteRead((1, "lol"),
+    testWriteReadAndAutoWriteRead((1, "lol"),
       List(1, "lol"))
-    testWriteRead((1, "lol", 3.0, 'a', List("dafuq", "fuu")),
+    testWriteReadAndAutoWriteRead((1, "lol", 3.0, 'a', List("dafuq", "fuu")),
       List(1, "lol", 3.0, "a", List("dafuq", "fuu"))
     )
   }
@@ -132,7 +71,7 @@ class GenCodecTest extends FunSuite {
   }
 
   test("object test") {
-    testWriteRead(SomeObject, Map())
+    testWriteReadAndAutoWriteRead(SomeObject, Map())
   }
 
   case class NoArgCaseClass()
@@ -141,7 +80,7 @@ class GenCodecTest extends FunSuite {
   }
 
   test("no arg case class test") {
-    testWriteRead(NoArgCaseClass(), Map())
+    testWriteReadAndAutoWriteRead(NoArgCaseClass(), Map())
   }
 
   case class SingleArgCaseClass(str: String)
@@ -150,7 +89,7 @@ class GenCodecTest extends FunSuite {
   }
 
   test("single arg case class test") {
-    testWriteRead(SingleArgCaseClass("something"), Map("str" -> "something"))
+    testWriteReadAndAutoWriteRead(SingleArgCaseClass("something"), Map("str" -> "something"))
   }
 
   @transparent
@@ -160,7 +99,7 @@ class GenCodecTest extends FunSuite {
   }
 
   test("transparent wrapper test") {
-    testWriteRead(TransparentWrapper("something"), "something")
+    testWriteReadAndAutoWriteRead(TransparentWrapper("something"), "something")
   }
 
   case class SomeCaseClass(@name("some.str") str: String, intList: List[Int])
@@ -169,7 +108,7 @@ class GenCodecTest extends FunSuite {
   }
 
   test("case class test") {
-    testWriteRead(SomeCaseClass("dafuq", List(1, 2, 3)),
+    testWriteReadAndAutoWriteRead(SomeCaseClass("dafuq", List(1, 2, 3)),
       Map("some.str" -> "dafuq", "intList" -> List(1, 2, 3))
     )
   }
@@ -180,9 +119,9 @@ class GenCodecTest extends FunSuite {
   }
 
   test("case class with default values test") {
-    testWriteRead(HasDefaults(str = "lol"), Map("str" -> "lol"))
-    testWriteRead(HasDefaults(43, "lol"), Map("int" -> 43, "str" -> "lol"))
-    testWriteRead(HasDefaults(str = null), Map("str" -> null))
+    testWriteReadAndAutoWriteRead(HasDefaults(str = "lol"), Map("str" -> "lol"))
+    testWriteReadAndAutoWriteRead(HasDefaults(43, "lol"), Map("int" -> 43, "str" -> "lol"))
+    testWriteReadAndAutoWriteRead(HasDefaults(str = null), Map("str" -> null))
   }
 
   case class Node[T](value: T, children: List[Node[T]] = Nil)
@@ -191,7 +130,7 @@ class GenCodecTest extends FunSuite {
   }
 
   test("recursive generic case class test") {
-    testWriteRead(
+    testWriteReadAndAutoWriteRead(
       Node(123, List(
         Node(42, List(
           Node(52),
@@ -210,7 +149,7 @@ class GenCodecTest extends FunSuite {
   }
 
   test("value class test") {
-    testWriteRead(ValueClass("costam"), Map("str" -> "costam"))
+    testWriteReadAndAutoWriteRead(ValueClass("costam"), Map("str" -> "costam"))
   }
 
   sealed trait Tree[T]
@@ -221,7 +160,7 @@ class GenCodecTest extends FunSuite {
   }
 
   test("recursive gadt test") {
-    testWriteRead[Tree[Int]](
+    testWriteReadAndAutoWriteRead[Tree[Int]](
       Branch(
         Leaf(1),
         Branch(
@@ -250,6 +189,6 @@ class GenCodecTest extends FunSuite {
   }
 
   test("sealed enum test") {
-    testWriteRead[Enumz](Enumz.First, Map("Primary" -> Map()))
+    testWriteReadAndAutoWriteRead[Enumz](Enumz.First, Map("Primary" -> Map()))
   }
 }

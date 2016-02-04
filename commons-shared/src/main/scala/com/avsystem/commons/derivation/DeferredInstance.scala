@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package macros
+package derivation
 
 /**
   * Author: ghik
@@ -7,6 +7,6 @@ package macros
   */
 trait DeferredInstance[T] {
   this: T =>
-  
+
   var underlying: T = _
 }

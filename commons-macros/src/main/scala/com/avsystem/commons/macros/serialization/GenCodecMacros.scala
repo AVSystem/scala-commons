@@ -3,7 +3,7 @@ package macros.serialization
 
 import com.avsystem.commons.macros.TypeClassDerivation
 
-import scala.reflect.macros.blackbox
+import scala.reflect.macros.{TypecheckException, blackbox}
 
 /**
   * Author: ghik
@@ -60,7 +60,10 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
      """
   }
 
-  def typeClass(tpe: Type): Type = getType(tq"$GenCodecCls[$tpe]")
+
+  def typeClass = GenCodecCls
+  def typeClassName = "GenCodec"
+  def wrapInAuto(tree: Tree) = q"$GenCodecObj.Auto($tree)"
   def implementDeferredInstance(tpe: Type): Tree = q"new $GenCodecObj.Deferred[$tpe]"
 
   def forSingleton(tpe: Type, singleValueTree: Tree): Tree =
@@ -196,5 +199,5 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
   }
 
   def forUnknown(tpe: Type): Tree =
-    c.abort(c.enclosingPosition, s"Cannot automatically derive GenCodec for $tpe")
+    typecheckException(s"Cannot automatically derive GenCodec for $tpe")
 }

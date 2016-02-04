@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package macros
 
+import com.avsystem.commons.derivation.DeferredInstance
 import org.scalatest.FunSuite
 
 import scala.language.experimental.macros
@@ -44,6 +45,7 @@ object TypeClassDerivationTest {
   }
 
   object TC {
+    case class Auto[T](tc: TC[T]) extends AnyVal
     final class Deferred[T] extends DeferredInstance[TC[T]] with TC[T] {
       def tpe = underlying.tpe
       override def hashCode(): Int = System.identityHashCode(underlying)
