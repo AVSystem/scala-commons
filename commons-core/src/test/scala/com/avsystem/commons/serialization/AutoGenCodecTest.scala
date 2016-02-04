@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.jiop.JavaInterop._
-import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.serialization.AutoGenCodecTest.ValueClass
 
 /**
