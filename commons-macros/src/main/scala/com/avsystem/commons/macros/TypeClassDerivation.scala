@@ -211,9 +211,6 @@ trait TypeClassDerivation extends MacroCommons {
       .getOrElse(abortOnTypecheckException(autoDeriveFor(weakTypeOf[T])))
   }
 
-  def autoDeriveRecursively[T: c.WeakTypeTag](allow: Tree): Tree =
-    autoDerive[T]
-
   def autoDeriveWrapped[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
     q"""

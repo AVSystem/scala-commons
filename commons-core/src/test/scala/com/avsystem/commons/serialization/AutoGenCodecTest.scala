@@ -112,4 +112,12 @@ class AutoGenCodecTest extends CodecTestBase {
   test("sealed enum test") {
     testAutoWriteRead[Enumz](Enumz.First, Map("Primary" -> Map()))
   }
+
+
+  case class Bottom(str: String)
+  case class Middle(bottom: Bottom)
+  case class Top(middle: Middle)
+  object Top {
+    implicit val codec: GenCodec[Top] = GenCodec.recursiveAuto[Top]
+  }
 }

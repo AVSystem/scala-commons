@@ -300,8 +300,11 @@ trait FallbackMapCodecs extends RecursiveAutoCodecs {this: GenCodec.type =>
 }
 
 trait RecursiveAutoCodecs {this: GenCodec.type =>
-  implicit def recursiveAuto[T](implicit allow: AutoDeriveRecursively[GenCodec]): GenCodec[T] =
+  def recursiveAuto[T]: GenCodec[T] =
   macro macros.serialization.GenCodecMacros.autoDeriveRecursively[T]
+
+  implicit def implicitRecursiveAuto[T](implicit allow: AutoDeriveRecursively[GenCodec]): GenCodec[T] =
+  macro macros.serialization.GenCodecMacros.autoDeriveRecursivelyImplicitly[T]
 
   implicit def wrappedRecursiveAuto[T]: GenCodec.Auto[T] =
   macro macros.serialization.GenCodecMacros.autoDeriveWrapped[T]

@@ -2,7 +2,7 @@ import sbt._
 
 name := "commons"
 
-version in ThisBuild := "1.11.1"
+version in ThisBuild := "1.11.2"
 scalaVersion in ThisBuild := "2.11.7"
 organization in ThisBuild := "com.avsystem.commons"
 scalacOptions in ThisBuild ++= Seq(

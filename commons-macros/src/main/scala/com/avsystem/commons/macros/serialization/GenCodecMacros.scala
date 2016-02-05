@@ -3,7 +3,7 @@ package macros.serialization
 
 import com.avsystem.commons.macros.TypeClassDerivation
 
-import scala.reflect.macros.{TypecheckException, blackbox}
+import scala.reflect.macros.blackbox
 
 /**
   * Author: ghik
@@ -200,4 +200,16 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   def forUnknown(tpe: Type): Tree =
     typecheckException(s"Cannot automatically derive GenCodec for $tpe")
+
+  def autoDeriveRecursively[T: c.WeakTypeTag]: Tree = {
+    val tpe = weakTypeOf[T]
+    q"""
+       implicit val ${c.freshName(TermName("allow"))}: $AutoDeriveRecursivelyCls[$typeClass] =
+         $AutoDeriveRecursivelyObj[$typeClass]
+       $GenCodecObj.auto[$tpe]
+     """
+  }
+
+  def autoDeriveRecursivelyImplicitly[T: c.WeakTypeTag](allow: Tree): Tree =
+    autoDerive[T]
 }
