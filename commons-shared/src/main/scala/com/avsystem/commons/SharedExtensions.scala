@@ -19,7 +19,7 @@ trait SharedExtensions {
 
   implicit def futureOps[A](fut: Future[A]): FutureOps[A] = new FutureOps(fut)
 
-  implicit def lazyFutureOps[A](fut: Future[A]): LazyFutureOps[A] = new LazyFutureOps(fut)
+  implicit def lazyFutureOps[A](fut: => Future[A]): LazyFutureOps[A] = new LazyFutureOps(fut)
 
   implicit def optionOps[A](option: Option[A]): OptionOps[A] = new OptionOps(option)
 }
