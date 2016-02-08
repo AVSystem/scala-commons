@@ -208,7 +208,7 @@ trait TypeClassDerivation extends MacroCommons {
           // will be replaced by reference to deferred instance
           q"$RecursiveImplicitMarkerObj.mark[$tcTpe]"
       }
-      .getOrElse(abortOnTypecheckException(autoDeriveFor(weakTypeOf[T])))
+      .getOrElse(autoDeriveFor(weakTypeOf[T]))
   }
 
   def autoDeriveWrapped[T: c.WeakTypeTag]: Tree = {
