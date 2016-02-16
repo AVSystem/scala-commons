@@ -2,7 +2,7 @@ import sbt._
 
 name := "commons"
 
-version in ThisBuild := "1.11.2"
+version in ThisBuild := "1.11.3"
 scalaVersion in ThisBuild := "2.11.7"
 organization in ThisBuild := "com.avsystem.commons"
 scalacOptions in ThisBuild ++= Seq(
@@ -41,6 +41,7 @@ val jsr305Version = "3.0.0"
 val scalatestVersion = "2.2.5"
 val upickleVersion = "0.3.6"
 val jettyVersion = "8.1.17.v20150415"
+val mongoVersion = "3.2.2"
 
 val commonSettings = Seq(
   (publishArtifact in packageDoc) := false,
@@ -64,7 +65,8 @@ lazy val commons = project.in(file("."))
     `commons-core`,
     `commons-analyzer`,
     `commons-jetty`,
-    `commons-benchmark`
+    `commons-benchmark`,
+    `commons-mongo`
   )
   .settings(
     publishArtifact := false
@@ -126,3 +128,12 @@ lazy val `commons-benchmark` = project
     publishArtifact := false
   )
   .enablePlugins(JmhPlugin)
+
+lazy val `commons-mongo` = project
+  .dependsOn(`commons-core`)
+  .settings(commonSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.mongodb" % "mongodb-driver" % mongoVersion
+    )
+  )

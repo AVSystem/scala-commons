@@ -1,0 +1,33 @@
+package com.avsystem.commons
+package mongo
+
+import com.avsystem.commons.jiop.JavaInterop._
+import com.mongodb.client.model.{Filters => F}
+import org.bson.conversions.Bson
+import org.bson.{BsonDateTime, BsonString, BsonValue}
+
+/**
+  * @author MKej
+  */
+object Filter {
+
+  import Limitations._
+
+  def and(filters: Bson*): Bson = F.and(filters.asJava)
+
+  def eq[A](key: DocKey[A, _], value: A): Bson = F.eq(key.key, key.codec.toBson(value))
+  def lte[A, BSON <: BsonValue : CanCompare](key: DocKey[A, BSON], value: A): Bson = F.lte(key.key, key.codec.toBson(value))
+
+  def regex[A](key: DocKey[A, BsonString], pattern: String): Bson = F.regex(key.key, pattern)
+
+  def exists(key: DocKey[_, _]): Bson = F.exists(key.key, true)
+  def notExists(key: DocKey[_, _]): Bson = F.exists(key.key, false)
+
+  private object Limitations {
+    trait CanCompare[BSON <: BsonValue]
+    object CanCompare {
+      def create[BSON <: BsonValue]: CanCompare[BSON] = new CanCompare[BSON] {}
+      implicit val date = create[BsonDateTime]
+    }
+  }
+}

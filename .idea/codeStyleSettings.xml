@@ -4,6 +4,7 @@
     <option name="PER_PROJECT_SETTINGS">
       <value>
         <ScalaCodeStyleSettings>
+          <option name="classCountToUseImportOnDemand" value="9999" />
           <option name="PLACE_SELF_TYPE_ON_NEW_LINE" value="false" />
         </ScalaCodeStyleSettings>
         <XML>
