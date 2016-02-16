@@ -24,6 +24,7 @@ trait MacroCommons {
   val ListCls = tq"$CollectionPkg.immutable.List"
   val NilObj = q"$CollectionPkg.immutable.Nil"
   val FutureSym = typeOf[Future[_]].typeSymbol
+  val OptionSym = typeOf[Option[_]].typeSymbol
 
   lazy val ownerChain = {
     val sym = c.typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
@@ -257,6 +258,12 @@ trait MacroCommons {
         apply.typeSignature.typeParams.length == expected && unapply.typeSignature.typeParams.length == expected
       }
 
+      def fixExistentialOptionType(tpe: Type) = tpe match {
+        case ExistentialType(quantified, TypeRef(pre, OptionSym, List(arg))) =>
+          internal.typeRef(pre, OptionSym, List(internal.existentialType(quantified, arg)))
+        case _ => tpe
+      }
+
       val applicableResults = applyUnapplyPairs.flatMap {
         case (apply, unapply) if typeParamsMatch(apply, unapply) =>
           val applySig = setTypeArgs(apply.typeSignature)
@@ -275,11 +282,12 @@ trait MacroCommons {
 
               unapplySig.paramLists match {
                 case List(List(soleArg)) if soleArg.typeSignature =:= tpe &&
-                  unapplySig.finalResultType =:= expectedUnapplyTpe =>
+                  fixExistentialOptionType(unapplySig.finalResultType) =:= expectedUnapplyTpe =>
 
                   val paramsWithDefaults = params.zipWithIndex.map({ case (p, i) => (p, defaultValueFor(p, i)) })
                   Some(ApplyUnapply(companion, paramsWithDefaults))
-                case _ => None
+                case _ =>
+                  None
               }
             case _ => None
           }
@@ -287,10 +295,8 @@ trait MacroCommons {
       }
 
       applicableResults match {
-        case List(result) =>
-          Some(result)
-        case _ =>
-          None
+        case List(result) => Some(result)
+        case _ => None
       }
     } else None
   }
