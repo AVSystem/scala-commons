@@ -194,15 +194,9 @@ class GenCodecTest extends CodecTestBase {
 
   case class HasOperator(str: String, op: Operator[_])
   object HasOperator {
-
-    import Operator.{codec => opCodec}
-
-    implicit val codec: GenCodec[HasOperator] = GenCodec.auto
+    implicit val codec: GenCodec[HasOperator] = GenCodec.recursiveAuto[HasOperator]
   }
   sealed trait Operator[T]
   case object StringOperator extends Operator[String]
   case object IntOperator extends Operator[Int]
-  object Operator {
-    implicit val codec: GenCodec[Operator[_]] = GenCodec.auto
-  }
 }

@@ -217,23 +217,32 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   implicit def arrayCodec[T: ClassTag : GenCodec]: GenCodec[Array[T]] =
     createList[Array[T]](_.iterator(read[T]).toArray[T], (lo, arr) => arr.iterator.writeToList(lo))
 
-  implicit def seqCodec[C[X] >: Null <: BSeq[X], T: GenCodec](implicit cbf: CanBuildFrom[Nothing, T, C[T]]): GenCodec[C[T]] =
-    createList[C[T]](readListWithCBF[C, T], (lo, c) => c.iterator.writeToList(lo))
+  // seqCodec, setCodec, jCollectionCodec, mapCodec, jMapCodec, fallbackMapCodec and fallbackJMapCodec
+  // have these weird return types (e.g. GenCodec[C[T] with BSeq[T]] instead of just GenCodec[C[T]]) because it's a
+  // workaround for https://groups.google.com/forum/#!topic/scala-user/O_fkaChTtg4
 
-  implicit def setCodec[C[X] >: Null <: BSet[X], T: GenCodec](implicit cbf: CanBuildFrom[Nothing, T, C[T]]): GenCodec[C[T]] =
-    createList[C[T]](readListWithCBF[C, T], (lo, c) => c.iterator.writeToList(lo))
+  implicit def seqCodec[C[X] >: Null <: BSeq[X], T: GenCodec](
+    implicit cbf: CanBuildFrom[Nothing, T, C[T]]): GenCodec[C[T] with BSeq[T]] =
+    createList[C[T] with BSeq[T]](readListWithCBF[C, T], (lo, c) => c.iterator.writeToList(lo))
 
-  implicit def jCollectionCodec[C[X] >: Null <: JCollection[X], T: GenCodec](implicit cbf: JCanBuildFrom[T, C[T]]): GenCodec[C[T]] =
-    createList[C[T]](readListWithCBF[C, T], (lo, c) => c.iterator.asScala.writeToList(lo))
+  implicit def setCodec[C[X] >: Null <: BSet[X], T: GenCodec](
+    implicit cbf: CanBuildFrom[Nothing, T, C[T]]): GenCodec[C[T] with BSet[T]] =
+    createList[C[T] with BSet[T]](readListWithCBF[C, T], (lo, c) => c.iterator.writeToList(lo))
 
-  implicit def mapCodec[M[X, Y] >: Null <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenCodec[M[K, V]] =
-    createObject[M[K, V]](
+  implicit def jCollectionCodec[C[X] >: Null <: JCollection[X], T: GenCodec](
+    implicit cbf: JCanBuildFrom[T, C[T]]): GenCodec[C[T] with JCollection[T]] =
+    createList[C[T] with JCollection[T]](readListWithCBF[C, T], (lo, c) => c.iterator.asScala.writeToList(lo))
+
+  implicit def mapCodec[M[X, Y] >: Null <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
+    implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenCodec[M[K, V] with BMap[K, V]] =
+    createObject[M[K, V] with BMap[K, V]](
       _.iterator(read[V]).map({ case (k, v) => (GenKeyCodec.read[K](k), v) }).collectWith(cbf),
       (oo, value) => value.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })
     )
 
-  implicit def jMapCodec[M[X, Y] >: Null <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](implicit cbf: JCanBuildFrom[(K, V), M[K, V]]): GenCodec[M[K, V]] =
-    createObject[M[K, V]](
+  implicit def jMapCodec[M[X, Y] >: Null <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
+    implicit cbf: JCanBuildFrom[(K, V), M[K, V]]): GenCodec[M[K, V] with JMap[K, V]] =
+    createObject[M[K, V] with JMap[K, V]](
       _.iterator(read[V]).map({ case (k, v) => (GenKeyCodec.read[K](k), v) }).collectWith(cbf),
       (oo, value) => value.asScala.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })
     )
@@ -286,14 +295,16 @@ trait FallbackMapCodecs extends RecursiveAutoCodecs {this: GenCodec.type =>
     output.finish()
   }
 
-  implicit def fallbackMapCodec[M[X, Y] >: Null <: BMap[X, Y], K: GenCodec, V: GenCodec](implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenCodec[M[K, V]] =
-    createList[M[K, V]](
+  implicit def fallbackMapCodec[M[X, Y] >: Null <: BMap[X, Y], K: GenCodec, V: GenCodec](
+    implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenCodec[M[K, V] with BMap[K, V]] =
+    createList[M[K, V] with BMap[K, V]](
       _.iterator(i => readKVPair[K, V](i.readObject().get)).collectWith(cbf),
       (lo, map) => map.iterator.foreach({ case (k, v) => writeKVPair(lo.writeElement().writeObject(), k, v) })
     )
 
-  implicit def fallbackJMapCodec[M[X, Y] >: Null <: JMap[X, Y], K: GenCodec, V: GenCodec](implicit cbf: JCanBuildFrom[(K, V), M[K, V]]): GenCodec[M[K, V]] =
-    createList[M[K, V]](
+  implicit def fallbackJMapCodec[M[X, Y] >: Null <: JMap[X, Y], K: GenCodec, V: GenCodec](
+    implicit cbf: JCanBuildFrom[(K, V), M[K, V]]): GenCodec[M[K, V] with JMap[K, V]] =
+    createList[M[K, V] with JMap[K, V]](
       _.iterator(i => readKVPair[K, V](i.readObject().get)).collectWith(cbf),
       (lo, map) => map.asScala.iterator.foreach({ case (k, v) => writeKVPair(lo.writeElement().writeObject(), k, v) })
     )
