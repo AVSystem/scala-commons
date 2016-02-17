@@ -4,7 +4,8 @@ package mongo
 import java.time.Instant
 
 import com.avsystem.commons.jiop.JavaInterop._
-import org.bson.{BsonArray, BsonBoolean, BsonDateTime, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
+import org.bson.types.ObjectId
+import org.bson.{BsonArray, BsonBinary, BsonBoolean, BsonDateTime, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonObjectId, BsonString, BsonValue}
 
 import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds
@@ -36,13 +37,23 @@ object BsonCodec {
     def toBson(a: A) = to(a)
   }
 
-  val boolean = create[Boolean, BsonBoolean](_.getValue, new BsonBoolean(_))
+  private object _identity extends BsonCodec[BsonValue, BsonValue] {
+    override def fromBson(bson: BsonValue) = bson
+    override def toBson(a: BsonValue) = a
+  }
+  def identity[B <: BsonValue] = _identity.asInstanceOf[BsonCodec[B, B]]
 
+  val objectId = create[ObjectId, BsonObjectId](_.getValue, new BsonObjectId(_))
+
+  val byteArray = create[Array[Byte], BsonBinary](_.getData, new BsonBinary(_))
+
+  val boolean = create[Boolean, BsonBoolean](_.getValue, new BsonBoolean(_))
   val int32 = create[Int, BsonInt32](_.getValue, new BsonInt32(_))
   val int64 = create[Long, BsonInt64](_.getValue, new BsonInt64(_))
   val double = create[Double, BsonDouble](_.getValue, new BsonDouble(_))
 
   val string = create[String, BsonString](_.getValue, new BsonString(_))
+
   val doc = create[Doc, BsonDocument](new Doc(_), _.toBson)
   val instant = create[Instant, BsonDateTime](
     bdt => Instant.ofEpochMilli(bdt.getValue),
