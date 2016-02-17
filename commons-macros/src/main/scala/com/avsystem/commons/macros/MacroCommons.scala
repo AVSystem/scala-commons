@@ -24,7 +24,6 @@ trait MacroCommons {
   val ListCls = tq"$CollectionPkg.immutable.List"
   val NilObj = q"$CollectionPkg.immutable.Nil"
   val FutureSym = typeOf[Future[_]].typeSymbol
-  val OptionSym = typeOf[Option[_]].typeSymbol
 
   lazy val ownerChain = {
     val sym = c.typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
@@ -259,14 +258,14 @@ trait MacroCommons {
       }
 
       def fixExistentialOptionType(tpe: Type) = tpe match {
-        case ExistentialType(quantified, TypeRef(pre, OptionSym, List(arg))) =>
+        case ExistentialType(quantified, TypeRef(pre, definitions.OptionClass, List(arg))) =>
           val newArg = arg match {
             case TypeRef(tuplePre, tupleSym, args) if definitions.TupleClass.seq.contains(tupleSym) =>
               internal.typeRef(tuplePre, tupleSym, args.map(arg => internal.existentialAbstraction(quantified, arg)))
             case _ =>
               internal.existentialAbstraction(quantified, arg)
           }
-          internal.typeRef(pre, OptionSym, List(newArg))
+          internal.typeRef(pre, definitions.OptionClass, List(newArg))
         case _ => tpe
       }
 
