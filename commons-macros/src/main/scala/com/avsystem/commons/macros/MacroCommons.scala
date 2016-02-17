@@ -260,7 +260,13 @@ trait MacroCommons {
 
       def fixExistentialOptionType(tpe: Type) = tpe match {
         case ExistentialType(quantified, TypeRef(pre, OptionSym, List(arg))) =>
-          internal.typeRef(pre, OptionSym, List(internal.existentialType(quantified, arg)))
+          val newArg = arg match {
+            case TypeRef(tuplePre, tupleSym, args) if definitions.TupleClass.seq.contains(tupleSym) =>
+              internal.typeRef(tuplePre, tupleSym, args.map(arg => internal.existentialAbstraction(quantified, arg)))
+            case _ =>
+              internal.existentialAbstraction(quantified, arg)
+          }
+          internal.typeRef(pre, OptionSym, List(newArg))
         case _ => tpe
       }
 

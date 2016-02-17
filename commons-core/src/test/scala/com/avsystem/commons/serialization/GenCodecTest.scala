@@ -192,7 +192,7 @@ class GenCodecTest extends CodecTestBase {
     testWriteReadAndAutoWriteRead[Enumz](Enumz.First, Map("Primary" -> Map()))
   }
 
-  case class HasOperator(op: Operator[_])
+  case class HasOperator(str: String, op: Operator[_])
   object HasOperator {
 
     import Operator.{codec => opCodec}
