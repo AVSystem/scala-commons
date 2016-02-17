@@ -191,12 +191,4 @@ class GenCodecTest extends CodecTestBase {
   test("sealed enum test") {
     testWriteReadAndAutoWriteRead[Enumz](Enumz.First, Map("Primary" -> Map()))
   }
-
-  case class HasOperator(str: String, op: Operator[_])
-  object HasOperator {
-    implicit val codec: GenCodec[HasOperator] = GenCodec.recursiveAuto[HasOperator]
-  }
-  sealed trait Operator[T]
-  case object StringOperator extends Operator[String]
-  case object IntOperator extends Operator[Int]
 }

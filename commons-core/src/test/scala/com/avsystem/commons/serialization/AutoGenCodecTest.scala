@@ -119,4 +119,22 @@ class AutoGenCodecTest extends CodecTestBase {
   object Top {
     implicit val codec: GenCodec[Top] = GenCodec.recursiveAuto[Top]
   }
+
+  sealed trait Operator[T]
+  case object StringOperator extends Operator[String]
+  case object IntOperator extends Operator[Int]
+
+  case class HasOperator(str: String, op: Operator[_])
+  object HasOperator {
+    implicit val codec: GenCodec[HasOperator] = GenCodec.recursiveAuto[HasOperator]
+  }
+
+  test("wrapped wildcarded GADT test") {
+    testWriteRead[HasOperator](HasOperator("lol", StringOperator),
+      Map[String, Any](
+        "str" -> "lol",
+        "op" -> Map("StringOperator" -> Map())
+      )
+    )
+  }
 }
