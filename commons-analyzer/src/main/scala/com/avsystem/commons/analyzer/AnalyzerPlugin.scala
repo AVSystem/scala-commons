@@ -4,13 +4,13 @@ package analyzer
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
 import scala.tools.nsc.{Global, Phase}
 
-final class AnalyzerPlugin(val global: Global) extends Plugin {
-  plugin =>
+final class AnalyzerPlugin(val global: Global) extends Plugin {plugin =>
 
   val rules = List[AnalyzerRule[global.type]](
     new ImportJavaUtil[global.type](global),
     new VarargsAtLeast[global.type](global),
-    new DetectSI7046[global.type](global)
+    new DetectSI7046[global.type](global),
+    new CheckMacroPrivate[global.type](global)
   )
 
   val name = "AVSystemAnalyzer"
