@@ -48,7 +48,7 @@ val scalatestVersion = "2.2.5"
 val upickleVersion = "0.3.6"
 val jettyVersion = "8.1.17.v20150415"
 val mongoVersion = "3.2.2"
-val prevAnalyzerVersion = "1.11.9"
+val prevAnalyzerVersion = "1.11.10"
 
 val commonSettings = Seq(
   (publishArtifact in packageDoc) := false,
