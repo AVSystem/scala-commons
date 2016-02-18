@@ -20,6 +20,20 @@ class CheckMacroPrivateTest extends FunSuite with AnalyzerTest {
     )
   }
 
+  test("macro private extractor used directly should be rejected") {
+    assertErrors(
+      """
+        |import com.avsystem.commons.analyzer.TestUtils
+        |
+        |object test {
+        |  123 match {
+        |    case TestUtils.Extractor(_) =>
+        |  }
+        |}
+      """.stripMargin
+    )
+  }
+
   test("macro private method invoked by macro-generated code should not be rejected") {
     assertNoErrors(
       """

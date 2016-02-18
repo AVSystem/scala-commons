@@ -17,7 +17,7 @@ class CheckMacroPrivate[C <: Global with Singleton](g: C) extends AnalyzerRule(g
     def analyzeTree(tree: Tree): Unit = analyzer.macroExpandee(tree) match {
       case `tree` | EmptyTree =>
         tree match {
-          case _: Ident | _: Select | _: SelectFromTypeTree | _: Apply | _: New | _: UnApply
+          case _: Ident | _: Select | _: SelectFromTypeTree | _: New
             if tree.symbol != null && tree.pos != NoPosition =>
 
             val sym = tree.symbol
