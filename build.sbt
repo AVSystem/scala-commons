@@ -2,7 +2,7 @@ import sbt._
 
 name := "commons"
 
-version in ThisBuild := "1.11.8"
+version in ThisBuild := "1.11.9"
 scalaVersion in ThisBuild := "2.11.7"
 organization in ThisBuild := "com.avsystem.commons"
 scalacOptions in ThisBuild ++= Seq(
@@ -16,6 +16,12 @@ scalacOptions in ThisBuild ++= Seq(
   "-Xfuture",
   "-Xfatal-warnings",
   "-Xlint:_,-missing-interpolator,-adapted-args"
+)
+
+externalResolvers in ThisBuild := Seq(
+  "AVSystem lib releases" at "http://repo.avsystem.com/libs-releases",
+  "AVSystem lib snapshots" at "http://repo.avsystem.com/libs-snapshots",
+  "AVSystem remote repository cache" at "http://repo.avsystem.com/remote-repos"
 )
 
 publishTo in ThisBuild := {
@@ -42,10 +48,12 @@ val scalatestVersion = "2.2.5"
 val upickleVersion = "0.3.6"
 val jettyVersion = "8.1.17.v20150415"
 val mongoVersion = "3.2.2"
+val prevAnalyzerVersion = "1.11.6"
 
 val commonSettings = Seq(
   (publishArtifact in packageDoc) := false,
   libraryDependencies += compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion),
+  libraryDependencies += compilerPlugin("com.avsystem.commons" %% "commons-analyzer" % prevAnalyzerVersion),
   libraryDependencies ++= Seq(
     "com.github.ghik" % "silencer-lib" % silencerVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % Test

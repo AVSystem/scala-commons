@@ -31,4 +31,16 @@ class CheckMacroPrivateTest extends FunSuite with AnalyzerTest {
       """.stripMargin
     )
   }
+
+  test("the definition of macro private method itself should not be rejected") {
+    assertNoErrors(
+      """
+        |import com.avsystem.commons.annotation.macroPrivate
+        |
+        |object test {
+        |  @macroPrivate def macroPrivateMethod = 5
+        |}
+      """.stripMargin
+    )
+  }
 }

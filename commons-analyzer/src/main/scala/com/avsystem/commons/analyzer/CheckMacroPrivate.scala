@@ -17,7 +17,7 @@ class CheckMacroPrivate[C <: Global with Singleton](g: C) extends AnalyzerRule(g
     def analyzeTree(tree: Tree): Unit = analyzer.macroExpandee(tree) match {
       case `tree` | EmptyTree =>
         val sym = tree.symbol
-        if (sym != null && tree.pos != NoPosition) {
+        if (!tree.isDef && sym != null && tree.pos != NoPosition) {
           val macroPrivate = (sym :: sym.overrides).iterator
             .flatMap(_.annotations).exists(_.tree.tpe <:< macroPrivateAnnotTpe)
           if (macroPrivate) {
