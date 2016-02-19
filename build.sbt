@@ -117,7 +117,7 @@ lazy val `commons-analyzer` = project
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-    excludeDependencies += SbtExclusionRule(organization.value)
+    excludeDependencies += SbtExclusionRule(organization.value, name.value)
   )
 
 lazy val `commons-jetty` = project
