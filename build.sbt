@@ -18,12 +18,6 @@ scalacOptions in ThisBuild ++= Seq(
   "-Xlint:_,-missing-interpolator,-adapted-args"
 )
 
-externalResolvers in ThisBuild := Seq(
-  "AVSystem lib releases" at "http://repo.avsystem.com/libs-releases",
-  "AVSystem lib snapshots" at "http://repo.avsystem.com/libs-snapshots",
-  "AVSystem remote repository cache" at "http://repo.avsystem.com/remote-repos"
-)
-
 publishTo in ThisBuild := {
   val name = if (isSnapshot.value) "snapshots" else "releases"
   Some(name at s"http://repo.avsystem.com/libs-$name-local/")
@@ -53,7 +47,6 @@ val prevAnalyzerVersion = "1.11.10"
 val commonSettings = Seq(
   (publishArtifact in packageDoc) := false,
   libraryDependencies += compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion),
-  libraryDependencies += compilerPlugin("com.avsystem.commons" %% "commons-analyzer" % prevAnalyzerVersion),
   libraryDependencies ++= Seq(
     "com.github.ghik" % "silencer-lib" % silencerVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % Test
@@ -116,8 +109,7 @@ lazy val `commons-analyzer` = project
   .dependsOn(`commons-core` % Test)
   .settings(commonSettings: _*)
   .settings(
-    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-    excludeDependencies += SbtExclusionRule("com.avsystem.commons", "commons-analyzer_2.11")
+    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
   )
 
 lazy val `commons-jetty` = project
