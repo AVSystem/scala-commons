@@ -1,0 +1,17 @@
+.idea/*
+!.idea/vcs.xml
+!.idea/codeStyleSettings.xml
+*.iml
+*.iws
+*.ipr
+
+target
+
+*.sjsir
+*.class
+*.diff
+*.orig
+*~
+*.scss.cache
+*.scssc
+
