@@ -1,39 +1,52 @@
-import sbt._
+import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys._
 
 name := "commons"
 
-version in ThisBuild := "1.11.10"
-scalaVersion in ThisBuild := "2.11.7"
-organization in ThisBuild := "com.avsystem.commons"
-scalacOptions in ThisBuild ++= Seq(
-  "-feature",
-  "-deprecation",
-  "-unchecked",
-  "-language:implicitConversions",
-  "-language:existentials",
-  "-language:dynamics",
-  "-language:experimental.macros",
-  "-Xfuture",
-  "-Xfatal-warnings",
-  "-Xlint:_,-missing-interpolator,-adapted-args"
-)
+inThisBuild(Seq(
+  scalaVersion := "2.11.7",
+  organization := "com.avsystem.commons",
+  scalacOptions ++= Seq(
+    "-feature",
+    "-deprecation",
+    "-unchecked",
+    "-language:implicitConversions",
+    "-language:existentials",
+    "-language:dynamics",
+    "-language:experimental.macros",
+    "-Xfuture",
+    "-Xfatal-warnings",
+    "-Xlint:_,-missing-interpolator,-adapted-args"
+  ),
 
-publishTo in ThisBuild := {
-  val name = if (isSnapshot.value) "snapshots" else "releases"
-  Some(name at s"http://repo.avsystem.com/libs-$name-local/")
-}
-publishMavenStyle in ThisBuild := true
+  projectInfo := ModuleInfo(
+    nameFormal = "AVSystem commons",
+    description = "AVSystem commons library for Scala",
+    homepage = Some(url("https://github.com/AVSystem/scala-commons")),
+    startYear = Some(2015),
+    organizationName = "AVSystem",
+    organizationHomepage = Some(url("http://www.avsystem.com/")),
+    scmInfo = Some(ScmInfo(
+      browseUrl = url("https://github.com/AVSystem/scala-commons.git"),
+      connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
+      devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git")
+    )),
+    licenses = Seq(
+      ("The MIT License", url("https://opensource.org/licenses/MIT"))
+    )
+  ),
 
-/* The file with credentials must have following format:
- *
- * realm=Artifactory Realm
- * host=repo.avsystem.com
- * user=<LDAP user>
- * password=<LDAP password>
- *
- */
-credentials in ThisBuild +=
-  Credentials(Path.userHome / ".repo.avsystem.com.credentials")
+  publishMavenStyle := true,
+  pomIncludeRepository := { _ => false },
+  pomExtra := {
+    <developers>
+      <developer>
+        <id>ghik</id>
+        <name>Roman Janusz</name>
+        <url>https://github.com/ghik</url>
+      </developer>
+    </developers>
+  }
+))
 
 val silencerVersion = "0.3"
 val guavaVersion = "14.0.1"
@@ -42,9 +55,16 @@ val scalatestVersion = "2.2.5"
 val upickleVersion = "0.3.6"
 val jettyVersion = "8.1.17.v20150415"
 val mongoVersion = "3.2.2"
-val prevAnalyzerVersion = "1.11.10"
 
 val commonSettings = Seq(
+  publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  },
+
   (publishArtifact in packageDoc) := false,
   libraryDependencies += compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion),
   libraryDependencies ++= Seq(
@@ -54,6 +74,13 @@ val commonSettings = Seq(
   dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.4",
   ideBasePackages := Seq(organization.value),
   fork in Test := true
+)
+
+val noPublishSettings = Seq(
+  publishArtifact := false,
+  publish :=(),
+  publishLocal :=(),
+  publishSigned :=()
 )
 
 val CompileAndTest = "compile->compile;test->test"
@@ -70,9 +97,7 @@ lazy val commons = project.in(file("."))
     `commons-benchmark`,
     `commons-mongo`
   )
-  .settings(
-    publishArtifact := false
-  )
+  .settings(noPublishSettings: _*)
 
 lazy val `commons-annotations` = project
   .settings(commonSettings: _*)
@@ -126,9 +151,7 @@ lazy val `commons-jetty` = project
 lazy val `commons-benchmark` = project
   .dependsOn(`commons-core`)
   .settings(commonSettings: _*)
-  .settings(
-    publishArtifact := false
-  )
+  .settings(noPublishSettings: _*)
   .enablePlugins(JmhPlugin)
 
 lazy val `commons-mongo` = project
