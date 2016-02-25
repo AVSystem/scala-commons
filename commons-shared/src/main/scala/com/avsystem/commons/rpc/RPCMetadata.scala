@@ -14,6 +14,9 @@ trait RPCMetadata[T] {
   def name: String
   def annotations: List[MetadataAnnotation]
   def methodsByRpcName: Map[String, MethodMetadata]
+
+  def getterResultMetadata(rpcName: String): RPCMetadata[_] =
+    methodsByRpcName.get(rpcName).collect({ case GetterMetadata(_, resultMetadata) => resultMetadata }).get
 }
 
 case class Signature(
