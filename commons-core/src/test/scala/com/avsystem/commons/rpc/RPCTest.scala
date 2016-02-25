@@ -28,7 +28,7 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
 
       rawRpc.fire("handleMore", List(Nil))
       rawRpc.fire("doStuff", List(List(42, "omgsrsly"), List(Some(true))))
-      assert("doStuffResult" === get(rawRpc.call("doStuff", List(List(true)))))
+      assert("doStuffResult" === get(rawRpc.call("doStuffBoolean", List(List(true)))))
       rawRpc.fire("doStuffInt", List(List(5)))
       rawRpc.fire("handleMore", List(Nil))
       rawRpc.fire("handle", Nil)
@@ -39,7 +39,7 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       assert(invocations.toList === List(
         ("handleMore", List(Nil)),
         ("doStuff", List(List(42, "omgsrsly"), List(Some(true)))),
-        ("doStuff", List(List(true))),
+        ("doStuffBoolean", List(List(true))),
         ("doStuffInt", List(List(5))),
         ("handleMore", List(Nil)),
         ("handle", Nil),
@@ -79,7 +79,7 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
 
       realRpc.handleMore()
       realRpc.doStuff(42, "omgsrsly")(Some(true))
-      assert("doStuffResult" === get(realRpc.doStuff(true)))
+      assert("doStuffBooleanResult" === get(realRpc.doStuff(true)))
       realRpc.doStuff(5)
       realRpc.handleMore()
       realRpc.handle
@@ -89,7 +89,7 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       assert(invocations.toList === List(
         ("handleMore", List(Nil)),
         ("doStuff", List(List(42, "omgsrsly"), List(Some(true)))),
-        ("doStuff", List(List(true))),
+        ("doStuffBoolean", List(List(true))),
         ("doStuffInt", List(List(5))),
         ("handleMore", List(Nil)),
         ("handle", Nil),

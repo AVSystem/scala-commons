@@ -23,8 +23,10 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
   val AsRealRPCObj = q"$FrameworkObj.AsRealRPC"
   val AsRealRPCCls = tq"$FrameworkObj.AsRealRPC"
   val RawValueTpe = tq"$FrameworkObj.RawValue"
+  val RPCMetadataCls = tq"$RpcPackage.RPCMetadata"
   val RPCNameAnnotType = getType(tq"$RpcPackage.RPCName")
   val RPCType = getType(tq"$RpcPackage.RPC")
+  val MetadataAnnotationTpe = getType(tq"$RpcPackage.MetadataAnnotation")
 
   def allAnnotations(tpe: Type) = {
     val ts = tpe.typeSymbol
@@ -59,6 +61,8 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
         case _ => c.abort(annot.tree.pos, "The argument of @RPCName must be a string literal.")
       }
     }.getOrElse(method.name)
+
+    def rpcNameString = rpcName.decodedName.toString
   }
 
   def proxyableMethods(tpe: Type) = {
@@ -72,29 +76,23 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
     val proxyables = tpe.members.filter(m => m.isTerm && m.isAbstract).map { m =>
       val signature = m.typeSignatureIn(tpe)
       ProxyableMember(m.asMethod, signature)
-    }.groupBy(_.memberType).withDefaultValue(Iterable.empty)
+    }.toList
 
-    proxyables(Invalid).foreach { pm =>
+    proxyables.groupBy(_.rpcName).foreach {
+      case (rpcName, members) if members.size > 1 =>
+        error(s"Multiple RPC methods have the same RPC name: $rpcName, you need to properly disambiguate them with @RPCName annotation")
+      case _ =>
+    }
+
+    val proxyablesByType = proxyables.groupBy(_.memberType).withDefaultValue(Iterable.empty)
+
+    proxyablesByType(Invalid).foreach { pm =>
       error(invalidProxyableMsg(pm))
     }
 
-    def validateShapes(members: Iterable[ProxyableMember]): Unit = {
-      def shape(pm: ProxyableMember) = (pm.rpcName, pm.paramLists.map(_.map(_ => ())))
-      members.groupBy(shape).values.filter(_.size > 1).foreach { overloads =>
-        val name = overloads.head.method.name.decodedName.toString
-        abort(s"Overloaded variants of $name in $tpe have the same shape " +
-          s"(the same number of arguments in every parameter list)\n" +
-          s"You can give each variant different @RPCName to resolve such conflicts.")
-      }
-    }
-
-    val procedures = proxyables(Procedure)
-    val functions = proxyables(Function)
-    val getters = proxyables(Getter)
-
-    validateShapes(procedures)
-    validateShapes(functions)
-    validateShapes(getters)
+    val procedures = proxyablesByType(Procedure)
+    val functions = proxyablesByType(Function)
+    val getters = proxyablesByType(Getter)
 
     if (proxyables.isEmpty) {
       warning(s"$tpe has no abstract members that could represent remote methods.")
@@ -117,7 +115,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
       val paramLists = member.signature.paramLists
       val matchedArgs = reifyListPat(paramLists.map(paramList => reifyListPat(paramList.map(ps => pq"${ps.name.toTermName}"))))
       val methodArgs = paramLists.map(_.map(ps => q"$FrameworkObj.read[${ps.typeSignature}](${ps.name.toTermName})"))
-      cq"(${member.rpcName.toString}, $matchedArgs) => ${adjustResult(member, q"$implName.${member.method}(...$methodArgs)")}"
+      cq"(${member.rpcNameString}, $matchedArgs) => ${adjustResult(member, q"$implName.${member.method}(...$methodArgs)")}"
     }
 
     def adjustResult(member: ProxyableMember, result: Tree) = member.memberType match {
@@ -137,7 +135,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
 
     q"""
       new $AsRawRPCCls[$rpcTpe] {
-        implicit val ${c.freshName(TermName("self"))}: $AsRawRPCCls[$rpcTpe] = this
+        implicit def ${c.freshName(TermName("self"))}: $AsRawRPCCls[$rpcTpe] = this
 
         def asRaw($implName: $rpcTpe) =
           new $RawRPCCls {
@@ -193,9 +191,53 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
 
     q"""
       new $AsRealRPCCls[$rpcTpe] {
-        implicit val ${c.freshName(TermName("self"))}: $AsRealRPCCls[$rpcTpe] = this
+        implicit def ${c.freshName(TermName("self"))}: $AsRealRPCCls[$rpcTpe] = this
 
         def asReal($rawRpcName: $RawRPCCls) = new $rpcTpe { ..$implementations; () }
+      }
+     """
+  }
+
+  def materializeMetadata[T: c.WeakTypeTag]: Tree = {
+    val rpcTpe = weakTypeOf[T]
+    val (procedures, functions, getters) = proxyableMethods(rpcTpe)
+    val methods = procedures ++ functions ++ getters
+
+    def reifyAnnotations(s: Symbol) = {
+      val trees = allAnnotations(s).iterator.map(_.tree).collect {
+        case tree if tree.tpe <:< MetadataAnnotationTpe => c.untypecheck(tree)
+      }.toList
+      q"$ListObj(..$trees)"
+    }
+
+    def reifyParamMetadata(s: Symbol) =
+      q"$RpcPackage.ParamMetadata(${s.name.decodedName.toString}, ${reifyAnnotations(s)})"
+
+    def reifySignature(ms: MethodSymbol) =
+      q"""
+        $RpcPackage.Signature(
+          ${ms.name.decodedName.toString},
+          $ListObj(..${ms.paramLists.map(ps => q"$ListObj(..${ps.map(reifyParamMetadata)})")}),
+          ${reifyAnnotations(ms)}
+        )"""
+
+    def reifyMethodMetadata(pm: ProxyableMember) = pm.memberType match {
+      case Procedure => 
+        q"$RpcPackage.ProcedureMetadata(${reifySignature(pm.method)})"
+      case Function => 
+        q"$RpcPackage.FunctionMetadata(${reifySignature(pm.method)})"
+      case Getter => 
+        q"$RpcPackage.GetterMetadata(${reifySignature(pm.method)}, implicitly[$RPCMetadataCls[${pm.returnType}]])"
+      case Invalid => EmptyTree
+    }
+    
+    q"""
+      new $RPCMetadataCls[$rpcTpe] {
+        implicit def ${c.freshName(TermName("self"))}: $RPCMetadataCls[$rpcTpe] = this
+      
+        def name = ${rpcTpe.typeSymbol.name.decodedName.toString}
+        lazy val annotations = ${reifyAnnotations(rpcTpe.typeSymbol)}
+        lazy val methodsByRpcName = $MapObj(..${methods.map(pm => q"${pm.rpcNameString} -> ${reifyMethodMetadata(pm)}")})
       }
      """
   }

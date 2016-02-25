@@ -23,6 +23,7 @@ trait MacroCommons {
   val ListObj = q"$CollectionPkg.immutable.List"
   val ListCls = tq"$CollectionPkg.immutable.List"
   val NilObj = q"$CollectionPkg.immutable.Nil"
+  val MapObj = q"$CollectionPkg.immutable.Map"
   val FutureSym = typeOf[Future[_]].typeSymbol
   val OptionClass = definitions.OptionClass
 
@@ -42,6 +43,20 @@ trait MacroCommons {
       t
     }
   }
+
+  def superSymbols(s: Symbol): List[Symbol] = s match {
+    case cs: ClassSymbol => cs.baseClasses
+    case ms: MethodSymbol => ms :: ms.overrides
+    case ps: TermSymbol if ps.isParameter && ps.owner.isMethod =>
+      val oms = ps.owner.asMethod
+      val paramListIdx = oms.paramLists.indexWhere(_.contains(ps))
+      val paramIdx = oms.paramLists(paramListIdx).indexOf(ps)
+      superSymbols(oms).map(_.asMethod.paramLists(paramListIdx)(paramIdx))
+    case _ => List(s)
+  }
+
+  def allAnnotations(s: Symbol): List[Annotation] =
+    superSymbols(s).flatMap(_.annotations)
 
   def abort(msg: String) =
     c.abort(c.enclosingPosition, msg)

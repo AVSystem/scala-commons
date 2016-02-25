@@ -15,6 +15,7 @@ case class Record(i: Int, fuu: String)
 
   def doStuff(lol: Int, fuu: String)(implicit cos: Option[Boolean]): Unit
 
+  @RPCName("doStuffBoolean")
   def doStuff(yes: Boolean): Future[String]
 
   @RPCName("doStuffInt")
@@ -57,7 +58,7 @@ object TestRPC {
       onProcedure("doStuff", List(List(lol, fuu), List(cos)))
 
     def doStuff(yes: Boolean): Future[String] =
-      onCall("doStuff", List(List(yes)), "doStuffResult")
+      onCall("doStuffBoolean", List(List(yes)), "doStuffResult")
 
     def doStuff(num: Int): Unit =
       onProcedure("doStuffInt", List(List(num)))
