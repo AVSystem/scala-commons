@@ -1,6 +1,6 @@
 import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys._
 
-name := "commons"
+cancelable in Global := true
 
 inThisBuild(Seq(
   scalaVersion := "2.11.7",
@@ -13,6 +13,7 @@ inThisBuild(Seq(
     "-language:existentials",
     "-language:dynamics",
     "-language:experimental.macros",
+    "-language:higherKinds",
     "-Xfuture",
     "-Xfatal-warnings",
     "-Xlint:_,-missing-interpolator,-adapted-args"
@@ -57,6 +58,7 @@ val jettyVersion = "8.1.17.v20150415"
 val mongoVersion = "3.2.2"
 
 val commonSettings = Seq(
+  sonatypeProfileName := "com.avsystem",
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
     if (isSnapshot.value)
@@ -80,7 +82,8 @@ val noPublishSettings = Seq(
   publishArtifact := false,
   publish :=(),
   publishLocal :=(),
-  publishSigned :=()
+  publishSigned :=(),
+  publishLocalSigned :=()
 )
 
 val CompileAndTest = "compile->compile;test->test"
@@ -97,6 +100,8 @@ lazy val commons = project.in(file("."))
     `commons-benchmark`,
     `commons-mongo`
   )
+  .settings(name := "commons")
+  .settings(commonSettings: _*)
   .settings(noPublishSettings: _*)
 
 lazy val `commons-annotations` = project
