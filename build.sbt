@@ -17,7 +17,26 @@ inThisBuild(Seq(
     "-Xfuture",
     "-Xfatal-warnings",
     "-Xlint:_,-missing-interpolator,-adapted-args"
-  ),
+  )
+))
+
+val silencerVersion = "0.3"
+val guavaVersion = "14.0.1"
+val jsr305Version = "3.0.0"
+val scalatestVersion = "2.2.5"
+val upickleVersion = "0.3.6"
+val jettyVersion = "8.1.17.v20150415"
+val mongoVersion = "3.2.2"
+
+val commonSettings = Seq(
+  sonatypeProfileName := "com.avsystem",
+  publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  },
 
   projectInfo := ModuleInfo(
     nameFormal = "AVSystem commons",
@@ -46,25 +65,6 @@ inThisBuild(Seq(
         <url>https://github.com/ghik</url>
       </developer>
     </developers>
-  }
-))
-
-val silencerVersion = "0.3"
-val guavaVersion = "14.0.1"
-val jsr305Version = "3.0.0"
-val scalatestVersion = "2.2.5"
-val upickleVersion = "0.3.6"
-val jettyVersion = "8.1.17.v20150415"
-val mongoVersion = "3.2.2"
-
-val commonSettings = Seq(
-  sonatypeProfileName := "com.avsystem",
-  publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (isSnapshot.value)
-      Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-      Some("releases" at nexus + "service/local/staging/deploy/maven2")
   },
 
   (publishArtifact in packageDoc) := false,
