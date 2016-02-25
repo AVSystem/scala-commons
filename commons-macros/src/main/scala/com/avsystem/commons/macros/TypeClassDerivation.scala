@@ -82,7 +82,7 @@ trait TypeClassDerivation extends MacroCommons {
     * Contains metadata extracted from `apply` method of companion object of some record (case-class like) type.
     *
     * @param sym          symbol of the `apply` method parameter
-    * @param defaultValue tree that evaluates to default value of the `apply` parameter or [[EmptyTree]]
+    * @param defaultValue tree that evaluates to default value of the `apply` parameter or `EmptyTree`
     * @param instance     tree that evaluates to type class instance for type of this parameter
     */
   case class ApplyParam(sym: Symbol, defaultValue: Tree, instance: Tree)
@@ -127,7 +127,7 @@ trait TypeClassDerivation extends MacroCommons {
 
   /**
     * Derives type class instance for arbitrary type which is neither a singleton, record nor union type.
-    * Usually, you want to throw a [[TypecheckException]] to indicate that type class instance cannot be derived
+    * Usually, you want to throw a `TypecheckException` to indicate that type class instance cannot be derived
     * for this type. You can use [[typecheckException]] method for this.
     */
   def forUnknown(tpe: Type): Tree

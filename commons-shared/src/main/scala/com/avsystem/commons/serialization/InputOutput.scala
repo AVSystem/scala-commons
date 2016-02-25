@@ -107,8 +107,8 @@ trait SequentialInput extends Any {
   * Represents an abstract source of sequence of values that can be deserialized.
   * [[ListInput]] instance is stateful and MUST be read strictly sequentially. This means, you MUST fully exhaust
   * an [[Input]] instance returned by `nextElement()` before calling `nextElement()` again. For this reason,
-  * [[ListInput]] is not an [[Iterator]] despite having similar interface ([[Iterator]] would easily allow e.g. conversion
-  * to `List[Input]` which would be illegal).
+  * [[ListInput]] is not an `Iterator` despite having similar interface
+  * (`Iterator` would easily allow e.g. conversion to `List[Input]` which would be illegal).
   * <p/>
   * [[ListInput]] MUST always be fully exhausted. In order to ignore any remaining elements, skipRemaining() may be
   * used.
@@ -131,8 +131,8 @@ trait ListInput extends SequentialInput {self =>
   * Represents an abstract source of key-value mappings that can be deserialized.
   * [[ObjectInput]] instance is stateful and MUST be read strictly sequentially. This means, you MUST fully exhaust
   * any [[Input]] instance returned by `nextField()` before calling `nextField()` again. For this reason,
-  * [[ObjectInput]] is not an [[Iterator]] despite having similar interface ([[Iterator]] would easily allow e.g.
-  * conversion to `List[(String, Input)]` which would be illegal).
+  * [[ObjectInput]] is not an `Iterator` despite having similar interface
+  * (`Iterator` would easily allow e.g. conversion to `List[(String, Input)]` which would be illegal).
   * <p/>
   * [[ObjectInput]] MUST always be fully exhausted. In order to ignore any remaining key-value mappings,
   * `skipRemaining()` may be used.

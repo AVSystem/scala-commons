@@ -4,9 +4,9 @@ package jiop
 import org.scalatest.FunSuite
 
 /**
- * Author: ghik
- * Created: 20/07/15.
- */
+  * Author: ghik
+  * Created: 20/07/15.
+  */
 class CBFShadowingTest extends FunSuite {
   test("java collections CanBuildFroms should not shadow Scala default ones when imported directly") {
     import JavaInterop.jArrayListCBF

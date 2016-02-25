@@ -28,7 +28,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   def forApplyUnapply(tpe: Type, companion: Symbol, params: List[ApplyParam]): Tree = {
     val deps = params.map { case ApplyParam(s, dv, t) =>
-      val defaultValueOpt = if(dv == EmptyTree) q"None" else q"Some($DefValObj($dv))"
+      val defaultValueOpt = if (dv == EmptyTree) q"None" else q"Some($DefValObj($dv))"
       q"(${s.name.toString}, $t, $defaultValueOpt)"
     }
     q"$ApplyUnapplyTCObj[$tpe](${tpe.toString}, List(..$deps))"

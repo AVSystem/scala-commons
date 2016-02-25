@@ -20,7 +20,7 @@ trait GenCodec[T] {
 
 object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   /**
-    * Macro that automatically materializes a [[GenCodec]] for some type [[T]], which must be one of:
+    * Macro that automatically materializes a [[GenCodec]] for some type `T`, which must be one of:
     * <ul>
     * <li>singleton type, e.g. an `object`</li>
     * <li>case class whose every field type has its own [[GenCodec]]</li>

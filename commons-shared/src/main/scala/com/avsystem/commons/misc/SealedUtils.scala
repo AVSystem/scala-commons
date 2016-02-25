@@ -27,7 +27,7 @@ object SealedUtils {
   */
 trait SealedEnumCompanion[T] {
   /**
-    * Holds a list of all case objects of a sealed trait or class [[T]]. This must be implemented separately
+    * Holds a list of all case objects of a sealed trait or class `T`. This must be implemented separately
     * for every sealed enum, but can be implemented simply by using the [[caseObjects]] macro.
     * It's important to *always* state the type of `values` explicitly, as a workaround for SI-7046. For example:
     *

@@ -2,7 +2,7 @@ package com.avsystem.commons
 package misc
 
 /**
-  * A typeclass which witnesses that type [[A]] can be wrapped into trait or abstract class [[B]]
+  * A typeclass which witnesses that type `A` can be wrapped into trait or abstract class `B`
   */
 trait Delegation[A, B] {
   def delegate(a: A): B

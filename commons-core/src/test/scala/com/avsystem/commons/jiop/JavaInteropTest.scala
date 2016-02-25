@@ -8,7 +8,7 @@ import org.scalatest.FunSuite
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Promise}
-import scala.util.{Random, Success}
+import scala.util.Success
 
 class JavaInteropTest extends FunSuite {
 

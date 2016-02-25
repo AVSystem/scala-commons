@@ -2,12 +2,12 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.concurrent.{HasExecutionContext, RunNowEC}
+import com.avsystem.commons.rpc.DummyRPC._
 import com.github.ghik.silencer.silent
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{ExecutionContext, Future}
-import DummyRPC._
 
 class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
 

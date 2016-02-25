@@ -28,7 +28,7 @@ class SamMacros(val c: blackbox.Context) extends MacroCommons {
     val byName = validateSam(targetTpe, funTpe)
     val m = targetTpe.members.filter(m => m.isAbstract).head
 
-    if(byName) {
+    if (byName) {
       q"""
         new $targetTpe {
           def ${m.name.toTermName} = $fun

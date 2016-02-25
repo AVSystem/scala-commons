@@ -109,7 +109,7 @@ class TypeClassDerivationTest extends FunSuite {
     assert(SealedRoot.tc == SealedHierarchyTC(typeRepr[SealedRoot], List(
       ("SealedCase", ApplyUnapplyTC(typeRepr[SealedCase], List(("i", TC.forInt, None)))),
       ("SealedObj", SingletonTC(typeRepr[SealedObj.type], SealedObj)),
-      ("SubSealedCase", ApplyUnapplyTC(typeRepr[SubSealedCase], List(("i", TC.forInt, None), ("w", Whatever.tc ,None))))
+      ("SubSealedCase", ApplyUnapplyTC(typeRepr[SubSealedCase], List(("i", TC.forInt, None), ("w", Whatever.tc, None))))
     )))
   }
 

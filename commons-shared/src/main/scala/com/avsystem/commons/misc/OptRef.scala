@@ -33,7 +33,7 @@ object OptRef {
 }
 
 /**
-  * Like [[Opt]] but has better Java interop thanks to the fact that wrapped value has type [[A]] instead of [[Any]].
+  * Like [[Opt]] but has better Java interop thanks to the fact that wrapped value has type `A` instead of `Any`.
   * For example, Scala method defined like this:
   * {{{
   *   def takeMaybeString(str: OptRef[String]): Unit
@@ -44,7 +44,7 @@ object OptRef {
   * }}}
   * and `null` will be used to represent absence of value.
   * <p/>
-  * This comes at the cost of [[A]] having to be a nullable type.
+  * This comes at the cost of `A` having to be a nullable type.
   *
   * Author: ghik
   * Created: 07/01/16.

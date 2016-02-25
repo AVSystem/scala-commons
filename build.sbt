@@ -67,7 +67,6 @@ val commonSettings = Seq(
     </developers>
   },
 
-  (publishArtifact in packageDoc) := false,
   libraryDependencies += compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion),
   libraryDependencies ++= Seq(
     "com.github.ghik" % "silencer-lib" % silencerVersion,

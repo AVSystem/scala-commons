@@ -14,7 +14,7 @@ object NOpt {
   private object NullMarker extends Serializable
 
   /**
-    * Creates a [[NOpt]] out of given value. Works like [[Option.apply]], i.e. `null` is translated into
+    * Creates a [[NOpt]] out of given value. Works like `Option.apply`, i.e. `null` is translated into
     * an empty [[NOpt]]. Note however that [[NOpt]] does have a representation of "present null" (which
     * can be obtained using [[NOpt.some]]).
     */

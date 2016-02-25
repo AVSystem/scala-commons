@@ -4,7 +4,7 @@ package serialization
 import scala.annotation.StaticAnnotation
 
 /**
-  * Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived [[GenCodec]]
+  * Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived `GenCodec`
   * to use particular name instead of just using parameter or class name.
   *
   * For example:

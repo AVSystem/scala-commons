@@ -9,9 +9,9 @@ import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds
 
 /**
- * Author: ghik
- * Created: 15/07/15.
- */
+  * Author: ghik
+  * Created: 15/07/15.
+  */
 final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
   def asJava = jStream
 

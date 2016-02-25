@@ -22,7 +22,8 @@ object TreeForTypeTest {
   testTreeForType("Set[_]")
   testTreeForType("Map[T, T] forSome {type T <: String}")
   testTreeForType("AnyRef with Serializable")
-  testTreeForType("""AnyRef {
+  testTreeForType(
+    """AnyRef {
     type Lol[K, V] <: Map[K, V]
     def stuff[C[+X] <: Traversable[X]](c: C[Int]): C[String]
     val lulz: Map[String, Int]
@@ -65,7 +66,8 @@ class TreeForTypeTest {
   testTreeForType("fu.z.type forSome {val fu: Fuu with Singleton}")
   testTreeForType("fu.bar.q.type forSome {val fu: Fuu}")
   testTreeForType("AnyRef with Serializable")
-  testTreeForType("""AnyRef {
+  testTreeForType(
+    """AnyRef {
     type Lol[K, V] <: Map[K, V]
     type Stuff[K, V] = Map[K, V]
     def stuff[C[+X] <: Traversable[X]](c: C[Int]): C[String]
@@ -92,7 +94,8 @@ class TreeForTypeTest {
     testTreeForType("fu.z.type forSome {val fu: Fuu}")
     testTreeForType("fu.bar.q.type forSome {val fu: Fuu}")
     testTreeForType("AnyRef with Serializable")
-    testTreeForType("""AnyRef {
+    testTreeForType(
+      """AnyRef {
       type Lol[K, V] <: Map[K, V]
       type Stuff[K, V] = Map[K, V]
       def stuff[C[+X] <: Traversable[X]](c: C[Int]): C[String]
@@ -102,6 +105,7 @@ class TreeForTypeTest {
 }
 
 object Unrelated {
+
   import TreeForTypeTest._
 
   testTreeForType("Int")
@@ -115,7 +119,8 @@ object Unrelated {
   testTreeForType("Set[_]")
   testTreeForType("Map[T, T] forSome {type T <: String}")
   testTreeForType("AnyRef with Serializable")
-  testTreeForType("""AnyRef {
+  testTreeForType(
+    """AnyRef {
     type Lol[K, V] <: Map[K, V]
     type Stuff[K, V] = Map[K, V]
     def stuff[C[+X] <: Traversable[X]](c: C[Int]): C[String]

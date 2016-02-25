@@ -71,13 +71,13 @@ object SharedExtensions extends SharedExtensions {
 
   class FutureOps[A](private val fut: Future[A]) extends AnyVal {
     /**
-      * Maps a [[Future]] using [[RunNowEC]].
+      * Maps a `Future` using [[concurrent.RunNowEC RunNowEC]].
       */
     def mapNow[B](f: A => B): Future[B] =
       fut.map(f)(RunNowEC)
 
     /**
-      * FlatMaps a [[Future]] using [[RunNowEC]].
+      * FlatMaps a `Future` using [[concurrent.RunNowEC RunNowEC]].
       */
     def flatMapNow[B](f: A => Future[B]): Future[B] =
       fut.flatMap(f)(RunNowEC)
@@ -91,10 +91,10 @@ object SharedExtensions extends SharedExtensions {
 
   class LazyFutureOps[A](fut: => Future[A]) {
     /**
-      * Evaluates a left-hand-side expression that returns a [[Future]] and ensures that all exceptions thrown by
-      * that expression are converted to a failed [[Future]].
-      * Also, if left-hand-side expression returns `null`, it's converted to a [[Future]] failed with
-      * [[NullPointerException]].
+      * Evaluates a left-hand-side expression that returns a `Future` and ensures that all exceptions thrown by
+      * that expression are converted to a failed `Future`.
+      * Also, if left-hand-side expression returns `null`, it's converted to a `Future` failed with
+      * `NullPointerException`.
       */
     def catchFailures: Future[A] = {
       val result = try fut catch {

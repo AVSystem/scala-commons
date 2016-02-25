@@ -28,7 +28,7 @@ object Opt {
 }
 
 /**
-  * Like [[Option]] but avoids boxing. No value is represented internally using `null`. Therefore, there is no
+  * Like `Option` but avoids boxing. No value is represented internally using `null`. Therefore, there is no
   * equivalent for `Some(null)`.
   *
   * Author: ghik

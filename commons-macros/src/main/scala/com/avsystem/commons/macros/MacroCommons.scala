@@ -131,7 +131,7 @@ trait MacroCommons {
   }
 
   /**
-    * Returns a [[Tree]] that should typecheck to the type passed as argument (without using [[TypeTree]]).
+    * Returns a `Tree` that should typecheck to the type passed as argument (without using `TypeTree`).
     */
   def treeForType(tpe: Type): Tree = tpe match {
     case TypeRef(NoPrefix, ExistentialSingleton(_, name, _), Nil) =>

@@ -4,9 +4,9 @@ package jiop
 import java.{util => ju}
 
 /**
- * Author: ghik
- * Created: 14/07/15.
- */
+  * Author: ghik
+  * Created: 14/07/15.
+  */
 trait JOptionalUtils {
 
   import JOptionalUtils._

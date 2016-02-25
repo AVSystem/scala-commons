@@ -6,8 +6,8 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import scala.util.{Failure, Success, Try}
 
 /**
-  * This is pretty much the same thing as [[Try]] but more lightweight - it simply holds an error message instead
-  * of a whole exception with stack trace etc.
+  * This is pretty much the same thing as `Try` but more lightweight -
+  * it simply holds an error message instead of a whole exception with stack trace etc.
   */
 sealed trait ValueRead[+A] {
   def isSuccess: Boolean = this match {
