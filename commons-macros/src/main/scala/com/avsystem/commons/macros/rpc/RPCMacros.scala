@@ -174,7 +174,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
       val args = reifyList(paramLists.map(paramList =>
         reifyList(paramList.map(ps => q"$FrameworkObj.write[${ps.typeSignature}](${ps.name.toTermName})"))))
 
-      val body = q"$rawRpcName.$rawRpcMethod(${m.rpcName.toString}, $args)"
+      val body = q"$rawRpcName.$rawRpcMethod(${m.rpcNameString}, $args)"
       val adjustedBody = m.memberType match {
         case Procedure => body
         case Function =>
