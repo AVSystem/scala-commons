@@ -184,7 +184,7 @@ class JavaInteropTest extends FunSuite {
 
     assert(gfut.isDone === sfut.isCompleted)
 
-    gfut.addListener(jRunnable(listenerCalled = true), MoreExecutors.sameThreadExecutor())
+    gfut.addListener(jRunnable(listenerCalled = true), MoreExecutors.directExecutor())
     promise.success(123)
 
     assert(Await.result(sfut, Duration.Inf) === gfut.get)

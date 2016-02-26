@@ -21,7 +21,7 @@ inThisBuild(Seq(
 ))
 
 val silencerVersion = "0.3"
-val guavaVersion = "14.0.1"
+val guavaVersion = "18.0"
 val jsr305Version = "3.0.0"
 val scalatestVersion = "2.2.5"
 val upickleVersion = "0.3.6"
