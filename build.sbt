@@ -5,6 +5,7 @@ cancelable in Global := true
 inThisBuild(Seq(
   scalaVersion := "2.11.7",
   organization := "com.avsystem.commons",
+  compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
     "-feature",
     "-deprecation",
@@ -27,6 +28,8 @@ val scalatestVersion = "2.2.5"
 val upickleVersion = "0.3.6"
 val jettyVersion = "8.1.17.v20150415"
 val mongoVersion = "3.2.2"
+val springVersion = "4.0.2.RELEASE"
+val typesafeConfigVersion = "1.3.0"
 
 val commonSettings = Seq(
   sonatypeProfileName := "com.avsystem",
@@ -81,6 +84,7 @@ val noPublishSettings = Seq(
   publishArtifact := false,
   publish :=(),
   publishLocal :=(),
+  publishM2 :=(),
   publishSigned :=(),
   publishLocalSigned :=()
 )
@@ -97,7 +101,8 @@ lazy val commons = project.in(file("."))
     `commons-analyzer`,
     `commons-jetty`,
     `commons-benchmark`,
-    `commons-mongo`
+    `commons-mongo`,
+    `commons-spring`
   )
   .settings(name := "commons")
   .settings(commonSettings: _*)
@@ -164,5 +169,15 @@ lazy val `commons-mongo` = project
   .settings(
     libraryDependencies ++= Seq(
       "org.mongodb" % "mongodb-driver" % mongoVersion
+    )
+  )
+
+lazy val `commons-spring` = project
+  .dependsOn(`commons-core`)
+  .settings(commonSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.springframework" % "spring-context" % springVersion,
+      "com.typesafe" % "config" % typesafeConfigVersion
     )
   )

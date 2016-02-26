@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <bean id="someAbstractBean" abstract="true">
+    <property name="settings">
+      <map>
+        <entry key="inherited" value="32"/>
+      </map>
+    </property>
+
+    <property name="characters">
+      <set>
+        <value>a</value>
+        <value>g</value>
+        <value>o</value>
+      </set>
+    </property>
+  </bean>
+
+  <bean id="someBean" class="com.example.SomeBeanClass" parent="someAbstractBaen">
+    <property name="someNumberProperty" value="42"/>
+    <property name="someStringProperty" value="someStringValue"/>
+
+    <property name="settings">
+      <map merge="true">
+        <entry key="someSetting" value="5"/>
+        <entry key="anotherSetting" value="20"/>
+      </map>
+    </property>
+
+    <property name="numbers">
+      <list>
+        <value>1</value>
+        <value>2</value>
+        <value>3</value>
+        <value>4</value>
+        <value>5</value>
+      </list>
+    </property>
+
+    <property name="characters">
+      <set merge="true">
+        <value>a</value>
+        <value>b</value>
+        <value>c</value>
+        <value>d</value>
+      </set>
+    </property>
+
+    <property name="nestedBean">
+      <bean class="com.example.SomeOtherBeanClass">
+        <property name="otherNestedBean" ref="otherBean"/>
+      </bean>
+    </property>
+
+  </bean>
+
+  <bean id="otherBean" class="com.example.YetAnotherBeanClass">
+    <property name="someRandomProperty" value="someRandomString"/>
+  </bean>
+
+</beans>
