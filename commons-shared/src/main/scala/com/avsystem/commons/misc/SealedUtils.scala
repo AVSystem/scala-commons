@@ -6,6 +6,11 @@ package misc
   * Created: 11/12/15.
   */
 object SealedUtils {
+  /**
+    * A macro which reifies a list of all case objects of a sealed trait or class `T`.
+    * WARNING: the order of case objects in the resulting list is arbitrary and is NOT guaranteed to be consistent with
+    * declaration order.
+    */
   def caseObjectsFor[T]: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
 }
 
@@ -34,8 +39,15 @@ trait SealedEnumCompanion[T] {
     * {{{
     *   val values: List[MyEnum] = caseObjects
     * }}}
+    *
+    * Also, be aware that [[caseObjects]] macro does NOT guarantee any particular order of elements.
     */
   val values: List[T]
 
+  /**
+    * A macro which reifies a list of all case objects of the sealed trait or class `T`.
+    * WARNING: the order of case objects in the resulting list is arbitrary and is NOT guaranteed to be consistent with
+    * declaration order.
+    */
   protected def caseObjects: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
 }
