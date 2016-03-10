@@ -156,7 +156,7 @@ class GenCodecTest extends CodecTestBase {
   case class Leaf[T](value: T) extends Tree[T]
   case class Branch[T](left: Tree[T], right: Tree[T]) extends Tree[T]
   object Tree {
-    implicit def codec[T: GenCodec]: GenCodec[Tree[T]] = GenCodec.auto[Tree[T]]
+    implicit def codec[A: GenCodec]: GenCodec[Tree[A]] = GenCodec.auto[Tree[A]]
   }
 
   test("recursive gadt test") {

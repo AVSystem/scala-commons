@@ -141,15 +141,15 @@ class TypeClassDerivationTest extends FunSuite {
   case class Branch[T](left: Tree[T], right: Tree[T]) extends Tree[T]
 
   object Tree {
-    implicit def tc[T: TC]: TC[Tree[T]] = autoDeriveFor[Tree[T]]
+    implicit def tc[A: TC]: TC[Tree[A]] = autoDeriveFor[Tree[A]]
   }
 
   test("recursive GADT test") {
-    def doTest[T](implicit tct: TC[T]): Unit = {
-      val tc = Tree.tc[T]
-      assert(tc == SealedHierarchyTC(typeRepr[Tree[T]], List(
-        ("Leaf", ApplyUnapplyTC(typeRepr[Leaf[T]], List(("value", tct, None)))),
-        ("Branch", ApplyUnapplyTC(typeRepr[Branch[T]], List(
+    def doTest[A](implicit tct: TC[A]): Unit = {
+      val tc = Tree.tc[A]
+      assert(tc == SealedHierarchyTC(typeRepr[Tree[A]], List(
+        ("Leaf", ApplyUnapplyTC(typeRepr[Leaf[A]], List(("value", tct, None)))),
+        ("Branch", ApplyUnapplyTC(typeRepr[Branch[A]], List(
           ("left", TC.Deferred(tc), None),
           ("right", TC.Deferred(tc), None)
         )))
