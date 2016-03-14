@@ -218,4 +218,55 @@ class JavaInteropTest extends FunSuite {
     val jmap = Iterator(1 -> "jeden", 2 -> "dwa").toJMap
     assert(jmap === JMap(1 -> "jeden", 2 -> "dwa"))
   }
+
+  test("JOptional companion object should act as factory") {
+    val string = "alamakota"
+    val stringOpt = JOptional(string)
+    assert(stringOpt.isPresent === true)
+    assert(stringOpt.get() === string)
+
+    val nullOpt = JOptional[String](null)
+    assert(nullOpt.isPresent === false)
+
+    assert(JOptional.empty.isPresent === false)
+    assert(JOptional.none.isPresent === false)
+
+    assert(JOptionalInt(3).getAsInt === 3)
+    assert(JOptionalLong(3L).getAsLong === 3L)
+    assert(JOptionalDouble(3.0).getAsDouble === 3.0)
+  }
+
+  test("option to optional converter should work") {
+    val string: String = "alamakota"
+    val empty: String = null
+
+    assert(Option(string).asJava === JOptional(string))
+    assert(Option(empty).asJava === JOptional.none)
+
+    assert(Option(3).asJavaInt === JOptionalInt(3))
+    assert(Option(3).asJava === JOptional(3))
+
+    assert(Option(3L).asJava === JOptional(3L))
+    assert(Option(3L).asJavaLong === JOptionalLong(3l))
+
+    assert(Option(3.0).asJava == JOptional(3.0))
+    assert(Option(3.0).asJavaDouble == JOptionalDouble(3.0))
+  }
+
+  test("optional to option converter should work") {
+    val string: String = "alamakota"
+    val empty: String = null
+
+    assert(Option(string) === JOptional(string).asScala)
+    assert(Option(empty) === JOptional.none.asScala)
+
+    assert(Option(3) === JOptionalInt(3).asScala)
+    assert(Option(3) === JOptional(3).asScala)
+
+    assert(Option(3L) === JOptional(3L).asScala)
+    assert(Option(3L) === JOptionalLong(3l).asScala)
+
+    assert(Option(3.0) === JOptional(3.0).asScala)
+    assert(Option(3.0) === JOptionalDouble(3.0).asScala)
+  }
 }
