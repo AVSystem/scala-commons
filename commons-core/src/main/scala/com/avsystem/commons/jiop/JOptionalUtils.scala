@@ -39,50 +39,32 @@ trait JOptionalUtils {
 
   implicit def option2AsJavaLong(option: Option[Long]): option2AsJavaLong =
     new option2AsJavaLong(option)
-}
 
-object JOptional {
 
-  import JavaInterop._
+  object JOptional {
+    def apply[T](nullable: T): JOptional[T] = ju.Optional.ofNullable(nullable)
 
-  def apply[T](nullable: T): JOptional[T] = ju.Optional.ofNullable(nullable)
+    def empty[T]: JOptional[T] = ju.Optional.empty[T]()
+  }
 
-  def empty[T]: JOptional[T] = ju.Optional.empty[T]()
+  object JOptionalDouble {
+    def apply(value: Double): JOptionalDouble = ju.OptionalDouble.of(value)
 
-  def none[T]: JOptional[T] = empty
-}
+    def empty: JOptionalDouble = ju.OptionalDouble.empty()
+  }
 
-object JOptionalDouble {
+  object JOptionalInt {
+    def apply(value: Int): JOptionalInt = ju.OptionalInt.of(value)
 
-  import JavaInterop._
+    def empty: JOptionalInt = ju.OptionalInt.empty()
+  }
 
-  def apply(value: Double): JOptionalDouble = ju.OptionalDouble.of(value)
+  object JOptionalLong {
+    def apply(value: Long): JOptionalLong = ju.OptionalLong.of(value)
 
-  def empty: JOptionalDouble = ju.OptionalDouble.empty()
+    def empty: JOptionalLong = ju.OptionalLong.empty()
+  }
 
-  def none: JOptionalDouble = empty
-}
-
-object JOptionalInt {
-
-  import JavaInterop._
-
-  def apply(value: Int): JOptionalInt = ju.OptionalInt.of(value)
-
-  def empty: JOptionalInt = ju.OptionalInt.empty()
-
-  def none: JOptionalInt = empty
-}
-
-object JOptionalLong {
-
-  import JavaInterop._
-
-  def apply(value: Long): JOptionalLong = ju.OptionalLong.of(value)
-
-  def empty: JOptionalLong = ju.OptionalLong.empty()
-
-  def none: JOptionalLong = empty
 }
 
 object JOptionalUtils {
@@ -109,11 +91,13 @@ object JOptionalUtils {
       if (optional.isPresent) Some(optional.getAsLong) else None
   }
 
-  // Note that in scala Some(null) is valid value. It will be translated to Optional.empty, because java Optional
-  // is not able to hold null
   final class option2AsJava[T](private val option: Option[T]) extends AnyVal {
+    /**
+      *Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional
+      *  is not able to hold null
+      */
     def asJava: JOptional[T] =
-      if (option.isDefined) ju.Optional.ofNullable(option.get) else ju.Optional.empty()
+      if (option.isDefined) ju.Optional.of(option.get) else ju.Optional.empty()
   }
 
   final class option2AsJavaDouble(private val option: Option[Double]) extends AnyVal {

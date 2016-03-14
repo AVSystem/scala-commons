@@ -229,7 +229,6 @@ class JavaInteropTest extends FunSuite {
     assert(nullOpt.isPresent === false)
 
     assert(JOptional.empty.isPresent === false)
-    assert(JOptional.none.isPresent === false)
 
     assert(JOptionalInt(3).getAsInt === 3)
     assert(JOptionalLong(3L).getAsLong === 3L)
@@ -241,7 +240,7 @@ class JavaInteropTest extends FunSuite {
     val empty: String = null
 
     assert(Option(string).asJava === JOptional(string))
-    assert(Option(empty).asJava === JOptional.none)
+    assert(Option(empty).asJava === JOptional.empty)
 
     assert(Option(3).asJavaInt === JOptionalInt(3))
     assert(Option(3).asJava === JOptional(3))
@@ -258,7 +257,7 @@ class JavaInteropTest extends FunSuite {
     val empty: String = null
 
     assert(Option(string) === JOptional(string).asScala)
-    assert(Option(empty) === JOptional.none.asScala)
+    assert(Option(empty) === JOptional.empty.asScala)
 
     assert(Option(3) === JOptionalInt(3).asScala)
     assert(Option(3) === JOptional(3).asScala)
