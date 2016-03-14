@@ -41,4 +41,8 @@ class OptTest extends FunSuite {
       case Opt(Opt.Empty) =>
     }
   }
+
+  test("empty hash code") {
+    Opt.Empty.hashCode
+  }
 }

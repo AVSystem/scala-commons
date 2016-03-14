@@ -1,10 +1,14 @@
 package com.avsystem.commons
 package misc
 
+import com.avsystem.commons.misc.Opt.EmptyMarker
+
 import scala.language.implicitConversions
 
 object Opt {
-  def apply[A](value: A): Opt[A] = new Opt[A](value)
+  private object EmptyMarker extends Serializable
+
+  def apply[A](value: A): Opt[A] = new Opt[A](if (value != null) value else EmptyMarker)
   def unapply[A](opt: Opt[A]): Opt[A] = opt //name-based extractor
 
   def some[A](value: A): Opt[A] =
@@ -13,7 +17,7 @@ object Opt {
 
   implicit def opt2Iterable[A](xo: Opt[A]): Iterable[A] = xo.toList
 
-  final val Empty: Opt[Nothing] = new Opt(null)
+  final val Empty: Opt[Nothing] = new Opt(EmptyMarker)
 
   def empty[A]: Opt[A] = Empty
 
@@ -28,8 +32,7 @@ object Opt {
 }
 
 /**
-  * Like `Option` but avoids boxing. No value is represented internally using `null`. Therefore, there is no
-  * equivalent for `Some(null)`.
+  * Like `Option` but avoids boxing and treats `null` as no value. Therefore, there is no equivalent for `Some(null)`.
   *
   * Author: ghik
   * Created: 07/01/16.
@@ -37,7 +40,7 @@ object Opt {
 final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
   private def value: A = rawValue.asInstanceOf[A]
 
-  @inline def isEmpty: Boolean = rawValue == null
+  @inline def isEmpty: Boolean = rawValue == EmptyMarker
   @inline def isDefined: Boolean = !isEmpty
   @inline def nonEmpty: Boolean = isDefined
 

@@ -45,4 +45,8 @@ class NOptTest extends FunSuite {
       case NOpt(NOpt.Empty) =>
     }
   }
+
+  test("empty hash code") {
+    NOpt.Empty.hashCode
+  }
 }

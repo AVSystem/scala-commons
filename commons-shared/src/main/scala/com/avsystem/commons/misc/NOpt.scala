@@ -6,11 +6,12 @@ package misc
   * Created: 14/01/16.
   */
 
-import com.avsystem.commons.misc.NOpt.NullMarker
+import com.avsystem.commons.misc.NOpt.{EmptyMarker, NullMarker}
 
 import scala.language.implicitConversions
 
 object NOpt {
+  private object EmptyMarker extends Serializable
   private object NullMarker extends Serializable
 
   /**
@@ -30,7 +31,7 @@ object NOpt {
 
   implicit def opt2Iterable[A](xo: NOpt[A]): Iterable[A] = xo.toList
 
-  final val Empty: NOpt[Nothing] = new NOpt(null)
+  final val Empty: NOpt[Nothing] = new NOpt(EmptyMarker)
 
   def empty[A]: NOpt[A] = Empty
 
@@ -50,7 +51,7 @@ object NOpt {
 final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
   private def value: A = (if (rawValue.asInstanceOf[AnyRef] eq NullMarker) null else rawValue).asInstanceOf[A]
 
-  @inline def isEmpty: Boolean = rawValue == null
+  @inline def isEmpty: Boolean = rawValue == EmptyMarker
   @inline def isDefined: Boolean = !isEmpty
   @inline def nonEmpty: Boolean = isDefined
 
