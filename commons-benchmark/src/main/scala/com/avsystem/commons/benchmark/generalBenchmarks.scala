@@ -14,47 +14,52 @@ class LoopBenchmark {
 
   @Benchmark
   def rangeForeachTest(blackhole: Blackhole): Unit = {
+    val x = 42
     var bin: Int = 0
     (1 to 100).foreach { i =>
-      bin = i
+      bin = i + x
     }
     blackhole.consume(bin)
   }
 
   @Benchmark
   def foreachTest(blackhole: Blackhole): Unit = {
+    val x = 42
     var bin: Int = 0
     collection.foreach { i =>
-      bin = i
+      bin = i + x
     }
     blackhole.consume(bin)
   }
 
   @Benchmark
   def iteratorForeachTest(blackhole: Blackhole): Unit = {
+    val x = 42
     var bin: Int = 0
     collection.iterator.foreach { i =>
-      bin = i
+      bin = i + x
     }
     blackhole.consume(bin)
   }
 
   @Benchmark
   def iteratorTest(blackhole: Blackhole): Unit = {
+    val x = 42
     var bin: Int = 0
     val it = collection.iterator
     while (it.hasNext) {
-      bin = it.next()
+      bin = it.next() + x
     }
     blackhole.consume(bin)
   }
 
   @Benchmark
   def whileTest(blackhole: Blackhole): Unit = {
+    val x = 42
     var bin: Int = 0
     var l = collection
     while (l.nonEmpty) {
-      bin = l.head
+      bin = l.head + x
       l = l.tail
     }
     blackhole.consume(bin)
