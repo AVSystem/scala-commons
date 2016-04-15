@@ -25,11 +25,14 @@ val silencerVersion = "0.3"
 val guavaVersion = "18.0"
 val jsr305Version = "3.0.0"
 val scalatestVersion = "2.2.5"
+val scalacheckVersion = "1.12.5"
 val upickleVersion = "0.3.6"
 val jettyVersion = "8.1.17.v20150415"
 val mongoVersion = "3.2.2"
 val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.0"
+val akkaVersion = "2.4.2"
+val shapelessVersion = "2.3.0"
 
 val commonSettings = Seq(
   sonatypeProfileName := "com.avsystem",
@@ -73,7 +76,8 @@ val commonSettings = Seq(
   libraryDependencies += compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion),
   libraryDependencies ++= Seq(
     "com.github.ghik" % "silencer-lib" % silencerVersion,
-    "org.scalatest" %% "scalatest" % scalatestVersion % Test
+    "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+    "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
   ),
   dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.4",
   ideBasePackages := Seq(organization.value),
@@ -102,6 +106,7 @@ lazy val commons = project.in(file("."))
     `commons-jetty`,
     `commons-benchmark`,
     `commons-mongo`,
+    `commons-redis`,
     `commons-spring`
   )
   .settings(name := "commons")
@@ -169,6 +174,16 @@ lazy val `commons-mongo` = project
   .settings(
     libraryDependencies ++= Seq(
       "org.mongodb" % "mongodb-driver" % mongoVersion
+    )
+  )
+
+lazy val `commons-redis` = project
+  .dependsOn(`commons-core`)
+  .settings(commonSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.chuusai" %% "shapeless" % shapelessVersion
     )
   )
 

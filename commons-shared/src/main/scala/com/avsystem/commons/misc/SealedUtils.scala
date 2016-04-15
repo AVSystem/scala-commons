@@ -51,3 +51,12 @@ trait SealedEnumCompanion[T] {
     */
   protected def caseObjects: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
 }
+
+trait NamedEnum extends Any {
+  def name: String
+  override def toString: String = name
+}
+
+trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
+  lazy val byName: Map[String, T] = values.iterator.map(v => (v.name, v)).toMap
+}
