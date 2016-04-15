@@ -45,4 +45,9 @@ class OptTest extends FunSuite {
   test("empty hash code") {
     Opt.Empty.hashCode
   }
+
+  test("orNull") {
+    assert((Opt.Empty.orNull: Any) == null)
+    assert(Opt("").orNull == "")
+  }
 }

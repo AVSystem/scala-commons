@@ -9,23 +9,65 @@ import org.openjdk.jmh.infra.Blackhole
 @Fork(1)
 @BenchmarkMode(Array(Mode.Throughput))
 class LoopBenchmark {
+
+  import LoopBenchmark._
+
   @Benchmark
-  def foreachTest(): Unit = {
+  def rangeForeachTest(blackhole: Blackhole): Unit = {
+    val x = 42
     var bin: Int = 0
     (1 to 100).foreach { i =>
-      bin = i
+      bin = i + x
     }
+    blackhole.consume(bin)
   }
 
   @Benchmark
-  def whileTest(): Unit = {
+  def foreachTest(blackhole: Blackhole): Unit = {
+    val x = 42
     var bin: Int = 0
-    var i = 0
-    while (i < 100) {
-      bin = i
-      i += 1
+    collection.foreach { i =>
+      bin = i + x
     }
+    blackhole.consume(bin)
   }
+
+  @Benchmark
+  def iteratorForeachTest(blackhole: Blackhole): Unit = {
+    val x = 42
+    var bin: Int = 0
+    collection.iterator.foreach { i =>
+      bin = i + x
+    }
+    blackhole.consume(bin)
+  }
+
+  @Benchmark
+  def iteratorTest(blackhole: Blackhole): Unit = {
+    val x = 42
+    var bin: Int = 0
+    val it = collection.iterator
+    while (it.hasNext) {
+      bin = it.next() + x
+    }
+    blackhole.consume(bin)
+  }
+
+  @Benchmark
+  def whileTest(blackhole: Blackhole): Unit = {
+    val x = 42
+    var bin: Int = 0
+    var l = collection
+    while (l.nonEmpty) {
+      bin = l.head + x
+      l = l.tail
+    }
+    blackhole.consume(bin)
+  }
+}
+
+object LoopBenchmark {
+  val collection = (1 to 100).toList
 }
 
 class Box(var n: Int) {

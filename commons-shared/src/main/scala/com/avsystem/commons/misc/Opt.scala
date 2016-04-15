@@ -63,7 +63,7 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
     if (isEmpty) default else value
 
   @inline def orNull[B >: A](implicit ev: Null <:< B): B =
-    value.asInstanceOf[B]
+    if (isEmpty) ev(null) else value
 
   @inline def map[B](f: A => B): Opt[B] =
     if (isEmpty) Opt.Empty else Opt(f(value))

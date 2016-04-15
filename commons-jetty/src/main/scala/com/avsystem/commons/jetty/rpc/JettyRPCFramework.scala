@@ -5,9 +5,10 @@ import java.nio.charset.StandardCharsets
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import com.avsystem.commons.rpc.RPCFramework
-import org.eclipse.jetty.client.{ContentExchange, HttpClient}
-import org.eclipse.jetty.http.{HttpException, HttpMethods, HttpStatus}
-import org.eclipse.jetty.io.ByteArrayBuffer
+import org.eclipse.jetty.client.HttpClient
+import org.eclipse.jetty.client.api.Result
+import org.eclipse.jetty.client.util.{BufferingResponseListener, BytesContentProvider}
+import org.eclipse.jetty.http.{HttpMethod, HttpStatus}
 import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.server.{Handler, Request}
 
@@ -40,33 +41,34 @@ trait JettyRPCFramework extends RPCFramework {
 
     val rawRPC: RawRPC = new RawRPCImpl("")
 
-    def request(method: String, path: String, content: String): Future[String] = {
+    def request(method: HttpMethod, path: String, content: String): Future[String] = {
       val promise = Promise[String]
-
-      val exchange = new ContentExchange(true) {
-        override def onResponseComplete(): Unit = {
-          if (HttpStatus.isSuccess(getResponseStatus)) promise.success(getResponseContent)
-          else promise.failure(new HttpException(getResponseStatus))
+      val request = httpClient.newRequest(urlPrefix + path)
+      request.method(method)
+      request.content(new BytesContentProvider(content.getBytes(StandardCharsets.UTF_8)))
+      request.send(new BufferingResponseListener() {
+        override def onComplete(result: Result): Unit = {
+          if (result.isFailed) {
+            promise.tryFailure(result.getFailure)
+          } else {
+            val response = result.getResponse
+            if (HttpStatus.isSuccess(response.getStatus)) {
+              promise.success(getContentAsString)
+            } else {
+              promise.failure(new HttpException(response.getStatus))
+            }
+          }
         }
-
-        override def onConnectionFailed(x: Throwable): Unit = promise.tryFailure(x)
-        override def onException(x: Throwable): Unit = promise.tryFailure(x)
-        override def onExpire(): Unit = promise.tryFailure(new RuntimeException("Exchange expired"))
-      }
-      exchange.setMethod(method)
-      exchange.setRequestContent(new ByteArrayBuffer(content.getBytes(StandardCharsets.UTF_8)))
-      exchange.setURL(urlPrefix + path)
-
-      httpClient.send(exchange)
+      })
 
       promise.future
     }
 
     def post(path: String, content: String): Future[String] =
-      request(HttpMethods.POST, path, content)
+      request(HttpMethod.POST, path, content)
 
     def put(path: String, content: String): Unit =
-      request(HttpMethods.PUT, path, content)
+      request(HttpMethod.PUT, path, content)
 
   }
 
@@ -82,8 +84,8 @@ trait JettyRPCFramework extends RPCFramework {
         .takeWhile(_ != null)
         .mkString("\n")
 
-      request.getMethod match {
-        case HttpMethods.POST =>
+      HttpMethod.fromString(request.getMethod) match {
+        case HttpMethod.POST =>
           val async = request.startAsync()
           handlePost(cleanTarget, content).onComplete {
             case Success(responseContent) =>
@@ -96,8 +98,10 @@ trait JettyRPCFramework extends RPCFramework {
               }
               async.complete()
           }
-        case HttpMethods.PUT =>
+        case HttpMethod.PUT =>
           handlePut(cleanTarget, content)
+        case _ =>
+          throw new IllegalArgumentException(s"Request HTTP method is ${request.getMethod}, only POST or PUT are supported")
       }
     }
 
