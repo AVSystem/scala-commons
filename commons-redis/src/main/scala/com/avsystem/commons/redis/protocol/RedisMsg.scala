@@ -44,8 +44,8 @@ object SimpleStringStr {
 }
 
 object RedisMsg {
-  def escape(bs: ByteString): String = {
-    val sb = new StringBuilder("\"")
+  def escape(bs: ByteString, quote: Boolean = true): String = {
+    val sb = new StringBuilder(if(quote) "\"" else "")
     bs.foreach {
       case '\t' => sb ++= "\\r"
       case '\b' => sb ++= "\\b"
@@ -58,7 +58,9 @@ object RedisMsg {
       case b if b > 0x1F && b < 0x7F => sb += b.toChar
       case b => sb ++= f"\\x$b%02x"
     }
-    sb += '\"'
+    if(quote) {
+      sb += '\"'
+    }
     sb.result()
   }
 

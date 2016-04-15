@@ -72,12 +72,12 @@ final class RedisConnectionActor(address: NodeAddress) extends Actor with ActorL
     case qreq@QueuedRequest(client, Request(messages)) =>
       queuedRequests += qreq
       val encoded = RedisMsg.encode(messages)
-      log.debug(s"$address >>>>\n${RedisMsg.escape(encoded)}")
+      log.debug(s"$address >>>>\n${RedisMsg.escape(encoded, quote = false).replaceAllLiterally("\\r\\n", "\\r\\n\n")}")
       connection ! Write(encoded, WriteAck)
     case WriteAck =>
       sentRequests += queuedRequests.dequeue()
     case Received(data) =>
-      log.debug(s"$address <<<<\n${RedisMsg.escape(data)}")
+      log.debug(s"$address <<<<\n${RedisMsg.escape(data, quote = false).replaceAllLiterally("\\r\\n", "\\r\\n\n")}")
       decoder.decodeMore(data)
     case CommandFailed(_: Write) =>
       log.error(s"Write failed on $address")
