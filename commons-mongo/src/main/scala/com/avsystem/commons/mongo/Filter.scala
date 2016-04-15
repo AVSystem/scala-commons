@@ -3,8 +3,8 @@ package mongo
 
 import com.avsystem.commons.jiop.JavaInterop._
 import com.mongodb.client.model.{Filters => F}
+import org.bson.{BsonString, BsonValue, BsonDateTime, BsonInt32, BsonInt64, BsonDouble}
 import org.bson.conversions.Bson
-import org.bson._
 
 /**
   * @author MKej
