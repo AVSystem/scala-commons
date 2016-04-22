@@ -16,6 +16,8 @@ trait GenKeyCodec[T] {
 }
 
 object GenKeyCodec {
+  def forSealedEnum[T]: GenKeyCodec[T] = macro macros.serialization.GenKeyCodecMacros.forSealedEnum[T]
+
   def read[T](key: String)(implicit keyCodec: GenKeyCodec[T]): T = keyCodec.read(key)
   def write[T](value: T)(implicit keyCodec: GenKeyCodec[T]): String = keyCodec.write(value)
 

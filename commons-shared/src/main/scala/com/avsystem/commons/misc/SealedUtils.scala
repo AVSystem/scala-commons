@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package misc
 
+import com.avsystem.commons.serialization.GenKeyCodec
+
 /**
   * Author: ghik
   * Created: 11/12/15.
@@ -59,4 +61,6 @@ trait NamedEnum extends Any {
 
 trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
   lazy val byName: Map[String, T] = values.iterator.map(v => (v.name, v)).toMap
+
+  implicit val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(byName, _.name)
 }
