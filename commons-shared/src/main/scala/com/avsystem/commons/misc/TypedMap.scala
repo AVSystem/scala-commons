@@ -60,7 +60,7 @@ object TypedMap {
 
 /**
   * Base class for sealed enums which can be used as key type for a [[TypedMap]]. It also ensures that
-  * the [[TypedMap]]
+  * the [[TypedMap]] using [[TypedKey]] as a key type will always have a [[GenCodec]].
   */
 abstract class TypedKey[T](implicit val valueCodec: GenCodec[T])
 trait TypedKeyCompanion[K[X] <: TypedKey[X]] extends SealedEnumCompanion[K[_]] {
