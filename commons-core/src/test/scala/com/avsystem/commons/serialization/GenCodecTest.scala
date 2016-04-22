@@ -3,6 +3,7 @@ package serialization
 
 import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.jiop.JavaInterop._
+import com.avsystem.commons.misc.{TypedKey, TypedKeyCompanion, TypedMap}
 import com.avsystem.commons.serialization.GenCodecTest.ValueClass
 
 /**
@@ -190,5 +191,44 @@ class GenCodecTest extends CodecTestBase {
 
   test("sealed enum test") {
     testWriteReadAndAutoWriteRead[Enumz](Enumz.First, Map("Primary" -> Map()))
+    testWriteReadAndAutoWriteRead[Enumz](Enumz.Second, Map("Second" -> Map()))
+    testWriteReadAndAutoWriteRead[Enumz](Enumz.Third, Map("Third" -> Map()))
+  }
+
+  sealed trait KeyEnumz
+  object KeyEnumz {
+    @name("Primary")
+    case object First extends KeyEnumz
+    case object Second extends KeyEnumz
+    case object Third extends KeyEnumz
+
+    implicit val keyCodec: GenKeyCodec[KeyEnumz] = GenKeyCodec.forSealedEnum[KeyEnumz]
+    implicit def codec: GenCodec[KeyEnumz] = GenCodec.fromKeyCodec
+  }
+
+  test("sealed enum based on key codec test") {
+    testWriteReadAndAutoWriteRead[KeyEnumz](KeyEnumz.First, "Primary")
+    testWriteReadAndAutoWriteRead[KeyEnumz](KeyEnumz.Second, "Second")
+    testWriteReadAndAutoWriteRead[KeyEnumz](KeyEnumz.Third, "Third")
+  }
+
+  sealed abstract class SealedKey[T: GenCodec] extends TypedKey[T]
+  object SealedKey extends TypedKeyCompanion[SealedKey] {
+    @name("StrKey")
+    case object StringKey extends SealedKey[String]
+    case object IntKey extends SealedKey[Int]
+    case object BooleanKey extends SealedKey[Boolean]
+
+    val values: List[SealedKey[_]] = caseObjects
+    implicit def keyCodec: GenKeyCodec[SealedKey[_]] = GenKeyCodec.forSealedEnum[SealedKey[_]]
+  }
+
+  test("typed map test") {
+    import SealedKey._
+
+    testWriteReadAndAutoWriteRead(
+      TypedMap(StringKey -> "lol", IntKey -> 42, BooleanKey -> true),
+      Map[String, Any]("StrKey" -> "lol", "IntKey" -> 42, "BooleanKey" -> true)
+    )
   }
 }
