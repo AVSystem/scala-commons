@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.Timeout
-import com.avsystem.commons.redis.{RedisCommand, RedisFlushable, RedisNodeClient, RedisOp}
+import com.avsystem.commons.redis.{RedisBatch, RedisCommand, RedisNodeClient, RedisOp}
 
 import scala.concurrent.Future
 
@@ -74,8 +74,8 @@ trait ApiSubset[+F[_]] {
 }
 
 object ApiSubset {
-  implicit class FlushableApiSubset[C <: ApiSubset[RedisFlushable]](val cs: C) extends AnyVal {
-    def operations: cs.Self[RedisOp] = cs.transform(Mappers.FlushableToOp)
+  implicit class BatchApiSubset[C <: ApiSubset[RedisBatch]](val cs: C) extends AnyVal {
+    def operations: cs.Self[RedisOp] = cs.transform(Mappers.BatchToOp)
   }
 
   implicit class OperationsApiSubset[C <: ApiSubset[RedisOp]](val cs: C) extends AnyVal {
@@ -85,8 +85,8 @@ object ApiSubset {
 }
 
 object Mappers {
-  object FlushableToOp extends PolyFun[RedisFlushable, RedisOp] {
-    def apply[T](f: RedisFlushable[T]) = RedisOp.LeafOp(f)
+  object BatchToOp extends PolyFun[RedisBatch, RedisOp] {
+    def apply[T](f: RedisBatch[T]) = RedisOp.LeafOp(f)
   }
   case class ExecuteWith(client: RedisNodeClient)(implicit timeout: Timeout) extends PolyFun[RedisOp, Future] {
     def apply[T](op: RedisOp[T]) = client.execute(op)

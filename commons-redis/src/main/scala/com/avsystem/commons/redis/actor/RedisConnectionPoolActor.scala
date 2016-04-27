@@ -46,7 +46,7 @@ final class RedisConnectionPoolActor(address: NodeAddress, size: Int) extends Ac
   def handleNextOp(): Unit = if (queuedOps.nonEmpty) {
     nextAvailableConnection().foreach { connection =>
       val QueuedOp(listener, op) = queuedOps.dequeue()
-      val operationActor = context.actorOf(Props(new RedisOperationActor(connection)))
+      val operationActor = context.actorOf(Props(new RedisOperationActor(connection, address)))
       log.debug(s"Forwarding $op to $operationActor using connection $connection")
       operationActor.tell(op, listener)
     }

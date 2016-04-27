@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.commands
 
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.RedisFlushable
+import com.avsystem.commons.redis.RedisBatch
 
 /**
   * Author: ghik
@@ -20,7 +20,7 @@ trait KeysApiSuite extends CommandsSuite {
     RedisCommands.set(bs"torename", bs"value") *>
     RedisCommands.set(bs"torenamenx", bs"value") *>
     RedisCommands.set(bs"tomove", bs"value") *>
-    RedisFlushable.success(())
+    RedisBatch.success(())
 
   test("DEL") {
     assert(del(Seq(bs"todel", bs"foo")).futureValue == 1)

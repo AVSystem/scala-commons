@@ -4,7 +4,7 @@ package redis
 import akka.util.{ByteString, Timeout}
 import com.avsystem.commons.misc.{NamedEnum, Opt, Sam}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
-import com.avsystem.commons.redis.RedisFlushable.{MessageBuffer, RepliesDecoder, Transaction}
+import com.avsystem.commons.redis.RedisBatch.{MessageBuffer, RepliesDecoder, Transaction}
 import com.avsystem.commons.redis.commands.{Exec, Multi}
 import com.avsystem.commons.redis.exception.{ErrorReplyException, OptimisticLockException, UnexpectedReplyException}
 import com.avsystem.commons.redis.protocol._
@@ -15,15 +15,15 @@ import scala.concurrent.Future
 /**
   * Represents a Redis operation or a set of operations which is sent to Redis as a single batch.
   */
-trait RedisFlushable[+A] {self =>
+trait RedisBatch[+A] {self =>
   /**
     * Encodes itself to a sequence of redis messages that will be sent in one batch to the server.
     * Returns a [[RepliesDecoder]] responsible for translating raw Redis responses into the actual result.
     */
   def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean): RepliesDecoder[A]
 
-  def map2[B, C](other: RedisFlushable[B])(f: (A, B) => C): RedisFlushable[C] =
-    new RedisFlushable[C] {
+  def map2[B, C](other: RedisBatch[B])(f: (A, B) => C): RedisBatch[C] =
+    new RedisBatch[C] {
       def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = {
         val initialSize = messageBuffer.size
         val selfDecoder = self.encodeCommands(messageBuffer, inTransaction)
@@ -37,14 +37,14 @@ trait RedisFlushable[+A] {self =>
       }
     }
 
-  def <*[B](other: RedisFlushable[B]): RedisFlushable[A] =
+  def <*[B](other: RedisBatch[B]): RedisBatch[A] =
     map2(other)((a, _) => a)
 
-  def *>[B](other: RedisFlushable[B]): RedisFlushable[B] =
+  def *>[B](other: RedisBatch[B]): RedisBatch[B] =
     map2(other)((_, b) => b)
 
-  def map[B](f: A => B): RedisFlushable[B] =
-    new RedisFlushable[B] {
+  def map[B](f: A => B): RedisBatch[B] =
+    new RedisBatch[B] {
       def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = {
         val decoder = self.encodeCommands(messageBuffer, inTransaction)
         RepliesDecoder((replies, start, end) => f(decoder.decodeReplies(replies, start, end)))
@@ -52,25 +52,25 @@ trait RedisFlushable[+A] {self =>
     }
 
   /**
-    * Returns a flushable which invokes the same Redis commands as this flushable, but ensures that
+    * Returns a batch which invokes the same Redis commands as this batch, but ensures that
     * they are invoked inside a Redis transaction (`MULTI`-`EXEC`).
     */
-  def transaction: RedisFlushable[A] =
+  def transaction: RedisBatch[A] =
     new Transaction(this)
 
   def operation: RedisOp[A] =
     RedisOp.LeafOp(this)
 }
 
-object RedisFlushable {
-  final class Transaction[+A](flushable: RedisFlushable[A]) extends RedisFlushable[A] {
+object RedisBatch {
+  final class Transaction[+A](batch: RedisBatch[A]) extends RedisBatch[A] {
     def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) =
       if (inTransaction) {
-        flushable.encodeCommands(messageBuffer, inTransaction)
+        batch.encodeCommands(messageBuffer, inTransaction)
       } else {
         messageBuffer += ArrayMsg(Multi.encode)
         val initialSize = messageBuffer.size
-        val actualDecoder = flushable.encodeCommands(messageBuffer, inTransaction = true)
+        val actualDecoder = batch.encodeCommands(messageBuffer, inTransaction = true)
         val actualSize = messageBuffer.size - initialSize
         messageBuffer += ArrayMsg(Exec.encode)
         RepliesDecoder((replies, start, end) => replies(end - 1) match {
@@ -104,14 +104,14 @@ object RedisFlushable {
     def apply[A](f: (IndexedSeq[RedisMsg], Int, Int) => A): RepliesDecoder[A] = Sam[RepliesDecoder[A]](f)
   }
 
-  def success[A](a: A): RedisFlushable[A] =
-    new RedisFlushable[A] with RedisFlushable.RepliesDecoder[A] {
+  def success[A](a: A): RedisBatch[A] =
+    new RedisBatch[A] with RedisBatch.RepliesDecoder[A] {
       def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = this
       def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int) = a
     }
 
-  def failure(cause: Throwable): RedisFlushable[Nothing] =
-    new RedisFlushable[Nothing] with RedisFlushable.RepliesDecoder[Nothing] {
+  def failure(cause: Throwable): RedisBatch[Nothing] =
+    new RedisBatch[Nothing] with RedisBatch.RepliesDecoder[Nothing] {
       def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = this
       def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int) = throw cause
     }
@@ -138,22 +138,22 @@ sealed trait RedisOp[+A] {
 
 object RedisOp {
   def success[A](a: A): RedisOp[A] =
-    RedisFlushable.success(a).operation
+    RedisBatch.success(a).operation
 
   def failure(cause: Throwable): RedisOp[Nothing] =
-    RedisFlushable.failure(cause).operation
+    RedisBatch.failure(cause).operation
 
   //TODO more API
 
-  case class LeafOp[A](flushable: RedisFlushable[A]) extends RedisOp[A] {
-    def flatMap[B](f: A => RedisOp[B]) = FlatMappedOp(flushable, f)
+  case class LeafOp[A](batch: RedisBatch[A]) extends RedisOp[A] {
+    def flatMap[B](f: A => RedisOp[B]) = FlatMappedOp(batch, f)
   }
-  case class FlatMappedOp[A, B](flushable: RedisFlushable[A], fun: A => RedisOp[B]) extends RedisOp[B] {
-    def flatMap[C](f: B => RedisOp[C]) = FlatMappedOp(flushable, (a: A) => fun(a).flatMap(f))
+  case class FlatMappedOp[A, B](batch: RedisBatch[A], fun: A => RedisOp[B]) extends RedisOp[B] {
+    def flatMap[C](f: B => RedisOp[C]) = FlatMappedOp(batch, (a: A) => fun(a).flatMap(f))
   }
 }
 
-trait RedisCommand[+A] extends RedisFlushable[A] with RedisFlushable.RepliesDecoder[A] {
+trait RedisCommand[+A] extends RedisBatch[A] with RedisBatch.RepliesDecoder[A] {
   def encode: IndexedSeq[BulkStringMsg]
   def isKey(idx: Int): Boolean
   def decodeExpected: PartialFunction[ValidRedisMsg, A]

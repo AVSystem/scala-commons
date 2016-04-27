@@ -3,12 +3,13 @@ package redis.actor
 
 import akka.actor.{Actor, ActorRef, Terminated}
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.RedisFlushable.{MessageBuffer, RepliesDecoder}
+import com.avsystem.commons.redis.RedisBatch.{MessageBuffer, RepliesDecoder}
 import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 import com.avsystem.commons.redis.actor.RedisOperationActor.{Failure, Release, Response}
+import com.avsystem.commons.redis.exception.{ConnectionClosedException, RedisException}
 import com.avsystem.commons.redis.protocol.RedisMsg
 import com.avsystem.commons.redis.util.ActorLazyLogging
-import com.avsystem.commons.redis.{RedisFlushable, RedisOp}
+import com.avsystem.commons.redis.{NodeAddress, RedisBatch, RedisOp}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
@@ -21,28 +22,28 @@ import scala.util.control.NonFatal
   * Author: ghik
   * Created: 11/04/16.
   */
-final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLazyLogging {
+final class RedisOperationActor(connection: ActorRef, address: NodeAddress) extends Actor with ActorLazyLogging {
 
   context.watch(connection)
 
   private var listener: ActorRef = null
   private var released = false
 
-  def handleFlushable[A](flushable: RedisFlushable[A]): RepliesDecoder[A] = {
+  def handleBatch[A](batch: RedisBatch[A]): RepliesDecoder[A] = {
     val buf = new ArrayBuffer[RedisMsg]
-    val decoder = flushable.encodeCommands(new MessageBuffer(buf), inTransaction = false)
+    val decoder = batch.encodeCommands(new MessageBuffer(buf), inTransaction = false)
     log.debug(s"Sending $buf to connection $connection")
     connection ! RedisConnectionActor.Request(buf)
     decoder
   }
 
   def handleOperation(op: RedisOp[Any]): Unit = op match {
-    case LeafOp(flushable) =>
-      val decoder = handleFlushable(flushable)
+    case LeafOp(batch) =>
+      val decoder = handleBatch(batch)
       releaseConnection() // release the connection immediately after using it for the last time
       context.become(waitingForResponse(decoder, Opt.Empty))
-    case FlatMappedOp(flushable, nextStep) =>
-      val decoder = handleFlushable(flushable)
+    case FlatMappedOp(batch, nextStep) =>
+      val decoder = handleBatch(batch)
       context.become(waitingForResponse(decoder, Opt(nextStep)))
   }
 
@@ -73,7 +74,7 @@ final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLa
     }
 
   def connectionTerminated =
-    Failure(new Exception("Connection actor terminated")) //TODO better exception
+    Failure(new ConnectionClosedException(address))
 
   def receive = {
     case op: RedisOp[Any] =>
@@ -92,7 +93,7 @@ final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLa
   // nullguard redundant, but avoids unnecessary exception creation
   override def postStop() =
     if (listener != null) {
-      respond(Failure(new Exception("Operation killed before finishing")))
+      respond(Failure(new RedisException("Operation killed before finishing")))
     }
 }
 
