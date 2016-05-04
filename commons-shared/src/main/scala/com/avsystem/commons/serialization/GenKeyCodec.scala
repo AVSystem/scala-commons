@@ -16,6 +16,11 @@ trait GenKeyCodec[T] {
 }
 
 object GenKeyCodec {
+  /**
+    * Materializes a `GenKeyCodec` for a "sealed enum" (sealed hierarchy with case objects at the bottom).
+    * The generated codec uses object name by default as key value.
+    * This can be adjusted with `@name` annotation.
+    */
   def forSealedEnum[T]: GenKeyCodec[T] = macro macros.serialization.GenKeyCodecMacros.forSealedEnum[T]
 
   def read[T](key: String)(implicit keyCodec: GenKeyCodec[T]): T = keyCodec.read(key)

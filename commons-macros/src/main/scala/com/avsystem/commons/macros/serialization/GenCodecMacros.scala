@@ -206,17 +206,17 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation with C
   def forUnknown(tpe: Type): Tree =
     typecheckException(s"Cannot automatically derive GenCodec for $tpe")
 
-  def autoDeriveRecursively[T: c.WeakTypeTag]: Tree = {
+  def materializeRecursively[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
     q"""
-       implicit val ${c.freshName(TermName("allow"))}: $AutoDeriveRecursivelyCls[$typeClass] =
-         $AutoDeriveRecursivelyObj[$typeClass]
-       $GenCodecObj.auto[$tpe]
+       implicit val ${c.freshName(TermName("allow"))}: $materializeRecursivelyCls[$typeClass] =
+         $materializeRecursivelyObj[$typeClass]
+       $GenCodecObj.materialize[$tpe]
      """
   }
 
-  def autoDeriveRecursivelyImplicitly[T: c.WeakTypeTag](allow: Tree): Tree =
-    autoDerive[T]
+  def materializeRecursivelyImplicitly[T: c.WeakTypeTag](allow: Tree): Tree =
+    materialize[T]
 }
 
 

@@ -12,8 +12,8 @@ trait TypeClassDerivation extends MacroCommons {
   import c.universe._
 
   val DeferredInstanceCls = tq"$CommonsPackage.derivation.DeferredInstance"
-  val AutoDeriveRecursivelyCls = tq"$CommonsPackage.derivation.AutoDeriveRecursively"
-  val AutoDeriveRecursivelyObj = q"$CommonsPackage.derivation.AutoDeriveRecursively"
+  val materializeRecursivelyCls = tq"$CommonsPackage.derivation.MaterializeRecursively"
+  val materializeRecursivelyObj = q"$CommonsPackage.derivation.MaterializeRecursively"
   val RecursiveImplicitMarkerObj = q"$CommonsPackage.macros.RecursiveImplicitMarker"
 
   /**
@@ -134,7 +134,7 @@ trait TypeClassDerivation extends MacroCommons {
 
   def typeClassInstance(tpe: Type): Type = getType(tq"$typeClass[$tpe]")
 
-  def autoDeriveFor(tpe: Type): Tree = {
+  def materializeFor(tpe: Type): Tree = {
     val tcTpe = typeClassInstance(tpe)
 
     def handleMissingDependency[T](hint: String)(expr: => T): T =
@@ -161,7 +161,7 @@ trait TypeClassDerivation extends MacroCommons {
       val dependencies = subtypes.map { depTpe =>
         val depTree = handleMissingDependency(s"for case type $depTpe") {
           inferDependency(depTpe, silent = true) match {
-            case EmptyTree => autoDeriveFor(depTpe)
+            case EmptyTree => materializeFor(depTpe)
             case tree => tree
           }
         }
@@ -196,7 +196,7 @@ trait TypeClassDerivation extends MacroCommons {
     }.getOrElse(result)
   }
 
-  def autoDerive[T: c.WeakTypeTag]: Tree = abortOnTypecheckException {
+  def materialize[T: c.WeakTypeTag]: Tree = abortOnTypecheckException {
     val tpe = weakTypeOf[T]
     val tcTpe = typeClassInstance(tpe)
 
@@ -208,14 +208,14 @@ trait TypeClassDerivation extends MacroCommons {
           // will be replaced by reference to deferred instance
           q"$RecursiveImplicitMarkerObj.mark[$tcTpe]"
       }
-      .getOrElse(autoDeriveFor(weakTypeOf[T]))
+      .getOrElse(materializeFor(weakTypeOf[T]))
   }
 
-  def autoDeriveWrapped[T: c.WeakTypeTag]: Tree = {
+  def materializeAuto[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
     q"""
-       implicit val ${c.freshName(TermName("allow"))}: $AutoDeriveRecursivelyCls[$typeClass] =
-         $AutoDeriveRecursivelyObj[$typeClass]
+       implicit val ${c.freshName(TermName("allow"))}: $materializeRecursivelyCls[$typeClass] =
+         $materializeRecursivelyObj[$typeClass]
        ${wrapInAuto(q"implicitly[${typeClassInstance(tpe)}]")}
      """
   }
