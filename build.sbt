@@ -123,6 +123,11 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
   .jvmConfigure(_.dependsOn(`commons-macros`))
   .settings(commonSettings: _*)
   .jsSettings(
+    scalacOptions += {
+      val localDir = (baseDirectory in ThisBuild).value.toURI.toString
+      val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
+      s"-P:scalajs:mapSourceURI:$localDir->$githubDir/v${version.value}/"
+    },
     test := {},
     fork in Test := false
   )
