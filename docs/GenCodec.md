@@ -26,6 +26,7 @@ A `GenCodec[T]` can read a value of type `T` from an `Input` and write a value o
 * millisecond-precision timestamps
 * arbitrarily nested sequences (lists)
 * arbitrarily nested objects, i.e. string-to-value mappings
+
 Of course, if some type is not "natively" supported by some serialization format, it can be supported by representing it with one of the primitive types. For example, timestamps may be serialized simply as `Long` values containing the number of milliseconds since 01.01.1970.
 
 The commons library contains example implementation of `Input` and `Output` - `SimpleValueInput` and `SimpleValueOutput` which translate serialized values to simple Scala objects. Primitive types are represented by themselves, lists are represented by standard Scala `List[T]` values and objects are represented by standard Scala `Map[String,T]` values. You can use this representation as an intermediate representation that can be further serialized e.g. by some Java serialization framework. However, for performance reasons it is recommended to have direct implementations of `Input` and `Output` for the final format.
@@ -159,4 +160,44 @@ object Person {
 ```
 
 `materializeRecursively` will generate a codec for `Address`. However, this codec will be visible only by the `Person` codec. That means you can now serialize `Person` objects, but you still can't serialize `Address` objects by themselves. Also, remember that `materializeRecursively` descends into dependencies only when it actually needs to do it, i.e. first it tries to use any already declared `GenCodec`.
+
+#### Types supported by automatic materialization
+
+To be precise, `materialize` and `materializeRecursively` macros work for:
+* case classes, provided that all field types are serializable
+* case class like types, i.e. whose companion object contains a pair of matching `apply`/`unapply` methods defined like in case class companion, provided that all field types are serializable
+* singleton types, e.g. types of `object`s or `this.type`
+* sealed traits or abstract classes, provided that every non-abstract subtype either has its own `GenCodec` or it can be automatically generated
+
+#### Recursive types and GADTs
+
+`materialize` and `materializeRecursively` support recursive and generic types, e.g.
+
+```scala
+case class SimpleTree(children: List[SimpleTree])
+object SimpleTree {
+  implicit val codec: GenCodec[SimpleTree] = GenCodec.materialize[SimpleTree]
+}
+```
+
+```scala
+sealed trait Tree[T]
+case class Leaf[T](value: T) extends Tree[T]
+case class Branch[T](left: Tree[T], right: Tree[T]) extends Tree[T]
+object Tree {
+  implicit def codec[T: GenCodec]: GenCodec[Tree[T]] = GenCodec.materialize[Tree[T]]
+}
+```
+
+```scala
+sealed abstract class Key[T](value: T)
+case class StringKey(value: String) extends Key[String](value)
+case class IntKey(value: Int) extends Key[Int](value)
+case object NullKey extends Key[Null](null)
+object Key {
+  implicit val codec: GenCodec[Key[_]] = GenCodec.materialize[Key[_]]
+}
+```
+
+### Fully automatic mode
 
