@@ -122,20 +122,38 @@ object Person {
 }
 ```
 
+The macro-materialized codec for case class serializes it into an object where field names serve as keys and field values as associated values. For example, `Person("Fred", 1990)` would be represented (using `SimpleValueWriter`) as `Map("name" -> "Fred", "birthYear" -> 1990)`
+
+This can be customized with annotations (see later)
+
 #### Sealed hierarchies
 
-If you materialize a `GenCodec` for sealed hierarchy, make sure that the macro is used in source code after all case classes and object have been defined:
+Materialization of `GenCodec` also works for sealed hierarchies with case classes and objects:
 
 ```scala
 sealed trait Timeout
 case class FiniteTimeout(seconds: Int) extends Timeout
-case object InfiniteDuration extends Timeout
+case object InfiniteTimeout extends Timeout
 object Timeout {
   implicit val codec: GenCodec[Timeout] = GenCodec.materialize[Timeout]
 }
 ```
 
-This requirement is caused by a limitation in Scala macros - see [SI-7046](https://issues.scala-lang.org/browse/SI-7046) for more details. If you use static analyzer provided by AVSystem commons library (`commons-analyzer`), the compiler will protect you by issuing an error if you invoke macro in wrong place. This is recommended - otherwise there is a risk that the codec implementation is incomplete and will crash in runtime.
+Values of such types are serialized into objects with one field where key is the name of case class or object used and value is the serialized case class or object itself. For example, `FiniteTimeout(60)` would be represented (using `SimpleValueWriter`) as `Map("FiniteTimeout" -> Map("seconds" -> 60))`
+
+You need to be careful about where you invoke the `materialize` macro. It should always be done *after* all case classes and objects in you sealed hierarchy have already been defined - like in the example above, where companion object `Timeout` (which contains macro invocation) is defined after `FiniteTimeout` and `InfiniteTimeout`.
+
+The above requirement is caused by a limitation in Scala macros - see [SI-7046](https://issues.scala-lang.org/browse/SI-7046) for more details. If you use static analyzer provided by AVSystem commons library (`commons-analyzer`), the compiler will protect you by issuing an error if you invoke macro in wrong place. This is recommended - otherwise there is a risk that the codec implementation is incomplete and will crash in runtime.
+
+#### Singletons
+
+`materialize` macro is also able to generate (trivial) codecs for singletons, i.e. `object`s or types like `this.type`. Singletions always serialize into empty object. When using `SimpleValueWriter`, empty object is represented by empty `Map`.
+
+```scala
+object SomeObject {
+  implicit val codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
+}
+```
 
 #### Codec dependencies
 
@@ -165,11 +183,11 @@ object Person {
 
 To be precise, `materialize` and `materializeRecursively` macros work for:
 * case classes, provided that all field types are serializable
-* case class like types, i.e. whose companion object contains a pair of matching `apply`/`unapply` methods defined like in case class companion, provided that all field types are serializable
+* case class like types, i.e. classes or traits whose companion object contains a pair of matching `apply`/`unapply` methods defined like in case class companion, provided that all field types are serializable
 * singleton types, e.g. types of `object`s or `this.type`
-* sealed traits or abstract classes, provided that every non-abstract subtype either has its own `GenCodec` or it can be automatically generated
+* sealed traits or abstract classes, provided that every non-abstract subtype is serializable or `GenCodec` can also be automatically materialized for them
 
-#### Recursive types and GADTs
+#### Recursive types, generic types and GADTs (generalized algebraic data types)
 
 `materialize` and `materializeRecursively` support recursive and generic types, e.g.
 
@@ -199,5 +217,43 @@ object Key {
 }
 ```
 
-### Fully automatic mode
+### Fully automatic mode - `GenCodec.Auto`
 
+As in all examples shown before, if your API accepts implicit parameters of type `GenCodec[T]` in order to be able to serialize or deserialize values of `T`, codecs must always be explicitly declared for all serializable types, even thought they could be materialized automatically. This may seem cumbersome and annoying, but first: there is a good reason for that, and second: there is an alternative mode where explicit codecs are not required.
+
+If you don't want to declare codecs for every object, case class or sealed hierarchy, you can design your API around the `GenCodec.Auto` typeclass instead of `GenCodec`. `GenCodec.Auto` is just a simple wrapper around `GenCodec`. If some method requires implicit parameter of type `GenCodec.Auto[T]` and there is already a `GenCodec[T]` available, that codec will be wrapped and used. But if there is no `GenCodec` available, the compiler will try to materialize it on the fly using `materializeRecursively` macro.
+
+As an example of an API build around auto codecs, `GenCodec` companion object contains `autoRead` and `autoWrite` methods which accept `GenCodec.Auto` instead of `GenCodec`.
+
+#### Explicit vs automatic mode
+
+You may wonder now: why not always use `GenCodec.Auto`? This depends on your use case, but sometimes it's good to require programmers to explicitly declare codecs. Suppose that you're using `GenCodec` framework to serialize values in order to save them in database. In such case, you don't want any types to be accidentally serialized, because once a class gets serialized into database, it's bound by backwards compatibility constraints. You can no longer freely refactor such class without risking that reading previously saved data from database will fail. That's why it's good to require that a programmer always consciously decides that a particular class can be serialized.
+
+Even if you're using `GenCodec.Auto`, it's often still beneficial to explicitly declare `GenCodec`s in companion objects of your classes (remember that `GenCodec.Auto` wraps existing `GenCodec`s if they are available). By declaring codecs explicitly one can:
+* avoid bytecode duplication
+* reduce compilation times
+* avoid problems with incremental compilation caused by usage of macros (especially in IntelliJ IDEA)
+
+### Customizing macro-materialized codecs
+
+There are several annotations that can be used to alter the default behaviour of auto-materialized codecs for case classes, objects and sealed hierarchies. They can be found in `com.avsystem.commons.serialization` package and include:
+
+* `@name("someName")` - changes object field names in serialized data
+ * when applied on case class field: changes the raw field name used in case class representation
+ * when applied on class or object in sealed hierarchy: changes raw field name used in sealed trait/class representation to determine which case is being serialized
+* `@transparent` - can be used on case classes with exactly one field to instruct the auto-codec that the class should be serialized to the same representation as its only field
+* `@transientDefault` - can be used on case class fields that have a default value to instruct the auto-codec to not serialize this field unless its value is different than the default value
+
+It's also worth to remember that when deserializing case class, some fields may be missing in the representation and the deserialization will not fail as long as those fields have a default value.
+
+#### Safely introducing changes to serialized classes (retaining backwards compatibility)
+
+One must be careful when introducing changes to serialized classes so that serialized representation of old version can be safely deserialized into new version.
+
+1. Changing order of fields in case class is always safe, as the order of fields in serialized objects doesn't matter
+1. Adding a field to case class is safe as long as you provide default value for that field. Deserializer will use that value if field is missing in the serialized data.
+1. Changing name of case class field is safe as long as you annotate that field with `@name` annotation containing the old name.
+1. Changing the type of case class field is safe as long as you ensure that both old and new type have the same representation. The `@transparent` annotation may be useful when changing a type into some type that wraps the original type.
+1. Changing default value of case class field is always safe (i.e. will not crash), but already serialized data will still contain old default value (unless you use `@transientDefault` annotation).
+1. Adding classes or objects to sealed hierarchy is always safe.
+1. Changing name of an object or class in sealed hierarchy is safe as long as you annotate that class/object with `@name` annotation containing the old name.
