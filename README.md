@@ -3,32 +3,28 @@
 [![Build Status](https://travis-ci.org/AVSystem/scala-commons.svg?branch=master)](https://travis-ci.org/AVSystem/scala-commons)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.11)
 
-## Features
+## Modules and features
 
-`commons-shared` and `commons-core` modules:
-* Java & Guava interoperability utilities
- * aliases for Java & Guava types
- * converters between Java and Scala collections (the same as in Scala standard library)
- * converters between Scala `Future`s and Guava `ListenableFuture`s
- * factory objects and `CanBuildFrom` instances for Java collections
- * factory methods for common Java functional interfaces
- * Scala API over Java 8 Stream API which accepts Scala lambdas
-* shorter type aliases for Scala collections
-* lightweight alternatives for Scala `Option`: `Opt`, `NOpt`, `OptRef` - implemented as value classes
-* [`GenCodec`: format-agnostic, typeclass based serialization framework with automatic derivation](docs/GenCodec.md)
-* typesafe RPC/proxy framework
-* utilities for sealed hierarchy based enums
-
-`commons-macros` module:
-* reusable macro/reflection utilities
-* macro infrastructure for automatic type class derivation
-
-`commons-spring` module:
-* `BeanDefinitionReader` implementation for HOCON format
-
-`commons-analyzer` module:
-* custom static analyzer (a Scala compiler plugin)
-
+* `commons-shared` - basic language utilities and generic features not associated with any particular library of framework:
+ * Java interoperability utilities
+ * Various Scala language-level utilities
+ * Lightweight alternatives for Scala `Option` - `Opt`, `NOpt`, `OptRef` (implemented as value classes)
+ * [`GenCodec`: format-agnostic, typeclass based serialization framework with automatic derivation](docs/GenCodec.md)
+ * Typesafe RPC/proxy framework
+ 
+ `commons-shared` module is cross compiled for JVM and JS.
+* `commons-core` - additional language utilities available only on JVM
+ * Java 8 interoperability utilities
+ * Google Guava interoperability utilities
+* `commons-macros` contains implementations of macros used in other modules and reusable macro utilities:
+ * `MacroCommons` trait with several convenience functions for implementing macros
+ * `TypeClassDerivation` - implements infrastructure for automatic type class derivation
+* `commons-analyzer` - static analyzer for Scala code, i.e. a compiler plugin that enforces various (mostly undrelated) rules and conventions on source code
+* `commons-annotations` - contains annotations used by macros and static analyzer
+* `commons-jetty` - Jetty server utilities
+* `commons-mongo` - MongoDB utilities
+* `commons-spring` - Spring framework utilities:
+ * `HoconBeanDefinitionReader` - an utility that allows you to define Spring application context using HOCON format
 
 ## Development
 
