@@ -4,6 +4,25 @@
 
 RPC framework is cross-compiled for JVM and JS, which makes it especially useful for implementing communication layer between client and server in ScalaJS applications.
 
+## Table of Contents
+
+  * [RPC traits](#rpc-traits)
+      * [Overloaded remote methods](#overloaded-remote-methods)
+      * [Non-abstract members](#non-abstract-members)
+  * [Choosing a serialization mechanism](#choosing-a-serialization-mechanism)
+  * [RPC client implementation](#rpc-client-implementation)
+    * [Implementing the transport](#implementing-the-transport)
+    * [Wrapping raw RPC into a "real" proxy](#wrapping-raw-rpc-into-a-real-proxy)
+      * [Type safety](#type-safety)
+      * [Internals](#internals)
+  * [RPC server implementation](#rpc-server-implementation)
+    * [RPC implementation](#rpc-implementation)
+    * [Wrapping "real" RCP implementation into a raw RPC](#wrapping-real-rcp-implementation-into-a-raw-rpc)
+      * [Type safety](#type-safety-1)
+      * [Internals](#internals-1)
+  * [RPC metadata](#rpc-metadata)
+    * [Example](#example)
+
 ## RPC traits
 
 Suppose you have a client-server application where client wants to invoke remote operations on the server. The notions of "client" and "server" are abstract here, since the framework does not assume any particular transport method. This set of operations must be represented using a trait (or abstract class) annotated as `@RPC`:
