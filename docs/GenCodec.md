@@ -12,7 +12,7 @@ Features:
 
 ## Table of Contents
 
-  * [GenCodec typeclass](#gencodec-typeclass)
+  * [`GenCodec` typeclass](#gencodec-typeclass)
   * [Codecs available by default](#codecs-available-by-default)
     * [GenKeyCodec ](#genkeycodec)
   * [Serializing and deserializing examples](#serializing-and-deserializing-examples)
@@ -24,7 +24,7 @@ Features:
       * [Codec dependencies](#codec-dependencies)
       * [Types supported by automatic materialization](#types-supported-by-automatic-materialization)
       * [Recursive types, generic types and GADTs (generalized algebraic data types)](#recursive-types-generic-types-and-gadts-generalized-algebraic-data-types)
-    * [Fully automatic mode - GenCodec.Auto ](#fully-automatic-mode---gencodecauto)
+    * [Fully automatic mode - `GenCodec.Auto`](#fully-automatic-mode---gencodecauto)
       * [Explicit vs automatic mode](#explicit-vs-automatic-mode)
     * [Customizing macro-materialized codecs](#customizing-macro-materialized-codecs)
       * [Safely introducing changes to serialized classes (retaining backwards compatibility)](#safely-introducing-changes-to-serialized-classes-retaining-backwards-compatibility)
