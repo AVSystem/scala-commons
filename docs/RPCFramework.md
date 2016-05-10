@@ -15,12 +15,14 @@ import com.avsystem.commons.rpc.RPC
 }
 ```
 
-The RPC framework will interpret all **abstract** methods (`def`s) declared in this interface as remote methods. There are three types of remote methods allowed:
+The RPC framework interprets all **abstract** methods (`def`s) declared in this interface as remote methods. There are three types of remote methods allowed:
 * procedures: methods with `Unit` return type are interpreted as "fire and forget" operations, i.e. the server doesn't return any result or success acknowledgement
 * functions: methods with `Future[T]` return type are interpreted as functions that return some result. Result must always be wrapped in a `Future`, because the communication layer between client and server may be asynchronous. The server-side implementation of a function may also be asynchronous.
 * getters: methods that return another RPC interface (trait or abstract class annotated as `@RPC`). This way one RPC interface may aggregate many other sub-interfaces.
 
 Every remote method may take parameters, including implicit ones. However, every parameter type must be "serializable" so that parameter values can be sent over network in raw form. What "serializable" means depends on the serialization library chosen. We will elaborate on that in the next section.
+
+Remote methods can **not** have type parameters (generics).
 
 Example of an RPC trait:
 
@@ -102,9 +104,9 @@ trait RawRPC {
 }
 ```
 
-As you can see, each invocation is already represented in a raw form. RPC method used is identified with a `String` and all the parameters are already serialized into `RawValue`. This is something easy to send through network. Function results are also expected to be returned as `RawValue`s - the RPC framework automatically handles its deserialization.
+As you can see, each invocation is already represented in raw form. RPC method used is identified with a `String` and all the parameters are already serialized into `RawValue`. This is something easy to send through network. Function results are also expected to be returned as `RawValue`s - the RPC framework automatically handles their deserialization.
 
-Implementation of `fire` and `call` should contain the actual network operations. We will omit them in this example as it's not in the scope of this guide. We can only promise that implementing them as AJAX calls using ScalaJS is fairly straightforward.
+Implementation of `fire` and `call` should contain the actual network operations. We omit them in this example as it's not in the scope of this guide. We can only promise that implementing them as AJAX calls using ScalaJS is fairly straightforward.
 
 What's left is the `get` method. It's supposed to return a raw form of RPC subinterface. Usually, `get` doesn't require any network operations but simply aggregates RPC name and arguments so that they can be sent along with the actual `fire` or `call` invocation that's eventually done on some subinterface. Here's an example:
 
@@ -119,7 +121,7 @@ class AjaxRawRPC(getterChain: List[RawInvocation]) extends RawRPC {
   def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue] = {
     // send RPC invocation along with the getter chain using AJAX
   }
-  // `get` method simply adds the getter invocation to the stack
+  // `get` method simply adds the getter invocation to the stack and returns the same implementation of `RawRPC`
   def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC =
     new AjaxRawRPC(RawInvocation(rpcName, argLists) :: getterChain)
 }
@@ -156,8 +158,8 @@ The `Map` passed as a raw argument to `fire` method is the serialized format of 
 
 #### Type safety
 
-Instances of `AsRealRPC` typeclass are provided automatically by a macro which uses compile-time reflection to inspect the trait and generate the proxy code. During that, it also thoroughly validates the interface against the rules described in the section about RPC traits. If the programmer makes any mistake, he/she will be immediately notified with a compilation error. The following situation will cause the compilation to fail:
-* some RPC method has wrong return type
+Instances of `AsRealRPC` typeclass are provided automatically by a macro which uses compile-time reflection to inspect the trait and generate the proxy code. During that, it also thoroughly validates the interface against the rules described in the section about RPC traits. If the programmer makes any mistake, he/she will be immediately notified with a compilation error. The following situations will cause the compilation to fail:
+* some abstract method has wrong signature (takes type parameters or has wrong return type)
 * any of the RPC parameters is not serializable (no instance of `Writer` typeclass is found for its type)
 * any of the function results is not de-serializable (no instance of `Reader` typeclass is found for its type)
 * some of the RPC methods have conflicting names (e.g. overloaded method not distinguished with `@RPCName` annotation)
@@ -220,7 +222,7 @@ We need to implement that handler and pass the operations to `realRpc` implement
 
 ```scala
 import SimpleRPCFramework._
-val realRpc: Services = ...
+val realRpc: Services = ???
 val rawRpc: RawRPC = AsRawRPC[Services].asRaw(realRpc)
 
 object SimpleHandler extends RequestHandler {
@@ -233,8 +235,8 @@ object SimpleHandler extends RequestHandler {
 
 #### Type safety
 
-Just like for `AsRealRPC`, instances of `AsRawRPC` are macro-generated and perform thorough validation of RPC interfaces that should fail in compile-time if anything is invlalid. Compilation error will be issued when:
-* some RPC method has wrong return type
+Just like for `AsRealRPC`, instances of `AsRawRPC` are macro-generated and perform thorough validation of RPC interfaces that should fail in compile-time if anything is invalid. Compilation error will be issued when:
+* some abstract method has wrong signature (takes type parameters or has wrong return type)
 * any of the RPC parameters is not de-serializable (no instance of `Reader` typeclass is found for its type)
 * any of the function results is not serializable (no instance of `Writer` typeclass is found for its type)
 * some of the RPC methods have conflicting names (e.g. overloaded method not distinguished with `@RPCName` annotation)
@@ -261,7 +263,7 @@ val rawRpc: RawRPC = new AsRawRPC[Services] {
           }
           def call(rpcName: String, argLists: List[List[RawValue]]) = (rpcName, argLists) match {
             case ("findById", List(List(id))) =>
-              userService.findById(read[String](id)).map[Any](user => write[User](user))
+              userService.findById(read[String](id)).map(user => write[User](user))
             case _ => fail("UserService", "function", rpcName, argLists)
           }
           def get(rpcName: String, argLists: List[List[RawValue]]) = 
@@ -273,3 +275,74 @@ val rawRpc: RawRPC = new AsRawRPC[Services] {
   }
 }.asRaw(realRpc)
 ```
+
+## RPC metadata
+
+When implementing network layer for transporting RPC invocations, it is often useful to have some more information about the RPC interface and its operations. For example, `RawRPC` implementation may be interested in names of the parameters or some annotations applied on them. Information like that is provided by `RPCMetadata` typeclass. Having an instance `RPCMetadata[T]` for RPC trait `T`, you can extract following metadata from it:
+* name of the RPC trait (simple trait or class name)
+* annotations applied on the RPC trait, assuming they are a subclass of `MetadataAnnotation`
+* signature metadata for every RPC method, which includes:
+ * RPC name - method name by default unless overridden with `@RPCName` annotation
+ * annotations applied on RPC method, assuming they are a subclass of `MetadataAnnotation`
+ * metadata for every parameter, which includes:
+   * parameter name
+    * annotations applied on RPC method parameter, assuming they are a subclass of `MetadataAnnotation`
+ * for getters, `RPCMetadata` instance for RPC subinterface returned by the getter
+ 
+As you can see, `RPCMetadata` provides similar information to standard Java reflection. However, `RPCMetadata` has various advantages over it, the most important one being **platform independency** - metadata is available in both JVM and JS, in the same format.
+
+Instances of `RPCMetadata` are automatically generated with macros, using compile-time reflection.
+
+### Example
+
+Suppose some RPC methods need permission checking. We can express that an RPC method requires some permissions with an annotation:
+
+```scala
+import com.avsystem.commons.rpc._
+
+case class RequiresPermissions(perms: String*) extends MetadataAnnotation
+
+case class User(id: String, login: String, birthYear: Int)
+@RPC trait UserService {
+  @RequiresPermissions("admin")
+  def addUser(user: User): Future[Unit]
+}
+```
+
+We'd like the server to validate those permissions before passing the call to real RPC implementation.
+Please recall one of the previous examples where we implemented a `RequestHandler` that received raw RPC invocations from the network and passed them to the real RPC. Below is a similar example for `UserService`. For simplicity, we're ignoring prodecures and getters and assume that only functions can be called.
+
+```scala
+import SimpleRPCFramework._
+val realRpc: Services = ???
+val rawRpc: RawRPC = AsRawRPC[UserService].asRaw(realRpc)
+
+object SimpleHandler extends RequestHandler {
+  // let's ignore `getterChain` and `handleFire`
+  def handleCall(invocation: RawInvocation): Future[RawValue] =
+    rawRpc.call(invocation.rpcName, invocation.argLists)
+}
+```
+
+Now, let's add some permission validation. We'll assume having a method `validatePermissions` that checks if current user has all the necesary permissions to call the RPC.
+
+```scala
+import SimpleRPCFramework._
+val realRpc: UserService = ???
+val rawRpc: RawRPC = AsRawRPC[UserService].asRaw(realRpc)
+val rpcMd = RPCMetadata[UserService]
+
+object SimpleHandler extends RequestHandler {
+  def validatePermissions(perms: Seq[String]): Boolean = ???
+
+  // let's ignore `getterChain` and `handleFire`
+  def handleCall(invocation: RawInvocation): Future[RawValue] = {
+    val perms = rpcMd.methodsByRpcName(invocation.rpcName).signature.annotations
+      .collectFirst({case RequiresPermissions(perms) => perms})
+      .getOrElse(Nil)
+    if(validatePermissions(perms)) rawRpc.call(invocation.rpcName, invocation.argLists)
+    else Future.failed(new Exception("Forbidden!"))
+  }
+}
+```
+
