@@ -10,7 +10,7 @@
  * Various Scala language-level utilities
  * Lightweight alternatives for Scala `Option` - `Opt`, `NOpt`, `OptRef` (implemented as value classes)
  * [`GenCodec`: format-agnostic, typeclass based serialization framework with automatic derivation](docs/GenCodec.md)
- * Typesafe RPC/proxy framework
+ * [Typesafe RPC/proxy framework](docs/RPCFramework.md)
  
  `commons-shared` module is cross compiled for JVM and JS.
 * `commons-core` - additional language utilities available only on JVM
@@ -28,15 +28,15 @@
 
 ## Development
 
- * Introduce your changes
- * Write some unit tests
- * Bump the version number in `version.sbt` file
- * Submit a pull request
+* Introduce your changes
+* Write some unit tests
+* Bump the version number in `version.sbt` file
+* Submit a pull request
 
 ### Test on local environment
 
- * Publish the artifact locally
-     * Use `sbt publishLocal` for projects managed by Ivy (e.g. SBT projects)
-     * Or `sbt publishM2` for projects managed by maven
- * Update avsystem-commons dependency version in your project and refresh
+* Publish the artifact locally
+ * Use `sbt publishLocal` for projects managed by Ivy (e.g. SBT projects)
+ * Or `sbt publishM2` for projects managed by maven
+* Update avsystem-commons dependency version in your project and refresh
  your project dependencies
