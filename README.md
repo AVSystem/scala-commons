@@ -3,6 +3,8 @@
 [![Build Status](https://travis-ci.org/AVSystem/scala-commons.svg?branch=master)](https://travis-ci.org/AVSystem/scala-commons)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.11)
 
+**NOTE** The library is still considered to be in early development where a lot of experiments is tried. Therefore we don't make any guarantees about backwards compatibility between versions yet.
+
 ## Modules and features
 
 * `commons-shared` - basic language utilities and generic features not associated with any particular library of framework:
