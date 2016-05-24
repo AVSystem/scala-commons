@@ -14,7 +14,6 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
   import c.universe._
 
   val RpcPackage = q"$CommonsPackage.rpc"
-  val RPCFrameworkType = getType(tq"$RpcPackage.RPCFramework")
   val FrameworkObj = c.prefix.tree
   val RunNowEC = q"$CommonsPackage.concurrent.RunNowEC"
   val RawRPCCls = tq"$FrameworkObj.RawRPC"
@@ -22,11 +21,21 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
   val AsRawRPCCls = tq"$FrameworkObj.AsRawRPC"
   val AsRealRPCObj = q"$FrameworkObj.AsRealRPC"
   val AsRealRPCCls = tq"$FrameworkObj.AsRealRPC"
-  val RawValueTpe = tq"$FrameworkObj.RawValue"
+  val RawValueCls = tq"$FrameworkObj.RawValue"
+  val ArgListsCls = tq"$ListCls[$ListCls[$RawValueCls]]"
+  val RealInvocationHandlerCls = tq"$FrameworkObj.RealInvocationHandler"
+  val RealInvocationHandlerObj = q"$FrameworkObj.RealInvocationHandler"
+  val RawInvocationHandlerCls = tq"$FrameworkObj.RawInvocationHandler"
   val RPCMetadataCls = tq"$RpcPackage.RPCMetadata"
-  val RPCNameAnnotType = getType(tq"$RpcPackage.RPCName")
-  val RPCType = getType(tq"$RpcPackage.RPC")
-  val MetadataAnnotationTpe = getType(tq"$RpcPackage.MetadataAnnotation")
+
+  lazy val RPCFrameworkType = getType(tq"$RpcPackage.RPCFramework")
+  lazy val RPCNameType = getType(tq"$RpcPackage.RPCName")
+  lazy val RPCType = getType(tq"$RpcPackage.RPC")
+  lazy val MetadataAnnotationType = getType(tq"$RpcPackage.MetadataAnnotation")
+  lazy val RawValueType = getType(RawValueCls)
+  lazy val RawValueLLType = getType(ArgListsCls)
+  lazy val RawRPCType = getType(RawRPCCls)
+  lazy val RawRPCSym = RawRPCType.typeSymbol
 
   def allAnnotations(tpe: Type) = {
     val ts = tpe.typeSymbol
@@ -37,25 +46,35 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
   def hasRpcAnnot(tpe: Type) =
     allAnnotations(tpe).exists(_.tree.tpe <:< RPCType)
 
-  sealed trait MemberType
+  case class Variant(rawMethod: MethodSymbol, returnType: Type)
 
-  case object Procedure extends MemberType
-  case object Function extends MemberType
-  case object Getter extends MemberType
-  case object Invalid extends MemberType
+  lazy val variants = RawRPCType.members.filter(s => s.isTerm && s.isAbstract)
+    .map { s =>
+      if (s.isMethod) {
+        val m = s.asMethod
+        val sig = m.typeSignatureIn(RawRPCType)
+        if (sig.typeParams.nonEmpty) {
+          abort(s"Bad signature ($m): RPC variant cannot be generic")
+        }
+        val returnType = sig.paramLists match {
+          case List(List(rpcNameParam, argListsParam))
+            if rpcNameParam.typeSignature =:= typeOf[String] && argListsParam.typeSignature =:= RawValueLLType =>
+            sig.finalResultType
+          case _ =>
+            abort(s"Bad signature ($m): RPC variant must take two parameters of types String and List[List[RawValue]]")
+        }
+        Variant(m, returnType)
+      } else {
+        abort("All abstract members in RawRPC must be methods that take two parameters of types String and List[List[RawValue]]")
+      }
+    }.toList
 
   case class ProxyableMember(method: MethodSymbol, signature: Type) {
     val returnType = signature.finalResultType
     val typeParams = signature.typeParams
     val paramLists = signature.paramLists
 
-    val memberType =
-      if (returnType =:= typeOf[Unit]) Procedure
-      else if (returnType.typeSymbol == FutureSym) Function
-      else if (hasRpcAnnot(returnType)) Getter
-      else Invalid
-
-    val rpcName = (method :: method.overrides).flatMap(_.annotations).find(_.tree.tpe <:< RPCNameAnnotType).map { annot =>
+    val rpcName = (method :: method.overrides).flatMap(_.annotations).find(_.tree.tpe <:< RPCNameType).map { annot =>
       annot.tree.children.tail match {
         case List(Literal(Constant(name: String))) => TermName(name)
         case _ => c.abort(annot.tree.pos, "The argument of @RPCName must be a string literal.")
@@ -65,16 +84,20 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
     def rpcNameString = rpcName.decodedName.toString
   }
 
-  def proxyableMethods(tpe: Type) = {
-    def invalidProxyableMsg(pm: ProxyableMember): String =
-      s"All abstract members in RPC interface must be non-generic methods that return Unit, Future or another RPC interface, ${pm.method} in $tpe does not."
-
+  def checkRpc(tpe: Type): Unit = {
     if (!hasRpcAnnot(tpe) || !tpe.typeSymbol.isClass || tpe <:< typeOf[AnyVal] || tpe <:< typeOf[Null]) {
       abort(s"RPC type must be a trait or abstract class annotated as @RPC, $tpe is not.")
     }
+  }
+
+  def proxyableMethods(tpe: Type) = {
+    checkRpc(tpe)
 
     val proxyables = tpe.members.filter(m => m.isTerm && m.isAbstract).map { m =>
       val signature = m.typeSignatureIn(tpe)
+      if (!m.isMethod || signature.typeParams.nonEmpty) {
+        abort(s"All abstract members in RPC interface must be non-generic methods, $m in $tpe is not.")
+      }
       ProxyableMember(m.asMethod, signature)
     }.toList
 
@@ -84,21 +107,11 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
       case _ =>
     }
 
-    val proxyablesByType = proxyables.groupBy(_.memberType).withDefaultValue(Iterable.empty)
-
-    proxyablesByType(Invalid).foreach { pm =>
-      error(invalidProxyableMsg(pm))
-    }
-
-    val procedures = proxyablesByType(Procedure)
-    val functions = proxyablesByType(Function)
-    val getters = proxyablesByType(Getter)
-
     if (proxyables.isEmpty) {
       warning(s"$tpe has no abstract members that could represent remote methods.")
     }
 
-    (procedures, functions, getters)
+    proxyables
   }
 
   def reifyList(args: List[Tree]) = q"$ListObj(..$args)"
@@ -107,64 +120,63 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
 
   def asRawImpl[T: c.WeakTypeTag]: c.Tree = {
     val rpcTpe = weakTypeOf[T]
-    val (procedures, functions, getters) = proxyableMethods(rpcTpe)
-
+    val proxyables = proxyableMethods(rpcTpe)
     val implName = c.freshName(TermName("impl"))
 
-    def methodCase(member: ProxyableMember) = {
+    def methodCase(variant: Variant, member: ProxyableMember): CaseDef = {
       val paramLists = member.signature.paramLists
       val matchedArgs = reifyListPat(paramLists.map(paramList => reifyListPat(paramList.map(ps => pq"${ps.name.toTermName}"))))
       val methodArgs = paramLists.map(_.map(ps => q"$FrameworkObj.read[${ps.typeSignature}](${ps.name.toTermName})"))
-      cq"(${member.rpcNameString}, $matchedArgs) => ${adjustResult(member, q"$implName.${member.method}(...$methodArgs)")}"
+      val badMethodError = s"${member.method} cannot be handled by raw ${variant.rawMethod}"
+      val onFailure = q"throw new Exception($badMethodError)"
+      val realInvocation = q"$implName.${member.method}(...$methodArgs)"
+      cq"""
+        (${member.rpcNameString}, $matchedArgs) =>
+          $FrameworkObj.tryToRaw[${member.returnType},${variant.returnType}]($realInvocation,$onFailure)
+        """
     }
 
-    def adjustResult(member: ProxyableMember, result: Tree) = member.memberType match {
-      case Procedure => result
-      case Function =>
-        val TypeRef(_, _, List(resultTpe)) = member.returnType
-        q"$result.map($FrameworkObj.write[$resultTpe])($RunNowEC)"
-      case Getter =>
-        q"$AsRawRPCObj[${member.returnType}].asRaw($result)"
-      case Invalid =>
-        sys.error("Not a proxyable member")
+    def defaultCase(variant: Variant): CaseDef =
+      cq"_ => fail(${rpcTpe.toString}, ${variant.rawMethod.name.toString}, methodName, args)"
+
+    def methodMatch(variant: Variant, methods: Iterable[ProxyableMember]) = {
+      Match(q"(methodName, args)", (methods.map(m => methodCase(variant, m)) ++ Iterator(defaultCase(variant))).toList)
     }
 
-    def defaultCase(memberType: MemberType) = cq"_ => fail(${rpcTpe.toString}, ${memberType.toString.toLowerCase}, methodName, args)"
-    def methodMatch(methods: Iterable[ProxyableMember], memberType: MemberType) =
-      Match(q"(methodName, args)", (methods.iterator.map(m => methodCase(m)) ++ Iterator(defaultCase(memberType))).toList)
+    def rawImplementation(variant: Variant) =
+      q"def ${variant.rawMethod.name}(methodName: String, args: $ListCls[$ListCls[$RawValueCls]]) = ${methodMatch(variant, proxyables)}"
 
     q"""
-      new $AsRawRPCCls[$rpcTpe] {
+      new $AsRawRPCCls[$rpcTpe] with $FrameworkObj.RawRPCUtils {
         implicit def ${c.freshName(TermName("self"))}: $AsRawRPCCls[$rpcTpe] = this
 
         def asRaw($implName: $rpcTpe) =
           new $RawRPCCls {
-            def fire(methodName: String, args: $ListCls[$ListCls[$FrameworkObj.RawValue]]) = ${methodMatch(procedures, Procedure)}
-
-            def call(methodName: String, args: $ListCls[$ListCls[$FrameworkObj.RawValue]]) = ${methodMatch(functions, Function)}
-
-            def get(methodName: String, args: $ListCls[$ListCls[$FrameworkObj.RawValue]]) = ${methodMatch(getters, Getter)}
+            ..${variants.map(rawImplementation)}
           }
       }
      """
   }
 
+  def tryToRaw[Real: c.WeakTypeTag, Raw: c.WeakTypeTag](real: Tree, onFailure: Tree): Tree = {
+    val realTpe = weakTypeOf[Real]
+    val rawTpe = weakTypeOf[Raw]
+    val handlerType = getType(tq"$RealInvocationHandlerCls[$realTpe,_]")
+    val expectedHandlerType = getType(tq"$RealInvocationHandlerCls[$realTpe,$rawTpe]")
+    c.inferImplicitValue(handlerType) match {
+      case EmptyTree => q"implicitly[$expectedHandlerType].toRaw($real)" //force normal complication error
+      case handler if handler.tpe <:< expectedHandlerType => q"$handler.toRaw($real)"
+      case _ => onFailure
+    }
+  }
+
   def asRealImpl[T: c.WeakTypeTag]: c.Tree = {
     val rpcTpe = weakTypeOf[T]
-    val (procedures, functions, getters) = proxyableMethods(rpcTpe)
-    val methods = procedures ++ functions ++ getters
+    val proxyables = proxyableMethods(rpcTpe)
     val rawRpcName = c.freshName(TermName("rawRpc"))
 
-    val implementations = methods.map { m =>
+    val implementations = proxyables.map { m =>
       val methodName = m.method.name
-
-      val rawRpcMethod = TermName(m.memberType match {
-        case Procedure => "fire"
-        case Function => "call"
-        case Getter => "get"
-        case Invalid => sys.error("Not a proxyable member")
-      })
-
       val paramLists = m.paramLists
       val params = paramLists.map(_.map { ps =>
         val implicitFlag = if (ps.isImplicit) Flag.IMPLICIT else NoFlags
@@ -174,19 +186,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
       val args = reifyList(paramLists.map(paramList =>
         reifyList(paramList.map(ps => q"$FrameworkObj.write[${ps.typeSignature}](${ps.name.toTermName})"))))
 
-      val body = q"$rawRpcName.$rawRpcMethod(${m.rpcNameString}, $args)"
-      val adjustedBody = m.memberType match {
-        case Procedure => body
-        case Function =>
-          val TypeRef(_, _, List(resultTpe)) = m.returnType
-          q"$body.map($FrameworkObj.read[$resultTpe])($RunNowEC)"
-        case Getter =>
-          q"$AsRealRPCObj[${m.returnType}].asReal($body)"
-        case Invalid =>
-          sys.error("Not a proxyable member")
-      }
-
-      q"def $methodName(...$params) = $adjustedBody"
+      q"def $methodName(...$params) = implicitly[$RawInvocationHandlerCls[${m.returnType}]].toReal($rawRpcName, ${m.rpcNameString}, $args)"
     }
 
     q"""
@@ -198,14 +198,45 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
      """
   }
 
+  def isRPC[T: c.WeakTypeTag]: Tree = {
+    checkRpc(weakTypeOf[T])
+    q"null"
+  }
+
+  def RPCToRaw[T: c.WeakTypeTag](ev: Tree): Tree = {
+    val tpe = weakTypeOf[T]
+    checkRpc(tpe)
+
+    q"""
+       new $FrameworkObj.RealInvocationHandler[$tpe,$RawRPCType] {
+         implicit def ${c.freshName(TermName("self"))}: $FrameworkObj.RealInvocationHandler[$tpe,$RawRPCType] = this
+
+         def toRaw(real: $tpe) = $AsRawRPCObj[$tpe].asRaw(real)
+       }
+     """
+  }
+
+  def GetHandler[T: c.WeakTypeTag](ev: Tree): Tree = {
+    val tpe = weakTypeOf[T]
+    checkRpc(tpe)
+
+    q"""
+      new $FrameworkObj.RawInvocationHandler[$tpe] {
+        implicit def ${c.freshName(TermName("self"))}: $FrameworkObj.RawInvocationHandler[$tpe] = this
+
+        def toReal(rawRpc: $RawRPCCls, rpcName: String, argLists: $ArgListsCls) =
+          $AsRealRPCObj[$tpe].asReal(rawRpc.get(rpcName, argLists))
+      }
+     """
+  }
+
   def materializeMetadata[T: c.WeakTypeTag]: Tree = {
     val rpcTpe = weakTypeOf[T]
-    val (procedures, functions, getters) = proxyableMethods(rpcTpe)
-    val methods = procedures ++ functions ++ getters
+    val proxyables = proxyableMethods(rpcTpe)
 
     def reifyAnnotations(s: Symbol) = {
       val trees = allAnnotations(s).iterator.map(_.tree).collect {
-        case tree if tree.tpe <:< MetadataAnnotationTpe => c.untypecheck(tree)
+        case tree if tree.tpe <:< MetadataAnnotationType => c.untypecheck(tree)
       }.toList
       q"$ListObj(..$trees)"
     }
@@ -221,23 +252,16 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
           ${reifyAnnotations(ms)}
         )"""
 
-    def reifyMethodMetadata(pm: ProxyableMember) = pm.memberType match {
-      case Procedure => 
-        q"$RpcPackage.ProcedureMetadata(${reifySignature(pm.method)})"
-      case Function => 
-        q"$RpcPackage.FunctionMetadata(${reifySignature(pm.method)})"
-      case Getter => 
-        q"$RpcPackage.GetterMetadata(${reifySignature(pm.method)}, implicitly[$RPCMetadataCls[${pm.returnType}]])"
-      case Invalid => EmptyTree
-    }
-    
     q"""
       new $RPCMetadataCls[$rpcTpe] {
         implicit def ${c.freshName(TermName("self"))}: $RPCMetadataCls[$rpcTpe] = this
-      
+
         def name = ${rpcTpe.typeSymbol.name.decodedName.toString}
         lazy val annotations = ${reifyAnnotations(rpcTpe.typeSymbol)}
-        lazy val methodsByRpcName = $MapObj(..${methods.map(pm => q"${pm.rpcNameString} -> ${reifyMethodMetadata(pm)}")})
+        lazy val signatures = $MapObj(..${proxyables.map(pm => q"${pm.rpcNameString} -> ${reifySignature(pm.method)}")})
+        lazy val getterResults = $MapObj[String,$RPCMetadataCls[_]](
+          ..${proxyables.filter(pm => hasRpcAnnot(pm.returnType)).map(pm => q"${pm.rpcNameString} -> implicitly[$RPCMetadataCls[${pm.returnType}]]")}
+        )
       }
      """
   }

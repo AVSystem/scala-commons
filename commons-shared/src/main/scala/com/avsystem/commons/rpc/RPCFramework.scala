@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import scala.concurrent.Future
+import scala.annotation.implicitNotFound
 import scala.language.higherKinds
 
 /**
@@ -13,28 +13,42 @@ trait RPCFramework {
   type RawValue
   type Reader[T]
   type Writer[T]
+  type RawRPC
 
   def read[T: Reader](raw: RawValue): T
   def write[T: Writer](value: T): RawValue
 
+  @implicitNotFound("This RPC framework doesn't support RPC methods that return ${Real} " +
+    "or you may be missing some implicit dependencies (e.g. Writer[A] when result type is Future[A])")
+  trait RealInvocationHandler[Real, Raw] {
+    def toRaw(real: Real): Raw
+  }
+  object RealInvocationHandler {
+    def apply[Real, Raw](fun: Real => Raw): RealInvocationHandler[Real, Raw] =
+      new RealInvocationHandler[Real, Raw] {
+        def toRaw(real: Real) = fun(real)
+      }
+  }
+
+  @implicitNotFound("This RPC framework doesn't support RPC methods that return ${Real} " +
+    "or you may be missing some implicit dependencies (e.g. Reader[A] when result type is Future[A])")
+  trait RawInvocationHandler[Real] {
+    def toReal(rawRpc: RawRPC, rpcName: String, argLists: List[List[RawValue]]): Real
+  }
+  object RawInvocationHandler {
+    def apply[Real](fun: (RawRPC, String, List[List[RawValue]]) => Real): RawInvocationHandler[Real] =
+      new RawInvocationHandler[Real] {
+        def toReal(rawRpc: RawRPC, rpcName: String, argLists: List[List[RawValue]]) = fun(rawRpc, rpcName, argLists)
+      }
+  }
+
   case class RawInvocation(rpcName: String, argLists: List[List[RawValue]])
 
-  trait RawRPC {
-    protected def fail(rpcTpe: String, memberType: String, methodName: String, args: List[List[RawValue]]) = {
+  trait RawRPCUtils {
+    protected def fail(rpcTpe: String, rawMethodName: String, methodName: String, args: List[List[RawValue]]) = {
       val argsRepr = args.map(_.mkString("[", ",", "]")).mkString("[", ",", "]")
-      throw new Exception(s"Cannot find $memberType $methodName in $rpcTpe which could be invoked with arguments $argsRepr")
+      throw new Exception(s"$methodName in $rpcTpe with arguments $argsRepr cannot be handled by raw method $rawMethodName")
     }
-
-    def fire(rpcName: String, argLists: List[List[RawValue]]): Unit
-
-    def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue]
-
-    def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC
-
-    def resolveGetterChain(getterChain: List[RawInvocation]): RawRPC =
-      getterChain.foldRight(this) {
-        case (RawInvocation(rpcName, argLists), rawRpc) => rawRpc.get(rpcName, argLists)
-      }
   }
 
   trait AsRawRPC[T] {
@@ -70,4 +84,7 @@ trait RPCFramework {
     * All abstract methods of `T` must be non-generic and return `Unit` or `Future`.
     */
   implicit def materializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCMacros.asRealImpl[T]
+
+  /** INTERNAL API */
+  def tryToRaw[Real, Raw](real: Real, onFailure: Nothing): Raw = macro macros.rpc.RPCMacros.tryToRaw[Real, Raw]
 }

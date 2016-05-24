@@ -5,7 +5,7 @@ package rpc
   * Author: ghik
   * Created: 16/12/15.
   */
-object DummyRPC extends RPCFramework {
+object DummyRPC extends StandardRPCFramework {
   type RawValue = Any
 
   type Reader[T] = DummyImplicit

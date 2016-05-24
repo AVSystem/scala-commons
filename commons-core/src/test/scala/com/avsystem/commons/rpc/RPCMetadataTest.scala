@@ -36,28 +36,24 @@ class RPCMetadataTest extends FunSuite {
     assert(metadata.name == "Sub")
     assert(metadata.annotations == List(Annot("on subclass"), Annot("on base class")))
 
-    assert(metadata.methodsByRpcName.keySet == Set("proc", "function", "getter"))
+    assert(metadata.signatures.keySet == Set("proc", "function", "getter"))
 
-    assert(metadata.methodsByRpcName("proc") == ProcedureMetadata(Signature("proc", List(List(
+    assert(metadata.signatures("proc") == Signature("proc", List(List(
       ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")))
-    )), List(Annot("on submethod"), Annot("on base method")))))
+    )), List(Annot("on submethod"), Annot("on base method"))))
 
-    assert(metadata.methodsByRpcName("function") == FunctionMetadata(Signature("func", Nil, Nil)))
+    assert(metadata.signatures("function") == Signature("func", Nil, Nil))
 
-    metadata.methodsByRpcName("getter") match {
-      case GetterMetadata(sig, resultMetadata) =>
-        assert(resultMetadata.name == "Base")
-        assert(resultMetadata.annotations == List(Annot("on base class")))
+    val resultMetadata = metadata.getterResults("getter")
+    assert(resultMetadata.name == "Base")
+    assert(resultMetadata.annotations == List(Annot("on base class")))
 
-        assert(resultMetadata.methodsByRpcName.keySet == Set("proc", "function"))
+    assert(resultMetadata.signatures.keySet == Set("proc", "function"))
 
-        assert(resultMetadata.methodsByRpcName("proc") == ProcedureMetadata(Signature("proc", List(List(
-          ParamMetadata("p", List(Annot("on base param")))
-        )), List(Annot("on base method")))))
+    assert(resultMetadata.signatures("proc") == Signature("proc", List(List(
+    ParamMetadata("p", List(Annot("on base param")))
+    )), List(Annot("on base method"))))
 
-        assert(resultMetadata.methodsByRpcName("function") == FunctionMetadata(Signature("func", Nil, Nil)))
-
-      case _ => throw new AssertionError("expected GetterMetadata")
-    }
+    assert(resultMetadata.signatures("function") == Signature("func", Nil, Nil))
   }
 }

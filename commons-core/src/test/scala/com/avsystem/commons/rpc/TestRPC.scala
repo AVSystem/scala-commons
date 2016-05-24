@@ -73,7 +73,7 @@ object TestRPC {
     def srslyDude(): Unit =
       onProcedure("srslyDude", List(Nil))
 
-    def innerRpc(name: String): InnerRPC = {
+    override def innerRpc(name: String): InnerRPC = {
       onInvocation("innerRpc", List(List(name)), None)
       new InnerRPC {
         def func(arg: Int): Future[String] =
