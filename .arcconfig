@@ -1,6 +1,6 @@
 {
   "project_id" : "scala-commons",
-  "conduit_uri" : "http://phabricator.avsystem.com/",
+  "conduit_uri" : "https://phabricator.avsystem.com/",
   "base" : "master"
 }
 
