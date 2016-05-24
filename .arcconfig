@@ -1,6 +1,6 @@
 {
-  "project_id" : "commons",
+  "project_id" : "scala-commons",
   "conduit_uri" : "http://phabricator.avsystem.com/",
-  "base" : "hg:gca(default)"
+  "base" : "master"
 }
 
