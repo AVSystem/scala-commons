@@ -24,7 +24,6 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
   val RawValueCls = tq"$FrameworkObj.RawValue"
   val ArgListsCls = tq"$ListCls[$ListCls[$RawValueCls]]"
   val RealInvocationHandlerCls = tq"$FrameworkObj.RealInvocationHandler"
-  val RealInvocationHandlerObj = q"$FrameworkObj.RealInvocationHandler"
   val RawInvocationHandlerCls = tq"$FrameworkObj.RawInvocationHandler"
   val RPCMetadataCls = tq"$RpcPackage.RPCMetadata"
 
