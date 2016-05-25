@@ -163,7 +163,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
     val handlerType = getType(tq"$RealInvocationHandlerCls[$realTpe,_]")
     val expectedHandlerType = getType(tq"$RealInvocationHandlerCls[$realTpe,$rawTpe]")
     c.inferImplicitValue(handlerType) match {
-      case EmptyTree => q"implicitly[$expectedHandlerType].toRaw($real)" //force normal complication error
+      case EmptyTree => q"implicitly[$expectedHandlerType].toRaw($real)" //force normal compilation error
       case handler if handler.tpe <:< expectedHandlerType => q"$handler.toRaw($real)"
       case _ => onFailure
     }
@@ -202,7 +202,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
     q"null"
   }
 
-  def RPCToRaw[T: c.WeakTypeTag](ev: Tree): Tree = {
+  def GetterRealHandler[T: c.WeakTypeTag](ev: Tree): Tree = {
     val tpe = weakTypeOf[T]
     checkRpc(tpe)
 
@@ -215,7 +215,7 @@ class RPCMacros(val c: blackbox.Context) extends MacroCommons {
      """
   }
 
-  def GetHandler[T: c.WeakTypeTag](ev: Tree): Tree = {
+  def GetterRawHandler[T: c.WeakTypeTag](ev: Tree): Tree = {
     val tpe = weakTypeOf[T]
     checkRpc(tpe)
 

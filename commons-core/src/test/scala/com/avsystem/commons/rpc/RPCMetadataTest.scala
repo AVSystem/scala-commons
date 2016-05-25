@@ -28,6 +28,8 @@ class RPCMetadataTest extends FunSuite {
     def proc(@Annot("on subparam") param: String): Unit
 
     def getter(i: Int)(s: String): Base
+
+    def selfGetter: Sub
   }
 
   test("RPC metadata should be correct") {

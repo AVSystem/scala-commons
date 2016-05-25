@@ -19,7 +19,7 @@ trait RPCFramework {
   def write[T: Writer](value: T): RawValue
 
   @implicitNotFound("This RPC framework doesn't support RPC methods that return ${Real} " +
-    "or you may be missing some implicit dependencies (e.g. Writer[A] when result type is Future[A])")
+    "or some implicit dependencies may be missing (e.g. Writer[A] when result type is Future[A])")
   trait RealInvocationHandler[Real, Raw] {
     def toRaw(real: Real): Raw
   }
@@ -31,7 +31,7 @@ trait RPCFramework {
   }
 
   @implicitNotFound("This RPC framework doesn't support RPC methods that return ${Real} " +
-    "or you may be missing some implicit dependencies (e.g. Reader[A] when result type is Future[A])")
+    "or some implicit dependencies may be missing (e.g. Reader[A] when result type is Future[A])")
   trait RawInvocationHandler[Real] {
     def toReal(rawRpc: RawRPC, rpcName: String, argLists: List[List[RawValue]]): Real
   }
@@ -60,11 +60,9 @@ trait RPCFramework {
   }
 
   /**
-    * Materializes a factory of implementations of [[RawRPC]] which translate invocations of its `call` and `fire` methods
+    * Materializes a factory of implementations of [[RawRPC]] which translate invocations of its raw methods
     * to invocations of actual methods on `rpcImpl`. Method arguments and results are serialized and deserialized
-    * from/to JSON using `uPickle` library.
-    *
-    * Only calls to non-generic, abstract methods returning `Unit` or `Future` are supported.
+    * from/to [[RawValue]] using [[Reader]] and [[Writer]] typeclasses.
     */
   implicit def materializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCMacros.asRawImpl[T]
 
@@ -79,9 +77,7 @@ trait RPCFramework {
   /**
     * Materializes a factory of implementations of `T` which are proxies that implement all abstract methods of `T`
     * by forwarding them to `rawRpc`. Method arguments and results are serialized and deserialized
-    * from/to JSON using `uPickle` library.
-    *
-    * All abstract methods of `T` must be non-generic and return `Unit` or `Future`.
+    * from/to [[RawValue]] using [[Reader]] and [[Writer]] typeclasses.
     */
   implicit def materializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCMacros.asRealImpl[T]
 
