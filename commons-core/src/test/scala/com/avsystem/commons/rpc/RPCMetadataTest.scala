@@ -38,7 +38,7 @@ class RPCMetadataTest extends FunSuite {
     assert(metadata.name == "Sub")
     assert(metadata.annotations == List(Annot("on subclass"), Annot("on base class")))
 
-    assert(metadata.signatures.keySet == Set("proc", "function", "getter"))
+    assert(metadata.signatures.keySet == Set("proc", "function", "getter", "selfGetter"))
 
     assert(metadata.signatures("proc") == Signature("proc", List(List(
       ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")))
