@@ -83,13 +83,13 @@ You will also need to choose a "raw value" type, i.e. the format to which parame
 
 After choosing the types, you'll finally have to implement the serialization and deserialization methods that actually convert between normal values and raw values (using `Reader`/`Writer` typeclass instances). Usually, this is just a simple call that delegates the job to the typeclass.
 
-Serialization mechanism is chosen by creating an object implementing `RPCFramework` interface. Here's an example for `GenCodec`:
+Serialization mechanism is chosen by creating an object implementing `StandardRPCFramework` trait. Here's an example for `GenCodec`:
 
 ```scala
 import com.avsystem.commons.serialization._
 import com.avsystem.commons.rpc._
 
-object SimpleRPCFramework extends RPCFramework {
+object SimpleRPCFramework extends StandardRPCFramework {
   type RawValue = Any
   type Reader[T] = GenCodec.Auto[T]
   type Writer[T] = GenCodec.Auto[T]
@@ -105,7 +105,9 @@ object SimpleRPCFramework extends RPCFramework {
 }
 ```
 
-It is specifically recommended to implement `RPCFramework` as an `object`. This is because it has types inside it that need to be referred to. The object is going to serve as a namespace or "package". From on now, everything in the following examples will happen in the "scope" of `SimpleRPCFramework`.
+It is specifically recommended to implement `StandardRPCFramework` as an `object`. This is because it has types inside it that need to be referred to. The object is going to serve as a namespace or "package". From on now, everything in the following examples will happen in the "scope" of `SimpleRPCFramework`.
+
+**NOTE**: The base trait is called `StandardRPCFramework` because it's a specialized version of more generic `RPCFramework`. The "standardness" of `StandardRPCFramework` is its support for procedures, functions and getters (RPC methods returning `Unit`, `Future` or another RPC interface). When directly extending `RPCFramework`, it is possible to create frameworks that support other types of RPC methods. However, this is not yet covered by this documentation.
 
 ## RPC client implementation
 
@@ -150,7 +152,7 @@ class AjaxRawRPC(getterChain: List[RawInvocation]) extends RawRPC {
 
 After you have a `RawRPC` implemented, you can wrap it into the actual implementation of your original RPC interface. This implementation will be a proxy that will delegate actual, nice, statically-typed operations from your original interface into raw calls on your `RawRPC`.
 
-To generate such proxy, use the `AsRealRPC` typeclass bound to your `RPCFramework`:
+To generate such proxy, use the `AsRealRPC` typeclass bound to your `StandardRPCFramework`:
 
 ```scala
 import SimpleRPCFramework._
@@ -306,7 +308,7 @@ When implementing network layer for transporting RPC invocations, it is often us
  * metadata for every parameter, which includes:
    * parameter name
     * annotations applied on RPC method parameter, assuming they are a subclass of `MetadataAnnotation`
- * for getters, `RPCMetadata` instance for RPC subinterface returned by the getter
+* for getters, `RPCMetadata` instance for RPC subinterface returned by the getter
  
 As you can see, `RPCMetadata` provides similar information to standard Java reflection. However, `RPCMetadata` has various advantages over it, the most important one being **platform independency** - metadata is available in both JVM and JS, in the same format.
 
@@ -356,7 +358,7 @@ object SimpleHandler extends RequestHandler {
 
   // let's ignore `getterChain` and `handleFire`
   def handleCall(invocation: RawInvocation): Future[RawValue] = {
-    val perms = rpcMd.methodsByRpcName(invocation.rpcName).signature.annotations
+    val perms = rpcMd.signatures(invocation.rpcName).annotations
       .collectFirst({case RequiresPermissions(perms) => perms})
       .getOrElse(Nil)
     if(validatePermissions(perms)) rawRpc.call(invocation.rpcName, invocation.argLists)
