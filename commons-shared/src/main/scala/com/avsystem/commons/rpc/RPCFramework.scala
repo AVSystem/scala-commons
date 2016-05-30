@@ -42,8 +42,6 @@ trait RPCFramework {
       }
   }
 
-  case class RawInvocation(rpcName: String, argLists: List[List[RawValue]])
-
   trait RawRPCUtils {
     protected def fail(rpcTpe: String, rawMethodName: String, methodName: String, args: List[List[RawValue]]) = {
       val argsRepr = args.map(_.mkString("[", ",", "]")).mkString("[", ",", "]")

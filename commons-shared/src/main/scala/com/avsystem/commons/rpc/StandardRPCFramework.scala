@@ -45,6 +45,8 @@ trait FunctionRPCFramework extends RPCFramework {
 trait GetterRPCFramework extends RPCFramework {
   type RawRPC <: GetterRawRPC
 
+  case class RawInvocation(rpcName: String, argLists: List[List[RawValue]])
+
   trait GetterRawRPC {this: RawRPC =>
     def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC
 
