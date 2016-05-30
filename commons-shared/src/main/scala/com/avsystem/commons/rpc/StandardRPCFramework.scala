@@ -7,7 +7,7 @@ import scala.concurrent.Future
 
 /**
   * Mix in this trait into your RPC framework to support remote procedures, i.e. fire-and-forget methods
-  * with [[Unit]] return type.
+  * with `Unit` return type.
   */
 trait ProcedureRPCFramework extends RPCFramework {
   type RawRPC <: ProcedureRawRPC
