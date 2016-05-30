@@ -299,6 +299,9 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   implicit def optRefCodec[T >: Null : GenCodec]: GenCodec[OptRef[T]] =
     new TransformedCodec[OptRef[T], Opt[T]](optCodec[T], _.toOpt, opt => OptRef(opt.orNull))
+
+  // Needed because of SI-9453
+  implicit val NothingAutoCodec: GenCodec.Auto[Nothing] = GenCodec.Auto[Nothing](NothingCodec)
 }
 
 /**
