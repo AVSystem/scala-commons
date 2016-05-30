@@ -2,6 +2,7 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.concurrent.RunNowEC
+import monifu.reactive.Observable
 
 import scala.concurrent.Future
 
@@ -57,6 +58,20 @@ trait GetterRPCFramework extends RPCFramework {
   // these must be macros in order to properly handle recursive RPC types
   implicit def GetterRealHandler[T](implicit ev: IsRPC[T]): RealInvocationHandler[T, RawRPC] = macro macros.rpc.RPCMacros.GetterRealHandler[T]
   implicit def GetterRawHandler[T](implicit ev: IsRPC[T]): RawInvocationHandler[T] = macro macros.rpc.RPCMacros.GetterRawHandler[T]
+}
+
+trait MonifuRPCFramework extends RPCFramework {
+  override type RawRPC <: MonifuRawRPC
+
+  trait MonifuRawRPC {this: RawRPC =>
+    def observe(rpcName: String, argLists: List[List[RawValue]]): Observable[RawValue]
+  }
+
+  implicit def ObservableRealHandler[A: Writer]: RealInvocationHandler[Observable[A], Observable[RawValue]] =
+    RealInvocationHandler[Observable[A], Observable[RawValue]](_.map(write[A] _))
+
+  implicit def ObservableRawHandler[A: Reader]: RawInvocationHandler[Observable[A]] =
+    RawInvocationHandler[Observable[A]]((rawRpc, rpcName, argLists) => rawRpc.observe(rpcName, argLists).map(read[A] _))
 }
 
 trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework with ProcedureRPCFramework {

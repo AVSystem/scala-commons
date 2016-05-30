@@ -122,6 +122,9 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
   .jsConfigure(_.dependsOn(`commons-macros`))
   .jvmConfigure(_.dependsOn(`commons-macros`))
   .settings(commonSettings: _*)
+  .settings(
+    libraryDependencies += "org.monifu" %%% "monifu" % "1.2"
+  )
   .jsSettings(
     scalacOptions += {
       val localDir = (baseDirectory in ThisBuild).value.toURI.toString
@@ -186,3 +189,27 @@ lazy val `commons-spring` = project
       "com.typesafe" % "config" % typesafeConfigVersion
     )
   )
+
+lazy val `rpc-akka` = project
+  .dependsOn(`commons-core`)
+  .settings(commonSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor" % "2.4.4",
+      "com.typesafe.akka" %% "akka-remote" % "2.4.4",
+      "com.typesafe.akka" %% "akka-stream" % "2.4.4"
+    )
+  )
+
+//TODO remove after finished implementation
+lazy val `test-api` = project
+  .dependsOn(`commons-core`)
+  .settings(commonSettings: _*)
+
+lazy val `test-server` = project
+  .dependsOn(`commons-core`, `test-api`, `rpc-akka`)
+  .settings(commonSettings: _*)
+
+lazy val `test-client` = project
+  .dependsOn(`commons-core`, `test-api`, `rpc-akka`)
+  .settings(commonSettings: _*)
