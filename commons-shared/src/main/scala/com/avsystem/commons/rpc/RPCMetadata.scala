@@ -13,10 +13,8 @@ object RPCMetadata {
 trait RPCMetadata[T] {
   def name: String
   def annotations: List[MetadataAnnotation]
-  def methodsByRpcName: Map[String, MethodMetadata]
-
-  def getterResultMetadata(rpcName: String): RPCMetadata[_] =
-    methodsByRpcName.get(rpcName).collect({ case GetterMetadata(_, resultMetadata) => resultMetadata }).get
+  def signatures: Map[String, Signature]
+  def getterResults: Map[String, RPCMetadata[_]]
 }
 
 case class Signature(
@@ -26,10 +24,3 @@ case class Signature(
 )
 
 case class ParamMetadata(name: String, annotations: List[MetadataAnnotation])
-
-sealed trait MethodMetadata {
-  def signature: Signature
-}
-case class ProcedureMetadata(signature: Signature) extends MethodMetadata
-case class FunctionMetadata(signature: Signature) extends MethodMetadata
-case class GetterMetadata(signature: Signature, resultMetadata: RPCMetadata[_]) extends MethodMetadata

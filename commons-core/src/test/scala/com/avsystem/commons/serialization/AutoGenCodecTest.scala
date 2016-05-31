@@ -117,7 +117,7 @@ class AutoGenCodecTest extends CodecTestBase {
   case class Middle(bottom: Bottom)
   case class Top(middle: Middle)
   object Top {
-    implicit val codec: GenCodec[Top] = GenCodec.recursiveAuto[Top]
+    implicit val codec: GenCodec[Top] = GenCodec.materializeRecursively[Top]
   }
 
   sealed trait Operator[T]
@@ -126,7 +126,7 @@ class AutoGenCodecTest extends CodecTestBase {
 
   case class HasOperator(str: String, op: Operator[_])
   object HasOperator {
-    implicit val codec: GenCodec[HasOperator] = GenCodec.recursiveAuto[HasOperator]
+    implicit val codec: GenCodec[HasOperator] = GenCodec.materializeRecursively[HasOperator]
   }
 
   test("wrapped wildcarded GADT test") {

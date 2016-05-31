@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.collection.CollectionAliases._
-import com.avsystem.commons.derivation.{AutoDeriveRecursively, DeferredInstance}
+import com.avsystem.commons.derivation.{DeferredInstance, MaterializeRecursively}
 import com.avsystem.commons.jiop.BasicJavaInterop._
 import com.avsystem.commons.jiop.JCanBuildFrom
 import com.avsystem.commons.misc.{NOpt, Opt, OptRef}
@@ -12,6 +12,16 @@ import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 
+/**
+  * Type class for types that can be serialized to `Output` (format-agnostic "output stream") and deserialized
+  * from `Input` (format-agnostic "input stream"). `GenCodec` is supposed to capture generic structure of serialized
+  * objects, without being bound to particular format like JSON. The actual format is determined by implementation
+  * of `Input` and `Output`.
+  * <p/>
+  * There are convenient macros for automatic derivation of `GenCodec` instances (`materialize` and `materializeRecursively`).
+  * However, `GenCodec` instances still need to be explicitly declared and won't be derived "automagically".
+  * If you want fully automatic derivation, use `GenCodec.Auto`.
+  */
 @implicitNotFound("No GenCodec found for ${T}")
 trait GenCodec[T] {
   def read(input: Input): T
@@ -30,9 +40,31 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     * <li>sealed hierarchy in which every non-abstract subclass either has its own [[GenCodec]] or it can be
     * automatically materialized with the same mechanism</li>
     * </ul>
+    * Note that automatic materialization does NOT descend into types that `T` is made of (e.g. types of case class
+    * fields must have their own codecs independently declared). If you want recursive materialization, use
+    * `materializeRecursively`.
     */
-  def auto[T]: GenCodec[T] = macro macros.serialization.GenCodecMacros.autoDerive[T]
+  def materialize[T]: GenCodec[T] = macro macros.serialization.GenCodecMacros.materialize[T]
 
+  /**
+    * Wrapper over `GenCodec` which forces fully automatic derivation.
+    * <p/>
+    * If you ask for implicit value of type `GenCodec[T]`, the codec must be explicitly declared and imported or
+    * put into implicit scope (e.g. companion object of `T`), even though it can be automatically implemented
+    * using `materialize` or `materializeRecursively`.
+    * <p/>
+    * However, if you ask for implicit value of type `GenCodec.Auto[T]`, the compiler will always fall back to fully
+    * automatic derivation if it cannot find already declared `GenCodec`. Note that since `GenCodec.Auto` will always
+    * try to wrap already existing `GenCodec` (if there is one), you should never explicitly declare any instances
+    * of `GenCodec.Auto`. If you need custom serialization, just write a `GenCodec` and `GenCodec.Auto` will wrap it.
+    * <p/>
+    * Whether you want to use `GenCodec` or `GenCodec.Auto` depends on your use case. `GenCodec` should be generally
+    * used when you want the programmer to always explicitly state that some type is serializable. For example, if you
+    * serialize your objects in order to put them into database, you probably want to use `GenCodec` and not `GenCodec.Auto`,
+    * because every type that has been written to database is likely to be bound by backwards compatibility constraints and
+    * cannot be freely refactored. That's why you want to always explicitly make the decision of making a type serializable.
+    * <p/>
+    */
   case class Auto[T](codec: GenCodec[T]) extends AnyVal
 
   def read[T](input: Input)(implicit codec: GenCodec[T]): T =
@@ -267,6 +299,9 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   implicit def optRefCodec[T >: Null : GenCodec]: GenCodec[OptRef[T]] =
     new TransformedCodec[OptRef[T], Opt[T]](optCodec[T], _.toOpt, opt => OptRef(opt.orNull))
+
+  // Needed because of SI-9453
+  implicit val NothingAutoCodec: GenCodec.Auto[Nothing] = GenCodec.Auto[Nothing](NothingCodec)
 }
 
 /**
@@ -311,12 +346,18 @@ trait FallbackMapCodecs extends RecursiveAutoCodecs {this: GenCodec.type =>
 }
 
 trait RecursiveAutoCodecs {this: GenCodec.type =>
-  def recursiveAuto[T]: GenCodec[T] =
-  macro macros.serialization.GenCodecMacros.autoDeriveRecursively[T]
+  /**
+    * Like `materialize`, but descends into types that `T` is made of (e.g. case class field types).
+    */
+  def materializeRecursively[T]: GenCodec[T] =
+  macro macros.serialization.GenCodecMacros.materializeRecursively[T]
 
-  implicit def implicitRecursiveAuto[T](implicit allow: AutoDeriveRecursively[GenCodec]): GenCodec[T] =
-  macro macros.serialization.GenCodecMacros.autoDeriveRecursivelyImplicitly[T]
+  /**
+    * Used internally for materialization of `GenCodec.Auto`. Should not be used directly.
+    */
+  implicit def materializeRecursivelyImplicitly[T](implicit allow: MaterializeRecursively[GenCodec]): GenCodec[T] =
+  macro macros.serialization.GenCodecMacros.materializeRecursivelyImplicitly[T]
 
-  implicit def wrappedRecursiveAuto[T]: GenCodec.Auto[T] =
-  macro macros.serialization.GenCodecMacros.autoDeriveWrapped[T]
+  implicit def materializeAuto[T]: GenCodec.Auto[T] =
+  macro macros.serialization.GenCodecMacros.materializeAuto[T]
 }

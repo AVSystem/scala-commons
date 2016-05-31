@@ -4,7 +4,6 @@ package macros
 import com.avsystem.commons.derivation.DeferredInstance
 import org.scalatest.FunSuite
 
-import scala.language.experimental.macros
 import scala.reflect.runtime.{universe => ru}
 
 /**
@@ -13,7 +12,7 @@ import scala.reflect.runtime.{universe => ru}
   */
 object TypeClassDerivationTest {
 
-  def autoDeriveFor[T]: TC[T] = macro com.avsystem.commons.macros.TestMacros.autoDerive[T]
+  def materializeFor[T]: TC[T] = macro macros.TestMacros.materialize[T]
 
   def typeRepr[T: ru.WeakTypeTag] = ru.weakTypeOf[T].toString
 
@@ -72,11 +71,11 @@ class TypeClassDerivationTest extends FunSuite {
   import TypeClassDerivationTest._
 
   test("unknown test") {
-    assert(autoDeriveFor[Int] == UnknownTC(typeRepr[Int]))
+    assert(materializeFor[Int] == UnknownTC(typeRepr[Int]))
   }
 
   object SomeSingleton {
-    implicit lazy val tc: TC[SomeSingleton.type] = autoDeriveFor[SomeSingleton.type]
+    implicit lazy val tc: TC[SomeSingleton.type] = materializeFor[SomeSingleton.type]
   }
 
   test("singleton test") {
@@ -85,7 +84,7 @@ class TypeClassDerivationTest extends FunSuite {
 
   case class Whatever(str: String, int: Int = 42)
   object Whatever {
-    implicit val tc: TC[Whatever] = autoDeriveFor[Whatever]
+    implicit val tc: TC[Whatever] = materializeFor[Whatever]
   }
 
   test("case class test") {
@@ -102,7 +101,7 @@ class TypeClassDerivationTest extends FunSuite {
   case class SubSealedCase(i: Int, w: Whatever) extends SubRoot
 
   object SealedRoot {
-    implicit val tc: TC[SealedRoot] = autoDeriveFor[SealedRoot]
+    implicit val tc: TC[SealedRoot] = materializeFor[SealedRoot]
   }
 
   test("sealed hierarchy test") {
@@ -115,7 +114,7 @@ class TypeClassDerivationTest extends FunSuite {
 
   case class Recursive(str: String, next: Recursive)
   object Recursive {
-    implicit val tc: TC[Recursive] = autoDeriveFor[Recursive]
+    implicit val tc: TC[Recursive] = materializeFor[Recursive]
   }
 
   test("recursive case class test") {
@@ -127,7 +126,7 @@ class TypeClassDerivationTest extends FunSuite {
 
   case class IndiRec(children: List[IndiRec])
   object IndiRec {
-    implicit val tc: TC[IndiRec] = autoDeriveFor[IndiRec]
+    implicit val tc: TC[IndiRec] = materializeFor[IndiRec]
   }
 
   test("indirectly recursive case class test") {
@@ -141,7 +140,7 @@ class TypeClassDerivationTest extends FunSuite {
   case class Branch[T](left: Tree[T], right: Tree[T]) extends Tree[T]
 
   object Tree {
-    implicit def tc[A: TC]: TC[Tree[A]] = autoDeriveFor[Tree[A]]
+    implicit def tc[A: TC]: TC[Tree[A]] = materializeFor[Tree[A]]
   }
 
   test("recursive GADT test") {
