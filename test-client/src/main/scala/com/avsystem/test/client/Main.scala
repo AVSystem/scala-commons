@@ -1,13 +1,11 @@
 package com.avsystem.test.client
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorPath, ActorSystem}
 import akka.stream.ActorMaterializer
-import com.avsystem.rpc.akka.AkkaRPCFramework
+import com.avsystem.commons.rpc.akka.AkkaRPCFramework
 import com.avsystem.test.api.ServerRPC
 import monifu.concurrent.Implicits.globalScheduler
-import monifu.reactive.Observable
 
-import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 /**
@@ -17,7 +15,7 @@ object Main {
   def main(args: Array[String]): Unit = {
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
-    val serverRPC = AkkaRPCFramework.clientActor[ServerRPC]("akka.tcp://serverSystem@127.0.0.1:2552/user/rpcServerActor")
+    val serverRPC = AkkaRPCFramework.client[ServerRPC](ActorPath.fromString("akka.tcp://serverSystem@127.0.0.1:2552/user/rpcServerActor"))
     serverRPC.unitMethod(Some("ok"))
     serverRPC.unitMethod(None)
     serverRPC.futureMethod("string")(5).onComplete {

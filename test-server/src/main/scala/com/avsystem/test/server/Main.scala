@@ -1,7 +1,7 @@
 package com.avsystem.test.server
 
 import akka.actor.ActorSystem
-import com.avsystem.rpc.akka.AkkaRPCFramework
+import com.avsystem.commons.rpc.akka.AkkaRPCFramework
 import com.avsystem.test.api.ServerRPC
 import com.avsystem.test.server.api.ServerRPCImpl
 

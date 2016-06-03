@@ -30,6 +30,7 @@ val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.2.2"
 val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.0"
+val akkaVersion = "2.4.6"
 
 val commonSettings = Seq(
   sonatypeProfileName := "com.avsystem",
@@ -102,7 +103,8 @@ lazy val commons = project.in(file("."))
     `commons-jetty`,
     `commons-benchmark`,
     `commons-mongo`,
-    `commons-spring`
+    `commons-spring`,
+    `commons-akka`
   )
   .settings(name := "commons")
   .settings(commonSettings: _*)
@@ -123,7 +125,7 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
   .jvmConfigure(_.dependsOn(`commons-macros`))
   .settings(commonSettings: _*)
   .settings(
-    libraryDependencies += "org.monifu" %%% "monifu" % "1.2"
+    libraryDependencies += "org.monifu" %%% "monifu" % "1.2" //todo temporary solution - to replace with custom interfaces
   )
   .jsSettings(
     scalacOptions += {
@@ -190,14 +192,16 @@ lazy val `commons-spring` = project
     )
   )
 
-lazy val `rpc-akka` = project
+lazy val `commons-akka` = project
   .dependsOn(`commons-core`)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor" % "2.4.4",
-      "com.typesafe.akka" %% "akka-remote" % "2.4.4",
-      "com.typesafe.akka" %% "akka-stream" % "2.4.4"
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-remote" % akkaVersion,
+      "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+      "org.mockito" % "mockito-core" % "2.0.54-beta" % Test
     )
   )
 
@@ -207,9 +211,9 @@ lazy val `test-api` = project
   .settings(commonSettings: _*)
 
 lazy val `test-server` = project
-  .dependsOn(`commons-core`, `test-api`, `rpc-akka`)
+  .dependsOn(`commons-core`, `test-api`, `commons-akka`)
   .settings(commonSettings: _*)
 
 lazy val `test-client` = project
-  .dependsOn(`commons-core`, `test-api`, `rpc-akka`)
+  .dependsOn(`commons-core`, `test-api`, `commons-akka`)
   .settings(commonSettings: _*)

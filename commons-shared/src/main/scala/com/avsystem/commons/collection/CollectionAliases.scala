@@ -48,6 +48,11 @@ object CollectionAliases {
   type MLinearSeq[A] = scm.LinearSeq[A]
   val MLinearSeq = scm.LinearSeq
 
+  type IQueue[+A] = sci.Queue[A]
+  val IQueue = sci.Queue
+  type MQueue[A] = scm.Queue[A]
+  val MQueue = scm.Queue
+
   type BSet[A] = sc.Set[A]
   val BSet = sc.Set
   type ISet[A] = sci.Set[A]

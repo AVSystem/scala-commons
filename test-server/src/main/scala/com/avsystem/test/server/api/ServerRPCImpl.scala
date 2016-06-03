@@ -4,7 +4,6 @@ import com.avsystem.test.api.{EchoRPC, ServerRPC}
 import monifu.reactive.Observable
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 /**
   * @author Wojciech Milewski
@@ -20,7 +19,8 @@ class ServerRPCImpl extends ServerRPC {
   }
   override def futureMethod(string: String)(int: Int): Future[String] = Future.successful(s"called future method; $string; $int")
   override def publisherMethod(limit: Int): Observable[String] = {
-    Observable.intervalAtFixedRate(1.second).take(limit).map(_.toString)
+//    Observable.intervalAtFixedRate(1.second).take(limit).map(_.toString)
+    Observable.from(1, 2, 3, 4, 5).map(_.toString)
   }
   def echoRPC: EchoRPC = new EchoRPCImpl
 }
