@@ -9,19 +9,6 @@ import org.scalatest.FunSuite
   */
 class SamTest extends FunSuite {
 
-  test("no arg lists") {
-    trait NoArgListsSam {
-      def handle: String
-    }
-    object NoArgListsSam extends SamCompanion[NoArgListsSam, () => String]
-
-    val sam = NoArgListsSam(() => "42")
-    assert(sam.handle == "42")
-
-    val adhoc = Sam[NoArgListsSam](() => "42")
-    assert(adhoc.handle == "42")
-  }
-
   test("no arg lists by name") {
     trait NoArgListsSam {
       def handle: String
@@ -91,12 +78,16 @@ class SamTest extends FunSuite {
     trait MultipleArgListsSam {
       def handle(i: Int)(str: String): String
     }
-    object MultipleArgListsSam extends SamCompanion[MultipleArgListsSam, (Int, String) => String]
+    object MultipleArgListsSam extends SamCompanion[MultipleArgListsSam, Int => String => String]
 
-    val sam = MultipleArgListsSam(_.toString + _)
-    assert(sam.handle(123)("lol") == "123lol")
+    val fullSam = MultipleArgListsSam(i => s => i.toString + s)
+    assert(fullSam.handle(123)("lol") == "123lol")
 
-    val adhoc = Sam[MultipleArgListsSam]((i: Int, s: String) => i.toString + s)
+    def ptApplied(i: Int) = (s: String) => i.toString + s
+    val partialSam = MultipleArgListsSam(i => ptApplied(i))
+    assert(partialSam.handle(123)("lol") == "123lol")
+
+    val adhoc = Sam[MultipleArgListsSam]((i: Int) => (s: String) => i.toString + s)
     assert(adhoc.handle(123)("lol") == "123lol")
   }
 
@@ -104,12 +95,12 @@ class SamTest extends FunSuite {
     trait ImplicitParamsSam {
       def handle(i: Int)(implicit str: String): String
     }
-    object ImplicitParamsSam extends SamCompanion[ImplicitParamsSam, (Int, String) => String]
+    object ImplicitParamsSam extends SamCompanion[ImplicitParamsSam, Int => String => String]
 
-    val sam = ImplicitParamsSam(_.toString + _)
+    val sam = ImplicitParamsSam(i => s => i.toString + s)
     assert(sam.handle(123)("lol") == "123lol")
 
-    val adhoc = Sam[ImplicitParamsSam]((i: Int, s: String) => i.toString + s)
+    val adhoc = Sam[ImplicitParamsSam]((i: Int) => (s: String) => i.toString + s)
     assert(adhoc.handle(123)("lol") == "123lol")
   }
 }

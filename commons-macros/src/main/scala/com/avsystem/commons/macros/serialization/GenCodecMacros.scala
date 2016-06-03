@@ -1,29 +1,21 @@
 package com.avsystem.commons
 package macros.serialization
 
-import com.avsystem.commons.macros.TypeClassDerivation
+import com.avsystem.commons.macros.{MacroCommons, TypeClassDerivation}
 
 import scala.reflect.macros.blackbox
 
-/**
-  * Author: ghik
-  * Created: 10/12/15.
-  */
-class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
+trait CodecMacroCommons extends MacroCommons {
 
   import c.universe._
 
   val SerializationPkg = q"$CommonsPackage.serialization"
   val NameAnnotType = getType(tq"$SerializationPkg.name")
-  val TransparentAnnotType = getType(tq"$SerializationPkg.transparent")
-  val TransientDefaultAnnotType = getType(tq"$SerializationPkg.transientDefault")
   val JavaInteropObj = q"$CommonsPackage.jiop.JavaInterop"
   val JListObj = q"$JavaInteropObj.JList"
   val JListCls = tq"$JavaInteropObj.JList"
   val ListBufferCls = tq"$CollectionPkg.mutable.ListBuffer"
   val BMapCls = tq"$CollectionPkg.Map"
-  val GenCodecObj = q"$SerializationPkg.GenCodec"
-  val GenCodecCls = tq"$SerializationPkg.GenCodec"
   val NOptObj = q"$CommonsPackage.misc.NOpt"
   val NOptCls = tq"$CommonsPackage.misc.NOpt"
 
@@ -35,15 +27,26 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
       case param :: _ => c.abort(param.pos, s"@name argument must be a string literal")
     }.getOrElse(sym.name.decodedName.toString)
 
-  def isTransparent(sym: Symbol): Boolean =
-    getAnnotations(sym, TransparentAnnotType).nonEmpty
-
   def getAnnotations(sym: Symbol, annotTpe: Type): List[Annotation] = {
     val syms =
       if (sym.isClass) sym.asClass.baseClasses
       else sym :: sym.overrides
     syms.flatMap(_.annotations).filter(_.tree.tpe <:< annotTpe)
   }
+}
+
+/**
+  * Author: ghik
+  * Created: 10/12/15.
+  */
+class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation with CodecMacroCommons {
+
+  import c.universe._
+
+  val TransparentAnnotType = getType(tq"$SerializationPkg.transparent")
+  val TransientDefaultAnnotType = getType(tq"$SerializationPkg.transientDefault")
+  val GenCodecObj = q"$SerializationPkg.GenCodec"
+  val GenCodecCls = tq"$SerializationPkg.GenCodec"
 
   def mkTupleCodec[T: c.WeakTypeTag](elementCodecs: c.Tree*): c.Tree = {
     val tupleTpe = weakTypeOf[T]
@@ -60,7 +63,6 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
      """
   }
 
-
   def typeClass = GenCodecCls
   def typeClassName = "GenCodec"
   def wrapInAuto(tree: Tree) = q"$GenCodecObj.Auto($tree)"
@@ -69,7 +71,10 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
   def forSingleton(tpe: Type, singleValueTree: Tree): Tree =
     q"new $GenCodecObj.SingletonCodec[$tpe]($singleValueTree)"
 
-  private def isTransientDefault(param: ApplyParam) =
+  def isTransparent(sym: Symbol): Boolean =
+    getAnnotations(sym, TransparentAnnotType).nonEmpty
+
+  def isTransientDefault(param: ApplyParam) =
     param.defaultValue.nonEmpty && param.sym.annotations.exists(_.tree.tpe <:< TransientDefaultAnnotType)
 
   def forApplyUnapply(tpe: Type, companion: Symbol, params: List[ApplyParam]): Tree = {
@@ -201,15 +206,50 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation {
   def forUnknown(tpe: Type): Tree =
     typecheckException(s"Cannot automatically derive GenCodec for $tpe")
 
-  def autoDeriveRecursively[T: c.WeakTypeTag]: Tree = {
+  def materializeRecursively[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
     q"""
-       implicit val ${c.freshName(TermName("allow"))}: $AutoDeriveRecursivelyCls[$typeClass] =
-         $AutoDeriveRecursivelyObj[$typeClass]
-       $GenCodecObj.auto[$tpe]
+       implicit val ${c.freshName(TermName("allow"))}: $materializeRecursivelyCls[$typeClass] =
+         $materializeRecursivelyObj[$typeClass]
+       $GenCodecObj.materialize[$tpe]
      """
   }
 
-  def autoDeriveRecursivelyImplicitly[T: c.WeakTypeTag](allow: Tree): Tree =
-    autoDerive[T]
+  def materializeRecursivelyImplicitly[T: c.WeakTypeTag](allow: Tree): Tree =
+    materialize[T]
+}
+
+
+class GenKeyCodecMacros(val c: blackbox.Context) extends CodecMacroCommons {
+
+  import c.universe._
+
+  val GenKeyCodecObj = q"$SerializationPkg.GenKeyCodec"
+  val GenKeyCodecCls = tq"$SerializationPkg.GenKeyCodec"
+
+  def forSealedEnum[T: c.WeakTypeTag]: Tree = {
+    val tpe = weakTypeOf[T]
+    knownSubtypes(tpe).map { subtypes =>
+      def singleValue(st: Type) = singleValueFor(st).getOrElse(abort(s"$st is not an object"))
+      val nameBySym = subtypes.groupBy(st => annotName(st.typeSymbol)).map {
+        case (name, List(subtype)) => (subtype.typeSymbol, name)
+        case (name, kst) =>
+          abort(s"Objects ${kst.map(_.typeSymbol.name).mkString(", ")} have the same @name: $name")
+      }
+      val result =
+        q"""
+          new $GenKeyCodecCls[$tpe] {
+            def tpeString = ${tpe.toString}
+            def read(key: String): $tpe = key match {
+              case ..${subtypes.map(st => cq"${nameBySym(st.typeSymbol)} => ${singleValue(st)}")}
+              case _ => throw new $SerializationPkg.GenCodec.ReadFailure(s"Cannot read $$tpeString, unknown object: $$key")
+            }
+            def write(value: $tpe): String = value match {
+              case ..${subtypes.map(st => cq"_: $st => ${nameBySym(st.typeSymbol)}")}
+            }
+          }
+         """
+      withKnownSubclassesCheck(result, tpe)
+    }.getOrElse(abort(s"$tpe is not a sealed trait or class"))
+  }
 }

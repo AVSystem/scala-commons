@@ -37,19 +37,53 @@ class SamMacros(val c: blackbox.Context) extends MacroCommons {
     } else {
       val sig = m.typeSignatureIn(targetTpe)
 
-      val argNames = sig.paramLists.flatten.map(_.name.toTermName)
-      val params = sig.paramLists.map(_.map(ps => {
+      val resultType = sig.finalResultType
+      val defParamss = sig.paramLists.map(_.map(ps => {
         val implicitFlag = if (ps.isImplicit) Flag.IMPLICIT else NoFlags
         ValDef(Modifiers(Flag.PARAM | implicitFlag), ps.name.toTermName, TypeTree(ps.typeSignature), EmptyTree)
       }))
 
-      val funName = c.freshName(TermName("fun"))
-      q"""
-        val $funName = $fun
-        new $targetTpe {
-          def ${m.name.toTermName}(...$params) = $funName(..$argNames)
+      val unimplemented = q"???"
+      val baseResult = c.typecheck(
+        q"""
+          new $targetTpe {
+            def ${m.name.toTermName}(...$defParamss): $resultType = $unimplemented
+          }
+         """)
+
+      val typedDefParamss = baseResult
+        .collect({ case dd: DefDef if dd.symbol.overrides.contains(m) => dd.vparamss })
+        .head
+
+      def rewriteParams(function: Tree, defParamss: List[List[ValDef]]): Tree =
+        (function, defParamss) match {
+          case (Function(funParams, body), defParams :: dpTail) =>
+            val defParamByFunParam = (funParams.map(_.symbol) zip defParams).toMap
+            object transformer extends Transformer {
+              override def transform(tree: Tree) = tree match {
+                case id: Ident if defParamByFunParam.contains(id.symbol) =>
+                  val defParam = defParamByFunParam(id.symbol)
+                  internal.setSymbol(treeCopy.Ident(id, defParam.name), defParam.symbol)
+                case _ => super.transform(tree)
+              }
+            }
+            rewriteParams(transformer.transform(body), dpTail)
+          case (body, _) =>
+            val paramss = defParamss.map(_.map(vd => Ident(vd.symbol)))
+            c.typecheck(q"$body(...$paramss)")
         }
-       """
+
+      val defBody = rewriteParams(fun, typedDefParamss)
+
+      object transformer extends Transformer {
+        override def transform(tree: Tree) = tree match {
+          case DefDef(mods, name, tparams, vparamss, resultTpe, _) if tree.symbol.overrides.contains(m) =>
+            treeCopy.DefDef(tree, mods, name, tparams, vparamss, resultTpe, defBody)
+          case _ => super.transform(tree)
+        }
+      }
+
+      transformer.transform(baseResult)
     }
   }
 
@@ -61,16 +95,19 @@ class SamMacros(val c: blackbox.Context) extends MacroCommons {
 
     targetTpe.members.iterator.filter(m => m.isAbstract).map(m => (m, m.typeSignatureIn(targetTpe))).toList match {
       case (m, sig) :: Nil if m.isPublic && m.isMethod && !m.asTerm.isAccessor && sig.typeParams.isEmpty =>
-        val argTypes = sig.paramLists.flatten.map(_.typeSignature)
-        val arity = argTypes.length
-        val resultType = if (sig.finalResultType =:= typeOf[Unit]) typeOf[Any] else sig.finalResultType
+        val argTypess = sig.paramLists.map(_.map(_.typeSignature))
+        val arity = sig.paramLists.foldLeft(0)(_ + _.length)
+        val finalResultType = if (sig.finalResultType =:= typeOf[Unit]) typeOf[Any] else sig.finalResultType
 
-        val funSym = rootMirror.staticClass(s"_root_.scala.Function$arity")
-        val requiredFunTpe = internal.reificationSupport.TypeRef(NoPrefix, funSym, argTypes :+ resultType)
+        val requiredFunTpe = argTypess.foldRight(finalResultType) { (argTypes, resultType) =>
+          val funSym = rootMirror.staticClass(s"_root_.scala.Function${argTypes.length}")
+          internal.reificationSupport.TypeRef(NoPrefix, funSym, argTypes :+ resultType)
+        }
 
-        val byName = arity == 0 && funTpe <:< resultType
+        val emptyList = argTypess == List(Nil)
+        val byName = emptyList && funTpe <:< finalResultType
         if (!byName && !(funTpe <:< requiredFunTpe)) {
-          val requiredMsg = (if (arity == 0) s"$resultType or " else "") + s"$requiredFunTpe"
+          val requiredMsg = (if (emptyList) s"$finalResultType or " else "") + s"$requiredFunTpe"
           abort(s"$funTpe does not match signature of $m in $targetTpe: expected $requiredMsg")
         }
         byName

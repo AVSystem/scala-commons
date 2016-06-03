@@ -4,7 +4,7 @@ package jetty.rpc
 import java.nio.charset.StandardCharsets
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
-import com.avsystem.commons.rpc.RPCFramework
+import com.avsystem.commons.rpc.StandardRPCFramework
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.client.api.Result
 import org.eclipse.jetty.client.util.{BufferingResponseListener, BytesContentProvider}
@@ -18,7 +18,7 @@ import scala.util.{Failure, Success}
 /**
   * @author MKej
   */
-trait JettyRPCFramework extends RPCFramework {
+trait JettyRPCFramework extends StandardRPCFramework {
   def valueToJson(value: RawValue): String
   def jsonToValue(json: String): RawValue
 

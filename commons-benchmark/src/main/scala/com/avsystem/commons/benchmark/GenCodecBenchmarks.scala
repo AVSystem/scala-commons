@@ -17,7 +17,7 @@ class GenCodecBenchmarks {
 
 case class Something(int: Int, str: String)
 object Something {
-  implicit val codec: GenCodec[Something] = GenCodec.auto
+  implicit val codec: GenCodec[Something] = GenCodec.materialize
 }
 
 object DummyInput extends Input {
