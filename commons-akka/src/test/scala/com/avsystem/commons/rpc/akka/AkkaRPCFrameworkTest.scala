@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc.akka
 
-import akka.actor.{ActorPath, ActorSystem}
+import akka.actor.{ActorPath, ActorSystem, Inbox, Terminated}
 import akka.stream.ActorMaterializer
 import monifu.concurrent.Implicits.globalScheduler
 import monifu.reactive.Observable
@@ -12,40 +12,61 @@ import org.mockito.stubbing.Answer
 import org.scalatest.concurrent.AsyncAssertions.Waiter
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.time.{Seconds, Span}
+import org.scalatest.time.Span
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future, Promise}
 import scala.util.{Failure, Success}
 
 /**
   * @author Wojciech Milewski
   */
-class AkkaRPCFrameworkTest extends FlatSpec with Matchers with MockitoSugar with BeforeAndAfterAll with ScalaFutures {
+abstract class AkkaRPCFrameworkTest(serverSystem: ActorSystem, clientSystem: ActorSystem, existingPath: Option[ActorPath] = None, nonExistingPath: Option[ActorPath] = None)
+  extends FlatSpec with Matchers with MockitoSugar with BeforeAndAfterAll with ScalaFutures {
 
   import AkkaRPCFrameworkTest._
 
-  implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
+  val callTimeout = 200.millis
+
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = Span.convertDurationToSpan(500.millis))
 
   case class Fixture(rpc: TestRPC, mockRpc: TestRPC, mockInnerRpc: InnerRPC)
 
   def fixture(testCode: Fixture => Any): Unit = {
     val testRpcMock = mock[TestRPC]
     val innerRpcMock = mock[InnerRPC]
-    val serverActor = AkkaRPCFramework.serverActor[TestRPC](testRpcMock)
-    val rpc = AkkaRPCFramework.client[TestRPC](serverActor.path)
+    val serverActor = {
+      implicit val system = serverSystem
+      AkkaRPCFramework.serverActor[TestRPC](testRpcMock)
+    }
+    val rpc = {
+      implicit val system = clientSystem
+      implicit val materializer = ActorMaterializer()
+      AkkaRPCFramework.client[TestRPC](AkkaRPCClientConfig(serverPath = existingPath.getOrElse(serverActor.path)))
+    }
     try {
       testCode(Fixture(rpc = rpc, mockRpc = testRpcMock, mockInnerRpc = innerRpcMock))
     } finally {
-      system.stop(serverActor)
+      //todo make it sync, because it sometimes fails
+      val inbox = Inbox.create(serverSystem)
+      inbox.watch(serverActor)
+      serverSystem.stop(serverActor)
+      inbox.receive(2.seconds) match {
+        case Terminated(_) =>
+      }
     }
   }
 
   def noConnectionFixture(testCode: Fixture => Any): Unit = {
+    implicit val system = clientSystem
+    implicit val materializer = ActorMaterializer()
     val mockRpc = mock[TestRPC]
     val mockInnerRpc = mock[InnerRPC]
-    val rpc = AkkaRPCFramework.client[TestRPC](ActorPath.fromString("akka://user/thisactorshouldnotexists"))
+    val rpc = AkkaRPCFramework.client[TestRPC](AkkaRPCClientConfig(
+      functionCallTimeout = callTimeout,
+      observableMessageTimeout = callTimeout,
+      serverPath = nonExistingPath.getOrElse(ActorPath.fromString("akka://user/thisactorshouldnotexists"))))
     testCode(Fixture(rpc = rpc, mockRpc = mockRpc, mockInnerRpc = mockInnerRpc))
   }
 
@@ -99,7 +120,8 @@ class AkkaRPCFrameworkTest extends FlatSpec with Matchers with MockitoSugar with
   }
 
   it should "return RemoteTimeoutException when no connection to the remote RPC" in noConnectionFixture { f =>
-    whenFailed(f.rpc.echoAsString(4), timeout(Span(5, Seconds))) { thrown =>
+    val span = Span.convertDurationToSpan(callTimeout.plus(1.second))
+    whenFailed(f.rpc.echoAsString(4), timeout(span)) { thrown =>
       thrown shouldBe a[RemoteTimeoutExceptionType]
     }
   }
@@ -125,12 +147,24 @@ class AkkaRPCFrameworkTest extends FlatSpec with Matchers with MockitoSugar with
   }
 
   it should "return RemoteTimeoutException when no connection to the remote RPC when observable method called" in noConnectionFixture { f =>
-    f.rpc.stream.error.asExistingFuture.futureValue(timeout(Span(2, Seconds))) shouldBe a[RemoteTimeoutExceptionType]
+    val span = Span.convertDurationToSpan(callTimeout.plus(1.second))
+    f.rpc.stream.error.asExistingFuture.futureValue(timeout(span)) shouldBe a[RemoteTimeoutExceptionType]
+  }
+
+  it should "call several methods" in fixture { f =>
+    when(f.mockRpc.echoAsString(anyInt())).thenReturn(Future.successful("1"))
+
+    f.rpc.echoAsString(1).futureValue shouldBe "1"
+    f.rpc.echoAsString(1).futureValue shouldBe "1"
+    f.rpc.echoAsString(1).futureValue shouldBe "1"
   }
 
   override protected def afterAll(): Unit = {
     super.afterAll()
-    system.terminate()
+    serverSystem.terminate()
+    clientSystem.terminate()
+    Await.ready(serverSystem.whenTerminated, 30.seconds)
+    Await.ready(clientSystem.whenTerminated, 30.seconds)
   }
 
 }

@@ -4,7 +4,7 @@ package rpc.akka.client
 import akka.actor.{Actor, ActorPath, Props, Status}
 import akka.pattern.{AskTimeoutException, ask, pipe}
 import akka.util.Timeout
-import com.avsystem.commons.rpc.akka.{AkkaRPCFramework, FunctionInvocationMessage, RemoteCallException, RemoteTimeoutException}
+import com.avsystem.commons.rpc.akka.{AkkaRPCClientConfig, AkkaRPCFramework, FunctionInvocationMessage, RemoteCallException, RemoteTimeoutException}
 
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -12,14 +12,14 @@ import scala.util.{Failure, Success}
 /**
   * @author Wojciech Milewski
   */
-private[akka] class FunctionClientActor(serverActorPath: ActorPath) extends Actor {
+private[akka] class FunctionClientActor(config: AkkaRPCClientConfig) extends Actor {
 
-  implicit val timeout = Timeout(1.second)  //todo make it configurable
+  implicit val timeout = Timeout(config.functionCallTimeout)
 
   override def receive: Receive = {
     case msg: FunctionInvocationMessage =>
       val s = sender()
-      val response = context.actorSelection(serverActorPath) ? msg
+      val response = context.actorSelection(config.serverPath) ? msg
       import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
 
       response.onComplete {
@@ -32,5 +32,5 @@ private[akka] class FunctionClientActor(serverActorPath: ActorPath) extends Acto
 }
 
 private[akka] object FunctionClientActor {
-  def props(serverActorPath: ActorPath): Props = Props(new FunctionClientActor(serverActorPath))
+  def props(config: AkkaRPCClientConfig): Props = Props(new FunctionClientActor(config))
 }

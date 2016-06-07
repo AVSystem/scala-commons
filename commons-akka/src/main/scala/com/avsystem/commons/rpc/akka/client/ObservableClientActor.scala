@@ -1,25 +1,24 @@
 package com.avsystem.commons
 package rpc.akka.client
 
-import com.avsystem.commons.collection.CollectionAliases._
 import akka.actor.{Actor, ActorLogging, ActorPath, FSM, Props}
 import akka.stream.actor.ActorPublisher
-import com.avsystem.commons.rpc.akka.{AkkaRPCFramework, ObservableCompleteMessage, ObservableInvocationMessage, RemoteCallException, RemoteTimeoutException}
+import com.avsystem.commons.collection.CollectionAliases._
+import com.avsystem.commons.rpc.akka.{AkkaRPCClientConfig, AkkaRPCFramework, ObservableCompleteMessage, ObservableInvocationMessage, RemoteCallException, RemoteTimeoutException}
 
 import scala.annotation.tailrec
-import scala.concurrent.duration._
 
 /**
   * @author Wojciech Milewski
   */
-private[akka] final class ObservableClientActor(serverActorPath: ActorPath, invocationMessage: ObservableInvocationMessage)
+private[akka] final class ObservableClientActor(config: AkkaRPCClientConfig, invocationMessage: ObservableInvocationMessage)
   extends ActorPublisher[AkkaRPCFramework.RawValue] with FSM[State, Data] with ActorLogging {
 
   import ObservableClientActor._
   import akka.stream.actor.ActorPublisherMessage._
 
-  val senderActor = context.actorOf(SenderActor.props(serverActorPath))
-  val timeout = 1.second    //todo read from config
+  val senderActor = context.actorOf(SenderActor.props(config.serverPath))
+  val timeout = config.observableMessageTimeout
 
   var buf = Vector.empty[AkkaRPCFramework.RawValue]
   var streamClosed = false
@@ -105,7 +104,7 @@ private final case class Buffer(values: IQueue[AkkaRPCFramework.RawValue] = IQue
 private final case class Error(exception: Exception, values: IQueue[AkkaRPCFramework.RawValue]) extends Data
 
 private[akka] object ObservableClientActor {
-  def props(serverActorPath: ActorPath, invocationMessage: ObservableInvocationMessage): Props = Props(new ObservableClientActor(serverActorPath, invocationMessage))
+  def props(config: AkkaRPCClientConfig, invocationMessage: ObservableInvocationMessage): Props = Props(new ObservableClientActor(config, invocationMessage))
 
   private val BufferLimit = 1000
 
