@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.{ByteString, ByteStringBuilder, Timeout}
-import com.avsystem.commons.redis.{RedisBatch, UsesRedisNodeClient}
+import com.avsystem.commons.redis.{ClusterBatch, RedisBatch, UsesRedisNodeClient}
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.ScalaFutures
 
@@ -14,8 +14,8 @@ import scala.concurrent.{Await, ExecutionContext, Future}
   * Created: 14/04/16.
   */
 trait CommandsSuite extends FunSuite with ScalaFutures {
-  def execute[A](cmd: RedisBatch[A]): Future[A]
-  def setupCommands: RedisBatch[Any] = RedisBatch.success(())
+  def execute[A](cmd: ClusterBatch[A]): Future[A]
+  def setupCommands: ClusterBatch[Any] = RedisBatch.success(())
 
   implicit def executionContext: ExecutionContext
 
@@ -29,16 +29,16 @@ trait CommandsSuite extends FunSuite with ScalaFutures {
     }
   }
 
-  val commands = RedisCommands.transform(
-    new PolyFun[RedisBatch, Future] {
-      def apply[A](fa: RedisBatch[A]) = execute(fa)
+  val commands = RedisClusterCommands.transform[Future](
+    new PolyFun[ClusterBatch, Future] {
+      def apply[A](fa: ClusterBatch[A]) = execute(fa)
     })
 }
 
 trait RedisNodeCommandsSuite extends CommandsSuite with UsesRedisNodeClient {
   implicit val timeout = Timeout(1.seconds)
 
-  def execute[A](cmd: RedisBatch[A]) = redisClient.execute(cmd.operation)
+  def execute[A](cmd: ClusterBatch[A]) = redisClient.execute(cmd.operation)
 
   override protected def beforeAll() = {
     super.beforeAll()

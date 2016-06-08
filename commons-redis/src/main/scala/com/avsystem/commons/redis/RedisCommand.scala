@@ -1,159 +1,16 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.{ByteString, Timeout}
-import com.avsystem.commons.misc.{NamedEnum, Opt, Sam}
+import akka.util.ByteString
+import com.avsystem.commons.misc.{NamedEnum, Opt}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
-import com.avsystem.commons.redis.RedisBatch.{MessageBuffer, RepliesDecoder, Transaction}
-import com.avsystem.commons.redis.commands.{Exec, Multi}
-import com.avsystem.commons.redis.exception.{ErrorReplyException, OptimisticLockException, UnexpectedReplyException}
+import com.avsystem.commons.redis.RedisBatch.MessageBuffer
+import com.avsystem.commons.redis.exception.{ErrorReplyException, UnexpectedReplyException}
 import com.avsystem.commons.redis.protocol._
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.Future
 
-/**
-  * Represents a Redis operation or a set of operations which is sent to Redis as a single batch.
-  */
-trait RedisBatch[+A] {self =>
-  /**
-    * Encodes itself to a sequence of redis messages that will be sent in one batch to the server.
-    * Returns a [[RepliesDecoder]] responsible for translating raw Redis responses into the actual result.
-    */
-  def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean): RepliesDecoder[A]
-
-  def map2[B, C](other: RedisBatch[B])(f: (A, B) => C): RedisBatch[C] =
-    new RedisBatch[C] {
-      def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = {
-        val initialSize = messageBuffer.size
-        val selfDecoder = self.encodeCommands(messageBuffer, inTransaction)
-        val selfCount = messageBuffer.size - initialSize
-        val otherDecoder = other.encodeCommands(messageBuffer, inTransaction)
-        RepliesDecoder { (replies, start, end) =>
-          val a = selfDecoder.decodeReplies(replies, start, start + selfCount)
-          val b = otherDecoder.decodeReplies(replies, start + selfCount, end)
-          f(a, b)
-        }
-      }
-    }
-
-  def <*[B](other: RedisBatch[B]): RedisBatch[A] =
-    map2(other)((a, _) => a)
-
-  def *>[B](other: RedisBatch[B]): RedisBatch[B] =
-    map2(other)((_, b) => b)
-
-  def map[B](f: A => B): RedisBatch[B] =
-    new RedisBatch[B] {
-      def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = {
-        val decoder = self.encodeCommands(messageBuffer, inTransaction)
-        RepliesDecoder((replies, start, end) => f(decoder.decodeReplies(replies, start, end)))
-      }
-    }
-
-  /**
-    * Returns a batch which invokes the same Redis commands as this batch, but ensures that
-    * they are invoked inside a Redis transaction (`MULTI`-`EXEC`).
-    */
-  def transaction: RedisBatch[A] =
-    new Transaction(this)
-
-  def operation: RedisOp[A] =
-    RedisOp.LeafOp(this)
-}
-
-object RedisBatch {
-  final class Transaction[+A](batch: RedisBatch[A]) extends RedisBatch[A] {
-    def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) =
-      if (inTransaction) {
-        batch.encodeCommands(messageBuffer, inTransaction)
-      } else {
-        messageBuffer += ArrayMsg(Multi.encode)
-        val initialSize = messageBuffer.size
-        val actualDecoder = batch.encodeCommands(messageBuffer, inTransaction = true)
-        val actualSize = messageBuffer.size - initialSize
-        messageBuffer += ArrayMsg(Exec.encode)
-        RepliesDecoder((replies, start, end) => replies(end - 1) match {
-          case ArrayMsg(actualReplies) => actualDecoder.decodeReplies(actualReplies, 0, actualSize)
-          case NullArrayMsg => throw new OptimisticLockException
-          case errorMsg: ErrorMsg =>
-            val actualErrors = replies.iterator.drop(start + 1).take(actualSize).map {
-              case SimpleStringMsg(str) if str.utf8String == "QUEUED" => errorMsg
-              case actualErrorMsg: ErrorMsg => actualErrorMsg
-              case msg => throw new UnexpectedReplyException(s"expected simple string QUEUED or error, got $msg")
-            }.to[ArrayBuffer]
-            actualDecoder.decodeReplies(actualErrors, 0, actualSize)
-          case _ => throw new UnexpectedReplyException("expected multi bulk reply")
-        })
-      }
-
-    override def transaction = this
-  }
-
-  class MessageBuffer(private val buffer: ArrayBuffer[RedisMsg]) extends AnyVal {
-    def result: IndexedSeq[RedisMsg] = buffer
-    def +=(msg: RedisMsg): Unit = buffer += msg
-    def ++=(msgs: TraversableOnce[RedisMsg]): Unit = buffer ++= msgs
-    def size = buffer.size
-  }
-
-  trait RepliesDecoder[+A] {
-    def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int): A
-  }
-  object RepliesDecoder {
-    def apply[A](f: (IndexedSeq[RedisMsg], Int, Int) => A): RepliesDecoder[A] = Sam[RepliesDecoder[A]](f)
-  }
-
-  def success[A](a: A): RedisBatch[A] =
-    new RedisBatch[A] with RedisBatch.RepliesDecoder[A] {
-      def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = this
-      def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int) = a
-    }
-
-  def failure(cause: Throwable): RedisBatch[Nothing] =
-    new RedisBatch[Nothing] with RedisBatch.RepliesDecoder[Nothing] {
-      def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = this
-      def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int) = throw cause
-    }
-
-  //TODO more API
-  //TODO sequence
-}
-
-/**
-  * Represents a sequence of Redis operations executed using a single Redis connection.
-  * Any operation may depend on the result of some previous operation (therefore, `flatMap` is available).
-  */
-sealed trait RedisOp[+A] {
-  def flatMap[B](f: A => RedisOp[B]): RedisOp[B]
-
-  def map[B](f: A => B): RedisOp[B] =
-    flatMap(a => RedisOp.success(f(a)))
-
-  def executeWith(client: RedisNodeClient)(implicit timeout: Timeout): Future[A] =
-    client.execute(this)
-
-  //TODO more API
-}
-
-object RedisOp {
-  def success[A](a: A): RedisOp[A] =
-    RedisBatch.success(a).operation
-
-  def failure(cause: Throwable): RedisOp[Nothing] =
-    RedisBatch.failure(cause).operation
-
-  //TODO more API
-
-  case class LeafOp[A](batch: RedisBatch[A]) extends RedisOp[A] {
-    def flatMap[B](f: A => RedisOp[B]) = FlatMappedOp(batch, f)
-  }
-  case class FlatMappedOp[A, B](batch: RedisBatch[A], fun: A => RedisOp[B]) extends RedisOp[B] {
-    def flatMap[C](f: B => RedisOp[C]) = FlatMappedOp(batch, (a: A) => fun(a).flatMap(f))
-  }
-}
-
-trait RedisCommand[+A] extends RedisBatch[A] with RedisBatch.RepliesDecoder[A] {
+trait RedisCommand[+A, +S] extends RedisBatch[A, S] with RedisBatch.RepliesDecoder[A] {
   def encode: IndexedSeq[BulkStringMsg]
   def isKey(idx: Int): Boolean
   def decodeExpected: PartialFunction[ValidRedisMsg, A]
@@ -219,52 +76,52 @@ object CommandEncoder {
   }
 }
 
-trait RedisRawCommand extends RedisCommand[ValidRedisMsg] {
+trait RedisRawCommand[S] extends RedisCommand[ValidRedisMsg, S] {
   def decodeExpected = {
     case msg => msg
   }
 }
 
-trait RedisUnitCommand extends RedisCommand[Unit] {
+trait RedisUnitCommand[S] extends RedisCommand[Unit, S] {
   def decodeExpected = {
     case SimpleStringStr("OK") => ()
   }
 }
 
-trait RedisLongCommand extends RedisCommand[Long] {
+trait RedisLongCommand[S] extends RedisCommand[Long, S] {
   def decodeExpected = {
     case IntegerMsg(res) => res
   }
 }
 
-trait RedisOptLongCommand extends RedisCommand[Opt[Long]] {
+trait RedisOptLongCommand[S] extends RedisCommand[Opt[Long], S] {
   def decodeExpected = {
     case IntegerMsg(res) => Opt(res)
     case NullBulkStringMsg => Opt.Empty
   }
 }
 
-trait RedisBooleanCommand extends RedisCommand[Boolean] {
+trait RedisBooleanCommand[S] extends RedisCommand[Boolean, S] {
   def decodeExpected = {
     case IntegerMsg(0) => false
     case IntegerMsg(1) => true
   }
 }
 
-trait RedisBinaryCommand extends RedisCommand[ByteString] {
+trait RedisBinaryCommand[S] extends RedisCommand[ByteString, S] {
   def decodeExpected = {
     case BulkStringMsg(data) => data
   }
 }
 
-trait RedisOptBinaryCommand extends RedisCommand[Opt[ByteString]] {
+trait RedisOptBinaryCommand[S] extends RedisCommand[Opt[ByteString], S] {
   def decodeExpected = {
     case BulkStringMsg(data) => Opt(data)
     case NullBulkStringMsg => Opt.Empty
   }
 }
 
-trait RedisBinarySeqCommand extends RedisCommand[Seq[ByteString]] {
+trait RedisBinarySeqCommand[S] extends RedisCommand[Seq[ByteString], S] {
   def decodeExpected = {
     case ArrayMsg(elements) =>
       elements.map {
@@ -274,7 +131,7 @@ trait RedisBinarySeqCommand extends RedisCommand[Seq[ByteString]] {
   }
 }
 
-trait RedisOptBinarySeqCommand extends RedisCommand[Seq[Opt[ByteString]]] {
+trait RedisOptBinarySeqCommand[S] extends RedisCommand[Seq[Opt[ByteString]], S] {
   def decodeExpected = {
     case ArrayMsg(elements) =>
       elements.map {
@@ -285,12 +142,12 @@ trait RedisOptBinarySeqCommand extends RedisCommand[Seq[Opt[ByteString]]] {
   }
 }
 
-trait RedisDoubleCommand extends RedisCommand[Double] {
+trait RedisDoubleCommand[S] extends RedisCommand[Double, S] {
   def decodeExpected = {
     case BulkStringMsg(bytes) => bytes.utf8String.toDouble
   }
 }
 
-trait SimpleSingleKeyed {this: RedisCommand[_] =>
+trait SimpleSingleKeyed {this: RedisCommand[_, Scope.Cluster] =>
   def isKey(idx: Int) = idx == 1
 }

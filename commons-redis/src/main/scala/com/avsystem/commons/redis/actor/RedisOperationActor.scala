@@ -29,7 +29,7 @@ final class RedisOperationActor(connection: ActorRef, address: NodeAddress) exte
   private var listener: ActorRef = null
   private var released = false
 
-  def handleBatch[A](batch: RedisBatch[A]): RepliesDecoder[A] = {
+  def handleBatch[A](batch: RedisBatch[A, Any]): RepliesDecoder[A] = {
     val buf = new ArrayBuffer[RedisMsg]
     val decoder = batch.encodeCommands(new MessageBuffer(buf), inTransaction = false)
     log.debug(s"Sending $buf to connection $connection")
@@ -37,7 +37,7 @@ final class RedisOperationActor(connection: ActorRef, address: NodeAddress) exte
     decoder
   }
 
-  def handleOperation(op: RedisOp[Any]): Unit = op match {
+  def handleOperation(op: RedisOp[Any, Any]): Unit = op match {
     case LeafOp(batch) =>
       val decoder = handleBatch(batch)
       releaseConnection() // release the connection immediately after using it for the last time
@@ -47,7 +47,7 @@ final class RedisOperationActor(connection: ActorRef, address: NodeAddress) exte
       context.become(waitingForResponse(decoder, Opt(nextStep)))
   }
 
-  def waitingForResponse[A, B](decoder: RepliesDecoder[A], nextStep: Opt[A => RedisOp[B]]): Receive = {
+  def waitingForResponse[A, B](decoder: RepliesDecoder[A], nextStep: Opt[A => RedisOp[B, Any]]): Receive = {
     case RedisConnectionActor.Response(replies) =>
       try {
         val a = decoder.decodeReplies(replies, 0, replies.size)
@@ -77,7 +77,7 @@ final class RedisOperationActor(connection: ActorRef, address: NodeAddress) exte
     Failure(new ConnectionClosedException(address))
 
   def receive = {
-    case op: RedisOp[Any] =>
+    case op: RedisOp[Any, Any] =>
       listener = sender()
       handleOperation(op)
     case Terminated(`connection`) =>

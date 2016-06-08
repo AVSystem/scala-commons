@@ -17,7 +17,6 @@ import scala.collection.mutable
 final class RedisConnectionPoolActor(address: NodeAddress, size: Int) extends Actor with ActorLazyLogging {
   private val availableConnections = new JArrayDeque[ActorRef](size)
   private val deadConnections = new mutable.HashSet[ActorRef]
-
   private val queuedOps = new mutable.Queue[QueuedOp]
 
   (0 until size).foreach { _ =>
@@ -26,12 +25,14 @@ final class RedisConnectionPoolActor(address: NodeAddress, size: Int) extends Ac
 
   def newConnection = {
     val res = context.actorOf(Props(new RedisConnectionActor(address)))
-    context.watch(res) // deliberately not relying on supervision and restarting
+    // Deliberately not relying on supervision and restarting - I want a truly new connection actor
+    // to be created after old one dies.
+    context.watch(res)
     res
   }
 
   def receive = {
-    case op: RedisOp[Any] =>
+    case op: RedisOp[Any, Any] =>
       queuedOps += QueuedOp(sender(), op)
       handleNextOp()
     case RedisOperationActor.Release(connection) =>
@@ -70,5 +71,5 @@ final class RedisConnectionPoolActor(address: NodeAddress, size: Int) extends Ac
 }
 
 object RedisConnectionPoolActor {
-  case class QueuedOp(listener: ActorRef, op: RedisOp[Any])
+  case class QueuedOp(listener: ActorRef, op: RedisOp[Any, Any])
 }

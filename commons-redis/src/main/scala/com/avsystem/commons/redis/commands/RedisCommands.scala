@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.Timeout
-import com.avsystem.commons.redis.{RedisBatch, RedisCommand, RedisNodeClient, RedisOp}
+import com.avsystem.commons.redis._
 
 import scala.concurrent.Future
 
@@ -20,26 +20,26 @@ trait RedisConnectionApi[+F[_]] extends RedisNodeApi[F] {
   type Self[G[_]] <: RedisConnectionApi[G]
 }
 
-class RedisCommands[+F[_]] private(protected val mapper: PolyFun[RedisCommand, F]) extends RedisApi[F] {
-  type Self[G[_]] = RedisCommands[G]
-  protected type Initial[A] = RedisCommand[A]
-  protected def withMapper[G[_]](mapper: PolyFun[RedisCommand, G]) = new RedisCommands(mapper)
+class RedisClusterCommands[+F[_]] private(protected val mapper: PolyFun[ClusterCommand, F]) extends RedisApi[F] {
+  type CmdScope = Scope.Cluster
+  type Self[G[_]] = RedisClusterCommands[G]
+  protected def withMapper[G[_]](mapper: PolyFun[ClusterCommand, G]) = new RedisClusterCommands(mapper)
 }
-object RedisCommands extends RedisCommands[RedisCommand](PolyFun.identity)
+object RedisClusterCommands extends RedisClusterCommands[ClusterCommand](PolyFun.identity)
 
-class RedisNodeCommands[+F[_]] private(protected val mapper: PolyFun[RedisCommand, F]) extends RedisNodeApi[F] {
+class RedisNodeCommands[+F[_]] private(protected val mapper: PolyFun[NodeCommand, F]) extends RedisNodeApi[F] {
+  type CmdScope = Scope.Node
   type Self[G[_]] = RedisNodeCommands[G]
-  protected type Initial[A] = RedisCommand[A]
-  protected def withMapper[G[_]](mapper: PolyFun[RedisCommand, G]) = new RedisNodeCommands(mapper)
+  protected def withMapper[G[_]](mapper: PolyFun[NodeCommand, G]) = new RedisNodeCommands(mapper)
 }
-object RedisNodeCommands extends RedisNodeCommands[RedisCommand](PolyFun.identity)
+object RedisNodeCommands extends RedisNodeCommands[NodeCommand](PolyFun.identity)
 
-class RedisConnectionCommands[+F[_]] private(protected val mapper: PolyFun[RedisCommand, F]) extends RedisConnectionApi[F] {
+class RedisConnectionCommands[+F[_]] private(protected val mapper: PolyFun[ConnectionCommand, F]) extends RedisConnectionApi[F] {
+  type CmdScope = Scope.Connection
   type Self[G[_]] = RedisConnectionCommands[G]
-  protected type Initial[A] = RedisCommand[A]
-  protected def withMapper[G[_]](mapper: PolyFun[RedisCommand, G]) = new RedisConnectionCommands(mapper)
+  protected def withMapper[G[_]](mapper: PolyFun[ConnectionCommand, G]) = new RedisConnectionCommands(mapper)
 }
-object RedisConnectionCommands extends RedisConnectionCommands[RedisCommand](PolyFun.identity)
+object RedisConnectionCommands extends RedisConnectionCommands[ConnectionCommand](PolyFun.identity)
 
 trait PolyFun[-F[_], +G[_]] {self =>
   def apply[A](fa: F[A]): G[A]
@@ -62,33 +62,45 @@ object PolyFun {
 }
 
 trait ApiSubset[+F[_]] {
+  type CmdScope
+  type Command[+A] = RedisCommand[A, CmdScope]
   type Self[G[_]] <: ApiSubset[G]
 
-  protected type Initial[A] >: RedisCommand[A]
-
-  protected def mapper: PolyFun[Initial, F]
-  protected def withMapper[G[_]](mapper: PolyFun[Initial, G]): Self[G]
+  protected def mapper: PolyFun[Command, F]
+  protected def withMapper[G[_]](mapper: PolyFun[Command, G]): Self[G]
 
   def transform[G[_]](pf: PolyFun[F, G]): Self[G] =
     withMapper(mapper andThen pf)
 }
 
 object ApiSubset {
-  implicit class BatchApiSubset[C <: ApiSubset[RedisBatch]](val cs: C) extends AnyVal {
-    def operations: cs.Self[RedisOp] = cs.transform(Mappers.BatchToOp)
+  implicit class BatchApiSubset[S, C <: ApiSubset[NodeCommand]](val cs: C) extends AnyVal {
+    def operations: cs.Self[NodeOp] = cs.transform[NodeOp](new Mappers.BatchToOp[Scope.Node])
   }
 
-  implicit class OperationsApiSubset[C <: ApiSubset[RedisOp]](val cs: C) extends AnyVal {
+  implicit class OperationsApiSubset[C <: ApiSubset[NodeOp]](val cs: C) extends AnyVal {
     def executedWith(client: RedisNodeClient)(implicit timeout: Timeout): cs.Self[Future] =
-      cs.transform(Mappers.ExecuteWith(client))
+      cs.transform(new Mappers.ExecuteWith(client))
   }
 }
 
+trait ClusterApiSubset[+F[_]] extends ApiSubset[F] {
+  type CmdScope >: Scope.Cluster
+}
+
+trait NodeApiSubset[+F[_]] extends ClusterApiSubset[F] {
+  type CmdScope >: Scope.Node
+}
+
+trait ConnectionApiSubset[+F[_]] extends NodeApiSubset[F] {
+  type CmdScope >: Scope.Connection
+}
+
 object Mappers {
-  object BatchToOp extends PolyFun[RedisBatch, RedisOp] {
-    def apply[T](f: RedisBatch[T]) = RedisOp.LeafOp(f)
+  final class BatchToOp[S] extends PolyFun[Scoped[S]#Batch, Scoped[S]#Op] {
+    def apply[A](f: Scoped[S]#Batch[A]) = f.operation
   }
-  case class ExecuteWith(client: RedisNodeClient)(implicit timeout: Timeout) extends PolyFun[RedisOp, Future] {
-    def apply[T](op: RedisOp[T]) = client.execute(op)
+  final class ExecuteWith(client: RedisNodeClient)(implicit timeout: Timeout) extends PolyFun[Scoped[Scope.Node]#Op, Future] {
+    def apply[T](op: Scoped[Scope.Node]#Op[T]) = client.execute(op)
   }
 }

@@ -13,13 +13,13 @@ trait KeysApiSuite extends CommandsSuite {
   import commands._
 
   override def setupCommands = super.setupCommands *>
-    RedisCommands.set(bs"key", bs"value") *>
-    RedisCommands.setex(bs"exkey", Int.MaxValue, bs"value") *>
-    RedisCommands.set(bs"toex", bs"value") *>
-    RedisCommands.set(bs"todel", bs"value") *>
-    RedisCommands.set(bs"torename", bs"value") *>
-    RedisCommands.set(bs"torenamenx", bs"value") *>
-    RedisCommands.set(bs"tomove", bs"value") *>
+    RedisClusterCommands.set(bs"key", bs"value") *>
+    RedisClusterCommands.setex(bs"exkey", Int.MaxValue, bs"value") *>
+    RedisClusterCommands.set(bs"toex", bs"value") *>
+    RedisClusterCommands.set(bs"todel", bs"value") *>
+    RedisClusterCommands.set(bs"torename", bs"value") *>
+    RedisClusterCommands.set(bs"torenamenx", bs"value") *>
+    RedisClusterCommands.set(bs"tomove", bs"value") *>
     RedisBatch.success(())
 
   test("DEL") {

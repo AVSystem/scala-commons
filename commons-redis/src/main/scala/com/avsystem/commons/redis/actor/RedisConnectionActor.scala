@@ -14,10 +14,6 @@ import com.avsystem.commons.redis.util.ActorLazyLogging
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-/**
-  * Author: ghik
-  * Created: 05/04/16.
-  */
 final class RedisConnectionActor(address: NodeAddress) extends Actor with ActorLazyLogging {
   //TODO authentication, db selection, script loading, configuration
 
@@ -64,11 +60,11 @@ final class RedisConnectionActor(address: NodeAddress) extends Actor with ActorL
   }
 
   def connected(connection: ActorRef): Receive = {
-    case Request(messages) if messages.isEmpty =>
-      log.debug(s"Empty request received, replying with empty response")
-      sender() ! Response(IndexedSeq.empty)
     case req: Request =>
       self ! QueuedRequest(sender(), req)
+    case qreq@QueuedRequest(client, Request(messages)) if messages.isEmpty =>
+      log.debug(s"Empty request received, replying with empty response")
+      client ! Response(IndexedSeq.empty)
     case qreq@QueuedRequest(client, Request(messages)) =>
       queuedRequests += qreq
       val encoded = RedisMsg.encode(messages)

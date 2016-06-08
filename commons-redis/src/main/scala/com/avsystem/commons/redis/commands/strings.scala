@@ -7,7 +7,7 @@ import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.protocol.{NullBulkStringMsg, SimpleStringStr}
 
-trait StringsApi[+F[_]] extends ApiSubset[F] {
+trait StringsApi[+F[_]] extends ClusterApiSubset[F] {
   def append(key: ByteString, value: ByteString): F[Long] =
     mapper(Append(key, value))
   def bitcount(key: ByteString, range: Opt[(Long, Long)] = Opt.Empty): F[Long] =
@@ -58,85 +58,85 @@ trait StringsApi[+F[_]] extends ApiSubset[F] {
     mapper(Strlen(key))
 }
 
-case class Append(key: ByteString, value: ByteString) extends RedisLongCommand with SimpleSingleKeyed {
+case class Append(key: ByteString, value: ByteString) extends RedisLongCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("APPEND").add(key).add(value).result
 }
 
-case class Bitcount(key: ByteString, range: Opt[(Long, Long)]) extends RedisLongCommand with SimpleSingleKeyed {
+case class Bitcount(key: ByteString, range: Opt[(Long, Long)]) extends RedisLongCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("BITCOUNT").add(range).result
 }
 
-case class Bitop(bitop: BitOperation, destkey: ByteString, keys: Seq[ByteString]) extends RedisLongCommand {
+case class Bitop(bitop: BitOperation, destkey: ByteString, keys: Seq[ByteString]) extends RedisLongCommand[Scope.Cluster] {
   require(keys.nonEmpty, "BITOP requires at least one source key")
   require(bitop != BitOperation.Not || keys.size == 1, "BITOP NOT requires exactly one source key")
   def encode = encoder("BITOP").add(bitop).add(destkey).add(keys).result
   def isKey(idx: Int) = idx >= 2
 }
 
-case class Bitpos(key: ByteString, bit: Boolean, range: Opt[SemiRange]) extends RedisLongCommand with SimpleSingleKeyed {
+case class Bitpos(key: ByteString, bit: Boolean, range: Opt[SemiRange]) extends RedisLongCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("BITPOS").add(key).add(bit).add(range.map(sr => (sr.start, sr.end))).result
 }
 
-case class Decr(key: ByteString) extends RedisLongCommand with SimpleSingleKeyed {
+case class Decr(key: ByteString) extends RedisLongCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("DECR").add(key).result
 }
 
-case class Decrby(key: ByteString, decrement: Long) extends RedisLongCommand with SimpleSingleKeyed {
+case class Decrby(key: ByteString, decrement: Long) extends RedisLongCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("DECRBY").add(key).add(decrement).result
 }
 
-case class Get(key: ByteString) extends RedisOptBinaryCommand with SimpleSingleKeyed {
+case class Get(key: ByteString) extends RedisOptBinaryCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("GET").add(key).result
 }
 
-case class Getbit(key: ByteString, offset: Long) extends RedisBooleanCommand with SimpleSingleKeyed {
+case class Getbit(key: ByteString, offset: Long) extends RedisBooleanCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("GETBIT").add(key).add(offset).result
 }
 
-case class Getrange(key: ByteString, start: Long, end: Long) extends RedisBinaryCommand with SimpleSingleKeyed {
+case class Getrange(key: ByteString, start: Long, end: Long) extends RedisBinaryCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("GETRANGE").add(key).add(start).add(end).result
 }
 
-case class Getset(key: ByteString, value: ByteString) extends RedisOptBinaryCommand with SimpleSingleKeyed {
+case class Getset(key: ByteString, value: ByteString) extends RedisOptBinaryCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("GETSET").add(key).add(value).result
 }
 
-case class Incr(key: ByteString) extends RedisLongCommand with SimpleSingleKeyed {
+case class Incr(key: ByteString) extends RedisLongCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("INCR").add(key).result
 }
 
-case class Incrby(key: ByteString, increment: Long) extends RedisLongCommand with SimpleSingleKeyed {
+case class Incrby(key: ByteString, increment: Long) extends RedisLongCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("INCRBY").add(key).add(increment).result
 }
 
-case class Incrbyfloat(key: ByteString, increment: Double) extends RedisDoubleCommand with SimpleSingleKeyed {
+case class Incrbyfloat(key: ByteString, increment: Double) extends RedisDoubleCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("INCRBYFLOAT").add(key).add(increment).result
 }
 
-case class Mget(keys: Seq[ByteString]) extends RedisOptBinarySeqCommand {
+case class Mget(keys: Seq[ByteString]) extends RedisOptBinarySeqCommand[Scope.Cluster] {
   require(keys.nonEmpty, "MGET requires at least one key")
   def encode = encoder("MGET").add(keys).result
   def isKey(idx: Int) = idx >= 1
 }
 
-case class Mset(keyValues: Seq[(ByteString, ByteString)]) extends RedisUnitCommand {
+case class Mset(keyValues: Seq[(ByteString, ByteString)]) extends RedisUnitCommand[Scope.Cluster] {
   require(keyValues.nonEmpty, "MSET requires at least one key-value pair")
   def encode = encoder("MSET").add(keyValues).result
   def isKey(idx: Int) = (idx % 2) == 1
 }
 
-case class Msetnx(keyValues: Seq[(ByteString, ByteString)]) extends RedisBooleanCommand {
+case class Msetnx(keyValues: Seq[(ByteString, ByteString)]) extends RedisBooleanCommand[Scope.Cluster] {
   require(keyValues.nonEmpty, "MSETNX requires at least one key-value pair")
   def encode = encoder("MSETNX").add(keyValues).result
   def isKey(idx: Int) = (idx % 2) == 1
 }
 
-case class Psetex(key: ByteString, milliseconds: Long, value: ByteString) extends RedisUnitCommand with SimpleSingleKeyed {
+case class Psetex(key: ByteString, milliseconds: Long, value: ByteString) extends RedisUnitCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("PSETEX").add(key).add(milliseconds).add(value).result
 }
 
 case class Set(key: ByteString, value: ByteString, expiration: Opt[SetExpiration], existence: Opt[Boolean])
-  extends RedisCommand[Boolean] with SimpleSingleKeyed {
+  extends RedisCommand[Boolean, Scope.Cluster] with SimpleSingleKeyed {
 
   def encode = encoder("SET").add(key).add(value).add(expiration)
     .add(existence.map(v => if (v) "XX" else "NX")).result
@@ -147,23 +147,23 @@ case class Set(key: ByteString, value: ByteString, expiration: Opt[SetExpiration
   }
 }
 
-case class Setbit(key: ByteString, offset: Long, value: ByteString) extends RedisBooleanCommand with SimpleSingleKeyed {
+case class Setbit(key: ByteString, offset: Long, value: ByteString) extends RedisBooleanCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("SETBIT").add(key).add(offset).add(value).result
 }
 
-case class Setex(key: ByteString, seconds: Long, value: ByteString) extends RedisUnitCommand with SimpleSingleKeyed {
+case class Setex(key: ByteString, seconds: Long, value: ByteString) extends RedisUnitCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("SETEX").add(key).add(seconds).add(value).result
 }
 
-case class Setnx(key: ByteString, value: ByteString) extends RedisBooleanCommand with SimpleSingleKeyed {
+case class Setnx(key: ByteString, value: ByteString) extends RedisBooleanCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("SETNX").add(key).add(value).result
 }
 
-case class Setrange(key: ByteString, offset: Long, value: ByteString) extends RedisLongCommand with SimpleSingleKeyed {
+case class Setrange(key: ByteString, offset: Long, value: ByteString) extends RedisLongCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("SETRANGE").add(key).add(offset).add(value).result
 }
 
-case class Strlen(key: ByteString) extends RedisLongCommand with SimpleSingleKeyed {
+case class Strlen(key: ByteString) extends RedisLongCommand[Scope.Cluster] with SimpleSingleKeyed {
   def encode = encoder("STRLEN").add(key).result
 }
 

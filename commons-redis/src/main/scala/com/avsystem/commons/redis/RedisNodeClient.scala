@@ -19,7 +19,7 @@ final class RedisNodeClient(address: NodeAddress = NodeAddress.Default, poolSize
 
   import system.dispatcher
 
-  def execute[A](op: RedisOp[A])(implicit timeout: Timeout): Future[A] =
+  def execute[A](op: RedisOp[A, Scope.Node])(implicit timeout: Timeout): Future[A] =
     handlingActor.ask(op).map {
       case RedisOperationActor.Response(result) => result.asInstanceOf[A]
       case RedisOperationActor.Failure(cause) => throw cause
