@@ -3,9 +3,10 @@ package redis.actor
 
 import akka.actor.{Actor, ActorRef, Terminated}
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.RedisBatch.{MessageBuffer, RepliesDecoder}
+import com.avsystem.commons.redis.RedisBatch.{ConnectionState, MessageBuffer, RepliesDecoder}
 import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 import com.avsystem.commons.redis.actor.RedisOperationActor.{Failure, Release, Response}
+import com.avsystem.commons.redis.commands.Unwatch
 import com.avsystem.commons.redis.exception.{ConnectionClosedException, RedisException}
 import com.avsystem.commons.redis.protocol.RedisMsg
 import com.avsystem.commons.redis.util.ActorLazyLogging
@@ -26,10 +27,11 @@ final class RedisOperationActor(connection: ActorRef, address: NodeAddress) exte
 
   context.watch(connection)
 
+  private val connState = new ConnectionState
   private var listener: ActorRef = null
   private var released = false
 
-  def handleBatch[A](batch: RedisBatch[A, Any]): RepliesDecoder[A] = {
+  def handleBatch[A](batch: RedisBatch[A, Nothing]): RepliesDecoder[A] = {
     val buf = new ArrayBuffer[RedisMsg]
     val decoder = batch.encodeCommands(new MessageBuffer(buf), inTransaction = false)
     log.debug(s"Sending $buf to connection $connection")
@@ -37,7 +39,7 @@ final class RedisOperationActor(connection: ActorRef, address: NodeAddress) exte
     decoder
   }
 
-  def handleOperation(op: RedisOp[Any, Any]): Unit = op match {
+  def handleOperation(op: RedisOp[Any]): Unit = op match {
     case LeafOp(batch) =>
       val decoder = handleBatch(batch)
       releaseConnection() // release the connection immediately after using it for the last time
@@ -47,12 +49,17 @@ final class RedisOperationActor(connection: ActorRef, address: NodeAddress) exte
       context.become(waitingForResponse(decoder, Opt(nextStep)))
   }
 
-  def waitingForResponse[A, B](decoder: RepliesDecoder[A], nextStep: Opt[A => RedisOp[B, Any]]): Receive = {
+  def waitingForResponse[A, B](decoder: RepliesDecoder[A], nextStep: Opt[A => RedisOp[B]]): Receive = {
     case RedisConnectionActor.Response(replies) =>
       try {
-        val a = decoder.decodeReplies(replies, 0, replies.size)
+        val a = decoder.decodeReplies(replies, 0, replies.size, connState)
         nextStep match {
-          case Opt.Empty => respond(Response(a))
+          case Opt.Empty =>
+            if (connState.watching) {
+              handleOperation(LeafOp(Unwatch.map(_ => a)))
+            } else {
+              respond(Response(a))
+            }
           case Opt(fun) => handleOperation(fun(a))
         }
       } catch {
@@ -77,7 +84,7 @@ final class RedisOperationActor(connection: ActorRef, address: NodeAddress) exte
     Failure(new ConnectionClosedException(address))
 
   def receive = {
-    case op: RedisOp[Any, Any] =>
+    case op: RedisOp[Any] =>
       listener = sender()
       handleOperation(op)
     case Terminated(`connection`) =>

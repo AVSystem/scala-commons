@@ -2,25 +2,33 @@ package com.avsystem.commons
 package redis.commands
 
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.RedisBatch
+import com.avsystem.commons.redis.RedisClusterCommands
+
+import scala.concurrent.Future
 
 /**
   * Author: ghik
   * Created: 14/04/16.
   */
-trait KeysApiSuite extends CommandsSuite {
+trait ClusterKeysApiSuite extends CommandsSuite {
+  type Api <: ClusterKeysApi
 
-  import commands._
+  // only to make IntelliJ happy
+  lazy val cmds: ClusterKeysApi {type Result[+A, -S] = Future[A]} = commands
 
-  override def setupCommands = super.setupCommands *>
-    RedisClusterCommands.set(bs"key", bs"value") *>
-    RedisClusterCommands.setex(bs"exkey", Int.MaxValue, bs"value") *>
-    RedisClusterCommands.set(bs"toex", bs"value") *>
-    RedisClusterCommands.set(bs"todel", bs"value") *>
-    RedisClusterCommands.set(bs"torename", bs"value") *>
-    RedisClusterCommands.set(bs"torenamenx", bs"value") *>
-    RedisClusterCommands.set(bs"tomove", bs"value") *>
-    RedisBatch.success(())
+  import cmds._
+
+  override def setupCommands = {
+    import RedisClusterCommands._
+    super.setupCommands *>
+      set(bs"key", bs"value") *>
+      setex(bs"exkey", Int.MaxValue, bs"value") *>
+      set(bs"toex", bs"value") *>
+      set(bs"todel", bs"value") *>
+      set(bs"torename", bs"value") *>
+      set(bs"torenamenx", bs"value") *>
+      set(bs"tomove", bs"value")
+  }
 
   test("DEL") {
     assert(del(Seq(bs"todel", bs"foo")).futureValue == 1)
@@ -112,4 +120,5 @@ trait KeysApiSuite extends CommandsSuite {
   }
 }
 
-class RedisNodeKeysApiSuite extends RedisNodeCommandsSuite with KeysApiSuite
+class RedisNodeKeysApiSuite extends RedisNodeCommandsSuite with ClusterKeysApiSuite
+class RedisConnectionKeysApiSuite extends RedisConnectionCommandsSuite with ClusterKeysApiSuite

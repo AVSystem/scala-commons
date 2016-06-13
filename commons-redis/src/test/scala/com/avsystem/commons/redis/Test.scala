@@ -5,8 +5,6 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
 import akka.util.{ByteString, Timeout}
-import com.avsystem.commons.redis.commands.Mappers.BatchToOp
-import com.avsystem.commons.redis.commands.RedisNodeCommands
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 
@@ -28,5 +26,7 @@ object Test {
   }
 
   val rc = new RedisNodeClient()
-  val commands = RedisNodeCommands.transform[NodeOp](new BatchToOp[Scope.Node]).executedWith(rc)
+  val commands = RedisNodeFutures(rc.toExecutor)
+
+  val batch = RedisNodeCommands.get("jksldjfkl".bytes)
 }

@@ -2,9 +2,9 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.{ByteString, ByteStringBuilder, Timeout}
-import com.avsystem.commons.redis.{ClusterBatch, RedisBatch, UsesRedisNodeClient}
-import org.scalatest.FunSuite
+import com.avsystem.commons.redis._
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -13,9 +13,12 @@ import scala.concurrent.{Await, ExecutionContext, Future}
   * Author: ghik
   * Created: 14/04/16.
   */
-trait CommandsSuite extends FunSuite with ScalaFutures {
-  def execute[A](cmd: ClusterBatch[A]): Future[A]
-  def setupCommands: ClusterBatch[Any] = RedisBatch.success(())
+trait CommandsSuite extends FunSuite with ScalaFutures with BeforeAndAfterAll {
+  type Api <: ApiSubset
+
+  def executor: RedisExecutor[Api#CmdScope]
+  def setupCommands: RedisBatch[Any, Api#CmdScope] = RedisBatch.success(())
+  val commands: Api {type Result[+A, -S] = Future[A]}
 
   implicit def executionContext: ExecutionContext
 
@@ -29,24 +32,32 @@ trait CommandsSuite extends FunSuite with ScalaFutures {
     }
   }
 
-  val commands = RedisClusterCommands.transform[Future](
-    new PolyFun[ClusterBatch, Future] {
-      def apply[A](fa: ClusterBatch[A]) = execute(fa)
-    })
-}
-
-trait RedisNodeCommandsSuite extends CommandsSuite with UsesRedisNodeClient {
-  implicit val timeout = Timeout(1.seconds)
-
-  def execute[A](cmd: ClusterBatch[A]) = redisClient.execute(cmd.operation)
-
   override protected def beforeAll() = {
     super.beforeAll()
-    Await.result(execute(setupCommands), Duration.Inf)
+    Await.result(executor.execute(setupCommands), Duration.Inf)
   }
+}
+
+trait RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with CommandsSuite {
+  type Api = RedisNodeFutures
+  implicit val timeout = Timeout(1.seconds)
+  def executor = redisClient.toExecutor
+  lazy val commands = RedisNodeFutures(executor)
 
   override protected def afterAll() = {
-    // TODO flushall here
+    Await.result(commands.flushall, Duration.Inf)
+    super.afterAll()
+  }
+}
+
+trait RedisConnectionCommandsSuite extends FunSuite with UsesRedisConnectionClient with CommandsSuite {
+  type Api = RedisConnectionFutures
+  implicit val timeout = Timeout(1.seconds)
+  def executor = redisClient.toExecutor
+  lazy val commands = RedisConnectionFutures(executor)
+
+  override protected def afterAll() = {
+    Await.result(commands.flushall, Duration.Inf)
     super.afterAll()
   }
 }

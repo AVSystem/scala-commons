@@ -2,29 +2,44 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.ByteString
-import com.avsystem.commons.redis.{RedisRawCommand, RedisUnitCommand, Scope}
+import com.avsystem.commons.redis.RedisBatch.ConnectionState
+import com.avsystem.commons.redis.protocol.RedisMsg
+import com.avsystem.commons.redis.{OperationApiSubset, RedisRawCommand, RedisUnitCommand, Scope, Unkeyed}
 
-case class Watch(keys: Seq[ByteString]) extends RedisUnitCommand[Scope] {
+trait TransactionApi extends OperationApiSubset {
+  def watch(keys: Seq[ByteString]) =
+    execute(Watch(keys))
+  def unwatch =
+    execute(Unwatch)
+}
+
+case class Watch(keys: Seq[ByteString]) extends RedisUnitCommand[Scope.Operation] {
   def encode = encoder("WATCH").add(keys).result
   def isKey(idx: Int) = idx > 0
+
+  override def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) = {
+    super.decodeReplies(replies, start, end, state)
+    state.watching = true
+  }
 }
 
-case object Unwatch extends RedisUnitCommand[Scope] {
+case object Unwatch extends RedisUnitCommand[Scope.Operation] with Unkeyed {
   def encode = encoder("UNWATCH").result
-  def isKey(idx: Int) = false
+
+  override def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) = {
+    super.decodeReplies(replies, start, end, state)
+    state.watching = false
+  }
 }
 
-case object Multi extends RedisUnitCommand[Scope] {
+case object Multi extends RedisUnitCommand[Scope.Empty] with Unkeyed {
   def encode = encoder("MULTI").result
-  def isKey(idx: Int) = false
 }
 
-case object Exec extends RedisRawCommand[Scope] {
+case object Exec extends RedisRawCommand[Scope.Empty] with Unkeyed {
   def encode = encoder("EXEC").result
-  def isKey(idx: Int) = false
 }
 
-case object Discard extends RedisUnitCommand[Scope] {
+case object Discard extends RedisUnitCommand[Scope.Empty] with Unkeyed {
   def encode = encoder("DISCARD").result
-  def isKey(idx: Int) = false
 }

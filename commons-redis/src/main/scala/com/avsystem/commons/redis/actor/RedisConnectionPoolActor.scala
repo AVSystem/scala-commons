@@ -32,7 +32,7 @@ final class RedisConnectionPoolActor(address: NodeAddress, size: Int) extends Ac
   }
 
   def receive = {
-    case op: RedisOp[Any, Any] =>
+    case op: RedisOp[Any] =>
       queuedOps += QueuedOp(sender(), op)
       handleNextOp()
     case RedisOperationActor.Release(connection) =>
@@ -71,5 +71,5 @@ final class RedisConnectionPoolActor(address: NodeAddress, size: Int) extends Ac
 }
 
 object RedisConnectionPoolActor {
-  case class QueuedOp(listener: ActorRef, op: RedisOp[Any, Any])
+  case class QueuedOp(listener: ActorRef, op: RedisOp[Any])
 }

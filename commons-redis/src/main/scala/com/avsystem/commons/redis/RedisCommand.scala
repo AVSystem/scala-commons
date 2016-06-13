@@ -4,15 +4,15 @@ package redis
 import akka.util.ByteString
 import com.avsystem.commons.misc.{NamedEnum, Opt}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
-import com.avsystem.commons.redis.RedisBatch.MessageBuffer
+import com.avsystem.commons.redis.RedisBatch.{ConnectionState, MessageBuffer}
+import com.avsystem.commons.redis.Scope.Cluster
 import com.avsystem.commons.redis.exception.{ErrorReplyException, UnexpectedReplyException}
 import com.avsystem.commons.redis.protocol._
 
 import scala.collection.mutable.ArrayBuffer
 
-trait RedisCommand[+A, +S] extends RedisBatch[A, S] with RedisBatch.RepliesDecoder[A] {
+trait RedisCommand[+A, -S] extends RedisBatch[A, S] with RedisBatch.RepliesDecoder[A] {
   def encode: IndexedSeq[BulkStringMsg]
-  def isKey(idx: Int): Boolean
   def decodeExpected: PartialFunction[ValidRedisMsg, A]
 
   protected def encoder(commandName: String*): CommandEncoder = {
@@ -33,7 +33,7 @@ trait RedisCommand[+A, +S] extends RedisBatch[A, S] with RedisBatch.RepliesDecod
     this
   }
 
-  def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int) =
+  def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) =
     decode(replies(start))
 
   override def toString =
@@ -148,6 +148,10 @@ trait RedisDoubleCommand[S] extends RedisCommand[Double, S] {
   }
 }
 
-trait SimpleSingleKeyed {this: RedisCommand[_, Scope.Cluster] =>
+trait Unkeyed {this: RedisCommand[Any, Nothing] =>
+  def isKey(idx: Int) = false
+}
+
+trait SimpleSingleKeyed {this: RedisCommand[Any, Cluster] =>
   def isKey(idx: Int) = idx == 1
 }

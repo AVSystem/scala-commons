@@ -4,9 +4,10 @@ package redis.commands
 import akka.util.ByteString
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
+import com.avsystem.commons.redis.Scope.{Cluster, Node}
+import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
-import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, IntegerMsg, NullBulkStringMsg, SimpleStringStr}
-import com.avsystem.commons.redis.{NodeAddress, RedisBinarySeqCommand, RedisBooleanCommand, RedisCommand, RedisLongCommand, RedisOptBinaryCommand, RedisOptLongCommand, RedisUnitCommand, Scope, SimpleSingleKeyed}
+import com.avsystem.commons.redis.protocol._
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -14,73 +15,71 @@ import scala.collection.mutable.ArrayBuffer
   * Author: ghik
   * Created: 06/04/16.
   */
-trait KeysApi[+F[_]] extends ClusterApiSubset[F] {
-  type Self[G[_]] <: KeysApi[G]
-
-  def del(keys: Seq[ByteString]) =
-    mapper(Del(keys))
-  def dump(key: ByteString) =
-    mapper(Dump(key))
-  def exists(keys: Seq[ByteString]) =
-    mapper(Exists(keys))
-  def expire(key: ByteString, seconds: Long) =
-    mapper(Expire(key, seconds))
-  def expireat(key: ByteString, timestamp: Long) =
-    mapper(Expireat(key, timestamp))
+trait ClusterKeysApi extends ClusterApiSubset {
+  def del(keys: Seq[ByteString]): Result[Long, Cluster] =
+    execute(Del(keys))
+  def dump(key: ByteString): Result[Opt[ByteString], Cluster] =
+    execute(Dump(key))
+  def exists(keys: Seq[ByteString]): Result[Long, Cluster] =
+    execute(Exists(keys))
+  def expire(key: ByteString, seconds: Long): Result[Boolean, Cluster] =
+    execute(Expire(key, seconds))
+  def expireat(key: ByteString, timestamp: Long): Result[Boolean, Cluster] =
+    execute(Expireat(key, timestamp))
   def migrate(keys: Seq[ByteString], address: NodeAddress, destinationDb: Int,
-    timeout: Long, copy: Boolean = false, replace: Boolean = false) =
-    mapper(Migrate(keys, address, destinationDb, timeout, copy, replace))
-  def move(key: ByteString, db: Int) =
-    mapper(Move(key, db))
+    timeout: Long, copy: Boolean = false, replace: Boolean = false): Result[Boolean, Cluster] =
+    execute(Migrate(keys, address, destinationDb, timeout, copy, replace))
+  def move(key: ByteString, db: Int): Result[Boolean, Cluster] =
+    execute(Move(key, db))
 
-  def objectRefcount(key: ByteString) =
-    mapper(ObjectRefcount(key))
-  def objectEncoding(key: ByteString) =
-    mapper(ObjectEncoding(key))
-  def objectIdletime(key: ByteString) =
-    mapper(ObjectIdletime(key))
+  def objectRefcount(key: ByteString): Result[Opt[Long], Cluster] =
+    execute(ObjectRefcount(key))
+  def objectEncoding(key: ByteString): Result[Opt[Encoding], Cluster] =
+    execute(ObjectEncoding(key))
+  def objectIdletime(key: ByteString): Result[Opt[Long], Cluster] =
+    execute(ObjectIdletime(key))
 
-  def persist(key: ByteString): F[Boolean] =
-    mapper(Persist(key))
-  def pexpire(key: ByteString, milliseconds: Long): F[Boolean] =
-    mapper(Pexpire(key, milliseconds))
-  def pexpireat(key: ByteString, millisecondsTimestamp: Long): F[Boolean] =
-    mapper(Pexpireat(key, millisecondsTimestamp))
-  def pttl(key: ByteString): F[Opt[Opt[Long]]] =
-    mapper(Pttl(key))
+  def persist(key: ByteString): Result[Boolean, Cluster] =
+    execute(Persist(key))
+  def pexpire(key: ByteString, milliseconds: Long): Result[Boolean, Cluster] =
+    execute(Pexpire(key, milliseconds))
+  def pexpireat(key: ByteString, millisecondsTimestamp: Long): Result[Boolean, Cluster] =
+    execute(Pexpireat(key, millisecondsTimestamp))
+  def pttl(key: ByteString): Result[Opt[Opt[Long]], Cluster] =
+    execute(Pttl(key))
 
-  def rename(key: ByteString, newkey: ByteString): F[Unit] =
-    mapper(Rename(key, newkey))
-  def renamenx(key: ByteString, newkey: ByteString): F[Boolean] =
-    mapper(Renamenx(key, newkey))
-  def restore(key: ByteString, ttl: Long, serializedValue: ByteString, replace: Boolean = false): F[Unit] =
-    mapper(Restore(key, ttl, serializedValue, replace))
+  def rename(key: ByteString, newkey: ByteString): Result[Unit, Cluster] =
+    execute(Rename(key, newkey))
+  def renamenx(key: ByteString, newkey: ByteString): Result[Boolean, Cluster] =
+    execute(Renamenx(key, newkey))
+  def restore(key: ByteString, ttl: Long, serializedValue: ByteString, replace: Boolean = false): Result[Unit, Cluster] =
+    execute(Restore(key, ttl, serializedValue, replace))
 
   def sort(key: ByteString, by: Opt[SortPattern] = Opt.Empty, limit: Opt[SortLimit] = Opt.Empty,
-    asc: Boolean = true, alpha: Boolean = false): F[Seq[ByteString]] =
-    mapper(Sort(key, by, limit, asc, alpha))
+    asc: Boolean = true, alpha: Boolean = false): Result[Seq[ByteString], Cluster] =
+    execute(Sort(key, by, limit, asc, alpha))
   def sortGet(key: ByteString, gets: Seq[SortPattern], by: Opt[SortPattern] = Opt.Empty, limit: Opt[SortLimit] = Opt.Empty,
-    asc: Boolean = true, alpha: Boolean = false): F[Seq[Seq[Opt[ByteString]]]] =
-    mapper(SortGet(key, gets, by, limit, asc, alpha))
+    asc: Boolean = true, alpha: Boolean = false): Result[Seq[Seq[Opt[ByteString]]], Cluster] =
+    execute(SortGet(key, gets, by, limit, asc, alpha))
   def sortStore(key: ByteString, destination: ByteString, by: Opt[SortPattern] = Opt.Empty, limit: Opt[SortLimit] = Opt.Empty,
-    gets: Seq[SortPattern] = Nil, asc: Boolean = true, alpha: Boolean = false): F[Long] =
-    mapper(SortStore(key, destination, by, limit, gets, asc, alpha))
+    gets: Seq[SortPattern] = Nil, asc: Boolean = true, alpha: Boolean = false): Result[Long, Cluster] =
+    execute(SortStore(key, destination, by, limit, gets, asc, alpha))
 
-  def ttl(key: ByteString): F[Opt[Opt[Long]]] =
-    mapper(Ttl(key))
-  def `type`(key: ByteString): F[RedisType] =
-    mapper(Type(key))
+  def ttl(key: ByteString): Result[Opt[Opt[Long]], Cluster] =
+    execute(Ttl(key))
+  def `type`(key: ByteString): Result[RedisType, Cluster] =
+    execute(Type(key))
 }
 
-trait NodeKeysApi[+F[_]] extends KeysApi[F] with NodeApiSubset[F] {
-  def keys(pattern: ByteString) =
-    mapper(Keys(pattern))
-  def scan(cursor: Cursor, matchPattern: Opt[ByteString] = Opt.Empty, count: Opt[Long] = Opt.Empty): F[(Cursor, Seq[ByteString])] =
-    mapper(Scan(cursor, matchPattern, count))
-  def randomkey: F[Opt[ByteString]] =
-    mapper(Randomkey)
-  def wait(numslaves: Int, timeout: Long): F[Long] =
-    mapper(Wait(numslaves, timeout))
+trait NodeKeysApi extends ClusterKeysApi with NodeApiSubset {
+  def keys(pattern: ByteString): Result[Seq[ByteString], Node] =
+    execute(Keys(pattern))
+  def scan(cursor: Cursor, matchPattern: Opt[ByteString] = Opt.Empty, count: Opt[Long] = Opt.Empty): Result[(Cursor, Seq[ByteString]), Node] =
+    execute(Scan(cursor, matchPattern, count))
+  def randomkey: Result[Opt[ByteString], Node] =
+    execute(Randomkey)
+  def wait(numslaves: Int, timeout: Long): Result[Long, Node] =
+    execute(Wait(numslaves, timeout))
 }
 
 case class Del(keys: Seq[ByteString]) extends RedisLongCommand[Scope.Cluster] {
@@ -107,9 +106,8 @@ case class Expireat(key: ByteString, timestamp: Long) extends RedisBooleanComman
   def encode = encoder("EXPIREAT").add(key).add(timestamp).result
 }
 
-case class Keys(pattern: ByteString) extends RedisBinarySeqCommand[Scope.Node] {
+case class Keys(pattern: ByteString) extends RedisBinarySeqCommand[Scope.Node] with Unkeyed {
   def encode = encoder("KEYS").add(pattern).result
-  def isKey(idx: Int) = false
 }
 
 case class Migrate(keys: Seq[ByteString], address: NodeAddress, destinationDb: Int,
@@ -190,9 +188,8 @@ case class Pttl(key: ByteString) extends RedisCommand[Opt[Opt[Long]], Scope.Clus
   }
 }
 
-case object Randomkey extends RedisOptBinaryCommand[Scope.Cluster] {
+case object Randomkey extends RedisOptBinaryCommand[Scope.Node] with Unkeyed {
   def encode = encoder("RANDOMKEY").result
-  def isKey(idx: Int) = false
 }
 
 case class Rename(key: ByteString, newkey: ByteString) extends RedisUnitCommand[Scope.Cluster] {
@@ -209,9 +206,8 @@ case class Restore(key: ByteString, ttl: Long, serializedValue: ByteString, repl
   def encode = encoder("RESTORE").add(key).add(ttl).add(serializedValue).addFlag("REPLACE", replace).result
 }
 
-case class Scan(cursor: Cursor, matchPattern: Opt[ByteString], count: Opt[Long]) extends RedisCommand[(Cursor, Seq[ByteString]), Scope.Cluster] {
+case class Scan(cursor: Cursor, matchPattern: Opt[ByteString], count: Opt[Long]) extends RedisCommand[(Cursor, Seq[ByteString]), Scope.Cluster] with Unkeyed {
   def encode = encoder("SCAN").add(cursor.raw).optAdd("MATCH", matchPattern).optAdd("COUNT", count).result
-  def isKey(idx: Int) = false
   def decodeExpected = {
     case ArrayMsg(IndexedSeq(BulkStringMsg(cursorString), ArrayMsg(elements))) =>
       (Cursor(cursorString.utf8String.toLong), elements.map {
@@ -282,9 +278,8 @@ case class Type(key: ByteString) extends RedisCommand[RedisType, Scope.Cluster] 
   }
 }
 
-case class Wait(numslaves: Int, timeout: Long) extends RedisLongCommand[Scope.Node] {
+case class Wait(numslaves: Int, timeout: Long) extends RedisLongCommand[Scope.Node] with Unkeyed {
   def encode = encoder("WAIT").add(numslaves).add(timeout).result
-  def isKey(idx: Int) = false
 }
 
 sealed abstract class Encoding(val name: String) extends NamedEnum
