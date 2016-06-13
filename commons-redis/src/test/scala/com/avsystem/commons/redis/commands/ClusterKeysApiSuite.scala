@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.commands
 
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.{CommandsSuite, RedisClusterCommands, RedisConnectionCommandsSuite, RedisNodeCommandsSuite}
+import com.avsystem.commons.redis.{CommandsSuite, RedisCommands, RedisConnectionCommandsSuite, RedisNodeCommandsSuite}
 
 import scala.concurrent.Future
 
@@ -11,15 +11,15 @@ import scala.concurrent.Future
   * Created: 14/04/16.
   */
 trait ClusterKeysApiSuite extends CommandsSuite {
-  type Api <: ClusterKeysApi
+  type Api <: ClusteredKeysApi
 
   // only to make IntelliJ happy
-  lazy val cmds: ClusterKeysApi {type Result[+A, -S] = Future[A]} = commands
+  lazy val cmds: ClusteredKeysApi {type Result[+A, -S] = Future[A]} = commands
 
   import cmds._
 
   override def setupCommands = {
-    import RedisClusterCommands._
+    import RedisCommands._
     super.setupCommands *>
       set(bs"key", bs"value") *>
       setex(bs"exkey", Int.MaxValue, bs"value") *>

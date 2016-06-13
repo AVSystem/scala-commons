@@ -26,7 +26,7 @@ object Test {
   }
 
   val rc = new RedisNodeClient()
-  val commands = RedisNodeFutures(rc.toExecutor)
+  val commands = RedisNodeAsyncCommands(rc.toExecutor)
 
-  val batch = RedisNodeCommands.get("jksldjfkl".bytes)
+  val batch = RedisCommands.get("jksldjfkl".bytes)
 }

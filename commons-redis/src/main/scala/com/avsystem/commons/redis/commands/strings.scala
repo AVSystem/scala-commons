@@ -8,7 +8,7 @@ import com.avsystem.commons.redis.Scope.Cluster
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.protocol.{NullBulkStringMsg, SimpleStringStr}
 
-trait StringsApi extends ClusterApiSubset {
+trait StringsApi extends ClusteredApiSubset {
   def append(key: ByteString, value: ByteString): Result[Long, Cluster] =
     execute(Append(key, value))
   def bitcount(key: ByteString, range: Opt[(Long, Long)] = Opt.Empty): Result[Long, Cluster] =

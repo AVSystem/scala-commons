@@ -38,10 +38,10 @@ trait CommandsSuite extends FunSuite with ScalaFutures with BeforeAndAfterAll {
 }
 
 trait RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with CommandsSuite {
-  type Api = RedisNodeFutures
+  type Api = RedisNodeAsyncCommands
   implicit val timeout = Timeout(1.seconds)
   def executor = redisClient.toExecutor
-  lazy val commands = RedisNodeFutures(executor)
+  lazy val commands = RedisNodeAsyncCommands(executor)
 
   override protected def afterAll() = {
     Await.result(commands.flushall, Duration.Inf)
@@ -50,10 +50,10 @@ trait RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with Comm
 }
 
 trait RedisConnectionCommandsSuite extends FunSuite with UsesRedisConnectionClient with CommandsSuite {
-  type Api = RedisConnectionFutures
+  type Api = RedisConnectionAsyncCommands
   implicit val timeout = Timeout(1.seconds)
   def executor = redisClient.toExecutor
-  lazy val commands = RedisConnectionFutures(executor)
+  lazy val commands = RedisConnectionAsyncCommands(executor)
 
   override protected def afterAll() = {
     Await.result(commands.flushall, Duration.Inf)

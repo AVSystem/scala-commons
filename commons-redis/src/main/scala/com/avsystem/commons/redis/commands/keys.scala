@@ -15,7 +15,7 @@ import scala.collection.mutable.ArrayBuffer
   * Author: ghik
   * Created: 06/04/16.
   */
-trait ClusterKeysApi extends ClusterApiSubset {
+trait ClusteredKeysApi extends ClusteredApiSubset {
   def del(keys: Seq[ByteString]): Result[Long, Cluster] =
     execute(Del(keys))
   def dump(key: ByteString): Result[Opt[ByteString], Cluster] =
@@ -71,7 +71,7 @@ trait ClusterKeysApi extends ClusterApiSubset {
     execute(Type(key))
 }
 
-trait NodeKeysApi extends ClusterKeysApi with NodeApiSubset {
+trait NodeKeysApi extends ClusteredKeysApi with NodeApiSubset {
   def keys(pattern: ByteString): Result[Seq[ByteString], Node] =
     execute(Keys(pattern))
   def scan(cursor: Cursor, matchPattern: Opt[ByteString] = Opt.Empty, count: Opt[Long] = Opt.Empty): Result[(Cursor, Seq[ByteString]), Node] =

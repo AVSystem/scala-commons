@@ -5,7 +5,6 @@ import akka.util.ByteString
 import com.avsystem.commons.misc.{NamedEnum, Opt}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis.RedisBatch.{ConnectionState, MessageBuffer}
-import com.avsystem.commons.redis.Scope.Cluster
 import com.avsystem.commons.redis.exception.{ErrorReplyException, UnexpectedReplyException}
 import com.avsystem.commons.redis.protocol._
 

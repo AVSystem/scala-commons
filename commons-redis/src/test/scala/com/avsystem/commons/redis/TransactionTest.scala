@@ -7,7 +7,7 @@ package redis
   */
 class TransactionTest extends RedisNodeCommandsSuite {
 
-  import RedisOperationCommands._
+  import RedisCommands._
 
   val key = bs"key"
 
