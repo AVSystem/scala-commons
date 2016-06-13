@@ -1,8 +1,7 @@
 package com.avsystem.commons
-package redis.commands
+package redis
 
 import akka.util.{ByteString, ByteStringBuilder, Timeout}
-import com.avsystem.commons.redis._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
@@ -61,3 +60,5 @@ trait RedisConnectionCommandsSuite extends FunSuite with UsesRedisConnectionClie
     super.afterAll()
   }
 }
+
+

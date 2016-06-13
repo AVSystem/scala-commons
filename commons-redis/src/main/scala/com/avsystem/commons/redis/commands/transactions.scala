@@ -4,7 +4,7 @@ package redis.commands
 import akka.util.ByteString
 import com.avsystem.commons.redis.RedisBatch.ConnectionState
 import com.avsystem.commons.redis.protocol.RedisMsg
-import com.avsystem.commons.redis.{OperationApiSubset, RedisRawCommand, RedisUnitCommand, Scope, Unkeyed}
+import com.avsystem.commons.redis.{OperationApiSubset, RedisRawCommand, RedisUnitCommand, Scope, SimpleMultiKeyed, Unkeyed}
 
 trait TransactionApi extends OperationApiSubset {
   def watch(keys: Seq[ByteString]) =
@@ -13,9 +13,8 @@ trait TransactionApi extends OperationApiSubset {
     execute(Unwatch)
 }
 
-case class Watch(keys: Seq[ByteString]) extends RedisUnitCommand[Scope.Operation] {
+case class Watch(keys: Seq[ByteString]) extends RedisUnitCommand[Scope.Operation] with SimpleMultiKeyed {
   def encode = encoder("WATCH").add(keys).result
-  def isKey(idx: Int) = idx > 0
 
   override def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) = {
     super.decodeReplies(replies, start, end, state)

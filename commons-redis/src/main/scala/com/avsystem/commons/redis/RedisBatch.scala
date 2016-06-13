@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package redis
 
+import akka.util.ByteString
 import com.avsystem.commons.misc.Sam
 import com.avsystem.commons.redis.RedisBatch.{MessageBuffer, RepliesDecoder, Transaction}
 import com.avsystem.commons.redis.commands.{Exec, Multi}
@@ -47,6 +48,7 @@ trait RedisBatch[+A, -S] {self =>
     * Returns a [[RepliesDecoder]] responsible for translating raw Redis responses into the actual result.
     */
   def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean): RepliesDecoder[A]
+  def reportKeys(consumer: ByteString => Any): Unit
 
   /**
     * Merges two batches into one. Provided function is applied on results of the batches being merged to obtain
@@ -68,6 +70,10 @@ trait RedisBatch[+A, -S] {self =>
           f(a, b)
         }
       }
+      def reportKeys(consumer: ByteString => Any) = {
+        self.reportKeys(consumer)
+        other.reportKeys(consumer)
+      }
     }
 
   def <*[B, S0](other: RedisBatch[B, S0]): RedisBatch[A, S with S0] =
@@ -82,6 +88,7 @@ trait RedisBatch[+A, -S] {self =>
         val decoder = self.encodeCommands(messageBuffer, inTransaction)
         RepliesDecoder((replies, start, end, state) => f(decoder.decodeReplies(replies, start, end, state)))
       }
+      def reportKeys(consumer: ByteString => Any) = self.reportKeys(consumer)
     }
 
   /**
@@ -124,6 +131,8 @@ object RedisBatch extends HasFlatMap[OperationBatch] {
         }
       }
 
+    def reportKeys(consumer: ByteString => Any) = batch.reportKeys(consumer)
+
     override def transaction = this
   }
 
@@ -149,12 +158,14 @@ object RedisBatch extends HasFlatMap[OperationBatch] {
     new RedisBatch[A, Any] with RedisBatch.RepliesDecoder[A] {
       def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = this
       def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) = a
+      def reportKeys(consumer: ByteString => Any) = ()
     }
 
   def failure(cause: Throwable): RedisBatch[Nothing, Any] =
     new RedisBatch[Nothing, Any] with RedisBatch.RepliesDecoder[Nothing] {
       def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = this
       def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) = throw cause
+      def reportKeys(consumer: ByteString => Any) = ()
     }
 
   //TODO more API

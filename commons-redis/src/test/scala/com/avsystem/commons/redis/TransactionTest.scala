@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.redis.commands.RedisNodeCommandsSuite
-
 /**
   * Author: ghik
   * Created: 10/06/16.

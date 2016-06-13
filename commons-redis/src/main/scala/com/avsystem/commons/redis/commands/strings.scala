@@ -71,7 +71,10 @@ case class Bitop(bitop: BitOperation, destkey: ByteString, keys: Seq[ByteString]
   require(keys.nonEmpty, "BITOP requires at least one source key")
   require(bitop != BitOperation.Not || keys.size == 1, "BITOP NOT requires exactly one source key")
   def encode = encoder("BITOP").add(bitop).add(destkey).add(keys).result
-  def isKey(idx: Int) = idx >= 2
+  def reportKeys(consumer: ByteString => Any) = {
+    consumer(destkey)
+    keys.foreach(consumer)
+  }
 }
 
 case class Bitpos(key: ByteString, bit: Boolean, range: Opt[SemiRange]) extends RedisLongCommand[Cluster] with SimpleSingleKeyed {
@@ -114,22 +117,21 @@ case class Incrbyfloat(key: ByteString, increment: Double) extends RedisDoubleCo
   def encode = encoder("INCRBYFLOAT").add(key).add(increment).result
 }
 
-case class Mget(keys: Seq[ByteString]) extends RedisOptBinarySeqCommand[Cluster] {
+case class Mget(keys: Seq[ByteString]) extends RedisOptBinarySeqCommand[Cluster] with SimpleMultiKeyed {
   require(keys.nonEmpty, "MGET requires at least one key")
   def encode = encoder("MGET").add(keys).result
-  def isKey(idx: Int) = idx >= 1
 }
 
 case class Mset(keyValues: Seq[(ByteString, ByteString)]) extends RedisUnitCommand[Cluster] {
   require(keyValues.nonEmpty, "MSET requires at least one key-value pair")
   def encode = encoder("MSET").add(keyValues).result
-  def isKey(idx: Int) = (idx % 2) == 1
+  def reportKeys(consumer: ByteString => Any) = keyValues.foreach({ case (k, _) => consumer(k) })
 }
 
 case class Msetnx(keyValues: Seq[(ByteString, ByteString)]) extends RedisBooleanCommand[Cluster] {
   require(keyValues.nonEmpty, "MSETNX requires at least one key-value pair")
   def encode = encoder("MSETNX").add(keyValues).result
-  def isKey(idx: Int) = (idx % 2) == 1
+  def reportKeys(consumer: ByteString => Any) = keyValues.foreach({ case (k, _) => consumer(k) })
 }
 
 case class Psetex(key: ByteString, milliseconds: Long, value: ByteString) extends RedisUnitCommand[Cluster] with SimpleSingleKeyed {

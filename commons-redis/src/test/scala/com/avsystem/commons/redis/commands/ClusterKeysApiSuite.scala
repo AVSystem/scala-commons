@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.commands
 
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.RedisClusterCommands
+import com.avsystem.commons.redis.{CommandsSuite, RedisClusterCommands, RedisConnectionCommandsSuite, RedisNodeCommandsSuite}
 
 import scala.concurrent.Future
 

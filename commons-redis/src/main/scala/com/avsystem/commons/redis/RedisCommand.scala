@@ -149,9 +149,15 @@ trait RedisDoubleCommand[S] extends RedisCommand[Double, S] {
 }
 
 trait Unkeyed {this: RedisCommand[Any, Nothing] =>
-  def isKey(idx: Int) = false
+  def reportKeys(consumer: ByteString => Any) = ()
 }
 
-trait SimpleSingleKeyed {this: RedisCommand[Any, Cluster] =>
-  def isKey(idx: Int) = idx == 1
+trait SimpleSingleKeyed {this: RedisCommand[Any, Nothing] =>
+  def key: ByteString
+  def reportKeys(consumer: ByteString => Any): Unit = consumer(key)
+}
+
+trait SimpleMultiKeyed {this: RedisCommand[Any, Nothing] =>
+  def keys: Seq[ByteString]
+  def reportKeys(consumer: ByteString => Any): Unit = keys.foreach(consumer)
 }
