@@ -4,9 +4,10 @@ package rpc.akka
 /**
   * @author Wojciech Milewski
   */
-class RemoteCallException(exceptionName: String) extends RuntimeException(
+final class RemoteCallException(exceptionName: String, remoteMessage: String) extends RuntimeException(
   s"""Exception on the server: $exceptionName.
-     |Please check logs on the server for whole stacktrace.
+      |Original message: $remoteMessage
+      |Please check logs on the server for whole stacktrace.
    """.stripMargin)
 
 object RemoteTimeoutException extends RuntimeException

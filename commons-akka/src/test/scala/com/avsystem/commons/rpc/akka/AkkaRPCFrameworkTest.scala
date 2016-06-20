@@ -2,6 +2,7 @@ package com.avsystem.commons
 package rpc.akka
 
 import akka.actor.{ActorPath, ActorSystem, Inbox, Terminated}
+import akka.pattern.AskTimeoutException
 import akka.stream.ActorMaterializer
 import monifu.concurrent.Implicits.globalScheduler
 import monifu.reactive.Observable
@@ -122,7 +123,7 @@ abstract class AkkaRPCFrameworkTest(serverSystem: ActorSystem, clientSystem: Act
   it should "return RemoteTimeoutException when no connection to the remote RPC" in noConnectionFixture { f =>
     val span = Span.convertDurationToSpan(callTimeout.plus(1.second))
     whenFailed(f.rpc.echoAsString(4), timeout(span)) { thrown =>
-      thrown shouldBe a[RemoteTimeoutExceptionType]
+      thrown shouldBe an[AskTimeoutException]
     }
   }
 

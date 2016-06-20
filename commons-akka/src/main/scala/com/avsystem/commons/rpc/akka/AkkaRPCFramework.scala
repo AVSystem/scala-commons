@@ -5,7 +5,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.routing.RoundRobinPool
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
-import com.avsystem.commons.rpc.akka.client.{ClientRawRPC, FunctionClientActor, ProcedureClientActor}
+import com.avsystem.commons.rpc.akka.client.ClientRawRPC
 import com.avsystem.commons.rpc.akka.serialization.{ByteStringInput, ByteStringOutput}
 import com.avsystem.commons.rpc.akka.server.ServerActor
 import com.avsystem.commons.rpc.{FunctionRPCFramework, GetterRPCFramework, MonifuRPCFramework, ProcedureRPCFramework}
@@ -35,9 +35,7 @@ object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework wi
     system.actorOf(single, config.actorName)
   }
   def client[T](config: AkkaRPCClientConfig)(implicit system: ActorSystem, materializer: ActorMaterializer, asRealRPC: AkkaRPCFramework.AsRealRPC[T]): T = {
-    val procedureClientActor = system.actorOf(ProcedureClientActor.props(config.serverPath))
-    val functionClientActor = system.actorOf(FunctionClientActor.props(config))
-    val rawRPC = new ClientRawRPC(procedureClientActor, functionClientActor, config)
+    val rawRPC = new ClientRawRPC(config)
     asRealRPC.asReal(rawRPC)
   }
 }
