@@ -30,7 +30,7 @@ val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.2.2"
 val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.0"
-val akkaVersion = "2.4.6"
+val akkaVersion = "2.4.7"
 
 val commonSettings = Seq(
   sonatypeProfileName := "com.avsystem",
@@ -126,7 +126,7 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
   .jvmConfigure(_.dependsOn(`commons-macros`))
   .settings(commonSettings: _*)
   .settings(
-    libraryDependencies += "org.monifu" %%% "monifu" % "1.2" //todo temporary solution - to replace with custom interfaces
+    libraryDependencies += "org.monifu" %%% "monifu" % "1.2" //todo
   )
   .jsSettings(
     scalacOptions += {

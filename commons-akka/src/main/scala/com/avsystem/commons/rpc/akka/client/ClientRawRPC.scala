@@ -29,7 +29,7 @@ private[akka] class ClientRawRPC(procedureActor: ActorRef, functionActor: ActorR
     val future = functionActor ? FunctionInvocationMessage(rpcName, argLists, getterChain)
     future.mapTo[AkkaRPCFramework.RawValue]
   }
-  override def get(rpcName: String, argLists: List[List[Any]]): RawRPC =
+  override def get(rpcName: String, argLists: List[List[AkkaRPCFramework.RawValue]]): RawRPC =
     new ClientRawRPC(procedureActor, functionActor, config, getterChain :+ RawInvocation(rpcName, argLists))
 
   override def observe(rpcName: String, argLists: List[List[AkkaRPCFramework.RawValue]]): Observable[AkkaRPCFramework.RawValue] = {

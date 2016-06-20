@@ -25,6 +25,7 @@ private[akka] class FunctionClientActor(config: AkkaRPCClientConfig) extends Act
       response.onComplete {
         case Success(exception: RemoteCallException) => s ! Status.Failure(exception)
         case Success(value: AkkaRPCFramework.RawValue) => s ! value
+        case Success(_) => //well, ignore? todo: redesign sent messages including proper serialization
         case Failure(e: AskTimeoutException) => s ! Status.Failure(RemoteTimeoutException)
         case Failure(e) => s ! Status.Failure(e)
       }
