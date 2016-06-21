@@ -82,6 +82,9 @@ trait RedisBatch[+A, -S] {self =>
   def *>[B, S0](other: RedisBatch[B, S0]): RedisBatch[B, S with S0] =
     map2(other)((_, b) => b)
 
+  def zip[B, S0](other: RedisBatch[B, S0]): RedisBatch[(A, B), S with S0] =
+    map2(other)((_, _))
+
   def map[B](f: A => B): RedisBatch[B, S] =
     new RedisBatch[B, S] {
       def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = {

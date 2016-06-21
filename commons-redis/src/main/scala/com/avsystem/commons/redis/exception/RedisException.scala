@@ -37,3 +37,9 @@ class ConnectionClosedException(address: NodeAddress)
 
 class ClientStoppedException(address: NodeAddress)
   extends RedisException(s"Redis client for $address was stopped")
+
+class ConnectionReservedException
+  extends RedisException("This connection is already reserved by somebody else")
+
+class ConnectionStateResetFailure(cause: Throwable)
+  extends RedisException("Failure while resetting Redis connection state", cause)

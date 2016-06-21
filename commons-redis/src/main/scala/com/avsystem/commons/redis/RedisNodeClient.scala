@@ -2,12 +2,15 @@ package com.avsystem.commons
 package redis
 
 import java.io.Closeable
+import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.avsystem.commons.redis.Scope.Node
-import com.avsystem.commons.redis.actor.{RedisConnectionPoolActor, RedisOperationActor}
+import com.avsystem.commons.redis.actor.RedisConnectionActor.BatchResult
+import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
+import com.avsystem.commons.redis.actor.{ManagedRedisConnectionActor, RedisOperationActor}
 
 import scala.concurrent.Future
 
@@ -16,25 +19,30 @@ import scala.concurrent.Future
   * Created: 05/04/16.
   */
 final class RedisNodeClient(address: NodeAddress = NodeAddress.Default, poolSize: Int = 1)
-  (implicit system: ActorSystem) extends Closeable {
+  (implicit system: ActorSystem) extends Closeable {client =>
 
-  private val handlingActor = system.actorOf(Props(new RedisConnectionPoolActor(address, poolSize)))
+  private val connections = Array.fill(poolSize)(system.actorOf(Props(new ManagedRedisConnectionActor(address))))
+  private val index = new AtomicLong(0)
 
-  import system.dispatcher
+  private def nextConnection() =
+    connections((index.getAndIncrement() % poolSize).toInt)
 
-  def executeOp[A](op: RedisOp[A])(implicit timeout: Timeout): Future[A] =
-    handlingActor.ask(op).map {
-      case RedisOperationActor.Response(result) => result.asInstanceOf[A]
-      case RedisOperationActor.Failure(cause) => throw cause
-    }
+  def executeBatch[A](batch: NodeBatch[A])(implicit timeout: Timeout): Future[A] =
+    nextConnection().ask(batch).mapNow({ case br: BatchResult[A@unchecked] => br.get })
+
+  def executeOp[A](op: RedisOp[A])(implicit timeout: Timeout): Future[A] = {
+    val connection = nextConnection()
+    system.actorOf(Props(new RedisOperationActor(connection))).ask(op)
+      .mapNow({ case or: OpResult[A@unchecked] => or.get })
+  }
 
   //TODO possible optimized version for batches / LeafOps
 
   def toExecutor(implicit timeout: Timeout): RedisExecutor[Node] =
     new RedisExecutor[Node] {
-      def execute[A](cmd: NodeBatch[A]) = executeOp(cmd.operation)
+      def execute[A](cmd: NodeBatch[A]) = client.executeBatch(cmd)
     }
 
   def close(): Unit =
-    system.stop(handlingActor)
+    connections.foreach(system.stop)
 }

@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis
 
 import com.avsystem.commons.redis.Scope.{Cluster, Connection, Node}
-import com.avsystem.commons.redis.commands.{ClusteredClusterApi, ClusteredKeysApi, ClusteredServerApi, ConnectionClusterApi, NodeClusterApi, NodeKeysApi, NodeServerApi, StringsApi, TransactionApi}
+import com.avsystem.commons.redis.commands._
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
