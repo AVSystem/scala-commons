@@ -1,18 +1,15 @@
 package com.avsystem.commons
 package rpc.akka.client
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 import com.avsystem.commons.rpc.akka.AkkaRPCFramework.RawRPC
-import com.avsystem.commons.rpc.akka.{AkkaRPCClientConfig, AkkaRPCFramework, FunctionInvocationMessage, InvocationFailure, InvocationSuccess, ObservableInvocationMessage, ProcedureInvocationMessage, RawInvocation, RemoteCallException}
+import com.avsystem.commons.rpc.akka._
 import monifu.reactive.Observable
-import org.reactivestreams.Publisher
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 /**
   * @author Wojciech Milewski
@@ -38,9 +35,12 @@ private[akka] class ClientRawRPC(config: AkkaRPCClientConfig, getterChain: Seq[R
     new ClientRawRPC(config, getterChain :+ RawInvocation(rpcName, argLists))
 
   override def observe(rpcName: String, argLists: List[List[AkkaRPCFramework.RawValue]]): Observable[AkkaRPCFramework.RawValue] = {
-    val publisher: Publisher[AkkaRPCFramework.RawValue] = Source.actorPublisher(ObservableClientActor.props(
-      config, ObservableInvocationMessage(rpcName, argLists, getterChain)
-    )).runWith(Sink.asPublisher(fanout = true))
-    Observable.fromReactivePublisher(publisher)
+    implicit val timeout = Timeout(config.observableMessageTimeout)
+
+    Observable.create { s =>
+      val actor = system.actorOf(MonifuClientActor.props(s, config))
+      actor ! ObservableInvocationMessage(rpcName, argLists, getterChain)
+    }
+
   }
 }

@@ -30,8 +30,8 @@ object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework wi
   }
 
   def serverActor[T](rpc: T, config: AkkaRPCServerConfig = AkkaRPCServerConfig.default)(implicit system: ActorSystem, asRawRpc: AkkaRPCFramework.AsRawRPC[T]): ActorRef = {
-    def roundRobin = RoundRobinPool(10).props(ServerActor.props(asRawRpc.asRaw(rpc)))
-    def single = ServerActor.props(asRawRpc.asRaw(rpc))
+    def roundRobin = RoundRobinPool(10).props(ServerActor.props(asRawRpc.asRaw(rpc), config))
+    def single = ServerActor.props(asRawRpc.asRaw(rpc), config)
     system.actorOf(single, config.actorName)
   }
   def client[T](config: AkkaRPCClientConfig)(implicit system: ActorSystem, materializer: ActorMaterializer, asRealRPC: AkkaRPCFramework.AsRealRPC[T]): T = {

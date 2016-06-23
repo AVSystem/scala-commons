@@ -9,7 +9,8 @@ import scala.concurrent.duration._
   * @author Wojciech Milewski
   */
 final case class AkkaRPCServerConfig(
-  actorName: String = "rpcServerActor"
+  actorName: String = "rpcServerActor",
+  observableAckTimeout: FiniteDuration = 35.seconds
 )
 
 object AkkaRPCServerConfig {
