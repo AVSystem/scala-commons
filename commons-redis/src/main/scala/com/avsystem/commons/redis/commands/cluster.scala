@@ -59,6 +59,8 @@ trait ConnectionClusterApi extends NodeClusterApi with ConnectionApiSubset {
     execute(Readonly)
   def readwrite: Result[Unit, Connection] =
     execute(Readwrite)
+  def asking: Result[Unit, Connection] =
+    execute(Asking)
 }
 
 case class ClusterAddslots(slots: Seq[Int]) extends RedisUnitCommand[Node] with Unkeyed {
@@ -168,6 +170,10 @@ case object Readonly extends RedisUnitCommand[Connection] with Unkeyed {
 
 case object Readwrite extends RedisUnitCommand[Connection] with Unkeyed {
   def encode = encoder("READWRITE").result
+}
+
+case object Asking extends RedisUnitCommand[Connection] with Unkeyed {
+  def encode = encoder("ASKING").result
 }
 
 case class NodeId(raw: String) extends AnyVal

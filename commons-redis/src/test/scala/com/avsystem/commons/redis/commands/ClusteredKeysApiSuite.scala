@@ -10,7 +10,7 @@ import scala.concurrent.Future
   * Author: ghik
   * Created: 14/04/16.
   */
-trait ClusterKeysApiSuite extends CommandsSuite {
+trait ClusteredKeysApiSuite extends CommandsSuite {
   type Api <: ClusteredKeysApi
 
   // only to make IntelliJ happy
@@ -120,5 +120,5 @@ trait ClusterKeysApiSuite extends CommandsSuite {
   }
 }
 
-class RedisNodeKeysApiSuite extends RedisNodeCommandsSuite with ClusterKeysApiSuite
-class RedisConnectionKeysApiSuite extends RedisConnectionCommandsSuite with ClusterKeysApiSuite
+class RedisNodeKeysApiSuite extends RedisNodeCommandsSuite with ClusteredKeysApiSuite
+class RedisConnectionKeysApiSuite extends RedisConnectionCommandsSuite with ClusteredKeysApiSuite

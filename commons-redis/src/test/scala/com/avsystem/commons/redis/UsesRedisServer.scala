@@ -3,30 +3,34 @@ package redis
 
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Promise}
 import scala.sys.process._
 
 /**
   * Author: ghik
   * Created: 14/04/16.
   */
-trait UsesRedisServer extends BeforeAndAfterAll {this: Suite =>
+trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils {this: Suite =>
   def port = 7000
   def address = NodeAddress(port = port)
 
   var redisProcess: Process = _
+  val initPromise = Promise[Unit]()
 
   override protected def beforeAll() = {
     super.beforeAll()
-    redisProcess = Seq("redis-server",
-      "--daemonize", "no",
-      "--port", port.toString
-    ).run()
-    Thread.sleep(3000)
+    redisProcess = Await.result(
+      launchRedis("redis-server",
+        "--daemonize", "no",
+        "--port", port.toString
+      ),
+      10.seconds
+    )
   }
 
   override protected def afterAll() = {
-    redisProcess.destroy()
-    Thread.sleep(500)
+    shutdownRedis(port, redisProcess)
     super.afterAll()
   }
 }

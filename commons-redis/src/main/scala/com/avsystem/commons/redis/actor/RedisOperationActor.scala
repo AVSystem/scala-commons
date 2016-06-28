@@ -5,6 +5,7 @@ import akka.actor.{Actor, ActorRef}
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RedisOp
 import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
+import com.avsystem.commons.redis.actor.ManagedRedisConnectionActor.Reserving
 import com.avsystem.commons.redis.actor.RedisOperationActor.{OpFailure, OpSuccess}
 import com.avsystem.commons.redis.exception.RedisException
 import com.avsystem.commons.redis.util.ActorLazyLogging
@@ -24,26 +25,17 @@ final class RedisOperationActor(managedConnection: ActorRef) extends Actor with 
   context.watch(managedConnection)
 
   private var listener: ActorRef = null
-  private var reserved = false
 
-  def handleOperation(op: RedisOp[Any]): Unit = op match {
+  def handleOperation(op: RedisOp[Any], reserving: Boolean = false): Unit = op match {
     case LeafOp(batch) =>
-      managedConnection ! batch
+      managedConnection ! (if (reserving) Reserving(batch) else batch)
       context.become(waitingForResponse(Opt.Empty))
     case FlatMappedOp(batch, nextStep) =>
-      managedConnection ! batch
+      managedConnection ! (if (reserving) Reserving(batch) else batch)
       context.become(waitingForResponse(Opt(nextStep)))
   }
 
-  def waitingForReserve(op: RedisOp[Any]): Receive = {
-    case ManagedRedisConnectionActor.ReserveSuccess =>
-      reserved = true
-      handleOperation(op)
-    case ManagedRedisConnectionActor.ReserveFailure(cause) =>
-      respond(OpFailure(cause))
-  }
-
-  def waitingForResponse[A, B](nextStep: Opt[A => RedisOp[B]]): Receive = {
+  def waitingForResponse[A, B](nextStep: Opt[A => RedisOp[B]], reserving: Boolean = false): Receive = {
     case RedisConnectionActor.BatchSuccess(a: A@unchecked) =>
       try {
         nextStep match {
@@ -71,15 +63,11 @@ final class RedisOperationActor(managedConnection: ActorRef) extends Actor with 
   def receive = {
     case op: RedisOp[Any] if listener == null =>
       listener = sender()
-      managedConnection ! ManagedRedisConnectionActor.Reserve
-      context.become(waitingForReserve(op))
+      handleOperation(op, reserving = true)
   }
 
   def releaseConnection(): Unit =
-    if (reserved) {
-      reserved = false
-      managedConnection ! ManagedRedisConnectionActor.Release
-    }
+    managedConnection ! ManagedRedisConnectionActor.Release
 
   // nullguard redundant, but avoids unnecessary exception creation
   override def postStop() =

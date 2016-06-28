@@ -56,7 +56,7 @@ class TransactionTest extends RedisNodeCommandsSuite {
 class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
   import RedisCommands._
 
-  override def poolSize = 1
+  override def nodeConfig = super.nodeConfig.copy(poolSize = 1)
 
   val key = bs"key"
 

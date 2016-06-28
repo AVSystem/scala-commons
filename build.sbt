@@ -33,6 +33,7 @@ val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.0"
 val akkaVersion = "2.4.2"
 val shapelessVersion = "2.3.0"
+val commonsIoVersion = "1.3.2"
 
 val commonSettings = Seq(
   sonatypeProfileName := "com.avsystem",
@@ -77,7 +78,8 @@ val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "com.github.ghik" % "silencer-lib" % silencerVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-    "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
+    "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
+    "org.apache.commons" % "commons-io" % commonsIoVersion % Test
   ),
   dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.4",
   ideBasePackages := Seq(organization.value),

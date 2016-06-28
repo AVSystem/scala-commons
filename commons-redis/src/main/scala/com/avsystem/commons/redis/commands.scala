@@ -57,12 +57,14 @@ trait RedisNodeApi extends RedisClusteredApi
   with NodeKeysApi
   with NodeServerApi
   with NodeClusterApi
+  with NodeConnectionApi
 
 trait RedisOperationApi extends RedisNodeApi
   with TransactionApi
 
 trait RedisConnectionApi extends RedisOperationApi
   with ConnectionClusterApi
+  with ConnectionConnectionApi
 
 trait AbstractRedisClusteredApi extends RedisClusteredApi {self =>
   type CmdScope = Scope.Cluster

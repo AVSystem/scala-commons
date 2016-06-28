@@ -10,7 +10,7 @@ import com.avsystem.commons.redis.protocol._
 
 import scala.collection.mutable.ArrayBuffer
 
-trait RedisCommand[+A, -S] extends RedisBatch[A, S] with RedisBatch.RepliesDecoder[A] {
+trait RedisCommand[+A, -S] extends AtomicBatch[A, S] with RedisBatch.RepliesDecoder[A] {
   def encode: IndexedSeq[BulkStringMsg]
   def decodeExpected: PartialFunction[ValidRedisMsg, A]
 
@@ -104,6 +104,12 @@ trait RedisBooleanCommand[S] extends RedisCommand[Boolean, S] {
   def decodeExpected = {
     case IntegerMsg(0) => false
     case IntegerMsg(1) => true
+  }
+}
+
+trait RedisSimpleStringCommand[S] extends RedisCommand[ByteString, S] {
+  def decodeExpected = {
+    case SimpleStringMsg(data) => data
   }
 }
 

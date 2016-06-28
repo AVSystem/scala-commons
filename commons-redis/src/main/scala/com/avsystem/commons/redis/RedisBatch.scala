@@ -98,8 +98,11 @@ trait RedisBatch[+A, -S] {self =>
     * Returns a batch which invokes the same Redis commands as this batch, but ensures that
     * they are invoked inside a Redis transaction (`MULTI`-`EXEC`).
     */
-  def transaction: RedisBatch[A, S] =
+  def transaction: AtomicBatch[A, S] =
     new Transaction(this)
+
+  def atomic: AtomicBatch[A, S] =
+    transaction
 }
 
 object RedisBatch extends HasFlatMap[OperationBatch] {
@@ -107,7 +110,7 @@ object RedisBatch extends HasFlatMap[OperationBatch] {
     def operation: RedisOp[A] = RedisOp.LeafOp(batch)
   }
 
-  final class Transaction[+A, -S](batch: RedisBatch[A, S]) extends RedisBatch[A, S] {
+  class Transaction[+A, -S](batch: RedisBatch[A, S]) extends AtomicBatch[A, S] {
     def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) =
       if (inTransaction) {
         batch.encodeCommands(messageBuffer, inTransaction)
@@ -171,8 +174,14 @@ object RedisBatch extends HasFlatMap[OperationBatch] {
       def reportKeys(consumer: ByteString => Any) = ()
     }
 
+  val unit = success(())
+
   //TODO more API
   //TODO sequence
+}
+
+trait AtomicBatch[+A, -S] extends RedisBatch[A, S] {
+  override def atomic: AtomicBatch[A, S] = this
 }
 
 /**
@@ -187,6 +196,8 @@ sealed trait RedisOp[+A] {
 }
 
 object RedisOp extends HasFlatMap[RedisOp] {
+  val unit: RedisOp[Unit] = success(())
+
   def success[A](a: A): RedisOp[A] =
     RedisBatch.success(a).operation
 

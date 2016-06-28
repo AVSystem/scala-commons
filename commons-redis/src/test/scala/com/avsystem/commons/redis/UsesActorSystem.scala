@@ -2,9 +2,10 @@ package com.avsystem.commons
 package redis
 
 import akka.actor.ActorSystem
+import akka.util.Timeout
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 
 /**
@@ -14,6 +15,7 @@ import scala.concurrent.{Await, ExecutionContext}
 trait UsesActorSystem extends BeforeAndAfterAll {this: Suite =>
   implicit lazy val actorSystem: ActorSystem = ActorSystem()
   implicit def executionContext: ExecutionContext = actorSystem.dispatcher
+  implicit val timeout = Timeout(10.seconds)
 
   override protected def afterAll() = {
     Await.ready(actorSystem.terminate(), Duration.Inf)

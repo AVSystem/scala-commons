@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package redis
 
+import com.avsystem.commons.redis.config.NodeConfig
 import org.scalatest.Suite
 
 /**
@@ -8,13 +9,13 @@ import org.scalatest.Suite
   * Created: 14/04/16.
   */
 trait UsesRedisNodeClient extends UsesRedisServer with UsesActorSystem {this: Suite =>
-  def poolSize = 5
+  def nodeConfig = NodeConfig()
 
   var redisClient: RedisNodeClient = _
 
   override protected def beforeAll() = {
     super.beforeAll()
-    redisClient = new RedisNodeClient(address, poolSize)
+    redisClient = new RedisNodeClient(address, nodeConfig)
   }
 
   override protected def afterAll() = {
