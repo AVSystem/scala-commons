@@ -51,7 +51,7 @@ private[akka] final class ByteStringInput(source: ByteString) extends Input {
   }
 }
 
-private[serialization] final class ByteArrayListInput(private var content: ByteString) extends ListInput with SequentialInputOps {
+private final class ByteArrayListInput(private var content: ByteString) extends ListInput with SequentialInputOps {
   private var nextEntryCache: Option[DataIndexes] = findDataIndex(content, 0)
 
   override def nextElement(): Input = {
@@ -64,9 +64,9 @@ private[serialization] final class ByteArrayListInput(private var content: ByteS
   override def hasNext: Boolean = nextEntryCache.isDefined
 }
 
-private[serialization] final case class DataIndexes(startInclusiveIndex: Int, endExclusiveIndex: Int)
+private final case class DataIndexes(startInclusiveIndex: Int, endExclusiveIndex: Int)
 
-private[serialization] final class ByteArrayObjectInput(private var content: ByteString) extends ObjectInput with SequentialInputOps {
+private final class ByteArrayObjectInput(private var content: ByteString) extends ObjectInput with SequentialInputOps {
 
   private var nextDataCache: Option[DataIndexes] = findNextData()
 
@@ -92,7 +92,7 @@ private[serialization] final class ByteArrayObjectInput(private var content: Byt
   override def hasNext: Boolean = nextDataCache.isDefined
 }
 
-private[serialization] trait SequentialInputOps {
+private trait SequentialInputOps {
   final def findDataIndex(content: ByteString, offset: Int): Option[DataIndexes] = {
     content.lift(offset).flatMap(Marker.of) match {
       case Some(m: CompileTimeSize) => Some(DataIndexes(offset, offset + m.size + 1))

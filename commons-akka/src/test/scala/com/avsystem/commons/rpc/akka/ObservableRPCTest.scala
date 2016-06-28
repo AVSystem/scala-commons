@@ -13,7 +13,6 @@ import scala.concurrent.{Future, Promise}
   * @author Wojciech Milewski
   */
 trait ObservableRPCTest {this: RPCFrameworkTest =>
-  //todo better test for timeouts and backpressure
 
   import ObservableRPCTest._
 

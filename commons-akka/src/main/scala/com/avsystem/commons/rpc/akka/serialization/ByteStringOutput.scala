@@ -103,8 +103,7 @@ private object WriteOps {
   }
 }
 
-//todo make those value classes
-private sealed trait DataEntry extends Any {
+private sealed trait DataEntry {
   def write(builder: ByteStringBuilder): Unit
   def contentSize: Int
 }
@@ -188,7 +187,7 @@ private sealed trait DataEntryWriter[T <: DataEntry] {
   def write(builder: ByteStringBuilder, elem: T): Unit
 }
 
-private class DirectByteArrayListOutput(onFinish: ByteString => Unit) extends ListOutput {
+private final class DirectByteArrayListOutput(onFinish: ByteString => Unit) extends ListOutput {
 
   private var data = ListData.empty
 
@@ -204,7 +203,7 @@ private class DirectByteArrayListOutput(onFinish: ByteString => Unit) extends Li
 
 }
 
-private class DirectByteStringObjectOutput(onFinish: ByteString => Unit) extends ObjectOutput {
+private final class DirectByteStringObjectOutput(onFinish: ByteString => Unit) extends ObjectOutput {
 
   private var data = ObjectData.empty
 
@@ -218,7 +217,7 @@ private class DirectByteStringObjectOutput(onFinish: ByteString => Unit) extends
   }
 }
 
-private class LazyEvaluatedOutput(onFinish: DataEntry => Unit) extends Output {
+private final class LazyEvaluatedOutput(onFinish: DataEntry => Unit) extends Output {
   override def writeNull(): Unit = onFinish(NullData)
   override def writeString(str: String): Unit = onFinish(StringData(str))
   override def writeByte(byte: Byte): Unit = onFinish(ByteData(byte))
@@ -233,7 +232,7 @@ private class LazyEvaluatedOutput(onFinish: DataEntry => Unit) extends Output {
   override def writeObject(): ObjectOutput = new LazyEvaluatedObjectOutput(entry => onFinish(entry))
 }
 
-private class LazyEvaluatedListOutput(onFinish: DataEntry => Unit) extends ListOutput {
+private final class LazyEvaluatedListOutput(onFinish: DataEntry => Unit) extends ListOutput {
 
   private var data = ListData.empty
   override def writeElement(): Output = new LazyEvaluatedOutput(entry => {
@@ -242,7 +241,7 @@ private class LazyEvaluatedListOutput(onFinish: DataEntry => Unit) extends ListO
   override def finish(): Unit = onFinish(data)
 }
 
-private class LazyEvaluatedObjectOutput(onFinish: DataEntry => Unit) extends ObjectOutput {
+private final class LazyEvaluatedObjectOutput(onFinish: DataEntry => Unit) extends ObjectOutput {
   private var data = ObjectData.empty
 
   override def writeField(key: String): Output = new LazyEvaluatedOutput(entry => {

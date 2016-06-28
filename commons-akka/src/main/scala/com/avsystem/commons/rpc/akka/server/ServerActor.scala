@@ -14,7 +14,7 @@ import scala.util.{Failure, Success}
 /**
   * @author Wojciech Milewski
   */
-class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPCServerConfig) extends Actor with ActorLogging {
+private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPCServerConfig) extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case msg@ProcedureInvocationMessage(name, argLists, getterChain) =>
@@ -56,6 +56,6 @@ class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPCServerConfig) 
   private def resolveRpc(msg: InvocationMessage) = rawRPC.resolveGetterChain(msg.getterChain.map(r => AkkaRPCFramework.RawInvocation(r.rpcName, r.argLists)).toList)
 }
 
-object ServerActor {
+private[akka] object ServerActor {
   def props(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPCServerConfig): Props = Props(new ServerActor(rawRPC, config))
 }

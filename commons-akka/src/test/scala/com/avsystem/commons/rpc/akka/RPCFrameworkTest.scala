@@ -17,13 +17,13 @@ import scala.util.{Failure, Success}
 /**
   * @author Wojciech Milewski
   */
-trait RPCFrameworkTest extends FlatSpecLike with Matchers with MockitoSugar with BeforeAndAfterAll with ScalaFutures {
+trait RPCFrameworkTest extends FlatSpecLike with Matchers with MockitoSugar with ScalaFutures {
 
   import RPCFrameworkTest._
 
   val callTimeout = 200.millis
 
-  override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = Span.convertDurationToSpan(500.millis))
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = Span.convertDurationToSpan(300.millis))
 
   /**
     * Run tests with connection between client and server.

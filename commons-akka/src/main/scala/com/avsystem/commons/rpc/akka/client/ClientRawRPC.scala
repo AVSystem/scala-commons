@@ -3,7 +3,6 @@ package rpc.akka.client
 
 import akka.actor.ActorSystem
 import akka.pattern.ask
-import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.avsystem.commons.rpc.akka.AkkaRPCFramework.RawRPC
 import com.avsystem.commons.rpc.akka._
@@ -14,7 +13,7 @@ import scala.concurrent.Future
 /**
   * @author Wojciech Milewski
   */
-private[akka] class ClientRawRPC(config: AkkaRPCClientConfig, getterChain: Seq[RawInvocation] = Nil)(implicit system: ActorSystem, materializer: ActorMaterializer) extends AkkaRPCFramework.RawRPC {
+private[akka] final class ClientRawRPC(config: AkkaRPCClientConfig, getterChain: Seq[RawInvocation] = Nil)(implicit system: ActorSystem) extends AkkaRPCFramework.RawRPC {
 
   override def fire(rpcName: String, argLists: List[List[AkkaRPCFramework.RawValue]]): Unit = {
     system.actorSelection(config.serverPath) ! ProcedureInvocationMessage(rpcName, argLists, getterChain)

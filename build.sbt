@@ -125,9 +125,6 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
   .jsConfigure(_.dependsOn(`commons-macros`))
   .jvmConfigure(_.dependsOn(`commons-macros`))
   .settings(commonSettings: _*)
-  .settings(
-    libraryDependencies += "org.monifu" %%% "monifu" % "1.2" //todo
-  )
   .jsSettings(
     scalacOptions += {
       val localDir = (baseDirectory in ThisBuild).value.toURI.toString
@@ -200,7 +197,7 @@ lazy val `commons-akka` = project
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.akka" %% "akka-remote" % akkaVersion,
-      "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "org.monifu" %% "monifu" % "1.2",
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
       "org.mockito" % "mockito-core" % "2.0.54-beta" % Test
     )
@@ -211,16 +208,3 @@ lazy val `commons-akka-benchmark` = project
   .settings(commonSettings: _*)
   .settings(noPublishSettings: _*)
   .enablePlugins(JmhPlugin)
-
-//TODO remove after finished implementation
-lazy val `test-api` = project
-  .dependsOn(`commons-core`)
-  .settings(commonSettings: _*)
-
-lazy val `test-server` = project
-  .dependsOn(`commons-core`, `test-api`, `commons-akka`)
-  .settings(commonSettings: _*)
-
-lazy val `test-client` = project
-  .dependsOn(`commons-core`, `test-api`, `commons-akka`)
-  .settings(commonSettings: _*)

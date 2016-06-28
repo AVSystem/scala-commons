@@ -6,7 +6,7 @@ import java.{lang => jl}
 /**
   * @author Wojciech Milewski
   */
-private[serialization] object PrimitiveSizes {
+private object PrimitiveSizes {
   val ByteBytes = jl.Byte.BYTES
   val ShortBytes = jl.Short.BYTES
   val IntBytes = jl.Integer.BYTES

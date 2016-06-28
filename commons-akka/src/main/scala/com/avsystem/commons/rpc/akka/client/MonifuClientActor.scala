@@ -12,7 +12,7 @@ import scala.util.{Failure, Success}
 /**
   * @author Wojciech Milewski
   */
-class MonifuClientActor(subscriber: Subscriber[RawValue], config: AkkaRPCClientConfig) extends Actor {
+private final class MonifuClientActor(subscriber: Subscriber[RawValue], config: AkkaRPCClientConfig) extends Actor {
 
   override def receive: Receive = initializing
 
@@ -53,6 +53,6 @@ class MonifuClientActor(subscriber: Subscriber[RawValue], config: AkkaRPCClientC
   }
 }
 
-object MonifuClientActor {
+private object MonifuClientActor {
   def props(s: Subscriber[RawValue], config: AkkaRPCClientConfig) = Props(new MonifuClientActor(s, config))
 }

@@ -2,17 +2,17 @@ package com.avsystem.commons
 package rpc.akka
 
 import akka.actor.{ActorPath, ActorSystem, Inbox, Terminated}
-import akka.stream.ActorMaterializer
-import org.scalatest.FlatSpec
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+import org.mockito.Mockito.{when, reset}
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 /**
   * @author Wojciech Milewski
   */
 abstract class AkkaRPCFrameworkTest(serverSystem: ActorSystem, clientSystem: ActorSystem, existingPath: Option[ActorPath] = None, nonExistingPath: Option[ActorPath] = None)
-  extends FlatSpec with RPCFrameworkTest with ProcedureRPCTest with FunctionRPCTest with GetterRPCTest with ObservableRPCTest {
+  extends FlatSpec with RPCFrameworkTest with ProcedureRPCTest with FunctionRPCTest with GetterRPCTest with ObservableRPCTest with BeforeAndAfterAll {
 
   override def fixture(testCode: Fixture => Any): Unit = {
     val testRpcMock = mock[TestRPC]
@@ -23,9 +23,9 @@ abstract class AkkaRPCFrameworkTest(serverSystem: ActorSystem, clientSystem: Act
     }
     val rpc = {
       implicit val system = clientSystem
-      implicit val materializer = ActorMaterializer()
       AkkaRPCFramework.client[TestRPC](AkkaRPCClientConfig(serverPath = existingPath.getOrElse(serverActor.path)))
     }
+
     try {
       testCode(Fixture(rpc = rpc, mockRpc = testRpcMock, mockInnerRpc = innerRpcMock))
     } finally {
@@ -41,7 +41,6 @@ abstract class AkkaRPCFrameworkTest(serverSystem: ActorSystem, clientSystem: Act
 
   override def noConnectionFixture(testCode: Fixture => Any): Unit = {
     implicit val system = clientSystem
-    implicit val materializer = ActorMaterializer()
     val mockRpc = mock[TestRPC]
     val mockInnerRpc = mock[InnerRPC]
     val rpc = AkkaRPCFramework.client[TestRPC](AkkaRPCClientConfig(
@@ -52,6 +51,17 @@ abstract class AkkaRPCFrameworkTest(serverSystem: ActorSystem, clientSystem: Act
   }
 
 
+  override protected def beforeAll(): Unit = {
+    super.beforeAll()
+    /*
+     * Kind of warmup of Akka systems.
+     * First RPC request can be very slow due to connection establishment, done especially by Akka Remote.
+     */
+    fixture { f =>
+      when(f.mockRpc.echoAsString(0)).thenReturn(Future.successful(""))
+      Await.ready(f.rpc.echoAsString(0), 1.second)
+    }
+  }
   override protected def afterAll(): Unit = {
     super.afterAll()
     serverSystem.terminate()

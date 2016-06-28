@@ -2,15 +2,16 @@ package com.avsystem.commons
 package rpc.akka.serialization
 
 import com.avsystem.commons.misc.Bidirectional
+import PrimitiveSizes._
 
 /**
   * @author Wojciech Milewski
   */
-private[serialization] sealed trait Marker {
+private sealed trait Marker {
   def byte: Byte = Marker.markerToByte(this)
 }
 
-private[serialization] object Marker {
+private object Marker {
   private val (markerToByte, byteToMarker) = Bidirectional[Marker, Byte] {
     case NullMarker => 0
     case StringMarker => 1
@@ -23,43 +24,24 @@ private[serialization] object Marker {
     case ByteArrayMarker => 8
     case BooleanMarker => 9
     case ListStartMarker => 10
-    case ObjectStartMarker => 12
+    case ObjectStartMarker => 11
   }
 
   def of(byte: Byte): Option[Marker] = byteToMarker.lift(byte)
 }
 
-private[serialization] sealed trait CompileTimeSize extends Marker {
-  def size: Int = CompileTimeSize.size(this)
-}
+private sealed abstract class CompileTimeSize(val size: Int) extends Marker
+private sealed trait RuntimeSize extends Marker
 
-private[serialization] object CompileTimeSize {
-
-  import PrimitiveSizes._
-
-  private def size(marker: CompileTimeSize): Int = marker match {
-    case NullMarker => 0
-    case ByteMarker => ByteBytes
-    case ShortMarker => ShortBytes
-    case IntMarker => IntBytes
-    case LongMarker => LongBytes
-    case FloatMarker => FloatBytes
-    case DoubleMarker => DoubleBytes
-    case BooleanMarker => ByteBytes
-  }
-}
-
-private[serialization] sealed trait RuntimeSize extends Marker
-
-private[serialization] case object NullMarker extends Marker with CompileTimeSize
-private[serialization] case object StringMarker extends Marker with RuntimeSize
-private[serialization] case object ByteMarker extends Marker with CompileTimeSize
-private[serialization] case object ShortMarker extends Marker with CompileTimeSize
-private[serialization] case object IntMarker extends Marker with CompileTimeSize
-private[serialization] case object LongMarker extends Marker with CompileTimeSize
-private[serialization] case object FloatMarker extends Marker with CompileTimeSize
-private[serialization] case object DoubleMarker extends Marker with CompileTimeSize
-private[serialization] case object ByteArrayMarker extends Marker with RuntimeSize
-private[serialization] case object BooleanMarker extends Marker with CompileTimeSize
-private[serialization] case object ListStartMarker extends Marker with RuntimeSize
-private[serialization] case object ObjectStartMarker extends Marker with RuntimeSize
+private case object NullMarker extends CompileTimeSize(0)
+private case object ByteMarker extends CompileTimeSize(ByteBytes)
+private case object ShortMarker extends CompileTimeSize(ShortBytes)
+private case object IntMarker extends CompileTimeSize(IntBytes)
+private case object LongMarker extends CompileTimeSize(LongBytes)
+private case object FloatMarker extends CompileTimeSize(FloatBytes)
+private case object DoubleMarker extends CompileTimeSize(DoubleBytes)
+private case object BooleanMarker extends CompileTimeSize(ByteBytes)
+private case object StringMarker extends RuntimeSize
+private case object ByteArrayMarker extends RuntimeSize
+private case object ListStartMarker extends RuntimeSize
+private case object ObjectStartMarker extends RuntimeSize

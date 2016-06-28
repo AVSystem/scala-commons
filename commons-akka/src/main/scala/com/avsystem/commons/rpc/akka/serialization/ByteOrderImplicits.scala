@@ -6,6 +6,6 @@ import java.nio.ByteOrder
 /**
   * @author Wojciech Milewski
   */
-private[serialization] object ByteOrderImplicits {
+private object ByteOrderImplicits {
   implicit val order: ByteOrder = ByteOrder.LITTLE_ENDIAN
 }
