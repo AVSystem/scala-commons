@@ -34,8 +34,6 @@ private[akka] final class ClientRawRPC(config: AkkaRPCClientConfig, getterChain:
     new ClientRawRPC(config, getterChain :+ RawInvocation(rpcName, argLists))
 
   override def observe(rpcName: String, argLists: List[List[AkkaRPCFramework.RawValue]]): Observable[AkkaRPCFramework.RawValue] = {
-    implicit val timeout = Timeout(config.observableMessageTimeout)
-
     Observable.create { s =>
       val actor = system.actorOf(MonifuClientActor.props(s, config))
       actor ! ObservableInvocationMessage(rpcName, argLists, getterChain)

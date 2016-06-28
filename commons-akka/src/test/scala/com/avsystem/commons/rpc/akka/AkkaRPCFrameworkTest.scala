@@ -29,7 +29,6 @@ abstract class AkkaRPCFrameworkTest(serverSystem: ActorSystem, clientSystem: Act
     try {
       testCode(Fixture(rpc = rpc, mockRpc = testRpcMock, mockInnerRpc = innerRpcMock))
     } finally {
-      //todo make it sync, because it sometimes fails
       val inbox = Inbox.create(serverSystem)
       inbox.watch(serverActor)
       serverSystem.stop(serverActor)

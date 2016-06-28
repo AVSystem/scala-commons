@@ -32,11 +32,11 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
       }
     case msg@ObservableInvocationMessage(name, argLists, getterChain) =>
       implicit val scheduler = Scheduler(RunNowEC)
+      implicit val timeout = Timeout(config.observableAckTimeout)
       val s = sender()
 
       resolveRpc(msg).observe(name, argLists).subscribe(
-        value => {
-          implicit val timeout = Timeout(config.observableAckTimeout)
+      value => {
           val result = s ? InvocationSuccess(value)
           //noinspection NestedStatefulMonads
           result.mapTo[MonifuProtocol.RemoteAck].map {
