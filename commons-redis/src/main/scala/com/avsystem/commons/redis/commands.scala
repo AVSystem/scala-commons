@@ -13,7 +13,7 @@ trait RedisExecutor[+S] {
 
 trait ApiSubset {self =>
   type CmdScope
-  type Result[+A, -S]
+  type Result[A, S]
 
   protected def execute[A, S >: CmdScope](cmd: RedisCommand[A, S]): Result[A, S]
 }
@@ -32,16 +32,16 @@ trait ConnectionApiSubset extends OperationApiSubset {
 }
 
 trait CommandSubset extends ApiSubset {
-  type Result[+A, -S] = RedisCommand[A, S]
+  type Result[A, S] = RedisCommand[A, S]
   protected def execute[A, S >: CmdScope](cmd: RedisCommand[A, S]) = cmd
 }
 trait AsyncCommandSubset extends ApiSubset {
-  type Result[+A, -S] = Future[A]
+  type Result[A, S] = Future[A]
   protected def executor: RedisExecutor[CmdScope]
   protected def execute[A, S >: CmdScope](cmd: RedisCommand[A, S]) = executor.execute(cmd)
 }
 trait BlockingCommandSubset extends ApiSubset {
-  type Result[+A, -S] = A
+  type Result[A, S] = A
   protected def timeout: Duration
   protected def executor: RedisExecutor[CmdScope]
   protected def execute[A, S >: CmdScope](cmd: RedisCommand[A, S]) = Await.result(executor.execute(cmd), timeout)

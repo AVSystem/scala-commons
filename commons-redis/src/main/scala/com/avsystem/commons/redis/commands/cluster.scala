@@ -269,7 +269,8 @@ case class NodeInfo(
       importingSlots.iterator.map({ case (s, n) => s"$s-<-$n" }) ++
       migratingSlots.iterator.map({ case (s, n) => s"$s->-$n" })
     val slotsRepr = if (slotReprs.hasNext) slotReprs.mkString(" ", " ", "") else ""
-    s"$id $address $flags ${master.getOrElse("-")} $pingSent $pongRecv $configEpoch$slotsRepr"
+    val linkState = if (connected) "connected" else "disconnected"
+    s"$id $address $flags ${master.getOrElse("-")} $pingSent $pongRecv $configEpoch $linkState$slotsRepr"
   }
 }
 
@@ -364,7 +365,9 @@ object NodeFlags {
   }
 }
 
-case class SlotRangeMapping(range: SlotRange, master: NodeAddress, replicas: Seq[NodeAddress])
+case class SlotRangeMapping(range: SlotRange, master: NodeAddress, replicas: Seq[NodeAddress]) {
+  override def toString = s"slots: $range, master: $master, slaves: ${replicas.mkString(",")}"
+}
 case class SlotRange(start: Int, end: Int) {
   def toRange: Range = start to end
   def contains(slot: Int): Boolean = slot >= start && slot <= end

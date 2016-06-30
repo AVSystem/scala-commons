@@ -143,7 +143,6 @@ object RedisBatch extends HasFlatMap[OperationBatch] {
   }
 
   class MessageBuffer(private val buffer: ArrayBuffer[RedisMsg]) extends AnyVal {
-    def result: IndexedSeq[RedisMsg] = buffer
     def +=(msg: RedisMsg): Unit = buffer += msg
     def ++=(msgs: TraversableOnce[RedisMsg]): Unit = buffer ++= msgs
     def size = buffer.size
