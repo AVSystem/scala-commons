@@ -25,6 +25,8 @@ private object Marker {
     case BooleanMarker => 9
     case ListStartMarker => 10
     case ObjectStartMarker => 11
+    case ListEndMarker => 12
+    case ObjectEndMarker => 13
   }
 
   def of(byte: Byte): Option[Marker] = byteToMarker.lift(byte)
@@ -44,4 +46,6 @@ private case object BooleanMarker extends CompileTimeSize(ByteBytes)
 private case object StringMarker extends RuntimeSize
 private case object ByteArrayMarker extends RuntimeSize
 private case object ListStartMarker extends RuntimeSize
+private case object ListEndMarker extends Marker
 private case object ObjectStartMarker extends RuntimeSize
+private case object ObjectEndMarker extends Marker
