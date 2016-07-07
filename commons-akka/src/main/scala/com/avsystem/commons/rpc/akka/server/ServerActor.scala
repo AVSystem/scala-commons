@@ -25,9 +25,7 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
       resolveRpc(msg).call(name, argLists).onComplete {
         case Success(value) => s ! InvocationSuccess(value)
         case Failure(e) =>
-          log.error(e,
-            """Server exception. Remote method called: {}.
-              |Original message: {}""".stripMargin, name, e.getMessage)
+          logError(e, name)
           s ! InvocationFailure(e.getClass.getCanonicalName, e.getMessage)
       }
     case msg@ObservableInvocationMessage(name, argLists, getterChain) =>
@@ -48,12 +46,23 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
               Ack.Cancel
           }
         },
-        e => s ! InvocationFailure(e.getClass.getCanonicalName, e.getMessage),
+        e => {
+          logError(e, name)
+          s ! InvocationFailure(e.getClass.getCanonicalName, e.getMessage)
+        },
         () => s ! MonifuProtocol.StreamCompleted
       )
   }
 
   private def resolveRpc(msg: InvocationMessage) = rawRPC.resolveGetterChain(msg.getterChain.map(r => AkkaRPCFramework.RawInvocation(r.rpcName, r.argLists)).toList)
+
+  private def logError(e: Throwable, methodName: String): Unit = {
+    log.error(e,
+      """
+        |Server exception. Remote method called: {}.
+        |Original message: {}.
+      """.stripMargin, methodName, e.getMessage)
+  }
 }
 
 private[akka] object ServerActor {

@@ -2,7 +2,6 @@ package com.avsystem.commons
 package rpc.akka.serialization
 
 import akka.util.{ByteIterator, ByteString}
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.rpc.akka.serialization.PrimitiveSizes._
 import com.avsystem.commons.serialization.{Input, ListInput, ObjectInput, ReadFailed, ReadSuccessful, ValueRead}
 
@@ -20,25 +19,8 @@ private[akka] class ByteStringLinearInput(source: ByteString, onMove: Int => Uni
   override def readInt(): ValueRead[Int] = readCompileTime(IntMarker)(_.getInt)
   override def readString(): ValueRead[String] = readRuntime(StringMarker)(_.utf8String)
   override def readBinary(): ValueRead[Array[Byte]] = readRuntime(ByteArrayMarker)(_.toArray)
-  override def readList(): ValueRead[ListInput] = {
-    source.headOption match {
-      case Some(value) if value == ListStartMarker.byte =>
-        onMove(ByteBytes)
-        ReadSuccessful(new ByteStringLinearListInput(source.tail, onMove))
-      case Some(value) => ReadFailed(s"Incorrect data has been found. Expected: ${ListStartMarker.byte.toInt}, but found: ${value.toInt}")
-      case None => ReadFailed("No data found")
-    }
-  }
-  override def readObject(): ValueRead[ObjectInput] = {
-    source.headOption match {
-      case Some(value) if value == ObjectStartMarker.byte =>
-        onMove(ByteBytes)
-        ReadSuccessful(new ByteStringLinearObjectInput(source.tail, onMove))
-      case Some(value) => ReadFailed(s"Incorrect data has been found. Expected: ${ListStartMarker.byte.toInt}, but found: ${value.toInt}")
-      case None => ReadFailed("No data found")
-    }
-  }
-
+  override def readList(): ValueRead[ListInput] = readBiMarker(ListStartMarker)(new ByteStringLinearListInput(_, onMove))
+  override def readObject(): ValueRead[ObjectInput] = readBiMarker(ObjectStartMarker)(new ByteStringLinearObjectInput(_, onMove))
   override def readDouble(): ValueRead[Double] = readCompileTime(DoubleMarker)(_.getDouble)
   override def readBoolean(): ValueRead[Boolean] = readCompileTimeAsValue(BooleanMarker) { iterator =>
     iterator.head match {
@@ -48,15 +30,14 @@ private[akka] class ByteStringLinearInput(source: ByteString, onMove: Int => Uni
     }
   }
   override def skip(): Unit = {
-    source.headOption.flatMap(Marker.of) match {
-      case Some(value: CompileTimeSize) =>
+    if (source.nonEmpty) Marker.of(source.head).foreach {
+      case value: CompileTimeSize =>
         onMove(ByteBytes + value.size)
-      case Some(ListStartMarker) => readList().foreach(_.skipRemaining())
-      case Some(ObjectStartMarker) => readObject().foreach(_.skipRemaining())
-      case Some(value: RuntimeSize) =>
+      case ListStartMarker => readList().foreach(_.skipRemaining())
+      case ObjectStartMarker => readObject().foreach(_.skipRemaining())
+      case value: RuntimeSize =>
         onMove(ByteBytes + IntBytes + source.iterator.drop(1).getInt)
-      case Some(ListEndMarker) | Some(ObjectEndMarker) => onMove(ByteBytes)
-      case None =>
+      case ListEndMarker | ObjectEndMarker => onMove(ByteBytes)
     }
   }
 
@@ -83,6 +64,15 @@ private[akka] class ByteStringLinearInput(source: ByteString, onMove: Int => Uni
       ReadSuccessful(dataFun(source.slice(headerSize, headerSize + contentSize)))
     }
   }
+
+  private def readBiMarker[T <: BiMarker, R](marker: T)(input: ByteString => R): ValueRead[R] = {
+    if (source.isEmpty) ReadFailed("No data found")
+    else source.head match {
+      case value if value == marker.byte =>
+        onMove(ByteBytes)
+        ReadSuccessful(input(source.tail))
+    }
+  }
 }
 
 private class ByteStringLinearListInput(private var source: ByteString, onMove: Int => Unit) extends ListInput {
@@ -96,10 +86,10 @@ private class ByteStringLinearListInput(private var source: ByteString, onMove: 
   })
 
   override def hasNext: Boolean = {
-    source.headOption match {
-      case Some(value) if value == ListEndMarker.byte => closeIfNotClosed(); false
-      case Some(value) => true
-      case None => false
+    if (source.isEmpty) false
+    else source.head match {
+      case value if value == ListEndMarker.byte => closeIfNotClosed(); false
+      case _ => true
     }
   }
 
@@ -129,10 +119,10 @@ private class ByteStringLinearObjectInput(private var source: ByteString, onMove
   }
 
   override def hasNext: Boolean = {
-    source.headOption match {
-      case Some(value) if value == ObjectEndMarker.byte => closeIfNotClosed(); false
-      case Some(value) => true
-      case None => false
+    if (source.isEmpty) false
+    else source.head match {
+      case value if value == ObjectEndMarker.byte => closeIfNotClosed(); false
+      case _ => true
     }
 
   }

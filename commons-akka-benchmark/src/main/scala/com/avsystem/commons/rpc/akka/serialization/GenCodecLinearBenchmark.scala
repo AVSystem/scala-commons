@@ -24,30 +24,26 @@ class GenCodecLinearBenchmark {
   }
 
   @Benchmark
-  def conversionTest(): Unit = {
+  def conversionTest(): Something = {
     val output = new ByteStringLinearOutput(ByteString.newBuilder)
     GenCodec.write[Something](output, something)
     val array: Array[Byte] = output.result.toArray
 
     val input = new ByteStringLinearInput(ByteString(array))
-    val result = GenCodec.read[Something](input)
-
-    assert(result == something)
+    GenCodec.read[Something](input)
   }
 
   @Benchmark
-  def writeTest(b: Blackhole): Unit = {
+  def writeTest(): Array[Byte] = {
     val output = new ByteStringLinearOutput(ByteString.newBuilder)
     GenCodec.write[Something](output, something)
-    b.consume(output.result)
+    output.result.toArray
   }
 
   @Benchmark
-  def readTest(): Unit = {
+  def readTest(): Something = {
     val input = new ByteStringLinearInput(ByteString(array))
-    val result = GenCodec.read[Something](input)
-
-    assert(result == something)
+    GenCodec.read[Something](input)
   }
 
 }
@@ -72,9 +68,11 @@ object GenCodecLinearBenchmark {
       output.result.toArray
     }
 
-    1.to(1000000).foreach { _ =>
+    var i = 0L
+    while (i < 1000000000000000000L) {
       val input = new ByteStringLinearInput(ByteString(array))
       val result = GenCodec.read[Something](input)
+      i += 1
     }
 
   }

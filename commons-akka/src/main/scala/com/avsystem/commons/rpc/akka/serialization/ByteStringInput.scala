@@ -71,7 +71,7 @@ private final class ByteArrayObjectInput(private var content: ByteString) extend
   private var nextDataCache: Option[DataIndexes] = findNextData()
 
   private def findNextData(): Option[DataIndexes] = {
-    content.headOption.flatMap(Marker.of) match {
+    content.headOption.flatMap(Marker.of(_).toOption) match {
       case Some(StringMarker) => content
         .lift(ByteBytes)
         .map(_.toInt)
@@ -79,6 +79,7 @@ private final class ByteArrayObjectInput(private var content: ByteString) extend
         .flatMap(dataStartIndex => findDataIndex(content, dataStartIndex))
       case _ => None
     }
+
   }
 
   override def nextField(): (String, Input) = {
@@ -94,7 +95,7 @@ private final class ByteArrayObjectInput(private var content: ByteString) extend
 
 private trait SequentialInputOps {
   final def findDataIndex(content: ByteString, offset: Int): Option[DataIndexes] = {
-    content.lift(offset).flatMap(Marker.of) match {
+    content.lift(offset).flatMap(Marker.of(_).toOption) match {
       case Some(m: CompileTimeSize) => Some(DataIndexes(offset, offset + m.size + 1))
       case Some(m: RuntimeSize) =>
         content.lift(offset + 1).map(_ => content.iterator.drop(offset + 1).getInt).map(size => DataIndexes(offset, offset + size + ByteBytes + IntBytes))

@@ -70,3 +70,33 @@ As a `serverPath` you need to pass proper remote actor path, which is listening 
 
 ## Serialization
 
+AkkaRPCFramework uses `com.avsystem.commons.serialization.GenCodec` as a serialization method from your entities to
+implemented raw value. In order to make a class allowed in RPC method, you need to provide an implicit `GenCodec` instance.
+
+Akka default configuration uses Java Serialization to serialize messages send via remoting.
+Implementation of the framework provides custom serializer of internal messages (faster than default one),
+but unfortunately you need to enable it manually.
+
+Full setup of the server with faster serializer configured:
+```hocon
+akka {
+  actor {
+    provider = "akka.remote.RemoteActorRefProvider"
+    serializers {
+      rpcInternal = com.avsystem.commons.rpc.akka.serialization.RemoteMessageSerializer
+    }
+    serialization-bindings {
+        "com.avsystem.commons.rpc.akka.RemoteMessage" = rpcInternal
+    }
+  }
+  remote {
+    enabled-transports = ["akka.remote.netty.tcp"]
+    netty.tcp {
+      hostname = "127.0.0.1"
+      port = 2552
+    }
+  }
+}
+```
+The same serializer must be configured on the client side.
+You can learn more about Akka serialization in [Akka documentation](http://doc.akka.io/docs/akka/current/scala/serialization.html#Configuration)

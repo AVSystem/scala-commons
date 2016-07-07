@@ -24,30 +24,26 @@ class GenCodecBenchmark {
   }
 
   @Benchmark
-  def conversionTest(): Unit = {
+  def conversionTest(): Something = {
     val output = new ByteStringOutput
     GenCodec.write[Something](output, something)
     val array: Array[Byte] = output.result.toArray
 
     val input = new ByteStringInput(ByteString(array))
-    val result = GenCodec.read[Something](input)
-
-    assert(result == something)
+    GenCodec.read[Something](input)
   }
 
   @Benchmark
-  def writeTest(b: Blackhole): Unit = {
+  def writeTest(): Array[Byte] = {
     val output = new ByteStringOutput()
     GenCodec.write[Something](output, something)
-    b.consume(output.result)
+    output.result.toArray
   }
 
   @Benchmark
-  def readTest(): Unit = {
+  def readTest(): Something = {
     val input = new ByteStringInput(ByteString(array))
-    val result = GenCodec.read[Something](input)
-
-    assert(result == something)
+    GenCodec.read[Something](input)
   }
 
 }

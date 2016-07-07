@@ -84,7 +84,7 @@ private object WriteOps {
   def writeBinary(value: Array[Byte])(builder: ByteStringBuilder): Unit = {
     builder += ByteArrayMarker.byte
     builder.putInt(value.length)
-    builder ++= value
+    builder.putBytes(value)
   }
 
   def writeBoolean(value: Boolean)(builder: ByteStringBuilder): Unit = {

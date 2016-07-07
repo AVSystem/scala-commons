@@ -28,7 +28,7 @@ class JavaSerializationBenchmark {
   }
 
   @Benchmark
-  def byteStringOutput(): Unit = {
+  def byteStringOutput(): Something = {
     val baos = new ByteArrayOutputStream()
     val o = new ObjectOutputStream(baos)
 
@@ -37,24 +37,22 @@ class JavaSerializationBenchmark {
 
     val array = baos.toByteArray
 
-    val result = new ObjectInputStream(new ByteArrayInputStream(array)).readObject().asInstanceOf[Something]
-    assert(result == something)
+    new ObjectInputStream(new ByteArrayInputStream(array)).readObject().asInstanceOf[Something]
   }
 
   @Benchmark
-  def writeTest(b: Blackhole): Unit = {
+  def writeTest(): Array[Byte] = {
     val baos = new ByteArrayOutputStream()
     val o = new ObjectOutputStream(baos)
 
     o.writeObject(something)
     o.close()
 
-    b.consume(baos.toByteArray)
+    baos.toByteArray
   }
 
   @Benchmark
-  def readTest(): Unit = {
-    val result = new ObjectInputStream(new ByteArrayInputStream(array)).readObject().asInstanceOf[Something]
-    assert(result == something)
+  def readTest(): Something = {
+    new ObjectInputStream(new ByteArrayInputStream(array)).readObject().asInstanceOf[Something]
   }
 }
