@@ -9,9 +9,9 @@ import com.avsystem.commons.serialization.{Input, ListInput, ObjectInput, ReadFa
 /**
   * @author Wojciech Milewski
   */
-private[akka] class ByteStringLinearInput(source: ByteString, listener: Option[Listener]) extends Input with Listener {
+private[akka] class ByteStringLinearInput(source: ByteString, onMove: Int => Unit) extends Input {
 
-  def this(source: ByteString) = this(source, None)
+  def this(source: ByteString) = this(source, _ => Unit)
 
   import ByteOrderImplicits._
 
@@ -23,8 +23,8 @@ private[akka] class ByteStringLinearInput(source: ByteString, listener: Option[L
   override def readList(): ValueRead[ListInput] = {
     source.headOption match {
       case Some(value) if value == ListStartMarker.byte =>
-        listener.foreach(_.dataUsed(ByteBytes))
-        ReadSuccessful(new ByteStringLinearListInput(source.tail, listener))
+        onMove(ByteBytes)
+        ReadSuccessful(new ByteStringLinearListInput(source.tail, onMove))
       case Some(value) => ReadFailed(s"Incorrect data has been found. Expected: ${ListStartMarker.byte.toInt}, but found: ${value.toInt}")
       case None => ReadFailed("No data found")
     }
@@ -32,8 +32,8 @@ private[akka] class ByteStringLinearInput(source: ByteString, listener: Option[L
   override def readObject(): ValueRead[ObjectInput] = {
     source.headOption match {
       case Some(value) if value == ObjectStartMarker.byte =>
-        listener.foreach(_.dataUsed(ByteBytes))
-        ReadSuccessful(new ByteStringLinearObjectInput(source.tail, listener))
+        onMove(ByteBytes)
+        ReadSuccessful(new ByteStringLinearObjectInput(source.tail, onMove))
       case Some(value) => ReadFailed(s"Incorrect data has been found. Expected: ${ListStartMarker.byte.toInt}, but found: ${value.toInt}")
       case None => ReadFailed("No data found")
     }
@@ -49,11 +49,13 @@ private[akka] class ByteStringLinearInput(source: ByteString, listener: Option[L
   }
   override def skip(): Unit = {
     source.headOption.flatMap(Marker.of) match {
-      case Some(value: CompileTimeSize) => listener.foreach(_.dataUsed(ByteBytes + value.size))
+      case Some(value: CompileTimeSize) =>
+        onMove(ByteBytes + value.size)
       case Some(ListStartMarker) => readList().foreach(_.skipRemaining())
       case Some(ObjectStartMarker) => readObject().foreach(_.skipRemaining())
-      case Some(value: RuntimeSize) => listener.foreach(_.dataUsed(ByteBytes + IntBytes + source.iterator.drop(1).getInt))
-      case Some(ListEndMarker) | Some(ObjectEndMarker) => listener.foreach(_.dataUsed(ByteBytes))
+      case Some(value: RuntimeSize) =>
+        onMove(ByteBytes + IntBytes + source.iterator.drop(1).getInt)
+      case Some(ListEndMarker) | Some(ObjectEndMarker) => onMove(ByteBytes)
       case None =>
     }
   }
@@ -64,7 +66,7 @@ private[akka] class ByteStringLinearInput(source: ByteString, listener: Option[L
     if (source.size < ByteBytes + marker.size) ReadFailed(s"Source doesn't contain $marker and data")
     else if (source(0) != marker.byte) ReadFailed(s"Expected $marker, but another byte found: ${source(0).toInt}")
     else {
-      listener.foreach(_.dataUsed(ByteBytes + marker.size))
+      onMove(ByteBytes + marker.size)
       f(source.iterator.drop(ByteBytes).take(marker.size))
     }
   }
@@ -77,49 +79,53 @@ private[akka] class ByteStringLinearInput(source: ByteString, listener: Option[L
     else if (source(0) != marker.byte) ReadFailed(s"Expected $marker, but another byte found: ${source(0).toInt}")
     else if (source.size < headerSize + contentSize) ReadFailed("Source doesn't contain declared byte array")
     else {
-      listener.foreach(_.dataUsed(headerSize + contentSize))
+      onMove(headerSize + contentSize)
       ReadSuccessful(dataFun(source.slice(headerSize, headerSize + contentSize)))
     }
   }
-  override def dataUsed(bytes: Int): Unit = listener.foreach(_.dataUsed(bytes))
 }
 
-private class ByteStringLinearListInput(private val container: Container, listener: Option[Listener]) extends ListInput with Listener {self =>
+private class ByteStringLinearListInput(private var source: ByteString, onMove: Int => Unit) extends ListInput {
 
   private var closed = false
+  private var usedBytes = 0
 
-  def this(bs: ByteString, listener: Option[Listener]) = this(new Container(bs), listener)
-
-  override def nextElement(): Input = new ByteStringLinearInput(container.source, Some(this))
+  override def nextElement(): Input = new ByteStringLinearInput(source, bytes => {
+    source = source.drop(bytes)
+    usedBytes += bytes
+  })
 
   override def hasNext: Boolean = {
-    container.source.headOption match {
+    source.headOption match {
       case Some(value) if value == ListEndMarker.byte => closeIfNotClosed(); false
       case Some(value) => true
       case None => false
     }
   }
-  override def dataUsed(bytes: Int): Unit = {
-    container.move(bytes)
-    listener.foreach(_.dataUsed(bytes))
-  }
 
   private def closeIfNotClosed(): Unit = {
     if (!closed) {
-      listener.foreach(_.dataUsed(ByteBytes))
+      onMove(ByteBytes + usedBytes)
       closed = true
     }
   }
 }
 
-private class ByteStringLinearObjectInput(private var source: ByteString, listener: Option[Listener]) extends ObjectInput with Listener {
+private class ByteStringLinearObjectInput(private var source: ByteString, onMove: Int => Unit) extends ObjectInput {
 
   private var closed = false
+  private var usedBytes = 0
 
   override def nextField(): (String, Input) = {
-    val key = new ByteStringLinearInput(source, Some(this)).readString().get
+    val key = new ByteStringLinearInput(source, bytes => {
+      source = source.drop(bytes)
+      usedBytes += bytes
+    }).readString().get
 
-    key -> new ByteStringLinearInput(source, Some(this))
+    key -> new ByteStringLinearInput(source, bytes => {
+      source = source.drop(bytes)
+      usedBytes += bytes
+    })
   }
 
   override def hasNext: Boolean = {
@@ -130,31 +136,11 @@ private class ByteStringLinearObjectInput(private var source: ByteString, listen
     }
 
   }
-  override def dataUsed(bytes: Int): Unit = {
-    source = source.drop(bytes)
-    listener.foreach(_.dataUsed(bytes))
-  }
 
   private def closeIfNotClosed(): Unit = {
     if (!closed) {
-      listener.foreach(_.dataUsed(ByteBytes))
+      onMove(ByteBytes + usedBytes)
       closed = true
     }
-  }
-}
-
-private object ByteStringLinearInput {
-  implicit class ByteIteratorOps(private val iterator: ByteIterator) extends AnyVal {
-    def nextOpt: Opt[Byte] = if (iterator.hasNext) Opt(iterator.next()) else Opt.empty
-  }
-}
-
-trait Listener {
-  def dataUsed(bytes: Int): Unit
-}
-
-class Container(var source: ByteString) {
-  def move(bytes: Int): Unit = {
-    source = source.drop(bytes)
   }
 }

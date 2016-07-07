@@ -51,3 +51,35 @@ class GenCodecLinearBenchmark {
   }
 
 }
+
+object GenCodecLinearBenchmark {
+
+  def write(): Unit = {
+    val something = Something(42, Nested(4 :: 8 :: 15 :: 16 :: 23 :: 42 :: Nil, 0), "lol")
+
+    1.to(1000000).foreach { _ =>
+      val output = new ByteStringLinearOutput(ByteString.newBuilder)
+      GenCodec.write[Something](output, something)
+    }
+
+  }
+
+  def read(): Unit = {
+    val something = Something(42, Nested(4 :: 8 :: 15 :: 16 :: 23 :: 42 :: Nil, 0), "lol")
+    val array: Array[Byte] = {
+      val output = new ByteStringLinearOutput(ByteString.newBuilder)
+      GenCodec.write[Something](output, something)
+      output.result.toArray
+    }
+
+    1.to(1000000).foreach { _ =>
+      val input = new ByteStringLinearInput(ByteString(array))
+      val result = GenCodec.read[Something](input)
+    }
+
+  }
+
+  def main(args: Array[String]): Unit = {
+    read()
+  }
+}
