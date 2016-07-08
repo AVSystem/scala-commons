@@ -100,3 +100,39 @@ akka {
 ```
 The same serializer must be configured on the client side.
 You can learn more about Akka serialization in [Akka documentation](http://doc.akka.io/docs/akka/current/scala/serialization.html#Configuration)
+
+## Observable
+`AkkaRPCFramework` implements an extension of standard RPC Framework, which provides possibility to return `Observable[T]`
+in RPC method. It uses [Monifu 1.2](https://monix.io/) as implementation of observables.
+
+### Caveats
+As all resources should be automatically closed, each subscription on client observable will call corresponding remote method.
+For example, on the client side:
+```scala
+val rpc: TestRPC = AkkaRPCFramework.client[TestRPC](AkkaRPCClientConfig(serverPath = "akka.tcp//ServerSystem@127.0.0.1:2552/user/rpcServerActor"))
+
+val observable: Observable[Int] = rpc.producer.streamData
+observable.subscribe { int =>
+  println(int)
+  Ack.Continue
+}
+
+observable.subscribe { int =>
+  println(int * 2)
+  if (int == 5) Ack.Cancel
+  else Ack.Continue
+}
+```
+We can see that there are two subscribers of observable on the client side. It will actually call
+`producer.streamData` method **twice**. Because of that, all rpc methods which returns `Observable[T]`
+should be stateless and idempotent to always return the same result. It also means that those methods should not
+have side effects.
+
+### Timeouts
+By default, client subscriber will wait 10 seconds from sending Ack.Continue message for next item from the server.
+If there is no new item, client observable will be completed as an error with `RemoteTimeoutException`.
+Timeout can be configured in `AkkaRPCClientConfig`
+
+By default, server will wait 10 seconds from sending new item to a client for next Ack message.
+If there is no the message, server will log an error and cancel server observable.
+Timeout can be configured in `AkkaRPCServerConfig`

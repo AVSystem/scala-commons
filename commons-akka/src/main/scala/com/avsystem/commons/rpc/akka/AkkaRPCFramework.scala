@@ -2,7 +2,6 @@ package com.avsystem.commons
 package rpc.akka
 
 import akka.actor.{ActorRef, ActorSystem}
-import akka.routing.RoundRobinPool
 import akka.util.ByteString
 import com.avsystem.commons.rpc.akka.client.ClientRawRPC
 import com.avsystem.commons.rpc.akka.serialization.{ByteStringLinearInput, ByteStringLinearOutput}
@@ -30,9 +29,28 @@ object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework wi
     output.result
   }
 
+  /**
+    * Creates server actor which listens for incoming requests.
+    *
+    * To stop server from listening, kill an actor returned from the method.
+    *
+    * @param rpc    actual implementation of `T` RPC
+    * @param config contains configuration on created actor name, timeouts etc.
+    * @tparam T type of RPC
+    */
   def serverActor[T](rpc: T, config: AkkaRPCServerConfig = AkkaRPCServerConfig.default)(implicit system: ActorSystem, asRawRpc: AkkaRPCFramework.AsRawRPC[T]): ActorRef = {
     system.actorOf(ServerActor.props(asRawRpc.asRaw(rpc), config), config.actorName)
   }
+
+  /**
+    * Returns client RPC of type `T`, which all method calls are remote.
+    *
+    * @param config
+    * @param system
+    * @param asRealRPC
+    * @tparam T
+    * @return
+    */
   def client[T](config: AkkaRPCClientConfig)(implicit system: ActorSystem, asRealRPC: AkkaRPCFramework.AsRealRPC[T]): T = {
     val rawRPC = new ClientRawRPC(config)
     asRealRPC.asReal(rawRPC)
