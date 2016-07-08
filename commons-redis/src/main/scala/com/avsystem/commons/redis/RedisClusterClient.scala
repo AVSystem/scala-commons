@@ -5,7 +5,7 @@ import java.io.Closeable
 
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
-import akka.util.{ByteString, Timeout}
+import akka.util.Timeout
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RedisBatch.{ConnectionState, MessageBuffer, RepliesDecoder}
 import com.avsystem.commons.redis.Scope.Cluster
@@ -13,8 +13,9 @@ import com.avsystem.commons.redis.actor.ClusterMonitoringActor
 import com.avsystem.commons.redis.commands.{Asking, SlotRange}
 import com.avsystem.commons.redis.config.ClusterConfig
 import com.avsystem.commons.redis.exception.{CrossSlotException, NoKeysException, RedisException, TooManyRedirectionsException, UnmappedSlotException}
-import com.avsystem.commons.redis.protocol.{ErrorMsg, RedisMsg}
+import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, ErrorMsg, RedisMsg}
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 import scala.util.control.NoStackTrace
@@ -56,19 +57,20 @@ final class RedisClusterClient(
     }
 
   private def determineSlot(batch: RedisBatch[Any, Cluster]): Int = {
-    object keyConsumer extends (ByteString => Unit) {
-      var slot = -1
-      def apply(key: ByteString) = {
-        val s = Hash.slot(key)
+    var slot = -1
+    val buf = new ArrayBuffer[ArrayMsg[BulkStringMsg]]
+    batch.encodeCommands(new MessageBuffer(buf), inTransaction = false)
+    buf.foreach(_.elements.foreach { bs =>
+      if (bs.isCommandKey) {
+        val s = Hash.slot(bs.string)
         if (slot == -1) {
           slot = s
         } else if (s != slot) {
           throw new CrossSlotException
         }
       }
-    }
-    batch.reportKeys(keyConsumer)
-    keyConsumer.slot match {
+    })
+    slot match {
       case -1 => throw new NoKeysException
       case slot => slot
     }
@@ -151,7 +153,5 @@ private object RedisClusterClient {
         }
       }
     }
-    def reportKeys(consumer: ByteString => Any) =
-      batch.reportKeys(consumer)
   }
 }

@@ -3,7 +3,7 @@ package redis.commands
 
 import akka.util.ByteString
 import com.avsystem.commons.redis.Scope.{Connection, Node}
-import com.avsystem.commons.redis.{ConnectionApiSubset, NodeApiSubset, RedisBinaryCommand, RedisSimpleStringCommand, RedisUnitCommand, Unkeyed}
+import com.avsystem.commons.redis.{ConnectionApiSubset, NodeApiSubset, RedisBinaryCommand, RedisSimpleStringCommand, RedisUnitCommand}
 
 trait NodeConnectionApi extends NodeApiSubset {
   def echo(message: ByteString): Result[ByteString, Node] =
@@ -24,22 +24,22 @@ trait ConnectionConnectionApi extends ConnectionApiSubset with NodeConnectionApi
     execute(Select(index))
 }
 
-case class Auth(password: ByteString) extends RedisUnitCommand[Connection] with Unkeyed {
+case class Auth(password: ByteString) extends RedisUnitCommand[Connection] {
   def encode = encoder("AUTH").add(password).result
 }
 
-case class Echo(message: ByteString) extends RedisBinaryCommand[Node] with Unkeyed {
+case class Echo(message: ByteString) extends RedisBinaryCommand[Node] {
   def encode = encoder("ECHO").add(message).result
 }
 
-case object Ping extends RedisSimpleStringCommand[Node] with Unkeyed {
+case object Ping extends RedisSimpleStringCommand[Node] {
   def encode = encoder("PING").result
 }
 
-case object Quit extends RedisUnitCommand[Connection] with Unkeyed {
+case object Quit extends RedisUnitCommand[Connection] {
   def encode = encoder("QUIT").result
 }
 
-case class Select(index: Int) extends RedisUnitCommand[Connection] with Unkeyed {
+case class Select(index: Int) extends RedisUnitCommand[Connection] {
   def encode = encoder("SELECT").add(index).result
 }

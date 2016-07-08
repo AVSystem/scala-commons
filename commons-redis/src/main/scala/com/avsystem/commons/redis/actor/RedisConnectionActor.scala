@@ -9,7 +9,7 @@ import com.avsystem.commons.redis.RedisBatch.{ConnectionState, MessageBuffer, Re
 import com.avsystem.commons.redis.commands.Unwatch
 import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception._
-import com.avsystem.commons.redis.protocol.RedisMsg
+import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, RedisMsg}
 import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{NodeAddress, RedisBatch}
 
@@ -28,8 +28,9 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
   private var requestBeingSent: Opt[SentRequest] = Opt.Empty
   private var blocked = false
   private val sentRequests = new mutable.Queue[SentRequest]
-  private val sendBuffer = new ArrayBuffer[RedisMsg]
+  private val sendBuffer = new ArrayBuffer[ArrayMsg[BulkStringMsg]]
   private val repliesBuffer = new ArrayBuffer[RedisMsg]
+  private val emptyRepliesBuffer = new ArrayBuffer[RedisMsg]
   private val state = new ConnectionState
 
   private val decoder = new RedisMsg.Decoder({ replyMsg =>
@@ -73,7 +74,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       blocked = blocking
       if (sendBuffer.isEmpty) {
         log.debug(s"Empty batch received")
-        decodeAndRespond(requestToSend, sendBuffer)
+        decodeAndRespond(requestToSend, emptyRepliesBuffer)
       } else {
         requestBeingSent = Opt(requestToSend)
         val encoded = RedisMsg.encode(sendBuffer)

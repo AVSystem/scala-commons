@@ -18,7 +18,7 @@ object RedisMsgScalacheck {
   implicit val shrinkBulkString: Shrink[BulkStringMsg] =
     Shrink(bs => Shrink.shrink(bs.string).map(BulkStringMsg(_)))
 
-  implicit val shrinkArray: Shrink[ArrayMsg] =
+  implicit val shrinkArray: Shrink[ArrayMsg[RedisMsg]] =
     Shrink(arr => Shrink.shrink(arr.elements).map(ArrayMsg(_)))
 
   implicit val shrinkRedisMsg: Shrink[RedisMsg] = Shrink {
@@ -28,7 +28,7 @@ object RedisMsgScalacheck {
     case bs: BulkStringMsg => Shrink.shrink(bs)
     case im: IntegerMsg => Shrink.shrink(im)
     case NullArrayMsg => Stream.empty
-    case am: ArrayMsg => Shrink.shrink(am)
+    case am: ArrayMsg[RedisMsg] => Shrink.shrink(am)
   }
 
   val simpleBytes = (Byte.MinValue.toInt to Byte.MaxValue.toInt)

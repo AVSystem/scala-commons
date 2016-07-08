@@ -48,7 +48,6 @@ trait RedisBatch[+A, -S] {self =>
     * Returns a [[RepliesDecoder]] responsible for translating raw Redis responses into the actual result.
     */
   def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean): RepliesDecoder[A]
-  def reportKeys(consumer: ByteString => Any): Unit
 
   /**
     * Merges two batches into one. Provided function is applied on results of the batches being merged to obtain
@@ -70,10 +69,6 @@ trait RedisBatch[+A, -S] {self =>
           f(a, b)
         }
       }
-      def reportKeys(consumer: ByteString => Any) = {
-        self.reportKeys(consumer)
-        other.reportKeys(consumer)
-      }
     }
 
   def <*[B, S0](other: RedisBatch[B, S0]): RedisBatch[A, S with S0] =
@@ -91,7 +86,6 @@ trait RedisBatch[+A, -S] {self =>
         val decoder = self.encodeCommands(messageBuffer, inTransaction)
         RepliesDecoder((replies, start, end, state) => f(decoder.decodeReplies(replies, start, end, state)))
       }
-      def reportKeys(consumer: ByteString => Any) = self.reportKeys(consumer)
     }
 
   /**
@@ -115,11 +109,11 @@ object RedisBatch extends HasFlatMap[OperationBatch] {
       if (inTransaction) {
         batch.encodeCommands(messageBuffer, inTransaction)
       } else {
-        messageBuffer += ArrayMsg(Multi.encode)
+        messageBuffer += Multi.encode
         val initialSize = messageBuffer.size
         val actualDecoder = batch.encodeCommands(messageBuffer, inTransaction = true)
         val actualSize = messageBuffer.size - initialSize
-        messageBuffer += ArrayMsg(Exec.encode)
+        messageBuffer += Exec.encode
         RepliesDecoder { (replies, start, end, state) =>
           state.watching = false
           replies(end - 1) match {
@@ -137,14 +131,12 @@ object RedisBatch extends HasFlatMap[OperationBatch] {
         }
       }
 
-    def reportKeys(consumer: ByteString => Any) = batch.reportKeys(consumer)
-
     override def transaction = this
   }
 
-  class MessageBuffer(private val buffer: ArrayBuffer[RedisMsg]) extends AnyVal {
-    def +=(msg: RedisMsg): Unit = buffer += msg
-    def ++=(msgs: TraversableOnce[RedisMsg]): Unit = buffer ++= msgs
+  class MessageBuffer(private val buffer: ArrayBuffer[ArrayMsg[BulkStringMsg]]) extends AnyVal {
+    def +=(msg: ArrayMsg[BulkStringMsg]): Unit = buffer += msg
+    def ++=(msgs: TraversableOnce[ArrayMsg[BulkStringMsg]]): Unit = buffer ++= msgs
     def size = buffer.size
   }
 
@@ -163,14 +155,12 @@ object RedisBatch extends HasFlatMap[OperationBatch] {
     new RedisBatch[A, Any] with RedisBatch.RepliesDecoder[A] {
       def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = this
       def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) = a
-      def reportKeys(consumer: ByteString => Any) = ()
     }
 
   def failure(cause: Throwable): RedisBatch[Nothing, Any] =
     new RedisBatch[Nothing, Any] with RedisBatch.RepliesDecoder[Nothing] {
       def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = this
       def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) = throw cause
-      def reportKeys(consumer: ByteString => Any) = ()
     }
 
   val unit = success(())

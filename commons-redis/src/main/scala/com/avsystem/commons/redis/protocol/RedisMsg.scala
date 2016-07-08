@@ -20,7 +20,7 @@ case class SimpleStringMsg(string: ByteString) extends ValidRedisMsg {
 object SimpleStringMsg {
   def apply(str: String): SimpleStringMsg = SimpleStringMsg(ByteString(str))
 }
-case class ErrorMsg(errorString: ByteString) extends RedisMsg {
+final case class ErrorMsg(errorString: ByteString) extends RedisMsg {
   override def toString = s"$productPrefix(${RedisMsg.escape(errorString)})"
   lazy val errorCode: String = errorString.indexOf(' '.toByte) match {
     case -1 => errorString.utf8String
@@ -30,13 +30,21 @@ case class ErrorMsg(errorString: ByteString) extends RedisMsg {
 object ErrorMsg {
   def apply(str: String): ErrorMsg = ErrorMsg(ByteString(str))
 }
-case class IntegerMsg(value: Long) extends ValidRedisMsg
+final case class IntegerMsg(value: Long) extends ValidRedisMsg
 case object NullBulkStringMsg extends ValidRedisMsg
-case class BulkStringMsg(string: ByteString) extends ValidRedisMsg {
+sealed case class BulkStringMsg(string: ByteString) extends ValidRedisMsg {
   override def toString = s"$productPrefix(${RedisMsg.escape(string)})"
+  def isCommandKey: Boolean = false
+}
+final class CommandKeyMsg(key: ByteString) extends BulkStringMsg(key) {
+  override def isCommandKey: Boolean = true
+}
+object CommandKeyMsg {
+  def apply(key: ByteString): CommandKeyMsg = new CommandKeyMsg(key)
+  def unapply(keyBulkStringMsg: CommandKeyMsg): Opt[CommandKeyMsg] = Opt(keyBulkStringMsg)
 }
 case object NullArrayMsg extends ValidRedisMsg
-case class ArrayMsg(elements: IndexedSeq[RedisMsg]) extends ValidRedisMsg
+final case class ArrayMsg[+E <: RedisMsg](elements: IndexedSeq[E]) extends ValidRedisMsg
 
 object SimpleStringStr {
   def unapply(ss: SimpleStringMsg): Opt[String] =
@@ -45,7 +53,7 @@ object SimpleStringStr {
 
 object RedisMsg {
   def escape(bs: ByteString, quote: Boolean = true): String = {
-    val sb = new StringBuilder(if(quote) "\"" else "")
+    val sb = new StringBuilder(if (quote) "\"" else "")
     bs.foreach {
       case '\t' => sb ++= "\\r"
       case '\b' => sb ++= "\\b"
@@ -58,7 +66,7 @@ object RedisMsg {
       case b if b > 0x1F && b < 0x7F => sb += b.toChar
       case b => sb ++= f"\\x$b%02x"
     }
-    if(quote) {
+    if (quote) {
       sb += '\"'
     }
     sb.result()

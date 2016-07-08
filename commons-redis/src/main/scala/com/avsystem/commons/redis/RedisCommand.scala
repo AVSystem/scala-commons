@@ -11,7 +11,7 @@ import com.avsystem.commons.redis.protocol._
 import scala.collection.mutable.ArrayBuffer
 
 trait RedisCommand[+A, -S] extends AtomicBatch[A, S] with RedisBatch.RepliesDecoder[A] {
-  def encode: IndexedSeq[BulkStringMsg]
+  def encode: ArrayMsg[BulkStringMsg]
   def decodeExpected: PartialFunction[ValidRedisMsg, A]
 
   protected def encoder(commandName: String*): CommandEncoder = {
@@ -28,7 +28,7 @@ trait RedisCommand[+A, -S] extends AtomicBatch[A, S] with RedisBatch.RepliesDeco
   }
 
   def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = {
-    messageBuffer += ArrayMsg(encode)
+    messageBuffer += encode
     this
   }
 
@@ -36,17 +36,24 @@ trait RedisCommand[+A, -S] extends AtomicBatch[A, S] with RedisBatch.RepliesDeco
     decode(replies(start))
 
   override def toString =
-    encode.iterator.map(bs => RedisMsg.escape(bs.string)).mkString(" ")
+    encode.elements.iterator.map(bs => RedisMsg.escape(bs.string)).mkString(" ")
 }
 
-class CommandEncoder(val result: ArrayBuffer[BulkStringMsg]) extends AnyVal {
+final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) extends AnyVal {
+  def result: ArrayMsg[BulkStringMsg] = ArrayMsg(buffer)
+
   private def fluent(code: => Any): CommandEncoder = {
     code
     this
   }
+
+  def key(key: ByteString) = fluent(buffer += CommandKeyMsg(key))
+  def keys(keys: TraversableOnce[ByteString]) = fluent(keys.foreach(key))
   def add[T: CommandArg](value: T): CommandEncoder = fluent(CommandArg.add(this, value))
   def addFlag(flag: String, value: Boolean): CommandEncoder = if (value) add(flag) else this
   def optAdd[T: CommandArg](flag: String, value: Opt[T]) = fluent(value.foreach(t => add(flag).add(t)))
+  def optKey(flag: String, value: Opt[ByteString]) = fluent(value.foreach(t => add(flag).key(t)))
+  def keyValues[T: CommandArg](keyValues: TraversableOnce[(ByteString, T)]) = fluent(keyValues.foreach({ case (k, v) => key(k).add(v) }))
 }
 
 object CommandEncoder {
@@ -55,7 +62,7 @@ object CommandEncoder {
     def add[T](ce: CommandEncoder, value: T)(implicit ca: CommandArg[T]): Unit =
       ca.add(ce, value)
 
-    implicit val ByteStringArg: CommandArg[ByteString] = CommandArg((ce, v) => ce.result += BulkStringMsg(v))
+    implicit val ByteStringArg: CommandArg[ByteString] = CommandArg((ce, v) => ce.buffer += BulkStringMsg(v))
     implicit val BooleanArg: CommandArg[Boolean] = CommandArg((ce, v) => ce.add(if (v) 1 else 0))
     implicit val StringArg: CommandArg[String] = CommandArg((ce, v) => ce.add(ByteString(v)))
     implicit val IntArg: CommandArg[Int] = CommandArg((ce, v) => ce.add(v.toString))
@@ -151,18 +158,4 @@ trait RedisDoubleCommand[S] extends RedisCommand[Double, S] {
   def decodeExpected = {
     case BulkStringMsg(bytes) => bytes.utf8String.toDouble
   }
-}
-
-trait Unkeyed {this: RedisCommand[Any, Nothing] =>
-  def reportKeys(consumer: ByteString => Any) = ()
-}
-
-trait SimpleSingleKeyed {this: RedisCommand[Any, Nothing] =>
-  def key: ByteString
-  def reportKeys(consumer: ByteString => Any): Unit = consumer(key)
-}
-
-trait SimpleMultiKeyed {this: RedisCommand[Any, Nothing] =>
-  def keys: Seq[ByteString]
-  def reportKeys(consumer: ByteString => Any): Unit = keys.foreach(consumer)
 }
