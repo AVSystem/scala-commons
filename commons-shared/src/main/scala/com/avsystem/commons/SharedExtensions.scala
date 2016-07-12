@@ -6,6 +6,7 @@ import com.avsystem.commons.misc.{Boxing, NOpt, Opt, OptRef}
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
+import scala.util.Try
 import scala.util.control.NonFatal
 
 /**
@@ -22,6 +23,8 @@ trait SharedExtensions {
   implicit def lazyFutureOps[A](fut: => Future[A]): LazyFutureOps[A] = new LazyFutureOps(fut)
 
   implicit def optionOps[A](option: Option[A]): OptionOps[A] = new OptionOps(option)
+
+  implicit def tryOps[A](tr: Try[A]): TryOps[A] = new TryOps(tr)
 }
 
 object SharedExtensions extends SharedExtensions {
@@ -113,5 +116,16 @@ object SharedExtensions extends SharedExtensions {
 
     def toNOpt: NOpt[A] =
       if (option.isEmpty) NOpt.Empty else NOpt.some(option.get)
+  }
+
+  class TryOps[A](private val tr: Try[A]) extends AnyVal {
+    def toOpt: Opt[A] =
+      if (tr.isFailure) Opt.Empty else Opt(tr.get)
+
+    def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
+      if (tr.isFailure) OptRef.Empty else OptRef(boxing.fun(tr.get))
+
+    def toNOpt: NOpt[A] =
+      if (tr.isFailure) NOpt.Empty else NOpt.some(tr.get)
   }
 }
