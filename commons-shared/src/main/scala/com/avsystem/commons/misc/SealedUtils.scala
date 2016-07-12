@@ -62,5 +62,5 @@ trait NamedEnum extends Any {
 trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
   lazy val byName: Map[String, T] = values.iterator.map(v => (v.name, v)).toMap
 
-  implicit val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(byName, _.name)
+  implicit lazy val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(byName, _.name)
 }
