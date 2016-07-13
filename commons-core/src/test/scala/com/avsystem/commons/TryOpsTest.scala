@@ -1,6 +1,6 @@
 package com.avsystem.commons
 
-import com.avsystem.commons.SharedExtensions.TryOps
+import com.avsystem.commons.misc.TryOps
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.{Failure, Success, Try}
