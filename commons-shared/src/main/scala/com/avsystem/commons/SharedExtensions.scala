@@ -5,9 +5,9 @@ import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc.{Boxing, NOpt, Opt, OptRef}
 
 import scala.collection.generic.CanBuildFrom
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.language.implicitConversions
-import scala.util.{Success, Try}
+import scala.util.Try
 import scala.util.control.NonFatal
 
 /**
@@ -134,8 +134,8 @@ object SharedExtensions extends SharedExtensions {
 
     import scala.language.higherKinds
 
-    /** Simple version of `Future.traverse`. Transforms a `TraversableOnce[Future[A]]` into a `Future[TraversableOnce[A]]`.
-      *  Useful for reducing many `Future`s into a single `Future`.
+    /** Simple version of `TryOps.traverse`. Transforms a `TraversableOnce[Try[A]]` into a `Try[TraversableOnce[A]]`.
+      * Useful for reducing many `Try`s into a single `Try`.
       */
     def sequence[A, M[X] <: TraversableOnce[X]](in: M[Try[A]])(implicit cbf: CanBuildFrom[M[Try[A]], A, M[A]]): Try[M[A]] = {
       in.foldLeft(Try(cbf(in))) {
@@ -150,12 +150,11 @@ object SharedExtensions extends SharedExtensions {
       }.map(_.result())
     }
 
-    /** Transforms a `TraversableOnce[A]` into a `Future[TraversableOnce[B]]` using the provided function `A => Future[B]`.
-      * This is useful for performing a parallel map. For example, to apply a function to all items of a list
-      * in parallel:
+    /** Transforms a `TraversableOnce[A]` into a `Try[TraversableOnce[B]]` using the provided function `A => Try[B]`.
+      * For example, to apply a function to all items of a list:
       *
       * {{{
-      *    val myFutureList = Future.traverse(myList)(x => Future(myFunc(x)))
+      *    val myTryList = TryOps.traverse(myList)(x => Try(myFunc(x)))
       * }}}
       */
     def traverse[A, B, M[X] <: TraversableOnce[X]](in: M[A])(fn: A => Try[B])(implicit cbf: CanBuildFrom[M[A], B, M[B]]): Try[M[B]] =
