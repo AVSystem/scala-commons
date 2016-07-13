@@ -7,7 +7,7 @@ import com.avsystem.commons.misc.{Boxing, NOpt, Opt, OptRef}
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.Future
 import scala.language.implicitConversions
-import scala.util.Try
+import scala.util.{Failure, Try}
 import scala.util.control.NonFatal
 
 /**
@@ -139,14 +139,8 @@ object SharedExtensions extends SharedExtensions {
       */
     def sequence[A, M[X] <: TraversableOnce[X]](in: M[Try[A]])(implicit cbf: CanBuildFrom[M[Try[A]], A, M[A]]): Try[M[A]] = {
       in.foldLeft(Try(cbf(in))) {
-        (tr, tb) => {
-          if (tr.isFailure && tb.isFailure) {
-            tr.failed.get.addSuppressed(tb.failed.get)
-            tr
-          } else {
-            for (r <- tr; a <- tb) yield r += a
-          }
-        }
+        case (f@Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
+        case (tr, tb) => for (r <- tr; a <- tb) yield r += a
       }.map(_.result())
     }
 
@@ -159,13 +153,8 @@ object SharedExtensions extends SharedExtensions {
       */
     def traverse[A, B, M[X] <: TraversableOnce[X]](in: M[A])(fn: A => Try[B])(implicit cbf: CanBuildFrom[M[A], B, M[B]]): Try[M[B]] =
     in.map(fn).foldLeft(Try(cbf(in))) {
-      (tr, tb) =>
-        if (tr.isFailure && tb.isFailure) {
-          tr.failed.get.addSuppressed(tb.failed.get)
-          tr
-        } else {
-          for (r <- tr; b <- tb) yield r += b
-        }
+      case (f@Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
+      case (tr, tb) => for (r <- tr; b <- tb) yield r += b
     }.map(_.result())
   }
 }
