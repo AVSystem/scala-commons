@@ -4,9 +4,10 @@ import com.avsystem.commons.SharedExtensions._
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc.{Boxing, NOpt, Opt, OptRef}
 
-import scala.concurrent.Future
+import scala.collection.generic.CanBuildFrom
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
-import scala.util.Try
+import scala.util.{Success, Try}
 import scala.util.control.NonFatal
 
 /**
@@ -77,13 +78,13 @@ object SharedExtensions extends SharedExtensions {
       * Maps a `Future` using [[concurrent.RunNowEC RunNowEC]].
       */
     def mapNow[B](f: A => B): Future[B] =
-      fut.map(f)(RunNowEC)
+    fut.map(f)(RunNowEC)
 
     /**
       * FlatMaps a `Future` using [[concurrent.RunNowEC RunNowEC]].
       */
     def flatMapNow[B](f: A => Future[B]): Future[B] =
-      fut.flatMap(f)(RunNowEC)
+    fut.flatMap(f)(RunNowEC)
 
     def toUnit: Future[Unit] =
       mapNow(_ => ())
@@ -127,5 +128,45 @@ object SharedExtensions extends SharedExtensions {
 
     def toNOpt: NOpt[A] =
       if (tr.isFailure) NOpt.Empty else NOpt.some(tr.get)
+  }
+
+  object TryOps {
+
+    import scala.language.higherKinds
+
+    /** Simple version of `Future.traverse`. Transforms a `TraversableOnce[Future[A]]` into a `Future[TraversableOnce[A]]`.
+      *  Useful for reducing many `Future`s into a single `Future`.
+      */
+    def sequence[A, M[X] <: TraversableOnce[X]](in: M[Try[A]])(implicit cbf: CanBuildFrom[M[Try[A]], A, M[A]]): Try[M[A]] = {
+      in.foldLeft(Try(cbf(in))) {
+        (tr, tb) => {
+          if (tr.isFailure && tb.isFailure) {
+            tr.failed.get.addSuppressed(tb.failed.get)
+            tr
+          } else {
+            for (r <- tr; a <- tb) yield r += a
+          }
+        }
+      }.map(_.result())
+    }
+
+    /** Transforms a `TraversableOnce[A]` into a `Future[TraversableOnce[B]]` using the provided function `A => Future[B]`.
+      * This is useful for performing a parallel map. For example, to apply a function to all items of a list
+      * in parallel:
+      *
+      * {{{
+      *    val myFutureList = Future.traverse(myList)(x => Future(myFunc(x)))
+      * }}}
+      */
+    def traverse[A, B, M[X] <: TraversableOnce[X]](in: M[A])(fn: A => Try[B])(implicit cbf: CanBuildFrom[M[A], B, M[B]]): Try[M[B]] =
+    in.map(fn).foldLeft(Try(cbf(in))) {
+      (tr, tb) =>
+        if (tr.isFailure && tb.isFailure) {
+          tr.failed.get.addSuppressed(tb.failed.get)
+          tr
+        } else {
+          for (r <- tr; b <- tb) yield r += b
+        }
+    }.map(_.result())
   }
 }
