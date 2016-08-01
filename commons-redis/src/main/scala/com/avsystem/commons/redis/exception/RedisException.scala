@@ -54,7 +54,7 @@ class UnmappedSlotException(val slot: Int)
   extends RedisException(s"Slot $slot is not served by any node")
 
 class NoKeysException
-  extends RedisException(s"Cannot execute commands with no keys on the cluster client")
+  extends RedisException(s"Cannot execute commands with no keys using cluster client")
 
 class TooManyRedirectionsException(val address: NodeAddress, val slot: Int, val ask: Boolean)
   extends RedisException(s"Too many Redis cluster redirections, last one to: $address (slot $slot${if (ask) ", ASK" else ""})")

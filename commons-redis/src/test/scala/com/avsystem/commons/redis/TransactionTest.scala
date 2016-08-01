@@ -18,10 +18,8 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
     connectionConfigs = _ => ConnectionConfig(debugListener = listener)
   )
 
-  override def setupCommands =
-    super.setupCommands *> set(key, bs"42")
-
   test("empty transaction") {
+    setup(set(key, bs"42"))
     val batch = RedisBatch.success(42).transaction
     assert(redisClient.executeBatch(batch).futureValue == 42)
 
@@ -108,6 +106,8 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
   }
 
   test("simple transaction with watch") {
+    setup(set(key, bs"42"))
+
     val operation = for {
       value <- watch(Seq(key)) *> get(key).map(_.getOrElse(bs"0"))
       _ <- set(key, value).transaction
@@ -155,6 +155,8 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
   }
 
   test("optimistic lock failure") {
+    setup(set(key, bs"42"))
+
     val operation = for {
       value <- watch(Seq(key)) *> get(key).map(_.getOrElse(bs"0"))
       _ <- RedisOp.success {
@@ -217,14 +219,13 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite with Commun
 
   private val key = bs"key"
 
-  override def setupCommands =
-    super.setupCommands *> set(key, bs"0")
-
   // needed in order to force the client to execute UNWATCH before test finishes
   private def withDummyGet[T](fut: Future[T]) =
   fut.andThen({ case _ => redisClient.executeBatch(get(bs"dummy")) })
 
   test("simple transaction with cleanup") {
+    setup(set(key, bs"0"))
+
     val operation = for {
       value <- watch(Seq(key)) *> get(key).map(_.getOrElse(bs"0"))
       _ <- set(key, value)
@@ -235,6 +236,8 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite with Commun
   }
 
   test("simple transaction with cleanup after failure") {
+    setup(set(key, bs"0"))
+
     val operation = for {
       value <- watch(Seq(key)) *> get(key).map(_.getOrElse(bs"0"))
       _ <- RedisOp.failure(new IllegalArgumentException("SRSLY"))
@@ -245,6 +248,8 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite with Commun
   }
 
   test("simple transaction with cleanup after redis failure") {
+    setup(set(key, bs"0"))
+
     val operation = for {
       value <- watch(Seq(key)) *> get(key).map(_.getOrElse(bs"0"))
       _ <- clusterInfo // cluster info will fail on non-cluster Redis instance
@@ -255,6 +260,8 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite with Commun
   }
 
   test("concurrent transactions") {
+    setup(set(key, bs"0"))
+
     val operation = for {
       value <- watch(Seq(key)) *> get(key).map(_.map(_.utf8String.toInt).getOrElse(0))
       _ <- set(key, bs"${value + 1}").transaction

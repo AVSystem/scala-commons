@@ -8,7 +8,7 @@ import org.scalatest.Suite
   * Author: ghik
   * Created: 14/04/16.
   */
-trait UsesRedisClusterClient extends UsesFreshClusterServers with UsesActorSystem {this: Suite =>
+trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem {this: Suite =>
   def clusterConfig: ClusterConfig = ClusterConfig()
 
   var redisClient: RedisClusterClient = _

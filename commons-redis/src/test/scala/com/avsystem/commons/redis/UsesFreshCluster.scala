@@ -12,7 +12,7 @@ import scala.concurrent.{Await, Future, Promise}
   * Author: ghik
   * Created: 27/06/16.
   */
-trait UsesFreshCluster extends UsesActorSystem with UsesFreshClusterServers {this: Suite =>
+trait UsesFreshCluster extends UsesActorSystem with UsesClusterServers {this: Suite =>
 
   def ports = 8000 to 8005
   def masterOf(idx: Int): Int = idx - (idx % 2)

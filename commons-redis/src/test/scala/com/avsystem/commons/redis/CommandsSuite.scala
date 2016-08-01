@@ -3,7 +3,7 @@ package redis
 
 import akka.util.{ByteString, ByteStringBuilder}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.{BeforeAndAfterEach, FunSuite}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -25,50 +25,50 @@ trait ByteStringInterpolation {
   }
 }
 
-trait CommandsSuite extends FunSuite with ScalaFutures with BeforeAndAfterAll with ByteStringInterpolation {
+trait CommandsSuite extends FunSuite with ScalaFutures with BeforeAndAfterEach with ByteStringInterpolation with CommunicationLogging {
   type Api <: ApiSubset
 
   def executor: RedisExecutor[Api#CmdScope]
-  def setupCommands: RedisBatch[Any, Api#CmdScope] = RedisBatch.success(())
-  val commands: Api {type Result[+A, -S] = Future[A]}
 
-  override protected def beforeAll() = {
-    super.beforeAll()
-    Await.result(executor.execute(setupCommands), Duration.Inf)
+  protected def setup(batches: RedisBatch[Any, Api#CmdScope]*): Unit = {
+    Await.result(executor.execute(batches.sequence), Duration.Inf)
+    listener.clear()
+  }
+
+  protected implicit class BatchOps[T](batch: RedisBatch[T, Api#CmdScope]) {
+    def exec: Future[T] = executor.execute(batch)
   }
 }
 
 trait RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
   type Api = RedisClusteredAsyncCommands
   def executor = redisClient.toExecutor
-  lazy val commands = RedisClusteredAsyncCommands(executor)
 
   override def clusterConfig = super.clusterConfig
 
-  override protected def afterAll() = {
-    // TODO: broadcast flushall?
-    super.afterAll()
+  override protected def afterEach() = {
+    val futures = redisClient.currentState.masters.values.map(_.executeBatch(RedisCommands.flushall))
+    Await.result(Future.sequence(futures), Duration.Inf)
+    super.afterEach()
   }
 }
 
 trait RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with CommandsSuite {
   type Api = RedisNodeAsyncCommands
   def executor = redisClient.toExecutor
-  lazy val commands = RedisNodeAsyncCommands(executor)
 
-  override protected def afterAll() = {
-    Await.result(commands.flushall, Duration.Inf)
-    super.afterAll()
+  override protected def afterEach() = {
+    Await.result(executor.execute(RedisCommands.flushall), Duration.Inf)
+    super.afterEach()
   }
 }
 
 trait RedisConnectionCommandsSuite extends FunSuite with UsesRedisConnectionClient with CommandsSuite {
   type Api = RedisConnectionAsyncCommands
   def executor = redisClient.toExecutor
-  lazy val commands = RedisConnectionAsyncCommands(executor)
 
-  override protected def afterAll() = {
-    Await.result(commands.flushall, Duration.Inf)
-    super.afterAll()
+  override protected def afterEach() = {
+    Await.result(executor.execute(RedisCommands.flushall), Duration.Inf)
+    super.afterEach()
   }
 }

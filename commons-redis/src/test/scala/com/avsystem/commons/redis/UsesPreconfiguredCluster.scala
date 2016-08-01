@@ -13,7 +13,7 @@ import scala.concurrent.{Await, Future, Promise}
   * Author: ghik
   * Created: 27/06/16.
   */
-trait UsesPreconfiguredCluster extends UsesActorSystem with UsesFreshClusterServers {this: Suite =>
+trait UsesPreconfiguredCluster extends UsesActorSystem with UsesClusterServers {this: Suite =>
 
   final def ports = 9000 to 9005
 

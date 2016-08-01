@@ -8,7 +8,7 @@ import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{ClusterSlots, SlotRange}
 import com.avsystem.commons.redis.config.ClusterConfig
 import com.avsystem.commons.redis.util.ActorLazyLogging
-import com.avsystem.commons.redis.{NodeAddress, RedisCommands, RedisNodeClient}
+import com.avsystem.commons.redis.{ClusterState, NodeAddress, RedisCommands, RedisNodeClient}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -17,7 +17,7 @@ import scala.util.{Failure, Random, Success, Try}
 final class ClusterMonitoringActor(
   seedNodes: Seq[NodeAddress],
   config: ClusterConfig,
-  listener: Array[(SlotRange, RedisNodeClient)] => Any)
+  listener: ClusterState => Any)
   extends Actor with ActorLazyLogging {
 
   import ClusterMonitoringActor._
@@ -33,11 +33,12 @@ final class ClusterMonitoringActor(
   private var masters = mutable.LinkedHashSet.empty[NodeAddress]
   private val connections = MHashMap(seedNodes.map(addr => (addr, createConnection(addr))): _*)
   private val clients = new MHashMap[NodeAddress, RedisNodeClient]
-  private var mapping = Array.empty[(SlotRange, RedisNodeClient)]
+  private var state = ClusterState(IndexedSeq.empty, Map.empty)
   private var suspendUntil = Deadline.now
 
   self ! Refresh(Opt(seedNodes))
-  system.scheduler.schedule(config.autoRefreshInterval, config.autoRefreshInterval, self, Refresh())
+  private val scheduledRefresh =
+    system.scheduler.schedule(config.autoRefreshInterval, config.autoRefreshInterval, self, Refresh())
 
   def randomMasters(): Seq[NodeAddress] = {
     val pool = masters.toArray
@@ -63,10 +64,13 @@ final class ClusterMonitoringActor(
       }
     case pr: PacksResult => Try(ClusterSlots.decodeReplies(pr)) match {
       case Success(slotRangeMapping) =>
-        val newMapping = slotRangeMapping.iterator.map { srm =>
-          (srm.range, clients.getOrElseUpdate(srm.master, createClient(srm.master)))
-        }.toArray
-        java.util.Arrays.sort(newMapping, MappingComparator)
+        val newMapping = {
+          val res = slotRangeMapping.iterator.map { srm =>
+            (srm.range, clients.getOrElseUpdate(srm.master, createClient(srm.master)))
+          }.toArray
+          java.util.Arrays.sort(res, MappingComparator)
+          res: IndexedSeq[(SlotRange, RedisNodeClient)]
+        }
 
         masters = slotRangeMapping.iterator.map(_.master).to[mutable.LinkedHashSet]
 
@@ -74,10 +78,10 @@ final class ClusterMonitoringActor(
           connections(addr) = createConnection(addr)
         }
 
-        if (!(mapping sameElements newMapping)) {
-          log.debug(s"New cluster slot mapping received:\n${slotRangeMapping.mkString("\n")}")
-          mapping = newMapping
-          listener(newMapping)
+        if (state.mapping != newMapping) {
+          log.info(s"New cluster slot mapping received:\n${slotRangeMapping.mkString("\n")}")
+          state = ClusterState(newMapping, masters.iterator.map(m => (m, clients(m))).toMap)
+          listener(state)
         }
 
         (connections.keySet diff masters).foreach { addr =>
@@ -97,6 +101,7 @@ final class ClusterMonitoringActor(
   }
 
   override def postStop() = {
+    scheduledRefresh.cancel()
     clients.values.foreach(_.close())
   }
 }

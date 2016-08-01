@@ -4,10 +4,10 @@ package redis
 import java.io.Closeable
 
 import akka.actor.{ActorSystem, Props}
-import akka.util.Timeout
-import com.avsystem.commons.collection.CollectionAliases.MHashMap
+import akka.util.{ByteString, Timeout}
+import com.avsystem.commons.collection.CollectionAliases.{BMap, MHashMap}
+import com.avsystem.commons.jiop.JavaInterop._
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.RedisBatch.Index
 import com.avsystem.commons.redis.RedisClusterClient.CollectionPacks
 import com.avsystem.commons.redis.Scope.Cluster
 import com.avsystem.commons.redis.actor.ClusterMonitoringActor
@@ -19,7 +19,7 @@ import com.avsystem.commons.redis.protocol.{ErrorMsg, FailureReply, RedisReply}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.control.NonFatal
 
 /**
@@ -31,31 +31,18 @@ final class RedisClusterClient(
   val clusterConfig: ClusterConfig = ClusterConfig())
   (implicit system: ActorSystem) extends Closeable {
 
-  private type SlotMapping = Array[(SlotRange, RedisNodeClient)]
-
-  @volatile private[this] var mapping: SlotMapping = _
+  @volatile private[this] var state: ClusterState = ClusterState(IndexedSeq.empty, Map.empty)
+  @volatile private[this] var stateListener: ClusterState => Unit = s => ()
   private val initPromise = Promise[Unit]()
 
-  private def onNewMapping(newMapping: Array[(SlotRange, RedisNodeClient)]): Unit = {
-    mapping = newMapping
+  private def onNewState(newState: ClusterState): Unit = {
+    state = newState
+    stateListener(state)
     initPromise.trySuccess(())
   }
 
   private val monitoringActor =
-    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, clusterConfig, onNewMapping)))
-
-  private def clientForSlot(mapping: SlotMapping, slot: Int): RedisNodeClient = {
-    def binsearch(from: Int, to: Int): RedisNodeClient =
-      if (from >= to) throw new UnmappedSlotException(slot)
-      else {
-        val mid = (from + to) / 2
-        val (range, client) = mapping(mid)
-        if (range.contains(slot)) client
-        else if (range.start > slot) binsearch(from, mid)
-        else binsearch(mid + 1, to)
-      }
-    binsearch(0, mapping.length)
-  }
+    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, clusterConfig, onNewState)))
 
   private def determineSlot(pack: RawCommandPack): Int = {
     var slot = -1
@@ -78,6 +65,15 @@ final class RedisClusterClient(
 
   import system.dispatcher
 
+  def setStateListener(listener: ClusterState => Unit)(implicit executor: ExecutionContext): Unit =
+    stateListener = state => executor.execute(jRunnable(listener(state)))
+
+  def currentState: ClusterState =
+    state
+
+  def initialized: Future[this.type] =
+    initPromise.future.map(_ => this)
+
   def toExecutor(implicit timeout: Timeout): RedisExecutor[Cluster] =
     new RedisExecutor[Cluster] {
       def execute[A](batch: RedisBatch[A, Cluster]) = executeBatch(batch)
@@ -86,7 +82,7 @@ final class RedisClusterClient(
   def executeBatch[A](batch: ClusterBatch[A])(implicit timeout: Timeout): Future[A] =
     initPromise.future.flatMap { _ =>
       //TODO: optimize when there's only one pack or all target the same node
-      val currentMapping = mapping
+      val currentState = state
       val barrier = Promise[Unit]()
       val packsByNode = new MHashMap[RedisNodeClient, ArrayBuffer[RawCommandPack]]
       val resultsByNode = new MHashMap[RedisNodeClient, Future[PacksResult]]
@@ -103,7 +99,7 @@ final class RedisClusterClient(
       val results = new ArrayBuffer[Future[RedisReply]]
       batch.rawCommandPacks.emitCommandPacks { pack =>
         val resultFuture = try {
-          val client = clientForSlot(currentMapping, determineSlot(pack))
+          val client = currentState.clientForSlot(determineSlot(pack))
           futureForPack(client, pack)
         } catch {
           case re: RedisException => Future.successful(FailureReply(re))
@@ -139,5 +135,23 @@ private object RedisClusterClient {
         Opt(Redirection(NodeAddress(ip, port.toInt), slot.toInt, ask))
       } else Opt.Empty
     }
+  }
+}
+
+case class ClusterState(mapping: IndexedSeq[(SlotRange, RedisNodeClient)], masters: BMap[NodeAddress, RedisNodeClient]) {
+  def clientForKey(key: ByteString): RedisNodeClient =
+    clientForSlot(Hash.slot(key))
+
+  def clientForSlot(slot: Int): RedisNodeClient = {
+    def binsearch(from: Int, to: Int): RedisNodeClient =
+      if (from >= to) throw new UnmappedSlotException(slot)
+      else {
+        val mid = (from + to) / 2
+        val (range, client) = mapping(mid)
+        if (range.contains(slot)) client
+        else if (range.start > slot) binsearch(from, mid)
+        else binsearch(mid + 1, to)
+      }
+    binsearch(0, mapping.length)
   }
 }

@@ -14,7 +14,7 @@ import scala.sys.process._
   * Author: ghik
   * Created: 27/06/16.
   */
-trait UsesFreshClusterServers extends BeforeAndAfterAll with RedisProcessUtils {this: Suite =>
+trait UsesClusterServers extends BeforeAndAfterAll with RedisProcessUtils {this: Suite =>
 
   val clusterDir = new File("cluster/" + System.currentTimeMillis())
 
@@ -29,7 +29,6 @@ trait UsesFreshClusterServers extends BeforeAndAfterAll with RedisProcessUtils {
     super.beforeAll()
     prepareDirectory()
     redisProcesses = Await.result(Future.traverse(ports)(port => launchRedis(
-      s"$redisHome/redis-server",
       "--port", port.toString,
       "--daemonize", "no",
       "--pidfile", "redis.pid",

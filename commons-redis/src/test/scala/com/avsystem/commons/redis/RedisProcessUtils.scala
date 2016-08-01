@@ -13,9 +13,9 @@ trait RedisProcessUtils {
 
   def redisHome = sys.env("REDIS_HOME")
 
-  def launchRedis(command: String*): Future[Process] = {
+  def launchRedis(arguments: String*): Future[Process] = {
     val promise = Promise[Unit]()
-    val process = command.run(ProcessLogger { line =>
+    val process = (s"$redisHome/redis-server" +: arguments).run(ProcessLogger { line =>
       println(line)
       if (line.contains("* The server is now ready to accept connections on port")) {
         promise.success(())
