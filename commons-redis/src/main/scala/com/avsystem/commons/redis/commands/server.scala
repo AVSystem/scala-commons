@@ -12,5 +12,5 @@ trait NodeServerApi extends ClusteredServerApi with NodeApiSubset {
 }
 
 case object Flushall extends RedisUnitCommand[Node] {
-  def encode = encoder("FLUSHALL").result
+  val encoded = encoder("FLUSHALL").result
 }

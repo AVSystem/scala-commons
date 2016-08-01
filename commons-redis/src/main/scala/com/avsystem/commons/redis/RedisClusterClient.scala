@@ -4,21 +4,23 @@ package redis
 import java.io.Closeable
 
 import akka.actor.{ActorSystem, Props}
-import akka.pattern.ask
 import akka.util.Timeout
+import com.avsystem.commons.collection.CollectionAliases.MHashMap
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.RedisBatch.{ConnectionState, MessageBuffer, RepliesDecoder}
+import com.avsystem.commons.redis.RedisBatch.Index
+import com.avsystem.commons.redis.RedisClusterClient.CollectionPacks
 import com.avsystem.commons.redis.Scope.Cluster
 import com.avsystem.commons.redis.actor.ClusterMonitoringActor
-import com.avsystem.commons.redis.commands.{Asking, SlotRange}
+import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
+import com.avsystem.commons.redis.commands.SlotRange
 import com.avsystem.commons.redis.config.ClusterConfig
-import com.avsystem.commons.redis.exception.{CrossSlotException, NoKeysException, RedisException, TooManyRedirectionsException, UnmappedSlotException}
-import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, ErrorMsg, RedisMsg}
+import com.avsystem.commons.redis.exception._
+import com.avsystem.commons.redis.protocol.{ErrorMsg, FailureReply, RedisReply}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
-import scala.util.control.NoStackTrace
+import scala.util.control.NonFatal
 
 /**
   * Author: ghik
@@ -29,86 +31,89 @@ final class RedisClusterClient(
   val clusterConfig: ClusterConfig = ClusterConfig())
   (implicit system: ActorSystem) extends Closeable {
 
-  import RedisClusterClient._
+  private type SlotMapping = Array[(SlotRange, RedisNodeClient)]
 
-  @volatile private[this] var mapping = Opt.empty[Array[(SlotRange, RedisNodeClient)]]
+  @volatile private[this] var mapping: SlotMapping = _
   private val initPromise = Promise[Unit]()
 
   private def onNewMapping(newMapping: Array[(SlotRange, RedisNodeClient)]): Unit = {
-    mapping = Opt(newMapping)
+    mapping = newMapping
     initPromise.trySuccess(())
   }
 
   private val monitoringActor =
     system.actorOf(Props(new ClusterMonitoringActor(seedNodes, clusterConfig, onNewMapping)))
 
-  private def clientForSlot(slot: Int): Opt[RedisNodeClient] =
-    mapping.flatMap { m =>
-      def binsearch(from: Int, to: Int): Opt[RedisNodeClient] =
-        if (from >= to) Opt.Empty
-        else {
-          val mid = (from + to) / 2
-          val (range, client) = m(mid)
-          if (range.contains(slot)) Opt(client)
-          else if (range.start > slot) binsearch(from, mid)
-          else binsearch(mid + 1, to)
-        }
-      binsearch(0, m.length)
-    }
-
-  private def determineSlot(batch: RedisBatch[Any, Cluster]): Int = {
-    var slot = -1
-    val buf = new ArrayBuffer[ArrayMsg[BulkStringMsg]]
-    batch.encodeCommands(new MessageBuffer(buf), inTransaction = false)
-    buf.foreach(_.elements.foreach { bs =>
-      if (bs.isCommandKey) {
-        val s = Hash.slot(bs.string)
-        if (slot == -1) {
-          slot = s
-        } else if (s != slot) {
-          throw new CrossSlotException
-        }
+  private def clientForSlot(mapping: SlotMapping, slot: Int): RedisNodeClient = {
+    def binsearch(from: Int, to: Int): RedisNodeClient =
+      if (from >= to) throw new UnmappedSlotException(slot)
+      else {
+        val mid = (from + to) / 2
+        val (range, client) = mapping(mid)
+        if (range.contains(slot)) client
+        else if (range.start > slot) binsearch(from, mid)
+        else binsearch(mid + 1, to)
       }
-    })
+    binsearch(0, mapping.length)
+  }
+
+  private def determineSlot(pack: RawCommandPack): Int = {
+    var slot = -1
+    pack.rawCommands(inTransaction = false)
+      .emitCommands(_.elements.foreach { bs =>
+        if (bs.isCommandKey) {
+          val s = Hash.slot(bs.string)
+          if (slot == -1) {
+            slot = s
+          } else if (s != slot) {
+            throw new CrossSlotException
+          }
+        }
+      })
     slot match {
       case -1 => throw new NoKeysException
-      case slot => slot
+      case _ => slot
     }
   }
 
   import system.dispatcher
 
-  def toAtomicExecutor(implicit timeout: Timeout): RedisExecutor[Cluster] =
+  def toExecutor(implicit timeout: Timeout): RedisExecutor[Cluster] =
     new RedisExecutor[Cluster] {
-      def execute[A](batch: RedisBatch[A, Cluster]) = executeAtomically(batch)
+      def execute[A](batch: RedisBatch[A, Cluster]) = executeBatch(batch)
     }
 
-  def executeAtomically[A](batch: ClusterBatch[A])(implicit timeout: Timeout): Future[A] =
+  def executeBatch[A](batch: ClusterBatch[A])(implicit timeout: Timeout): Future[A] =
     initPromise.future.flatMap { _ =>
-      val slot = determineSlot(batch)
-      val client = clientForSlot(slot).getOrElse(throw new UnmappedSlotException(slot))
-      tryExecuteBatch(batch.atomic, client, Redirection(client.address, slot, ask = false), 0)
-    }
+      //TODO: optimize when there's only one pack or all target the same node
+      val currentMapping = mapping
+      val barrier = Promise[Unit]()
+      val packsByNode = new MHashMap[RedisNodeClient, ArrayBuffer[RawCommandPack]]
+      val resultsByNode = new MHashMap[RedisNodeClient, Future[PacksResult]]
 
-  private def tryExecuteBatch[A](batch: ClusterAtomicBatch[A], client: RedisNodeClient, redirection: Redirection, retry: Int)
-    (implicit timeout: Timeout): Future[A] = {
+      def futureForPack(client: RedisNodeClient, pack: RawCommandPack): Future[RedisReply] = {
+        val packBuffer = packsByNode.getOrElseUpdate(client, new ArrayBuffer)
+        val idx = packBuffer.size
+        packBuffer += pack
+        resultsByNode.getOrElseUpdate(client, barrier.future.flatMapNow { _ =>
+          client.executeRaw(CollectionPacks(packBuffer))
+        }).mapNow(_.apply(idx))
+      }
 
-    if (retry > clusterConfig.maxRedirections) {
-      throw new TooManyRedirectionsException(redirection.address, redirection.slot, redirection.ask)
-    }
-
-    client.executeBatch(new RedirectableBatch(batch, redirection.ask)).recoverWith {
-      case RedirectionException(red) =>
-        if (!red.ask) {
-          // force immediate cluster state refresh on non-ASK redirection
-          monitoringActor ! ClusterMonitoringActor.Refresh(Opt(Seq(client.address)))
+      val results = new ArrayBuffer[Future[RedisReply]]
+      batch.rawCommandPacks.emitCommandPacks { pack =>
+        val resultFuture = try {
+          val client = clientForSlot(currentMapping, determineSlot(pack))
+          futureForPack(client, pack)
+        } catch {
+          case re: RedisException => Future.successful(FailureReply(re))
+          case NonFatal(cause) => Future.failed(cause)
         }
-        monitoringActor.ask(ClusterMonitoringActor.GetClient(red.address))(GetClientTimeout).flatMap {
-          case ClusterMonitoringActor.GetClientResponse(newClient) =>
-            tryExecuteBatch(batch, newClient, red, retry + 1)
-        }
+        results += resultFuture
+      }
+      barrier.success(())
+      Future.sequence(results).map(replies => batch.decodeReplies(replies))
     }
-  }
 
   def close(): Unit = {
     system.stop(monitoringActor)
@@ -118,9 +123,11 @@ final class RedisClusterClient(
 private object RedisClusterClient {
   val GetClientTimeout = Timeout(1.seconds)
 
-  case class Redirection(address: NodeAddress, slot: Int, ask: Boolean)
-  case class RedirectionException(redirection: Redirection) extends RedisException with NoStackTrace
+  case class CollectionPacks(coll: Traversable[RawCommandPack]) extends RawCommandPacks {
+    def emitCommandPacks(consumer: RawCommandPack => Unit) = coll.foreach(consumer)
+  }
 
+  case class Redirection(address: NodeAddress, slot: Int, ask: Boolean)
   object RedirectionError {
     def unapply(failure: ErrorMsg): Opt[Redirection] = {
       val message = failure.errorString.utf8String
@@ -131,27 +138,6 @@ private object RedisClusterClient {
         val Array(ip, port) = ipport.split(':')
         Opt(Redirection(NodeAddress(ip, port.toInt), slot.toInt, ask))
       } else Opt.Empty
-    }
-  }
-
-  case class RedirectableBatch[+A](batch: ClusterAtomicBatch[A], asking: Boolean) extends RedisBatch[A, Cluster] {
-    def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = {
-      val askingDecoder = if (asking) Opt(Asking.encodeCommands(messageBuffer, inTransaction = false)) else Opt.Empty
-      val decoder = batch.encodeCommands(messageBuffer, inTransaction = false)
-      new RepliesDecoder[A] {
-        def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) = {
-          val actualStart = start + (if (asking) 1 else 0)
-          askingDecoder.foreach(_.decodeReplies(replies, start, start + 1, state))
-          def detectRedirection(acc: Opt[Redirection], idx: Int): Opt[Redirection] =
-            if (idx >= end) acc
-            else replies(idx) match {
-              case RedirectionError(redirection) if acc.exists(_ != redirection) => Opt.Empty
-              case _ => detectRedirection(acc, idx + 1)
-            }
-          detectRedirection(Opt.Empty, actualStart).foreach(r => throw new RedirectionException(r))
-          decoder.decodeReplies(replies, actualStart, end, state)
-        }
-      }
     }
   }
 }

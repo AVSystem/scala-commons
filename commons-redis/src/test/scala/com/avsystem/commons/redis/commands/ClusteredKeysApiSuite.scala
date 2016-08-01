@@ -1,8 +1,10 @@
 package com.avsystem.commons
 package redis.commands
 
+import akka.util.ByteString
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.{CommandsSuite, RedisCommands, RedisConnectionCommandsSuite, RedisNodeCommandsSuite}
+import com.avsystem.commons.redis.ClusterUtils.keyWithSameSlotAs
+import com.avsystem.commons.redis.{CommandsSuite, RedisBatch, RedisClusterCommandsSuite, RedisCommands, RedisConnectionCommandsSuite, RedisNodeCommandsSuite}
 
 import scala.concurrent.Future
 
@@ -14,7 +16,7 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
   type Api <: ClusteredKeysApi
 
   // only to make IntelliJ happy
-  lazy val cmds: ClusteredKeysApi {type Result[+A, -S] = Future[A]} = commands
+  private lazy val cmds: ClusteredKeysApi {type Result[+A, -S] = Future[A]} = commands
 
   import cmds._
 
@@ -26,12 +28,11 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
       set(bs"toex", bs"value") *>
       set(bs"todel", bs"value") *>
       set(bs"torename", bs"value") *>
-      set(bs"torenamenx", bs"value") *>
-      set(bs"tomove", bs"value")
+      set(bs"torenamenx", bs"value")
   }
 
   test("DEL") {
-    assert(del(Seq(bs"todel", bs"foo")).futureValue == 1)
+    assert(del(Seq(bs"todel")).futureValue == 1)
   }
 
   test("DUMP") {
@@ -40,7 +41,7 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
   }
 
   test("EXISTS") {
-    assert(exists(Seq(bs"key", bs"foo")).futureValue == 1)
+    assert(exists(Seq(bs"key")).futureValue == 1)
   }
 
   test("EXPIRE") {
@@ -49,10 +50,6 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
 
   test("EXPIREAT") {
     assert(expireat(bs"toex", Int.MaxValue).futureValue)
-  }
-
-  test("MOVE") {
-    assert(move(bs"tomove", 1).futureValue)
   }
 
   test("OBJECT REFCOUNT") {
@@ -89,11 +86,11 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
   }
 
   test("RENAME") {
-    rename(bs"torename", bs"renamed").futureValue
+    rename(bs"torename", keyWithSameSlotAs(bs"torename")).futureValue
   }
 
   test("RENAMENX") {
-    assert(renamenx(bs"torenamenx", bs"renamednx").futureValue)
+    assert(renamenx(bs"torenamenx", keyWithSameSlotAs(bs"torenamenx")).futureValue)
   }
 
   test("RESTORE") {
@@ -104,9 +101,10 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
   test("SORT") {
     assert(sort(bs"somelist",
       Opt(SelfPattern), Opt(SortLimit(0, 1)), asc = false, alpha = true).futureValue.isEmpty)
-    assert(sortGet(bs"somelist", Seq(HashFieldPattern(bs"hash", bs"*")),
-      Opt(SelfPattern), Opt(SortLimit(0, 1)), asc = false, alpha = true).futureValue.isEmpty)
-    assert(sortStore(bs"somelist", bs"destination").futureValue == 0)
+  }
+
+  test("SORT with STORE") {
+    assert(sortStore(bs"somelist", keyWithSameSlotAs(bs"somelist")).futureValue == 0)
   }
 
   test("TTL") {
@@ -120,5 +118,61 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
   }
 }
 
-class RedisNodeKeysApiSuite extends RedisNodeCommandsSuite with ClusteredKeysApiSuite
-class RedisConnectionKeysApiSuite extends RedisConnectionCommandsSuite with ClusteredKeysApiSuite
+trait NodeKeysApiSuite extends ClusteredKeysApiSuite {
+  type Api <: NodeKeysApi
+
+  // only to make IntelliJ happy
+  private lazy val cmds: NodeKeysApi {type Result[+A, -S] = Future[A]} = commands
+
+  import cmds._
+
+  private val scanKeys = (0 until 32).map(i => bs"toscan$i")
+
+  override def setupCommands = {
+    import RedisCommands._
+    super.setupCommands *>
+      scanKeys.map(set(_, bs"value")).sequence *>
+      set(bs"todel2", bs"value") *>
+      set(bs"tomove", bs"value")
+  }
+
+  test("KEYS") {
+    assert(keys(bs"toscan*").futureValue.toSet == scanKeys.toSet)
+  }
+
+  test("SCAN") {
+    def scanCollect(cursor: Cursor, acc: Seq[ByteString]): Future[Seq[ByteString]] =
+      scan(cursor, Opt(bs"toscan*"), Opt(4L)).flatMapNow {
+        case (Cursor.NoCursor, data) => Future.successful(acc ++ data)
+        case (nextCursor, data) => scanCollect(nextCursor, acc ++ data)
+      }
+    assert(scanCollect(Cursor.NoCursor, Vector.empty).futureValue.toSet == scanKeys.toSet)
+  }
+
+  test("DEL multikey") {
+    assert(del(Seq(bs"todel2", bs"foo")).futureValue == 1)
+  }
+
+  test("MOVE") {
+    assert(move(bs"tomove", 1).futureValue)
+  }
+
+  test("EXISTS multikey") {
+    assert(exists(Seq(bs"key", bs"foo")).futureValue == 1)
+  }
+
+  test("SORT with GET") {
+    assert(sortGet(bs"somelist", Seq(HashFieldPattern(bs"hash", bs"*")),
+      Opt(SelfPattern), Opt(SortLimit(0, 1)), asc = false, alpha = true).futureValue.isEmpty)
+  }
+
+  test("SORT with BY") {
+    assert(sort(bs"somelist", by = SelfPattern.opt).futureValue.isEmpty)
+    assert(sort(bs"somelist", by = KeyPattern(bs"sth_*").opt).futureValue.isEmpty)
+    assert(sort(bs"somelist", by = HashFieldPattern(bs"hash_*", bs"sth_*").opt).futureValue.isEmpty)
+  }
+}
+
+class RedisClusterKeysApiSuite extends RedisClusterCommandsSuite with ClusteredKeysApiSuite
+class RedisNodeKeysApiSuite extends RedisNodeCommandsSuite with NodeKeysApiSuite
+class RedisConnectionKeysApiSuite extends RedisConnectionCommandsSuite with NodeKeysApiSuite

@@ -29,8 +29,6 @@ trait ClusteredKeysApi extends ClusteredApiSubset {
   def migrate(keys: Seq[ByteString], address: NodeAddress, destinationDb: Int,
     timeout: Long, copy: Boolean = false, replace: Boolean = false): Result[Boolean, Cluster] =
     execute(Migrate(keys, address, destinationDb, timeout, copy, replace))
-  def move(key: ByteString, db: Int): Result[Boolean, Cluster] =
-    execute(Move(key, db))
 
   def objectRefcount(key: ByteString): Result[Opt[Long], Cluster] =
     execute(ObjectRefcount(key))
@@ -72,6 +70,8 @@ trait ClusteredKeysApi extends ClusteredApiSubset {
 }
 
 trait NodeKeysApi extends ClusteredKeysApi with NodeApiSubset {
+  def move(key: ByteString, db: Int): Result[Boolean, Node] =
+    execute(Move(key, db))
   def keys(pattern: ByteString): Result[Seq[ByteString], Node] =
     execute(Keys(pattern))
   def scan(cursor: Cursor, matchPattern: Opt[ByteString] = Opt.Empty, count: Opt[Long] = Opt.Empty): Result[(Cursor, Seq[ByteString]), Node] =
@@ -84,28 +84,28 @@ trait NodeKeysApi extends ClusteredKeysApi with NodeApiSubset {
 
 case class Del(keys: Seq[ByteString]) extends RedisLongCommand[Cluster] {
   require(keys.nonEmpty, "DEL requires at least one key")
-  def encode = encoder("DEL").keys(keys).result
+  val encoded = encoder("DEL").keys(keys).result
 }
 
 case class Dump(key: ByteString) extends RedisOptBinaryCommand[Cluster] {
-  def encode = encoder("DUMP").key(key).result
+  val encoded = encoder("DUMP").key(key).result
 }
 
 case class Exists(keys: Seq[ByteString]) extends RedisLongCommand[Cluster] {
   require(keys.nonEmpty, "EXISTS requires at least one key")
-  def encode = encoder("EXISTS").keys(keys).result
+  val encoded = encoder("EXISTS").keys(keys).result
 }
 
 case class Expire(key: ByteString, seconds: Long) extends RedisBooleanCommand[Cluster] {
-  def encode = encoder("EXPIRE").key(key).add(seconds).result
+  val encoded = encoder("EXPIRE").key(key).add(seconds).result
 }
 
 case class Expireat(key: ByteString, timestamp: Long) extends RedisBooleanCommand[Cluster] {
-  def encode = encoder("EXPIREAT").key(key).add(timestamp).result
+  val encoded = encoder("EXPIREAT").key(key).add(timestamp).result
 }
 
 case class Keys(pattern: ByteString) extends RedisBinarySeqCommand[Scope.Node] {
-  def encode = encoder("KEYS").add(pattern).result
+  val encoded = encoder("KEYS").add(pattern).result
 }
 
 case class Migrate(keys: Seq[ByteString], address: NodeAddress, destinationDb: Int,
@@ -114,7 +114,7 @@ case class Migrate(keys: Seq[ByteString], address: NodeAddress, destinationDb: I
 
   private val multiKey = keys.size > 1
 
-  def encode = {
+  val encoded = {
     val enc = encoder("MIGRATE").add(address.ip).add(address.port)
     if (multiKey) {
       enc.add("")
@@ -134,16 +134,16 @@ case class Migrate(keys: Seq[ByteString], address: NodeAddress, destinationDb: I
   }
 }
 
-case class Move(key: ByteString, db: Int) extends RedisBooleanCommand[Cluster] {
-  def encode = encoder("MOVE").key(key).add(db).result
+case class Move(key: ByteString, db: Int) extends RedisBooleanCommand[Node] {
+  val encoded = encoder("MOVE").key(key).add(db).result
 }
 
 case class ObjectRefcount(key: ByteString) extends RedisOptLongCommand[Cluster] {
-  def encode = encoder("OBJECT", "REFCOUNT").key(key).result
+  val encoded = encoder("OBJECT", "REFCOUNT").key(key).result
 }
 
 case class ObjectEncoding(key: ByteString) extends RedisCommand[Opt[Encoding], Cluster] {
-  def encode = encoder("OBJECT", "ENCODING").key(key).result
+  val encoded = encoder("OBJECT", "ENCODING").key(key).result
   def decodeExpected = {
     case BulkStringMsg(string) => Opt(Encoding.byName(string.utf8String))
     case NullBulkStringMsg => Opt.Empty
@@ -151,23 +151,23 @@ case class ObjectEncoding(key: ByteString) extends RedisCommand[Opt[Encoding], C
 }
 
 case class ObjectIdletime(key: ByteString) extends RedisOptLongCommand[Cluster] {
-  def encode = encoder("OBJECT", "IDLETIME").key(key).result
+  val encoded = encoder("OBJECT", "IDLETIME").key(key).result
 }
 
 case class Persist(key: ByteString) extends RedisBooleanCommand[Cluster] {
-  def encode = encoder("PERSIST").key(key).result
+  val encoded = encoder("PERSIST").key(key).result
 }
 
 case class Pexpire(key: ByteString, milliseconds: Long) extends RedisBooleanCommand[Cluster] {
-  def encode = encoder("PEXPIRE").key(key).add(milliseconds).result
+  val encoded = encoder("PEXPIRE").key(key).add(milliseconds).result
 }
 
 case class Pexpireat(key: ByteString, millisecondsTimestamp: Long) extends RedisBooleanCommand[Cluster] {
-  def encode = encoder("PEXPIREAT").key(key).add(millisecondsTimestamp).result
+  val encoded = encoder("PEXPIREAT").key(key).add(millisecondsTimestamp).result
 }
 
 case class Pttl(key: ByteString) extends RedisCommand[Opt[Opt[Long]], Cluster] {
-  def encode = encoder("PTTL").key(key).result
+  val encoded = encoder("PTTL").key(key).result
   def decodeExpected = {
     case IntegerMsg(-2) => Opt.Empty
     case IntegerMsg(-1) => Opt(Opt.Empty)
@@ -176,25 +176,25 @@ case class Pttl(key: ByteString) extends RedisCommand[Opt[Opt[Long]], Cluster] {
 }
 
 case object Randomkey extends RedisOptBinaryCommand[Scope.Node] {
-  def encode = encoder("RANDOMKEY").result
+  val encoded = encoder("RANDOMKEY").result
 }
 
 case class Rename(key: ByteString, newkey: ByteString) extends RedisUnitCommand[Cluster] {
-  def encode = encoder("RENAME").key(key).key(newkey).result
+  val encoded = encoder("RENAME").key(key).key(newkey).result
 }
 
 case class Renamenx(key: ByteString, newkey: ByteString) extends RedisBooleanCommand[Cluster] {
-  def encode = encoder("RENAMENX").key(key).key(newkey).result
+  val encoded = encoder("RENAMENX").key(key).key(newkey).result
 }
 
 case class Restore(key: ByteString, ttl: Long, serializedValue: ByteString, replace: Boolean)
   extends RedisUnitCommand[Cluster] {
-  def encode = encoder("RESTORE").key(key).add(ttl).add(serializedValue).addFlag("REPLACE", replace).result
+  val encoded = encoder("RESTORE").key(key).add(ttl).add(serializedValue).addFlag("REPLACE", replace).result
 }
 
 case class Scan(cursor: Cursor, matchPattern: Opt[ByteString], count: Opt[Long])
   extends RedisCommand[(Cursor, Seq[ByteString]), Cluster] {
-  def encode = encoder("SCAN").add(cursor.raw).optAdd("MATCH", matchPattern).optAdd("COUNT", count).result
+  val encoded = encoder("SCAN").add(cursor.raw).optAdd("MATCH", matchPattern).optAdd("COUNT", count).result
   def decodeExpected = {
     case ArrayMsg(IndexedSeq(BulkStringMsg(cursorString), ArrayMsg(elements))) =>
       (Cursor(cursorString.utf8String.toLong), elements.map {
@@ -206,7 +206,7 @@ case class Scan(cursor: Cursor, matchPattern: Opt[ByteString], count: Opt[Long])
 
 sealed abstract case class AbstractSort[T](key: ByteString, by: Opt[SortPattern], limit: Opt[SortLimit],
   gets: Seq[SortPattern], asc: Boolean, alpha: Boolean, destination: Opt[ByteString]) extends RedisCommand[T, Cluster] {
-  def encode = {
+  val encoded = {
     val enc = encoder("SORT").key(key).optAdd("BY", by).optAdd("LIMIT", limit)
     gets.foreach(sp => enc.add("GET").add(sp))
     enc.addFlag("DESC", !asc).addFlag("ALPHA", alpha).optKey("STORE", destination).result
@@ -248,7 +248,7 @@ object SortStore {
 }
 
 case class Ttl(key: ByteString) extends RedisCommand[Opt[Opt[Long]], Cluster] {
-  def encode = encoder("TTL").key(key).result
+  val encoded = encoder("TTL").key(key).result
   def decodeExpected = {
     case IntegerMsg(-2) => Opt.Empty
     case IntegerMsg(-1) => Opt(Opt.Empty)
@@ -257,14 +257,14 @@ case class Ttl(key: ByteString) extends RedisCommand[Opt[Opt[Long]], Cluster] {
 }
 
 case class Type(key: ByteString) extends RedisCommand[RedisType, Cluster] {
-  def encode = encoder("TYPE").key(key).result
+  val encoded = encoder("TYPE").key(key).result
   def decodeExpected = {
     case SimpleStringStr(str) => RedisType.byName(str)
   }
 }
 
 case class Wait(numslaves: Int, timeout: Long) extends RedisLongCommand[Scope.Node] {
-  def encode = encoder("WAIT").add(numslaves).add(timeout).result
+  val encoded = encoder("WAIT").add(numslaves).add(timeout).result
 }
 
 sealed abstract class Encoding(val name: String) extends NamedEnum

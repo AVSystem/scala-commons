@@ -3,11 +3,11 @@ package redis.actor
 
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.actor.RedisConnectionActor.BatchFailure
+import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception.{ClientStoppedException, ConnectionClosedException}
 import com.avsystem.commons.redis.util.ActorLazyLogging
-import com.avsystem.commons.redis.{NodeAddress, RedisBatch}
+import com.avsystem.commons.redis.{NodeAddress, RawCommandPacks}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -30,24 +30,24 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
   private var invalid = false
 
   @tailrec
-  def handle(client: ActorRef, batch: RedisBatch[Any, Nothing], reserve: Boolean): Unit =
+  def handle(client: ActorRef, packs: RawCommandPacks, reserve: Boolean): Unit =
     if (reservedBy.forall(_ == client)) {
       if (invalid) {
         // connection was restarted and current reservation is invalid
-        client ! RedisConnectionActor.BatchFailure(new ConnectionClosedException(address))
+        client ! PacksResult.Failure(new ConnectionClosedException(address))
       } else {
-        connectionActor.tell(batch, client)
+        connectionActor.tell(packs, client)
         if (reserve) {
           log.debug(s"Reserving connection for $client")
           context.watch(client)
           reservedBy = Opt(client)
         } else if (queue.nonEmpty) {
           val q = queue.dequeue()
-          handle(q.client, q.batch, q.reserve)
+          handle(q.client, q.packs, q.reserve)
         }
       }
     } else {
-      queue += Queued(client, batch, reserve)
+      queue += Queued(client, packs, reserve)
     }
 
   def release(): Unit = {
@@ -61,15 +61,15 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
     reservedBy = Opt.Empty
     if (queue.nonEmpty) {
       val q = queue.dequeue()
-      handle(q.client, q.batch, q.reserve)
+      handle(q.client, q.packs, q.reserve)
     }
   }
 
   def receive = {
-    case batch: RedisBatch[Any, Nothing] =>
-      handle(sender(), batch, reserve = false)
-    case Reserving(batch) =>
-      handle(sender(), batch, reserve = true)
+    case packs: RawCommandPacks =>
+      handle(sender(), packs, reserve = false)
+    case Reserving(packs) =>
+      handle(sender(), packs, reserve = true)
     case Release =>
       if (reservedBy.contains(sender())) {
         release()
@@ -85,14 +85,14 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
   }
 
   override def postStop() = if (queue.nonEmpty) {
-    val failure = BatchFailure(new ClientStoppedException(address))
+    val failure = PacksResult.Failure(new ClientStoppedException(address))
     queue.foreach(_.client ! failure)
   }
 }
 
 object ManagedRedisConnectionActor {
-  case class Reserving(batch: RedisBatch[Any, Nothing])
+  case class Reserving(packs: RawCommandPacks)
   case object Release
 
-  case class Queued(client: ActorRef, batch: RedisBatch[Any, Nothing], reserve: Boolean)
+  case class Queued(client: ActorRef, packs: RawCommandPacks, reserve: Boolean)
 }

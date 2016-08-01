@@ -2,9 +2,8 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.ByteString
-import com.avsystem.commons.redis.RedisBatch.ConnectionState
-import com.avsystem.commons.redis.protocol.RedisMsg
-import com.avsystem.commons.redis.{OperationApiSubset, RedisRawCommand, RedisUnitCommand, Scope}
+import com.avsystem.commons.redis.protocol.{ArrayMsg, ErrorMsg, NullArrayMsg, RedisMsg}
+import com.avsystem.commons.redis.{ConnectionState, OperationApiSubset, RawCommand, RedisUnitCommand, Scope}
 
 trait TransactionApi extends OperationApiSubset {
   def watch(keys: Seq[ByteString]) =
@@ -14,31 +13,38 @@ trait TransactionApi extends OperationApiSubset {
 }
 
 case class Watch(keys: Seq[ByteString]) extends RedisUnitCommand[Scope.Operation] {
-  def encode = encoder("WATCH").keys(keys).result
-
-  override def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) = {
-    super.decodeReplies(replies, start, end, state)
-    state.watching = true
+  val encoded = encoder("WATCH").keys(keys).result
+  override def updateState(message: RedisMsg, state: ConnectionState) = message match {
+    case RedisMsg.Ok => state.watching = true
+    case _ =>
   }
 }
 
 case object Unwatch extends RedisUnitCommand[Scope.Operation] {
-  def encode = encoder("UNWATCH").result
-
-  override def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) = {
-    super.decodeReplies(replies, start, end, state)
-    state.watching = false
+  val encoded = encoder("UNWATCH").result
+  override def updateState(message: RedisMsg, state: ConnectionState) = message match {
+    case RedisMsg.Ok => state.watching = false
+    case _ =>
   }
 }
 
-case object Multi extends RedisUnitCommand[Scope.Empty] {
-  def encode = encoder("MULTI").result
+case object Multi extends RawCommand {
+  val encoded = encoder("MULTI").result
 }
 
-case object Exec extends RedisRawCommand[Scope.Empty] {
-  def encode = encoder("EXEC").result
+case object Exec extends RawCommand {
+  val encoded = encoder("EXEC").result
+  override def updateState(message: RedisMsg, state: ConnectionState) = message match {
+    case _: ArrayMsg[RedisMsg] | NullArrayMsg => state.watching = false
+    case err: ErrorMsg if err.errorCode == "EXECABORT" => state.watching = false
+    case _ =>
+  }
 }
 
-case object Discard extends RedisUnitCommand[Scope.Empty] {
-  def encode = encoder("DISCARD").result
+case object Discard extends RawCommand {
+  val encoded = encoder("DISCARD").result
+  override def updateState(message: RedisMsg, state: ConnectionState) = message match {
+    case RedisMsg.Ok => state.watching = false
+    case _ =>
+  }
 }

@@ -2,8 +2,8 @@ package com.avsystem.commons
 package redis.protocol
 
 import akka.util.{ByteString, ByteStringBuilder}
-import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.exception.InvalidDataException
+import com.avsystem.commons.misc.{Opt, Sam}
+import com.avsystem.commons.redis.exception.{InvalidDataException, RedisException}
 
 import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ArrayBuffer
@@ -12,7 +12,16 @@ import scala.collection.mutable.ArrayBuffer
   * Author: ghik
   * Created: 31/03/16.
   */
-sealed trait RedisMsg
+sealed trait RedisReply
+trait FailureReply extends RedisReply {
+  def exception: RedisException
+}
+object FailureReply {
+  def apply(createException: => RedisException): FailureReply =
+    Sam[FailureReply](createException)
+}
+
+sealed trait RedisMsg extends RedisReply
 sealed trait ValidRedisMsg extends RedisMsg
 case class SimpleStringMsg(string: ByteString) extends ValidRedisMsg {
   override def toString = s"$productPrefix(${RedisMsg.escape(string)})"
@@ -52,6 +61,9 @@ object SimpleStringStr {
 }
 
 object RedisMsg {
+  val Ok = SimpleStringMsg(ByteString("OK"))
+  val Queued = SimpleStringMsg(ByteString("QUEUED"))
+
   def escape(bs: ByteString, quote: Boolean = true): String = {
     val sb = new StringBuilder(if (quote) "\"" else "")
     bs.foreach {

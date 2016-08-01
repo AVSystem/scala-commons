@@ -8,7 +8,7 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.avsystem.commons.redis.Scope.Node
-import com.avsystem.commons.redis.actor.RedisConnectionActor.BatchResult
+import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{ManagedRedisConnectionActor, RedisOperationActor}
 import com.avsystem.commons.redis.config.NodeConfig
@@ -31,8 +31,11 @@ final class RedisNodeClient(
   private def nextConnection() =
     connections((index.getAndIncrement() % config.poolSize).toInt)
 
+  def executeRaw(packs: RawCommandPacks)(implicit timeout: Timeout): Future[PacksResult] =
+    initFuture.flatMapNow(_ => nextConnection().ask(packs)).mapTo[PacksResult]
+
   def executeBatch[A](batch: NodeBatch[A])(implicit timeout: Timeout): Future[A] =
-    initFuture.flatMapNow(_ => nextConnection().ask(batch).mapNow({ case br: BatchResult[A@unchecked] => br.get }))
+    executeRaw(batch.rawCommandPacks).mapNow(result => batch.decodeReplies(result))
 
   def executeOp[A](op: RedisOp[A])(implicit timeout: Timeout): Future[A] =
     initFuture.flatMapNow(_ => executeOp(nextConnection(), op))

@@ -4,39 +4,29 @@ package redis
 import akka.util.ByteString
 import com.avsystem.commons.misc.{NamedEnum, Opt}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
-import com.avsystem.commons.redis.RedisBatch.{ConnectionState, MessageBuffer}
+import com.avsystem.commons.redis.RedisBatch.Index
 import com.avsystem.commons.redis.exception.{ErrorReplyException, UnexpectedReplyException}
 import com.avsystem.commons.redis.protocol._
 
 import scala.collection.mutable.ArrayBuffer
 
-trait RedisCommand[+A, -S] extends AtomicBatch[A, S] with RedisBatch.RepliesDecoder[A] {
-  def encode: ArrayMsg[BulkStringMsg]
+trait RedisCommand[+A, -S] extends AtomicBatch[A, S] with RawCommand {
   def decodeExpected: PartialFunction[ValidRedisMsg, A]
 
-  protected def encoder(commandName: String*): CommandEncoder = {
-    val res = new CommandEncoder(new ArrayBuffer)
-    res.add(commandName)
-    res
-  }
-
-  def decode(replyMsg: RedisMsg): A = replyMsg match {
+  def decode(replyMsg: RedisReply): A = replyMsg match {
     case validReply: ValidRedisMsg =>
       decodeExpected.applyOrElse(validReply, (r: ValidRedisMsg) => throw new UnexpectedReplyException(r.toString))
     case err: ErrorMsg =>
       throw new ErrorReplyException(err)
+    case error: FailureReply =>
+      throw error.exception
   }
 
-  def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = {
-    messageBuffer += encode
-    this
-  }
-
-  def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) =
-    decode(replies(start))
+  def decodeReplies(replies: Int => RedisReply, idx: Index, inTransaction: Boolean) =
+    decode(replies(idx.inc()))
 
   override def toString =
-    encode.elements.iterator.map(bs => RedisMsg.escape(bs.string)).mkString(" ")
+    encoded.elements.iterator.map(bs => RedisMsg.escape(bs.string)).mkString(" ")
 }
 
 final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) extends AnyVal {
@@ -90,7 +80,7 @@ trait RedisRawCommand[S] extends RedisCommand[ValidRedisMsg, S] {
 
 trait RedisUnitCommand[S] extends RedisCommand[Unit, S] {
   def decodeExpected = {
-    case SimpleStringStr("OK") => ()
+    case RedisMsg.Ok => ()
   }
 }
 

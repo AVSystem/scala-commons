@@ -4,14 +4,14 @@ package redis.actor
 import akka.actor.{Actor, ActorRef}
 import akka.io.Tcp._
 import akka.io.{IO, Tcp}
+import akka.util.ByteString
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.RedisBatch.{ConnectionState, MessageBuffer, RepliesDecoder}
 import com.avsystem.commons.redis.commands.Unwatch
 import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception._
-import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, RedisMsg}
+import com.avsystem.commons.redis.protocol._
 import com.avsystem.commons.redis.util.ActorLazyLogging
-import com.avsystem.commons.redis.{NodeAddress, RedisBatch}
+import com.avsystem.commons.redis.{ConnectionState, NodeAddress, RawCommandPacks, ReplyPreprocessor}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -29,56 +29,51 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
   private var blocked = false
   private val sentRequests = new mutable.Queue[SentRequest]
   private val sendBuffer = new ArrayBuffer[ArrayMsg[BulkStringMsg]]
-  private val repliesBuffer = new ArrayBuffer[RedisMsg]
-  private val emptyRepliesBuffer = new ArrayBuffer[RedisMsg]
   private val state = new ConnectionState
 
   private val decoder = new RedisMsg.Decoder({ replyMsg =>
     val lastRequest = sentRequests.front
-    val expectedReplies = lastRequest.batchSize
-    repliesBuffer += replyMsg
-    if (repliesBuffer.size >= expectedReplies) {
+    lastRequest.processMessage(replyMsg, state).foreach { packsResult =>
       sentRequests.dequeue()
-      decodeAndRespond(lastRequest, repliesBuffer)
-      repliesBuffer.clear()
+      respondAndContinue(lastRequest, packsResult)
     }
   })
 
-  IO(Tcp) ! Connect(address.socketAddress)
-
-  queuedRequests += QueuedRequest(config.initCommands, blocking = true, {
-    case BatchSuccess(_) =>
-    case BatchFailure(cause) =>
-      failUnfinishedAndStop(new ConnectionInitializationFailure(cause))
-  })
-
-  def decodeAndRespond(sentRequest: SentRequest, replies: ArrayBuffer[RedisMsg]): Unit = {
-    log.debug(s"Decoding response")
-    try {
-      val result = sentRequest.decoder.decodeReplies(replies, 0, sentRequest.batchSize, state)
-      sentRequest.callback(BatchSuccess(result))
-    } catch {
-      case NonFatal(cause) => sentRequest.callback(BatchFailure(cause))
-    } finally {
+  private def respondAndContinue(request: SentRequest, result: PacksResult): Unit = {
+    request.callback(result)
+    if (blocked) {
       blocked = false
       handleQueued()
     }
   }
 
+  IO(Tcp) ! Connect(address.socketAddress)
+
+  queuedRequests += QueuedRequest(config.initCommands.rawCommandPacks, blocking = true,
+    pr => try config.initCommands.decodeReplies(pr) catch {
+      case NonFatal(cause) => failUnfinishedAndStop(new ConnectionInitializationFailure(cause))
+    }
+  )
+
   def handleQueued(): Unit =
     if (!blocked && queuedRequests.nonEmpty && requestBeingSent.isEmpty) {
-      val QueuedRequest(batch, blocking, callback) = queuedRequests.dequeue()
+      val QueuedRequest(packs, blocking, callback) = queuedRequests.dequeue()
       sendBuffer.clear()
-      val decoder = batch.encodeCommands(new MessageBuffer(sendBuffer), inTransaction = false)
-      val requestToSend = SentRequest(sendBuffer.size, decoder, callback)
+      val requestToSend = new SentRequest(callback)
+      packs.emitCommandPacks { pack =>
+        val sizeBefore = sendBuffer.size
+        pack.rawCommands(inTransaction = false).emitCommands(sendBuffer += _)
+        requestToSend.pushPreprocessor(pack.createPreprocessor(sendBuffer.size - sizeBefore))
+      }
       blocked = blocking
       if (sendBuffer.isEmpty) {
-        log.debug(s"Empty batch received")
-        decodeAndRespond(requestToSend, emptyRepliesBuffer)
+        log.debug(s"Empty packs received")
+        respondAndContinue(requestToSend, PacksResult.Empty)
       } else {
         requestBeingSent = Opt(requestToSend)
         val encoded = RedisMsg.encode(sendBuffer)
         log.debug(s"$address >>>>\n${RedisMsg.escape(encoded, quote = false).replaceAllLiterally("\\r\\n", "\\r\\n\n")}")
+        config.debugListener.onSend(encoded)
         connection ! Write(encoded, WriteAck)
       }
     }
@@ -93,25 +88,27 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       handleQueued()
     case CommandFailed(_: Connect) =>
       log.error(s"Connection failed on $address")
-      failUnfinished(new ConnectionFailedException(address))
-      stop(self)
-    case batch: RedisBatch[Any, Nothing] =>
-      log.debug(s"Not yet connected to $address, queueing batch")
+      failUnfinishedAndStop(new ConnectionFailedException(address))
+    case packs: RawCommandPacks =>
+      log.debug(s"Not yet connected to $address, queueing packs")
       val s = sender()
-      queuedRequests += QueuedRequest(batch, blocking = false, s ! _)
+      queuedRequests += QueuedRequest(packs, blocking = false, s ! _)
   }
 
   def connected: Receive = {
-    case batch: RedisBatch[Any, Nothing] =>
+    case packs: RawCommandPacks =>
       val s = sender()
-      queuedRequests += QueuedRequest(batch, blocking = false, s ! _)
+      queuedRequests += QueuedRequest(packs, blocking = false, s ! _)
       handleQueued()
     case ResetState =>
       if (state.watching) {
-        queuedRequests += QueuedRequest(Unwatch, blocking = false, {
-          case BatchSuccess(_) => state.watching = false
-          case BatchFailure(cause) => failUnfinishedAndStop(new ConnectionStateResetFailure(cause))
-        })
+        log.debug(s"Resetting state")
+        queuedRequests += QueuedRequest(Unwatch, blocking = false,
+          pr => try Unwatch.decodeReplies(pr) catch {
+            case NonFatal(cause) => failUnfinishedAndStop(new ConnectionStateResetFailure(cause))
+          }
+        )
+        handleQueued()
       }
     case WriteAck =>
       requestBeingSent.foreach(sentRequests += _)
@@ -119,12 +116,13 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       handleQueued()
     case CommandFailed(_: Write) =>
       log.error(s"Write failed on $address")
-      requestBeingSent.foreach(_.callback(BatchFailure(new WriteFailedException(address))))
+      requestBeingSent.foreach(_.callback(PacksResult.Failure(new WriteFailedException(address))))
       requestBeingSent = Opt.Empty
       blocked = false
       handleQueued()
     case Received(data) =>
       log.debug(s"$address <<<<\n${RedisMsg.escape(data, quote = false).replaceAllLiterally("\\r\\n", "\\r\\n\n")}")
+      config.debugListener.onReceive(data)
       decoder.decodeMore(data)
     case closed: ConnectionClosed =>
       log.info(s"Connection closed on $address")
@@ -132,7 +130,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
   }
 
   def failUnfinished(cause: Throwable): Unit = {
-    val failure = BatchFailure(cause)
+    val failure = PacksResult.Failure(cause)
     while (sentRequests.nonEmpty) {
       sentRequests.dequeue().callback(failure)
     }
@@ -156,17 +154,60 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
 
 object RedisConnectionActor {
   private object WriteAck extends Event
-  private case class QueuedRequest(batch: RedisBatch[Any, Nothing], blocking: Boolean, callback: BatchResult[Any] => Unit)
-  private case class SentRequest(batchSize: Int, decoder: RepliesDecoder[Any], callback: BatchResult[Any] => Unit)
+  private case class QueuedRequest(packs: RawCommandPacks, blocking: Boolean, callback: PacksResult => Unit)
+
+  private class SentRequest(val callback: PacksResult => Unit) {
+    private[this] var replies: ArrayBuffer[RedisReply] = _
+    private[this] var preprocessors: Any = _
+
+    def processMessage(message: RedisMsg, state: ConnectionState): Opt[PacksResult] =
+      preprocessors match {
+        case null => Opt(PacksResult.Empty)
+        case prep: ReplyPreprocessor =>
+          prep.preprocess(message, state).map(PacksResult.Single)
+        case queue: mutable.Queue[ReplyPreprocessor@unchecked] =>
+          queue.front.preprocess(message, state).flatMap { preprocessedMsg =>
+            if (replies == null) {
+              replies = new ArrayBuffer(queue.length)
+            }
+            queue.dequeue()
+            replies += preprocessedMsg
+            if (queue.isEmpty) Opt(PacksResult.Multiple(replies)) else Opt.Empty
+          }
+      }
+
+    def pushPreprocessor(preprocessor: ReplyPreprocessor): Unit =
+      preprocessors match {
+        case null => preprocessors = preprocessor
+        case prep: ReplyPreprocessor => preprocessors = mutable.Queue(prep, preprocessor)
+        case queue: mutable.Queue[ReplyPreprocessor@unchecked] => queue += preprocessor
+      }
+  }
+
+  sealed trait PacksResult extends (Int => RedisReply)
+  object PacksResult {
+    case object Empty extends PacksResult {
+      def apply(idx: Int) = throw new NoSuchElementException
+    }
+    case class Single(reply: RedisReply) extends PacksResult {
+      def apply(idx: Int) = reply
+    }
+    case class Multiple(replySeq: IndexedSeq[RedisReply]) extends PacksResult {
+      def apply(idx: Int) = replySeq(idx)
+    }
+    case class Failure(cause: Throwable) extends PacksResult {
+      def apply(idx: Int) = throw cause
+    }
+  }
 
   case object ResetState
 
-  sealed trait BatchResult[+A] {
-    def get: A = this match {
-      case BatchSuccess(result) => result
-      case BatchFailure(cause) => throw cause
-    }
+  trait DebugListener {
+    def onSend(data: ByteString): Unit
+    def onReceive(data: ByteString): Unit
   }
-  case class BatchSuccess[+A](result: A) extends BatchResult[A]
-  case class BatchFailure(cause: Throwable) extends BatchResult[Nothing]
+  object DevNullListener extends DebugListener {
+    def onSend(data: ByteString) = ()
+    def onReceive(data: ByteString) = ()
+  }
 }

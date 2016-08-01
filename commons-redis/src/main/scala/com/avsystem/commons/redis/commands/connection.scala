@@ -25,21 +25,21 @@ trait ConnectionConnectionApi extends ConnectionApiSubset with NodeConnectionApi
 }
 
 case class Auth(password: ByteString) extends RedisUnitCommand[Connection] {
-  def encode = encoder("AUTH").add(password).result
+  val encoded = encoder("AUTH").add(password).result
 }
 
 case class Echo(message: ByteString) extends RedisBinaryCommand[Node] {
-  def encode = encoder("ECHO").add(message).result
+  val encoded = encoder("ECHO").add(message).result
 }
 
 case object Ping extends RedisSimpleStringCommand[Node] {
-  def encode = encoder("PING").result
+  val encoded = encoder("PING").result
 }
 
 case object Quit extends RedisUnitCommand[Connection] {
-  def encode = encoder("QUIT").result
+  val encoded = encoder("QUIT").result
 }
 
 case class Select(index: Int) extends RedisUnitCommand[Connection] {
-  def encode = encoder("SELECT").add(index).result
+  val encoded = encoder("SELECT").add(index).result
 }

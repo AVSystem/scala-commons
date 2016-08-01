@@ -1,14 +1,10 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.ByteString
-import com.avsystem.commons.misc.Sam
-import com.avsystem.commons.redis.RedisBatch.{MessageBuffer, RepliesDecoder, Transaction}
-import com.avsystem.commons.redis.commands.{Exec, Multi}
-import com.avsystem.commons.redis.exception.{OptimisticLockException, UnexpectedReplyException}
+import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.protocol._
 
-import scala.collection.mutable.ArrayBuffer
+import scala.util.control.NonFatal
 
 /**
   * A [[Scope]] is associated with every [[RedisCommand]] and propagated to [[RedisBatch]] and [[RedisOp]].
@@ -43,11 +39,11 @@ object Scope {
   * @tparam S [[Scope]] of this batch ([[Scope.Connection]], [[Scope.Node]] or [[Scope.Cluster]])
   */
 trait RedisBatch[+A, -S] {self =>
-  /**
-    * Encodes itself to a sequence of redis messages that will be sent in one batch to the server.
-    * Returns a [[RepliesDecoder]] responsible for translating raw Redis responses into the actual result.
-    */
-  def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean): RepliesDecoder[A]
+
+  import RedisBatch._
+
+  def rawCommandPacks: RawCommandPacks
+  def decodeReplies(replies: Int => RedisReply, index: Index = new Index, inTransaction: Boolean = false): A
 
   /**
     * Merges two batches into one. Provided function is applied on results of the batches being merged to obtain
@@ -57,19 +53,37 @@ trait RedisBatch[+A, -S] {self =>
     * on node client and not on cluster client; therefore merged batch also cannot be executed on cluster).
     */
   def map2[B, S0, C](other: RedisBatch[B, S0])(f: (A, B) => C): RedisBatch[C, S with S0] =
-    new RedisBatch[C, S with S0] {
-      def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = {
-        val initialSize = messageBuffer.size
-        val selfDecoder = self.encodeCommands(messageBuffer, inTransaction)
-        val selfCount = messageBuffer.size - initialSize
-        val otherDecoder = other.encodeCommands(messageBuffer, inTransaction)
-        RepliesDecoder { (replies, start, end, state) =>
-          val a = selfDecoder.decodeReplies(replies, start, start + selfCount, state)
-          val b = otherDecoder.decodeReplies(replies, start + selfCount, end, state)
-          f(a, b)
-        }
+  new RedisBatch[C, S with S0] with RawCommandPacks {
+    def rawCommandPacks = this
+
+    def emitCommandPacks(consumer: RawCommandPack => Unit) = {
+      self.rawCommandPacks.emitCommandPacks(consumer)
+      other.rawCommandPacks.emitCommandPacks(consumer)
+    }
+
+    def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = {
+      // we must invoke both decoders regardless of intermediate errors because index must be properly advanced
+      var failure: Opt[Throwable] = Opt.Empty
+      val a = try self.decodeReplies(replies, index, inTransaction) catch {
+        case NonFatal(cause) =>
+          if (failure.isEmpty) {
+            failure = cause.opt
+          }
+          null.asInstanceOf[A]
+      }
+      val b = try other.decodeReplies(replies, index, inTransaction) catch {
+        case NonFatal(cause) =>
+          if (failure.isEmpty) {
+            failure = cause.opt
+          }
+          null.asInstanceOf[B]
+      }
+      failure match {
+        case Opt.Empty => f(a, b)
+        case Opt(cause) => throw cause
       }
     }
+  }
 
   def <*[B, S0](other: RedisBatch[B, S0]): RedisBatch[A, S with S0] =
     map2(other)((a, _) => a)
@@ -81,21 +95,22 @@ trait RedisBatch[+A, -S] {self =>
     map2(other)((_, _))
 
   def map[B](f: A => B): RedisBatch[B, S] =
-    new RedisBatch[B, S] {
-      def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = {
-        val decoder = self.encodeCommands(messageBuffer, inTransaction)
-        RepliesDecoder((replies, start, end, state) => f(decoder.decodeReplies(replies, start, end, state)))
-      }
+    new RedisBatch[B, S] with RawCommandPacks {
+      def rawCommandPacks = this
+      def emitCommandPacks(consumer: RawCommandPack => Unit) =
+        self.rawCommandPacks.emitCommandPacks(consumer)
+      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) =
+        f(self.decodeReplies(replies, index, inTransaction))
     }
 
   /**
     * Returns a batch which invokes the same Redis commands as this batch, but ensures that
     * they are invoked inside a Redis transaction (`MULTI`-`EXEC`).
     */
-  def transaction: AtomicBatch[A, S] =
-    new Transaction(this)
+  def transaction: RedisBatch[A, S] =
+  new Transaction(this)
 
-  def atomic: AtomicBatch[A, S] =
+  def atomic: RedisBatch[A, S] =
     transaction
 }
 
@@ -104,73 +119,48 @@ object RedisBatch extends HasFlatMap[OperationBatch] {
     def operation: RedisOp[A] = RedisOp.LeafOp(batch)
   }
 
-  class Transaction[+A, -S](batch: RedisBatch[A, S]) extends AtomicBatch[A, S] {
-    def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) =
-      if (inTransaction) {
-        batch.encodeCommands(messageBuffer, inTransaction)
-      } else {
-        messageBuffer += Multi.encode
-        val initialSize = messageBuffer.size
-        val actualDecoder = batch.encodeCommands(messageBuffer, inTransaction = true)
-        val actualSize = messageBuffer.size - initialSize
-        messageBuffer += Exec.encode
-        RepliesDecoder { (replies, start, end, state) =>
-          state.watching = false
-          replies(end - 1) match {
-            case ArrayMsg(actualReplies) => actualDecoder.decodeReplies(actualReplies, 0, actualSize, state)
-            case NullArrayMsg => throw new OptimisticLockException
-            case errorMsg: ErrorMsg =>
-              val actualErrors = replies.iterator.drop(start + 1).take(actualSize).map {
-                case SimpleStringMsg(str) if str.utf8String == "QUEUED" => errorMsg
-                case actualErrorMsg: ErrorMsg => actualErrorMsg
-                case msg => throw new UnexpectedReplyException(s"expected simple string QUEUED or error, got $msg")
-              }.to[ArrayBuffer]
-              actualDecoder.decodeReplies(actualErrors, 0, actualSize, state)
-            case _ => throw new UnexpectedReplyException("expected multi bulk reply")
-          }
-        }
-      }
-
-    override def transaction = this
+  final class Index {
+    var value: Int = 0
+    def inc(): Int = {
+      val res = value
+      value += 1
+      res
+    }
   }
-
-  class MessageBuffer(private val buffer: ArrayBuffer[ArrayMsg[BulkStringMsg]]) extends AnyVal {
-    def +=(msg: ArrayMsg[BulkStringMsg]): Unit = buffer += msg
-    def ++=(msgs: TraversableOnce[ArrayMsg[BulkStringMsg]]): Unit = buffer ++= msgs
-    def size = buffer.size
-  }
-
-  final class ConnectionState {
-    var watching: Boolean = false
-  }
-
-  trait RepliesDecoder[+A] {
-    def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState): A
-  }
-  object RepliesDecoder {
-    def apply[A](f: (IndexedSeq[RedisMsg], Int, Int, ConnectionState) => A): RepliesDecoder[A] = Sam[RepliesDecoder[A]](f)
+  object Index {
+    def apply(value: Int): Index = {
+      val res = new Index
+      res.value = value
+      res
+    }
   }
 
   def success[A](a: A): RedisBatch[A, Any] =
-    new RedisBatch[A, Any] with RedisBatch.RepliesDecoder[A] {
-      def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = this
-      def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) = a
+    new RedisBatch[A, Any] with RawCommandPacks {
+      def rawCommandPacks = this
+      def emitCommandPacks(consumer: RawCommandPack => Unit) = ()
+      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = a
     }
 
   def failure(cause: Throwable): RedisBatch[Nothing, Any] =
-    new RedisBatch[Nothing, Any] with RedisBatch.RepliesDecoder[Nothing] {
-      def encodeCommands(messageBuffer: MessageBuffer, inTransaction: Boolean) = this
-      def decodeReplies(replies: IndexedSeq[RedisMsg], start: Int, end: Int, state: ConnectionState) = throw cause
+    new RedisBatch[Nothing, Any] with RawCommandPacks {
+      def rawCommandPacks = this
+      def emitCommandPacks(consumer: RawCommandPack => Unit) = ()
+      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = throw cause
     }
 
   val unit = success(())
 
+  implicit class SequenceOps[Ops, Res, S](private val ops: Ops) extends AnyVal {
+    def sequence(implicit sequencer: Sequencer[Ops, Res, S]): RedisBatch[Res, S] = sequencer.sequence(ops)
+  }
+
   //TODO more API
-  //TODO sequence
 }
 
-trait AtomicBatch[+A, -S] extends RedisBatch[A, S] {
-  override def atomic: AtomicBatch[A, S] = this
+trait AtomicBatch[+A, -S] extends RedisBatch[A, S] with RawCommandPack {
+  def rawCommandPacks = this
+  override def atomic: RedisBatch[A, S] = this
 }
 
 /**

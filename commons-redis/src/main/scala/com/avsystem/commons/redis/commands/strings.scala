@@ -60,82 +60,82 @@ trait StringsApi extends ClusteredApiSubset {
 }
 
 case class Append(key: ByteString, value: ByteString) extends RedisLongCommand[Cluster] {
-  def encode = encoder("APPEND").key(key).add(value).result
+  val encoded = encoder("APPEND").key(key).add(value).result
 }
 
 case class Bitcount(key: ByteString, range: Opt[(Long, Long)]) extends RedisLongCommand[Cluster] {
-  def encode = encoder("BITCOUNT").add(range).result
+  val encoded = encoder("BITCOUNT").add(range).result
 }
 
 case class Bitop(bitop: BitOperation, destkey: ByteString, keys: Seq[ByteString]) extends RedisLongCommand[Cluster] {
   require(keys.nonEmpty, "BITOP requires at least one source key")
   require(bitop != BitOperation.Not || keys.size == 1, "BITOP NOT requires exactly one source key")
-  def encode = encoder("BITOP").add(bitop).key(destkey).keys(keys).result
+  val encoded = encoder("BITOP").add(bitop).key(destkey).keys(keys).result
 }
 
 case class Bitpos(key: ByteString, bit: Boolean, range: Opt[SemiRange]) extends RedisLongCommand[Cluster] {
-  def encode = encoder("BITPOS").key(key).add(bit).add(range.map(sr => (sr.start, sr.end))).result
+  val encoded = encoder("BITPOS").key(key).add(bit).add(range.map(sr => (sr.start, sr.end))).result
 }
 
 case class Decr(key: ByteString) extends RedisLongCommand[Cluster] {
-  def encode = encoder("DECR").key(key).result
+  val encoded = encoder("DECR").key(key).result
 }
 
 case class Decrby(key: ByteString, decrement: Long) extends RedisLongCommand[Cluster] {
-  def encode = encoder("DECRBY").key(key).add(decrement).result
+  val encoded = encoder("DECRBY").key(key).add(decrement).result
 }
 
 case class Get(key: ByteString) extends RedisOptBinaryCommand[Cluster] {
-  def encode = encoder("GET").key(key).result
+  val encoded = encoder("GET").key(key).result
 }
 
 case class Getbit(key: ByteString, offset: Long) extends RedisBooleanCommand[Cluster] {
-  def encode = encoder("GETBIT").key(key).add(offset).result
+  val encoded = encoder("GETBIT").key(key).add(offset).result
 }
 
 case class Getrange(key: ByteString, start: Long, end: Long) extends RedisBinaryCommand[Cluster] {
-  def encode = encoder("GETRANGE").key(key).add(start).add(end).result
+  val encoded = encoder("GETRANGE").key(key).add(start).add(end).result
 }
 
 case class Getset(key: ByteString, value: ByteString) extends RedisOptBinaryCommand[Cluster] {
-  def encode = encoder("GETSET").key(key).add(value).result
+  val encoded = encoder("GETSET").key(key).add(value).result
 }
 
 case class Incr(key: ByteString) extends RedisLongCommand[Cluster] {
-  def encode = encoder("INCR").key(key).result
+  val encoded = encoder("INCR").key(key).result
 }
 
 case class Incrby(key: ByteString, increment: Long) extends RedisLongCommand[Cluster] {
-  def encode = encoder("INCRBY").key(key).add(increment).result
+  val encoded = encoder("INCRBY").key(key).add(increment).result
 }
 
 case class Incrbyfloat(key: ByteString, increment: Double) extends RedisDoubleCommand[Cluster] {
-  def encode = encoder("INCRBYFLOAT").key(key).add(increment).result
+  val encoded = encoder("INCRBYFLOAT").key(key).add(increment).result
 }
 
 case class Mget(keys: Seq[ByteString]) extends RedisOptBinarySeqCommand[Cluster] {
   require(keys.nonEmpty, "MGET requires at least one key")
-  def encode = encoder("MGET").keys(keys).result
+  val encoded = encoder("MGET").keys(keys).result
 }
 
 case class Mset(keyValues: Seq[(ByteString, ByteString)]) extends RedisUnitCommand[Cluster] {
   require(keyValues.nonEmpty, "MSET requires at least one key-value pair")
-  def encode = encoder("MSET").keyValues(keyValues).result
+  val encoded = encoder("MSET").keyValues(keyValues).result
 }
 
 case class Msetnx(keyValues: Seq[(ByteString, ByteString)]) extends RedisBooleanCommand[Cluster] {
   require(keyValues.nonEmpty, "MSETNX requires at least one key-value pair")
-  def encode = encoder("MSETNX").keyValues(keyValues).result
+  val encoded = encoder("MSETNX").keyValues(keyValues).result
 }
 
 case class Psetex(key: ByteString, milliseconds: Long, value: ByteString) extends RedisUnitCommand[Cluster] {
-  def encode = encoder("PSETEX").key(key).add(milliseconds).add(value).result
+  val encoded = encoder("PSETEX").key(key).add(milliseconds).add(value).result
 }
 
 case class Set(key: ByteString, value: ByteString, expiration: Opt[SetExpiration], existence: Opt[Boolean])
   extends RedisCommand[Boolean, Cluster] {
 
-  def encode = encoder("SET").key(key).add(value).add(expiration)
+  val encoded = encoder("SET").key(key).add(value).add(expiration)
     .add(existence.map(v => if (v) "XX" else "NX")).result
 
   def decodeExpected = {
@@ -145,23 +145,23 @@ case class Set(key: ByteString, value: ByteString, expiration: Opt[SetExpiration
 }
 
 case class Setbit(key: ByteString, offset: Long, value: ByteString) extends RedisBooleanCommand[Cluster] {
-  def encode = encoder("SETBIT").key(key).add(offset).add(value).result
+  val encoded = encoder("SETBIT").key(key).add(offset).add(value).result
 }
 
 case class Setex(key: ByteString, seconds: Long, value: ByteString) extends RedisUnitCommand[Cluster] {
-  def encode = encoder("SETEX").key(key).add(seconds).add(value).result
+  val encoded = encoder("SETEX").key(key).add(seconds).add(value).result
 }
 
 case class Setnx(key: ByteString, value: ByteString) extends RedisBooleanCommand[Cluster] {
-  def encode = encoder("SETNX").key(key).add(value).result
+  val encoded = encoder("SETNX").key(key).add(value).result
 }
 
 case class Setrange(key: ByteString, offset: Long, value: ByteString) extends RedisLongCommand[Cluster] {
-  def encode = encoder("SETRANGE").key(key).add(offset).add(value).result
+  val encoded = encoder("SETRANGE").key(key).add(offset).add(value).result
 }
 
 case class Strlen(key: ByteString) extends RedisLongCommand[Cluster] {
-  def encode = encoder("STRLEN").key(key).result
+  val encoded = encoder("STRLEN").key(key).result
 }
 
 sealed abstract class BitOperation(val name: String) extends NamedEnum

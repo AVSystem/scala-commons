@@ -2,6 +2,7 @@ package com.avsystem.commons
 package redis.config
 
 import akka.util.Timeout
+import com.avsystem.commons.redis.actor.RedisConnectionActor.{DebugListener, DevNullListener}
 import com.avsystem.commons.redis.{ConnectionBatch, NodeAddress, RedisBatch, RedisOp}
 
 import scala.concurrent.duration._
@@ -30,5 +31,6 @@ case class NodeConfig(
 }
 
 case class ConnectionConfig(
-  initCommands: ConnectionBatch[Any] = RedisBatch.unit
+  initCommands: ConnectionBatch[Any] = RedisBatch.unit,
+  debugListener: DebugListener = DevNullListener
 )

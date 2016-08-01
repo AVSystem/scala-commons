@@ -14,11 +14,12 @@ import scala.concurrent.{Await, Future}
   */
 trait ByteStringInterpolation {
   implicit class bsInterpolation(sc: StringContext) {
-    def bs = this
-
-    def apply(): ByteString = {
+    def bs(args: Any*) = {
       val bsb = new ByteStringBuilder
-      sc.parts.foreach(p => bsb.append(ByteString(p)))
+      bsb.append(ByteString(sc.parts.head))
+      (sc.parts.tail zip args.map(_.toString)).foreach {
+        case (p, a) => bsb.append(ByteString(p)).append(ByteString(a))
+      }
       bsb.result()
     }
   }
@@ -30,14 +31,30 @@ trait CommandsSuite extends FunSuite with ScalaFutures with BeforeAndAfterAll wi
   def executor: RedisExecutor[Api#CmdScope]
   def setupCommands: RedisBatch[Any, Api#CmdScope] = RedisBatch.success(())
   val commands: Api {type Result[+A, -S] = Future[A]}
+
+  override protected def beforeAll() = {
+    super.beforeAll()
+    Await.result(executor.execute(setupCommands), Duration.Inf)
+  }
+}
+
+trait RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
+  type Api = RedisClusteredAsyncCommands
+  def executor = redisClient.toExecutor
+  lazy val commands = RedisClusteredAsyncCommands(executor)
+
+  override def clusterConfig = super.clusterConfig
+
+  override protected def afterAll() = {
+    // TODO: broadcast flushall?
+    super.afterAll()
+  }
 }
 
 trait RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with CommandsSuite {
   type Api = RedisNodeAsyncCommands
   def executor = redisClient.toExecutor
   lazy val commands = RedisNodeAsyncCommands(executor)
-
-  override def nodeConfig = super.nodeConfig.copy(initOp = setupCommands.operation)
 
   override protected def afterAll() = {
     Await.result(commands.flushall, Duration.Inf)
@@ -49,8 +66,6 @@ trait RedisConnectionCommandsSuite extends FunSuite with UsesRedisConnectionClie
   type Api = RedisConnectionAsyncCommands
   def executor = redisClient.toExecutor
   lazy val commands = RedisConnectionAsyncCommands(executor)
-
-  override def connectionConfig = super.connectionConfig.copy(initCommands = setupCommands)
 
   override protected def afterAll() = {
     Await.result(commands.flushall, Duration.Inf)

@@ -32,7 +32,7 @@ trait ConnectionApiSubset extends OperationApiSubset {
 }
 
 trait CommandSubset extends ApiSubset {
-  type Result[A, S] = RedisCommand[A, S]
+  type Result[A, S] = RedisBatch[A, S]
   protected def execute[A, S >: CmdScope](cmd: RedisCommand[A, S]) = cmd
 }
 trait AsyncCommandSubset extends ApiSubset {

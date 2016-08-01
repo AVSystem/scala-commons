@@ -21,7 +21,7 @@ object RedisMsgScalacheck {
   implicit val shrinkArray: Shrink[ArrayMsg[RedisMsg]] =
     Shrink(arr => Shrink.shrink(arr.elements).map(ArrayMsg(_)))
 
-  implicit val shrinkRedisMsg: Shrink[RedisMsg] = Shrink {
+  implicit val shrinkRedisProtocolMsg: Shrink[RedisMsg] = Shrink {
     case ss: SimpleStringMsg => Shrink.shrink(ss)
     case er: ErrorMsg => Shrink.shrink(er)
     case NullBulkStringMsg => Stream.empty
@@ -52,10 +52,10 @@ object RedisMsgScalacheck {
   def arrayGen: Gen[RedisMsg] = Gen.sized(s => Gen.choose(-1, s).flatMap {
     case -1 => Gen.const(NullArrayMsg)
     case 0 => Gen.const(ArrayMsg(IndexedSeq.empty))
-    case n => Gen.buildableOfN[IndexedSeq[RedisMsg], RedisMsg](n, Gen.resize(s / n, redisMsgGen))
+    case n => Gen.buildableOfN[IndexedSeq[RedisMsg], RedisMsg](n, Gen.resize(s / n, redisProtocolMsgGen))
       .map(els => ArrayMsg(els))
   })
 
-  def redisMsgGen: Gen[RedisMsg] =
+  def redisProtocolMsgGen: Gen[RedisMsg] =
     Gen.oneOf(simpleStringGen, errorGen, integerGen, bulkStringGen, arrayGen)
 }

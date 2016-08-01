@@ -21,7 +21,7 @@ class RedisMsgTest extends FunSuite with PropertyChecks {
 
   test("encoded and then decoded messages should be equal to the original messages") {
     val gen = for {
-      redisMsgs <- Gen.buildableOf[Seq[RedisMsg], RedisMsg](redisMsgGen)
+      redisMsgs <- Gen.buildableOf[Seq[RedisMsg], RedisMsg](redisProtocolMsgGen)
       splitPoints <- Gen.buildableOf[Seq[Double], Double](Gen.choose(0.0, 1.0))
     } yield (redisMsgs, splitPoints)
 

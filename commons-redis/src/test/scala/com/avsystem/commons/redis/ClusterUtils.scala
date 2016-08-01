@@ -10,9 +10,12 @@ import scala.io.Source
   * Created: 28/06/16.
   */
 object ClusterUtils {
-  private val SlotKeys =
+  val SlotKeys =
     Source.fromInputStream(getClass.getResourceAsStream("/slotkeys.txt"))
       .getLines().map(ByteString(_)).toArray
+
+  def keyWithSameSlotAs(key: ByteString) =
+    SlotKeys(Hash.slot(key))
 
   def strings(length: Int): Iterator[String] =
     if (length == 0) Iterator("")

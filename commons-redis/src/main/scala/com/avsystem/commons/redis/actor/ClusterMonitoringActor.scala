@@ -4,15 +4,15 @@ package redis.actor
 import akka.actor.{Actor, Props}
 import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.actor.RedisConnectionActor.{BatchFailure, BatchSuccess}
-import com.avsystem.commons.redis.commands.{SlotRange, SlotRangeMapping}
+import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
+import com.avsystem.commons.redis.commands.{ClusterSlots, SlotRange}
 import com.avsystem.commons.redis.config.ClusterConfig
 import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{NodeAddress, RedisCommands, RedisNodeClient}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
-import scala.util.Random
+import scala.util.{Failure, Random, Success, Try}
 
 final class ClusterMonitoringActor(
   seedNodes: Seq[NodeAddress],
@@ -61,34 +61,36 @@ final class ClusterMonitoringActor(
         }
         suspendUntil = config.minRefreshInterval.fromNow
       }
-    case BatchSuccess(slotRangeMapping: Seq[SlotRangeMapping@unchecked]) =>
-      val newMapping = slotRangeMapping.iterator.map { srm =>
-        (srm.range, clients.getOrElseUpdate(srm.master, createClient(srm.master)))
-      }.toArray
-      java.util.Arrays.sort(newMapping, MappingComparator)
+    case pr: PacksResult => Try(ClusterSlots.decodeReplies(pr)) match {
+      case Success(slotRangeMapping) =>
+        val newMapping = slotRangeMapping.iterator.map { srm =>
+          (srm.range, clients.getOrElseUpdate(srm.master, createClient(srm.master)))
+        }.toArray
+        java.util.Arrays.sort(newMapping, MappingComparator)
 
-      masters = slotRangeMapping.iterator.map(_.master).to[mutable.LinkedHashSet]
+        masters = slotRangeMapping.iterator.map(_.master).to[mutable.LinkedHashSet]
 
-      (masters diff connections.keySet).foreach { addr =>
-        connections(addr) = createConnection(addr)
-      }
-
-      if (!(mapping sameElements newMapping)) {
-        log.debug(s"New cluster slot mapping received:\n${slotRangeMapping.mkString("\n")}")
-        mapping = newMapping
-        listener(newMapping)
-      }
-
-      (connections.keySet diff masters).foreach { addr =>
-        connections.remove(addr).foreach(context.stop)
-      }
-      (clients.keySet diff masters).foreach { addr =>
-        clients.remove(addr).foreach { client =>
-          system.scheduler.scheduleOnce(config.nodeClientCloseDelay)(client.close())
+        (masters diff connections.keySet).foreach { addr =>
+          connections(addr) = createConnection(addr)
         }
-      }
-    case BatchFailure(cause) =>
-      log.error(s"Failed to refresh cluster state", cause)
+
+        if (!(mapping sameElements newMapping)) {
+          log.debug(s"New cluster slot mapping received:\n${slotRangeMapping.mkString("\n")}")
+          mapping = newMapping
+          listener(newMapping)
+        }
+
+        (connections.keySet diff masters).foreach { addr =>
+          connections.remove(addr).foreach(context.stop)
+        }
+        (clients.keySet diff masters).foreach { addr =>
+          clients.remove(addr).foreach { client =>
+            system.scheduler.scheduleOnce(config.nodeClientCloseDelay)(client.close())
+          }
+        }
+      case Failure(cause) =>
+        log.error(s"Failed to refresh cluster state", cause)
+    }
     case GetClient(addr) =>
       val client = clients.getOrElseUpdate(addr, createClient(addr))
       sender() ! GetClientResponse(client)

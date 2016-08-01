@@ -30,7 +30,10 @@ trait UsesPreconfiguredCluster extends UsesActorSystem with UsesFreshClusterServ
   def waitUntil(predicate: => Future[Boolean], retryInterval: FiniteDuration): Future[Unit] =
     predicate.flatMap { r =>
       if (r) Future.successful(())
-      else wait(retryInterval).flatMap(_ => waitUntil(predicate, retryInterval))
+      else for {
+        _ <- wait(retryInterval)
+        _ <- waitUntil(predicate, retryInterval)
+      } yield ()
     }
 
   override protected def beforeAll() = {
