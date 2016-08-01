@@ -11,6 +11,8 @@ import scala.sys.process._
 trait RedisProcessUtils {
   implicit def executionContext: ExecutionContext
 
+  def redisHome = sys.env("REDIS_HOME")
+
   def launchRedis(command: String*): Future[Process] = {
     val promise = Promise[Unit]()
     val process = command.run(ProcessLogger { line =>
@@ -23,7 +25,7 @@ trait RedisProcessUtils {
   }
 
   def shutdownRedis(port: Int, process: Process): Future[Unit] = Future {
-    Seq("redis-cli", "-p", port.toString, "SHUTDOWN").!!
+    Seq(s"$redisHome/redis-cli", "-p", port.toString, "SHUTDOWN").!!
     process.exitValue()
   }
 }

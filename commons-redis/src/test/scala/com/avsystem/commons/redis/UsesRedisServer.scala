@@ -21,7 +21,7 @@ trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils {this: Su
   override protected def beforeAll() = {
     super.beforeAll()
     redisProcess = Await.result(
-      launchRedis("redis-server",
+      launchRedis(s"$redisHome/redis-server",
         "--daemonize", "no",
         "--port", port.toString
       ),

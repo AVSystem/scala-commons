@@ -29,7 +29,7 @@ trait UsesFreshClusterServers extends BeforeAndAfterAll with RedisProcessUtils {
     super.beforeAll()
     prepareDirectory()
     redisProcesses = Await.result(Future.traverse(ports)(port => launchRedis(
-      "redis-server",
+      s"$redisHome/redis-server",
       "--port", port.toString,
       "--daemonize", "no",
       "--pidfile", "redis.pid",

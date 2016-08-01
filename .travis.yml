@@ -12,7 +12,7 @@ before_install:
 env:
   global:
     - REDIS_VERSION=3.2.2
-    - PATH=$PATH:$PWD/redis-$REDIS_VERSION/src
+    - REDIS_HOME=$PWD/redis-$REDIS_VERSION/src
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean test
