@@ -1,10 +1,18 @@
 language: scala
 
 scala:
-  - 2.11.7
+  - 2.11.8
 
 jdk:
   - oraclejdk8
+
+before_install:
+  - ./install-redis.sh
+
+env:
+  global:
+    - REDIS_VERSION=3.2.2
+    - PATH=$PATH:$PWD/redis-$REDIS_VERSION/src
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean test
@@ -15,6 +23,7 @@ cache:
   directories:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
+    - redis-$REDIS_VERSION
 
 before_cache:
   - find $HOME/.ivy2 -name "ivydata-*.properties" -delete

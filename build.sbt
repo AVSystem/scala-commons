@@ -191,7 +191,8 @@ lazy val `commons-redis` = project
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.chuusai" %% "shapeless" % shapelessVersion
-    )
+    ),
+    parallelExecution in Test := false
   )
 
 lazy val `commons-spring` = project
