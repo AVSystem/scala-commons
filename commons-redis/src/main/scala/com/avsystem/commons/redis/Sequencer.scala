@@ -14,23 +14,23 @@ import scala.util.control.NonFatal
   * Created: 28/07/16.
   */
 @implicitNotFound("${Ops} is not something that can be transformed into RedisBatch")
-trait Sequencer[Ops, Res, S] {
-  def sequence(ops: Ops): RedisBatch[Res, S]
+trait Sequencer[Ops, Res] {
+  def sequence(ops: Ops): RedisBatch[Res]
 }
 object Sequencer extends TupleSequencers {
-  private val reusableTrivialSequencer = new Sequencer[RedisBatch[Any, Any], Any, Any] {
-    def sequence(ops: RedisBatch[Any, Any]): RedisBatch[Any, Any] = ops
+  private val reusableTrivialSequencer = new Sequencer[RedisBatch[Any], Any] {
+    def sequence(ops: RedisBatch[Any]): RedisBatch[Any] = ops
   }
 
-  implicit def trivialSequencer[A, S]: Sequencer[RedisBatch[A, S], A, S] =
-    reusableTrivialSequencer.asInstanceOf[Sequencer[RedisBatch[A, S], A, S]]
+  implicit def trivialSequencer[A]: Sequencer[RedisBatch[A], A] =
+    reusableTrivialSequencer.asInstanceOf[Sequencer[RedisBatch[A], A]]
 
-  implicit def collectionSequencer[A, S, M[X] <: TraversableOnce[X], That](
-    implicit cbf: CanBuildFrom[M[RedisBatch[A, S]], A, That]): Sequencer[M[RedisBatch[A, S]], That, S] =
+  implicit def collectionSequencer[A, M[X] <: TraversableOnce[X], That](
+    implicit cbf: CanBuildFrom[M[RedisBatch[A]], A, That]): Sequencer[M[RedisBatch[A]], That] =
 
-    new Sequencer[M[RedisBatch[A, S]], That, S] {
-      def sequence(ops: M[RedisBatch[A, S]]) =
-        new RedisBatch[That, S] with RawCommandPacks {
+    new Sequencer[M[RedisBatch[A]], That] {
+      def sequence(ops: M[RedisBatch[A]]) =
+        new RedisBatch[That] with RawCommandPacks {
           def rawCommandPacks = this
           def emitCommandPacks(consumer: RawCommandPack => Unit) =
             ops.foreach(_.rawCommandPacks.emitCommandPacks(consumer))

@@ -3,12 +3,13 @@ package redis.actor
 
 import akka.actor.{Actor, ActorRef}
 import com.avsystem.commons.misc.Opt
+import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 import com.avsystem.commons.redis.actor.ManagedRedisConnectionActor.Reserving
 import com.avsystem.commons.redis.actor.RedisOperationActor.{OpFailure, OpSuccess}
 import com.avsystem.commons.redis.exception.RedisException
 import com.avsystem.commons.redis.util.ActorLazyLogging
-import com.avsystem.commons.redis.{OperationBatch, RedisOp}
+import com.avsystem.commons.redis.{RedisBatch, RedisOp}
 
 import scala.util.control.NonFatal
 
@@ -26,18 +27,19 @@ final class RedisOperationActor(managedConnection: ActorRef) extends Actor with 
 
   private var listener: ActorRef = _
 
-  def handleOperation(op: RedisOp[Any], reserving: Boolean = false): Unit = op match {
-    case LeafOp(batch) =>
-      val packs = batch.rawCommandPacks
+  def handleOperation(op: RedisOp[Any], reserving: Boolean = false): Unit = {
+    def handle[A, B](batch: RedisBatch[A], nextStep: Opt[A => RedisOp[B]]) = {
+      val packs = batch.rawCommandPacks.requireLevel(Level.Operation, "RedisOperation")
       managedConnection ! (if (reserving) Reserving(packs) else packs)
-      context.become(waitingForResponse(batch, Opt.Empty))
-    case FlatMappedOp(batch, nextStep) =>
-      val packs = batch.rawCommandPacks
-      managedConnection ! (if (reserving) Reserving(packs) else packs)
-      context.become(waitingForResponse(batch, Opt(nextStep)))
+      context.become(waitingForResponse(batch, nextStep))
+    }
+    op match {
+      case LeafOp(batch) => handle(batch, Opt.Empty)
+      case FlatMappedOp(batch, nextStep) => handle(batch, nextStep.opt)
+    }
   }
 
-  def waitingForResponse[A, B](prevBatch: OperationBatch[A], nextStep: Opt[A => RedisOp[B]], reserving: Boolean = false): Receive = {
+  def waitingForResponse[A, B](prevBatch: RedisBatch[A], nextStep: Opt[A => RedisOp[B]], reserving: Boolean = false): Receive = {
     case pr: RedisConnectionActor.PacksResult =>
       try {
         val a = prevBatch.decodeReplies(pr)
@@ -62,7 +64,9 @@ final class RedisOperationActor(managedConnection: ActorRef) extends Actor with 
   def receive = {
     case op: RedisOp[Any] if listener == null =>
       listener = sender()
-      handleOperation(op, reserving = true)
+      try handleOperation(op, reserving = true) catch {
+        case NonFatal(t) => respond(OpFailure(t))
+      }
   }
 
   def releaseConnection(): Unit =

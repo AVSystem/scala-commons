@@ -13,7 +13,7 @@ import org.scalatest.{FunSuite, Matchers}
 class RedisConnectionClientTest extends FunSuite
   with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer with ByteStringInterpolation {
 
-  def createClient(initCommands: ConnectionBatch[Any]) =
+  def createClient(initCommands: RedisBatch[Any]) =
     new RedisConnectionClient(address, config = ConnectionConfig(initCommands))
 
   test("client initialization test") {

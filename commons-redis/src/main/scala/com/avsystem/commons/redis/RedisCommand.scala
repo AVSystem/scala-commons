@@ -10,7 +10,7 @@ import com.avsystem.commons.redis.protocol._
 
 import scala.collection.mutable.ArrayBuffer
 
-trait RedisCommand[+A, -S] extends AtomicBatch[A, S] with RawCommand {
+trait RedisCommand[+A] extends AtomicBatch[A] with RawCommand {
   def decodeExpected: PartialFunction[ValidRedisMsg, A]
 
   def decode(replyMsg: RedisReply): A = replyMsg match {
@@ -72,58 +72,58 @@ object CommandEncoder {
   }
 }
 
-trait RedisRawCommand[S] extends RedisCommand[ValidRedisMsg, S] {
+trait RedisRawCommand extends RedisCommand[ValidRedisMsg] {
   def decodeExpected = {
     case msg => msg
   }
 }
 
-trait RedisUnitCommand[S] extends RedisCommand[Unit, S] {
+trait RedisUnitCommand extends RedisCommand[Unit] {
   def decodeExpected = {
     case RedisMsg.Ok => ()
   }
 }
 
-trait RedisLongCommand[S] extends RedisCommand[Long, S] {
+trait RedisLongCommand extends RedisCommand[Long] {
   def decodeExpected = {
     case IntegerMsg(res) => res
   }
 }
 
-trait RedisOptLongCommand[S] extends RedisCommand[Opt[Long], S] {
+trait RedisOptLongCommand extends RedisCommand[Opt[Long]] {
   def decodeExpected = {
     case IntegerMsg(res) => Opt(res)
     case NullBulkStringMsg => Opt.Empty
   }
 }
 
-trait RedisBooleanCommand[S] extends RedisCommand[Boolean, S] {
+trait RedisBooleanCommand extends RedisCommand[Boolean] {
   def decodeExpected = {
     case IntegerMsg(0) => false
     case IntegerMsg(1) => true
   }
 }
 
-trait RedisSimpleStringCommand[S] extends RedisCommand[ByteString, S] {
+trait RedisSimpleStringCommand extends RedisCommand[ByteString] {
   def decodeExpected = {
     case SimpleStringMsg(data) => data
   }
 }
 
-trait RedisBinaryCommand[S] extends RedisCommand[ByteString, S] {
+trait RedisBinaryCommand extends RedisCommand[ByteString] {
   def decodeExpected = {
     case BulkStringMsg(data) => data
   }
 }
 
-trait RedisOptBinaryCommand[S] extends RedisCommand[Opt[ByteString], S] {
+trait RedisOptBinaryCommand extends RedisCommand[Opt[ByteString]] {
   def decodeExpected = {
     case BulkStringMsg(data) => Opt(data)
     case NullBulkStringMsg => Opt.Empty
   }
 }
 
-trait RedisBinarySeqCommand[S] extends RedisCommand[Seq[ByteString], S] {
+trait RedisBinarySeqCommand extends RedisCommand[Seq[ByteString]] {
   def decodeExpected = {
     case ArrayMsg(elements) =>
       elements.map {
@@ -133,7 +133,7 @@ trait RedisBinarySeqCommand[S] extends RedisCommand[Seq[ByteString], S] {
   }
 }
 
-trait RedisOptBinarySeqCommand[S] extends RedisCommand[Seq[Opt[ByteString]], S] {
+trait RedisOptBinarySeqCommand extends RedisCommand[Seq[Opt[ByteString]]] {
   def decodeExpected = {
     case ArrayMsg(elements) =>
       elements.map {
@@ -144,7 +144,7 @@ trait RedisOptBinarySeqCommand[S] extends RedisCommand[Seq[Opt[ByteString]], S] 
   }
 }
 
-trait RedisDoubleCommand[S] extends RedisCommand[Double, S] {
+trait RedisDoubleCommand extends RedisCommand[Double] {
   def decodeExpected = {
     case BulkStringMsg(bytes) => bytes.utf8String.toDouble
   }

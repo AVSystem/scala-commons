@@ -2,6 +2,8 @@ package com.avsystem.commons
 package redis
 
 import com.avsystem.commons.misc.Opt
+import com.avsystem.commons.redis.RawCommand.Level
+import com.avsystem.commons.redis.exception.ForbiddenCommandException
 import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, RedisMsg, RedisReply}
 
 import scala.collection.mutable.ArrayBuffer
@@ -11,18 +13,24 @@ import scala.collection.mutable.ArrayBuffer
   * (avoids wrapping in case of single element).
   */
 trait RawCommands {
-  def emitCommands(consumer: ArrayMsg[BulkStringMsg] => Unit): Unit
+  def emitCommands(consumer: RawCommand => Unit): Unit
 }
 
 trait RawCommand extends RawCommandPack with RawCommands with ReplyPreprocessor {
   val encoded: ArrayMsg[BulkStringMsg]
-  def updateState(message: RedisMsg, state: ConnectionState): Unit = ()
+  def updateWatchState(message: RedisMsg, state: WatchState): Unit = ()
+  def level: Level
+
+  def checkLevel(minAllowed: Level, clientType: String) =
+    if (!minAllowed.allows(level)) {
+      throw new ForbiddenCommandException(this, clientType)
+    }
 
   def rawCommands(inTransaction: Boolean) = this
-  def emitCommands(consumer: ArrayMsg[BulkStringMsg] => Unit) = consumer(encoded)
+  def emitCommands(consumer: RawCommand => Unit) = consumer(this)
   def createPreprocessor(replyCount: Int) = this
-  def preprocess(message: RedisMsg, state: ConnectionState) = {
-    updateState(message, state)
+  def preprocess(message: RedisMsg, state: WatchState) = {
+    updateWatchState(message, state)
     Opt(message)
   }
 
@@ -33,12 +41,43 @@ trait RawCommand extends RawCommandPack with RawCommands with ReplyPreprocessor 
   }
 }
 
+trait UnsafeCommand extends RawCommand {
+  def level = Level.Unsafe
+}
+trait ConnectionCommand extends RawCommand {
+  def level = Level.Connection
+}
+trait OperationCommand extends RawCommand {
+  def level = Level.Operation
+}
+trait NodeCommand extends RawCommand {
+  def level = Level.Node
+}
+
+object RawCommand {
+  case class Level(raw: Int) extends AnyVal {
+    def allows(other: Level) = raw <= other.raw
+  }
+  object Level {
+    val Unsafe = Level(0)
+    val Connection = Level(1)
+    val Operation = Level(2)
+    val Node = Level(3)
+    val Control = Level(4)
+  }
+}
+
 /**
   * One or more [[RawCommandPack]]s. More lightweight than regular Scala collection
   * (avoids wrapping in case of single element).
   */
 trait RawCommandPacks {
   def emitCommandPacks(consumer: RawCommandPack => Unit): Unit
+
+  def requireLevel(minAllowed: Level, clientType: String): this.type = {
+    emitCommandPacks(_.checkLevel(minAllowed, clientType))
+    this
+  }
 }
 
 /**
@@ -48,19 +87,20 @@ trait RawCommandPacks {
 trait RawCommandPack extends RawCommandPacks {
   def rawCommands(inTransaction: Boolean): RawCommands
   def createPreprocessor(replyCount: Int): ReplyPreprocessor
+  def checkLevel(minAllowed: Level, clientType: String): Unit
 
   def emitCommandPacks(consumer: RawCommandPack => Unit) = consumer(this)
 }
 
-final class ConnectionState {
+final class WatchState {
   var watching: Boolean = false
 }
 
 /**
   * Something that translates incoming [[RedisMsg]] messages and emits a single [[RedisReply]].
   * For example, it may handle transactions by extracting actual responses for every command from
-  * the `EXEC` response and returning them in a [[com.avsystem.commons.redis.protocol.TransactionReply]] (see [[Transaction]]).
+  * the `EXEC` response and returning them in an [[ArrayMsg]] (see [[Transaction]]).
   */
 trait ReplyPreprocessor {
-  def preprocess(message: RedisMsg, connectionState: ConnectionState): Opt[RedisReply]
+  def preprocess(message: RedisMsg, connectionState: WatchState): Opt[RedisReply]
 }

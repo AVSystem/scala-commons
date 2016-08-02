@@ -1,8 +1,8 @@
 package com.avsystem.commons
 package redis.exception
 
-import com.avsystem.commons.redis.NodeAddress
 import com.avsystem.commons.redis.protocol.ErrorMsg
+import com.avsystem.commons.redis.{NodeAddress, RawCommand}
 
 /**
   * Author: ghik
@@ -46,6 +46,9 @@ class ConnectionInitializationFailure(cause: Throwable)
 
 class ConnectionStateResetFailure(cause: Throwable)
   extends RedisException("Failure while resetting Redis connection state", cause)
+
+class ForbiddenCommandException(cmd: RawCommand, client: String)
+  extends RedisException(s"This command cannot be executed on $client: $cmd")
 
 class CrossSlotException
   extends RedisException("Keys don't hash to the same slot")

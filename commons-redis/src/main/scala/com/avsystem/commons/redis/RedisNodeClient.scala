@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicLong
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.avsystem.commons.redis.Scope.Node
+import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{ManagedRedisConnectionActor, RedisOperationActor}
@@ -31,10 +31,12 @@ final class RedisNodeClient(
   private def nextConnection() =
     connections((index.getAndIncrement() % config.poolSize).toInt)
 
-  def executeRaw(packs: RawCommandPacks)(implicit timeout: Timeout): Future[PacksResult] =
+  def executeRaw(packs: RawCommandPacks)(implicit timeout: Timeout): Future[PacksResult] = {
+    packs.requireLevel(Level.Node, "NodeClient")
     initFuture.flatMapNow(_ => nextConnection().ask(packs)).mapTo[PacksResult]
+  }
 
-  def executeBatch[A](batch: NodeBatch[A])(implicit timeout: Timeout): Future[A] =
+  def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A] =
     executeRaw(batch.rawCommandPacks).mapNow(result => batch.decodeReplies(result))
 
   def executeOp[A](op: RedisOp[A])(implicit timeout: Timeout): Future[A] =
@@ -47,9 +49,9 @@ final class RedisNodeClient(
   def initialized: Future[this.type] =
     initFuture.mapNow(_ => this)
 
-  def toExecutor(implicit timeout: Timeout): RedisExecutor[Node] =
-    new RedisExecutor[Node] {
-      def execute[A](cmd: NodeBatch[A]) = client.executeBatch(cmd)
+  def toExecutor(implicit timeout: Timeout): RedisExecutor =
+    new RedisExecutor {
+      def execute[A](cmd: RedisBatch[A]) = client.executeBatch(cmd)
     }
 
   def close(): Unit =

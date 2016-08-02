@@ -11,7 +11,7 @@ import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.protocol._
 import com.avsystem.commons.redis.util.ActorLazyLogging
-import com.avsystem.commons.redis.{ConnectionState, NodeAddress, RawCommandPacks, ReplyPreprocessor}
+import com.avsystem.commons.redis.{WatchState, NodeAddress, RawCommandPacks, ReplyPreprocessor}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -29,7 +29,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
   private var blocked = false
   private val sentRequests = new mutable.Queue[SentRequest]
   private val sendBuffer = new ArrayBuffer[ArrayMsg[BulkStringMsg]]
-  private val state = new ConnectionState
+  private val state = new WatchState
 
   private val decoder = new RedisMsg.Decoder({ replyMsg =>
     val lastRequest = sentRequests.front
@@ -62,7 +62,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       val requestToSend = new SentRequest(callback)
       packs.emitCommandPacks { pack =>
         val sizeBefore = sendBuffer.size
-        pack.rawCommands(inTransaction = false).emitCommands(sendBuffer += _)
+        pack.rawCommands(inTransaction = false).emitCommands(rc => sendBuffer += rc.encoded)
         requestToSend.pushPreprocessor(pack.createPreprocessor(sendBuffer.size - sizeBefore))
       }
       blocked = blocking
@@ -160,7 +160,7 @@ object RedisConnectionActor {
     private[this] var replies: ArrayBuffer[RedisReply] = _
     private[this] var preprocessors: Any = _
 
-    def processMessage(message: RedisMsg, state: ConnectionState): Opt[PacksResult] =
+    def processMessage(message: RedisMsg, state: WatchState): Opt[PacksResult] =
       preprocessors match {
         case null => Opt(PacksResult.Empty)
         case prep: ReplyPreprocessor =>

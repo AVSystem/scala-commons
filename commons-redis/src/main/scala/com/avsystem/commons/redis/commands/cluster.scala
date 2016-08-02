@@ -4,7 +4,6 @@ package redis.commands
 import akka.util.ByteString
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
-import com.avsystem.commons.redis.Scope.{Cluster, Connection, Node}
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
 import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, IntegerMsg, RedisMsg}
@@ -12,102 +11,102 @@ import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, IntegerMsg,
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-trait ClusteredClusterApi extends ClusteredApiSubset {
-  def clusterKeyslot(key: ByteString): Result[Int, Cluster] =
+trait ClusteredClusterApi extends ApiSubset {
+  def clusterKeyslot(key: ByteString): Result[Int] =
     execute(ClusterKeyslot(key))
 }
 
-trait NodeClusterApi extends ClusteredClusterApi with NodeApiSubset {
-  def clusterAddslots(slots: Seq[Int]): Result[Unit, Node] =
+trait NodeClusterApi extends ClusteredClusterApi {
+  def clusterAddslots(slots: Seq[Int]): Result[Unit] =
     execute(ClusterAddslots(slots))
-  def clusterCountFailureReports(nodeId: NodeId): Result[Long, Node] =
+  def clusterCountFailureReports(nodeId: NodeId): Result[Long] =
     execute(ClusterCountFailureReports(nodeId))
-  def clusterCountkeysinslot(slot: Int): Result[Long, Node] =
+  def clusterCountkeysinslot(slot: Int): Result[Long] =
     execute(ClusterCountkeysinslot(slot))
-  def clusterDelslots(slots: Seq[Int]): Result[Unit, Node] =
+  def clusterDelslots(slots: Seq[Int]): Result[Unit] =
     execute(ClusterDelslots(slots))
-  def clusterFailover(option: Opt[FailoverOption]): Result[Unit, Node] =
+  def clusterFailover(option: Opt[FailoverOption]): Result[Unit] =
     execute(ClusterFailover(option))
-  def clusterForget(nodeId: NodeId): Result[Unit, Node] =
+  def clusterForget(nodeId: NodeId): Result[Unit] =
     execute(ClusterForget(nodeId))
-  def clusterGetkeysinslot(slot: Int, count: Long): Result[Seq[ByteString], Node] =
+  def clusterGetkeysinslot(slot: Int, count: Long): Result[Seq[ByteString]] =
     execute(ClusterGetkeysinslot(slot, count))
-  def clusterInfo: Result[ClusterInfoReply, Node] =
+  def clusterInfo: Result[ClusterInfoReply] =
     execute(ClusterInfo)
-  def clusterMeet(address: NodeAddress): Result[Unit, Node] =
+  def clusterMeet(address: NodeAddress): Result[Unit] =
     execute(ClusterMeet(address))
-  def clusterNodes: Result[Seq[NodeInfo], Node] =
+  def clusterNodes: Result[Seq[NodeInfo]] =
     execute(ClusterNodes)
-  def clusterReplicate(nodeId: NodeId): Result[Unit, Node] =
+  def clusterReplicate(nodeId: NodeId): Result[Unit] =
     execute(ClusterReplicate(nodeId))
-  def clusterReset(hard: Boolean = false): Result[Unit, Node] =
+  def clusterReset(hard: Boolean = false): Result[Unit] =
     execute(ClusterReset(hard))
-  def clusterSaveconfig: Result[Unit, Node] =
+  def clusterSaveconfig: Result[Unit] =
     execute(ClusterSaveconfig)
-  def clusterSetConfigEpoch(configEpoch: Long): Result[Unit, Node] =
+  def clusterSetConfigEpoch(configEpoch: Long): Result[Unit] =
     execute(ClusterSetConfigEpoch(configEpoch))
-  def clusterSetslot(slot: Int, subcommand: SetslotSubcommand): Result[Unit, Node] =
+  def clusterSetslot(slot: Int, subcommand: SetslotSubcommand): Result[Unit] =
     execute(ClusterSetslot(slot, subcommand))
-  def clusterSlaves(nodeId: NodeId): Result[Seq[NodeInfo], Node] =
+  def clusterSlaves(nodeId: NodeId): Result[Seq[NodeInfo]] =
     execute(ClusterSlaves(nodeId))
-  def clusterSlots: Result[Seq[SlotRangeMapping], Node] =
+  def clusterSlots: Result[Seq[SlotRangeMapping]] =
     execute(ClusterSlots)
 }
 
-trait ConnectionClusterApi extends NodeClusterApi with ConnectionApiSubset {
-  def readonly: Result[Unit, Connection] =
+trait ConnectionClusterApi extends NodeClusterApi {
+  def readonly: Result[Unit] =
     execute(Readonly)
-  def readwrite: Result[Unit, Connection] =
+  def readwrite: Result[Unit] =
     execute(Readwrite)
 }
 
-case class ClusterAddslots(slots: Seq[Int]) extends RedisUnitCommand[Node] {
+case class ClusterAddslots(slots: Seq[Int]) extends RedisUnitCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "ADDSLOTS").add(slots).result
 }
 
-case class ClusterCountFailureReports(nodeId: NodeId) extends RedisLongCommand[Node] {
+case class ClusterCountFailureReports(nodeId: NodeId) extends RedisLongCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "COUNT-FAILURE-REPORTS").add(nodeId.raw).result
 }
 
-case class ClusterCountkeysinslot(slot: Int) extends RedisLongCommand[Node] {
+case class ClusterCountkeysinslot(slot: Int) extends RedisLongCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "COUNTKEYSINSLOT").add(slot).result
 }
 
-case class ClusterDelslots(slots: Seq[Int]) extends RedisUnitCommand[Node] {
+case class ClusterDelslots(slots: Seq[Int]) extends RedisUnitCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "DELSLOTS").add(slots).result
 }
 
-case class ClusterFailover(option: Opt[FailoverOption]) extends RedisUnitCommand[Node] {
+case class ClusterFailover(option: Opt[FailoverOption]) extends RedisUnitCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "FAILOVER").add(option).result
 }
 
-case class ClusterForget(nodeId: NodeId) extends RedisUnitCommand[Node] {
+case class ClusterForget(nodeId: NodeId) extends RedisUnitCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "FORGET").add(nodeId.raw).result
 }
 
-case class ClusterGetkeysinslot(slot: Int, count: Long) extends RedisBinarySeqCommand[Node] {
+case class ClusterGetkeysinslot(slot: Int, count: Long) extends RedisBinarySeqCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "GETKEYSINSLOT").add(slot).add(count).result
 }
 
-case object ClusterInfo extends RedisCommand[ClusterInfoReply, Node] {
+case object ClusterInfo extends RedisCommand[ClusterInfoReply] with NodeCommand {
   val encoded = encoder("CLUSTER", "INFO").result
   def decodeExpected = {
     case BulkStringMsg(clusterInfo) => ClusterInfoReply.parse(clusterInfo.utf8String)
   }
 }
 
-case class ClusterKeyslot(key: ByteString) extends RedisCommand[Int, Cluster] {
+case class ClusterKeyslot(key: ByteString) extends RedisCommand[Int] with NodeCommand {
   val encoded = encoder("CLUSTER", "KEYSLOT").key(key).result
   def decodeExpected = {
     case IntegerMsg(value) => value.toInt
   }
 }
 
-case class ClusterMeet(address: NodeAddress) extends RedisUnitCommand[Node] {
+case class ClusterMeet(address: NodeAddress) extends RedisUnitCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "MEET").add(address.ip).add(address.port).result
 }
 
-case object ClusterNodes extends RedisCommand[Seq[NodeInfo], Node] {
+case object ClusterNodes extends RedisCommand[Seq[NodeInfo]] with NodeCommand {
   val encoded = encoder("CLUSTER", "NODES").result
   def decodeExpected = {
     case BulkStringMsg(nodeInfos) =>
@@ -115,27 +114,27 @@ case object ClusterNodes extends RedisCommand[Seq[NodeInfo], Node] {
   }
 }
 
-case class ClusterReplicate(nodeId: NodeId) extends RedisUnitCommand[Node] {
+case class ClusterReplicate(nodeId: NodeId) extends RedisUnitCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "REPLICATE").add(nodeId.raw).result
 }
 
-case class ClusterReset(hard: Boolean) extends RedisUnitCommand[Node] {
+case class ClusterReset(hard: Boolean) extends RedisUnitCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "RESET").addFlag("HARD", hard).result
 }
 
-case object ClusterSaveconfig extends RedisUnitCommand[Node] {
+case object ClusterSaveconfig extends RedisUnitCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "SAVECONFIG").result
 }
 
-case class ClusterSetConfigEpoch(configEpoch: Long) extends RedisUnitCommand[Node] {
+case class ClusterSetConfigEpoch(configEpoch: Long) extends RedisUnitCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "SET-CONFIG-EPOCH").add(configEpoch).result
 }
 
-case class ClusterSetslot(slot: Int, subcommand: SetslotSubcommand) extends RedisUnitCommand[Node] {
+case class ClusterSetslot(slot: Int, subcommand: SetslotSubcommand) extends RedisUnitCommand with NodeCommand {
   val encoded = encoder("CLUSTER", "SETSLOT").add(slot).add(subcommand).result
 }
 
-case class ClusterSlaves(nodeId: NodeId) extends RedisCommand[Seq[NodeInfo], Node] {
+case class ClusterSlaves(nodeId: NodeId) extends RedisCommand[Seq[NodeInfo]] with NodeCommand {
   val encoded = encoder("CLUSTER", "SLAVES").add(nodeId.raw).result
   def decodeExpected = {
     case BulkStringMsg(nodeInfos) =>
@@ -143,7 +142,7 @@ case class ClusterSlaves(nodeId: NodeId) extends RedisCommand[Seq[NodeInfo], Nod
   }
 }
 
-case object ClusterSlots extends RedisCommand[Seq[SlotRangeMapping], Node] {
+case object ClusterSlots extends RedisCommand[Seq[SlotRangeMapping]] with NodeCommand {
   val encoded = encoder("CLUSTER", "SLOTS").result
   def decodeExpected = {
     case ArrayMsg(elements) => elements.map {
@@ -162,15 +161,15 @@ case object ClusterSlots extends RedisCommand[Seq[SlotRangeMapping], Node] {
   }
 }
 
-case object Readonly extends RedisUnitCommand[Connection] {
+case object Readonly extends RedisUnitCommand with ConnectionCommand {
   val encoded = encoder("READONLY").result
 }
 
-case object Readwrite extends RedisUnitCommand[Connection] {
+case object Readwrite extends RedisUnitCommand with ConnectionCommand {
   val encoded = encoder("READWRITE").result
 }
 
-case object Asking extends RawCommand {
+case object Asking extends UnsafeCommand {
   val encoded = encoder("ASKING").result
 }
 

@@ -26,19 +26,19 @@ object FlatMapper {
         case fmop: FlatMappedOp[pA, A] => FlatMappedOp(fmop.batch, (a: pA) => flatMap(fmop.fun(a))(rightFun))
       }
     }
-  implicit def OpBatch[A, B]: FlatMapper[A, B, RedisOp[A], OperationBatch[B]] =
-    new FlatMapper[A, B, RedisOp[A], OperationBatch[B]] {
-      def flatMap(left: RedisOp[A])(rightFun: A => OperationBatch[B]) =
+  implicit def OpBatch[A, B]: FlatMapper[A, B, RedisOp[A], RedisBatch[B]] =
+    new FlatMapper[A, B, RedisOp[A], RedisBatch[B]] {
+      def flatMap(left: RedisOp[A])(rightFun: A => RedisBatch[B]) =
         OpOp.flatMap(left)(a => rightFun(a).operation)
     }
-  implicit def BatchOp[A, B]: FlatMapper[A, B, OperationBatch[A], RedisOp[B]] =
-    new FlatMapper[A, B, OperationBatch[A], RedisOp[B]] {
-      def flatMap(left: OperationBatch[A])(rightFun: A => RedisOp[B]) =
+  implicit def BatchOp[A, B]: FlatMapper[A, B, RedisBatch[A], RedisOp[B]] =
+    new FlatMapper[A, B, RedisBatch[A], RedisOp[B]] {
+      def flatMap(left: RedisBatch[A])(rightFun: A => RedisOp[B]) =
         OpOp.flatMap(left.operation)(rightFun)
     }
-  implicit def BatchBatch[A, B]: FlatMapper[A, B, OperationBatch[A], OperationBatch[B]] =
-    new FlatMapper[A, B, OperationBatch[A], OperationBatch[B]] {
-      def flatMap(left: OperationBatch[A])(rightFun: A => OperationBatch[B]) =
+  implicit def BatchBatch[A, B]: FlatMapper[A, B, RedisBatch[A], RedisBatch[B]] =
+    new FlatMapper[A, B, RedisBatch[A], RedisBatch[B]] {
+      def flatMap(left: RedisBatch[A])(rightFun: A => RedisBatch[B]) =
         OpOp.flatMap(left.operation)(a => rightFun(a).operation)
     }
 }

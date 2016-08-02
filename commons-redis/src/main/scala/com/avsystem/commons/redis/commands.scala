@@ -1,50 +1,35 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.redis.Scope.{Cluster, Connection, Node}
 import com.avsystem.commons.redis.commands._
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-trait RedisExecutor[+S] {
-  def execute[A](batch: RedisBatch[A, S]): Future[A]
+trait RedisExecutor {
+  def execute[A](batch: RedisBatch[A]): Future[A]
 }
 
 trait ApiSubset {self =>
-  type CmdScope
-  type Result[A, S]
+  type Result[A]
 
-  protected def execute[A, S >: CmdScope](cmd: RedisCommand[A, S]): Result[A, S]
-}
-
-trait ClusteredApiSubset extends ApiSubset {
-  type CmdScope <: Scope.Cluster
-}
-trait NodeApiSubset extends ClusteredApiSubset {
-  type CmdScope <: Scope.Node
-}
-trait OperationApiSubset extends NodeApiSubset {
-  type CmdScope <: Scope.Operation
-}
-trait ConnectionApiSubset extends OperationApiSubset {
-  type CmdScope <: Scope.Connection
+  protected def execute[A](cmd: RedisCommand[A]): Result[A]
 }
 
 trait CommandSubset extends ApiSubset {
-  type Result[A, S] = RedisBatch[A, S]
-  protected def execute[A, S >: CmdScope](cmd: RedisCommand[A, S]) = cmd
+  type Result[A] = RedisBatch[A]
+  protected def execute[A](cmd: RedisCommand[A]) = cmd
 }
 trait AsyncCommandSubset extends ApiSubset {
-  type Result[A, S] = Future[A]
-  protected def executor: RedisExecutor[CmdScope]
-  protected def execute[A, S >: CmdScope](cmd: RedisCommand[A, S]) = executor.execute(cmd)
+  type Result[A] = Future[A]
+  protected def executor: RedisExecutor
+  protected def execute[A](cmd: RedisCommand[A]) = executor.execute(cmd)
 }
 trait BlockingCommandSubset extends ApiSubset {
-  type Result[A, S] = A
+  type Result[A] = A
   protected def timeout: Duration
-  protected def executor: RedisExecutor[CmdScope]
-  protected def execute[A, S >: CmdScope](cmd: RedisCommand[A, S]) = Await.result(executor.execute(cmd), timeout)
+  protected def executor: RedisExecutor
+  protected def execute[A](cmd: RedisCommand[A]) = Await.result(executor.execute(cmd), timeout)
 }
 
 trait RedisClusteredApi extends AnyRef
@@ -66,28 +51,18 @@ trait RedisConnectionApi extends RedisOperationApi
   with ConnectionClusterApi
   with ConnectionConnectionApi
 
-trait AbstractRedisClusteredApi extends RedisClusteredApi {self =>
-  type CmdScope = Scope.Cluster
-}
-trait AbstractRedisNodeApi extends RedisNodeApi {self =>
-  type CmdScope = Scope.Node
-}
-trait AbstractRedisConnectionApi extends RedisConnectionApi {self =>
-  type CmdScope = Scope.Connection
-}
+object RedisCommands extends RedisConnectionApi with CommandSubset
 
-object RedisCommands extends AbstractRedisConnectionApi with CommandSubset
+case class RedisClusteredAsyncCommands(executor: RedisExecutor)
+  extends RedisClusteredApi with AsyncCommandSubset
+case class RedisNodeAsyncCommands(executor: RedisExecutor)
+  extends RedisNodeApi with AsyncCommandSubset
+case class RedisConnectionAsyncCommands(executor: RedisExecutor)
+  extends RedisConnectionApi with AsyncCommandSubset
 
-case class RedisClusteredAsyncCommands(executor: RedisExecutor[Cluster])
-  extends AbstractRedisClusteredApi with AsyncCommandSubset
-case class RedisNodeAsyncCommands(executor: RedisExecutor[Node])
-  extends AbstractRedisNodeApi with AsyncCommandSubset
-case class RedisConnectionAsyncCommands(executor: RedisExecutor[Connection])
-  extends AbstractRedisConnectionApi with AsyncCommandSubset
-
-case class RedisClusteredBlockingCommands(executor: RedisExecutor[Cluster], timeout: Duration)
-  extends AbstractRedisClusteredApi with BlockingCommandSubset
-case class RedisNodeBlockingCommands(executor: RedisExecutor[Node], timeout: Duration)
-  extends AbstractRedisNodeApi with BlockingCommandSubset
-case class RedisConnectionBlockingCommands(executor: RedisExecutor[Connection], timeout: Duration)
-  extends AbstractRedisConnectionApi with BlockingCommandSubset
+case class RedisClusteredBlockingCommands(executor: RedisExecutor, timeout: Duration)
+  extends RedisClusteredApi with BlockingCommandSubset
+case class RedisNodeBlockingCommands(executor: RedisExecutor, timeout: Duration)
+  extends RedisNodeApi with BlockingCommandSubset
+case class RedisConnectionBlockingCommands(executor: RedisExecutor, timeout: Duration)
+  extends RedisConnectionApi with BlockingCommandSubset

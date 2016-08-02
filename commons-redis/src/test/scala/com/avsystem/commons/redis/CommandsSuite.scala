@@ -7,6 +7,7 @@ import org.scalatest.{BeforeAndAfterEach, FunSuite}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.reflect.ClassTag
 
 /**
   * Author: ghik
@@ -25,26 +26,27 @@ trait ByteStringInterpolation {
   }
 }
 
-trait CommandsSuite extends FunSuite with ScalaFutures with BeforeAndAfterEach with ByteStringInterpolation with CommunicationLogging {
-  type Api <: ApiSubset
+trait CommandsSuite extends FunSuite with ScalaFutures with BeforeAndAfterEach
+  with ByteStringInterpolation with CommunicationLogging {
 
-  def executor: RedisExecutor[Api#CmdScope]
+  val redisKey = bs"key"
+  def executor: RedisExecutor
 
-  protected def setup(batches: RedisBatch[Any, Api#CmdScope]*): Unit = {
+  protected def setup(batches: RedisBatch[Any]*): Unit = {
     Await.result(executor.execute(batches.sequence), Duration.Inf)
     listener.clear()
   }
 
-  protected implicit class BatchOps[T](batch: RedisBatch[T, Api#CmdScope]) {
+  protected implicit class BatchOps[T](batch: RedisBatch[T]) {
     def exec: Future[T] = executor.execute(batch)
+    def assert(pred: T => Boolean): Unit = CommandsSuite.this.assert(pred(exec.futureValue))
+    def assertEquals(t: T): Unit = assert(_ == t)
+    def intercept[E <: Throwable: Manifest]: E = CommandsSuite.this.intercept[E](throw exec.failed.futureValue)
   }
 }
 
 trait RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
-  type Api = RedisClusteredAsyncCommands
   def executor = redisClient.toExecutor
-
-  override def clusterConfig = super.clusterConfig
 
   override protected def afterEach() = {
     val futures = redisClient.currentState.masters.values.map(_.executeBatch(RedisCommands.flushall))
@@ -54,7 +56,6 @@ trait RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster w
 }
 
 trait RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with CommandsSuite {
-  type Api = RedisNodeAsyncCommands
   def executor = redisClient.toExecutor
 
   override protected def afterEach() = {
@@ -64,7 +65,6 @@ trait RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with Comm
 }
 
 trait RedisConnectionCommandsSuite extends FunSuite with UsesRedisConnectionClient with CommandsSuite {
-  type Api = RedisConnectionAsyncCommands
   def executor = redisClient.toExecutor
 
   override protected def afterEach() = {

@@ -1,16 +1,15 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.redis.Scope.Node
-import com.avsystem.commons.redis.{ClusteredApiSubset, NodeApiSubset, RedisUnitCommand}
+import com.avsystem.commons.redis.{ApiSubset, NodeCommand, RedisUnitCommand}
 
-trait ClusteredServerApi extends ClusteredApiSubset
+trait ClusteredServerApi extends ApiSubset
 
-trait NodeServerApi extends ClusteredServerApi with NodeApiSubset {
-  def flushall: Result[Unit, Node] =
+trait NodeServerApi extends ClusteredServerApi {
+  def flushall: Result[Unit] =
     execute(Flushall)
 }
 
-case object Flushall extends RedisUnitCommand[Node] {
+case object Flushall extends RedisUnitCommand with NodeCommand {
   val encoded = encoder("FLUSHALL").result
 }

@@ -12,16 +12,14 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
 
   import RedisCommands._
 
-  private val key = bs"key"
-
   override def nodeConfig = super.nodeConfig.copy(
     connectionConfigs = _ => ConnectionConfig(debugListener = listener)
   )
 
   test("empty transaction") {
-    setup(set(key, bs"42"))
+    setup(set(redisKey, bs"42"))
     val batch = RedisBatch.success(42).transaction
-    assert(redisClient.executeBatch(batch).futureValue == 42)
+    batch.assertEquals(42)
 
     assertCommunication(
       """
@@ -40,7 +38,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
 
   test("simple transaction") {
     val batch = set(bs"randomkey", bs"value").transaction
-    assert(redisClient.executeBatch(batch).futureValue)
+    batch.assert(identity)
 
     assertCommunication(
       """
@@ -72,7 +70,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
       set(bs"nestedkey", bs"value").transaction
       ).sequence.transaction
 
-    assert(redisClient.executeBatch(batch).futureValue == (Opt.Empty, true))
+    batch.assertEquals((Opt.Empty, true))
 
     assertCommunication(
       """
@@ -106,11 +104,11 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
   }
 
   test("simple transaction with watch") {
-    setup(set(key, bs"42"))
+    setup(set(redisKey, bs"42"))
 
     val operation = for {
-      value <- watch(Seq(key)) *> get(key).map(_.getOrElse(bs"0"))
-      _ <- set(key, value).transaction
+      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse(bs"0"))
+      _ <- set(redisKey, value).transaction
     } yield value
 
     assert(redisClient.executeOp(operation).futureValue == bs"42")
@@ -155,17 +153,17 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
   }
 
   test("optimistic lock failure") {
-    setup(set(key, bs"42"))
+    setup(set(redisKey, bs"42"))
 
     val operation = for {
-      value <- watch(Seq(key)) *> get(key).map(_.getOrElse(bs"0"))
+      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse(bs"0"))
       _ <- RedisOp.success {
         // simulate concurrent client reading watched key
         val client = new RedisConnectionClient(redisClient.address)
-        Await.result(client.execute(set(key, bs"42")), Duration.Inf)
+        Await.result(client.execute(set(redisKey, bs"42")), Duration.Inf)
         client.close()
       }
-      _ <- set(key, value).transaction
+      _ <- set(redisKey, value).transaction
     } yield value
 
     intercept[OptimisticLockException](throw redisClient.executeOp(operation).failed.futureValue)
@@ -206,9 +204,47 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
       """.stripMargin
     )
   }
+
+  test("EXECABORT") {
+    val badCommand: RedisBatch[Unit] =
+      new RedisUnitCommand with NodeCommand {
+        val encoded = encoder("GET").result
+      }
+
+    val batch = (get(redisKey).failed, badCommand.failed).sequence.transaction
+    batch.exec.futureValue match {
+      case (err1: ErrorReplyException, err2: ErrorReplyException) =>
+        assert(err1.reply.errorCode == "EXECABORT")
+        assert(err2.reply.errorCode == "ERR")
+    }
+
+    assertCommunication(
+      """
+        |*1\r\n
+        |$5\r\n
+        |MULTI\r\n
+        |*2\r\n
+        |$3\r\n
+        |GET\r\n
+        |$3\r\n
+        |key\r\n
+        |*1\r\n
+        |$3\r\n
+        |GET\r\n
+        |*1\r\n
+        |$4\r\n
+        |EXEC\r\n
+        |
+        |+OK\r\n
+        |+QUEUED\r\n
+        |-ERR wrong number of arguments for \'get\' command\r\n
+        |-EXECABORT Transaction discarded because of previous errors.\r\n
+      """.stripMargin
+    )
+  }
 }
 
-class SingleConnectionTransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
+class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
 
   import RedisCommands._
 
@@ -217,18 +253,16 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite with Commun
     connectionConfigs = _ => ConnectionConfig(debugListener = listener)
   )
 
-  private val key = bs"key"
-
   // needed in order to force the client to execute UNWATCH before test finishes
   private def withDummyGet[T](fut: Future[T]) =
   fut.andThen({ case _ => redisClient.executeBatch(get(bs"dummy")) })
 
   test("simple transaction with cleanup") {
-    setup(set(key, bs"0"))
+    setup(set(redisKey, bs"0"))
 
     val operation = for {
-      value <- watch(Seq(key)) *> get(key).map(_.getOrElse(bs"0"))
-      _ <- set(key, value)
+      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse(bs"0"))
+      _ <- set(redisKey, value)
     } yield value
 
     assert(withDummyGet(redisClient.executeOp(operation)).futureValue == bs"0")
@@ -236,10 +270,10 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite with Commun
   }
 
   test("simple transaction with cleanup after failure") {
-    setup(set(key, bs"0"))
+    setup(set(redisKey, bs"0"))
 
     val operation = for {
-      value <- watch(Seq(key)) *> get(key).map(_.getOrElse(bs"0"))
+      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse(bs"0"))
       _ <- RedisOp.failure(new IllegalArgumentException("SRSLY"))
     } yield value
 
@@ -248,10 +282,10 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite with Commun
   }
 
   test("simple transaction with cleanup after redis failure") {
-    setup(set(key, bs"0"))
+    setup(set(redisKey, bs"0"))
 
     val operation = for {
-      value <- watch(Seq(key)) *> get(key).map(_.getOrElse(bs"0"))
+      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse(bs"0"))
       _ <- clusterInfo // cluster info will fail on non-cluster Redis instance
     } yield value
 
@@ -260,11 +294,11 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite with Commun
   }
 
   test("concurrent transactions") {
-    setup(set(key, bs"0"))
+    setup(set(redisKey, bs"0"))
 
     val operation = for {
-      value <- watch(Seq(key)) *> get(key).map(_.map(_.utf8String.toInt).getOrElse(0))
-      _ <- set(key, bs"${value + 1}").transaction
+      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.map(_.utf8String.toInt).getOrElse(0))
+      _ <- set(redisKey, bs"${value + 1}").transaction
     } yield value
 
     def execute = redisClient.executeOp(operation)

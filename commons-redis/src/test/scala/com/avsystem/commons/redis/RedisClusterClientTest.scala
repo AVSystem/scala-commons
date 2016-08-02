@@ -3,25 +3,23 @@ package redis
 
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.config.{ClusterConfig, NodeConfig}
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Seconds, Span}
-import org.scalatest.{FunSuite, Matchers}
+import com.avsystem.commons.redis.exception.{CrossSlotException, ForbiddenCommandException, NoKeysException}
 
 /**
   * Author: ghik
   * Created: 27/06/16.
   */
-class RedisClusterClientTest extends FunSuite with Matchers with ScalaFutures
-  with UsesPreconfiguredCluster with UsesRedisClusterClient with ByteStringInterpolation {
+class RedisClusterClientTest extends RedisClusterCommandsSuite {
+
+  import RedisCommands._
 
   override def clusterConfig = ClusterConfig(nodeConfigs = addr => NodeConfig(poolSize = 1))
 
   test("simple get") {
-    val commands = RedisClusteredAsyncCommands(redisClient.toExecutor)
-    commands.get(bs"key").futureValue(PatienceConfig(Span(1, Seconds))) shouldBe Opt.Empty
+    get(bs"key").assertEquals(Opt.Empty)
   }
 
-  test("distribution test") {
+  test("distribution") {
     val slots = List(
       0,
       7000,
@@ -31,10 +29,27 @@ class RedisClusterClientTest extends FunSuite with Matchers with ScalaFutures
       14001,
       7002
     )
+    setup(slots.map(s => set(ClusterUtils.SlotKeys(s), bs"$s")).sequence)
+    val batch = slots.map(s => get(ClusterUtils.SlotKeys(s))).sequence
+    batch.assertEquals(slots.map(s => bs"$s".opt))
+  }
 
-    val batches = slots.map(s => RedisCommands.get(ClusterUtils.SlotKeys(s)))
-    val batch = batches.sequence
+  test("no keys") {
+    flushall.intercept[NoKeysException]
+  }
 
-    redisClient.executeBatch(batch).futureValue shouldBe slots.map(_ => Opt.Empty)
+  test("cross slot on multikey command") {
+    val batch = mget(Seq(0, 7000).map(ClusterUtils.SlotKeys))
+    batch.intercept[CrossSlotException]
+  }
+
+  test("cross slot on multikey transaction") {
+    val batch = Seq(0, 7000).map(i => get(ClusterUtils.SlotKeys(i))).sequence.transaction
+    batch.intercept[CrossSlotException]
+  }
+
+  test("forbidden command") {
+    val batch = watch(Seq(ClusterUtils.SlotKeys(0)))
+    batch.intercept[ForbiddenCommandException]
   }
 }

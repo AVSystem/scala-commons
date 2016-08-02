@@ -2,6 +2,7 @@ package com.avsystem.commons
 package redis
 
 import com.avsystem.commons.misc.Opt
+import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.RedisBatch.Index
 import com.avsystem.commons.redis.commands.{Exec, Multi}
 import com.avsystem.commons.redis.exception.{OptimisticLockException, RedisException, UnexpectedReplyException}
@@ -9,19 +10,23 @@ import com.avsystem.commons.redis.protocol._
 
 import scala.collection.mutable.ArrayBuffer
 
-final class Transaction[+A, -S](batch: RedisBatch[A, S]) extends AtomicBatch[A, S] {
+final class Transaction[+A](batch: RedisBatch[A]) extends AtomicBatch[A] {
 
   def rawCommands(inTransaction: Boolean) = new RawCommands {
-    def emitCommands(consumer: ArrayMsg[BulkStringMsg] => Unit) = {
+    def emitCommands(consumer: RawCommand => Unit) = {
       if (!inTransaction) {
-        consumer(Multi.encoded)
+        consumer(Multi)
       }
       batch.rawCommandPacks.emitCommandPacks(_.rawCommands(inTransaction = true).emitCommands(consumer))
       if (!inTransaction) {
-        consumer(Exec.encoded)
+        consumer(Exec)
       }
     }
   }
+
+  def checkLevel(minAllowed: Level, clientType: String) =
+    batch.rawCommandPacks.emitCommandPacks(_.rawCommands(inTransaction = true)
+      .emitCommands(_.checkLevel(minAllowed, clientType)))
 
   def createPreprocessor(replyCount: Int) = new ReplyPreprocessor {
     private var singleError: Opt[FailureReply] = Opt.Empty
@@ -51,7 +56,7 @@ final class Transaction[+A, -S](batch: RedisBatch[A, S]) extends AtomicBatch[A, 
       }
     }
 
-    def preprocess(message: RedisMsg, state: ConnectionState) = {
+    def preprocess(message: RedisMsg, state: WatchState) = {
       val LastIndex = replyCount - 1
       val c = ctr
       ctr += 1
@@ -63,7 +68,7 @@ final class Transaction[+A, -S](batch: RedisBatch[A, S]) extends AtomicBatch[A, 
           }
           Opt.Empty
         case LastIndex =>
-          Exec.updateState(message, state)
+          Exec.updateWatchState(message, state)
           message match {
             case arr: ArrayMsg[RedisMsg] => normalResult = arr.opt
             case NullArrayMsg => setSingleError(new OptimisticLockException)

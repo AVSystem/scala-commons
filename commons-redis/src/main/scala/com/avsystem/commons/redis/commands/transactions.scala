@@ -3,47 +3,47 @@ package redis.commands
 
 import akka.util.ByteString
 import com.avsystem.commons.redis.protocol.{ArrayMsg, ErrorMsg, NullArrayMsg, RedisMsg}
-import com.avsystem.commons.redis.{ConnectionState, OperationApiSubset, RawCommand, RedisUnitCommand, Scope}
+import com.avsystem.commons.redis.{ApiSubset, OperationCommand, RedisUnitCommand, UnsafeCommand, WatchState}
 
-trait TransactionApi extends OperationApiSubset {
+trait TransactionApi extends ApiSubset {
   def watch(keys: Seq[ByteString]) =
     execute(Watch(keys))
   def unwatch =
     execute(Unwatch)
 }
 
-case class Watch(keys: Seq[ByteString]) extends RedisUnitCommand[Scope.Operation] {
+case class Watch(keys: Seq[ByteString]) extends RedisUnitCommand with OperationCommand {
   val encoded = encoder("WATCH").keys(keys).result
-  override def updateState(message: RedisMsg, state: ConnectionState) = message match {
+  override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
     case RedisMsg.Ok => state.watching = true
     case _ =>
   }
 }
 
-case object Unwatch extends RedisUnitCommand[Scope.Operation] {
+case object Unwatch extends RedisUnitCommand with OperationCommand {
   val encoded = encoder("UNWATCH").result
-  override def updateState(message: RedisMsg, state: ConnectionState) = message match {
+  override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
     case RedisMsg.Ok => state.watching = false
     case _ =>
   }
 }
 
-case object Multi extends RawCommand {
+case object Multi extends UnsafeCommand {
   val encoded = encoder("MULTI").result
 }
 
-case object Exec extends RawCommand {
+case object Exec extends UnsafeCommand {
   val encoded = encoder("EXEC").result
-  override def updateState(message: RedisMsg, state: ConnectionState) = message match {
+  override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
     case _: ArrayMsg[RedisMsg] | NullArrayMsg => state.watching = false
     case err: ErrorMsg if err.errorCode == "EXECABORT" => state.watching = false
     case _ =>
   }
 }
 
-case object Discard extends RawCommand {
+case object Discard extends UnsafeCommand {
   val encoded = encoder("DISCARD").result
-  override def updateState(message: RedisMsg, state: ConnectionState) = message match {
+  override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
     case RedisMsg.Ok => state.watching = false
     case _ =>
   }

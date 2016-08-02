@@ -8,8 +8,8 @@ import akka.util.{ByteString, Timeout}
 import com.avsystem.commons.collection.CollectionAliases.{BMap, MHashMap}
 import com.avsystem.commons.jiop.JavaInterop._
 import com.avsystem.commons.misc.Opt
+import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.RedisClusterClient.CollectionPacks
-import com.avsystem.commons.redis.Scope.Cluster
 import com.avsystem.commons.redis.actor.ClusterMonitoringActor
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.SlotRange
@@ -47,7 +47,7 @@ final class RedisClusterClient(
   private def determineSlot(pack: RawCommandPack): Int = {
     var slot = -1
     pack.rawCommands(inTransaction = false)
-      .emitCommands(_.elements.foreach { bs =>
+      .emitCommands(_.encoded.elements.foreach { bs =>
         if (bs.isCommandKey) {
           val s = Hash.slot(bs.string)
           if (slot == -1) {
@@ -74,12 +74,13 @@ final class RedisClusterClient(
   def initialized: Future[this.type] =
     initPromise.future.map(_ => this)
 
-  def toExecutor(implicit timeout: Timeout): RedisExecutor[Cluster] =
-    new RedisExecutor[Cluster] {
-      def execute[A](batch: RedisBatch[A, Cluster]) = executeBatch(batch)
+  def toExecutor(implicit timeout: Timeout): RedisExecutor =
+    new RedisExecutor {
+      def execute[A](batch: RedisBatch[A]) = executeBatch(batch)
     }
 
-  def executeBatch[A](batch: ClusterBatch[A])(implicit timeout: Timeout): Future[A] =
+  def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A] = {
+    batch.rawCommandPacks.requireLevel(Level.Node, "ClusterClient")
     initPromise.future.flatMap { _ =>
       //TODO: optimize when there's only one pack or all target the same node
       val currentState = state
@@ -110,6 +111,8 @@ final class RedisClusterClient(
       barrier.success(())
       Future.sequence(results).map(replies => batch.decodeReplies(replies))
     }
+  }
+
 
   def close(): Unit = {
     system.stop(monitoringActor)
