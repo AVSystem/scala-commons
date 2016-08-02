@@ -26,8 +26,8 @@ final class RedisConnectionClient(address: NodeAddress = NodeAddress.Default, co
     connectionActor.ask(batch.rawCommandPacks.requireLevel(Level.Connection, "ConnectionClient"))
       .mapNow({ case pr: PacksResult => batch.decodeReplies(pr) })
 
-  def toExecutor(implicit timeout: Timeout): RedisExecutor =
-    new RedisExecutor {
+  def toExecutor(implicit timeout: Timeout): RedisConnectionExecutor =
+    new RedisConnectionExecutor {
       def execute[A](batch: RedisBatch[A]) = self.execute(batch)
     }
 

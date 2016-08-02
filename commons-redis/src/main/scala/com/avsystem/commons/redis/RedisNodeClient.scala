@@ -49,8 +49,8 @@ final class RedisNodeClient(
   def initialized: Future[this.type] =
     initFuture.mapNow(_ => this)
 
-  def toExecutor(implicit timeout: Timeout): RedisExecutor =
-    new RedisExecutor {
+  def toExecutor(implicit timeout: Timeout): RedisNodeExecutor =
+    new RedisNodeExecutor {
       def execute[A](cmd: RedisBatch[A]) = client.executeBatch(cmd)
     }
 

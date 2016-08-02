@@ -74,8 +74,8 @@ final class RedisClusterClient(
   def initialized: Future[this.type] =
     initPromise.future.map(_ => this)
 
-  def toExecutor(implicit timeout: Timeout): RedisExecutor =
-    new RedisExecutor {
+  def toExecutor(implicit timeout: Timeout): RedisClusteredExecutor =
+    new RedisClusteredExecutor {
       def execute[A](batch: RedisBatch[A]) = executeBatch(batch)
     }
 
