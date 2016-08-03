@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.exception
 
 import com.avsystem.commons.redis.protocol.ErrorMsg
-import com.avsystem.commons.redis.{NodeAddress, RawCommand}
+import com.avsystem.commons.redis.{NodeAddress, RawCommand, Redirection}
 
 /**
   * Author: ghik
@@ -59,5 +59,6 @@ class UnmappedSlotException(val slot: Int)
 class NoKeysException
   extends RedisException(s"Cannot execute commands with no keys using cluster client")
 
-class TooManyRedirectionsException(val address: NodeAddress, val slot: Int, val ask: Boolean)
-  extends RedisException(s"Too many Redis cluster redirections, last one to: $address (slot $slot${if (ask) ", ASK" else ""})")
+class TooManyRedirectionsException(val lastRedirection: Redirection)
+  extends RedisException(s"Too many Redis cluster redirections, last one to: " +
+    s"${lastRedirection.address} (slot ${lastRedirection.slot}${if (lastRedirection.ask) ", ASK" else ""})")

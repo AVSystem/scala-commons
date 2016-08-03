@@ -34,6 +34,7 @@ val typesafeConfigVersion = "1.3.0"
 val akkaVersion = "2.4.2"
 val shapelessVersion = "2.3.0"
 val commonsIoVersion = "1.3.2"
+val scalaLoggingVersion = "3.4.0"
 
 val commonSettings = Seq(
   sonatypeProfileName := "com.avsystem",
@@ -190,6 +191,7 @@ lazy val `commons-redis` = project
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
       "com.chuusai" %% "shapeless" % shapelessVersion
     ),
     parallelExecution in Test := false

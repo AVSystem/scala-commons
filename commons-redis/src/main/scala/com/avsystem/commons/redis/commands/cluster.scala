@@ -25,7 +25,7 @@ trait NodeClusterApi extends ClusteredClusterApi {
     execute(ClusterCountkeysinslot(slot))
   def clusterDelslots(slots: Seq[Int]): Result[Unit] =
     execute(ClusterDelslots(slots))
-  def clusterFailover(option: Opt[FailoverOption]): Result[Unit] =
+  def clusterFailover(option: Opt[FailoverOption] = Opt.Empty): Result[Unit] =
     execute(ClusterFailover(option))
   def clusterForget(nodeId: NodeId): Result[Unit] =
     execute(ClusterForget(nodeId))

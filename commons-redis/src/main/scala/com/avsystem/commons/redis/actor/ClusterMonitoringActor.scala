@@ -17,7 +17,8 @@ import scala.util.{Failure, Random, Success, Try}
 final class ClusterMonitoringActor(
   seedNodes: Seq[NodeAddress],
   config: ClusterConfig,
-  listener: ClusterState => Any)
+  onNewClusterState: ClusterState => Any,
+  onTemporaryClient: RedisNodeClient => Any)
   extends Actor with ActorLazyLogging {
 
   import ClusterMonitoringActor._
@@ -81,7 +82,7 @@ final class ClusterMonitoringActor(
         if (state.mapping != newMapping) {
           log.info(s"New cluster slot mapping received:\n${slotRangeMapping.mkString("\n")}")
           state = ClusterState(newMapping, masters.iterator.map(m => (m, clients(m))).toMap)
-          listener(state)
+          onNewClusterState(state)
         }
 
         (connections.keySet diff masters).foreach { addr =>
@@ -96,7 +97,11 @@ final class ClusterMonitoringActor(
         log.error(s"Failed to refresh cluster state", cause)
     }
     case GetClient(addr) =>
-      val client = clients.getOrElseUpdate(addr, createClient(addr))
+      val client = clients.getOrElseUpdate(addr, {
+        val tempClient = createClient(addr)
+        onTemporaryClient(tempClient)
+        tempClient
+      })
       sender() ! GetClientResponse(client)
   }
 

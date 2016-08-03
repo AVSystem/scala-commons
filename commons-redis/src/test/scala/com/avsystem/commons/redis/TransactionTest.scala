@@ -12,10 +12,6 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
 
   import RedisCommands._
 
-  override def nodeConfig = super.nodeConfig.copy(
-    connectionConfigs = _ => ConnectionConfig(debugListener = listener)
-  )
-
   test("empty transaction") {
     setup(set(redisKey, bs"42"))
     val batch = RedisBatch.success(42).transaction

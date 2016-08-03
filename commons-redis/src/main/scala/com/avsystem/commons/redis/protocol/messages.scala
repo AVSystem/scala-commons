@@ -9,10 +9,12 @@ import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Author: ghik
-  * Created: 31/03/16.
+  * Raw result of executing a single [[com.avsystem.commons.redis.RawCommandPack]].
+  * It may be a Redis protocol message ([[RedisMsg]]) or an object that
+  * aggregates transaction results or an object that indicates failure.
   */
 sealed trait RedisReply
+final case class TransactionReply(elements: IndexedSeq[RedisMsg]) extends RedisReply
 trait FailureReply extends RedisReply {
   def exception: RedisException
 }
@@ -21,6 +23,9 @@ object FailureReply {
     Sam[FailureReply](createException)
 }
 
+/**
+  * Redis protocol message. It can be sent over network from or to Redis instance.
+  */
 sealed trait RedisMsg extends RedisReply
 sealed trait ValidRedisMsg extends RedisMsg
 case class SimpleStringMsg(string: ByteString) extends ValidRedisMsg {

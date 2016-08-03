@@ -31,7 +31,7 @@ final class Transaction[+A](batch: RedisBatch[A]) extends AtomicBatch[A] {
   def createPreprocessor(replyCount: Int) = new ReplyPreprocessor {
     private var singleError: Opt[FailureReply] = Opt.Empty
     private var errors: Opt[ArrayBuffer[ErrorMsg]] = Opt.Empty
-    private var normalResult: Opt[ArrayMsg[RedisMsg]] = Opt.Empty
+    private var normalResult: Opt[IndexedSeq[RedisMsg]] = Opt.Empty
     private var ctr = 0
 
     private def setSingleError(exception: => RedisException): Unit =
@@ -70,12 +70,12 @@ final class Transaction[+A](batch: RedisBatch[A]) extends AtomicBatch[A] {
         case LastIndex =>
           Exec.updateWatchState(message, state)
           message match {
-            case arr: ArrayMsg[RedisMsg] => normalResult = arr.opt
+            case ArrayMsg(elements)  => normalResult = elements.opt
             case NullArrayMsg => setSingleError(new OptimisticLockException)
             case errorMsg: ErrorMsg => setDefaultError(errorMsg)
             case _ => setSingleError(new UnexpectedReplyException(s"Unexpected reply for EXEC: $message"))
           }
-          singleError orElse errors.map(ArrayMsg(_)) orElse normalResult
+          singleError orElse errors.map(TransactionReply) orElse normalResult.map(TransactionReply)
         case i =>
           message match {
             case RedisMsg.Queued =>
@@ -92,7 +92,7 @@ final class Transaction[+A](batch: RedisBatch[A]) extends AtomicBatch[A] {
   def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) =
     if (inTransaction) batch.decodeReplies(replies, index, inTransaction)
     else replies(index.inc()) match {
-      case ArrayMsg(elements) =>
+      case TransactionReply(elements) =>
         batch.decodeReplies(elements, new Index, inTransaction = true)
       case fr: FailureReply =>
         batch.decodeReplies(_ => fr, new Index, inTransaction = true)

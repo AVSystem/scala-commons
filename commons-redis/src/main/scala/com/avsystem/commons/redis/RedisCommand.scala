@@ -20,6 +20,8 @@ trait RedisCommand[+A] extends AtomicBatch[A] with RawCommand {
       throw new ErrorReplyException(err)
     case error: FailureReply =>
       throw error.exception
+    case _ =>
+      throw new UnexpectedReplyException(replyMsg.toString)
   }
 
   def decodeReplies(replies: Int => RedisReply, idx: Index, inTransaction: Boolean) =

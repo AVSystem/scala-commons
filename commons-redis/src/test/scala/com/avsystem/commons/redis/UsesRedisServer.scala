@@ -31,6 +31,7 @@ trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils {this: Su
 
   override protected def afterAll() = {
     shutdownRedis(port, redisProcess)
+    Thread.sleep(1000) // ensure that port is released
     super.afterAll()
   }
 }
