@@ -59,10 +59,10 @@ trait SealedEnumCompanion[T] {
   */
 trait NamedEnum extends Any {
   /**
-    * Used as a key for a map returned from `byName`. It is recommended to override this method  uniquely
+    * Used as a key for a map returned from `byName`. It is recommended to override this method uniquely
     * by each case object in the sealed hierarchy.
     */
-  def name: String
+  val name: String
   override def toString: String = name
 }
 
