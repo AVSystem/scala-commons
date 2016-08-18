@@ -11,19 +11,19 @@ import com.avsystem.commons.serialization.{Input, ListInput, ObjectInput, ReadFa
   */
 private[akka] final class ByteStringInput(source: ByteString) extends Input {
 
-  override def readNull(): ValueRead[Null] = readCompileTime(NullMarker)(_ => null)
-  override def readByte(): ValueRead[Byte] = readCompileTime(ByteMarker)(_.head)
-  override def readShort(): ValueRead[Short] = readCompileTime(ShortMarker)(_.getShort)
-  override def readInt(): ValueRead[Int] = readCompileTime(IntMarker)(_.getInt)
-  override def readLong(): ValueRead[Long] = readCompileTime(LongMarker)(_.getLong)
-  override def readFloat(): ValueRead[Float] = readCompileTime(FloatMarker)(_.getFloat)
-  override def readDouble(): ValueRead[Double] = readCompileTime(DoubleMarker)(_.getDouble)
-  override def readString(): ValueRead[String] = readRuntime(StringMarker)(_.utf8String)
-  override def readList(): ValueRead[ListInput] = readRuntime(ListStartMarker)(sliced => new ByteArrayListInput(sliced))
-  override def readObject(): ValueRead[ObjectInput] = readRuntime(ObjectStartMarker)(sliced => new ByteArrayObjectInput(sliced))
-  override def readBinary(): ValueRead[Array[Byte]] = readRuntime(ByteArrayMarker)(_.toArray)
+  override def readNull(): ValueRead[Null] = readStatic(NullMarker)(_ => null)
+  override def readByte(): ValueRead[Byte] = readStatic(ByteMarker)(_.head)
+  override def readShort(): ValueRead[Short] = readStatic(ShortMarker)(_.getShort)
+  override def readInt(): ValueRead[Int] = readStatic(IntMarker)(_.getInt)
+  override def readLong(): ValueRead[Long] = readStatic(LongMarker)(_.getLong)
+  override def readFloat(): ValueRead[Float] = readStatic(FloatMarker)(_.getFloat)
+  override def readDouble(): ValueRead[Double] = readStatic(DoubleMarker)(_.getDouble)
+  override def readString(): ValueRead[String] = readDynamic(StringMarker)(_.utf8String)
+  override def readList(): ValueRead[ListInput] = readDynamic(ListStartMarker)(sliced => new ByteArrayListInput(sliced))
+  override def readObject(): ValueRead[ObjectInput] = readDynamic(ObjectStartMarker)(sliced => new ByteArrayObjectInput(sliced))
+  override def readBinary(): ValueRead[Array[Byte]] = readDynamic(ByteArrayMarker)(_.toArray)
 
-  override def readBoolean(): ValueRead[Boolean] = readCompileTimeAsValue(BooleanMarker) { iterator =>
+  override def readBoolean(): ValueRead[Boolean] = readDynamicAsValue(BooleanMarker) { iterator =>
     iterator.head match {
       case 1 => ReadSuccessful(true)
       case 0 => ReadSuccessful(false)
@@ -32,15 +32,15 @@ private[akka] final class ByteStringInput(source: ByteString) extends Input {
   }
   override def skip(): Unit = ()
 
-  private def readCompileTime[T](marker: CompileTimeSize)(f: (ByteIterator) => T): ValueRead[T] = readCompileTimeAsValue(marker)(iterator => ReadSuccessful(f(iterator)))
+  private def readStatic[T](marker: StaticSize)(f: (ByteIterator) => T): ValueRead[T] = readDynamicAsValue(marker)(iterator => ReadSuccessful(f(iterator)))
 
-  private def readCompileTimeAsValue[T](marker: CompileTimeSize)(f: (ByteIterator) => ValueRead[T]): ValueRead[T] = {
+  private def readDynamicAsValue[T](marker: StaticSize)(f: (ByteIterator) => ValueRead[T]): ValueRead[T] = {
     if (source.size < ByteBytes + marker.size) ReadFailed(s"Source doesn't contain $marker and data")
     else if (source(0) != marker.byte) ReadFailed(s"Expected $marker, but another byte found")
     else f(source.iterator.drop(ByteBytes))
   }
 
-  private def readRuntime[T](marker: RuntimeSize)(data: ByteString => T): ValueRead[T] = {
+  private def readDynamic[T](marker: DynamicSize)(data: ByteString => T): ValueRead[T] = {
     def contentSize = source.iterator.drop(ByteBytes).getInt
     val headerSize = ByteBytes + IntBytes
 
@@ -96,8 +96,8 @@ private final class ByteArrayObjectInput(private var content: ByteString) extend
 private trait SequentialInputOps {
   final def findDataIndex(content: ByteString, offset: Int): Option[DataIndexes] = {
     content.lift(offset).flatMap(Marker.of(_).toOption) match {
-      case Some(m: CompileTimeSize) => Some(DataIndexes(offset, offset + m.size + 1))
-      case Some(m: RuntimeSize) =>
+      case Some(m: StaticSize) => Some(DataIndexes(offset, offset + m.size + 1))
+      case Some(m: DynamicSize) =>
         content.lift(offset + 1).map(_ => content.iterator.drop(offset + 1).getInt).map(size => DataIndexes(offset, offset + size + ByteBytes + IntBytes))
       case _ => None
     }

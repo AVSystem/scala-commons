@@ -34,7 +34,7 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
       val s = sender()
 
       resolveRpc(msg).observe(name, argLists).subscribe(
-      value => {
+        value => {
           val result = s ? InvocationSuccess(value)
           //noinspection NestedStatefulMonads
           result.mapTo[MonifuProtocol.RemoteAck].map {

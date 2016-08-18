@@ -10,7 +10,7 @@ import com.avsystem.commons.serialization.{Input, ListInput, ObjectInput, ReadFa
   */
 private[akka] class ByteStringLinearInput(source: ByteString, onMove: Int => Unit) extends Input {
 
-  def this(source: ByteString) = this(source, _ => Unit)
+  def this(source: ByteString) = this(source, _ => ())
 
   import ByteOrderImplicits._
 
@@ -31,19 +31,19 @@ private[akka] class ByteStringLinearInput(source: ByteString, onMove: Int => Uni
   }
   override def skip(): Unit = {
     if (source.nonEmpty) Marker.of(source.head).foreach {
-      case value: CompileTimeSize =>
+      case value: StaticSize =>
         onMove(ByteBytes + value.size)
       case ListStartMarker => readList().foreach(_.skipRemaining())
       case ObjectStartMarker => readObject().foreach(_.skipRemaining())
-      case value: RuntimeSize =>
+      case value: DynamicSize =>
         onMove(ByteBytes + IntBytes + source.iterator.drop(1).getInt)
       case ListEndMarker | ObjectEndMarker => onMove(ByteBytes)
     }
   }
 
-  private def readCompileTime[T](marker: CompileTimeSize)(f: (ByteIterator) => T): ValueRead[T] = readCompileTimeAsValue(marker)(iterator => ReadSuccessful(f(iterator)))
+  private def readCompileTime[T](marker: StaticSize)(f: (ByteIterator) => T): ValueRead[T] = readCompileTimeAsValue(marker)(iterator => ReadSuccessful(f(iterator)))
 
-  private def readCompileTimeAsValue[T](marker: CompileTimeSize)(f: (ByteIterator) => ValueRead[T]): ValueRead[T] = {
+  private def readCompileTimeAsValue[T](marker: StaticSize)(f: (ByteIterator) => ValueRead[T]): ValueRead[T] = {
     if (source.size < ByteBytes + marker.size) ReadFailed(s"Source doesn't contain $marker and data")
     else if (source(0) != marker.byte) ReadFailed(s"Expected $marker, but another byte found: ${source(0).toInt}")
     else {
@@ -52,7 +52,7 @@ private[akka] class ByteStringLinearInput(source: ByteString, onMove: Int => Uni
     }
   }
 
-  private def readRuntime[T](marker: RuntimeSize)(dataFun: ByteString => T): ValueRead[T] = {
+  private def readRuntime[T](marker: DynamicSize)(dataFun: ByteString => T): ValueRead[T] = {
     def contentSize = source.iterator.drop(ByteBytes).getInt
     val headerSize = ByteBytes + IntBytes
 

@@ -1,19 +1,18 @@
 package com.avsystem.commons
 package rpc.akka
 
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.{ActorPath, ActorSystem}
 import com.avsystem.commons.rpc.RPC
 import com.typesafe.config.{Config, ConfigFactory}
 import monifu.reactive.Observable
-import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, OutputTimeUnit, Scope, Setup, State, TearDown, Warmup}
+import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, Scope, Setup, State, TearDown, Warmup}
 import org.openjdk.jmh.infra.Blackhole
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.{Await, Future}
 
 /**
   * @author Wojciech Milewski
@@ -24,6 +23,7 @@ import scala.concurrent.{Await, Future, Promise}
 @BenchmarkMode(Array(Mode.Throughput))
 @State(Scope.Thread)
 class AkkaRPCFrameworkBenchmark {
+
   import AkkaRPCFrameworkBenchmark._
 
   @Benchmark
@@ -72,8 +72,7 @@ object AkkaRPCFrameworkBenchmark {
 
     @TearDown
     def teardown(): Unit = {
-      serverSystem.terminate()
-      Await.ready(serverSystem.whenTerminated, 30.seconds)
+      Await.ready(serverSystem.terminate(), 30.seconds)
     }
   }
 
@@ -92,8 +91,7 @@ object AkkaRPCFrameworkBenchmark {
 
     @TearDown
     def teardown(): Unit = {
-      clientSystem.terminate()
-      Await.ready(clientSystem.whenTerminated, 30.seconds)
+      Await.ready(clientSystem.terminate(), 30.seconds)
     }
   }
 
