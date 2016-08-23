@@ -25,6 +25,7 @@ private object RemoteMessage {
   implicit val cancelCodec = GenCodec.materialize[MonifuProtocol.Cancel.type]
   implicit val subscribeCodec = GenCodec.materialize[MonifuProtocol.Subscribe.type]
   implicit val streamCompletedCodec = GenCodec.materialize[MonifuProtocol.StreamCompleted.type]
+  implicit val heatBeatCodec = GenCodec.materialize[MonifuProtocol.Heartbeat.type]
 }
 
 private final case class RawInvocation(rpcName: String, argLists: List[List[RawValue]]) extends RemoteMessage
@@ -49,4 +50,6 @@ private object MonifuProtocol {
 
   case object Subscribe extends RemoteMessage
   case object StreamCompleted extends RemoteMessage
+
+  case object Heartbeat extends RemoteMessage
 }

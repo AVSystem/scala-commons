@@ -30,7 +30,7 @@ val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.2.2"
 val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.0"
-val akkaVersion = "2.4.7"
+val akkaVersion = "2.4.9"
 
 val commonSettings = Seq(
   sonatypeProfileName := "com.avsystem",

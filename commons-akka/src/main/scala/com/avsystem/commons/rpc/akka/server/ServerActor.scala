@@ -7,7 +7,7 @@ import akka.util.Timeout
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.rpc.akka._
 import monifu.concurrent.Scheduler
-import monifu.reactive.Ack
+import monifu.reactive.{Ack, Observable}
 
 import scala.util.{Failure, Success}
 
@@ -33,24 +33,37 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
       implicit val timeout = Timeout(config.observableAckTimeout)
       val s = sender()
 
+      val heartbeat = Observable.timerRepeated(config.heartbeatInterval, config.heartbeatInterval, MonifuProtocol.Heartbeat)
+        .subscribe { beat =>
+          s ! beat
+          Ack.Continue
+        }
+
       resolveRpc(msg).observe(name, argLists).subscribe(
         value => {
           val result = s ? InvocationSuccess(value)
           //noinspection NestedStatefulMonads
           result.mapTo[MonifuProtocol.RemoteAck].map {
             case MonifuProtocol.Continue => Ack.Continue
-            case MonifuProtocol.Cancel => Ack.Cancel
+            case MonifuProtocol.Cancel =>
+              heartbeat.cancel()
+              Ack.Cancel
           }.recover {
             case e: AskTimeoutException =>
+              heartbeat.cancel()
               log.error(e, "Client actor didn't respond within requested time.")
               Ack.Cancel
           }
         },
         e => {
+          heartbeat.cancel()
           logError(e, name)
           s ! InvocationFailure(e.getClass.getCanonicalName, e.getMessage)
         },
-        () => s ! MonifuProtocol.StreamCompleted
+        () => {
+          heartbeat.cancel()
+          s ! MonifuProtocol.StreamCompleted
+        }
       )
   }
 

@@ -24,6 +24,8 @@ private final class MonifuClientActor(subscriber: Subscriber[RawValue], config: 
   }
 
   private def waitingForServer: Receive = {
+    case MonifuProtocol.Heartbeat =>
+      //do absolutely nothing as this message should only reset timeout counter
     case InvocationSuccess(value) =>
       context.setReceiveTimeout(Duration.Undefined)
       import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext

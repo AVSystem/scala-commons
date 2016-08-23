@@ -31,6 +31,7 @@ final class RemoteMessageSerializer extends Serializer {
       case c if c == MonifuProtocol.Cancel.getClass => GenCodec.read[MonifuProtocol.Cancel.type](input)
       case c if c == MonifuProtocol.Subscribe.getClass => GenCodec.read[MonifuProtocol.Subscribe.type](input)
       case c if c == MonifuProtocol.StreamCompleted.getClass => GenCodec.read[MonifuProtocol.StreamCompleted.type](input)
+      case c if c == MonifuProtocol.Heartbeat.getClass => GenCodec.read[MonifuProtocol.Heartbeat.type](input)
     }
   }
 
@@ -49,6 +50,7 @@ final class RemoteMessageSerializer extends Serializer {
       case MonifuProtocol.Cancel => GenCodec.write(output, MonifuProtocol.Cancel)
       case MonifuProtocol.Subscribe => GenCodec.write(output, MonifuProtocol.Subscribe)
       case MonifuProtocol.StreamCompleted => GenCodec.write(output, MonifuProtocol.StreamCompleted)
+      case MonifuProtocol.Heartbeat => GenCodec.write(output, MonifuProtocol.Heartbeat)
     }
 
     output.result.toArray
