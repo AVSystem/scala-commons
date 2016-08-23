@@ -20,6 +20,7 @@ inThisBuild(Seq(
     "-Xlint:_,-missing-interpolator,-adapted-args"
   )
 ))
+parallelExecution in Test := false
 
 val silencerVersion = "0.3"
 val guavaVersion = "18.0"
