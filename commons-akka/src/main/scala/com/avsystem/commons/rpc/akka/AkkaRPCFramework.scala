@@ -43,7 +43,7 @@ object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework wi
   }
 
   /**
-    * Returns client RPC of type `T`. Each method call on returned RPC will connect to a remote server.
+    * Returns client RPC of type `T`. Each method call on returned object will make a remote call.
     */
   def client[T](config: AkkaRPCClientConfig)(implicit system: ActorSystem, asRealRPC: AkkaRPCFramework.AsRealRPC[T]): T = {
     val rawRPC = new ClientRawRPC(config)

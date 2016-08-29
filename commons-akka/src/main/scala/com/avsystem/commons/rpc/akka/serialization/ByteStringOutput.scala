@@ -61,6 +61,9 @@ private[akka] class ByteStringOutput extends Output {
 }
 
 private object WriteOps {
+  val TrueByte: Byte = 1
+  val FalseByte: Byte = 0
+
   def writeNull(builder: ByteStringBuilder): Unit = {
     builder += NullMarker.byte
   }
@@ -89,7 +92,7 @@ private object WriteOps {
 
   def writeBoolean(value: Boolean)(builder: ByteStringBuilder): Unit = {
     builder += BooleanMarker.byte
-    builder += (if (value) 1 else 0).toByte
+    builder += (if (value) TrueByte else FalseByte).toByte
   }
   def writeShort(value: Short)(builder: ByteStringBuilder): Unit = writeSinglePrimitive(ShortMarker, _.putShort(value))(builder)
   def writeInt(value: Int)(builder: ByteStringBuilder): Unit = writeSinglePrimitive(IntMarker, _.putInt(value))(builder)

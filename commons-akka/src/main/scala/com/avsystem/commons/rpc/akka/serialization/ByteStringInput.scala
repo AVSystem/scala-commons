@@ -25,8 +25,8 @@ private[akka] final class ByteStringInput(source: ByteString) extends Input {
 
   override def readBoolean(): ValueRead[Boolean] = readDynamicAsValue(BooleanMarker) { iterator =>
     iterator.head match {
-      case 1 => ReadSuccessful(true)
-      case 0 => ReadSuccessful(false)
+      case WriteOps.TrueByte => ReadSuccessful(true)
+      case WriteOps.FalseByte => ReadSuccessful(false)
       case value => ReadFailed(s"Found incorrect data: $value")
     }
   }
