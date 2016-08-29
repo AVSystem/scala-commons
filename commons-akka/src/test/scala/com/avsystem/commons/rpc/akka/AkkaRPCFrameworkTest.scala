@@ -1,29 +1,44 @@
 package com.avsystem.commons
 package rpc.akka
 
-import akka.actor.{ActorPath, ActorSystem, Inbox, Terminated}
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
-import org.mockito.Mockito.{when, reset}
+import java.util.concurrent.atomic.AtomicLong
 
-import scala.concurrent.{Await, Future}
+import akka.actor.{ActorPath, ActorSystem, Inbox, Terminated}
+import org.mockito.Mockito.when
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 /**
   * @author Wojciech Milewski
   */
-abstract class AkkaRPCFrameworkTest(serverSystem: ActorSystem, clientSystem: ActorSystem, existingPath: Option[ActorPath] = None, nonExistingPath: Option[ActorPath] = None)
+abstract class AkkaRPCFrameworkTest(
+  serverSystem: ActorSystem,
+  clientSystem: ActorSystem,
+  serverSystemPath: Option[String] = None)
   extends FlatSpec with RPCFrameworkTest with ProcedureRPCTest with FunctionRPCTest with GetterRPCTest with ObservableRPCTest with BeforeAndAfterAll {
 
+  /**
+    * Servers as identifier supplier for each test case to allow tests parallelization.
+    */
+  private val idCounter = new AtomicLong()
+
   override def fixture(testCode: Fixture => Any): Unit = {
+    val id: Long = idCounter.getAndIncrement()
+    val serverActorName = s"rpcServerActor$id"
+
     val testRpcMock = mock[TestRPC]
     val innerRpcMock = mock[InnerRPC]
     val serverActor = {
       implicit val system = serverSystem
-      AkkaRPCFramework.serverActor[TestRPC](testRpcMock)
+      AkkaRPCFramework.serverActor[TestRPC](testRpcMock, AkkaRPCServerConfig(actorName = serverActorName))
     }
     val rpc = {
       implicit val system = clientSystem
-      AkkaRPCFramework.client[TestRPC](AkkaRPCClientConfig(serverPath = existingPath.getOrElse(serverActor.path)))
+      AkkaRPCFramework.client[TestRPC](AkkaRPCClientConfig(serverPath = serverSystemPath.fold(serverActor.path)(
+        serverPath => ActorPath.fromString(s"$serverPath/user/$serverActorName")))
+      )
     }
 
     try {
@@ -45,7 +60,7 @@ abstract class AkkaRPCFrameworkTest(serverSystem: ActorSystem, clientSystem: Act
     val rpc = AkkaRPCFramework.client[TestRPC](AkkaRPCClientConfig(
       functionCallTimeout = callTimeout,
       observableMessageTimeout = callTimeout,
-      serverPath = nonExistingPath.getOrElse(ActorPath.fromString("akka://user/thisactorshouldnotexists"))))
+      serverPath = serverSystemPath.fold(ActorPath.fromString("akka://user/thisactorshouldnotexists"))(serverPath => ActorPath.fromString(s"$serverPath/user/thisactorshouldnotExist)"))))
     testCode(Fixture(rpc = rpc, mockRpc = mockRpc, mockInnerRpc = mockInnerRpc))
   }
 

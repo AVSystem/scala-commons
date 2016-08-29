@@ -8,10 +8,9 @@ import com.typesafe.config.{Config, ConfigFactory}
   * @author Wojciech Milewski
   */
 class RemoteAkkaRPCFrameworkTest extends AkkaRPCFrameworkTest(
-  serverSystem = ActorSystem("ServerRPC", RemoteAkkaRPCFrameworkTest.config(2552)),
-  clientSystem = ActorSystem("ClientRPC", RemoteAkkaRPCFrameworkTest.config(2553)),
-  existingPath = Some(ActorPath.fromString("akka.tcp://ServerRPC@127.0.0.1:2552/user/rpcServerActor")),
-  nonExistingPath = Some(ActorPath.fromString("akka.tcp://user@127.0.0.1:2553/thisactorshouldnotexists"))
+  serverSystem = ActorSystem("ServerRPC", RemoteAkkaRPCFrameworkTest.config(port = 2552)),
+  clientSystem = ActorSystem("ClientRPC", RemoteAkkaRPCFrameworkTest.config(port = 2553)),
+  serverSystemPath = Some("akka.tcp://ServerRPC@127.0.0.1:2552")
 )
 
 object RemoteAkkaRPCFrameworkTest {
