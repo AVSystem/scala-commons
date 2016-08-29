@@ -10,8 +10,32 @@ import scala.collection.generic.CanBuildFrom
 import scala.util.control.NonFatal
 
 /**
-  * Author: ghik
-  * Created: 28/07/16.
+  * Typeclass for easy merging ("sequencing") of multiple [[RedisBatch]] instances into one. This is done in
+  * order to guarantee that some set of operations is sent to Redis as a single batch (most likely single network
+  * message).
+  *
+  * The parameter [[Ops]] represents batches that will be sequenced into one. It may be a collection, a tuple or
+  * any other "collection-like" type for which type class instance is provided.
+  *
+  * [[Res]] is the type of result of the batch created by "sequencing". This type is automatically inferred from
+  * the [[Ops]] type. For example, if [[Ops]] is `(RedisBatch[Int], RedisBatch[String])` (tuple) then [[Res]] will be
+  * `(Int, String)`. If [[Ops]] is `List[RedisBatch[Int&#93;]` then [[Res]] will be `List[Int]`.
+  *
+  * Nesting is also possible. For example, if [[Ops]] is `(List[RedisBatch[Int&#93;], RedisBatch[String])` then
+  * [[Res]] will be `(List[Int], String)`.
+  *
+  * In order to perform "sequencing", simply call `sequence` on your collection of batches, e.g.
+  *
+  * {{{
+  *   import akka.util.ByteString
+  *   import com.avsystem.commons.redis.RedisCommands._
+  *
+  *   val key1 = ByteString("key1")
+  *   val key2 = ByteString("key2")
+  *
+  *   val tupleBatch: RedisBatch[(Long, String)] = (incr(key1), get(key2).map(_.utf8String)).sequence
+  *   val listBatch: RedisBatch[List[Int]] = List(key1, key2).map(key => incr(key)).sequence
+  * }}}
   */
 @implicitNotFound("${Ops} is not something that can be transformed into RedisBatch")
 trait Sequencer[Ops, Res] {

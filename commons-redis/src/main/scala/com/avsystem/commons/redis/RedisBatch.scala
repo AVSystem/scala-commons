@@ -2,6 +2,7 @@ package com.avsystem.commons
 package redis
 
 import com.avsystem.commons.misc.Opt
+import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 import com.avsystem.commons.redis.protocol._
 
 import scala.util.control.NonFatal
@@ -21,7 +22,7 @@ trait RedisBatch[+A] {self =>
 
   /**
     * Merges two batches into one. Provided function is applied on results of the batches being merged to obtain
-    * result of the merged batch.
+    * result of the merged batch. `map2` is the fundamental primitive for composing multiple batches into one.
     */
   def map2[B, C](other: RedisBatch[B])(f: (A, B) => C): RedisBatch[C] =
   new RedisBatch[C] with RawCommandPacks {
@@ -142,13 +143,16 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
       def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = throw cause
     }
 
+  def fromTry[T](t: Try[T]): RedisBatch[T] = t match {
+    case Success(value) => success(value)
+    case Failure(cause) => failure(cause)
+  }
+
   val unit = success(())
 
   implicit class SequenceOps[Ops, Res](private val ops: Ops) extends AnyVal {
     def sequence(implicit sequencer: Sequencer[Ops, Res]): RedisBatch[Res] = sequencer.sequence(ops)
   }
-
-  //TODO more API
 }
 
 trait AtomicBatch[+A] extends RedisBatch[A] with RawCommandPack {
@@ -160,11 +164,42 @@ trait AtomicBatch[+A] extends RedisBatch[A] with RawCommandPack {
   * Represents a sequence of Redis operations executed using a single Redis connection.
   * Any operation may depend on the result of some previous operation (therefore, `flatMap` is available).
   */
-sealed trait RedisOp[+A] {
+sealed trait RedisOp[+A] {self =>
   def map[B](f: A => B): RedisOp[B] =
-    this.flatMap(a => RedisOp.success(f(a)))
+    self.flatMap(a => RedisOp.success(f(a)))
 
-  //TODO more API
+  def transform[B](fun: Try[A] => Try[B]): RedisOp[B] =
+    self match {
+      case LeafOp(batch) => LeafOp(batch.transform(fun))
+      case FlatMappedOp(batch, pfun) => FlatMappedOp(batch, pfun.andThen(_.transform(fun)))
+    }
+
+  def recover[B >: A](f: PartialFunction[Throwable, B]): RedisOp[B] =
+    self match {
+      case LeafOp(batch) => LeafOp(batch.recover(f))
+      case FlatMappedOp(batch, pfun) => FlatMappedOp(batch, pfun.andThen(_.recover(f)))
+    }
+
+  def recoverWith[B >: A](fun: PartialFunction[Throwable, RedisOp[B]]): RedisOp[B] =
+    transform({
+      case Failure(cause) => Success(fun.applyOrElse(cause, (t: Throwable) => RedisOp.failure(t)))
+      case Success(value) => Success(RedisOp.success(value))
+    }).flatMap(identity)
+
+  def fallbackTo[B >: A](op: RedisOp[B]): RedisOp[B] =
+    recoverWith({ case _ => op })
+
+  def failed: RedisOp[Throwable] =
+    transform {
+      case Failure(cause) => Success(cause)
+      case Success(_) => Failure(new NoSuchElementException("RedisOp.failed not completed with a throwable"))
+    }
+
+  def tried: RedisOp[Try[A]] =
+    transform(Success(_))
+
+  def ignoreFailures: RedisOp[Unit] =
+    transform(_ => Success(()))
 }
 
 object RedisOp extends HasFlatMap[RedisOp] {
@@ -176,7 +211,10 @@ object RedisOp extends HasFlatMap[RedisOp] {
   def failure(cause: Throwable): RedisOp[Nothing] =
     RedisBatch.failure(cause).operation
 
-  //TODO more API
+  def fromTry[T](t: Try[T]): RedisOp[T] = t match {
+    case Success(value) => success(value)
+    case Failure(cause) => failure(cause)
+  }
 
   case class LeafOp[A](batch: RedisBatch[A]) extends RedisOp[A]
   case class FlatMappedOp[A, B](batch: RedisBatch[A], fun: A => RedisOp[B]) extends RedisOp[B]
