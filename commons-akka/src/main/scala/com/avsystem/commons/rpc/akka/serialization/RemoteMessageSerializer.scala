@@ -18,7 +18,7 @@ final class RemoteMessageSerializer extends Serializer {
   override def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]): AnyRef = {
     require(manifest.isDefined)
 
-    val input = new ByteStringInput(ByteString(bytes))
+    val input = new ByteStringLinearInput(ByteString(bytes))
 
     manifest.get match {
       case c if c == classOf[ProcedureInvocationMessage] => GenCodec.read[ProcedureInvocationMessage](input)
@@ -38,7 +38,7 @@ final class RemoteMessageSerializer extends Serializer {
   override def toBinary(o: AnyRef): Array[Byte] = {
     require(o.isInstanceOf[RemoteMessage])
 
-    val output = new ByteStringOutput
+    val output = new ByteStringLinearOutput(ByteString.newBuilder)
     o.asInstanceOf[RemoteMessage] match {
       case m: ProcedureInvocationMessage => GenCodec.write(output, m)
       case m: FunctionInvocationMessage => GenCodec.write(output, m)

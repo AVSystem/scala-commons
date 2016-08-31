@@ -2,7 +2,6 @@ package com.avsystem.commons
 package rpc.akka.serialization
 
 import akka.util.{ByteIterator, ByteString}
-import com.avsystem.commons.rpc.akka.serialization.PrimitiveSizes._
 import com.avsystem.commons.serialization.{Input, ListInput, ObjectInput, ReadFailed, ReadSuccessful, ValueRead}
 
 /**
@@ -14,18 +13,18 @@ private[akka] class ByteStringLinearInput(source: ByteString, onMove: Int => Uni
 
   import ByteOrderImplicits._
 
-  override def readNull(): ValueRead[Null] = readCompileTime(NullMarker)(_ => null)
-  override def readLong(): ValueRead[Long] = readCompileTime(LongMarker)(_.getLong)
-  override def readInt(): ValueRead[Int] = readCompileTime(IntMarker)(_.getInt)
-  override def readString(): ValueRead[String] = readRuntime(StringMarker)(_.utf8String)
-  override def readBinary(): ValueRead[Array[Byte]] = readRuntime(ByteArrayMarker)(_.toArray)
+  override def readNull(): ValueRead[Null] = readStatic(NullMarker)(_ => null)
+  override def readLong(): ValueRead[Long] = readStatic(LongMarker)(_.getLong)
+  override def readInt(): ValueRead[Int] = readStatic(IntMarker)(_.getInt)
+  override def readString(): ValueRead[String] = readDynamic(StringMarker)(_.utf8String)
+  override def readBinary(): ValueRead[Array[Byte]] = readDynamic(ByteArrayMarker)(_.toArray)
   override def readList(): ValueRead[ListInput] = readBiMarker(ListStartMarker)(new ByteStringLinearListInput(_, onMove))
   override def readObject(): ValueRead[ObjectInput] = readBiMarker(ObjectStartMarker)(new ByteStringLinearObjectInput(_, onMove))
-  override def readDouble(): ValueRead[Double] = readCompileTime(DoubleMarker)(_.getDouble)
-  override def readBoolean(): ValueRead[Boolean] = readCompileTimeAsValue(BooleanMarker) { iterator =>
+  override def readDouble(): ValueRead[Double] = readStatic(DoubleMarker)(_.getDouble)
+  override def readBoolean(): ValueRead[Boolean] = readStaticAsValue(BooleanMarker) { iterator =>
     iterator.head match {
-      case 1 => ReadSuccessful(true)
-      case 0 => ReadSuccessful(false)
+      case TrueByte => ReadSuccessful(true)
+      case FalseByte => ReadSuccessful(false)
       case value => ReadFailed(s"Found incorrect data: ${value.toInt}")
     }
   }
@@ -41,9 +40,9 @@ private[akka] class ByteStringLinearInput(source: ByteString, onMove: Int => Uni
     }
   }
 
-  private def readCompileTime[T](marker: StaticSize)(f: (ByteIterator) => T): ValueRead[T] = readCompileTimeAsValue(marker)(iterator => ReadSuccessful(f(iterator)))
+  private def readStatic[T](marker: StaticSize)(f: (ByteIterator) => T): ValueRead[T] = readStaticAsValue(marker)(iterator => ReadSuccessful(f(iterator)))
 
-  private def readCompileTimeAsValue[T](marker: StaticSize)(f: (ByteIterator) => ValueRead[T]): ValueRead[T] = {
+  private def readStaticAsValue[T](marker: StaticSize)(f: (ByteIterator) => ValueRead[T]): ValueRead[T] = {
     if (source.size < ByteBytes + marker.size) ReadFailed(s"Source doesn't contain $marker and data")
     else if (source(0) != marker.byte) ReadFailed(s"Expected $marker, but another byte found: ${source(0).toInt}")
     else {
@@ -52,7 +51,7 @@ private[akka] class ByteStringLinearInput(source: ByteString, onMove: Int => Uni
     }
   }
 
-  private def readRuntime[T](marker: DynamicSize)(dataFun: ByteString => T): ValueRead[T] = {
+  private def readDynamic[T](marker: DynamicSize)(dataFun: ByteString => T): ValueRead[T] = {
     def contentSize = source.iterator.drop(ByteBytes).getInt
     val headerSize = ByteBytes + IntBytes
 

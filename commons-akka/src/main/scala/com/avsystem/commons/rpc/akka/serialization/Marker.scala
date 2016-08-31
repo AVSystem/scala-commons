@@ -1,8 +1,7 @@
 package com.avsystem.commons
 package rpc.akka.serialization
 
-import com.avsystem.commons.misc.{Bidirectional, Opt, SealedEnumCompanion}
-import PrimitiveSizes._
+import com.avsystem.commons.misc.{Opt, SealedEnumCompanion}
 
 /**
   * @author Wojciech Milewski

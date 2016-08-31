@@ -3,7 +3,6 @@ package rpc.akka.serialization
 
 import akka.util.{ByteIterator, ByteString}
 import com.avsystem.commons.rpc.akka.serialization.ByteOrderImplicits._
-import com.avsystem.commons.rpc.akka.serialization.PrimitiveSizes._
 import com.avsystem.commons.serialization.{Input, ListInput, ObjectInput, ReadFailed, ReadSuccessful, ValueRead}
 
 /**
@@ -25,8 +24,8 @@ private[akka] final class ByteStringInput(source: ByteString) extends Input {
 
   override def readBoolean(): ValueRead[Boolean] = readDynamicAsValue(BooleanMarker) { iterator =>
     iterator.head match {
-      case WriteOps.TrueByte => ReadSuccessful(true)
-      case WriteOps.FalseByte => ReadSuccessful(false)
+      case TrueByte => ReadSuccessful(true)
+      case FalseByte => ReadSuccessful(false)
       case value => ReadFailed(s"Found incorrect data: $value")
     }
   }

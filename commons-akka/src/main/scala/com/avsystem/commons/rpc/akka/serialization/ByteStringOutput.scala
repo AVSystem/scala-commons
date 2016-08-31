@@ -6,7 +6,6 @@ import java.nio.charset.StandardCharsets
 import akka.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.collection.CollectionAliases.IQueue
 import com.avsystem.commons.rpc.akka.serialization.ByteOrderImplicits._
-import com.avsystem.commons.rpc.akka.serialization.PrimitiveSizes._
 import com.avsystem.commons.serialization.{ListOutput, ObjectOutput, Output}
 
 /**
@@ -61,9 +60,6 @@ private[akka] class ByteStringOutput extends Output {
 }
 
 private object WriteOps {
-  val TrueByte: Byte = 1
-  val FalseByte: Byte = 0
-
   def writeNull(builder: ByteStringBuilder): Unit = {
     builder += NullMarker.byte
   }
@@ -92,7 +88,7 @@ private object WriteOps {
 
   def writeBoolean(value: Boolean)(builder: ByteStringBuilder): Unit = {
     builder += BooleanMarker.byte
-    builder += (if (value) TrueByte else FalseByte).toByte
+    builder += (if (value) TrueByte else FalseByte)
   }
   def writeShort(value: Short)(builder: ByteStringBuilder): Unit = writeSinglePrimitive(ShortMarker, _.putShort(value))(builder)
   def writeInt(value: Int)(builder: ByteStringBuilder): Unit = writeSinglePrimitive(IntMarker, _.putInt(value))(builder)

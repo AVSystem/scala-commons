@@ -31,7 +31,7 @@ private[akka] class ByteStringLinearOutput(builder: ByteStringBuilder) extends O
   override def writeLong(long: Long): Unit = writeSinglePrimitive(LongMarker, _.putLong(long))
   override def writeBoolean(boolean: Boolean): Unit = {
     builder += BooleanMarker.byte
-    builder += (if (boolean) 1 else 0).toByte
+    builder += (if (boolean) TrueByte else FalseByte)
   }
   override def writeList(): ListOutput = new ByteStringLinearListOutput(builder)
   override def writeObject(): ObjectOutput = new ByteStringLinearObjectOutput(builder)
