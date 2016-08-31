@@ -22,7 +22,7 @@ private[akka] final class ByteStringInput(source: ByteString) extends Input {
   override def readObject(): ValueRead[ObjectInput] = readDynamic(ObjectStartMarker)(sliced => new ByteArrayObjectInput(sliced))
   override def readBinary(): ValueRead[Array[Byte]] = readDynamic(ByteArrayMarker)(_.toArray)
 
-  override def readBoolean(): ValueRead[Boolean] = readDynamicAsValue(BooleanMarker) { iterator =>
+  override def readBoolean(): ValueRead[Boolean] = readStaticAsValue(BooleanMarker) { iterator =>
     iterator.head match {
       case TrueByte => ReadSuccessful(true)
       case FalseByte => ReadSuccessful(false)
@@ -31,9 +31,9 @@ private[akka] final class ByteStringInput(source: ByteString) extends Input {
   }
   override def skip(): Unit = ()
 
-  private def readStatic[T](marker: StaticSize)(f: (ByteIterator) => T): ValueRead[T] = readDynamicAsValue(marker)(iterator => ReadSuccessful(f(iterator)))
+  private def readStatic[T](marker: StaticSize)(f: (ByteIterator) => T): ValueRead[T] = readStaticAsValue(marker)(iterator => ReadSuccessful(f(iterator)))
 
-  private def readDynamicAsValue[T](marker: StaticSize)(f: (ByteIterator) => ValueRead[T]): ValueRead[T] = {
+  private def readStaticAsValue[T](marker: StaticSize)(f: (ByteIterator) => ValueRead[T]): ValueRead[T] = {
     if (source.size < ByteBytes + marker.size) ReadFailed(s"Source doesn't contain $marker and data")
     else if (source(0) != marker.byte) ReadFailed(s"Expected $marker, but another byte found")
     else f(source.iterator.drop(ByteBytes))
