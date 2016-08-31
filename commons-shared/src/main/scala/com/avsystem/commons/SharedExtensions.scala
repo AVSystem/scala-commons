@@ -2,7 +2,7 @@ package com.avsystem.commons
 
 import com.avsystem.commons.SharedExtensions._
 import com.avsystem.commons.concurrent.RunNowEC
-import com.avsystem.commons.misc.{Boxing, NOpt, Opt, OptRef}
+import com.avsystem.commons.misc.{Boxing, NOpt, Opt, OptRef, Unboxing}
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
@@ -34,6 +34,9 @@ object SharedExtensions extends SharedExtensions {
     def option: Option[A] = Option(a)
 
     def opt: Opt[A] = Opt(a)
+
+    def unboxedOpt[B](implicit unboxing: Unboxing[B, A]): Opt[B] =
+      opt.map(unboxing.fun)
 
     def checkNotNull(msg: String): A =
       if (a != null) a else throw new NullPointerException(msg)
