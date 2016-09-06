@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 
-import java.io.{ByteArrayOutputStream, DataInputStream, DataOutputStream, InputStream, IOException, OutputStream}
+import java.io.{ByteArrayOutputStream, DataInputStream, DataOutputStream, IOException}
 import java.nio.charset.StandardCharsets
 import java.{lang => jl}
 
@@ -17,7 +17,8 @@ private object PrimitiveSizes {
   val FloatBytes = jl.Float.BYTES
   val DoubleBytes = jl.Double.BYTES
 }
-import PrimitiveSizes._
+
+import com.avsystem.commons.serialization.PrimitiveSizes._
 
 
 private sealed abstract class Marker(val byte: Byte)
@@ -26,7 +27,6 @@ private sealed abstract class DynamicSize(byte: Byte) extends Marker(byte)
 private sealed trait BiMarker {
   def byte: Byte
 }
-
 
 
 private case object NullMarker extends StaticSize(0, 0)
@@ -54,59 +54,58 @@ private object Marker extends SealedEnumCompanion[Marker] {
 }
 
 class StreamInput(is: DataInputStream) extends Input {
-  private[this] val markerByte = is.readByte()
-  private[serialization] val marker = Marker.of(markerByte).getOrElse(throw new IOException(s"Illegal marker $markerByte"))
+  private[serialization] val markerByte = is.readByte()
 
-  private def checkedInternal[A](expected: Marker)(vr: => A): ValueRead[A] = {
-    if (marker == expected) ReadSuccessful(vr) else ReadFailed(s"Expected $expected, but $marker found")
-  }
+  override def readNull(): ValueRead[Null] = if (markerByte == NullMarker.byte) ReadSuccessful(null) else ReadFailed(s"Expected string, but $markerByte found")
 
-  private def checkedStatic[A](expected: StaticSize)(vr: => A): ValueRead[A] = checkedInternal(expected)(vr)
-
-  private def checkedDynamic[A](marker: DynamicSize)(vr: Int => A): ValueRead[A] = checkedInternal(marker) {
-    vr(is.readInt())
-  }
-
-  override def readNull(): ValueRead[Null] = checkedStatic(NullMarker)(null)
-
-  override def readString(): ValueRead[String] = checkedDynamic(StringMarker) { size =>
-    val binaryString = Array.ofDim[Byte](size)
+  override def readString(): ValueRead[String] = if (markerByte == StringMarker.byte) ReadSuccessful({
+    val binaryString = Array.ofDim[Byte](is.readInt())
     is.readFully(binaryString)
     new String(binaryString, StandardCharsets.UTF_8)
-  }
+  })
+  else ReadFailed(s"Expected string, but $markerByte found")
 
-  override def readBoolean(): ValueRead[Boolean] = checkedStatic(BooleanMarker) {
+  override def readBoolean(): ValueRead[Boolean] = if (markerByte == BooleanMarker.byte) ReadSuccessful({
     is.readBoolean()
-  }
+  })
+  else ReadFailed(s"Expected boolean, but $markerByte found")
 
-  override def readInt(): ValueRead[Int] = checkedStatic(IntMarker) {
+  override def readInt(): ValueRead[Int] = if (markerByte == IntMarker.byte) ReadSuccessful({
     is.readInt()
-  }
+  })
+  else ReadFailed(s"Expected int, but $markerByte found")
 
-  override def readLong(): ValueRead[Long] = checkedStatic(LongMarker) {
+  override def readLong(): ValueRead[Long] = if (markerByte == LongMarker.byte) ReadSuccessful({
     is.readLong()
-  }
+  })
+  else ReadFailed(s"Expected long, but $markerByte found")
 
-  override def readDouble(): ValueRead[Double] = checkedStatic(DoubleMarker) {
+  override def readDouble(): ValueRead[Double] = if (markerByte == DoubleMarker.byte) ReadSuccessful({
     is.readDouble()
-  }
+  })
+  else ReadFailed(s"Expected double, but $markerByte found")
 
-  override def readBinary(): ValueRead[Array[Byte]] = checkedDynamic(ByteArrayMarker) { size =>
-    val binary = Array.ofDim[Byte](size)
+  override def readBinary(): ValueRead[Array[Byte]] = if (markerByte == ByteArrayMarker.byte) ReadSuccessful({
+    val binary = Array.ofDim[Byte](is.readInt())
     is.readFully(binary)
     binary
-  }
+  })
+  else ReadFailed(s"Expected binary array, but $markerByte found")
 
-  override def readList(): ValueRead[ListInput] = checkedDynamic(ListStartMarker) { size =>
+  override def readList(): ValueRead[ListInput] = if (markerByte == ListStartMarker.byte) ReadSuccessful({
+    is.readInt()
     new StreamListInput(is)
-  }
+  })
+  else ReadFailed(s"Expected list, but $markerByte found")
 
-  override def readObject(): ValueRead[ObjectInput] = checkedDynamic(ObjectStartMarker) { size =>
+  override def readObject(): ValueRead[ObjectInput] = if (markerByte == ObjectStartMarker.byte) ReadSuccessful({
+    is.readInt()
     new StreamObjectInput(is)
-  }
+  })
+  else ReadFailed(s"Expected object, but $markerByte found")
 
   override def skip(): Unit = {
-    val toSkip  = marker match {
+    val toSkip = Marker.of(markerByte).get match {
       case m: StaticSize =>
         m.size
       case m: DynamicSize =>
@@ -135,11 +134,12 @@ private class StreamListInput(is: DataInputStream) extends ListInput {
 
   override def hasNext: Boolean = {
     ensureInput()
-    currentInput.get.marker != ListEndMarker
+    currentInput.get.markerByte != ListEndMarker.byte
   }
 }
 
 private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
+
   import StreamObjectInput._
 
   private[this] var currentField: CurrentField = NoneYet
@@ -147,7 +147,7 @@ private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
   private def ensureInput(): Unit = currentField match {
     case NoneYet =>
       val keyInput = new StreamInput(is)
-      currentField = if (keyInput.marker != ObjectEndMarker) {
+      currentField = if (keyInput.markerByte != ObjectEndMarker.byte) {
         val keyString = keyInput.readString().get
         val valueInput = new StreamInput(is)
         Field(keyString, valueInput)
@@ -180,68 +180,77 @@ private object StreamObjectInput {
 
 class StreamOutput(os: DataOutputStream) extends Output {
 
-  private def writeStatic(marker: StaticSize)(f: => Unit) = {
-    os.write(marker.byte)
-    f
+  override def writeNull(): Unit = os.write(NullMarker.byte)
+
+  override def writeString(str: String): Unit = {
+    os.writeByte(StringMarker.byte)
+    val binary = str.getBytes(StandardCharsets.UTF_8)
+    os.writeInt(binary.length)
+    os.write(binary)
   }
 
-  private def writeDynamic[A](marker: DynamicSize)(f: (DataOutputStream, () => Unit) => A): A = {
-    val bytes = new ByteArrayOutputStream()
-    val stream = new DataOutputStream(bytes)
-    f(stream, { () =>
-      os.write(marker.byte)
-      os.writeInt(bytes.size())
-      os.write(bytes.toByteArray)
-    })
+  override def writeBoolean(boolean: Boolean): Unit = {
+    os.writeByte(BooleanMarker.byte)
+    os.writeBoolean(boolean)
   }
 
-  override def writeNull(): Unit = writeStatic(NullMarker)(())
-
-  override def writeString(str: String): Unit =
-    writeDynamic(StringMarker){ (stream, onFinish) =>
-      stream.write(str.getBytes(StandardCharsets.UTF_8))
-      onFinish()
-    }
-
-  override def writeBoolean(boolean: Boolean): Unit = writeStatic(BooleanMarker)(os.writeBoolean(boolean))
-
-  override def writeInt(int: Int): Unit = writeStatic(IntMarker)(os.writeInt(int))
-
-  override def writeLong(long: Long): Unit = writeStatic(LongMarker)(os.writeLong(long))
-
-  override def writeDouble(double: Double): Unit = writeStatic(DoubleMarker)(os.writeDouble(double))
-
-  override def writeBinary(binary: Array[Byte]): Unit = writeDynamic(ByteArrayMarker) { (stream, onFinish) =>
-    stream.write(binary)
-    onFinish()
+  override def writeInt(int: Int): Unit = {
+    os.writeByte(IntMarker.byte)
+    os.writeInt(int)
   }
 
-  override def writeList(): ListOutput = writeDynamic(ListStartMarker) { (stream, onFinish) =>
-    new StreamListOutput(stream, onFinish)
+  override def writeLong(long: Long): Unit = {
+    os.writeByte(LongMarker.byte)
+    os.writeLong(long)
   }
 
-  override def writeObject(): ObjectOutput = writeDynamic(ObjectStartMarker) { (stream, onFinish) =>
-    new StreamObjectOutput(stream, onFinish)
+  override def writeDouble(double: Double): Unit = {
+    os.writeByte(DoubleMarker.byte)
+    os.writeDouble(double)
+  }
+
+  override def writeBinary(binary: Array[Byte]): Unit = {
+    os.writeByte(ByteArrayMarker.byte)
+    os.writeInt(binary.length)
+    os.write(binary)
+  }
+
+  override def writeList(): ListOutput = {
+    os.writeByte(ListStartMarker.byte)
+    new StreamListOutput(os)
+  }
+
+  override def writeObject(): ObjectOutput = {
+    os.writeByte(ObjectStartMarker.byte)
+    new StreamObjectOutput(os)
   }
 }
 
-private class StreamListOutput(os: DataOutputStream, onFinish: () => Unit) extends ListOutput {
-  override def writeElement(): Output = new StreamOutput(os)
+private class StreamListOutput(os: DataOutputStream) extends ListOutput {
+  private[this] val innerOs = new ByteArrayOutputStream()
+  private[this] val innerDataOs = new DataOutputStream(innerOs)
+
+  override def writeElement(): Output = new StreamOutput(innerDataOs)
 
   override def finish(): Unit = {
+    os.writeInt(innerOs.size() + 1)
+    os.write(innerOs.toByteArray)
     os.writeByte(ListEndMarker.byte)
-    onFinish()
   }
 }
 
-private class StreamObjectOutput(os: DataOutputStream, onFinish: () => Unit) extends ObjectOutput {
+private class StreamObjectOutput(os: DataOutputStream) extends ObjectOutput {
+  private[this] val innerOs = new ByteArrayOutputStream()
+  private[this] val innerDataOs = new DataOutputStream(innerOs)
+
   override def writeField(key: String): Output = {
-    new StreamOutput(os).writeString(key)
-    new StreamOutput(os)
+    new StreamOutput(innerDataOs).writeString(key)
+    new StreamOutput(innerDataOs)
   }
 
   override def finish(): Unit = {
+    os.writeInt(innerOs.size() + 1)
+    os.write(innerOs.toByteArray)
     os.writeByte(ObjectEndMarker.byte)
-    onFinish()
   }
 }
