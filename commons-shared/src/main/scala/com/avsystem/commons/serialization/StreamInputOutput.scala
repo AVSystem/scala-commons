@@ -57,13 +57,13 @@ class StreamInput(is: DataInputStream) extends Input {
   private[this] val markerByte = is.readByte()
   private[serialization] val marker = Marker.of(markerByte).getOrElse(throw new IOException(s"Illegal marker $markerByte"))
 
-  private[this] def checkedInternal[A](expected: Marker)(vr: => A): ValueRead[A] = {
+  private def checkedInternal[A](expected: Marker)(vr: => A): ValueRead[A] = {
     if (marker == expected) ReadSuccessful(vr) else ReadFailed(s"Expected $expected, but $marker found")
   }
 
-  private[this] def checkedStatic[A](expected: StaticSize)(vr: => A): ValueRead[A] = checkedInternal(expected)(vr)
+  private def checkedStatic[A](expected: StaticSize)(vr: => A): ValueRead[A] = checkedInternal(expected)(vr)
 
-  private[this] def checkedDynamic[A](marker: DynamicSize)(vr: Int => A): ValueRead[A] = checkedInternal(marker) {
+  private def checkedDynamic[A](marker: DynamicSize)(vr: Int => A): ValueRead[A] = checkedInternal(marker) {
     vr(is.readInt())
   }
 
