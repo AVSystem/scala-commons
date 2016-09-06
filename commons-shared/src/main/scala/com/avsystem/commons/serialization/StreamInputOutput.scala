@@ -18,8 +18,6 @@ private object PrimitiveSizes {
   val DoubleBytes = jl.Double.BYTES
 }
 
-import com.avsystem.commons.serialization.PrimitiveSizes._
-
 
 private sealed abstract class Marker(val byte: Byte)
 private sealed abstract class StaticSize(val size: Int, byte: Byte) extends Marker(byte)
@@ -28,23 +26,25 @@ private sealed trait BiMarker {
   def byte: Byte
 }
 
-
-private case object NullMarker extends StaticSize(0, 0)
-private case object StringMarker extends DynamicSize(1)
-private case object ByteMarker extends StaticSize(ByteBytes, 2)
-private case object ShortMarker extends StaticSize(ShortBytes, 3)
-private case object IntMarker extends StaticSize(IntBytes, 4)
-private case object LongMarker extends StaticSize(LongBytes, 5)
-private case object FloatMarker extends StaticSize(FloatBytes, 6)
-private case object DoubleMarker extends StaticSize(DoubleBytes, 7)
-private case object ByteArrayMarker extends DynamicSize(8)
-private case object BooleanMarker extends StaticSize(ByteBytes, 9)
-private case object ListStartMarker extends DynamicSize(10) with BiMarker
-private case object ObjectStartMarker extends DynamicSize(11) with BiMarker
-private case object ListEndMarker extends Marker(12)
-private case object ObjectEndMarker extends Marker(13)
-
 private object Marker extends SealedEnumCompanion[Marker] {
+
+  import com.avsystem.commons.serialization.PrimitiveSizes._
+
+  case object NullMarker extends StaticSize(0, 0)
+  case object StringMarker extends DynamicSize(1)
+  case object ByteMarker extends StaticSize(ByteBytes, 2)
+  case object ShortMarker extends StaticSize(ShortBytes, 3)
+  case object IntMarker extends StaticSize(IntBytes, 4)
+  case object LongMarker extends StaticSize(LongBytes, 5)
+  case object FloatMarker extends StaticSize(FloatBytes, 6)
+  case object DoubleMarker extends StaticSize(DoubleBytes, 7)
+  case object ByteArrayMarker extends DynamicSize(8)
+  case object BooleanMarker extends StaticSize(ByteBytes, 9)
+  case object ListStartMarker extends DynamicSize(10) with BiMarker
+  case object ObjectStartMarker extends DynamicSize(11) with BiMarker
+  case object ListEndMarker extends Marker(12)
+  case object ObjectEndMarker extends Marker(13)
+
   val values: List[Marker] = caseObjects
 
   private val markers = values.toArray.sortBy(_.byte)
@@ -52,6 +52,8 @@ private object Marker extends SealedEnumCompanion[Marker] {
   def of(byte: Byte): Opt[Marker] =
     if (byte >= 0 && byte < markers.length) Opt(markers(byte)) else Opt.empty
 }
+
+import com.avsystem.commons.serialization.Marker._
 
 class StreamInput(is: DataInputStream) extends Input {
   private[serialization] val markerByte = is.readByte()

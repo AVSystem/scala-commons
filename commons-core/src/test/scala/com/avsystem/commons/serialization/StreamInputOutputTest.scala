@@ -34,15 +34,15 @@ class StreamInputOutputTest extends FunSuite {
     (),
     "str",
     'c',
-    e=false,
+    e = false,
     List(null, null),
-    f=true,
+    f = true,
     -3,
     -4,
     -5,
     -6,
     -7.3,
-    Array[Byte](1,2,4,2),
+    Array[Byte](1, 2, 4, 2),
     Obj(10, "x"),
     List(
       List.empty,
@@ -79,7 +79,7 @@ class StreamInputOutputTest extends FunSuite {
 
   test("simple encode/decode") {
     assertEncDec(1)
-    assert(Array[Byte](1,3,8) sameElements  encDec(Array[Byte](1,3,8)))
+    assert(Array[Byte](1, 3, 8) sameElements encDec(Array[Byte](1, 3, 8)))
     assertEncDec("x")
     assertEncDec(List.empty[String])
     assertEncDec(List[String]("   "))
