@@ -30,6 +30,7 @@ val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.2.2"
 val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.0"
+val akkaVersion = "2.4.9"
 
 val commonSettings = Seq(
   sonatypeProfileName := "com.avsystem",
@@ -95,7 +96,9 @@ lazy val commons = project.in(file("."))
     `commons-jetty`,
     `commons-benchmark`,
     `commons-mongo`,
-    `commons-spring`
+    `commons-spring`,
+    `commons-akka`,
+    `commons-akka-benchmark`
   )
   .settings(name := "commons")
   .settings(commonSettings: _*)
@@ -179,3 +182,22 @@ lazy val `commons-spring` = project
       "com.typesafe" % "config" % typesafeConfigVersion
     )
   )
+
+lazy val `commons-akka` = project
+  .dependsOn(`commons-core`)
+  .settings(commonSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-remote" % akkaVersion,
+      "org.monifu" %% "monifu" % "1.2",
+      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+      "org.mockito" % "mockito-core" % "2.0.54-beta" % Test
+    )
+  )
+
+lazy val `commons-akka-benchmark` = project
+  .dependsOn(`commons-akka`)
+  .settings(commonSettings: _*)
+  .settings(noPublishSettings: _*)
+  .enablePlugins(JmhPlugin)
