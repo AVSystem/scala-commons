@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicLong
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import com.avsystem.commons.redis.actor.ManagedRedisConnectionActor.NodeRemoved
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{ManagedRedisConnectionActor, RedisOperationActor}
@@ -22,7 +23,7 @@ final class RedisNodeClient(
   private def createConnection(i: Int) =
     system.actorOf(Props(new ManagedRedisConnectionActor(address, config.connectionConfigs(i))))
 
-  private val connections = (0 to config.poolSize).iterator.map(createConnection).toArray
+  private val connections = (0 until config.poolSize).iterator.map(createConnection).toArray
   private val index = new AtomicLong(0)
   private val initFuture = Promise[Any]()
     .completeWith(executeOp(connections(0), config.initOp)(config.initTimeout)).future
@@ -32,6 +33,13 @@ final class RedisNodeClient(
 
   private[redis] def executeRaw(packs: RawCommandPacks)(implicit timeout: Timeout): Future[PacksResult] =
     initFuture.flatMapNow(_ => nextConnection().ask(packs)).mapTo[PacksResult]
+
+  /**
+    * Notifies the [[RedisNodeClient]] that its node is no longer a master in Redis Cluster and.
+    * The client stops itself as a result and fails any pending requests with
+    * [[com.avsystem.commons.redis.exception.NodeRemovedException]].
+    */
+  private[redis] def nodeRemoved(): Unit = connections.foreach(_ ! NodeRemoved)
 
   def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A] =
     executeRaw(batch.rawCommandPacks).mapNow(result => batch.decodeReplies(result))

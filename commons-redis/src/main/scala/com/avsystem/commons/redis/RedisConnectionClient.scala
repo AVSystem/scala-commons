@@ -7,9 +7,9 @@ import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.avsystem.commons.redis.RawCommand.Level
-import com.avsystem.commons.redis.actor.RedisConnectionActor
+import com.avsystem.commons.redis.actor.ManagedRedisConnectionActor
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
-import com.avsystem.commons.redis.config.ConnectionConfig
+import com.avsystem.commons.redis.config.{ConnectionConfig, ManagedConnectionConfig, NoReconnectionStrategy}
 
 import scala.concurrent.Future
 
@@ -20,7 +20,8 @@ import scala.concurrent.Future
 final class RedisConnectionClient(address: NodeAddress = NodeAddress.Default, config: ConnectionConfig = ConnectionConfig())
   (implicit system: ActorSystem) extends Closeable {self =>
 
-  private val connectionActor = system.actorOf(Props(new RedisConnectionActor(address, config)))
+  private val connectionActor = system.actorOf(Props(
+    new ManagedRedisConnectionActor(address, ManagedConnectionConfig(config, NoReconnectionStrategy))))
 
   def execute[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A] =
     connectionActor.ask(batch.rawCommandPacks.requireLevel(Level.Connection, "ConnectionClient"))

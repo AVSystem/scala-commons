@@ -48,16 +48,19 @@ trait CommandsSuite extends FunSuite with ScalaFutures with BeforeAndAfterEach
 trait RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
   def executor = redisClient.toExecutor
 
-  override def clusterConfig = super.clusterConfig |> { cc =>
-    cc.copy(
-      nodeConfigs = a => cc.nodeConfigs(a) |> { nc =>
-        nc.copy(
-          connectionConfigs = i =>
-            nc.connectionConfigs(i).copy(debugListener = listener)
-        )
-      }
-    )
-  }
+  override def clusterConfig =
+    super.clusterConfig |> { cc =>
+      cc.copy(
+        nodeConfigs = a => cc.nodeConfigs(a) |> { nc =>
+          nc.copy(
+            connectionConfigs = i =>
+              nc.connectionConfigs(i) |> { mcc =>
+                mcc.copy(connectionConfig = mcc.connectionConfig.copy(debugListener = listener))
+              }
+          )
+        }
+      )
+    }
 
   override protected def afterEach() = {
     val futures = redisClient.currentState.masters.values.map(_.executeBatch(RedisCommands.flushall))
@@ -69,12 +72,16 @@ trait RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster w
 trait RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with CommandsSuite {
   def executor = redisClient.toExecutor
 
-  override def nodeConfig = super.nodeConfig |> { nc =>
-    nc.copy(
-      connectionConfigs = i =>
-        nc.connectionConfigs(i).copy(debugListener = listener)
-    )
-  }
+  override def nodeConfig =
+    super.nodeConfig |> { nc =>
+      nc.copy(
+        poolSize = 1,
+        connectionConfigs = i =>
+          nc.connectionConfigs(i) |> { mcc =>
+            mcc.copy(connectionConfig = mcc.connectionConfig.copy(debugListener = listener))
+          }
+      )
+    }
 
   override protected def afterEach() = {
     Await.ready(executor.execute(RedisCommands.flushall), Duration.Inf)

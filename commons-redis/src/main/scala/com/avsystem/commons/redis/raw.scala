@@ -102,5 +102,5 @@ final class WatchState {
   * the `EXEC` response and returning them in an [[ArrayMsg]] (see [[Transaction]]).
   */
 trait ReplyPreprocessor {
-  def preprocess(message: RedisMsg, connectionState: WatchState): Opt[RedisReply]
+  def preprocess(message: RedisMsg, watchState: WatchState): Opt[RedisReply]
 }

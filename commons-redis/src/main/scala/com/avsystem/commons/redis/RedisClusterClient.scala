@@ -91,7 +91,7 @@ final class RedisClusterClient(
       def execute[A](batch: RedisBatch[A]) = executeBatch(batch)
     }
 
-  private def handleRedirection(pack: RawCommandPack, result: Future[RedisReply], retryCount: Int)
+  private def handleRedirection(pack: RawCommandPack, slot: Int, result: Future[RedisReply], retryCount: Int)
     (implicit timeout: Timeout): Future[RedisReply] =
 
     result.flatMapNow {
@@ -112,6 +112,17 @@ final class RedisClusterClient(
           .getOrElse(result)
       case _ =>
         result
+    } recoverWithNow {
+      case nre: NodeRemovedException if !nre.alreadySent =>
+        // Node went down and we didn't get a regular redirection but the cluster detected the failure
+        // and we now have a new cluster view, so retry our not-yet-sent request using new cluster state.
+        val client = state.clientForSlot(slot)
+        if (retryCount >= clusterConfig.maxRedirections)
+          throw new TooManyRedirectionsException(Redirection(client.address, slot, ask = false))
+        else {
+          val result = client.executeRaw(pack).mapNow(_.apply(0))
+          handleRedirection(pack, slot, result, retryCount + 1)
+        }
     }
 
   private def retryRedirected(pack: RawCommandPack, redirection: Redirection, retryCount: Int)
@@ -135,7 +146,7 @@ final class RedisClusterClient(
           monitoringActor.ask(GetClient(redirection.address))(RedisClusterClient.GetClientTimeout)
             .mapTo[GetClientResponse].flatMapNow(_.client.executeRaw(packToResend))
       }
-      handleRedirection(pack, result.map(_.apply(0)), retryCount + 1)
+      handleRedirection(pack, redirection.slot, result.map(_.apply(0)), retryCount + 1)
     }
   }
 
@@ -148,7 +159,7 @@ final class RedisClusterClient(
       val packsByNode = new MHashMap[RedisNodeClient, ArrayBuffer[RawCommandPack]]
       val resultsByNode = new MHashMap[RedisNodeClient, Future[PacksResult]]
 
-      def futureForPack(client: RedisNodeClient, pack: RawCommandPack): Future[RedisReply] = {
+      def futureForPack(slot: Int, client: RedisNodeClient, pack: RawCommandPack): Future[RedisReply] = {
         val packBuffer = packsByNode.getOrElseUpdate(client, new ArrayBuffer)
         val idx = packBuffer.size
         packBuffer += pack
@@ -157,14 +168,15 @@ final class RedisClusterClient(
             client.executeRaw(CollectionPacks(packBuffer))
           }
         ).mapNow(_.apply(idx))
-        handleRedirection(pack, result, 0)
+        handleRedirection(pack, slot, result, 0)
       }
 
       val results = new ArrayBuffer[Future[RedisReply]]
       batch.rawCommandPacks.emitCommandPacks { pack =>
         val resultFuture = try {
-          val client = currentState.clientForSlot(determineSlot(pack))
-          futureForPack(client, pack)
+          val slot = determineSlot(pack)
+          val client = currentState.clientForSlot(slot)
+          futureForPack(slot, client, pack)
         } catch {
           case re: RedisException => Future.successful(FailureReply(re))
           case NonFatal(cause) => Future.failed(cause)
@@ -203,7 +215,7 @@ private object RedisClusterClient {
       private var first = true
       private var error: Opt[FailureReply] = Opt.Empty
 
-      def preprocess(message: RedisMsg, connectionState: WatchState) =
+      def preprocess(message: RedisMsg, watchState: WatchState) =
         if (first) {
           first = false
           message match {
@@ -211,7 +223,7 @@ private object RedisClusterClient {
             case _ => error = FailureReply(new UnexpectedReplyException(s"Unexpected reply for ASKING: $message")).opt
           }
           Opt.Empty
-        } else wrapped.preprocess(message, connectionState)
+        } else wrapped.preprocess(message, watchState)
           .map(reply => error.getOrElse(reply))
     }
 

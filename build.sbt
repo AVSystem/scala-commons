@@ -24,8 +24,8 @@ inThisBuild(Seq(
 val silencerVersion = "0.3"
 val guavaVersion = "18.0"
 val jsr305Version = "3.0.0"
-val scalatestVersion = "2.2.5"
-val scalacheckVersion = "1.12.5"
+val scalatestVersion = "3.0.0"
+val scalacheckVersion = "1.13.2"
 val upickleVersion = "0.3.6"
 val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.2.2"
@@ -84,6 +84,8 @@ val commonSettings = Seq(
   ),
   dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.4",
   ideBasePackages := Seq(organization.value),
+  ideOutputDirectory in Compile := Some(baseDirectory.value / "out/production"),
+  ideOutputDirectory in Test := Some(baseDirectory.value / "out/test"),
   fork in Test := true
 )
 

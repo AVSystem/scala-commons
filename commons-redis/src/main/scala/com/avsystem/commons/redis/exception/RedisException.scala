@@ -32,11 +32,23 @@ class ConnectionFailedException(val address: NodeAddress)
 class WriteFailedException(val address: NodeAddress)
   extends RedisIOException(s"Failed to send data through Redis connection to $address")
 
+class NotYetConnectedException(val address: NodeAddress)
+  extends RedisIOException(s"Redis connection to $address has not been established yet")
+
 class ConnectionClosedException(val address: NodeAddress)
   extends RedisIOException(s"Redis connection to $address was closed")
 
+class ConnectionBusyException(val address: NodeAddress)
+  extends RedisIOException(s"Redis connection to $address is currently busy writing other request")
+
+class ConnectionNotYetInitializedException(val address: NodeAddress)
+  extends RedisIOException(s"Redis connection to $address has not been initialized yet")
+
 class ClientStoppedException(val address: NodeAddress)
   extends RedisException(s"Redis client for $address was stopped")
+
+class NodeRemovedException(val address: NodeAddress, val alreadySent: Boolean)
+  extends RedisException(s"Node $address is no longer a master in Redis Cluster")
 
 class ConnectionReservedException
   extends RedisException("This connection is already reserved by somebody else")

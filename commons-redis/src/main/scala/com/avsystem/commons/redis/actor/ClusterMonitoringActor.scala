@@ -7,6 +7,7 @@ import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{ClusterSlots, SlotRange}
 import com.avsystem.commons.redis.config.ClusterConfig
+import com.avsystem.commons.redis.exception.ClientStoppedException
 import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{ClusterState, NodeAddress, RedisCommands, RedisNodeClient}
 
@@ -90,9 +91,11 @@ final class ClusterMonitoringActor(
         }
         (clients.keySet diff masters).foreach { addr =>
           clients.remove(addr).foreach { client =>
-            system.scheduler.scheduleOnce(config.nodeClientCloseDelay)(client.close())
+            client.nodeRemoved()
           }
         }
+      case Failure(_: ClientStoppedException) =>
+      // node was removed, everything is normal
       case Failure(cause) =>
         log.error(s"Failed to refresh cluster state", cause)
     }

@@ -104,13 +104,13 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       ))
     }
 
+    @RPC trait BaseRPC[T] {
+      def accept(t: T): Unit
+    }
+
+    trait ConcreteRPC extends BaseRPC[String]
+
     "rpc should work with parameterized interface types" in {
-      @RPC trait BaseRPC[T] {
-        def accept(t: T): Unit
-      }
-
-      trait ConcreteRPC extends BaseRPC[String]
-
       AsRawRPC[ConcreteRPC]
       AsRealRPC[ConcreteRPC]
     }

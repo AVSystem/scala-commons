@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis
 
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.config.ConnectionConfig
+import com.avsystem.commons.redis.config.{ConnectionConfig, ManagedConnectionConfig}
 import com.avsystem.commons.redis.exception.{ErrorReplyException, OptimisticLockException}
 
 import scala.concurrent.duration.Duration
@@ -246,7 +246,7 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
 
   override def nodeConfig = super.nodeConfig.copy(
     poolSize = 1,
-    connectionConfigs = _ => ConnectionConfig(debugListener = listener)
+    connectionConfigs = _ => ManagedConnectionConfig(ConnectionConfig(debugListener = listener))
   )
 
   // needed in order to force the client to execute UNWATCH before test finishes
