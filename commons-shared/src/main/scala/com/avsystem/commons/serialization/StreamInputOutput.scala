@@ -38,37 +38,37 @@ import com.avsystem.commons.serialization.FormatConstants._
 class StreamInput(is: DataInputStream) extends Input {
   private[serialization] val markerByte = is.readByte()
 
-  override def readNull(): ValueRead[Null] = if (markerByte == NullMarker)
+  def readNull(): ValueRead[Null] = if (markerByte == NullMarker)
     ReadSuccessful(null)
   else
-    ReadFailed(s"Expected string, but $markerByte found")
+    ReadFailed(s"Expected null, but $markerByte found")
 
-  override def readString(): ValueRead[String] = if (markerByte == StringMarker)
+  def readString(): ValueRead[String] = if (markerByte == StringMarker)
     ReadSuccessful(is.readUTF())
   else
     ReadFailed(s"Expected string, but $markerByte found")
 
-  override def readBoolean(): ValueRead[Boolean] = if (markerByte == BooleanMarker)
+  def readBoolean(): ValueRead[Boolean] = if (markerByte == BooleanMarker)
     ReadSuccessful(is.readBoolean())
   else
     ReadFailed(s"Expected boolean, but $markerByte found")
 
-  override def readInt(): ValueRead[Int] = if (markerByte == IntMarker)
+  def readInt(): ValueRead[Int] = if (markerByte == IntMarker)
     ReadSuccessful(is.readInt())
   else
     ReadFailed(s"Expected int, but $markerByte found")
 
-  override def readLong(): ValueRead[Long] = if (markerByte == LongMarker)
+  def readLong(): ValueRead[Long] = if (markerByte == LongMarker)
     ReadSuccessful(is.readLong())
   else
     ReadFailed(s"Expected long, but $markerByte found")
 
-  override def readDouble(): ValueRead[Double] = if (markerByte == DoubleMarker)
+  def readDouble(): ValueRead[Double] = if (markerByte == DoubleMarker)
     ReadSuccessful(is.readDouble())
   else
     ReadFailed(s"Expected double, but $markerByte found")
 
-  override def readBinary(): ValueRead[Array[Byte]] = if (markerByte == ByteArrayMarker)
+  def readBinary(): ValueRead[Array[Byte]] = if (markerByte == ByteArrayMarker)
     ReadSuccessful {
       val binary = Array.ofDim[Byte](is.readInt())
       is.readFully(binary)
@@ -77,17 +77,17 @@ class StreamInput(is: DataInputStream) extends Input {
   else
     ReadFailed(s"Expected binary array, but $markerByte found")
 
-  override def readList(): ValueRead[ListInput] = if (markerByte == ListStartMarker)
+  def readList(): ValueRead[ListInput] = if (markerByte == ListStartMarker)
     ReadSuccessful(new StreamListInput(is))
   else
     ReadFailed(s"Expected list, but $markerByte found")
 
-  override def readObject(): ValueRead[ObjectInput] = if (markerByte == ObjectStartMarker)
+  def readObject(): ValueRead[ObjectInput] = if (markerByte == ObjectStartMarker)
     ReadSuccessful(new StreamObjectInput(is))
   else
     ReadFailed(s"Expected object, but $markerByte found")
 
-  override def skip(): Unit = {
+  def skip(): Unit = {
     val toSkip = markerByte match {
       case NullMarker =>
       // no op
@@ -126,14 +126,14 @@ private class StreamListInput(is: DataInputStream) extends ListInput {
   private def ensureInput(): Unit =
     if (currentInput == Opt.empty) currentInput = Opt.some(new StreamInput(is))
 
-  override def nextElement(): Input = {
+  def nextElement(): Input = {
     if (!hasNext) throw new ReadFailure("List already emptied")
     val input = currentInput
     currentInput = Opt.empty
     input.get
   }
 
-  override def hasNext: Boolean = {
+  def hasNext: Boolean = {
     ensureInput()
     currentInput.get.markerByte != ListEndMarker
   }
@@ -159,14 +159,14 @@ private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
     case _: Field =>
   }
 
-  override def nextField(): (String, Input) = {
+  def nextField(): (String, Input) = {
     if (!hasNext) throw new ReadFailure("Object already emptied")
     val Field(key, field) = currentField
     currentField = NoneYet
     (key, field)
   }
 
-  override def hasNext: Boolean = {
+  def hasNext: Boolean = {
     ensureInput()
     currentField != End
   }
@@ -181,45 +181,45 @@ private object StreamObjectInput {
 
 class StreamOutput(os: DataOutputStream) extends Output {
 
-  override def writeNull(): Unit = os.write(NullMarker)
+  def writeNull(): Unit = os.write(NullMarker)
 
-  override def writeString(str: String): Unit = {
+  def writeString(str: String): Unit = {
     os.writeByte(StringMarker)
     os.writeUTF(str)
   }
 
-  override def writeBoolean(boolean: Boolean): Unit = {
+  def writeBoolean(boolean: Boolean): Unit = {
     os.writeByte(BooleanMarker)
     os.writeBoolean(boolean)
   }
 
-  override def writeInt(int: Int): Unit = {
+  def writeInt(int: Int): Unit = {
     os.writeByte(IntMarker)
     os.writeInt(int)
   }
 
-  override def writeLong(long: Long): Unit = {
+  def writeLong(long: Long): Unit = {
     os.writeByte(LongMarker)
     os.writeLong(long)
   }
 
-  override def writeDouble(double: Double): Unit = {
+  def writeDouble(double: Double): Unit = {
     os.writeByte(DoubleMarker)
     os.writeDouble(double)
   }
 
-  override def writeBinary(binary: Array[Byte]): Unit = {
+  def writeBinary(binary: Array[Byte]): Unit = {
     os.writeByte(ByteArrayMarker)
     os.writeInt(binary.length)
     os.write(binary)
   }
 
-  override def writeList(): ListOutput = {
+  def writeList(): ListOutput = {
     os.writeByte(ListStartMarker)
     new StreamListOutput(os)
   }
 
-  override def writeObject(): ObjectOutput = {
+  def writeObject(): ObjectOutput = {
     os.writeByte(ObjectStartMarker)
     new StreamObjectOutput(os)
   }
@@ -227,21 +227,21 @@ class StreamOutput(os: DataOutputStream) extends Output {
 
 private class StreamListOutput(os: DataOutputStream) extends ListOutput {
 
-  override def writeElement(): Output = new StreamOutput(os)
+  def writeElement(): Output = new StreamOutput(os)
 
-  override def finish(): Unit = {
+  def finish(): Unit = {
     os.writeByte(ListEndMarker)
   }
 }
 
 private class StreamObjectOutput(os: DataOutputStream) extends ObjectOutput {
 
-  override def writeField(key: String): Output = {
+  def writeField(key: String): Output = {
     new StreamOutput(os).writeString(key)
     new StreamOutput(os)
   }
 
-  override def finish(): Unit = {
+  def finish(): Unit = {
     os.writeByte(ObjectEndMarker)
   }
 }
