@@ -45,9 +45,9 @@ object TypedMap {
       protected def readObject(input: ObjectInput) = {
         val rawBuilder = Map.newBuilder[K[_], Any]
         while (input.hasNext) {
-          val (rawKey, valueInput) = input.nextField()
-          val key = keyCodec.read(rawKey)
-          rawBuilder += ((key, codecMapping.valueCodec(key).read(valueInput)))
+          val fieldInput = input.nextField()
+          val key = keyCodec.read(fieldInput.fieldName)
+          rawBuilder += ((key, codecMapping.valueCodec(key).read(fieldInput)))
         }
         new TypedMap[K](rawBuilder.result())
       }

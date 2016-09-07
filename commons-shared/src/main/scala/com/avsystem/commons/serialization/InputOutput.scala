@@ -64,14 +64,31 @@ trait ObjectOutput extends SequentialOutput {
 }
 
 /**
-  * Represents an abstract source from which a value may be deserialized (read).
-  * Each of the `read` methods returns an instance of [[ValueRead]] which may contain either a successfully read
-  * value or an error message.
+  * Represents the type of value inside and [[Input]] that can be read from it.
   * <p/>
-  * An [[Input]] value should be assumed to be stateful. If any of the `read` methods have already been called AND
-  * returned successful result (([[ReadSuccessful]]), the [[Input]] instance can no longer be used and MUST be discarded.
-  * On the other hand, when the `read` method returned a [[ReadFailed]], its state should be unchanged and any `read`
-  * method may be called again.
+  * It is possible to distinguish only between four types (null, simple value, object and list) even though
+  * any of these types may have different representations. For example, [[InputType.Simple]] is returned for
+  * more than one actual value types (numbers, booleans, strings, timestamps, binary, etc.).
+  * <p/>
+  * It's not possible to distinguish between them based only on [[InputType]] because not every [[Input]]
+  * implementation is able to do that. For example, JSON must represent 64-bit integers as strings and therefore
+  * it can't distinguish between strings and numbers in general.
+  */
+sealed trait InputType
+object InputType {
+  case object Null extends InputType
+  case object Simple extends InputType
+  case object Object extends InputType
+  case object List extends InputType
+}
+
+/**
+  * Represents an abstract source from which a value may be deserialized (read).
+  * Each of the `read` methods tries to read a value of specified type and may throw an exception
+  * (usually [[com.avsystem.commons.serialization.GenCodec.ReadFailure]]) when reading is not successful.
+  * <p/>
+  * An [[Input]] value should be assumed to be stateful. If any of the `readX` methods have already been called,
+  * the [[Input]] instance can no longer be used and MUST be discarded.
   * <p/>
   * In order to ignore the value kept in this [[Input]], `skip()` MUST be called.
   * <p/>
@@ -80,23 +97,42 @@ trait ObjectOutput extends SequentialOutput {
   * [[Input]] must also be fully exhausted on their own.
   */
 trait Input extends Any {
-  def readNull(): ValueRead[Null]
-  def readUnit(): ValueRead[Unit] = readNull().map(_ => ())
-  def readString(): ValueRead[String]
-  def readChar(): ValueRead[Char] = readString().map(_.charAt(0))
-  def readBoolean(): ValueRead[Boolean]
-  def readByte(): ValueRead[Byte] = readShort().map(_.toByte)
-  def readShort(): ValueRead[Short] = readInt().map(_.toShort)
-  def readInt(): ValueRead[Int]
-  def readLong(): ValueRead[Long]
-  def readTimestamp(): ValueRead[Long] = readLong()
-  def readFloat(): ValueRead[Float] = readDouble().map(_.toFloat)
-  def readDouble(): ValueRead[Double]
-  def readBinary(): ValueRead[Array[Byte]]
-  def readList(): ValueRead[ListInput]
-  def readSet(): ValueRead[ListInput] = readList()
-  def readObject(): ValueRead[ObjectInput]
-  def readMap(): ValueRead[ObjectInput] = readObject()
+  /**
+    * Returns the type of the value that can be read from this [[Input]].
+    * Only four types can be distinguished (see [[InputType]] for more details on this).
+    * <p/>
+    * If this method returns [[InputType.Null]], then `readNull()` can be safely called.<br/>
+    * If this method returns [[InputType.Object]], then AT LEAST ONE OF `readObject()` and `readMap()` can be safely called.<br/>
+    * If this method returns [[InputType.List]], then AT LEAST ONE OF `readList()` and `readSet()` can be safely called.<br/>
+    * If this method returns [[InputType.Simple]] then AT LEAST ONE OF `readString()`, `readChar()`, `readBoolean()`,
+    * `readByte()`, `readShort()`, `readInt()`, `readLong()`, `readTimestamp()`, `readFloat()`, `readDouble()`,
+    * `readBinary()` can be called.
+    * <p/>
+    * It's impossible to know which of the listed methods is actually safe to call based only on [[InputType]].
+    * It is the responsibility of [[GenCodec]] implementation to have reading and writing logic consistent.
+    * For example, if `writeDouble(Double)` is used during writing then `readDouble()` must be used during reading
+    * by the same [[GenCodec]].
+    *
+    * @return
+    */
+  def inputType: InputType
+  def readNull(): Null
+  def readUnit(): Unit = readNull()
+  def readString(): String
+  def readChar(): Char = readString().charAt(0)
+  def readBoolean(): Boolean
+  def readByte(): Byte = readShort().toByte
+  def readShort(): Short = readInt().toShort
+  def readInt(): Int
+  def readLong(): Long
+  def readTimestamp(): Long = readLong()
+  def readFloat(): Float = readDouble().toFloat
+  def readDouble(): Double
+  def readBinary(): Array[Byte]
+  def readList(): ListInput
+  def readSet(): ListInput = readList()
+  def readObject(): ObjectInput
+  def readMap(): ObjectInput = readObject()
   def skip(): Unit
 }
 trait SequentialInput extends Any {
@@ -113,7 +149,7 @@ trait SequentialInput extends Any {
   * [[ListInput]] MUST always be fully exhausted. In order to ignore any remaining elements, skipRemaining() may be
   * used.
   */
-trait ListInput extends SequentialInput {self =>
+trait ListInput extends SequentialInput { self =>
   /**
     * Returns an [[Input]] representing next element in a sequence of values represented by this [[ListInput]].
     * Returned [[Input]] instance must be fully exhausted before calling `nextElement()` next time.
@@ -140,16 +176,23 @@ trait ListInput extends SequentialInput {self =>
   * NOTE: The order of keys returned by subsequent invocations of `nextField()` may be arbitrary and in particular
   * may not match the order in which keys were written to corresponding [[ObjectOutput]].
   */
-trait ObjectInput extends SequentialInput {self =>
-  def nextField(): (String, Input)
+trait ObjectInput extends SequentialInput { self =>
+  def nextField(): FieldInput
 
-  def skipRemaining() = while (hasNext) nextField()._2.skip()
+  def skipRemaining() = while (hasNext) nextField().skip()
   def iterator[A](readFun: Input => A): Iterator[(String, A)] =
     new Iterator[(String, A)] {
       def hasNext = self.hasNext
       def next() = {
-        val (k, i) = nextField()
-        (k, readFun(i))
+        val fi = nextField()
+        (fi.fieldName, readFun(fi))
       }
     }
+}
+
+/**
+  * An [[Input]] representing an object field. The same as [[Input]] but also provides field name.
+  */
+trait FieldInput extends Input {
+  def fieldName: String
 }
