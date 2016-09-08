@@ -158,6 +158,9 @@ trait TypeClassDerivation extends MacroCommons {
         forApplyUnapply(tpe, companion, dependencies)
     }
     def sealedHierarchyTc = knownSubtypes(tpe).map { subtypes =>
+      if (subtypes.isEmpty) {
+        abort(s"Could not find any subtypes for $tpe")
+      }
       val dependencies = subtypes.map { depTpe =>
         val depTree = handleMissingDependency(s"for case type $depTpe") {
           inferDependency(depTpe, silent = true) match {

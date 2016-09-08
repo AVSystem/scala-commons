@@ -16,7 +16,8 @@ class SealedMacros(val c: blackbox.Context) extends MacroCommons {
   def caseObjectsFor[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
     knownSubtypes(tpe).map { subtypes =>
-      val objects = subtypes.flatMap(singleValueFor)
+      val objects = subtypes.map(subTpe => singleValueFor(subTpe)
+        .getOrElse(abort(s"All possible values of a SealedEnum must be objects but $subTpe is not")))
       withKnownSubclassesCheck(q"$ListObj(..$objects)", tpe)
     }.getOrElse(abort(s"$tpe is not a sealed trait or class"))
   }
