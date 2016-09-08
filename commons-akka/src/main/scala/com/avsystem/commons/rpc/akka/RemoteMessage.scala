@@ -11,7 +11,7 @@ import com.avsystem.commons.serialization.GenCodec
 private sealed trait RemoteMessage extends Serializable
 
 private object RemoteMessage {
-  implicit val byteStringCodec = GenCodec.create[ByteString](input => ByteString(input.readBinary().get), (output, byteString) => output.writeBinary(byteString.toArray))
+  implicit val byteStringCodec = GenCodec.create[ByteString](input => ByteString(input.readBinary()), (output, byteString) => output.writeBinary(byteString.toArray))
   implicit val rawInvocationCodec = GenCodec.materialize[RawInvocation]
 
   implicit val procedureInvocationMessageCodec = GenCodec.materialize[ProcedureInvocationMessage]

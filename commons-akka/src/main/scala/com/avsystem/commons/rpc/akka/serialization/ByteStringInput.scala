@@ -3,50 +3,58 @@ package rpc.akka.serialization
 
 import akka.util.{ByteIterator, ByteString}
 import com.avsystem.commons.rpc.akka.serialization.ByteOrderImplicits._
-import com.avsystem.commons.serialization.{Input, ListInput, ObjectInput, ReadFailed, ReadSuccessful, ValueRead}
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
+import com.avsystem.commons.serialization.{FieldInput, Input, InputType, ListInput, ObjectInput}
 
 /**
   * @author Wojciech Milewski
   */
-private[akka] final class ByteStringInput(source: ByteString) extends Input {
+private[akka] class ByteStringInput(source: ByteString) extends Input {
 
-  override def readNull(): ValueRead[Null] = readStatic(NullMarker)(_ => null)
-  override def readByte(): ValueRead[Byte] = readStatic(ByteMarker)(_.head)
-  override def readShort(): ValueRead[Short] = readStatic(ShortMarker)(_.getShort)
-  override def readInt(): ValueRead[Int] = readStatic(IntMarker)(_.getInt)
-  override def readLong(): ValueRead[Long] = readStatic(LongMarker)(_.getLong)
-  override def readFloat(): ValueRead[Float] = readStatic(FloatMarker)(_.getFloat)
-  override def readDouble(): ValueRead[Double] = readStatic(DoubleMarker)(_.getDouble)
-  override def readString(): ValueRead[String] = readDynamic(StringMarker)(_.utf8String)
-  override def readList(): ValueRead[ListInput] = readDynamic(ListStartMarker)(sliced => new ByteArrayListInput(sliced))
-  override def readObject(): ValueRead[ObjectInput] = readDynamic(ObjectStartMarker)(sliced => new ByteArrayObjectInput(sliced))
-  override def readBinary(): ValueRead[Array[Byte]] = readDynamic(ByteArrayMarker)(_.toArray)
+  def inputType = Marker.of(source.head).getOrElse(throw new ReadFailure(s"Unknown input type")) match {
+    case NullMarker => InputType.Null
+    case ListStartMarker => InputType.List
+    case ObjectStartMarker => InputType.Object
+    case _ => InputType.Simple
+  }
 
-  override def readBoolean(): ValueRead[Boolean] = readStaticAsValue(BooleanMarker) { iterator =>
+  override def readNull(): Null = readStatic(NullMarker)(_ => null)
+  override def readByte(): Byte = readStatic(ByteMarker)(_.head)
+  override def readShort(): Short = readStatic(ShortMarker)(_.getShort)
+  override def readInt(): Int = readStatic(IntMarker)(_.getInt)
+  override def readLong(): Long = readStatic(LongMarker)(_.getLong)
+  override def readFloat(): Float = readStatic(FloatMarker)(_.getFloat)
+  override def readDouble(): Double = readStatic(DoubleMarker)(_.getDouble)
+  override def readString(): String = readDynamic(StringMarker)(_.utf8String)
+  override def readList(): ListInput = readDynamic(ListStartMarker)(sliced => new ByteArrayListInput(sliced))
+  override def readObject(): ObjectInput = readDynamic(ObjectStartMarker)(sliced => new ByteArrayObjectInput(sliced))
+  override def readBinary(): Array[Byte] = readDynamic(ByteArrayMarker)(_.toArray)
+
+  override def readBoolean(): Boolean = readStaticAsValue(BooleanMarker) { iterator =>
     iterator.head match {
-      case TrueByte => ReadSuccessful(true)
-      case FalseByte => ReadSuccessful(false)
-      case value => ReadFailed(s"Found incorrect data: $value")
+      case TrueByte => true
+      case FalseByte => false
+      case value => throw new ReadFailure(s"Found incorrect data: $value")
     }
   }
   override def skip(): Unit = ()
 
-  private def readStatic[T](marker: StaticSize)(f: (ByteIterator) => T): ValueRead[T] = readStaticAsValue(marker)(iterator => ReadSuccessful(f(iterator)))
+  private def readStatic[T](marker: StaticSize)(f: (ByteIterator) => T): T = readStaticAsValue(marker)(iterator => f(iterator))
 
-  private def readStaticAsValue[T](marker: StaticSize)(f: (ByteIterator) => ValueRead[T]): ValueRead[T] = {
-    if (source.size < ByteBytes + marker.size) ReadFailed(s"Source doesn't contain $marker and data")
-    else if (source(0) != marker.byte) ReadFailed(s"Expected $marker, but another byte found")
+  private def readStaticAsValue[T](marker: StaticSize)(f: (ByteIterator) => T): T = {
+    if (source.size < ByteBytes + marker.size) throw new ReadFailure(s"Source doesn't contain $marker and data")
+    else if (source(0) != marker.byte) throw new ReadFailure(s"Expected $marker, but another byte found")
     else f(source.iterator.drop(ByteBytes))
   }
 
-  private def readDynamic[T](marker: DynamicSize)(data: ByteString => T): ValueRead[T] = {
+  private def readDynamic[T](marker: DynamicSize)(data: ByteString => T): T = {
     def contentSize = source.iterator.drop(ByteBytes).getInt
     val headerSize = ByteBytes + IntBytes
 
-    if (source.size < headerSize) ReadFailed(s"Source doesn't contain $marker and length of serialized data")
-    else if (source(0) != marker.byte) ReadFailed(s"Expected $marker, but another byte found")
-    else if (source.size < headerSize + contentSize) ReadFailed("Source doesn't contain declared byte array")
-    else ReadSuccessful(data(source.slice(headerSize, headerSize + contentSize)))
+    if (source.size < headerSize) throw new ReadFailure(s"Source doesn't contain $marker and length of serialized data")
+    else if (source(0) != marker.byte) throw new ReadFailure(s"Expected $marker, but another byte found")
+    else if (source.size < headerSize + contentSize) throw new ReadFailure("Source doesn't contain declared byte array")
+    else data(source.slice(headerSize, headerSize + contentSize))
   }
 }
 
@@ -62,6 +70,9 @@ private final class ByteArrayListInput(private var content: ByteString) extends 
   }
   override def hasNext: Boolean = nextEntryCache.isDefined
 }
+
+private final class ByteStringFieldInput(val fieldName: String, source: ByteString)
+  extends ByteStringInput(source) with FieldInput
 
 private final case class DataIndexes(startInclusiveIndex: Int, endExclusiveIndex: Int)
 
@@ -81,13 +92,13 @@ private final class ByteArrayObjectInput(private var content: ByteString) extend
 
   }
 
-  override def nextField(): (String, Input) = {
+  override def nextField(): FieldInput = {
     require(nextDataCache.isDefined)
     val name = content.slice(ByteBytes + IntBytes, nextDataCache.get.startInclusiveIndex).utf8String
-    val resultInput = new ByteStringInput(content.slice(nextDataCache.get.startInclusiveIndex, nextDataCache.get.endExclusiveIndex))
+    val resultInput = new ByteStringFieldInput(name, content.slice(nextDataCache.get.startInclusiveIndex, nextDataCache.get.endExclusiveIndex))
     content = content.drop(nextDataCache.get.endExclusiveIndex)
     nextDataCache = findNextData()
-    name -> resultInput
+    resultInput
   }
   override def hasNext: Boolean = nextDataCache.isDefined
 }

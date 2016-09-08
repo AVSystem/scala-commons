@@ -51,7 +51,7 @@ class StreamInputOutputBenchmark {
   }
 
   @Benchmark
-  def testRawEncode(bh: Blackhole): Unit = {
+  def testEncodeRaw(bh: Blackhole): Unit = {
     val os = new DataOutputStream(new DummyOutputStream(bh))
     val output = new StreamOutput(os)
     val toplevelOutput = output.writeObject()
@@ -72,23 +72,23 @@ class StreamInputOutputBenchmark {
   }
 
   @Benchmark
-  def testRawDecode(bh: Blackhole): Unit = {
+  def testDecodeRaw(bh: Blackhole): Unit = {
     val is = new DataInputStream(new ByteArrayInputStream(inputArray))
     val input = new StreamInput(is)
-    val objInput = input.readObject().get
-    bh.consume(objInput.nextField()._2.readInt().get)
-    val nestedInput = objInput.nextField()._2.readObject().get
-    val listInput = nestedInput.nextField()._2.readList().get
-    bh.consume(listInput.nextElement().readInt().get)
-    bh.consume(listInput.nextElement().readInt().get)
-    bh.consume(listInput.nextElement().readInt().get)
-    bh.consume(listInput.nextElement().readInt().get)
-    bh.consume(listInput.nextElement().readInt().get)
-    bh.consume(listInput.nextElement().readInt().get)
+    val objInput = input.readObject()
+    bh.consume(objInput.nextField().readInt())
+    val nestedInput = objInput.nextField().readObject()
+    val listInput = nestedInput.nextField().readList()
+    bh.consume(listInput.nextElement().readInt())
+    bh.consume(listInput.nextElement().readInt())
+    bh.consume(listInput.nextElement().readInt())
+    bh.consume(listInput.nextElement().readInt())
+    bh.consume(listInput.nextElement().readInt())
+    bh.consume(listInput.nextElement().readInt())
     bh.consume(listInput.hasNext)
-    bh.consume(nestedInput.nextField()._2.readInt().get)
+    bh.consume(nestedInput.nextField().readInt())
     bh.consume(nestedInput.hasNext)
-    bh.consume(objInput.nextField()._2.readString().get)
+    bh.consume(objInput.nextField().readString())
     bh.consume(objInput.hasNext)
   }
 }

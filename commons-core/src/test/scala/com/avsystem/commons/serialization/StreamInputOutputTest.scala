@@ -103,11 +103,11 @@ class StreamInputOutputTest extends FunSuite {
 
     val (is, input) = inputs(os)
 
-    val objIn = input.readObject().get
+    val objIn = input.readObject()
 
-    val (k, v) = objIn.nextField()
-    assert(k == "k1")
-    assert(v.readInt().get == 5)
+    val v = objIn.nextField()
+    assert(v.fieldName == "k1")
+    assert(v.readInt() == 5)
 
     assert(!objIn.hasNext)
     assert(is.available() == 0)
@@ -118,21 +118,21 @@ class StreamInputOutputTest extends FunSuite {
     GenCodec.write(output, fieldTypesInstance)
     val (is, input) = inputs(os)
 
-    val objInput = input.readObject().get
+    val objInput = input.readObject()
 
-    (1 to 2).foreach(_ => objInput.nextField()._2.skip())
+    (1 to 2).foreach(_ => objInput.nextField().skip())
 
-    assert(objInput.nextField()._2.readString().get == "str")
+    assert(objInput.nextField().readString() == "str")
 
-    (4 until fieldTypesInstance.productArity).foreach(_ => objInput.nextField()._2.skip())
+    (4 until fieldTypesInstance.productArity).foreach(_ => objInput.nextField().skip())
 
-    val listInput = objInput.nextField()._2.readList().get
+    val listInput = objInput.nextField().readList()
     listInput.nextElement().skip()
-    val innerList = listInput.nextElement().readList().get
-    val innerObjInput = innerList.nextElement().readObject().get
+    val innerList = listInput.nextElement().readList()
+    val innerObjInput = innerList.nextElement().readObject()
 
-    assert(innerObjInput.nextField()._2.readInt().get == 123)
-    assert(innerObjInput.nextField()._2.readString().get == "y")
+    assert(innerObjInput.nextField().readInt() == 123)
+    assert(innerObjInput.nextField().readString() == "y")
     assert(!innerObjInput.hasNext)
 
     innerList.nextElement().skip()

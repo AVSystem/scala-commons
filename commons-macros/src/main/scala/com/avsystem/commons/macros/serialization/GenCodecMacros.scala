@@ -158,9 +158,10 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation with C
           protected def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
             ..${params.map(p => q"var ${optName(p)}: $NOptCls[${p.sym.typeSignature}] = $NOptObj.Empty")}
             while(input.hasNext) {
-              input.nextField() match {
-                case ..${params.map(p => cq"(${nameBySym(p.sym)}, fi) => ${optName(p)} = $NOptObj.some(${depNames(p.sym)}.read(fi))")}
-                case (_, fi) => fi.skip()
+              val fi = input.nextField()
+              fi.fieldName match {
+                case ..${params.map(p => cq"${nameBySym(p.sym)} => ${optName(p)} = $NOptObj.some(${depNames(p.sym)}.read(fi))")}
+                case _ => fi.skip()
               }
             }
             $companion.apply[..${tpe.typeArgs}](..${params.map(readField)})
@@ -189,9 +190,10 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation with C
         protected def nullable = ${typeOf[Null] <:< tpe}
         protected def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
           if(input.hasNext) {
-            val result = input.nextField() match {
-              case ..${subtypes.map(st => cq"(${dbNameBySym(st.sym)}, fi) => ${depNames(st.sym)}.read(fi)")}
-              case (key, _) => unknownCase(key)
+            val fi = input.nextField()
+            val result = fi.fieldName match {
+              case ..${subtypes.map(st => cq"${dbNameBySym(st.sym)} => ${depNames(st.sym)}.read(fi)")}
+              case key => unknownCase(key)
             }
             if(input.hasNext) notSingleField(empty = false) else result
           } else notSingleField(empty = true)

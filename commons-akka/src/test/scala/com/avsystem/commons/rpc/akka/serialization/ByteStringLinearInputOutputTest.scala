@@ -20,19 +20,19 @@ class ByteStringLinearInputOutputTest extends FlatSpec with Matchers with Inside
   it should "serialize null" in new Fixture {
     output.writeNull()
 
-    noException should be thrownBy input.readNull().get
+    noException should be thrownBy input.readNull()
   }
 
   it should "serialize unit" in new Fixture {
     output.writeUnit()
 
-    noException should be thrownBy input.readUnit().get
+    noException should be thrownBy input.readUnit()
   }
 
   it should "serialize empty string" in new Fixture {
     output.writeString("")
 
-    val result = input.readString().get
+    val result = input.readString()
     result shouldBe ""
   }
 
@@ -41,75 +41,75 @@ class ByteStringLinearInputOutputTest extends FlatSpec with Matchers with Inside
 
     output.writeString(string)
 
-    input.readString().get shouldBe string
+    input.readString() shouldBe string
   }
 
   it should "serialize character" in new Fixture {
     val char = 'c'
     output.writeChar(char)
 
-    input.readChar().get shouldBe char
+    input.readChar() shouldBe char
   }
 
   it should "serialize true boolean" in new Fixture {
     output.writeBoolean(true)
 
-    input.readBoolean().get shouldBe true
+    input.readBoolean() shouldBe true
   }
 
   it should "serialize false boolean" in new Fixture {
     output.writeBoolean(false)
 
-    input.readBoolean().get shouldBe false
+    input.readBoolean() shouldBe false
   }
 
   it should "serialize byte" in new Fixture {
     val byte = 42.toByte
     output.writeByte(byte)
 
-    input.readByte().get shouldBe byte
+    input.readByte() shouldBe byte
   }
 
   it should "serialize short" in new Fixture {
     val short = 42.toShort
     output.writeShort(short)
 
-    input.readShort().get shouldBe short
+    input.readShort() shouldBe short
   }
 
   it should "serialize int" in new Fixture {
     val int = 42
     output.writeInt(int)
 
-    input.readInt().get shouldBe int
+    input.readInt() shouldBe int
   }
 
   it should "serialize long" in new Fixture {
     val long = 42.toLong
     output.writeLong(long)
 
-    input.readLong().get shouldBe long
+    input.readLong() shouldBe long
   }
 
   it should "serialize float" in new Fixture {
     val float = 42.42f
     output.writeFloat(float)
 
-    input.readFloat().get shouldBe float
+    input.readFloat() shouldBe float
   }
 
   it should "serialize double" in new Fixture {
     val double = 42.42
     output.writeDouble(double)
 
-    input.readDouble().get shouldBe double
+    input.readDouble() shouldBe double
   }
 
   it should "serialize binary array" in new Fixture {
     val bytes = Array.range(0, 10).map(_.toByte)
     output.writeBinary(bytes)
 
-    input.readBinary().get shouldBe bytes
+    input.readBinary() shouldBe bytes
   }
 
   it should "serialize list" in new Fixture {
@@ -119,8 +119,8 @@ class ByteStringLinearInputOutputTest extends FlatSpec with Matchers with Inside
     }
     list.finish()
 
-    val listInput = input.readList().get
-    listInput.iterator(_.readInt().get).toStream should contain inOrderOnly(1, 2, 3, 4, 5)
+    val listInput = input.readList()
+    listInput.iterator(_.readInt()).toStream should contain inOrderOnly(1, 2, 3, 4, 5)
   }
 
   it should "serialize nested lists" in new Fixture {
@@ -136,11 +136,11 @@ class ByteStringLinearInputOutputTest extends FlatSpec with Matchers with Inside
     secondList.finish()
     list.finish()
 
-    val listInput = input.readList().get
-    val firstListInput = listInput.nextElement().readList().get
-    firstListInput.iterator(_.readInt().get).toStream should contain inOrderOnly(1, 2, 3, 4, 5)
-    val secondListInput = listInput.nextElement().readList().get
-    secondListInput.iterator(_.readChar().get).toStream should contain inOrderOnly('a', 'b', 'c', 'd', 'e', 'f')
+    val listInput = input.readList()
+    val firstListInput = listInput.nextElement().readList()
+    firstListInput.iterator(_.readInt()).toStream should contain inOrderOnly(1, 2, 3, 4, 5)
+    val secondListInput = listInput.nextElement().readList()
+    secondListInput.iterator(_.readChar()).toStream should contain inOrderOnly('a', 'b', 'c', 'd', 'e', 'f')
   }
 
   it should "serialize object" in new Fixture {
@@ -150,15 +150,15 @@ class ByteStringLinearInputOutputTest extends FlatSpec with Matchers with Inside
     objectOutput.writeField("third").writeString("3")
     objectOutput.finish()
 
-    val objectInput = input.readObject().get
+    val objectInput = input.readObject()
     inside(objectInput.nextField()) {
-      case ("first", input) => input.readInt().get shouldBe 1
+      case input if input.fieldName == "first" => input.readInt() shouldBe 1
     }
     inside(objectInput.nextField()) {
-      case ("second", input) => noException should be thrownBy input.readNull().get
+      case input if input.fieldName == "second" => noException should be thrownBy input.readNull()
     }
     inside(objectInput.nextField()) {
-      case ("third", input) => input.readString().get shouldBe "3"
+      case input if input.fieldName == "third" => input.readString() shouldBe "3"
     }
     objectInput.hasNext shouldBe false
   }
@@ -180,40 +180,40 @@ class ByteStringLinearInputOutputTest extends FlatSpec with Matchers with Inside
     objectOutput.writeField("last").writeInt(3)
     objectOutput.finish()
 
-    val objectInput = input.readObject().get
+    val objectInput = input.readObject()
     objectInput.hasNext shouldBe true
     inside(objectInput.nextField()) {
-      case ("first", input) => input.readString().get shouldBe "lol"
+      case input if input.fieldName == "first" => input.readString() shouldBe "lol"
     }
     objectInput.hasNext shouldBe true
     inside(objectInput.nextField()) {
-      case ("object", input) =>
-        val nestedInput = input.readObject().get
+      case input if input.fieldName == "object" =>
+        val nestedInput = input.readObject()
         nestedInput.hasNext shouldBe true
         inside(nestedInput.nextField()) {
-          case ("first", i) => i.readInt().get shouldBe 1
+          case i if i.fieldName == "first" => i.readInt() shouldBe 1
         }
         nestedInput.hasNext shouldBe true
         inside(nestedInput.nextField()) {
-          case ("second", i) => i.readInt().get shouldBe 2
+          case i if i.fieldName == "second" => i.readInt() shouldBe 2
         }
         nestedInput.hasNext shouldBe true
         inside(nestedInput.nextField()) {
-          case ("nestedList", i) => i.readList().get.iterator(_.readInt().get).toStream should contain inOrderOnly(1, 2, 3, 4, 5)
+          case i if i.fieldName == "nestedList" => i.readList().iterator(_.readInt()).toStream should contain inOrderOnly(1, 2, 3, 4, 5)
         }
         nestedInput.hasNext shouldBe true
         inside(nestedInput.nextField()) {
-          case ("third", i) => noException should be thrownBy i.readUnit().get
+          case i if i.fieldName == "third" => noException should be thrownBy i.readUnit()
         }
         nestedInput.hasNext shouldBe false
     }
     objectInput.hasNext shouldBe true
     inside(objectInput.nextField()) {
-      case ("second", input) => noException should be thrownBy input.readNull().get
+      case input if input.fieldName == "second" => noException should be thrownBy input.readNull()
     }
     objectInput.hasNext shouldBe true
     inside(objectInput.nextField()) {
-      case ("last", input) => input.readInt().get shouldBe 3
+      case input if input.fieldName == "last" => input.readInt() shouldBe 3
     }
     objectInput.hasNext shouldBe false
   }
@@ -224,14 +224,14 @@ class ByteStringLinearInputOutputTest extends FlatSpec with Matchers with Inside
     objectOutput.writeField("second").writeLong(5L)
     objectOutput.finish()
 
-    private val readObject = input.readObject().get
+    private val readObject = input.readObject()
     readObject.hasNext shouldBe true
     inside(readObject.nextField()) {
-      case ("first", input) => input.skip()
+      case input if input.fieldName == "first" => input.skip()
     }
     readObject.hasNext shouldBe true
     inside(readObject.nextField()) {
-      case ("second", input) => input.readLong().get shouldBe 5L
+      case input if input.fieldName == "second" => input.readLong() shouldBe 5L
     }
     readObject.hasNext shouldBe false
   }

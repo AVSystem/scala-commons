@@ -38,54 +38,64 @@ import com.avsystem.commons.serialization.FormatConstants._
 class StreamInput(is: DataInputStream) extends Input {
   private[serialization] val markerByte = is.readByte()
 
-  def readNull(): ValueRead[Null] = if (markerByte == NullMarker)
-    ReadSuccessful(null)
-  else
-    ReadFailed(s"Expected null, but $markerByte found")
+  def inputType: InputType = markerByte match {
+    case NullMarker =>
+      InputType.Null
+    case ListStartMarker =>
+      InputType.List
+    case ObjectStartMarker =>
+      InputType.Object
+    case _ =>
+      InputType.Simple
+  }
 
-  def readString(): ValueRead[String] = if (markerByte == StringMarker)
-    ReadSuccessful(is.readUTF())
+  def readNull(): Null = if (markerByte == NullMarker)
+    null
   else
-    ReadFailed(s"Expected string, but $markerByte found")
+    throw new ReadFailure(s"Expected null, but $markerByte found")
 
-  def readBoolean(): ValueRead[Boolean] = if (markerByte == BooleanMarker)
-    ReadSuccessful(is.readBoolean())
+  def readString(): String = if (markerByte == StringMarker)
+    is.readUTF()
   else
-    ReadFailed(s"Expected boolean, but $markerByte found")
+    throw new ReadFailure(s"Expected string, but $markerByte found")
 
-  def readInt(): ValueRead[Int] = if (markerByte == IntMarker)
-    ReadSuccessful(is.readInt())
+  def readBoolean(): Boolean = if (markerByte == BooleanMarker)
+    is.readBoolean()
   else
-    ReadFailed(s"Expected int, but $markerByte found")
+    throw new ReadFailure(s"Expected boolean, but $markerByte found")
 
-  def readLong(): ValueRead[Long] = if (markerByte == LongMarker)
-    ReadSuccessful(is.readLong())
+  def readInt(): Int = if (markerByte == IntMarker)
+    is.readInt()
   else
-    ReadFailed(s"Expected long, but $markerByte found")
+    throw new ReadFailure(s"Expected int, but $markerByte found")
 
-  def readDouble(): ValueRead[Double] = if (markerByte == DoubleMarker)
-    ReadSuccessful(is.readDouble())
+  def readLong(): Long = if (markerByte == LongMarker)
+    is.readLong()
   else
-    ReadFailed(s"Expected double, but $markerByte found")
+    throw new ReadFailure(s"Expected long, but $markerByte found")
 
-  def readBinary(): ValueRead[Array[Byte]] = if (markerByte == ByteArrayMarker)
-    ReadSuccessful {
-      val binary = Array.ofDim[Byte](is.readInt())
-      is.readFully(binary)
-      binary
-    }
+  def readDouble(): Double = if (markerByte == DoubleMarker)
+    is.readDouble()
   else
-    ReadFailed(s"Expected binary array, but $markerByte found")
+    throw new ReadFailure(s"Expected double, but $markerByte found")
 
-  def readList(): ValueRead[ListInput] = if (markerByte == ListStartMarker)
-    ReadSuccessful(new StreamListInput(is))
-  else
-    ReadFailed(s"Expected list, but $markerByte found")
+  def readBinary(): Array[Byte] = if (markerByte == ByteArrayMarker) {
+    val binary = Array.ofDim[Byte](is.readInt())
+    is.readFully(binary)
+    binary
+  } else {
+    throw new ReadFailure(s"Expected binary array, but $markerByte found")
+  }
 
-  def readObject(): ValueRead[ObjectInput] = if (markerByte == ObjectStartMarker)
-    ReadSuccessful(new StreamObjectInput(is))
+  def readList(): ListInput = if (markerByte == ListStartMarker)
+    new StreamListInput(is)
   else
-    ReadFailed(s"Expected object, but $markerByte found")
+    throw new ReadFailure(s"Expected list, but $markerByte found")
+
+  def readObject(): ObjectInput = if (markerByte == ObjectStartMarker)
+    new StreamObjectInput(is)
+  else
+    throw new ReadFailure(s"Expected object, but $markerByte found")
 
   def skip(): Unit = {
     val toSkip = markerByte match {
@@ -120,6 +130,10 @@ class StreamInput(is: DataInputStream) extends Input {
   }
 }
 
+class StreamFieldInput(key: String, is: DataInputStream) extends StreamInput(is) with FieldInput {
+  override def fieldName: String = key
+}
+
 private class StreamListInput(is: DataInputStream) extends ListInput {
   private[this] var currentInput: Opt[StreamInput] = Opt.empty
 
@@ -143,22 +157,21 @@ private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
 
   import StreamObjectInput._
 
-  private[this] var currentField: (String, Input) = NoneYet
+  private[this] var currentField: FieldInput = NoneYet
 
   private def ensureInput(): Unit = {
     if (currentField eq NoneYet) {
       val keyInput = new StreamInput(is)
       currentField = if (keyInput.markerByte != ObjectEndMarker) {
-        val keyString = keyInput.readString().get
-        val valueInput = new StreamInput(is)
-        (keyString, valueInput)
+        val keyString = keyInput.readString()
+        new StreamFieldInput(keyString, is)
       } else {
         End
       }
     }
   }
 
-  def nextField(): (String, Input) = {
+  def nextField(): FieldInput = {
     if (!hasNext) throw new ReadFailure("Object already emptied")
     val field = currentField
     currentField = NoneYet
@@ -172,8 +185,25 @@ private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
 }
 
 private object StreamObjectInput {
-  val NoneYet = ("NONE", null)
-  val End = ("END", null)
+  case class EmptyFieldInput(name: String) extends FieldInput {
+    private def nope: Nothing = throw new ReadFailure(s"Something went horribly wrong ($name)")
+
+    def fieldName: String = nope
+    def inputType: InputType = nope
+    def readNull(): Null = nope
+    def readString(): String = nope
+    def readBoolean(): Boolean = nope
+    def readInt(): Int = nope
+    def readLong(): Long = nope
+    def readDouble(): Double = nope
+    def readBinary(): Array[Byte] = nope
+    def readList(): ListInput = nope
+    def readObject(): ObjectInput = nope
+    def skip(): Unit = nope
+  }
+
+  val NoneYet = EmptyFieldInput("NONE")
+  val End = EmptyFieldInput("END")
 }
 
 class StreamOutput(os: DataOutputStream) extends Output {
