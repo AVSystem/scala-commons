@@ -40,7 +40,7 @@ object Opt {
 final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
   private def value: A = rawValue.asInstanceOf[A]
 
-  @inline def isEmpty: Boolean = rawValue == EmptyMarker
+  @inline def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker
   @inline def isDefined: Boolean = !isEmpty
   @inline def nonEmpty: Boolean = isDefined
 

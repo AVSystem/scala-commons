@@ -13,3 +13,4 @@ object JavaInterop
     // contents of scala.collection.JavaConverters
     with DecorateAsJava
     with DecorateAsScala
+

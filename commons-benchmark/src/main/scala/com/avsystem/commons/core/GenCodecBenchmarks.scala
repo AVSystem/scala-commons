@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package core
 
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import org.openjdk.jmh.annotations._
 
@@ -21,19 +22,20 @@ object Something {
 }
 
 object DummyInput extends Input {
-  private def ignored = ReadFailed("don't care")
+  private def ignored = throw new ReadFailure("don't care")
 
+  def inputType = InputType.Object
   def readBinary() = ignored
   def readLong() = ignored
   def readNull() = ignored
-  def readObject() = ReadSuccessful(new ObjectInput {
+  def readObject() = new ObjectInput {
     private val it = Iterator(
-      ("int", new SimpleValueInput(42)),
-      ("str", new SimpleValueInput("lol"))
+      new SimpleValueFieldInput("int", 42),
+      new SimpleValueFieldInput("str", "lol")
     )
     def nextField() = it.next()
     def hasNext = it.hasNext
-  })
+  }
   def readInt() = ignored
   def readString() = ignored
   def readList() = ignored

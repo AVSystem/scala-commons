@@ -54,13 +54,25 @@ trait SealedEnumCompanion[T] {
   protected def caseObjects: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
 }
 
+/**
+  * Base trait for companion objects of sealed traits that serve as named enums
+  */
 trait NamedEnum extends Any {
-  def name: String
+  /**
+    * Used as a key for a map returned from `byName`. It is recommended to override this method uniquely
+    * by each case object in the sealed hierarchy.
+    */
+  val name: String
   override def toString: String = name
 }
 
 trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
+  /**
+    * Returns a map from all case objects names to their instances.
+    * Since `byName` uses [[caseObjects]] macro it does NOT guarantee an order of elements. It is also essential
+    * to provide unique names for each case object in the sealed hierarchy to retrieve valid hierarchy.
+   */
   lazy val byName: Map[String, T] = values.iterator.map(v => (v.name, v)).toMap
 
-  implicit val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(s => byName(s), _.name)
+  implicit lazy val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(s => byName(s), _.name)
 }

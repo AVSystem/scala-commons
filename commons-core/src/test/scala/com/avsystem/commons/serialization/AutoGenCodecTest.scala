@@ -137,4 +137,10 @@ class AutoGenCodecTest extends CodecTestBase {
       )
     )
   }
+
+  case class Element(str: String)
+
+  test("sequence of case classes test") {
+    testAutoWriteRead[Seq[Element]](Vector(Element("wut")), List(Map("str" -> "wut")))
+  }
 }
