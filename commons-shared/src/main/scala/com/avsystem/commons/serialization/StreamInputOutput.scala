@@ -130,9 +130,7 @@ class StreamInput(is: DataInputStream) extends Input {
   }
 }
 
-class StreamFieldInput(key: String, is: DataInputStream) extends StreamInput(is) with FieldInput {
-  override def fieldName: String = key
-}
+class StreamFieldInput(val fieldName: String, is: DataInputStream) extends StreamInput(is) with FieldInput
 
 private class StreamListInput(is: DataInputStream) extends ListInput {
   private[this] var currentInput: Opt[StreamInput] = Opt.empty
