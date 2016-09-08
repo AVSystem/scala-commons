@@ -143,43 +143,43 @@ private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
 
   import StreamObjectInput._
 
-  private[this] var currentField: CurrentField = NoneYet
+  private[this] var currentField: (String, Input) = NoneYet
 
-  private def ensureInput(): Unit = currentField match {
-    case NoneYet =>
+  private def ensureInput(): Unit = {
+    if (currentField eq NoneYet) {
       val keyInput = new StreamInput(is)
       currentField = if (keyInput.markerByte != ObjectEndMarker) {
         val keyString = keyInput.readString().get
         val valueInput = new StreamInput(is)
-        Field(keyString, valueInput)
+        (keyString, valueInput)
       } else {
         End
       }
-    case End =>
-    case _: Field =>
+    }
   }
 
   def nextField(): (String, Input) = {
     if (!hasNext) throw new ReadFailure("Object already emptied")
-    val Field(key, field) = currentField
+    val field = currentField
     currentField = NoneYet
-    (key, field)
+    field
   }
 
   def hasNext: Boolean = {
     ensureInput()
-    currentField != End
+    currentField ne End
   }
 }
 
 private object StreamObjectInput {
-  private sealed trait CurrentField
-  private case object NoneYet extends CurrentField
-  private case object End extends CurrentField
-  private case class Field(key: String, value: StreamInput) extends CurrentField
+  val NoneYet = ("NONE", null)
+  val End = ("END", null)
 }
 
 class StreamOutput(os: DataOutputStream) extends Output {
+
+  private[this] val streamList = new StreamListOutput(os, this)
+  private[this] val streamObject = new StreamObjectOutput(os, this)
 
   def writeNull(): Unit = os.write(NullMarker)
 
@@ -216,29 +216,29 @@ class StreamOutput(os: DataOutputStream) extends Output {
 
   def writeList(): ListOutput = {
     os.writeByte(ListStartMarker)
-    new StreamListOutput(os)
+    streamList
   }
 
   def writeObject(): ObjectOutput = {
     os.writeByte(ObjectStartMarker)
-    new StreamObjectOutput(os)
+    streamObject
   }
 }
 
-private class StreamListOutput(os: DataOutputStream) extends ListOutput {
+private class StreamListOutput(os: DataOutputStream, output: StreamOutput) extends ListOutput {
 
-  def writeElement(): Output = new StreamOutput(os)
+  def writeElement(): Output = output
 
   def finish(): Unit = {
     os.writeByte(ListEndMarker)
   }
 }
 
-private class StreamObjectOutput(os: DataOutputStream) extends ObjectOutput {
+private class StreamObjectOutput(os: DataOutputStream, output: StreamOutput) extends ObjectOutput {
 
   def writeField(key: String): Output = {
-    new StreamOutput(os).writeString(key)
-    new StreamOutput(os)
+    output.writeString(key)
+    output
   }
 
   def finish(): Unit = {
