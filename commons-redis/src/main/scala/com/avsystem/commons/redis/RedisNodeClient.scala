@@ -13,12 +13,13 @@ import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{ManagedRedisConnectionActor, RedisOperationActor}
 import com.avsystem.commons.redis.config.NodeConfig
 
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Future, Promise}
 
 final class RedisNodeClient(
   val address: NodeAddress = NodeAddress.Default,
   val config: NodeConfig = NodeConfig())
-  (implicit system: ActorSystem) extends Closeable {client =>
+  (implicit system: ActorSystem) extends Closeable { client =>
 
   private def createConnection(i: Int) =
     system.actorOf(Props(new ManagedRedisConnectionActor(address, config.connectionConfigs(i))))

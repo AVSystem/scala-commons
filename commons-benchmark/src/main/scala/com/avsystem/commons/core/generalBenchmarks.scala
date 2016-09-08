@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package benchmark
+package core
 
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole

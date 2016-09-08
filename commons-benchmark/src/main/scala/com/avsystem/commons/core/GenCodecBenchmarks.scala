@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package benchmark
+package core
 
 import com.avsystem.commons.serialization._
 import org.openjdk.jmh.annotations._

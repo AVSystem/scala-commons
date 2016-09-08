@@ -16,7 +16,7 @@ import com.avsystem.commons.redis.{NodeAddress, RawCommandPacks, ReplyPreprocess
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.util.control.NonFatal
 
 final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig, manager: ActorRef)
@@ -54,7 +54,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
       }
       if (sendBuffer.isEmpty) {
         log.debug(s"Empty packs received")
-        manager ! Accepted
+        notifyAccepted()
         requestToSend.callback(PacksResult.Empty)
       } else {
         requestBeingSent = Opt(requestToSend)
@@ -112,21 +112,17 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
           }
         )
       } else {
-        manager ! Accepted
+        notifyAccepted()
       }
     case WriteAck =>
       requestBeingSent.foreach(sentRequests += _)
       requestBeingSent = Opt.Empty
-      if (initialized) {
-        manager ! Accepted
-      }
+      notifyAccepted()
     case CommandFailed(_: Write) =>
       log.error(s"Write to Redis at $address failed")
       requestBeingSent.foreach(_.callback(PacksResult.Failure(new WriteFailedException(address))))
       requestBeingSent = Opt.Empty
-      if (initialized) {
-        manager ! Accepted
-      }
+      notifyAccepted()
     case Received(data) =>
       log.debug(s"$address <<<<\n${RedisMsg.escape(data, quote = false).replaceAllLiterally("\\r\\n", "\\r\\n\n")}")
       config.debugListener.onReceive(data)
@@ -137,6 +133,11 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
     case NodeRemoved =>
       failUnfinishedAndStop(new NodeRemovedException(address, alreadySent = true))
   }
+
+  def notifyAccepted(): Unit =
+    if (initialized) {
+      manager ! Accepted
+    }
 
   def failUnfinished(cause: Throwable): Unit = {
     val failure = PacksResult.Failure(cause)

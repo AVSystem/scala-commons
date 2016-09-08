@@ -5,6 +5,6 @@ resolvers += Resolver.url("jetbrains-bintray",
 
 addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "0.1.2")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.9")
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.2.6")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.2.11")
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
