@@ -16,10 +16,6 @@ object Toplevel {
   implicit val codec = GenCodec.materialize[Toplevel]
 }
 
-private class DummyOutputStream(bh: Blackhole) extends OutputStream {
-  override def write(b: Int): Unit = bh.consume(b)
-}
-
 @Warmup(iterations = 10)
 @Measurement(iterations = 20)
 @Fork(1)
@@ -38,9 +34,10 @@ class StreamInputOutputBenchmark {
 
   @Benchmark
   def testEncode(bh: Blackhole): Unit = {
-    val os = new DataOutputStream(new DummyOutputStream(bh))
-    val output = new StreamOutput(os)
+    val os = new ByteArrayOutputStream(inputArray.length)
+    val output = new StreamOutput(new DataOutputStream(os))
     GenCodec.autoWrite(output, something)
+    bh.consume(os.toByteArray)
   }
 
   @Benchmark
@@ -52,8 +49,8 @@ class StreamInputOutputBenchmark {
 
   @Benchmark
   def testEncodeRaw(bh: Blackhole): Unit = {
-    val os = new DataOutputStream(new DummyOutputStream(bh))
-    val output = new StreamOutput(os)
+    val os = new ByteArrayOutputStream(inputArray.length)
+    val output = new StreamOutput(new DataOutputStream(os))
     val toplevelOutput = output.writeObject()
     toplevelOutput.writeField("int").writeInt(35)
     val nestedOutput = toplevelOutput.writeField("nested").writeObject()
@@ -69,6 +66,7 @@ class StreamInputOutputBenchmark {
     nestedOutput.finish()
     toplevelOutput.writeField("str").writeString("lol")
     toplevelOutput.finish()
+    bh.consume(os.toByteArray)
   }
 
   @Benchmark
@@ -76,20 +74,23 @@ class StreamInputOutputBenchmark {
     val is = new DataInputStream(new ByteArrayInputStream(inputArray))
     val input = new StreamInput(is)
     val objInput = input.readObject()
-    bh.consume(objInput.nextField().readInt())
+    val intField = objInput.nextField().readInt()
     val nestedInput = objInput.nextField().readObject()
     val listInput = nestedInput.nextField().readList()
-    bh.consume(listInput.nextElement().readInt())
-    bh.consume(listInput.nextElement().readInt())
-    bh.consume(listInput.nextElement().readInt())
-    bh.consume(listInput.nextElement().readInt())
-    bh.consume(listInput.nextElement().readInt())
-    bh.consume(listInput.nextElement().readInt())
-    bh.consume(listInput.hasNext)
-    bh.consume(nestedInput.nextField().readInt())
-    bh.consume(nestedInput.hasNext)
-    bh.consume(objInput.nextField().readString())
-    bh.consume(objInput.hasNext)
+    val listNested = List(
+      listInput.nextElement().readInt(),
+      listInput.nextElement().readInt(),
+      listInput.nextElement().readInt(),
+      listInput.nextElement().readInt(),
+      listInput.nextElement().readInt(),
+      listInput.nextElement().readInt()
+    )
+    listInput.hasNext
+    val intNested = nestedInput.nextField().readInt()
+    nestedInput.hasNext
+    val strField = objInput.nextField().readString()
+    objInput.hasNext
+    bh.consume(Toplevel(intField, Nested(listNested, intNested), strField))
   }
 }
 
