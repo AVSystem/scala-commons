@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rpc.akka
 
+import com.github.ghik.silencer.silent
 import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
@@ -8,7 +9,7 @@ import org.scalatest.concurrent.AsyncAssertions.Waiter
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.time.Span
-import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
+import org.scalatest.{FlatSpecLike, Matchers}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -17,6 +18,7 @@ import scala.util.{Failure, Success}
 /**
   * @author Wojciech Milewski
   */
+@silent
 trait RPCFrameworkTest extends FlatSpecLike with Matchers with MockitoSugar with ScalaFutures {
 
   import RPCFrameworkTest._
@@ -94,7 +96,7 @@ trait RPCFrameworkTest extends FlatSpecLike with Matchers with MockitoSugar with
 object RPCFrameworkTest {
 
   private def whenFailedGeneric[T, U](future: Future[T], awaitCode: Waiter => Any)(fun: Exception => U)(implicit ec: ExecutionContext): U = {
-    val w = new Waiter
+    @silent val w = new Waiter
     future onComplete {
       case Failure(e) => w(throw e); w.dismiss()
       case Success(_) => w.dismiss()

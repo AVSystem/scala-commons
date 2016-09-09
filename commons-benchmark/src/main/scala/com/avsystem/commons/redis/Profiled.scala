@@ -19,9 +19,10 @@ object Profiled {
     implicit val system = ActorSystem("redis", ConfigFactory.defaultReference.withValue("akka.loglevel", ConfigValueFactory.fromAnyRef("INFO")))
     val client = new RedisClusterClient(List(NodeAddress(port = 33330)))
     while (true) {
-      def singleFut = client.executeBatch(RedisCommands.get(ByteString(s"costam")))(Timeout(5, TimeUnit.SECONDS))
+      def singleFut = client.executeBatch((0 until 1000)
+        .map(i => RedisCommands.get(ByteString(s"costam$i"))).sequence)(Timeout(5, TimeUnit.SECONDS))
       import com.avsystem.commons.concurrent.RunInQueueEC.Implicits.executionContext
-      val resultFut = Future.traverse(0 until 1000: IndexedSeq[Int])(_ => singleFut)
+      val resultFut = Future.traverse(0 until 100: IndexedSeq[Int])(_ => singleFut)
       Await.result(resultFut, Duration.Inf)
     }
   }

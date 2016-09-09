@@ -32,7 +32,7 @@ case class NodeConfig(
 
 case class ManagedConnectionConfig(
   connectionConfig: ConnectionConfig = ConnectionConfig(),
-  reconnectionStrategy: ReconnectionStrategy = ExponentialBackoff(5.seconds, 80.seconds)
+  reconnectionStrategy: RetryStrategy = ExponentialBackoff(1.seconds, 32.seconds)
 )
 
 case class ConnectionConfig(
@@ -40,12 +40,12 @@ case class ConnectionConfig(
   debugListener: DebugListener = DevNullListener
 )
 
-trait ReconnectionStrategy {
-  def reconnectionDelay(retry: Int): Opt[FiniteDuration]
+trait RetryStrategy {
+  def retryDelay(retry: Int): Opt[FiniteDuration]
 }
 
 case class ExponentialBackoff(firstDelay: FiniteDuration, maxDelay: FiniteDuration)
-  extends ReconnectionStrategy {
+  extends RetryStrategy {
 
   private def expDelay(retry: Int) =
     firstDelay * (1 << (retry - 1))
@@ -53,13 +53,13 @@ case class ExponentialBackoff(firstDelay: FiniteDuration, maxDelay: FiniteDurati
   private val maxRetry =
     Iterator.from(1).find(i => expDelay(i) >= maxDelay).getOrElse(Int.MaxValue)
 
-  def reconnectionDelay(retry: Int) = Opt {
+  def retryDelay(retry: Int) = Opt {
     if (retry == 0) Duration.Zero
     else if (retry >= maxRetry) maxDelay
     else expDelay(retry)
   }
 }
 
-case object NoReconnectionStrategy extends ReconnectionStrategy {
-  def reconnectionDelay(retry: Int) = Opt.Empty
+case object NoRetryStrategy extends RetryStrategy {
+  def retryDelay(retry: Int) = Opt.Empty
 }

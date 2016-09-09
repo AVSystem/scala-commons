@@ -23,6 +23,9 @@ import scala.concurrent.{Await, Future}
 @BenchmarkMode(Array(Mode.Throughput))
 @State(Scope.Benchmark)
 class RedisClusterBenchmark {
+
+  import RedisClusterBenchmark._
+
   val key = ByteString("costam")
   implicit val system = ActorSystem("redis", ConfigFactory.defaultReference.withValue("akka.loglevel", ConfigValueFactory.fromAnyRef("INFO")))
   var client: RedisClusterClient = _
@@ -40,15 +43,16 @@ class RedisClusterBenchmark {
   }
 
   @Benchmark
-  @OperationsPerInvocation(RedisClusterBenchmark.SequencedFutures)
-  def redisClusterBenchmark(bh: Blackhole): Unit = {
-    def singleFut = client.executeBatch(RedisCommands.get(ByteString(s"costam")))(Timeout(5, TimeUnit.SECONDS))
+  @OperationsPerInvocation(SequencedFutures * BatchedGets)
+  def redisClusterBenchmark(bh: Blackhole) = {
+    def singleFut(i: Int) = client.executeBatch(RedisCommands.get(key))(Timeout(30, TimeUnit.SECONDS))
     import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
-    val resultFut = Future.traverse(0 until RedisClusterBenchmark.SequencedFutures: IndexedSeq[Int])(_ => singleFut)
-    bh.consume(Await.result(resultFut, Duration.Inf))
+    val resultFut = Future.traverse(0 until SequencedFutures: IndexedSeq[Int])(singleFut)
+    Await.result(resultFut, Duration.Inf)
   }
 }
 
 object RedisClusterBenchmark {
-  final val SequencedFutures = 200
+  final val BatchedGets = 1
+  final val SequencedFutures = 100
 }
