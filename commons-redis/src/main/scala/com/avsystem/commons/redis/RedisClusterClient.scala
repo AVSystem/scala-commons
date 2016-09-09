@@ -91,7 +91,7 @@ final class RedisClusterClient(
       def execute[A](batch: RedisBatch[A]) = executeBatch(batch)
     }
 
-  private def handleRedirection(pack: RawCommandPack, slot: Int, result: Future[RedisReply], retryCount: Int)
+  private def handleRedirection[T](pack: RawCommandPack, slot: Int, result: Future[RedisReply], retryCount: Int)
     (implicit timeout: Timeout): Future[RedisReply] =
 
     result.flatMapNow {
@@ -153,38 +153,49 @@ final class RedisClusterClient(
   def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A] = {
     batch.rawCommandPacks.requireLevel(Level.Node, "ClusterClient")
     initPromise.future.flatMap { _ =>
-      //TODO: optimize when there's only one pack or all target the same node
       val currentState = state
-      val barrier = Promise[Unit]()
-      val packsByNode = new MHashMap[RedisNodeClient, ArrayBuffer[RawCommandPack]]
-      val resultsByNode = new MHashMap[RedisNodeClient, Future[PacksResult]]
-
-      def futureForPack(slot: Int, client: RedisNodeClient, pack: RawCommandPack): Future[RedisReply] = {
-        val packBuffer = packsByNode.getOrElseUpdate(client, new ArrayBuffer)
-        val idx = packBuffer.size
-        packBuffer += pack
-        val result = resultsByNode.getOrElseUpdate(client,
-          barrier.future.flatMapNow { _ =>
-            client.executeRaw(CollectionPacks(packBuffer))
-          }
-        ).mapNow(_.apply(idx))
-        handleRedirection(pack, slot, result, 0)
-      }
-
-      val results = new ArrayBuffer[Future[RedisReply]]
-      batch.rawCommandPacks.emitCommandPacks { pack =>
-        val resultFuture = try {
+      val packs = batch.rawCommandPacks
+      val undecodedResult = packs.single match {
+        case Opt(pack) =>
+          // optimization for single-pack (e.g. single-command) batches that avoids creating unnecessary data structures
           val slot = determineSlot(pack)
           val client = currentState.clientForSlot(slot)
-          futureForPack(slot, client, pack)
-        } catch {
-          case re: RedisException => Future.successful(FailureReply(re))
-          case NonFatal(cause) => Future.failed(cause)
-        }
-        results += resultFuture
+          val result = client.executeRaw(pack).mapNow(_.apply(0))
+          handleRedirection(pack, slot, result, 0).mapNow(PacksResult.Single)
+
+        case Opt.Empty =>
+          val barrier = Promise[Unit]()
+          val packsByNode = new MHashMap[RedisNodeClient, ArrayBuffer[RawCommandPack]]
+          val resultsByNode = new MHashMap[RedisNodeClient, Future[PacksResult]]
+
+          def futureForPack(slot: Int, client: RedisNodeClient, pack: RawCommandPack): Future[RedisReply] = {
+            val packBuffer = packsByNode.getOrElseUpdate(client, new ArrayBuffer)
+            val idx = packBuffer.size
+            packBuffer += pack
+            val result = resultsByNode.getOrElseUpdate(client,
+              barrier.future.flatMapNow { _ =>
+                client.executeRaw(CollectionPacks(packBuffer))
+              }
+            ).mapNow(_.apply(idx))
+            handleRedirection(pack, slot, result, 0)
+          }
+
+          val results = new ArrayBuffer[Future[RedisReply]]
+          packs.emitCommandPacks { pack =>
+            val resultFuture = try {
+              val slot = determineSlot(pack)
+              val client = currentState.clientForSlot(slot)
+              futureForPack(slot, client, pack)
+            } catch {
+              case re: RedisException => Future.successful(FailureReply(re))
+              case NonFatal(cause) => Future.failed(cause)
+            }
+            results += resultFuture
+          }
+          barrier.success(())
+          Future.sequence(results)
       }
-      barrier.success(())
-      Future.sequence(results).map(replies => batch.decodeReplies(replies))
+      undecodedResult.map(replies => batch.decodeReplies(replies))
     }
   }
 

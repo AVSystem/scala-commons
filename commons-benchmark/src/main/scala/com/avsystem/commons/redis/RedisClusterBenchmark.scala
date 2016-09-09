@@ -46,7 +46,7 @@ class RedisClusterBenchmark {
   @OperationsPerInvocation(SequencedFutures * BatchedGets)
   def redisClusterBenchmark(bh: Blackhole) = {
     def singleFut(i: Int) = client.executeBatch(RedisCommands.get(key))(Timeout(30, TimeUnit.SECONDS))
-    import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
+    import com.avsystem.commons.concurrent.RunInQueueEC.Implicits.executionContext
     val resultFut = Future.traverse(0 until SequencedFutures: IndexedSeq[Int])(singleFut)
     Await.result(resultFut, Duration.Inf)
   }

@@ -73,6 +73,7 @@ object RawCommand {
   */
 trait RawCommandPacks {
   def emitCommandPacks(consumer: RawCommandPack => Unit): Unit
+  def single: Opt[RawCommandPack] = Opt.Empty
 
   def requireLevel(minAllowed: Level, clientType: String): this.type = {
     emitCommandPacks(_.checkLevel(minAllowed, clientType))
@@ -90,6 +91,7 @@ trait RawCommandPack extends RawCommandPacks {
   def checkLevel(minAllowed: Level, clientType: String): Unit
 
   def emitCommandPacks(consumer: RawCommandPack => Unit) = consumer(this)
+  override def single: Opt[RawCommandPack] = this.opt
 }
 
 final class WatchState {
