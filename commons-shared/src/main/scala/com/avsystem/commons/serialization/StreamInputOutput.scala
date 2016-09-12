@@ -10,27 +10,27 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 
 private object FormatConstants {
-  val ByteBytes = jl.Byte.BYTES
-  val ShortBytes = jl.Short.BYTES
-  val IntBytes = jl.Integer.BYTES
-  val LongBytes = jl.Long.BYTES
-  val FloatBytes = jl.Float.BYTES
-  val DoubleBytes = jl.Double.BYTES
+  final val ByteBytes = jl.Byte.BYTES
+  final val ShortBytes = jl.Short.BYTES
+  final val IntBytes = jl.Integer.BYTES
+  final val LongBytes = jl.Long.BYTES
+  final val FloatBytes = jl.Float.BYTES
+  final val DoubleBytes = jl.Double.BYTES
 
-  val NullMarker: Byte = 0
-  val StringMarker: Byte = 1
-  val ByteMarker: Byte = 2
-  val ShortMarker: Byte = 3
-  val IntMarker: Byte = 4
-  val LongMarker: Byte = 5
-  val FloatMarker: Byte = 6
-  val DoubleMarker: Byte = 7
-  val ByteArrayMarker: Byte = 8
-  val BooleanMarker: Byte = 9
-  val ListStartMarker: Byte = 10
-  val ObjectStartMarker: Byte = 11
-  val ListEndMarker: Byte = 12
-  val ObjectEndMarker: Byte = 13
+  final val NullMarker: Byte = 0
+  final val StringMarker: Byte = 1
+  final val ByteMarker: Byte = 2
+  final val ShortMarker: Byte = 3
+  final val IntMarker: Byte = 4
+  final val LongMarker: Byte = 5
+  final val FloatMarker: Byte = 6
+  final val DoubleMarker: Byte = 7
+  final val ByteArrayMarker: Byte = 8
+  final val BooleanMarker: Byte = 9
+  final val ListStartMarker: Byte = 10
+  final val ObjectStartMarker: Byte = 11
+  final val ListEndMarker: Byte = 12
+  final val ObjectEndMarker: Byte = 13
 }
 
 import com.avsystem.commons.serialization.FormatConstants._
