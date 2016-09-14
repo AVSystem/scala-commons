@@ -1,9 +1,12 @@
 package com.avsystem.commons
 
 import com.avsystem.commons.SharedExtensions._
+import com.avsystem.commons.collection.CollectionAliases.{BMap, BTraversable}
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc.{Boxing, NOpt, Opt, OptRef, Unboxing}
 
+import scala.collection.generic.CanBuildFrom
+import scala.collection.mutable
 import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.util.Try
@@ -25,6 +28,10 @@ trait SharedExtensions {
   implicit def optionOps[A](option: Option[A]): OptionOps[A] = new OptionOps(option)
 
   implicit def tryOps[A](tr: Try[A]): TryOps[A] = new TryOps(tr)
+
+  implicit def collectionOps[C[X] <: BTraversable[X], A](coll: C[A]): CollectionOps[C, A] = new CollectionOps(coll)
+
+  implicit def mapOps[M[X, Y] <: BMap[X, Y], K, V](map: M[K, V]): MapOps[M, K, V] = new MapOps(map)
 }
 
 object SharedExtensions extends SharedExtensions {
@@ -130,5 +137,49 @@ object SharedExtensions extends SharedExtensions {
 
     def toNOpt: NOpt[A] =
       if (tr.isFailure) NOpt.Empty else NOpt.some(tr.get)
+  }
+
+  class CollectionOps[C[X] <: BTraversable[X], A](private val coll: C[A]) extends AnyVal {
+    def toMap[K, V](keyFun: A => K, valueFun: A => V): Map[K, V] = {
+      val res = Map.newBuilder[K, V]
+      coll.foreach { a =>
+        res += ((keyFun(a), valueFun(a)))
+      }
+      res.result()
+    }
+
+    def groupToMap[K, V, To](keyFun: A => K, valueFun: A => V)(implicit cbf: CanBuildFrom[C[A], V, To]): Map[K, To] = {
+      val builders = mutable.Map[K, mutable.Builder[V, To]]()
+      coll.foreach { a =>
+        builders.getOrElseUpdate(keyFun(a), cbf(coll)) += valueFun(a)
+      }
+      builders.iterator.map({ case (k, v) => (k, v.result()) }).toMap
+    }
+
+    def headOpt: Opt[A] = coll.headOption.toOpt
+
+    def lastOpt: Opt[A] = coll.lastOption.toOpt
+
+    def findOpt(p: A => Boolean) = coll.find(p).toOpt
+
+    def collectFirstOpt[B](pf: PartialFunction[A, B]): Opt[B] = coll.collectFirst(pf).toOpt
+
+    def reduceOpt[A1 >: A](op: (A1, A1) => A1): Opt[A1] = coll.reduceOption(op).toOpt
+
+    def reduceLeftOpt[B >: A](op: (B, A) => B): Opt[B] = coll.reduceLeftOption(op).toOpt
+
+    def reduceRightOpt[B >: A](op: (A, B) => B): Opt[B] = coll.reduceRightOption(op).toOpt
+
+    def maxOpt[B >: A](implicit cmp: Ordering[B]): Opt[B] = if (coll.isEmpty) Opt.Empty else coll.max[B].opt
+
+    def maxOptBy[B](f: A => B)(implicit cmp: Ordering[B]): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.maxBy(f).opt
+
+    def minOpt[B >: A](implicit cmp: Ordering[B]): Opt[B] = if (coll.isEmpty) Opt.Empty else coll.min[B].opt
+
+    def minOptBy[B](f: A => B)(implicit cmp: Ordering[B]): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.minBy(f).opt
+  }
+
+  class MapOps[M[X, Y] <: BMap[X, Y], K, V](private val map: M[K, V]) extends AnyVal {
+    def getOpt(key: K): Opt[V] = map.get(key).toOpt
   }
 }
