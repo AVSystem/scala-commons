@@ -50,4 +50,8 @@ class OptTest extends FunSuite {
     assert((Opt.Empty.orNull: Any) == null)
     assert(Opt("").orNull == "")
   }
+
+  test("collect") {
+    assert(Opt(3).collect { case 2 => 2 } == Opt.Empty)
+  }
 }

@@ -49,4 +49,10 @@ class NOptTest extends FunSuite {
   test("empty hash code") {
     NOpt.Empty.hashCode
   }
+
+  test("collect") {
+    assert(NOpt(3).collect { case 2 => 2 } == NOpt.Empty)
+    assert(NOpt(3).collect { case 3 => 2 } == NOpt.some(2))
+    assert(NOpt(3).collect { case 3 => null } == NOpt.some(null))
+  }
 }

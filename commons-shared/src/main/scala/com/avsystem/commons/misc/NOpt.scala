@@ -35,7 +35,7 @@ object NOpt {
 
   def empty[A]: NOpt[A] = Empty
 
-  private val emptyFunc: Any => NOpt[Nothing] = _ => Empty
+  private val emptyMarkerFunc: Any => Any = _ => EmptyMarker
 
   final class WithFilter[+A] private[NOpt](self: NOpt[A], p: A => Boolean) {
     def map[B](f: A => B): NOpt[B] = self filter p map f
@@ -114,7 +114,10 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with Seri
   }
 
   @inline def collect[B](pf: PartialFunction[A, B]): NOpt[B] =
-    if (!isEmpty) pf.andThen(NOpt.some).applyOrElse(value, NOpt.emptyFunc) else NOpt.Empty
+    if (!isEmpty) {
+      val res = pf.applyOrElse(value, NOpt.emptyMarkerFunc)
+      new NOpt(if (res == null) NullMarker else res)
+    } else NOpt.Empty
 
   @inline def orElse[B >: A](alternative: => NOpt[B]): NOpt[B] =
     if (isEmpty) alternative else this

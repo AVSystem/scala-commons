@@ -21,7 +21,7 @@ object Opt {
 
   def empty[A]: Opt[A] = Empty
 
-  private val nullFunc: Any => Null = _ => null
+  private val emptyMarkerFunc: Any => Any = _ => EmptyMarker
 
   final class WithFilter[+A] private[Opt](self: Opt[A], p: A => Boolean) {
     def map[B](f: A => B): Opt[B] = self filter p map f
@@ -100,7 +100,7 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
   }
 
   @inline def collect[B](pf: PartialFunction[A, B]): Opt[B] =
-    if (!isEmpty) new Opt(pf.applyOrElse(value, Opt.nullFunc)) else Opt.Empty
+    if (!isEmpty) new Opt(pf.applyOrElse(value, Opt.emptyMarkerFunc)) else Opt.Empty
 
   @inline def orElse[B >: A](alternative: => Opt[B]): Opt[B] =
     if (isEmpty) alternative else this
