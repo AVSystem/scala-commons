@@ -53,14 +53,14 @@ trait ClusteredKeysApi extends ApiSubset {
     execute(Restore(key, ttl, serializedValue, replace))
 
   def sort(key: ByteString, by: Opt[SortPattern] = Opt.Empty, limit: Opt[SortLimit] = Opt.Empty,
-    asc: Boolean = true, alpha: Boolean = false): Result[Seq[ByteString]] =
-    execute(Sort(key, by, limit, asc, alpha))
+    sortOrder: SortOrder = SortOrder.Asc, alpha: Boolean = false): Result[Seq[ByteString]] =
+    execute(Sort(key, by, limit, sortOrder, alpha))
   def sortGet(key: ByteString, gets: Seq[SortPattern], by: Opt[SortPattern] = Opt.Empty, limit: Opt[SortLimit] = Opt.Empty,
-    asc: Boolean = true, alpha: Boolean = false): Result[Seq[Seq[Opt[ByteString]]]] =
-    execute(SortGet(key, gets, by, limit, asc, alpha))
+    sortOrder: SortOrder = SortOrder.Asc, alpha: Boolean = false): Result[Seq[Seq[Opt[ByteString]]]] =
+    execute(SortGet(key, gets, by, limit, sortOrder, alpha))
   def sortStore(key: ByteString, destination: ByteString, by: Opt[SortPattern] = Opt.Empty, limit: Opt[SortLimit] = Opt.Empty,
-    gets: Seq[SortPattern] = Nil, asc: Boolean = true, alpha: Boolean = false): Result[Long] =
-    execute(SortStore(key, destination, by, limit, gets, asc, alpha))
+    gets: Seq[SortPattern] = Nil, sortOrder: SortOrder = SortOrder.Asc, alpha: Boolean = false): Result[Long] =
+    execute(SortStore(key, destination, by, limit, gets, sortOrder, alpha))
 
   def ttl(key: ByteString): Result[Opt[Opt[Long]]] =
     execute(Ttl(key))
@@ -203,24 +203,20 @@ case class Scan(cursor: Cursor, matchPattern: Opt[ByteString], count: Opt[Long])
   }
 }
 
-sealed abstract case class AbstractSort[T](key: ByteString, by: Opt[SortPattern], limit: Opt[SortLimit],
-  gets: Seq[SortPattern], asc: Boolean, alpha: Boolean, destination: Opt[ByteString]) extends RedisCommand[T] with NodeCommand {
+sealed abstract class AbstractSort[T](key: ByteString, by: Opt[SortPattern], limit: Opt[SortLimit],
+  gets: Seq[SortPattern], sortOrder: SortOrder, alpha: Boolean, destination: Opt[ByteString]) extends RedisCommand[T] with NodeCommand {
   val encoded = {
     val enc = encoder("SORT").key(key).optAdd("BY", by).optAdd("LIMIT", limit)
     gets.foreach(sp => enc.add("GET").add(sp))
-    enc.addFlag("DESC", !asc).addFlag("ALPHA", alpha).optKey("STORE", destination).result
+    enc.add(sortOrder).addFlag("ALPHA", alpha).optKey("STORE", destination).result
   }
 }
 
-class Sort(key: ByteString, by: Opt[SortPattern], limit: Opt[SortLimit], asc: Boolean, alpha: Boolean)
-  extends AbstractSort[Seq[ByteString]](key, by, limit, Nil, asc, alpha, Opt.Empty) with RedisBinarySeqCommand
-object Sort {
-  def apply(key: ByteString, by: Opt[SortPattern] = Opt.Empty, limit: Opt[SortLimit] = Opt.Empty, asc: Boolean, alpha: Boolean) =
-    new Sort(key, by, limit, asc, alpha)
-}
+case class Sort(key: ByteString, by: Opt[SortPattern], limit: Opt[SortLimit], sortOrder: SortOrder, alpha: Boolean)
+  extends AbstractSort[Seq[ByteString]](key, by, limit, Nil, sortOrder, alpha, Opt.Empty) with RedisBinarySeqCommand
 
-class SortGet(key: ByteString, gets: Seq[SortPattern], by: Opt[SortPattern], limit: Opt[SortLimit], asc: Boolean, alpha: Boolean)
-  extends AbstractSort[Seq[Seq[Opt[ByteString]]]](key, by, limit, gets, asc, alpha, Opt.Empty) {
+case class SortGet(key: ByteString, gets: Seq[SortPattern], by: Opt[SortPattern], limit: Opt[SortLimit], sortOrder: SortOrder, alpha: Boolean)
+  extends AbstractSort[Seq[Seq[Opt[ByteString]]]](key, by, limit, gets, sortOrder, alpha, Opt.Empty) {
 
   def decodeExpected = {
     case ArrayMsg(elements) =>
@@ -233,18 +229,9 @@ class SortGet(key: ByteString, gets: Seq[SortPattern], by: Opt[SortPattern], lim
       it.to[ArrayBuffer]
   }
 }
-object SortGet {
-  def apply(key: ByteString, gets: Seq[SortPattern], by: Opt[SortPattern], limit: Opt[SortLimit], asc: Boolean, alpha: Boolean) =
-    new SortGet(key, gets, by, limit, asc, alpha)
-}
 
-class SortStore(key: ByteString, destination: ByteString, by: Opt[SortPattern], limit: Opt[SortLimit], gets: Seq[SortPattern], asc: Boolean, alpha: Boolean)
-  extends AbstractSort[Long](key, by, limit, gets, asc, alpha, Opt(destination)) with RedisLongCommand
-
-object SortStore {
-  def apply(key: ByteString, destination: ByteString, by: Opt[SortPattern], limit: Opt[SortLimit], gets: Seq[SortPattern], asc: Boolean, alpha: Boolean) =
-    new SortStore(key, destination, by, limit, gets, asc, alpha)
-}
+case class SortStore(key: ByteString, destination: ByteString, by: Opt[SortPattern], limit: Opt[SortLimit], gets: Seq[SortPattern], sortOrder: SortOrder, alpha: Boolean)
+  extends AbstractSort[Long](key, by, limit, gets, sortOrder, alpha, Opt(destination)) with RedisLongCommand
 
 case class Ttl(key: ByteString) extends RedisCommand[Opt[Opt[Long]]] with NodeCommand {
   val encoded = encoder("TTL").key(key).result

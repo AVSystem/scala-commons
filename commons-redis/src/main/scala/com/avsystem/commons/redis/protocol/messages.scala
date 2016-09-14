@@ -59,6 +59,9 @@ object CommandKeyMsg {
 }
 case object NullArrayMsg extends ValidRedisMsg
 final case class ArrayMsg[+E <: RedisMsg](elements: IndexedSeq[E]) extends ValidRedisMsg
+object ArrayMsg {
+  val Empty = ArrayMsg(IndexedSeq.empty)
+}
 
 object SimpleStringStr {
   def unapply(ss: SimpleStringMsg): Opt[String] =

@@ -5,7 +5,7 @@ import akka.actor.{Actor, Props}
 import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
-import com.avsystem.commons.redis.commands.{ClusterSlots, SlotRange}
+import com.avsystem.commons.redis.commands.SlotRange
 import com.avsystem.commons.redis.config.ClusterConfig
 import com.avsystem.commons.redis.exception.ClientStoppedException
 import com.avsystem.commons.redis.util.ActorLazyLogging
@@ -64,7 +64,7 @@ final class ClusterMonitoringActor(
         }
         suspendUntil = config.minRefreshInterval.fromNow
       }
-    case pr: PacksResult => Try(ClusterSlots.decodeReplies(pr)) match {
+    case pr: PacksResult => Try(RedisCommands.clusterSlots.decodeReplies(pr)) match {
       case Success(slotRangeMapping) =>
         val newMapping = {
           val res = slotRangeMapping.iterator.map { srm =>

@@ -38,6 +38,7 @@ trait CommandsSuite extends FunSuite with ScalaFutures with BeforeAndAfterEach
   }
 
   protected implicit class BatchOps[T](batch: RedisBatch[T]) {
+    def get: T = exec.futureValue
     def exec: Future[T] = executor.execute(batch)
     def assert(pred: T => Boolean): Unit = CommandsSuite.this.assert(pred(exec.futureValue))
     def assertEquals(t: T): Unit = assert(_ == t)

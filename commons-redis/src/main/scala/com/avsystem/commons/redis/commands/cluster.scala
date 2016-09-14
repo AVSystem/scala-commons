@@ -5,6 +5,7 @@ import akka.util.ByteString
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.commands.ClusterSlots.NodeFormat
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
 import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, IntegerMsg, RedisMsg}
 
@@ -49,8 +50,10 @@ trait NodeClusterApi extends ClusteredClusterApi {
     execute(ClusterSetslot(slot, subcommand))
   def clusterSlaves(nodeId: NodeId): Result[Seq[NodeInfo]] =
     execute(ClusterSlaves(nodeId))
-  def clusterSlots: Result[Seq[SlotRangeMapping]] =
-    execute(ClusterSlots)
+  def clusterSlots: Result[Seq[SlotRangeMapping[NodeAddress]]] =
+    execute(ClusterSlots(ClusterSlots.OnlyAddress))
+  def clusterSlotsWithNodeIds: Result[Seq[SlotRangeMapping[(NodeAddress, NodeId)]]] =
+    execute(ClusterSlots(ClusterSlots.AddressAndNodeId))
 }
 
 trait ConnectionClusterApi extends NodeClusterApi {
@@ -142,21 +145,38 @@ case class ClusterSlaves(nodeId: NodeId) extends RedisCommand[Seq[NodeInfo]] wit
   }
 }
 
-case object ClusterSlots extends RedisCommand[Seq[SlotRangeMapping]] with NodeCommand {
+case class ClusterSlots[N](nodeFormat: NodeFormat[N]) extends RedisCommand[Seq[SlotRangeMapping[N]]] with NodeCommand {
   val encoded = encoder("CLUSTER", "SLOTS").result
   def decodeExpected = {
     case ArrayMsg(elements) => elements.map {
       case ArrayMsg(IntegerMsg(from) +: IntegerMsg(to) +: (master: RedisMsg) +: (replicas: IndexedSeq[RedisMsg])) =>
         val range = SlotRange(from.toInt, to.toInt)
         def parseNode(rr: RedisMsg) = rr match {
-          case ArrayMsg(IndexedSeq(BulkStringMsg(ip), IntegerMsg(port), _*)) =>
-            NodeAddress(ip.utf8String, port.toInt)
+          case arr: ArrayMsg[RedisMsg] => nodeFormat.parseNode
+            .applyOrElse(arr, (_: ArrayMsg[RedisMsg]) => throw new UnexpectedReplyException(s"bad entry in CLUSTER SLOTS reply: $arr"))
           case msg =>
-            throw new UnexpectedReplyException(s"bad entry in CLUSTER SLOTS reply: $msg")
+            throw new UnexpectedReplyException(s"bad entry in CLUSTER SLOTS reply: $rr")
         }
         SlotRangeMapping(range, parseNode(master), replicas.map(parseNode))
       case msg =>
         throw new UnexpectedReplyException(s"bad reply for CLUSTER SLOTS: $msg")
+    }
+  }
+}
+object ClusterSlots {
+  trait NodeFormat[N] {
+    def parseNode: PartialFunction[ArrayMsg[RedisMsg], N]
+  }
+  object OnlyAddress extends NodeFormat[NodeAddress] {
+    def parseNode = {
+      case ArrayMsg(IndexedSeq(BulkStringMsg(ip), IntegerMsg(port), _*)) =>
+        NodeAddress(ip.utf8String, port.toInt)
+    }
+  }
+  object AddressAndNodeId extends NodeFormat[(NodeAddress, NodeId)] {
+    def parseNode = {
+      case ArrayMsg(IndexedSeq(BulkStringMsg(ip), IntegerMsg(port), BulkStringMsg(nodeId), _*)) =>
+        (NodeAddress(ip.utf8String, port.toInt), NodeId(nodeId.utf8String))
     }
   }
 }
@@ -362,7 +382,7 @@ object NodeFlags {
   }
 }
 
-case class SlotRangeMapping(range: SlotRange, master: NodeAddress, replicas: Seq[NodeAddress]) {
+case class SlotRangeMapping[N](range: SlotRange, master: N, replicas: Seq[N]) {
   override def toString = s"slots: $range, master: $master, slaves: ${replicas.mkString(",")}"
 }
 case class SlotRange(start: Int, end: Int) {

@@ -46,6 +46,7 @@ trait RedisClusteredApi extends AnyRef
   with StringsApi
   with ClusteredServerApi
   with ClusteredClusterApi
+  with GeoApi
 
 trait RedisNodeApi extends RedisClusteredApi
   with NodeKeysApi
