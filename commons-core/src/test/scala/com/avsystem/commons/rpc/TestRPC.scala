@@ -7,6 +7,15 @@ import scala.concurrent.Future
 
 case class Record(i: Int, fuu: String)
 
+@RPC trait InnerRPC {
+  def proc(): Unit
+
+  def func(arg: Int): Future[String]
+
+  def moreInner(name: String): InnerRPC
+}
+object InnerRPC extends RPCTypeClasses[DummyRPC.type, InnerRPC]
+
 @RPC trait TestRPC {
   @silent
   def handle: Unit
@@ -28,15 +37,8 @@ case class Record(i: Int, fuu: String)
   def innerRpc(name: String): InnerRPC
 }
 
-@RPC trait InnerRPC {
-  def proc(): Unit
-
-  def func(arg: Int): Future[String]
-
-  def moreInner(name: String): InnerRPC
-}
-
-object TestRPC {
+@silent
+object TestRPC extends RPCTypeClasses[DummyRPC.type, TestRPC] {
   def rpcImpl(onInvocation: (String, List[List[Any]], Option[Any]) => Any) = new TestRPC {
     private def onProcedure(methodName: String, args: List[List[Any]]): Unit =
       onInvocation(methodName, args, None)
@@ -63,7 +65,6 @@ object TestRPC {
     def doStuff(num: Int): Unit =
       onProcedure("doStuffInt", List(List(num)))
 
-    @silent
     def handle: Unit =
       onProcedure("handle", Nil)
 

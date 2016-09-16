@@ -85,7 +85,7 @@ trait TypeClassDerivation extends MacroCommons {
     * @param defaultValue tree that evaluates to default value of the `apply` parameter or `EmptyTree`
     * @param instance     tree that evaluates to type class instance for type of this parameter
     */
-  case class ApplyParam(sym: Symbol, defaultValue: Tree, instance: Tree)
+  case class ApplyParam(sym: TermSymbol, defaultValue: Tree, instance: Tree)
 
   /**
     * Contains metadata extracted from one of the case subtypes in a sealed hierarchy.
@@ -110,11 +110,11 @@ trait TypeClassDerivation extends MacroCommons {
     * matching `apply` and `unapply` methods. In particular, every case class is a proper record type.
     *
     * @param tpe       the record type
-    * @param companion symbol of the companion object of record type; can be used to refer to `apply` and
-    *                  `unapply` methods
+    * @param apply     symbol of the `apply` method in companion object
+    * @param unapply     symbol of the `unapply` method in companion object
     * @param params    metadata for parameters of `apply` method
     */
-  def forApplyUnapply(tpe: Type, companion: Symbol, params: List[ApplyParam]): Tree
+  def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree
 
   /**
     * Derives type class instance for union type (sealed hierarchy in which every non-abstract subtype has
@@ -140,7 +140,7 @@ trait TypeClassDerivation extends MacroCommons {
     def handleMissingDependency[T](hint: String)(expr: => T): T =
       try expr catch {
         case TypecheckException(pos, msg) =>
-          throw new TypecheckException(pos, s"Cannot automatically derive $typeClassName for $tpe because ($hint):\n$msg")
+          throw TypecheckException(pos, s"Cannot automatically derive $typeClassName for $tpe because ($hint):\n$msg")
       }
 
     def inferDependency(depTpe: Type, silent: Boolean = false): Tree =
@@ -151,11 +151,11 @@ trait TypeClassDerivation extends MacroCommons {
 
     def singleTypeTc = singleValueFor(tpe).map(tree => forSingleton(tpe, tree))
     def applyUnapplyTc = applyUnapplyFor(tpe).map {
-      case ApplyUnapply(companion, params) =>
+      case ApplyUnapply(apply, unapply, params) =>
         val dependencies = params.map { case (s, defaultValue) =>
           ApplyParam(s, defaultValue, handleMissingDependency(s"for field ${s.name}")(inferDependency(s.typeSignature)))
         }
-        forApplyUnapply(tpe, companion, dependencies)
+        forApplyUnapply(tpe, apply, unapply, dependencies)
     }
     def sealedHierarchyTc = knownSubtypes(tpe).map { subtypes =>
       if (subtypes.isEmpty) {

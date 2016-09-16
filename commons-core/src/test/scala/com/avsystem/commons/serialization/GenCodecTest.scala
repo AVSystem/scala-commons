@@ -12,9 +12,7 @@ import com.avsystem.commons.serialization.GenCodecTest.ValueClass
   */
 object GenCodecTest {
   case class ValueClass(str: String) extends AnyVal
-  object ValueClass {
-    implicit val codec: GenCodec[ValueClass] = GenCodec.materialize[ValueClass]
-  }
+  object ValueClass extends HasGenCodec[ValueClass]
 }
 
 class GenCodecTest extends CodecTestBase {
@@ -76,18 +74,14 @@ class GenCodecTest extends CodecTestBase {
   }
 
   case class NoArgCaseClass()
-  object NoArgCaseClass {
-    implicit val codec = GenCodec.materialize[NoArgCaseClass]
-  }
+  object NoArgCaseClass extends HasGenCodec[NoArgCaseClass]
 
   test("no arg case class test") {
     testWriteReadAndAutoWriteRead(NoArgCaseClass(), Map())
   }
 
   case class SingleArgCaseClass(str: String)
-  object SingleArgCaseClass {
-    implicit val codec = GenCodec.materialize[SingleArgCaseClass]
-  }
+  object SingleArgCaseClass extends HasGenCodec[SingleArgCaseClass]
 
   test("single arg case class test") {
     testWriteReadAndAutoWriteRead(SingleArgCaseClass("something"), Map("str" -> "something"))
@@ -95,18 +89,14 @@ class GenCodecTest extends CodecTestBase {
 
   @transparent
   case class TransparentWrapper(str: String)
-  object TransparentWrapper {
-    implicit val codec = GenCodec.materialize[TransparentWrapper]
-  }
+  object TransparentWrapper extends HasGenCodec[TransparentWrapper]
 
   test("transparent wrapper test") {
     testWriteReadAndAutoWriteRead(TransparentWrapper("something"), "something")
   }
 
   case class SomeCaseClass(@name("some.str") str: String, intList: List[Int])
-  object SomeCaseClass {
-    implicit val codec = GenCodec.materialize[SomeCaseClass]
-  }
+  object SomeCaseClass extends HasGenCodec[SomeCaseClass]
 
   test("case class test") {
     testWriteReadAndAutoWriteRead(SomeCaseClass("dafuq", List(1, 2, 3)),
