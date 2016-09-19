@@ -11,6 +11,8 @@ object AutoGenCodecTest {
   case class ValueClass(str: String) extends AnyVal
 }
 
+case class HasMap(map: Map[String, String]) extends AnyVal
+
 class AutoGenCodecTest extends CodecTestBase {
   object SomeObject
 
@@ -142,5 +144,17 @@ class AutoGenCodecTest extends CodecTestBase {
 
   test("sequence of case classes test") {
     testAutoWriteRead[Seq[Element]](Vector(Element("wut")), List(Map("str" -> "wut")))
+  }
+
+  case class SomethingNested(nested: Seq[SomethingNested])
+  case class SomethingOuter(x: SomethingNested)
+
+  test("double recursive nesting") {
+    testAutoWriteRead[SomethingOuter](SomethingOuter(SomethingNested(List(SomethingNested(Nil)))),
+      Map("x" -> Map("nested" -> List(Map("nested" -> Nil)))))
+  }
+
+  ignore("option codec visibility") {
+    testAutoWriteRead[Option[HasMap]](Some(HasMap(Map("a" -> "A"))), List(Map("map" -> Map("a" -> "A"))))
   }
 }

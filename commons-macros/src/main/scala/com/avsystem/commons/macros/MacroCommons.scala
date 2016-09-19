@@ -27,6 +27,7 @@ trait MacroCommons {
   val MaterializedCls = tq"$CommonsPackage.derivation.Materialized"
   val FutureSym = typeOf[Future[_]].typeSymbol
   val OptionClass = definitions.OptionClass
+  val ImplicitsObj = q"$CommonsPackage.misc.Implicits"
 
   lazy val ownerChain = {
     val sym = c.typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
@@ -409,5 +410,7 @@ trait MacroCommons {
     }
 
   def typecheckException(msg: String) =
-    throw new TypecheckException(c.enclosingPosition, msg)
+    throw TypecheckException(c.enclosingPosition, msg)
 }
+
+abstract class AbstractMacroCommons(val c: blackbox.Context) extends MacroCommons

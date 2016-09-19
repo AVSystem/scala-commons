@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package macros.serialization
 
-import com.avsystem.commons.macros.{MacroCommons, TypeClassDerivation}
+import com.avsystem.commons.macros.{AbstractMacroCommons, TypeClassDerivation}
 
 import scala.reflect.macros.blackbox
 
-trait CodecMacroCommons extends MacroCommons {
+abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
@@ -39,7 +39,7 @@ trait CodecMacroCommons extends MacroCommons {
   * Author: ghik
   * Created: 10/12/15.
   */
-class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation with CodecMacroCommons {
+class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with TypeClassDerivation {
 
   import c.universe._
 
@@ -250,20 +250,17 @@ class GenCodecMacros(val c: blackbox.Context) extends TypeClassDerivation with C
   def materializeRecursively[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
     q"""
-       implicit val ${c.freshName(TermName("allow"))}: $materializeRecursivelyCls[$typeClass] =
-         $materializeRecursivelyObj[$typeClass]
+       implicit def ${c.freshName(TermName("allow"))}[T]: $AllowImplicitMacroCls[$typeClass[T]] =
+         $AllowImplicitMacroObj[$typeClass[T]]
        $GenCodecObj.materialize[$tpe]
      """
   }
-
-  def materializeRecursivelyImplicitly[T: c.WeakTypeTag](allow: Tree): Tree =
-    materialize[T]
 
   def materializeMacroCodec[T: c.WeakTypeTag]: Tree =
     q"$SerializationPkg.MacroCodec($GenCodecObj.materialize[${weakTypeOf[T]}])"
 }
 
-class GenKeyCodecMacros(val c: blackbox.Context) extends CodecMacroCommons {
+class GenKeyCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
   import c.universe._
 

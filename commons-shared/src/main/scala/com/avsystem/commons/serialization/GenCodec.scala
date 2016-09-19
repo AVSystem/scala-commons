@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.collection.CollectionAliases._
-import com.avsystem.commons.derivation.{DeferredInstance, MaterializeRecursively}
+import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.BasicJavaInterop._
 import com.avsystem.commons.jiop.JCanBuildFrom
 import com.avsystem.commons.misc.{NOpt, Opt, OptRef}
@@ -362,8 +362,8 @@ trait RecursiveAutoCodecs { this: GenCodec.type =>
   /**
     * Used internally for materialization of `GenCodec.Auto`. Should not be used directly.
     */
-  implicit def materializeRecursivelyImplicitly[T](implicit allow: MaterializeRecursively[GenCodec]): GenCodec[T] =
-  macro macros.serialization.GenCodecMacros.materializeRecursivelyImplicitly[T]
+  implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] =
+  macro macros.serialization.GenCodecMacros.materializeImplicitly[T]
 
   implicit def materializeAuto[T]: GenCodec.Auto[T] =
   macro macros.serialization.GenCodecMacros.materializeAuto[T]
