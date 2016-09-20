@@ -22,6 +22,7 @@ RPC framework is cross-compiled for JVM and JS, which makes it especially useful
       * [Internals](#internals-1)
   * [RPC metadata](#rpc-metadata)
     * [Example](#example)
+  * [Declaring typeclass instances explicitly](#declaring-typeclass-instances-explicitly)
 
 ## RPC traits
 
