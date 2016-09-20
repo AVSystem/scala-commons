@@ -12,7 +12,7 @@ import scala.concurrent.Future
 trait ProcedureRPCFramework extends RPCFramework {
   type RawRPC <: ProcedureRawRPC
 
-  trait ProcedureRawRPC {this: RawRPC =>
+  trait ProcedureRawRPC { this: RawRPC =>
     def fire(rpcName: String, argLists: List[List[RawValue]]): Unit
   }
 
@@ -29,7 +29,7 @@ trait ProcedureRPCFramework extends RPCFramework {
 trait FunctionRPCFramework extends RPCFramework {
   type RawRPC <: FunctionRawRPC
 
-  trait FunctionRawRPC {this: RawRPC =>
+  trait FunctionRawRPC { this: RawRPC =>
     def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue]
   }
 
@@ -47,7 +47,7 @@ trait GetterRPCFramework extends RPCFramework {
 
   case class RawInvocation(rpcName: String, argLists: List[List[RawValue]])
 
-  trait GetterRawRPC {this: RawRPC =>
+  trait GetterRawRPC { this: RawRPC =>
     def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC
 
     def resolveGetterChain(getters: List[RawInvocation]): RawRPC =
@@ -55,8 +55,15 @@ trait GetterRPCFramework extends RPCFramework {
   }
 
   // these must be macros in order to properly handle recursive RPC types
-  implicit def GetterRealHandler[T](implicit ev: IsRPC[T]): RealInvocationHandler[T, RawRPC] = macro macros.rpc.RPCMacros.GetterRealHandler[T]
-  implicit def GetterRawHandler[T](implicit ev: IsRPC[T]): RawInvocationHandler[T] = macro macros.rpc.RPCMacros.GetterRawHandler[T]
+  implicit def getterRealHandler[T](implicit ev: IsRPC[T]): RealInvocationHandler[T, RawRPC] = macro macros.rpc.RPCMacros.getterRealHandler[T]
+  implicit def getterRawHandler[T](implicit ev: IsRPC[T]): RawInvocationHandler[T] = macro macros.rpc.RPCMacros.getterRawHandler[T]
+
+  final class GetterRealHandler[T: AsRawRPC] extends RealInvocationHandler[T, RawRPC] {
+    def toRaw(real: T) = AsRawRPC[T].asRaw(real)
+  }
+  final class GetterRawHandler[T: AsRealRPC] extends RawInvocationHandler[T] {
+    def toReal(rawRpc: RawRPC, rpcName: String, argLists: List[List[RawValue]]) = AsRealRPC[T].asReal(rawRpc.get(rpcName, argLists))
+  }
 }
 
 trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework with ProcedureRPCFramework {

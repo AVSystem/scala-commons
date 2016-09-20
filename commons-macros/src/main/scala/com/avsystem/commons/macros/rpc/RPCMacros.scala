@@ -221,30 +221,16 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     q"null"
   }
 
-  def GetterRealHandler[T: c.WeakTypeTag](ev: Tree): Tree = {
+  def getterRealHandler[T: c.WeakTypeTag](ev: Tree): Tree = {
     val tpe = weakTypeOf[T]
     checkRpc(tpe)
-
-    q"""
-      new $FrameworkObj.RealInvocationHandler[$tpe,$RawRPCType] with $MaterializedCls {
-        implicit def ${c.freshName(TermName("self"))}: $FrameworkObj.RealInvocationHandler[$tpe,$RawRPCType] with $MaterializedCls = this
-          def toRaw(real: $tpe) = $AsRawRPCObj[$tpe].asRaw(real)
-      }
-     """
+    q"new $FrameworkObj.GetterRealHandler[$tpe]"
   }
 
-  def GetterRawHandler[T: c.WeakTypeTag](ev: Tree): Tree = {
+  def getterRawHandler[T: c.WeakTypeTag](ev: Tree): Tree = {
     val tpe = weakTypeOf[T]
     checkRpc(tpe)
-
-    q"""
-      new $FrameworkObj.RawInvocationHandler[$tpe] with $MaterializedCls {
-        implicit def ${c.freshName(TermName("self"))}: $FrameworkObj.RawInvocationHandler[$tpe] with $MaterializedCls = this
-
-        def toReal(rawRpc: $RawRPCCls, rpcName: String, argLists: $ArgListsCls) =
-          $AsRealRPCObj[$tpe].asReal(rawRpc.get(rpcName, argLists))
-      }
-     """
+    q"new $FrameworkObj.GetterRawHandler[$tpe]"
   }
 
   def materializeMetadata[T: c.WeakTypeTag]: Tree = {
