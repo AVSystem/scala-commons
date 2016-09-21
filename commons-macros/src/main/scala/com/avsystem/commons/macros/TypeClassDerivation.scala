@@ -81,7 +81,8 @@ trait TypeClassDerivation extends MacroCommons {
   /**
     * Contains metadata extracted from `apply` method of companion object of some record (case-class like) type.
     *
-    * @param sym          symbol of the `apply` method parameter
+    * @param sym          symbol of the `apply` method parameter or case class constructor parameter
+    *                     (if `apply` is auto-generated for case class companion object)
     * @param defaultValue tree that evaluates to default value of the `apply` parameter or `EmptyTree`
     * @param instance     tree that evaluates to type class instance for type of this parameter
     */

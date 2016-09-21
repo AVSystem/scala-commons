@@ -62,7 +62,7 @@ trait NamedEnum extends Any {
     * Used as a key for a map returned from `byName`. It is recommended to override this method uniquely
     * by each case object in the sealed hierarchy.
     */
-  val name: String
+  def name: String
   override def toString: String = name
 }
 

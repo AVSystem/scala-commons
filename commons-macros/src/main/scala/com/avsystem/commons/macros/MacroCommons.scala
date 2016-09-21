@@ -258,6 +258,7 @@ trait MacroCommons {
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] = {
     val ts = tpe.typeSymbol.asType
+    val caseClass = ts.isClass && ts.asClass.isCaseClass
     val companion = ts.companion
 
     if (companion != NoSymbol && !companion.isJava) {
@@ -292,7 +293,12 @@ trait MacroCommons {
 
       val applicableResults = applyUnapplyPairs.flatMap {
         case (apply, unapply) if typeParamsMatch(apply, unapply) =>
-          val applySig = setTypeArgs(apply.typeSignature)
+          val constructor =
+            if (caseClass && apply.isSynthetic)
+              alternatives(tpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor).getOrElse(NoSymbol)
+            else NoSymbol
+
+          val applySig = if(constructor != NoSymbol) constructor.typeSignatureIn(tpe) else setTypeArgs(apply.typeSignature)
           val unapplySig = setTypeArgs(unapply.typeSignature)
 
           applySig.paramLists match {
@@ -303,7 +309,7 @@ trait MacroCommons {
               }
               def defaultValueFor(param: Symbol, idx: Int): Tree =
                 if (param.asTerm.isParamWithDefault)
-                  q"$companion.${TermName("apply$default$" + (idx + 1))}[..${tpe.typeArgs}]"
+                  q"$companion.${TermName(s"${param.owner.name.encodedName.toString}$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
                 else EmptyTree
 
               unapplySig.paramLists match {
@@ -311,7 +317,7 @@ trait MacroCommons {
                   fixExistentialOptionType(unapplySig.finalResultType) =:= expectedUnapplyTpe =>
 
                   val paramsWithDefaults = params.zipWithIndex.map({ case (p, i) => (p.asTerm, defaultValueFor(p, i)) })
-                  Some(ApplyUnapply(apply, unapply, paramsWithDefaults))
+                  Some(ApplyUnapply(constructor orElse apply, unapply, paramsWithDefaults))
                 case _ =>
                   None
               }

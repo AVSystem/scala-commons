@@ -2,6 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.serialization.AutoGenCodecTest.ValueClass
+import com.github.ghik.silencer.silent
 
 /**
   * Author: ghik
@@ -13,6 +14,7 @@ object AutoGenCodecTest {
 
 case class HasMap(map: Map[String, String]) extends AnyVal
 
+@silent
 class AutoGenCodecTest extends CodecTestBase {
   object SomeObject
 

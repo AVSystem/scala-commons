@@ -5,6 +5,7 @@ import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.jiop.JavaInterop._
 import com.avsystem.commons.misc.{TypedKey, TypedKeyCompanion, TypedMap}
 import com.avsystem.commons.serialization.GenCodecTest.ValueClass
+import com.github.ghik.silencer.silent
 
 /**
   * Author: ghik
@@ -15,6 +16,7 @@ object GenCodecTest {
   object ValueClass extends HasGenCodec[ValueClass]
 }
 
+@silent
 class GenCodecTest extends CodecTestBase {
   test("NoState test") {
     type NoState = Nothing {type Dummy = Nothing}

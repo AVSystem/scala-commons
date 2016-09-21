@@ -75,11 +75,11 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
     val ttpe = weakTypeOf[T]
     val ftpe = weakTypeOf[F]
 
-    val ApplyUnapply(apply, _, params) = applyUnapplyFor(ttpe)
+    val ApplyUnapply(_, unapply, params) = applyUnapplyFor(ttpe)
       .getOrElse(c.abort(c.enclosingPosition,
         s"Could not find unambiguous, matching pair of apply/unapply methods for $ttpe"))
 
-    val companion = apply.owner.asClass.module
+    val companion = unapply.owner.asClass.module
 
     val expectedTpe = params match {
       case Nil => typeOf[Unit]

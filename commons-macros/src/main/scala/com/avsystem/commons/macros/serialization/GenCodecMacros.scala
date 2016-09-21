@@ -78,7 +78,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     param.defaultValue.nonEmpty && param.sym.annotations.exists(_.tree.tpe <:< TransientDefaultAnnotType)
 
   def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
-    val companion = apply.owner.asClass.module
+    val companion = unapply.owner.asClass.module
     val nameBySym = params.groupBy(p => annotName(p.sym)).map {
       case (name, List(param)) => (param.sym, name)
       case (name, ps) if ps.length > 1 =>
@@ -91,18 +91,6 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     // don't use apply/unapply when they're synthetic (for case class) to avoid reference to companion object
 
     val caseClass = tpe.typeSymbol.isClass && tpe.typeSymbol.asClass.isCaseClass
-
-    val canUseConstructor = caseClass && apply.isSynthetic &&
-      alternatives(tpe.member(termNames.CONSTRUCTOR)).exists { c =>
-        c.isPublic && (c.typeSignatureIn(tpe).paramLists match {
-          case List(constrParams) =>
-            (constrParams corresponds params.map(_.sym)) {
-              case (cp, p) => cp.name == p.name && cp.typeSignature =:= p.typeSignature
-            }
-          case _ => false
-        })
-      }
-
     val canUseFields = caseClass && unapply.isSynthetic && params.forall { p =>
       alternatives(tpe.member(p.sym.name)).exists { f =>
         f.isTerm && f.asTerm.isCaseAccessor && f.isPublic && f.typeSignature.finalResultType =:= p.sym.typeSignature
@@ -110,7 +98,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     }
 
     def applier(args: List[Tree]) =
-      if (canUseConstructor) q"new $tpe(..$args)"
+      if (apply.isConstructor) q"new $tpe(..$args)"
       else q"$companion.apply[..${tpe.typeArgs}](..$args)"
 
     def writeObjectBody = params match {
