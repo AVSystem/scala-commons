@@ -169,6 +169,7 @@ class GenCodecTest extends CodecTestBase {
   }
 
   test("GADT test") {
+    testWriteReadAndAutoWriteRead[Expr[_]](NullExpr, Map("NullExpr" -> Map()))
     testWriteReadAndAutoWriteRead[Expr[_]](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
     testWriteReadAndAutoWriteRead[Expr[String]](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
     testWriteReadAndAutoWriteRead[BaseExpr](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
