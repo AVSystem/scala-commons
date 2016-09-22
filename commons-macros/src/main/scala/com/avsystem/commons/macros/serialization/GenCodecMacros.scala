@@ -199,13 +199,15 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     }
   }
 
-  def forSealedHierarchy(tpe: Type, subtypes: List[KnownSubtype]): Tree = {
-    val dbNameBySym = subtypes.groupBy(st => annotName(st.sym)).map {
-      case (dbName, List(subtype)) => (subtype.sym, dbName)
+  private def dbNameBySymMap(subtypeSymbols: Seq[Symbol]): Map[Symbol,String] =
+    subtypeSymbols.groupBy(st => annotName(st)).map {
+      case (dbName, List(subtype)) => (subtype, dbName)
       case (dbName, kst) =>
-        c.abort(c.enclosingPosition, s"Subclasses ${kst.map(_.sym.name).mkString(", ")} have the same @name: $dbName")
+        c.abort(c.enclosingPosition, s"Subclasses ${kst.map(_.name).mkString(", ")} have the same @name: $dbName")
     }
 
+  def forSealedHierarchy(tpe: Type, subtypes: List[KnownSubtype]): Tree = {
+    val dbNameBySym = dbNameBySymMap(subtypes.map(_.sym))
     val depNames = subtypes.map(st => (st.sym, c.freshName(TermName(st.sym.name.toString + "Codec")))).toMap
     def depDeclaration(subtype: KnownSubtype) =
       q"val ${depNames(subtype.sym)} = ${subtype.instance}"
@@ -246,6 +248,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   def materializeMacroCodec[T: c.WeakTypeTag]: Tree =
     q"$SerializationPkg.MacroCodec($GenCodecObj.materialize[${weakTypeOf[T]}])"
+
+  def forSealedEnum[T: c.WeakTypeTag]: Tree = {
+    val tpe = weakTypeOf[T]
+    q"$GenCodecObj.fromKeyCodec($SerializationPkg.GenKeyCodec.forSealedEnum[$tpe])"
+  }
 }
 
 class GenKeyCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {

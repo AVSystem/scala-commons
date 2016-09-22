@@ -111,6 +111,8 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     (output, value) => output.writeString(keyCodec.write(value))
   )
 
+  def forSealedEnum[T]: GenCodec[T] = macro macros.serialization.GenCodecMacros.forSealedEnum[T]
+
   class ReadFailure(msg: String, cause: Throwable) extends RuntimeException(msg, cause) {
     def this(msg: String) = this(msg, null)
   }
