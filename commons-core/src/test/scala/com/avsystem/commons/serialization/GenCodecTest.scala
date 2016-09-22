@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import java.lang.annotation.RetentionPolicy
+
 import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.jiop.JavaInterop._
 import com.avsystem.commons.misc.{TypedKey, TypedKeyCompanion, TypedMap}
@@ -65,6 +67,11 @@ class GenCodecTest extends CodecTestBase {
     testWriteReadAndAutoWriteRead((1, "lol", 3.0, 'a', List("dafuq", "fuu")),
       List(1, "lol", 3.0, "a", List("dafuq", "fuu"))
     )
+  }
+
+  test("java enum test") {
+    testWriteReadAndAutoWriteRead(RetentionPolicy.RUNTIME, "RUNTIME")
+    testWriteReadAndAutoWriteRead(RetentionPolicy.SOURCE, "SOURCE")
   }
 
   object SomeObject {

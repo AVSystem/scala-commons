@@ -4,6 +4,7 @@ package serialization
 import com.avsystem.commons.jiop.BasicJavaInterop._
 
 import scala.annotation.implicitNotFound
+import scala.reflect.ClassTag
 
 /**
   * Typeclass which expresses ability to convert between MongoDB JSON object keys and values of some type.
@@ -47,4 +48,10 @@ object GenKeyCodec {
   implicit val JLongKeyCodec: GenKeyCodec[JLong] = create(_.toLong, _.toString)
 
   implicit val StringKeyCodec: GenKeyCodec[String] = create(identity, identity)
+
+  implicit def jEnumKeyCodec[E <: Enum[E]](implicit ct: ClassTag[E]): GenKeyCodec[E] =
+    GenKeyCodec.create(
+      string => Enum.valueOf(ct.runtimeClass.asInstanceOf[Class[E]], string),
+      enum => enum.name()
+    )
 }
