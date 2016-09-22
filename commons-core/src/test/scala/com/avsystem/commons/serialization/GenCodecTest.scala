@@ -208,13 +208,13 @@ class GenCodecTest extends CodecTestBase {
     case object Second extends Enumz
     case object Third extends Enumz
 
-    implicit val codec: GenCodec[Enumz] = GenCodec.forSealedEnum[Enumz]
+    implicit val codec: GenCodec[Enumz] = GenCodec.materialize[Enumz]
   }
 
   test("sealed enum test") {
-    testWriteReadAndAutoWriteRead[Enumz](Enumz.First, "Primary")
-    testWriteReadAndAutoWriteRead[Enumz](Enumz.Second, "Second")
-    testWriteReadAndAutoWriteRead[Enumz](Enumz.Third, "Third")
+    testWriteReadAndAutoWriteRead[Enumz](Enumz.First, Map("Primary" -> Map()))
+    testWriteReadAndAutoWriteRead[Enumz](Enumz.Second, Map("Second" -> Map()))
+    testWriteReadAndAutoWriteRead[Enumz](Enumz.Third, Map("Third" -> Map()))
   }
 
   sealed trait KeyEnumz
@@ -224,8 +224,7 @@ class GenCodecTest extends CodecTestBase {
     case object Second extends KeyEnumz
     case object Third extends KeyEnumz
 
-    implicit val keyCodec: GenKeyCodec[KeyEnumz] = GenKeyCodec.forSealedEnum[KeyEnumz]
-    implicit def codec: GenCodec[KeyEnumz] = GenCodec.fromKeyCodec
+    implicit val codec: GenCodec[KeyEnumz] = GenCodec.forSealedEnum[KeyEnumz]
   }
 
   test("sealed enum based on key codec test") {
