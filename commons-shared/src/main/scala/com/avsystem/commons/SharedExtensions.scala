@@ -21,6 +21,8 @@ trait SharedExtensions {
 
   implicit def nullableOps[A >: Null](a: A): NullableOps[A] = new NullableOps(a)
 
+  implicit def intOps(int: Int): IntOps = new IntOps(int)
+
   implicit def futureOps[A](fut: Future[A]): FutureOps[A] = new FutureOps(fut)
 
   implicit def lazyFutureOps[A](fut: => Future[A]): LazyFutureOps[A] = new LazyFutureOps(fut)
@@ -80,6 +82,16 @@ object SharedExtensions extends SharedExtensions {
 
   class NullableOps[A >: Null](private val a: A) extends AnyVal {
     def optRef: OptRef[A] = OptRef(a)
+  }
+
+  class IntOps(private val int: Int) extends AnyVal {
+    def times(code: => Any): Unit = {
+      var i = 0
+      while (i < int) {
+        code
+        i += 1
+      }
+    }
   }
 
   class FutureOps[A](private val fut: Future[A]) extends AnyVal {
