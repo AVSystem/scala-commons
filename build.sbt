@@ -111,8 +111,7 @@ lazy val commons = project.in(file("."))
     `commons-mongo`,
     `commons-spring`,
     `commons-redis`,
-    `commons-akka`,
-    `commons-akka-benchmark`
+    `commons-akka`
   )
   .settings(name := "commons")
   .settings(commonSettings: _*)
@@ -194,11 +193,10 @@ lazy val `commons-mongo` = project
   )
 
 lazy val `commons-redis` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-core`, `commons-akka`)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
       "com.chuusai" %% "shapeless" % shapelessVersion
     ),
@@ -228,9 +226,3 @@ lazy val `commons-akka` = project
       "org.mockito" % "mockito-core" % "2.0.54-beta" % Test
     )
   )
-
-lazy val `commons-akka-benchmark` = project
-  .dependsOn(`commons-akka`)
-  .settings(commonSettings: _*)
-  .settings(noPublishSettings: _*)
-  .enablePlugins(JmhPlugin)
