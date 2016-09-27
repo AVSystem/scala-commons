@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package macros
 
-import scala.reflect.macros.TypecheckException
+import scala.reflect.macros.blackbox
 
 /**
   * Author: ghik
@@ -12,8 +12,8 @@ trait TypeClassDerivation extends MacroCommons {
   import c.universe._
 
   val DeferredInstanceCls = tq"$CommonsPackage.derivation.DeferredInstance"
-  val materializeRecursivelyCls = tq"$CommonsPackage.derivation.MaterializeRecursively"
-  val materializeRecursivelyObj = q"$CommonsPackage.derivation.MaterializeRecursively"
+  val AllowImplicitMacroCls = tq"$CommonsPackage.derivation.AllowImplicitMacro"
+  val AllowImplicitMacroObj = q"$CommonsPackage.derivation.AllowImplicitMacro"
   val RecursiveImplicitMarkerObj = q"$CommonsPackage.macros.RecursiveImplicitMarker"
 
   /**
@@ -81,11 +81,12 @@ trait TypeClassDerivation extends MacroCommons {
   /**
     * Contains metadata extracted from `apply` method of companion object of some record (case-class like) type.
     *
-    * @param sym          symbol of the `apply` method parameter
+    * @param sym          symbol of the `apply` method parameter or case class constructor parameter
+    *                     (if `apply` is auto-generated for case class companion object)
     * @param defaultValue tree that evaluates to default value of the `apply` parameter or `EmptyTree`
     * @param instance     tree that evaluates to type class instance for type of this parameter
     */
-  case class ApplyParam(sym: Symbol, defaultValue: Tree, instance: Tree)
+  case class ApplyParam(sym: TermSymbol, defaultValue: Tree, instance: Tree)
 
   /**
     * Contains metadata extracted from one of the case subtypes in a sealed hierarchy.
@@ -109,12 +110,12 @@ trait TypeClassDerivation extends MacroCommons {
     * Derives type class instance for record type. Record type is a class/trait whose companion object has
     * matching `apply` and `unapply` methods. In particular, every case class is a proper record type.
     *
-    * @param tpe       the record type
-    * @param companion symbol of the companion object of record type; can be used to refer to `apply` and
-    *                  `unapply` methods
-    * @param params    metadata for parameters of `apply` method
+    * @param tpe     the record type
+    * @param apply   symbol of the `apply` method in companion object
+    * @param unapply symbol of the `unapply` method in companion object
+    * @param params  metadata for parameters of `apply` method
     */
-  def forApplyUnapply(tpe: Type, companion: Symbol, params: List[ApplyParam]): Tree
+  def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree
 
   /**
     * Derives type class instance for union type (sealed hierarchy in which every non-abstract subtype has
@@ -137,89 +138,78 @@ trait TypeClassDerivation extends MacroCommons {
   def materializeFor(tpe: Type): Tree = {
     val tcTpe = typeClassInstance(tpe)
 
-    def handleMissingDependency[T](hint: String)(expr: => T): T =
-      try expr catch {
-        case TypecheckException(pos, msg) =>
-          throw new TypecheckException(pos, s"Cannot automatically derive $typeClassName for $tpe because ($hint):\n$msg")
-      }
+    def dependency(depTpe: Type, hint: String, allowImplicitMacro: Boolean = false): Tree = {
+      val clue = s"Cannot automatically derive type class instance $tcTpe because ($hint):\n"
+      val depTcTpe = typeClassInstance(depTpe)
+      val allowDef = if (allowImplicitMacro)
+        q"""
+          implicit val ${c.freshName(TermName("allow"))}: $AllowImplicitMacroCls[$depTcTpe] =
+            $AllowImplicitMacroObj[$depTcTpe]
+         """
+      else
+        q"()"
 
-    def inferDependency(depTpe: Type, silent: Boolean = false): Tree =
-      c.typecheck(q"implicitly[${typeClassInstance(depTpe)}]", silent = silent) match {
-        case Apply(_, List(arg)) => arg
-        case EmptyTree => EmptyTree
-      }
+      q"""
+        $allowDef
+        $ImplicitsObj.infer[$depTcTpe]($clue)
+       """
+    }
 
     def singleTypeTc = singleValueFor(tpe).map(tree => forSingleton(tpe, tree))
     def applyUnapplyTc = applyUnapplyFor(tpe).map {
-      case ApplyUnapply(companion, params) =>
+      case ApplyUnapply(apply, unapply, params) =>
         val dependencies = params.map { case (s, defaultValue) =>
-          ApplyParam(s, defaultValue, handleMissingDependency(s"for field ${s.name}")(inferDependency(s.typeSignature)))
+          ApplyParam(s, defaultValue, dependency(s.typeSignature, s"for field ${s.name}"))
         }
-        forApplyUnapply(tpe, companion, dependencies)
+        forApplyUnapply(tpe, apply, unapply, dependencies)
     }
     def sealedHierarchyTc = knownSubtypes(tpe).map { subtypes =>
       if (subtypes.isEmpty) {
         abort(s"Could not find any subtypes for $tpe")
       }
       val dependencies = subtypes.map { depTpe =>
-        val depTree = handleMissingDependency(s"for case type $depTpe") {
-          inferDependency(depTpe, silent = true) match {
-            case EmptyTree => materializeFor(depTpe)
-            case tree => tree
-          }
-        }
+        val depTree = dependency(depTpe, s"for case type $depTpe", allowImplicitMacro = true)
         KnownSubtype(depTpe, depTree)
       }
       withKnownSubclassesCheck(forSealedHierarchy(tpe, dependencies), tpe)
     }
-    val result = singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown(tpe)
+
+    val untypedResult = singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown(tpe)
 
     val deferredName = c.freshName(TermName("deferred"))
-    lazy val Block(List(deferredVal), deferredIdent) =
-      c.typecheck(q"val $deferredName: $DeferredInstanceCls[$tcTpe] with $tcTpe = ${implementDeferredInstance(tpe)}; $deferredName")
-
-    // the transformer replaces recursive implicits with references to 'deferred instance'
-    object transformer extends Transformer {
-      var changed = false
-      override def transform(tree: Tree): Tree = {
-        if (tree.symbol != null && tree.tpe != null) {
-          if (!tree.isDef && tree.symbol.isImplicit && tree.tpe.widen =:= tcTpe) {
-            changed = true
-            deferredIdent.duplicate
-          } else super.transform(tree)
-        } else super.transform(tree)
-      }
-    }
-    Some(transformer.transform(result)).filter(_ => transformer.changed).map { guardedResult =>
+    val guardedResult@Block(List(_, Apply(_, List(result))), _) = c.typecheck(
       q"""
-         $deferredVal
-         ${deferredIdent.duplicate}.underlying = $guardedResult
-         ${deferredIdent.duplicate}.underlying
-         """
-    }.getOrElse(result)
+        implicit val $deferredName: $DeferredInstanceCls[$tcTpe] with $tcTpe =
+          ${implementDeferredInstance(tpe)}
+        $deferredName.underlying = $untypedResult
+        $deferredName.underlying
+       """
+    )
+
+    val needsGuarding = result.exists {
+      case Ident(`deferredName`) => true
+      case _ => false
+    }
+
+    if (needsGuarding) guardedResult else result
   }
 
-  def materialize[T: c.WeakTypeTag]: Tree = abortOnTypecheckException {
-    val tpe = weakTypeOf[T]
-    val tcTpe = typeClassInstance(tpe)
+  def materialize[T: c.WeakTypeTag]: Tree =
+    abortOnTypecheckException(materializeFor(weakTypeOf[T]))
 
-    c.enclosingMacros.tail
-      .map(ctx => internal.createImporter(ctx.universe).importTree(ctx.macroApplication))
-      .collectFirst {
-        // avoid going into infinite recursion during auto derivation
-        case tree if tree.symbol == c.macroApplication.symbol && tree.tpe =:= tcTpe =>
-          // will be replaced by reference to deferred instance
-          q"$RecursiveImplicitMarkerObj.mark[$tcTpe]"
-      }
-      .getOrElse(materializeFor(weakTypeOf[T]))
-  }
+  def materializeImplicitly[T: c.WeakTypeTag](allow: Tree): Tree =
+    materialize[T]
 
   def materializeAuto[T: c.WeakTypeTag]: Tree = {
-    val tpe = weakTypeOf[T]
+    val tcTpe = typeClassInstance(weakTypeOf[T])
+    val tName = c.freshName(TypeName("T"))
     q"""
-       implicit val ${c.freshName(TermName("allow"))}: $materializeRecursivelyCls[$typeClass] =
-         $materializeRecursivelyObj[$typeClass]
-       ${wrapInAuto(q"implicitly[${typeClassInstance(tpe)}]")}
+       implicit def ${c.freshName(TermName("allow"))}[$tName]: $AllowImplicitMacroCls[$typeClass[$tName]] =
+         $AllowImplicitMacroObj[$typeClass[$tName]]
+       ${wrapInAuto(q"""$ImplicitsObj.infer[$tcTpe]("")""")}
      """
   }
 }
+
+abstract class AbstractTypeClassDerivation(c: blackbox.Context)
+  extends AbstractMacroCommons(c) with TypeClassDerivation

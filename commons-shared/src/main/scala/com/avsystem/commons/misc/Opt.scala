@@ -100,7 +100,10 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
   }
 
   @inline def collect[B](pf: PartialFunction[A, B]): Opt[B] =
-    if (!isEmpty) new Opt(pf.applyOrElse(value, Opt.emptyMarkerFunc)) else Opt.Empty
+    if (!isEmpty) {
+      val res = pf.applyOrElse(value, Opt.emptyMarkerFunc)
+      new Opt(if (res == null) EmptyMarker else res)
+    } else Opt.Empty
 
   @inline def orElse[B >: A](alternative: => Opt[B]): Opt[B] =
     if (isEmpty) alternative else this

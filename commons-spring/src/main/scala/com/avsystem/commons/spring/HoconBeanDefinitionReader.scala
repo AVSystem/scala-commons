@@ -12,7 +12,6 @@ import org.springframework.beans.factory.support._
 import org.springframework.beans.{MutablePropertyValues, PropertyValue}
 import org.springframework.core.io.Resource
 
-import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
 class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
@@ -41,7 +40,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   private def iterate(obj: ConfigObject)
     (attrFun: (String, ConfigValue) => Any)
     (propFun: (String, ConfigValue) => Any) =
-    obj.foreach {
+    obj.asScala.foreach {
       case (key, _) if key.startsWith("_") =>
       case (key, value) if key.startsWith("%") => attrFun(key, value)
       case (key, value) => propFun(key, value)
@@ -66,7 +65,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   }
 
   private def getProps(obj: ConfigObject) =
-    obj.filterKeys(k => !k.startsWith("%") && !k.startsWith("_"))
+    obj.asScala.filterKeys(k => !k.startsWith("%") && !k.startsWith("_"))
 
   private def badAttr(key: String, value: ConfigValue) =
     throw new IllegalArgumentException(s"Unexpected attribute $key at ${value.origin.description}")
@@ -134,7 +133,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   private def readList(obj: ConfigObject) = {
     validateObj(required = Set(ListAttr), allowed = Set(MergeAttr, ValueTypeAttr))(obj)
     setup(new ManagedList[Any]) { list =>
-      list.addAll(obj.get(ListAttr).as[ConfigList].map(read))
+      list.addAll(obj.get(ListAttr).as[ConfigList].asScala.map(read).asJavaCollection)
       list.setMergeEnabled(obj.get(MergeAttr).as[Option[Boolean]].getOrElse(false))
       list.setElementTypeName(obj.get(ValueTypeAttr).as[Option[String]].orNull)
     }
@@ -145,7 +144,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     val elements = obj.get(ArrayAttr).as[ConfigList]
     val valueType = obj.get(ValueTypeAttr).as[Option[String]].getOrElse("")
     val result = new ManagedArray(valueType, elements.size)
-    result.addAll(elements.map(v => read(v).asInstanceOf[AnyRef]))
+    result.addAll(elements.asScala.map(v => read(v).asInstanceOf[AnyRef]).asJavaCollection)
     result.setMergeEnabled(obj.get(MergeAttr).as[Option[Boolean]].getOrElse(false))
     result
   }
@@ -153,7 +152,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   private def readSet(obj: ConfigObject) = {
     validateObj(required = Set(SetAttr), allowed = Set(MergeAttr, ValueTypeAttr))(obj)
     setup(new ManagedSet[Any]) { set =>
-      set.addAll(obj.get(SetAttr).as[ConfigList].map(read))
+      set.addAll(obj.get(SetAttr).as[ConfigList].asScala.map(read).asJavaCollection)
       set.setMergeEnabled(obj.get(MergeAttr).as[Option[Boolean]].getOrElse(false))
       set.setElementTypeName(obj.get(ValueTypeAttr).as[Option[String]].orNull)
     }
@@ -161,7 +160,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
 
   private def readRawList(list: ConfigList) = {
     setup(new ManagedList[Any]) { ml =>
-      ml.addAll(list.map(read))
+      ml.addAll(list.asScala.map(read).asJavaCollection)
     }
   }
 
@@ -171,7 +170,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
       mm.setMergeEnabled(obj.get(MergeAttr).as[Option[Boolean]].getOrElse(false))
       mm.setKeyTypeName(obj.get(KeyTypeAttr).as[Option[String]].orNull)
       mm.setValueTypeName(obj.get(ValueTypeAttr).as[Option[String]].orNull)
-      obj.get(EntriesAttr).as[Option[ConfigList]].getOrElse(ju.Collections.emptyList).foreach {
+      obj.get(EntriesAttr).as[Option[ConfigList]].getOrElse(ju.Collections.emptyList).asScala.foreach {
         case obj: ConfigObject =>
           validateObj(required = Set(KeyAttr, ValueAttr))(obj)
           mm.put(read(obj.get(KeyAttr)), read(obj.get(ValueAttr)))
@@ -188,7 +187,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     validateObj(required = Set(PropsAttr), allowed = Set(MergeAttr))(obj)
     setup(new ManagedProperties) { mp =>
       mp.setMergeEnabled(obj.get(MergeAttr).as[Option[Boolean]].getOrElse(false))
-      obj.get(PropsAttr).as[Option[Config]].getOrElse(ConfigFactory.empty).entrySet.foreach {
+      obj.get(PropsAttr).as[Option[Config]].getOrElse(ConfigFactory.empty).entrySet.asScala.foreach {
         case entry if Set(STRING, NUMBER, BOOLEAN).contains(entry.getValue.valueType) =>
           mp.setProperty(entry.getKey, entry.getValue.unwrapped.toString)
         case entry => throw new IllegalArgumentException(s"Bad prop definition at ${entry.getValue.origin.description}")
@@ -233,15 +232,15 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
         case (key, value) => bd.getMethodOverrides.addOverride(new LookupOverride(key, value.as[String]))
       }
     }
-    obj.get(MetaAttr).as[Option[ConfigObject]].getOrElse(ConfigFactory.empty.root).foreach {
+    obj.get(MetaAttr).as[Option[ConfigObject]].getOrElse(ConfigFactory.empty.root).asScala.foreach {
       case (mkey, mvalue) => bd.setAttribute(mkey, mvalue.as[String])
     }
     obj.get(ParentAttr).as[Option[String]].foreach(bd.setParentName)
     obj.get(PrimaryAttr).as[Option[Boolean]].foreach(bd.setPrimary)
-    obj.get(QualifiersAttr).as[Option[ju.List[ConfigObject]]].getOrElse(ju.Collections.emptyList).foreach { obj =>
+    obj.get(QualifiersAttr).as[Option[ju.List[ConfigObject]]].getOrElse(ju.Collections.emptyList).asScala.foreach { obj =>
       bd.addQualifier(readQualifier(obj))
     }
-    obj.get(ReplacedMethodsAttr).as[Option[ju.List[ConfigObject]]].getOrElse(ju.Collections.emptyList).foreach { obj =>
+    obj.get(ReplacedMethodsAttr).as[Option[ju.List[ConfigObject]]].getOrElse(ju.Collections.emptyList).asScala.foreach { obj =>
       bd.getMethodOverrides.addOverride(readReplacedMethod(obj))
     }
     obj.get(ScopeAttr).as[Option[String]].foreach(bd.setScope)
@@ -271,7 +270,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   private def readReplacedMethod(obj: ConfigObject) = {
     validateObj(required = Set(NameAttr, ReplacerAttr), allowed = Set(ArgTypesAttr))(obj)
     val replaceOverride = new ReplaceOverride(obj.get(NameAttr).as[String], obj.get(ReplacerAttr).as[String])
-    obj.get(ArgTypesAttr).as[Option[ju.List[String]]].getOrElse(ju.Collections.emptyList).foreach(replaceOverride.addTypeIdentifier)
+    obj.get(ArgTypesAttr).as[Option[ju.List[String]]].getOrElse(ju.Collections.emptyList).asScala.foreach(replaceOverride.addTypeIdentifier)
     replaceOverride
   }
 
@@ -309,7 +308,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     case ValueDefinition(obj) =>
       validateObj(required = Set(ValueAttr), allowed = Set(MetaAttr))(obj)
       val pv = new PropertyValue(name, read(obj.get(ValueAttr)))
-      obj.get(MetaAttr).as[Option[ConfigObject]].getOrElse(ConfigFactory.empty.root).foreach {
+      obj.get(MetaAttr).as[Option[ConfigObject]].getOrElse(ConfigFactory.empty.root).asScala.foreach {
         case (mkey, mvalue) => pv.setAttribute(mkey, mvalue.as[String])
       }
       pv

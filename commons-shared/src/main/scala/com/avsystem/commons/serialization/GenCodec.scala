@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.collection.CollectionAliases._
-import com.avsystem.commons.derivation.{DeferredInstance, MaterializeRecursively}
+import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.BasicJavaInterop._
 import com.avsystem.commons.jiop.JCanBuildFrom
 import com.avsystem.commons.misc.{NOpt, Opt, OptRef}
@@ -110,6 +110,8 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     input => keyCodec.read(input.readString()),
     (output, value) => output.writeString(keyCodec.write(value))
   )
+
+  def forSealedEnum[T]: GenCodec[T] = macro macros.serialization.GenCodecMacros.forSealedEnum[T]
 
   class ReadFailure(msg: String, cause: Throwable) extends RuntimeException(msg, cause) {
     def this(msg: String) = this(msg, null)
@@ -306,6 +308,9 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   implicit def optRefCodec[T >: Null : GenCodec]: GenCodec[OptRef[T]] =
     new TransformedCodec[OptRef[T], Opt[T]](optCodec[T], _.toOpt, opt => OptRef(opt.orNull))
 
+  implicit def jEnumCodec[E <: Enum[E]: GenKeyCodec]: GenCodec[E] =
+    fromKeyCodec[E]
+
   // Needed because of SI-9453
   implicit val NothingAutoCodec: GenCodec.Auto[Nothing] = GenCodec.Auto[Nothing](NothingCodec)
 }
@@ -362,8 +367,8 @@ trait RecursiveAutoCodecs { this: GenCodec.type =>
   /**
     * Used internally for materialization of `GenCodec.Auto`. Should not be used directly.
     */
-  implicit def materializeRecursivelyImplicitly[T](implicit allow: MaterializeRecursively[GenCodec]): GenCodec[T] =
-  macro macros.serialization.GenCodecMacros.materializeRecursivelyImplicitly[T]
+  implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] =
+  macro macros.serialization.GenCodecMacros.materializeImplicitly[T]
 
   implicit def materializeAuto[T]: GenCodec.Auto[T] =
   macro macros.serialization.GenCodecMacros.materializeAuto[T]

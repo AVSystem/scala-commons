@@ -6,6 +6,5 @@ package derivation
   * Created: 07/12/15.
   */
 trait DeferredInstance[T] {this: T =>
-
   var underlying: T = _
 }

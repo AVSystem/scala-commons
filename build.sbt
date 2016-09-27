@@ -4,6 +4,7 @@ cancelable in Global := true
 
 inThisBuild(Seq(
   scalaVersion := "2.11.8",
+  crossScalaVersions := Seq("2.11.8"),
   organization := "com.avsystem.commons",
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
@@ -21,7 +22,7 @@ inThisBuild(Seq(
   )
 ))
 
-val silencerVersion = "0.3"
+val silencerVersion = "0.5"
 val guavaVersion = "18.0"
 val jsr305Version = "3.0.0"
 val scalatestVersion = "3.0.0"
@@ -68,14 +69,14 @@ val commonSettings = Seq(
     </developers>
   },
 
-  libraryDependencies += compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion),
+  libraryDependencies += compilerPlugin("com.github.ghik" %% "silencer-plugin" % silencerVersion),
   libraryDependencies ++= Seq(
-    "com.github.ghik" % "silencer-lib" % silencerVersion,
+    "com.github.ghik" %% "silencer-lib" % silencerVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
     "org.apache.commons" % "commons-io" % commonsIoVersion % Test
   ),
-  dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.4",
+  dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
   ideBasePackages := Seq(organization.value),
   ideOutputDirectory in Compile := Some(baseDirectory.value / "out/production"),
   ideOutputDirectory in Test := Some(baseDirectory.value / "out/test"),
@@ -89,6 +90,10 @@ val noPublishSettings = Seq(
   publishM2 :=(),
   publishSigned :=(),
   publishLocalSigned :=()
+)
+
+val scala212Settings = Seq(
+  crossScalaVersions += "2.12.0-RC1"
 )
 
 val CompileAndTest = "compile->compile;test->test"
@@ -115,10 +120,12 @@ lazy val commons = project.in(file("."))
 
 lazy val `commons-annotations` = project
   .settings(commonSettings: _*)
+  .settings(scala212Settings: _*)
 
 lazy val `commons-macros` = project
   .dependsOn(`commons-annotations`)
   .settings(commonSettings: _*)
+  .settings(scala212Settings: _*)
   .settings(
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
   )
@@ -127,6 +134,7 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
   .jsConfigure(_.dependsOn(`commons-macros`))
   .jvmConfigure(_.dependsOn(`commons-macros`))
   .settings(commonSettings: _*)
+  .settings(scala212Settings: _*)
   .jsSettings(
     scalacOptions += {
       val localDir = (baseDirectory in ThisBuild).value.toURI.toString
@@ -142,6 +150,7 @@ lazy val `commons-sharedJS` = `commons-shared`.js
 
 lazy val `commons-core` = project.dependsOn(`commons-macros` % CompileAndTest, `commons-sharedJVM`)
   .settings(commonSettings: _*)
+  .settings(scala212Settings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
@@ -152,6 +161,7 @@ lazy val `commons-core` = project.dependsOn(`commons-macros` % CompileAndTest, `
 lazy val `commons-analyzer` = project
   .dependsOn(`commons-core` % Test)
   .settings(commonSettings: _*)
+  .settings(scala212Settings: _*)
   .settings(
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
   )
@@ -175,6 +185,7 @@ lazy val `commons-benchmark` = project
 
 lazy val `commons-mongo` = project
   .dependsOn(`commons-core`)
+  .settings(scala212Settings: _*)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
@@ -197,6 +208,7 @@ lazy val `commons-redis` = project
 lazy val `commons-spring` = project
   .dependsOn(`commons-core`)
   .settings(commonSettings: _*)
+  .settings(scala212Settings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "org.springframework" % "spring-context" % springVersion,

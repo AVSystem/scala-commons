@@ -8,7 +8,7 @@ import scala.language.higherKinds
   * Used to inform the compiler and macro engine that automatic derivation of particular type class is
   * allowed in some context.
   */
-sealed trait MaterializeRecursively[TC[_]]
-object MaterializeRecursively {
-  def apply[TC[_]]: MaterializeRecursively[TC] = null
+sealed trait AllowImplicitMacro[T]
+object AllowImplicitMacro {
+  def apply[T]: AllowImplicitMacro[T] = null
 }

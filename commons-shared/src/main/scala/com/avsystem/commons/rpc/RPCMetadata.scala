@@ -7,7 +7,8 @@ package rpc
   */
 object RPCMetadata {
   def apply[T](implicit metadata: RPCMetadata[T]): RPCMetadata[T] = metadata
-  implicit def materialize[T]: RPCMetadata[T] = macro macros.rpc.RPCMacros.materializeMetadata[T]
+  implicit def implicitlyMaterialize[T]: RPCMetadata[T] = macro macros.rpc.RPCMacros.materializeMetadata[T]
+  def materialize[T]: RPCMetadata[T] = macro macros.rpc.RPCMacros.materializeMetadata[T]
 }
 
 trait RPCMetadata[T] {

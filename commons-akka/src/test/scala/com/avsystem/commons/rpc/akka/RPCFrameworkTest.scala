@@ -5,9 +5,9 @@ import com.github.ghik.silencer.silent
 import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import org.scalatest.concurrent.AsyncAssertions.Waiter
+import org.scalatest.concurrent.Waiters.Waiter
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.time.Span
 import org.scalatest.{FlatSpecLike, Matchers}
 

@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.serialization.GenKeyCodec
+import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
 /**
   * Author: ghik
@@ -62,7 +62,7 @@ trait NamedEnum extends Any {
     * Used as a key for a map returned from `byName`. It is recommended to override this method uniquely
     * by each case object in the sealed hierarchy.
     */
-  val name: String
+  def name: String
   override def toString: String = name
 }
 
@@ -74,5 +74,6 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
    */
   lazy val byName: Map[String, T] = values.iterator.map(v => (v.name, v)).toMap
 
-  implicit lazy val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(s => byName(s), _.name)
+  implicit lazy val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(byName, _.name)
+  implicit lazy val codec: GenCodec[T] = GenCodec.fromKeyCodec
 }

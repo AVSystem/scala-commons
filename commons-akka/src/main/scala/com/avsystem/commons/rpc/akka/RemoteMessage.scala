@@ -14,18 +14,18 @@ private object RemoteMessage {
   implicit val byteStringCodec = GenCodec.create[ByteString](input => ByteString(input.readBinary()), (output, byteString) => output.writeBinary(byteString.toArray))
   implicit val rawInvocationCodec = GenCodec.materialize[RawInvocation]
 
-  implicit val procedureInvocationMessageCodec = GenCodec.materialize[ProcedureInvocationMessage]
-  implicit val functionInvocationMessageCodec = GenCodec.materialize[FunctionInvocationMessage]
-  implicit val observableInvocationMessageCodec = GenCodec.materialize[ObservableInvocationMessage]
+  implicit val procedureInvocationMessageCodec: GenCodec[ProcedureInvocationMessage] = GenCodec.materialize[ProcedureInvocationMessage]
+  implicit val functionInvocationMessageCodec: GenCodec[FunctionInvocationMessage] = GenCodec.materialize[FunctionInvocationMessage]
+  implicit val observableInvocationMessageCodec: GenCodec[ObservableInvocationMessage] = GenCodec.materialize[ObservableInvocationMessage]
 
-  implicit val invocationSuccessCodec = GenCodec.materialize[InvocationSuccess]
-  implicit val invocationFailureCodec = GenCodec.materialize[InvocationFailure]
+  implicit val invocationSuccessCodec: GenCodec[InvocationSuccess] = GenCodec.materialize[InvocationSuccess]
+  implicit val invocationFailureCodec: GenCodec[InvocationFailure] = GenCodec.materialize[InvocationFailure]
 
-  implicit val continueCodec = GenCodec.materialize[MonifuProtocol.Continue.type]
-  implicit val cancelCodec = GenCodec.materialize[MonifuProtocol.Cancel.type]
-  implicit val subscribeCodec = GenCodec.materialize[MonifuProtocol.Subscribe.type]
-  implicit val streamCompletedCodec = GenCodec.materialize[MonifuProtocol.StreamCompleted.type]
-  implicit val heatBeatCodec = GenCodec.materialize[MonifuProtocol.Heartbeat.type]
+  implicit val continueCodec: GenCodec[MonifuProtocol.Continue.type] = GenCodec.materialize[MonifuProtocol.Continue.type]
+  implicit val cancelCodec: GenCodec[MonifuProtocol.Cancel.type] = GenCodec.materialize[MonifuProtocol.Cancel.type]
+  implicit val subscribeCodec: GenCodec[MonifuProtocol.Subscribe.type] = GenCodec.materialize[MonifuProtocol.Subscribe.type]
+  implicit val streamCompletedCodec: GenCodec[MonifuProtocol.StreamCompleted.type] = GenCodec.materialize[MonifuProtocol.StreamCompleted.type]
+  implicit val heatBeatCodec: GenCodec[MonifuProtocol.Heartbeat.type] = GenCodec.materialize[MonifuProtocol.Heartbeat.type]
 }
 
 private final case class RawInvocation(rpcName: String, argLists: List[List[RawValue]]) extends RemoteMessage

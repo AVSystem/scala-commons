@@ -50,9 +50,9 @@ class StreamInputOutputTest extends FunSuite {
     )
   )
 
-  implicit val wrapCodec = GenCodec.materialize[Wrap]
-  implicit val objCodec = GenCodec.materialize[Obj]
-  implicit val fieldTypesCodec = GenCodec.materialize[FieldTypes]
+  implicit val wrapCodec: GenCodec[Wrap] = GenCodec.materialize[Wrap]
+  implicit val objCodec: GenCodec[Obj] = GenCodec.materialize[Obj]
+  implicit val fieldTypesCodec: GenCodec[FieldTypes] = GenCodec.materialize[FieldTypes]
 
   def outputs() = {
     val os = new ByteArrayOutputStream()

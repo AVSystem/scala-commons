@@ -6,6 +6,7 @@
 *.ipr
 
 target
+out
 
 *.sjsir
 *.class

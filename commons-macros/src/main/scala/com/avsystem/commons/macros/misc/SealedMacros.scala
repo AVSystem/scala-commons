@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package macros.misc
 
-import com.avsystem.commons.macros.MacroCommons
+import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.reflect.macros.blackbox
 
@@ -9,7 +9,7 @@ import scala.reflect.macros.blackbox
   * Author: ghik
   * Created: 11/12/15.
   */
-class SealedMacros(val c: blackbox.Context) extends MacroCommons {
+class SealedMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 

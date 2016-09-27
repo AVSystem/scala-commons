@@ -1,10 +1,13 @@
 package com.avsystem.commons
 package serialization
 
+import java.lang.annotation.RetentionPolicy
+
 import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.jiop.JavaInterop._
 import com.avsystem.commons.misc.{TypedKey, TypedKeyCompanion, TypedMap}
 import com.avsystem.commons.serialization.GenCodecTest.ValueClass
+import com.github.ghik.silencer.silent
 
 /**
   * Author: ghik
@@ -12,11 +15,10 @@ import com.avsystem.commons.serialization.GenCodecTest.ValueClass
   */
 object GenCodecTest {
   case class ValueClass(str: String) extends AnyVal
-  object ValueClass {
-    implicit val codec: GenCodec[ValueClass] = GenCodec.materialize[ValueClass]
-  }
+  object ValueClass extends HasGenCodec[ValueClass]
 }
 
+@silent
 class GenCodecTest extends CodecTestBase {
   test("NoState test") {
     type NoState = Nothing {type Dummy = Nothing}
@@ -67,6 +69,11 @@ class GenCodecTest extends CodecTestBase {
     )
   }
 
+  test("java enum test") {
+    testWriteReadAndAutoWriteRead(RetentionPolicy.RUNTIME, "RUNTIME")
+    testWriteReadAndAutoWriteRead(RetentionPolicy.SOURCE, "SOURCE")
+  }
+
   object SomeObject {
     implicit val codec = GenCodec.materialize[SomeObject.type]
   }
@@ -76,18 +83,14 @@ class GenCodecTest extends CodecTestBase {
   }
 
   case class NoArgCaseClass()
-  object NoArgCaseClass {
-    implicit val codec = GenCodec.materialize[NoArgCaseClass]
-  }
+  object NoArgCaseClass extends HasGenCodec[NoArgCaseClass]
 
   test("no arg case class test") {
     testWriteReadAndAutoWriteRead(NoArgCaseClass(), Map())
   }
 
   case class SingleArgCaseClass(str: String)
-  object SingleArgCaseClass {
-    implicit val codec = GenCodec.materialize[SingleArgCaseClass]
-  }
+  object SingleArgCaseClass extends HasGenCodec[SingleArgCaseClass]
 
   test("single arg case class test") {
     testWriteReadAndAutoWriteRead(SingleArgCaseClass("something"), Map("str" -> "something"))
@@ -95,18 +98,14 @@ class GenCodecTest extends CodecTestBase {
 
   @transparent
   case class TransparentWrapper(str: String)
-  object TransparentWrapper {
-    implicit val codec = GenCodec.materialize[TransparentWrapper]
-  }
+  object TransparentWrapper extends HasGenCodec[TransparentWrapper]
 
   test("transparent wrapper test") {
     testWriteReadAndAutoWriteRead(TransparentWrapper("something"), "something")
   }
 
   case class SomeCaseClass(@name("some.str") str: String, intList: List[Int])
-  object SomeCaseClass {
-    implicit val codec = GenCodec.materialize[SomeCaseClass]
-  }
+  object SomeCaseClass extends HasGenCodec[SomeCaseClass]
 
   test("case class test") {
     testWriteReadAndAutoWriteRead(SomeCaseClass("dafuq", List(1, 2, 3)),
@@ -170,6 +169,7 @@ class GenCodecTest extends CodecTestBase {
   }
 
   test("GADT test") {
+    testWriteReadAndAutoWriteRead[Expr[_]](NullExpr, Map("NullExpr" -> Map()))
     testWriteReadAndAutoWriteRead[Expr[_]](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
     testWriteReadAndAutoWriteRead[Expr[String]](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
     testWriteReadAndAutoWriteRead[BaseExpr](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
@@ -224,8 +224,7 @@ class GenCodecTest extends CodecTestBase {
     case object Second extends KeyEnumz
     case object Third extends KeyEnumz
 
-    implicit val keyCodec: GenKeyCodec[KeyEnumz] = GenKeyCodec.forSealedEnum[KeyEnumz]
-    implicit def codec: GenCodec[KeyEnumz] = GenCodec.fromKeyCodec
+    implicit val codec: GenCodec[KeyEnumz] = GenCodec.forSealedEnum[KeyEnumz]
   }
 
   test("sealed enum based on key codec test") {

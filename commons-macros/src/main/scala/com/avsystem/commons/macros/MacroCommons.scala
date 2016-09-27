@@ -24,8 +24,10 @@ trait MacroCommons {
   val ListCls = tq"$CollectionPkg.immutable.List"
   val NilObj = q"$CollectionPkg.immutable.Nil"
   val MapObj = q"$CollectionPkg.immutable.Map"
+  val MaterializedCls = tq"$CommonsPackage.derivation.Materialized"
   val FutureSym = typeOf[Future[_]].typeSymbol
   val OptionClass = definitions.OptionClass
+  val ImplicitsObj = q"$CommonsPackage.misc.Implicits"
 
   lazy val ownerChain = {
     val sym = c.typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
@@ -33,8 +35,11 @@ trait MacroCommons {
   }
 
   lazy val enclosingClasses = {
-    val sym = c.typecheck(q"this").tpe.typeSymbol
-    Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).toList
+    val enclosingSym = c.typecheck(q"this", silent = true) match {
+      case EmptyTree => Iterator.iterate(c.internal.enclosingOwner)(_.owner).find(_.isModuleClass).get
+      case tree => tree.tpe.typeSymbol
+    }
+    Iterator.iterate(enclosingSym)(_.owner).takeWhile(_ != NoSymbol).toList
   }
 
   implicit class treeOps[T <: Tree](t: T) {
@@ -249,10 +254,11 @@ trait MacroCommons {
     case _ => tpe
   }
 
-  case class ApplyUnapply(companion: Symbol, params: List[(Symbol, Tree)])
+  case class ApplyUnapply(apply: Symbol, unapply: Symbol, params: List[(TermSymbol, Tree)])
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] = {
     val ts = tpe.typeSymbol.asType
+    val caseClass = ts.isClass && ts.asClass.isCaseClass
     val companion = ts.companion
 
     if (companion != NoSymbol && !companion.isJava) {
@@ -287,7 +293,12 @@ trait MacroCommons {
 
       val applicableResults = applyUnapplyPairs.flatMap {
         case (apply, unapply) if typeParamsMatch(apply, unapply) =>
-          val applySig = setTypeArgs(apply.typeSignature)
+          val constructor =
+            if (caseClass && apply.isSynthetic)
+              alternatives(tpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor).getOrElse(NoSymbol)
+            else NoSymbol
+
+          val applySig = if(constructor != NoSymbol) constructor.typeSignatureIn(tpe) else setTypeArgs(apply.typeSignature)
           val unapplySig = setTypeArgs(unapply.typeSignature)
 
           applySig.paramLists match {
@@ -298,15 +309,15 @@ trait MacroCommons {
               }
               def defaultValueFor(param: Symbol, idx: Int): Tree =
                 if (param.asTerm.isParamWithDefault)
-                  q"$companion.${TermName("apply$default$" + (idx + 1))}[..${tpe.typeArgs}]"
+                  q"$companion.${TermName(s"${param.owner.name.encodedName.toString}$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
                 else EmptyTree
 
               unapplySig.paramLists match {
                 case List(List(soleArg)) if soleArg.typeSignature =:= tpe &&
                   fixExistentialOptionType(unapplySig.finalResultType) =:= expectedUnapplyTpe =>
 
-                  val paramsWithDefaults = params.zipWithIndex.map({ case (p, i) => (p, defaultValueFor(p, i)) })
-                  Some(ApplyUnapply(companion, paramsWithDefaults))
+                  val paramsWithDefaults = params.zipWithIndex.map({ case (p, i) => (p.asTerm, defaultValueFor(p, i)) })
+                  Some(ApplyUnapply(constructor orElse apply, unapply, paramsWithDefaults))
                 case _ =>
                   None
               }
@@ -391,11 +402,21 @@ trait MacroCommons {
     }
   }
 
+  def inferOrMaterialize(typeClass: Type)(materialize: => Tree): Tree =
+    if (c.macroApplication.symbol.isImplicit)
+      c.inferImplicitValue(typeClass, withMacrosDisabled = true) match {
+        case EmptyTree => materialize
+        case tree => tree
+      }
+    else materialize
+
   def abortOnTypecheckException[T](expr: => T): T =
     try expr catch {
       case TypecheckException(pos, msg) => abort(msg)
     }
 
   def typecheckException(msg: String) =
-    throw new TypecheckException(c.enclosingPosition, msg)
+    throw TypecheckException(c.enclosingPosition, msg)
 }
+
+abstract class AbstractMacroCommons(val c: blackbox.Context) extends MacroCommons
