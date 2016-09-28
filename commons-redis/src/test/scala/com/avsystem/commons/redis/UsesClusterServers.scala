@@ -14,7 +14,7 @@ import scala.sys.process._
   * Author: ghik
   * Created: 27/06/16.
   */
-trait UsesClusterServers extends BeforeAndAfterAll with RedisProcessUtils {this: Suite =>
+trait UsesClusterServers extends BeforeAndAfterAll with RedisProcessUtils { this: Suite =>
 
   val clusterDir = new File("cluster/" + System.currentTimeMillis())
 

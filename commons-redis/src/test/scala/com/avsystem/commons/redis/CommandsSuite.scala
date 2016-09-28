@@ -2,11 +2,13 @@ package com.avsystem.commons
 package redis
 
 import akka.util.{ByteString, ByteStringBuilder}
+import org.scalactic.source.Position
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.reflect.ClassTag
 
 /**
   * Author: ghik
@@ -29,7 +31,7 @@ trait ByteStringInterpolation {
 trait CommandsSuite extends FunSuite with ScalaFutures with BeforeAndAfterEach
   with ByteStringInterpolation with CommunicationLogging {
 
-  val redisKey = bs"key"
+  val redisKey = "key"
   def executor: RedisExecutor
 
   protected def setup(batches: RedisBatch[Any]*): Unit = {
@@ -38,15 +40,15 @@ trait CommandsSuite extends FunSuite with ScalaFutures with BeforeAndAfterEach
   }
 
   protected implicit class BatchOps[T](batch: RedisBatch[T]) {
-    def get: T = exec.futureValue
+    def get(implicit pos: Position): T = exec.futureValue
     def exec: Future[T] = executor.execute(batch)
-    def assert(pred: T => Boolean): Unit = CommandsSuite.this.assert(pred(exec.futureValue))
-    def assertEquals(t: T): Unit = assert(_ == t)
-    def intercept[E <: Throwable : Manifest]: E = CommandsSuite.this.intercept[E](throw exec.failed.futureValue)
+    def assert(pred: T => Boolean)(implicit pos: Position): Unit = CommandsSuite.this.assert(pred(get))
+    def assertEquals(t: T)(implicit pos: Position): Unit = assertResult(t)(get)
+    def intercept[E <: Throwable : ClassTag](implicit pos: Position): E = CommandsSuite.this.intercept[E](throw exec.failed.futureValue)
   }
 }
 
-trait RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
+abstract class RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
   def executor = redisClient.toExecutor
 
   override def clusterConfig =
@@ -64,13 +66,13 @@ trait RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster w
     }
 
   override protected def afterEach() = {
-    val futures = redisClient.currentState.masters.values.map(_.executeBatch(RedisCommands.flushall))
+    val futures = redisClient.currentState.masters.values.map(_.executeBatch(RedisBinaryCommands.flushall))
     Await.ready(Future.sequence(futures), Duration.Inf)
     super.afterEach()
   }
 }
 
-trait RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with CommandsSuite {
+abstract class RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with CommandsSuite {
   def executor = redisClient.toExecutor
 
   override def nodeConfig =
@@ -85,19 +87,19 @@ trait RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with Comm
     }
 
   override protected def afterEach() = {
-    Await.ready(executor.execute(RedisCommands.flushall), Duration.Inf)
+    Await.ready(executor.execute(RedisBinaryCommands.flushall), Duration.Inf)
     super.afterEach()
   }
 }
 
-trait RedisConnectionCommandsSuite extends FunSuite with UsesRedisConnectionClient with CommandsSuite {
+abstract class RedisConnectionCommandsSuite extends FunSuite with UsesRedisConnectionClient with CommandsSuite {
   def executor = redisClient.toExecutor
 
   override def connectionConfig =
     super.connectionConfig.copy(debugListener = listener)
 
   override protected def afterEach() = {
-    Await.ready(executor.execute(RedisCommands.flushall), Duration.Inf)
+    Await.ready(executor.execute(RedisBinaryCommands.flushall), Duration.Inf)
     super.afterEach()
   }
 }

@@ -35,7 +35,7 @@ object Test {
     val ctr = new AtomicInteger(0)
     as.scheduler.schedule(Duration.Zero, 1.seconds) {
       val i = ctr.incrementAndGet()
-      client.executeBatch(RedisCommands.get("costam".bytes).map(_.map(_.utf8String)))
+      client.executeBatch(RedisStringCommands.get("costam"))
         .onComplete {
           case Success(result) => println(s"$i: SUCCESSFUL $result")
           case Failure(cause) => println(s"$i: FAILED $cause")

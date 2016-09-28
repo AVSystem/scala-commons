@@ -13,17 +13,17 @@ import scala.concurrent.{Await, Future}
   */
 class RedisClusterClientTest extends RedisClusterCommandsSuite {
 
-  import RedisCommands._
+  import RedisStringCommands._
 
   test("simple get") {
-    get(bs"key").assertEquals(Opt.Empty)
+    get("key").assertEquals(Opt.Empty)
   }
 
   test("distribution") {
     val slots = List(0, 7000, 7001, 1, 14000, 14001, 7002)
-    setup(slots.map(s => set(slotKey(s), bs"$s")).sequence)
+    setup(slots.map(s => set(slotKey(s), s"$s")).sequence)
     val batch = slots.map(s => get(slotKey(s))).sequence
-    batch.assertEquals(slots.map(s => bs"$s".opt))
+    batch.assertEquals(slots.map(s => s"$s".opt))
   }
 
   test("no keys") {
@@ -48,26 +48,26 @@ class RedisClusterClientTest extends RedisClusterCommandsSuite {
 
 class ClusterSlotMigrationTest extends RedisClusterCommandsSuite {
 
-  import RedisCommands._
+  import RedisStringCommands._
 
   test("empty slot migration") {
     migrateSlot(0, 7000).futureValue
   }
 
   test("single key slot migration") {
-    setup(set(slotKey(1), bs"value"))
+    setup(set(slotKey(1), "value"))
     migrateSlot(1, 7000).futureValue
   }
 
   test("multiple keys slot migration") {
-    setup(mset((0 until 10).map(i => (bs"{${slotKey(2)}}$i", bs"value"))))
+    setup(mset((0 until 10).map(i => ("{${slotKey(2)}}$i", "value"))))
     migrateSlot(2, 7000).futureValue
   }
 }
 
 class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
 
-  import RedisCommands._
+  import RedisStringCommands._
 
   // don't refresh cluster state
   override def clusterConfig = super.clusterConfig.copy(minRefreshInterval = Int.MaxValue.seconds)
@@ -107,7 +107,7 @@ class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
 
 class ClusterFailoverHandlingTest extends RedisClusterCommandsSuite {
 
-  import RedisCommands._
+  import RedisStringCommands._
 
   // don't refresh cluster state
   override def clusterConfig = super.clusterConfig.copy(minRefreshInterval = Int.MaxValue.seconds)

@@ -10,10 +10,10 @@ import scala.concurrent.{Await, Future}
 
 class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
 
-  import RedisCommands._
+  import RedisStringCommands._
 
   test("empty transaction") {
-    setup(set(redisKey, bs"42"))
+    setup(set(redisKey, "42"))
     val batch = RedisBatch.success(42).transaction
     batch.assertEquals(42)
 
@@ -33,7 +33,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
   }
 
   test("simple transaction") {
-    val batch = set(bs"randomkey", bs"value").transaction
+    val batch = set("randomkey", "value").transaction
     batch.assert(identity)
 
     assertCommunication(
@@ -62,8 +62,8 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
 
   test("nested transactions") {
     val batch = (
-      get(bs"nestedkey"),
-      set(bs"nestedkey", bs"value").transaction
+      get("nestedkey"),
+      set("nestedkey", "value").transaction
       ).sequence.transaction
 
     batch.assertEquals((Opt.Empty, true))
@@ -100,14 +100,14 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
   }
 
   test("simple transaction with watch") {
-    setup(set(redisKey, bs"42"))
+    setup(set(redisKey, "42"))
 
     val operation = for {
-      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse(bs"0"))
+      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse("0"))
       _ <- set(redisKey, value).transaction
     } yield value
 
-    assert(redisClient.executeOp(operation).futureValue == bs"42")
+    assert(redisClient.executeOp(operation).futureValue == "42")
 
     assertCommunication(
       """
@@ -149,14 +149,14 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
   }
 
   test("optimistic lock failure") {
-    setup(set(redisKey, bs"42"))
+    setup(set(redisKey, "42"))
 
     val operation = for {
-      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse(bs"0"))
+      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse("0"))
       _ <- RedisOp.success {
         // simulate concurrent client reading watched key
         val client = new RedisConnectionClient(redisClient.address)
-        Await.result(client.execute(set(redisKey, bs"42")), Duration.Inf)
+        Await.result(client.execute(set(redisKey, "42")), Duration.Inf)
         client.close()
       }
       _ <- set(redisKey, value).transaction
@@ -242,7 +242,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
 
 class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
 
-  import RedisCommands._
+  import RedisStringCommands._
 
   override def nodeConfig = super.nodeConfig.copy(
     poolSize = 1,
@@ -251,25 +251,25 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
 
   // needed in order to force the client to execute UNWATCH before test finishes
   private def withDummyGet[T](fut: Future[T]) =
-  fut.andThen({ case _ => redisClient.executeBatch(get(bs"dummy")) })
+  fut.andThen({ case _ => redisClient.executeBatch(get("dummy")) })
 
   test("simple transaction with cleanup") {
-    setup(set(redisKey, bs"0"))
+    setup(set(redisKey, "0"))
 
     val operation = for {
-      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse(bs"0"))
+      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse("0"))
       _ <- set(redisKey, value)
     } yield value
 
-    assert(withDummyGet(redisClient.executeOp(operation)).futureValue == bs"0")
+    assert(withDummyGet(redisClient.executeOp(operation)).futureValue == "0")
     assert(listener.result().contains("UNWATCH"))
   }
 
   test("simple transaction with cleanup after failure") {
-    setup(set(redisKey, bs"0"))
+    setup(set(redisKey, "0"))
 
     val operation = for {
-      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse(bs"0"))
+      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse("0"))
       _ <- RedisOp.failure(new IllegalArgumentException("SRSLY"))
     } yield value
 
@@ -278,10 +278,10 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
   }
 
   test("simple transaction with cleanup after redis failure") {
-    setup(set(redisKey, bs"0"))
+    setup(set(redisKey, "0"))
 
     val operation = for {
-      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse(bs"0"))
+      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.getOrElse("0"))
       _ <- clusterInfo // cluster info will fail on non-cluster Redis instance
     } yield value
 
@@ -290,11 +290,11 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
   }
 
   test("concurrent transactions") {
-    setup(set(redisKey, bs"0"))
+    setup(set(redisKey, "0"))
 
     val operation = for {
-      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.map(_.utf8String.toInt).getOrElse(0))
-      _ <- set(redisKey, bs"${value + 1}").transaction
+      value <- watch(Seq(redisKey)) *> get(redisKey).map(_.map(_.toInt).getOrElse(0))
+      _ <- set(redisKey, s"${value + 1}").transaction
     } yield value
 
     def execute = redisClient.executeOp(operation)

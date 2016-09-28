@@ -4,7 +4,7 @@ package redis.commands
 import akka.util.ByteString
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.ClusterUtils.keyWithSameSlotAs
-import com.avsystem.commons.redis.{CommandsSuite, RedisClusterCommandsSuite, RedisCommands, RedisConnectionCommandsSuite, RedisNodeCommandsSuite}
+import com.avsystem.commons.redis._
 
 import scala.concurrent.Future
 
@@ -13,133 +13,133 @@ import scala.concurrent.Future
   * Created: 14/04/16.
   */
 trait ClusteredKeysApiSuite extends CommandsSuite {
-  import RedisCommands._
+  import RedisStringCommands._
 
   test("DEL") {
-    setup(set(bs"key", bs"value"))
-    del(Seq(bs"key")).assertEquals(1)
+    setup(set("key", "value"))
+    del(Seq("key")).assertEquals(1)
   }
 
   test("DUMP") {
-    setup(set(bs"key", bs"value"))
-    dump(bs"???").assert(_.isEmpty)
-    dump(bs"key").assert(_.nonEmpty)
+    setup(set("key", "value"))
+    dump("???").assert(_.isEmpty)
+    dump("key").assert(_.nonEmpty)
   }
 
   test("EXISTS") {
-    setup(set(bs"key", bs"value"))
-    exists(Seq(bs"???")).assertEquals(0)
-    exists(Seq(bs"key")).assertEquals(1)
+    setup(set("key", "value"))
+    exists(Seq("???")).assertEquals(0)
+    exists(Seq("key")).assertEquals(1)
   }
 
   test("EXPIRE") {
-    setup(set(bs"key", bs"value"))
-    expire(bs"key", Int.MaxValue).assert(identity)
+    setup(set("key", "value"))
+    expire("key", Int.MaxValue).assert(identity)
   }
 
   test("EXPIREAT") {
-    setup(set(bs"key", bs"value"))
-    expireat(bs"key", Int.MaxValue).assert(identity)
+    setup(set("key", "value"))
+    expireat("key", Int.MaxValue).assert(identity)
   }
 
   test("OBJECT REFCOUNT") {
-    setup(set(bs"key", bs"value"))
-    objectRefcount(bs"???").assert(_.isEmpty)
-    objectRefcount(bs"key").assert(_.nonEmpty)
+    setup(set("key", "value"))
+    objectRefcount("???").assert(_.isEmpty)
+    objectRefcount("key").assert(_.nonEmpty)
   }
 
   test("OBJECT ENCODING") {
-    setup(set(bs"key", bs"value"))
-    objectEncoding(bs"???").assert(_.isEmpty)
-    objectEncoding(bs"key").assert(_.nonEmpty)
+    setup(set("key", "value"))
+    objectEncoding("???").assert(_.isEmpty)
+    objectEncoding("key").assert(_.nonEmpty)
   }
 
   test("OBJECT IDLETIME") {
-    setup(set(bs"key", bs"value"))
-    objectIdletime(bs"???").assert(_.isEmpty)
-    objectIdletime(bs"key").assert(_.nonEmpty)
+    setup(set("key", "value"))
+    objectIdletime("???").assert(_.isEmpty)
+    objectIdletime("key").assert(_.nonEmpty)
   }
 
   test("PERSIST") {
-    setup(set(bs"key", bs"value"))
-    persist(bs"key").assertEquals(false)
+    setup(set("key", "value"))
+    persist("key").assertEquals(false)
   }
 
   test("PEXPIRE") {
-    setup(set(bs"key", bs"value"))
-    pexpire(bs"key", Int.MaxValue).assert(identity)
+    setup(set("key", "value"))
+    pexpire("key", Int.MaxValue).assert(identity)
   }
 
   test("PEXPIREAT") {
-    setup(set(bs"key", bs"value"))
-    pexpireat(bs"key", Int.MaxValue).assert(identity)
+    setup(set("key", "value"))
+    pexpireat("key", Int.MaxValue).assert(identity)
   }
 
   test("PTTL") {
     setup(
-      set(bs"key", bs"value"),
-      setex(bs"exkey", Int.MaxValue, bs"value")
+      set("key", "value"),
+      setex("exkey", Int.MaxValue, "value")
     )
-    pttl(bs"???").assertEquals(Opt.Empty)
-    pttl(bs"key").assertEquals(Opt(Opt.Empty))
-    pttl(bs"exkey").assert(_.exists(_.nonEmpty))
+    pttl("???").assertEquals(Opt.Empty)
+    pttl("key").assertEquals(Opt(Opt.Empty))
+    pttl("exkey").assert(_.exists(_.nonEmpty))
   }
 
   test("RENAME") {
-    setup(set(bs"key", bs"value"))
-    rename(bs"key", keyWithSameSlotAs(bs"key")).exec.futureValue
+    setup(set("key", "value"))
+    rename("key", keyWithSameSlotAs("key")).exec.futureValue
   }
 
   test("RENAMENX") {
-    setup(set(bs"key", bs"value"))
-    renamenx(bs"key", keyWithSameSlotAs(bs"key")).assert(identity)
+    setup(set("key", "value"))
+    renamenx("key", keyWithSameSlotAs("key")).assert(identity)
   }
 
   test("RESTORE") {
-    setup(set(bs"key", bs"value"))
-    val dumped = dump(bs"key").exec.futureValue.get
-    restore(bs"torestore", 1, dumped).exec.futureValue
+    setup(set("key", "value"))
+    val dumped = dump("key").exec.futureValue.get
+    restore("torestore", 1, dumped).exec.futureValue
   }
 
   test("SORT") {
-    sort(bs"somelist",
+    sort("somelist",
       Opt(SelfPattern), Opt(SortLimit(0, 1)), SortOrder.Desc, alpha = true).assert(_.isEmpty)
   }
 
   test("SORT with STORE") {
-    sortStore(bs"somelist", keyWithSameSlotAs(bs"somelist")).assertEquals(0)
+    sortStore("somelist", keyWithSameSlotAs("somelist")).assertEquals(0)
   }
 
   test("TTL") {
     setup(
-      set(bs"key", bs"value"),
-      setex(bs"exkey", Int.MaxValue, bs"value")
+      set("key", "value"),
+      setex("exkey", Int.MaxValue, "value")
     )
-    ttl(bs"???").assertEquals(Opt.Empty)
-    ttl(bs"key").assertEquals(Opt(Opt.Empty))
-    ttl(bs"exkey").assert(_.exists(_.nonEmpty))
+    ttl("???").assertEquals(Opt.Empty)
+    ttl("key").assertEquals(Opt(Opt.Empty))
+    ttl("exkey").assert(_.exists(_.nonEmpty))
   }
 
   test("TYPE") {
-    setup(set(bs"key", bs"value"))
-    `type`(bs"key").assertEquals(RedisType.String)
+    setup(set("key", "value"))
+    `type`("key").assertEquals(RedisType.String)
   }
 }
 
 trait NodeKeysApiSuite extends ClusteredKeysApiSuite {
-  import RedisCommands._
+  import RedisStringCommands._
 
-  private val scanKeys = (0 until 32).map(i => bs"toscan$i")
+  private val scanKeys = (0 until 32).map(i => s"toscan$i")
 
   test("KEYS") {
-    setup(mset(scanKeys.map(k => (k, bs"value"))))
-    keys(bs"toscan*").assert(_.toSet == scanKeys.toSet)
+    setup(mset(scanKeys.map(k => (k, "value"))))
+    keys("toscan*").assert(_.toSet == scanKeys.toSet)
   }
 
   test("SCAN") {
-    setup(mset(scanKeys.map(k => (k, bs"value"))))
-    def scanCollect(cursor: Cursor, acc: Seq[ByteString]): Future[Seq[ByteString]] =
-      scan(cursor, Opt(bs"toscan*"), Opt(4L)).exec.flatMapNow {
+    setup(mset(scanKeys.map(k => (k, "value"))))
+    def scanCollect(cursor: Cursor, acc: Seq[String]): Future[Seq[String]] =
+      scan(cursor, Opt("toscan*"), Opt(4L)).exec.flatMapNow {
         case (Cursor.NoCursor, data) => Future.successful(acc ++ data)
         case (nextCursor, data) => scanCollect(nextCursor, acc ++ data)
       }
@@ -147,29 +147,29 @@ trait NodeKeysApiSuite extends ClusteredKeysApiSuite {
   }
 
   test("DEL multikey") {
-    setup(set(bs"key", bs"value"))
-    del(Seq(bs"key", bs"foo")).assertEquals(1)
+    setup(set("key", "value"))
+    del(Seq("key", "foo")).assertEquals(1)
   }
 
   test("MOVE") {
-    setup(set(bs"key", bs"value"))
-    move(bs"key", 1).assert(identity)
+    setup(set("key", "value"))
+    move("key", 1).assert(identity)
   }
 
   test("EXISTS multikey") {
-    setup(set(bs"key", bs"value"))
-    exists(Seq(bs"key", bs"foo")).assertEquals(1)
+    setup(set("key", "value"))
+    exists(Seq("key", "foo")).assertEquals(1)
   }
 
   test("SORT with GET") {
-    sortGet(bs"somelist", Seq(HashFieldPattern(bs"hash", bs"*")),
+    sortGet("somelist", Seq(HashFieldPattern("hash", "*")),
       Opt(SelfPattern), Opt(SortLimit(0, 1)), SortOrder.Desc, alpha = true).assert(_.isEmpty)
   }
 
   test("SORT with BY") {
-    sort(bs"somelist", by = SelfPattern.opt).assert(_.isEmpty)
-    sort(bs"somelist", by = KeyPattern(bs"sth_*").opt).assert(_.isEmpty)
-    sort(bs"somelist", by = HashFieldPattern(bs"hash_*", bs"sth_*").opt).assert(_.isEmpty)
+    sort("somelist", by = SelfPattern.opt).assert(_.isEmpty)
+    sort("somelist", by = KeyPattern("sth_*").opt).assert(_.isEmpty)
+    sort("somelist", by = HashFieldPattern("hash_*", "sth_*").opt).assert(_.isEmpty)
   }
 }
 

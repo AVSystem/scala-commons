@@ -24,8 +24,8 @@ trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem {th
       val sourceClient = state.clientForSlot(slot)
       val targetClient = state.clientForSlot(targetNodeSlot)
       if (sourceClient != targetClient) {
-        val sourceApi = RedisNodeAsyncCommands(sourceClient.toExecutor)
-        val targetApi = RedisNodeAsyncCommands(targetClient.toExecutor)
+        val sourceApi = new RedisBinaryNodeAsyncCommands(sourceClient.toExecutor)
+        val targetApi = new RedisBinaryNodeAsyncCommands(targetClient.toExecutor)
         val sourceIdFut = sourceApi.clusterNodes.map(_.find(_.flags.myself).get.id)
         val targetIdFut = targetApi.clusterNodes.map(_.find(_.flags.myself).get.id)
         val keysToMigrateFut = sourceApi.clusterGetkeysinslot(slot, Int.MaxValue)

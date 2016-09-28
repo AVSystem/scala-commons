@@ -17,7 +17,7 @@ class RedisConnectionClientTest extends FunSuite
     new RedisConnectionClient(address, config = ConnectionConfig(initCommands))
 
   test("client initialization test") {
-    import RedisCommands._
+    import RedisStringCommands._
     val client = createClient(select(0) *> ping)
 
     val f1 = client.execute(echo(bs"LOL1"))
@@ -28,7 +28,7 @@ class RedisConnectionClientTest extends FunSuite
   }
 
   test("client initialization failure test") {
-    import RedisCommands._
+    import RedisStringCommands._
     val client = createClient(clusterInfo)
 
     val f1 = client.execute(echo(bs"LOL1"))

@@ -1,10 +1,9 @@
 package com.avsystem.commons
 package redis.commands
 
-import akka.util.ByteString
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.commands.Georadius._
+import com.avsystem.commons.redis.commands.GeoradiusAttrs._
 
 import scala.collection.immutable.ListMap
 
@@ -14,11 +13,11 @@ import scala.collection.immutable.ListMap
   */
 trait GeoApiSuite extends CommandsSuite {
 
-  import RedisCommands._
+  import RedisStringCommands._
 
-  final val Key = ByteString("Cities")
-  final val StoreKey = ByteString("{Cities}Stored")
-  final val OtherKey = ByteString("Other")
+  final val Key = "Cities"
+  final val StoreKey = "{Cities}Stored"
+  final val OtherKey = "Other"
 
   final val Lodz = GeoPoint(19.45598512887954712, 51.75924813957209381)
   final val Cracow = GeoPoint(19.94497865438461304, 50.06465016961141146)
@@ -28,12 +27,12 @@ trait GeoApiSuite extends CommandsSuite {
   final val Gdansk = GeoPoint(18.64663928747177124, 54.35202455234454533)
 
   final val Cities = ListMap(
-    bs"Kraków" -> Cracow,
-    bs"Warszawa" -> Warsaw,
-    bs"Wrocław" -> Wroclaw,
-    bs"Poznań" -> Poznan,
-    bs"Gdańsk" -> Gdansk,
-    bs"Łódź" -> Lodz
+    "Kraków" -> Cracow,
+    "Warszawa" -> Warsaw,
+    "Wrocław" -> Wroclaw,
+    "Poznań" -> Poznan,
+    "Gdańsk" -> Gdansk,
+    "Łódź" -> Lodz
   )
 
   test("GEOADD") {
@@ -68,19 +67,19 @@ trait GeoApiSuite extends CommandsSuite {
 
   test("GEODIST") {
     setup(geoadd(Key, Cities.toList))
-    geodist(Key, bs"Kraków", bs"Warszawa").assertEquals(252051.6096.opt)
-    geodist(Key, bs"Kraków", bs"Warszawa", GeoUnit.Km).assertEquals(252.0516.opt)
-    geodist(Key, bs"Kraków", bs"Nic").assertEquals(Opt.Empty)
-    geodist(OtherKey, bs"Kraków", bs"Warszawa").assertEquals(Opt.Empty)
+    geodist(Key, "Kraków", "Warszawa").assertEquals(252051.6096.opt)
+    geodist(Key, "Kraków", "Warszawa", GeoUnit.Km).assertEquals(252.0516.opt)
+    geodist(Key, "Kraków", "Nic").assertEquals(Opt.Empty)
+    geodist(OtherKey, "Kraków", "Warszawa").assertEquals(Opt.Empty)
   }
 
   val Names = List(
-    bs"Łódź",
-    bs"Warszawa",
-    bs"Wrocław",
-    bs"Poznań",
-    bs"Kraków",
-    bs"Gdańsk"
+    "Łódź",
+    "Warszawa",
+    "Wrocław",
+    "Poznań",
+    "Kraków",
+    "Gdańsk"
   )
   val Distances = List(
     0.0,
@@ -110,9 +109,9 @@ trait GeoApiSuite extends CommandsSuite {
   test("GEORADIUS") {
     setup(geoadd(Key, Cities.toList))
     georadius(Key, Lodz, 150, GeoUnit.Km)
-      .assertEquals(List(bs"Łódź", bs"Warszawa"))
+      .assertEquals(List("Łódź", "Warszawa"))
     georadius(Key, Lodz, 300, GeoUnit.Km, sortOrder = SortOrder.Desc.opt, count = 2L.opt)
-      .assertEquals(List(bs"Gdańsk", bs"Kraków"))
+      .assertEquals(List("Gdańsk", "Kraków"))
     georadius(OtherKey, Lodz, 10, GeoUnit.Km).assertEquals(Nil)
 
     val WithDistances = (Distances zip Names).map({ case (dist, name) => Withdist(dist, name) })
@@ -139,31 +138,31 @@ trait GeoApiSuite extends CommandsSuite {
   test("GEORADIUSBYMEMBER") {
     setup(geoadd(Key, Cities.toList))
 
-    georadiusbymember(Key, bs"Łódź", 150, GeoUnit.Km)
-      .assertEquals(List(bs"Łódź", bs"Warszawa"))
-    georadiusbymember(Key, bs"Łódź", 300, GeoUnit.Km, sortOrder = SortOrder.Desc.opt, count = 2L.opt)
-      .assertEquals(List(bs"Gdańsk", bs"Kraków"))
-    georadiusbymember(OtherKey, bs"Łódź", 10, GeoUnit.Km).assertEquals(Nil)
+    georadiusbymember(Key, "Łódź", 150, GeoUnit.Km)
+      .assertEquals(List("Łódź", "Warszawa"))
+    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, sortOrder = SortOrder.Desc.opt, count = 2L.opt)
+      .assertEquals(List("Gdańsk", "Kraków"))
+    georadiusbymember(OtherKey, "Łódź", 10, GeoUnit.Km).assertEquals(Nil)
 
     val WithDistances = (Distances zip Names).map({ case (dist, name) => Withdist(dist, name) })
     val WithCoordsDistances = (Coords zip WithDistances).map({ case (coord, rest) => Withcoord(coord, rest) })
     val WithHashesCoordsDistances = (Hashes zip WithCoordsDistances).map({ case (hash, rest) => Withhash(hash, rest) })
 
-    georadiusbymember(Key, bs"Łódź", 300, GeoUnit.Km, sortOrder = SortOrder.Asc.opt)
+    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, sortOrder = SortOrder.Asc.opt)
       .assertEquals(Names)
-    georadiusbymember(Key, bs"Łódź", 300, GeoUnit.Km, Withdist, sortOrder = SortOrder.Asc.opt)
+    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, Withdist, sortOrder = SortOrder.Asc.opt)
       .assertEquals(WithDistances)
-    georadiusbymember(Key, bs"Łódź", 300, GeoUnit.Km, Withcoord + Withdist, sortOrder = SortOrder.Asc.opt)
+    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, Withcoord + Withdist, sortOrder = SortOrder.Asc.opt)
       .assertEquals(WithCoordsDistances)
-    georadiusbymember(Key, bs"Łódź", 300, GeoUnit.Km, Withhash + Withcoord + Withdist, sortOrder = SortOrder.Asc.opt)
+    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, Withhash + Withcoord + Withdist, sortOrder = SortOrder.Asc.opt)
       .assertEquals(WithHashesCoordsDistances)
   }
 
   test("GEORADIUSBYMEMBER with STORE") {
     setup(geoadd(Key, Cities.toList))
 
-    georadiusbymemberStore(Key, bs"Łódź", 300, GeoUnit.Km, StoreKey).assertEquals(Opt(6L))
-    georadiusbymemberStore(Key, bs"Łódź", 300, GeoUnit.Km, StoreKey, storeDist = true).assertEquals(Opt(6L))
+    georadiusbymemberStore(Key, "Łódź", 300, GeoUnit.Km, StoreKey).assertEquals(Opt(6L))
+    georadiusbymemberStore(Key, "Łódź", 300, GeoUnit.Km, StoreKey, storeDist = true).assertEquals(Opt(6L))
   }
 }
 

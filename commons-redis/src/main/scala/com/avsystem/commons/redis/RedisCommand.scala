@@ -11,9 +11,9 @@ import com.avsystem.commons.redis.protocol._
 import scala.collection.mutable.ArrayBuffer
 
 trait RedisCommand[+A] extends AtomicBatch[A] with RawCommand {
-  def decodeExpected: PartialFunction[ValidRedisMsg, A]
+  protected def decodeExpected: PartialFunction[ValidRedisMsg, A]
 
-  def decode(replyMsg: RedisReply): A = replyMsg match {
+  protected def decode(replyMsg: RedisReply): A = replyMsg match {
     case validReply: ValidRedisMsg =>
       decodeExpected.applyOrElse(validReply, (r: ValidRedisMsg) => throw new UnexpectedReplyException(r.toString))
     case err: ErrorMsg =>
@@ -39,13 +39,17 @@ final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) exten
     this
   }
 
-  def key(key: ByteString) = fluent(buffer += CommandKeyMsg(key))
-  def keys(keys: TraversableOnce[ByteString]) = fluent(keys.foreach(key))
+  def key[K: RedisDataCodec](k: K) = fluent(buffer += CommandKeyMsg(RedisDataCodec.write(k)))
+  def keys[K: RedisDataCodec](keys: TraversableOnce[K]) = fluent(keys.foreach(key[K]))
+  def value[V: RedisDataCodec](v: V) = fluent(buffer += BulkStringMsg(RedisDataCodec.write(v)))
+  def values[V: RedisDataCodec](values: TraversableOnce[V]) = fluent(values.foreach(value[V]))
   def add[T: CommandArg](value: T): CommandEncoder = fluent(CommandArg.add(this, value))
   def addFlag(flag: String, value: Boolean): CommandEncoder = if (value) add(flag) else this
   def optAdd[T: CommandArg](flag: String, value: Opt[T]) = fluent(value.foreach(t => add(flag).add(t)))
-  def optKey(flag: String, value: Opt[ByteString]) = fluent(value.foreach(t => add(flag).key(t)))
-  def keyValues[T: CommandArg](keyValues: TraversableOnce[(ByteString, T)]) = fluent(keyValues.foreach({ case (k, v) => key(k).add(v) }))
+  def optKey[K: RedisDataCodec](flag: String, value: Opt[K]) = fluent(value.foreach(t => add(flag).key(t)))
+  def optValue[V: RedisDataCodec](flag: String, value: Opt[V]) = fluent(value.foreach(t => add(flag).value(t)))
+  def keyValues[K: RedisDataCodec, V: RedisDataCodec](keyValues: TraversableOnce[(K, V)]) =
+    fluent(keyValues.foreach({ case (k, v) => key(k).value(v) }))
 }
 
 object CommandEncoder {
@@ -70,6 +74,37 @@ object CommandEncoder {
         case (ce, (a, b)) =>
           ce.add(a)
           ce.add(b)
+      }
+  }
+}
+
+trait HasCodec[A] {
+  protected def codec: RedisDataCodec[A]
+}
+
+trait RedisDataCommand[A] extends RedisCommand[A] with HasCodec[A] {
+  protected def decodeExpected = {
+    case BulkStringMsg(data) => codec.read(data)
+  }
+}
+
+trait RedisOptDataCommand[A] extends RedisOptCommand[A] with HasCodec[A] {
+  protected def decodeNonEmpty(bytes: ByteString) = codec.read(bytes)
+}
+
+trait RedisDataSeqCommand[A] extends RedisSeqCommand[A] with HasCodec[A] {
+  protected val decodeElement: PartialFunction[ValidRedisMsg, A] = {
+    case BulkStringMsg(bs) => codec.read(bs)
+  }
+}
+
+trait RedisOptDataSeqCommand[A] extends RedisCommand[Seq[Opt[A]]] with HasCodec[A] {
+  protected def decodeExpected = {
+    case ArrayMsg(elements) =>
+      elements.map {
+        case BulkStringMsg(bs) => Opt(codec.read(bs))
+        case NullBulkStringMsg => Opt.Empty
+        case msg => throw new UnexpectedReplyException(s"Expected multi bulk reply, but one of the elements is $msg")
       }
   }
 }
@@ -118,11 +153,12 @@ trait RedisBinaryCommand extends RedisCommand[ByteString] {
   }
 }
 
-trait RedisOptBinaryCommand extends RedisCommand[Opt[ByteString]] {
+trait RedisOptCommand[A] extends RedisCommand[Opt[A]] {
   def decodeExpected = {
-    case BulkStringMsg(data) => Opt(data)
+    case BulkStringMsg(data) => Opt(decodeNonEmpty(data))
     case NullBulkStringMsg => Opt.Empty
   }
+  protected def decodeNonEmpty(bytes: ByteString): A
 }
 
 trait RedisSeqCommand[A] extends RedisCommand[Seq[A]] {

@@ -1,30 +1,29 @@
 package com.avsystem.commons
 package redis.commands
 
-import akka.util.ByteString
 import com.avsystem.commons.redis.protocol.{ArrayMsg, ErrorMsg, NullArrayMsg, RedisMsg}
 import com.avsystem.commons.redis.{ApiSubset, OperationCommand, RedisUnitCommand, UnsafeCommand, WatchState}
 
 trait TransactionApi extends ApiSubset {
-  def watch(keys: Seq[ByteString]) =
+  def watch(keys: Seq[Key]): Result[Unit] =
     execute(Watch(keys))
-  def unwatch =
+  def unwatch: Result[Unit] =
     execute(Unwatch)
-}
 
-case class Watch(keys: Seq[ByteString]) extends RedisUnitCommand with OperationCommand {
-  val encoded = encoder("WATCH").keys(keys).result
-  override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
-    case RedisMsg.Ok => state.watching = true
-    case _ =>
+  case class Watch(keys: Seq[Key]) extends RedisUnitCommand with OperationCommand {
+    val encoded = encoder("WATCH").keys(keys).result
+    override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
+      case RedisMsg.Ok => state.watching = true
+      case _ =>
+    }
   }
-}
 
-case object Unwatch extends RedisUnitCommand with OperationCommand {
-  val encoded = encoder("UNWATCH").result
-  override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
-    case RedisMsg.Ok => state.watching = false
-    case _ =>
+  case object Unwatch extends RedisUnitCommand with OperationCommand {
+    val encoded = encoder("UNWATCH").result
+    override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
+      case RedisMsg.Ok => state.watching = false
+      case _ =>
+    }
   }
 }
 
