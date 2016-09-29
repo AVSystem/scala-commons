@@ -25,6 +25,33 @@ trait ByteStringInterpolation {
       }
       bsb.result()
     }
+
+    def bin(args: Any*): ByteString = {
+      def extractByte(chars: Iterator[Char], bits: Int = 8): Byte = {
+        var b = 0
+        var c = 0
+        while (c < bits) {
+          chars.next() match {
+            case '0' => b = b << 1
+            case '1' => b = (b << 1) + 1
+            case _ => throw new IllegalArgumentException("binary digit expected")
+          }
+          c += 1
+        }
+        b.toByte
+      }
+      val str = sc.s(args: _*)
+      val firstBits = str.length % 8
+      val bsb = new ByteStringBuilder
+      val it = str.iterator
+      if (firstBits != 0) {
+        bsb += extractByte(it, firstBits)
+      }
+      while (it.hasNext) {
+        bsb += extractByte(it)
+      }
+      bsb.result()
+    }
   }
 }
 

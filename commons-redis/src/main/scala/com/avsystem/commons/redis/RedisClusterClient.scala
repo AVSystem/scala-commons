@@ -129,7 +129,7 @@ final class RedisClusterClient(
     (implicit timeout: Timeout): Future[RedisReply] = {
 
     if (!redirection.ask) {
-      // force state refresh after non-ASK redirection
+      // redirection (without ASK) indicates that we may have old cluster state, refresh it
       monitoringActor ! Refresh(new SingletonSeq(redirection.address).opt)
     }
     val packToResend = if (redirection.ask) new AskingPack(pack) else pack
@@ -143,6 +143,7 @@ final class RedisClusterClient(
           client.executeRaw(packToResend)
         case None =>
           // this should only happen when a new master appears and we don't yet have a client for it
+          // because we still have old cluster state without that master
           monitoringActor.ask(GetClient(redirection.address))(RedisClusterClient.GetClientTimeout)
             .mapTo[GetClientResponse].flatMapNow(_.client.executeRaw(packToResend))
       }

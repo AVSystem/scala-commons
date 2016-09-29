@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package redis.commands
 
-import akka.util.ByteString
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.ClusterUtils.keyWithSameSlotAs
 import com.avsystem.commons.redis._
@@ -13,11 +12,13 @@ import scala.concurrent.Future
   * Created: 14/04/16.
   */
 trait ClusteredKeysApiSuite extends CommandsSuite {
+
   import RedisStringCommands._
 
   test("DEL") {
     setup(set("key", "value"))
-    del(Seq("key")).assertEquals(1)
+    del("???").assertEquals(0)
+    del("key").assertEquals(1)
   }
 
   test("DUMP") {
@@ -28,8 +29,8 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
 
   test("EXISTS") {
     setup(set("key", "value"))
-    exists(Seq("???")).assertEquals(0)
-    exists(Seq("key")).assertEquals(1)
+    exists("???").assertEquals(0)
+    exists("key").assertEquals(1)
   }
 
   test("EXPIRE") {
@@ -127,17 +128,18 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
 }
 
 trait NodeKeysApiSuite extends ClusteredKeysApiSuite {
+
   import RedisStringCommands._
 
   private val scanKeys = (0 until 32).map(i => s"toscan$i")
 
   test("KEYS") {
-    setup(mset(scanKeys.map(k => (k, "value"))))
+    setup(mset(scanKeys.map(k => (k, "value")):_*))
     keys("toscan*").assert(_.toSet == scanKeys.toSet)
   }
 
   test("SCAN") {
-    setup(mset(scanKeys.map(k => (k, "value"))))
+    setup(mset(scanKeys.map(k => (k, "value")):_*))
     def scanCollect(cursor: Cursor, acc: Seq[String]): Future[Seq[String]] =
       scan(cursor, Opt("toscan*"), Opt(4L)).exec.flatMapNow {
         case (Cursor.NoCursor, data) => Future.successful(acc ++ data)
@@ -148,7 +150,7 @@ trait NodeKeysApiSuite extends ClusteredKeysApiSuite {
 
   test("DEL multikey") {
     setup(set("key", "value"))
-    del(Seq("key", "foo")).assertEquals(1)
+    del("key", "foo").assertEquals(1)
   }
 
   test("MOVE") {
@@ -158,7 +160,7 @@ trait NodeKeysApiSuite extends ClusteredKeysApiSuite {
 
   test("EXISTS multikey") {
     setup(set("key", "value"))
-    exists(Seq("key", "foo")).assertEquals(1)
+    exists("key", "foo").assertEquals(1)
   }
 
   test("SORT with GET") {

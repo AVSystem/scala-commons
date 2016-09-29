@@ -56,11 +56,20 @@ trait ApiSubset { self =>
   def keyType[K: RedisDataCodec]: WithKey[K] =
     copy(newKeyCodec = RedisDataCodec[K])
 
+  def transformKey[K](read: Key => K)(write: K => Key): WithKey[K] =
+    copy(newKeyCodec = RedisDataCodec(keyCodec.read andThen read, write andThen keyCodec.write))
+
   def hashKeyType[H: RedisDataCodec]: WithHashKey[H] =
     copy(newHashKeyCodec = RedisDataCodec[H])
 
+  def transformHashKey[H](read: HashKey => H)(write: H => HashKey): WithHashKey[H] =
+    copy(newHashKeyCodec = RedisDataCodec(hashKeyCodec.read andThen read, write andThen hashKeyCodec.write))
+
   def valueType[V: RedisDataCodec]: WithValue[V] =
     copy(newValueCodec = RedisDataCodec[V])
+
+  def transformValue[V](read: Value => V)(write: V => Value): WithValue[V] =
+    copy(newValueCodec = RedisDataCodec(valueCodec.read andThen read, write andThen valueCodec.write))
 
   protected implicit def keyCodec: RedisDataCodec[Key]
   protected implicit def hashKeyCodec: RedisDataCodec[HashKey]
@@ -72,7 +81,7 @@ trait ApiSubset { self =>
     newValueCodec: RedisDataCodec[V] = valueCodec
   ): Self[K, H, V]
 
-  protected def execute[A](cmd: RedisCommand[A]): Result[A]
+  protected def execute[A](batch: RedisBatch[A]): Result[A]
 
   trait HasKeyCodec extends HasCodec[Key] {
     protected def codec = keyCodec
@@ -96,20 +105,20 @@ abstract class AbstractApiSubset[K, H, V](implicit
 trait CommandSubset extends ApiSubset {
   type Result[A] = RedisBatch[A]
   type Self[K, H, V] <: AbstractApiSubset[K, H, V] with CommandSubset
-  protected def execute[A](cmd: RedisCommand[A]) = cmd
+  protected def execute[A](batch: RedisBatch[A]) = batch
 }
 trait AsyncCommandSubset extends ApiSubset {
   type Result[A] = Future[A]
   type Self[K, H, V] <: AbstractApiSubset[K, H, V] with AsyncCommandSubset
   protected def executor: RedisClusteredExecutor
-  protected def execute[A](cmd: RedisCommand[A]) = executor.execute(cmd)
+  protected def execute[A](batch: RedisBatch[A]) = executor.execute(batch)
 }
 trait BlockingCommandSubset extends ApiSubset {
   type Result[A] = A
   type Self[K, H, V] <: AbstractApiSubset[K, H, V] with BlockingCommandSubset
   protected def timeout: Duration
   protected def executor: RedisClusteredExecutor
-  protected def execute[A](cmd: RedisCommand[A]) = Await.result(executor.execute(cmd), timeout)
+  protected def execute[A](batch: RedisBatch[A]) = Await.result(executor.execute(batch), timeout)
 }
 
 trait RedisClusteredApi extends AnyRef

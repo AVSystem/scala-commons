@@ -174,23 +174,6 @@ trait RedisSeqCommand[A] extends RedisCommand[Seq[A]] {
   protected def decodeElement: PartialFunction[ValidRedisMsg, A]
 }
 
-trait RedisBinarySeqCommand extends RedisSeqCommand[ByteString] {
-  protected val decodeElement: PartialFunction[ValidRedisMsg, ByteString] = {
-    case BulkStringMsg(bs) => bs
-  }
-}
-
-trait RedisOptBinarySeqCommand extends RedisCommand[Seq[Opt[ByteString]]] {
-  def decodeExpected = {
-    case ArrayMsg(elements) =>
-      elements.map {
-        case BulkStringMsg(bs) => Opt(bs)
-        case NullBulkStringMsg => Opt.Empty
-        case msg => throw new UnexpectedReplyException(s"Expected multi bulk reply, but one of the elements is $msg")
-      }
-  }
-}
-
 trait RedisDoubleCommand extends RedisCommand[Double] {
   def decodeExpected = {
     case BulkStringMsg(bytes) => bytes.utf8String.toDouble

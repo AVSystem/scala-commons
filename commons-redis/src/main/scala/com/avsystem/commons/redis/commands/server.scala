@@ -9,7 +9,7 @@ trait NodeServerApi extends ClusteredServerApi {
   def flushall: Result[Unit] =
     execute(Flushall)
 
-  private case object Flushall extends RedisUnitCommand with NodeCommand {
+  private object Flushall extends RedisUnitCommand with NodeCommand {
     val encoded = encoder("FLUSHALL").result
   }
 }

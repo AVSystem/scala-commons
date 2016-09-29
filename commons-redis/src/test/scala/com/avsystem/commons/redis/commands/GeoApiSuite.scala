@@ -48,7 +48,7 @@ trait GeoApiSuite extends CommandsSuite {
       Opt.Empty,
       Opt.Empty,
       Opt.Empty
-    ).map(_.map(GeohashValue)))
+    ).map(_.map(GeoHash)))
     geohash(OtherKey, Cities.keys.toList).assertEquals(Nil)
   }
 

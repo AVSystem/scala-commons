@@ -6,11 +6,11 @@ import com.avsystem.commons.redis.{ApiSubset, OperationCommand, RedisUnitCommand
 
 trait TransactionApi extends ApiSubset {
   def watch(keys: Seq[Key]): Result[Unit] =
-    execute(Watch(keys))
+    execute(new Watch(keys))
   def unwatch: Result[Unit] =
     execute(Unwatch)
 
-  case class Watch(keys: Seq[Key]) extends RedisUnitCommand with OperationCommand {
+  private final class Watch(keys: Seq[Key]) extends RedisUnitCommand with OperationCommand {
     val encoded = encoder("WATCH").keys(keys).result
     override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
       case RedisMsg.Ok => state.watching = true
@@ -18,7 +18,7 @@ trait TransactionApi extends ApiSubset {
     }
   }
 
-  case object Unwatch extends RedisUnitCommand with OperationCommand {
+  private object Unwatch extends RedisUnitCommand with OperationCommand {
     val encoded = encoder("UNWATCH").result
     override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
       case RedisMsg.Ok => state.watching = false
@@ -27,11 +27,11 @@ trait TransactionApi extends ApiSubset {
   }
 }
 
-case object Multi extends UnsafeCommand {
+private[redis] object Multi extends UnsafeCommand {
   val encoded = encoder("MULTI").result
 }
 
-case object Exec extends UnsafeCommand {
+private[redis] object Exec extends UnsafeCommand {
   val encoded = encoder("EXEC").result
   override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
     case _: ArrayMsg[RedisMsg] | NullArrayMsg => state.watching = false
@@ -40,7 +40,7 @@ case object Exec extends UnsafeCommand {
   }
 }
 
-case object Discard extends UnsafeCommand {
+private[redis] object Discard extends UnsafeCommand {
   val encoded = encoder("DISCARD").result
   override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
     case RedisMsg.Ok => state.watching = false

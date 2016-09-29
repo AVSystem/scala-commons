@@ -31,7 +31,7 @@ class RedisClusterClientTest extends RedisClusterCommandsSuite {
   }
 
   test("cross slot on multikey command") {
-    val batch = mget(Seq(0, 7000).map(slotKey))
+    val batch = mget(Seq(0, 7000).map(slotKey): _*)
     batch.intercept[CrossSlotException]
   }
 
@@ -60,7 +60,7 @@ class ClusterSlotMigrationTest extends RedisClusterCommandsSuite {
   }
 
   test("multiple keys slot migration") {
-    setup(mset((0 until 10).map(i => ("{${slotKey(2)}}$i", "value"))))
+    setup(mset((0 until 10).map(i => (s"{${slotKey(2)}}$i", "value")): _*))
     migrateSlot(2, 7000).futureValue
   }
 }
