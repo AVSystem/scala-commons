@@ -281,14 +281,20 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
       (oo, value) => value.asScala.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })
     )
 
-  implicit def optionCodec[T: GenCodec]: GenCodec[Option[T]] =
+  implicit def nullableOptionCodec[T >: Null : GenCodec]: GenCodec[Option[T]] =
     createList[Option[T]](
       li => if (li.hasNext) Some(read[T](li.nextElement())) else None,
       (lo, opt) => opt.iterator.writeToList(lo)
     )
 
-  implicit def nOptCodec[T: GenCodec]: GenCodec[NOpt[T]] =
-    new TransformedCodec[NOpt[T], Option[T]](optionCodec[T], _.toOption, _.toNOpt)
+  implicit def nonNullableOptionCodec[T <: AnyVal : GenCodec]: GenCodec[Option[T]] =
+    new TransformedCodec[Option[T], Opt[T]](optCodec[T], _.toOpt, _.toOption)
+
+  implicit def nullableNOptCodec[T >: Null : GenCodec]: GenCodec[NOpt[T]] =
+    new TransformedCodec[NOpt[T], Option[T]](nullableOptionCodec[T], _.toOption, _.toNOpt)
+
+  implicit def nonNullableNOptCodec[T <: AnyVal : GenCodec]: GenCodec[NOpt[T]] =
+    new TransformedCodec[NOpt[T], Opt[T]](optCodec[T], _.toOpt, _.toNOpt)
 
   implicit def optCodec[T: GenCodec]: GenCodec[Opt[T]] =
     create[Opt[T]](
@@ -308,7 +314,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   implicit def optRefCodec[T >: Null : GenCodec]: GenCodec[OptRef[T]] =
     new TransformedCodec[OptRef[T], Opt[T]](optCodec[T], _.toOpt, opt => OptRef(opt.orNull))
 
-  implicit def jEnumCodec[E <: Enum[E]: GenKeyCodec]: GenCodec[E] =
+  implicit def jEnumCodec[E <: Enum[E] : GenKeyCodec]: GenCodec[E] =
     fromKeyCodec[E]
 
   // Needed because of SI-9453

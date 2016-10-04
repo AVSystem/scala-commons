@@ -3,6 +3,7 @@ package serialization
 
 import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.jiop.JavaInterop._
+import com.avsystem.commons.misc.{NOpt, Opt}
 import org.scalatest.FunSuite
 
 /**
@@ -39,6 +40,10 @@ trait CodecTestBase extends FunSuite {
   }
 
   val option = Option(42)
+  val nullableOption = Option("str")
+  val nOpt = NOpt(42)
+  val nullableNOpt = NOpt("str")
+  val opt = Opt(42)
   val list = List(1, 2, 3)
   val set = Set(1, 2, 3)
   val map = Map("1" -> 1, "2" -> 2, "3" -> 3)

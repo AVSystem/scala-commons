@@ -5,7 +5,7 @@ import java.lang.annotation.RetentionPolicy
 
 import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.jiop.JavaInterop._
-import com.avsystem.commons.misc.{TypedKey, TypedKeyCompanion, TypedMap}
+import com.avsystem.commons.misc.{NOpt, Opt, TypedKey, TypedKeyCompanion, TypedMap}
 import com.avsystem.commons.serialization.GenCodecTest.ValueClass
 import com.github.ghik.silencer.silent
 
@@ -26,7 +26,16 @@ class GenCodecTest extends CodecTestBase {
   }
 
   test("collection test") {
-    testWriteReadAndAutoWriteRead[Option[Int]](option, List(42))
+    testWriteReadAndAutoWriteRead[Option[Int]](option, 42)
+    testWriteReadAndAutoWriteRead[Option[Int]](None, null)
+    testWriteReadAndAutoWriteRead[Option[String]](nullableOption, List("str"))
+    testWriteReadAndAutoWriteRead[Option[String]](None, List())
+    testWriteReadAndAutoWriteRead[NOpt[Int]](nOpt, 42)
+    testWriteReadAndAutoWriteRead[NOpt[Int]](NOpt.Empty, null)
+    testWriteReadAndAutoWriteRead[NOpt[String]](nullableNOpt, List("str"))
+    testWriteReadAndAutoWriteRead[NOpt[String]](NOpt.Empty, List())
+    testWriteReadAndAutoWriteRead[Opt[Int]](opt, 42)
+    testWriteReadAndAutoWriteRead[Opt[Int]](Opt.Empty, null)
     testWriteReadAndAutoWriteRead[List[Int]](list, list)
     testWriteReadAndAutoWriteRead[Set[Int]](set, set.toList)
     testWriteReadAndAutoWriteRead[Map[String, Int]](map, map)
