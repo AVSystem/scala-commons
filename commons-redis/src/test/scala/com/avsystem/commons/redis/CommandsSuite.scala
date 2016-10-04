@@ -105,7 +105,6 @@ abstract class RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient 
   override def nodeConfig =
     super.nodeConfig |> { nc =>
       nc.copy(
-        poolSize = 1,
         connectionConfigs = i =>
           nc.connectionConfigs(i) |> { mcc =>
             mcc.copy(connectionConfig = mcc.connectionConfig.copy(debugListener = listener))

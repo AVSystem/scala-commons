@@ -134,6 +134,10 @@ trait RedisOptLongCommand extends RedisCommand[Opt[Long]] {
   }
 }
 
+trait RedisOptStringCommand extends RedisOptCommand[String] {
+  protected def decodeNonEmpty(bytes: ByteString) = bytes.utf8String
+}
+
 trait RedisBooleanCommand extends RedisCommand[Boolean] {
   def decodeExpected = {
     case IntegerMsg(0) => false
@@ -141,9 +145,9 @@ trait RedisBooleanCommand extends RedisCommand[Boolean] {
   }
 }
 
-trait RedisSimpleStringCommand extends RedisCommand[ByteString] {
+trait RedisSimpleStringCommand extends RedisCommand[String] {
   def decodeExpected = {
-    case SimpleStringMsg(data) => data
+    case SimpleStringMsg(data) => data.utf8String
   }
 }
 

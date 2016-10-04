@@ -31,18 +31,6 @@ trait UsesFreshCluster extends UsesActorSystem with UsesClusterServers {this: Su
 
   def firstSlot(masterNo: Int) = masterNo * Hash.TotalSlots / masterIndices.size
 
-  def wait(duration: FiniteDuration): Future[Unit] = {
-    val promise = Promise[Unit]()
-    actorSystem.scheduler.scheduleOnce(duration)(promise.success(()))
-    promise.future
-  }
-
-  def waitUntil(predicate: => Future[Boolean], retryInterval: FiniteDuration): Future[Unit] =
-    predicate.flatMap { r =>
-      if (r) Future.successful(())
-      else wait(retryInterval).flatMap(_ => waitUntil(predicate, retryInterval))
-    }
-
   override protected def beforeAll() = {
     super.beforeAll()
 

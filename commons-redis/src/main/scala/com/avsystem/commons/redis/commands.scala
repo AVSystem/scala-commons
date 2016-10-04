@@ -81,7 +81,7 @@ trait ApiSubset { self =>
     newValueCodec: RedisDataCodec[V] = valueCodec
   ): Self[K, H, V]
 
-  protected def execute[A](batch: RedisBatch[A]): Result[A]
+  protected def execute[A](command: RedisCommand[A]): Result[A]
 
   trait HasKeyCodec extends HasCodec[Key] {
     protected def codec = keyCodec
@@ -102,23 +102,28 @@ abstract class AbstractApiSubset[K, H, V](implicit
   type Value = V
 }
 
+trait RawCommandSubset extends ApiSubset {
+  type Result[A] = RawCommand
+  type Self[K, H, V] <: AbstractApiSubset[K, H, V] with RawCommandSubset
+  protected def execute[A](command: RedisCommand[A]) = command
+}
 trait CommandSubset extends ApiSubset {
   type Result[A] = RedisBatch[A]
   type Self[K, H, V] <: AbstractApiSubset[K, H, V] with CommandSubset
-  protected def execute[A](batch: RedisBatch[A]) = batch
+  protected def execute[A](command: RedisCommand[A]) = command
 }
 trait AsyncCommandSubset extends ApiSubset {
   type Result[A] = Future[A]
   type Self[K, H, V] <: AbstractApiSubset[K, H, V] with AsyncCommandSubset
   protected def executor: RedisClusteredExecutor
-  protected def execute[A](batch: RedisBatch[A]) = executor.execute(batch)
+  protected def execute[A](command: RedisCommand[A]) = executor.execute(command)
 }
 trait BlockingCommandSubset extends ApiSubset {
   type Result[A] = A
   type Self[K, H, V] <: AbstractApiSubset[K, H, V] with BlockingCommandSubset
   protected def timeout: Duration
   protected def executor: RedisClusteredExecutor
-  protected def execute[A](batch: RedisBatch[A]) = Await.result(executor.execute(batch), timeout)
+  protected def execute[A](command: RedisCommand[A]) = Await.result(executor.execute(command), timeout)
 }
 
 trait RedisClusteredApi extends AnyRef
@@ -145,9 +150,20 @@ trait RedisOperationApi extends RedisNodeApi
 
 trait RedisConnectionApi extends RedisOperationApi
   with ConnectionClusterApi
-  with ConnectionConnectionApi {
+  with ConnectionConnectionApi
+  with ConnectionServerApi {
   type Self[K, H, V] <: AbstractApiSubset[K, H, V] with RedisConnectionApi
 }
+
+class RedisRawCommands[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec]
+  extends AbstractApiSubset[Key, HashKey, Value] with RedisConnectionApi with RawCommandSubset {
+  type Self[K, H, V] = RedisRawCommands[K, H, V]
+  protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
+    new RedisRawCommands[K, H, V]()(newKeyCodec, newHashKeyCodec, newValueCodec)
+}
+
+object RedisBinaryRawCommands extends RedisRawCommands[ByteString, ByteString, ByteString]
+object RedisStringRawCommands extends RedisRawCommands[String, String, String]
 
 class RedisCommands[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec]
   extends AbstractApiSubset[Key, HashKey, Value] with RedisConnectionApi with CommandSubset {

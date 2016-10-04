@@ -3,6 +3,7 @@ package redis.commands
 
 import akka.util.ByteString
 import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.protocol.SimpleStringMsg
 
 trait NodeConnectionApi extends ApiSubset {
   def echo(message: ByteString): Result[ByteString] =
@@ -15,13 +16,16 @@ trait NodeConnectionApi extends ApiSubset {
     val encoded = encoder("ECHO").add(message).result
   }
 
-  private object Ping extends RedisSimpleStringCommand with NodeCommand {
+  private object Ping extends RedisCommand[ByteString] with NodeCommand {
     val encoded = encoder("PING").result
+    protected def decodeExpected = {
+      case SimpleStringMsg(data) => data
+    }
   }
 }
 
 trait ConnectionConnectionApi extends NodeConnectionApi {
-  def auth(password: ByteString): Result[Unit] =
+  def auth(password: String): Result[Unit] =
     execute(new Auth(password))
 
   def quit: Result[Unit] =
@@ -30,7 +34,7 @@ trait ConnectionConnectionApi extends NodeConnectionApi {
   def select(index: Int): Result[Unit] =
     execute(new Select(index))
 
-  private final class Auth(password: ByteString) extends RedisUnitCommand with ConnectionCommand {
+  private final class Auth(password: String) extends RedisUnitCommand with ConnectionCommand {
     val encoded = encoder("AUTH").add(password).result
   }
 
