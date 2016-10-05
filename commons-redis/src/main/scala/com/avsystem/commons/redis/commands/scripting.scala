@@ -27,14 +27,14 @@ trait ClusteredScriptingApi extends ApiSubset {
   private final class Eval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value])
     extends RedisCommand[T] with NodeCommand {
 
-    val encoded = encoder("EVAL").add(script.source).add(keys.size).keys(keys).values(args).result
+    val encoded = encoder("EVAL").add(script.source).add(keys.size).keys(keys).datas(args).result
     protected def decodeExpected = script.decodeResult
   }
 
   private final class Evalsha[T](sha1: Sha1, decoder: PartialFunction[ValidRedisMsg, T], keys: Seq[Key], args: Seq[Value])
     extends RedisCommand[T] with NodeCommand {
 
-    val encoded = encoder("EVALSHA").add(sha1.raw).add(keys.size).keys(keys).values(args).result
+    val encoded = encoder("EVALSHA").add(sha1.raw).add(keys.size).keys(keys).datas(args).result
     protected def decodeExpected = decoder
   }
 }

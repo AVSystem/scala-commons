@@ -36,7 +36,7 @@ trait GeoApi extends ApiSubset {
   }
 
   private final class Geohash(key: Key, members: Seq[Value]) extends RedisSeqCommand[Opt[GeoHash]] with NodeCommand {
-    val encoded = encoder("GEOHASH").key(key).values(members).result
+    val encoded = encoder("GEOHASH").key(key).datas(members).result
     protected val decodeElement: PartialFunction[ValidRedisMsg, Opt[GeoHash]] = {
       case BulkStringMsg(hash) => GeoHash(hash.utf8String).opt
       case NullBulkStringMsg => Opt.Empty
@@ -44,7 +44,7 @@ trait GeoApi extends ApiSubset {
   }
 
   private final class Geopos(key: Key, members: Seq[Value]) extends RedisSeqCommand[Opt[GeoPoint]] with NodeCommand {
-    val encoded = encoder("GEOPOS").key(key).values(members).result
+    val encoded = encoder("GEOPOS").key(key).datas(members).result
     protected val decodeElement: PartialFunction[ValidRedisMsg, Opt[GeoPoint]] = {
       case ArrayMsg(IndexedSeq(BulkStringMsg(rawLong), BulkStringMsg(rawLat))) =>
         GeoPoint(rawLong.utf8String.toDouble, rawLat.utf8String.toDouble).opt
@@ -54,7 +54,7 @@ trait GeoApi extends ApiSubset {
 
   private final class Geodist(key: Key, member1: Value, member2: Value, unit: GeoUnit)
     extends RedisOptDoubleCommand with NodeCommand {
-    val encoded = encoder("GEODIST").key(key).value(member1).value(member2).add(unit).result
+    val encoded = encoder("GEODIST").key(key).data(member1).data(member2).add(unit).result
   }
 
   private abstract class AbstractGeoradius[T](

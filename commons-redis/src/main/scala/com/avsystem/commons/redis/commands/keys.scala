@@ -230,12 +230,12 @@ trait NodeKeysApi extends ClusteredKeysApi with ApiSubset {
   }
 
   private final class Keys(pattern: Key) extends RedisDataSeqCommand[Key] with HasKeyCodec with NodeCommand {
-    val encoded = encoder("KEYS").value(pattern).result
+    val encoded = encoder("KEYS").data(pattern).result
   }
 
   private final class Scan(cursor: Cursor, matchPattern: Opt[Key], count: Opt[Long])
     extends RedisCommand[(Cursor, Seq[Key])] with NodeCommand {
-    val encoded = encoder("SCAN").add(cursor.raw).optValue("MATCH", matchPattern).optAdd("COUNT", count).result
+    val encoded = encoder("SCAN").add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
     def decodeExpected = {
       case ArrayMsg(IndexedSeq(BulkStringMsg(cursorString), ArrayMsg(elements))) =>
         (Cursor(cursorString.utf8String.toLong), elements.map {

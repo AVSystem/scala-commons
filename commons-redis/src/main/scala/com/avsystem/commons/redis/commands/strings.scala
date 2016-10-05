@@ -61,7 +61,7 @@ trait StringsApi extends ApiSubset {
     execute(new Strlen(key))
 
   private final class Append(key: Key, value: Value) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("APPEND").key(key).value(value).result
+    val encoded = encoder("APPEND").key(key).data(value).result
   }
 
   private final class Bitcount(key: Key, range: Opt[(Long, Long)]) extends RedisLongCommand with NodeCommand {
@@ -99,7 +99,7 @@ trait StringsApi extends ApiSubset {
   }
 
   private final class Getset(key: Key, value: Value) extends RedisOptDataCommand[Value] with HasValueCodec with NodeCommand {
-    val encoded = encoder("GETSET").key(key).value(value).result
+    val encoded = encoder("GETSET").key(key).data(value).result
   }
 
   private final class Incr(key: Key) extends RedisLongCommand with NodeCommand {
@@ -121,22 +121,22 @@ trait StringsApi extends ApiSubset {
 
   private final class Mset(keyValues: Seq[(Key, Value)]) extends RedisUnitCommand with NodeCommand {
     require(keyValues.nonEmpty, "MSET requires at least one key-value pair")
-    val encoded = encoder("MSET").keyValues(keyValues).result
+    val encoded = encoder("MSET").keyDatas(keyValues).result
   }
 
   private final class Msetnx(keyValues: Seq[(Key, Value)]) extends RedisBooleanCommand with NodeCommand {
     require(keyValues.nonEmpty, "MSETNX requires at least one key-value pair")
-    val encoded = encoder("MSETNX").keyValues(keyValues).result
+    val encoded = encoder("MSETNX").keyDatas(keyValues).result
   }
 
   private final class Psetex(key: Key, milliseconds: Long, value: Value) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("PSETEX").key(key).add(milliseconds).value(value).result
+    val encoded = encoder("PSETEX").key(key).add(milliseconds).data(value).result
   }
 
   private final class Set(key: Key, value: Value, expiration: Opt[Expiration], existence: Opt[Boolean])
     extends RedisCommand[Boolean] with NodeCommand {
 
-    val encoded = encoder("SET").key(key).value(value).add(expiration)
+    val encoded = encoder("SET").key(key).data(value).add(expiration)
       .add(existence.map(v => if (v) "XX" else "NX")).result
 
     def decodeExpected = {
@@ -150,15 +150,15 @@ trait StringsApi extends ApiSubset {
   }
 
   private final class Setex(key: Key, seconds: Long, value: Value) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("SETEX").key(key).add(seconds).value(value).result
+    val encoded = encoder("SETEX").key(key).add(seconds).data(value).result
   }
 
   private final class Setnx(key: Key, value: Value) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("SETNX").key(key).value(value).result
+    val encoded = encoder("SETNX").key(key).data(value).result
   }
 
   private final class Setrange(key: Key, offset: Long, value: Value) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("SETRANGE").key(key).add(offset).value(value).result
+    val encoded = encoder("SETRANGE").key(key).add(offset).data(value).result
   }
 
   private final class Strlen(key: Key) extends RedisLongCommand with NodeCommand {

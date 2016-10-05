@@ -16,10 +16,12 @@ trait ServerApiSuite extends CommandsSuite { this: UsesActorSystem =>
 
   test("BGSAVE") {
     bgsave.get
+    waitUntil(RedisStringCommands.info(PersistenceInfo).map(_.rdbBgsaveInProgress.contains(false)).exec, 50.millis)
   }
 
-  ignore("BGREWRITEAOF") {
+  test("BGREWRITEAOF") {
     bgrewriteaof.get
+    waitUntil(RedisStringCommands.info(PersistenceInfo).map(_.aofRewriteInProgress.contains(false)).exec, 50.millis)
   }
 
   test("CLIENT LIST") {
@@ -121,7 +123,6 @@ trait NodeServerApiSuite extends ServerApiSuite { this: UsesActorSystem =>
 
   test("CLIENT KILL") {
     val clients: Seq[ClientInfo] = waitFor(clientList.exec)(_.size >= 3, 100.millis).futureValue
-    clients.foreach(println)
     clientKill(clients.head.addr).get
     clientKill(clients(1).addr, Skipme(false)).assertEquals(1)
     clientKill(clients(2).id, Skipme(false)).assertEquals(1)

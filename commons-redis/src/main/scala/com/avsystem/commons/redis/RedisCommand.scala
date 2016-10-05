@@ -41,15 +41,15 @@ final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) exten
 
   def key[K: RedisDataCodec](k: K) = fluent(buffer += CommandKeyMsg(RedisDataCodec.write(k)))
   def keys[K: RedisDataCodec](keys: TraversableOnce[K]) = fluent(keys.foreach(key[K]))
-  def value[V: RedisDataCodec](v: V) = fluent(buffer += BulkStringMsg(RedisDataCodec.write(v)))
-  def values[V: RedisDataCodec](values: TraversableOnce[V]) = fluent(values.foreach(value[V]))
+  def data[V: RedisDataCodec](v: V) = fluent(buffer += BulkStringMsg(RedisDataCodec.write(v)))
+  def datas[V: RedisDataCodec](values: TraversableOnce[V]) = fluent(values.foreach(data[V]))
   def add[T: CommandArg](value: T): CommandEncoder = fluent(CommandArg.add(this, value))
   def addFlag(flag: String, value: Boolean): CommandEncoder = if (value) add(flag) else this
   def optAdd[T: CommandArg](flag: String, value: Opt[T]) = fluent(value.foreach(t => add(flag).add(t)))
   def optKey[K: RedisDataCodec](flag: String, value: Opt[K]) = fluent(value.foreach(t => add(flag).key(t)))
-  def optValue[V: RedisDataCodec](flag: String, value: Opt[V]) = fluent(value.foreach(t => add(flag).value(t)))
-  def keyValues[K: RedisDataCodec, V: RedisDataCodec](keyValues: TraversableOnce[(K, V)]) =
-    fluent(keyValues.foreach({ case (k, v) => key(k).value(v) }))
+  def optData[V: RedisDataCodec](flag: String, value: Opt[V]) = fluent(value.foreach(t => add(flag).data(t)))
+  def keyDatas[K: RedisDataCodec, V: RedisDataCodec](keyDatas: TraversableOnce[(K, V)]) =
+    fluent(keyDatas.foreach({ case (k, v) => key(k).data(v) }))
 }
 
 object CommandEncoder {
