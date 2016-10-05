@@ -50,6 +50,8 @@ final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) exten
   def optData[V: RedisDataCodec](flag: String, value: Opt[V]) = fluent(value.foreach(t => add(flag).data(t)))
   def keyDatas[K: RedisDataCodec, V: RedisDataCodec](keyDatas: TraversableOnce[(K, V)]) =
     fluent(keyDatas.foreach({ case (k, v) => key(k).data(v) }))
+  def dataPairs[K: RedisDataCodec, V: RedisDataCodec](dataPairs: TraversableOnce[(K, V)]) =
+    fluent(dataPairs.foreach({ case (k, v) => data(k).data(v) }))
 }
 
 object CommandEncoder {
@@ -176,6 +178,22 @@ trait RedisSeqCommand[A] extends RedisCommand[Seq[A]] {
   }
 
   protected def decodeElement: PartialFunction[ValidRedisMsg, A]
+}
+
+trait RedisPairSeqCommand[A] extends RedisCommand[Seq[A]] {
+  def decodeExpected = {
+    case ArrayMsg(elements) =>
+      elements.iterator.grouped(2).map {
+        case Seq(key: ValidRedisMsg, value: ValidRedisMsg) =>
+          val fail: PartialFunction[(ValidRedisMsg, ValidRedisMsg), Nothing] = {
+            case (k, v) => throw new UnexpectedReplyException(s"$k and $v")
+          }
+          decodeElement.applyOrElse((key, value), fail)
+        case Seq(error: ErrorMsg, _) => throw new ErrorReplyException(error)
+        case Seq(_, error: ErrorMsg) => throw new ErrorReplyException(error)
+      }.to[ArrayBuffer]
+  }
+  protected def decodeElement: PartialFunction[(ValidRedisMsg, ValidRedisMsg), A]
 }
 
 trait RedisDoubleCommand extends RedisCommand[Double] {

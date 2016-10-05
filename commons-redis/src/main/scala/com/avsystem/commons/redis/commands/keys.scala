@@ -276,13 +276,6 @@ object Encoding extends NamedEnumCompanion[Encoding] {
   val values: List[Encoding] = caseObjects
 }
 
-case class Cursor(raw: Long) extends AnyVal {
-  override def toString = raw.toString
-}
-object Cursor {
-  val NoCursor = Cursor(0)
-}
-
 case class SortLimit(offset: Long, count: Long)
 object SortLimit {
   implicit val SortLimitArg: CommandArg[SortLimit] =

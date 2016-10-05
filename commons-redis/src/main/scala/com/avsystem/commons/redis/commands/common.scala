@@ -13,3 +13,10 @@ object SortOrder extends NamedEnumCompanion[SortOrder] {
 
   val values: List[SortOrder] = caseObjects
 }
+
+case class Cursor(raw: Long) extends AnyVal {
+  override def toString = raw.toString
+}
+object Cursor {
+  val NoCursor = Cursor(0)
+}

@@ -152,16 +152,10 @@ trait NodeServerApi extends ClusteredServerApi {
     val encoded = encoder("COMMAND", "INFO").add(commandNames).result
   }
 
-  private final class ConfigGet(parameter: String) extends RedisCommand[Seq[(String, String)]] with NodeCommand {
+  private final class ConfigGet(parameter: String) extends RedisPairSeqCommand[(String, String)] with NodeCommand {
     val encoded = encoder("CONFIG", "GET").add(parameter).result
-    protected def decodeExpected = {
-      case ArrayMsg(paramValues) =>
-        paramValues.iterator.map({
-          case BulkStringMsg(data) => data.utf8String
-          case element => throw new UnexpectedReplyException(s"Expected bulk string, got $element")
-        }).grouped(2).map {
-          case Seq(param, value) => (param, value)
-        }.to[ArrayBuffer]
+    protected def decodeElement = {
+      case (BulkStringMsg(param), BulkStringMsg(value)) => (param.utf8String, value.utf8String)
     }
   }
 
