@@ -88,6 +88,7 @@ final class RedisClusterClient(
 
   def toExecutor(implicit timeout: Timeout): RedisClusteredExecutor =
     new RedisClusteredExecutor {
+      def executionContext = system.dispatcher
       def execute[A](batch: RedisBatch[A]) = executeBatch(batch)
     }
 

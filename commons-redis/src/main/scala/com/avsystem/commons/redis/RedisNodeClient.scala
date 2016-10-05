@@ -57,6 +57,7 @@ final class RedisNodeClient(
 
   def toExecutor(implicit timeout: Timeout): RedisNodeExecutor =
     new RedisNodeExecutor {
+      def executionContext = system.dispatcher
       def execute[A](cmd: RedisBatch[A]) = client.executeBatch(cmd)
     }
 

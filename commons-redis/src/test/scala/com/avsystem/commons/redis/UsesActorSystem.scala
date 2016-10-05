@@ -20,7 +20,7 @@ trait UsesActorSystem extends BeforeAndAfterAll with PatienceConfiguration { thi
   implicit val timeout = Timeout(60.seconds)
 
   override implicit def patienceConfig =
-    PatienceConfig(Span(60, Seconds), Span(100, Milliseconds))
+    PatienceConfig(scaled(Span(60, Seconds)), scaled(Span(10, Milliseconds)))
 
   override protected def afterAll() = {
     Await.ready(actorSystem.terminate(), Duration.Inf)

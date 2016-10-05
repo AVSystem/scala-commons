@@ -18,6 +18,10 @@ trait ServerApiSuite extends CommandsSuite { this: UsesActorSystem =>
     bgsave.get
   }
 
+  ignore("BGREWRITEAOF") {
+    bgrewriteaof.get
+  }
+
   test("CLIENT LIST") {
     waitFor(clientList.exec)(_.nonEmpty, 100.millis).futureValue
   }

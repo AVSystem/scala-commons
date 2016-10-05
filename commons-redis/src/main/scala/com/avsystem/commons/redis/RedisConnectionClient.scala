@@ -29,6 +29,7 @@ final class RedisConnectionClient(address: NodeAddress = NodeAddress.Default, co
 
   def toExecutor(implicit timeout: Timeout): RedisConnectionExecutor =
     new RedisConnectionExecutor {
+      def executionContext = system.dispatcher
       def execute[A](batch: RedisBatch[A]) = self.execute(batch)
     }
 
