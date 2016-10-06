@@ -76,7 +76,3 @@ trait ConnectionScriptingApiSuite extends NodeScriptingApiSuite {
     scriptDebug(DebugMode.No).get
   }
 }
-
-class RedisClusterScriptingApiSuite extends RedisClusterCommandsSuite with ClusteredScriptingApiSuite
-class RedisNodeScriptingApiSuite extends RedisNodeCommandsSuite with NodeScriptingApiSuite
-class RedisConnectionScriptingApiSuite extends RedisConnectionCommandsSuite with ConnectionScriptingApiSuite

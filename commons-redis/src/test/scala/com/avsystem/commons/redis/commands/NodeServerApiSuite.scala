@@ -10,7 +10,7 @@ import scala.concurrent.duration._
   * Author: ghik
   * Created: 03/10/16.
   */
-trait ServerApiSuite extends CommandsSuite { this: UsesActorSystem =>
+trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
 
   import RedisStringCommands._
 
@@ -118,7 +118,7 @@ trait ServerApiSuite extends CommandsSuite { this: UsesActorSystem =>
   }
 }
 
-trait NodeServerApiSuite extends ServerApiSuite { this: UsesActorSystem =>
+trait NodeOnlyServerApiSuite extends ServerApiSuite {
   import RedisStringCommands._
 
   test("CLIENT KILL") {
@@ -130,7 +130,7 @@ trait NodeServerApiSuite extends ServerApiSuite { this: UsesActorSystem =>
   }
 }
 
-trait ConnectionServerApiSuite extends ServerApiSuite { this: UsesActorSystem =>
+trait ConnectionServerApiSuite extends ServerApiSuite {
   import RedisStringCommands._
 
   test("CLIENT GETNAME") {
@@ -144,5 +144,3 @@ trait ConnectionServerApiSuite extends ServerApiSuite { this: UsesActorSystem =>
   }
 }
 
-class RedisNodeServerApiSuite extends RedisNodeCommandsSuite with NodeServerApiSuite
-class RedisConnectionServerApiSuite extends RedisConnectionCommandsSuite with ConnectionServerApiSuite

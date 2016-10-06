@@ -194,7 +194,3 @@ trait StringsApiSuite extends CommandsSuite {
     strlen("key").assertEquals(5)
   }
 }
-
-class RedisClusterStringsApiSuite extends RedisClusterCommandsSuite with StringsApiSuite
-class RedisNodeStringsApiSuite extends RedisNodeCommandsSuite with StringsApiSuite
-class RedisConnectionStringsApiSuite extends RedisConnectionCommandsSuite with StringsApiSuite

@@ -166,6 +166,3 @@ trait GeoApiSuite extends CommandsSuite {
   }
 }
 
-class RedisClusterGeoApiSuite extends RedisClusterCommandsSuite with GeoApiSuite
-class RedisNodeGeoApiSuite extends RedisNodeCommandsSuite with GeoApiSuite
-class RedisConnectionGeoApiSuite extends RedisConnectionCommandsSuite with GeoApiSuite

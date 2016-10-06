@@ -9,7 +9,7 @@ import com.avsystem.commons.redis.{RedisConnectionCommandsSuite, RedisStringComm
   * Author: ghik
   * Created: 29/09/16.
   */
-class ConnectionApiSuite extends RedisConnectionCommandsSuite {
+trait ConnectionApiSuite extends RedisConnectionCommandsSuite {
 
   import RedisStringCommands._
 

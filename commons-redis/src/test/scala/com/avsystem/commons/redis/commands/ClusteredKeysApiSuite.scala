@@ -175,6 +175,3 @@ trait NodeKeysApiSuite extends ClusteredKeysApiSuite {
   }
 }
 
-class RedisClusterKeysApiSuite extends RedisClusterCommandsSuite with ClusteredKeysApiSuite
-class RedisNodeKeysApiSuite extends RedisNodeCommandsSuite with NodeKeysApiSuite
-class RedisConnectionKeysApiSuite extends RedisConnectionCommandsSuite with NodeKeysApiSuite

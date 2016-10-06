@@ -107,7 +107,3 @@ trait HashesApiSuite extends CommandsSuite {
     hvals("key").map(_.toSet).assertEquals(fieldValues.map(_._2).toSet)
   }
 }
-
-class RedisClusterHashesApiSuite extends RedisClusterCommandsSuite with HashesApiSuite
-class RedisNodeHashesApiSuite extends RedisNodeCommandsSuite with HashesApiSuite
-class RedisConnectionHashesApiSuite extends RedisConnectionCommandsSuite with HashesApiSuite
