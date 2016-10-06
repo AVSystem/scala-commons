@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.ByteString
-import com.avsystem.commons.misc.Opt
+import com.avsystem.commons.misc.{Opt, OptArg}
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
 import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, NullBulkStringMsg}
@@ -30,8 +30,8 @@ trait HashesApi extends ApiSubset {
     execute(new Hmget(key, fields))
   def hmset(key: Key, fieldValues: (HashKey, Value)*): Result[Unit] =
     execute(new Hmset(key, fieldValues))
-  def hscan(key: Key, cursor: Cursor, matchPattern: Opt[HashKey] = Opt.Empty, count: Opt[Long] = Opt.Empty): Result[(Cursor, Seq[(HashKey, Value)])] =
-    execute(new Hscan(key, cursor, matchPattern, count))
+  def hscan(key: Key, cursor: Cursor, matchPattern: OptArg[HashKey] = OptArg.Empty, count: OptArg[Long] = OptArg.Empty): Result[(Cursor, Seq[(HashKey, Value)])] =
+    execute(new Hscan(key, cursor, matchPattern.toOpt, count.toOpt))
   def hset(key: Key, field: HashKey, value: Value): Result[Boolean] =
     execute(new Hset(key, field, value))
   def hsetnx(key: Key, field: HashKey, value: Value): Result[Boolean] =

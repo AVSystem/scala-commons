@@ -103,7 +103,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
     setup(set("key", "42"))
 
     val operation = for {
-      value <- watch(Seq("key")) *> get("key").map(_.getOrElse("0"))
+      value <- watch("key") *> get("key").map(_.getOrElse("0"))
       _ <- set("key", value).transaction
     } yield value
 
@@ -152,7 +152,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
     setup(set("key", "42"))
 
     val operation = for {
-      value <- watch(Seq("key")) *> get("key").map(_.getOrElse("0"))
+      value <- watch("key") *> get("key").map(_.getOrElse("0"))
       _ <- RedisOp.success {
         // simulate concurrent client reading watched key
         val client = new RedisConnectionClient(redisClient.address)
@@ -257,7 +257,7 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
     setup(set("key", "0"))
 
     val operation = for {
-      value <- watch(Seq("key")) *> get("key").map(_.getOrElse("0"))
+      value <- watch("key") *> get("key").map(_.getOrElse("0"))
       _ <- set("key", value)
     } yield value
 
@@ -269,7 +269,7 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
     setup(set("key", "0"))
 
     val operation = for {
-      value <- watch(Seq("key")) *> get("key").map(_.getOrElse("0"))
+      value <- watch("key") *> get("key").map(_.getOrElse("0"))
       _ <- RedisOp.failure(new IllegalArgumentException("SRSLY"))
     } yield value
 
@@ -281,7 +281,7 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
     setup(set("key", "0"))
 
     val operation = for {
-      value <- watch(Seq("key")) *> get("key").map(_.getOrElse("0"))
+      value <- watch("key") *> get("key").map(_.getOrElse("0"))
       _ <- clusterInfo // cluster info will fail on non-cluster Redis instance
     } yield value
 
@@ -293,7 +293,7 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
     setup(set("key", "0"))
 
     val operation = for {
-      value <- watch(Seq("key")) *> get("key").map(_.map(_.toInt).getOrElse(0))
+      value <- watch("key") *> get("key").map(_.map(_.toInt).getOrElse(0))
       _ <- set("key", s"${value + 1}").transaction
     } yield value
 

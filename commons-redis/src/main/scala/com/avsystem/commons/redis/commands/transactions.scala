@@ -5,7 +5,7 @@ import com.avsystem.commons.redis.protocol.{ArrayMsg, ErrorMsg, NullArrayMsg, Re
 import com.avsystem.commons.redis.{ApiSubset, OperationCommand, RedisUnitCommand, UnsafeCommand, WatchState}
 
 trait TransactionApi extends ApiSubset {
-  def watch(keys: Seq[Key]): Result[Unit] =
+  def watch(keys: Key*): Result[Unit] =
     execute(new Watch(keys))
   def unwatch: Result[Unit] =
     execute(Unwatch)

@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
+import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt, OptArg}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
@@ -31,8 +31,8 @@ trait NodeClusterApi extends ClusteredClusterApi {
     execute(new ClusterCountkeysinslot(slot))
   def clusterDelslots(slots: Seq[Int]): Result[Unit] =
     execute(new ClusterDelslots(slots))
-  def clusterFailover(option: Opt[FailoverOption] = Opt.Empty): Result[Unit] =
-    execute(new ClusterFailover(option))
+  def clusterFailover(option: OptArg[FailoverOption] = OptArg.Empty): Result[Unit] =
+    execute(new ClusterFailover(option.toOpt))
   def clusterForget(nodeId: NodeId): Result[Unit] =
     execute(new ClusterForget(nodeId))
   def clusterGetkeysinslot(slot: Int, count: Long): Result[Seq[Key]] =

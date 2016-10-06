@@ -3,7 +3,7 @@ package redis.commands
 
 import akka.util.ByteString
 import com.avsystem.commons.collection.CollectionAliases._
-import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
+import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt, OptArg}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
@@ -70,16 +70,14 @@ trait NodeServerApi extends ClusteredServerApi {
     execute(Role)
   def save: Result[Unit] =
     execute(Save)
-  def shutdown: Result[Nothing] =
-    execute(new Shutdown(Opt.Empty))
-  def shutdown(modifier: ShutdownModifier): Result[Nothing] =
-    execute(new Shutdown(modifier.opt))
+  def shutdown: Result[Nothing] = shutdown()
+  def shutdown(modifier: OptArg[ShutdownModifier] = OptArg.Empty): Result[Nothing] =
+    execute(new Shutdown(modifier.toOpt))
   def slaveof(newMaster: Opt[NodeAddress]): Result[Unit] =
     execute(new Slaveof(newMaster))
-  def slowlogGet: Result[Seq[SlowlogEntry]] =
-    execute(new SlowlogGet(Opt.Empty))
-  def slowlogGet(count: Int): Result[Seq[SlowlogEntry]] =
-    execute(new SlowlogGet(count.opt))
+  def slowlogGet: Result[Seq[SlowlogEntry]] = slowlogGet()
+  def slowlogGet(count: OptArg[Int] = OptArg.Empty): Result[Seq[SlowlogEntry]] =
+    execute(new SlowlogGet(count.toOpt))
   def slowlogLen: Result[Long] =
     execute(SlowlogLen)
   def slowlogReset: Result[Unit] =

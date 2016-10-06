@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
+import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt, OptArg}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
@@ -19,17 +19,17 @@ trait GeoApi extends ApiSubset {
   def geodist(key: Key, member1: Value, member2: Value, unit: GeoUnit = GeoUnit.M): Result[Opt[Double]] =
     execute(new Geodist(key, member1, member2, unit))
   def georadius[A <: GeoradiusAttrs](key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
-    attributes: A = GeoradiusAttrs.None, count: Opt[Long] = Opt.Empty, sortOrder: Opt[SortOrder] = Opt.Empty): Result[Seq[A#Attributed[Value]]] =
-    execute(new Georadius(key, point, radius, unit, attributes, count, sortOrder))
+    attributes: A = GeoradiusAttrs.None, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty): Result[Seq[A#Attributed[Value]]] =
+    execute(new Georadius(key, point, radius, unit, attributes, count.toOpt, sortOrder.toOpt))
   def georadiusbymember[A <: GeoradiusAttrs](key: Key, member: Value, radius: Double, unit: GeoUnit,
-    attributes: A = GeoradiusAttrs.None, count: Opt[Long] = Opt.Empty, sortOrder: Opt[SortOrder] = Opt.Empty): Result[Seq[A#Attributed[Value]]] =
-    execute(new Georadiusbymember(key, member, radius, unit, attributes, count, sortOrder))
+    attributes: A = GeoradiusAttrs.None, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty): Result[Seq[A#Attributed[Value]]] =
+    execute(new Georadiusbymember(key, member, radius, unit, attributes, count.toOpt, sortOrder.toOpt))
   def georadiusStore(key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
-    storeKey: Key, storeDist: Boolean = false, count: Opt[Long] = Opt.Empty, sortOrder: Opt[SortOrder] = Opt.Empty): Result[Opt[Long]] =
-    execute(new GeoradiusStore(key, point, radius, unit, count, sortOrder, storeKey, storeDist))
+    storeKey: Key, storeDist: Boolean = false, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty): Result[Opt[Long]] =
+    execute(new GeoradiusStore(key, point, radius, unit, count.toOpt, sortOrder.toOpt, storeKey, storeDist))
   def georadiusbymemberStore(key: Key, member: Value, radius: Double, unit: GeoUnit,
-    storeKey: Key, storeDist: Boolean = false, count: Opt[Long] = Opt.Empty, sortOrder: Opt[SortOrder] = Opt.Empty): Result[Opt[Long]] =
-    execute(new GeoradiusbymemberStore(key, member, radius, unit, count, sortOrder, storeKey, storeDist))
+    storeKey: Key, storeDist: Boolean = false, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty): Result[Opt[Long]] =
+    execute(new GeoradiusbymemberStore(key, member, radius, unit, count.toOpt, sortOrder.toOpt, storeKey, storeDist))
 
   private final class Geoadd(key: Key, items: Seq[(Value, GeoPoint)]) extends RedisLongCommand with NodeCommand {
     val encoded = encoder("GEOADD").key(key).add(items.iterator.map({case (v, p) => (p, valueCodec.write(v))})).result

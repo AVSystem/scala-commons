@@ -76,7 +76,7 @@ trait HashesApiSuite extends CommandsSuite {
     val scanFields = (0 until 32).map(i => (s"toscan$i", s"value$i"))
     setup(hmset("key", scanFields: _*))
     def hscanCollect(cursor: Cursor, acc: Seq[(String, String)]): Future[Seq[(String, String)]] =
-      hscan("key", cursor, Opt("toscan*"), Opt(4L)).exec.flatMapNow {
+      hscan("key", cursor, "toscan*", 4L).exec.flatMapNow {
         case (Cursor.NoCursor, data) => Future.successful(acc ++ data)
         case (nextCursor, data) => hscanCollect(nextCursor, acc ++ data)
       }

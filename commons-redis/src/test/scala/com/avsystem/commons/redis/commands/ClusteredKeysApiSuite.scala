@@ -104,7 +104,7 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
 
   test("SORT") {
     sort("somelist",
-      Opt(SelfPattern), Opt(SortLimit(0, 1)), SortOrder.Desc, alpha = true).assert(_.isEmpty)
+      SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true).assert(_.isEmpty)
   }
 
   test("SORT with STORE") {
@@ -165,13 +165,13 @@ trait NodeKeysApiSuite extends ClusteredKeysApiSuite {
 
   test("SORT with GET") {
     sortGet("somelist", Seq(HashFieldPattern("hash", "*")),
-      Opt(SelfPattern), Opt(SortLimit(0, 1)), SortOrder.Desc, alpha = true).assert(_.isEmpty)
+      SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true).assert(_.isEmpty)
   }
 
   test("SORT with BY") {
-    sort("somelist", by = SelfPattern.opt).assert(_.isEmpty)
-    sort("somelist", by = KeyPattern("sth_*").opt).assert(_.isEmpty)
-    sort("somelist", by = HashFieldPattern("hash_*", "sth_*").opt).assert(_.isEmpty)
+    sort("somelist", by = SelfPattern).assert(_.isEmpty)
+    sort("somelist", by = KeyPattern("sth_*")).assert(_.isEmpty)
+    sort("somelist", by = HashFieldPattern("hash_*", "sth_*")).assert(_.isEmpty)
   }
 }
 

@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.{ByteString, ByteStringBuilder}
-import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
+import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt, OptArg}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
@@ -52,15 +52,15 @@ trait ClusteredKeysApi extends ApiSubset {
   def restore(key: Key, ttl: Long, dumpedValue: Dumped, replace: Boolean = false): Result[Unit] =
     execute(new Restore(key, ttl, dumpedValue, replace))
 
-  def sort(key: Key, by: Opt[SortPattern[Key, HashKey]] = Opt.Empty, limit: Opt[SortLimit] = Opt.Empty,
+  def sort(key: Key, by: OptArg[SortPattern[Key, HashKey]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
     sortOrder: SortOrder = SortOrder.Asc, alpha: Boolean = false): Result[Seq[Value]] =
-    execute(new Sort(key, by, limit, sortOrder, alpha))
-  def sortGet(key: Key, gets: Seq[SortPattern[Key, HashKey]], by: Opt[SortPattern[Key, HashKey]] = Opt.Empty, limit: Opt[SortLimit] = Opt.Empty,
+    execute(new Sort(key, by.toOpt, limit.toOpt, sortOrder, alpha))
+  def sortGet(key: Key, gets: Seq[SortPattern[Key, HashKey]], by: OptArg[SortPattern[Key, HashKey]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
     sortOrder: SortOrder = SortOrder.Asc, alpha: Boolean = false): Result[Seq[Seq[Opt[Value]]]] =
-    execute(new SortGet(key, gets, by, limit, sortOrder, alpha))
-  def sortStore(key: Key, destination: Key, by: Opt[SortPattern[Key, HashKey]] = Opt.Empty, limit: Opt[SortLimit] = Opt.Empty,
+    execute(new SortGet(key, gets, by.toOpt, limit.toOpt, sortOrder, alpha))
+  def sortStore(key: Key, destination: Key, by: OptArg[SortPattern[Key, HashKey]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
     gets: Seq[SortPattern[Key, HashKey]] = Nil, sortOrder: SortOrder = SortOrder.Asc, alpha: Boolean = false): Result[Long] =
-    execute(new SortStore(key, destination, by, limit, gets, sortOrder, alpha))
+    execute(new SortStore(key, destination, by.toOpt, limit.toOpt, gets, sortOrder, alpha))
 
   def ttl(key: Key): Result[Opt[Opt[Long]]] =
     execute(new Ttl(key))

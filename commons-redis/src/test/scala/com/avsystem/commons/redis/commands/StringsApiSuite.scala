@@ -23,7 +23,7 @@ trait StringsApiSuite extends CommandsSuite {
     setup(valueType[ByteString].set("key", ByteString(0, 1, 0, 7, 0)))
     bitcount("???").assertEquals(0)
     bitcount("key").assertEquals(4)
-    bitcount("key", (2L, -1L).opt).assertEquals(3)
+    bitcount("key", (2L, -1L)).assertEquals(3)
   }
 
   test("BITOP") {
@@ -160,10 +160,10 @@ trait StringsApiSuite extends CommandsSuite {
 
   test("SET") {
     set("key", "value").assertEquals(true)
-    set("key", "value", Expiration.Ex(100).opt).assertEquals(true)
-    set("key", "value", Expiration.Px(100000).opt).assertEquals(true)
-    set("key", "value", existence = true.opt).assertEquals(true)
-    set("key", "value", existence = false.opt).assertEquals(false)
+    set("key", "value", Expiration.Ex(100)).assertEquals(true)
+    set("key", "value", Expiration.Px(100000)).assertEquals(true)
+    set("key", "value", existence = true).assertEquals(true)
+    set("key", "value", existence = false).assertEquals(false)
   }
 
   test("SETBIT") {

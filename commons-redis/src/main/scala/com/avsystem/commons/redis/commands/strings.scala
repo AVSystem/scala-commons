@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
+import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt, OptArg}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.protocol.{NullBulkStringMsg, SimpleStringStr}
@@ -9,8 +9,8 @@ import com.avsystem.commons.redis.protocol.{NullBulkStringMsg, SimpleStringStr}
 trait StringsApi extends ApiSubset {
   def append(key: Key, value: Value): Result[Long] =
     execute(new Append(key, value))
-  def bitcount(key: Key, range: Opt[(Long, Long)] = Opt.Empty): Result[Long] =
-    execute(new Bitcount(key, range))
+  def bitcount(key: Key, range: OptArg[(Long, Long)] = OptArg.Empty): Result[Long] =
+    execute(new Bitcount(key, range.toOpt))
   def bitop(multiOperation: MultiBitOp, destkey: Key, keys: Key*): Result[Long] =
     execute(new Bitop(multiOperation, destkey, keys))
   def bitopNot(destkey: Key, key: Key): Result[Long] =
@@ -47,8 +47,8 @@ trait StringsApi extends ApiSubset {
     execute(new Msetnx(keyValues))
   def psetex(key: Key, milliseconds: Long, value: Value): Result[Unit] =
     execute(new Psetex(key, milliseconds, value))
-  def set(key: Key, value: Value, expiration: Opt[Expiration] = Opt.Empty, existence: Opt[Boolean] = Opt.Empty): Result[Boolean] =
-    execute(new Set(key, value, expiration, existence))
+  def set(key: Key, value: Value, expiration: OptArg[Expiration] = OptArg.Empty, existence: OptArg[Boolean] = OptArg.Empty): Result[Boolean] =
+    execute(new Set(key, value, expiration.toOpt, existence.toOpt))
   def setbit(key: Key, offset: Long, value: Boolean): Result[Boolean] =
     execute(new Setbit(key, offset, value))
   def setex(key: Key, seconds: Long, value: Value): Result[Unit] =

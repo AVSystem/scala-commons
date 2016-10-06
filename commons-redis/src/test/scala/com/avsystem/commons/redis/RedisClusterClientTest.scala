@@ -41,7 +41,7 @@ class RedisClusterClientTest extends RedisClusterCommandsSuite {
   }
 
   test("forbidden command") {
-    val batch = watch(Seq(slotKey(0)))
+    val batch = watch(slotKey(0))
     batch.intercept[ForbiddenCommandException]
   }
 }

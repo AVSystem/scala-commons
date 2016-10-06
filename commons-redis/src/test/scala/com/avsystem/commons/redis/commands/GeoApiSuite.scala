@@ -110,7 +110,7 @@ trait GeoApiSuite extends CommandsSuite {
     setup(geoadd(Key, Cities.toList))
     georadius(Key, Lodz, 150, GeoUnit.Km)
       .assertEquals(List("Łódź", "Warszawa"))
-    georadius(Key, Lodz, 300, GeoUnit.Km, sortOrder = SortOrder.Desc.opt, count = 2L.opt)
+    georadius(Key, Lodz, 300, GeoUnit.Km, sortOrder = SortOrder.Desc, count = 2L)
       .assertEquals(List("Gdańsk", "Kraków"))
     georadius(OtherKey, Lodz, 10, GeoUnit.Km).assertEquals(Nil)
 
@@ -118,13 +118,13 @@ trait GeoApiSuite extends CommandsSuite {
     val WithCoordsDistances = (Coords zip WithDistances).map({ case (coord, rest) => Withcoord(coord, rest) })
     val WithHashesCoordsDistances = (Hashes zip WithCoordsDistances).map({ case (hash, rest) => Withhash(hash, rest) })
 
-    georadius(Key, Lodz, 300, GeoUnit.Km, sortOrder = SortOrder.Asc.opt)
+    georadius(Key, Lodz, 300, GeoUnit.Km, sortOrder = SortOrder.Asc)
       .assertEquals(Names)
-    georadius(Key, Lodz, 300, GeoUnit.Km, Withdist, sortOrder = SortOrder.Asc.opt)
+    georadius(Key, Lodz, 300, GeoUnit.Km, Withdist, sortOrder = SortOrder.Asc)
       .assertEquals(WithDistances)
-    georadius(Key, Lodz, 300, GeoUnit.Km, Withcoord + Withdist, sortOrder = SortOrder.Asc.opt)
+    georadius(Key, Lodz, 300, GeoUnit.Km, Withcoord + Withdist, sortOrder = SortOrder.Asc)
       .assertEquals(WithCoordsDistances)
-    georadius(Key, Lodz, 300, GeoUnit.Km, Withhash + Withcoord + Withdist, sortOrder = SortOrder.Asc.opt)
+    georadius(Key, Lodz, 300, GeoUnit.Km, Withhash + Withcoord + Withdist, sortOrder = SortOrder.Asc)
       .assertEquals(WithHashesCoordsDistances)
   }
 
@@ -140,7 +140,7 @@ trait GeoApiSuite extends CommandsSuite {
 
     georadiusbymember(Key, "Łódź", 150, GeoUnit.Km)
       .assertEquals(List("Łódź", "Warszawa"))
-    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, sortOrder = SortOrder.Desc.opt, count = 2L.opt)
+    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, sortOrder = SortOrder.Desc, count = 2L)
       .assertEquals(List("Gdańsk", "Kraków"))
     georadiusbymember(OtherKey, "Łódź", 10, GeoUnit.Km).assertEquals(Nil)
 
@@ -148,13 +148,13 @@ trait GeoApiSuite extends CommandsSuite {
     val WithCoordsDistances = (Coords zip WithDistances).map({ case (coord, rest) => Withcoord(coord, rest) })
     val WithHashesCoordsDistances = (Hashes zip WithCoordsDistances).map({ case (hash, rest) => Withhash(hash, rest) })
 
-    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, sortOrder = SortOrder.Asc.opt)
+    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, sortOrder = SortOrder.Asc)
       .assertEquals(Names)
-    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, Withdist, sortOrder = SortOrder.Asc.opt)
+    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, Withdist, sortOrder = SortOrder.Asc)
       .assertEquals(WithDistances)
-    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, Withcoord + Withdist, sortOrder = SortOrder.Asc.opt)
+    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, Withcoord + Withdist, sortOrder = SortOrder.Asc)
       .assertEquals(WithCoordsDistances)
-    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, Withhash + Withcoord + Withdist, sortOrder = SortOrder.Asc.opt)
+    georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, Withhash + Withcoord + Withdist, sortOrder = SortOrder.Asc)
       .assertEquals(WithHashesCoordsDistances)
   }
 
