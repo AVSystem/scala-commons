@@ -8,7 +8,6 @@ import org.scalatest.{BeforeAndAfterAll, Suite}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.sys.process._
 
 /**
   * Author: ghik
@@ -21,7 +20,7 @@ trait UsesClusterServers extends BeforeAndAfterAll with RedisProcessUtils { this
   def ports: Seq[Int]
 
   lazy val addresses = ports.map(port => NodeAddress(port = port))
-  var redisProcesses: Seq[Process] = _
+  var redisProcesses: Seq[RedisProcess] = _
 
   protected def prepareDirectory(): Unit
 
@@ -42,7 +41,6 @@ trait UsesClusterServers extends BeforeAndAfterAll with RedisProcessUtils { this
   }
 
   override protected def afterAll() = {
-    Await.result(Future.traverse(ports)(resetCluster), 10.seconds)
     Await.result(Future.traverse(ports zip redisProcesses) {
       case (port, process) => shutdownRedis(port, process)
     }, 10.seconds)

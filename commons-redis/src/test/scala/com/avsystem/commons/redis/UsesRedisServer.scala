@@ -5,7 +5,6 @@ import org.scalatest.{BeforeAndAfterAll, Suite}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Promise}
-import scala.sys.process._
 
 /**
   * Author: ghik
@@ -15,7 +14,7 @@ trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils { this: S
   def port = 7000
   def address = NodeAddress(port = port)
 
-  var redisProcess: Process = _
+  var redisProcess: RedisProcess = _
   val initPromise = Promise[Unit]()
 
   override protected def beforeAll() = {
