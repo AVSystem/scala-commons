@@ -5,7 +5,7 @@ import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.BasicJavaInterop._
 import com.avsystem.commons.jiop.JCanBuildFrom
-import com.avsystem.commons.misc.{NOpt, Opt, OptRef}
+import com.avsystem.commons.misc.{NOpt, Opt, OptArg, OptRef}
 
 import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
@@ -305,10 +305,13 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
       }
     )
 
+  implicit def optArgCodec[T: GenCodec]: GenCodec[OptArg[T]] =
+    new TransformedCodec[OptArg[T], Opt[T]](optCodec[T], _.toOpt, opt => if (opt.isEmpty) OptArg.Empty else OptArg(opt.get))
+
   implicit def optRefCodec[T >: Null : GenCodec]: GenCodec[OptRef[T]] =
     new TransformedCodec[OptRef[T], Opt[T]](optCodec[T], _.toOpt, opt => OptRef(opt.orNull))
 
-  implicit def jEnumCodec[E <: Enum[E]: GenKeyCodec]: GenCodec[E] =
+  implicit def jEnumCodec[E <: Enum[E] : GenKeyCodec]: GenCodec[E] =
     fromKeyCodec[E]
 
   // Needed because of SI-9453

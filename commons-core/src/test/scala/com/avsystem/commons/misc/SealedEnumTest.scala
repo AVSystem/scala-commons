@@ -4,7 +4,7 @@ package misc
 import org.scalatest.FunSuite
 
 class SealedEnumTest extends FunSuite {
-  sealed trait SomeEnum
+  sealed abstract class SomeEnum(implicit val sourceInfo: SourceInfo) extends OrderedEnum
   object SomeEnum extends SealedEnumCompanion[SomeEnum] {
     case object First extends SomeEnum
     case object Second extends SomeEnum
@@ -16,6 +16,6 @@ class SealedEnumTest extends FunSuite {
 
   test("case objects listing test") {
     import SomeEnum._
-    assert(values.toSet == Set(First, Second, Third, Fourth))
+    assert(values == List(First, Second, Third, Fourth))
   }
 }
