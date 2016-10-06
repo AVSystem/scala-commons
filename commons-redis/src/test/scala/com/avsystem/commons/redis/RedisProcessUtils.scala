@@ -30,12 +30,23 @@ trait RedisProcessUtils {
     promise.future.mapNow(_ => process)
   }
 
+  def resetCluster(port: Int): Future[Unit] = Future {
+    val resetScript =
+      """
+        |FLUSHALL
+        |CLUSTER RESET HARD
+      """.stripMargin
+
+    val passOption = password.map(p => Seq("-a", p)).getOrElse(Seq.empty)
+    val command = Seq(s"$redisHome/redis-cli", "-p", port.toString) ++ passOption
+    def input = new ByteArrayInputStream(resetScript.getBytes)
+    blocking((command #< input).!!)
+  }
+
   def shutdownRedis(port: Int, process: Process): Future[Unit] = Future {
     val shutdownScript =
       """
         |CONFIG SET appendonly no
-        |FLUSHALL
-        |CLUSTER RESET HARD
         |SHUTDOWN NOSAVE
       """.stripMargin
 
