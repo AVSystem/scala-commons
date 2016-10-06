@@ -305,13 +305,13 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
       }
     )
 
-  implicit def optArgCodec[T : GenCodec]: GenCodec[OptArg[T]] =
-    new TransformedCodec[OptArg[T], Opt[T]](optCodec[T], _.toOpt, opt => OptArg(opt.orNull))
+  implicit def optArgCodec[T: GenCodec]: GenCodec[OptArg[T]] =
+    new TransformedCodec[OptArg[T], Opt[T]](optCodec[T], _.toOpt, opt => if (opt.isEmpty) OptArg.Empty else OptArg(opt.get))
 
   implicit def optRefCodec[T >: Null : GenCodec]: GenCodec[OptRef[T]] =
     new TransformedCodec[OptRef[T], Opt[T]](optCodec[T], _.toOpt, opt => OptRef(opt.orNull))
 
-  implicit def jEnumCodec[E <: Enum[E]: GenKeyCodec]: GenCodec[E] =
+  implicit def jEnumCodec[E <: Enum[E] : GenKeyCodec]: GenCodec[E] =
     fromKeyCodec[E]
 
   // Needed because of SI-9453
