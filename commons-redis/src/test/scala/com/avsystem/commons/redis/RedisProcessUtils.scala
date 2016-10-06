@@ -5,7 +5,7 @@ import java.io.ByteArrayInputStream
 
 import com.avsystem.commons.misc.Opt
 
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise, blocking}
 import scala.sys.process._
 
 /**
@@ -34,13 +34,17 @@ trait RedisProcessUtils {
     val shutdownScript =
       """
         |CONFIG SET appendonly no
+        |FLUSHALL
+        |CLUSTER RESET HARD
         |SHUTDOWN NOSAVE
       """.stripMargin
 
     val passOption = password.map(p => Seq("-a", p)).getOrElse(Seq.empty)
     val command = Seq(s"$redisHome/redis-cli", "-p", port.toString) ++ passOption
     def input = new ByteArrayInputStream(shutdownScript.getBytes)
-    (command #< input).!!
-    process.exitValue()
+    blocking {
+      (command #< input).!!
+      process.exitValue()
+    }
   }
 }
