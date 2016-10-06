@@ -44,7 +44,7 @@ trait UsesClusterServers extends BeforeAndAfterAll with RedisProcessUtils { this
   override protected def afterAll() = {
     Await.result(Future.traverse(ports zip redisProcesses) {
       case (port, process) => shutdownRedis(port, process)
-    }, 10.seconds)
+    }, 60.seconds)
     FileUtils.deleteDirectory(clusterDir)
     super.afterAll()
   }
