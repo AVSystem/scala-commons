@@ -63,7 +63,6 @@ object RawCommand {
     val Connection = Level(1)
     val Operation = Level(2)
     val Node = Level(3)
-    val Control = Level(4)
   }
 }
 

@@ -31,6 +31,7 @@ trait NodeClusterApi extends ClusteredClusterApi {
     execute(new ClusterCountkeysinslot(slot))
   def clusterDelslots(slots: Seq[Int]): Result[Unit] =
     execute(new ClusterDelslots(slots))
+  def clusterFailover: Result[Unit] = clusterFailover()
   def clusterFailover(option: OptArg[FailoverOption] = OptArg.Empty): Result[Unit] =
     execute(new ClusterFailover(option.toOpt))
   def clusterForget(nodeId: NodeId): Result[Unit] =
@@ -45,13 +46,14 @@ trait NodeClusterApi extends ClusteredClusterApi {
     execute(ClusterNodes)
   def clusterReplicate(nodeId: NodeId): Result[Unit] =
     execute(new ClusterReplicate(nodeId))
+  def clusterReset: Result[Unit] = clusterReset()
   def clusterReset(hard: Boolean = false): Result[Unit] =
     execute(new ClusterReset(hard))
   def clusterSaveconfig: Result[Unit] =
     execute(ClusterSaveconfig)
   def clusterSetConfigEpoch(configEpoch: Long): Result[Unit] =
     execute(new ClusterSetConfigEpoch(configEpoch))
-  def clusterSetslot(slot: Int, subcommand: SetslotSubcommand): Result[Unit] =
+  def clusterSetslot(slot: Int, subcommand: SetslotCmd): Result[Unit] =
     execute(new ClusterSetslot(slot, subcommand))
   def clusterSlaves(nodeId: NodeId): Result[Seq[NodeInfo]] =
     execute(new ClusterSlaves(nodeId))
@@ -123,7 +125,7 @@ trait NodeClusterApi extends ClusteredClusterApi {
     val encoded = encoder("CLUSTER", "SET-CONFIG-EPOCH").add(configEpoch).result
   }
 
-  private final class ClusterSetslot(slot: Int, subcommand: SetslotSubcommand) extends RedisUnitCommand with NodeCommand {
+  private final class ClusterSetslot(slot: Int, subcommand: SetslotCmd) extends RedisUnitCommand with NodeCommand {
     val encoded = encoder("CLUSTER", "SETSLOT").add(slot).add(subcommand).result
   }
 
@@ -202,14 +204,14 @@ object FailoverOption extends NamedEnumCompanion[FailoverOption] {
   val values: List[FailoverOption] = caseObjects
 }
 
-sealed trait SetslotSubcommand
-object SetslotSubcommand {
-  case class Migrating(destinationNodeId: NodeId) extends SetslotSubcommand
-  case class Importing(sourceNodeId: NodeId) extends SetslotSubcommand
-  case object Stable extends SetslotSubcommand
-  case class Node(nodeId: NodeId) extends SetslotSubcommand
+sealed trait SetslotCmd
+object SetslotCmd {
+  case class Migrating(destinationNodeId: NodeId) extends SetslotCmd
+  case class Importing(sourceNodeId: NodeId) extends SetslotCmd
+  case object Stable extends SetslotCmd
+  case class Node(nodeId: NodeId) extends SetslotCmd
 
-  implicit val SubcommandCommandArg: CommandArg[SetslotSubcommand] =
+  implicit val SubcommandCommandArg: CommandArg[SetslotCmd] =
     CommandArg((encoder, arg) => arg match {
       case Migrating(NodeId(nodeId)) => encoder.add("MIGRATING").add(nodeId)
       case Importing(NodeId(nodeId)) => encoder.add("IMPORTING").add(nodeId)

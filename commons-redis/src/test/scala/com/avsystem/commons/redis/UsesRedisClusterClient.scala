@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.redis.commands.SetslotSubcommand.{Importing, Migrating, Node}
+import com.avsystem.commons.redis.commands.SetslotCmd.{Importing, Migrating, Node}
 import com.avsystem.commons.redis.config.ClusterConfig
 import org.scalatest.Suite
 

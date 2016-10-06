@@ -73,8 +73,10 @@ trait NodeServerApi extends ClusteredServerApi {
   def shutdown: Result[Nothing] = shutdown()
   def shutdown(modifier: OptArg[ShutdownModifier] = OptArg.Empty): Result[Nothing] =
     execute(new Shutdown(modifier.toOpt))
-  def slaveof(newMaster: Opt[NodeAddress]): Result[Unit] =
-    execute(new Slaveof(newMaster))
+  def slaveofNoOne: Result[Unit] =
+    execute(new Slaveof(Opt.Empty))
+  def slaveof(newMaster: NodeAddress): Result[Unit] =
+    execute(new Slaveof(newMaster.opt))
   def slowlogGet: Result[Seq[SlowlogEntry]] = slowlogGet()
   def slowlogGet(count: OptArg[Int] = OptArg.Empty): Result[Seq[SlowlogEntry]] =
     execute(new SlowlogGet(count.toOpt))

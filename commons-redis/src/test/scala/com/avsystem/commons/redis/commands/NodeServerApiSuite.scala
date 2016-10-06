@@ -97,7 +97,7 @@ trait ServerApiSuite extends CommandsSuite { this: UsesActorSystem =>
   }
 
   test("SLAVEOF") {
-    slaveof(Opt.Empty).get
+    slaveofNoOne.get
   }
 
   test("SLOWLOG GET") {
