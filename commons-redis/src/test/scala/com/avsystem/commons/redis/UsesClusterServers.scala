@@ -38,13 +38,13 @@ trait UsesClusterServers extends BeforeAndAfterAll with RedisProcessUtils { this
       "--appendfilename", "appendonly.aof",
       "--cluster-enabled", "yes",
       "--cluster-config-file", "nodes.conf"
-    )), 60.seconds)
+    )), 10.seconds)
   }
 
   override protected def afterAll() = {
     Await.result(Future.traverse(ports zip redisProcesses) {
       case (port, process) => shutdownRedis(port, process)
-    }, 60.seconds)
+    }, 10.seconds)
     FileUtils.deleteDirectory(clusterDir)
     super.afterAll()
   }

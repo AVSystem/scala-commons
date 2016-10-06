@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package redis
 
+import java.io.ByteArrayInputStream
+
 import com.avsystem.commons.misc.Opt
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -29,8 +31,16 @@ trait RedisProcessUtils {
   }
 
   def shutdownRedis(port: Int, process: Process): Future[Unit] = Future {
+    val shutdownScript =
+      """
+        |CONFIG SET appendonly no
+        |SHUTDOWN NOSAVE
+      """.stripMargin
+
     val passOption = password.map(p => Seq("-a", p)).getOrElse(Seq.empty)
-    (Seq(s"$redisHome/redis-cli", "-p", port.toString) ++ passOption :+ "SHUTDOWN").!!
+    val command = Seq(s"$redisHome/redis-cli", "-p", port.toString) ++ passOption
+    def input = new ByteArrayInputStream(shutdownScript.getBytes)
+    (command #< input).!!
     process.exitValue()
   }
 }
