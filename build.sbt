@@ -19,7 +19,8 @@ inThisBuild(Seq(
     "-Xfuture",
     "-Xfatal-warnings",
     "-Xlint:_,-missing-interpolator,-adapted-args"
-  )
+  ),
+  autoAPIMappings := true
 ))
 
 val silencerVersion = "0.5"
