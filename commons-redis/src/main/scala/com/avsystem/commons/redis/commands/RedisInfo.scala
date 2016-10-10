@@ -52,15 +52,6 @@ case class FullRedisInfo(infoStr: String) extends DefaultRedisInfo
   with CommandstatsInfo
 object FullRedisInfo extends RedisInfoSection[FullRedisInfo]("all")
 
-abstract class ParsedInfoLine(infoLine: String) {
-  protected val attrMap = infoLine.split(",").iterator.map { attr =>
-    val Array(name, value) = attr.split("=", 2)
-    (name, value)
-  }.toMap
-
-  override def toString = infoLine
-}
-
 trait ServerInfo extends RedisInfo {
   def redisVersion = get("redis_version")
   def redisGitSha1 = get("redis_git_sha1")
@@ -211,7 +202,7 @@ trait ReplicationInfo extends RedisInfo {
 }
 object ReplicationInfo extends RedisInfoSection[ReplicationInfo]("replication")
 
-case class SlaveInfo(infoLine: String) extends ParsedInfoLine(infoLine) {
+case class SlaveInfo(infoLine: String) extends ParsedInfo(infoLine, ",", "=") {
   def addr = NodeAddress(attrMap("ip"), attrMap("port").toInt)
   def state = SlaveState.byName(attrMap("state"))
   def offset = attrMap("offset").toLong
@@ -241,7 +232,7 @@ trait CommandstatsInfo extends RedisInfo {
 }
 object CommandstatsInfo extends RedisInfoSection[CommandstatsInfo]("commandstats")
 
-case class CommandStat(infoLine: String) extends ParsedInfoLine(infoLine) {
+case class CommandStat(infoLine: String) extends ParsedInfo(infoLine, ",", "=") {
   def calls = attrMap("calls").toLong
   def usec = attrMap("usec").toLong
   def usecPerCall = attrMap("usec_per_call").toDouble
@@ -260,7 +251,7 @@ trait KeyspaceInfo extends RedisInfo {
 }
 object KeyspaceInfo extends RedisInfoSection[KeyspaceInfo]("keyspace")
 
-case class DbStat(infoLine: String) extends ParsedInfoLine(infoLine) {
+case class DbStat(infoLine: String) extends ParsedInfo(infoLine, ",", "=") {
   def keys = attrMap("keys").toLong
   def expires = attrMap("expires").toLong
   def avgTtl = attrMap("avg_ttl").toLong

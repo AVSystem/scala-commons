@@ -5,9 +5,10 @@ import java.nio.charset.StandardCharsets
 
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
+import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.exception.ErrorReplyException
-import com.avsystem.commons.redis.protocol.{BulkStringMsg, IntegerMsg, ValidRedisMsg}
-import com.avsystem.commons.redis.{ApiSubset, ConnectionCommand, NodeCommand, RecoverableApiSubset, RedisCommand, RedisSeqCommand, RedisUnitCommand}
+import com.avsystem.commons.redis.protocol.ValidRedisMsg
+import com.avsystem.commons.redis._
 import com.google.common.hash.Hashing
 
 /**
@@ -17,25 +18,21 @@ import com.google.common.hash.Hashing
 trait ClusteredScriptingApi extends ApiSubset {
   def eval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value]): Result[T] =
     execute(new Eval(script, keys, args))
-  def eval[T](source: String, keys: Seq[Key], args: Seq[Value])(decode: PartialFunction[ValidRedisMsg, T]): Result[T] =
-    execute(new Eval(RedisScript(source)(decode), keys, args))
+  def eval[T](source: String, keys: Seq[Key], args: Seq[Value])(decoder: ReplyDecoder[T]): Result[T] =
+    execute(new Eval(RedisScript(source)(decoder), keys, args))
   def evalsha[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value]): Result[T] =
-    execute(new Evalsha(script.sha1, script.decodeResult, keys, args))
-  def evalsha[T](sha1: Sha1, keys: Seq[Key], args: Seq[Value])(decode: PartialFunction[ValidRedisMsg, T]): Result[T] =
-    execute(new Evalsha(sha1, decode, keys, args))
+    execute(new Evalsha(script.sha1, script.decoder, keys, args))
+  def evalsha[T](sha1: Sha1, keys: Seq[Key], args: Seq[Value])(decoder: ReplyDecoder[T]): Result[T] =
+    execute(new Evalsha(sha1, decoder, keys, args))
 
   private final class Eval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value])
-    extends RedisCommand[T] with NodeCommand {
-
+    extends AbstractRedisCommand[T](script.decoder) with NodeCommand {
     val encoded = encoder("EVAL").add(script.source).add(keys.size).keys(keys).datas(args).result
-    protected def decodeExpected = script.decodeResult
   }
 
   private final class Evalsha[T](sha1: Sha1, decoder: PartialFunction[ValidRedisMsg, T], keys: Seq[Key], args: Seq[Value])
-    extends RedisCommand[T] with NodeCommand {
-
+    extends AbstractRedisCommand[T](decoder) with NodeCommand {
     val encoded = encoder("EVALSHA").add(sha1.raw).add(keys.size).keys(keys).datas(args).result
-    protected def decodeExpected = decoder
   }
 }
 
@@ -57,12 +54,9 @@ trait NodeScriptingApi extends ClusteredScriptingApi {
   def scriptLoad(script: RedisScript[Any]): Result[Sha1] =
     execute(new ScriptLoad(script))
 
-  private final class ScriptExists(hashes: Seq[Sha1]) extends RedisSeqCommand[Boolean] with NodeCommand {
+  private final class ScriptExists(hashes: Seq[Sha1])
+    extends RedisSeqCommand[Boolean](integerBoolean) with NodeCommand {
     val encoded = encoder("SCRIPT", "EXISTS").add(hashes).result
-    protected def decodeElement = {
-      case IntegerMsg(1) => true
-      case IntegerMsg(0) => false
-    }
   }
 
   private object ScriptFlush extends RedisUnitCommand with NodeCommand {
@@ -73,11 +67,9 @@ trait NodeScriptingApi extends ClusteredScriptingApi {
     val encoded = encoder("SCRIPT", "KILL").result
   }
 
-  private final class ScriptLoad(script: RedisScript[Any]) extends RedisCommand[Sha1] with NodeCommand {
+  private final class ScriptLoad(script: RedisScript[Any])
+    extends AbstractRedisCommand[Sha1](bulkSha1) with NodeCommand {
     val encoded = encoder("SCRIPT", "LOAD").add(script.source).result
-    protected def decodeExpected = {
-      case BulkStringMsg(data) => Sha1(data.utf8String)
-    }
   }
 }
 
@@ -90,16 +82,16 @@ trait ConnectionScriptingApi extends NodeScriptingApi {
   }
 }
 
-trait RedisScript[+T] {
+trait RedisScript[+A] {
   def source: String
-  def decodeResult: PartialFunction[ValidRedisMsg, T]
+  def decoder: ReplyDecoder[A]
   lazy val sha1 = Sha1(Hashing.sha1.hashString(source, StandardCharsets.UTF_8).toString)
 }
 object RedisScript {
-  def apply[T](script: String)(decode: PartialFunction[ValidRedisMsg, T]): RedisScript[T] =
-    new RedisScript[T] {
+  def apply[A](script: String)(replyDecoder: ReplyDecoder[A]): RedisScript[A] =
+    new RedisScript[A] {
       def source = script
-      def decodeResult = decode
+      def decoder = replyDecoder
     }
 }
 case class Sha1(raw: String) extends AnyVal {

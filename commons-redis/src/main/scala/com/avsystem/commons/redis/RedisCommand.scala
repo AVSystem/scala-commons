@@ -2,16 +2,17 @@ package com.avsystem.commons
 package redis
 
 import akka.util.ByteString
-import com.avsystem.commons.misc.{NamedEnum, Opt}
+import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis.RedisBatch.Index
+import com.avsystem.commons.redis.commands.{Cursor, ReplyDecoder}
 import com.avsystem.commons.redis.exception.{ErrorReplyException, UnexpectedReplyException}
 import com.avsystem.commons.redis.protocol._
 
 import scala.collection.mutable.ArrayBuffer
 
 trait RedisCommand[+A] extends AtomicBatch[A] with RawCommand {
-  protected def decodeExpected: PartialFunction[ValidRedisMsg, A]
+  protected def decodeExpected: ReplyDecoder[A]
 
   protected def decode(replyMsg: RedisReply): A = replyMsg match {
     case validReply: ValidRedisMsg =>
@@ -30,6 +31,9 @@ trait RedisCommand[+A] extends AtomicBatch[A] with RawCommand {
   override def toString =
     encoded.elements.iterator.map(bs => RedisMsg.escape(bs.string)).mkString(" ")
 }
+
+abstract class AbstractRedisCommand[A](protected val decodeExpected: ReplyDecoder[A])
+  extends RedisCommand[A]
 
 final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) extends AnyVal {
   def result: ArrayMsg[BulkStringMsg] = ArrayMsg(buffer)
@@ -52,6 +56,8 @@ final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) exten
     fluent(keyDatas.foreach({ case (k, v) => key(k).data(v) }))
   def dataPairs[K: RedisDataCodec, V: RedisDataCodec](dataPairs: TraversableOnce[(K, V)]) =
     fluent(dataPairs.foreach({ case (k, v) => data(k).data(v) }))
+  def argDataPairs[T: CommandArg, V: RedisDataCodec](argDataPairs: TraversableOnce[(T, V)]) =
+    fluent(argDataPairs.foreach({ case (a, v) => add(a).data(v) }))
 }
 
 object CommandEncoder {
@@ -80,132 +86,67 @@ object CommandEncoder {
   }
 }
 
-trait HasCodec[A] {
-  protected def codec: RedisDataCodec[A]
-}
+import com.avsystem.commons.redis.commands.ReplyDecoders._
 
-trait RedisDataCommand[A] extends RedisCommand[A] with HasCodec[A] {
-  protected def decodeExpected = {
-    case BulkStringMsg(data) => codec.read(data)
-  }
-}
+abstract class RedisDataCommand[A: RedisDataCodec]
+  extends AbstractRedisCommand(bulk[A])
 
-trait RedisOptDataCommand[A] extends RedisOptCommand[A] with HasCodec[A] {
-  protected def decodeNonEmpty(bytes: ByteString) = codec.read(bytes)
-}
+abstract class RedisOptDataCommand[A: RedisDataCodec]
+  extends AbstractRedisCommand(nullBulkOr[A])
 
-trait RedisDataSeqCommand[A] extends RedisSeqCommand[A] with HasCodec[A] {
-  protected val decodeElement: PartialFunction[ValidRedisMsg, A] = {
-    case BulkStringMsg(bs) => codec.read(bs)
-  }
-}
+abstract class RedisDataSeqCommand[A: RedisDataCodec]
+  extends AbstractRedisCommand[Seq[A]](multiBulk[A])
 
-trait RedisOptDataSeqCommand[A] extends RedisCommand[Seq[Opt[A]]] with HasCodec[A] {
-  protected def decodeExpected = {
-    case ArrayMsg(elements) =>
-      elements.map {
-        case BulkStringMsg(bs) => Opt(codec.read(bs))
-        case NullBulkStringMsg => Opt.Empty
-        case msg => throw new UnexpectedReplyException(s"Expected multi bulk reply, but one of the elements is $msg")
-      }
-  }
-}
+abstract class RedisOptDataSeqCommand[A: RedisDataCodec]
+  extends AbstractRedisCommand[Seq[Opt[A]]](multiBulk(nullBulkOr[A]))
 
-trait RedisRawCommand extends RedisCommand[ValidRedisMsg] {
-  def decodeExpected = {
-    case msg => msg
-  }
-}
+abstract class RedisRawCommand
+  extends AbstractRedisCommand[ValidRedisMsg](undecoded)
 
-trait RedisUnitCommand extends RedisCommand[Unit] {
-  def decodeExpected = {
-    case RedisMsg.Ok => ()
-  }
-}
+abstract class RedisNothingCommand
+  extends AbstractRedisCommand(failing)
 
-trait RedisLongCommand extends RedisCommand[Long] {
-  def decodeExpected = {
-    case IntegerMsg(res) => res
-  }
-}
+abstract class RedisUnitCommand
+  extends AbstractRedisCommand[Unit](simpleOkUnit)
 
-trait RedisOptLongCommand extends RedisCommand[Opt[Long]] {
-  def decodeExpected = {
-    case IntegerMsg(res) => Opt(res)
-    case NullBulkStringMsg => Opt.Empty
-  }
-}
+abstract class RedisLongCommand
+  extends AbstractRedisCommand[Long](integerLong)
 
-trait RedisOptStringCommand extends RedisOptCommand[String] {
-  protected def decodeNonEmpty(bytes: ByteString) = bytes.utf8String
-}
+abstract class RedisIntCommand
+  extends AbstractRedisCommand[Int](integerInt)
 
-trait RedisBooleanCommand extends RedisCommand[Boolean] {
-  def decodeExpected = {
-    case IntegerMsg(0) => false
-    case IntegerMsg(1) => true
-  }
-}
+abstract class RedisOptLongCommand
+  extends AbstractRedisCommand[Opt[Long]](nullBulkOr(integerLong))
 
-trait RedisSimpleStringCommand extends RedisCommand[String] {
-  def decodeExpected = {
-    case SimpleStringMsg(data) => data.utf8String
-  }
-}
+abstract class RedisOptDoubleCommand
+  extends AbstractRedisCommand[Opt[Double]](nullOrEmptyBulkOr(bulkDouble))
 
-trait RedisBinaryCommand extends RedisCommand[ByteString] {
-  def decodeExpected = {
-    case BulkStringMsg(data) => data
-  }
-}
+abstract class RedisOptStringCommand
+  extends AbstractRedisCommand[Opt[String]](nullBulkOr(bulkUTF8))
 
-trait RedisOptCommand[A] extends RedisCommand[Opt[A]] {
-  def decodeExpected = {
-    case BulkStringMsg(data) => Opt(decodeNonEmpty(data))
-    case NullBulkStringMsg => Opt.Empty
-  }
-  protected def decodeNonEmpty(bytes: ByteString): A
-}
+abstract class RedisBooleanCommand
+  extends AbstractRedisCommand[Boolean](integerBoolean)
 
-trait RedisSeqCommand[A] extends RedisCommand[Seq[A]] {
-  def decodeExpected = {
-    case ArrayMsg(elements) => elements.map {
-      case validReply: ValidRedisMsg =>
-        decodeElement.applyOrElse(validReply, (r: ValidRedisMsg) => throw new UnexpectedReplyException(r.toString))
-      case errMsg: ErrorMsg =>
-        throw new ErrorReplyException(errMsg)
-    }
-  }
+abstract class RedisSimpleStringCommand
+  extends AbstractRedisCommand[String](simpleUTF8)
 
-  protected def decodeElement: PartialFunction[ValidRedisMsg, A]
-}
+abstract class RedisBinaryCommand
+  extends AbstractRedisCommand[ByteString](bulkBinary)
 
-trait RedisPairSeqCommand[A] extends RedisCommand[Seq[A]] {
-  def decodeExpected = {
-    case ArrayMsg(elements) =>
-      elements.iterator.grouped(2).map {
-        case Seq(key: ValidRedisMsg, value: ValidRedisMsg) =>
-          val fail: PartialFunction[(ValidRedisMsg, ValidRedisMsg), Nothing] = {
-            case (k, v) => throw new UnexpectedReplyException(s"$k and $v")
-          }
-          decodeElement.applyOrElse((key, value), fail)
-        case Seq(error: ErrorMsg, _) => throw new ErrorReplyException(error)
-        case Seq(_, error: ErrorMsg) => throw new ErrorReplyException(error)
-      }.to[ArrayBuffer]
-  }
-  protected def decodeElement: PartialFunction[(ValidRedisMsg, ValidRedisMsg), A]
-}
+abstract class RedisDoubleCommand
+  extends AbstractRedisCommand[Double](bulkDouble)
 
-trait RedisDoubleCommand extends RedisCommand[Double] {
-  def decodeExpected = {
-    case BulkStringMsg(bytes) => bytes.utf8String.toDouble
-  }
-}
+abstract class RedisScanCommand[T](decoder: ReplyDecoder[T])
+  extends AbstractRedisCommand[(Cursor, T)](multiBulkPair(bulkCursor, decoder))
 
-trait RedisOptDoubleCommand extends RedisCommand[Opt[Double]] {
-  def decodeExpected = {
-    case BulkStringMsg(ByteString.empty) => Opt.Empty
-    case BulkStringMsg(bytes) => bytes.utf8String.toDouble.opt
-    case NullBulkStringMsg => Opt.Empty
-  }
-}
+abstract class RedisSeqCommand[T](elementDecoder: ReplyDecoder[T])
+  extends AbstractRedisCommand[Seq[T]](multiBulk(elementDecoder))
+
+abstract class RedisOptSeqCommand[T](elementDecoder: ReplyDecoder[T])
+  extends AbstractRedisCommand[Opt[Seq[T]]](nullMultiBulkOr(multiBulk(elementDecoder)))
+
+abstract class RedisOptCommand[T](elementDecoder: ReplyDecoder[T])
+  extends AbstractRedisCommand[Opt[T]](nullBulkOr(elementDecoder))
+
+abstract class RedisEnumCommand[E <: NamedEnum](companion: NamedEnumCompanion[E])
+  extends AbstractRedisCommand[E](bulkNamedEnum(companion))

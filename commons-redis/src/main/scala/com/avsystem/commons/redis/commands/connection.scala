@@ -3,7 +3,7 @@ package redis.commands
 
 import akka.util.ByteString
 import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.protocol.SimpleStringMsg
+import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait NodeConnectionApi extends ApiSubset {
   def echo(message: ByteString): Result[ByteString] =
@@ -16,11 +16,8 @@ trait NodeConnectionApi extends ApiSubset {
     val encoded = encoder("ECHO").add(message).result
   }
 
-  private object Ping extends RedisCommand[ByteString] with NodeCommand {
+  private object Ping extends AbstractRedisCommand[ByteString](simpleBinary) with NodeCommand {
     val encoded = encoder("PING").result
-    protected def decodeExpected = {
-      case SimpleStringMsg(data) => data
-    }
   }
 }
 

@@ -6,6 +6,7 @@ import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
 import com.avsystem.commons.redis.protocol._
+import ReplyDecoders._
 
 import scala.collection.mutable.ListBuffer
 
@@ -35,21 +36,14 @@ trait GeoApi extends ApiSubset {
     val encoded = encoder("GEOADD").key(key).add(items.iterator.map({case (v, p) => (p, valueCodec.write(v))})).result
   }
 
-  private final class Geohash(key: Key, members: Seq[Value]) extends RedisSeqCommand[Opt[GeoHash]] with NodeCommand {
+  private final class Geohash(key: Key, members: Seq[Value])
+    extends RedisSeqCommand[Opt[GeoHash]](nullBulkOr(bulk(bs => GeoHash(bs.utf8String)))) with NodeCommand {
     val encoded = encoder("GEOHASH").key(key).datas(members).result
-    protected val decodeElement: PartialFunction[ValidRedisMsg, Opt[GeoHash]] = {
-      case BulkStringMsg(hash) => GeoHash(hash.utf8String).opt
-      case NullBulkStringMsg => Opt.Empty
-    }
   }
 
-  private final class Geopos(key: Key, members: Seq[Value]) extends RedisSeqCommand[Opt[GeoPoint]] with NodeCommand {
+  private final class Geopos(key: Key, members: Seq[Value])
+    extends RedisSeqCommand[Opt[GeoPoint]](nullMultiBulkOr(multiBulkGeoPoint)) with NodeCommand {
     val encoded = encoder("GEOPOS").key(key).datas(members).result
-    protected val decodeElement: PartialFunction[ValidRedisMsg, Opt[GeoPoint]] = {
-      case ArrayMsg(IndexedSeq(BulkStringMsg(rawLong), BulkStringMsg(rawLat))) =>
-        GeoPoint(rawLong.utf8String.toDouble, rawLat.utf8String.toDouble).opt
-      case NullArrayMsg => Opt.Empty
-    }
   }
 
   private final class Geodist(key: Key, member1: Value, member2: Value, unit: GeoUnit)
@@ -57,10 +51,10 @@ trait GeoApi extends ApiSubset {
     val encoded = encoder("GEODIST").key(key).data(member1).data(member2).add(unit).result
   }
 
-  private abstract class AbstractGeoradius[T](
+  private abstract class AbstractGeoradius[T](decoder: ReplyDecoder[T])(
     key: Key, point: Opt[GeoPoint], member: Opt[Value], radius: Double, unit: GeoUnit,
     flags: List[String], count: Opt[Long], sortOrder: Opt[SortOrder], store: Opt[(Key, Boolean)])
-    extends RedisCommand[T] with NodeCommand {
+    extends AbstractRedisCommand[T](decoder) with NodeCommand {
 
     val encoded = encoder(if (point.isDefined) "GEORADIUS" else "GEORADIUSBYMEMBER")
       .key(key).add(point).add(member.map(valueCodec.write)).add(radius).add(unit).add(flags)
@@ -68,48 +62,27 @@ trait GeoApi extends ApiSubset {
       .optKey("STORE", store.collect({ case (skey, false) => skey }))
       .optKey("STOREDIST", store.collect({ case (skey, true) => skey }))
       .result
-
-    protected def decodeAttributedElement(attributes: GeoradiusAttrs): PartialFunction[RedisMsg, attributes.Attributed[Value]] =
-      if (attributes.isEmpty) {
-        case BulkStringMsg(mem) =>
-          attributes.decode(ArrayMsg.Empty, attributes.flags, valueCodec.read(mem))
-      } else {
-        case arr@ArrayMsg(IndexedSeq(BulkStringMsg(mem), _*)) =>
-          attributes.decode(arr, attributes.flags, valueCodec.read(mem))
-      }
   }
 
   private final class Georadius[A <: GeoradiusAttrs](key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
     attributes: A, count: Opt[Long], sortOrder: Opt[SortOrder])
-    extends AbstractGeoradius[Seq[A#Attributed[Value]]](
+    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulk(geoAttributed(attributes, bulk[Value])))(
       key, point.opt, Opt.Empty, radius, unit, attributes.encodeFlags, count, sortOrder, Opt.Empty)
-      with RedisSeqCommand[A#Attributed[Value]] {
-
-    protected val decodeElement: PartialFunction[ValidRedisMsg, A#Attributed[Value]] =
-      decodeAttributedElement(attributes)
-  }
 
   private final class GeoradiusStore(key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
     count: Opt[Long], sortOrder: Opt[SortOrder], storeKey: Key, storeDist: Boolean)
-    extends AbstractGeoradius[Opt[Long]](
+    extends AbstractGeoradius[Opt[Long]](nullBulkOr(integerLong))(
       key, point.opt, Opt.Empty, radius, unit, Nil, count, sortOrder, Opt((storeKey, storeDist)))
-      with RedisOptLongCommand
 
   private final class Georadiusbymember[A <: GeoradiusAttrs](key: Key, member: Value, radius: Double, unit: GeoUnit,
     attributes: A, count: Opt[Long], sortOrder: Opt[SortOrder])
-    extends AbstractGeoradius[Seq[A#Attributed[Value]]](
+    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulk(geoAttributed(attributes, bulk[Value])))(
       key, Opt.Empty, member.opt, radius, unit, attributes.encodeFlags, count, sortOrder, Opt.Empty)
-      with RedisSeqCommand[A#Attributed[Value]] {
-
-    protected val decodeElement: PartialFunction[ValidRedisMsg, A#Attributed[Value]] =
-      decodeAttributedElement(attributes)
-  }
 
   private final class GeoradiusbymemberStore(key: Key, member: Value, radius: Double, unit: GeoUnit,
     count: Opt[Long], sortOrder: Opt[SortOrder], storeKey: Key, storeDist: Boolean)
-    extends AbstractGeoradius[Opt[Long]](
+    extends AbstractGeoradius[Opt[Long]](nullBulkOr(integerLong))(
       key, Opt.Empty, member.opt, radius, unit, Nil, count, sortOrder, Opt((storeKey, storeDist)))
-      with RedisOptLongCommand
 }
 
 abstract class GeoradiusAttrs(val flags: Int) { self =>

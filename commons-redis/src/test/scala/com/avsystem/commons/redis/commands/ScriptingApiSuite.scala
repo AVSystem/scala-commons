@@ -16,7 +16,7 @@ trait ClusteredScriptingApiSuite extends CommandsSuite {
 
   object getScript extends RedisScript[Opt[String]] {
     def source = "return redis.call('get', KEYS[1])"
-    def decodeResult = {
+    def decoder = {
       case BulkStringMsg(data) => data.utf8String.opt
       case NullBulkStringMsg => Opt.Empty
     }

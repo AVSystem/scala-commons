@@ -83,16 +83,6 @@ trait ApiSubset { self =>
   ): Self[K, H, V]
 
   protected def execute[A](command: RedisCommand[A]): Result[A]
-
-  trait HasKeyCodec extends HasCodec[Key] {
-    protected def codec = keyCodec
-  }
-  trait HasHashKeyCodec extends HasCodec[HashKey] {
-    protected def codec = hashKeyCodec
-  }
-  trait HasValueCodec extends HasCodec[Value] {
-    protected def codec = valueCodec
-  }
 }
 
 abstract class AbstractApiSubset[K, H, V](implicit

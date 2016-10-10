@@ -5,6 +5,7 @@ import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt, OptArg}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.protocol.{NullBulkStringMsg, SimpleStringStr}
+import ReplyDecoders._
 
 trait StringsApi extends ApiSubset {
   def append(key: Key, value: Value): Result[Long] =
@@ -86,7 +87,7 @@ trait StringsApi extends ApiSubset {
     val encoded = encoder("DECRBY").key(key).add(decrement).result
   }
 
-  private final class Get(key: Key) extends RedisOptDataCommand[Value] with HasValueCodec with NodeCommand {
+  private final class Get(key: Key) extends RedisOptDataCommand[Value] with NodeCommand {
     val encoded = encoder("GET").key(key).result
   }
 
@@ -94,11 +95,11 @@ trait StringsApi extends ApiSubset {
     val encoded = encoder("GETBIT").key(key).add(offset).result
   }
 
-  private final class Getrange(key: Key, start: Long, end: Long) extends RedisDataCommand[Value] with HasValueCodec with NodeCommand {
+  private final class Getrange(key: Key, start: Long, end: Long) extends RedisDataCommand[Value] with NodeCommand {
     val encoded = encoder("GETRANGE").key(key).add(start).add(end).result
   }
 
-  private final class Getset(key: Key, value: Value) extends RedisOptDataCommand[Value] with HasValueCodec with NodeCommand {
+  private final class Getset(key: Key, value: Value) extends RedisOptDataCommand[Value] with NodeCommand {
     val encoded = encoder("GETSET").key(key).data(value).result
   }
 
@@ -114,7 +115,7 @@ trait StringsApi extends ApiSubset {
     val encoded = encoder("INCRBYFLOAT").key(key).add(increment).result
   }
 
-  private final class Mget(keys: Seq[Key]) extends RedisOptDataSeqCommand[Value] with HasValueCodec with NodeCommand {
+  private final class Mget(keys: Seq[Key]) extends RedisOptDataSeqCommand[Value] with NodeCommand {
     require(keys.nonEmpty, "MGET requires at least one key")
     val encoded = encoder("MGET").keys(keys).result
   }
@@ -134,15 +135,10 @@ trait StringsApi extends ApiSubset {
   }
 
   private final class Set(key: Key, value: Value, expiration: Opt[Expiration], existence: Opt[Boolean])
-    extends RedisCommand[Boolean] with NodeCommand {
+    extends AbstractRedisCommand[Boolean](nullBulkOrSimpleOkBoolean) with NodeCommand {
 
     val encoded = encoder("SET").key(key).data(value).add(expiration)
       .add(existence.map(v => if (v) "XX" else "NX")).result
-
-    def decodeExpected = {
-      case SimpleStringStr("OK") => true
-      case NullBulkStringMsg => false
-    }
   }
 
   private final class Setbit(key: Key, offset: Long, value: Boolean) extends RedisBooleanCommand with NodeCommand {

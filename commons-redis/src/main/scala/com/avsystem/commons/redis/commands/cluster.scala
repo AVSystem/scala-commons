@@ -4,7 +4,7 @@ package redis.commands
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt, OptArg}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.exception.UnexpectedReplyException
+import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, IntegerMsg, RedisMsg}
 
 import scala.collection.mutable
@@ -14,11 +14,8 @@ trait ClusteredClusterApi extends ApiSubset {
   def clusterKeyslot(key: Key): Result[Int] =
     execute(new ClusterKeyslot(key))
 
-  private final class ClusterKeyslot(key: Key) extends RedisCommand[Int] with NodeCommand {
+  private final class ClusterKeyslot(key: Key) extends RedisIntCommand with NodeCommand {
     val encoded = encoder("CLUSTER", "KEYSLOT").key(key).result
-    def decodeExpected = {
-      case IntegerMsg(value) => value.toInt
-    }
   }
 }
 
@@ -38,7 +35,7 @@ trait NodeClusterApi extends ClusteredClusterApi {
     execute(new ClusterForget(nodeId))
   def clusterGetkeysinslot(slot: Int, count: Long): Result[Seq[Key]] =
     execute(new ClusterGetkeysinslot(slot, count))
-  def clusterInfo: Result[ClusterInfoReply] =
+  def clusterInfo: Result[ClusterStateInfo] =
     execute(ClusterInfo)
   def clusterMeet(address: NodeAddress): Result[Unit] =
     execute(new ClusterMeet(address))
@@ -86,27 +83,21 @@ trait NodeClusterApi extends ClusteredClusterApi {
     val encoded = encoder("CLUSTER", "FORGET").add(nodeId.raw).result
   }
 
-  private final class ClusterGetkeysinslot(slot: Int, count: Long) extends RedisDataSeqCommand[Key] with HasKeyCodec with NodeCommand {
+  private final class ClusterGetkeysinslot(slot: Int, count: Long) extends RedisDataSeqCommand[Key] with NodeCommand {
     val encoded = encoder("CLUSTER", "GETKEYSINSLOT").add(slot).add(count).result
   }
 
-  private object ClusterInfo extends RedisCommand[ClusterInfoReply] with NodeCommand {
+  private object ClusterInfo
+    extends AbstractRedisCommand[ClusterStateInfo](bulk(bs => ClusterStateInfo(bs.utf8String))) with NodeCommand {
     val encoded = encoder("CLUSTER", "INFO").result
-    def decodeExpected = {
-      case BulkStringMsg(clusterInfo) => ClusterInfoReply.parse(clusterInfo.utf8String)
-    }
   }
 
   private final class ClusterMeet(address: NodeAddress) extends RedisUnitCommand with NodeCommand {
     val encoded = encoder("CLUSTER", "MEET").add(address.ip).add(address.port).result
   }
 
-  private object ClusterNodes extends RedisCommand[Seq[NodeInfo]] with NodeCommand {
+  private object ClusterNodes extends AbstractRedisCommand[Seq[NodeInfo]](bulkNodeInfos) with NodeCommand {
     val encoded = encoder("CLUSTER", "NODES").result
-    def decodeExpected = {
-      case BulkStringMsg(nodeInfos) =>
-        nodeInfos.utf8String.split("\n").iterator.filter(_.nonEmpty).map(NodeInfo.parse).toIndexedSeq
-    }
   }
 
   private final class ClusterReplicate(nodeId: NodeId) extends RedisUnitCommand with NodeCommand {
@@ -129,31 +120,13 @@ trait NodeClusterApi extends ClusteredClusterApi {
     val encoded = encoder("CLUSTER", "SETSLOT").add(slot).add(subcommand).result
   }
 
-  private final class ClusterSlaves(nodeId: NodeId) extends RedisCommand[Seq[NodeInfo]] with NodeCommand {
+  private final class ClusterSlaves(nodeId: NodeId) extends AbstractRedisCommand[Seq[NodeInfo]](bulkNodeInfos) with NodeCommand {
     val encoded = encoder("CLUSTER", "SLAVES").add(nodeId.raw).result
-    def decodeExpected = {
-      case BulkStringMsg(nodeInfos) =>
-        nodeInfos.utf8String.split("\n").iterator.filter(_.nonEmpty).map(NodeInfo.parse).toIndexedSeq
-    }
   }
 
-  private final class ClusterSlots[N](nodeFormat: SlotsNodeFormat[N]) extends RedisCommand[Seq[SlotRangeMapping[N]]] with NodeCommand {
+  private final class ClusterSlots[N](nodeFormat: SlotsNodeFormat[N])
+    extends RedisSeqCommand[SlotRangeMapping[N]](multiBulkSlotRangeMapping(nodeFormat)) with NodeCommand {
     val encoded = encoder("CLUSTER", "SLOTS").result
-    def decodeExpected = {
-      case ArrayMsg(elements) => elements.map {
-        case ArrayMsg(IntegerMsg(from) +: IntegerMsg(to) +: (master: RedisMsg) +: (replicas: IndexedSeq[RedisMsg])) =>
-          val range = SlotRange(from.toInt, to.toInt)
-          def parseNode(rr: RedisMsg) = rr match {
-            case arr: ArrayMsg[RedisMsg] => nodeFormat.parseNode
-              .applyOrElse(arr, (_: ArrayMsg[RedisMsg]) => throw new UnexpectedReplyException(s"bad entry in CLUSTER SLOTS reply: $arr"))
-            case msg =>
-              throw new UnexpectedReplyException(s"bad entry in CLUSTER SLOTS reply: $rr")
-          }
-          SlotRangeMapping(range, parseNode(master), replicas.map(parseNode))
-        case msg =>
-          throw new UnexpectedReplyException(s"bad reply for CLUSTER SLOTS: $msg")
-      }
-    }
   }
 }
 
@@ -220,115 +193,54 @@ object SetslotCmd {
     })
 }
 
-case class ClusterInfoReply(
-  stateOk: Boolean,
-  slotsAssigned: Int,
-  slotsOk: Int,
-  slotsPfail: Int,
-  slotsFail: Int,
-  knownNodes: Int,
-  size: Int,
-  currentEpoch: Long,
-  myEpoch: Long,
-  statsMessagesSent: Long,
-  statsMessagesReceived: Long
-) {
-  override def toString =
-    s"""
-       |cluster_state:${if (stateOk) "ok" else "fail"}
-       |cluster_slots_assigned:$slotsAssigned
-       |cluster_slots_ok:$slotsOk
-       |cluster_slots_pfail:$slotsPfail
-       |cluster_slots_fail:$slotsFail
-       |cluster_known_nodes:$knownNodes
-       |cluster_size:$size
-       |cluster_current_epoch:$currentEpoch
-       |cluster_my_epoch:$myEpoch
-       |cluster_stats_messages_sent:$statsMessagesSent
-       |cluster_stats_messages_received:$statsMessagesReceived
-     """.stripMargin.trim
-}
-object ClusterInfoReply {
-  def parse(clusterInfo: String): ClusterInfoReply = {
-    val rawReply = mutable.HashMap() ++ clusterInfo.split("\r\n").iterator
-      .filter(_.nonEmpty).map(_.split(':') match { case Array(field, value) => (field, value) })
-
-    ClusterInfoReply(
-      rawReply("cluster_state") == "ok",
-      rawReply("cluster_slots_assigned").toInt,
-      rawReply("cluster_slots_ok").toInt,
-      rawReply("cluster_slots_pfail").toInt,
-      rawReply("cluster_slots_fail").toInt,
-      rawReply("cluster_known_nodes").toInt,
-      rawReply("cluster_size").toInt,
-      rawReply("cluster_current_epoch").toLong,
-      rawReply("cluster_my_epoch").toLong,
-      rawReply("cluster_stats_messages_sent").toLong,
-      rawReply("cluster_stats_messages_received").toLong
-    )
-  }
+case class ClusterStateInfo(info: String) extends ParsedInfo(info, "\r\n", ":") {
+  val stateOk = attrMap("cluster_state") == "ok"
+  val slotsAssigned = attrMap("cluster_slots_assigned").toInt
+  val slotsOk = attrMap("cluster_slots_ok").toInt
+  val slotsPfail = attrMap("cluster_slots_pfail").toInt
+  val slotsFail = attrMap("cluster_slots_fail").toInt
+  val knownNodes = attrMap("cluster_known_nodes").toInt
+  val size = attrMap("cluster_size").toInt
+  val currentEpoch = attrMap("cluster_current_epoch").toLong
+  val myEpoch = attrMap("cluster_my_epoch").toLong
+  val statsMessagesSent = attrMap("cluster_stats_messages_sent").toLong
+  val statsMessagesReceived = attrMap("cluster_stats_messages_received").toLong
 }
 
-case class NodeInfo(
-  id: NodeId,
-  address: NodeAddress,
-  flags: NodeFlags,
-  master: Opt[NodeId],
-  pingSent: Long,
-  pongRecv: Long,
-  configEpoch: Long,
-  connected: Boolean,
-  slots: Seq[SlotRange],
-  importingSlots: Seq[(Int, NodeId)],
-  migratingSlots: Seq[(Int, NodeId)]
-) {
-  override def toString = {
-    val slotReprs = slots.iterator.map(_.toString) ++
-      importingSlots.iterator.map({ case (s, n) => s"$s-<-$n" }) ++
-      migratingSlots.iterator.map({ case (s, n) => s"$s->-$n" })
-    val slotsRepr = if (slotReprs.hasNext) slotReprs.mkString(" ", " ", "") else ""
-    val linkState = if (connected) "connected" else "disconnected"
-    s"$id $address $flags ${master.getOrElse("-")} $pingSent $pongRecv $configEpoch $linkState$slotsRepr"
-  }
-}
+case class NodeInfo(infoLine: String) {
+  private val splitLine: Array[String] = infoLine.split(' ')
 
-object NodeInfo {
-  def parse(lineStr: String) = {
-    val line = lineStr.split(' ')
-    val Array(ip, portStr) = line(1).split(':')
+  val id = NodeId(splitLine(0))
+  val address = NodeAddress.parse(splitLine(1))
+  val flags = NodeFlags(splitLine(2))
+  val master = Opt(splitLine(3)).filter(_ != "-").map(NodeId)
+  val pingSent = splitLine(4).toLong
+  val pongRecv = splitLine(5).toLong
+  val configEpoch = splitLine(6).toLong
+  val connected = splitLine(7) == "connected"
+  val (slots: Seq[SlotRange], importingSlots: Seq[(Int, NodeId)], migratingSlots: Seq[(Int, NodeId)]) = {
 
-    val slotRanges = new ArrayBuffer[SlotRange]
+    val slots = new ArrayBuffer[SlotRange]
     val importingSlots = new ArrayBuffer[(Int, NodeId)]
     val migratingSlots = new ArrayBuffer[(Int, NodeId)]
 
-    line.iterator.drop(8).foreach { str =>
+    splitLine.iterator.drop(8).foreach { str =>
       (str.indexOf("-<-"), str.indexOf("->-"), str.indexOf('-')) match {
         case (-1, -1, -1) =>
           val slot = str.toInt
-          slotRanges += SlotRange(slot, slot)
+          slots += SlotRange(slot, slot)
         case (-1, -1, idx) =>
-          slotRanges += SlotRange(str.take(idx).toInt, str.drop(idx + 1).toInt)
+          slots += SlotRange(str.take(idx).toInt, str.drop(idx + 1).toInt)
         case (idx, -1, _) =>
           importingSlots += ((str.take(idx).toInt, NodeId(str.drop(idx + 1))))
         case (-1, idx, _) =>
           migratingSlots += ((str.take(idx).toInt, NodeId(str.drop(idx + 1))))
       }
     }
-
-    NodeInfo(
-      NodeId(line(0)),
-      NodeAddress(ip, portStr.toInt),
-      NodeFlags(line(2)),
-      Opt(line(3)).filter(_ != "-").map(NodeId),
-      line(4).toLong,
-      line(5).toLong,
-      line(6).toLong,
-      line(7) == "connected",
-      slotRanges,
-      importingSlots,
-      migratingSlots
-    )
+    (slots, importingSlots, migratingSlots)
   }
+
+  override def toString = infoLine
 }
 
 class NodeFlags(val raw: Int) extends AnyVal {

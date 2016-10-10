@@ -1,7 +1,10 @@
 package com.avsystem.commons
 package redis.commands
 
+import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
+
+import scala.collection.mutable
 
 sealed abstract class SortOrder(val name: String) extends NamedEnum
 object SortOrder extends NamedEnumCompanion[SortOrder] {
@@ -19,4 +22,14 @@ case class Cursor(raw: Long) extends AnyVal {
 }
 object Cursor {
   val NoCursor = Cursor(0)
+}
+
+abstract class ParsedInfo(info: String, attrSeparator: String, nameValueSeparator: String) {
+  protected val attrMap: BMap[String, String] = mutable.OpenHashMap() ++
+    info.split(attrSeparator).iterator.map { attr =>
+      val Array(name, value) = attr.split(nameValueSeparator, 2)
+      (name, value)
+    }
+
+  override def toString = info
 }

@@ -5,10 +5,8 @@ import akka.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt, OptArg}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.exception.UnexpectedReplyException
+import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol._
-
-import scala.collection.mutable.ArrayBuffer
 
 /**
   * Author: ghik
@@ -72,9 +70,8 @@ trait ClusteredKeysApi extends ApiSubset {
     val encoded = encoder("DEL").keys(keys).result
   }
 
-  private final class Dump(key: Key) extends RedisOptCommand[Dumped] with NodeCommand {
+  private final class Dump(key: Key) extends RedisOptCommand[Dumped](bulk(Dumped)) with NodeCommand {
     val encoded = encoder("DUMP").key(key).result
-    protected def decodeNonEmpty(bytes: ByteString) = Dumped(bytes)
   }
 
   private final class Exists(keys: Seq[Key]) extends RedisLongCommand with NodeCommand {
@@ -120,12 +117,9 @@ trait ClusteredKeysApi extends ApiSubset {
     val encoded = encoder("OBJECT", "REFCOUNT").key(key).result
   }
 
-  private final class ObjectEncoding(key: Key) extends RedisCommand[Opt[Encoding]] with NodeCommand {
+  private final class ObjectEncoding(key: Key)
+    extends RedisOptCommand[Encoding](bulkNamedEnum(Encoding)) with NodeCommand {
     val encoded = encoder("OBJECT", "ENCODING").key(key).result
-    def decodeExpected = {
-      case BulkStringMsg(string) => Opt(Encoding.byName(string.utf8String))
-      case NullBulkStringMsg => Opt.Empty
-    }
   }
 
   private final class ObjectIdletime(key: Key) extends RedisOptLongCommand with NodeCommand {
@@ -144,13 +138,8 @@ trait ClusteredKeysApi extends ApiSubset {
     val encoded = encoder("PEXPIREAT").key(key).add(millisecondsTimestamp).result
   }
 
-  private final class Pttl(key: Key) extends RedisCommand[Opt[Opt[Long]]] with NodeCommand {
+  private final class Pttl(key: Key) extends AbstractRedisCommand[Opt[Opt[Long]]](integerTtl) with NodeCommand {
     val encoded = encoder("PTTL").key(key).result
-    def decodeExpected = {
-      case IntegerMsg(-2) => Opt.Empty
-      case IntegerMsg(-1) => Opt(Opt.Empty)
-      case IntegerMsg(ttl) => Opt(Opt(ttl))
-    }
   }
 
   private final class Rename(key: Key, newkey: Key) extends RedisUnitCommand with NodeCommand {
@@ -166,8 +155,10 @@ trait ClusteredKeysApi extends ApiSubset {
     val encoded = encoder("RESTORE").key(key).add(ttl).add(dumpedValue.raw).addFlag("REPLACE", replace).result
   }
 
-  private abstract class AbstractSort[T](key: Key, by: Opt[SortPattern[Key, HashKey]], limit: Opt[SortLimit],
-    gets: Seq[SortPattern[Key, HashKey]], sortOrder: SortOrder, alpha: Boolean, destination: Opt[Key]) extends RedisCommand[T] with NodeCommand {
+  private abstract class AbstractSort[T](decoder: ReplyDecoder[T])
+    (key: Key, by: Opt[SortPattern[Key, HashKey]], limit: Opt[SortLimit],
+      gets: Seq[SortPattern[Key, HashKey]], sortOrder: SortOrder, alpha: Boolean, destination: Opt[Key])
+    extends AbstractRedisCommand[T](decoder) with NodeCommand {
     val encoded = {
       val enc = encoder("SORT").key(key).optAdd("BY", by).optAdd("LIMIT", limit)
       gets.foreach(sp => enc.add("GET").add(sp))
@@ -176,40 +167,21 @@ trait ClusteredKeysApi extends ApiSubset {
   }
 
   private final class Sort(key: Key, by: Opt[SortPattern[Key, HashKey]], limit: Opt[SortLimit], sortOrder: SortOrder, alpha: Boolean)
-    extends AbstractSort[Seq[Value]](key, by, limit, Nil, sortOrder, alpha, Opt.Empty) with RedisDataSeqCommand[Value] with HasValueCodec
+    extends AbstractSort[Seq[Value]](multiBulk[Value])(key, by, limit, Nil, sortOrder, alpha, Opt.Empty)
 
   private final class SortGet(key: Key, gets: Seq[SortPattern[Key, HashKey]], by: Opt[SortPattern[Key, HashKey]], limit: Opt[SortLimit], sortOrder: SortOrder, alpha: Boolean)
-    extends AbstractSort[Seq[Seq[Opt[Value]]]](key, by, limit, gets, sortOrder, alpha, Opt.Empty) {
-
-    def decodeExpected = {
-      case ArrayMsg(elements) =>
-        val valuesPerKey = gets.size min 1
-        val it = elements.iterator.map {
-          case NullBulkStringMsg => Opt.Empty
-          case BulkStringMsg(bytes) => Opt(valueCodec.read(bytes))
-          case msg => throw new UnexpectedReplyException(s"Expected multi bulk reply but one of the elements is $msg")
-        }.grouped(valuesPerKey)
-        it.to[ArrayBuffer]
-    }
-  }
+    extends AbstractSort[Seq[Seq[Opt[Value]]]](groupedMultiBulk(gets.size min 1, nullBulkOr[Value]))(
+      key, by, limit, gets, sortOrder, alpha, Opt.Empty)
 
   private final class SortStore(key: Key, destination: Key, by: Opt[SortPattern[Key, HashKey]], limit: Opt[SortLimit], gets: Seq[SortPattern[Key, HashKey]], sortOrder: SortOrder, alpha: Boolean)
-    extends AbstractSort[Long](key, by, limit, gets, sortOrder, alpha, Opt(destination)) with RedisLongCommand
+    extends AbstractSort[Long](integerLong)(key, by, limit, gets, sortOrder, alpha, Opt(destination))
 
-  private final class Ttl(key: Key) extends RedisCommand[Opt[Opt[Long]]] with NodeCommand {
+  private final class Ttl(key: Key) extends AbstractRedisCommand[Opt[Opt[Long]]](integerTtl) with NodeCommand {
     val encoded = encoder("TTL").key(key).result
-    def decodeExpected = {
-      case IntegerMsg(-2) => Opt.Empty
-      case IntegerMsg(-1) => Opt(Opt.Empty)
-      case IntegerMsg(ttl) => Opt(Opt(ttl))
-    }
   }
 
-  private final class Type(key: Key) extends RedisCommand[RedisType] with NodeCommand {
+  private final class Type(key: Key) extends AbstractRedisCommand[RedisType](simpleNamedEnum(RedisType)) with NodeCommand {
     val encoded = encoder("TYPE").key(key).result
-    def decodeExpected = {
-      case SimpleStringStr(str) => RedisType.byName(str)
-    }
   }
 }
 
@@ -229,23 +201,16 @@ trait NodeKeysApi extends ClusteredKeysApi with ApiSubset {
     val encoded = encoder("MOVE").key(key).add(db).result
   }
 
-  private final class Keys(pattern: Key) extends RedisDataSeqCommand[Key] with HasKeyCodec with NodeCommand {
+  private final class Keys(pattern: Key) extends RedisDataSeqCommand[Key] with NodeCommand {
     val encoded = encoder("KEYS").data(pattern).result
   }
 
   private final class Scan(cursor: Cursor, matchPattern: Opt[Key], count: Opt[Long])
-    extends RedisCommand[(Cursor, Seq[Key])] with NodeCommand {
+    extends RedisScanCommand[Seq[Key]](multiBulk[Key]) with NodeCommand {
     val encoded = encoder("SCAN").add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
-    def decodeExpected = {
-      case ArrayMsg(IndexedSeq(BulkStringMsg(cursorString), ArrayMsg(elements))) =>
-        (Cursor(cursorString.utf8String.toLong), elements.map {
-          case BulkStringMsg(bs) => keyCodec.read(bs)
-          case msg => throw new UnexpectedReplyException(s"Expected multi bulk reply, but one of the elements is $msg")
-        })
-    }
   }
 
-  private object Randomkey extends RedisOptDataCommand[Key] with HasKeyCodec with NodeCommand {
+  private object Randomkey extends RedisOptDataCommand[Key] with NodeCommand {
     val encoded = encoder("RANDOMKEY").result
   }
 

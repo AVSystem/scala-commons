@@ -1,13 +1,9 @@
 package com.avsystem.commons
 package redis.commands
 
-import akka.util.ByteString
 import com.avsystem.commons.misc.{Opt, OptArg}
 import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.exception.UnexpectedReplyException
-import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, NullBulkStringMsg}
-
-import scala.collection.mutable.ArrayBuffer
+import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait HashesApi extends ApiSubset {
   def hdel(key: Key, fields: HashKey*): Result[Long] =
@@ -49,16 +45,14 @@ trait HashesApi extends ApiSubset {
     val encoded = encoder("HEXISTS").key(key).data(field).result
   }
 
-  private final class Hget(key: Key, field: HashKey) extends RedisOptCommand[Value] with NodeCommand {
+  private final class Hget(key: Key, field: HashKey)
+    extends RedisOptDataCommand[Value] with NodeCommand {
     val encoded = encoder("HGET").key(key).data(field).result
-    protected def decodeNonEmpty(bytes: ByteString) = valueCodec.read(bytes)
   }
 
-  private final class Hgetall(key: Key) extends RedisPairSeqCommand[(HashKey, Value)] with NodeCommand {
+  private final class Hgetall(key: Key)
+    extends AbstractRedisCommand[Seq[(HashKey, Value)]](pairedMultiBulk[HashKey, Value]) with NodeCommand {
     val encoded = encoder("HGETALL").key(key).result
-    protected def decodeElement = {
-      case (BulkStringMsg(field), BulkStringMsg(value)) => (hashKeyCodec.read(field), valueCodec.read(value))
-    }
   }
 
   private final class Hincrby(key: Key, field: HashKey, increment: Long) extends RedisLongCommand with NodeCommand {
@@ -78,12 +72,9 @@ trait HashesApi extends ApiSubset {
     val encoded = encoder("HLEN").key(key).result
   }
 
-  private final class Hmget(key: Key, fields: Seq[HashKey]) extends RedisSeqCommand[Opt[Value]] with NodeCommand {
+  private final class Hmget(key: Key, fields: Seq[HashKey])
+    extends RedisOptDataSeqCommand[Value] with NodeCommand {
     val encoded = encoder("HMGET").key(key).datas(fields).result
-    protected def decodeElement = {
-      case BulkStringMsg(data) => valueCodec.read(data).opt
-      case NullBulkStringMsg => Opt.Empty
-    }
   }
 
   private final class Hmset(key: Key, fieldValues: Seq[(HashKey, Value)]) extends RedisUnitCommand with NodeCommand {
@@ -91,15 +82,8 @@ trait HashesApi extends ApiSubset {
   }
 
   private final class Hscan(key: Key, cursor: Cursor, matchPattern: Opt[HashKey], count: Opt[Long])
-    extends RedisCommand[(Cursor, Seq[(HashKey, Value)])] with NodeCommand {
+    extends RedisScanCommand[Seq[(HashKey, Value)]](pairedMultiBulk[HashKey, Value]) with NodeCommand {
     val encoded = encoder("HSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
-    def decodeExpected = {
-      case ArrayMsg(IndexedSeq(BulkStringMsg(cursorString), ArrayMsg(elements))) =>
-        (Cursor(cursorString.utf8String.toLong), elements.iterator.grouped(2).map {
-          case Seq(BulkStringMsg(field), BulkStringMsg(value)) => (hashKeyCodec.read(field), valueCodec.read(value))
-          case Seq(field, value) => throw new UnexpectedReplyException(s"Expected multi bulk reply pairs, but one of the pairs is ($field, $value)")
-        }.to[ArrayBuffer])
-    }
   }
 
   private final class Hset(key: Key, field: HashKey, value: Value) extends RedisBooleanCommand with NodeCommand {

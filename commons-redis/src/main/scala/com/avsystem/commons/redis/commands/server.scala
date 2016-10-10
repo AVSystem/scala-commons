@@ -6,11 +6,8 @@ import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt, OptArg}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.exception.UnexpectedReplyException
-import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, IntegerMsg, SimpleStringMsg, ValidRedisMsg}
-
-import scala.collection.mutable.ArrayBuffer
-import scala.io.Source
+import com.avsystem.commons.redis.commands.ReplyDecoders._
+import com.avsystem.commons.redis.protocol.{BulkStringMsg, ValidRedisMsg}
 
 trait ClusteredServerApi extends ApiSubset {
   def debugObject(key: Key): Result[ValidRedisMsg] =
@@ -112,29 +109,16 @@ trait NodeServerApi extends ClusteredServerApi {
     }
   }
 
-  private object ClientList extends RedisCommand[Seq[ClientInfo]] with NodeCommand {
+  private object ClientList extends AbstractRedisCommand[Seq[ClientInfo]](bulkClientInfos) with NodeCommand {
     val encoded = encoder("CLIENT", "LIST").result
-    protected def decodeExpected = {
-      case BulkStringMsg(data) =>
-        Source.fromInputStream(data.iterator.asInputStream).getLines()
-          .map(_.trim).filter(_.nonEmpty).map(line => ClientInfo(line)).to[ArrayBuffer]
-    }
   }
 
   private final class ClientPause(timeout: Long) extends RedisUnitCommand with NodeCommand {
     val encoded = encoder("CLIENT", "PAUSE").add(timeout).result
   }
 
-  private abstract class AbstractCommandInfoCommand extends RedisSeqCommand[CommandInfo] with NodeCommand {
-    protected def decodeElement = {
-      case ArrayMsg(IndexedSeq(BulkStringMsg(name), IntegerMsg(arity), ArrayMsg(flagArray), IntegerMsg(firstKey), IntegerMsg(lastKey), IntegerMsg(stepCount))) =>
-        val flags = flagArray.iterator.map({
-          case SimpleStringMsg(flagStr) => CommandFlags.byRepr(flagStr.utf8String)
-          case msg => throw new UnexpectedReplyException(s"Expected only simple strings in command flag list, got $msg")
-        }).fold(CommandFlags.NoFlags)(_ | _)
-        CommandInfo(name.utf8String, CommandArity(math.abs(arity.toInt), arity < 0), flags, firstKey.toInt, lastKey.toInt, stepCount.toInt)
-    }
-  }
+  private abstract class AbstractCommandInfoCommand
+    extends AbstractRedisCommand[Seq[CommandInfo]](multiBulk(multiBulkCommandInfo)) with NodeCommand
 
   private object Command extends AbstractCommandInfoCommand {
     val encoded = encoder("COMMAND").result
@@ -144,7 +128,7 @@ trait NodeServerApi extends ClusteredServerApi {
     val encoded = encoder("COMMAND", "COUNT").result
   }
 
-  private final class CommandGetkeys(command: TraversableOnce[ByteString]) extends RedisDataSeqCommand[Key] with HasKeyCodec with NodeCommand {
+  private final class CommandGetkeys(command: TraversableOnce[ByteString]) extends RedisDataSeqCommand[Key] with NodeCommand {
     val encoded = encoder("COMMAND", "GETKEYS").add(command).result
   }
 
@@ -152,11 +136,9 @@ trait NodeServerApi extends ClusteredServerApi {
     val encoded = encoder("COMMAND", "INFO").add(commandNames).result
   }
 
-  private final class ConfigGet(parameter: String) extends RedisPairSeqCommand[(String, String)] with NodeCommand {
+  private final class ConfigGet(parameter: String)
+    extends AbstractRedisCommand[Seq[(String, String)]](pairedMultiBulk(bulkUTF8, bulkUTF8)) with NodeCommand {
     val encoded = encoder("CONFIG", "GET").add(parameter).result
-    protected def decodeElement = {
-      case (BulkStringMsg(param), BulkStringMsg(value)) => (param.utf8String, value.utf8String)
-    }
   }
 
   private object ConfigResetstat extends RedisUnitCommand with NodeCommand {
@@ -175,11 +157,8 @@ trait NodeServerApi extends ClusteredServerApi {
     val encoded = encoder("DBSIZE").result
   }
 
-  private object DebugSegfault extends RedisCommand[Nothing] with NodeCommand {
+  private object DebugSegfault extends RedisNothingCommand with NodeCommand {
     val encoded = encoder("DEBUG", "SEGFAULT").result
-    protected def decodeExpected = {
-      case msg => throw new UnexpectedReplyException(s"Expected no reply, got $msg")
-    }
   }
 
   private object Flushall extends RedisUnitCommand with NodeCommand {
@@ -191,48 +170,24 @@ trait NodeServerApi extends ClusteredServerApi {
   }
 
   private final class Info[T >: FullRedisInfo <: RedisInfo](section: RedisInfoSection[T], implicitDefault: Boolean)
-    extends RedisCommand[T] with NodeCommand {
-
+    extends AbstractRedisCommand[T](bulk(bs => new FullRedisInfo(bs.utf8String))) with NodeCommand {
     val encoded = encoder("INFO").setup(e => if (!implicitDefault || section != DefaultRedisInfo) e.add(section.name)).result
-    protected def decodeExpected = {
-      case BulkStringMsg(data) => new FullRedisInfo(data.utf8String)
-    }
   }
 
   private object Lastsave extends RedisLongCommand with NodeCommand {
     val encoded = encoder("LASTSAVE").result
   }
 
-  private object Role extends RedisCommand[RedisRole] with NodeCommand {
+  private object Role extends AbstractRedisCommand[RedisRole](multiBulkRedisRole) with NodeCommand {
     val encoded = encoder("ROLE").result
-    protected def decodeExpected = {
-      case ArrayMsg(IndexedSeq(RedisRole.MasterStr, IntegerMsg(replOffset), ArrayMsg(rawSlaveOffsets))) =>
-        val slaveOffsets = rawSlaveOffsets.map {
-          case ArrayMsg(IndexedSeq(BulkStringMsg(ip), BulkStringMsg(port), BulkStringMsg(offset))) =>
-            (NodeAddress(ip.utf8String, port.utf8String.toInt), offset.utf8String.toLong)
-          case el => throw new UnexpectedReplyException(s"Unexpected message for slave info: $el")
-        }
-        MasterRole(replOffset, slaveOffsets)
-      case ArrayMsg(IndexedSeq(RedisRole.SlaveStr, BulkStringMsg(ip), IntegerMsg(port), BulkStringMsg(replState), IntegerMsg(dataReceivedOffset))) =>
-        SlaveRole(NodeAddress(ip.utf8String, port.toInt), ReplState.byName(replState.utf8String), dataReceivedOffset)
-      case ArrayMsg(IndexedSeq(RedisRole.SentinelStr, ArrayMsg(rawMasterNames))) =>
-        val masterNames = rawMasterNames.map {
-          case BulkStringMsg(masterName) => masterName.utf8String
-          case el => throw new UnexpectedReplyException(s"Unexpected message for master name: $el")
-        }
-        SentinelRole(masterNames)
-    }
   }
 
   private object Save extends RedisUnitCommand with NodeCommand {
     val encoded = encoder("SAVE").result
   }
 
-  private final class Shutdown(modifier: Opt[ShutdownModifier]) extends RedisCommand[Nothing] with NodeCommand {
+  private final class Shutdown(modifier: Opt[ShutdownModifier]) extends RedisNothingCommand with NodeCommand {
     val encoded = encoder("SHUTDOWN").add(modifier).result
-    protected def decodeExpected = {
-      case msg => throw new UnexpectedReplyException(s"Expected no reply, got $msg")
-    }
   }
 
   private final class Slaveof(newMaster: Opt[NodeAddress]) extends RedisUnitCommand with NodeCommand {
@@ -246,16 +201,9 @@ trait NodeServerApi extends ClusteredServerApi {
     }
   }
 
-  private final class SlowlogGet(count: Opt[Int]) extends RedisSeqCommand[SlowlogEntry] with NodeCommand {
+  private final class SlowlogGet(count: Opt[Int])
+    extends RedisSeqCommand[SlowlogEntry](multiBulkSlowlogEntry) with NodeCommand {
     val encoded = encoder("SLOWLOG", "GET").add(count).result
-    protected def decodeElement = {
-      case ArrayMsg(IndexedSeq(IntegerMsg(id), IntegerMsg(timestamp), IntegerMsg(duration), ArrayMsg(rawCommand))) =>
-        val commandArgs = rawCommand.map {
-          case BulkStringMsg(arg) => arg
-          case el => throw new UnexpectedReplyException(s"Unexpected message for SLOWLOG command argument: $el")
-        }
-        SlowlogEntry(id, timestamp, duration, commandArgs)
-    }
   }
 
   private object SlowlogLen extends RedisLongCommand with NodeCommand {
@@ -266,12 +214,8 @@ trait NodeServerApi extends ClusteredServerApi {
     val encoded = encoder("SLOWLOG", "RESET").result
   }
 
-  private object Time extends RedisCommand[RedisTimestamp] with NodeCommand {
+  private object Time extends AbstractRedisCommand[RedisTimestamp](multiBulkRedisTimestamp) with NodeCommand {
     val encoded = encoder("TIME").result
-    protected def decodeExpected = {
-      case ArrayMsg(IndexedSeq(BulkStringMsg(seconds), BulkStringMsg(useconds))) =>
-        RedisTimestamp(seconds.utf8String.toLong, useconds.utf8String.toLong)
-    }
   }
 }
 
