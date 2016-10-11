@@ -16,6 +16,7 @@ trait ClusteredFullApiSuite extends CommandsSuite
   with SortedSetsApiSuite
   with ListsApiSuite
   with SetsApiSuite
+  with HyperLogLogApiSuite
 
 trait NodeFullApiSuite extends ClusteredFullApiSuite
   with NodeKeysApiSuite

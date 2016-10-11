@@ -135,7 +135,8 @@ trait RedisClusteredApi extends AnyRef
   with HashesApi
   with SortedSetsApi
   with ListsApi
-  with SetsApi {
+  with SetsApi
+  with HyperLogLogApi {
   type Self[K, H, V] <: AbstractApiSubset[K, H, V] with RedisClusteredApi
 }
 
