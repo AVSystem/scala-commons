@@ -31,7 +31,7 @@ class AuthenticationTest extends RedisConnectionCommandsSuite {
 
   import RedisStringCommands._
 
-  apiTest("AUTH") {
+  test("AUTH") {
     get("key").intercept[ErrorReplyException]
     auth("hassword").get
     get("key").assertEquals(Opt.Empty)

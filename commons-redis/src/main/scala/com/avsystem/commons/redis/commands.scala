@@ -132,7 +132,8 @@ trait RedisClusteredApi extends AnyRef
   with ClusteredClusterApi
   with GeoApi
   with ClusteredScriptingApi
-  with HashesApi {
+  with HashesApi
+  with SortedSetsApi {
   type Self[K, H, V] <: AbstractApiSubset[K, H, V] with RedisClusteredApi
 }
 
