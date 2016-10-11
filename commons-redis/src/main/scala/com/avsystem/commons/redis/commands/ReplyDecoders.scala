@@ -41,6 +41,10 @@ object ReplyDecoders {
     case IntegerMsg(value) => value
   }
 
+  val positiveIntegerLongOpt: ReplyDecoder[Opt[Long]] = {
+    case IntegerMsg(value) => if (value > 0) value.opt else Opt.Empty
+  }
+
   val integerInt: ReplyDecoder[Int] = {
     case IntegerMsg(value) => value.toInt
   }

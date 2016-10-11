@@ -118,6 +118,9 @@ abstract class RedisIntCommand
 abstract class RedisOptLongCommand
   extends AbstractRedisCommand[Opt[Long]](nullBulkOr(integerLong))
 
+abstract class RedisPositiveLongCommand
+  extends AbstractRedisCommand[Opt[Long]](positiveIntegerLongOpt)
+
 abstract class RedisOptDoubleCommand
   extends AbstractRedisCommand[Opt[Double]](nullOrEmptyBulkOr(bulkDouble))
 
