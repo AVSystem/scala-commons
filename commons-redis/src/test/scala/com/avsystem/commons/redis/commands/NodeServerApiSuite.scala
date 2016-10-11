@@ -14,106 +14,106 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
 
   import RedisStringCommands._
 
-  test("BGSAVE") {
+  apiTest("BGSAVE") {
     bgsave.get
     waitUntil(RedisStringCommands.info(PersistenceInfo).map(_.rdbBgsaveInProgress.contains(false)).exec, 50.millis)
   }
 
-  test("BGREWRITEAOF") {
+  apiTest("BGREWRITEAOF") {
     bgrewriteaof.get
     waitUntil(RedisStringCommands.info(PersistenceInfo).map(_.aofRewriteInProgress.contains(false)).exec, 50.millis)
   }
 
-  test("CLIENT LIST") {
+  apiTest("CLIENT LIST") {
     waitFor(clientList.exec)(_.nonEmpty, 100.millis).futureValue
   }
 
-  test("CLIENT PAUSE") {
+  apiTest("CLIENT PAUSE") {
     clientPause(10).get
   }
 
-  test("COMMAND") {
+  apiTest("COMMAND") {
     command.get
   }
 
-  test("COMMAND COUNT") {
+  apiTest("COMMAND COUNT") {
     commandCount.assert(_ > 150)
   }
 
-  test("COMMAND GETKEYS") {
+  apiTest("COMMAND GETKEYS") {
     commandGetkeys(RedisStringRawCommands.mset("key1" -> "value1", "key2" -> "value2", "key3" -> "value3"))
       .assertEquals(Seq("key1", "key2", "key3"))
   }
 
-  test("COMMAND INFO") {
+  apiTest("COMMAND INFO") {
     commandInfo("mget").assertEquals(Seq(CommandInfo("mget", CommandArity(2, more = true), CommandFlags.Readonly, 1, -1, 1)))
   }
 
-  test("CONFIG GET") {
+  apiTest("CONFIG GET") {
     configGet("daemonize").assertEquals(Seq("daemonize" -> "no"))
   }
 
-  test("CONFIG RESETSTAT") {
+  apiTest("CONFIG RESETSTAT") {
     configResetstat.get
   }
 
-  test("CONFIG SET") {
+  apiTest("CONFIG SET") {
     configSet("maxclients", "1000").get
   }
 
-  test("DBSIZE") {
+  apiTest("DBSIZE") {
     dbsize.assertEquals(0)
   }
 
-  test("DEBUG OBJECT") {
+  apiTest("DEBUG OBJECT") {
     setup(set("key", "value"))
     debugObject("key").get
   }
 
-  test("FLUSHALL") {
+  apiTest("FLUSHALL") {
     flushall.get
   }
 
-  test("FLUSHDB") {
+  apiTest("FLUSHDB") {
     flushdb.get
   }
 
-  test("INFO") {
+  apiTest("INFO") {
     RedisStringCommands.info.get
     RedisStringCommands.info(FullRedisInfo).get
     RedisStringCommands.info(CpuInfo).get
   }
 
-  test("LASTSAVE") {
+  apiTest("LASTSAVE") {
     lastsave.get
   }
 
-  test("ROLE") {
+  apiTest("ROLE") {
     role.assertEquals(MasterRole(0, Seq.empty))
   }
 
-  test("SAVE") {
+  apiTest("SAVE") {
     save.get
   }
 
-  test("SLAVEOF") {
+  apiTest("SLAVEOF") {
     slaveofNoOne.get
   }
 
-  test("SLOWLOG GET") {
+  apiTest("SLOWLOG GET") {
     slowlogGet.get
     slowlogGet(10).get
   }
 
-  test("SLOWLOG LEN") {
+  apiTest("SLOWLOG LEN") {
     slowlogLen.get
   }
 
-  test("SLOWLOG RESET") {
+  apiTest("SLOWLOG RESET") {
     slowlogReset.get
   }
 
-  test("TIME") {
+  apiTest("TIME") {
     time.get
   }
 }
@@ -121,7 +121,7 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
 trait NodeOnlyServerApiSuite extends ServerApiSuite {
   import RedisStringCommands._
 
-  test("CLIENT KILL") {
+  apiTest("CLIENT KILL") {
     val clients: Seq[ClientInfo] = waitFor(clientList.exec)(_.size >= 3, 100.millis).futureValue
     clientKill(clients.head.addr).get
     clientKill(clients(1).addr, Skipme(false)).assertEquals(1)
@@ -133,13 +133,13 @@ trait NodeOnlyServerApiSuite extends ServerApiSuite {
 trait ConnectionServerApiSuite extends ServerApiSuite {
   import RedisStringCommands._
 
-  test("CLIENT GETNAME") {
+  apiTest("CLIENT GETNAME") {
     clientGetname.assertEquals(Opt.Empty)
     setup(clientSetname("name"))
     clientGetname.assertEquals("name".opt)
   }
 
-  test("CLIENT SETNAME") {
+  apiTest("CLIENT SETNAME") {
     clientSetname("name").get
   }
 }

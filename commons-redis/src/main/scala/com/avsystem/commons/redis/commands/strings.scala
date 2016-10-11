@@ -4,8 +4,7 @@ package redis.commands
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt, OptArg}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.protocol.{NullBulkStringMsg, SimpleStringStr}
-import ReplyDecoders._
+import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait StringsApi extends ApiSubset {
   def append(key: Key, value: Value): Result[Long] =
@@ -30,7 +29,7 @@ trait StringsApi extends ApiSubset {
     execute(new Get(key))
   def getbit(key: Key, offset: Long): Result[Boolean] =
     execute(new Getbit(key, offset))
-  def getrange(key: Key, start: Long, end: Long): Result[Value] =
+  def getrange(key: Key, start: Long = 0, end: Long = -1): Result[Value] =
     execute(new Getrange(key, start, end))
   def getset(key: Key, value: Value): Result[Opt[Value]] =
     execute(new Getset(key, value))

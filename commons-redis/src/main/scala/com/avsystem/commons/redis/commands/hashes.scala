@@ -65,7 +65,6 @@ trait HashesApi extends ApiSubset {
 
   private final class Hkeys(key: Key) extends RedisDataSeqCommand[HashKey] with NodeCommand {
     val encoded = encoder("HKEYS").key(key).result
-    protected def codec = hashKeyCodec
   }
 
   private final class Hlen(key: Key) extends RedisLongCommand with NodeCommand {
@@ -100,6 +99,5 @@ trait HashesApi extends ApiSubset {
 
   private final class Hvals(key: Key) extends RedisDataSeqCommand[Value] with NodeCommand {
     val encoded = encoder("HVALS").key(key).result
-    protected def codec = valueCodec
   }
 }

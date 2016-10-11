@@ -22,7 +22,7 @@ trait ClusteredScriptingApiSuite extends CommandsSuite {
     }
   }
 
-  test("EVAL") {
+  apiTest("EVAL") {
     eval(getScript, Seq("key"), Nil).assertEquals(Opt.Empty)
     set("key", "value").get
     eval(getScript, Seq("key"), Nil).assertEquals("value".opt)
@@ -33,7 +33,7 @@ trait ClusteredScriptingApiSuite extends CommandsSuite {
     }.assertEquals("value".opt)
   }
 
-  test("EVALSHA") {
+  apiTest("EVALSHA") {
     setup(set("key", "value"))
     intercept[ErrorReplyException](throw evalsha(getScript, Seq("key"), Nil).failed.get)
     eval(getScript, Seq("key"), Nil).get
@@ -44,7 +44,7 @@ trait ClusteredScriptingApiSuite extends CommandsSuite {
     }.assertEquals("value".opt)
   }
 
-  test("EVALSHA or EVAL") {
+  apiTest("EVALSHA or EVAL") {
     setup(set("key", "value"))
     asyncClusteredCommands.evalshaOrEval(getScript, Seq("key"), Nil).futureValue shouldEqual "value".opt
     asyncClusteredCommands.evalshaOrEval(getScript, Seq("key"), Nil).futureValue shouldEqual "value".opt
@@ -55,13 +55,13 @@ trait NodeScriptingApiSuite extends ClusteredScriptingApiSuite {
 
   import RedisStringCommands._
 
-  test("SCRIPT EXISTS") {
+  apiTest("SCRIPT EXISTS") {
     scriptExists(getScript.sha1).assertEquals(Seq(false))
     scriptLoad(getScript).get
     scriptExists(getScript.sha1).assertEquals(Seq(true))
   }
 
-  test("SCRIPT LOAD") {
+  apiTest("SCRIPT LOAD") {
     scriptLoad(getScript).assertEquals(getScript.sha1)
   }
 }
@@ -70,7 +70,7 @@ trait ConnectionScriptingApiSuite extends NodeScriptingApiSuite {
 
   import RedisStringCommands._
 
-  test("SCRIPT DEBUG") {
+  apiTest("SCRIPT DEBUG") {
     scriptDebug(DebugMode.Yes).get
     scriptDebug(DebugMode.Sync).get
     scriptDebug(DebugMode.No).get

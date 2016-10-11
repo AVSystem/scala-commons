@@ -11,7 +11,7 @@ import scala.concurrent.Future
   * Author: ghik
   * Created: 14/04/16.
   */
-trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem {this: Suite =>
+trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem { this: Suite =>
   def clusterConfig: ClusterConfig = ClusterConfig()
 
   var redisClient: RedisClusterClient = _
@@ -36,8 +36,8 @@ trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem {th
           _ <- targetApi.clusterSetslot(slot, Importing(sourceId))
           keys <- keysToMigrateFut
           _ <- if (keys.nonEmpty) sourceApi.migrate(keys, targetClient.address, 0, Int.MaxValue) else Future.successful(())
-          _ <-  {
-            if(incomplete) Future.successful(())
+          _ <- {
+            if (incomplete) Future.successful(())
             else Future.traverse(List(sourceApi, targetApi))(_.clusterSetslot(slot, Node(targetId)))
           }
         } yield ()

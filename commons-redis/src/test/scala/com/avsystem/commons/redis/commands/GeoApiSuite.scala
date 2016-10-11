@@ -35,11 +35,11 @@ trait GeoApiSuite extends CommandsSuite {
     "Łódź" -> Lodz
   )
 
-  test("GEOADD") {
+  apiTest("GEOADD") {
     geoadd(Key, Cities.toList).assertEquals(6)
   }
 
-  test("GEOHASH") {
+  apiTest("GEOHASH") {
     setup(geoadd(Key, Cities.toList.take(3)))
     geohash(Key, Cities.keys.toList).assertEquals(List(
       "u2yhvcgrxx0".opt,
@@ -52,7 +52,7 @@ trait GeoApiSuite extends CommandsSuite {
     geohash(OtherKey, Cities.keys.toList).assertEquals(Nil)
   }
 
-  test("GEOPOS") {
+  apiTest("GEOPOS") {
     setup(geoadd(Key, Cities.toList.take(3)))
     geopos(Key, Cities.keys.toList).assertEquals(List(
       Cracow.opt,
@@ -65,7 +65,7 @@ trait GeoApiSuite extends CommandsSuite {
     geopos(OtherKey, Cities.keys.toList).assertEquals(Nil)
   }
 
-  test("GEODIST") {
+  apiTest("GEODIST") {
     setup(geoadd(Key, Cities.toList))
     geodist(Key, "Kraków", "Warszawa").assertEquals(252051.6096.opt)
     geodist(Key, "Kraków", "Warszawa", GeoUnit.Km).assertEquals(252.0516.opt)
@@ -106,7 +106,7 @@ trait GeoApiSuite extends CommandsSuite {
     3687998315644695L
   )
 
-  test("GEORADIUS") {
+  apiTest("GEORADIUS") {
     setup(geoadd(Key, Cities.toList))
     georadius(Key, Lodz, 150, GeoUnit.Km)
       .assertEquals(List("Łódź", "Warszawa"))
@@ -128,14 +128,14 @@ trait GeoApiSuite extends CommandsSuite {
       .assertEquals(WithHashesCoordsDistances)
   }
 
-  test("GEORADIUS with STORE") {
+  apiTest("GEORADIUS with STORE") {
     setup(geoadd(Key, Cities.toList))
 
     georadiusStore(Key, Lodz, 300, GeoUnit.Km, StoreKey).assertEquals(Opt(6L))
     georadiusStore(Key, Lodz, 300, GeoUnit.Km, StoreKey, storeDist = true).assertEquals(Opt(6L))
   }
 
-  test("GEORADIUSBYMEMBER") {
+  apiTest("GEORADIUSBYMEMBER") {
     setup(geoadd(Key, Cities.toList))
 
     georadiusbymember(Key, "Łódź", 150, GeoUnit.Km)
@@ -158,7 +158,7 @@ trait GeoApiSuite extends CommandsSuite {
       .assertEquals(WithHashesCoordsDistances)
   }
 
-  test("GEORADIUSBYMEMBER with STORE") {
+  apiTest("GEORADIUSBYMEMBER with STORE") {
     setup(geoadd(Key, Cities.toList))
 
     georadiusbymemberStore(Key, "Łódź", 300, GeoUnit.Km, StoreKey).assertEquals(Opt(6L))

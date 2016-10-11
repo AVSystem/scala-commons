@@ -13,15 +13,15 @@ trait ConnectionApiSuite extends RedisConnectionCommandsSuite {
 
   import RedisStringCommands._
 
-  test("ECHO") {
+  apiTest("ECHO") {
     echo(bs"lol").assertEquals(bs"lol")
   }
 
-  test("PING") {
+  apiTest("PING") {
     ping.assertEquals(bs"PONG")
   }
 
-  test("SELECT") {
+  apiTest("SELECT") {
     select(1).get
   }
 }
@@ -31,7 +31,7 @@ class AuthenticationTest extends RedisConnectionCommandsSuite {
 
   import RedisStringCommands._
 
-  test("AUTH") {
+  apiTest("AUTH") {
     get("key").intercept[ErrorReplyException]
     auth("hassword").get
     get("key").assertEquals(Opt.Empty)

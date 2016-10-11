@@ -13,20 +13,20 @@ trait StringsApiSuite extends CommandsSuite {
 
   import RedisStringCommands._
 
-  test("APPEND") {
+  apiTest("APPEND") {
     setup(set("key", "cos"))
     append("key", "value").assertEquals(8)
     append("nonkey", "value").assertEquals(5)
   }
 
-  test("BITCOUNT") {
+  apiTest("BITCOUNT") {
     setup(valueType[ByteString].set("key", ByteString(0, 1, 0, 7, 0)))
     bitcount("???").assertEquals(0)
     bitcount("key").assertEquals(4)
     bitcount("key", (2L, -1L)).assertEquals(3)
   }
 
-  test("BITOP") {
+  apiTest("BITOP") {
     val withBinValue = valueType[ByteString]
     val keys = Seq("{key}1", "{key}2", "{key}3")
     setup(List(
@@ -45,7 +45,7 @@ trait StringsApiSuite extends CommandsSuite {
     withBinValue.get("dest{key}").assertEquals(bin"10101010".opt)
   }
 
-  test("BITOP NOT") {
+  apiTest("BITOP NOT") {
     val withBinValue = valueType[ByteString]
     setup(withBinValue.set("key", bin"01010101"))
 
@@ -53,7 +53,7 @@ trait StringsApiSuite extends CommandsSuite {
     withBinValue.get("dest{key}").assertEquals(bin"10101010".opt)
   }
 
-  test("BITPOS") {
+  apiTest("BITPOS") {
     val withBinValue = valueType[ByteString]
     setup(List(
       "{key}1" -> bin"00000000",
@@ -73,58 +73,58 @@ trait StringsApiSuite extends CommandsSuite {
     bitpos("{key}5", bit = false, 1).assertEquals(8)
   }
 
-  test("DECR") {
+  apiTest("DECR") {
     setup(set("key", "42"))
     decr("???").assertEquals(-1)
     decr("key").assertEquals(41)
   }
 
-  test("DECRBY") {
+  apiTest("DECRBY") {
     setup(set("key", "42"))
     decrby("???", 3).assertEquals(-3)
     decrby("key", 5).assertEquals(37)
   }
 
-  test("GET") {
+  apiTest("GET") {
     setup(set("key", "value"))
     get("key").assertEquals("value".opt)
     get("???").assertEquals(Opt.Empty)
   }
 
-  test("GETBIT") {
+  apiTest("GETBIT") {
     setup(valueType[ByteString].set("key", bin"00001111"))
     getbit("key", 2).assertEquals(false)
     getbit("key", 6).assertEquals(true)
   }
 
-  test("GETRANGE") {
+  apiTest("GETRANGE") {
     setup(set("key", "lolvalue"))
     getrange("key", 0, 2).assertEquals("lol")
     getrange("key", 5, -1).assertEquals("lue")
     getrange("???", 0, 2).assertEquals("")
   }
 
-  test("GETSET") {
+  apiTest("GETSET") {
     getset("key", "value").assertEquals(Opt.Empty)
     getset("key", "nevalue").assertEquals("value".opt)
   }
 
-  test("INCR") {
+  apiTest("INCR") {
     incr("key").assertEquals(1)
     incr("key").assertEquals(2)
   }
 
-  test("INCRBY") {
+  apiTest("INCRBY") {
     incrby("key", 3).assertEquals(3)
     incrby("key", 5).assertEquals(8)
   }
 
-  test("INCRBYFLOAT") {
+  apiTest("INCRBYFLOAT") {
     incrbyfloat("key", 3.14).assertEquals(3.14)
     incrbyfloat("key", 5).assertEquals(8.14)
   }
 
-  test("MGET") {
+  apiTest("MGET") {
     setup(
       set("{key}1", "value1") *>
         set("{key}2", "value2") *>
@@ -134,7 +134,7 @@ trait StringsApiSuite extends CommandsSuite {
       .assertEquals(Seq("value1".opt, "value2".opt, "value3".opt, Opt.Empty))
   }
 
-  test("MSET") {
+  apiTest("MSET") {
     mset(
       "{key}1" -> "value1",
       "{key}2" -> "value2",
@@ -142,7 +142,7 @@ trait StringsApiSuite extends CommandsSuite {
     ).get
   }
 
-  test("MSETNX") {
+  apiTest("MSETNX") {
     msetnx(
       "{key}1" -> "value1",
       "{key}2" -> "value2"
@@ -154,11 +154,11 @@ trait StringsApiSuite extends CommandsSuite {
     ).assertEquals(false)
   }
 
-  test("PSETEX") {
+  apiTest("PSETEX") {
     psetex("key", 1000, "value").get
   }
 
-  test("SET") {
+  apiTest("SET") {
     set("key", "value").assertEquals(true)
     set("key", "value", Expiration.Ex(100)).assertEquals(true)
     set("key", "value", Expiration.Px(100000)).assertEquals(true)
@@ -166,29 +166,29 @@ trait StringsApiSuite extends CommandsSuite {
     set("key", "value", existence = false).assertEquals(false)
   }
 
-  test("SETBIT") {
+  apiTest("SETBIT") {
     setup(valueType[ByteString].set("key", bin"00001111"))
     setbit("key", 1, value = true).assertEquals(false)
     setbit("key", 5, value = false).assertEquals(true)
     valueType[ByteString].get("key").assertEquals(bin"01001011".opt)
   }
 
-  test("SETEX") {
+  apiTest("SETEX") {
     setex("key", 10, "value").get
   }
 
-  test("SETNX") {
+  apiTest("SETNX") {
     setnx("key", "value").assertEquals(true)
     setnx("key", "value").assertEquals(false)
   }
 
-  test("SETRANGE") {
+  apiTest("SETRANGE") {
     setrange("key", 0, "value").assertEquals(5)
     setrange("key", 3, "dafuq").assertEquals(8)
     get("key").assertEquals("valdafuq".opt)
   }
 
-  test("STRLEN") {
+  apiTest("STRLEN") {
     setup(set("key", "value"))
     strlen("???").assertEquals(0)
     strlen("key").assertEquals(5)

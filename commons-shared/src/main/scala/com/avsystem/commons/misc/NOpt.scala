@@ -26,8 +26,7 @@ object NOpt {
   def unapply[A](opt: NOpt[A]): NOpt[A] = opt //name-based extractor
 
   def some[A](value: A): NOpt[A] =
-    if (value == null) new NOpt(NullMarker)
-    else new NOpt(value)
+    new NOpt(if(value == null) NullMarker else value)
 
   implicit def opt2Iterable[A](xo: NOpt[A]): Iterable[A] = xo.toList
 
@@ -46,7 +45,7 @@ object NOpt {
 }
 
 /**
-  * Like [[Opt]] but does have a counterpart for `Some(null)`.
+  * Like [[Opt]] but does have a counterpart for `Some(null)`. In other words, [[NOpt]] is a "nullable [[Opt]]".
   */
 final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
   private def value: A = (if (rawValue.asInstanceOf[AnyRef] eq NullMarker) null else rawValue).asInstanceOf[A]

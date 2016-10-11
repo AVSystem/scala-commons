@@ -15,68 +15,68 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
 
   import RedisStringCommands._
 
-  test("DEL") {
+  apiTest("DEL") {
     setup(set("key", "value"))
     del("???").assertEquals(0)
     del("key").assertEquals(1)
   }
 
-  test("DUMP") {
+  apiTest("DUMP") {
     setup(set("key", "value"))
     dump("???").assert(_.isEmpty)
     dump("key").assert(_.nonEmpty)
   }
 
-  test("EXISTS") {
+  apiTest("EXISTS") {
     setup(set("key", "value"))
     exists("???").assertEquals(0)
     exists("key").assertEquals(1)
   }
 
-  test("EXPIRE") {
+  apiTest("EXPIRE") {
     setup(set("key", "value"))
     expire("key", Int.MaxValue).assert(identity)
   }
 
-  test("EXPIREAT") {
+  apiTest("EXPIREAT") {
     setup(set("key", "value"))
     expireat("key", Int.MaxValue).assert(identity)
   }
 
-  test("OBJECT REFCOUNT") {
+  apiTest("OBJECT REFCOUNT") {
     setup(set("key", "value"))
     objectRefcount("???").assert(_.isEmpty)
     objectRefcount("key").assert(_.nonEmpty)
   }
 
-  test("OBJECT ENCODING") {
+  apiTest("OBJECT ENCODING") {
     setup(set("key", "value"))
     objectEncoding("???").assert(_.isEmpty)
     objectEncoding("key").assert(_.nonEmpty)
   }
 
-  test("OBJECT IDLETIME") {
+  apiTest("OBJECT IDLETIME") {
     setup(set("key", "value"))
     objectIdletime("???").assert(_.isEmpty)
     objectIdletime("key").assert(_.nonEmpty)
   }
 
-  test("PERSIST") {
+  apiTest("PERSIST") {
     setup(set("key", "value"))
     persist("key").assertEquals(false)
   }
 
-  test("PEXPIRE") {
+  apiTest("PEXPIRE") {
     setup(set("key", "value"))
     pexpire("key", Int.MaxValue).assert(identity)
   }
 
-  test("PEXPIREAT") {
+  apiTest("PEXPIREAT") {
     setup(set("key", "value"))
     pexpireat("key", Int.MaxValue).assert(identity)
   }
 
-  test("PTTL") {
+  apiTest("PTTL") {
     setup(
       set("key", "value"),
       setex("exkey", Int.MaxValue, "value")
@@ -86,32 +86,32 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
     pttl("exkey").assert(_.exists(_.nonEmpty))
   }
 
-  test("RENAME") {
+  apiTest("RENAME") {
     setup(set("key", "value"))
     rename("key", keyWithSameSlotAs("key")).exec.futureValue
   }
 
-  test("RENAMENX") {
+  apiTest("RENAMENX") {
     setup(set("key", "value"))
     renamenx("key", keyWithSameSlotAs("key")).assert(identity)
   }
 
-  test("RESTORE") {
+  apiTest("RESTORE") {
     setup(set("key", "value"))
     val dumped = dump("key").exec.futureValue.get
     restore("torestore", 1, dumped).exec.futureValue
   }
 
-  test("SORT") {
+  apiTest("SORT") {
     sort("somelist",
       SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true).assert(_.isEmpty)
   }
 
-  test("SORT with STORE") {
+  apiTest("SORT with STORE") {
     sortStore("somelist", keyWithSameSlotAs("somelist")).assertEquals(0)
   }
 
-  test("TTL") {
+  apiTest("TTL") {
     setup(
       set("key", "value"),
       setex("exkey", Int.MaxValue, "value")
@@ -121,7 +121,7 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
     ttl("exkey").assert(_.exists(_.nonEmpty))
   }
 
-  test("TYPE") {
+  apiTest("TYPE") {
     setup(set("key", "value"))
     `type`("key").assertEquals(RedisType.String)
   }
@@ -131,14 +131,14 @@ trait NodeKeysApiSuite extends ClusteredKeysApiSuite {
 
   import RedisStringCommands._
 
-  private val scanKeys = (0 until 32).map(i => s"toscan$i")
+  private val scanKeys = (0 until 256).map(i => s"toscan$i")
 
-  test("KEYS") {
+  apiTest("KEYS") {
     setup(mset(scanKeys.map(k => (k, "value")):_*))
     keys("toscan*").assert(_.toSet == scanKeys.toSet)
   }
 
-  test("SCAN") {
+  apiTest("SCAN") {
     setup(mset(scanKeys.map(k => (k, "value")):_*))
     def scanCollect(cursor: Cursor, acc: Seq[String]): Future[Seq[String]] =
       scan(cursor, Opt("toscan*"), Opt(4L)).exec.flatMapNow {
@@ -148,30 +148,29 @@ trait NodeKeysApiSuite extends ClusteredKeysApiSuite {
     assert(scanCollect(Cursor.NoCursor, Vector.empty).futureValue.toSet == scanKeys.toSet)
   }
 
-  test("DEL multikey") {
+  apiTest("DEL multikey") {
     setup(set("key", "value"))
     del("key", "foo").assertEquals(1)
   }
 
-  test("MOVE") {
+  apiTest("MOVE") {
     setup(set("key", "value"))
     move("key", 1).assert(identity)
   }
 
-  test("EXISTS multikey") {
+  apiTest("EXISTS multikey") {
     setup(set("key", "value"))
     exists("key", "foo").assertEquals(1)
   }
 
-  test("SORT with GET") {
+  apiTest("SORT with GET") {
     sortGet("somelist", Seq(HashFieldPattern("hash", "*")),
       SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true).assert(_.isEmpty)
   }
 
-  test("SORT with BY") {
+  apiTest("SORT with BY") {
     sort("somelist", by = SelfPattern).assert(_.isEmpty)
     sort("somelist", by = KeyPattern("sth_*")).assert(_.isEmpty)
     sort("somelist", by = HashFieldPattern("hash_*", "sth_*")).assert(_.isEmpty)
   }
 }
-

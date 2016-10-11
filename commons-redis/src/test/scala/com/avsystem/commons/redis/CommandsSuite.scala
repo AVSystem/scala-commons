@@ -2,9 +2,10 @@ package com.avsystem.commons
 package redis
 
 import akka.util.{ByteString, ByteStringBuilder}
+import com.avsystem.commons.misc.SourceInfo
 import org.scalactic.source.Position
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterEach, FunSuite, Matchers}
+import org.scalatest.{BeforeAndAfterEach, FunSuite, Matchers, Tag}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -77,6 +78,11 @@ trait CommandsSuite extends FunSuite with ScalaFutures with Matchers with Before
 
   protected def cleanupBatch: RedisBatch[Any] =
     RedisStringCommands.scriptFlush *> RedisStringCommands.flushall
+
+  protected def apiTest(testName: String)(testFun: => Any)(implicit sourceInfo: SourceInfo): Unit = {
+    val suiteName = sourceInfo.enclosingSymbols.find(_.endsWith("ApiSuite")).map(_.stripSuffix("ApiSuite")).get
+    test(testName, Tag(suiteName))(testFun)(Position(sourceInfo.fileName, sourceInfo.filePath, sourceInfo.line))
+  }
 }
 
 abstract class RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
