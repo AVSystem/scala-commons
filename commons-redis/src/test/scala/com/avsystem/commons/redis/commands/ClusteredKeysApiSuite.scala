@@ -141,7 +141,7 @@ trait NodeKeysApiSuite extends ClusteredKeysApiSuite {
   apiTest("SCAN") {
     setup(mset(scanKeys.map(k => (k, "value")):_*))
     def scanCollect(cursor: Cursor, acc: Seq[String]): Future[Seq[String]] =
-      scan(cursor, Opt("toscan*"), Opt(4L)).exec.flatMapNow {
+      scan(cursor, "toscan*", 4L).exec.flatMapNow {
         case (Cursor.NoCursor, data) => Future.successful(acc ++ data)
         case (nextCursor, data) => scanCollect(nextCursor, acc ++ data)
       }

@@ -139,8 +139,8 @@ abstract class RedisBinaryCommand
 abstract class RedisDoubleCommand
   extends AbstractRedisCommand[Double](bulkDouble)
 
-abstract class RedisScanCommand[T](decoder: ReplyDecoder[T])
-  extends AbstractRedisCommand[(Cursor, T)](multiBulkPair(bulkCursor, decoder))
+abstract class RedisScanCommand[T](decoder: ReplyDecoder[Seq[T]])
+  extends AbstractRedisCommand[(Cursor, Seq[T])](multiBulkPair(bulkCursor, decoder))
 
 abstract class RedisSeqCommand[T](elementDecoder: ReplyDecoder[T])
   extends AbstractRedisCommand[Seq[T]](multiBulk(elementDecoder))

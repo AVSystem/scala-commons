@@ -95,7 +95,7 @@ trait ListsApiSuite extends CommandsSuite {
   }
 
   apiTest("RPOPLPUSH") {
-    setup(rpush("{key}1", "a", "b") *> rpush("{key}2", "c", "d"))
+    setup(rpush("{key}1", "a", "b"), rpush("{key}2", "c", "d"))
     rpoplpush("{key}?", "{key}1").assertEquals(Opt.Empty)
     rpoplpush("{key}1", "{key}2").assertEquals("b".opt)
     lrange("{key}1").assertEquals(Seq("a"))

@@ -185,7 +185,7 @@ trait SortedSetsApi extends ApiSubset {
   }
 
   private final class Zscan(key: Key, cursor: Cursor, matchPattern: Opt[Value], count: Opt[Long])
-    extends RedisScanCommand[Seq[(Value, Double)]](pairedMultiBulk(bulk[Value], bulkDouble)) with NodeCommand {
+    extends RedisScanCommand[(Value, Double)](pairedMultiBulk(bulk[Value], bulkDouble)) with NodeCommand {
     val encoded = encoder("ZSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 

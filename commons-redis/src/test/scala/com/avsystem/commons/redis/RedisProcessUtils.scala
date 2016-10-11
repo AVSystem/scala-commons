@@ -5,17 +5,16 @@ import java.io.ByteArrayInputStream
 
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.commands.NodeId
+import org.scalatest.Suite
 
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{Future, Promise}
 import scala.sys.process._
 
 /**
   * Author: ghik
   * Created: 27/06/16.
   */
-trait RedisProcessUtils {
-  implicit def executionContext: ExecutionContext
-
+trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
   def redisHome = sys.env("REDIS_HOME")
   def password = Opt.empty[String]
 
@@ -29,7 +28,7 @@ trait RedisProcessUtils {
     var nodeId: Opt[NodeId] = Opt.Empty
     val passArgs = password.map(p => Seq("--requirepass", p)).getOrElse(Nil)
     val process = (s"$redisHome/redis-server" +: arguments ++: passArgs).run(ProcessLogger { line =>
-      println(line)
+      actorSystem.log.debug(line)
       line match {
         case NodeLogRegex(rawNodeId) =>
           nodeId = NodeId(rawNodeId).opt

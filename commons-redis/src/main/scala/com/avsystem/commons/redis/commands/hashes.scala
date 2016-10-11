@@ -81,7 +81,7 @@ trait HashesApi extends ApiSubset {
   }
 
   private final class Hscan(key: Key, cursor: Cursor, matchPattern: Opt[HashKey], count: Opt[Long])
-    extends RedisScanCommand[Seq[(HashKey, Value)]](pairedMultiBulk[HashKey, Value]) with NodeCommand {
+    extends RedisScanCommand[(HashKey, Value)](pairedMultiBulk[HashKey, Value]) with NodeCommand {
     val encoded = encoder("HSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 

@@ -35,13 +35,13 @@ trait StringsApiSuite extends CommandsSuite {
       "{key}3" -> bin"01010101"
     ).map({ case (k, v) => withBinValue.set(k, v) }).sequence)
 
-    bitop(BitOp.And, "dest{key}", keys:_*).assertEquals(1)
+    bitop(BitOp.And, "dest{key}", keys: _*).assertEquals(1)
     withBinValue.get("dest{key}").assertEquals(bin"00000000".opt)
 
-    bitop(BitOp.Or, "dest{key}", keys:_*).assertEquals(1)
+    bitop(BitOp.Or, "dest{key}", keys: _*).assertEquals(1)
     withBinValue.get("dest{key}").assertEquals(bin"11111111".opt)
 
-    bitop(BitOp.Xor, "dest{key}", keys:_*).assertEquals(1)
+    bitop(BitOp.Xor, "dest{key}", keys: _*).assertEquals(1)
     withBinValue.get("dest{key}").assertEquals(bin"10101010".opt)
   }
 
@@ -126,9 +126,9 @@ trait StringsApiSuite extends CommandsSuite {
 
   apiTest("MGET") {
     setup(
-      set("{key}1", "value1") *>
-        set("{key}2", "value2") *>
-        set("{key}3", "value3")
+      set("{key}1", "value1"),
+      set("{key}2", "value2"),
+      set("{key}3", "value3")
     )
     mget("{key}1", "{key}2", "{key}3", "{key}4")
       .assertEquals(Seq("value1".opt, "value2".opt, "value3".opt, Opt.Empty))

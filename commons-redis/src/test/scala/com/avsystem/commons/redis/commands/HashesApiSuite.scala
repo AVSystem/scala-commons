@@ -11,7 +11,7 @@ trait HashesApiSuite extends CommandsSuite {
   import RedisStringCommands._
 
   apiTest("HDEL") {
-    setup(hset("key", "field", "value") *> hmset("key2", "field1" -> "value1", "field2" -> "value2"))
+    setup(hset("key", "field", "value"), hmset("key2", "field1" -> "value1", "field2" -> "value2"))
     hdel("???", "field").assertEquals(0)
     hdel("key", "???").assertEquals(0)
     hdel("key", "field").assertEquals(1)

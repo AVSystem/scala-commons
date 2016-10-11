@@ -48,8 +48,8 @@ trait SortedSetsApiSuite extends CommandsSuite {
 
   apiTest("ZINTERSTORE") {
     setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0) *>
-        zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
+      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
+      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
     )
     zinterstore("key", "{key}1", "{key}?").assertEquals(0)
     zinterstore("key", "{key}1", "{key}2").assertEquals(1)
@@ -64,8 +64,8 @@ trait SortedSetsApiSuite extends CommandsSuite {
 
   apiTest("ZINTERSTORE with WEIGHTS") {
     setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0) *>
-        zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
+      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
+      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
     )
     zinterstoreWeights("key", "{key}1" -> 1.0, "{key}2" -> 2.0).assertEquals(1)
     zrangeWithscores("key").assertEquals(Seq("bar" -> 8.0))
@@ -223,8 +223,8 @@ trait SortedSetsApiSuite extends CommandsSuite {
 
   apiTest("ZUNIONSTORE") {
     setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0) *>
-        zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
+      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
+      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
     )
     zunionstore("key", "{key}1", "{key}?").assertEquals(2)
     zunionstore("key", "{key}1", "{key}2").assertEquals(3)
@@ -239,8 +239,8 @@ trait SortedSetsApiSuite extends CommandsSuite {
 
   apiTest("ZUNIONSTORE with WEIGHTS") {
     setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0) *>
-        zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
+      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
+      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
     )
     zunionstoreWeights("key", "{key}1" -> 1.0, "{key}2" -> 2.0).assertEquals(3)
     zrangeWithscores("key").assertEquals(Seq("foo" -> 1.0, "bar" -> 8.0, "lol" -> 8.0))

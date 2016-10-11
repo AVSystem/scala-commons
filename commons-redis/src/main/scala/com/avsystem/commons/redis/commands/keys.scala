@@ -190,8 +190,8 @@ trait NodeKeysApi extends ClusteredKeysApi with ApiSubset {
     execute(new Move(key, db))
   def keys(pattern: Key): Result[Seq[Key]] =
     execute(new Keys(pattern))
-  def scan(cursor: Cursor, matchPattern: Opt[Key] = Opt.Empty, count: Opt[Long] = Opt.Empty): Result[(Cursor, Seq[Key])] =
-    execute(new Scan(cursor, matchPattern, count))
+  def scan(cursor: Cursor, matchPattern: OptArg[Key] = OptArg.Empty, count: OptArg[Long] = OptArg.Empty): Result[(Cursor, Seq[Key])] =
+    execute(new Scan(cursor, matchPattern.toOpt, count.toOpt))
   def randomkey: Result[Opt[Key]] =
     execute(Randomkey)
   def wait(numslaves: Int, timeout: Long): Result[Long] =
@@ -206,7 +206,7 @@ trait NodeKeysApi extends ClusteredKeysApi with ApiSubset {
   }
 
   private final class Scan(cursor: Cursor, matchPattern: Opt[Key], count: Opt[Long])
-    extends RedisScanCommand[Seq[Key]](multiBulk[Key]) with NodeCommand {
+    extends RedisScanCommand[Key](multiBulk[Key]) with NodeCommand {
     val encoded = encoder("SCAN").add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 
