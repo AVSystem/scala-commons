@@ -12,7 +12,7 @@ import com.avsystem.commons.redis.protocol._
   * Author: ghik
   * Created: 06/04/16.
   */
-trait ClusteredKeysApi extends ApiSubset {
+trait KeyedKeysApi extends ApiSubset {
   def del(keys: Key*): Result[Long] =
     execute(new Del(keys))
   def dump(key: Key): Result[Opt[Dumped]] =
@@ -185,7 +185,7 @@ trait ClusteredKeysApi extends ApiSubset {
   }
 }
 
-trait NodeKeysApi extends ClusteredKeysApi with ApiSubset {
+trait NodeKeysApi extends KeyedKeysApi with ApiSubset {
   def move(key: Key, db: Int): Result[Boolean] =
     execute(new Move(key, db))
   def keys(pattern: Key): Result[Seq[Key]] =

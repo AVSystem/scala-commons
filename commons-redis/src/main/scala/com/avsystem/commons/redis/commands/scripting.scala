@@ -15,7 +15,7 @@ import com.google.common.hash.Hashing
   * Author: ghik
   * Created: 04/10/16.
   */
-trait ClusteredScriptingApi extends ApiSubset {
+trait KeyedScriptingApi extends ApiSubset {
   def eval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value]): Result[T] =
     execute(new Eval(script, keys, args))
   def eval[T](source: String, keys: Seq[Key], args: Seq[Value])(decoder: ReplyDecoder[T]): Result[T] =
@@ -36,7 +36,7 @@ trait ClusteredScriptingApi extends ApiSubset {
   }
 }
 
-trait RecoverableClusteredScriptingApi extends RecoverableApiSubset with ClusteredScriptingApi {
+trait RecoverableKeyedScriptingApi extends RecoverableApiSubset with KeyedScriptingApi {
   def evalshaOrEval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value]): Result[T] =
     recoverWith(evalsha(script, keys, args)) {
       case e: ErrorReplyException if e.reply.errorCode == "NOSCRIPT" =>
@@ -44,7 +44,7 @@ trait RecoverableClusteredScriptingApi extends RecoverableApiSubset with Cluster
     }
 }
 
-trait NodeScriptingApi extends ClusteredScriptingApi {
+trait NodeScriptingApi extends KeyedScriptingApi {
   def scriptExists(hashes: Sha1*): Result[Seq[Boolean]] =
     execute(new ScriptExists(hashes))
   def scriptFlush: Result[Unit] =

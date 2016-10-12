@@ -3,7 +3,7 @@ package redis.commands
 
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.exception.ErrorReplyException
-import com.avsystem.commons.redis.{RedisConnectionCommandsSuite, RedisStringCommands}
+import com.avsystem.commons.redis.{RedisConnectionCommandsSuite, RedisApi}
 
 /**
   * Author: ghik
@@ -11,7 +11,7 @@ import com.avsystem.commons.redis.{RedisConnectionCommandsSuite, RedisStringComm
   */
 trait ConnectionApiSuite extends RedisConnectionCommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("ECHO") {
     echo(bs"lol").assertEquals(bs"lol")
@@ -29,7 +29,7 @@ trait ConnectionApiSuite extends RedisConnectionCommandsSuite {
 class AuthenticationTest extends RedisConnectionCommandsSuite {
   override def password = "hassword".opt
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   test("AUTH") {
     get("key").intercept[ErrorReplyException]

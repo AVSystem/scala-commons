@@ -9,7 +9,7 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol.{BulkStringMsg, ValidRedisMsg}
 
-trait ClusteredServerApi extends ApiSubset {
+trait KeyedServerApi extends ApiSubset {
   def debugObject(key: Key): Result[ValidRedisMsg] =
     execute(new DebugObject(key))
 
@@ -18,7 +18,7 @@ trait ClusteredServerApi extends ApiSubset {
   }
 }
 
-trait NodeServerApi extends ClusteredServerApi {
+trait NodeServerApi extends KeyedServerApi {
   def bgrewriteaof: Result[String] =
     execute(Bgrewriteaof)
   def bgsave: Result[String] =

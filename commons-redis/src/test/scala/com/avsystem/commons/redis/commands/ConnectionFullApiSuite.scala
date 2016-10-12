@@ -7,10 +7,10 @@ import com.avsystem.commons.redis._
   * Author: ghik
   * Created: 06/10/16.
   */
-trait ClusteredFullApiSuite extends CommandsSuite
+trait KeyedFullApiSuite extends CommandsSuite
   with GeoApiSuite
-  with ClusteredScriptingApiSuite
-  with ClusteredKeysApiSuite
+  with KeyedScriptingApiSuite
+  with KeyedKeysApiSuite
   with StringsApiSuite
   with HashesApiSuite
   with SortedSetsApiSuite
@@ -18,7 +18,7 @@ trait ClusteredFullApiSuite extends CommandsSuite
   with SetsApiSuite
   with HyperLogLogApiSuite
 
-trait NodeFullApiSuite extends ClusteredFullApiSuite
+trait NodeFullApiSuite extends KeyedFullApiSuite
   with NodeKeysApiSuite
   with ServerApiSuite
   with NodeScriptingApiSuite
@@ -26,6 +26,6 @@ trait NodeFullApiSuite extends ClusteredFullApiSuite
 trait ConnectionFullApiSuite extends NodeFullApiSuite
   with ConnectionScriptingApiSuite
 
-class RedisClusterCommandsTest extends RedisClusterCommandsSuite with ClusteredFullApiSuite
+class RedisClusterCommandsTest extends RedisClusterCommandsSuite with KeyedFullApiSuite
 class RedisNodeCommandsTest extends RedisNodeCommandsSuite with NodeFullApiSuite with NodeOnlyServerApiSuite
 class RedisConnectionCommandsTest extends RedisConnectionCommandsSuite with ConnectionFullApiSuite

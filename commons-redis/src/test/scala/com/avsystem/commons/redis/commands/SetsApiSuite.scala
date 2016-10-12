@@ -8,7 +8,7 @@ import scala.concurrent.Future
 
 trait SetsApiSuite extends CommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("SADD") {
     sadd("key", "a", "b", "c").assertEquals(3)

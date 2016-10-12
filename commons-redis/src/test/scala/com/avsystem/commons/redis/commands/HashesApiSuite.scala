@@ -8,7 +8,7 @@ import scala.concurrent.Future
 
 trait HashesApiSuite extends CommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("HDEL") {
     setup(hset("key", "field", "value"), hmset("key2", "field1" -> "value1", "field2" -> "value2"))

@@ -9,7 +9,7 @@ import com.avsystem.commons.redis.commands.SlotRange
 import com.avsystem.commons.redis.config.ClusterConfig
 import com.avsystem.commons.redis.exception.ClientStoppedException
 import com.avsystem.commons.redis.util.ActorLazyLogging
-import com.avsystem.commons.redis.{ClusterState, NodeAddress, RedisBinaryCommands, RedisNodeClient}
+import com.avsystem.commons.redis.{ClusterState, NodeAddress, RedisApi, RedisNodeClient}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -60,11 +60,11 @@ final class ClusterMonitoringActor(
     case Refresh(nodesOpt) =>
       if (suspendUntil.isOverdue) {
         nodesOpt.getOrElse(randomMasters()).foreach { node =>
-          connections.getOrElseUpdate(node, createConnection(node)) ! RedisBinaryCommands.clusterSlots
+          connections.getOrElseUpdate(node, createConnection(node)) ! RedisApi.Batches.BinaryTyped.clusterSlots
         }
         suspendUntil = config.minRefreshInterval.fromNow
       }
-    case pr: PacksResult => Try(RedisBinaryCommands.clusterSlots.decodeReplies(pr)) match {
+    case pr: PacksResult => Try(RedisApi.Batches.BinaryTyped.clusterSlots.decodeReplies(pr)) match {
       case Success(slotRangeMapping) =>
         val newMapping = {
           val res = slotRangeMapping.iterator.map { srm =>

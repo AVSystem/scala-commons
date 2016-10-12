@@ -8,7 +8,7 @@ import scala.concurrent.Future
 
 trait SortedSetsApiSuite extends CommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("ZADD") {
     zadd("lex", 0.0, "a", "b", "c", "d").assertEquals(4)

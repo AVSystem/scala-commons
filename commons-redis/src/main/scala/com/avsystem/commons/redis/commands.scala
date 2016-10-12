@@ -1,18 +1,25 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.ByteString
+import akka.util.{ByteString, Timeout}
 import com.avsystem.commons.redis.commands._
 import com.avsystem.commons.redis.util.ByteStringCodec
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait RedisExecutor {
   def executionContext: ExecutionContext
-  def execute[A](batch: RedisBatch[A]): Future[A]
+  def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A]
 }
+trait RedisOpExecutor {
+  def executeOp[A](op: RedisOp[A])(implicit timeout: Timeout): Future[A]
+}
+
+trait RedisKeyedExecutor extends RedisExecutor
+trait RedisNodeExecutor extends RedisKeyedExecutor with RedisOpExecutor
+trait RedisConnectionExecutor extends RedisNodeExecutor
 
 case class RedisDataCodec[T](read: ByteString => T, write: T => ByteString)
 object RedisDataCodec extends LowPriorityRedisDataCodecs {
@@ -30,16 +37,6 @@ trait LowPriorityRedisDataCodecs { this: RedisDataCodec.type =>
   implicit def fromGenCodec[T: GenCodec]: RedisDataCodec[T] =
     RedisDataCodec(bytes => ByteStringCodec.read(bytes), value => ByteStringCodec.write(value))
 }
-
-/*
- * These three subtraits provide rudimentary typesafety layer.
- * Their sole purpose is so that e.g. `RedisNodeClient.toExecutor` cannot be passed into `RedisNodeAsyncCommands`.
- * However, it's still easy to circumvent this protection by using client's `executeBatch` method directly or
- * by implementing `RedisConnectionExecutor` manually.
- */
-trait RedisClusteredExecutor extends RedisExecutor
-trait RedisNodeExecutor extends RedisClusteredExecutor
-trait RedisConnectionExecutor extends RedisNodeExecutor
 
 trait ApiSubset { self =>
   // type function that changes key, hash key and value type of self-type
@@ -97,53 +94,56 @@ trait RecoverableApiSubset extends ApiSubset {
   protected def recoverWith[A](executed: => Result[A])(fun: PartialFunction[Throwable, Result[A]]): Result[A]
 }
 
-trait RawCommandSubset extends ApiSubset {
+trait RedisRawApi extends ApiSubset {
   type Result[A] = RawCommand
-  type Self[K, H, V] <: AbstractApiSubset[K, H, V] with RawCommandSubset
+  type Self[K, H, V] <: AbstractApiSubset[K, H, V] with RedisRawApi
   protected def execute[A](command: RedisCommand[A]) = command
 }
-trait CommandSubset extends ApiSubset {
+trait RedisBatchApi extends ApiSubset {
   type Result[A] = RedisBatch[A]
-  type Self[K, H, V] <: AbstractApiSubset[K, H, V] with CommandSubset
+  type Self[K, H, V] <: AbstractApiSubset[K, H, V] with RedisBatchApi
   protected def execute[A](command: RedisCommand[A]) = command
 }
-trait AsyncCommandSubset extends RecoverableApiSubset {
-  type Result[A] = Future[A]
-  type Self[K, H, V] <: AbstractApiSubset[K, H, V] with AsyncCommandSubset
+trait RedisExecutedApi extends RecoverableApiSubset {
+  protected def timeout: Timeout
   protected def executor: RedisExecutor
-  protected def execute[A](command: RedisCommand[A]) = executor.execute(command)
+  protected def executeAsync[A](command: RedisCommand[A]): Future[A] =
+    executor.executeBatch(command)(timeout)
+}
+trait RedisAsyncApi extends RedisExecutedApi {
+  type Result[A] = Future[A]
+  type Self[K, H, V] <: AbstractApiSubset[K, H, V] with RedisAsyncApi
+  protected def execute[A](command: RedisCommand[A]) = executeAsync(command)
   protected def recoverWith[A](executed: => Future[A])(fun: PartialFunction[Throwable, Future[A]]) =
     executed.recoverWith(fun)(executor.executionContext)
 }
-trait BlockingCommandSubset extends RecoverableApiSubset {
+trait RedisBlockingApi extends RedisExecutedApi {
   type Result[A] = A
-  type Self[K, H, V] <: AbstractApiSubset[K, H, V] with BlockingCommandSubset
-  protected def timeout: Duration
-  protected def executor: RedisExecutor
-  protected def execute[A](command: RedisCommand[A]) = Await.result(executor.execute(command), timeout)
+  type Self[K, H, V] <: AbstractApiSubset[K, H, V] with RedisBlockingApi
+  protected def execute[A](command: RedisCommand[A]) = Await.result(executeAsync(command), Duration.Inf)
   protected def recoverWith[A](executed: => A)(fun: PartialFunction[Throwable, A]) =
     try executed catch fun
 }
 
-trait RedisClusteredApi extends AnyRef
-  with ClusteredKeysApi
+trait RedisKeyedApi extends AnyRef
+  with KeyedKeysApi
   with StringsApi
-  with ClusteredServerApi
-  with ClusteredClusterApi
+  with KeyedServerApi
+  with KeyedClusterApi
   with GeoApi
-  with ClusteredScriptingApi
+  with KeyedScriptingApi
   with HashesApi
   with SortedSetsApi
   with ListsApi
   with SetsApi
   with HyperLogLogApi {
-  type Self[K, H, V] <: AbstractApiSubset[K, H, V] with RedisClusteredApi
+  type Self[K, H, V] <: AbstractApiSubset[K, H, V] with RedisKeyedApi
 }
 
-trait RedisRecoverableClusteredApi extends RedisClusteredApi
-  with RecoverableClusteredScriptingApi
+trait RedisRecoverableKeyedApi extends RedisKeyedApi
+  with RecoverableKeyedScriptingApi
 
-trait RedisNodeApi extends RedisClusteredApi
+trait RedisNodeApi extends RedisKeyedApi
   with NodeKeysApi
   with NodeServerApi
   with NodeClusterApi
@@ -152,7 +152,7 @@ trait RedisNodeApi extends RedisClusteredApi
   type Self[K, H, V] <: AbstractApiSubset[K, H, V] with RedisNodeApi
 }
 
-trait RedisRecoverableNodeApi extends RedisRecoverableClusteredApi with RedisNodeApi
+trait RedisRecoverableNodeApi extends RedisRecoverableKeyedApi with RedisNodeApi
 
 trait RedisOperationApi extends RedisNodeApi
   with TransactionApi {
@@ -169,106 +169,98 @@ trait RedisConnectionApi extends RedisOperationApi
 
 trait RedisRecoverableConnectionApi extends RedisRecoverableNodeApi with RedisConnectionApi
 
-class RedisRawCommands[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec]
-  extends AbstractApiSubset[Key, HashKey, Value] with RedisConnectionApi with RawCommandSubset {
-  type Self[K, H, V] = RedisRawCommands[K, H, V]
-  protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-    new RedisRawCommands[K, H, V]()(newKeyCodec, newHashKeyCodec, newValueCodec)
+object RedisApi {
+  class Raw[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec]
+    extends AbstractApiSubset[Key, HashKey, Value] with RedisConnectionApi with RedisRawApi {
+    type Self[K, H, V] = Raw[K, H, V]
+    protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
+      new Raw[K, H, V]()(newKeyCodec, newHashKeyCodec, newValueCodec)
+  }
+  object Raw {
+    object StringTyped extends Raw[String, String, String]
+    object BinaryTyped extends Raw[ByteString, ByteString, ByteString]
+  }
+
+  class Batches[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec]
+    extends AbstractApiSubset[Key, HashKey, Value] with RedisConnectionApi with RedisBatchApi {
+    type Self[K, H, V] = Batches[K, H, V]
+    protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
+      new Batches[K, H, V]()(newKeyCodec, newHashKeyCodec, newValueCodec)
+  }
+  object Batches {
+    object StringTyped extends Batches[String, String, String]
+    object BinaryTyped extends Batches[ByteString, ByteString, ByteString]
+  }
+
+  object Keyed {
+    class Async[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisKeyedExecutor)
+      (implicit val timeout: Timeout) extends AbstractApiSubset[Key, HashKey, Value] with RedisRecoverableKeyedApi with RedisAsyncApi {
+      type Self[K, H, V] = Async[K, H, V]
+      protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
+        new Async[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec, timeout)
+    }
+    object Async {
+      case class StringTyped(exec: RedisKeyedExecutor)(implicit timeout: Timeout) extends Async[String, String, String](exec)
+      case class BinaryTyped(exec: RedisKeyedExecutor)(implicit timeout: Timeout) extends Async[ByteString, ByteString, ByteString](exec)
+    }
+
+    class Blocking[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisKeyedExecutor)
+      (implicit val timeout: Timeout) extends AbstractApiSubset[Key, HashKey, Value] with RedisRecoverableKeyedApi with RedisBlockingApi {
+      type Self[K, H, V] = Blocking[K, H, V]
+      protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
+        new Blocking[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec, timeout)
+    }
+    object Blocking {
+      case class StringTyped(exec: RedisKeyedExecutor)(implicit timeout: Timeout) extends Blocking[String, String, String](exec)
+      case class BinaryTyped(exec: RedisKeyedExecutor)(implicit timeout: Timeout) extends Blocking[ByteString, ByteString, ByteString](exec)
+    }
+  }
+
+  object Node {
+    class Async[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisNodeExecutor)
+      (implicit val timeout: Timeout) extends AbstractApiSubset[Key, HashKey, Value] with RedisRecoverableNodeApi with RedisAsyncApi {
+      type Self[K, H, V] = Async[K, H, V]
+      protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
+        new Async[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec, timeout)
+    }
+    object Async {
+      case class StringTyped(exec: RedisNodeExecutor)(implicit timeout: Timeout) extends Async[String, String, String](exec)
+      case class BinaryTyped(exec: RedisNodeExecutor)(implicit timeout: Timeout) extends Async[ByteString, ByteString, ByteString](exec)
+    }
+
+    class Blocking[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisNodeExecutor)
+      (implicit val timeout: Timeout) extends AbstractApiSubset[Key, HashKey, Value] with RedisRecoverableNodeApi with RedisBlockingApi {
+      type Self[K, H, V] = Blocking[K, H, V]
+      protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
+        new Blocking[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec, timeout)
+    }
+    object Blocking {
+      case class StringTyped(exec: RedisNodeExecutor)(implicit timeout: Timeout) extends Blocking[String, String, String](exec)
+      case class BinaryTyped(exec: RedisNodeExecutor)(implicit timeout: Timeout) extends Blocking[ByteString, ByteString, ByteString](exec)
+    }
+  }
+
+  object Connection {
+    class Async[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisConnectionExecutor)
+      (implicit val timeout: Timeout) extends AbstractApiSubset[Key, HashKey, Value] with RedisRecoverableConnectionApi with RedisAsyncApi {
+      type Self[K, H, V] = Async[K, H, V]
+      protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
+        new Async[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec, timeout)
+    }
+    object Async {
+      case class StringTyped(exec: RedisConnectionExecutor)(implicit timeout: Timeout) extends Async[String, String, String](exec)
+      case class BinaryTyped(exec: RedisConnectionExecutor)(implicit timeout: Timeout) extends Async[ByteString, ByteString, ByteString](exec)
+    }
+
+    class Blocking[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisConnectionExecutor)
+      (implicit val timeout: Timeout) extends AbstractApiSubset[Key, HashKey, Value] with RedisRecoverableConnectionApi with RedisBlockingApi {
+      type Self[K, H, V] = Blocking[K, H, V]
+      protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
+        new Blocking[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec, timeout)
+    }
+    object Blocking {
+      case class StringTyped(exec: RedisConnectionExecutor)(implicit timeout: Timeout) extends Blocking[String, String, String](exec)
+      case class BinaryTyped(exec: RedisConnectionExecutor)(implicit timeout: Timeout) extends Blocking[ByteString, ByteString, ByteString](exec)
+    }
+  }
 }
-
-object RedisBinaryRawCommands extends RedisRawCommands[ByteString, ByteString, ByteString]
-object RedisStringRawCommands extends RedisRawCommands[String, String, String]
-
-class RedisCommands[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec]
-  extends AbstractApiSubset[Key, HashKey, Value] with RedisConnectionApi with CommandSubset {
-  type Self[K, H, V] = RedisCommands[K, H, V]
-  protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-    new RedisCommands[K, H, V]()(newKeyCodec, newHashKeyCodec, newValueCodec)
-}
-
-object RedisBinaryCommands extends RedisCommands[ByteString, ByteString, ByteString]
-object RedisStringCommands extends RedisCommands[String, String, String]
-
-// clustered, async
-
-class RedisClusteredAsyncCommands[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisClusteredExecutor)
-  extends AbstractApiSubset[Key, HashKey, Value] with RedisRecoverableClusteredApi with AsyncCommandSubset {
-  type Self[K, H, V] = RedisClusteredAsyncCommands[K, H, V]
-  protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-    new RedisClusteredAsyncCommands[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec)
-}
-
-final class RedisBinaryClusteredAsyncCommands(executor: RedisClusteredExecutor)
-  extends RedisClusteredAsyncCommands[ByteString, ByteString, ByteString](executor)
-final class RedisStringClusteredAsyncCommands(executor: RedisClusteredExecutor)
-  extends RedisClusteredAsyncCommands[String, String, String](executor)
-
-// node, async
-
-class RedisNodeAsyncCommands[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisNodeExecutor)
-  extends AbstractApiSubset[Key, HashKey, Value] with RedisRecoverableNodeApi with AsyncCommandSubset {
-  type Self[K, H, V] = RedisNodeAsyncCommands[K, H, V]
-  protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-    new RedisNodeAsyncCommands[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec)
-}
-
-final class RedisBinaryNodeAsyncCommands(executor: RedisNodeExecutor)
-  extends RedisNodeAsyncCommands[ByteString, ByteString, ByteString](executor)
-final class RedisStringNodeAsyncCommands(executor: RedisNodeExecutor)
-  extends RedisNodeAsyncCommands[String, String, String](executor)
-
-// connection, async
-
-class RedisConnectionAsyncCommands[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisConnectionExecutor)
-  extends AbstractApiSubset[Key, HashKey, Value] with RedisRecoverableConnectionApi with AsyncCommandSubset {
-  type Self[K, H, V] = RedisConnectionAsyncCommands[K, H, V]
-  protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-    new RedisConnectionAsyncCommands[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec)
-}
-
-final class RedisBinaryConnectionAsyncCommands(executor: RedisConnectionExecutor)
-  extends RedisConnectionAsyncCommands[ByteString, ByteString, ByteString](executor)
-final class RedisStringConnectionAsyncCommands(executor: RedisConnectionExecutor)
-  extends RedisConnectionAsyncCommands[String, String, String](executor)
-
-// clustered, blocking
-
-class RedisClusteredBlockingCommands[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisClusteredExecutor, val timeout: Duration)
-  extends AbstractApiSubset[Key, HashKey, Value] with RedisRecoverableClusteredApi with BlockingCommandSubset {
-  type Self[K, H, V] = RedisClusteredBlockingCommands[K, H, V]
-  protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-    new RedisClusteredBlockingCommands[K, H, V](executor, timeout)(newKeyCodec, newHashKeyCodec, newValueCodec)
-}
-
-final class RedisBinaryClusteredBlockingCommands(executor: RedisClusteredExecutor, timeout: Duration)
-  extends RedisClusteredBlockingCommands[ByteString, ByteString, ByteString](executor, timeout)
-final class RedisStringClusteredBlockingCommands(executor: RedisClusteredExecutor, timeout: Duration)
-  extends RedisClusteredBlockingCommands[String, String, String](executor, timeout)
-
-// node, blocking
-
-class RedisNodeBlockingCommands[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisNodeExecutor, val timeout: Duration)
-  extends AbstractApiSubset[Key, HashKey, Value] with RedisRecoverableNodeApi with BlockingCommandSubset {
-  type Self[K, H, V] = RedisNodeBlockingCommands[K, H, V]
-  protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-    new RedisNodeBlockingCommands[K, H, V](executor, timeout)(newKeyCodec, newHashKeyCodec, newValueCodec)
-}
-
-final class RedisBinaryNodeBlockingCommands(executor: RedisNodeExecutor, timeout: Duration)
-  extends RedisNodeBlockingCommands[ByteString, ByteString, ByteString](executor, timeout)
-final class RedisStringNodeBlockingCommands(executor: RedisNodeExecutor, timeout: Duration)
-  extends RedisNodeBlockingCommands[String, String, String](executor, timeout)
-
-// connection, blocking
-
-class RedisConnectionBlockingCommands[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisConnectionExecutor, val timeout: Duration)
-  extends AbstractApiSubset[Key, HashKey, Value] with RedisRecoverableConnectionApi with BlockingCommandSubset {
-  type Self[K, H, V] = RedisConnectionBlockingCommands[K, H, V]
-  protected def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-    new RedisConnectionBlockingCommands[K, H, V](executor, timeout)(newKeyCodec, newHashKeyCodec, newValueCodec)
-}
-
-final class RedisBinaryConnectionBlockingCommands(executor: RedisConnectionExecutor, timeout: Duration)
-  extends RedisConnectionBlockingCommands[ByteString, ByteString, ByteString](executor, timeout)
-final class RedisStringConnectionBlockingCommands(executor: RedisConnectionExecutor, timeout: Duration)
-  extends RedisConnectionBlockingCommands[String, String, String](executor, timeout)

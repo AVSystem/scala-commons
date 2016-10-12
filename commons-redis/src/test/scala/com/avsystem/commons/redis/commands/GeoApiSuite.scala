@@ -13,7 +13,7 @@ import scala.collection.immutable.ListMap
   */
 trait GeoApiSuite extends CommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   final val Key = "Cities"
   final val StoreKey = "{Cities}Stored"

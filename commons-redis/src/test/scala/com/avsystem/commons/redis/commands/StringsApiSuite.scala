@@ -11,7 +11,7 @@ import com.avsystem.commons.redis._
   */
 trait StringsApiSuite extends CommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("APPEND") {
     setup(set("key", "cos"))

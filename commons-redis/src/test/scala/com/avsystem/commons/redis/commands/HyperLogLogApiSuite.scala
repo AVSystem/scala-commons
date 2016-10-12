@@ -5,7 +5,7 @@ import com.avsystem.commons.redis._
 
 trait HyperLogLogApiSuite extends CommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("PFADD") {
     pfadd("key", "lol", "foo", "bar").assertEquals(true)

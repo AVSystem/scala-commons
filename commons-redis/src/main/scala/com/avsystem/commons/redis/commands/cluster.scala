@@ -10,7 +10,7 @@ import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, IntegerMsg,
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-trait ClusteredClusterApi extends ApiSubset {
+trait KeyedClusterApi extends ApiSubset {
   def clusterKeyslot(key: Key): Result[Int] =
     execute(new ClusterKeyslot(key))
 
@@ -19,7 +19,7 @@ trait ClusteredClusterApi extends ApiSubset {
   }
 }
 
-trait NodeClusterApi extends ClusteredClusterApi {
+trait NodeClusterApi extends KeyedClusterApi {
   def clusterAddslots(slots: Seq[Int]): Result[Unit] =
     execute(new ClusterAddslots(slots))
   def clusterCountFailureReports(nodeId: NodeId): Result[Long] =

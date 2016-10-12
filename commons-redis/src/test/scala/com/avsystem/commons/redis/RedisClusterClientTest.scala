@@ -13,7 +13,7 @@ import scala.concurrent.{Await, Future}
   */
 class RedisClusterClientTest extends RedisClusterCommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   test("simple get") {
     get("key").assertEquals(Opt.Empty)
@@ -48,7 +48,7 @@ class RedisClusterClientTest extends RedisClusterCommandsSuite {
 
 class ClusterSlotMigrationTest extends RedisClusterCommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   test("empty slot migration") {
     migrateSlot(0, 7000).futureValue
@@ -67,7 +67,7 @@ class ClusterSlotMigrationTest extends RedisClusterCommandsSuite {
 
 class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   // don't refresh cluster state
   override def clusterConfig = super.clusterConfig.copy(minRefreshInterval = Int.MaxValue.seconds)
@@ -107,7 +107,7 @@ class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
 
 class ClusterFailoverHandlingTest extends RedisClusterCommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   // don't refresh cluster state
   override def clusterConfig = super.clusterConfig.copy(minRefreshInterval = Int.MaxValue.seconds)
@@ -116,11 +116,11 @@ class ClusterFailoverHandlingTest extends RedisClusterCommandsSuite {
     super.beforeAll()
     val slaveClient = new RedisConnectionClient(NodeAddress(port = 9001))
     def failover: Future[Unit] = for {
-      master <- slaveClient.execute(clusterNodes.map(_.find(_.flags.myself).exists(_.flags.master)))
+      master <- slaveClient.executeBatch(clusterNodes.map(_.find(_.flags.myself).exists(_.flags.master)))
       _ <- {
         if (master) Future.successful(())
         else for {
-          _ <- slaveClient.execute(clusterFailover().ignoreFailures)
+          _ <- slaveClient.executeBatch(clusterFailover().ignoreFailures)
           _ <- wait(1.seconds)
           _ <- failover
         } yield ()

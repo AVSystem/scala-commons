@@ -17,22 +17,22 @@ class RedisConnectionClientTest extends FunSuite
     new RedisConnectionClient(address, config = ConnectionConfig(initCommands))
 
   test("client initialization test") {
-    import RedisStringCommands._
+    import RedisApi.Batches.StringTyped._
     val client = createClient(select(0) *> ping)
 
-    val f1 = client.execute(echo(bs"LOL1"))
-    val f2 = client.execute(echo(bs"LOL2"))
+    val f1 = client.executeBatch(echo(bs"LOL1"))
+    val f2 = client.executeBatch(echo(bs"LOL2"))
 
     f1.futureValue shouldBe bs"LOL1"
     f2.futureValue shouldBe bs"LOL2"
   }
 
   test("client initialization failure test") {
-    import RedisStringCommands._
+    import RedisApi.Batches.StringTyped._
     val client = createClient(clusterInfo)
 
-    val f1 = client.execute(echo(bs"LOL1"))
-    val f2 = client.execute(echo(bs"LOL2"))
+    val f1 = client.executeBatch(echo(bs"LOL1"))
+    val f2 = client.executeBatch(echo(bs"LOL2"))
 
     f1.failed.futureValue shouldBe a[ConnectionInitializationFailure]
     f2.failed.futureValue shouldBe a[ConnectionInitializationFailure]

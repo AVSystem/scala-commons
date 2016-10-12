@@ -32,7 +32,7 @@ import scala.util.control.NonFatal
 final class RedisClusterClient(
   val seedNodes: Seq[NodeAddress] = List(NodeAddress.Default),
   val clusterConfig: ClusterConfig = ClusterConfig())
-  (implicit system: ActorSystem) extends Closeable {
+  (implicit system: ActorSystem) extends RedisKeyedExecutor with Closeable {
 
   @volatile private[this] var state: ClusterState = ClusterState(IndexedSeq.empty, Map.empty)
   @volatile private[this] var stateListener: ClusterState => Unit = s => ()
@@ -85,12 +85,6 @@ final class RedisClusterClient(
 
   def initialized: Future[this.type] =
     initPromise.future.map(_ => this)
-
-  def toExecutor(implicit timeout: Timeout): RedisClusteredExecutor =
-    new RedisClusteredExecutor {
-      def executionContext = system.dispatcher
-      def execute[A](batch: RedisBatch[A]) = executeBatch(batch)
-    }
 
   private def handleRedirection[T](pack: RawCommandPack, slot: Int, result: Future[RedisReply], retryCount: Int)
     (implicit timeout: Timeout): Future[RedisReply] =
@@ -151,6 +145,8 @@ final class RedisClusterClient(
       handleRedirection(pack, redirection.slot, result.map(_.apply(0)), retryCount + 1)
     }
   }
+
+  def executionContext: ExecutionContext = system.dispatcher
 
   def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A] = {
     batch.rawCommandPacks.requireLevel(Level.Node, "ClusterClient")

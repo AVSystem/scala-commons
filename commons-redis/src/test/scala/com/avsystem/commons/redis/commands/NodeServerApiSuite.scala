@@ -12,16 +12,16 @@ import scala.concurrent.duration._
   */
 trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("BGSAVE") {
     bgsave.get
-    waitUntil(RedisStringCommands.info(PersistenceInfo).map(_.rdbBgsaveInProgress.contains(false)).exec, 50.millis)
+    waitUntil(RedisApi.Batches.StringTyped.info(PersistenceInfo).map(_.rdbBgsaveInProgress.contains(false)).exec, 50.millis)
   }
 
   apiTest("BGREWRITEAOF") {
     bgrewriteaof.get
-    waitUntil(RedisStringCommands.info(PersistenceInfo).map(_.aofRewriteInProgress.contains(false)).exec, 50.millis)
+    waitUntil(RedisApi.Batches.StringTyped.info(PersistenceInfo).map(_.aofRewriteInProgress.contains(false)).exec, 50.millis)
   }
 
   apiTest("CLIENT LIST") {
@@ -41,7 +41,7 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
   }
 
   apiTest("COMMAND GETKEYS") {
-    commandGetkeys(RedisStringRawCommands.mset("key1" -> "value1", "key2" -> "value2", "key3" -> "value3"))
+    commandGetkeys(RedisApi.Raw.StringTyped.mset("key1" -> "value1", "key2" -> "value2", "key3" -> "value3"))
       .assertEquals(Seq("key1", "key2", "key3"))
   }
 
@@ -79,9 +79,9 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
   }
 
   apiTest("INFO") {
-    RedisStringCommands.info.get
-    RedisStringCommands.info(FullRedisInfo).get
-    RedisStringCommands.info(CpuInfo).get
+    RedisApi.Batches.StringTyped.info.get
+    RedisApi.Batches.StringTyped.info(FullRedisInfo).get
+    RedisApi.Batches.StringTyped.info(CpuInfo).get
   }
 
   apiTest("LASTSAVE") {
@@ -119,7 +119,7 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
 }
 
 trait NodeOnlyServerApiSuite extends ServerApiSuite {
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("CLIENT KILL") {
     val clients: Seq[ClientInfo] = waitFor(clientList.exec)(_.size >= 3, 100.millis).futureValue
@@ -131,7 +131,7 @@ trait NodeOnlyServerApiSuite extends ServerApiSuite {
 }
 
 trait ConnectionServerApiSuite extends ServerApiSuite {
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("CLIENT GETNAME") {
     clientGetname.assertEquals(Opt.Empty)

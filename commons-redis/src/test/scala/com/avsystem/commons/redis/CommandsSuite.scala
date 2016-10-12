@@ -5,7 +5,7 @@ import akka.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.SourceInfo
 import org.scalactic.source.Position
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterEach, FunSuite, Matchers, Tag}
+import org.scalatest.{FunSuite, Matchers, Tag}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -56,28 +56,28 @@ trait ByteStringInterpolation {
   }
 }
 
-trait CommandsSuite extends FunSuite with ScalaFutures with Matchers with BeforeAndAfterEach
+trait CommandsSuite extends FunSuite with ScalaFutures with Matchers with UsesActorSystem
   with ByteStringInterpolation with CommunicationLogging {
 
-  def executor: RedisClusteredExecutor
+  def executor: RedisKeyedExecutor
 
-  protected lazy val asyncClusteredCommands = new RedisStringClusteredAsyncCommands(executor)
+  protected lazy val asyncKeyedCommands = new RedisApi.Keyed.Async.StringTyped(executor)
 
   protected def setup(batches: RedisBatch[Any]*): Unit = {
-    Await.result(executor.execute(batches.sequence), Duration.Inf)
+    Await.result(executor.executeBatch(batches.sequence), Duration.Inf)
     listener.clear()
   }
 
   protected implicit class BatchOps[T](batch: RedisBatch[T]) {
     def get: T = Await.result(exec, patienceConfig.timeout.totalNanos.nanos)
-    def exec: Future[T] = executor.execute(batch)
+    def exec: Future[T] = executor.executeBatch(batch)
     def assert(pred: T => Boolean)(implicit pos: Position): Unit = CommandsSuite.this.assert(pred(get))
     def assertEquals(t: T)(implicit pos: Position): Unit = assertResult(t)(get)
     def intercept[E <: Throwable : ClassTag](implicit pos: Position): E = CommandsSuite.this.intercept[E](get)
   }
 
   protected def cleanupBatch: RedisBatch[Any] =
-    RedisStringCommands.scriptFlush *> RedisStringCommands.flushall
+    RedisApi.Batches.StringTyped.scriptFlush *> RedisApi.Batches.StringTyped.flushall
 
   protected def apiTest(testName: String)(testFun: => Any)(implicit sourceInfo: SourceInfo): Unit = {
     val suiteName = sourceInfo.enclosingSymbols.find(_.endsWith("ApiSuite")).map(_.stripSuffix("ApiSuite")).get
@@ -86,7 +86,7 @@ trait CommandsSuite extends FunSuite with ScalaFutures with Matchers with Before
 }
 
 abstract class RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
-  def executor = redisClient.toExecutor
+  def executor = redisClient
 
   override def clusterConfig =
     super.clusterConfig |> { cc =>
@@ -110,7 +110,7 @@ abstract class RedisClusterCommandsSuite extends FunSuite with UsesPreconfigured
 }
 
 abstract class RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with CommandsSuite {
-  def executor = redisClient.toExecutor
+  def executor = redisClient
 
   override def nodeConfig =
     super.nodeConfig |> { nc =>
@@ -123,19 +123,19 @@ abstract class RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient 
     }
 
   override protected def afterEach() = {
-    Await.ready(executor.execute(cleanupBatch), Duration.Inf)
+    Await.ready(executor.executeBatch(cleanupBatch), Duration.Inf)
     super.afterEach()
   }
 }
 
 abstract class RedisConnectionCommandsSuite extends FunSuite with UsesRedisConnectionClient with CommandsSuite {
-  def executor = redisClient.toExecutor
+  def executor = redisClient
 
   override def connectionConfig =
     super.connectionConfig.copy(debugListener = listener)
 
   override protected def afterEach() = {
-    Await.ready(executor.execute(cleanupBatch), Duration.Inf)
+    Await.ready(executor.executeBatch(cleanupBatch), Duration.Inf)
     super.afterEach()
   }
 }

@@ -11,9 +11,9 @@ import scala.concurrent.Future
   * Author: ghik
   * Created: 14/04/16.
   */
-trait ClusteredKeysApiSuite extends CommandsSuite {
+trait KeyedKeysApiSuite extends CommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("DEL") {
     setup(set("key", "value"))
@@ -127,9 +127,9 @@ trait ClusteredKeysApiSuite extends CommandsSuite {
   }
 }
 
-trait NodeKeysApiSuite extends ClusteredKeysApiSuite {
+trait NodeKeysApiSuite extends KeyedKeysApiSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   private val scanKeys = (0 until 256).map(i => s"toscan$i")
 

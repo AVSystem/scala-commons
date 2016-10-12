@@ -14,12 +14,12 @@ import com.avsystem.commons.redis.actor.{ManagedRedisConnectionActor, RedisOpera
 import com.avsystem.commons.redis.config.NodeConfig
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
 final class RedisNodeClient(
   val address: NodeAddress = NodeAddress.Default,
   val config: NodeConfig = NodeConfig())
-  (implicit system: ActorSystem) extends Closeable { client =>
+  (implicit system: ActorSystem) extends RedisNodeExecutor with Closeable { client =>
 
   private def createConnection(i: Int) =
     system.actorOf(Props(new ManagedRedisConnectionActor(address, config.connectionConfigs(i))))
@@ -42,6 +42,9 @@ final class RedisNodeClient(
     */
   private[redis] def nodeRemoved(): Unit = connections.foreach(_ ! NodeRemoved)
 
+  def executionContext: ExecutionContext =
+    system.dispatcher
+
   def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A] =
     executeRaw(batch.rawCommandPacks).mapNow(result => batch.decodeReplies(result))
 
@@ -54,12 +57,6 @@ final class RedisNodeClient(
 
   def initialized: Future[this.type] =
     initFuture.mapNow(_ => this)
-
-  def toExecutor(implicit timeout: Timeout): RedisNodeExecutor =
-    new RedisNodeExecutor {
-      def executionContext = system.dispatcher
-      def execute[A](cmd: RedisBatch[A]) = client.executeBatch(cmd)
-    }
 
   def close(): Unit =
     connections.foreach(system.stop)

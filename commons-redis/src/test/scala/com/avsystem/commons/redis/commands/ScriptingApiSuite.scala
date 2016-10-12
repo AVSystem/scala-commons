@@ -10,9 +10,9 @@ import com.avsystem.commons.redis.protocol.{BulkStringMsg, NullBulkStringMsg}
   * Author: ghik
   * Created: 05/10/16.
   */
-trait ClusteredScriptingApiSuite extends CommandsSuite {
+trait KeyedScriptingApiSuite extends CommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   object getScript extends RedisScript[Opt[String]] {
     def source = "return redis.call('get', KEYS[1])"
@@ -46,14 +46,14 @@ trait ClusteredScriptingApiSuite extends CommandsSuite {
 
   apiTest("EVALSHA or EVAL") {
     setup(set("key", "value"))
-    asyncClusteredCommands.evalshaOrEval(getScript, Seq("key"), Nil).futureValue shouldEqual "value".opt
-    asyncClusteredCommands.evalshaOrEval(getScript, Seq("key"), Nil).futureValue shouldEqual "value".opt
+    asyncKeyedCommands.evalshaOrEval(getScript, Seq("key"), Nil).futureValue shouldEqual "value".opt
+    asyncKeyedCommands.evalshaOrEval(getScript, Seq("key"), Nil).futureValue shouldEqual "value".opt
   }
 }
 
-trait NodeScriptingApiSuite extends ClusteredScriptingApiSuite {
+trait NodeScriptingApiSuite extends KeyedScriptingApiSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("SCRIPT EXISTS") {
     scriptExists(getScript.sha1).assertEquals(Seq(false))
@@ -68,7 +68,7 @@ trait NodeScriptingApiSuite extends ClusteredScriptingApiSuite {
 
 trait ConnectionScriptingApiSuite extends NodeScriptingApiSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("SCRIPT DEBUG") {
     scriptDebug(DebugMode.Yes).get

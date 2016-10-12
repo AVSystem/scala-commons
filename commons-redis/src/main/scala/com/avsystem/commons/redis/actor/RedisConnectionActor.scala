@@ -11,7 +11,7 @@ import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.protocol._
 import com.avsystem.commons.redis.util.ActorLazyLogging
-import com.avsystem.commons.redis.{NodeAddress, RawCommandPacks, RedisBinaryCommands, ReplyPreprocessor, WatchState}
+import com.avsystem.commons.redis.{NodeAddress, RawCommandPacks, RedisApi, ReplyPreprocessor, WatchState}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -105,8 +105,8 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
     case ResetState =>
       if (state.watching) {
         log.debug(s"Resetting state of connection to Redis at $address")
-        handleRequest(RedisBinaryCommands.unwatch.rawCommandPacks,
-          pr => try RedisBinaryCommands.unwatch.decodeReplies(pr) catch {
+        handleRequest(RedisApi.Batches.BinaryTyped.unwatch.rawCommandPacks,
+          pr => try RedisApi.Batches.BinaryTyped.unwatch.decodeReplies(pr) catch {
             case NonFatal(cause) => failUnfinishedAndStop(new ConnectionStateResetFailure(cause))
           }
         )

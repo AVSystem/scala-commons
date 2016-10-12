@@ -10,7 +10,7 @@ import com.avsystem.commons.redis._
   */
 trait ListsApiSuite extends CommandsSuite {
 
-  import RedisStringCommands._
+  import RedisApi.Batches.StringTyped._
 
   apiTest("LINDEX") {
     setup(rpush("key", "a", "b", "c"))
