@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis
 
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.config.{ConnectionConfig, ManagedConnectionConfig}
+import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception.{ErrorReplyException, OptimisticLockException}
 
 import scala.concurrent.duration.Duration
@@ -64,7 +64,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
     val batch = (
       get("nestedkey"),
       set("nestedkey", "value").transaction
-      ).sequence.transaction
+    ).sequence.transaction
 
     batch.assertEquals((Opt.Empty, true))
 
@@ -246,12 +246,12 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
 
   override def nodeConfig = super.nodeConfig.copy(
     poolSize = 1,
-    connectionConfigs = _ => ManagedConnectionConfig(ConnectionConfig(debugListener = listener))
+    connectionConfigs = _ => ConnectionConfig(debugListener = listener)
   )
 
   // needed in order to force the client to execute UNWATCH before test finishes
   private def withDummyGet[T](fut: Future[T]) =
-  fut.andThen({ case _ => redisClient.executeBatch(get("dummy")) })
+    fut.andThen({ case _ => redisClient.executeBatch(get("dummy")) })
 
   test("simple transaction with cleanup") {
     setup(set("key", "0"))

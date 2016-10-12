@@ -4,7 +4,7 @@ package redis.actor
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.actor.RedisConnectionActor._
-import com.avsystem.commons.redis.config.ManagedConnectionConfig
+import com.avsystem.commons.redis.config.{ConnectionConfig, RetryStrategy}
 import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{NodeAddress, RawCommandPacks}
@@ -17,13 +17,13 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
   * manually (not by standard supervision mechanisms) because this actor needs to update additional state when
   * restarting the connection actor
   */
-final class ManagedRedisConnectionActor(address: NodeAddress, config: ManagedConnectionConfig)
+final class ManagedRedisConnectionActor(address: NodeAddress, config: ConnectionConfig, reconnectionStrategy: RetryStrategy)
   extends Actor with ActorLazyLogging {
 
   import ManagedRedisConnectionActor._
 
   def newConnection = context.watch(context.actorOf(Props(
-    new RedisConnectionActor(address, config.connectionConfig, self))))
+    new RedisConnectionActor(address, config, self))))
 
   private var connectionActor = newConnection
   // connected and not busy
@@ -119,7 +119,7 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: ManagedCon
     case Terminated(conn) if conn == connectionActor =>
       log.info(s"Connection to Redis on $address was closed.")
       connected = false
-      config.reconnectionStrategy.retryDelay(reconnectionRetry) match {
+      reconnectionStrategy.retryDelay(reconnectionRetry) match {
         case Opt(delay) =>
           log.info(s"Reconnecting in $delay (retry $reconnectionRetry) ...")
           reconnectionRetry += 1

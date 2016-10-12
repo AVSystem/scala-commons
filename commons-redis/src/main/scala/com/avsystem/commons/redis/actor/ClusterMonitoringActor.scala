@@ -26,7 +26,8 @@ final class ClusterMonitoringActor(
   import context._
 
   def createConnection(addr: NodeAddress) =
-    actorOf(Props(new ManagedRedisConnectionActor(addr, config.monitoringConnectionConfigs(addr))))
+    actorOf(Props(new ManagedRedisConnectionActor(addr,
+      config.monitoringConnectionConfigs(addr), config.nodeConfigs(addr).reconnectionStrategy)))
 
   def createClient(addr: NodeAddress) =
     new RedisNodeClient(addr, config.nodeConfigs(addr))

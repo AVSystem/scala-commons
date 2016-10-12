@@ -10,7 +10,7 @@ import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{ManagedRedisConnectionActor, RedisOperationActor}
-import com.avsystem.commons.redis.config.{ConnectionConfig, ManagedConnectionConfig, NoRetryStrategy}
+import com.avsystem.commons.redis.config.{ConnectionConfig, NoRetryStrategy}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -22,7 +22,7 @@ final class RedisConnectionClient(address: NodeAddress = NodeAddress.Default, co
   (implicit system: ActorSystem) extends RedisConnectionExecutor with Closeable { self =>
 
   private val connectionActor = system.actorOf(Props(
-    new ManagedRedisConnectionActor(address, ManagedConnectionConfig(config, NoRetryStrategy))))
+    new ManagedRedisConnectionActor(address, config, NoRetryStrategy)))
 
   def executionContext: ExecutionContext =
     system.dispatcher

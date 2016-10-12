@@ -14,7 +14,7 @@ import scala.concurrent.duration._
   */
 case class ClusterConfig(
   nodeConfigs: NodeAddress => NodeConfig = _ => NodeConfig(),
-  monitoringConnectionConfigs: NodeAddress => ManagedConnectionConfig = _ => ManagedConnectionConfig(),
+  monitoringConnectionConfigs: NodeAddress => ConnectionConfig = _ => ConnectionConfig(),
   autoRefreshInterval: FiniteDuration = 15.seconds,
   minRefreshInterval: FiniteDuration = 1.seconds,
   nodesToQueryForState: Int => Int = _ min 5,
@@ -25,15 +25,11 @@ case class NodeConfig(
   poolSize: Int = 16,
   initOp: RedisOp[Any] = RedisOp.unit,
   initTimeout: Timeout = Timeout(10.seconds),
-  connectionConfigs: Int => ManagedConnectionConfig = _ => ManagedConnectionConfig()
+  connectionConfigs: Int => ConnectionConfig = _ => ConnectionConfig(),
+  reconnectionStrategy: RetryStrategy = ExponentialBackoff(1.seconds, 32.seconds)
 ) {
   require(poolSize > 0, "Pool size must be positive")
 }
-
-case class ManagedConnectionConfig(
-  connectionConfig: ConnectionConfig = ConnectionConfig(),
-  reconnectionStrategy: RetryStrategy = ExponentialBackoff(1.seconds, 32.seconds)
-)
 
 case class ConnectionConfig(
   initCommands: RedisBatch[Any] = RedisBatch.unit,

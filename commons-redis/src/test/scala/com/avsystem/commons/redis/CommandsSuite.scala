@@ -94,9 +94,7 @@ abstract class RedisClusterCommandsSuite extends FunSuite with UsesPreconfigured
         nodeConfigs = a => cc.nodeConfigs(a) |> { nc =>
           nc.copy(
             connectionConfigs = i =>
-              nc.connectionConfigs(i) |> { mcc =>
-                mcc.copy(connectionConfig = mcc.connectionConfig.copy(debugListener = listener))
-              }
+              nc.connectionConfigs(i).copy(debugListener = listener)
           )
         }
       )
@@ -116,9 +114,7 @@ abstract class RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient 
     super.nodeConfig |> { nc =>
       nc.copy(
         connectionConfigs = i =>
-          nc.connectionConfigs(i) |> { mcc =>
-            mcc.copy(connectionConfig = mcc.connectionConfig.copy(debugListener = listener))
-          }
+          nc.connectionConfigs(i).copy(debugListener = listener)
       )
     }
 

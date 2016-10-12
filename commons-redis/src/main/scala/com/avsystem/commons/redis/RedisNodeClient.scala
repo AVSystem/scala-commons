@@ -22,7 +22,7 @@ final class RedisNodeClient(
   (implicit system: ActorSystem) extends RedisNodeExecutor with Closeable { client =>
 
   private def createConnection(i: Int) =
-    system.actorOf(Props(new ManagedRedisConnectionActor(address, config.connectionConfigs(i))))
+    system.actorOf(Props(new ManagedRedisConnectionActor(address, config.connectionConfigs(i), config.reconnectionStrategy)))
 
   private val connections = (0 until config.poolSize).iterator.map(createConnection).toArray
   private val index = new AtomicLong(0)

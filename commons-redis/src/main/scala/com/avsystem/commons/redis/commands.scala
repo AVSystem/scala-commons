@@ -10,7 +10,7 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait RedisExecutor {
-  def executionContext: ExecutionContext
+  implicit def executionContext: ExecutionContext
   def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A]
 }
 trait RedisOpExecutor {
