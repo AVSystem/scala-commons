@@ -69,36 +69,35 @@ trait GeoApi extends ApiSubset {
 
   private abstract class AbstractGeoradius[T](decoder: ReplyDecoder[T])(
     key: Key, point: Opt[GeoPoint], member: Opt[Value], radius: Double, unit: GeoUnit,
-    flags: List[String], count: Opt[Long], sortOrder: Opt[SortOrder], store: Opt[(Key, Boolean)])
+    flags: List[String], count: Opt[Long], sortOrder: Opt[SortOrder], storeKey: Opt[Key], storeDist: Boolean)
     extends AbstractRedisCommand[T](decoder) with NodeCommand {
 
     val encoded = encoder(if (point.isDefined) "GEORADIUS" else "GEORADIUSBYMEMBER")
       .key(key).add(point).add(member.map(valueCodec.write)).add(radius).add(unit).add(flags)
       .optAdd("COUNT", count).add(sortOrder)
-      .optKey("STORE", store.collect({ case (skey, false) => skey }))
-      .optKey("STOREDIST", store.collect({ case (skey, true) => skey }))
+      .optKey(if(storeDist) "STOREDIST" else "STORE", storeKey)
       .result
   }
 
   private final class Georadius[A <: GeoradiusAttrs](key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
     attributes: A, count: Opt[Long], sortOrder: Opt[SortOrder])
     extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulkSeq(geoAttributed(attributes, bulk[Value])))(
-      key, point.opt, Opt.Empty, radius, unit, attributes.encodeFlags, count, sortOrder, Opt.Empty)
+      key, point.opt, Opt.Empty, radius, unit, attributes.encodeFlags, count, sortOrder, Opt.Empty, storeDist = false)
 
   private final class GeoradiusStore(key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
     count: Opt[Long], sortOrder: Opt[SortOrder], storeKey: Key, storeDist: Boolean)
     extends AbstractGeoradius[Opt[Long]](nullBulkOr(integerLong))(
-      key, point.opt, Opt.Empty, radius, unit, Nil, count, sortOrder, Opt((storeKey, storeDist)))
+      key, point.opt, Opt.Empty, radius, unit, Nil, count, sortOrder, storeKey.opt, storeDist)
 
   private final class Georadiusbymember[A <: GeoradiusAttrs](key: Key, member: Value, radius: Double, unit: GeoUnit,
     attributes: A, count: Opt[Long], sortOrder: Opt[SortOrder])
     extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulkSeq(geoAttributed(attributes, bulk[Value])))(
-      key, Opt.Empty, member.opt, radius, unit, attributes.encodeFlags, count, sortOrder, Opt.Empty)
+      key, Opt.Empty, member.opt, radius, unit, attributes.encodeFlags, count, sortOrder, Opt.Empty, storeDist = false)
 
   private final class GeoradiusbymemberStore(key: Key, member: Value, radius: Double, unit: GeoUnit,
     count: Opt[Long], sortOrder: Opt[SortOrder], storeKey: Key, storeDist: Boolean)
     extends AbstractGeoradius[Opt[Long]](nullBulkOr(integerLong))(
-      key, Opt.Empty, member.opt, radius, unit, Nil, count, sortOrder, Opt((storeKey, storeDist)))
+      key, Opt.Empty, member.opt, radius, unit, Nil, count, sortOrder, storeKey.opt, storeDist)
 }
 
 abstract class GeoradiusAttrs(val flags: Int) { self =>
