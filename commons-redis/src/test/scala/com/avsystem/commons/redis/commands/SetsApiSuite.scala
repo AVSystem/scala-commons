@@ -13,7 +13,7 @@ trait SetsApiSuite extends CommandsSuite {
   apiTest("SADD") {
     sadd("key", "a", "b", "c").assertEquals(3)
     sadd("key", "a", "b", "d").assertEquals(1)
-    smembers("key").map(_.toSet).assertEquals(Set("a", "b", "c", "d"))
+    smembers("key").assertEquals(Set("a", "b", "c", "d"))
   }
 
   apiTest("SCARD") {
@@ -28,7 +28,7 @@ trait SetsApiSuite extends CommandsSuite {
       sadd("{key}2", "b", "d"),
       sadd("{key}3", "c", "d")
     )
-    sdiff("{key}1", "{key}2", "{key}3").assertEquals(Seq("a"))
+    sdiff("{key}1", "{key}2", "{key}3").assertEquals(Set("a"))
   }
 
   apiTest("SDIFFSTORE") {
@@ -38,7 +38,7 @@ trait SetsApiSuite extends CommandsSuite {
       sadd("{key}3", "c", "d")
     )
     sdiffstore("{key}d", "{key}1", "{key}2", "{key}3").assertEquals(1)
-    smembers("{key}d").assertEquals(Seq("a"))
+    smembers("{key}d").assertEquals(Set("a"))
   }
 
   apiTest("SINTER") {
@@ -47,7 +47,7 @@ trait SetsApiSuite extends CommandsSuite {
       sadd("{key}2", "b", "a"),
       sadd("{key}3", "c", "a")
     )
-    sinter("{key}1", "{key}2", "{key}3").assertEquals(Seq("a"))
+    sinter("{key}1", "{key}2", "{key}3").assertEquals(Set("a"))
   }
 
   apiTest("SINTERSTORE") {
@@ -57,7 +57,7 @@ trait SetsApiSuite extends CommandsSuite {
       sadd("{key}3", "c", "a")
     )
     sinterstore("{key}d", "{key}1", "{key}2", "{key}3").assertEquals(1)
-    smembers("{key}d").assertEquals(Seq("a"))
+    smembers("{key}d").assertEquals(Set("a"))
   }
 
   apiTest("SISMEMBER") {
@@ -69,8 +69,8 @@ trait SetsApiSuite extends CommandsSuite {
 
   apiTest("SMEMBERS") {
     setup(sadd("key", "a", "b", "c"))
-    smembers("???").assertEquals(Seq.empty)
-    smembers("key").map(_.toSet).assertEquals(Set("a", "b", "c"))
+    smembers("???").assertEquals(Set.empty)
+    smembers("key").assertEquals(Set("a", "b", "c"))
   }
 
   apiTest("SMOVE") {
@@ -80,14 +80,14 @@ trait SetsApiSuite extends CommandsSuite {
     )
     smove("{key}1", "{key}2", "?").assertEquals(false)
     smove("{key}1", "{key}2", "a").assertEquals(true)
-    smembers("{key}1").assertEquals(Seq("b"))
-    smembers("{key}2").map(_.toSet).assertEquals(Set("a", "c", "d"))
+    smembers("{key}1").assertEquals(Set("b"))
+    smembers("{key}2").assertEquals(Set("a", "c", "d"))
   }
 
   apiTest("SPOP") {
     setup(sadd("key", "a", "b", "c"))
     spop("???").assertEquals(Opt.Empty)
-    spop("???", 2).assertEquals(Seq.empty)
+    spop("???", 2).assertEquals(Set.empty)
     spop("key").assert(_.exists(Set("a", "b", "c").contains))
     spop("key", 2).assert(s => s.size == 2 && s.forall(Set("a", "b", "c").contains))
     scard("key").assertEquals(0)
@@ -96,9 +96,9 @@ trait SetsApiSuite extends CommandsSuite {
   apiTest("SRANDMEMBER") {
     setup(sadd("key", "a", "b", "c"))
     srandmember("???").assertEquals(Opt.Empty)
-    srandmember("???", 2).assertEquals(Seq.empty)
+    srandmemberDistinct("???", 2).assertEquals(Set.empty)
     srandmember("key").assert(_.exists(Set("a", "b", "c").contains))
-    srandmember("key", 2).assert(s => s.size == 2 && s.forall(Set("a", "b", "c").contains))
+    srandmemberDistinct("key", 2).assert(s => s.size == 2 && s.forall(Set("a", "b", "c").contains))
     scard("key").assertEquals(3)
   }
 
@@ -110,14 +110,14 @@ trait SetsApiSuite extends CommandsSuite {
   }
 
   apiTest("SSCAN") {
-    val scanMembers = (0 to 256).map(i => s"toscan$i")
-    setup(sadd("key", scanMembers: _*))
-    def sscanCollect(cursor: Cursor, acc: Seq[String]): Future[Seq[String]] =
-      sscan("key", cursor, "toscan*", 4L).exec.flatMapNow {
+    val scanMembers = (0 to 256).map(i => s"toscan$i").toSet
+    setup(sadd("key", scanMembers))
+    def sscanCollect(cursor: Cursor, acc: Set[String]): Future[Set[String]] =
+      sscan("key", cursor, "toscan*", 4).exec.flatMapNow {
         case (Cursor.NoCursor, data) => Future.successful(acc ++ data)
         case (nextCursor, data) => sscanCollect(nextCursor, acc ++ data)
       }
-    assert(sscanCollect(Cursor.NoCursor, Vector.empty).futureValue.toSet == scanMembers.toSet)
+    assert(sscanCollect(Cursor.NoCursor, Set.empty).futureValue == scanMembers)
   }
 
   apiTest("SUNION") {
@@ -126,7 +126,7 @@ trait SetsApiSuite extends CommandsSuite {
       sadd("{key}2", "b", "d"),
       sadd("{key}3", "c", "e")
     )
-    sunion("{key}1", "{key}2", "{key}3").map(_.toSet).assertEquals(Set("a", "b", "c", "d", "e"))
+    sunion("{key}1", "{key}2", "{key}3").assertEquals(Set("a", "b", "c", "d", "e"))
   }
 
   apiTest("SUNIONSTORE") {
@@ -136,6 +136,6 @@ trait SetsApiSuite extends CommandsSuite {
       sadd("{key}3", "c", "e")
     )
     sunionstore("{key}d", "{key}1", "{key}2", "{key}3").assertEquals(5)
-    smembers("{key}d").map(_.toSet).assertEquals(Set("a", "b", "c", "d", "e"))
+    smembers("{key}d").assertEquals(Set("a", "b", "c", "d", "e"))
   }
 }

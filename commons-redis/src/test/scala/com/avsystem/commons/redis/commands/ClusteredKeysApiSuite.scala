@@ -16,9 +16,10 @@ trait KeyedKeysApiSuite extends CommandsSuite {
   import RedisApi.Batches.StringTyped._
 
   apiTest("DEL") {
-    setup(set("key", "value"))
-    del("???").assertEquals(0)
-    del("key").assertEquals(1)
+    setup(mset("{key}1" -> "value", "{key}2" -> "value"))
+    del("???").assertEquals(false)
+    del("{key}1").assertEquals(true)
+    del("{key}2", "{key}?").assertEquals(1)
   }
 
   apiTest("DUMP") {
@@ -28,9 +29,10 @@ trait KeyedKeysApiSuite extends CommandsSuite {
   }
 
   apiTest("EXISTS") {
-    setup(set("key", "value"))
-    exists("???").assertEquals(0)
-    exists("key").assertEquals(1)
+    setup(mset("{key}1" -> "value", "{key}2" -> "value"))
+    exists("???").assertEquals(false)
+    exists("{key}1").assertEquals(true)
+    exists("{key}2", "{key}?").assertEquals(1)
   }
 
   apiTest("EXPIRE") {
@@ -134,12 +136,12 @@ trait NodeKeysApiSuite extends KeyedKeysApiSuite {
   private val scanKeys = (0 until 256).map(i => s"toscan$i")
 
   apiTest("KEYS") {
-    setup(mset(scanKeys.map(k => (k, "value")):_*))
+    setup(mset(scanKeys.map(k => (k, "value"))))
     keys("toscan*").assert(_.toSet == scanKeys.toSet)
   }
 
   apiTest("SCAN") {
-    setup(mset(scanKeys.map(k => (k, "value")):_*))
+    setup(mset(scanKeys.map(k => (k, "value"))))
     def scanCollect(cursor: Cursor, acc: Seq[String]): Future[Seq[String]] =
       scan(cursor, "toscan*", 4L).exec.flatMapNow {
         case (Cursor.NoCursor, data) => Future.successful(acc ++ data)
@@ -148,19 +150,9 @@ trait NodeKeysApiSuite extends KeyedKeysApiSuite {
     assert(scanCollect(Cursor.NoCursor, Vector.empty).futureValue.toSet == scanKeys.toSet)
   }
 
-  apiTest("DEL multikey") {
-    setup(set("key", "value"))
-    del("key", "foo").assertEquals(1)
-  }
-
   apiTest("MOVE") {
     setup(set("key", "value"))
     move("key", 1).assert(identity)
-  }
-
-  apiTest("EXISTS multikey") {
-    setup(set("key", "value"))
-    exists("key", "foo").assertEquals(1)
   }
 
   apiTest("SORT with GET") {

@@ -17,7 +17,7 @@ trait RawCommands {
 }
 
 trait RawCommand extends RawCommandPack with RawCommands with ReplyPreprocessor {
-  val encoded: ArrayMsg[BulkStringMsg]
+  def encoded: ArrayMsg[BulkStringMsg]
   def updateWatchState(message: RedisMsg, state: WatchState): Unit = ()
   def level: Level
 

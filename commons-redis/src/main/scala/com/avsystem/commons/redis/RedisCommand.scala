@@ -2,6 +2,7 @@ package com.avsystem.commons
 package redis
 
 import akka.util.ByteString
+import com.avsystem.commons.collection.CollectionAliases.BSet
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis.RedisBatch.Index
@@ -11,7 +12,7 @@ import com.avsystem.commons.redis.protocol._
 
 import scala.collection.mutable.ArrayBuffer
 
-trait RedisCommand[+A] extends AtomicBatch[A] with RawCommand {
+trait RedisCommand[+A] extends AtomicBatch[A] with RawCommand { self =>
   protected def decodeExpected: ReplyDecoder[A]
 
   protected def decode(replyMsg: RedisReply): A = replyMsg match {
@@ -30,6 +31,16 @@ trait RedisCommand[+A] extends AtomicBatch[A] with RawCommand {
 
   override def toString =
     encoded.elements.iterator.map(bs => RedisMsg.escape(bs.string)).mkString(" ")
+
+  protected def requireNonEmpty(seq: TraversableOnce[Any], what: String): Unit =
+    require(seq.nonEmpty, s"$what must not be empty")
+
+  override def map[B](fun: A => B): RedisCommand[B] =
+    new RedisCommand[B] {
+      def level = self.level
+      def encoded = self.encoded
+      def decodeExpected = self.decodeExpected andThen fun
+    }
 }
 
 abstract class AbstractRedisCommand[A](protected val decodeExpected: ReplyDecoder[A])
@@ -95,10 +106,13 @@ abstract class RedisOptDataCommand[A: RedisDataCodec]
   extends AbstractRedisCommand(nullBulkOr[A])
 
 abstract class RedisDataSeqCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[Seq[A]](multiBulk[A])
+  extends AbstractRedisCommand[Seq[A]](multiBulkSeq[A])
+
+abstract class RedisDataSetCommand[A: RedisDataCodec]
+  extends AbstractRedisCommand[BSet[A]](multiBulkSet[A])
 
 abstract class RedisOptDataSeqCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[Seq[Opt[A]]](multiBulk(nullBulkOr[A]))
+  extends AbstractRedisCommand[Seq[Opt[A]]](multiBulkSeq(nullBulkOr[A]))
 
 abstract class RedisRawCommand
   extends AbstractRedisCommand[ValidRedisMsg](undecoded)
@@ -143,10 +157,10 @@ abstract class RedisScanCommand[T](decoder: ReplyDecoder[Seq[T]])
   extends AbstractRedisCommand[(Cursor, Seq[T])](multiBulkPair(bulkCursor, decoder))
 
 abstract class RedisSeqCommand[T](elementDecoder: ReplyDecoder[T])
-  extends AbstractRedisCommand[Seq[T]](multiBulk(elementDecoder))
+  extends AbstractRedisCommand[Seq[T]](multiBulkSeq(elementDecoder))
 
 abstract class RedisOptSeqCommand[T](elementDecoder: ReplyDecoder[T])
-  extends AbstractRedisCommand[Opt[Seq[T]]](nullMultiBulkOr(multiBulk(elementDecoder)))
+  extends AbstractRedisCommand[Opt[Seq[T]]](nullMultiBulkOr(multiBulkSeq(elementDecoder)))
 
 abstract class RedisOptCommand[T](elementDecoder: ReplyDecoder[T])
   extends AbstractRedisCommand[Opt[T]](nullBulkOr(elementDecoder))

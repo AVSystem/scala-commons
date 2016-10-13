@@ -7,16 +7,27 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
 import com.avsystem.commons.redis.protocol._
 import ReplyDecoders._
+import com.avsystem.commons.redis.util.SingletonSeq
 
 import scala.collection.mutable.ListBuffer
 
 trait GeoApi extends ApiSubset {
-  def geoadd(key: Key, items: Seq[(Value, GeoPoint)]): Result[Long] =
+  def geoadd(key: Key, member: Value, point: GeoPoint): Result[Boolean] =
+    execute(new Geoadd(key, (member, point).single).map(_ > 0))
+  def geoadd(key: Key, item: (Value, GeoPoint), items: (Value, GeoPoint)*): Result[Int] =
+    execute(new Geoadd(key, item +:: items))
+  def geoadd(key: Key, items: Iterable[(Value, GeoPoint)]): Result[Int] =
     execute(new Geoadd(key, items))
+  def geohash(key: Key, member: Value): Result[Opt[GeoHash]] =
+    execute(new Geohash(key, member.single).map(_.head))
+  def geohash(key: Key, member: Value, members: Value*): Result[Seq[Opt[GeoHash]]] =
+    execute(new Geohash(key, member +:: members))
   def geohash(key: Key, members: Seq[Value]): Result[Seq[Opt[GeoHash]]] =
     execute(new Geohash(key, members))
   def geopos(key: Key, members: Seq[Value]): Result[Seq[Opt[GeoPoint]]] =
     execute(new Geopos(key, members))
+  def geopos(key: Key, member: Value, members: Value*): Result[Seq[Opt[GeoPoint]]] =
+    execute(new Geopos(key, member +:: members))
   def geodist(key: Key, member1: Value, member2: Value, unit: GeoUnit = GeoUnit.M): Result[Opt[Double]] =
     execute(new Geodist(key, member1, member2, unit))
   def georadius[A <: GeoradiusAttrs](key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
@@ -32,17 +43,20 @@ trait GeoApi extends ApiSubset {
     storeKey: Key, storeDist: Boolean = false, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty): Result[Opt[Long]] =
     execute(new GeoradiusbymemberStore(key, member, radius, unit, count.toOpt, sortOrder.toOpt, storeKey, storeDist))
 
-  private final class Geoadd(key: Key, items: Seq[(Value, GeoPoint)]) extends RedisLongCommand with NodeCommand {
+  private final class Geoadd(key: Key, items: Iterable[(Value, GeoPoint)]) extends RedisIntCommand with NodeCommand {
+    requireNonEmpty(items, "items")
     val encoded = encoder("GEOADD").key(key).add(items.iterator.map({ case (v, p) => (p, valueCodec.write(v)) })).result
   }
 
-  private final class Geohash(key: Key, members: Seq[Value])
+  private final class Geohash(key: Key, members: Iterable[Value])
     extends RedisSeqCommand[Opt[GeoHash]](nullBulkOr(bulk(bs => GeoHash(bs.utf8String)))) with NodeCommand {
+    requireNonEmpty(members, "members")
     val encoded = encoder("GEOHASH").key(key).datas(members).result
   }
 
-  private final class Geopos(key: Key, members: Seq[Value])
+  private final class Geopos(key: Key, members: Iterable[Value])
     extends RedisSeqCommand[Opt[GeoPoint]](nullMultiBulkOr(multiBulkGeoPoint)) with NodeCommand {
+    requireNonEmpty(members, "members")
     val encoded = encoder("GEOPOS").key(key).datas(members).result
   }
 
@@ -66,7 +80,7 @@ trait GeoApi extends ApiSubset {
 
   private final class Georadius[A <: GeoradiusAttrs](key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
     attributes: A, count: Opt[Long], sortOrder: Opt[SortOrder])
-    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulk(geoAttributed(attributes, bulk[Value])))(
+    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulkSeq(geoAttributed(attributes, bulk[Value])))(
       key, point.opt, Opt.Empty, radius, unit, attributes.encodeFlags, count, sortOrder, Opt.Empty)
 
   private final class GeoradiusStore(key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
@@ -76,7 +90,7 @@ trait GeoApi extends ApiSubset {
 
   private final class Georadiusbymember[A <: GeoradiusAttrs](key: Key, member: Value, radius: Double, unit: GeoUnit,
     attributes: A, count: Opt[Long], sortOrder: Opt[SortOrder])
-    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulk(geoAttributed(attributes, bulk[Value])))(
+    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulkSeq(geoAttributed(attributes, bulk[Value])))(
       key, Opt.Empty, member.opt, radius, unit, attributes.encodeFlags, count, sortOrder, Opt.Empty)
 
   private final class GeoradiusbymemberStore(key: Key, member: Value, radius: Double, unit: GeoUnit,

@@ -7,19 +7,19 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait StringsApi extends ApiSubset {
-  def append(key: Key, value: Value): Result[Long] =
+  def append(key: Key, value: Value): Result[Int] =
     execute(new Append(key, value))
-  def bitcount(key: Key, range: OptArg[(Long, Long)] = OptArg.Empty): Result[Long] =
+  def bitcount(key: Key, range: OptArg[(Int, Int)] = OptArg.Empty): Result[Long] =
     execute(new Bitcount(key, range.toOpt))
-  def bitop(multiOperation: MultiBitOp, destkey: Key, keys: Key*): Result[Long] =
+  def bitop(multiOperation: MultiBitOp, destkey: Key, keys: Key*): Result[Int] =
     execute(new Bitop(multiOperation, destkey, keys))
-  def bitopNot(destkey: Key, key: Key): Result[Long] =
+  def bitopNot(destkey: Key, key: Key): Result[Int] =
     execute(new Bitop(BitOp.Not, destkey, List(key)))
   def bitpos(key: Key, bit: Boolean): Result[Long] =
     execute(new Bitpos(key, bit, Opt.Empty))
-  def bitpos(key: Key, bit: Boolean, start: Long): Result[Long] =
+  def bitpos(key: Key, bit: Boolean, start: Int): Result[Long] =
     execute(new Bitpos(key, bit, SemiRange(start).opt))
-  def bitpos(key: Key, bit: Boolean, start: Long, end: Long): Result[Long] =
+  def bitpos(key: Key, bit: Boolean, start: Int, end: Int): Result[Long] =
     execute(new Bitpos(key, bit, SemiRange(start, end.opt).opt))
   def decr(key: Key): Result[Long] =
     execute(new Decr(key))
@@ -27,9 +27,9 @@ trait StringsApi extends ApiSubset {
     execute(new Decrby(key, decrement))
   def get(key: Key): Result[Opt[Value]] =
     execute(new Get(key))
-  def getbit(key: Key, offset: Long): Result[Boolean] =
+  def getbit(key: Key, offset: Int): Result[Boolean] =
     execute(new Getbit(key, offset))
-  def getrange(key: Key, start: Long = 0, end: Long = -1): Result[Value] =
+  def getrange(key: Key, start: Int = 0, end: Int = -1): Result[Value] =
     execute(new Getrange(key, start, end))
   def getset(key: Key, value: Value): Result[Opt[Value]] =
     execute(new Getset(key, value))
@@ -39,11 +39,17 @@ trait StringsApi extends ApiSubset {
     execute(new Incrby(key, increment))
   def incrbyfloat(key: Key, increment: Double): Result[Double] =
     execute(new Incrbyfloat(key, increment))
-  def mget(keys: Key*): Result[Seq[Opt[Value]]] =
+  def mget(key: Key, keys: Key*): Result[Seq[Opt[Value]]] =
+    execute(new Mget(key +:: keys))
+  def mget(keys: Iterable[Key]): Result[Seq[Opt[Value]]] =
     execute(new Mget(keys))
-  def mset(keyValues: (Key, Value)*): Result[Unit] =
+  def mset(keyValue: (Key, Value), keyValues: (Key, Value)*): Result[Unit] =
+    execute(new Mset(keyValue +:: keyValues))
+  def mset(keyValues: Iterable[(Key, Value)]): Result[Unit] =
     execute(new Mset(keyValues))
-  def msetnx(keyValues: (Key, Value)*): Result[Boolean] =
+  def msetnx(keyValue: (Key, Value), keyValues: (Key, Value)*): Result[Boolean] =
+    execute(new Msetnx(keyValue +:: keyValues))
+  def msetnx(keyValues: Iterable[(Key, Value)]): Result[Boolean] =
     execute(new Msetnx(keyValues))
   def psetex(key: Key, milliseconds: Long, value: Value): Result[Unit] =
     execute(new Psetex(key, milliseconds, value))
@@ -55,20 +61,20 @@ trait StringsApi extends ApiSubset {
     execute(new Setex(key, seconds, value))
   def setnx(key: Key, value: Value): Result[Boolean] =
     execute(new Setnx(key, value))
-  def setrange(key: Key, offset: Long, value: Value): Result[Long] =
+  def setrange(key: Key, offset: Int, value: Value): Result[Int] =
     execute(new Setrange(key, offset, value))
-  def strlen(key: Key): Result[Long] =
+  def strlen(key: Key): Result[Int] =
     execute(new Strlen(key))
 
-  private final class Append(key: Key, value: Value) extends RedisLongCommand with NodeCommand {
+  private final class Append(key: Key, value: Value) extends RedisIntCommand with NodeCommand {
     val encoded = encoder("APPEND").key(key).data(value).result
   }
 
-  private final class Bitcount(key: Key, range: Opt[(Long, Long)]) extends RedisLongCommand with NodeCommand {
+  private final class Bitcount(key: Key, range: Opt[(Int, Int)]) extends RedisLongCommand with NodeCommand {
     val encoded = encoder("BITCOUNT").key(key).add(range).result
   }
 
-  private final class Bitop(bitop: BitOp, destkey: Key, keys: Seq[Key]) extends RedisLongCommand with NodeCommand {
+  private final class Bitop(bitop: BitOp, destkey: Key, keys: Seq[Key]) extends RedisIntCommand with NodeCommand {
     require(keys.nonEmpty, "BITOP requires at least one source key")
     require(bitop != BitOp.Not || keys.size == 1, "BITOP NOT requires exactly one source key")
     val encoded = encoder("BITOP").add(bitop).key(destkey).keys(keys).result
@@ -90,11 +96,11 @@ trait StringsApi extends ApiSubset {
     val encoded = encoder("GET").key(key).result
   }
 
-  private final class Getbit(key: Key, offset: Long) extends RedisBooleanCommand with NodeCommand {
+  private final class Getbit(key: Key, offset: Int) extends RedisBooleanCommand with NodeCommand {
     val encoded = encoder("GETBIT").key(key).add(offset).result
   }
 
-  private final class Getrange(key: Key, start: Long, end: Long) extends RedisDataCommand[Value] with NodeCommand {
+  private final class Getrange(key: Key, start: Int, end: Int) extends RedisDataCommand[Value] with NodeCommand {
     val encoded = encoder("GETRANGE").key(key).add(start).add(end).result
   }
 
@@ -114,18 +120,18 @@ trait StringsApi extends ApiSubset {
     val encoded = encoder("INCRBYFLOAT").key(key).add(increment).result
   }
 
-  private final class Mget(keys: Seq[Key]) extends RedisOptDataSeqCommand[Value] with NodeCommand {
-    require(keys.nonEmpty, "MGET requires at least one key")
+  private final class Mget(keys: Iterable[Key]) extends RedisOptDataSeqCommand[Value] with NodeCommand {
+    requireNonEmpty(keys, "keys")
     val encoded = encoder("MGET").keys(keys).result
   }
 
-  private final class Mset(keyValues: Seq[(Key, Value)]) extends RedisUnitCommand with NodeCommand {
-    require(keyValues.nonEmpty, "MSET requires at least one key-value pair")
+  private final class Mset(keyValues: Iterable[(Key, Value)]) extends RedisUnitCommand with NodeCommand {
+    requireNonEmpty(keyValues, "keyValues")
     val encoded = encoder("MSET").keyDatas(keyValues).result
   }
 
-  private final class Msetnx(keyValues: Seq[(Key, Value)]) extends RedisBooleanCommand with NodeCommand {
-    require(keyValues.nonEmpty, "MSETNX requires at least one key-value pair")
+  private final class Msetnx(keyValues: Iterable[(Key, Value)]) extends RedisBooleanCommand with NodeCommand {
+    requireNonEmpty(keyValues, "keyValues")
     val encoded = encoder("MSETNX").keyDatas(keyValues).result
   }
 
@@ -152,11 +158,11 @@ trait StringsApi extends ApiSubset {
     val encoded = encoder("SETNX").key(key).data(value).result
   }
 
-  private final class Setrange(key: Key, offset: Long, value: Value) extends RedisLongCommand with NodeCommand {
+  private final class Setrange(key: Key, offset: Int, value: Value) extends RedisIntCommand with NodeCommand {
     val encoded = encoder("SETRANGE").key(key).add(offset).data(value).result
   }
 
-  private final class Strlen(key: Key) extends RedisLongCommand with NodeCommand {
+  private final class Strlen(key: Key) extends RedisIntCommand with NodeCommand {
     val encoded = encoder("STRLEN").key(key).result
   }
 }
@@ -172,7 +178,7 @@ object BitOp extends NamedEnumCompanion[BitOp] {
   val values: List[BitOp] = caseObjects
 }
 
-case class SemiRange(start: Long, end: Opt[Long] = Opt.Empty)
+case class SemiRange(start: Int, end: Opt[Int] = Opt.Empty)
 
 sealed trait Expiration
 object Expiration {

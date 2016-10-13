@@ -136,7 +136,7 @@ trait SortedSetsApiSuite extends CommandsSuite {
     zremrangebylex("???").assertEquals(0)
     zremrangebylex("key", LexLimit.incl("a"), LexLimit.excl("c")).assertEquals(2)
     zremrangebylex("key").assertEquals(2)
-    exists("key").assertEquals(0)
+    exists("key").assertEquals(false)
   }
 
   apiTest("ZREMRANGEBYRANK") {
@@ -144,7 +144,7 @@ trait SortedSetsApiSuite extends CommandsSuite {
     zremrangebyrank("???").assertEquals(0)
     zremrangebyrank("key", 0, 1).assertEquals(2)
     zremrangebyrank("key").assertEquals(2)
-    exists("key").assertEquals(0)
+    exists("key").assertEquals(false)
   }
 
   apiTest("ZREMRANGEBYSCORE") {
@@ -152,7 +152,7 @@ trait SortedSetsApiSuite extends CommandsSuite {
     zremrangebyscore("???").assertEquals(0)
     zremrangebyscore("key", ScoreLimit.incl(1.0), ScoreLimit.excl(3.0)).assertEquals(2)
     zremrangebyscore("key").assertEquals(2)
-    exists("key").assertEquals(0)
+    exists("key").assertEquals(false)
   }
 
   apiTest("ZREVRANGE") {
@@ -207,11 +207,11 @@ trait SortedSetsApiSuite extends CommandsSuite {
     setup(zadd("key", scanMembers))
     zscan("???", Cursor.NoCursor).assertEquals((Cursor.NoCursor, Seq.empty))
     def zscanCollect(cursor: Cursor, acc: Seq[(String, Double)]): Future[Seq[(String, Double)]] =
-      zscan("key", cursor, "toscan*", 2L).exec.flatMapNow {
+      zscan("key", cursor, "toscan*", 2).exec.flatMapNow {
         case (Cursor.NoCursor, data) => Future.successful(acc ++ data)
         case (nextCursor, data) => zscanCollect(nextCursor, acc ++ data)
       }
-    zscanCollect(Cursor.NoCursor, Vector.empty).futureValue.toSet shouldEqual scanMembers.toSet
+    zscanCollect(Cursor.NoCursor, Vector.empty).futureValue.sortBy(_._2) shouldEqual scanMembers
   }
 
   apiTest("ZSCORE") {

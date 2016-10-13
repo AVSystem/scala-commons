@@ -12,9 +12,9 @@ trait HashesApiSuite extends CommandsSuite {
 
   apiTest("HDEL") {
     setup(hset("key", "field", "value"), hmset("key2", "field1" -> "value1", "field2" -> "value2"))
-    hdel("???", "field").assertEquals(0)
-    hdel("key", "???").assertEquals(0)
-    hdel("key", "field").assertEquals(1)
+    hdel("???", "field").assertEquals(false)
+    hdel("key", "???").assertEquals(false)
+    hdel("key", "field").assertEquals(true)
     hdel("key2", "field1", "field2", "field3").assertEquals(2)
   }
 
@@ -32,10 +32,10 @@ trait HashesApiSuite extends CommandsSuite {
   }
 
   apiTest("HGETALL") {
-    val fieldValues = Seq("field1" -> "value1", "field2" -> "value2", "field3" -> "value3")
-    setup(hmset("key", fieldValues: _*))
-    hgetall("???").assertEquals(Seq.empty)
-    hgetall("key").map(_.toSet).assertEquals(fieldValues.toSet)
+    val fieldValues = Map("field1" -> "value1", "field2" -> "value2", "field3" -> "value3")
+    setup(hmset("key", fieldValues))
+    hgetall("???").assertEquals(Map.empty)
+    hgetall("key").assertEquals(fieldValues)
   }
 
   apiTest("HINCRBY") {
@@ -49,15 +49,15 @@ trait HashesApiSuite extends CommandsSuite {
   }
 
   apiTest("HKEYS") {
-    val fieldValues = Seq("field1" -> "value1", "field2" -> "value2", "field3" -> "value3")
-    setup(hmset("key", fieldValues: _*))
-    hkeys("???").assertEquals(Seq.empty)
-    hkeys("key").map(_.toSet).assertEquals(fieldValues.map(_._1).toSet)
+    val fieldValues = Map("field1" -> "value1", "field2" -> "value2", "field3" -> "value3")
+    setup(hmset("key", fieldValues))
+    hkeys("???").assertEquals(Set.empty)
+    hkeys("key").assertEquals(fieldValues.keySet)
   }
 
   apiTest("HLEN") {
-    val fieldValues = Seq("field1" -> "value1", "field2" -> "value2", "field3" -> "value3")
-    setup(hmset("key", fieldValues: _*))
+    val fieldValues = Map("field1" -> "value1", "field2" -> "value2", "field3" -> "value3")
+    setup(hmset("key", fieldValues))
     hlen("???").assertEquals(0)
     hlen("key").assertEquals(3)
   }
@@ -73,15 +73,15 @@ trait HashesApiSuite extends CommandsSuite {
   }
 
   apiTest("HSCAN") {
-    val scanFields = (0 until 256).map(i => (s"toscan$i", s"value$i"))
-    setup(hmset("key", scanFields: _*))
+    val scanFields = (0 until 256).map(i => (s"toscan$i", s"value$i")).toMap
+    setup(hmset("key", scanFields))
     hscan("???", Cursor.NoCursor).assertEquals((Cursor.NoCursor, Seq.empty))
-    def hscanCollect(cursor: Cursor, acc: Seq[(String, String)]): Future[Seq[(String, String)]] =
-      hscan("key", cursor, "toscan*", 4L).exec.flatMapNow {
-        case (Cursor.NoCursor, data) => Future.successful(acc ++ data)
-        case (nextCursor, data) => hscanCollect(nextCursor, acc ++ data)
+    def hscanCollect(cursor: Cursor, acc: Map[String,String]): Future[Map[String,String]] =
+      hscan("key", cursor, "toscan*", 4).exec.flatMapNow {
+        case (Cursor.NoCursor, data) => Future.successful(acc ++ data.toMap)
+        case (nextCursor, data) => hscanCollect(nextCursor, acc ++ data.toMap)
       }
-    hscanCollect(Cursor.NoCursor, Vector.empty).futureValue.toSet shouldEqual scanFields.toSet
+    hscanCollect(Cursor.NoCursor, Map.empty).futureValue.toSet shouldEqual scanFields.toSet
   }
 
   apiTest("HSET") {
@@ -102,9 +102,9 @@ trait HashesApiSuite extends CommandsSuite {
   }
 
   apiTest("HVALS") {
-    val fieldValues = Seq("field1" -> "value1", "field2" -> "value2", "field3" -> "value3")
-    setup(hmset("key", fieldValues: _*))
+    val fieldValues = Map("field1" -> "value1", "field2" -> "value2", "field3" -> "value3")
+    setup(hmset("key", fieldValues))
     hvals("???").assertEquals(Seq.empty)
-    hvals("key").map(_.toSet).assertEquals(fieldValues.map(_._2).toSet)
+    hvals("key").map(_.toSet).assertEquals(fieldValues.values.toSet)
   }
 }

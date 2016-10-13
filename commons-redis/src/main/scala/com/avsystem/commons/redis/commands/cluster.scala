@@ -20,20 +20,24 @@ trait KeyedClusterApi extends ApiSubset {
 }
 
 trait NodeClusterApi extends KeyedClusterApi {
-  def clusterAddslots(slots: Seq[Int]): Result[Unit] =
+  def clusterAddslots(slot: Int, slots: Int*): Result[Unit] =
+    execute(new ClusterAddslots(slot +:: slots))
+  def clusterAddslots(slots: Iterable[Int]): Result[Unit] =
     execute(new ClusterAddslots(slots))
   def clusterCountFailureReports(nodeId: NodeId): Result[Long] =
     execute(new ClusterCountFailureReports(nodeId))
   def clusterCountkeysinslot(slot: Int): Result[Long] =
     execute(new ClusterCountkeysinslot(slot))
-  def clusterDelslots(slots: Seq[Int]): Result[Unit] =
+  def clusterDelslots(slot: Int, slots: Int*): Result[Unit] =
+    execute(new ClusterDelslots(slot +:: slots))
+  def clusterDelslots(slots: Iterable[Int]): Result[Unit] =
     execute(new ClusterDelslots(slots))
   def clusterFailover: Result[Unit] = clusterFailover()
   def clusterFailover(option: OptArg[FailoverOption] = OptArg.Empty): Result[Unit] =
     execute(new ClusterFailover(option.toOpt))
   def clusterForget(nodeId: NodeId): Result[Unit] =
     execute(new ClusterForget(nodeId))
-  def clusterGetkeysinslot(slot: Int, count: Long): Result[Seq[Key]] =
+  def clusterGetkeysinslot(slot: Int, count: Int): Result[Seq[Key]] =
     execute(new ClusterGetkeysinslot(slot, count))
   def clusterInfo: Result[ClusterStateInfo] =
     execute(ClusterInfo)
@@ -59,7 +63,8 @@ trait NodeClusterApi extends KeyedClusterApi {
   def clusterSlotsWithNodeIds: Result[Seq[SlotRangeMapping[(NodeAddress, NodeId)]]] =
     execute(new ClusterSlots(SlotsNodeFormat.AddressAndNodeId))
 
-  private final class ClusterAddslots(slots: Seq[Int]) extends RedisUnitCommand with NodeCommand {
+  private final class ClusterAddslots(slots: Iterable[Int]) extends RedisUnitCommand with NodeCommand {
+    requireNonEmpty(slots, "slots")
     val encoded = encoder("CLUSTER", "ADDSLOTS").add(slots).result
   }
 
@@ -71,7 +76,8 @@ trait NodeClusterApi extends KeyedClusterApi {
     val encoded = encoder("CLUSTER", "COUNTKEYSINSLOT").add(slot).result
   }
 
-  private final class ClusterDelslots(slots: Seq[Int]) extends RedisUnitCommand with NodeCommand {
+  private final class ClusterDelslots(slots: Iterable[Int]) extends RedisUnitCommand with NodeCommand {
+    requireNonEmpty(slots, "slots")
     val encoded = encoder("CLUSTER", "DELSLOTS").add(slots).result
   }
 
@@ -83,7 +89,7 @@ trait NodeClusterApi extends KeyedClusterApi {
     val encoded = encoder("CLUSTER", "FORGET").add(nodeId.raw).result
   }
 
-  private final class ClusterGetkeysinslot(slot: Int, count: Long) extends RedisDataSeqCommand[Key] with NodeCommand {
+  private final class ClusterGetkeysinslot(slot: Int, count: Int) extends RedisDataSeqCommand[Key] with NodeCommand {
     val encoded = encoder("CLUSTER", "GETKEYSINSLOT").add(slot).add(count).result
   }
 

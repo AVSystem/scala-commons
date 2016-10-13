@@ -2,8 +2,9 @@ package com.avsystem.commons
 package redis
 
 import akka.util.{ByteString, Timeout}
+import com.avsystem.commons.redis.ApiSubset.{HeadOps, IterableTailOps, IteratorTailOps}
 import com.avsystem.commons.redis.commands._
-import com.avsystem.commons.redis.util.ByteStringCodec
+import com.avsystem.commons.redis.util.{ByteStringCodec, HeadIterable, HeadIterator, SingletonSeq}
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -80,6 +81,22 @@ trait ApiSubset { self =>
   ): Self[K, H, V]
 
   protected def execute[A](command: RedisCommand[A]): Result[A]
+
+  protected implicit def iterableTailOps[T](tail: Iterable[T]): IterableTailOps[T] = new IterableTailOps(tail)
+  protected implicit def iteratorTailOps[T](tail: Iterator[T]): IteratorTailOps[T] = new IteratorTailOps(tail)
+  protected implicit def headOps[T](head: T): HeadOps[T] = new HeadOps(head)
+}
+
+object ApiSubset {
+  class HeadOps[A](private val head: A) extends AnyVal {
+    def single: Seq[A] = new SingletonSeq[A](head)
+  }
+  class IterableTailOps[A](private val tail: Iterable[A]) extends AnyVal {
+    def +::(head: A): Iterable[A] = new HeadIterable(head, tail)
+  }
+  class IteratorTailOps[A](private val tail: Iterator[A]) extends AnyVal {
+    def +::(head: A): Iterator[A] = new HeadIterator(head, tail)
+  }
 }
 
 abstract class AbstractApiSubset[K, H, V](implicit

@@ -46,7 +46,7 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
   }
 
   apiTest("COMMAND INFO") {
-    commandInfo("mget").assertEquals(Seq(CommandInfo("mget", CommandArity(2, more = true), CommandFlags.Readonly, 1, -1, 1)))
+    commandInfo("mget").assertEquals(CommandInfo("mget", CommandArity(2, more = true), CommandFlags.Readonly, 1, -1, 1))
   }
 
   apiTest("CONFIG GET") {
@@ -119,6 +119,7 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
 }
 
 trait NodeOnlyServerApiSuite extends ServerApiSuite {
+
   import RedisApi.Batches.StringTyped._
 
   apiTest("CLIENT KILL") {
@@ -131,6 +132,7 @@ trait NodeOnlyServerApiSuite extends ServerApiSuite {
 }
 
 trait ConnectionServerApiSuite extends ServerApiSuite {
+
   import RedisApi.Batches.StringTyped._
 
   apiTest("CLIENT GETNAME") {

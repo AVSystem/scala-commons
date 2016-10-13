@@ -23,7 +23,7 @@ trait StringsApiSuite extends CommandsSuite {
     setup(valueType[ByteString].set("key", ByteString(0, 1, 0, 7, 0)))
     bitcount("???").assertEquals(0)
     bitcount("key").assertEquals(4)
-    bitcount("key", (2L, -1L)).assertEquals(3)
+    bitcount("key", (2, -1)).assertEquals(3)
   }
 
   apiTest("BITOP") {

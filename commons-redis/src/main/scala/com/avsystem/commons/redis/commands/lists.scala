@@ -13,7 +13,9 @@ trait ListsApi extends ApiSubset {
     execute(new Llen(key))
   def lpop(key: Key): Result[Opt[Value]] =
     execute(new Lpop(key))
-  def lpush(key: Key, values: Value*): Result[Long] =
+  def lpush(key: Key, value: Value, values: Value*): Result[Long] =
+    execute(new Lpush(key, value +:: values))
+  def lpush(key: Key, values: Iterable[Value]): Result[Long] =
     execute(new Lpush(key, values))
   def lpushx(key: Key, value: Value): Result[Long] =
     execute(new Lpushx(key, value))
@@ -29,7 +31,9 @@ trait ListsApi extends ApiSubset {
     execute(new Rpop(key))
   def rpoplpush(source: Key, destination: Key): Result[Opt[Value]] =
     execute(new Rpoplpush(source, destination))
-  def rpush(key: Key, values: Value*): Result[Long] =
+  def rpush(key: Key, value: Value, values: Value*): Result[Long] =
+    execute(new Rpush(key, value +:: values))
+  def rpush(key: Key, values: Iterable[Value]): Result[Long] =
     execute(new Rpush(key, values))
   def rpushx(key: Key, value: Value): Result[Long] =
     execute(new Rpushx(key, value))
@@ -51,7 +55,8 @@ trait ListsApi extends ApiSubset {
     val encoded = encoder("LPOP").key(key).result
   }
 
-  private final class Lpush(key: Key, values: Seq[Value]) extends RedisLongCommand with NodeCommand {
+  private final class Lpush(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {
+    requireNonEmpty(values, "values")
     val encoded = encoder("LPUSH").key(key).datas(values).result
   }
 
@@ -84,7 +89,8 @@ trait ListsApi extends ApiSubset {
     val encoded = encoder("RPOPLPUSH").key(source).key(destination).result
   }
 
-  private final class Rpush(key: Key, values: Seq[Value]) extends RedisLongCommand with NodeCommand {
+  private final class Rpush(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {
+    requireNonEmpty(values, "values")
     val encoded = encoder("RPUSH").key(key).datas(values).result
   }
 

@@ -5,12 +5,15 @@ import com.avsystem.commons.redis.protocol.{ArrayMsg, ErrorMsg, NullArrayMsg, Re
 import com.avsystem.commons.redis.{ApiSubset, OperationCommand, RedisUnitCommand, UnsafeCommand, WatchState}
 
 trait TransactionApi extends ApiSubset {
-  def watch(keys: Key*): Result[Unit] =
+  def watch(key: Key, keys: Key*): Result[Unit] =
+    execute(new Watch(key +:: keys))
+  def watch(keys: Iterable[Key]): Result[Unit] =
     execute(new Watch(keys))
   def unwatch: Result[Unit] =
     execute(Unwatch)
 
-  private final class Watch(keys: Seq[Key]) extends RedisUnitCommand with OperationCommand {
+  private final class Watch(keys: Iterable[Key]) extends RedisUnitCommand with OperationCommand {
+    requireNonEmpty(keys, "keys")
     val encoded = encoder("WATCH").keys(keys).result
     override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
       case RedisMsg.Ok => state.watching = true

@@ -25,7 +25,7 @@ trait NodeServerApi extends KeyedServerApi {
     execute(Bgsave)
   def clientKill(addr: ClientAddress): Result[Unit] =
     execute(new ClientKill(addr))
-  def clientKill(filters: ClientFilter*): Result[Long] =
+  def clientKill(filters: ClientFilter*): Result[Int] =
     execute(new ClientKillFiltered(filters))
   def clientList: Result[Seq[ClientInfo]] =
     execute(ClientList)
@@ -33,13 +33,17 @@ trait NodeServerApi extends KeyedServerApi {
     execute(new ClientPause(timeout))
   def command: Result[Seq[CommandInfo]] =
     execute(Command)
-  def commandCount: Result[Long] =
+  def commandCount: Result[Int] =
     execute(CommandCount)
   def commandGetkeys(command: RawCommand): Result[Seq[Key]] =
     execute(new CommandGetkeys(command.encoded.elements.iterator.map(_.string)))
   def commandGetkeys(command: Seq[ByteString]): Result[Seq[Key]] =
     execute(new CommandGetkeys(command))
-  def commandInfo(commandNames: String*): Result[Seq[CommandInfo]] =
+  def commandInfo(commandName: String): Result[CommandInfo] =
+    execute(new CommandInfoCommand(commandName.single).map(_.head))
+  def commandInfo(commandName: String, commandNames: String*): Result[Seq[CommandInfo]] =
+    execute(new CommandInfoCommand(commandName +:: commandNames))
+  def commandInfo(commandNames: Seq[String]): Result[Seq[CommandInfo]] =
     execute(new CommandInfoCommand(commandNames))
   def configGet(parameter: String): Result[Seq[(String, String)]] =
     execute(new ConfigGet(parameter))
@@ -96,7 +100,7 @@ trait NodeServerApi extends KeyedServerApi {
     val encoded = encoder("CLIENT", "KILL").add(address.toString).result
   }
 
-  private final class ClientKillFiltered(filters: Seq[ClientFilter]) extends RedisLongCommand with NodeCommand {
+  private final class ClientKillFiltered(filters: Seq[ClientFilter]) extends RedisIntCommand with NodeCommand {
     val encoded = {
       val enc = encoder("CLIENT", "KILL")
       if (filters.nonEmpty) {
@@ -118,13 +122,13 @@ trait NodeServerApi extends KeyedServerApi {
   }
 
   private abstract class AbstractCommandInfoCommand
-    extends AbstractRedisCommand[Seq[CommandInfo]](multiBulk(multiBulkCommandInfo)) with NodeCommand
+    extends AbstractRedisCommand[Seq[CommandInfo]](multiBulkSeq(multiBulkCommandInfo)) with NodeCommand
 
   private object Command extends AbstractCommandInfoCommand {
     val encoded = encoder("COMMAND").result
   }
 
-  private object CommandCount extends RedisLongCommand with NodeCommand {
+  private object CommandCount extends RedisIntCommand with NodeCommand {
     val encoded = encoder("COMMAND", "COUNT").result
   }
 
@@ -132,7 +136,7 @@ trait NodeServerApi extends KeyedServerApi {
     val encoded = encoder("COMMAND", "GETKEYS").add(command).result
   }
 
-  private final class CommandInfoCommand(commandNames: Seq[String]) extends AbstractCommandInfoCommand {
+  private final class CommandInfoCommand(commandNames: Iterable[String]) extends AbstractCommandInfoCommand {
     val encoded = encoder("COMMAND", "INFO").add(commandNames).result
   }
 
