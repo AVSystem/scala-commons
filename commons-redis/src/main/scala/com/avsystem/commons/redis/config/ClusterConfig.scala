@@ -1,6 +1,9 @@
 package com.avsystem.commons
 package redis.config
 
+import java.net.InetSocketAddress
+
+import akka.io.Inet
 import akka.util.Timeout
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{DebugListener, DevNullListener}
@@ -33,6 +36,9 @@ case class NodeConfig(
 
 case class ConnectionConfig(
   initCommands: RedisBatch[Any] = RedisBatch.unit,
+  localAddress: Opt[InetSocketAddress] = Opt.Empty,
+  socketOptions: List[Inet.SocketOption] = Nil,
+  timeout: Opt[FiniteDuration] = Opt.Empty,
   debugListener: DebugListener = DevNullListener
 )
 

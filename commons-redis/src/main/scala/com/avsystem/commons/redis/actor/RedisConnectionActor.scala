@@ -40,7 +40,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
   })
 
   log.debug(s"Connecting to $address")
-  IO(Tcp) ! Connect(address.socketAddress)
+  IO(Tcp) ! Connect(address.socketAddress, config.localAddress.toOption, config.socketOptions, config.timeout.toOption)
 
   def handleRequest(packs: RawCommandPacks, callback: PacksResult => Unit): Unit =
     if (requestBeingSent.isEmpty) {
