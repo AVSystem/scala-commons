@@ -6,13 +6,13 @@ import java.io.File
 import org.scalatest.Suite
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.{Await, Future}
 
 /**
   * Author: ghik
   * Created: 27/06/16.
   */
-trait UsesFreshCluster extends UsesActorSystem with UsesClusterServers {this: Suite =>
+trait UsesFreshCluster extends UsesActorSystem with UsesClusterServers { this: Suite =>
 
   def ports = 8000 to 8005
   def masterOf(idx: Int): Int = idx - (idx % 2)

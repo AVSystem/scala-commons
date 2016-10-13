@@ -13,7 +13,7 @@ import scala.util.{Failure, Success, Try}
   *
   * @tparam A result yield by this batch
   */
-trait RedisBatch[+A] {self =>
+trait RedisBatch[+A] { self =>
 
   import RedisBatch._
 
@@ -25,37 +25,37 @@ trait RedisBatch[+A] {self =>
     * result of the merged batch. `map2` is the fundamental primitive for composing multiple batches into one.
     */
   def map2[B, C](other: RedisBatch[B])(f: (A, B) => C): RedisBatch[C] =
-  new RedisBatch[C] with RawCommandPacks {
-    def rawCommandPacks = this
+    new RedisBatch[C] with RawCommandPacks {
+      def rawCommandPacks = this
 
-    def emitCommandPacks(consumer: RawCommandPack => Unit) = {
-      self.rawCommandPacks.emitCommandPacks(consumer)
-      other.rawCommandPacks.emitCommandPacks(consumer)
-    }
+      def emitCommandPacks(consumer: RawCommandPack => Unit) = {
+        self.rawCommandPacks.emitCommandPacks(consumer)
+        other.rawCommandPacks.emitCommandPacks(consumer)
+      }
 
-    def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = {
-      // we must invoke both decoders regardless of intermediate errors because index must be properly advanced
-      var failure: Opt[Throwable] = Opt.Empty
-      val a = try self.decodeReplies(replies, index, inTransaction) catch {
-        case NonFatal(cause) =>
-          if (failure.isEmpty) {
-            failure = cause.opt
-          }
-          null.asInstanceOf[A]
-      }
-      val b = try other.decodeReplies(replies, index, inTransaction) catch {
-        case NonFatal(cause) =>
-          if (failure.isEmpty) {
-            failure = cause.opt
-          }
-          null.asInstanceOf[B]
-      }
-      failure match {
-        case Opt.Empty => f(a, b)
-        case Opt(cause) => throw cause
+      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = {
+        // we must invoke both decoders regardless of intermediate errors because index must be properly advanced
+        var failure: Opt[Throwable] = Opt.Empty
+        val a = try self.decodeReplies(replies, index, inTransaction) catch {
+          case NonFatal(cause) =>
+            if (failure.isEmpty) {
+              failure = cause.opt
+            }
+            null.asInstanceOf[A]
+        }
+        val b = try other.decodeReplies(replies, index, inTransaction) catch {
+          case NonFatal(cause) =>
+            if (failure.isEmpty) {
+              failure = cause.opt
+            }
+            null.asInstanceOf[B]
+        }
+        failure match {
+          case Opt.Empty => f(a, b)
+          case Opt(cause) => throw cause
+        }
       }
     }
-  }
 
   def transform[B](fun: Try[A] => Try[B]): RedisBatch[B] =
     new RedisBatch[B] {
@@ -164,7 +164,7 @@ trait AtomicBatch[+A] extends RedisBatch[A] with RawCommandPack {
   * Represents a sequence of Redis operations executed using a single Redis connection.
   * Any operation may depend on the result of some previous operation (therefore, `flatMap` is available).
   */
-sealed trait RedisOp[+A] {self =>
+sealed trait RedisOp[+A] { self =>
   def map[B](f: A => B): RedisOp[B] =
     self.flatMap(a => RedisOp.success(f(a)))
 

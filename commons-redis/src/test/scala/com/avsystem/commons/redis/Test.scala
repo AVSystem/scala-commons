@@ -17,7 +17,6 @@ object Test {
     import scala.concurrent.duration._
     import scala.concurrent.{Await, ExecutionContext, Future}
     import scala.util.{Failure, Success}
-    import com.avsystem.commons.redis._
 
     implicit val as = ActorSystem()
     implicit val ec: ExecutionContext = as.dispatcher

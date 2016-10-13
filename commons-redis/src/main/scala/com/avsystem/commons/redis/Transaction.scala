@@ -70,7 +70,7 @@ final class Transaction[+A](batch: RedisBatch[A]) extends AtomicBatch[A] {
         case LastIndex =>
           Exec.updateWatchState(message, state)
           message match {
-            case ArrayMsg(elements)  => normalResult = elements.opt
+            case ArrayMsg(elements) => normalResult = elements.opt
             case NullArrayMsg => setSingleError(new OptimisticLockException)
             case errorMsg: ErrorMsg => setDefaultError(errorMsg)
             case _ => setSingleError(new UnexpectedReplyException(s"Unexpected reply for EXEC: $message"))

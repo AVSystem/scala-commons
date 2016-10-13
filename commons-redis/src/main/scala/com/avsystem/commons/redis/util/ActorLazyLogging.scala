@@ -8,7 +8,7 @@ import akka.event.LoggingAdapter
   * Author: ghik
   * Created: 12/04/16.
   */
-trait ActorLazyLogging {self: Actor =>
+trait ActorLazyLogging { self: Actor =>
   object log {
     val rawLog: LoggingAdapter = akka.event.Logging(context.system, self)
 

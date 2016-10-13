@@ -33,7 +33,7 @@ trait GeoApi extends ApiSubset {
     execute(new GeoradiusbymemberStore(key, member, radius, unit, count.toOpt, sortOrder.toOpt, storeKey, storeDist))
 
   private final class Geoadd(key: Key, items: Seq[(Value, GeoPoint)]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("GEOADD").key(key).add(items.iterator.map({case (v, p) => (p, valueCodec.write(v))})).result
+    val encoded = encoder("GEOADD").key(key).add(items.iterator.map({ case (v, p) => (p, valueCodec.write(v)) })).result
   }
 
   private final class Geohash(key: Key, members: Seq[Value])
@@ -86,6 +86,7 @@ trait GeoApi extends ApiSubset {
 }
 
 abstract class GeoradiusAttrs(val flags: Int) { self =>
+
   import GeoradiusAttrs._
 
   type Attributed[A]

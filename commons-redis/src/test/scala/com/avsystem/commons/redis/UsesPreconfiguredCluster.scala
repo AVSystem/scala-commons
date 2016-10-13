@@ -7,13 +7,13 @@ import org.apache.commons.io.FileUtils
 import org.scalatest.Suite
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.{Await, Future}
 
 /**
   * Author: ghik
   * Created: 27/06/16.
   */
-trait UsesPreconfiguredCluster extends UsesActorSystem with UsesClusterServers {this: Suite =>
+trait UsesPreconfiguredCluster extends UsesActorSystem with UsesClusterServers { this: Suite =>
 
   final def ports = 9000 to 9005
 

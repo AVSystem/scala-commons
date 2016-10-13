@@ -8,7 +8,7 @@ import com.avsystem.commons.redis.protocol.RedisReply
 
 import scala.util.control.NonFatal
 
-trait TupleSequencers {this: Sequencer.type =>
+trait TupleSequencers { this: Sequencer.type =>
   implicit def tuple1Sequencer[O1, R1](implicit
     s1: Sequencer[O1, R1]): Sequencer[Tuple1[O1], Tuple1[R1]] =
 

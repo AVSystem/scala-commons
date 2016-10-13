@@ -8,7 +8,7 @@ import org.scalatest.Suite
   * Author: ghik
   * Created: 14/04/16.
   */
-trait UsesRedisNodeClient extends UsesRedisServer with UsesActorSystem {this: Suite =>
+trait UsesRedisNodeClient extends UsesRedisServer with UsesActorSystem { this: Suite =>
   def nodeConfig = NodeConfig()
 
   var redisClient: RedisNodeClient = _
