@@ -24,10 +24,12 @@ trait GeoApi extends ApiSubset {
     execute(new Geohash(key, member +:: members))
   def geohash(key: Key, members: Seq[Value]): Result[Seq[Opt[GeoHash]]] =
     execute(new Geohash(key, members))
-  def geopos(key: Key, members: Seq[Value]): Result[Seq[Opt[GeoPoint]]] =
-    execute(new Geopos(key, members))
+  def geopos(key: Key, member: Value): Result[Opt[GeoPoint]] =
+    execute(new Geopos(key, member.single).map(_.head))
   def geopos(key: Key, member: Value, members: Value*): Result[Seq[Opt[GeoPoint]]] =
     execute(new Geopos(key, member +:: members))
+  def geopos(key: Key, members: Seq[Value]): Result[Seq[Opt[GeoPoint]]] =
+    execute(new Geopos(key, members))
   def geodist(key: Key, member1: Value, member2: Value, unit: GeoUnit = GeoUnit.M): Result[Opt[Double]] =
     execute(new Geodist(key, member1, member2, unit))
   def georadius[A <: GeoradiusAttrs](key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
