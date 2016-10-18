@@ -90,7 +90,8 @@ val noPublishSettings = Seq(
   publishLocal := (),
   publishM2 := (),
   publishSigned := (),
-  publishLocalSigned := ()
+  publishLocalSigned := (),
+  doc := (target in doc).value
 )
 
 val scala212Settings = Seq(
