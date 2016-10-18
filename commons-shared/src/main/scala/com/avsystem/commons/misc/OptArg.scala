@@ -37,8 +37,14 @@ object OptArg {
   * }}}
   *
   * Note that like [[Opt]], [[OptArg]] assumes its underlying value to be non-null and `null` is translated into `OptArg.Empty`.
+  * <br/>
+  * It is strongly recommended that [[OptArg]] type is used ONLY in signatures where implicit conversion `A => OptArg[A]`
+  * is intended to work. You should not use [[OptArg]] as a general-purpose "optional value" type - other types like
+  * [[Opt]], [[NOpt]] and [[scala.Option]] serve that purpose. For this reason [[OptArg]] deliberately does not have any "transforming"
+  * methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that [[OptArg]] is converted to [[Opt]],
+  * [[NOpt]] or [[scala.Option]] as soon as possible (using `toOpt`, `toNOpt` and `toOption` methods).
   */
-final class OptArg[+A](private val rawValue: Any) extends AnyVal with Serializable {
+final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
   private def value: A = rawValue.asInstanceOf[A]
 
   @inline def get: A = if (isEmpty) throw new NoSuchElementException("empty OptArg") else value
@@ -67,4 +73,32 @@ final class OptArg[+A](private val rawValue: Any) extends AnyVal with Serializab
 
   @inline def fold[B](ifEmpty: => B)(f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
+
+  @inline def contains[A1 >: A](elem: A1): Boolean =
+    !isEmpty && value == elem
+
+  @inline def exists(p: A => Boolean): Boolean =
+    !isEmpty && p(value)
+
+  @inline def forall(p: A => Boolean): Boolean =
+    isEmpty || p(value)
+
+  @inline def foreach[U](f: A => U): Unit = {
+    if (!isEmpty) f(value)
+  }
+
+  @inline def iterator: Iterator[A] =
+    if (isEmpty) Iterator.empty else Iterator.single(value)
+
+  @inline def toList: List[A] =
+    if (isEmpty) List() else new ::(value, Nil)
+
+  @inline def toRight[X](left: => X) =
+    if (isEmpty) Left(left) else Right(value)
+
+  @inline def toLeft[X](right: => X) =
+    if (isEmpty) Right(right) else Left(value)
+
+  override def toString =
+    if (isEmpty) "OptArg.Empty" else s"OptArg($value)"
 }
