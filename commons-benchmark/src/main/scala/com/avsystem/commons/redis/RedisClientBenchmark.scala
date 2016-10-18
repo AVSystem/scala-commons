@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package redis
 
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import akka.actor.ActorSystem
@@ -49,17 +50,17 @@ class RedisClientBenchmark extends RedisBenchmark {
 
   def batchFuture(client: RedisKeyedExecutor, i: Int) = {
     val batch = (0 to BatchSize).map(_ => set(s"key$i", "v")).sequence
-    client.executeBatch(batch)(Timeout(2, TimeUnit.SECONDS))
+    client.executeBatch(batch)(Timeout(30, TimeUnit.SECONDS))
   }
 
   def distributedBatchFuture(client: RedisKeyedExecutor, i: Int) = {
     val batch = (0 to BatchSize).map(j => set(s"key$i.$j", "v")).sequence
-    client.executeBatch(batch)(Timeout(2, TimeUnit.SECONDS))
+    client.executeBatch(batch)(Timeout(30, TimeUnit.SECONDS))
   }
 
   def operationFuture(client: RedisOpExecutor, i: Int) = {
     val batch = (0 to BatchSize).map(_ => set(s"key$i", "v")).sequence
-    client.executeOp(batch.operation)(Timeout(2, TimeUnit.SECONDS))
+    client.executeOp(batch.operation)(Timeout(30, TimeUnit.SECONDS))
   }
 
   def transactionFuture(client: RedisOpExecutor, i: Int) = {
@@ -80,6 +81,8 @@ class RedisClientBenchmark extends RedisBenchmark {
     }
 
   private def redisClientBenchmark(singleFut: Int => Future[Any]) = {
+    val start = System.nanoTime()
+    val failures = new AtomicInteger()
     val ctl = new CountDownLatch(SequencedFutures)
     (0 until SequencedFutures).foreach { i =>
       singleFut(i).onComplete {
@@ -87,10 +90,12 @@ class RedisClientBenchmark extends RedisBenchmark {
           ctl.countDown()
         case Failure(t) =>
           ctl.countDown()
-          t.printStackTrace()
+          failures.incrementAndGet()
       }(RunNowEC)
     }
-    ctl.await(3, TimeUnit.SECONDS)
+    ctl.await(30, TimeUnit.SECONDS)
+    val millis = (System.nanoTime() - start) / 1000000
+    println(s"Took $millis, ${failures.get()} failures")
   }
 
   @Benchmark

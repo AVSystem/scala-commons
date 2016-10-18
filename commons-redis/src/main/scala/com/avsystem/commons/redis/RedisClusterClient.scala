@@ -110,7 +110,7 @@ final class RedisClusterClient(
       case _ =>
         result
     } recoverWithNow {
-      case nre: NodeRemovedException if !nre.alreadySent =>
+      case _: NodeRemovedException =>
         // Node went down and we didn't get a regular redirection but the cluster detected the failure
         // and we now have a new cluster view, so retry our not-yet-sent request using new cluster state.
         val client = state.clientForSlot(slot)

@@ -301,8 +301,8 @@ object NodeFlags {
   }
 }
 
-case class SlotRangeMapping[N](range: SlotRange, master: N, replicas: Seq[N]) {
-  override def toString = s"slots: $range, master: $master, slaves: ${replicas.mkString(",")}"
+case class SlotRangeMapping[N](range: SlotRange, master: N, slaves: Seq[N]) {
+  override def toString = s"slots: $range, master: $master, slaves: ${slaves.mkString(",")}"
 }
 case class SlotRange(start: Int, end: Int) {
   def toRange: Range = start to end

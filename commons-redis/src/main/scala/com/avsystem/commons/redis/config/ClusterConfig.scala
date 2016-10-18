@@ -21,7 +21,8 @@ case class ClusterConfig(
   autoRefreshInterval: FiniteDuration = 15.seconds,
   minRefreshInterval: FiniteDuration = 1.seconds,
   nodesToQueryForState: Int => Int = _ min 5,
-  maxRedirections: Int = 3
+  maxRedirections: Int = 3,
+  nodeClientCloseDelay: FiniteDuration = 5.seconds
 )
 
 case class NodeConfig(

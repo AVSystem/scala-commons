@@ -214,7 +214,7 @@ object ReplyDecoders {
   }
 
   def multiBulkSlotRangeMapping[N](nodeFormat: SlotsNodeFormat[N]): ReplyDecoder[SlotRangeMapping[N]] = {
-    case ArrayMsg(IndexedSeq(IntegerMsg(from), IntegerMsg(to), master, replicas@_*)) =>
+    case ArrayMsg(IndexedSeq(IntegerMsg(from), IntegerMsg(to), master, slaves@_*)) =>
       val range = SlotRange(from.toInt, to.toInt)
       def parseNode(rr: RedisMsg) = rr match {
         case arr: ArrayMsg[RedisMsg] => nodeFormat.parseNode
@@ -222,7 +222,7 @@ object ReplyDecoders {
         case msg =>
           throw new UnexpectedReplyException(s"bad entry in CLUSTER SLOTS reply: $rr")
       }
-      SlotRangeMapping(range, parseNode(master), replicas.map(parseNode))
+      SlotRangeMapping(range, parseNode(master), slaves.map(parseNode))
   }
 
   def groupedMultiBulk[T](size: Int, elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[Seq[T]]] = {

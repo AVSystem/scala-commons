@@ -94,6 +94,7 @@ final class ClusterMonitoringActor(
         (clients.keySet diff masters).foreach { addr =>
           clients.remove(addr).foreach { client =>
             client.nodeRemoved()
+            context.system.scheduler.scheduleOnce(config.nodeClientCloseDelay)(client.close())
           }
         }
       case Failure(_: ClientStoppedException) =>

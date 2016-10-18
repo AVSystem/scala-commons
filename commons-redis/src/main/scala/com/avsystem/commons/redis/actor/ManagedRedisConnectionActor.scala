@@ -113,8 +113,8 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
       connectionReady = true
       handleNextAllowed()
     case InitializationFailure(cause) =>
-      failUnfinished(new ConnectionInitializationFailure(cause))
-      context.stop(self)
+      failUnfinished(cause)
+      context.become(closed(cause))
     case Accepted =>
       connectionReady = true
       handleNextAllowed()
@@ -133,17 +133,26 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
           }
         case Opt.Empty =>
           log.error(s"All reconnection attempts to $address failed. Stopping.")
-          failUnfinished(new ConnectionClosedException(address))
-          context.stop(self)
+          val cause = new ConnectionClosedException(address)
+          failUnfinished(cause)
+          context.become(closed(cause))
       }
     case Reconnect =>
       connectionActor = newConnection
     case NodeRemoved =>
-      connectionActor ! NodeRemoved
-      failUnfinished(new NodeRemovedException(address, alreadySent = false))
-      context.stop(self)
+      connectionActor ! Close
+      val cause = new NodeRemovedException(address)
+      failUnfinished(cause)
+      context.become(closed(cause))
     case Terminated(client) if reservedBy.contains(client) =>
       release()
+  }
+
+  def closed(cause: RedisException): Receive = {
+    case Closed =>
+      connectionActor ! Stop
+    case packs: RawCommandPacks =>
+      sender() ! PacksResult.Failure(cause)
   }
 
   private def failUnfinished(cause: Throwable): Unit = {

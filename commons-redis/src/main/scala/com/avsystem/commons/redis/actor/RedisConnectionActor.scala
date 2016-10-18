@@ -6,7 +6,6 @@ import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.actor.ManagedRedisConnectionActor.NodeRemoved
 import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.protocol._
@@ -24,8 +23,9 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
   import RedisConnectionActor._
   import context._
 
-  private var connection: ActorRef = _
+  private var connectionActor: Opt[ActorRef] = Opt.Empty
   private var initialized = false
+  private var gracefulClosing = false
   private var requestBeingSent: Opt[SentRequest] = Opt.Empty
   private val sentRequests = new mutable.Queue[SentRequest]
   private val sendBuffer = new ArrayBuffer[ArrayMsg[BulkStringMsg]]
@@ -42,7 +42,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
   log.debug(s"Connecting to $address")
   IO(Tcp) ! Connect(address.socketAddress, config.localAddress.toOption, config.socketOptions, config.timeout.toOption)
 
-  def handleRequest(packs: RawCommandPacks, callback: PacksResult => Unit): Unit =
+  def handleRequest(connection: ActorRef, packs: RawCommandPacks, callback: PacksResult => Unit): Unit =
     if (requestBeingSent.isEmpty) {
       sendBuffer.clear()
       val requestToSend = new SentRequest(callback)
@@ -70,43 +70,49 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
 
   def connecting: Receive = {
     case Connected(_, _) =>
-      connection = sender()
+      val connection = sender()
       connection ! Register(self)
-      become(connected)
+      connectionActor = connection.opt
+      become(connected(connection))
       log.debug(s"Connected to Redis at $address")
-      handleRequest(config.initCommands.rawCommandPacks,
+      handleRequest(connection, config.initCommands.rawCommandPacks,
         pr => try {
           config.initCommands.decodeReplies(pr)
           log.debug(s"Successfully initialized connection to Redis at $address")
           initialized = true
           manager ! Initialized
         } catch {
-          case NonFatal(cause) =>
-            log.error(s"Failed to initialize connection to Redis at $address", cause)
+          case NonFatal(rawCause) =>
+            log.error(s"Failed to initialize connection to Redis at $address", rawCause)
+            val cause = new ConnectionInitializationFailure(rawCause)
             manager ! InitializationFailure(cause)
+            close(cause)
         }
       )
     case CommandFailed(_: Connect) =>
       log.error(s"Connection attempt to Redis at $address failed")
-      close()
+      close(new ConnectionFailedException(address))
     case packs: RawCommandPacks =>
       sender() ! PacksResult.Failure(new NotYetConnectedException(address))
-    case NodeRemoved =>
-      failUnfinishedAndClose(new NodeRemovedException(address, alreadySent = true))
+    case Close =>
+      close(new ConnectionClosedException(address))
   }
 
-  def connected: Receive = {
+  def connected(connection: ActorRef): Receive = {
     case packs: RawCommandPacks =>
       val s = sender()
       if (initialized) {
-        handleRequest(packs, s ! _)
+        handleRequest(connection, packs, { packsResult =>
+          s ! packsResult
+          checkCloseConditions(connection)
+        })
       } else {
         s ! PacksResult.Failure(new ConnectionNotYetInitializedException(address))
       }
     case ResetState =>
       if (state.watching) {
         log.debug(s"Resetting state of connection to Redis at $address")
-        handleRequest(RedisApi.Batches.BinaryTyped.unwatch.rawCommandPacks,
+        handleRequest(connection, RedisApi.Batches.BinaryTyped.unwatch.rawCommandPacks,
           pr => try RedisApi.Batches.BinaryTyped.unwatch.decodeReplies(pr) catch {
             case NonFatal(cause) => failUnfinishedAndClose(new ConnectionStateResetFailure(cause))
           }
@@ -122,6 +128,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
       log.error(s"Write to Redis at $address failed")
       requestBeingSent.foreach(_.callback(PacksResult.Failure(new WriteFailedException(address))))
       requestBeingSent = Opt.Empty
+      checkCloseConditions(connection)
       notifyAccepted()
     case Received(data) =>
       log.debug(s"$address <<<<\n${RedisMsg.escape(data, quote = false).replaceAllLiterally("\\r\\n", "\\r\\n\n")}")
@@ -129,16 +136,34 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
       decoder.decodeMore(data)
     case closed: ConnectionClosed =>
       log.info(s"Connection to Redis at $address closed")
+      connectionActor = Opt.Empty
       failUnfinishedAndClose(new ConnectionClosedException(address))
-    case NodeRemoved =>
-      failUnfinishedAndClose(new NodeRemovedException(address, alreadySent = true))
+    case Close =>
+      gracefulClosing = true
+      checkCloseConditions(connection)
   }
 
-  def closed: Receive = {
+  def checkCloseConditions(connection: ActorRef): Unit =
+    if (gracefulClosing && requestBeingSent.isEmpty && sentRequests.isEmpty) {
+      connection ! Tcp.Close
+    }
+
+  def closed(cause: RedisException): Receive = {
     case Stop =>
       context.stop(self)
+    case _: ConnectionClosed if connectionActor.contains(sender()) =>
+      connectionActor = Opt.Empty
+      manager ! Closed
     case packs: RawCommandPacks =>
-      sender() ! PacksResult.Failure(new ConnectionClosedException(address))
+      sender() ! PacksResult.Failure(cause)
+  }
+
+  def close(cause: RedisException): Unit = {
+    connectionActor match {
+      case Opt(connection) => connection ! Tcp.Close
+      case Opt.Empty => manager ! Closed
+    }
+    become(closed(cause))
   }
 
   def notifyAccepted(): Unit =
@@ -155,14 +180,9 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
     requestBeingSent = Opt.Empty
   }
 
-  def failUnfinishedAndClose(cause: Throwable): Unit = {
+  def failUnfinishedAndClose(cause: RedisException): Unit = {
     failUnfinished(cause)
-    close()
-  }
-
-  def close(): Unit = {
-    manager ! Closed
-    become(closed)
+    close(cause)
   }
 
   override def postStop() =
@@ -222,7 +242,7 @@ object RedisConnectionActor {
     * and connection actor is ready to accept requests.
     */
   case object Initialized
-  case class InitializationFailure(cause: Throwable)
+  case class InitializationFailure(cause: ConnectionInitializationFailure)
   /**
     * Message sent to manager actor after connection is closed.
     */
@@ -234,6 +254,7 @@ object RedisConnectionActor {
   case object Accepted
 
   case object ResetState
+  case object Close
   case object Stop
 
   trait DebugListener {

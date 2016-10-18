@@ -47,7 +47,7 @@ class ConnectionNotYetInitializedException(val address: NodeAddress)
 class ClientStoppedException(val address: NodeAddress)
   extends RedisException(s"Redis client for $address was stopped")
 
-class NodeRemovedException(val address: NodeAddress, val alreadySent: Boolean)
+class NodeRemovedException(val address: NodeAddress)
   extends RedisException(s"Node $address is no longer a master in Redis Cluster")
 
 class ConnectionReservedException
