@@ -64,4 +64,7 @@ final class OptArg[+A](private val rawValue: Any) extends AnyVal with Serializab
 
   @inline def orNull[B >: A](implicit ev: Null <:< B): B =
     if (isEmpty) ev(null) else value
+
+  @inline def fold[B](ifEmpty: => B)(f: A => B): B =
+    if (isEmpty) ifEmpty else f(value)
 }

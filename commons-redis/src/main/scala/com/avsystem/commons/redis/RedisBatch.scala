@@ -38,16 +38,12 @@ trait RedisBatch[+A] { self =>
         var failure: Opt[Throwable] = Opt.Empty
         val a = try self.decodeReplies(replies, index, inTransaction) catch {
           case NonFatal(cause) =>
-            if (failure.isEmpty) {
-              failure = cause.opt
-            }
+            failure = failure orElse cause.opt
             null.asInstanceOf[A]
         }
         val b = try other.decodeReplies(replies, index, inTransaction) catch {
           case NonFatal(cause) =>
-            if (failure.isEmpty) {
-              failure = cause.opt
-            }
+            failure = failure orElse cause.opt
             null.asInstanceOf[B]
         }
         failure match {

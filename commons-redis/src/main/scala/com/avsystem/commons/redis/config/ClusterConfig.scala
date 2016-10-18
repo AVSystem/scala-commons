@@ -5,7 +5,7 @@ import java.net.InetSocketAddress
 
 import akka.io.Inet
 import akka.util.Timeout
-import com.avsystem.commons.misc.Opt
+import com.avsystem.commons.misc.{Opt, OptArg}
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{DebugListener, DevNullListener}
 import com.avsystem.commons.redis.{NodeAddress, RedisBatch, RedisOp}
 
@@ -36,9 +36,10 @@ case class NodeConfig(
 
 case class ConnectionConfig(
   initCommands: RedisBatch[Any] = RedisBatch.unit,
-  localAddress: Opt[InetSocketAddress] = Opt.Empty,
+  actorName: OptArg[String] = OptArg.Empty,
+  localAddress: OptArg[InetSocketAddress] = OptArg.Empty,
   socketOptions: List[Inet.SocketOption] = Nil,
-  timeout: Opt[FiniteDuration] = Opt.Empty,
+  timeout: OptArg[FiniteDuration] = OptArg.Empty,
   debugListener: DebugListener = DevNullListener
 )
 

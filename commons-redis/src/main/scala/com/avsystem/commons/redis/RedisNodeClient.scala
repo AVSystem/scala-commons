@@ -4,25 +4,29 @@ package redis
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicLong
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, Deploy, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.avsystem.commons.redis.actor.ManagedRedisConnectionActor.NodeRemoved
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{ManagedRedisConnectionActor, RedisOperationActor}
-import com.avsystem.commons.redis.config.NodeConfig
+import com.avsystem.commons.redis.config.{ConnectionConfig, NodeConfig}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
 final class RedisNodeClient(
   val address: NodeAddress = NodeAddress.Default,
-  val config: NodeConfig = NodeConfig())
+  val config: NodeConfig = NodeConfig(),
+  val actorDeploy: Deploy = Deploy())
   (implicit system: ActorSystem) extends RedisNodeExecutor with Closeable { client =>
 
-  private def createConnection(i: Int) =
-    system.actorOf(Props(new ManagedRedisConnectionActor(address, config.connectionConfigs(i), config.reconnectionStrategy)))
+  private def createConnection(i: Int) = {
+    val connConfig: ConnectionConfig = config.connectionConfigs(i)
+    val props = Props(new ManagedRedisConnectionActor(address, connConfig, config.reconnectionStrategy)).withDeploy(actorDeploy)
+    connConfig.actorName.fold(system.actorOf(props))(system.actorOf(props, _))
+  }
 
   private val connections = (0 until config.poolSize).iterator.map(createConnection).toArray
   private val index = new AtomicLong(0)

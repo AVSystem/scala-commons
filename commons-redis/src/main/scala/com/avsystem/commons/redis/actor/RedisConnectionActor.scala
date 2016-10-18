@@ -66,10 +66,11 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
       callback(PacksResult.Failure(new ConnectionBusyException(address)))
     }
 
+  def receive = connecting
+
   def connecting: Receive = {
     case Connected(_, _) =>
       connection = sender()
-      watch(connection)
       connection ! Register(self)
       become(connected)
       log.debug(s"Connected to Redis at $address")
@@ -87,11 +88,11 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
       )
     case CommandFailed(_: Connect) =>
       log.error(s"Connection attempt to Redis at $address failed")
-      stop(self)
+      close()
     case packs: RawCommandPacks =>
       sender() ! PacksResult.Failure(new NotYetConnectedException(address))
     case NodeRemoved =>
-      failUnfinishedAndStop(new NodeRemovedException(address, alreadySent = true))
+      failUnfinishedAndClose(new NodeRemovedException(address, alreadySent = true))
   }
 
   def connected: Receive = {
@@ -107,7 +108,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
         log.debug(s"Resetting state of connection to Redis at $address")
         handleRequest(RedisApi.Batches.BinaryTyped.unwatch.rawCommandPacks,
           pr => try RedisApi.Batches.BinaryTyped.unwatch.decodeReplies(pr) catch {
-            case NonFatal(cause) => failUnfinishedAndStop(new ConnectionStateResetFailure(cause))
+            case NonFatal(cause) => failUnfinishedAndClose(new ConnectionStateResetFailure(cause))
           }
         )
       } else {
@@ -128,9 +129,16 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
       decoder.decodeMore(data)
     case closed: ConnectionClosed =>
       log.info(s"Connection to Redis at $address closed")
-      failUnfinishedAndStop(new ConnectionClosedException(address))
+      failUnfinishedAndClose(new ConnectionClosedException(address))
     case NodeRemoved =>
-      failUnfinishedAndStop(new NodeRemovedException(address, alreadySent = true))
+      failUnfinishedAndClose(new NodeRemovedException(address, alreadySent = true))
+  }
+
+  def closed: Receive = {
+    case Stop =>
+      context.stop(self)
+    case packs: RawCommandPacks =>
+      sender() ! PacksResult.Failure(new ConnectionClosedException(address))
   }
 
   def notifyAccepted(): Unit =
@@ -147,12 +155,15 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
     requestBeingSent = Opt.Empty
   }
 
-  def failUnfinishedAndStop(cause: Throwable): Unit = {
+  def failUnfinishedAndClose(cause: Throwable): Unit = {
     failUnfinished(cause)
-    stop(self)
+    close()
   }
 
-  def receive = connecting
+  def close(): Unit = {
+    manager ! Closed
+    become(closed)
+  }
 
   override def postStop() =
     failUnfinished(new ClientStoppedException(address))
@@ -213,11 +224,17 @@ object RedisConnectionActor {
   case object Initialized
   case class InitializationFailure(cause: Throwable)
   /**
+    * Message sent to manager actor after connection is closed.
+    */
+  case object Closed
+  /**
     * Message sent back to manager actor to indicate that previous request was written (successfully or not) and
     * connection actor is ready to accept another request.
     */
   case object Accepted
+
   case object ResetState
+  case object Stop
 
   trait DebugListener {
     def onSend(data: ByteString): Unit

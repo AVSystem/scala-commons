@@ -11,6 +11,7 @@ import com.avsystem.commons.redis.exception.RedisException
 import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{RedisBatch, RedisOp}
 
+import scala.concurrent.duration.FiniteDuration
 import scala.util.control.NonFatal
 
 /**

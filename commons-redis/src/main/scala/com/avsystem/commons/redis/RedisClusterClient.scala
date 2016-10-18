@@ -3,7 +3,7 @@ package redis
 
 import java.io.Closeable
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ActorSystem, Deploy, Props}
 import akka.pattern.ask
 import akka.util.{ByteString, Timeout}
 import com.avsystem.commons.collection.CollectionAliases.{BMap, MHashMap}
@@ -31,7 +31,8 @@ import scala.util.control.NonFatal
   */
 final class RedisClusterClient(
   val seedNodes: Seq[NodeAddress] = List(NodeAddress.Default),
-  val clusterConfig: ClusterConfig = ClusterConfig())
+  val clusterConfig: ClusterConfig = ClusterConfig(),
+  val actorDeploy: Deploy = Deploy())
   (implicit system: ActorSystem) extends RedisKeyedExecutor with Closeable {
 
   @volatile private[this] var state: ClusterState = ClusterState(IndexedSeq.empty, Map.empty)
@@ -54,7 +55,8 @@ final class RedisClusterClient(
   }
 
   private val monitoringActor =
-    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, clusterConfig, onNewState, onTemporaryClient)))
+    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, actorDeploy, clusterConfig, onNewState, onTemporaryClient))
+      .withDeploy(actorDeploy))
 
   private def determineSlot(pack: RawCommandPack): Int = {
     var slot = -1

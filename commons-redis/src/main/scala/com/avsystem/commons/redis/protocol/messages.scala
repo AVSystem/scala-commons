@@ -5,6 +5,7 @@ import akka.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.{Opt, Sam}
 import com.avsystem.commons.redis.exception.{InvalidDataException, RedisException}
 
+import scala.annotation.tailrec
 import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ArrayBuffer
 
@@ -93,7 +94,8 @@ object RedisMsg {
   }
 
   private final val CRLF = ByteString("\r\n")
-  private final val MinusOne = ByteString("-1")
+  private final val NullBulk = ByteString("$-1\r\n")
+  private final val NullArray = ByteString("*-1\r\n")
 
   private final val CRByte = '\r'.toByte
   private final val LFByte = '\n'.toByte
@@ -102,6 +104,26 @@ object RedisMsg {
   private final val IntegerInd = ':'.toByte
   private final val BulkInd = '$'.toByte
   private final val ArrayInd = '*'.toByte
+
+  def encodedSize(msg: RedisMsg): Int = {
+    def integerSize(value: Long): Int =
+      if (value == 0) 0
+      else if (value < 0) integerSize(-value) + 1
+      else posIntegerSize(value, 0)
+
+    @tailrec def posIntegerSize(value: Long, acc: Int): Int =
+      if (value == 0) acc
+      else posIntegerSize(value / 10, acc + 1)
+
+    msg match {
+      case NullBulkStringMsg | NullArrayMsg => 5
+      case SimpleStringMsg(data) => data.size + 3
+      case ErrorMsg(data) => data.size + 3
+      case IntegerMsg(value) => integerSize(value)
+      case BulkStringMsg(data) => integerSize(data.size) + data.size + 5
+      case ArrayMsg(data) => integerSize(data.size) + data.foldLeft(0)((acc, msg) => acc + encodedSize(msg)) + 3
+    }
+  }
 
   def encode(msg: RedisMsg): ByteString = {
     val builder = new ByteStringBuilder
@@ -124,11 +146,11 @@ object RedisMsg {
       case IntegerMsg(value: Long) =>
         builder.putByte(IntegerInd).append(ByteString(value.toString)).append(CRLF)
       case NullBulkStringMsg =>
-        builder.putByte(BulkInd).append(MinusOne).append(CRLF)
+        builder.append(NullBulk)
       case BulkStringMsg(string) =>
         builder.putByte(BulkInd).append(ByteString(string.size.toString)).append(CRLF).append(string).append(CRLF)
       case NullArrayMsg =>
-        builder.putByte(ArrayInd).append(MinusOne).append(CRLF)
+        builder.append(NullArray)
       case ArrayMsg(elements) =>
         builder.putByte(ArrayInd).append(ByteString(elements.size.toString)).append(CRLF)
         elements.foreach(encodeIn)
@@ -151,9 +173,9 @@ object RedisMsg {
     private final val ReadingInt = 4
     private final val ReadingBulk = 5
 
-    private final val ZeroDigitByte = '0'.toByte
-    private final val NineDigitByte = '9'.toByte
-    private final val MinusByte = '-'.toByte
+    private final val ZeroDigitByte: Byte = '0'
+    private final val NineDigitByte: Byte = '9'
+    private final val MinusByte: Byte = '-'
 
     private object Digit {
       def unapply(b: Byte): Opt[Long] =
@@ -263,7 +285,7 @@ object RedisMsg {
                   state = Initial
                   numberValue match {
                     case -1 => completed(NullArrayMsg)
-                    case 0 => completed(ArrayMsg(IndexedSeq.empty))
+                    case 0 => completed(ArrayMsg.Empty)
                     case size if size > 0 =>
                       val is = size.toInt
                       arrayStack = (is, new ArrayBuffer[RedisMsg](is)) :: arrayStack

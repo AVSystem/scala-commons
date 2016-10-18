@@ -22,18 +22,20 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
 
   import ManagedRedisConnectionActor._
 
-  def newConnection = context.watch(context.actorOf(Props(
-    new RedisConnectionActor(address, config, self))))
+  def newConnection = context.actorOf(Props(new RedisConnectionActor(address, config, self)))
 
   private var connectionActor = newConnection
   // connected and not busy
   private var connectionReady = false
-  // connected
-  private var connected = false
+  // contains requests that wait for current reservation to finish
   private val reserveQueue = new mutable.Queue[QueuedPacks]
+  // contains requests already allowed to be sent but waiting for the connection client to be available
   private val writeQueue = new mutable.Queue[Queued]
+  // client currently holding reservation on this connection (most likely RedisOperationActor)
   private var reservedBy: Opt[ActorRef] = Opt.Empty
+  // true when we're in the process of sending some reservation requests to the connection
   private var reservationWriting = false
+  // true when reservation currently being written is broken due connection failure
   private var reservationBroken = false
   private var reconnectionRetry = 0
 
@@ -50,27 +52,28 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
     }
 
   def handleAllowed(client: ActorRef, packs: RawCommandPacks, reserve: Boolean): Unit =
-    if (connectionReady) {
+    if (reservationBroken) {
+      // connection was restarted and current reservation is broken
+      client ! PacksResult.Failure(new ConnectionClosedException(address))
+      handleNextAllowed()
+    } else if (connectionReady) {
       if (reserve) {
         reservationWriting = true
       }
-      if (reservationBroken) {
-        // connection was restarted and current reservation is broken
-        client ! PacksResult.Failure(new ConnectionClosedException(address))
-      } else {
-        connectionReady = false
-        connectionActor.tell(packs, client)
-      }
+      connectionReady = false
+      connectionActor.tell(packs, client)
     } else {
       writeQueue += QueuedPacks(client, packs, reserve)
     }
 
   def handleRelease(): Unit =
     if (reservationBroken) {
-      // when reservation is broken, don't reset state because connection was restarted
+      // when reservation is broken, don't reset state because connection was restarted anyway and its state was lost
       reservationBroken = false
       reservationWriting = false
+      handleNextAllowed()
     } else if (connectionReady) {
+      reservationWriting = false
       connectionReady = false
       connectionActor ! RedisConnectionActor.ResetState
     } else {
@@ -107,7 +110,6 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
       }
     case Initialized =>
       reconnectionRetry = 0
-      connected = true
       connectionReady = true
       handleNextAllowed()
     case InitializationFailure(cause) =>
@@ -116,9 +118,9 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
     case Accepted =>
       connectionReady = true
       handleNextAllowed()
-    case Terminated(conn) if conn == connectionActor =>
+    case Closed =>
       log.info(s"Connection to Redis on $address was closed.")
-      connected = false
+      connectionActor ! Stop
       reconnectionStrategy.retryDelay(reconnectionRetry) match {
         case Opt(delay) =>
           log.info(s"Reconnecting in $delay (retry $reconnectionRetry) ...")
@@ -127,14 +129,7 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
           connectionReady = false
           if (reservationWriting) {
             reservationBroken = true
-            while (reservationWriting && writeQueue.nonEmpty) {
-              writeQueue.dequeue() match {
-                case QueuedPacks(client, _, _) =>
-                  client ! PacksResult.Failure(new ConnectionClosedException(address))
-                case QueuedRelease =>
-                  handleRelease()
-              }
-            }
+            handleNextAllowed() // in order to fail any remaining requests from this reservation
           }
         case Opt.Empty =>
           log.error(s"All reconnection attempts to $address failed. Stopping.")

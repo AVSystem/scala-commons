@@ -32,7 +32,7 @@ val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.2.2"
 val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.0"
-val akkaVersion = "2.4.9"
+val akkaVersion = "2.4.11"
 val shapelessVersion = "2.3.0"
 val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.4.0"
@@ -85,11 +85,11 @@ val commonSettings = Seq(
 
 val noPublishSettings = Seq(
   publishArtifact := false,
-  publish :=(),
-  publishLocal :=(),
-  publishM2 :=(),
-  publishSigned :=(),
-  publishLocalSigned :=()
+  publish := (),
+  publishLocal := (),
+  publishM2 := (),
+  publishSigned := (),
+  publishLocalSigned := ()
 )
 
 val scala212Settings = Seq(
@@ -181,6 +181,9 @@ lazy val `commons-benchmark` = project
   .settings(commonSettings: _*)
   .settings(noPublishSettings: _*)
   .enablePlugins(JmhPlugin)
+  .settings(
+    ideExcludedDirectories := (managedSourceDirectories in Jmh).value
+  )
 
 lazy val `commons-mongo` = project
   .dependsOn(`commons-core`)

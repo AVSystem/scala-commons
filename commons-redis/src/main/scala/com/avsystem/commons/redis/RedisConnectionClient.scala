@@ -3,7 +3,7 @@ package redis
 
 import java.io.Closeable
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ActorSystem, Deploy, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.avsystem.commons.redis.RawCommand.Level
@@ -18,11 +18,14 @@ import scala.concurrent.{ExecutionContext, Future}
   * Author: ghik
   * Created: 09/06/16.
   */
-final class RedisConnectionClient(address: NodeAddress = NodeAddress.Default, config: ConnectionConfig = ConnectionConfig())
+final class RedisConnectionClient(
+  val address: NodeAddress = NodeAddress.Default,
+  val config: ConnectionConfig = ConnectionConfig(),
+  val actorDeploy: Deploy = Deploy())
   (implicit system: ActorSystem) extends RedisConnectionExecutor with Closeable { self =>
 
   private val connectionActor = system.actorOf(Props(
-    new ManagedRedisConnectionActor(address, config, NoRetryStrategy)))
+    new ManagedRedisConnectionActor(address, config, NoRetryStrategy)).withDeploy(actorDeploy))
 
   def executionContext: ExecutionContext =
     system.dispatcher

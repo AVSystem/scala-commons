@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.actor
 
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, Deploy, Props}
 import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
@@ -17,6 +17,7 @@ import scala.util.{Failure, Random, Success, Try}
 
 final class ClusterMonitoringActor(
   seedNodes: Seq[NodeAddress],
+  deploy: Deploy,
   config: ClusterConfig,
   onNewClusterState: ClusterState => Any,
   onTemporaryClient: RedisNodeClient => Any)
@@ -30,7 +31,7 @@ final class ClusterMonitoringActor(
       config.monitoringConnectionConfigs(addr), config.nodeConfigs(addr).reconnectionStrategy)))
 
   def createClient(addr: NodeAddress) =
-    new RedisNodeClient(addr, config.nodeConfigs(addr))
+    new RedisNodeClient(addr, config.nodeConfigs(addr), deploy)
 
   private val random = new Random
   private var masters = mutable.LinkedHashSet.empty[NodeAddress]

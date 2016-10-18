@@ -67,9 +67,7 @@ object Sequencer extends TupleSequencers {
                 builder += batch.decodeReplies(replies, index, inTransaction)
               } catch {
                 case NonFatal(cause) =>
-                  if (failure.isEmpty) {
-                    failure = cause.opt
-                  }
+                  failure = failure orElse cause.opt
               }
             }
             failure match {
