@@ -27,11 +27,12 @@ trait UsesActorSystem extends BeforeAndAfterAll with PatienceConfiguration { thi
     super.afterAll()
   }
 
-  def wait(duration: FiniteDuration): Future[Unit] = {
-    val promise = Promise[Unit]()
-    actorSystem.scheduler.scheduleOnce(duration)(promise.success(()))
-    promise.future
-  }
+  def wait(duration: FiniteDuration): Future[Unit] =
+    if (duration == Duration.Zero) Future.successful(()) else {
+      val promise = Promise[Unit]()
+      actorSystem.scheduler.scheduleOnce(duration)(promise.success(()))
+      promise.future
+    }
 
   def waitUntil(predicate: => Future[Boolean], retryInterval: FiniteDuration): Future[Unit] =
     predicate.flatMap { r =>

@@ -32,7 +32,7 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
   // contains requests already allowed to be sent but waiting for the connection client to be available
   private val writeQueue = new mutable.Queue[Queued]
   // client currently holding reservation on this connection (most likely RedisOperationActor)
-  private var reservedBy: Opt[ActorRef] = Opt.Empty
+  private var reservedBy = Opt.empty[ActorRef]
   // true when we're in the process of sending some reservation requests to the connection
   private var reservationWriting = false
   // true when reservation currently being written is broken due connection failure

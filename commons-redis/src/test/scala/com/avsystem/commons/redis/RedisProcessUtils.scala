@@ -20,7 +20,10 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
 
   private val NodeLogRegex = ".*Node configuration loaded, I'm ([0-9a-f]+)$".r
 
-  case class RedisProcess(process: Process, pid: Int, nodeId: Opt[NodeId])
+  case class RedisProcess(process: Process, pid: Int, nodeId: Opt[NodeId]) {
+    def stop() = Seq(s"kill -SIGSTOP $pid").!!
+    def cont() = Seq(s"kill -SIGCONT $pid").!!
+  }
 
   def launchRedis(arguments: String*): Future[RedisProcess] = {
     val promise = Promise[Unit]()

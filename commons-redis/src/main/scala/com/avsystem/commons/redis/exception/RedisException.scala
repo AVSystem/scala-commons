@@ -44,6 +44,9 @@ class ConnectionBusyException(val address: NodeAddress)
 class ConnectionNotYetInitializedException(val address: NodeAddress)
   extends RedisIOException(s"Redis connection to $address has not been initialized yet")
 
+class MaxQueuedRequestsLimitReached(val address: NodeAddress)
+  extends RedisException(s"Maximum number of queued requests for a connection has been reached.")
+
 class ClientStoppedException(val address: NodeAddress)
   extends RedisException(s"Redis client for $address was stopped")
 

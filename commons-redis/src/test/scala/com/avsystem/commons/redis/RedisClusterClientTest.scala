@@ -115,18 +115,18 @@ class ClusterFailoverHandlingTest extends RedisClusterCommandsSuite {
   override protected def beforeAll() = {
     super.beforeAll()
     val slaveClient = new RedisConnectionClient(NodeAddress(port = 9001))
-    def failover: Future[Unit] = for {
+    def failover(delay: FiniteDuration = Duration.Zero): Future[Unit] = for {
       master <- slaveClient.executeBatch(clusterNodes.map(_.find(_.flags.myself).exists(_.flags.master)))
       _ <- {
         if (master) Future.successful(())
         else for {
-          _ <- slaveClient.executeBatch(clusterFailover().ignoreFailures)
-          _ <- wait(1.seconds)
-          _ <- failover
+          _ <- wait(delay)
+          _ <- slaveClient.executeBatch(clusterFailover.ignoreFailures)
+          _ <- failover(1.seconds)
         } yield ()
       }
     } yield ()
-    Await.result(redisClient.initialized.flatMapNow(_ => failover), Duration.Inf)
+    Await.result(redisClient.initialized.flatMapNow(_ => failover()), Duration.Inf)
   }
 
   test("redirection caused by failover handling") {

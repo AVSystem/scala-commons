@@ -41,7 +41,7 @@ final class RedisNodeClient(
 
   /**
     * Notifies the [[RedisNodeClient]] that its node is no longer a master in Redis Cluster and.
-    * The client stops itself as a result and fails any pending requests with
+    * The client stops itself as a result and fails any pending unsent requests with
     * [[com.avsystem.commons.redis.exception.NodeRemovedException]].
     */
   private[redis] def nodeRemoved(): Unit = connections.foreach(_ ! NodeRemoved)

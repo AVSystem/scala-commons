@@ -12,7 +12,7 @@ object Profiled {
 
   def main(args: Array[String]): Unit = {
     while (true) {
-      bench.clusterClientDistributedBatchBenchmark()
+      bench.nodeClientMixedBenchmark()
     }
   }
 }

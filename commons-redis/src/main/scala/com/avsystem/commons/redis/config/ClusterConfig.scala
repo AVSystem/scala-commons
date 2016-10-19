@@ -22,7 +22,7 @@ case class ClusterConfig(
   minRefreshInterval: FiniteDuration = 1.seconds,
   nodesToQueryForState: Int => Int = _ min 5,
   maxRedirections: Int = 3,
-  nodeClientCloseDelay: FiniteDuration = 5.seconds
+  nodeClientCloseDelay: FiniteDuration = 1.seconds
 )
 
 case class NodeConfig(
@@ -40,7 +40,8 @@ case class ConnectionConfig(
   actorName: OptArg[String] = OptArg.Empty,
   localAddress: OptArg[InetSocketAddress] = OptArg.Empty,
   socketOptions: List[Inet.SocketOption] = Nil,
-  timeout: OptArg[FiniteDuration] = OptArg.Empty,
+  socketTimeout: OptArg[FiniteDuration] = OptArg.Empty,
+  maxSentRequests: OptArg[Int] = OptArg.Empty,
   debugListener: DebugListener = DevNullListener
 )
 

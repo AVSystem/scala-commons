@@ -6,11 +6,11 @@ import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import com.avsystem.commons.misc.Opt
+import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.protocol._
 import com.avsystem.commons.redis.util.ActorLazyLogging
-import com.avsystem.commons.redis.{NodeAddress, RawCommandPacks, RedisApi, ReplyPreprocessor, WatchState}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -23,28 +23,30 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
   import RedisConnectionActor._
   import context._
 
-  private var connectionActor: Opt[ActorRef] = Opt.Empty
+  private var connectionActor = Opt.empty[ActorRef]
   private var initialized = false
-  private var gracefulClosing = false
-  private var requestBeingSent: Opt[SentRequest] = Opt.Empty
+  private var waitingForRequests = true
+  private var closeWhenIdle = false
+  private var requestBeingSent = Opt.empty[SentRequest]
   private val sentRequests = new mutable.Queue[SentRequest]
-  private val sendBuffer = new ArrayBuffer[ArrayMsg[BulkStringMsg]]
   private val state = new WatchState
 
   private val decoder = new RedisMsg.Decoder({ replyMsg =>
     val lastRequest = sentRequests.front
     lastRequest.processMessage(replyMsg, state).foreach { packsResult =>
       sentRequests.dequeue()
+      checkState()
       lastRequest.callback(packsResult)
     }
   })
 
   log.debug(s"Connecting to $address")
-  IO(Tcp) ! Connect(address.socketAddress, config.localAddress.toOption, config.socketOptions, config.timeout.toOption)
+  IO(Tcp) ! Connect(address.socketAddress, config.localAddress.toOption, config.socketOptions, config.socketTimeout.toOption)
 
   def handleRequest(connection: ActorRef, packs: RawCommandPacks, callback: PacksResult => Unit): Unit =
-    if (requestBeingSent.isEmpty) {
-      sendBuffer.clear()
+    if (waitingForRequests) {
+      waitingForRequests = false
+      val sendBuffer = new ArrayBuffer[ArrayMsg[BulkStringMsg]]
       val requestToSend = new SentRequest(callback)
       packs.emitCommandPacks { pack =>
         val sizeBefore = sendBuffer.size
@@ -53,12 +55,12 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
       }
       if (sendBuffer.isEmpty) {
         log.debug(s"Empty packs received")
-        notifyAccepted()
+        checkState()
         requestToSend.callback(PacksResult.Empty)
       } else {
-        requestBeingSent = Opt(requestToSend)
+        requestBeingSent = requestToSend.opt
         val encoded = RedisMsg.encode(sendBuffer)
-        log.debug(s"$address >>>>\n${RedisMsg.escape(encoded, quote = false).replaceAllLiterally("\\r\\n", "\\r\\n\n")}")
+        log.debug(s"$address >>>>\n${RedisMsg.escape(encoded, quote = false).replaceAllLiterally("\\n", "\\n\n")}")
         config.debugListener.onSend(encoded)
         connection ! Write(encoded, WriteAck)
       }
@@ -102,10 +104,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
     case packs: RawCommandPacks =>
       val s = sender()
       if (initialized) {
-        handleRequest(connection, packs, { packsResult =>
-          s ! packsResult
-          checkCloseConditions(connection)
-        })
+        handleRequest(connection, packs, s ! _)
       } else {
         s ! PacksResult.Failure(new ConnectionNotYetInitializedException(address))
       }
@@ -118,40 +117,47 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
           }
         )
       } else {
-        notifyAccepted()
+        handleRequest(connection, RedisBatch.unit.rawCommandPacks, _ => ())
       }
     case WriteAck =>
       requestBeingSent.foreach(sentRequests += _)
       requestBeingSent = Opt.Empty
-      notifyAccepted()
+      checkState()
     case CommandFailed(_: Write) =>
       log.error(s"Write to Redis at $address failed")
       requestBeingSent.foreach(_.callback(PacksResult.Failure(new WriteFailedException(address))))
       requestBeingSent = Opt.Empty
-      checkCloseConditions(connection)
-      notifyAccepted()
+      checkState()
     case Received(data) =>
       log.debug(s"$address <<<<\n${RedisMsg.escape(data, quote = false).replaceAllLiterally("\\r\\n", "\\r\\n\n")}")
       config.debugListener.onReceive(data)
       decoder.decodeMore(data)
-    case closed: ConnectionClosed =>
+    case _: ConnectionClosed =>
       log.info(s"Connection to Redis at $address closed")
       connectionActor = Opt.Empty
       failUnfinishedAndClose(new ConnectionClosedException(address))
     case Close =>
-      gracefulClosing = true
-      checkCloseConditions(connection)
+      closeWhenIdle = true
+      checkState()
   }
 
-  def checkCloseConditions(connection: ActorRef): Unit =
-    if (gracefulClosing && requestBeingSent.isEmpty && sentRequests.isEmpty) {
-      connection ! Tcp.Close
+  def checkState(): Unit = {
+    if (!waitingForRequests && requestBeingSent.isEmpty && config.maxSentRequests.forall(_ > sentRequests.size)) {
+      if (initialized) {
+        manager ! Accepted
+      }
+      waitingForRequests = true
     }
+    if (closeWhenIdle && requestBeingSent.isEmpty && sentRequests.isEmpty) {
+      connectionActor.foreach(_ ! Tcp.Close)
+    }
+  }
 
   def closed(cause: RedisException): Receive = {
     case Stop =>
       context.stop(self)
     case _: ConnectionClosed if connectionActor.contains(sender()) =>
+      log.info(s"Connection to Redis at $address closed")
       connectionActor = Opt.Empty
       manager ! Closed
     case packs: RawCommandPacks =>
@@ -166,13 +172,9 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
     become(closed(cause))
   }
 
-  def notifyAccepted(): Unit =
-    if (initialized) {
-      manager ! Accepted
-    }
-
   def failUnfinished(cause: Throwable): Unit = {
     val failure = PacksResult.Failure(cause)
+    log.debug(s"Failing ${sentRequests.size} sent requests and ${requestBeingSent.size} not confirmed yet")
     while (sentRequests.nonEmpty) {
       sentRequests.dequeue().callback(failure)
     }
