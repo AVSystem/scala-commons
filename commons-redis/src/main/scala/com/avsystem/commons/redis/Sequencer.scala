@@ -14,15 +14,15 @@ import scala.util.control.NonFatal
   * order to guarantee that some set of operations is sent to Redis as a single batch (most likely single network
   * message).
   *
-  * The parameter [[Ops]] represents batches that will be sequenced into one. It may be a collection, a tuple or
+  * The parameter `Ops` represents batches that will be sequenced into one. It may be a collection, a tuple or
   * any other "collection-like" type for which type class instance is provided.
   *
-  * [[Res]] is the type of result of the batch created by "sequencing". This type is automatically inferred from
-  * the [[Ops]] type. For example, if [[Ops]] is `(RedisBatch[Int], RedisBatch[String])` (tuple) then [[Res]] will be
-  * `(Int, String)`. If [[Ops]] is `List[RedisBatch[Int&#93;]` then [[Res]] will be `List[Int]`.
+  * `Res` is the type of result of the batch created by "sequencing". This type is automatically inferred from
+  * the `Ops` type. For example, if `Ops` is `(RedisBatch[Int], RedisBatch[String])` (tuple) then `Res` will be
+  * `(Int, String)`. If `Ops` is `List[RedisBatch[Int&#93;]` then `Res` will be `List[Int]`.
   *
-  * Nesting is also possible. For example, if [[Ops]] is `(List[RedisBatch[Int&#93;], RedisBatch[String])` then
-  * [[Res]] will be `(List[Int], String)`.
+  * Nesting is also possible. For example, if `Ops` is `(List[RedisBatch[Int&#93;], RedisBatch[String])` then
+  * `Res` will be `(List[Int], String)`.
   *
   * In order to perform "sequencing", simply call `sequence` on your collection of batches, e.g.
   *
