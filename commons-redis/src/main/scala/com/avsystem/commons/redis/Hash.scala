@@ -3,6 +3,10 @@ package redis
 
 import akka.util.ByteString
 
+/**
+  * Implementation of key hashing function used in Redis Cluster, as specified in
+  * [[http://redis.io/topics/cluster-spec#appendix-a-crc16-reference-implementation-in-ansi-c Redis Cluster Specification]]
+  */
 object Hash {
   val TotalSlots = 16384
 

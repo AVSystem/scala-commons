@@ -99,9 +99,10 @@ final class WatchState {
 
 /**
   * Something that translates incoming [[com.avsystem.commons.redis.protocol.RedisMsg RedisMsg]]
-  * messages and emits a single [[RedisReply]].
+  * messages and emits a single [[com.avsystem.commons.redis.protocol.RedisReply RedisReply]].
   * For example, it may handle transactions by extracting actual responses for every command from
-  * the `EXEC` response and returning them in an [[ArrayMsg]] (see [[Transaction]]).
+  * the `EXEC` response and returning them in an [[com.avsystem.commons.redis.protocol.ArrayMsg ArrayMsg]]
+  * (see [[Transaction]]).
   */
 trait ReplyPreprocessor {
   def preprocess(message: RedisMsg, watchState: WatchState): Opt[RedisReply]
