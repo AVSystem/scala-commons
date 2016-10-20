@@ -71,7 +71,7 @@ val commonSettings = Seq(
     "com.github.ghik" %% "silencer-lib" % silencerVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % Test
   ),
-  dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
+  dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
   ideBasePackages := Seq(organization.value),
   fork in Test := true
 )
