@@ -86,7 +86,7 @@ val noPublishSettings = Seq(
 )
 
 val scala212Settings = Seq(
-  crossScalaVersions += "2.12.0-RC1"
+  crossScalaVersions += "2.12.0-RC2"
 )
 
 val CompileAndTest = "compile->compile;test->test"
