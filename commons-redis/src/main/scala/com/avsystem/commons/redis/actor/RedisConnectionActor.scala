@@ -97,7 +97,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
     case packs: RawCommandPacks =>
       sender() ! PacksResult.Failure(new NotYetConnectedException(address))
     case Close =>
-      close(new ConnectionClosedException(address))
+      close(new ConnectionClosedException(address, "connection was closed explicitly by client".opt))
   }
 
   def connected(connection: ActorRef): Receive = {
@@ -132,17 +132,17 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
       log.debug(s"$address <<<<\n${RedisMsg.escape(data, quote = false).replaceAllLiterally("\\r\\n", "\\r\\n\n")}")
       config.debugListener.onReceive(data)
       decoder.decodeMore(data)
-    case _: ConnectionClosed =>
-      log.info(s"Connection to Redis at $address closed")
+    case cc: ConnectionClosed =>
+      log.info(s"Connection to Redis at $address closed${cc.getErrorCause.opt.fold("")(c => s": $c")}")
       connectionActor = Opt.Empty
-      failUnfinishedAndClose(new ConnectionClosedException(address))
+      failUnfinishedAndClose(new ConnectionClosedException(address, cc.getErrorCause.opt))
     case Close =>
       closeWhenIdle = true
       checkState()
   }
 
   def checkState(): Unit = {
-    if (!waitingForRequests && requestBeingSent.isEmpty && config.maxSentRequests.forall(_ > sentRequests.size)) {
+    if (!waitingForRequests && requestBeingSent.isEmpty && config.maxOutstandingRequests.forall(_ > sentRequests.size)) {
       if (initialized) {
         manager ! Accepted
       }
@@ -156,10 +156,10 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
   def closed(cause: RedisException): Receive = {
     case Stop =>
       context.stop(self)
-    case _: ConnectionClosed if connectionActor.contains(sender()) =>
-      log.info(s"Connection to Redis at $address closed")
+    case cc: ConnectionClosed if connectionActor.contains(sender()) =>
+      log.info(s"Connection to Redis at $address closed${cc.getErrorCause.opt.fold("")(c => s": $c")}")
       connectionActor = Opt.Empty
-      manager ! Closed
+      manager ! Closed(cause)
     case packs: RawCommandPacks =>
       sender() ! PacksResult.Failure(cause)
   }
@@ -167,7 +167,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
   def close(cause: RedisException): Unit = {
     connectionActor match {
       case Opt(connection) => connection ! Tcp.Close
-      case Opt.Empty => manager ! Closed
+      case Opt.Empty => manager ! Closed(cause)
     }
     become(closed(cause))
   }
@@ -188,7 +188,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
   }
 
   override def postStop() =
-    failUnfinished(new ClientStoppedException(address))
+    failUnfinished(new ClientStoppedException(address.opt))
 }
 
 object RedisConnectionActor {
@@ -248,7 +248,7 @@ object RedisConnectionActor {
   /**
     * Message sent to manager actor after connection is closed.
     */
-  case object Closed
+  case class Closed(cause: RedisException)
   /**
     * Message sent back to manager actor to indicate that previous request was written (successfully or not) and
     * connection actor is ready to accept another request.

@@ -35,8 +35,8 @@ final class ClusterMonitoringActor(
 
   private val random = new Random
   private var masters = mutable.LinkedHashSet.empty[NodeAddress]
-  private val connections = MHashMap(seedNodes.map(addr => (addr, createConnection(addr))): _*)
-  private val clients = new MHashMap[NodeAddress, RedisNodeClient]
+  private val connections = mutable.OpenHashMap(seedNodes.map(addr => (addr, createConnection(addr))): _*)
+  private val clients = new mutable.OpenHashMap[NodeAddress, RedisNodeClient]
   private var state = ClusterState(IndexedSeq.empty, Map.empty)
   private var suspendUntil = Deadline.now
 

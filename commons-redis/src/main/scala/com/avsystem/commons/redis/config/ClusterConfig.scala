@@ -12,8 +12,30 @@ import com.avsystem.commons.redis.{NodeAddress, RedisBatch, RedisOp}
 import scala.concurrent.duration._
 
 /**
-  * Author: ghik
-  * Created: 24/06/16.
+  * Configuration of a [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]]
+  *
+  * @param nodeConfigs                 function that returns [[NodeConfig]] given the address of the node.
+  * @param monitoringConnectionConfigs function that returns [[ConnectionConfig]] for a monitoring connection
+  *                                    used to monitor node with given address. The cluster client keeps single
+  *                                    monitoring connection for every cluster master. Monitoring connections are used
+  *                                    to refresh Redis Cluster state (current masters and slot mapping).
+  * @param autoRefreshInterval         interval between routine cluster state refresh operations
+  * @param minRefreshInterval          minimal interval between consecutive cluster state refresh operations.
+  *                                    Normally, cluster state is not refreshed more frequently than specified by
+  *                                    `autoRefreshInterval` but additional refresh operations may be forced when
+  *                                    cluster redirections are observed. `minRefreshInterval` prevents too many
+  *                                    refresh operations from being executed in such situations.
+  * @param nodesToQueryForState        function that determines how many randomly selected masters should be queried
+  *                                    for cluster state during routine state refresh operation. The function takes
+  *                                    current number of known masters as its argument.
+  * @param maxRedirections             maximum number of consecutive redirections automatically handled by
+  *                                    [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
+  *                                    When set to 0, redirections are not handled at all.
+  * @param nodeClientCloseDelay        Delay after which [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]]
+  *                                    is closed when it's master leaves cluster state (goes down or becomes a slave).
+  *                                    Note that the node client is NOT operational during that delay. Trying to
+  *                                    execute commands on it will result in
+  *                                    [[com.avsystem.commons.redis.exception.NodeRemovedException NodeRemovedException]]
   */
 case class ClusterConfig(
   nodeConfigs: NodeAddress => NodeConfig = _ => NodeConfig(),
@@ -25,6 +47,21 @@ case class ClusterConfig(
   nodeClientCloseDelay: FiniteDuration = 1.seconds
 )
 
+/**
+  * Configuration of a [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]], used either as a standalone
+  * client or internally by [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
+  *
+  * @param poolSize             number of connections used by node client. Commands are distributed between connections using
+  *                             a round-robin scenario. Number of connections in the pool is constant and cannot be changed.
+  * @param initOp               a [[com.avsystem.commons.redis.RedisOp RedisOp]] executed by this client upon initialization.
+  *                             This may be useful for things like script loading, especially when using cluster client which
+  *                             may create and close node clients dynamically as reactions on cluster state changes.
+  * @param initTimeout          timeout used by initialization operation (`initOp`)
+  * @param connectionConfigs    a function that returns [[ConnectionConfig]] for a connection given its id. Connection ID
+  *                             is its index in the connection pool, i.e. an int ranging from 0 to `poolSize`-1.
+  * @param reconnectionStrategy a [[RetryStrategy]] used to determine what delay should be used when reconnecting
+  *                             a failed connection
+  */
 case class NodeConfig(
   poolSize: Int = 16,
   initOp: RedisOp[Any] = RedisOp.unit,
@@ -35,17 +72,59 @@ case class NodeConfig(
   require(poolSize > 0, "Pool size must be positive")
 }
 
+/**
+  * Configuration options for a single Redis connection.
+  *
+  * `initCommands` usage example:
+  * {{{
+  *   implicit val actorSystem = ActorSystem()
+  *   import RedisApi.Batches.StringTyped._
+  *   val nodeClient = new RedisNodeClient(
+  *     config = NodeConfig(
+  *       poolSize = 8,
+  *       connectionConfigs = connectionId => ConnectionConfig(
+  *         initCommands = auth("mypassword") *> clientSetname(s"conn_$$connectionId") *> select(1)
+  *       )
+  *     )
+  *   )
+  * }}}
+  *
+  * @param initCommands           commands always sent upon establishing a Redis connection (and every time it's reconnected).
+  *                               The most common reason to configure `initCommands` is to specify authentication password used by every
+  *                               connection (`AUTH` command), but it's also useful for commands like `CLIENT SETNAME`, `SELECT`, etc.
+  *                               Note that these are all commands that can't be executed directly by
+  *                               [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]] or
+  *                               [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
+  * @param actorName              name of the actor representing the connection
+  * @param localAddress           local bind address for the connection
+  * @param socketOptions          socket options for the connection
+  * @param socketTimeout          socket timeout for the connection
+  * @param maxOutstandingRequests maximum number of requests (batches) that may be sent through the connection without
+  *                               receiving a response. For example, if `maxOutstandingRequests` is 1 then every batch
+  *                               must receive a response from Redis before next batch can be sent.
+  *                               Setting this option to a low value may help reduce number of errors caused by connection
+  *                               and node failures. See [[com.avsystem.commons.redis.exception.ConnectionClosedException ConnectionClosedException]]
+  *                               for more details.
+  * @param debugListener          listener for traffic going through this connection. Only for debugging and testing
+  *                               purposes
+  */
 case class ConnectionConfig(
   initCommands: RedisBatch[Any] = RedisBatch.unit,
   actorName: OptArg[String] = OptArg.Empty,
   localAddress: OptArg[InetSocketAddress] = OptArg.Empty,
   socketOptions: List[Inet.SocketOption] = Nil,
   socketTimeout: OptArg[FiniteDuration] = OptArg.Empty,
-  maxSentRequests: OptArg[Int] = OptArg.Empty,
+  maxOutstandingRequests: OptArg[Int] = OptArg.Empty,
   debugListener: DebugListener = DevNullListener
 )
 
 trait RetryStrategy {
+  /**
+    * Determines a delay that will be waited before restarting a failed Redis connection.
+    * If this method returns `Opt.Empty`, the connection will not be restarted and will remain in a broken state.
+    *
+    * @param retry indicates which consecutive reconnection retry it is after the connection was lost, starting from 0
+    */
   def retryDelay(retry: Int): Opt[FiniteDuration]
 }
 

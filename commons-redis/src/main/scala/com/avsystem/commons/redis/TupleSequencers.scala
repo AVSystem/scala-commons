@@ -979,16 +979,11 @@ object TupleSequencers {
           result(i) = batches.productElement(i).asInstanceOf[RedisBatch[Any]].decodeReplies(replies, index, inTransaction)
         } catch {
           case NonFatal(cause) =>
-            if (failure.isEmpty) {
-              failure = cause.opt
-            }
+            failure = failure orElse cause.opt
         }
         i += 1
       }
-      failure match {
-        case Opt.Empty => fun(result)
-        case Opt(cause) => throw cause
-      }
+      failure.fold(fun(result))(throw _)
     }
   }
 }

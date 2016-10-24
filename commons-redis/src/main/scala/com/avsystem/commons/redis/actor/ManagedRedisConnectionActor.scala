@@ -36,7 +36,7 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
   // true when we're in the process of sending some reservation requests to the connection
   private var reservationWriting = false
   // true when reservation currently being written is broken due connection failure
-  private var reservationBroken = false
+  private var brokenReservationCause = Opt.empty[RedisException]
   private var reconnectionRetry = 0
 
   def handleIncoming(client: ActorRef, packs: RawCommandPacks, reserve: Boolean): Unit =
@@ -52,33 +52,37 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
     }
 
   def handleAllowed(client: ActorRef, packs: RawCommandPacks, reserve: Boolean): Unit =
-    if (reservationBroken) {
-      // connection was restarted and current reservation is broken
-      client ! PacksResult.Failure(new ConnectionClosedException(address))
-      handleNextAllowed()
-    } else if (connectionReady) {
-      if (reserve) {
-        reservationWriting = true
-      }
-      connectionReady = false
-      connectionActor.tell(packs, client)
-    } else {
-      writeQueue += QueuedPacks(client, packs, reserve)
+    brokenReservationCause match {
+      case Opt(cause) =>
+        // connection was restarted and current reservation is broken
+        client ! PacksResult.Failure(cause)
+        handleNextAllowed()
+      case Opt.Empty =>
+        if (connectionReady) {
+          if (reserve) {
+            reservationWriting = true
+          }
+          connectionReady = false
+          connectionActor.tell(packs, client)
+        } else {
+          writeQueue += QueuedPacks(client, packs, reserve)
+        }
     }
 
-  def handleRelease(): Unit =
-    if (reservationBroken) {
-      // when reservation is broken, don't reset state because connection was restarted anyway and its state was lost
-      reservationBroken = false
+  def handleRelease(): Unit = brokenReservationCause match {
+    case Opt(cause) =>
+      brokenReservationCause = Opt.Empty
       reservationWriting = false
       handleNextAllowed()
-    } else if (connectionReady) {
-      reservationWriting = false
-      connectionReady = false
-      connectionActor ! RedisConnectionActor.ResetState
-    } else {
-      writeQueue += QueuedRelease
-    }
+    case Opt.Empty =>
+      if (connectionReady) {
+        reservationWriting = false
+        connectionReady = false
+        connectionActor ! RedisConnectionActor.ResetState
+      } else {
+        writeQueue += QueuedRelease
+      }
+  }
 
   def handleNextAllowed(): Unit =
     if (writeQueue.nonEmpty) {
@@ -113,12 +117,11 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
       connectionReady = true
       handleNextAllowed()
     case InitializationFailure(cause) =>
-      failUnfinished(cause)
-      context.become(closed(cause))
+      close(cause)
     case Accepted =>
       connectionReady = true
       handleNextAllowed()
-    case Closed =>
+    case Closed(cause) =>
       log.info(s"Connection to Redis on $address was closed.")
       connectionActor ! Stop
       reconnectionStrategy.retryDelay(reconnectionRetry) match {
@@ -128,14 +131,12 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
           context.system.scheduler.scheduleOnce(delay, context.self, Reconnect)(context.dispatcher)
           connectionReady = false
           if (reservationWriting) {
-            reservationBroken = true
+            brokenReservationCause = cause.opt
             handleNextAllowed() // in order to fail any remaining requests from this reservation
           }
         case Opt.Empty =>
           log.error(s"All reconnection attempts to $address failed. Stopping.")
-          val cause = new ConnectionClosedException(address)
-          failUnfinished(cause)
-          context.become(closed(cause))
+          close(cause)
       }
     case Reconnect =>
       connectionActor = newConnection
@@ -148,8 +149,14 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
       release()
   }
 
+  def close(cause: RedisException): Unit = {
+    failUnfinished(cause)
+    reservedBy.foreach(context.unwatch)
+    context.become(closed(cause))
+  }
+
   def closed(cause: RedisException): Receive = {
-    case Closed =>
+    case Closed(_) =>
       connectionActor ! Stop
     case packs: RawCommandPacks =>
       sender() ! PacksResult.Failure(cause)
@@ -169,7 +176,7 @@ final class ManagedRedisConnectionActor(address: NodeAddress, config: Connection
   }
 
   override def postStop() =
-    failUnfinished(new ClientStoppedException(address))
+    failUnfinished(new ClientStoppedException(address.opt))
 }
 
 object ManagedRedisConnectionActor {

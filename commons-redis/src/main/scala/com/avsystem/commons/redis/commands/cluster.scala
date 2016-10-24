@@ -11,6 +11,9 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 trait KeyedClusterApi extends ApiSubset {
+  def keySlot(key: Key): Int =
+    Hash.slot(keyCodec.write(key))
+
   def clusterKeyslot(key: Key): Result[Int] =
     execute(new ClusterKeyslot(key))
 

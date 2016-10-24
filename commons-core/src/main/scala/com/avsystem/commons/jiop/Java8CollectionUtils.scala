@@ -58,16 +58,16 @@ object Java8CollectionUtils {
     def compute(key: K, remappingFunction: (K, V) => V): V =
       map.compute(key, jBiFunction(remappingFunction))
 
-    def computeIfAbsent(key: K, mappingFunction: K => V): V =
+    def computeIfAbsent(key: K)(mappingFunction: K => V): V =
       map.computeIfAbsent(key, jFunction(mappingFunction))
 
-    def computeIfPresent(key: K, remappingFunction: (K, V) => V): V =
+    def computeIfPresent(key: K)(remappingFunction: (K, V) => V): V =
       map.computeIfPresent(key, jBiFunction(remappingFunction))
 
     def forEach(action: (K, V) => Any): Unit =
       map.forEach(jBiConsumer(action))
 
-    def merge(key: K, value: V, remappingFunction: (V, V) => V): V =
+    def merge(key: K, value: V)(remappingFunction: (V, V) => V): V =
       map.merge(key, value, jBiFunction(remappingFunction))
 
     def replaceAll(function: (K, V) => V): Unit =

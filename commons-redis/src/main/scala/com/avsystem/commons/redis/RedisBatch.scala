@@ -147,8 +147,55 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
   val unit = success(())
 
   implicit class SequenceOps[Ops, Res](private val ops: Ops) extends AnyVal {
+    /**
+      * Merges multiple [[RedisBatch]]es into one. Alternative syntax for [[RedisBatch.sequence]].
+      * See [[Sequencer]] for more general description of sequencing.
+      *
+      * Example usage:
+      * {{{
+      *   import RedisApi.Batches.StringTyped._
+      *
+      *   // tuple of batches -> single batch of a tuple
+      *   val tupleBatch: RedisBatch[(Opt[String],Long)] =
+      *     (get("key1"), incr("key2")).sequence
+      *
+      *   // collection of batches -> single batch of a collection
+      *   val seqBatch: RedisBatch[Seq[Opt[String]]] =
+      *     (1 to 10).map(i => get(s"key$i")).sequence
+      *
+      *   // collection of tuples of batches -> single batch of collection of tuples
+      *   val tupleCollectionBatch: RedisBatch[Seq[(Opt[String], Long)]] =
+      *     (1 to 10).map(i => (get(s"stringKey$i"), incr(s"numberKey$i"))).sequence
+      * }}}
+      */
     def sequence(implicit sequencer: Sequencer[Ops, Res]): RedisBatch[Res] = sequencer.sequence(ops)
   }
+
+  /**
+    * Merges multiple [[RedisBatch]]es into one. This is similar to Scala's `Future.sequence` but more general,
+    * because the left-hand-side (`Ops`) can be more than just a collection. It can be any type for which
+    * an instance of [[Sequencer]] type-function is defined. This includes all standard Scala collections and tuples.
+    * See [[Sequencer]] for more details.
+    *
+    * Example usage:
+    * {{{
+    *   import RedisApi.Batches.StringTyped._
+    *
+    *   // tuple of batches -> single batch of a tuple
+    *   val tupleBatch: RedisBatch[(Opt[String],Long)] =
+    *     RedisBatch.sequence(get("key1"), incr("key2"))
+    *
+    *   // collection of batches -> single batch of a collection
+    *   val seqBatch: RedisBatch[Seq[Opt[String]]] =
+    *     RedisBatch.sequence((1 to 10).map(i => get(s"key$i")))
+    *
+    *   // collection of tuples of batches -> single batch of collection of tuples
+    *   val tupleCollectionBatch: RedisBatch[Seq[(Opt[String], Long)]] =
+    *     RedisBatch.sequence((1 to 10).map(i => (get(s"stringKey$i"), incr(s"numberKey$i"))))
+    * }}}
+    */
+  def sequence[Ops, Res](ops: Ops)(implicit sequencer: Sequencer[Ops, Res]): RedisBatch[Res] =
+    sequencer.sequence(ops)
 }
 
 trait AtomicBatch[+A] extends RedisBatch[A] with RawCommandPack {
