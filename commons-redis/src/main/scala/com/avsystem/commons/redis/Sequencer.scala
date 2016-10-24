@@ -24,17 +24,14 @@ import scala.util.control.NonFatal
   * Nesting is also possible. For example, if `Ops` is `(List[RedisBatch[Int&#93;], RedisBatch[String])` then
   * `Res` will be `(List[Int], String)`.
   *
-  * In order to perform "sequencing", simply call `sequence` on your collection of batches, e.g.
+  * In order to perform "sequencing", simply call [[RedisBatch.SequenceOps#sequence sequence]]
+  * on your collection of batches, e.g.
   *
   * {{{
-  *   import akka.util.ByteString
-  *   import com.avsystem.commons.redis.RedisCommands._
+  *   import RedisApi.Batches.StringTyped._
   *
-  *   val key1 = ByteString("key1")
-  *   val key2 = ByteString("key2")
-  *
-  *   val tupleBatch: RedisBatch[(Long, String)] = (incr(key1), get(key2).map(_.utf8String)).sequence
-  *   val listBatch: RedisBatch[List[Int]] = List(key1, key2).map(key => incr(key)).sequence
+  *   val tupleBatch: RedisBatch[(Long, String)] = (incr("key1"), get("key2")).sequence
+  *   val listBatch: RedisBatch[List[Long]] = List("key1", "key2").map(key => incr(key)).sequence
   * }}}
   */
 @implicitNotFound("${Ops} is not something that can be transformed into RedisBatch")

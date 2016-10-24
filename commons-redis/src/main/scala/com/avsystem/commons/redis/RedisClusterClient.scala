@@ -206,12 +206,10 @@ final class RedisClusterClient(
 
   /**
     * Executes a [[RedisBatch]] on a Redis Cluster deployment. In order to determine node on which each command must be
-    * executed, every command or `MULTI`-`EXEC` transaction in the batch must contain at least one key,
-    * otherwise [[com.avsystem.commons.redis.exception.NoKeysException NoKeysException]] is thrown.
-    * Also, in the scope of a single command or transaction all keys must hash to the same slot. Otherwise,
-    * [[com.avsystem.commons.redis.exception.CrossSlotException CrossSlotException]] is thrown.
+    * executed, every command or `MULTI`-`EXEC` transaction in the batch must contain at least one key.
+    * Also, in the scope of a single command or transaction all keys must hash to the same slot.
     *
-    * However, in the scope of the whole batch, not all commands and transactions must hash to the same slot.
+    * However, each command or transaction in the batch may target different slot.
     * [[RedisClusterClient]] automatically splits the original batch and creates smaller batches, one for every master
     * node that needs to be contacted. In other words, commands and transactions from the original batch are
     * automatically distributed over Redis Cluster master nodes, in parallel, using a scatter-gather like manner.
@@ -223,7 +221,7 @@ final class RedisClusterClient(
     * (see [[http://redis.io/topics/cluster-spec#multiple-keys-operations Redis Cluster specification]]).
     * [[RedisClusterClient]] makes no attempt to recover from these errors. It would require waiting for an
     * indeterminate time until the migration is finished. The maximum number of consecutive retries caused by
-    * redirections is configured by [[com.avsystem.commons.redis.config.ClusterConfig#maxRedirections maxRedirections]].
+    * redirections is configured by [[config.ClusterConfig#maxRedirections maxRedirections]].
     * See [[http://redis.io/topics/cluster-spec#redirection-and-resharding Redis Cluster specification]] for
     * more detailed information on redirections.
     *
@@ -232,10 +230,20 @@ final class RedisClusterClient(
     *
     * Execution of each command in the batch or the whole batch may fail due to following reasons:
     * <ul>
-    * <li>[[com.avsystem.commons.redis.exception.ConnectionClosedException ConnectionClosedException]]  </li>
-    * <li>[[com.avsystem.commons.redis.exception.WriteFailedException WriteFailedException]] when a network write
+    * <li>[[exception.NoKeysException NoKeysException]] when some command or transaction contains no keys</li>
+    * <li>[[exception.CrossSlotException CrossSlotException]] when some command or transaction
+    * contains keys hashing to different slots</li>
+    * <li>[[exception.ForbiddenCommandException ForbiddenCommandException]] when trying to execute command not
+    * supported by this client type</li>
+    * <li>[[exception.ErrorReplyException ErrorReplyException]] when Redis server replies with an error for some command</li>
+    * <li>[[exception.UnexpectedReplyException UnexpectedReplyException]] when Redis server replies with something
+    * unexpected by a decoder of some command</li>
+    * <li>[[exception.ConnectionClosedException ConnectionClosedException]] when connection is closed or
+    * reset (the client reconnects automatically after connection failure but commands that were in the middle of
+    * execution may still fail)</li>
+    * <li>[[exception.WriteFailedException WriteFailedException]] when a network write
     * failed</li>
-    * <li>[[com.avsystem.commons.redis.exception.TooManyRedirectionsException TooManyRedirectionsException]] when
+    * <li>[[exception.TooManyRedirectionsException TooManyRedirectionsException]] when
     * a command was replied with `MOVED` or `ASK` redirection too many times in a row. This might indicate
     * misconfiguration of the Redis Cluster deployment.</li>
     * </ul>
@@ -388,7 +396,7 @@ case class ClusterState(mapping: IndexedSeq[(SlotRange, RedisNodeClient)], maste
     *
     * However, be aware that when executing transactions on node clients obtained from [[ClusterState]], you must
     * manually handle cluster redirections and cluster state changes
-    * ([[com.avsystem.commons.redis.exception.NodeRemovedException NodeRemovedException]])
+    * ([[exception.NodeRemovedException NodeRemovedException]])
     */
   def clientForSlot(slot: Int): RedisNodeClient = {
     def binsearch(from: Int, to: Int): RedisNodeClient =

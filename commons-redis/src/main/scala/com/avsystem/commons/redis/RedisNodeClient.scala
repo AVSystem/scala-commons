@@ -21,7 +21,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 /**
   * Redis client implementation for a single Redis node using a connection pool. Connection pool size is constant
   * and batches and operations are distributed over connections using round-robin scheme. Connections are automatically
-  * reconnected upon failure (possibly with an appropriate delay, see [[com.avsystem.commons.redis.config.NodeConfig NodeConfig]]
+  * reconnected upon failure (possibly with an appropriate delay, see [[config.NodeConfig NodeConfig]]
   * for details).
   */
 final class RedisNodeClient(
@@ -54,7 +54,7 @@ final class RedisNodeClient(
   /**
     * Notifies the [[RedisNodeClient]] that its node is no longer a master in Redis Cluster and.
     * The client stops itself as a result and fails any pending unsent requests with
-    * [[com.avsystem.commons.redis.exception.NodeRemovedException]].
+    * [[exception.NodeRemovedException]].
     */
   private[redis] def nodeRemoved(): Unit = {
     failure = new NodeRemovedException(address).opt
@@ -71,21 +71,28 @@ final class RedisNodeClient(
     *
     * Note that even though connection used by [[RedisNodeClient]] are automatically reconnected, it's still possible
     * that an error is returned for some batches that were executed around the time connection failure happened.
-    * To be precise, [[com.avsystem.commons.redis.exception.ConnectionClosedException ConnectionClosedException]]
+    * To be precise, [[exception.ConnectionClosedException ConnectionClosedException]]
     * is returned for batches that were sent through the connection but the connection failed before
     * a response could be received. There is no way to safely retry such batches because it is unknown whether Redis
-    * node actually received and executed them.
+    * node actually received and executed them or not.
     *
-    * Also, be aware that if this client has been obtained from a [[RedisClusterClient]] instance
-    * (e.g. by using [[com.avsystem.commons.redis.RedisClusterClient#masterClient masterClient]]) then batch execution
-    * may fail for other reasons:
-    *
+    * Execution of each command in the batch or the whole batch may fail due to following reasons:
     * <ul>
-    * <li>[[com.avsystem.commons.redis.exception.ErrorReplyException ErrorReplyException]] with a cluster redirection
-    * (`MOVED` or `ASK`) may be returned when this client's node stops being a master or resharding is performed.</li>
-    * <li>[[com.avsystem.commons.redis.exception.NodeRemovedException NodeRemovedException]] may be returned when
-    * the cluster client detects that the node is no longer a master. In other words, you can use an instance
-    * of [[RedisNodeClient]] provided by [[RedisClusterClient]] only as long as it's connected to a master node.</li>
+    * <li>[[exception.ForbiddenCommandException ForbiddenCommandException]] when trying to execute command not
+    * supported by this client type</li>
+    * <li>[[exception.ErrorReplyException ErrorReplyException]] when Redis server replies with an error for some command.
+    * In particular, if this client was obtained from [[RedisClusterClient]] then every keyed command may fail with
+    * cluster redirection. You can pattern-match redirection errors using [[RedirectionException]] extractor object.
+    * </li>
+    * <li>[[exception.UnexpectedReplyException UnexpectedReplyException]] when Redis server replies with something
+    * unexpected by a decoder of some command</li>
+    * <li>[[exception.ConnectionClosedException ConnectionClosedException]] when connection is closed or
+    * reset (the client reconnects automatically after connection failure but commands that were in the middle of
+    * execution may still fail)</li>
+    * <li>[[exception.WriteFailedException WriteFailedException]] when a network write
+    * failed</li>
+    * <li>[[exception.NodeRemovedException NodeRemovedException]] when this client was obtained from
+    * [[RedisClusterClient]] and Redis node that it's connected to is no longer a master</li>
     * </ul>
     */
   def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A] =
@@ -97,10 +104,10 @@ final class RedisNodeClient(
     * `WATCH`-`MULTI`-`EXEC` transaction (see [[RedisOp]] for more details).
     *
     * Note that the client does not handle optimistic lock failures (which happen when watched key is modified by
-    * other client). An [[com.avsystem.commons.redis.exception.OptimisticLockException OptimisticLockException]] is
+    * other client). An [[exception.OptimisticLockException OptimisticLockException]] is
     * returned in such cases and you must recover from it manually.
     *
-    * Execution of a [[RedisOp]] may also fail for the same reasons as specified in [[executeBatch]].
+    * Execution of a [[RedisOp]] may also fail for the same reasons as specified for [[RedisBatch]] in [[executeBatch]].
     * Be especially careful when using node clients obtained from cluster client.
     */
   def executeOp[A](op: RedisOp[A])(implicit timeout: Timeout): Future[A] =

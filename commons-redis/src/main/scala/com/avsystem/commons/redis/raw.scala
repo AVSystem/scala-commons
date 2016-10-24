@@ -67,8 +67,8 @@ object RawCommand {
 }
 
 /**
-  * One or more [[RawCommandPack]]s. More lightweight than regular Scala collection
-  * (avoids wrapping in case of single element).
+  * One or more [[RawCommandPack]]s. Conceptually pretty much the same as `Traversable[RawCommandPack]]`
+  * but more lightweight.
   */
 trait RawCommandPacks {
   def emitCommandPacks(consumer: RawCommandPack => Unit): Unit
@@ -98,10 +98,10 @@ final class WatchState {
 }
 
 /**
-  * Something that translates incoming [[com.avsystem.commons.redis.protocol.RedisMsg RedisMsg]]
-  * messages and emits a single [[com.avsystem.commons.redis.protocol.RedisReply RedisReply]].
+  * Something that translates incoming [[protocol.RedisMsg RedisMsg]]
+  * messages and emits a single [[protocol.RedisReply RedisReply]].
   * For example, it may handle transactions by extracting actual responses for every command from
-  * the `EXEC` response and returning them in an [[com.avsystem.commons.redis.protocol.ArrayMsg ArrayMsg]]
+  * the `EXEC` response and returning them in an [[protocol.ArrayMsg ArrayMsg]]
   * (see [[Transaction]]).
   */
 trait ReplyPreprocessor {

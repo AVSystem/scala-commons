@@ -10,6 +10,16 @@ import scala.util.{Failure, Success, Try}
 
 /**
   * Represents a Redis operation or a set of operations which is sent to Redis as a single batch.
+  * [[RedisBatch]] yields a result of type `A` which is decoded from responses to commands from this batch.
+  * Execution of a batch may also fail for various reasons. Therefore, [[RedisBatch]] contains API that allows
+  * to recover from failures, e.g. [[RedisBatch.tried]].
+  *
+  * [[RedisBatch]]es may be combined with each other to form bigger batches.
+  * The simpliest primitive for combining batches is [[RedisBatch.map2]] operation while the most convenient
+  * way is by using [[RedisBatch.sequence]] operation which is powered by [[Sequencer]] typeclass.
+  *
+  * [[RedisBatch]] can be turned into a [[RedisOp]] or executed by [[RedisExecutor]]
+  * (e.g. one of Redis client implementations).
   *
   * @tparam A result yield by this batch
   */
@@ -67,12 +77,24 @@ trait RedisBatch[+A] { self =>
         try self.decodeReplies(replies, index, inTransaction) catch f
     }
 
+  /**
+    * This is a symbolic alias for [[map2]]. The symbol (along with [[*>]] and [[<*]]) is inspired by its
+    * [[http://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Applicative.html#v:-60--42--62- Haskell equivalent]].
+    */
   def <*>[B, C](other: RedisBatch[B])(f: (A, B) => C): RedisBatch[C] =
     (self map2 other) (f)
 
+  /**
+    * Merges two batches into a single batch where result of the left-hand-side batch is returned while
+    * result of right-hand-side is discarded. Useful when right-hand-side returns `Unit`.
+    */
   def <*[B](other: RedisBatch[B]): RedisBatch[A] =
     map2(other)((a, _) => a)
 
+  /**
+    * Merges two batches into a single batch where result of the right-hand-side batch is returned while
+    * result of left-hand-side is discarded. Useful when left-hand-side returns `Unit`.
+    */
   def *>[B](other: RedisBatch[B]): RedisBatch[B] =
     map2(other)((_, b) => b)
 
@@ -98,12 +120,22 @@ trait RedisBatch[+A] { self =>
   def ignoreFailures: RedisBatch[Unit] =
     transform(_ => Success(()))
 
+  /**
+    * Transforms this batch into a [[RedisOp]].
+    */
   def operation: RedisOp[A] =
     RedisOp.LeafOp(this)
 
+  /**
+    * Ensures that this batch is executed inside a `MULTI`-`EXEC` block.
+    */
   def transaction: RedisBatch[A] =
     new Transaction(this)
 
+  /**
+    * Ensures that this batch is atomic, i.e. it's either a single Redis command or is executed inside a
+    * `MULTI`-`EXEC` block.
+    */
   def atomic: RedisBatch[A] =
     transaction
 }
@@ -161,11 +193,11 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
       *
       *   // collection of batches -> single batch of a collection
       *   val seqBatch: RedisBatch[Seq[Opt[String]]] =
-      *     (1 to 10).map(i => get(s"key$i")).sequence
+      *     (1 to 10).map(i => get(s"key$$i")).sequence
       *
       *   // collection of tuples of batches -> single batch of collection of tuples
       *   val tupleCollectionBatch: RedisBatch[Seq[(Opt[String], Long)]] =
-      *     (1 to 10).map(i => (get(s"stringKey$i"), incr(s"numberKey$i"))).sequence
+      *     (1 to 10).map(i => (get(s"stringKey$$i"), incr(s"numberKey$$i"))).sequence
       * }}}
       */
     def sequence(implicit sequencer: Sequencer[Ops, Res]): RedisBatch[Res] = sequencer.sequence(ops)
@@ -187,17 +219,21 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
     *
     *   // collection of batches -> single batch of a collection
     *   val seqBatch: RedisBatch[Seq[Opt[String]]] =
-    *     RedisBatch.sequence((1 to 10).map(i => get(s"key$i")))
+    *     RedisBatch.sequence((1 to 10).map(i => get(s"key$$i")))
     *
     *   // collection of tuples of batches -> single batch of collection of tuples
     *   val tupleCollectionBatch: RedisBatch[Seq[(Opt[String], Long)]] =
-    *     RedisBatch.sequence((1 to 10).map(i => (get(s"stringKey$i"), incr(s"numberKey$i"))))
+    *     RedisBatch.sequence((1 to 10).map(i => (get(s"stringKey$$i"), incr(s"numberKey$$i"))))
     * }}}
     */
   def sequence[Ops, Res](ops: Ops)(implicit sequencer: Sequencer[Ops, Res]): RedisBatch[Res] =
     sequencer.sequence(ops)
 }
 
+/**
+  * [[RedisBatch]] guaranteed to be atomic, i.e. it either consists of a single command or is a `MULTI`-`EXEC`
+  * transaction.
+  */
 trait AtomicBatch[+A] extends RedisBatch[A] with RawCommandPack {
   def rawCommandPacks = this
   override def atomic: RedisBatch[A] = this
@@ -206,6 +242,30 @@ trait AtomicBatch[+A] extends RedisBatch[A] with RawCommandPack {
 /**
   * Represents a sequence of Redis operations executed using a single Redis connection.
   * Any operation may depend on the result of some previous operation (therefore, `flatMap` is available).
+  * [[RedisOp]] is guaranteed to be executed fully and exclusively on a single Redis connection
+  * (no other concurrent commands can be executed on that connection during execution of [[RedisOp]]).
+  * Because of that, [[RedisOp]]s may execute `WATCH` and `UNWATCH` commands.
+  *
+  * In fact, the primary purpose of [[RedisOp]] is to allow execution of Redis transactions with optimistic locking.
+  * For this purpose, [[RedisOp]] may be created by flat-mapping [[RedisBatch]]es.
+  *
+  * For example, below is an implementation of Redis transaction which fetches a value of some key (as `Int`)
+  * multiplies it by 3 and saves it back to Redis. During this operation, the key being modified is watched so that
+  * saving fails with [[exception.OptimisticLockException OptimisticLockException]]
+  * if some other client concurrently modifies that key.
+  *
+  * {{{
+  * val api = RedisApi.Batches.StringTyped.valueType[Int]
+  * import api._
+  * val transactionOp: RedisOp[Unit] = for {
+  *   // we're sending WATCH and GET commands in a single batch
+  *   value <- watch("number") *> get("number").map(_.getOrElse(1))
+  *   // SET command is wrapped in MULTI-EXEC block
+  *   _ <- set("number", value * 3).transaction
+  * } yield ()
+  * }}}
+  *
+  * [[RedisOp]] can be passed for execution to [[RedisOpExecutor]] (implemented by e.g. [[RedisNodeClient]]).
   */
 sealed trait RedisOp[+A] { self =>
   def map[B](f: A => B): RedisOp[B] =

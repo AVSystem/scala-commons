@@ -22,7 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * changing commands like `AUTH`, `CLIENT SETNAME`, `WATCH`, etc.
   *
   * However, note that connection-setup commands like `AUTH` may also be specified in
-  * [[com.avsystem.commons.redis.config.ConnectionConfig ConnectionConfig]]
+  * [[config.ConnectionConfig ConnectionConfig]]
   * (which may also be specified for connections used by [[RedisNodeClient]] and [[RedisClusterClient]]).
   *
   * This type of client should only be used when requiring capability of manual handling of connection state.
