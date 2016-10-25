@@ -4,15 +4,16 @@ package rpc.akka.client
 import akka.actor.{Actor, ActorRef, Props, ReceiveTimeout, Status}
 import akka.pattern.pipe
 import com.avsystem.commons.rpc.akka.AkkaRPCFramework.RawValue
-import com.avsystem.commons.rpc.akka.{AkkaRPCClientConfig, InvocationFailure, InvocationSuccess, MonifuProtocol, ObservableInvocationMessage, RemoteCallException, RemoteTimeoutException}
-import monifu.reactive.{Ack, Subscriber}
+import com.avsystem.commons.rpc.akka.{AkkaRPCClientConfig, InvocationFailure, InvocationSuccess, MonixProtocol, ObservableInvocationMessage, RemoteCallException, RemoteTimeoutException}
+import monix.execution.Ack
+import monix.reactive.observers.Subscriber
 
 import scala.concurrent.duration.Duration
 
 /**
   * @author Wojciech Milewski
   */
-private final class MonifuClientActor(subscriber: Subscriber[RawValue], config: AkkaRPCClientConfig) extends Actor {
+private final class MonixClientActor(subscriber: Subscriber[RawValue], config: AkkaRPCClientConfig) extends Actor {
 
   override def receive: Receive = initializing
 
@@ -24,8 +25,8 @@ private final class MonifuClientActor(subscriber: Subscriber[RawValue], config: 
   }
 
   private def waitingForServer: Receive = {
-    case MonifuProtocol.Heartbeat =>
-      //do absolutely nothing as this message should only reset timeout counter
+    case MonixProtocol.Heartbeat =>
+    //do absolutely nothing as this message should only reset timeout counter
     case InvocationSuccess(value) =>
       context.setReceiveTimeout(Duration.Undefined)
       import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
@@ -35,7 +36,7 @@ private final class MonifuClientActor(subscriber: Subscriber[RawValue], config: 
     case InvocationFailure(name, message) =>
       subscriber.onError(new RemoteCallException(name, message))
       context.stop(self)
-    case MonifuProtocol.StreamCompleted =>
+    case MonixProtocol.StreamCompleted =>
       subscriber.onComplete()
       context.stop(self)
     case ReceiveTimeout =>
@@ -45,19 +46,19 @@ private final class MonifuClientActor(subscriber: Subscriber[RawValue], config: 
 
   private def waitingForConsumer(server: ActorRef): Receive = {
     case Ack.Continue =>
-      server ! MonifuProtocol.Continue
+      server ! MonixProtocol.Continue
       context.setReceiveTimeout(config.observableMessageTimeout)
       context.become(waitingForServer)
-    case Ack.Cancel =>
-      server ! MonifuProtocol.Cancel
+    case Ack.Stop =>
+      server ! MonixProtocol.Stop
       context.stop(self)
     case Status.Failure(cause) =>
       subscriber.onError(cause)
-      server ! MonifuProtocol.Cancel
+      server ! MonixProtocol.Stop
       context.stop(self)
   }
 }
 
-private object MonifuClientActor {
-  def props(s: Subscriber[RawValue], config: AkkaRPCClientConfig) = Props(new MonifuClientActor(s, config))
+private object MonixClientActor {
+  def props(s: Subscriber[RawValue], config: AkkaRPCClientConfig) = Props(new MonixClientActor(s, config))
 }

@@ -2,12 +2,12 @@ package com.avsystem.commons
 package rpc.akka
 
 import com.avsystem.commons.rpc.RPCFramework
-import monifu.reactive.Observable
+import monix.reactive.Observable
 
-trait MonifuRPCFramework extends RPCFramework {
-  override type RawRPC <: MonifuRawRPC
+trait MonixRPCFramework extends RPCFramework {
+  override type RawRPC <: MonixRawRPC
 
-  trait MonifuRawRPC {this: RawRPC =>
+  trait MonixRawRPC {this: RawRPC =>
     def observe(rpcName: String, argLists: List[List[RawValue]]): Observable[RawValue]
   }
 

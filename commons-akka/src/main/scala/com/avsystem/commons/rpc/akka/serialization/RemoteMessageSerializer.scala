@@ -27,11 +27,11 @@ final class RemoteMessageSerializer extends Serializer {
       case c if c == classOf[RawInvocation] => GenCodec.read[RawInvocation](input)
       case c if c == classOf[InvocationSuccess] => GenCodec.read[InvocationSuccess](input)
       case c if c == classOf[InvocationFailure] => GenCodec.read[InvocationFailure](input)
-      case c if c == MonifuProtocol.Continue.getClass => GenCodec.read[MonifuProtocol.Continue.type](input)
-      case c if c == MonifuProtocol.Cancel.getClass => GenCodec.read[MonifuProtocol.Cancel.type](input)
-      case c if c == MonifuProtocol.Subscribe.getClass => GenCodec.read[MonifuProtocol.Subscribe.type](input)
-      case c if c == MonifuProtocol.StreamCompleted.getClass => GenCodec.read[MonifuProtocol.StreamCompleted.type](input)
-      case c if c == MonifuProtocol.Heartbeat.getClass => GenCodec.read[MonifuProtocol.Heartbeat.type](input)
+      case c if c == MonixProtocol.Continue.getClass => GenCodec.read[MonixProtocol.Continue.type](input)
+      case c if c == MonixProtocol.Stop.getClass => GenCodec.read[MonixProtocol.Stop.type](input)
+      case c if c == MonixProtocol.Subscribe.getClass => GenCodec.read[MonixProtocol.Subscribe.type](input)
+      case c if c == MonixProtocol.StreamCompleted.getClass => GenCodec.read[MonixProtocol.StreamCompleted.type](input)
+      case c if c == MonixProtocol.Heartbeat.getClass => GenCodec.read[MonixProtocol.Heartbeat.type](input)
     }
   }
 
@@ -46,11 +46,11 @@ final class RemoteMessageSerializer extends Serializer {
       case m: RawInvocation => GenCodec.write(output, m)
       case m: InvocationSuccess => GenCodec.write(output, m)
       case m: InvocationFailure => GenCodec.write(output, m)
-      case MonifuProtocol.Continue => GenCodec.write(output, MonifuProtocol.Continue)
-      case MonifuProtocol.Cancel => GenCodec.write(output, MonifuProtocol.Cancel)
-      case MonifuProtocol.Subscribe => GenCodec.write(output, MonifuProtocol.Subscribe)
-      case MonifuProtocol.StreamCompleted => GenCodec.write(output, MonifuProtocol.StreamCompleted)
-      case MonifuProtocol.Heartbeat => GenCodec.write(output, MonifuProtocol.Heartbeat)
+      case MonixProtocol.Continue => GenCodec.write(output, MonixProtocol.Continue)
+      case MonixProtocol.Stop => GenCodec.write(output, MonixProtocol.Stop)
+      case MonixProtocol.Subscribe => GenCodec.write(output, MonixProtocol.Subscribe)
+      case MonixProtocol.StreamCompleted => GenCodec.write(output, MonixProtocol.StreamCompleted)
+      case MonixProtocol.Heartbeat => GenCodec.write(output, MonixProtocol.Heartbeat)
     }
 
     output.result.toArray

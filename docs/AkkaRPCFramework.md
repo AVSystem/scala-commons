@@ -1,6 +1,6 @@
 # Akka based typesafe RPC framework
 
-`commons-akka` module contains implementation of RPC framework using Akka Remoting. It supports every basic method type (procedure, function and getter), but it also allows you to define methods returning `Observable` from Monifu library.
+`commons-akka` module contains implementation of RPC framework using Akka Remoting. It supports every basic method type (procedure, function and getter), but it also allows you to define methods returning `Observable` from Monix library.
 
 Note: For examples purpose, let's assume that we have defined rpc:
 ```scala
@@ -103,7 +103,7 @@ You can learn more about Akka serialization in [Akka documentation](http://doc.a
 
 ## Observable
 `AkkaRPCFramework` implements an extension of standard RPC Framework, which provides possibility to return `Observable[T]`
-in RPC method. It uses [Monifu 1.2](https://monix.io/) as implementation of observables.
+in RPC method. It uses [Monix](https://monix.io/) as implementation of observables.
 
 ### Caveats
 As all resources should be automatically closed, each subscription on client observable will call corresponding remote method.
