@@ -244,6 +244,7 @@ case class NodeInfo(infoLine: String) {
           importingSlots += ((str.take(idx).toInt, NodeId(str.drop(idx + 1))))
         case (-1, idx, _) =>
           migratingSlots += ((str.take(idx).toInt, NodeId(str.drop(idx + 1))))
+        case _ =>
       }
     }
     (slots, importingSlots, migratingSlots)

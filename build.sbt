@@ -27,7 +27,7 @@ val silencerVersion = "0.5"
 val guavaVersion = "18.0"
 val jsr305Version = "3.0.0"
 val scalatestVersion = "3.0.0"
-val scalacheckVersion = "1.13.2"
+val scalacheckVersion = "1.13.3"
 val upickleVersion = "0.3.6"
 val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.2.2"
@@ -36,7 +36,7 @@ val typesafeConfigVersion = "1.3.0"
 val akkaVersion = "2.4.11"
 val shapelessVersion = "2.3.0"
 val commonsIoVersion = "1.3.2"
-val scalaLoggingVersion = "3.4.0"
+val scalaLoggingVersion = "3.5.0"
 
 val commonSettings = Seq(
   sonatypeProfileName := "com.avsystem",
@@ -77,7 +77,7 @@ val commonSettings = Seq(
     "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
     "org.apache.commons" % "commons-io" % commonsIoVersion % Test
   ),
-  dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
+  dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
   ideBasePackages := Seq(organization.value),
   ideOutputDirectory in Compile := Some(baseDirectory.value / "out/production"),
   ideOutputDirectory in Test := Some(baseDirectory.value / "out/test"),
@@ -95,7 +95,7 @@ val noPublishSettings = Seq(
 )
 
 val scala212Settings = Seq(
-  crossScalaVersions += "2.12.0-RC1"
+  crossScalaVersions += "2.12.0-RC2"
 )
 
 val CompileAndTest = "compile->compile;test->test"
@@ -198,20 +198,21 @@ lazy val `commons-mongo` = project
   )
 
 lazy val `commons-redis` = project
-  .dependsOn(`commons-core`, `commons-akka`)
+  .dependsOn(`commons-core`)
+  .settings(scala212Settings: _*)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
-      "com.chuusai" %% "shapeless" % shapelessVersion
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion
     ),
     parallelExecution in Test := false
   )
 
 lazy val `commons-spring` = project
   .dependsOn(`commons-core`)
-  .settings(commonSettings: _*)
   .settings(scala212Settings: _*)
+  .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "org.springframework" % "spring-context" % springVersion,

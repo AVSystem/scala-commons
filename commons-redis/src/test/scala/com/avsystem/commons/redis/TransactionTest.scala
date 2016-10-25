@@ -212,6 +212,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
       case (err1: ErrorReplyException, err2: ErrorReplyException) =>
         assert(err1.reply.errorCode == "EXECABORT")
         assert(err2.reply.errorCode == "ERR")
+      case obj => throw new MatchError(obj)
     }
 
     assertCommunication(
