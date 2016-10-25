@@ -263,6 +263,7 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
     } yield value
 
     assert(withDummyGet(redisClient.executeOp(operation)).futureValue == "0")
+    ping.get // make sure UNWATCH got executed
     assert(listener.result().contains("UNWATCH"))
   }
 
@@ -275,6 +276,7 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
     } yield value
 
     intercept[IllegalArgumentException](throw withDummyGet(redisClient.executeOp(operation)).failed.futureValue)
+    ping.get // make sure UNWATCH got executed
     assert(listener.result().contains("UNWATCH"))
   }
 
