@@ -18,6 +18,7 @@ object RedisDataCodec extends LowPriorityRedisDataCodecs {
 
   implicit val ByteStringCodec: RedisDataCodec[ByteString] = RedisDataCodec(identity, identity)
   implicit val ByteArrayCodec: RedisDataCodec[Array[Byte]] = RedisDataCodec(_.toArray, ByteString(_))
+  implicit val StringCodec: RedisDataCodec[String] = RedisDataCodec(_.utf8String, ByteString(_))
   implicit val BooleanKeyCodec: RedisDataCodec[Boolean] = RedisDataCodec(bs => bs.utf8String.toInt != 0, b => ByteString(if (b) "1" else "0"))
   implicit val CharCodec: RedisDataCodec[Char] = RedisDataCodec(_.utf8String.charAt(0), v => ByteString(v.toString))
   implicit val ByteCodec: RedisDataCodec[Byte] = RedisDataCodec(_.utf8String.toByte, v => ByteString(v.toString))
