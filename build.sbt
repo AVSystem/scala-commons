@@ -179,7 +179,7 @@ lazy val `commons-jetty` = project
   )
 
 lazy val `commons-benchmark` = project
-  .dependsOn(`commons-core`, `commons-redis`)
+  .dependsOn(`commons-core`, `commons-akka`, `commons-redis`)
   .settings(commonSettings: _*)
   .settings(noPublishSettings: _*)
   .enablePlugins(JmhPlugin)
