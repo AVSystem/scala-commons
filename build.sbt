@@ -32,7 +32,8 @@ val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.2.2"
 val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.0"
-val akkaVersion = "2.4.9"
+val akkaVersion = "2.4.11"
+val monixVersion = "2.0.5"
 
 val commonSettings = Seq(
   sonatypeProfileName := "com.avsystem",
@@ -198,12 +199,13 @@ lazy val `commons-spring` = project
 
 lazy val `commons-akka` = project
   .dependsOn(`commons-core`)
+  .settings(scala212Settings: _*)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.akka" %% "akka-remote" % akkaVersion,
-      "org.monifu" %% "monifu" % "1.2",
+      "io.monix" %% "monix" % monixVersion,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
       "org.mockito" % "mockito-core" % "2.0.54-beta" % Test
     )

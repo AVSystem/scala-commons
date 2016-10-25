@@ -14,8 +14,8 @@ import com.avsystem.commons.serialization.GenCodec
   *
   * @author Wojciech Milewski
   */
-object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework with FunctionRPCFramework with MonifuRPCFramework {
-  trait RawRPC extends GetterRawRPC with ProcedureRawRPC with FunctionRawRPC with MonifuRawRPC
+object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework with FunctionRPCFramework with MonixRPCFramework {
+  trait RawRPC extends GetterRawRPC with ProcedureRawRPC with FunctionRawRPC with MonixRawRPC
 
   override type RawValue = ByteString
 

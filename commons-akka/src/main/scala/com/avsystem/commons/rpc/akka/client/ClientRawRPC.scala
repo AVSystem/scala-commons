@@ -6,7 +6,8 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.avsystem.commons.rpc.akka.AkkaRPCFramework.RawRPC
 import com.avsystem.commons.rpc.akka._
-import monifu.reactive.Observable
+import monix.execution.Cancelable
+import monix.reactive.{Observable, OverflowStrategy}
 
 import scala.concurrent.Future
 
@@ -34,9 +35,10 @@ private[akka] final class ClientRawRPC(config: AkkaRPCClientConfig, getterChain:
     new ClientRawRPC(config, getterChain :+ RawInvocation(rpcName, argLists))
 
   override def observe(rpcName: String, argLists: List[List[AkkaRPCFramework.RawValue]]): Observable[AkkaRPCFramework.RawValue] = {
-    Observable.create { s =>
-      val actor = system.actorOf(MonifuClientActor.props(s, config))
+    Observable.create(OverflowStrategy.Unbounded) { s =>
+      val actor = system.actorOf(MonixClientActor.props(s, config))
       actor ! ObservableInvocationMessage(rpcName, argLists, getterChain)
+      Cancelable.empty // TODO implement proper canceling
     }
 
   }

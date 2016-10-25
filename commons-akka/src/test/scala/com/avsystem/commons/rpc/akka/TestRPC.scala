@@ -2,7 +2,7 @@ package com.avsystem.commons
 package rpc.akka
 
 import com.avsystem.commons.rpc.RPC
-import monifu.reactive.Observable
+import monix.reactive.Observable
 
 import scala.concurrent.Future
 

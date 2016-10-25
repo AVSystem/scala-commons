@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import akka.actor.{ActorPath, ActorSystem}
 import com.avsystem.commons.rpc.RPC
 import com.typesafe.config.{Config, ConfigFactory}
-import monifu.reactive.Observable
+import monix.reactive.Observable
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, Scope, Setup, State, TearDown, Warmup}
 import org.openjdk.jmh.infra.Blackhole
 
@@ -59,7 +59,7 @@ object AkkaRPCFrameworkBenchmark {
       }
       override def stream: Observable[Int] = {
         Blackhole.consumeCPU(cpuTokens)
-        Observable.from(1, 2, 3, 4, 5)
+        Observable(1, 2, 3, 4, 5)
       }
     }
 

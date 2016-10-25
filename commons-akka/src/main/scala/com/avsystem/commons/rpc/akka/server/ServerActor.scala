@@ -6,8 +6,8 @@ import akka.pattern.{AskTimeoutException, ask}
 import akka.util.Timeout
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.rpc.akka._
-import monifu.concurrent.Scheduler
-import monifu.reactive.{Ack, Observable}
+import monix.execution.{Ack, Scheduler}
+import monix.reactive.Observable
 
 import scala.util.{Failure, Success}
 
@@ -33,7 +33,7 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
       implicit val timeout = Timeout(config.observableAckTimeout)
       val s = sender()
 
-      val heartbeat = Observable.timerRepeated(config.heartbeatInterval, config.heartbeatInterval, MonifuProtocol.Heartbeat)
+      val heartbeat = Observable.timerRepeated(config.heartbeatInterval, config.heartbeatInterval, MonixProtocol.Heartbeat)
         .subscribe { beat =>
           s ! beat
           Ack.Continue
@@ -43,16 +43,16 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
         value => {
           val result = s ? InvocationSuccess(value)
           //noinspection NestedStatefulMonads
-          result.mapTo[MonifuProtocol.RemoteAck].map {
-            case MonifuProtocol.Continue => Ack.Continue
-            case MonifuProtocol.Cancel =>
+          result.mapTo[MonixProtocol.RemoteAck].map {
+            case MonixProtocol.Continue => Ack.Continue
+            case MonixProtocol.Stop =>
               heartbeat.cancel()
-              Ack.Cancel
+              Ack.Stop
           }.recover {
             case e: AskTimeoutException =>
               heartbeat.cancel()
               log.error(e, "Client actor didn't respond within requested time.")
-              Ack.Cancel
+              Ack.Stop
           }
         },
         e => {
@@ -62,7 +62,7 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
         },
         () => {
           heartbeat.cancel()
-          s ! MonifuProtocol.StreamCompleted
+          s ! MonixProtocol.StreamCompleted
         }
       )
   }

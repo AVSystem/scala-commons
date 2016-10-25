@@ -21,11 +21,11 @@ private object RemoteMessage {
   implicit val invocationSuccessCodec: GenCodec[InvocationSuccess] = GenCodec.materialize[InvocationSuccess]
   implicit val invocationFailureCodec: GenCodec[InvocationFailure] = GenCodec.materialize[InvocationFailure]
 
-  implicit val continueCodec: GenCodec[MonifuProtocol.Continue.type] = GenCodec.materialize[MonifuProtocol.Continue.type]
-  implicit val cancelCodec: GenCodec[MonifuProtocol.Cancel.type] = GenCodec.materialize[MonifuProtocol.Cancel.type]
-  implicit val subscribeCodec: GenCodec[MonifuProtocol.Subscribe.type] = GenCodec.materialize[MonifuProtocol.Subscribe.type]
-  implicit val streamCompletedCodec: GenCodec[MonifuProtocol.StreamCompleted.type] = GenCodec.materialize[MonifuProtocol.StreamCompleted.type]
-  implicit val heatBeatCodec: GenCodec[MonifuProtocol.Heartbeat.type] = GenCodec.materialize[MonifuProtocol.Heartbeat.type]
+  implicit val continueCodec: GenCodec[MonixProtocol.Continue.type] = GenCodec.materialize[MonixProtocol.Continue.type]
+  implicit val stopCodec: GenCodec[MonixProtocol.Stop.type] = GenCodec.materialize[MonixProtocol.Stop.type]
+  implicit val subscribeCodec: GenCodec[MonixProtocol.Subscribe.type] = GenCodec.materialize[MonixProtocol.Subscribe.type]
+  implicit val streamCompletedCodec: GenCodec[MonixProtocol.StreamCompleted.type] = GenCodec.materialize[MonixProtocol.StreamCompleted.type]
+  implicit val heatBeatCodec: GenCodec[MonixProtocol.Heartbeat.type] = GenCodec.materialize[MonixProtocol.Heartbeat.type]
 }
 
 private final case class RawInvocation(rpcName: String, argLists: List[List[RawValue]]) extends RemoteMessage
@@ -43,10 +43,10 @@ private sealed trait InvocationResult extends RemoteMessage
 private final case class InvocationSuccess(value: RawValue) extends InvocationResult
 private final case class InvocationFailure(exceptionName: String, remoteMessage: String) extends InvocationResult
 
-private object MonifuProtocol {
+private object MonixProtocol {
   sealed trait RemoteAck extends RemoteMessage
   case object Continue extends RemoteAck
-  case object Cancel extends RemoteAck
+  case object Stop extends RemoteAck
 
   case object Subscribe extends RemoteMessage
   case object StreamCompleted extends RemoteMessage
