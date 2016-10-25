@@ -55,7 +55,7 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
     val passOption = password.map(p => Seq("-a", p)).getOrElse(Seq.empty)
     val command = Seq(s"$redisHome/redis-cli", "-p", port.toString) ++ passOption
     def input = new ByteArrayInputStream(shutdownScript.getBytes)
-    (command #< input).run() // !! and ! with redirection seem to not work in 2.12.0-RC2
+    (command #< input).run(ProcessLogger(_ => ())) // !! and ! with redirection seem to not work in 2.12.0-RC2
     process.process.exitValue()
     ()
   })(SeparateThreadExecutionContext)
