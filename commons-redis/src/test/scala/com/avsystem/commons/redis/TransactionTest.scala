@@ -287,6 +287,7 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
     } yield value
 
     intercept[ErrorReplyException](throw withDummyGet(redisClient.executeOp(operation)).failed.futureValue)
+    ping.get // make sure UNWATCH got executed
     assert(listener.result().contains("UNWATCH"))
   }
 
