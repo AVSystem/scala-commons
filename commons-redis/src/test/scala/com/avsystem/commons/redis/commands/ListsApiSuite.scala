@@ -118,3 +118,46 @@ trait ListsApiSuite extends CommandsSuite {
     lrange("key").assertEquals(Seq("a", "b"))
   }
 }
+
+trait BlockingListsApiSuite extends CommandsSuite {
+
+  import RedisApi.Batches.StringTyped._
+
+  apiTest("BLPOP") {
+    setup(
+      rpush("key", "a", "b"),
+      rpush("{key}1", "a1", "b1"),
+      rpush("{key}2", "a2", "b2")
+    )
+    blpop("key").assertEquals("a")
+    blpop("key", 1).assertEquals("b".opt)
+    blpop("key", 1).assertEquals(Opt.Empty)
+    blpop("{key}1", "{key}2").assertEquals("{key}1", "a1")
+    blpop(List("{key}2", "{key}1"), 1).assertEquals(("{key}2", "a2").opt)
+    blpop(List("{???}1", "{???}2"), 1).assertEquals(Opt.Empty)
+  }
+
+  apiTest("BRPOP") {
+    setup(
+      rpush("key", "a", "b"),
+      rpush("{key}1", "a1", "b1"),
+      rpush("{key}2", "a2", "b2")
+    )
+    brpop("key").assertEquals("b")
+    brpop("key", 1).assertEquals("a".opt)
+    brpop("key", 1).assertEquals(Opt.Empty)
+    brpop("{key}1", "{key}2").assertEquals("{key}1", "b1")
+    brpop(List("{key}2", "{key}1"), 1).assertEquals(("{key}2", "b2").opt)
+    brpop(List("{???}1", "{???}2"), 1).assertEquals(Opt.Empty)
+  }
+
+  apiTest("BRPOPLPUSH") {
+    setup(
+      rpush("{key}1", "a1", "b1"),
+      rpush("{key}2", "a2", "b2")
+    )
+    brpoplpush("{key}1", "{key}2").assertEquals("b1")
+    brpoplpush("{key}1", "{key}2", 1).assertEquals("a1".opt)
+    brpoplpush("{key}1", "{key}2", 1).assertEquals(Opt.Empty)
+  }
+}

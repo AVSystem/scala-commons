@@ -133,5 +133,6 @@ trait RedisConnectionApi extends RedisOperationApi
   with ConnectionConnectionApi
   with ConnectionServerApi
   with ConnectionScriptingApi
+  with BlockingListsApi
 
 trait RedisRecoverableConnectionApi extends RedisRecoverableNodeApi with RedisConnectionApi

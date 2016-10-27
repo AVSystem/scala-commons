@@ -3,6 +3,7 @@ package redis.commands
 
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait ListsApi extends ApiSubset {
   def lindex(key: Key, index: Long): Result[Opt[Value]] =
@@ -96,6 +97,48 @@ trait ListsApi extends ApiSubset {
 
   private final class Rpushx(key: Key, value: Value) extends RedisLongCommand with NodeCommand {
     val encoded = encoder("RPUSHX").key(key).data(value).result
+  }
+}
+
+trait BlockingListsApi extends ApiSubset {
+  def blpop(key: Key): Result[Value] =
+    execute(new Blpop(key.single, 0).map(_.get._2))
+  def blpop(key: Key, keys: Key*): Result[(Key, Value)] =
+    execute(new Blpop(key +:: keys, 0).map(_.get))
+  def blpop(keys: Iterable[Key]): Result[(Key, Value)] =
+    execute(new Blpop(keys, 0).map(_.get))
+  def blpop(key: Key, timeout: Int): Result[Opt[Value]] =
+    execute(new Blpop(key.single, timeout).map(_.map(_._2)))
+  def blpop(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value)]] =
+    execute(new Blpop(keys, timeout))
+  def brpop(key: Key): Result[Value] =
+    execute(new Brpop(key.single, 0).map(_.get._2))
+  def brpop(key: Key, keys: Key*): Result[(Key, Value)] =
+    execute(new Brpop(key +:: keys, 0).map(_.get))
+  def brpop(keys: Iterable[Key]): Result[(Key, Value)] =
+    execute(new Brpop(keys, 0).map(_.get))
+  def brpop(key: Key, timeout: Int): Result[Opt[Value]] =
+    execute(new Brpop(key.single, timeout).map(_.map(_._2)))
+  def brpop(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value)]] =
+    execute(new Brpop(keys, timeout))
+  def brpoplpush(source: Key, destination: Key): Result[Value] =
+    execute(new Brpoplpush(source, destination, 0).map(_.get))
+  def brpoplpush(source: Key, destination: Key, timeout: Int): Result[Opt[Value]] =
+    execute(new Brpoplpush(source, destination, timeout))
+
+  private final class Blpop(keys: Iterable[Key], timeout: Int)
+    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkPair(bulk[Key], bulk[Value]))) with ConnectionCommand {
+    val encoded = encoder("BLPOP").keys(keys).add(timeout).result
+  }
+
+  private final class Brpop(keys: Iterable[Key], timeout: Int)
+    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkPair(bulk[Key], bulk[Value]))) with ConnectionCommand {
+    val encoded = encoder("BRPOP").keys(keys).add(timeout).result
+  }
+
+  private final class Brpoplpush(source: Key, destination: Key, timeout: Int)
+    extends AbstractRedisCommand[Opt[Value]](nullMultiBulkOr(bulk[Value])) with ConnectionCommand {
+    val encoded = encoder("BRPOPLPUSH").key(source).key(destination).add(timeout).result
   }
 }
 

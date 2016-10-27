@@ -25,6 +25,7 @@ trait NodeFullApiSuite extends KeyedFullApiSuite
 
 trait ConnectionFullApiSuite extends NodeFullApiSuite
   with ConnectionScriptingApiSuite
+  with BlockingListsApiSuite
 
 class RedisClusterCommandsTest extends RedisClusterCommandsSuite with KeyedFullApiSuite
 class RedisNodeCommandsTest extends RedisNodeCommandsSuite with NodeFullApiSuite with NodeOnlyServerApiSuite
