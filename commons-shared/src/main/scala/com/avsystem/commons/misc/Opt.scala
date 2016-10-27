@@ -32,10 +32,11 @@ object Opt {
 }
 
 /**
-  * Like `Option` but avoids boxing and treats `null` as no value. Therefore, there is no equivalent for `Some(null)`.
+  * Like [[scala.Option Option]] but implemented as value class (avoids boxing) and treats `null` as no value.
+  * Therefore, there is no equivalent for `Some(null)`.
   *
-  * Author: ghik
-  * Created: 07/01/16.
+  * If you need a value-class version of [[scala.Option, Option]] which differentiates between no value and `null` value,
+  * use [[NOpt]].
   */
 final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
   private def value: A = rawValue.asInstanceOf[A]

@@ -3,10 +3,6 @@ package misc
 
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
-/**
-  * Author: ghik
-  * Created: 11/12/15.
-  */
 object SealedUtils {
   /**
     * A macro which reifies a list of all case objects of a sealed trait or class `T`.

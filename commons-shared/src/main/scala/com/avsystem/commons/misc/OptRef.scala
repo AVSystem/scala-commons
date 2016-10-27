@@ -47,9 +47,6 @@ object OptRef {
   * This comes at the cost of `A` having to be a nullable type. Also, empty value is represented internally using `null`
   * which unfortunately makes [[OptRef]] suffer from SI-7396 (`hashCode` fails on `OptRef.Empty` which means that you
   * can't add [[OptRef]] values into hash sets or use them as hash map keys).
-  *
-  * Author: ghik
-  * Created: 07/01/16.
   */
 final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with Serializable {
   @inline def isEmpty: Boolean = value == null

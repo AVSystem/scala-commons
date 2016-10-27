@@ -1,10 +1,6 @@
 package com.avsystem.commons
 package rpc
 
-/**
-  * Author: ghik
-  * Created: 16/12/15.
-  */
 object DummyRPC extends StandardRPCFramework {
   type RawValue = Any
 

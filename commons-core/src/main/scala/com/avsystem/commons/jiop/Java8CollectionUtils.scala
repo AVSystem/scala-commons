@@ -3,10 +3,6 @@ package jiop
 
 import com.avsystem.commons.jiop.JavaInterop._
 
-/**
-  * Author: ghik
-  * Created: 01/12/15.
-  */
 trait Java8CollectionUtils extends JCollectionUtils {
 
   import Java8CollectionUtils._

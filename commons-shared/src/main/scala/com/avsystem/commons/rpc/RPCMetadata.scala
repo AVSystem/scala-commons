@@ -1,10 +1,6 @@
 package com.avsystem.commons
 package rpc
 
-/**
-  * Author: ghik
-  * Created: 25/02/16.
-  */
 object RPCMetadata {
   def apply[T](implicit metadata: RPCMetadata[T]): RPCMetadata[T] = metadata
   implicit def implicitlyMaterialize[T]: RPCMetadata[T] = macro macros.rpc.RPCMacros.materializeMetadata[T]

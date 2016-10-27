@@ -6,10 +6,6 @@ import com.avsystem.commons.jiop.JavaInterop._
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
 
-/**
-  * Author: ghik
-  * Created: 04/02/16.
-  */
 trait CodecTestBase extends FunSuite {
   def col[T <: JCollection[Int]](col: T): T = {
     col.add(1)

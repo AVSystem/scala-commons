@@ -6,10 +6,6 @@ import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, ObjectInput, O
 
 import scala.language.{higherKinds, implicitConversions}
 
-/**
-  * Author: ghik
-  * Created: 21/04/16.
-  */
 class TypedMap[K[_]](val raw: Map[K[_], Any]) extends AnyVal {
   def apply[T](key: K[T]): Option[T] =
     raw.get(key).map(_.asInstanceOf[T])

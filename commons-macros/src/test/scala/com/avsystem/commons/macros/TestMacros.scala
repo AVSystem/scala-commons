@@ -3,10 +3,6 @@ package macros
 
 import scala.reflect.macros.blackbox
 
-/**
-  * Author: ghik
-  * Created: 02/12/15.
-  */
 class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   import c.universe._

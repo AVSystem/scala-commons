@@ -4,10 +4,6 @@ package rpc
 import scala.annotation.implicitNotFound
 import scala.language.higherKinds
 
-/**
-  * Author: ghik
-  * Created: 27/05/15.
-  */
 
 trait RPCFramework {
   type RawValue

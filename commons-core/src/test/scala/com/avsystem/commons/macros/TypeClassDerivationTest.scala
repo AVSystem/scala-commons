@@ -6,10 +6,6 @@ import org.scalatest.FunSuite
 
 import scala.reflect.runtime.{universe => ru}
 
-/**
-  * Author: ghik
-  * Created: 04/12/15.
-  */
 object TypeClassDerivationTest {
 
   def materializeFor[T]: TC[T] = macro macros.TestMacros.materialize[T]

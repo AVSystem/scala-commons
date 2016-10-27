@@ -3,10 +3,6 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-/**
-  * Author: ghik
-  * Created: 18/02/16.
-  */
 class CheckMacroPrivate[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
 
   import global._

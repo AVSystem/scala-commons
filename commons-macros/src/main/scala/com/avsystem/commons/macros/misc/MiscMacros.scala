@@ -5,10 +5,6 @@ import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.reflect.macros.{TypecheckException, blackbox}
 
-/**
-  * Author: ghik
-  * Created: 19/09/16.
-  */
 class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   class C[+A, +B <: A]

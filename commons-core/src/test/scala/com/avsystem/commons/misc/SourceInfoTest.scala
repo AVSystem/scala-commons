@@ -3,10 +3,6 @@ package misc
 
 import org.scalatest.{FunSuite, Matchers}
 
-/**
-  * Author: ghik
-  * Created: 23/09/16.
-  */
 class SourceInfoTest extends FunSuite with Matchers {
   val srcInfo = SourceInfo.here
 

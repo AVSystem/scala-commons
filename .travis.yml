@@ -16,7 +16,7 @@ env:
     - REDIS_HOME=$PWD/redis-$REDIS_VERSION/src
 
 script:
-  - sbt "plz $TRAVIS_SCALA_VERSION test" "plz $TRAVIS_SCALA_VERSION doc"
+  - sbt "plz $TRAVIS_SCALA_VERSION test" "plz $TRAVIS_SCALA_VERSION commons/unidoc"
 
 sudo: false
 

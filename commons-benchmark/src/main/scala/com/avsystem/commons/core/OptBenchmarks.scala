@@ -5,10 +5,6 @@ import com.avsystem.commons.misc.{NOpt, Opt}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 
-/**
-  * Author: ghik
-  * Created: 14/01/16.
-  */
 @Warmup(iterations = 5)
 @Measurement(iterations = 20)
 @Fork(1)

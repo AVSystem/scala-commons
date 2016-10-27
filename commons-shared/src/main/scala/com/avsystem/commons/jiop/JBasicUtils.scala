@@ -3,10 +3,6 @@ package jiop
 
 import java.{lang => jl, math => jm, util => ju}
 
-/**
-  * Author: ghik
-  * Created: 10/07/15.
-  */
 trait JBasicUtils {
   type JByte = jl.Byte
   type JShort = jl.Short

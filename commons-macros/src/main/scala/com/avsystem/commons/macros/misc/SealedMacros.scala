@@ -5,10 +5,6 @@ import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.reflect.macros.blackbox
 
-/**
-  * Author: ghik
-  * Created: 11/12/15.
-  */
 class SealedMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._

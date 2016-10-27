@@ -3,10 +3,6 @@ package analyzer
 
 import org.scalatest.FunSuite
 
-/**
-  * Author: ghik
-  * Created: 18/02/16.
-  */
 class CheckMacroPrivateTest extends FunSuite with AnalyzerTest {
   test("macro private method invoked directly should be rejected") {
     assertErrors(
