@@ -5,10 +5,6 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.reflect.macros.{TypecheckException, blackbox}
 
-/**
-  * Author: ghik
-  * Created: 26/11/15.
-  */
 trait MacroCommons {
   val c: blackbox.Context
 

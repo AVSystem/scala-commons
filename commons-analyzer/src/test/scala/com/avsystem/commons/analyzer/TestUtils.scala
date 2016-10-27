@@ -5,10 +5,6 @@ import com.avsystem.commons.annotation.{atLeast, macroPrivate}
 
 import scala.reflect.macros.blackbox
 
-/**
-  * Author: ghik
-  * Created: 08/09/15.
-  */
 object TestUtils {
   def need3Params(@atLeast(3) args: Any*) = ()
 

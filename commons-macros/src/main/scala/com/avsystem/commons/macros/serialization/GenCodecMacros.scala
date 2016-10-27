@@ -35,10 +35,6 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   }
 }
 
-/**
-  * Author: ghik
-  * Created: 10/12/15.
-  */
 class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with TypeClassDerivation {
 
   import c.universe._

@@ -3,10 +3,6 @@ package macros
 
 import scala.reflect.macros.blackbox
 
-/**
-  * Author: ghik
-  * Created: 04/12/15.
-  */
 trait TypeClassDerivation extends MacroCommons {
 
   import c.universe._

@@ -3,10 +3,6 @@ package macros
 
 import scala.language.experimental.macros
 
-/**
-  * Author: ghik
-  * Created: 30/11/15.
-  */
 object KnownSubtypesTest {
   def testKnownSubtypes[T, R]: Nothing = macro com.avsystem.commons.macros.TestMacros.testKnownSubtypes[T, R]
 

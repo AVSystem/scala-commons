@@ -5,10 +5,6 @@ import org.scalatest.FunSuite
 
 import scala.concurrent.Future
 
-/**
-  * Author: ghik
-  * Created: 25/02/16.
-  */
 class RPCMetadataTest extends FunSuite {
   case class Annot(str: String) extends MetadataAnnotation
 

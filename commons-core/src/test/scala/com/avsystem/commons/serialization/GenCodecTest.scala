@@ -9,10 +9,6 @@ import com.avsystem.commons.misc.{TypedKey, TypedKeyCompanion, TypedMap}
 import com.avsystem.commons.serialization.GenCodecTest.ValueClass
 import com.github.ghik.silencer.silent
 
-/**
-  * Author: ghik
-  * Created: 18/11/15.
-  */
 object GenCodecTest {
   case class ValueClass(str: String) extends AnyVal
   object ValueClass extends HasGenCodec[ValueClass]

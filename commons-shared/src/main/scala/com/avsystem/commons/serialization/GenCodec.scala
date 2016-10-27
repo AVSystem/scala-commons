@@ -13,14 +13,14 @@ import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 /**
-  * Type class for types that can be serialized to `Output` (format-agnostic "output stream") and deserialized
-  * from `Input` (format-agnostic "input stream"). `GenCodec` is supposed to capture generic structure of serialized
+  * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized
+  * from [[Input]] (format-agnostic "input stream"). `GenCodec` is supposed to capture generic structure of serialized
   * objects, without being bound to particular format like JSON. The actual format is determined by implementation
-  * of `Input` and `Output`.
-  * <p/>
-  * There are convenient macros for automatic derivation of `GenCodec` instances (`materialize` and `materializeRecursively`).
-  * However, `GenCodec` instances still need to be explicitly declared and won't be derived "automagically".
-  * If you want fully automatic derivation, use `GenCodec.Auto`.
+  * of [[Input]] and [[Output]].
+  *
+  * There are convenient macros for automatic derivation of [[GenCodec]] instances (`materialize` and `materializeRecursively`).
+  * However, [[GenCodec]] instances still need to be explicitly declared and won't be derived "automagically".
+  * If you want fully automatic derivation, use [[GenCodec.Auto]].
   */
 @implicitNotFound("No GenCodec found for ${T}")
 trait GenCodec[T] {

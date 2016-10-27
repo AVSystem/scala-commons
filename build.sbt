@@ -1,4 +1,5 @@
 import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys._
+import sbtunidoc.Plugin.UnidocKeys._
 
 cancelable in Global := true
 
@@ -79,11 +80,11 @@ val commonSettings = Seq(
 
 val noPublishSettings = Seq(
   publishArtifact := false,
-  publish :=(),
-  publishLocal :=(),
-  publishM2 :=(),
-  publishSigned :=(),
-  publishLocalSigned :=()
+  publish := (),
+  publishLocal := (),
+  publishM2 := (),
+  publishSigned := (),
+  publishLocalSigned := ()
 )
 
 val scala212Settings = Seq(
@@ -107,9 +108,22 @@ lazy val commons = project.in(file("."))
     `commons-akka`,
     `commons-akka-benchmark`
   )
-  .settings(name := "commons")
   .settings(commonSettings: _*)
+  .settings(unidocSettings: _*)
   .settings(noPublishSettings: _*)
+  .settings(
+    name := "commons",
+    scalacOptions in(ScalaUnidoc, unidoc) += "-Ymacro-no-expand",
+    unidocProjectFilter in(ScalaUnidoc, unidoc) :=
+      inAnyProject -- inProjects(
+        `commons-macros`,
+        `commons-analyzer`,
+        `commons-sharedJS`,
+        `commons-jetty`, // because no upickle for Scala 2.12
+        `commons-benchmark`,
+        `commons-akka-benchmark`
+      )
+  )
 
 lazy val `commons-annotations` = project
   .settings(commonSettings: _*)

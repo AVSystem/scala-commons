@@ -5,10 +5,6 @@ import org.scalatest.FunSuite
 
 import scala.language.higherKinds
 
-/**
-  * Author: ghik
-  * Created: 26/11/15.
-  */
 class DelegationTest extends FunSuite {
   trait Destination[T] {
     val te: T

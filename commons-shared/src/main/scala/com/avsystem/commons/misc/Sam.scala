@@ -1,10 +1,6 @@
 package com.avsystem.commons
 package misc
 
-/**
-  * Author: ghik
-  * Created: 24/11/15.
-  */
 object Sam {
   /**
     * Implements a single abstract method trait/class `T` using passed function or expression as implementation

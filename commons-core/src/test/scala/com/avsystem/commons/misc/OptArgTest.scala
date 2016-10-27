@@ -3,10 +3,6 @@ package misc
 
 import org.scalatest.{FunSuite, Matchers}
 
-/**
-  * Author: ghik
-  * Created: 06/10/16.
-  */
 class OptArgTest extends FunSuite with Matchers {
   test("nonempty") {
     val opt = OptArg(23)

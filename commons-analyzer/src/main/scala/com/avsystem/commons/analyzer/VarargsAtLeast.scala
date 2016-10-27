@@ -3,10 +3,6 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-/**
-  * Author: ghik
-  * Created: 08/09/15.
-  */
 class VarargsAtLeast[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
 
   import global._

@@ -1,10 +1,6 @@
 package com.avsystem.commons
 package misc
 
-/**
-  * Author: ghik
-  * Created: 14/01/16.
-  */
 
 import com.avsystem.commons.misc.NOpt.{EmptyMarker, NullMarker}
 

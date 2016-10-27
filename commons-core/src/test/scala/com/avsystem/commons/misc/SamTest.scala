@@ -3,10 +3,6 @@ package misc
 
 import org.scalatest.FunSuite
 
-/**
-  * Author: ghik
-  * Created: 23/11/15.
-  */
 class SamTest extends FunSuite {
 
   test("no arg lists by name") {

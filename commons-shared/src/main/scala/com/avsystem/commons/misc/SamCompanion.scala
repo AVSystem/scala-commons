@@ -3,10 +3,6 @@ package misc
 
 import com.avsystem.commons.misc.SamCompanion.ValidSam
 
-/**
-  * Author: ghik
-  * Created: 23/11/15.
-  */
 abstract class SamCompanion[T, F](implicit vs: ValidSam[T, F]) {
   def apply(fun: F): T = macro com.avsystem.commons.macros.misc.SamMacros.toSam[T, F]
 }

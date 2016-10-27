@@ -12,10 +12,6 @@ import scala.language.implicitConversions
 import scala.util.Try
 import scala.util.control.NonFatal
 
-/**
-  * Author: ghik
-  * Created: 11/01/16.
-  */
 trait SharedExtensions {
   implicit def universalOps[A](a: A): UniversalOps[A] = new UniversalOps(a)
 

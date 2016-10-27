@@ -4,10 +4,6 @@ package serialization
 import com.avsystem.commons.serialization.AutoGenCodecTest.ValueClass
 import com.github.ghik.silencer.silent
 
-/**
-  * Author: ghik
-  * Created: 02/02/16.
-  */
 object AutoGenCodecTest {
   case class ValueClass(str: String) extends AnyVal
 }

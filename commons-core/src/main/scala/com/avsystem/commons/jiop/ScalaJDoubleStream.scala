@@ -8,10 +8,6 @@ import com.avsystem.commons.jiop.JavaInterop._
 import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds
 
-/**
-  * Author: ghik
-  * Created: 15/07/15.
-  */
 final class ScalaJDoubleStream(private val jStream: JDoubleStream) extends AnyVal {
   def asJava = jStream
 

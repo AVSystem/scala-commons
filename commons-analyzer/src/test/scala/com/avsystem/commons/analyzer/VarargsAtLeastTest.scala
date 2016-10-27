@@ -3,10 +3,6 @@ package analyzer
 
 import org.scalatest.FunSuite
 
-/**
-  * Author: ghik
-  * Created: 08/09/15.
-  */
 class VarargsAtLeastTest extends FunSuite with AnalyzerTest {
   test("too few varargs parameters should be rejected") {
     assertErrors(
