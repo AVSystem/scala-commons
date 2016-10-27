@@ -1,0 +1,709 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>serialization - com.avsystem.commons.serialization</title>
+          <meta name="description" content="serialization - com.avsystem.commons.serialization" />
+          <meta name="keywords" content="serialization com.avsystem.commons.serialization" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../index.html';
+            var hash = 'com.avsystem.commons.serialization.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img alt="Package" src="../../../../lib/package_big.png" />
+        <p id="owner"><a href="../../../package.html" class="extype" name="com">com</a>.<a href="../../package.html" class="extype" name="com.avsystem">avsystem</a>.<a href="../package.html" class="extype" name="com.avsystem.commons">commons</a></p>
+        <h1>serialization</h1><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">serialization</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.avsystem.commons.serialization.FallbackMapCodecs" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="FallbackMapCodecsextendsRecursiveAutoCodecs"></a>
+      <a id="FallbackMapCodecs:FallbackMapCodecs"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="FallbackMapCodecs.html"><span class="name">FallbackMapCodecs</span></a><span class="result"> extends <a href="RecursiveAutoCodecs.html" class="extype" name="com.avsystem.commons.serialization.RecursiveAutoCodecs">RecursiveAutoCodecs</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@FallbackMapCodecsextendsRecursiveAutoCodecs" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Contains readers for maps where there is no DBKeyCodec for key type.</p><div class="fullcomment"><div class="comment cmt"><p>Contains readers for maps where there is no DBKeyCodec for key type. In such case, we assume reading from a list
+of key-value pairs instead of JSON object.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.FieldInput" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="FieldInputextendsInput"></a>
+      <a id="FieldInput:FieldInput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="FieldInput.html"><span class="name">FieldInput</span></a><span class="result"> extends <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@FieldInputextendsInput" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">An <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> representing an object field.</p><div class="fullcomment"><div class="comment cmt"><p>An <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> representing an object field. The same as <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> but also provides field name.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.GenCodec" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="GenCodec[T]extendsAnyRef"></a>
+      <a id="GenCodec[T]:GenCodec[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="GenCodec.html"><span class="name">GenCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@GenCodec[T]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Type class for types that can be serialized to <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> (format-agnostic &quot;output stream&quot;) and deserialized
+from <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> (format-agnostic &quot;input stream&quot;).</p><div class="fullcomment"><div class="comment cmt"><p>Type class for types that can be serialized to <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> (format-agnostic &quot;output stream&quot;) and deserialized
+from <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> (format-agnostic &quot;input stream&quot;). <code>GenCodec</code> is supposed to capture generic structure of serialized
+objects, without being bound to particular format like JSON. The actual format is determined by implementation
+of <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> and <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>.</p><p>There are convenient macros for automatic derivation of <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a> instances (<code>materialize</code> and <code>materializeRecursively</code>).
+However, <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a> instances still need to be explicitly declared and won't be derived &quot;automagically&quot;.
+If you want fully automatic derivation, use <a href="GenCodec$$Auto.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.Auto">GenCodec.Auto</a>.
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@implicitNotFound</span><span class="args">(<span>
+      
+      <span class="symbol">&quot;No GenCodec found for ${T}&quot;</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.GenKeyCodec" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="GenKeyCodec[T]extendsAnyRef"></a>
+      <a id="GenKeyCodec[T]:GenKeyCodec[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="GenKeyCodec.html"><span class="name">GenKeyCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@GenKeyCodec[T]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Typeclass which expresses ability to convert between MongoDB JSON object keys and values of some type.</p><div class="fullcomment"><div class="comment cmt"><p>Typeclass which expresses ability to convert between MongoDB JSON object keys and values of some type.
+Every type which has a natural, unambiguous string representation should have a DBKeyCodec.
+</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@implicitNotFound</span><span class="args">(<span>
+      
+      <span class="defval" name="&quot;Can't convert between database key and ${T} - GenKeyCodec not found&quot;">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.HasGenCodec" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="HasGenCodec[T]extendsAnyRef"></a>
+      <a id="HasGenCodec[T]:HasGenCodec[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="HasGenCodec.html"><span class="name">HasGenCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@HasGenCodec[T]extendsAnyRef" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Convenience abstract class for companion objects of types that have a <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Convenience abstract class for companion objects of types that have a <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>.
+Unfortunately, due to compiler and language limitations this only works for non-generic case classes
+without default constructor arguments.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.Input" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="InputextendsAny"></a>
+      <a id="Input:Input"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Input.html"><span class="name">Input</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.Any" class="extype" target="_top">Any</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@InputextendsAny" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Represents an abstract source from which a value may be deserialized (read).</p><div class="fullcomment"><div class="comment cmt"><p>Represents an abstract source from which a value may be deserialized (read).
+Each of the <code>read</code> methods tries to read a value of specified type and may throw an exception
+(usually <a href="GenCodec$$ReadFailure.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ReadFailure">com.avsystem.commons.serialization.GenCodec.ReadFailure</a>) when reading is not successful.</p><p>An <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> value should be assumed to be stateful. If any of the <code>readX</code> methods have already been called,
+the <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> instance can no longer be used and MUST be discarded.</p><p>In order to ignore the value kept in this <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>, <code>skip()</code> MUST be called.</p><p>In summary: every <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> MUST be fully exhausted by either calling one of the <code>read</code> methods which returns
+successful value or by calling <code>skip()</code>. Also, <a href="ListInput.html" class="extype" name="com.avsystem.commons.serialization.ListInput">ListInput</a> and <a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> instances returned from this
+<a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> must also be fully exhausted on their own.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.InputType" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="InputTypeextendsAnyRef"></a>
+      <a id="InputType:InputType"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="InputType.html"><span class="name">InputType</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@InputTypeextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Represents the type of value inside and <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> that can be read from it.</p><div class="fullcomment"><div class="comment cmt"><p>Represents the type of value inside and <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> that can be read from it.</p><p>It is possible to distinguish only between four types (null, simple value, object and list) even though
+any of these types may have different representations. For example, <a href="InputType$$Simple$.html" class="extype" name="com.avsystem.commons.serialization.InputType.Simple">InputType.Simple</a> is returned for
+more than one actual value types (numbers, booleans, strings, timestamps, binary, etc.).</p><p>It's not possible to distinguish between them based only on <a href="InputType.html" class="extype" name="com.avsystem.commons.serialization.InputType">InputType</a> because not every <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>
+implementation is able to do that. For example, JSON must represent 64-bit integers as strings and therefore
+it can't distinguish between strings and numbers in general.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.ListInput" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="ListInputextendsSequentialInput"></a>
+      <a id="ListInput:ListInput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="ListInput.html"><span class="name">ListInput</span></a><span class="result"> extends <a href="SequentialInput.html" class="extype" name="com.avsystem.commons.serialization.SequentialInput">SequentialInput</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@ListInputextendsSequentialInput" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Represents an abstract source of sequence of values that can be deserialized.</p><div class="fullcomment"><div class="comment cmt"><p>Represents an abstract source of sequence of values that can be deserialized.
+<a href="ListInput.html" class="extype" name="com.avsystem.commons.serialization.ListInput">ListInput</a> instance is stateful and MUST be read strictly sequentially. This means, you MUST fully exhaust
+an <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> instance returned by <code>nextElement()</code> before calling <code>nextElement()</code> again. For this reason,
+<a href="ListInput.html" class="extype" name="com.avsystem.commons.serialization.ListInput">ListInput</a> is not an <code>Iterator</code> despite having similar interface
+(<code>Iterator</code> would easily allow e.g. conversion to <code>List[Input]</code> which would be illegal).</p><p><a href="ListInput.html" class="extype" name="com.avsystem.commons.serialization.ListInput">ListInput</a> MUST always be fully exhausted. In order to ignore any remaining elements, skipRemaining() may be
+used.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.ListOutput" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="ListOutputextendsSequentialOutput"></a>
+      <a id="ListOutput:ListOutput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="ListOutput.html"><span class="name">ListOutput</span></a><span class="result"> extends <a href="SequentialOutput.html" class="extype" name="com.avsystem.commons.serialization.SequentialOutput">SequentialOutput</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@ListOutputextendsSequentialOutput" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Represents an abstract sink for serialization of sequences of values.</p><div class="fullcomment"><div class="comment cmt"><p>Represents an abstract sink for serialization of sequences of values. Any <a href="ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a> instance
+must be assumed to be stateful and used in strictly sequential manner. After all elements have been written,
+<code>finish()</code> must be called to explicitly mark that the list is complete.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.MacroCodec" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MacroCodec[T]extendsAnyValwithProductwithSerializable"></a>
+      <a id="MacroCodec[T]:MacroCodec[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="MacroCodec.html"><span class="name">MacroCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="codec">codec: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.MacroCodec.T">T</span>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@MacroCodec[T]extendsAnyValwithProductwithSerializable" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.ObjectInput" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="ObjectInputextendsSequentialInput"></a>
+      <a id="ObjectInput:ObjectInput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="ObjectInput.html"><span class="name">ObjectInput</span></a><span class="result"> extends <a href="SequentialInput.html" class="extype" name="com.avsystem.commons.serialization.SequentialInput">SequentialInput</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@ObjectInputextendsSequentialInput" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Represents an abstract source of key-value mappings that can be deserialized.</p><div class="fullcomment"><div class="comment cmt"><p>Represents an abstract source of key-value mappings that can be deserialized.
+<a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> instance is stateful and MUST be read strictly sequentially. This means, you MUST fully exhaust
+any <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> instance returned by <code>nextField()</code> before calling <code>nextField()</code> again. For this reason,
+<a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> is not an <code>Iterator</code> despite having similar interface
+(<code>Iterator</code> would easily allow e.g. conversion to <code>List[(String, Input)]</code> which would be illegal).</p><p><a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> MUST always be fully exhausted. In order to ignore any remaining key-value mappings,
+<code>skipRemaining()</code> may be used.</p><p>NOTE: The order of keys returned by subsequent invocations of <code>nextField()</code> may be arbitrary and in particular
+may not match the order in which keys were written to corresponding <a href="ObjectOutput.html" class="extype" name="com.avsystem.commons.serialization.ObjectOutput">ObjectOutput</a>.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.ObjectOutput" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="ObjectOutputextendsSequentialOutput"></a>
+      <a id="ObjectOutput:ObjectOutput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="ObjectOutput.html"><span class="name">ObjectOutput</span></a><span class="result"> extends <a href="SequentialOutput.html" class="extype" name="com.avsystem.commons.serialization.SequentialOutput">SequentialOutput</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@ObjectOutputextendsSequentialOutput" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Represents an abstract sink for serialization of string-to-value mappings.</p><div class="fullcomment"><div class="comment cmt"><p>Represents an abstract sink for serialization of string-to-value mappings. Any <a href="ObjectOutput.html" class="extype" name="com.avsystem.commons.serialization.ObjectOutput">ObjectOutput</a> instance
+must be assumed to be stateful and used in strictly sequential manner. After all key-value pairs have been
+written, <code>finish()</code> must be called to explicitly mark that the object is complete.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.Output" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="OutputextendsAny"></a>
+      <a id="Output:Output"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Output.html"><span class="name">Output</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.Any" class="extype" target="_top">Any</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@OutputextendsAny" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Represents an abstract sink to which a value may be serialized (written).</p><div class="fullcomment"><div class="comment cmt"><p>Represents an abstract sink to which a value may be serialized (written).
+An <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> instance should be assumed to be stateful. After calling any of the <code>write</code> methods, it MUST NOT be
+reused. This means that <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> instance can be used only to write a single value. However, if the value
+to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or <code>writeObject</code>/<code>writeMap</code>.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.RecursiveAutoCodecs" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="RecursiveAutoCodecsextendsAnyRef"></a>
+      <a id="RecursiveAutoCodecs:RecursiveAutoCodecs"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="RecursiveAutoCodecs.html"><span class="name">RecursiveAutoCodecs</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@RecursiveAutoCodecsextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.SequentialInput" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="SequentialInputextendsAny"></a>
+      <a id="SequentialInput:SequentialInput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="SequentialInput.html"><span class="name">SequentialInput</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.Any" class="extype" target="_top">Any</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@SequentialInputextendsAny" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.SequentialOutput" visbl="pub" data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="SequentialOutputextendsAny"></a>
+      <a id="SequentialOutput:SequentialOutput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="SequentialOutput.html"><span class="name">SequentialOutput</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.Any" class="extype" target="_top">Any</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@SequentialOutputextendsAny" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Base trait for outputs which allow writing of multiple values in sequence, i.e.</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for outputs which allow writing of multiple values in sequence, i.e. <a href="ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a> and <a href="ObjectOutput.html" class="extype" name="com.avsystem.commons.serialization.ObjectOutput">ObjectOutput</a>.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.SimpleValueFieldInput" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SimpleValueFieldInputextendsSimpleValueInputwithFieldInput"></a>
+      <a id="SimpleValueFieldInput:SimpleValueFieldInput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SimpleValueFieldInput.html"><span class="name">SimpleValueFieldInput</span></a><span class="result"> extends <a href="SimpleValueInput.html" class="extype" name="com.avsystem.commons.serialization.SimpleValueInput">SimpleValueInput</a> with <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@SimpleValueFieldInputextendsSimpleValueInputwithFieldInput" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.SimpleValueInput" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SimpleValueInputextendsInput"></a>
+      <a id="SimpleValueInput:SimpleValueInput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SimpleValueInput.html"><span class="name">SimpleValueInput</span></a><span class="result"> extends <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@SimpleValueInputextendsInput" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.SimpleValueOutput" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SimpleValueOutputextendsOutput"></a>
+      <a id="SimpleValueOutput:SimpleValueOutput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="SimpleValueOutput.html"><span class="name">SimpleValueOutput</span></a><span class="result"> extends <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@SimpleValueOutputextendsOutput" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.StreamFieldInput" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="StreamFieldInputextendsStreamInputwithFieldInput"></a>
+      <a id="StreamFieldInput:StreamFieldInput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="StreamFieldInput.html"><span class="name">StreamFieldInput</span></a><span class="result"> extends <a href="StreamInput.html" class="extype" name="com.avsystem.commons.serialization.StreamInput">StreamInput</a> with <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@StreamFieldInputextendsStreamInputwithFieldInput" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.StreamInput" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="StreamInputextendsInput"></a>
+      <a id="StreamInput:StreamInput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="StreamInput.html"><span class="name">StreamInput</span></a><span class="result"> extends <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@StreamInputextendsInput" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.StreamOutput" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="StreamOutputextendsOutput"></a>
+      <a id="StreamOutput:StreamOutput"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="StreamOutput.html"><span class="name">StreamOutput</span></a><span class="result"> extends <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@StreamOutputextendsOutput" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.TupleGenCodecs" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="TupleGenCodecsextendsAnyRef"></a>
+      <a id="TupleGenCodecs:TupleGenCodecs"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="TupleGenCodecs.html"><span class="name">TupleGenCodecs</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@TupleGenCodecsextendsAnyRef" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.name" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="nameextendsAnnotationwithStaticAnnotation"></a>
+      <a id="name:name"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="name.html"><span class="name">name</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.annotation.Annotation" class="extype" target="_top">Annotation</a> with <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.annotation.StaticAnnotation" class="extype" target="_top">StaticAnnotation</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@nameextendsAnnotationwithStaticAnnotation" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived <code>GenCodec</code>
+to use particular name instead of just using parameter or class name.</p><div class="fullcomment"><div class="comment cmt"><p>Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived <code>GenCodec</code>
+to use particular name instead of just using parameter or class name.</p><p>For example:</p><pre><span class="kw">case</span> <span class="kw">class</span> Something(@name(<span class="lit">"dbname"</span>) paramname: <span class="std">Int</span>)
+<span class="kw">object</span> Something {
+  <span class="kw">implicit</span> codec = GenCodec.auto[Something]
+}</pre><p><code>GenCodec.write(someOutput, Something(42))</code> would write an object <code>{&quot;dbname&quot;: 42}</code> instead of <code>{&quot;paramname&quot;: 42}</code>.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.transientDefault" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="transientDefaultextendsAnnotationwithStaticAnnotation"></a>
+      <a id="transientDefault:transientDefault"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="transientDefault.html"><span class="name">transientDefault</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.annotation.Annotation" class="extype" target="_top">Annotation</a> with <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.annotation.StaticAnnotation" class="extype" target="_top">StaticAnnotation</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@transientDefaultextendsAnnotationwithStaticAnnotation" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">If some case class field has default value, you can use this annotation on this field to instruct an
+automatically derived <code>GenCodec</code> to not persist the value of that field if it's equal to the default value.</p><div class="fullcomment"><div class="comment cmt"><p>If some case class field has default value, you can use this annotation on this field to instruct an
+automatically derived <code>GenCodec</code> to not persist the value of that field if it's equal to the default value.</p><p>For example:</p><pre><span class="kw">case</span> <span class="kw">class</span> Something(str: <span class="std">String</span>, @transientDefault int: <span class="std">Int</span> = <span class="num">42</span>)
+<span class="kw">object</span> Something {
+  <span class="kw">implicit</span> <span class="kw">val</span> codec = GenCodec.auto[Something]
+}</pre><p><code>GenCodec.write(someOutput, Something(&quot;lol&quot;, 10))</code> would yield object <code>{&quot;str&quot;: &quot;lol&quot;, &quot;int&quot;: 10}</code> but
+<code>GenCodec.write(someOutput, Something(&quot;lol&quot;, 42))</code> would yield object <code>{&quot;str&quot;: &quot;lol&quot;}</code> because the value of <code>int</code>
+is the same as the default value.
+</p></div></div>
+    </li><li name="com.avsystem.commons.serialization.transparent" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="transparentextendsAnnotationwithStaticAnnotation"></a>
+      <a id="transparent:transparent"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="transparent.html"><span class="name">transparent</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.annotation.Annotation" class="extype" target="_top">Annotation</a> with <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.annotation.StaticAnnotation" class="extype" target="_top">StaticAnnotation</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@transparentextendsAnnotationwithStaticAnnotation" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Can be used on case classes with exactly one field to instruct automatically generated <code>GenCodec</code> that the
+class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole
+field.</p>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="com.avsystem.commons.serialization.GenCodec" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="GenCodec"></a>
+      <a id="GenCodec:GenCodec"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="GenCodec$.html"><span class="name">GenCodec</span></a><span class="result"> extends <a href="FallbackMapCodecs.html" class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs">FallbackMapCodecs</a> with <a href="TupleGenCodecs.html" class="extype" name="com.avsystem.commons.serialization.TupleGenCodecs">TupleGenCodecs</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@GenCodec" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.GenKeyCodec" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="GenKeyCodec"></a>
+      <a id="GenKeyCodec:GenKeyCodec"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="GenKeyCodec$.html"><span class="name">GenKeyCodec</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@GenKeyCodec" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.GenTupleDBCodecs" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="GenTupleDBCodecs"></a>
+      <a id="GenTupleDBCodecs:GenTupleDBCodecs"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="GenTupleDBCodecs$.html"><span class="name">GenTupleDBCodecs</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@GenTupleDBCodecs" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.InputType" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="InputType"></a>
+      <a id="InputType:InputType"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="InputType$.html"><span class="name">InputType</span></a>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@InputType" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li><li name="com.avsystem.commons.serialization.MacroCodec" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MacroCodec"></a>
+      <a id="MacroCodec:MacroCodec"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="MacroCodec$.html"><span class="name">MacroCodec</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.serialization.package@MacroCodec" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>

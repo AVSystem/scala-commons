@@ -1,0 +1,161 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <title>annotation - com.avsystem.commons.annotation</title>
+          <meta name="description" content="annotation - com.avsystem.commons.annotation" />
+          <meta name="keywords" content="annotation com.avsystem.commons.annotation" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../../../../lib/jquery.js" id="jquery-js"></script>
+      <script type="text/javascript" src="../../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../index.html';
+            var hash = 'com.avsystem.commons.annotation.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img alt="Package" src="../../../../lib/package_big.png" />
+        <p id="owner"><a href="../../../package.html" class="extype" name="com">com</a>.<a href="../../package.html" class="extype" name="com.avsystem">avsystem</a>.<a href="../package.html" class="extype" name="com.avsystem.commons">commons</a></p>
+        <h1>annotation</h1><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.annotation.package" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">annotation</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.avsystem.commons.annotation.atLeast" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="atLeastextendsAnnotationwithStaticAnnotation"></a>
+      <a id="atLeast:atLeast"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="atLeast.html"><span class="name">atLeast</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.annotation.Annotation" class="extype" target="_top">Annotation</a> with <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.annotation.StaticAnnotation" class="extype" target="_top">StaticAnnotation</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.annotation.package@atLeastextendsAnnotationwithStaticAnnotation" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">When applied on varargs parameter, indicates that at least some number of parameters is required.</p><div class="fullcomment"><div class="comment cmt"><p>When applied on varargs parameter, indicates that at least some number of parameters is required.
+This is later checked by the static analyzer.
+<br/>
+WARNING: implementation of method which takes a varargs parameter may NOT assume that given number of
+arguments will always be passed, because it's still possible to pass a <code>Seq</code> where
+varargs parameter is required using the <code>: _*</code> ascription, e.g.</p><pre>varargsMethod(<span class="std">List</span>(): _*)</pre><p>and that is not checked by the static analyzer.
+</p></div></div>
+    </li><li name="com.avsystem.commons.annotation.checkKnownSubtypes" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="checkKnownSubtypes[T]extendsAnnotationwithStaticAnnotation"></a>
+      <a id="checkKnownSubtypes[T]:checkKnownSubtypes[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="checkKnownSubtypes.html"><span class="name">checkKnownSubtypes</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.annotation.Annotation" class="extype" target="_top">Annotation</a> with <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.annotation.StaticAnnotation" class="extype" target="_top">StaticAnnotation</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.annotation.package@checkKnownSubtypes[T]extendsAnnotationwithStaticAnnotation" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Used in code generated by macros which traverse sealed hierarchies using <code>knownDirectSubclasses</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Used in code generated by macros which traverse sealed hierarchies using <code>knownDirectSubclasses</code>.
+Allows the static analyzer to determine if <code>knownDirectSubclasses</code> used in macro returned correct
+result (see <a href="https://issues.scala-lang.org/browse/SI-7046">SI-7046</a>).
+</p></div></div>
+    </li><li name="com.avsystem.commons.annotation.macroPrivate" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="macroPrivateextendsAnnotationwithStaticAnnotation"></a>
+      <a id="macroPrivate:macroPrivate"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="macroPrivate.html"><span class="name">macroPrivate</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.annotation.Annotation" class="extype" target="_top">Annotation</a> with <a href="http://www.scala-lang.org/api/2.11.8/index.html#scala.annotation.StaticAnnotation" class="extype" target="_top">StaticAnnotation</a></span>
+      </span>
+      </h4><span class="permalink">
+      <a href="../../../../index.html#com.avsystem.commons.annotation.package@macroPrivateextendsAnnotationwithStaticAnnotation" title="Permalink" target="_top">
+        <img src="../../../../lib/permalink.png" alt="Permalink" />
+      </a>
+    </span>
+      <p class="shortcomment cmt">Symbols annotated with this annotation can only be used in macro-generated code.</p>
+    </li></ol>
+            </div>
+
+        
+
+        
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>
