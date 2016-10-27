@@ -21,6 +21,7 @@ inThisBuild(Seq(
     "-Xfatal-warnings",
     "-Xlint:_,-missing-interpolator,-adapted-args"
   ),
+  apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true
 ))
 

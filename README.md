@@ -3,14 +3,27 @@
 [![Build Status](https://travis-ci.org/AVSystem/scala-commons.svg?branch=master)](https://travis-ci.org/AVSystem/scala-commons)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.11)
 
+**[API reference](http://avsystem.github.io/scala-commons/api)**
+
 **NOTE** The library is still considered to be in early development where a lot of experiments is tried. Therefore we don't make any guarantees about backwards compatibility between versions yet.
 
 ## Modules and features
 
 * `commons-shared` - basic language utilities and generic features not associated with any particular library of framework:
- * Java interoperability utilities
+ * Java interoperability utilities - [`JavaInterop`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/jiop/JavaInterop$.html)
  * Various Scala language-level utilities
- * Lightweight alternatives for Scala `Option` - `Opt`, `NOpt`, `OptRef` (implemented as value classes)
+  * Better enumeration support for Scala - 
+    [`SealedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/SealedEnumCompanion.html),
+    [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html),
+    [`OrderedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OrderedEnum.html)
+  * Implicit source information objects - [`SourceInfo`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/SourceInfo.html)
+  * More concise aliases for Scala collection types - [`CollectionAliases`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/collection/CollectionAliases$.html)
+  * Universal extension methods - [`SharedExtensions`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/SharedExtensions$.html)
+ * Lightweight alternatives for Scala `Option` - 
+   [`Opt`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/Opt.html), 
+   [`OptArg`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptArg.html), 
+   [`NOpt`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NOpt.html), 
+   [`OptRef`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptRef.html) (implemented as value classes)
  * [`GenCodec`: format-agnostic, typeclass based serialization framework with automatic derivation](docs/GenCodec.md)
  * [Typesafe RPC/proxy framework](docs/RPCFramework.md)
  
