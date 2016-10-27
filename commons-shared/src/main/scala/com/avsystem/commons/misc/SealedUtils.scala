@@ -43,7 +43,8 @@ trait SealedEnumCompanion[T] {
     *   val values: List[MyEnum] = caseObjects
     * }}}
     *
-    * Also, be aware that [[caseObjects]] macro guarantees well-defined order of elements only for [[OrderedEnum]]s.
+    * Also, be aware that [[caseObjects]] macro guarantees well-defined order of elements only for
+    * [[com.avsystem.commons.misc.OrderedEnum OrderedEnum]].
     */
   val values: List[T]
 
