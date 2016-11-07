@@ -14,7 +14,7 @@ trait ConnectionApiSuite extends RedisConnectionCommandsSuite {
   import RedisApi.Batches.StringTyped._
 
   apiTest("ECHO") {
-    echo(bs"lol").assertEquals(bs"lol")
+    echo("lol").assertEquals("lol")
   }
 
   apiTest("PING") {

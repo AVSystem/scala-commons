@@ -10,7 +10,7 @@ import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
-import com.avsystem.commons.redis.actor.{ManagedRedisConnectionActor, RedisOperationActor}
+import com.avsystem.commons.redis.actor.{RedisConnectionActor, RedisOperationActor}
 import com.avsystem.commons.redis.config.{ConnectionConfig, NoRetryStrategy}
 import com.avsystem.commons.redis.exception.ClientStoppedException
 
@@ -36,7 +36,7 @@ final class RedisConnectionClient(
   (implicit system: ActorSystem) extends RedisConnectionExecutor with Closeable { self =>
 
   private val connectionActor = system.actorOf(Props(
-    new ManagedRedisConnectionActor(address, config, NoRetryStrategy)).withDeploy(actorDeploy))
+    new RedisConnectionActor(address, config, NoRetryStrategy)).withDeploy(actorDeploy))
   @volatile private[this] var failure = Opt.empty[Throwable]
 
   private def ifReady[T](code: => Future[T]): Future[T] =

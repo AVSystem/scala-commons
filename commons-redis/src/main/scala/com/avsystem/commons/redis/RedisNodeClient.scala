@@ -7,11 +7,11 @@ import java.util.concurrent.atomic.AtomicLong
 import akka.actor.{ActorRef, ActorSystem, Deploy, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc.Opt
-import com.avsystem.commons.redis.actor.ManagedRedisConnectionActor.NodeRemoved
-import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
+import com.avsystem.commons.redis.actor.RedisConnectionActor.{Close, PacksResult}
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
-import com.avsystem.commons.redis.actor.{ManagedRedisConnectionActor, RedisOperationActor}
+import com.avsystem.commons.redis.actor.{RedisConnectionActor, RedisOperationActor}
 import com.avsystem.commons.redis.config.{ConnectionConfig, NodeConfig}
 import com.avsystem.commons.redis.exception.{ClientStoppedException, NodeRemovedException}
 
@@ -32,18 +32,21 @@ final class RedisNodeClient(
 
   private def createConnection(i: Int) = {
     val connConfig: ConnectionConfig = config.connectionConfigs(i)
-    val props = Props(new ManagedRedisConnectionActor(address, connConfig, config.reconnectionStrategy)).withDeploy(actorDeploy)
+    val props = Props(new RedisConnectionActor(address, connConfig, config.reconnectionStrategy)).withDeploy(actorDeploy)
     connConfig.actorName.fold(system.actorOf(props))(system.actorOf(props, _))
   }
 
   private val connections = (0 until config.poolSize).iterator.map(createConnection).toArray
   private val index = new AtomicLong(0)
+
+  @volatile private[this] var initSuccess = false
+  @volatile private[this] var failure = Opt.empty[Throwable]
   private val initFuture = Promise[Any]()
     .completeWith(executeOp(connections(0), config.initOp)(config.initTimeout)).future
-  @volatile private[this] var failure = Opt.empty[Throwable]
+  initFuture.onSuccess({ case _ => initSuccess = true })(RunNowEC)
 
   private def ifReady[T](code: => Future[T]): Future[T] =
-    failure.fold(initFuture.flatMapNow(_ => code))(Future.failed)
+    failure.fold(if (initSuccess) code else initFuture.flatMapNow(_ => code))(Future.failed)
 
   private def nextConnection() =
     connections((index.getAndIncrement() % config.poolSize).toInt)
@@ -57,8 +60,9 @@ final class RedisNodeClient(
     * [[exception.NodeRemovedException]].
     */
   private[redis] def nodeRemoved(): Unit = {
-    failure = new NodeRemovedException(address).opt
-    connections.foreach(_ ! NodeRemoved)
+    val cause = new NodeRemovedException(address)
+    failure = cause.opt
+    connections.foreach(_ ! Close(cause))
   }
 
   def executionContext: ExecutionContext =
@@ -121,7 +125,7 @@ final class RedisNodeClient(
     initFuture.mapNow(_ => this)
 
   def close(): Unit = {
-    failure = failure.getOrElse(new ClientStoppedException(address.opt)).opt
+    failure = failure orElse new ClientStoppedException(address.opt).opt
     connections.foreach(system.stop)
   }
 }

@@ -198,6 +198,7 @@ lazy val `commons-benchmark` = project
   .settings(noPublishSettings: _*)
   .enablePlugins(JmhPlugin)
   .settings(
+    libraryDependencies += "com.github.etaty" %% "rediscala" % "1.6.0",
     ideExcludedDirectories := (managedSourceDirectories in Jmh).value
   )
 

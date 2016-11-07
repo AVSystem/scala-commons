@@ -5,7 +5,7 @@ import akka.actor.{Actor, ActorRef}
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
-import com.avsystem.commons.redis.actor.ManagedRedisConnectionActor.Reserving
+import com.avsystem.commons.redis.actor.RedisConnectionActor.{Release, Reserving}
 import com.avsystem.commons.redis.actor.RedisOperationActor.{OpFailure, OpSuccess}
 import com.avsystem.commons.redis.exception.RedisException
 import com.avsystem.commons.redis.util.ActorLazyLogging
@@ -22,16 +22,16 @@ import scala.util.control.NonFatal
   * Author: ghik
   * Created: 11/04/16.
   */
-final class RedisOperationActor(managedConnection: ActorRef) extends Actor with ActorLazyLogging {
+final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLazyLogging {
 
-  context.watch(managedConnection)
+  context.watch(connection)
 
   private var listener: ActorRef = _
 
   def handleOperation(op: RedisOp[Any], reserving: Boolean = false): Unit = {
     def handle[A, B](batch: RedisBatch[A], nextStep: Opt[A => RedisOp[B]]) = {
       val packs = batch.rawCommandPacks.requireLevel(Level.Operation, "RedisOperation")
-      managedConnection ! (if (reserving) Reserving(packs) else packs)
+      connection ! (if (reserving) Reserving(packs) else packs)
       context.become(waitingForResponse(batch, nextStep))
     }
     op match {
@@ -71,7 +71,7 @@ final class RedisOperationActor(managedConnection: ActorRef) extends Actor with 
   }
 
   def releaseConnection(): Unit =
-    managedConnection ! ManagedRedisConnectionActor.Release
+    connection ! Release
 
   override def postStop(): Unit =
     if (listener != null) {

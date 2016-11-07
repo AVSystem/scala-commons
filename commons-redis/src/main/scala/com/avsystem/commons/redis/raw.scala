@@ -89,11 +89,13 @@ trait RawCommandPack extends RawCommandPacks {
   def createPreprocessor(replyCount: Int): ReplyPreprocessor
   def checkLevel(minAllowed: Level, clientType: String): Unit
 
+  def isAsking: Boolean = false
   def emitCommandPacks(consumer: RawCommandPack => Unit) = consumer(this)
+
   override def single: Opt[RawCommandPack] = this.opt
 }
 
-final class WatchState {
+trait WatchState {
   var watching: Boolean = false
 }
 

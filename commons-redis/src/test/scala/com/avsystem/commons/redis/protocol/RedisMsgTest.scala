@@ -30,8 +30,8 @@ class RedisMsgTest extends FunSuite with PropertyChecks {
       val splitIndices = splitPoints.map(sp => (sp * (repr.size - 1)).toInt).toSet.toVector.sorted
       val encodedParts = splitAtIndices(repr, splitIndices)
       val decoded = new VectorBuilder[RedisMsg]
-      val decoder = new RedisMsg.Decoder(decoded += _)
-      encodedParts.foreach(decoder.decodeMore)
+      val decoder = new RedisMsg.Decoder
+      encodedParts.foreach(bs => decoder.decodeMore(bs)(decoded += _))
       val decodedMsgs = decoded.result()
       assert(decodedMsgs == redisMsgs)
     }

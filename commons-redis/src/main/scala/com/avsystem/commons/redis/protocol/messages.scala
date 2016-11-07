@@ -160,8 +160,8 @@ object RedisMsg {
 
   def decode(bs: ByteString): Seq[RedisMsg] = {
     val builder = new VectorBuilder[RedisMsg]
-    val decoder = new Decoder(builder += _)
-    decoder.decodeMore(bs)
+    val decoder = new Decoder
+    decoder.decodeMore(bs)(builder += _)
     builder.result()
   }
 
@@ -184,7 +184,7 @@ object RedisMsg {
     }
   }
 
-  final class Decoder(consumer: RedisMsg => Any) {
+  final class Decoder {
 
     import Decoder._
 
@@ -196,21 +196,21 @@ object RedisMsg {
     private[this] var numberValue: Long = 0
     private[this] val dataBuilder = new ByteStringBuilder
 
-    private def completed(msg: RedisMsg): Unit = {
-      arrayStack match {
-        case Nil => consumer(msg)
-        case (expected, collected) :: tail =>
-          collected += msg
-          if (collected.size >= expected) {
-            arrayStack = tail
-            completed(ArrayMsg(collected))
-          }
-      }
-    }
-
     def fail(msg: String) = throw new InvalidDataException(msg)
 
-    def decodeMore(bytes: ByteString): Unit = {
+    def decodeMore(bytes: ByteString)(consumer: RedisMsg => Unit): Unit = {
+      def completed(msg: RedisMsg): Unit = {
+        arrayStack match {
+          case Nil => consumer(msg)
+          case (expected, collected) :: tail =>
+            collected += msg
+            if (collected.size >= expected) {
+              arrayStack = tail
+              completed(ArrayMsg(collected))
+            }
+        }
+      }
+
       def decode(idx: Int, prevDataStart: Int): Unit = if (idx < bytes.length) {
         val byte = bytes(idx)
         var dataStart = prevDataStart

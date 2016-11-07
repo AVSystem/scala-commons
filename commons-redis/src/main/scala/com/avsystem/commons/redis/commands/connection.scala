@@ -6,14 +6,14 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait NodeConnectionApi extends ApiSubset {
-  def echo(message: ByteString): Result[ByteString] =
+  def echo(message: Value): Result[Value] =
     execute(new Echo(message))
 
   def ping: Result[ByteString] =
     execute(Ping)
 
-  private final class Echo(message: ByteString) extends RedisBinaryCommand with NodeCommand {
-    val encoded = encoder("ECHO").add(message).result
+  private final class Echo(message: Value) extends RedisDataCommand[Value] with NodeCommand {
+    val encoded = encoder("ECHO").data(message).result
   }
 
   private object Ping extends AbstractRedisCommand[ByteString](simpleBinary) with NodeCommand {

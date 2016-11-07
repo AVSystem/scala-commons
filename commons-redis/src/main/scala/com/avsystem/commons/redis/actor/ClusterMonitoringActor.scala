@@ -2,7 +2,6 @@ package com.avsystem.commons
 package redis.actor
 
 import akka.actor.{Actor, Deploy, Props}
-import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.SlotRange
@@ -27,7 +26,7 @@ final class ClusterMonitoringActor(
   import context._
 
   def createConnection(addr: NodeAddress) =
-    actorOf(Props(new ManagedRedisConnectionActor(addr,
+    actorOf(Props(new RedisConnectionActor(addr,
       config.monitoringConnectionConfigs(addr), config.nodeConfigs(addr).reconnectionStrategy)))
 
   def createClient(addr: NodeAddress) =

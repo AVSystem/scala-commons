@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package redis.exception
 
+import java.net.InetSocketAddress
+
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.protocol.ErrorMsg
 import com.avsystem.commons.redis.{NodeAddress, RawCommand, Redirection}
@@ -45,9 +47,6 @@ class ConnectionFailedException(val address: NodeAddress)
 class WriteFailedException(val address: NodeAddress)
   extends RedisIOException(s"Failed to send data through Redis connection to $address")
 
-class NotYetConnectedException(val address: NodeAddress)
-  extends RedisIOException(s"Redis connection to $address has not been established yet")
-
 /**
   * Command or operation is failed with this exception when it has been already sent through network but the
   * connection was closed before receiving a response. Even though connections are automatically restarted,
@@ -62,12 +61,6 @@ class ConnectionClosedException(val address: NodeAddress, val cause: Opt[String]
 class ConnectionBusyException(val address: NodeAddress)
   extends RedisIOException(s"Redis connection to $address is currently busy writing other request")
 
-class ConnectionNotYetInitializedException(val address: NodeAddress)
-  extends RedisIOException(s"Redis connection to $address has not been initialized yet")
-
-class MaxQueuedRequestsLimitReached(val address: NodeAddress)
-  extends RedisException(s"Maximum number of queued requests for a connection has been reached.")
-
 class ClientStoppedException(val address: Opt[NodeAddress])
   extends RedisException(s"Redis client for ${address.fold("cluster")(_.toString)} was stopped")
 
@@ -79,14 +72,8 @@ class ClientStoppedException(val address: Opt[NodeAddress])
 class NodeRemovedException(val address: NodeAddress)
   extends RedisException(s"Node $address is no longer a master in Redis Cluster")
 
-class ConnectionReservedException
-  extends RedisException("This connection is already reserved by somebody else")
-
 class ConnectionInitializationFailure(cause: Throwable)
   extends RedisException(s"Failed to initialize Redis connection", cause)
-
-class ConnectionStateResetFailure(cause: Throwable)
-  extends RedisException("Failure while resetting Redis connection state", cause)
 
 /**
   * Thrown when trying to execute command unsupported by particular client type. For example, it's impossible

@@ -87,6 +87,7 @@ trait RedisBatch[+A] { self =>
   /**
     * Merges two batches into a single batch where result of the left-hand-side batch is returned while
     * result of right-hand-side is discarded. Useful when right-hand-side returns `Unit`.
+    * NOTE: errors for right-hand-side are NOT discarded, use [[ignoreFailures]] on it if that's your intention.
     */
   def <*[B](other: RedisBatch[B]): RedisBatch[A] =
     map2(other)((a, _) => a)
@@ -94,6 +95,7 @@ trait RedisBatch[+A] { self =>
   /**
     * Merges two batches into a single batch where result of the right-hand-side batch is returned while
     * result of left-hand-side is discarded. Useful when left-hand-side returns `Unit`.
+    * NOTE: errors for left-hand-side are NOT discarded, use [[ignoreFailures]] on it if that's your intention.
     */
   def *>[B](other: RedisBatch[B]): RedisBatch[B] =
     map2(other)((_, b) => b)
@@ -138,6 +140,19 @@ trait RedisBatch[+A] { self =>
     */
   def atomic: RedisBatch[A] =
     transaction
+
+  /**
+    * Ensures that every keyed command in this batch is prepended with `ASKING` special command.
+    * This is necessary only when manually handling Redis Cluster redirections.
+    */
+  def asking: RedisBatch[A] =
+    new RedisBatch[A] with RawCommandPacks {
+      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) =
+        self.decodeReplies(replies, index, inTransaction)
+      def emitCommandPacks(consumer: RawCommandPack => Unit) =
+        self.rawCommandPacks.emitCommandPacks(pack => consumer(new RedisClusterClient.AskingPack(pack)))
+      def rawCommandPacks = this
+    }
 }
 
 object RedisBatch extends HasFlatMap[RedisBatch] {
@@ -303,6 +318,15 @@ sealed trait RedisOp[+A] { self =>
 
   def ignoreFailures: RedisOp[Unit] =
     transform(_ => Success(()))
+
+  /**
+    * Ensures that every keyed command in this operation is prepended with special `ASKING` command.
+    * This is necessary only when manually handling Redis Cluster redirections.
+    */
+  def asking: RedisOp[A] = self match {
+    case LeafOp(batch) => LeafOp(batch.asking)
+    case FlatMappedOp(batch, fun) => FlatMappedOp(batch.asking, fun.andThen(_.asking))
+  }
 }
 
 object RedisOp extends HasFlatMap[RedisOp] {

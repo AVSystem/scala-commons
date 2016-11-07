@@ -43,12 +43,12 @@ import scala.util.control.NonFatal
   * You must manually access node client for appropriate master through [[currentState]] and execute the operation using it.
   * However, be aware that you must manually handle cluster redirections and cluster state changes while doing so.
   *
-  * @param seedNodes nodes used to fetch initial cluster state. You don't need to list all cluster nodes, it is only
-  *                  required that at least one of the seed nodes is available during startup.
+  * @param seedNodes nodes used to fetch initial cluster state from. You don't need to list all cluster nodes, it is
+  *                  only required that at least one of the seed nodes is available during startup.
   */
 final class RedisClusterClient(
   val seedNodes: Seq[NodeAddress] = List(NodeAddress.Default),
-  val clusterConfig: ClusterConfig = ClusterConfig(),
+  val config: ClusterConfig = ClusterConfig(),
   val actorDeploy: Deploy = Deploy())
   (implicit system: ActorSystem) extends RedisKeyedExecutor with Closeable {
 
@@ -76,7 +76,7 @@ final class RedisClusterClient(
   }
 
   private val monitoringActor =
-    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, actorDeploy, clusterConfig, onNewState, onTemporaryClient))
+    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, actorDeploy, config, onNewState, onTemporaryClient))
       .withDeploy(actorDeploy))
 
   private def determineSlot(pack: RawCommandPack): Int = {
@@ -148,7 +148,7 @@ final class RedisClusterClient(
         // and we now have a new cluster view, so retry our not-yet-sent request using new cluster state.
         implicit def timeout: Timeout = remainingTimeout(startTime, overallTimeout)
         val client = state.clientForSlot(slot)
-        if (retryCount >= clusterConfig.maxRedirections)
+        if (retryCount >= config.maxRedirections)
           throw new TooManyRedirectionsException(Redirection(client.address, slot, ask = false))
         else {
           val result = client.executeRaw(pack).mapNow(_.apply(0))
@@ -164,7 +164,7 @@ final class RedisClusterClient(
       monitoringActor ! Refresh(new SingletonSeq(redirection.address).opt)
     }
     val packToResend = if (redirection.ask) new AskingPack(pack) else pack
-    if (retryCount >= clusterConfig.maxRedirections)
+    if (retryCount >= config.maxRedirections)
       Future.successful(FailureReply(new TooManyRedirectionsException(redirection)))
     else {
       implicit def timeout: Timeout = remainingTimeout(startTime, overallTimeout)
@@ -221,7 +221,7 @@ final class RedisClusterClient(
     * (see [[http://redis.io/topics/cluster-spec#multiple-keys-operations Redis Cluster specification]]).
     * [[RedisClusterClient]] makes no attempt to recover from these errors. It would require waiting for an
     * indeterminate time until the migration is finished. The maximum number of consecutive retries caused by
-    * redirections is configured by [[config.ClusterConfig#maxRedirections maxRedirections]].
+    * redirections is configured by [[config.ClusterConfig.maxRedirections maxRedirections]].
     * See [[http://redis.io/topics/cluster-spec#redirection-and-resharding Redis Cluster specification]] for
     * more detailed information on redirections.
     *
@@ -309,8 +309,18 @@ private object RedisClusterClient {
   }
 
   final class AskingPack(pack: RawCommandPack) extends RawCommandPack {
+    private val keyed = {
+      var result = false
+      pack.rawCommands(inTransaction = true).emitCommands { cmd =>
+        result = result || cmd.encoded.elements.exists(_.isCommandKey)
+      }
+      result
+    }
+
+    override def isAsking = true
+
     def rawCommands(inTransaction: Boolean) =
-      if (inTransaction) pack.rawCommands(inTransaction)
+      if (inTransaction || pack.isAsking || !keyed) pack.rawCommands(inTransaction)
       else new RawCommands {
         def emitCommands(consumer: RawCommand => Unit) = {
           consumer(Asking)
@@ -318,22 +328,24 @@ private object RedisClusterClient {
         }
       }
 
-    def createPreprocessor(replyCount: Int) = new ReplyPreprocessor {
-      private val wrapped = pack.createPreprocessor(replyCount - 1)
-      private var first = true
-      private var error: Opt[FailureReply] = Opt.Empty
+    def createPreprocessor(replyCount: Int) =
+      if (pack.isAsking || !keyed) pack.createPreprocessor(replyCount)
+      else new ReplyPreprocessor {
+        private val wrapped = pack.createPreprocessor(replyCount - 1)
+        private var first = true
+        private var error: Opt[FailureReply] = Opt.Empty
 
-      def preprocess(message: RedisMsg, watchState: WatchState) =
-        if (first) {
-          first = false
-          message match {
-            case RedisMsg.Ok =>
-            case _ => error = FailureReply(new UnexpectedReplyException(s"Unexpected reply for ASKING: $message")).opt
-          }
-          Opt.Empty
-        } else wrapped.preprocess(message, watchState)
-          .map(reply => error.getOrElse(reply))
-    }
+        def preprocess(message: RedisMsg, watchState: WatchState) =
+          if (first) {
+            first = false
+            message match {
+              case RedisMsg.Ok =>
+              case _ => error = FailureReply(new UnexpectedReplyException(s"Unexpected reply for ASKING: $message")).opt
+            }
+            Opt.Empty
+          } else wrapped.preprocess(message, watchState)
+            .map(reply => error.getOrElse(reply))
+      }
 
     def checkLevel(minAllowed: Level, clientType: String) =
       pack.checkLevel(minAllowed, clientType)

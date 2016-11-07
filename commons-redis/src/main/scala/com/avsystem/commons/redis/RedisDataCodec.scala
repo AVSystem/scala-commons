@@ -7,7 +7,14 @@ import com.avsystem.commons.redis.util.ByteStringSerialization
 import com.avsystem.commons.serialization.GenCodec
 
 /**
+  * Typeclass which expresses that values of some type are serializable to binary form (`ByteString`) and deserializable
+  * from it in order to use them as keys, hash keys and values in Redis commands.
   *
+  * By default, `RedisDataCodec` is provided for simple types like `String`, `ByteString`, `Array[Byte]`,
+  * `Boolean`, `Char`, all primitive numeric types and [[NamedEnum]]s (which have [[NamedEnumCompanion]]).
+  *
+  * Also, all types which have an instance of [[com.avsystem.commons.serialization.GenCodec GenCodec]]
+  * automatically have an instance of `RedisDataCodec`.
   */
 case class RedisDataCodec[T](read: ByteString => T, write: T => ByteString)
 object RedisDataCodec extends LowPriorityRedisDataCodecs {
@@ -27,9 +34,9 @@ object RedisDataCodec extends LowPriorityRedisDataCodecs {
   implicit val LongCodec: RedisDataCodec[Long] = RedisDataCodec(_.utf8String.toLong, v => ByteString(v.toString))
   implicit val FloatCodec: RedisDataCodec[Float] = RedisDataCodec(_.utf8String.toFloat, v => ByteString(v.toString))
   implicit val DoubleCodec: RedisDataCodec[Double] = RedisDataCodec(_.utf8String.toDouble, v => ByteString(v.toString))
+  implicit val NothingCodec: RedisDataCodec[Nothing] = new RedisDataCodec[Nothing](_ => sys.error("nothing"), _ => sys.error("nothing"))
   implicit def namedEnumCodec[E <: NamedEnum](implicit companion: NamedEnumCompanion[E]): RedisDataCodec[E] =
     RedisDataCodec(bs => companion.byName(bs.utf8String), v => ByteString(v.name))
-
 }
 trait LowPriorityRedisDataCodecs { this: RedisDataCodec.type =>
   implicit def fromGenCodec[T: GenCodec]: RedisDataCodec[T] =

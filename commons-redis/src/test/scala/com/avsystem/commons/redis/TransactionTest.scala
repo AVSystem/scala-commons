@@ -250,10 +250,6 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
     connectionConfigs = _ => ConnectionConfig(debugListener = listener)
   )
 
-  // needed in order to force the client to execute UNWATCH before test finishes
-  private def withDummyGet[T](fut: Future[T]) =
-    fut.andThen({ case _ => redisClient.executeBatch(get("dummy")) })
-
   test("simple transaction with cleanup") {
     setup(set("key", "0"))
 
@@ -262,7 +258,7 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
       _ <- set("key", value)
     } yield value
 
-    assert(withDummyGet(redisClient.executeOp(operation)).futureValue == "0")
+    assert(redisClient.executeOp(operation).futureValue == "0")
     ping.get // make sure UNWATCH got executed
     assert(listener.result().contains("UNWATCH"))
   }
@@ -275,7 +271,7 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
       _ <- RedisOp.failure(new IllegalArgumentException("SRSLY"))
     } yield value
 
-    intercept[IllegalArgumentException](throw withDummyGet(redisClient.executeOp(operation)).failed.futureValue)
+    intercept[IllegalArgumentException](throw redisClient.executeOp(operation).failed.futureValue)
     ping.get // make sure UNWATCH got executed
     assert(listener.result().contains("UNWATCH"))
   }
@@ -288,7 +284,7 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
       _ <- clusterInfo // cluster info will fail on non-cluster Redis instance
     } yield value
 
-    intercept[ErrorReplyException](throw withDummyGet(redisClient.executeOp(operation)).failed.futureValue)
+    intercept[ErrorReplyException](throw redisClient.executeOp(operation).failed.futureValue)
     ping.get // make sure UNWATCH got executed
     assert(listener.result().contains("UNWATCH"))
   }

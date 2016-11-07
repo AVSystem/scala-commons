@@ -4,11 +4,13 @@ package redis
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, TimeUnit}
 
-import akka.actor.ActorSystem
-import akka.util.Timeout
+import _root_.redis._
+import akka.actor.{ActorSystem, Deploy}
+import akka.util.{ByteString, Timeout}
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.jiop.JavaInterop._
 import com.avsystem.commons.redis.RedisClientBenchmark._
+import com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener
 import com.avsystem.commons.redis.config._
 import com.typesafe.config._
 import org.openjdk.jmh.annotations._
@@ -17,8 +19,24 @@ import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 
+object OutgoingTraffictStats extends DebugListener {
+  val writeCount = new AtomicInteger
+  val byteCount = new AtomicInteger
+
+  def reset(): Unit = {
+    writeCount.set(0)
+    byteCount.set(0)
+  }
+
+  def onSend(data: ByteString) = {
+    writeCount.incrementAndGet()
+    byteCount.addAndGet(data.size)
+  }
+  def onReceive(data: ByteString) = ()
+}
+
 @Warmup(iterations = 20)
-@Measurement(iterations = 20)
+@Measurement(iterations = 40)
 @Fork(1)
 @Threads(1)
 @BenchmarkMode(Array(Mode.Throughput))
@@ -27,16 +45,28 @@ abstract class RedisBenchmark {
 
   import RedisApi.Batches.StringTyped._
 
-  implicit val system = ActorSystem("redis", ConfigFactory.defaultReference.withValue("akka.loglevel", ConfigValueFactory.fromAnyRef("INFO")))
+  val Config =
+    """
+      |
+    """.stripMargin
 
-  val connectionConfig = ConnectionConfig(initCommands = clientSetname("benchmark"), maxOutstandingRequests = 1)
+  implicit val system = ActorSystem("redis",
+    ConfigFactory.parseString(Config).withFallback(ConfigFactory.defaultReference()).resolve)
+
+  val PoolSize = 8
+
+  val deploy = Deploy(dispatcher = "redis.default-dispatcher")
+  val connectionConfig = ConnectionConfig(initCommands = clientSetname("benchmark"), debugListener = OutgoingTraffictStats)
   val monConnectionConfig = ConnectionConfig(initCommands = clientSetname("benchmarkMon"))
-  val nodeConfig = NodeConfig(poolSize = 8, connectionConfigs = _ => connectionConfig)
+  val nodeConfig = NodeConfig(poolSize = PoolSize, connectionConfigs = _ => connectionConfig)
   val clusterConfig = ClusterConfig(nodeConfigs = _ => nodeConfig, monitoringConnectionConfigs = _ => monConnectionConfig)
 
   lazy val clusterClient = new RedisClusterClient(List(NodeAddress(port = 33333)), clusterConfig)
   lazy val nodeClient = new RedisNodeClient(config = nodeConfig)
-  lazy val connectionClient = new RedisConnectionClient
+  lazy val connectionClient = new RedisConnectionClient(config = connectionConfig)
+
+  lazy val rediscalaClient = RedisClient()
+  lazy val rediscalaClientPool = RedisClientPool(Seq.fill(PoolSize)(RedisServer()))
 
   @TearDown
   def teardownClient(): Unit = {
@@ -46,43 +76,54 @@ abstract class RedisBenchmark {
 
 object RedisClientBenchmark {
   final val BatchSize = 300
-  final val SequencedFutures = 500
+  final val ConcurrentBatches = 100
+  final val ConcurrentCommands = 20000
+
+  val KeyBase = "key"
 }
 
-@OperationsPerInvocation(SequencedFutures * BatchSize)
+@OperationsPerInvocation(ConcurrentBatches * BatchSize)
 class RedisClientBenchmark extends RedisBenchmark {
 
   import RedisApi.Batches.StringTyped._
 
+  implicit val timeout = Timeout(5, TimeUnit.SECONDS)
+
+  def commandFuture(client: RedisKeyedExecutor, i: Int) =
+    client.executeBatch(set(s"$KeyBase$i", "v"))
+
+  def rediscalaCommandFuture(client: RedisCommands, i: Int) =
+    client.set(s"$KeyBase$i", "v")
+
   def batchFuture(client: RedisKeyedExecutor, i: Int) = {
-    val key = s"key$i"
+    val key = s"$KeyBase$i"
     val cmd = set(key, "v")
     val batch = Seq.fill(BatchSize)(cmd).sequence
-    client.executeBatch(batch)(Timeout(60, TimeUnit.SECONDS))
+    client.executeBatch(batch)
   }
 
   def distributedBatchFuture(client: RedisKeyedExecutor, i: Int) = {
-    val batch = (0 to BatchSize).map(j => set(s"key$i.$j", "v")).sequence
-    client.executeBatch(batch)(Timeout(60, TimeUnit.SECONDS))
+    val batch = (0 to BatchSize).map(j => set(s"$KeyBase$i.$j", "v")).sequence
+    client.executeBatch(batch)
   }
 
   def operationFuture(client: RedisOpExecutor, i: Int) = {
-    val key = s"key$i"
+    val key = s"$KeyBase$i"
     val cmd = set(key, "v")
     val batch = Seq.fill(BatchSize)(cmd).sequence
-    client.executeOp(batch.operation)(Timeout(60, TimeUnit.SECONDS))
+    client.executeOp(batch.operation)
   }
 
   def clusterOperationFuture(client: RedisClusterClient, i: Int) = {
-    val key = s"key$i"
+    val key = s"$KeyBase$i"
     val cmd = set(key, "v")
     val batch = Seq.fill(BatchSize)(cmd).sequence
     client.initialized.flatMapNow(_.currentState.clientForSlot(keySlot(key))
-      .executeOp(batch.operation)(Timeout(60, TimeUnit.SECONDS)))
+      .executeOp(batch.operation))
   }
 
   def clusterTransactionFuture(client: RedisClusterClient, i: Int) = {
-    val key = s"key$i"
+    val key = s"$KeyBase$i"
     val cmd = set(key, "v")
     val transaction = Seq.fill(BatchSize)(cmd).sequence.transaction
     val operation = for {
@@ -90,11 +131,11 @@ class RedisClientBenchmark extends RedisBenchmark {
       _ <- transaction
     } yield ()
     client.initialized.flatMapNow(_.currentState.clientForSlot(keySlot(key))
-      .executeOp(operation)(Timeout(60, TimeUnit.SECONDS)))
+      .executeOp(operation))
   }
 
   def transactionFuture(client: RedisOpExecutor, i: Int) = {
-    val key = s"key$i"
+    val key = s"$KeyBase$i"
     val cmd = set(key, "v")
     val transaction = Seq.fill(BatchSize)(cmd).sequence.transaction
     val operation = for {
@@ -118,11 +159,12 @@ class RedisClientBenchmark extends RedisBenchmark {
       case 2 => clusterTransactionFuture(client, i)
     }
 
-  private def redisClientBenchmark(singleFut: Int => Future[Any]) = {
+  private def redisClientBenchmark(futureCount: Int, singleFut: Int => Future[Any]) = {
     val start = System.nanoTime()
-    val ctl = new CountDownLatch(SequencedFutures)
+    val ctl = new CountDownLatch(futureCount)
     val failures = new ConcurrentHashMap[String, AtomicInteger]
-    (0 until SequencedFutures).foreach { i =>
+    OutgoingTraffictStats.reset()
+    (0 until futureCount).foreach { i =>
       singleFut(i).onComplete {
         case Success(_) =>
           ctl.countDown()
@@ -133,48 +175,89 @@ class RedisClientBenchmark extends RedisBenchmark {
       }(RunNowEC)
     }
     ctl.await(60, TimeUnit.SECONDS)
-    val millis = (System.nanoTime() - start) / 1000000
-    val failuresRepr = failures.asScala.opt.filter(_.nonEmpty)
-      .map(_.iterator.map({ case (cause, count) => s"${count.get} x $cause" }).mkString(", failures:\n", "\n", "")).getOrElse("")
-    println(s"Took $millis$failuresRepr")
+    if(!failures.isEmpty) {
+      val millis = (System.nanoTime() - start) / 1000000
+      val failuresRepr = failures.asScala.opt.filter(_.nonEmpty)
+        .map(_.iterator.map({ case (cause, count) => s"${count.get} x $cause" }).mkString(", failures:\n", "\n", "")).getOrElse("")
+      import OutgoingTraffictStats._
+      println(s"Took $millis$failuresRepr, ${writeCount.get} writes, ${byteCount.get / writeCount.get} bytes per write")
+    }
   }
 
   @Benchmark
-  def clusterClientBatchBenchmark() = redisClientBenchmark(batchFuture(clusterClient, _))
+  @OperationsPerInvocation(ConcurrentCommands)
+  def clusterClientCommandBenchmark() =
+    redisClientBenchmark(ConcurrentCommands, commandFuture(clusterClient, _))
 
   @Benchmark
-  def clusterClientDistributedBatchBenchmark() = redisClientBenchmark(distributedBatchFuture(clusterClient, _))
+  def clusterClientBatchBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, batchFuture(clusterClient, _))
 
   @Benchmark
-  def clusterClientOpBenchmark() = redisClientBenchmark(clusterOperationFuture(clusterClient, _))
+  def clusterClientDistributedBatchBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, distributedBatchFuture(clusterClient, _))
 
   @Benchmark
-  def clusterClientTransactionBenchmark() = redisClientBenchmark(clusterTransactionFuture(clusterClient, _))
+  def clusterClientOpBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, clusterOperationFuture(clusterClient, _))
 
   @Benchmark
-  def clusterClientMixedBenchmark() = redisClientBenchmark(clusterMixedFuture(clusterClient, _))
+  def clusterClientTransactionBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, clusterTransactionFuture(clusterClient, _))
 
   @Benchmark
-  def nodeClientBatchBenchmark() = redisClientBenchmark(batchFuture(nodeClient, _))
+  def clusterClientMixedBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, clusterMixedFuture(clusterClient, _))
 
   @Benchmark
-  def connectionClientBatchBenchmark() = redisClientBenchmark(batchFuture(connectionClient, _))
+  @OperationsPerInvocation(ConcurrentCommands)
+  def nodeClientCommandBenchmark() =
+    redisClientBenchmark(ConcurrentCommands, commandFuture(nodeClient, _))
 
   @Benchmark
-  def nodeClientOpBenchmark() = redisClientBenchmark(operationFuture(nodeClient, _))
+  def nodeClientBatchBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, batchFuture(nodeClient, _))
 
   @Benchmark
-  def connectionClientOpBenchmark() = redisClientBenchmark(operationFuture(connectionClient, _))
+  def nodeClientOpBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, operationFuture(nodeClient, _))
 
   @Benchmark
-  def nodeClientTransactionBenchmark() = redisClientBenchmark(transactionFuture(nodeClient, _))
+  def nodeClientMixedBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, mixedFuture(nodeClient, _))
 
   @Benchmark
-  def connectionClientTransactionBenchmark() = redisClientBenchmark(transactionFuture(connectionClient, _))
+  def nodeClientTransactionBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, transactionFuture(nodeClient, _))
 
   @Benchmark
-  def nodeClientMixedBenchmark() = redisClientBenchmark(mixedFuture(nodeClient, _))
+  @OperationsPerInvocation(ConcurrentCommands)
+  def connectionClientCommandBenchmark() =
+    redisClientBenchmark(ConcurrentCommands, commandFuture(connectionClient, _))
 
   @Benchmark
-  def connectionClientMixedBenchmark() = redisClientBenchmark(mixedFuture(connectionClient, _))
+  def connectionClientBatchBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, batchFuture(connectionClient, _))
+
+  @Benchmark
+  def connectionClientOpBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, operationFuture(connectionClient, _))
+
+  @Benchmark
+  def connectionClientTransactionBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, transactionFuture(connectionClient, _))
+
+  @Benchmark
+  def connectionClientMixedBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, mixedFuture(connectionClient, _))
+
+  @Benchmark
+  @OperationsPerInvocation(ConcurrentCommands)
+  def rediscalaCommandBenchmark() =
+    redisClientBenchmark(ConcurrentCommands, rediscalaCommandFuture(rediscalaClient, _))
+
+  @Benchmark
+  @OperationsPerInvocation(ConcurrentCommands)
+  def rediscalaPoolCommandBenchmark() =
+    redisClientBenchmark(ConcurrentCommands, rediscalaCommandFuture(rediscalaClientPool, _))
 }
