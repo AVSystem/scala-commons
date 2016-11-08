@@ -143,12 +143,12 @@ object. Consult its documentation for more details.
 
 Examples can be found in [test sources](https://github.com/AVSystem/scala-commons/tree/redis/commons-redis/src/test/scala/com/avsystem/commons/redis/examples).
 
-* quickstart, simple node client usage - [NodeClientExample](https://github.com/AVSystem/scala-commons/blob/redis/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/NodeClientExample.scala)
-* API customization, serialization - [ApiCustomizationExample](https://github.com/AVSystem/scala-commons/blob/redis/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ApiCustomizationExample.scala)
-* connection client usage - [ConnectionClientExample](https://github.com/AVSystem/scala-commons/blob/redis/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ConnectionClientExample.scala)
-* cluster client usage - [ClusterClientExample](https://github.com/AVSystem/scala-commons/blob/redis/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ClusterClientExample.scala)
-* authentication, database selection - [ConnectionSetupExample](https://github.com/AVSystem/scala-commons/blob/redis/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ConnectionSetupExample.scala)
-* pipelining - [PipeliningExample](https://github.com/AVSystem/scala-commons/blob/redis/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/PipeliningExample.scala)
-* simple atomic transactions (without `WATCH`) - [MultiExecExample](https://github.com/AVSystem/scala-commons/blob/redis/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/MultiExecExample.scala)
-* transactions with `WATCH` and optimistic locking - [TransactionExample](https://github.com/AVSystem/scala-commons/blob/redis/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/TransactionExample.scala)
-* LUA scripting - [ScriptingExample](https://github.com/AVSystem/scala-commons/blob/redis/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ScriptingExample.scala)
+* quickstart, simple node client usage - [NodeClientExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/NodeClientExample.scala)
+* API customization, serialization - [ApiCustomizationExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ApiCustomizationExample.scala)
+* connection client usage - [ConnectionClientExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ConnectionClientExample.scala)
+* cluster client usage - [ClusterClientExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ClusterClientExample.scala)
+* authentication, database selection - [ConnectionSetupExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ConnectionSetupExample.scala)
+* pipelining - [PipeliningExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/PipeliningExample.scala)
+* simple atomic transactions (without `WATCH`) - [MultiExecExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/MultiExecExample.scala)
+* transactions with `WATCH` and optimistic locking - [TransactionExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/TransactionExample.scala)
+* LUA scripting - [ScriptingExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ScriptingExample.scala)
