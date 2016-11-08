@@ -31,6 +31,9 @@
 * `commons-core` - additional language utilities available only on JVM
   * Java 8 interoperability utilities
   * Google Guava interoperability utilities
+* `commons-redis` - [Scala driver for Redis](docs/RedisDriver.md)
+* `commons-akka` - Akka utilities, primarily [`AkkaRPCFramework`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/rpc/akka/AkkaRPCFramework$.html)
+  which supports methods returning Monix `Observable`s
 * `commons-macros` contains implementations of macros used in other modules and reusable macro utilities:
   * `MacroCommons` trait with several convenience functions for implementing macros
   * `TypeClassDerivation` - implements infrastructure for automatic type class derivation
