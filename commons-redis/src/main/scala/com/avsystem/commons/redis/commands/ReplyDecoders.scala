@@ -19,6 +19,11 @@ object `package` {
 
 object ReplyDecoders {
   implicit class PartialFunctionOps[A, B](private val pf: PartialFunction[A, B]) extends AnyVal {
+    /**
+      * The same thing as [[PartialFunction.orElse]] but with arguments flipped.
+      * Useful in situations where [[PartialFunction.orElse]] would have to be called on a partial function literal,
+      * which does not work well with type inference.
+      */
     def unless(pre: PartialFunction[A, B]): PartialFunction[A, B] = pre orElse pf
   }
 
@@ -105,10 +110,6 @@ object ReplyDecoders {
 
   val simpleBinary: ReplyDecoder[ByteString] = {
     case SimpleStringMsg(str) => str
-  }
-
-  def simpleNamedEnum[E <: NamedEnum](companion: NamedEnumCompanion[E]): ReplyDecoder[E] = {
-    case SimpleStringMsg(data) => companion.byName(data.utf8String)
   }
 
   def bulk[T](fun: ByteString => T): ReplyDecoder[T] = {

@@ -5,10 +5,10 @@ import java.nio.charset.StandardCharsets
 
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
+import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.exception.ErrorReplyException
 import com.avsystem.commons.redis.protocol.ValidRedisMsg
-import com.avsystem.commons.redis._
 import com.google.common.hash.Hashing
 
 /**
@@ -45,7 +45,11 @@ trait RecoverableKeyedScriptingApi extends RecoverableApiSubset with KeyedScript
 }
 
 trait NodeScriptingApi extends KeyedScriptingApi {
-  def scriptExists(hashes: Sha1*): Result[Seq[Boolean]] =
+  def scriptExists(hash: Sha1): Result[Boolean] =
+    execute(new ScriptExists(hash.single).map(_.head))
+  def scriptExists(hash: Sha1, hashes: Sha1*): Result[Seq[Boolean]] =
+    execute(new ScriptExists(hash +:: hashes))
+  def scriptExists(hashes: Iterable[Sha1]): Result[Seq[Boolean]] =
     execute(new ScriptExists(hashes))
   def scriptFlush: Result[Unit] =
     execute(ScriptFlush)
@@ -54,8 +58,9 @@ trait NodeScriptingApi extends KeyedScriptingApi {
   def scriptLoad(script: RedisScript[Any]): Result[Sha1] =
     execute(new ScriptLoad(script))
 
-  private final class ScriptExists(hashes: Seq[Sha1])
+  private final class ScriptExists(hashes: Iterable[Sha1])
     extends RedisSeqCommand[Boolean](integerBoolean) with NodeCommand {
+    requireNonEmpty(hashes, "hashes")
     val encoded = encoder("SCRIPT", "EXISTS").add(hashes).result
   }
 
