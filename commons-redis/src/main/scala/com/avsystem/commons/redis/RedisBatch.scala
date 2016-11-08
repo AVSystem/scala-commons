@@ -9,7 +9,7 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 /**
-  * Represents a Redis operation or a set of operations which is sent to Redis as a single batch.
+  * Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message).
   * [[RedisBatch]] yields a result of type `A` which is decoded from responses to commands from this batch.
   * Execution of a batch may also fail for various reasons. Therefore, [[RedisBatch]] contains API that allows
   * to recover from failures, e.g. [[RedisBatch.tried]].

@@ -30,7 +30,7 @@ import scala.util.control.NonFatal
   * {{{
   *   import RedisApi.Batches.StringTyped._
   *
-  *   val tupleBatch: RedisBatch[(Long, String)] = (incr("key1"), get("key2")).sequence
+  *   val tupleBatch: RedisBatch[(Long, Opt[String])] = (incr("key1"), get("key2")).sequence
   *   val listBatch: RedisBatch[List[Long]] = List("key1", "key2").map(key => incr(key)).sequence
   * }}}
   */

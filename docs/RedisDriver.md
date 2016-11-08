@@ -17,8 +17,7 @@ and characteristics are:
 * good performance
 
 Features: 
-* Redis 3.2 API support (except for blocking commands, pub/sub API and some unsafe or debugging 
-  commands like `MONITOR`)
+* Redis 3.2 API support (except for pub/sub API and some unsafe or debugging commands like `MONITOR`)
 * three client implementations: for single connection ([`RedisConnectionClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisConnectionClient.html)), 
   connection pool to a single node ([`RedisNodeClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisNodeClient.html)) 
   and for Redis Cluster ([`RedisClusterClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisClusterClient.html)), 
@@ -138,7 +137,7 @@ def get(key: String): Future[Opt[String]]
 ```
 
 Predefined API variants are defined in [`RedisApi`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisApi$.html)
-objects. Consult its documentation for more details.
+object. Consult its documentation for more details.
 
 ## Examples
 
