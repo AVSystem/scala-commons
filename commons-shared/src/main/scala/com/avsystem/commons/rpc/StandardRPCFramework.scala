@@ -34,9 +34,9 @@ trait FunctionRPCFramework extends RPCFramework {
   }
 
   implicit def FunctionRealHandler[A: Writer]: RealInvocationHandler[Future[A], Future[RawValue]] =
-    RealInvocationHandler[Future[A], Future[RawValue]](_.map(write[A] _)(RunNowEC))
+    RealInvocationHandler[Future[A], Future[RawValue]](_.mapNow(write[A] _))
   implicit def FunctionRawHandler[A: Reader]: RawInvocationHandler[Future[A]] =
-    RawInvocationHandler[Future[A]]((rawRpc, rpcName, argLists) => rawRpc.call(rpcName, argLists).map(read[A] _)(RunNowEC))
+    RawInvocationHandler[Future[A]]((rawRpc, rpcName, argLists) => rawRpc.call(rpcName, argLists).mapNow(read[A] _))
 }
 
 /**
