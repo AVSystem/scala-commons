@@ -64,7 +64,7 @@ api.get("key").onComplete {
 }
 ```
 
-More examples can be found in [test sources](https://github.com/AVSystem/scala-commons/tree/redis/commons-redis/src/test/scala/com/avsystem/commons/redis/examples).
+More examples can be found in [test sources](https://github.com/AVSystem/scala-commons/tree/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples).
 
 ### APIs and clients
 
@@ -141,7 +141,7 @@ object. Consult its documentation for more details.
 
 ## Examples
 
-Examples can be found in [test sources](https://github.com/AVSystem/scala-commons/tree/redis/commons-redis/src/test/scala/com/avsystem/commons/redis/examples).
+Examples can be found in [test sources](https://github.com/AVSystem/scala-commons/tree/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples).
 
 * quickstart, simple node client usage - [NodeClientExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/NodeClientExample.scala)
 * API customization, serialization - [ApiCustomizationExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ApiCustomizationExample.scala)
