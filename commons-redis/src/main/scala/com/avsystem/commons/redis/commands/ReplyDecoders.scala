@@ -5,7 +5,7 @@ import akka.util.ByteString
 import com.avsystem.commons.collection.CollectionAliases.{BMap, BSet, MHashSet}
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
 import com.avsystem.commons.redis.exception.{ErrorReplyException, UnexpectedReplyException}
-import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, ErrorMsg, IntegerMsg, NullArrayMsg, NullBulkStringMsg, RedisMsg, SimpleStringMsg, ValidRedisMsg}
+import com.avsystem.commons.redis.protocol._
 import com.avsystem.commons.redis.{NodeAddress, RedisDataCodec}
 
 import scala.collection.mutable
@@ -104,13 +104,18 @@ object ReplyDecoders {
     case BulkStringMsg(data) => Cursor(data.utf8String.toLong)
   }
 
-  val simpleUTF8: ReplyDecoder[String] = {
-    case SimpleStringMsg(str) => str.utf8String
+  val simpleUTF8: ReplyDecoder[String] =
+    simple(_.utf8String)
+
+  val simpleBinary: ReplyDecoder[ByteString] =
+    simple(bs => bs)
+
+  def simple[T](fun: ByteString => T): ReplyDecoder[T] = {
+    case SimpleStringMsg(data) => fun(data)
   }
 
-  val simpleBinary: ReplyDecoder[ByteString] = {
-    case SimpleStringMsg(str) => str
-  }
+  def simple[T: RedisDataCodec]: ReplyDecoder[T] =
+    simple(RedisDataCodec[T].read)
 
   def bulk[T](fun: ByteString => T): ReplyDecoder[T] = {
     case BulkStringMsg(data) => fun(data)

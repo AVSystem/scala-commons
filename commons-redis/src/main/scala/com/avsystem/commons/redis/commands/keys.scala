@@ -189,7 +189,7 @@ trait KeyedKeysApi extends ApiSubset {
     val encoded = encoder("TTL").key(key).result
   }
 
-  private final class Type(key: Key) extends RedisDataCommand[RedisType] with NodeCommand {
+  private final class Type(key: Key) extends AbstractRedisCommand[RedisType](simple[RedisType]) with NodeCommand {
     val encoded = encoder("TYPE").key(key).result
   }
 }

@@ -30,7 +30,7 @@ val guavaVersion = "18.0"
 val jsr305Version = "3.0.0"
 val scalatestVersion = "3.0.0"
 val upickleVersion = "0.4.4"
-val scalacheckVersion = "1.13.3"
+val scalacheckVersion = "1.13.4"
 val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.2.2"
 val springVersion = "4.0.2.RELEASE"
@@ -188,7 +188,10 @@ lazy val `commons-benchmark` = project
   .settings(noPublishSettings: _*)
   .enablePlugins(JmhPlugin)
   .settings(
-    libraryDependencies += "com.github.etaty" %% "rediscala" % "1.6.0",
+    libraryDependencies ++= {
+      if (scalaBinaryVersion.value != "2.12") Seq("com.github.etaty" %% "rediscala" % "1.6.0")
+      else Seq.empty
+    },
     ideExcludedDirectories := (managedSourceDirectories in Jmh).value
   )
 

@@ -4,9 +4,9 @@ package redis
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, TimeUnit}
 
-import _root_.redis._
 import akka.actor.{ActorSystem, Deploy}
 import akka.util.{ByteString, Timeout}
+import com.avsystem.commons.benchmark.CrossRedisBenchmark
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.jiop.JavaInterop._
 import com.avsystem.commons.redis.RedisClientBenchmark._
@@ -56,7 +56,7 @@ abstract class RedisBenchmark {
   val PoolSize = 8
 
   val deploy = Deploy(dispatcher = "redis.default-dispatcher")
-  val connectionConfig = ConnectionConfig(initCommands = clientSetname("benchmark"), debugListener = OutgoingTraffictStats)
+  val connectionConfig = ConnectionConfig(initCommands = clientSetname("com/avsystem/commons/benchmark"), debugListener = OutgoingTraffictStats)
   val monConnectionConfig = ConnectionConfig(initCommands = clientSetname("benchmarkMon"))
   val nodeConfig = NodeConfig(poolSize = PoolSize, connectionConfigs = _ => connectionConfig)
   val clusterConfig = ClusterConfig(nodeConfigs = _ => nodeConfig, monitoringConnectionConfigs = _ => monConnectionConfig)
@@ -64,9 +64,6 @@ abstract class RedisBenchmark {
   lazy val clusterClient = new RedisClusterClient(List(NodeAddress(port = 33333)), clusterConfig)
   lazy val nodeClient = new RedisNodeClient(config = nodeConfig)
   lazy val connectionClient = new RedisConnectionClient(config = connectionConfig)
-
-  lazy val rediscalaClient = RedisClient()
-  lazy val rediscalaClientPool = RedisClientPool(Seq.fill(PoolSize)(RedisServer()))
 
   @TearDown
   def teardownClient(): Unit = {
@@ -83,7 +80,7 @@ object RedisClientBenchmark {
 }
 
 @OperationsPerInvocation(ConcurrentBatches * BatchSize)
-class RedisClientBenchmark extends RedisBenchmark {
+class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
 
   import RedisApi.Batches.StringTyped._
 
@@ -91,9 +88,6 @@ class RedisClientBenchmark extends RedisBenchmark {
 
   def commandFuture(client: RedisKeyedExecutor, i: Int) =
     client.executeBatch(set(s"$KeyBase$i", "v"))
-
-  def rediscalaCommandFuture(client: RedisCommands, i: Int) =
-    client.set(s"$KeyBase$i", "v")
 
   def batchFuture(client: RedisKeyedExecutor, i: Int) = {
     val key = s"$KeyBase$i"
@@ -159,7 +153,7 @@ class RedisClientBenchmark extends RedisBenchmark {
       case 2 => clusterTransactionFuture(client, i)
     }
 
-  private def redisClientBenchmark(futureCount: Int, singleFut: Int => Future[Any]) = {
+  protected def redisClientBenchmark(futureCount: Int, singleFut: Int => Future[Any]) = {
     val start = System.nanoTime()
     val ctl = new CountDownLatch(futureCount)
     val failures = new ConcurrentHashMap[String, AtomicInteger]
@@ -175,7 +169,7 @@ class RedisClientBenchmark extends RedisBenchmark {
       }(RunNowEC)
     }
     ctl.await(60, TimeUnit.SECONDS)
-    if(!failures.isEmpty) {
+    if (!failures.isEmpty) {
       val millis = (System.nanoTime() - start) / 1000000
       val failuresRepr = failures.asScala.opt.filter(_.nonEmpty)
         .map(_.iterator.map({ case (cause, count) => s"${count.get} x $cause" }).mkString(", failures:\n", "\n", "")).getOrElse("")
@@ -250,14 +244,4 @@ class RedisClientBenchmark extends RedisBenchmark {
   @Benchmark
   def connectionClientMixedBenchmark() =
     redisClientBenchmark(ConcurrentBatches, mixedFuture(connectionClient, _))
-
-  @Benchmark
-  @OperationsPerInvocation(ConcurrentCommands)
-  def rediscalaCommandBenchmark() =
-    redisClientBenchmark(ConcurrentCommands, rediscalaCommandFuture(rediscalaClient, _))
-
-  @Benchmark
-  @OperationsPerInvocation(ConcurrentCommands)
-  def rediscalaPoolCommandBenchmark() =
-    redisClientBenchmark(ConcurrentCommands, rediscalaCommandFuture(rediscalaClientPool, _))
 }

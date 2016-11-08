@@ -43,7 +43,7 @@ final class RedisNodeClient(
   @volatile private[this] var failure = Opt.empty[Throwable]
   private val initFuture = Promise[Any]()
     .completeWith(executeOp(connections(0), config.initOp)(config.initTimeout)).future
-  initFuture.onSuccess({ case _ => initSuccess = true })(RunNowEC)
+  initFuture.foreach(_ => initSuccess = true)(RunNowEC)
 
   private def ifReady[T](code: => Future[T]): Future[T] =
     failure.fold(if (initSuccess) code else initFuture.flatMapNow(_ => code))(Future.failed)
