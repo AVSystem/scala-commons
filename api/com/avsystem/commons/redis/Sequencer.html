@@ -264,7 +264,7 @@
                           AbstractRedisCommand
                         </a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
+                        <a class="object" href="ApiSubset$.html" title=""></a>
                         <a class="trait" href="ApiSubset.html" title=""></a>
                         <a href="ApiSubset.html" title="">
                           ApiSubset
@@ -409,8 +409,8 @@ on a single Redis connection.">
                         </a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="RedisBatch$.html" title=""></a>
-                        <a class="trait" href="RedisBatch.html" title="Represents a Redis operation or a set of operations which is sent to Redis as a single batch."></a>
-                        <a href="RedisBatch.html" title="Represents a Redis operation or a set of operations which is sent to Redis as a single batch.">
+                        <a class="trait" href="RedisBatch.html" title="Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message)."></a>
+                        <a href="RedisBatch.html" title="Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message).">
                           RedisBatch
                         </a>
                       </li><li class="current-entities indented4">
@@ -766,7 +766,7 @@ the <code>Ops</code> type. For example, if <code>Ops</code> is <code>(RedisBatch
 <code>Res</code> will be <code>(List[Int], String)</code>.</p><p>In order to perform &quot;sequencing&quot;, simply call <a href="RedisBatch$$SequenceOps.html#sequence(implicitsequencer:com.avsystem.commons.redis.Sequencer[Ops,Res]):com.avsystem.commons.redis.RedisBatch[Res]" class="extmbr" name="com.avsystem.commons.redis.RedisBatch.SequenceOps#sequence">sequence</a>
 on your collection of batches, e.g.</p><pre><span class="kw">import</span> RedisApi.Batches.StringTyped._
 
-<span class="kw">val</span> tupleBatch: RedisBatch[(<span class="std">Long</span>, <span class="std">String</span>)] = (incr(<span class="lit">"key1"</span>), get(<span class="lit">"key2"</span>)).sequence
+<span class="kw">val</span> tupleBatch: RedisBatch[(<span class="std">Long</span>, Opt[<span class="std">String</span>])] = (incr(<span class="lit">"key1"</span>), get(<span class="lit">"key2"</span>)).sequence
 <span class="kw">val</span> listBatch: RedisBatch[<span class="std">List</span>[<span class="std">Long</span>]] = <span class="std">List</span>(<span class="lit">"key1"</span>, <span class="lit">"key2"</span>).map(key <span class="kw">=&gt;</span> incr(key)).sequence</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@implicitNotFound</span><span class="args">(<span>
       

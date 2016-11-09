@@ -406,7 +406,7 @@
                           AbstractRedisCommand
                         </a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
+                        <a class="object" href="ApiSubset$.html" title=""></a>
                         <a class="trait" href="ApiSubset.html" title=""></a>
                         <a href="ApiSubset.html" title="">
                           ApiSubset
@@ -551,8 +551,8 @@ on a single Redis connection.">
                         </a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="RedisBatch$.html" title=""></a>
-                        <a class="trait" href="RedisBatch.html" title="Represents a Redis operation or a set of operations which is sent to Redis as a single batch."></a>
-                        <a href="RedisBatch.html" title="Represents a Redis operation or a set of operations which is sent to Redis as a single batch.">
+                        <a class="trait" href="RedisBatch.html" title="Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message)."></a>
+                        <a href="RedisBatch.html" title="Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message).">
                           RedisBatch
                         </a>
                       </li><li class="current-entities indented4">
@@ -1389,12 +1389,12 @@ but more lightweight.
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Represents a Redis operation or a set of operations which is sent to Redis as a single batch." href="RedisBatch.html">
+        <a title="Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message)." href="RedisBatch.html">
               <span class="name">RedisBatch</span>
             </a><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
       </span>
       
-      <p class="shortcomment cmt">Represents a Redis operation or a set of operations which is sent to Redis as a single batch.</p><div class="fullcomment"><div class="comment cmt"><p>Represents a Redis operation or a set of operations which is sent to Redis as a single batch.
+      <p class="shortcomment cmt">Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message).</p><div class="fullcomment"><div class="comment cmt"><p>Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message).
 <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a> yields a result of type <code>A</code> which is decoded from responses to commands from this batch.
 Execution of a batch may also fail for various reasons. Therefore, <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a> contains API that allows
 to recover from failures, e.g. <a href="RedisBatch.html#tried:com.avsystem.commons.redis.RedisBatch[scala.util.Try[A]]" class="extmbr" name="com.avsystem.commons.redis.RedisBatch#tried">RedisBatch.tried</a>.</p><p><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>es may be combined with each other to form bigger batches.
@@ -1752,9 +1752,9 @@ automatically have an instance of <code>RedisDataCodec</code>.
       
       
     </li><li name="com.avsystem.commons.redis.RedisKeyedApi" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="RedisKeyedApiextendsKeyedKeysApiwithStringsApiwithKeyedServerApiwithKeyedClusterApiwithGeoApiwithKeyedScriptingApiwithHashesApiwithSortedSetsApiwithListsApiwithSetsApiwithHyperLogLogApi"></a><a id="RedisKeyedApi:RedisKeyedApi"></a>
+      <a id="RedisKeyedApiextendsKeyedKeysApiwithStringsApiwithKeyedClusterApiwithGeoApiwithKeyedScriptingApiwithHashesApiwithSortedSetsApiwithListsApiwithSetsApiwithHyperLogLogApi"></a><a id="RedisKeyedApi:RedisKeyedApi"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/index.html#RedisKeyedApiextendsKeyedKeysApiwithStringsApiwithKeyedServerApiwithKeyedClusterApiwithGeoApiwithKeyedScriptingApiwithHashesApiwithSortedSetsApiwithListsApiwithSetsApiwithHyperLogLogApi" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/index.html#RedisKeyedApiextendsKeyedKeysApiwithStringsApiwithKeyedClusterApiwithGeoApiwithKeyedScriptingApiwithHashesApiwithSortedSetsApiwithListsApiwithSetsApiwithHyperLogLogApi" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1765,7 +1765,7 @@ automatically have an instance of <code>RedisDataCodec</code>.
       <span class="symbol">
         <a title="" href="RedisKeyedApi.html">
               <span class="name">RedisKeyedApi</span>
-            </a><span class="result"> extends <a href="commands/KeyedKeysApi.html" class="extype" name="com.avsystem.commons.redis.commands.KeyedKeysApi">KeyedKeysApi</a> with <a href="commands/StringsApi.html" class="extype" name="com.avsystem.commons.redis.commands.StringsApi">StringsApi</a> with <a href="commands/KeyedServerApi.html" class="extype" name="com.avsystem.commons.redis.commands.KeyedServerApi">KeyedServerApi</a> with <a href="commands/KeyedClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.KeyedClusterApi">KeyedClusterApi</a> with <a href="commands/GeoApi.html" class="extype" name="com.avsystem.commons.redis.commands.GeoApi">GeoApi</a> with <a href="commands/KeyedScriptingApi.html" class="extype" name="com.avsystem.commons.redis.commands.KeyedScriptingApi">KeyedScriptingApi</a> with <a href="commands/HashesApi.html" class="extype" name="com.avsystem.commons.redis.commands.HashesApi">HashesApi</a> with <a href="commands/SortedSetsApi.html" class="extype" name="com.avsystem.commons.redis.commands.SortedSetsApi">SortedSetsApi</a> with <a href="commands/ListsApi.html" class="extype" name="com.avsystem.commons.redis.commands.ListsApi">ListsApi</a> with <a href="commands/SetsApi.html" class="extype" name="com.avsystem.commons.redis.commands.SetsApi">SetsApi</a> with <a href="commands/HyperLogLogApi.html" class="extype" name="com.avsystem.commons.redis.commands.HyperLogLogApi">HyperLogLogApi</a></span>
+            </a><span class="result"> extends <a href="commands/KeyedKeysApi.html" class="extype" name="com.avsystem.commons.redis.commands.KeyedKeysApi">KeyedKeysApi</a> with <a href="commands/StringsApi.html" class="extype" name="com.avsystem.commons.redis.commands.StringsApi">StringsApi</a> with <a href="commands/KeyedClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.KeyedClusterApi">KeyedClusterApi</a> with <a href="commands/GeoApi.html" class="extype" name="com.avsystem.commons.redis.commands.GeoApi">GeoApi</a> with <a href="commands/KeyedScriptingApi.html" class="extype" name="com.avsystem.commons.redis.commands.KeyedScriptingApi">KeyedScriptingApi</a> with <a href="commands/HashesApi.html" class="extype" name="com.avsystem.commons.redis.commands.HashesApi">HashesApi</a> with <a href="commands/SortedSetsApi.html" class="extype" name="com.avsystem.commons.redis.commands.SortedSetsApi">SortedSetsApi</a> with <a href="commands/ListsApi.html" class="extype" name="com.avsystem.commons.redis.commands.ListsApi">ListsApi</a> with <a href="commands/SetsApi.html" class="extype" name="com.avsystem.commons.redis.commands.SetsApi">SetsApi</a> with <a href="commands/HyperLogLogApi.html" class="extype" name="com.avsystem.commons.redis.commands.HyperLogLogApi">HyperLogLogApi</a></span>
       </span>
       
       
@@ -2312,7 +2312,7 @@ the <code>Ops</code> type. For example, if <code>Ops</code> is <code>(RedisBatch
 <code>Res</code> will be <code>(List[Int], String)</code>.</p><p>In order to perform &quot;sequencing&quot;, simply call <a href="RedisBatch$$SequenceOps.html#sequence(implicitsequencer:com.avsystem.commons.redis.Sequencer[Ops,Res]):com.avsystem.commons.redis.RedisBatch[Res]" class="extmbr" name="com.avsystem.commons.redis.RedisBatch.SequenceOps#sequence">sequence</a>
 on your collection of batches, e.g.</p><pre><span class="kw">import</span> RedisApi.Batches.StringTyped._
 
-<span class="kw">val</span> tupleBatch: RedisBatch[(<span class="std">Long</span>, <span class="std">String</span>)] = (incr(<span class="lit">"key1"</span>), get(<span class="lit">"key2"</span>)).sequence
+<span class="kw">val</span> tupleBatch: RedisBatch[(<span class="std">Long</span>, Opt[<span class="std">String</span>])] = (incr(<span class="lit">"key1"</span>), get(<span class="lit">"key2"</span>)).sequence
 <span class="kw">val</span> listBatch: RedisBatch[<span class="std">List</span>[<span class="std">Long</span>]] = <span class="std">List</span>(<span class="lit">"key1"</span>, <span class="lit">"key2"</span>).map(key <span class="kw">=&gt;</span> incr(key)).sequence</pre></div><dl class="attributes block"> <dt>Annotations</dt><dd>
                 <span class="name">@implicitNotFound</span><span class="args">(<span>
       
@@ -2400,7 +2400,25 @@ on your collection of batches, e.g.</p><pre><span class="kw">import</span> Redis
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="com.avsystem.commons.redis.CommandEncoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+                <li name="com.avsystem.commons.redis.ApiSubset" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ApiSubset"></a><a id="ApiSubset:ApiSubset"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/redis/index.html#ApiSubset" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="ApiSubset$.html">
+              <span class="name">ApiSubset</span>
+            </a>
+      </span>
+      
+      
+    </li><li name="com.avsystem.commons.redis.CommandEncoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="CommandEncoder"></a><a id="CommandEncoder:CommandEncoder"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/redis/index.html#CommandEncoder" title="Permalink">
@@ -2585,20 +2603,31 @@ Link(http://redis.io/topics/cluster-spec#appendix-a-crc16-reference-implementati
       
       <p class="shortcomment cmt">Object which contains implementations of various variants of Redis API that this driver provides.</p><div class="fullcomment"><div class="comment cmt"><p>Object which contains implementations of various variants of Redis API that this driver provides.
 Each variant implements a set of methods corresponding directly to Redis commands, e.g.
-<a href="commands/StringsApi.html#get(key:StringsApi.this.Key):StringsApi.this.Result[com.avsystem.commons.misc.Opt[StringsApi.this.Value]]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#get">get</a> method represents Redis <code>GET</code> command.</p><p>The difference between variants might be any of:</p><ul><li>Type returned by each command-method:</li><li><a href="RedisApi$$Raw.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Raw">RedisApi.Raw</a> - type returned for each command-method is <a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a>. Probably the only reason
+<a href="commands/StringsApi.html#get(key:StringsApi.this.Key):StringsApi.this.Result[com.avsystem.commons.misc.Opt[StringsApi.this.Value]]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#get">get</a> method represents Redis <code>GET</code> command.</p><p>API variants may differ from each other in several independent aspects:</p><p>The most important one is the result type returned by every method corresponding to a Redis command:</p><ul><li><a href="RedisApi$$Raw.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Raw">RedisApi.Raw</a> - type returned for each command-method is <a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a>. Probably the only reason
 to use this API variant is to pass a <a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a> to
-<a href="commands/NodeServerApi.html#commandGetkeys(command:com.avsystem.commons.redis.RawCommand):NodeServerApi.this.Result[Seq[NodeServerApi.this.Key]]" class="extmbr" name="com.avsystem.commons.redis.commands.NodeServerApi#commandGetkeys">commands.NodeServerApi.commandGetkeys(command:com\.avsystem\.commons\.redis\.RawCommand)*</a></li><li><a href="RedisApi$$Batches.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Batches">RedisApi.Batches</a> - type returned for each command-method is <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>.
+<a href="commands/NodeServerApi.html#commandGetkeys(command:com.avsystem.commons.redis.RawCommand):NodeServerApi.this.Result[Seq[NodeServerApi.this.Key]]" class="extmbr" name="com.avsystem.commons.redis.commands.NodeServerApi#commandGetkeys">commandGetkeys</a></li><li><a href="RedisApi$$Batches.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Batches">RedisApi.Batches</a> - type returned for each command-method is <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>.
 Batch can then be combined with other batches to form larger batches, become a part of <a href="RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a> or simply
-get executed by <a href="RedisExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisExecutor">RedisExecutor</a> (e.g. one of Redis client implementations).</li><li><a href="RedisApi$$Keyed$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async">RedisApi.Keyed.Async</a>, <a href="RedisApi$$Node$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Node.Async">RedisApi.Node.Async</a> and <a href="RedisApi$$Connection$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Connection.Async">RedisApi.Connection.Async</a> type returned for each
-command-method is <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>, i.e. commands are actually executed (asynchronously).</li><li><a href="RedisApi$$Keyed$$Blocking.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Blocking">RedisApi.Keyed.Blocking</a>, <a href="RedisApi$$Node$$Blocking.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Node.Blocking">RedisApi.Node.Blocking</a> and <a href="RedisApi$$Connection$$Blocking.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Connection.Blocking">RedisApi.Connection.Blocking</a> type returned for each
-command-method is simply the result type of each command, i.e. commands are actually executed (synchronously).</li><li>The subset of API supported. This only applies to &quot;executing&quot; variants, i.e. <code>Async</code> and <code>Blocking</code>.
-<a href="RedisApi$$Raw.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Raw">RedisApi.Raw</a> and <a href="RedisApi$$Batches.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Batches">RedisApi.Batches</a> support all commands.</li><li>Variants from <a href="RedisApi$$Keyed$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed">RedisApi.Keyed</a> include only commands with keys (so that they can be executed on Redis Cluster)</li><li>Variants from <a href="RedisApi$$Node$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Node">RedisApi.Node</a> include only commands which don't access connection state</li><li>Variants from <a href="RedisApi$$Connection$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Connection">RedisApi.Connection</a> include all commands supported by the driver</li><li>Types of keys, hash keys and values used in command-methods. You can define your own API variants for
-arbitrary combination of types chosen for keys, hash keys and values, as long as there is an instance of
-<a href="RedisDataCodec.html" class="extype" name="com.avsystem.commons.redis.RedisDataCodec">RedisDataCodec</a> for every of these types. For example, if you keep only numeric values on a Redis Cluster installation,
-you might define an API variant like this one:</li></ul><pre><span class="kw">class</span> NumericKeyedAsyncApi(executor: RedisKeyedExecutor)(<span class="kw">implicit</span> timeout: Timeout)
-  <span class="kw">extends</span> RedisApi.Keyed.Async[<span class="std">String</span>,<span class="std">String</span>,<span class="std">Long</span>](executor)</pre><p>By default, the driver always implements variants where all the types are <code>ByteString</code>s or <code>String</code>s, e.g.
-<a href="RedisApi$$Keyed$$Async$$StringTyped.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async.StringTyped">RedisApi.Keyed.Async.StringTyped</a>, <a href="RedisApi$$Batches$$BinaryTyped$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Batches.BinaryTyped">RedisApi.Batches.BinaryTyped</a>.</p><p>Note that chosen key, hash key and value types can be adjusted &quot;on the fly&quot; with a convenient syntax.
-For example, if you need your value to be binary in a single, specific callsite, you can do this:</p><pre><span class="kw">import</span> scala.concurrent.duration._
+get executed by <a href="RedisExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisExecutor">RedisExecutor</a> (e.g. one of Redis client implementations).</li><li><a href="RedisApi$$Keyed$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async">RedisApi.Keyed.Async</a>, <a href="RedisApi$$Node$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Node.Async">RedisApi.Node.Async</a> and <a href="RedisApi$$Connection$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Connection.Async">RedisApi.Connection.Async</a> variants are the ones that
+actually <i>execute</i> commands by sending them to Redis. Because of that, they take an appropriate <a href="RedisExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisExecutor">RedisExecutor</a>
+as constructor argument. Execution of commands is asynchronous and results are returned as
+<a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>s.</li><li><a href="RedisApi$$Keyed$$Blocking.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Blocking">RedisApi.Keyed.Blocking</a>, <a href="RedisApi$$Node$$Blocking.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Node.Blocking">RedisApi.Node.Blocking</a> and <a href="RedisApi$$Connection$$Blocking.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Connection.Blocking">RedisApi.Connection.Blocking</a> are similar
+to their <code>Async</code> counterparts but execution is blocking and results are returned as unwrapped values.</li></ul><p><code>Async</code> and <code>Blocking</code> API variants additionally come in three different &quot;levels&quot;, each one exposing different
+subset of Redis commands. This reflects the fact that not every <a href="RedisExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisExecutor">RedisExecutor</a> (client implementation) supports
+every command (e.g. you can't execute unkeyed commands using <a href="RedisClusterClient.html" class="extype" name="com.avsystem.commons.redis.RedisClusterClient">RedisClusterClient</a>).</p><ul><li>Variants from <a href="RedisApi$$Keyed$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed">RedisApi.Keyed</a> include only commands with keys (so that they can be executed on Redis Cluster)</li><li>Variants from <a href="RedisApi$$Node$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Node">RedisApi.Node</a> include only commands which don't access connection state</li><li>Variants from <a href="RedisApi$$Connection$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Connection">RedisApi.Connection</a> include all commands supported by the driver</li></ul><p>Every API variant may also use different types to represent Redis keys, hash keys and values.
+You can define your own API variants for arbitrary combination of key, hash key and value types
+as long as there is an instance of <a href="RedisDataCodec.html" class="extype" name="com.avsystem.commons.redis.RedisDataCodec">RedisDataCodec</a> for every of these types.</p><p>For example, if you keep only numeric values on a Redis Cluster installation, you might define an API variant
+like this one:</p><pre><span class="kw">class</span> NumericKeyedAsyncApi(executor: RedisKeyedExecutor)(<span class="kw">implicit</span> timeout: Timeout)
+  <span class="kw">extends</span> RedisApi.Keyed.Async[<span class="std">String</span>,<span class="std">String</span>,<span class="std">Long</span>](executor)</pre><p>API variants which use only <code>String</code>s (textual) or only <code>ByteString</code>s (binary) are already implemented by the driver, e.g.
+<a href="RedisApi$$Keyed$$Async$$StringTyped.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async.StringTyped">RedisApi.Keyed.Async.StringTyped</a>, <a href="RedisApi$$Batches$$BinaryTyped$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Batches.BinaryTyped">RedisApi.Batches.BinaryTyped</a>.</p><p>Note that <a href="RedisDataCodec.html" class="extype" name="com.avsystem.commons.redis.RedisDataCodec">RedisDataCodec</a> is automatically provided for many simple types and also all types which have a
+<a href="../serialization/GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>. This effectively gives you a complete serialization
+framework for keys, hash keys and values stored in Redis.</p><p>Note that chosen key, hash key and value types can be adjusted &quot;on the fly&quot; with a convenient syntax.
+For example, if you need to use some case class as a value type in a single, specific place, you can do it
+without defining a completely separate API variant. For example:</p><pre><span class="kw">case</span> <span class="kw">class</span> Person(name: <span class="std">String</span>, birthYear: <span class="std">Int</span>)
+<span class="kw">object</span> Person {
+  <span class="kw">implicit</span> <span class="kw">val</span> codec: GenCodec[Person] = GenCodec.materialize[Person]
+}
+
+<span class="kw">import</span> scala.concurrent.duration._
 <span class="kw">implicit</span> <span class="kw">val</span> system: ActorSystem = ActorSystem()
 <span class="kw">implicit</span> <span class="kw">val</span> timeout: Timeout = <span class="num">10.</span>seconds
 
@@ -2606,8 +2635,10 @@ For example, if you need your value to be binary in a single, specific callsite,
 
 <span class="cmt">// normally, we're just using String-typed API</span>
 api.set(<span class="lit">"key"</span>, <span class="lit">"value"</span>)
-<span class="cmt">// but in one specific place, we might need to use binary data as a value</span>
-api.valueType[ByteString].set(<span class="lit">"binaryDataKey"</span>, ByteString(<span class="lit">"binaryData"</span>))</pre></div></div>
+
+<span class="cmt">// but in one specific place, we might want to use Person as the value</span>
+<span class="cmt">// Person has an instance of GenCodec, so it will be automatically serialized to binary format</span>
+api.valueType[Person].set(<span class="lit">"binaryDataKey"</span>, Person(<span class="lit">"Fred"</span>, <span class="num">1990</span>))</pre></div></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="RedisBatch"></a><a id="RedisBatch:RedisBatch"></a>
       <span class="permalink">

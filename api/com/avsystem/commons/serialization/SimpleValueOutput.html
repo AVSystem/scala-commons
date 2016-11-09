@@ -255,14 +255,14 @@ from Input (format-agnostic &quot;input stream&quot;).">
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="SimpleValueInput.html" title=""></a>
-                        <a href="SimpleValueInput.html" title="">
+                        <a class="class" href="SimpleValueInput.html" title="An Input for GenCodec complementary to SimpleValueOutput."></a>
+                        <a href="SimpleValueInput.html" title="An Input for GenCodec complementary to SimpleValueOutput.">
                           SimpleValueInput
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="" title=""></a>
-                        <a href="" title="">
+                        <a class="class" href="" title="An Output for GenCodec which serializes data into plain Scala objects."></a>
+                        <a href="" title="An Output for GenCodec which serializes data into plain Scala objects.">
                           SimpleValueOutput
                         </a>
                       </li><li class="current-entities indented4">
@@ -343,7 +343,21 @@ field.">
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>An <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> for <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a> which serializes data into plain Scala objects.</p><p>- &quot;lists&quot; are represented as Scala <code>List</code>s
+- &quot;objects&quot; are represented as <code>String</code>-keyed Scala <code>Map</code>s
+- simple values (strings, numbers, booleans, byte arrays) are represented as themselves, unchanged</p><p>In other words, serialized value yield by <code>SimpleValueOutput</code> is a Scala object guaranteed to be one of:
+- <code>null</code>
+- <code>Int</code>
+- <code>Long</code>
+- <code>Double</code>
+- <code>Boolean</code>
+- <code>String</code>
+- <code>Array[Byte]</code>
+- <code>List[Any]</code> where every element is also one of the listed types
+- <code>Map[String,Any]</code> where every value is also one of the listed types</p><p>Such format is often useful as an intermediate representation. For example, it can be later safely passed to
+standard Java serialization. However, for performance reasons it's recommended to implement dedicated
+<a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> and <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> for the final format (e.g. binary or JSON).
+</p></div><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
@@ -393,7 +407,7 @@ field.">
         <div id="allMembers">
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
-              <ol><li name="com.avsystem.commons.serialization.SimpleValueOutput#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+              <ol><li name="com.avsystem.commons.serialization.SimpleValueOutput#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="&lt;init&gt;(consumer:Any=&gt;Unit):com.avsystem.commons.serialization.SimpleValueOutput"></a><a id="&lt;init&gt;:SimpleValueOutput"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/serialization/SimpleValueOutput.html#&lt;init&gt;(consumer:Any=&gt;Unit):com.avsystem.commons.serialization.SimpleValueOutput" title="Permalink">
@@ -408,7 +422,7 @@ field.">
         <span class="name">SimpleValueOutput</span><span class="params">(<span name="consumer">consumer: (<a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>)</span>
       </span>
       
-      
+      <p class="shortcomment cmt"></p><div class="fullcomment"><div class="comment cmt"></div><dl class="paramcmts block"><dt class="param">consumer</dt><dd class="cmt"><p>consumer of serialized value, which is guaranteed to meet the above rules</p></dd></dl></div>
     </li></ol>
             </div>
 

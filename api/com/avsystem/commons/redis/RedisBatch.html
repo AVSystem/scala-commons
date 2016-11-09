@@ -264,7 +264,7 @@
                           AbstractRedisCommand
                         </a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
+                        <a class="object" href="ApiSubset$.html" title=""></a>
                         <a class="trait" href="ApiSubset.html" title=""></a>
                         <a href="ApiSubset.html" title="">
                           ApiSubset
@@ -409,8 +409,8 @@ on a single Redis connection.">
                         </a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="RedisBatch$.html" title=""></a>
-                        <a class="trait" href="" title="Represents a Redis operation or a set of operations which is sent to Redis as a single batch."></a>
-                        <a href="" title="Represents a Redis operation or a set of operations which is sent to Redis as a single batch.">
+                        <a class="trait" href="" title="Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message)."></a>
+                        <a href="" title="Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message).">
                           RedisBatch
                         </a>
                       </li><li class="current-entities indented4">
@@ -757,7 +757,7 @@ messages and emits a single RedisReply.">
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Represents a Redis operation or a set of operations which is sent to Redis as a single batch.
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message).
 <a href="" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a> yields a result of type <code>A</code> which is decoded from responses to commands from this batch.
 Execution of a batch may also fail for various reasons. Therefore, <a href="" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a> contains API that allows
 to recover from failures, e.g. <a href="#tried:com.avsystem.commons.redis.RedisBatch[scala.util.Try[A]]" class="extmbr" name="com.avsystem.commons.redis.RedisBatch#tried">RedisBatch.tried</a>.</p><p><a href="" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>es may be combined with each other to form bigger batches.

@@ -189,16 +189,16 @@
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="NamedEnum.html" title=""></a>
-                        <a href="NamedEnum.html" title="">
+                        <a class="trait" href="NamedEnum.html" title="Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
+textual representation (name)."></a>
+                        <a href="NamedEnum.html" title="Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
+textual representation (name).">
                           NamedEnum
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="" title="Base trait for companion objects of sealed traits that serve as named enums
-"></a>
-                        <a href="" title="Base trait for companion objects of sealed traits that serve as named enums
-">
+                        <a class="trait" href="" title="Base trait for companion objects of sealed traits that serve as named enums."></a>
+                        <a href="" title="Base trait for companion objects of sealed traits that serve as named enums.">
                           NamedEnumCompanion
                         </a>
                       </li><li class="current-entities indented4">
@@ -311,7 +311,18 @@ parameters while at the same time avoiding having to explicitly wrap arguments w
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Base trait for companion objects of sealed traits that serve as named enums
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Base trait for companion objects of sealed traits that serve as named enums. <code>NamedEnumCompanion</code> is an
+extension of <a href="SealedEnumCompanion.html" class="extype" name="com.avsystem.commons.misc.SealedEnumCompanion">SealedEnumCompanion</a> which additionally requires that every enum value has distinct string
+representation. Values can then be looked up by that representation using <a href="#byName:Map[String,T]" class="extmbr" name="com.avsystem.commons.misc.NamedEnumCompanion#byName">NamedEnumCompanion.byName</a></p><p>Example:</p><pre><span class="kw">sealed</span> <span class="kw">abstract</span> <span class="kw">class</span> Color(<span class="kw">val</span> name: <span class="std">String</span>) <span class="kw">extends</span> NamedEnum
+<span class="kw">object</span> Color <span class="kw">extends</span> NamedEnumCompanion[Color] {
+  <span class="kw">case</span> <span class="kw">object</span> Red <span class="kw">extends</span> Color(<span class="lit">"red"</span>)
+  <span class="kw">case</span> <span class="kw">object</span> Blue <span class="kw">extends</span> Color(<span class="lit">"blue"</span>)
+  <span class="kw">case</span> <span class="kw">object</span> Green <span class="kw">extends</span> Color(<span class="lit">"green"</span>)
+
+  <span class="cmt">// it's important to explicitly specify the type so that `caseObjects` macro works properly</span>
+  <span class="kw">val</span> values: <span class="std">List</span>[Color] = caseObjects
+}</pre><p><code>NamedEnumCompanion</code> also automatically provides implicit typeclass instances for
+<a href="../serialization/GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a> and <a href="../serialization/GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>.
 </p></div><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes

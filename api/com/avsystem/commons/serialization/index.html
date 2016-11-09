@@ -433,14 +433,14 @@ from Input (format-agnostic &quot;input stream&quot;).">
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="SimpleValueInput.html" title=""></a>
-                        <a href="SimpleValueInput.html" title="">
+                        <a class="class" href="SimpleValueInput.html" title="An Input for GenCodec complementary to SimpleValueOutput."></a>
+                        <a href="SimpleValueInput.html" title="An Input for GenCodec complementary to SimpleValueOutput.">
                           SimpleValueInput
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="SimpleValueOutput.html" title=""></a>
-                        <a href="SimpleValueOutput.html" title="">
+                        <a class="class" href="SimpleValueOutput.html" title="An Output for GenCodec which serializes data into plain Scala objects."></a>
+                        <a href="SimpleValueOutput.html" title="An Output for GenCodec which serializes data into plain Scala objects.">
                           SimpleValueOutput
                         </a>
                       </li><li class="current-entities indented4">
@@ -973,13 +973,13 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="SimpleValueInput.html">
+        <a title="An Input for GenCodec complementary to SimpleValueOutput." href="SimpleValueInput.html">
               <span class="name">SimpleValueInput</span>
             </a><span class="result"> extends <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a></span>
       </span>
       
-      
-    </li><li name="com.avsystem.commons.serialization.SimpleValueOutput" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <p class="shortcomment cmt">An <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> for <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a> complementary to <a href="SimpleValueOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleValueOutput">SimpleValueOutput</a>.</p>
+    </li><li name="com.avsystem.commons.serialization.SimpleValueOutput" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="SimpleValueOutputextendsOutput"></a><a id="SimpleValueOutput:SimpleValueOutput"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/serialization/index.html#SimpleValueOutputextendsOutput" title="Permalink">
@@ -991,12 +991,26 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="SimpleValueOutput.html">
+        <a title="An Output for GenCodec which serializes data into plain Scala objects." href="SimpleValueOutput.html">
               <span class="name">SimpleValueOutput</span>
             </a><span class="result"> extends <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></span>
       </span>
       
-      
+      <p class="shortcomment cmt">An <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> for <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a> which serializes data into plain Scala objects.</p><div class="fullcomment"><div class="comment cmt"><p>An <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> for <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a> which serializes data into plain Scala objects.</p><p>- &quot;lists&quot; are represented as Scala <code>List</code>s
+- &quot;objects&quot; are represented as <code>String</code>-keyed Scala <code>Map</code>s
+- simple values (strings, numbers, booleans, byte arrays) are represented as themselves, unchanged</p><p>In other words, serialized value yield by <code>SimpleValueOutput</code> is a Scala object guaranteed to be one of:
+- <code>null</code>
+- <code>Int</code>
+- <code>Long</code>
+- <code>Double</code>
+- <code>Boolean</code>
+- <code>String</code>
+- <code>Array[Byte]</code>
+- <code>List[Any]</code> where every element is also one of the listed types
+- <code>Map[String,Any]</code> where every value is also one of the listed types</p><p>Such format is often useful as an intermediate representation. For example, it can be later safely passed to
+standard Java serialization. However, for performance reasons it's recommended to implement dedicated
+<a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> and <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> for the final format (e.g. binary or JSON).
+</p></div></div>
     </li><li name="com.avsystem.commons.serialization.StreamFieldInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="StreamFieldInputextendsStreamInputwithFieldInput"></a><a id="StreamFieldInput:StreamFieldInput"></a>
       <span class="permalink">

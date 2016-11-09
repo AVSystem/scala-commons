@@ -295,16 +295,16 @@
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="NamedEnum.html" title=""></a>
-                        <a href="NamedEnum.html" title="">
+                        <a class="trait" href="NamedEnum.html" title="Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
+textual representation (name)."></a>
+                        <a href="NamedEnum.html" title="Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
+textual representation (name).">
                           NamedEnum
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="NamedEnumCompanion.html" title="Base trait for companion objects of sealed traits that serve as named enums
-"></a>
-                        <a href="NamedEnumCompanion.html" title="Base trait for companion objects of sealed traits that serve as named enums
-">
+                        <a class="trait" href="NamedEnumCompanion.html" title="Base trait for companion objects of sealed traits that serve as named enums."></a>
+                        <a href="NamedEnumCompanion.html" title="Base trait for companion objects of sealed traits that serve as named enums.">
                           NamedEnumCompanion
                         </a>
                       </li><li class="current-entities indented4">
@@ -653,7 +653,7 @@ parameters while at the same time avoiding having to explicitly wrap arguments w
       
       <p class="shortcomment cmt">Like <a href="Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a> but does have a counterpart for <code>Some(null)</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Like <a href="Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a> but does have a counterpart for <code>Some(null)</code>. In other words, <a href="NOpt.html" class="extype" name="com.avsystem.commons.misc.NOpt">NOpt</a> is a &quot;nullable <a href="Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>&quot;.
 </p></div></div>
-    </li><li name="com.avsystem.commons.misc.NamedEnum" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+    </li><li name="com.avsystem.commons.misc.NamedEnum" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="NamedEnumextendsAny"></a><a id="NamedEnum:NamedEnum"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/misc/index.html#NamedEnumextendsAny" title="Permalink">
@@ -665,13 +665,18 @@ parameters while at the same time avoiding having to explicitly wrap arguments w
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="NamedEnum.html">
+        <a title="Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
+textual representation (name)." href="NamedEnum.html">
               <span class="name">NamedEnum</span>
             </a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a></span>
       </span>
       
-      
-    </li><li name="com.avsystem.commons.misc.NamedEnumCompanion" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <p class="shortcomment cmt">Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
+textual representation (name).</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
+textual representation (name).</p><p>Typically, if a trait or class extends <code>NamedEnum</code>, its companion object extends <a href="NamedEnumCompanion.html" class="extype" name="com.avsystem.commons.misc.NamedEnumCompanion">NamedEnumCompanion</a>.
+Enum values can then be looked up by name using <a href="NamedEnumCompanion.html#byName:Map[String,T]" class="extmbr" name="com.avsystem.commons.misc.NamedEnumCompanion#byName">NamedEnumCompanion.byName</a>.
+</p></div></div>
+    </li><li name="com.avsystem.commons.misc.NamedEnumCompanion" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="NamedEnumCompanion[T&lt;:com.avsystem.commons.misc.NamedEnum]extendsSealedEnumCompanion[T]"></a><a id="NamedEnumCompanion[T&lt;:NamedEnum]:NamedEnumCompanion[T]"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/misc/index.html#NamedEnumCompanion[T&lt;:com.avsystem.commons.misc.NamedEnum]extendsSealedEnumCompanion[T]" title="Permalink">
@@ -683,14 +688,24 @@ parameters while at the same time avoiding having to explicitly wrap arguments w
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Base trait for companion objects of sealed traits that serve as named enums
-" href="NamedEnumCompanion.html">
+        <a title="Base trait for companion objects of sealed traits that serve as named enums." href="NamedEnumCompanion.html">
               <span class="name">NamedEnumCompanion</span>
             </a><span class="tparams">[<span name="T">T &lt;: <a href="NamedEnum.html" class="extype" name="com.avsystem.commons.misc.NamedEnum">NamedEnum</a></span>]</span><span class="result"> extends <a href="SealedEnumCompanion.html" class="extype" name="com.avsystem.commons.misc.SealedEnumCompanion">SealedEnumCompanion</a>[<span class="extype" name="com.avsystem.commons.misc.NamedEnumCompanion.T">T</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Base trait for companion objects of sealed traits that serve as named enums
-</p>
+      <p class="shortcomment cmt">Base trait for companion objects of sealed traits that serve as named enums.</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for companion objects of sealed traits that serve as named enums. <code>NamedEnumCompanion</code> is an
+extension of <a href="SealedEnumCompanion.html" class="extype" name="com.avsystem.commons.misc.SealedEnumCompanion">SealedEnumCompanion</a> which additionally requires that every enum value has distinct string
+representation. Values can then be looked up by that representation using <a href="NamedEnumCompanion.html#byName:Map[String,T]" class="extmbr" name="com.avsystem.commons.misc.NamedEnumCompanion#byName">NamedEnumCompanion.byName</a></p><p>Example:</p><pre><span class="kw">sealed</span> <span class="kw">abstract</span> <span class="kw">class</span> Color(<span class="kw">val</span> name: <span class="std">String</span>) <span class="kw">extends</span> NamedEnum
+<span class="kw">object</span> Color <span class="kw">extends</span> NamedEnumCompanion[Color] {
+  <span class="kw">case</span> <span class="kw">object</span> Red <span class="kw">extends</span> Color(<span class="lit">"red"</span>)
+  <span class="kw">case</span> <span class="kw">object</span> Blue <span class="kw">extends</span> Color(<span class="lit">"blue"</span>)
+  <span class="kw">case</span> <span class="kw">object</span> Green <span class="kw">extends</span> Color(<span class="lit">"green"</span>)
+
+  <span class="cmt">// it's important to explicitly specify the type so that `caseObjects` macro works properly</span>
+  <span class="kw">val</span> values: <span class="std">List</span>[Color] = caseObjects
+}</pre><p><code>NamedEnumCompanion</code> also automatically provides implicit typeclass instances for
+<a href="../serialization/GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a> and <a href="../serialization/GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>.
+</p></div></div>
     </li><li name="com.avsystem.commons.misc.Opt" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="Opt[+A]extendsAnyValwithSerializable"></a><a id="Opt[+A]:Opt[A]"></a>
       <span class="permalink">
@@ -837,7 +852,7 @@ For example:</p><pre><span class="kw">sealed</span> <span class="kw">trait</span
   <span class="kw">case</span> <span class="kw">object</span> SecondValue <span class="kw">extends</span> SomeEnum
   <span class="kw">case</span> <span class="kw">object</span> ThirdValue <span class="kw">extends</span> SomeEnum
 
-  <span class="cmt">// it's important to give explicit type here</span>
+  <span class="cmt">// it's important to explicitly specify the type so that `caseObjects` macro works properly</span>
   <span class="kw">val</span> values: <span class="std">List</span>[SomeEnum] = caseObjects
 }</pre></div></div>
     </li><li name="com.avsystem.commons.misc.SourceInfo" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">

@@ -189,16 +189,16 @@
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="NamedEnum.html" title=""></a>
-                        <a href="NamedEnum.html" title="">
+                        <a class="trait" href="NamedEnum.html" title="Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
+textual representation (name)."></a>
+                        <a href="NamedEnum.html" title="Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
+textual representation (name).">
                           NamedEnum
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="NamedEnumCompanion.html" title="Base trait for companion objects of sealed traits that serve as named enums
-"></a>
-                        <a href="NamedEnumCompanion.html" title="Base trait for companion objects of sealed traits that serve as named enums
-">
+                        <a class="trait" href="NamedEnumCompanion.html" title="Base trait for companion objects of sealed traits that serve as named enums."></a>
+                        <a href="NamedEnumCompanion.html" title="Base trait for companion objects of sealed traits that serve as named enums.">
                           NamedEnumCompanion
                         </a>
                       </li><li class="current-entities indented4">
@@ -318,7 +318,7 @@ For example:</p><pre><span class="kw">sealed</span> <span class="kw">trait</span
   <span class="kw">case</span> <span class="kw">object</span> SecondValue <span class="kw">extends</span> SomeEnum
   <span class="kw">case</span> <span class="kw">object</span> ThirdValue <span class="kw">extends</span> SomeEnum
 
-  <span class="cmt">// it's important to give explicit type here</span>
+  <span class="cmt">// it's important to explicitly specify the type so that `caseObjects` macro works properly</span>
   <span class="kw">val</span> values: <span class="std">List</span>[SomeEnum] = caseObjects
 }</pre></div><div class="toggleContainer block">
           <span class="toggle">
