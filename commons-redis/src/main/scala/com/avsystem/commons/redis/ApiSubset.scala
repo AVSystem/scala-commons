@@ -50,7 +50,7 @@ trait ApiSubset { self =>
   protected implicit def headOps[T](head: T): HeadOps[T] = new HeadOps(head)
 }
 
-private[redis] object ApiSubset {
+object ApiSubset {
   class HeadOps[A](private val head: A) extends AnyVal {
     def single: Seq[A] = new SingletonSeq[A](head)
   }
@@ -103,7 +103,6 @@ trait RedisBlockingApi extends RedisExecutedApi {
 trait RedisKeyedApi extends AnyRef
   with KeyedKeysApi
   with StringsApi
-  with KeyedServerApi
   with KeyedClusterApi
   with GeoApi
   with KeyedScriptingApi

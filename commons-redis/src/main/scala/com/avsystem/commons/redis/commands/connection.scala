@@ -6,9 +6,10 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait NodeConnectionApi extends ApiSubset {
+  /** [[http://redis.io/commands/echo ECHO]] */
   def echo(message: Value): Result[Value] =
     execute(new Echo(message))
-
+  /** [[http://redis.io/commands/ping PING]] */
   def ping: Result[ByteString] =
     execute(Ping)
 
@@ -22,12 +23,13 @@ trait NodeConnectionApi extends ApiSubset {
 }
 
 trait ConnectionConnectionApi extends NodeConnectionApi {
+  /** [[http://redis.io/commands/auth AUTH]] */
   def auth(password: String): Result[Unit] =
     execute(new Auth(password))
-
+  /** [[http://redis.io/commands/quit QUIT]] */
   def quit: Result[Unit] =
     execute(Quit)
-
+  /** [[http://redis.io/commands/select SELECT]] */
   def select(index: Int): Result[Unit] =
     execute(new Select(index))
 

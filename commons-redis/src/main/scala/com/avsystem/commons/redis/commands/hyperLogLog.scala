@@ -4,16 +4,22 @@ package redis.commands
 import com.avsystem.commons.redis._
 
 trait HyperLogLogApi extends ApiSubset {
+  /** [[http://redis.io/commands/pfadd PFADD]] */
   def pfadd(key: Key, element: Value, elements: Value*): Result[Boolean] =
     execute(new Pfadd(key, element +:: elements))
+  /** [[http://redis.io/commands/pfadd PFADD]] */
   def pfadd(key: Key, elements: Iterable[Value]): Result[Boolean] =
     execute(new Pfadd(key, elements))
+  /** [[http://redis.io/commands/pfcount PFCOUNT]] */
   def pfcount(key: Key, keys: Key*): Result[Long] =
     execute(new Pfcount(key +:: keys))
+  /** [[http://redis.io/commands/pfcount PFCOUNT]] */
   def pfcount(keys: Iterable[Key]): Result[Long] =
     execute(new Pfcount(keys))
+  /** [[http://redis.io/commands/pfmerge PFMERGE]] */
   def pfmerge(destkey: Key, sourcekey: Key, sourcekeys: Key*): Result[Unit] =
     execute(new Pfmerge(destkey, sourcekey +:: sourcekeys))
+  /** [[http://redis.io/commands/pfmerge PFMERGE]] */
   def pfmerge(destkey: Key, sourcekeys: Iterable[Key]): Result[Unit] =
     execute(new Pfmerge(destkey, sourcekeys))
 

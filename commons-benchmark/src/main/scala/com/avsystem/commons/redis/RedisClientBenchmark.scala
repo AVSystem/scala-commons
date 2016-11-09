@@ -4,7 +4,7 @@ package redis
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, TimeUnit}
 
-import akka.actor.{ActorSystem, Deploy}
+import akka.actor.ActorSystem
 import akka.util.{ByteString, Timeout}
 import com.avsystem.commons.benchmark.CrossRedisBenchmark
 import com.avsystem.commons.concurrent.RunNowEC
@@ -55,8 +55,7 @@ abstract class RedisBenchmark {
 
   val PoolSize = 8
 
-  val deploy = Deploy(dispatcher = "redis.default-dispatcher")
-  val connectionConfig = ConnectionConfig(initCommands = clientSetname("com/avsystem/commons/benchmark"), debugListener = OutgoingTraffictStats)
+  val connectionConfig = ConnectionConfig(initCommands = clientSetname("benchmark"), debugListener = OutgoingTraffictStats)
   val monConnectionConfig = ConnectionConfig(initCommands = clientSetname("benchmarkMon"))
   val nodeConfig = NodeConfig(poolSize = PoolSize, connectionConfigs = _ => connectionConfig)
   val clusterConfig = ClusterConfig(nodeConfigs = _ => nodeConfig, monitoringConnectionConfigs = _ => monConnectionConfig)

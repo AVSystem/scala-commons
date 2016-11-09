@@ -8,9 +8,62 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
 
+/**
+  * An [[Output]] for [[GenCodec]] which serializes data into plain Scala objects.
+  *
+  * - "lists" are represented as Scala `List`s
+  * - "objects" are represented as `String`-keyed Scala `Map`s
+  * - simple values (strings, numbers, booleans, byte arrays) are represented as themselves, unchanged
+  *
+  * In other words, serialized value yield by `SimpleValueOutput` is a Scala object guaranteed to be one of:
+  * - `null`
+  * - `Int`
+  * - `Long`
+  * - `Double`
+  * - `Boolean`
+  * - `String`
+  * - `Array[Byte]`
+  * - `List[Any]` where every element is also one of the listed types
+  * - `Map[String,Any]` where every value is also one of the listed types
+  *
+  * Such format is often useful as an intermediate representation. For example, it can be later safely passed to
+  * standard Java serialization. However, for performance reasons it's recommended to implement dedicated
+  * [[Input]] and [[Output]] for the final format (e.g. binary or JSON).
+  *
+  * @param consumer consumer of serialized value, which is guaranteed to meet the above rules
+  */
+class SimpleValueOutput(consumer: Any => Unit) extends Output {
+  def writeBinary(binary: Array[Byte]) = consumer(binary)
+  def writeString(str: String) = consumer(str)
+  def writeDouble(double: Double) = consumer(double)
+  def writeInt(int: Int) = consumer(int)
+
+  def writeList() = new ListOutput {
+    private val buffer = new ListBuffer[Any]
+    def writeElement() = new SimpleValueOutput(buffer += _)
+    def finish() = consumer(buffer.result())
+  }
+
+  def writeBoolean(boolean: Boolean) = consumer(boolean)
+
+  def writeObject() = new ObjectOutput {
+    private val builder = Map.newBuilder[String, Any]
+    def writeField(key: String) = new SimpleValueOutput(v => builder += ((key, v)))
+    def finish() = consumer(builder.result())
+  }
+
+  def writeLong(long: Long) = consumer(long)
+  def writeNull() = consumer(null)
+}
+
+/**
+  * An [[Input]] for [[GenCodec]] complementary to [[SimpleValueOutput]].
+  *
+  * @param value serialized value yield by [[SimpleValueOutput]]
+  */
 class SimpleValueInput(value: Any) extends Input {
-  private def doRead[A: ClassTag]: A =
-    doReadUnboxed[A, A](classTag[A], Unboxing(identity))
+  private def doRead[A >: Null <: AnyRef: ClassTag]: A =
+    doReadUnboxed[A, A]
 
   private def doReadUnboxed[A, B: ClassTag](implicit unboxing: Unboxing[A, B]): A = value match {
     case b: B => unboxing.fun(b)
@@ -53,27 +106,3 @@ class SimpleValueInput(value: Any) extends Input {
 }
 
 class SimpleValueFieldInput(val fieldName: String, value: Any) extends SimpleValueInput(value) with FieldInput
-
-class SimpleValueOutput(consumer: Any => Unit) extends Output {
-  def writeBinary(binary: Array[Byte]) = consumer(binary)
-  def writeString(str: String) = consumer(str)
-  def writeDouble(double: Double) = consumer(double)
-  def writeInt(int: Int) = consumer(int)
-
-  def writeList() = new ListOutput {
-    private val buffer = new ListBuffer[Any]
-    def writeElement() = new SimpleValueOutput(buffer += _)
-    def finish() = consumer(buffer.result())
-  }
-
-  def writeBoolean(boolean: Boolean) = consumer(boolean)
-
-  def writeObject() = new ObjectOutput {
-    private val builder = Map.newBuilder[String, Any]
-    def writeField(key: String) = new SimpleValueOutput(v => builder += ((key, v)))
-    def finish() = consumer(builder.result())
-  }
-
-  def writeLong(long: Long) = consumer(long)
-  def writeNull() = consumer(null)
-}

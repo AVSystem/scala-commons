@@ -65,11 +65,6 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
     dbsize.assertEquals(0)
   }
 
-  apiTest("DEBUG OBJECT") {
-    setup(set("key", "value"))
-    debugObject("key").get
-  }
-
   apiTest("FLUSHALL") {
     flushall.get
   }

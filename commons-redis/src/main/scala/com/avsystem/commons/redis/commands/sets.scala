@@ -7,60 +7,88 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait SetsApi extends ApiSubset {
+  /** [[http://redis.io/commands/sadd SADD]] */
   def sadd(key: Key, member: Value): Result[Boolean] =
     execute(new Sadd(key, member.single).map(_ > 0))
+  /** [[http://redis.io/commands/sadd SADD]] */
   def sadd(key: Key, member: Value, members: Value*): Result[Int] =
     execute(new Sadd(key, member +:: members))
+  /** [[http://redis.io/commands/sadd SADD]] */
   def sadd(key: Key, members: Iterable[Value]): Result[Int] =
     execute(new Sadd(key, members))
+  /** [[http://redis.io/commands/scard SCARD]] */
   def scard(key: Key): Result[Long] =
     execute(new Scard(key))
+  /** [[http://redis.io/commands/sdiff SDIFF]] */
   def sdiff(source: Key, keys: Key*): Result[BSet[Value]] =
     execute(new Sdiff(source, keys))
+  /** [[http://redis.io/commands/sdiff SDIFF]] */
   def sdiff(source: Key, keys: Iterable[Key]): Result[BSet[Value]] =
     execute(new Sdiff(source, keys))
+  /** [[http://redis.io/commands/sdiffstore SDIFFSTORE]] */
   def sdiffstore(destination: Key, source: Key, keys: Key*): Result[Long] =
     execute(new Sdiffstore(destination, source, keys))
+  /** [[http://redis.io/commands/sdiffstore SDIFFSTORE]] */
   def sdiffstore(destination: Key, source: Key, keys: Iterable[Key]): Result[Long] =
     execute(new Sdiffstore(destination, source, keys))
+  /** [[http://redis.io/commands/sinter SINTER]] */
   def sinter(key: Key, keys: Key*): Result[BSet[Value]] =
     execute(new Sinter(key +:: keys))
+  /** [[http://redis.io/commands/sinter SINTER]] */
   def sinter(keys: Iterable[Key]): Result[BSet[Value]] =
     execute(new Sinter(keys))
+  /** [[http://redis.io/commands/sinterstore SINTERSTORE]] */
   def sinterstore(destination: Key, key: Key, keys: Key*): Result[Long] =
     execute(new Sinterstore(destination, key +:: keys))
+  /** [[http://redis.io/commands/sinterstore SINTERSTORE]] */
   def sinterstore(destination: Key, keys: Iterable[Key]): Result[Long] =
     execute(new Sinterstore(destination, keys))
+  /** [[http://redis.io/commands/sismember SISMEMBER]] */
   def sismember(key: Key, member: Value): Result[Boolean] =
     execute(new Sismember(key, member))
+  /** [[http://redis.io/commands/smembers SMEMBERS]] */
   def smembers(key: Key): Result[BSet[Value]] =
     execute(new Smembers(key))
+  /** [[http://redis.io/commands/smove SMOVE]] */
   def smove(source: Key, destination: Key, member: Value): Result[Boolean] =
     execute(new Smove(source, destination, member))
+  /** [[http://redis.io/commands/spop SPOP]] */
   def spop(key: Key): Result[Opt[Value]] =
     execute(new Spop(key))
+  /** [[http://redis.io/commands/spop SPOP]] */
   def spop(key: Key, count: Int): Result[BSet[Value]] =
     execute(new SpopCount(key, count))
+  /** [[http://redis.io/commands/srandmember SRANDMEMBER]] */
   def srandmember(key: Key): Result[Opt[Value]] =
     execute(new Srandmember(key))
+  /** [[http://redis.io/commands/srandmember SRANDMEMBER]] */
   def srandmember(key: Key, count: Int): Result[Seq[Value]] =
     execute(new SrandmemberCount(key, count))
+  /** [[http://redis.io/commands/srandmember SRANDMEMBER]] */
   def srandmemberDistinct(key: Key, count: Int): Result[BSet[Value]] =
     execute(new SrandmemberCountDistinct(key, count))
+  /** [[http://redis.io/commands/srem SREM]] */
   def srem(key: Key, member: Value): Result[Boolean] =
     execute(new Srem(key, member.single).map(_ > 0))
+  /** [[http://redis.io/commands/srem SREM]] */
   def srem(key: Key, member: Value, members: Value*): Result[Int] =
     execute(new Srem(key, member +:: members))
+  /** [[http://redis.io/commands/srem SREM]] */
   def srem(key: Key, members: Iterable[Value]): Result[Int] =
     execute(new Srem(key, members))
+  /** [[http://redis.io/commands/sscan SSCAN]] */
   def sscan(key: Key, cursor: Cursor, matchPattern: OptArg[Value] = OptArg.Empty, count: OptArg[Int] = OptArg.Empty): Result[(Cursor, Seq[Value])] =
     execute(new Sscan(key, cursor, matchPattern.toOpt, count.toOpt))
+  /** [[http://redis.io/commands/sunion SUNION]] */
   def sunion(key: Key, keys: Key*): Result[BSet[Value]] =
     execute(new Sunion(key +:: keys))
+  /** [[http://redis.io/commands/sunion SUNION]] */
   def sunion(keys: Iterable[Key]): Result[BSet[Value]] =
     execute(new Sunion(keys))
+  /** [[http://redis.io/commands/sunionstore SUNIONSTORE]] */
   def sunionstore(destination: Key, key: Key, keys: Key*): Result[Long] =
     execute(new Sunionstore(destination, key +:: keys))
+  /** [[http://redis.io/commands/sunionstore SUNIONSTORE]] */
   def sunionstore(destination: Key, keys: Iterable[Key]): Result[Long] =
     execute(new Sunionstore(destination, keys))
 

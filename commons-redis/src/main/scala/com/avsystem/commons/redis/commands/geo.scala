@@ -12,35 +12,49 @@ import com.avsystem.commons.redis.util.SingletonSeq
 import scala.collection.mutable.ListBuffer
 
 trait GeoApi extends ApiSubset {
+  /** [[http://redis.io/commands/geoadd GEOADD]] */
   def geoadd(key: Key, member: Value, point: GeoPoint): Result[Boolean] =
     execute(new Geoadd(key, (member, point).single).map(_ > 0))
+  /** [[http://redis.io/commands/geoadd GEOADD]] */
   def geoadd(key: Key, item: (Value, GeoPoint), items: (Value, GeoPoint)*): Result[Int] =
     execute(new Geoadd(key, item +:: items))
+  /** [[http://redis.io/commands/geoadd GEOADD]] */
   def geoadd(key: Key, items: Iterable[(Value, GeoPoint)]): Result[Int] =
     execute(new Geoadd(key, items))
+  /** [[http://redis.io/commands/geohash GEOHASH]] */
   def geohash(key: Key, member: Value): Result[Opt[GeoHash]] =
     execute(new Geohash(key, member.single).map(_.head))
+  /** [[http://redis.io/commands/geohash GEOHASH]] */
   def geohash(key: Key, member: Value, members: Value*): Result[Seq[Opt[GeoHash]]] =
     execute(new Geohash(key, member +:: members))
+  /** [[http://redis.io/commands/geohash GEOHASH]] */
   def geohash(key: Key, members: Seq[Value]): Result[Seq[Opt[GeoHash]]] =
     execute(new Geohash(key, members))
+  /** [[http://redis.io/commands/geopos GEOPOS]] */
   def geopos(key: Key, member: Value): Result[Opt[GeoPoint]] =
     execute(new Geopos(key, member.single).map(_.head))
+  /** [[http://redis.io/commands/geopos GEOPOS]] */
   def geopos(key: Key, member: Value, members: Value*): Result[Seq[Opt[GeoPoint]]] =
     execute(new Geopos(key, member +:: members))
+  /** [[http://redis.io/commands/geopos GEOPOS]] */
   def geopos(key: Key, members: Seq[Value]): Result[Seq[Opt[GeoPoint]]] =
     execute(new Geopos(key, members))
+  /** [[http://redis.io/commands/geodist GEODIST]] */
   def geodist(key: Key, member1: Value, member2: Value, unit: GeoUnit = GeoUnit.M): Result[Opt[Double]] =
     execute(new Geodist(key, member1, member2, unit))
+  /** [[http://redis.io/commands/georadius GEORADIUS]] */
   def georadius[A <: GeoradiusAttrs](key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
     attributes: A = GeoradiusAttrs.None, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty): Result[Seq[A#Attributed[Value]]] =
     execute(new Georadius(key, point, radius, unit, attributes, count.toOpt, sortOrder.toOpt))
+  /** [[http://redis.io/commands/georadiusbymember GEORADIUSBYMEMBER]] */
   def georadiusbymember[A <: GeoradiusAttrs](key: Key, member: Value, radius: Double, unit: GeoUnit,
     attributes: A = GeoradiusAttrs.None, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty): Result[Seq[A#Attributed[Value]]] =
     execute(new Georadiusbymember(key, member, radius, unit, attributes, count.toOpt, sortOrder.toOpt))
+  /** [[http://redis.io/commands/georadius GEORADIUS]] */
   def georadiusStore(key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
     storeKey: Key, storeDist: Boolean = false, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty): Result[Opt[Long]] =
     execute(new GeoradiusStore(key, point, radius, unit, count.toOpt, sortOrder.toOpt, storeKey, storeDist))
+  /** [[http://redis.io/commands/georadiusbymember GEORADIUSBYMEMBER]] */
   def georadiusbymemberStore(key: Key, member: Value, radius: Double, unit: GeoUnit,
     storeKey: Key, storeDist: Boolean = false, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty): Result[Opt[Long]] =
     execute(new GeoradiusbymemberStore(key, member, radius, unit, count.toOpt, sortOrder.toOpt, storeKey, storeDist))

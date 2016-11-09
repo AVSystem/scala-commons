@@ -23,7 +23,7 @@ object SealedUtils {
   *     case object SecondValue extends SomeEnum
   *     case object ThirdValue extends SomeEnum
   *
-  *     // it's important to give explicit type here
+  *     // it's important to explicitly specify the type so that `caseObjects` macro works properly
   *     val values: List[SomeEnum] = caseObjects
   *   }
   * }}}
@@ -57,6 +57,13 @@ trait SealedEnumCompanion[T] {
   protected def caseObjects: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
 }
 
+/**
+  * Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
+  * textual representation (name).
+  *
+  * Typically, if a trait or class extends `NamedEnum`, its companion object extends [[NamedEnumCompanion]].
+  * Enum values can then be looked up by name using [[NamedEnumCompanion.byName]].
+  */
 trait NamedEnum extends Any {
   /**
     * Used as a key for a map returned from `byName`. It is recommended to override this method uniquely
@@ -67,7 +74,26 @@ trait NamedEnum extends Any {
 }
 
 /**
-  * Base trait for companion objects of sealed traits that serve as named enums
+  * Base trait for companion objects of sealed traits that serve as named enums. `NamedEnumCompanion` is an
+  * extension of [[SealedEnumCompanion]] which additionally requires that every enum value has distinct string
+  * representation. Values can then be looked up by that representation using [[NamedEnumCompanion.byName]]
+  *
+  * Example:
+  *
+  * {{{
+  *   sealed abstract class Color(val name: String) extends NamedEnum
+  *   object Color extends NamedEnumCompanion[Color] {
+  *     case object Red extends Color("red")
+  *     case object Blue extends Color("blue")
+  *     case object Green extends Color("green")
+  *
+  *     // it's important to explicitly specify the type so that `caseObjects` macro works properly
+  *     val values: List[Color] = caseObjects
+  *   }
+  * }}}
+  *
+  * `NamedEnumCompanion` also automatically provides implicit typeclass instances for
+  * [[com.avsystem.commons.serialization.GenKeyCodec GenKeyCodec]] and [[com.avsystem.commons.serialization.GenCodec GenCodec]].
   */
 trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
   /**

@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/AVSystem/scala-commons.svg?branch=master)](https://travis-ci.org/AVSystem/scala-commons)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.11)
 
-**[API reference](http://avsystem.github.io/scala-commons/api)**
+**[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/index.html)**
 
 **NOTE** The library is still considered to be in early development where a lot of experiments is tried. Therefore we don't make any guarantees about backwards compatibility between versions yet.
 

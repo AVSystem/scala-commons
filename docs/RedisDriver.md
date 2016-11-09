@@ -152,3 +152,37 @@ Examples can be found in [test sources](https://github.com/AVSystem/scala-common
 * simple atomic transactions (without `WATCH`) - [MultiExecExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/MultiExecExample.scala)
 * transactions with `WATCH` and optimistic locking - [TransactionExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/TransactionExample.scala)
 * LUA scripting - [ScriptingExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ScriptingExample.scala)
+
+## Benchmarks
+
+Some basic JMH benchmarks have been implemented in 
+[`RedisClientBenchmark`](https://github.com/AVSystem/scala-commons/blob/master/commons-benchmark/src/main/scala/com/avsystem/commons/redis/RedisClientBenchmark.scala)
+
+Here's an example result:
+
+```
+[info] Benchmark                                                     Mode  Cnt        Score       Error  Units
+[info] RedisClientBenchmark.clusterClientBatchBenchmark             thrpt   40  1074866.470 ± 16140.227  ops/s
+[info] RedisClientBenchmark.clusterClientCommandBenchmark           thrpt   40   326855.405 ± 12962.072  ops/s
+[info] RedisClientBenchmark.clusterClientDistributedBatchBenchmark  thrpt   40   727236.540 ± 16935.577  ops/s
+[info] RedisClientBenchmark.clusterClientMixedBenchmark             thrpt   40   941223.965 ± 16324.902  ops/s
+[info] RedisClientBenchmark.clusterClientOpBenchmark                thrpt   40  1284238.977 ± 35083.590  ops/s
+[info] RedisClientBenchmark.clusterClientTransactionBenchmark       thrpt   40   947884.617 ± 16823.736  ops/s
+[info] RedisClientBenchmark.connectionClientBatchBenchmark          thrpt   40   617679.548 ± 15966.014  ops/s
+[info] RedisClientBenchmark.connectionClientCommandBenchmark        thrpt   40   424141.334 ± 15337.339  ops/s
+[info] RedisClientBenchmark.connectionClientMixedBenchmark          thrpt   40   362924.325 ± 35500.359  ops/s
+[info] RedisClientBenchmark.connectionClientOpBenchmark             thrpt   40   314001.726 ± 25950.990  ops/s
+[info] RedisClientBenchmark.connectionClientTransactionBenchmark    thrpt   40   307683.387 ± 24061.938  ops/s
+[info] RedisClientBenchmark.nodeClientBatchBenchmark                thrpt   40  1149734.800 ± 11886.009  ops/s
+[info] RedisClientBenchmark.nodeClientCommandBenchmark              thrpt   40   295572.755 ± 13835.540  ops/s
+[info] RedisClientBenchmark.nodeClientMixedBenchmark                thrpt   40  1057054.637 ± 23604.286  ops/s
+[info] RedisClientBenchmark.nodeClientOpBenchmark                   thrpt   40  1232789.983 ± 33703.698  ops/s
+[info] RedisClientBenchmark.nodeClientTransactionBenchmark          thrpt   40   836065.547 ±  8319.257  ops/s
+```
+
+Environment:
+* Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz
+* Ubuntu 14.04, Linux 4.4.0 x86_64
+* Oracle Java 1.8.0_111-b14, Scala 2.12.0
+* Redis 3.2 running on the same machine
+* For Redis Cluster benchmarks - 3 masters running on the same machine
