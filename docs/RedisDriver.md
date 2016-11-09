@@ -33,7 +33,7 @@ Features:
   objects, asynchronous API returning `Future`s and blocking API)
 * strong conceptual separation between "Redis API" and "Redis client", e.g. multiple API flavors may reuse the same client
 * customizable key, hash key and value types for every API flavor with automatic serialization powered by 
-  [`GenCodec`](../GenCodec.md)
+  [`GenCodec`](GenCodec.md)
 * genericity - ability to easily create your own API flavors
 
 Missing features:
