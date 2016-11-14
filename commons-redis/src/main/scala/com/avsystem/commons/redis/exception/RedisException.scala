@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package redis.exception
 
-import java.net.InetSocketAddress
-
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.protocol.ErrorMsg
 import com.avsystem.commons.redis.{NodeAddress, RawCommand, Redirection}
@@ -52,8 +50,6 @@ class WriteFailedException(val address: NodeAddress)
   * connection was closed before receiving a response. Even though connections are automatically restarted,
   * such command cannot be resent because we don't know whether it was actually executed on the Redis instance or not.
   * In a Redis Cluster deployment, this is likely to happen when a node fails.
-  * You can reduce the number of these errors during node or connection failure by configuring
-  * [[com.avsystem.commons.redis.config.ConnectionConfig#maxOutstandingRequests maxOutstandingRequests]].
   */
 class ConnectionClosedException(val address: NodeAddress, val cause: Opt[String])
   extends RedisIOException(s"Redis connection to $address was closed${cause.fold("")(c => s": $c")}")
