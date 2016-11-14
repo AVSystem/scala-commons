@@ -89,24 +89,20 @@ case class NodeConfig(
   *   )
   * }}}
   *
-  * @param initCommands           commands always sent upon establishing a Redis connection (and every time it's reconnected).
-  *                               The most common reason to configure `initCommands` is to specify authentication password used by every
-  *                               connection (`AUTH` command), but it's also useful for commands like `CLIENT SETNAME`, `SELECT`, etc.
-  *                               Note that these are all commands that can't be executed directly by
-  *                               [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]] or
-  *                               [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
-  * @param actorName              name of the actor representing the connection
-  * @param localAddress           local bind address for the connection
-  * @param socketOptions          socket options for the connection
-  * @param socketTimeout          socket timeout for the connection
-  * @param maxOutstandingRequests maximum number of requests (batches) that may be sent through the connection without
-  *                               receiving a response. For example, if `maxOutstandingRequests` is 1 then every batch
-  *                               must receive a response from Redis before next batch can be sent.
-  *                               Setting this option to a low value may help reduce number of errors caused by connection
-  *                               and node failures. See [[com.avsystem.commons.redis.exception.ConnectionClosedException ConnectionClosedException]]
-  *                               for more details.
-  * @param debugListener          listener for traffic going through this connection. Only for debugging and testing
-  *                               purposes
+  * @param initCommands     commands always sent upon establishing a Redis connection (and every time it's reconnected).
+  *                         The most common reason to configure `initCommands` is to specify authentication password used by every
+  *                         connection (`AUTH` command), but it's also useful for commands like `CLIENT SETNAME`, `SELECT`, etc.
+  *                         Note that these are all commands that can't be executed directly by
+  *                         [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]] or
+  *                         [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
+  * @param actorName        name of the actor representing the connection
+  * @param localAddress     local bind address for the connection
+  * @param socketOptions    socket options for the connection
+  * @param socketTimeout    socket timeout for the connection
+  * @param maxWriteSizeHint hint for maximum number of bytes sent in a single network write message (the actual number
+  *                         of bytes sent may be slightly larger)
+  * @param debugListener    listener for traffic going through this connection. Only for debugging and testing
+  *                         purposes
   */
 case class ConnectionConfig(
   initCommands: RedisBatch[Any] = RedisBatch.unit,
@@ -114,7 +110,7 @@ case class ConnectionConfig(
   localAddress: OptArg[InetSocketAddress] = OptArg.Empty,
   socketOptions: List[Inet.SocketOption] = Nil,
   socketTimeout: OptArg[FiniteDuration] = OptArg.Empty,
-  maxOutstandingRequests: OptArg[Int] = OptArg.Empty,
+  maxWriteSizeHint: OptArg[Int] = 50000,
   debugListener: DebugListener = DevNullListener
 )
 

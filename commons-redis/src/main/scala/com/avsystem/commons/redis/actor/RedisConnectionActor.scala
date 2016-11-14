@@ -4,7 +4,6 @@ package redis.actor
 import java.net.InetSocketAddress
 
 import akka.actor.{Actor, ActorRef}
-import akka.io.Tcp.{CommandFailed, Register}
 import akka.io.{IO, Tcp}
 import akka.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.jiop.JavaInterop._
@@ -41,6 +40,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
 
   private val queuedToReserve = new JArrayDeque[QueuedPacks]
   private val queuedToWrite = new JArrayDeque[QueuedPacks]
+  private val writeBuffer = new ByteStringBuilder
 
   self ! Connect
   def receive = connecting(-1)
@@ -115,7 +115,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
     private var unwatch = false
 
     def initialize(): Unit = {
-      connection ! Register(self)
+      connection ! Tcp.Register(self)
       val initBuffer = new ByteStringBuilder
       new ReplyCollector(config.initCommands.rawCommandPacks, initBuffer, onInitResult)
         .sendEmptyReplyOr { collector =>
@@ -168,7 +168,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
       case WriteAck =>
         waitingForAck = 0
         writeIfPossible()
-      case CommandFailed(_: Tcp.Write) =>
+      case Tcp.CommandFailed(_: Tcp.Write) =>
         onWriteFailed()
         writeIfPossible()
       case cc: Tcp.ConnectionClosed =>
@@ -188,7 +188,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
       case Release => //ignore
       case WriteAck =>
         waitingForAck = 0
-      case CommandFailed(_: Tcp.Write) =>
+      case Tcp.CommandFailed(_: Tcp.Write) =>
         onWriteFailed()
         closeIfPossible(cause)
       case cc: Tcp.ConnectionClosed =>
@@ -215,7 +215,6 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
 
     def writeIfPossible(): Unit =
       if (waitingForAck == 0 && !queuedToWrite.isEmpty) {
-        val writeBuffer = new ByteStringBuilder
         // Implementation of RedisOperationActor will not send more than one batch at once (before receiving response to
         // previous one). This guarantees that only the last batch in write queue can be a reserving one.
         val startingReservation = queuedToWrite.peekLast.reserve
@@ -223,7 +222,8 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
           queuedToWrite.addFirst(QueuedPacks(RedisApi.Raw.BinaryTyped.unwatch, Opt.Empty, reserve = false))
           unwatch = false //TODO: what if UNWATCH fails?
         }
-        drain(queuedToWrite) { queued =>
+        while (!queuedToWrite.isEmpty && config.maxWriteSizeHint.forall(_ > writeBuffer.length)) {
+          val queued = queuedToWrite.removeFirst()
           new ReplyCollector(queued.packs, writeBuffer, queued.reply)
             .sendEmptyReplyOr { collector =>
               collectors.addLast(collector)
@@ -240,6 +240,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
           val data = writeBuffer.result()
           logWrite(data)
           connection ! Tcp.Write(data, WriteAck)
+          writeBuffer.clear()
         }
       }
 
@@ -285,7 +286,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
     }
   }
 
-  private def drain[T](queue: JArrayDeque[T])(fun: T => Unit): Unit =
+  private def drain[T](queue: JDeque[T])(fun: T => Unit): Unit =
     while (!queue.isEmpty) {
       fun(queue.removeFirst())
     }

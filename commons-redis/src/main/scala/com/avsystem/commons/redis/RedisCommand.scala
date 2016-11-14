@@ -49,7 +49,7 @@ abstract class AbstractRedisCommand[A](protected val decodeExpected: ReplyDecode
 final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) extends AnyVal {
   def result: ArrayMsg[BulkStringMsg] = ArrayMsg(buffer)
 
-  private def fluent(code: => Any): CommandEncoder = {
+  private def fluent(code: => Unit): CommandEncoder = {
     code
     this
   }

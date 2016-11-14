@@ -55,7 +55,7 @@ abstract class RedisBenchmark {
 
   val PoolSize = 8
 
-  val connectionConfig = ConnectionConfig(initCommands = clientSetname("benchmark"), debugListener = OutgoingTraffictStats)
+  val connectionConfig = ConnectionConfig(initCommands = clientSetname("benchmark"))
   val monConnectionConfig = ConnectionConfig(initCommands = clientSetname("benchmarkMon"))
   val nodeConfig = NodeConfig(poolSize = PoolSize, connectionConfigs = _ => connectionConfig)
   val clusterConfig = ClusterConfig(nodeConfigs = _ => nodeConfig, monitoringConnectionConfigs = _ => monConnectionConfig)
@@ -71,14 +71,14 @@ abstract class RedisBenchmark {
 }
 
 object RedisClientBenchmark {
-  final val BatchSize = 300
-  final val ConcurrentBatches = 100
+  final val BatchSize = 50
   final val ConcurrentCommands = 20000
+  final val ConcurrentBatches = ConcurrentCommands / BatchSize
 
   val KeyBase = "key"
 }
 
-@OperationsPerInvocation(ConcurrentBatches * BatchSize)
+@OperationsPerInvocation(ConcurrentCommands)
 class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
 
   import RedisApi.Batches.StringTyped._
@@ -100,19 +100,11 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
     client.executeBatch(batch)
   }
 
-  def operationFuture(client: RedisOpExecutor, i: Int) = {
+  def operationFuture(client: RedisExecutor, i: Int) = {
     val key = s"$KeyBase$i"
     val cmd = set(key, "v")
     val batch = Seq.fill(BatchSize)(cmd).sequence
-    client.executeOp(batch.operation)
-  }
-
-  def clusterOperationFuture(client: RedisClusterClient, i: Int) = {
-    val key = s"$KeyBase$i"
-    val cmd = set(key, "v")
-    val batch = Seq.fill(BatchSize)(cmd).sequence
-    client.initialized.flatMapNow(_.currentState.clientForSlot(keySlot(key))
-      .executeOp(batch.operation))
+    client.executeBatch(batch.transaction)
   }
 
   def clusterTransactionFuture(client: RedisClusterClient, i: Int) = {
@@ -148,7 +140,7 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
   def clusterMixedFuture(client: RedisClusterClient, i: Int) =
     i % 3 match {
       case 0 => distributedBatchFuture(client, i)
-      case 1 => clusterOperationFuture(client, i)
+      case 1 => operationFuture(client, i)
       case 2 => clusterTransactionFuture(client, i)
     }
 
@@ -178,7 +170,6 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
   }
 
   @Benchmark
-  @OperationsPerInvocation(ConcurrentCommands)
   def clusterClientCommandBenchmark() =
     redisClientBenchmark(ConcurrentCommands, commandFuture(clusterClient, _))
 
@@ -192,7 +183,7 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
 
   @Benchmark
   def clusterClientOpBenchmark() =
-    redisClientBenchmark(ConcurrentBatches, clusterOperationFuture(clusterClient, _))
+    redisClientBenchmark(ConcurrentBatches, operationFuture(clusterClient, _))
 
   @Benchmark
   def clusterClientTransactionBenchmark() =
@@ -203,7 +194,6 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
     redisClientBenchmark(ConcurrentBatches, clusterMixedFuture(clusterClient, _))
 
   @Benchmark
-  @OperationsPerInvocation(ConcurrentCommands)
   def nodeClientCommandBenchmark() =
     redisClientBenchmark(ConcurrentCommands, commandFuture(nodeClient, _))
 
@@ -224,7 +214,6 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
     redisClientBenchmark(ConcurrentBatches, transactionFuture(nodeClient, _))
 
   @Benchmark
-  @OperationsPerInvocation(ConcurrentCommands)
   def connectionClientCommandBenchmark() =
     redisClientBenchmark(ConcurrentCommands, commandFuture(connectionClient, _))
 

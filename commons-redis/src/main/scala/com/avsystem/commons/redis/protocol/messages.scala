@@ -137,6 +137,27 @@ object RedisMsg {
     builder.result()
   }
 
+  private final val LongMinValueBytes = ByteString(Long.MinValue.toString)
+  private implicit class ByteStringBuilderOps(private val bsb: ByteStringBuilder) extends AnyVal {
+    def append(value: Long): ByteStringBuilder = value match {
+      case 0 => bsb.putByte('0')
+      case Long.MinValue => bsb.append(LongMinValueBytes)
+      case v if v < 0 => bsb.putByte('-'); append(-v)
+      case v =>
+        def appendPos(value: Long, log: Long): Unit =
+          if (log > 0) {
+            bsb.putByte(('0' + (value / log)).toByte)
+            appendPos(value % log, log / 10)
+          }
+        var log: Long = 1
+        while (v / log >= 10) {
+          log *= 10
+        }
+        appendPos(v, log)
+        bsb
+    }
+  }
+
   def encode(msg: RedisMsg, builder: ByteStringBuilder): Unit = {
     def encodeIn(msg: RedisMsg): Unit = msg match {
       case SimpleStringMsg(string) =>
@@ -144,15 +165,15 @@ object RedisMsg {
       case ErrorMsg(errorString) =>
         builder.putByte(ErrorInd).append(errorString).append(CRLF)
       case IntegerMsg(value: Long) =>
-        builder.putByte(IntegerInd).append(ByteString(value.toString)).append(CRLF)
+        builder.putByte(IntegerInd).append(value).append(CRLF)
       case NullBulkStringMsg =>
         builder.append(NullBulk)
       case BulkStringMsg(string) =>
-        builder.putByte(BulkInd).append(ByteString(string.size.toString)).append(CRLF).append(string).append(CRLF)
+        builder.putByte(BulkInd).append(string.size).append(CRLF).append(string).append(CRLF)
       case NullArrayMsg =>
         builder.append(NullArray)
       case ArrayMsg(elements) =>
-        builder.putByte(ArrayInd).append(ByteString(elements.size.toString)).append(CRLF)
+        builder.putByte(ArrayInd).append(elements.size).append(CRLF)
         elements.foreach(encodeIn)
     }
     encodeIn(msg)

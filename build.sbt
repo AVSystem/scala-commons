@@ -4,7 +4,7 @@ import sbtunidoc.Plugin.UnidocKeys._
 cancelable in Global := true
 
 inThisBuild(Seq(
-  scalaVersion := "2.12.0",
+  scalaVersion := "2.11.8",
   crossScalaVersions := Seq("2.11.8", "2.12.0"),
   organization := "com.avsystem.commons",
   compileOrder := CompileOrder.Mixed,
@@ -189,7 +189,10 @@ lazy val `commons-benchmark` = project
   .enablePlugins(JmhPlugin)
   .settings(
     libraryDependencies ++= {
-      if (scalaBinaryVersion.value != "2.12") Seq("com.github.etaty" %% "rediscala" % "1.6.0")
+      if (scalaBinaryVersion.value != "2.12") Seq(
+        "com.github.etaty" %% "rediscala" % "1.6.0",
+        "com.livestream" %% "scredis" % "2.0.8"
+      )
       else Seq.empty
     },
     ideExcludedDirectories := (managedSourceDirectories in Jmh).value
