@@ -2,10 +2,11 @@ package com.avsystem.commons
 package redis.actor
 
 import java.net.InetSocketAddress
+import java.nio.ByteBuffer
 
 import akka.actor.{Actor, ActorRef}
 import akka.io.{IO, Tcp}
-import akka.util.{ByteString, ByteStringBuilder}
+import akka.util.ByteString
 import com.avsystem.commons.jiop.JavaInterop._
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis._
@@ -40,7 +41,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
 
   private val queuedToReserve = new JArrayDeque[QueuedPacks]
   private val queuedToWrite = new JArrayDeque[QueuedPacks]
-  private val writeBuffer = new ByteStringBuilder
+  private var writeBuffer = ByteBuffer.allocate(config.maxWriteSizeHint.getOrElse(0) + 1024)
 
   self ! Connect
   def receive = connecting(-1)
@@ -116,10 +117,11 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
 
     def initialize(): Unit = {
       connection ! Tcp.Register(self)
-      val initBuffer = new ByteStringBuilder
+      val initBuffer = ByteBuffer.allocate(config.initCommands.rawCommandPacks.encodedSize)
       new ReplyCollector(config.initCommands.rawCommandPacks, initBuffer, onInitResult)
         .sendEmptyReplyOr { collector =>
-          val data = initBuffer.result()
+          initBuffer.flip()
+          val data = ByteString(initBuffer)
           logWrite(data)
           connection ! Tcp.Write(data)
           become(initializing(collector))
@@ -222,14 +224,26 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
           queuedToWrite.addFirst(QueuedPacks(RedisApi.Raw.BinaryTyped.unwatch, Opt.Empty, reserve = false))
           unwatch = false //TODO: what if UNWATCH fails?
         }
-        while (!queuedToWrite.isEmpty && config.maxWriteSizeHint.forall(_ > writeBuffer.length)) {
+
+        var bufferSize = 0
+        var packsCount = 0
+        val it = queuedToWrite.iterator()
+        while (it.hasNext && config.maxWriteSizeHint.forall(_ > bufferSize)) {
+          packsCount += 1
+          bufferSize += it.next().packs.encodedSize
+        }
+        waitingForAck = packsCount
+        if (writeBuffer.capacity < bufferSize) {
+          writeBuffer = ByteBuffer.allocate(bufferSize)
+        }
+
+        while (packsCount > 0) {
+          packsCount -= 1
           val queued = queuedToWrite.removeFirst()
           new ReplyCollector(queued.packs, writeBuffer, queued.reply)
-            .sendEmptyReplyOr { collector =>
-              collectors.addLast(collector)
-              waitingForAck += 1
-            }
+            .sendEmptyReplyOr(collectors.addLast)
         }
+
         if (waitingForAck > 0) {
           if (startingReservation) {
             // We're about to write first batch in a RedisOp (transaction). Save current incarnation so that in case
@@ -237,7 +251,8 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
             // executed on a single Redis network connection).
             reservationIncarnation = incarnation.opt
           }
-          val data = writeBuffer.result()
+          writeBuffer.flip()
+          val data = ByteString(writeBuffer)
           logWrite(data)
           connection ! Tcp.Write(data, WriteAck)
           writeBuffer.clear()
@@ -325,7 +340,7 @@ object RedisConnectionActor {
     def reply(result: PacksResult): Unit = client.foreach(_ ! result)
   }
 
-  class ReplyCollector(packs: RawCommandPacks, writeBuffer: ByteStringBuilder, val callback: PacksResult => Unit) {
+  class ReplyCollector(packs: RawCommandPacks, writeBuffer: ByteBuffer, val callback: PacksResult => Unit) {
     private[this] var replies: ArrayBuffer[RedisReply] = _
     private[this] var preprocessors: Any = _
 

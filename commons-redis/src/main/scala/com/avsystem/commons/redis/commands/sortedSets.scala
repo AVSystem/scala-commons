@@ -127,7 +127,7 @@ trait SortedSetsApi extends ApiSubset {
     extends AbstractRedisCommand[T](decoder) with NodeCommand {
 
     requireNonEmpty(memberScores, "members with scores")
-    val encoded = encoder("ZADD").key(key).add(existence.map(e => if (e) "XX" else "NX"))
+    val encoded = encoder("ZADD").key(key).optAdd(existence.map(e => if (e) "XX" else "NX"))
       .addFlag("CH", changed).addFlag("INCR", incr).argDataPairs(memberScores.map(_.swap)).result
   }
 

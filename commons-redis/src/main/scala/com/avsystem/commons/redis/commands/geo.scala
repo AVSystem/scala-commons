@@ -87,8 +87,8 @@ trait GeoApi extends ApiSubset {
     extends AbstractRedisCommand[T](decoder) with NodeCommand {
 
     val encoded = encoder(if (point.isDefined) "GEORADIUS" else "GEORADIUSBYMEMBER")
-      .key(key).add(point).add(member.map(valueCodec.write)).add(radius).add(unit).add(flags)
-      .optAdd("COUNT", count).add(sortOrder)
+      .key(key).optAdd(point).optAdd(member.map(valueCodec.write)).add(radius).add(unit).add(flags)
+      .optAdd("COUNT", count).optAdd(sortOrder)
       .optKey(if(storeDist) "STOREDIST" else "STORE", storeKey)
       .result
   }

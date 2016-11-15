@@ -100,7 +100,7 @@ trait StringsApi extends ApiSubset {
   }
 
   private final class Bitcount(key: Key, range: Opt[(Int, Int)]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("BITCOUNT").key(key).add(range).result
+    val encoded = encoder("BITCOUNT").key(key).optAdd(range).result
   }
 
   private final class Bitop(bitop: BitOp, destkey: Key, keys: Seq[Key]) extends RedisIntCommand with NodeCommand {
@@ -110,7 +110,7 @@ trait StringsApi extends ApiSubset {
   }
 
   private final class Bitpos(key: Key, bit: Boolean, range: Opt[SemiRange]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("BITPOS").key(key).add(bit).add(range.map(sr => (sr.start, sr.end))).result
+    val encoded = encoder("BITPOS").key(key).add(bit).optAdd(range).result
   }
 
   private final class Decr(key: Key) extends RedisLongCommand with NodeCommand {
@@ -171,8 +171,8 @@ trait StringsApi extends ApiSubset {
   private final class Set(key: Key, value: Value, expiration: Opt[Expiration], existence: Opt[Boolean])
     extends AbstractRedisCommand[Boolean](nullBulkOrSimpleOkBoolean) with NodeCommand {
 
-    val encoded = encoder("SET").key(key).data(value).add(expiration)
-      .add(existence.map(v => if (v) "XX" else "NX")).result
+    val encoded = encoder("SET").key(key).data(value).optAdd(expiration)
+      .optAdd(existence.map(v => if (v) "XX" else "NX")).result
   }
 
   private final class Setbit(key: Key, offset: Long, value: Boolean) extends RedisBooleanCommand with NodeCommand {
@@ -208,6 +208,10 @@ object BitOp extends NamedEnumCompanion[BitOp] {
 }
 
 case class SemiRange(start: Int, end: Opt[Int] = Opt.Empty)
+object SemiRange {
+  implicit val SemiRangeArg: CommandArg[SemiRange] =
+    CommandArg((enc, sa) => enc.add(sa.start).optAdd(sa.end))
+}
 
 sealed trait Expiration
 object Expiration {

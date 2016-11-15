@@ -60,6 +60,7 @@ final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) exten
   def datas[V: RedisDataCodec](values: TraversableOnce[V]) = fluent(values.foreach(data[V]))
   def add[T: CommandArg](value: T): CommandEncoder = fluent(CommandArg.add(this, value))
   def addFlag(flag: String, value: Boolean): CommandEncoder = if (value) add(flag) else this
+  def optAdd[T: CommandArg](value: Opt[T]) = fluent(value.foreach(t => add(t)))
   def optAdd[T: CommandArg](flag: String, value: Opt[T]) = fluent(value.foreach(t => add(flag).add(t)))
   def optKey[K: RedisDataCodec](flag: String, value: Opt[K]) = fluent(value.foreach(t => add(flag).key(t)))
   def optData[V: RedisDataCodec](flag: String, value: Opt[V]) = fluent(value.foreach(t => add(flag).data(t)))
@@ -86,8 +87,7 @@ object CommandEncoder {
     implicit val NamedEnumArg: CommandArg[NamedEnum] = CommandArg((ce, v) => ce.add(v.name))
     implicit def CollArg[T: CommandArg]: CommandArg[TraversableOnce[T]] =
       CommandArg((ce, v) => v.foreach(t => ce.add(t)))
-    implicit def OptArg[T: CommandArg]: CommandArg[Opt[T]] =
-      CommandArg((ce, v) => v.foreach(ce.add(_)))
+
     implicit def PairArg[A: CommandArg, B: CommandArg]: CommandArg[(A, B)] =
       CommandArg {
         case (ce, (a, b)) =>

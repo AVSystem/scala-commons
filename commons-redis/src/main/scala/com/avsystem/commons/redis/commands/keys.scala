@@ -196,7 +196,7 @@ trait KeyedKeysApi extends ApiSubset {
     val encoded = {
       val enc = encoder("SORT").key(key).optAdd("BY", by).optAdd("LIMIT", limit)
       gets.foreach(sp => enc.add("GET").add(sp))
-      enc.add(sortOrder).addFlag("ALPHA", alpha).optKey("STORE", destination).result
+      enc.optAdd(sortOrder).addFlag("ALPHA", alpha).optKey("STORE", destination).result
     }
   }
 

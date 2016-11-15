@@ -217,7 +217,7 @@ trait NodeServerApi extends ApiSubset {
   }
 
   private final class Shutdown(modifier: Opt[ShutdownModifier]) extends RedisNothingCommand with NodeCommand {
-    val encoded = encoder("SHUTDOWN").add(modifier).result
+    val encoded = encoder("SHUTDOWN").optAdd(modifier).result
   }
 
   private final class Slaveof(newMaster: Opt[NodeAddress]) extends RedisUnitCommand with NodeCommand {
@@ -233,7 +233,7 @@ trait NodeServerApi extends ApiSubset {
 
   private final class SlowlogGet(count: Opt[Int])
     extends RedisSeqCommand[SlowlogEntry](multiBulkSlowlogEntry) with NodeCommand {
-    val encoded = encoder("SLOWLOG", "GET").add(count).result
+    val encoded = encoder("SLOWLOG", "GET").optAdd(count).result
   }
 
   private object SlowlogLen extends RedisLongCommand with NodeCommand {

@@ -108,7 +108,7 @@ trait NodeClusterApi extends KeyedClusterApi {
   }
 
   private final class ClusterFailover(option: Opt[FailoverOption]) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("CLUSTER", "FAILOVER").add(option).result
+    val encoded = encoder("CLUSTER", "FAILOVER").optAdd(option).result
   }
 
   private final class ClusterForget(nodeId: NodeId) extends RedisUnitCommand with NodeCommand {

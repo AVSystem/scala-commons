@@ -37,6 +37,12 @@ class RedisMsgTest extends FunSuite with PropertyChecks {
     }
   }
 
+  test("encoded size") {
+    forAll(redisProtocolMsgGen) { msg =>
+      assert(RedisMsg.encode(msg).length == RedisMsg.encodedSize(msg))
+    }
+  }
+
   test("simple string encode") {
     assert(RedisMsg.encode(SimpleStringMsg("asdf")).utf8String == "+asdf\r\n")
   }

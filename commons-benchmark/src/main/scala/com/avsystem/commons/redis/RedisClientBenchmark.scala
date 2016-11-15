@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, TimeUnit}
 
 import akka.actor.ActorSystem
-import akka.util.{ByteString, Timeout}
+import akka.util.{ByteString, ByteStringBuilder, Timeout}
 import com.avsystem.commons.benchmark.CrossRedisBenchmark
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.jiop.JavaInterop._
@@ -47,7 +47,8 @@ abstract class RedisBenchmark {
 
   val Config =
     """
-      |
+      |akka.actor.default-dispatcher.fork-join-executor {
+      |}
     """.stripMargin
 
   implicit val system = ActorSystem("redis",
@@ -71,11 +72,16 @@ abstract class RedisBenchmark {
 }
 
 object RedisClientBenchmark {
+  import RedisApi.Batches.StringTyped._
+
   final val BatchSize = 50
   final val ConcurrentCommands = 20000
   final val ConcurrentBatches = ConcurrentCommands / BatchSize
 
   val KeyBase = "key"
+  val Value = "value"
+
+  val Commands = Iterator.range(0, ConcurrentCommands).map(i => set(s"$KeyBase$i", Value)).toArray
 }
 
 @OperationsPerInvocation(ConcurrentCommands)
@@ -86,7 +92,7 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
   implicit val timeout = Timeout(5, TimeUnit.SECONDS)
 
   def commandFuture(client: RedisKeyedExecutor, i: Int) =
-    client.executeBatch(set(s"$KeyBase$i", "v"))
+    client.executeBatch(Commands(i))
 
   def batchFuture(client: RedisKeyedExecutor, i: Int) = {
     val key = s"$KeyBase$i"

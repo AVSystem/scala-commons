@@ -74,6 +74,13 @@ trait RawCommandPacks {
   def emitCommandPacks(consumer: RawCommandPack => Unit): Unit
   def single: Opt[RawCommandPack] = Opt.Empty
 
+  final def encodedSize: Int = {
+    var result = 0
+    emitCommandPacks(_.rawCommands(inTransaction = false)
+      .emitCommands(c => result += RedisMsg.encodedSize(c.encoded)))
+    result
+  }
+
   def requireLevel(minAllowed: Level, clientType: String): this.type = {
     emitCommandPacks(_.checkLevel(minAllowed, clientType))
     this

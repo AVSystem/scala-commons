@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package redis.protocol
 
+import java.nio.ByteBuffer
+
 import akka.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.{Opt, Sam}
 import com.avsystem.commons.redis.exception.{InvalidDataException, RedisException}
@@ -97,29 +99,33 @@ object RedisMsg {
   private final val NullBulk = ByteString("$-1\r\n")
   private final val NullArray = ByteString("*-1\r\n")
 
-  private final val CRByte = '\r'.toByte
-  private final val LFByte = '\n'.toByte
-  private final val SimpleInd = '+'.toByte
-  private final val ErrorInd = '-'.toByte
-  private final val IntegerInd = ':'.toByte
-  private final val BulkInd = '$'.toByte
-  private final val ArrayInd = '*'.toByte
+  private final val CRByte: Byte = '\r'
+  private final val LFByte: Byte = '\n'
+  private final val SimpleInd: Byte = '+'
+  private final val ErrorInd: Byte = '-'
+  private final val IntegerInd: Byte = ':'
+  private final val BulkInd: Byte = '$'
+  private final val ArrayInd: Byte = '*'
+
+  private final val LongMinValue = ByteString(Long.MinValue.toString)
 
   def encodedSize(msg: RedisMsg): Int = {
-    def integerSize(value: Long): Int =
-      if (value == 0) 0
-      else if (value < 0) integerSize(-value) + 1
-      else posIntegerSize(value, 0)
-
-    @tailrec def posIntegerSize(value: Long, acc: Int): Int =
-      if (value == 0) acc
-      else posIntegerSize(value / 10, acc + 1)
+    def integerSize(value: Long): Int = value match {
+      case 0 => 1
+      case Long.MinValue => LongMinValue.size
+      case v if v < 0 => integerSize(-v) + 1
+      case v =>
+        @tailrec def posIntegerSize(value: Long, acc: Int): Int =
+          if (value == 0) acc
+          else posIntegerSize(value / 10, acc + 1)
+        posIntegerSize(value, 0)
+    }
 
     msg match {
       case NullBulkStringMsg | NullArrayMsg => 5
       case SimpleStringMsg(data) => data.size + 3
       case ErrorMsg(data) => data.size + 3
-      case IntegerMsg(value) => integerSize(value)
+      case IntegerMsg(value) => integerSize(value) + 3
       case BulkStringMsg(data) => integerSize(data.size) + data.size + 5
       case ArrayMsg(data) => integerSize(data.size) + data.foldLeft(0)((acc, msg) => acc + encodedSize(msg)) + 3
     }
@@ -137,24 +143,25 @@ object RedisMsg {
     builder.result()
   }
 
-  private final val LongMinValueBytes = ByteString(Long.MinValue.toString)
-  private implicit class ByteStringBuilderOps(private val bsb: ByteStringBuilder) extends AnyVal {
-    def append(value: Long): ByteStringBuilder = value match {
-      case 0 => bsb.putByte('0')
-      case Long.MinValue => bsb.append(LongMinValueBytes)
-      case v if v < 0 => bsb.putByte('-'); append(-v)
-      case v =>
-        def appendPos(value: Long, log: Long): Unit =
-          if (log > 0) {
-            bsb.putByte(('0' + (value / log)).toByte)
-            appendPos(value % log, log / 10)
-          }
-        var log: Long = 1
-        while (v / log >= 10) {
-          log *= 10
+  def encodeInteger(value: Long, bsb: ByteStringBuilder): Unit = value match {
+    case 0 => bsb.putByte('0')
+    case Long.MinValue => bsb.append(LongMinValue)
+    case v if v < 0 => bsb.putByte('-'); encodeInteger(-v, bsb)
+    case v =>
+      @tailrec def encodePosInteger(value: Long, pow: Long): Unit =
+        if (pow > 0) {
+          bsb.putByte(('0' + (value / pow)).toByte)
+          encodePosInteger(value % pow, pow / 10)
         }
-        appendPos(v, log)
-        bsb
+      @tailrec def maxPow10(value: Long, pow: Long): Long =
+        if (value < 10) pow else maxPow10(value / 10, pow * 10)
+      encodePosInteger(v, maxPow10(v, 1))
+  }
+
+  private implicit class ByteStringBuilderOps(private val bsb: ByteStringBuilder) extends AnyVal {
+    def append(value: Long): ByteStringBuilder = {
+      encodeInteger(value, bsb)
+      bsb
     }
   }
 
@@ -174,6 +181,53 @@ object RedisMsg {
         builder.append(NullArray)
       case ArrayMsg(elements) =>
         builder.putByte(ArrayInd).append(elements.size).append(CRLF)
+        elements.foreach(encodeIn)
+    }
+    encodeIn(msg)
+  }
+
+  def encodeInteger(value: Long, bb: ByteBuffer): Unit = value match {
+    case 0 => bb.put('0': Byte)
+    case Long.MinValue => bb.put(LongMinValue.asByteBuffer)
+    case v if v < 0 => bb.put('-': Byte); encodeInteger(-v, bb)
+    case v =>
+      @tailrec def encodePosInteger(value: Long, pow: Long): Unit =
+        if (pow > 0) {
+          bb.put(('0' + (value / pow)).toByte)
+          encodePosInteger(value % pow, pow / 10)
+        }
+      @tailrec def maxPow10(value: Long, pow: Long): Long =
+        if (value < 10) pow else maxPow10(value / 10, pow * 10)
+      encodePosInteger(v, maxPow10(v, 1))
+  }
+
+  private implicit class ByteBufferOps(private val bb: ByteBuffer) extends AnyVal {
+    def putNum(value: Long): ByteBuffer = {
+      encodeInteger(value, bb)
+      bb
+    }
+  }
+
+  private final val CRLFBytes = "\r\n".getBytes
+  private final val NullBulkBytes = "$-1\r\n".getBytes
+  private final val NullArrayBytes = "*-1\r\n".getBytes
+
+  def encode(msg: RedisMsg, buffer: ByteBuffer): Unit = {
+    def encodeIn(msg: RedisMsg): Unit = msg match {
+      case SimpleStringMsg(string) =>
+        buffer.put(SimpleInd).put(string.asByteBuffer).put(CRLFBytes)
+      case ErrorMsg(errorString) =>
+        buffer.put(ErrorInd).put(errorString.asByteBuffer).put(CRLFBytes)
+      case IntegerMsg(value: Long) =>
+        buffer.put(IntegerInd).putNum(value).put(CRLFBytes)
+      case NullBulkStringMsg =>
+        buffer.put(NullBulkBytes)
+      case BulkStringMsg(string) =>
+        buffer.put(BulkInd).putNum(string.size).put(CRLFBytes).put(string.asByteBuffer).put(CRLFBytes)
+      case NullArrayMsg =>
+        buffer.put(NullArrayBytes)
+      case ArrayMsg(elements) =>
+        buffer.put(ArrayInd).putNum(elements.size).put(CRLFBytes)
         elements.foreach(encodeIn)
     }
     encodeIn(msg)
