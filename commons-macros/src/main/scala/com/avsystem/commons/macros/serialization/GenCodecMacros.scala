@@ -156,7 +156,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
              protected def nullable = ${typeOf[Null] <:< tpe}
              protected def readNonNull(input: $SerializationPkg.Input): $tpe =
                ${applier(List(q"${depNames(p.sym)}.read(input)"))}
-             protected def writeNonNull(output: $SerializationPkg.Output, value: $tpe): Unit =
+             protected def writeNonNull(output: $SerializationPkg.Output, value: $tpe): $UnitCls =
                $writeBody
            }
          """

@@ -12,6 +12,7 @@ trait MacroCommons {
 
   val ScalaPkg = q"_root_.scala"
   val CommonsPackage = q"_root_.com.avsystem.commons"
+  val UnitCls = tq"$ScalaPkg.Unit"
   val OptionCls = tq"$ScalaPkg.Option"
   val SomeObj = q"$ScalaPkg.Some"
   val NoneObj = q"$ScalaPkg.None"
@@ -386,7 +387,7 @@ trait MacroCommons {
 
     val tree = c.typecheck(
       q"""
-        def $methodName[..$typeDefs](f: ${treeForType(undetTpe)} => Unit): Unit = ()
+        def $methodName[..$typeDefs](f: ${treeForType(undetTpe)} => $UnitCls): $UnitCls = ()
         $methodName((_: ${treeForType(detTpe)}) => ())
       """, silent = true
     )
