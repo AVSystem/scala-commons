@@ -51,23 +51,23 @@ case class ClusterConfig(
   * Configuration of a [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]], used either as a standalone
   * client or internally by [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
   *
-  * @param poolSize             number of connections used by node client. Commands are distributed between connections using
-  *                             a round-robin scenario. Number of connections in the pool is constant and cannot be changed.
-  * @param initOp               a [[com.avsystem.commons.redis.RedisOp RedisOp]] executed by this client upon initialization.
-  *                             This may be useful for things like script loading, especially when using cluster client which
-  *                             may create and close node clients dynamically as reactions on cluster state changes.
-  * @param initTimeout          timeout used by initialization operation (`initOp`)
-  * @param connectionConfigs    a function that returns [[ConnectionConfig]] for a connection given its id. Connection ID
-  *                             is its index in the connection pool, i.e. an int ranging from 0 to `poolSize`-1.
-  * @param reconnectionStrategy a [[RetryStrategy]] used to determine what delay should be used when reconnecting
-  *                             a failed connection
+  * @param poolSize          number of connections used by node client. Commands are distributed between connections using
+  *                          a round-robin scenario. Number of connections in the pool is constant and cannot be changed.
+  *                          Due to single-threaded nature of Redis, the number of concurrent connections should be kept
+  *                          low for best performance. The only situation where the number of connections should be increased
+  *                          is when using `WATCH`-`MULTI`-`EXEC` transactions with optimistic locking.
+  * @param initOp            a [[com.avsystem.commons.redis.RedisOp RedisOp]] executed by this client upon initialization.
+  *                          This may be useful for things like script loading, especially when using cluster client which
+  *                          may create and close node clients dynamically as reactions on cluster state changes.
+  * @param initTimeout       timeout used by initialization operation (`initOp`)
+  * @param connectionConfigs a function that returns [[ConnectionConfig]] for a connection given its id. Connection ID
+  *                          is its index in the connection pool, i.e. an int ranging from 0 to `poolSize`-1.
   */
 case class NodeConfig(
-  poolSize: Int = 16,
+  poolSize: Int = 4,
   initOp: RedisOp[Any] = RedisOp.unit,
   initTimeout: Timeout = Timeout(10.seconds),
-  connectionConfigs: Int => ConnectionConfig = _ => ConnectionConfig(),
-  reconnectionStrategy: RetryStrategy = ExponentialBackoff(1.seconds, 32.seconds)
+  connectionConfigs: Int => ConnectionConfig = _ => ConnectionConfig()
 ) {
   require(poolSize > 0, "Pool size must be positive")
 }
@@ -89,28 +89,31 @@ case class NodeConfig(
   *   )
   * }}}
   *
-  * @param initCommands     commands always sent upon establishing a Redis connection (and every time it's reconnected).
-  *                         The most common reason to configure `initCommands` is to specify authentication password used by every
-  *                         connection (`AUTH` command), but it's also useful for commands like `CLIENT SETNAME`, `SELECT`, etc.
-  *                         Note that these are all commands that can't be executed directly by
-  *                         [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]] or
-  *                         [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
-  * @param actorName        name of the actor representing the connection
-  * @param localAddress     local bind address for the connection
-  * @param socketOptions    socket options for the connection
-  * @param socketTimeout    socket timeout for the connection
-  * @param maxWriteSizeHint hint for maximum number of bytes sent in a single network write message (the actual number
-  *                         of bytes sent may be slightly larger)
-  * @param debugListener    listener for traffic going through this connection. Only for debugging and testing
-  *                         purposes
+  * @param initCommands         commands always sent upon establishing a Redis connection (and every time it's reconnected).
+  *                             The most common reason to configure `initCommands` is to specify authentication password used by every
+  *                             connection (`AUTH` command), but it's also useful for commands like `CLIENT SETNAME`, `SELECT`, etc.
+  *                             Note that these are all commands that can't be executed directly by
+  *                             [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]] or
+  *                             [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
+  * @param actorName            name of the actor representing the connection
+  * @param localAddress         local bind address for the connection
+  * @param socketOptions        socket options for the connection
+  * @param connectTimeout       timeout for establishing connection
+  * @param maxWriteSizeHint     hint for maximum number of bytes sent in a single network write message (the actual number
+  *                             of bytes sent may be slightly larger)
+  * @param reconnectionStrategy a [[RetryStrategy]] used to determine what delay should be used when reconnecting
+  *                             a failed connection. NOTE: `reconnectionStrategy` is ignored by `RedisConnectionClient`
+  * @param debugListener        listener for traffic going through this connection. Only for debugging and testing
+  *                             purposes
   */
 case class ConnectionConfig(
   initCommands: RedisBatch[Any] = RedisBatch.unit,
   actorName: OptArg[String] = OptArg.Empty,
   localAddress: OptArg[InetSocketAddress] = OptArg.Empty,
   socketOptions: List[Inet.SocketOption] = Nil,
-  socketTimeout: OptArg[FiniteDuration] = OptArg.Empty,
+  connectTimeout: OptArg[FiniteDuration] = OptArg.Empty,
   maxWriteSizeHint: OptArg[Int] = 50000,
+  reconnectionStrategy: RetryStrategy = ExponentialBackoff(1.seconds, 32.seconds),
   debugListener: DebugListener = DevNullListener
 )
 
@@ -142,4 +145,8 @@ case class ExponentialBackoff(firstDelay: FiniteDuration, maxDelay: FiniteDurati
 
 case object NoRetryStrategy extends RetryStrategy {
   def retryDelay(retry: Int) = Opt.Empty
+}
+
+object ConfigDefaults {
+  val Dispatcher = "redis.pinned-dispatcher"
 }

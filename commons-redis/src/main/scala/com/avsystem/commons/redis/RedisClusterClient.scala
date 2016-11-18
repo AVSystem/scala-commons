@@ -3,7 +3,7 @@ package redis
 
 import java.io.Closeable
 
-import akka.actor.{ActorSystem, Deploy, Props}
+import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.avsystem.commons.collection.CollectionAliases.BMap
@@ -48,9 +48,10 @@ import scala.util.control.NonFatal
   */
 final class RedisClusterClient(
   val seedNodes: Seq[NodeAddress] = List(NodeAddress.Default),
-  val config: ClusterConfig = ClusterConfig(),
-  val actorDeploy: Deploy = Deploy())
+  val config: ClusterConfig = ClusterConfig())
   (implicit system: ActorSystem) extends RedisKeyedExecutor with Closeable {
+
+  require(seedNodes.nonEmpty, "No seed nodes provided")
 
   @volatile private[this] var state = ClusterState(IndexedSeq.empty, Map.empty)
   @volatile private[this] var stateListener = (_: ClusterState) => ()
@@ -67,7 +68,14 @@ final class RedisClusterClient(
     state = newState
     temporaryClients = Nil
     stateListener(state)
-    initPromise.trySuccess(())
+    import system.dispatcher
+    Future.traverse(state.masters.values)(_.initialized)
+      .mapNow(_ => ()).onComplete { result =>
+      // is it still the same state?
+      if (state eq newState) {
+        initPromise.tryComplete(result)
+      }
+    }
   }
 
   // invoked by monitoring actor, effectively serialized
@@ -76,8 +84,7 @@ final class RedisClusterClient(
   }
 
   private val monitoringActor =
-    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, actorDeploy, config, onNewState, onTemporaryClient))
-      .withDeploy(actorDeploy))
+    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, config, initPromise.failure, onNewState, onTemporaryClient)))
 
   private def determineSlot(pack: RawCommandPack): Int = {
     var slot = -1
@@ -114,7 +121,7 @@ final class RedisClusterClient(
     state
 
   /**
-    * Waits until cluster state is known.
+    * Waits until cluster state is known and [[RedisNodeClient]] for every master node is initialized.
     */
   def initialized: Future[this.type] =
     initPromise.future.map(_ => this)
@@ -422,4 +429,7 @@ case class ClusterState(mapping: IndexedSeq[(SlotRange, RedisNodeClient)], maste
       }
     binsearch(0, mapping.length)
   }
+}
+object ClusterState {
+  val Empty = ClusterState(IndexedSeq.empty, BMap.empty)
 }

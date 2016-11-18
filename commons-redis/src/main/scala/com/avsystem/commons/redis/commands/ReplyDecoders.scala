@@ -18,15 +18,6 @@ object `package` {
 }
 
 object ReplyDecoders {
-  implicit class PartialFunctionOps[A, B](private val pf: PartialFunction[A, B]) extends AnyVal {
-    /**
-      * The same thing as [[scala.PartialFunction.orElse]] but with arguments flipped.
-      * Useful in situations where [[scala.PartialFunction.orElse]] would have to be called on a partial function literal,
-      * which does not work well with type inference.
-      */
-    def unless(pre: PartialFunction[A, B]): PartialFunction[A, B] = pre orElse pf
-  }
-
   val failing: ReplyDecoder[Nothing] = {
     case msg => throw new UnexpectedReplyException(s"Expected no reply, got $msg")
   }

@@ -188,7 +188,7 @@ object RedisMsg {
 
   def encodeInteger(value: Long, bb: ByteBuffer): Unit = value match {
     case 0 => bb.put('0': Byte)
-    case Long.MinValue => bb.put(LongMinValue.asByteBuffer)
+    case Long.MinValue => LongMinValue.copyToBuffer(bb)
     case v if v < 0 => bb.put('-': Byte); encodeInteger(-v, bb)
     case v =>
       @tailrec def encodePosInteger(value: Long, pow: Long): Unit =
@@ -206,6 +206,11 @@ object RedisMsg {
       encodeInteger(value, bb)
       bb
     }
+
+    def put(bs: ByteString): ByteBuffer = {
+      bs.copyToBuffer(bb)
+      bb
+    }
   }
 
   private final val CRLFBytes = "\r\n".getBytes
@@ -215,15 +220,15 @@ object RedisMsg {
   def encode(msg: RedisMsg, buffer: ByteBuffer): Unit = {
     def encodeIn(msg: RedisMsg): Unit = msg match {
       case SimpleStringMsg(string) =>
-        buffer.put(SimpleInd).put(string.asByteBuffer).put(CRLFBytes)
+        buffer.put(SimpleInd).put(string).put(CRLFBytes)
       case ErrorMsg(errorString) =>
-        buffer.put(ErrorInd).put(errorString.asByteBuffer).put(CRLFBytes)
+        buffer.put(ErrorInd).put(errorString).put(CRLFBytes)
       case IntegerMsg(value: Long) =>
         buffer.put(IntegerInd).putNum(value).put(CRLFBytes)
       case NullBulkStringMsg =>
         buffer.put(NullBulkBytes)
       case BulkStringMsg(string) =>
-        buffer.put(BulkInd).putNum(string.size).put(CRLFBytes).put(string.asByteBuffer).put(CRLFBytes)
+        buffer.put(BulkInd).putNum(string.size).put(CRLFBytes).put(string).put(CRLFBytes)
       case NullArrayMsg =>
         buffer.put(NullArrayBytes)
       case ArrayMsg(elements) =>

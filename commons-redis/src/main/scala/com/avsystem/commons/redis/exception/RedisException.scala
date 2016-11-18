@@ -71,6 +71,9 @@ class NodeRemovedException(val address: NodeAddress)
 class ConnectionInitializationFailure(cause: Throwable)
   extends RedisException(s"Failed to initialize Redis connection", cause)
 
+class NodeInitializationFailure(cause: Throwable)
+  extends RedisException(s"Failed to initialize node client", cause)
+
 /**
   * Thrown when trying to execute command unsupported by particular client type. For example, it's impossible
   * to execute connection state changing commands like `CLIENT SETNAME` using a
@@ -78,6 +81,16 @@ class ConnectionInitializationFailure(cause: Throwable)
   */
 class ForbiddenCommandException(cmd: RawCommand, client: String)
   extends RedisException(s"This command cannot be executed on $client: $cmd")
+
+/**
+  * Thrown when [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]] is unable to fetch initial
+  * cluster state from any of the seed nodes. This happens e.g. when none of the seed nodes can be contacted or when
+  * they aren't Redis Cluster members.
+  *
+  * @param seedNodes seed node addresses passed to [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]]
+  */
+class ClusterInitializationException(val seedNodes: Seq[NodeAddress])
+  extends RedisException(s"Failed to read cluster state from any of the seed nodes ${seedNodes.mkString(",")}")
 
 /**
   * Thrown when some multi-keyed command or `MULTI`-`EXEC` block executed by

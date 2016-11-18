@@ -27,6 +27,8 @@ trait SharedExtensions {
 
   implicit def tryOps[A](tr: Try[A]): TryOps[A] = new TryOps(tr)
 
+  implicit def partialFunctionOps[A, B](pf: PartialFunction[A, B]): PartialFunctionOps[A, B] = new PartialFunctionOps(pf)
+
   implicit def collectionOps[C[X] <: BTraversable[X], A](coll: C[A]): CollectionOps[C, A] = new CollectionOps(coll)
 
   implicit def mapOps[M[X, Y] <: BMap[X, Y], K, V](map: M[K, V]): MapOps[M, K, V] = new MapOps(map)
@@ -148,6 +150,15 @@ object SharedExtensions extends SharedExtensions {
 
     def toNOpt: NOpt[A] =
       if (tr.isFailure) NOpt.Empty else NOpt.some(tr.get)
+  }
+
+  class PartialFunctionOps[A, B](private val pf: PartialFunction[A, B]) extends AnyVal {
+    /**
+      * The same thing as [[scala.PartialFunction.orElse]] but with arguments flipped.
+      * Useful in situations where [[scala.PartialFunction.orElse]] would have to be called on a partial function literal,
+      * which does not work well with type inference.
+      */
+    def unless(pre: PartialFunction[A, B]): PartialFunction[A, B] = pre orElse pf
   }
 
   class CollectionOps[C[X] <: BTraversable[X], A](private val coll: C[A]) extends AnyVal {

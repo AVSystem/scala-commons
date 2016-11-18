@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, TimeUnit}
 
 import akka.actor.ActorSystem
-import akka.util.{ByteString, ByteStringBuilder, Timeout}
+import akka.util.{ByteString, Timeout}
 import com.avsystem.commons.benchmark.CrossRedisBenchmark
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.jiop.JavaInterop._
@@ -47,23 +47,25 @@ abstract class RedisBenchmark {
 
   val Config =
     """
-      |akka.actor.default-dispatcher.fork-join-executor {
+      |redis.dispatcher {
+      |  executor = "thread-pool-executor"
+      |  type = PinnedDispatcher
       |}
     """.stripMargin
 
   implicit val system = ActorSystem("redis",
     ConfigFactory.parseString(Config).withFallback(ConfigFactory.defaultReference()).resolve)
 
-  val PoolSize = 8
+  val PoolSize = 1
 
   val connectionConfig = ConnectionConfig(initCommands = clientSetname("benchmark"))
   val monConnectionConfig = ConnectionConfig(initCommands = clientSetname("benchmarkMon"))
   val nodeConfig = NodeConfig(poolSize = PoolSize, connectionConfigs = _ => connectionConfig)
   val clusterConfig = ClusterConfig(nodeConfigs = _ => nodeConfig, monitoringConnectionConfigs = _ => monConnectionConfig)
 
-  lazy val clusterClient = new RedisClusterClient(List(NodeAddress(port = 33333)), clusterConfig)
-  lazy val nodeClient = new RedisNodeClient(config = nodeConfig)
-  lazy val connectionClient = new RedisConnectionClient(config = connectionConfig)
+  lazy val clusterClient = Await.result(new RedisClusterClient(List(NodeAddress(port = 33333)), clusterConfig).initialized, Duration.Inf)
+  lazy val nodeClient = Await.result(new RedisNodeClient(config = nodeConfig).initialized, Duration.Inf)
+  lazy val connectionClient = Await.result(new RedisConnectionClient(config = connectionConfig).initialized, Duration.Inf)
 
   @TearDown
   def teardownClient(): Unit = {
@@ -72,6 +74,7 @@ abstract class RedisBenchmark {
 }
 
 object RedisClientBenchmark {
+
   import RedisApi.Batches.StringTyped._
 
   final val BatchSize = 50
@@ -92,7 +95,7 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
   implicit val timeout = Timeout(5, TimeUnit.SECONDS)
 
   def commandFuture(client: RedisKeyedExecutor, i: Int) =
-    client.executeBatch(Commands(i))
+    client.executeBatch(set(s"$KeyBase$i", Value))
 
   def batchFuture(client: RedisKeyedExecutor, i: Int) = {
     val key = s"$KeyBase$i"

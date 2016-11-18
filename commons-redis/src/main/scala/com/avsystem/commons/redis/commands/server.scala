@@ -521,8 +521,8 @@ object ReplState extends NamedEnumCompanion[ReplState] {
 
 sealed abstract class ShutdownModifier(val name: String) extends NamedEnum
 object ShutdownModifier extends NamedEnumCompanion[ShutdownModifier] {
-  case object Save extends ReplState("SAVE")
-  case object Nosave extends ReplState("NOSAVE")
+  case object Save extends ShutdownModifier("SAVE")
+  case object Nosave extends ShutdownModifier("NOSAVE")
   val values: List[ShutdownModifier] = caseObjects
 }
 

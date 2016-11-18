@@ -24,6 +24,8 @@ trait UsesClusterServers extends BeforeAndAfterAll with RedisProcessUtils { this
 
   protected def prepareDirectory(): Unit
 
+  protected def slotKey(slot: Int) = ClusterUtils.SlotKeys(slot)
+
   override protected def beforeAll() = {
     super.beforeAll()
     prepareDirectory()

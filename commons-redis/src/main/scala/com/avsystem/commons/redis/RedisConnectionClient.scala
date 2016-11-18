@@ -3,7 +3,7 @@ package redis
 
 import java.io.Closeable
 
-import akka.actor.{ActorSystem, Deploy, Props}
+import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.avsystem.commons.misc.Opt
@@ -11,10 +11,10 @@ import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{RedisConnectionActor, RedisOperationActor}
-import com.avsystem.commons.redis.config.{ConnectionConfig, NoRetryStrategy}
+import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, NoRetryStrategy}
 import com.avsystem.commons.redis.exception.ClientStoppedException
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
 /**
   * Redis client that uses a single, non-reconnectable connection.
@@ -31,16 +31,27 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 final class RedisConnectionClient(
   val address: NodeAddress = NodeAddress.Default,
-  val config: ConnectionConfig = ConnectionConfig(),
-  val actorDeploy: Deploy = Deploy())
+  val config: ConnectionConfig = ConnectionConfig())
   (implicit system: ActorSystem) extends RedisConnectionExecutor with Closeable { self =>
 
+  private val initPromise = Promise[Unit]
   private val connectionActor = system.actorOf(Props(
-    new RedisConnectionActor(address, config, NoRetryStrategy)).withDeploy(actorDeploy))
+    new RedisConnectionActor(address, config.copy(reconnectionStrategy = NoRetryStrategy)))
+    .withDispatcher(ConfigDefaults.Dispatcher))
+  connectionActor ! RedisConnectionActor.Open(mustInitiallyConnect = true, initPromise)
+
   @volatile private[this] var failure = Opt.empty[Throwable]
 
   private def ifReady[T](code: => Future[T]): Future[T] =
     failure.fold(code)(Future.failed)
+
+  /**
+    * Waits until Redis connection is initialized. Note that you can call [[executeBatch]] and [[executeOp]]
+    * even if the connection is not yet initialized - requests will be internally queued and executed after
+    * initialization is complete.
+    */
+  def initialized: Future[this.type] =
+    initPromise.future.mapNow(_ => this)
 
   def executionContext: ExecutionContext =
     system.dispatcher

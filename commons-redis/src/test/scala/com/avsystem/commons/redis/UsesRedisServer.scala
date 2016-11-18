@@ -15,7 +15,6 @@ trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils { this: S
   def address = NodeAddress(port = port)
 
   var redisProcess: RedisProcess = _
-  val initPromise = Promise[Unit]()
 
   override protected def beforeAll() = {
     super.beforeAll()

@@ -16,8 +16,6 @@ trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem { t
 
   var redisClient: RedisClusterClient = _
 
-  protected def slotKey(slot: Int) = ClusterUtils.SlotKeys(slot)
-
   protected def migrateSlot(slot: Int, targetNodeSlot: Int, incomplete: Boolean = false): Future[Unit] =
     redisClient.initialized.flatMapNow { client =>
       val state = client.currentState

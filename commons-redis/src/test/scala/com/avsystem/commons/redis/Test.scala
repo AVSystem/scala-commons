@@ -1,23 +1,21 @@
 package com.avsystem.commons
 package redis
 
+import java.util.concurrent.TimeUnit
+
+import akka.actor.ActorSystem
+import akka.util.{ByteString, Timeout}
+import com.avsystem.commons.redis.commands.ShutdownModifier
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
+
 /**
   * Author: ghik
   * Created: 05/04/16.
   */
 object Test {
   def main(args: Array[String]): Unit = {
-    import java.util.concurrent.TimeUnit
-    import java.util.concurrent.atomic.AtomicInteger
-
-    import akka.actor.ActorSystem
-    import akka.util.{ByteString, Timeout}
-    import com.avsystem.commons.redis.config.{ClusterConfig, NodeConfig}
-
-    import scala.concurrent.duration._
-    import scala.concurrent.{Await, ExecutionContext, Future}
-    import scala.util.{Failure, Success}
-
     implicit val as = ActorSystem()
     implicit val ec: ExecutionContext = as.dispatcher
     implicit val timeout = Timeout(60, TimeUnit.SECONDS)
@@ -30,16 +28,13 @@ object Test {
       def bytes = ByteString(s)
     }
 
-    val client = new RedisClusterClient(List(NodeAddress(port = 33330)), ClusterConfig(nodeConfigs = _ => NodeConfig(poolSize = 1)))
+    val shutdownClient = new RedisConnectionClient(NodeAddress(port = 33332))
+    RedisApi.Connection.Async.StringTyped(shutdownClient).shutdown(ShutdownModifier.Nosave)
 
-    val ctr = new AtomicInteger(0)
-    as.scheduler.schedule(Duration.Zero, 1.seconds) {
-      val i = ctr.incrementAndGet()
-      client.executeBatch(RedisApi.Batches.StringTyped.get("costam"))
-        .onComplete {
-          case Success(result) => println(s"$i: SUCCESSFUL $result")
-          case Failure(cause) => println(s"$i: FAILED $cause")
-        }
-    }
+    Thread.sleep(5)
+    println("SHUTDOWN COMPLETE")
+
+    val client = new RedisClusterClient(List(NodeAddress(port = 33332), NodeAddress(port = 33333)))
+    Await.result(client.initialized, Duration.Inf)
   }
 }
