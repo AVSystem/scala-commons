@@ -85,23 +85,23 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
       def read(input: Input): T = readFun(input)
     }
 
-  def createNullSafe[T >: Null](readFun: Input => T, writeFun: (Output, T) => Any): GenCodec[T] =
+  def createNullSafe[T](readFun: Input => T, writeFun: (Output, T) => Any, allowNull: Boolean): GenCodec[T] =
     new NullSafeCodec[T] {
-      protected def nullable = true
+      protected def nullable = allowNull
       protected def readNonNull(input: Input) = readFun(input)
       protected def writeNonNull(output: Output, value: T) = writeFun(output, value)
     }
 
-  def createList[T >: Null](readFun: ListInput => T, writeFun: (ListOutput, T) => Any) =
+  def createList[T](readFun: ListInput => T, writeFun: (ListOutput, T) => Any, allowNull: Boolean) =
     new ListCodec[T] {
-      protected def nullable = true
+      protected def nullable = allowNull
       protected def readList(input: ListInput) = readFun(input)
       protected def writeList(output: ListOutput, value: T) = writeFun(output, value)
     }
 
-  def createObject[T >: Null](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any) =
+  def createObject[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any, allowNull: Boolean) =
     new ObjectCodec[T] {
-      protected def nullable = true
+      protected def nullable = allowNull
       protected def readObject(input: ObjectInput) = readFun(input)
       protected def writeObject(output: ObjectOutput, value: T) = writeFun(output, value)
     }
@@ -132,10 +132,13 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     protected def writeNonNull(output: Output, value: T): Unit
 
     def write(output: Output, value: T): Unit =
-      if (value == null) output.writeNull() else writeNonNull(output, value)
+      if (value == null)
+        if (nullable) output.writeNull() else throw new WriteFailure("null")
+      else writeNonNull(output, value)
 
     def read(input: Input): T =
-      if (nullable && input.inputType == InputType.Null) input.readNull().asInstanceOf[T]
+      if (input.inputType == InputType.Null)
+        if (nullable) input.readNull().asInstanceOf[T] else throw new ReadFailure("null")
       else readNonNull(input)
   }
 
@@ -219,18 +222,18 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   implicit val FloatCodec: GenCodec[Float] = create(_.readFloat(), _ writeFloat _)
   implicit val DoubleCodec: GenCodec[Double] = create(_.readDouble(), _ writeDouble _)
 
-  implicit val JBooleanCodec: GenCodec[JBoolean] = createNullSafe(_.readBoolean(), _ writeBoolean _)
-  implicit val JCharacterCodec: GenCodec[JCharacter] = createNullSafe(_.readChar(), _ writeChar _)
-  implicit val JByteCodec: GenCodec[JByte] = createNullSafe(_.readByte(), _ writeByte _)
-  implicit val JShortCodec: GenCodec[JShort] = createNullSafe(_.readShort(), _ writeShort _)
-  implicit val JIntegerCodec: GenCodec[JInteger] = createNullSafe(_.readInt(), _ writeInt _)
-  implicit val JLongCodec: GenCodec[JLong] = createNullSafe(_.readLong(), _ writeLong _)
-  implicit val JFloatCodec: GenCodec[JFloat] = createNullSafe(_.readFloat(), _ writeFloat _)
-  implicit val JDoubleCodec: GenCodec[JDouble] = createNullSafe(_.readDouble(), _ writeDouble _)
+  implicit val JBooleanCodec: GenCodec[JBoolean] = createNullSafe(_.readBoolean(), _ writeBoolean _, allowNull = true)
+  implicit val JCharacterCodec: GenCodec[JCharacter] = createNullSafe(_.readChar(), _ writeChar _, allowNull = true)
+  implicit val JByteCodec: GenCodec[JByte] = createNullSafe(_.readByte(), _ writeByte _, allowNull = true)
+  implicit val JShortCodec: GenCodec[JShort] = createNullSafe(_.readShort(), _ writeShort _, allowNull = true)
+  implicit val JIntegerCodec: GenCodec[JInteger] = createNullSafe(_.readInt(), _ writeInt _, allowNull = true)
+  implicit val JLongCodec: GenCodec[JLong] = createNullSafe(_.readLong(), _ writeLong _, allowNull = true)
+  implicit val JFloatCodec: GenCodec[JFloat] = createNullSafe(_.readFloat(), _ writeFloat _, allowNull = true)
+  implicit val JDoubleCodec: GenCodec[JDouble] = createNullSafe(_.readDouble(), _ writeDouble _, allowNull = true)
 
-  implicit val JDateCodec: GenCodec[JDate] = createNullSafe(i => new JDate(i.readTimestamp()), (o, d) => o.writeTimestamp(d.getTime))
-  implicit val StringCodec: GenCodec[String] = createNullSafe(_.readString(), _ writeString _)
-  implicit val ByteArrayCodec: GenCodec[Array[Byte]] = createNullSafe(_.readBinary(), _ writeBinary _)
+  implicit val JDateCodec: GenCodec[JDate] = createNullSafe(i => new JDate(i.readTimestamp()), (o, d) => o.writeTimestamp(d.getTime), allowNull = true)
+  implicit val StringCodec: GenCodec[String] = createNullSafe(_.readString(), _ writeString _, allowNull = true)
+  implicit val ByteArrayCodec: GenCodec[Array[Byte]] = createNullSafe(_.readBinary(), _ writeBinary _, allowNull = true)
 
   private implicit class IteratorOps[A](private val it: Iterator[A]) extends AnyVal {
     def writeToList(lo: ListOutput)(implicit writer: GenCodec[A]): Unit =
@@ -249,42 +252,45 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     li.iterator(read[T]).collectWith(cbf)
 
   implicit def arrayCodec[T: ClassTag : GenCodec]: GenCodec[Array[T]] =
-    createList[Array[T]](_.iterator(read[T]).toArray[T], (lo, arr) => arr.iterator.writeToList(lo))
+    createList[Array[T]](_.iterator(read[T]).toArray[T], (lo, arr) => arr.iterator.writeToList(lo), allowNull = true)
 
   // seqCodec, setCodec, jCollectionCodec, mapCodec, jMapCodec, fallbackMapCodec and fallbackJMapCodec
   // have these weird return types (e.g. GenCodec[C[T] with BSeq[T]] instead of just GenCodec[C[T]]) because it's a
   // workaround for https://groups.google.com/forum/#!topic/scala-user/O_fkaChTtg4
 
-  implicit def seqCodec[C[X] >: Null <: BSeq[X], T: GenCodec](
+  implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](
     implicit cbf: CanBuildFrom[Nothing, T, C[T]]): GenCodec[C[T] with BSeq[T]] =
-    createList[C[T] with BSeq[T]](readListWithCBF[C, T], (lo, c) => c.iterator.writeToList(lo))
+    createList[C[T] with BSeq[T]](readListWithCBF[C, T], (lo, c) => c.iterator.writeToList(lo), allowNull = true)
 
-  implicit def setCodec[C[X] >: Null <: BSet[X], T: GenCodec](
+  implicit def setCodec[C[X] <: BSet[X], T: GenCodec](
     implicit cbf: CanBuildFrom[Nothing, T, C[T]]): GenCodec[C[T] with BSet[T]] =
-    createList[C[T] with BSet[T]](readListWithCBF[C, T], (lo, c) => c.iterator.writeToList(lo))
+    createList[C[T] with BSet[T]](readListWithCBF[C, T], (lo, c) => c.iterator.writeToList(lo), allowNull = true)
 
-  implicit def jCollectionCodec[C[X] >: Null <: JCollection[X], T: GenCodec](
+  implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](
     implicit cbf: JCanBuildFrom[T, C[T]]): GenCodec[C[T] with JCollection[T]] =
-    createList[C[T] with JCollection[T]](readListWithCBF[C, T], (lo, c) => c.iterator.asScala.writeToList(lo))
+    createList[C[T] with JCollection[T]](readListWithCBF[C, T], (lo, c) => c.iterator.asScala.writeToList(lo), allowNull = true)
 
-  implicit def mapCodec[M[X, Y] >: Null <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
+  implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
     implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenCodec[M[K, V] with BMap[K, V]] =
     createObject[M[K, V] with BMap[K, V]](
       _.iterator(read[V]).map({ case (k, v) => (GenKeyCodec.read[K](k), v) }).collectWith(cbf),
-      (oo, value) => value.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })
+      (oo, value) => value.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) }),
+      allowNull = true
     )
 
-  implicit def jMapCodec[M[X, Y] >: Null <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
+  implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
     implicit cbf: JCanBuildFrom[(K, V), M[K, V]]): GenCodec[M[K, V] with JMap[K, V]] =
     createObject[M[K, V] with JMap[K, V]](
       _.iterator(read[V]).map({ case (k, v) => (GenKeyCodec.read[K](k), v) }).collectWith(cbf),
-      (oo, value) => value.asScala.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })
+      (oo, value) => value.asScala.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) }),
+      allowNull = true
     )
 
   implicit def optionCodec[T: GenCodec]: GenCodec[Option[T]] =
     createList[Option[T]](
       li => if (li.hasNext) Some(read[T](li.nextElement())) else None,
-      (lo, opt) => opt.iterator.writeToList(lo)
+      (lo, opt) => opt.iterator.writeToList(lo),
+      allowNull = true
     )
 
   implicit def nOptCodec[T: GenCodec]: GenCodec[NOpt[T]] =
@@ -345,18 +351,20 @@ trait FallbackMapCodecs extends RecursiveAutoCodecs { this: GenCodec.type =>
     output.finish()
   }
 
-  implicit def fallbackMapCodec[M[X, Y] >: Null <: BMap[X, Y], K: GenCodec, V: GenCodec](
+  implicit def fallbackMapCodec[M[X, Y] <: BMap[X, Y], K: GenCodec, V: GenCodec](
     implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenCodec[M[K, V] with BMap[K, V]] =
     createList[M[K, V] with BMap[K, V]](
       _.iterator(i => readKVPair[K, V](i.readObject())).collectWith(cbf),
-      (lo, map) => map.iterator.foreach({ case (k, v) => writeKVPair(lo.writeElement().writeObject(), k, v) })
+      (lo, map) => map.iterator.foreach({ case (k, v) => writeKVPair(lo.writeElement().writeObject(), k, v) }),
+      allowNull = true
     )
 
-  implicit def fallbackJMapCodec[M[X, Y] >: Null <: JMap[X, Y], K: GenCodec, V: GenCodec](
+  implicit def fallbackJMapCodec[M[X, Y] <: JMap[X, Y], K: GenCodec, V: GenCodec](
     implicit cbf: JCanBuildFrom[(K, V), M[K, V]]): GenCodec[M[K, V] with JMap[K, V]] =
     createList[M[K, V] with JMap[K, V]](
       _.iterator(i => readKVPair[K, V](i.readObject())).collectWith(cbf),
-      (lo, map) => map.asScala.iterator.foreach({ case (k, v) => writeKVPair(lo.writeElement().writeObject(), k, v) })
+      (lo, map) => map.asScala.iterator.foreach({ case (k, v) => writeKVPair(lo.writeElement().writeObject(), k, v) }),
+      allowNull = true
     )
 }
 
