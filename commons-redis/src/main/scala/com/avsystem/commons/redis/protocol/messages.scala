@@ -115,10 +115,10 @@ object RedisMsg {
       case Long.MinValue => LongMinValue.size
       case v if v < 0 => integerSize(-v) + 1
       case v =>
-        @tailrec def posIntegerSize(value: Long, acc: Int): Int =
-          if (value == 0) acc
-          else posIntegerSize(value / 10, acc + 1)
-        posIntegerSize(value, 0)
+        @tailrec def posIntegerSize(v: Long, acc: Int): Int =
+          if (v == 0) acc
+          else posIntegerSize(v / 10, acc + 1)
+        posIntegerSize(v, 0)
     }
 
     msg match {

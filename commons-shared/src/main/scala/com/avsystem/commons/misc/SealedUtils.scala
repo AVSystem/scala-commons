@@ -128,7 +128,7 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
   *
   * In the example above, `values` is guaranteed to return `First`, `Second` and `Third` objects in exactly that order.
   */
-trait OrderedEnum extends Any {
+trait OrderedEnum {
   def sourceInfo: SourceInfo
 }
 object OrderedEnum {

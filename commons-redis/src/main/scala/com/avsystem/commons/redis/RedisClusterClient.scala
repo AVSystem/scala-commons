@@ -7,6 +7,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.avsystem.commons.collection.CollectionAliases.BMap
+import com.avsystem.commons.concurrent.RunInQueueEC
 import com.avsystem.commons.jiop.JavaInterop._
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RawCommand.Level
@@ -53,15 +54,16 @@ final class RedisClusterClient(
 
   require(seedNodes.nonEmpty, "No seed nodes provided")
 
+  @volatile private[this] var initSuccess = false
   @volatile private[this] var state = ClusterState(IndexedSeq.empty, Map.empty)
   @volatile private[this] var stateListener = (_: ClusterState) => ()
   // clients for nodes mentioned in redirection messages which are not yet in the cluster state
   @volatile private[this] var temporaryClients = List.empty[RedisNodeClient]
   @volatile private[this] var failure = Opt.empty[Throwable]
-  private val initPromise = Promise[Unit]()
+  private val initPromise = Promise[Unit]
 
-  private def ifReady[T](code: => Future[T])(implicit ec: ExecutionContext): Future[T] =
-    failure.fold(initPromise.future.flatMap(_ => code))(Future.failed)
+  private def ifReady[T](code: => Future[T]): Future[T] =
+    failure.fold(if (initSuccess) code else initPromise.future.flatMapNow(_ => code))(Future.failed)
 
   // invoked by monitoring actor, effectively serialized
   private def onNewState(newState: ClusterState): Unit = {
@@ -69,11 +71,11 @@ final class RedisClusterClient(
     temporaryClients = Nil
     stateListener(state)
     import system.dispatcher
-    Future.traverse(state.masters.values)(_.initialized)
-      .mapNow(_ => ()).onComplete { result =>
+    Future.traverse(state.masters.values)(_.initialized).mapNow(_ => ()).onComplete { result =>
       // is it still the same state?
       if (state eq newState) {
         initPromise.tryComplete(result)
+        initSuccess = true
       }
     }
   }
@@ -88,24 +90,17 @@ final class RedisClusterClient(
 
   private def determineSlot(pack: RawCommandPack): Int = {
     var slot = -1
-    pack.rawCommands(inTransaction = false)
-      .emitCommands(_.encoded.elements.foreach { bs =>
-        if (bs.isCommandKey) {
-          val s = Hash.slot(bs.string)
-          if (slot == -1) {
-            slot = s
-          } else if (s != slot) {
-            throw new CrossSlotException
-          }
-        }
-      })
-    slot match {
-      case -1 => throw new NoKeysException
-      case _ => slot
+    pack.foreachKey { key =>
+      val s = Hash.slot(key)
+      if (slot == -1) {
+        slot = s
+      } else if (s != slot) {
+        throw new CrossSlotException
+      }
     }
+    if (slot >= 0) slot
+    else throw new NoKeysException
   }
-
-  import system.dispatcher
 
   /**
     * Sets a listener that is notified every time [[RedisClusterClient]] detects a change in cluster state
@@ -124,7 +119,7 @@ final class RedisClusterClient(
     * Waits until cluster state is known and [[RedisNodeClient]] for every master node is initialized.
     */
   def initialized: Future[this.type] =
-    initPromise.future.map(_ => this)
+    initPromise.future.mapNow(_ => this)
 
   private def remainingTimeout(startTime: Long, overallTimeout: Timeout): Timeout =
     (overallTimeout.duration - (System.nanoTime() - startTime).nanos) max Duration.Zero
@@ -132,23 +127,9 @@ final class RedisClusterClient(
   private def handleRedirection[T](pack: RawCommandPack, slot: Int, result: Future[RedisReply],
     retryCount: Int, startTime: Long, overallTimeout: Timeout): Future[RedisReply] =
     result.flatMapNow {
-      case RedirectionError(redirection) =>
-        retryRedirected(pack, redirection, retryCount, startTime, overallTimeout)
-      case TransactionReply(elements) =>
-        def collectRedirection(acc: Opt[Redirection], idx: Int): Opt[Redirection] =
-          if (idx >= elements.size) acc
-          else elements(idx) match {
-            case RedirectionError(redirection) if acc.forall(_ == redirection) =>
-              collectRedirection(redirection.opt, idx + 1)
-            case err: ErrorMsg if err.errorCode == "EXECABORT" =>
-              collectRedirection(acc, idx + 1)
-            case _ => Opt.Empty
-          }
-        collectRedirection(Opt.Empty, 0)
-          .map(red => retryRedirected(pack, red, retryCount, startTime, overallTimeout))
-          .getOrElse(result)
-      case _ =>
-        result
+      case RedirectionReply(red) =>
+        retryRedirected(pack, red, retryCount, startTime, overallTimeout)
+      case _ => result
     } recoverWithNow {
       case _: NodeRemovedException =>
         // Node went down and we didn't get a regular redirection but the cluster detected the failure
@@ -183,7 +164,7 @@ final class RedisClusterClient(
           // because we still have old cluster state without that master
           askForClient(redirection.address).flatMapNow(_.executeRaw(packToResend))
       }
-      handleRedirection(pack, redirection.slot, result.map(_.apply(0)), retryCount + 1, startTime, overallTimeout)
+      handleRedirection(pack, redirection.slot, result.mapNow(_.apply(0)), retryCount + 1, startTime, overallTimeout)
     }
   }
 
@@ -192,7 +173,7 @@ final class RedisClusterClient(
 
   private def askForClient(address: NodeAddress): Future[RedisNodeClient] =
     monitoringActor.ask(GetClient(address))(RedisClusterClient.GetClientTimeout)
-      .mapTo[GetClientResponse].map(_.client)
+      .flatMapNow({ case GetClientResponse(client) => client.initialized })
 
   /**
     * Returns a [[RedisNodeClient]] internally used to connect to a master with given address.
@@ -269,7 +250,7 @@ final class RedisClusterClient(
           handleRedirection(pack, slot, result, 0, System.nanoTime(), timeout).mapNow(PacksResult.Single)
 
         case Opt.Empty =>
-          val barrier = Promise[Unit]()
+          val barrier = Promise[Unit]
           val packsByNode = new mutable.OpenHashMap[RedisNodeClient, ArrayBuffer[RawCommandPack]]
           val resultsByNode = new mutable.OpenHashMap[RedisNodeClient, Future[PacksResult]]
 
@@ -296,9 +277,10 @@ final class RedisClusterClient(
             results += resultFuture
           }
           barrier.success(())
+          implicit val ec: ExecutionContext = RunInQueueEC
           Future.sequence(results)
       }
-      undecodedResult.map(replies => batch.decodeReplies(replies))
+      undecodedResult.mapNow(replies => batch.decodeReplies(replies))
     }
   }
 
@@ -356,6 +338,25 @@ private object RedisClusterClient {
 
     def checkLevel(minAllowed: Level, clientType: String) =
       pack.checkLevel(minAllowed, clientType)
+  }
+}
+
+object RedirectionReply {
+  def unapply(reply: RedisReply): Opt[Redirection] = reply match {
+    case RedirectionError(redirection) =>
+      redirection.opt
+    case TransactionReply(elements) =>
+      def collectRedirection(acc: Opt[Redirection], idx: Int): Opt[Redirection] =
+        if (idx >= elements.size) acc
+        else elements(idx) match {
+          case RedirectionError(redirection) if acc.forall(_ == redirection) =>
+            collectRedirection(redirection.opt, idx + 1)
+          case err: ErrorMsg if err.errorCode == "EXECABORT" =>
+            collectRedirection(acc, idx + 1)
+          case _ => Opt.Empty
+        }
+      collectRedirection(Opt.Empty, 0)
+    case _ => Opt.Empty
   }
 }
 

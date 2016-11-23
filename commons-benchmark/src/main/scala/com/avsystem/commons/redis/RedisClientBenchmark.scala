@@ -47,16 +47,13 @@ abstract class RedisBenchmark {
 
   val Config =
     """
-      |redis.dispatcher {
-      |  executor = "thread-pool-executor"
-      |  type = PinnedDispatcher
-      |}
+      |
     """.stripMargin
 
   implicit val system = ActorSystem("redis",
     ConfigFactory.parseString(Config).withFallback(ConfigFactory.defaultReference()).resolve)
 
-  val PoolSize = 1
+  val PoolSize = 4
 
   val connectionConfig = ConnectionConfig(initCommands = clientSetname("benchmark"))
   val monConnectionConfig = ConnectionConfig(initCommands = clientSetname("benchmarkMon"))
@@ -98,9 +95,7 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
     client.executeBatch(set(s"$KeyBase$i", Value))
 
   def batchFuture(client: RedisKeyedExecutor, i: Int) = {
-    val key = s"$KeyBase$i"
-    val cmd = set(key, "v")
-    val batch = Seq.fill(BatchSize)(cmd).sequence
+    val batch = (0 until BatchSize).map(j => set(s"{$KeyBase$i}$j", "v")).sequence
     client.executeBatch(batch)
   }
 
@@ -110,16 +105,13 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
   }
 
   def operationFuture(client: RedisExecutor, i: Int) = {
-    val key = s"$KeyBase$i"
-    val cmd = set(key, "v")
-    val batch = Seq.fill(BatchSize)(cmd).sequence
+    val batch = (0 until BatchSize).map(j => set(s"{$KeyBase$i}$j", "v")).sequence
     client.executeBatch(batch.transaction)
   }
 
   def clusterTransactionFuture(client: RedisClusterClient, i: Int) = {
     val key = s"$KeyBase$i"
-    val cmd = set(key, "v")
-    val transaction = Seq.fill(BatchSize)(cmd).sequence.transaction
+    val transaction = (0 until BatchSize).map(j => set(s"{$KeyBase$i}$j", "v")).sequence.transaction
     val operation = for {
       _ <- watch(key)
       _ <- transaction
@@ -130,8 +122,7 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
 
   def transactionFuture(client: RedisOpExecutor, i: Int) = {
     val key = s"$KeyBase$i"
-    val cmd = set(key, "v")
-    val transaction = Seq.fill(BatchSize)(cmd).sequence.transaction
+    val transaction = (0 until BatchSize).map(j => set(s"{$KeyBase$i}$j", "v")).sequence.transaction
     val operation = for {
       _ <- watch(key)
       _ <- transaction

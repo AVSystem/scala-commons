@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package redis
 
+import akka.util.ByteString
 import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.exception.ForbiddenCommandException
@@ -73,6 +74,10 @@ object RawCommand {
 trait RawCommandPacks {
   def emitCommandPacks(consumer: RawCommandPack => Unit): Unit
   def single: Opt[RawCommandPack] = Opt.Empty
+
+  def foreachKey(consumer: ByteString => Unit): Unit =
+    emitCommandPacks(_.rawCommands(inTransaction = false)
+      .emitCommands(_.encoded.elements.foreach(bs => if (bs.isCommandKey) consumer(bs.string))))
 
   final def encodedSize: Int = {
     var result = 0

@@ -266,9 +266,9 @@ case class NodeInfo(infoLine: String) {
         case (-1, -1, idx) =>
           slots += SlotRange(str.take(idx).toInt, str.drop(idx + 1).toInt)
         case (idx, -1, _) =>
-          importingSlots += ((str.take(idx).toInt, NodeId(str.drop(idx + 1))))
+          importingSlots += ((str.substring(1, idx).toInt, NodeId(str.substring(idx + 1, str.length - 1))))
         case (-1, idx, _) =>
-          migratingSlots += ((str.take(idx).toInt, NodeId(str.drop(idx + 1))))
+          migratingSlots += ((str.substring(1, idx).toInt, NodeId(str.substring(idx + 1, str.length - 1))))
         case _ =>
       }
     }
