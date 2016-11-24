@@ -166,26 +166,19 @@ Here's an example result:
 
 ```
 [info] Benchmark                                                     Mode  Cnt        Score       Error  Units
-[info] RedisClientBenchmark.clusterClientBatchBenchmark             thrpt   40  1243910.759 ± 43365.952  ops/s
-[info] RedisClientBenchmark.clusterClientCommandBenchmark           thrpt   40   387183.343 ± 17099.328  ops/s
-[info] RedisClientBenchmark.clusterClientDistributedBatchBenchmark  thrpt   40   701343.080 ± 39298.199  ops/s
-[info] RedisClientBenchmark.clusterClientMixedBenchmark             thrpt   40   876846.190 ± 24900.200  ops/s
-[info] RedisClientBenchmark.clusterClientOpBenchmark                thrpt   40  1223695.376 ± 56561.443  ops/s
-[info] RedisClientBenchmark.clusterClientTransactionBenchmark       thrpt   40   845419.515 ± 29094.864  ops/s
-[info] RedisClientBenchmark.connectionClientBatchBenchmark          thrpt   40  1489086.135 ± 14193.566  ops/s
-[info] RedisClientBenchmark.connectionClientCommandBenchmark        thrpt   40   801747.056 ± 53039.919  ops/s
-[info] RedisClientBenchmark.connectionClientMixedBenchmark          thrpt   40   459021.898 ± 26645.310  ops/s
-[info] RedisClientBenchmark.connectionClientOpBenchmark             thrpt   40  1118495.958 ± 17871.168  ops/s
-[info] RedisClientBenchmark.connectionClientTransactionBenchmark    thrpt   40   302677.113 ± 10175.493  ops/s
-[info] RedisClientBenchmark.nodeClientBatchBenchmark                thrpt   40  1362098.932 ± 15312.061  ops/s
-[info] RedisClientBenchmark.nodeClientCommandBenchmark              thrpt   40   511885.799 ± 26020.407  ops/s
-[info] RedisClientBenchmark.nodeClientMixedBenchmark                thrpt   40   902759.983 ± 26368.068  ops/s
-[info] RedisClientBenchmark.nodeClientOpBenchmark                   thrpt   40  1036323.010 ± 11289.245  ops/s
-[info] RedisClientBenchmark.nodeClientTransactionBenchmark          thrpt   40   538912.568 ± 22263.932  ops/s
-[info] RedisClientBenchmark.rediscalaCommandBenchmark               thrpt   40   554374.104 ± 21542.071  ops/s
-[info] RedisClientBenchmark.rediscalaPoolCommandBenchmark           thrpt   40   524949.255 ± 24798.362  ops/s
-[info] RedisClientBenchmark.scredisCommandBenchmark                 thrpt   40   820735.033 ± 25189.100  ops/s
-[info] RedisClientBenchmark.scredisOpBenchmark                      thrpt   40   694234.328 ± 12260.981  ops/s
+[info] RedisClientBenchmark.clusterClientBatchBenchmark             thrpt   40   972566.875 ± 23690.312  ops/s
+[info] RedisClientBenchmark.clusterClientCommandBenchmark           thrpt   40   321375.083 ± 50150.155  ops/s
+[info] RedisClientBenchmark.clusterClientDistributedBatchBenchmark  thrpt   40   762133.038 ± 18547.533  ops/s
+[info] RedisClientBenchmark.clusterClientOperationBenchmark         thrpt   40    25720.818 ±   949.894  ops/s
+[info] RedisClientBenchmark.clusterClientTransactionBenchmark       thrpt   40   993998.179 ± 30108.538  ops/s
+[info] RedisClientBenchmark.connectionClientBatchBenchmark          thrpt   40  1079675.683 ± 14930.129  ops/s
+[info] RedisClientBenchmark.connectionClientCommandBenchmark        thrpt   40   714678.686 ± 42471.005  ops/s
+[info] RedisClientBenchmark.connectionClientOperationBenchmark      thrpt   40    13692.019 ±   563.235  ops/s
+[info] RedisClientBenchmark.connectionClientTransactionBenchmark    thrpt   40   805744.265 ± 26065.241  ops/s
+[info] RedisClientBenchmark.nodeClientBatchBenchmark                thrpt   40   935836.711 ± 19358.894  ops/s
+[info] RedisClientBenchmark.nodeClientCommandBenchmark              thrpt   40   684494.740 ± 44997.728  ops/s
+[info] RedisClientBenchmark.nodeClientOperationBenchmark            thrpt   40    24945.317 ±   920.142  ops/s
+[info] RedisClientBenchmark.nodeClientTransactionBenchmark          thrpt   40   735208.728 ± 23660.125  ops/s
 ```
 
 Hardware & environment:

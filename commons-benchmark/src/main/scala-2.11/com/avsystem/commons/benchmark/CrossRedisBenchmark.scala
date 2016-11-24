@@ -15,17 +15,17 @@ trait CrossRedisBenchmark { this: RedisClientBenchmark =>
   lazy val scredisClient = scredis.Redis.withActorSystem()
 
   def rediscalaCommandFuture(client: RedisCommands, i: Int): Future[Any] =
-    client.set(s"$KeyBase$i", "v")
+    client.set(s"$KeyBase$i", Value)
 
   def scredisCommandFuture(client: scredis.Redis, i: Int): Future[Any] =
-    client.set(s"$KeyBase$i", "v")
+    client.set(s"$KeyBase$i", Value)
 
   def scredisTransactionFuture(client: scredis.Redis, i: Int): Future[Any] = {
     client.withTransaction { b =>
       for (j <- 0 until (BatchSize - 1)) {
-        b.set(s"$KeyBase$i$j", "v")
+        b.set(s"$KeyBase$i$j", Value)
       }
-      b.set(s"$KeyBase$i${BatchSize - 1}", "v")
+      b.set(s"$KeyBase$i${BatchSize - 1}", Value)
     }
   }
 
