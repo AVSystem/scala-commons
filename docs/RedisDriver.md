@@ -4,6 +4,10 @@
 
 **[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/index.html)**
 
+```scala
+libraryDependencies += "com.avsystem.commons" %% "commons-redis" % avsCommonsVersion
+```
+
 ## Overview
 
 The module `commons-redis` contains from-the-scratch implementation of Scala driver for Redis. It's most important goals

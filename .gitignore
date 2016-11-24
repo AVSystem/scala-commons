@@ -16,6 +16,9 @@ out
 *.scss.cache
 *.scssc
 *.log
+*.rdb
+*.aof
+*.pid
 
 local.sbt
 cluster

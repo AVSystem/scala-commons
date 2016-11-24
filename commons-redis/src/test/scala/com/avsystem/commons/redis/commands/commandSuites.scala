@@ -3,10 +3,8 @@ package redis.commands
 
 import com.avsystem.commons.redis._
 
-/**
-  * Author: ghik
-  * Created: 06/10/16.
-  */
+import scala.concurrent.duration._
+
 trait KeyedFullApiSuite extends CommandsSuite
   with GeoApiSuite
   with KeyedScriptingApiSuite
@@ -28,5 +26,5 @@ trait ConnectionFullApiSuite extends NodeFullApiSuite
   with BlockingListsApiSuite
 
 class RedisClusterCommandsTest extends RedisClusterCommandsSuite with KeyedFullApiSuite
-class RedisNodeCommandsTest extends RedisNodeCommandsSuite with NodeFullApiSuite with NodeOnlyServerApiSuite
+class RedisNodeCommandsTest extends RedisNodeCommandsSuite with NodeFullApiSuite
 class RedisConnectionCommandsTest extends RedisConnectionCommandsSuite with ConnectionFullApiSuite

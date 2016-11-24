@@ -35,9 +35,11 @@ final class RedisConnectionClient(
   (implicit system: ActorSystem) extends RedisConnectionExecutor with Closeable { self =>
 
   private val initPromise = Promise[Unit]
-  private val connectionActor = system.actorOf(Props(
-    new RedisConnectionActor(address, config.copy(reconnectionStrategy = NoRetryStrategy)))
-    .withDispatcher(ConfigDefaults.Dispatcher))
+  private val connectionActor = {
+    val props = Props(new RedisConnectionActor(address, config.copy(reconnectionStrategy = NoRetryStrategy)))
+      .withDispatcher(ConfigDefaults.Dispatcher)
+    config.actorName.fold(system.actorOf(props))(system.actorOf(props, _))
+  }
   connectionActor ! RedisConnectionActor.Open(mustInitiallyConnect = true, initPromise)
 
   @volatile private[this] var failure = Opt.empty[Throwable]

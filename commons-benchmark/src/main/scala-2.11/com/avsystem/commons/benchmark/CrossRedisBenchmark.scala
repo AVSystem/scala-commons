@@ -10,7 +10,7 @@ import scala.concurrent.Future
 
 trait CrossRedisBenchmark { this: RedisClientBenchmark =>
   lazy val rediscalaClient = RedisClient()
-  lazy val rediscalaClientPool = RedisClientPool(Seq.fill(PoolSize)(RedisServer()))
+  lazy val rediscalaClientPool = RedisClientPool(Seq.fill(nodeConfig.poolSize)(RedisServer()))
 
   lazy val scredisClient = scredis.Redis.withActorSystem()
 
@@ -20,7 +20,7 @@ trait CrossRedisBenchmark { this: RedisClientBenchmark =>
   def scredisCommandFuture(client: scredis.Redis, i: Int): Future[Any] =
     client.set(s"$KeyBase$i", "v")
 
-  def scredisOperationFuture(client: scredis.Redis, i: Int): Future[Any] = {
+  def scredisTransactionFuture(client: scredis.Redis, i: Int): Future[Any] = {
     client.withTransaction { b =>
       for (j <- 0 until (BatchSize - 1)) {
         b.set(s"$KeyBase$i$j", "v")
@@ -34,8 +34,8 @@ trait CrossRedisBenchmark { this: RedisClientBenchmark =>
     redisClientBenchmark(ConcurrentCommands, scredisCommandFuture(scredisClient, _))
 
   @Benchmark
-  def scredisOpBenchmark() =
-    redisClientBenchmark(ConcurrentBatches, scredisOperationFuture(scredisClient, _))
+  def scredisTransactionBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, scredisTransactionFuture(scredisClient, _))
 
   @Benchmark
   def rediscalaCommandBenchmark() =
