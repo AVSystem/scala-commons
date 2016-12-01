@@ -48,7 +48,7 @@ import akka.util.{ByteString, Timeout}
   * [[RedisApi.Keyed.Async.StringTyped]], [[RedisApi.Batches.BinaryTyped]].
   *
   * Note that [[RedisDataCodec]] is automatically provided for many simple types and also all types which have a
-  * [[com.avsystem.commons.serialization.GenCodec GenCodec]]. This effectively gives you a complete serialization
+  * `GenCodec`. This effectively gives you a complete serialization
   * framework for keys, hash keys and values stored in Redis.
   *
   * Note that chosen key, hash key and value types can be adjusted "on the fly" with a convenient syntax.

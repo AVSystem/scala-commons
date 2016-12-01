@@ -11,11 +11,11 @@ import com.avsystem.commons.serialization.GenCodec
   * from it in order to use them as keys, hash keys and values in Redis commands.
   *
   * By default, `RedisDataCodec` is provided for simple types like `String`, `ByteString`, `Array[Byte]`,
-  * `Boolean`, `Char`, all primitive numeric types and [[com.avsystem.commons.misc.NamedEnum NamedEnum]]s
-  * (which have [[com.avsystem.commons.misc.NamedEnumCompanion NamedEnumCompanion]]).
+  * `Boolean`, `Char`, all primitive numeric types and `NamedEnum`s
+  * (which have `NamedEnumCompanion`).
   *
-  * Also, all types which have an instance of [[com.avsystem.commons.serialization.GenCodec GenCodec]]
-  * automatically have an instance of `RedisDataCodec`.
+  * Also, all types which have an instance of `GenCodec`
+  * automatically have an instance of RedisDataCodec.
   */
 case class RedisDataCodec[T](read: ByteString => T, write: T => ByteString)
 object RedisDataCodec extends LowPriorityRedisDataCodecs {
