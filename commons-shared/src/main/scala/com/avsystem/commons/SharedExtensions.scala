@@ -32,6 +32,8 @@ trait SharedExtensions {
   implicit def collectionOps[C[X] <: BTraversable[X], A](coll: C[A]): CollectionOps[C, A] = new CollectionOps(coll)
 
   implicit def mapOps[M[X, Y] <: BMap[X, Y], K, V](map: M[K, V]): MapOps[M, K, V] = new MapOps(map)
+
+  implicit def iteratorOps[A](it: Iterator[A]): IteratorOps[A] = new IteratorOps(it)
 }
 
 object SharedExtensions extends SharedExtensions {
@@ -203,5 +205,20 @@ object SharedExtensions extends SharedExtensions {
 
   class MapOps[M[X, Y] <: BMap[X, Y], K, V](private val map: M[K, V]) extends AnyVal {
     def getOpt(key: K): Opt[V] = map.get(key).toOpt
+  }
+
+  class IteratorOps[A](private val it: Iterator[A]) extends AnyVal {
+    def nextOpt: Opt[A] =
+      if (it.hasNext) it.next().opt else Opt.Empty
+
+    def drainTo[C[_]](n: Int)(implicit cbf: CanBuildFrom[Nothing, A, C[A]]): C[A] = {
+      val builder = cbf()
+      var i = 0
+      while (it.hasNext && i < n) {
+        builder += it.next()
+        i += 1
+      }
+      builder.result()
+    }
   }
 }

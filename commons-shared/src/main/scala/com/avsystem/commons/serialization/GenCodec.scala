@@ -10,7 +10,7 @@ import com.avsystem.commons.misc.{NOpt, Opt, OptArg, OptRef}
 import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds
-import scala.reflect.ClassTag
+import scala.reflect.{ClassTag, classTag}
 
 /**
   * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized
@@ -84,6 +84,9 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
       def write(output: Output, value: T) = writeFun(output, value)
       def read(input: Input): T = readFun(input)
     }
+
+  def transformed[T, R: GenCodec](toRaw: T => R, fromRaw: R => T): GenCodec[T] =
+    new TransformedCodec[T, R](implicitly[GenCodec[R]], toRaw, fromRaw)
 
   def createNullSafe[T](readFun: Input => T, writeFun: (Output, T) => Any, allowNull: Boolean): GenCodec[T] =
     new NullSafeCodec[T] {
@@ -317,8 +320,11 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   implicit def optRefCodec[T >: Null : GenCodec]: GenCodec[OptRef[T]] =
     new TransformedCodec[OptRef[T], Opt[T]](optCodec[T], _.toOpt, opt => OptRef(opt.orNull))
 
-  implicit def jEnumCodec[E <: Enum[E] : GenKeyCodec]: GenCodec[E] =
-    fromKeyCodec[E]
+  implicit def jEnumCodec[E <: Enum[E] : ClassTag]: GenCodec[E] = createNullSafe(
+    in => Enum.valueOf(classTag[E].runtimeClass.asInstanceOf[Class[E]], in.readString()),
+    (out, value) => out.writeString(value.name),
+    allowNull = true
+  )
 
   // Needed because of SI-9453
   implicit val NothingAutoCodec: GenCodec.Auto[Nothing] = GenCodec.Auto[Nothing](NothingCodec)
