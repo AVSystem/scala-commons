@@ -12,7 +12,7 @@ before_install:
 
 env:
   global:
-    - REDIS_VERSION=3.2.2
+    - REDIS_VERSION=4.0-rc2
     - REDIS_HOME=$PWD/redis-$REDIS_VERSION/src
 
 script:
