@@ -243,9 +243,11 @@ case class ClusterStateInfo(info: String) extends ParsedInfo(info, "\r\n", ":") 
 
 case class NodeInfo(infoLine: String) {
   private val splitLine: Array[String] = infoLine.split(' ')
+  private val splitAddr: Array[String] = splitLine(1).split('@')
 
   val id = NodeId(splitLine(0))
-  val address = NodeAddress.parse(splitLine(1))
+  val address = NodeAddress.parse(splitAddr(0))
+  val clusterPort = splitAddr.opt.filter(_.length > 1).map(_.apply(1))
   val flags = NodeFlags(splitLine(2))
   val master = Opt(splitLine(3)).filter(_ != "-").map(NodeId)
   val pingSent = splitLine(4).toLong
