@@ -14,8 +14,10 @@ trait NodeServerApi extends ApiSubset {
   def bgrewriteaof: Result[String] =
     execute(Bgrewriteaof)
   /** [[http://redis.io/commands/bgsave BGSAVE]] */
-  def bgsave: Result[String] =
-    execute(Bgsave)
+  def bgsave: Result[String] = bgsave()
+  /** [[http://redis.io/commands/bgsave BGSAVE]] */
+  def bgsave(schedule: Boolean = false): Result[String] =
+    execute(new Bgsave(schedule))
   /** [[http://redis.io/commands/client-kill CLIENT KILL]] */
   def clientKill(addr: ClientAddress): Result[Unit] =
     execute(new ClientKill(addr))
@@ -118,8 +120,8 @@ trait NodeServerApi extends ApiSubset {
     val encoded = encoder("BGREWRITEAOF").result
   }
 
-  private object Bgsave extends RedisSimpleStringCommand with NodeCommand {
-    val encoded = encoder("BGSAVE").result
+  private final class Bgsave(schedule: Boolean) extends RedisSimpleStringCommand with NodeCommand {
+    val encoded = encoder("BGSAVE").addFlag("SCHEDULE", schedule).result
   }
 
   private final class ClientKill(address: ClientAddress) extends RedisUnitCommand with NodeCommand {

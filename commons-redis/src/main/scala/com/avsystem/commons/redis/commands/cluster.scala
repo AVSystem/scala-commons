@@ -47,6 +47,8 @@ trait NodeClusterApi extends KeyedClusterApi {
   /** [[http://redis.io/commands/cluster-failover CLUSTER FAILOVER]] */
   def clusterFailover(option: OptArg[FailoverOption] = OptArg.Empty): Result[Unit] =
     execute(new ClusterFailover(option.toOpt))
+  def clusterFlushslots: Result[Unit] =
+    execute(ClusterFlushslots)
   /** [[http://redis.io/commands/cluster-forget CLUSTER FORGET]] */
   def clusterForget(nodeId: NodeId): Result[Unit] =
     execute(new ClusterForget(nodeId))
@@ -59,6 +61,8 @@ trait NodeClusterApi extends KeyedClusterApi {
   /** [[http://redis.io/commands/cluster-meet CLUSTER MEET]] */
   def clusterMeet(address: NodeAddress): Result[Unit] =
     execute(new ClusterMeet(address))
+  def clusterMyid: Result[NodeId] =
+    execute(ClusterMyid)
   /** [[http://redis.io/commands/cluster-nodes CLUSTER NODES]] */
   def clusterNodes: Result[Seq[NodeInfo]] =
     execute(ClusterNodes)
@@ -111,6 +115,10 @@ trait NodeClusterApi extends KeyedClusterApi {
     val encoded = encoder("CLUSTER", "FAILOVER").optAdd(option).result
   }
 
+  private object ClusterFlushslots extends RedisUnitCommand with NodeCommand {
+    val encoded = encoder("CLUSTER", "FLUSHSLOTS").result
+  }
+
   private final class ClusterForget(nodeId: NodeId) extends RedisUnitCommand with NodeCommand {
     val encoded = encoder("CLUSTER", "FORGET").add(nodeId.raw).result
   }
@@ -126,6 +134,10 @@ trait NodeClusterApi extends KeyedClusterApi {
 
   private final class ClusterMeet(address: NodeAddress) extends RedisUnitCommand with NodeCommand {
     val encoded = encoder("CLUSTER", "MEET").add(address.ip).add(address.port).result
+  }
+
+  private final object ClusterMyid extends AbstractRedisCommand[NodeId](bulkNodeId) with NodeCommand {
+    val encoded = encoder("CLUSTER", "MYID").result
   }
 
   private object ClusterNodes extends AbstractRedisCommand[Seq[NodeInfo]](bulkNodeInfos) with NodeCommand {

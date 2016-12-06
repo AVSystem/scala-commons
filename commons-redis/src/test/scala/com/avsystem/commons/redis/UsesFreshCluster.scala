@@ -35,7 +35,7 @@ trait UsesFreshCluster extends UsesActorSystem with UsesClusterServers { this: S
     super.beforeAll()
 
     val clients = addresses.map(addr => new RedisConnectionClient(addr))
-    val commands = clients.map(client => new RedisApi.Connection.Async.BinaryTyped(client))
+    val commands = clients.map(client => RedisApi.Connection.Async.BinaryTyped(client))
 
     val initFuture = for {
       _ <- Future.traverse(commands.tail)(_.clusterMeet(addresses.head))

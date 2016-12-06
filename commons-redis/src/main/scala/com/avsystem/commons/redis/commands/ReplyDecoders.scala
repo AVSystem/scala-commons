@@ -80,6 +80,9 @@ object ReplyDecoders {
   val bulkSha1: ReplyDecoder[Sha1] =
     bulk(bs => Sha1(bs.utf8String))
 
+  val bulkNodeId: ReplyDecoder[NodeId] =
+    bulk(bs => NodeId(bs.utf8String))
+
   val bulkClientInfos: ReplyDecoder[Seq[ClientInfo]] = {
     case BulkStringMsg(data) =>
       Source.fromInputStream(data.iterator.asInputStream).getLines()
