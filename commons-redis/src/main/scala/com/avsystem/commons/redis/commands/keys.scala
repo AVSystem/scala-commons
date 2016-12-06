@@ -92,12 +92,32 @@ trait KeyedKeysApi extends ApiSubset {
     gets: Seq[SortPattern[Key, HashKey]] = Nil, sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Long] =
     execute(new SortStore(key, destination, by.toOpt, limit.toOpt, gets, sortOrder.toOpt, alpha))
 
+  /** [[http://redis.io/commands/touch TOUCH]] */
+  def touch(key: Key): Result[Boolean] =
+    execute(new Touch(key.single).map(_ > 0))
+  /** [[http://redis.io/commands/touch TOUCH]] */
+  def touch(key: Key, keys: Key*): Result[Int] =
+    execute(new Touch(key +:: keys))
+  /** [[http://redis.io/commands/touch TOUCH]] */
+  def touch(keys: Iterable[Key]): Result[Int] =
+    execute(new Touch(keys))
+
   /** [[http://redis.io/commands/ttl TTL]] */
   def ttl(key: Key): Result[Opt[Opt[Long]]] =
     execute(new Ttl(key))
   /** [[http://redis.io/commands/type TYPE]] */
   def `type`(key: Key): Result[RedisType] =
     execute(new Type(key))
+
+  /** [[http://redis.io/commands/unlink UNLINK]] */
+  def unlink(key: Key): Result[Boolean] =
+    execute(new Unlink(key.single).map(_ > 0))
+  /** [[http://redis.io/commands/unlink UNLINK]] */
+  def unlink(key: Key, keys: Key*): Result[Int] =
+    execute(new Unlink(key +:: keys))
+  /** [[http://redis.io/commands/unlink UNLINK]] */
+  def unlink(keys: Iterable[Key]): Result[Int] =
+    execute(new Unlink(keys))
 
   private final class Del(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
     requireNonEmpty(keys, "keys")
@@ -210,12 +230,22 @@ trait KeyedKeysApi extends ApiSubset {
   private final class SortStore(key: Key, destination: Key, by: Opt[SortPattern[Key, HashKey]], limit: Opt[SortLimit], gets: Seq[SortPattern[Key, HashKey]], sortOrder: Opt[SortOrder], alpha: Boolean)
     extends AbstractSort[Long](integerLong)(key, by, limit, gets, sortOrder, alpha, Opt(destination))
 
+  private final class Touch(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
+    requireNonEmpty(keys, "keys")
+    val encoded = encoder("TOUCH").keys(keys).result
+  }
+
   private final class Ttl(key: Key) extends AbstractRedisCommand[Opt[Opt[Long]]](integerTtl) with NodeCommand {
     val encoded = encoder("TTL").key(key).result
   }
 
   private final class Type(key: Key) extends AbstractRedisCommand[RedisType](simple[RedisType]) with NodeCommand {
     val encoded = encoder("TYPE").key(key).result
+  }
+
+  private final class Unlink(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
+    requireNonEmpty(keys, "keys")
+    val encoded = encoder("UNLINK").keys(keys).result
   }
 }
 

@@ -26,6 +26,20 @@ trait StringsApiSuite extends CommandsSuite {
     bitcount("key", (2, -1)).assertEquals(3)
   }
 
+  apiTest("BITFIELD") {
+    bitfield("key", BitField.signed(8).at(0).get).assertEquals(Opt(0))
+    bitfield("key", BitField.signed(8).atWidths(0).set(50)).assertEquals(Opt(0))
+    bitfield("key", BitField.signed(8).at(0).incrby(50)).assertEquals(Opt(100))
+    bitfield("key", BitField.signed(8).atWidths(0).incrby(50).overflowSat).assertEquals(Opt(127))
+    bitfield("key", BitField.signed(8).atWidths(0).incrby(50).overflowFail).assertEquals(Opt.Empty)
+    bitfield("key", BitField.unsigned(8).atWidths(1).set(42)).assertEquals(Opt(0))
+    bitfield("key",
+      BitField.signed(8).atWidths(0).set(500).overflowFail,
+      BitField.unsigned(8).atWidths(0).set(257),
+      BitField.unsigned(8).atWidths(0).get
+    ).assertEquals(Seq(Opt.Empty, Opt(127), Opt(1)))
+  }
+
   apiTest("BITOP") {
     val withBinValue = valueType[ByteString]
     val keys = Seq("{key}1", "{key}2", "{key}3")

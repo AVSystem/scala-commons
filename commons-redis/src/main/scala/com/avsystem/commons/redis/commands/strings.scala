@@ -13,6 +13,15 @@ trait StringsApi extends ApiSubset {
   /** [[http://redis.io/commands/bitcount BITCOUNT]] */
   def bitcount(key: Key, range: OptArg[(Int, Int)] = OptArg.Empty): Result[Long] =
     execute(new Bitcount(key, range.toOpt))
+  /** [[http://redis.io/commands/bitfield BITFIELD]] */
+  def bitfield(key: Key, op: BitFieldOp): Result[Opt[Long]] =
+    execute(new Bitfield(key, op.single).map(_.head))
+  /** [[http://redis.io/commands/bitfield BITFIELD]] */
+  def bitfield(key: Key, op: BitFieldOp, ops: BitFieldOp*): Result[Seq[Opt[Long]]] =
+    execute(new Bitfield(key, op +:: ops))
+  /** [[http://redis.io/commands/bitfield BITFIELD]] */
+  def bitfield(key: Key, ops: Iterable[BitFieldOp]): Result[Seq[Opt[Long]]] =
+    execute(new Bitfield(key, ops))
   /** [[http://redis.io/commands/bitop BITOP]] */
   def bitop(multiOperation: MultiBitOp, destkey: Key, keys: Key*): Result[Int] =
     execute(new Bitop(multiOperation, destkey, keys))
@@ -101,6 +110,36 @@ trait StringsApi extends ApiSubset {
 
   private final class Bitcount(key: Key, range: Opt[(Int, Int)]) extends RedisLongCommand with NodeCommand {
     val encoded = encoder("BITCOUNT").key(key).optAdd(range).result
+  }
+
+  private final class Bitfield(key: Key, ops: Iterable[BitFieldOp])
+    extends RedisSeqCommand[Opt[Long]](nullBulkOr(integerLong)) with NodeCommand {
+
+    val encoded = {
+      import BitFieldOp._
+      val enc = encoder("BITFIELD").key(key)
+      def loop(it: Iterator[BitFieldOp], curOverflow: Overflow): Unit = if (it.hasNext) {
+        def ensureOverflow(overflow: Overflow) =
+          if (overflow != curOverflow) {
+            enc.add("OVERFLOW").add(overflow)
+          }
+        it.next() match {
+          case Get(field) =>
+            enc.add("GET").add(field)
+            loop(it, curOverflow)
+          case Set(field, overflow, value) =>
+            ensureOverflow(overflow)
+            enc.add("SET").add(field).add(value)
+            loop(it, overflow)
+          case Incrby(field, overflow, increment) =>
+            ensureOverflow(overflow)
+            enc.add("INCRBY").add(field).add(increment)
+            loop(it, overflow)
+        }
+      }
+      loop(ops.iterator, Overflow.Wrap)
+      enc.result
+    }
   }
 
   private final class Bitop(bitop: BitOp, destkey: Key, keys: Seq[Key]) extends RedisIntCommand with NodeCommand {
@@ -193,6 +232,62 @@ trait StringsApi extends ApiSubset {
 
   private final class Strlen(key: Key) extends RedisIntCommand with NodeCommand {
     val encoded = encoder("STRLEN").key(key).result
+  }
+}
+
+case class BitFieldType(signed: Boolean, width: Int) {
+  def at(offset: Long): BitField = BitField(this, offset, offsetInWidths = false)
+  def atWidths(offset: Long): BitField = BitField(this, offset, offsetInWidths = true)
+}
+case class BitField(bfType: BitFieldType, offset: Long, offsetInWidths: Boolean) {
+
+  import BitFieldOp._
+
+  def get: BitFieldOp = Get(this)
+  def set(value: Long): BitFieldMod = Set(this, Overflow.Wrap, value)
+  def incrby(value: Long): BitFieldMod = Incrby(this, Overflow.Wrap, value)
+}
+object BitField {
+  def signed(width: Int): BitFieldType = BitFieldType(signed = true, width)
+  def unsigned(width: Int): BitFieldType = BitFieldType(signed = false, width)
+
+  implicit val commandArg: CommandArg[BitField] = CommandArg {
+    case (enc, BitField(BitFieldType(signed, width), offset, offsetInWidths)) =>
+      enc.add((if (signed) "i" else "u") + width.toString).add((if (offsetInWidths) "#" else "") + offset.toString)
+  }
+}
+
+sealed trait BitFieldOp {
+  def field: BitField
+}
+
+sealed trait BitFieldMod extends BitFieldOp {
+
+  import BitFieldOp.Overflow
+
+  def overflow: Overflow
+  def overflow(of: Overflow): BitFieldMod
+
+  def overflowWrap: BitFieldMod = overflow(Overflow.Wrap)
+  def overflowSat: BitFieldMod = overflow(Overflow.Sat)
+  def overflowFail: BitFieldMod = overflow(Overflow.Fail)
+}
+
+object BitFieldOp {
+  sealed abstract class Overflow(val name: String) extends NamedEnum
+  object Overflow extends NamedEnumCompanion[Overflow] {
+    case object Wrap extends Overflow("WRAP")
+    case object Sat extends Overflow("SAT")
+    case object Fail extends Overflow("FAIL")
+    val values: List[Overflow] = caseObjects
+  }
+
+  case class Get(field: BitField) extends BitFieldOp
+  case class Set(field: BitField, overflow: Overflow, value: Long) extends BitFieldMod {
+    def overflow(of: Overflow): BitFieldMod = copy(overflow = of)
+  }
+  case class Incrby(field: BitField, overflow: Overflow, increment: Long) extends BitFieldMod {
+    def overflow(of: Overflow): BitFieldMod = copy(overflow = of)
   }
 }
 

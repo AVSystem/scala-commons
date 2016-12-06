@@ -113,6 +113,13 @@ trait KeyedKeysApiSuite extends CommandsSuite {
     sortStore("somelist", keyWithSameSlotAs("somelist")).assertEquals(0)
   }
 
+  apiTest("TOUCH") {
+    setup(mset("{key}1" -> "value", "{key}2" -> "value"))
+    touch("???").assertEquals(false)
+    touch("{key}1").assertEquals(true)
+    touch("{key}2", "{key}?").assertEquals(1)
+  }
+
   apiTest("TTL") {
     setup(
       set("key", "value"),
@@ -126,6 +133,13 @@ trait KeyedKeysApiSuite extends CommandsSuite {
   apiTest("TYPE") {
     setup(set("key", "value"))
     `type`("key").assertEquals(RedisType.String)
+  }
+
+  apiTest("UNLINK") {
+    setup(mset("{key}1" -> "value", "{key}2" -> "value"))
+    unlink("???").assertEquals(false)
+    unlink("{key}1").assertEquals(true)
+    unlink("{key}2", "{key}?").assertEquals(1)
   }
 }
 
