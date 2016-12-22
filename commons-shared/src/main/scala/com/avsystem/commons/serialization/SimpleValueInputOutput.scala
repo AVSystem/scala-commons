@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.jiop.BasicJavaInterop._
 import com.avsystem.commons.misc.Unboxing
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
@@ -83,7 +84,7 @@ class SimpleValueInput(value: Any) extends Input {
   def readNull() = if (value == null) null else throw new ReadFailure("not null")
   def readObject() =
     new ObjectInput {
-      private val it = doRead[Map[String, Any]].iterator.map {
+      private val it = doRead[BMap[String, Any]].iterator.map {
         case (k, v) => new SimpleValueFieldInput(k, v)
       }
       def nextField() = it.next()
@@ -95,7 +96,7 @@ class SimpleValueInput(value: Any) extends Input {
 
   def readList() =
     new ListInput {
-      private val it = doRead[List[Any]].iterator.map(new SimpleValueInput(_))
+      private val it = doRead[BSeq[Any]].iterator.map(new SimpleValueInput(_))
       def nextElement() = it.next()
       def hasNext = it.hasNext
     }
