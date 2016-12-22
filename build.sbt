@@ -25,6 +25,9 @@ inThisBuild(Seq(
   autoAPIMappings := true
 ))
 
+// for binary compatibility checking
+val previousVersion = "1.19.0"
+
 val silencerVersion = "0.5"
 val guavaVersion = "18.0"
 val jsr305Version = "3.0.0"
@@ -86,6 +89,12 @@ val commonSettings = Seq(
   fork in Test := true
 )
 
+val jvmCommonSettings = Seq(
+  mimaPreviousArtifacts := {
+    Set(organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion)
+  }
+)
+
 val noPublishSettings = Seq(
   publishArtifact := false,
   publish := (),
@@ -93,7 +102,8 @@ val noPublishSettings = Seq(
   publishM2 := (),
   publishSigned := (),
   publishLocalSigned := (),
-  doc := (target in doc).value
+  doc := (target in doc).value,
+  mimaPreviousArtifacts := Set.empty
 )
 
 val CompileAndTest = "compile->compile;test->test"
@@ -130,10 +140,12 @@ lazy val commons = project.in(file("."))
 
 lazy val `commons-annotations` = project
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
 
 lazy val `commons-macros` = project
   .dependsOn(`commons-annotations`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
   )
@@ -142,6 +154,7 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
   .jsConfigure(_.dependsOn(`commons-macros`))
   .jvmConfigure(_.dependsOn(`commons-macros`))
   .settings(commonSettings: _*)
+  .jvmSettings(jvmCommonSettings)
   .jsSettings(
     scalacOptions += {
       val localDir = (baseDirectory in ThisBuild).value.toURI.toString
@@ -157,6 +170,7 @@ lazy val `commons-sharedJS` = `commons-shared`.js
 
 lazy val `commons-core` = project.dependsOn(`commons-macros` % CompileAndTest, `commons-sharedJVM`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
@@ -167,6 +181,7 @@ lazy val `commons-core` = project.dependsOn(`commons-macros` % CompileAndTest, `
 lazy val `commons-analyzer` = project
   .dependsOn(`commons-core` % Test)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
   )
@@ -174,6 +189,7 @@ lazy val `commons-analyzer` = project
 lazy val `commons-jetty` = project
   .dependsOn(`commons-sharedJVM`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
@@ -185,6 +201,7 @@ lazy val `commons-jetty` = project
 lazy val `commons-benchmark` = project
   .dependsOn(`commons-core`, `commons-akka`, `commons-redis`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(noPublishSettings: _*)
   .enablePlugins(JmhPlugin)
   .settings(
@@ -201,6 +218,7 @@ lazy val `commons-benchmark` = project
 lazy val `commons-mongo` = project
   .dependsOn(`commons-core`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "org.mongodb" % "mongodb-driver" % mongoVersion
@@ -210,6 +228,7 @@ lazy val `commons-mongo` = project
 lazy val `commons-redis` = project
   .dependsOn(`commons-core`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
@@ -221,6 +240,7 @@ lazy val `commons-redis` = project
 lazy val `commons-spring` = project
   .dependsOn(`commons-core`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "org.springframework" % "spring-context" % springVersion,
@@ -231,6 +251,7 @@ lazy val `commons-spring` = project
 lazy val `commons-akka` = project
   .dependsOn(`commons-core`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
