@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
+
 /**
   * Represents an abstract sink to which a value may be serialized (written).
   * An [[Output]] instance should be assumed to be stateful. After calling any of the `write` methods, it MUST NOT be
@@ -53,6 +55,9 @@ trait ListOutput extends SequentialOutput {
   * Represents an abstract sink for serialization of string-to-value mappings. Any [[ObjectOutput]] instance
   * must be assumed to be stateful and used in strictly sequential manner. After all key-value pairs have been
   * written, `finish()` must be called to explicitly mark that the object is complete.
+  * <p/>
+  * [[ObjectOutput]] MUST preserve information about the order in which fields are written.
+  * [[ObjectInput]] is required to read fields in exactly the same order as [[ObjectOutput]] writes them.
   */
 trait ObjectOutput extends SequentialOutput {
   /**
@@ -173,10 +178,15 @@ trait ListInput extends SequentialInput { self =>
   * [[ObjectInput]] MUST always be fully exhausted. In order to ignore any remaining key-value mappings,
   * `skipRemaining()` may be used.
   * <p/>
-  * NOTE: The order of keys returned by subsequent invocations of `nextField()` may be arbitrary and in particular
-  * may not match the order in which keys were written to corresponding [[ObjectOutput]].
   */
 trait ObjectInput extends SequentialInput { self =>
+  /**
+    * Returns [[FieldInput]] that represents next field of this object. You MUST NOT call `nextField()` again until
+    * this [[FieldInput]] is fully read or skipped.
+    * </p>
+    * Subsequent invocations of `nextField` MUST return fields in exactly the same order as they were written
+    * using [[ObjectOutput.writeField]]. In other words, serialization format MUST preserve order of object fields.
+    */
   def nextField(): FieldInput
 
   def skipRemaining() = while (hasNext) nextField().skip()
@@ -195,4 +205,11 @@ trait ObjectInput extends SequentialInput { self =>
   */
 trait FieldInput extends Input {
   def fieldName: String
+
+  def assertField(expectedName: String): this.type = {
+    if (fieldName != expectedName) {
+      throw new ReadFailure(s"Expected $expectedName as next field, got $fieldName")
+    }
+    this
+  }
 }

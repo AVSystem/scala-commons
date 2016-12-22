@@ -5,6 +5,7 @@ import com.avsystem.commons.jiop.BasicJavaInterop._
 import com.avsystem.commons.misc.Unboxing
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
 
@@ -23,8 +24,8 @@ import scala.reflect.{ClassTag, classTag}
   * - `Boolean`
   * - `String`
   * - `Array[Byte]`
-  * - `List[Any]` where every element is also one of the listed types
-  * - `Map[String,Any]` where every value is also one of the listed types
+  * - `scala.collection.Seq[Any]` where every element is also one of the listed types
+  * - `scala.collection.Map[String,Any]` where every value is also one of the listed types
   *
   * Such format is often useful as an intermediate representation. For example, it can be later safely passed to
   * standard Java serialization. However, for performance reasons it's recommended to implement dedicated
@@ -47,9 +48,9 @@ class SimpleValueOutput(consumer: Any => Unit) extends Output {
   def writeBoolean(boolean: Boolean) = consumer(boolean)
 
   def writeObject() = new ObjectOutput {
-    private val builder = Map.newBuilder[String, Any]
-    def writeField(key: String) = new SimpleValueOutput(v => builder += ((key, v)))
-    def finish() = consumer(builder.result())
+    private val result = new mutable.LinkedHashMap[String, Any]
+    def writeField(key: String) = new SimpleValueOutput(v => result += ((key, v)))
+    def finish() = consumer(result)
   }
 
   def writeLong(long: Long) = consumer(long)
@@ -62,7 +63,7 @@ class SimpleValueOutput(consumer: Any => Unit) extends Output {
   * @param value serialized value yield by [[SimpleValueOutput]]
   */
 class SimpleValueInput(value: Any) extends Input {
-  private def doRead[A >: Null <: AnyRef: ClassTag]: A =
+  private def doRead[A >: Null <: AnyRef : ClassTag]: A =
     doReadUnboxed[A, A]
 
   private def doReadUnboxed[A, B: ClassTag](implicit unboxing: Unboxing[A, B]): A = value match {

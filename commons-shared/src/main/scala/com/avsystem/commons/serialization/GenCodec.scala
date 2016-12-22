@@ -336,18 +336,8 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   */
 trait FallbackMapCodecs extends RecursiveAutoCodecs { this: GenCodec.type =>
   private def readKVPair[K: GenCodec, V: GenCodec](input: ObjectInput): (K, V) = {
-    var keyOpt: NOpt[K] = NOpt.empty
-    var valueOpt: NOpt[V] = NOpt.empty
-    while (input.hasNext) {
-      val fi = input.nextField()
-      fi.fieldName match {
-        case "k" => keyOpt = NOpt.some(read[K](fi))
-        case "v" => valueOpt = NOpt.some(read[V](fi))
-        case _ =>
-      }
-    }
-    val key = keyOpt.getOrElse(throw new ReadFailure("key `k` absent"))
-    val value = valueOpt.getOrElse(throw new ReadFailure("key `v` absent"))
+    val key = read[K](input.nextField().assertField("k"))
+    val value = read[V](input.nextField().assertField("v"))
     (key, value)
   }
 
