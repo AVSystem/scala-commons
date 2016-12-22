@@ -15,6 +15,8 @@ import scala.util.control.NonFatal
 trait SharedExtensions {
   implicit def universalOps[A](a: A): UniversalOps[A] = new UniversalOps(a)
 
+  implicit def lazyUniversalOps[A](a: => A): LazyUniversalOps[A] = new LazyUniversalOps(() => a)
+
   implicit def nullableOps[A >: Null](a: A): NullableOps[A] = new NullableOps(a)
 
   implicit def intOps(int: Int): IntOps = new IntOps(int)
@@ -80,6 +82,16 @@ object SharedExtensions extends SharedExtensions {
     def showTypeSymbolFullName: A = macro macros.UniversalMacros.showTypeSymbolFullName[A]
   }
 
+  class LazyUniversalOps[A](private val a: () => A) extends AnyVal {
+    def evalFuture: Future[A] =
+      try Future.successful(a()) catch {
+        case NonFatal(t) => Future.failed(t)
+      }
+
+    def evalTry: Try[A] =
+      Try(a())
+  }
+
   class NullableOps[A >: Null](private val a: A) extends AnyVal {
     def optRef: OptRef[A] = OptRef(a)
   }
@@ -95,6 +107,18 @@ object SharedExtensions extends SharedExtensions {
   }
 
   class FutureOps[A](private val fut: Future[A]) extends AnyVal {
+    def onCompleteNow[U](f: Try[A] => U): Unit =
+      fut.onComplete(f)(RunNowEC)
+
+    def andThenNow[U](pf: PartialFunction[Try[A], U]): Unit =
+      fut.andThen(pf)(RunNowEC)
+
+    def foreachNow[U](f: A => U): Unit =
+      fut.foreach(f)(RunNowEC)
+
+    def transformNow[S](s: A => S, f: Throwable => Throwable): Future[S] =
+      fut.transform(s, f)(RunNowEC)
+
     /**
       * Maps a `Future` using [[concurrent.RunNowEC RunNowEC]].
       */
@@ -106,6 +130,9 @@ object SharedExtensions extends SharedExtensions {
       */
     def flatMapNow[B](f: A => Future[B]): Future[B] =
       fut.flatMap(f)(RunNowEC)
+
+    def recoverNow[U >: A](pf: PartialFunction[Throwable, U]): Future[U] =
+      fut.recover(pf)(RunNowEC)
 
     def recoverWithNow[B >: A](pf: PartialFunction[Throwable, Future[B]]): Future[B] =
       fut.recoverWith(pf)(RunNowEC)
