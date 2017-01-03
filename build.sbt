@@ -5,7 +5,7 @@ cancelable in Global := true
 
 inThisBuild(Seq(
   scalaVersion := "2.11.8",
-  crossScalaVersions := Seq("2.11.8", "2.12.0"),
+  crossScalaVersions := Seq("2.11.8", "2.12.1"),
   organization := "com.avsystem.commons",
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
