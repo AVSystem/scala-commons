@@ -22,10 +22,6 @@ class NamedEnumTest extends FunSuite with Matchers {
 
   case object Fourth extends AnotherNamedEnum with SomeNamedEnum
 
-  object AnotherNamedEnum extends NamedEnumCompanion[AnotherNamedEnum] {
-    override val values: List[AnotherNamedEnum] = caseObjects
-  }
-
   object SomeNamedEnum extends NamedEnumCompanion[SomeNamedEnum] {
 
     case object First extends SomeNamedEnum {
@@ -45,6 +41,10 @@ class NamedEnumTest extends FunSuite with Matchers {
     override val values: List[SomeNamedEnum] = caseObjects
   }
 
+  object AnotherNamedEnum extends NamedEnumCompanion[AnotherNamedEnum] {
+    override val values: List[AnotherNamedEnum] = caseObjects
+  }
+
   test("all possible ways of `name` override") {
     import SomeNamedEnum._
     assert(byName == Map(
@@ -54,7 +54,6 @@ class NamedEnumTest extends FunSuite with Matchers {
       "Another one" -> Fourth,
       "I am toplvl" -> TopLevel,
       "I am from withName" -> FromWithName
-
     ))
   }
 
@@ -65,7 +64,7 @@ class NamedEnumTest extends FunSuite with Matchers {
 
   test("object recognized by scope") {
     SomeNamedEnum.byName.get("Third") should contain(SomeNamedEnum.Third)
-    AnotherNamedEnum.byName.get("Third") shouldNot contain(SomeNamedEnum.Third)
+    AnotherNamedEnum.byName.get("Third") should contain(SomeNamedEnum.Third)
   }
 
   test("top level objects") {
