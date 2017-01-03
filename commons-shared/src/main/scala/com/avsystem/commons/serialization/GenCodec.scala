@@ -24,7 +24,13 @@ import scala.reflect.{ClassTag, classTag}
   */
 @implicitNotFound("No GenCodec found for ${T}")
 trait GenCodec[T] {
+  /**
+    * Deserializes a value of type `T` from an [[Input]].
+    */
   def read(input: Input): T
+  /**
+    * Serializes a value of type `T` into an [[Output]].
+    */
   def write(output: Output, value: T): Unit
 }
 
