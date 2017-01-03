@@ -276,7 +276,7 @@
                           AtomicBatch
                         </a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
+                        <a class="object" href="ClusterState$.html" title=""></a>
                         <a class="class" href="ClusterState.html" title="Current cluster state known by RedisClusterClient."></a>
                         <a href="ClusterState.html" title="Current cluster state known by RedisClusterClient.">
                           ClusterState
@@ -394,6 +394,12 @@ on a single Redis connection.">
                         <a class="object" href="RedirectionException$.html" title=""></a>
                         <a href="RedirectionException$.html" title="">
                           RedirectionException
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="object" href="RedirectionReply$.html" title=""></a>
+                        <a href="RedirectionReply$.html" title="">
+                          RedirectionReply
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
@@ -763,7 +769,7 @@ for details).
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="java.io.Closeable">Closeable</span>, <span class="extype" name="java.lang.AutoCloseable">AutoCloseable</span>, <a href="RedisNodeExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisNodeExecutor">RedisNodeExecutor</a>, <a href="RedisOpExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisOpExecutor">RedisOpExecutor</a>, <a href="RedisKeyedExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisKeyedExecutor">RedisKeyedExecutor</a>, <a href="RedisExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisExecutor">RedisExecutor</a>, <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="java.io.Closeable">Closeable</span>, <span class="extype" name="java.lang.AutoCloseable">AutoCloseable</span>, <a href="RedisNodeExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisNodeExecutor">RedisNodeExecutor</a>, <a href="RedisOpExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisOpExecutor">RedisOpExecutor</a>, <a href="RedisKeyedExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisKeyedExecutor">RedisKeyedExecutor</a>, <a href="RedisExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisExecutor">RedisExecutor</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
         </div></div>
         
 
@@ -810,9 +816,9 @@ for details).
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.avsystem.commons.redis.RedisNodeClient#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(address:com.avsystem.commons.redis.NodeAddress,config:com.avsystem.commons.redis.config.NodeConfig,actorDeploy:akka.actor.Deploy)(implicitsystem:akka.actor.ActorSystem):com.avsystem.commons.redis.RedisNodeClient"></a><a id="&lt;init&gt;:RedisNodeClient"></a>
+      <a id="&lt;init&gt;(address:com.avsystem.commons.redis.NodeAddress,config:com.avsystem.commons.redis.config.NodeConfig,clusterNode:Boolean)(implicitsystem:akka.actor.ActorSystem):com.avsystem.commons.redis.RedisNodeClient"></a><a id="&lt;init&gt;:RedisNodeClient"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/RedisNodeClient.html#&lt;init&gt;(address:com.avsystem.commons.redis.NodeAddress,config:com.avsystem.commons.redis.config.NodeConfig,actorDeploy:akka.actor.Deploy)(implicitsystem:akka.actor.ActorSystem):com.avsystem.commons.redis.RedisNodeClient" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/RedisNodeClient.html#&lt;init&gt;(address:com.avsystem.commons.redis.NodeAddress,config:com.avsystem.commons.redis.config.NodeConfig,clusterNode:Boolean)(implicitsystem:akka.actor.ActorSystem):com.avsystem.commons.redis.RedisNodeClient" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -821,7 +827,7 @@ for details).
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">RedisNodeClient</span><span class="params">(<span name="address">address: <a href="NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a> = <span class="symbol"><span class="name"><a href="NodeAddress$.html">NodeAddress.Default</a></span></span></span>, <span name="config">config: <a href="config/NodeConfig.html" class="extype" name="com.avsystem.commons.redis.config.NodeConfig">NodeConfig</a> = <span class="symbol"><span class="name"><a href="../../../index.html">NodeConfig()</a></span></span></span>, <span name="actorDeploy">actorDeploy: <a href="http://doc.akka.io/api/akka/2.4.12/index.html#akka.actor.Deploy" class="extype" target="_top">Deploy</a> = <span class="symbol"><span class="name"><a href="../../../../akka/index.html">Deploy()</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="system">system: <a href="http://doc.akka.io/api/akka/2.4.12/index.html#akka.actor.ActorSystem" class="extype" target="_top">ActorSystem</a></span>)</span>
+        <span class="name">RedisNodeClient</span><span class="params">(<span name="address">address: <a href="NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a> = <span class="symbol"><span class="name"><a href="NodeAddress$.html">NodeAddress.Default</a></span></span></span>, <span name="config">config: <a href="config/NodeConfig.html" class="extype" name="com.avsystem.commons.redis.config.NodeConfig">NodeConfig</a> = <span class="symbol"><span class="name"><a href="../../../index.html">NodeConfig()</a></span></span></span>, <span name="clusterNode">clusterNode: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a> = <span class="symbol">false</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="system">system: <a href="http://doc.akka.io/api/akka/2.4.12/index.html#akka.actor.ActorSystem" class="extype" target="_top">ActorSystem</a></span>)</span>
       </span>
       
       
@@ -847,7 +853,7 @@ for details).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -863,7 +869,7 @@ for details).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -879,26 +885,10 @@ for details).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.RedisNodeClient#actorDeploy" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="actorDeploy:akka.actor.Deploy"></a><a id="actorDeploy:Deploy"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/RedisNodeClient.html#actorDeploy:akka.actor.Deploy" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">actorDeploy</span><span class="result">: <a href="http://doc.akka.io/api/akka/2.4.12/index.html#akka.actor.Deploy" class="extype" target="_top">Deploy</a></span>
-      </span>
-      
-      
     </li><li name="com.avsystem.commons.redis.RedisNodeClient#address" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="address:com.avsystem.commons.redis.NodeAddress"></a><a id="address:NodeAddress"></a>
       <span class="permalink">
@@ -943,7 +933,7 @@ for details).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -965,10 +955,26 @@ for details).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">close</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">close</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.redis.RedisNodeClient">RedisNodeClient</a> → Closeable → AutoCloseable</dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.RedisNodeClient#clusterNode" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="clusterNode:Boolean"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/redis/RedisNodeClient.html#clusterNode:Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">clusterNode</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+      </span>
+      
+      
     </li><li name="com.avsystem.commons.redis.RedisNodeClient#config" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="config:com.avsystem.commons.redis.config.NodeConfig"></a><a id="config:NodeConfig"></a>
       <span class="permalink">
@@ -997,7 +1003,7 @@ for details).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1013,7 +1019,7 @@ for details).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1029,7 +1035,7 @@ for details).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">executeBatch</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="batch">batch: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisNodeClient.executeBatch.A">A</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="timeout">timeout: <span class="extype" name="akka.util.Timeout">Timeout</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>[<span class="extype" name="com.avsystem.commons.redis.RedisNodeClient.executeBatch.A">A</span>]</span>
+        <span class="name">executeBatch</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="batch">batch: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisNodeClient.executeBatch.A">A</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="timeout">timeout: <span class="extype" name="akka.util.Timeout">Timeout</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>[<span class="extype" name="com.avsystem.commons.redis.RedisNodeClient.executeBatch.A">A</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Executes a <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a> on this client by sending its commands to the Redis node in a single network
@@ -1061,7 +1067,7 @@ failed</li><li><a href="exception/NodeRemovedException.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">executeOp</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="op">op: <a href="RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>[<span class="extype" name="com.avsystem.commons.redis.RedisNodeClient.executeOp.A">A</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="timeout">timeout: <span class="extype" name="akka.util.Timeout">Timeout</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>[<span class="extype" name="com.avsystem.commons.redis.RedisNodeClient.executeOp.A">A</span>]</span>
+        <span class="name">executeOp</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="op">op: <a href="RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>[<span class="extype" name="com.avsystem.commons.redis.RedisNodeClient.executeOp.A">A</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="timeout">timeout: <span class="extype" name="akka.util.Timeout">Timeout</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>[<span class="extype" name="com.avsystem.commons.redis.RedisNodeClient.executeOp.A">A</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Executes a <a href="RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a> on this client.</p><div class="fullcomment"><div class="comment cmt"><p>Executes a <a href="RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a> on this client. <a href="RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a> is a sequence of dependent <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>es,
@@ -1083,7 +1089,7 @@ Be especially careful when using node clients obtained from cluster client.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">executionContext</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.concurrent.ExecutionContext" class="extype" target="_top">ExecutionContext</a></span>
+        <span class="name">executionContext</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.ExecutionContext" class="extype" target="_top">ExecutionContext</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.redis.RedisNodeClient">RedisNodeClient</a> → <a href="RedisExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisExecutor">RedisExecutor</a></dd></dl></div>
@@ -1099,7 +1105,7 @@ Be especially careful when using node clients obtained from cluster client.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1137,11 +1143,11 @@ Be especially careful when using node clients obtained from cluster client.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.RedisNodeClient#initialized" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="com.avsystem.commons.redis.RedisNodeClient#initialized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="initialized:scala.concurrent.Future[RedisNodeClient.this.type]"></a><a id="initialized:Future[RedisNodeClient.this.type]"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/redis/RedisNodeClient.html#initialized:scala.concurrent.Future[RedisNodeClient.this.type]" title="Permalink">
@@ -1153,10 +1159,13 @@ Be especially careful when using node clients obtained from cluster client.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">initialized</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>[<a href="" class="extype" name="com.avsystem.commons.redis.RedisNodeClient">RedisNodeClient</a>.this.type]</span>
+        <span class="name">initialized</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>[<a href="" class="extype" name="com.avsystem.commons.redis.RedisNodeClient">RedisNodeClient</a>.this.type]</span>
       </span>
       
-      
+      <p class="shortcomment cmt">Waits until all Redis connections are initialized and <code>initOp</code> is executed.</p><div class="fullcomment"><div class="comment cmt"><p>Waits until all Redis connections are initialized and <code>initOp</code> is executed.
+Note that you can call <a href="#executeBatch[A](batch:com.avsystem.commons.redis.RedisBatch[A])(implicittimeout:akka.util.Timeout):scala.concurrent.Future[A]" class="extmbr" name="com.avsystem.commons.redis.RedisNodeClient#executeBatch">executeBatch</a> and <a href="#executeOp[A](op:com.avsystem.commons.redis.RedisOp[A])(implicittimeout:akka.util.Timeout):scala.concurrent.Future[A]" class="extmbr" name="com.avsystem.commons.redis.RedisNodeClient#executeOp">executeOp</a> even if the client is not yet initialized -
+requests will be internally queued and executed after initialization is complete.
+</p></div></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -1169,7 +1178,7 @@ Be especially careful when using node clients obtained from cluster client.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -1185,7 +1194,7 @@ Be especially careful when using node clients obtained from cluster client.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1201,7 +1210,7 @@ Be especially careful when using node clients obtained from cluster client.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1217,7 +1226,7 @@ Be especially careful when using node clients obtained from cluster client.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1265,7 +1274,7 @@ Be especially careful when using node clients obtained from cluster client.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1287,7 +1296,7 @@ Be especially careful when using node clients obtained from cluster client.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1309,7 +1318,7 @@ Be especially careful when using node clients obtained from cluster client.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1342,9 +1351,9 @@ Be especially careful when using node clients obtained from cluster client.
             </div><div class="parent" name="com.avsystem.commons.redis.RedisExecutor">
               <h3>Inherited from <a href="RedisExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisExecutor">RedisExecutor</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
             </div>
         
         </div>

@@ -171,6 +171,12 @@
                         </a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
+                        <a class="object" href="ConfigDefaults$.html" title=""></a>
+                        <a href="ConfigDefaults$.html" title="">
+                          ConfigDefaults
+                        </a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
                         <a class="class" href="ConnectionConfig.html" title="Configuration options for a single Redis connection."></a>
                         <a href="ConnectionConfig.html" title="Configuration options for a single Redis connection.">
                           ConnectionConfig
@@ -224,7 +230,7 @@ client or internally by RedisClusterClient.">
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">NodeConfig</span><span class="params">(<span name="poolSize">poolSize: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Int" class="extype" target="_top">Int</a> = <span class="symbol">16</span></span>, <span name="initOp">initOp: <a href="../RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>[<a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">RedisOp.unit</a></span></span></span>, <span name="initTimeout">initTimeout: <span class="extype" name="akka.util.Timeout">Timeout</span> = <span class="symbol"><span class="name"><a href="../../../../../akka/index.html">Timeout(10.seconds)</a></span></span></span>, <span name="connectionConfigs">connectionConfigs: (<a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> = <span class="symbol">_ =&gt; ConnectionConfig()</span></span>, <span name="reconnectionStrategy">reconnectionStrategy: <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> = <span class="defval" name="ExponentialBackoff(1.seconds, 32.seconds)">...</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
+        <span class="name">NodeConfig</span><span class="params">(<span name="poolSize">poolSize: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a> = <span class="symbol">4</span></span>, <span name="initOp">initOp: <a href="../RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">RedisOp.unit</a></span></span></span>, <span name="initTimeout">initTimeout: <span class="extype" name="akka.util.Timeout">Timeout</span> = <span class="symbol"><span class="name"><a href="../../../../../akka/index.html">Timeout(10.seconds)</a></span></span></span>, <span name="connectionConfigs">connectionConfigs: (<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> = <span class="symbol">_ =&gt; ConnectionConfig()</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
       </span>
       </h4>
 
@@ -232,15 +238,17 @@ client or internally by RedisClusterClient.">
           <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Configuration of a <a href="../RedisNodeClient.html" class="extype" name="com.avsystem.commons.redis.RedisNodeClient">RedisNodeClient</a>, used either as a standalone
 client or internally by <a href="../RedisClusterClient.html" class="extype" name="com.avsystem.commons.redis.RedisClusterClient">RedisClusterClient</a>.
 </p></div><dl class="paramcmts block"><dt class="param">poolSize</dt><dd class="cmt"><p>number of connections used by node client. Commands are distributed between connections using
-                            a round-robin scenario. Number of connections in the pool is constant and cannot be changed.</p></dd><dt class="param">initOp</dt><dd class="cmt"><p>a <a href="../RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a> executed by this client upon initialization.
-                            This may be useful for things like script loading, especially when using cluster client which
-                            may create and close node clients dynamically as reactions on cluster state changes.</p></dd><dt class="param">initTimeout</dt><dd class="cmt"><p>timeout used by initialization operation (<code>initOp</code>)</p></dd><dt class="param">connectionConfigs</dt><dd class="cmt"><p>a function that returns <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> for a connection given its id. Connection ID
-                            is its index in the connection pool, i.e. an int ranging from 0 to <code>poolSize</code>-1.</p></dd><dt class="param">reconnectionStrategy</dt><dd class="cmt"><p>a <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> used to determine what delay should be used when reconnecting
-                            a failed connection</p></dd></dl><div class="toggleContainer block">
+                         a round-robin scenario. Number of connections in the pool is constant and cannot be changed.
+                         Due to single-threaded nature of Redis, the number of concurrent connections should be kept
+                         low for best performance. The only situation where the number of connections should be increased
+                         is when using <code>WATCH</code>-<code>MULTI</code>-<code>EXEC</code> transactions with optimistic locking.</p></dd><dt class="param">initOp</dt><dd class="cmt"><p>a <a href="../RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a> executed by this client upon initialization.
+                         This may be useful for things like script loading, especially when using cluster client which
+                         may create and close node clients dynamically as reactions on cluster state changes.</p></dd><dt class="param">initTimeout</dt><dd class="cmt"><p>timeout used by initialization operation (<code>initOp</code>)</p></dd><dt class="param">connectionConfigs</dt><dd class="cmt"><p>a function that returns <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> for a connection given its id. Connection ID
+                         is its index in the connection pool, i.e. an int ranging from 0 to <code>poolSize</code>-1.</p></dd></dl><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Serializable" class="extype" target="_top">Serializable</a>, <span class="extype" name="java.io.Serializable">Serializable</span>, <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Product" class="extype" target="_top">Product</a>, <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Equals" class="extype" target="_top">Equals</a>, <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Serializable" class="extype" target="_top">Serializable</a>, <span class="extype" name="java.io.Serializable">Serializable</span>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Product" class="extype" target="_top">Product</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Equals" class="extype" target="_top">Equals</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
         </div></div>
         
 
@@ -287,9 +295,9 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.avsystem.commons.redis.config.NodeConfig#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="&lt;init&gt;(poolSize:Int,initOp:com.avsystem.commons.redis.RedisOp[Any],initTimeout:akka.util.Timeout,connectionConfigs:Int=&gt;com.avsystem.commons.redis.config.ConnectionConfig,reconnectionStrategy:com.avsystem.commons.redis.config.RetryStrategy):com.avsystem.commons.redis.config.NodeConfig"></a><a id="&lt;init&gt;:NodeConfig"></a>
+      <a id="&lt;init&gt;(poolSize:Int,initOp:com.avsystem.commons.redis.RedisOp[Any],initTimeout:akka.util.Timeout,connectionConfigs:Int=&gt;com.avsystem.commons.redis.config.ConnectionConfig):com.avsystem.commons.redis.config.NodeConfig"></a><a id="&lt;init&gt;:NodeConfig"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/config/NodeConfig.html#&lt;init&gt;(poolSize:Int,initOp:com.avsystem.commons.redis.RedisOp[Any],initTimeout:akka.util.Timeout,connectionConfigs:Int=&gt;com.avsystem.commons.redis.config.ConnectionConfig,reconnectionStrategy:com.avsystem.commons.redis.config.RetryStrategy):com.avsystem.commons.redis.config.NodeConfig" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/NodeConfig.html#&lt;init&gt;(poolSize:Int,initOp:com.avsystem.commons.redis.RedisOp[Any],initTimeout:akka.util.Timeout,connectionConfigs:Int=&gt;com.avsystem.commons.redis.config.ConnectionConfig):com.avsystem.commons.redis.config.NodeConfig" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -298,15 +306,17 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">NodeConfig</span><span class="params">(<span name="poolSize">poolSize: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Int" class="extype" target="_top">Int</a> = <span class="symbol">16</span></span>, <span name="initOp">initOp: <a href="../RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>[<a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">RedisOp.unit</a></span></span></span>, <span name="initTimeout">initTimeout: <span class="extype" name="akka.util.Timeout">Timeout</span> = <span class="symbol"><span class="name"><a href="../../../../../akka/index.html">Timeout(10.seconds)</a></span></span></span>, <span name="connectionConfigs">connectionConfigs: (<a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> = <span class="symbol">_ =&gt; ConnectionConfig()</span></span>, <span name="reconnectionStrategy">reconnectionStrategy: <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> = <span class="defval" name="ExponentialBackoff(1.seconds, 32.seconds)">...</span></span>)</span>
+        <span class="name">NodeConfig</span><span class="params">(<span name="poolSize">poolSize: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a> = <span class="symbol">4</span></span>, <span name="initOp">initOp: <a href="../RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">RedisOp.unit</a></span></span></span>, <span name="initTimeout">initTimeout: <span class="extype" name="akka.util.Timeout">Timeout</span> = <span class="symbol"><span class="name"><a href="../../../../../akka/index.html">Timeout(10.seconds)</a></span></span></span>, <span name="connectionConfigs">connectionConfigs: (<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> = <span class="symbol">_ =&gt; ConnectionConfig()</span></span>)</span>
       </span>
       
       <p class="shortcomment cmt"></p><div class="fullcomment"><div class="comment cmt"></div><dl class="paramcmts block"><dt class="param">poolSize</dt><dd class="cmt"><p>number of connections used by node client. Commands are distributed between connections using
-                            a round-robin scenario. Number of connections in the pool is constant and cannot be changed.</p></dd><dt class="param">initOp</dt><dd class="cmt"><p>a <a href="../RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a> executed by this client upon initialization.
-                            This may be useful for things like script loading, especially when using cluster client which
-                            may create and close node clients dynamically as reactions on cluster state changes.</p></dd><dt class="param">initTimeout</dt><dd class="cmt"><p>timeout used by initialization operation (<code>initOp</code>)</p></dd><dt class="param">connectionConfigs</dt><dd class="cmt"><p>a function that returns <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> for a connection given its id. Connection ID
-                            is its index in the connection pool, i.e. an int ranging from 0 to <code>poolSize</code>-1.</p></dd><dt class="param">reconnectionStrategy</dt><dd class="cmt"><p>a <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> used to determine what delay should be used when reconnecting
-                            a failed connection</p></dd></dl></div>
+                         a round-robin scenario. Number of connections in the pool is constant and cannot be changed.
+                         Due to single-threaded nature of Redis, the number of concurrent connections should be kept
+                         low for best performance. The only situation where the number of connections should be increased
+                         is when using <code>WATCH</code>-<code>MULTI</code>-<code>EXEC</code> transactions with optimistic locking.</p></dd><dt class="param">initOp</dt><dd class="cmt"><p>a <a href="../RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a> executed by this client upon initialization.
+                         This may be useful for things like script loading, especially when using cluster client which
+                         may create and close node clients dynamically as reactions on cluster state changes.</p></dd><dt class="param">initTimeout</dt><dd class="cmt"><p>timeout used by initialization operation (<code>initOp</code>)</p></dd><dt class="param">connectionConfigs</dt><dd class="cmt"><p>a function that returns <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> for a connection given its id. Connection ID
+                         is its index in the connection pool, i.e. an int ranging from 0 to <code>poolSize</code>-1.</p></dd></dl></div>
     </li></ol>
             </div>
 
@@ -329,7 +339,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -345,7 +355,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -361,7 +371,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -393,7 +403,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -415,7 +425,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">connectionConfigs</span><span class="result">: (<a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a></span>
+        <span class="name">connectionConfigs</span><span class="result">: (<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a></span>
       </span>
       
       
@@ -431,7 +441,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -447,7 +457,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -485,7 +495,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">initOp</span><span class="result">: <a href="../RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>[<a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a>]</span>
+        <span class="name">initOp</span><span class="result">: <a href="../RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a>]</span>
       </span>
       
       
@@ -517,7 +527,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -533,7 +543,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -549,7 +559,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -565,7 +575,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -581,23 +591,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">poolSize</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Int" class="extype" target="_top">Int</a></span>
-      </span>
-      
-      
-    </li><li name="com.avsystem.commons.redis.config.NodeConfig#reconnectionStrategy" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="reconnectionStrategy:com.avsystem.commons.redis.config.RetryStrategy"></a><a id="reconnectionStrategy:RetryStrategy"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/config/NodeConfig.html#reconnectionStrategy:com.avsystem.commons.redis.config.RetryStrategy" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">reconnectionStrategy</span><span class="result">: <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a></span>
+        <span class="name">poolSize</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       
@@ -629,7 +623,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -651,7 +645,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -673,7 +667,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -694,17 +688,17 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.Serializable">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></h3>
             </div><div class="parent" name="java.io.Serializable">
               <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
             </div><div class="parent" name="scala.Product">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Product" class="extype" target="_top">Product</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Product" class="extype" target="_top">Product</a></h3>
             </div><div class="parent" name="scala.Equals">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Equals" class="extype" target="_top">Equals</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Equals" class="extype" target="_top">Equals</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.0/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
             </div>
         
         </div>

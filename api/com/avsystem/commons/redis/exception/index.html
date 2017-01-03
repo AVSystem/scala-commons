@@ -221,6 +221,14 @@
                         </a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
+                        <a class="class" href="ClusterInitializationException.html" title="Thrown when RedisClusterClient is unable to fetch initial
+cluster state from any of the seed nodes."></a>
+                        <a href="ClusterInitializationException.html" title="Thrown when RedisClusterClient is unable to fetch initial
+cluster state from any of the seed nodes.">
+                          ClusterInitializationException
+                        </a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
                         <a class="class" href="ConnectionBusyException.html" title=""></a>
                         <a href="ConnectionBusyException.html" title="">
                           ConnectionBusyException
@@ -278,6 +286,12 @@ RedisClusterClient."></a>
                         <a href="NoKeysException.html" title="Thrown when trying to execute command or MULTI-EXEC block that does not contain any keys using
 RedisClusterClient.">
                           NoKeysException
+                        </a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="class" href="NodeInitializationFailure.html" title=""></a>
+                        <a href="NodeInitializationFailure.html" title="">
+                          NodeInitializationFailure
                         </a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
@@ -430,6 +444,29 @@ RedisClusterClient.">
       </span>
       
       
+    </li><li name="com.avsystem.commons.redis.exception.ClusterInitializationException" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ClusterInitializationExceptionextendsRedisException"></a><a id="ClusterInitializationException:ClusterInitializationException"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/redis/exception/index.html#ClusterInitializationExceptionextendsRedisException" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="Thrown when RedisClusterClient is unable to fetch initial
+cluster state from any of the seed nodes." href="ClusterInitializationException.html">
+              <span class="name">ClusterInitializationException</span>
+            </a><span class="result"> extends <a href="RedisException.html" class="extype" name="com.avsystem.commons.redis.exception.RedisException">RedisException</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Thrown when <a href="../RedisClusterClient.html" class="extype" name="com.avsystem.commons.redis.RedisClusterClient">RedisClusterClient</a> is unable to fetch initial
+cluster state from any of the seed nodes.</p><div class="fullcomment"><div class="comment cmt"><p>Thrown when <a href="../RedisClusterClient.html" class="extype" name="com.avsystem.commons.redis.RedisClusterClient">RedisClusterClient</a> is unable to fetch initial
+cluster state from any of the seed nodes. This happens e.g. when none of the seed nodes can be contacted or when
+they aren't Redis Cluster members.
+</p></div></div>
     </li><li name="com.avsystem.commons.redis.exception.ConnectionBusyException" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ConnectionBusyExceptionextendsRedisIOException"></a><a id="ConnectionBusyException:ConnectionBusyException"></a>
       <span class="permalink">
@@ -471,8 +508,6 @@ connection was closed before receiving a response.</p><div class="fullcomment"><
 connection was closed before receiving a response. Even though connections are automatically restarted,
 such command cannot be resent because we don't know whether it was actually executed on the Redis instance or not.
 In a Redis Cluster deployment, this is likely to happen when a node fails.
-You can reduce the number of these errors during node or connection failure by configuring
-<a href="../config/ConnectionConfig.html#maxOutstandingRequests:com.avsystem.commons.misc.OptArg[Int]" class="extmbr" name="com.avsystem.commons.redis.config.ConnectionConfig#maxOutstandingRequests">maxOutstandingRequests</a>.
 </p></div></div>
     </li><li name="com.avsystem.commons.redis.exception.ConnectionFailedException" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ConnectionFailedExceptionextendsRedisIOException"></a><a id="ConnectionFailedException:ConnectionFailedException"></a>
@@ -607,6 +642,24 @@ RedisClusterClient." href="NoKeysException.html">
       
       <p class="shortcomment cmt">Thrown when trying to execute command or <code>MULTI</code>-<code>EXEC</code> block that does not contain any keys using
 <a href="../RedisClusterClient.html" class="extype" name="com.avsystem.commons.redis.RedisClusterClient">RedisClusterClient</a>.</p>
+    </li><li name="com.avsystem.commons.redis.exception.NodeInitializationFailure" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="NodeInitializationFailureextendsRedisException"></a><a id="NodeInitializationFailure:NodeInitializationFailure"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/redis/exception/index.html#NodeInitializationFailureextendsRedisException" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="NodeInitializationFailure.html">
+              <span class="name">NodeInitializationFailure</span>
+            </a><span class="result"> extends <a href="RedisException.html" class="extype" name="com.avsystem.commons.redis.exception.RedisException">RedisException</a></span>
+      </span>
+      
+      
     </li><li name="com.avsystem.commons.redis.exception.NodeRemovedException" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="NodeRemovedExceptionextendsRedisException"></a><a id="NodeRemovedException:NodeRemovedException"></a>
       <span class="permalink">
