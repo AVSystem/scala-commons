@@ -33,8 +33,8 @@ trait Output extends Any {
   */
 trait SequentialOutput extends Any {
   /**
-    * Indicates that all elements or fields in this [[SequentialOutput]] have been written. This method MUST always
-    * be called after list/object writing has been finished.
+    * Indicates that all elements or fields in this [[com.avsystem.commons.serialization.SequentialOutput SequentialOutput]]
+    * have been written. This method MUST always be called after list/object writing has been finished.
     */
   def finish(): Unit
 }
@@ -45,9 +45,10 @@ trait SequentialOutput extends Any {
   */
 trait ListOutput extends SequentialOutput {
   /**
-    * Returns an [[Output]] representing next element in this list. This [[Output]] instance MUST be fully used
+    * Returns an [[com.avsystem.commons.serialization.Output Output]] representing next element in this list.
+    * This [[com.avsystem.commons.serialization.Output Output]] instance MUST be fully used
     * before calling [[writeElement]] next time. That means, one can NOT simultaneously use multiple instances of
-    * [[Output]] returned by subsequent calls to this method.
+    * [[com.avsystem.commons.serialization.Output Output]] returned by subsequent calls to this method.
     */
   def writeElement(): Output
 }
@@ -61,9 +62,10 @@ trait ListOutput extends SequentialOutput {
   */
 trait ObjectOutput extends SequentialOutput {
   /**
-    * Returns an [[Output]] representing value mapped to given string key. This [[Output]] instance must be fully
+    * Returns an [[com.avsystem.commons.serialization.Output Output]] representing value mapped to given string key.
+    * This [[com.avsystem.commons.serialization.Output Output]] instance must be fully
     * used before calling [[writeField]] next time. That means, one can NOT simultaneously use multiple instances
-    * of [[Output]] returned by subsequent calls to this method.
+    * of [[com.avsystem.commons.serialization.Output Output]] returned by subsequent calls to this method.
     */
   def writeField(key: String): Output
 }
@@ -90,7 +92,7 @@ object InputType {
 /**
   * Represents an abstract source from which a value may be deserialized (read).
   * Each of the `read` methods tries to read a value of specified type and may throw an exception
-  * (usually [[com.avsystem.commons.serialization.GenCodec.ReadFailure]]) when reading is not successful.
+  * (usually [[com.avsystem.commons.serialization.GenCodec.ReadFailure ReadFailure]]) when reading is not successful.
   * <p/>
   * An [[Input]] value should be assumed to be stateful. If any of the `readX` methods have already been called,
   * the [[Input]] instance can no longer be used and MUST be discarded.
@@ -103,20 +105,26 @@ object InputType {
   */
 trait Input extends Any {
   /**
-    * Returns the type of the value that can be read from this [[Input]].
-    * Only four types can be distinguished (see [[InputType]] for more details on this).
+    * Returns the type of the value that can be read from this [[com.avsystem.commons.serialization.Input Input]].
+    * Only four types can be distinguished (see [[com.avsystem.commons.serialization.InputType InputType]] for more details on this).
     * <p/>
-    * If this method returns [[InputType.Null]], then `readNull()` can be safely called.<br/>
-    * If this method returns [[InputType.Object]], then AT LEAST ONE OF `readObject()` and `readMap()` can be safely called.<br/>
-    * If this method returns [[InputType.List]], then AT LEAST ONE OF `readList()` and `readSet()` can be safely called.<br/>
-    * If this method returns [[InputType.Simple]] then AT LEAST ONE OF `readString()`, `readChar()`, `readBoolean()`,
+    * If this method returns [[com.avsystem.commons.serialization.InputType.Null InputType.Null]],
+    * then `readNull()` can be safely called.<br/>
+    * If this method returns [[com.avsystem.commons.serialization.InputType.Object InputType.Object]],
+    * then AT LEAST ONE OF `readObject()` and `readMap()` can be safely called.<br/>
+    * If this method returns [[com.avsystem.commons.serialization.InputType.List InputType.List]],
+    * then AT LEAST ONE OF `readList()` and `readSet()` can be safely called.<br/>
+    * If this method returns [[com.avsystem.commons.serialization.InputType.Simple InputType.Simple]]
+    * then AT LEAST ONE OF `readString()`, `readChar()`, `readBoolean()`,
     * `readByte()`, `readShort()`, `readInt()`, `readLong()`, `readTimestamp()`, `readFloat()`, `readDouble()`,
     * `readBinary()` can be called.
     * <p/>
-    * It's impossible to know which of the listed methods is actually safe to call based only on [[InputType]].
-    * It is the responsibility of [[GenCodec]] implementation to have reading and writing logic consistent.
+    * It's impossible to know which of the listed methods is actually safe to call based only on
+    * [[com.avsystem.commons.serialization.InputType InputType]].
+    * It is the responsibility of [[com.avsystem.commons.serialization.GenCodec GenCodec]] implementation to have
+    * reading and writing logic consistent.
     * For example, if `writeDouble(Double)` is used during writing then `readDouble()` must be used during reading
-    * by the same [[GenCodec]].
+    * by the same [[com.avsystem.commons.serialization.GenCodec GenCodec]].
     *
     * @return
     */
@@ -156,8 +164,10 @@ trait SequentialInput extends Any {
   */
 trait ListInput extends SequentialInput { self =>
   /**
-    * Returns an [[Input]] representing next element in a sequence of values represented by this [[ListInput]].
-    * Returned [[Input]] instance must be fully exhausted before calling `nextElement()` next time.
+    * Returns an [[com.avsystem.commons.serialization.Input Input]] representing next element in a sequence of values
+    * represented by this [[com.avsystem.commons.serialization.ListInput ListInput]].
+    * Returned [[com.avsystem.commons.serialization.Input Input]] instance must be fully exhausted before calling
+    * `nextElement()` next time.
     */
   def nextElement(): Input
 
@@ -170,22 +180,25 @@ trait ListInput extends SequentialInput { self =>
 }
 /**
   * Represents an abstract source of key-value mappings that can be deserialized.
-  * [[ObjectInput]] instance is stateful and MUST be read strictly sequentially. This means, you MUST fully exhaust
-  * any [[Input]] instance returned by `nextField()` before calling `nextField()` again. For this reason,
-  * [[ObjectInput]] is not an `Iterator` despite having similar interface
+  * [[com.avsystem.commons.serialization.ObjectInput ObjectInput]] instance is stateful and MUST be read strictly
+  * sequentially. This means, you MUST fully exhaust any [[com.avsystem.commons.serialization.Input Input]] instance
+  * returned by `nextField()` before calling `nextField()` again. For this reason,
+  * [[com.avsystem.commons.serialization.ObjectInput ObjectInput]] is not an `Iterator` despite having similar interface
   * (`Iterator` would easily allow e.g. conversion to `List[(String, Input)]` which would be illegal).
   * <p/>
-  * [[ObjectInput]] MUST always be fully exhausted. In order to ignore any remaining key-value mappings,
-  * `skipRemaining()` may be used.
+  * [[com.avsystem.commons.serialization.ObjectInput ObjectInput]] MUST always be fully exhausted.
+  * In order to ignore any remaining key-value mappings, `skipRemaining()` may be used.
   * <p/>
   */
 trait ObjectInput extends SequentialInput { self =>
   /**
-    * Returns [[FieldInput]] that represents next field of this object. You MUST NOT call `nextField()` again until
-    * this [[FieldInput]] is fully read or skipped.
+    * Returns [[com.avsystem.commons.serialization.FieldInput FieldInput]] that represents next field of this object.
+    * You MUST NOT call `nextField()` again until this [[com.avsystem.commons.serialization.FieldInput FieldInput]]
+    * is fully read or skipped.
     * </p>
     * Subsequent invocations of `nextField` MUST return fields in exactly the same order as they were written
-    * using [[ObjectOutput.writeField]]. In other words, serialization format MUST preserve order of object fields.
+    * using [[com.avsystem.commons.serialization.ObjectOutput.writeField ObjectOutput.writeField]].
+    * In other words, serialization format MUST preserve order of object fields.
     */
   def nextField(): FieldInput
 
