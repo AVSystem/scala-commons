@@ -14,6 +14,21 @@ object GenCodecTest {
   object ValueClass extends HasGenCodec[ValueClass]
 }
 
+sealed trait SealedBase
+object SealedBase {
+  case object CaseObject extends SealedBase
+  case class CaseClass(str: String) extends SealedBase
+
+  sealed trait InnerBase extends SealedBase
+  object InnerBase {
+    case object InnerCaseObject extends InnerBase
+    case class InnerCaseClass(str: String) extends InnerBase
+  }
+
+  @silent //exhaustivity checker has some problems with macro-generated match on doubly nested inner case classes/objects
+  implicit val codec: GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
+}
+
 @silent
 class GenCodecTest extends CodecTestBase {
   test("NoState test") {
@@ -146,6 +161,13 @@ class GenCodecTest extends CodecTestBase {
 
   test("value class test") {
     testWriteReadAndAutoWriteRead(ValueClass("costam"), Map("str" -> "costam"))
+  }
+
+  test("sealed hierarchy test") {
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseObject, Map("CaseObject" -> Map()))
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseClass("fuu"), Map("CaseClass" -> Map("str" -> "fuu")))
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseObject, Map("InnerCaseObject" -> Map()))
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"), Map("InnerCaseClass" -> Map("str" -> "fuu")))
   }
 
   sealed trait BaseExpr {
