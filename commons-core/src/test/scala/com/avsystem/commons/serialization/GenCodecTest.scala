@@ -159,6 +159,22 @@ class GenCodecTest extends CodecTestBase {
     )
   }
 
+  sealed trait CustomList
+  case object CustomTail extends CustomList
+  @transparent case class CustomCons(tail: CustomList) extends CustomList
+  object CustomCons {
+    implicit val codec: GenCodec[CustomCons] = GenCodec.materialize[CustomCons]
+  }
+  object CustomList {
+    implicit val codec: GenCodec[CustomList] = GenCodec.materialize[CustomList]
+  }
+
+  test("recursively defined sealed hierarchy with explicit case class codec test") {
+    testWriteReadAndAutoWriteRead[CustomList](CustomTail, Map("CustomTail" -> Map()))
+    testWriteReadAndAutoWriteRead[CustomList](CustomCons(CustomCons(CustomTail)),
+      Map("CustomCons" -> Map("CustomCons" -> Map("CustomTail" -> Map()))))
+  }
+
   test("value class test") {
     testWriteReadAndAutoWriteRead(ValueClass("costam"), Map("str" -> "costam"))
   }

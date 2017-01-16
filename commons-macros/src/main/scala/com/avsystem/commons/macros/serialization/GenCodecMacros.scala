@@ -82,7 +82,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     }
     val depNames = params.map(p => (p.sym, c.freshName(TermName(p.sym.name.toString + "Codec")))).toMap
     def depDeclaration(param: ApplyParam) =
-      q"val ${depNames(param.sym)} = ${param.instance}"
+      q"lazy val ${depNames(param.sym)} = ${param.instance}"
 
     // don't use apply/unapply when they're synthetic (for case class) to avoid reference to companion object
 
@@ -195,7 +195,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     }
   }
 
-  private def dbNameBySymMap(subtypeSymbols: Seq[Symbol]): Map[Symbol,String] =
+  private def dbNameBySymMap(subtypeSymbols: Seq[Symbol]): Map[Symbol, String] =
     subtypeSymbols.groupBy(st => annotName(st)).map {
       case (dbName, List(subtype)) => (subtype, dbName)
       case (dbName, kst) =>
@@ -206,7 +206,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val dbNameBySym = dbNameBySymMap(subtypes.map(_.sym))
     val depNames = subtypes.map(st => (st.sym, c.freshName(TermName(st.sym.name.toString + "Codec")))).toMap
     def depDeclaration(subtype: KnownSubtype) =
-      q"val ${depNames(subtype.sym)} = ${subtype.instance}"
+      q"lazy val ${depNames(subtype.sym)} = ${subtype.instance}"
 
     q"""
       new $GenCodecObj.ObjectCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
