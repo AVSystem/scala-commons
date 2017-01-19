@@ -7,7 +7,7 @@ import com.avsystem.commons.misc.{Boxing, NOpt, Opt, OptRef, Unboxing}
 
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{Future, Promise}
 import scala.language.implicitConversions
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -146,16 +146,16 @@ object SharedExtensions extends SharedExtensions {
     /**
       * Returns a `Future` that completes with the specified `result`, but only after this future completes.
       */
-    def thenReturn[T](result: Future[T])(implicit ec: ExecutionContext): Future[T] = {
+    def thenReturn[T](result: Future[T]): Future[T] = {
       val p = Promise[T]()
-      fut.onComplete(_ => p.completeWith(result))
+      fut.onComplete(_ => p.completeWith(result))(RunNowEC)
       p.future
     }
 
     /**
       * Returns a `Future` that completes successfully, but only after this future completes.
       */
-    def ignoreFailures(implicit ec: ExecutionContext): Future[Unit] =
+    def ignoreFailures: Future[Unit] =
       thenReturn(Future.successful {})
   }
 
