@@ -7,8 +7,8 @@ import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.FunSuite
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Promise}
-import scala.util.Success
+import scala.concurrent.{Await, Promise}
+import scala.util.{Failure, Success, Try}
 
 class JavaInteropTest extends FunSuite {
 
@@ -193,10 +193,7 @@ class JavaInteropTest extends FunSuite {
   }
 
   test("guava to scala Future conversion should work") {
-    implicit object ec extends ExecutionContext {
-      def execute(runnable: Runnable): Unit = runnable.run()
-      def reportFailure(cause: Throwable): Unit = cause.printStackTrace()
-    }
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
 
     val gfut = SettableFuture.create[Int]
     val sfut = gfut.asScala
@@ -212,6 +209,26 @@ class JavaInteropTest extends FunSuite {
     assert(gfut.isDone === sfut.isCompleted)
     assert(sfut.value === Some(Success(123)))
     assert(listenerCalled)
+  }
+
+  test("SettableFuture to Promise conversion should work") {
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
+
+    val sprom = SettableFuture.create[String].asScalaPromise
+    val fprom = SettableFuture.create[String].asScalaPromise
+
+    var sres: Try[String] = null
+    var fres: Try[String] = null
+
+    sprom.future.onComplete(sres = _)
+    fprom.future.onComplete(fres = _)
+
+    object exception extends Exception
+    sprom.complete(Success("lol"))
+    fprom.complete(Failure(exception))
+
+    assert(sres == Success("lol"))
+    assert(fres == Failure(exception))
   }
 
   test("toJMap should work") {

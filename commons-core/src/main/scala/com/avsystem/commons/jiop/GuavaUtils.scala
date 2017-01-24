@@ -3,9 +3,9 @@ package jiop
 
 import java.util.concurrent.{Executor, TimeUnit}
 
-import com.avsystem.commons.jiop.GuavaUtils.{DecorateFutureAsGuava, DecorateFutureAsScala}
+import com.avsystem.commons.jiop.GuavaUtils._
 import com.avsystem.commons.misc.Sam
-import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture}
+import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture, SettableFuture}
 import com.google.common.{base => gbase}
 
 import scala.annotation.unchecked.uncheckedVariance
@@ -26,6 +26,9 @@ trait GuavaUtils {
   implicit def toDecorateAsScala[T](gfut: ListenableFuture[T]): DecorateFutureAsScala[T] =
     new DecorateFutureAsScala(gfut)
 
+  implicit def toDecorateAsScalaPromise[T](gfut: SettableFuture[T]): DecorateSettableFutureAsScala[T] =
+    new DecorateSettableFutureAsScala(gfut)
+
   implicit def toDecorateAsGuava[T](fut: Future[T]): DecorateFutureAsGuava[T] =
     new DecorateFutureAsGuava(fut)
 }
@@ -39,6 +42,10 @@ object GuavaUtils {
 
     def asScalaUnit: Future[Unit] =
       asScala.toUnit
+  }
+
+  class DecorateSettableFutureAsScala[T](private val gfut: SettableFuture[T]) extends AnyVal {
+    def asScalaPromise: Promise[T] = new SettableFutureAsPromise(gfut)
   }
 
   class DecorateFutureAsGuava[T](private val fut: Future[T]) extends AnyVal {
@@ -137,5 +144,15 @@ object GuavaUtils {
 
     def isDone: Boolean =
       fut.isCompleted
+  }
+
+  private class SettableFutureAsPromise[T](fut: SettableFuture[T])
+    extends ListenableFutureAsScala[T](fut) with Promise[T] {
+
+    def future: Future[T] = this
+    def tryComplete(result: Try[T]): Boolean = result match {
+      case Success(value) => fut.set(value)
+      case Failure(cause) => fut.setException(cause)
+    }
   }
 }
