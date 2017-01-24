@@ -211,6 +211,19 @@ class JavaInteropTest extends FunSuite {
     assert(listenerCalled)
   }
 
+  test("transforming wrapped guava Future should work") {
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
+
+    val gfut = SettableFuture.create[Int]
+    val sfut = gfut.asScala.transform(identity, identity)
+
+    var value: Try[Int] = null
+    sfut.onComplete { value = _ }
+    gfut.set(42)
+
+    assert(value == Success(42))
+  }
+
   test("SettableFuture to Promise conversion should work") {
     import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
 

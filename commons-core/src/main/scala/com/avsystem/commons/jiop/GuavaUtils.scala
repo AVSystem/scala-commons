@@ -79,11 +79,25 @@ object GuavaUtils {
       Futures.addCallback(gfut, callback, executor)
     }
 
-    def transform[S](f: Try[T] => Try[S])(implicit executor: ExecutionContext): Future[S] =
-      map(Success(_)).recover({ case NonFatal(t) => Failure(t) }).map(f(_).get)
+    def transform[S](f: Try[T] => Try[S])(implicit executor: ExecutionContext): Future[S] = {
+      val p = Promise[S]()
+      onComplete { r =>
+        p.complete(try f(r) catch {
+          case NonFatal(t) => Failure(t)
+        })
+      }
+      p.future
+    }
 
-    def transformWith[S](f: Try[T] => Future[S])(implicit executor: ExecutionContext): Future[S] =
-      map(Success(_)).recover({ case NonFatal(t) => Failure(t) }).flatMap(f)
+    def transformWith[S](f: Try[T] => Future[S])(implicit executor: ExecutionContext): Future[S] = {
+      val p = Promise[S]()
+      onComplete { r =>
+        try p.completeWith(f(r)) catch {
+          case NonFatal(t) => p.failure(t)
+        }
+      }
+      p.future
+    }
 
     private[this] def unwrapFailures(expr: => T): T =
       try expr catch {
