@@ -344,16 +344,22 @@ field.">
 
       
           <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Represents an abstract source of key-value mappings that can be deserialized.
-<a href="" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> instance is stateful and MUST be read strictly sequentially. This means, you MUST fully exhaust
-any <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> instance returned by <code>nextField()</code> before calling <code>nextField()</code> again. For this reason,
+<a href="" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> instance is stateful and MUST be read strictly
+sequentially. This means, you MUST fully exhaust any <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> instance
+returned by <code>nextField()</code> before calling <code>nextField()</code> again. For this reason,
 <a href="" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> is not an <code>Iterator</code> despite having similar interface
-(<code>Iterator</code> would easily allow e.g. conversion to <code>List[(String, Input)]</code> which would be illegal).</p><p><a href="" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> MUST always be fully exhausted. In order to ignore any remaining key-value mappings,
-<code>skipRemaining()</code> may be used.</p></div><dl class="attributes block"> <dt>Self Type</dt><dd><a href="" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a></dd></dl><div class="toggleContainer block">
+(<code>Iterator</code> would easily allow e.g. conversion to <code>List[(String, Input)]</code> which would be illegal).</p><p><a href="" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> MUST always be fully exhausted.
+In order to ignore any remaining key-value mappings, <code>skipRemaining()</code> may be used.</p></div><dl class="attributes block"> <dt>Self Type</dt><dd><a href="" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a></dd></dl><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
           <div class="superTypes hiddenContent"><a href="SequentialInput.html" class="extype" name="com.avsystem.commons.serialization.SequentialInput">SequentialInput</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
-        </div></div>
+        </div><div class="toggleContainer block">
+            <span class="toggle">
+              Known Subclasses
+            </span>
+            <div class="subClasses hiddenContent"><a href="../jetty/rpc/JsValueObjectInput.html" class="extype" name="com.avsystem.commons.jetty.rpc.JsValueObjectInput">JsValueObjectInput</a></div>
+          </div></div>
         
 
       <div id="mbrsel">
@@ -433,9 +439,11 @@ any <a href="Input.html" class="extype" name="com.avsystem.commons.serialization
         <span class="name">nextField</span><span class="params">()</span><span class="result">: <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a></span>
       </span>
       
-      <p class="shortcomment cmt">Returns <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a> that represents next field of this object.</p><div class="fullcomment"><div class="comment cmt"><p>Returns <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a> that represents next field of this object. You MUST NOT call <code>nextField()</code> again until
-this <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a> is fully read or skipped.</p><p>Subsequent invocations of <code>nextField</code> MUST return fields in exactly the same order as they were written
-using <a href="ObjectOutput.html#writeField(key:String):com.avsystem.commons.serialization.Output" class="extmbr" name="com.avsystem.commons.serialization.ObjectOutput#writeField">ObjectOutput.writeField</a>. In other words, serialization format MUST preserve order of object fields.
+      <p class="shortcomment cmt">Returns <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a> that represents next field of this object.</p><div class="fullcomment"><div class="comment cmt"><p>Returns <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a> that represents next field of this object.
+You MUST NOT call <code>nextField()</code> again until this <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a>
+is fully read or skipped.</p><p>Subsequent invocations of <code>nextField</code> MUST return fields in exactly the same order as they were written
+using <a href="ObjectOutput.html#writeField(key:String):com.avsystem.commons.serialization.Output" class="extmbr" name="com.avsystem.commons.serialization.ObjectOutput#writeField">ObjectOutput.writeField</a>.
+In other words, serialization format MUST preserve order of object fields.
 </p></div></div>
     </li></ol>
             </div>

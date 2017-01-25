@@ -729,7 +729,7 @@ without default constructor arguments.
       
       <p class="shortcomment cmt">Represents an abstract source from which a value may be deserialized (read).</p><div class="fullcomment"><div class="comment cmt"><p>Represents an abstract source from which a value may be deserialized (read).
 Each of the <code>read</code> methods tries to read a value of specified type and may throw an exception
-(usually <a href="GenCodec$$ReadFailure.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ReadFailure">com.avsystem.commons.serialization.GenCodec.ReadFailure</a>) when reading is not successful.</p><p>An <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> value should be assumed to be stateful. If any of the <code>readX</code> methods have already been called,
+(usually <a href="GenCodec$$ReadFailure.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ReadFailure">ReadFailure</a>) when reading is not successful.</p><p>An <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> value should be assumed to be stateful. If any of the <code>readX</code> methods have already been called,
 the <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> instance can no longer be used and MUST be discarded.</p><p>In order to ignore the value kept in this <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>, <code>skip()</code> MUST be called.</p><p>In summary: every <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> MUST be fully exhausted by either calling one of the <code>read</code> methods which returns
 successful value or by calling <code>skip()</code>. Also, <a href="ListInput.html" class="extype" name="com.avsystem.commons.serialization.ListInput">ListInput</a> and <a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> instances returned from this
 <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> must also be fully exhausted on their own.
@@ -838,11 +838,12 @@ must be assumed to be stateful and used in strictly sequential manner. After all
       </span>
       
       <p class="shortcomment cmt">Represents an abstract source of key-value mappings that can be deserialized.</p><div class="fullcomment"><div class="comment cmt"><p>Represents an abstract source of key-value mappings that can be deserialized.
-<a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> instance is stateful and MUST be read strictly sequentially. This means, you MUST fully exhaust
-any <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> instance returned by <code>nextField()</code> before calling <code>nextField()</code> again. For this reason,
+<a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> instance is stateful and MUST be read strictly
+sequentially. This means, you MUST fully exhaust any <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> instance
+returned by <code>nextField()</code> before calling <code>nextField()</code> again. For this reason,
 <a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> is not an <code>Iterator</code> despite having similar interface
-(<code>Iterator</code> would easily allow e.g. conversion to <code>List[(String, Input)]</code> which would be illegal).</p><p><a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> MUST always be fully exhausted. In order to ignore any remaining key-value mappings,
-<code>skipRemaining()</code> may be used.</p></div></div>
+(<code>Iterator</code> would easily allow e.g. conversion to <code>List[(String, Input)]</code> which would be illegal).</p><p><a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> MUST always be fully exhausted.
+In order to ignore any remaining key-value mappings, <code>skipRemaining()</code> may be used.</p></div></div>
     </li><li name="com.avsystem.commons.serialization.ObjectOutput" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="ObjectOutputextendsSequentialOutput"></a><a id="ObjectOutput:ObjectOutput"></a>
       <span class="permalink">

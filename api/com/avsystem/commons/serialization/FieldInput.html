@@ -353,7 +353,7 @@ field.">
             <span class="toggle">
               Known Subclasses
             </span>
-            <div class="subClasses hiddenContent"><a href="SimpleValueFieldInput.html" class="extype" name="com.avsystem.commons.serialization.SimpleValueFieldInput">SimpleValueFieldInput</a>, <a href="StreamFieldInput.html" class="extype" name="com.avsystem.commons.serialization.StreamFieldInput">StreamFieldInput</a></div>
+            <div class="subClasses hiddenContent"><a href="../jetty/rpc/JsValueFieldInput.html" class="extype" name="com.avsystem.commons.jetty.rpc.JsValueFieldInput">JsValueFieldInput</a>, <a href="SimpleValueFieldInput.html" class="extype" name="com.avsystem.commons.serialization.SimpleValueFieldInput">SimpleValueFieldInput</a>, <a href="StreamFieldInput.html" class="extype" name="com.avsystem.commons.serialization.StreamFieldInput">StreamFieldInput</a></div>
           </div></div>
         
 
@@ -435,13 +435,19 @@ field.">
       </span>
       
       <p class="shortcomment cmt">Returns the type of the value that can be read from this <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Returns the type of the value that can be read from this <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>.
-Only four types can be distinguished (see <a href="InputType.html" class="extype" name="com.avsystem.commons.serialization.InputType">InputType</a> for more details on this).</p><p>If this method returns <a href="InputType$$Null$.html" class="extype" name="com.avsystem.commons.serialization.InputType.Null">InputType.Null</a>, then <code>readNull()</code> can be safely called.<br/>
-If this method returns <a href="InputType$$Object$.html" class="extype" name="com.avsystem.commons.serialization.InputType.Object">InputType.Object</a>, then AT LEAST ONE OF <code>readObject()</code> and <code>readMap()</code> can be safely called.<br/>
-If this method returns <a href="InputType$$List$.html" class="extype" name="com.avsystem.commons.serialization.InputType.List">InputType.List</a>, then AT LEAST ONE OF <code>readList()</code> and <code>readSet()</code> can be safely called.<br/>
-If this method returns <a href="InputType$$Simple$.html" class="extype" name="com.avsystem.commons.serialization.InputType.Simple">InputType.Simple</a> then AT LEAST ONE OF <code>readString()</code>, <code>readChar()</code>, <code>readBoolean()</code>,
+Only four types can be distinguished (see <a href="InputType.html" class="extype" name="com.avsystem.commons.serialization.InputType">InputType</a> for more details on this).</p><p>If this method returns <a href="InputType$$Null$.html" class="extype" name="com.avsystem.commons.serialization.InputType.Null">InputType.Null</a>,
+then <code>readNull()</code> can be safely called.<br/>
+If this method returns <a href="InputType$$Object$.html" class="extype" name="com.avsystem.commons.serialization.InputType.Object">InputType.Object</a>,
+then AT LEAST ONE OF <code>readObject()</code> and <code>readMap()</code> can be safely called.<br/>
+If this method returns <a href="InputType$$List$.html" class="extype" name="com.avsystem.commons.serialization.InputType.List">InputType.List</a>,
+then AT LEAST ONE OF <code>readList()</code> and <code>readSet()</code> can be safely called.<br/>
+If this method returns <a href="InputType$$Simple$.html" class="extype" name="com.avsystem.commons.serialization.InputType.Simple">InputType.Simple</a>
+then AT LEAST ONE OF <code>readString()</code>, <code>readChar()</code>, <code>readBoolean()</code>,
 <code>readByte()</code>, <code>readShort()</code>, <code>readInt()</code>, <code>readLong()</code>, <code>readTimestamp()</code>, <code>readFloat()</code>, <code>readDouble()</code>,
-<code>readBinary()</code> can be called.</p><p>It's impossible to know which of the listed methods is actually safe to call based only on <a href="InputType.html" class="extype" name="com.avsystem.commons.serialization.InputType">InputType</a>.
-It is the responsibility of <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a> implementation to have reading and writing logic consistent.
+<code>readBinary()</code> can be called.</p><p>It's impossible to know which of the listed methods is actually safe to call based only on
+<a href="InputType.html" class="extype" name="com.avsystem.commons.serialization.InputType">InputType</a>.
+It is the responsibility of <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a> implementation to have
+reading and writing logic consistent.
 For example, if <code>writeDouble(Double)</code> is used during writing then <code>readDouble()</code> must be used during reading
 by the same <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a></dd></dl></div>

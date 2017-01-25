@@ -351,7 +351,12 @@ must be assumed to be stateful and used in strictly sequential manner. After all
             Linear Supertypes
           </span>
           <div class="superTypes hiddenContent"><a href="SequentialOutput.html" class="extype" name="com.avsystem.commons.serialization.SequentialOutput">SequentialOutput</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
-        </div></div>
+        </div><div class="toggleContainer block">
+            <span class="toggle">
+              Known Subclasses
+            </span>
+            <div class="subClasses hiddenContent"><a href="../jetty/rpc/JsValueListOutput.html" class="extype" name="com.avsystem.commons.jetty.rpc.JsValueListOutput">JsValueListOutput</a></div>
+          </div></div>
         
 
       <div id="mbrsel">
@@ -415,8 +420,9 @@ must be assumed to be stateful and used in strictly sequential manner. After all
         <span class="name">finish</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
-      <p class="shortcomment cmt">Indicates that all elements or fields in this <a href="SequentialOutput.html" class="extype" name="com.avsystem.commons.serialization.SequentialOutput">SequentialOutput</a> have been written.</p><div class="fullcomment"><div class="comment cmt"><p>Indicates that all elements or fields in this <a href="SequentialOutput.html" class="extype" name="com.avsystem.commons.serialization.SequentialOutput">SequentialOutput</a> have been written. This method MUST always
-be called after list/object writing has been finished.
+      <p class="shortcomment cmt">Indicates that all elements or fields in this <a href="SequentialOutput.html" class="extype" name="com.avsystem.commons.serialization.SequentialOutput">SequentialOutput</a>
+have been written.</p><div class="fullcomment"><div class="comment cmt"><p>Indicates that all elements or fields in this <a href="SequentialOutput.html" class="extype" name="com.avsystem.commons.serialization.SequentialOutput">SequentialOutput</a>
+have been written. This method MUST always be called after list/object writing has been finished.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SequentialOutput.html" class="extype" name="com.avsystem.commons.serialization.SequentialOutput">SequentialOutput</a></dd></dl></div>
     </li><li name="com.avsystem.commons.serialization.ListOutput#writeElement" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="writeElement():com.avsystem.commons.serialization.Output"></a><a id="writeElement():Output"></a>
@@ -433,7 +439,8 @@ be called after list/object writing has been finished.
         <span class="name">writeElement</span><span class="params">()</span><span class="result">: <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></span>
       </span>
       
-      <p class="shortcomment cmt">Returns an <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> representing next element in this list.</p><div class="fullcomment"><div class="comment cmt"><p>Returns an <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> representing next element in this list. This <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> instance MUST be fully used
+      <p class="shortcomment cmt">Returns an <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> representing next element in this list.</p><div class="fullcomment"><div class="comment cmt"><p>Returns an <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> representing next element in this list.
+This <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> instance MUST be fully used
 before calling <a href="#writeElement():com.avsystem.commons.serialization.Output" class="extmbr" name="com.avsystem.commons.serialization.ListOutput#writeElement">writeElement</a> next time. That means, one can NOT simultaneously use multiple instances of
 <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> returned by subsequent calls to this method.
 </p></div></div>
