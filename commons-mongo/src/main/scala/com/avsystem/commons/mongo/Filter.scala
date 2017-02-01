@@ -3,8 +3,8 @@ package mongo
 
 import com.avsystem.commons.jiop.JavaInterop._
 import com.mongodb.client.model.{Filters => F}
-import org.bson.{BsonString, BsonValue, BsonDateTime, BsonInt32, BsonInt64, BsonDouble}
 import org.bson.conversions.Bson
+import org.bson.{BsonDateTime, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
 
 /**
   * @author MKej
@@ -15,8 +15,14 @@ object Filter {
 
   def and(filters: Bson*): Bson = F.and(filters.asJava)
 
-  def eq[A](key: DocKey[A, _], value: A): Bson = F.eq(key.key, key.codec.toBson(value))
-  def ne[A](key: DocKey[A, _], value: A): Bson = F.ne(key.key, key.codec.toBson(value))
+  @deprecated(message = "Use `equal` instead", since = "1.19.9")
+  def eq[A](key: DocKey[A, _], value: A): Bson = equal(key, value)
+
+  @deprecated(message = "Use `notEqual` instead", since = "1.19.9")
+  def ne[A](key: DocKey[A, _], value: A): Bson = notEqual(key, value)
+
+  def equal[A](key: DocKey[A, _], value: A): Bson = F.eq(key.key, key.codec.toBson(value))
+  def notEqual[A](key: DocKey[A, _], value: A): Bson = F.ne(key.key, key.codec.toBson(value))
 
   def lt[A, BSON <: BsonValue : CanCompare](key: DocKey[A, BSON], value: A): Bson = F.lt(key.key, key.codec.toBson(value))
 
@@ -26,9 +32,9 @@ object Filter {
 
   def gte[A, BSON <: BsonValue : CanCompare](key: DocKey[A, BSON], value: A): Bson = F.gte(key.key, key.codec.toBson(value))
 
-  def in[A](key: DocKey[A, _], values: Iterable[A]): Bson = F.in(key.key, values.map(key.codec.toBson))
+  def in[A](key: DocKey[A, _], values: Iterable[A]): Bson = F.in(key.key, values.map(key.codec.toBson).asJava)
 
-  def nin[A](key: DocKey[A, _], values: Iterable[A]): Bson = F.nin(key.key, values.map(key.codec.toBson))
+  def nin[A](key: DocKey[A, _], values: Iterable[A]): Bson = F.nin(key.key, values.map(key.codec.toBson).asJava)
 
   def regex[A](key: DocKey[A, BsonString], pattern: String): Bson = F.regex(key.key, pattern)
 
@@ -36,7 +42,7 @@ object Filter {
 
   def notExists(key: DocKey[_, _]): Bson = F.exists(key.key, false)
 
-  private object Limitations {
+  object Limitations {
     trait CanCompare[BSON <: BsonValue]
     object CanCompare {
       def create[BSON <: BsonValue]: CanCompare[BSON] = new CanCompare[BSON] {}
