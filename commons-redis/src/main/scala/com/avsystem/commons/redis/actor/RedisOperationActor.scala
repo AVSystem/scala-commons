@@ -2,7 +2,6 @@ package com.avsystem.commons
 package redis.actor
 
 import akka.actor.{Actor, ActorRef}
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{Release, Reserving}
@@ -12,7 +11,6 @@ import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{RedisBatch, RedisOp}
 
 import scala.concurrent.duration.FiniteDuration
-import scala.util.control.NonFatal
 
 /**
   * Implements execution of [[RedisOp]] (sequence of redis operations).

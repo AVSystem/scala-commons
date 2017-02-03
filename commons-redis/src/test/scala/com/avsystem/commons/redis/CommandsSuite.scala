@@ -8,8 +8,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FunSuite, Matchers, Tag}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.reflect.ClassTag
+import scala.concurrent.Await
 
 /**
   * Author: ghik

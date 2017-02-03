@@ -12,8 +12,6 @@ import org.springframework.beans.factory.support._
 import org.springframework.beans.{MutablePropertyValues, PropertyValue}
 import org.springframework.core.io.Resource
 
-import scala.collection.JavaConverters._
-
 class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   extends AbstractBeanDefinitionReader(registry) {
 

@@ -4,7 +4,7 @@ package redis.protocol
 import java.nio.ByteBuffer
 
 import akka.util.{ByteString, ByteStringBuilder}
-import com.avsystem.commons.misc.{Opt, Sam}
+import com.avsystem.commons.misc.Sam
 import com.avsystem.commons.redis.exception.{InvalidDataException, RedisException}
 
 import scala.annotation.tailrec

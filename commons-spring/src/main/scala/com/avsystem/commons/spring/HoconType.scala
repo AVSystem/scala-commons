@@ -1,12 +1,7 @@
 package com.avsystem.commons
 package spring
 
-import java.{lang => jl, util => ju}
-
 import com.typesafe.config._
-
-import scala.collection.JavaConverters._
-import scala.util.{Failure, Success, Try}
 
 trait HoconType[T] {
 
@@ -58,24 +53,24 @@ object HoconType {
     }
   }
 
-  implicit object numberHoconType extends HoconType[jl.Number] {
+  implicit object numberHoconType extends HoconType[JNumber] {
     def get(value: ConfigValue) = {
       requireType(NUMBER, value)
-      value.unwrapped.asInstanceOf[jl.Number]
+      value.unwrapped.asInstanceOf[JNumber]
     }
   }
 
   implicit object intHoconType extends HoconType[Int] {
     def get(value: ConfigValue) = {
       requireType(NUMBER, value)
-      value.unwrapped.asInstanceOf[jl.Number].intValue
+      value.unwrapped.asInstanceOf[JNumber].intValue
     }
   }
 
   implicit object longHoconType extends HoconType[Long] {
     def get(value: ConfigValue) = {
       requireType(NUMBER, value)
-      value.unwrapped.asInstanceOf[jl.Number].longValue
+      value.unwrapped.asInstanceOf[JNumber].longValue
     }
   }
 
@@ -104,7 +99,7 @@ object HoconType {
     }
   }
 
-  implicit def listHoconType[T: HoconType]: HoconType[ju.List[T]] = new HoconType[ju.List[T]] {
+  implicit def listHoconType[T: HoconType]: HoconType[JList[T]] = new HoconType[JList[T]] {
     def get(value: ConfigValue) = {
       requireType(LIST, value)
       val elementHoconType = implicitly[HoconType[T]]
@@ -112,7 +107,7 @@ object HoconType {
     }
   }
 
-  implicit def mapHoconType[T: HoconType]: HoconType[ju.Map[String, T]] = new HoconType[ju.Map[String, T]] {
+  implicit def mapHoconType[T: HoconType]: HoconType[JMap[String, T]] = new HoconType[JMap[String, T]] {
     def get(value: ConfigValue) = {
       requireType(OBJECT, value)
       val elementHoconType = implicitly[HoconType[T]]

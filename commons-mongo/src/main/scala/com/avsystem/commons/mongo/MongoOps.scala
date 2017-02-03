@@ -9,7 +9,6 @@ import org.bson.codecs.configuration.CodecRegistries
 import org.bson.conversions.Bson
 
 import scala.language.implicitConversions
-import scala.reflect.ClassTag
 
 /**
   * @author MKej

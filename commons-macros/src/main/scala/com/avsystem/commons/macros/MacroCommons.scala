@@ -2,7 +2,6 @@ package com.avsystem.commons
 package macros
 
 import scala.collection.mutable
-import scala.concurrent.Future
 import scala.reflect.macros.{TypecheckException, blackbox}
 
 trait MacroCommons {
@@ -22,7 +21,7 @@ trait MacroCommons {
   val NilObj = q"$CollectionPkg.immutable.Nil"
   val MapObj = q"$CollectionPkg.immutable.Map"
   val MaterializedCls = tq"$CommonsPackage.derivation.Materialized"
-  val FutureSym = typeOf[Future[_]].typeSymbol
+  val FutureSym = typeOf[scala.concurrent.Future[_]].typeSymbol
   val OptionClass = definitions.OptionClass
   val ImplicitsObj = q"$CommonsPackage.misc.Implicits"
 

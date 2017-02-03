@@ -7,7 +7,6 @@ import org.mockito.Mockito._
 import org.scalatest.time.Span
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /**

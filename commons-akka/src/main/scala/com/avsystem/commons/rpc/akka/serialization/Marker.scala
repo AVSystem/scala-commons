@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc.akka.serialization
 
-import com.avsystem.commons.misc.{Opt, SealedEnumCompanion}
+import com.avsystem.commons.misc.SealedEnumCompanion
 
 /**
   * @author Wojciech Milewski

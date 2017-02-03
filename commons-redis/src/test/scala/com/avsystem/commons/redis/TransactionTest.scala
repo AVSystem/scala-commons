@@ -1,12 +1,11 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception.{ErrorReplyException, OptimisticLockException}
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 
 class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
 

@@ -3,7 +3,7 @@ package jiop
 
 import java.util.IntSummaryStatistics
 
-import com.avsystem.commons.jiop.JavaInterop._
+import com.avsystem.commons.jiop.Java8Interop._
 
 import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds

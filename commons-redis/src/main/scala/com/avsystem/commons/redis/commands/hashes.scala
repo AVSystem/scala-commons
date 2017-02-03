@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.collection.CollectionAliases.{BMap, BSet}
-import com.avsystem.commons.misc.{Opt, OptArg}
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 

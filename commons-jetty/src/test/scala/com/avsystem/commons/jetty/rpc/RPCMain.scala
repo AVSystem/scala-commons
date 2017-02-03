@@ -6,8 +6,6 @@ import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.server.Server
 import upickle.Js
 
-import scala.concurrent.Future
-
 /**
   * @author MKej
   */

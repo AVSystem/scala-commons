@@ -8,7 +8,6 @@ import org.mockito.Mockito._
 import org.scalatest.time.Span
 
 import scala.concurrent.duration._
-import scala.concurrent.{Future, Promise}
 
 /**
   * @author Wojciech Milewski

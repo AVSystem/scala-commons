@@ -9,8 +9,6 @@ import com.avsystem.commons.rpc.akka._
 import monix.execution.Cancelable
 import monix.reactive.{Observable, OverflowStrategy}
 
-import scala.concurrent.Future
-
 /**
   * @author Wojciech Milewski
   */

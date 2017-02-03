@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.jiop.BasicJavaInterop._
 
 case class Boxing[-A, +B](fun: A => B) extends AnyVal
 object Boxing extends LowPrioBoxing {

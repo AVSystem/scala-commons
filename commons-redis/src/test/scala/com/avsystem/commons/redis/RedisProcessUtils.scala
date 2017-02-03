@@ -3,11 +3,9 @@ package redis
 
 import java.io.ByteArrayInputStream
 
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.commands.NodeId
 import org.scalatest.Suite
 
-import scala.concurrent.{Future, Promise}
 import scala.sys.process._
 
 /**

@@ -3,7 +3,6 @@ package jetty.rpc
 
 import java.util.Base64
 
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{FieldInput, InputType, ListInput, ObjectInput, _}
 import upickle.Js

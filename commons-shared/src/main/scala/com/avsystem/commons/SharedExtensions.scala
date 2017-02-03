@@ -1,16 +1,12 @@
 package com.avsystem.commons
 
 import com.avsystem.commons.SharedExtensions._
-import com.avsystem.commons.collection.CollectionAliases.{BMap, BTraversable}
 import com.avsystem.commons.concurrent.RunNowEC
-import com.avsystem.commons.misc.{Boxing, NOpt, Opt, OptRef, Unboxing}
+import com.avsystem.commons.misc.{Boxing, Unboxing}
 
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
-import scala.concurrent.{Future, Promise}
 import scala.language.implicitConversions
-import scala.util.Try
-import scala.util.control.NonFatal
 
 trait SharedExtensions {
   implicit def universalOps[A](a: A): UniversalOps[A] = new UniversalOps(a)
@@ -24,6 +20,8 @@ trait SharedExtensions {
   implicit def futureOps[A](fut: Future[A]): FutureOps[A] = new FutureOps(fut)
 
   implicit def lazyFutureOps[A](fut: => Future[A]): LazyFutureOps[A] = new LazyFutureOps(fut)
+
+  implicit def futureCompanionOps(fut: Future.type): FutureCompanionOps.type = FutureCompanionOps
 
   implicit def optionOps[A](option: Option[A]): OptionOps[A] = new OptionOps(option)
 
@@ -83,13 +81,9 @@ object SharedExtensions extends SharedExtensions {
   }
 
   class LazyUniversalOps[A](private val a: () => A) extends AnyVal {
-    def evalFuture: Future[A] =
-      try Future.successful(a()) catch {
-        case NonFatal(t) => Future.failed(t)
-      }
+    def evalFuture: Future[A] = FutureCompanionOps.eval(a())
 
-    def evalTry: Try[A] =
-      Try(a())
+    def evalTry: Try[A] = Try(a())
   }
 
   class NullableOps[A >: Null](private val a: A) extends AnyVal {
@@ -172,6 +166,13 @@ object SharedExtensions extends SharedExtensions {
       }
       if (result != null) result else Future.failed(new NullPointerException("null Future"))
     }
+  }
+
+  object FutureCompanionOps {
+    def eval[T](expr: => T): Future[T] =
+      try Future.successful(expr) catch {
+        case NonFatal(cause) => Future.failed(cause)
+      }
   }
 
   class OptionOps[A](private val option: Option[A]) extends AnyVal {

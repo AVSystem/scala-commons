@@ -12,8 +12,6 @@ import org.scalatest.time.Span
 import org.scalatest.{FlatSpecLike, Matchers}
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future, Promise}
-import scala.util.{Failure, Success}
 
 /**
   * @author Wojciech Milewski

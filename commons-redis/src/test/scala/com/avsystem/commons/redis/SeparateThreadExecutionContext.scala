@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package redis
 
-import scala.concurrent.ExecutionContext
-
 /**
   * Author: ghik
   * Created: 06/10/16.

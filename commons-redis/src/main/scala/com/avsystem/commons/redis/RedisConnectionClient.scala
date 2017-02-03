@@ -6,15 +6,12 @@ import java.io.Closeable
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{RedisConnectionActor, RedisOperationActor}
 import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, NoRetryStrategy}
 import com.avsystem.commons.redis.exception.ClientStoppedException
-
-import scala.concurrent.{ExecutionContext, Future, Promise}
 
 /**
   * Redis client that uses a single, non-reconnectable connection.

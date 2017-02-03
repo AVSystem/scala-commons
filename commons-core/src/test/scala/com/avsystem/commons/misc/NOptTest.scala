@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.jiop.JavaInterop._
 import org.scalatest.FunSuite
 
 class NOptTest extends FunSuite {

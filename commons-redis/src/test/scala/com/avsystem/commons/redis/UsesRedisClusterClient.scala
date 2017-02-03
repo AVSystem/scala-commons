@@ -5,7 +5,6 @@ import com.avsystem.commons.redis.commands.SetslotCmd.{Importing, Migrating, Nod
 import com.avsystem.commons.redis.config.ClusterConfig
 import org.scalatest.Suite
 
-import scala.concurrent.Future
 
 /**
   * Author: ghik

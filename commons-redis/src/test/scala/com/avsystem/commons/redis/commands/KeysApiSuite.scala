@@ -1,11 +1,9 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.ClusterUtils.keyWithSameSlotAs
 import com.avsystem.commons.redis._
 
-import scala.concurrent.Future
 
 /**
   * Author: ghik

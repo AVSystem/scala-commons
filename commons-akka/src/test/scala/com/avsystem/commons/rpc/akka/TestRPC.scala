@@ -4,7 +4,6 @@ package rpc.akka
 import com.avsystem.commons.rpc.RPC
 import monix.reactive.Observable
 
-import scala.concurrent.Future
 
 /**
   * @author Wojciech Milewski

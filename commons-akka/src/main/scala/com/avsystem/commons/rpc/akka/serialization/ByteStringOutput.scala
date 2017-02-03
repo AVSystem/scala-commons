@@ -4,7 +4,6 @@ package rpc.akka.serialization
 import java.nio.charset.StandardCharsets
 
 import akka.util.{ByteString, ByteStringBuilder}
-import com.avsystem.commons.collection.CollectionAliases.IQueue
 import com.avsystem.commons.rpc.akka.serialization.ByteOrderImplicits._
 import com.avsystem.commons.serialization.{ListOutput, ObjectOutput, Output}
 

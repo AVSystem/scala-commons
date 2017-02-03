@@ -2,7 +2,6 @@ package com.avsystem.commons
 package redis.actor
 
 import akka.actor.{Actor, ActorRef, Props}
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{NodeInfo, SlotRange, SlotRangeMapping}
 import com.avsystem.commons.redis.config.ClusterConfig
@@ -13,8 +12,7 @@ import com.avsystem.commons.redis.{ClusterState, NodeAddress, RedisApi, RedisBat
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
-import scala.concurrent.{Future, Promise}
-import scala.util.{Failure, Random, Success, Try}
+import scala.util.Random
 
 final class ClusterMonitoringActor(
   seedNodes: Seq[NodeAddress],

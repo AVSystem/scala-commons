@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package core
 
-import com.avsystem.commons.misc.{NOpt, Opt}
 import org.openjdk.jmh.annotations._
 
 @Warmup(iterations = 5)

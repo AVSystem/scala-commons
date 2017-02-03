@@ -1,13 +1,11 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RedisBatch.Index
 import com.avsystem.commons.redis.protocol.RedisReply
 
 import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
-import scala.util.control.NonFatal
 
 /**
   * Typeclass for easy merging ("sequencing") of multiple [[RedisBatch]] instances into one. This is done in

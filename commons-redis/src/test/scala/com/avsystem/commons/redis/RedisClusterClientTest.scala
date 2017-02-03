@@ -2,7 +2,6 @@ package com.avsystem.commons
 package redis
 
 import akka.util.Timeout
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.commands.ShutdownModifier
 import com.avsystem.commons.redis.config.{ClusterConfig, ConnectionConfig, NodeConfig}
 import com.avsystem.commons.redis.exception.{ClusterInitializationException, CrossSlotException, ForbiddenCommandException, NoKeysException}
@@ -11,7 +10,7 @@ import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{FunSuite, Matchers}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 
 class RedisClusterClientInitFailureTest extends FunSuite
   with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer {

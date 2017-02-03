@@ -7,7 +7,6 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.config._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /**

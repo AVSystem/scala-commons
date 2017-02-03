@@ -2,7 +2,6 @@ package com.avsystem.commons
 package redis
 
 import akka.util.ByteString
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.exception.ForbiddenCommandException
 import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, RedisMsg, RedisReply}

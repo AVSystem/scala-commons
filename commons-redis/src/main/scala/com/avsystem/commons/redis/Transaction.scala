@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.RedisBatch.Index
 import com.avsystem.commons.redis.commands.{Exec, Multi}

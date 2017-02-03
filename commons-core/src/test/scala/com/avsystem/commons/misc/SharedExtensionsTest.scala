@@ -13,4 +13,10 @@ class SharedExtensionsTest extends FunSuite with Matchers {
     List.range(0, 10).maxOpt shouldEqual Opt(9)
     List.empty[Int].maxOpt shouldEqual Opt.Empty
   }
+
+  test("future eval") {
+    val ex = new Exception
+    assert(Future.eval(42).value.contains(Success(42)))
+    assert(Future.eval(throw ex).value.contains(Failure(ex)))
+  }
 }

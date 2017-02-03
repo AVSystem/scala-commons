@@ -49,7 +49,6 @@ Missing features:
 ```scala
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis._
 
 import scala.concurrent.ExecutionContext.Implicits.global

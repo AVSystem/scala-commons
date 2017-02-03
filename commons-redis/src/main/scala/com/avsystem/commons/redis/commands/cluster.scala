@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt, OptArg}
+import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._

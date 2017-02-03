@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package redis.exception
 
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.protocol.ErrorMsg
 import com.avsystem.commons.redis.{NodeAddress, RawCommand, Redirection}
 

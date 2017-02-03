@@ -6,13 +6,13 @@ import java.util.stream.{Collectors, DoubleStream, IntStream, LongStream}
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.FunSuite
 
+import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Promise}
-import scala.util.{Failure, Success, Try}
 
 class JavaInteropTest extends FunSuite {
 
-  import JavaInterop._
+  import GuavaInterop._
+  import Java8Interop._
 
   def assertSame[A](s1: JStream[A], s2: JStream[A]): Unit =
     assert(s1.collect(Collectors.toList[A]) === s2.collect(Collectors.toList[A]))
@@ -54,7 +54,7 @@ class JavaInteropTest extends FunSuite {
   }
 
   test("java primitive streams should work") {
-    import JavaInterop._
+    import Java8Interop._
 
     def ints = IntStream.of(1, 2, 3, 4, 5, 6)
     assertSame(
@@ -77,8 +77,6 @@ class JavaInteropTest extends FunSuite {
   }
 
   test("streams should be collectible to scala collections") {
-    import JavaInterop._
-
     assertSameTypeValue(arrayList.scalaStream.to[Traversable], Iterator(1, 2, 3).to[Traversable])
     assertSameTypeValue(arrayList.scalaStream.to[Iterable], Iterator(1, 2, 3).to[Iterable])
     assertSameTypeValue(arrayList.scalaStream.to[Seq], Iterator(1, 2, 3).to[Seq])
@@ -93,8 +91,6 @@ class JavaInteropTest extends FunSuite {
   }
 
   test("java collection CanBuildFroms should have proper priority") {
-    import JavaInterop._
-
     val intList = List(1, 2, 3)
     val pairList = intList.map(i => (i, i.toString))
     assertSameTypeValue(intList.to[JArrayList], arrayList)
@@ -218,7 +214,9 @@ class JavaInteropTest extends FunSuite {
     val sfut = gfut.asScala.transform(identity, identity)
 
     var value: Try[Int] = null
-    sfut.onComplete { value = _ }
+    sfut.onComplete {
+      value = _
+    }
     gfut.set(42)
 
     assert(value == Success(42))

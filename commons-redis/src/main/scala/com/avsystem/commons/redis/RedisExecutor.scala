@@ -3,8 +3,6 @@ package redis
 
 import akka.util.Timeout
 
-import scala.concurrent.{ExecutionContext, Future}
-
 /**
   * Base trait for Redis clients with ability to execute [[RedisBatch]]es.
   */

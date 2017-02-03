@@ -12,7 +12,7 @@ import org.openjdk.jmh.infra.Blackhole
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 
 /**
   * @author Wojciech Milewski

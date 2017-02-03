@@ -3,7 +3,6 @@ package jiop
 
 import java.{lang => jl, util => ju}
 
-import com.avsystem.commons.jiop.BasicJavaInterop._
 
 import scala.collection.generic.CanBuildFrom
 import scala.language.{higherKinds, implicitConversions}

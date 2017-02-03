@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package redis.protocol
 
-import com.avsystem.commons.misc.Opt
 import org.scalacheck.Shrink
 
 /**

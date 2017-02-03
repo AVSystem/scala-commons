@@ -7,9 +7,7 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.{NodeRemovedException, OptimisticLockException}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
 
 /**
   * Example that shows execution of Redis transactions with optimistic locking

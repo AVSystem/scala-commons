@@ -3,7 +3,6 @@ package rpc
 
 import com.github.ghik.silencer.silent
 
-import scala.concurrent.Future
 
 case class Record(i: Int, fuu: String)
 

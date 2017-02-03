@@ -1,14 +1,11 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.collection.CollectionAliases._
-import com.avsystem.commons.jiop.BasicJavaInterop._
 import com.avsystem.commons.misc.Unboxing
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.reflect.{ClassTag, classTag}
 
 /**
   * An [[Output]] for [[GenCodec]] which serializes data into plain Scala objects.

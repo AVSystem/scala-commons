@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package redis.config
 
-import com.avsystem.commons.misc.Opt
 import org.scalatest.{FunSuite, Matchers}
 
 import scala.concurrent.duration._

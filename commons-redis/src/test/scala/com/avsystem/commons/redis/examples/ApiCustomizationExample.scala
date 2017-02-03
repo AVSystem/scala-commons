@@ -3,11 +3,9 @@ package redis.examples
 
 import akka.actor.ActorSystem
 import akka.util.{ByteString, Timeout}
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis._
 import com.avsystem.commons.serialization.GenCodec
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /**

@@ -1,8 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import java.util.concurrent.Callable
-import java.util.{Comparator, function => juf}
+import java.util.{function => juf}
 
 import com.avsystem.commons.misc.Sam
 
@@ -12,10 +11,6 @@ import scala.language.implicitConversions
   * Utils to convert Scala functions and expressions to most common Java functional interfaces.
   */
 trait JFunctionUtils {
-  def jRunnable(code: => Any) = Sam[Runnable](code)
-  def jCallable[T](expr: => T) = Sam[Callable[T]](expr)
-  def jComparator[T](cmp: (T, T) => Int) = Sam[Comparator[T]](cmp)
-
   type JBiConsumer[T, U] = juf.BiConsumer[T, U]
   type JBiFunction[T, U, R] = juf.BiFunction[T, U, R]
   type JBiPredicate[T, U] = juf.BiPredicate[T, U]

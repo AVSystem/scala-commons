@@ -1,12 +1,8 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 import com.avsystem.commons.redis.protocol._
-
-import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
 
 /**
   * Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message).

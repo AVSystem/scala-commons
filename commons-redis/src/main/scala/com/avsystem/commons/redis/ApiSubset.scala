@@ -6,8 +6,8 @@ import com.avsystem.commons.redis.ApiSubset.{HeadOps, IterableTailOps, IteratorT
 import com.avsystem.commons.redis.commands._
 import com.avsystem.commons.redis.util.{HeadIterable, HeadIterator, SingletonSeq}
 
+import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, FiniteDuration}
-import scala.concurrent.{Await, Future}
 
 trait ApiSubset { self =>
   type Input[A] >: RedisCommand[A]

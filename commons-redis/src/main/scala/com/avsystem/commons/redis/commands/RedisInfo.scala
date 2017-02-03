@@ -1,8 +1,7 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.collection.CollectionAliases._
-import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
+import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.NodeAddress
 
 import scala.collection.mutable

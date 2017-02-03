@@ -2,7 +2,6 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.ByteString
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis._
 
 /**

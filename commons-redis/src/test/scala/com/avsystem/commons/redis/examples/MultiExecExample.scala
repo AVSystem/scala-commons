@@ -3,12 +3,10 @@ package redis.examples
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
 
 /**
   * Example that shows execution of simple `MULTI`-`EXEC` blocks. For full Redis transactions with optimistic locking

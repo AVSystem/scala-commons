@@ -6,10 +6,7 @@ import java.io.Closeable
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.avsystem.commons.collection.CollectionAliases.BMap
 import com.avsystem.commons.concurrent.RunInQueueEC
-import com.avsystem.commons.jiop.JavaInterop._
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.RedisClusterClient.{AskingPack, CollectionPacks}
 import com.avsystem.commons.redis.actor.ClusterMonitoringActor
@@ -24,8 +21,6 @@ import com.avsystem.commons.redis.util.SingletonSeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future, Promise}
-import scala.util.control.NonFatal
 
 /**
   * Redis client implementation for Redis Cluster deployments. Internally, it uses single [[RedisNodeClient]] instance

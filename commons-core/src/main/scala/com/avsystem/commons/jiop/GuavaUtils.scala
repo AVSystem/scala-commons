@@ -9,10 +9,8 @@ import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFut
 import com.google.common.{base => gbase}
 
 import scala.annotation.unchecked.uncheckedVariance
-import scala.concurrent._
+import scala.concurrent.{Await, CanAwait, ExecutionException, TimeoutException}
 import scala.concurrent.duration.Duration
-import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
 
 trait GuavaUtils {
   type GFunction[F, T] = gbase.Function[F, T]

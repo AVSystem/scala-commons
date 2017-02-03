@@ -1,10 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.jiop.BasicJavaInterop._
-
 import scala.annotation.implicitNotFound
-import scala.reflect.ClassTag
 
 /**
   * Typeclass which expresses ability to convert between MongoDB JSON object keys and values of some type.

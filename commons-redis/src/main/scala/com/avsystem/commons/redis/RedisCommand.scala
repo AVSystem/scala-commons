@@ -2,8 +2,7 @@ package com.avsystem.commons
 package redis
 
 import akka.util.ByteString
-import com.avsystem.commons.collection.CollectionAliases.BSet
-import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Opt}
+import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis.RedisBatch.Index
 import com.avsystem.commons.redis.commands.{Cursor, ReplyDecoder}

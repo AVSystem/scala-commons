@@ -8,7 +8,7 @@ import akka.util.{ByteString, Timeout}
 import com.avsystem.commons.redis.commands.ShutdownModifier
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.Await
 
 /**
   * Author: ghik

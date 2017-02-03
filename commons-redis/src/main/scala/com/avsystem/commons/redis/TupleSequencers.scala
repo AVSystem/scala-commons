@@ -1,12 +1,10 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.RedisBatch.Index
 import com.avsystem.commons.redis.TupleSequencers.TupleBatch
 import com.avsystem.commons.redis.protocol.RedisReply
 
-import scala.util.control.NonFatal
 
 trait TupleSequencers { this: Sequencer.type =>
   implicit def tuple1Sequencer[O1, R1](implicit

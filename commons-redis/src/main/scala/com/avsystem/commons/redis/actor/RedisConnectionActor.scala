@@ -7,8 +7,6 @@ import java.nio.ByteBuffer
 import akka.actor.{Actor, ActorRef}
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
-import com.avsystem.commons.jiop.JavaInterop._
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception._
@@ -17,9 +15,7 @@ import com.avsystem.commons.redis.util.ActorLazyLogging
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.Promise
 import scala.concurrent.duration.Duration
-import scala.util.control.NonFatal
 
 final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
   extends Actor with ActorLazyLogging { actor =>

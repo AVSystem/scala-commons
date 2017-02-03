@@ -1,11 +1,9 @@
 package com.avsystem.commons
 package serialization
 
-
 import java.io.{DataInputStream, DataOutputStream}
 import java.{lang => jl}
 
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 

@@ -8,7 +8,6 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.avsystem.commons.concurrent.RunInQueueEC
-import com.avsystem.commons.misc.Opt
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{Close, PacksResult}
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{RedisConnectionActor, RedisOperationActor}
@@ -17,8 +16,6 @@ import com.avsystem.commons.redis.exception.{ClientStoppedException, NodeInitial
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future, Promise}
-import scala.util.{Failure, Success}
 
 /**
   * Redis client implementation for a single Redis node using a connection pool. Connection pool size is constant

@@ -9,8 +9,6 @@ import com.avsystem.commons.rpc.akka._
 import monix.execution.{Ack, Scheduler}
 import monix.reactive.Observable
 
-import scala.util.{Failure, Success}
-
 /**
   * @author Wojciech Milewski
   */

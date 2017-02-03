@@ -8,16 +8,15 @@ import akka.actor.ActorSystem
 import akka.util.{ByteString, Timeout}
 import com.avsystem.commons.benchmark.CrossRedisBenchmark
 import com.avsystem.commons.concurrent.RunNowEC
-import com.avsystem.commons.jiop.JavaInterop._
 import com.avsystem.commons.redis.RedisClientBenchmark._
 import com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener
 import com.avsystem.commons.redis.config._
 import com.typesafe.config._
 import org.openjdk.jmh.annotations._
+import com.avsystem.commons.jiop.Java8Interop._
 
-import scala.concurrent.duration.{Duration, _}
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.duration.Duration
+import scala.concurrent.Await
 
 object OutgoingTraffictStats extends DebugListener {
   val writeCount = new AtomicInteger

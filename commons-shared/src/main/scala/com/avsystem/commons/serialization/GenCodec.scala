@@ -1,16 +1,12 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.collection.CollectionAliases._
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
-import com.avsystem.commons.jiop.BasicJavaInterop._
 import com.avsystem.commons.jiop.JCanBuildFrom
-import com.avsystem.commons.misc.{NOpt, Opt, OptArg, OptRef}
 
 import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds
-import scala.reflect.{ClassTag, classTag}
 
 /**
   * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized

@@ -6,7 +6,7 @@ import java.io.File
 import org.scalatest.Suite
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 
 /**
   * Author: ghik

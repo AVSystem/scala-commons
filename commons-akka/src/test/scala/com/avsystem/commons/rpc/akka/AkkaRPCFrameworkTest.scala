@@ -7,8 +7,8 @@ import akka.actor.{ActorPath, ActorSystem, Inbox, Terminated}
 import org.mockito.Mockito.when
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 /**
   * @author Wojciech Milewski

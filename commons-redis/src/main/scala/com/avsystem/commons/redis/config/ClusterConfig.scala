@@ -5,7 +5,6 @@ import java.net.InetSocketAddress
 
 import akka.io.Inet
 import akka.util.Timeout
-import com.avsystem.commons.misc.{Opt, OptArg}
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{DebugListener, DevNullListener}
 import com.avsystem.commons.redis.{NodeAddress, RedisBatch, RedisOp}
 
