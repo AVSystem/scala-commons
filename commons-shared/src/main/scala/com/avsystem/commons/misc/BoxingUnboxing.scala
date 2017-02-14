@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package misc
 
-
 case class Boxing[-A, +B](fun: A => B) extends AnyVal
 object Boxing extends LowPrioBoxing {
   def fromImplicitConv[A, B](implicit conv: A => B): Boxing[A, B] = Boxing(conv)

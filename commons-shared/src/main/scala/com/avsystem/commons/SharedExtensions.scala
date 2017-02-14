@@ -29,7 +29,9 @@ trait SharedExtensions {
 
   implicit def partialFunctionOps[A, B](pf: PartialFunction[A, B]): PartialFunctionOps[A, B] = new PartialFunctionOps(pf)
 
-  implicit def collectionOps[C[X] <: BTraversable[X], A](coll: C[A]): CollectionOps[C, A] = new CollectionOps(coll)
+  implicit def traversableOps[C[X] <: BTraversable[X], A](coll: C[A]): TraversableOps[C, A] = new TraversableOps(coll)
+
+  implicit def setOps[A](set: BSet[A]): SetOps[A] = new SetOps(set)
 
   implicit def mapOps[M[X, Y] <: BMap[X, Y], K, V](map: M[K, V]): MapOps[M, K, V] = new MapOps(map)
 
@@ -206,7 +208,7 @@ object SharedExtensions extends SharedExtensions {
     def unless(pre: PartialFunction[A, B]): PartialFunction[A, B] = pre orElse pf
   }
 
-  class CollectionOps[C[X] <: BTraversable[X], A](private val coll: C[A]) extends AnyVal {
+  class TraversableOps[C[X] <: BTraversable[X], A](private val coll: C[A]) extends AnyVal {
     def toMap[K, V](keyFun: A => K, valueFun: A => V): Map[K, V] = {
       val res = Map.newBuilder[K, V]
       coll.foreach { a =>
@@ -237,13 +239,19 @@ object SharedExtensions extends SharedExtensions {
 
     def reduceRightOpt[B >: A](op: (A, B) => B): Opt[B] = coll.reduceRightOption(op).toOpt
 
-    def maxOpt[B >: A](implicit cmp: Ordering[B]): Opt[B] = if (coll.isEmpty) Opt.Empty else coll.max[B].opt
+    def maxOpt[B >: A : Ordering]: Opt[B] = if (coll.isEmpty) Opt.Empty else coll.max[B].opt
 
-    def maxOptBy[B](f: A => B)(implicit cmp: Ordering[B]): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.maxBy(f).opt
+    def maxOptBy[B: Ordering](f: A => B): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.maxBy(f).opt
 
-    def minOpt[B >: A](implicit cmp: Ordering[B]): Opt[B] = if (coll.isEmpty) Opt.Empty else coll.min[B].opt
+    def minOpt[B >: A : Ordering]: Opt[B] = if (coll.isEmpty) Opt.Empty else coll.min[B].opt
 
-    def minOptBy[B](f: A => B)(implicit cmp: Ordering[B]): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.minBy(f).opt
+    def minOptBy[B: Ordering](f: A => B): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.minBy(f).opt
+  }
+
+  class SetOps[A](private val set: BSet[A]) extends AnyVal {
+    def containsAny(other: BTraversable[A]): Boolean = other.exists(set.contains)
+
+    def containsAll(other: BTraversable[A]): Boolean = other.forall(set.contains)
   }
 
   class MapOps[M[X, Y] <: BMap[X, Y], K, V](private val map: M[K, V]) extends AnyVal {

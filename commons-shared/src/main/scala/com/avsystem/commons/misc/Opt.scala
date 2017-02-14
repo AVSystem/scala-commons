@@ -51,6 +51,9 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
   @inline def boxed[B](implicit boxing: Boxing[A, B]): Opt[B] =
     map(boxing.fun)
 
+  @inline def boxedOrNull[B >: Null](implicit boxing: Boxing[A, B]): B =
+    if (isEmpty) null else boxing.fun(value)
+
   @inline def unboxed[B](implicit unboxing: Unboxing[B, A]): Opt[B] =
     map(unboxing.fun)
 
