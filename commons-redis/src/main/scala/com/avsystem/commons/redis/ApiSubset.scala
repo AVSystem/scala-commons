@@ -14,7 +14,7 @@ trait ApiSubset { self =>
 
   /**
     * The type constructor into which a result of each command is wrapped. For example if `Result` is
-    * [[scala.concurrent.Future Future]], then [[commands.StringsApi.incr incr]] returns `Future[Long]`.
+    * `Future`, then [[commands.StringsApi.incr incr]] returns `Future[Long]`.
     */
   type Result[A]
 

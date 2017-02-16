@@ -21,7 +21,7 @@ import akka.util.{ByteString, Timeout}
   *  - [[RedisApi.Keyed.Async]], [[RedisApi.Node.Async]] and [[RedisApi.Connection.Async]] variants are the ones that
   * actually ''execute'' commands by sending them to Redis. Because of that, they take an appropriate [[RedisExecutor]]
   * as constructor argument. Execution of commands is asynchronous and results are returned as
-  * [[scala.concurrent.Future Future]]s.
+  * `Future`s.
   *  - [[RedisApi.Keyed.Blocking]], [[RedisApi.Node.Blocking]] and [[RedisApi.Connection.Blocking]] are similar
   * to their `Async` counterparts but execution is blocking and results are returned as unwrapped values.
   *
