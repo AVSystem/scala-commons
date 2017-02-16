@@ -206,12 +206,8 @@ object SharedExtensions extends SharedExtensions {
   }
 
   class CollectionOps[C[X] <: BTraversable[X], A](private val coll: C[A]) extends AnyVal {
-    def toMap[K, V](keyFun: A => K, valueFun: A => V): Map[K, V] = {
-      val res = Map.newBuilder[K, V]
-      coll.foreach { a =>
-        res += ((keyFun(a), valueFun(a)))
-      }
-      res.result()
+    def mkMap[K, V](keyFun: A => K, valueFun: A => V): Map[K, V] = {
+      coll.map { a => (keyFun(a), valueFun(a)) }(scala.collection.breakOut)
     }
 
     def groupToMap[K, V, To](keyFun: A => K, valueFun: A => V)(implicit cbf: CanBuildFrom[C[A], V, To]): Map[K, To] = {
@@ -219,14 +215,14 @@ object SharedExtensions extends SharedExtensions {
       coll.foreach { a =>
         builders.getOrElseUpdate(keyFun(a), cbf(coll)) += valueFun(a)
       }
-      builders.iterator.map({ case (k, v) => (k, v.result()) }).toMap
+      builders.map({ case (k, v) => (k, v.result()) })(scala.collection.breakOut)
     }
 
     def headOpt: Opt[A] = coll.headOption.toOpt
 
     def lastOpt: Opt[A] = coll.lastOption.toOpt
 
-    def findOpt(p: A => Boolean) = coll.find(p).toOpt
+    def findOpt(p: A => Boolean): Opt[A] = coll.find(p).toOpt
 
     def collectFirstOpt[B](pf: PartialFunction[A, B]): Opt[B] = coll.collectFirst(pf).toOpt
 
