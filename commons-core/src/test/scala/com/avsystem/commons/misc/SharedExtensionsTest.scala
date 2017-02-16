@@ -4,6 +4,11 @@ package misc
 import org.scalatest.{FunSuite, Matchers}
 
 class SharedExtensionsTest extends FunSuite with Matchers {
+  test("mkMap") {
+    List.range(0, 3).mkMap(identity, _.toString) shouldEqual
+      Map(0 -> "0", 1 -> "1", 2 -> "2")
+  }
+
   test("groupToMap") {
     List.range(0, 10).groupToMap(_ % 3, _.toString) shouldEqual
       Map(0 -> List("0", "3", "6", "9"), 1 -> List("1", "4", "7"), 2 -> List("2", "5", "8"))
