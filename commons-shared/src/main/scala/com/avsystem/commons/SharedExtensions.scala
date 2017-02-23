@@ -5,7 +5,7 @@ import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc.{Boxing, Unboxing}
 
 import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable
+import scala.collection.{AbstractIterator, mutable}
 import scala.language.implicitConversions
 
 trait SharedExtensions {
@@ -36,6 +36,8 @@ trait SharedExtensions {
   implicit def mapOps[M[X, Y] <: BMap[X, Y], K, V](map: M[K, V]): MapOps[M, K, V] = new MapOps(map)
 
   implicit def iteratorOps[A](it: Iterator[A]): IteratorOps[A] = new IteratorOps(it)
+
+  implicit def iteratorCompanionOps(it: Iterator.type): IteratorCompanionOps.type = IteratorCompanionOps
 }
 
 object SharedExtensions extends SharedExtensions {
@@ -267,5 +269,61 @@ object SharedExtensions extends SharedExtensions {
       }
       builder.result()
     }
+  }
+
+  object IteratorCompanionOps {
+    def untilEmpty[T](elem: => Opt[T]): Iterator[T] =
+      new AbstractIterator[T] {
+        private[this] var fetched = false
+        private[this] var value = Opt.empty[T]
+
+        def hasNext = {
+          if (!fetched) {
+            value = elem
+            fetched = true
+          }
+          value.isDefined
+        }
+
+        def next = {
+          if (!fetched) {
+            value = elem
+          }
+          value match {
+            case Opt(v) =>
+              fetched = false
+              v
+            case Opt.Empty =>
+              throw new NoSuchElementException
+          }
+        }
+      }
+
+    def iterateUntilEmpty[T](start: Opt[T])(nextFun: T => Opt[T]): Iterator[T] =
+      new AbstractIterator[T] {
+        private[this] var fetched = true
+        private[this] var value = start
+
+        def hasNext = {
+          if (!fetched) {
+            value = nextFun(value.get)
+            fetched = true
+          }
+          value.isDefined
+        }
+
+        def next = {
+          if (!fetched) {
+            value = nextFun(value.get)
+          }
+          value match {
+            case Opt(v) =>
+              fetched = false
+              v
+            case Opt.Empty =>
+              throw new NoSuchElementException
+          }
+        }
+      }
   }
 }

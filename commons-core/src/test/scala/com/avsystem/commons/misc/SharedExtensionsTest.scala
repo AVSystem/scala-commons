@@ -24,4 +24,17 @@ class SharedExtensionsTest extends FunSuite with Matchers {
     assert(Future.eval(42).value.contains(Success(42)))
     assert(Future.eval(throw ex).value.contains(Failure(ex)))
   }
+
+  test("Iterator.untilEmpty") {
+    var i = 0
+    assert(Iterator.untilEmpty {
+      i += 1
+      i.opt.filter(_ <= 5)
+    }.toList == List(1, 2, 3, 4, 5))
+  }
+
+  test("Iterator.iterateUntilEmpty") {
+    assert(Iterator.iterateUntilEmpty(Opt.empty[Int])(i => (i + 1).opt).toList == Nil)
+    assert(Iterator.iterateUntilEmpty(1.opt)(i => (i + 1).opt.filter(_ <= 5)).toList == List(1, 2, 3, 4, 5))
+  }
 }
