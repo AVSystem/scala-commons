@@ -3,10 +3,6 @@ package macros
 
 import scala.reflect.macros.blackbox
 
-/**
-  * Author: ghik
-  * Created: 02/12/15.
-  */
 class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   import c.universe._
@@ -26,7 +22,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
   def forSingleton(tpe: Type, singleValueTree: Tree): Tree =
     q"$SingletonTCObj[$tpe](${tpe.toString}, $singleValueTree)"
 
-  def forApplyUnapply(tpe: Type, companion: Symbol, params: List[ApplyParam]): Tree = {
+  def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
     val deps = params.map { case ApplyParam(s, dv, t) =>
       val defaultValueOpt = if (dv == EmptyTree) q"None" else q"Some($DefValObj($dv))"
       q"(${s.name.toString}, $t, $defaultValueOpt)"
@@ -75,9 +71,11 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
     val ttpe = weakTypeOf[T]
     val ftpe = weakTypeOf[F]
 
-    val ApplyUnapply(companion, params) = applyUnapplyFor(ttpe)
+    val ApplyUnapply(_, unapply, params) = applyUnapplyFor(ttpe)
       .getOrElse(c.abort(c.enclosingPosition,
         s"Could not find unambiguous, matching pair of apply/unapply methods for $ttpe"))
+
+    val companion = unapply.owner.asClass.module
 
     val expectedTpe = params match {
       case Nil => typeOf[Unit]

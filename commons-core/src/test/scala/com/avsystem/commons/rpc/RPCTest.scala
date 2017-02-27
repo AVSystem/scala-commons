@@ -7,7 +7,6 @@ import com.github.ghik.silencer.silent
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.{ExecutionContext, Future}
 
 class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
 
@@ -104,13 +103,13 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       ))
     }
 
+    @RPC trait BaseRPC[T] {
+      def accept(t: T): Unit
+    }
+
+    trait ConcreteRPC extends BaseRPC[String]
+
     "rpc should work with parameterized interface types" in {
-      @RPC trait BaseRPC[T] {
-        def accept(t: T): Unit
-      }
-
-      trait ConcreteRPC extends BaseRPC[String]
-
       AsRawRPC[ConcreteRPC]
       AsRealRPC[ConcreteRPC]
     }

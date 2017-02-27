@@ -1,9 +1,11 @@
 import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys._
+import sbtunidoc.Plugin.UnidocKeys._
 
 cancelable in Global := true
 
 inThisBuild(Seq(
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.12.1",
+  crossScalaVersions := Seq("2.11.8", "2.12.1"),
   organization := "com.avsystem.commons",
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
@@ -18,18 +20,28 @@ inThisBuild(Seq(
     "-Xfuture",
     "-Xfatal-warnings",
     "-Xlint:_,-missing-interpolator,-adapted-args"
-  )
+  ),
+  apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
+  autoAPIMappings := true
 ))
 
-val silencerVersion = "0.3"
+// for binary compatibility checking
+val previousVersion = "1.19.0"
+
+val silencerVersion = "0.5"
 val guavaVersion = "18.0"
 val jsr305Version = "3.0.0"
-val scalatestVersion = "2.2.5"
-val upickleVersion = "0.3.6"
+val scalatestVersion = "3.0.0"
+val upickleVersion = "0.4.4"
+val scalacheckVersion = "1.13.4"
 val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.2.2"
 val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.0"
+val commonsIoVersion = "1.3.2"
+val scalaLoggingVersion = "3.5.0"
+val akkaVersion = "2.4.12"
+val monixVersion = "2.0.6"
 
 val commonSettings = Seq(
   sonatypeProfileName := "com.avsystem",
@@ -63,23 +75,35 @@ val commonSettings = Seq(
     </developers>
   },
 
-  libraryDependencies += compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion),
+  libraryDependencies += compilerPlugin("com.github.ghik" %% "silencer-plugin" % silencerVersion),
   libraryDependencies ++= Seq(
-    "com.github.ghik" % "silencer-lib" % silencerVersion,
-    "org.scalatest" %% "scalatest" % scalatestVersion % Test
+    "com.github.ghik" %% "silencer-lib" % silencerVersion,
+    "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+    "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
+    "org.apache.commons" % "commons-io" % commonsIoVersion % Test
   ),
-  dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.4",
+  dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
   ideBasePackages := Seq(organization.value),
+  ideOutputDirectory in Compile := Some(baseDirectory.value / "out/production"),
+  ideOutputDirectory in Test := Some(baseDirectory.value / "out/test"),
   fork in Test := true
+)
+
+val jvmCommonSettings = Seq(
+  mimaPreviousArtifacts := {
+    Set(organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion)
+  }
 )
 
 val noPublishSettings = Seq(
   publishArtifact := false,
-  publish :=(),
-  publishLocal :=(),
-  publishM2 :=(),
-  publishSigned :=(),
-  publishLocalSigned :=()
+  publish := (),
+  publishLocal := (),
+  publishM2 := (),
+  publishSigned := (),
+  publishLocalSigned := (),
+  doc := (target in doc).value,
+  mimaPreviousArtifacts := Set.empty
 )
 
 val CompileAndTest = "compile->compile;test->test"
@@ -95,18 +119,33 @@ lazy val commons = project.in(file("."))
     `commons-jetty`,
     `commons-benchmark`,
     `commons-mongo`,
-    `commons-spring`
+    `commons-spring`,
+    `commons-redis`,
+    `commons-akka`
   )
-  .settings(name := "commons")
   .settings(commonSettings: _*)
+  .settings(unidocSettings: _*)
   .settings(noPublishSettings: _*)
+  .settings(
+    name := "commons",
+    scalacOptions in(ScalaUnidoc, unidoc) += "-Ymacro-no-expand",
+    unidocProjectFilter in(ScalaUnidoc, unidoc) :=
+      inAnyProject -- inProjects(
+        `commons-macros`,
+        `commons-analyzer`,
+        `commons-sharedJS`,
+        `commons-benchmark`
+      )
+  )
 
 lazy val `commons-annotations` = project
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
 
 lazy val `commons-macros` = project
   .dependsOn(`commons-annotations`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
   )
@@ -115,6 +154,7 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
   .jsConfigure(_.dependsOn(`commons-macros`))
   .jvmConfigure(_.dependsOn(`commons-macros`))
   .settings(commonSettings: _*)
+  .jvmSettings(jvmCommonSettings)
   .jsSettings(
     scalacOptions += {
       val localDir = (baseDirectory in ThisBuild).value.toURI.toString
@@ -130,6 +170,7 @@ lazy val `commons-sharedJS` = `commons-shared`.js
 
 lazy val `commons-core` = project.dependsOn(`commons-macros` % CompileAndTest, `commons-sharedJVM`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
@@ -140,6 +181,7 @@ lazy val `commons-core` = project.dependsOn(`commons-macros` % CompileAndTest, `
 lazy val `commons-analyzer` = project
   .dependsOn(`commons-core` % Test)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
   )
@@ -147,35 +189,75 @@ lazy val `commons-analyzer` = project
 lazy val `commons-jetty` = project
   .dependsOn(`commons-sharedJVM`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
       "org.eclipse.jetty" % "jetty-server" % jettyVersion,
-      "com.lihaoyi" %% "upickle" % upickleVersion % Test
+      "com.lihaoyi" %% "upickle" % upickleVersion
     )
   )
 
 lazy val `commons-benchmark` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-core`, `commons-akka`, `commons-redis`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(noPublishSettings: _*)
   .enablePlugins(JmhPlugin)
+  .settings(
+    libraryDependencies ++= {
+      if (scalaBinaryVersion.value != "2.12") Seq(
+        "com.github.etaty" %% "rediscala" % "1.6.0",
+        "com.livestream" %% "scredis" % "2.0.8"
+      )
+      else Seq.empty
+    },
+    ideExcludedDirectories := (managedSourceDirectories in Jmh).value
+  )
 
 lazy val `commons-mongo` = project
   .dependsOn(`commons-core`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "org.mongodb" % "mongodb-driver" % mongoVersion
     )
   )
 
+lazy val `commons-redis` = project
+  .dependsOn(`commons-core`)
+  .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion
+    ),
+    parallelExecution in Test := false
+  )
+
 lazy val `commons-spring` = project
   .dependsOn(`commons-core`)
   .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "org.springframework" % "spring-context" % springVersion,
       "com.typesafe" % "config" % typesafeConfigVersion
+    )
+  )
+
+lazy val `commons-akka` = project
+  .dependsOn(`commons-core`)
+  .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-remote" % akkaVersion,
+      "io.monix" %% "monix" % monixVersion,
+      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+      "org.mockito" % "mockito-core" % "2.0.54-beta" % Test
     )
   )

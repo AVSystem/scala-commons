@@ -1,15 +1,11 @@
 package com.avsystem.commons
 package macros
 
-import com.avsystem.commons.derivation.DeferredInstance
+import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import org.scalatest.FunSuite
 
 import scala.reflect.runtime.{universe => ru}
 
-/**
-  * Author: ghik
-  * Created: 04/12/15.
-  */
 object TypeClassDerivationTest {
 
   def materializeFor[T]: TC[T] = macro macros.TestMacros.materialize[T]
@@ -43,7 +39,7 @@ object TypeClassDerivationTest {
     def tpe: String = s"List[${elementTc.tpe}]"
   }
 
-  object TC {
+  object TC extends ImplicitMaterializers {
     case class Auto[T](tc: TC[T]) extends AnyVal
     final class Deferred[T] extends DeferredInstance[TC[T]] with TC[T] {
       def tpe = underlying.tpe
@@ -63,6 +59,9 @@ object TypeClassDerivationTest {
     implicit val forInt: TC[Int] = UnknownTC(typeRepr[Int])
     implicit val forString: TC[String] = UnknownTC(typeRepr[String])
     implicit def forList[T](implicit tct: TC[T]): TC[List[T]] = ForList(tct)
+  }
+  trait ImplicitMaterializers { this: TC.type =>
+    implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[TC[T]]): TC[T] = macro macros.TestMacros.materializeImplicitly[T]
   }
 }
 

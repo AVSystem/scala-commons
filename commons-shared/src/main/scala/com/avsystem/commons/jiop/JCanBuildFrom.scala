@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package jiop
 
-import com.avsystem.commons.jiop.BasicJavaInterop._
-
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
 

@@ -1,14 +1,9 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.collection.CollectionAliases._
-import com.avsystem.commons.jiop.JavaInterop._
+import org.scalactic.source.Position
 import org.scalatest.FunSuite
 
-/**
-  * Author: ghik
-  * Created: 04/02/16.
-  */
 trait CodecTestBase extends FunSuite {
   def col[T <: JCollection[Int]](col: T): T = {
     col.add(1)
@@ -57,12 +52,12 @@ trait CodecTestBase extends FunSuite {
   val jLinkedHashMap = stringMap(new JLinkedHashMap[String, Int])
   val jTreeMap = stringMap(new JTreeMap[String, Int])
 
-  def assertSameTypeValue[T](v1: T, v2: T): Unit = {
+  def assertSameTypeValue[T](v1: T, v2: T)(implicit pos: Position): Unit = {
     assert(v1 == v2)
     assert(v1.getClass == v2.getClass)
   }
 
-  def testWriteRead[T: GenCodec](value: T, expectedRepr: Any): Unit = {
+  def testWriteRead[T: GenCodec](value: T, expectedRepr: Any)(implicit pos: Position): Unit = {
     var written: Any = null
     GenCodec.write[T](new SimpleValueOutput(written = _), value)
     assert(written == expectedRepr)
@@ -70,7 +65,7 @@ trait CodecTestBase extends FunSuite {
     assertSameTypeValue(value, readBack)
   }
 
-  def testAutoWriteRead[T: GenCodec.Auto](value: T, expectedRepr: Any): Unit = {
+  def testAutoWriteRead[T: GenCodec.Auto](value: T, expectedRepr: Any)(implicit pos: Position): Unit = {
     var written: Any = null
     GenCodec.autoWrite[T](new SimpleValueOutput(written = _), value)
     assert(written == expectedRepr)
@@ -78,7 +73,7 @@ trait CodecTestBase extends FunSuite {
     assertSameTypeValue(value, readBack)
   }
 
-  def testWriteReadAndAutoWriteRead[T: GenCodec : GenCodec.Auto](value: T, expectedRepr: Any): Unit = {
+  def testWriteReadAndAutoWriteRead[T: GenCodec : GenCodec.Auto](value: T, expectedRepr: Any)(implicit pos: Position): Unit = {
     testWriteRead[T](value, expectedRepr)
     testAutoWriteRead[T](value, expectedRepr)
   }

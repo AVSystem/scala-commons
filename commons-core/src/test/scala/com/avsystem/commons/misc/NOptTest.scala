@@ -1,13 +1,8 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.jiop.JavaInterop._
 import org.scalatest.FunSuite
 
-/**
-  * Author: ghik
-  * Created: 08/01/16.
-  */
 class NOptTest extends FunSuite {
   test("nonempty test") {
     val opt = NOpt(23)
@@ -48,5 +43,11 @@ class NOptTest extends FunSuite {
 
   test("empty hash code") {
     NOpt.Empty.hashCode
+  }
+
+  test("collect") {
+    assert(NOpt(3).collect { case 2 => 2 } == NOpt.Empty)
+    assert(NOpt(3).collect { case 3 => 2 } == NOpt.some(2))
+    assert(NOpt(3).collect { case 3 => null } == NOpt.some(null))
   }
 }

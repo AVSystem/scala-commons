@@ -21,7 +21,7 @@ object Opt {
 
   def empty[A]: Opt[A] = Empty
 
-  private val nullFunc: Any => Null = _ => null
+  private val emptyMarkerFunc: Any => Any = _ => EmptyMarker
 
   final class WithFilter[+A] private[Opt](self: Opt[A], p: A => Boolean) {
     def map[B](f: A => B): Opt[B] = self filter p map f
@@ -32,15 +32,16 @@ object Opt {
 }
 
 /**
-  * Like `Option` but avoids boxing and treats `null` as no value. Therefore, there is no equivalent for `Some(null)`.
+  * Like [[scala.Option Option]] but implemented as value class (avoids boxing) and treats `null` as no value.
+  * Therefore, there is no equivalent for `Some(null)`.
   *
-  * Author: ghik
-  * Created: 07/01/16.
+  * If you need a value-class version of [[scala.Option Option]] which differentiates between no value and `null` value,
+  * use [[NOpt]].
   */
 final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
   private def value: A = rawValue.asInstanceOf[A]
 
-  @inline def isEmpty: Boolean = rawValue == EmptyMarker
+  @inline def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker
   @inline def isDefined: Boolean = !isEmpty
   @inline def nonEmpty: Boolean = isDefined
 
@@ -49,6 +50,9 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
 
   @inline def boxed[B](implicit boxing: Boxing[A, B]): Opt[B] =
     map(boxing.fun)
+
+  @inline def boxedOrNull[B >: Null](implicit boxing: Boxing[A, B]): B =
+    if (isEmpty) null else boxing.fun(value)
 
   @inline def unboxed[B](implicit unboxing: Unboxing[B, A]): Opt[B] =
     map(unboxing.fun)
@@ -100,7 +104,10 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
   }
 
   @inline def collect[B](pf: PartialFunction[A, B]): Opt[B] =
-    if (!isEmpty) new Opt(pf.applyOrElse(value, Opt.nullFunc)) else Opt.Empty
+    if (!isEmpty) {
+      val res = pf.applyOrElse(value, Opt.emptyMarkerFunc)
+      new Opt(if (res == null) EmptyMarker else res)
+    } else Opt.Empty
 
   @inline def orElse[B >: A](alternative: => Opt[B]): Opt[B] =
     if (isEmpty) alternative else this

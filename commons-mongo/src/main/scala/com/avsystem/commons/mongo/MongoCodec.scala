@@ -5,8 +5,6 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
 import org.bson.{BsonReader, BsonValue, BsonWriter}
 
-import scala.reflect.ClassTag
-
 /**
   * @author MKej
   */

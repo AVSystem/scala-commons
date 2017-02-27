@@ -3,7 +3,6 @@ package mongo
 
 import java.time.Instant
 
-import com.avsystem.commons.jiop.JavaInterop._
 import org.bson.types.ObjectId
 import org.bson.{BsonArray, BsonBinary, BsonBoolean, BsonDateTime, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonObjectId, BsonString, BsonValue}
 

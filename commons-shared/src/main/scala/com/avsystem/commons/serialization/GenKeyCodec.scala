@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.jiop.BasicJavaInterop._
-
 import scala.annotation.implicitNotFound
 
 /**
@@ -47,4 +45,10 @@ object GenKeyCodec {
   implicit val JLongKeyCodec: GenKeyCodec[JLong] = create(_.toLong, _.toString)
 
   implicit val StringKeyCodec: GenKeyCodec[String] = create(identity, identity)
+
+  implicit def jEnumKeyCodec[E <: Enum[E]](implicit ct: ClassTag[E]): GenKeyCodec[E] =
+    GenKeyCodec.create(
+      string => Enum.valueOf(ct.runtimeClass.asInstanceOf[Class[E]], string),
+      enum => enum.name()
+    )
 }

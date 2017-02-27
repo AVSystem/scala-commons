@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.collection.CollectionAliases._
 import org.bson.BsonString
 import org.scalatest.FunSuite
 

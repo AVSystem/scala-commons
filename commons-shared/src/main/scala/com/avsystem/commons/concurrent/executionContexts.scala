@@ -2,8 +2,7 @@ package com.avsystem.commons
 package concurrent
 
 import scala.collection.mutable
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
-import scala.util.control.NonFatal
+import scala.concurrent.ExecutionContextExecutor
 
 object RunNowEC extends ExecutionContextExecutor {
   def get: ExecutionContextExecutor = this

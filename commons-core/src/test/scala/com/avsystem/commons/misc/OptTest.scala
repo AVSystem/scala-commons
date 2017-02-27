@@ -1,13 +1,8 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.jiop.JavaInterop._
 import org.scalatest.FunSuite
 
-/**
-  * Author: ghik
-  * Created: 08/01/16.
-  */
 class OptTest extends FunSuite {
   test("nonempty test") {
     val opt = Opt(23)
@@ -49,5 +44,11 @@ class OptTest extends FunSuite {
   test("orNull") {
     assert((Opt.Empty.orNull: Any) == null)
     assert(Opt("").orNull == "")
+  }
+
+  test("collect") {
+    assert(Opt(3).collect { case 3 => 2 } == Opt(2))
+    assert(Opt(3).collect { case 2 => 2 } == Opt.Empty)
+    assert(Opt(3).collect { case 3 => null } == Opt.Empty)
   }
 }

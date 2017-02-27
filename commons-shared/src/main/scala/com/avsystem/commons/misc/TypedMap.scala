@@ -6,10 +6,6 @@ import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, ObjectInput, O
 
 import scala.language.{higherKinds, implicitConversions}
 
-/**
-  * Author: ghik
-  * Created: 21/04/16.
-  */
 class TypedMap[K[_]](val raw: Map[K[_], Any]) extends AnyVal {
   def apply[T](key: K[T]): Option[T] =
     raw.get(key).map(_.asInstanceOf[T])
@@ -45,9 +41,9 @@ object TypedMap {
       protected def readObject(input: ObjectInput) = {
         val rawBuilder = Map.newBuilder[K[_], Any]
         while (input.hasNext) {
-          val (rawKey, valueInput) = input.nextField()
-          val key = keyCodec.read(rawKey)
-          rawBuilder += ((key, codecMapping.valueCodec(key).read(valueInput)))
+          val fieldInput = input.nextField()
+          val key = keyCodec.read(fieldInput.fieldName)
+          rawBuilder += ((key, codecMapping.valueCodec(key).read(fieldInput)))
         }
         new TypedMap[K](rawBuilder.result())
       }

@@ -3,15 +3,11 @@ package jiop
 
 import java.util.IntSummaryStatistics
 
-import com.avsystem.commons.jiop.JavaInterop._
+import com.avsystem.commons.jiop.Java8Interop._
 
 import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds
 
-/**
-  * Author: ghik
-  * Created: 15/07/15.
-  */
 final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
   def asJava = jStream
 

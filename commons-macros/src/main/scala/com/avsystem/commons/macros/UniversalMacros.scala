@@ -3,10 +3,6 @@ package macros
 
 import scala.reflect.macros.blackbox
 
-/**
-  * Author: ghik
-  * Created: 07/01/16.
-  */
 class UniversalMacros(val c: blackbox.Context) {
 
   import c.universe._

@@ -1,13 +1,8 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.jiop.JavaInterop._
 import org.scalatest.FunSuite
 
-/**
-  * Author: ghik
-  * Created: 08/01/16.
-  */
 class OptRefTest extends FunSuite {
   test("nonempty test") {
     val opt = OptRef("lol")

@@ -3,7 +3,6 @@ package jiop
 
 import java.{lang => jl, util => ju}
 
-import com.avsystem.commons.jiop.BasicJavaInterop._
 
 import scala.collection.generic.CanBuildFrom
 import scala.language.{higherKinds, implicitConversions}
@@ -29,6 +28,9 @@ trait JCollectionUtils extends JCanBuildFroms {
   type JNavigableMap[K, V] = ju.NavigableMap[K, V]
   type JTreeMap[K, V] = ju.TreeMap[K, V]
   type JEnumMap[K <: Enum[K], V] = ju.EnumMap[K, V]
+  type JQueue[E] = ju.Queue[E]
+  type JDeque[E] = ju.Deque[E]
+  type JArrayDeque[E] = ju.ArrayDeque[E]
 
   abstract class JCollectionCreator[C[T] <: JCollection[T]] {
     protected def instantiate[T]: C[T]

@@ -1,12 +1,6 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.jiop.BasicJavaInterop._
-
-/**
-  * Author: ghik
-  * Created: 07/01/16.
-  */
 case class Boxing[-A, +B](fun: A => B) extends AnyVal
 object Boxing extends LowPrioBoxing {
   def fromImplicitConv[A, B](implicit conv: A => B): Boxing[A, B] = Boxing(conv)

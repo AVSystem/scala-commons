@@ -4,10 +4,6 @@ package rpc
 import scala.annotation.implicitNotFound
 import scala.language.higherKinds
 
-/**
-  * Author: ghik
-  * Created: 27/05/15.
-  */
 
 trait RPCFramework {
   type RawValue
@@ -62,7 +58,8 @@ trait RPCFramework {
     * to invocations of actual methods on `rpcImpl`. Method arguments and results are serialized and deserialized
     * from/to [[RawValue]] using [[Reader]] and [[Writer]] typeclasses.
     */
-  implicit def materializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCMacros.asRawImpl[T]
+  def materializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCMacros.asRawImpl[T]
+  implicit def implicitlyMaterializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCMacros.asRawImpl[T]
 
   trait AsRealRPC[T] {
     def asReal(rawRpc: RawRPC): T
@@ -77,7 +74,8 @@ trait RPCFramework {
     * by forwarding them to `rawRpc`. Method arguments and results are serialized and deserialized
     * from/to [[RawValue]] using [[Reader]] and [[Writer]] typeclasses.
     */
-  implicit def materializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCMacros.asRealImpl[T]
+  def materializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCMacros.asRealImpl[T]
+  implicit def implicitlyMaterializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCMacros.asRealImpl[T]
 
   /** INTERNAL API */
   def tryToRaw[Real, Raw](real: Real, onFailure: Nothing): Raw = macro macros.rpc.RPCMacros.tryToRaw[Real, Raw]

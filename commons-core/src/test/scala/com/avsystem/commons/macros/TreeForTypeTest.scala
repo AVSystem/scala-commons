@@ -30,10 +30,6 @@ object TreeForTypeTest {
   }""")
 }
 
-/**
-  * Author: ghik
-  * Created: 25/11/15.
-  */
 class TreeForTypeTest {
 
   import TreeForTypeTest._

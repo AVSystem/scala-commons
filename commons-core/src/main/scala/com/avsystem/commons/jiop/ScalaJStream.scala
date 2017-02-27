@@ -1,17 +1,12 @@
 package com.avsystem.commons
 package jiop
 
-import com.avsystem.commons.jiop.JavaInterop._
+import com.avsystem.commons.jiop.Java8Interop._
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds
-import scala.reflect.ClassTag
 
-/**
-  * Author: ghik
-  * Created: 15/07/15.
-  */
 final class ScalaJStream[+A](private val jStream: JStream[A@uV]) extends AnyVal {
   def asJava[B >: A]: JStream[B] =
     jStream.asInstanceOf[JStream[B]]

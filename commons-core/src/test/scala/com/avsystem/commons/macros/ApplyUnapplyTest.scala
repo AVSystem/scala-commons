@@ -6,10 +6,6 @@ trait ApplierUnapplier[T, F] {
   def unapply(t: T): F
 }
 
-/**
-  * Author: ghik
-  * Created: 02/12/15.
-  */
 object ApplyUnapplyTest {
   case class Empty()
   case class Single(int: Int)

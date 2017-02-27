@@ -1,15 +1,11 @@
 package com.avsystem.commons
 package macros.misc
 
-import com.avsystem.commons.macros.MacroCommons
+import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.reflect.macros.blackbox
 
-/**
-  * Author: ghik
-  * Created: 23/11/15.
-  */
-class SamMacros(val c: blackbox.Context) extends MacroCommons {
+class SamMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 

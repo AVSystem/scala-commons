@@ -40,8 +40,6 @@ class HoconBeanDefinitionReaderTest extends FunSuite {
   test("hocon bean definition reader should work") {
     val ctx = createContext("testBean.conf")
 
-    import scala.collection.JavaConverters._
-
     val testBean = ctx.getBean(classOf[TestBean])
     assert(42 === testBean.constrInt)
     assert("lolzsy" === testBean.constrString)

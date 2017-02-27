@@ -1,22 +1,33 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.collection.CollectionAliases._
-import com.avsystem.commons.jiop.JavaInterop._
+import java.lang.annotation.RetentionPolicy
+
 import com.avsystem.commons.misc.{TypedKey, TypedKeyCompanion, TypedMap}
 import com.avsystem.commons.serialization.GenCodecTest.ValueClass
+import com.github.ghik.silencer.silent
 
-/**
-  * Author: ghik
-  * Created: 18/11/15.
-  */
 object GenCodecTest {
   case class ValueClass(str: String) extends AnyVal
-  object ValueClass {
-    implicit val codec: GenCodec[ValueClass] = GenCodec.materialize[ValueClass]
-  }
+  object ValueClass extends HasGenCodec[ValueClass]
 }
 
+sealed trait SealedBase
+object SealedBase {
+  case object CaseObject extends SealedBase
+  case class CaseClass(str: String) extends SealedBase
+
+  sealed trait InnerBase extends SealedBase
+  object InnerBase {
+    case object InnerCaseObject extends InnerBase
+    case class InnerCaseClass(str: String) extends InnerBase
+  }
+
+  @silent //exhaustivity checker has some problems with macro-generated match on doubly nested inner case classes/objects
+  implicit val codec: GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
+}
+
+@silent
 class GenCodecTest extends CodecTestBase {
   test("NoState test") {
     type NoState = Nothing {type Dummy = Nothing}
@@ -67,6 +78,11 @@ class GenCodecTest extends CodecTestBase {
     )
   }
 
+  test("java enum test") {
+    testWriteReadAndAutoWriteRead(RetentionPolicy.RUNTIME, "RUNTIME")
+    testWriteReadAndAutoWriteRead(RetentionPolicy.SOURCE, "SOURCE")
+  }
+
   object SomeObject {
     implicit val codec = GenCodec.materialize[SomeObject.type]
   }
@@ -76,18 +92,14 @@ class GenCodecTest extends CodecTestBase {
   }
 
   case class NoArgCaseClass()
-  object NoArgCaseClass {
-    implicit val codec = GenCodec.materialize[NoArgCaseClass]
-  }
+  object NoArgCaseClass extends HasGenCodec[NoArgCaseClass]
 
   test("no arg case class test") {
     testWriteReadAndAutoWriteRead(NoArgCaseClass(), Map())
   }
 
   case class SingleArgCaseClass(str: String)
-  object SingleArgCaseClass {
-    implicit val codec = GenCodec.materialize[SingleArgCaseClass]
-  }
+  object SingleArgCaseClass extends HasGenCodec[SingleArgCaseClass]
 
   test("single arg case class test") {
     testWriteReadAndAutoWriteRead(SingleArgCaseClass("something"), Map("str" -> "something"))
@@ -95,18 +107,14 @@ class GenCodecTest extends CodecTestBase {
 
   @transparent
   case class TransparentWrapper(str: String)
-  object TransparentWrapper {
-    implicit val codec = GenCodec.materialize[TransparentWrapper]
-  }
+  object TransparentWrapper extends HasGenCodec[TransparentWrapper]
 
   test("transparent wrapper test") {
     testWriteReadAndAutoWriteRead(TransparentWrapper("something"), "something")
   }
 
   case class SomeCaseClass(@name("some.str") str: String, intList: List[Int])
-  object SomeCaseClass {
-    implicit val codec = GenCodec.materialize[SomeCaseClass]
-  }
+  object SomeCaseClass extends HasGenCodec[SomeCaseClass]
 
   test("case class test") {
     testWriteReadAndAutoWriteRead(SomeCaseClass("dafuq", List(1, 2, 3)),
@@ -149,8 +157,54 @@ class GenCodecTest extends CodecTestBase {
     )
   }
 
+  sealed trait CustomList
+  case object CustomTail extends CustomList
+  @transparent case class CustomCons(tail: CustomList) extends CustomList
+  object CustomCons {
+    implicit val codec: GenCodec[CustomCons] = GenCodec.materialize[CustomCons]
+  }
+  object CustomList {
+    implicit val codec: GenCodec[CustomList] = GenCodec.materialize[CustomList]
+  }
+
+  test("recursively defined sealed hierarchy with explicit case class codec test") {
+    testWriteReadAndAutoWriteRead[CustomList](CustomTail, Map("CustomTail" -> Map()))
+    testWriteReadAndAutoWriteRead[CustomList](CustomCons(CustomCons(CustomTail)),
+      Map("CustomCons" -> Map("CustomCons" -> Map("CustomTail" -> Map()))))
+  }
+
   test("value class test") {
     testWriteReadAndAutoWriteRead(ValueClass("costam"), Map("str" -> "costam"))
+  }
+
+  test("sealed hierarchy test") {
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseObject, Map("CaseObject" -> Map()))
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseClass("fuu"), Map("CaseClass" -> Map("str" -> "fuu")))
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseObject, Map("InnerCaseObject" -> Map()))
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"), Map("InnerCaseClass" -> Map("str" -> "fuu")))
+  }
+
+  sealed trait BaseExpr {
+    type Value
+    def value: Value
+  }
+  sealed abstract class Expr[T](val value: T) extends BaseExpr {
+    type Value = T
+  }
+  case class IntExpr(int: Int) extends Expr[Int](int)
+  case class StringExpr(str: String) extends Expr[String](str)
+  case object NullExpr extends Expr[Null](null)
+  object BaseExpr {
+    implicit val baseCodec: GenCodec[BaseExpr] = GenCodec.materialize[BaseExpr]
+    implicit val codec: GenCodec[Expr[_]] = GenCodec.materialize[Expr[_]]
+    implicit val stringCodec: GenCodec[Expr[String]] = GenCodec.materialize[Expr[String]]
+  }
+
+  test("GADT test") {
+    testWriteReadAndAutoWriteRead[Expr[_]](NullExpr, Map("NullExpr" -> Map()))
+    testWriteReadAndAutoWriteRead[Expr[_]](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
+    testWriteReadAndAutoWriteRead[Expr[String]](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
+    testWriteReadAndAutoWriteRead[BaseExpr](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
   }
 
   sealed trait Tree[T]
@@ -160,7 +214,7 @@ class GenCodecTest extends CodecTestBase {
     implicit def codec[A: GenCodec]: GenCodec[Tree[A]] = GenCodec.materialize[Tree[A]]
   }
 
-  test("recursive gadt test") {
+  test("recursive generic ADT test") {
     testWriteReadAndAutoWriteRead[Tree[Int]](
       Branch(
         Leaf(1),
@@ -202,8 +256,7 @@ class GenCodecTest extends CodecTestBase {
     case object Second extends KeyEnumz
     case object Third extends KeyEnumz
 
-    implicit val keyCodec: GenKeyCodec[KeyEnumz] = GenKeyCodec.forSealedEnum[KeyEnumz]
-    implicit def codec: GenCodec[KeyEnumz] = GenCodec.fromKeyCodec
+    implicit val codec: GenCodec[KeyEnumz] = GenCodec.forSealedEnum[KeyEnumz]
   }
 
   test("sealed enum based on key codec test") {

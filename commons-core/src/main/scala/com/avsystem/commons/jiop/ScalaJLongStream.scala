@@ -3,15 +3,11 @@ package jiop
 
 import java.util.LongSummaryStatistics
 
-import com.avsystem.commons.jiop.JavaInterop._
+import com.avsystem.commons.jiop.Java8Interop._
 
 import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds
 
-/**
-  * Author: ghik
-  * Created: 15/07/15.
-  */
 final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
   def asJava = jStream
 

@@ -1,10 +1,6 @@
 package com.avsystem.commons
 package misc
 
-/**
-  * Author: ghik
-  * Created: 14/01/16.
-  */
 
 import com.avsystem.commons.misc.NOpt.{EmptyMarker, NullMarker}
 
@@ -26,8 +22,7 @@ object NOpt {
   def unapply[A](opt: NOpt[A]): NOpt[A] = opt //name-based extractor
 
   def some[A](value: A): NOpt[A] =
-    if (value == null) new NOpt(NullMarker)
-    else new NOpt(value)
+    new NOpt(if(value == null) NullMarker else value)
 
   implicit def opt2Iterable[A](xo: NOpt[A]): Iterable[A] = xo.toList
 
@@ -35,7 +30,7 @@ object NOpt {
 
   def empty[A]: NOpt[A] = Empty
 
-  private val emptyFunc: Any => NOpt[Nothing] = _ => Empty
+  private val emptyMarkerFunc: Any => Any = _ => EmptyMarker
 
   final class WithFilter[+A] private[NOpt](self: NOpt[A], p: A => Boolean) {
     def map[B](f: A => B): NOpt[B] = self filter p map f
@@ -46,12 +41,12 @@ object NOpt {
 }
 
 /**
-  * Like [[Opt]] but does have a counterpart for `Some(null)`.
+  * Like [[Opt]] but does have a counterpart for `Some(null)`. In other words, [[NOpt]] is a "nullable [[Opt]]".
   */
 final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
   private def value: A = (if (rawValue.asInstanceOf[AnyRef] eq NullMarker) null else rawValue).asInstanceOf[A]
 
-  @inline def isEmpty: Boolean = rawValue == EmptyMarker
+  @inline def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker
   @inline def isDefined: Boolean = !isEmpty
   @inline def nonEmpty: Boolean = isDefined
 
@@ -114,7 +109,10 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with Seri
   }
 
   @inline def collect[B](pf: PartialFunction[A, B]): NOpt[B] =
-    if (!isEmpty) pf.andThen(NOpt.some).applyOrElse(value, NOpt.emptyFunc) else NOpt.Empty
+    if (!isEmpty) {
+      val res = pf.applyOrElse(value, NOpt.emptyMarkerFunc)
+      new NOpt(if (res == null) NullMarker else res)
+    } else NOpt.Empty
 
   @inline def orElse[B >: A](alternative: => NOpt[B]): NOpt[B] =
     if (isEmpty) alternative else this

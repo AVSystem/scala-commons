@@ -6,13 +6,13 @@ import java.util.stream.{Collectors, DoubleStream, IntStream, LongStream}
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.FunSuite
 
+import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Promise}
-import scala.util.Success
 
 class JavaInteropTest extends FunSuite {
 
-  import JavaInterop._
+  import GuavaInterop._
+  import Java8Interop._
 
   def assertSame[A](s1: JStream[A], s2: JStream[A]): Unit =
     assert(s1.collect(Collectors.toList[A]) === s2.collect(Collectors.toList[A]))
@@ -54,7 +54,7 @@ class JavaInteropTest extends FunSuite {
   }
 
   test("java primitive streams should work") {
-    import JavaInterop._
+    import Java8Interop._
 
     def ints = IntStream.of(1, 2, 3, 4, 5, 6)
     assertSame(
@@ -77,8 +77,6 @@ class JavaInteropTest extends FunSuite {
   }
 
   test("streams should be collectible to scala collections") {
-    import JavaInterop._
-
     assertSameTypeValue(arrayList.scalaStream.to[Traversable], Iterator(1, 2, 3).to[Traversable])
     assertSameTypeValue(arrayList.scalaStream.to[Iterable], Iterator(1, 2, 3).to[Iterable])
     assertSameTypeValue(arrayList.scalaStream.to[Seq], Iterator(1, 2, 3).to[Seq])
@@ -93,8 +91,6 @@ class JavaInteropTest extends FunSuite {
   }
 
   test("java collection CanBuildFroms should have proper priority") {
-    import JavaInterop._
-
     val intList = List(1, 2, 3)
     val pairList = intList.map(i => (i, i.toString))
     assertSameTypeValue(intList.to[JArrayList], arrayList)
@@ -193,10 +189,7 @@ class JavaInteropTest extends FunSuite {
   }
 
   test("guava to scala Future conversion should work") {
-    implicit object ec extends ExecutionContext {
-      def execute(runnable: Runnable): Unit = runnable.run()
-      def reportFailure(cause: Throwable): Unit = cause.printStackTrace()
-    }
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
 
     val gfut = SettableFuture.create[Int]
     val sfut = gfut.asScala
@@ -212,6 +205,41 @@ class JavaInteropTest extends FunSuite {
     assert(gfut.isDone === sfut.isCompleted)
     assert(sfut.value === Some(Success(123)))
     assert(listenerCalled)
+  }
+
+  test("transforming wrapped guava Future should work") {
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
+
+    val gfut = SettableFuture.create[Int]
+    val sfut = gfut.asScala.transform(identity, identity)
+
+    var value: Try[Int] = null
+    sfut.onComplete {
+      value = _
+    }
+    gfut.set(42)
+
+    assert(value == Success(42))
+  }
+
+  test("SettableFuture to Promise conversion should work") {
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
+
+    val sprom = SettableFuture.create[String].asScalaPromise
+    val fprom = SettableFuture.create[String].asScalaPromise
+
+    var sres: Try[String] = null
+    var fres: Try[String] = null
+
+    sprom.future.onComplete(sres = _)
+    fprom.future.onComplete(fres = _)
+
+    object exception extends Exception
+    sprom.complete(Success("lol"))
+    fprom.complete(Failure(exception))
+
+    assert(sres == Success("lol"))
+    assert(fres == Failure(exception))
   }
 
   test("toJMap should work") {

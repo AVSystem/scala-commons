@@ -1,13 +1,22 @@
 language: scala
 
 scala:
-  - 2.11.7
+  - 2.11.8
+  - 2.12.1
 
 jdk:
   - oraclejdk8
 
+before_install:
+  - ./install-redis.sh
+
+env:
+  global:
+    - REDIS_VERSION=4.0-rc2
+    - REDIS_HOME=$PWD/redis-$REDIS_VERSION/src
+
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean test
+  - sbt ++$TRAVIS_SCALA_VERSION test commons/unidoc
 
 sudo: false
 
@@ -15,7 +24,12 @@ cache:
   directories:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
+    - redis-$REDIS_VERSION
 
 before_cache:
   - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
   - find $HOME/.sbt -name "*.lock" -delete
+
+notifications:
+  email:
+    - r.janusz@avsystem.com
