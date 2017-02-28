@@ -184,7 +184,6 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
               val fi = input.nextField()
               fi.fieldName match {
                 case ..${params.map(p => cq"${nameBySym(p.sym)} => ${optName(p)} = $NOptObj.some(${depNames(p.sym)}.read(fi))")}
-                case _ => fi.skip()
               }
             }
             ${applier(params.map(readField))}

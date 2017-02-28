@@ -4,6 +4,8 @@ package serialization
 import com.avsystem.commons.serialization.AutoGenCodecTest.ValueClass
 import com.github.ghik.silencer.silent
 
+import scala.util.Try
+
 object AutoGenCodecTest {
   case class ValueClass(str: String) extends AnyVal
 }
@@ -154,5 +156,33 @@ class AutoGenCodecTest extends CodecTestBase {
 
   ignore("option codec visibility") {
     testAutoWriteRead[Option[HasMap]](Some(HasMap(Map("a" -> "A"))), List(Map("map" -> Map("a" -> "A"))))
+  }
+
+  trait Fields
+  case class FieldsAB(a: String, b: String) extends Fields
+  case class FieldsABC(a: String, b: String, c: String) extends Fields
+
+  test("exact match of fields") {
+    implicit val abGenCodec: GenCodec[FieldsAB] = GenCodec.materialize[FieldsAB]
+    implicit val abcGenCodec: GenCodec[FieldsABC] = GenCodec.materialize[FieldsABC]
+
+    implicit val genCodec: GenCodec[Fields] = new GenCodec[Fields] {
+      override def write(output: Output, value: Fields): Unit = {
+        value match {
+          case v: FieldsAB => abGenCodec.write(output, v)
+          case v: FieldsABC => abcGenCodec.write(output, v)
+        }
+      }
+
+      override def read(input: Input): Fields = {
+        Seq(abGenCodec, abcGenCodec).map(codec => Try(codec.read(input))).find(_.isSuccess) match {
+          case Some(value) => value.get
+          case None => throw new IllegalArgumentException()
+        }
+      }
+    }
+
+    testAutoWriteRead[Fields](FieldsAB("A", "B"), Map("a" -> "A", "b" -> "B"))
+    testAutoWriteRead[Fields](FieldsABC("A", "B", "C"), Map("a" -> "A", "b" -> "B", "c" -> "C"))
   }
 }
