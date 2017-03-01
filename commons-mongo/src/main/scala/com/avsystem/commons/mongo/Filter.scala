@@ -13,6 +13,7 @@ object Filter {
   import Limitations._
 
   def and(filters: Bson*): Bson = F.and(filters.asJava)
+  def or(filters: Bson*): Bson = F.or(filters.asJava)
 
   @deprecated(message = "Use `equal` instead", since = "1.19.9")
   def eq[A](key: DocKey[A, _], value: A): Bson = equal(key, value)

@@ -30,5 +30,6 @@ object Filtering {
 
   implicit class BsonOps(val bson: Bson) extends AnyVal {
     def and(others: Bson*): Bson = Filter.and(bson +: others: _*)
+    def or(others: Bson*): Bson = Filter.or(bson +: others: _*)
   }
 }
