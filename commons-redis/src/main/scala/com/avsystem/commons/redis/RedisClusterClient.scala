@@ -49,28 +49,41 @@ final class RedisClusterClient(
 
   require(seedNodes.nonEmpty, "No seed nodes provided")
 
+  // (optimization) allows us to avoid going through `initPromise` after the client has been successfully initialized
   @volatile private[this] var initSuccess = false
   @volatile private[this] var state = ClusterState(IndexedSeq.empty, Map.empty)
   @volatile private[this] var stateListener = (_: ClusterState) => ()
   // clients for nodes mentioned in redirection messages which are not yet in the cluster state
   @volatile private[this] var temporaryClients = List.empty[RedisNodeClient]
+  // ensures that all operations fail fast after client is closed instead of being sent further
   @volatile private[this] var failure = Opt.empty[Throwable]
   private val initPromise = Promise[Unit]
+  initPromise.future.foreachNow(_ => initSuccess = true)
 
-  private def ifReady[T](code: => Future[T]): Future[T] =
-    failure.fold(if (initSuccess) code else initPromise.future.flatMapNow(_ => code))(Future.failed)
+  private def ifReady[T](code: => Future[T]): Future[T] = failure match {
+    case Opt.Empty if initSuccess => code
+    case Opt.Empty => initPromise.future.flatMapNow(_ => code)
+    case Opt(t) => Future.failed(t)
+  }
 
   // invoked by monitoring actor, effectively serialized
   private def onNewState(newState: ClusterState): Unit = {
     state = newState
     temporaryClients = Nil
     stateListener(state)
-    import system.dispatcher
-    Future.traverse(state.masters.values)(_.initialized).mapNow(_ => ()).onComplete { result =>
-      // is it still the same state?
-      if (state eq newState) {
-        initPromise.tryComplete(result)
-        initSuccess = true
+    if (!initSuccess) {
+      import system.dispatcher
+      Future.traverse(state.masters.values)(_.initialized).toUnit.onComplete { result =>
+        // This check handles situation where some node goes down _exactly_ during RedisClusterClient initialization.
+        // The failed node was in the first cluster state that we fetched and we tried to connect to it
+        // but Redis Cluster detected the failure and cluster state changed. When `RedisMonitoringActor` detects this
+        // change, `RedisNodeClient` for the failed node is killed and initialization fails. But we shouldn't fail
+        // initialization of entire `RedisClusterClient` because we know that the state changed and thus we should retry.
+        // In other words, this check avoids failing entire `RedisClusterClient` based on obsolete cluster state.
+        // This scenario is tested by `RedisClusterClientInitDuringFailureTest`.
+        if (state eq newState) {
+          initPromise.tryComplete(result)
+        }
       }
     }
   }

@@ -75,9 +75,7 @@ class RedisClusterClientInitDuringFailureTest extends FunSuite
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(Span(120, Seconds), Span(1, Seconds))
   override implicit val timeout: Timeout = 120.seconds
 
-  def createClient(ports: Int*) = {
-    new RedisClusterClient(ports.map(p => NodeAddress(port = p)))
-  }
+  def createClient(ports: Int*) = new RedisClusterClient(ports.map(p => NodeAddress(port = p)))
 
   test("client init during failure test") {
     new RedisConnectionClient(NodeAddress(port = 9000))
