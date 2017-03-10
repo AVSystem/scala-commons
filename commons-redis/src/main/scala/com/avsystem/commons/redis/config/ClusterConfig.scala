@@ -35,6 +35,11 @@ import scala.concurrent.duration._
   *                                    Note that the node client is NOT operational during that delay. Trying to
   *                                    execute commands on it will result in
   *                                    [[com.avsystem.commons.redis.exception.NodeRemovedException NodeRemovedException]]
+  * @param fallbackToSingleNode        if [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]] has
+  *                                    exactly one seed address configured and it points to a non-clustered Redis node
+  *                                    then cluster client will not fail initialization but internally create a
+  *                                    [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]] for that node
+  *                                    and forward all operations to it.
   */
 case class ClusterConfig(
   nodeConfigs: NodeAddress => NodeConfig = _ => NodeConfig(),
@@ -43,7 +48,8 @@ case class ClusterConfig(
   minRefreshInterval: FiniteDuration = 1.seconds,
   nodesToQueryForState: Int => Int = _ min 5,
   maxRedirections: Int = 3,
-  nodeClientCloseDelay: FiniteDuration = 1.seconds
+  nodeClientCloseDelay: FiniteDuration = 1.seconds,
+  fallbackToSingleNode: Boolean = false
 )
 
 /**

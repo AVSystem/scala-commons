@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package spring
 
-import java.{lang => jl, util => ju}
-
 import com.github.ghik.silencer.silent
 import org.springframework.beans.factory.support.AbstractBeanDefinition
 

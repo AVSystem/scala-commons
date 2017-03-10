@@ -352,3 +352,7 @@ case class SlotRange(start: Int, end: Int) {
   def contains(slot: Int): Boolean = slot >= start && slot <= end
   override def toString = if (start == end) start.toString else s"$start-$end"
 }
+object SlotRange {
+  final val LastSlot = Hash.TotalSlots - 1
+  final val Full = SlotRange(0, LastSlot)
+}

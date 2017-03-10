@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package redis.actor
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, Cancellable, Props}
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{NodeInfo, SlotRange, SlotRangeMapping}
 import com.avsystem.commons.redis.config.ClusterConfig
-import com.avsystem.commons.redis.exception.ClusterInitializationException
+import com.avsystem.commons.redis.exception.{ClusterInitializationException, ErrorReplyException}
 import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{ClusterState, NodeAddress, RedisApi, RedisBatch, RedisNodeClient}
 
@@ -41,8 +41,8 @@ final class ClusterMonitoringActor(
     initPromise.future
   }
 
-  private def createClient(addr: NodeAddress) =
-    new RedisNodeClient(addr, config.nodeConfigs(addr), clusterNode = true)
+  private def createClient(addr: NodeAddress, clusterNode: Boolean = true) =
+    new RedisNodeClient(addr, config.nodeConfigs(addr), clusterNode)
 
   private val random = new Random
   private var masters = mutable.LinkedHashSet.empty[NodeAddress]
@@ -50,11 +50,10 @@ final class ClusterMonitoringActor(
   private val clients = new mutable.HashMap[NodeAddress, RedisNodeClient]
   private var state = Opt.empty[ClusterState]
   private var suspendUntil = Deadline.now
+  private var scheduledRefresh = Opt.empty[Cancellable]
   private val seedFailures = new ArrayBuffer[Throwable]
 
   self ! Refresh(Opt(seedNodes))
-  private val scheduledRefresh =
-    system.scheduler.schedule(config.autoRefreshInterval, config.autoRefreshInterval, self, Refresh())
 
   private def randomMasters(): Seq[NodeAddress] = {
     val pool = masters.toArray
@@ -104,6 +103,10 @@ final class ClusterMonitoringActor(
           onNewClusterState(newState)
         }
 
+        if (scheduledRefresh.isEmpty) {
+          scheduledRefresh = system.scheduler.schedule(config.autoRefreshInterval, config.autoRefreshInterval, self, Refresh()).opt
+        }
+
         (connections.keySet diff masters).foreach { addr =>
           connections.remove(addr).foreach(context.stop)
         }
@@ -113,6 +116,21 @@ final class ClusterMonitoringActor(
             context.system.scheduler.scheduleOnce(config.nodeClientCloseDelay)(client.close())
           }
         }
+
+      case Failure(err: ErrorReplyException) if state.isEmpty && seedNodes.size == 1 && config.fallbackToSingleNode &&
+        err.reply.errorString.utf8String == "ERR This instance has cluster support disabled" =>
+
+        val addr = seedNodes.head
+        log.info(s"$addr is a non-clustered node, falling back to regular node client")
+
+        val client = clients.getOrElseUpdate(addr, createClient(addr, clusterNode = false))
+        val newState = ClusterState.nonClustered(client)
+        state = newState.opt
+        onNewClusterState(newState)
+
+        // we don't need monitoring connection for non-clustered node
+        connections.values.foreach(context.stop)
+        connections.clear()
 
       case Failure(cause) =>
         log.error(s"Failed to refresh cluster state", cause)
@@ -135,7 +153,7 @@ final class ClusterMonitoringActor(
   }
 
   override def postStop() = {
-    scheduledRefresh.cancel()
+    scheduledRefresh.foreach(_.cancel())
     clients.values.foreach(_.close())
   }
 }

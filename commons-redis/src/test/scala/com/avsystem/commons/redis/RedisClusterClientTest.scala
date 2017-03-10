@@ -12,17 +12,21 @@ import org.scalatest.{FunSuite, Matchers}
 import scala.concurrent.duration._
 import scala.concurrent.Await
 
-class RedisClusterClientInitFailureTest extends FunSuite
+class RedisClusterClientNonClusteredInitTest extends FunSuite
   with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer {
 
   import RedisApi.Batches.StringTyped._
 
   override def password = "pass".opt
 
-  def createClient(port: Int, pass: String) = {
+  def createClient(port: Int, pass: String, fallbackToSingleNode: Boolean = false) = {
     val connConfig = ConnectionConfig(initCommands = auth(pass))
     val nodeConfig = NodeConfig(connectionConfigs = _ => connConfig)
-    val config = ClusterConfig(nodeConfigs = _ => nodeConfig, monitoringConnectionConfigs = _ => connConfig)
+    val config = ClusterConfig(
+      nodeConfigs = _ => nodeConfig,
+      monitoringConnectionConfigs = _ => connConfig,
+      fallbackToSingleNode = fallbackToSingleNode
+    )
     new RedisClusterClient(List(NodeAddress(port = port)), config)
   }
 
@@ -42,6 +46,12 @@ class RedisClusterClientInitFailureTest extends FunSuite
     val client = createClient(port, "pass")
     client.initialized.failed.futureValue shouldBe a[ClusterInitializationException]
     client.executeBatch(get("lol")).failed.futureValue shouldBe a[ClusterInitializationException]
+  }
+
+  test("fallback to single node test") {
+    val client = createClient(port, "pass", fallbackToSingleNode = true)
+    client.initialized.futureValue shouldBe client
+    client.executeBatch(get("lol")).futureValue shouldBe Opt.Empty
   }
 }
 

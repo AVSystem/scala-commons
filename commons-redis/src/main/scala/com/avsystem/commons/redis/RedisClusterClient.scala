@@ -248,48 +248,58 @@ final class RedisClusterClient(
     batch.rawCommandPacks.requireLevel(Level.Node, "ClusterClient")
     ifReady {
       val currentState = state
-      val packs = batch.rawCommandPacks
-      val undecodedResult = packs.single match {
-        case Opt(pack) =>
-          // optimization for single-pack (e.g. single-command) batches that avoids creating unnecessary data structures
-          val slot = determineSlot(pack)
-          val client = currentState.clientForSlot(slot)
-          val result = client.executeRaw(pack).mapNow(_.apply(0))
-          handleRedirection(pack, slot, result, 0, System.nanoTime(), timeout).mapNow(PacksResult.Single)
-
+      currentState.nonClustered match {
+        case Opt(client) =>
+          client.executeBatch(batch)
         case Opt.Empty =>
-          val barrier = Promise[Unit]
-          val packsByNode = new mutable.OpenHashMap[RedisNodeClient, ArrayBuffer[RawCommandPack]]
-          val resultsByNode = new mutable.OpenHashMap[RedisNodeClient, Future[PacksResult]]
-
-          def futureForPack(slot: Int, client: RedisNodeClient, pack: RawCommandPack): Future[RedisReply] = {
-            val packBuffer = packsByNode.getOrElseUpdate(client, new ArrayBuffer)
-            val idx = packBuffer.size
-            packBuffer += pack
-            val result = resultsByNode.getOrElseUpdate(client,
-              barrier.future.flatMapNow(_ => client.executeRaw(CollectionPacks(packBuffer)))
-            ).mapNow(_.apply(idx))
-            handleRedirection(pack, slot, result, 0, System.nanoTime(), timeout)
+          val packs = batch.rawCommandPacks
+          val undecodedResult = packs.single match {
+            case Opt(pack) => executeSinglePack(pack, currentState)
+            case Opt.Empty => executeClusteredPacks(packs, currentState)
           }
-
-          val results = new ArrayBuffer[Future[RedisReply]]
-          packs.emitCommandPacks { pack =>
-            val resultFuture = try {
-              val slot = determineSlot(pack)
-              val client = currentState.clientForSlot(slot)
-              futureForPack(slot, client, pack)
-            } catch {
-              case re: RedisException => Future.successful(FailureReply(re))
-              case NonFatal(cause) => Future.failed(cause)
-            }
-            results += resultFuture
-          }
-          barrier.success(())
-          implicit val ec: ExecutionContext = RunInQueueEC
-          Future.sequence(results)
+          undecodedResult.mapNow(replies => batch.decodeReplies(replies))
       }
-      undecodedResult.mapNow(replies => batch.decodeReplies(replies))
     }
+  }
+
+  private def executeSinglePack(pack: RawCommandPack, currentState: ClusterState)(implicit timeout: Timeout) = {
+    // optimization for single-pack (e.g. single-command) batches that avoids creating unnecessary data structures
+    val slot = determineSlot(pack)
+    val client = currentState.clientForSlot(slot)
+    val result = client.executeRaw(pack).mapNow(_.apply(0))
+    handleRedirection(pack, slot, result, 0, System.nanoTime(), timeout).mapNow(PacksResult.Single)
+  }
+
+  private def executeClusteredPacks[A](packs: RawCommandPacks, currentState: ClusterState)(implicit timeout: Timeout) = {
+    val barrier = Promise[Unit]
+    val packsByNode = new mutable.OpenHashMap[RedisNodeClient, ArrayBuffer[RawCommandPack]]
+    val resultsByNode = new mutable.OpenHashMap[RedisNodeClient, Future[PacksResult]]
+
+    def futureForPack(slot: Int, client: RedisNodeClient, pack: RawCommandPack): Future[RedisReply] = {
+      val packBuffer = packsByNode.getOrElseUpdate(client, new ArrayBuffer)
+      val idx = packBuffer.size
+      packBuffer += pack
+      val result = resultsByNode.getOrElseUpdate(client,
+        barrier.future.flatMapNow(_ => client.executeRaw(CollectionPacks(packBuffer)))
+      ).mapNow(_.apply(idx))
+      handleRedirection(pack, slot, result, 0, System.nanoTime(), timeout)
+    }
+
+    val results = new ArrayBuffer[Future[RedisReply]]
+    packs.emitCommandPacks { pack =>
+      val resultFuture = try {
+        val slot = determineSlot(pack)
+        val client = currentState.clientForSlot(slot)
+        futureForPack(slot, client, pack)
+      } catch {
+        case re: RedisException => Future.successful(FailureReply(re))
+        case NonFatal(cause) => Future.failed(cause)
+      }
+      results += resultFuture
+    }
+    barrier.success(())
+    implicit val ec: ExecutionContext = RunInQueueEC
+    Future.sequence(results)
   }
 
   def close(): Unit = {
@@ -391,10 +401,21 @@ case class Redirection(address: NodeAddress, slot: Int, ask: Boolean)
 /**
   * Current cluster state known by [[RedisClusterClient]].
   *
-  * @param mapping mapping between slot ranges and node clients that serve them, sorted by slot ranges
-  * @param masters direct mapping between master addresses and node clients
+  * @param mapping      mapping between slot ranges and node clients that serve them, sorted by slot ranges
+  * @param masters      direct mapping between master addresses and node clients
+  * @param nonClustered non-empty if there's actually only one, non-clustered Redis node - see
+  *                     [[com.avsystem.commons.redis.config.ClusterConfig.fallbackToSingleNode fallbackToSingleNode]]
   */
-case class ClusterState(mapping: IndexedSeq[(SlotRange, RedisNodeClient)], masters: BMap[NodeAddress, RedisNodeClient]) {
+case class ClusterState(
+  mapping: IndexedSeq[(SlotRange, RedisNodeClient)],
+  masters: BMap[NodeAddress, RedisNodeClient],
+  nonClustered: Opt[RedisNodeClient] = Opt.Empty
+) {
+
+  nonClustered.foreach { client =>
+    require(!client.clusterNode && mapping == IndexedSeq(SlotRange.Full -> client) && masters == Map(client.address -> client))
+  }
+
   /**
     * Obtains a [[RedisNodeClient]] that currently serves particular hash slot. This is primarily used to
     * execute `WATCH`-`MULTI`-`EXEC` transactions on a Redis Cluster deployment ([[RedisClusterClient]] cannot
@@ -441,4 +462,6 @@ case class ClusterState(mapping: IndexedSeq[(SlotRange, RedisNodeClient)], maste
 }
 object ClusterState {
   val Empty = ClusterState(IndexedSeq.empty, BMap.empty)
+  def nonClustered(client: RedisNodeClient): ClusterState =
+    ClusterState(IndexedSeq(SlotRange.Full -> client), Map(client.address -> client), client.opt)
 }
