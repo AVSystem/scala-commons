@@ -190,6 +190,19 @@ object SharedExtensions extends SharedExtensions {
 
     def toNOpt: NOpt[A] =
       if (option.isEmpty) NOpt.Empty else NOpt.some(option.get)
+
+    /**
+      * Apply side effect only if Option is empty. It's a bit like foreach for None
+      * @param sideEffect - code to be executed if option is empty
+      * @return the same option
+      * @example {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+      */
+    @inline def forEmpty(sideEffect: => Unit): Option[A] = {
+      if (option.isEmpty) {
+        sideEffect
+      }
+      option
+    }
   }
 
   class TryOps[A](private val tr: Try[A]) extends AnyVal {
