@@ -197,7 +197,7 @@ object SharedExtensions extends SharedExtensions {
       * @return the same option
       * @example {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
       */
-    @inline def forEmpty(sideEffect: => Unit): Option[A] = {
+    def forEmpty(sideEffect: => Unit): Option[A] = {
       if (option.isEmpty) {
         sideEffect
       }
