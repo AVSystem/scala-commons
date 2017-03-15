@@ -123,12 +123,25 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with Seri
   @inline def toList: List[A] =
     if (isEmpty) List() else new ::(value, Nil)
 
-  @inline def toRight[X](left: => X) =
+  @inline def toRight[X](left: => X): Either[X, A] =
     if (isEmpty) Left(left) else Right(value)
 
-  @inline def toLeft[X](right: => X) =
+  @inline def toLeft[X](right: => X): Either[A, X] =
     if (isEmpty) Right(right) else Left(value)
 
-  override def toString =
+  /**
+    * Apply side effect only if NOpt is empty. It's a bit like foreach for NOpt.Empty
+    * @param sideEffect - code to be executed if nopt is empty
+    * @return the same nopt
+    * @example {{{captionNOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+    */
+  @inline def forEmpty(sideEffect: => Unit): NOpt[A] = {
+    if (isEmpty) {
+      sideEffect
+    }
+    this
+  }
+
+  override def toString: String =
     if (isEmpty) "NOpt.Empty" else s"NOpt($value)"
 }

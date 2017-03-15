@@ -118,12 +118,26 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
   @inline def toList: List[A] =
     if (isEmpty) List() else new ::(value, Nil)
 
-  @inline def toRight[X](left: => X) =
+  @inline def toRight[X](left: => X): Either[X, A] =
     if (isEmpty) Left(left) else Right(value)
 
-  @inline def toLeft[X](right: => X) =
+  @inline def toLeft[X](right: => X): Either[A, X] =
     if (isEmpty) Right(right) else Left(value)
 
-  override def toString =
+  /**
+    * Apply side effect only if Opt is empty. It's a bit like foreach for Opt.Empty
+    * @param sideEffect - code to be executed if opt is empty
+    * @return the same opt
+    * @example {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+    */
+  @inline def forEmpty(sideEffect: => Unit): Opt[A] = {
+    if (isEmpty) {
+      sideEffect
+    }
+    this
+  }
+
+  override def toString: String =
     if (isEmpty) "Opt.Empty" else s"Opt($value)"
+
 }

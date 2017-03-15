@@ -111,12 +111,26 @@ final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with
   @inline def toList: List[A] =
     if (isEmpty) List() else new ::(value, Nil)
 
-  @inline def toRight[X](left: => X) =
+  @inline def toRight[X](left: => X): Either[X, A] =
     if (isEmpty) Left(left) else Right(value)
 
-  @inline def toLeft[X](right: => X) =
+  @inline def toLeft[X](right: => X): Either[A, X] =
     if (isEmpty) Right(right) else Left(value)
 
-  override def toString =
+  /**
+    * Apply side effect only if OptRef is empty. It's a bit like foreach for OptRef.Empty
+    * @param sideEffect - code to be executed if optRef is empty
+    * @return the same optRef
+    * @example {{{captionOptRef.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+    */
+  @inline def forEmpty(sideEffect: => Unit): OptRef[A] = {
+    if (isEmpty) {
+      sideEffect
+    }
+    this
+  }
+
+
+  override def toString: String =
     if (isEmpty) "OptRef.Empty" else s"OptRef($value)"
 }
