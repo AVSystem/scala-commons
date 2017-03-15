@@ -93,12 +93,25 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Se
   @inline def toList: List[A] =
     if (isEmpty) List() else new ::(value, Nil)
 
-  @inline def toRight[X](left: => X) =
+  @inline def toRight[X](left: => X): Either[X, A] =
     if (isEmpty) Left(left) else Right(value)
 
-  @inline def toLeft[X](right: => X) =
+  @inline def toLeft[X](right: => X): Either[A, X] =
     if (isEmpty) Right(right) else Left(value)
 
-  override def toString =
+  /**
+    * Apply side effect only if OptArg is empty. It's a bit like foreach for OptArg.Empty
+    * @param sideEffect - code to be executed if optArg is empty
+    * @return the same optArg
+    * @example {{{captionOptArg.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+    */
+  @inline def forEmpty(sideEffect: => Unit): OptArg[A] = {
+    if (isEmpty) {
+      sideEffect
+    }
+    this
+  }
+
+  override def toString: String =
     if (isEmpty) "OptArg.Empty" else s"OptArg($value)"
 }
