@@ -87,6 +87,7 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
   }
 
   apiTest("SAVE") {
+    waitUntil(RedisApi.Batches.StringTyped.info(PersistenceInfo).map(_.rdbBgsaveInProgress.contains(false)).exec, 50.millis)
     save.get
   }
 
