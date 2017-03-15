@@ -62,11 +62,25 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with Seri
   @inline def toOption: Option[A] =
     if (isEmpty) None else Some(value)
 
+  /**
+    * Converts this `NOpt` into `Opt`. Because `Opt` cannot hold `null`, `NOpt(null)` is translated to `Opt.Empty`.
+    */
   @inline def toOpt: Opt[A] =
     if (isEmpty) Opt.Empty else Opt(value)
 
+  /**
+    * Converts this `NOpt` into `OptRef`, changing the element type into boxed representation if
+    * necessary (e.g. `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`,
+    * `NOpt(null)` is translated to `OptRef.Empty`.
+    */
   @inline def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
+
+  /**
+    * Converts this `NOpt` into `OptArg`. Because `OptArg` cannot hold `null`, `NOpt(null)` is translated to `OptArg.Empty`.
+    */
+  @inline def toOptArg: OptArg[A] =
+    if (isEmpty) OptArg.Empty else OptArg(value)
 
   @inline def getOrElse[B >: A](default: => B): B =
     if (isEmpty) default else value

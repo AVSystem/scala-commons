@@ -124,6 +124,12 @@ final class RedisClusterClient(
     state
 
   /**
+    * Returns currently known cluster state, waiting for initialization if necessary.
+    */
+  def initializedCurrentState: Future[ClusterState] =
+    initPromise.future.mapNow(_ => currentState)
+
+  /**
     * Waits until cluster state is known and [[RedisNodeClient]] for every master node is initialized.
     */
   def initialized: Future[this.type] =

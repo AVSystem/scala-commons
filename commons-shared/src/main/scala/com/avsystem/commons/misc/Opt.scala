@@ -63,6 +63,12 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
   @inline def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
 
+  @inline def toNOpt: NOpt[A] =
+    if (isEmpty) NOpt.Empty else NOpt(value)
+
+  @inline def toOptArg: OptArg[A] =
+    if (isEmpty) OptArg.Empty else OptArg(value)
+
   @inline def getOrElse[B >: A](default: => B): B =
     if (isEmpty) default else value
 
@@ -126,6 +132,7 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
 
   /**
     * Apply side effect only if Opt is empty. It's a bit like foreach for Opt.Empty
+    *
     * @param sideEffect - code to be executed if opt is empty
     * @return the same opt
     * @example {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}

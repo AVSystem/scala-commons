@@ -62,6 +62,12 @@ final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with
   @inline def toOption: Option[A] =
     Option(value)
 
+  @inline def toNOpt: NOpt[A] =
+    if (isEmpty) NOpt.Empty else NOpt(value)
+
+  @inline def toOptArg: OptArg[A] =
+    if (isEmpty) OptArg.Empty else OptArg(value)
+
   @inline def getOrElse[B >: A](default: => B): B =
     if (isEmpty) default else value
 

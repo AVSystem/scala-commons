@@ -5,7 +5,6 @@ import com.avsystem.commons.redis.commands.SetslotCmd.{Importing, Migrating, Nod
 import com.avsystem.commons.redis.config.ClusterConfig
 import org.scalatest.Suite
 
-
 /**
   * Author: ghik
   * Created: 14/04/16.
@@ -29,8 +28,8 @@ trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem { t
         for {
           sourceId <- sourceIdFut
           targetId <- targetIdFut
-          _ <- sourceApi.clusterSetslot(slot, Migrating(targetId))
           _ <- targetApi.clusterSetslot(slot, Importing(sourceId))
+          _ <- sourceApi.clusterSetslot(slot, Migrating(targetId))
           keys <- keysToMigrateFut
           _ <- if (keys.nonEmpty) sourceApi.migrate(keys, targetClient.address, 0, Int.MaxValue) else Future.successful(())
           _ <- {

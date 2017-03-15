@@ -69,7 +69,7 @@ case class ClusterConfig(
   *                          is its index in the connection pool, i.e. an int ranging from 0 to `poolSize`-1.
   */
 case class NodeConfig(
-  poolSize: Int = 4,
+  poolSize: Int = 1,
   initOp: RedisOp[Any] = RedisOp.unit,
   initTimeout: Timeout = Timeout(10.seconds),
   connectionConfigs: Int => ConnectionConfig = _ => ConnectionConfig()

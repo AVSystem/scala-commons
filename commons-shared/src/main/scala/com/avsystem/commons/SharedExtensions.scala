@@ -182,9 +182,17 @@ object SharedExtensions extends SharedExtensions {
   }
 
   class OptionOps[A](private val option: Option[A]) extends AnyVal {
+    /**
+      * Converts this `Option` into `Opt`. Because `Opt` cannot hold `null`, `Some(null)` is translated to `Opt.Empty`.
+      */
     def toOpt: Opt[A] =
       if (option.isEmpty) Opt.Empty else Opt(option.get)
 
+    /**
+      * Converts this `Option` into `OptRef`, changing the element type into boxed representation if
+      * necessary (e.g. `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`,
+      * `Some(null)` is translated to `OptRef.Empty`.
+      */
     def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
       if (option.isEmpty) OptRef.Empty else OptRef(boxing.fun(option.get))
 
@@ -192,7 +200,14 @@ object SharedExtensions extends SharedExtensions {
       if (option.isEmpty) NOpt.Empty else NOpt.some(option.get)
 
     /**
+      * Converts this `Option` into `OptArg`. Because `OptArg` cannot hold `null`, `Some(null)` is translated to `OptArg.Empty`.
+      */
+    def toOptArg: OptArg[A] =
+      if (option.isEmpty) OptArg.Empty else OptArg(option.get)
+
+    /**
       * Apply side effect only if Option is empty. It's a bit like foreach for None
+      *
       * @param sideEffect - code to be executed if option is empty
       * @return the same option
       * @example {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
@@ -206,14 +221,28 @@ object SharedExtensions extends SharedExtensions {
   }
 
   class TryOps[A](private val tr: Try[A]) extends AnyVal {
+    /**
+      * Converts this `Try` into `Opt`. Because `Opt` cannot hold `null`, `Success(null)` is translated to `Opt.Empty`.
+      */
     def toOpt: Opt[A] =
       if (tr.isFailure) Opt.Empty else Opt(tr.get)
 
+    /**
+      * Converts this `Try` into `OptRef`, changing the element type into boxed representation if
+      * necessary (e.g. `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`,
+      * `Success(null)` is translated to `OptRef.Empty`.
+      */
     def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
       if (tr.isFailure) OptRef.Empty else OptRef(boxing.fun(tr.get))
 
     def toNOpt: NOpt[A] =
       if (tr.isFailure) NOpt.Empty else NOpt.some(tr.get)
+
+    /**
+      * Converts this `Try` into `OptArg`. Because `OptArg` cannot hold `null`, `Success(null)` is translated to `OptArg.Empty`.
+      */
+    def toOptArg: OptArg[A] =
+      if (tr.isFailure) OptArg.Empty else OptArg(tr.get)
   }
 
   object TryCompanionOps {
