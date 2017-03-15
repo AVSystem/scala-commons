@@ -8,15 +8,15 @@ import akka.actor.ActorSystem
 import akka.util.{ByteString, Timeout}
 import com.avsystem.commons.benchmark.CrossRedisBenchmark
 import com.avsystem.commons.concurrent.RunNowEC
+import com.avsystem.commons.jiop.Java8Interop._
 import com.avsystem.commons.redis.RedisClientBenchmark._
 import com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener
 import com.avsystem.commons.redis.config._
 import com.typesafe.config._
 import org.openjdk.jmh.annotations._
-import com.avsystem.commons.jiop.Java8Interop._
 
-import scala.concurrent.duration.Duration
 import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 object OutgoingTraffictStats extends DebugListener {
   val writeCount = new AtomicInteger
@@ -54,7 +54,7 @@ abstract class RedisBenchmark {
 
   val connectionConfig = ConnectionConfig(initCommands = clientSetname("benchmark"))
   val monConnectionConfig = ConnectionConfig(initCommands = clientSetname("benchmarkMon"))
-  val nodeConfig = NodeConfig(connectionConfigs = _ => connectionConfig)
+  val nodeConfig = NodeConfig(poolSize = 4, connectionConfigs = _ => connectionConfig)
   val clusterConfig = ClusterConfig(nodeConfigs = _ => nodeConfig, monitoringConnectionConfigs = _ => monConnectionConfig)
 
   lazy val clusterClient = Await.result(new RedisClusterClient(List(NodeAddress(port = 33333)), clusterConfig).initialized, Duration.Inf)
@@ -206,7 +206,7 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
     redisClientBenchmark(ConcurrentBatches, transactionFuture(nodeClient, _))
 
   def nodeClientMixedBenchmark() =
-    redisClientBenchmark(ConcurrentBatches, mixedFuture(nodeClient, seq,  _))
+    redisClientBenchmark(ConcurrentBatches, mixedFuture(nodeClient, seq, _))
 
   @Benchmark
   @OperationsPerInvocation(ConcurrentOps)

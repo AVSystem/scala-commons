@@ -60,7 +60,7 @@ trait CommandsSuite extends FunSuite with ScalaFutures with Matchers with UsesAc
 
   def executor: RedisKeyedExecutor
 
-  protected lazy val asyncKeyedCommands = new RedisApi.Keyed.Async.StringTyped(executor)
+  protected lazy val asyncKeyedCommands = RedisApi.Keyed.Async.StringTyped(executor)
 
   protected def setup(batches: RedisBatch[Any]*): Unit = {
     Await.result(executor.executeBatch(batches.sequence), Duration.Inf)
@@ -92,6 +92,7 @@ abstract class RedisClusterCommandsSuite extends FunSuite with UsesPreconfigured
       cc.copy(
         nodeConfigs = a => cc.nodeConfigs(a) |> { nc =>
           nc.copy(
+            poolSize = 4,
             connectionConfigs = i =>
               nc.connectionConfigs(i).copy(debugListener = listener)
           )
@@ -112,6 +113,7 @@ abstract class RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient 
   override def nodeConfig =
     super.nodeConfig |> { nc =>
       nc.copy(
+        poolSize = 4,
         connectionConfigs = i =>
           nc.connectionConfigs(i).copy(debugListener = listener)
       )
