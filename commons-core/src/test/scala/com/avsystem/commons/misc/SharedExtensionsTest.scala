@@ -37,4 +37,10 @@ class SharedExtensionsTest extends FunSuite with Matchers {
     assert(Iterator.iterateUntilEmpty(Opt.empty[Int])(i => (i + 1).opt).toList == Nil)
     assert(Iterator.iterateUntilEmpty(1.opt)(i => (i + 1).opt.filter(_ <= 5)).toList == List(1, 2, 3, 4, 5))
   }
+
+  test("IteratorOps.collectWhileDefined") {
+    assert(Iterator(1, 2, 3, 2, 1).collectWhileDefined({ case n if n < 3 => n * 2 }).toList == List(2, 4))
+    assert(Iterator[Int]().collectWhileDefined({ case n if n < 3 => n * 2 }).toList == Nil)
+    assert(Iterator(1, 2, 3, 2, 1).collectWhileDefined({ case n if n > 0 => n * 2 }).toList == List(2, 4, 6, 4, 2))
+  }
 }

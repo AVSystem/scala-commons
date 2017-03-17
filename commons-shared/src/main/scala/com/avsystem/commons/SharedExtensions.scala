@@ -275,12 +275,29 @@ object SharedExtensions extends SharedExtensions {
   }
 
   class PartialFunctionOps[A, B](private val pf: PartialFunction[A, B]) extends AnyVal {
+
+    import PartialFunctionOps._
+
     /**
       * The same thing as [[scala.PartialFunction.orElse]] but with arguments flipped.
       * Useful in situations where [[scala.PartialFunction.orElse]] would have to be called on a partial function literal,
       * which does not work well with type inference.
       */
     def unless(pre: PartialFunction[A, B]): PartialFunction[A, B] = pre orElse pf
+
+    def applyNOpt(a: A): NOpt[B] = pf.applyOrElse(a, NoValueMarkerFunc) match {
+      case NoValueMarker => NOpt.Empty
+      case rawValue => NOpt.some(rawValue.asInstanceOf[B])
+    }
+
+    def applyOpt(a: A): Opt[B] = pf.applyOrElse(a, NoValueMarkerFunc) match {
+      case NoValueMarker => Opt.Empty
+      case rawValue => Opt(rawValue.asInstanceOf[B])
+    }
+  }
+  object PartialFunctionOps {
+    private object NoValueMarker
+    private final val NoValueMarkerFunc = (_: Any) => NoValueMarker
   }
 
   class TraversableOps[C[X] <: BTraversable[X], A](private val coll: C[A]) extends AnyVal {
@@ -296,19 +313,19 @@ object SharedExtensions extends SharedExtensions {
       builders.map({ case (k, v) => (k, v.result()) })(scala.collection.breakOut)
     }
 
-    def headOpt: Opt[A] = coll.headOption.toOpt
+    def headOpt: Opt[A] = if (coll.isEmpty) Opt.Empty else Opt(coll.head)
 
-    def lastOpt: Opt[A] = coll.lastOption.toOpt
+    def lastOpt: Opt[A] = if (coll.isEmpty) Opt.Empty else Opt(coll.last)
 
     def findOpt(p: A => Boolean): Opt[A] = coll.find(p).toOpt
 
     def collectFirstOpt[B](pf: PartialFunction[A, B]): Opt[B] = coll.collectFirst(pf).toOpt
 
-    def reduceOpt[A1 >: A](op: (A1, A1) => A1): Opt[A1] = coll.reduceOption(op).toOpt
+    def reduceOpt[A1 >: A](op: (A1, A1) => A1): Opt[A1] = if (coll.isEmpty) Opt.Empty else coll.reduce(op).opt
 
-    def reduceLeftOpt[B >: A](op: (B, A) => B): Opt[B] = coll.reduceLeftOption(op).toOpt
+    def reduceLeftOpt[B >: A](op: (B, A) => B): Opt[B] = if (coll.isEmpty) Opt.Empty else coll.reduceLeft(op).opt
 
-    def reduceRightOpt[B >: A](op: (A, B) => B): Opt[B] = coll.reduceRightOption(op).toOpt
+    def reduceRightOpt[B >: A](op: (A, B) => B): Opt[B] = if (coll.isEmpty) Opt.Empty else coll.reduceRight(op).opt
 
     def maxOpt[B >: A : Ordering]: Opt[B] = if (coll.isEmpty) Opt.Empty else coll.max[B].opt
 
@@ -342,6 +359,40 @@ object SharedExtensions extends SharedExtensions {
       }
       builder.result()
     }
+
+    def collectWhileDefined[B](pf: PartialFunction[A, B]): Iterator[B] =
+      new AbstractIterator[B] {
+        private[this] var fetched = false
+        private[this] var value: NOpt[B] = _
+
+        private[this] def fetch(): Unit =
+          if (it.hasNext) {
+            value = pf.applyNOpt(it.next())
+          } else {
+            value = NOpt.Empty
+          }
+
+        def hasNext: Boolean = {
+          if (!fetched) {
+            fetch()
+            fetched = true
+          }
+          value.isDefined
+        }
+
+        def next(): B = {
+          if (!fetched) {
+            fetch()
+          }
+          value match {
+            case NOpt(v) =>
+              fetched = false
+              v
+            case NOpt.Empty =>
+              throw new NoSuchElementException
+          }
+        }
+      }
   }
 
   object IteratorCompanionOps {
