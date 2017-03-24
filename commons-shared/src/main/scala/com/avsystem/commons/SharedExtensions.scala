@@ -61,6 +61,9 @@ object SharedExtensions extends SharedExtensions {
       a
     }
 
+    def matchOpt[B](pf: PartialFunction[A, B]): Opt[B] =
+      pf.applyOpt(a)
+
     /**
       * Prints AST of the prefix in a compilation error.
       * Useful for debugging macros.
