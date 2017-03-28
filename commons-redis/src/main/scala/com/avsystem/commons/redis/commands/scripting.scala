@@ -12,16 +12,16 @@ import com.avsystem.commons.redis.protocol.ValidRedisMsg
 import com.google.common.hash.Hashing
 
 trait KeyedScriptingApi extends ApiSubset {
-  /** [[http://redis.io/commands/eval EVAL]] */
+  /** Executes [[http://redis.io/commands/eval EVAL]] */
   def eval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value]): Result[T] =
     execute(new Eval(script, keys, args))
-  /** [[http://redis.io/commands/eval EVAL]] */
+  /** Executes [[http://redis.io/commands/eval EVAL]] */
   def eval[T](source: String, keys: Seq[Key], args: Seq[Value])(decoder: ReplyDecoder[T]): Result[T] =
     execute(new Eval(RedisScript(source)(decoder), keys, args))
-  /** [[http://redis.io/commands/evalsha EVALSHA]] */
+  /** Executes [[http://redis.io/commands/evalsha EVALSHA]] */
   def evalsha[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value]): Result[T] =
     execute(new Evalsha(script.sha1, script.decoder, keys, args))
-  /** [[http://redis.io/commands/evalsha EVALSHA]] */
+  /** Executes [[http://redis.io/commands/evalsha EVALSHA]] */
   def evalsha[T](sha1: Sha1, keys: Seq[Key], args: Seq[Value])(decoder: ReplyDecoder[T]): Result[T] =
     execute(new Evalsha(sha1, decoder, keys, args))
 
@@ -56,22 +56,22 @@ trait NodeScriptingApi extends KeyedScriptingApi {
   /** [[http://redis.io/commands/script-exists SCRIPT EXISTS]] */
   def scriptExists(hash: Sha1, hashes: Sha1*): Result[Seq[Boolean]] =
     execute(new ScriptExists(hash +:: hashes))
-  /** [[http://redis.io/commands/script-exists SCRIPT EXISTS]] */
+  /** Executes [[http://redis.io/commands/script-exists SCRIPT EXISTS]]
+    * NOTE: `hashes` CAN be empty, Redis accepts it */
   def scriptExists(hashes: Iterable[Sha1]): Result[Seq[Boolean]] =
     execute(new ScriptExists(hashes))
-  /** [[http://redis.io/commands/script-flush SCRIPT FLUSH]] */
+  /** Executes [[http://redis.io/commands/script-flush SCRIPT FLUSH]] */
   def scriptFlush: Result[Unit] =
     execute(ScriptFlush)
-  /** [[http://redis.io/commands/script-kill SCRIPT KILL]] */
+  /** Executes [[http://redis.io/commands/script-kill SCRIPT KILL]] */
   def scriptKill: Result[Unit] =
     execute(ScriptKill)
-  /** [[http://redis.io/commands/script-load SCRIPT LOAD]] */
+  /** Executes [[http://redis.io/commands/script-load SCRIPT LOAD]] */
   def scriptLoad(script: RedisScript[Any]): Result[Sha1] =
     execute(new ScriptLoad(script))
 
   private final class ScriptExists(hashes: Iterable[Sha1])
     extends RedisSeqCommand[Boolean](integerBoolean) with NodeCommand {
-    requireNonEmpty(hashes, "hashes")
     val encoded = encoder("SCRIPT", "EXISTS").add(hashes).result
   }
 
@@ -90,7 +90,7 @@ trait NodeScriptingApi extends KeyedScriptingApi {
 }
 
 trait ConnectionScriptingApi extends NodeScriptingApi {
-  /** [[http://redis.io/commands/script-debug SCRIPT DEBUG]] */
+  /** Executes [[http://redis.io/commands/script-debug SCRIPT DEBUG]] */
   def scriptDebug(mode: DebugMode): Result[Unit] =
     execute(new ScriptDebug(mode))
 

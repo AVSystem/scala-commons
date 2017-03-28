@@ -7,100 +7,103 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait StringsApi extends ApiSubset {
-  /** [[http://redis.io/commands/append APPEND]] */
+  /** Executes [[http://redis.io/commands/append APPEND]] */
   def append(key: Key, value: Value): Result[Int] =
     execute(new Append(key, value))
-  /** [[http://redis.io/commands/bitcount BITCOUNT]] */
+  /** Executes [[http://redis.io/commands/bitcount BITCOUNT]] */
   def bitcount(key: Key, range: OptArg[(Int, Int)] = OptArg.Empty): Result[Long] =
     execute(new Bitcount(key, range.toOpt))
-  /** [[http://redis.io/commands/bitfield BITFIELD]] */
+  /** Executes [[http://redis.io/commands/bitfield BITFIELD]] */
   def bitfield(key: Key, op: BitFieldOp): Result[Opt[Long]] =
     execute(new Bitfield(key, op.single).map(_.head))
-  /** [[http://redis.io/commands/bitfield BITFIELD]] */
+  /** Executes [[http://redis.io/commands/bitfield BITFIELD]] */
   def bitfield(key: Key, op: BitFieldOp, ops: BitFieldOp*): Result[Seq[Opt[Long]]] =
     execute(new Bitfield(key, op +:: ops))
-  /** [[http://redis.io/commands/bitfield BITFIELD]] */
+  /** Executes [[http://redis.io/commands/bitfield BITFIELD]] */
   def bitfield(key: Key, ops: Iterable[BitFieldOp]): Result[Seq[Opt[Long]]] =
     execute(new Bitfield(key, ops))
-  /** [[http://redis.io/commands/bitop BITOP]] */
+  /** Executes [[http://redis.io/commands/bitop BITOP]] */
   def bitop(multiOperation: MultiBitOp, destkey: Key, keys: Key*): Result[Int] =
     execute(new Bitop(multiOperation, destkey, keys))
-  /** [[http://redis.io/commands/bitop BITOP]] */
+  /** Executes [[http://redis.io/commands/bitop BITOP]] */
   def bitopNot(destkey: Key, key: Key): Result[Int] =
     execute(new Bitop(BitOp.Not, destkey, List(key)))
-  /** [[http://redis.io/commands/bitpos BITPOS]] */
+  /** Executes [[http://redis.io/commands/bitpos BITPOS]] */
   def bitpos(key: Key, bit: Boolean): Result[Long] =
     execute(new Bitpos(key, bit, Opt.Empty))
-  /** [[http://redis.io/commands/bitpos BITPOS]] */
+  /** Executes [[http://redis.io/commands/bitpos BITPOS]] */
   def bitpos(key: Key, bit: Boolean, start: Int): Result[Long] =
     execute(new Bitpos(key, bit, SemiRange(start).opt))
-  /** [[http://redis.io/commands/bitpos BITPOS]] */
+  /** Executes [[http://redis.io/commands/bitpos BITPOS]] */
   def bitpos(key: Key, bit: Boolean, start: Int, end: Int): Result[Long] =
     execute(new Bitpos(key, bit, SemiRange(start, end.opt).opt))
-  /** [[http://redis.io/commands/decr DECR]] */
+  /** Executes [[http://redis.io/commands/decr DECR]] */
   def decr(key: Key): Result[Long] =
     execute(new Decr(key))
-  /** [[http://redis.io/commands/decrby DECRBY]] */
+  /** Executes [[http://redis.io/commands/decrby DECRBY]] */
   def decrby(key: Key, decrement: Long): Result[Long] =
     execute(new Decrby(key, decrement))
-  /** [[http://redis.io/commands/get GET]] */
+  /** Executes [[http://redis.io/commands/get GET]] */
   def get(key: Key): Result[Opt[Value]] =
     execute(new Get(key))
-  /** [[http://redis.io/commands/getbit GETBIT]] */
+  /** Executes [[http://redis.io/commands/getbit GETBIT]] */
   def getbit(key: Key, offset: Int): Result[Boolean] =
     execute(new Getbit(key, offset))
-  /** [[http://redis.io/commands/getrange GETRANGE]] */
+  /** Executes [[http://redis.io/commands/getrange GETRANGE]] */
   def getrange(key: Key, start: Int = 0, end: Int = -1): Result[Value] =
     execute(new Getrange(key, start, end))
-  /** [[http://redis.io/commands/getset GETSET]] */
+  /** Executes [[http://redis.io/commands/getset GETSET]] */
   def getset(key: Key, value: Value): Result[Opt[Value]] =
     execute(new Getset(key, value))
-  /** [[http://redis.io/commands/incr INCR]] */
+  /** Executes [[http://redis.io/commands/incr INCR]] */
   def incr(key: Key): Result[Long] =
     execute(new Incr(key))
-  /** [[http://redis.io/commands/incrby INCRBY]] */
+  /** Executes [[http://redis.io/commands/incrby INCRBY]] */
   def incrby(key: Key, increment: Long): Result[Long] =
     execute(new Incrby(key, increment))
-  /** [[http://redis.io/commands/incrbyfloat INCRBYFLOAT]] */
+  /** Executes [[http://redis.io/commands/incrbyfloat INCRBYFLOAT]] */
   def incrbyfloat(key: Key, increment: Double): Result[Double] =
     execute(new Incrbyfloat(key, increment))
-  /** [[http://redis.io/commands/mget MGET]] */
+  /** Executes [[http://redis.io/commands/mget MGET]] */
   def mget(key: Key, keys: Key*): Result[Seq[Opt[Value]]] =
     execute(new Mget(key +:: keys))
-  /** [[http://redis.io/commands/mget MGET]] */
+  /** Executes [[http://redis.io/commands/mget MGET]]
+    * or simply returns empty `Seq` when `keys` is empty, without sending the command to Redis */
   def mget(keys: Iterable[Key]): Result[Seq[Opt[Value]]] =
     execute(new Mget(keys))
-  /** [[http://redis.io/commands/mset MSET]] */
+  /** Executes [[http://redis.io/commands/mset MSET]] */
   def mset(keyValue: (Key, Value), keyValues: (Key, Value)*): Result[Unit] =
     execute(new Mset(keyValue +:: keyValues))
-  /** [[http://redis.io/commands/mset MSET]] */
+  /** Executes [[http://redis.io/commands/mset MSET]]
+    * or does nothing when `keyValues` is empty, without sending the command to Redis */
   def mset(keyValues: Iterable[(Key, Value)]): Result[Unit] =
     execute(new Mset(keyValues))
-  /** [[http://redis.io/commands/msetnx MSETNX]] */
+  /** Executes [[http://redis.io/commands/msetnx MSETNX]] */
   def msetnx(keyValue: (Key, Value), keyValues: (Key, Value)*): Result[Boolean] =
     execute(new Msetnx(keyValue +:: keyValues))
-  /** [[http://redis.io/commands/msetnx MSETNX]] */
+  /** Executes [[http://redis.io/commands/msetnx MSETNX]]
+    * or simply returns `true` when `keyValues` is empty, without sending the command to Redis */
   def msetnx(keyValues: Iterable[(Key, Value)]): Result[Boolean] =
     execute(new Msetnx(keyValues))
-  /** [[http://redis.io/commands/psetex PSETEX]] */
+  /** Executes [[http://redis.io/commands/psetex PSETEX]] */
   def psetex(key: Key, milliseconds: Long, value: Value): Result[Unit] =
     execute(new Psetex(key, milliseconds, value))
-  /** [[http://redis.io/commands/set SET]] */
+  /** Executes [[http://redis.io/commands/set SET]] */
   def set(key: Key, value: Value, expiration: OptArg[Expiration] = OptArg.Empty, existence: OptArg[Boolean] = OptArg.Empty): Result[Boolean] =
     execute(new Set(key, value, expiration.toOpt, existence.toOpt))
-  /** [[http://redis.io/commands/setbit SETBIT]] */
+  /** Executes [[http://redis.io/commands/setbit SETBIT]] */
   def setbit(key: Key, offset: Long, value: Boolean): Result[Boolean] =
     execute(new Setbit(key, offset, value))
-  /** [[http://redis.io/commands/setex SETEX]] */
+  /** Executes [[http://redis.io/commands/setex SETEX]] */
   def setex(key: Key, seconds: Long, value: Value): Result[Unit] =
     execute(new Setex(key, seconds, value))
-  /** [[http://redis.io/commands/setnx SETNX]] */
+  /** Executes [[http://redis.io/commands/setnx SETNX]] */
   def setnx(key: Key, value: Value): Result[Boolean] =
     execute(new Setnx(key, value))
-  /** [[http://redis.io/commands/setrange SETRANGE]] */
+  /** Executes [[http://redis.io/commands/setrange SETRANGE]] */
   def setrange(key: Key, offset: Int, value: Value): Result[Int] =
     execute(new Setrange(key, offset, value))
-  /** [[http://redis.io/commands/strlen STRLEN]] */
+  /** Executes [[http://redis.io/commands/strlen STRLEN]] */
   def strlen(key: Key): Result[Int] =
     execute(new Strlen(key))
 
@@ -189,18 +192,18 @@ trait StringsApi extends ApiSubset {
   }
 
   private final class Mget(keys: Iterable[Key]) extends RedisOptDataSeqCommand[Value] with NodeCommand {
-    requireNonEmpty(keys, "keys")
     val encoded = encoder("MGET").keys(keys).result
+    override def immediateResult = whenEmpty(keys, Seq.empty)
   }
 
   private final class Mset(keyValues: Iterable[(Key, Value)]) extends RedisUnitCommand with NodeCommand {
-    requireNonEmpty(keyValues, "keyValues")
     val encoded = encoder("MSET").keyDatas(keyValues).result
+    override def immediateResult = whenEmpty(keyValues, ())
   }
 
   private final class Msetnx(keyValues: Iterable[(Key, Value)]) extends RedisBooleanCommand with NodeCommand {
-    requireNonEmpty(keyValues, "keyValues")
     val encoded = encoder("MSETNX").keyDatas(keyValues).result
+    override def immediateResult = whenEmpty(keyValues, true)
   }
 
   private final class Psetex(key: Key, milliseconds: Long, value: Value) extends RedisUnitCommand with NodeCommand {

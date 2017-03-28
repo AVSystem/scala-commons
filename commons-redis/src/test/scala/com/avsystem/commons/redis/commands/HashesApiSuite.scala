@@ -10,6 +10,7 @@ trait HashesApiSuite extends CommandsSuite {
 
   apiTest("HDEL") {
     setup(hset("key", "field", "value"), hmset("key2", "field1" -> "value1", "field2" -> "value2"))
+    hdel("key", Nil).assertEquals(0)
     hdel("???", "field").assertEquals(false)
     hdel("key", "???").assertEquals(false)
     hdel("key", "field").assertEquals(true)
@@ -62,11 +63,13 @@ trait HashesApiSuite extends CommandsSuite {
 
   apiTest("HMGET") {
     setup(hset("key", "field", "value"))
+    hmget("key", Nil).assertEquals(Seq.empty)
     hmget("???", "field", "field2").assertEquals(Seq(Opt.Empty, Opt.Empty))
     hmget("key", "field", "field2").assertEquals(Seq("value".opt, Opt.Empty))
   }
 
   apiTest("HMSET") {
+    hmset("key", Nil).get
     hmset("key", "field" -> "value", "f2" -> "v2").get
   }
 

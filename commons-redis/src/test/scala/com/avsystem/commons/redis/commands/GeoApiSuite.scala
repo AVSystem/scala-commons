@@ -35,11 +35,13 @@ trait GeoApiSuite extends CommandsSuite {
   )
 
   apiTest("GEOADD") {
+    geoadd(Key, Nil).assertEquals(0)
     geoadd(Key, Cities.toList).assertEquals(6)
   }
 
   apiTest("GEOHASH") {
     setup(geoadd(Key, Cities.toList.take(3)))
+    geohash(Key, Nil).assert(_.isEmpty)
     geohash(Key, Cities.keys.toList).assertEquals(List(
       "u2yhvcgrxx0".opt,
       "u3qcnhheum0".opt,

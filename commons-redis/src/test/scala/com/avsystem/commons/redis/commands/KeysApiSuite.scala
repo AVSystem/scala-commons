@@ -15,6 +15,7 @@ trait KeyedKeysApiSuite extends CommandsSuite {
 
   apiTest("DEL") {
     setup(mset("{key}1" -> "value", "{key}2" -> "value"))
+    del(Nil).assertEquals(0)
     del("???").assertEquals(false)
     del("{key}1").assertEquals(true)
     del("{key}2", "{key}?").assertEquals(1)
@@ -28,6 +29,7 @@ trait KeyedKeysApiSuite extends CommandsSuite {
 
   apiTest("EXISTS") {
     setup(mset("{key}1" -> "value", "{key}2" -> "value"))
+    exists(Nil).assertEquals(0)
     exists("???").assertEquals(false)
     exists("{key}1").assertEquals(true)
     exists("{key}2", "{key}?").assertEquals(1)
@@ -113,6 +115,7 @@ trait KeyedKeysApiSuite extends CommandsSuite {
 
   apiTest("TOUCH") {
     setup(mset("{key}1" -> "value", "{key}2" -> "value"))
+    touch(Nil).assertEquals(0)
     touch("???").assertEquals(false)
     touch("{key}1").assertEquals(true)
     touch("{key}2", "{key}?").assertEquals(1)
@@ -135,6 +138,7 @@ trait KeyedKeysApiSuite extends CommandsSuite {
 
   apiTest("UNLINK") {
     setup(mset("{key}1" -> "value", "{key}2" -> "value"))
+    unlink(Nil).assertEquals(0)
     unlink("???").assertEquals(false)
     unlink("{key}1").assertEquals(true)
     unlink("{key}2", "{key}?").assertEquals(1)

@@ -55,6 +55,7 @@ trait NodeScriptingApiSuite extends KeyedScriptingApiSuite {
   import RedisApi.Batches.StringTyped._
 
   apiTest("SCRIPT EXISTS") {
+    scriptExists(Nil).assertEquals(Seq.empty)
     scriptExists(getScript.sha1).assertEquals(false)
     scriptLoad(getScript).get
     scriptExists(getScript.sha1).assertEquals(true)

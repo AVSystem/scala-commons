@@ -21,20 +21,22 @@ trait RawCommand extends RawCommandPack with RawCommands with ReplyPreprocessor 
   def updateWatchState(message: RedisMsg, state: WatchState): Unit = ()
   def level: Level
 
-  def checkLevel(minAllowed: Level, clientType: String) =
+  final def checkLevel(minAllowed: Level, clientType: String) =
     if (!minAllowed.allows(level)) {
       throw new ForbiddenCommandException(this, clientType)
     }
 
-  def rawCommands(inTransaction: Boolean) = this
-  def emitCommands(consumer: RawCommand => Unit) = consumer(this)
-  def createPreprocessor(replyCount: Int) = this
-  def preprocess(message: RedisMsg, state: WatchState) = {
+  final def rawCommands(inTransaction: Boolean) = this
+  final def emitCommands(consumer: RawCommand => Unit) = consumer(this)
+  final def createPreprocessor(replyCount: Int) = this
+  final def preprocess(message: RedisMsg, state: WatchState) = {
     updateWatchState(message, state)
     Opt(message)
   }
 
-  protected def encoder(commandName: String*): CommandEncoder = {
+  override final def isAsking = false
+
+  protected final def encoder(commandName: String*): CommandEncoder = {
     val res = new CommandEncoder(new ArrayBuffer)
     res.add(commandName)
     res
@@ -74,7 +76,7 @@ trait RawCommandPacks {
   def emitCommandPacks(consumer: RawCommandPack => Unit): Unit
   def single: Opt[RawCommandPack] = Opt.Empty
 
-  def foreachKey(consumer: ByteString => Unit): Unit =
+  final def foreachKey(consumer: ByteString => Unit): Unit =
     emitCommandPacks(_.rawCommands(inTransaction = false)
       .emitCommands(_.encoded.elements.foreach(bs => if (bs.isCommandKey) consumer(bs.string))))
 
@@ -85,7 +87,7 @@ trait RawCommandPacks {
     result
   }
 
-  def requireLevel(minAllowed: Level, clientType: String): this.type = {
+  final def requireLevel(minAllowed: Level, clientType: String): this.type = {
     emitCommandPacks(_.checkLevel(minAllowed, clientType))
     this
   }
@@ -101,9 +103,9 @@ trait RawCommandPack extends RawCommandPacks {
   def checkLevel(minAllowed: Level, clientType: String): Unit
 
   def isAsking: Boolean = false
-  def emitCommandPacks(consumer: RawCommandPack => Unit) = consumer(this)
+  final def emitCommandPacks(consumer: RawCommandPack => Unit) = consumer(this)
 
-  override def single: Opt[RawCommandPack] = this.opt
+  override final def single: Opt[RawCommandPack] = this.opt
 }
 
 trait WatchState {
@@ -114,7 +116,7 @@ trait WatchState {
   * Something that translates incoming [[protocol.RedisMsg RedisMsg]]
   * messages and emits a single [[protocol.RedisReply RedisReply]].
   * For example, it may handle transactions by extracting actual responses for every command from
-  * the `EXEC` response and returning them in an [[protocol.ArrayMsg ArrayMsg]]
+  * the `EXEC` response and returning them in a [[protocol.TransactionReply TransactionReply]]
   * (see [[Transaction]]).
   */
 trait ReplyPreprocessor {

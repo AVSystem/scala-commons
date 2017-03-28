@@ -143,11 +143,13 @@ trait StringsApiSuite extends CommandsSuite {
       set("{key}2", "value2"),
       set("{key}3", "value3")
     )
+    mget(Nil).assertEquals(Seq.empty)
     mget("{key}1", "{key}2", "{key}3", "{key}4")
       .assertEquals(Seq("value1".opt, "value2".opt, "value3".opt, Opt.Empty))
   }
 
   apiTest("MSET") {
+    mset(Nil).get
     mset(
       "{key}1" -> "value1",
       "{key}2" -> "value2",
@@ -156,6 +158,7 @@ trait StringsApiSuite extends CommandsSuite {
   }
 
   apiTest("MSETNX") {
+    msetnx(Nil).assertEquals(true)
     msetnx(
       "{key}1" -> "value1",
       "{key}2" -> "value2"

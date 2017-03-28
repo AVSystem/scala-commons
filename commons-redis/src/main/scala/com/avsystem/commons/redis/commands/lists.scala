@@ -5,52 +5,62 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait ListsApi extends ApiSubset {
-  /** [[http://redis.io/commands/lindex LINDEX]] */
+  /** Executes [[http://redis.io/commands/lindex LINDEX]] */
   def lindex(key: Key, index: Long): Result[Opt[Value]] =
     execute(new Lindex(key, index))
-  /** [[http://redis.io/commands/linsert LINSERT]] */
+  /** Executes [[http://redis.io/commands/linsert LINSERT]] */
   def linsert(key: Key, pivot: Value, value: Value, before: Boolean = false): Result[Opt[Long]] =
     execute(new Linsert(key, before, pivot, value))
-  /** [[http://redis.io/commands/llen LLEN]] */
+  /** Executes [[http://redis.io/commands/llen LLEN]] */
   def llen(key: Key): Result[Long] =
     execute(new Llen(key))
-  /** [[http://redis.io/commands/lpop LPOP]] */
+  /** Executes [[http://redis.io/commands/lpop LPOP]] */
   def lpop(key: Key): Result[Opt[Value]] =
     execute(new Lpop(key))
-  /** [[http://redis.io/commands/lpush LPUSH]] */
+  /** Executes [[http://redis.io/commands/lpush LPUSH]] */
   def lpush(key: Key, value: Value, values: Value*): Result[Long] =
     execute(new Lpush(key, value +:: values))
-  /** [[http://redis.io/commands/lpush LPUSH]] */
+  /** Executes [[http://redis.io/commands/lpush LPUSH]]
+    * NOTE: `values` MUST NOT be empty - consider using [[lpushOrLlen]] in such case. */
   def lpush(key: Key, values: Iterable[Value]): Result[Long] =
     execute(new Lpush(key, values))
-  /** [[http://redis.io/commands/lpushx LPUSHX]] */
+  /** Executes [[http://redis.io/commands/lpush LPUSH]]
+    * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
+  def lpushOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
+    if(values.nonEmpty) lpush(key, values) else llen(key)
+  /** Executes [[http://redis.io/commands/lpushx LPUSHX]] */
   def lpushx(key: Key, value: Value): Result[Long] =
     execute(new Lpushx(key, value))
-  /** [[http://redis.io/commands/lrange LRANGE]] */
+  /** Executes [[http://redis.io/commands/lrange LRANGE]] */
   def lrange(key: Key, start: Long = 0, stop: Long = -1): Result[Seq[Value]] =
     execute(new Lrange(key, start, stop))
-  /** [[http://redis.io/commands/lrem LREM]] */
+  /** Executes [[http://redis.io/commands/lrem LREM]] */
   def lrem(key: Key, value: Value, count: RemCount = RemCount.All): Result[Long] =
     execute(new Lrem(key, count, value))
-  /** [[http://redis.io/commands/lset LSET]] */
+  /** Executes [[http://redis.io/commands/lset LSET]] */
   def lset(key: Key, index: Long, value: Value): Result[Unit] =
     execute(new Lset(key, index, value))
-  /** [[http://redis.io/commands/ltrim LTRIM]] */
+  /** Executes [[http://redis.io/commands/ltrim LTRIM]] */
   def ltrim(key: Key, start: Long = 0, stop: Long = -1): Result[Unit] =
     execute(new Ltrim(key, start, stop))
-  /** [[http://redis.io/commands/rpop RPOP]] */
+  /** Executes [[http://redis.io/commands/rpop RPOP]] */
   def rpop(key: Key): Result[Opt[Value]] =
     execute(new Rpop(key))
-  /** [[http://redis.io/commands/rpoplpush RPOPLPUSH]] */
+  /** Executes [[http://redis.io/commands/rpoplpush RPOPLPUSH]] */
   def rpoplpush(source: Key, destination: Key): Result[Opt[Value]] =
     execute(new Rpoplpush(source, destination))
-  /** [[http://redis.io/commands/rpush RPUSH]] */
+  /** Executes [[http://redis.io/commands/rpush RPUSH]] */
   def rpush(key: Key, value: Value, values: Value*): Result[Long] =
     execute(new Rpush(key, value +:: values))
-  /** [[http://redis.io/commands/rpush RPUSH]] */
+  /** Executes [[http://redis.io/commands/rpush RPUSH]]
+    * NOTE: `values` MUST NOT be empty - consider using [[rpushOrLlen]] in such case. */
   def rpush(key: Key, values: Iterable[Value]): Result[Long] =
     execute(new Rpush(key, values))
-  /** [[http://redis.io/commands/rpushx RPUSHX]] */
+  /** Executes [[http://redis.io/commands/lpush RPUSH]]
+    * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
+  def rpushOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
+    if(values.nonEmpty) rpush(key, values) else llen(key)
+  /** Executes [[http://redis.io/commands/rpushx RPUSHX]] */
   def rpushx(key: Key, value: Value): Result[Long] =
     execute(new Rpushx(key, value))
 
@@ -72,7 +82,6 @@ trait ListsApi extends ApiSubset {
   }
 
   private final class Lpush(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {
-    requireNonEmpty(values, "values")
     val encoded = encoder("LPUSH").key(key).datas(values).result
   }
 
@@ -106,7 +115,6 @@ trait ListsApi extends ApiSubset {
   }
 
   private final class Rpush(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {
-    requireNonEmpty(values, "values")
     val encoded = encoder("RPUSH").key(key).datas(values).result
   }
 
@@ -116,40 +124,40 @@ trait ListsApi extends ApiSubset {
 }
 
 trait BlockingListsApi extends ApiSubset {
-  /** [[http://redis.io/commands/blpop BLPOP]] */
+  /** Executes [[http://redis.io/commands/blpop BLPOP]] */
   def blpop(key: Key): Result[Value] =
     execute(new Blpop(key.single, 0).map(_.get._2))
-  /** [[http://redis.io/commands/blpop BLPOP]] */
+  /** Executes [[http://redis.io/commands/blpop BLPOP]] */
   def blpop(key: Key, keys: Key*): Result[(Key, Value)] =
     execute(new Blpop(key +:: keys, 0).map(_.get))
-  /** [[http://redis.io/commands/blpop BLPOP]] */
+  /** Executes [[http://redis.io/commands/blpop BLPOP]] */
   def blpop(keys: Iterable[Key]): Result[(Key, Value)] =
     execute(new Blpop(keys, 0).map(_.get))
-  /** [[http://redis.io/commands/blpop BLPOP]] */
+  /** Executes [[http://redis.io/commands/blpop BLPOP]] */
   def blpop(key: Key, timeout: Int): Result[Opt[Value]] =
     execute(new Blpop(key.single, timeout).map(_.map(_._2)))
-  /** [[http://redis.io/commands/blpop BLPOP]] */
+  /** Executes [[http://redis.io/commands/blpop BLPOP]] */
   def blpop(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value)]] =
     execute(new Blpop(keys, timeout))
-  /** [[http://redis.io/commands/brpop BRPOP]] */
+  /** Executes [[http://redis.io/commands/brpop BRPOP]] */
   def brpop(key: Key): Result[Value] =
     execute(new Brpop(key.single, 0).map(_.get._2))
-  /** [[http://redis.io/commands/brpop BRPOP]] */
+  /** Executes [[http://redis.io/commands/brpop BRPOP]] */
   def brpop(key: Key, keys: Key*): Result[(Key, Value)] =
     execute(new Brpop(key +:: keys, 0).map(_.get))
-  /** [[http://redis.io/commands/brpop BRPOP]] */
+  /** Executes [[http://redis.io/commands/brpop BRPOP]] */
   def brpop(keys: Iterable[Key]): Result[(Key, Value)] =
     execute(new Brpop(keys, 0).map(_.get))
-  /** [[http://redis.io/commands/brpop BRPOP]] */
+  /** Executes [[http://redis.io/commands/brpop BRPOP]] */
   def brpop(key: Key, timeout: Int): Result[Opt[Value]] =
     execute(new Brpop(key.single, timeout).map(_.map(_._2)))
-  /** [[http://redis.io/commands/brpop BRPOP]] */
+  /** Executes [[http://redis.io/commands/brpop BRPOP]] */
   def brpop(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value)]] =
     execute(new Brpop(keys, timeout))
-  /** [[http://redis.io/commands/brpoplpush BRPOPLPUSH]] */
+  /** Executes [[http://redis.io/commands/brpoplpush BRPOPLPUSH]] */
   def brpoplpush(source: Key, destination: Key): Result[Value] =
     execute(new Brpoplpush(source, destination, 0).map(_.get))
-  /** [[http://redis.io/commands/brpoplpush BRPOPLPUSH]] */
+  /** Executes [[http://redis.io/commands/brpoplpush BRPOPLPUSH]] */
   def brpoplpush(source: Key, destination: Key, timeout: Int): Result[Opt[Value]] =
     execute(new Brpoplpush(source, destination, timeout))
 

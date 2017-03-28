@@ -9,6 +9,7 @@ trait SortedSetsApiSuite extends CommandsSuite {
   import RedisApi.Batches.StringTyped._
 
   apiTest("ZADD") {
+    zadd("key", Nil).assertEquals(0)
     zadd("lex", 0.0, "a", "b", "c", "d").assertEquals(4)
     zadd("key", "lol" -> 1.0, "fuu" -> 2.0).assertEquals(2)
     zrangeWithscores("key").assertEquals(Seq("lol" -> 1.0, "fuu" -> 2.0))
@@ -125,6 +126,7 @@ trait SortedSetsApiSuite extends CommandsSuite {
 
   apiTest("ZREM") {
     setup(zadd("key", "a" -> 1.0, "b" -> 2.0, "c" -> 3.0, "d" -> 4.0))
+    zrem("key", Nil).assertEquals(0)
     zrem("???", "a", "o").assertEquals(0)
     zrem("key", "a", "o").assertEquals(1)
   }

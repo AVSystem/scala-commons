@@ -246,8 +246,8 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
   * transaction.
   */
 trait AtomicBatch[+A] extends RedisBatch[A] with RawCommandPack {
-  def rawCommandPacks = this
-  override def atomic: RedisBatch[A] = this
+  final def rawCommandPacks = this
+  override final def atomic: RedisBatch[A] = this
 }
 
 /**

@@ -14,7 +14,7 @@ import scala.collection.mutable.ArrayBuffer
 trait RedisCommand[+A] extends AtomicBatch[A] with RawCommand { self =>
   protected def decodeExpected: ReplyDecoder[A]
 
-  protected def decode(replyMsg: RedisReply): A = replyMsg match {
+  final protected def decode(replyMsg: RedisReply): A = replyMsg match {
     case validReply: ValidRedisMsg =>
       decodeExpected.applyOrElse(validReply, (r: ValidRedisMsg) => throw new UnexpectedReplyException(r.toString))
     case err: ErrorMsg =>
@@ -25,21 +25,34 @@ trait RedisCommand[+A] extends AtomicBatch[A] with RawCommand { self =>
       throw new UnexpectedReplyException(replyMsg.toString)
   }
 
-  def decodeReplies(replies: Int => RedisReply, idx: Index, inTransaction: Boolean) =
+  final def decodeReplies(replies: Int => RedisReply, idx: Index, inTransaction: Boolean) =
     decode(replies(idx.inc()))
 
   override def toString =
     encoded.elements.iterator.map(bs => RedisMsg.escape(bs.string)).mkString(" ")
-
-  protected def requireNonEmpty(seq: TraversableOnce[Any], what: String): Unit =
-    require(seq.nonEmpty, s"$what must not be empty")
 
   override def map[B](fun: A => B): RedisCommand[B] =
     new RedisCommand[B] {
       def level = self.level
       def encoded = self.encoded
       def decodeExpected = self.decodeExpected andThen fun
+      override def immediateResult =
+        self.immediateResult.map(fun)
+      override def updateWatchState(message: RedisMsg, state: WatchState): Unit =
+        self.updateWatchState(message, state)
     }
+
+  /**
+    * Returns optional value that may be used as immediate result of this command if it command can be treated as
+    * no-op. For example `DEL` command with no keys may simply return 0 as its immediate result.
+    */
+  def immediateResult: Opt[A] = Opt.Empty
+
+  protected[this] final def whenEmpty(args: Iterable[Any], value: A) =
+    if (args.isEmpty) Opt(value) else Opt.Empty
+
+  final def batchOrFallback: RedisBatch[A] =
+    immediateResult.fold(this: RedisBatch[A])(RedisBatch.success)
 }
 
 abstract class AbstractRedisCommand[A](protected val decodeExpected: ReplyDecoder[A])

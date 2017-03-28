@@ -5,23 +5,24 @@ import com.avsystem.commons.redis.protocol.{ArrayMsg, ErrorMsg, NullArrayMsg, Re
 import com.avsystem.commons.redis.{ApiSubset, OperationCommand, RedisUnitCommand, UnsafeCommand, WatchState}
 
 trait TransactionApi extends ApiSubset {
-  /** [[http://redis.io/commands/watch WATCH]] */
+  /** Executes [[http://redis.io/commands/watch WATCH]] */
   def watch(key: Key, keys: Key*): Result[Unit] =
     execute(new Watch(key +:: keys))
-  /** [[http://redis.io/commands/watch WATCH]] */
+  /** Executes [[http://redis.io/commands/watch WATCH]]
+    * or does nothing when `keys` is empty, without sending the command to Redis */
   def watch(keys: Iterable[Key]): Result[Unit] =
     execute(new Watch(keys))
-  /** [[http://redis.io/commands/unwatch UNWATCH]] */
+  /** Executes [[http://redis.io/commands/unwatch UNWATCH]] */
   def unwatch: Result[Unit] =
     execute(Unwatch)
 
   private final class Watch(keys: Iterable[Key]) extends RedisUnitCommand with OperationCommand {
-    requireNonEmpty(keys, "keys")
     val encoded = encoder("WATCH").keys(keys).result
     override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
       case RedisMsg.Ok => state.watching = true
       case _ =>
     }
+    override def immediateResult = whenEmpty(keys, ())
   }
 
   private object Unwatch extends RedisUnitCommand with OperationCommand {

@@ -9,6 +9,7 @@ trait SetsApiSuite extends CommandsSuite {
   import RedisApi.Batches.StringTyped._
 
   apiTest("SADD") {
+    sadd("key", Nil).assertEquals(0)
     sadd("key", "a", "b", "c").assertEquals(3)
     sadd("key", "a", "b", "d").assertEquals(1)
     smembers("key").assertEquals(Set("a", "b", "c", "d"))
@@ -102,6 +103,7 @@ trait SetsApiSuite extends CommandsSuite {
 
   apiTest("SREM") {
     setup(sadd("key", "a", "b", "c"))
+    srem("key", Nil).assertEquals(0)
     srem("???", "a", "b").assertEquals(0)
     srem("key", "a", "d").assertEquals(1)
     scard("key").assertEquals(2)
@@ -124,6 +126,7 @@ trait SetsApiSuite extends CommandsSuite {
       sadd("{key}2", "b", "d"),
       sadd("{key}3", "c", "e")
     )
+    sunion(Nil).assertEquals(Set.empty)
     sunion("{key}1", "{key}2", "{key}3").assertEquals(Set("a", "b", "c", "d", "e"))
   }
 

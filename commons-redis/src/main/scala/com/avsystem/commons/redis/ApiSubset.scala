@@ -10,8 +10,6 @@ import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 trait ApiSubset { self =>
-  type Input[A] >: RedisCommand[A]
-
   /**
     * The type constructor into which a result of each command is wrapped. For example if `Result` is
     * `Future`, then [[commands.StringsApi.incr incr]] returns `Future[Long]`.
@@ -43,7 +41,7 @@ trait ApiSubset { self =>
   protected implicit def hashKeyCodec: RedisDataCodec[HashKey]
   protected implicit def valueCodec: RedisDataCodec[Value]
 
-  def execute[A](command: Input[A]): Result[A]
+  def execute[A](command: RedisCommand[A]): Result[A]
 
   protected implicit def iterableTailOps[T](tail: Iterable[T]): IterableTailOps[T] = new IterableTailOps(tail)
   protected implicit def iteratorTailOps[T](tail: Iterator[T]): IteratorTailOps[T] = new IteratorTailOps(tail)
@@ -67,35 +65,32 @@ trait RecoverableApiSubset extends ApiSubset {
 }
 
 trait RedisRawApi extends ApiSubset {
-  type Input[A] = RedisCommand[A]
   type Result[A] = RawCommand
   def execute[A](command: RedisCommand[A]) = command
 }
 
 trait RedisBatchApi extends ApiSubset {
-  type Input[A] = RedisBatch[A]
   type Result[A] = RedisBatch[A]
-  def execute[A](command: RedisBatch[A]) = command
+  def execute[A](command: RedisCommand[A]) = command.batchOrFallback
 }
 
 trait RedisExecutedApi extends RecoverableApiSubset {
-  type Input[A] = RedisBatch[A]
   def timeout: Timeout
   def executor: RedisExecutor
-  def executeAsync[A](command: RedisBatch[A]): Future[A] =
-    executor.executeBatch(command)(timeout)
+  def executeAsync[A](command: RedisCommand[A]): Future[A] =
+    executor.executeBatch(command.batchOrFallback)(timeout)
 }
 
 trait RedisAsyncApi extends RedisExecutedApi {
   type Result[A] = Future[A]
-  def execute[A](command: RedisBatch[A]) = executeAsync(command)
+  def execute[A](command: RedisCommand[A]) = executeAsync(command)
   def recoverWith[A](executed: => Future[A])(fun: PartialFunction[Throwable, Future[A]]) =
     executed.recoverWith(fun)(executor.executionContext)
 }
 
 trait RedisBlockingApi extends RedisExecutedApi {
   type Result[A] = A
-  def execute[A](command: RedisBatch[A]) = Await.result(executeAsync(command), Duration.Inf)
+  def execute[A](command: RedisCommand[A]) = Await.result(executeAsync(command), Duration.Inf)
   def recoverWith[A](executed: => A)(fun: PartialFunction[Throwable, A]) =
     try executed catch fun
 }

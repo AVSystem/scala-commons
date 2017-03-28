@@ -9,109 +9,109 @@ import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol.BulkStringMsg
 
 trait NodeServerApi extends ApiSubset {
-  /** [[http://redis.io/commands/bgrewriteaof BGREWRITEAOF]] */
+  /** Executes [[http://redis.io/commands/bgrewriteaof BGREWRITEAOF]] */
   def bgrewriteaof: Result[String] =
     execute(Bgrewriteaof)
-  /** [[http://redis.io/commands/bgsave BGSAVE]] */
+  /** Executes [[http://redis.io/commands/bgsave BGSAVE]] */
   def bgsave: Result[String] = bgsave()
-  /** [[http://redis.io/commands/bgsave BGSAVE]] */
+  /** Executes [[http://redis.io/commands/bgsave BGSAVE]] */
   def bgsave(schedule: Boolean = false): Result[String] =
     execute(new Bgsave(schedule))
-  /** [[http://redis.io/commands/client-kill CLIENT KILL]] */
+  /** Executes [[http://redis.io/commands/client-kill CLIENT KILL]] */
   def clientKill(addr: ClientAddress): Result[Unit] =
     execute(new ClientKill(addr))
-  /** [[http://redis.io/commands/client-kill CLIENT KILL]] */
+  /** Executes [[http://redis.io/commands/client-kill CLIENT KILL]] */
   def clientKill(filters: ClientFilter*): Result[Int] =
     execute(new ClientKillFiltered(filters))
-  /** [[http://redis.io/commands/client-list CLIENT LIST]] */
+  /** Executes [[http://redis.io/commands/client-list CLIENT LIST]] */
   def clientList: Result[Seq[ClientInfo]] =
     execute(ClientList)
-  /** [[http://redis.io/commands/client-pause CLIENT PAUSE]] */
+  /** Executes [[http://redis.io/commands/client-pause CLIENT PAUSE]] */
   def clientPause(timeout: Long): Result[Unit] =
     execute(new ClientPause(timeout))
-  /** [[http://redis.io/commands/command COMMAND]] */
+  /** Executes [[http://redis.io/commands/command COMMAND]] */
   def command: Result[Seq[CommandInfo]] =
     execute(Command)
-  /** [[http://redis.io/commands/command-count COMMAND COUNT]] */
+  /** Executes [[http://redis.io/commands/command-count COMMAND COUNT]] */
   def commandCount: Result[Int] =
     execute(CommandCount)
-  /** [[http://redis.io/commands/command-getkeys COMMAND GETKEYS]] */
+  /** Executes [[http://redis.io/commands/command-getkeys COMMAND GETKEYS]] */
   def commandGetkeys(command: RawCommand): Result[Seq[Key]] =
     execute(new CommandGetkeys(command.encoded.elements.iterator.map(_.string)))
-  /** [[http://redis.io/commands/command-getkeys COMMAND GETKEYS]] */
+  /** Executes [[http://redis.io/commands/command-getkeys COMMAND GETKEYS]] */
   def commandGetkeys(command: Seq[ByteString]): Result[Seq[Key]] =
     execute(new CommandGetkeys(command))
-  /** [[http://redis.io/commands/command-info COMMAND INFO]] */
+  /** Executes [[http://redis.io/commands/command-info COMMAND INFO]] */
   def commandInfo(commandName: String): Result[CommandInfo] =
     execute(new CommandInfoCommand(commandName.single).map(_.head))
-  /** [[http://redis.io/commands/command-info COMMAND INFO]] */
+  /** Executes [[http://redis.io/commands/command-info COMMAND INFO]] */
   def commandInfo(commandName: String, commandNames: String*): Result[Seq[CommandInfo]] =
     execute(new CommandInfoCommand(commandName +:: commandNames))
-  /** [[http://redis.io/commands/command-info COMMAND INFO]] */
+  /** Executes [[http://redis.io/commands/command-info COMMAND INFO]] */
   def commandInfo(commandNames: Seq[String]): Result[Seq[CommandInfo]] =
     execute(new CommandInfoCommand(commandNames))
-  /** [[http://redis.io/commands/config-get CONFIG GET]] */
+  /** Executes [[http://redis.io/commands/config-get CONFIG GET]] */
   def configGet(parameter: String): Result[Seq[(String, String)]] =
     execute(new ConfigGet(parameter))
-  /** [[http://redis.io/commands/config-resetstat CONFIG RESETSTAT]] */
+  /** Executes [[http://redis.io/commands/config-resetstat CONFIG RESETSTAT]] */
   def configResetstat: Result[Unit] =
     execute(ConfigResetstat)
-  /** [[http://redis.io/commands/config-rewrite CONFIG REWRITE]] */
+  /** Executes [[http://redis.io/commands/config-rewrite CONFIG REWRITE]] */
   def configRewrite: Result[Unit] =
     execute(ConfigRewrite)
-  /** [[http://redis.io/commands/config-set CONFIG SET]] */
+  /** Executes [[http://redis.io/commands/config-set CONFIG SET]] */
   def configSet(parameter: String, value: String): Result[Unit] =
     execute(new ConfigSet(parameter, value))
-  /** [[http://redis.io/commands/dbsize DBSIZE]] */
+  /** Executes [[http://redis.io/commands/dbsize DBSIZE]] */
   def dbsize: Result[Long] =
     execute(Dbsize)
-  /** [[http://redis.io/commands/debug-segfault DEBUG SEGFAULT]] */
+  /** Executes [[http://redis.io/commands/debug-segfault DEBUG SEGFAULT]] */
   def debugSegfault: Result[Nothing] =
     execute(DebugSegfault)
-  /** [[http://redis.io/commands/flushall FLUSHALL]] */
+  /** Executes [[http://redis.io/commands/flushall FLUSHALL]] */
   def flushall: Result[Unit] =
     execute(Flushall)
-  /** [[http://redis.io/commands/flushdb FLUSHDB]] */
+  /** Executes [[http://redis.io/commands/flushdb FLUSHDB]] */
   def flushdb: Result[Unit] =
     execute(Flushdb)
-  /** [[http://redis.io/commands/info INFO]] */
+  /** Executes [[http://redis.io/commands/info INFO]] */
   def info: Result[DefaultRedisInfo] =
     execute(new Info(DefaultRedisInfo, implicitDefault = true))
-  /** [[http://redis.io/commands/info INFO]] */
+  /** Executes [[http://redis.io/commands/info INFO]] */
   def info[T >: FullRedisInfo <: RedisInfo](section: RedisInfoSection[T]): Result[T] =
     execute(new Info(section, implicitDefault = false))
-  /** [[http://redis.io/commands/lastsave LASTSAVE]] */
+  /** Executes [[http://redis.io/commands/lastsave LASTSAVE]] */
   def lastsave: Result[Long] =
     execute(Lastsave)
-  /** [[http://redis.io/commands/role ROLE]] */
+  /** Executes [[http://redis.io/commands/role ROLE]] */
   def role: Result[RedisRole] =
     execute(Role)
-  /** [[http://redis.io/commands/save SAVE]] */
+  /** Executes [[http://redis.io/commands/save SAVE]] */
   def save: Result[Unit] =
     execute(Save)
-  /** [[http://redis.io/commands/shutdown SHUTDOWN]] */
+  /** Executes [[http://redis.io/commands/shutdown SHUTDOWN]] */
   def shutdown: Result[Nothing] = shutdown()
-  /** [[http://redis.io/commands/shutdown SHUTDOWN]] */
+  /** Executes [[http://redis.io/commands/shutdown SHUTDOWN]] */
   def shutdown(modifier: OptArg[ShutdownModifier] = OptArg.Empty): Result[Nothing] =
     execute(new Shutdown(modifier.toOpt))
-  /** [[http://redis.io/commands/slaveof SLAVEOF]] */
+  /** Executes [[http://redis.io/commands/slaveof SLAVEOF]] */
   def slaveofNoOne: Result[Unit] =
     execute(new Slaveof(Opt.Empty))
-  /** [[http://redis.io/commands/slaveof SLAVEOF]] */
+  /** Executes [[http://redis.io/commands/slaveof SLAVEOF]] */
   def slaveof(newMaster: NodeAddress): Result[Unit] =
     execute(new Slaveof(newMaster.opt))
-  /** [[http://redis.io/commands/slowlog SLOWLOG]] */
+  /** Executes [[http://redis.io/commands/slowlog SLOWLOG]] */
   def slowlogGet: Result[Seq[SlowlogEntry]] = slowlogGet()
-  /** [[http://redis.io/commands/slowlog SLOWLOG]] */
+  /** Executes [[http://redis.io/commands/slowlog SLOWLOG]] */
   def slowlogGet(count: OptArg[Int] = OptArg.Empty): Result[Seq[SlowlogEntry]] =
     execute(new SlowlogGet(count.toOpt))
-  /** [[http://redis.io/commands/slowlog SLOWLOG]] */
+  /** Executes [[http://redis.io/commands/slowlog SLOWLOG]] */
   def slowlogLen: Result[Long] =
     execute(SlowlogLen)
-  /** [[http://redis.io/commands/slowlog SLOWLOG]] */
+  /** Executes [[http://redis.io/commands/slowlog SLOWLOG]] */
   def slowlogReset: Result[Unit] =
     execute(SlowlogReset)
-  /** [[http://redis.io/commands/time TIME]] */
+  /** Executes [[http://redis.io/commands/time TIME]] */
   def time: Result[RedisTimestamp] =
     execute(Time)
 
@@ -251,10 +251,10 @@ trait NodeServerApi extends ApiSubset {
 }
 
 trait ConnectionServerApi extends NodeServerApi {
-  /** [[http://redis.io/commands/client-getname CLIENT GETNAME]] */
+  /** Executes [[http://redis.io/commands/client-getname CLIENT GETNAME]] */
   def clientGetname: Result[Opt[String]] =
     execute(ClientGetname)
-  /** [[http://redis.io/commands/client-setname CLIENT SETNAME]] */
+  /** Executes [[http://redis.io/commands/client-setname CLIENT SETNAME]] */
   def clientSetname(connectionName: String): Result[Unit] =
     execute(new ClientSetname(connectionName))
 

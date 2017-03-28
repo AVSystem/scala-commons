@@ -14,7 +14,7 @@ trait KeyedClusterApi extends ApiSubset {
   def keySlot(key: Key): Int =
     Hash.slot(keyCodec.write(key))
 
-  /** [[http://redis.io/commands/cluster-keyslot CLUSTER KEYSLOT]] */
+  /** Executes [[http://redis.io/commands/cluster-keyslot CLUSTER KEYSLOT]] */
   def clusterKeyslot(key: Key): Result[Int] =
     execute(new ClusterKeyslot(key))
 
@@ -24,78 +24,80 @@ trait KeyedClusterApi extends ApiSubset {
 }
 
 trait NodeClusterApi extends KeyedClusterApi {
-  /** [[http://redis.io/commands/cluster-addslots CLUSTER ADDSLOTS]] */
+  /** Executes [[http://redis.io/commands/cluster-addslots CLUSTER ADDSLOTS]] */
   def clusterAddslots(slot: Int, slots: Int*): Result[Unit] =
     execute(new ClusterAddslots(slot +:: slots))
-  /** [[http://redis.io/commands/cluster-addslots CLUSTER ADDSLOTS]] */
+  /** Executes [[http://redis.io/commands/cluster-addslots CLUSTER ADDSLOTS]]
+    * or does nothing when `slots` is empty. */
   def clusterAddslots(slots: Iterable[Int]): Result[Unit] =
     execute(new ClusterAddslots(slots))
-  /** [[http://redis.io/commands/cluster-count-failure-reports CLUSTER COUNT-FAILURE-REPORTS]] */
+  /** Executes [[http://redis.io/commands/cluster-count-failure-reports CLUSTER COUNT-FAILURE-REPORTS]] */
   def clusterCountFailureReports(nodeId: NodeId): Result[Long] =
     execute(new ClusterCountFailureReports(nodeId))
-  /** [[http://redis.io/commands/cluster-countkeysinslot CLUSTER COUNTKEYSINSLOT]] */
+  /** Executes [[http://redis.io/commands/cluster-countkeysinslot CLUSTER COUNTKEYSINSLOT]] */
   def clusterCountkeysinslot(slot: Int): Result[Long] =
     execute(new ClusterCountkeysinslot(slot))
-  /** [[http://redis.io/commands/cluster-delslots CLUSTER DELSLOTS]] */
+  /** Executes [[http://redis.io/commands/cluster-delslots CLUSTER DELSLOTS]] */
   def clusterDelslots(slot: Int, slots: Int*): Result[Unit] =
     execute(new ClusterDelslots(slot +:: slots))
-  /** [[http://redis.io/commands/cluster-delslots CLUSTER DELSLOTS]] */
+  /** Executes [[http://redis.io/commands/cluster-delslots CLUSTER DELSLOTS]]
+    * or does nothing when `slots` is empty */
   def clusterDelslots(slots: Iterable[Int]): Result[Unit] =
     execute(new ClusterDelslots(slots))
-  /** [[http://redis.io/commands/cluster-failover CLUSTER FAILOVER]] */
+  /** Executes [[http://redis.io/commands/cluster-failover CLUSTER FAILOVER]] */
   def clusterFailover: Result[Unit] = clusterFailover()
-  /** [[http://redis.io/commands/cluster-failover CLUSTER FAILOVER]] */
+  /** Executes [[http://redis.io/commands/cluster-failover CLUSTER FAILOVER]] */
   def clusterFailover(option: OptArg[FailoverOption] = OptArg.Empty): Result[Unit] =
     execute(new ClusterFailover(option.toOpt))
   def clusterFlushslots: Result[Unit] =
     execute(ClusterFlushslots)
-  /** [[http://redis.io/commands/cluster-forget CLUSTER FORGET]] */
+  /** Executes [[http://redis.io/commands/cluster-forget CLUSTER FORGET]] */
   def clusterForget(nodeId: NodeId): Result[Unit] =
     execute(new ClusterForget(nodeId))
-  /** [[http://redis.io/commands/cluster-getkeysinslot CLUSTER GETKEYSINSLOT]] */
+  /** Executes [[http://redis.io/commands/cluster-getkeysinslot CLUSTER GETKEYSINSLOT]] */
   def clusterGetkeysinslot(slot: Int, count: Int): Result[Seq[Key]] =
     execute(new ClusterGetkeysinslot(slot, count))
-  /** [[http://redis.io/commands/cluster-info CLUSTER INFO]] */
+  /** Executes [[http://redis.io/commands/cluster-info CLUSTER INFO]] */
   def clusterInfo: Result[ClusterStateInfo] =
     execute(ClusterInfo)
-  /** [[http://redis.io/commands/cluster-meet CLUSTER MEET]] */
+  /** Executes [[http://redis.io/commands/cluster-meet CLUSTER MEET]] */
   def clusterMeet(address: NodeAddress): Result[Unit] =
     execute(new ClusterMeet(address))
   def clusterMyid: Result[NodeId] =
     execute(ClusterMyid)
-  /** [[http://redis.io/commands/cluster-nodes CLUSTER NODES]] */
+  /** Executes [[http://redis.io/commands/cluster-nodes CLUSTER NODES]] */
   def clusterNodes: Result[Seq[NodeInfo]] =
     execute(ClusterNodes)
-  /** [[http://redis.io/commands/cluster-replicate CLUSTER REPLICATE]] */
+  /** Executes [[http://redis.io/commands/cluster-replicate CLUSTER REPLICATE]] */
   def clusterReplicate(nodeId: NodeId): Result[Unit] =
     execute(new ClusterReplicate(nodeId))
-  /** [[http://redis.io/commands/cluster-reset CLUSTER RESET]] */
+  /** Executes [[http://redis.io/commands/cluster-reset CLUSTER RESET]] */
   def clusterReset: Result[Unit] = clusterReset()
-  /** [[http://redis.io/commands/cluster-reset CLUSTER RESET]] */
+  /** Executes [[http://redis.io/commands/cluster-reset CLUSTER RESET]] */
   def clusterReset(hard: Boolean = false): Result[Unit] =
     execute(new ClusterReset(hard))
-  /** [[http://redis.io/commands/cluster-saveconfig CLUSTER SAVECONFIG]] */
+  /** Executes [[http://redis.io/commands/cluster-saveconfig CLUSTER SAVECONFIG]] */
   def clusterSaveconfig: Result[Unit] =
     execute(ClusterSaveconfig)
-  /** [[http://redis.io/commands/cluster-set-config-epoch CLUSTER SET-CONFIG-EPOCH]] */
+  /** Executes [[http://redis.io/commands/cluster-set-config-epoch CLUSTER SET-CONFIG-EPOCH]] */
   def clusterSetConfigEpoch(configEpoch: Long): Result[Unit] =
     execute(new ClusterSetConfigEpoch(configEpoch))
-  /** [[http://redis.io/commands/cluster-setslot CLUSTER SETSLOT]] */
+  /** Executes [[http://redis.io/commands/cluster-setslot CLUSTER SETSLOT]] */
   def clusterSetslot(slot: Int, subcommand: SetslotCmd): Result[Unit] =
     execute(new ClusterSetslot(slot, subcommand))
-  /** [[http://redis.io/commands/cluster-slaves CLUSTER SLAVES]] */
+  /** Executes [[http://redis.io/commands/cluster-slaves CLUSTER SLAVES]] */
   def clusterSlaves(nodeId: NodeId): Result[Seq[NodeInfo]] =
     execute(new ClusterSlaves(nodeId))
-  /** [[http://redis.io/commands/cluster-slots CLUSTER SLOTS]] */
+  /** Executes [[http://redis.io/commands/cluster-slots CLUSTER SLOTS]] */
   def clusterSlots: Result[Seq[SlotRangeMapping[NodeAddress]]] =
     execute(new ClusterSlots(SlotsNodeFormat.OnlyAddress))
-  /** [[http://redis.io/commands/cluster-slots CLUSTER SLOTS]] */
+  /** Executes [[http://redis.io/commands/cluster-slots CLUSTER SLOTS]] */
   def clusterSlotsWithNodeIds: Result[Seq[SlotRangeMapping[(NodeAddress, NodeId)]]] =
     execute(new ClusterSlots(SlotsNodeFormat.AddressAndNodeId))
 
   private final class ClusterAddslots(slots: Iterable[Int]) extends RedisUnitCommand with NodeCommand {
-    requireNonEmpty(slots, "slots")
     val encoded = encoder("CLUSTER", "ADDSLOTS").add(slots).result
+    override def immediateResult = whenEmpty(slots, ())
   }
 
   private final class ClusterCountFailureReports(nodeId: NodeId) extends RedisLongCommand with NodeCommand {
@@ -107,8 +109,8 @@ trait NodeClusterApi extends KeyedClusterApi {
   }
 
   private final class ClusterDelslots(slots: Iterable[Int]) extends RedisUnitCommand with NodeCommand {
-    requireNonEmpty(slots, "slots")
     val encoded = encoder("CLUSTER", "DELSLOTS").add(slots).result
+    override def immediateResult = whenEmpty(slots, ())
   }
 
   private final class ClusterFailover(option: Opt[FailoverOption]) extends RedisUnitCommand with NodeCommand {
@@ -175,10 +177,10 @@ trait NodeClusterApi extends KeyedClusterApi {
 }
 
 trait ConnectionClusterApi extends NodeClusterApi {
-  /** [[http://redis.io/commands/readonly READONLY]] */
+  /** Executes [[http://redis.io/commands/readonly READONLY]] */
   def readonly: Result[Unit] =
     execute(Readonly)
-  /** [[http://redis.io/commands/readwrite READWRITE]] */
+  /** Executes [[http://redis.io/commands/readwrite READWRITE]] */
   def readwrite: Result[Unit] =
     execute(Readwrite)
 

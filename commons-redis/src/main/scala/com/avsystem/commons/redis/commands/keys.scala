@@ -13,114 +13,119 @@ import com.avsystem.commons.redis.protocol._
   * Created: 06/04/16.
   */
 trait KeyedKeysApi extends ApiSubset {
-  /** [[http://redis.io/commands/del DEL]] */
+  /** Executes [[http://redis.io/commands/del DEL]] */
   def del(key: Key): Result[Boolean] =
     execute(new Del(key.single).map(_ > 0))
-  /** [[http://redis.io/commands/del DEL]] */
+  /** Executes [[http://redis.io/commands/del DEL]] */
   def del(key: Key, keys: Key*): Result[Int] =
     execute(new Del(key +:: keys))
-  /** [[http://redis.io/commands/del DEL]] */
+  /** Executes [[http://redis.io/commands/del DEL]]
+    * or simply returns 0 if `keys` is empty, without sending the command to Redis */
   def del(keys: Iterable[Key]): Result[Int] =
     execute(new Del(keys))
-  /** [[http://redis.io/commands/dump DUMP]] */
+  /** Executes [[http://redis.io/commands/dump DUMP]] */
   def dump(key: Key): Result[Opt[Dumped]] =
     execute(new Dump(key))
-  /** [[http://redis.io/commands/exists EXISTS]] */
+  /** Executes [[http://redis.io/commands/exists EXISTS]] */
   def exists(key: Key): Result[Boolean] =
     execute(new Exists(key.single).map(_ > 0))
-  /** [[http://redis.io/commands/exists EXISTS]] */
+  /** Executes [[http://redis.io/commands/exists EXISTS]] */
   def exists(key: Key, keys: Key*): Result[Int] =
     execute(new Exists(key +:: keys))
-  /** [[http://redis.io/commands/exists EXISTS]] */
+  /** Executes [[http://redis.io/commands/exists EXISTS]]
+    * or simply returns 0 when `keys` is empty, without sending the command to Redis */
   def exists(keys: Iterable[Key]): Result[Int] =
     execute(new Exists(keys))
-  /** [[http://redis.io/commands/expire EXPIRE]] */
+  /** Executes [[http://redis.io/commands/expire EXPIRE]] */
   def expire(key: Key, seconds: Long): Result[Boolean] =
     execute(new Expire(key, seconds))
-  /** [[http://redis.io/commands/expireat EXPIREAT]] */
+  /** Executes [[http://redis.io/commands/expireat EXPIREAT]] */
   def expireat(key: Key, timestamp: Long): Result[Boolean] =
     execute(new Expireat(key, timestamp))
-  /** [[http://redis.io/commands/migrate MIGRATE]] */
+  /** Executes [[http://redis.io/commands/migrate MIGRATE]]
+    * or simply returns `true` when `keys` is empty, without sending the command to Redis */
   def migrate(keys: Iterable[Key], address: NodeAddress, destinationDb: Int,
     timeout: Long, copy: Boolean = false, replace: Boolean = false): Result[Boolean] =
     execute(new Migrate(keys, address, destinationDb, timeout, copy, replace))
 
-  /** [[http://redis.io/commands/object OBJECT]] */
+  /** Executes [[http://redis.io/commands/object OBJECT]] */
   def objectRefcount(key: Key): Result[Opt[Long]] =
     execute(new ObjectRefcount(key))
-  /** [[http://redis.io/commands/object OBJECT]] */
+  /** Executes [[http://redis.io/commands/object OBJECT]] */
   def objectEncoding(key: Key): Result[Opt[Encoding]] =
     execute(new ObjectEncoding(key))
-  /** [[http://redis.io/commands/object OBJECT]] */
+  /** Executes [[http://redis.io/commands/object OBJECT]] */
   def objectIdletime(key: Key): Result[Opt[Long]] =
     execute(new ObjectIdletime(key))
 
-  /** [[http://redis.io/commands/persist PERSIST]] */
+  /** Executes [[http://redis.io/commands/persist PERSIST]] */
   def persist(key: Key): Result[Boolean] =
     execute(new Persist(key))
-  /** [[http://redis.io/commands/pexpire PEXPIRE]] */
+  /** Executes [[http://redis.io/commands/pexpire PEXPIRE]] */
   def pexpire(key: Key, milliseconds: Long): Result[Boolean] =
     execute(new Pexpire(key, milliseconds))
-  /** [[http://redis.io/commands/pexpireat PEXPIREAT]] */
+  /** Executes [[http://redis.io/commands/pexpireat PEXPIREAT]] */
   def pexpireat(key: Key, millisecondsTimestamp: Long): Result[Boolean] =
     execute(new Pexpireat(key, millisecondsTimestamp))
-  /** [[http://redis.io/commands/pttl PTTL]] */
+  /** Executes [[http://redis.io/commands/pttl PTTL]] */
   def pttl(key: Key): Result[Opt[Opt[Long]]] =
     execute(new Pttl(key))
 
-  /** [[http://redis.io/commands/rename RENAME]] */
+  /** Executes [[http://redis.io/commands/rename RENAME]] */
   def rename(key: Key, newkey: Key): Result[Unit] =
     execute(new Rename(key, newkey))
-  /** [[http://redis.io/commands/renamenx RENAMENX]] */
+  /** Executes [[http://redis.io/commands/renamenx RENAMENX]] */
   def renamenx(key: Key, newkey: Key): Result[Boolean] =
     execute(new Renamenx(key, newkey))
-  /** [[http://redis.io/commands/restore RESTORE]] */
+  /** Executes [[http://redis.io/commands/restore RESTORE]] */
   def restore(key: Key, ttl: Long, dumpedValue: Dumped, replace: Boolean = false): Result[Unit] =
     execute(new Restore(key, ttl, dumpedValue, replace))
 
-  /** [[http://redis.io/commands/sort SORT]] */
+  /** Executes [[http://redis.io/commands/sort SORT]] */
   def sort(key: Key, by: OptArg[SortPattern[Key, HashKey]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
     sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Seq[Value]] =
     execute(new Sort(key, by.toOpt, limit.toOpt, sortOrder.toOpt, alpha))
-  /** [[http://redis.io/commands/sort SORT]] */
+  /** Executes [[http://redis.io/commands/sort SORT]] */
   def sortGet(key: Key, gets: Seq[SortPattern[Key, HashKey]], by: OptArg[SortPattern[Key, HashKey]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
     sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Seq[Seq[Opt[Value]]]] =
     execute(new SortGet(key, gets, by.toOpt, limit.toOpt, sortOrder.toOpt, alpha))
-  /** [[http://redis.io/commands/sort SORT]] */
+  /** Executes [[http://redis.io/commands/sort SORT]] */
   def sortStore(key: Key, destination: Key, by: OptArg[SortPattern[Key, HashKey]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
     gets: Seq[SortPattern[Key, HashKey]] = Nil, sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Long] =
     execute(new SortStore(key, destination, by.toOpt, limit.toOpt, gets, sortOrder.toOpt, alpha))
 
-  /** [[http://redis.io/commands/touch TOUCH]] */
+  /** Executes [[http://redis.io/commands/touch TOUCH]] */
   def touch(key: Key): Result[Boolean] =
     execute(new Touch(key.single).map(_ > 0))
-  /** [[http://redis.io/commands/touch TOUCH]] */
+  /** Executes [[http://redis.io/commands/touch TOUCH]] */
   def touch(key: Key, keys: Key*): Result[Int] =
     execute(new Touch(key +:: keys))
-  /** [[http://redis.io/commands/touch TOUCH]] */
+  /** Executes [[http://redis.io/commands/touch TOUCH]]
+    * or simply returns 0 when `keys` is empty, without sending the command to Redis */
   def touch(keys: Iterable[Key]): Result[Int] =
     execute(new Touch(keys))
 
-  /** [[http://redis.io/commands/ttl TTL]] */
+  /** Executes [[http://redis.io/commands/ttl TTL]] */
   def ttl(key: Key): Result[Opt[Opt[Long]]] =
     execute(new Ttl(key))
-  /** [[http://redis.io/commands/type TYPE]] */
+  /** Executes [[http://redis.io/commands/type TYPE]] */
   def `type`(key: Key): Result[RedisType] =
     execute(new Type(key))
 
-  /** [[http://redis.io/commands/unlink UNLINK]] */
+  /** Executes [[http://redis.io/commands/unlink UNLINK]] */
   def unlink(key: Key): Result[Boolean] =
     execute(new Unlink(key.single).map(_ > 0))
-  /** [[http://redis.io/commands/unlink UNLINK]] */
+  /** Executes [[http://redis.io/commands/unlink UNLINK]] */
   def unlink(key: Key, keys: Key*): Result[Int] =
     execute(new Unlink(key +:: keys))
-  /** [[http://redis.io/commands/unlink UNLINK]] */
+  /** Executes [[http://redis.io/commands/unlink UNLINK]]
+    * or simply returns 0 when `keys` is empty, without sending the command to Redis */
   def unlink(keys: Iterable[Key]): Result[Int] =
     execute(new Unlink(keys))
 
   private final class Del(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
-    requireNonEmpty(keys, "keys")
     val encoded = encoder("DEL").keys(keys).result
+    override def immediateResult = whenEmpty(keys, 0)
   }
 
   private final class Dump(key: Key) extends RedisOptCommand[Dumped](bulk(Dumped)) with NodeCommand {
@@ -128,8 +133,8 @@ trait KeyedKeysApi extends ApiSubset {
   }
 
   private final class Exists(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
-    requireNonEmpty(keys, "keys")
     val encoded = encoder("EXISTS").keys(keys).result
+    override def immediateResult = whenEmpty(keys, 0)
   }
 
   private final class Expire(key: Key, seconds: Long) extends RedisBooleanCommand with NodeCommand {
@@ -142,9 +147,8 @@ trait KeyedKeysApi extends ApiSubset {
 
   private final class Migrate(keys: Iterable[Key], address: NodeAddress, destinationDb: Int,
     timeout: Long, copy: Boolean, replace: Boolean) extends RedisCommand[Boolean] with NodeCommand {
-    requireNonEmpty(keys, "keys")
 
-    private val multiKey = keys.size > 1
+    private val multiKey = keys.size != 1
 
     val encoded = {
       val enc = encoder("MIGRATE").add(address.ip).add(address.port)
@@ -164,6 +168,8 @@ trait KeyedKeysApi extends ApiSubset {
       case SimpleStringStr("OK") => true
       case SimpleStringStr("NOKEY") => false
     }
+
+    override def immediateResult = whenEmpty(keys, true)
   }
 
   private final class ObjectRefcount(key: Key) extends RedisOptLongCommand with NodeCommand {
@@ -230,8 +236,8 @@ trait KeyedKeysApi extends ApiSubset {
     extends AbstractSort[Long](integerLong)(key, by, limit, gets, sortOrder, alpha, Opt(destination))
 
   private final class Touch(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
-    requireNonEmpty(keys, "keys")
     val encoded = encoder("TOUCH").keys(keys).result
+    override def immediateResult = whenEmpty(keys, 0)
   }
 
   private final class Ttl(key: Key) extends AbstractRedisCommand[Opt[Opt[Long]]](integerTtl) with NodeCommand {
@@ -243,25 +249,25 @@ trait KeyedKeysApi extends ApiSubset {
   }
 
   private final class Unlink(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
-    requireNonEmpty(keys, "keys")
     val encoded = encoder("UNLINK").keys(keys).result
+    override def immediateResult = whenEmpty(keys, 0)
   }
 }
 
 trait NodeKeysApi extends KeyedKeysApi with ApiSubset {
-  /** [[http://redis.io/commands/move MOVE]] */
+  /** Executes [[http://redis.io/commands/move MOVE]] */
   def move(key: Key, db: Int): Result[Boolean] =
     execute(new Move(key, db))
-  /** [[http://redis.io/commands/keys KEYS]] */
+  /** Executes [[http://redis.io/commands/keys KEYS]] */
   def keys(pattern: Key): Result[BSet[Key]] =
     execute(new Keys(pattern))
-  /** [[http://redis.io/commands/scan SCAN]] */
+  /** Executes [[http://redis.io/commands/scan SCAN]] */
   def scan(cursor: Cursor, matchPattern: OptArg[Key] = OptArg.Empty, count: OptArg[Long] = OptArg.Empty): Result[(Cursor, Seq[Key])] =
     execute(new Scan(cursor, matchPattern.toOpt, count.toOpt))
-  /** [[http://redis.io/commands/randomkey RANDOMKEY]] */
+  /** Executes [[http://redis.io/commands/randomkey RANDOMKEY]] */
   def randomkey: Result[Opt[Key]] =
     execute(Randomkey)
-  /** [[http://redis.io/commands/wait WAIT]] */
+  /** Executes [[http://redis.io/commands/wait WAIT]] */
   def wait(numslaves: Int, timeout: Long): Result[Long] =
     execute(new Wait(numslaves, timeout))
 
