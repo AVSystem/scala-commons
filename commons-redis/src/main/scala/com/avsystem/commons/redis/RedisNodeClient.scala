@@ -48,7 +48,7 @@ final class RedisNodeClient(
   @volatile private[this] var failure = Opt.empty[Throwable]
 
   private val overallInitFuture: Future[Any] = {
-    implicit val executionContext: ExecutionContext = RunInQueueEC
+    implicit val executionContext: ExecutionContext = new RunInQueueEC
     val initOpFuture = executeOp(connections(0), config.initOp)(config.initTimeout)
       .transform(identity, new NodeInitializationFailure(_))
     val res = Future.traverse(connInitPromises)(_.future).flatMap(_ => initOpFuture)

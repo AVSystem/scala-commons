@@ -18,13 +18,15 @@ object RunNowEC extends ExecutionContextExecutor {
     cause.printStackTrace()
 }
 
-object RunInQueueEC extends ExecutionContextExecutor {
+object RunInQueueEC extends RunInQueueEC {
   def get: ExecutionContextExecutor = this
 
   object Implicits {
     implicit val executionContext: ExecutionContext = RunInQueueEC
   }
+}
 
+class RunInQueueEC extends ExecutionContextExecutor {
   private val queueTL = new ThreadLocal[mutable.Queue[Runnable]] {
     override def initialValue = new mutable.Queue[Runnable]
   }

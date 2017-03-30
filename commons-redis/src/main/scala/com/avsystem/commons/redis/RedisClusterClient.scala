@@ -59,6 +59,7 @@ final class RedisClusterClient(
   @volatile private[this] var failure = Opt.empty[Throwable]
   private val initPromise = Promise[Unit]
   initPromise.future.foreachNow(_ => initSuccess = true)
+  private val internalExecutor: ExecutionContext = new RunInQueueEC
 
   private def ifReady[T](code: => Future[T]): Future[T] = failure match {
     case Opt.Empty if initSuccess => code
@@ -304,7 +305,7 @@ final class RedisClusterClient(
       results += resultFuture
     }
     barrier.success(())
-    implicit val ec: ExecutionContext = RunInQueueEC
+    implicit val ec: ExecutionContext = internalExecutor
     Future.sequence(results)
   }
 
