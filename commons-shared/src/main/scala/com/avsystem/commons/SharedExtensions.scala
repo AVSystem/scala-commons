@@ -307,6 +307,14 @@ object SharedExtensions extends SharedExtensions {
 
   class TraversableOnceOps[C[X] <: TraversableOnce[X], A](private val coll: C[A]) extends AnyVal {
 
+    def mkMap[K, V](keyFun: A => K, valueFun: A => V): Map[K, V] = {
+      val res = Map.newBuilder[K, V]
+      coll.foreach { a =>
+        res += ((keyFun(a), valueFun(a)))
+      }
+      res.result()
+    }
+
     def groupToMap[K, V, To](keyFun: A => K, valueFun: A => V)(implicit cbf: CanBuildFrom[C[A], V, To]): Map[K, To] = {
       val builders = mutable.Map[K, mutable.Builder[V, To]]()
       coll.foreach { a =>
@@ -332,12 +340,15 @@ object SharedExtensions extends SharedExtensions {
     def minOpt[B >: A : Ordering]: Opt[B] = if (coll.isEmpty) Opt.Empty else coll.min[B].opt
 
     def minOptBy[B: Ordering](f: A => B): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.minBy(f).opt
+
   }
 
   class SetOps[A](private val set: BSet[A]) extends AnyVal {
+
     def containsAny(other: BTraversable[A]): Boolean = other.exists(set.contains)
 
     def containsAll(other: BTraversable[A]): Boolean = other.forall(set.contains)
+
   }
 
   class TraversableOps[C[X] <: BTraversable[X], A](private val coll: C[A]) extends AnyVal {
@@ -345,10 +356,6 @@ object SharedExtensions extends SharedExtensions {
     def headOpt: Opt[A] = if (coll.isEmpty) Opt.Empty else Opt(coll.head)
 
     def lastOpt: Opt[A] = if (coll.isEmpty) Opt.Empty else Opt(coll.last)
-
-    def mkMap[K, V](keyFun: A => K, valueFun: A => V): Map[K, V] = {
-      coll.map { a => (keyFun(a), valueFun(a)) }(scala.collection.breakOut)
-    }
 
   }
 
