@@ -47,6 +47,6 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
     SeparateThreadExecutionContext.submit {
       s"kill -SIGKILL ${process.pid}".run(ProcessLogger(_ => (), Console.err.println))
       process.process.exitValue()
-      ()
+      Thread.sleep(1000)
     }
 }
