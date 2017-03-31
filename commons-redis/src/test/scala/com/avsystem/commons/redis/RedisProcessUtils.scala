@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package redis
 
-import java.io.ByteArrayInputStream
-
 import com.avsystem.commons.redis.commands.NodeId
 import org.scalatest.Suite
 
@@ -20,12 +18,7 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
 
   private val NodeLogRegex = ".*Node configuration loaded, I'm ([0-9a-f]+)$".r
 
-  case class RedisProcess(process: Process, pid: Int, nodeId: Opt[NodeId]) {
-    def stop() = s"kill -SIGSTOP $pid".!!
-    def cont() = s"kill -SIGCONT $pid".!!
-    def term() = s"kill -SIGTERM $pid".!!
-    def kill() = s"kill -SIGKILL $pid".!!
-  }
+  case class RedisProcess(process: Process, pid: Int, nodeId: Opt[NodeId])
 
   def launchRedis(arguments: String*): Future[RedisProcess] = {
     val promise = Promise[Unit]()
@@ -52,21 +45,8 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
 
   def shutdownRedis(port: Int, process: RedisProcess): Future[Unit] =
     SeparateThreadExecutionContext.submit {
-      val shutdownScript =
-        """
-          |CONFIG SET appendonly no
-          |SHUTDOWN NOSAVE
-        """.stripMargin
-
-      val passOption = password.map(p => Seq("-a", p)).getOrElse(Seq.empty)
-      val command = Seq(inRedisHome("redis-cli"), "-p", port.toString) ++ passOption
-      def input = new ByteArrayInputStream(shutdownScript.getBytes)
-      (command #< input).run(ProcessLogger(_ => (), err => Console.err.println(err)))
-      val tc = scheduleSpawn(3.seconds)(process.term())
-      val kc = scheduleSpawn(6.seconds)(process.kill())
+      s"kill -SIGKILL ${process.pid}".run(ProcessLogger(_ => (), Console.err.println))
       process.process.exitValue()
-      tc.cancel()
-      kc.cancel()
       ()
     }
 }
