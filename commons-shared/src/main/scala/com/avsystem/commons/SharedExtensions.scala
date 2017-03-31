@@ -31,9 +31,11 @@ trait SharedExtensions {
 
   implicit def partialFunctionOps[A, B](pf: PartialFunction[A, B]): PartialFunctionOps[A, B] = new PartialFunctionOps(pf)
 
-  implicit def traversableOps[C[X] <: BTraversable[X], A](coll: C[A]): TraversableOps[C, A] = new TraversableOps(coll)
-
   implicit def setOps[A](set: BSet[A]): SetOps[A] = new SetOps(set)
+
+  implicit def traversableOnceOps[C[X] <: TraversableOnce[X], A](coll: C[A]): TraversableOnceOps[C, A] = new TraversableOnceOps(coll)
+
+  implicit def traversableOps[C[X] <: BTraversable[X], A](coll: C[A]): TraversableOps[C, A] = new TraversableOps(coll)
 
   implicit def mapOps[M[X, Y] <: BMap[X, Y], K, V](map: M[K, V]): MapOps[M, K, V] = new MapOps(map)
 
@@ -303,9 +305,14 @@ object SharedExtensions extends SharedExtensions {
     private final val NoValueMarkerFunc = (_: Any) => NoValueMarker
   }
 
-  class TraversableOps[C[X] <: BTraversable[X], A](private val coll: C[A]) extends AnyVal {
+  class TraversableOnceOps[C[X] <: TraversableOnce[X], A](private val coll: C[A]) extends AnyVal {
+
     def mkMap[K, V](keyFun: A => K, valueFun: A => V): Map[K, V] = {
-      coll.map { a => (keyFun(a), valueFun(a)) }(scala.collection.breakOut)
+      val res = Map.newBuilder[K, V]
+      coll.foreach { a =>
+        res += ((keyFun(a), valueFun(a)))
+      }
+      res.result()
     }
 
     def groupToMap[K, V, To](keyFun: A => K, valueFun: A => V)(implicit cbf: CanBuildFrom[C[A], V, To]): Map[K, To] = {
@@ -315,10 +322,6 @@ object SharedExtensions extends SharedExtensions {
       }
       builders.map({ case (k, v) => (k, v.result()) })(scala.collection.breakOut)
     }
-
-    def headOpt: Opt[A] = if (coll.isEmpty) Opt.Empty else Opt(coll.head)
-
-    def lastOpt: Opt[A] = if (coll.isEmpty) Opt.Empty else Opt(coll.last)
 
     def findOpt(p: A => Boolean): Opt[A] = coll.find(p).toOpt
 
@@ -337,19 +340,33 @@ object SharedExtensions extends SharedExtensions {
     def minOpt[B >: A : Ordering]: Opt[B] = if (coll.isEmpty) Opt.Empty else coll.min[B].opt
 
     def minOptBy[B: Ordering](f: A => B): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.minBy(f).opt
+
   }
 
   class SetOps[A](private val set: BSet[A]) extends AnyVal {
+
     def containsAny(other: BTraversable[A]): Boolean = other.exists(set.contains)
 
     def containsAll(other: BTraversable[A]): Boolean = other.forall(set.contains)
+
+  }
+
+  class TraversableOps[C[X] <: BTraversable[X], A](private val coll: C[A]) extends AnyVal {
+
+    def headOpt: Opt[A] = if (coll.isEmpty) Opt.Empty else Opt(coll.head)
+
+    def lastOpt: Opt[A] = if (coll.isEmpty) Opt.Empty else Opt(coll.last)
+
   }
 
   class MapOps[M[X, Y] <: BMap[X, Y], K, V](private val map: M[K, V]) extends AnyVal {
+
     def getOpt(key: K): Opt[V] = map.get(key).toOpt
+
   }
 
   class IteratorOps[A](private val it: Iterator[A]) extends AnyVal {
+
     def nextOpt: Opt[A] =
       if (it.hasNext) it.next().opt else Opt.Empty
 
