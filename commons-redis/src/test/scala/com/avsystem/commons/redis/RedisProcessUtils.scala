@@ -14,7 +14,8 @@ import scala.sys.process._
   * Created: 27/06/16.
   */
 trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
-  def redisHome = sys.env("REDIS_HOME")
+  def redisHome = sys.env.getOpt("REDIS_HOME")
+  def inRedisHome(cmd: String) = redisHome.fold(cmd)(_ + "/" + cmd)
   def password = Opt.empty[String]
 
   private val NodeLogRegex = ".*Node configuration loaded, I'm ([0-9a-f]+)$".r
@@ -31,7 +32,7 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
     var pid = 0
     var nodeId: Opt[NodeId] = Opt.Empty
     val passArgs = password.fold(Seq.empty[String])(p => Seq("--requirepass", p))
-    val process = (s"$redisHome/redis-server" +: arguments ++: passArgs).run(ProcessLogger { line =>
+    val process = (inRedisHome("redis-server") +: arguments ++: passArgs).run(ProcessLogger { line =>
       actorSystem.log.debug(line)
       line match {
         case NodeLogRegex(rawNodeId) =>
@@ -58,7 +59,7 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
         """.stripMargin
 
       val passOption = password.map(p => Seq("-a", p)).getOrElse(Seq.empty)
-      val command = Seq(s"$redisHome/redis-cli", "-p", port.toString) ++ passOption
+      val command = Seq(inRedisHome("redis-cli"), "-p", port.toString) ++ passOption
       def input = new ByteArrayInputStream(shutdownScript.getBytes)
       (command #< input).run(ProcessLogger(_ => (), err => Console.err.println(err)))
       val tc = scheduleSpawn(3.seconds)(process.term())
