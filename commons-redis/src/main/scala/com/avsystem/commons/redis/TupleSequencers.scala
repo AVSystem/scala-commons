@@ -968,6 +968,15 @@ object TupleSequencers {
         i += 1
       }
     }
+    def computeSize(limit: Int) = {
+      var res = 0
+      var i = 0
+      while (i < batches.productArity && res < limit) {
+        res += batches.productElement(i).asInstanceOf[RedisBatch[Any]].rawCommandPacks.computeSize(limit - res)
+        i += 1
+      }
+      res
+    }
     def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = {
       val result = new Array[Any](batches.productArity)
       var failure: Opt[Throwable] = Opt.Empty

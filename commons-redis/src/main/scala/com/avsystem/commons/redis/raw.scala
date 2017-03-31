@@ -74,7 +74,7 @@ object RawCommand {
   */
 trait RawCommandPacks {
   def emitCommandPacks(consumer: RawCommandPack => Unit): Unit
-  def single: Opt[RawCommandPack] = Opt.Empty
+  def computeSize(limit: Int): Int
 
   final def foreachKey(consumer: ByteString => Unit): Unit =
     emitCommandPacks(_.rawCommands(inTransaction = false)
@@ -104,8 +104,7 @@ trait RawCommandPack extends RawCommandPacks {
 
   def isAsking: Boolean = false
   final def emitCommandPacks(consumer: RawCommandPack => Unit) = consumer(this)
-
-  override final def single: Opt[RawCommandPack] = this.opt
+  final def computeSize(limit: Int) = limit min 1
 }
 
 trait WatchState {

@@ -39,6 +39,13 @@ trait RedisBatch[+A] { self =>
         other.rawCommandPacks.emitCommandPacks(consumer)
       }
 
+      def computeSize(limit: Int) =
+        if (limit <= 0) limit
+        else {
+          val selfSize = self.rawCommandPacks.computeSize(limit)
+          selfSize + other.rawCommandPacks.computeSize(limit - selfSize)
+        }
+
       def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = {
         // we must invoke both decoders regardless of intermediate errors because index must be properly advanced
         var failure: Opt[Throwable] = Opt.Empty
@@ -147,6 +154,8 @@ trait RedisBatch[+A] { self =>
         self.decodeReplies(replies, index, inTransaction)
       def emitCommandPacks(consumer: RawCommandPack => Unit) =
         self.rawCommandPacks.emitCommandPacks(pack => consumer(new RedisClusterClient.AskingPack(pack)))
+      def computeSize(limit: Int) =
+        self.rawCommandPacks.computeSize(limit)
       def rawCommandPacks = this
     }
 }
@@ -169,17 +178,13 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
   }
 
   def success[A](a: A): RedisBatch[A] =
-    new RedisBatch[A] with RawCommandPacks {
-      def rawCommandPacks = this
-      def emitCommandPacks(consumer: RawCommandPack => Unit) = ()
-      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = a
+    new ImmediateBatch[A] {
+      def result: A = a
     }
 
   def failure(cause: Throwable): RedisBatch[Nothing] =
-    new RedisBatch[Nothing] with RawCommandPacks {
-      def rawCommandPacks = this
-      def emitCommandPacks(consumer: RawCommandPack => Unit) = ()
-      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = throw cause
+    new ImmediateBatch[Nothing] {
+      def result: Nothing = throw cause
     }
 
   def fromTry[T](t: Try[T]): RedisBatch[T] = t match {
@@ -248,6 +253,14 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
 trait AtomicBatch[+A] extends RedisBatch[A] with RawCommandPack {
   final def rawCommandPacks = this
   override final def atomic: RedisBatch[A] = this
+}
+
+trait ImmediateBatch[+A] extends RedisBatch[A] with RawCommandPacks {
+  def result: A
+  final def rawCommandPacks: RawCommandPacks = this
+  final def decodeReplies(replies: Int => RedisReply, index: RedisBatch.Index, inTransaction: Boolean): A = result
+  final def emitCommandPacks(consumer: RawCommandPack => Unit): Unit = ()
+  final def computeSize(limit: Int) = 0
 }
 
 /**

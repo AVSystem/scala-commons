@@ -8,4 +8,5 @@ package redis
 object SeparateThreadExecutionContext extends ExecutionContext {
   def execute(runnable: Runnable) = new Thread(runnable).start()
   def reportFailure(cause: Throwable) = cause.printStackTrace()
+  def submit[T](code: => T): Future[T] = Future(code)(this)
 }

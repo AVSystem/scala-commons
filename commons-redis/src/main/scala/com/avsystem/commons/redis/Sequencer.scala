@@ -6,6 +6,7 @@ import com.avsystem.commons.redis.protocol.RedisReply
 
 import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Typeclass for easy merging ("sequencing") of multiple [[RedisBatch]] instances into one. This is done in
@@ -44,22 +45,32 @@ object Sequencer extends TupleSequencers {
   implicit def trivialSequencer[A]: Sequencer[RedisBatch[A], A] =
     reusableTrivialSequencer.asInstanceOf[Sequencer[RedisBatch[A], A]]
 
-  implicit def collectionSequencer[ElOps, ElRes, M[X] <: TraversableOnce[X], That](
+  implicit def collectionSequencer[ElOps, ElRes, M[X] <: Traversable[X], That](
     implicit elSequencer: Sequencer[ElOps, ElRes], cbf: CanBuildFrom[M[ElOps], ElRes, That]): Sequencer[M[ElOps], That] =
 
     new Sequencer[M[ElOps], That] {
       def sequence(ops: M[ElOps]) =
         new RedisBatch[That] with RawCommandPacks {
+          private val batches: Traversable[RedisBatch[ElRes]] =
+            if (elSequencer eq reusableTrivialSequencer) ops.asInstanceOf[M[RedisBatch[ElRes]]]
+            else {
+              val buf = new ArrayBuffer[RedisBatch[ElRes]]
+              ops.foreach(el => buf += elSequencer.sequence(el))
+              buf
+            }
+
           def rawCommandPacks = this
           def emitCommandPacks(consumer: RawCommandPack => Unit) =
-            ops.foreach(e => elSequencer.sequence(e).rawCommandPacks.emitCommandPacks(consumer))
+            batches.foreach(_.rawCommandPacks.emitCommandPacks(consumer))
+          def computeSize(limit: Int) =
+            if (limit <= 0) limit else batches.foldLeft(0)((s, b) => s + b.rawCommandPacks.computeSize(limit - s))
           def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = {
             // we must invoke all decoders regardless of intermediate errors because index must be properly advanced
             var failure: Opt[Throwable] = Opt.Empty
             val builder = cbf(ops)
-            ops.foreach { batch =>
+            batches.foreach { batch =>
               try {
-                builder += elSequencer.sequence(batch).decodeReplies(replies, index, inTransaction)
+                builder += batch.decodeReplies(replies, index, inTransaction)
               } catch {
                 case NonFatal(cause) =>
                   failure = failure orElse cause.opt

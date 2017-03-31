@@ -20,10 +20,10 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
   private val NodeLogRegex = ".*Node configuration loaded, I'm ([0-9a-f]+)$".r
 
   case class RedisProcess(process: Process, pid: Int, nodeId: Opt[NodeId]) {
-    def stop() = Seq(s"kill -SIGSTOP $pid").!!
-    def cont() = Seq(s"kill -SIGCONT $pid").!!
-    def term() = Seq(s"kill -SIGTERM $pid").!!
-    def kill() = Seq(s"kill -SIGKILL $pid").!!
+    def stop() = s"kill -SIGSTOP $pid".!!
+    def cont() = s"kill -SIGCONT $pid".!!
+    def term() = s"kill -SIGTERM $pid".!!
+    def kill() = s"kill -SIGKILL $pid".!!
   }
 
   def launchRedis(arguments: String*): Future[RedisProcess] = {
@@ -49,22 +49,23 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
   private def scheduleSpawn(delay: FiniteDuration)(fun: => Unit) =
     actorSystem.scheduler.scheduleOnce(delay)(fun)(SeparateThreadExecutionContext)
 
-  def shutdownRedis(port: Int, process: RedisProcess): Future[Unit] = Future({
-    val shutdownScript =
-      """
-        |CONFIG SET appendonly no
-        |SHUTDOWN NOSAVE
-      """.stripMargin
+  def shutdownRedis(port: Int, process: RedisProcess): Future[Unit] =
+    SeparateThreadExecutionContext.submit {
+      val shutdownScript =
+        """
+          |CONFIG SET appendonly no
+          |SHUTDOWN NOSAVE
+        """.stripMargin
 
-    val passOption = password.map(p => Seq("-a", p)).getOrElse(Seq.empty)
-    val command = Seq(s"$redisHome/redis-cli", "-p", port.toString) ++ passOption
-    def input = new ByteArrayInputStream(shutdownScript.getBytes)
-    (command #< input).!! // please shut down
-    val tc = scheduleSpawn(3.seconds)(process.term()) // dude, stop
-    val kc = scheduleSpawn(6.seconds)(process.kill()) // just die already
-    process.process.exitValue()
-    tc.cancel()
-    kc.cancel()
-    ()
-  })(SeparateThreadExecutionContext)
+      val passOption = password.map(p => Seq("-a", p)).getOrElse(Seq.empty)
+      val command = Seq(s"$redisHome/redis-cli", "-p", port.toString) ++ passOption
+      def input = new ByteArrayInputStream(shutdownScript.getBytes)
+      (command #< input).run(ProcessLogger(_ => (), err => Console.err.println(err)))
+      val tc = scheduleSpawn(3.seconds)(process.term())
+      val kc = scheduleSpawn(6.seconds)(process.kill())
+      process.process.exitValue()
+      tc.cancel()
+      kc.cancel()
+      ()
+    }
 }

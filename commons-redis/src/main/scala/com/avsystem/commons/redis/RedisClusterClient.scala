@@ -260,9 +260,14 @@ final class RedisClusterClient(
           client.executeBatch(batch)
         case Opt.Empty =>
           val packs = batch.rawCommandPacks
-          val undecodedResult = packs.single match {
-            case Opt(pack) => executeSinglePack(pack, currentState)
-            case Opt.Empty => executeClusteredPacks(packs, currentState)
+          val undecodedResult = packs.computeSize(2) match {
+            case 0 => Future.successful(PacksResult.Empty)
+            case 1 =>
+              var pack: RawCommandPack = null
+              packs.emitCommandPacks(pack = _)
+              executeSinglePack(pack, currentState)
+            case _ =>
+              executeClusteredPacks(packs, currentState)
           }
           undecodedResult.mapNow(replies => batch.decodeReplies(replies))
       }
@@ -318,8 +323,9 @@ final class RedisClusterClient(
 private object RedisClusterClient {
   val GetClientTimeout = Timeout(1.seconds)
 
-  case class CollectionPacks(coll: Traversable[RawCommandPack]) extends RawCommandPacks {
+  case class CollectionPacks(coll: IndexedSeq[RawCommandPack]) extends RawCommandPacks {
     def emitCommandPacks(consumer: RawCommandPack => Unit) = coll.foreach(consumer)
+    def computeSize(limit: Int): Int = limit min coll.size
   }
 
   final class AskingPack(pack: RawCommandPack) extends RawCommandPack {
