@@ -13,14 +13,19 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
 
   import RedisApi.Batches.StringTyped._
 
+  def waitForPersistence() =
+    waitUntil(RedisApi.Batches.StringTyped.info(PersistenceInfo).map { pi =>
+      pi.rdbBgsaveInProgress.contains(false) && pi.aofRewriteInProgress.contains(false)
+    }.exec, 50.millis)
+
   apiTest("BGSAVE") {
+    waitForPersistence()
     bgsave.get
-    waitUntil(RedisApi.Batches.StringTyped.info(PersistenceInfo).map(_.rdbBgsaveInProgress.contains(false)).exec, 50.millis)
   }
 
   apiTest("BGREWRITEAOF") {
+    waitForPersistence()
     bgrewriteaof.get
-    waitUntil(RedisApi.Batches.StringTyped.info(PersistenceInfo).map(_.aofRewriteInProgress.contains(false)).exec, 50.millis)
   }
 
   apiTest("CLIENT LIST") {
@@ -87,7 +92,7 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
   }
 
   apiTest("SAVE") {
-    waitUntil(RedisApi.Batches.StringTyped.info(PersistenceInfo).map(_.rdbBgsaveInProgress.contains(false)).exec, 50.millis)
+    waitForPersistence()
     save.get
   }
 
