@@ -45,7 +45,8 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
 
   def shutdownRedis(port: Int, process: RedisProcess): Future[Unit] =
     SeparateThreadExecutionContext.submit {
-      s"kill -SIGKILL ${process.pid}".run(ProcessLogger(_ => (), Console.err.println))
+      actorSystem.log.info(s"Killing Redis process ${process.pid}")
+      s"kill -SIGKILL ${process.pid}".run(ProcessLogger(actorSystem.log.debug(_), actorSystem.log.error(_)))
       process.process.exitValue()
       Thread.sleep(1000)
     }
