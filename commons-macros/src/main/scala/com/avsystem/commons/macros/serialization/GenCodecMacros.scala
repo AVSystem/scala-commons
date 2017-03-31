@@ -109,7 +109,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
       case List(p) =>
         def writeField(value: Tree) = {
-          val baseWrite = q"${depNames(p.sym)}.write(output.writeField(${nameBySym(p.sym)}), $value)"
+          val baseWrite = q"writeField(${nameBySym(p.sym)}, output, $value, ${depNames(p.sym)})"
           if (isTransientDefault(p))
             q"if($value != ${p.defaultValue}) { $baseWrite }"
           else
@@ -125,7 +125,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
       case _ =>
         def writeField(p: ApplyParam, value: Tree) = {
-          val baseWrite = q"${depNames(p.sym)}.write(output.writeField(${nameBySym(p.sym)}), $value)"
+          val baseWrite = q"writeField(${nameBySym(p.sym)}, output, $value, ${depNames(p.sym)})"
           if (isTransientDefault(p))
             q"if($value != ${p.defaultValue}) { $baseWrite }"
           else
@@ -183,7 +183,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
             while(input.hasNext) {
               val fi = input.nextField()
               fi.fieldName match {
-                case ..${params.map(p => cq"${nameBySym(p.sym)} => ${optName(p)} = $NOptObj.some(${depNames(p.sym)}.read(fi))")}
+                case ..${params.map(p => cq"${nameBySym(p.sym)} => ${optName(p)} = $NOptObj.some(readField(fi, ${depNames(p.sym)}))")}
                 case _ => fi.skip()
               }
             }
@@ -217,14 +217,14 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           if(input.hasNext) {
             val fi = input.nextField()
             val result = fi.fieldName match {
-              case ..${subtypes.map(st => cq"${dbNameBySym(st.sym)} => ${depNames(st.sym)}.read(fi)")}
+              case ..${subtypes.map(st => cq"${dbNameBySym(st.sym)} => readCase(fi, ${depNames(st.sym)})")}
               case key => unknownCase(key)
             }
             if(input.hasNext) notSingleField(empty = false) else result
           } else notSingleField(empty = true)
         }
         protected def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
-          case ..${subtypes.map(st => cq"value: ${st.tpe} => ${depNames(st.sym)}.write(output.writeField(${dbNameBySym(st.sym)}), value)")}
+          case ..${subtypes.map(st => cq"value: ${st.tpe} => writeCase(${dbNameBySym(st.sym)}, output, value, ${depNames(st.sym)})")}
         }
       }
      """

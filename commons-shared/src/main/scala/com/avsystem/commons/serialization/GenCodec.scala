@@ -120,10 +120,16 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   class ReadFailure(msg: String, cause: Throwable) extends RuntimeException(msg, cause) {
     def this(msg: String) = this(msg, null)
+
+    override def fillInStackTrace(): Throwable =
+      if (cause == null) super.fillInStackTrace() else this
   }
 
   class WriteFailure(msg: String, cause: Throwable) extends RuntimeException(msg, cause) {
     def this(msg: String) = this(msg, null)
+
+    override def fillInStackTrace(): Throwable =
+      if (cause == null) super.fillInStackTrace() else this
   }
 
   final class Deferred[T] extends DeferredInstance[GenCodec[T]] with GenCodec[T] {
@@ -183,6 +189,28 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   trait ErrorReportingCodec[T] extends GenCodec[T] {
     protected def typeRepr: String
+
+    protected def readField[A](fieldInput: FieldInput, codec: GenCodec[A]): A =
+      decoratedRead(fieldInput, codec, "field")
+
+    protected def readCase[A](fieldInput: FieldInput, codec: GenCodec[A]): A =
+      decoratedRead(fieldInput, codec, "case")
+
+    private def decoratedRead[A](fieldInput: FieldInput, codec: GenCodec[A], what: String): A =
+      try codec.read(fieldInput) catch {
+        case NonFatal(e) => throw new ReadFailure(s"Failed to read $what ${fieldInput.fieldName} of $typeRepr", e)
+      }
+
+    protected def writeField[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
+      decoratedWrite(fieldName, output, value, codec, "field")
+
+    protected def writeCase[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
+      decoratedWrite(fieldName, output, value, codec, "case")
+
+    private def decoratedWrite[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A], what: String): Unit =
+      try codec.write(output.writeField(fieldName), value) catch {
+        case NonFatal(e) => throw new WriteFailure(s"Failed to write $what $fieldName of $typeRepr", e)
+      }
 
     protected def fieldMissing(field: String) =
       throw new ReadFailure(s"Cannot read $typeRepr, field $field is missing in decoded data")
