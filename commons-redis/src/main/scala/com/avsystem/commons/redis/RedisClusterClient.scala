@@ -2,11 +2,11 @@ package com.avsystem.commons
 package redis
 
 import java.io.Closeable
+import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.avsystem.commons.concurrent.RunInQueueEC
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.RedisClusterClient.{AskingPack, CollectionPacks}
 import com.avsystem.commons.redis.actor.ClusterMonitoringActor
@@ -51,7 +51,7 @@ final class RedisClusterClient(
 
   // (optimization) allows us to avoid going through `initPromise` after the client has been successfully initialized
   @volatile private[this] var initSuccess = false
-  @volatile private[this] var state = ClusterState(IndexedSeq.empty, Map.empty)
+  @volatile private[this] var state = ClusterState.Empty
   @volatile private[this] var stateListener = (_: ClusterState) => ()
   // clients for nodes mentioned in redirection messages which are not yet in the cluster state
   @volatile private[this] var temporaryClients = List.empty[RedisNodeClient]
@@ -59,7 +59,6 @@ final class RedisClusterClient(
   @volatile private[this] var failure = Opt.empty[Throwable]
   private val initPromise = Promise[Unit]
   initPromise.future.foreachNow(_ => initSuccess = true)
-  private val internalExecutor: ExecutionContext = new RunInQueueEC
 
   private def ifReady[T](code: => Future[T]): Future[T] = failure match {
     case Opt.Empty if initSuccess => code
@@ -310,8 +309,22 @@ final class RedisClusterClient(
       results += resultFuture
     }
     barrier.success(())
-    implicit val ec: ExecutionContext = internalExecutor
-    Future.sequence(results)
+
+    // specialized Future.sequence which avoids creating new collection and doesn't need execution contexts
+    val finalPromise = Promise[Int => RedisReply]
+    val finalResult = results.andThen(_.value.get.get)
+    val counter = new AtomicInteger(results.size)
+    for(i <- results.indices) {
+      results(i).onCompleteNow {
+        case Success(_) =>
+          if(counter.decrementAndGet() == 0) {
+            finalPromise.success(finalResult)
+          }
+        case Failure(cause) =>
+          finalPromise.tryFailure(cause)
+      }
+    }
+    finalPromise.future
   }
 
   def close(): Unit = {

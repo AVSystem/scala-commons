@@ -11,12 +11,14 @@ import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.jiop.Java8Interop._
 import com.avsystem.commons.redis.RedisClientBenchmark._
 import com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener
+import com.avsystem.commons.redis.commands.SlotRange
 import com.avsystem.commons.redis.config._
 import com.typesafe.config._
 import org.openjdk.jmh.annotations._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.io.Source
 
 object OutgoingTraffictStats extends DebugListener {
   val writeCount = new AtomicInteger
@@ -71,6 +73,10 @@ object RedisClientBenchmark {
 
   import RedisApi.Batches.StringTyped._
 
+  val SlotKeys =
+    Source.fromInputStream(getClass.getResourceAsStream("/slotkeys.txt"))
+      .getLines().toArray
+
   final val BatchSize = 50
   final val ConcurrentCommands = 20000
   final val ConcurrentBatches = ConcurrentCommands / BatchSize
@@ -102,6 +108,13 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
   def batchFuture(client: RedisKeyedExecutor, i: Int) = {
     val batch = (0 until BatchSize).map(j => set(s"{$KeyBase$i}$j", "v")).sequence
     client.executeBatch(batch)
+  }
+
+  def roundRobinBatchFuture(client: RedisClusterClient, i: Int) = {
+    val mapping = client.currentState.mapping
+    val (SlotRange(slot, _), nodeClient) = mapping(i % mapping.size)
+    val batch = (0 until BatchSize).map(j => set(s"$KeyBase{${SlotKeys(slot)}}$i$j", "v")).sequence
+    nodeClient.executeBatch(batch)
   }
 
   def distributedBatchFuture(client: RedisKeyedExecutor, i: Int) = {
@@ -176,6 +189,10 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
   @Benchmark
   def clusterClientBatchBenchmark() =
     redisClientBenchmark(ConcurrentBatches, batchFuture(clusterClient, _))
+
+  @Benchmark
+  def clusterClientRoundRobinBatchBenchmark() =
+    redisClientBenchmark(ConcurrentBatches, roundRobinBatchFuture(clusterClient, _))
 
   @Benchmark
   def clusterClientDistributedBatchBenchmark() =
