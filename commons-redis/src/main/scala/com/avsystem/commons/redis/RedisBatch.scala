@@ -4,6 +4,9 @@ package redis
 import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 import com.avsystem.commons.redis.protocol._
 
+import scala.collection.generic.CanBuildFrom
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Represents a Redis command or a set of commands sent to Redis as a single batch (usually in a single network message).
   * [[RedisBatch]] yields a result of type `A` which is decoded from responses to commands from this batch.
@@ -244,11 +247,25 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
     */
   def sequence[Ops, Res](ops: Ops)(implicit sequencer: Sequencer[Ops, Res]): RedisBatch[Res] =
     sequencer.sequence(ops)
+
+  def traverse[M[X] <: TraversableOnce[X], A, B, That](coll: M[A])(opFun: A => RedisBatch[B])
+    (implicit cbf: CanBuildFrom[M[A], B, That]): RedisBatch[That] = {
+    val batches = new ArrayBuffer[RedisBatch[B]]
+    coll.foreach(a => batches += opFun(a))
+    new CollectionBatch[B, That](batches, () => cbf(coll))
+  }
+
+  def traverseFoldLeft[A, B, T](coll: TraversableOnce[A], zero: T)(opFun: A => RedisBatch[B])(fun: (T, B) => T): RedisBatch[T] =
+    coll.foldLeft(RedisBatch.success(zero)) {
+      case (acc, a) => (acc map2 opFun(a)) (fun)
+    }
+
+  def foldLeft[T, A](ops: TraversableOnce[RedisBatch[A]], zero: T)(fun: (T, A) => T): RedisBatch[T] =
+    traverseFoldLeft(ops, zero)(identity)(fun)
 }
 
 /**
-  * [[RedisBatch]] guaranteed to be atomic, i.e. it either consists of a single command or is a `MULTI`-`EXEC`
-  * transaction.
+  * [[RedisBatch]] guaranteed to be atomic, i.e. either a single command or a `MULTI`-`EXEC` transaction.
   */
 trait AtomicBatch[+A] extends RedisBatch[A] with RawCommandPack {
   final def rawCommandPacks = this

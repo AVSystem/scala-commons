@@ -36,6 +36,18 @@ object ApiTypecheckingTest {
   }
 
   locally {
+    import RedisApi.Batches.StringTyped._
+
+    // collection of batches -> single batch of a collection
+    val seqBatch: RedisBatch[Seq[Opt[String]]] =
+      RedisBatch.traverse(1 to 10)(i => get(s"key$i"))
+
+    // collection of tuples of batches -> single batch of collection of tuples
+    val tupleCollectionBatch2: RedisBatch[Seq[(Opt[String], Long)]] =
+      RedisBatch.traverse(1 to 10)(i => RedisBatch.sequence(get(s"stringKey$i"), incr(s"numberKey$i")))
+  }
+
+  locally {
     val api = RedisApi.Batches.StringTyped.valueType[Int]
     import api._
     val transactionOp: RedisOp[Unit] = for {
@@ -49,6 +61,13 @@ object ApiTypecheckingTest {
   locally {
     val api = RedisApi.Batches.StringTyped.valueType[Encoding]
     api.set("lol", Encoding.HashTable)
+  }
+
+  locally {
+    import RedisApi.Batches.StringTyped._
+    val keys = (0 to 5).map(i => s"key$i")
+    val sumBatch1: RedisBatch[Long] = RedisBatch.foldLeft(keys.map(scard), 0L)(_ + _)
+    val sumBatch2: RedisBatch[Long] = RedisBatch.traverseFoldLeft(keys, 0L)(scard)(_ + _)
   }
 
 }
