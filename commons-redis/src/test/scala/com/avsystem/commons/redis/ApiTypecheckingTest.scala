@@ -67,7 +67,7 @@ object ApiTypecheckingTest {
     import RedisApi.Batches.StringTyped._
     val keys = (0 to 5).map(i => s"key$i")
     val sumBatch1: RedisBatch[Long] = RedisBatch.foldLeft(keys.map(scard), 0L)(_ + _)
-    val sumBatch2: RedisBatch[Long] = RedisBatch.traverseFoldLeft(keys, 0L)(scard)(_ + _)
+    val sumBatch2: RedisBatch[Long] = RedisBatch.foldLeftMap(keys, 0L)(scard)(_ + _)
   }
 
 }

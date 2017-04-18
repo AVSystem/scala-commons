@@ -18,5 +18,5 @@ object ByteStringSerialization {
   }
 
   def read[T: GenCodec](bytes: ByteString): T =
-    GenCodec.read(new StreamInput(new DataInputStream(bytes.iterator.asInputStream)))
+    GenCodec.read[T](new StreamInput(new DataInputStream(bytes.iterator.asInputStream)))
 }

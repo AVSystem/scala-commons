@@ -255,13 +255,16 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
     new CollectionBatch[B, That](batches, () => cbf(coll))
   }
 
-  def traverseFoldLeft[A, B, T](coll: TraversableOnce[A], zero: T)(opFun: A => RedisBatch[B])(fun: (T, B) => T): RedisBatch[T] =
+  def foldLeftMap[A, B, T](coll: TraversableOnce[A], zero: T)(opFun: A => RedisBatch[B])(fun: (T, B) => T): RedisBatch[T] =
     coll.foldLeft(RedisBatch.success(zero)) {
       case (acc, a) => (acc map2 opFun(a)) (fun)
     }
 
   def foldLeft[T, A](ops: TraversableOnce[RedisBatch[A]], zero: T)(fun: (T, A) => T): RedisBatch[T] =
-    traverseFoldLeft(ops, zero)(identity)(fun)
+    foldLeftMap(ops, zero)(identity)(fun)
+
+  def foreach[A](ops: TraversableOnce[A])(opFun: A => RedisBatch[Any]): RedisBatch[Unit] =
+    foldLeftMap(ops, ())(opFun)((_, _) => ())
 }
 
 /**
