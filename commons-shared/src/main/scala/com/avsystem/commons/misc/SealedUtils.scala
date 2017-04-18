@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package misc
 
+import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
 object SealedUtils {
@@ -9,6 +10,7 @@ object SealedUtils {
     * WARNING: the order of case objects in the resulting list is guaranteed to be consistent with
     * declaration order ONLY for enums extending [[OrderedEnum]]. Otherwise, the order may be arbitrary.
     */
+  @explicitGenerics
   def caseObjectsFor[T]: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
 }
 

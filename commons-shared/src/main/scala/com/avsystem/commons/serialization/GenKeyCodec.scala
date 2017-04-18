@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.annotation.explicitGenerics
+
 import scala.annotation.implicitNotFound
 
 /**
@@ -21,6 +23,7 @@ object GenKeyCodec {
     */
   def forSealedEnum[T]: GenKeyCodec[T] = macro macros.serialization.GenKeyCodecMacros.forSealedEnum[T]
 
+  @explicitGenerics
   def read[T](key: String)(implicit keyCodec: GenKeyCodec[T]): T = keyCodec.read(key)
   def write[T](value: T)(implicit keyCodec: GenKeyCodec[T]): String = keyCodec.write(value)
 

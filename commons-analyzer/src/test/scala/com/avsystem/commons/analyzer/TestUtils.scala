@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package analyzer
 
-import com.avsystem.commons.annotation.{atLeast, macroPrivate}
+import com.avsystem.commons.annotation.{atLeast, explicitGenerics, macroPrivate}
 
 import scala.reflect.macros.blackbox
 
@@ -21,4 +21,11 @@ object TestUtils {
   object Extractor {
     @macroPrivate def unapply(any: Any): Option[Any] = None
   }
+
+  def genericMacroImpl[T](c: blackbox.Context)(arg: c.Tree): c.Tree = arg
+
+  @explicitGenerics
+  def genericMethod[T](arg: T): T = arg
+  @explicitGenerics
+  def genericMacro[T](arg: T): T = macro genericMacroImpl[T]
 }

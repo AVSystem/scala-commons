@@ -50,7 +50,7 @@ final class JsValueObjectOutput(consumer: Js.Obj => Unit) extends ObjectOutput {
 
 object JsValueInput {
   def read[T: GenCodec](value: Js.Value): T =
-    GenCodec.read(new JsValueInput(value))
+    GenCodec.read[T](new JsValueInput(value))
 }
 
 class JsValueInput(value: Js.Value) extends Input {

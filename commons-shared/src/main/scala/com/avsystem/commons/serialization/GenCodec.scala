@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.JCanBuildFrom
 
@@ -69,12 +70,14 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     */
   case class Auto[T](codec: GenCodec[T]) extends AnyVal
 
+  @explicitGenerics
   def read[T](input: Input)(implicit codec: GenCodec[T]): T =
     codec.read(input)
 
   def write[T](output: Output, value: T)(implicit codec: GenCodec[T]): Unit =
     codec.write(output, value)
 
+  @explicitGenerics
   def autoRead[T](input: Input)(implicit autoCodec: GenCodec.Auto[T]): T =
     autoCodec.codec.read(input)
 
