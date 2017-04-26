@@ -5,12 +5,11 @@ import java.io.Closeable
 
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
-import akka.util.Timeout
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{RedisConnectionActor, RedisOperationActor}
-import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, NoRetryStrategy}
+import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, ExecutionConfig, NoRetryStrategy}
 import com.avsystem.commons.redis.exception.ClientStoppedException
 
 /**
@@ -55,12 +54,13 @@ final class RedisConnectionClient(
   def executionContext: ExecutionContext =
     system.dispatcher
 
-  def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A] =
-    ifReady(connectionActor.ask(batch.rawCommandPacks.requireLevel(Level.Connection, "ConnectionClient"))
-      .mapNow({ case pr: PacksResult => batch.decodeReplies(pr) }))
+  def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] =
+    ifReady(connectionActor.ask(batch.rawCommandPacks.requireLevel(Level.Connection, "ConnectionClient"))(config.timeout)
+      .map({ case pr: PacksResult => batch.decodeReplies(pr) })(config.decodeOn))
 
-  def executeOp[A](op: RedisOp[A])(implicit timeout: Timeout): Future[A] =
-    ifReady(system.actorOf(Props(new RedisOperationActor(connectionActor))).ask(op)
+  //TODO: don't ignore executionConfig.decodeOn
+  def executeOp[A](op: RedisOp[A], executionConfig: ExecutionConfig): Future[A] =
+    ifReady(system.actorOf(Props(new RedisOperationActor(connectionActor))).ask(op)(executionConfig.timeout)
       .mapNow({ case or: OpResult[A@unchecked] => or.get }))
 
   def close(): Unit = {

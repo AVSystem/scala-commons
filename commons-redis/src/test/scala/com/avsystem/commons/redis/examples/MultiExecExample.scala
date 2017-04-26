@@ -14,7 +14,6 @@ import scala.concurrent.duration._
   */
 object MultiExecExample extends App {
   implicit val actorSystem = ActorSystem()
-  implicit val timeout: Timeout = 10.seconds
 
   // Executing MULTI-EXEC blocks (without WATCH) is very similar to pipelining.
   // See PipeliningExample for more details.

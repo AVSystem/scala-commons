@@ -13,7 +13,7 @@ import com.avsystem.commons.redis.actor.ClusterMonitoringActor
 import com.avsystem.commons.redis.actor.ClusterMonitoringActor.{GetClient, GetClientResponse, Refresh}
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{Asking, SlotRange}
-import com.avsystem.commons.redis.config.ClusterConfig
+import com.avsystem.commons.redis.config.{ClusterConfig, ExecutionConfig}
 import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.protocol.{ErrorMsg, FailureReply, RedisMsg, RedisReply, TransactionReply}
 import com.avsystem.commons.redis.util.SingletonSeq
@@ -250,7 +250,8 @@ final class RedisClusterClient(
     * misconfiguration of the Redis Cluster deployment.</li>
     * </ul>
     */
-  def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A] = {
+  def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] = {
+    implicit val timeout: Timeout = config.timeout
     batch.rawCommandPacks.requireLevel(Level.Node, "ClusterClient")
     ifReady {
       val currentState = state
@@ -268,7 +269,7 @@ final class RedisClusterClient(
             case _ =>
               executeClusteredPacks(packs, currentState)
           }
-          undecodedResult.mapNow(replies => batch.decodeReplies(replies))
+          undecodedResult.map(replies => batch.decodeReplies(replies))(config.decodeOn)
       }
     }
   }
@@ -314,10 +315,10 @@ final class RedisClusterClient(
     val finalPromise = Promise[Int => RedisReply]
     val finalResult = results.andThen(_.value.get.get)
     val counter = new AtomicInteger(results.size)
-    for(i <- results.indices) {
+    for (i <- results.indices) {
       results(i).onCompleteNow {
         case Success(_) =>
-          if(counter.decrementAndGet() == 0) {
+          if (counter.decrementAndGet() == 0) {
             finalPromise.success(finalResult)
           }
         case Failure(cause) =>

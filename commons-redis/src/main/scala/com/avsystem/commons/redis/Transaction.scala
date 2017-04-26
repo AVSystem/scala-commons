@@ -9,7 +9,7 @@ import com.avsystem.commons.redis.protocol._
 
 import scala.collection.mutable.ArrayBuffer
 
-final class Transaction[+A](batch: RedisBatch[A]) extends AtomicBatch[A] {
+final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
 
   def rawCommands(inTransaction: Boolean) = new RawCommands {
     def emitCommands(consumer: RawCommand => Unit) = {

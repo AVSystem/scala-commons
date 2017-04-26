@@ -14,7 +14,6 @@ import scala.concurrent.duration._
   */
 object ApiCustomizationExample extends App {
   implicit val actorSystem = ActorSystem()
-  implicit val timeout: Timeout = 10.seconds
 
   val client = new RedisNodeClient
   // By default, the driver provides textual and binary API variants, e.g.

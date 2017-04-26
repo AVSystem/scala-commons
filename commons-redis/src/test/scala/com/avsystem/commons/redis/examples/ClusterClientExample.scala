@@ -13,7 +13,6 @@ import scala.concurrent.duration._
   */
 object ClusterClientExample extends App {
   implicit val actorSystem = ActorSystem()
-  implicit val timeout: Timeout = 10.seconds
 
   // The cluster client asks seed nodes about cluster state (by default local Redis instance is the only seed node)
   // and then uses separate RedisNodeClients to connect individually to every master mentioned in cluster state

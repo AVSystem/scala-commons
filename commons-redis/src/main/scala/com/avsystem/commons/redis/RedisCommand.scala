@@ -11,7 +11,7 @@ import com.avsystem.commons.redis.protocol._
 
 import scala.collection.mutable.ArrayBuffer
 
-trait RedisCommand[+A] extends AtomicBatch[A] with RawCommand { self =>
+trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
   protected def decodeExpected: ReplyDecoder[A]
 
   final protected def decode(replyMsg: RedisReply): A = replyMsg match {

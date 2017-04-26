@@ -14,8 +14,6 @@ import scala.concurrent.duration._
 object NodeClientExample extends App {
   // The driver is implemented using Akka IO, so we need actor system
   implicit val actorSystem = ActorSystem()
-  // We'll be using asynchronous API so we need to specify a timeout
-  implicit val timeout: Timeout = 10.seconds
   // The client is the object that actually talks to Redis, but does not expose Redis API
   val client = new RedisNodeClient
   // API object exposes API to access individual Redis commands. The API variant we're using here is:

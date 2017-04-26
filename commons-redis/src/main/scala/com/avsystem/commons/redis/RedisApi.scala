@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.{ByteString, Timeout}
+import akka.util.ByteString
+import com.avsystem.commons.redis.config.ExecutionConfig
 
 /**
   * Object which contains implementations of various variants of Redis API that this driver provides.
@@ -40,8 +41,8 @@ import akka.util.{ByteString, Timeout}
   * For example, if you keep only numeric values on a Redis Cluster installation, you might define an API variant
   * like this one:
   * {{{
-  *   class NumericKeyedAsyncApi(executor: RedisKeyedExecutor)(implicit timeout: Timeout)
-  *     extends RedisApi.Keyed.Async[String,String,Long](executor)
+  *   class NumericKeyedAsyncApi(executor: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+  *     extends RedisApi.Keyed.Async[String,String,Long](executor, config)
   * }}}
   *
   * API variants which use only `String`s (textual) or only `ByteString`s (binary) are already implemented by the driver, e.g.
@@ -63,7 +64,6 @@ import akka.util.{ByteString, Timeout}
   *
   *   import scala.concurrent.duration._
   *   implicit val system: ActorSystem = ActorSystem()
-  *   implicit val timeout: Timeout = 10.seconds
   *
   *   val api = RedisApi.Keyed.Blocking.StringTyped(new RedisClusterClient)
   *
@@ -106,32 +106,40 @@ object RedisApi {
     * Entry point for API variants which expose only keyed commands.
     */
   object Keyed {
-    class Async[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisKeyedExecutor)
-      (implicit val timeout: Timeout) extends AbstractRedisApi[Async, Key, HashKey, Value] with RedisRecoverableKeyedApi with RedisAsyncApi {
+    class Async[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](
+      val executor: RedisKeyedExecutor,
+      val execConfig: ExecutionConfig = ExecutionConfig.Default
+    ) extends AbstractRedisApi[Async, Key, HashKey, Value] with RedisRecoverableKeyedApi with RedisAsyncApi {
       def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Async[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec, timeout)
+        new Async[K, H, V](executor, execConfig)(newKeyCodec, newHashKeyCodec, newValueCodec)
     }
     /**
       * Entry point for API variants which execute commands using [[RedisKeyedExecutor]] (e.g. [[RedisClusterClient]])
       * and return results as `Future`s.
       */
     object Async {
-      case class StringTyped(exec: RedisKeyedExecutor)(implicit timeout: Timeout) extends Async[String, String, String](exec)
-      case class BinaryTyped(exec: RedisKeyedExecutor)(implicit timeout: Timeout) extends Async[ByteString, ByteString, ByteString](exec)
+      case class StringTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+        extends Async[String, String, String](exec, config)
+      case class BinaryTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+        extends Async[ByteString, ByteString, ByteString](exec, config)
     }
 
-    class Blocking[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisKeyedExecutor)
-      (implicit val timeout: Timeout) extends AbstractRedisApi[Blocking, Key, HashKey, Value] with RedisRecoverableKeyedApi with RedisBlockingApi {
+    class Blocking[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](
+      val executor: RedisKeyedExecutor,
+      val execConfig: ExecutionConfig = ExecutionConfig.Default
+    ) extends AbstractRedisApi[Blocking, Key, HashKey, Value] with RedisRecoverableKeyedApi with RedisBlockingApi {
       def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Blocking[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec, timeout)
+        new Blocking[K, H, V](executor, execConfig)(newKeyCodec, newHashKeyCodec, newValueCodec)
     }
     /**
       * Entry point for API variants which execute commands using [[RedisKeyedExecutor]] (e.g. [[RedisClusterClient]])
       * and return results synchronously.
       */
     object Blocking {
-      case class StringTyped(exec: RedisKeyedExecutor)(implicit timeout: Timeout) extends Blocking[String, String, String](exec)
-      case class BinaryTyped(exec: RedisKeyedExecutor)(implicit timeout: Timeout) extends Blocking[ByteString, ByteString, ByteString](exec)
+      case class StringTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+        extends Blocking[String, String, String](exec, config)
+      case class BinaryTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+        extends Blocking[ByteString, ByteString, ByteString](exec, config)
     }
   }
 
@@ -140,32 +148,40 @@ object RedisApi {
     * Redis connection state.
     */
   object Node {
-    class Async[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisNodeExecutor)
-      (implicit val timeout: Timeout) extends AbstractRedisApi[Async, Key, HashKey, Value] with RedisRecoverableNodeApi with RedisAsyncApi {
+    class Async[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](
+      val executor: RedisNodeExecutor,
+      val execConfig: ExecutionConfig = ExecutionConfig.Default
+    ) extends AbstractRedisApi[Async, Key, HashKey, Value] with RedisRecoverableNodeApi with RedisAsyncApi {
       def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Async[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec, timeout)
+        new Async[K, H, V](executor, execConfig)(newKeyCodec, newHashKeyCodec, newValueCodec)
     }
     /**
       * Entry point for API variants which execute commands using [[RedisNodeExecutor]] (e.g. [[RedisNodeClient]])
       * and return results as `Future`s.
       */
     object Async {
-      case class StringTyped(exec: RedisNodeExecutor)(implicit timeout: Timeout) extends Async[String, String, String](exec)
-      case class BinaryTyped(exec: RedisNodeExecutor)(implicit timeout: Timeout) extends Async[ByteString, ByteString, ByteString](exec)
+      case class StringTyped(exec: RedisNodeExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+        extends Async[String, String, String](exec, config)
+      case class BinaryTyped(exec: RedisNodeExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+        extends Async[ByteString, ByteString, ByteString](exec, config)
     }
 
-    class Blocking[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisNodeExecutor)
-      (implicit val timeout: Timeout) extends AbstractRedisApi[Blocking, Key, HashKey, Value] with RedisRecoverableNodeApi with RedisBlockingApi {
+    class Blocking[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](
+      val executor: RedisNodeExecutor,
+      val execConfig: ExecutionConfig = ExecutionConfig.Default
+    ) extends AbstractRedisApi[Blocking, Key, HashKey, Value] with RedisRecoverableNodeApi with RedisBlockingApi {
       def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Blocking[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec, timeout)
+        new Blocking[K, H, V](executor, execConfig)(newKeyCodec, newHashKeyCodec, newValueCodec)
     }
     /**
       * Entry point for API variants which execute commands using [[RedisNodeExecutor]] (e.g. [[RedisNodeClient]])
       * and return results synchronously.
       */
     object Blocking {
-      case class StringTyped(exec: RedisNodeExecutor)(implicit timeout: Timeout) extends Blocking[String, String, String](exec)
-      case class BinaryTyped(exec: RedisNodeExecutor)(implicit timeout: Timeout) extends Blocking[ByteString, ByteString, ByteString](exec)
+      case class StringTyped(exec: RedisNodeExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+        extends Blocking[String, String, String](exec, config)
+      case class BinaryTyped(exec: RedisNodeExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+        extends Blocking[ByteString, ByteString, ByteString](exec, config)
     }
   }
 
@@ -174,32 +190,40 @@ object RedisApi {
     * access or modify Redis connection state.
     */
   object Connection {
-    class Async[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisConnectionExecutor)
-      (implicit val timeout: Timeout) extends AbstractRedisApi[Async, Key, HashKey, Value] with RedisRecoverableConnectionApi with RedisAsyncApi {
+    class Async[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](
+      val executor: RedisConnectionExecutor,
+      val execConfig: ExecutionConfig = ExecutionConfig.Default
+    ) extends AbstractRedisApi[Async, Key, HashKey, Value] with RedisRecoverableConnectionApi with RedisAsyncApi {
       def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Async[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec, timeout)
+        new Async[K, H, V](executor, execConfig)(newKeyCodec, newHashKeyCodec, newValueCodec)
     }
     /**
       * Entry point for API variants which execute commands using [[RedisConnectionExecutor]] (e.g. [[RedisConnectionClient]])
       * and return results as `Future`s.
       */
     object Async {
-      case class StringTyped(exec: RedisConnectionExecutor)(implicit timeout: Timeout) extends Async[String, String, String](exec)
-      case class BinaryTyped(exec: RedisConnectionExecutor)(implicit timeout: Timeout) extends Async[ByteString, ByteString, ByteString](exec)
+      case class StringTyped(exec: RedisConnectionExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+        extends Async[String, String, String](exec, config)
+      case class BinaryTyped(exec: RedisConnectionExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+        extends Async[ByteString, ByteString, ByteString](exec, config)
     }
 
-    class Blocking[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](val executor: RedisConnectionExecutor)
-      (implicit val timeout: Timeout) extends AbstractRedisApi[Blocking, Key, HashKey, Value] with RedisRecoverableConnectionApi with RedisBlockingApi {
+    class Blocking[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](
+      val executor: RedisConnectionExecutor,
+      val execConfig: ExecutionConfig = ExecutionConfig.Default
+    ) extends AbstractRedisApi[Blocking, Key, HashKey, Value] with RedisRecoverableConnectionApi with RedisBlockingApi {
       def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Blocking[K, H, V](executor)(newKeyCodec, newHashKeyCodec, newValueCodec, timeout)
+        new Blocking[K, H, V](executor, execConfig)(newKeyCodec, newHashKeyCodec, newValueCodec)
     }
     /**
       * Entry point for API variants which execute commands using [[RedisConnectionExecutor]] (e.g. [[RedisConnectionClient]])
       * and return results synchronously.
       */
     object Blocking {
-      case class StringTyped(exec: RedisConnectionExecutor)(implicit timeout: Timeout) extends Blocking[String, String, String](exec)
-      case class BinaryTyped(exec: RedisConnectionExecutor)(implicit timeout: Timeout) extends Blocking[ByteString, ByteString, ByteString](exec)
+      case class StringTyped(exec: RedisConnectionExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+        extends Blocking[String, String, String](exec, config)
+      case class BinaryTyped(exec: RedisConnectionExecutor, config: ExecutionConfig = ExecutionConfig.Default)
+        extends Blocking[ByteString, ByteString, ByteString](exec, config)
     }
   }
 }

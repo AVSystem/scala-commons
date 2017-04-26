@@ -13,7 +13,6 @@ import scala.concurrent.duration._
   */
 object PipeliningExample extends App {
   implicit val actorSystem = ActorSystem()
-  implicit val timeout: Timeout = 10.seconds
 
   // Pipelining is a technique in which multiple Redis commands are sent to server at once, without one command
   // waiting for previous one to finish. This allows sending multiple commands in a single network message, which

@@ -3,6 +3,7 @@ package redis
 
 import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 import com.avsystem.commons.redis.protocol._
+import com.avsystem.commons.redis.util.FoldingBuilder
 
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.ArrayBuffer
@@ -135,17 +136,23 @@ trait RedisBatch[+A] { self =>
     RedisOp.LeafOp(this)
 
   /**
-    * Ensures that this batch is executed inside a `MULTI`-`EXEC` block.
+    * Wraps this batch into a Redis transaction, i.e. ensures that it's executed inside a `MULTI`-`EXEC` block.
+    * NOTE: If you simply want to ensure atomicity, use [[atomic]].
+    * NOTE: You can safely nest transactions, the driver will make sure that
+    * there are no nested `MULTI`-`EXEC` blocks on the wire.
     */
   def transaction: RedisBatch[A] =
     new Transaction(this)
 
   /**
-    * Ensures that this batch is atomic, i.e. it's either a single Redis command or is executed inside a
-    * `MULTI`-`EXEC` block.
+    * Returns a batch which invokes the same commands as this batch but atomically.
+    * If this batch is already atomic then it's returned unchanged. Otherwise, it's wrapped into a Redis
+    * [[transaction]] (`MULTI`-`EXEC` block).
+    * Empty batches, single-command batches and transactions are atomic by themselves and therefore are returned
+    * unchanged.
     */
   def atomic: RedisBatch[A] =
-    transaction
+    if (rawCommandPacks.computeSize(2) > 1) transaction else this
 
   /**
     * Ensures that every keyed command in this batch is prepended with `ASKING` special command.
@@ -255,10 +262,11 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
     new CollectionBatch[B, That](batches, () => cbf(coll))
   }
 
-  def foldLeftMap[A, B, T](coll: TraversableOnce[A], zero: T)(opFun: A => RedisBatch[B])(fun: (T, B) => T): RedisBatch[T] =
-    coll.foldLeft(RedisBatch.success(zero)) {
-      case (acc, a) => (acc map2 opFun(a)) (fun)
-    }
+  def foldLeftMap[A, B, T](coll: TraversableOnce[A], zero: T)(opFun: A => RedisBatch[B])(fun: (T, B) => T): RedisBatch[T] = {
+    val batches = new ArrayBuffer[RedisBatch[B]]
+    coll.foreach(a => batches += opFun(a))
+    new CollectionBatch[B, T](batches, () => new FoldingBuilder(zero, fun))
+  }
 
   def foldLeft[T, A](ops: TraversableOnce[RedisBatch[A]], zero: T)(fun: (T, A) => T): RedisBatch[T] =
     foldLeftMap(ops, zero)(identity)(fun)
@@ -267,12 +275,8 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
     foldLeftMap(ops, ())(opFun)((_, _) => ())
 }
 
-/**
-  * [[RedisBatch]] guaranteed to be atomic, i.e. either a single command or a `MULTI`-`EXEC` transaction.
-  */
-trait AtomicBatch[+A] extends RedisBatch[A] with RawCommandPack {
+trait SinglePackBatch[+A] extends RedisBatch[A] with RawCommandPack {
   final def rawCommandPacks = this
-  override final def atomic: RedisBatch[A] = this
 }
 
 trait ImmediateBatch[+A] extends RedisBatch[A] with RawCommandPacks {

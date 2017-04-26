@@ -16,7 +16,6 @@ import scala.concurrent.duration._
   */
 object TransactionExample extends App {
   implicit val actorSystem = ActorSystem()
-  implicit val timeout: Timeout = 10.seconds
 
   // In order to execute Redis transaction with optimistic locking, one must execute at least two batches of
   // commands and ensure that they're all executed on the same Redis connection which is exclusively reserved

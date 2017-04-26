@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.Timeout
+import com.avsystem.commons.redis.config.ExecutionConfig
 
 /**
   * Base trait for Redis clients with ability to execute [[RedisBatch]]es.
@@ -19,7 +19,7 @@ trait RedisExecutor {
     * pool of reusable connections. If you try to do this, you'll get a
     * [[exception.ForbiddenCommandException ForbiddenCommandException]].
     */
-  def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A]
+  def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig = ExecutionConfig.Default): Future[A]
 }
 
 /**
@@ -34,7 +34,7 @@ trait RedisOpExecutor {
     * other concurrent commands executing in between. This is necessary for `WATCH` and `UNWATCH` commands to
     * work as expected.
     */
-  def executeOp[A](op: RedisOp[A])(implicit timeout: Timeout): Future[A]
+  def executeOp[A](op: RedisOp[A], executionConfig: ExecutionConfig = ExecutionConfig.Default): Future[A]
 }
 
 /**

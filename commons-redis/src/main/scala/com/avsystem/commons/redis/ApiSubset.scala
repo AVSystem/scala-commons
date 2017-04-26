@@ -4,6 +4,7 @@ package redis
 import akka.util.Timeout
 import com.avsystem.commons.redis.ApiSubset.{HeadOps, IterableTailOps, IteratorTailOps}
 import com.avsystem.commons.redis.commands._
+import com.avsystem.commons.redis.config.ExecutionConfig
 import com.avsystem.commons.redis.util.{HeadIterable, HeadIterator, SingletonSeq}
 
 import scala.concurrent.Await
@@ -75,10 +76,10 @@ trait RedisBatchApi extends ApiSubset {
 }
 
 trait RedisExecutedApi extends RecoverableApiSubset {
-  def timeout: Timeout
+  def execConfig: ExecutionConfig
   def executor: RedisExecutor
   def executeAsync[A](command: RedisCommand[A]): Future[A] =
-    executor.executeBatch(command.batchOrFallback)(timeout)
+    executor.executeBatch(command.batchOrFallback, execConfig)
 }
 
 trait RedisAsyncApi extends RedisExecutedApi {

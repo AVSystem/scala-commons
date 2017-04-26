@@ -11,7 +11,7 @@ import com.avsystem.commons.concurrent.RunInQueueEC
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{Close, PacksResult}
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{RedisConnectionActor, RedisOperationActor}
-import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, NodeConfig}
+import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, ExecutionConfig, NodeConfig}
 import com.avsystem.commons.redis.exception.{ClientStoppedException, NodeInitializationFailure, NodeRemovedException}
 
 import scala.collection.mutable.ArrayBuffer
@@ -115,9 +115,9 @@ final class RedisNodeClient(
     * [[RedisClusterClient]] and Redis node that it's connected to is no longer a master</li>
     * </ul>
     */
-  def executeBatch[A](batch: RedisBatch[A])(implicit timeout: Timeout): Future[A] =
-    executeRaw(batch.rawCommandPacks.requireLevel(RawCommand.Level.Node, "NodeClient"))
-      .mapNow(result => batch.decodeReplies(result))
+  def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] =
+    executeRaw(batch.rawCommandPacks.requireLevel(RawCommand.Level.Node, "NodeClient"))(config.timeout)
+      .map(result => batch.decodeReplies(result))(config.decodeOn)
 
   /**
     * Executes a [[RedisOp]] on this client. [[RedisOp]] is a sequence of dependent [[RedisBatch]]es,
@@ -131,8 +131,9 @@ final class RedisNodeClient(
     * Execution of a [[RedisOp]] may also fail for the same reasons as specified for [[RedisBatch]] in [[executeBatch]].
     * Be especially careful when using node clients obtained from cluster client.
     */
-  def executeOp[A](op: RedisOp[A])(implicit timeout: Timeout): Future[A] =
-    ifReady(executeOp(nextConnection(), op))
+  //TODO: executionConfig.decodeOn is ignored now
+  def executeOp[A](op: RedisOp[A], executionConfig: ExecutionConfig): Future[A] =
+    ifReady(executeOp(nextConnection(), op)(executionConfig.timeout))
 
   private def executeOp[A](connection: ActorRef, op: RedisOp[A])(implicit timeout: Timeout): Future[A] =
     system.actorOf(Props(new RedisOperationActor(connection))).ask(op)

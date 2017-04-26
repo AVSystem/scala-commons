@@ -13,7 +13,6 @@ import scala.concurrent.duration._
   */
 object ConnectionClientExample extends App {
   implicit val actorSystem = ActorSystem()
-  implicit val timeout: Timeout = 10.seconds
 
   // Connection client only uses a single, non-reconnectable connection
   val client = new RedisConnectionClient

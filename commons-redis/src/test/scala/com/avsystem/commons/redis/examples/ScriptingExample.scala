@@ -15,7 +15,6 @@ import scala.concurrent.duration._
   */
 object ScriptingExample extends App {
   implicit val actorSystem = ActorSystem()
-  implicit val timeout: Timeout = 10.seconds
 
   val client = new RedisNodeClient
   val api = RedisApi.Node.Async.StringTyped(client)

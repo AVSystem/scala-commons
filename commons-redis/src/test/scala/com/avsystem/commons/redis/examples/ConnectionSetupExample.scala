@@ -15,7 +15,6 @@ import scala.concurrent.duration._
   */
 object ConnectionSetupExample extends App {
   implicit val actorSystem = ActorSystem()
-  implicit val timeout: Timeout = 10.seconds
 
   // In order to authenticate to Redis, every connection must send an AUTH command upon initializing.
   // We can specify "initialization commands" for a connection in ConnectionConfig:
