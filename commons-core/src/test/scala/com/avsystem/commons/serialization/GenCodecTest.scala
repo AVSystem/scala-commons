@@ -27,6 +27,14 @@ object SealedBase {
   implicit val codec: GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
 }
 
+abstract class Wrapper[Self <: Wrapper[Self] : ClassTag](private val args: Any*) { this: Self =>
+  override def equals(obj: Any) = obj match {
+    case other: Self => args == other.args
+    case _ => false
+  }
+  override def hashCode() = args.hashCode()
+}
+
 @silent
 class GenCodecTest extends CodecTestBase {
   test("NoState test") {
@@ -122,13 +130,8 @@ class GenCodecTest extends CodecTestBase {
     )
   }
 
-  class CaseClassLike(val str: String, val intList: List[Int]) {
-    override def equals(obj: Any) = obj match {
-      case ccl: CaseClassLike => (str, intList) == (ccl.str, ccl.intList)
-      case _ => false
-    }
-    override def hashCode() = (str, intList).hashCode()
-  }
+  class CaseClassLike(val str: String, val intList: List[Int])
+    extends Wrapper[CaseClassLike](str, intList)
   object CaseClassLike {
     def apply(@name("some.str") str: String, intList: List[Int]): CaseClassLike = new CaseClassLike(str, intList)
     def unapply(ccl: CaseClassLike): Option[(String, List[Int])] = (ccl.str, ccl.intList).option
@@ -138,6 +141,26 @@ class GenCodecTest extends CodecTestBase {
   test("case class like test") {
     testWriteReadAndAutoWriteRead(CaseClassLike("dafuq", List(1, 2, 3)),
       Map("some.str" -> "dafuq", "intList" -> List(1, 2, 3))
+    )
+  }
+
+  class HasInheritedApply(val str: String, val intList: List[Int])
+    extends Wrapper[HasInheritedApply](str, intList)
+  trait ApplyAndUnapply[A, B, C] {
+    protected def doApply(a: A, lb: List[B]): C
+    protected def doUnapply(c: C): Option[(A, List[B])]
+    def apply(a: A, lb: List[B]): C = doApply(a, lb)
+    def unapply(c: C): Option[(A, List[B])] = doUnapply(c)
+  }
+  object HasInheritedApply extends ApplyAndUnapply[String, Int, HasInheritedApply] {
+    protected def doApply(a: String, lb: List[Int]): HasInheritedApply = new HasInheritedApply(a, lb)
+    protected def doUnapply(c: HasInheritedApply): Option[(String, List[Int])] = (c.str, c.intList).option
+    implicit val codec: GenCodec[HasInheritedApply] = GenCodec.materialize[HasInheritedApply]
+  }
+
+  test("case class like with inherited apply/unapply test") {
+    testWriteReadAndAutoWriteRead(HasInheritedApply("dafuq", List(1, 2, 3)),
+      Map("a" -> "dafuq", "lb" -> List(1, 2, 3))
     )
   }
 
@@ -152,13 +175,8 @@ class GenCodecTest extends CodecTestBase {
     )
   }
 
-  class VarargsCaseClassLike(val str: String, val ints: Seq[Int]) {
-    override def equals(obj: Any) = obj match {
-      case vccl: VarargsCaseClassLike => (str, ints) == (vccl.str, vccl.ints)
-      case _ => false
-    }
-    override def hashCode() = (str, ints).hashCode()
-  }
+  class VarargsCaseClassLike(val str: String, val ints: Seq[Int])
+    extends Wrapper[VarargsCaseClassLike](str, ints)
   object VarargsCaseClassLike {
     def apply(@name("some.str") str: String, ints: Int*): VarargsCaseClassLike = new VarargsCaseClassLike(str, ints)
     def unapplySeq(vccl: VarargsCaseClassLike): Option[(String, Seq[Int])] = (vccl.str, vccl.ints).option

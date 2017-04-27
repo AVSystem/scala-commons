@@ -70,11 +70,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   def isTransparent(sym: Symbol): Boolean =
     getAnnotations(sym, TransparentAnnotType).nonEmpty
 
-  def isTransientDefault(param: ApplyParam) =
+  def isTransientDefault(param: ApplyParam): Boolean =
     param.defaultValue.nonEmpty && param.sym.annotations.exists(_.tree.tpe <:< TransientDefaultAnnotType)
 
   def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
-    val companion = unapply.owner.asClass.module
+    val companion = tpe.typeSymbol.companion
     val nameBySym = params.groupBy(p => annotName(p.sym)).map {
       case (name, List(param)) => (param.sym, name)
       case (name, ps) if ps.length > 1 =>

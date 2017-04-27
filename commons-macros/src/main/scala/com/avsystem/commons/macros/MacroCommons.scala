@@ -306,8 +306,8 @@ trait MacroCommons {
               alternatives(tpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor).getOrElse(NoSymbol)
             else NoSymbol
 
-          val applySig = if (constructor != NoSymbol) constructor.typeSignatureIn(tpe) else setTypeArgs(apply.typeSignature)
-          val unapplySig = setTypeArgs(unapply.typeSignature)
+          val applySig = if (constructor != NoSymbol) constructor.typeSignatureIn(tpe) else setTypeArgs(apply.typeSignatureIn(companionTpe))
+          val unapplySig = setTypeArgs(unapply.typeSignatureIn(companionTpe))
 
           applySig.paramLists match {
             case params :: implicits if implicits.flatten.forall(_.isImplicit) && applySig.finalResultType =:= tpe =>
