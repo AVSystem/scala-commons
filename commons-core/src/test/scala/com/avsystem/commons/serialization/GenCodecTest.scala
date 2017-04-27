@@ -122,6 +122,55 @@ class GenCodecTest extends CodecTestBase {
     )
   }
 
+  class CaseClassLike(val str: String, val intList: List[Int]) {
+    override def equals(obj: Any) = obj match {
+      case ccl: CaseClassLike => (str, intList) == (ccl.str, ccl.intList)
+      case _ => false
+    }
+    override def hashCode() = (str, intList).hashCode()
+  }
+  object CaseClassLike {
+    def apply(@name("some.str") str: String, intList: List[Int]): CaseClassLike = new CaseClassLike(str, intList)
+    def unapply(ccl: CaseClassLike): Option[(String, List[Int])] = (ccl.str, ccl.intList).option
+    implicit val codec: GenCodec[CaseClassLike] = GenCodec.materialize[CaseClassLike]
+  }
+
+  test("case class like test") {
+    testWriteReadAndAutoWriteRead(CaseClassLike("dafuq", List(1, 2, 3)),
+      Map("some.str" -> "dafuq", "intList" -> List(1, 2, 3))
+    )
+  }
+
+  case class VarargsCaseClass(int: Int, strings: String*)
+  object VarargsCaseClass {
+    implicit val codec: GenCodec[VarargsCaseClass] = GenCodec.materialize[VarargsCaseClass]
+  }
+
+  test("varargs case class test") {
+    testWriteReadAndAutoWriteRead(VarargsCaseClass(42, "foo", "bar"),
+      Map("int" -> 42, "strings" -> List("foo", "bar"))
+    )
+  }
+
+  class VarargsCaseClassLike(val str: String, val ints: Seq[Int]) {
+    override def equals(obj: Any) = obj match {
+      case vccl: VarargsCaseClassLike => (str, ints) == (vccl.str, vccl.ints)
+      case _ => false
+    }
+    override def hashCode() = (str, ints).hashCode()
+  }
+  object VarargsCaseClassLike {
+    def apply(@name("some.str") str: String, ints: Int*): VarargsCaseClassLike = new VarargsCaseClassLike(str, ints)
+    def unapplySeq(vccl: VarargsCaseClassLike): Option[(String, Seq[Int])] = (vccl.str, vccl.ints).option
+    implicit val codec: GenCodec[VarargsCaseClassLike] = GenCodec.materialize[VarargsCaseClassLike]
+  }
+
+  test("varargs case class like test") {
+    testWriteReadAndAutoWriteRead(VarargsCaseClassLike("dafuq", 1, 2, 3),
+      Map("some.str" -> "dafuq", "ints" -> List(1, 2, 3))
+    )
+  }
+
   case class HasDefaults(@transientDefault int: Int = 42, str: String)
   object HasDefaults {
     implicit val codec = GenCodec.materialize[HasDefaults]

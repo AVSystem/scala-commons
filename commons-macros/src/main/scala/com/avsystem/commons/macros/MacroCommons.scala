@@ -250,6 +250,16 @@ trait MacroCommons {
     case _ => tpe
   }
 
+  def isVarargs(meth: Symbol) =
+    meth.typeSignature.paramLists.headOption.flatMap(_.lastOption)
+      .exists(_.typeSignature.typeSymbol == definitions.RepeatedParamClass)
+
+  def nonRepeatedType(tpe: Type) = tpe match {
+    case TypeRef(_, s, List(arg)) if s == definitions.RepeatedParamClass =>
+      getType(tq"$ScalaPkg.Seq[$arg]")
+    case _ => tpe
+  }
+
   case class ApplyUnapply(apply: Symbol, unapply: Symbol, params: List[(TermSymbol, Tree)])
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] = {
@@ -262,7 +272,8 @@ trait MacroCommons {
 
       val applyUnapplyPairs = for {
         apply <- alternatives(companionTpe.member(TermName("apply")))
-        unapply <- alternatives(companionTpe.member(TermName("unapply")))
+        unapplyName = if (isVarargs(apply)) "unapplySeq" else "unapply"
+        unapply <- alternatives(companionTpe.member(TermName(unapplyName)))
       } yield (apply, unapply)
 
       def setTypeArgs(sig: Type) = sig match {
@@ -275,6 +286,7 @@ trait MacroCommons {
         apply.typeSignature.typeParams.length == expected && unapply.typeSignature.typeParams.length == expected
       }
 
+      // https://issues.scala-lang.org/browse/SI-6541 (fixed in Scala 2.11.5 but requires -Xsource:2.12)
       def fixExistentialOptionType(tpe: Type) = tpe match {
         case ExistentialType(quantified, TypeRef(pre, OptionClass, List(arg))) =>
           val newArg = arg match {
@@ -294,14 +306,14 @@ trait MacroCommons {
               alternatives(tpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor).getOrElse(NoSymbol)
             else NoSymbol
 
-          val applySig = if(constructor != NoSymbol) constructor.typeSignatureIn(tpe) else setTypeArgs(apply.typeSignature)
+          val applySig = if (constructor != NoSymbol) constructor.typeSignatureIn(tpe) else setTypeArgs(apply.typeSignature)
           val unapplySig = setTypeArgs(unapply.typeSignature)
 
           applySig.paramLists match {
             case params :: implicits if implicits.flatten.forall(_.isImplicit) && applySig.finalResultType =:= tpe =>
               val expectedUnapplyTpe = params match {
                 case Nil => typeOf[Boolean]
-                case args => getType(tq"$OptionCls[(..${args.map(_.typeSignature)})]")
+                case args => getType(tq"$OptionCls[(..${args.map(s => nonRepeatedType(s.typeSignature))})]")
               }
               def defaultValueFor(param: Symbol, idx: Int): Tree =
                 if (param.asTerm.isParamWithDefault)

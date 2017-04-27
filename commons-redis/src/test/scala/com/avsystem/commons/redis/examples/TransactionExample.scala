@@ -36,7 +36,6 @@ object TransactionExample extends App {
     _ <- api.set("key", value * 3).transaction
   } yield ()
 
-
   // RedisOp can be executed by RedisConnectionClient and RedisNodeClient
   val executor: RedisOpExecutor = new RedisNodeClient
 
