@@ -284,8 +284,8 @@ object SharedExtensions extends SharedExtensions {
     import PartialFunctionOps._
 
     /**
-      * The same thing as [[scala.PartialFunction.orElse]] but with arguments flipped.
-      * Useful in situations where [[scala.PartialFunction.orElse]] would have to be called on a partial function literal,
+      * The same thing as `orElse` but with arguments flipped.
+      * Useful in situations where `orElse` would have to be called on a partial function literal,
       * which does not work well with type inference.
       */
     def unless(pre: PartialFunction[A, B]): PartialFunction[A, B] = pre orElse pf

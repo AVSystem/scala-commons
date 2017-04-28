@@ -40,9 +40,9 @@ object OptArg {
   * <br/>
   * It is strongly recommended that [[OptArg]] type is used ONLY in signatures where implicit conversion `A => OptArg[A]`
   * is intended to work. You should not use [[OptArg]] as a general-purpose "optional value" type - other types like
-  * [[Opt]], [[NOpt]] and [[scala.Option]] serve that purpose. For this reason [[OptArg]] deliberately does not have any "transforming"
+  * [[Opt]], [[NOpt]] and `Option` serve that purpose. For this reason [[OptArg]] deliberately does not have any "transforming"
   * methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that [[OptArg]] is converted to [[Opt]],
-  * [[NOpt]] or [[scala.Option]] as soon as possible (using `toOpt`, `toNOpt` and `toOption` methods).
+  * [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption` methods).
   */
 final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
   private def value: A = rawValue.asInstanceOf[A]
