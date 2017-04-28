@@ -92,7 +92,6 @@ class SamMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     targetTpe.members.iterator.filter(m => m.isAbstract).map(m => (m, m.typeSignatureIn(targetTpe))).toList match {
       case (m, sig) :: Nil if m.isPublic && m.isMethod && !m.asTerm.isAccessor && sig.typeParams.isEmpty =>
         val argTypess = sig.paramLists.map(_.map(_.typeSignature))
-        val arity = sig.paramLists.foldLeft(0)(_ + _.length)
         val finalResultType = if (sig.finalResultType =:= typeOf[Unit]) typeOf[Any] else sig.finalResultType
 
         val requiredFunTpe = argTypess.foldRight(finalResultType) { (argTypes, resultType) =>

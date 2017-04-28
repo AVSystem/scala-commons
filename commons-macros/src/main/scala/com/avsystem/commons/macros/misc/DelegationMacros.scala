@@ -14,7 +14,6 @@ class DelegationMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
 
   def delegate[A: c.WeakTypeTag, B: c.WeakTypeTag](source: c.Tree): c.Tree = {
     val targetTpe = weakTypeOf[B]
-    val sourceTpe = weakTypeOf[A]
 
     val targetSymbol = targetTpe.dealias.typeSymbol
     if (!targetSymbol.isClass && !targetSymbol.asClass.isAbstract) {
