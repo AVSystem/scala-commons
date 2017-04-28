@@ -324,58 +324,61 @@ trait MacroCommons {
   case class ApplyUnapply(apply: Symbol, unapply: Symbol, params: List[(TermSymbol, Tree)])
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] = {
+    val companionSym = tpe.typeSymbol.companion
+    if(companionSym != NoSymbol && !companionSym.isJava)
+      applyUnapplyFor(tpe, c.typecheck(Ident(companionSym)))
+    else
+      None
+  }
+
+  def applyUnapplyFor(tpe: Type, companion: Tree): Option[ApplyUnapply] = {
     val ts = tpe.typeSymbol.asType
     val caseClass = ts.isClass && ts.asClass.isCaseClass
-    val companion = ts.companion
 
-    if (companion != NoSymbol && !companion.isJava) {
-      val companionTpe = getType(tq"$companion.type")
+    val applyUnapplyPairs = for {
+      apply <- alternatives(companion.tpe.member(TermName("apply")))
+      unapplyName = if (isVarargs(apply)) "unapplySeq" else "unapply"
+      unapply <- alternatives(companion.tpe.member(TermName(unapplyName)))
+    } yield (apply, unapply)
 
-      val applyUnapplyPairs = for {
-        apply <- alternatives(companionTpe.member(TermName("apply")))
-        unapplyName = if (isVarargs(apply)) "unapplySeq" else "unapply"
-        unapply <- alternatives(companionTpe.member(TermName(unapplyName)))
-      } yield (apply, unapply)
+    def setTypeArgs(sig: Type) = sig match {
+      case PolyType(params, resultType) => resultType.substituteTypes(params, tpe.typeArgs)
+      case _ => sig
+    }
 
-      def setTypeArgs(sig: Type) = sig match {
-        case PolyType(params, resultType) => resultType.substituteTypes(params, tpe.typeArgs)
-        case _ => sig
-      }
+    def typeParamsMatch(apply: Symbol, unapply: Symbol) = {
+      val expected = tpe.typeArgs.length
+      apply.typeSignature.typeParams.length == expected && unapply.typeSignature.typeParams.length == expected
+    }
 
-      def typeParamsMatch(apply: Symbol, unapply: Symbol) = {
-        val expected = tpe.typeArgs.length
-        apply.typeSignature.typeParams.length == expected && unapply.typeSignature.typeParams.length == expected
-      }
+    val applicableResults = applyUnapplyPairs.flatMap {
+      case (apply, unapply) if typeParamsMatch(apply, unapply) =>
+        val constructor =
+          if (caseClass && apply.isSynthetic)
+            alternatives(tpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor).getOrElse(NoSymbol)
+          else NoSymbol
 
-      val applicableResults = applyUnapplyPairs.flatMap {
-        case (apply, unapply) if typeParamsMatch(apply, unapply) =>
-          val constructor =
-            if (caseClass && apply.isSynthetic)
-              alternatives(tpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor).getOrElse(NoSymbol)
-            else NoSymbol
+        val applySig = if (constructor != NoSymbol) constructor.typeSignatureIn(tpe) else setTypeArgs(apply.typeSignatureIn(companion.tpe))
+        val unapplySig = setTypeArgs(unapply.typeSignatureIn(companion.tpe))
 
-          val applySig = if (constructor != NoSymbol) constructor.typeSignatureIn(tpe) else setTypeArgs(apply.typeSignatureIn(companionTpe))
-          val unapplySig = setTypeArgs(unapply.typeSignatureIn(companionTpe))
+        if (matchingApplyUnapply(tpe, applySig, unapplySig)) {
+          def defaultValueFor(param: Symbol, idx: Int): Tree =
+            if (param.asTerm.isParamWithDefault)
+              q"$companion.${TermName(s"${param.owner.name.encodedName.toString}$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
+            else EmptyTree
 
-          if(matchingApplyUnapply(tpe, applySig, unapplySig)) {
-            def defaultValueFor(param: Symbol, idx: Int): Tree =
-              if (param.asTerm.isParamWithDefault)
-                q"$companion.${TermName(s"${param.owner.name.encodedName.toString}$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
-              else EmptyTree
+          val paramsWithDefaults = applySig.paramLists.head.zipWithIndex
+            .map({ case (p, i) => (p.asTerm, defaultValueFor(p, i)) })
+          Some(ApplyUnapply(constructor orElse apply, unapply, paramsWithDefaults))
+        } else None
 
-            val paramsWithDefaults = applySig.paramLists.head.zipWithIndex
-              .map({ case (p, i) => (p.asTerm, defaultValueFor(p, i)) })
-            Some(ApplyUnapply(constructor orElse apply, unapply, paramsWithDefaults))
-          } else None
+      case _ => None
+    }
 
-        case _ => None
-      }
-
-      applicableResults match {
-        case List(result) => Some(result)
-        case _ => None
-      }
-    } else None
+    applicableResults match {
+      case List(result) => Some(result)
+      case _ => None
+    }
   }
 
   def singleValueFor(tpe: Type): Option[Tree] = tpe match {

@@ -49,6 +49,8 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     */
   def materialize[T]: GenCodec[T] = macro macros.serialization.GenCodecMacros.materialize[T]
 
+  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] = macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
+
   /**
     * Wrapper over `GenCodec` which forces fully automatic derivation.
     * <p/>

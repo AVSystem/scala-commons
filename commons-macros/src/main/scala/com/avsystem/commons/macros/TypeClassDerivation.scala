@@ -135,31 +135,31 @@ trait TypeClassDerivation extends MacroCommons {
 
   def typeClassInstance(tpe: Type): Type = getType(tq"$typeClass[$tpe]")
 
-  def materializeFor(tpe: Type): Tree = {
-    val tcTpe = typeClassInstance(tpe)
-
-    def dependency(depTpe: Type, hint: String, allowImplicitMacro: Boolean = false): Tree = {
-      val clue = s"Cannot automatically derive type class instance $tcTpe because ($hint):\n"
-      val depTcTpe = typeClassInstance(depTpe)
-      val allowDef = if (allowImplicitMacro)
-        q"""
+  def dependency(depTpe: Type, tcTpe: Type, hint: String, allowImplicitMacro: Boolean = false): Tree = {
+    val clue = s"Cannot automatically derive type class instance $tcTpe because ($hint):\n"
+    val depTcTpe = typeClassInstance(depTpe)
+    val allowDef = if (allowImplicitMacro)
+      q"""
           implicit val ${c.freshName(TermName("allow"))}: $AllowImplicitMacroCls[$depTcTpe] =
             $AllowImplicitMacroObj[$depTcTpe]
          """
-      else
-        q"()"
+    else
+      q"()"
 
-      q"""
+    q"""
         $allowDef
         $ImplicitsObj.infer[$depTcTpe]($clue)
        """
-    }
+  }
+
+  def materializeFor(tpe: Type): Tree = {
+    val tcTpe = typeClassInstance(tpe)
 
     def singleTypeTc = singleValueFor(tpe).map(tree => forSingleton(tpe, tree))
     def applyUnapplyTc = applyUnapplyFor(tpe).map {
       case ApplyUnapply(apply, unapply, params) =>
         val dependencies = params.map { case (s, defaultValue) =>
-          ApplyParam(s, defaultValue, dependency(nonRepeatedType(s.typeSignature), s"for field ${s.name}"))
+          ApplyParam(s, defaultValue, dependency(nonRepeatedType(s.typeSignature), tcTpe, s"for field ${s.name}"))
         }
         forApplyUnapply(tpe, apply, unapply, dependencies)
     }
@@ -168,7 +168,7 @@ trait TypeClassDerivation extends MacroCommons {
         abort(s"Could not find any subtypes for $tpe")
       }
       val dependencies = subtypes.map { depTpe =>
-        val depTree = dependency(depTpe, s"for case type $depTpe", allowImplicitMacro = true)
+        val depTree = dependency(depTpe, tcTpe, s"for case type $depTpe", allowImplicitMacro = true)
         KnownSubtype(depTpe, depTree)
       }
       withKnownSubclassesCheck(forSealedHierarchy(tpe, dependencies), tpe)

@@ -130,6 +130,22 @@ class GenCodecTest extends CodecTestBase {
     )
   }
 
+  case class Stuff[T](name: String)
+  object Stuff {
+    implicit val codec: GenCodec[Stuff[_]] = GenCodec.create(
+      in => new Stuff[Any](in.readString()),
+      (out, value) => out.writeString(value.name)
+    )
+  }
+  case class CaseClassWithWildcard(stuff: Stuff[_])
+  object CaseClassWithWildcard {
+    implicit val codec: GenCodec[CaseClassWithWildcard] = GenCodec.materialize[CaseClassWithWildcard]
+  }
+
+  test("case class with wildcard test") {
+    testWriteReadAndAutoWriteRead(CaseClassWithWildcard(Stuff("lol")), Map("stuff" -> "lol"))
+  }
+
   class CaseClassLike(val str: String, val intList: List[Int])
     extends Wrapper[CaseClassLike](str, intList)
   object CaseClassLike {
@@ -161,6 +177,19 @@ class GenCodecTest extends CodecTestBase {
   test("case class like with inherited apply/unapply test") {
     testWriteReadAndAutoWriteRead(HasInheritedApply("dafuq", List(1, 2, 3)),
       Map("a" -> "dafuq", "lb" -> List(1, 2, 3))
+    )
+  }
+
+  case class ThirdParty(i: Int, s: String)
+  object ThirdPartyFakeCompanion {
+    def apply(str: String, int: Int): ThirdParty = ThirdParty(int, str)
+    def unapply(tp: ThirdParty): Opt[(String, Int)] = (tp.s, tp.i).opt
+  }
+
+  test("apply/unapply provider based codec test") {
+    implicit val tpCodec: GenCodec[ThirdParty] = GenCodec.fromApplyUnapplyProvider[ThirdParty](ThirdPartyFakeCompanion)
+    testWriteReadAndAutoWriteRead(ThirdParty(42, "lol"),
+      Map("str" -> "lol", "int" -> 42)
     )
   }
 

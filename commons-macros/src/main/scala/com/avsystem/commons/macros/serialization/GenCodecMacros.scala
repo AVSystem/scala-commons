@@ -73,8 +73,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   def isTransientDefault(param: ApplyParam): Boolean =
     param.defaultValue.nonEmpty && param.sym.annotations.exists(_.tree.tpe <:< TransientDefaultAnnotType)
 
-  def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
-    val companion = tpe.typeSymbol.companion
+  def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree =
+    forApplyUnapply(tpe, Ident(tpe.typeSymbol.companion), apply, unapply, params)
+
+  def forApplyUnapply(tpe: Type, companion: Tree, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
     val nameBySym = params.groupBy(p => annotName(p.sym)).map {
       case (name, List(param)) => (param.sym, name)
       case (name, ps) if ps.length > 1 =>
@@ -86,7 +88,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
     // don't use apply/unapply when they're synthetic (for case class) to avoid reference to companion object
 
-    val caseClass = tpe.typeSymbol.isClass && tpe.typeSymbol.asClass.isCaseClass
+    val caseClass = tpe.typeSymbol.isClass && tpe.typeSymbol.asClass.isCaseClass &&
+      companion.symbol == tpe.typeSymbol.companion
     val canUseFields = caseClass && unapply.isSynthetic && params.forall { p =>
       alternatives(tpe.member(p.sym.name)).exists { f =>
         f.isTerm && f.asTerm.isCaseAccessor && f.isPublic && f.typeSignature.finalResultType =:= p.sym.typeSignature
@@ -249,6 +252,20 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   def materializeMacroCodec[T: c.WeakTypeTag]: Tree =
     q"$SerializationPkg.MacroCodec($GenCodecObj.materialize[${weakTypeOf[T]}])"
+
+  def fromApplyUnapplyProvider[T: c.WeakTypeTag](applyUnapplyProvider: Tree): Tree = {
+    val tpe = weakTypeOf[T]
+    val tcTpe = typeClassInstance(tpe)
+    applyUnapplyFor(tpe, applyUnapplyProvider) match {
+      case Some(ApplyUnapply(apply, unapply, params)) =>
+        val dependencies = params.map { case (s, defaultValue) =>
+          ApplyParam(s, defaultValue, dependency(nonRepeatedType(s.typeSignature), tcTpe, s"for field ${s.name}"))
+        }
+        forApplyUnapply(tpe, applyUnapplyProvider, apply, unapply, dependencies)
+      case None =>
+        abort(s"Cannot derive GenCodec for $tpe from `apply` and `unapply/unapplySeq` methods of ${applyUnapplyProvider.tpe}")
+    }
+  }
 
   def forSealedEnum[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
