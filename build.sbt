@@ -4,8 +4,8 @@ import sbtunidoc.Plugin.UnidocKeys._
 cancelable in Global := true
 
 inThisBuild(Seq(
-  scalaVersion := "2.12.1",
-  crossScalaVersions := Seq("2.11.8", "2.12.1"),
+  scalaVersion := "2.12.2",
+  crossScalaVersions := Seq("2.11.11", "2.12.2"),
   organization := "com.avsystem.commons",
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
