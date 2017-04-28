@@ -28,11 +28,11 @@ object SealedBase {
 }
 
 abstract class Wrapper[Self <: Wrapper[Self] : ClassTag](private val args: Any*) { this: Self =>
-  override def equals(obj: Any) = obj match {
+  override def equals(obj: Any): Boolean = obj match {
     case other: Self => args == other.args
     case _ => false
   }
-  override def hashCode() = args.hashCode()
+  override def hashCode(): Int = args.hashCode()
 }
 
 @silent
@@ -92,7 +92,7 @@ class GenCodecTest extends CodecTestBase {
   }
 
   object SomeObject {
-    implicit val codec = GenCodec.materialize[SomeObject.type]
+    implicit val codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
   }
 
   test("object test") {
@@ -134,7 +134,7 @@ class GenCodecTest extends CodecTestBase {
     extends Wrapper[CaseClassLike](str, intList)
   object CaseClassLike {
     def apply(@name("some.str") str: String, intList: List[Int]): CaseClassLike = new CaseClassLike(str, intList)
-    def unapply(ccl: CaseClassLike): Option[(String, List[Int])] = (ccl.str, ccl.intList).option
+    def unapply(ccl: CaseClassLike): Opt[(String, List[Int])] = (ccl.str, ccl.intList).opt
     implicit val codec: GenCodec[CaseClassLike] = GenCodec.materialize[CaseClassLike]
   }
 
@@ -179,7 +179,7 @@ class GenCodecTest extends CodecTestBase {
     extends Wrapper[VarargsCaseClassLike](str, ints)
   object VarargsCaseClassLike {
     def apply(@name("some.str") str: String, ints: Int*): VarargsCaseClassLike = new VarargsCaseClassLike(str, ints)
-    def unapplySeq(vccl: VarargsCaseClassLike): Option[(String, Seq[Int])] = (vccl.str, vccl.ints).option
+    def unapplySeq(vccl: VarargsCaseClassLike): Opt[(String, Seq[Int])] = (vccl.str, vccl.ints).opt
     implicit val codec: GenCodec[VarargsCaseClassLike] = GenCodec.materialize[VarargsCaseClassLike]
   }
 
@@ -191,7 +191,7 @@ class GenCodecTest extends CodecTestBase {
 
   case class HasDefaults(@transientDefault int: Int = 42, str: String)
   object HasDefaults {
-    implicit val codec = GenCodec.materialize[HasDefaults]
+    implicit val codec: GenCodec[HasDefaults] = GenCodec.materialize[HasDefaults]
   }
 
   test("case class with default values test") {

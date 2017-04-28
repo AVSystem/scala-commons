@@ -120,8 +120,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           writeField(q"value.${p.sym.name}")
         else
           q"""
-            $companion.$unapply[..${tpe.typeArgs}](value)
-              .map(v => ${writeField(q"v")}).getOrElse(unapplyFailed)
+            val unapplyRes = $companion.$unapply[..${tpe.typeArgs}](value)
+            if(unapplyRes.isEmpty) unapplyFailed else ${writeField(q"unapplyRes.get")}
            """
       case _ =>
         def writeField(p: ApplyParam, value: Tree) = {
@@ -136,9 +136,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           q"..${params.map(p => writeField(p, q"value.${p.sym.name}"))}"
         else
           q"""
-            $companion.$unapply[..${tpe.typeArgs}](value).map { t =>
+            val unapplyRes = $companion.$unapply[..${tpe.typeArgs}](value)
+            if(unapplyRes.isEmpty) unapplyFailed else {
+              val t = unapplyRes.get
               ..${params.zipWithIndex.map({ case (p, i) => writeField(p, q"t.${tupleGet(i)}") })}
-            }.getOrElse(unapplyFailed)
+            }
            """
     }
 
@@ -147,7 +149,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         val writeBody = if (canUseFields)
           q"${depNames(p.sym)}.write(output, value.${p.sym.name})"
         else
-          q"$companion.$unapply[..${tpe.typeArgs}](value).map(${depNames(p.sym)}.write(output, _)).getOrElse(unapplyFailed)"
+          q"""
+            val unapplyRes = $companion.$unapply[..${tpe.typeArgs}](value)
+            if(unapplyRes.isEmpty) unapplyFailed else ${depNames(p.sym)}.write(output, unapplyRes.get)
+           """
 
         q"""
            new $GenCodecObj.NullSafeCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {

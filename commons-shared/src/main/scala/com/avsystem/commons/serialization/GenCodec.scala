@@ -225,7 +225,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
       throw new ReadFailure(s"Cannot read $typeRepr, expected object with exactly one field but got ${if (empty) "empty object" else "more than one"}")
 
     protected def unapplyFailed =
-      throw new WriteFailure(s"Could not write $typeRepr, unapply failed (returned false or None)")
+      throw new WriteFailure(s"Could not write $typeRepr, unapply/unapplySeq returned false or empty value")
   }
 
   final class SingletonCodec[T <: Singleton](value: => T) extends ObjectCodec[T] {

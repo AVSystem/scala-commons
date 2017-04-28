@@ -250,15 +250,76 @@ trait MacroCommons {
     case _ => tpe
   }
 
-  def isVarargs(meth: Symbol) =
+  def isVarargs(meth: Symbol): Boolean =
     meth.typeSignature.paramLists.headOption.flatMap(_.lastOption)
       .exists(_.typeSignature.typeSymbol == definitions.RepeatedParamClass)
 
-  def nonRepeatedType(tpe: Type) = tpe match {
+  def nonRepeatedType(tpe: Type): Type = tpe match {
     case TypeRef(_, s, List(arg)) if s == definitions.RepeatedParamClass =>
       getType(tq"$ScalaPkg.Seq[$arg]")
     case _ => tpe
   }
+
+  def isParameterless(signature: Type): Boolean =
+    signature.paramLists.flatten == Nil
+
+  def hasMemberWithSig(tpe: Type, name: Name, suchThat: Type => Boolean): Boolean =
+    alternatives(tpe.member(name)).exists(sym => suchThat(sym.typeSignatureIn(tpe)))
+
+  object SingleParamList {
+    def unapply(paramLists: List[List[Symbol]]): Option[List[Symbol]] = paramLists match {
+      case head :: tail if tail.flatten.forall(_.isImplicit) => Some(head)
+      case _ => None
+    }
+  }
+
+  def matchingApplyUnapply(tpe: Type, applySig: Type, unapplySig: Type): Boolean = {
+    applySig.finalResultType =:= tpe && (unapplySig.paramLists match {
+      case SingleParamList(List(unapplyParam)) if unapplyParam.typeSignature =:= tpe =>
+        applySig.paramLists match {
+          case SingleParamList(args) => isCorrectUnapply(unapplySig.finalResultType, args)
+          case _ => false
+        }
+      case _ => false
+    })
+  }
+
+  def isCorrectUnapply(unapplyResultType: Type, applyParams: List[Symbol], elemAdjust: Type => Type = identity): Boolean =
+    unapplyResultType match {
+      // https://issues.scala-lang.org/browse/SI-6541 (fixed in Scala 2.11.5 but requires -Xsource:2.12)
+      case ExistentialType(quantified, underlying) =>
+        isCorrectUnapply(underlying, applyParams, internal.existentialAbstraction(quantified, _))
+      case tpe =>
+        def hasIsEmpty = hasMemberWithSig(tpe, TermName("isEmpty"),
+          sig => isParameterless(sig) && sig.finalResultType =:= typeOf[Boolean])
+
+        def hasProperGet(resultTypeCondition: Type => Boolean): Boolean =
+          hasMemberWithSig(tpe, TermName("get"), sig => isParameterless(sig) && resultTypeCondition(sig.finalResultType))
+
+        applyParams match {
+          case Nil =>
+            tpe =:= typeOf[Boolean]
+          case List(singleParam) =>
+            hasIsEmpty && hasProperGet(resType => elemAdjust(resType) =:= singleParam.typeSignature)
+          case params =>
+            hasIsEmpty && hasProperGet { resType =>
+              val elemTypes = Iterator.range(1, 22).map { i =>
+                alternatives(resType.member(TermName(s"_$i")))
+                  .map(_.typeSignatureIn(resType))
+                  .find(sig => sig.typeParams == Nil && sig.paramLists == Nil)
+                  .map(sig => elemAdjust(sig.finalResultType))
+                  .getOrElse(NoType)
+              }.takeWhile(_ != NoType).toList
+              def check(params: List[Symbol], elemTypes: List[Type]): Boolean = (params, elemTypes) match {
+                case (Nil, Nil) => true
+                case (p :: prest, et :: etrest) =>
+                  nonRepeatedType(p.typeSignature) =:= et && check(prest, etrest)
+                case _ => false
+              }
+              check(params, elemTypes)
+            }
+        }
+    }
 
   case class ApplyUnapply(apply: Symbol, unapply: Symbol, params: List[(TermSymbol, Tree)])
 
@@ -286,19 +347,6 @@ trait MacroCommons {
         apply.typeSignature.typeParams.length == expected && unapply.typeSignature.typeParams.length == expected
       }
 
-      // https://issues.scala-lang.org/browse/SI-6541 (fixed in Scala 2.11.5 but requires -Xsource:2.12)
-      def fixExistentialOptionType(tpe: Type) = tpe match {
-        case ExistentialType(quantified, TypeRef(pre, OptionClass, List(arg))) =>
-          val newArg = arg match {
-            case TypeRef(tuplePre, tupleSym, args) if definitions.TupleClass.seq.contains(tupleSym) =>
-              internal.typeRef(tuplePre, tupleSym, args.map(arg => internal.existentialAbstraction(quantified, arg)))
-            case _ =>
-              internal.existentialAbstraction(quantified, arg)
-          }
-          internal.typeRef(pre, OptionClass, List(newArg))
-        case _ => tpe
-      }
-
       val applicableResults = applyUnapplyPairs.flatMap {
         case (apply, unapply) if typeParamsMatch(apply, unapply) =>
           val constructor =
@@ -309,28 +357,17 @@ trait MacroCommons {
           val applySig = if (constructor != NoSymbol) constructor.typeSignatureIn(tpe) else setTypeArgs(apply.typeSignatureIn(companionTpe))
           val unapplySig = setTypeArgs(unapply.typeSignatureIn(companionTpe))
 
-          applySig.paramLists match {
-            case params :: implicits if implicits.flatten.forall(_.isImplicit) && applySig.finalResultType =:= tpe =>
-              val expectedUnapplyTpe = params match {
-                case Nil => typeOf[Boolean]
-                case args => getType(tq"$OptionCls[(..${args.map(s => nonRepeatedType(s.typeSignature))})]")
-              }
-              def defaultValueFor(param: Symbol, idx: Int): Tree =
-                if (param.asTerm.isParamWithDefault)
-                  q"$companion.${TermName(s"${param.owner.name.encodedName.toString}$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
-                else EmptyTree
+          if(matchingApplyUnapply(tpe, applySig, unapplySig)) {
+            def defaultValueFor(param: Symbol, idx: Int): Tree =
+              if (param.asTerm.isParamWithDefault)
+                q"$companion.${TermName(s"${param.owner.name.encodedName.toString}$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
+              else EmptyTree
 
-              unapplySig.paramLists match {
-                case List(List(soleArg)) if soleArg.typeSignature =:= tpe &&
-                  fixExistentialOptionType(unapplySig.finalResultType) =:= expectedUnapplyTpe =>
+            val paramsWithDefaults = applySig.paramLists.head.zipWithIndex
+              .map({ case (p, i) => (p.asTerm, defaultValueFor(p, i)) })
+            Some(ApplyUnapply(constructor orElse apply, unapply, paramsWithDefaults))
+          } else None
 
-                  val paramsWithDefaults = params.zipWithIndex.map({ case (p, i) => (p.asTerm, defaultValueFor(p, i)) })
-                  Some(ApplyUnapply(constructor orElse apply, unapply, paramsWithDefaults))
-                case _ =>
-                  None
-              }
-            case _ => None
-          }
         case _ => None
       }
 
