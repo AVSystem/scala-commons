@@ -49,6 +49,27 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     */
   def materialize[T]: GenCodec[T] = macro macros.serialization.GenCodecMacros.materialize[T]
 
+  /**
+    * Materializes a [[GenCodec]] for type `T` using `apply` and `unapply`/`unapplySeq` methods available on
+    * passed `applyUnapplyProvider` object. The signatures of `apply` and `unapply` must be as if `T` was a case class
+    * and `applyUnapplyProvider` was its companion object.
+    * This is useful for easy derivation of [[GenCodec]] for third party classes which don't have their own companion
+    * objects with `apply` and `unapply`. So essentially the `applyUnapplyProvider` is a "fake companion object"
+    * of type `T`.
+    *
+    * Example:
+    * {{{
+    *   class ThirdParty { ... }
+    *
+    *   object ThirdPartyFakeCompanion {
+    *     def apply(int: Int, string: String): ThirdParty = ...
+    *     def unapply(tp: ThirdParty): Option[(Int, String)] = ...
+    *   }
+    *
+    *   implicit val thirdPartyCodec: GenCodec[ThirdParty] =
+    *     GenCodec.fromApplyUnapplyProvider[ThirdParty](ThirdPartyFakeCompanion)
+    * }}}
+    */
   def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] = macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
 
   /**
