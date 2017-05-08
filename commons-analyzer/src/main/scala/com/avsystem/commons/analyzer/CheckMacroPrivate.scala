@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class CheckMacroPrivate[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
+class CheckMacroPrivate[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "macroPrivate") {
 
   import global._
 
@@ -20,7 +20,7 @@ class CheckMacroPrivate[C <: Global with Singleton](g: C) extends AnalyzerRule(g
             val macroPrivate = (sym :: sym.overrides).iterator
               .flatMap(_.annotations).exists(_.tree.tpe <:< macroPrivateAnnotTpe)
             if (macroPrivate) {
-              reporter.error(tree.pos, s"$sym can only be used in macro-generated code")
+              report(tree.pos, s"$sym can only be used in macro-generated code")
             }
           case _ =>
         }

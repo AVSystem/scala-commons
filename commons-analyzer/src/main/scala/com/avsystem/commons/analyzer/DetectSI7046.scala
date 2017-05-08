@@ -7,7 +7,7 @@ import scala.tools.nsc.Global
 /**
   * See <a href="https://issues.scala-lang.org/browse/SI-7046">SI-7046</a>
   */
-class DetectSI7046[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
+class DetectSI7046[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "SI7046") {
 
   import global._
 
@@ -35,11 +35,11 @@ class DetectSI7046[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
           if (alreadyCheckedFor.add(tree.pos)) {
             val expectedSize = allCurrentlyKnownSubclasses(hierarchyRoot).size
             if (expectedSize != actualSize) {
-              reporter.error(tree.pos,
+              report(tree.pos,
                 s"""`knownDirectSubclasses` for $hierarchyRoot used in a macro did not correctly detect all subclasses.
-                    |This is caused by a limitation of Scala macro engine described in SI-7046.
-                    |Common workaround is to move the macro invocation after entire sealed hierarchy has been defined
-                    |(e.g. at the end of the file) so that the macro sees the entire hierarchy already typechecked.
+                   |This is caused by a limitation of Scala macro engine described in SI-7046.
+                   |Common workaround is to move the macro invocation after entire sealed hierarchy has been defined
+                   |(e.g. at the end of the file) so that the macro sees the entire hierarchy already typechecked.
                  """.stripMargin)
             }
           }

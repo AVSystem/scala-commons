@@ -7,11 +7,11 @@ import scala.reflect.internal.util.BatchSourceFile
 import scala.tools.nsc.plugins.Plugin
 import scala.tools.nsc.{Global, Settings}
 
-trait AnalyzerTest {this: Assertions =>
+trait AnalyzerTest { this: Assertions =>
   val settings = new Settings
   settings.usejavacp.value = true
-  val compiler = new Global(settings) {global =>
-
+  settings.pluginOptions.appendToValue("AVSystemAnalyzer:+_")
+  val compiler = new Global(settings) { global =>
     override protected def loadRoughPluginsList(): List[Plugin] =
       new AnalyzerPlugin(global) :: super.loadRoughPluginsList()
   }

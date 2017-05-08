@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class VarargsAtLeast[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
+class VarargsAtLeast[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "varargsAtLeast") {
 
   import global._
 
@@ -28,7 +28,7 @@ class VarargsAtLeast[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
         val actual = args.size - fun.tpe.params.size + 1
 
         if (actual < required) {
-          reporter.error(t.pos,
+          report(t.pos,
             s"This method requires at least $required arguments for its repeated parameter, $actual passed.")
         }
     })

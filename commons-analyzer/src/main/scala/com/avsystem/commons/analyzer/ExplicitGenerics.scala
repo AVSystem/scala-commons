@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class ExplicitGenerics[C <: Global with Singleton](g: C) extends AnalyzerRule(g) {
+class ExplicitGenerics[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "explicitGenerics") {
 
   import global._
 
@@ -22,7 +22,7 @@ class ExplicitGenerics[C <: Global with Singleton](g: C) extends AnalyzerRule(g)
               case _ => false
             }
             if (inferredTypeParams) {
-              reporter.error(t.pos, s"${pre.symbol} requires that its type arguments are explicit (not inferred)")
+              report(t.pos, s"${pre.symbol} requires that its type arguments are explicit (not inferred)")
             }
           case _ =>
         }

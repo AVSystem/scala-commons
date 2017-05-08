@@ -4,7 +4,7 @@ package analyzer
 import org.scalatest.FunSuite
 
 class DetectSI7046Test extends FunSuite with AnalyzerTest {
-  test("too few varargs parameters should be rejected") {
+  test("code in which SI-7046 occurs should be rejected") {
     assertErrors(
       """
         |import com.avsystem.commons.misc.SealedEnumCompanion
