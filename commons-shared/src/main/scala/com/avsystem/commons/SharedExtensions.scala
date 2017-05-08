@@ -115,7 +115,7 @@ object SharedExtensions extends SharedExtensions {
     def onCompleteNow[U](f: Try[A] => U): Unit =
       fut.onComplete(f)(RunNowEC)
 
-    def andThenNow[U](pf: PartialFunction[Try[A], U]): Unit =
+    def andThenNow[U](pf: PartialFunction[Try[A], U]): Future[A] =
       fut.andThen(pf)(RunNowEC)
 
     def foreachNow[U](f: A => U): Unit =
