@@ -125,6 +125,7 @@ final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with
 
   /**
     * Apply side effect only if OptRef is empty. It's a bit like foreach for OptRef.Empty
+    *
     * @param sideEffect - code to be executed if optRef is empty
     * @return the same optRef
     * @example {{{captionOptRef.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
@@ -135,7 +136,6 @@ final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with
     }
     this
   }
-
 
   override def toString: String =
     if (isEmpty) "OptRef.Empty" else s"OptRef($value)"

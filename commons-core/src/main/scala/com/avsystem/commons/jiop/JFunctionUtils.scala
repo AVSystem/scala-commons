@@ -5,8 +5,6 @@ import java.util.{function => juf}
 
 import com.avsystem.commons.misc.Sam
 
-import scala.language.implicitConversions
-
 /**
   * Utils to convert Scala functions and expressions to most common Java functional interfaces.
   */

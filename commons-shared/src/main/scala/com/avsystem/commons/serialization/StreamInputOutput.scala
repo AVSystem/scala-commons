@@ -95,36 +95,34 @@ class StreamInput(is: DataInputStream) extends Input {
   else
     throw new ReadFailure(s"Expected object, but $markerByte found")
 
-  def skip(): Unit = {
-    val toSkip = markerByte match {
-      case NullMarker =>
-      // no op
-      case StringMarker =>
-        val n = is.readUnsignedShort()
-        is.skipBytes(n)
-      case ByteMarker =>
-        is.skipBytes(ByteBytes)
-      case ShortMarker =>
-        is.skipBytes(ShortBytes)
-      case IntMarker =>
-        is.skipBytes(IntBytes)
-      case LongMarker =>
-        is.skipBytes(LongBytes)
-      case FloatMarker =>
-        is.skipBytes(FloatBytes)
-      case DoubleMarker =>
-        is.skipBytes(DoubleBytes)
-      case ByteArrayMarker =>
-        is.skipBytes(is.readInt())
-      case BooleanMarker =>
-        is.skipBytes(ByteBytes)
-      case ListStartMarker =>
-        new StreamListInput(is).skipRemaining()
-      case ObjectStartMarker =>
-        new StreamObjectInput(is).skipRemaining()
-      case unexpected =>
-        throw new ReadFailure(s"Unexpected marker byte: $unexpected")
-    }
+  def skip(): Unit = markerByte match {
+    case NullMarker =>
+    // no op
+    case StringMarker =>
+      val n = is.readUnsignedShort()
+      is.skipBytes(n)
+    case ByteMarker =>
+      is.skipBytes(ByteBytes)
+    case ShortMarker =>
+      is.skipBytes(ShortBytes)
+    case IntMarker =>
+      is.skipBytes(IntBytes)
+    case LongMarker =>
+      is.skipBytes(LongBytes)
+    case FloatMarker =>
+      is.skipBytes(FloatBytes)
+    case DoubleMarker =>
+      is.skipBytes(DoubleBytes)
+    case ByteArrayMarker =>
+      is.skipBytes(is.readInt())
+    case BooleanMarker =>
+      is.skipBytes(ByteBytes)
+    case ListStartMarker =>
+      new StreamListInput(is).skipRemaining()
+    case ObjectStartMarker =>
+      new StreamObjectInput(is).skipRemaining()
+    case unexpected =>
+      throw new ReadFailure(s"Unexpected marker byte: $unexpected")
   }
 }
 

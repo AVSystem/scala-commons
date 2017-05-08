@@ -9,6 +9,8 @@ inThisBuild(Seq(
   organization := "com.avsystem.commons",
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
+    "-encoding", "utf-8",
+    "-explaintypes",
     "-feature",
     "-deprecation",
     "-unchecked",
@@ -19,8 +21,14 @@ inThisBuild(Seq(
     "-language:higherKinds",
     "-Xfuture",
     "-Xfatal-warnings",
-    "-Xlint:_,-missing-interpolator,-adapted-args"
+    "-Xlint:-missing-interpolator,-adapted-args,-unused,_"
   ),
+  scalacOptions := {
+    if (scalaBinaryVersion.value == "2.11")
+      scalacOptions.value.map(o => if (o.startsWith("-Xlint")) o.replace("-unused,", "") else o)
+    else
+      scalacOptions.value
+  },
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true
 ))
