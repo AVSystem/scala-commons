@@ -270,16 +270,16 @@
                           ApiSubset
                         </a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="trait" href="AtomicBatch.html" title="RedisBatch guaranteed to be atomic, i.e."></a>
-                        <a href="AtomicBatch.html" title="RedisBatch guaranteed to be atomic, i.e.">
-                          AtomicBatch
-                        </a>
-                      </li><li class="current-entities indented4">
                         <a class="object" href="ClusterState$.html" title=""></a>
                         <a class="class" href="ClusterState.html" title="Current cluster state known by RedisClusterClient."></a>
                         <a href="ClusterState.html" title="Current cluster state known by RedisClusterClient.">
                           ClusterState
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="CollectionBatch.html" title=""></a>
+                        <a href="CollectionBatch.html" title="">
+                          CollectionBatch
                         </a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="CommandEncoder$.html" title=""></a>
@@ -314,12 +314,18 @@
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="Hash$.html" title="Implementation of key hashing function used in Redis Cluster, as specified in
-Link(http://redis.io/topics/cluster-spec#appendix-a-crc16-reference-implementation-in-ansi-c,Text(Redis Cluster Specification))
+Redis Cluster Specification
 "></a>
                         <a href="Hash$.html" title="Implementation of key hashing function used in Redis Cluster, as specified in
-Link(http://redis.io/topics/cluster-spec#appendix-a-crc16-reference-implementation-in-ansi-c,Text(Redis Cluster Specification))
+Redis Cluster Specification
 ">
                           Hash
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="ImmediateBatch.html" title=""></a>
+                        <a href="ImmediateBatch.html" title="">
+                          ImmediateBatch
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
@@ -711,6 +717,12 @@ messages and emits a single RedisReply.">
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="trait" href="SinglePackBatch.html" title=""></a>
+                        <a href="SinglePackBatch.html" title="">
+                          SinglePackBatch
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="Transaction.html" title=""></a>
                         <a href="Transaction.html" title="">
                           Transaction
@@ -765,7 +777,7 @@ messages and emits a single RedisReply.">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></div>
         </div><div class="toggleContainer block">
             <span class="toggle">
               Known Subclasses
@@ -856,22 +868,6 @@ messages and emits a single RedisReply.">
 hashes (<a href="commands/HashesApi.html" class="extype" name="com.avsystem.commons.redis.commands.HashesApi">HashesApi</a>).</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis hash keys or hash key patterns used in methods representing Redis commands that work on
 hashes (<a href="commands/HashesApi.html" class="extype" name="com.avsystem.commons.redis.commands.HashesApi">HashesApi</a>).
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.redis.AbstractRedisApi">AbstractRedisApi</a> → <a href="ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.ApiSubset.Input" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]"></a><a id="Input[A]:Input[A]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AbstractRedisApi.html#Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">type</span>
-      </span>
-      <span class="symbol">
-        <span class="name">Input</span><span class="tparams">[<span name="A">A</span>]</span><span class="result"> &gt;: <a href="RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.Input.A">A</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.AbstractRedisApi.Key" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="Key=K"></a><a id="Key:Key"></a>
       <span class="permalink">
@@ -888,7 +884,7 @@ hashes (<a href="commands/HashesApi.html" class="extype" name="com.avsystem.comm
       </span>
       
       <p class="shortcomment cmt">The type of Redis keys or key patterns used in methods representing Redis commands.</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis keys or key patterns used in methods representing Redis commands. For example, if <code>Key = String</code>
-then <a href="commands/StringsApi.html#get(key:StringsApi.this.Key):StringsApi.this.Result[com.avsystem.commons.misc.Opt[StringsApi.this.Value]]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#get">get</a> returns <code>Result[Opt[String]]</code>. This type is used only for toplevel Redis keys, hash
+then <a href="commands/StringsApi.html#get(key:StringsApi.this.Key):StringsApi.this.Result[com.avsystem.commons.Opt[StringsApi.this.Value]]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#get">get</a> returns <code>Result[Opt[String]]</code>. This type is used only for toplevel Redis keys, hash
 keys have their own type, <a href="#HashKey=H" class="extmbr" name="com.avsystem.commons.redis.AbstractRedisApi.HashKey">HashKey</a>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.redis.AbstractRedisApi">AbstractRedisApi</a> → <a href="ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Result" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
@@ -907,7 +903,7 @@ keys have their own type, <a href="#HashKey=H" class="extmbr" name="com.avsystem
       </span>
       
       <p class="shortcomment cmt">The type constructor into which a result of each command is wrapped.</p><div class="fullcomment"><div class="comment cmt"><p>The type constructor into which a result of each command is wrapped. For example if <code>Result</code> is
-<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>, then <a href="commands/StringsApi.html#incr(key:StringsApi.this.Key):StringsApi.this.Result[Long]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#incr">incr</a> returns <code>Future[Long]</code>.
+<code>Future</code>, then <a href="commands/StringsApi.html#incr(key:StringsApi.this.Key):StringsApi.this.Result[Long]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#incr">incr</a> returns <code>Future[Long]</code>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.AbstractRedisApi.Value" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="Value=V"></a><a id="Value:Value"></a>
@@ -925,7 +921,7 @@ keys have their own type, <a href="#HashKey=H" class="extmbr" name="com.avsystem
       </span>
       
       <p class="shortcomment cmt">The type of Redis values used in methods representing Redis commands.</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis values used in methods representing Redis commands. &quot;Value&quot; is the data that might be
-stored directly under a Redis key (e.g. using <a href="commands/StringsApi.html#set(key:StringsApi.this.Key,value:StringsApi.this.Value,expiration:com.avsystem.commons.misc.OptArg[com.avsystem.commons.redis.commands.Expiration],existence:com.avsystem.commons.misc.OptArg[Boolean]):StringsApi.this.Result[Boolean]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#set">set</a>) but also a value of hash field, list element,
+stored directly under a Redis key (e.g. using <a href="commands/StringsApi.html#set(key:StringsApi.this.Key,value:StringsApi.this.Value,expiration:com.avsystem.commons.OptArg[com.avsystem.commons.redis.commands.Expiration],existence:com.avsystem.commons.OptArg[Boolean]):StringsApi.this.Result[Boolean]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#set">set</a>) but also a value of hash field, list element,
 set member, sorted set member, geo set member or element inserted into hyper-log-log structure.
 There are no separate types specified for every of those use cases because only one of them can be used in a
 single command (for example, there is no Redis command that works on both list elements and set members
@@ -1001,9 +997,9 @@ at the same time).
       
       
     </li><li name="com.avsystem.commons.redis.ApiSubset#execute" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="execute[A](command:ApiSubset.this.Input[A]):ApiSubset.this.Result[A]"></a><a id="execute[A](Input[A]):Result[A]"></a>
+      <a id="execute[A](command:com.avsystem.commons.redis.RedisCommand[A]):ApiSubset.this.Result[A]"></a><a id="execute[A](RedisCommand[A]):Result[A]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AbstractRedisApi.html#execute[A](command:ApiSubset.this.Input[A]):ApiSubset.this.Result[A]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/AbstractRedisApi.html#execute[A](command:com.avsystem.commons.redis.RedisCommand[A]):ApiSubset.this.Result[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1012,7 +1008,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">execute</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="command">command: <a href="#Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]" class="extmbr" name="com.avsystem.commons.redis.AbstractRedisApi.Input">Input</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.AbstractRedisApi.Result">Result</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>
+        <span class="name">execute</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="command">command: <a href="RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.AbstractRedisApi.Result">Result</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
@@ -1034,7 +1030,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1050,7 +1046,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1066,7 +1062,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1098,7 +1094,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1120,7 +1116,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1136,7 +1132,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1152,7 +1148,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1190,7 +1186,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1255,7 +1251,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -1336,7 +1332,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1352,7 +1348,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1368,7 +1364,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1500,7 +1496,7 @@ functions which convert between new and old type.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1522,7 +1518,7 @@ functions which convert between new and old type.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1544,7 +1540,7 @@ functions which convert between new and old type.</p>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1567,9 +1563,9 @@ functions which convert between new and old type.</p>
         <div class="parent" name="com.avsystem.commons.redis.ApiSubset">
               <h3>Inherited from <a href="ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
             </div>
         
         </div>

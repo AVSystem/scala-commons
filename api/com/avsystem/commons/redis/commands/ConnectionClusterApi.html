@@ -734,7 +734,7 @@ Created: 06/04/16.">
                           SlaveState
                         </a>
                       </li><li class="current-entities indented5">
-                        <span class="separator"></span>
+                        <a class="object" href="SlotRange$.html" title=""></a>
                         <a class="class" href="SlotRange.html" title=""></a>
                         <a href="SlotRange.html" title="">
                           SlotRange
@@ -843,7 +843,7 @@ Created: 06/04/16.">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a>, <a href="KeyedClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.KeyedClusterApi">KeyedClusterApi</a>, <a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a>, <a href="KeyedClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.KeyedClusterApi">KeyedClusterApi</a>, <a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></div>
         </div><div class="toggleContainer block">
             <span class="toggle">
               Known Subclasses
@@ -915,22 +915,6 @@ Created: 06/04/16.">
 hashes (<a href="HashesApi.html" class="extype" name="com.avsystem.commons.redis.commands.HashesApi">HashesApi</a>).</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis hash keys or hash key patterns used in methods representing Redis commands that work on
 hashes (<a href="HashesApi.html" class="extype" name="com.avsystem.commons.redis.commands.HashesApi">HashesApi</a>).
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.ApiSubset.Input" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]"></a><a id="Input[A]:Input[A]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/ConnectionClusterApi.html#Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">type</span>
-      </span>
-      <span class="symbol">
-        <span class="name">Input</span><span class="tparams">[<span name="A">A</span>]</span><span class="result"> &gt;: <a href="../RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.Input.A">A</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Key" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="Key"></a><a id="Key:Key"></a>
       <span class="permalink">
@@ -947,7 +931,7 @@ hashes (<a href="HashesApi.html" class="extype" name="com.avsystem.commons.redis
       </span>
       
       <p class="shortcomment cmt">The type of Redis keys or key patterns used in methods representing Redis commands.</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis keys or key patterns used in methods representing Redis commands. For example, if <code>Key = String</code>
-then <a href="StringsApi.html#get(key:StringsApi.this.Key):StringsApi.this.Result[com.avsystem.commons.misc.Opt[StringsApi.this.Value]]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#get">get</a> returns <code>Result[Opt[String]]</code>. This type is used only for toplevel Redis keys, hash
+then <a href="StringsApi.html#get(key:StringsApi.this.Key):StringsApi.this.Result[com.avsystem.commons.Opt[StringsApi.this.Value]]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#get">get</a> returns <code>Result[Opt[String]]</code>. This type is used only for toplevel Redis keys, hash
 keys have their own type, <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.HashKey">HashKey</a>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Result" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
@@ -966,7 +950,7 @@ keys have their own type, <a href="#HashKey" class="extmbr" name="com.avsystem.c
       </span>
       
       <p class="shortcomment cmt">The type constructor into which a result of each command is wrapped.</p><div class="fullcomment"><div class="comment cmt"><p>The type constructor into which a result of each command is wrapped. For example if <code>Result</code> is
-<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>, then <a href="StringsApi.html#incr(key:StringsApi.this.Key):StringsApi.this.Result[Long]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#incr">incr</a> returns <code>Future[Long]</code>.
+<code>Future</code>, then <a href="StringsApi.html#incr(key:StringsApi.this.Key):StringsApi.this.Result[Long]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#incr">incr</a> returns <code>Future[Long]</code>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Value" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="Value"></a><a id="Value:Value"></a>
@@ -984,7 +968,7 @@ keys have their own type, <a href="#HashKey" class="extmbr" name="com.avsystem.c
       </span>
       
       <p class="shortcomment cmt">The type of Redis values used in methods representing Redis commands.</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis values used in methods representing Redis commands. &quot;Value&quot; is the data that might be
-stored directly under a Redis key (e.g. using <a href="StringsApi.html#set(key:StringsApi.this.Key,value:StringsApi.this.Value,expiration:com.avsystem.commons.misc.OptArg[com.avsystem.commons.redis.commands.Expiration],existence:com.avsystem.commons.misc.OptArg[Boolean]):StringsApi.this.Result[Boolean]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#set">set</a>) but also a value of hash field, list element,
+stored directly under a Redis key (e.g. using <a href="StringsApi.html#set(key:StringsApi.this.Key,value:StringsApi.this.Value,expiration:com.avsystem.commons.OptArg[com.avsystem.commons.redis.commands.Expiration],existence:com.avsystem.commons.OptArg[Boolean]):StringsApi.this.Result[Boolean]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#set">set</a>) but also a value of hash field, list element,
 set member, sorted set member, geo set member or element inserted into hyper-log-log structure.
 There are no separate types specified for every of those use cases because only one of them can be used in a
 single command (for example, there is no Redis command that works on both list elements and set members
@@ -996,9 +980,9 @@ at the same time).
         <div class="values members">
               <h3>Abstract Value Members</h3>
               <ol><li name="com.avsystem.commons.redis.ApiSubset#execute" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="execute[A](command:ApiSubset.this.Input[A]):ApiSubset.this.Result[A]"></a><a id="execute[A](Input[A]):Result[A]"></a>
+      <a id="execute[A](command:com.avsystem.commons.redis.RedisCommand[A]):ApiSubset.this.Result[A]"></a><a id="execute[A](RedisCommand[A]):Result[A]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/ConnectionClusterApi.html#execute[A](command:ApiSubset.this.Input[A]):ApiSubset.this.Result[A]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/ConnectionClusterApi.html#execute[A](command:com.avsystem.commons.redis.RedisCommand[A]):ApiSubset.this.Result[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1007,7 +991,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">execute</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="command">command: <a href="#Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Input">Input</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>
+        <span class="name">execute</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="command">command: <a href="../RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
@@ -1077,7 +1061,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1093,7 +1077,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1109,7 +1093,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1141,7 +1125,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1163,10 +1147,12 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterAddslots</span><span class="params">(<span name="slots">slots: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterAddslots</span><span class="params">(<span name="slots">slots: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-addslots" target="_blank">CLUSTER ADDSLOTS</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-addslots" target="_blank">CLUSTER ADDSLOTS</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-addslots" target="_blank">CLUSTER ADDSLOTS</a>
+or does nothing when <code>slots</code> is empty.</p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-addslots" target="_blank">CLUSTER ADDSLOTS</a>
+or does nothing when <code>slots</code> is empty.</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterAddslots" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterAddslots(slot:Int,slots:Int*):NodeClusterApi.this.Result[Unit]"></a><a id="clusterAddslots(Int,Int*):Result[Unit]"></a>
       <span class="permalink">
@@ -1179,10 +1165,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterAddslots</span><span class="params">(<span name="slot">slot: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>, <span name="slots">slots: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterAddslots</span><span class="params">(<span name="slot">slot: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>, <span name="slots">slots: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-addslots" target="_blank">CLUSTER ADDSLOTS</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-addslots" target="_blank">CLUSTER ADDSLOTS</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-addslots" target="_blank">CLUSTER ADDSLOTS</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-addslots" target="_blank">CLUSTER ADDSLOTS</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterCountFailureReports" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterCountFailureReports(nodeId:com.avsystem.commons.redis.commands.NodeId):NodeClusterApi.this.Result[Long]"></a><a id="clusterCountFailureReports(NodeId):Result[Long]"></a>
       <span class="permalink">
@@ -1195,10 +1181,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterCountFailureReports</span><span class="params">(<span name="nodeId">nodeId: <a href="NodeId.html" class="extype" name="com.avsystem.commons.redis.commands.NodeId">NodeId</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
+        <span class="name">clusterCountFailureReports</span><span class="params">(<span name="nodeId">nodeId: <a href="NodeId.html" class="extype" name="com.avsystem.commons.redis.commands.NodeId">NodeId</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-count-failure-reports" target="_blank">CLUSTER COUNT-FAILURE-REPORTS</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-count-failure-reports" target="_blank">CLUSTER COUNT-FAILURE-REPORTS</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-count-failure-reports" target="_blank">CLUSTER COUNT-FAILURE-REPORTS</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-count-failure-reports" target="_blank">CLUSTER COUNT-FAILURE-REPORTS</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterCountkeysinslot" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterCountkeysinslot(slot:Int):NodeClusterApi.this.Result[Long]"></a><a id="clusterCountkeysinslot(Int):Result[Long]"></a>
       <span class="permalink">
@@ -1211,10 +1197,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterCountkeysinslot</span><span class="params">(<span name="slot">slot: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
+        <span class="name">clusterCountkeysinslot</span><span class="params">(<span name="slot">slot: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-countkeysinslot" target="_blank">CLUSTER COUNTKEYSINSLOT</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-countkeysinslot" target="_blank">CLUSTER COUNTKEYSINSLOT</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-countkeysinslot" target="_blank">CLUSTER COUNTKEYSINSLOT</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-countkeysinslot" target="_blank">CLUSTER COUNTKEYSINSLOT</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterDelslots" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterDelslots(slots:Iterable[Int]):NodeClusterApi.this.Result[Unit]"></a><a id="clusterDelslots(Iterable[Int]):Result[Unit]"></a>
       <span class="permalink">
@@ -1227,10 +1213,12 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterDelslots</span><span class="params">(<span name="slots">slots: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterDelslots</span><span class="params">(<span name="slots">slots: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-delslots" target="_blank">CLUSTER DELSLOTS</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-delslots" target="_blank">CLUSTER DELSLOTS</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-delslots" target="_blank">CLUSTER DELSLOTS</a>
+or does nothing when <code>slots</code> is empty</p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-delslots" target="_blank">CLUSTER DELSLOTS</a>
+or does nothing when <code>slots</code> is empty</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterDelslots" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterDelslots(slot:Int,slots:Int*):NodeClusterApi.this.Result[Unit]"></a><a id="clusterDelslots(Int,Int*):Result[Unit]"></a>
       <span class="permalink">
@@ -1243,14 +1231,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterDelslots</span><span class="params">(<span name="slot">slot: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>, <span name="slots">slots: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterDelslots</span><span class="params">(<span name="slot">slot: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>, <span name="slots">slots: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-delslots" target="_blank">CLUSTER DELSLOTS</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-delslots" target="_blank">CLUSTER DELSLOTS</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-delslots" target="_blank">CLUSTER DELSLOTS</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-delslots" target="_blank">CLUSTER DELSLOTS</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterFailover" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="clusterFailover(option:com.avsystem.commons.misc.OptArg[com.avsystem.commons.redis.commands.FailoverOption]):NodeClusterApi.this.Result[Unit]"></a><a id="clusterFailover(OptArg[FailoverOption]):Result[Unit]"></a>
+      <a id="clusterFailover(option:com.avsystem.commons.OptArg[com.avsystem.commons.redis.commands.FailoverOption]):NodeClusterApi.this.Result[Unit]"></a><a id="clusterFailover(commons.OptArg[FailoverOption]):Result[Unit]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/ConnectionClusterApi.html#clusterFailover(option:com.avsystem.commons.misc.OptArg[com.avsystem.commons.redis.commands.FailoverOption]):NodeClusterApi.this.Result[Unit]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/ConnectionClusterApi.html#clusterFailover(option:com.avsystem.commons.OptArg[com.avsystem.commons.redis.commands.FailoverOption]):NodeClusterApi.this.Result[Unit]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1259,10 +1247,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterFailover</span><span class="params">(<span name="option">option: <a href="../../misc/OptArg.html" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a>[<a href="FailoverOption.html" class="extype" name="com.avsystem.commons.redis.commands.FailoverOption">FailoverOption</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">OptArg.Empty</a></span></span></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterFailover</span><span class="params">(<span name="option">option: <a href="../../index.html#OptArg[+T]=com.avsystem.commons.misc.OptArg[T]" class="extmbr" name="com.avsystem.commons.OptArg">commons.OptArg</a>[<a href="FailoverOption.html" class="extype" name="com.avsystem.commons.redis.commands.FailoverOption">FailoverOption</a>] = <span class="symbol"><span class="name"><a href="../../CommonAliases.html#OptArg:com.avsystem.commons.misc.OptArg.type">OptArg.Empty</a></span></span></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-failover" target="_blank">CLUSTER FAILOVER</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-failover" target="_blank">CLUSTER FAILOVER</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-failover" target="_blank">CLUSTER FAILOVER</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-failover" target="_blank">CLUSTER FAILOVER</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterFailover" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterFailover:NodeClusterApi.this.Result[Unit]"></a><a id="clusterFailover:Result[Unit]"></a>
       <span class="permalink">
@@ -1275,10 +1263,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterFailover</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterFailover</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-failover" target="_blank">CLUSTER FAILOVER</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-failover" target="_blank">CLUSTER FAILOVER</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-failover" target="_blank">CLUSTER FAILOVER</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-failover" target="_blank">CLUSTER FAILOVER</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterFlushslots" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterFlushslots:NodeClusterApi.this.Result[Unit]"></a><a id="clusterFlushslots:Result[Unit]"></a>
       <span class="permalink">
@@ -1291,7 +1279,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterFlushslots</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterFlushslots</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
@@ -1307,10 +1295,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterForget</span><span class="params">(<span name="nodeId">nodeId: <a href="NodeId.html" class="extype" name="com.avsystem.commons.redis.commands.NodeId">NodeId</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterForget</span><span class="params">(<span name="nodeId">nodeId: <a href="NodeId.html" class="extype" name="com.avsystem.commons.redis.commands.NodeId">NodeId</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-forget" target="_blank">CLUSTER FORGET</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-forget" target="_blank">CLUSTER FORGET</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-forget" target="_blank">CLUSTER FORGET</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-forget" target="_blank">CLUSTER FORGET</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterGetkeysinslot" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterGetkeysinslot(slot:Int,count:Int):NodeClusterApi.this.Result[Seq[NodeClusterApi.this.Key]]"></a><a id="clusterGetkeysinslot(Int,Int):Result[Seq[Key]]"></a>
       <span class="permalink">
@@ -1323,10 +1311,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterGetkeysinslot</span><span class="params">(<span name="slot">slot: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>, <span name="count">count: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Key">Key</a>]]</span>
+        <span class="name">clusterGetkeysinslot</span><span class="params">(<span name="slot">slot: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>, <span name="count">count: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Key">Key</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-getkeysinslot" target="_blank">CLUSTER GETKEYSINSLOT</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-getkeysinslot" target="_blank">CLUSTER GETKEYSINSLOT</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-getkeysinslot" target="_blank">CLUSTER GETKEYSINSLOT</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-getkeysinslot" target="_blank">CLUSTER GETKEYSINSLOT</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterInfo" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterInfo:NodeClusterApi.this.Result[com.avsystem.commons.redis.commands.ClusterStateInfo]"></a><a id="clusterInfo:Result[ClusterStateInfo]"></a>
       <span class="permalink">
@@ -1342,7 +1330,7 @@ at the same time).
         <span class="name">clusterInfo</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="ClusterStateInfo.html" class="extype" name="com.avsystem.commons.redis.commands.ClusterStateInfo">ClusterStateInfo</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-info" target="_blank">CLUSTER INFO</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-info" target="_blank">CLUSTER INFO</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-info" target="_blank">CLUSTER INFO</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-info" target="_blank">CLUSTER INFO</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.KeyedClusterApi#clusterKeyslot" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterKeyslot(key:KeyedClusterApi.this.Key):KeyedClusterApi.this.Result[Int]"></a><a id="clusterKeyslot(Key):Result[Int]"></a>
       <span class="permalink">
@@ -1355,10 +1343,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterKeyslot</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
+        <span class="name">clusterKeyslot</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-keyslot" target="_blank">CLUSTER KEYSLOT</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-keyslot" target="_blank">CLUSTER KEYSLOT</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="KeyedClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.KeyedClusterApi">KeyedClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-keyslot" target="_blank">CLUSTER KEYSLOT</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-keyslot" target="_blank">CLUSTER KEYSLOT</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="KeyedClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.KeyedClusterApi">KeyedClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterMeet" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterMeet(address:com.avsystem.commons.redis.NodeAddress):NodeClusterApi.this.Result[Unit]"></a><a id="clusterMeet(NodeAddress):Result[Unit]"></a>
       <span class="permalink">
@@ -1371,10 +1359,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterMeet</span><span class="params">(<span name="address">address: <a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterMeet</span><span class="params">(<span name="address">address: <a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-meet" target="_blank">CLUSTER MEET</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-meet" target="_blank">CLUSTER MEET</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-meet" target="_blank">CLUSTER MEET</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-meet" target="_blank">CLUSTER MEET</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterMyid" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterMyid:NodeClusterApi.this.Result[com.avsystem.commons.redis.commands.NodeId]"></a><a id="clusterMyid:Result[NodeId]"></a>
       <span class="permalink">
@@ -1406,7 +1394,7 @@ at the same time).
         <span class="name">clusterNodes</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="NodeInfo.html" class="extype" name="com.avsystem.commons.redis.commands.NodeInfo">NodeInfo</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-nodes" target="_blank">CLUSTER NODES</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-nodes" target="_blank">CLUSTER NODES</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-nodes" target="_blank">CLUSTER NODES</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-nodes" target="_blank">CLUSTER NODES</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterReplicate" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterReplicate(nodeId:com.avsystem.commons.redis.commands.NodeId):NodeClusterApi.this.Result[Unit]"></a><a id="clusterReplicate(NodeId):Result[Unit]"></a>
       <span class="permalink">
@@ -1419,10 +1407,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterReplicate</span><span class="params">(<span name="nodeId">nodeId: <a href="NodeId.html" class="extype" name="com.avsystem.commons.redis.commands.NodeId">NodeId</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterReplicate</span><span class="params">(<span name="nodeId">nodeId: <a href="NodeId.html" class="extype" name="com.avsystem.commons.redis.commands.NodeId">NodeId</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-replicate" target="_blank">CLUSTER REPLICATE</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-replicate" target="_blank">CLUSTER REPLICATE</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-replicate" target="_blank">CLUSTER REPLICATE</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-replicate" target="_blank">CLUSTER REPLICATE</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterReset" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterReset(hard:Boolean):NodeClusterApi.this.Result[Unit]"></a><a id="clusterReset(Boolean):Result[Unit]"></a>
       <span class="permalink">
@@ -1435,10 +1423,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterReset</span><span class="params">(<span name="hard">hard: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a> = <span class="symbol">false</span></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterReset</span><span class="params">(<span name="hard">hard: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a> = <span class="symbol">false</span></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-reset" target="_blank">CLUSTER RESET</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-reset" target="_blank">CLUSTER RESET</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-reset" target="_blank">CLUSTER RESET</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-reset" target="_blank">CLUSTER RESET</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterReset" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterReset:NodeClusterApi.this.Result[Unit]"></a><a id="clusterReset:Result[Unit]"></a>
       <span class="permalink">
@@ -1451,10 +1439,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterReset</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterReset</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-reset" target="_blank">CLUSTER RESET</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-reset" target="_blank">CLUSTER RESET</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-reset" target="_blank">CLUSTER RESET</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-reset" target="_blank">CLUSTER RESET</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterSaveconfig" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterSaveconfig:NodeClusterApi.this.Result[Unit]"></a><a id="clusterSaveconfig:Result[Unit]"></a>
       <span class="permalink">
@@ -1467,10 +1455,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterSaveconfig</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterSaveconfig</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-saveconfig" target="_blank">CLUSTER SAVECONFIG</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-saveconfig" target="_blank">CLUSTER SAVECONFIG</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-saveconfig" target="_blank">CLUSTER SAVECONFIG</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-saveconfig" target="_blank">CLUSTER SAVECONFIG</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterSetConfigEpoch" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterSetConfigEpoch(configEpoch:Long):NodeClusterApi.this.Result[Unit]"></a><a id="clusterSetConfigEpoch(Long):Result[Unit]"></a>
       <span class="permalink">
@@ -1483,10 +1471,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterSetConfigEpoch</span><span class="params">(<span name="configEpoch">configEpoch: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterSetConfigEpoch</span><span class="params">(<span name="configEpoch">configEpoch: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-set-config-epoch" target="_blank">CLUSTER SET-CONFIG-EPOCH</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-set-config-epoch" target="_blank">CLUSTER SET-CONFIG-EPOCH</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-set-config-epoch" target="_blank">CLUSTER SET-CONFIG-EPOCH</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-set-config-epoch" target="_blank">CLUSTER SET-CONFIG-EPOCH</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterSetslot" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterSetslot(slot:Int,subcommand:com.avsystem.commons.redis.commands.SetslotCmd):NodeClusterApi.this.Result[Unit]"></a><a id="clusterSetslot(Int,SetslotCmd):Result[Unit]"></a>
       <span class="permalink">
@@ -1499,10 +1487,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clusterSetslot</span><span class="params">(<span name="slot">slot: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>, <span name="subcommand">subcommand: <a href="SetslotCmd.html" class="extype" name="com.avsystem.commons.redis.commands.SetslotCmd">SetslotCmd</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">clusterSetslot</span><span class="params">(<span name="slot">slot: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>, <span name="subcommand">subcommand: <a href="SetslotCmd.html" class="extype" name="com.avsystem.commons.redis.commands.SetslotCmd">SetslotCmd</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-setslot" target="_blank">CLUSTER SETSLOT</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-setslot" target="_blank">CLUSTER SETSLOT</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-setslot" target="_blank">CLUSTER SETSLOT</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-setslot" target="_blank">CLUSTER SETSLOT</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterSlaves" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterSlaves(nodeId:com.avsystem.commons.redis.commands.NodeId):NodeClusterApi.this.Result[Seq[com.avsystem.commons.redis.commands.NodeInfo]]"></a><a id="clusterSlaves(NodeId):Result[Seq[NodeInfo]]"></a>
       <span class="permalink">
@@ -1518,7 +1506,7 @@ at the same time).
         <span class="name">clusterSlaves</span><span class="params">(<span name="nodeId">nodeId: <a href="NodeId.html" class="extype" name="com.avsystem.commons.redis.commands.NodeId">NodeId</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="NodeInfo.html" class="extype" name="com.avsystem.commons.redis.commands.NodeInfo">NodeInfo</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-slaves" target="_blank">CLUSTER SLAVES</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-slaves" target="_blank">CLUSTER SLAVES</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-slaves" target="_blank">CLUSTER SLAVES</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-slaves" target="_blank">CLUSTER SLAVES</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterSlots" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterSlots:NodeClusterApi.this.Result[Seq[com.avsystem.commons.redis.commands.SlotRangeMapping[com.avsystem.commons.redis.NodeAddress]]]"></a><a id="clusterSlots:Result[Seq[SlotRangeMapping[NodeAddress]]]"></a>
       <span class="permalink">
@@ -1534,7 +1522,7 @@ at the same time).
         <span class="name">clusterSlots</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="SlotRangeMapping.html" class="extype" name="com.avsystem.commons.redis.commands.SlotRangeMapping">SlotRangeMapping</a>[<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>]]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-slots" target="_blank">CLUSTER SLOTS</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-slots" target="_blank">CLUSTER SLOTS</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-slots" target="_blank">CLUSTER SLOTS</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-slots" target="_blank">CLUSTER SLOTS</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.NodeClusterApi#clusterSlotsWithNodeIds" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clusterSlotsWithNodeIds:NodeClusterApi.this.Result[Seq[com.avsystem.commons.redis.commands.SlotRangeMapping[(com.avsystem.commons.redis.NodeAddress,com.avsystem.commons.redis.commands.NodeId)]]]"></a><a id="clusterSlotsWithNodeIds:Result[Seq[SlotRangeMapping[(NodeAddress,NodeId)]]]"></a>
       <span class="permalink">
@@ -1550,7 +1538,7 @@ at the same time).
         <span class="name">clusterSlotsWithNodeIds</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="SlotRangeMapping.html" class="extype" name="com.avsystem.commons.redis.commands.SlotRangeMapping">SlotRangeMapping</a>[(<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>, <a href="NodeId.html" class="extype" name="com.avsystem.commons.redis.commands.NodeId">NodeId</a>)]]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/cluster-slots" target="_blank">CLUSTER SLOTS</a></p><div class="fullcomment"><div class="comment cmt"><p><a href="http://redis.io/commands/cluster-slots" target="_blank">CLUSTER SLOTS</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/cluster-slots" target="_blank">CLUSTER SLOTS</a></p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/cluster-slots" target="_blank">CLUSTER SLOTS</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="NodeClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.NodeClusterApi">NodeClusterApi</a></dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -1563,7 +1551,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1579,7 +1567,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1595,7 +1583,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1633,7 +1621,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1665,7 +1653,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -1713,7 +1701,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">keySlot</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Key">Key</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span class="name">keySlot</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Key">Key</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="KeyedClusterApi.html" class="extype" name="com.avsystem.commons.redis.commands.KeyedClusterApi">KeyedClusterApi</a></dd></dl></div>
@@ -1729,7 +1717,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1745,7 +1733,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1761,7 +1749,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1777,10 +1765,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">readonly</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">readonly</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/readonly" target="_blank">READONLY</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/readonly" target="_blank">READONLY</a></p>
     </li><li name="com.avsystem.commons.redis.commands.ConnectionClusterApi#readwrite" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="readwrite:ConnectionClusterApi.this.Result[Unit]"></a><a id="readwrite:Result[Unit]"></a>
       <span class="permalink">
@@ -1793,10 +1781,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">readwrite</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">readwrite</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.ConnectionClusterApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/readwrite" target="_blank">READWRITE</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/readwrite" target="_blank">READWRITE</a></p>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -1841,7 +1829,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1863,7 +1851,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1885,7 +1873,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1912,9 +1900,9 @@ at the same time).
             </div><div class="parent" name="com.avsystem.commons.redis.ApiSubset">
               <h3>Inherited from <a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
             </div>
         
         </div>

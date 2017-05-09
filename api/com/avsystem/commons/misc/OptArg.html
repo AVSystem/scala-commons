@@ -308,7 +308,7 @@ parameters while at the same time avoiding having to explicitly wrap arguments w
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">OptArg</span><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
+        <span class="name">OptArg</span><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
       </span>
       </h4>
 
@@ -322,14 +322,14 @@ takesMaybeString(<span class="lit">"string"</span>) <span class="cmt">// no expl
 <br/>
 It is strongly recommended that <a href="" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a> type is used ONLY in signatures where implicit conversion <code>A =&gt; OptArg[A]</code>
 is intended to work. You should not use <a href="" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a> as a general-purpose &quot;optional value&quot; type - other types like
-<a href="Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>, <a href="NOpt.html" class="extype" name="com.avsystem.commons.misc.NOpt">NOpt</a> and <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Option" class="extype" target="_top">scala.Option</a> serve that purpose. For this reason <a href="" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a> deliberately does not have any &quot;transforming&quot;
+<a href="Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>, <a href="NOpt.html" class="extype" name="com.avsystem.commons.misc.NOpt">NOpt</a> and <code>Option</code> serve that purpose. For this reason <a href="" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a> deliberately does not have any &quot;transforming&quot;
 methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. Instead it's recommended that <a href="" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a> is converted to <a href="Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>,
-<a href="NOpt.html" class="extype" name="com.avsystem.commons.misc.NOpt">NOpt</a> or <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Option" class="extype" target="_top">scala.Option</a> as soon as possible (using <code>toOpt</code>, <code>toNOpt</code> and <code>toOption</code> methods).
+<a href="NOpt.html" class="extype" name="com.avsystem.commons.misc.NOpt">NOpt</a> or <code>Option</code> as soon as possible (using <code>toOpt</code>, <code>toNOpt</code> and <code>toOption</code> methods).
 </p></div><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Serializable" class="extype" target="_top">Serializable</a>, <span class="extype" name="java.io.Serializable">Serializable</span>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Serializable" class="extype" target="_top">Serializable</a>, <span class="extype" name="java.io.Serializable">Serializable</span>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></div>
         </div></div>
         
 
@@ -394,7 +394,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -410,7 +410,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -426,7 +426,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -458,7 +458,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">contains</span><span class="tparams">[<span name="A1">A1 &gt;: <span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span></span>]</span><span class="params">(<span name="elem">elem: <span class="extype" name="com.avsystem.commons.misc.OptArg.contains.A1">A1</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">contains</span><span class="tparams">[<span name="A1">A1 &gt;: <span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span></span>]</span><span class="params">(<span name="elem">elem: <span class="extype" name="com.avsystem.commons.misc.OptArg.contains.A1">A1</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
@@ -477,7 +477,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">exists</span><span class="params">(<span name="p">p: (<span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">exists</span><span class="params">(<span name="p">p: (<span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
@@ -503,6 +503,27 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
                 <span class="name">@inline</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="com.avsystem.commons.misc.OptArg#forEmpty" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="forEmpty(sideEffect:=&gt;Unit):com.avsystem.commons.misc.OptArg[A]"></a><a id="forEmpty(⇒Unit):OptArg[A]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/misc/OptArg.html#forEmpty(sideEffect:=&gt;Unit):com.avsystem.commons.misc.OptArg[A]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">forEmpty</span><span class="params">(<span name="sideEffect">sideEffect: ⇒ <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a>[<span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Apply side effect only if OptArg is empty.</p><div class="fullcomment"><div class="comment cmt"><p>Apply side effect only if OptArg is empty. It's a bit like foreach for OptArg.Empty</p></div><dl class="paramcmts block"><dt class="param">sideEffect</dt><dd class="cmt"><p>- code to be executed if optArg is empty</p></dd><dt>returns</dt><dd class="cmt"><p>the same optArg</p></dd></dl><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@inline</span><span class="args">()</span>
+              
+        </dd><div class="block">Example:
+               <ol><li class="cmt"><p></p><pre>captionOptArg.forEmpty(logger.warn(<span class="lit">"caption is empty"</span>)).foreach(setCaption)</pre></li></ol>
+            </div></dl></div>
     </li><li name="com.avsystem.commons.misc.OptArg#forall" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="forall(p:A=&gt;Boolean):Boolean"></a><a id="forall((A)⇒Boolean):Boolean"></a>
       <span class="permalink">
@@ -515,7 +536,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">forall</span><span class="params">(<span name="p">p: (<span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">forall</span><span class="params">(<span name="p">p: (<span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
@@ -534,7 +555,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">foreach</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span name="f">f: (<span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>) ⇒ <span class="extype" name="com.avsystem.commons.misc.OptArg.foreach.U">U</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">foreach</span><span class="tparams">[<span name="U">U</span>]</span><span class="params">(<span name="f">f: (<span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>) ⇒ <span class="extype" name="com.avsystem.commons.misc.OptArg.foreach.U">U</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
@@ -572,7 +593,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.Class">Class</span>[_ &lt;: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a>]</span>
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.Class">Class</span>[_ &lt;: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyVal → Any</dd></dl></div>
@@ -607,7 +628,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isDefined</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isDefined</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
@@ -626,7 +647,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isEmpty</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isEmpty</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
@@ -645,7 +666,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -680,7 +701,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">nonEmpty</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">nonEmpty</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
@@ -688,9 +709,9 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
               
         </dd></dl></div>
     </li><li name="com.avsystem.commons.misc.OptArg#orNull" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="orNull[B&gt;:A](implicitev:&lt;:&lt;[Null,B]):B"></a><a id="orNull[B&gt;:A](&lt;:&lt;[Null,B]):B"></a>
+      <a id="orNull[B&gt;:A](implicitev:Null&lt;:&lt;B):B"></a><a id="orNull[B&gt;:A](&lt;:&lt;[Null,B]):B"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/OptArg.html#orNull[B&gt;:A](implicitev:&lt;:&lt;[Null,B]):B" title="Permalink">
+      <a href="../../../../com/avsystem/commons/misc/OptArg.html#orNull[B&gt;:A](implicitev:Null&lt;:&lt;B):B" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -707,9 +728,9 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
               
         </dd></dl></div>
     </li><li name="com.avsystem.commons.misc.OptArg#toLeft" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="toLeft[X](right:=&gt;X):scala.util.Either[A,X]"></a><a id="toLeft[X](⇒X):Either[A,X]"></a>
+      <a id="toLeft[X](right:=&gt;X):Either[A,X]"></a><a id="toLeft[X](⇒X):Either[A,X]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/OptArg.html#toLeft[X](right:=&gt;X):scala.util.Either[A,X]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/misc/OptArg.html#toLeft[X](right:=&gt;X):Either[A,X]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -718,7 +739,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toLeft</span><span class="tparams">[<span name="X">X</span>]</span><span class="params">(<span name="right">right: ⇒ <span class="extype" name="com.avsystem.commons.misc.OptArg.toLeft.X">X</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.util.Either" class="extype" target="_top">Either</a>[<span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>, <span class="extype" name="com.avsystem.commons.misc.OptArg.toLeft.X">X</span>]</span>
+        <span class="name">toLeft</span><span class="tparams">[<span name="X">X</span>]</span><span class="params">(<span name="right">right: ⇒ <span class="extype" name="com.avsystem.commons.misc.OptArg.toLeft.X">X</span></span>)</span><span class="result">: <span class="extype" name="scala.Either">Either</span>[<span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>, <span class="extype" name="com.avsystem.commons.misc.OptArg.toLeft.X">X</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
@@ -813,7 +834,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toOption</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Option" class="extype" target="_top">Option</a>[<span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>]</span>
+        <span class="name">toOption</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Option" class="extype" target="_top">Option</a>[<span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
@@ -821,9 +842,9 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
               
         </dd></dl></div>
     </li><li name="com.avsystem.commons.misc.OptArg#toRight" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="toRight[X](left:=&gt;X):scala.util.Either[X,A]"></a><a id="toRight[X](⇒X):Either[X,A]"></a>
+      <a id="toRight[X](left:=&gt;X):Either[X,A]"></a><a id="toRight[X](⇒X):Either[X,A]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/OptArg.html#toRight[X](left:=&gt;X):scala.util.Either[X,A]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/misc/OptArg.html#toRight[X](left:=&gt;X):Either[X,A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -832,7 +853,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toRight</span><span class="tparams">[<span name="X">X</span>]</span><span class="params">(<span name="left">left: ⇒ <span class="extype" name="com.avsystem.commons.misc.OptArg.toRight.X">X</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.util.Either" class="extype" target="_top">Either</a>[<span class="extype" name="com.avsystem.commons.misc.OptArg.toRight.X">X</span>, <span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>]</span>
+        <span class="name">toRight</span><span class="tparams">[<span name="X">X</span>]</span><span class="params">(<span name="left">left: ⇒ <span class="extype" name="com.avsystem.commons.misc.OptArg.toRight.X">X</span></span>)</span><span class="result">: <span class="extype" name="scala.Either">Either</span>[<span class="extype" name="com.avsystem.commons.misc.OptArg.toRight.X">X</span>, <span class="extype" name="com.avsystem.commons.misc.OptArg.A">A</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
@@ -851,7 +872,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+        <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a> → Any</dd></dl></div>
@@ -866,13 +887,13 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.Serializable">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></h3>
             </div><div class="parent" name="java.io.Serializable">
               <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
             </div><div class="parent" name="scala.AnyVal">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
             </div>
         
         </div>

@@ -734,7 +734,7 @@ Created: 06/04/16.">
                           SlaveState
                         </a>
                       </li><li class="current-entities indented5">
-                        <span class="separator"></span>
+                        <a class="object" href="SlotRange$.html" title=""></a>
                         <a class="class" href="SlotRange.html" title=""></a>
                         <a href="SlotRange.html" title="">
                           SlotRange
@@ -843,7 +843,7 @@ Created: 06/04/16.">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></div>
         </div><div class="toggleContainer block">
             <span class="toggle">
               Known Subclasses
@@ -915,22 +915,6 @@ Created: 06/04/16.">
 hashes (<a href="HashesApi.html" class="extype" name="com.avsystem.commons.redis.commands.HashesApi">HashesApi</a>).</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis hash keys or hash key patterns used in methods representing Redis commands that work on
 hashes (<a href="HashesApi.html" class="extype" name="com.avsystem.commons.redis.commands.HashesApi">HashesApi</a>).
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.ApiSubset.Input" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]"></a><a id="Input[A]:Input[A]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">type</span>
-      </span>
-      <span class="symbol">
-        <span class="name">Input</span><span class="tparams">[<span name="A">A</span>]</span><span class="result"> &gt;: <a href="../RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.Input.A">A</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Key" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="Key"></a><a id="Key:Key"></a>
       <span class="permalink">
@@ -947,7 +931,7 @@ hashes (<a href="HashesApi.html" class="extype" name="com.avsystem.commons.redis
       </span>
       
       <p class="shortcomment cmt">The type of Redis keys or key patterns used in methods representing Redis commands.</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis keys or key patterns used in methods representing Redis commands. For example, if <code>Key = String</code>
-then <a href="StringsApi.html#get(key:StringsApi.this.Key):StringsApi.this.Result[com.avsystem.commons.misc.Opt[StringsApi.this.Value]]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#get">get</a> returns <code>Result[Opt[String]]</code>. This type is used only for toplevel Redis keys, hash
+then <a href="StringsApi.html#get(key:StringsApi.this.Key):StringsApi.this.Result[com.avsystem.commons.Opt[StringsApi.this.Value]]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#get">get</a> returns <code>Result[Opt[String]]</code>. This type is used only for toplevel Redis keys, hash
 keys have their own type, <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.HashKey">HashKey</a>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Result" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
@@ -966,7 +950,7 @@ keys have their own type, <a href="#HashKey" class="extmbr" name="com.avsystem.c
       </span>
       
       <p class="shortcomment cmt">The type constructor into which a result of each command is wrapped.</p><div class="fullcomment"><div class="comment cmt"><p>The type constructor into which a result of each command is wrapped. For example if <code>Result</code> is
-<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>, then <a href="StringsApi.html#incr(key:StringsApi.this.Key):StringsApi.this.Result[Long]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#incr">incr</a> returns <code>Future[Long]</code>.
+<code>Future</code>, then <a href="StringsApi.html#incr(key:StringsApi.this.Key):StringsApi.this.Result[Long]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#incr">incr</a> returns <code>Future[Long]</code>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Value" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="Value"></a><a id="Value:Value"></a>
@@ -984,7 +968,7 @@ keys have their own type, <a href="#HashKey" class="extmbr" name="com.avsystem.c
       </span>
       
       <p class="shortcomment cmt">The type of Redis values used in methods representing Redis commands.</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis values used in methods representing Redis commands. &quot;Value&quot; is the data that might be
-stored directly under a Redis key (e.g. using <a href="StringsApi.html#set(key:StringsApi.this.Key,value:StringsApi.this.Value,expiration:com.avsystem.commons.misc.OptArg[com.avsystem.commons.redis.commands.Expiration],existence:com.avsystem.commons.misc.OptArg[Boolean]):StringsApi.this.Result[Boolean]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#set">set</a>) but also a value of hash field, list element,
+stored directly under a Redis key (e.g. using <a href="StringsApi.html#set(key:StringsApi.this.Key,value:StringsApi.this.Value,expiration:com.avsystem.commons.OptArg[com.avsystem.commons.redis.commands.Expiration],existence:com.avsystem.commons.OptArg[Boolean]):StringsApi.this.Result[Boolean]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#set">set</a>) but also a value of hash field, list element,
 set member, sorted set member, geo set member or element inserted into hyper-log-log structure.
 There are no separate types specified for every of those use cases because only one of them can be used in a
 single command (for example, there is no Redis command that works on both list elements and set members
@@ -996,9 +980,9 @@ at the same time).
         <div class="values members">
               <h3>Abstract Value Members</h3>
               <ol><li name="com.avsystem.commons.redis.ApiSubset#execute" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="execute[A](command:ApiSubset.this.Input[A]):ApiSubset.this.Result[A]"></a><a id="execute[A](Input[A]):Result[A]"></a>
+      <a id="execute[A](command:com.avsystem.commons.redis.RedisCommand[A]):ApiSubset.this.Result[A]"></a><a id="execute[A](RedisCommand[A]):Result[A]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#execute[A](command:ApiSubset.this.Input[A]):ApiSubset.this.Result[A]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#execute[A](command:com.avsystem.commons.redis.RedisCommand[A]):ApiSubset.this.Result[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1007,7 +991,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">execute</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="command">command: <a href="#Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Input">Input</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>
+        <span class="name">execute</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="command">command: <a href="../RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
@@ -1077,7 +1061,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1093,7 +1077,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1109,7 +1093,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1130,9 +1114,9 @@ at the same time).
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="com.avsystem.commons.redis.commands.BlockingListsApi#blpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="blpop(keys:Iterable[BlockingListsApi.this.Key],timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.misc.Opt[(BlockingListsApi.this.Key,BlockingListsApi.this.Value)]]"></a><a id="blpop(Iterable[Key],Int):Result[Opt[(Key,Value)]]"></a>
+      <a id="blpop(keys:Iterable[BlockingListsApi.this.Key],timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.Opt[(BlockingListsApi.this.Key,BlockingListsApi.this.Value)]]"></a><a id="blpop(Iterable[Key],Int):Result[commons.Opt[(Key,Value)]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#blpop(keys:Iterable[BlockingListsApi.this.Key],timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.misc.Opt[(BlockingListsApi.this.Key,BlockingListsApi.this.Value)]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#blpop(keys:Iterable[BlockingListsApi.this.Key],timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.Opt[(BlockingListsApi.this.Key,BlockingListsApi.this.Value)]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1141,14 +1125,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">blpop</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>]</span>, <span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="../../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[(<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>)]]</span>
+        <span class="name">blpop</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>]</span>, <span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="../../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[(<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>)]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/blpop" target="_blank">BLPOP</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/blpop" target="_blank">BLPOP</a></p>
     </li><li name="com.avsystem.commons.redis.commands.BlockingListsApi#blpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="blpop(key:BlockingListsApi.this.Key,timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.misc.Opt[BlockingListsApi.this.Value]]"></a><a id="blpop(Key,Int):Result[Opt[Value]]"></a>
+      <a id="blpop(key:BlockingListsApi.this.Key,timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.Opt[BlockingListsApi.this.Value]]"></a><a id="blpop(Key,Int):Result[commons.Opt[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#blpop(key:BlockingListsApi.this.Key,timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.misc.Opt[BlockingListsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#blpop(key:BlockingListsApi.this.Key,timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.Opt[BlockingListsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1157,10 +1141,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">blpop</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>, <span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="../../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>]]</span>
+        <span class="name">blpop</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>, <span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="../../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/blpop" target="_blank">BLPOP</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/blpop" target="_blank">BLPOP</a></p>
     </li><li name="com.avsystem.commons.redis.commands.BlockingListsApi#blpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="blpop(keys:Iterable[BlockingListsApi.this.Key]):BlockingListsApi.this.Result[(BlockingListsApi.this.Key,BlockingListsApi.this.Value)]"></a><a id="blpop(Iterable[Key]):Result[(Key,Value)]"></a>
       <span class="permalink">
@@ -1176,7 +1160,7 @@ at the same time).
         <span class="name">blpop</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[(<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>)]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/blpop" target="_blank">BLPOP</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/blpop" target="_blank">BLPOP</a></p>
     </li><li name="com.avsystem.commons.redis.commands.BlockingListsApi#blpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="blpop(key:BlockingListsApi.this.Key,keys:BlockingListsApi.this.Key*):BlockingListsApi.this.Result[(BlockingListsApi.this.Key,BlockingListsApi.this.Value)]"></a><a id="blpop(Key,Key*):Result[(Key,Value)]"></a>
       <span class="permalink">
@@ -1192,7 +1176,7 @@ at the same time).
         <span class="name">blpop</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[(<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>)]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/blpop" target="_blank">BLPOP</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/blpop" target="_blank">BLPOP</a></p>
     </li><li name="com.avsystem.commons.redis.commands.BlockingListsApi#blpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="blpop(key:BlockingListsApi.this.Key):BlockingListsApi.this.Result[BlockingListsApi.this.Value]"></a><a id="blpop(Key):Result[Value]"></a>
       <span class="permalink">
@@ -1208,11 +1192,11 @@ at the same time).
         <span class="name">blpop</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/blpop" target="_blank">BLPOP</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/blpop" target="_blank">BLPOP</a></p>
     </li><li name="com.avsystem.commons.redis.commands.BlockingListsApi#brpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="brpop(keys:Iterable[BlockingListsApi.this.Key],timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.misc.Opt[(BlockingListsApi.this.Key,BlockingListsApi.this.Value)]]"></a><a id="brpop(Iterable[Key],Int):Result[Opt[(Key,Value)]]"></a>
+      <a id="brpop(keys:Iterable[BlockingListsApi.this.Key],timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.Opt[(BlockingListsApi.this.Key,BlockingListsApi.this.Value)]]"></a><a id="brpop(Iterable[Key],Int):Result[commons.Opt[(Key,Value)]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#brpop(keys:Iterable[BlockingListsApi.this.Key],timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.misc.Opt[(BlockingListsApi.this.Key,BlockingListsApi.this.Value)]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#brpop(keys:Iterable[BlockingListsApi.this.Key],timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.Opt[(BlockingListsApi.this.Key,BlockingListsApi.this.Value)]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1221,14 +1205,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">brpop</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>]</span>, <span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="../../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[(<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>)]]</span>
+        <span class="name">brpop</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>]</span>, <span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="../../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[(<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>)]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/brpop" target="_blank">BRPOP</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/brpop" target="_blank">BRPOP</a></p>
     </li><li name="com.avsystem.commons.redis.commands.BlockingListsApi#brpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="brpop(key:BlockingListsApi.this.Key,timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.misc.Opt[BlockingListsApi.this.Value]]"></a><a id="brpop(Key,Int):Result[Opt[Value]]"></a>
+      <a id="brpop(key:BlockingListsApi.this.Key,timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.Opt[BlockingListsApi.this.Value]]"></a><a id="brpop(Key,Int):Result[commons.Opt[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#brpop(key:BlockingListsApi.this.Key,timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.misc.Opt[BlockingListsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#brpop(key:BlockingListsApi.this.Key,timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.Opt[BlockingListsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1237,10 +1221,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">brpop</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>, <span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="../../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>]]</span>
+        <span class="name">brpop</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>, <span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="../../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/brpop" target="_blank">BRPOP</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/brpop" target="_blank">BRPOP</a></p>
     </li><li name="com.avsystem.commons.redis.commands.BlockingListsApi#brpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="brpop(keys:Iterable[BlockingListsApi.this.Key]):BlockingListsApi.this.Result[(BlockingListsApi.this.Key,BlockingListsApi.this.Value)]"></a><a id="brpop(Iterable[Key]):Result[(Key,Value)]"></a>
       <span class="permalink">
@@ -1256,7 +1240,7 @@ at the same time).
         <span class="name">brpop</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[(<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>)]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/brpop" target="_blank">BRPOP</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/brpop" target="_blank">BRPOP</a></p>
     </li><li name="com.avsystem.commons.redis.commands.BlockingListsApi#brpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="brpop(key:BlockingListsApi.this.Key,keys:BlockingListsApi.this.Key*):BlockingListsApi.this.Result[(BlockingListsApi.this.Key,BlockingListsApi.this.Value)]"></a><a id="brpop(Key,Key*):Result[(Key,Value)]"></a>
       <span class="permalink">
@@ -1272,7 +1256,7 @@ at the same time).
         <span class="name">brpop</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[(<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>)]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/brpop" target="_blank">BRPOP</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/brpop" target="_blank">BRPOP</a></p>
     </li><li name="com.avsystem.commons.redis.commands.BlockingListsApi#brpop" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="brpop(key:BlockingListsApi.this.Key):BlockingListsApi.this.Result[BlockingListsApi.this.Value]"></a><a id="brpop(Key):Result[Value]"></a>
       <span class="permalink">
@@ -1288,11 +1272,11 @@ at the same time).
         <span class="name">brpop</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/brpop" target="_blank">BRPOP</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/brpop" target="_blank">BRPOP</a></p>
     </li><li name="com.avsystem.commons.redis.commands.BlockingListsApi#brpoplpush" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="brpoplpush(source:BlockingListsApi.this.Key,destination:BlockingListsApi.this.Key,timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.misc.Opt[BlockingListsApi.this.Value]]"></a><a id="brpoplpush(Key,Key,Int):Result[Opt[Value]]"></a>
+      <a id="brpoplpush(source:BlockingListsApi.this.Key,destination:BlockingListsApi.this.Key,timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.Opt[BlockingListsApi.this.Value]]"></a><a id="brpoplpush(Key,Key,Int):Result[commons.Opt[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#brpoplpush(source:BlockingListsApi.this.Key,destination:BlockingListsApi.this.Key,timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.misc.Opt[BlockingListsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/BlockingListsApi.html#brpoplpush(source:BlockingListsApi.this.Key,destination:BlockingListsApi.this.Key,timeout:Int):BlockingListsApi.this.Result[com.avsystem.commons.Opt[BlockingListsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1301,10 +1285,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">brpoplpush</span><span class="params">(<span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>, <span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>, <span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="../../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>]]</span>
+        <span class="name">brpoplpush</span><span class="params">(<span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>, <span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>, <span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="../../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/brpoplpush" target="_blank">BRPOPLPUSH</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/brpoplpush" target="_blank">BRPOPLPUSH</a></p>
     </li><li name="com.avsystem.commons.redis.commands.BlockingListsApi#brpoplpush" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="brpoplpush(source:BlockingListsApi.this.Key,destination:BlockingListsApi.this.Key):BlockingListsApi.this.Result[BlockingListsApi.this.Value]"></a><a id="brpoplpush(Key,Key):Result[Value]"></a>
       <span class="permalink">
@@ -1320,7 +1304,7 @@ at the same time).
         <span class="name">brpoplpush</span><span class="params">(<span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>, <span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Result">Result</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.BlockingListsApi.Value">Value</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/brpoplpush" target="_blank">BRPOPLPUSH</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/brpoplpush" target="_blank">BRPOPLPUSH</a></p>
     </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a><a id="clone():AnyRef"></a>
       <span class="permalink">
@@ -1333,7 +1317,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1355,7 +1339,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1371,7 +1355,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1387,7 +1371,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1425,7 +1409,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1457,7 +1441,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -1505,7 +1489,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1521,7 +1505,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1537,7 +1521,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1585,7 +1569,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1607,7 +1591,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1629,7 +1613,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1652,9 +1636,9 @@ at the same time).
         <div class="parent" name="com.avsystem.commons.redis.ApiSubset">
               <h3>Inherited from <a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
             </div>
         
         </div>

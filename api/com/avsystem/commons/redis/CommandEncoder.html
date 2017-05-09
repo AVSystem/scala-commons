@@ -270,16 +270,16 @@
                           ApiSubset
                         </a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="trait" href="AtomicBatch.html" title="RedisBatch guaranteed to be atomic, i.e."></a>
-                        <a href="AtomicBatch.html" title="RedisBatch guaranteed to be atomic, i.e.">
-                          AtomicBatch
-                        </a>
-                      </li><li class="current-entities indented4">
                         <a class="object" href="ClusterState$.html" title=""></a>
                         <a class="class" href="ClusterState.html" title="Current cluster state known by RedisClusterClient."></a>
                         <a href="ClusterState.html" title="Current cluster state known by RedisClusterClient.">
                           ClusterState
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="CollectionBatch.html" title=""></a>
+                        <a href="CollectionBatch.html" title="">
+                          CollectionBatch
                         </a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="CommandEncoder$.html" title=""></a>
@@ -314,12 +314,18 @@
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="Hash$.html" title="Implementation of key hashing function used in Redis Cluster, as specified in
-Link(http://redis.io/topics/cluster-spec#appendix-a-crc16-reference-implementation-in-ansi-c,Text(Redis Cluster Specification))
+Redis Cluster Specification
 "></a>
                         <a href="Hash$.html" title="Implementation of key hashing function used in Redis Cluster, as specified in
-Link(http://redis.io/topics/cluster-spec#appendix-a-crc16-reference-implementation-in-ansi-c,Text(Redis Cluster Specification))
+Redis Cluster Specification
 ">
                           Hash
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="ImmediateBatch.html" title=""></a>
+                        <a href="ImmediateBatch.html" title="">
+                          ImmediateBatch
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
@@ -711,6 +717,12 @@ messages and emits a single RedisReply.">
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="trait" href="SinglePackBatch.html" title=""></a>
+                        <a href="SinglePackBatch.html" title="">
+                          SinglePackBatch
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="Transaction.html" title=""></a>
                         <a href="Transaction.html" title="">
                           Transaction
@@ -758,7 +770,7 @@ messages and emits a single RedisReply.">
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">CommandEncoder</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a></span>
+        <span class="name">CommandEncoder</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a></span>
       </span>
       </h4>
 
@@ -767,7 +779,7 @@ messages and emits a single RedisReply.">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></div>
         </div></div>
         
 
@@ -825,7 +837,7 @@ messages and emits a single RedisReply.">
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">CommandEncoder</span><span class="params">(<span name="buffer">buffer: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.collection.mutable.ArrayBuffer" class="extype" target="_top">ArrayBuffer</a>[<a href="protocol/BulkStringMsg.html" class="extype" name="com.avsystem.commons.redis.protocol.BulkStringMsg">BulkStringMsg</a>]</span>)</span>
+        <span class="name">CommandEncoder</span><span class="params">(<span name="buffer">buffer: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.collection.mutable.ArrayBuffer" class="extype" target="_top">ArrayBuffer</a>[<a href="protocol/BulkStringMsg.html" class="extype" name="com.avsystem.commons.redis.protocol.BulkStringMsg">BulkStringMsg</a>]</span>)</span>
       </span>
       
       
@@ -851,7 +863,7 @@ messages and emits a single RedisReply.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -867,7 +879,7 @@ messages and emits a single RedisReply.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -883,7 +895,7 @@ messages and emits a single RedisReply.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -915,7 +927,7 @@ messages and emits a single RedisReply.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">addFlag</span><span class="params">(<span name="flag">flag: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.CommandEncoder">CommandEncoder</a></span>
+        <span class="name">addFlag</span><span class="params">(<span name="flag">flag: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.CommandEncoder">CommandEncoder</a></span>
       </span>
       
       
@@ -1011,7 +1023,7 @@ messages and emits a single RedisReply.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.Class">Class</span>[_ &lt;: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a>]</span>
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.Class">Class</span>[_ &lt;: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyVal → Any</dd></dl></div>
@@ -1027,7 +1039,7 @@ messages and emits a single RedisReply.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -1080,9 +1092,9 @@ messages and emits a single RedisReply.">
       
       
     </li><li name="com.avsystem.commons.redis.CommandEncoder#optAdd" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="optAdd[T](flag:String,value:com.avsystem.commons.misc.Opt[T])(implicitevidence$7:com.avsystem.commons.redis.CommandEncoder.CommandArg[T]):com.avsystem.commons.redis.CommandEncoder"></a><a id="optAdd[T](String,Opt[T])(CommandArg[T]):CommandEncoder"></a>
+      <a id="optAdd[T](flag:String,value:com.avsystem.commons.Opt[T])(implicitevidence$7:com.avsystem.commons.redis.CommandEncoder.CommandArg[T]):com.avsystem.commons.redis.CommandEncoder"></a><a id="optAdd[T](String,commons.Opt[T])(CommandArg[T]):CommandEncoder"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/CommandEncoder.html#optAdd[T](flag:String,value:com.avsystem.commons.misc.Opt[T])(implicitevidence$7:com.avsystem.commons.redis.CommandEncoder.CommandArg[T]):com.avsystem.commons.redis.CommandEncoder" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/CommandEncoder.html#optAdd[T](flag:String,value:com.avsystem.commons.Opt[T])(implicitevidence$7:com.avsystem.commons.redis.CommandEncoder.CommandArg[T]):com.avsystem.commons.redis.CommandEncoder" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1091,14 +1103,14 @@ messages and emits a single RedisReply.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">optAdd</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="flag">flag: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <a href="../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optAdd.T">T</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="CommandEncoder$$CommandArg.html" class="extype" name="com.avsystem.commons.redis.CommandEncoder.CommandArg">CommandArg</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optAdd.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.CommandEncoder">CommandEncoder</a></span>
+        <span class="name">optAdd</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="flag">flag: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <a href="../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optAdd.T">T</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="CommandEncoder$$CommandArg.html" class="extype" name="com.avsystem.commons.redis.CommandEncoder.CommandArg">CommandArg</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optAdd.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.CommandEncoder">CommandEncoder</a></span>
       </span>
       
       
     </li><li name="com.avsystem.commons.redis.CommandEncoder#optAdd" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="optAdd[T](value:com.avsystem.commons.misc.Opt[T])(implicitevidence$6:com.avsystem.commons.redis.CommandEncoder.CommandArg[T]):com.avsystem.commons.redis.CommandEncoder"></a><a id="optAdd[T](Opt[T])(CommandArg[T]):CommandEncoder"></a>
+      <a id="optAdd[T](value:com.avsystem.commons.Opt[T])(implicitevidence$6:com.avsystem.commons.redis.CommandEncoder.CommandArg[T]):com.avsystem.commons.redis.CommandEncoder"></a><a id="optAdd[T](commons.Opt[T])(CommandArg[T]):CommandEncoder"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/CommandEncoder.html#optAdd[T](value:com.avsystem.commons.misc.Opt[T])(implicitevidence$6:com.avsystem.commons.redis.CommandEncoder.CommandArg[T]):com.avsystem.commons.redis.CommandEncoder" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/CommandEncoder.html#optAdd[T](value:com.avsystem.commons.Opt[T])(implicitevidence$6:com.avsystem.commons.redis.CommandEncoder.CommandArg[T]):com.avsystem.commons.redis.CommandEncoder" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1107,14 +1119,14 @@ messages and emits a single RedisReply.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">optAdd</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="value">value: <a href="../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optAdd.T">T</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="CommandEncoder$$CommandArg.html" class="extype" name="com.avsystem.commons.redis.CommandEncoder.CommandArg">CommandArg</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optAdd.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.CommandEncoder">CommandEncoder</a></span>
+        <span class="name">optAdd</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="value">value: <a href="../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optAdd.T">T</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="CommandEncoder$$CommandArg.html" class="extype" name="com.avsystem.commons.redis.CommandEncoder.CommandArg">CommandArg</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optAdd.T">T</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.CommandEncoder">CommandEncoder</a></span>
       </span>
       
       
     </li><li name="com.avsystem.commons.redis.CommandEncoder#optData" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="optData[V](flag:String,value:com.avsystem.commons.misc.Opt[V])(implicitevidence$9:com.avsystem.commons.redis.RedisDataCodec[V]):com.avsystem.commons.redis.CommandEncoder"></a><a id="optData[V](String,Opt[V])(RedisDataCodec[V]):CommandEncoder"></a>
+      <a id="optData[V](flag:String,value:com.avsystem.commons.Opt[V])(implicitevidence$9:com.avsystem.commons.redis.RedisDataCodec[V]):com.avsystem.commons.redis.CommandEncoder"></a><a id="optData[V](String,commons.Opt[V])(RedisDataCodec[V]):CommandEncoder"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/CommandEncoder.html#optData[V](flag:String,value:com.avsystem.commons.misc.Opt[V])(implicitevidence$9:com.avsystem.commons.redis.RedisDataCodec[V]):com.avsystem.commons.redis.CommandEncoder" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/CommandEncoder.html#optData[V](flag:String,value:com.avsystem.commons.Opt[V])(implicitevidence$9:com.avsystem.commons.redis.RedisDataCodec[V]):com.avsystem.commons.redis.CommandEncoder" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1123,14 +1135,14 @@ messages and emits a single RedisReply.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">optData</span><span class="tparams">[<span name="V">V</span>]</span><span class="params">(<span name="flag">flag: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <a href="../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optData.V">V</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="RedisDataCodec.html" class="extype" name="com.avsystem.commons.redis.RedisDataCodec">RedisDataCodec</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optData.V">V</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.CommandEncoder">CommandEncoder</a></span>
+        <span class="name">optData</span><span class="tparams">[<span name="V">V</span>]</span><span class="params">(<span name="flag">flag: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <a href="../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optData.V">V</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="RedisDataCodec.html" class="extype" name="com.avsystem.commons.redis.RedisDataCodec">RedisDataCodec</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optData.V">V</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.CommandEncoder">CommandEncoder</a></span>
       </span>
       
       
     </li><li name="com.avsystem.commons.redis.CommandEncoder#optKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="optKey[K](flag:String,value:com.avsystem.commons.misc.Opt[K])(implicitevidence$8:com.avsystem.commons.redis.RedisDataCodec[K]):com.avsystem.commons.redis.CommandEncoder"></a><a id="optKey[K](String,Opt[K])(RedisDataCodec[K]):CommandEncoder"></a>
+      <a id="optKey[K](flag:String,value:com.avsystem.commons.Opt[K])(implicitevidence$8:com.avsystem.commons.redis.RedisDataCodec[K]):com.avsystem.commons.redis.CommandEncoder"></a><a id="optKey[K](String,commons.Opt[K])(RedisDataCodec[K]):CommandEncoder"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/CommandEncoder.html#optKey[K](flag:String,value:com.avsystem.commons.misc.Opt[K])(implicitevidence$8:com.avsystem.commons.redis.RedisDataCodec[K]):com.avsystem.commons.redis.CommandEncoder" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/CommandEncoder.html#optKey[K](flag:String,value:com.avsystem.commons.Opt[K])(implicitevidence$8:com.avsystem.commons.redis.RedisDataCodec[K]):com.avsystem.commons.redis.CommandEncoder" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1139,7 +1151,7 @@ messages and emits a single RedisReply.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">optKey</span><span class="tparams">[<span name="K">K</span>]</span><span class="params">(<span name="flag">flag: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <a href="../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optKey.K">K</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="RedisDataCodec.html" class="extype" name="com.avsystem.commons.redis.RedisDataCodec">RedisDataCodec</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optKey.K">K</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.CommandEncoder">CommandEncoder</a></span>
+        <span class="name">optKey</span><span class="tparams">[<span name="K">K</span>]</span><span class="params">(<span name="flag">flag: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <a href="../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optKey.K">K</span>]</span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="RedisDataCodec.html" class="extype" name="com.avsystem.commons.redis.RedisDataCodec">RedisDataCodec</a>[<span class="extype" name="com.avsystem.commons.redis.CommandEncoder.optKey.K">K</span>]</span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.CommandEncoder">CommandEncoder</a></span>
       </span>
       
       
@@ -1186,9 +1198,9 @@ messages and emits a single RedisReply.">
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyVal">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyVal" class="extype" target="_top">AnyVal</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
             </div>
         
         </div>

@@ -734,7 +734,7 @@ Created: 06/04/16.">
                           SlaveState
                         </a>
                       </li><li class="current-entities indented5">
-                        <span class="separator"></span>
+                        <a class="object" href="SlotRange$.html" title=""></a>
                         <a class="class" href="SlotRange.html" title=""></a>
                         <a href="SlotRange.html" title="">
                           SlotRange
@@ -843,7 +843,7 @@ Created: 06/04/16.">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></div>
         </div><div class="toggleContainer block">
             <span class="toggle">
               Known Subclasses
@@ -915,22 +915,6 @@ Created: 06/04/16.">
 hashes (<a href="HashesApi.html" class="extype" name="com.avsystem.commons.redis.commands.HashesApi">HashesApi</a>).</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis hash keys or hash key patterns used in methods representing Redis commands that work on
 hashes (<a href="HashesApi.html" class="extype" name="com.avsystem.commons.redis.commands.HashesApi">HashesApi</a>).
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.ApiSubset.Input" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]"></a><a id="Input[A]:Input[A]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">type</span>
-      </span>
-      <span class="symbol">
-        <span class="name">Input</span><span class="tparams">[<span name="A">A</span>]</span><span class="result"> &gt;: <a href="../RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.Input.A">A</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Key" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="Key"></a><a id="Key:Key"></a>
       <span class="permalink">
@@ -947,7 +931,7 @@ hashes (<a href="HashesApi.html" class="extype" name="com.avsystem.commons.redis
       </span>
       
       <p class="shortcomment cmt">The type of Redis keys or key patterns used in methods representing Redis commands.</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis keys or key patterns used in methods representing Redis commands. For example, if <code>Key = String</code>
-then <a href="StringsApi.html#get(key:StringsApi.this.Key):StringsApi.this.Result[com.avsystem.commons.misc.Opt[StringsApi.this.Value]]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#get">get</a> returns <code>Result[Opt[String]]</code>. This type is used only for toplevel Redis keys, hash
+then <a href="StringsApi.html#get(key:StringsApi.this.Key):StringsApi.this.Result[com.avsystem.commons.Opt[StringsApi.this.Value]]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#get">get</a> returns <code>Result[Opt[String]]</code>. This type is used only for toplevel Redis keys, hash
 keys have their own type, <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.HashKey">HashKey</a>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Result" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
@@ -966,7 +950,7 @@ keys have their own type, <a href="#HashKey" class="extmbr" name="com.avsystem.c
       </span>
       
       <p class="shortcomment cmt">The type constructor into which a result of each command is wrapped.</p><div class="fullcomment"><div class="comment cmt"><p>The type constructor into which a result of each command is wrapped. For example if <code>Result</code> is
-<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>, then <a href="StringsApi.html#incr(key:StringsApi.this.Key):StringsApi.this.Result[Long]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#incr">incr</a> returns <code>Future[Long]</code>.
+<code>Future</code>, then <a href="StringsApi.html#incr(key:StringsApi.this.Key):StringsApi.this.Result[Long]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#incr">incr</a> returns <code>Future[Long]</code>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Value" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="Value"></a><a id="Value:Value"></a>
@@ -984,7 +968,7 @@ keys have their own type, <a href="#HashKey" class="extmbr" name="com.avsystem.c
       </span>
       
       <p class="shortcomment cmt">The type of Redis values used in methods representing Redis commands.</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis values used in methods representing Redis commands. &quot;Value&quot; is the data that might be
-stored directly under a Redis key (e.g. using <a href="StringsApi.html#set(key:StringsApi.this.Key,value:StringsApi.this.Value,expiration:com.avsystem.commons.misc.OptArg[com.avsystem.commons.redis.commands.Expiration],existence:com.avsystem.commons.misc.OptArg[Boolean]):StringsApi.this.Result[Boolean]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#set">set</a>) but also a value of hash field, list element,
+stored directly under a Redis key (e.g. using <a href="StringsApi.html#set(key:StringsApi.this.Key,value:StringsApi.this.Value,expiration:com.avsystem.commons.OptArg[com.avsystem.commons.redis.commands.Expiration],existence:com.avsystem.commons.OptArg[Boolean]):StringsApi.this.Result[Boolean]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#set">set</a>) but also a value of hash field, list element,
 set member, sorted set member, geo set member or element inserted into hyper-log-log structure.
 There are no separate types specified for every of those use cases because only one of them can be used in a
 single command (for example, there is no Redis command that works on both list elements and set members
@@ -996,9 +980,9 @@ at the same time).
         <div class="values members">
               <h3>Abstract Value Members</h3>
               <ol><li name="com.avsystem.commons.redis.ApiSubset#execute" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="execute[A](command:ApiSubset.this.Input[A]):ApiSubset.this.Result[A]"></a><a id="execute[A](Input[A]):Result[A]"></a>
+      <a id="execute[A](command:com.avsystem.commons.redis.RedisCommand[A]):ApiSubset.this.Result[A]"></a><a id="execute[A](RedisCommand[A]):Result[A]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#execute[A](command:ApiSubset.this.Input[A]):ApiSubset.this.Result[A]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#execute[A](command:com.avsystem.commons.redis.RedisCommand[A]):ApiSubset.this.Result[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1007,7 +991,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">execute</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="command">command: <a href="#Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Input">Input</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>
+        <span class="name">execute</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="command">command: <a href="../RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
@@ -1077,7 +1061,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1093,7 +1077,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1109,7 +1093,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1141,7 +1125,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1163,7 +1147,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1179,7 +1163,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1195,7 +1179,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1233,7 +1217,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1265,7 +1249,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -1313,7 +1297,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1329,7 +1313,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1345,7 +1329,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1361,10 +1345,11 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sadd</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="members">members: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
+        <span class="name">sadd</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="members">members: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sadd" target="_blank">SADD</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sadd" target="_blank">SADD</a>
+or simply returns 0 when <code>members</code> is empty</p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sadd" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="sadd(key:SetsApi.this.Key,member:SetsApi.this.Value,members:SetsApi.this.Value*):SetsApi.this.Result[Int]"></a><a id="sadd(Key,Value,Value*):Result[Int]"></a>
       <span class="permalink">
@@ -1377,10 +1362,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sadd</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="member">member: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a></span>, <span name="members">members: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
+        <span class="name">sadd</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="member">member: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a></span>, <span name="members">members: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sadd" target="_blank">SADD</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sadd" target="_blank">SADD</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sadd" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="sadd(key:SetsApi.this.Key,member:SetsApi.this.Value):SetsApi.this.Result[Boolean]"></a><a id="sadd(Key,Value):Result[Boolean]"></a>
       <span class="permalink">
@@ -1393,10 +1378,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sadd</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="member">member: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
+        <span class="name">sadd</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="member">member: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sadd" target="_blank">SADD</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sadd" target="_blank">SADD</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#scard" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="scard(key:SetsApi.this.Key):SetsApi.this.Result[Long]"></a><a id="scard(Key):Result[Long]"></a>
       <span class="permalink">
@@ -1409,14 +1394,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">scard</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
+        <span class="name">scard</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/scard" target="_blank">SCARD</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/scard" target="_blank">SCARD</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sdiff" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="sdiff(source:SetsApi.this.Key,keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]"></a><a id="sdiff(Key,Iterable[Key]):Result[BSet[Value]]"></a>
+      <a id="sdiff(source:SetsApi.this.Key,keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]"></a><a id="sdiff(Key,Iterable[Key]):Result[commons.BSet[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sdiff(source:SetsApi.this.Key,keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sdiff(source:SetsApi.this.Key,keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1425,14 +1410,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sdiff</span><span class="params">(<span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../collection/CollectionAliases$.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.collection.CollectionAliases.BSet">BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
+        <span class="name">sdiff</span><span class="params">(<span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sdiff" target="_blank">SDIFF</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sdiff" target="_blank">SDIFF</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sdiff" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="sdiff(source:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]"></a><a id="sdiff(Key,Key*):Result[BSet[Value]]"></a>
+      <a id="sdiff(source:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]"></a><a id="sdiff(Key,Key*):Result[commons.BSet[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sdiff(source:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sdiff(source:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1441,10 +1426,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sdiff</span><span class="params">(<span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../collection/CollectionAliases$.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.collection.CollectionAliases.BSet">BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
+        <span class="name">sdiff</span><span class="params">(<span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sdiff" target="_blank">SDIFF</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sdiff" target="_blank">SDIFF</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sdiffstore" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="sdiffstore(destination:SetsApi.this.Key,source:SetsApi.this.Key,keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[Long]"></a><a id="sdiffstore(Key,Key,Iterable[Key]):Result[Long]"></a>
       <span class="permalink">
@@ -1457,10 +1442,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sdiffstore</span><span class="params">(<span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
+        <span class="name">sdiffstore</span><span class="params">(<span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sdiffstore" target="_blank">SDIFFSTORE</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sdiffstore" target="_blank">SDIFFSTORE</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sdiffstore" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="sdiffstore(destination:SetsApi.this.Key,source:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[Long]"></a><a id="sdiffstore(Key,Key,Key*):Result[Long]"></a>
       <span class="permalink">
@@ -1473,14 +1458,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sdiffstore</span><span class="params">(<span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
+        <span class="name">sdiffstore</span><span class="params">(<span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sdiffstore" target="_blank">SDIFFSTORE</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sdiffstore" target="_blank">SDIFFSTORE</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sinter" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="sinter(keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]"></a><a id="sinter(Iterable[Key]):Result[BSet[Value]]"></a>
+      <a id="sinter(keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]"></a><a id="sinter(Iterable[Key]):Result[commons.BSet[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sinter(keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sinter(keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1489,14 +1474,15 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sinter</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../collection/CollectionAliases$.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.collection.CollectionAliases.BSet">BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
+        <span class="name">sinter</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sinter" target="_blank">SINTER</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sinter" target="_blank">SINTER</a>
+NOTE: <code>keys</code> MUST NOT be empty</p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sinter" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="sinter(key:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]"></a><a id="sinter(Key,Key*):Result[BSet[Value]]"></a>
+      <a id="sinter(key:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]"></a><a id="sinter(Key,Key*):Result[commons.BSet[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sinter(key:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sinter(key:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1505,10 +1491,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sinter</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../collection/CollectionAliases$.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.collection.CollectionAliases.BSet">BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
+        <span class="name">sinter</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sinter" target="_blank">SINTER</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sinter" target="_blank">SINTER</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sinterstore" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="sinterstore(destination:SetsApi.this.Key,keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[Long]"></a><a id="sinterstore(Key,Iterable[Key]):Result[Long]"></a>
       <span class="permalink">
@@ -1521,10 +1507,11 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sinterstore</span><span class="params">(<span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
+        <span class="name">sinterstore</span><span class="params">(<span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sinterstore" target="_blank">SINTERSTORE</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sinterstore" target="_blank">SINTERSTORE</a>
+NOTE: <code>keys</code> MUST NOT be empty</p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sinterstore" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="sinterstore(destination:SetsApi.this.Key,key:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[Long]"></a><a id="sinterstore(Key,Key,Key*):Result[Long]"></a>
       <span class="permalink">
@@ -1537,10 +1524,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sinterstore</span><span class="params">(<span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
+        <span class="name">sinterstore</span><span class="params">(<span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sinterstore" target="_blank">SINTERSTORE</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sinterstore" target="_blank">SINTERSTORE</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sismember" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="sismember(key:SetsApi.this.Key,member:SetsApi.this.Value):SetsApi.this.Result[Boolean]"></a><a id="sismember(Key,Value):Result[Boolean]"></a>
       <span class="permalink">
@@ -1553,14 +1540,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sismember</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="member">member: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
+        <span class="name">sismember</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="member">member: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sismember" target="_blank">SISMEMBER</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sismember" target="_blank">SISMEMBER</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#smembers" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="smembers(key:SetsApi.this.Key):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]"></a><a id="smembers(Key):Result[BSet[Value]]"></a>
+      <a id="smembers(key:SetsApi.this.Key):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]"></a><a id="smembers(Key):Result[commons.BSet[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#smembers(key:SetsApi.this.Key):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#smembers(key:SetsApi.this.Key):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1569,10 +1556,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">smembers</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../collection/CollectionAliases$.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.collection.CollectionAliases.BSet">BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
+        <span class="name">smembers</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/smembers" target="_blank">SMEMBERS</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/smembers" target="_blank">SMEMBERS</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#smove" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="smove(source:SetsApi.this.Key,destination:SetsApi.this.Key,member:SetsApi.this.Value):SetsApi.this.Result[Boolean]"></a><a id="smove(Key,Key,Value):Result[Boolean]"></a>
       <span class="permalink">
@@ -1585,14 +1572,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">smove</span><span class="params">(<span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="member">member: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
+        <span class="name">smove</span><span class="params">(<span name="source">source: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="member">member: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/smove" target="_blank">SMOVE</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/smove" target="_blank">SMOVE</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#spop" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="spop(key:SetsApi.this.Key,count:Int):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]"></a><a id="spop(Key,Int):Result[BSet[Value]]"></a>
+      <a id="spop(key:SetsApi.this.Key,count:Int):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]"></a><a id="spop(Key,Int):Result[commons.BSet[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#spop(key:SetsApi.this.Key,count:Int):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#spop(key:SetsApi.this.Key,count:Int):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1601,14 +1588,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">spop</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="count">count: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../collection/CollectionAliases$.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.collection.CollectionAliases.BSet">BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
+        <span class="name">spop</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="count">count: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/spop" target="_blank">SPOP</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/spop" target="_blank">SPOP</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#spop" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="spop(key:SetsApi.this.Key):SetsApi.this.Result[com.avsystem.commons.misc.Opt[SetsApi.this.Value]]"></a><a id="spop(Key):Result[Opt[Value]]"></a>
+      <a id="spop(key:SetsApi.this.Key):SetsApi.this.Result[com.avsystem.commons.Opt[SetsApi.this.Value]]"></a><a id="spop(Key):Result[commons.Opt[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#spop(key:SetsApi.this.Key):SetsApi.this.Result[com.avsystem.commons.misc.Opt[SetsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#spop(key:SetsApi.this.Key):SetsApi.this.Result[com.avsystem.commons.Opt[SetsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1617,10 +1604,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">spop</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
+        <span class="name">spop</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/spop" target="_blank">SPOP</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/spop" target="_blank">SPOP</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#srandmember" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="srandmember(key:SetsApi.this.Key,count:Int):SetsApi.this.Result[Seq[SetsApi.this.Value]]"></a><a id="srandmember(Key,Int):Result[Seq[Value]]"></a>
       <span class="permalink">
@@ -1633,14 +1620,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">srandmember</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="count">count: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
+        <span class="name">srandmember</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="count">count: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/srandmember" target="_blank">SRANDMEMBER</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/srandmember" target="_blank">SRANDMEMBER</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#srandmember" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="srandmember(key:SetsApi.this.Key):SetsApi.this.Result[com.avsystem.commons.misc.Opt[SetsApi.this.Value]]"></a><a id="srandmember(Key):Result[Opt[Value]]"></a>
+      <a id="srandmember(key:SetsApi.this.Key):SetsApi.this.Result[com.avsystem.commons.Opt[SetsApi.this.Value]]"></a><a id="srandmember(Key):Result[commons.Opt[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#srandmember(key:SetsApi.this.Key):SetsApi.this.Result[com.avsystem.commons.misc.Opt[SetsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#srandmember(key:SetsApi.this.Key):SetsApi.this.Result[com.avsystem.commons.Opt[SetsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1649,14 +1636,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">srandmember</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
+        <span class="name">srandmember</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/srandmember" target="_blank">SRANDMEMBER</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/srandmember" target="_blank">SRANDMEMBER</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#srandmemberDistinct" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="srandmemberDistinct(key:SetsApi.this.Key,count:Int):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]"></a><a id="srandmemberDistinct(Key,Int):Result[BSet[Value]]"></a>
+      <a id="srandmemberDistinct(key:SetsApi.this.Key,count:Int):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]"></a><a id="srandmemberDistinct(Key,Int):Result[commons.BSet[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#srandmemberDistinct(key:SetsApi.this.Key,count:Int):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#srandmemberDistinct(key:SetsApi.this.Key,count:Int):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1665,10 +1652,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">srandmemberDistinct</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="count">count: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../collection/CollectionAliases$.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.collection.CollectionAliases.BSet">BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
+        <span class="name">srandmemberDistinct</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="count">count: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/srandmember" target="_blank">SRANDMEMBER</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/srandmember" target="_blank">SRANDMEMBER</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#srem" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="srem(key:SetsApi.this.Key,members:Iterable[SetsApi.this.Value]):SetsApi.this.Result[Int]"></a><a id="srem(Key,Iterable[Value]):Result[Int]"></a>
       <span class="permalink">
@@ -1681,10 +1668,11 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">srem</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="members">members: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
+        <span class="name">srem</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="members">members: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/srem" target="_blank">SREM</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/srem" target="_blank">SREM</a>
+or simply returns 0 when <code>members</code> is empty</p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#srem" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="srem(key:SetsApi.this.Key,member:SetsApi.this.Value,members:SetsApi.this.Value*):SetsApi.this.Result[Int]"></a><a id="srem(Key,Value,Value*):Result[Int]"></a>
       <span class="permalink">
@@ -1697,10 +1685,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">srem</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="member">member: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a></span>, <span name="members">members: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
+        <span class="name">srem</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="member">member: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a></span>, <span name="members">members: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/srem" target="_blank">SREM</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/srem" target="_blank">SREM</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#srem" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="srem(key:SetsApi.this.Key,member:SetsApi.this.Value):SetsApi.this.Result[Boolean]"></a><a id="srem(Key,Value):Result[Boolean]"></a>
       <span class="permalink">
@@ -1713,14 +1701,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">srem</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="member">member: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
+        <span class="name">srem</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="member">member: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/srem" target="_blank">SREM</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/srem" target="_blank">SREM</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sscan" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="sscan(key:SetsApi.this.Key,cursor:com.avsystem.commons.redis.commands.Cursor,matchPattern:com.avsystem.commons.misc.OptArg[SetsApi.this.Value],count:com.avsystem.commons.misc.OptArg[Int]):SetsApi.this.Result[(com.avsystem.commons.redis.commands.Cursor,Seq[SetsApi.this.Value])]"></a><a id="sscan(Key,Cursor,OptArg[Value],OptArg[Int]):Result[(Cursor,Seq[Value])]"></a>
+      <a id="sscan(key:SetsApi.this.Key,cursor:com.avsystem.commons.redis.commands.Cursor,matchPattern:com.avsystem.commons.OptArg[SetsApi.this.Value],count:com.avsystem.commons.OptArg[Int]):SetsApi.this.Result[(com.avsystem.commons.redis.commands.Cursor,Seq[SetsApi.this.Value])]"></a><a id="sscan(Key,Cursor,commons.OptArg[Value],commons.OptArg[Int]):Result[(Cursor,Seq[Value])]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sscan(key:SetsApi.this.Key,cursor:com.avsystem.commons.redis.commands.Cursor,matchPattern:com.avsystem.commons.misc.OptArg[SetsApi.this.Value],count:com.avsystem.commons.misc.OptArg[Int]):SetsApi.this.Result[(com.avsystem.commons.redis.commands.Cursor,Seq[SetsApi.this.Value])]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sscan(key:SetsApi.this.Key,cursor:com.avsystem.commons.redis.commands.Cursor,matchPattern:com.avsystem.commons.OptArg[SetsApi.this.Value],count:com.avsystem.commons.OptArg[Int]):SetsApi.this.Result[(com.avsystem.commons.redis.commands.Cursor,Seq[SetsApi.this.Value])]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1729,14 +1717,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sscan</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="cursor">cursor: <a href="Cursor.html" class="extype" name="com.avsystem.commons.redis.commands.Cursor">Cursor</a></span>, <span name="matchPattern">matchPattern: <a href="../../misc/OptArg.html" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">OptArg.Empty</a></span></span></span>, <span name="count">count: <a href="../../misc/OptArg.html" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">OptArg.Empty</a></span></span></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[(<a href="Cursor.html" class="extype" name="com.avsystem.commons.redis.commands.Cursor">Cursor</a>, <span class="extype" name="scala.Seq">Seq</span>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>])]</span>
+        <span class="name">sscan</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="cursor">cursor: <a href="Cursor.html" class="extype" name="com.avsystem.commons.redis.commands.Cursor">Cursor</a></span>, <span name="matchPattern">matchPattern: <a href="../../index.html#OptArg[+T]=com.avsystem.commons.misc.OptArg[T]" class="extmbr" name="com.avsystem.commons.OptArg">commons.OptArg</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>] = <span class="symbol"><span class="name"><a href="../../CommonAliases.html#OptArg:com.avsystem.commons.misc.OptArg.type">OptArg.Empty</a></span></span></span>, <span name="count">count: <a href="../../index.html#OptArg[+T]=com.avsystem.commons.misc.OptArg[T]" class="extmbr" name="com.avsystem.commons.OptArg">commons.OptArg</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>] = <span class="symbol"><span class="name"><a href="../../CommonAliases.html#OptArg:com.avsystem.commons.misc.OptArg.type">OptArg.Empty</a></span></span></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[(<a href="Cursor.html" class="extype" name="com.avsystem.commons.redis.commands.Cursor">Cursor</a>, <span class="extype" name="scala.Seq">Seq</span>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>])]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sscan" target="_blank">SSCAN</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sscan" target="_blank">SSCAN</a></p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sunion" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="sunion(keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]"></a><a id="sunion(Iterable[Key]):Result[BSet[Value]]"></a>
+      <a id="sunion(keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]"></a><a id="sunion(Iterable[Key]):Result[commons.BSet[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sunion(keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sunion(keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1745,14 +1733,15 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sunion</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../collection/CollectionAliases$.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.collection.CollectionAliases.BSet">BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
+        <span class="name">sunion</span><span class="params">(<span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sunion" target="_blank">SUNION</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sunion" target="_blank">SUNION</a>
+or simply returns empty set when <code>keys</code> is empty</p>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sunion" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="sunion(key:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]"></a><a id="sunion(Key,Key*):Result[BSet[Value]]"></a>
+      <a id="sunion(key:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]"></a><a id="sunion(Key,Key*):Result[commons.BSet[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sunion(key:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[SetsApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sunion(key:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[com.avsystem.commons.BSet[SetsApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1761,11 +1750,11 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sunion</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../collection/CollectionAliases$.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.collection.CollectionAliases.BSet">BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
+        <span class="name">sunion</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="../../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sunion" target="_blank">SUNION</a></p>
-    </li><li name="com.avsystem.commons.redis.commands.SetsApi#sunionstore" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sunion" target="_blank">SUNION</a></p>
+    </li><li name="com.avsystem.commons.redis.commands.SetsApi#sunionstore" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="sunionstore(destination:SetsApi.this.Key,keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[Long]"></a><a id="sunionstore(Key,Iterable[Key]):Result[Long]"></a>
       <span class="permalink">
       <a href="../../../../../com/avsystem/commons/redis/commands/SetsApi.html#sunionstore(destination:SetsApi.this.Key,keys:Iterable[SetsApi.this.Key]):SetsApi.this.Result[Long]" title="Permalink">
@@ -1777,10 +1766,13 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sunionstore</span><span class="params">(<span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
+        <span class="name">sunionstore</span><span class="params">(<span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sunionstore" target="_blank">SUNIONSTORE</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sunionstore" target="_blank">SUNIONSTORE</a>
+NOTE: unlike in <code>SUNION</code> <code>keys</code> MUST NOT be empty because <code>SUNIONSTORE</code> overwrites destination key.</p><div class="fullcomment"><div class="comment cmt"><p>Executes <a href="http://redis.io/commands/sunionstore" target="_blank">SUNIONSTORE</a>
+NOTE: unlike in <code>SUNION</code> <code>keys</code> MUST NOT be empty because <code>SUNIONSTORE</code> overwrites destination key.
+An operation equivalent to invoking <code>SUNIONSTORE</code> with only <code>destination</code> and no <code>keys</code> would be <code>DEL destination</code></p></div></div>
     </li><li name="com.avsystem.commons.redis.commands.SetsApi#sunionstore" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="sunionstore(destination:SetsApi.this.Key,key:SetsApi.this.Key,keys:SetsApi.this.Key*):SetsApi.this.Result[Long]"></a><a id="sunionstore(Key,Key,Key*):Result[Long]"></a>
       <span class="permalink">
@@ -1793,10 +1785,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">sunionstore</span><span class="params">(<span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
+        <span class="name">sunionstore</span><span class="params">(<span name="destination">destination: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a></span>, <span name="keys">keys: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Key">Key</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.SetsApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/sunionstore" target="_blank">SUNIONSTORE</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/sunionstore" target="_blank">SUNIONSTORE</a></p>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -1841,7 +1833,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1863,7 +1855,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1885,7 +1877,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1908,9 +1900,9 @@ at the same time).
         <div class="parent" name="com.avsystem.commons.redis.ApiSubset">
               <h3>Inherited from <a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
             </div>
         
         </div>

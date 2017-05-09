@@ -270,16 +270,16 @@
                           ApiSubset
                         </a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="trait" href="" title="RedisBatch guaranteed to be atomic, i.e."></a>
-                        <a href="" title="RedisBatch guaranteed to be atomic, i.e.">
-                          AtomicBatch
-                        </a>
-                      </li><li class="current-entities indented4">
                         <a class="object" href="ClusterState$.html" title=""></a>
                         <a class="class" href="ClusterState.html" title="Current cluster state known by RedisClusterClient."></a>
                         <a href="ClusterState.html" title="Current cluster state known by RedisClusterClient.">
                           ClusterState
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="CollectionBatch.html" title=""></a>
+                        <a href="CollectionBatch.html" title="">
+                          CollectionBatch
                         </a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="CommandEncoder$.html" title=""></a>
@@ -314,12 +314,18 @@
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="Hash$.html" title="Implementation of key hashing function used in Redis Cluster, as specified in
-Link(http://redis.io/topics/cluster-spec#appendix-a-crc16-reference-implementation-in-ansi-c,Text(Redis Cluster Specification))
+Redis Cluster Specification
 "></a>
                         <a href="Hash$.html" title="Implementation of key hashing function used in Redis Cluster, as specified in
-Link(http://redis.io/topics/cluster-spec#appendix-a-crc16-reference-implementation-in-ansi-c,Text(Redis Cluster Specification))
+Redis Cluster Specification
 ">
                           Hash
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="ImmediateBatch.html" title=""></a>
+                        <a href="ImmediateBatch.html" title="">
+                          ImmediateBatch
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
@@ -711,6 +717,12 @@ messages and emits a single RedisReply.">
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="trait" href="" title=""></a>
+                        <a href="" title="">
+                          SinglePackBatch
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="Transaction.html" title=""></a>
                         <a href="Transaction.html" title="">
                           Transaction
@@ -742,8 +754,8 @@ messages and emits a single RedisReply.">
       <div id="definition">
         <div class="big-circle trait">t</div>
         <p id="owner"><a href="../../../index.html" class="extype" name="com">com</a>.<a href="../../index.html" class="extype" name="com.avsystem">avsystem</a>.<a href="../index.html" class="extype" name="com.avsystem.commons">commons</a>.<a href="index.html" class="extype" name="com.avsystem.commons.redis">redis</a></p>
-        <h1>AtomicBatch<span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html" title="Permalink">
+        <h1>SinglePackBatch<span class="permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span></h1>
@@ -756,18 +768,16 @@ messages and emits a single RedisReply.">
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <span class="name">AtomicBatch</span><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>] with <a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a></span>
+        <span class="name">SinglePackBatch</span><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>] with <a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a></span>
       </span>
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a> guaranteed to be atomic, i.e. it either consists of a single command or is a <code>MULTI</code>-<code>EXEC</code>
-transaction.
-</p></div><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a>, <a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a>, <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>], <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a>, <a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a>, <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>], <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></div>
         </div><div class="toggleContainer block">
             <span class="toggle">
               Known Subclasses
@@ -798,7 +808,7 @@ transaction.
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.avsystem.commons.redis.AtomicBatch"><span>AtomicBatch</span></li><li class="in" name="com.avsystem.commons.redis.RawCommandPack"><span>RawCommandPack</span></li><li class="in" name="com.avsystem.commons.redis.RawCommandPacks"><span>RawCommandPacks</span></li><li class="in" name="com.avsystem.commons.redis.RedisBatch"><span>RedisBatch</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.avsystem.commons.redis.SinglePackBatch"><span>SinglePackBatch</span></li><li class="in" name="com.avsystem.commons.redis.RawCommandPack"><span>RawCommandPack</span></li><li class="in" name="com.avsystem.commons.redis.RawCommandPacks"><span>RawCommandPacks</span></li><li class="in" name="com.avsystem.commons.redis.RedisBatch"><span>RedisBatch</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -825,7 +835,7 @@ transaction.
               <ol><li name="com.avsystem.commons.redis.RawCommandPack#checkLevel" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="checkLevel(minAllowed:com.avsystem.commons.redis.RawCommand.Level,clientType:String):Unit"></a><a id="checkLevel(Level,String):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#checkLevel(minAllowed:com.avsystem.commons.redis.RawCommand.Level,clientType:String):Unit" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#checkLevel(minAllowed:com.avsystem.commons.redis.RawCommand.Level,clientType:String):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -834,14 +844,14 @@ transaction.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">checkLevel</span><span class="params">(<span name="minAllowed">minAllowed: <a href="RawCommand$$Level.html" class="extype" name="com.avsystem.commons.redis.RawCommand.Level">Level</a></span>, <span name="clientType">clientType: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">checkLevel</span><span class="params">(<span name="minAllowed">minAllowed: <a href="RawCommand$$Level.html" class="extype" name="com.avsystem.commons.redis.RawCommand.Level">Level</a></span>, <span name="clientType">clientType: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RawCommandPack#createPreprocessor" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="createPreprocessor(replyCount:Int):com.avsystem.commons.redis.ReplyPreprocessor"></a><a id="createPreprocessor(Int):ReplyPreprocessor"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#createPreprocessor(replyCount:Int):com.avsystem.commons.redis.ReplyPreprocessor" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#createPreprocessor(replyCount:Int):com.avsystem.commons.redis.ReplyPreprocessor" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -850,14 +860,14 @@ transaction.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createPreprocessor</span><span class="params">(<span name="replyCount">replyCount: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="ReplyPreprocessor.html" class="extype" name="com.avsystem.commons.redis.ReplyPreprocessor">ReplyPreprocessor</a></span>
+        <span class="name">createPreprocessor</span><span class="params">(<span name="replyCount">replyCount: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="ReplyPreprocessor.html" class="extype" name="com.avsystem.commons.redis.ReplyPreprocessor">ReplyPreprocessor</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#decodeReplies" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="decodeReplies(replies:Int=&gt;com.avsystem.commons.redis.protocol.RedisReply,index:com.avsystem.commons.redis.RedisBatch.Index,inTransaction:Boolean):A"></a><a id="decodeReplies((Int)⇒RedisReply,Index,Boolean):A"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#decodeReplies(replies:Int=&gt;com.avsystem.commons.redis.protocol.RedisReply,index:com.avsystem.commons.redis.RedisBatch.Index,inTransaction:Boolean):A" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#decodeReplies(replies:Int=&gt;com.avsystem.commons.redis.protocol.RedisReply,index:com.avsystem.commons.redis.RedisBatch.Index,inTransaction:Boolean):A" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -866,14 +876,14 @@ transaction.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">decodeReplies</span><span class="params">(<span name="replies">replies: (<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="protocol/RedisReply.html" class="extype" name="com.avsystem.commons.redis.protocol.RedisReply">RedisReply</a></span>, <span name="index">index: <a href="RedisBatch$$Index.html" class="extype" name="com.avsystem.commons.redis.RedisBatch.Index">Index</a> = <span class="symbol"><span class="name"><a href="RedisBatch$.html">new Index</a></span></span></span>, <span name="inTransaction">inTransaction: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a> = <span class="symbol">false</span></span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span></span>
+        <span class="name">decodeReplies</span><span class="params">(<span name="replies">replies: (<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="protocol/RedisReply.html" class="extype" name="com.avsystem.commons.redis.protocol.RedisReply">RedisReply</a></span>, <span name="index">index: <a href="RedisBatch$$Index.html" class="extype" name="com.avsystem.commons.redis.RedisBatch.Index">Index</a> = <span class="symbol"><span class="name"><a href="RedisBatch$.html">new Index</a></span></span></span>, <span name="inTransaction">inTransaction: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a> = <span class="symbol">false</span></span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RawCommandPack#rawCommands" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="rawCommands(inTransaction:Boolean):com.avsystem.commons.redis.RawCommands"></a><a id="rawCommands(Boolean):RawCommands"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#rawCommands(inTransaction:Boolean):com.avsystem.commons.redis.RawCommands" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#rawCommands(inTransaction:Boolean):com.avsystem.commons.redis.RawCommands" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -882,7 +892,7 @@ transaction.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">rawCommands</span><span class="params">(<span name="inTransaction">inTransaction: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>)</span><span class="result">: <a href="RawCommands.html" class="extype" name="com.avsystem.commons.redis.RawCommands">RawCommands</a></span>
+        <span class="name">rawCommands</span><span class="params">(<span name="inTransaction">inTransaction: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>)</span><span class="result">: <a href="RawCommands.html" class="extype" name="com.avsystem.commons.redis.RawCommands">RawCommands</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a></dd></dl></div>
@@ -895,7 +905,7 @@ transaction.
                 <li name="scala.AnyRef#!=" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="!=(x$1:Any):Boolean"></a><a id="!=(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#!=(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#!=(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -904,14 +914,14 @@ transaction.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="scala.AnyRef###" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="##():Int"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html###():Int" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html###():Int" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -920,14 +930,14 @@ transaction.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#*&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="*&gt;[B](other:com.avsystem.commons.redis.RedisBatch[B]):com.avsystem.commons.redis.RedisBatch[B]"></a><a id="*&gt;[B](RedisBatch[B]):RedisBatch[B]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#*&gt;[B](other:com.avsystem.commons.redis.RedisBatch[B]):com.avsystem.commons.redis.RedisBatch[B]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#*&gt;[B](other:com.avsystem.commons.redis.RedisBatch[B]):com.avsystem.commons.redis.RedisBatch[B]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -947,7 +957,7 @@ NOTE: errors for left-hand-side are NOT discarded, use <a href="RedisBatch.html#
     </li><li name="com.avsystem.commons.redis.RedisBatch#&lt;*" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="&lt;*[B](other:com.avsystem.commons.redis.RedisBatch[B]):com.avsystem.commons.redis.RedisBatch[A]"></a><a id="&lt;*[B](RedisBatch[B]):RedisBatch[A]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#&lt;*[B](other:com.avsystem.commons.redis.RedisBatch[B]):com.avsystem.commons.redis.RedisBatch[A]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#&lt;*[B](other:com.avsystem.commons.redis.RedisBatch[B]):com.avsystem.commons.redis.RedisBatch[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -956,7 +966,7 @@ NOTE: errors for left-hand-side are NOT discarded, use <a href="RedisBatch.html#
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $less$times" class="name">&lt;*</span><span class="tparams">[<span name="B">B</span>]</span><span class="params">(<span name="other">other: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.&lt;*.B">B</span>]</span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>]</span>
+        <span title="gt4s: $less$times" class="name">&lt;*</span><span class="tparams">[<span name="B">B</span>]</span><span class="params">(<span name="other">other: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.&lt;*.B">B</span>]</span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Merges two batches into a single batch where result of the left-hand-side batch is returned while
@@ -967,7 +977,7 @@ NOTE: errors for right-hand-side are NOT discarded, use <a href="RedisBatch.html
     </li><li name="com.avsystem.commons.redis.RedisBatch#&lt;*&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="&lt;*&gt;[B,C](other:com.avsystem.commons.redis.RedisBatch[B])(f:(A,B)=&gt;C):com.avsystem.commons.redis.RedisBatch[C]"></a><a id="&lt;*&gt;[B,C](RedisBatch[B])((A,B)⇒C):RedisBatch[C]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#&lt;*&gt;[B,C](other:com.avsystem.commons.redis.RedisBatch[B])(f:(A,B)=&gt;C):com.avsystem.commons.redis.RedisBatch[C]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#&lt;*&gt;[B,C](other:com.avsystem.commons.redis.RedisBatch[B])(f:(A,B)=&gt;C):com.avsystem.commons.redis.RedisBatch[C]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -976,7 +986,7 @@ NOTE: errors for right-hand-side are NOT discarded, use <a href="RedisBatch.html
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $less$times$greater" class="name">&lt;*&gt;</span><span class="tparams">[<span name="B">B</span>, <span name="C">C</span>]</span><span class="params">(<span name="other">other: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.&lt;*&gt;.B">B</span>]</span>)</span><span class="params">(<span name="f">f: (<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>, <span class="extype" name="com.avsystem.commons.redis.RedisBatch.&lt;*&gt;.B">B</span>) ⇒ <span class="extype" name="com.avsystem.commons.redis.RedisBatch.&lt;*&gt;.C">C</span></span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.&lt;*&gt;.C">C</span>]</span>
+        <span title="gt4s: $less$times$greater" class="name">&lt;*&gt;</span><span class="tparams">[<span name="B">B</span>, <span name="C">C</span>]</span><span class="params">(<span name="other">other: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.&lt;*&gt;.B">B</span>]</span>)</span><span class="params">(<span name="f">f: (<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>, <span class="extype" name="com.avsystem.commons.redis.RedisBatch.&lt;*&gt;.B">B</span>) ⇒ <span class="extype" name="com.avsystem.commons.redis.RedisBatch.&lt;*&gt;.C">C</span></span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.&lt;*&gt;.C">C</span>]</span>
       </span>
       
       <p class="shortcomment cmt">This is a symbolic alias for <a href="RedisBatch.html#map2[B,C](other:com.avsystem.commons.redis.RedisBatch[B])(f:(A,B)=&gt;C):com.avsystem.commons.redis.RedisBatch[C]" class="extmbr" name="com.avsystem.commons.redis.RedisBatch#map2">map2</a>.</p><div class="fullcomment"><div class="comment cmt"><p>This is a symbolic alias for <a href="RedisBatch.html#map2[B,C](other:com.avsystem.commons.redis.RedisBatch[B])(f:(A,B)=&gt;C):com.avsystem.commons.redis.RedisBatch[C]" class="extmbr" name="com.avsystem.commons.redis.RedisBatch#map2">map2</a>. The symbol (along with <a href="RedisBatch.html#*&gt;[B](other:com.avsystem.commons.redis.RedisBatch[B]):com.avsystem.commons.redis.RedisBatch[B]" class="extmbr" name="com.avsystem.commons.redis.RedisBatch#*&gt;">*&gt;</a> and <a href="../../../../index.html" class="extype" name="_root_">&lt;*</a>) is inspired by its
@@ -985,7 +995,7 @@ NOTE: errors for right-hand-side are NOT discarded, use <a href="RedisBatch.html
     </li><li name="scala.AnyRef#==" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="==(x$1:Any):Boolean"></a><a id="==(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#==(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#==(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -994,14 +1004,14 @@ NOTE: errors for right-hand-side are NOT discarded, use <a href="RedisBatch.html
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#asInstanceOf[T0]:T0" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#asInstanceOf[T0]:T0" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1017,7 +1027,7 @@ NOTE: errors for right-hand-side are NOT discarded, use <a href="RedisBatch.html
     </li><li name="com.avsystem.commons.redis.RedisBatch#asking" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asking:com.avsystem.commons.redis.RedisBatch[A]"></a><a id="asking:RedisBatch[A]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#asking:com.avsystem.commons.redis.RedisBatch[A]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#asking:com.avsystem.commons.redis.RedisBatch[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1026,16 +1036,16 @@ NOTE: errors for right-hand-side are NOT discarded, use <a href="RedisBatch.html
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">asking</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>]</span>
+        <span class="name">asking</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Ensures that every keyed command in this batch is prepended with <code>ASKING</code> special command.</p><div class="fullcomment"><div class="comment cmt"><p>Ensures that every keyed command in this batch is prepended with <code>ASKING</code> special command.
 This is necessary only when manually handling Redis Cluster redirections.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.AtomicBatch#atomic" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="com.avsystem.commons.redis.RedisBatch#atomic" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="atomic:com.avsystem.commons.redis.RedisBatch[A]"></a><a id="atomic:RedisBatch[A]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#atomic:com.avsystem.commons.redis.RedisBatch[A]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#atomic:com.avsystem.commons.redis.RedisBatch[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1044,16 +1054,19 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">atomic</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>]</span>
+        <span class="name">atomic</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Ensures that this batch is atomic, i.e.</p><div class="fullcomment"><div class="comment cmt"><p>Ensures that this batch is atomic, i.e. it's either a single Redis command or is executed inside a
-<code>MULTI</code>-<code>EXEC</code> block.
-</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.redis.AtomicBatch">AtomicBatch</a> → <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
+      <p class="shortcomment cmt">Returns a batch which invokes the same commands as this batch but atomically.</p><div class="fullcomment"><div class="comment cmt"><p>Returns a batch which invokes the same commands as this batch but atomically.
+If this batch is already atomic then it's returned unchanged. Otherwise, it's wrapped into a Redis
+<a href="RedisBatch.html#transaction:com.avsystem.commons.redis.RedisBatch[A]" class="extmbr" name="com.avsystem.commons.redis.RedisBatch#transaction">transaction</a> (<code>MULTI</code>-<code>EXEC</code> block).
+Empty batches, single-command batches and transactions are atomic by themselves and therefore are returned
+unchanged.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a><a id="clone():AnyRef"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#clone():Object" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#clone():Object" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1062,7 +1075,7 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1072,26 +1085,42 @@ This is necessary only when manually handling Redis Cluster redirections.
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.RawCommandPack#emitCommandPacks" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="emitCommandPacks(consumer:com.avsystem.commons.redis.RawCommandPack=&gt;Unit):Unit"></a><a id="emitCommandPacks((RawCommandPack)⇒Unit):Unit"></a>
+    </li><li name="com.avsystem.commons.redis.RawCommandPack#computeSize" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="computeSize(limit:Int):Int"></a><a id="computeSize(Int):Int"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#emitCommandPacks(consumer:com.avsystem.commons.redis.RawCommandPack=&gt;Unit):Unit" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#computeSize(limit:Int):Int" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">emitCommandPacks</span><span class="params">(<span name="consumer">consumer: (<a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">computeSize</span><span class="params">(<span name="limit">limit: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a> → <a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.RawCommandPack#emitCommandPacks" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="emitCommandPacks(consumer:com.avsystem.commons.redis.RawCommandPack=&gt;Unit):Unit"></a><a id="emitCommandPacks((RawCommandPack)⇒Unit):Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#emitCommandPacks(consumer:com.avsystem.commons.redis.RawCommandPack=&gt;Unit):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">emitCommandPacks</span><span class="params">(<span name="consumer">consumer: (<a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a> → <a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RawCommandPacks#encodedSize" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="encodedSize:Int"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#encodedSize:Int" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#encodedSize:Int" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1100,14 +1129,14 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">encodedSize</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span class="name">encodedSize</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#eq(x$1:AnyRef):Boolean" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#eq(x$1:AnyRef):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1116,14 +1145,14 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="scala.AnyRef#equals" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="equals(x$1:Any):Boolean"></a><a id="equals(Any):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#equals(x$1:Any):Boolean" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#equals(x$1:Any):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1132,14 +1161,14 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#failed" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="failed:com.avsystem.commons.redis.RedisBatch[Throwable]"></a><a id="failed:RedisBatch[Throwable]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#failed:com.avsystem.commons.redis.RedisBatch[Throwable]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#failed:com.avsystem.commons.redis.RedisBatch[Throwable]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1155,7 +1184,7 @@ This is necessary only when manually handling Redis Cluster redirections.
     </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#finalize():Unit" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#finalize():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1164,7 +1193,7 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1177,23 +1206,23 @@ This is necessary only when manually handling Redis Cluster redirections.
     </li><li name="com.avsystem.commons.redis.RawCommandPacks#foreachKey" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="foreachKey(consumer:akka.util.ByteString=&gt;Unit):Unit"></a><a id="foreachKey((ByteString)⇒Unit):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#foreachKey(consumer:akka.util.ByteString=&gt;Unit):Unit" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#foreachKey(consumer:akka.util.ByteString=&gt;Unit):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">foreachKey</span><span class="params">(<span name="consumer">consumer: (<a href="http://doc.akka.io/api/akka/2.4.12/index.html#akka.util.ByteString" class="extype" target="_top">ByteString</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">foreachKey</span><span class="params">(<span name="consumer">consumer: (<a href="http://doc.akka.io/api/akka/2.4.12/index.html#akka.util.ByteString" class="extype" target="_top">ByteString</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></dd></dl></div>
     </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#getClass():Class[_]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#getClass():Class[_]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1209,7 +1238,7 @@ This is necessary only when manually handling Redis Cluster redirections.
     </li><li name="scala.AnyRef#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#hashCode():Int" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#hashCode():Int" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1218,14 +1247,14 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#ignoreFailures" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ignoreFailures:com.avsystem.commons.redis.RedisBatch[Unit]"></a><a id="ignoreFailures:RedisBatch[Unit]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#ignoreFailures:com.avsystem.commons.redis.RedisBatch[Unit]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#ignoreFailures:com.avsystem.commons.redis.RedisBatch[Unit]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1234,14 +1263,14 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ignoreFailures</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">ignoreFailures</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RawCommandPack#isAsking" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isAsking:Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#isAsking:Boolean" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#isAsking:Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1250,14 +1279,14 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isAsking</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isAsking</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a></dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#isInstanceOf[T0]:Boolean" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#isInstanceOf[T0]:Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1266,14 +1295,14 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#map" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="map[B](f:A=&gt;B):com.avsystem.commons.redis.RedisBatch[B]"></a><a id="map[B]((A)⇒B):RedisBatch[B]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#map[B](f:A=&gt;B):com.avsystem.commons.redis.RedisBatch[B]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#map[B](f:A=&gt;B):com.avsystem.commons.redis.RedisBatch[B]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1282,14 +1311,14 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">map</span><span class="tparams">[<span name="B">B</span>]</span><span class="params">(<span name="f">f: (<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>) ⇒ <span class="extype" name="com.avsystem.commons.redis.RedisBatch.map.B">B</span></span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.map.B">B</span>]</span>
+        <span class="name">map</span><span class="tparams">[<span name="B">B</span>]</span><span class="params">(<span name="f">f: (<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>) ⇒ <span class="extype" name="com.avsystem.commons.redis.RedisBatch.map.B">B</span></span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.map.B">B</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#map2" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="map2[B,C](other:com.avsystem.commons.redis.RedisBatch[B])(f:(A,B)=&gt;C):com.avsystem.commons.redis.RedisBatch[C]"></a><a id="map2[B,C](RedisBatch[B])((A,B)⇒C):RedisBatch[C]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#map2[B,C](other:com.avsystem.commons.redis.RedisBatch[B])(f:(A,B)=&gt;C):com.avsystem.commons.redis.RedisBatch[C]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#map2[B,C](other:com.avsystem.commons.redis.RedisBatch[B])(f:(A,B)=&gt;C):com.avsystem.commons.redis.RedisBatch[C]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1298,7 +1327,7 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">map2</span><span class="tparams">[<span name="B">B</span>, <span name="C">C</span>]</span><span class="params">(<span name="other">other: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.map2.B">B</span>]</span>)</span><span class="params">(<span name="f">f: (<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>, <span class="extype" name="com.avsystem.commons.redis.RedisBatch.map2.B">B</span>) ⇒ <span class="extype" name="com.avsystem.commons.redis.RedisBatch.map2.C">C</span></span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.map2.C">C</span>]</span>
+        <span class="name">map2</span><span class="tparams">[<span name="B">B</span>, <span name="C">C</span>]</span><span class="params">(<span name="other">other: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.map2.B">B</span>]</span>)</span><span class="params">(<span name="f">f: (<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>, <span class="extype" name="com.avsystem.commons.redis.RedisBatch.map2.B">B</span>) ⇒ <span class="extype" name="com.avsystem.commons.redis.RedisBatch.map2.C">C</span></span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.map2.C">C</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Merges two batches into one.</p><div class="fullcomment"><div class="comment cmt"><p>Merges two batches into one. Provided function is applied on results of the batches being merged to obtain
@@ -1307,7 +1336,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
     </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#ne(x$1:AnyRef):Boolean" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#ne(x$1:AnyRef):Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1316,14 +1345,14 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="scala.AnyRef#notify" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notify():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#notify():Unit" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#notify():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1332,14 +1361,14 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="scala.AnyRef#notifyAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notifyAll():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#notifyAll():Unit" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#notifyAll():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1348,14 +1377,14 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#operation" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="operation:com.avsystem.commons.redis.RedisOp[A]"></a><a id="operation:RedisOp[A]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#operation:com.avsystem.commons.redis.RedisOp[A]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#operation:com.avsystem.commons.redis.RedisOp[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1364,31 +1393,31 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">operation</span><span class="result">: <a href="RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>[<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>]</span>
+        <span class="name">operation</span><span class="result">: <a href="RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>[<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Transforms this batch into a <a href="RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Transforms this batch into a <a href="RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.AtomicBatch#rawCommandPacks" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="rawCommandPacks:com.avsystem.commons.redis.AtomicBatch[A]"></a><a id="rawCommandPacks:AtomicBatch[A]"></a>
+    </li><li name="com.avsystem.commons.redis.SinglePackBatch#rawCommandPacks" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="rawCommandPacks:com.avsystem.commons.redis.SinglePackBatch[A]"></a><a id="rawCommandPacks:SinglePackBatch[A]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#rawCommandPacks:com.avsystem.commons.redis.AtomicBatch[A]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#rawCommandPacks:com.avsystem.commons.redis.SinglePackBatch[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">rawCommandPacks</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.AtomicBatch">AtomicBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>]</span>
+        <span class="name">rawCommandPacks</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.SinglePackBatch">SinglePackBatch</a>[<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.redis.AtomicBatch">AtomicBatch</a> → <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.redis.SinglePackBatch">SinglePackBatch</a> → <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#recover" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="recover[B&gt;:A](f:PartialFunction[Throwable,B]):com.avsystem.commons.redis.RedisBatch[B]"></a><a id="recover[B&gt;:A](PartialFunction[Throwable,B]):RedisBatch[B]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#recover[B&gt;:A](f:PartialFunction[Throwable,B]):com.avsystem.commons.redis.RedisBatch[B]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#recover[B&gt;:A](f:PartialFunction[Throwable,B]):com.avsystem.commons.redis.RedisBatch[B]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1397,46 +1426,30 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">recover</span><span class="tparams">[<span name="B">B &gt;: <span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span></span>]</span><span class="params">(<span name="f">f: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.PartialFunction" class="extype" target="_top">PartialFunction</a>[<span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="com.avsystem.commons.redis.RedisBatch.recover.B">B</span>]</span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.recover.B">B</span>]</span>
+        <span class="name">recover</span><span class="tparams">[<span name="B">B &gt;: <span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span></span>]</span><span class="params">(<span name="f">f: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.PartialFunction" class="extype" target="_top">PartialFunction</a>[<span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="com.avsystem.commons.redis.RedisBatch.recover.B">B</span>]</span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.recover.B">B</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RawCommandPacks#requireLevel" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="requireLevel(minAllowed:com.avsystem.commons.redis.RawCommand.Level,clientType:String):RawCommandPacks.this.type"></a><a id="requireLevel(Level,String):AtomicBatch.this.type"></a>
+      <a id="requireLevel(minAllowed:com.avsystem.commons.redis.RawCommand.Level,clientType:String):RawCommandPacks.this.type"></a><a id="requireLevel(Level,String):SinglePackBatch.this.type"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#requireLevel(minAllowed:com.avsystem.commons.redis.RawCommand.Level,clientType:String):RawCommandPacks.this.type" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#requireLevel(minAllowed:com.avsystem.commons.redis.RawCommand.Level,clientType:String):RawCommandPacks.this.type" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">requireLevel</span><span class="params">(<span name="minAllowed">minAllowed: <a href="RawCommand$$Level.html" class="extype" name="com.avsystem.commons.redis.RawCommand.Level">Level</a></span>, <span name="clientType">clientType: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.AtomicBatch">AtomicBatch</a>.this.type</span>
+        <span class="name">requireLevel</span><span class="params">(<span name="minAllowed">minAllowed: <a href="RawCommand$$Level.html" class="extype" name="com.avsystem.commons.redis.RawCommand.Level">Level</a></span>, <span name="clientType">clientType: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.SinglePackBatch">SinglePackBatch</a>.this.type</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.RawCommandPack#single" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="single:com.avsystem.commons.misc.Opt[com.avsystem.commons.redis.RawCommandPack]"></a><a id="single:Opt[RawCommandPack]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#single:com.avsystem.commons.misc.Opt[com.avsystem.commons.redis.RawCommandPack]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">single</span><span class="result">: <a href="../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a> → <a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1452,7 +1465,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
     </li><li name="scala.AnyRef#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#toString():String" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#toString():String" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1468,7 +1481,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
     </li><li name="com.avsystem.commons.redis.RedisBatch#transaction" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="transaction:com.avsystem.commons.redis.RedisBatch[A]"></a><a id="transaction:RedisBatch[A]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#transaction:com.avsystem.commons.redis.RedisBatch[A]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#transaction:com.avsystem.commons.redis.RedisBatch[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1477,15 +1490,18 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">transaction</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>]</span>
+        <span class="name">transaction</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Ensures that this batch is executed inside a <code>MULTI</code>-<code>EXEC</code> block.</p><div class="fullcomment"><div class="comment cmt"><p>Ensures that this batch is executed inside a <code>MULTI</code>-<code>EXEC</code> block.
+      <p class="shortcomment cmt">Wraps this batch into a Redis transaction, i.e.</p><div class="fullcomment"><div class="comment cmt"><p>Wraps this batch into a Redis transaction, i.e. ensures that it's executed inside a <code>MULTI</code>-<code>EXEC</code> block.
+NOTE: If you simply want to ensure atomicity, use <a href="RedisBatch.html#atomic:com.avsystem.commons.redis.RedisBatch[A]" class="extmbr" name="com.avsystem.commons.redis.RedisBatch#atomic">atomic</a>.
+NOTE: You can safely nest transactions, the driver will make sure that
+there are no nested <code>MULTI</code>-<code>EXEC</code> blocks on the wire.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#transform" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="transform[B](fun:scala.util.Try[A]=&gt;scala.util.Try[B]):com.avsystem.commons.redis.RedisBatch[B]"></a><a id="transform[B]((Try[A])⇒Try[B]):RedisBatch[B]"></a>
+      <a id="transform[B](fun:com.avsystem.commons.Try[A]=&gt;com.avsystem.commons.Try[B]):com.avsystem.commons.redis.RedisBatch[B]"></a><a id="transform[B]((commons.Try[A])⇒commons.Try[B]):RedisBatch[B]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#transform[B](fun:scala.util.Try[A]=&gt;scala.util.Try[B]):com.avsystem.commons.redis.RedisBatch[B]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#transform[B](fun:com.avsystem.commons.Try[A]=&gt;com.avsystem.commons.Try[B]):com.avsystem.commons.redis.RedisBatch[B]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1494,14 +1510,14 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">transform</span><span class="tparams">[<span name="B">B</span>]</span><span class="params">(<span name="fun">fun: (<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.util.Try" class="extype" target="_top">Try</a>[<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>]) ⇒ <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.util.Try" class="extype" target="_top">Try</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.transform.B">B</span>]</span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.transform.B">B</span>]</span>
+        <span class="name">transform</span><span class="tparams">[<span name="B">B</span>]</span><span class="params">(<span name="fun">fun: (<a href="../index.html#Try[+T]=scala.util.Try[T]" class="extmbr" name="com.avsystem.commons.Try">commons.Try</a>[<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>]) ⇒ <a href="../index.html#Try[+T]=scala.util.Try[T]" class="extmbr" name="com.avsystem.commons.Try">commons.Try</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.transform.B">B</span>]</span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.transform.B">B</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#tried" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="tried:com.avsystem.commons.redis.RedisBatch[scala.util.Try[A]]"></a><a id="tried:RedisBatch[Try[A]]"></a>
+      <a id="tried:com.avsystem.commons.redis.RedisBatch[com.avsystem.commons.Try[A]]"></a><a id="tried:RedisBatch[commons.Try[A]]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#tried:com.avsystem.commons.redis.RedisBatch[scala.util.Try[A]]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#tried:com.avsystem.commons.redis.RedisBatch[com.avsystem.commons.Try[A]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1510,14 +1526,14 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">tried</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.util.Try" class="extype" target="_top">Try</a>[<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>]]</span>
+        <span class="name">tried</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<a href="../index.html#Try[+T]=scala.util.Try[T]" class="extmbr" name="com.avsystem.commons.Try">commons.Try</a>[<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#wait():Unit" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#wait():Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1526,7 +1542,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1539,7 +1555,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long,x$2:Int):Unit"></a><a id="wait(Long,Int):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1548,7 +1564,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1561,7 +1577,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait(x$1:Long):Unit"></a><a id="wait(Long):Unit"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#wait(x$1:Long):Unit" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#wait(x$1:Long):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1570,7 +1586,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1583,7 +1599,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
     </li><li name="com.avsystem.commons.redis.RedisBatch#zip" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="zip[B](other:com.avsystem.commons.redis.RedisBatch[B]):com.avsystem.commons.redis.RedisBatch[(A,B)]"></a><a id="zip[B](RedisBatch[B]):RedisBatch[(A,B)]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AtomicBatch.html#zip[B](other:com.avsystem.commons.redis.RedisBatch[B]):com.avsystem.commons.redis.RedisBatch[(A,B)]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/SinglePackBatch.html#zip[B](other:com.avsystem.commons.redis.RedisBatch[B]):com.avsystem.commons.redis.RedisBatch[(A,B)]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1592,7 +1608,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">zip</span><span class="tparams">[<span name="B">B</span>]</span><span class="params">(<span name="other">other: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.zip.B">B</span>]</span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[(<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>, <span class="extype" name="com.avsystem.commons.redis.RedisBatch.zip.B">B</span>)]</span>
+        <span class="name">zip</span><span class="tparams">[<span name="B">B</span>]</span><span class="params">(<span name="other">other: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.zip.B">B</span>]</span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[(<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>, <span class="extype" name="com.avsystem.commons.redis.RedisBatch.zip.B">B</span>)]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
@@ -1611,11 +1627,11 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
             </div><div class="parent" name="com.avsystem.commons.redis.RawCommandPacks">
               <h3>Inherited from <a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></h3>
             </div><div class="parent" name="com.avsystem.commons.redis.RedisBatch">
-              <h3>Inherited from <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AtomicBatch.A">A</span>]</h3>
+              <h3>Inherited from <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.SinglePackBatch.A">A</span>]</h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
             </div>
         
         </div>

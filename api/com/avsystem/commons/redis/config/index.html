@@ -216,6 +216,16 @@
                           ConnectionConfig
                         </a>
                       </li><li class="current-entities indented5">
+                        <a class="object" href="ExecutionConfig$.html" title=""></a>
+                        <a class="class" href="ExecutionConfig.html" title="Additional options for executing a RedisBatch on a
+RedisExecutor
+"></a>
+                        <a href="ExecutionConfig.html" title="Additional options for executing a RedisBatch on a
+RedisExecutor
+">
+                          ExecutionConfig
+                        </a>
+                      </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="ExponentialBackoff.html" title=""></a>
                         <a href="ExponentialBackoff.html" title="">
@@ -373,7 +383,7 @@ client or internally by RedisClusterClient.">
         <a title="Configuration of a RedisClusterClient
 " href="ClusterConfig.html">
               <span class="name">ClusterConfig</span>
-            </a><span class="params">(<span name="nodeConfigs">nodeConfigs: (<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>) ⇒ <a href="NodeConfig.html" class="extype" name="com.avsystem.commons.redis.config.NodeConfig">NodeConfig</a> = <span class="symbol">_ =&gt; NodeConfig()</span></span>, <span name="monitoringConnectionConfigs">monitoringConnectionConfigs: (<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> = <span class="symbol">_ =&gt; ConnectionConfig()</span></span>, <span name="autoRefreshInterval">autoRefreshInterval: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.duration.FiniteDuration" class="extype" target="_top">FiniteDuration</a> = <span class="symbol">5.seconds</span></span>, <span name="minRefreshInterval">minRefreshInterval: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.duration.FiniteDuration" class="extype" target="_top">FiniteDuration</a> = <span class="symbol">1.seconds</span></span>, <span name="nodesToQueryForState">nodesToQueryForState: (<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a> = <span class="symbol">_ min 5</span></span>, <span name="maxRedirections">maxRedirections: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a> = <span class="symbol">3</span></span>, <span name="nodeClientCloseDelay">nodeClientCloseDelay: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.duration.FiniteDuration" class="extype" target="_top">FiniteDuration</a> = <span class="symbol">1.seconds</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
+            </a><span class="params">(<span name="nodeConfigs">nodeConfigs: (<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>) ⇒ <a href="NodeConfig.html" class="extype" name="com.avsystem.commons.redis.config.NodeConfig">NodeConfig</a> = <span class="symbol">_ =&gt; NodeConfig()</span></span>, <span name="monitoringConnectionConfigs">monitoringConnectionConfigs: (<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> = <span class="symbol">_ =&gt; ConnectionConfig()</span></span>, <span name="autoRefreshInterval">autoRefreshInterval: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.concurrent.duration.FiniteDuration" class="extype" target="_top">FiniteDuration</a> = <span class="symbol">5.seconds</span></span>, <span name="minRefreshInterval">minRefreshInterval: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.concurrent.duration.FiniteDuration" class="extype" target="_top">FiniteDuration</a> = <span class="symbol">1.seconds</span></span>, <span name="nodesToQueryForState">nodesToQueryForState: (<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a> = <span class="symbol">_ min 5</span></span>, <span name="maxRedirections">maxRedirections: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a> = <span class="symbol">3</span></span>, <span name="nodeClientCloseDelay">nodeClientCloseDelay: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.concurrent.duration.FiniteDuration" class="extype" target="_top">FiniteDuration</a> = <span class="symbol">1.seconds</span></span>, <span name="fallbackToSingleNode">fallbackToSingleNode: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Configuration of a <a href="../RedisClusterClient.html" class="extype" name="com.avsystem.commons.redis.RedisClusterClient">RedisClusterClient</a>
@@ -393,7 +403,11 @@ client or internally by RedisClusterClient.">
                                    is closed when it's master leaves cluster state (goes down or becomes a slave).
                                    Note that the node client is NOT operational during that delay. Trying to
                                    execute commands on it will result in
-                                   <a href="../exception/NodeRemovedException.html" class="extype" name="com.avsystem.commons.redis.exception.NodeRemovedException">NodeRemovedException</a></p></dd></dl></div>
+                                   <a href="../exception/NodeRemovedException.html" class="extype" name="com.avsystem.commons.redis.exception.NodeRemovedException">NodeRemovedException</a></p></dd><dt class="param">fallbackToSingleNode</dt><dd class="cmt"><p>if <a href="../RedisClusterClient.html" class="extype" name="com.avsystem.commons.redis.RedisClusterClient">RedisClusterClient</a> has
+                                   exactly one seed address configured and it points to a non-clustered Redis node
+                                   then cluster client will not fail initialization but internally create a
+                                   <a href="../RedisNodeClient.html" class="extype" name="com.avsystem.commons.redis.RedisNodeClient">RedisNodeClient</a> for that node
+                                   and forward all operations to it.</p></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.config.ConnectionConfig" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ConnectionConfigextendsProductwithSerializable"></a><a id="ConnectionConfig:ConnectionConfig"></a>
       <span class="permalink">
@@ -408,7 +422,7 @@ client or internally by RedisClusterClient.">
       <span class="symbol">
         <a title="Configuration options for a single Redis connection." href="ConnectionConfig.html">
               <span class="name">ConnectionConfig</span>
-            </a><span class="params">(<span name="initCommands">initCommands: <a href="../RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">RedisBatch.unit</a></span></span></span>, <span name="actorName">actorName: <a href="../../misc/OptArg.html" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol"><span class="name"><a href="../../../../index.html">OptArg.Empty</a></span></span></span>, <span name="localAddress">localAddress: <a href="../../misc/OptArg.html" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a>[<span class="extype" name="java.net.InetSocketAddress">InetSocketAddress</span>] = <span class="symbol"><span class="name"><a href="../../../../index.html">OptArg.Empty</a></span></span></span>, <span name="socketOptions">socketOptions: <span class="extype" name="scala.List">List</span>[<span class="extype" name="akka.io.Inet.SocketOption">SocketOption</span>] = <span class="symbol">Nil</span></span>, <span name="connectTimeout">connectTimeout: <a href="../../misc/OptArg.html" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.duration.FiniteDuration" class="extype" target="_top">FiniteDuration</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">OptArg.Empty</a></span></span></span>, <span name="maxWriteSizeHint">maxWriteSizeHint: <a href="../../misc/OptArg.html" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>] = <span class="symbol"><span class="name"><a href="../../misc/OptArg$.html">50000</a></span></span></span>, <span name="reconnectionStrategy">reconnectionStrategy: <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> = <span class="defval" name="ExponentialBackoff(1.seconds, 32.seconds)">...</span></span>, <span name="debugListener">debugListener: <a href="../actor/RedisConnectionActor$$DebugListener.html" class="extype" name="com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener">DebugListener</a> = <span class="symbol"><span class="name"><a href="../../../../index.html">DevNullListener</a></span></span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
+            </a><span class="params">(<span name="initCommands">initCommands: <a href="../RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">RedisBatch.unit</a></span></span></span>, <span name="actorName">actorName: <a href="../../index.html#OptArg[+T]=com.avsystem.commons.misc.OptArg[T]" class="extmbr" name="com.avsystem.commons.OptArg">commons.OptArg</a>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol"><span class="name"><a href="../../CommonAliases.html#OptArg:com.avsystem.commons.misc.OptArg.type">OptArg.Empty</a></span></span></span>, <span name="localAddress">localAddress: <a href="../../index.html#OptArg[+T]=com.avsystem.commons.misc.OptArg[T]" class="extmbr" name="com.avsystem.commons.OptArg">commons.OptArg</a>[<span class="extype" name="java.net.InetSocketAddress">InetSocketAddress</span>] = <span class="symbol"><span class="name"><a href="../../CommonAliases.html#OptArg:com.avsystem.commons.misc.OptArg.type">OptArg.Empty</a></span></span></span>, <span name="socketOptions">socketOptions: <span class="extype" name="scala.List">List</span>[<span class="extype" name="akka.io.Inet.SocketOption">SocketOption</span>] = <span class="symbol">Nil</span></span>, <span name="connectTimeout">connectTimeout: <a href="../../index.html#OptArg[+T]=com.avsystem.commons.misc.OptArg[T]" class="extmbr" name="com.avsystem.commons.OptArg">commons.OptArg</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.concurrent.duration.FiniteDuration" class="extype" target="_top">FiniteDuration</a>] = <span class="symbol"><span class="name"><a href="../../CommonAliases.html#OptArg:com.avsystem.commons.misc.OptArg.type">OptArg.Empty</a></span></span></span>, <span name="maxWriteSizeHint">maxWriteSizeHint: <a href="../../index.html#OptArg[+T]=com.avsystem.commons.misc.OptArg[T]" class="extmbr" name="com.avsystem.commons.OptArg">commons.OptArg</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>] = <span class="symbol"><span class="name"><a href="../../misc/OptArg$.html">50000</a></span></span></span>, <span name="reconnectionStrategy">reconnectionStrategy: <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> = <span class="defval" name="ExponentialBackoff(1.seconds, 32.seconds)">...</span></span>, <span name="debugListener">debugListener: <a href="../actor/RedisConnectionActor$$DebugListener.html" class="extype" name="com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener">DebugListener</a> = <span class="symbol"><span class="name"><a href="../../../../index.html">DevNullListener</a></span></span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Configuration options for a single Redis connection.</p><div class="fullcomment"><div class="comment cmt"><p>Configuration options for a single Redis connection.</p><p><code>initCommands</code> usage example:</p><pre><span class="kw">implicit</span> <span class="kw">val</span> actorSystem = ActorSystem()
@@ -429,6 +443,33 @@ client or internally by RedisClusterClient.">
                             of bytes sent may be slightly larger)</p></dd><dt class="param">reconnectionStrategy</dt><dd class="cmt"><p>a <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> used to determine what delay should be used when reconnecting
                             a failed connection. NOTE: <code>reconnectionStrategy</code> is ignored by <code>RedisConnectionClient</code></p></dd><dt class="param">debugListener</dt><dd class="cmt"><p>listener for traffic going through this connection. Only for debugging and testing
                             purposes</p></dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.config.ExecutionConfig" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ExecutionConfigextendsProductwithSerializable"></a><a id="ExecutionConfig:ExecutionConfig"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/index.html#ExecutionConfigextendsProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="Additional options for executing a RedisBatch on a
+RedisExecutor
+" href="ExecutionConfig.html">
+              <span class="name">ExecutionConfig</span>
+            </a><span class="params">(<span name="timeout">timeout: <span class="extype" name="akka.util.Timeout">Timeout</span> = <span class="symbol">10.seconds</span></span>, <span name="decodeOn">decodeOn: <a href="../../index.html#ExecutionContext=scala.concurrent.ExecutionContext" class="extmbr" name="com.avsystem.commons.ExecutionContext">commons.ExecutionContext</a> = <span class="symbol"><span class="name"><a href="../../../../index.html">RunNowEC</a></span></span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Additional options for executing a <a href="../RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a> on a
+<a href="../RedisExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisExecutor">RedisExecutor</a>
+</p><div class="fullcomment"><div class="comment cmt"><p>Additional options for executing a <a href="../RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a> on a
+<a href="../RedisExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisExecutor">RedisExecutor</a>
+</p></div><dl class="paramcmts block"><dt class="param">timeout</dt><dd class="cmt"><p>execution timeout</p></dd><dt class="param">decodeOn</dt><dd class="cmt"><p>execution context on which Redis response to a batch will be decoded. Normally this is happening
+                on one of the connection actor threads. This is ok for simple Redis commands but may introduce
+                performance bottleneck for large batches with more heavy decoding. In such case it may be
+                beneficial to delegate that work to some external executor.</p></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.config.ExponentialBackoff" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ExponentialBackoffextendsRetryStrategywithProductwithSerializable"></a><a id="ExponentialBackoff:ExponentialBackoff"></a>
       <span class="permalink">
@@ -443,7 +484,7 @@ client or internally by RedisClusterClient.">
       <span class="symbol">
         <a title="" href="ExponentialBackoff.html">
               <span class="name">ExponentialBackoff</span>
-            </a><span class="params">(<span name="firstDelay">firstDelay: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.duration.FiniteDuration" class="extype" target="_top">FiniteDuration</a></span>, <span name="maxDelay">maxDelay: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.duration.FiniteDuration" class="extype" target="_top">FiniteDuration</a></span>)</span><span class="result"> extends <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> with <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
+            </a><span class="params">(<span name="firstDelay">firstDelay: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.concurrent.duration.FiniteDuration" class="extype" target="_top">FiniteDuration</a></span>, <span name="maxDelay">maxDelay: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.concurrent.duration.FiniteDuration" class="extype" target="_top">FiniteDuration</a></span>)</span><span class="result"> extends <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> with <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
       </span>
       
       
@@ -462,7 +503,7 @@ client or internally by RedisClusterClient.">
         <a title="Configuration of a RedisNodeClient, used either as a standalone
 client or internally by RedisClusterClient." href="NodeConfig.html">
               <span class="name">NodeConfig</span>
-            </a><span class="params">(<span name="poolSize">poolSize: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a> = <span class="symbol">4</span></span>, <span name="initOp">initOp: <a href="../RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">RedisOp.unit</a></span></span></span>, <span name="initTimeout">initTimeout: <span class="extype" name="akka.util.Timeout">Timeout</span> = <span class="symbol"><span class="name"><a href="../../../../../akka/index.html">Timeout(10.seconds)</a></span></span></span>, <span name="connectionConfigs">connectionConfigs: (<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> = <span class="symbol">_ =&gt; ConnectionConfig()</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
+            </a><span class="params">(<span name="poolSize">poolSize: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a> = <span class="symbol">1</span></span>, <span name="initOp">initOp: <a href="../RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">RedisOp.unit</a></span></span></span>, <span name="initTimeout">initTimeout: <span class="extype" name="akka.util.Timeout">Timeout</span> = <span class="symbol"><span class="name"><a href="../../../../../akka/index.html">Timeout(10.seconds)</a></span></span></span>, <span name="connectionConfigs">connectionConfigs: (<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> = <span class="symbol">_ =&gt; ConnectionConfig()</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Configuration of a <a href="../RedisNodeClient.html" class="extype" name="com.avsystem.commons.redis.RedisNodeClient">RedisNodeClient</a>, used either as a standalone
@@ -490,7 +531,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
       <span class="symbol">
         <a title="" href="RetryStrategy.html">
               <span class="name">RetryStrategy</span>
-            </a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+            </a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
       </span>
       
       
@@ -520,6 +561,24 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
       </span>
       
       
+    </li><li name="com.avsystem.commons.redis.config.ExecutionConfig" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ExecutionConfig"></a><a id="ExecutionConfig:ExecutionConfig"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/index.html#ExecutionConfig" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="ExecutionConfig$.html">
+              <span class="name">ExecutionConfig</span>
+            </a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
+      </span>
+      
+      
     </li><li name="com.avsystem.commons.redis.config.NoRetryStrategy" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="NoRetryStrategy"></a><a id="NoRetryStrategy:NoRetryStrategy"></a>
       <span class="permalink">
@@ -534,7 +593,7 @@ client or internally by <a href="../RedisClusterClient.html" class="extype" name
       <span class="symbol">
         <a title="" href="NoRetryStrategy$.html">
               <span class="name">NoRetryStrategy</span>
-            </a><span class="result"> extends <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> with <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
+            </a><span class="result"> extends <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> with <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Product" class="extype" target="_top">Product</a> with <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Serializable" class="extype" target="_top">Serializable</a></span>
       </span>
       
       

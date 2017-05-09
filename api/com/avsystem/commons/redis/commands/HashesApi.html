@@ -734,7 +734,7 @@ Created: 06/04/16.">
                           SlaveState
                         </a>
                       </li><li class="current-entities indented5">
-                        <span class="separator"></span>
+                        <a class="object" href="SlotRange$.html" title=""></a>
                         <a class="class" href="SlotRange.html" title=""></a>
                         <a href="SlotRange.html" title="">
                           SlotRange
@@ -843,7 +843,7 @@ Created: 06/04/16.">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></div>
         </div><div class="toggleContainer block">
             <span class="toggle">
               Known Subclasses
@@ -915,22 +915,6 @@ Created: 06/04/16.">
 hashes (<a href="" class="extype" name="com.avsystem.commons.redis.commands.HashesApi">HashesApi</a>).</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis hash keys or hash key patterns used in methods representing Redis commands that work on
 hashes (<a href="" class="extype" name="com.avsystem.commons.redis.commands.HashesApi">HashesApi</a>).
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.ApiSubset.Input" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]"></a><a id="Input[A]:Input[A]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">abstract </span>
-        <span class="kind">type</span>
-      </span>
-      <span class="symbol">
-        <span class="name">Input</span><span class="tparams">[<span name="A">A</span>]</span><span class="result"> &gt;: <a href="../RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.Input.A">A</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Key" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="Key"></a><a id="Key:Key"></a>
       <span class="permalink">
@@ -947,7 +931,7 @@ hashes (<a href="" class="extype" name="com.avsystem.commons.redis.commands.Hash
       </span>
       
       <p class="shortcomment cmt">The type of Redis keys or key patterns used in methods representing Redis commands.</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis keys or key patterns used in methods representing Redis commands. For example, if <code>Key = String</code>
-then <a href="StringsApi.html#get(key:StringsApi.this.Key):StringsApi.this.Result[com.avsystem.commons.misc.Opt[StringsApi.this.Value]]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#get">get</a> returns <code>Result[Opt[String]]</code>. This type is used only for toplevel Redis keys, hash
+then <a href="StringsApi.html#get(key:StringsApi.this.Key):StringsApi.this.Result[com.avsystem.commons.Opt[StringsApi.this.Value]]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#get">get</a> returns <code>Result[Opt[String]]</code>. This type is used only for toplevel Redis keys, hash
 keys have their own type, <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Result" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
@@ -966,7 +950,7 @@ keys have their own type, <a href="#HashKey" class="extmbr" name="com.avsystem.c
       </span>
       
       <p class="shortcomment cmt">The type constructor into which a result of each command is wrapped.</p><div class="fullcomment"><div class="comment cmt"><p>The type constructor into which a result of each command is wrapped. For example if <code>Result</code> is
-<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.concurrent.Future" class="extype" target="_top">Future</a>, then <a href="StringsApi.html#incr(key:StringsApi.this.Key):StringsApi.this.Result[Long]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#incr">incr</a> returns <code>Future[Long]</code>.
+<code>Future</code>, then <a href="StringsApi.html#incr(key:StringsApi.this.Key):StringsApi.this.Result[Long]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#incr">incr</a> returns <code>Future[Long]</code>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.ApiSubset.Value" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="Value"></a><a id="Value:Value"></a>
@@ -984,7 +968,7 @@ keys have their own type, <a href="#HashKey" class="extmbr" name="com.avsystem.c
       </span>
       
       <p class="shortcomment cmt">The type of Redis values used in methods representing Redis commands.</p><div class="fullcomment"><div class="comment cmt"><p>The type of Redis values used in methods representing Redis commands. &quot;Value&quot; is the data that might be
-stored directly under a Redis key (e.g. using <a href="StringsApi.html#set(key:StringsApi.this.Key,value:StringsApi.this.Value,expiration:com.avsystem.commons.misc.OptArg[com.avsystem.commons.redis.commands.Expiration],existence:com.avsystem.commons.misc.OptArg[Boolean]):StringsApi.this.Result[Boolean]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#set">set</a>) but also a value of hash field, list element,
+stored directly under a Redis key (e.g. using <a href="StringsApi.html#set(key:StringsApi.this.Key,value:StringsApi.this.Value,expiration:com.avsystem.commons.OptArg[com.avsystem.commons.redis.commands.Expiration],existence:com.avsystem.commons.OptArg[Boolean]):StringsApi.this.Result[Boolean]" class="extmbr" name="com.avsystem.commons.redis.commands.StringsApi#set">set</a>) but also a value of hash field, list element,
 set member, sorted set member, geo set member or element inserted into hyper-log-log structure.
 There are no separate types specified for every of those use cases because only one of them can be used in a
 single command (for example, there is no Redis command that works on both list elements and set members
@@ -996,9 +980,9 @@ at the same time).
         <div class="values members">
               <h3>Abstract Value Members</h3>
               <ol><li name="com.avsystem.commons.redis.ApiSubset#execute" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="execute[A](command:ApiSubset.this.Input[A]):ApiSubset.this.Result[A]"></a><a id="execute[A](Input[A]):Result[A]"></a>
+      <a id="execute[A](command:com.avsystem.commons.redis.RedisCommand[A]):ApiSubset.this.Result[A]"></a><a id="execute[A](RedisCommand[A]):Result[A]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#execute[A](command:ApiSubset.this.Input[A]):ApiSubset.this.Result[A]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#execute[A](command:com.avsystem.commons.redis.RedisCommand[A]):ApiSubset.this.Result[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1007,7 +991,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">execute</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="command">command: <a href="#Input[A]&gt;:com.avsystem.commons.redis.RedisCommand[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Input">Input</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>
+        <span class="name">execute</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="command">command: <a href="../RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<span class="extype" name="com.avsystem.commons.redis.ApiSubset.execute.A">A</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></dd></dl></div>
@@ -1077,7 +1061,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1093,7 +1077,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1109,7 +1093,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1141,7 +1125,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1163,7 +1147,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1179,7 +1163,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1195,7 +1179,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1233,7 +1217,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1249,10 +1233,11 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hdel</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="fields">fields: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
+        <span class="name">hdel</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="fields">fields: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hdel" target="_blank">HDEL</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hdel" target="_blank">HDEL</a>
+or simply returns 0 when <code>fields</code> is empty, without sending the command to Redis</p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hdel" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="hdel(key:HashesApi.this.Key,field:HashesApi.this.HashKey,fields:HashesApi.this.HashKey*):HashesApi.this.Result[Int]"></a><a id="hdel(Key,HashKey,HashKey*):Result[Int]"></a>
       <span class="permalink">
@@ -1265,10 +1250,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hdel</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>, <span name="fields">fields: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
+        <span class="name">hdel</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>, <span name="fields">fields: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hdel" target="_blank">HDEL</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hdel" target="_blank">HDEL</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hdel" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="hdel(key:HashesApi.this.Key,field:HashesApi.this.HashKey):HashesApi.this.Result[Boolean]"></a><a id="hdel(Key,HashKey):Result[Boolean]"></a>
       <span class="permalink">
@@ -1281,10 +1266,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hdel</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
+        <span class="name">hdel</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hdel" target="_blank">HDEL</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hdel" target="_blank">HDEL</a></p>
     </li><li name="com.avsystem.commons.redis.ApiSubset#headOps" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="headOps[T](head:T):com.avsystem.commons.redis.ApiSubset.HeadOps[T]"></a><a id="headOps[T](T):HeadOps[T]"></a>
       <span class="permalink">
@@ -1313,14 +1298,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hexists</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
+        <span class="name">hexists</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hexists" target="_blank">HEXISTS</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hexists" target="_blank">HEXISTS</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hget" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="hget(key:HashesApi.this.Key,field:HashesApi.this.HashKey):HashesApi.this.Result[com.avsystem.commons.misc.Opt[HashesApi.this.Value]]"></a><a id="hget(Key,HashKey):Result[Opt[Value]]"></a>
+      <a id="hget(key:HashesApi.this.Key,field:HashesApi.this.HashKey):HashesApi.this.Result[com.avsystem.commons.Opt[HashesApi.this.Value]]"></a><a id="hget(Key,HashKey):Result[commons.Opt[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hget(key:HashesApi.this.Key,field:HashesApi.this.HashKey):HashesApi.this.Result[com.avsystem.commons.misc.Opt[HashesApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hget(key:HashesApi.this.Key,field:HashesApi.this.HashKey):HashesApi.this.Result[com.avsystem.commons.Opt[HashesApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1329,14 +1314,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hget</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="../../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>]]</span>
+        <span class="name">hget</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="../../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hget" target="_blank">HGET</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hget" target="_blank">HGET</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hgetall" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="hgetall(key:HashesApi.this.Key):HashesApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BMap[HashesApi.this.HashKey,HashesApi.this.Value]]"></a><a id="hgetall(Key):Result[BMap[HashKey,Value]]"></a>
+      <a id="hgetall(key:HashesApi.this.Key):HashesApi.this.Result[com.avsystem.commons.BMap[HashesApi.this.HashKey,HashesApi.this.Value]]"></a><a id="hgetall(Key):Result[commons.BMap[HashKey,Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hgetall(key:HashesApi.this.Key):HashesApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BMap[HashesApi.this.HashKey,HashesApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hgetall(key:HashesApi.this.Key):HashesApi.this.Result[com.avsystem.commons.BMap[HashesApi.this.HashKey,HashesApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1345,10 +1330,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hgetall</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="../../collection/CollectionAliases$.html#BMap[A,+B]=scala.collection.Map[A,B]" class="extmbr" name="com.avsystem.commons.collection.CollectionAliases.BMap">BMap</a>[<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>]]</span>
+        <span class="name">hgetall</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="../../index.html#BMap[A,+B]=scala.collection.Map[A,B]" class="extmbr" name="com.avsystem.commons.BMap">commons.BMap</a>[<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hgetall" target="_blank">HGETALL</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hgetall" target="_blank">HGETALL</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hincrby" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="hincrby(key:HashesApi.this.Key,field:HashesApi.this.HashKey,increment:Long):HashesApi.this.Result[Long]"></a><a id="hincrby(Key,HashKey,Long):Result[Long]"></a>
       <span class="permalink">
@@ -1361,10 +1346,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hincrby</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>, <span name="increment">increment: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
+        <span class="name">hincrby</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>, <span name="increment">increment: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hincrby" target="_blank">HINCRBY</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hincrby" target="_blank">HINCRBY</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hincrbyfloat" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="hincrbyfloat(key:HashesApi.this.Key,field:HashesApi.this.HashKey,increment:Double):HashesApi.this.Result[Double]"></a><a id="hincrbyfloat(Key,HashKey,Double):Result[Double]"></a>
       <span class="permalink">
@@ -1377,14 +1362,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hincrbyfloat</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>, <span name="increment">increment: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Double" class="extype" target="_top">Double</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Double" class="extype" target="_top">Double</a>]</span>
+        <span class="name">hincrbyfloat</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>, <span name="increment">increment: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Double" class="extype" target="_top">Double</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Double" class="extype" target="_top">Double</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hincrbyfloat" target="_blank">HINCRBYFLOAT</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hincrbyfloat" target="_blank">HINCRBYFLOAT</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hkeys" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="hkeys(key:HashesApi.this.Key):HashesApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[HashesApi.this.HashKey]]"></a><a id="hkeys(Key):Result[BSet[HashKey]]"></a>
+      <a id="hkeys(key:HashesApi.this.Key):HashesApi.this.Result[com.avsystem.commons.BSet[HashesApi.this.HashKey]]"></a><a id="hkeys(Key):Result[commons.BSet[HashKey]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hkeys(key:HashesApi.this.Key):HashesApi.this.Result[com.avsystem.commons.collection.CollectionAliases.BSet[HashesApi.this.HashKey]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hkeys(key:HashesApi.this.Key):HashesApi.this.Result[com.avsystem.commons.BSet[HashesApi.this.HashKey]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1393,10 +1378,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hkeys</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="../../collection/CollectionAliases$.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.collection.CollectionAliases.BSet">BSet</a>[<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>]]</span>
+        <span class="name">hkeys</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="../../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hkeys" target="_blank">HKEYS</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hkeys" target="_blank">HKEYS</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hlen" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="hlen(key:HashesApi.this.Key):HashesApi.this.Result[Long]"></a><a id="hlen(Key):Result[Long]"></a>
       <span class="permalink">
@@ -1409,14 +1394,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hlen</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
+        <span class="name">hlen</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hlen" target="_blank">HLEN</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hlen" target="_blank">HLEN</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hmget" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="hmget(key:HashesApi.this.Key,fields:Seq[HashesApi.this.HashKey]):HashesApi.this.Result[Seq[com.avsystem.commons.misc.Opt[HashesApi.this.Value]]]"></a><a id="hmget(Key,Seq[HashKey]):Result[Seq[Opt[Value]]]"></a>
+      <a id="hmget(key:HashesApi.this.Key,fields:Iterable[HashesApi.this.HashKey]):HashesApi.this.Result[Seq[com.avsystem.commons.Opt[HashesApi.this.Value]]]"></a><a id="hmget(Key,Iterable[HashKey]):Result[Seq[commons.Opt[Value]]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hmget(key:HashesApi.this.Key,fields:Seq[HashesApi.this.HashKey]):HashesApi.this.Result[Seq[com.avsystem.commons.misc.Opt[HashesApi.this.Value]]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hmget(key:HashesApi.this.Key,fields:Iterable[HashesApi.this.HashKey]):HashesApi.this.Result[Seq[com.avsystem.commons.Opt[HashesApi.this.Value]]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1425,14 +1410,15 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hmget</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="fields">fields: <span class="extype" name="scala.Seq">Seq</span>[<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="../../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>]]]</span>
+        <span class="name">hmget</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="fields">fields: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="../../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>]]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hmget" target="_blank">HMGET</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hmget" target="_blank">HMGET</a>
+or simply returns empty <code>Seq</code> when <code>fields</code> is empty, without sending the command to Redis</p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hmget" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="hmget(key:HashesApi.this.Key,field:HashesApi.this.HashKey,fields:HashesApi.this.HashKey*):HashesApi.this.Result[Seq[com.avsystem.commons.misc.Opt[HashesApi.this.Value]]]"></a><a id="hmget(Key,HashKey,HashKey*):Result[Seq[Opt[Value]]]"></a>
+      <a id="hmget(key:HashesApi.this.Key,field:HashesApi.this.HashKey,fields:HashesApi.this.HashKey*):HashesApi.this.Result[Seq[com.avsystem.commons.Opt[HashesApi.this.Value]]]"></a><a id="hmget(Key,HashKey,HashKey*):Result[Seq[commons.Opt[Value]]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hmget(key:HashesApi.this.Key,field:HashesApi.this.HashKey,fields:HashesApi.this.HashKey*):HashesApi.this.Result[Seq[com.avsystem.commons.misc.Opt[HashesApi.this.Value]]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hmget(key:HashesApi.this.Key,field:HashesApi.this.HashKey,fields:HashesApi.this.HashKey*):HashesApi.this.Result[Seq[com.avsystem.commons.Opt[HashesApi.this.Value]]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1441,10 +1427,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hmget</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>, <span name="fields">fields: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="../../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>]]]</span>
+        <span class="name">hmget</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>, <span name="fields">fields: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="../../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>]]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hmget" target="_blank">HMGET</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hmget" target="_blank">HMGET</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hmset" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="hmset(key:HashesApi.this.Key,fieldValues:Iterable[(HashesApi.this.HashKey,HashesApi.this.Value)]):HashesApi.this.Result[Unit]"></a><a id="hmset(Key,Iterable[(HashKey,Value)]):Result[Unit]"></a>
       <span class="permalink">
@@ -1457,10 +1443,11 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hmset</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="fieldValues">fieldValues: <span class="extype" name="scala.Iterable">Iterable</span>[(<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>)]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">hmset</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="fieldValues">fieldValues: <span class="extype" name="scala.Iterable">Iterable</span>[(<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>)]</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hmset" target="_blank">HMSET</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hmset" target="_blank">HMSET</a>
+or does nothing when <code>fieldValues</code> is empty, without sending the command to Redis</p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hmset" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="hmset(key:HashesApi.this.Key,fieldValue:(HashesApi.this.HashKey,HashesApi.this.Value),fieldValues:(HashesApi.this.HashKey,HashesApi.this.Value)*):HashesApi.this.Result[Unit]"></a><a id="hmset(Key,(HashKey,Value),(HashKey,Value)*):Result[Unit]"></a>
       <span class="permalink">
@@ -1473,14 +1460,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hmset</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="fieldValue">fieldValue: (<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>)</span>, <span name="fieldValues">fieldValues: (<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>)*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">hmset</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="fieldValue">fieldValue: (<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>)</span>, <span name="fieldValues">fieldValues: (<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>)*</span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hmset" target="_blank">HMSET</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hmset" target="_blank">HMSET</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hscan" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="hscan(key:HashesApi.this.Key,cursor:com.avsystem.commons.redis.commands.Cursor,matchPattern:com.avsystem.commons.misc.OptArg[HashesApi.this.HashKey],count:com.avsystem.commons.misc.OptArg[Int]):HashesApi.this.Result[(com.avsystem.commons.redis.commands.Cursor,Seq[(HashesApi.this.HashKey,HashesApi.this.Value)])]"></a><a id="hscan(Key,Cursor,OptArg[HashKey],OptArg[Int]):Result[(Cursor,Seq[(HashKey,Value)])]"></a>
+      <a id="hscan(key:HashesApi.this.Key,cursor:com.avsystem.commons.redis.commands.Cursor,matchPattern:com.avsystem.commons.OptArg[HashesApi.this.HashKey],count:com.avsystem.commons.OptArg[Int]):HashesApi.this.Result[(com.avsystem.commons.redis.commands.Cursor,Seq[(HashesApi.this.HashKey,HashesApi.this.Value)])]"></a><a id="hscan(Key,Cursor,commons.OptArg[HashKey],commons.OptArg[Int]):Result[(Cursor,Seq[(HashKey,Value)])]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hscan(key:HashesApi.this.Key,cursor:com.avsystem.commons.redis.commands.Cursor,matchPattern:com.avsystem.commons.misc.OptArg[HashesApi.this.HashKey],count:com.avsystem.commons.misc.OptArg[Int]):HashesApi.this.Result[(com.avsystem.commons.redis.commands.Cursor,Seq[(HashesApi.this.HashKey,HashesApi.this.Value)])]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hscan(key:HashesApi.this.Key,cursor:com.avsystem.commons.redis.commands.Cursor,matchPattern:com.avsystem.commons.OptArg[HashesApi.this.HashKey],count:com.avsystem.commons.OptArg[Int]):HashesApi.this.Result[(com.avsystem.commons.redis.commands.Cursor,Seq[(HashesApi.this.HashKey,HashesApi.this.Value)])]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1489,10 +1476,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hscan</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="cursor">cursor: <a href="Cursor.html" class="extype" name="com.avsystem.commons.redis.commands.Cursor">Cursor</a></span>, <span name="matchPattern">matchPattern: <a href="../../misc/OptArg.html" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a>[<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">OptArg.Empty</a></span></span></span>, <span name="count">count: <a href="../../misc/OptArg.html" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>] = <span class="symbol"><span class="name"><a href="../../../../index.html">OptArg.Empty</a></span></span></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[(<a href="Cursor.html" class="extype" name="com.avsystem.commons.redis.commands.Cursor">Cursor</a>, <span class="extype" name="scala.Seq">Seq</span>[(<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>)])]</span>
+        <span class="name">hscan</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="cursor">cursor: <a href="Cursor.html" class="extype" name="com.avsystem.commons.redis.commands.Cursor">Cursor</a></span>, <span name="matchPattern">matchPattern: <a href="../../index.html#OptArg[+T]=com.avsystem.commons.misc.OptArg[T]" class="extmbr" name="com.avsystem.commons.OptArg">commons.OptArg</a>[<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>] = <span class="symbol"><span class="name"><a href="../../CommonAliases.html#OptArg:com.avsystem.commons.misc.OptArg.type">OptArg.Empty</a></span></span></span>, <span name="count">count: <a href="../../index.html#OptArg[+T]=com.avsystem.commons.misc.OptArg[T]" class="extmbr" name="com.avsystem.commons.OptArg">commons.OptArg</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>] = <span class="symbol"><span class="name"><a href="../../CommonAliases.html#OptArg:com.avsystem.commons.misc.OptArg.type">OptArg.Empty</a></span></span></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[(<a href="Cursor.html" class="extype" name="com.avsystem.commons.redis.commands.Cursor">Cursor</a>, <span class="extype" name="scala.Seq">Seq</span>[(<a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a>, <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>)])]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hscan" target="_blank">HSCAN</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hscan" target="_blank">HSCAN</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hset" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="hset(key:HashesApi.this.Key,field:HashesApi.this.HashKey,value:HashesApi.this.Value):HashesApi.this.Result[Boolean]"></a><a id="hset(Key,HashKey,Value):Result[Boolean]"></a>
       <span class="permalink">
@@ -1505,10 +1492,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hset</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>, <span name="value">value: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
+        <span class="name">hset</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>, <span name="value">value: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hset" target="_blank">HSET</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hset" target="_blank">HSET</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hsetnx" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="hsetnx(key:HashesApi.this.Key,field:HashesApi.this.HashKey,value:HashesApi.this.Value):HashesApi.this.Result[Boolean]"></a><a id="hsetnx(Key,HashKey,Value):Result[Boolean]"></a>
       <span class="permalink">
@@ -1521,10 +1508,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hsetnx</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>, <span name="value">value: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
+        <span class="name">hsetnx</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>, <span name="value">value: <a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hsetnx" target="_blank">HSETNX</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hsetnx" target="_blank">HSETNX</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hstrlen" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="hstrlen(key:HashesApi.this.Key,field:HashesApi.this.HashKey):HashesApi.this.Result[Int]"></a><a id="hstrlen(Key,HashKey):Result[Int]"></a>
       <span class="permalink">
@@ -1537,14 +1524,14 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hstrlen</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
+        <span class="name">hstrlen</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>, <span name="field">field: <a href="#HashKey" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.HashKey">HashKey</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hstrlen" target="_blank">HSTRLEN</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hstrlen" target="_blank">HSTRLEN</a></p>
     </li><li name="com.avsystem.commons.redis.commands.HashesApi#hvals" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="hvals(key:HashesApi.this.Key):HashesApi.this.Result[Seq[HashesApi.this.Value]]"></a><a id="hvals(Key):Result[Seq[Value]]"></a>
+      <a id="hvals(key:HashesApi.this.Key):HashesApi.this.Result[Iterable[HashesApi.this.Value]]"></a><a id="hvals(Key):Result[Iterable[Value]]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hvals(key:HashesApi.this.Key):HashesApi.this.Result[Seq[HashesApi.this.Value]]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/commands/HashesApi.html#hvals(key:HashesApi.this.Key):HashesApi.this.Result[Iterable[HashesApi.this.Value]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1553,10 +1540,10 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hvals</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<span class="extype" name="scala.Seq">Seq</span>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>]]</span>
+        <span class="name">hvals</span><span class="params">(<span name="key">key: <a href="#Key" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Key">Key</a></span>)</span><span class="result">: <a href="#Result[A]" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Result">Result</a>[<span class="extype" name="scala.Iterable">Iterable</span>[<a href="#Value" class="extmbr" name="com.avsystem.commons.redis.commands.HashesApi.Value">Value</a>]]</span>
       </span>
       
-      <p class="shortcomment cmt"><a href="http://redis.io/commands/hvals" target="_blank">HVALS</a></p>
+      <p class="shortcomment cmt">Executes <a href="http://redis.io/commands/hvals" target="_blank">HVALS</a></p>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -1569,7 +1556,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -1617,7 +1604,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1633,7 +1620,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1649,7 +1636,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1697,7 +1684,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1719,7 +1706,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1741,7 +1728,7 @@ at the same time).
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1764,9 +1751,9 @@ at the same time).
         <div class="parent" name="com.avsystem.commons.redis.ApiSubset">
               <h3>Inherited from <a href="../ApiSubset.html" class="extype" name="com.avsystem.commons.redis.ApiSubset">ApiSubset</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
             </div>
         
         </div>

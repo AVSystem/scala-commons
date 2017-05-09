@@ -270,16 +270,16 @@
                           ApiSubset
                         </a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
-                        <a class="trait" href="AtomicBatch.html" title="RedisBatch guaranteed to be atomic, i.e."></a>
-                        <a href="AtomicBatch.html" title="RedisBatch guaranteed to be atomic, i.e.">
-                          AtomicBatch
-                        </a>
-                      </li><li class="current-entities indented4">
                         <a class="object" href="ClusterState$.html" title=""></a>
                         <a class="class" href="ClusterState.html" title="Current cluster state known by RedisClusterClient."></a>
                         <a href="ClusterState.html" title="Current cluster state known by RedisClusterClient.">
                           ClusterState
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="CollectionBatch.html" title=""></a>
+                        <a href="CollectionBatch.html" title="">
+                          CollectionBatch
                         </a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="CommandEncoder$.html" title=""></a>
@@ -314,12 +314,18 @@
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="Hash$.html" title="Implementation of key hashing function used in Redis Cluster, as specified in
-Link(http://redis.io/topics/cluster-spec#appendix-a-crc16-reference-implementation-in-ansi-c,Text(Redis Cluster Specification))
+Redis Cluster Specification
 "></a>
                         <a href="Hash$.html" title="Implementation of key hashing function used in Redis Cluster, as specified in
-Link(http://redis.io/topics/cluster-spec#appendix-a-crc16-reference-implementation-in-ansi-c,Text(Redis Cluster Specification))
+Redis Cluster Specification
 ">
                           Hash
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="ImmediateBatch.html" title=""></a>
+                        <a href="ImmediateBatch.html" title="">
+                          ImmediateBatch
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
@@ -711,6 +717,12 @@ messages and emits a single RedisReply.">
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="trait" href="SinglePackBatch.html" title=""></a>
+                        <a href="SinglePackBatch.html" title="">
+                          SinglePackBatch
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="Transaction.html" title=""></a>
                         <a href="Transaction.html" title="">
                           Transaction
@@ -765,7 +777,7 @@ messages and emits a single RedisReply.">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>], <a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a>, <a href="ReplyPreprocessor.html" class="extype" name="com.avsystem.commons.redis.ReplyPreprocessor">ReplyPreprocessor</a>, <a href="RawCommands.html" class="extype" name="com.avsystem.commons.redis.RawCommands">RawCommands</a>, <a href="AtomicBatch.html" class="extype" name="com.avsystem.commons.redis.AtomicBatch">AtomicBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>], <a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a>, <a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a>, <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>], <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>], <a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a>, <a href="ReplyPreprocessor.html" class="extype" name="com.avsystem.commons.redis.ReplyPreprocessor">ReplyPreprocessor</a>, <a href="RawCommands.html" class="extype" name="com.avsystem.commons.redis.RawCommands">RawCommands</a>, <a href="SinglePackBatch.html" class="extype" name="com.avsystem.commons.redis.SinglePackBatch">SinglePackBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>], <a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a>, <a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a>, <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>], <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></div>
         </div><div class="toggleContainer block">
             <span class="toggle">
               Known Subclasses
@@ -796,7 +808,7 @@ messages and emits a single RedisReply.">
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.avsystem.commons.redis.AbstractRedisCommand"><span>AbstractRedisCommand</span></li><li class="in" name="com.avsystem.commons.redis.RedisCommand"><span>RedisCommand</span></li><li class="in" name="com.avsystem.commons.redis.RawCommand"><span>RawCommand</span></li><li class="in" name="com.avsystem.commons.redis.ReplyPreprocessor"><span>ReplyPreprocessor</span></li><li class="in" name="com.avsystem.commons.redis.RawCommands"><span>RawCommands</span></li><li class="in" name="com.avsystem.commons.redis.AtomicBatch"><span>AtomicBatch</span></li><li class="in" name="com.avsystem.commons.redis.RawCommandPack"><span>RawCommandPack</span></li><li class="in" name="com.avsystem.commons.redis.RawCommandPacks"><span>RawCommandPacks</span></li><li class="in" name="com.avsystem.commons.redis.RedisBatch"><span>RedisBatch</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.avsystem.commons.redis.AbstractRedisCommand"><span>AbstractRedisCommand</span></li><li class="in" name="com.avsystem.commons.redis.RedisCommand"><span>RedisCommand</span></li><li class="in" name="com.avsystem.commons.redis.RawCommand"><span>RawCommand</span></li><li class="in" name="com.avsystem.commons.redis.ReplyPreprocessor"><span>ReplyPreprocessor</span></li><li class="in" name="com.avsystem.commons.redis.RawCommands"><span>RawCommands</span></li><li class="in" name="com.avsystem.commons.redis.SinglePackBatch"><span>SinglePackBatch</span></li><li class="in" name="com.avsystem.commons.redis.RawCommandPack"><span>RawCommandPack</span></li><li class="in" name="com.avsystem.commons.redis.RawCommandPacks"><span>RawCommandPacks</span></li><li class="in" name="com.avsystem.commons.redis.RedisBatch"><span>RedisBatch</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -889,7 +901,7 @@ messages and emits a single RedisReply.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -905,7 +917,7 @@ messages and emits a single RedisReply.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -979,7 +991,7 @@ NOTE: errors for right-hand-side are NOT discarded, use <a href="RedisBatch.html
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1017,7 +1029,7 @@ NOTE: errors for right-hand-side are NOT discarded, use <a href="RedisBatch.html
       <p class="shortcomment cmt">Ensures that every keyed command in this batch is prepended with <code>ASKING</code> special command.</p><div class="fullcomment"><div class="comment cmt"><p>Ensures that every keyed command in this batch is prepended with <code>ASKING</code> special command.
 This is necessary only when manually handling Redis Cluster redirections.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.AtomicBatch#atomic" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="com.avsystem.commons.redis.RedisBatch#atomic" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="atomic:com.avsystem.commons.redis.RedisBatch[A]"></a><a id="atomic:RedisBatch[A]"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#atomic:com.avsystem.commons.redis.RedisBatch[A]" title="Permalink">
@@ -1032,9 +1044,28 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="name">atomic</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Ensures that this batch is atomic, i.e.</p><div class="fullcomment"><div class="comment cmt"><p>Ensures that this batch is atomic, i.e. it's either a single Redis command or is executed inside a
-<code>MULTI</code>-<code>EXEC</code> block.
-</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="AtomicBatch.html" class="extype" name="com.avsystem.commons.redis.AtomicBatch">AtomicBatch</a> → <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
+      <p class="shortcomment cmt">Returns a batch which invokes the same commands as this batch but atomically.</p><div class="fullcomment"><div class="comment cmt"><p>Returns a batch which invokes the same commands as this batch but atomically.
+If this batch is already atomic then it's returned unchanged. Otherwise, it's wrapped into a Redis
+<a href="RedisBatch.html#transaction:com.avsystem.commons.redis.RedisBatch[A]" class="extmbr" name="com.avsystem.commons.redis.RedisBatch#transaction">transaction</a> (<code>MULTI</code>-<code>EXEC</code> block).
+Empty batches, single-command batches and transactions are atomic by themselves and therefore are returned
+unchanged.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.RedisCommand#batchOrFallback" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="batchOrFallback:com.avsystem.commons.redis.RedisBatch[A]"></a><a id="batchOrFallback:RedisBatch[A]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#batchOrFallback:com.avsystem.commons.redis.RedisBatch[A]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">batchOrFallback</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RawCommand#checkLevel" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="checkLevel(minAllowed:com.avsystem.commons.redis.RawCommand.Level,clientType:String):Unit"></a><a id="checkLevel(Level,String):Unit"></a>
       <span class="permalink">
@@ -1043,11 +1074,11 @@ This is necessary only when manually handling Redis Cluster redirections.
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">checkLevel</span><span class="params">(<span name="minAllowed">minAllowed: <a href="RawCommand$$Level.html" class="extype" name="com.avsystem.commons.redis.RawCommand.Level">Level</a></span>, <span name="clientType">clientType: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">checkLevel</span><span class="params">(<span name="minAllowed">minAllowed: <a href="RawCommand$$Level.html" class="extype" name="com.avsystem.commons.redis.RawCommand.Level">Level</a></span>, <span name="clientType">clientType: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a> → <a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a></dd></dl></div>
@@ -1063,7 +1094,7 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1073,6 +1104,22 @@ This is necessary only when manually handling Redis Cluster redirections.
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.RawCommandPack#computeSize" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="computeSize(limit:Int):Int"></a><a id="computeSize(Int):Int"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#computeSize(limit:Int):Int" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">computeSize</span><span class="params">(<span name="limit">limit: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a> → <a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RawCommand#createPreprocessor" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="createPreprocessor(replyCount:Int):com.avsystem.commons.redis.RawCommand"></a><a id="createPreprocessor(Int):RawCommand"></a>
       <span class="permalink">
@@ -1081,11 +1128,11 @@ This is necessary only when manually handling Redis Cluster redirections.
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createPreprocessor</span><span class="params">(<span name="replyCount">replyCount: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a></span>
+        <span class="name">createPreprocessor</span><span class="params">(<span name="replyCount">replyCount: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a> → <a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a></dd></dl></div>
@@ -1097,7 +1144,7 @@ This is necessary only when manually handling Redis Cluster redirections.
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
@@ -1129,11 +1176,11 @@ This is necessary only when manually handling Redis Cluster redirections.
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">decodeReplies</span><span class="params">(<span name="replies">replies: (<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="protocol/RedisReply.html" class="extype" name="com.avsystem.commons.redis.protocol.RedisReply">RedisReply</a></span>, <span name="idx">idx: <a href="RedisBatch$$Index.html" class="extype" name="com.avsystem.commons.redis.RedisBatch.Index">Index</a></span>, <span name="inTransaction">inTransaction: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span></span>
+        <span class="name">decodeReplies</span><span class="params">(<span name="replies">replies: (<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>) ⇒ <a href="protocol/RedisReply.html" class="extype" name="com.avsystem.commons.redis.protocol.RedisReply">RedisReply</a></span>, <span name="idx">idx: <a href="RedisBatch$$Index.html" class="extype" name="com.avsystem.commons.redis.RedisBatch.Index">Index</a></span>, <span name="inTransaction">inTransaction: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a> → <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
@@ -1145,11 +1192,11 @@ This is necessary only when manually handling Redis Cluster redirections.
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">emitCommandPacks</span><span class="params">(<span name="consumer">consumer: (<a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">emitCommandPacks</span><span class="params">(<span name="consumer">consumer: (<a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a> → <a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></dd></dl></div>
@@ -1161,11 +1208,11 @@ This is necessary only when manually handling Redis Cluster redirections.
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">emitCommands</span><span class="params">(<span name="consumer">consumer: (<a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">emitCommands</span><span class="params">(<span name="consumer">consumer: (<a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a> → <a href="RawCommands.html" class="extype" name="com.avsystem.commons.redis.RawCommands">RawCommands</a></dd></dl></div>
@@ -1181,7 +1228,7 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">encodedSize</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span class="name">encodedSize</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></dd></dl></div>
@@ -1193,7 +1240,7 @@ This is necessary only when manually handling Redis Cluster redirections.
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
@@ -1213,7 +1260,7 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1229,7 +1276,7 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1261,7 +1308,7 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1279,11 +1326,11 @@ This is necessary only when manually handling Redis Cluster redirections.
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">foreachKey</span><span class="params">(<span name="consumer">consumer: (<a href="http://doc.akka.io/api/akka/2.4.12/index.html#akka.util.ByteString" class="extype" target="_top">ByteString</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">foreachKey</span><span class="params">(<span name="consumer">consumer: (<a href="http://doc.akka.io/api/akka/2.4.12/index.html#akka.util.ByteString" class="extype" target="_top">ByteString</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></dd></dl></div>
@@ -1315,7 +1362,7 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -1331,14 +1378,14 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ignoreFailures</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
+        <span class="name">ignoreFailures</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.RawCommandPack#isAsking" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="isAsking:Boolean"></a>
+    </li><li name="com.avsystem.commons.redis.RedisCommand#immediateResult" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="immediateResult:com.avsystem.commons.Opt[A]"></a><a id="immediateResult:commons.Opt[A]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#isAsking:Boolean" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#immediateResult:com.avsystem.commons.Opt[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1347,10 +1394,29 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isAsking</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">immediateResult</span><span class="result">: <a href="../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a></dd></dl></div>
+      <p class="shortcomment cmt">Returns optional value that may be used as immediate result of this command if it command can be treated as
+no-op.</p><div class="fullcomment"><div class="comment cmt"><p>Returns optional value that may be used as immediate result of this command if it command can be treated as
+no-op. For example <code>DEL</code> command with no keys may simply return 0 as its immediate result.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.RawCommand#isAsking" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isAsking:Boolean"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#isAsking:Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isAsking</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a> → <a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a></dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -1363,7 +1429,7 @@ This is necessary only when manually handling Redis Cluster redirections.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -1413,7 +1479,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1429,7 +1495,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1445,7 +1511,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1467,37 +1533,37 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
       <p class="shortcomment cmt">Transforms this batch into a <a href="RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Transforms this batch into a <a href="RedisOp.html" class="extype" name="com.avsystem.commons.redis.RedisOp">RedisOp</a>.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RawCommand#preprocess" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="preprocess(message:com.avsystem.commons.redis.protocol.RedisMsg,state:com.avsystem.commons.redis.WatchState):com.avsystem.commons.misc.Opt[com.avsystem.commons.redis.protocol.RedisMsg]"></a><a id="preprocess(RedisMsg,WatchState):Opt[RedisMsg]"></a>
+      <a id="preprocess(message:com.avsystem.commons.redis.protocol.RedisMsg,state:com.avsystem.commons.redis.WatchState):com.avsystem.commons.misc.Opt[com.avsystem.commons.redis.protocol.RedisMsg]"></a><a id="preprocess(RedisMsg,WatchState):misc.Opt[RedisMsg]"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#preprocess(message:com.avsystem.commons.redis.protocol.RedisMsg,state:com.avsystem.commons.redis.WatchState):com.avsystem.commons.misc.Opt[com.avsystem.commons.redis.protocol.RedisMsg]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">preprocess</span><span class="params">(<span name="message">message: <a href="protocol/RedisMsg.html" class="extype" name="com.avsystem.commons.redis.protocol.RedisMsg">RedisMsg</a></span>, <span name="state">state: <a href="WatchState.html" class="extype" name="com.avsystem.commons.redis.WatchState">WatchState</a></span>)</span><span class="result">: <a href="../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<a href="protocol/RedisMsg.html" class="extype" name="com.avsystem.commons.redis.protocol.RedisMsg">RedisMsg</a>]</span>
+        <span class="name">preprocess</span><span class="params">(<span name="message">message: <a href="protocol/RedisMsg.html" class="extype" name="com.avsystem.commons.redis.protocol.RedisMsg">RedisMsg</a></span>, <span name="state">state: <a href="WatchState.html" class="extype" name="com.avsystem.commons.redis.WatchState">WatchState</a></span>)</span><span class="result">: <a href="../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">misc.Opt</a>[<a href="protocol/RedisMsg.html" class="extype" name="com.avsystem.commons.redis.protocol.RedisMsg">RedisMsg</a>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a> → <a href="ReplyPreprocessor.html" class="extype" name="com.avsystem.commons.redis.ReplyPreprocessor">ReplyPreprocessor</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.AtomicBatch#rawCommandPacks" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="rawCommandPacks:com.avsystem.commons.redis.AtomicBatch[A]"></a><a id="rawCommandPacks:AtomicBatch[A]"></a>
+    </li><li name="com.avsystem.commons.redis.SinglePackBatch#rawCommandPacks" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="rawCommandPacks:com.avsystem.commons.redis.SinglePackBatch[A]"></a><a id="rawCommandPacks:SinglePackBatch[A]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#rawCommandPacks:com.avsystem.commons.redis.AtomicBatch[A]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#rawCommandPacks:com.avsystem.commons.redis.SinglePackBatch[A]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">rawCommandPacks</span><span class="result">: <a href="AtomicBatch.html" class="extype" name="com.avsystem.commons.redis.AtomicBatch">AtomicBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]</span>
+        <span class="name">rawCommandPacks</span><span class="result">: <a href="SinglePackBatch.html" class="extype" name="com.avsystem.commons.redis.SinglePackBatch">SinglePackBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="AtomicBatch.html" class="extype" name="com.avsystem.commons.redis.AtomicBatch">AtomicBatch</a> → <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SinglePackBatch.html" class="extype" name="com.avsystem.commons.redis.SinglePackBatch">SinglePackBatch</a> → <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RawCommand#rawCommands" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="rawCommands(inTransaction:Boolean):com.avsystem.commons.redis.RawCommand"></a><a id="rawCommands(Boolean):RawCommand"></a>
       <span class="permalink">
@@ -1506,11 +1572,11 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">rawCommands</span><span class="params">(<span name="inTransaction">inTransaction: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>)</span><span class="result">: <a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a></span>
+        <span class="name">rawCommands</span><span class="params">(<span name="inTransaction">inTransaction: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>)</span><span class="result">: <a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a> → <a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a></dd></dl></div>
@@ -1526,7 +1592,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">recover</span><span class="tparams">[<span name="B">B &gt;: <span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span></span>]</span><span class="params">(<span name="f">f: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.PartialFunction" class="extype" target="_top">PartialFunction</a>[<span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="com.avsystem.commons.redis.RedisBatch.recover.B">B</span>]</span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.recover.B">B</span>]</span>
+        <span class="name">recover</span><span class="tparams">[<span name="B">B &gt;: <span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span></span>]</span><span class="params">(<span name="f">f: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.PartialFunction" class="extype" target="_top">PartialFunction</a>[<span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="com.avsystem.commons.redis.RedisBatch.recover.B">B</span>]</span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.recover.B">B</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
@@ -1538,7 +1604,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
@@ -1546,38 +1612,6 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.RedisCommand#requireNonEmpty" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="requireNonEmpty(seq:TraversableOnce[Any],what:String):Unit"></a><a id="requireNonEmpty(TraversableOnce[Any],String):Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#requireNonEmpty(seq:TraversableOnce[Any],what:String):Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">requireNonEmpty</span><span class="params">(<span name="seq">seq: <span class="extype" name="scala.TraversableOnce">TraversableOnce</span>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a>]</span>, <span name="what">what: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.RawCommandPack#single" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="single:com.avsystem.commons.misc.Opt[com.avsystem.commons.redis.RawCommandPack]"></a><a id="single:Opt[RawCommandPack]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#single:com.avsystem.commons.misc.Opt[com.avsystem.commons.redis.RawCommandPack]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">single</span><span class="result">: <a href="../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>[<a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a> → <a href="RawCommandPacks.html" class="extype" name="com.avsystem.commons.redis.RawCommandPacks">RawCommandPacks</a></dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -1625,12 +1659,15 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="name">transaction</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]</span>
       </span>
       
-      <p class="shortcomment cmt">Ensures that this batch is executed inside a <code>MULTI</code>-<code>EXEC</code> block.</p><div class="fullcomment"><div class="comment cmt"><p>Ensures that this batch is executed inside a <code>MULTI</code>-<code>EXEC</code> block.
+      <p class="shortcomment cmt">Wraps this batch into a Redis transaction, i.e.</p><div class="fullcomment"><div class="comment cmt"><p>Wraps this batch into a Redis transaction, i.e. ensures that it's executed inside a <code>MULTI</code>-<code>EXEC</code> block.
+NOTE: If you simply want to ensure atomicity, use <a href="RedisBatch.html#atomic:com.avsystem.commons.redis.RedisBatch[A]" class="extmbr" name="com.avsystem.commons.redis.RedisBatch#atomic">atomic</a>.
+NOTE: You can safely nest transactions, the driver will make sure that
+there are no nested <code>MULTI</code>-<code>EXEC</code> blocks on the wire.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#transform" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="transform[B](fun:scala.util.Try[A]=&gt;scala.util.Try[B]):com.avsystem.commons.redis.RedisBatch[B]"></a><a id="transform[B]((Try[A])⇒Try[B]):RedisBatch[B]"></a>
+      <a id="transform[B](fun:com.avsystem.commons.Try[A]=&gt;com.avsystem.commons.Try[B]):com.avsystem.commons.redis.RedisBatch[B]"></a><a id="transform[B]((commons.Try[A])⇒commons.Try[B]):RedisBatch[B]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#transform[B](fun:scala.util.Try[A]=&gt;scala.util.Try[B]):com.avsystem.commons.redis.RedisBatch[B]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#transform[B](fun:com.avsystem.commons.Try[A]=&gt;com.avsystem.commons.Try[B]):com.avsystem.commons.redis.RedisBatch[B]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1639,14 +1676,14 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">transform</span><span class="tparams">[<span name="B">B</span>]</span><span class="params">(<span name="fun">fun: (<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.util.Try" class="extype" target="_top">Try</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]) ⇒ <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.util.Try" class="extype" target="_top">Try</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.transform.B">B</span>]</span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.transform.B">B</span>]</span>
+        <span class="name">transform</span><span class="tparams">[<span name="B">B</span>]</span><span class="params">(<span name="fun">fun: (<a href="../index.html#Try[+T]=scala.util.Try[T]" class="extmbr" name="com.avsystem.commons.Try">commons.Try</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]) ⇒ <a href="../index.html#Try[+T]=scala.util.Try[T]" class="extmbr" name="com.avsystem.commons.Try">commons.Try</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.transform.B">B</span>]</span>)</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.RedisBatch.transform.B">B</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#tried" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="tried:com.avsystem.commons.redis.RedisBatch[scala.util.Try[A]]"></a><a id="tried:RedisBatch[Try[A]]"></a>
+      <a id="tried:com.avsystem.commons.redis.RedisBatch[com.avsystem.commons.Try[A]]"></a><a id="tried:RedisBatch[commons.Try[A]]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#tried:com.avsystem.commons.redis.RedisBatch[scala.util.Try[A]]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#tried:com.avsystem.commons.redis.RedisBatch[com.avsystem.commons.Try[A]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1655,7 +1692,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">tried</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.util.Try" class="extype" target="_top">Try</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]]</span>
+        <span class="name">tried</span><span class="result">: <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<a href="../index.html#Try[+T]=scala.util.Try[T]" class="extmbr" name="com.avsystem.commons.Try">commons.Try</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a></dd></dl></div>
@@ -1671,7 +1708,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">updateWatchState</span><span class="params">(<span name="message">message: <a href="protocol/RedisMsg.html" class="extype" name="com.avsystem.commons.redis.protocol.RedisMsg">RedisMsg</a></span>, <span name="state">state: <a href="WatchState.html" class="extype" name="com.avsystem.commons.redis.WatchState">WatchState</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">updateWatchState</span><span class="params">(<span name="message">message: <a href="protocol/RedisMsg.html" class="extype" name="com.avsystem.commons.redis.protocol.RedisMsg">RedisMsg</a></span>, <span name="state">state: <a href="WatchState.html" class="extype" name="com.avsystem.commons.redis.WatchState">WatchState</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RawCommand.html" class="extype" name="com.avsystem.commons.redis.RawCommand">RawCommand</a></dd></dl></div>
@@ -1687,7 +1724,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1709,7 +1746,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1731,7 +1768,7 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1741,6 +1778,22 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.RedisCommand#whenEmpty" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="whenEmpty(args:Iterable[Any],value:A):com.avsystem.commons.misc.Opt[A]"></a><a id="whenEmpty(Iterable[Any],A):misc.Opt[A]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/redis/AbstractRedisCommand.html#whenEmpty(args:Iterable[Any],value:A):com.avsystem.commons.misc.Opt[A]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">whenEmpty</span><span class="params">(<span name="args">args: <span class="extype" name="scala.Iterable">Iterable</span>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a>]</span>, <span name="value">value: <span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span></span>)</span><span class="result">: <a href="../misc/Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">misc.Opt</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[this] </dd><dt>Definition Classes</dt><dd><a href="RedisCommand.html" class="extype" name="com.avsystem.commons.redis.RedisCommand">RedisCommand</a></dd></dl></div>
     </li><li name="com.avsystem.commons.redis.RedisBatch#zip" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="zip[B](other:com.avsystem.commons.redis.RedisBatch[B]):com.avsystem.commons.redis.RedisBatch[(A,B)]"></a><a id="zip[B](RedisBatch[B]):RedisBatch[(A,B)]"></a>
       <span class="permalink">
@@ -1775,8 +1828,8 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
               <h3>Inherited from <a href="ReplyPreprocessor.html" class="extype" name="com.avsystem.commons.redis.ReplyPreprocessor">ReplyPreprocessor</a></h3>
             </div><div class="parent" name="com.avsystem.commons.redis.RawCommands">
               <h3>Inherited from <a href="RawCommands.html" class="extype" name="com.avsystem.commons.redis.RawCommands">RawCommands</a></h3>
-            </div><div class="parent" name="com.avsystem.commons.redis.AtomicBatch">
-              <h3>Inherited from <a href="AtomicBatch.html" class="extype" name="com.avsystem.commons.redis.AtomicBatch">AtomicBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]</h3>
+            </div><div class="parent" name="com.avsystem.commons.redis.SinglePackBatch">
+              <h3>Inherited from <a href="SinglePackBatch.html" class="extype" name="com.avsystem.commons.redis.SinglePackBatch">SinglePackBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]</h3>
             </div><div class="parent" name="com.avsystem.commons.redis.RawCommandPack">
               <h3>Inherited from <a href="RawCommandPack.html" class="extype" name="com.avsystem.commons.redis.RawCommandPack">RawCommandPack</a></h3>
             </div><div class="parent" name="com.avsystem.commons.redis.RawCommandPacks">
@@ -1784,9 +1837,9 @@ result of the merged batch. <code>map2</code> is the fundamental primitive for c
             </div><div class="parent" name="com.avsystem.commons.redis.RedisBatch">
               <h3>Inherited from <a href="RedisBatch.html" class="extype" name="com.avsystem.commons.redis.RedisBatch">RedisBatch</a>[<span class="extype" name="com.avsystem.commons.redis.AbstractRedisCommand.A">A</span>]</h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.1/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
             </div>
         
         </div>
