@@ -48,7 +48,6 @@ Missing features:
 
 ```scala
 import akka.actor.ActorSystem
-import akka.util.Timeout
 import com.avsystem.commons.redis._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -56,7 +55,6 @@ import scala.concurrent.duration._
 import scala.util._
 
 implicit val actorSystem = ActorSystem()
-implicit val timeout: Timeout = 10.seconds
 val client = new RedisNodeClient
 val api = RedisApi.Node.Async.StringTyped(client)
 
