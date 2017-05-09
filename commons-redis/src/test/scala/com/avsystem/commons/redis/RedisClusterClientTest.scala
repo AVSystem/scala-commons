@@ -1,9 +1,8 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.Timeout
 import com.avsystem.commons.redis.commands.ShutdownModifier
-import com.avsystem.commons.redis.config.{ClusterConfig, ConnectionConfig, NodeConfig}
+import com.avsystem.commons.redis.config.{ClusterConfig, ConnectionConfig, ExecutionConfig, NodeConfig}
 import com.avsystem.commons.redis.exception.{ClusterInitializationException, CrossSlotException, ForbiddenCommandException, NoKeysException}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
@@ -83,7 +82,6 @@ class RedisClusterClientInitDuringFailureTest extends FunSuite
   import RedisApi.Batches.StringTyped._
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(Span(120, Seconds), Span(1, Seconds))
-  override implicit val timeout: Timeout = 120.seconds
 
   def createClient(ports: Int*) = new RedisClusterClient(ports.map(p => NodeAddress(port = p)))
 
@@ -93,7 +91,7 @@ class RedisClusterClientInitDuringFailureTest extends FunSuite
 
     val client = createClient(ports.head, ports.head + 1)
     client.initialized.futureValue shouldBe client
-    client.executeBatch(get(slotKey(0))).futureValue shouldBe Opt.Empty
+    client.executeBatch(get(slotKey(0)), ExecutionConfig(timeout = 120.seconds)).futureValue shouldBe Opt.Empty
   }
 }
 

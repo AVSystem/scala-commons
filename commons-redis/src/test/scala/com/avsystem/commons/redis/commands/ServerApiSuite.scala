@@ -2,6 +2,7 @@ package com.avsystem.commons
 package redis.commands
 
 import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.exception.ErrorReplyException
 
 import scala.concurrent.duration._
 
@@ -93,7 +94,10 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
 
   apiTest("SAVE") {
     waitForPersistence()
-    save.get
+    try save.get catch {
+      // ignore spurious Redis failures
+      case e: ErrorReplyException if e.getMessage == "ERR Background save already in progress" =>
+    }
   }
 
   apiTest("SLAVEOF") {

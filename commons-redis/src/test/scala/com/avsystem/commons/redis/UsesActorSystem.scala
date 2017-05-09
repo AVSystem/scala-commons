@@ -17,7 +17,6 @@ import scala.concurrent.duration._
 trait UsesActorSystem extends BeforeAndAfterAll with PatienceConfiguration { this: Suite =>
   implicit lazy val actorSystem: ActorSystem = ActorSystem()
   implicit def executionContext: ExecutionContext = actorSystem.dispatcher
-  implicit val timeout = Timeout(10.seconds)
 
   override implicit def patienceConfig =
     PatienceConfig(scaled(Span(10, Seconds)), scaled(Span(10, Milliseconds)))
