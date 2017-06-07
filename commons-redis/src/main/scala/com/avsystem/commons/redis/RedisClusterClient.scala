@@ -257,7 +257,7 @@ final class RedisClusterClient(
       val currentState = state
       currentState.nonClustered match {
         case Opt(client) =>
-          client.executeBatch(batch)
+          client.executeBatch(batch, config)
         case Opt.Empty =>
           val packs = batch.rawCommandPacks
           val undecodedResult = packs.computeSize(2) match {
