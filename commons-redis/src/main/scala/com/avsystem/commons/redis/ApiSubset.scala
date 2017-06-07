@@ -1,14 +1,13 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.Timeout
 import com.avsystem.commons.redis.ApiSubset.{HeadOps, IterableTailOps, IteratorTailOps}
 import com.avsystem.commons.redis.commands._
 import com.avsystem.commons.redis.config.ExecutionConfig
 import com.avsystem.commons.redis.util.{HeadIterable, HeadIterator, SingletonSeq}
 
 import scala.concurrent.Await
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration._
 
 trait ApiSubset { self =>
   /**
@@ -91,7 +90,9 @@ trait RedisAsyncApi extends RedisExecutedApi {
 
 trait RedisBlockingApi extends RedisExecutedApi {
   type Result[A] = A
-  def execute[A](command: RedisCommand[A]) = Await.result(executeAsync(command), Duration.Inf)
+  def execute[A](command: RedisCommand[A]) =
+  // executeAsync should already handle timeouts, but just to be safe let's pass the standard timeout plus one second
+    Await.result(executeAsync(command), execConfig.timeout.duration + 1.second)
   def recoverWith[A](executed: => A)(fun: PartialFunction[Throwable, A]) =
     try executed catch fun
 }
