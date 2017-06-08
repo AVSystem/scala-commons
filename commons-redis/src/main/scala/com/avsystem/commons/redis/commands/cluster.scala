@@ -166,7 +166,7 @@ trait NodeClusterApi extends KeyedClusterApi {
     val encoded = encoder("CLUSTER", "SETSLOT").add(slot).add(subcommand).result
   }
 
-  private final class ClusterSlaves(nodeId: NodeId) extends AbstractRedisCommand[Seq[NodeInfo]](bulkNodeInfos) with NodeCommand {
+  private final class ClusterSlaves(nodeId: NodeId) extends AbstractRedisCommand[Seq[NodeInfo]](multiBulkNodeInfos) with NodeCommand {
     val encoded = encoder("CLUSTER", "SLAVES").add(nodeId.raw).result
   }
 

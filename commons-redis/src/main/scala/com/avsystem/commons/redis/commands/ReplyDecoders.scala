@@ -93,6 +93,12 @@ object ReplyDecoders {
       nodeInfos.utf8String.split("\n").iterator.filter(_.nonEmpty).map(NodeInfo).toIndexedSeq
   }
 
+  val bulkNodeInfo: ReplyDecoder[NodeInfo] =
+    bulk(bs => NodeInfo(bs.utf8String))
+
+  val multiBulkNodeInfos: ReplyDecoder[Seq[NodeInfo]] =
+    multiBulkSeq(bulkNodeInfo)
+
   val bulkCursor: ReplyDecoder[Cursor] = {
     case BulkStringMsg(data) => Cursor(data.utf8String.toLong)
   }

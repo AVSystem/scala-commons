@@ -85,7 +85,7 @@ trait CommandsSuite extends FunSuite with ScalaFutures with Matchers with UsesAc
 }
 
 abstract class RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
-  def executor = redisClient
+  def executor: RedisKeyedExecutor = redisClient
 
   override def clusterConfig =
     super.clusterConfig |> { cc =>
