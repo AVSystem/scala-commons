@@ -22,8 +22,8 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   val ArgListsCls = tq"$ListCls[$ListCls[$RawValueCls]]"
   val RealInvocationHandlerCls = tq"$FrameworkObj.RealInvocationHandler"
   val RawInvocationHandlerCls = tq"$FrameworkObj.RawInvocationHandler"
-  val RPCMetadataObj = q"$RpcPackage.RPCMetadata"
-  val RPCMetadataCls = tq"$RpcPackage.RPCMetadata"
+  val RPCMetadataObj = q"$FrameworkObj.RPCMetadata"
+  val RPCMetadataCls = tq"$FrameworkObj.RPCMetadata"
 
   lazy val RPCFrameworkType = getType(tq"$RpcPackage.RPCFramework")
   lazy val RPCNameType = getType(tq"$RpcPackage.RPCName")
@@ -209,7 +209,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val ftpe = weakTypeOf[F]
     val frameworkObj = singleValueFor(ftpe).getOrElse(abort(s"Could not find singleton value for $ftpe"))
     val tpe = weakTypeOf[T]
-    q"$AllRPCTypeClassesObj[$ftpe,$tpe]($frameworkObj.materializeAsReal[$tpe], $frameworkObj.materializeAsRaw[$tpe], $RPCMetadataObj.materialize[$tpe])"
+    q"$AllRPCTypeClassesObj[$ftpe,$tpe]($frameworkObj.materializeAsReal[$tpe], $frameworkObj.materializeAsRaw[$tpe], $frameworkObj.materializeMetadata[$tpe])"
   }
 
   def isRPC[T: c.WeakTypeTag]: Tree = {
@@ -243,11 +243,11 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       }
 
       def reifyParamMetadata(s: Symbol) =
-        q"$RpcPackage.ParamMetadata(${s.name.decodedName.toString}, ${reifyAnnotations(s)})"
+        q"$FrameworkObj.ParamMetadata(${s.name.decodedName.toString}, ${reifyAnnotations(s)}, implicitly[$FrameworkObj.ParamTypeMetadata[${s.typeSignature}]])"
 
       def reifySignature(ms: MethodSymbol) =
         q"""
-          $RpcPackage.Signature(
+          $FrameworkObj.Signature(
             ${ms.name.decodedName.toString},
             $ListObj(..${ms.paramLists.map(ps => q"$ListObj(..${ps.map(reifyParamMetadata)})")}),
             ${reifyAnnotations(ms)}

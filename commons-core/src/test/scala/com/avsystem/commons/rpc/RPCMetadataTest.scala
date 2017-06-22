@@ -1,8 +1,8 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.rpc.DummyRPC._
 import org.scalatest.FunSuite
-
 
 class RPCMetadataTest extends FunSuite {
   case class Annot(str: String) extends MetadataAnnotation
@@ -36,7 +36,7 @@ class RPCMetadataTest extends FunSuite {
     assert(metadata.signatures.keySet == Set("proc", "function", "getter", "selfGetter"))
 
     assert(metadata.signatures("proc") == Signature("proc", List(List(
-      ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")))
+      ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")), ParamTypeMetadata)
     )), List(Annot("on submethod"), Annot("on base method"))))
 
     assert(metadata.signatures("function") == Signature("func", Nil, Nil))
@@ -48,7 +48,7 @@ class RPCMetadataTest extends FunSuite {
     assert(resultMetadata.signatures.keySet == Set("proc", "function"))
 
     assert(resultMetadata.signatures("proc") == Signature("proc", List(List(
-    ParamMetadata("p", List(Annot("on base param")))
+      ParamMetadata("p", List(Annot("on base param")), ParamTypeMetadata)
     )), List(Annot("on base method"))))
 
     assert(resultMetadata.signatures("function") == Signature("func", Nil, Nil))

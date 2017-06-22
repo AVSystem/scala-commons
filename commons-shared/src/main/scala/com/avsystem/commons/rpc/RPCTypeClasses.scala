@@ -11,10 +11,10 @@ package rpc
 abstract class RPCTypeClasses[F <: RPCFramework with Singleton, T](implicit fullRPCMetadata: AllRPCTypeClasses[F, T]) {
   implicit val asRawRPC: F#AsRawRPC[T] = fullRPCMetadata.asRawRPC
   implicit val asRealRPC: F#AsRealRPC[T] = fullRPCMetadata.asRealRPC
-  implicit val rpcMetadata: RPCMetadata[T] = fullRPCMetadata.metadata
+  implicit val rpcMetadata: F#RPCMetadata[T] = fullRPCMetadata.metadata
 }
 
-case class AllRPCTypeClasses[F <: RPCFramework with Singleton, T](asRealRPC: F#AsRealRPC[T], asRawRPC: F#AsRawRPC[T], metadata: RPCMetadata[T])
+case class AllRPCTypeClasses[F <: RPCFramework with Singleton, T](asRealRPC: F#AsRealRPC[T], asRawRPC: F#AsRawRPC[T], metadata: F#RPCMetadata[T])
 object AllRPCTypeClasses {
   implicit def materialize[F <: RPCFramework with Singleton, T]: AllRPCTypeClasses[F, T] = macro macros.rpc.RPCMacros.allRpcTypeClassesImpl[F, T]
 }

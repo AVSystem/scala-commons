@@ -14,6 +14,12 @@ trait RPCFramework {
   def read[T: Reader](raw: RawValue): T
   def write[T: Writer](value: T): RawValue
 
+  type ParamTypeMetadata[T]
+
+  object RPCMetadata {
+    def apply[T](implicit metadata: RPCMetadata[T]): RPCMetadata[T] = metadata
+  }
+
   @implicitNotFound("This RPC framework doesn't support RPC methods that return ${Real} " +
     "or some implicit dependencies may be missing (e.g. Writer[A] when result type is Future[A])")
   trait RealInvocationHandler[Real, Raw] {
@@ -79,4 +85,22 @@ trait RPCFramework {
 
   /** INTERNAL API */
   def tryToRaw[Real, Raw](real: Real, onFailure: Nothing): Raw = macro macros.rpc.RPCMacros.tryToRaw[Real, Raw]
+
+  trait RPCMetadata[T] {
+    def name: String
+    def annotations: List[MetadataAnnotation]
+    def signatures: Map[String, Signature]
+    def getterResults: Map[String, RPCMetadata[_]]
+  }
+
+  case class Signature(
+    methodName: String,
+    paramMetadata: List[List[ParamMetadata]],
+    annotations: List[MetadataAnnotation]
+  )
+
+  case class ParamMetadata(name: String, annotations: List[MetadataAnnotation], typeMetadata: ParamTypeMetadata[_])
+
+  implicit def implicitlyMaterializeMetadata[T]: RPCMetadata[T] = macro macros.rpc.RPCMacros.materializeMetadata[T]
+  def materializeMetadata[T]: RPCMetadata[T] = macro macros.rpc.RPCMacros.materializeMetadata[T]
 }
