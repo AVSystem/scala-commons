@@ -242,8 +242,19 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         q"$ListObj(..$trees)"
       }
 
+      def reifyParamType(s: Symbol) =
+        if (s.typeSignature =:= typeOf[Double]) q"$RpcPackage.ParamMetadata.DoubleType"
+        else if (s.typeSignature =:= typeOf[Float]) q"$RpcPackage.ParamMetadata.FloatType"
+        else if (s.typeSignature =:= typeOf[Long]) q"$RpcPackage.ParamMetadata.LongType"
+        else if (s.typeSignature =:= typeOf[Int]) q"$RpcPackage.ParamMetadata.IntType"
+        else if (s.typeSignature =:= typeOf[Char]) q"$RpcPackage.ParamMetadata.CharType"
+        else if (s.typeSignature =:= typeOf[Short]) q"$RpcPackage.ParamMetadata.ShortType"
+        else if (s.typeSignature =:= typeOf[Byte]) q"$RpcPackage.ParamMetadata.ByteType"
+        else if (s.typeSignature =:= typeOf[String]) q"$RpcPackage.ParamMetadata.StringType"
+        else q"$RpcPackage.ParamMetadata.ObjectType"
+
       def reifyParamMetadata(s: Symbol) =
-        q"$RpcPackage.ParamMetadata(${s.name.decodedName.toString}, ${reifyAnnotations(s)})"
+        q"$RpcPackage.ParamMetadata(${s.name.decodedName.toString}, ${reifyParamType(s)}, ${reifyAnnotations(s)})"
 
       def reifySignature(ms: MethodSymbol) =
         q"""
