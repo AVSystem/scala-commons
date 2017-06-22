@@ -20,4 +20,17 @@ case class Signature(
   annotations: List[MetadataAnnotation]
 )
 
-case class ParamMetadata(name: String, annotations: List[MetadataAnnotation])
+case class ParamMetadata(name: String, tpe: ParamMetadata.SimplifiedType, annotations: List[MetadataAnnotation])
+
+object ParamMetadata {
+  sealed trait SimplifiedType
+  case object DoubleType extends SimplifiedType
+  case object FloatType extends SimplifiedType
+  case object LongType extends SimplifiedType
+  case object IntType extends SimplifiedType
+  case object CharType extends SimplifiedType
+  case object ShortType extends SimplifiedType
+  case object ByteType extends SimplifiedType
+  case object StringType extends SimplifiedType
+  case object ObjectType extends SimplifiedType
+}
