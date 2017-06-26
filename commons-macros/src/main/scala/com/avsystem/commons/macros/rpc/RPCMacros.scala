@@ -245,12 +245,12 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       def reifyParamMetadata(s: Symbol) =
         q"$FrameworkObj.ParamMetadata(${s.name.decodedName.toString}, ${reifyAnnotations(s)}, implicitly[$FrameworkObj.ParamTypeMetadata[${s.typeSignature}]])"
 
-      def reifySignature(ms: MethodSymbol) =
+      def reifySignature(pm: ProxyableMember) =
         q"""
           $FrameworkObj.Signature(
-            ${ms.name.decodedName.toString},
-            $ListObj(..${ms.paramLists.map(ps => q"$ListObj(..${ps.map(reifyParamMetadata)})")}),
-            ${reifyAnnotations(ms)}
+            ${pm.method.name.decodedName.toString},
+            $ListObj(..${pm.paramLists.map(ps => q"$ListObj(..${ps.map(reifyParamMetadata)})")}),
+            ${reifyAnnotations(pm.method)}
           )
          """
 
@@ -260,7 +260,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
           def name = ${rpcTpe.typeSymbol.name.decodedName.toString}
           lazy val annotations = ${reifyAnnotations(rpcTpe.typeSymbol)}
-          lazy val signatures = $MapObj(..${proxyables.map(pm => q"${pm.rpcNameString} -> ${reifySignature(pm.method)}")})
+          lazy val signatures = $MapObj(..${proxyables.map(pm => q"${pm.rpcNameString} -> ${reifySignature(pm)}")})
           lazy val getterResults = $MapObj[String,$RPCMetadataCls[_]](
             ..${proxyables.filter(pm => hasRpcAnnot(pm.returnType)).map(pm => q"${pm.rpcNameString} -> implicitly[$RPCMetadataCls[${pm.returnType}]]")}
           )

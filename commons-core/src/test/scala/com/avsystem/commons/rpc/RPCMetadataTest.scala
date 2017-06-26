@@ -9,7 +9,9 @@ class RPCMetadataTest extends FunSuite {
 
   @RPC
   @Annot("on base class")
-  trait Base {
+  trait Base[T] {
+    def genproc(p: T): Unit
+
     @Annot("on base method")
     def proc(@Annot("on base param") p: String): Unit
 
@@ -18,11 +20,11 @@ class RPCMetadataTest extends FunSuite {
   }
 
   @Annot("on subclass")
-  trait Sub extends Base {
+  trait Sub extends Base[String] {
     @Annot("on submethod")
     def proc(@Annot("on subparam") param: String): Unit
 
-    def getter(i: Int)(s: String): Base
+    def getter(i: Int)(s: String): Base[String]
 
     def selfGetter: Sub
   }
@@ -33,11 +35,15 @@ class RPCMetadataTest extends FunSuite {
     assert(metadata.name == "Sub")
     assert(metadata.annotations == List(Annot("on subclass"), Annot("on base class")))
 
-    assert(metadata.signatures.keySet == Set("proc", "function", "getter", "selfGetter"))
+    assert(metadata.signatures.keySet == Set("proc", "genproc", "function", "getter", "selfGetter"))
 
     assert(metadata.signatures("proc") == Signature("proc", List(List(
-      ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")), ParamTypeMetadata)
+      ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")), TypeName("String"))
     )), List(Annot("on submethod"), Annot("on base method"))))
+
+    assert(metadata.signatures("genproc") == Signature("genproc", List(List(
+      ParamMetadata("p", Nil, TypeName("String"))
+    )), Nil))
 
     assert(metadata.signatures("function") == Signature("func", Nil, Nil))
 
@@ -45,11 +51,15 @@ class RPCMetadataTest extends FunSuite {
     assert(resultMetadata.name == "Base")
     assert(resultMetadata.annotations == List(Annot("on base class")))
 
-    assert(resultMetadata.signatures.keySet == Set("proc", "function"))
+    assert(resultMetadata.signatures.keySet == Set("proc", "genproc", "function"))
 
     assert(resultMetadata.signatures("proc") == Signature("proc", List(List(
-      ParamMetadata("p", List(Annot("on base param")), ParamTypeMetadata)
+      ParamMetadata("p", List(Annot("on base param")), TypeName("String"))
     )), List(Annot("on base method"))))
+
+    assert(metadata.signatures("genproc") == Signature("genproc", List(List(
+      ParamMetadata("p", Nil, TypeName("String"))
+    )), Nil))
 
     assert(resultMetadata.signatures("function") == Signature("func", Nil, Nil))
   }

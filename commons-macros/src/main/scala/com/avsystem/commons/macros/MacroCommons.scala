@@ -50,8 +50,8 @@ trait MacroCommons {
     case ms: MethodSymbol => ms :: ms.overrides
     case ps: TermSymbol if ps.isParameter && ps.owner.isMethod =>
       val oms = ps.owner.asMethod
-      val paramListIdx = oms.paramLists.indexWhere(_.contains(ps))
-      val paramIdx = oms.paramLists(paramListIdx).indexOf(ps)
+      val paramListIdx = oms.paramLists.indexWhere(_.exists(_.name == ps.name))
+      val paramIdx = oms.paramLists(paramListIdx).indexWhere(_.name == ps.name)
       superSymbols(oms).map(_.asMethod.paramLists(paramListIdx)(paramIdx))
     case _ => List(s)
   }
@@ -325,7 +325,7 @@ trait MacroCommons {
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] = {
     val companionSym = tpe.typeSymbol.companion
-    if(companionSym != NoSymbol && !companionSym.isJava)
+    if (companionSym != NoSymbol && !companionSym.isJava)
       applyUnapplyFor(tpe, c.typecheck(Ident(companionSym)))
     else
       None
