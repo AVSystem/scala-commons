@@ -8,6 +8,7 @@ object JsonJettyRPCFramework extends JettyRPCFramework {
   type RawValue = Js.Value
   type Reader[T] = GenCodec[T]
   type Writer[T] = GenCodec[T]
+  type ParamTypeMetadata[T] = ClassTag[T]
 
   def valueToJson(value: RawValue) = upickle.json.write(value)
   def jsonToValue(json: String) = upickle.json.read(json)
