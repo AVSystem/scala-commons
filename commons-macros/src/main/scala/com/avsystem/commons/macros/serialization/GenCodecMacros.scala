@@ -9,11 +9,6 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   import c.universe._
 
-  val TransparentAnnotType = getType(tq"$SerializationPkg.transparent")
-  val TransientDefaultAnnotType = getType(tq"$SerializationPkg.transientDefault")
-  val GenCodecObj = q"$SerializationPkg.GenCodec"
-  val GenCodecCls = tq"$SerializationPkg.GenCodec"
-
   def mkTupleCodec[T: c.WeakTypeTag](elementCodecs: c.Tree*): c.Tree = {
     val tupleTpe = weakTypeOf[T]
     val indices = elementCodecs.indices
@@ -36,9 +31,6 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   def forSingleton(tpe: Type, singleValueTree: Tree): Tree =
     q"new $GenCodecObj.SingletonCodec[$tpe]($singleValueTree)"
-
-  def isTransparent(sym: Symbol): Boolean =
-    getAnnotations(sym, TransparentAnnotType).nonEmpty
 
   def isTransientDefault(param: ApplyParam): Boolean =
     param.defaultValue.nonEmpty && param.sym.annotations.exists(_.tree.tpe <:< TransientDefaultAnnotType)

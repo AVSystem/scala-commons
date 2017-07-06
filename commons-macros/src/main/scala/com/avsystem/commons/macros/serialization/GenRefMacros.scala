@@ -42,13 +42,18 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
           if (body.symbol.isTerm && body.symbol.asTerm.isCaseAccessor &&
             !definitions.TupleClass.seq.contains(prefix.tpe.typeSymbol)) {
 
-            val constrArg = alternatives(prefix.tpe.member(termNames.CONSTRUCTOR))
+            val primaryConstructorParams = alternatives(prefix.tpe.member(termNames.CONSTRUCTOR))
               .find(_.asMethod.isPrimaryConstructor)
               .getOrElse(abort(s"No primary constructor found for ${prefix.tpe}"))
-              .typeSignature.paramLists.head.find(_.name == body.symbol.name)
-              .getOrElse(abort(s"No primary constructor parameter ${body.symbol.name} found"))
+              .typeSignature.paramLists.head
 
-            refs ::= q"$SerializationPkg.RawRef.Field(${annotName(constrArg)})"
+            if (primaryConstructorParams.size != 1 || !isTransparent(prefix.tpe.typeSymbol)) {
+              val constrArg = primaryConstructorParams.find(_.name == body.symbol.name)
+                .getOrElse(abort(s"No primary constructor parameter ${body.symbol.name} found"))
+
+              refs ::= q"$SerializationPkg.RawRef.Field(${annotName(constrArg)})"
+            }
+
             extract(prefix)
           } else {
             c.abort(body.pos, s"${body.symbol} is not a case class field accessor")

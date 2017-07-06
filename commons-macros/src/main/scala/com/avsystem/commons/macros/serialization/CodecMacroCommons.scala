@@ -18,6 +18,10 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   val BMapCls = tq"$CollectionPkg.Map"
   val NOptObj = q"$CommonsPackage.misc.NOpt"
   val NOptCls = tq"$CommonsPackage.misc.NOpt"
+  val TransparentAnnotType = getType(tq"$SerializationPkg.transparent")
+  val TransientDefaultAnnotType = getType(tq"$SerializationPkg.transientDefault")
+  val GenCodecObj = q"$SerializationPkg.GenCodec"
+  val GenCodecCls = tq"$SerializationPkg.GenCodec"
 
   def tupleGet(i: Int) = TermName(s"_${i + 1}")
 
@@ -33,4 +37,7 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
       else sym :: sym.overrides
     syms.flatMap(_.annotations).filter(_.tree.tpe <:< annotTpe)
   }
+
+  def isTransparent(sym: Symbol): Boolean =
+    getAnnotations(sym, TransparentAnnotType).nonEmpty
 }
