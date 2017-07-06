@@ -15,16 +15,23 @@ sealed trait RawRef {
 }
 
 sealed trait SimpleRawRef extends RawRef
+
 object RawRef {
   case class Field(name: String) extends SimpleRawRef
   case class Composite(left: RawRef, right: RawRef) extends RawRef
   case object Identity extends RawRef
 
+  implicit val codec: GenCodec[RawRef] = GenCodec.materialize[RawRef]
+
   def apply[S]: Creator[S] = new Creator[S]
 
   final class Creator[S] {
-    def apply[T](fun: S => T): RawRef = macro macros.serialization.GenRefMacros.rawRef[S, T]
+    def apply[T](fun: S => T): RawRef = macro macros.serialization.GenRefMacros.rawRef
   }
+}
+
+object SimpleRawRef {
+  implicit val codec: GenCodec[SimpleRawRef] = GenCodec.materialize[SimpleRawRef]
 }
 
 case class GenRef[-S, +T](fun: S => T, rawRef: RawRef) extends (S => T) {
@@ -42,11 +49,11 @@ object GenRef {
   def apply[S]: Creator[S] = new Creator[S]
 
   final class Creator[S] {
-    def apply[T](fun: S => T): GenRef[S, T] = macro macros.serialization.GenRefMacros.genRef[S, T]
+    def apply[T](fun: S => T): GenRef[S, T] = macro macros.serialization.GenRefMacros.genRef
   }
 
   trait Implicits {
-    implicit def fun2GenRef[S, T](fun: S => T): GenRef[S, T] = macro macros.serialization.GenRefMacros.genRef[S, T]
+    implicit def fun2GenRef[S, T](fun: S => T): GenRef[S, T] = macro macros.serialization.GenRefMacros.genRef
   }
   object Implicits extends Implicits
 }
