@@ -10,7 +10,7 @@ libraryDependencies += "com.avsystem.commons" %% "commons-redis" % avsCommonsVer
 
 ## Overview
 
-The module `commons-redis` contains from-the-scratch implementation of Scala driver for Redis. It's most important goals
+The module `commons-redis` contains from-the-scratch implementation of Scala driver for Redis. Its most important goals
 and characteristics are:
 * non-blocking network communication (based on Akka IO)
 * asynchronous API
@@ -107,16 +107,19 @@ there's `get` method for Redis `GET` command. However, the exact signature of th
 you are using. They can differ in following ways:
 
 * the subset of commands supported
+
   Some API objects are directly associated with client instances. Since different clients support different subsets
   of commands (e.g. [`RedisClusterClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisClusterClient.html) 
   can only execute keyed commands), this limitation is also reflected in methods
   available in API objects which use these clients.
 * method result types
+
   An API object might by asynchronous and return `Future`s but it may also be synchronous and return result of every
   method directly (without wrapping into a `Future`). There are also API variants which return command results as 
   "unexecuted" [`RedisBatch`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisBatch.html) 
   objects that need to be manually passed to the client for execution.
 * representation of keys, hash keys and values
+
   Redis internally stores keys, hash keys and data as arbitrary byte sequences, but on Scala level we don't usually want
   to deal with raw binary data. Therefore, the driver allows you to use any types as long as you specify how they are 
   serialized to binary form. Every API object is bound to particular key type, hash key type and value type.
