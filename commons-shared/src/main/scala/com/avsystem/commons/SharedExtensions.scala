@@ -124,6 +124,11 @@ object SharedExtensions extends SharedExtensions {
     def transformNow[S](s: A => S, f: Throwable => Throwable): Future[S] =
       fut.transform(s, f)(RunNowEC)
 
+    def wrapToTry: Future[Try[A]] =
+      fut.mapNow(Success(_)).recoverNow {
+        case NonFatal(t) => Failure(t)
+      }
+
     /**
       * Maps a `Future` using [[concurrent.RunNowEC RunNowEC]].
       */
