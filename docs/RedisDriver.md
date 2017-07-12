@@ -95,7 +95,7 @@ AVSystem Redis driver comes with three client types.
   commands available in the driver except for the ones which change connection state. When connections are lost, they are
   automatically reconnected, using an exponential backoff procedure (each consecutive reconnection attempt is appropriately
   delayed to avoid too many reconnection attempts when node is down).
-* [`RedisClusterClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisClusterClient.html) connects to a Redis Cluster deployment. It uses dynamically allocated [`RedisConnectionClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisNodeClient.html) instances
+* [`RedisClusterClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisClusterClient.html) connects to a Redis Cluster deployment. It uses dynamically allocated [`RedisNodeClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisNodeClient.html) instances
   for every cluster master known at given moment. Cluster state is monitored with separate monitoring connections.
   Cluster client can only execute commands which contain keys. It automatically dispatches every command to appropriate
   master. It is also possible to gain direct access to individual master node clients.
