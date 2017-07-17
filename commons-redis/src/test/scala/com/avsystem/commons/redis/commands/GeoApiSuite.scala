@@ -50,7 +50,7 @@ trait GeoApiSuite extends CommandsSuite {
       Opt.Empty,
       Opt.Empty
     ).map(_.map(GeoHash)))
-    geohash(OtherKey, Cities.keys.toList).assertEquals(Nil)
+    geohash(OtherKey, Cities.keys.toList).assertEquals(List.fill(Cities.size)(Opt.Empty))
   }
 
   apiTest("GEOPOS") {
@@ -63,7 +63,7 @@ trait GeoApiSuite extends CommandsSuite {
       Opt.Empty,
       Opt.Empty
     ))
-    geopos(OtherKey, Cities.keys.toList).assertEquals(Nil)
+    geopos(OtherKey, Cities.keys.toList).assertEquals(List.fill(Cities.size)(Opt.Empty))
   }
 
   apiTest("GEODIST") {

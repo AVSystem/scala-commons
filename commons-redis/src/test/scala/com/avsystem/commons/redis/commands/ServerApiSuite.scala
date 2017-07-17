@@ -51,7 +51,8 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
   }
 
   apiTest("COMMAND INFO") {
-    commandInfo("mget").assertEquals(CommandInfo("mget", CommandArity(2, more = true), CommandFlags.Readonly, 1, -1, 1))
+    commandInfo("mget").assertEquals(CommandInfo("mget", CommandArity(2, more = true),
+      CommandFlags.Readonly | CommandFlags.Fast, 1, -1, 1))
   }
 
   apiTest("CONFIG GET") {

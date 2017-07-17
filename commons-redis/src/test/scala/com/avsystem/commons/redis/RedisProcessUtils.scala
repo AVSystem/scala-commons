@@ -32,7 +32,7 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
           nodeId = NodeId(rawNodeId).opt
         case _ =>
       }
-      if (line.contains("* The server is now ready to accept connections on port")) {
+      if (line.contains("* Ready to accept connections")) {
         pid = line.split(":", 2).head.toInt
         promise.success(())
       }
