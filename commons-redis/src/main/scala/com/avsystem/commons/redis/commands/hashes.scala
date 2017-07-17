@@ -55,7 +55,14 @@ trait HashesApi extends ApiSubset {
     execute(new Hscan(key, cursor, matchPattern.toOpt, count.toOpt))
   /** Executes [[http://redis.io/commands/hset HSET]] */
   def hset(key: Key, field: HashKey, value: Value): Result[Boolean] =
-    execute(new Hset(key, field, value))
+    execute(new Hset(key, (field, value).single).map(_ > 0))
+  /** Executes [[http://redis.io/commands/hset HSET]] */
+  def hset(key: Key, fieldValue: (HashKey, Value), fieldValues: (HashKey, Value)*): Result[Int] =
+    execute(new Hset(key, fieldValue +:: fieldValues))
+  /** Executes [[http://redis.io/commands/hset HSET]]
+    * or does nothing when `fieldValues` is empty, without sending the command to Redis */
+  def hset(key: Key, fieldValues: Iterable[(HashKey, Value)]): Result[Int] =
+    execute(new Hset(key, fieldValues))
   /** Executes [[http://redis.io/commands/hsetnx HSETNX]] */
   def hsetnx(key: Key, field: HashKey, value: Value): Result[Boolean] =
     execute(new Hsetnx(key, field, value))
@@ -117,8 +124,9 @@ trait HashesApi extends ApiSubset {
     val encoded = encoder("HSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 
-  private final class Hset(key: Key, field: HashKey, value: Value) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("HSET").key(key).data(field).data(value).result
+  private final class Hset(key: Key, fieldValues: Iterable[(HashKey, Value)]) extends RedisIntCommand with NodeCommand {
+    val encoded = encoder("HSET").key(key).dataPairs(fieldValues).result
+    override def immediateResult = whenEmpty(fieldValues, 0)
   }
 
   private final class Hsetnx(key: Key, field: HashKey, value: Value) extends RedisBooleanCommand with NodeCommand {

@@ -86,8 +86,10 @@ trait HashesApiSuite extends CommandsSuite {
   }
 
   apiTest("HSET") {
+    hset("key", Nil).assertEquals(0)
     hset("key", "field", "value").assertEquals(true)
     hset("key", "field", "value").assertEquals(false)
+    hset("key", "field" -> "value", "f1" -> "v1", "f2" -> "v2").assertEquals(2)
   }
 
   apiTest("HSETNX") {

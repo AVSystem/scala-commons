@@ -159,7 +159,7 @@ final class ClusterMonitoringActor(
 }
 
 object ClusterMonitoringActor {
-  val StateRefresh: RedisBatch[(Seq[SlotRangeMapping[NodeAddress]], Seq[NodeInfo])] = {
+  val StateRefresh: RedisBatch[(Seq[SlotRangeMapping], Seq[NodeInfo])] = {
     val api = RedisApi.Batches.BinaryTyped
     api.clusterSlots zip api.clusterNodes
   }

@@ -29,8 +29,15 @@ trait ListsApi extends ApiSubset {
   def lpushOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
     if(values.nonEmpty) lpush(key, values) else llen(key)
   /** Executes [[http://redis.io/commands/lpushx LPUSHX]] */
-  def lpushx(key: Key, value: Value): Result[Long] =
-    execute(new Lpushx(key, value))
+  def lpushx(key: Key, value: Value, values: Value*): Result[Long] =
+    execute(new Lpushx(key, value +:: values))
+  /** Executes [[http://redis.io/commands/lpushx LPUSHX]] */
+  def lpushx(key: Key, values: Iterable[Value]): Result[Long] =
+    execute(new Lpushx(key, values))
+  /** Executes [[http://redis.io/commands/lpush LPUSHX]]
+    * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
+  def lpushxOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
+    if(values.nonEmpty) lpushx(key, values) else llen(key)
   /** Executes [[http://redis.io/commands/lrange LRANGE]] */
   def lrange(key: Key, start: Long = 0, stop: Long = -1): Result[Seq[Value]] =
     execute(new Lrange(key, start, stop))
@@ -61,8 +68,15 @@ trait ListsApi extends ApiSubset {
   def rpushOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
     if(values.nonEmpty) rpush(key, values) else llen(key)
   /** Executes [[http://redis.io/commands/rpushx RPUSHX]] */
-  def rpushx(key: Key, value: Value): Result[Long] =
-    execute(new Rpushx(key, value))
+  def rpushx(key: Key, value: Value, values: Value*): Result[Long] =
+    execute(new Rpushx(key, value +:: values))
+  /** Executes [[http://redis.io/commands/rpushx RPUSHX]] */
+  def rpushx(key: Key, values: Iterable[Value]): Result[Long] =
+    execute(new Rpushx(key, values))
+  /** Executes [[http://redis.io/commands/lpush RPUSHX]]
+    * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
+  def rpushxOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
+    if(values.nonEmpty) rpushx(key, values) else llen(key)
 
   private final class Lindex(key: Key, index: Long) extends RedisOptDataCommand[Value] with NodeCommand {
     val encoded = encoder("LINDEX").key(key).add(index).result
@@ -85,8 +99,8 @@ trait ListsApi extends ApiSubset {
     val encoded = encoder("LPUSH").key(key).datas(values).result
   }
 
-  private final class Lpushx(key: Key, value: Value) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("LPUSHX").key(key).data(value).result
+  private final class Lpushx(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {
+    val encoded = encoder("LPUSHX").key(key).datas(values).result
   }
 
   private final class Lrange(key: Key, start: Long, stop: Long)
@@ -118,8 +132,8 @@ trait ListsApi extends ApiSubset {
     val encoded = encoder("RPUSH").key(key).datas(values).result
   }
 
-  private final class Rpushx(key: Key, value: Value) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("RPUSHX").key(key).data(value).result
+  private final class Rpushx(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {
+    val encoded = encoder("RPUSHX").key(key).datas(values).result
   }
 }
 

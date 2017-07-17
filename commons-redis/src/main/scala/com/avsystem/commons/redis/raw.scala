@@ -36,11 +36,11 @@ trait RawCommand extends RawCommandPack with RawCommands with ReplyPreprocessor 
 
   override final def isAsking = false
 
-  protected final def encoder(commandName: String*): CommandEncoder = {
-    val res = new CommandEncoder(new ArrayBuffer)
-    res.add(commandName)
-    res
-  }
+  protected final def encoder(command: String): CommandEncoder =
+    new CommandEncoder(new ArrayBuffer).add(command)
+
+  protected final def encoder(command: String, subcommand: String): CommandEncoder =
+    new CommandEncoder(new ArrayBuffer).add(command).add(subcommand)
 }
 
 trait UnsafeCommand extends RawCommand {

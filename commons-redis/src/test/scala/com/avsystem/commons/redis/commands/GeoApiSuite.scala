@@ -111,6 +111,8 @@ trait GeoApiSuite extends CommandsSuite {
     setup(geoadd(Key, Cities.toList))
     georadius(Key, Lodz, 150, GeoUnit.Km)
       .assertEquals(List("Łódź", "Warszawa"))
+    georadius(Key, Lodz, 150, GeoUnit.Km, readOnly = true)
+      .assertEquals(List("Łódź", "Warszawa"))
     georadius(Key, Lodz, 300, GeoUnit.Km, sortOrder = SortOrder.Desc, count = 2L)
       .assertEquals(List("Gdańsk", "Kraków"))
     georadius(OtherKey, Lodz, 10, GeoUnit.Km).assertEquals(Nil)
@@ -140,6 +142,8 @@ trait GeoApiSuite extends CommandsSuite {
     setup(geoadd(Key, Cities.toList))
 
     georadiusbymember(Key, "Łódź", 150, GeoUnit.Km)
+      .assertEquals(List("Łódź", "Warszawa"))
+    georadiusbymember(Key, "Łódź", 150, GeoUnit.Km, readOnly = true)
       .assertEquals(List("Łódź", "Warszawa"))
     georadiusbymember(Key, "Łódź", 300, GeoUnit.Km, sortOrder = SortOrder.Desc, count = 2L)
       .assertEquals(List("Gdańsk", "Kraków"))

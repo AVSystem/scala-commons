@@ -205,12 +205,18 @@ object ReplyDecoders {
   }
 
   val multiBulkSlowlogEntry: ReplyDecoder[SlowlogEntry] = {
-    case ArrayMsg(IndexedSeq(IntegerMsg(id), IntegerMsg(timestamp), IntegerMsg(duration), ArrayMsg(rawCommand))) =>
+    case msg@ArrayMsg(IndexedSeq(IntegerMsg(id), IntegerMsg(timestamp), IntegerMsg(duration), ArrayMsg(rawCommand), rest@_*)) =>
       val commandArgs = rawCommand.map {
         case BulkStringMsg(arg) => arg
         case el => throw new UnexpectedReplyException(s"Unexpected message for SLOWLOG command argument: $el")
       }
-      SlowlogEntry(id, timestamp, duration, commandArgs)
+      val (clientAddr, clientName) = rest match {
+        case IndexedSeq(BulkStringMsg(addr)) => (ClientAddress(addr.utf8String).opt, Opt.Empty)
+        case IndexedSeq(BulkStringMsg(addr), NullBulkStringMsg, _*) => (ClientAddress(addr.utf8String).opt, Opt.Empty)
+        case IndexedSeq(BulkStringMsg(addr), BulkStringMsg(name), _*) => (ClientAddress(addr.utf8String).opt, name.utf8String.opt)
+        case _ => throw new UnexpectedReplyException(s"Unexpected message for SLOWLOG command argument: $msg")
+      }
+      SlowlogEntry(id, timestamp, duration, commandArgs, clientAddr, clientName)
   }
 
   val multiBulkRedisTimestamp: ReplyDecoder[RedisTimestamp] = {
@@ -218,16 +224,19 @@ object ReplyDecoders {
       RedisTimestamp(seconds.utf8String.toLong, useconds.utf8String.toLong)
   }
 
-  def multiBulkSlotRangeMapping[N](nodeFormat: SlotsNodeFormat[N]): ReplyDecoder[SlotRangeMapping[N]] = {
+  val multiBulkSlotRangeMapping: ReplyDecoder[SlotRangeMapping] = {
     case ArrayMsg(IndexedSeq(IntegerMsg(from), IntegerMsg(to), master, slaves@_*)) =>
       val range = SlotRange(from.toInt, to.toInt)
       def parseNode(rr: RedisMsg) = rr match {
-        case arr: ArrayMsg[RedisMsg] => nodeFormat.parseNode
-          .applyOrElse(arr, (_: ArrayMsg[RedisMsg]) => throw new UnexpectedReplyException(s"bad entry in CLUSTER SLOTS reply: $arr"))
-        case msg =>
+        case ArrayMsg(IndexedSeq(BulkStringMsg(ip), IntegerMsg(port), BulkStringMsg(nodeId), _*)) =>
+          (NodeAddress(ip.utf8String, port.toInt), NodeId(nodeId.utf8String).opt)
+        case ArrayMsg(IndexedSeq(BulkStringMsg(ip), IntegerMsg(port))) =>
+          (NodeAddress(ip.utf8String, port.toInt), Opt.Empty)
+        case _ =>
           throw new UnexpectedReplyException(s"bad entry in CLUSTER SLOTS reply: $rr")
       }
-      SlotRangeMapping(range, parseNode(master), slaves.map(parseNode))
+      val (masterAddr, masterId) = parseNode(master)
+      SlotRangeMapping(range, masterAddr, masterId, slaves.map(parseNode))
   }
 
   def groupedMultiBulk[T](size: Int, elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[Seq[T]]] = {

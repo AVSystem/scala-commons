@@ -69,11 +69,15 @@ trait NodeServerApi extends ApiSubset {
   def debugSegfault: Result[Nothing] =
     execute(DebugSegfault)
   /** Executes [[http://redis.io/commands/flushall FLUSHALL]] */
-  def flushall: Result[Unit] =
-    execute(Flushall)
+  def flushall: Result[Unit] = flushall()
+  /** Executes [[http://redis.io/commands/flushall FLUSHALL]] */
+  def flushall(async: Boolean = false): Result[Unit] =
+    execute(new Flushall(async))
   /** Executes [[http://redis.io/commands/flushdb FLUSHDB]] */
-  def flushdb: Result[Unit] =
-    execute(Flushdb)
+  def flushdb: Result[Unit] = flushdb()
+  /** Executes [[http://redis.io/commands/flushdb FLUSHDB]] */
+  def flushdb(async: Boolean = false): Result[Unit] =
+    execute(new Flushdb(async))
   /** Executes [[http://redis.io/commands/info INFO]] */
   def info: Result[DefaultRedisInfo] =
     execute(new Info(DefaultRedisInfo, implicitDefault = true))
@@ -192,12 +196,12 @@ trait NodeServerApi extends ApiSubset {
     val encoded = encoder("DEBUG", "SEGFAULT").result
   }
 
-  private object Flushall extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("FLUSHALL").result
+  private final class Flushall(async: Boolean) extends RedisUnitCommand with NodeCommand {
+    val encoded = encoder("FLUSHALL").addFlag("ASYNC", async).result
   }
 
-  private object Flushdb extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("FLUSHDB").result
+  private final class Flushdb(async: Boolean) extends RedisUnitCommand with NodeCommand {
+    val encoded = encoder("FLUSHDB").addFlag("ASYNC", async).result
   }
 
   private final class Info[T >: FullRedisInfo <: RedisInfo](section: RedisInfoSection[T], implicitDefault: Boolean)
@@ -527,6 +531,7 @@ object ShutdownModifier extends NamedEnumCompanion[ShutdownModifier] {
   val values: List[ShutdownModifier] = caseObjects
 }
 
-case class SlowlogEntry(id: Long, timestamp: Long, duration: Long, command: Seq[ByteString])
+case class SlowlogEntry(id: Long, timestamp: Long, duration: Long, command: Seq[ByteString],
+  clientAddress: Opt[ClientAddress] = Opt.Empty, clientName: Opt[String] = Opt.Empty)
 
 case class RedisTimestamp(seconds: Long, useconds: Long)

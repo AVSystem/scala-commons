@@ -89,11 +89,8 @@ trait NodeClusterApi extends KeyedClusterApi {
   def clusterSlaves(nodeId: NodeId): Result[Seq[NodeInfo]] =
     execute(new ClusterSlaves(nodeId))
   /** Executes [[http://redis.io/commands/cluster-slots CLUSTER SLOTS]] */
-  def clusterSlots: Result[Seq[SlotRangeMapping[NodeAddress]]] =
-    execute(new ClusterSlots(SlotsNodeFormat.OnlyAddress))
-  /** Executes [[http://redis.io/commands/cluster-slots CLUSTER SLOTS]] */
-  def clusterSlotsWithNodeIds: Result[Seq[SlotRangeMapping[(NodeAddress, NodeId)]]] =
-    execute(new ClusterSlots(SlotsNodeFormat.AddressAndNodeId))
+  def clusterSlots: Result[Seq[SlotRangeMapping]] =
+    execute(ClusterSlots)
 
   private final class ClusterAddslots(slots: Iterable[Int]) extends RedisUnitCommand with NodeCommand {
     val encoded = encoder("CLUSTER", "ADDSLOTS").add(slots).result
@@ -170,8 +167,8 @@ trait NodeClusterApi extends KeyedClusterApi {
     val encoded = encoder("CLUSTER", "SLAVES").add(nodeId.raw).result
   }
 
-  private final class ClusterSlots[N](nodeFormat: SlotsNodeFormat[N])
-    extends RedisSeqCommand[SlotRangeMapping[N]](multiBulkSlotRangeMapping(nodeFormat)) with NodeCommand {
+  private object ClusterSlots
+    extends RedisSeqCommand[SlotRangeMapping](multiBulkSlotRangeMapping) with NodeCommand {
     val encoded = encoder("CLUSTER", "SLOTS").result
   }
 }
@@ -195,24 +192,6 @@ trait ConnectionClusterApi extends NodeClusterApi {
 
 case object Asking extends UnsafeCommand {
   val encoded = encoder("ASKING").result
-}
-
-trait SlotsNodeFormat[N] {
-  def parseNode: PartialFunction[ArrayMsg[RedisMsg], N]
-}
-object SlotsNodeFormat {
-  object OnlyAddress extends SlotsNodeFormat[NodeAddress] {
-    def parseNode = {
-      case ArrayMsg(IndexedSeq(BulkStringMsg(ip), IntegerMsg(port), _*)) =>
-        NodeAddress(ip.utf8String, port.toInt)
-    }
-  }
-  object AddressAndNodeId extends SlotsNodeFormat[(NodeAddress, NodeId)] {
-    def parseNode = {
-      case ArrayMsg(IndexedSeq(BulkStringMsg(ip), IntegerMsg(port), BulkStringMsg(nodeId), _*)) =>
-        (NodeAddress(ip.utf8String, port.toInt), NodeId(nodeId.utf8String))
-    }
-  }
 }
 
 case class NodeId(raw: String) extends AnyVal
@@ -346,7 +325,7 @@ object NodeFlags {
   }
 }
 
-case class SlotRangeMapping[N](range: SlotRange, master: N, slaves: Seq[N]) {
+case class SlotRangeMapping(range: SlotRange, master: NodeAddress, masterId: Opt[NodeId], slaves: Seq[(NodeAddress, Opt[NodeId])]) {
   override def toString = s"slots: $range, master: $master, slaves: ${slaves.mkString(",")}"
 }
 case class SlotRange(start: Int, end: Int) {

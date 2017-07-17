@@ -12,6 +12,9 @@ trait NodeConnectionApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/ping PING]] */
   def ping: Result[ByteString] =
     execute(Ping)
+  /** Executes [[http://redis.io/commands/swapdb SWAPDB]] */
+  def swapdb(first: Int, second: Int): Result[Unit] =
+    execute(new Swapdb(first, second))
 
   private final class Echo(message: Value) extends RedisDataCommand[Value] with NodeCommand {
     val encoded = encoder("ECHO").data(message).result
@@ -19,6 +22,10 @@ trait NodeConnectionApi extends ApiSubset {
 
   private object Ping extends AbstractRedisCommand[ByteString](simpleBinary) with NodeCommand {
     val encoded = encoder("PING").result
+  }
+
+  private final class Swapdb(first: Int, second: Int) extends RedisUnitCommand with NodeCommand {
+    val encoded = encoder("SWAPDB").add(first).add(second).result
   }
 }
 

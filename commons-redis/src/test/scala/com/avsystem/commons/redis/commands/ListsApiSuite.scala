@@ -55,8 +55,15 @@ trait ListsApiSuite extends CommandsSuite {
   apiTest("LPUSHX") {
     lpushx("key", "a").assertEquals(0)
     lpush("key", "a").assertEquals(1)
-    lpushx("key", "b").assertEquals(2)
-    lrange("key").assertEquals(Seq("b", "a"))
+    lpushx("key", "b", "c").assertEquals(3)
+    lrange("key").assertEquals(Seq("c", "b", "a"))
+  }
+
+  apiTest("LPUSHX or LLEN") {
+    lpushxOrLlen("key", List("a", "b")).assertEquals(0)
+    lpush("key", "a").assertEquals(1)
+    lpushxOrLlen("key", Nil).assertEquals(1)
+    lrange("key").assertEquals(Seq("a"))
   }
 
   apiTest("LRANGE") {
@@ -127,6 +134,13 @@ trait ListsApiSuite extends CommandsSuite {
     rpush("key", "a").assertEquals(1)
     rpushx("key", "b").assertEquals(2)
     lrange("key").assertEquals(Seq("a", "b"))
+  }
+
+  apiTest("RPUSHX or LLEN") {
+    rpushxOrLlen("key", List("a", "b")).assertEquals(0)
+    rpush("key", "a").assertEquals(1)
+    rpushxOrLlen("key", Nil).assertEquals(1)
+    lrange("key").assertEquals(Seq("a"))
   }
 }
 

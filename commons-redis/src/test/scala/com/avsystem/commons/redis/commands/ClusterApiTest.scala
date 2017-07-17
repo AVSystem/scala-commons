@@ -50,9 +50,12 @@ class ClusterApiTest extends RedisClusterCommandsSuite {
 
   test("CLUSTER SLOTS") {
     clusterSlots.map(_.sortBy(_.master.port)).assertEquals(Seq(
-      SlotRangeMapping(SlotRange(0, 5460), NodeAddress(port = 9000), Seq(NodeAddress(port = 9001))),
-      SlotRangeMapping(SlotRange(5461, 10921), NodeAddress(port = 9002), Seq(NodeAddress(port = 9003))),
-      SlotRangeMapping(SlotRange(10922, 16383), NodeAddress(port = 9004), Seq(NodeAddress(port = 9005)))
+      SlotRangeMapping(SlotRange(0, 5460), NodeAddress(port = 9000), NodeId("b714a8032b9c1d74a7adc7da75fdbde0517bdf1b").opt,
+        Seq((NodeAddress(port = 9001), NodeId("cc8228f6e849ba1ee5abfc8f1ebde238e08c1d27").opt))),
+      SlotRangeMapping(SlotRange(5461, 10921), NodeAddress(port = 9002), NodeId("5f4c1e93370f3a60e9106cff3a613216abb1c8dc").opt,
+        Seq((NodeAddress(port = 9003), NodeId("18346204561dbae251912d8ae93fa4c78eeb3e16").opt))),
+      SlotRangeMapping(SlotRange(10922, 16383), NodeAddress(port = 9004), NodeId("6a724c321662027e9c1c58684ea82a1315a294fb").opt,
+        Seq((NodeAddress(port = 9005), NodeId("9a90efc8f9cf52de6aa60be3da3071798e0e365f").opt)))
     ))
   }
 

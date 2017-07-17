@@ -23,6 +23,10 @@ trait ConnectionApiSuite extends RedisConnectionCommandsSuite {
   apiTest("SELECT") {
     select(1).get
   }
+
+  apiTest("SWAPDB") {
+    swapdb(0, 1).get
+  }
 }
 
 class AuthenticationTest extends RedisConnectionCommandsSuite {
