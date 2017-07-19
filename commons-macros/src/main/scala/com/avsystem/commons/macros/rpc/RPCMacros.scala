@@ -250,6 +250,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           $FrameworkObj.Signature(
             ${pm.method.name.decodedName.toString},
             $ListObj(..${pm.paramLists.map(ps => q"$ListObj(..${ps.map(reifyParamMetadata)})")}),
+            implicitly[$FrameworkObj.ResultTypeMetadata[${pm.returnType}]],
             ${reifyAnnotations(pm.method)}
           )
          """

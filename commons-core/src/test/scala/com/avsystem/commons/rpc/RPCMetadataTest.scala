@@ -39,13 +39,13 @@ class RPCMetadataTest extends FunSuite {
 
     assert(metadata.signatures("proc") == Signature("proc", List(List(
       ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")), TypeName("String"))
-    )), List(Annot("on submethod"), Annot("on base method"))))
+    )), classTag[Unit], List(Annot("on submethod"), Annot("on base method"))))
 
     assert(metadata.signatures("genproc") == Signature("genproc", List(List(
       ParamMetadata("p", Nil, TypeName("String"))
-    )), Nil))
+    )), classTag[Unit], Nil))
 
-    assert(metadata.signatures("function") == Signature("func", Nil, Nil))
+    assert(metadata.signatures("function") == Signature("func", Nil, classTag[Future[_]], Nil))
 
     val resultMetadata = metadata.getterResults("getter")
     assert(resultMetadata.name == "Base")
@@ -55,12 +55,12 @@ class RPCMetadataTest extends FunSuite {
 
     assert(resultMetadata.signatures("proc") == Signature("proc", List(List(
       ParamMetadata("p", List(Annot("on base param")), TypeName("String"))
-    )), List(Annot("on base method"))))
+    )), classTag[Unit], List(Annot("on base method"))))
 
     assert(metadata.signatures("genproc") == Signature("genproc", List(List(
       ParamMetadata("p", Nil, TypeName("String"))
-    )), Nil))
+    )), classTag[Unit], Nil))
 
-    assert(resultMetadata.signatures("function") == Signature("func", Nil, Nil))
+    assert(resultMetadata.signatures("function") == Signature("func", Nil, classTag[Future[_]], Nil))
   }
 }
