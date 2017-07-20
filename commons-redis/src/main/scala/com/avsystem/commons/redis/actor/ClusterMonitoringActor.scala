@@ -89,7 +89,8 @@ final class ClusterMonitoringActor(
           res: IndexedSeq[(SlotRange, RedisNodeClient)]
         }
 
-        masters = nodeInfos.iterator.filter(_.flags.master).map(_.address).to[mutable.LinkedHashSet]
+        masters = nodeInfos.iterator.filter(n => n.flags.master && !n.flags.fail)
+          .map(_.address).to[mutable.LinkedHashSet]
         masters.foreach { addr =>
           openConnection(addr, seed = false)
         }
