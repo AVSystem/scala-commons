@@ -15,6 +15,7 @@ trait RPCFramework {
   def write[T: Writer](value: T): RawValue
 
   type ParamTypeMetadata[T]
+  type ResultTypeMetadata[T]
 
   object RPCMetadata {
     def apply[T](implicit metadata: RPCMetadata[T]): RPCMetadata[T] = metadata
@@ -96,6 +97,7 @@ trait RPCFramework {
   case class Signature(
     methodName: String,
     paramMetadata: List[List[ParamMetadata]],
+    resultTypeMetadata: ResultTypeMetadata[_],
     annotations: List[MetadataAnnotation]
   )
 
