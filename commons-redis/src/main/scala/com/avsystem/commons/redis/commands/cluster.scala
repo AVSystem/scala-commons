@@ -5,7 +5,6 @@ import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
-import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, IntegerMsg, RedisMsg}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -326,7 +325,8 @@ object NodeFlags {
 }
 
 case class SlotRangeMapping(range: SlotRange, master: NodeAddress, masterId: Opt[NodeId], slaves: Seq[(NodeAddress, Opt[NodeId])]) {
-  override def toString = s"slots: $range, master: $master, slaves: ${slaves.mkString(",")}"
+  private def nodeRepr(addr: NodeAddress, idOpt: Opt[NodeId]) = addr.toString + idOpt.fold("")(id => s" (${id.raw})")
+  override def toString = s"slots: $range, master: ${nodeRepr(master, masterId)}, slaves: ${slaves.map((nodeRepr _).tupled).mkString(",")}"
 }
 case class SlotRange(start: Int, end: Int) {
   def toRange: Range = start to end
