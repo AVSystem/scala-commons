@@ -42,7 +42,7 @@ object Filter {
 
   def notExists(key: DocKey[_, _]): Bson = F.exists(key.key, false)
 
-  def matchElem(key: DocKey[_, _], filter: Bson): Bson = F.elemMatch(key.key, filter)
+  def elemMatch(key: DocKey[_, _], filter: Bson): Bson = F.elemMatch(key.key, filter)
 
   object Limitations {
     trait CanCompare[BSON <: BsonValue]
