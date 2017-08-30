@@ -10,7 +10,7 @@ import scala.tools.nsc.{Global, Settings}
 trait AnalyzerTest { this: Assertions =>
   val settings = new Settings
   settings.usejavacp.value = true
-  settings.pluginOptions.appendToValue("AVSystemAnalyzer:+_")
+  settings.pluginOptions.value ++= List("AVSystemAnalyzer:+_")
   val compiler = new Global(settings) { global =>
     override protected def loadRoughPluginsList(): List[Plugin] =
       new AnalyzerPlugin(global) :: super.loadRoughPluginsList()
