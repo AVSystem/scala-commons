@@ -108,6 +108,7 @@ and Java `Map` types. By default, following types have [`GenKeyCodec`](http://av
 * [`NamedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnum.html)s 
   whose companion object extends [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html)
 * Java enums
+
 If there is no [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html) 
 available for some type `K`, then `Map[K,V]` will be serialized into a list of key-value 
 pairs (each pair represented as an object with two fields).
