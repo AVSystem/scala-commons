@@ -59,7 +59,7 @@ bound to any format. It only depends on the fact that this format is capable of 
 * arbitrary byte chunks
 * millisecond-precision timestamps
 * arbitrarily nested sequences (lists)
-* arbitrarily nested objects, i.e. string-to-value mappings
+* arbitrarily nested objects, i.e. sequences of (string, value) pairs
 
 Of course, if some type is not "natively" supported by some serialization format, it can be supported by representing 
 it with one of the primitive types. For example, timestamps may be serialized simply as `Long` values containing the 
