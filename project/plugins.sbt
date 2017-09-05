@@ -3,8 +3,11 @@ logLevel := Level.Warn
 resolvers += Resolver.url("jetbrains-bintray",
   url("http://dl.bintray.com/jetbrains/sbt-plugins/"))(Resolver.ivyStylePatterns)
 
+val scalaJSVersion =
+  Option(System.getenv("SCALAJS_VERSION")).getOrElse("0.6.20")
+
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % scalaJSVersion)
 addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.0.0")
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.19")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.2.27")
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0")
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.0")

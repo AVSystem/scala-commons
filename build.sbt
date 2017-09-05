@@ -52,6 +52,7 @@ val akkaVersion = "2.4.12"
 val monixVersion = "2.0.6"
 
 val commonSettings = Seq(
+  publishTo := Some(Opts.resolver.sonatypeStaging),
   sonatypeProfileName := "com.avsystem",
 
   projectInfo := ModuleInfo(
