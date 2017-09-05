@@ -22,6 +22,11 @@ class Doc(private val doc: BsonDocument) extends AnyVal {
     case _ => this
   }
 
+  def putOpt[A](key: DocKey[A, _ <: BsonValue], optValue: Opt[A]): Doc = optValue match {
+    case Opt(value) => put(key, value)
+    case _ => this
+  }
+
   def toBson: BsonDocument = doc
 }
 
