@@ -59,7 +59,7 @@ bound to any format. It only depends on the fact that this format is capable of 
 * arbitrary byte chunks
 * millisecond-precision timestamps
 * arbitrarily nested sequences (lists)
-* arbitrarily nested objects, i.e. string-to-value mappings
+* arbitrarily nested objects, i.e. sequences of (string, value) pairs
 
 Of course, if some type is not "natively" supported by some serialization format, it can be supported by representing 
 it with one of the primitive types. For example, timestamps may be serialized simply as `Long` values containing the 
@@ -108,6 +108,7 @@ and Java `Map` types. By default, following types have [`GenKeyCodec`](http://av
 * [`NamedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnum.html)s 
   whose companion object extends [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html)
 * Java enums
+
 If there is no [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html) 
 available for some type `K`, then `Map[K,V]` will be serialized into a list of key-value 
 pairs (each pair represented as an object with two fields).
