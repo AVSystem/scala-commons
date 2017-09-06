@@ -20,10 +20,7 @@ class Doc(private val doc: BsonDocument) extends AnyVal {
     this
   }
 
-  def putOpt[A](key: DocKey[A, _ <: BsonValue], optValue: Option[A]): Doc = optValue match {
-    case Some(value) => put(key, value)
-    case _ => this
-  }
+  def putOpt[A](key: DocKey[A, _ <: BsonValue], optValue: Option[A]): Doc = optValue.fold(this)(put(key, _))
 
   def putOpt[A](key: DocKey[A, _ <: BsonValue], optValue: Opt[A]): Doc = optValue.fold(this)(put(key, _))
 
