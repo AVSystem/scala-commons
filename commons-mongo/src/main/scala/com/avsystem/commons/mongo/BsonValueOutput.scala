@@ -43,6 +43,6 @@ class BsonValueListOutput(receiver: BsonArray => Unit) extends ListOutput {
 class BsonValueObjectOutput(receiver: BsonDocument => Unit) extends ObjectOutput {
   private val doc = new BsonDocument()
 
-  override def writeField(key: String): BsonOutput = new BsonValueOutput(v => doc.put(key, v))
+  override def writeField(key: String): BsonOutput = new BsonValueOutput(v => doc.put(KeyEscaper.escape(key), v))
   override def finish(): Unit = receiver(doc)
 }

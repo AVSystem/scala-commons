@@ -62,7 +62,7 @@ object BsonReaderListInput {
 
 class BsonReaderObjectInput private(br: BsonReader) extends ObjectInput {
   private val it = new BsonReaderIterator(br, _.readEndDocument(),
-    br => new BsonReaderFieldInput(br.readName(), br)
+    br => new BsonReaderFieldInput(KeyEscaper.unescape(br.readName()), br)
   )
 
   override def hasNext: Boolean = it.hasNext

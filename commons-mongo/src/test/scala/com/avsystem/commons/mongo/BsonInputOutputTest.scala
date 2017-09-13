@@ -9,48 +9,68 @@ import org.scalatest.FunSuite
 import org.scalatest.prop.PropertyChecks
 
 class BsonInputOutputTest extends FunSuite with PropertyChecks {
+  def binaryRoundtrip(sthBefore: SomethingComplex): Unit = {
+    val bsonOutput = new BasicOutputBuffer()
+    val writer = new BsonBinaryWriter(bsonOutput)
+    val output = new BsonWriterOutput(writer)
+
+    SomethingComplex.codec.write(output, sthBefore)
+    val bytes = bsonOutput.toByteArray
+
+    val reader = new BsonBinaryReader(ByteBuffer.wrap(bytes))
+    val input = new BsonReaderInput(reader)
+
+    val sthAfter = SomethingComplex.codec.read(input)
+    assert(sthAfter === sthBefore)
+  }
+
+  def documentRoundtrip(sthBefore: SomethingComplex): Unit = {
+    val doc = new BsonDocument()
+    val writer = new BsonDocumentWriter(doc)
+    val output = new BsonWriterOutput(writer)
+    SomethingComplex.codec.write(output, sthBefore)
+
+    val expectedDoc = somethingComplexToBson(sthBefore)
+    assert(doc === expectedDoc)
+
+    val reader = new BsonDocumentReader(doc)
+    val input = new BsonReaderInput(reader)
+    val sthAfter = SomethingComplex.codec.read(input)
+    assert(sthAfter === sthBefore)
+  }
+
+  def valueEncoding(sthBefore: SomethingComplex): Unit = {
+    val output = new BsonValueOutput()
+    SomethingComplex.codec.write(output, sthBefore)
+
+    val doc = output.value.asDocument()
+    val expectedDoc = somethingComplexToBson(sthBefore)
+    assert(doc === expectedDoc)
+  }
+
   test("Roundtrip binary encoding of random objects") {
-    forAll(SomethingComplex.gen) { sthBefore =>
-      val bsonOutput = new BasicOutputBuffer()
-      val writer = new BsonBinaryWriter(bsonOutput)
-      val output = new BsonWriterOutput(writer)
-
-      SomethingComplex.codec.write(output, sthBefore)
-      val bytes = bsonOutput.toByteArray
-
-      val reader = new BsonBinaryReader(ByteBuffer.wrap(bytes))
-      val input = new BsonReaderInput(reader)
-
-      val sthAfter = SomethingComplex.codec.read(input)
-      assert(sthAfter === sthBefore)
-    }
+    forAll(SomethingComplex.gen)(binaryRoundtrip)
   }
 
   test("Roundtrip document encoding of random objects") {
-    forAll(SomethingComplex.gen) { sthBefore =>
-      val doc = new BsonDocument()
-      val writer = new BsonDocumentWriter(doc)
-      val output = new BsonWriterOutput(writer)
-      SomethingComplex.codec.write(output, sthBefore)
-
-      val expectedDoc = somethingComplexToBson(sthBefore)
-      assert(doc === expectedDoc)
-
-      val reader = new BsonDocumentReader(doc)
-      val input = new BsonReaderInput(reader)
-      val sthAfter = SomethingComplex.codec.read(input)
-      assert(sthAfter === sthBefore)
-    }
+    forAll(SomethingComplex.gen)(documentRoundtrip)
   }
 
   test("Value encoding of random objects") {
-    forAll(SomethingComplex.gen) { sthBefore =>
-      val output = new BsonValueOutput()
-      SomethingComplex.codec.write(output, sthBefore)
+    forAll(SomethingComplex.gen)(valueEncoding)
+  }
 
-      val doc = output.value.asDocument()
-      val expectedDoc = somethingComplexToBson(sthBefore)
-      assert(doc === expectedDoc)
+  test("All encoding schemes with problematic map keys") {
+    forAll(SomethingComplex.gen) { sth =>
+      val sthBefore = sth.copy(
+        embeddedObject = sth.embeddedObject.copy(
+          map = sth.embeddedObject.map + ("$problematic.key" -> "value")
+        )
+      )
+
+      binaryRoundtrip(sthBefore)
+      documentRoundtrip(sthBefore)
+      valueEncoding(sthBefore)
     }
   }
 
@@ -59,7 +79,7 @@ class BsonInputOutputTest extends FunSuite with PropertyChecks {
   def mapToBson[T](map: Map[String, T])(valueConverter: T => BsonValue): BsonDocument = {
     val doc = new BsonDocument()
     for ((key, value) <- map) {
-      doc.put(key, valueConverter(value))
+      doc.put(KeyEscaper.escape(key), valueConverter(value))
     }
     doc
   }

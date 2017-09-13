@@ -19,18 +19,18 @@ class BsonWriterOutput(bw: BsonWriter) extends BsonOutput {
   override def writeObjectId(objectId: ObjectId): Unit = bw.writeObjectId(objectId)
 }
 
-class BsonWriterNamedOutput(name: String, bw: BsonWriter) extends BsonOutput {
-  override def writeNull(): Unit = bw.writeNull(name)
-  override def writeString(str: String): Unit = bw.writeString(name, str)
-  override def writeBoolean(boolean: Boolean): Unit = bw.writeBoolean(name, boolean)
-  override def writeInt(int: Int): Unit = bw.writeInt32(name, int)
-  override def writeLong(long: Long): Unit = bw.writeInt64(name, long)
-  override def writeTimestamp(millis: Long): Unit = bw.writeDateTime(name, millis)
-  override def writeDouble(double: Double): Unit = bw.writeDouble(name, double)
-  override def writeBinary(binary: Array[Byte]): Unit = bw.writeBinaryData(name, new BsonBinary(binary))
-  override def writeList(): BsonWriterListOutput = BsonWriterListOutput.startWriting(bw, name)
-  override def writeObject(): BsonWriterObjectOutput = BsonWriterObjectOutput.startWriting(bw, name)
-  override def writeObjectId(objectId: ObjectId): Unit = bw.writeObjectId(name, objectId)
+class BsonWriterNamedOutput(escapedName: String, bw: BsonWriter) extends BsonOutput {
+  override def writeNull(): Unit = bw.writeNull(escapedName)
+  override def writeString(str: String): Unit = bw.writeString(escapedName, str)
+  override def writeBoolean(boolean: Boolean): Unit = bw.writeBoolean(escapedName, boolean)
+  override def writeInt(int: Int): Unit = bw.writeInt32(escapedName, int)
+  override def writeLong(long: Long): Unit = bw.writeInt64(escapedName, long)
+  override def writeTimestamp(millis: Long): Unit = bw.writeDateTime(escapedName, millis)
+  override def writeDouble(double: Double): Unit = bw.writeDouble(escapedName, double)
+  override def writeBinary(binary: Array[Byte]): Unit = bw.writeBinaryData(escapedName, new BsonBinary(binary))
+  override def writeList(): BsonWriterListOutput = BsonWriterListOutput.startWriting(bw, escapedName)
+  override def writeObject(): BsonWriterObjectOutput = BsonWriterObjectOutput.startWriting(bw, escapedName)
+  override def writeObjectId(objectId: ObjectId): Unit = bw.writeObjectId(escapedName, objectId)
 }
 
 class BsonWriterListOutput private(bw: BsonWriter) extends ListOutput {
@@ -50,7 +50,7 @@ object BsonWriterListOutput {
 }
 
 class BsonWriterObjectOutput private(bw: BsonWriter) extends ObjectOutput {
-  override def writeField(key: String) = new BsonWriterNamedOutput(key, bw)
+  override def writeField(key: String) = new BsonWriterNamedOutput(KeyEscaper.escape(key), bw)
   override def finish(): Unit = bw.writeEndDocument()
 }
 object BsonWriterObjectOutput {
