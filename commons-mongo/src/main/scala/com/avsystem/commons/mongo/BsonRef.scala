@@ -14,7 +14,7 @@ object BsonRef {
 
   def apply[T](rawRef: RawRef)(implicit codec: GenCodec[T]): BsonRef[T] = {
     val path = rawRef.normalize.map {
-      case Field(name) => name
+      case Field(name) => KeyEscaper.escape(name)
     }.mkString(BsonKeySeparator)
 
     BsonRef(path, codec)
