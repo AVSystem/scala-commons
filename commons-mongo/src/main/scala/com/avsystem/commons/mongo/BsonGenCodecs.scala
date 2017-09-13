@@ -10,8 +10,14 @@ trait BsonGenCodecs {
 
 object BsonGenCodecs {
   implicit val objectIdCodec: GenCodec[ObjectId] = GenCodec.createNullSafe(
-    readFun = _.asInstanceOf[BsonInput].readObjectId(),
-    writeFun = _.asInstanceOf[BsonOutput].writeObjectId(_),
+    readFun = {
+      case bsonInput: BsonInput => bsonInput.readObjectId()
+      case otherInput => new ObjectId(otherInput.readString())
+    },
+    writeFun = {
+      case (bsonOutput: BsonOutput, objectId) => bsonOutput.writeObjectId(objectId)
+      case (otherOutput, objectId) => otherOutput.writeString(objectId.toHexString)
+    },
     allowNull = true
   )
 }
