@@ -1,41 +1,43 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.{FieldInput, InputType, ListInput, ObjectInput}
 import com.google.common.collect.AbstractIterator
+import org.bson.types.ObjectId
 import org.bson.{BsonReader, BsonType}
 
-class BsonReaderInput(br: BsonReader) extends Input {
-  override def inputType = br.getCurrentBsonType match {
+class BsonReaderInput(br: BsonReader) extends BsonInput {
+  override def inputType: InputType = br.getCurrentBsonType match {
     case BsonType.NULL => InputType.Null
     case BsonType.ARRAY => InputType.List
     case BsonType.DOCUMENT => InputType.Object
     case _ => InputType.Simple
   }
 
-  override def readNull() = {
+  override def readNull(): Null = {
     br.readNull()
     null
   }
-  override def readString() = br.readString()
-  override def readBoolean() = br.readBoolean()
-  override def readInt() = br.readInt32()
-  override def readLong() = br.readInt64()
-  override def readTimestamp() = br.readDateTime()
-  override def readDouble() = br.readDouble()
-  override def readBinary() = br.readBinaryData().getData
-  override def readList() = BsonReaderListInput.startReading(br)
-  override def readObject() = BsonReaderObjectInput.startReading(br)
-  override def skip() = br.skipValue()
+  override def readString(): String = br.readString()
+  override def readBoolean(): Boolean = br.readBoolean()
+  override def readInt(): Int = br.readInt32()
+  override def readLong(): Long = br.readInt64()
+  override def readTimestamp(): Long = br.readDateTime()
+  override def readDouble(): Double = br.readDouble()
+  override def readBinary(): Array[Byte] = br.readBinaryData().getData
+  override def readList(): BsonReaderListInput = BsonReaderListInput.startReading(br)
+  override def readObject(): BsonReaderObjectInput = BsonReaderObjectInput.startReading(br)
+  override def readObjectId(): ObjectId = br.readObjectId()
+  override def skip(): Unit = br.skipValue()
 }
 
 class BsonReaderFieldInput(name: String, br: BsonReader) extends BsonReaderInput(br) with FieldInput {
-  override def fieldName = name
+  override def fieldName: String = name
 }
 
 class BsonReaderIterator[T](br: BsonReader, endCallback: BsonReader => Unit, readElement: BsonReader => T)
   extends AbstractIterator[T] {
-  override def computeNext() = {
+  override def computeNext(): T = {
     if (br.readBsonType() == BsonType.END_OF_DOCUMENT) {
       endCallback(br)
       endOfData()
@@ -48,8 +50,8 @@ class BsonReaderIterator[T](br: BsonReader, endCallback: BsonReader => Unit, rea
 class BsonReaderListInput private(br: BsonReader) extends ListInput {
   private val it = new BsonReaderIterator(br, _.readEndArray(), new BsonReaderInput(_))
 
-  override def hasNext = it.hasNext
-  override def nextElement() = it.next()
+  override def hasNext: Boolean = it.hasNext
+  override def nextElement(): BsonReaderInput = it.next()
 }
 object BsonReaderListInput {
   def startReading(br: BsonReader): BsonReaderListInput = {
@@ -63,8 +65,8 @@ class BsonReaderObjectInput private(br: BsonReader) extends ObjectInput {
     br => new BsonReaderFieldInput(br.readName(), br)
   )
 
-  override def hasNext = it.hasNext
-  override def nextField() = it.next()
+  override def hasNext: Boolean = it.hasNext
+  override def nextField(): BsonReaderFieldInput = it.next()
 }
 object BsonReaderObjectInput {
   def startReading(br: BsonReader): BsonReaderObjectInput = {

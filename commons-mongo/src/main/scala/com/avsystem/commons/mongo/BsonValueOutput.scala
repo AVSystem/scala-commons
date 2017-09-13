@@ -1,10 +1,11 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization.{ListOutput, ObjectOutput, Output}
+import com.avsystem.commons.serialization.{ListOutput, ObjectOutput}
 import org.bson._
+import org.bson.types.ObjectId
 
-class BsonValueOutput(receiver: BsonValue => Unit = _ => ()) extends Output {
+class BsonValueOutput(receiver: BsonValue => Unit = _ => ()) extends BsonOutput {
   private var _value: Opt[BsonValue] = Opt.empty
 
   private def setValue(bsonValue: BsonValue): Unit = {
@@ -29,18 +30,19 @@ class BsonValueOutput(receiver: BsonValue => Unit = _ => ()) extends Output {
   override def writeBinary(binary: Array[Byte]): Unit = setValue(new BsonBinary(binary))
   override def writeList(): ListOutput = new BsonValueListOutput(setValue)
   override def writeObject(): ObjectOutput = new BsonValueObjectOutput(setValue)
+  override def writeObjectId(objectId: ObjectId): Unit = setValue(new BsonObjectId(objectId))
 }
 
 class BsonValueListOutput(receiver: BsonArray => Unit) extends ListOutput {
   private val array = new BsonArray()
 
-  override def writeElement(): Output = new BsonValueOutput(v => array.add(v))
+  override def writeElement(): BsonOutput = new BsonValueOutput(v => array.add(v))
   override def finish(): Unit = receiver(array)
 }
 
 class BsonValueObjectOutput(receiver: BsonDocument => Unit) extends ObjectOutput {
   private val doc = new BsonDocument()
 
-  override def writeField(key: String): Output = new BsonValueOutput(v => doc.put(key, v))
+  override def writeField(key: String): BsonOutput = new BsonValueOutput(v => doc.put(key, v))
   override def finish(): Unit = receiver(doc)
 }

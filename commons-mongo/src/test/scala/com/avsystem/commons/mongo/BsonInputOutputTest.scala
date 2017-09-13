@@ -67,7 +67,7 @@ class BsonInputOutputTest extends FunSuite {
     doc
   }
 
-  def somethingToBson(s: Something): BsonDocument = {
+  def somethingToBson(s: SomethingPlain): BsonDocument = {
     new BsonDocument()
       .append("string", new BsonString(s.string))
       .append("boolean", new BsonBoolean(s.boolean))

@@ -43,7 +43,7 @@ object BytesWrapper {
   )
 }
 
-case class Something(
+case class SomethingPlain(
   string: String,
   boolean: Boolean,
   int: Int,
@@ -54,14 +54,14 @@ case class Something(
   list: List[String],
   map: Map[String, String]
 )
-object Something {
+object SomethingPlain {
 
   import Randoms._
 
   implicitly[GenCodec[JDate]]
-  implicit val codec: GenCodec[Something] = GenCodec.materialize
+  implicit val codec: GenCodec[SomethingPlain] = GenCodec.materialize
 
-  def random = Something(
+  def random = SomethingPlain(
     string = randString,
     boolean = randBoolean,
     int = randInt,
@@ -75,10 +75,10 @@ object Something {
 }
 
 case class SomethingComplex(
-  embeddedObject: Something,
-  complexList: List[Something],
+  embeddedObject: SomethingPlain,
+  complexList: List[SomethingPlain],
   nestedList: List[List[String]],
-  nestedComplexList: List[List[Something]]
+  nestedComplexList: List[List[SomethingPlain]]
 )
 object SomethingComplex {
 
@@ -87,9 +87,9 @@ object SomethingComplex {
   implicit val codec: GenCodec[SomethingComplex] = GenCodec.materialize
 
   def random = SomethingComplex(
-    embeddedObject = Something.random,
-    complexList = randListNonEmpty(Something.random),
+    embeddedObject = SomethingPlain.random,
+    complexList = randListNonEmpty(SomethingPlain.random),
     nestedList = randListNonEmpty(randListNonEmpty(randString)),
-    nestedComplexList = randListNonEmpty(randListNonEmpty(Something.random))
+    nestedComplexList = randListNonEmpty(randListNonEmpty(SomethingPlain.random))
   )
 }
