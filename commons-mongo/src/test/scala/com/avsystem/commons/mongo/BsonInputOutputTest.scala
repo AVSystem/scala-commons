@@ -6,12 +6,11 @@ import java.nio.ByteBuffer
 import org.bson._
 import org.bson.io.BasicOutputBuffer
 import org.scalatest.FunSuite
+import org.scalatest.prop.PropertyChecks
 
-class BsonInputOutputTest extends FunSuite {
+class BsonInputOutputTest extends FunSuite with PropertyChecks {
   test("Roundtrip binary encoding of random objects") {
-    100 times {
-      val sthBefore = SomethingComplex.random
-
+    forAll(SomethingComplex.gen) { sthBefore =>
       val bsonOutput = new BasicOutputBuffer()
       val writer = new BsonBinaryWriter(bsonOutput)
       val output = new BsonWriterOutput(writer)
@@ -28,8 +27,7 @@ class BsonInputOutputTest extends FunSuite {
   }
 
   test("Roundtrip document encoding of random objects") {
-    100 times {
-      val sthBefore = SomethingComplex.random
+    forAll(SomethingComplex.gen) { sthBefore =>
       val doc = new BsonDocument()
       val writer = new BsonDocumentWriter(doc)
       val output = new BsonWriterOutput(writer)
@@ -46,8 +44,7 @@ class BsonInputOutputTest extends FunSuite {
   }
 
   test("Value encoding of random objects") {
-    100 times {
-      val sthBefore = SomethingComplex.random
+    forAll(SomethingComplex.gen) { sthBefore =>
       val output = new BsonValueOutput()
       SomethingComplex.codec.write(output, sthBefore)
 
