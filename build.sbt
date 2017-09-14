@@ -20,7 +20,7 @@ inThisBuild(Seq(
     "-language:higherKinds",
     "-Xfuture",
     "-Xfatal-warnings",
-    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
+    "-Xlint:-missing-interpolator,-adapted-args,-unused,_"
   ),
   scalacOptions := {
     val opts = scalacOptions.value
@@ -30,7 +30,7 @@ inThisBuild(Seq(
       opts
   },
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
-  autoAPIMappings := true,
+  autoAPIMappings := true
 ))
 
 // for binary compatibility checking
@@ -72,7 +72,7 @@ val commonSettings = Seq(
     )),
     developers = Vector(
       Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik"))
-    ),
+    )
   ),
 
   publishMavenStyle := true,
@@ -89,13 +89,13 @@ val commonSettings = Seq(
   ideBasePackages := Seq(organization.value),
   ideOutputDirectory in Compile := Some(baseDirectory.value / "out/production"),
   ideOutputDirectory in Test := Some(baseDirectory.value / "out/test"),
-  fork in Test := true,
+  fork in Test := true
 )
 
 val jvmCommonSettings = Seq(
   mimaPreviousArtifacts := {
     Set(organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion)
-  },
+  }
 )
 
 val noPublishSettings = Seq(
@@ -106,7 +106,7 @@ val noPublishSettings = Seq(
   publishSigned := {},
   publishLocalSigned := {},
   doc := (target in doc).value,
-  mimaPreviousArtifacts := Set.empty,
+  mimaPreviousArtifacts := Set.empty
 )
 
 val CompileAndTest = "compile->compile;test->test"
@@ -125,7 +125,7 @@ lazy val commons = project.in(file("."))
     `commons-mongo`,
     `commons-spring`,
     `commons-redis`,
-    `commons-akka`,
+    `commons-akka`
   )
   .settings(commonSettings: _*)
   .settings(noPublishSettings: _*)
@@ -137,8 +137,8 @@ lazy val commons = project.in(file("."))
         `commons-macros`,
         `commons-analyzer`,
         `commons-sharedJS`,
-        `commons-benchmark`,
-      ),
+        `commons-benchmark`
+      )
   )
 
 lazy val `commons-annotations` = project
@@ -150,7 +150,7 @@ lazy val `commons-macros` = project
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(
-    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
   )
 
 lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
@@ -165,7 +165,7 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
       s"-P:scalajs:mapSourceURI:$localDir->$githubDir/v${version.value}/"
     },
     test := {},
-    fork in Test := false,
+    fork in Test := false
   )
 
 lazy val `commons-sharedJVM` = `commons-shared`.jvm
@@ -177,8 +177,8 @@ lazy val `commons-core` = project.dependsOn(`commons-macros` % CompileAndTest, `
   .settings(
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
-      "com.google.guava" % "guava" % guavaVersion,
-    ),
+      "com.google.guava" % "guava" % guavaVersion
+    )
   )
 
 lazy val `commons-analyzer` = project
@@ -186,7 +186,7 @@ lazy val `commons-analyzer` = project
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(
-    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
   )
 
 lazy val `commons-jetty` = project
@@ -197,8 +197,8 @@ lazy val `commons-jetty` = project
     libraryDependencies ++= Seq(
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
       "org.eclipse.jetty" % "jetty-server" % jettyVersion,
-      "com.lihaoyi" %% "upickle" % upickleVersion,
-    ),
+      "com.lihaoyi" %% "upickle" % upickleVersion
+    )
   )
 
 lazy val `commons-benchmark` = project
@@ -211,11 +211,11 @@ lazy val `commons-benchmark` = project
     libraryDependencies ++= {
       if (scalaBinaryVersion.value != "2.12") Seq(
         "com.github.etaty" %% "rediscala" % "1.6.0",
-        "com.livestream" %% "scredis" % "2.0.8",
+        "com.livestream" %% "scredis" % "2.0.8"
       )
       else Seq.empty
     },
-    ideExcludedDirectories := (managedSourceDirectories in Jmh).value,
+    ideExcludedDirectories := (managedSourceDirectories in Jmh).value
   )
 
 lazy val `commons-mongo` = project
@@ -224,8 +224,8 @@ lazy val `commons-mongo` = project
   .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
-      "org.mongodb" % "mongodb-driver" % mongoVersion,
-    ),
+      "org.mongodb" % "mongodb-driver" % mongoVersion
+    )
   )
 
 lazy val `commons-redis` = project
@@ -235,9 +235,9 @@ lazy val `commons-redis` = project
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
+      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion
     ),
-    parallelExecution in Test := false,
+    parallelExecution in Test := false
   )
 
 lazy val `commons-spring` = project
@@ -247,8 +247,8 @@ lazy val `commons-spring` = project
   .settings(
     libraryDependencies ++= Seq(
       "org.springframework" % "spring-context" % springVersion,
-      "com.typesafe" % "config" % typesafeConfigVersion,
-    ),
+      "com.typesafe" % "config" % typesafeConfigVersion
+    )
   )
 
 lazy val `commons-akka` = project
@@ -261,6 +261,6 @@ lazy val `commons-akka` = project
       "com.typesafe.akka" %% "akka-remote" % akkaVersion,
       "io.monix" %% "monix" % monixVersion,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
-      "org.mockito" % "mockito-core" % "2.0.54-beta" % Test,
-    ),
+      "org.mockito" % "mockito-core" % "2.0.54-beta" % Test
+    )
   )
