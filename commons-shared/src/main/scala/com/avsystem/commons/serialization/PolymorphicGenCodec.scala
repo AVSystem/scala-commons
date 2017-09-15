@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.serialization.GenCodec.NullSafeCodec
+import com.avsystem.commons.serialization.GenCodec.{NullSafeCodec, ReadFailure, WriteFailure}
 import com.avsystem.commons.serialization.PolymorphicGenCodec.Variant
 
 class PolymorphicGenCodec[T](variants: Variant[_ <: T]*) extends NullSafeCodec[T] {
@@ -32,9 +32,9 @@ class PolymorphicGenCodec[T](variants: Variant[_ <: T]*) extends NullSafeCodec[T
 }
 
 object PolymorphicGenCodec {
-  private def unsupported = throw new UnsupportedOperationException
-
   private class CustomObjectInput(objectInput: ObjectInput) extends Input {
+    private def unsupported = throw new ReadFailure("Only objects can be read")
+
     override def readNull(): Null = unsupported
     override def readString(): String = unsupported
     override def readBoolean(): Boolean = unsupported
@@ -50,6 +50,8 @@ object PolymorphicGenCodec {
   }
 
   private class CustomObjectOutput(objectOutput: ObjectOutput) extends Output {
+    private def unsupported = throw new WriteFailure("Only objects can be written")
+
     override def writeNull(): Unit = unsupported
     override def writeString(str: String): Unit = unsupported
     override def writeBoolean(boolean: Boolean): Unit = unsupported
