@@ -6,8 +6,8 @@ import java.time.Instant
 import org.bson.types.ObjectId
 import org.bson.{BsonArray, BsonBinary, BsonBoolean, BsonDateTime, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonObjectId, BsonString, BsonValue}
 
-import scala.collection.generic.CanBuildFrom
-import scala.language.higherKinds
+import _root_.scala.collection.generic.CanBuildFrom
+import _root_.scala.language.higherKinds
 
 /**
   * @author MKej
