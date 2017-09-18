@@ -1,19 +1,20 @@
 package com.avsystem.commons
-package mongo
+package mongo.sync
 
-import com.avsystem.commons.mongo.MongoOps.{DBOps, FindIterableOps}
+import com.avsystem.commons.mongo.{BsonCodec, MongoCodec}
 import com.mongodb.Block
 import com.mongodb.client.{FindIterable, MongoCollection, MongoDatabase}
 import org.bson.BsonDocument
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.conversions.Bson
 
-import scala.language.implicitConversions
-
 /**
   * @author MKej
   */
 trait MongoOps {
+
+  import MongoOps._
+
   implicit def dbOps(db: MongoDatabase): DBOps = new DBOps(db)
   implicit def findIterableOps[T](find: FindIterable[T]): FindIterableOps[T] = new FindIterableOps(find)
 }

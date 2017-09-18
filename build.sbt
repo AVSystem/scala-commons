@@ -43,7 +43,8 @@ val scalatestVersion = "3.0.0"
 val upickleVersion = "0.4.4"
 val scalacheckVersion = "1.13.4"
 val jettyVersion = "9.3.8.v20160314"
-val mongoVersion = "3.2.2"
+val mongoVersion = "3.5.0"
+val mongoScalaVersion = "2.1.0"
 val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.0"
 val commonsIoVersion = "1.3.2"
@@ -224,7 +225,10 @@ lazy val `commons-mongo` = project
   .settings(jvmCommonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
-      "org.mongodb" % "mongodb-driver" % mongoVersion
+      "org.mongodb" % "mongodb-driver-core" % mongoVersion,
+      "org.mongodb" % "mongodb-driver" % mongoVersion % Optional,
+      "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,
+      "org.mongodb.scala" %% "mongo-scala-driver" % mongoScalaVersion % Optional
     )
   )
 

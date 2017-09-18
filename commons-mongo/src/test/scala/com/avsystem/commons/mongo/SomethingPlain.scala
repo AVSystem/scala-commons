@@ -5,7 +5,7 @@ import com.avsystem.commons.serialization.GenCodec
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 
-import scala.util.hashing.MurmurHash3
+import _root_.scala.util.hashing.MurmurHash3
 
 class BytesWrapper(val bytes: Array[Byte]) {
   override def hashCode(): Int = MurmurHash3.bytesHash(bytes)
