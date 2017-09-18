@@ -2,10 +2,10 @@ package com.avsystem.commons
 package mongo
 
 object KeyEscaper {
-  private val escapeReplacements = List(
-    "_" -> "__",
-    "." -> "_d",
-    "$" -> "_D"
+  private val escapeReplacements: List[(String, String)] = List(
+//    "_" -> "__",
+//    "." -> "_d",
+//    "$" -> "_D"
   )
 
   private val unescapeReplacements = escapeReplacements.reverseMap(_.swap)

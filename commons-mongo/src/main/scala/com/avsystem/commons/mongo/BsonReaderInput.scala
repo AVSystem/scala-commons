@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package mongo
 
+import java.util.NoSuchElementException
+
 import com.avsystem.commons.serialization.{FieldInput, InputType, ListInput, ObjectInput}
 import com.google.common.collect.AbstractIterator
 import org.bson.types.ObjectId
@@ -35,6 +37,23 @@ class BsonReaderFieldInput(name: String, br: BsonReader) extends BsonReaderInput
   override def fieldName: String = name
 }
 
+class ObjectIdFieldInput(name: String, objectId: ObjectId) extends BsonInput with FieldInput {
+  override def fieldName: String = name
+  override def readObjectId(): ObjectId = objectId
+  override def inputType: InputType = InputType.Simple
+  override def skip(): Unit = ()
+
+  override def readNull(): Null = throw new UnsupportedOperationException
+  override def readString(): String = throw new UnsupportedOperationException
+  override def readBoolean(): Boolean = throw new UnsupportedOperationException
+  override def readInt(): Int = throw new UnsupportedOperationException
+  override def readLong(): Long = throw new UnsupportedOperationException
+  override def readDouble(): Double = throw new UnsupportedOperationException
+  override def readBinary(): Array[Byte] = throw new UnsupportedOperationException
+  override def readList(): ListInput = throw new UnsupportedOperationException
+  override def readObject(): ObjectInput = throw new UnsupportedOperationException
+}
+
 class BsonReaderIterator[T](br: BsonReader, endCallback: BsonReader => Unit, readElement: BsonReader => T)
   extends AbstractIterator[T] {
   override def computeNext(): T = {
@@ -60,14 +79,31 @@ object BsonReaderListInput {
   }
 }
 
+
 class BsonReaderObjectInput private(br: BsonReader) extends ObjectInput {
   private val it = new BsonReaderIterator(br, _.readEndDocument(),
     br => new BsonReaderFieldInput(KeyEscaper.unescape(br.readName()), br)
   )
 
-  override def hasNext: Boolean = it.hasNext
-  override def nextField(): BsonReaderFieldInput = it.next()
+  val objectId: Opt[ObjectId] =
+    if (it.hasNext && it.peek().fieldName == "_id") Opt.some(it.next().readObjectId())
+    else Opt.empty
+
+  private var idToRead = objectId.isDefined
+
+  override def hasNext: Boolean = it.hasNext || idToRead
+  override def nextField(): FieldInput =
+    if (it.hasNext) {
+      it.next()
+    }
+    else if (idToRead) {
+      idToRead = false
+      new ObjectIdFieldInput("_id", objectId.get)
+    } else {
+      throw new NoSuchElementException
+    }
 }
+
 object BsonReaderObjectInput {
   def startReading(br: BsonReader): BsonReaderObjectInput = {
     br.readStartDocument()

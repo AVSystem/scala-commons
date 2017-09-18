@@ -3,7 +3,7 @@ import PgpKeys._
 cancelable in Global := true
 
 inThisBuild(Seq(
-  scalaVersion := "2.12.3",
+  scalaVersion := "2.11.11",
   crossScalaVersions := Seq("2.11.11", "2.12.3"),
   organization := "com.avsystem.commons",
   compileOrder := CompileOrder.Mixed,
