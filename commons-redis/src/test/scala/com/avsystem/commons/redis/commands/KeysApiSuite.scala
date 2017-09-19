@@ -63,6 +63,14 @@ trait KeyedKeysApiSuite extends CommandsSuite {
     objectIdletime("key").assert(_.nonEmpty)
   }
 
+  apiTest("MEMORY USAGE") {
+    setup(set("key", "value"))
+    memoryUsage("???").assertEquals(Opt.Empty)
+    memoryUsage("key").assert(_.exists(_ > 5))
+    memoryUsage("key", 0L).assert(_.exists(_ > 5))
+    memoryUsage("key", 1L).assert(_.exists(_ > 5))
+  }
+
   apiTest("PERSIST") {
     setup(set("key", "value"))
     persist("key").assertEquals(false)
