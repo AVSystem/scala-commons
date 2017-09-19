@@ -4,17 +4,19 @@ package serialization
 import com.avsystem.commons.serialization.GenCodec.NullSafeCodec
 import com.avsystem.commons.serialization.PolymorphicGenCodec.Variant
 
-class PolymorphicGenCodec[T](variants: Variant[_ <: T]*) extends NullSafeCodec[T] {
+abstract class PolymorphicGenCodec[T](variants: Variant[_ <: T]*) extends NullSafeCodec[T] {
   private val nameToVariant = variants.iterator.mkMap(_.name, identity)
 
   private lazy val supportedTypesDebug = variants.map { v =>
     s"${v.name} -> ${v.ct.runtimeClass.getName}"
   }.mkString(", ")
 
+  def decorateInputObject(objectInput: ObjectInput): ObjectInput
+
   override protected def nullable: Boolean = true
 
   override protected def readNonNull(input: Input): T = {
-    val objectInput = input.readObject()
+    val objectInput = decorateInputObject(input.readObject())
     val tpe = objectInput.nextField().assertField(PolymorphicGenCodec.ObjectTypeField).readString()
     val variant = nameToVariant.getOrElse(
       tpe,
@@ -29,6 +31,10 @@ class PolymorphicGenCodec[T](variants: Variant[_ <: T]*) extends NullSafeCodec[T
       throw new IllegalArgumentException(s"Unsupported object: $value of type ${value.getClass.getName}. Supported types are: $supportedTypesDebug")
     }
   }
+}
+
+class SimplePolymorphicGenCodec[T](variants: Variant[_ <: T]*) extends PolymorphicGenCodec[T](variants: _*) {
+  override def decorateInputObject(objectInput: ObjectInput): ObjectInput = objectInput
 }
 
 object PolymorphicGenCodec {
