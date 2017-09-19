@@ -110,7 +110,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   def create[T](readFun: Input => T, writeFun: (Output, T) => Any): GenCodec[T] =
     new GenCodec[T] {
       def write(output: Output, value: T) = writeFun(output, value)
-      def read(input: Input): T = readFun(input)
+      def read(input: Input) = readFun(input)
     }
 
   def transformed[T, R: GenCodec](toRaw: T => R, fromRaw: R => T): GenCodec[T] =
@@ -118,23 +118,23 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   def createNullSafe[T](readFun: Input => T, writeFun: (Output, T) => Any, allowNull: Boolean): GenCodec[T] =
     new NullSafeCodec[T] {
-      protected def nullable = allowNull
-      protected def readNonNull(input: Input) = readFun(input)
-      protected def writeNonNull(output: Output, value: T) = writeFun(output, value)
+      def nullable = allowNull
+      def readNonNull(input: Input) = readFun(input)
+      def writeNonNull(output: Output, value: T) = writeFun(output, value)
     }
 
   def createList[T](readFun: ListInput => T, writeFun: (ListOutput, T) => Any, allowNull: Boolean) =
     new ListCodec[T] {
-      protected def nullable = allowNull
-      protected def readList(input: ListInput) = readFun(input)
-      protected def writeList(output: ListOutput, value: T) = writeFun(output, value)
+      def nullable = allowNull
+      def readList(input: ListInput) = readFun(input)
+      def writeList(output: ListOutput, value: T) = writeFun(output, value)
     }
 
   def createObject[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any, allowNull: Boolean) =
     new ObjectCodec[T] {
-      protected def nullable = allowNull
-      protected def readObject(input: ObjectInput) = readFun(input)
-      protected def writeObject(output: ObjectOutput, value: T) = writeFun(output, value)
+      def nullable = allowNull
+      def readObject(input: ObjectInput) = readFun(input)
+      def writeObject(output: ObjectOutput, value: T) = writeFun(output, value)
     }
 
   def fromKeyCodec[T](implicit keyCodec: GenKeyCodec[T]): GenCodec[T] = create(
@@ -164,31 +164,31 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   }
 
   trait NullSafeCodec[T] extends GenCodec[T] {
-    protected def nullable: Boolean
-    protected def readNonNull(input: Input): T
-    protected def writeNonNull(output: Output, value: T): Unit
+    def nullable: Boolean
+    def readNonNull(input: Input): T
+    def writeNonNull(output: Output, value: T): Unit
 
-    def write(output: Output, value: T): Unit =
+    final def write(output: Output, value: T): Unit =
       if (value == null)
         if (nullable) output.writeNull() else throw new WriteFailure("null")
       else writeNonNull(output, value)
 
-    def read(input: Input): T =
+    final def read(input: Input): T =
       if (input.inputType == InputType.Null)
         if (nullable) input.readNull().asInstanceOf[T] else throw new ReadFailure("null")
       else readNonNull(input)
   }
 
   trait ListCodec[T] extends NullSafeCodec[T] {
-    protected def readList(input: ListInput): T
-    protected def writeList(output: ListOutput, value: T): Unit
+    def readList(input: ListInput): T
+    def writeList(output: ListOutput, value: T): Unit
 
-    protected def writeNonNull(output: Output, value: T) = {
+    final def writeNonNull(output: Output, value: T) = {
       val lo = output.writeList()
       writeList(lo, value)
       lo.finish()
     }
-    protected def readNonNull(input: Input) = {
+    final def readNonNull(input: Input) = {
       val li = input.readList()
       val result = readList(li)
       li.skipRemaining()
@@ -197,15 +197,15 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   }
 
   trait ObjectCodec[T] extends NullSafeCodec[T] {
-    protected def readObject(input: ObjectInput): T
-    protected def writeObject(output: ObjectOutput, value: T): Unit
+    def readObject(input: ObjectInput): T
+    def writeObject(output: ObjectOutput, value: T): Unit
 
-    protected def writeNonNull(output: Output, value: T) = {
+    final def writeNonNull(output: Output, value: T) = {
       val oo = output.writeObject()
       writeObject(oo, value)
       oo.finish()
     }
-    protected def readNonNull(input: Input) = {
+    final def readNonNull(input: Input) = {
       val oi = input.readObject()
       val result = readObject(oi)
       oi.skipRemaining()
@@ -252,9 +252,9 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   }
 
   final class SingletonCodec[T <: Singleton](value: => T) extends ObjectCodec[T] {
-    protected def nullable: Boolean = true
-    protected def readObject(input: ObjectInput) = value
-    protected def writeObject(output: ObjectOutput, value: T) = ()
+    def nullable: Boolean = true
+    def readObject(input: ObjectInput) = value
+    def writeObject(output: ObjectOutput, value: T) = ()
   }
 
   class TransformedCodec[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {

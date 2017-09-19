@@ -14,10 +14,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val indices = elementCodecs.indices
     q"""
         new $GenCodecObj.ListCodec[$tupleTpe] {
-          protected def nullable = true
-          protected def readList(input: $SerializationPkg.ListInput) =
+          def nullable = true
+          def readList(input: $SerializationPkg.ListInput) =
             (..${indices.map(i => q"${elementCodecs(i)}.read(input.nextElement())")})
-          protected def writeList(output: $SerializationPkg.ListOutput, value: $tupleTpe) = {
+          def writeList(output: $SerializationPkg.ListOutput, value: $tupleTpe) = {
             ..${indices.map(i => q"${elementCodecs(i)}.write(output.writeElement(), value.${tupleGet(i)})")}
           }
         }
@@ -123,10 +123,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            new $GenCodecObj.NullSafeCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
              ${depDeclaration(p)}
              protected def typeRepr = ${tpe.toString}
-             protected def nullable = ${typeOf[Null] <:< tpe}
-             protected def readNonNull(input: $SerializationPkg.Input): $tpe =
+             def nullable = ${typeOf[Null] <:< tpe}
+             def readNonNull(input: $SerializationPkg.Input): $tpe =
                ${applier(List(q"${depNames(p.sym)}.read(input)"))}
-             protected def writeNonNull(output: $SerializationPkg.Output, value: $tpe): $UnitCls =
+             def writeNonNull(output: $SerializationPkg.Output, value: $tpe): $UnitCls =
                $writeBody
            }
          """
@@ -147,8 +147,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         new $GenCodecObj.ObjectCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
           ..${params.map(depDeclaration)}
           protected def typeRepr = ${tpe.toString}
-          protected def nullable = ${typeOf[Null] <:< tpe}
-          protected def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
+          def nullable = ${typeOf[Null] <:< tpe}
+          def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
             ..${params.map(p => q"var ${optName(p)}: $NOptCls[${p.valueType}] = $NOptObj.Empty")}
             while(input.hasNext) {
               val fi = input.nextField()
@@ -159,7 +159,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
             }
             ${applier(params.map(p => p.asArgument(readField(p))))}
           }
-          protected def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = $writeObjectBody
+          def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = $writeObjectBody
         }
        """
     }
@@ -182,8 +182,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       new $GenCodecObj.ObjectCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
         ..${subtypes.map(depDeclaration)}
         protected def typeRepr = ${tpe.toString}
-        protected def nullable = ${typeOf[Null] <:< tpe}
-        protected def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
+        def nullable = ${typeOf[Null] <:< tpe}
+        def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
           if(input.hasNext) {
             val fi = input.nextField()
             val result = fi.fieldName match {
@@ -193,7 +193,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
             if(input.hasNext) notSingleField(empty = false) else result
           } else notSingleField(empty = true)
         }
-        protected def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
+        def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
           case ..${subtypes.map(st => cq"value: ${st.tpe} => writeCase(${dbNameBySym(st.sym)}, output, value, ${depNames(st.sym)})")}
         }
       }

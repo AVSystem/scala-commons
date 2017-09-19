@@ -11,9 +11,9 @@ class PolymorphicGenCodec[T](variants: Variant[_ <: T]*) extends NullSafeCodec[T
     s"${v.caseName} -> ${v.ct.runtimeClass.getName}"
   }.mkString(", ")
 
-  override protected def nullable: Boolean = true
+  override def nullable: Boolean = true
 
-  override protected def readNonNull(input: Input): T = {
+  override def readNonNull(input: Input): T = {
     val objectInput = input.readObject()
     val cse = objectInput.nextField().assertField(PolymorphicGenCodec.CaseField).readString()
     val variant = nameToVariant.getOrElse(
@@ -23,7 +23,7 @@ class PolymorphicGenCodec[T](variants: Variant[_ <: T]*) extends NullSafeCodec[T
     variant.readFrom(objectInput)
   }
 
-  override protected def writeNonNull(output: Output, value: T): Unit = {
+  override def writeNonNull(output: Output, value: T): Unit = {
     val objectOutput = output.writeObject()
     variants.find(_.maybeWriteTo(objectOutput, value)).getOrElse {
       throw new IllegalArgumentException(s"Unsupported object: $value of type ${value.getClass.getName}. Supported cases are: $supportedCasesDebug")
