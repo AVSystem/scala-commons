@@ -330,6 +330,12 @@ object SharedExtensions extends SharedExtensions {
 
     def findOpt(p: A => Boolean): Opt[A] = coll.find(p).toOpt
 
+    def flatCollect[B, That](f: PartialFunction[A, TraversableOnce[B]])(implicit cbf: CanBuildFrom[C[A], B, That]): That = {
+      val b = cbf(coll)
+      coll.foreach(f.runWith(_.foreach(b += _)))
+      b.result()
+    }
+
     def collectFirstOpt[B](pf: PartialFunction[A, B]): Opt[B] = coll.collectFirst(pf).toOpt
 
     def reduceOpt[A1 >: A](op: (A1, A1) => A1): Opt[A1] = if (coll.isEmpty) Opt.Empty else coll.reduce(op).opt

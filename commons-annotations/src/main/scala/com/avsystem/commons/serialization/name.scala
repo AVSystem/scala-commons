@@ -9,12 +9,19 @@ import scala.annotation.StaticAnnotation
   *
   * For example:
   * {{{
-  *   case class Something(@name("dbname") paramname: Int)
-  *   object Something {
-  *     implicit codec = GenCodec.auto[Something]
+  *   sealed trait Base
+  *   @name("STH")
+  *   case class Something(@name("dbname") paramname: Int) extends Base
+  *   object Base {
+  *     implicit codec = GenCodec.auto[Base]
   *   }
   * }}}
   *
-  * `GenCodec.write(someOutput, Something(42))` would write an object `{"dbname": 42}` instead of `{"paramname": 42}`.
+  * `GenCodec.write[Base](someOutput, Something(42))` would write an object
+  * `{"STH": {"dbname": 42}}` instead of `{"Something": {"paramname": 42}}`.
+  *
+  * NOTE: `@name` annotation may be defined on any level of inheritance hierarchy.
+  * For instance, if a case class field overrides a method of some base trait, the `@name` annotation may
+  * be used on that method and will affect the case class field.
   */
 class name(name: String) extends StaticAnnotation

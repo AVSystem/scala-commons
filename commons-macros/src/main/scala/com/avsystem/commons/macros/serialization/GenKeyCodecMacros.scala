@@ -14,7 +14,7 @@ class GenKeyCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
     val tpe = weakTypeOf[T]
     knownSubtypes(tpe).map { subtypes =>
       def singleValue(st: Type) = singleValueFor(st).getOrElse(abort(s"$st is not an object"))
-      val nameBySym = subtypes.groupBy(st => annotName(st.typeSymbol)).map {
+      val nameBySym = subtypes.groupBy(st => targetName(st.typeSymbol)).map {
         case (name, List(subtype)) => (subtype.typeSymbol, name)
         case (name, kst) =>
           abort(s"Objects ${kst.map(_.typeSymbol.name).mkString(", ")} have the same @name: $name")

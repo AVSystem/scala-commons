@@ -10,15 +10,15 @@ import org.openjdk.jmh.annotations._
 class OptBenchmarks {
   def doSomething(str: String): Unit = ()
 
-  @Benchmark
-  def testOption: Double =
-    Option("lol").map(_.length).filter(_ < 10).map(_.toDouble).getOrElse(0)
+  def takeOpt(os: Opt[String]): Opt[String] =
+    os.filter(_.length < 10).map(_.toDouble).map(_.toString)
+
+  def takeOption(os: Option[String]): Option[String] =
+    os.filter(_.length < 10).map(_.toDouble).map(_.toString)
 
   @Benchmark
-  def testOpt: Double =
-    Opt("lol").map(_.length).filter(_ < 10).map(_.toDouble).getOrElse(0)
+  def testOption: String = takeOption(Option("1234.56")).getOrElse("")
 
   @Benchmark
-  def testNOpt: Double =
-    NOpt("lol").map(_.length).filter(_ < 10).map(_.toDouble).getOrElse(0)
+  def testOpt: String = takeOpt(Opt("1234.56")).getOrElse("")
 }
