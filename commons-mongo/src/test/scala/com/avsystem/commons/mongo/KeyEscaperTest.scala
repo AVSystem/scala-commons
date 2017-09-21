@@ -15,16 +15,19 @@ class KeyEscaperTest extends FunSuite with PropertyChecks {
     val customCases = List(
       "plain" -> "plain",
       "<plain, but strange>" -> "<plain, but strange>",
-      "not_so_plain" -> "not__so__plain",
-      "$" -> "_D",
-      "." -> "_d"
+      "not_so_plain" -> "not_so_plain",
+      "$" -> "\\$",
+      "." -> "\\_",
+      "plain$ with$ $dollars$" -> "plain$ with$ $dollars$",
+      "Sentence." -> "Sentence\\_",
+      "$operator" -> "\\$operator",
+      "$worst.of.both.worlds" -> "\\$worst\\_of\\_both\\_worlds"
     )
 
     for ((input, expected) <- customCases) {
       val escaped = escape(input)
       assert(validator.validate(escaped))
       assert(escaped === expected)
-      assert(escaped.forall(isPlain))
       assert(unescape(escaped) === input)
     }
   }
@@ -34,7 +37,6 @@ class KeyEscaperTest extends FunSuite with PropertyChecks {
       val escaped = escape(plainKey)
       assert(validator.validate(escaped))
       assert(escaped === plainKey)
-      assert(escaped.forall(isPlain))
       assert(unescape(escaped) === plainKey)
     }
   }
@@ -43,14 +45,13 @@ class KeyEscaperTest extends FunSuite with PropertyChecks {
     forAll(deniedKeyGen) { arbitraryKey =>
       val escaped = escape(arbitraryKey)
       assert(validator.validate(escaped))
-      assert(escaped.forall(isPlain))
       assert(unescape(escaped) === arbitraryKey)
     }
   }
 }
 
 object KeyEscaperTest {
-  def isPlain(char: Char): Boolean = char != '.' && char != '$'
+  def isPlain(char: Char): Boolean = char != '.' && char != '$' && char != '\\'
 
   val validator = new CollectibleDocumentFieldNameValidator
 
