@@ -4,13 +4,25 @@ package mongo
 import java.lang.{StringBuilder => JStringBuilder}
 
 object KeyEscaper {
+  private final val Esc = '\\'
+  private final val EscSub = '\\'
+  private final val EscRepl = s"$Esc$EscSub"
+
+  private final val Dot = '.'
+  private final val DotSub = '_'
+  private final val DotRepl = s"$Esc$DotSub"
+
+  private final val Dollar = '$'
+  private final val DollarSub = '$'
+  private final val DollarRepl = s"$Esc$DollarSub"
+
   private def escapeSpecials(str: String, start: Int, sb: JStringBuilder): Unit = {
     var i = start
     val len = str.length
     while (i < len) {
       str.charAt(i) match {
-        case '.' => sb.append("\\_")
-        case '\\' => sb.append("\\\\")
+        case Dot => sb.append(DotRepl)
+        case Esc => sb.append(EscRepl)
         case c => sb.append(c)
       }
       i += 1
@@ -25,13 +37,13 @@ object KeyEscaper {
       var specials = 0
       while (i < key.length) {
         val c = key.charAt(i)
-        if (c == '.' || c == '\\') specials += 1
+        if (c == Dot || c == Esc) specials += 1
         i += 1
       }
 
-      if (key.charAt(0) == '$') {
+      if (key.charAt(0) == Dollar) {
         val sb = new JStringBuilder(key.length + 1 + specials)
-        sb.append("\\$")
+        sb.append(DollarRepl)
         if (specials > 0) {
           escapeSpecials(key, 1, sb)
         } else {
@@ -54,11 +66,11 @@ object KeyEscaper {
     var i = 0
     while (i < str.length) {
       str.charAt(i) match {
-        case '\\' =>
+        case Esc =>
           str.charAt(i + 1) match {
-            case '\\' => sb.append('\\')
-            case '_' => sb.append('.')
-            case '$' => sb.append('$')
+            case EscSub => sb.append(Esc)
+            case DotSub => sb.append(Dot)
+            case DollarSub => sb.append(Dollar)
           }
           i += 2
         case c =>
@@ -74,7 +86,7 @@ object KeyEscaper {
 
     while (i < key.length) {
       val c = key.charAt(i)
-      if (c == '\\') {
+      if (c == Esc) {
         specials += 1
         i += 2
       } else {
