@@ -64,7 +64,7 @@ object PolymorphicGenCodec {
     override def writeObject(): ObjectOutput = objectOutput
   }
 
-  val CaseField = "@case"
+  val CaseField = "_case"
 
   case class Variant[T](caseName: String)(implicit val ct: ClassTag[T], val codec: GenCodec[T]) {
     def readFrom(objectInput: ObjectInput): T = {

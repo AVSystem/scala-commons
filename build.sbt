@@ -203,7 +203,7 @@ lazy val `commons-jetty` = project
   )
 
 lazy val `commons-benchmark` = project
-  .dependsOn(`commons-core`, `commons-akka`, `commons-redis`)
+  .dependsOn(`commons-core`, `commons-akka`, `commons-redis`, `commons-mongo`)
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(noPublishSettings: _*)
