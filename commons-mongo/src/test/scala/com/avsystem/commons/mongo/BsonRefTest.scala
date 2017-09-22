@@ -33,6 +33,6 @@ class BsonRefTest extends FunSuite with BsonRef.Creator[TestEntity] {
     assert(ref(_.innerClass).path === "inner")
     assert(ref(_.innerClass.map).path === "inner.map")
     assert(ref(_.innerClass.map("key")).path === "inner.map.key")
-    assert(ref(_.`$special.field`).path === "_Dspecial_dfield")
+    assert(ref(_.`$special.field`).path === "\\$special\\_field")
   }
 }
