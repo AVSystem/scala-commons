@@ -39,7 +39,7 @@ object FlatSealedBase {
     def id = "THIRD"
   }
 
-  implicit val codec: GenCodec[FlatSealedBase] = GenCodec.materialize[FlatSealedBase].showAst
+  implicit val codec: GenCodec[FlatSealedBase] = GenCodec.materialize[FlatSealedBase]
 }
 
 abstract class Wrapper[Self <: Wrapper[Self] : ClassTag](private val args: Any*) { this: Self =>
