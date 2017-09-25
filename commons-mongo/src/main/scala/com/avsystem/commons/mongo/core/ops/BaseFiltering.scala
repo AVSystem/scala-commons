@@ -6,9 +6,8 @@ import java.util.regex.Pattern
 import com.google.common.collect.ImmutableList
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.geojson.{Geometry, Point}
-import org.bson.BsonType
+import org.bson.{BsonType, BsonValue}
 import org.bson.conversions.Bson
-import org.mongodb.scala.bson.BsonValue
 
 import scala.util.matching.Regex
 
