@@ -78,4 +78,9 @@ trait CodecTestBase extends FunSuite {
     testAutoWriteRead[T](value, expectedRepr)
   }
 
+  def testReadAndAutoRead[T: GenCodec : GenCodec.Auto](repr: Any, expected: T)(implicit pos: Position): Unit = {
+    assert(expected == GenCodec.read[T](new SimpleValueInput(repr)))
+    assert(expected == GenCodec.autoRead[T](new SimpleValueInput(repr)))
+  }
+
 }

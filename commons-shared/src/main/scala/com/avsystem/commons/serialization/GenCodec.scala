@@ -213,36 +213,50 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     }
   }
 
+  trait ApplyUnapplyCodec[T, O] extends ObjectCodec[T] {
+    protected def emptyOutOfOrderFields: O
+    def readObject(input: ObjectInput, outOfOrderFields: O): T
+    final def readObject(input: ObjectInput): T = readObject(input, emptyOutOfOrderFields)
+  }
+
   trait ErrorReportingCodec[T] extends GenCodec[T] {
     protected def typeRepr: String
 
     protected def readField[A](fieldInput: FieldInput, codec: GenCodec[A]): A =
-      decoratedRead(fieldInput, codec, "field")
+      decoratedRead(fieldInput, codec, s"field ${fieldInput.fieldName}")
 
     protected def readCaseName(input: ObjectInput): String = {
       if (input.hasNext) {
         val fi = input.nextField()
         fi.fieldName match {
-          case CaseField => try fi.readString() catch {
-            case NonFatal(e) =>
-              throw new ReadFailure(s"Cannot read $typeRepr, failed to read case name from `$CaseField` field", e)
-          }
+          case CaseField => readCaseName(fi.opt)
           case _ => missingCase
         }
       } else missingCase
     }
 
-    protected def readCase[A](fieldInput: FieldInput, codec: GenCodec[A]): A =
-      decoratedRead(fieldInput, codec, "case")
+    protected def readCaseName(fi: Opt[FieldInput]): String =
+      try fi.getOrElse(missingCase).readString() catch {
+        case NonFatal(e) =>
+          throw new ReadFailure(s"Cannot read $typeRepr, failed to read case name from `$CaseField` field", e)
+      }
+
+    protected def readCase[A](caseName: String, input: Input, codec: GenCodec[A]): A =
+      decoratedRead(input, codec, s"case $caseName")
+
+    protected def readFlatCase[A, O](caseName: String, outOfOrderFields: O, input: ObjectInput, codec: GenCodec.ApplyUnapplyCodec[A, O]): A =
+      try codec.readObject(input, outOfOrderFields) catch {
+        case NonFatal(e) => throw new ReadFailure(s"Failed to read case $caseName of $typeRepr", e)
+      }
 
     protected def readFlatCase[A](caseName: String, input: ObjectInput, codec: GenCodec.ObjectCodec[A]): A =
       try codec.readObject(input) catch {
         case NonFatal(e) => throw new ReadFailure(s"Failed to read case $caseName of $typeRepr", e)
       }
 
-    private def decoratedRead[A](fieldInput: FieldInput, codec: GenCodec[A], what: String): A =
-      try codec.read(fieldInput) catch {
-        case NonFatal(e) => throw new ReadFailure(s"Failed to read $what ${fieldInput.fieldName} of $typeRepr", e)
+    private def decoratedRead[A](input: Input, codec: GenCodec[A], what: String): A =
+      try codec.read(input) catch {
+        case NonFatal(e) => throw new ReadFailure(s"Failed to read $what of $typeRepr", e)
       }
 
     protected def writeField[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
