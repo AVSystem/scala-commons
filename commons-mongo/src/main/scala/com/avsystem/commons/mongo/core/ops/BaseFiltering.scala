@@ -6,19 +6,12 @@ import java.util.regex.Pattern
 import com.google.common.collect.ImmutableList
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.geojson.{Geometry, Point}
-import org.bson.{BsonType, BsonValue}
+import org.bson.BsonType
 import org.bson.conversions.Bson
 
 import scala.util.matching.Regex
 
-trait BaseFiltering[T] extends Any {
-  private[core] def key: String
-  private[core] def encode(t: T): BsonValue
-
-  private def use(t: T)(f: (String, BsonValue) => Bson): Bson = {
-    f(key, encode(t))
-  }
-
+trait BaseFiltering[T] extends Any with KeyValueHandling[T] {
   def equal(t: T): Bson = use(t)(Filters.eq)
   def notEqual(t: T): Bson = use(t)(Filters.ne)
 
