@@ -91,6 +91,7 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
                 refs ::= q"$SerializationPkg.RawRef.Field(${targetName(fieldSym)})"
               }
           }
+          extract(prefix)
 
         case MapApplyOrGet(prefix, key, baseMapSymbol) =>
           val keyType = prefix.tpe.baseType(baseMapSymbol).typeArgs.head
