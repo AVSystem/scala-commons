@@ -28,6 +28,13 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
     }
   }
 
+  private def primaryConstructorParamFor(tpe: Type, accessor: Symbol): Symbol =
+    alternatives(tpe.member(termNames.CONSTRUCTOR))
+      .find(_.asMethod.isPrimaryConstructor)
+      .map(_.typeSignature.paramLists.head)
+      .flatMap(_.find(_.name == accessor.name))
+      .getOrElse(abort(s"Could not find primary constructor parameter ${accessor.name}"))
+
   def rawRef(fun: Tree): Tree = fun match {
     case genRef if genRef.tpe <:< GenRefTpe => q"${genRef.duplicate}.rawRef"
     case Apply(TypeApply(Select(left, TermName("andThen")), List(_)), List(right)) =>
@@ -37,26 +44,52 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
     case Function(List(param), body) =>
       var refs = List.empty[Tree]
+
       def extract(body: Tree): Unit = body match {
         case Select(prefix, _) =>
-          if (body.symbol.isTerm && body.symbol.asTerm.isCaseAccessor &&
-            !definitions.TupleClass.seq.contains(prefix.tpe.typeSymbol)) {
+          val prefixTpe = prefix.tpe.widen
+          val bodyTpe = body.tpe.widen
+          val prefixTpeSym = prefixTpe.typeSymbol
+          val selSym = body.symbol
 
-            val primaryConstructorParams = alternatives(prefix.tpe.member(termNames.CONSTRUCTOR))
-              .find(_.asMethod.isPrimaryConstructor)
-              .getOrElse(abort(s"No primary constructor found for ${prefix.tpe}"))
-              .typeSignature.paramLists.head
+          def fieldMemberFor(tpe: Type, member: Symbol): Symbol =
+            if (hasAnnotation(member, GeneratedAnnotType))
+              member
+            else if (member.isTerm && member.asTerm.isCaseAccessor && !isTuple(prefixTpeSym))
+              primaryConstructorParamFor(tpe, member)
+            else
+              c.abort(body.pos, s"$member in $tpe is neither a case class field accessor nor a @generated member")
 
-            if (primaryConstructorParams.size != 1 || !isTransparent(prefix.tpe.typeSymbol)) {
-              val constrArg = primaryConstructorParams.find(_.name == body.symbol.name)
-                .getOrElse(abort(s"No primary constructor parameter ${body.symbol.name} found"))
+          knownSubtypes(prefixTpe) match {
+            case Some(subtypes) if subtypes.nonEmpty && hasAnnotation(prefixTpeSym, FlattenAnnotType) =>
+              val subMembers = subtypes.map { subtype =>
+                val sym = alternatives(subtype.member(selSym.name))
+                  .find(s => s == selSym || s.overrides.contains(selSym))
+                  .getOrElse(c.abort(body.pos, s"Could not find overriding member for $selSym in $subtype"))
+                (subtype, sym)
+              }
 
-              refs ::= q"$SerializationPkg.RawRef.Field(${targetName(constrArg)})"
-            }
+              val fieldSymbols = subMembers.map { case (subtype, subMember) =>
+                val fieldSym = fieldMemberFor(subtype, subMember)
+                val fieldType = nonRepeatedType(fieldSym.typeSignatureIn(subtype).finalResultType)
+                if (!(fieldType =:= bodyTpe)) {
+                  c.abort(body.pos, s"$subMember in $subtype has different type ($fieldType) than $selSym in $prefixTpe ($bodyTpe)")
+                }
+                fieldSym
+              }
 
-            extract(prefix)
-          } else {
-            c.abort(body.pos, s"${body.symbol} is not a case class field accessor")
+              val memberName = targetName(fieldSymbols.head)
+              if (fieldSymbols.exists(s => targetName(s) != memberName)) {
+                c.abort(body.pos, s"All members that override $selSym in $prefixTpe in subtypes must have the same @name")
+              }
+
+              refs ::= q"$SerializationPkg.RawRef.Field($memberName)"
+
+            case _ =>
+              val fieldSym = fieldMemberFor(prefixTpe, selSym)
+              if(!isTransparent(prefixTpeSym)) {
+                refs ::= q"$SerializationPkg.RawRef.Field(${targetName(fieldSym)})"
+              }
           }
 
         case MapApplyOrGet(prefix, key, baseMapSymbol) =>

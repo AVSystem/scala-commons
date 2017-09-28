@@ -427,8 +427,13 @@ trait MacroCommons {
         val undetparams = subSym.asType.typeParams
         val undetSubTpe = typeOfTypeSymbol(subSym.asType)
 
-        determineTypeParams(undetSubTpe, tpe, undetparams)
-          .map(typeArgs => undetSubTpe.substituteTypes(undetparams, typeArgs))
+        if(undetparams.nonEmpty)
+          determineTypeParams(undetSubTpe, tpe, undetparams)
+            .map(typeArgs => undetSubTpe.substituteTypes(undetparams, typeArgs))
+        else if(undetSubTpe <:< tpe)
+          Some(undetSubTpe)
+        else
+          None
       }
     }
 
@@ -465,6 +470,9 @@ trait MacroCommons {
 
   def typecheckException(msg: String) =
     throw TypecheckException(c.enclosingPosition, msg)
+
+  def isTuple(sym: Symbol) =
+    definitions.TupleClass.seq.contains(sym)
 }
 
 abstract class AbstractMacroCommons(val c: blackbox.Context) extends MacroCommons
