@@ -229,14 +229,14 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
       if (input.hasNext) {
         val fi = input.nextField()
         fi.fieldName match {
-          case CaseField => readCaseName(fi.opt)
+          case CaseField => readCaseName(fi)
           case _ => missingCase
         }
       } else missingCase
     }
 
-    protected def readCaseName(fi: Opt[FieldInput]): String =
-      try fi.getOrElse(missingCase).readString() catch {
+    protected def readCaseName(fi: FieldInput): String =
+      try fi.readString() catch {
         case NonFatal(e) =>
           throw new ReadFailure(s"Cannot read $typeRepr, failed to read case name from `$CaseField` field", e)
       }
@@ -284,8 +284,11 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     protected def unknownCase(caseName: String) =
       throw new ReadFailure(s"Cannot read $typeRepr, unknown case: $caseName")
 
+    protected def missingCase(fieldToRead: String) =
+      throw new ReadFailure(s"Cannot read field $fieldToRead of $typeRepr before $CaseField field is read")
+
     protected def missingCase =
-      throw new ReadFailure(s"Cannot read $typeRepr, `$CaseField` field is missing at the beginning of an object")
+      throw new ReadFailure(s"Cannot read $typeRepr, $CaseField field is missing")
 
     protected def notSingleField(empty: Boolean) =
       throw new ReadFailure(s"Cannot read $typeRepr, expected object with exactly one field but got ${if (empty) "empty object" else "more than one"}")

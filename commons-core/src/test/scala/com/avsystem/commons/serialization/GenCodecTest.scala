@@ -318,10 +318,10 @@ class GenCodecTest extends CodecTestBase {
 
   test("out of order field in flat sealed hierarchy test") {
     testReadAndAutoRead[FlatSealedBase](
-      ListMap("_id" -> "fuu", "_case" -> "FirstCase", "int" -> 42),
+      ListMap("_id" -> "fuu", "upper_id" -> "FUU", "random" -> 13, "_case" -> "FirstCase", "int" -> 42),
       FlatSealedBase.FirstCase("fuu", 42))
     testReadAndAutoRead[FlatSealedBase](
-      ListMap("_id" -> "bar", "_case" -> "SecondCase", "dbl" -> 3.14, "moar" -> List(1.0, 2.0)),
+      ListMap("_id" -> "bar", "upper_id" -> "FUU", "random" -> 13, "_case" -> "SecondCase", "dbl" -> 3.14, "moar" -> List(1.0, 2.0)),
       FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0))
   }
 

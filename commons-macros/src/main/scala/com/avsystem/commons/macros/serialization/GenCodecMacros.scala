@@ -380,6 +380,14 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       ci.oooFieldNames.iterator.map(name => (name, ci.membersByName(name)._2))
     }.toMap
 
+    val caseDependentFieldNames =
+      (for {
+        ci <- caseInfos.iterator
+        ap <- ci.applyParams.iterator
+        name = ci.targetNames(ap.sym)
+        if !oooParams.contains(name)
+      } yield name).toSet
+
     // Make sure that out of order params are marked with @outOfOrder in every case class in which they appear
     // and that they all have exactly the same type.
     for {
@@ -404,7 +412,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       q"lazy val ${oooDepNames(name)} = ${dependency(ptpe, tcTpe, s"for field $name")}"
 
     def oooFieldReadCase(name: String) =
-      cq"$name => oooFields.${optName(name)} = $NOptObj.some(readField(fi, ${oooDepNames(name)}))"
+      cq"$name => oooFields.${optName(name)} = $NOptObj.some(readField(fi, ${oooDepNames(name)})); lookForCase()"
 
     val oooFieldsClass = if (oooParams.isEmpty) q"()" else
       q"""
@@ -416,6 +424,13 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val oooFieldsDecl =
       if (oooParams.isEmpty) q"()" else q"val oooFields = new OutOfOrderFields"
 
+    val caseDependentParamsCase =
+      if(caseDependentFieldNames.isEmpty) Nil
+      else {
+        val pattern = caseDependentFieldNames.map(n => pq"$n").reduce((p1, p2) => pq"$p1 | $p2")
+        List(cq"$pattern => missingCase(fi.fieldName)")
+      }
+
     q"""
       new $GenCodecObj.ObjectCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
         $oooFieldsClass
@@ -424,20 +439,18 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         protected def typeRepr = ${tpe.toString}
         def nullable = ${typeOf[Null] <:< tpe}
         def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
-          var lookForCase = true
-          var caseField = $OptObj.empty[$SerializationPkg.FieldInput]
           $oooFieldsDecl
-          while(lookForCase && input.hasNext) {
-            val fi = input.nextField()
-            fi.fieldName match {
-              case $CaseField =>
-                caseField = fi.opt
-                lookForCase = false
-              case ..${oooParams.keysIterator.map(oooFieldReadCase).toList}
-              case _ => lookForCase = false
-            }
-          }
-          readCaseName(caseField) match {
+          def lookForCase(): $SerializationPkg.FieldInput =
+            if(input.hasNext) {
+              val fi = input.nextField()
+              fi.fieldName match {
+                case $CaseField => fi
+                case ..${oooParams.keysIterator.map(oooFieldReadCase).toList}
+                case ..$caseDependentParamsCase
+                case _ => fi.skip(); lookForCase()
+              }
+            } else missingCase
+          readCaseName(lookForCase()) match {
             case ..${caseInfos.map(_.caseRead)}
             case caseName => unknownCase(caseName)
           }
