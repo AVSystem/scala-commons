@@ -34,24 +34,24 @@ object GenKeyCodec {
       def write(value: T): String = writeFun(value)
     }
 
-  implicit val BooleanKeyCodec: GenKeyCodec[Boolean] = create(_.toBoolean, _.toString)
-  implicit val CharKeyCodec: GenKeyCodec[Char] = create(_.charAt(0), _.toString)
-  implicit val ByteKeyCodec: GenKeyCodec[Byte] = create(_.toByte, _.toString)
-  implicit val ShortKeyCodec: GenKeyCodec[Short] = create(_.toShort, _.toString)
-  implicit val IntKeyCodec: GenKeyCodec[Int] = create(_.toInt, _.toString)
-  implicit val LongKeyCodec: GenKeyCodec[Long] = create(_.toLong, _.toString)
-  implicit val BigIntKeyCodec: GenKeyCodec[BigInt] = create(BigInt(_), _.toString)
+  implicit lazy val BooleanKeyCodec: GenKeyCodec[Boolean] = create(_.toBoolean, _.toString)
+  implicit lazy val CharKeyCodec: GenKeyCodec[Char] = create(_.charAt(0), _.toString)
+  implicit lazy val ByteKeyCodec: GenKeyCodec[Byte] = create(_.toByte, _.toString)
+  implicit lazy val ShortKeyCodec: GenKeyCodec[Short] = create(_.toShort, _.toString)
+  implicit lazy val IntKeyCodec: GenKeyCodec[Int] = create(_.toInt, _.toString)
+  implicit lazy val LongKeyCodec: GenKeyCodec[Long] = create(_.toLong, _.toString)
+  implicit lazy val BigIntKeyCodec: GenKeyCodec[BigInt] = create(BigInt(_), _.toString)
 
-  implicit val JBooleanKeyCodec: GenKeyCodec[JBoolean] = create(_.toBoolean, _.toString)
-  implicit val JCharacterKeyCodec: GenKeyCodec[JCharacter] = create(_.charAt(0), _.toString)
-  implicit val JByteKeyCodec: GenKeyCodec[JByte] = create(_.toByte, _.toString)
-  implicit val JShortKeyCodec: GenKeyCodec[JShort] = create(_.toShort, _.toString)
-  implicit val JIntKeyCodec: GenKeyCodec[JInteger] = create(_.toInt, _.toString)
-  implicit val JLongKeyCodec: GenKeyCodec[JLong] = create(_.toLong, _.toString)
-  implicit val JBigIntegerKeyCodec: GenKeyCodec[JBigInteger] = create(new JBigInteger(_), _.toString)
+  implicit lazy val JBooleanKeyCodec: GenKeyCodec[JBoolean] = create(_.toBoolean, _.toString)
+  implicit lazy val JCharacterKeyCodec: GenKeyCodec[JCharacter] = create(_.charAt(0), _.toString)
+  implicit lazy val JByteKeyCodec: GenKeyCodec[JByte] = create(_.toByte, _.toString)
+  implicit lazy val JShortKeyCodec: GenKeyCodec[JShort] = create(_.toShort, _.toString)
+  implicit lazy val JIntKeyCodec: GenKeyCodec[JInteger] = create(_.toInt, _.toString)
+  implicit lazy val JLongKeyCodec: GenKeyCodec[JLong] = create(_.toLong, _.toString)
+  implicit lazy val JBigIntegerKeyCodec: GenKeyCodec[JBigInteger] = create(new JBigInteger(_), _.toString)
 
-  implicit val StringKeyCodec: GenKeyCodec[String] = create(identity, identity)
-  implicit val SymbolKeyCodec: GenKeyCodec[Symbol] = create(Symbol(_), _.name)
+  implicit lazy val StringKeyCodec: GenKeyCodec[String] = create(identity, identity)
+  implicit lazy val SymbolKeyCodec: GenKeyCodec[Symbol] = create(Symbol(_), _.name)
 
   implicit def jEnumKeyCodec[E <: Enum[E]](implicit ct: ClassTag[E]): GenKeyCodec[E] =
     GenKeyCodec.create(
