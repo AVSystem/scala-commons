@@ -110,8 +110,8 @@ class GenCodecTest extends CodecTestBase {
   }
 
   object SomeObject {
-    implicit val codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
     @generated def random: Int = 42
+    implicit val codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
   }
 
   test("object test") {
