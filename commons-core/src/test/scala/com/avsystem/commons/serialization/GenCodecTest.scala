@@ -30,13 +30,16 @@ object SealedBase {
 }
 
 @flatten sealed trait FlatSealedBase {
-  @outOfOrder @name("_id") def id: String
+  @outOfOrder
+  @name("_id") def id: String
+  @generated
+  @name("upper_id") def upperId: String = id.toUpperCase
 }
 object FlatSealedBase {
   case class FirstCase(id: String, int: Int) extends FlatSealedBase
   case class SecondCase(id: String, dbl: Double, moar: Double*) extends FlatSealedBase
   case object ThirdCase extends FlatSealedBase {
-    def id = "THIRD"
+    @generated def id = "third"
   }
 
   implicit val codec: GenCodec[FlatSealedBase] = GenCodec.materialize[FlatSealedBase]
@@ -108,10 +111,11 @@ class GenCodecTest extends CodecTestBase {
 
   object SomeObject {
     implicit val codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
+    @generated def random: Int = 42
   }
 
   test("object test") {
-    testWriteReadAndAutoWriteRead(SomeObject, Map())
+    testWriteReadAndAutoWriteRead(SomeObject, Map("random" -> 42))
   }
 
   case class NoArgCaseClass()
@@ -138,13 +142,14 @@ class GenCodecTest extends CodecTestBase {
 
   trait HasSomeStr {
     @name("some.str") def str: String
+    @generated def someStrLen: Int = str.length
   }
   case class SomeCaseClass(str: String, intList: List[Int]) extends HasSomeStr
   object SomeCaseClass extends HasGenCodec[SomeCaseClass]
 
   test("case class test") {
     testWriteReadAndAutoWriteRead(SomeCaseClass("dafuq", List(1, 2, 3)),
-      ListMap("some.str" -> "dafuq", "intList" -> List(1, 2, 3))
+      ListMap("some.str" -> "dafuq", "intList" -> List(1, 2, 3), "someStrLen" -> 5)
     )
   }
 
@@ -292,19 +297,23 @@ class GenCodecTest extends CodecTestBase {
   }
 
   test("sealed hierarchy test") {
-    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseObject, ListMap("CaseObject" -> Map()))
-    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseClass("fuu"), ListMap("CaseClass" -> ListMap("str" -> "fuu")))
-    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseObject, ListMap("InnerCaseObject" -> Map()))
-    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"), ListMap("InnerCaseClass" -> ListMap("str" -> "fuu")))
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseObject,
+      ListMap("CaseObject" -> Map()))
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseClass("fuu"),
+      ListMap("CaseClass" -> ListMap("str" -> "fuu")))
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseObject,
+      ListMap("InnerCaseObject" -> Map()))
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"),
+      ListMap("InnerCaseClass" -> ListMap("str" -> "fuu")))
   }
 
   test("flat sealed hierarchy test") {
     testWriteReadAndAutoWriteRead[FlatSealedBase](FlatSealedBase.FirstCase("fuu", 42),
-      ListMap("_case" -> "FirstCase", "_id" -> "fuu", "int" -> 42))
+      ListMap("_case" -> "FirstCase", "_id" -> "fuu", "int" -> 42, "upper_id" -> "FUU"))
     testWriteReadAndAutoWriteRead[FlatSealedBase](FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0),
-      ListMap("_case" -> "SecondCase", "_id" -> "bar", "dbl" -> 3.14, "moar" -> List(1.0, 2.0)))
+      ListMap("_case" -> "SecondCase", "_id" -> "bar", "dbl" -> 3.14, "moar" -> List(1.0, 2.0), "upper_id" -> "BAR"))
     testWriteReadAndAutoWriteRead[FlatSealedBase](FlatSealedBase.ThirdCase,
-      ListMap("_case" -> "ThirdCase"))
+      ListMap("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD"))
   }
 
   test("out of order field in flat sealed hierarchy test") {

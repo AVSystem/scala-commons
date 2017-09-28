@@ -294,7 +294,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
       throw new WriteFailure(s"Could not write $typeRepr, unapply/unapplySeq returned false or empty value")
   }
 
-  final class SingletonCodec[T <: Singleton](value: => T) extends ObjectCodec[T] {
+  class SingletonCodec[T <: Singleton](value: => T) extends ObjectCodec[T] {
     def nullable: Boolean = true
     def readObject(input: ObjectInput) = value
     def writeObject(output: ObjectOutput, value: T) = ()

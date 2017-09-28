@@ -24,6 +24,7 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   final val TransientDefaultAnnotType = getType(tq"$SerializationPkg.transientDefault")
   final val FlattenAnnotType = getType(tq"$SerializationPkg.flatten")
   final val OutOfOrderAnnotType = getType(tq"$SerializationPkg.outOfOrder")
+  final val GeneratedAnnotType = getType(tq"$SerializationPkg.generated")
   final val GenCodecObj = q"$SerializationPkg.GenCodec"
   final val GenCodecCls = tq"$SerializationPkg.GenCodec"
   final val CaseField = "_case"
@@ -65,4 +66,7 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
 
   def isTransparent(sym: Symbol): Boolean =
     hasAnnotation(sym, TransparentAnnotType)
+
+  def isGenerated(sym: Symbol): Boolean =
+    hasAnnotation(sym, GeneratedAnnotType)
 }
