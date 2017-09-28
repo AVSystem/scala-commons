@@ -44,13 +44,20 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
       } else NoSymbol
     } else NoSymbol
 
+  def withAccessed(sym: Symbol): List[Symbol] =
+    if (sym.isTerm) {
+      val tsym = sym.asTerm
+      if (tsym.isGetter) List(sym, tsym.accessed)
+      else List(sym)
+    } else List(sym)
+
   def getAnnotations(sym: Symbol, annotTpe: Type): List[Annotation] = {
     val caseAccessor = caseAccessorFor(sym)
     val syms =
       if (caseAccessor != NoSymbol) sym :: caseAccessor :: caseAccessor.overrides
       else if (sym.isClass) sym.asClass.baseClasses
       else sym :: sym.overrides
-    syms.flatMap(_.annotations).filter(_.tree.tpe <:< annotTpe)
+    syms.flatMap(s => withAccessed(s).flatMap(_.annotations.filter(_.tree.tpe <:< annotTpe)))
   }
 
   def hasAnnotation(sym: Symbol, annotTpe: Type): Boolean =

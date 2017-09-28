@@ -103,7 +103,7 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
     * Since `byName` uses [[caseObjects]] macro it does NOT guarantee an order of elements. It is also essential
     * to provide unique names for each case object in the sealed hierarchy to retrieve valid hierarchy.
     */
-  lazy val byName: Map[String, T] = values.iterator.map(v => (v.name, v)).toMap
+  lazy val byName: Map[String, T] = values.toMapBy(_.name)
 
   implicit lazy val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(byName, _.name)
   implicit lazy val codec: GenCodec[T] = GenCodec.createNullSafe[T](
