@@ -435,7 +435,6 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
                 lookForCase = false
               case ..${oooParams.keysIterator.map(oooFieldReadCase).toList}
               case _ => lookForCase = false
-              case _ => fi.skip()
             }
           }
           readCaseName(caseField) match {
