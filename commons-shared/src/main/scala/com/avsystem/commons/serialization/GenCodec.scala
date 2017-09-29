@@ -256,9 +256,11 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     protected def writeCase[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
       decoratedWrite(fieldName, output, value, codec, "case")
 
-    protected def writeFlatCase[A](caseName: String, output: ObjectOutput, value: A, codec: ObjectCodec[A]): Unit =
+    protected def writeFlatCase[A](caseName: String, transient: Boolean, output: ObjectOutput, value: A, codec: ObjectCodec[A]): Unit =
       try {
-        output.writeField(caseFieldName).writeString(caseName)
+        if(!transient) {
+          output.writeField(caseFieldName).writeString(caseName)
+        }
         codec.writeObject(output, value)
       } catch {
         case NonFatal(e) => throw new WriteFailure(s"Failed to write case $caseName of $typeRepr", e)

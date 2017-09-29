@@ -427,7 +427,7 @@ class GenCodecTest extends CodecTestBase {
   }
 
   @flatten("kejs") sealed trait CustomizedSeal
-  case class CustomizedCase(str: String) extends CustomizedSeal
+  @defaultCase(transient = true) case class CustomizedCase(str: String) extends CustomizedSeal
   case object CustomizedObjekt extends CustomizedSeal
   object CustomizedSeal {
     implicit val codec: GenCodec[CustomizedSeal] = GenCodec.materialize[CustomizedSeal]
@@ -435,7 +435,7 @@ class GenCodecTest extends CodecTestBase {
 
   test("customized flat sealed hierarchy test") {
     testWriteReadAndAutoWriteRead[CustomizedSeal](CustomizedCase("dafuq"),
-      Map("kejs" -> "CustomizedCase", "str" -> "dafuq"))
+      Map("str" -> "dafuq"))
     testWriteReadAndAutoWriteRead[CustomizedSeal](CustomizedObjekt,
       Map("kejs" -> "CustomizedObjekt"))
   }

@@ -333,6 +333,13 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val caseName: String = targetName(sym)
     val depName: TermName = newDepName(sym)
     val generated: List[(Symbol, Type)] = generatedMembers(subtype)
+    val (defaultCase, transientCase) =
+      getAnnotations(sym, DefaultCaseAnnotType).headOption
+        .map(a => a.tree match {
+          case Apply(_, Nil) => (true, false)
+          case Apply(_, BooleanLiteral(transient) :: _) => (true, transient)
+          case Apply(_, arg :: _) => c.abort(arg.pos, s"Boolean literal expected as @defaultCase `transient` argument")
+        }).getOrElse((false, false))
 
     val targetNames: Map[Symbol, String] = targetNameMap(applyParams.map(_.sym) ++ generated.map(_._1))
     val membersByName: Map[String, (Symbol, Type)] =
@@ -341,10 +348,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val oooFieldNames: Set[String] = oooSymbols.iterator.map(targetNames).toSet
 
     def depInstance(oooDepNames: Map[String, TermName]): Tree
-    def caseRead: Tree
+    def caseReadBody(input: Tree): Tree
 
+    def caseRead: Tree = cq"$caseName => ${caseReadBody(q"input")}"
     def depDeclaration(oooDepNames: Map[String, TermName]) = q"lazy val $depName = ${depInstance(oooDepNames)}"
-    def caseWrite = cq"value: $subtype => writeFlatCase($caseName, output, value, $depName)"
+    def caseWrite = cq"value: $subtype => writeFlatCase($caseName, $transientCase, output, value, $depName)"
 
     if (isTransparent(sym)) {
       abort(s"You can't use @transparent on case classes of a sealed trait/class with @flatten annotation")
@@ -354,15 +362,15 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   case class CaseClassInfo(subtype: Type, applyUnapply: ApplyUnapply, applyParams: List[ApplyParam]) extends CaseInfo {
     def depInstance(oooDepNames: Map[String, TermName]) =
       forApplyUnapply(subtype, applyUnapply.apply, applyUnapply.unapply, applyParams, oooDepNames.filterKeys(oooFieldNames))
-    def caseRead =
-      if (oooFieldNames.isEmpty) cq"$caseName => readFlatCase($caseName, input, $depName)"
-      else cq"$caseName => readFlatCase($caseName, oooFields, input, $depName)"
+    def caseReadBody(input: Tree) =
+      if (oooFieldNames.isEmpty) q"readFlatCase($caseName, $input, $depName)"
+      else q"readFlatCase($caseName, oooFields, $input, $depName)"
   }
 
   case class CaseObjectInfo(subtype: Type, singleton: Tree) extends CaseInfo {
     def applyParams = Nil
     def depInstance(oooDepNames: Map[String, TermName]) = forSingleton(subtype, singleton)
-    def caseRead = cq"$caseName => readFlatCase($caseName, input, $depName)"
+    def caseReadBody(input: Tree) = q"readFlatCase($caseName, $input, $depName)"
   }
 
   def flatForSealedHierarchy(tpe: Type, caseFieldName: String): Tree = {
@@ -384,6 +392,12 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       if (ci.targetNames.values.exists(_ == caseFieldName)) {
         abort(s"$caseFieldName is the case discriminator field name that can't be used as any other's field name")
       }
+    }
+
+    val defaultCase: Option[CaseInfo] = caseInfos.filter(_.defaultCase) match {
+      case Nil => None
+      case List(single) => Some(single)
+      case _ => abort(s"Only one class or object may be marked as @defaultCase")
     }
 
     val oooParams: Map[String, Type] = caseInfos.flatMap { ci =>
@@ -422,7 +436,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       q"lazy val ${oooDepNames(name)} = ${dependency(ptpe, tcTpe, s"for field $name")}"
 
     def oooFieldReadCase(name: String) =
-      cq"$name => oooFields.${optName(name)} = $NOptObj.some(readField(fi, ${oooDepNames(name)})); lookForCase()"
+      cq"$name => oooFields.${optName(name)} = $NOptObj.some(readField(fi, ${oooDepNames(name)})); read()"
 
     val oooFieldsClass = if (oooParams.isEmpty) q"()" else
       q"""
@@ -438,7 +452,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       if (caseDependentFieldNames.isEmpty) Nil
       else {
         val pattern = caseDependentFieldNames.map(n => pq"$n").reduce((p1, p2) => pq"$p1 | $p2")
-        List(cq"$pattern => missingCase(fi.fieldName)")
+        val wrappedInput = q"new $SerializationPkg.DefaultCaseObjectInput(fi, input, $caseFieldName)"
+        List(cq"$pattern => ${defaultCase.fold(q"missingCase(fi.fieldName)")(_.caseReadBody(wrappedInput))}")
       }
 
     q"""
@@ -451,20 +466,20 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         def nullable = ${typeOf[Null] <:< tpe}
         def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
           $oooFieldsDecl
-          def lookForCase(): $SerializationPkg.FieldInput =
+          def read(): $tpe =
             if(input.hasNext) {
               val fi = input.nextField()
               fi.fieldName match {
-                case $caseFieldName => fi
+                case $caseFieldName => readCaseName(fi) match {
+                  case ..${caseInfos.map(_.caseRead)}
+                  case caseName => unknownCase(caseName)
+                }
                 case ..${oooParams.keysIterator.map(oooFieldReadCase).toList}
                 case ..$caseDependentParamsCase
-                case _ => fi.skip(); lookForCase()
+                case _ => fi.skip(); read()
               }
-            } else missingCase
-          readCaseName(lookForCase()) match {
-            case ..${caseInfos.map(_.caseRead)}
-            case caseName => unknownCase(caseName)
-          }
+            } else ${defaultCase.fold[Tree](q"missingCase")(_.caseReadBody(q"input"))}
+          read()
         }
 
         def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
