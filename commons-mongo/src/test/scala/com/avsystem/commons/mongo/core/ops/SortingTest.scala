@@ -16,7 +16,7 @@ class SortingTest extends FunSuite {
 
   test("docKey tests") {
     val someDocKey = DocKey(someKey, BsonCodec.string)
-    val otherDocKey = DocKey(otherKey, BsonCodec.string)
+    val otherDocKey = DocKey(otherKey, BsonCodec.int32)
 
     assert(someDocKey.ascending() === Sorts.ascending(someKey))
     assert(someDocKey.descending() === Sorts.descending(someKey))
@@ -29,7 +29,7 @@ class SortingTest extends FunSuite {
 
   test("bsonRef tests") {
     val someRef = BsonRef(someKey, GenCodec.StringCodec)
-    val otherRef = BsonRef(otherKey, GenCodec.StringCodec)
+    val otherRef = BsonRef(otherKey, GenCodec.IntCodec)
 
     assert(someRef.ascending() === Sorts.ascending(someKey))
     assert(someRef.descending() === Sorts.descending(someKey))
