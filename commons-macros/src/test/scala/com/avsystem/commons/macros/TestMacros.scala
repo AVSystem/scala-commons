@@ -85,7 +85,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
     assertSameTypes(expectedTpe, ftpe)
 
     val applyParams = params match {
-      case List(single) => List(Ident(TermName("f")))
+      case List(_) => List(Ident(TermName("f")))
       case _ => params.indices.map(i => q"f.${TermName(s"_${i + 1}")}")
     }
 

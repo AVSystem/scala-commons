@@ -3,9 +3,17 @@ package serialization
 
 import org.scalatest.FunSuite
 
+@flatten sealed trait Seal {
+  def id: String
+}
+case class Klass(@name("_id") id: String) extends Seal
+case object Objekt extends Seal {
+  @generated @name("_id") def id: String = "O"
+}
+
 case class Bottom(mapa: Map[String, Int])
 case class Middle(@name("bot") bottom: Bottom)
-case class Toplevel(middle: Middle)
+case class Toplevel(middle: Middle, seal: Seal = Objekt)
 @transparent case class TransparentToplevel(toplevel: Toplevel)
 
 case class CodecRef[S, T](ref: GenRef[S, T])(implicit targetCodec: GenCodec[T])
@@ -39,5 +47,10 @@ class GenRefTest extends FunSuite {
     val codecRef = CodecRef((_: TransparentToplevel).toplevel.middle.bottom.mapa("str"))
     val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42)))))
     assert(codecRef.ref(obj) == 42)
+  }
+
+  test("sealed trait common field test") {
+    val ref = GenRef[Toplevel](_.seal.id)
+    assert(ref.rawRef.normalize.toList == List("seal", "_id").map(RawRef.Field))
   }
 }

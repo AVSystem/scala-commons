@@ -23,6 +23,8 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   final val TransparentAnnotType = getType(tq"$SerializationPkg.transparent")
   final val TransientDefaultAnnotType = getType(tq"$SerializationPkg.transientDefault")
   final val FlattenAnnotType = getType(tq"$SerializationPkg.flatten")
+  final val OutOfOrderAnnotType = getType(tq"$SerializationPkg.outOfOrder")
+  final val GeneratedAnnotType = getType(tq"$SerializationPkg.generated")
   final val GenCodecObj = q"$SerializationPkg.GenCodec"
   final val GenCodecCls = tq"$SerializationPkg.GenCodec"
   final val CaseField = "_case"
@@ -35,11 +37,28 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
       case param :: _ => c.abort(param.pos, s"@name argument must be a string literal")
     }.getOrElse(sym.name.decodedName.toString)
 
+  def caseAccessorFor(sym: Symbol): Symbol =
+    if (sym.isParameter && sym.owner.isConstructor) {
+      val ownerClass = sym.owner.owner.asClass
+      if (ownerClass.isCaseClass) {
+        alternatives(ownerClass.toType.member(sym.name)).find(_.asTerm.isCaseAccessor).getOrElse(NoSymbol)
+      } else NoSymbol
+    } else NoSymbol
+
+  def withAccessed(sym: Symbol): List[Symbol] =
+    if (sym.isTerm) {
+      val tsym = sym.asTerm
+      if (tsym.isGetter) List(sym, tsym.accessed)
+      else List(sym)
+    } else List(sym)
+
   def getAnnotations(sym: Symbol, annotTpe: Type): List[Annotation] = {
+    val caseAccessor = caseAccessorFor(sym)
     val syms =
-      if (sym.isClass) sym.asClass.baseClasses
+      if (caseAccessor != NoSymbol) sym :: caseAccessor :: caseAccessor.overrides
+      else if (sym.isClass) sym.asClass.baseClasses
       else sym :: sym.overrides
-    syms.flatMap(_.annotations).filter(_.tree.tpe <:< annotTpe)
+    syms.flatMap(s => withAccessed(s).flatMap(_.annotations.filter(_.tree.tpe <:< annotTpe)))
   }
 
   def hasAnnotation(sym: Symbol, annotTpe: Type): Boolean =
@@ -47,4 +66,7 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
 
   def isTransparent(sym: Symbol): Boolean =
     hasAnnotation(sym, TransparentAnnotType)
+
+  def isGenerated(sym: Symbol): Boolean =
+    hasAnnotation(sym, GeneratedAnnotType)
 }

@@ -4,6 +4,8 @@ package serialization
 import com.avsystem.commons.serialization.AutoGenCodecTest.ValueClass
 import com.github.ghik.silencer.silent
 
+import scala.collection.immutable.ListMap
+
 object AutoGenCodecTest {
   case class ValueClass(str: String) extends AnyVal
 }
@@ -15,19 +17,19 @@ class AutoGenCodecTest extends CodecTestBase {
   object SomeObject
 
   test("object test") {
-    testAutoWriteRead(SomeObject, Map())
+    testAutoWriteRead(SomeObject, ListMap())
   }
 
   case class NoArgCaseClass()
 
   test("no arg case class test") {
-    testAutoWriteRead(NoArgCaseClass(), Map())
+    testAutoWriteRead(NoArgCaseClass(), ListMap())
   }
 
   case class SingleArgCaseClass(str: String)
 
   test("single arg case class test") {
-    testAutoWriteRead(SingleArgCaseClass("something"), Map("str" -> "something"))
+    testAutoWriteRead(SingleArgCaseClass("something"), ListMap("str" -> "something"))
   }
 
   @transparent
@@ -41,16 +43,16 @@ class AutoGenCodecTest extends CodecTestBase {
 
   test("case class test") {
     testAutoWriteRead(SomeCaseClass("dafuq", List(1, 2, 3)),
-      Map("some.str" -> "dafuq", "intList" -> List(1, 2, 3))
+      ListMap("some.str" -> "dafuq", "intList" -> List(1, 2, 3))
     )
   }
 
   case class HasDefaults(@transientDefault int: Int = 42, str: String)
 
   test("case class with default values test") {
-    testAutoWriteRead(HasDefaults(str = "lol"), Map("str" -> "lol"))
-    testAutoWriteRead(HasDefaults(43, "lol"), Map("int" -> 43, "str" -> "lol"))
-    testAutoWriteRead(HasDefaults(str = null), Map("str" -> null))
+    testAutoWriteRead(HasDefaults(str = "lol"), ListMap("str" -> "lol"))
+    testAutoWriteRead(HasDefaults(43, "lol"), ListMap("int" -> 43, "str" -> "lol"))
+    testAutoWriteRead(HasDefaults(str = null), ListMap("str" -> null))
   }
 
   case class Node[T](value: T, children: List[Node[T]] = Nil)
@@ -75,7 +77,7 @@ class AutoGenCodecTest extends CodecTestBase {
   }
 
   test("value class test") {
-    testAutoWriteRead(ValueClass("costam"), Map("str" -> "costam"))
+    testAutoWriteRead(ValueClass("costam"), ListMap("str" -> "costam"))
   }
 
   sealed trait Tree[T]
@@ -91,11 +93,11 @@ class AutoGenCodecTest extends CodecTestBase {
           Leaf(3)
         )
       ),
-      Map("Branch" -> Map(
-        "left" -> Map("Leaf" -> Map("value" -> 1)),
-        "right" -> Map("Branch" -> Map(
-          "left" -> Map("Leaf" -> Map("value" -> 2)),
-          "right" -> Map("Leaf" -> Map("value" -> 3))
+      ListMap("Branch" -> ListMap(
+        "left" -> ListMap("Leaf" -> ListMap("value" -> 1)),
+        "right" -> ListMap("Branch" -> ListMap(
+          "left" -> ListMap("Leaf" -> ListMap("value" -> 2)),
+          "right" -> ListMap("Leaf" -> ListMap("value" -> 3))
         ))
       ))
     )
@@ -110,7 +112,7 @@ class AutoGenCodecTest extends CodecTestBase {
   }
 
   test("sealed enum test") {
-    testAutoWriteRead[Enumz](Enumz.First, Map("Primary" -> Map()))
+    testAutoWriteRead[Enumz](Enumz.First, ListMap("Primary" -> ListMap()))
   }
 
   case class Bottom(str: String)
@@ -133,7 +135,7 @@ class AutoGenCodecTest extends CodecTestBase {
     testWriteRead[HasOperator](HasOperator("lol", StringOperator),
       Map[String, Any](
         "str" -> "lol",
-        "op" -> Map("StringOperator" -> Map())
+        "op" -> ListMap("StringOperator" -> ListMap())
       )
     )
   }
@@ -141,7 +143,7 @@ class AutoGenCodecTest extends CodecTestBase {
   case class Element(str: String)
 
   test("sequence of case classes test") {
-    testAutoWriteRead[Seq[Element]](Vector(Element("wut")), List(Map("str" -> "wut")))
+    testAutoWriteRead[Seq[Element]](Vector(Element("wut")), List(ListMap("str" -> "wut")))
   }
 
   case class SomethingNested(nested: Seq[SomethingNested])
@@ -149,10 +151,10 @@ class AutoGenCodecTest extends CodecTestBase {
 
   test("double recursive nesting") {
     testAutoWriteRead[SomethingOuter](SomethingOuter(SomethingNested(List(SomethingNested(Nil)))),
-      Map("x" -> Map("nested" -> List(Map("nested" -> Nil)))))
+      ListMap("x" -> ListMap("nested" -> List(ListMap("nested" -> Nil)))))
   }
 
   ignore("option codec visibility") {
-    testAutoWriteRead[Option[HasMap]](Some(HasMap(Map("a" -> "A"))), List(Map("map" -> Map("a" -> "A"))))
+    testAutoWriteRead[Option[HasMap]](Some(HasMap(Map("a" -> "A"))), List(ListMap("map" -> ListMap("a" -> "A"))))
   }
 }

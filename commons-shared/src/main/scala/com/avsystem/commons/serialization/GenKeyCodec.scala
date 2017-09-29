@@ -6,10 +6,11 @@ import com.avsystem.commons.annotation.explicitGenerics
 import scala.annotation.implicitNotFound
 
 /**
-  * Typeclass which expresses ability to convert between MongoDB JSON object keys and values of some type.
-  * Every type which has a natural, unambiguous string representation should have a DBKeyCodec.
+  * Typeclass which implements two-directional conversion between values of some type and field names
+  * used in [[ObjectOutput.writeField]] and [[ObjectInput.nextField]] ([[FieldInput.fieldName]]).
+  * Every type which has a natural, unambiguous string representation should have a `GenKeyCodec`.
   */
-@implicitNotFound("Can't convert between database key and ${T} - GenKeyCodec not found")
+@implicitNotFound("Can't convert between map key and ${T} - GenKeyCodec not found")
 trait GenKeyCodec[T] {
   def read(key: String): T
   def write(value: T): String
