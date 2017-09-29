@@ -24,9 +24,7 @@ trait Output extends Any {
   def writeDouble(double: Double): Unit
   def writeBinary(binary: Array[Byte]): Unit
   def writeList(): ListOutput
-  def writeSet(): ListOutput = writeList()
   def writeObject(): ObjectOutput
-  def writeMap(): ObjectOutput = writeObject()
 }
 /**
   * Base trait for outputs which allow writing of multiple values in sequence, i.e. [[ListOutput]] and [[ObjectOutput]].
@@ -143,9 +141,7 @@ trait Input extends Any {
   def readDouble(): Double
   def readBinary(): Array[Byte]
   def readList(): ListInput
-  def readSet(): ListInput = readList()
   def readObject(): ObjectInput
-  def readMap(): ObjectInput = readObject()
   def skip(): Unit
 }
 trait SequentialInput extends Any {

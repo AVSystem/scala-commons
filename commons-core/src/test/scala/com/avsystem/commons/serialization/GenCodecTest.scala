@@ -27,6 +27,15 @@ object SealedBase {
   implicit val codec: GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
 }
 
+@flatten sealed trait FlatSealedBase
+object FlatSealedBase {
+  case class FirstCase(str: String, int: Int) extends FlatSealedBase
+  case class SecondCase(dbl: Double) extends FlatSealedBase
+  case object ThirdCase extends FlatSealedBase
+
+  implicit val codec: GenCodec[FlatSealedBase] = GenCodec.materialize[FlatSealedBase]
+}
+
 abstract class Wrapper[Self <: Wrapper[Self] : ClassTag](private val args: Any*) { this: Self =>
   override def equals(obj: Any): Boolean = obj match {
     case other: Self => args == other.args
@@ -278,6 +287,12 @@ class GenCodecTest extends CodecTestBase {
     testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseClass("fuu"), Map("CaseClass" -> Map("str" -> "fuu")))
     testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseObject, Map("InnerCaseObject" -> Map()))
     testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"), Map("InnerCaseClass" -> Map("str" -> "fuu")))
+  }
+
+  test("flat sealed hierarchy test") {
+    testWriteReadAndAutoWriteRead[FlatSealedBase](FlatSealedBase.FirstCase("fuu", 42), Map("_case" -> "FirstCase", "str" -> "fuu", "int" -> 42))
+    testWriteReadAndAutoWriteRead[FlatSealedBase](FlatSealedBase.SecondCase(3.14), Map("_case" -> "SecondCase", "dbl" -> 3.14))
+    testWriteReadAndAutoWriteRead[FlatSealedBase](FlatSealedBase.ThirdCase, Map("_case" -> "ThirdCase"))
   }
 
   sealed trait BaseExpr {

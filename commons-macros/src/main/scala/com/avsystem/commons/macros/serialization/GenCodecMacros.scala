@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package macros.serialization
 
-import com.avsystem.commons.macros.{AbstractMacroCommons, TypeClassDerivation}
+import com.avsystem.commons.macros.TypeClassDerivation
 
 import scala.reflect.macros.blackbox
 
@@ -14,10 +14,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val indices = elementCodecs.indices
     q"""
         new $GenCodecObj.ListCodec[$tupleTpe] {
-          protected def nullable = true
-          protected def readList(input: $SerializationPkg.ListInput) =
+          def nullable = true
+          def readList(input: $SerializationPkg.ListInput) =
             (..${indices.map(i => q"${elementCodecs(i)}.read(input.nextElement())")})
-          protected def writeList(output: $SerializationPkg.ListOutput, value: $tupleTpe) = {
+          def writeList(output: $SerializationPkg.ListOutput, value: $tupleTpe) = {
             ..${indices.map(i => q"${elementCodecs(i)}.write(output.writeElement(), value.${tupleGet(i)})")}
           }
         }
@@ -29,6 +29,14 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   def wrapInAuto(tree: Tree) = q"$GenCodecObj.Auto($tree)"
   def implementDeferredInstance(tpe: Type): Tree = q"new $GenCodecObj.Deferred[$tpe]"
 
+  override def materializeFor(tpe: Type) = {
+    val tsym = tpe.typeSymbol
+    if (isSealedHierarchyRoot(tsym) && hasAnnotation(tsym, FlattenAnnotType))
+      flatForSealedHierarchy(tpe)
+    else
+      super.materializeFor(tpe)
+  }
+
   def forSingleton(tpe: Type, singleValueTree: Tree): Tree =
     q"new $GenCodecObj.SingletonCodec[$tpe]($singleValueTree)"
 
@@ -39,12 +47,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     forApplyUnapply(tpe, Ident(tpe.typeSymbol.companion), apply, unapply, params)
 
   def forApplyUnapply(tpe: Type, companion: Tree, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
-    val nameBySym = params.groupBy(p => annotName(p.sym)).map {
-      case (name, List(param)) => (param.sym, name)
-      case (name, ps) if ps.length > 1 =>
-        c.abort(c.enclosingPosition, s"Parameters ${ps.map(_.sym.name).mkString(", ")} have the same @name: $name")
-    }
+    val nameBySym = targetNameBySymMap(params.map(_.sym))
     val depNames = params.map(p => (p.sym, c.freshName(TermName(p.sym.name.toString + "Codec")))).toMap
+
     def depDeclaration(param: ApplyParam) =
       q"lazy val ${depNames(param.sym)} = ${param.instance}"
 
@@ -123,10 +128,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            new $GenCodecObj.NullSafeCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
              ${depDeclaration(p)}
              protected def typeRepr = ${tpe.toString}
-             protected def nullable = ${typeOf[Null] <:< tpe}
-             protected def readNonNull(input: $SerializationPkg.Input): $tpe =
+             def nullable = ${typeOf[Null] <:< tpe}
+             def readNonNull(input: $SerializationPkg.Input): $tpe =
                ${applier(List(q"${depNames(p.sym)}.read(input)"))}
-             protected def writeNonNull(output: $SerializationPkg.Output, value: $tpe): $UnitCls =
+             def writeNonNull(output: $SerializationPkg.Output, value: $tpe): $UnitCls =
                $writeBody
            }
          """
@@ -147,8 +152,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         new $GenCodecObj.ObjectCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
           ..${params.map(depDeclaration)}
           protected def typeRepr = ${tpe.toString}
-          protected def nullable = ${typeOf[Null] <:< tpe}
-          protected def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
+          def nullable = ${typeOf[Null] <:< tpe}
+          def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
             ..${params.map(p => q"var ${optName(p)}: $NOptCls[${p.valueType}] = $NOptObj.Empty")}
             while(input.hasNext) {
               val fi = input.nextField()
@@ -159,22 +164,25 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
             }
             ${applier(params.map(p => p.asArgument(readField(p))))}
           }
-          protected def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = $writeObjectBody
+          def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = $writeObjectBody
         }
        """
     }
   }
 
-  private def dbNameBySymMap(subtypeSymbols: Seq[Symbol]): Map[Symbol, String] =
-    subtypeSymbols.groupBy(st => annotName(st)).map {
-      case (dbName, List(subtype)) => (subtype, dbName)
-      case (dbName, kst) =>
-        c.abort(c.enclosingPosition, s"Subclasses ${kst.map(_.name).mkString(", ")} have the same @name: $dbName")
+  private def targetNameBySymMap(symbols: Seq[Symbol]): Map[Symbol, String] = {
+    val paramsOrSubclasses = if (symbols.exists(_.isTerm)) "Parameters" else "Subclasses"
+    symbols.groupBy(st => targetName(st)).map {
+      case (dbName, List(sym)) => (sym, dbName)
+      case (dbName, syms) =>
+        c.abort(c.enclosingPosition, s"$paramsOrSubclasses ${syms.map(_.name).mkString(", ")} have the same @name: $dbName")
     }
+  }
 
   def forSealedHierarchy(tpe: Type, subtypes: List[KnownSubtype]): Tree = {
-    val dbNameBySym = dbNameBySymMap(subtypes.map(_.sym))
+    val targetNameBySym = targetNameBySymMap(subtypes.map(_.sym))
     val depNames = subtypes.map(st => (st.sym, c.freshName(TermName(st.sym.name.toString + "Codec")))).toMap
+
     def depDeclaration(subtype: KnownSubtype) =
       q"lazy val ${depNames(subtype.sym)} = ${subtype.instance}"
 
@@ -182,19 +190,63 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       new $GenCodecObj.ObjectCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
         ..${subtypes.map(depDeclaration)}
         protected def typeRepr = ${tpe.toString}
-        protected def nullable = ${typeOf[Null] <:< tpe}
-        protected def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
+        def nullable = ${typeOf[Null] <:< tpe}
+        def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
           if(input.hasNext) {
             val fi = input.nextField()
             val result = fi.fieldName match {
-              case ..${subtypes.map(st => cq"${dbNameBySym(st.sym)} => readCase(fi, ${depNames(st.sym)})")}
+              case ..${subtypes.map(st => cq"${targetNameBySym(st.sym)} => readCase(fi, ${depNames(st.sym)})")}
               case key => unknownCase(key)
             }
             if(input.hasNext) notSingleField(empty = false) else result
           } else notSingleField(empty = true)
         }
-        protected def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
-          case ..${subtypes.map(st => cq"value: ${st.tpe} => writeCase(${dbNameBySym(st.sym)}, output, value, ${depNames(st.sym)})")}
+        def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
+          case ..${subtypes.map(st => cq"value: ${st.tpe} => writeCase(${targetNameBySym(st.sym)}, output, value, ${depNames(st.sym)})")}
+        }
+      }
+     """
+  }
+
+  def flatForSealedHierarchy(tpe: Type): Tree = {
+    val subtypes = knownSubtypes(tpe).getOrElse(abort(s"$tpe is not a sealed hierarchy root"))
+    val stSymbols = subtypes.map(_.typeSymbol)
+    val caseNames = targetNameBySymMap(stSymbols)
+    val depNames = stSymbols.map(sym => (sym, c.freshName(TermName(sym.name.toString + "Codec")))).toMap
+
+    subtypes.foreach { subtype =>
+      if (isTransparent(subtype.typeSymbol)) {
+        abort(s"You can't use @transparent on case classes of a sealed trait/class with @flatten annotation")
+      }
+    }
+
+    // assuming that these will be all `ObjectCodec`s
+    def depDeclaration(subtype: Type) =
+      q"lazy val ${depNames(subtype.typeSymbol)} = ${materializeFor(subtype)}"
+
+    def caseRead(subtype: Type) = {
+      val sym = subtype.typeSymbol
+      val caseName = caseNames(sym)
+      cq"$caseName => readFlatCase($caseName, input, ${depNames(sym)})"
+    }
+
+    def caseWrite(subtype: Type) = {
+      val sym = subtype.typeSymbol
+      val caseName = caseNames(sym)
+      cq"value: $subtype => writeFlatCase($caseName, output, value, ${depNames(sym)})"
+    }
+
+    q"""
+      new $GenCodecObj.ObjectCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
+        ..${subtypes.map(depDeclaration)}
+        protected def typeRepr = ${tpe.toString}
+        def nullable = ${typeOf[Null] <:< tpe}
+        def readObject(input: $SerializationPkg.ObjectInput): $tpe = readCaseName(input) match {
+          case ..${subtypes.map(caseRead)}
+          case caseName => unknownCase(caseName)
+        }
+        def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
+          case ..${subtypes.map(caseWrite)}
         }
       }
      """

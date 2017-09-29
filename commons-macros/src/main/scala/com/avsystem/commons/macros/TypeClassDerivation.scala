@@ -156,6 +156,7 @@ trait TypeClassDerivation extends MacroCommons {
     val tcTpe = typeClassInstance(tpe)
 
     def singleTypeTc = singleValueFor(tpe).map(tree => forSingleton(tpe, tree))
+
     def applyUnapplyTc = applyUnapplyFor(tpe).map {
       case ApplyUnapply(apply, unapply, params) =>
         val dependencies = params.map { case (s, defaultValue) =>
@@ -163,6 +164,7 @@ trait TypeClassDerivation extends MacroCommons {
         }
         forApplyUnapply(tpe, apply, unapply, dependencies)
     }
+
     def sealedHierarchyTc = knownSubtypes(tpe).map { subtypes =>
       if (subtypes.isEmpty) {
         abort(s"Could not find any subtypes for $tpe")
@@ -176,22 +178,27 @@ trait TypeClassDerivation extends MacroCommons {
 
     val untypedResult = singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown(tpe)
 
+    // deferred instance is necessary to handle recursively defined types
     val deferredName = c.freshName(TermName("deferred"))
-    val guardedResult@Block(List(_, Apply(_, List(result))), _) = c.typecheck(
+    // introducing intermediate val to make sure exact type of materialized instance is not lost
+    val underlyingName = c.freshName(TermName("underlying"))
+    val guardedResult@Block(List(_, ValDef(_, _, _, unguardedResult), _), _) = c.typecheck(
       q"""
         implicit val $deferredName: $DeferredInstanceCls[$tcTpe] with $tcTpe =
           ${implementDeferredInstance(tpe)}
-        $deferredName.underlying = $untypedResult
-        $deferredName.underlying
+        val $underlyingName = $untypedResult
+        $deferredName.underlying = $underlyingName
+        $underlyingName
        """
     )
 
-    val needsGuarding = result.exists {
+    // check if the deferred instance was actually used and drop it if not
+    val needsGuarding = unguardedResult.exists {
       case Ident(`deferredName`) => true
       case _ => false
     }
 
-    if (needsGuarding) guardedResult else result
+    if (needsGuarding) guardedResult else unguardedResult
   }
 
   def materialize[T: c.WeakTypeTag]: Tree =

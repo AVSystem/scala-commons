@@ -9,28 +9,28 @@ trait MacroCommons {
 
   import c.universe._
 
-  val ScalaPkg = q"_root_.scala"
-  val CommonsPackage = q"_root_.com.avsystem.commons"
-  val UnitCls = tq"$ScalaPkg.Unit"
-  val OptionCls = tq"$ScalaPkg.Option"
-  val SomeObj = q"$ScalaPkg.Some"
-  val NoneObj = q"$ScalaPkg.None"
-  val CollectionPkg = q"$ScalaPkg.collection"
-  val ListObj = q"$CollectionPkg.immutable.List"
-  val ListCls = tq"$CollectionPkg.immutable.List"
-  val NilObj = q"$CollectionPkg.immutable.Nil"
-  val MapObj = q"$CollectionPkg.immutable.Map"
-  val MaterializedCls = tq"$CommonsPackage.derivation.Materialized"
-  val FutureSym = typeOf[scala.concurrent.Future[_]].typeSymbol
-  val OptionClass = definitions.OptionClass
-  val ImplicitsObj = q"$CommonsPackage.misc.Implicits"
+  final val ScalaPkg = q"_root_.scala"
+  final val CommonsPackage = q"_root_.com.avsystem.commons"
+  final val UnitCls = tq"$ScalaPkg.Unit"
+  final val OptionCls = tq"$ScalaPkg.Option"
+  final val SomeObj = q"$ScalaPkg.Some"
+  final val NoneObj = q"$ScalaPkg.None"
+  final val CollectionPkg = q"$ScalaPkg.collection"
+  final val ListObj = q"$CollectionPkg.immutable.List"
+  final val ListCls = tq"$CollectionPkg.immutable.List"
+  final val NilObj = q"$CollectionPkg.immutable.Nil"
+  final val MapObj = q"$CollectionPkg.immutable.Map"
+  final val MaterializedCls = tq"$CommonsPackage.derivation.Materialized"
+  final val FutureSym = typeOf[scala.concurrent.Future[_]].typeSymbol
+  final val OptionClass = definitions.OptionClass
+  final val ImplicitsObj = q"$CommonsPackage.misc.Implicits"
 
-  lazy val ownerChain = {
+  final lazy val ownerChain = {
     val sym = c.typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
     Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).drop(1).toList
   }
 
-  lazy val enclosingClasses = {
+  final lazy val enclosingClasses = {
     val enclosingSym = c.typecheck(q"this", silent = true) match {
       case EmptyTree => Iterator.iterate(c.internal.enclosingOwner)(_.owner).find(_.isModuleClass).get
       case tree => tree.tpe.typeSymbol

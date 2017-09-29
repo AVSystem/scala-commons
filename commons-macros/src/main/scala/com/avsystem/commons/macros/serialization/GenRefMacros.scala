@@ -51,7 +51,7 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
               val constrArg = primaryConstructorParams.find(_.name == body.symbol.name)
                 .getOrElse(abort(s"No primary constructor parameter ${body.symbol.name} found"))
 
-              refs ::= q"$SerializationPkg.RawRef.Field(${annotName(constrArg)})"
+              refs ::= q"$SerializationPkg.RawRef.Field(${targetName(constrArg)})"
             }
 
             extract(prefix)

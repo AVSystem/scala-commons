@@ -9,23 +9,27 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
 
   import c.universe._
 
-  val SerializationPkg = q"$CommonsPackage.serialization"
-  val NameAnnotType = getType(tq"$SerializationPkg.name")
-  val JavaInteropObj = q"$CommonsPackage.jiop.JavaInterop"
-  val JListObj = q"$JavaInteropObj.JList"
-  val JListCls = tq"$JavaInteropObj.JList"
-  val ListBufferCls = tq"$CollectionPkg.mutable.ListBuffer"
-  val BMapCls = tq"$CollectionPkg.Map"
-  val NOptObj = q"$CommonsPackage.misc.NOpt"
-  val NOptCls = tq"$CommonsPackage.misc.NOpt"
-  val TransparentAnnotType = getType(tq"$SerializationPkg.transparent")
-  val TransientDefaultAnnotType = getType(tq"$SerializationPkg.transientDefault")
-  val GenCodecObj = q"$SerializationPkg.GenCodec"
-  val GenCodecCls = tq"$SerializationPkg.GenCodec"
+  final val SerializationPkg = q"$CommonsPackage.serialization"
+  final val NameAnnotType = getType(tq"$SerializationPkg.name")
+  final val JavaInteropObj = q"$CommonsPackage.jiop.JavaInterop"
+  final val JListObj = q"$JavaInteropObj.JList"
+  final val JListCls = tq"$JavaInteropObj.JList"
+  final val ListBufferCls = tq"$CollectionPkg.mutable.ListBuffer"
+  final val BMapCls = tq"$CollectionPkg.Map"
+  final val NOptObj = q"$CommonsPackage.misc.NOpt"
+  final val NOptCls = tq"$CommonsPackage.misc.NOpt"
+  final val OptObj = q"$CommonsPackage.misc.Opt"
+  final val OptCls = tq"$CommonsPackage.misc.Opt"
+  final val TransparentAnnotType = getType(tq"$SerializationPkg.transparent")
+  final val TransientDefaultAnnotType = getType(tq"$SerializationPkg.transientDefault")
+  final val FlattenAnnotType = getType(tq"$SerializationPkg.flatten")
+  final val GenCodecObj = q"$SerializationPkg.GenCodec"
+  final val GenCodecCls = tq"$SerializationPkg.GenCodec"
+  final val CaseField = "_case"
 
   def tupleGet(i: Int) = TermName(s"_${i + 1}")
 
-  def annotName(sym: Symbol): String =
+  def targetName(sym: Symbol): String =
     getAnnotations(sym, NameAnnotType).headOption.map(_.tree.children.tail).map {
       case Literal(Constant(str: String)) :: _ => str
       case param :: _ => c.abort(param.pos, s"@name argument must be a string literal")
@@ -38,6 +42,9 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
     syms.flatMap(_.annotations).filter(_.tree.tpe <:< annotTpe)
   }
 
+  def hasAnnotation(sym: Symbol, annotTpe: Type): Boolean =
+    getAnnotations(sym, annotTpe).nonEmpty
+
   def isTransparent(sym: Symbol): Boolean =
-    getAnnotations(sym, TransparentAnnotType).nonEmpty
+    hasAnnotation(sym, TransparentAnnotType)
 }

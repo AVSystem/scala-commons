@@ -110,7 +110,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   def create[T](readFun: Input => T, writeFun: (Output, T) => Any): GenCodec[T] =
     new GenCodec[T] {
       def write(output: Output, value: T) = writeFun(output, value)
-      def read(input: Input): T = readFun(input)
+      def read(input: Input) = readFun(input)
     }
 
   def transformed[T, R: GenCodec](toRaw: T => R, fromRaw: R => T): GenCodec[T] =
@@ -118,23 +118,23 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   def createNullSafe[T](readFun: Input => T, writeFun: (Output, T) => Any, allowNull: Boolean): GenCodec[T] =
     new NullSafeCodec[T] {
-      protected def nullable = allowNull
-      protected def readNonNull(input: Input) = readFun(input)
-      protected def writeNonNull(output: Output, value: T) = writeFun(output, value)
+      def nullable = allowNull
+      def readNonNull(input: Input) = readFun(input)
+      def writeNonNull(output: Output, value: T) = writeFun(output, value)
     }
 
   def createList[T](readFun: ListInput => T, writeFun: (ListOutput, T) => Any, allowNull: Boolean) =
     new ListCodec[T] {
-      protected def nullable = allowNull
-      protected def readList(input: ListInput) = readFun(input)
-      protected def writeList(output: ListOutput, value: T) = writeFun(output, value)
+      def nullable = allowNull
+      def readList(input: ListInput) = readFun(input)
+      def writeList(output: ListOutput, value: T) = writeFun(output, value)
     }
 
   def createObject[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any, allowNull: Boolean) =
     new ObjectCodec[T] {
-      protected def nullable = allowNull
-      protected def readObject(input: ObjectInput) = readFun(input)
-      protected def writeObject(output: ObjectOutput, value: T) = writeFun(output, value)
+      def nullable = allowNull
+      def readObject(input: ObjectInput) = readFun(input)
+      def writeObject(output: ObjectOutput, value: T) = writeFun(output, value)
     }
 
   def fromKeyCodec[T](implicit keyCodec: GenKeyCodec[T]): GenCodec[T] = create(
@@ -164,31 +164,31 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   }
 
   trait NullSafeCodec[T] extends GenCodec[T] {
-    protected def nullable: Boolean
-    protected def readNonNull(input: Input): T
-    protected def writeNonNull(output: Output, value: T): Unit
+    def nullable: Boolean
+    def readNonNull(input: Input): T
+    def writeNonNull(output: Output, value: T): Unit
 
-    def write(output: Output, value: T): Unit =
+    final def write(output: Output, value: T): Unit =
       if (value == null)
         if (nullable) output.writeNull() else throw new WriteFailure("null")
       else writeNonNull(output, value)
 
-    def read(input: Input): T =
+    final def read(input: Input): T =
       if (input.inputType == InputType.Null)
         if (nullable) input.readNull().asInstanceOf[T] else throw new ReadFailure("null")
       else readNonNull(input)
   }
 
   trait ListCodec[T] extends NullSafeCodec[T] {
-    protected def readList(input: ListInput): T
-    protected def writeList(output: ListOutput, value: T): Unit
+    def readList(input: ListInput): T
+    def writeList(output: ListOutput, value: T): Unit
 
-    protected def writeNonNull(output: Output, value: T) = {
+    final def writeNonNull(output: Output, value: T) = {
       val lo = output.writeList()
       writeList(lo, value)
       lo.finish()
     }
-    protected def readNonNull(input: Input) = {
+    final def readNonNull(input: Input) = {
       val li = input.readList()
       val result = readList(li)
       li.skipRemaining()
@@ -197,15 +197,15 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   }
 
   trait ObjectCodec[T] extends NullSafeCodec[T] {
-    protected def readObject(input: ObjectInput): T
-    protected def writeObject(output: ObjectOutput, value: T): Unit
+    def readObject(input: ObjectInput): T
+    def writeObject(output: ObjectOutput, value: T): Unit
 
-    protected def writeNonNull(output: Output, value: T) = {
+    final def writeNonNull(output: Output, value: T) = {
       val oo = output.writeObject()
       writeObject(oo, value)
       oo.finish()
     }
-    protected def readNonNull(input: Input) = {
+    final def readNonNull(input: Input) = {
       val oi = input.readObject()
       val result = readObject(oi)
       oi.skipRemaining()
@@ -219,8 +219,26 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     protected def readField[A](fieldInput: FieldInput, codec: GenCodec[A]): A =
       decoratedRead(fieldInput, codec, "field")
 
+    protected def readCaseName(input: ObjectInput): String = {
+      if (input.hasNext) {
+        val fi = input.nextField()
+        fi.fieldName match {
+          case CaseField => try fi.readString() catch {
+            case NonFatal(e) =>
+              throw new ReadFailure(s"Cannot read $typeRepr, failed to read case name from `$CaseField` field", e)
+          }
+          case _ => missingCase
+        }
+      } else missingCase
+    }
+
     protected def readCase[A](fieldInput: FieldInput, codec: GenCodec[A]): A =
       decoratedRead(fieldInput, codec, "case")
+
+    protected def readFlatCase[A](caseName: String, input: ObjectInput, codec: GenCodec.ObjectCodec[A]): A =
+      try codec.readObject(input) catch {
+        case NonFatal(e) => throw new ReadFailure(s"Failed to read case $caseName of $typeRepr", e)
+      }
 
     private def decoratedRead[A](fieldInput: FieldInput, codec: GenCodec[A], what: String): A =
       try codec.read(fieldInput) catch {
@@ -233,6 +251,14 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     protected def writeCase[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
       decoratedWrite(fieldName, output, value, codec, "case")
 
+    protected def writeFlatCase[A](caseName: String, output: ObjectOutput, value: A, codec: GenCodec.ObjectCodec[A]): Unit =
+      try {
+        output.writeField(CaseField).writeString(caseName)
+        codec.writeObject(output, value)
+      } catch {
+        case NonFatal(e) => throw new WriteFailure(s"Failed to write case $caseName of $typeRepr", e)
+      }
+
     private def decoratedWrite[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A], what: String): Unit =
       try codec.write(output.writeField(fieldName), value) catch {
         case NonFatal(e) => throw new WriteFailure(s"Failed to write $what $fieldName of $typeRepr", e)
@@ -241,8 +267,11 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     protected def fieldMissing(field: String) =
       throw new ReadFailure(s"Cannot read $typeRepr, field $field is missing in decoded data")
 
-    protected def unknownCase(field: String) =
-      throw new ReadFailure(s"Cannot read $typeRepr, unknown case: $field")
+    protected def unknownCase(caseName: String) =
+      throw new ReadFailure(s"Cannot read $typeRepr, unknown case: $caseName")
+
+    protected def missingCase =
+      throw new ReadFailure(s"Cannot read $typeRepr, `$CaseField` field is missing at the beginning of an object")
 
     protected def notSingleField(empty: Boolean) =
       throw new ReadFailure(s"Cannot read $typeRepr, expected object with exactly one field but got ${if (empty) "empty object" else "more than one"}")
@@ -252,9 +281,9 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   }
 
   final class SingletonCodec[T <: Singleton](value: => T) extends ObjectCodec[T] {
-    protected def nullable: Boolean = true
-    protected def readObject(input: ObjectInput) = value
-    protected def writeObject(output: ObjectOutput, value: T) = ()
+    def nullable: Boolean = true
+    def readObject(input: ObjectInput) = value
+    def writeObject(output: ObjectOutput, value: T) = ()
   }
 
   class TransformedCodec[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {
@@ -266,6 +295,8 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     case tc: TransformedCodec[_, _] => underlyingCodec(tc.wrapped)
     case _ => codec
   }
+
+  final val CaseField = "_case"
 
   implicit val NothingCodec: GenCodec[Nothing] = create[Nothing](_ => sys.error("read Nothing"), (_, _) => sys.error("write Nothing"))
   implicit val NullCodec: GenCodec[Null] = create[Null](_.readNull(), (o, _) => o.writeNull())
@@ -428,7 +459,7 @@ trait RecursiveAutoCodecs { this: GenCodec.type =>
   macro macros.serialization.GenCodecMacros.materializeRecursively[T]
 
   /**
-    * Used internally for materialization of `GenCodec.Auto`. Should not be used directly.
+    * INTERNAL API. Should not be used directly.
     */
   implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] =
   macro macros.serialization.GenCodecMacros.materializeImplicitly[T]

@@ -58,6 +58,9 @@ trait KeyedKeysApi extends ApiSubset {
   def objectIdletime(key: Key): Result[Opt[Long]] =
     execute(new ObjectIdletime(key))
 
+  def memoryUsage(key: Key, samples: OptArg[Long] = OptArg.Empty): Result[Opt[Long]] =
+    execute(new MemoryUsage(key, samples.toOpt))
+
   /** Executes [[http://redis.io/commands/persist PERSIST]] */
   def persist(key: Key): Result[Boolean] =
     execute(new Persist(key))
@@ -183,6 +186,10 @@ trait KeyedKeysApi extends ApiSubset {
 
   private final class ObjectIdletime(key: Key) extends RedisOptLongCommand with NodeCommand {
     val encoded = encoder("OBJECT", "IDLETIME").key(key).result
+  }
+
+  private final class MemoryUsage(key: Key, samples: Opt[Long]) extends RedisOptLongCommand with NodeCommand {
+    val encoded = encoder("MEMORY", "USAGE").key(key).optAdd("SAMPLES", samples).result
   }
 
   private final class Persist(key: Key) extends RedisBooleanCommand with NodeCommand {

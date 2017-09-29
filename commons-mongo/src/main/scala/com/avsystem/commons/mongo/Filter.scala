@@ -5,7 +5,7 @@ import com.mongodb.client.model.{Filters => F}
 import org.bson.conversions.Bson
 import org.bson.{BsonArray, BsonDateTime, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
 
-import scala.collection.generic.CanBuildFrom
+import _root_.scala.collection.generic.CanBuildFrom
 
 /**
   * @author MKej
