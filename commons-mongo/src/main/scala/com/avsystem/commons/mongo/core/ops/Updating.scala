@@ -7,7 +7,7 @@ import org.bson.conversions.Bson
 
 object Updating extends LowPrioUpdating {
   implicit def bsonUpdating(bson: Bson): BsonUpdating = new BsonUpdating(bson)
-  implicit def bsonRefIterableUpdating[E: GenCodec, T <: Iterable[E]](bsonRef: BsonRef[T]): BsonRefIterableUpdating[E, T] = {
+  implicit def bsonRefIterableUpdating[E: GenCodec, C[T] <: Iterable[T]](bsonRef: BsonRef[C[E]]): BsonRefIterableUpdating[E, C] = {
     new BsonRefIterableUpdating(bsonRef)
   }
 }
