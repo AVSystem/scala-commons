@@ -145,6 +145,12 @@
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="DefaultCaseObjectInput.html" title=""></a>
+                        <a href="DefaultCaseObjectInput.html" title="">
+                          DefaultCaseObjectInput
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="trait" href="FallbackMapCodecs.html" title="Contains readers for maps where there is no DBKeyCodec for key type."></a>
                         <a href="FallbackMapCodecs.html" title="Contains readers for maps where there is no DBKeyCodec for key type.">
                           FallbackMapCodecs
@@ -165,9 +171,17 @@ from Input (format-agnostic &quot;input stream&quot;).">
                         </a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="" title=""></a>
-                        <a class="trait" href="GenKeyCodec.html" title="Typeclass which expresses ability to convert between MongoDB JSON object keys and values of some type."></a>
-                        <a href="GenKeyCodec.html" title="Typeclass which expresses ability to convert between MongoDB JSON object keys and values of some type.">
+                        <a class="trait" href="GenKeyCodec.html" title="Typeclass which implements two-directional conversion between values of some type and field names
+used in ObjectOutput.writeField and ObjectInput.nextField (FieldInput.fieldName)."></a>
+                        <a href="GenKeyCodec.html" title="Typeclass which implements two-directional conversion between values of some type and field names
+used in ObjectOutput.writeField and ObjectInput.nextField (FieldInput.fieldName).">
                           GenKeyCodec
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="GenRef$.html" title=""></a>
+                        <a class="class" href="GenRef.html" title=""></a>
+                        <a href="GenRef.html" title="">
+                          GenRef
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
@@ -230,6 +244,12 @@ from Input (format-agnostic &quot;input stream&quot;).">
                           Output
                         </a>
                       </li><li class="current-entities indented4">
+                        <a class="object" href="RawRef$.html" title=""></a>
+                        <a class="trait" href="RawRef.html" title=""></a>
+                        <a href="RawRef.html" title="">
+                          RawRef
+                        </a>
+                      </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="RecursiveAutoCodecs.html" title=""></a>
                         <a href="RecursiveAutoCodecs.html" title="">
@@ -246,6 +266,12 @@ from Input (format-agnostic &quot;input stream&quot;).">
                         <a class="trait" href="SequentialOutput.html" title="Base trait for outputs which allow writing of multiple values in sequence, i.e."></a>
                         <a href="SequentialOutput.html" title="Base trait for outputs which allow writing of multiple values in sequence, i.e.">
                           SequentialOutput
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="SimpleRawRef$.html" title=""></a>
+                        <a class="trait" href="SimpleRawRef.html" title=""></a>
+                        <a href="SimpleRawRef.html" title="">
+                          SimpleRawRef
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
@@ -291,11 +317,41 @@ from Input (format-agnostic &quot;input stream&quot;).">
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="defaultCase.html" title="When materializing a GenCodec for sealed hierarchy with @flatten annotation, you can use this
+annotation on one of case classes or objects to mark it as the default one."></a>
+                        <a href="defaultCase.html" title="When materializing a GenCodec for sealed hierarchy with @flatten annotation, you can use this
+annotation on one of case classes or objects to mark it as the default one.">
+                          defaultCase
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="flatten.html" title="Changes the serialization format used by GenCodecs automatically derived for sealed hierarchies."></a>
+                        <a href="flatten.html" title="Changes the serialization format used by GenCodecs automatically derived for sealed hierarchies.">
+                          flatten
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="generated.html" title="May be used on members of objects, case classes or any types having companion object with case class
+like apply and unapply/unapplySeq methods in order to add additional, generated fields to data serialized by
+auto-materialized GenCodecs."></a>
+                        <a href="generated.html" title="May be used on members of objects, case classes or any types having companion object with case class
+like apply and unapply/unapplySeq methods in order to add additional, generated fields to data serialized by
+auto-materialized GenCodecs.">
+                          generated
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="name.html" title="Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived GenCodec
 to use particular name instead of just using parameter or class name."></a>
                         <a href="name.html" title="Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived GenCodec
 to use particular name instead of just using parameter or class name.">
                           name
+                        </a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="outOfOrder.html" title="To be used in conjunction with flatten."></a>
+                        <a href="outOfOrder.html" title="To be used in conjunction with flatten.">
+                          outOfOrder
                         </a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
@@ -349,7 +405,7 @@ field.">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.3/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.3/scala/collection/immutable/List.html#scala.Any" class="extype" name="scala.collection.immutable.List">Any</a></div>
         </div></div>
         
 
@@ -414,7 +470,7 @@ field.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.3/scala/collection/immutable/List.html#scala.Any" class="extype" name="scala.collection.immutable.List">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -430,7 +486,7 @@ field.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -446,7 +502,7 @@ field.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.3/scala/collection/immutable/List.html#scala.Any" class="extype" name="scala.collection.immutable.List">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -462,7 +518,7 @@ field.">
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">BooleanKeyCodec</span><span class="result">: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a>]</span>
+        <span class="name">BooleanKeyCodec</span><span class="result">: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<a href="http://www.scala-lang.org/api/2.12.3/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a>]</span>
       </span>
       
       
@@ -478,7 +534,7 @@ field.">
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">ByteKeyCodec</span><span class="result">: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Byte" class="extype" target="_top">Byte</a>]</span>
+        <span class="name">ByteKeyCodec</span><span class="result">: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<a href="http://www.scala-lang.org/api/2.12.3/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]</span>
       </span>
       
       
@@ -494,7 +550,7 @@ field.">
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">CharKeyCodec</span><span class="result">: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Char" class="extype" target="_top">Char</a>]</span>
+        <span class="name">CharKeyCodec</span><span class="result">: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<a href="http://www.scala-lang.org/api/2.12.3/scala/Char.html#scala.Char" class="extype" name="scala.Char">Char</a>]</span>
       </span>
       
       
@@ -510,7 +566,7 @@ field.">
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">IntKeyCodec</span><span class="result">: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a>]</span>
+        <span class="name">IntKeyCodec</span><span class="result">: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<a href="http://www.scala-lang.org/api/2.12.3/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>]</span>
       </span>
       
       
@@ -622,7 +678,7 @@ field.">
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">LongKeyCodec</span><span class="result">: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a>]</span>
+        <span class="name">LongKeyCodec</span><span class="result">: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<a href="http://www.scala-lang.org/api/2.12.3/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
       </span>
       
       
@@ -638,7 +694,7 @@ field.">
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">ShortKeyCodec</span><span class="result">: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Short" class="extype" target="_top">Short</a>]</span>
+        <span class="name">ShortKeyCodec</span><span class="result">: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<a href="http://www.scala-lang.org/api/2.12.3/scala/Short.html#scala.Short" class="extype" name="scala.Short">Short</a>]</span>
       </span>
       
       
@@ -686,10 +742,10 @@ field.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@throws</span><span class="args">(<span>
       
       <span class="defval" name="classOf[java.lang.CloneNotSupportedException]">...</span>
@@ -724,7 +780,7 @@ field.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.3/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -740,7 +796,7 @@ field.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.3/scala/collection/immutable/List.html#scala.Any" class="extype" name="scala.collection.immutable.List">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -756,10 +812,10 @@ field.">
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java$lang.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@throws</span><span class="args">(<span>
       
       <span class="symbol">classOf[java.lang.Throwable]</span>
@@ -813,7 +869,7 @@ This can be adjusted with <code>@name</code> annotation.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -829,7 +885,7 @@ This can be adjusted with <code>@name</code> annotation.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -861,7 +917,7 @@ This can be adjusted with <code>@name</code> annotation.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Boolean" class="extype" target="_top">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.3/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -877,7 +933,7 @@ This can be adjusted with <code>@name</code> annotation.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -893,7 +949,7 @@ This can be adjusted with <code>@name</code> annotation.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -960,7 +1016,7 @@ This can be adjusted with <code>@name</code> annotation.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -982,7 +1038,7 @@ This can be adjusted with <code>@name</code> annotation.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Int" class="extype" target="_top">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.3/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.3/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1004,7 +1060,7 @@ This can be adjusted with <code>@name</code> annotation.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Long" class="extype" target="_top">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Unit" class="extype" target="_top">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.3/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.3/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1041,9 +1097,9 @@ This can be adjusted with <code>@name</code> annotation.
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.AnyRef" class="extype" target="_top">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.3/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.2/index.html#scala.Any" class="extype" target="_top">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.3/scala/collection/immutable/List.html#scala.Any" class="extype" name="scala.collection.immutable.List">Any</a></h3>
             </div>
         
         </div>
