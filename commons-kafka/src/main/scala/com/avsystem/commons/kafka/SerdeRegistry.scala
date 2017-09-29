@@ -2,6 +2,7 @@ package com.avsystem.commons
 package kafka
 
 import com.avsystem.commons.kafka.exceptions.UnsupportedVersionEvent
+import com.avsystem.commons.serialization.GenCodec
 
 import scala.collection.mutable
 
@@ -9,8 +10,13 @@ import scala.collection.mutable
 class SerdeRegistry[T] extends AbstractDeserializer[T] {
   private val registry = mutable.Map[Byte, KafkaSerde[_ <: T]]()
 
-  def add[X <: T](version: Byte, serde: KafkaSerde[X])(implicit classTag: ClassTag[X]): SerdeRegistry[T] = {
+  def add[X <: T](version: Byte, serde: KafkaSerde[X]): this.type = {
     registry += (version -> serde)
+    this
+  }
+
+  def add[X <: T](version: Byte)(implicit codec: GenCodec[T]): this.type = {
+    registry += (version -> new KafkaSerde(codec))
     this
   }
 
