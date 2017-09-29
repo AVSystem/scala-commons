@@ -27,13 +27,13 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   final val GeneratedAnnotType = getType(tq"$SerializationPkg.generated")
   final val GenCodecObj = q"$SerializationPkg.GenCodec"
   final val GenCodecCls = tq"$SerializationPkg.GenCodec"
-  final val CaseField = "_case"
+  final val DefaultCaseField = "_case"
 
   def tupleGet(i: Int) = TermName(s"_${i + 1}")
 
   def targetName(sym: Symbol): String =
     getAnnotations(sym, NameAnnotType).headOption.map(_.tree.children.tail).map {
-      case Literal(Constant(str: String)) :: _ => str
+      case StringLiteral(str) :: _ => str
       case param :: _ => c.abort(param.pos, s"@name argument must be a string literal")
     }.getOrElse(sym.name.decodedName.toString)
 

@@ -31,9 +31,17 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   override def materializeFor(tpe: Type) = {
     val tsym = tpe.typeSymbol
-    if (isSealedHierarchyRoot(tsym) && hasAnnotation(tsym, FlattenAnnotType))
-      flatForSealedHierarchy(tpe)
-    else
+    if (isSealedHierarchyRoot(tsym)) getAnnotations(tsym, FlattenAnnotType).headOption match {
+      case Some(annot) =>
+        val caseFieldName = annot.tree match {
+          case Apply(_, Nil) => DefaultCaseField
+          case Apply(_, StringLiteral(str) :: _) => str
+          case Apply(_, arg :: _) => c.abort(arg.pos, s"String literal expected as case field name")
+        }
+        flatForSealedHierarchy(tpe, caseFieldName)
+      case None =>
+        super.materializeFor(tpe)
+    } else
       super.materializeFor(tpe)
   }
 
@@ -329,10 +337,6 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val targetNames: Map[Symbol, String] = targetNameMap(applyParams.map(_.sym) ++ generated.map(_._1))
     val membersByName: Map[String, (Symbol, Type)] =
       (applyParams.map(ap => (ap.sym, ap.valueType)) ++ generated).map({ case (s, t) => (targetNames(s), (s, t)) }).toMap
-
-    if (targetNames.values.exists(_ == CaseField)) {
-      abort(s"`$CaseField` is a reserved field name")
-    }
     val oooSymbols: List[Symbol] = membersByName.values.iterator.map(_._1).filter(isOutOfOrder).toList
     val oooFieldNames: Set[String] = oooSymbols.iterator.map(targetNames).toSet
 
@@ -361,7 +365,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     def caseRead = cq"$caseName => readFlatCase($caseName, input, $depName)"
   }
 
-  def flatForSealedHierarchy(tpe: Type): Tree = {
+  def flatForSealedHierarchy(tpe: Type, caseFieldName: String): Tree = {
     val tcTpe = typeClassInstance(tpe)
     val subtypes = knownSubtypes(tpe).getOrElse(abort(s"$tpe is not a sealed hierarchy root"))
     targetNameMap(subtypes.map(_.typeSymbol)) // just to validate uniqueness
@@ -375,6 +379,12 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     } orElse singleValueFor(st).map { singleton =>
       CaseObjectInfo(st, singleton)
     } getOrElse abort(s""))
+
+    caseInfos.foreach { ci =>
+      if (ci.targetNames.values.exists(_ == caseFieldName)) {
+        abort(s"$caseFieldName is the case discriminator field name that can't be used as any other's field name")
+      }
+    }
 
     val oooParams: Map[String, Type] = caseInfos.flatMap { ci =>
       ci.oooFieldNames.iterator.map(name => (name, ci.membersByName(name)._2))
@@ -425,7 +435,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       if (oooParams.isEmpty) q"()" else q"val oooFields = new OutOfOrderFields"
 
     val caseDependentParamsCase =
-      if(caseDependentFieldNames.isEmpty) Nil
+      if (caseDependentFieldNames.isEmpty) Nil
       else {
         val pattern = caseDependentFieldNames.map(n => pq"$n").reduce((p1, p2) => pq"$p1 | $p2")
         List(cq"$pattern => missingCase(fi.fieldName)")
@@ -437,6 +447,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         ..${oooParams.map({ case (name, ptpe) => oooDepDeclaration(name, ptpe) })}
         ..${caseInfos.map(_.depDeclaration(oooDepNames))}
         protected def typeRepr = ${tpe.toString}
+        override protected def caseFieldName = $caseFieldName
         def nullable = ${typeOf[Null] <:< tpe}
         def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
           $oooFieldsDecl
@@ -444,7 +455,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
             if(input.hasNext) {
               val fi = input.nextField()
               fi.fieldName match {
-                case $CaseField => fi
+                case $caseFieldName => fi
                 case ..${oooParams.keysIterator.map(oooFieldReadCase).toList}
                 case ..$caseDependentParamsCase
                 case _ => fi.skip(); lookForCase()

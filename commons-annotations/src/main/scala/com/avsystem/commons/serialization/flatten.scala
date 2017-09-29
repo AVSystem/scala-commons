@@ -28,5 +28,9 @@ import scala.annotation.StaticAnnotation
   * {{{
   * {"_case": "Numeric", "int": 42}
   * }}}
+  *
+  * The "_case" field name can be customized with annotation parameter
   */
-class flatten extends StaticAnnotation
+class flatten(caseFieldName: String) extends StaticAnnotation {
+  def this() = this("_case")
+}

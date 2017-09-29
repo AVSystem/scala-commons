@@ -73,7 +73,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     val rpcName = (method :: method.overrides).flatMap(_.annotations).find(_.tree.tpe <:< RPCNameType).map { annot =>
       annot.tree.children.tail match {
-        case List(Literal(Constant(name: String))) => TermName(name)
+        case List(StringLiteral(name)) => TermName(name)
         case _ => c.abort(annot.tree.pos, "The argument of @RPCName must be a string literal.")
       }
     }.getOrElse(method.name)
