@@ -8,8 +8,6 @@ import com.avsystem.commons.serialization.GenCodec
 import com.mongodb.client.model.Filters
 import org.bson.BsonType
 import org.bson.conversions.Bson
-import org.mongodb.scala.MongoClient
-import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.FunSuite
 
 class FilteringTest extends FunSuite {
@@ -18,12 +16,10 @@ class FilteringTest extends FunSuite {
   import FilteringTest._
 
   private def testCase(name: String)(filter: (BsonRef[String]) => Bson)(verify: (String) => Bson): Unit = {
-    def toDoc(bson: Bson): BsonDocument = bson.toBsonDocument(classOf[BsonDocument], MongoClient.DEFAULT_CODEC_REGISTRY)
+    import BsonEquality.bsonEquality
 
     test(name) {
-      val actualFilter = toDoc(filter(sRef))
-      val expectedFilter = toDoc(verify("s"))
-      assert(actualFilter === expectedFilter)
+      assert(filter(sRef) === verify("s"))
     }
   }
 
