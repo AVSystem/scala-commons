@@ -3,8 +3,6 @@ package kafka
 
 import org.apache.kafka.common.serialization.{Deserializer, Serializer}
 
-import com.avsystem.commons.jiop.JavaInterop._
-
 import org.apache.kafka.common.serialization.Serde
 
 abstract class AbstractSerde[T] extends Serde[T] {
