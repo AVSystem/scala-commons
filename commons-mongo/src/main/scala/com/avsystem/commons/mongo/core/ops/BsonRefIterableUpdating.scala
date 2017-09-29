@@ -5,9 +5,9 @@ import com.avsystem.commons.mongo.{BsonRef, BsonValueOutput}
 import com.avsystem.commons.serialization.GenCodec
 import org.bson.BsonValue
 
-class BsonRefIterableUpdating[E, T <: Iterable[E]](val bsonRef: BsonRef[T])(implicit eCodec: GenCodec[E])
-  extends BaseIterableUpdating[E, T]
-    with BsonRefKeyValueHandling[T] {
+class BsonRefIterableUpdating[E, C[T] <: Iterable[T]](val bsonRef: BsonRef[C[E]])(implicit eCodec: GenCodec[E])
+  extends BaseIterableUpdating[E, C[E]]
+    with BsonRefKeyValueHandling[C[E]] {
 
   override protected def encodeElement(e: E): BsonValue = {
     var result: BsonValue = null
