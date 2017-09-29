@@ -221,30 +221,21 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   trait ErrorReportingCodec[T] extends GenCodec[T] {
     protected def typeRepr: String
+    protected def caseFieldName: String = DefaultCaseField
 
     protected def readField[A](fieldInput: FieldInput, codec: GenCodec[A]): A =
       decoratedRead(fieldInput, codec, s"field ${fieldInput.fieldName}")
 
-    protected def readCaseName(input: ObjectInput): String = {
-      if (input.hasNext) {
-        val fi = input.nextField()
-        fi.fieldName match {
-          case CaseField => readCaseName(fi)
-          case _ => missingCase
-        }
-      } else missingCase
-    }
-
     protected def readCaseName(fi: FieldInput): String =
       try fi.readString() catch {
         case NonFatal(e) =>
-          throw new ReadFailure(s"Cannot read $typeRepr, failed to read case name from `$CaseField` field", e)
+          throw new ReadFailure(s"Cannot read $typeRepr, failed to read case name from $caseFieldName field", e)
       }
 
     protected def readCase[A](caseName: String, input: Input, codec: GenCodec[A]): A =
       decoratedRead(input, codec, s"case $caseName")
 
-    protected def readFlatCase[A, O](caseName: String, outOfOrderFields: O, input: ObjectInput, codec: GenCodec.ApplyUnapplyCodec[A, O]): A =
+    protected def readFlatCase[A, O](caseName: String, outOfOrderFields: O, input: ObjectInput, codec: ApplyUnapplyCodec[A, O]): A =
       try codec.readObject(input, outOfOrderFields) catch {
         case NonFatal(e) => throw new ReadFailure(s"Failed to read case $caseName of $typeRepr", e)
       }
@@ -265,9 +256,11 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     protected def writeCase[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
       decoratedWrite(fieldName, output, value, codec, "case")
 
-    protected def writeFlatCase[A](caseName: String, output: ObjectOutput, value: A, codec: GenCodec.ObjectCodec[A]): Unit =
+    protected def writeFlatCase[A](caseName: String, transient: Boolean, output: ObjectOutput, value: A, codec: ObjectCodec[A]): Unit =
       try {
-        output.writeField(CaseField).writeString(caseName)
+        if(!transient) {
+          output.writeField(caseFieldName).writeString(caseName)
+        }
         codec.writeObject(output, value)
       } catch {
         case NonFatal(e) => throw new WriteFailure(s"Failed to write case $caseName of $typeRepr", e)
@@ -285,10 +278,10 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
       throw new ReadFailure(s"Cannot read $typeRepr, unknown case: $caseName")
 
     protected def missingCase(fieldToRead: String) =
-      throw new ReadFailure(s"Cannot read field $fieldToRead of $typeRepr before $CaseField field is read")
+      throw new ReadFailure(s"Cannot read field $fieldToRead of $typeRepr before $caseFieldName field is read")
 
     protected def missingCase =
-      throw new ReadFailure(s"Cannot read $typeRepr, $CaseField field is missing")
+      throw new ReadFailure(s"Cannot read $typeRepr, $caseFieldName field is missing")
 
     protected def notSingleField(empty: Boolean) =
       throw new ReadFailure(s"Cannot read $typeRepr, expected object with exactly one field but got ${if (empty) "empty object" else "more than one"}")
@@ -313,7 +306,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     case _ => codec
   }
 
-  final val CaseField = "_case"
+  final val DefaultCaseField = "_case"
 
   implicit val NothingCodec: GenCodec[Nothing] = create[Nothing](_ => sys.error("read Nothing"), (_, _) => sys.error("write Nothing"))
   implicit val NullCodec: GenCodec[Null] = create[Null](_.readNull(), (o, _) => o.writeNull())

@@ -126,6 +126,20 @@ trait MacroCommons {
     case t => Select(t, name)
   }
 
+  object StringLiteral {
+    def unapply(tree: Tree): Option[String] = tree match {
+      case Literal(Constant(str: String)) => Some(str)
+      case _ => None
+    }
+  }
+
+  object BooleanLiteral {
+    def unapply(tree: Tree): Option[Boolean] = tree match {
+      case Literal(Constant(boolean: Boolean)) => Some(boolean)
+      case _ => None
+    }
+  }
+
   object ExistentialSingleton {
     def unapply(sym: Symbol): Option[(TypeSymbol, TermName, Type)] =
       if (sym.isType && sym.name.decodedName.toString.endsWith(".type")) {

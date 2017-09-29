@@ -20,7 +20,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     unwrapAndAddClue(clue)(c.typecheck(q"implicitly[${weakTypeOf[T]}]", withMacrosDisabled = true))
 
   private def unwrapAndAddClue(clueTree: Tree)(expr: => Tree): Tree = clueTree match {
-    case Literal(Constant(clue: String)) =>
+    case StringLiteral(clue) =>
       val wrapped = try expr catch {
         case TypecheckException(_, msg) => abort(clue + msg)
       }
