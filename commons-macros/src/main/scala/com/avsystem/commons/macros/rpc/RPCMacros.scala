@@ -122,24 +122,30 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       val proxyables = proxyableMethods(rpcTpe)
       val implName = c.freshName(TermName("impl"))
 
-      def methodCase(variant: Variant, member: ProxyableMember): CaseDef = {
+      def methodCase(variant: Variant, member: ProxyableMember): Option[CaseDef] = {
         val paramLists = member.signature.paramLists
         val matchedArgs = reifyListPat(paramLists.map(paramList => reifyListPat(paramList.map(ps => pq"${ps.name.toTermName}"))))
         val methodArgs = paramLists.map(_.map(ps => q"$FrameworkObj.read[${ps.typeSignature}](${ps.name.toTermName})"))
-        val badMethodError = s"${member.method} cannot be handled by raw ${variant.rawMethod}"
-        val onFailure = q"throw new Exception($badMethodError)"
         val realInvocation = q"$implName.${member.method}(...$methodArgs)"
-        cq"""
-        (${member.rpcNameString}, $matchedArgs) =>
-          $FrameworkObj.tryToRaw[${member.returnType},${variant.returnType}]($realInvocation,$onFailure)
-        """
+        val handlerType = getType(tq"$RealInvocationHandlerCls[${member.returnType},_]")
+        val expectedHandlerType = getType(tq"$RealInvocationHandlerCls[${member.returnType},${variant.returnType}]")
+
+        c.inferImplicitValue(handlerType) match {
+          case EmptyTree =>
+            Some(cq"(${member.rpcNameString}, $matchedArgs) => implicitly[$expectedHandlerType].toRaw($realInvocation)") //force normal compilation error
+          case handler if handler.tpe <:< expectedHandlerType =>
+            Some(cq"""(${member.rpcNameString}, $matchedArgs) => $FrameworkObj.tryToRaw[${member.returnType},${variant.returnType}]($realInvocation)""")
+          case _ => None
+        }
       }
 
       def defaultCase(variant: Variant): CaseDef =
         cq"_ => fail(${rpcTpe.toString}, ${variant.rawMethod.name.toString}, methodName, args)"
 
       def methodMatch(variant: Variant, methods: Iterable[ProxyableMember]) = {
-        Match(q"(methodName, args)", (methods.map(m => methodCase(variant, m)) ++ Iterator(defaultCase(variant))).toList)
+        Match(q"(methodName, args)",
+          (methods.flatMap(m => methodCase(variant, m)) ++ Iterator(defaultCase(variant))).toList
+        )
       }
 
       def rawImplementation(variant: Variant) =
@@ -160,15 +166,13 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
-  def tryToRaw[Real: c.WeakTypeTag, Raw: c.WeakTypeTag](real: Tree, onFailure: Tree): Tree = {
+  def tryToRaw[Real: c.WeakTypeTag, Raw: c.WeakTypeTag](real: Tree): Tree = {
     val realTpe = weakTypeOf[Real]
     val rawTpe = weakTypeOf[Raw]
-    val handlerType = getType(tq"$RealInvocationHandlerCls[$realTpe,_]")
     val expectedHandlerType = getType(tq"$RealInvocationHandlerCls[$realTpe,$rawTpe]")
-    c.inferImplicitValue(handlerType) match {
+    c.inferImplicitValue(expectedHandlerType) match {
       case EmptyTree => q"implicitly[$expectedHandlerType].toRaw($real)" //force normal compilation error
-      case handler if handler.tpe <:< expectedHandlerType => q"$handler.toRaw($real)"
-      case _ => onFailure
+      case handler  => q"$handler.toRaw($real)"
     }
   }
 

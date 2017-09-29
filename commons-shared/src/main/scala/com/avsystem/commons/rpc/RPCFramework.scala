@@ -85,7 +85,7 @@ trait RPCFramework {
   implicit def implicitlyMaterializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCMacros.asRealImpl[T]
 
   /** INTERNAL API */
-  def tryToRaw[Real, Raw](real: Real, onFailure: Nothing): Raw = macro macros.rpc.RPCMacros.tryToRaw[Real, Raw]
+  def tryToRaw[Real, Raw](real: Real): Raw = macro macros.rpc.RPCMacros.tryToRaw[Real, Raw]
 
   trait RPCMetadata[T] {
     def name: String
