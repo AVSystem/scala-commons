@@ -6,7 +6,7 @@ import com.avsystem.commons.serialization.GenCodec
 import org.bson.BsonValue
 
 class BsonRefIterableUpdating[E, C[T] <: Iterable[T]](val bsonRef: BsonRef[C[E]])(implicit eCodec: GenCodec[E])
-  extends BaseIterableUpdating[E, C[E]]
+  extends BaseIterableUpdating[E, C]
     with BsonRefKeyValueHandling[C[E]] {
 
   override protected def encodeElement(e: E): BsonValue = {

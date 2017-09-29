@@ -5,7 +5,7 @@ import com.mongodb.client.model.{PushOptions, Updates}
 import org.bson.BsonValue
 import org.bson.conversions.Bson
 
-trait BaseIterableUpdating[E, T <: Iterable[E]] extends Any with BaseUpdating[T] {
+trait BaseIterableUpdating[E, C[T] <: Iterable[T]] extends Any with BaseUpdating[C[E]] {
   protected def encodeElement(e: E): BsonValue
 
   protected def useE(e: E)(f: (String, BsonValue) => Bson): Bson = {
