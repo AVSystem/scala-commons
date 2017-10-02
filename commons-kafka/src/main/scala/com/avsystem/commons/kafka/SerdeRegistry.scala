@@ -15,7 +15,7 @@ class SerdeRegistry[T] extends AbstractDeserializer[T] {
     this
   }
 
-  def add[X <: T](version: Byte)(implicit codec: GenCodec[T]): this.type = {
+  def add[X <: T](version: Byte)(implicit codec: GenCodec[X]): this.type = {
     registry += (version -> new KafkaSerde(codec))
     this
   }
@@ -26,7 +26,7 @@ class SerdeRegistry[T] extends AbstractDeserializer[T] {
 
   override def deserialize(topic: String, data: Array[Byte]): T = {
     registry.get(data.head) match {
-      case Some(serde: KafkaSerde[T]) => serde.deserializer().deserialize(topic, data.tail)
+      case Some(serde: KafkaSerde[T]) => serde.deserialize(topic, data.tail)
       case _ => throw new UnsupportedVersionEvent(s"Unsupported version ${data.head}, add proper serde to registry.")
     }
   }

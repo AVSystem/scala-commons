@@ -44,7 +44,7 @@ class KafkaSerdeTest extends FunSuite {
     val event = TestEvent3("Martin")
     val testEvent3Serde = new KafkaSerde[TestEvent3](GenCodec.materialize[TestEvent3])
 
-    val serialized = testEvent3Serde.serializer().serialize("topic", event)
+    val serialized = testEvent3Serde.serialize(3, "topic", event)
 
     assertThrows[UnsupportedVersionEvent] {
       TestEvent.registry.deserialize("topic", serialized)
