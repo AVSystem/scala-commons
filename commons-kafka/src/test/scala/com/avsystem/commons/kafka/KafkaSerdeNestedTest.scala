@@ -20,10 +20,11 @@ class KafkaSerdeNestedTest extends FunSuite {
 
   object TestEvent extends EventOps {
 
-    implicit val registry: SerdeRegistry[TestEvent] = new SerdeRegistry[TestEvent]()
-      .add(1, new KafkaSerde[TestEvent1](GenCodec.materializeRecursively[TestEvent1]))
+    implicit val registry: SerdeRegistry[TestEvent] = new SerdeRegistry[TestEvent](Map(
+      1.toByte -> GenCodec.materializeRecursively[TestEvent1]))
 
-    implicit val ser: Serializer[TestEvent] = new VersionedSerializer[TestEvent](1)
+    implicit val codec: GenCodec[TestEvent1] = GenCodec.materializeRecursively[TestEvent1]
+    implicit val ser: Serializer[TestEvent1] = new VersionedSerializer[TestEvent1](1)
 
   }
 

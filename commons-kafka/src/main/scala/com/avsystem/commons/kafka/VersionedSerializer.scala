@@ -1,14 +1,17 @@
 package com.avsystem.commons
 package kafka
 
-import com.avsystem.commons.kafka.exceptions.UnsupportedVersionEvent
+import java.io.ByteArrayOutputStream
 
-class VersionedSerializer[T](version: Byte)(implicit registry: SerdeRegistry[T]) extends AbstractSerializer[T] {
-  require(registry.isSupported(version), s"Version: $version isn't supported by registry. Please add it first.")
+import com.avsystem.commons.serialization.GenCodec
+
+class VersionedSerializer[T](version: Byte)(implicit codec: GenCodec[T]) extends AbstractSerializer[T] {
+
+  private val serde = new KafkaSerde(codec)
+
   override def serialize(topic: String, data: T): Array[Byte] = {
-    registry(version) match {
-      case Some(serde: KafkaSerde[T]) => serde.serialize(version, topic, data)
-      case _ => throw new UnsupportedVersionEvent(s"Unsupported version $version of ${data.getClass.getSimpleName}")
-    }
+    val output = new ByteArrayOutputStream()
+    output.write(version)
+    serde.serialize(output, data)
   }
 }

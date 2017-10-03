@@ -1,4 +1,4 @@
-import PgpKeys._
+import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys._
 
 cancelable in Global := true
 
@@ -44,7 +44,7 @@ val upickleVersion = "0.4.4"
 val scalacheckVersion = "1.13.4"
 val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.5.0"
-val kafkaVersion = "0.11.0.0"
+val kafkaVersion = "0.11.0.1"
 val mongoScalaVersion = "2.1.0"
 val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.0"
@@ -234,14 +234,14 @@ lazy val `commons-mongo` = project
   )
 
 lazy val `commons-kafka` = project
-.dependsOn(`commons-core`)
-.settings(commonSettings: _*)
-.settings(jvmCommonSettings: _*)
-.settings(
-  libraryDependencies ++= Seq(
-    "org.apache.kafka" % "kafka-streams" % kafkaVersion
+  .dependsOn(`commons-core`)
+  .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.apache.kafka" % "kafka-streams" % kafkaVersion
+    )
   )
-)
 
 lazy val `commons-redis` = project
   .dependsOn(`commons-core`)
