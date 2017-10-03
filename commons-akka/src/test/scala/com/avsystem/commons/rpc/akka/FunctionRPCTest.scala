@@ -2,7 +2,7 @@ package com.avsystem.commons
 package rpc.akka
 
 import akka.pattern.AskTimeoutException
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.time.Span
 

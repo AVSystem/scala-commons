@@ -9,6 +9,7 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.exception.ErrorReplyException
 import com.avsystem.commons.redis.protocol.ValidRedisMsg
+import com.github.ghik.silencer.silent
 import com.google.common.hash.Hashing
 
 trait KeyedScriptingApi extends ApiSubset {
@@ -102,7 +103,7 @@ trait ConnectionScriptingApi extends NodeScriptingApi {
 trait RedisScript[+A] {
   def source: String
   def decoder: ReplyDecoder[A]
-  lazy val sha1 = Sha1(Hashing.sha1.hashString(source, StandardCharsets.UTF_8).toString)
+  lazy val sha1: Sha1 = Sha1.hashString(source)
 }
 object RedisScript {
   def apply[A](script: String)(replyDecoder: ReplyDecoder[A]): RedisScript[A] =
@@ -115,6 +116,10 @@ case class Sha1(raw: String) extends AnyVal {
   override def toString = raw
 }
 object Sha1 {
+  @silent
+  def hashString(input: CharSequence): Sha1 =
+    Sha1(Hashing.sha1.hashString(input, StandardCharsets.UTF_8).toString)
+
   implicit val commandArg: CommandArg[Sha1] =
     CommandArg((enc, sha1) => enc.add(sha1.raw))
 }
