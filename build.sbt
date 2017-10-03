@@ -1,4 +1,4 @@
-import PgpKeys._
+import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys._
 
 cancelable in Global := true
 
@@ -34,23 +34,24 @@ inThisBuild(Seq(
 ))
 
 // for binary compatibility checking
-val previousVersion = "1.19.0"
+val previousVersion = "1.22.0"
 
 val silencerVersion = "0.5"
-val guavaVersion = "18.0"
-val jsr305Version = "3.0.0"
-val scalatestVersion = "3.0.0"
+val guavaVersion = "23.0"
+val jsr305Version = "3.0.2"
+val scalatestVersion = "3.0.4"
 val upickleVersion = "0.4.4"
-val scalacheckVersion = "1.13.4"
+val scalacheckVersion = "1.13.5"
 val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.5.0"
 val mongoScalaVersion = "2.1.0"
 val springVersion = "4.0.2.RELEASE"
-val typesafeConfigVersion = "1.3.0"
+val typesafeConfigVersion = "1.3.1"
 val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.5.0"
-val akkaVersion = "2.4.12"
-val monixVersion = "2.0.6"
+val akkaVersion = "2.5.6"
+val monixVersion = "2.3.0"
+val mockitoVersion = "2.10.0"
 
 val commonSettings = Seq(
   publishTo := Some(Opts.resolver.sonatypeStaging),
@@ -265,6 +266,6 @@ lazy val `commons-akka` = project
       "com.typesafe.akka" %% "akka-remote" % akkaVersion,
       "io.monix" %% "monix" % monixVersion,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
-      "org.mockito" % "mockito-core" % "2.0.54-beta" % Test
+      "org.mockito" % "mockito-core" % mockitoVersion % Test
     )
   )
