@@ -7,7 +7,7 @@ import com.avsystem.commons.serialization.GenCodec
 
 class VersionedSerializer[T](version: Byte)(implicit codec: GenCodec[T]) extends AbstractSerializer[T] {
 
-  private val serde = new KafkaSerde(codec)
+  private val serde = new CodecSerde(codec)
 
   override def serialize(topic: String, data: T): Array[Byte] = {
     val output = new ByteArrayOutputStream()

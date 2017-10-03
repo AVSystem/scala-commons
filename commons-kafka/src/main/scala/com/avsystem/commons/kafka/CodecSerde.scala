@@ -5,7 +5,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, Da
 
 import com.avsystem.commons.serialization.{GenCodec, StreamInput, StreamOutput}
 
-private[kafka] class KafkaSerde[T](codec: GenCodec[T]) {
+private[kafka] class CodecSerde[T](codec: GenCodec[T]) {
 
   def deserialize(in: ByteArrayInputStream): T = {
     val input = new StreamInput(new DataInputStream(in))

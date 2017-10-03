@@ -7,7 +7,7 @@ import com.avsystem.commons.serialization.GenCodec
 import org.apache.kafka.common.serialization.Serializer
 import org.scalatest.FunSuite
 
-class KafkaSerdeNestedTest extends FunSuite {
+class CodecSerdeNestedTest extends FunSuite {
 
   trait TestEvent
 

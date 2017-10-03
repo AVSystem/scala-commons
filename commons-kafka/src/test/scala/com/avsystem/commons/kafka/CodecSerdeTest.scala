@@ -8,7 +8,7 @@ import com.avsystem.commons.serialization.GenCodec
 import org.apache.kafka.common.serialization.Serializer
 import org.scalatest.FunSuite
 
-class KafkaSerdeTest extends FunSuite {
+class CodecSerdeTest extends FunSuite {
 
   sealed trait TestEvent
 
@@ -39,7 +39,7 @@ class KafkaSerdeTest extends FunSuite {
     val event = TestEvent3("Martin")
 
 
-    val testEvent3Serde = new KafkaSerde[TestEvent3](GenCodec.materialize[TestEvent3])
+    val testEvent3Serde = new CodecSerde[TestEvent3](GenCodec.materialize[TestEvent3])
     val output = new ByteArrayOutputStream()
     output.write(3)
 
