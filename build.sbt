@@ -44,6 +44,7 @@ val upickleVersion = "0.4.4"
 val scalacheckVersion = "1.13.5"
 val jettyVersion = "9.3.8.v20160314"
 val mongoVersion = "3.5.0"
+val kafkaVersion = "0.11.0.1"
 val mongoScalaVersion = "2.1.0"
 val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.1"
@@ -230,6 +231,16 @@ lazy val `commons-mongo` = project
       "org.mongodb" % "mongodb-driver" % mongoVersion % Optional,
       "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,
       "org.mongodb.scala" %% "mongo-scala-driver" % mongoScalaVersion % Optional
+    )
+  )
+
+lazy val `commons-kafka` = project
+  .dependsOn(`commons-core`)
+  .settings(commonSettings: _*)
+  .settings(jvmCommonSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.apache.kafka" % "kafka-streams" % kafkaVersion
     )
   )
 
