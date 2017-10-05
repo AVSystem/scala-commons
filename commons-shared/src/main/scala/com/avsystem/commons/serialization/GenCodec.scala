@@ -321,6 +321,8 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   implicit val LongCodec: GenCodec[Long] = create(_.readLong(), _ writeLong _)
   implicit val FloatCodec: GenCodec[Float] = create(_.readFloat(), _ writeFloat _)
   implicit val DoubleCodec: GenCodec[Double] = create(_.readDouble(), _ writeDouble _)
+  implicit val BigIntCodec: GenCodec[BigInt] = createNullSafe(i => BigInt(i.readString()), (o, v) => o.writeString(v.toString), allowNull = true)
+  implicit val BigDecimalCodec: GenCodec[BigDecimal] = createNullSafe(i => BigDecimal(i.readString()), (o, v) => o.writeString(v.toString), allowNull = true)
 
   implicit val JBooleanCodec: GenCodec[JBoolean] = createNullSafe(_.readBoolean(), _ writeBoolean _, allowNull = true)
   implicit val JCharacterCodec: GenCodec[JCharacter] = createNullSafe(_.readChar(), _ writeChar _, allowNull = true)
@@ -330,6 +332,8 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   implicit val JLongCodec: GenCodec[JLong] = createNullSafe(_.readLong(), _ writeLong _, allowNull = true)
   implicit val JFloatCodec: GenCodec[JFloat] = createNullSafe(_.readFloat(), _ writeFloat _, allowNull = true)
   implicit val JDoubleCodec: GenCodec[JDouble] = createNullSafe(_.readDouble(), _ writeDouble _, allowNull = true)
+  implicit val JBigIntegerCodec: GenCodec[JBigInteger] = createNullSafe(i => new JBigInteger(i.readString()), (o, v) => o.writeString(v.toString), allowNull = true)
+  implicit val JBigDecimalCodec: GenCodec[JBigDecimal] = createNullSafe(i => new JBigDecimal(i.readString()), (o, v) => o.writeString(v.toString), allowNull = true)
 
   implicit val JDateCodec: GenCodec[JDate] = createNullSafe(i => new JDate(i.readTimestamp()), (o, d) => o.writeTimestamp(d.getTime), allowNull = true)
   implicit val StringCodec: GenCodec[String] = createNullSafe(_.readString(), _ writeString _, allowNull = true)
