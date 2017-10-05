@@ -106,10 +106,9 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
   lazy val byName: Map[String, T] = values.toMapBy(_.name)
 
   implicit lazy val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(byName, _.name)
-  implicit lazy val codec: GenCodec[T] = GenCodec.createNullSafe[T](
+  implicit lazy val codec: GenCodec[T] = GenCodec.createNullable[T](
     input => byName(input.readString()),
-    (output, value) => output.writeString(value.name),
-    allowNull = true
+    (output, value) => output.writeString(value.name)
   )
 }
 

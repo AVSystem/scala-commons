@@ -9,7 +9,7 @@ trait BsonGenCodecs {
 }
 
 object BsonGenCodecs {
-  implicit val objectIdCodec: GenCodec[ObjectId] = GenCodec.createNullSafe(
+  implicit val objectIdCodec: GenCodec[ObjectId] = GenCodec.createNullable(
     readFun = {
       case bsonInput: BsonInput => bsonInput.readObjectId()
       case otherInput => new ObjectId(otherInput.readString())
@@ -17,7 +17,6 @@ object BsonGenCodecs {
     writeFun = {
       case (bsonOutput: BsonOutput, objectId) => bsonOutput.writeObjectId(objectId)
       case (otherOutput, objectId) => otherOutput.writeString(objectId.toHexString)
-    },
-    allowNull = true
+    }
   )
 }
