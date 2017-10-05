@@ -64,8 +64,10 @@ class GenCodecTest extends CodecTestBase {
     assert(implicitly[GenCodec[NoState]] == GenCodec.NothingCodec)
   }
 
-  test("collection test") {
+  test("collections and wrappers test") {
     testWriteReadAndAutoWriteRead[Option[Int]](option, List(42))
+    testWriteReadAndAutoWriteRead[Either[Int, String]](Left(42), ListMap("Left" -> 42))
+    testWriteReadAndAutoWriteRead[Either[Int, String]](Right("lol"), ListMap("Right" -> "lol"))
     testWriteReadAndAutoWriteRead[List[Int]](list, list)
     testWriteReadAndAutoWriteRead[Set[Int]](set, set.toList)
     testWriteReadAndAutoWriteRead[Map[String, Int]](map, map)

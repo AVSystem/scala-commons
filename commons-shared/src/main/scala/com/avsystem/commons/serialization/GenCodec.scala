@@ -258,7 +258,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
     protected def writeFlatCase[A](caseName: String, transient: Boolean, output: ObjectOutput, value: A, codec: ObjectCodec[A]): Unit =
       try {
-        if(!transient) {
+        if (!transient) {
           output.writeField(caseFieldName).writeString(caseName)
         }
         codec.writeObject(output, value)
@@ -308,7 +308,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   final val DefaultCaseField = "_case"
 
-  implicit val NothingCodec: GenCodec[Nothing] = create[Nothing](_ => sys.error("read Nothing"), (_, _) => sys.error("write Nothing"))
+  implicit val NothingCodec: GenCodec[Nothing] = create[Nothing](_ => throw new ReadFailure("read Nothing"), (_, _) => throw new WriteFailure("write Nothing"))
   implicit val NullCodec: GenCodec[Null] = create[Null](_.readNull(), (o, _) => o.writeNull())
   implicit val UnitCodec: GenCodec[Unit] = create[Unit](_.readUnit(), (o, _) => o.writeUnit())
   implicit val VoidCodec: GenCodec[Void] = create[Void](_.readNull(), (o, _) => o.writeNull())
@@ -337,6 +337,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   implicit val JDateCodec: GenCodec[JDate] = createNullSafe(i => new JDate(i.readTimestamp()), (o, d) => o.writeTimestamp(d.getTime), allowNull = true)
   implicit val StringCodec: GenCodec[String] = createNullSafe(_.readString(), _ writeString _, allowNull = true)
+  implicit val SymbolCodec: GenCodec[Symbol] = createNullSafe(i => Symbol(i.readString()), (o, s) => o.writeString(s.name), allowNull = true)
   implicit val ByteArrayCodec: GenCodec[Array[Byte]] = createNullSafe(_.readBinary(), _ writeBinary _, allowNull = true)
 
   private implicit class IteratorOps[A](private val it: Iterator[A]) extends AnyVal {
@@ -420,6 +421,22 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   implicit def optRefCodec[T >: Null : GenCodec]: GenCodec[OptRef[T]] =
     new TransformedCodec[OptRef[T], Opt[T]](optCodec[T], _.toOpt, opt => OptRef(opt.orNull))
+
+  implicit def eitherCodec[A: GenCodec, B: GenCodec]: GenCodec[Either[A, B]] = createObject(
+    oi => {
+      val fi = oi.nextField()
+      fi.fieldName match {
+        case "Left" => Left(read[A](fi))
+        case "Right" => Right(read[B](fi))
+        case name => throw new ReadFailure(s"Expected field 'Left' or 'Right', got $name")
+      }
+    },
+    (oo, v) => v match {
+      case Left(a) => write[A](oo.writeField("Left"), a)
+      case Right(b) => write[B](oo.writeField("Right"), b)
+    },
+    allowNull = true
+  )
 
   implicit def jEnumCodec[E <: Enum[E] : ClassTag]: GenCodec[E] = createNullSafe(
     in => Enum.valueOf(classTag[E].runtimeClass.asInstanceOf[Class[E]], in.readString()),
