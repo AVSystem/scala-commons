@@ -59,7 +59,7 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
       if (caseAccessor != NoSymbol) sym :: caseAccessor :: caseAccessor.overrides
       else if (sym.isClass) sym.asClass.baseClasses
       else sym :: sym.overrides
-    syms.flatMap(s => withAccessed(s).flatMap(_.annotations.filter(_.tree.tpe <:< annotTpe)))
+    syms.flatMap(s => withAccessed(s).flatMap(s => aggregatedAnnotations(s).filter(_.tree.tpe <:< annotTpe)))
   }
 
   def hasAnnotation(sym: Symbol, annotTpe: Type): Boolean =

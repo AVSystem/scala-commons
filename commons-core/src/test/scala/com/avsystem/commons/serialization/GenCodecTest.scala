@@ -3,6 +3,7 @@ package serialization
 
 import java.lang.annotation.RetentionPolicy
 
+import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.misc.{TypedKey, TypedKeyCompanion, TypedMap}
 import com.avsystem.commons.serialization.GenCodecTest.ValueClass
 import com.github.ghik.silencer.silent
@@ -29,9 +30,12 @@ object SealedBase {
   implicit val codec: GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
 }
 
+@outOfOrder
+@name("_id")
+class mongoId extends AnnotationAggregate
+
 @flatten sealed trait FlatSealedBase {
-  @outOfOrder
-  @name("_id") def id: String
+  @mongoId def id: String
   @generated
   @name("upper_id") def upperId: String = id.toUpperCase
 }

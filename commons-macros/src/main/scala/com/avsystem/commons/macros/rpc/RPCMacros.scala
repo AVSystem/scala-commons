@@ -34,9 +34,9 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   lazy val RawRPCType = getType(RawRPCCls)
   lazy val RawRPCSym = RawRPCType.typeSymbol
 
-  def allAnnotations(tpe: Type) = {
+  def allAnnotations(tpe: Type): List[Annotation] = {
     val ts = tpe.typeSymbol
-    if (ts.isClass) ts.asClass.baseClasses.flatMap(_.annotations)
+    if (ts.isClass) allAnnotations(ts)
     else Nil
   }
 
@@ -71,7 +71,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val typeParams = signature.typeParams
     val paramLists = signature.paramLists
 
-    val rpcName = (method :: method.overrides).flatMap(_.annotations).find(_.tree.tpe <:< RPCNameType).map { annot =>
+    val rpcName = allAnnotations(method).find(_.tree.tpe <:< RPCNameType).map { annot =>
       annot.tree.children.tail match {
         case List(StringLiteral(name)) => TermName(name)
         case _ => c.abort(annot.tree.pos, "The argument of @RPCName must be a string literal.")

@@ -24,6 +24,7 @@ trait MacroCommons {
   final val FutureSym = typeOf[scala.concurrent.Future[_]].typeSymbol
   final val OptionClass = definitions.OptionClass
   final val ImplicitsObj = q"$CommonsPackage.misc.Implicits"
+  final val AnnotationAggregateType = getType(tq"$CommonsPackage.annotation.AnnotationAggregate")
 
   final lazy val ownerChain = {
     val sym = c.typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
@@ -56,8 +57,18 @@ trait MacroCommons {
     case _ => List(s)
   }
 
+  def aggregatedAnnotations(s: Symbol): List[Annotation] =
+    s.annotations.flatMap { annot =>
+      val annotTpe = annot.tree.tpe
+      val tail =
+        if (annotTpe <:< AnnotationAggregateType)
+          allAnnotations(annotTpe.typeSymbol)
+        else Nil
+      annot :: tail
+    }
+
   def allAnnotations(s: Symbol): List[Annotation] =
-    superSymbols(s).flatMap(_.annotations)
+    superSymbols(s).flatMap(aggregatedAnnotations)
 
   def abort(msg: String) =
     c.abort(c.enclosingPosition, msg)
@@ -79,6 +90,7 @@ trait MacroCommons {
     override lazy val hashCode = {
       val dealiased = tpe.map(_.dealias)
       val innerSymbols = new mutable.HashSet[Symbol]
+
       def collectInnerSymbols(tpe: Type): Unit = tpe match {
         case PolyType(ts, _) =>
           innerSymbols ++= ts
@@ -91,6 +103,7 @@ trait MacroCommons {
           innerSymbols ++= scope.flatMap(_.typeSignature.paramLists.flatten)
         case _ =>
       }
+
       dealiased.foreach(collectInnerSymbols)
       val hashCodeSymbols = new mutable.ListBuffer[Symbol]
       dealiased.foreach {
@@ -324,12 +337,14 @@ trait MacroCommons {
                   .map(sig => elemAdjust(sig.finalResultType))
                   .getOrElse(NoType)
               }.takeWhile(_ != NoType).toList
+
               def check(params: List[Symbol], elemTypes: List[Type]): Boolean = (params, elemTypes) match {
                 case (Nil, Nil) => true
                 case (p :: prest, et :: etrest) =>
                   nonRepeatedType(p.typeSignature) =:= et && check(prest, etrest)
                 case _ => false
               }
+
               check(params, elemTypes)
             }
         }
@@ -441,10 +456,10 @@ trait MacroCommons {
         val undetparams = subSym.asType.typeParams
         val undetSubTpe = typeOfTypeSymbol(subSym.asType)
 
-        if(undetparams.nonEmpty)
+        if (undetparams.nonEmpty)
           determineTypeParams(undetSubTpe, tpe, undetparams)
             .map(typeArgs => undetSubTpe.substituteTypes(undetparams, typeArgs))
-        else if(undetSubTpe <:< tpe)
+        else if (undetSubTpe <:< tpe)
           Some(undetSubTpe)
         else
           None
