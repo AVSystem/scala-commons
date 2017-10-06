@@ -80,9 +80,9 @@ and [`Output`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/
 
 In order to serialize/deserialize value of some type, there needs to be an implicit value of type `GenCodec[T]` available.
 The library by default provides codecs for common Scala and Java types:
-* `Unit`, `Null`, `String`, `Char`, `Boolean`, `Byte`, `Short`, `Int`, `Long`, `Float`, `Double`, `java.util.Date`, 
-  `Array[Byte]` and all their Java boxed counterparts (like `java.lang.Integer`).
-* Any Scala tuple, provided that every tuple element type can be serialized
+* `Unit`, `Null`, `String`, `Symbol`, `Char`, `Boolean`, `Byte`, `Short`, `Int`, `Long`, `Float`, `Double`, `java.util.Date`, 
+  `Array[Byte]`, `BigInt`, `BigDecimal` and all their Java boxed counterparts (like `java.lang.Integer`).
+* Any Scala tuple, provided that every tuple element type can be serialized. Tuples are serialized into lists.
 * Any `Array[T]`, provided that `T` can be serialized
 * Any Scala collection extending `scala.collection.Seq[T]` or `scala.collection.Set[T]`, provided that `T` can be serialized
 * Any `java.util.Collection[T]`, provided that `T` can be serialized
@@ -92,6 +92,7 @@ The library by default provides codecs for common Scala and Java types:
 * Any `java.util.Map[K,V]`, provided that `K` and `V` can be serialized. [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html) 
   existence for `K` applies in the same way as for Scala `Map`.
 * `Option[T]`, `Opt[T]`, `OptArg[T]`, `NOpt[T]`, `OptRef[T]`, provided that `T` can be serialized.
+* `Either[A,B]`, provided that `A` and `B` can be serialized.
 * [`NamedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnum.html)s 
   whose companion object extends [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html)
 * Java enums
@@ -123,8 +124,10 @@ and [`write`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/s
 methods which automatically capture implicitly available [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html) 
 and use it (resulting in shorter syntax).
 
-Here are some simple examples of serialization using [`SimpleValueOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueOutput.html) 
-and [`SimpleValueInput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueInput.html):
+Below are some simple examples of serialization using [`SimpleValueOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueOutput.html) 
+and [`SimpleValueInput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueInput.html).
+
+`SimpleValueOutput` and `SimpleValueInput` use Scala primitives and simple collections as the serialized format. The abstract notion of "object" is realized using an field order preserving `Map` (e.g. `LinkedHashMap`) and the abstract notion of "list" is realized using Scala's `List` structure. The primitive types are passed unchanged to the serialized format (numbers, strings, etc.)
 
 ```scala
 import com.avsystem.commons.serialization._
@@ -143,25 +146,35 @@ val raw = simpleWrite[Int](123) // 123
 simpleRead[Int](raw) // 123
 
 // `Option`s are represented using empty list or single-element list
+// This encoding is necessary to distinguish between `None` and `Some(null)`
+// The same encoding is used by `NOpt`
 val raw = simpleWrite[Option[String]](Some("sth")) // List("sth")
 simpleRead[Option[String]](raw) // Some("sth")
 
 val raw = simpleWrite[Option[String]](None) // List()
 simpleRead[Option[String]](raw) // None
 
+// `Opt`, `OptRef` and `OptArg` are represented either as `null` (when empty) or directly
+// as the underlying value (when non-empty).
+val raw = simpleWrite[Opt[String]](Opt.Empty) // null
+simpleRead[Opt[String]](null) // Opt.Empty
+
+val raw = simpleWrite[Opt[String]](Opt("sth")) // "sth"
+simpleRead[Opt[String]]("sth") // Opt("sth")
+
 // all collections are represented as lists
 val raw = simpleWrite(Set(1,2,3)) // List(1,2,3)
 simpleRead[Set[Int]](raw) // Set(1,2,3)
 
-// maps are represented as Scala maps
+// maps are represented as Scala maps (actually, `LinkedHashMap`s in order to retain field order)
 val raw = simpleWrite(Map("1" -> 1, "2" -> 2)) // Map("1" -> 1, "2" -> 2)
 simpleRead[Map[String,Int]](raw) // Map("1" -> 1, "2" -> 2)
 
-// maps without GenKeyCodec for key type are represented as lists of key-value pairs
-val raw = simpleWrite(Map(1.0 -> 1, 2.0 -> 2)) // List(Map("key" -> 1.0, "value" -> 1), Map("key" -> 2.0, "value" -> 2))
+// maps without GenKeyCodec instance for key type are represented as lists of key-value pairs
+val raw = simpleWrite(Map(1.0 -> 1, 2.0 -> 2)) // List(Map("k" -> 1.0, "v" -> 1), Map("k" -> 2.0, "v" -> 2))
 simpleRead[Map[Double,Int]](raw) // Map(1.0 -> 1, 2.0 -> 2)
 
-// tuples are represented as lists
+// tuples are represented as heterogeneous lists
 val raw = simpleWrite((1, "sth", 2.0)) // List(1, "sth", 2.0)
 simpleRead[(Int,String,Double)](raw) // (1, "sth", 2.0)
 ```
@@ -170,23 +183,10 @@ simpleRead[(Int,String,Double)](raw) // (1, "sth", 2.0)
 
 In order to make your own (or third-party) classes and types serializable, you need to provide an instance of 
 [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html) 
-for it. You can implement it manually, e.g.
-
-```scala
-case class Person(name: String, birthYear: Int)
-object Person {
-  implicit val codec: GenCodec[Person] = GenCodec.create(...)
-}
-```
-
-### Automatic generation of codecs
-
-The previous example intentionally omits the actual implementation, because you rarely need to provide it yourself. 
-If your type is a case class or sealed hierarchy of case classes/objects, then you can generate codec implementation 
-using the [`GenCodec.materialize`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$.html#materialize[T]:com.avsystem.commons.serialization.GenCodec[T])
+for it. You can implement it manually, but in most cases you'll probably rely on one of the predefined codecs (primitive types, collections, standard library classes, etc.) or materialize it automatically using the [`GenCodec.materialize`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$.html#materialize[T]:com.avsystem.commons.serialization.GenCodec[T])
 macro.
 
-#### Case classes
+### Case classes
 
 ```scala
 case class Person(name: String, birthYear: Int)
@@ -197,15 +197,113 @@ object Person {
 
 The macro-materialized codec for case class serializes it into an object where field names serve as keys and field 
 values as associated values. For example, `Person("Fred", 1990)` would be represented (using 
-[`SimpleValueWriter`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueWriter.html))
-as `Map("name" -> "Fred", "birthYear" -> 1990)`
+[`SimpleValueOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueOutput.html))
+as `Map("name" -> "Fred", "birthYear" -> 1990)`.
 
-This can be customized with annotations (see later)
+The macro will only compile if it can find dependencies - a `GenCodec` instance for every case class field type. If it can't find any of them, you'll get a compilation error. This way the macro will fully validate the serializability of your case class. This is good - you'll never serialize any type by accident and if you forget to make any type serializable, the compiler will tell you about it. This way you avoid problems usually associated with runtime reflection based serialization, particularly popular in Java ecosystem.
 
-#### Sealed hierarchies
+In general, the serialization framework requires that the serialized representation retains order of object fields and during deserialization supplies them in exactly the same order as they were written during serialization (that's why `SimpleValueOutput` uses `LinkedHashMap`s to represent objects). This is usually a reasonable assumption because most serialization formats are either textual, binary or stream-like (the word "serialization" itself indicates a sequential order). 
 
-Materialization of [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html)
-also works for sealed hierarchies with case classes and objects:
+The codec materialized for case class guarantees that the fields are written in the order of their declaration in constructor. However, during deserialization the codec is lenient and does not require that the order of fields is the same as during serialization. It will successfully deserialize the case class as long as all the fields are present in the serialized format (in any order) or have a default value defined. Any superfluous fields will be simply ignored. This allows the programmer to refactor the case class without breaking compatibility with serialization format - fields may be reordered and removed. New fields may also be added, as long as they have a default value defined.
+
+The way macro materializes the codec may be customized with annotations:
+
+* Using [`@name`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/name.html) you can change the raw field name used for serialization of each case class field.
+
+  ```scala
+  case class Entity(@name("_id") id: String, data: Int)
+  ```
+  
+  This is useful in particular when you want to refactor your case class and change the name of some field without changing the serialized format (in order to remain backwards compatible). Note that the annotation (like all other annotations used to customize serialization) may also be inherited from implemented/overridden member.
+  
+* Using [`@generated`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/generated.html) annotation on some additional members of your case class you can instruct the codec to serialize some additional fields into the resulting format. This can be useful when some case class field has been removed or converted to a regular `val` or `def` but we want the serialized format to be backwards compatible. Sometimes it may also be necessary to generate additional fields for the purpose of database indexing.
+  
+  ```scala
+  case class Person(name: String, birthYear: Int) {
+    @generated def upperName: String = name.toUpper
+  }
+  ```
+  
+  Generated members may also be customized with `@name` annotation. During serialization, generated fields are emitted after all the "regular" fields have been written. Unlike for the regular fields, there is no guarantee about the order of generated fields in the serialized format. During deserialization, generated fields are simply ignored.
+  
+* If one of the fields in your case class has a default value, you might want to not serialize that field if its value is the default one. To instruct the codec to omit default values, [`@transientDefault`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transientDefault.html) annotation can be used.
+
+  ```scala
+  case class Person(name: String, birthYear: Int, @transientDefault planet: String = "Earth")
+  ```
+  
+  This comes in handy especially when your field might not have a value at all. You can express it using [`Opt`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/Opt.html) which is serialized either as `null` (when empty) or directly as the value inside it (when non-empty). By specifying `Opt.Empty` as default value and applying `@transientDefault` annotation, you can completely avoid emitting the field when there is no value.
+  
+  ```scala
+  case class Person(name: String, birthYear: Int, @transientDefault maidenName: Opt[String] = Opt.Empty)
+  ```
+  
+  Note that the absence of a field with default value in the serialized data does not cause any errors during deserialization - if the field is missing, the codec will simply use its default value (it works even without `@transientDefault` annotation).
+  
+* If your case class has exactly one field, you might want it to be simply serialized to the value of its sole field. This way your class would be a "transparent wrapper" over some type. Wrapping a primitive type into nicely named wrapper is a common technique to increase readability and type safety. In Scala, value classes are often utilized for this purpose.
+  If your case class has exactly one field, you can annotate is as [`@transparent`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transparent.html) and the macro materialized codec will simply serialize the wrapped value.
+  
+  ```scala
+  @transparent case class DatabaseId(raw: String) extends AnyVal
+  ```
+  
+#### Safe evolution and refactoring - summary
+
+Following changes can be made to a case class while still making it backwards compatible with the old format (the old format will successfully deserialize to the new case class):
+
+* renaming the case class or moving to a different package, object, etc. - case class name is not serialized (unless it's a part of a [sealed hierarchiy](#sealed-hierarchies))
+* reordering fields
+* removing a field
+* renaming a field, as long as the old name is retained using `@name` annotation
+* adding a field, as long as it has default value defined
+* changing the type of a field, as long as the new type has serialized format compatible with the old type
+* adding generated fields
+* adding implicit parameters (they must be available at the codec materialization site and will be embedded in the codec itself)
+* case class may also be safely lifted to a sealed hierarchy (when using `@flatten` and `@defaultCase` - see [sealed hierarchies](#sealed-hierarchies) for details)
+
+### Case class like types
+
+If, for whatever reason, your class can't be a case class, but you still want it to be serialized like a case class would be, you can make it look like a case class for the `GenCodec.materialize` macro. In order to do this, simply provide your own implementations of `apply` and `unapply` methods in the companion object of your trait/class. For case classes, these methods are generated automatically by the compiler.
+
+```scala
+class Person(val name: String, val birthYear: Int)
+object Person {
+  def apply(name: String, birthYear: Int): Person = new Person(name, birthYear)
+  def unapply(person: Person): Option[(String, Int)] = Some((person.name, person.birthYear))
+  
+  implicit val codec: GenCodec[Person] = GenCodec.materialize[Person]
+}
+```
+
+**NOTE**: if `apply` method takes a repeated (varargs) parameter, then there must be an `unapplySeq` method instead of `unapply` and the repeated parameter should correspond to a `Seq` in the `unapplySeq` return type. 
+
+**NOTE**: the `Option` in return type of `unapply`/`unapplySeq` may be replaced with other similar types, e.g. `Opt`, `NOpt`, etc. thanks to the [name based extractors](https://hseeberger.wordpress.com/2013/10/04/name-based-extractors-in-scala-2-11/) feature in Scala. This way you may avoid boxing associated with `Option`s.
+
+You can use all the customization features available for regular case classes - `@name`, `@transientDefault` (applied on `apply` parameters), `@generated`, `@transparent`, etc.
+
+### Singletons
+
+`GenCodec.materialize` macro is also able to generate (trivial) codecs for singletons, i.e. `object`s or types like `this.type`.
+Singletons always serialize into empty object (unless `@generated` fields are defined). When using [`SimpleValueOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueOutput.html), 
+empty object is represented by empty `Map`.
+
+```scala
+object SomeObject {
+  implicit val codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
+}
+```
+
+As already mentioned, just like case classes, singletons might define or inherit members annotated as [`@generated`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/generated.html) - their values will be serialized as the only object fields and ignored during deserialization.
+
+Singletons will successfully deserialize from any object, ignoring all its fields.
+
+Singleton codecs may not seem very useful as standalone codes - they're primarily used when the object is a part of a [sealed hierarchy](#sealed-hierarchies).
+
+### Sealed hierarchies
+
+`GenCodec.materialize` macro can also be used to derive a `GenCodec` for a sealed trait or class. There are two possible serialization formats for sealed hierarchies: *nested* (the default one) and *flat* (enabled using [`@flatten`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/flatten.html) annotation). The nested format is the default one for historical reasons - it is generally recommended to use the flat format as it's more robust and customizable. The advantage of nested format is that it does not depend on the order of object fields.
+
+#### Nested format
 
 ```scala
 sealed trait Timeout
@@ -216,10 +314,9 @@ object Timeout {
 }
 ```
 
-Values of such types are serialized into objects with one field where key is the name of case class or object used and 
-value is the serialized case class or object itself. For example, `FiniteTimeout(60)` would be represented 
-(using [`SimpleValueWriter`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueWriter.html)) 
-as `Map("FiniteTimeout" -> Map("seconds" -> 60))`
+In nested format, values of sealed traits or classes are serialized into objects with one field where key is the name of case class or object being serialized and value is the serialized case class or object itself. For example, `FiniteTimeout(60)` would be represented (using [`SimpleValueOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueOutput.html)) as `Map("FiniteTimeout" -> Map("seconds" -> 60))`
+
+In order to serialize each case class or object, **TODO CONTINUE HERE**
 
 You need to be careful about where you invoke the [`materialize`]((http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$.html#materialize[T]:com.avsystem.commons.serialization.GenCodec[T]))
 macro. It should always be done *after* all case classes and objects in you sealed hierarchy have already been defined - 
@@ -230,19 +327,7 @@ for more details. If you use static analyzer provided by AVSystem commons librar
 protect you by issuing an error if you invoke macro in wrong place. This is recommended - otherwise there is a risk that 
 the codec implementation is incomplete and will crash in runtime.
 
-#### Singletons
-
-`materialize` macro is also able to generate (trivial) codecs for singletons, i.e. `object`s or types like `this.type`.
-Singletons always serialize into empty object. When using [`SimpleValueWriter`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueWriter.html), 
-empty object is represented by empty `Map`.
-
-```scala
-object SomeObject {
-  implicit val codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
-}
-```
-
-#### Codec dependencies
+### Codec dependencies
 
 The `materialize` macro will only generate [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html) 
 implementation for case class or sealed hierarchy if all fields of case classes are already serializable 
