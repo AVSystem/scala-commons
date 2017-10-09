@@ -55,13 +55,45 @@ class FilteringTest extends FunSuite {
   testCase("regexString")(_ regex regexString)(Filters.regex(_, regexString))
   testCase("regexOptions")(_.regex(regexString, "ops"))(Filters.regex(_, regexString, "ops"))
 
-  private val simpleFilter = Filters.eq("key", "value")
-  testCase("elemMatch")(_ elemMatch simpleFilter)(Filters.elemMatch(_, simpleFilter))
+  import BsonEquality.bsonEquality
 
-  testCase("size")(_ size 131)(Filters.size(_, 131))
+  test("contains") {
+    assert(aRef.contains("elem") === Filters.eq("a", "elem"))
+  }
+
+  private val simpleFilter = Filters.eq("key", "value")
+  test("elemMatch") {
+    assert(aRef.elemMatch(simpleFilter) === Filters.elemMatch("a", simpleFilter))
+  }
+
+  test("size") {
+    assert(aRef.size(131) === Filters.size("a", 131))
+  }
+
+  test("all") {
+    assert(aRef.all("e1", "e2") === Filters.all("a", "e1", "e2"))
+  }
+
+  private val otherFilter = Filters.eq("key2", "value2")
+  test("and") {
+    assert(and(simpleFilter, otherFilter) === Filters.and(simpleFilter, otherFilter))
+  }
+
+  test("or") {
+    assert(or(simpleFilter, otherFilter) === Filters.or(simpleFilter, otherFilter))
+  }
+
+  test("nor") {
+    assert(nor(simpleFilter, otherFilter) === Filters.nor(simpleFilter, otherFilter))
+  }
+
+  test("not") {
+    assert(not(simpleFilter) === Filters.not(simpleFilter))
+  }
 }
 
 object FilteringTest extends BsonRef.Creator[SomeEntity] {
   implicit val codec: GenCodec[SomeEntity] = GenCodec.materialize
   val sRef: BsonRef[String] = ref(_.s)
+  val aRef: BsonRef[List[String]] = ref(_.a)
 }
