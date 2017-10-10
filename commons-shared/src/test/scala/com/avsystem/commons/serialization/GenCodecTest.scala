@@ -1,11 +1,8 @@
 package com.avsystem.commons
 package serialization
 
-import java.lang.annotation.RetentionPolicy
-
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.misc.{TypedKey, TypedKeyCompanion, TypedMap}
-import com.avsystem.commons.serialization.GenCodecTest.ValueClass
 import com.github.ghik.silencer.silent
 
 import scala.collection.immutable.ListMap
@@ -59,6 +56,28 @@ abstract class Wrapper[Self <: Wrapper[Self] : ClassTag](private val args: Any*)
 
 @silent
 class GenCodecTest extends CodecTestBase {
+  import GenCodecTest._
+
+  test("java collection test") {
+    testWriteReadAndAutoWriteRead[JCollection[Int]](jArrayList, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JList[Int]](jArrayList, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JArrayList[Int]](jArrayList, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JLinkedList[Int]](jLinkedList, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JSet[Int]](jHashSet, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JHashSet[Int]](jHashSet, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JLinkedHashSet[Int]](jLinkedHashSet, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JSortedSet[Int]](jTreeSet, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JNavigableSet[Int]](jTreeSet, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JTreeSet[Int]](jTreeSet, List(1, 2, 3))
+    testWriteReadAndAutoWriteRead[JMap[String, Int]](jHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JHashMap[String, Int]](jHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JLinkedHashMap[String, Int]](jLinkedHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JHashMap[Int, Int]](jIntHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
+    testSameElementsWriteRead[JHashMap[Double, Int]](jDoubleHashMap,
+      List(Map[String, Any]("k" -> 1.0, "v" -> 1), Map[String, Any]("k" -> 2.0, "v" -> 2), Map[String, Any]("k" -> 3.0, "v" -> 3))
+    )
+  }
+
   test("NoState test") {
     type NoState = Nothing {type Dummy = Nothing}
     assert(implicitly[GenCodec[NoState]] == GenCodec.NothingCodec)
@@ -77,29 +96,6 @@ class GenCodecTest extends CodecTestBase {
     testWriteReadAndAutoWriteRead[IHashMap[String, Int]](hashMap, hashMap)
   }
 
-  test("java collection test") {
-    testWriteReadAndAutoWriteRead[JCollection[Int]](jArrayList, List(1, 2, 3))
-    testWriteReadAndAutoWriteRead[JList[Int]](jArrayList, List(1, 2, 3))
-    testWriteReadAndAutoWriteRead[JArrayList[Int]](jArrayList, List(1, 2, 3))
-    testWriteReadAndAutoWriteRead[JLinkedList[Int]](jLinkedList, List(1, 2, 3))
-    testWriteReadAndAutoWriteRead[JSet[Int]](jHashSet, List(1, 2, 3))
-    testWriteReadAndAutoWriteRead[JHashSet[Int]](jHashSet, List(1, 2, 3))
-    testWriteReadAndAutoWriteRead[JLinkedHashSet[Int]](jLinkedHashSet, List(1, 2, 3))
-    testWriteReadAndAutoWriteRead[JSortedSet[Int]](jTreeSet, List(1, 2, 3))
-    testWriteReadAndAutoWriteRead[JNavigableSet[Int]](jTreeSet, List(1, 2, 3))
-    testWriteReadAndAutoWriteRead[JTreeSet[Int]](jTreeSet, List(1, 2, 3))
-    testWriteReadAndAutoWriteRead[JMap[String, Int]](jHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteReadAndAutoWriteRead[JHashMap[String, Int]](jHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteReadAndAutoWriteRead[JLinkedHashMap[String, Int]](jLinkedHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteReadAndAutoWriteRead[JHashMap[Int, Int]](jIntHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteReadAndAutoWriteRead[JHashMap[Double, Int]](jDoubleHashMap,
-      List(Map[String, Any]("k" -> 1.0, "v" -> 1), Map[String, Any]("k" -> 2.0, "v" -> 2), Map[String, Any]("k" -> 3.0, "v" -> 3))
-    )
-    testWriteReadAndAutoWriteRead[JSortedMap[String, Int]](jTreeMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteReadAndAutoWriteRead[JNavigableMap[String, Int]](jTreeMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteReadAndAutoWriteRead[JTreeMap[String, Int]](jTreeMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
-  }
-
   test("tuple test") {
     testWriteReadAndAutoWriteRead((1, 2, 3),
       List(1, 2, 3))
@@ -108,11 +104,6 @@ class GenCodecTest extends CodecTestBase {
     testWriteReadAndAutoWriteRead((1, "lol", 3.0, 'a', List("dafuq", "fuu")),
       List(1, "lol", 3.0, "a", List("dafuq", "fuu"))
     )
-  }
-
-  test("java enum test") {
-    testWriteReadAndAutoWriteRead(RetentionPolicy.RUNTIME, "RUNTIME")
-    testWriteReadAndAutoWriteRead(RetentionPolicy.SOURCE, "SOURCE")
   }
 
   object SomeObject {

@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.serialization.AutoGenCodecTest.ValueClass
 import com.github.ghik.silencer.silent
 
 import scala.collection.immutable.ListMap
@@ -14,6 +13,8 @@ case class HasMap(map: Map[String, String]) extends AnyVal
 
 @silent
 class AutoGenCodecTest extends CodecTestBase {
+  import AutoGenCodecTest._
+
   object SomeObject
 
   test("object test") {
