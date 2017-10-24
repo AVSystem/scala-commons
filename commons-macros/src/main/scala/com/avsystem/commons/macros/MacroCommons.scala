@@ -10,14 +10,18 @@ trait MacroCommons {
   import c.universe._
 
   final val ScalaPkg = q"_root_.scala"
+  final val StringCls = tq"_root_.java.lang.String"
   final val CommonsPackage = q"_root_.com.avsystem.commons"
   final val UnitCls = tq"$ScalaPkg.Unit"
   final val OptionCls = tq"$ScalaPkg.Option"
+  final val OptionObj = q"$ScalaPkg.Option"
   final val SomeObj = q"$ScalaPkg.Some"
   final val NoneObj = q"$ScalaPkg.None"
   final val CollectionPkg = q"$ScalaPkg.collection"
   final val ListObj = q"$CollectionPkg.immutable.List"
   final val ListCls = tq"$CollectionPkg.immutable.List"
+  final val SetObj = q"$CollectionPkg.immutable.Set"
+  final val SetCls = tq"$CollectionPkg.immutable.Set"
   final val NilObj = q"$CollectionPkg.immutable.Nil"
   final val MapObj = q"$CollectionPkg.immutable.Map"
   final val MaterializedCls = tq"$CommonsPackage.derivation.Materialized"

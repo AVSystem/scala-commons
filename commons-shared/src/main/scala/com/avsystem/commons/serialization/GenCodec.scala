@@ -231,87 +231,11 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     }
   }
 
-  trait ApplyUnapplyCodec[T, O] extends ObjectCodec[T] {
-    protected def emptyOutOfOrderFields: O
-    def readObject(input: ObjectInput, outOfOrderFields: O): T
-    final def readObject(input: ObjectInput): T = readObject(input, emptyOutOfOrderFields)
-  }
+  trait OOOFieldsObjectCodec[T] extends ObjectCodec[T] {
+    def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T
 
-  trait ErrorReportingCodec[T] extends GenCodec[T] {
-    protected def typeRepr: String
-    protected def caseFieldName: String = DefaultCaseField
-
-    protected def readField[A](fieldInput: FieldInput, codec: GenCodec[A]): A =
-      decoratedRead(fieldInput, codec, s"field ${fieldInput.fieldName}")
-
-    protected def readCaseName(fi: FieldInput): String =
-      try fi.readString() catch {
-        case NonFatal(e) =>
-          throw new ReadFailure(s"Cannot read $typeRepr, failed to read case name from $caseFieldName field", e)
-      }
-
-    protected def readCase[A](caseName: String, input: Input, codec: GenCodec[A]): A =
-      decoratedRead(input, codec, s"case $caseName")
-
-    protected def readFlatCase[A, O](caseName: String, outOfOrderFields: O, input: ObjectInput, codec: ApplyUnapplyCodec[A, O]): A =
-      try codec.readObject(input, outOfOrderFields) catch {
-        case NonFatal(e) => throw new ReadFailure(s"Failed to read case $caseName of $typeRepr", e)
-      }
-
-    protected def readFlatCase[A](caseName: String, input: ObjectInput, codec: GenCodec.ObjectCodec[A]): A =
-      try codec.readObject(input) catch {
-        case NonFatal(e) => throw new ReadFailure(s"Failed to read case $caseName of $typeRepr", e)
-      }
-
-    private def decoratedRead[A](input: Input, codec: GenCodec[A], what: String): A =
-      try codec.read(input) catch {
-        case NonFatal(e) => throw new ReadFailure(s"Failed to read $what of $typeRepr", e)
-      }
-
-    protected def writeField[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
-      decoratedWrite(fieldName, output, value, codec, "field")
-
-    protected def writeCase[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
-      decoratedWrite(fieldName, output, value, codec, "case")
-
-    protected def writeFlatCase[A](caseName: String, transient: Boolean, output: ObjectOutput, value: A, codec: ObjectCodec[A]): Unit =
-      try {
-        if (!transient) {
-          output.writeField(caseFieldName).writeString(caseName)
-        }
-        codec.writeObject(output, value)
-      } catch {
-        case NonFatal(e) => throw new WriteFailure(s"Failed to write case $caseName of $typeRepr", e)
-      }
-
-    private def decoratedWrite[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A], what: String): Unit =
-      try codec.write(output.writeField(fieldName), value) catch {
-        case NonFatal(e) => throw new WriteFailure(s"Failed to write $what $fieldName of $typeRepr", e)
-      }
-
-    protected def fieldMissing(field: String) =
-      throw new ReadFailure(s"Cannot read $typeRepr, field $field is missing in decoded data")
-
-    protected def unknownCase(caseName: String) =
-      throw new ReadFailure(s"Cannot read $typeRepr, unknown case: $caseName")
-
-    protected def missingCase(fieldToRead: String) =
-      throw new ReadFailure(s"Cannot read field $fieldToRead of $typeRepr before $caseFieldName field is read")
-
-    protected def missingCase =
-      throw new ReadFailure(s"Cannot read $typeRepr, $caseFieldName field is missing")
-
-    protected def notSingleField(empty: Boolean) =
-      throw new ReadFailure(s"Cannot read $typeRepr, expected object with exactly one field but got ${if (empty) "empty object" else "more than one"}")
-
-    protected def unapplyFailed =
-      throw new WriteFailure(s"Could not write $typeRepr, unapply/unapplySeq returned false or empty value")
-  }
-
-  class SingletonCodec[T <: Singleton](value: => T) extends ObjectCodec[T] {
-    def nullable: Boolean = true
-    def readObject(input: ObjectInput) = value
-    def writeObject(output: ObjectOutput, value: T) = ()
+    final def readObject(input: ObjectInput): T =
+      readObject(input, FieldValues.Empty)
   }
 
   class TransformedCodec[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {

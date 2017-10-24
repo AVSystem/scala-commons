@@ -82,7 +82,7 @@ trait TypeClassDerivation extends MacroCommons {
     * @param defaultValue tree that evaluates to default value of the `apply` parameter or `EmptyTree`
     * @param instance     tree that evaluates to type class instance for type of this parameter
     */
-  case class ApplyParam(sym: TermSymbol, defaultValue: Tree, instance: Tree) {
+  case class ApplyParam(idx: Int, sym: TermSymbol, defaultValue: Tree, instance: Tree) {
     val repeated: Boolean = sym.typeSignature.typeSymbol == definitions.RepeatedParamClass
     def valueType: Type = nonRepeatedType(sym.typeSignature)
     def asArgument(tree: Tree): Tree = if (repeated) q"$tree: _*" else tree
@@ -94,7 +94,7 @@ trait TypeClassDerivation extends MacroCommons {
     * @param tpe      the case subtype itself
     * @param instance tree that evaluates to type class instance for this subtype
     */
-  case class KnownSubtype(tpe: Type, instance: Tree) {
+  case class KnownSubtype(idx: Int, tpe: Type, instance: Tree) {
     def sym = tpe.typeSymbol
   }
 
@@ -159,8 +159,8 @@ trait TypeClassDerivation extends MacroCommons {
 
     def applyUnapplyTc = applyUnapplyFor(tpe).map {
       case ApplyUnapply(apply, unapply, params) =>
-        val dependencies = params.map { case (s, defaultValue) =>
-          ApplyParam(s, defaultValue, dependency(nonRepeatedType(s.typeSignature), tcTpe, s"for field ${s.name}"))
+        val dependencies = params.zipWithIndex.map { case ((s, defaultValue), idx) =>
+          ApplyParam(idx, s, defaultValue, dependency(nonRepeatedType(s.typeSignature), tcTpe, s"for field ${s.name}"))
         }
         forApplyUnapply(tpe, apply, unapply, dependencies)
     }
@@ -169,9 +169,9 @@ trait TypeClassDerivation extends MacroCommons {
       if (subtypes.isEmpty) {
         abort(s"Could not find any subtypes for $tpe")
       }
-      val dependencies = subtypes.map { depTpe =>
+      val dependencies = subtypes.zipWithIndex.map { case (depTpe, idx) =>
         val depTree = dependency(depTpe, tcTpe, s"for case type $depTpe", allowImplicitMacro = true)
-        KnownSubtype(depTpe, depTree)
+        KnownSubtype(idx, depTpe, depTree)
       }
       withKnownSubclassesCheck(forSealedHierarchy(tpe, dependencies), tpe)
     }
