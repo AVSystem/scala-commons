@@ -86,7 +86,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       val targetNames = targetNameMap(generated.map(_._1))
       val depNames = depNamesMap(generated.map(_._1))
 
-      def depDeclaration(sym: Symbol, depTpe: Type) =
+      def generatedDepDeclaration(sym: Symbol, depTpe: Type) =
         q"lazy val ${depNames(sym)} = ${dependency(depTpe, tcTpe, s"for generated member ${sym.name}")}"
 
       def generatedWrite(sym: Symbol) =
@@ -94,7 +94,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
       q"""
         new $SerializationPkg.SingletonCodec[$tpe](${tpe.toString}, $singleValueTree) {
-          ..${generated.map({ case (sym, depTpe) => depDeclaration(sym, depTpe) })}
+          ..${generated.map({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
           override def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe): $UnitCls = {
             ..${generated.map({ case (sym, _) => generatedWrite(sym) })}
           }
@@ -227,7 +227,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           ${typeOf[Null] <:< tpe},
           $ScalaPkg.Array[$StringCls](..${params.map(p => nameBySym(p.sym))})
         ) {
-          lazy val dependencies = $ScalaPkg.Array[$GenCodecCls[_]](..${params.map(_.instance)})
+          def dependencies = $ScalaPkg.Array[$GenCodecCls[_]](..${params.map(_.instance)})
           ..${generated.collect({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
           def instantiate(fieldValues: $SerializationPkg.FieldValues) =
             ${applier(params.map(p => p.asArgument(readField(p))))}
@@ -259,7 +259,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         ${typeOf[Null] <:< tpe},
         $ScalaPkg.Array[$StringCls](..${subtypes.map(st => targetNameBySym(st.sym))})
       ) {
-        lazy val caseDependencies = $ScalaPkg.Array[$GenCodecCls[_ <: $tpe]](..${subtypes.map(_.instance)})
+        def caseDependencies = $ScalaPkg.Array[$GenCodecCls[_ <: $tpe]](..${subtypes.map(_.instance)})
         def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
           case ..${subtypes.map(st => cq"value: ${st.tpe} => writeCase(output, ${st.idx}, value)")}
         }
@@ -378,8 +378,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         $caseFieldName,
         ${defaultCase.map(caseInfos.indexOf).getOrElse(-1)}
       ) {
-        lazy val caseDependencies = $ScalaPkg.Array[$GenCodecObj.OOOFieldsObjectCodec[_ <: $tpe]](..${caseInfos.map(_.depInstance)})
-        lazy val oooDependencies = $ScalaPkg.Array[$GenCodecCls[_]](..${oooParamNames.map(oooDependency)})
+        def caseDependencies = $ScalaPkg.Array[$GenCodecObj.OOOFieldsObjectCodec[_ <: $tpe]](..${caseInfos.map(_.depInstance)})
+        def oooDependencies = $ScalaPkg.Array[$GenCodecCls[_]](..${oooParamNames.map(oooDependency)})
 
         def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
           case ..${caseInfos.map(_.caseWrite)}

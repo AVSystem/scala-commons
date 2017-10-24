@@ -19,11 +19,14 @@ abstract class ApplyUnapplyCodec[T](
   val nullable: Boolean,
   fieldNames: Array[String]
 ) extends OOOFieldsObjectCodec[T] with ErrorReportingCodec[T] {
+
   protected def dependencies: Array[GenCodec[_]]
   protected def instantiate(fieldValues: FieldValues): T
 
+  private[this] lazy val deps = dependencies
+
   protected final def writeField[A](output: ObjectOutput, idx: Int, value: A): Unit =
-    writeField(fieldNames(idx), output, value, dependencies(idx).asInstanceOf[GenCodec[A]])
+    writeField(fieldNames(idx), output, value, deps(idx).asInstanceOf[GenCodec[A]])
 
   protected final def getField[A](fieldValues: FieldValues, idx: Int, default: => A): A =
     fieldValues.getOrElse[A](idx, default)
@@ -32,7 +35,7 @@ abstract class ApplyUnapplyCodec[T](
     fieldValues.getOrElse[A](idx, fieldMissing(fieldNames(idx)))
 
   final def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T = {
-    val fieldValues = new FieldValues(fieldNames, dependencies)
+    val fieldValues = new FieldValues(fieldNames, deps)
     fieldValues.rewriteFrom(outOfOrderFields)
     while (input.hasNext) {
       fieldValues.readField(input.nextField())
@@ -71,17 +74,19 @@ abstract class NestedSealedHierarchyCodec[T](
   caseNames: Array[String]
 ) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames) {
 
-  def caseDependencies: Array[GenCodec[_ <: T]]
+  protected def caseDependencies: Array[GenCodec[_ <: T]]
+
+  private[this] lazy val caseDeps = caseDependencies
 
   protected final def writeCase[A <: T](output: ObjectOutput, idx: Int, value: A): Unit =
-    writeCase(caseNames(idx), output, value, caseDependencies(idx).asInstanceOf[GenCodec[A]])
+    writeCase(caseNames(idx), output, value, caseDeps(idx).asInstanceOf[GenCodec[A]])
 
   final def readObject(input: ObjectInput): T = {
     if (input.hasNext) {
       val fi = input.nextField()
       val result = caseIndex(fi.fieldName, 0) match {
         case -1 => unknownCase(fi.fieldName)
-        case idx => readCase(fi.fieldName, fi, caseDependencies(idx))
+        case idx => readCase(fi.fieldName, fi, caseDeps(idx))
       }
       if (input.hasNext) notSingleField(empty = false) else result
     } else notSingleField(empty = true)
@@ -98,14 +103,17 @@ abstract class FlatSealedHierarchyCodec[T](
   defaultCaseIdx: Int
 ) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames) {
 
-  def oooDependencies: Array[GenCodec[_]]
-  def caseDependencies: Array[OOOFieldsObjectCodec[_ <: T]]
+  protected def oooDependencies: Array[GenCodec[_]]
+  protected def caseDependencies: Array[OOOFieldsObjectCodec[_ <: T]]
+
+  private[this] lazy val oooDeps = oooDependencies
+  private[this] lazy val caseDeps = caseDependencies
 
   protected final def writeCase[A <: T](output: ObjectOutput, idx: Int, transient: Boolean, value: A): Unit =
-    writeFlatCase(caseNames(idx), transient, output, value, caseDependencies(idx).asInstanceOf[OOOFieldsObjectCodec[A]])
+    writeFlatCase(caseNames(idx), transient, output, value, caseDeps(idx).asInstanceOf[OOOFieldsObjectCodec[A]])
 
   final def readObject(input: ObjectInput): T = {
-    val oooFields = new FieldValues(oooFieldNames, oooDependencies)
+    val oooFields = new FieldValues(oooFieldNames, oooDeps)
 
     def read(): T =
       if (input.hasNext) {
@@ -114,14 +122,14 @@ abstract class FlatSealedHierarchyCodec[T](
           val caseName = readCaseName(fi)
           caseIndex(caseName, 0) match {
             case -1 => unknownCase(caseName)
-            case idx => readFlatCase(caseName, oooFields, input, caseDependencies(idx))
+            case idx => readFlatCase(caseName, oooFields, input, caseDeps(idx))
           }
         } else if (!oooFields.tryReadField(fi)) {
           if (caseDependentFieldNames.contains(fi.fieldName)) {
             if (defaultCaseIdx != -1) {
               val defaultCaseName = caseNames(defaultCaseIdx)
               val wrappedInput = new DefaultCaseObjectInput(fi, input, defaultCaseName)
-              readFlatCase(defaultCaseName, oooFields, wrappedInput, caseDependencies(defaultCaseIdx))
+              readFlatCase(defaultCaseName, oooFields, wrappedInput, caseDeps(defaultCaseIdx))
             } else {
               missingCase(fi.fieldName)
             }
@@ -133,7 +141,7 @@ abstract class FlatSealedHierarchyCodec[T](
           read()
         }
       } else if (defaultCaseIdx != -1) {
-        readFlatCase(caseNames(defaultCaseIdx), oooFields, input, caseDependencies(defaultCaseIdx))
+        readFlatCase(caseNames(defaultCaseIdx), oooFields, input, caseDeps(defaultCaseIdx))
       } else {
         missingCase
       }
