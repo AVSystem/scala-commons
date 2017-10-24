@@ -53,6 +53,7 @@ val scalaLoggingVersion = "3.5.0"
 val akkaVersion = "2.5.6"
 val monixVersion = "2.3.0"
 val mockitoVersion = "2.10.0"
+val circeVersion = "0.8.0"
 
 val commonSettings = Seq(
   publishTo := Some(Opts.resolver.sonatypeStaging),
@@ -163,6 +164,7 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
   .settings(commonSettings: _*)
   .jvmSettings(jvmCommonSettings)
   .jsSettings(
+    scalaJSUseMainModuleInitializer in Test := true,
     scalacOptions += {
       val localDir = (baseDirectory in ThisBuild).value.toURI.toString
       val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
@@ -219,6 +221,13 @@ lazy val `commons-benchmark` = project
       )
       else Seq.empty
     },
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core" % circeVersion,
+      "io.circe" %% "circe-generic" % circeVersion,
+      "io.circe" %% "circe-jawn" % circeVersion,
+      "io.circe" %% "circe-parser" % circeVersion,
+      "io.circe" %% "circe-testing" % circeVersion % Test,
+    ),
     ideExcludedDirectories := (managedSourceDirectories in Jmh).value,
   )
 

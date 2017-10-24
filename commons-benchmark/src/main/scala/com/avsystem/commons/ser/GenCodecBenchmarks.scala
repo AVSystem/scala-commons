@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package core
+package ser
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
@@ -11,14 +11,12 @@ import org.openjdk.jmh.annotations._
 @BenchmarkMode(Array(Mode.Throughput))
 class GenCodecBenchmarks {
   @Benchmark
-  def testCaseClassCodec(): Unit = {
-    GenCodec.read[Something](DummyInput)
-  }
+  def testCaseClassCodec(): Simple = GenCodec.read[Simple](DummyInput)
 }
 
-case class Something(int: Int, str: String)
-object Something {
-  implicit val codec: GenCodec[Something] = GenCodec.materialize
+case class Simple(int: Int, str: String)
+object Simple {
+  implicit val codec: GenCodec[Simple] = GenCodec.materialize
 }
 
 object DummyInput extends Input {

@@ -25,4 +25,6 @@ trait JBasicUtils {
   type JDate = ju.Date
   type JNumber = jl.Number
   type JVoid = jl.Void
+  type JEnum[E <: jl.Enum[E]] = jl.Enum[E]
+  type JStringBuilder = jl.StringBuilder
 }
