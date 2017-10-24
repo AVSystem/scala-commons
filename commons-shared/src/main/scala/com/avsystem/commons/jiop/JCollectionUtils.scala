@@ -12,6 +12,7 @@ trait JCollectionUtils extends JCanBuildFroms {
   type JIterable[T] = jl.Iterable[T]
   type JCollection[T] = ju.Collection[T]
   type JList[T] = ju.List[T]
+  type JListIterator[T] = ju.ListIterator[T]
   type JArrayList[T] = ju.ArrayList[T]
   type JLinkedList[T] = ju.LinkedList[T]
   type JSet[T] = ju.Set[T]

@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package mongo
 
-import java.lang.{StringBuilder => JStringBuilder}
-
 object KeyEscaper {
   private final val Esc = '\\'
   private final val EscSub = '\\'

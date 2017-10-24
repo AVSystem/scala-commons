@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package benchmark
+package ser
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, DataOutputStream}
 

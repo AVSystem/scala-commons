@@ -122,7 +122,7 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
       def readNonNull(input: Input) = readFun(input)
       def writeNonNull(output: Output, value: T) = writeFun(output, value)
     }
-  
+
   def createNullable[T <: AnyRef](readFun: Input => T, writeFun: (Output, T) => Any): GenCodec[T] =
     createNullSafe(readFun, writeFun, allowNull = true)
 
@@ -363,16 +363,26 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
       it.foreach(writer.write(lo.writeElement(), _))
   }
 
-  protected implicit class TraversableOps[A](private val it: TraversableOnce[A]) extends AnyVal {
-    def collectWith[C](cbf: CanBuildFrom[Nothing, A, C]): C = {
+  private implicit class ListInputOps(private val li: ListInput) extends AnyVal {
+    def collectTo[A: GenCodec, C](implicit cbf: CanBuildFrom[Nothing, A, C]): C = {
       val b = cbf()
-      b ++= it
+      while (li.hasNext) {
+        b += read[A](li.nextElement())
+      }
       b.result()
     }
   }
 
-  private def readListWithCBF[C[_], T: GenCodec](li: ListInput)(implicit cbf: CanBuildFrom[Nothing, T, C[T]]): C[T] =
-    li.iterator(read[T]).collectWith(cbf)
+  private implicit class ObjectInputOps(private val oi: ObjectInput) extends AnyVal {
+    def collectTo[K: GenKeyCodec, V: GenCodec, C](implicit cbf: CanBuildFrom[Nothing, (K, V), C]): C = {
+      val b = cbf()
+      while (oi.hasNext) {
+        val fi = oi.nextField()
+        b += ((GenKeyCodec.read[K](fi.fieldName), read[V](fi)))
+      }
+      b.result()
+    }
+  }
 
   implicit def arrayCodec[T: ClassTag : GenCodec]: GenCodec[Array[T]] =
     createNullableList[Array[T]](_.iterator(read[T]).toArray[T], (lo, arr) => arr.iterator.writeToList(lo))
@@ -383,27 +393,27 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](
     implicit cbf: CanBuildFrom[Nothing, T, C[T]]): GenCodec[C[T] with BSeq[T]] =
-    createNullableList[C[T] with BSeq[T]](readListWithCBF[C, T], (lo, c) => c.iterator.writeToList(lo))
+    createNullableList[C[T] with BSeq[T]](_.collectTo[T, C[T]], (lo, c) => c.iterator.writeToList(lo))
 
   implicit def setCodec[C[X] <: BSet[X], T: GenCodec](
     implicit cbf: CanBuildFrom[Nothing, T, C[T]]): GenCodec[C[T] with BSet[T]] =
-    createNullableList[C[T] with BSet[T]](readListWithCBF[C, T], (lo, c) => c.iterator.writeToList(lo))
+    createNullableList[C[T] with BSet[T]](_.collectTo[T, C[T]], (lo, c) => c.iterator.writeToList(lo))
 
   implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](
     implicit cbf: JCanBuildFrom[T, C[T]]): GenCodec[C[T] with JCollection[T]] =
-    createNullableList[C[T] with JCollection[T]](readListWithCBF[C, T], (lo, c) => c.iterator.asScala.writeToList(lo))
+    createNullableList[C[T] with JCollection[T]](_.collectTo[T, C[T]], (lo, c) => c.iterator.asScala.writeToList(lo))
 
   implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
     implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenCodec[M[K, V] with BMap[K, V]] =
     createNullableObject[M[K, V] with BMap[K, V]](
-      _.iterator(read[V]).map({ case (k, v) => (GenKeyCodec.read[K](k), v) }).collectWith(cbf),
+      _.collectTo[K, V, M[K, V]],
       (oo, value) => value.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })
     )
 
   implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
     implicit cbf: JCanBuildFrom[(K, V), M[K, V]]): GenCodec[M[K, V] with JMap[K, V]] =
     createNullableObject[M[K, V] with JMap[K, V]](
-      _.iterator(read[V]).map({ case (k, v) => (GenKeyCodec.read[K](k), v) }).collectWith(cbf),
+      _.collectTo[K, V, M[K, V]],
       (oo, value) => value.asScala.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })
     )
 
@@ -480,10 +490,18 @@ trait FallbackMapCodecs extends RecursiveAutoCodecs { this: GenCodec.type =>
     output.finish()
   }
 
+  private def collectPairsTo[K: GenCodec, V: GenCodec, C](li: ListInput)(implicit cbf: CanBuildFrom[Nothing, (K, V), C]): C = {
+    val b = cbf()
+    while (li.hasNext) {
+      b += readKVPair[K, V](li.nextElement().readObject())
+    }
+    b.result()
+  }
+
   implicit def fallbackMapCodec[M[X, Y] <: BMap[X, Y], K: GenCodec, V: GenCodec](
     implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenCodec[M[K, V] with BMap[K, V]] =
     createList[M[K, V] with BMap[K, V]](
-      _.iterator(i => readKVPair[K, V](i.readObject())).collectWith(cbf),
+      collectPairsTo[K, V, M[K, V]],
       (lo, map) => map.iterator.foreach({ case (k, v) => writeKVPair(lo.writeElement().writeObject(), k, v) }),
       allowNull = true
     )
@@ -491,7 +509,7 @@ trait FallbackMapCodecs extends RecursiveAutoCodecs { this: GenCodec.type =>
   implicit def fallbackJMapCodec[M[X, Y] <: JMap[X, Y], K: GenCodec, V: GenCodec](
     implicit cbf: JCanBuildFrom[(K, V), M[K, V]]): GenCodec[M[K, V] with JMap[K, V]] =
     createList[M[K, V] with JMap[K, V]](
-      _.iterator(i => readKVPair[K, V](i.readObject())).collectWith(cbf),
+      collectPairsTo[K, V, M[K, V]],
       (lo, map) => map.asScala.iterator.foreach({ case (k, v) => writeKVPair(lo.writeElement().writeObject(), k, v) }),
       allowNull = true
     )

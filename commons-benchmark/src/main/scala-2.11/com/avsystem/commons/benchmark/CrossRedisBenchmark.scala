@@ -6,7 +6,6 @@ import com.avsystem.commons.redis.RedisClientBenchmark
 import com.avsystem.commons.redis.RedisClientBenchmark._
 import org.openjdk.jmh.annotations.Benchmark
 
-
 trait CrossRedisBenchmark { this: RedisClientBenchmark =>
   lazy val rediscalaClient = RedisClient()
   lazy val rediscalaClientPool = RedisClientPool(Seq.fill(nodeConfig.poolSize)(RedisServer()))

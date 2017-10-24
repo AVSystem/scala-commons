@@ -40,6 +40,7 @@ object GenKeyCodec {
   implicit val ShortKeyCodec: GenKeyCodec[Short] = create(_.toShort, _.toString)
   implicit val IntKeyCodec: GenKeyCodec[Int] = create(_.toInt, _.toString)
   implicit val LongKeyCodec: GenKeyCodec[Long] = create(_.toLong, _.toString)
+  implicit val BigIntKeyCodec: GenKeyCodec[BigInt] = create(BigInt(_), _.toString)
 
   implicit val JBooleanKeyCodec: GenKeyCodec[JBoolean] = create(_.toBoolean, _.toString)
   implicit val JCharacterKeyCodec: GenKeyCodec[JCharacter] = create(_.charAt(0), _.toString)
@@ -47,8 +48,10 @@ object GenKeyCodec {
   implicit val JShortKeyCodec: GenKeyCodec[JShort] = create(_.toShort, _.toString)
   implicit val JIntKeyCodec: GenKeyCodec[JInteger] = create(_.toInt, _.toString)
   implicit val JLongKeyCodec: GenKeyCodec[JLong] = create(_.toLong, _.toString)
+  implicit val JBigIntegerKeyCodec: GenKeyCodec[JBigInteger] = create(new JBigInteger(_), _.toString)
 
   implicit val StringKeyCodec: GenKeyCodec[String] = create(identity, identity)
+  implicit val SymbolKeyCodec: GenKeyCodec[Symbol] = create(Symbol(_), _.name)
 
   implicit def jEnumKeyCodec[E <: Enum[E]](implicit ct: ClassTag[E]): GenKeyCodec[E] =
     GenKeyCodec.create(
