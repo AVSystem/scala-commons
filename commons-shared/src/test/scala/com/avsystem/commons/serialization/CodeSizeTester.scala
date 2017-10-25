@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import scala.scalajs.js.annotation.JSExport
-
 case class CodeSizeTester00(
   int: Int,
   string: String,
@@ -119,8 +117,7 @@ object Person {
 }
 
 object CodeSizeTester {
-  @JSExport
-  def whatever(): Unit = {
+  def main(args: Array[String]): Unit = {
     println(CodeSizeTester00.codec.write(null, null))
     println(CodeSizeTester01.codec.write(null, null))
 
