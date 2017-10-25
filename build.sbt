@@ -164,7 +164,6 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
   .settings(commonSettings: _*)
   .jvmSettings(jvmCommonSettings)
   .jsSettings(
-    scalaJSUseMainModuleInitializer in Test := true,
     scalacOptions += {
       val localDir = (baseDirectory in ThisBuild).value.toURI.toString
       val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
