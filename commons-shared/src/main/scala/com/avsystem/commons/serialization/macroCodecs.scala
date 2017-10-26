@@ -44,6 +44,20 @@ abstract class ApplyUnapplyCodec[T](
   }
 }
 
+abstract class ProductCodec[T <: Product](
+  typeRepr: String,
+  nullable: Boolean,
+  fieldNames: Array[String]
+) extends ApplyUnapplyCodec[T](typeRepr, nullable, fieldNames) {
+  final def writeObject(output: ObjectOutput, value: T): Unit = {
+    var i = 0
+    while (i < value.productArity) {
+      writeField(output, i, value.productElement(i))
+      i += 1
+    }
+  }
+}
+
 abstract class TransparentCodec[T, U](
   protected val typeRepr: String,
   val nullable: Boolean,
@@ -59,32 +73,41 @@ abstract class TransparentCodec[T, U](
 abstract class SealedHierarchyCodec[T](
   protected val typeRepr: String,
   val nullable: Boolean,
-  caseNames: Array[String]
+  caseNames: Array[String],
+  cases: Array[Class[_ <: T]]
 ) extends ObjectCodec[T] with ErrorReportingCodec[T] {
 
-  @tailrec protected final def caseIndex(caseName: String, idx: Int): Int =
+  @tailrec protected final def caseIndexByValue(value: T, idx: Int = 0): Int =
+    if (idx >= cases.length) unknownCase(value)
+    else if (cases(idx).isInstance(value)) idx
+    else caseIndexByValue(value, idx + 1)
+
+  @tailrec protected final def caseIndexByName(caseName: String, idx: Int = 0): Int =
     if (idx >= caseNames.length) -1
     else if (caseName == caseNames(idx)) idx
-    else caseIndex(caseName, idx + 1)
+    else caseIndexByName(caseName, idx + 1)
 }
 
 abstract class NestedSealedHierarchyCodec[T](
   typeRepr: String,
   nullable: Boolean,
-  caseNames: Array[String]
-) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames) {
+  caseNames: Array[String],
+  cases: Array[Class[_ <: T]]
+) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
 
   protected def caseDependencies: Array[GenCodec[_ <: T]]
 
   private[this] lazy val caseDeps = caseDependencies
 
-  protected final def writeCase[A <: T](output: ObjectOutput, idx: Int, value: A): Unit =
-    writeCase(caseNames(idx), output, value, caseDeps(idx).asInstanceOf[GenCodec[A]])
+  final def writeObject(output: ObjectOutput, value: T): Unit = {
+    val caseIdx = caseIndexByValue(value)
+    writeCase(caseNames(caseIdx), output, value, caseDeps(caseIdx).asInstanceOf[GenCodec[T]])
+  }
 
   final def readObject(input: ObjectInput): T = {
     if (input.hasNext) {
       val fi = input.nextField()
-      val result = caseIndex(fi.fieldName, 0) match {
+      val result = caseIndexByName(fi.fieldName) match {
         case -1 => unknownCase(fi.fieldName)
         case idx => readCase(fi.fieldName, fi, caseDeps(idx))
       }
@@ -97,11 +120,13 @@ abstract class FlatSealedHierarchyCodec[T](
   typeRepr: String,
   nullable: Boolean,
   caseNames: Array[String],
+  cases: Array[Class[_ <: T]],
   oooFieldNames: Array[String],
   caseDependentFieldNames: Set[String],
   override protected val caseFieldName: String,
-  defaultCaseIdx: Int
-) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames) {
+  defaultCaseIdx: Int,
+  defaultCaseTransient: Boolean
+) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
 
   protected def oooDependencies: Array[GenCodec[_]]
   protected def caseDependencies: Array[OOOFieldsObjectCodec[_ <: T]]
@@ -109,8 +134,11 @@ abstract class FlatSealedHierarchyCodec[T](
   private[this] lazy val oooDeps = oooDependencies
   private[this] lazy val caseDeps = caseDependencies
 
-  protected final def writeCase[A <: T](output: ObjectOutput, idx: Int, transient: Boolean, value: A): Unit =
-    writeFlatCase(caseNames(idx), transient, output, value, caseDeps(idx).asInstanceOf[OOOFieldsObjectCodec[A]])
+  final def writeObject(output: ObjectOutput, value: T): Unit = {
+    val caseIdx = caseIndexByValue(value)
+    val transient = defaultCaseTransient && defaultCaseIdx == caseIdx
+    writeFlatCase(caseNames(caseIdx), transient, output, value, caseDeps(caseIdx).asInstanceOf[OOOFieldsObjectCodec[T]])
+  }
 
   final def readObject(input: ObjectInput): T = {
     val oooFields = new FieldValues(oooFieldNames, oooDeps)
@@ -120,7 +148,7 @@ abstract class FlatSealedHierarchyCodec[T](
         val fi = input.nextField()
         if (fi.fieldName == caseFieldName) {
           val caseName = readCaseName(fi)
-          caseIndex(caseName, 0) match {
+          caseIndexByName(caseName) match {
             case -1 => unknownCase(caseName)
             case idx => readFlatCase(caseName, oooFields, input, caseDeps(idx))
           }
@@ -201,6 +229,9 @@ trait ErrorReportingCodec[T] extends GenCodec[T] {
     try codec.write(output.writeField(fieldName), value) catch {
       case NonFatal(e) => throw new WriteFailure(s"Failed to write $what $fieldName of $typeRepr", e)
     }
+
+  protected def unknownCase(value: T) =
+    throw new WriteFailure(s"Failed to write $typeRepr: value $value does not match any of known subtypes")
 
   protected def fieldMissing(field: String) =
     throw new ReadFailure(s"Cannot read $typeRepr, field $field is missing in decoded data")

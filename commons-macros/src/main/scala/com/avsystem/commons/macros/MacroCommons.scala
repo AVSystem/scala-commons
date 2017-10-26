@@ -11,6 +11,7 @@ trait MacroCommons {
 
   final val ScalaPkg = q"_root_.scala"
   final val StringCls = tq"_root_.java.lang.String"
+  final val ClassCls = tq"_root_.java.lang.Class"
   final val CommonsPackage = q"_root_.com.avsystem.commons"
   final val UnitCls = tq"$ScalaPkg.Unit"
   final val OptionCls = tq"$ScalaPkg.Option"

@@ -56,6 +56,7 @@ abstract class Wrapper[Self <: Wrapper[Self] : ClassTag](private val args: Any*)
 
 @silent
 class GenCodecTest extends CodecTestBase {
+
   import GenCodecTest._
 
   test("java collection test") {

@@ -128,7 +128,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       companion.symbol == tpe.typeSymbol.companion
     val canUseFields = caseClass && unapply.isSynthetic && params.forall { p =>
       alternatives(tpe.member(p.sym.name)).exists { f =>
-        f.isTerm && f.asTerm.isCaseAccessor && f.isPublic && f.typeSignature.finalResultType =:= p.sym.typeSignature
+        f.isTerm && f.asTerm.isCaseAccessor && f.isPublic && f.typeSignatureIn(tpe).finalResultType =:= p.valueType
       }
     }
 
@@ -221,8 +221,19 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       def generatedWrite(sym: Symbol) =
         q"writeField(${nameBySym(sym)}, output, ${mkParamLessCall(q"value", sym)}, ${genDepNames(sym)})"
 
+      val useProductCodec = canUseFields && generated.isEmpty && !params.exists(isTransientDefault)
+      val baseClass = TypeName(if(useProductCodec) "ProductCodec" else "ApplyUnapplyCodec")
+
+      def writeMethod = if(useProductCodec) q"()" else
+        q"""
+          def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = {
+            $writeFields
+            ..${generated.map({ case (sym, _) => generatedWrite(sym) })}
+          }
+         """
+
       q"""
-        new $SerializationPkg.ApplyUnapplyCodec[$tpe](
+        new $SerializationPkg.$baseClass[$tpe](
           ${tpe.toString},
           ${typeOf[Null] <:< tpe},
           $ScalaPkg.Array[$StringCls](..${params.map(p => nameBySym(p.sym))})
@@ -231,10 +242,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           ..${generated.collect({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
           def instantiate(fieldValues: $SerializationPkg.FieldValues) =
             ${applier(params.map(p => p.asArgument(readField(p))))}
-          def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = {
-            $writeFields
-            ..${generated.map({ case (sym, _) => generatedWrite(sym) })}
-          }
+          $writeMethod
         }
        """
     }
@@ -257,12 +265,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       new $SerializationPkg.NestedSealedHierarchyCodec[$tpe](
         ${tpe.toString},
         ${typeOf[Null] <:< tpe},
-        $ScalaPkg.Array[$StringCls](..${subtypes.map(st => targetNameBySym(st.sym))})
+        $ScalaPkg.Array[$StringCls](..${subtypes.map(st => targetNameBySym(st.sym))}),
+        $ScalaPkg.Array[$ClassCls[_ <: $tpe]](..${subtypes.map(st => q"classOf[${st.tpe}]")})
       ) {
         def caseDependencies = $ScalaPkg.Array[$GenCodecCls[_ <: $tpe]](..${subtypes.map(_.instance)})
-        def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
-          case ..${subtypes.map(st => cq"value: ${st.tpe} => writeCase(output, ${st.idx}, value)")}
-        }
       }
      """
   }
@@ -271,9 +277,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     def idx: Int
     def subtype: Type
     def applyParams: List[ApplyParam]
+    def depInstance: Tree
 
     val sym: Symbol = subtype.typeSymbol
     val caseName: String = targetName(sym)
+    val classOf: Tree = q"classOf[$subtype]"
     val generated: List[(Symbol, Type)] = generatedMembers(subtype)
     val (defaultCase, transientCase) =
       getAnnotations(sym, DefaultCaseAnnotType).headOption
@@ -288,9 +296,6 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       (applyParams.map(ap => (ap.sym, ap.valueType)) ++ generated).map({ case (s, t) => (targetNames(s), (s, t)) }).toMap
     val oooSymbols: List[Symbol] = membersByName.values.iterator.map(_._1).filter(isOutOfOrder).toList
     val oooFieldNames: Set[String] = oooSymbols.iterator.map(targetNames).toSet
-
-    def depInstance: Tree
-    def caseWrite = cq"value: $subtype => writeCase(output, $idx, $transientCase, value)"
 
     if (isTransparent(sym)) {
       abort(s"You can't use @transparent on case classes of a sealed trait/class with @flatten annotation")
@@ -373,17 +378,15 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         ${tpe.toString},
         ${typeOf[Null] <:< tpe},
         $ScalaPkg.Array[$StringCls](..${caseInfos.map(_.caseName)}),
+        $ScalaPkg.Array[$ClassCls[_ <: $tpe]](..${caseInfos.map(_.classOf)}),
         $ScalaPkg.Array[$StringCls](..$oooParamNames),
         $SetObj(..$caseDependentFieldNames),
         $caseFieldName,
-        ${defaultCase.map(caseInfos.indexOf).getOrElse(-1)}
+        ${defaultCase.map(caseInfos.indexOf).getOrElse(-1)},
+        ${defaultCase.exists(_.transientCase)}
       ) {
         def caseDependencies = $ScalaPkg.Array[$GenCodecObj.OOOFieldsObjectCodec[_ <: $tpe]](..${caseInfos.map(_.depInstance)})
         def oooDependencies = $ScalaPkg.Array[$GenCodecCls[_]](..${oooParamNames.map(oooDependency)})
-
-        def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
-          case ..${caseInfos.map(_.caseWrite)}
-        }
       }
     """
   }
