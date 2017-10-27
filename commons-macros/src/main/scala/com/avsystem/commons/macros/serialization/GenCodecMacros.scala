@@ -222,9 +222,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         q"writeField(${nameBySym(sym)}, output, ${mkParamLessCall(q"value", sym)}, ${genDepNames(sym)})"
 
       val useProductCodec = canUseFields && generated.isEmpty && !params.exists(isTransientDefault)
-      val baseClass = TypeName(if(useProductCodec) "ProductCodec" else "ApplyUnapplyCodec")
+      val baseClass = TypeName(if (useProductCodec) "ProductCodec" else "ApplyUnapplyCodec")
 
-      def writeMethod = if(useProductCodec) q"()" else
+      def writeMethod = if (useProductCodec) q"()" else
         q"""
           def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = {
             $writeFields
@@ -232,13 +232,22 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           }
          """
 
+      def deduplicatedDependency(params: List[ApplyParam], p: ApplyParam): Tree = {
+        val prevIdx = params.indexWhere(_.valueType =:= p.valueType)
+        if(prevIdx >= 0 && prevIdx < p.idx) q"res($prevIdx)" else p.instance
+      }
+
       q"""
         new $SerializationPkg.$baseClass[$tpe](
           ${tpe.toString},
           ${typeOf[Null] <:< tpe},
           $ScalaPkg.Array[$StringCls](..${params.map(p => nameBySym(p.sym))})
         ) {
-          def dependencies = $ScalaPkg.Array[$GenCodecCls[_]](..${params.map(_.instance)})
+          def dependencies = {
+            val res = new $ScalaPkg.Array[$GenCodecCls[_]](${params.size})
+            ..${params.map(p => q"res(${p.idx}) = ${deduplicatedDependency(params, p)}")}
+            res
+          }
           ..${generated.collect({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
           def instantiate(fieldValues: $SerializationPkg.FieldValues) =
             ${applier(params.map(p => p.asArgument(readField(p))))}
