@@ -35,9 +35,6 @@ trait BaseFiltering[T] extends Any with KeyValueHandling[T] {
   def regex(patternStr: String): Bson = Filters.regex(key, patternStr)
   def regex(patternStr: String, options: String): Bson = Filters.regex(key, patternStr, options)
 
-  def elemMatch(filter: Bson): Bson = Filters.elemMatch(key, filter)
-  def size(size: Int): Bson = Filters.size(key, size)
-
   def bitsAllClear(bitMask: Long): Bson = Filters.bitsAllClear(key, bitMask)
   def bitsAllSet(bitMask: Long): Bson = Filters.bitsAllSet(key, bitMask)
   def bitsAnyClear(bitMask: Long): Bson = Filters.bitsAnyClear(key, bitMask)
