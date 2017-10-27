@@ -25,11 +25,11 @@ object Something {
     2017,
     List(
       Stuff(Map(), 3.15)
-//      Stuff(Map("fuu" -> true, "boo" -> false, "fag" -> true), 3.14),
-//      Stuff(Map("fuu" -> true), 3.16),
-//      Stuff(Map("fuu" -> true, "boo \n\r\t" -> false, "fag" -> true, "moar" -> false), 3.17),
-//      Stuff(Map.empty, 3.18),
-//      Stuff(Map("fuu" -> true, "boo" -> false, "fag" -> true), 3.19),
+      //      Stuff(Map("fuu" -> true, "boo" -> false, "fag" -> true), 3.14),
+      //      Stuff(Map("fuu" -> true), 3.16),
+      //      Stuff(Map("fuu" -> true, "boo \n\r\t" -> false, "fag" -> true, "moar" -> false), 3.17),
+      //      Stuff(Map.empty, 3.18),
+      //      Stuff(Map("fuu" -> true, "boo" -> false, "fag" -> true), 3.19),
     ),
     Set(
       1 //5, 62, -23, 454, 123, 75, -234,
@@ -47,34 +47,92 @@ object Stuff {
   implicit val decoder: Decoder[Stuff] = deriveDecoder[Stuff]
 }
 
+sealed trait SealedStuff
+case class Case1(i: Int) extends SealedStuff
+case class Case2(i: Int) extends SealedStuff
+case class Case3(i: Int) extends SealedStuff
+case class Case4(i: Int) extends SealedStuff
+case class Case5(i: Int) extends SealedStuff
+case class Case6(i: Int) extends SealedStuff
+case class Case7(i: Int) extends SealedStuff
+object SealedStuff {
+  implicit val codec: GenCodec[SealedStuff] = GenCodec.materialize
+  implicit val encoder: Encoder[SealedStuff] = deriveEncoder[SealedStuff]
+  implicit val decoder: Decoder[SealedStuff] = deriveDecoder[SealedStuff]
+
+  final val ExampleList = List[SealedStuff](Case5(5), Case3(3), Case1(1), Case7(7), Case2(2), Case4(4), Case6(6))
+  final val ExampleJson = ExampleList.asJson
+  final val ExampleJsonString = ExampleJson.noSpaces
+}
+
 @Warmup(iterations = 10)
 @Measurement(iterations = 20)
 @Fork(1)
 @BenchmarkMode(Array(Mode.Throughput))
 class JsonSerializationBenchmark {
   @Benchmark
-  def genCodecJsonStringWriting: String = JsonStringOutput.write(Something.Example)
+  def circeJsonWriting: Json =
+    Something.Example.asJson
 
   @Benchmark
-  def genCodecJsonStringReading: Something = JsonStringInput.read[Something](Something.ExampleJsonString)
+  def circeJsonReading: Something =
+    Something.ExampleJson.as[Something].fold(e => throw e, identity)
 
   @Benchmark
-  def circeJsonStringWriting: String = Something.Example.asJson.noSpaces
+  def circeJsonStringWriting: String =
+    Something.Example.asJson.noSpaces
 
   @Benchmark
-  def circeJsonStringReading: Something = decode[Something](Something.ExampleJsonString).fold(e => throw e, identity)
+  def circeJsonStringReading: Something =
+    decode[Something](Something.ExampleJsonString).fold(e => throw e, identity)
 
   @Benchmark
-  def genCodecJsonWriting: Json = CirceJsonOutput.write(Something.Example)
+  def circeSealedJsonWriting: Json =
+    SealedStuff.ExampleList.asJson
 
   @Benchmark
-  def genCodecJsonReading: Something = CirceJsonInput.read[Something](Something.ExampleJson)
+  def circeSealedJsonReading: List[SealedStuff] =
+    SealedStuff.ExampleJson.as[List[SealedStuff]].fold(e => throw e, identity)
 
   @Benchmark
-  def circeJsonWriting: Json = Something.Example.asJson
+  def circeSealedJsonStringWriting: String =
+    SealedStuff.ExampleList.asJson.noSpaces
 
   @Benchmark
-  def circeJsonReading: Something = Something.ExampleJson.as[Something].fold(e => throw e, identity)
+  def circeSealedJsonStringReading: List[SealedStuff] =
+    decode[List[SealedStuff]](SealedStuff.ExampleJsonString).fold(e => throw e, identity)
+
+  @Benchmark
+  def genCodecJsonWriting: Json =
+    CirceJsonOutput.write(Something.Example)
+
+  @Benchmark
+  def genCodecJsonReading: Something =
+    CirceJsonInput.read[Something](Something.ExampleJson)
+
+  @Benchmark
+  def genCodecJsonStringWriting: String =
+    JsonStringOutput.write(Something.Example)
+
+  @Benchmark
+  def genCodecJsonStringReading: Something =
+    JsonStringInput.read[Something](Something.ExampleJsonString)
+
+  @Benchmark
+  def genCodecSealedJsonWriting: Json =
+    CirceJsonOutput.write(SealedStuff.ExampleList)
+
+  @Benchmark
+  def genCodecSealedJsonReading: List[SealedStuff] =
+    CirceJsonInput.read[List[SealedStuff]](SealedStuff.ExampleJson)
+
+  @Benchmark
+  def genCodecSealedJsonStringWriting: String =
+    JsonStringOutput.write(SealedStuff.ExampleList)
+
+  @Benchmark
+  def genCodecSealedJsonStringReading: List[SealedStuff] =
+    JsonStringInput.read[List[SealedStuff]](SealedStuff.ExampleJsonString)
 }
 
 object JsonSerializationBenchmark {
@@ -84,7 +142,7 @@ object JsonSerializationBenchmark {
     println(CirceJsonOutput.write(Something.Example) == Something.ExampleJson)
     println(CirceJsonInput.read[Something](Something.ExampleJson) == Something.Example)
 
-    while(true) {
+    while (true) {
       CirceJsonInput.read[Something](Something.ExampleJson)
     }
   }
