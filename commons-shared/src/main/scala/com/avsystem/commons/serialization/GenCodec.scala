@@ -282,9 +282,9 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
   implicit lazy val SymbolCodec: GenCodec[Symbol] = createNullable(i => Symbol(i.readString()), (o, s) => o.writeString(s.name))
   implicit lazy val ByteArrayCodec: GenCodec[Array[Byte]] = createNullable(_.readBinary(), _ writeBinary _)
 
-  private implicit class IteratorOps[A](private val it: Iterator[A]) extends AnyVal {
+  private implicit class TraversableOnceOps[A](private val coll: TraversableOnce[A]) extends AnyVal {
     def writeToList(lo: ListOutput)(implicit writer: GenCodec[A]): Unit =
-      it.foreach(writer.write(lo.writeElement(), _))
+      coll.foreach(writer.write(lo.writeElement(), _))
   }
 
   private implicit class ListInputOps(private val li: ListInput) extends AnyVal {
@@ -317,15 +317,15 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](
     implicit cbf: CanBuildFrom[Nothing, T, C[T]]): GenCodec[C[T] with BSeq[T]] =
-    createNullableList[C[T] with BSeq[T]](_.collectTo[T, C[T]], (lo, c) => c.iterator.writeToList(lo))
+    createNullableList[C[T] with BSeq[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
   implicit def setCodec[C[X] <: BSet[X], T: GenCodec](
     implicit cbf: CanBuildFrom[Nothing, T, C[T]]): GenCodec[C[T] with BSet[T]] =
-    createNullableList[C[T] with BSet[T]](_.collectTo[T, C[T]], (lo, c) => c.iterator.writeToList(lo))
+    createNullableList[C[T] with BSet[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
   implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](
     implicit cbf: JCanBuildFrom[T, C[T]]): GenCodec[C[T] with JCollection[T]] =
-    createNullableList[C[T] with JCollection[T]](_.collectTo[T, C[T]], (lo, c) => c.iterator.asScala.writeToList(lo))
+    createNullableList[C[T] with JCollection[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
   implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
     implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenCodec[M[K, V] with BMap[K, V]] =

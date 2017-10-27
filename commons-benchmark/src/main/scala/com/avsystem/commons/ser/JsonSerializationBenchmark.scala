@@ -137,13 +137,8 @@ class JsonSerializationBenchmark {
 
 object JsonSerializationBenchmark {
   def main(args: Array[String]): Unit = {
-    println(JsonStringOutput.write(Something.Example) == Something.ExampleJsonString)
-    println(JsonStringInput.read[Something](Something.ExampleJsonString) == Something.Example)
-    println(CirceJsonOutput.write(Something.Example) == Something.ExampleJson)
-    println(CirceJsonInput.read[Something](Something.ExampleJson) == Something.Example)
-
     while (true) {
-      CirceJsonInput.read[Something](Something.ExampleJson)
+      JsonStringOutput.write[List[SealedStuff]](SealedStuff.ExampleList)
     }
   }
 }

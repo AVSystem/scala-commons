@@ -3,6 +3,7 @@ package macros.serialization
 
 import com.avsystem.commons.macros.TypeClassDerivation
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.macros.blackbox
 
 class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with TypeClassDerivation {
@@ -63,6 +64,13 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
     addParams(q"$prefix.$sym", sym.typeSignature.paramLists)
   }
+
+  private def mkArray[T: Liftable](elemTpe: Tree, elems: Seq[T]): Tree =
+    q"""
+       val res = new $ScalaPkg.Array[$elemTpe](${elems.size})
+       ..${elems.zipWithIndex.map({case (e, i) => q"res($i) = $e"})}
+       res
+     """
 
   private def generatedMembers(tpe: Type): List[(Symbol, Type)] =
     tpe.members.filter(isGenerated).map { sym =>
@@ -232,21 +240,27 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           }
          """
 
-      def deduplicatedDependency(params: List[ApplyParam], p: ApplyParam): Tree = {
-        val prevIdx = params.indexWhere(_.valueType =:= p.valueType)
-        if(prevIdx >= 0 && prevIdx < p.idx) q"res($prevIdx)" else p.instance
+      val reusedDeps = new ArrayBuffer[Tree]
+      val depsWithReusing = params.map { p =>
+        if (params.count(_.valueType =:= p.valueType) == 1) p.instance else {
+          val prevIdx = params.indexWhere(_.valueType =:= p.valueType)
+          val reusedName = TermName("dep" + prevIdx)
+          if (prevIdx == p.idx) {
+            reusedDeps += q"val $reusedName = ${p.instance}"
+          }
+          q"$reusedName"
+        }
       }
 
       q"""
         new $SerializationPkg.$baseClass[$tpe](
           ${tpe.toString},
           ${typeOf[Null] <:< tpe},
-          $ScalaPkg.Array[$StringCls](..${params.map(p => nameBySym(p.sym))})
+          ${mkArray(StringCls, params.map(p => nameBySym(p.sym)))}
         ) {
           def dependencies = {
-            val res = new $ScalaPkg.Array[$GenCodecCls[_]](${params.size})
-            ..${params.map(p => q"res(${p.idx}) = ${deduplicatedDependency(params, p)}")}
-            res
+            ..$reusedDeps
+            ${mkArray(tq"$GenCodecCls[_]", depsWithReusing)}
           }
           ..${generated.collect({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
           def instantiate(fieldValues: $SerializationPkg.FieldValues) =
@@ -274,10 +288,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       new $SerializationPkg.NestedSealedHierarchyCodec[$tpe](
         ${tpe.toString},
         ${typeOf[Null] <:< tpe},
-        $ScalaPkg.Array[$StringCls](..${subtypes.map(st => targetNameBySym(st.sym))}),
-        $ScalaPkg.Array[$ClassCls[_ <: $tpe]](..${subtypes.map(st => q"classOf[${st.tpe}]")})
+        ${mkArray(StringCls, subtypes.map(st => targetNameBySym(st.sym)))},
+        ${mkArray(tq"$ClassCls[_ <: $tpe]", subtypes.map(st => q"classOf[${st.tpe}]"))}
       ) {
-        def caseDependencies = $ScalaPkg.Array[$GenCodecCls[_ <: $tpe]](..${subtypes.map(_.instance)})
+        def caseDependencies = ${mkArray(tq"$GenCodecCls[_ <: $tpe]", subtypes.map(_.instance))}
       }
      """
   }
@@ -386,16 +400,16 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       new $SerializationPkg.FlatSealedHierarchyCodec[$tpe](
         ${tpe.toString},
         ${typeOf[Null] <:< tpe},
-        $ScalaPkg.Array[$StringCls](..${caseInfos.map(_.caseName)}),
-        $ScalaPkg.Array[$ClassCls[_ <: $tpe]](..${caseInfos.map(_.classOf)}),
-        $ScalaPkg.Array[$StringCls](..$oooParamNames),
+        ${mkArray(StringCls, caseInfos.map(_.caseName))},
+        ${mkArray(tq"$ClassCls[_ <: $tpe]", caseInfos.map(_.classOf))},
+        ${mkArray(StringCls, oooParamNames)},
         $SetObj(..$caseDependentFieldNames),
         $caseFieldName,
         ${defaultCase.map(caseInfos.indexOf).getOrElse(-1)},
         ${defaultCase.exists(_.transientCase)}
       ) {
-        def caseDependencies = $ScalaPkg.Array[$GenCodecObj.OOOFieldsObjectCodec[_ <: $tpe]](..${caseInfos.map(_.depInstance)})
-        def oooDependencies = $ScalaPkg.Array[$GenCodecCls[_]](..${oooParamNames.map(oooDependency)})
+        def caseDependencies = ${mkArray(tq"$GenCodecObj.OOOFieldsObjectCodec[_ <: $tpe]", caseInfos.map(_.depInstance))}
+        def oooDependencies = ${mkArray(tq"$GenCodecCls[_]", oooParamNames.map(oooDependency))}
       }
     """
   }
