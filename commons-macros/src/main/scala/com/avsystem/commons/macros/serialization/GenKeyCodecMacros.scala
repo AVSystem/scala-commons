@@ -19,20 +19,19 @@ class GenKeyCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
         case (name, kst) =>
           abort(s"Objects ${kst.map(_.typeSymbol.name).mkString(", ")} have the same @name: $name")
       }
-      val result =
-        q"""
-          new $GenKeyCodecCls[$tpe] {
-            def tpeString = ${tpe.toString}
-            def read(key: String): $tpe = key match {
-              case ..${subtypes.map(st => cq"${nameBySym(st.typeSymbol)} => ${singleValue(st)}")}
-              case _ => throw new $SerializationPkg.GenCodec.ReadFailure(s"Cannot read $$tpeString, unknown object: $$key")
-            }
-            def write(value: $tpe): String = value match {
-              case ..${subtypes.map(st => cq"_: $st => ${nameBySym(st.typeSymbol)}")}
-            }
+
+      q"""
+        new $GenKeyCodecCls[$tpe] {
+          def tpeString = ${tpe.toString}
+          def read(key: String): $tpe = key match {
+            case ..${subtypes.map(st => cq"${nameBySym(st.typeSymbol)} => ${singleValue(st)}")}
+            case _ => throw new $SerializationPkg.GenCodec.ReadFailure(s"Cannot read $$tpeString, unknown object: $$key")
           }
-         """
-      withKnownSubclassesCheck(result, tpe)
+          def write(value: $tpe): String = value match {
+            case ..${subtypes.map(st => cq"_: $st => ${nameBySym(st.typeSymbol)}")}
+          }
+        }
+      """
     }.getOrElse(abort(s"$tpe is not a sealed trait or class"))
   }
 }

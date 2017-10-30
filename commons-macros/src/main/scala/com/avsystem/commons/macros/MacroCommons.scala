@@ -447,9 +447,6 @@ trait MacroCommons {
       directSubclasses.flatMap(allCurrentlyKnownSubclasses) + sym
     } else Set.empty
 
-  def withKnownSubclassesCheck(tree: Tree, tpe: Type): Tree =
-    q"$tree: @$CommonsPackage.annotation.checkKnownSubtypes[$tpe](${allCurrentlyKnownSubclasses(tpe.typeSymbol).size})"
-
   def knownSubtypes(tpe: Type): Option[List[Type]] =
     Option(tpe.typeSymbol).filter(isSealedHierarchyRoot).map { sym =>
       knownNonAbstractSubclasses(sym).toList.flatMap { subSym =>
