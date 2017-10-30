@@ -3,8 +3,8 @@ import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys._
 cancelable in Global := true
 
 inThisBuild(Seq(
-  scalaVersion := "2.12.3",
-  crossScalaVersions := Seq("2.11.11", "2.12.3"),
+  scalaVersion := "2.12.4",
+  crossScalaVersions := Seq("2.11.11", "2.12.4"),
   organization := "com.avsystem.commons",
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
