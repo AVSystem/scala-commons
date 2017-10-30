@@ -24,7 +24,7 @@ object Something {
     "The Name of Something",
     2017,
     List(
-      Stuff(Map(), 3.15),
+      Stuff(Map(), 3.15)
 //      Stuff(Map("fuu" -> true, "boo" -> false, "fag" -> true), 3.14),
 //      Stuff(Map("fuu" -> true), 3.16),
 //      Stuff(Map("fuu" -> true, "boo \n\r\t" -> false, "fag" -> true, "moar" -> false), 3.17),
@@ -32,7 +32,7 @@ object Something {
 //      Stuff(Map("fuu" -> true, "boo" -> false, "fag" -> true), 3.19),
     ),
     Set(
-      1, //5, 62, -23, 454, 123, 75, -234,
+      1 //5, 62, -23, 454, 123, 75, -234,
     )
   )
 
