@@ -221,15 +221,14 @@ class JavaInteropTest extends FunSuite {
     val sfut = gfut.asScala.transform(identity, identity)
 
     var value: Try[Int] = null
-    sfut.onComplete {
-      value = _
-    }
+    sfut.onComplete({value = _})
     gfut.set(42)
 
     assert(value == Success(42))
   }
 
   test("SettableFuture to Promise conversion should work") {
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
 
     val sprom = SettableFuture.create[String].asScalaPromise
     val fprom = SettableFuture.create[String].asScalaPromise
@@ -237,8 +236,8 @@ class JavaInteropTest extends FunSuite {
     var sres: Try[String] = null
     var fres: Try[String] = null
 
-    sprom.future.onComplete(sres = _)
-    fprom.future.onComplete(fres = _)
+    sprom.future.onComplete({sres = _})
+    fprom.future.onComplete({fres = _})
 
     object exception extends Exception
     sprom.complete(Success("lol"))
