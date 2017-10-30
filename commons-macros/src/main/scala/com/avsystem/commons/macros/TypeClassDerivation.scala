@@ -173,7 +173,7 @@ trait TypeClassDerivation extends MacroCommons {
         val depTree = dependency(depTpe, tcTpe, s"for case type $depTpe", allowImplicitMacro = true)
         KnownSubtype(idx, depTpe, depTree)
       }
-      withKnownSubclassesCheck(forSealedHierarchy(tpe, dependencies), tpe)
+      forSealedHierarchy(tpe, dependencies)
     }
 
     val untypedResult = singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown(tpe)

@@ -9,7 +9,6 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
   val rules = List[AnalyzerRule[global.type]](
     new ImportJavaUtil[global.type](global),
     new VarargsAtLeast[global.type](global),
-    new DetectSI7046[global.type](global),
     new CheckMacroPrivate[global.type](global),
     new ExplicitGenerics[global.type](global)
   )

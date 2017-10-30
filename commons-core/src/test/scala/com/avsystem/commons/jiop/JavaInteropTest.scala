@@ -57,18 +57,23 @@ class JavaInteropTest extends FunSuite {
     import Java8Interop._
 
     def ints = IntStream.of(1, 2, 3, 4, 5, 6)
+
     assertSame(
       ints.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaIntStream).asJava.boxed,
       ints.flatMap(jIntFunction(i => JArrayList(i - 1, i, i + 1)
         .stream.mapToInt(jToIntFunction(identity)))).boxed
     )
+
     def longs = LongStream.of(1, 2, 3, 4, 5, 6)
+
     assertSame(
       longs.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaLongStream).asJava.boxed,
       longs.flatMap(jLongFunction(i => JArrayList(i - 1, i, i + 1)
         .stream.mapToLong(jToLongFunction(identity)))).boxed
     )
+
     def doubles = DoubleStream.of(1, 2, 3, 4, 5, 6)
+
     assertSame(
       doubles.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaDoubleStream).asJava.boxed,
       doubles.flatMap(jDoubleFunction(i => JArrayList(i - 1, i, i + 1)
@@ -180,7 +185,9 @@ class JavaInteropTest extends FunSuite {
 
     assert(gfut.isDone === sfut.isCompleted)
 
-    gfut.addListener(jRunnable(listenerCalled = true), MoreExecutors.directExecutor())
+    gfut.addListener(jRunnable {
+      listenerCalled = true
+    }, MoreExecutors.directExecutor())
     promise.success(123)
 
     assert(Await.result(sfut, Duration.Inf) === gfut.get)
@@ -214,9 +221,7 @@ class JavaInteropTest extends FunSuite {
     val sfut = gfut.asScala.transform(identity, identity)
 
     var value: Try[Int] = null
-    sfut.onComplete {
-      value = _
-    }
+    sfut.onComplete({value = _})
     gfut.set(42)
 
     assert(value == Success(42))
@@ -231,8 +236,8 @@ class JavaInteropTest extends FunSuite {
     var sres: Try[String] = null
     var fres: Try[String] = null
 
-    sprom.future.onComplete(sres = _)
-    fprom.future.onComplete(fres = _)
+    sprom.future.onComplete({sres = _})
+    fprom.future.onComplete({fres = _})
 
     object exception extends Exception
     sprom.complete(Success("lol"))

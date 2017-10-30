@@ -3,6 +3,7 @@ package com.avsystem.commons
 import com.avsystem.commons.SharedExtensions._
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc.{Boxing, Unboxing}
+import com.github.ghik.silencer.silent
 
 import scala.collection.generic.CanBuildFrom
 import scala.collection.{AbstractIterator, mutable}
@@ -46,18 +47,51 @@ trait SharedExtensions {
 
 object SharedExtensions extends SharedExtensions {
   class UniversalOps[A](private val a: A) extends AnyVal {
+    /**
+      * The "pipe" operator. Alternative syntax to apply a function on an argument.
+      * Useful for fluent expressions and avoiding intermediate variables.
+      *
+      * @example
+      * {{{someVeryLongExpression() |> (v => if(condition(v)) something(v) else somethingElse(v))}}}
+      */
     def |>[B](f: A => B): B = f(a)
+
+    /**
+      * Explicit syntax to discard the value of a side-effecting expression.
+      * Useful when `-Ywarn-value-discard` compiler option is enabled.
+      */
+    @silent
+    def discard: Unit = ()
 
     def option: Option[A] = Option(a)
 
     def opt: Opt[A] = Opt(a)
 
+    /**
+      * Converts a boxed primitive type into an `Opt` of its corresponding primitive type, converting `null` into
+      * `Opt.Empty`. For example, calling `.unboxedOpt` on a `java.lang.Integer` will convert it to `Opt[Int]`.
+      */
     def unboxedOpt[B](implicit unboxing: Unboxing[B, A]): Opt[B] =
       opt.map(unboxing.fun)
 
     def checkNotNull(msg: String): A =
       if (a != null) a else throw new NullPointerException(msg)
 
+    /**
+      * Alternative syntax for applying some side effects on a value before returning it,
+      * without having to declare an intermediate variable. Also, using `setup` confines the "setting-up"
+      * code in a separate code block which has more clarity and avoids polluting outer scope.
+      *
+      * @example
+      * {{{
+      * import javax.swing._
+      * // this entire expression returns the panel
+      * new JPanel().setup { p =>
+      *   p.setEnabled(true)
+      *   p.setSize(100, 100)
+      * }
+      * }}}
+      */
     def setup(code: A => Any): A = {
       code(a)
       a
@@ -185,6 +219,11 @@ object SharedExtensions extends SharedExtensions {
   }
 
   object FutureCompanionOps {
+    /**
+      * Evaluates an expression and wraps its value into a `Future`. Failed `Future` is returned if expression
+      * evaluation throws an exception. This is very similar to `Future.apply` but evaluates the argument immediately,
+      * without dispatching it to some `ExecutionContext`.
+      */
     def eval[T](expr: => T): Future[T] =
       try Future.successful(expr) catch {
         case NonFatal(cause) => Future.failed(cause)
