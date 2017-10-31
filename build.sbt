@@ -53,7 +53,7 @@ val scalaLoggingVersion = "3.5.0"
 val akkaVersion = "2.5.6"
 val monixVersion = "2.3.0"
 val mockitoVersion = "2.10.0"
-val circeVersion = "0.8.0"
+val circeVersion = "0.9.0-M1"
 
 val commonSettings = Seq(
   publishTo := Some(Opts.resolver.sonatypeStaging),

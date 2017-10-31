@@ -1,16 +1,14 @@
 package com.avsystem.commons
 package serialization.json
 
-import java.io.{Reader, StringReader}
-
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
+import com.avsystem.commons.serialization._
 import com.avsystem.commons.serialization.json.JsonStringInput.{AfterElement, AfterElementNothing}
-import com.avsystem.commons.serialization.{FieldInput, GenCodec, Input, InputType, ListInput, ObjectInput}
 
 object JsonStringInput {
   @explicitGenerics def read[T: GenCodec](json: String): T =
-    GenCodec.read[T](new JsonStringInput(new JsonReader(new StringReader(json))))
+    GenCodec.read[T](new JsonStringInput(new JsonReader(json)))
 
   private[json] object ObjectMarker {
     override def toString = "object"
@@ -79,7 +77,7 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
     val result = new Array[Byte](hex.length / 2)
     var i = 0
     while (i < result.length) {
-      result(i) = ((reader.fromHex(hex.codePointAt(2 * i)) << 4) | reader.fromHex(hex.codePointAt(2 * i + 1))).toByte
+      result(i) = ((reader.fromHex(hex.charAt(2 * i)) << 4) | reader.fromHex(hex.charAt(2 * i + 1))).toByte
       i += 1
     }
     result
@@ -111,9 +109,10 @@ final class JsonListInput(reader: JsonReader, callback: AfterElement) extends Li
   prepareForNext(first = true)
 
   private def prepareForNext(first: Boolean): Unit = {
-    end = reader.peekNoWs() == ']'
+    reader.skipWs()
+    end = reader.isNext(']')
     if (end) {
-      reader.read()
+      reader.advance()
       callback.afterElement()
     } else if (!first) {
       reader.pass(',')
@@ -134,9 +133,10 @@ final class JsonObjectInput(reader: JsonReader, callback: AfterElement) extends 
   prepareForNext(first = true)
 
   private def prepareForNext(first: Boolean): Unit = {
-    end = reader.peekNoWs() == '}'
+    reader.skipWs()
+    end = reader.isNext('}')
     if (end) {
-      reader.read()
+      reader.advance()
       callback.afterElement()
     } else if (!first) {
       reader.pass(',')
@@ -157,56 +157,55 @@ final class JsonObjectInput(reader: JsonReader, callback: AfterElement) extends 
     prepareForNext(first = false)
 }
 
-final class JsonReader(reader: Reader) {
-  private[this] var peeked: Int = -2
+final class JsonReader(json: String) {
+  private[this] var i: Int = 0
 
-  def read(): Int =
-    if (peeked != -2) {
-      val res = peeked
-      peeked = -2
-      res
-    } else reader.read()
+  @inline def read(): Char = {
+    val res = json.charAt(i)
+    advance()
+    res
+  }
 
-  def peek(): Int =
-    if (peeked != -2) peeked
-    else {
-      peeked = reader.read()
-      peeked
-    }
+  @inline def isNext(ch: Char): Boolean =
+    i < json.length && json.charAt(i) == ch
+
+  @inline def isNextDigit: Boolean =
+    i < json.length && Character.isDigit(json.charAt(i))
+
+  @inline def advance(): Unit = {
+    i += 1
+  }
 
   def skipWs(): Unit = {
-    while (Character.isWhitespace(peek())) {
-      read()
-    }
-  }
-
-  def peekNoWs(): Int = {
-    skipWs()
-    peek()
-  }
-
-  def pass(ch: Int): Unit = {
-    val r = read()
-    if (r != ch) throw new ReadFailure(s"'${ch.toChar}' expected, got ${if (r == -1) "EOF" else r.toChar}")
-  }
-
-  def tryPass(ch: Int): Boolean =
-    if (peek() == ch) {
-      read()
-      true
-    } else false
-
-  private def pass(str: String): Unit = {
-    var i = 0
-    while (i < str.length) {
-      if (read() != str.charAt(i)) {
-        throw new ReadFailure(s"expected '$str'")
-      }
+    while (i < json.length && Character.isWhitespace(json.charAt(i))) {
       i += 1
     }
   }
 
-  def fromHex(ch: Int): Int =
+  def pass(ch: Char): Unit = {
+    val r = read()
+    if (r != ch) throw new ReadFailure(s"'${ch.toChar}' expected, got ${if (r == -1) "EOF" else r.toChar}")
+  }
+
+  def tryPass(ch: Char): Boolean =
+    if (isNext(ch)) {
+      advance()
+      true
+    } else false
+
+  private def pass(str: String): Unit = {
+    var j = 0
+    while (j < str.length) {
+      if (!isNext(str.charAt(j))) {
+        throw new ReadFailure(s"expected '$str'")
+      } else {
+        advance()
+      }
+      j += 1
+    }
+  }
+
+  def fromHex(ch: Char): Int =
     if (ch >= 'A' && ch <= 'F') ch - 'A' + 10
     else if (ch >= 'a' && ch <= 'f') ch - 'a' + 10
     else if (ch >= '0' && ch <= '9') ch - '0'
@@ -216,56 +215,60 @@ final class JsonReader(reader: Reader) {
     fromHex(read())
 
   private def parseNumber(): Any = {
-    val sb = new JStringBuilder
+    val start = i
     var decimal = false
 
-    def advance(): Unit =
-      sb.appendCodePoint(read())
-
-    if (peek() == '-') {
+    if (isNext('-')) {
       advance()
     }
 
     def parseDigits(): Unit = {
-      if (!Character.isDigit(peek())) {
+      if (!isNextDigit) {
         throw new ReadFailure("Expected digit")
       }
-      while (Character.isDigit(peek())) {
+      while (isNextDigit) {
         advance()
       }
     }
 
-    if (peek() == '0') {
+    if (isNext('0')) {
       advance()
-    } else if (Character.isDigit(peek())) {
+    } else if (isNextDigit) {
       parseDigits()
     } else throw new ReadFailure("Expected '-' or digit")
 
-    if (peek() == '.') {
+    if (isNext('.')) {
       decimal = true
       advance()
       parseDigits()
-      if (peek() == 'e' || peek() == 'E') {
+      if (isNext('e') || isNext('E')) {
         advance()
-        if (peek() == '-' || peek() == '+') {
+        if (isNext('-') || isNext('+')) {
           advance()
           parseDigits()
         } else throw new ReadFailure("Expected '+' or '-'")
       }
     }
 
-    val str = sb.toString
+    val str = json.substring(start, i)
     if (decimal) str.toDouble else str.toInt
   }
 
   def parseString(): String = {
     pass('"')
-    val sb = new JStringBuilder
+    var sb: JStringBuilder = null
+    var plainStart = i
     var cont = true
     while (cont) {
       read() match {
         case '"' => cont = false
         case '\\' =>
+          if (sb == null) {
+            sb = new JStringBuilder
+          }
+          if (plainStart < i - 1) {
+            sb.append(json, plainStart, i - 1)
+          }
           val unesc = read() match {
             case '"' => '"'
             case '\\' => '\\'
@@ -277,22 +280,32 @@ final class JsonReader(reader: Reader) {
             case 'u' => ((readHex() << 12) + (readHex() << 8) + (readHex() << 4) + readHex()).toChar
           }
           sb.append(unesc)
-        case c =>
-          sb.append(c.toChar)
+          plainStart = i
+        case _ =>
       }
     }
-    sb.toString
+    if (sb != null) {
+      sb.append(json, plainStart, i - 1)
+      sb.toString
+    } else {
+      json.substring(plainStart, i - 1)
+    }
   }
 
-  def parseValue(): Any = peekNoWs() match {
-    case '"' => parseString()
-    case 't' => pass("true"); true
-    case 'f' => pass("false"); false
-    case 'n' => pass("null"); null
-    case '[' => read(); JsonStringInput.ListMarker
-    case '{' => read(); JsonStringInput.ObjectMarker
-    case '-' => parseNumber()
-    case c if Character.isDigit(c) => parseNumber()
-    case c => throw new ReadFailure(s"Unexpected character: '${c.toChar}'")
+  def parseValue(): Any = {
+    skipWs()
+    if (i < json.length) json.charAt(i) match {
+      case '"' => parseString()
+      case 't' => pass("true"); true
+      case 'f' => pass("false"); false
+      case 'n' => pass("null"); null
+      case '[' => read(); JsonStringInput.ListMarker
+      case '{' => read(); JsonStringInput.ObjectMarker
+      case '-' => parseNumber()
+      case c if Character.isDigit(c) => parseNumber()
+      case c => throw new ReadFailure(s"Unexpected character: '${c.toChar}'")
+    } else {
+      throw new ReadFailure("EOF")
+    }
   }
 }

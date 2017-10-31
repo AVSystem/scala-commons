@@ -2,7 +2,7 @@ package com.avsystem.commons
 package ser
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization.{FieldInput, GenCodec, Input, InputType, ListInput, ListOutput, ObjectInput, ObjectOutput, Output}
+import com.avsystem.commons.serialization._
 import io.circe.{Json, JsonObject}
 
 import scala.collection.mutable.ArrayBuffer
@@ -83,11 +83,11 @@ class CirceJsonListInput(jsonArray: Vector[Json]) extends ListInput {
 }
 
 class CirceJsonObjectInput(jsonObject: JsonObject) extends ObjectInput {
-  private[this] val fieldIt = jsonObject.fields.iterator
+  private[this] val fieldIt = jsonObject.keys.iterator
 
   def hasNext: Boolean = fieldIt.hasNext
   def nextField(): FieldInput = {
     val field = fieldIt.next()
-    new CirceJsonFieldInput(field, jsonObject.toMap(field))
+    new CirceJsonFieldInput(field, jsonObject(field).get)
   }
 }
