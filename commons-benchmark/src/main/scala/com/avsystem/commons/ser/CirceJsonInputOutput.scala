@@ -2,7 +2,7 @@ package com.avsystem.commons
 package ser
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization.{FieldInput, GenCodec, Input, InputType, ListInput, ListOutput, ObjectInput, ObjectOutput, Output}
+import com.avsystem.commons.serialization._
 import io.circe.{Json, JsonObject}
 
 import scala.collection.mutable.ArrayBuffer

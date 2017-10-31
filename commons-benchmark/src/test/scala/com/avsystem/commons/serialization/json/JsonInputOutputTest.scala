@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization.json
 
-import java.io.{StringReader, StringWriter}
-
 import com.avsystem.commons.serialization.Output
 import io.circe.testing.ArbitraryInstances
 import io.circe.{Json, JsonNumber}
@@ -36,10 +34,10 @@ class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryIns
       }
     )
 
-    val writer = new StringWriter
-    val output = new JsonStringOutput(writer)
+    val builder = new JStringBuilder
+    val output = new JsonStringOutput(builder)
     writeIn(json, output)
-    writer.toString
+    builder.toString
   }
 
   private def read(json: String): Json = {
@@ -66,7 +64,7 @@ class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryIns
         Json.fromFields(lb)
     }
 
-    readIn(new JsonStringInput(new JsonReader(new StringReader(json))))
+    readIn(new JsonStringInput(new JsonReader(json)))
   }
 
   // These tests like to hang up for reasons I have too little patience to investigate
