@@ -14,7 +14,7 @@ import scala.collection.mutable.ListBuffer
 class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryInstances {
   // limit JsonNumbers to Int values
   override def transformJsonNumber(n: JsonNumber): JsonNumber =
-    Json.fromInt(n.truncateToInt).asNumber.get
+    Json.fromInt(n.toBigDecimal.map(_.intValue).getOrElse(0)).asNumber.get
 
   private def write(json: Json): String = {
     def writeIn(json: Json, output: Output): Unit = json.fold(
