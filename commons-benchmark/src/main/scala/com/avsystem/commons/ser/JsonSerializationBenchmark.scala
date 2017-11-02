@@ -65,74 +65,128 @@ object SealedStuff {
   final val ExampleJsonString = ExampleJson.noSpaces
 }
 
+case class Foo(s: String, d: Double, i: Int, l: Long, bs: List[Boolean])
+object Foo {
+  implicit val circeEncodeFoo: Encoder[Foo] = deriveEncoder
+  implicit val circeDecodeFoo: Decoder[Foo] = deriveDecoder
+  implicit val codec: GenCodec[Foo] = GenCodec.materialize
+
+  final val ExampleMap: Map[String, Foo] = List.tabulate(100) { i =>
+    ("b" * i) -> Foo("a" * i, (i + 2.0) / (i + 1.0), i, i * 1000L, (0 to i).map(_ % 2 == 0).toList)
+  }.toMap
+
+  final val ExampleJson = ExampleMap.asJson
+  final val ExampleJsonString = ExampleJson.noSpaces
+}
+
 @Warmup(iterations = 10)
 @Measurement(iterations = 20)
 @Fork(1)
 @BenchmarkMode(Array(Mode.Throughput))
-class JsonSerializationBenchmark {
+abstract class JsonSerializationBenchmark
+
+class JsonEncodingBenchmark extends JsonSerializationBenchmark {
   @Benchmark
-  def circeJsonWriting: Json =
+  def encodeCCCirce: Json =
     Something.Example.asJson
 
   @Benchmark
-  def circeJsonReading: Something =
-    Something.ExampleJson.as[Something].fold(e => throw e, identity)
-
-  @Benchmark
-  def circeJsonStringWriting: String =
-    Something.Example.asJson.noSpaces
-
-  @Benchmark
-  def circeJsonStringReading: Something =
-    decode[Something](Something.ExampleJsonString).fold(e => throw e, identity)
-
-  @Benchmark
-  def circeSealedJsonWriting: Json =
-    SealedStuff.ExampleList.asJson
-
-  @Benchmark
-  def circeSealedJsonReading: List[SealedStuff] =
-    SealedStuff.ExampleJson.as[List[SealedStuff]].fold(e => throw e, identity)
-
-  @Benchmark
-  def circeSealedJsonStringWriting: String =
-    SealedStuff.ExampleList.asJson.noSpaces
-
-  @Benchmark
-  def circeSealedJsonStringReading: List[SealedStuff] =
-    decode[List[SealedStuff]](SealedStuff.ExampleJsonString).fold(e => throw e, identity)
-
-  @Benchmark
-  def genCodecJsonWriting: Json =
+  def encodeCCGenCodec: Json =
     CirceJsonOutput.write(Something.Example)
 
   @Benchmark
-  def genCodecJsonReading: Something =
-    CirceJsonInput.read[Something](Something.ExampleJson)
+  def encodeSHCirce: Json =
+    SealedStuff.ExampleList.asJson
 
   @Benchmark
-  def genCodecJsonStringWriting: String =
-    JsonStringOutput.write(Something.Example)
-
-  @Benchmark
-  def genCodecJsonStringReading: Something =
-    JsonStringInput.read[Something](Something.ExampleJsonString)
-
-  @Benchmark
-  def genCodecSealedJsonWriting: Json =
+  def encodeSHGenCodec: Json =
     CirceJsonOutput.write(SealedStuff.ExampleList)
 
   @Benchmark
-  def genCodecSealedJsonReading: List[SealedStuff] =
+  def encodeFoosCirce: Json =
+    Foo.ExampleMap.asJson
+
+  @Benchmark
+  def encodeFoosGenCodec: Json =
+    CirceJsonOutput.write(Foo.ExampleMap)
+}
+
+class JsonDecodingBenchmark extends JsonSerializationBenchmark {
+  @Benchmark
+  def decodeCCCirce: Something =
+    Something.ExampleJson.as[Something].fold(e => throw e, identity)
+
+  @Benchmark
+  def decodeCCGenCodec: Something =
+    CirceJsonInput.read[Something](Something.ExampleJson)
+
+  @Benchmark
+  def decodeSHCirce: List[SealedStuff] =
+    SealedStuff.ExampleJson.as[List[SealedStuff]].fold(e => throw e, identity)
+
+  @Benchmark
+  def decodeSHGenCodec: List[SealedStuff] =
     CirceJsonInput.read[List[SealedStuff]](SealedStuff.ExampleJson)
 
   @Benchmark
-  def genCodecSealedJsonStringWriting: String =
+  def decodeFoosCirce: Map[String, Foo] =
+    Foo.ExampleJson.as[Map[String, Foo]].fold(e => throw e, identity)
+
+  @Benchmark
+  def decodeFoosGenCodec: Map[String, Foo] =
+    CirceJsonInput.read[Map[String, Foo]](Foo.ExampleJson)
+}
+
+class JsonWritingBenchmark extends JsonSerializationBenchmark {
+  @Benchmark
+  def writeCCCirce: String =
+    Something.Example.asJson.noSpaces
+
+  @Benchmark
+  def writeCCGenCodec: String =
+    JsonStringOutput.write(Something.Example)
+
+  @Benchmark
+  def writeSHCirce: String =
+    SealedStuff.ExampleList.asJson.noSpaces
+
+  @Benchmark
+  def writeSHGenCodec: String =
     JsonStringOutput.write(SealedStuff.ExampleList)
 
   @Benchmark
-  def genCodecSealedJsonStringReading: List[SealedStuff] =
+  def writeFoosCirce: String =
+    Foo.ExampleMap.asJson.noSpaces
+
+  @Benchmark
+  def writeFoosGenCodec: String =
+    JsonStringOutput.write(Foo.ExampleMap)
+}
+
+class JsonReadingBenchmark extends JsonSerializationBenchmark {
+  @Benchmark
+  def readCCCirce: Something =
+    decode[Something](Something.ExampleJsonString).fold(e => throw e, identity)
+
+  @Benchmark
+  def readCCGenCodec: Something =
+    JsonStringInput.read[Something](Something.ExampleJsonString)
+
+  @Benchmark
+  def readSHCirce: List[SealedStuff] =
+    decode[List[SealedStuff]](SealedStuff.ExampleJsonString).fold(e => throw e, identity)
+
+  @Benchmark
+  def readSHGenCodec: List[SealedStuff] =
     JsonStringInput.read[List[SealedStuff]](SealedStuff.ExampleJsonString)
+
+  @Benchmark
+  def readFoosCirce: Map[String, Foo] =
+    decode[Map[String, Foo]](Foo.ExampleJsonString).fold(e => throw e, identity)
+
+  @Benchmark
+  def readFoosGenCodec: Map[String, Foo] =
+    JsonStringInput.read[Map[String, Foo]](Foo.ExampleJsonString)
 }
 
 object JsonSerializationBenchmark {
