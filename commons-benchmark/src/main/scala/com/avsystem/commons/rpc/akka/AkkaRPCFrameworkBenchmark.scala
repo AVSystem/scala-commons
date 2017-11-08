@@ -5,14 +5,15 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.{ActorPath, ActorSystem}
 import com.avsystem.commons.rpc.RPC
+import com.avsystem.commons.rpc.akka.AkkaRPCFramework._
 import com.typesafe.config.{Config, ConfigFactory}
 import monix.reactive.Observable
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, Scope, Setup, State, TearDown, Warmup}
 import org.openjdk.jmh.infra.Blackhole
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.Await
 
 /**
   * @author Wojciech Milewski
@@ -128,8 +129,14 @@ trait TestRPC {
   def stream: Observable[Int]
   def inner: InnerRPC
 }
+object TestRPC {
+  implicit val fullRPCInfo: BaseFullRPCInfo[TestRPC] = materializeFullInfo
+}
 
 @RPC
 trait InnerRPC {
   def innerFire(): Unit
+}
+object InnerRPC {
+  implicit val fullRPCInfo: BaseFullRPCInfo[InnerRPC] = materializeFullInfo
 }

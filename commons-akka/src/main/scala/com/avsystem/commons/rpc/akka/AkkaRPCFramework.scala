@@ -17,13 +17,15 @@ import com.avsystem.commons.serialization.GenCodec
 object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework with FunctionRPCFramework with MonixRPCFramework {
   trait RawRPC extends GetterRawRPC with ProcedureRawRPC with FunctionRawRPC with MonixRawRPC
 
-  override type RawValue = ByteString
+  type RawValue = ByteString
 
-  override type Reader[T] = GenCodec[T]
-  override type Writer[T] = GenCodec[T]
+  type Reader[T] = GenCodec[T]
+  type Writer[T] = GenCodec[T]
+  type ParamTypeMetadata[T] = DummyImplicit
+  type ResultTypeMetadata[T] = DummyImplicit
 
-  override def read[T: Reader](raw: RawValue): T = GenCodec.read[T](new ByteStringLinearInput(raw))
-  override def write[T: Writer](value: T): RawValue = {
+  def read[T: Reader](raw: RawValue): T = GenCodec.read[T](new ByteStringLinearInput(raw))
+  def write[T: Writer](value: T): RawValue = {
     val output = new ByteStringLinearOutput(ByteString.newBuilder)
     GenCodec.write[T](output, value)
     output.result

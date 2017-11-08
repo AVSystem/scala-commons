@@ -31,6 +31,9 @@ trait MacroCommons {
   final val ImplicitsObj = q"$CommonsPackage.misc.Implicits"
   final val AnnotationAggregateType = getType(tq"$CommonsPackage.annotation.AnnotationAggregate")
 
+  final lazy val isScalaJs =
+    definitions.ScalaPackageClass.toType.member(TermName("scalajs")) != NoSymbol
+
   final lazy val ownerChain = {
     val sym = c.typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
     Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).drop(1).toList
@@ -48,6 +51,11 @@ trait MacroCommons {
     def debug: T = {
       c.echo(c.enclosingPosition, show(t))
       t
+    }
+
+    def asStatList: List[Tree] = t match {
+      case Block(stats, expr) => stats :+ expr
+      case _ => List(t)
     }
   }
 
@@ -485,14 +493,6 @@ trait MacroCommons {
       case EmptyTree => None
     }
   }
-
-  def inferOrMaterialize(typeClass: Type)(materialize: => Tree): Tree =
-    if (c.macroApplication.symbol.isImplicit)
-      c.inferImplicitValue(typeClass, withMacrosDisabled = true) match {
-        case EmptyTree => materialize
-        case tree => tree
-      }
-    else materialize
 
   def abortOnTypecheckException[T](expr: => T): T =
     try expr catch {
