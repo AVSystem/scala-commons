@@ -15,7 +15,7 @@ case class Record(i: Int, fuu: String)
 
   def indirectRecursion(): TestRPC
 }
-object InnerRPC extends RPCTypeClasses[DummyRPC.type, InnerRPC]
+object InnerRPC extends DummyRPC.RPCCompanion[InnerRPC]
 
 @RPC trait TestRPC {
   @silent
@@ -39,7 +39,7 @@ object InnerRPC extends RPCTypeClasses[DummyRPC.type, InnerRPC]
 }
 
 @silent
-object TestRPC extends RPCTypeClasses[DummyRPC.type, TestRPC] {
+object TestRPC extends DummyRPC.RPCCompanion[TestRPC] {
   def rpcImpl(onInvocation: (String, List[List[Any]], Option[Any]) => Any) = new TestRPC { outer =>
     private def onProcedure(methodName: String, args: List[List[Any]]): Unit =
       onInvocation(methodName, args, None)

@@ -17,7 +17,6 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
   val AsRawRPCCls = tq"$FrameworkObj.AsRawRPC"
   val AsRealRPCObj = q"$FrameworkObj.AsRealRPC"
   val AsRealRPCCls = tq"$FrameworkObj.AsRealRPC"
-  val AllRPCTypeClassesObj = q"$RpcPackage.AllRPCTypeClasses"
   val RawValueCls = tq"$FrameworkObj.RawValue"
   val ArgListsCls = tq"$ListCls[$ListCls[$RawValueCls]]"
   val RealInvocationHandlerCls = tq"$FrameworkObj.RealInvocationHandler"
@@ -216,13 +215,6 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
         def asReal($rawRpcName: $RawRPCCls) = new $rpcTpe { ..$implementations; () }
       }
      """
-  }
-
-  def allRpcTypeClassesImpl[F: c.WeakTypeTag, T: c.WeakTypeTag]: Tree = {
-    val ftpe = weakTypeOf[F]
-    val frameworkObj = singleValueFor(ftpe).getOrElse(abort(s"Could not find singleton value for $ftpe"))
-    val tpe = weakTypeOf[T]
-    q"$AllRPCTypeClassesObj[$ftpe,$tpe]($frameworkObj.materializeAsReal[$tpe], $frameworkObj.materializeAsRaw[$tpe], $frameworkObj.materializeMetadata[$tpe])"
   }
 
   def isRPC[T: c.WeakTypeTag]: Tree = {
