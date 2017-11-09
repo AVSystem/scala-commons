@@ -3,6 +3,7 @@ package macros.serialization
 
 import com.avsystem.commons.macros.TypeClassDerivation
 
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.macros.blackbox
 
 class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with TypeClassDerivation {
@@ -64,6 +65,13 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     addParams(q"$prefix.$sym", sym.typeSignature.paramLists)
   }
 
+  private def mkArray[T: Liftable](elemTpe: Tree, elems: Seq[T]): Tree =
+    q"""
+       val res = new $ScalaPkg.Array[$elemTpe](${elems.size})
+       ..${elems.zipWithIndex.map({case (e, i) => q"res($i) = $e"})}
+       res
+     """
+
   private def generatedMembers(tpe: Type): List[(Symbol, Type)] =
     tpe.members.filter(isGenerated).map { sym =>
       val sig = sym.typeSignatureIn(tpe)
@@ -80,22 +88,21 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val generated = generatedMembers(tpe)
 
     if (generated.isEmpty)
-      q"new $GenCodecObj.SingletonCodec[$tpe]($singleValueTree)"
+      q"new $SerializationPkg.SingletonCodec[$tpe](${tpe.toString}, $singleValueTree)"
     else {
       val tcTpe = typeClassInstance(tpe)
       val targetNames = targetNameMap(generated.map(_._1))
       val depNames = depNamesMap(generated.map(_._1))
 
-      def depDeclaration(sym: Symbol, depTpe: Type) =
+      def generatedDepDeclaration(sym: Symbol, depTpe: Type) =
         q"lazy val ${depNames(sym)} = ${dependency(depTpe, tcTpe, s"for generated member ${sym.name}")}"
 
       def generatedWrite(sym: Symbol) =
         q"writeField(${targetNames(sym)}, output, ${mkParamLessCall(q"value", sym)}, ${depNames(sym)})"
 
       q"""
-        new $GenCodecObj.SingletonCodec[$tpe]($singleValueTree) with $GenCodecObj.ErrorReportingCodec[$tpe] {
-          ..${generated.map({ case (sym, depTpe) => depDeclaration(sym, depTpe) })}
-          protected def typeRepr = ${tpe.toString}
+        new $SerializationPkg.SingletonCodec[$tpe](${tpe.toString}, $singleValueTree) {
+          ..${generated.map({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
           override def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe): $UnitCls = {
             ..${generated.map({ case (sym, _) => generatedWrite(sym) })}
           }
@@ -111,29 +118,17 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     hasAnnotation(sym, OutOfOrderAnnotType)
 
   def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree =
-    forApplyUnapply(tpe, apply, unapply, params, Map.empty)
+    forApplyUnapply(tpe, Ident(tpe.typeSymbol.companion), apply, unapply, params)
 
-  def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol,
-    params: List[ApplyParam], oooFields: Map[String, TermName]): Tree =
-    forApplyUnapply(tpe, Ident(tpe.typeSymbol.companion), apply, unapply, params, oooFields)
-
-  def forApplyUnapply(tpe: Type, companion: Tree, apply: Symbol, unapply: Symbol,
-    params: List[ApplyParam], oooFields: Map[String, TermName]): Tree = {
-
+  def forApplyUnapply(tpe: Type, companion: Tree, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
     val tcTpe = typeClassInstance(tpe)
     val generated = generatedMembers(tpe)
     val nameBySym = targetNameMap(params.map(_.sym) ++ generated.map(_._1))
 
-    def memberDepName(sym: Symbol) = oooFields.getOrElse(nameBySym(sym), newDepName(sym))
-
-    val depNames = params.map(p => (p.sym, memberDepName(p.sym))).toMap ++
-      generated.map({ case (sym, _) => (sym, memberDepName(sym)) }).toMap
-
-    def depDeclaration(param: ApplyParam) =
-      q"lazy val ${depNames(param.sym)} = ${param.instance}"
+    val genDepNames = generated.map({ case (sym, _) => (sym, newDepName(sym)) }).toMap
 
     def generatedDepDeclaration(sym: Symbol, depTpe: Type) =
-      q"lazy val ${depNames(sym)} = ${dependency(depTpe, tcTpe, s"for generated member ${sym.name}")}"
+      q"lazy val ${genDepNames(sym)} = ${dependency(depTpe, tcTpe, s"for generated member ${sym.name}")}"
 
     // don't use apply/unapply when they're synthetic (for case class) to avoid reference to companion object
 
@@ -141,7 +136,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       companion.symbol == tpe.typeSymbol.companion
     val canUseFields = caseClass && unapply.isSynthetic && params.forall { p =>
       alternatives(tpe.member(p.sym.name)).exists { f =>
-        f.isTerm && f.asTerm.isCaseAccessor && f.isPublic && f.typeSignature.finalResultType =:= p.sym.typeSignature
+        f.isTerm && f.asTerm.isCaseAccessor && f.isPublic && f.typeSignatureIn(tpe).finalResultType =:= p.valueType
       }
     }
 
@@ -161,7 +156,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
       case List(p) =>
         def writeField(value: Tree) = {
-          val baseWrite = q"writeField(${nameBySym(p.sym)}, output, $value, ${depNames(p.sym)})"
+          val baseWrite = q"writeField[${p.valueType}](output, ${p.idx}, $value)"
           if (isTransientDefault(p))
             q"if($value != ${p.defaultValue}) { $baseWrite }"
           else
@@ -177,7 +172,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
       case _ =>
         def writeField(p: ApplyParam, value: Tree) = {
-          val baseWrite = q"writeField(${nameBySym(p.sym)}, output, $value, ${depNames(p.sym)})"
+          val baseWrite = q"writeField[${p.valueType}](output, ${p.idx}, $value)"
           if (isTransientDefault(p))
             q"if($value != ${p.defaultValue}) { $baseWrite }"
           else
@@ -191,7 +186,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
             val unapplyRes = $companion.$unapply[..${tpe.typeArgs}](value)
             if(unapplyRes.isEmpty) unapplyFailed else {
               val t = unapplyRes.get
-              ..${params.zipWithIndex.map({ case (p, i) => writeField(p, q"t.${tupleGet(i)}") })}
+              ..${params.map(p => writeField(p, q"t.${tupleGet(p.idx)}"))}
             }
            """
     }
@@ -202,84 +197,75 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           abort(s"class marked as @transparent cannot have @generated members")
         }
 
-        val writeBody = if (canUseFields)
-          q"${depNames(p.sym)}.write(output, value.${p.sym.name})"
+        val unwrapBody = if (canUseFields)
+          q"value.${p.sym.name}"
         else
           q"""
             val unapplyRes = $companion.$unapply[..${tpe.typeArgs}](value)
-            if(unapplyRes.isEmpty) unapplyFailed else ${depNames(p.sym)}.write(output, unapplyRes.get)
+            if(unapplyRes.isEmpty) unapplyFailed else unapplyRes.get
            """
 
         q"""
-           new $GenCodecObj.NullSafeCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
-             ${depDeclaration(p)}
-             protected def typeRepr = ${tpe.toString}
-             def nullable = ${typeOf[Null] <:< tpe}
-             def readNonNull(input: $SerializationPkg.Input): $tpe =
-               ${applier(List(q"${depNames(p.sym)}.read(input)"))}
-             def writeNonNull(output: $SerializationPkg.Output, value: $tpe): $UnitCls =
-               $writeBody
+           new $SerializationPkg.TransparentCodec[$tpe,${p.valueType}](
+             ${tpe.toString},
+             ${typeOf[Null] <:< tpe},
+             ${p.instance}
+           ) {
+             def wrap(underlying: ${p.valueType}): $tpe = ${applier(List(q"underlying"))}
+             def unwrap(value: $tpe): ${p.valueType} = $unwrapBody
            }
          """
       case _ =>
         abort(s"@transparent annotation found on class with ${params.size} parameters, expected exactly one.")
+
     } else {
 
-      def optName(param: ApplyParam): TermName =
-        TermName(nameBySym(param.sym) + "Opt")
-
-      def readField(param: ApplyParam) = {
-        val fieldName = nameBySym(param.sym)
-        val defaultValueTree = param.defaultValue.orElse(q"fieldMissing($fieldName)")
-        q"${optName(param)}.getOrElse($defaultValueTree)"
-      }
-
-      def varDeclaration(p: ApplyParam) = {
-        val varName = optName(p)
-        if (oooFields.contains(nameBySym(p.sym)))
-          q"var $varName = oooFields.$varName"
-        else
-          q"var $varName = $NOptObj.empty[${p.valueType}]"
-      }
-
-      val baseClass =
-        if (oooFields.nonEmpty) tq"$GenCodecObj.ApplyUnapplyCodec[$tpe,OutOfOrderFields]"
-        else tq"$GenCodecObj.ObjectCodec[$tpe]"
-
-      val oooFieldsParam =
-        if (oooFields.nonEmpty) List(q"oooFields: OutOfOrderFields") else Nil
-
-      val emptyOooFieldsDecl =
-        if (oooFields.nonEmpty) q"protected val emptyOutOfOrderFields = new OutOfOrderFields" else q"()"
-
-      def fieldReadCase(p: ApplyParam): Tree =
-        cq"${nameBySym(p.sym)} => ${optName(p)} = $NOptObj.some(readField(fi, ${depNames(p.sym)}))"
+      def readField(param: ApplyParam) =
+        param.defaultValue match {
+          case EmptyTree => q"getField[${param.valueType}](fieldValues, ${param.idx})"
+          case tree => q"getField[${param.valueType}](fieldValues, ${param.idx}, $tree)"
+        }
 
       def generatedWrite(sym: Symbol) =
-        q"writeField(${nameBySym(sym)}, output, ${mkParamLessCall(q"value", sym)}, ${depNames(sym)})"
+        q"writeField(${nameBySym(sym)}, output, ${mkParamLessCall(q"value", sym)}, ${genDepNames(sym)})"
 
-      q"""
-        new $baseClass with $GenCodecObj.ErrorReportingCodec[$tpe] {
-          ..${params.filterNot(ap => oooFields.contains(nameBySym(ap.sym))).map(depDeclaration)}
-          ..${generated.collect({ case (sym, depTpe) if !oooFields.contains(nameBySym(sym)) => generatedDepDeclaration(sym, depTpe) })}
-          $emptyOooFieldsDecl
-          protected def typeRepr = ${tpe.toString}
-          def nullable = ${typeOf[Null] <:< tpe}
-          def readObject(input: $SerializationPkg.ObjectInput, ..$oooFieldsParam): $tpe = {
-            ..${params.map(varDeclaration)}
-            while(input.hasNext) {
-              val fi = input.nextField()
-              fi.fieldName match {
-                case ..${params.map(fieldReadCase)}
-                case _ => fi.skip()
-              }
-            }
-            ${applier(params.map(p => p.asArgument(readField(p))))}
-          }
+      val useProductCodec = canUseFields && generated.isEmpty && !params.exists(isTransientDefault)
+      val baseClass = TypeName(if (useProductCodec) "ProductCodec" else "ApplyUnapplyCodec")
+
+      def writeMethod = if (useProductCodec) q"()" else
+        q"""
           def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = {
             $writeFields
             ..${generated.map({ case (sym, _) => generatedWrite(sym) })}
           }
+         """
+
+      val reusedDeps = new ArrayBuffer[Tree]
+      val depsWithReusing = params.map { p =>
+        if (params.count(_.valueType =:= p.valueType) == 1) p.instance else {
+          val prevIdx = params.indexWhere(_.valueType =:= p.valueType)
+          val reusedName = TermName("dep" + prevIdx)
+          if (prevIdx == p.idx) {
+            reusedDeps += q"val $reusedName = ${p.instance}"
+          }
+          q"$reusedName"
+        }
+      }
+
+      q"""
+        new $SerializationPkg.$baseClass[$tpe](
+          ${tpe.toString},
+          ${typeOf[Null] <:< tpe},
+          ${mkArray(StringCls, params.map(p => nameBySym(p.sym)))}
+        ) {
+          def dependencies = {
+            ..$reusedDeps
+            ${mkArray(tq"$GenCodecCls[_]", depsWithReusing)}
+          }
+          ..${generated.collect({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
+          def instantiate(fieldValues: $SerializationPkg.FieldValues) =
+            ${applier(params.map(p => p.asArgument(readField(p))))}
+          $writeMethod
         }
        """
     }
@@ -298,40 +284,27 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   def forSealedHierarchy(tpe: Type, subtypes: List[KnownSubtype]): Tree = {
     val targetNameBySym = targetNameMap(subtypes.map(_.sym))
-    val depNames = depNamesMap(subtypes.map(_.sym))
-
-    def depDeclaration(subtype: KnownSubtype) =
-      q"lazy val ${depNames(subtype.sym)} = ${subtype.instance}"
-
     q"""
-      new $GenCodecObj.ObjectCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
-        ..${subtypes.map(depDeclaration)}
-        protected def typeRepr = ${tpe.toString}
-        def nullable = ${typeOf[Null] <:< tpe}
-        def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
-          if(input.hasNext) {
-            val fi = input.nextField()
-            val result = fi.fieldName match {
-              case ..${subtypes.map(st => cq"${targetNameBySym(st.sym)} => readCase(${targetNameBySym(st.sym)}, fi, ${depNames(st.sym)})")}
-              case key => unknownCase(key)
-            }
-            if(input.hasNext) notSingleField(empty = false) else result
-          } else notSingleField(empty = true)
-        }
-        def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
-          case ..${subtypes.map(st => cq"value: ${st.tpe} => writeCase(${targetNameBySym(st.sym)}, output, value, ${depNames(st.sym)})")}
-        }
+      new $SerializationPkg.NestedSealedHierarchyCodec[$tpe](
+        ${tpe.toString},
+        ${typeOf[Null] <:< tpe},
+        ${mkArray(StringCls, subtypes.map(st => targetNameBySym(st.sym)))},
+        ${mkArray(tq"$ClassCls[_ <: $tpe]", subtypes.map(st => q"classOf[${st.tpe}]"))}
+      ) {
+        def caseDependencies = ${mkArray(tq"$GenCodecCls[_ <: $tpe]", subtypes.map(_.instance))}
       }
      """
   }
 
   sealed abstract class CaseInfo {
+    def idx: Int
     def subtype: Type
     def applyParams: List[ApplyParam]
+    def depInstance: Tree
 
     val sym: Symbol = subtype.typeSymbol
     val caseName: String = targetName(sym)
-    val depName: TermName = newDepName(sym)
+    val classOf: Tree = q"classOf[$subtype]"
     val generated: List[(Symbol, Type)] = generatedMembers(subtype)
     val (defaultCase, transientCase) =
       getAnnotations(sym, DefaultCaseAnnotType).headOption
@@ -347,30 +320,19 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val oooSymbols: List[Symbol] = membersByName.values.iterator.map(_._1).filter(isOutOfOrder).toList
     val oooFieldNames: Set[String] = oooSymbols.iterator.map(targetNames).toSet
 
-    def depInstance(oooDepNames: Map[String, TermName]): Tree
-    def caseReadBody(input: Tree): Tree
-
-    def caseRead: Tree = cq"$caseName => ${caseReadBody(q"input")}"
-    def depDeclaration(oooDepNames: Map[String, TermName]) = q"lazy val $depName = ${depInstance(oooDepNames)}"
-    def caseWrite = cq"value: $subtype => writeFlatCase($caseName, $transientCase, output, value, $depName)"
-
     if (isTransparent(sym)) {
       abort(s"You can't use @transparent on case classes of a sealed trait/class with @flatten annotation")
     }
   }
 
-  case class CaseClassInfo(subtype: Type, applyUnapply: ApplyUnapply, applyParams: List[ApplyParam]) extends CaseInfo {
-    def depInstance(oooDepNames: Map[String, TermName]) =
-      forApplyUnapply(subtype, applyUnapply.apply, applyUnapply.unapply, applyParams, oooDepNames.filterKeys(oooFieldNames))
-    def caseReadBody(input: Tree) =
-      if (oooFieldNames.isEmpty) q"readFlatCase($caseName, $input, $depName)"
-      else q"readFlatCase($caseName, oooFields, $input, $depName)"
+  case class CaseClassInfo(idx: Int, subtype: Type, applyUnapply: ApplyUnapply, applyParams: List[ApplyParam]) extends CaseInfo {
+    def depInstance =
+      forApplyUnapply(subtype, applyUnapply.apply, applyUnapply.unapply, applyParams)
   }
 
-  case class CaseObjectInfo(subtype: Type, singleton: Tree) extends CaseInfo {
+  case class CaseObjectInfo(idx: Int, subtype: Type, singleton: Tree) extends CaseInfo {
     def applyParams = Nil
-    def depInstance(oooDepNames: Map[String, TermName]) = forSingleton(subtype, singleton)
-    def caseReadBody(input: Tree) = q"readFlatCase($caseName, $input, $depName)"
+    def depInstance = forSingleton(subtype, singleton)
   }
 
   def flatForSealedHierarchy(tpe: Type, caseFieldName: String): Tree = {
@@ -378,15 +340,17 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val subtypes = knownSubtypes(tpe).getOrElse(abort(s"$tpe is not a sealed hierarchy root"))
     targetNameMap(subtypes.map(_.typeSymbol)) // just to validate uniqueness
 
-    val caseInfos: List[CaseInfo] = subtypes.map(st => applyUnapplyFor(st).map { au =>
-      val subTcTpe = typeClassInstance(st)
-      val applyParams = au.params.map { case (s, defaultValue) =>
-        ApplyParam(s, defaultValue, dependency(nonRepeatedType(s.typeSignature), subTcTpe, s"for field ${s.name}"))
-      }
-      CaseClassInfo(st, au, applyParams)
-    } orElse singleValueFor(st).map { singleton =>
-      CaseObjectInfo(st, singleton)
-    } getOrElse abort(s""))
+    val caseInfos: List[CaseInfo] = subtypes.zipWithIndex.map { case (st, idx) =>
+      applyUnapplyFor(st).map { au =>
+        val subTcTpe = typeClassInstance(st)
+        val applyParams = au.params.zipWithIndex.map { case ((s, defaultValue), pidx) =>
+          ApplyParam(pidx, s, defaultValue, dependency(nonRepeatedType(s.typeSignature), subTcTpe, s"for field ${s.name}"))
+        }
+        CaseClassInfo(idx, st, au, applyParams)
+      } orElse singleValueFor(st).map { singleton =>
+        CaseObjectInfo(idx, st, singleton)
+      } getOrElse abort(s"")
+    }
 
     caseInfos.foreach { ci =>
       if (ci.targetNames.values.exists(_ == caseFieldName)) {
@@ -403,6 +367,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val oooParams: Map[String, Type] = caseInfos.flatMap { ci =>
       ci.oooFieldNames.iterator.map(name => (name, ci.membersByName(name)._2))
     }.toMap
+    val oooParamNames = oooParams.keys.toList
 
     val caseDependentFieldNames =
       (for {
@@ -428,63 +393,23 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       }
     }
 
-    def optName(name: String) = TermName(name + "Opt")
-
-    val oooDepNames = oooParams.map({ case (name, _) => (name, newDepName(name)) })
-
-    def oooDepDeclaration(name: String, ptpe: Type) =
-      q"lazy val ${oooDepNames(name)} = ${dependency(ptpe, tcTpe, s"for field $name")}"
-
-    def oooFieldReadCase(name: String) =
-      cq"$name => oooFields.${optName(name)} = $NOptObj.some(readField(fi, ${oooDepNames(name)})); read()"
-
-    val oooFieldsClass = if (oooParams.isEmpty) q"()" else
-      q"""
-        final class OutOfOrderFields {
-          ..${oooParams.map({ case (name, ptpe) => q"var ${optName(name)} = $NOptObj.empty[$ptpe]" })}
-        }
-       """
-
-    val oooFieldsDecl =
-      if (oooParams.isEmpty) q"()" else q"val oooFields = new OutOfOrderFields"
-
-    val caseDependentParamsCase =
-      if (caseDependentFieldNames.isEmpty) Nil
-      else {
-        val pattern = caseDependentFieldNames.map(n => pq"$n").reduce((p1, p2) => pq"$p1 | $p2")
-        val wrappedInput = q"new $SerializationPkg.DefaultCaseObjectInput(fi, input, $caseFieldName)"
-        List(cq"$pattern => ${defaultCase.fold(q"missingCase(fi.fieldName)")(_.caseReadBody(wrappedInput))}")
-      }
+    def oooDependency(name: String) =
+      dependency(oooParams(name), tcTpe, s"for field $name")
 
     q"""
-      new $GenCodecObj.ObjectCodec[$tpe] with $GenCodecObj.ErrorReportingCodec[$tpe] {
-        $oooFieldsClass
-        ..${oooParams.map({ case (name, ptpe) => oooDepDeclaration(name, ptpe) })}
-        ..${caseInfos.map(_.depDeclaration(oooDepNames))}
-        protected def typeRepr = ${tpe.toString}
-        override protected def caseFieldName = $caseFieldName
-        def nullable = ${typeOf[Null] <:< tpe}
-        def readObject(input: $SerializationPkg.ObjectInput): $tpe = {
-          $oooFieldsDecl
-          def read(): $tpe =
-            if(input.hasNext) {
-              val fi = input.nextField()
-              fi.fieldName match {
-                case $caseFieldName => readCaseName(fi) match {
-                  case ..${caseInfos.map(_.caseRead)}
-                  case caseName => unknownCase(caseName)
-                }
-                case ..${oooParams.keysIterator.map(oooFieldReadCase).toList}
-                case ..$caseDependentParamsCase
-                case _ => fi.skip(); read()
-              }
-            } else ${defaultCase.fold[Tree](q"missingCase")(_.caseReadBody(q"input"))}
-          read()
-        }
-
-        def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = value match {
-          case ..${caseInfos.map(_.caseWrite)}
-        }
+      new $SerializationPkg.FlatSealedHierarchyCodec[$tpe](
+        ${tpe.toString},
+        ${typeOf[Null] <:< tpe},
+        ${mkArray(StringCls, caseInfos.map(_.caseName))},
+        ${mkArray(tq"$ClassCls[_ <: $tpe]", caseInfos.map(_.classOf))},
+        ${mkArray(StringCls, oooParamNames)},
+        $SetObj(..$caseDependentFieldNames),
+        $caseFieldName,
+        ${defaultCase.map(caseInfos.indexOf).getOrElse(-1)},
+        ${defaultCase.exists(_.transientCase)}
+      ) {
+        def caseDependencies = ${mkArray(tq"$GenCodecObj.OOOFieldsObjectCodec[_ <: $tpe]", caseInfos.map(_.depInstance))}
+        def oooDependencies = ${mkArray(tq"$GenCodecCls[_]", oooParamNames.map(oooDependency))}
       }
     """
   }
@@ -509,10 +434,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val tcTpe = typeClassInstance(tpe)
     applyUnapplyFor(tpe, applyUnapplyProvider) match {
       case Some(ApplyUnapply(apply, unapply, params)) =>
-        val dependencies = params.map { case (s, defaultValue) =>
-          ApplyParam(s, defaultValue, dependency(nonRepeatedType(s.typeSignature), tcTpe, s"for field ${s.name}"))
+        val dependencies = params.zipWithIndex.map { case ((s, defaultValue), idx) =>
+          ApplyParam(idx, s, defaultValue, dependency(nonRepeatedType(s.typeSignature), tcTpe, s"for field ${s.name}"))
         }
-        forApplyUnapply(tpe, applyUnapplyProvider, apply, unapply, dependencies, Map.empty)
+        forApplyUnapply(tpe, applyUnapplyProvider, apply, unapply, dependencies)
       case None =>
         abort(s"Cannot derive GenCodec for $tpe from `apply` and `unapply`/`unapplySeq` methods of ${applyUnapplyProvider.tpe}")
     }

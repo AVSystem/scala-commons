@@ -7,6 +7,17 @@ package serialization
   * without default constructor arguments.
   */
 abstract class HasGenCodec[T](implicit macroCodec: MacroCodec[T]) {
+  /**
+    * Use this constructor and pass `GenCodec.materialize` explicitly if you're getting the
+    * "super constructor cannot be passed a self reference unless parameter is declared by-name" error.
+    *
+    * {{{
+    *   case class Stuff(int: Int = 42)
+    *   object Stuff extends HasGenCodec[Stuff](GenCodec.materialize)
+    * }}}
+    */
+  def this(codec: => GenCodec[T]) = this()(MacroCodec(codec))
+
   implicit val codec: GenCodec[T] = macroCodec.codec
 }
 

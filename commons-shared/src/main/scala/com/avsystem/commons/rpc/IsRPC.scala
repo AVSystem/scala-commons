@@ -6,6 +6,6 @@ package rpc
   */
 sealed trait IsRPC[T]
 object IsRPC {
-  implicit def isRPC[T]: IsRPC[T] = macro macros.rpc.RPCMacros.isRPC[T]
+  implicit def isRPC[T]: IsRPC[T] = macro macros.rpc.RPCFrameworkMacros.isRPC[T]
 }
 

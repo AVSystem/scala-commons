@@ -110,15 +110,13 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
     trait ConcreteRPC extends BaseRPC[String]
 
     "rpc should work with parameterized interface types" in {
-      AsRawRPC[ConcreteRPC]
-      AsRealRPC[ConcreteRPC]
+      materializeFullInfo[ConcreteRPC]
     }
 
-    "rpc should work with empty interface types" in {
-      @RPC trait EmptyRPC
+    @RPC trait EmptyRPC
 
-      AsRawRPC[EmptyRPC]: @silent
-      AsRealRPC[EmptyRPC]: @silent
+    "rpc should work with empty interface types" in {
+      materializeFullInfo[EmptyRPC]: @silent
     }
   }
 }

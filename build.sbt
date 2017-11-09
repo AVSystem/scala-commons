@@ -85,8 +85,8 @@ val commonSettings = Seq(
   libraryDependencies += compilerPlugin("com.github.ghik" %% "silencer-plugin" % silencerVersion),
   libraryDependencies ++= Seq(
     "com.github.ghik" %% "silencer-lib" % silencerVersion,
-    "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-    "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
+    "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
+    "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.apache.commons" % "commons-io" % commonsIoVersion % Test,
   ),
   dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
@@ -164,20 +164,19 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
   .settings(commonSettings: _*)
   .jvmSettings(jvmCommonSettings)
   .jsSettings(
-    scalaJSUseMainModuleInitializer in Test := true,
     scalacOptions += {
       val localDir = (baseDirectory in ThisBuild).value.toURI.toString
       val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
       s"-P:scalajs:mapSourceURI:$localDir->$githubDir/v${version.value}/"
     },
-    test := {},
+    jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
     fork in Test := false,
   )
 
 lazy val `commons-sharedJVM` = `commons-shared`.jvm
 lazy val `commons-sharedJS` = `commons-shared`.js
 
-lazy val `commons-core` = project.dependsOn(`commons-macros` % CompileAndTest, `commons-sharedJVM`)
+lazy val `commons-core` = project.dependsOn(`commons-macros` % CompileAndTest, `commons-sharedJVM` % CompileAndTest)
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(

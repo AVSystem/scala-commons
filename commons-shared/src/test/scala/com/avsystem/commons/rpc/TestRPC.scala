@@ -12,8 +12,10 @@ case class Record(i: Int, fuu: String)
   def func(arg: Int): Future[String]
 
   def moreInner(name: String): InnerRPC
+
+  def indirectRecursion(): TestRPC
 }
-object InnerRPC extends RPCTypeClasses[DummyRPC.type, InnerRPC]
+object InnerRPC extends DummyRPC.RPCCompanion[InnerRPC]
 
 @RPC trait TestRPC {
   @silent
@@ -37,8 +39,8 @@ object InnerRPC extends RPCTypeClasses[DummyRPC.type, InnerRPC]
 }
 
 @silent
-object TestRPC extends RPCTypeClasses[DummyRPC.type, TestRPC] {
-  def rpcImpl(onInvocation: (String, List[List[Any]], Option[Any]) => Any) = new TestRPC {
+object TestRPC extends DummyRPC.RPCCompanion[TestRPC] {
+  def rpcImpl(onInvocation: (String, List[List[Any]], Option[Any]) => Any) = new TestRPC { outer =>
     private def onProcedure(methodName: String, args: List[List[Any]]): Unit =
       onInvocation(methodName, args, None)
 
@@ -84,6 +86,9 @@ object TestRPC extends RPCTypeClasses[DummyRPC.type, TestRPC] {
 
         def moreInner(name: String) =
           this
+
+        def indirectRecursion() =
+          outer
       }
     }
   }

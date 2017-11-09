@@ -14,103 +14,103 @@ import scala.{collection => sc}
   */
 trait CollectionAliases {
   type BTraversable[+A] = sc.Traversable[A]
-  final val BTraversable = sc.Traversable
+  final def BTraversable: sc.Traversable.type = sc.Traversable
   type ITraversable[+A] = sci.Traversable[A]
-  final val ITraversable = sci.Traversable
+  final def ITraversable: sci.Traversable.type = sci.Traversable
   type MTraversable[A] = scm.Traversable[A]
-  final val MTraversable = scm.Traversable
+  final def MTraversable: scm.Traversable.type = scm.Traversable
 
   type BIterable[+A] = sc.Iterable[A]
-  final val BIterable = sc.Iterable
+  final def BIterable: sc.Iterable.type = sc.Iterable
   type IIterable[+A] = sci.Iterable[A]
-  final val IIterable = sci.Iterable
+  final def IIterable: sci.Iterable.type = sci.Iterable
   type MIterable[A] = scm.Iterable[A]
-  final val MIterable = scm.Iterable
+  final def MIterable: scm.Iterable.type = scm.Iterable
 
   type BSeq[+A] = sc.Seq[A]
-  final val BSeq = sc.Seq
+  final def BSeq: sc.Seq.type = sc.Seq
   type ISeq[+A] = sci.Seq[A]
-  final val ISeq = sci.Seq
+  final def ISeq: sci.Seq.type = sci.Seq
   type MSeq[A] = scm.Seq[A]
-  final val MSeq = scm.Seq
+  final def MSeq: scm.Seq.type = scm.Seq
 
   type BIndexedSeq[+A] = sc.IndexedSeq[A]
-  final val BIndexedSeq = sc.IndexedSeq
+  final def BIndexedSeq: sc.IndexedSeq.type = sc.IndexedSeq
   type IIndexedSeq[+A] = sci.IndexedSeq[A]
-  final val IIndexedSeq = sci.IndexedSeq
+  final def IIndexedSeq: sci.IndexedSeq.type = sci.IndexedSeq
   type MIndexedSeq[A] = scm.IndexedSeq[A]
-  final val MIndexedSeq = scm.IndexedSeq
+  final def MIndexedSeq: scm.IndexedSeq.type = scm.IndexedSeq
 
   type BLinearSeq[+A] = sc.LinearSeq[A]
-  final val BLinearSeq = sc.LinearSeq
+  final def BLinearSeq: sc.LinearSeq.type = sc.LinearSeq
   type ILinearSeq[+A] = sci.LinearSeq[A]
-  final val ILinearSeq = sci.LinearSeq
+  final def ILinearSeq: sci.LinearSeq.type = sci.LinearSeq
   type MLinearSeq[A] = scm.LinearSeq[A]
-  final val MLinearSeq = scm.LinearSeq
+  final def MLinearSeq: scm.LinearSeq.type = scm.LinearSeq
 
   type IQueue[+A] = sci.Queue[A]
-  final val IQueue = sci.Queue
+  final def IQueue: sci.Queue.type = sci.Queue
   type MQueue[A] = scm.Queue[A]
-  final val MQueue = scm.Queue
+  final def MQueue: scm.Queue.type = scm.Queue
 
   type BSet[A] = sc.Set[A]
-  final val BSet = sc.Set
+  final def BSet: sc.Set.type = sc.Set
   type ISet[A] = sci.Set[A]
-  final val ISet = sci.Set
+  final def ISet: Set.type = sci.Set
   type MSet[A] = scm.Set[A]
-  final val MSet = scm.Set
+  final def MSet: scm.Set.type = scm.Set
 
   type IHashSet[A] = sci.HashSet[A]
-  final val IHashSet = sci.HashSet
+  final def IHashSet: sci.HashSet.type = sci.HashSet
   type MHashSet[A] = scm.HashSet[A]
-  final val MHashSet = scm.HashSet
+  final def MHashSet: scm.HashSet.type = scm.HashSet
 
   type BSortedSet[A] = sc.SortedSet[A]
-  final val BSortedSet = sc.SortedSet
+  final def BSortedSet: sc.SortedSet.type = sc.SortedSet
   type ISortedSet[A] = sci.SortedSet[A]
-  final val ISortedSet = sci.SortedSet
+  final def ISortedSet: sci.SortedSet.type = sci.SortedSet
   type MSortedSet[A] = scm.SortedSet[A]
-  final val MSortedSet = scm.SortedSet
+  final def MSortedSet: scm.SortedSet.type = scm.SortedSet
 
   type ITreeSet[A] = sci.TreeSet[A]
-  final val ITreeSet = sci.TreeSet
+  final def ITreeSet: sci.TreeSet.type = sci.TreeSet
   type MTreeSet[A] = scm.TreeSet[A]
-  final val MTreeSet = scm.TreeSet
+  final def MTreeSet: scm.TreeSet.type = scm.TreeSet
 
   type BBitSet = sc.BitSet
-  final val BBitSet = sc.BitSet
+  final def BBitSet: sc.BitSet.type = sc.BitSet
   type IBitSet = sci.BitSet
-  final val IBitSet = sci.BitSet
+  final def IBitSet: sci.BitSet.type = sci.BitSet
   type MBitSet = scm.BitSet
-  final val MBitSet = scm.BitSet
+  final def MBitSet: scm.BitSet.type = scm.BitSet
 
   type BMap[A, +B] = sc.Map[A, B]
-  final val BMap = sc.Map
+  final def BMap: sc.Map.type = sc.Map
   type IMap[A, +B] = sci.Map[A, B]
-  final val IMap = sci.Map
+  final def IMap: sci.Map.type = sci.Map
   type MMap[A, B] = scm.Map[A, B]
-  final val MMap = scm.Map
+  final def MMap: scm.Map.type = scm.Map
 
   type IHashMap[A, +B] = sci.HashMap[A, B]
-  final val IHashMap = sci.HashMap
+  final def IHashMap: sci.HashMap.type = sci.HashMap
   type MHashMap[A, B] = scm.HashMap[A, B]
-  final val MHashMap = scm.HashMap
+  final def MHashMap: scm.HashMap.type = scm.HashMap
 
   type IListMap[A, +B] = sci.ListMap[A, B]
-  final val IListMap = sci.ListMap
+  final def IListMap: sci.ListMap.type = sci.ListMap
   type MListMap[A, B] = scm.ListMap[A, B]
-  final val MListMap = scm.ListMap
+  final def MListMap: scm.ListMap.type = scm.ListMap
 
   type BSortedMap[A, +B] = sc.SortedMap[A, B]
-  final val BSortedMap = sc.SortedMap
+  final def BSortedMap: sc.SortedMap.type = sc.SortedMap
   type ISortedMap[A, +B] = sci.SortedMap[A, B]
-  final val ISortedMap = sci.SortedMap
+  final def ISortedMap: sci.SortedMap.type = sci.SortedMap
 
   type ITreeMap[A, +B] = sci.TreeMap[A, B]
-  final val ITreeMap = sci.TreeMap
+  final def ITreeMap: sci.TreeMap.type = sci.TreeMap
   // Coming in Scala 2.12
   // type MTreeMap[A, B] = scm.TreeMap[A, B]
-  // final val MTreeMap = scm.TreeMap
+  // final def MTreeMap: scm.TreeMap.type = scm.TreeMap
 }
 
 object CollectionAliases extends CollectionAliases

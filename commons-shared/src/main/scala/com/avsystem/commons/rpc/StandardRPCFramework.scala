@@ -51,8 +51,8 @@ trait GetterRPCFramework extends RPCFramework {
   }
 
   // these must be macros in order to properly handle recursive RPC types
-  implicit def getterRealHandler[T](implicit ev: IsRPC[T]): RealInvocationHandler[T, RawRPC] = macro macros.rpc.RPCMacros.getterRealHandler[T]
-  implicit def getterRawHandler[T](implicit ev: IsRPC[T]): RawInvocationHandler[T] = macro macros.rpc.RPCMacros.getterRawHandler[T]
+  implicit def getterRealHandler[T](implicit ev: IsRPC[T]): RealInvocationHandler[T, RawRPC] = macro macros.rpc.RPCFrameworkMacros.getterRealHandler[T]
+  implicit def getterRawHandler[T](implicit ev: IsRPC[T]): RawInvocationHandler[T] = macro macros.rpc.RPCFrameworkMacros.getterRawHandler[T]
 
   final class GetterRealHandler[T: AsRawRPC] extends RealInvocationHandler[T, RawRPC] {
     def toRaw(real: T) = AsRawRPC[T].asRaw(real)
@@ -64,8 +64,10 @@ trait GetterRPCFramework extends RPCFramework {
 
 trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework with ProcedureRPCFramework {
   trait RawRPC extends GetterRawRPC with FunctionRawRPC with ProcedureRawRPC
+  trait FullRPCInfo[T] extends BaseFullRPCInfo[T]
 }
 
 trait OneWayRPCFramework extends GetterRPCFramework with ProcedureRPCFramework {
   trait RawRPC extends GetterRawRPC with ProcedureRawRPC
+  trait FullRPCInfo[T] extends BaseFullRPCInfo[T]
 }

@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import org.scalatest.FunSuite
+
 case class CodeSizeTester00(
   int: Int,
   string: String,
@@ -116,28 +118,12 @@ object Person {
   implicit val codec: GenCodec[Person] = GenCodec.materialize
 }
 
-object Main {
-  def main(args: Array[String]): Unit = {
+class CodeSizeTester extends FunSuite {
+  ignore("fake test to see how much JS is generated") {
     println(CodeSizeTester00.codec.write(null, null))
 //    println(CodeSizeTester01.codec.write(null, null))
-//    println(CodeSizeTester02.codec.write(null, null))
-//    println(CodeSizeTester03.codec.write(null, null))
-//    println(CodeSizeTester04.codec.write(null, null))
-//    println(CodeSizeTester05.codec.write(null, null))
-//    println(CodeSizeTester06.codec.write(null, null))
-//    println(CodeSizeTester07.codec.write(null, null))
-//    println(CodeSizeTester08.codec.write(null, null))
-//    println(CodeSizeTester09.codec.write(null, null))
 
     println(CodeSizeTester00.codec.read(null))
 //    println(CodeSizeTester01.codec.read(null))
-//    println(CodeSizeTester02.codec.read(null))
-//    println(CodeSizeTester03.codec.read(null))
-//    println(CodeSizeTester04.codec.read(null))
-//    println(CodeSizeTester05.codec.read(null))
-//    println(CodeSizeTester06.codec.read(null))
-//    println(CodeSizeTester07.codec.read(null))
-//    println(CodeSizeTester08.codec.read(null))
-//    println(CodeSizeTester09.codec.read(null))
   }
 }

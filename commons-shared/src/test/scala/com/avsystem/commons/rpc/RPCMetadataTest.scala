@@ -18,6 +18,9 @@ class RPCMetadataTest extends FunSuite {
     @RPCName("function")
     def func: Future[String]
   }
+  object Base {
+    implicit def fullRpcInfo[T: ParamTypeMetadata]: BaseFullRPCInfo[Base[T]] = materializeFullInfo
+  }
 
   @Annot("on subclass")
   trait Sub extends Base[String] {
@@ -27,6 +30,9 @@ class RPCMetadataTest extends FunSuite {
     def getter(i: Int)(s: String): Base[String]
 
     def selfGetter: Sub
+  }
+  object Sub {
+    implicit lazy val fullRPCInfo: BaseFullRPCInfo[Sub] = materializeFullInfo
   }
 
   test("RPC metadata should be correct") {

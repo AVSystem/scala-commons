@@ -3,6 +3,7 @@ package macros
 
 import scala.reflect.macros.blackbox
 
+private[commons]
 class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   import c.universe._
@@ -23,7 +24,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
     q"$SingletonTCObj[$tpe](${tpe.toString}, $singleValueTree)"
 
   def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
-    val deps = params.map { case ApplyParam(s, dv, t) =>
+    val deps = params.map { case ApplyParam(_, s, dv, t) =>
       val defaultValueOpt = if (dv == EmptyTree) q"None" else q"Some($DefValObj($dv))"
       q"(${s.name.toString}, $t, $defaultValueOpt)"
     }
@@ -31,7 +32,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
   }
 
   def forSealedHierarchy(tpe: Type, subtypes: List[KnownSubtype]): Tree = {
-    val deps = subtypes.map({ case KnownSubtype(st, tree) => q"(${st.typeSymbol.name.toString}, $tree)" })
+    val deps = subtypes.map({ case KnownSubtype(_, st, tree) => q"(${st.typeSymbol.name.toString}, $tree)" })
     q"$SealedHierarchyTCObj[$tpe](${tpe.toString}, List(..$deps))"
   }
 

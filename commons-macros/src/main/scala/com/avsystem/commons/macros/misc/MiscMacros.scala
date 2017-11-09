@@ -48,4 +48,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       )
      """
   }
+
+  def crossImpl(forJvm: Tree, forJs: Tree): Tree =
+    if (isScalaJs) forJs else forJvm
 }

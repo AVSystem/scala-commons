@@ -10,14 +10,19 @@ trait MacroCommons {
   import c.universe._
 
   final val ScalaPkg = q"_root_.scala"
+  final val StringCls = tq"_root_.java.lang.String"
+  final val ClassCls = tq"_root_.java.lang.Class"
   final val CommonsPackage = q"_root_.com.avsystem.commons"
   final val UnitCls = tq"$ScalaPkg.Unit"
   final val OptionCls = tq"$ScalaPkg.Option"
+  final val OptionObj = q"$ScalaPkg.Option"
   final val SomeObj = q"$ScalaPkg.Some"
   final val NoneObj = q"$ScalaPkg.None"
   final val CollectionPkg = q"$ScalaPkg.collection"
   final val ListObj = q"$CollectionPkg.immutable.List"
   final val ListCls = tq"$CollectionPkg.immutable.List"
+  final val SetObj = q"$CollectionPkg.immutable.Set"
+  final val SetCls = tq"$CollectionPkg.immutable.Set"
   final val NilObj = q"$CollectionPkg.immutable.Nil"
   final val MapObj = q"$CollectionPkg.immutable.Map"
   final val MaterializedCls = tq"$CommonsPackage.derivation.Materialized"
@@ -25,6 +30,9 @@ trait MacroCommons {
   final val OptionClass = definitions.OptionClass
   final val ImplicitsObj = q"$CommonsPackage.misc.Implicits"
   final val AnnotationAggregateType = getType(tq"$CommonsPackage.annotation.AnnotationAggregate")
+
+  final lazy val isScalaJs =
+    definitions.ScalaPackageClass.toType.member(TermName("scalajs")) != NoSymbol
 
   final lazy val ownerChain = {
     val sym = c.typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
@@ -43,6 +51,11 @@ trait MacroCommons {
     def debug: T = {
       c.echo(c.enclosingPosition, show(t))
       t
+    }
+
+    def asStatList: List[Tree] = t match {
+      case Block(stats, expr) => stats :+ expr
+      case _ => List(t)
     }
   }
 
@@ -480,14 +493,6 @@ trait MacroCommons {
       case EmptyTree => None
     }
   }
-
-  def inferOrMaterialize(typeClass: Type)(materialize: => Tree): Tree =
-    if (c.macroApplication.symbol.isImplicit)
-      c.inferImplicitValue(typeClass, withMacrosDisabled = true) match {
-        case EmptyTree => materialize
-        case tree => tree
-      }
-    else materialize
 
   def abortOnTypecheckException[T](expr: => T): T =
     try expr catch {
