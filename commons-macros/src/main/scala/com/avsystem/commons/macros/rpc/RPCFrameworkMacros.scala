@@ -9,8 +9,8 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
 
   import c.universe._
 
-  val RpcPackage = q"$CommonsPackage.rpc"
   val FrameworkObj = c.prefix.tree
+  val RpcPackage = q"$CommonsPackage.rpc"
   val RunNowEC = q"$CommonsPackage.concurrent.RunNowEC"
   val RawRPCCls = tq"$FrameworkObj.RawRPC"
   val AsRawRPCObj = q"$FrameworkObj.AsRawRPC"
@@ -33,7 +33,7 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
   lazy val RawValueLLType = getType(ArgListsCls)
   lazy val RawRPCType = getType(RawRPCCls)
   lazy val RawRPCSym = RawRPCType.typeSymbol
-  lazy val RPCCompanionSym = getType(tq"$RPCFrameworkType#RPCCompanion[_]").typeSymbol
+  lazy val RPCCompanionSym = RPCFrameworkType.member(TypeName("RPCCompanion"))
 
   def allAnnotations(tpe: Type): List[Annotation] = {
     val ts = tpe.typeSymbol
