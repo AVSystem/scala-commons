@@ -138,6 +138,13 @@ class GenCodecTest extends CodecTestBase {
     testWriteReadAndAutoWriteRead(TransparentWrapper("something"), "something")
   }
 
+  case class StringId(id: String)
+  object StringId extends TransparentWrapperCompanion[String, StringId]
+
+  test("transparent wrapper companion test") {
+    testWriteReadAndAutoWriteRead(StringId("lolfuu"), "lolfuu")
+  }
+
   trait HasSomeStr {
     @name("some.str") def str: String
     @generated def someStrLen: Int = str.length
