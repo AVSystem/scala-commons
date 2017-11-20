@@ -8,13 +8,14 @@ class ValueEnumTest extends FunSuite {
   object SomeValueEnum extends AbstractValueEnumCompanion[SomeValueEnum] {
     final val One, Two, Three: Value = new SomeValueEnum
     final val Four: Value = new SomeValueEnum {}
+    final val Five_? : Value = new SomeValueEnum
   }
 
   test("value enum test") {
     import SomeValueEnum._
-    assert(values == List(One, Two, Three, Four))
-    assert(values.map(_.ordinal) == List.range(0, 4))
-    assert(values.map(_.name) == List("One", "Two", "Three", "Four"))
+    assert(values == List(One, Two, Three, Four, Five_?))
+    assert(values.map(_.ordinal) == List.range(0, 5))
+    assert(values.map(_.name) == List("One", "Two", "Three", "Four", "Five_?"))
   }
 
   test("enum constant member validation") {

@@ -69,6 +69,6 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         "with explicit `Value` type annotation, e.g. `final val MyEnumValue: Value = new MyEnumClass")
     }
 
-    q"new ${c.prefix}.ValName(${owner.asTerm.getter.name.toString})"
+    q"new ${c.prefix}.ValName(${owner.asTerm.getter.name.decodedName.toString})"
   }
 }
