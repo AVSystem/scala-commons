@@ -9,7 +9,10 @@ abstract class TransparentWrapperCompanion[R: GenCodec, T] {
 
   implicit lazy val codec: GenCodec[T] = GenCodec.createNullSafe[T](
     input => apply(GenCodec.read[R](input)),
-    (output, value) => GenCodec.write[R](output, unapply(value).getOrElse(throw new ReadFailure("unapply failed"))),
+    (output, value) => GenCodec.write[R](output, unapply(value).getOrElse(throw new ReadFailure("unwrapping failed"))),
     allowNull = true
   )
 }
+
+abstract class StringWrapperCompanion[T]
+  extends TransparentWrapperCompanion[String, T]

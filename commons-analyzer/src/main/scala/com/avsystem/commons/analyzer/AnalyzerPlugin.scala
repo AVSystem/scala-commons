@@ -10,7 +10,8 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
     new ImportJavaUtil[global.type](global),
     new VarargsAtLeast[global.type](global),
     new CheckMacroPrivate[global.type](global),
-    new ExplicitGenerics[global.type](global)
+    new ExplicitGenerics[global.type](global),
+    new ValueEnumExhaustiveMatch[global.type](global)
   )
   val rulesByName = rules.map(r => (r.name, r)).toMap
 

@@ -248,6 +248,14 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
     case _ => codec
   }
 
+  class SubclassCodec[T: ClassTag, S >: T : GenCodec](val nullable: Boolean) extends NullSafeCodec[T] {
+    override def readNonNull(input: Input): T = GenCodec.read[S](input) match {
+      case sub: T => sub
+      case v => throw new ReadFailure(s"$v is not an instance of ${classTag[T].runtimeClass}")
+    }
+    override def writeNonNull(output: Output, value: T): Unit = GenCodec.write[S](output, value)
+  }
+
   final val DefaultCaseField = "_case"
 
   implicit lazy val NothingCodec: GenCodec[Nothing] = create[Nothing](_ => throw new ReadFailure("read Nothing"), (_, _) => throw new WriteFailure("write Nothing"))

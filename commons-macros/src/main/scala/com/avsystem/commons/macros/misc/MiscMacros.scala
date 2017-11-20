@@ -51,4 +51,24 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   def crossImpl(forJvm: Tree, forJs: Tree): Tree =
     if (isScalaJs) forJs else forJvm
+
+  def enumValName: Tree = {
+    def omitAnonClass(owner: Symbol): Symbol =
+      if (owner.isConstructor && owner.owner.name.toString.contains("$anon"))
+        owner.owner.owner
+      else owner
+
+    val owner = omitAnonClass(c.internal.enclosingOwner)
+    val valid = owner.isTerm && owner.owner == c.prefix.tree.symbol && {
+      val term = owner.asTerm
+      term.isVal && term.isFinal && !term.isLazy && term.getter.isPublic &&
+        term.typeSignature <:< getType(tq"${c.prefix}.Value")
+    }
+    if (!valid) {
+      abort("ValueEnum must be assigned to a public, final, non-lazy val in its companion object " +
+        "with explicit `Value` type annotation, e.g. `final val MyEnumValue: Value = new MyEnumClass")
+    }
+
+    q"new ${c.prefix}.ValName(${owner.asTerm.getter.name.toString})"
+  }
 }

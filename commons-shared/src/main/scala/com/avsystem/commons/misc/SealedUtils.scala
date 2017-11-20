@@ -48,7 +48,7 @@ trait SealedEnumCompanion[T] {
     * Also, be aware that [[caseObjects]] macro guarantees well-defined order of elements only for
     * [[com.avsystem.commons.misc.OrderedEnum OrderedEnum]].
     */
-  val values: List[T]
+  val values: Seq[T]
 
   /**
     * A macro which reifies a list of all case objects of the sealed trait or class `T`.
@@ -59,6 +59,8 @@ trait SealedEnumCompanion[T] {
   protected def caseObjects: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
 }
 
+abstract class AbstractSealedEnumCompanion[T] extends SealedEnumCompanion[T]
+
 /**
   * Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
   * textual representation (name).
@@ -66,7 +68,7 @@ trait SealedEnumCompanion[T] {
   * Typically, if a trait or class extends `NamedEnum`, its companion object extends [[NamedEnumCompanion]].
   * Enum values can then be looked up by name using [[NamedEnumCompanion.byName]].
   */
-trait NamedEnum {
+trait NamedEnum extends Serializable {
   /**
     * Used as a key for a map returned from `byName`. It is recommended to override this method uniquely
     * by each case object in the sealed hierarchy.
@@ -139,3 +141,6 @@ object OrderedEnum {
   implicit def ordering[T <: OrderedEnum]: Ordering[T] =
     reusableOrdering.asInstanceOf[Ordering[T]]
 }
+
+abstract class AbstractNamedEnumCompanion[T <: NamedEnum]
+  extends AbstractSealedEnumCompanion[T] with NamedEnumCompanion[T]
