@@ -99,6 +99,10 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
   private[this] var finished: Boolean = false
   private[this] var awaitingRegister: Boolean = false
 
+  /**
+    * Holds an indexed sequence of all enum values, ordered by their ordinal
+    * (`values(i).ordinal` is always equal to `i`).
+    */
   final lazy val values: IndexedSeq[T] = synchronized {
     if (awaitingRegister) {
       throw new IllegalStateException(s"Cannot collect enum values - one of the created contexts didn't register a value yet")
