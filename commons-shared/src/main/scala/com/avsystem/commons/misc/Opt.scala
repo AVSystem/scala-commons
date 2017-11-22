@@ -77,6 +77,10 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
   @inline def orNull[B >: A](implicit ev: Null <:< B): B =
     if (isEmpty) ev(null) else value
 
+  /**
+    * Analogous to `Option.map` except that when mapping function returns `null`,
+    * empty `Opt` is returned as a result.
+    */
   @inline def map[B](f: A => B): Opt[B] =
     if (isEmpty) Opt.Empty else Opt(f(value))
 
@@ -111,6 +115,10 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
     if (!isEmpty) f(value)
   }
 
+  /**
+    * Analogous to `Option.collect` except that when the function returns `null`,
+    * empty `Opt` is returned as a result.
+    */
   @inline def collect[B](pf: PartialFunction[A, B]): Opt[B] =
     if (!isEmpty) {
       val res = pf.applyOrElse(value, Opt.emptyMarkerFunc)
