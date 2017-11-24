@@ -1,11 +1,20 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.misc.Unboxing
-import com.avsystem.commons.serialization.GenCodec.ReadFailure
+import com.avsystem.commons.serialization.GenCodec.{ReadFailure, WriteFailure}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+
+object SimpleValueOutput {
+  def write[T: GenCodec](value: T): Any = {
+    var res = NOpt.empty[Any]
+    GenCodec.write[T](new SimpleValueOutput(raw => res = NOpt.some(raw)), value)
+    res.getOrElse(throw new WriteFailure("no value was written"))
+  }
+}
 
 /**
   * An [[Output]] for [[GenCodec]] which serializes data into plain Scala objects.
@@ -53,6 +62,11 @@ class SimpleValueOutput(consumer: Any => Unit) extends Output {
 
   def writeLong(long: Long) = consumer(long)
   def writeNull() = consumer(null)
+}
+
+object SimpleValueInput {
+  @explicitGenerics def read[T: GenCodec](raw: Any): T =
+    GenCodec.read[T](new SimpleValueInput(raw))
 }
 
 /**
