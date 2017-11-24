@@ -35,7 +35,7 @@ abstract class ApplyUnapplyCodec[T](
     fieldValues.getOrElse[A](idx, fieldMissing(fieldNames(idx)))
 
   final def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T = {
-    val fieldValues = new FieldValues(fieldNames, deps)
+    val fieldValues = new FieldValues(fieldNames, deps, typeRepr)
     fieldValues.rewriteFrom(outOfOrderFields)
     while (input.hasNext) {
       fieldValues.readField(input.nextField())
@@ -141,7 +141,7 @@ abstract class FlatSealedHierarchyCodec[T](
   }
 
   final def readObject(input: ObjectInput): T = {
-    val oooFields = new FieldValues(oooFieldNames, oooDeps)
+    val oooFields = new FieldValues(oooFieldNames, oooDeps, typeRepr)
 
     def read(): T =
       if (input.hasNext) {

@@ -1,13 +1,17 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
+
 import scala.annotation.tailrec
 
 object FieldValues {
   final val Empty = new FieldValues(Array.empty, Array.empty)
   private object NullMarker
 }
-final class FieldValues(private val fieldNames: Array[String], codecs: Array[GenCodec[_]]) {
+final class FieldValues(
+  private val fieldNames: Array[String], codecs: Array[GenCodec[_]], ofWhat: OptArg[String] = OptArg.Empty) {
+
   @tailrec private def fieldIndex(fieldName: String, idx: Int): Int =
     if (idx >= fieldNames.length) -1
     else if (fieldNames(idx) == fieldName) idx
@@ -25,7 +29,10 @@ final class FieldValues(private val fieldNames: Array[String], codecs: Array[Gen
   def tryReadField(input: FieldInput): Boolean = fieldIndex(input.fieldName, 0) match {
     case -1 => false
     case idx =>
-      val value = codecs(idx).read(input)
+      val value = try codecs(idx).read(input) catch {
+        case NonFatal(e) => throw new ReadFailure(
+          s"Failed to read field ${input.fieldName}${ofWhat.fold("")(what => s" of $what")}", e)
+      }
       values(idx) = if (value == null) NullMarker else value
       true
   }
