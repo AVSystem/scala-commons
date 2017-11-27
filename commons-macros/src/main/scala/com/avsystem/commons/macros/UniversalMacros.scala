@@ -3,7 +3,7 @@ package macros
 
 import scala.reflect.macros.blackbox
 
-class UniversalMacros(val c: blackbox.Context) {
+class UniversalMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 

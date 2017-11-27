@@ -43,4 +43,17 @@ class SharedExtensionsTest extends FunSuite with Matchers {
     assert(Iterator[Int]().collectWhileDefined({ case n if n < 3 => n * 2 }).toList == Nil)
     assert(Iterator(1, 2, 3, 2, 1).collectWhileDefined({ case n if n > 0 => n * 2 }).toList == List(2, 4, 6, 4, 2))
   }
+
+  test("uncheckedMatch") {
+    val res = Option(42) uncheckedMatch {
+      case Some(int) => int
+    }
+    assert(res == 42)
+
+    assertThrows[MatchError] {
+      Option.empty[Int] uncheckedMatch {
+        case Some(int) => int
+      }
+    }
+  }
 }

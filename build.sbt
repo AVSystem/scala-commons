@@ -176,6 +176,12 @@ lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
 lazy val `commons-sharedJVM` = `commons-shared`.jvm
 lazy val `commons-sharedJS` = `commons-shared`.js
 
+lazy val `commons-shared-aggregate` = project
+  .aggregate(`commons-sharedJS`, `commons-sharedJVM`)
+  .settings(commonSettings: _*)
+  .settings(noPublishSettings: _*)
+  .settings(ideSkipProject := true)
+
 lazy val `commons-core` = project.dependsOn(`commons-macros` % CompileAndTest, `commons-sharedJVM` % CompileAndTest)
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)

@@ -1,9 +1,11 @@
 package com.avsystem.commons
 package macros.misc
 
+import com.avsystem.commons.macros.AbstractMacroCommons
+
 import scala.reflect.macros.blackbox
 
-class BidirectionalMacro(val c: blackbox.Context) {
+class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
@@ -64,8 +66,7 @@ class BidirectionalMacro(val c: blackbox.Context) {
   def impl[A: c.WeakTypeTag, B: c.WeakTypeTag](
     pf: c.Expr[PartialFunction[A, B]]): c.Expr[(PartialFunction[A, B], PartialFunction[B, A])] = {
 
-    // To find out WTF is this, please learn how Scala compiler represents (typechecked) partial functions
-    val Typed(Block(List(ClassDef(_, _, _, Template(_, _, List(_, DefDef(_, _, _, _, _, Match(_, cases)), _)))), _), _) = pf.tree
+    val AnonPartialFunction(cases) = pf.tree
 
     def patternToExpr(pattern: Tree): Tree = pattern match {
       case Apply(tt@TypeTree(), args) if tt.original != null =>
@@ -108,10 +109,12 @@ class BidirectionalMacro(val c: blackbox.Context) {
         case _ =>
           c.abort(expr.pos, "Could not translate expression to pattern: " + show(expr))
       }
+
       toPattern(expr)
     }
 
     val bodies = scala.collection.mutable.Set[Tree]()
+
     def reverseCaseDef(caseDef: CaseDef) = caseDef match {
       case CaseDef(pattern, guard, body) =>
         val boundNamesSet = boundNames(pattern).toSet

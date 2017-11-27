@@ -186,6 +186,15 @@ trait MacroCommons {
       } else None
   }
 
+  object AnonPartialFunction {
+    def unapply(tree: Tree): Option[List[CaseDef]] = tree match {
+      case Typed(Block(List(ClassDef(_, _, _, Template(_, _, List(_, DefDef(_, _, _, _, _, Match(_, cases)), _)))), _), _)
+        if tree.tpe <:< typeOf[PartialFunction[Nothing, Any]] =>
+        Some(cases)
+      case _ => None
+    }
+  }
+
   /**
     * Returns a `Tree` that should typecheck to the type passed as argument (without using `TypeTree`).
     */

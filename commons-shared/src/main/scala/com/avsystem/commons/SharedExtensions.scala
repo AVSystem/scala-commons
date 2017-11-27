@@ -101,6 +101,20 @@ object SharedExtensions extends SharedExtensions {
       pf.applyOpt(a)
 
     /**
+      * To be used instead of normal `match` keyword in pattern matching in order to suppress
+      * non-exhaustive match checking.
+      *
+      * @example
+      * {{{
+      *   Option(42) uncheckedMatch {
+      *     case Some(int) => println(int)
+      *   }
+      * }}}
+      */
+    def uncheckedMatch[B](pf: PartialFunction[A, B]): B =
+      pf.applyOrElse(a, (obj: A) => throw new MatchError(obj))
+
+    /**
       * Prints AST of the prefix in a compilation error.
       * Useful for debugging macros.
       */
