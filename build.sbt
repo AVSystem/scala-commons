@@ -2,6 +2,8 @@ import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys._
 
 cancelable in Global := true
 
+val forIdea = System.getProperty("idea.runid") != null
+
 inThisBuild(Seq(
   scalaVersion := "2.12.4",
   crossScalaVersions := Seq("2.11.11", "2.12.4"),
@@ -91,8 +93,8 @@ val commonSettings = Seq(
   ),
   dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
   ideBasePackages := Seq(organization.value),
-  ideOutputDirectory in Compile := Some(baseDirectory.value / "out/production"),
-  ideOutputDirectory in Test := Some(baseDirectory.value / "out/test"),
+  ideOutputDirectory in Compile := Some(target.value.getParentFile / "out/production"),
+  ideOutputDirectory in Test := Some(target.value.getParentFile / "out/test"),
   fork in Test := true,
 )
 
@@ -100,6 +102,16 @@ val jvmCommonSettings = Seq(
   mimaPreviousArtifacts := {
     Set(organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion)
   },
+)
+
+val jsCommonSettings = Seq(
+  scalacOptions += {
+    val localDir = (baseDirectory in ThisBuild).value.toURI.toString
+    val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
+    s"-P:scalajs:mapSourceURI:$localDir->$githubDir/v${version.value}/"
+  },
+  jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
+  fork in Test := false,
 )
 
 val noPublishSettings = Seq(
@@ -120,9 +132,8 @@ lazy val commons = project.in(file("."))
   .aggregate(
     `commons-annotations`,
     `commons-macros`,
-    `commons-sharedJVM`,
-    `commons-sharedJS`,
-    `commons-core`,
+    `commons-shared`,
+    `commons-shared-js`,
     `commons-analyzer`,
     `commons-jetty`,
     `commons-benchmark`,
@@ -141,9 +152,10 @@ lazy val commons = project.in(file("."))
       inAnyProject -- inProjects(
         `commons-macros`,
         `commons-analyzer`,
-        `commons-sharedJS`,
+        `commons-shared-js`,
         `commons-benchmark`,
       ),
+    ideExcludedDirectories := Seq((baseDirectory in `commons-shared-aggregate`).value),
   )
 
 lazy val `commons-annotations` = project
@@ -158,42 +170,38 @@ lazy val `commons-macros` = project
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
   )
 
-lazy val `commons-shared` = crossProject.crossType(CrossType.Pure)
-  .jsConfigure(_.dependsOn(`commons-macros`))
-  .jvmConfigure(_.dependsOn(`commons-macros`))
-  .settings(commonSettings: _*)
-  .jvmSettings(jvmCommonSettings)
-  .jsSettings(
-    scalacOptions += {
-      val localDir = (baseDirectory in ThisBuild).value.toURI.toString
-      val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
-      s"-P:scalajs:mapSourceURI:$localDir->$githubDir/v${version.value}/"
-    },
-    jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
-    fork in Test := false,
-  )
-
-lazy val `commons-sharedJVM` = `commons-shared`.jvm
-lazy val `commons-sharedJS` = `commons-shared`.js
-
-lazy val `commons-shared-aggregate` = project
-  .aggregate(`commons-sharedJS`, `commons-sharedJVM`)
-  .settings(commonSettings: _*)
-  .settings(noPublishSettings: _*)
-  .settings(ideSkipProject := true)
-
-lazy val `commons-core` = project.dependsOn(`commons-macros` % CompileAndTest, `commons-sharedJVM` % CompileAndTest)
+lazy val `commons-shared` = project
+  .dependsOn(`commons-macros`)
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(
+    unmanagedSourceDirectories in Compile += baseDirectory.value / "jvm/src/main/scala",
+    unmanagedSourceDirectories in Test += baseDirectory.value / "jvm/src/test/scala",
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
       "com.google.guava" % "guava" % guavaVersion,
     ),
   )
 
+lazy val `commons-shared-js` = project.in(file("commons-shared/js")).enablePlugins(ScalaJSPlugin)
+  .dependsOn(`commons-macros`)
+  .dependsOn(Seq[ClasspathDep[ProjectReference]](`commons-shared`).filter(_ => forIdea): _*)
+  .settings(commonSettings: _*)
+  .settings(jsCommonSettings: _*)
+  .settings(name := (name in `commons-shared`).value)
+  .settings(Seq(
+    unmanagedSourceDirectories in Compile += baseDirectory.value.getParentFile / "src/main/scala",
+    unmanagedSourceDirectories in Test += baseDirectory.value.getParentFile / "src/test/scala",
+  ).filterNot(_ => forIdea): _*)
+
+lazy val `commons-shared-aggregate` = project
+  .aggregate(`commons-shared`, `commons-shared-js`)
+  .settings(commonSettings: _*)
+  .settings(noPublishSettings: _*)
+  .settings(ideSkipProject := true)
+
 lazy val `commons-analyzer` = project
-  .dependsOn(`commons-core` % Test)
+  .dependsOn(`commons-shared` % Test)
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(
@@ -201,7 +209,7 @@ lazy val `commons-analyzer` = project
   )
 
 lazy val `commons-jetty` = project
-  .dependsOn(`commons-sharedJVM`)
+  .dependsOn(`commons-shared`)
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(
@@ -213,7 +221,7 @@ lazy val `commons-jetty` = project
   )
 
 lazy val `commons-benchmark` = project
-  .dependsOn(`commons-core`, `commons-akka`, `commons-redis`, `commons-mongo`)
+  .dependsOn(`commons-shared`, `commons-akka`, `commons-redis`, `commons-mongo`)
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(noPublishSettings: _*)
@@ -237,7 +245,7 @@ lazy val `commons-benchmark` = project
   )
 
 lazy val `commons-mongo` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-shared`)
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(
@@ -250,7 +258,7 @@ lazy val `commons-mongo` = project
   )
 
 lazy val `commons-kafka` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-shared`)
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(
@@ -260,7 +268,7 @@ lazy val `commons-kafka` = project
   )
 
 lazy val `commons-redis` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-shared`)
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(
@@ -272,7 +280,7 @@ lazy val `commons-redis` = project
   )
 
 lazy val `commons-spring` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-shared`)
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(
@@ -283,7 +291,7 @@ lazy val `commons-spring` = project
   )
 
 lazy val `commons-akka` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-shared`)
   .settings(commonSettings: _*)
   .settings(jvmCommonSettings: _*)
   .settings(
