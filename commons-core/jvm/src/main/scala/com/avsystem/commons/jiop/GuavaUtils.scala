@@ -52,10 +52,8 @@ object GuavaUtils {
       case _ => FutureAsListenableFuture(fut)
     }
 
-    def asGuavaVoid: ListenableFuture[Void] = {
-      import JavaInterop.toDecorateAsGuava
+    def asGuavaVoid: ListenableFuture[Void] =
       fut.toVoid.asGuava
-    }
   }
 
   private case class ListenableFutureAsScala[+T](gfut: ListenableFuture[T@uncheckedVariance]) extends Future[T] {

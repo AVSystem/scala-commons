@@ -11,9 +11,6 @@ import scala.concurrent.duration.Duration
 
 class JavaInteropTest extends FunSuite {
 
-  import GuavaInterop._
-  import Java8Interop._
-
   def assertSame[A](s1: JStream[A], s2: JStream[A]): Unit =
     assert(s1.collect(Collectors.toList[A]) === s2.collect(Collectors.toList[A]))
 
@@ -54,8 +51,6 @@ class JavaInteropTest extends FunSuite {
   }
 
   test("java primitive streams should work") {
-    import Java8Interop._
-
     def ints = IntStream.of(1, 2, 3, 4, 5, 6)
 
     assertSame(

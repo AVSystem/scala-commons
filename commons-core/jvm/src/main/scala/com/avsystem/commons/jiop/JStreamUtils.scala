@@ -37,8 +37,6 @@ trait JStreamUtils {
 
 object JStreamUtils {
 
-  import JavaInterop._
-
   final class JStream2AsScala[T](private val jStream: JStream[T]) extends AnyVal {
     def asScala: ScalaJStream[T] = new ScalaJStream(jStream)
   }

@@ -65,8 +65,6 @@ trait JOptionalUtils {
 
 object JOptionalUtils {
 
-  import JavaInterop._
-
   final class optional2AsScala[T](private val optional: JOptional[T]) extends AnyVal {
     def asScala: Option[T] =
       if (optional.isPresent) Some(optional.get) else None

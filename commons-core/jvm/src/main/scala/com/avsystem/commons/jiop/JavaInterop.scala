@@ -3,7 +3,7 @@ package jiop
 
 import scala.collection.convert.{DecorateAsJava, DecorateAsScala}
 
-trait JavaInterop extends Any
+trait JavaInterop extends AnyRef
   with JBasicUtils
   with JCollectionUtils
   with DecorateAsJava

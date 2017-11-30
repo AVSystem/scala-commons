@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package jiop
 
-import com.avsystem.commons.jiop.Java8Interop._
-
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.generic.CanBuildFrom
 import scala.language.higherKinds

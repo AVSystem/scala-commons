@@ -8,7 +8,6 @@ import akka.actor.ActorSystem
 import akka.util.{ByteString, Timeout}
 import com.avsystem.commons.benchmark.CrossRedisBenchmark
 import com.avsystem.commons.concurrent.RunNowEC
-import com.avsystem.commons.jiop.Java8Interop._
 import com.avsystem.commons.redis.RedisClientBenchmark._
 import com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener
 import com.avsystem.commons.redis.commands.SlotRange
