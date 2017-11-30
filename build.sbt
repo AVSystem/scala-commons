@@ -178,8 +178,8 @@ lazy val `commons-shared` = project
     unmanagedSourceDirectories in Compile += baseDirectory.value / "jvm/src/main/scala",
     unmanagedSourceDirectories in Test += baseDirectory.value / "jvm/src/test/scala",
     libraryDependencies ++= Seq(
-      "com.google.code.findbugs" % "jsr305" % jsr305Version,
-      "com.google.guava" % "guava" % guavaVersion,
+      "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
+      "com.google.guava" % "guava" % guavaVersion % Optional,
     ),
   )
 
