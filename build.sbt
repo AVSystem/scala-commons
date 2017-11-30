@@ -98,13 +98,13 @@ val commonSettings = Seq(
   fork in Test := true,
 )
 
-val jvmCommonSettings = Seq(
+val jvmCommonSettings = commonSettings ++ Seq(
   mimaPreviousArtifacts := {
     Set(organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion)
   },
 )
 
-val jsCommonSettings = Seq(
+val jsCommonSettings = commonSettings ++ Seq(
   scalacOptions += {
     val localDir = (baseDirectory in ThisBuild).value.toURI.toString
     val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
@@ -143,9 +143,9 @@ lazy val commons = project.in(file("."))
     `commons-akka`,
     `commons-kafka`,
   )
-  .settings(commonSettings: _*)
-  .settings(noPublishSettings: _*)
   .settings(
+    commonSettings,
+    noPublishSettings,
     name := "commons",
     scalacOptions in(ScalaUnidoc, unidoc) += "-Ymacro-no-expand",
     unidocProjectFilter in(ScalaUnidoc, unidoc) :=
@@ -159,24 +159,33 @@ lazy val commons = project.in(file("."))
   )
 
 lazy val `commons-annotations` = project
-  .settings(commonSettings: _*)
-  .settings(jvmCommonSettings: _*)
+  .settings(jvmCommonSettings)
 
 lazy val `commons-macros` = project
   .dependsOn(`commons-annotations`)
-  .settings(commonSettings: _*)
-  .settings(jvmCommonSettings: _*)
   .settings(
+    jvmCommonSettings,
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
   )
 
+def mkSourceDirs(base: File, scalaBinary: String, conf: String): Seq[File] = Seq(
+  base / "src" / conf / "scala",
+  base / "src" / conf / s"scala-$scalaBinary",
+  base / "src" / conf / "java"
+)
+
+def sourceDirsSettings(baseMapper: File => File) = Seq(
+  unmanagedSourceDirectories in Compile ++=
+    mkSourceDirs(baseMapper(baseDirectory.value), scalaBinaryVersion.value, "main"),
+  unmanagedSourceDirectories in Test ++=
+    mkSourceDirs(baseMapper(baseDirectory.value), scalaBinaryVersion.value, "test"),
+)
+
 lazy val `commons-shared` = project
   .dependsOn(`commons-macros`)
-  .settings(commonSettings: _*)
-  .settings(jvmCommonSettings: _*)
   .settings(
-    unmanagedSourceDirectories in Compile += baseDirectory.value / "jvm/src/main/scala",
-    unmanagedSourceDirectories in Test += baseDirectory.value / "jvm/src/test/scala",
+    jvmCommonSettings,
+    sourceDirsSettings(_ / "jvm"),
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
@@ -186,33 +195,31 @@ lazy val `commons-shared` = project
 lazy val `commons-shared-js` = project.in(file("commons-shared/js")).enablePlugins(ScalaJSPlugin)
   .dependsOn(`commons-macros`)
   .dependsOn(Seq[ClasspathDep[ProjectReference]](`commons-shared`).filter(_ => forIdea): _*)
-  .settings(commonSettings: _*)
-  .settings(jsCommonSettings: _*)
-  .settings(name := (name in `commons-shared`).value)
-  .settings(Seq(
-    unmanagedSourceDirectories in Compile += baseDirectory.value.getParentFile / "src/main/scala",
-    unmanagedSourceDirectories in Test += baseDirectory.value.getParentFile / "src/test/scala",
-  ).filterNot(_ => forIdea): _*)
+  .settings(
+    jsCommonSettings,
+    name := (name in `commons-shared`).value,
+    sourceDirsSettings(_.getParentFile).filterNot(_ => forIdea),
+  )
 
 lazy val `commons-shared-aggregate` = project
   .aggregate(`commons-shared`, `commons-shared-js`)
-  .settings(commonSettings: _*)
-  .settings(noPublishSettings: _*)
-  .settings(ideSkipProject := true)
+  .settings(
+    commonSettings,
+    noPublishSettings,
+    ideSkipProject := true
+  )
 
 lazy val `commons-analyzer` = project
   .dependsOn(`commons-shared` % Test)
-  .settings(commonSettings: _*)
-  .settings(jvmCommonSettings: _*)
   .settings(
+    jvmCommonSettings,
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
   )
 
 lazy val `commons-jetty` = project
   .dependsOn(`commons-shared`)
-  .settings(commonSettings: _*)
-  .settings(jvmCommonSettings: _*)
   .settings(
+    jvmCommonSettings,
     libraryDependencies ++= Seq(
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
       "org.eclipse.jetty" % "jetty-server" % jettyVersion,
@@ -222,11 +229,10 @@ lazy val `commons-jetty` = project
 
 lazy val `commons-benchmark` = project
   .dependsOn(`commons-shared`, `commons-akka`, `commons-redis`, `commons-mongo`)
-  .settings(commonSettings: _*)
-  .settings(jvmCommonSettings: _*)
-  .settings(noPublishSettings: _*)
   .enablePlugins(JmhPlugin)
   .settings(
+    jvmCommonSettings,
+    noPublishSettings,
     libraryDependencies ++= {
       if (scalaBinaryVersion.value != "2.12") Seq(
         "com.github.etaty" %% "rediscala" % "1.6.0",
@@ -246,9 +252,8 @@ lazy val `commons-benchmark` = project
 
 lazy val `commons-mongo` = project
   .dependsOn(`commons-shared`)
-  .settings(commonSettings: _*)
-  .settings(jvmCommonSettings: _*)
   .settings(
+    jvmCommonSettings,
     libraryDependencies ++= Seq(
       "org.mongodb" % "mongodb-driver-core" % mongoVersion,
       "org.mongodb" % "mongodb-driver" % mongoVersion % Optional,
@@ -259,9 +264,8 @@ lazy val `commons-mongo` = project
 
 lazy val `commons-kafka` = project
   .dependsOn(`commons-shared`)
-  .settings(commonSettings: _*)
-  .settings(jvmCommonSettings: _*)
   .settings(
+    jvmCommonSettings,
     libraryDependencies ++= Seq(
       "org.apache.kafka" % "kafka-streams" % kafkaVersion,
     ),
@@ -269,9 +273,8 @@ lazy val `commons-kafka` = project
 
 lazy val `commons-redis` = project
   .dependsOn(`commons-shared`)
-  .settings(commonSettings: _*)
-  .settings(jvmCommonSettings: _*)
   .settings(
+    jvmCommonSettings,
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
@@ -281,9 +284,8 @@ lazy val `commons-redis` = project
 
 lazy val `commons-spring` = project
   .dependsOn(`commons-shared`)
-  .settings(commonSettings: _*)
-  .settings(jvmCommonSettings: _*)
   .settings(
+    jvmCommonSettings,
     libraryDependencies ++= Seq(
       "org.springframework" % "spring-context" % springVersion,
       "com.typesafe" % "config" % typesafeConfigVersion,
@@ -292,9 +294,8 @@ lazy val `commons-spring` = project
 
 lazy val `commons-akka` = project
   .dependsOn(`commons-shared`)
-  .settings(commonSettings: _*)
-  .settings(jvmCommonSettings: _*)
   .settings(
+    jvmCommonSettings,
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.akka" %% "akka-remote" % akkaVersion,
