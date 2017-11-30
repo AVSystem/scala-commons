@@ -8,7 +8,7 @@ class ValueEnumExhaustiveMatch[C <: Global with Singleton](g: C) extends Analyze
 
   import global._
 
-  val valueEnumTpe: Type = classType("com.avsystem.commons.misc.ValueEnum")
+  lazy val valueEnumTpe: Type = classType("com.avsystem.commons.misc.ValueEnum")
   lazy val ExistentialType(_, TypeRef(miscPackageTpe, valueEnumCompanionSym, _)) =
     classType("com.avsystem.commons.misc.ValueEnumCompanion")
 
