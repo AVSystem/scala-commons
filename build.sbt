@@ -89,7 +89,6 @@ val commonSettings = Seq(
     "com.github.ghik" %% "silencer-lib" % silencerVersion,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
-    "org.apache.commons" % "commons-io" % commonsIoVersion % Test,
   ),
   dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
   ideBasePackages := Seq(organization.value),
@@ -99,6 +98,10 @@ val commonSettings = Seq(
 )
 
 val jvmCommonSettings = commonSettings ++ Seq(
+  libraryDependencies ++= Seq(
+    "org.apache.commons" % "commons-io" % commonsIoVersion % Test,
+    "com.google.guava" % "guava" % guavaVersion % Test,
+  ),
   mimaPreviousArtifacts := {
     Set(organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion)
   },
