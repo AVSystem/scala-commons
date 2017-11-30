@@ -6,12 +6,8 @@ import scala.collection.convert.{DecorateAsJava, DecorateAsScala}
 trait JavaInterop extends Any
   with JBasicUtils
   with JCollectionUtils
+  // contents of scala.collection.JavaConverters
   with DecorateAsJava
   with DecorateAsScala
-  with Java8CollectionUtils
-  with JFunctionUtils
-  with JStreamUtils
-  with JOptionalUtils
-  with GuavaUtils
 
 object JavaInterop extends JavaInterop

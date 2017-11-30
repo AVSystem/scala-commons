@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import com.avsystem.commons.jiop.Java8Interop._
+import com.avsystem.commons.jiop.JavaInterop._
 
 trait Java8CollectionUtils {
 
