@@ -268,6 +268,7 @@ lazy val `commons-kafka` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion,
       "org.apache.kafka" % "kafka-streams" % kafkaVersion,
     ),
   )
@@ -289,6 +290,7 @@ lazy val `commons-spring` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion,
       "org.springframework" % "spring-context" % springVersion,
       "com.typesafe" % "config" % typesafeConfigVersion,
     ),
@@ -299,6 +301,7 @@ lazy val `commons-akka` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion,
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.akka" %% "akka-remote" % akkaVersion,
       "io.monix" %% "monix" % monixVersion,
