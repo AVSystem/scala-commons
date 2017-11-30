@@ -100,7 +100,6 @@ val commonSettings = Seq(
 val jvmCommonSettings = commonSettings ++ Seq(
   libraryDependencies ++= Seq(
     "org.apache.commons" % "commons-io" % commonsIoVersion % Test,
-    "com.google.guava" % "guava" % guavaVersion % Test,
   ),
   mimaPreviousArtifacts := {
     Set(organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion)
@@ -191,7 +190,7 @@ lazy val `commons-core` = project
     sourceDirsSettings(_ / "jvm"),
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
-      "com.google.guava" % "guava" % guavaVersion % Optional,
+      "com.google.guava" % "guava" % guavaVersion,
     ),
   )
 
@@ -224,7 +223,6 @@ lazy val `commons-jetty` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion,
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
       "org.eclipse.jetty" % "jetty-server" % jettyVersion,
       "com.lihaoyi" %% "upickle" % upickleVersion,
@@ -259,7 +257,6 @@ lazy val `commons-mongo` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion,
       "org.mongodb" % "mongodb-driver-core" % mongoVersion,
       "org.mongodb" % "mongodb-driver" % mongoVersion % Optional,
       "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,
@@ -272,7 +269,6 @@ lazy val `commons-kafka` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion,
       "org.apache.kafka" % "kafka-streams" % kafkaVersion,
     ),
   )
@@ -282,7 +278,6 @@ lazy val `commons-redis` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion,
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
     ),
@@ -294,7 +289,6 @@ lazy val `commons-spring` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion,
       "org.springframework" % "spring-context" % springVersion,
       "com.typesafe" % "config" % typesafeConfigVersion,
     ),
@@ -305,7 +299,6 @@ lazy val `commons-akka` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion,
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.akka" %% "akka-remote" % akkaVersion,
       "io.monix" %% "monix" % monixVersion,
