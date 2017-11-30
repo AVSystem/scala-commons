@@ -221,6 +221,7 @@ lazy val `commons-jetty` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion,
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
       "org.eclipse.jetty" % "jetty-server" % jettyVersion,
       "com.lihaoyi" %% "upickle" % upickleVersion,
