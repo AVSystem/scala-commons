@@ -2,8 +2,7 @@ import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys._
 
 cancelable in Global := true
 
-// `-DforIdea=true` must be manually added to SBT VM options in IDEA settings
-val forIdea = System.getProperty("forIdea", "false").toBoolean
+val forIdea = System.getProperty("idea.managed", "false").toBoolean
 
 inThisBuild(Seq(
   scalaVersion := "2.12.4",
