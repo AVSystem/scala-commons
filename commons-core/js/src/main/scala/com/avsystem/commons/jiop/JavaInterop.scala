@@ -6,7 +6,6 @@ import scala.collection.convert.{DecorateAsJava, DecorateAsScala}
 trait JavaInterop extends AnyRef
   with JBasicUtils
   with JCollectionUtils
-  // contents of scala.collection.JavaConverters
   with DecorateAsJava
   with DecorateAsScala
 
