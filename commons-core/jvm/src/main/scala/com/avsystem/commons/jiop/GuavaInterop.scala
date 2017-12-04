@@ -3,16 +3,16 @@ package jiop
 
 import java.util.concurrent.{Executor, TimeUnit}
 
-import com.avsystem.commons.jiop.GuavaUtils._
+import com.avsystem.commons.jiop.GuavaInterop._
 import com.avsystem.commons.misc.Sam
 import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture, SettableFuture}
 import com.google.common.{base => gbase}
 
 import scala.annotation.unchecked.uncheckedVariance
-import scala.concurrent.{Await, CanAwait, ExecutionException, TimeoutException}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, CanAwait, ExecutionException, TimeoutException}
 
-trait GuavaUtils {
+trait GuavaInterop {
   type GFunction[F, T] = gbase.Function[F, T]
   type GSupplier[T] = gbase.Supplier[T]
   type GPredicate[T] = gbase.Predicate[T]
@@ -31,7 +31,7 @@ trait GuavaUtils {
     new DecorateFutureAsGuava(fut)
 }
 
-object GuavaUtils {
+object GuavaInterop extends GuavaInterop {
   class DecorateFutureAsScala[T](private val gfut: ListenableFuture[T]) extends AnyVal {
     def asScala: Future[T] = gfut match {
       case FutureAsListenableFuture(fut) => fut

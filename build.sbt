@@ -190,7 +190,7 @@ lazy val `commons-core` = project
     sourceDirsSettings(_ / "jvm"),
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
-      "com.google.guava" % "guava" % guavaVersion,
+      "com.google.guava" % "guava" % guavaVersion % Optional,
     ),
   )
 
@@ -257,6 +257,7 @@ lazy val `commons-mongo` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion,
       "org.mongodb" % "mongodb-driver-core" % mongoVersion,
       "org.mongodb" % "mongodb-driver" % mongoVersion % Optional,
       "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,
@@ -278,6 +279,7 @@ lazy val `commons-redis` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion,
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
     ),

@@ -12,6 +12,5 @@ trait JavaInterop extends AnyRef
   with JFunctionUtils
   with JStreamUtils
   with JOptionalUtils
-  with GuavaUtils
 
 object JavaInterop extends JavaInterop

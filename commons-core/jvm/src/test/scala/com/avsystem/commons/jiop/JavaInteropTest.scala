@@ -5,6 +5,7 @@ import java.util.stream.{Collectors, DoubleStream, IntStream, LongStream}
 
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.FunSuite
+import GuavaInterop._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
