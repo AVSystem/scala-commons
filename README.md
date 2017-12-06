@@ -20,7 +20,7 @@
     [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html),
     [`OrderedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OrderedEnum.html)
   * Java interoperability utilities - [`JavaInterop`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/jiop/JavaInterop$.html)
-  * Google Guava interoperability utilities
+  * Google Guava interoperability utilities (dependency on Guava is optional)
   * Various Scala language-level utilities
     * Implicit source information objects - [`SourceInfo`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/SourceInfo.html)
     * More concise aliases for Scala collection types - [`CollectionAliases`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/collection/CollectionAliases$.html)
