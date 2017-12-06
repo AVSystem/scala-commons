@@ -22,4 +22,8 @@ trait CaseMethods extends Any with Product {
   def canEqual(that: Any): Boolean = getClass.isAssignableFrom(that.getClass)
 }
 
+/**
+  * Base class for case classes that reduces amount of code that the compiler generates for them.
+  * Useful primarily for JS size reduction. See [[CaseMethods]] for more details.
+  */
 abstract class AbstractCase extends CaseMethods

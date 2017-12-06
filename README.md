@@ -9,28 +9,27 @@
 
 ## Modules and features
 
-* `commons-shared` - basic language utilities and generic features not associated with any particular library of framework:
+* `commons-core` - basic language utilities and generic features not associated with any particular library of framework:
+  * [`GenCodec`](docs/GenCodec.md): format-agnostic, typeclass based serialization framework with automatic typeclass
+    derivation for case classes and sealed hierarchies
+  * [RPC framework](docs/RPCFramework.md): **typesafe** RPC/proxy framework used in particular by
+    [Udash Framework](http://guide.udash.io/#/rpc) for client-server communication
+  * Better enumeration support for Scala -
+    [`ValueEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/ValueEnum.html),
+    [`SealedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/SealedEnumCompanion.html),
+    [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html),
+    [`OrderedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OrderedEnum.html)
   * Java interoperability utilities - [`JavaInterop`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/jiop/JavaInterop$.html)
+  * Google Guava interoperability utilities
   * Various Scala language-level utilities
-    * Better enumeration support for Scala - 
-      [`SealedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/SealedEnumCompanion.html),
-      [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html),
-      [`OrderedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OrderedEnum.html)
     * Implicit source information objects - [`SourceInfo`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/SourceInfo.html)
     * More concise aliases for Scala collection types - [`CollectionAliases`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/collection/CollectionAliases$.html)
     * Universal extension methods - [`SharedExtensions`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/SharedExtensions$.html)
-  * Lightweight alternatives for Scala `Option` - 
-    [`Opt`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/Opt.html), 
+  * Lightweight alternatives for Scala `Option` -
+    [`Opt`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/Opt.html) - guarantees no `null`s,
     [`OptArg`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptArg.html), 
     [`NOpt`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NOpt.html), 
     [`OptRef`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptRef.html) (implemented as value classes)
-  * [`GenCodec`: format-agnostic, typeclass based serialization framework with automatic derivation](docs/GenCodec.md)
-  * [Typesafe RPC/proxy framework](docs/RPCFramework.md)
- 
- `commons-shared` module is cross compiled for JVM and JS.
-* `commons-core` - additional language utilities available only on JVM
-  * Java 8 interoperability utilities
-  * Google Guava interoperability utilities
 * `commons-redis` - [Scala driver for Redis](docs/RedisDriver.md)
 * `commons-akka` - Akka utilities, primarily [`AkkaRPCFramework`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/rpc/akka/AkkaRPCFramework$.html)
   which supports methods returning Monix `Observable`s
@@ -40,7 +39,8 @@
 * `commons-analyzer` - static analyzer for Scala code, i.e. a compiler plugin that enforces various (mostly undrelated) rules and conventions on source code
 * `commons-annotations` - contains annotations used by macros and static analyzer
 * `commons-jetty` - Jetty server utilities
-* `commons-mongo` - MongoDB utilities
+* `commons-mongo` - MongoDB utilities for Scala & Java MongoDB drivers, integration with `GenCodec`
+* `commons-kafka` - Kafka utilities
 * `commons-spring` - Spring framework utilities:
   * `HoconBeanDefinitionReader` - an utility that allows you to define Spring application context using HOCON format
 
