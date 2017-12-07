@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
   *
   * Enum classes must have a companion object which extends [[ValueEnumCompanion]] (prefer using
   * [[AbstractValueEnumCompanion]] where possible). Every enum constant must be declared as a `final val` in the
-  * companion object and must have the `Value` type explicitly ascribed.
+  * companion object and must have the `Value` type explicitly ascribed (which is just a type alias for enum class itself).
   * The enum class itself must take an implicit [[EnumCtx]] argument which provides information about
   * enum ordinal and name as well as makes sure that enum value is registered in the companion object.
   * If possible, you should always extend [[AbstractValueEnum]] instead of mixing in this trait.
