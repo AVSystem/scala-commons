@@ -7,11 +7,10 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.FunSuite
 import org.springframework.beans.factory.support.DefaultListableBeanFactory
 import org.springframework.context.support.GenericApplicationContext
-import org.springframework.core.DefaultParameterNameDiscoverer
 
 import scala.beans.BeanProperty
 
-class TestBean @ParamNames(Array("constrInt", "constrString"))(val constrInt: Int, val constrString: String) {
+class TestBean(val constrInt: Int = 1, val constrString: String = "constrDefault") {
   @BeanProperty var int: Int = _
   @BeanProperty var string: String = _
   @BeanProperty var strIntMap: ju.Map[String, Int] = _
@@ -20,16 +19,21 @@ class TestBean @ParamNames(Array("constrInt", "constrString"))(val constrInt: In
   @BeanProperty var nestedBean: TestBean = _
   @BeanProperty var config: Config = _
 }
+object TestBean {
+  def create(theInt: Int = -1, theString: String = "factoryDefault"): TestBean =
+    new TestBean(theInt, theString)
+}
 
 class HoconBeanDefinitionReaderTest extends FunSuite {
-  def createContext(resource: String) = {
-    val pnd = new DefaultParameterNameDiscoverer
-    pnd.addDiscoverer(new AnnotationParameterNameDiscoverer)
+  def createContext(resource: String): GenericApplicationContext = {
+    val pnd = new ScalaParameterNameDiscoverer
 
     val beanFactory = new DefaultListableBeanFactory
     beanFactory.setParameterNameDiscoverer(pnd)
 
     val ctx = new GenericApplicationContext(beanFactory)
+    ctx.addBeanFactoryPostProcessor(new ScalaDefaultValuesInjector)
+
     val rdr = new HoconBeanDefinitionReader(ctx)
     rdr.loadBeanDefinitions(resource)
     ctx.refresh()
@@ -40,7 +44,7 @@ class HoconBeanDefinitionReaderTest extends FunSuite {
   test("hocon bean definition reader should work") {
     val ctx = createContext("testBean.conf")
 
-    val testBean = ctx.getBean(classOf[TestBean])
+    val testBean = ctx.getBean("testBean", classOf[TestBean])
     assert(42 === testBean.constrInt)
     assert("lolzsy" === testBean.constrString)
     assert(5 === testBean.int)
@@ -54,5 +58,29 @@ class HoconBeanDefinitionReaderTest extends FunSuite {
     assert(2 === testBean.nestedBean.nestedBean.constrInt)
     assert("yes" === testBean.nestedBean.nestedBean.constrString)
     assert(ConfigFactory.parseString("srsly = dafuq") === testBean.config)
+
+    val testBeanDefInt = ctx.getBean("testBeanDefInt", classOf[TestBean])
+    assert(testBeanDefInt.constrInt == 1)
+    assert(testBeanDefInt.constrString == "constrNonDefault")
+
+    val testBeanDefString = ctx.getBean("testBeanDefString", classOf[TestBean])
+    assert(testBeanDefString.constrInt == 2)
+    assert(testBeanDefString.constrString == "constrDefault")
+
+    val testBeanDefAll = ctx.getBean("testBeanDefAll", classOf[TestBean])
+    assert(testBeanDefAll.constrInt == 1)
+    assert(testBeanDefAll.constrString == "constrDefault")
+
+    val testBeanFMDefInt = ctx.getBean("testBeanFMDefInt", classOf[TestBean])
+    assert(testBeanFMDefInt.constrInt == -1)
+    assert(testBeanFMDefInt.constrString == "factoryNonDefault")
+
+    val testBeanFMDefString = ctx.getBean("testBeanFMDefString", classOf[TestBean])
+    assert(testBeanFMDefString.constrInt == -2)
+    assert(testBeanFMDefString.constrString == "factoryDefault")
+
+    val testBeanFMDefAll = ctx.getBean("testBeanFMDefAll", classOf[TestBean])
+    assert(testBeanFMDefAll.constrInt == -1)
+    assert(testBeanFMDefAll.constrString == "factoryDefault")
   }
 }

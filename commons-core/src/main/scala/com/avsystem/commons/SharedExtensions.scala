@@ -143,6 +143,16 @@ object SharedExtensions extends SharedExtensions {
     def evalFuture: Future[A] = FutureCompanionOps.eval(a())
 
     def evalTry: Try[A] = Try(a())
+
+    def recoverFrom[T <: Throwable : ClassTag](fallbackValue: => A): A =
+      try a() catch {
+        case _: T => fallbackValue
+      }
+
+    def recoverToOpt[T <: Throwable : ClassTag]: Opt[A] =
+      try Opt(a()) catch {
+        case _: T => Opt.Empty
+      }
   }
 
   class NullableOps[A >: Null](private val a: A) extends AnyVal {

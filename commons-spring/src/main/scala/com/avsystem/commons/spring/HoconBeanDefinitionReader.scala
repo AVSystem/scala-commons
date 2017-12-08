@@ -247,7 +247,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     getProps(obj).foreach {
       case (key, value) =>
         if (construct) {
-          addConstructorArg(readConstructorArg(value, Some(key)))
+          addConstructorArg(readConstructorArg(value, forcedName = key))
         } else {
           propertyValues.addPropertyValue(readPropertyValue(key, value))
         }
@@ -275,31 +275,35 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   private def readConstructorArgs(value: ConfigValue) = {
     value.as[Option[Either[ConfigList, ConfigObject]]] match {
       case Some(Left(list)) =>
-        list.iterator.asScala.map(configValue => readConstructorArg(configValue))
+        list.iterator.asScala.zipWithIndex.map { case (configValue, idx) =>
+          readConstructorArg(configValue, forcedIndex = idx)
+        }
       case Some(Right(obj)) =>
         validateObj(props = true)(obj)
         getProps(obj).iterator.map { case (name, configValue) =>
-          val (idxOpt, holder) = readConstructorArg(configValue)
-          holder.setName(name)
-          (idxOpt, holder)
+          readConstructorArg(configValue, forcedName = name)
         }
       case None =>
         Iterator.empty
     }
   }
 
-  private def readConstructorArg(value: ConfigValue, forcedName: Option[String] = None) = value match {
+  private def readConstructorArg(
+    value: ConfigValue,
+    forcedIndex: OptArg[Int] = OptArg.Empty,
+    forcedName: OptArg[String] = OptArg.Empty
+  ) = value match {
     case ValueDefinition(obj) =>
       validateObj(required = Set(ValueAttr), allowed = Set(IndexAttr, TypeAttr, NameAttr))(obj)
       val vh = new ValueHolder(read(obj.get(ValueAttr)))
       obj.get(TypeAttr).as[Option[String]].foreach(vh.setType)
-      (forcedName orElse obj.get(NameAttr).as[Option[String]]).foreach(vh.setName)
-      val indexOpt = obj.get(IndexAttr).as[Option[Int]]
+      (forcedName.toOption orElse obj.get(NameAttr).as[Option[String]]).foreach(vh.setName)
+      val indexOpt = forcedIndex.toOption orElse obj.get(IndexAttr).as[Option[Int]]
       (indexOpt, vh)
     case _ =>
       val vh = new ValueHolder(read(value))
       forcedName.foreach(vh.setName)
-      (None, vh)
+      (forcedIndex.toOption, vh)
   }
 
   private def readPropertyValue(name: String, value: ConfigValue) = value match {
@@ -344,6 +348,6 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     result
   }
 
-  def loadBeanDefinitions(resource: Resource) =
+  def loadBeanDefinitions(resource: Resource): Int =
     loadBeanDefinitions(ConfigFactory.parseURL(resource.getURL).resolve)
 }
