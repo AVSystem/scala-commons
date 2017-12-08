@@ -4,17 +4,6 @@
     <option name="PER_PROJECT_SETTINGS">
       <value>
         <option name="LINE_SEPARATOR" value="&#10;" />
-        <ScalaCodeStyleSettings>
-          <option name="alwaysUsedImports">
-            <array>
-              <option value="scala.concurrent.duration._" />
-              <option value="com.avsystem.commons.jiop.JavaInterop._" />
-              <option value="com.avsystem.commons.commons.collection.CollectionAliases._" />
-            </array>
-          </option>
-          <option name="classCountToUseImportOnDemand" value="9999" />
-          <option name="PLACE_SELF_TYPE_ON_NEW_LINE" value="false" />
-        </ScalaCodeStyleSettings>
         <XML>
           <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
         </XML>

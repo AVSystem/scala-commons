@@ -1,6 +1,7 @@
 .idea/*
 !.idea/vcs.xml
 !.idea/codeStyleSettings.xml
+!.idea/codeStyles/
 *.iml
 *.iws
 *.ipr
