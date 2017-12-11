@@ -9,7 +9,7 @@ object BsonRef {
   val BsonKeySeparator = "."
 
   trait Creator[S] {
-    def ref[T](fun: S => T): BsonRef[T] = macro macros.serialization.BsonRefMacros.bsonRef[S]
+    protected[this] def ref[T](fun: S => T): BsonRef[T] = macro macros.serialization.BsonRefMacros.bsonRef[S]
   }
 
   def apply[T](rawRef: RawRef)(implicit codec: GenCodec[T]): BsonRef[T] = {
