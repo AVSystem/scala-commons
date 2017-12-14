@@ -15,6 +15,11 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
   val JMapTpe = typeOf[util.Map[_, _]]
   val MapApply = MapTpe.member(TermName("apply"))
   val JMapGet = JMapTpe.member(TermName("get"))
+  val TransparentGets = Set(
+    getType(tq"$CommonsPackage.misc.Opt[_]"),
+    getType(tq"$CommonsPackage.misc.OptArg[_]"),
+    getType(tq"$CommonsPackage.misc.OptRef[_]")
+  ).map(_.member(TermName("get")))
 
   object MapApplyOrGet {
     def unapply(tree: Tree): Option[(Tree, Tree, Symbol)] = tree match {
@@ -46,6 +51,9 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
       var refs = List.empty[Tree]
 
       def extract(body: Tree): Unit = body match {
+        case Select(prefix, _) if TransparentGets.contains(body.symbol) =>
+          extract(prefix)
+
         case Select(prefix, _) =>
           val prefixTpe = prefix.tpe.widen
           val bodyTpe = body.tpe.widen
@@ -87,7 +95,7 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
             case _ =>
               val fieldSym = fieldMemberFor(prefixTpe, selSym)
-              if(!isTransparent(prefixTpeSym)) {
+              if (!isTransparent(prefixTpeSym)) {
                 refs ::= q"$SerializationPkg.RawRef.Field(${targetName(fieldSym)})"
               }
           }
