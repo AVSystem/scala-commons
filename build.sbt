@@ -194,9 +194,10 @@ lazy val `commons-core` = project
     ),
   )
 
-lazy val `commons-core-js` = project.in(file("commons-core/js")).enablePlugins(ScalaJSPlugin)
+lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
+  .enablePlugins(ScalaJSPlugin)
+  .configure(p => if (forIdea) p.dependsOn(`commons-core`) else p)
   .dependsOn(`commons-macros`)
-  .dependsOn(Seq[ClasspathDep[ProjectReference]](`commons-core`).filter(_ => forIdea): _*)
   .settings(
     jsCommonSettings,
     name := (name in `commons-core`).value,
