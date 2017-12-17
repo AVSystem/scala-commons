@@ -157,7 +157,6 @@ lazy val commons = project.in(file("."))
         `commons-core-js`,
         `commons-benchmark`,
       ),
-    ideExcludedDirectories := Seq((baseDirectory in `commons-core-aggregate`).value),
   )
 
 lazy val `commons-annotations` = project
@@ -204,11 +203,12 @@ lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
     sourceDirsSettings(_.getParentFile).filterNot(_ => forIdea),
   )
 
-lazy val `commons-core-aggregate` = project
+lazy val `commons-core-agg` = project.in(`commons-core`.base)
   .aggregate(`commons-core`, `commons-core-js`)
   .settings(
     commonSettings,
     noPublishSettings,
+    target := (target in `commons-core`).value / "agg",
     ideSkipProject := true
   )
 
