@@ -2,7 +2,11 @@ import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys._
 
 cancelable in Global := true
 
-val forIdea = System.getProperty("idea.managed", "false").toBoolean
+// We need to generate slightly different structure for IntelliJ in order to better support ScalaJS cross projects.
+// idea.managed property is set by IntelliJ when running SBT (shell or import), idea.runid is set only for IntelliJ's
+// SBT shell. In order for this technique to work, you MUST NOT set the "Use the sbt shell for build and import"
+// option in IntelliJ's SBT settings.
+val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
 inThisBuild(Seq(
   scalaVersion := "2.12.4",
@@ -36,7 +40,7 @@ inThisBuild(Seq(
 ))
 
 // for binary compatibility checking
-val previousVersion = "1.22.0"
+val previousVersion = "1.25.0"
 
 val silencerVersion = "0.5"
 val guavaVersion = "23.0"
@@ -149,8 +153,8 @@ lazy val commons = project.in(file("."))
     commonSettings,
     noPublishSettings,
     name := "commons",
-    scalacOptions in(ScalaUnidoc, unidoc) += "-Ymacro-no-expand",
-    unidocProjectFilter in(ScalaUnidoc, unidoc) :=
+    scalacOptions in ScalaUnidoc in unidoc += "-Ymacro-no-expand",
+    unidocProjectFilter in ScalaUnidoc in unidoc :=
       inAnyProject -- inProjects(
         `commons-macros`,
         `commons-analyzer`,
@@ -191,24 +195,24 @@ lazy val `commons-core` = project
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
     ),
+    ideExcludedDirectories := Seq(baseDirectory.value / "agg"),
   )
 
 lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
   .enablePlugins(ScalaJSPlugin)
-  .configure(p => if (forIdea) p.dependsOn(`commons-core`) else p)
+  .configure(p => if (forIdeaImport) p.dependsOn(`commons-core`) else p)
   .dependsOn(`commons-macros`)
   .settings(
     jsCommonSettings,
     name := (name in `commons-core`).value,
-    sourceDirsSettings(_.getParentFile).filterNot(_ => forIdea),
+    sourceDirsSettings(_.getParentFile),
   )
 
-lazy val `commons-core-agg` = project.in(`commons-core`.base)
+lazy val `commons-core-agg` = project.in(`commons-core`.base / "agg")
   .aggregate(`commons-core`, `commons-core-js`)
   .settings(
     commonSettings,
     noPublishSettings,
-    target := (target in `commons-core`).value / "agg",
     ideSkipProject := true
   )
 
