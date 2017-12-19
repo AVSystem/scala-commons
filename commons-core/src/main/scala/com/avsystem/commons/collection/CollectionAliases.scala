@@ -111,6 +111,15 @@ trait CollectionAliases {
   // Coming in Scala 2.12
   // type MTreeMap[A, B] = scm.TreeMap[A, B]
   // final def MTreeMap: scm.TreeMap.type = scm.TreeMap
+
+  type MBuffer[A] = scm.Buffer[A]
+  final def MBuffer: scm.Buffer.type = scm.Buffer
+
+  type MListBuffer[A] = scm.ListBuffer[A]
+  final def MListBuffer: scm.ListBuffer.type = scm.ListBuffer
+
+  type MArrayBuffer[A] = scm.ArrayBuffer[A]
+  final def MArrayBuffer: scm.ArrayBuffer.type = scm.ArrayBuffer
 }
 
 object CollectionAliases extends CollectionAliases
