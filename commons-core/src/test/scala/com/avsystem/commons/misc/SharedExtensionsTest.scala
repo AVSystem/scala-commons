@@ -19,10 +19,28 @@ class SharedExtensionsTest extends FunSuite with Matchers {
     List.empty[Int].maxOpt shouldEqual Opt.Empty
   }
 
-  test("future eval") {
+  test("Future.eval") {
     val ex = new Exception
     assert(Future.eval(42).value.contains(Success(42)))
     assert(Future.eval(throw ex).value.contains(Failure(ex)))
+  }
+
+  test("Future.transformTry") {
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits._
+    val ex = new Exception
+    assert(Future.successful(42).transformTry(t => Success(t.get - 1)).value.contains(Success(41)))
+    assert(Future.successful(42).transformTry(_ => Failure(ex)).value.contains(Failure(ex)))
+    assert(Future.failed[Int](ex).transformTry(t => Success(t.failed.get)).value.contains(Success(ex)))
+    assert(Future.failed[Int](ex).transformTry(_ => Failure(ex)).value.contains(Failure(ex)))
+  }
+
+  test("Future.transformWith") {
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits._
+    val ex = new Exception
+    assert(Future.successful(42).transformWith(t => Future.successful(t.get - 1)).value.contains(Success(41)))
+    assert(Future.successful(42).transformWith(_ => Future.failed(ex)).value.contains(Failure(ex)))
+    assert(Future.failed[Int](ex).transformWith(t => Future.successful(t.failed.get)).value.contains(Success(ex)))
+    assert(Future.failed[Int](ex).transformWith(_ => Future.failed(ex)).value.contains(Failure(ex)))
   }
 
   test("Iterator.untilEmpty") {

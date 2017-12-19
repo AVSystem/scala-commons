@@ -9,7 +9,7 @@ import scala.collection.generic.CanBuildFrom
 import scala.collection.{AbstractIterator, mutable}
 import scala.language.implicitConversions
 
-trait SharedExtensions {
+trait SharedExtensions extends CompatSharedExtensions {
   implicit def universalOps[A](a: A): UniversalOps[A] = new UniversalOps(a)
 
   implicit def lazyUniversalOps[A](a: => A): LazyUniversalOps[A] = new LazyUniversalOps(() => a)
@@ -181,6 +181,12 @@ object SharedExtensions extends SharedExtensions {
 
     def transformNow[S](s: A => S, f: Throwable => Throwable): Future[S] =
       fut.transform(s, f)(RunNowEC)
+
+    def transformNow[S](f: Try[A] => Try[S]): Future[S] =
+      fut.transformTry(f)(RunNowEC)
+
+    def transformWithNow[S](f: Try[A] => Future[S]): Future[S] =
+      fut.transformWith(f)(RunNowEC)
 
     def wrapToTry: Future[Try[A]] =
       fut.mapNow(Success(_)).recoverNow {
