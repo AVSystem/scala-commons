@@ -36,5 +36,9 @@ import scala.annotation.StaticAnnotation
   *   case class SecondCase(tag: String, dbl: Double) extends Base
   * }}}
   *
+  * The direct motivation for this annotation was the ability to use [[flatten]] on MongoDB entities with an `_id` field.
+  * When reading entities from MongoDB, the `_id` field is always at the beginning of a BSON document and therefore
+  * `GenCodec` must be able to read it before it knows which case class of sealed hierarchy is being deserialized.
+  *
   */
 class outOfOrder extends StaticAnnotation
