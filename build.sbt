@@ -42,7 +42,7 @@ inThisBuild(Seq(
 // for binary compatibility checking
 val previousVersion = "1.25.0"
 
-val silencerVersion = "0.5"
+val silencerVersion = "0.6"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.4"
@@ -90,7 +90,7 @@ val commonSettings = Seq(
 
   libraryDependencies += compilerPlugin("com.github.ghik" %% "silencer-plugin" % silencerVersion),
   libraryDependencies ++= Seq(
-    "com.github.ghik" %% "silencer-lib" % silencerVersion,
+    "com.github.ghik" %% "silencer-lib" % silencerVersion % Optional,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
   ),
