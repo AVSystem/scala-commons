@@ -153,7 +153,7 @@ lazy val commons = project.in(file("."))
     commonSettings,
     noPublishSettings,
     name := "commons",
-    scalacOptions in ScalaUnidoc in unidoc += "-Ymacro-no-expand",
+    scalacOptions in ScalaUnidoc in unidoc += "-Ymacro-expand:none",
     unidocProjectFilter in ScalaUnidoc in unidoc :=
       inAnyProject -- inProjects(
         `commons-macros`,
