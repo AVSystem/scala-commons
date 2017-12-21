@@ -88,8 +88,8 @@ val commonSettings = Seq(
   publishMavenStyle := true,
   pomIncludeRepository := { _ => false },
 
-  libraryDependencies += compilerPlugin("com.github.ghik" %% "silencer-plugin" % silencerVersion),
   libraryDependencies ++= Seq(
+    compilerPlugin("com.github.ghik" %% "silencer-plugin" % silencerVersion),
     "com.github.ghik" %% "silencer-lib" % silencerVersion % Optional,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
