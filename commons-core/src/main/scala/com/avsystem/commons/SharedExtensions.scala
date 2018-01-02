@@ -16,6 +16,8 @@ trait SharedExtensions extends CompatSharedExtensions {
 
   implicit def nullableOps[A >: Null](a: A): NullableOps[A] = new NullableOps(a)
 
+  implicit def stringOps(str: String): StringOps = new StringOps(str)
+
   implicit def intOps(int: Int): IntOps = new IntOps(int)
 
   implicit def futureOps[A](fut: Future[A]): FutureOps[A] = new FutureOps(fut)
@@ -144,6 +146,12 @@ object SharedExtensions extends SharedExtensions {
 
     def evalTry: Try[A] = Try(a())
 
+    def optIf(condition: Boolean): Opt[A] =
+      if (condition) Opt(a()) else Opt.Empty
+
+    def optionIf(condition: Boolean): Option[A] =
+      if (condition) Some(a()) else None
+
     def recoverFrom[T <: Throwable : ClassTag](fallbackValue: => A): A =
       try a() catch {
         case _: T => fallbackValue
@@ -157,6 +165,14 @@ object SharedExtensions extends SharedExtensions {
 
   class NullableOps[A >: Null](private val a: A) extends AnyVal {
     def optRef: OptRef[A] = OptRef(a)
+  }
+
+  class StringOps(private val str: String) extends AnyVal {
+    def ensureSuffix(suffix: String): String =
+      if (str.endsWith(suffix)) str else str + suffix
+
+    def ensurePrefix(prefix: String): String =
+      if (str.startsWith(prefix)) str else prefix + str
   }
 
   class IntOps(private val int: Int) extends AnyVal {
