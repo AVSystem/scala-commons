@@ -5,6 +5,7 @@ import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc.{Boxing, Unboxing}
 import com.github.ghik.silencer.silent
 
+import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.collection.{AbstractIterator, mutable}
 import scala.language.implicitConversions
@@ -503,6 +504,28 @@ object SharedExtensions extends SharedExtensions {
           }
         }
       }
+
+    def distinctBy[B](f: A => B): Iterator[A] =
+      new AbstractIterator[A] {
+        private[this] val seen = new MHashSet[B]
+        private[this] var nextDistinct = NOpt.empty[A]
+
+        @tailrec
+        override final def hasNext: Boolean = nextDistinct.nonEmpty || it.hasNext && {
+          nextDistinct = NOpt.some(it.next()).filter(a => seen.add(f(a)))
+          hasNext
+        }
+
+        override def next(): A =
+          if (hasNext) {
+            val result = nextDistinct.get
+            nextDistinct = NOpt.Empty
+            result
+          }
+          else throw new NoSuchElementException
+      }
+
+    def distinct: Iterator[A] = distinctBy(identity)
   }
 
   object IteratorCompanionOps {

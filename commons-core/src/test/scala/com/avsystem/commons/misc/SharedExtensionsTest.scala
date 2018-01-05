@@ -62,6 +62,13 @@ class SharedExtensionsTest extends FunSuite with Matchers {
     assert(Iterator(1, 2, 3, 2, 1).collectWhileDefined({ case n if n > 0 => n * 2 }).toList == List(2, 4, 6, 4, 2))
   }
 
+  test("IteratorOps.distinctBy") {
+    assert(
+      Iterator("ab", "ba", "ac", "cd", "ad", "bd", "be", "fu").distinctBy(_.charAt(0)).toList ==
+        List("ab", "ba", "cd", "fu")
+    )
+  }
+
   test("uncheckedMatch") {
     val res = Option(42) uncheckedMatch {
       case Some(int) => int
