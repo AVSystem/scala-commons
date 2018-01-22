@@ -6,7 +6,7 @@ import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion,
 /**
   * Language supported by MongoDB text search.
   *
-  * @param code ISO 639-1, ISO 639-3 or RLP code used by Mongo $text operator
+  * @param code ISO 639-1, ISO 639-3 or RLP code used by Mongo \$text operator
   * @see [[https://docs.mongodb.com/manual/reference/text-search-languages/#text-search-languages]]
   */
 final class TextSearchLanguage(val code: String)(implicit enumCtx: EnumCtx) extends AbstractValueEnum
