@@ -3,9 +3,10 @@ package mongo.core.ops
 
 import java.util.regex.Pattern
 
+import com.avsystem.commons.mongo.text.TextSearchLanguage
 import com.google.common.collect.ImmutableList
-import com.mongodb.client.model.Filters
 import com.mongodb.client.model.geojson.{Geometry, Point}
+import com.mongodb.client.model.{Filters, TextSearchOptions}
 import org.bson.BsonType
 import org.bson.conversions.Bson
 
@@ -34,6 +35,16 @@ trait BaseFiltering[T] extends Any with KeyValueHandling[T] {
   def regex(pattern: Pattern): Bson = Filters.regex(key, pattern)
   def regex(patternStr: String): Bson = Filters.regex(key, patternStr)
   def regex(patternStr: String, options: String): Bson = Filters.regex(key, patternStr, options)
+
+  def text(str: String, caseSensitive: OptArg[Boolean] = OptArg.Empty,
+    language: OptArg[TextSearchLanguage] = OptArg.Empty, diacriticSensitive: OptArg[Boolean] = OptArg.Empty): Bson = {
+    val searchOptions = new TextSearchOptions().setup { options =>
+      caseSensitive.foreach(b => options.caseSensitive(b))
+      language.foreach(l => options.language(l.code))
+      diacriticSensitive.foreach(b => options.diacriticSensitive(b))
+    }
+    Filters.text(str, searchOptions)
+  }
 
   def bitsAllClear(bitMask: Long): Bson = Filters.bitsAllClear(key, bitMask)
   def bitsAllSet(bitMask: Long): Bson = Filters.bitsAllSet(key, bitMask)
