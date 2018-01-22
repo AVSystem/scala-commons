@@ -36,8 +36,8 @@ trait BaseFiltering[T] extends Any with KeyValueHandling[T] {
   def regex(patternStr: String): Bson = Filters.regex(key, patternStr)
   def regex(patternStr: String, options: String): Bson = Filters.regex(key, patternStr, options)
 
-  def text(str: String, caseSensitive: OptArg[Boolean],
-    language: OptArg[TextSearchLanguage], diacriticSensitive: OptArg[Boolean]): Bson = {
+  def text(str: String, caseSensitive: OptArg[Boolean] = OptArg.Empty,
+    language: OptArg[TextSearchLanguage] = OptArg.Empty, diacriticSensitive: OptArg[Boolean] = OptArg.Empty): Bson = {
     val searchOptions = new TextSearchOptions().setup { options =>
       caseSensitive.foreach(b => options.caseSensitive(b))
       language.foreach(l => options.language(l.code))
