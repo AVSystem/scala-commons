@@ -11,6 +11,12 @@ import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion,
   */
 final class TextSearchLanguage(val code: String)(implicit enumCtx: EnumCtx) extends AbstractValueEnum
 object TextSearchLanguage extends AbstractValueEnumCompanion[TextSearchLanguage] {
+
+  /**
+    * Uses simple tokenization with no list of stop words and no stemming.
+    */
+  final val None: Value = new TextSearchLanguage("none")
+
   final val Danish: Value = new TextSearchLanguage("da")
   final val Dutch: Value = new TextSearchLanguage("nl")
   final val English: Value = new TextSearchLanguage("en")
