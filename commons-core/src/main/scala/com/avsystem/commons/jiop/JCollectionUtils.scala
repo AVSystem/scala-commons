@@ -3,7 +3,6 @@ package jiop
 
 import java.{lang => jl, util => ju}
 
-
 import scala.collection.generic.CanBuildFrom
 import scala.language.{higherKinds, implicitConversions}
 
@@ -113,6 +112,17 @@ trait JCollectionUtils extends JCanBuildFroms {
     protected def instantiate[T](ord: Ordering[T]): JTreeSet[T] = new JTreeSet[T](ord)
   }
 
+  object JEnumSet {
+    def empty[T <: Enum[T] : ClassTag]: JEnumSet[T] =
+      ju.EnumSet.noneOf(classTag[T].runtimeClass.asInstanceOf[Class[T]])
+
+    def apply[T <: Enum[T] : ClassTag](values: T*): JEnumSet[T] = {
+      val result = empty[T]
+      values.foreach(result.add)
+      result
+    }
+  }
+
   abstract class JMapCreator[M[K, V] <: JMap[K, V]] {
     protected def instantiate[K, V]: M[K, V]
 
@@ -163,6 +173,19 @@ trait JCollectionUtils extends JCanBuildFroms {
 
   object JTreeMap extends JSortedMapCreator[JTreeMap] {
     protected def instantiate[K, V](ord: Ordering[K]): JTreeMap[K, V] = new JTreeMap[K, V](ord)
+  }
+
+  object JEnumMap {
+    def empty[K <: Enum[K] : ClassTag, V]: JEnumMap[K, V] =
+      new JEnumMap[K, V](classTag[K].runtimeClass.asInstanceOf[Class[K]])
+
+    def apply[K <: Enum[K] : ClassTag, V](keyValues: (K, V)*): JEnumMap[K, V] = {
+      val result = empty[K, V]
+      keyValues.foreach {
+        case (k, v) => result.put(k, v)
+      }
+      result
+    }
   }
 
   import JCollectionUtils._
