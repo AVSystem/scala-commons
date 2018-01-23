@@ -8,37 +8,6 @@ cancelable in Global := true
 // option in IntelliJ's SBT settings.
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-inThisBuild(Seq(
-  scalaVersion := "2.12.4",
-  crossScalaVersions := Seq("2.11.11", "2.12.4"),
-  organization := "com.avsystem.commons",
-  compileOrder := CompileOrder.Mixed,
-  scalacOptions ++= Seq(
-    "-encoding", "utf-8",
-    "-explaintypes",
-    "-feature",
-    "-deprecation",
-    "-unchecked",
-    "-language:implicitConversions",
-    "-language:existentials",
-    "-language:dynamics",
-    "-language:experimental.macros",
-    "-language:higherKinds",
-    "-Xfuture",
-    "-Xfatal-warnings",
-    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
-  ),
-  scalacOptions := {
-    val opts = scalacOptions.value
-    if (scalaBinaryVersion.value == "2.11")
-      opts.map(o => if (o.startsWith("-Xlint")) o.replace("-unused,", "") else o)
-    else
-      opts
-  },
-  apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
-  autoAPIMappings := true,
-))
-
 // for binary compatibility checking
 val previousVersion = "1.25.0"
 
@@ -62,6 +31,28 @@ val mockitoVersion = "2.10.0"
 val circeVersion = "0.9.0-M1"
 
 val commonSettings = Seq(
+  organization := "com.avsystem.commons",
+  scalaVersion := "2.12.4",
+  crossScalaVersions := Seq("2.11.11", "2.12.4"),
+  compileOrder := CompileOrder.Mixed,
+  scalacOptions ++= Seq(
+    "-encoding", "utf-8",
+    "-explaintypes",
+    "-feature",
+    "-deprecation",
+    "-unchecked",
+    "-language:implicitConversions",
+    "-language:existentials",
+    "-language:dynamics",
+    "-language:experimental.macros",
+    "-language:higherKinds",
+    "-Xfuture",
+    "-Xfatal-warnings",
+    s"-Xlint:-missing-interpolator,-adapted-args,${if (scalaBinaryVersion.value == "2.12") "-unused," else ""}_",
+  ),
+  apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
+  autoAPIMappings := true,
+
   publishTo := Some(Opts.resolver.sonatypeStaging),
   sonatypeProfileName := "com.avsystem",
 
