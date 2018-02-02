@@ -81,4 +81,16 @@ class SharedExtensionsTest extends FunSuite with Matchers {
       }
     }
   }
+
+  test("Ordering.orElse") {
+    case class CC(f: Int, s: Int)
+
+    val o = Ordering.by((_: CC).f).orElseBy(_.s)
+
+    assert(o.compare(CC(0, 1), CC(1, 0)) < 0)
+    assert(o.compare(CC(1, 0), CC(0, 1)) > 0)
+    assert(o.compare(CC(0, 0), CC(0, 1)) < 0)
+    assert(o.compare(CC(0, 1), CC(0, 0)) > 0)
+    assert(o.compare(CC(0, 0), CC(0, 0)) == 0)
+  }
 }

@@ -46,6 +46,8 @@ trait SharedExtensions extends CompatSharedExtensions {
   implicit def iteratorOps[A](it: Iterator[A]): IteratorOps[A] = new IteratorOps(it)
 
   implicit def iteratorCompanionOps(it: Iterator.type): IteratorCompanionOps.type = IteratorCompanionOps
+
+  implicit def orderingOps[A](ordering: Ordering[A]): OrderingOps[A] = new OrderingOps(ordering)
 }
 
 object SharedExtensions extends SharedExtensions {
@@ -582,5 +584,17 @@ object SharedExtensions extends SharedExtensions {
           }
         }
       }
+  }
+
+  final class OrderingOps[A](private val ordering: Ordering[A]) extends AnyVal {
+    def orElse(whenEqual: Ordering[A]): Ordering[A] =
+      new Ordering[A] {
+        override def compare(x: A, y: A): Int = ordering.compare(x, y) match {
+          case 0 => whenEqual.compare(x, y)
+          case res => res
+        }
+      }
+
+    def orElseBy[B: Ordering](f: A => B): Ordering[A] = orElse(Ordering.by(f))
   }
 }
