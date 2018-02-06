@@ -113,6 +113,9 @@ trait JCollectionUtils extends JCanBuildFroms {
   }
 
   object JEnumSet {
+    def allOf[T <: Enum[T] : ClassTag]: JEnumSet[T] =
+      ju.EnumSet.allOf(classTag[T].runtimeClass.asInstanceOf[Class[T]])
+
     def empty[T <: Enum[T] : ClassTag]: JEnumSet[T] =
       ju.EnumSet.noneOf(classTag[T].runtimeClass.asInstanceOf[Class[T]])
 
