@@ -94,7 +94,7 @@ sealed trait EnumCtx extends Any {
 trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { companion =>
   type Value = T
 
-  private[this] val registry = new ArrayBuffer[T]
+  private[this] val registryBuilder = IIndexedSeq.newBuilder[T]
   private[this] var currentOrdinal: Int = 0
   private[this] var finished: Boolean = false
   private[this] var awaitingRegister: Boolean = false
@@ -103,12 +103,12 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
     * Holds an indexed sequence of all enum values, ordered by their ordinal
     * (`values(i).ordinal` is always equal to `i`).
     */
-  final lazy val values: IndexedSeq[T] = synchronized {
+  final lazy val values: IIndexedSeq[T] = synchronized {
     if (awaitingRegister) {
       throw new IllegalStateException(s"Cannot collect enum values - one of the created contexts didn't register a value yet")
     }
     finished = true
-    registry
+    registryBuilder.result()
   }
 
   private class Ctx(val valName: String, val ordinal: Int) extends EnumCtx {
@@ -125,7 +125,7 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
       else if (registered)
         throw new IllegalStateException("Cannot register using the same EnumCtx more than once")
       else {
-        registry += value.asInstanceOf[T] //`enumValName` macro performs static checks that make this safe
+        registryBuilder += value.asInstanceOf[T] //`enumValName` macro performs static checks that make this safe
         currentOrdinal += 1
         registered = true
         awaitingRegister = false
