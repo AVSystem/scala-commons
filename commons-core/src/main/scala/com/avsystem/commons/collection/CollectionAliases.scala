@@ -84,6 +84,9 @@ trait CollectionAliases {
   type MBitSet = scm.BitSet
   final def MBitSet: scm.BitSet.type = scm.BitSet
 
+  type MLinkedHashSet[A] = scm.LinkedHashSet[A]
+  final def MLinkedHashSet: scm.LinkedHashSet.type = scm.LinkedHashSet
+
   type BMap[A, +B] = sc.Map[A, B]
   final def BMap: sc.Map.type = sc.Map
   type IMap[A, +B] = sci.Map[A, B]
