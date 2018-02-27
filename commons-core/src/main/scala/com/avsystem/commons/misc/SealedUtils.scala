@@ -48,7 +48,7 @@ trait SealedEnumCompanion[T] {
     * Also, be aware that [[caseObjects]] macro guarantees well-defined order of elements only for
     * [[com.avsystem.commons.misc.OrderedEnum OrderedEnum]].
     */
-  val values: Seq[T]
+  val values: ISeq[T]
 
   /**
     * A macro which reifies a list of all case objects of the sealed trait or class `T`.
