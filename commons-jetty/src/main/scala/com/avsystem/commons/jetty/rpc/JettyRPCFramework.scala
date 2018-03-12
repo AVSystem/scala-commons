@@ -40,10 +40,10 @@ trait JettyRPCFramework extends StandardRPCFramework {
 
     def request(method: HttpMethod, path: String, content: String): Future[String] = {
       val promise = Promise[String]
-      val request = httpClient.newRequest(urlPrefix + path)
-      request.method(method)
-      request.content(new BytesContentProvider(content.getBytes(StandardCharsets.UTF_8)))
-      request.send(new BufferingResponseListener() {
+      httpClient.newRequest(urlPrefix + path)
+        .method(method)
+        .content(new BytesContentProvider(content.getBytes(StandardCharsets.UTF_8)))
+        .send(new BufferingResponseListener() {
         override def onComplete(result: Result): Unit = {
           if (result.isFailed) {
             promise.tryFailure(result.getFailure)
@@ -76,8 +76,7 @@ trait JettyRPCFramework extends StandardRPCFramework {
 
       val cleanTarget = target.stripPrefix("/").stripSuffix("/")
 
-      val reader = request.getReader
-      val content = Stream.continually(reader.readLine())
+      val content = Iterator.continually(request.getReader.readLine())
         .takeWhile(_ != null)
         .mkString("\n")
 
