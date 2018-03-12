@@ -8,14 +8,14 @@ import org.eclipse.jetty.server.Server
 /**
   * @author MKej
   */
-object RPCMain {
-
+object JsonJettyRPCFrameworkTest {
   import JsonJettyRPCFramework._
 
   @RPC trait SomeApi {
     def keks: Future[Int]
     def isTop(keks: Int): Future[Boolean]
     def topper: Topper
+    def erroneousKeks: Future[Int]
   }
   object SomeApi {
     implicit val fullRPCInfo: BaseFullRPCInfo[SomeApi] = materializeFullInfo
@@ -39,6 +39,7 @@ object RPCMain {
         def initialize = Future.successful(println("Topper initialized"))
         def topKeks = Future.successful(Int.MaxValue)
       }
+      def erroneousKeks: Future[Int] = Future.failed(new RuntimeException("cannot into"))
     }
 
     val port = 1337
@@ -58,6 +59,7 @@ object RPCMain {
       top <- rpc.isTop(keks)
       topKeks <- rpc.topper.topKeks
       topIsTop <- rpc.isTop(topKeks)
+      err <- rpc.erroneousKeks.failed
     } yield {
       println(
         s"""
@@ -65,6 +67,7 @@ object RPCMain {
            |rpc.isTop(rpc.keks) = $top
            |rpc.topper.topKeks = $topKeks
            |rpc.isTop(rpc.topper.topKeks) = $topIsTop
+           |rpc.erroneousTopper = $err
          """.stripMargin.trim)
     }) onComplete { _ =>
       server.stop()
