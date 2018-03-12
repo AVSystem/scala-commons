@@ -16,11 +16,11 @@ import org.eclipse.jetty.server.{Handler, Request}
   * @author MKej
   */
 trait JettyRPCFramework extends StandardRPCFramework {
-  def valueToJson(value: RawValue): String
-  def jsonToValue(json: String): RawValue
+  protected def valueToJson(value: RawValue): String
+  protected def jsonToValue(json: String): RawValue
 
-  def argsToJson(args: List[List[RawValue]]): String
-  def jsonToArgs(json: String): List[List[RawValue]]
+  protected def argsToJson(args: List[List[RawValue]]): String
+  protected def jsonToArgs(json: String): List[List[RawValue]]
 
   class RPCClient(httpClient: HttpClient, urlPrefix: String)(implicit ec: ExecutionContext) {
     private class RawRPCImpl(pathPrefix: String) extends RawRPC {
@@ -40,10 +40,10 @@ trait JettyRPCFramework extends StandardRPCFramework {
 
     def request(method: HttpMethod, path: String, content: String): Future[String] = {
       val promise = Promise[String]
-      val request = httpClient.newRequest(urlPrefix + path)
-      request.method(method)
-      request.content(new BytesContentProvider(content.getBytes(StandardCharsets.UTF_8)))
-      request.send(new BufferingResponseListener() {
+      httpClient.newRequest(urlPrefix + path)
+        .method(method)
+        .content(new BytesContentProvider(content.getBytes(StandardCharsets.UTF_8)))
+        .send(new BufferingResponseListener() {
         override def onComplete(result: Result): Unit = {
           if (result.isFailed) {
             promise.tryFailure(result.getFailure)
@@ -52,7 +52,7 @@ trait JettyRPCFramework extends StandardRPCFramework {
             if (HttpStatus.isSuccess(response.getStatus)) {
               promise.success(getContentAsString)
             } else {
-              promise.failure(new HttpException(response.getStatus))
+              promise.failure(new HttpException(response.getStatus, response.getReason))
             }
           }
         }
@@ -76,25 +76,19 @@ trait JettyRPCFramework extends StandardRPCFramework {
 
       val cleanTarget = target.stripPrefix("/").stripSuffix("/")
 
-      val reader = request.getReader
-      val content = Stream.continually(reader.readLine())
+      val content = Iterator.continually(request.getReader.readLine())
         .takeWhile(_ != null)
         .mkString("\n")
 
       HttpMethod.fromString(request.getMethod) match {
         case HttpMethod.POST =>
           val async = request.startAsync()
-          handlePost(cleanTarget, content).onComplete {
+          handlePost(cleanTarget, content).andThenNow {
             case Success(responseContent) =>
-              async.getResponse.getWriter.write(responseContent)
-              async.complete()
+              response.getWriter.write(responseContent)
             case Failure(t) =>
-              async.getResponse match {
-                case httpResponse: HttpServletResponse =>
-                  httpResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500)
-              }
-              async.complete()
-          }
+              response.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, t.getMessage)
+          }.andThenNow { case _ => async.complete() }
         case HttpMethod.PUT =>
           handlePut(cleanTarget, content)
         case _ =>

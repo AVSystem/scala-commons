@@ -3,7 +3,7 @@ package jetty.rpc
 
 import java.util.Base64
 
-import com.avsystem.commons.serialization.GenCodec.ReadFailure
+import com.avsystem.commons.serialization.GenCodec.{ReadFailure, WriteFailure}
 import com.avsystem.commons.serialization.{FieldInput, InputType, ListInput, ObjectInput, _}
 import upickle.Js
 
@@ -18,7 +18,7 @@ object JsValueOutput {
     var result: Opt[Js.Value] = Opt.Empty
     val output = new JsValueOutput(value => result = Opt(value))
     GenCodec.write(output, value)
-    result.getOrElse(throw new Exception("No value written by GenCodec"))
+    result.getOrElse(throw new WriteFailure("No value written by GenCodec"))
   }
 }
 

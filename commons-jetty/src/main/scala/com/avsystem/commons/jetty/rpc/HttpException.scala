@@ -3,4 +3,4 @@ package jetty.rpc
 
 import java.io.IOException
 
-class HttpException(val status: Int) extends IOException(s"HttpException($status)")
+final class HttpException(val status: Int, val reason: String) extends IOException(s"HttpException($status): $reason")
