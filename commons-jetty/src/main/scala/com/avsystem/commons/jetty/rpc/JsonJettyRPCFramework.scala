@@ -11,26 +11,20 @@ object JsonJettyRPCFramework extends JettyRPCFramework {
   type ParamTypeMetadata[T] = ClassTag[T]
   type ResultTypeMetadata[T] = DummyImplicit
 
-  def valueToJson(value: RawValue) = upickle.json.write(value)
-  def jsonToValue(json: String) = upickle.json.read(json)
-  def argsToJson(args: List[List[RawValue]]) = upickle.json.write(argsToJsArr(args))
-  def jsonToArgs(json: String) = jsArrToArgs(upickle.json.read(json))
-
   def read[T: Reader](raw: RawValue): T = GenCodec.read[T](new JsValueInput(raw))
   def write[T: Writer](value: T): RawValue = JsValueOutput.write[T](value)
 
-  def argsToJsArr(argLists: List[List[Js.Value]]): Js.Value = {
-    Js.Arr(argLists map { args => Js.Arr(args: _*) }: _*)
-  }
-
-  def jsArrToArgs(value: Js.Value): List[List[Js.Value]] = {
-    value match {
-      case array: Js.Arr =>
-        (array.value map {
-          case nestedArray: Js.Arr => nestedArray.value.toList
-          case _ => List()
-        }).toList
-      case _ => List()
+  override protected def valueToJson(value: RawValue): String = upickle.json.write(value)
+  override protected def jsonToValue(json: String): Js.Value = upickle.json.read(json)
+  override protected def argsToJson(argLists: List[List[RawValue]]): String =
+    upickle.json.write(Js.Arr(argLists.map { args => Js.Arr(args: _*) }: _*))
+  override protected def jsonToArgs(json: String): List[List[Js.Value]] = {
+    upickle.json.read(json) match {
+      case Js.Arr(lists@_*) =>
+        lists.collect {
+          case Js.Arr(args@_*) => args.toList
+        }(scala.collection.breakOut)
+      case _ => Nil
     }
   }
 }

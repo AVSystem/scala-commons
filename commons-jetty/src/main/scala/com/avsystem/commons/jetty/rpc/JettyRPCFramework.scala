@@ -16,11 +16,11 @@ import org.eclipse.jetty.server.{Handler, Request}
   * @author MKej
   */
 trait JettyRPCFramework extends StandardRPCFramework {
-  def valueToJson(value: RawValue): String
-  def jsonToValue(json: String): RawValue
+  protected def valueToJson(value: RawValue): String
+  protected def jsonToValue(json: String): RawValue
 
-  def argsToJson(args: List[List[RawValue]]): String
-  def jsonToArgs(json: String): List[List[RawValue]]
+  protected def argsToJson(args: List[List[RawValue]]): String
+  protected def jsonToArgs(json: String): List[List[RawValue]]
 
   class RPCClient(httpClient: HttpClient, urlPrefix: String)(implicit ec: ExecutionContext) {
     private class RawRPCImpl(pathPrefix: String) extends RawRPC {
