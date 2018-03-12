@@ -67,7 +67,7 @@ object JsonJettyRPCFrameworkTest {
            |rpc.isTop(rpc.keks) = $top
            |rpc.topper.topKeks = $topKeks
            |rpc.isTop(rpc.topper.topKeks) = $topIsTop
-           |rpc.erroneousKeks = $err
+           |rpc.erroneousKeks = ${err.getMessage}
          """.stripMargin.trim)
     }) onComplete { _ =>
       server.stop()

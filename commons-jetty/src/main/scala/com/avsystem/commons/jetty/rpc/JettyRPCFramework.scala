@@ -52,7 +52,7 @@ trait JettyRPCFramework extends StandardRPCFramework {
             if (HttpStatus.isSuccess(response.getStatus)) {
               promise.success(getContentAsString)
             } else {
-              promise.failure(new HttpException(response.getStatus))
+              promise.failure(new HttpException(response.getStatus, response.getReason))
             }
           }
         }
@@ -83,17 +83,12 @@ trait JettyRPCFramework extends StandardRPCFramework {
       HttpMethod.fromString(request.getMethod) match {
         case HttpMethod.POST =>
           val async = request.startAsync()
-          handlePost(cleanTarget, content).onComplete {
+          handlePost(cleanTarget, content).andThenNow {
             case Success(responseContent) =>
-              async.getResponse.getWriter.write(responseContent)
-              async.complete()
+              response.getWriter.write(responseContent)
             case Failure(t) =>
-              async.getResponse match {
-                case httpResponse: HttpServletResponse =>
-                  httpResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500)
-              }
-              async.complete()
-          }
+              response.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, t.getMessage)
+          }.andThenNow { case _ => async.complete() }
         case HttpMethod.PUT =>
           handlePut(cleanTarget, content)
         case _ =>
