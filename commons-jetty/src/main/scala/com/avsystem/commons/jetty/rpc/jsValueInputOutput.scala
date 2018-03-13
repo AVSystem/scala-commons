@@ -22,7 +22,7 @@ object JsValueOutput {
   }
 }
 
-final class JsValueOutput(consumer: Js.Value => Unit) extends Output {
+final class JsValueOutput(private val consumer: Js.Value => Unit) extends AnyVal with Output {
   def writeNull() = consumer(Js.Null)
   def writeBoolean(boolean: Boolean) = consumer(if (boolean) Js.True else Js.False)
   def writeString(str: String) = consumer(Js.Str(str))
@@ -123,12 +123,12 @@ class JsValueInput(value: Js.Value) extends Input {
 
 final class JsValueFieldInput(val fieldName: String, value: Js.Value) extends JsValueInput(value) with FieldInput
 
-final class JsValueListInput(it: Iterator[Js.Value]) extends ListInput {
+final class JsValueListInput(private val it: Iterator[Js.Value]) extends AnyVal with ListInput {
   def hasNext = it.hasNext
   def nextElement() = new JsValueInput(it.next())
 }
 
-final class JsValueObjectInput(it: Iterator[(String, Js.Value)]) extends ObjectInput {
+final class JsValueObjectInput(private val it: Iterator[(String, Js.Value)]) extends AnyVal with ObjectInput {
   def hasNext = it.hasNext
   def nextField() = it.next() match {
     case (k, v) => new JsValueFieldInput(k, v)
