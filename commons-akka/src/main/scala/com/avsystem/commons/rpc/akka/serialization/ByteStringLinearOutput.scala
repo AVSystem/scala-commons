@@ -9,7 +9,7 @@ import com.avsystem.commons.serialization.{ListOutput, ObjectOutput, Output}
 /**
   * @author Wojciech Milewski
   */
-private[akka] class ByteStringLinearOutput(builder: ByteStringBuilder) extends Output {
+final class ByteStringLinearOutput(private val builder: ByteStringBuilder) extends AnyVal with Output {
   import ByteOrderImplicits._
 
   override def writeNull(): Unit = {
@@ -33,8 +33,14 @@ private[akka] class ByteStringLinearOutput(builder: ByteStringBuilder) extends O
     builder += BooleanMarker.byte
     builder += (if (boolean) TrueByte else FalseByte)
   }
-  override def writeList(): ListOutput = new ByteStringLinearListOutput(builder)
-  override def writeObject(): ObjectOutput = new ByteStringLinearObjectOutput(builder)
+  override def writeList(): ListOutput = {
+    builder += ListStartMarker.byte
+    new ByteStringLinearListOutput(builder)
+  }
+  override def writeObject(): ObjectOutput = {
+    builder += ObjectStartMarker.byte
+    new ByteStringLinearObjectOutput(builder)
+  }
 
   private def writeSinglePrimitive(marker: Marker, f: ByteStringBuilder => Unit): Unit = {
     builder += marker.byte
@@ -44,17 +50,14 @@ private[akka] class ByteStringLinearOutput(builder: ByteStringBuilder) extends O
   def result: ByteString = builder.result()
 }
 
-private class ByteStringLinearListOutput(builder: ByteStringBuilder) extends ListOutput {
-  builder += ListStartMarker.byte
-
+private class ByteStringLinearListOutput(private val builder: ByteStringBuilder) extends AnyVal with ListOutput {
   override def writeElement(): Output = new ByteStringLinearOutput(builder)
   override def finish(): Unit = {
     builder += ListEndMarker.byte
   }
 }
 
-private class ByteStringLinearObjectOutput(builder: ByteStringBuilder) extends ObjectOutput {
-  builder += ObjectStartMarker.byte
+private class ByteStringLinearObjectOutput(private val builder: ByteStringBuilder) extends AnyVal with ObjectOutput {
 
   override def writeField(key: String): Output = {
     WriteOps.writeString(key)(builder)
