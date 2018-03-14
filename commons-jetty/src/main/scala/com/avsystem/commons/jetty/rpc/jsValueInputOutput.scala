@@ -83,11 +83,11 @@ class JsValueInput(value: Js.Value) extends Input {
     case _ => expectedError("boolean")
   }
   def readString() = value match {
-    case Js.Str(string) => string
+    case Js.Str(cs) => cs.toString
     case _ => expectedError("string")
   }
   def readBinary() = value match {
-    case Js.Str(string) => try Base64.getDecoder.decode(string) catch {
+    case Js.Str(cs) => try Base64.getDecoder.decode(cs.toString) catch {
       case e: IllegalArgumentException => throw new ReadFailure("error decoding Base64: " + e.getMessage, e)
     }
     case _ => expectedError("string")
@@ -101,7 +101,7 @@ class JsValueInput(value: Js.Value) extends Input {
     case _ => expectedError("number")
   }
   def readLong() = value match {
-    case Js.Str(string) => try string.toLong catch {
+    case Js.Str(cs) => try cs.toString.toLong catch {
       case e: NumberFormatException => throw new ReadFailure("error parsing number: " + e.getMessage, e)
     }
     case _ => expectedError("string")

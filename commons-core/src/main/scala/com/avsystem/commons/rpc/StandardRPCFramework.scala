@@ -1,6 +1,33 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.serialization.{GenCodec, Input, Output}
+
+/**
+  * Mix in this trait into your RPC framework to use [[GenCodec]] for serialization.
+  */
+trait GenCodecSerializationFramework extends RPCFramework {
+  type Writer[T] = GenCodec[T]
+  type Reader[T] = GenCodec[T]
+
+  /** Converts value of type `T` into `RawValue`. */
+  final def write[T: Writer](value: T): RawValue = {
+    var result: RawValue = null.asInstanceOf[RawValue]
+    GenCodec.write[T](outputSerialization(result = _), value)
+    result
+  }
+
+  /** Converts `RawValue` into value of type `T`. */
+  final def read[T: Reader](raw: RawValue): T =
+    GenCodec.read[T](inputSerialization(raw))
+
+  /** Creates an `Input` for data marshalling. */
+  def inputSerialization(value: RawValue): Input
+
+  /** Creates an `Output` for data unmarshalling. */
+  def outputSerialization(valueConsumer: RawValue => Unit): Output
+}
+
 /**
   * Mix in this trait into your RPC framework to support remote procedures, i.e. fire-and-forget methods
   * with `Unit` return type.
@@ -30,9 +57,9 @@ trait FunctionRPCFramework extends RPCFramework {
   }
 
   implicit def FunctionRealHandler[A: Writer]: RealInvocationHandler[Future[A], Future[RawValue]] =
-    RealInvocationHandler[Future[A], Future[RawValue]](_.mapNow(write[A] _))
+    RealInvocationHandler[Future[A], Future[RawValue]](_.mapNow(write[A]))
   implicit def FunctionRawHandler[A: Reader]: RawInvocationHandler[Future[A]] =
-    RawInvocationHandler[Future[A]]((rawRpc, rpcName, argLists) => rawRpc.call(rpcName, argLists).mapNow(read[A] _))
+    RawInvocationHandler[Future[A]]((rawRpc, rpcName, argLists) => rawRpc.call(rpcName, argLists).mapNow(read[A]))
 }
 
 /**
