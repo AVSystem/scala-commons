@@ -1,33 +1,6 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.serialization.{GenCodec, Input, Output}
-
-/**
-  * Mix in this trait into your RPC framework to use [[GenCodec]] for serialization.
-  */
-trait GenCodecSerializationFramework extends RPCFramework {
-  type Writer[T] = GenCodec[T]
-  type Reader[T] = GenCodec[T]
-
-  /** Converts value of type `T` into `RawValue`. */
-  final def write[T: Writer](value: T): RawValue = {
-    var result: RawValue = null.asInstanceOf[RawValue]
-    GenCodec.write[T](outputSerialization(result = _), value)
-    result
-  }
-
-  /** Converts `RawValue` into value of type `T`. */
-  final def read[T: Reader](raw: RawValue): T =
-    GenCodec.read[T](inputSerialization(raw))
-
-  /** Creates an `Input` for data marshalling. */
-  def inputSerialization(value: RawValue): Input
-
-  /** Creates an `Output` for data unmarshalling. */
-  def outputSerialization(valueConsumer: RawValue => Unit): Output
-}
-
 /**
   * Mix in this trait into your RPC framework to support remote procedures, i.e. fire-and-forget methods
   * with `Unit` return type.
@@ -82,10 +55,11 @@ trait GetterRPCFramework extends RPCFramework {
   implicit def getterRawHandler[T](implicit ev: IsRPC[T]): RawInvocationHandler[T] = macro macros.rpc.RPCFrameworkMacros.getterRawHandler[T]
 
   final class GetterRealHandler[T: AsRawRPC] extends RealInvocationHandler[T, RawRPC] {
-    def toRaw(real: T) = AsRawRPC[T].asRaw(real)
+    def toRaw(real: T): RawRPC = AsRawRPC[T].asRaw(real)
   }
   final class GetterRawHandler[T: AsRealRPC] extends RawInvocationHandler[T] {
-    def toReal(rawRpc: RawRPC, rpcName: String, argLists: List[List[RawValue]]) = AsRealRPC[T].asReal(rawRpc.get(rpcName, argLists))
+    def toReal(rawRpc: RawRPC, rpcName: String, argLists: List[List[RawValue]]): T =
+      AsRealRPC[T].asReal(rawRpc.get(rpcName, argLists))
   }
 }
 

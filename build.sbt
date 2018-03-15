@@ -17,17 +17,17 @@ val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.5"
 val upickleVersion = "0.5.1"
 val scalacheckVersion = "1.13.5"
-val jettyVersion = "9.3.8.v20160314"
+val jettyVersion = "9.3.23.v20180228"
 val mongoVersion = "3.5.0"
 val kafkaVersion = "0.11.0.1"
 val mongoScalaVersion = "2.1.0"
 val springVersion = "4.0.2.RELEASE"
-val typesafeConfigVersion = "1.3.1"
+val typesafeConfigVersion = "1.3.3"
 val commonsIoVersion = "1.3.2"
-val scalaLoggingVersion = "3.5.0"
-val akkaVersion = "2.5.6"
+val scalaLoggingVersion = "3.8.0"
+val akkaVersion = "2.5.11"
 val monixVersion = "2.3.3"
-val mockitoVersion = "2.10.0"
+val mockitoVersion = "2.16.0"
 val circeVersion = "0.9.2"
 
 val commonSettings = Seq(
@@ -221,7 +221,6 @@ lazy val `commons-jetty` = project
     libraryDependencies ++= Seq(
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
       "org.eclipse.jetty" % "jetty-server" % jettyVersion,
-      "io.monix" %% "monix" % monixVersion,
       "com.lihaoyi" %% "upickle" % upickleVersion,
     ),
   )

@@ -32,7 +32,7 @@ trait JettyRPCFramework extends StandardRPCFramework {
 
       def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC = argLists match {
         case Nil => new RawRPCImpl(s"$pathPrefix$rpcName/")
-        case _ => throw new IllegalArgumentException("Only no-arg list sub-RPCs are supported (without parenthesis)")
+        case _ => throw new IllegalArgumentException("Only no-arg list sub-RPCs are supported (without parentheses)")
       }
     }
 
