@@ -12,8 +12,8 @@ object JsonJettyRPCFrameworkTest {
   import JsonJettyRPCFramework._
 
   @RPC trait SomeApi {
-    def keks: Future[Int]
-    def isTop(keks: Int): Future[Boolean]
+    def keks: Future[Long]
+    def isTop(keks: Long): Future[Boolean]
     def topper: Topper
     def erroneousKeks: Future[Int]
   }
@@ -33,8 +33,8 @@ object JsonJettyRPCFrameworkTest {
     import scala.concurrent.ExecutionContext.Implicits.global
 
     val impl = new SomeApi {
-      def keks = Future.successful(131)
-      def isTop(keks: Int) = Future.successful(keks == Int.MaxValue)
+      def keks = Future.successful(Long.MaxValue)
+      def isTop(keks: Long) = Future.successful(keks == Int.MaxValue)
       object topper extends Topper {
         def initialize = Future.successful(println("Topper initialized"))
         def topKeks = Future.successful(Int.MaxValue)

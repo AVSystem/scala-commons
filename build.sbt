@@ -15,8 +15,8 @@ val silencerVersion = "0.6"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.5"
-val upickleVersion = "0.5.1"
 val scalacheckVersion = "1.13.5"
+val jawnVersion = "0.11.1"
 val jettyVersion = "9.3.23.v20180228"
 val mongoVersion = "3.5.0"
 val kafkaVersion = "0.11.0.1"
@@ -221,7 +221,7 @@ lazy val `commons-jetty` = project
     libraryDependencies ++= Seq(
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
       "org.eclipse.jetty" % "jetty-server" % jettyVersion,
-      "com.lihaoyi" %% "upickle" % upickleVersion,
+      "org.spire-math" %% "jawn-ast" % jawnVersion,
     ),
   )
 
