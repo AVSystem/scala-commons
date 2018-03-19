@@ -1,13 +1,14 @@
 package com.avsystem.commons
 package rpc.akka
 
+import java.io.{DataInputStream, DataOutputStream}
+
 import akka.actor.{ActorRef, ActorSystem}
 import akka.util.ByteString
 import com.avsystem.commons.rpc.akka.client.ClientRawRPC
-import com.avsystem.commons.rpc.akka.serialization.{ByteStringLinearInput, ByteStringLinearOutput}
 import com.avsystem.commons.rpc.akka.server.ServerActor
 import com.avsystem.commons.rpc.{FunctionRPCFramework, GetterRPCFramework, ProcedureRPCFramework}
-import com.avsystem.commons.serialization.GenCodec
+import com.avsystem.commons.serialization.{GenCodec, StreamInput, StreamOutput}
 
 /**
   * RPC Framework implemented with Akka as transportation layer.
@@ -25,11 +26,13 @@ object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework wi
   type ParamTypeMetadata[T] = DummyImplicit
   type ResultTypeMetadata[T] = DummyImplicit
 
-  def read[T: Reader](raw: RawValue): T = GenCodec.read[T](new ByteStringLinearInput(raw))
+  def read[T: Reader](raw: RawValue): T =
+    GenCodec.read[T](new StreamInput(new DataInputStream(raw.iterator.asInputStream)))
   def write[T: Writer](value: T): RawValue = {
-    val output = new ByteStringLinearOutput(ByteString.newBuilder)
+    val builder = ByteString.newBuilder
+    val output = new StreamOutput(new DataOutputStream(builder.asOutputStream))
     GenCodec.write[T](output, value)
-    output.result
+    builder.result()
   }
 
   /**

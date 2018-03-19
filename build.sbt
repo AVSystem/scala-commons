@@ -194,6 +194,9 @@ lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
   .configure(p => if (forIdeaImport) p.dependsOn(`commons-core`) else p)
   .dependsOn(`commons-macros`)
   .settings(
+    libraryDependencies ++= Seq(
+      "io.circe" %%% "circe-testing" % circeVersion % Test,
+    ),
     jsCommonSettings,
     name := (name in `commons-core`).value,
     sourceDirsSettings(_.getParentFile),
