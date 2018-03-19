@@ -11,7 +11,7 @@ object JsonJettyRPCFramework extends JettyRPCFramework {
   type ParamTypeMetadata[T] = ClassTag[T]
   type ResultTypeMetadata[T] = DummyImplicit
 
-  def read[T: Reader](raw: RawValue): T = GenCodec.read[T](new JValueInput(raw))
+  def read[T: Reader](raw: RawValue): T = JValueInput.read[T](raw)
   def write[T: Writer](value: T): RawValue = JValueOutput.write[T](value)
 
   override protected def valueToJson(value: RawValue): String = FastRenderer.render(value)
