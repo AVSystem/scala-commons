@@ -2,9 +2,10 @@ package com.avsystem.commons
 package jetty.rpc
 
 import java.nio.charset.StandardCharsets
-import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import com.avsystem.commons.rpc.StandardRPCFramework
+import com.avsystem.commons.serialization.GenCodec
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.client.api.Result
 import org.eclipse.jetty.client.util.{BufferingResponseListener, BytesContentProvider}
@@ -16,19 +17,17 @@ import org.eclipse.jetty.server.{Handler, Request}
   * @author MKej
   */
 trait JettyRPCFramework extends StandardRPCFramework {
-  protected def valueToJson(value: RawValue): String
-  protected def jsonToValue(json: String): RawValue
-
-  protected def argsToJson(args: List[List[RawValue]]): String
-  protected def jsonToArgs(json: String): List[List[RawValue]]
+  type RawValue = String
+  type Reader[T] = GenCodec[T]
+  type Writer[T] = GenCodec[T]
 
   class RPCClient(httpClient: HttpClient, urlPrefix: String)(implicit ec: ExecutionContext) {
     private class RawRPCImpl(pathPrefix: String) extends RawRPC {
       def fire(rpcName: String, argLists: List[List[RawValue]]): Unit =
-        put(pathPrefix + rpcName, argsToJson(argLists))
+        put(pathPrefix + rpcName, write(argLists))
 
       def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue] =
-        post(pathPrefix + rpcName, argsToJson(argLists)).map(jsonToValue)
+        post(pathPrefix + rpcName, write(argLists))
 
       def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC = argLists match {
         case Nil => new RawRPCImpl(s"$pathPrefix$rpcName/")
@@ -102,13 +101,13 @@ trait JettyRPCFramework extends StandardRPCFramework {
       val parts = path.split('/')
       val targetRpc = parts.dropRight(1).foldLeft(rootRpc)(_.get(_, Nil))
       val rpcName = parts.last
-      val args = jsonToArgs(content)
+      val args = read[List[List[RawValue]]](content)
       f(targetRpc, rpcName, args)
     }
 
     def handlePost(path: String, content: String): Future[String] =
       invoke(path, content) { (rpc, name, args) =>
-        rpc.call(name, args).map(valueToJson)
+        rpc.call(name, args)
       }
 
     def handlePut(path: String, content: String): Unit = {
