@@ -68,25 +68,25 @@ class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryIns
   }
 
   // These tests like to hang up for reasons I have too little patience to investigate
-  ignore("write consistency with circe") {
+  test("write consistency with circe") {
     forAll { json: Json =>
       assert(write(json) == json.noSpaces)
     }
   }
 
-  ignore("read consistency with circe - compact") {
+  test("read consistency with circe - compact") {
     forAll { json: Json =>
       assert(read(json.noSpaces) == json)
     }
   }
 
-  ignore("read consistency with circe - spaced") {
+  test("read consistency with circe - spaced") {
     forAll { json: Json =>
       assert(read(json.spaces2) == json)
     }
   }
 
-  ignore("read write round trip") {
+  test("read write round trip") {
     forAll { json: Json =>
       assert(read(write(json)) == json)
     }

@@ -16,7 +16,6 @@ val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.5"
 val scalacheckVersion = "1.13.5"
-val jawnVersion = "0.11.1"
 val jettyVersion = "9.3.23.v20180228"
 val mongoVersion = "3.5.0"
 val kafkaVersion = "0.11.0.1"
@@ -185,6 +184,7 @@ lazy val `commons-core` = project
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
+      "io.circe" %%% "circe-testing" % circeVersion % Test,
     ),
     ideExcludedDirectories := Seq(baseDirectory.value / "agg"),
   )
@@ -221,7 +221,6 @@ lazy val `commons-jetty` = project
     libraryDependencies ++= Seq(
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
       "org.eclipse.jetty" % "jetty-server" % jettyVersion,
-      "org.spire-math" %% "jawn-ast" % jawnVersion,
     ),
   )
 
