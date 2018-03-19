@@ -184,7 +184,7 @@ lazy val `commons-core` = project
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
-      "io.circe" %%% "circe-testing" % circeVersion % Test,
+      "io.circe" %% "circe-testing" % circeVersion % Test,
     ),
     ideExcludedDirectories := Seq(baseDirectory.value / "agg"),
   )
@@ -194,9 +194,6 @@ lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
   .configure(p => if (forIdeaImport) p.dependsOn(`commons-core`) else p)
   .dependsOn(`commons-macros`)
   .settings(
-    libraryDependencies ++= Seq(
-      "io.circe" %%% "circe-testing" % circeVersion % Test,
-    ),
     jsCommonSettings,
     name := (name in `commons-core`).value,
     sourceDirsSettings(_.getParentFile),
