@@ -27,12 +27,10 @@ object JsonStringInput {
 
 class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementNothing) extends Input {
   private[this] val value: Any = {
-    val res = reader.parseValue()
-    res match {
+    reader.parseValue().setup {
       case JsonStringInput.ListMarker | JsonStringInput.ObjectMarker =>
       case _ => callback.afterElement()
     }
-    res
   }
 
   def jsonType: String = value match {
@@ -45,9 +43,9 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
     case null => "null"
   }
 
-  private def expected(what: String) = throw new ReadFailure(s"Expected $what but got $jsonType")
+  private def expected(what: String) = throw new ReadFailure(s"Expected $what but got $jsonType: $value")
 
-  private def matchOr[T: ClassTag](what: String): T = value match {
+  private def matchOr[@specialized(Int, Double, Boolean) T: ClassTag](what: String): T = value match {
     case t: T => t
     case _ => expected(what)
   }
@@ -69,7 +67,6 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
     case s: String => s.toLong
     case _ => expected("integer number or numeric string")
   }
-
   def readDouble(): Double = matchOr[Double]("double number")
 
   def readBinary(): Array[Byte] = {
@@ -120,10 +117,7 @@ final class JsonListInput(reader: JsonReader, callback: AfterElement) extends Li
   }
 
   def hasNext: Boolean = !end
-  def nextElement(): JsonStringInput = {
-    new JsonStringInput(reader, this)
-  }
-
+  def nextElement(): JsonStringInput = new JsonStringInput(reader, this)
   def afterElement(): Unit = prepareForNext(first = false)
 }
 
