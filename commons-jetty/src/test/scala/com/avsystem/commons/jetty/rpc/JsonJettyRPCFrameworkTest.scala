@@ -30,6 +30,8 @@ class JsonJettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers
     def initialize2(): Future[Unit]
     def topKeks: Future[Int]
     def hello(world: String): Future[String]
+    def hellos(world1: String, world2: Int): Future[String]
+    def currys(curry1: String)(curry2: Int = 30): Future[String]
   }
   object Topper {
     implicit val fullRPCInfo: BaseFullRPCInfo[Topper] = materializeFullInfo
@@ -47,6 +49,8 @@ class JsonJettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers
       def initialize2() = initialize
       def topKeks = Future.successful(topKeksResult)
       def hello(world: String) = Future.successful(world)
+      def hellos(world1: String, world2: Int) = Future.successful(world1 + world2)
+      def currys(curry1: String)(curry2: Int) = Future.successful(curry1 + curry2)
     }
     def erroneousKeks: Future[Int] = Future.failed(new RuntimeException(errorMessage))
   }
@@ -83,6 +87,18 @@ class JsonJettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers
     rpc.topper.hello(world).futureValue shouldBe world
     val anonymous = ""
     rpc.topper.hello(anonymous).futureValue shouldBe anonymous
+  }
+
+  test("inner rpc + multi arg -> string") {
+    rpc.topper.hellos("world", 42).futureValue shouldBe "world42"
+  }
+
+  test("multiple argument lists") {
+    rpc.topper.currys("world")(42).futureValue shouldBe "world42"
+  }
+
+  test("multiple argument lists + default value") {
+    rpc.topper.currys("world")().futureValue shouldBe "world30"
   }
 
   test("empty-paren -> error msg") {
