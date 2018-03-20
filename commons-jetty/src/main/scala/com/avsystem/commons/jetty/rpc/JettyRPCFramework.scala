@@ -4,7 +4,8 @@ package jetty.rpc
 import java.nio.charset.StandardCharsets
 
 import com.avsystem.commons.rpc.StandardRPCFramework
-import com.avsystem.commons.serialization.GenCodec
+import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
+import com.avsystem.commons.serialization.{GenCodec, Input, ListOutput, Output}
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.client.api.Result
@@ -21,13 +22,47 @@ trait JettyRPCFramework extends StandardRPCFramework {
   type Reader[T] = GenCodec[T]
   type Writer[T] = GenCodec[T]
 
+  private val ArgListCodec: GenCodec[List[List[RawValue]]] = new GenCodec[List[List[String]]] {
+    private val RawValueCodec: GenCodec[RawValue] = GenCodec.StringCodec
+    private val ArgListsField = "argLists"
+
+    override def read(input: Input): List[List[String]] = {
+      val obj = input.readObject()
+      val listInput = obj.nextField().assertField(ArgListsField).readList()
+      val argLists = List.newBuilder[List[RawValue]]
+      while (listInput.hasNext) {
+        val i = listInput.nextElement()
+        val argList = List.newBuilder[RawValue]
+        val it = i.readList().iterator((el: Input) => argList += GenCodec.StringCodec.read(el))
+        while (it.hasNext) it.next()
+        argLists += argList.result()
+      }
+      argLists.result()
+    }
+
+    override def write(output: Output, argLists: List[List[String]]): Unit = {
+      val obj = output.writeObject()
+      val listOutput: ListOutput = obj.writeField(ArgListsField).writeList()
+      argLists.foreach((argList: List[RawValue]) => {
+        val args = listOutput.writeElement().writeList()
+        argList.foreach(v => RawValueCodec.write(args.writeElement(), v))
+        args.finish()
+      })
+      listOutput.finish()
+      obj.finish()
+    }
+  }
+
+  private def argListToRaw(a: List[List[RawValue]]): RawValue = JsonStringOutput.write(a)(ArgListCodec)
+  private def argListFromRaw(s: RawValue): List[List[RawValue]] = JsonStringInput.read[List[List[RawValue]]](s)(ArgListCodec)
+
   class RPCClient(httpClient: HttpClient, urlPrefix: String)(implicit ec: ExecutionContext) {
     private class RawRPCImpl(pathPrefix: String) extends RawRPC {
       def fire(rpcName: String, argLists: List[List[RawValue]]): Unit =
-        put(pathPrefix + rpcName, write(argLists))
+        put(pathPrefix + rpcName, argListToRaw(argLists))
 
       def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue] =
-        post(pathPrefix + rpcName, write(argLists))
+        post(pathPrefix + rpcName, argListToRaw(argLists))
 
       def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC = argLists match {
         case Nil => new RawRPCImpl(s"$pathPrefix$rpcName/")
@@ -101,7 +136,7 @@ trait JettyRPCFramework extends StandardRPCFramework {
       val parts = path.split('/')
       val targetRpc = parts.dropRight(1).foldLeft(rootRpc)(_.get(_, Nil))
       val rpcName = parts.last
-      val args = read[List[List[RawValue]]](content)
+      val args: List[List[RawValue]] = argListFromRaw(content)
       f(targetRpc, rpcName, args)
     }
 
