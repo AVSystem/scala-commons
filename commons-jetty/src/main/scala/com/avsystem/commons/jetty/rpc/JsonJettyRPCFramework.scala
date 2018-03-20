@@ -24,12 +24,19 @@ object JsonJettyRPCFramework extends StandardRPCFramework {
   def read[T: Reader](raw: RawValue): T = JsonStringInput.read[T](raw)
   def write[T: Writer](value: T): RawValue = JsonStringOutput.write[T](value)
 
-  private def argListToRaw(a: List[List[RawValue]]): RawValue = {
-    def listToString(l: List[_]): RawValue = l.mkString("[", ",", "]")
-    listToString(a.map(listToString))
+  private def argListsToRaw(argLists: List[List[RawValue]]): RawValue = {
+    val sb = new JStringBuilder
+    val listsOutput = new JsonStringOutput(sb).writeList()
+    argLists.foreach { argList =>
+      val listOutput = listsOutput.writeElement().writeList()
+      argList.foreach(rawJson => listOutput.writeElement().writeRawJson(rawJson))
+      listOutput.finish()
+    }
+    listsOutput.finish()
+    sb.toString
   }
 
-  private def argListFromRaw(s: RawValue): List[List[RawValue]] = {
+  private def argListsFromRaw(s: RawValue): List[List[RawValue]] = {
     val listsInput = new JsonStringInput(new JsonReader(s)).readList()
     val listsBuilder = List.newBuilder[List[RawValue]]
     while (listsInput.hasNext) {
@@ -46,10 +53,10 @@ object JsonJettyRPCFramework extends StandardRPCFramework {
   class RPCClient(httpClient: HttpClient, urlPrefix: String)(implicit ec: ExecutionContext) {
     private class RawRPCImpl(pathPrefix: String) extends RawRPC {
       def fire(rpcName: String, argLists: List[List[RawValue]]): Unit =
-        put(pathPrefix + rpcName, argListToRaw(argLists))
+        put(pathPrefix + rpcName, argListsToRaw(argLists))
 
       def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue] =
-        post(pathPrefix + rpcName, argListToRaw(argLists))
+        post(pathPrefix + rpcName, argListsToRaw(argLists))
 
       def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC = argLists match {
         case Nil => new RawRPCImpl(s"$pathPrefix$rpcName/")
@@ -123,7 +130,7 @@ object JsonJettyRPCFramework extends StandardRPCFramework {
       val parts = path.split('/')
       val targetRpc = parts.dropRight(1).foldLeft(rootRpc)(_.get(_, Nil))
       val rpcName = parts.last
-      val args: List[List[RawValue]] = argListFromRaw(content)
+      val args: List[List[RawValue]] = argListsFromRaw(content)
       f(targetRpc, rpcName, args)
     }
 
