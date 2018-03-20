@@ -5,6 +5,7 @@ import com.avsystem.commons.rpc.RPC
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.server.Server
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{Milliseconds, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
 /**
@@ -14,6 +15,9 @@ class JsonJettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers
   import JsonJettyRPCFramework._
 
   import scala.concurrent.ExecutionContext.Implicits.global
+
+  override implicit def patienceConfig: PatienceConfig =
+    PatienceConfig(scaled(Span(5, Seconds)), scaled(Span(50, Milliseconds)))
 
   @RPC trait SomeApi {
     def keks: Future[Long]
