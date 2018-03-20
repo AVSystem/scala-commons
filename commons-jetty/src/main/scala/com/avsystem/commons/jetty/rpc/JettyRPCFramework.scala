@@ -21,13 +21,23 @@ trait JettyRPCFramework extends StandardRPCFramework {
   type Reader[T] = GenCodec[T]
   type Writer[T] = GenCodec[T]
 
+  private def argListToRaw(a: List[List[RawValue]]): RawValue = {
+    def listToString(l: List[_]): RawValue = l.mkString("[", ",", "]")
+    listToString(a.map(listToString))
+  }
+
+  private def argListFromRaw(s: RawValue): List[List[RawValue]] = {
+    def splitStringList(l: RawValue): List[RawValue] = l.drop(1).dropRight(1).split(",").iterator.filter(_.nonEmpty).toList
+    splitStringList(s).iterator.map(splitStringList).toList
+  }
+
   class RPCClient(httpClient: HttpClient, urlPrefix: String)(implicit ec: ExecutionContext) {
     private class RawRPCImpl(pathPrefix: String) extends RawRPC {
       def fire(rpcName: String, argLists: List[List[RawValue]]): Unit =
-        put(pathPrefix + rpcName, write(argLists))
+        put(pathPrefix + rpcName, argListToRaw(argLists))
 
       def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue] =
-        post(pathPrefix + rpcName, write(argLists))
+        post(pathPrefix + rpcName, argListToRaw(argLists))
 
       def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC = argLists match {
         case Nil => new RawRPCImpl(s"$pathPrefix$rpcName/")
@@ -101,7 +111,7 @@ trait JettyRPCFramework extends StandardRPCFramework {
       val parts = path.split('/')
       val targetRpc = parts.dropRight(1).foldLeft(rootRpc)(_.get(_, Nil))
       val rpcName = parts.last
-      val args = read[List[List[RawValue]]](content)
+      val args: List[List[RawValue]] = argListFromRaw(content)
       f(targetRpc, rpcName, args)
     }
 
