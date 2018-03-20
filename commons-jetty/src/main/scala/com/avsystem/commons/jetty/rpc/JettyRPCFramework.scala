@@ -14,7 +14,7 @@ import org.eclipse.jetty.http.{HttpMethod, HttpStatus}
 import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.server.{Handler, Request}
 
-object JsonJettyRPCFramework extends StandardRPCFramework {
+object JettyRPCFramework extends StandardRPCFramework {
   type RawValue = String
   type Reader[T] = GenCodec[T]
   type Writer[T] = GenCodec[T]

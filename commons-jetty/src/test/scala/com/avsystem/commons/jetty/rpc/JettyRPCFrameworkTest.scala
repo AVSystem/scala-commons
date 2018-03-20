@@ -11,8 +11,9 @@ import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 /**
   * @author MKej
   */
-class JsonJettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers with BeforeAndAfterAll {
-  import JsonJettyRPCFramework._
+class JettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers with BeforeAndAfterAll {
+
+  import JettyRPCFramework._
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -60,9 +61,9 @@ class JsonJettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers
   }
 
   val port = 1337
-  val server = new Server(port).setup(_.setHandler(JsonJettyRPCFramework.newHandler[SomeApi](impl)))
+  val server = new Server(port).setup(_.setHandler(JettyRPCFramework.newHandler[SomeApi](impl)))
   val httpClient = new HttpClient()
-  val rpc = JsonJettyRPCFramework.newClient[SomeApi](httpClient, s"http://localhost:${1337}/")
+  val rpc = JettyRPCFramework.newClient[SomeApi](httpClient, s"http://localhost:${1337}/")
 
   test("empty-paren -> unit") {
     noException should be thrownBy rpc.topper.initialize.futureValue
