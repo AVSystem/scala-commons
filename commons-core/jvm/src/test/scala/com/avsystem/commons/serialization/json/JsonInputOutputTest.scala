@@ -100,4 +100,45 @@ class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryIns
       }
     }
   }
+
+  test("raw json list test") {
+    val jsons = List("123", "null", "\"str\"", "4.5", "[1,2,3]", "{\"a\": 123, \"b\": 3.14}")
+    val sb = new JStringBuilder
+    val output = new JsonStringOutput(sb)
+    val lo = output.writeList()
+    jsons.foreach(json => lo.writeElement().writeRawJson(json))
+    lo.finish()
+    val jsonList = sb.toString
+
+    assert(jsonList == jsons.mkString("[", ",", "]"))
+
+    val input = new JsonStringInput(new JsonReader(jsonList))
+    val li = input.readList()
+    val resBuilder = new ListBuffer[String]
+    while (li.hasNext) {
+      resBuilder += li.nextElement().readRawJson()
+    }
+    assert(resBuilder.result() == jsons)
+  }
+
+  test("raw json object test") {
+    val jsons = IListMap("a" -> "123", "b" -> "null", "c" -> "\"str\"", "d" -> "4.5", "e" -> "[1,2,3]", "f" -> "{\"a\": 123, \"b\": 3.14}")
+    val sb = new JStringBuilder
+    val output = new JsonStringOutput(sb)
+    val oo = output.writeObject()
+    jsons.foreach { case (fn, fv) => oo.writeField(fn).writeRawJson(fv) }
+    oo.finish()
+    val jsonList = sb.toString
+
+    assert(jsonList == jsons.map({ case (k, v) => s""""$k":$v""" }).mkString("{", ",", "}"))
+
+    val input = new JsonStringInput(new JsonReader(jsonList))
+    val oi = input.readObject()
+    val resBuilder = IListMap.newBuilder[String, String]
+    while (oi.hasNext) {
+      val fi = oi.nextField()
+      resBuilder += ((fi.fieldName, fi.readRawJson()))
+    }
+    assert(resBuilder.result() == jsons)
+  }
 }

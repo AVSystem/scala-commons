@@ -25,12 +25,19 @@ object JsonStringInput {
   }
 }
 
-class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementNothing) extends Input {
+class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementNothing) extends Input with AfterElement {
+  private[this] var startIdx: Int = _
+  private[this] var endIdx: Int = _
+
   private[this] val value: Any = {
-    reader.parseValue().setup {
+    reader.skipWs()
+    startIdx = reader.index
+    val res = reader.parseValue()
+    res match {
       case JsonStringInput.ListMarker | JsonStringInput.ObjectMarker =>
-      case _ => callback.afterElement()
+      case _ => afterElement()
     }
+    res
   }
 
   def jsonType: String = value match {
@@ -81,19 +88,29 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
   }
 
   def readList(): JsonListInput = value match {
-    case JsonStringInput.ListMarker => new JsonListInput(reader, callback)
+    case JsonStringInput.ListMarker => new JsonListInput(reader, this)
     case _ => expected("list")
   }
 
   def readObject(): JsonObjectInput = value match {
-    case JsonStringInput.ObjectMarker => new JsonObjectInput(reader, callback)
+    case JsonStringInput.ObjectMarker => new JsonObjectInput(reader, this)
     case _ => expected("object")
+  }
+
+  def readRawJson(): String = {
+    skip()
+    reader.json.substring(startIdx, endIdx)
   }
 
   def skip(): Unit = value match {
     case JsonStringInput.ListMarker => readList().skipRemaining()
     case JsonStringInput.ObjectMarker => readObject().skipRemaining()
     case _ =>
+  }
+
+  override def afterElement(): Unit = {
+    endIdx = reader.index
+    callback.afterElement()
   }
 }
 
@@ -151,8 +168,10 @@ final class JsonObjectInput(reader: JsonReader, callback: AfterElement) extends 
     prepareForNext(first = false)
 }
 
-final class JsonReader(json: String) {
+final class JsonReader(val json: String) {
   private[this] var i: Int = 0
+
+  def index: Int = i
 
   @inline def read(): Char = {
     val res = json.charAt(i)
@@ -286,8 +305,7 @@ final class JsonReader(json: String) {
     }
   }
 
-  def parseValue(): Any = {
-    skipWs()
+  def parseValue(): Any =
     if (i < json.length) json.charAt(i) match {
       case '"' => parseString()
       case 't' => pass("true"); true
@@ -301,5 +319,4 @@ final class JsonReader(json: String) {
     } else {
       throw new ReadFailure("EOF")
     }
-  }
 }

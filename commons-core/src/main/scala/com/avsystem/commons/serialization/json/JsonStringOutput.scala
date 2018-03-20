@@ -59,13 +59,14 @@ final class JsonStringOutput(builder: JStringBuilder) extends BaseJsonOutput wit
     }
     builder.append('"')
   }
-  def writeList(): ListOutput = new JsonListOutput(builder)
-  def writeObject(): ObjectOutput = new JsonObjectOutput(builder)
+  def writeRawJson(json: String): Unit = builder.append(json)
+  def writeList(): JsonListOutput = new JsonListOutput(builder)
+  def writeObject(): JsonObjectOutput = new JsonObjectOutput(builder)
 }
 
 final class JsonListOutput(builder: JStringBuilder) extends ListOutput {
   private[this] var first = true
-  def writeElement(): Output = {
+  def writeElement(): JsonStringOutput = {
     builder.append(if (first) '[' else ',')
     first = false
     new JsonStringOutput(builder)
@@ -80,7 +81,7 @@ final class JsonListOutput(builder: JStringBuilder) extends ListOutput {
 
 final class JsonObjectOutput(builder: JStringBuilder) extends BaseJsonOutput with ObjectOutput {
   private[this] var first = true
-  def writeField(key: String): Output = {
+  def writeField(key: String): JsonStringOutput = {
     builder.append(if (first) '{' else ',')
     first = false
     writeJsonString(builder, key)
