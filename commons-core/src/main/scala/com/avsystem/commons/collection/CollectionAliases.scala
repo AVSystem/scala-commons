@@ -99,6 +99,9 @@ trait CollectionAliases {
   type MHashMap[A, B] = scm.HashMap[A, B]
   final def MHashMap: scm.HashMap.type = scm.HashMap
 
+  type MLinkedHashMap[A, B] = scm.LinkedHashMap[A, B]
+  final def MLinkedHashMap: scm.LinkedHashMap.type = scm.LinkedHashMap
+
   type IListMap[A, +B] = sci.ListMap[A, B]
   final def IListMap: sci.ListMap.type = sci.ListMap
   type MListMap[A, B] = scm.ListMap[A, B]

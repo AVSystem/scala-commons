@@ -2,9 +2,11 @@ package com.avsystem.commons
 package jetty.rpc
 
 import java.nio.charset.StandardCharsets
-import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import com.avsystem.commons.rpc.StandardRPCFramework
+import com.avsystem.commons.serialization.GenCodec
+import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.client.api.Result
 import org.eclipse.jetty.client.util.{BufferingResponseListener, BytesContentProvider}
@@ -12,27 +14,53 @@ import org.eclipse.jetty.http.{HttpMethod, HttpStatus}
 import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.server.{Handler, Request}
 
-/**
-  * @author MKej
-  */
-trait JettyRPCFramework extends StandardRPCFramework {
-  protected def valueToJson(value: RawValue): String
-  protected def jsonToValue(json: String): RawValue
+object JettyRPCFramework extends StandardRPCFramework {
+  type RawValue = String
+  type Reader[T] = GenCodec[T]
+  type Writer[T] = GenCodec[T]
+  type ParamTypeMetadata[T] = ClassTag[T]
+  type ResultTypeMetadata[T] = DummyImplicit
 
-  protected def argsToJson(args: List[List[RawValue]]): String
-  protected def jsonToArgs(json: String): List[List[RawValue]]
+  def read[T: Reader](raw: RawValue): T = JsonStringInput.read[T](raw)
+  def write[T: Writer](value: T): RawValue = JsonStringOutput.write[T](value)
+
+  private def argListsToRaw(argLists: List[List[RawValue]]): RawValue = {
+    val sb = new JStringBuilder
+    val listsOutput = new JsonStringOutput(sb).writeList()
+    argLists.foreach { argList =>
+      val listOutput = listsOutput.writeElement().writeList()
+      argList.foreach(rawJson => listOutput.writeElement().writeRawJson(rawJson))
+      listOutput.finish()
+    }
+    listsOutput.finish()
+    sb.toString
+  }
+
+  private def argListsFromRaw(s: RawValue): List[List[RawValue]] = {
+    val listsInput = new JsonStringInput(new JsonReader(s)).readList()
+    val listsBuilder = List.newBuilder[List[RawValue]]
+    while (listsInput.hasNext) {
+      val listInput = listsInput.nextElement().readList()
+      val argsBuilder = List.newBuilder[RawValue]
+      while (listInput.hasNext) {
+        argsBuilder += listInput.nextElement().readRawJson()
+      }
+      listsBuilder += argsBuilder.result()
+    }
+    listsBuilder.result()
+  }
 
   class RPCClient(httpClient: HttpClient, urlPrefix: String)(implicit ec: ExecutionContext) {
     private class RawRPCImpl(pathPrefix: String) extends RawRPC {
       def fire(rpcName: String, argLists: List[List[RawValue]]): Unit =
-        put(pathPrefix + rpcName, argsToJson(argLists))
+        put(pathPrefix + rpcName, argListsToRaw(argLists))
 
       def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue] =
-        post(pathPrefix + rpcName, argsToJson(argLists)).map(jsonToValue)
+        post(pathPrefix + rpcName, argListsToRaw(argLists))
 
       def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC = argLists match {
         case Nil => new RawRPCImpl(s"$pathPrefix$rpcName/")
-        case _ => throw new IllegalArgumentException("Only no-arg list sub-RPCs are supported (without parenthesis)")
+        case _ => throw new IllegalArgumentException("Only no-arg list sub-RPCs are supported (without parentheses)")
       }
     }
 
@@ -44,19 +72,19 @@ trait JettyRPCFramework extends StandardRPCFramework {
         .method(method)
         .content(new BytesContentProvider(content.getBytes(StandardCharsets.UTF_8)))
         .send(new BufferingResponseListener() {
-        override def onComplete(result: Result): Unit = {
-          if (result.isFailed) {
-            promise.tryFailure(result.getFailure)
-          } else {
-            val response = result.getResponse
-            if (HttpStatus.isSuccess(response.getStatus)) {
-              promise.success(getContentAsString)
+          override def onComplete(result: Result): Unit = {
+            if (result.isFailed) {
+              promise.tryFailure(result.getFailure)
             } else {
-              promise.failure(new HttpException(response.getStatus, response.getReason))
+              val response = result.getResponse
+              if (HttpStatus.isSuccess(response.getStatus)) {
+                promise.success(getContentAsString)
+              } else {
+                promise.failure(new HttpException(response.getStatus, response.getReason))
+              }
             }
           }
-        }
-      })
+        })
 
       promise.future
     }
@@ -102,13 +130,13 @@ trait JettyRPCFramework extends StandardRPCFramework {
       val parts = path.split('/')
       val targetRpc = parts.dropRight(1).foldLeft(rootRpc)(_.get(_, Nil))
       val rpcName = parts.last
-      val args = jsonToArgs(content)
+      val args: List[List[RawValue]] = argListsFromRaw(content)
       f(targetRpc, rpcName, args)
     }
 
     def handlePost(path: String, content: String): Future[String] =
       invoke(path, content) { (rpc, name, args) =>
-        rpc.call(name, args).map(valueToJson)
+        rpc.call(name, args)
       }
 
     def handlePut(path: String, content: String): Unit = {

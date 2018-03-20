@@ -30,9 +30,9 @@ trait FunctionRPCFramework extends RPCFramework {
   }
 
   implicit def FunctionRealHandler[A: Writer]: RealInvocationHandler[Future[A], Future[RawValue]] =
-    RealInvocationHandler[Future[A], Future[RawValue]](_.mapNow(write[A] _))
+    RealInvocationHandler[Future[A], Future[RawValue]](_.mapNow(write[A]))
   implicit def FunctionRawHandler[A: Reader]: RawInvocationHandler[Future[A]] =
-    RawInvocationHandler[Future[A]]((rawRpc, rpcName, argLists) => rawRpc.call(rpcName, argLists).mapNow(read[A] _))
+    RawInvocationHandler[Future[A]]((rawRpc, rpcName, argLists) => rawRpc.call(rpcName, argLists).mapNow(read[A]))
 }
 
 /**
@@ -55,10 +55,11 @@ trait GetterRPCFramework extends RPCFramework {
   implicit def getterRawHandler[T](implicit ev: IsRPC[T]): RawInvocationHandler[T] = macro macros.rpc.RPCFrameworkMacros.getterRawHandler[T]
 
   final class GetterRealHandler[T: AsRawRPC] extends RealInvocationHandler[T, RawRPC] {
-    def toRaw(real: T) = AsRawRPC[T].asRaw(real)
+    def toRaw(real: T): RawRPC = AsRawRPC[T].asRaw(real)
   }
   final class GetterRawHandler[T: AsRealRPC] extends RawInvocationHandler[T] {
-    def toReal(rawRpc: RawRPC, rpcName: String, argLists: List[List[RawValue]]) = AsRealRPC[T].asReal(rawRpc.get(rpcName, argLists))
+    def toReal(rawRpc: RawRPC, rpcName: String, argLists: List[List[RawValue]]): T =
+      AsRealRPC[T].asReal(rawRpc.get(rpcName, argLists))
   }
 }
 

@@ -41,7 +41,7 @@ trait SequentialOutput extends Any {
   * must be assumed to be stateful and used in strictly sequential manner. After all elements have been written,
   * `finish()` must be called to explicitly mark that the list is complete.
   */
-trait ListOutput extends SequentialOutput {
+trait ListOutput extends Any with SequentialOutput {
   /**
     * Returns an [[com.avsystem.commons.serialization.Output Output]] representing next element in this list.
     * This [[com.avsystem.commons.serialization.Output Output]] instance MUST be fully used
@@ -58,7 +58,7 @@ trait ListOutput extends SequentialOutput {
   * [[ObjectOutput]] MUST preserve information about the order in which fields are written.
   * [[ObjectInput]] is required to read fields in exactly the same order as [[ObjectOutput]] writes them.
   */
-trait ObjectOutput extends SequentialOutput {
+trait ObjectOutput extends Any with SequentialOutput {
   /**
     * Returns an [[com.avsystem.commons.serialization.Output Output]] representing value mapped to given string key.
     * This [[com.avsystem.commons.serialization.Output Output]] instance must be fully
@@ -158,7 +158,7 @@ trait SequentialInput extends Any {
   * [[ListInput]] MUST always be fully exhausted. In order to ignore any remaining elements, skipRemaining() may be
   * used.
   */
-trait ListInput extends SequentialInput { self =>
+trait ListInput extends Any with SequentialInput { self =>
   /**
     * Returns an [[com.avsystem.commons.serialization.Input Input]] representing next element in a sequence of values
     * represented by this [[com.avsystem.commons.serialization.ListInput ListInput]].
@@ -186,7 +186,7 @@ trait ListInput extends SequentialInput { self =>
   * In order to ignore any remaining key-value mappings, `skipRemaining()` may be used.
   * <p/>
   */
-trait ObjectInput extends SequentialInput { self =>
+trait ObjectInput extends Any with SequentialInput { self =>
   /**
     * Returns [[com.avsystem.commons.serialization.FieldInput FieldInput]] that represents next field of this object.
     * You MUST NOT call `nextField()` again until this [[com.avsystem.commons.serialization.FieldInput FieldInput]]

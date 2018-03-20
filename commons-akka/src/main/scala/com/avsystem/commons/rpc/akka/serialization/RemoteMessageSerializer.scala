@@ -1,10 +1,12 @@
 package com.avsystem.commons
 package rpc.akka.serialization
 
+import java.io.{ByteArrayInputStream, DataInputStream, DataOutputStream}
+
 import akka.serialization.Serializer
 import akka.util.ByteString
 import com.avsystem.commons.rpc.akka._
-import com.avsystem.commons.serialization.GenCodec
+import com.avsystem.commons.serialization.{GenCodec, StreamInput, StreamOutput}
 
 /**
   * @author Wojciech Milewski
@@ -18,7 +20,7 @@ final class RemoteMessageSerializer extends Serializer {
   override def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]): AnyRef = {
     require(manifest.isDefined)
 
-    val input = new ByteStringLinearInput(ByteString(bytes))
+    val input = new StreamInput(new DataInputStream(new ByteArrayInputStream(bytes)))
 
     manifest.get match {
       case c if c == classOf[ProcedureInvocationMessage] => GenCodec.read[ProcedureInvocationMessage](input)
@@ -38,7 +40,8 @@ final class RemoteMessageSerializer extends Serializer {
   override def toBinary(o: AnyRef): Array[Byte] = {
     require(o.isInstanceOf[RemoteMessage])
 
-    val output = new ByteStringLinearOutput(ByteString.newBuilder)
+    val builder = ByteString.newBuilder
+    val output = new StreamOutput(new DataOutputStream(builder.asOutputStream))
     o.asInstanceOf[RemoteMessage] match {
       case m: ProcedureInvocationMessage => GenCodec.write(output, m)
       case m: FunctionInvocationMessage => GenCodec.write(output, m)
@@ -53,7 +56,7 @@ final class RemoteMessageSerializer extends Serializer {
       case MonixProtocol.Heartbeat => GenCodec.write(output, MonixProtocol.Heartbeat)
     }
 
-    output.result.toArray
+    builder.result.toArray
   }
 
 }

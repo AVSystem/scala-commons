@@ -5,11 +5,12 @@ import com.avsystem.commons.serialization.Output
 import io.circe.testing.ArbitraryInstances
 import io.circe.{Json, JsonNumber}
 import org.scalatest.FunSuite
+import org.scalatest.concurrent.Eventually
 import org.scalatest.prop.PropertyChecks
 
 import scala.collection.mutable.ListBuffer
 
-class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryInstances {
+class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryInstances with Eventually {
   // limit JsonNumbers to Int values
   override def transformJsonNumber(n: JsonNumber): JsonNumber =
     Json.fromInt(n.toBigDecimal.map(_.intValue).getOrElse(0)).asNumber.get
@@ -69,26 +70,75 @@ class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryIns
 
   // These tests like to hang up for reasons I have too little patience to investigate
   ignore("write consistency with circe") {
-    forAll { json: Json =>
-      assert(write(json) == json.noSpaces)
+    eventually {
+      forAll { json: Json =>
+        assert(write(json) == json.noSpaces)
+      }
     }
   }
 
   ignore("read consistency with circe - compact") {
-    forAll { json: Json =>
-      assert(read(json.noSpaces) == json)
+    eventually {
+      forAll { json: Json =>
+        assert(read(json.noSpaces) == json)
+      }
     }
   }
 
   ignore("read consistency with circe - spaced") {
-    forAll { json: Json =>
-      assert(read(json.spaces2) == json)
+    eventually {
+      forAll { json: Json =>
+        assert(read(json.spaces2) == json)
+      }
     }
   }
 
   ignore("read write round trip") {
-    forAll { json: Json =>
-      assert(read(write(json)) == json)
+    eventually {
+      forAll { json: Json =>
+        assert(read(write(json)) == json)
+      }
     }
+  }
+
+  test("raw json list test") {
+    val jsons = List("123", "null", "\"str\"", "4.5", "[1,2,3]", "{\"a\": 123, \"b\": 3.14}")
+    val sb = new JStringBuilder
+    val output = new JsonStringOutput(sb)
+    val lo = output.writeList()
+    jsons.foreach(json => lo.writeElement().writeRawJson(json))
+    lo.finish()
+    val jsonList = sb.toString
+
+    assert(jsonList == jsons.mkString("[", ",", "]"))
+
+    val input = new JsonStringInput(new JsonReader(jsonList))
+    val li = input.readList()
+    val resBuilder = new ListBuffer[String]
+    while (li.hasNext) {
+      resBuilder += li.nextElement().readRawJson()
+    }
+    assert(resBuilder.result() == jsons)
+  }
+
+  test("raw json object test") {
+    val jsons = IListMap("a" -> "123", "b" -> "null", "c" -> "\"str\"", "d" -> "4.5", "e" -> "[1,2,3]", "f" -> "{\"a\": 123, \"b\": 3.14}")
+    val sb = new JStringBuilder
+    val output = new JsonStringOutput(sb)
+    val oo = output.writeObject()
+    jsons.foreach { case (fn, fv) => oo.writeField(fn).writeRawJson(fv) }
+    oo.finish()
+    val jsonList = sb.toString
+
+    assert(jsonList == jsons.map({ case (k, v) => s""""$k":$v""" }).mkString("{", ",", "}"))
+
+    val input = new JsonStringInput(new JsonReader(jsonList))
+    val oi = input.readObject()
+    val resBuilder = IListMap.newBuilder[String, String]
+    while (oi.hasNext) {
+      val fi = oi.nextField()
+      resBuilder += ((fi.fieldName, fi.readRawJson()))
+    }
+    assert(resBuilder.result() == jsons)
   }
 }

@@ -27,8 +27,8 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
           s ! InvocationFailure(e.getClass.getCanonicalName, e.getMessage)
       }
     case msg@ObservableInvocationMessage(name, argLists, getterChain) =>
-      implicit val scheduler = Scheduler(RunNowEC)
-      implicit val timeout = Timeout(config.observableAckTimeout)
+      implicit val scheduler: Scheduler = Scheduler(RunNowEC)
+      implicit val timeout: Timeout = Timeout(config.observableAckTimeout)
       val s = sender()
 
       val heartbeat = Observable.timerRepeated(config.heartbeatInterval, config.heartbeatInterval, MonixProtocol.Heartbeat)
@@ -40,7 +40,6 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
       resolveRpc(msg).observe(name, argLists).subscribe(
         value => {
           val result = s ? InvocationSuccess(value)
-          //noinspection NestedStatefulMonads
           result.mapTo[MonixProtocol.RemoteAck].map {
             case MonixProtocol.Continue => Ack.Continue
             case MonixProtocol.Stop =>

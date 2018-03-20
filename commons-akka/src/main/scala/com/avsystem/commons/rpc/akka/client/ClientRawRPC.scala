@@ -18,7 +18,7 @@ private[akka] final class ClientRawRPC(config: AkkaRPCClientConfig, getterChain:
     system.actorSelection(config.serverPath) ! ProcedureInvocationMessage(rpcName, argLists, getterChain)
   }
   override def call(rpcName: String, argLists: List[List[AkkaRPCFramework.RawValue]]): Future[AkkaRPCFramework.RawValue] = {
-    implicit val timeout = Timeout(config.functionCallTimeout)
+    implicit val timeout: Timeout = Timeout(config.functionCallTimeout)
     val future = system.actorSelection(config.serverPath) ? FunctionInvocationMessage(rpcName, argLists, getterChain)
 
     import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
