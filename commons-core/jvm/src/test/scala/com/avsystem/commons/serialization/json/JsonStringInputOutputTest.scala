@@ -4,18 +4,20 @@ package serialization.json
 import com.avsystem.commons.serialization.Output
 import io.circe.testing.ArbitraryInstances
 import io.circe.{Json, JsonNumber}
-import org.scalatest.FunSuite
 import org.scalatest.concurrent.Eventually
 import org.scalatest.prop.PropertyChecks
+import org.scalatest.{FunSuite, Matchers}
 
 import scala.collection.mutable.ListBuffer
 
-class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryInstances with Eventually {
+class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils
+  with PropertyChecks with ArbitraryInstances with Eventually with Matchers {
+
   // limit JsonNumbers to Int values
   override def transformJsonNumber(n: JsonNumber): JsonNumber =
     Json.fromInt(n.toBigDecimal.map(_.intValue).getOrElse(0)).asNumber.get
 
-  private def write(json: Json): String = {
+  private def writeJson(json: Json): String = {
     def writeIn(json: Json, output: Output): Unit = json.fold(
       output.writeNull(),
       output.writeBoolean,
@@ -41,7 +43,7 @@ class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryIns
     builder.toString
   }
 
-  private def read(json: String): Json = {
+  private def readJson(json: String): Json = {
     def readIn(input: JsonStringInput): Json = input.jsonType match {
       case "null" => input.readNull(); Json.Null
       case "boolean" => Json.fromBoolean(input.readBoolean())
@@ -72,7 +74,7 @@ class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryIns
   ignore("write consistency with circe") {
     eventually {
       forAll { json: Json =>
-        assert(write(json) == json.noSpaces)
+        assert(writeJson(json) == json.noSpaces)
       }
     }
   }
@@ -80,7 +82,7 @@ class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryIns
   ignore("read consistency with circe - compact") {
     eventually {
       forAll { json: Json =>
-        assert(read(json.noSpaces) == json)
+        assert(readJson(json.noSpaces) == json)
       }
     }
   }
@@ -88,7 +90,7 @@ class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryIns
   ignore("read consistency with circe - spaced") {
     eventually {
       forAll { json: Json =>
-        assert(read(json.spaces2) == json)
+        assert(readJson(json.spaces2) == json)
       }
     }
   }
@@ -96,10 +98,13 @@ class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryIns
   ignore("read write round trip") {
     eventually {
       forAll { json: Json =>
-        assert(read(write(json)) == json)
+        assert(readJson(writeJson(json)) == json)
       }
     }
   }
+
+  import JsonStringInput.read
+  import JsonStringOutput.write
 
   test("raw json list test") {
     val jsons = List("123", "null", "\"str\"", "4.5", "[1,2,3]", "{\"a\": 123, \"b\": 3.14}")
@@ -141,4 +146,54 @@ class JsonInputOutputTest extends FunSuite with PropertyChecks with ArbitraryIns
     }
     assert(resBuilder.result() == jsons)
   }
+
+  test("integers") {
+    val test = 5
+    val serialized = write(test)
+    val deserialized = read[Int](serialized)
+
+    deserialized should be(test)
+  }
+
+  test("long") {
+    val test = 5310282985281836837L
+    val serialized = write(test)
+    val deserialized = read[Long](serialized)
+
+    deserialized should be(test)
+  }
+
+  test("double") {
+    val test = -1.750470182E9
+    val serialized = write(test)
+    val deserialized = read[Double](serialized)
+
+    deserialized should be(test)
+  }
+
+  test("boolean") {
+    val test = true
+    val serialized = write(test)
+    val deserialized = read[Boolean](serialized)
+
+    deserialized should be(test)
+  }
+
+  test("strings") {
+    val test = "a።bc\u0676ąቢść➔Ĳ"
+    val serialized = write(test)
+    val deserialized = read[String](serialized)
+
+    deserialized should be(test)
+  }
+
+  test("simple case classes") {
+    val test: TestCC = TestCC(5, 123L, 432, true, "bla", 'a' :: 'b' :: Nil)
+    val serialized = write[TestCC](test)
+    val deserialized = read[TestCC](serialized)
+
+    deserialized should be(test)
+  }
+
+
 }
