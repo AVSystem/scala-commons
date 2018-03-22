@@ -76,6 +76,7 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
   }
   def readDouble(): Double = value match {
     case d: Double => matchOr[Double]("double number")
+    case i: Int => matchOr[Int]("integer number")
     case s: String => s.toDouble
   }
 

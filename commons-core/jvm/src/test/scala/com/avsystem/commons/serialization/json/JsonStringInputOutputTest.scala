@@ -241,12 +241,5 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils
     intercept[ReadFailure](read[Int](jsonDouble))
     intercept[ReadFailure](read[Long](jsonDouble))
     read[Double](jsonDouble) should be(Double.MaxValue)
-
-
-    val brokenDouble = "312,321"
-    val i = read[Int](brokenDouble)
-    intercept[ReadFailure](i)
-    intercept[ReadFailure](read[Long](brokenDouble))
-    intercept[ReadFailure](read[Double](brokenDouble))
   }
 }
