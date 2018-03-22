@@ -54,7 +54,7 @@ final class JsonStringOutput(builder: JStringBuilder) extends BaseJsonOutput wit
     builder.append('"')
     var i = 0
     while (i < binary.length) {
-      builder.append(f"${binary(i)}%02x")
+      builder.append(f"${binary(i) & 0xff}%02x") //JS has signed chars
       i += 1
     }
     builder.append('"')

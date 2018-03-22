@@ -255,7 +255,7 @@ final class JsonReader(val json: String) {
       parseDigits()
     }
 
-    //Double.MinPositiveValue.toString is 5e-324. Written by scientists, for scientists.
+    //Double.MinPositiveValue.toString is 5e-324 in JS. Written by scientists, for scientists.
     if (isNext('e') || isNext('E')) {
       advance()
       if (isNext('-') || isNext('+')) {
