@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization.json
 
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{GenCodec, Output}
 import io.circe.testing.ArbitraryInstances
 import io.circe.{Json, JsonNumber}
@@ -157,7 +158,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils
 
   roundtrip("integers")(Seq(Int.MinValue, -42, 0, 42, Int.MaxValue))
 
-  roundtrip("longs")(Seq(Long.MinValue, -783868188, 0, 783868188, Long.MaxValue))
+  roundtrip("longs")(Seq(Int.MaxValue.toLong + 1, Long.MinValue, -783868188, 0, 783868188, Long.MaxValue))
 
   roundtrip("doubles")(Seq(
     Double.MinValue, -1.750470182E9, Double.MaxValue, Double.MinPositiveValue, Double.PositiveInfinity, Double.NegativeInfinity)
@@ -219,5 +220,33 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils
     deserialized.map should be(item.map)
   }
 
+  test("handle plain numbers in JSON as Int, Long and Double") {
+    val json = "123"
+    read[Int](json) should be(123)
+    read[Long](json) should be(123)
+    read[Double](json) should be(123)
 
+    val maxIntPlusOne: Long = Int.MaxValue.toLong + 1
+    val jsonLong = maxIntPlusOne.toString
+    intercept[ReadFailure](read[Int](jsonLong))
+    read[Long](jsonLong) should be(maxIntPlusOne)
+    read[Double](jsonLong) should be(maxIntPlusOne)
+
+    val jsonLongMax = Long.MaxValue.toString
+    intercept[ReadFailure](read[Int](jsonLong))
+    read[Long](jsonLongMax) should be(Long.MaxValue)
+    read[Double](jsonLongMax) should be(Long.MaxValue)
+
+    val jsonDouble = Double.MaxValue.toString
+    intercept[ReadFailure](read[Int](jsonDouble))
+    intercept[ReadFailure](read[Long](jsonDouble))
+    read[Double](jsonDouble) should be(Double.MaxValue)
+
+
+    val brokenDouble = "312,321"
+    val i = read[Int](brokenDouble)
+    intercept[ReadFailure](i)
+    intercept[ReadFailure](read[Long](brokenDouble))
+    intercept[ReadFailure](read[Double](brokenDouble))
+  }
 }

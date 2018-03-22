@@ -240,7 +240,7 @@ final class JsonReader(val json: String) {
 
     def parseDigits(): Unit = {
       if (!isNextDigit) {
-        throw new ReadFailure("Expected digit")
+        throw new ReadFailure(s"Expected digit, got ${json.charAt(i)}")
       }
       while (isNextDigit) {
         advance()
@@ -251,7 +251,7 @@ final class JsonReader(val json: String) {
       advance()
     } else if (isNextDigit) {
       parseDigits()
-    } else throw new ReadFailure("Expected '-' or digit")
+    } else throw new ReadFailure(s"Expected '-' or digit, got ${json.charAt(i)}")
 
     if (isNext('.')) {
       decimal = true
@@ -269,7 +269,13 @@ final class JsonReader(val json: String) {
     }
 
     val str = json.substring(start, i)
-    if (decimal) str.toDouble else str.toInt
+    Try[Any] {
+      if (decimal) str.toDouble else {
+        val longValue = str.toLong
+        if (Int.MinValue <= longValue && longValue <= Int.MaxValue) longValue.toInt else str
+      }
+    }.recover { case t => throw new ReadFailure(s"Invalid number format: $str", t) }
+      .get
   }
 
   def parseString(): String = {
