@@ -156,11 +156,26 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils
   }
 
   roundtrip("integers")(Seq(Int.MinValue, -42, 0, 42, Int.MaxValue))
+
   roundtrip("longs")(Seq(Long.MinValue, -783868188, 0, 783868188, Long.MaxValue))
-  roundtrip("doubles")(Seq(Double.MinValue, -1.750470182E9, Double.MaxValue, Double.MinPositiveValue /*Double.NegativeInfinity, Double.NaN*/))
+
+  roundtrip("doubles")(Seq(
+    Double.MinValue, -1.750470182E9, Double.MaxValue, Double.MinPositiveValue, Double.PositiveInfinity, Double.NegativeInfinity)
+  )
   roundtrip("booleans")(Seq(false, true))
+
   roundtrip("strings")(Seq("", "a።bc\u0676ąቢść➔Ĳ"))
+
   roundtrip("simple case classes")(Seq(TestCC(5, 123L, 432, true, "bla", 'a' :: 'b' :: Nil)))
+
+  test("NaN") {
+    val value = Double.NaN
+
+    val serialized = write(value)
+    val deserialized = read[Double](serialized)
+
+    assert(java.lang.Double.isNaN(deserialized))
+  }
 
   test("scientific") {
     val value = -1.750470182E9

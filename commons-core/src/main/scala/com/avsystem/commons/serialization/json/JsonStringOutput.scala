@@ -49,7 +49,11 @@ final class JsonStringOutput(builder: JStringBuilder) extends BaseJsonOutput wit
     if (asInt == long) writeInt(asInt)
     else writeString(long.toString)
   }
-  def writeDouble(double: Double): Unit = builder.append(double.toString)
+  def writeDouble(double: Double): Unit = {
+    if (java.lang.Double.isNaN(double) || double == Double.NegativeInfinity || double == Double.PositiveInfinity)
+      writeString(double.toString)
+    else builder.append(double.toString)
+  }
   def writeBinary(binary: Array[Byte]): Unit = {
     builder.append('"')
     var i = 0

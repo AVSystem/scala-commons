@@ -74,7 +74,10 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
     case s: String => s.toLong
     case _ => expected("integer number or numeric string")
   }
-  def readDouble(): Double = matchOr[Double]("double number")
+  def readDouble(): Double = value match {
+    case d: Double => matchOr[Double]("double number")
+    case s: String => s.toDouble
+  }
 
   def readBinary(): Array[Byte] = {
     val hex = matchOr[String]("hex string")
