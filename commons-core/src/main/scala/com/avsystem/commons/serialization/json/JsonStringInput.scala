@@ -260,12 +260,12 @@ final class JsonReader(val json: String) {
       parseDigits()
       if (isNext('e') || isNext('E')) {
         advance()
+        if (isNext('-') || isNext('+')) {
+          advance()
+        }
         if (isNextDigit) {
           parseDigits()
-        } else if (isNext('-') || isNext('+')) {
-          advance()
-          parseDigits()
-        } else throw new ReadFailure("Expected '+' or '-'")
+        } else throw new ReadFailure(s"Expected a digit, got ${json.charAt(i)}")
       }
     }
 

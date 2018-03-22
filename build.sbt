@@ -184,7 +184,6 @@ lazy val `commons-core` = project
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
-      "io.circe" %% "circe-testing" % circeVersion % Test,
     ),
     ideExcludedDirectories := Seq(baseDirectory.value / "agg"),
   )
