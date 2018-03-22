@@ -184,7 +184,39 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils
     val serialized = Seq("-1.750470182E+9", test)
     val deserialized = serialized.map(read[Double])
 
-    deserialized should contain only (value)
+    deserialized should contain only value
+  }
+
+  test("serialize and deserialize nested case classes") {
+    val test: TestCC = TestCC(5, 123L, 432, true, "bla", 'a' :: 'b' :: Nil)
+    val test2: TestCC = TestCC(-35, 1L, 432, true, "blsddf sdg  \"{,}[,]\"a", 'a' :: 'b' :: Nil)
+    val nested: NestedTestCC = NestedTestCC(-123, test, test2)
+    val serialized = write(nested)
+    val deserialized = read[NestedTestCC](serialized)
+
+    deserialized should be(nested)
+  }
+
+  test("serialize all types") {
+    val item = completeItem()
+    val serialized = write(item)
+    val deserialized = read[CompleteItem](serialized)
+
+    deserialized.unit should be(item.unit)
+    deserialized.string should be(item.string)
+    deserialized.char should be(item.char)
+    deserialized.boolean should be(item.boolean)
+    deserialized.byte should be(item.byte)
+    deserialized.short should be(item.short)
+    deserialized.int should be(item.int)
+    deserialized.long should be(item.long)
+    deserialized.float should be(item.float)
+    deserialized.double should be(item.double)
+    deserialized.binary should be(item.binary)
+    deserialized.list should be(item.list)
+    deserialized.set should be(item.set)
+    deserialized.obj should be(item.obj)
+    deserialized.map should be(item.map)
   }
 
 

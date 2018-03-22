@@ -3,6 +3,8 @@ package serialization.json
 
 import com.avsystem.commons.serialization.HasGenCodec
 
+import scala.util.Random
+
 trait SerializationTestUtils {
   case class TestCC(i: Int, l: Long, intAsDouble: Double, b: Boolean, s: String, list: List[Char])
   object TestCC extends HasGenCodec[TestCC]
@@ -20,5 +22,24 @@ trait SerializationTestUtils {
     set: Set[String], obj: TestCC, map: Map[String, Int]
   )
   object CompleteItem extends HasGenCodec[CompleteItem]
+
+  def completeItem() = CompleteItem(
+    unit = (),
+    string = Random.nextString(Random.nextInt(20)),
+    specialString = "\n\f\b\t\r\n\\\"\\\\",
+    char = Random.nextString(1).head,
+    boolean = Random.nextBoolean(),
+    byte = Random.nextInt().toByte,
+    short = Random.nextInt().toShort,
+    int = Random.nextInt(),
+    long = Random.nextLong(),
+    float = Random.nextFloat(),
+    double = Random.nextDouble(),
+    binary = Array.fill(Random.nextInt(20))(Random.nextInt().toByte),
+    list = List.fill(Random.nextInt(20))(Random.nextString(Random.nextInt(20))),
+    set = List.fill(Random.nextInt(20))(Random.nextString(Random.nextInt(20))).toSet,
+    obj = TestCC(Random.nextInt(), Random.nextLong(), Random.nextInt(), Random.nextBoolean(), Random.nextString(Random.nextInt(20)), Nil),
+    map = Map(Seq.fill(Random.nextInt(20))(Random.nextString(20) -> Random.nextInt()): _*)
+  )
 
 }
