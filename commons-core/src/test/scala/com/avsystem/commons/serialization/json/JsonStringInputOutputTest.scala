@@ -9,6 +9,7 @@ import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
 class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils with Matchers {
+
   import JsonStringInput.read
   import JsonStringOutput.write
 
@@ -66,7 +67,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
   roundtrip("longs")(Seq(Int.MaxValue.toLong + 1, Long.MinValue, -783868188, 0, 783868188, Long.MaxValue))
 
   roundtrip("doubles")(Seq(
-    Double.MinValue, -1.750470182E9, Double.MaxValue, Double.MinPositiveValue, Double.PositiveInfinity, Double.NegativeInfinity)
+    Double.MinPositiveValue, Double.MinValue, -1.750470182E9, Double.MaxValue, Double.PositiveInfinity, Double.NegativeInfinity)
   )
   roundtrip("booleans")(Seq(false, true))
 
@@ -86,8 +87,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
   test("scientific") {
     val value = -1.750470182E9
     val test = value.toString
-    assume(test == "-1.750470182E9")
-    val serialized = Seq("-1.750470182E+9", test)
+    val serialized = Seq("-1.750470182E+9", "-1.750470182E9", test)
     val deserialized = serialized.map(read[Double])
 
     deserialized should contain only value

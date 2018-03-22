@@ -233,7 +233,6 @@ final class JsonReader(val json: String) {
 
   private def parseNumber(): Any = {
     val start = i
-    var decimal = false
 
     if (isNext('-')) {
       advance()
@@ -255,26 +254,30 @@ final class JsonReader(val json: String) {
     } else throw new ReadFailure(s"Expected '-' or digit, got ${json.charAt(i)}")
 
     if (isNext('.')) {
-      decimal = true
       advance()
       parseDigits()
-      if (isNext('e') || isNext('E')) {
+    }
+
+    //Double.MinPositiveValue.toString is 5e-324. Written by scientists, for scientists.
+    if (isNext('e') || isNext('E')) {
+      advance()
+      if (isNext('-') || isNext('+')) {
         advance()
-        if (isNext('-') || isNext('+')) {
-          advance()
-        }
-        if (isNextDigit) {
-          parseDigits()
-        } else throw new ReadFailure(s"Expected a digit, got ${json.charAt(i)}")
       }
+      if (isNextDigit) {
+        parseDigits()
+      } else throw new ReadFailure(s"Expected a digit, got ${json.charAt(i)}")
     }
 
     val str = json.substring(start, i)
     Try[Any] {
-      if (decimal) str.toDouble else {
-        val longValue = str.toLong
-        if (Int.MinValue <= longValue && longValue <= Int.MaxValue) longValue.toInt else str
-      }
+      val doubleValue = str.toDouble
+      val longValue = doubleValue.toLong
+      val intValue = doubleValue.toInt
+
+      if (intValue == doubleValue) intValue
+      else if (longValue == doubleValue) str
+      else doubleValue
     }.recover { case t => throw new ReadFailure(s"Invalid number format: $str", t) }
       .get
   }
