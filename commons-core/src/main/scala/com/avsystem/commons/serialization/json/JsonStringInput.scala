@@ -52,9 +52,16 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
 
   private def expected(what: String) = throw new ReadFailure(s"Expected $what but got $jsonType: $value")
 
-  private def matchOr[@specialized(Int, Double, Boolean) T: ClassTag](what: String): T = value match {
+  private def matchOr[@specialized(Boolean) T: ClassTag](what: String): T = value match {
     case t: T => t
     case _ => expected(what)
+  }
+
+  private def matchNumericString[T](toNumber: String => T): T = value match {
+    case ns: String =>
+      Try(toNumber(ns)).recover { case t => throw new ReadFailure(s"Invalid number format: $ns", t) }.get
+    case _ =>
+      expected("numeric string")
   }
 
   def inputType: InputType = value match {
@@ -67,19 +74,9 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
   def readNull(): Null = if (value == null) null else expected("null")
   def readString(): String = matchOr[String]("string")
   def readBoolean(): Boolean = matchOr[Boolean]("boolean")
-  def readInt(): Int = matchOr[Int]("integer number")
-
-  def readLong(): Long = value match {
-    case i: Int => i
-    case s: String => s.toLong
-    case _ => expected("integer number or numeric string")
-  }
-  def readDouble(): Double = value match {
-    case d: Double => matchOr[Double]("double number")
-    case i: Int => matchOr[Int]("integer number")
-    case s: String => s.toDouble
-  }
-
+  def readInt(): Int = matchNumericString(_.toInt)
+  def readLong(): Long = matchNumericString(_.toLong)
+  def readDouble(): Double = matchNumericString(_.toDouble)
   def readBinary(): Array[Byte] = {
     val hex = matchOr[String]("hex string")
     val result = new Array[Byte](hex.length / 2)
@@ -270,16 +267,7 @@ final class JsonReader(val json: String) {
     }
 
     val str = json.substring(start, i)
-    Try[Any] {
-      val doubleValue = str.toDouble
-      val longValue = doubleValue.toLong
-      val intValue = doubleValue.toInt
-
-      if (intValue == doubleValue) intValue
-      else if (longValue == doubleValue) str
-      else doubleValue
-    }.recover { case t => throw new ReadFailure(s"Invalid number format: $str", t) }
-      .get
+    str
   }
 
   def parseString(): String = {
