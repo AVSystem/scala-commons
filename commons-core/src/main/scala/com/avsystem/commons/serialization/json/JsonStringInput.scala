@@ -256,7 +256,9 @@ final class JsonReader(val json: String) {
       parseDigits()
       if (isNext('e') || isNext('E')) {
         advance()
-        if (isNext('-') || isNext('+')) {
+        if (isNextDigit) {
+          parseDigits()
+        } else if (isNext('-') || isNext('+')) {
           advance()
           parseDigits()
         } else throw new ReadFailure("Expected '+' or '-'")

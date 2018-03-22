@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization.json
 
-import com.avsystem.commons.serialization.Output
+import com.avsystem.commons.serialization.{GenCodec, Output}
 import io.circe.testing.ArbitraryInstances
 import io.circe.{Json, JsonNumber}
 import org.scalatest.concurrent.Eventually
@@ -147,52 +147,29 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils
     assert(resBuilder.result() == jsons)
   }
 
-  test("integers") {
-    val test = 5
-    val serialized = write(test)
-    val deserialized = read[Int](serialized)
-
-    deserialized should be(test)
+  def roundtrip[T: GenCodec](name: String)(values: Seq[T]): Unit = {
+    test(name) {
+      val serialized = values.map(write[T])
+      val deserialized = serialized.map(read[T])
+      deserialized shouldBe values
+    }
   }
 
-  test("long") {
-    val test = 5310282985281836837L
-    val serialized = write(test)
-    val deserialized = read[Long](serialized)
+  roundtrip("integers")(Seq(Int.MinValue, -42, 0, 42, Int.MaxValue))
+  roundtrip("longs")(Seq(Long.MinValue, -783868188, 0, 783868188, Long.MaxValue))
+  roundtrip("doubles")(Seq(Double.MinValue, -1.750470182E9, Double.MaxValue, Double.MinPositiveValue /*Double.NegativeInfinity, Double.NaN*/))
+  roundtrip("booleans")(Seq(false, true))
+  roundtrip("strings")(Seq("", "a።bc\u0676ąቢść➔Ĳ"))
+  roundtrip("simple case classes")(Seq(TestCC(5, 123L, 432, true, "bla", 'a' :: 'b' :: Nil)))
 
-    deserialized should be(test)
-  }
+  test("scientific") {
+    val value = -1.750470182E9
+    val test = value.toString
+    assume(test == "-1.750470182E9")
+    val serialized = Seq("-1.750470182E+9", test)
+    val deserialized = serialized.map(read[Double])
 
-  test("double") {
-    val test = -1.750470182E9
-    val serialized = write(test)
-    val deserialized = read[Double](serialized)
-
-    deserialized should be(test)
-  }
-
-  test("boolean") {
-    val test = true
-    val serialized = write(test)
-    val deserialized = read[Boolean](serialized)
-
-    deserialized should be(test)
-  }
-
-  test("strings") {
-    val test = "a።bc\u0676ąቢść➔Ĳ"
-    val serialized = write(test)
-    val deserialized = read[String](serialized)
-
-    deserialized should be(test)
-  }
-
-  test("simple case classes") {
-    val test: TestCC = TestCC(5, 123L, 432, true, "bla", 'a' :: 'b' :: Nil)
-    val serialized = write[TestCC](test)
-    val deserialized = read[TestCC](serialized)
-
-    deserialized should be(test)
+    deserialized should contain only (value)
   }
 
 

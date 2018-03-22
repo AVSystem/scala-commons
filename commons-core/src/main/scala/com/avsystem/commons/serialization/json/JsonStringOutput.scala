@@ -11,7 +11,7 @@ object JsonStringOutput {
   }
 }
 
-abstract class BaseJsonOutput {
+trait BaseJsonOutput {
   protected final def writeJsonString(builder: JStringBuilder, str: String): Unit = {
     builder.append('"')
     var i = 0
