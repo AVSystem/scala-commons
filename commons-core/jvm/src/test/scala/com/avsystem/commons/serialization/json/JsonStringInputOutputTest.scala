@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization.json
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization.{GenCodec, Output}
+import com.avsystem.commons.serialization.{GenCodec, Input, Output}
 import io.circe.testing.ArbitraryInstances
 import io.circe.{Json, JsonNumber}
 import org.scalatest.concurrent.Eventually
@@ -10,6 +10,7 @@ import org.scalatest.prop.PropertyChecks
 import org.scalatest.{FunSuite, Matchers}
 
 import scala.collection.mutable.ListBuffer
+import scala.util.Random
 
 class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils
   with PropertyChecks with ArbitraryInstances with Eventually with Matchers {
@@ -241,5 +242,61 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils
     intercept[ReadFailure](read[Int](jsonDouble))
     intercept[ReadFailure](read[Long](jsonDouble))
     read[Double](jsonDouble) should be(Double.MaxValue)
+  }
+
+  test("work with skipping") {
+    case class TwoItems(i1: CompleteItem, i2: CompleteItem)
+    implicit val skippingCodec = new GenCodec[TwoItems] {
+      override def read(input: Input): TwoItems = {
+        val obj = input.readObject()
+        obj.nextField().skip()
+        val i2 = GenCodec.read[CompleteItem](obj.nextField())
+        TwoItems(null, i2)
+      }
+
+
+      override def write(output: Output, value: TwoItems): Unit = {
+        val obj = output.writeObject()
+        GenCodec.write[CompleteItem](obj.writeField("i1"), value.i1)
+        GenCodec.write[CompleteItem](obj.writeField("i2"), value.i2)
+        obj.finish()
+      }
+    }
+
+    val item = TwoItems(completeItem(), completeItem())
+    val serialized = write(item)
+    val deserialized = read[TwoItems](serialized)
+
+    deserialized.i1 should be(null)
+    deserialized.i2.unit should be(item.i2.unit)
+    deserialized.i2.string should be(item.i2.string)
+    deserialized.i2.char should be(item.i2.char)
+    deserialized.i2.boolean should be(item.i2.boolean)
+    deserialized.i2.byte should be(item.i2.byte)
+    deserialized.i2.short should be(item.i2.short)
+    deserialized.i2.int should be(item.i2.int)
+    deserialized.i2.long should be(item.i2.long)
+    deserialized.i2.float should be(item.i2.float)
+    deserialized.i2.double should be(item.i2.double)
+    deserialized.i2.binary should be(item.i2.binary)
+    deserialized.i2.list should be(item.i2.list)
+    deserialized.i2.set should be(item.i2.set)
+    deserialized.i2.obj should be(item.i2.obj)
+    deserialized.i2.map should be(item.i2.map)
+  }
+
+
+  test("serialize and deserialize huge case classes") {
+    def cc() = TestCC(Random.nextInt(), Random.nextLong(), Random.nextInt(), Random.nextBoolean(), Random.nextString(Random.nextInt(300)), List.fill(Random.nextInt(300))('a'))
+    def ncc() = NestedTestCC(Random.nextInt(), cc(), cc())
+    def dncc(counter: Int = 0): DeepNestedTestCC =
+      if (counter < 500) DeepNestedTestCC(ncc(), dncc(counter + 1))
+      else DeepNestedTestCC(ncc(), null)
+
+    val test: DeepNestedTestCC = dncc()
+    val serialized = write(test)
+    val deserialized = read[DeepNestedTestCC](serialized)
+
+    deserialized should be(test)
   }
 }
