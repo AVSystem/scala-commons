@@ -178,7 +178,7 @@ final class JsonReader(val json: String) {
 
   def index: Int = i
 
-  @inline def read(): Char = {
+  @inline private def read(): Char = {
     val res = json.charAt(i)
     advance()
     res
@@ -204,12 +204,6 @@ final class JsonReader(val json: String) {
     val r = read()
     if (r != ch) throw new ReadFailure(s"'${ch.toChar}' expected, got ${if (r == -1) "EOF" else r.toChar}")
   }
-
-  def tryPass(ch: Char): Boolean =
-    if (isNext(ch)) {
-      advance()
-      true
-    } else false
 
   private def pass(str: String): Unit = {
     var j = 0

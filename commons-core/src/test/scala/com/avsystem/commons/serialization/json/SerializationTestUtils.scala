@@ -16,7 +16,7 @@ trait SerializationTestUtils {
   object DeepNestedTestCC extends HasGenCodec[DeepNestedTestCC]
 
   case class CompleteItem(
-    unit: Unit, string: String, specialString: String, char: Char,
+    unit: Unit, string: String, char: Char,
     boolean: Boolean, byte: Byte, short: Short, int: Int,
     long: Long, float: Float, double: Double, binary: Array[Byte], list: List[String],
     set: Set[String], obj: TestCC, map: Map[String, Int]
@@ -26,7 +26,6 @@ trait SerializationTestUtils {
   def completeItem() = CompleteItem(
     unit = (),
     string = Random.nextString(Random.nextInt(20)),
-    specialString = "\n\f\b\t\r\n\\\"\\\\",
     char = Random.nextString(1).head,
     boolean = Random.nextBoolean(),
     byte = Random.nextInt().toByte,

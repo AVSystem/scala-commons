@@ -3,13 +3,16 @@ package serialization.json
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{GenCodec, Input, Output}
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck._
 import org.scalactic.source.Position
+import org.scalatest.prop.PropertyChecks
 import org.scalatest.{FunSuite, Matchers}
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
-class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils with Matchers {
+class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils with Matchers with PropertyChecks {
 
   import JsonStringInput.read
   import JsonStringOutput.write
@@ -104,26 +107,57 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     deserialized shouldBe nested
   }
 
-  test("serialize all types") {
-    val item = completeItem()
-    val serialized = write(item)
-    val deserialized = read[CompleteItem](serialized)
+  /*  test("read string") {
+      println(read[String]("42"))
+      println(read[String]("\"42\""))
+    }*/
 
-    deserialized.unit shouldBe item.unit
-    deserialized.string shouldBe item.string
-    deserialized.char shouldBe item.char
-    deserialized.boolean shouldBe item.boolean
-    deserialized.byte shouldBe item.byte
-    deserialized.short shouldBe item.short
-    deserialized.int shouldBe item.int
-    deserialized.long shouldBe item.long
-    deserialized.float shouldBe item.float
-    deserialized.double shouldBe item.double
-    deserialized.binary shouldBe item.binary
-    deserialized.list shouldBe item.list
-    deserialized.set shouldBe item.set
-    deserialized.obj shouldBe item.obj
-    deserialized.map shouldBe item.map
+  test("serialize all types") {
+    implicit val arbitraryTestCC: Arbitrary[TestCC] = Arbitrary(for {
+      i <- arbitrary[Int]
+      l <- arbitrary[Long]
+      b <- arbitrary[Boolean]
+      s <- arbitrary[String]
+      list <- arbitrary[List[Char]]
+    } yield TestCC(i, l, i.toDouble, b, s, list))
+    implicit val arbCompleteItem: Arbitrary[CompleteItem] = Arbitrary(for {
+      u <- arbitrary[Unit]
+      str <- arbitrary[String]
+      c <- arbitrary[Char]
+      bool <- arbitrary[Boolean]
+      b <- arbitrary[Byte]
+      s <- arbitrary[Short]
+      i <- arbitrary[Int]
+      l <- arbitrary[Long]
+      f <- arbitrary[Float]
+      d <- arbitrary[Double]
+      binary <- arbitrary[Array[Byte]]
+      list <- arbitrary[List[String]]
+      set <- arbitrary[Set[String]]
+      obj <- arbitrary[TestCC]
+      map <- arbitrary[Map[String, Int]]
+    } yield CompleteItem(u, str, c, bool, b, s, i, l, f, d, binary, list, set, obj, map))
+
+    forAll { item: CompleteItem =>
+      val serialized = write(item)
+      val deserialized = read[CompleteItem](serialized)
+
+      deserialized.unit shouldBe item.unit
+      deserialized.string shouldBe item.string
+      deserialized.char shouldBe item.char
+      deserialized.boolean shouldBe item.boolean
+      deserialized.byte shouldBe item.byte
+      deserialized.short shouldBe item.short
+      deserialized.int shouldBe item.int
+      deserialized.long shouldBe item.long
+      deserialized.float shouldBe item.float
+      deserialized.double shouldBe item.double
+      deserialized.binary shouldBe item.binary
+      deserialized.list shouldBe item.list
+      deserialized.set shouldBe item.set
+      deserialized.obj shouldBe item.obj
+      deserialized.map shouldBe item.map
+    }
   }
 
   test("handle plain numbers in JSON as Int, Long and Double") {
