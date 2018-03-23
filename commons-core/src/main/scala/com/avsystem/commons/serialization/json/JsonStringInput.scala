@@ -59,7 +59,11 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
 
   private def matchNumericString[T](toNumber: String => T): T = value match {
     case ns: String =>
-      Try(toNumber(ns)).recover { case t => throw new ReadFailure(s"Invalid number format: $ns", t) }.get
+      try {
+        toNumber(ns)
+      } catch {
+        case e: NumberFormatException => throw new ReadFailure(s"Invalid number format: $ns", e)
+      }
     case _ =>
       expected("numeric string")
   }
@@ -261,13 +265,10 @@ final class JsonReader(val json: String) {
       if (isNext('-') || isNext('+')) {
         advance()
       }
-      if (isNextDigit) {
-        parseDigits()
-      } else throw new ReadFailure(s"Expected a digit, got ${json.charAt(i)}")
+      parseDigits()
     }
 
-    val str = json.substring(start, i)
-    str
+    json.substring(start, i)
   }
 
   def parseString(): String = {

@@ -3,6 +3,7 @@ package serialization.json
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{GenCodec, Input, Output}
+import org.scalactic.source.Position
 import org.scalatest.{FunSuite, Matchers}
 
 import scala.collection.mutable.ListBuffer
@@ -54,7 +55,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     assert(resBuilder.result() == jsons)
   }
 
-  def roundtrip[T: GenCodec](name: String)(values: Seq[T]): Unit = {
+  def roundtrip[T: GenCodec](name: String)(values: T*)(implicit pos: Position): Unit = {
     test(name) {
       val serialized = values.map(write[T])
       val deserialized = serialized.map(read[T])
@@ -62,18 +63,18 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     }
   }
 
-  roundtrip("integers")(Seq(Int.MinValue, -42, 0, 42, Int.MaxValue))
+  roundtrip("integers")(Int.MinValue, -42, 0, 42, Int.MaxValue)
 
-  roundtrip("longs")(Seq(Int.MaxValue.toLong + 1, Long.MinValue, -783868188, 0, 783868188, Long.MaxValue))
+  roundtrip("longs")(Int.MaxValue.toLong + 1, Long.MinValue, -783868188, 0, 783868188, Long.MaxValue)
 
-  roundtrip("doubles")(Seq(
-    Double.MinPositiveValue, Double.MinValue, -1.750470182E9, Double.MaxValue, Double.PositiveInfinity, Double.NegativeInfinity)
+  roundtrip("doubles")(
+    Double.MinPositiveValue, Double.MinValue, -1.750470182E9, Double.MaxValue, Double.PositiveInfinity, Double.NegativeInfinity
   )
-  roundtrip("booleans")(Seq(false, true))
+  roundtrip("booleans")(false, true)
 
-  roundtrip("strings")(Seq("", "a።bc\u0676ąቢść➔Ĳ"))
+  roundtrip("strings")("", "a።bc\u0676ąቢść➔Ĳ")
 
-  roundtrip("simple case classes")(Seq(TestCC(5, 123L, 432, true, "bla", 'a' :: 'b' :: Nil)))
+  roundtrip("simple case classes")(TestCC(5, 123L, 432, true, "bla", 'a' :: 'b' :: Nil))
 
   test("NaN") {
     val value = Double.NaN
@@ -100,7 +101,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     val serialized = write(nested)
     val deserialized = read[NestedTestCC](serialized)
 
-    deserialized should be(nested)
+    deserialized shouldBe nested
   }
 
   test("serialize all types") {
@@ -108,44 +109,44 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     val serialized = write(item)
     val deserialized = read[CompleteItem](serialized)
 
-    deserialized.unit should be(item.unit)
-    deserialized.string should be(item.string)
-    deserialized.char should be(item.char)
-    deserialized.boolean should be(item.boolean)
-    deserialized.byte should be(item.byte)
-    deserialized.short should be(item.short)
-    deserialized.int should be(item.int)
-    deserialized.long should be(item.long)
-    deserialized.float should be(item.float)
-    deserialized.double should be(item.double)
-    deserialized.binary should be(item.binary)
-    deserialized.list should be(item.list)
-    deserialized.set should be(item.set)
-    deserialized.obj should be(item.obj)
-    deserialized.map should be(item.map)
+    deserialized.unit shouldBe item.unit
+    deserialized.string shouldBe item.string
+    deserialized.char shouldBe item.char
+    deserialized.boolean shouldBe item.boolean
+    deserialized.byte shouldBe item.byte
+    deserialized.short shouldBe item.short
+    deserialized.int shouldBe item.int
+    deserialized.long shouldBe item.long
+    deserialized.float shouldBe item.float
+    deserialized.double shouldBe item.double
+    deserialized.binary shouldBe item.binary
+    deserialized.list shouldBe item.list
+    deserialized.set shouldBe item.set
+    deserialized.obj shouldBe item.obj
+    deserialized.map shouldBe item.map
   }
 
   test("handle plain numbers in JSON as Int, Long and Double") {
     val json = "123"
-    read[Int](json) should be(123)
-    read[Long](json) should be(123)
-    read[Double](json) should be(123)
+    read[Int](json) shouldBe 123
+    read[Long](json) shouldBe 123
+    read[Double](json) shouldBe 123
 
     val maxIntPlusOne: Long = Int.MaxValue.toLong + 1
     val jsonLong = maxIntPlusOne.toString
     intercept[ReadFailure](read[Int](jsonLong))
-    read[Long](jsonLong) should be(maxIntPlusOne)
-    read[Double](jsonLong) should be(maxIntPlusOne)
+    read[Long](jsonLong) shouldBe maxIntPlusOne
+    read[Double](jsonLong) shouldBe maxIntPlusOne
 
     val jsonLongMax = Long.MaxValue.toString
     intercept[ReadFailure](read[Int](jsonLong))
-    read[Long](jsonLongMax) should be(Long.MaxValue)
-    read[Double](jsonLongMax) should be(Long.MaxValue)
+    read[Long](jsonLongMax) shouldBe Long.MaxValue
+    read[Double](jsonLongMax) shouldBe Long.MaxValue
 
     val jsonDouble = Double.MaxValue.toString
     intercept[ReadFailure](read[Int](jsonDouble))
     intercept[ReadFailure](read[Long](jsonDouble))
-    read[Double](jsonDouble) should be(Double.MaxValue)
+    read[Double](jsonDouble) shouldBe Double.MaxValue
   }
 
   test("work with skipping") {
@@ -171,22 +172,22 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     val serialized = write(item)
     val deserialized = read[TwoItems](serialized)
 
-    deserialized.i1 should be(null)
-    deserialized.i2.unit should be(item.i2.unit)
-    deserialized.i2.string should be(item.i2.string)
-    deserialized.i2.char should be(item.i2.char)
-    deserialized.i2.boolean should be(item.i2.boolean)
-    deserialized.i2.byte should be(item.i2.byte)
-    deserialized.i2.short should be(item.i2.short)
-    deserialized.i2.int should be(item.i2.int)
-    deserialized.i2.long should be(item.i2.long)
-    deserialized.i2.float should be(item.i2.float)
-    deserialized.i2.double should be(item.i2.double)
-    deserialized.i2.binary should be(item.i2.binary)
-    deserialized.i2.list should be(item.i2.list)
-    deserialized.i2.set should be(item.i2.set)
-    deserialized.i2.obj should be(item.i2.obj)
-    deserialized.i2.map should be(item.i2.map)
+    deserialized.i1 shouldBe null
+    deserialized.i2.unit shouldBe item.i2.unit
+    deserialized.i2.string shouldBe item.i2.string
+    deserialized.i2.char shouldBe item.i2.char
+    deserialized.i2.boolean shouldBe item.i2.boolean
+    deserialized.i2.byte shouldBe item.i2.byte
+    deserialized.i2.short shouldBe item.i2.short
+    deserialized.i2.int shouldBe item.i2.int
+    deserialized.i2.long shouldBe item.i2.long
+    deserialized.i2.float shouldBe item.i2.float
+    deserialized.i2.double shouldBe item.i2.double
+    deserialized.i2.binary shouldBe item.i2.binary
+    deserialized.i2.list shouldBe item.i2.list
+    deserialized.i2.set shouldBe item.i2.set
+    deserialized.i2.obj shouldBe item.i2.obj
+    deserialized.i2.map shouldBe item.i2.map
   }
 
 
@@ -201,6 +202,6 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     val serialized = write(test)
     val deserialized = read[DeepNestedTestCC](serialized)
 
-    deserialized should be(test)
+    deserialized shouldBe test
   }
 }
