@@ -106,6 +106,11 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     deserialized shouldBe nested
   }
 
+  test("numerical strings") {
+    read[String]("\"42\"") shouldBe "42"
+    a[ReadFailure] shouldBe thrownBy(read[String]("42"))
+  }
+
   test("serialize all types") {
     forAll { item: CompleteItem =>
       val serialized = write(item)

@@ -70,7 +70,11 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
   }
 
   def readNull(): Null = if (reader.currentValue == null) null else expected("null")
-  def readString(): String = matchOr[String]("string")
+  def readString(): String = {
+    val expected = "string"
+    if (reader.isValueNumeric) throw new ReadFailure(s"Expected $expected but got numeric string: ${reader.currentValue}")
+    matchOr[String](expected)
+  }
   def readBoolean(): Boolean = matchOr[Boolean]("boolean")
   def readInt(): Int = matchNumericString(_.toInt)
   def readLong(): Long = matchNumericString(_.toLong)
@@ -169,8 +173,12 @@ final class JsonObjectInput(reader: JsonReader, callback: AfterElement) extends 
 
 final class JsonReader(val json: String) {
   private[this] var i: Int = 0
+  private[this] var value: Any = _
+  private[this] var valueNumeric = false
 
   def index: Int = i
+  def currentValue: Any = value
+  def isValueNumeric: Boolean = valueNumeric
 
   @inline private def read(): Char = {
     val res = json.charAt(i)
@@ -222,6 +230,7 @@ final class JsonReader(val json: String) {
 
   private def parseNumber(): Any = {
     val start = i
+    valueNumeric = true
 
     if (isNext('-')) {
       advance()
@@ -297,16 +306,14 @@ final class JsonReader(val json: String) {
     }
   }
 
-  var _currentValue: Any = _
-  def currentValue: Any = _currentValue
-
   /**
     * @return startIndex
     */
   def parseValue(): Int = {
     skipWs()
     val startIndex = index
-    val res = if (i < json.length) json.charAt(i) match {
+    valueNumeric = false
+    value = if (i < json.length) json.charAt(i) match {
       case '"' => parseString()
       case 't' => pass("true"); true
       case 'f' => pass("false"); false
@@ -319,7 +326,6 @@ final class JsonReader(val json: String) {
     } else {
       throw new ReadFailure("EOF")
     }
-    _currentValue = res
     startIndex
   }
 }
