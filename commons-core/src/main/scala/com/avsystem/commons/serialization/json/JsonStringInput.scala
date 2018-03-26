@@ -55,7 +55,7 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
         case e: NumberFormatException => throw new ReadFailure(s"Invalid number format: $ns", e)
       }
     case _ =>
-      expected("numeric string")
+      expected("number")
   }
 
   def inputType: InputType = reader.currentValue match {
