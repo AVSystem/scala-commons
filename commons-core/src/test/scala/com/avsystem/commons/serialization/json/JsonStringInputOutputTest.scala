@@ -10,7 +10,6 @@ import org.scalatest.prop.PropertyChecks
 import org.scalatest.{FunSuite, Matchers}
 
 import scala.collection.mutable.ListBuffer
-import scala.util.Random
 
 class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils with Matchers with PropertyChecks {
 
@@ -113,31 +112,6 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     }*/
 
   test("serialize all types") {
-    implicit val arbitraryTestCC: Arbitrary[TestCC] = Arbitrary(for {
-      i <- arbitrary[Int]
-      l <- arbitrary[Long]
-      b <- arbitrary[Boolean]
-      s <- arbitrary[String]
-      list <- arbitrary[List[Char]]
-    } yield TestCC(i, l, i.toDouble, b, s, list))
-    implicit val arbCompleteItem: Arbitrary[CompleteItem] = Arbitrary(for {
-      u <- arbitrary[Unit]
-      str <- arbitrary[String]
-      c <- arbitrary[Char]
-      bool <- arbitrary[Boolean]
-      b <- arbitrary[Byte]
-      s <- arbitrary[Short]
-      i <- arbitrary[Int]
-      l <- arbitrary[Long]
-      f <- arbitrary[Float]
-      d <- arbitrary[Double]
-      binary <- arbitrary[Array[Byte]]
-      list <- arbitrary[List[String]]
-      set <- arbitrary[Set[String]]
-      obj <- arbitrary[TestCC]
-      map <- arbitrary[Map[String, Int]]
-    } yield CompleteItem(u, str, c, bool, b, s, i, l, f, d, binary, list, set, obj, map))
-
     forAll { item: CompleteItem =>
       val serialized = write(item)
       val deserialized = read[CompleteItem](serialized)
@@ -202,40 +176,49 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
       }
     }
 
-    val item = TwoItems(completeItem(), completeItem())
-    val serialized = write(item)
-    val deserialized = read[TwoItems](serialized)
+    forAll { (i1: CompleteItem, i2: CompleteItem) =>
+      val item = TwoItems(i1, i2)
+      val serialized = write(item)
+      val deserialized = read[TwoItems](serialized)
 
-    deserialized.i1 shouldBe null
-    deserialized.i2.unit shouldBe item.i2.unit
-    deserialized.i2.string shouldBe item.i2.string
-    deserialized.i2.char shouldBe item.i2.char
-    deserialized.i2.boolean shouldBe item.i2.boolean
-    deserialized.i2.byte shouldBe item.i2.byte
-    deserialized.i2.short shouldBe item.i2.short
-    deserialized.i2.int shouldBe item.i2.int
-    deserialized.i2.long shouldBe item.i2.long
-    deserialized.i2.float shouldBe item.i2.float
-    deserialized.i2.double shouldBe item.i2.double
-    deserialized.i2.binary shouldBe item.i2.binary
-    deserialized.i2.list shouldBe item.i2.list
-    deserialized.i2.set shouldBe item.i2.set
-    deserialized.i2.obj shouldBe item.i2.obj
-    deserialized.i2.map shouldBe item.i2.map
+      deserialized.i1 shouldBe null
+      deserialized.i2.unit shouldBe item.i2.unit
+      deserialized.i2.string shouldBe item.i2.string
+      deserialized.i2.char shouldBe item.i2.char
+      deserialized.i2.boolean shouldBe item.i2.boolean
+      deserialized.i2.byte shouldBe item.i2.byte
+      deserialized.i2.short shouldBe item.i2.short
+      deserialized.i2.int shouldBe item.i2.int
+      deserialized.i2.long shouldBe item.i2.long
+      deserialized.i2.float shouldBe item.i2.float
+      deserialized.i2.double shouldBe item.i2.double
+      deserialized.i2.binary shouldBe item.i2.binary
+      deserialized.i2.list shouldBe item.i2.list
+      deserialized.i2.set shouldBe item.i2.set
+      deserialized.i2.obj shouldBe item.i2.obj
+      deserialized.i2.map shouldBe item.i2.map
+    }
   }
 
 
   test("serialize and deserialize huge case classes") {
-    def cc() = TestCC(Random.nextInt(), Random.nextLong(), Random.nextInt(), Random.nextBoolean(), Random.nextString(Random.nextInt(300)), List.fill(Random.nextInt(300))('a'))
-    def ncc() = NestedTestCC(Random.nextInt(), cc(), cc())
-    def dncc(counter: Int = 0): DeepNestedTestCC =
-      if (counter < 500) DeepNestedTestCC(ncc(), dncc(counter + 1))
-      else DeepNestedTestCC(ncc(), null)
+    implicit val arbTree: Arbitrary[DeepNestedTestCC] =
+      Arbitrary {
+        def sized(sz: Int): Gen[DeepNestedTestCC] =
+          if (sz == 0) for (t <- arbitrary[TestCC]) yield DeepNestedTestCC(t, null)
+          else for {
+            t <- arbitrary[TestCC]
+            n <- sized(sz - 1)
+          } yield DeepNestedTestCC(t, n)
 
-    val test: DeepNestedTestCC = dncc()
-    val serialized = write(test)
-    val deserialized = read[DeepNestedTestCC](serialized)
+        Gen.sized(sz => sized(math.min(sz, 1)))
+      }
 
-    deserialized shouldBe test
+    forAll { dncc: DeepNestedTestCC =>
+      val serialized = write(dncc)
+      val deserialized = read[DeepNestedTestCC](serialized)
+
+      deserialized shouldBe dncc
+    }
   }
 }
