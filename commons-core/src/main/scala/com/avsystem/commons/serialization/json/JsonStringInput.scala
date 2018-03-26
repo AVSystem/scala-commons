@@ -26,21 +26,15 @@ object JsonStringInput {
 }
 
 class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementNothing) extends Input with AfterElement {
-  private[this] var startIdx: Int = _
+  private[this] val startIdx: Int = reader.parseValue()
   private[this] var endIdx: Int = _
 
-  private[this] val value: Any = {
-    reader.skipWs()
-    startIdx = reader.index
-    val res = reader.parseValue()
-    res match {
-      case JsonStringInput.ListMarker | JsonStringInput.ObjectMarker =>
-      case _ => afterElement()
-    }
-    res
+  reader.currentValue match {
+    case JsonStringInput.ListMarker | JsonStringInput.ObjectMarker =>
+    case _ => afterElement()
   }
 
-  def jsonType: String = value match {
+  def jsonType: String = reader.currentValue match {
     case JsonStringInput.ListMarker => "list"
     case JsonStringInput.ObjectMarker => "object"
     case _: String => "string"
@@ -50,14 +44,14 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
     case null => "null"
   }
 
-  private def expected(what: String) = throw new ReadFailure(s"Expected $what but got $jsonType: $value")
+  private def expected(what: String) = throw new ReadFailure(s"Expected $what but got $jsonType: ${reader.currentValue}")
 
-  private def matchOr[@specialized(Boolean) T: ClassTag](what: String): T = value match {
+  private def matchOr[@specialized(Boolean) T: ClassTag](what: String): T = reader.currentValue match {
     case t: T => t
     case _ => expected(what)
   }
 
-  private def matchNumericString[T](toNumber: String => T): T = value match {
+  private def matchNumericString[T](toNumber: String => T): T = reader.currentValue match {
     case ns: String =>
       try {
         toNumber(ns)
@@ -68,14 +62,14 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
       expected("numeric string")
   }
 
-  def inputType: InputType = value match {
+  def inputType: InputType = reader.currentValue match {
     case JsonStringInput.ListMarker => InputType.List
     case JsonStringInput.ObjectMarker => InputType.Object
     case null => InputType.Null
     case _ => InputType.Simple
   }
 
-  def readNull(): Null = if (value == null) null else expected("null")
+  def readNull(): Null = if (reader.currentValue == null) null else expected("null")
   def readString(): String = matchOr[String]("string")
   def readBoolean(): Boolean = matchOr[Boolean]("boolean")
   def readInt(): Int = matchNumericString(_.toInt)
@@ -92,12 +86,12 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
     result
   }
 
-  def readList(): JsonListInput = value match {
+  def readList(): JsonListInput = reader.currentValue match {
     case JsonStringInput.ListMarker => new JsonListInput(reader, this)
     case _ => expected("list")
   }
 
-  def readObject(): JsonObjectInput = value match {
+  def readObject(): JsonObjectInput = reader.currentValue match {
     case JsonStringInput.ObjectMarker => new JsonObjectInput(reader, this)
     case _ => expected("object")
   }
@@ -107,7 +101,7 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
     reader.json.substring(startIdx, endIdx)
   }
 
-  def skip(): Unit = value match {
+  def skip(): Unit = reader.currentValue match {
     case JsonStringInput.ListMarker => readList().skipRemaining()
     case JsonStringInput.ObjectMarker => readObject().skipRemaining()
     case _ =>
@@ -303,8 +297,16 @@ final class JsonReader(val json: String) {
     }
   }
 
-  def parseValue(): Any =
-    if (i < json.length) json.charAt(i) match {
+  var _currentValue: Any = _
+  def currentValue: Any = _currentValue
+
+  /**
+    * @return startIndex
+    */
+  def parseValue(): Int = {
+    skipWs()
+    val startIndex = index
+    val res = if (i < json.length) json.charAt(i) match {
       case '"' => parseString()
       case 't' => pass("true"); true
       case 'f' => pass("false"); false
@@ -317,4 +319,7 @@ final class JsonReader(val json: String) {
     } else {
       throw new ReadFailure("EOF")
     }
+    _currentValue = res
+    startIndex
+  }
 }
