@@ -37,10 +37,8 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
   def jsonType: String = reader.currentValue match {
     case JsonStringInput.ListMarker => "list"
     case JsonStringInput.ObjectMarker => "object"
-    case _: String => "string"
+    case _: String => if (reader.isNumber) "number" else "string"
     case _: Boolean => "boolean"
-    case _: Int => "integer number"
-    case _: Double => "decimal number"
     case null => "null"
   }
 
@@ -71,9 +69,9 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
 
   def readNull(): Null = if (reader.currentValue == null) null else expected("null")
   def readString(): String = {
-    val expected = "string"
-    if (reader.isValueNumeric) throw new ReadFailure(s"Expected $expected but got numeric string: ${reader.currentValue}")
-    matchOr[String](expected)
+    val expectedTpe = "string"
+    if (reader.isNumber) expected(expectedTpe)
+    matchOr[String](expectedTpe)
   }
   def readBoolean(): Boolean = matchOr[Boolean]("boolean")
   def readInt(): Int = matchNumericString(_.toInt)
@@ -174,11 +172,11 @@ final class JsonObjectInput(reader: JsonReader, callback: AfterElement) extends 
 final class JsonReader(val json: String) {
   private[this] var i: Int = 0
   private[this] var value: Any = _
-  private[this] var valueNumeric = false
+  private[this] var number = false
 
   def index: Int = i
   def currentValue: Any = value
-  def isValueNumeric: Boolean = valueNumeric
+  def isNumber: Boolean = number
 
   @inline private def read(): Char = {
     val res = json.charAt(i)
@@ -230,7 +228,7 @@ final class JsonReader(val json: String) {
 
   private def parseNumber(): Any = {
     val start = i
-    valueNumeric = true
+    number = true
 
     if (isNext('-')) {
       advance()
@@ -312,7 +310,7 @@ final class JsonReader(val json: String) {
   def parseValue(): Int = {
     skipWs()
     val startIndex = index
-    valueNumeric = false
+    number = false
     value = if (i < json.length) json.charAt(i) match {
       case '"' => parseString()
       case 't' => pass("true"); true
