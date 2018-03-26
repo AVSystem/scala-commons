@@ -28,6 +28,7 @@ val akkaVersion = "2.5.11"
 val monixVersion = "2.3.3"
 val mockitoVersion = "2.16.0"
 val circeVersion = "0.9.2"
+val upickleVersion = "0.6.1"
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
@@ -241,7 +242,7 @@ lazy val `commons-benchmark` = project
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-jawn" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
-      "io.circe" %% "circe-testing" % circeVersion % Test,
+      "com.lihaoyi" %% "upickle" % upickleVersion,
     ),
     ideExcludedDirectories := (managedSourceDirectories in Jmh).value,
   )
