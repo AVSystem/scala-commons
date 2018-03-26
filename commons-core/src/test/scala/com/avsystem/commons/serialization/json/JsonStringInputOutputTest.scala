@@ -109,6 +109,11 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
   test("numerical strings") {
     read[String]("\"42\"") shouldBe "42"
     a[ReadFailure] shouldBe thrownBy(read[String]("42"))
+    a[ReadFailure] shouldBe thrownBy(read[Short]("\"42\""))
+    a[ReadFailure] shouldBe thrownBy(read[Int]("\"42\""))
+    a[ReadFailure] shouldBe thrownBy(read[Long]("\"42\""))
+    a[ReadFailure] shouldBe thrownBy(read[Float]("\"42\""))
+    a[ReadFailure] shouldBe thrownBy(read[Double]("\"42\""))
   }
 
   test("serialize all types") {

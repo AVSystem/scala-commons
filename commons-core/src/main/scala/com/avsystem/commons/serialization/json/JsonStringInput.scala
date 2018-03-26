@@ -50,10 +50,8 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
   }
 
   private def matchNumericString[T](toNumber: String => T): T = reader.currentValue match {
-    case ns: String =>
-      try {
-        toNumber(ns)
-      } catch {
+    case ns: String if reader.isNumber || ns == "Infinity" || ns == "-Infinity" || ns == "NaN" =>
+      try toNumber(ns) catch {
         case e: NumberFormatException => throw new ReadFailure(s"Invalid number format: $ns", e)
       }
     case _ =>
