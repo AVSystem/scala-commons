@@ -28,12 +28,12 @@ val akkaVersion = "2.5.11"
 val monixVersion = "2.3.3"
 val mockitoVersion = "2.16.0"
 val circeVersion = "0.9.2"
-val upickleVersion = "0.6.1"
+val upickleVersion = "0.6.2"
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  scalaVersion := "2.12.4",
-  crossScalaVersions := Seq("2.11.11", "2.12.4"),
+  scalaVersion := "2.12.5",
+  crossScalaVersions := Seq("2.11.11", "2.12.5"),
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
     "-encoding", "utf-8",
