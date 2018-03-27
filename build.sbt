@@ -29,6 +29,7 @@ val monixVersion = "2.3.3"
 val mockitoVersion = "2.16.0"
 val circeVersion = "0.9.2"
 val upickleVersion = "0.6.2"
+val scalajsBenchmarkVersion = "0.2.4"
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
@@ -230,6 +231,7 @@ lazy val `commons-benchmark` = project
   .settings(
     jvmCommonSettings,
     noPublishSettings,
+    sourceDirsSettings(_ / "jvm"),
     libraryDependencies ++= {
       if (scalaBinaryVersion.value != "2.12") Seq(
         "com.github.etaty" %% "rediscala" % "1.6.0",
@@ -245,6 +247,25 @@ lazy val `commons-benchmark` = project
       "com.lihaoyi" %% "upickle" % upickleVersion,
     ),
     ideExcludedDirectories := (managedSourceDirectories in Jmh).value,
+  )
+
+lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
+  .enablePlugins(ScalaJSPlugin)
+  .configure(p => if (forIdeaImport) p.dependsOn(`commons-benchmark`) else p)
+  .dependsOn(`commons-macros`, `commons-core-js`)
+  .settings(
+    jsCommonSettings,
+    noPublishSettings,
+    name := (name in `commons-benchmark`).value,
+    sourceDirsSettings(_.getParentFile),
+    libraryDependencies ++= Seq(
+      "io.circe" %%% "circe-core" % circeVersion,
+      "io.circe" %%% "circe-generic" % circeVersion,
+      "io.circe" %%% "circe-parser" % circeVersion,
+      "com.lihaoyi" %%% "upickle" % upickleVersion,
+      "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
+    ),
+    scalaJSUseMainModuleInitializer := true
   )
 
 lazy val `commons-mongo` = project
