@@ -93,7 +93,7 @@ The library by default provides codecs for common Scala and Java types:
   whose companion object extends [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html)
 * Java enums
 
-### [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html)
+## [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html)
 
 For serialization of maps, there is an auxilliary typeclass - [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html). 
 It provides the ability to translate values of some type into `String` keys that can be used as object keys by 
@@ -166,7 +166,7 @@ In order to make your own (or third-party) classes and types serializable, you n
 for it. You can implement it manually, but in most cases you'll probably rely on one of the predefined codecs (primitive types, collections, standard library classes, etc.) or materialize it automatically using the [`GenCodec.materialize`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$.html#materialize[T]:com.avsystem.commons.serialization.GenCodec[T])
 macro.
 
-### Simple types
+## Simple types
 
 When your type is simple, e.g. it has a straightforward `String` representation, you can easily implement a `GenCodec` by using one of `GenCodec.create*` helper methods:
 
@@ -189,7 +189,7 @@ Alternatively, you can provide a two-way conversion with an existing type that a
 
 However, in most cases when your class simply wraps another type, you can use [`@transparent`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transparent.html) annotation and macro-materialize the codec.
 
-### Case classes
+## Case classes
 
 ```scala
 case class Person(name: String, birthYear: Int)
@@ -283,7 +283,94 @@ object Person {
 
 You can use all the customization features available for regular case classes - `@name`, `@transientDefault` (applied on `apply` parameters), `@generated`, `@transparent`, etc.
 
-### Third party classes
+## Singletons
+
+`GenCodec.materialize` macro is also able to generate (trivial) codecs for singletons, i.e. `object`s or types like `this.type`.
+Singletons always serialize into empty object (unless `@generated` fields are defined). When using [`SimpleValueOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueOutput.html), 
+empty object is represented by empty `Map`.
+
+```scala
+object SomeObject {
+  implicit val codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
+}
+```
+
+Just like case classes, singletons might define or inherit members annotated as [`@generated`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/generated.html) - their values will be serialized as the only object fields and ignored during deserialization.
+
+Singletons will successfully deserialize from any object, ignoring all its fields.
+
+Singleton codecs may not seem very useful as standalone codes - they're primarily used when the object is a part of a [sealed hierarchy](#sealed-hierarchies).
+
+## Sealed hierarchies
+
+`GenCodec.materialize` macro can also be used to derive a `GenCodec` for a sealed trait or class. There are two possible serialization formats for sealed hierarchies: *nested* (the default one) and *flat* (enabled using [`@flatten`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/flatten.html) annotation). The nested format is the default one for historical reasons - it is generally recommended to use the flat format as it's more robust and customizable. The advantage of nested format is that it does not depend on the order of object fields.
+
+### Nested format
+
+```scala
+sealed trait Timeout
+case class FiniteTimeout(seconds: Int) extends Timeout
+case object InfiniteTimeout extends Timeout
+object Timeout {
+  implicit val codec: GenCodec[Timeout] = GenCodec.materialize[Timeout]
+}
+```
+
+In nested format, values of sealed traits or classes are serialized into objects with just one field. The name of that field is the name of actual class being serialized. The value of that field will be the serialized class itself, using its own codec. For example, `FiniteTimeout(60)` would be represented (using [`JsonStringOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringOutput.html)) as `{"FiniteTimeout":{"seconds":60}}`
+
+`GenCodec` for each case class/object may be provided explicitly or left for the macro to materialize. In other words, the `materialize` macro called for sealed trait *will* descend into its subtypes and materialize their codecs recursively. However, it will still *not* descend into any case class fields.
+
+### Flat format
+
+The other format is called "flat" because it does not introduce the intermediate single-field object. It is enabled by annotating your sealed hierarchy root with [`@flatten`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/flatten.html) annotation, e.g.
+
+```scala
+@flatten sealed trait Timeout
+case class FiniteTimeout(seconds: Int) extends Timeout
+case object InfiniteTimeout extends Timeout
+object Timeout {
+  implicit val codec: GenCodec[Timeout] = GenCodec.materialize[Timeout]
+}
+```
+
+Instead of creating a single-field object, now the `materialize` macro will assume that every case class/object serializes to an object (e.g. JSON object) and will use this object as a representation of the entire sealed type. In order to differentiate between case classes during deserialization, an additional marker field containing class name is added at the beginning of resulting object. For example, `FiniteTimeout(60)` would be represented (using [`JsonStringOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringOutput.html)) as `{"_case":"FiniteTimeout","seconds":60}`
+
+### Customizing sealed hierarchy codecs
+
+Similarly to case classes, sealed hierarchy codecs may be customized with annotations:
+
+* Using [`@name`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/name.html) you can change the class name saved as marker field name in nested format or as marker field value in flat format.
+
+   ```scala
+   sealed trait Tree
+   @name("L") case class Leaf(value: Int) extends Tree
+   @name("B") case class Branch(left: Tree, right: Tree) extends Tree
+   object Tree {
+     implicit val codec: GenCodec[Tree] = GenCodec.materialize
+   }
+   ```
+
+* When using flat format, name of the marker field (`_case` by default) may be customized by passing it as an argument to `@flatten` annotation, e.g. `@flatten("$case")`.
+
+* When using flat format, one of the case classes may be annotated as [`@defaultCase`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/defaultCase.html). When marker field is missing during deserialization, the codec will assume that it's deserializing the case class annotated as `@defaultCase`. This mechanism is useful to retain backwards compatibility when refactoring a case class into a sealed hierarchy with multiple case classes.
+
+* It's important to remember that deserialization of the flat format relies on the preservation of field order by serialization backend. In particular, the marker field must come first so that the codec knows which class to create and how to deserialize the rest of the fields. However, there is one escape hatch from this requirement - a field present in one or more of case classes in the sealed hierarchy may be marked as [`@outOfOrder`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/outOfOrder.html). See the documentation of this annotation for more details. The direct motivation for introducing this annotation was to support deserialization of `_id` field in MongoDB documents - the database server always serves documents with `_id` being the very first field.
+
+### Nested vs flat format
+
+Advantages of nested format:
+* Codec materialized for sealed hierarchy may reuse already existing codecs for its case classes
+* Each case class may serialize to arbitrary representation while flat format requires every case class to serialize to an object
+* It does not rely on object field order
+
+Advantages of flat format:
+* When some field is present in more than one case class, it may be extracted from serialized form in uniform way, regardless of which case class it comes from. This may greatly simplify querying and indexing databases used to store sealed hierarchies.
+* Case class serialized with flat sealed hierarchy codec may be safely deserialized using codec of the case class itself.
+* Using `@defaultCase` annotation, a case class may be safely refactored into a sealed hierarchy.
+
+In other words, when the serialized form is opaque and you don't care about it as long as it deserializes properly to the same value then the nested format should be better. If you care about how the serialized form looks like and you want to retain it through refactorings then probably the flat format is easier to maintain.
+
+## Third party classes
 
 When you need to serialize a type that comes from a third party library, you must implement a `GenCodec` for it, put somewhere in your codebase and remember to import it when needed. You must import it because it's not possible to put it in companion object of the type being serialized. However, you can still use all the goodness of macro materialization only if you can make the third party type "look like" a case class by defining a "fake" companion for that type and passing it explicitly to `GenCodec.fromApplyUnapplyProvider`. For example, here's an easy way to make a typical Java bean class serializable with `GenCodec`:
 
@@ -311,7 +398,7 @@ object JavaPersonFakeCompanion {
     result.setBirthYear(birthYear)
     result
   }
-  def unapply(javaPerson: JavaPerson): Option[(String,Int)] =
+  def unapply(javaPerson: JavaPerson): Option[(String, Int)] =
     Some((javaPerson.getName, javaPerson.getBirthYear))
     
   implicit val javaPersonCodec: GenCodec[JavaPerson] = 
@@ -322,51 +409,8 @@ object JavaPersonFakeCompanion {
 
 Now, as long as you remember to `import JavaPersonFakeCompanion.javaPersonCodec`, `JavaPerson` instances will serialize just as if it was a regular Scala case class. The macro derives serialization format from signatures of `apply` and `unapply` methods and uses them to create and deconstruct `JavaPerson` instances.
 
-### Singletons
 
-`GenCodec.materialize` macro is also able to generate (trivial) codecs for singletons, i.e. `object`s or types like `this.type`.
-Singletons always serialize into empty object (unless `@generated` fields are defined). When using [`SimpleValueOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueOutput.html), 
-empty object is represented by empty `Map`.
-
-```scala
-object SomeObject {
-  implicit val codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
-}
-```
-
-Just like case classes, singletons might define or inherit members annotated as [`@generated`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/generated.html) - their values will be serialized as the only object fields and ignored during deserialization.
-
-Singletons will successfully deserialize from any object, ignoring all its fields.
-
-Singleton codecs may not seem very useful as standalone codes - they're primarily used when the object is a part of a [sealed hierarchy](#sealed-hierarchies).
-
-### Sealed hierarchies
-
-`GenCodec.materialize` macro can also be used to derive a `GenCodec` for a sealed trait or class. There are two possible serialization formats for sealed hierarchies: *nested* (the default one) and *flat* (enabled using [`@flatten`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/flatten.html) annotation). The nested format is the default one for historical reasons - it is generally recommended to use the flat format as it's more robust and customizable. The advantage of nested format is that it does not depend on the order of object fields.
-
-#### Nested format
-
-```scala
-sealed trait Timeout
-case class FiniteTimeout(seconds: Int) extends Timeout
-case object InfiniteTimeout extends Timeout
-object Timeout {
-  implicit val codec: GenCodec[Timeout] = GenCodec.materialize[Timeout]
-}
-```
-
-In nested format, values of sealed traits or classes are serialized into objects with one field where key is the name of case class or object being serialized and value is the serialized case class or object itself. For example, `FiniteTimeout(60)` would be represented (using [`SimpleValueOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueOutput.html)) as `Map("FiniteTimeout" -> Map("seconds" -> 60))`
-
-In order to serialize each case class or object, **TODO CONTINUE HERE**
-
-You need to be careful about where you invoke the [`materialize`]((http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$.html#materialize[T]:com.avsystem.commons.serialization.GenCodec[T]))
-macro. It should always be done *after* all case classes and objects in you sealed hierarchy have already been defined - 
-like in the example above, where companion object `Timeout` (which contains macro invocation) is defined after `FiniteTimeout` and `InfiniteTimeout`.
-
-The above requirement is caused by a limitation in Scala macros - see [SI-7046](https://issues.scala-lang.org/browse/SI-7046) 
-for more details. If you use static analyzer provided by AVSystem commons library (`commons-analyzer`), the compiler will 
-protect you by issuing an error if you invoke macro in wrong place. This is recommended - otherwise there is a risk that 
-the codec implementation is incomplete and will crash in runtime.
+## Summary
 
 ### Codec dependencies
 
@@ -401,18 +445,16 @@ That means you can now serialize `Person` objects, but you still can't serialize
 remember that `materializeRecursively` descends into dependencies only when it actually needs to do it, i.e. first it 
 tries to use any already declared [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html).
 
-#### Types supported by automatic materialization
+### Types supported by automatic materialization
 
-To be precise, `materialize` and `materializeRecursively` macros work for:
+`materialize` and `materializeRecursively` macros work for:
 * case classes, provided that all field types are serializable
 * case class like types, i.e. classes or traits whose companion object contains a pair of matching `apply`/`unapply` 
   methods defined like in case class companion, provided that all field types are serializable
 * singleton types, e.g. types of `object`s or `this.type`
-* sealed traits or abstract classes, provided that every non-abstract subtype is serializable or
-  [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html) can also 
-  be automatically materialized for them
+* sealed traits or sealed abstract classes, provided that `GenCodec` can also be materialized for all non-abstract subtypes (typically case classes). If the nested serialization format is used (i.e. `@flatten` annotation is **not** used) then `GenCodec`s for subtypes may also be declared explicitly and will be reused by sealed trait's codec.
 
-#### Recursive types, generic types and GADTs (generalized algebraic data types)
+### Recursive types, generic types and GADTs (generalized algebraic data types)
 
 `materialize` and `materializeRecursively` support recursive and generic types, e.g.
 
@@ -442,72 +484,16 @@ object Key {
 }
 ```
 
-### Fully automatic mode - [`GenCodec.Auto`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$$Auto.html)
+### Customizing annotations
 
-As in all examples shown before, if your API accepts implicit parameters of type `GenCodec[T]` in order to be able to 
-serialize or deserialize values of `T`, codecs must always be explicitly declared for all serializable types, even thought 
-they could be materialized automatically. This may seem cumbersome and annoying, but first: there is a good reason for that, 
-and second: there is an alternative mode where explicit codecs are not required.
+* [`@name`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/name.html)
+* [`@transparent`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transparent.html)
+* [`@transientDefault`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transientDefault.html)
+* [`@flatten`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/flatten.html)
+* [`@defaultCase`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/defaultCase.html)
+* [`@outOfOrder`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/outOfOrder.html)
 
-If you don't want to declare codecs for every object, case class or sealed hierarchy, you can design your API around the 
-[`GenCodec.Auto`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$$Auto.html) 
-typeclass instead of [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html). 
-[`GenCodec.Auto`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$$Auto.html) 
-is just a simple wrapper around [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html). 
-If some method requires implicit parameter of type `GenCodec.Auto[T]` and there is already a `GenCodec[T]` available, 
-that codec will be wrapped and used. But if there is no [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html)
-available, the compiler will try to materialize it on the fly using `materializeRecursively` macro.
-
-As an example of an API build around auto codecs, [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$.html) 
-companion object contains `autoRead` and `autoWrite` 
-methods which accept [`GenCodec.Auto`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$$Auto.html) 
-instead of [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html).
-
-#### Explicit vs automatic mode
-
-You may wonder now: why not always use [`GenCodec.Auto`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$$Auto.html)? 
-This depends on your use case, but sometimes it's good to require programmers to explicitly declare codecs. 
-Suppose that you're using [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html) 
-framework to serialize values in order to save them in database. In such case, you don't want any types to be accidentally 
-serialized, because once a class gets serialized into database, it's bound by backwards compatibility constraints. 
-You can no longer freely refactor such class without risking that reading previously saved data from database will fail. 
-That's why it's good to require that a programmer always consciously decides that a particular class can be serialized.
-
-Even if you're using [`GenCodec.Auto`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$$Auto.html), 
-it's often still beneficial to explicitly declare [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html)s 
-in companion objects of your classes (remember that [`GenCodec.Auto`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$$Auto.html) 
-wraps existing [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html)s if they are available).
-By declaring codecs explicitly one can:
-* avoid bytecode duplication
-* reduce compilation times
-* avoid problems with incremental compilation caused by usage of macros (especially in IntelliJ IDEA)
-
-### Customizing macro-materialized codecs
-
-There are several annotations that can be used to alter the default behaviour of auto-materialized codecs for case classes, 
-objects and sealed hierarchies. They can be found in 
-[`com.avsystem.commons.serialization`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/index.html) 
-package and include:
-
-* [`@name("someName")`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/name.html) - 
-  changes object field names in serialized data
-  * when applied on case class field: changes the raw field name used in case class representation
-  * when applied on class or object in sealed hierarchy: changes raw field name used in sealed trait/class representation 
-    to determine which case is being serialized
-* [`@transparent`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transparent.html) - 
-  can be used on case classes with exactly one field to instruct the auto-codec that the class should 
-  be serialized to the same representation as its only field
-* [`@transientDefault`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transientDefault.html) - 
-  can be used on case class fields that have a default value to instruct the auto-codec to not 
-  serialize this field unless its value is different than the default value
-
-It's also worth to remember that when deserializing case class, some fields may be missing in the representation and 
-the deserialization will not fail as long as those fields have a default value.
-
-#### Safely introducing changes to serialized classes (retaining backwards compatibility)
-
-One must be careful when introducing changes to serialized classes so that serialized representation of old version can 
-be safely deserialized into new version.
+### Safely introducing changes to serialized classes (retaining backwards compatibility)
 
 1. Changing order of fields in case class is always safe, as the order of fields in serialized objects doesn't matter
 1. Adding a field to case class is safe as long as you provide default value for that field. Deserializer will use that 
@@ -521,6 +507,8 @@ be safely deserialized into new version.
 1. Adding classes or objects to sealed hierarchy is always safe.
 1. Changing name of an object or class in sealed hierarchy is safe as long as you annotate that class/object with `@name` 
    annotation containing the old name.
+1. Lifting a case class into a sealed hierarchy is safe as long as the flat format is used for the sealed 
+   hierarchy and existing case class remains one of the cases in the sealed hierarchy, annotated as `@defaultCase`.
 
 Of course, the above rules are guaranteed to work only for macro-materialized codecs.
 If you implement your codecs manually, you're on your own.
