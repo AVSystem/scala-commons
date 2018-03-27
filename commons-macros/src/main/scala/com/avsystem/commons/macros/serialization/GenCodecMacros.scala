@@ -31,7 +31,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   def implementDeferredInstance(tpe: Type): Tree = q"new $GenCodecObj.Deferred[$tpe]"
 
   override def materializeFor(tpe: Type) = {
-    val tsym = tpe.typeSymbol
+    val tsym = tpe.dealias.typeSymbol
     if (isSealedHierarchyRoot(tsym)) getAnnotations(tsym, FlattenAnnotType).headOption match {
       case Some(annot) =>
         val caseFieldName = annot.tree match {
@@ -68,7 +68,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   private def mkArray[T: Liftable](elemTpe: Tree, elems: Seq[T]): Tree =
     q"""
        val res = new $ScalaPkg.Array[$elemTpe](${elems.size})
-       ..${elems.zipWithIndex.map({case (e, i) => q"res($i) = $e"})}
+       ..${elems.zipWithIndex.map({ case (e, i) => q"res($i) = $e" })}
        res
      """
 
@@ -118,11 +118,12 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     hasAnnotation(sym, OutOfOrderAnnotType)
 
   def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree =
-    forApplyUnapply(tpe, Ident(tpe.typeSymbol.companion), apply, unapply, params)
+    forApplyUnapply(tpe, Ident(tpe.dealias.typeSymbol.companion), apply, unapply, params)
 
   def forApplyUnapply(tpe: Type, companion: Tree, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
-    val tcTpe = typeClassInstance(tpe)
-    val generated = generatedMembers(tpe)
+    val dtpe = tpe.dealias
+    val tcTpe = typeClassInstance(dtpe)
+    val generated = generatedMembers(dtpe)
     val nameBySym = targetNameMap(params.map(_.sym) ++ generated.map(_._1))
 
     val genDepNames = generated.map({ case (sym, _) => (sym, newDepName(sym)) }).toMap
@@ -132,17 +133,17 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
     // don't use apply/unapply when they're synthetic (for case class) to avoid reference to companion object
 
-    val caseClass = tpe.typeSymbol.isClass && tpe.typeSymbol.asClass.isCaseClass &&
-      companion.symbol == tpe.typeSymbol.companion
+    val ts = dtpe.typeSymbol
+    val caseClass = ts.isClass && ts.asClass.isCaseClass && companion.symbol == ts.companion
     val canUseFields = caseClass && unapply.isSynthetic && params.forall { p =>
-      alternatives(tpe.member(p.sym.name)).exists { f =>
-        f.isTerm && f.asTerm.isCaseAccessor && f.isPublic && f.typeSignatureIn(tpe).finalResultType =:= p.valueType
+      alternatives(dtpe.member(p.sym.name)).exists { f =>
+        f.isTerm && f.asTerm.isCaseAccessor && f.isPublic && f.typeSignatureIn(dtpe).finalResultType =:= p.valueType
       }
     }
 
     def applier(args: List[Tree]) =
-      if (apply.isConstructor) q"new $tpe(..$args)"
-      else q"$companion.apply[..${tpe.typeArgs}](..$args)"
+      if (apply.isConstructor) q"new $dtpe(..$args)"
+      else q"$companion.apply[..${dtpe.typeArgs}](..$args)"
 
     def writeFields = params match {
       case Nil =>
@@ -150,7 +151,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           q"()"
         else
           q"""
-            if(!$companion.$unapply[..${tpe.typeArgs}](value)) {
+            if(!$companion.$unapply[..${dtpe.typeArgs}](value)) {
               unapplyFailed
             }
            """
@@ -167,7 +168,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           writeField(q"value.${p.sym.name}")
         else
           q"""
-            val unapplyRes = $companion.$unapply[..${tpe.typeArgs}](value)
+            val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
             if(unapplyRes.isEmpty) unapplyFailed else ${writeField(q"unapplyRes.get")}
            """
       case _ =>
@@ -183,7 +184,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           q"..${params.map(p => writeField(p, q"value.${p.sym.name}"))}"
         else
           q"""
-            val unapplyRes = $companion.$unapply[..${tpe.typeArgs}](value)
+            val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
             if(unapplyRes.isEmpty) unapplyFailed else {
               val t = unapplyRes.get
               ..${params.map(p => writeField(p, q"t.${tupleGet(p.idx)}"))}
@@ -191,7 +192,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
     }
 
-    if (isTransparent(tpe.typeSymbol)) params match {
+    if (isTransparent(dtpe.typeSymbol)) params match {
       case List(p) =>
         if (generated.nonEmpty) {
           abort(s"class marked as @transparent cannot have @generated members")
@@ -201,18 +202,18 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           q"value.${p.sym.name}"
         else
           q"""
-            val unapplyRes = $companion.$unapply[..${tpe.typeArgs}](value)
+            val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
             if(unapplyRes.isEmpty) unapplyFailed else unapplyRes.get
            """
 
         q"""
-           new $SerializationPkg.TransparentCodec[$tpe,${p.valueType}](
-             ${tpe.toString},
-             ${typeOf[Null] <:< tpe},
+           new $SerializationPkg.TransparentCodec[$dtpe,${p.valueType}](
+             ${dtpe.toString},
+             ${typeOf[Null] <:< dtpe},
              ${p.instance}
            ) {
-             def wrap(underlying: ${p.valueType}): $tpe = ${applier(List(q"underlying"))}
-             def unwrap(value: $tpe): ${p.valueType} = $unwrapBody
+             def wrap(underlying: ${p.valueType}): $dtpe = ${applier(List(q"underlying"))}
+             def unwrap(value: $dtpe): ${p.valueType} = $unwrapBody
            }
          """
       case _ =>
@@ -234,7 +235,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
       def writeMethod = if (useProductCodec) q"()" else
         q"""
-          def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe) = {
+          def writeObject(output: $SerializationPkg.ObjectOutput, value: $dtpe) = {
             $writeFields
             ..${generated.map({ case (sym, _) => generatedWrite(sym) })}
           }
@@ -253,9 +254,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       }
 
       q"""
-        new $SerializationPkg.$baseClass[$tpe](
-          ${tpe.toString},
-          ${typeOf[Null] <:< tpe},
+        new $SerializationPkg.$baseClass[$dtpe](
+          ${dtpe.toString},
+          ${typeOf[Null] <:< dtpe},
           ${mkArray(StringCls, params.map(p => nameBySym(p.sym)))}
         ) {
           def dependencies = {
@@ -418,7 +419,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     typecheckException(s"Cannot automatically derive GenCodec for $tpe")
 
   def materializeRecursively[T: c.WeakTypeTag]: Tree = {
-    val tpe = weakTypeOf[T]
+    val tpe = weakTypeOf[T].dealias
     q"""
        implicit def ${c.freshName(TermName("allow"))}[T]: $AllowImplicitMacroCls[$typeClass[T]] =
          $AllowImplicitMacroObj[$typeClass[T]]
@@ -427,10 +428,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   }
 
   def materializeMacroCodec[T: c.WeakTypeTag]: Tree =
-    q"$SerializationPkg.MacroCodec($GenCodecObj.materialize[${weakTypeOf[T]}])"
+    q"$SerializationPkg.MacroCodec($GenCodecObj.materialize[${weakTypeOf[T].dealias}])"
 
   def fromApplyUnapplyProvider[T: c.WeakTypeTag](applyUnapplyProvider: Tree): Tree = {
-    val tpe = weakTypeOf[T]
+    val tpe = weakTypeOf[T].dealias
     val tcTpe = typeClassInstance(tpe)
     applyUnapplyFor(tpe, applyUnapplyProvider) match {
       case Some(ApplyUnapply(apply, unapply, params)) =>
@@ -444,7 +445,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   }
 
   def forSealedEnum[T: c.WeakTypeTag]: Tree = {
-    val tpe = weakTypeOf[T]
+    val tpe = weakTypeOf[T].dealias
     q"$GenCodecObj.fromKeyCodec($SerializationPkg.GenKeyCodec.forSealedEnum[$tpe])"
   }
 }

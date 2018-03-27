@@ -153,30 +153,31 @@ trait TypeClassDerivation extends MacroCommons {
   }
 
   def materializeFor(tpe: Type): Tree = {
-    val tcTpe = typeClassInstance(tpe)
+    val dtpe = tpe.dealias
+    val tcTpe = typeClassInstance(dtpe)
 
-    def singleTypeTc = singleValueFor(tpe).map(tree => forSingleton(tpe, tree))
+    def singleTypeTc = singleValueFor(dtpe).map(tree => forSingleton(dtpe, tree))
 
-    def applyUnapplyTc = applyUnapplyFor(tpe).map {
+    def applyUnapplyTc = applyUnapplyFor(dtpe).map {
       case ApplyUnapply(apply, unapply, params) =>
         val dependencies = params.zipWithIndex.map { case ((s, defaultValue), idx) =>
           ApplyParam(idx, s, defaultValue, dependency(nonRepeatedType(s.typeSignature), tcTpe, s"for field ${s.name}"))
         }
-        forApplyUnapply(tpe, apply, unapply, dependencies)
+        forApplyUnapply(dtpe, apply, unapply, dependencies)
     }
 
-    def sealedHierarchyTc = knownSubtypes(tpe).map { subtypes =>
+    def sealedHierarchyTc = knownSubtypes(dtpe).map { subtypes =>
       if (subtypes.isEmpty) {
-        abort(s"Could not find any subtypes for $tpe")
+        abort(s"Could not find any subtypes for $dtpe")
       }
       val dependencies = subtypes.zipWithIndex.map { case (depTpe, idx) =>
         val depTree = dependency(depTpe, tcTpe, s"for case type $depTpe", allowImplicitMacro = true)
         KnownSubtype(idx, depTpe, depTree)
       }
-      forSealedHierarchy(tpe, dependencies)
+      forSealedHierarchy(dtpe, dependencies)
     }
 
-    val untypedResult = singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown(tpe)
+    val untypedResult = singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown(dtpe)
 
     // deferred instance is necessary to handle recursively defined types
     val deferredName = c.freshName(TermName("deferred"))
@@ -185,7 +186,7 @@ trait TypeClassDerivation extends MacroCommons {
     val guardedResult@Block(List(_, ValDef(_, _, _, unguardedResult), _), _) = c.typecheck(
       q"""
         implicit val $deferredName: $DeferredInstanceCls[$tcTpe] with $tcTpe =
-          ${implementDeferredInstance(tpe)}
+          ${implementDeferredInstance(dtpe)}
         val $underlyingName = $untypedResult
         $deferredName.underlying = $underlyingName
         $underlyingName
@@ -208,7 +209,7 @@ trait TypeClassDerivation extends MacroCommons {
     materialize[T]
 
   def materializeAuto[T: c.WeakTypeTag]: Tree = {
-    val tcTpe = typeClassInstance(weakTypeOf[T])
+    val tcTpe = typeClassInstance(weakTypeOf[T].dealias)
     val tName = c.freshName(TypeName("T"))
     q"""
        implicit def ${c.freshName(TermName("allow"))}[$tName]: $AllowImplicitMacroCls[$typeClass[$tName]] =

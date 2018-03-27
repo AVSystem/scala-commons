@@ -360,6 +360,12 @@ class GenCodecTest extends CodecTestBase {
     implicit def codec[A: GenCodec]: GenCodec[Tree[A]] = GenCodec.materialize[Tree[A]]
   }
 
+  // test type dealiasing during materialization
+  type IntTree = Tree[Int]
+  GenCodec.materialize[IntTree]
+  type IntBranch = Branch[Int]
+  GenCodec.materialize[IntBranch]
+
   test("recursive generic ADT test") {
     testWriteReadAndAutoWriteRead[Tree[Int]](
       Branch(

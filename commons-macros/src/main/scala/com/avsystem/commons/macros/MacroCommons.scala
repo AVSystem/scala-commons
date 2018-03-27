@@ -75,7 +75,7 @@ trait MacroCommons {
       val annotTpe = annot.tree.tpe
       val tail =
         if (annotTpe <:< AnnotationAggregateType)
-          allAnnotations(annotTpe.typeSymbol)
+          allAnnotations(annotTpe.dealias.typeSymbol)
         else Nil
       annot :: tail
     }
@@ -375,15 +375,17 @@ trait MacroCommons {
   case class ApplyUnapply(apply: Symbol, unapply: Symbol, params: List[(TermSymbol, Tree)])
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] = {
-    val companionSym = tpe.typeSymbol.companion
+    val dtpe = tpe.dealias
+    val companionSym = dtpe.typeSymbol.companion
     if (companionSym != NoSymbol && !companionSym.isJava)
-      applyUnapplyFor(tpe, c.typecheck(Ident(companionSym)))
+      applyUnapplyFor(dtpe, c.typecheck(Ident(companionSym)))
     else
       None
   }
 
   def applyUnapplyFor(tpe: Type, companion: Tree): Option[ApplyUnapply] = {
-    val ts = tpe.typeSymbol.asType
+    val dtpe = tpe.dealias
+    val ts = dtpe.typeSymbol.asType
     val caseClass = ts.isClass && ts.asClass.isCaseClass
 
     val applyUnapplyPairs = for {
@@ -393,12 +395,12 @@ trait MacroCommons {
     } yield (apply, unapply)
 
     def setTypeArgs(sig: Type) = sig match {
-      case PolyType(params, resultType) => resultType.substituteTypes(params, tpe.typeArgs)
+      case PolyType(params, resultType) => resultType.substituteTypes(params, dtpe.typeArgs)
       case _ => sig
     }
 
     def typeParamsMatch(apply: Symbol, unapply: Symbol) = {
-      val expected = tpe.typeArgs.length
+      val expected = dtpe.typeArgs.length
       apply.typeSignature.typeParams.length == expected && unapply.typeSignature.typeParams.length == expected
     }
 
@@ -406,13 +408,13 @@ trait MacroCommons {
       case (apply, unapply) if typeParamsMatch(apply, unapply) =>
         val constructor =
           if (caseClass && apply.isSynthetic)
-            alternatives(tpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor).getOrElse(NoSymbol)
+            alternatives(dtpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor).getOrElse(NoSymbol)
           else NoSymbol
 
-        val applySig = if (constructor != NoSymbol) constructor.typeSignatureIn(tpe) else setTypeArgs(apply.typeSignatureIn(companion.tpe))
+        val applySig = if (constructor != NoSymbol) constructor.typeSignatureIn(dtpe) else setTypeArgs(apply.typeSignatureIn(companion.tpe))
         val unapplySig = setTypeArgs(unapply.typeSignatureIn(companion.tpe))
 
-        if (matchingApplyUnapply(tpe, applySig, unapplySig)) {
+        if (matchingApplyUnapply(dtpe, applySig, unapplySig)) {
           def defaultValueFor(param: Symbol, idx: Int): Tree =
             if (param.asTerm.isParamWithDefault)
               q"$companion.${TermName(s"${param.owner.name.encodedName.toString}$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
@@ -469,21 +471,23 @@ trait MacroCommons {
       directSubclasses.flatMap(allCurrentlyKnownSubclasses) + sym
     } else Set.empty
 
-  def knownSubtypes(tpe: Type): Option[List[Type]] =
-    Option(tpe.typeSymbol).filter(isSealedHierarchyRoot).map { sym =>
+  def knownSubtypes(tpe: Type): Option[List[Type]] = {
+    val dtpe = tpe.dealias
+    Option(dtpe.typeSymbol).filter(isSealedHierarchyRoot).map { sym =>
       knownNonAbstractSubclasses(sym).toList.flatMap { subSym =>
         val undetparams = subSym.asType.typeParams
         val undetSubTpe = typeOfTypeSymbol(subSym.asType)
 
         if (undetparams.nonEmpty)
-          determineTypeParams(undetSubTpe, tpe, undetparams)
+          determineTypeParams(undetSubTpe, dtpe, undetparams)
             .map(typeArgs => undetSubTpe.substituteTypes(undetparams, typeArgs))
-        else if (undetSubTpe <:< tpe)
+        else if (undetSubTpe <:< dtpe)
           Some(undetSubTpe)
         else
           None
       }
     }
+  }
 
   def determineTypeParams(undetTpe: Type, detTpe: Type, typeParams: List[Symbol]): Option[List[Type]] = {
     val methodName = c.freshName(TermName("m"))
