@@ -35,7 +35,7 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
 
   private def expectedError(tpe: JsonType) = throw new ReadFailure(s"Expected $tpe but got ${reader.jsonType}: ${reader.currentValue}")
 
-  private def checkedValue[T: ClassTag](jsonType: JsonType): T = {
+  private def checkedValue[T](jsonType: JsonType): T = {
     if (reader.jsonType != jsonType) expectedError(jsonType)
     else reader.currentValue.asInstanceOf[T]
   }
@@ -294,23 +294,23 @@ final class JsonReader(val json: String) {
     * @return startIndex
     */
   def parseValue(): Int = {
+    @inline def update(newValue: Any, newTpe: JsonType): Unit = {
+      value = newValue
+      tpe = newTpe
+    }
     skipWs()
     val startIndex = index
-    val (newValue, newTpe) = if (i < json.length) json.charAt(i) match {
-      case '"' => (parseString(), JsonType.string)
-      case 't' => pass("true"); (true, JsonType.boolean)
-      case 'f' => pass("false"); (false, JsonType.boolean)
-      case 'n' => pass("null"); (null, JsonType.`null`)
-      case '[' => read(); (null, JsonType.list)
-      case '{' => read(); (null, JsonType.`object`)
-      case '-' => (parseNumber(), JsonType.number)
-      case c if Character.isDigit(c) => (parseNumber(), JsonType.number)
+    if (i < json.length) json.charAt(i) match {
+      case '"' => update(parseString(), JsonType.string)
+      case 't' => pass("true"); update(true, JsonType.boolean)
+      case 'f' => pass("false"); update(false, JsonType.boolean)
+      case 'n' => pass("null"); update(null, JsonType.`null`)
+      case '[' => read(); update(null, JsonType.list)
+      case '{' => read(); update(null, JsonType.`object`)
+      case '-' => update(parseNumber(), JsonType.number)
+      case c if Character.isDigit(c) => update(parseNumber(), JsonType.number)
       case c => throw new ReadFailure(s"Unexpected character: '${c.toChar}'")
-    } else {
-      throw new ReadFailure("EOF")
-    }
-    value = newValue
-    tpe = newTpe
+    } else throw new ReadFailure("EOF")
     startIndex
   }
 }
