@@ -2,19 +2,18 @@ package com.avsystem.commons
 package serialization.json
 
 import com.avsystem.commons.annotation.explicitGenerics
+import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
-import com.avsystem.commons.serialization.json.JsonStringInput.{AfterElement, AfterElementNothing}
+import com.avsystem.commons.serialization.json.JsonStringInput.{AfterElement, AfterElementNothing, JsonType}
 
 object JsonStringInput {
   @explicitGenerics def read[T: GenCodec](json: String): T =
     GenCodec.read[T](new JsonStringInput(new JsonReader(json)))
 
-  private[json] object ObjectMarker {
-    override def toString = "object"
-  }
-  private[json] object ListMarker {
-    override def toString = "list"
+  final class JsonType(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+  object JsonType extends AbstractValueEnumCompanion[JsonType] {
+    final val list, `object`, number, string, boolean, `null`: Value = new JsonType
   }
 
   trait AfterElement {
@@ -26,58 +25,47 @@ object JsonStringInput {
 }
 
 class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementNothing) extends Input with AfterElement {
-  private[this] var startIdx: Int = _
+  private[this] val startIdx: Int = reader.parseValue()
   private[this] var endIdx: Int = _
 
-  private[this] val value: Any = {
-    reader.skipWs()
-    startIdx = reader.index
-    val res = reader.parseValue()
-    res match {
-      case JsonStringInput.ListMarker | JsonStringInput.ObjectMarker =>
-      case _ => afterElement()
-    }
-    res
+  reader.jsonType match {
+    case JsonType.list | JsonType.`object` =>
+    case _ => afterElement()
   }
 
-  def jsonType: String = value match {
-    case JsonStringInput.ListMarker => "list"
-    case JsonStringInput.ObjectMarker => "object"
-    case _: String => "string"
-    case _: Boolean => "boolean"
-    case _: Int => "integer number"
-    case _: Double => "decimal number"
-    case null => "null"
+  private def expectedError(tpe: JsonType) = throw new ReadFailure(s"Expected $tpe but got ${reader.jsonType}: ${reader.currentValue}")
+
+  private def checkedValue[T](jsonType: JsonType): T = {
+    if (reader.jsonType != jsonType) expectedError(jsonType)
+    else reader.currentValue.asInstanceOf[T]
   }
 
-  private def expected(what: String) = throw new ReadFailure(s"Expected $what but got $jsonType: $value")
-
-  private def matchOr[@specialized(Int, Double, Boolean) T: ClassTag](what: String): T = value match {
-    case t: T => t
-    case _ => expected(what)
+  private def matchNumericString[T](toNumber: String => T): T = {
+    if (reader.jsonType == JsonType.number ||
+      (reader.jsonType == JsonType.string &&
+        (reader.currentValue == "Infinity" || reader.currentValue == "-Infinity" || reader.currentValue == "NaN"))) {
+      val str = reader.currentValue.asInstanceOf[String]
+      try toNumber(str) catch {
+        case e: NumberFormatException => throw new ReadFailure(s"Invalid number format: $str", e)
+      }
+    } else expectedError(JsonType.number)
   }
 
-  def inputType: InputType = value match {
-    case JsonStringInput.ListMarker => InputType.List
-    case JsonStringInput.ObjectMarker => InputType.Object
-    case null => InputType.Null
+  def inputType: InputType = reader.jsonType match {
+    case JsonType.list => InputType.List
+    case JsonType.`object` => InputType.Object
+    case JsonType.`null` => InputType.Null
     case _ => InputType.Simple
   }
 
-  def readNull(): Null = if (value == null) null else expected("null")
-  def readString(): String = matchOr[String]("string")
-  def readBoolean(): Boolean = matchOr[Boolean]("boolean")
-  def readInt(): Int = matchOr[Int]("integer number")
-
-  def readLong(): Long = value match {
-    case i: Int => i
-    case s: String => s.toLong
-    case _ => expected("integer number or numeric string")
-  }
-  def readDouble(): Double = matchOr[Double]("double number")
-
+  def readNull(): Null = checkedValue[Null](JsonType.`null`)
+  def readString(): String = checkedValue[String](JsonType.string)
+  def readBoolean(): Boolean = checkedValue[Boolean](JsonType.boolean)
+  def readInt(): Int = matchNumericString(_.toInt)
+  def readLong(): Long = matchNumericString(_.toLong)
+  def readDouble(): Double = matchNumericString(_.toDouble)
   def readBinary(): Array[Byte] = {
-    val hex = matchOr[String]("hex string")
+    val hex = checkedValue[String](JsonType.string)
     val result = new Array[Byte](hex.length / 2)
     var i = 0
     while (i < result.length) {
@@ -87,14 +75,14 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
     result
   }
 
-  def readList(): JsonListInput = value match {
-    case JsonStringInput.ListMarker => new JsonListInput(reader, this)
-    case _ => expected("list")
+  def readList(): JsonListInput = reader.jsonType match {
+    case JsonType.list => new JsonListInput(reader, this)
+    case _ => expectedError(JsonType.list)
   }
 
-  def readObject(): JsonObjectInput = value match {
-    case JsonStringInput.ObjectMarker => new JsonObjectInput(reader, this)
-    case _ => expected("object")
+  def readObject(): JsonObjectInput = reader.jsonType match {
+    case JsonType.`object` => new JsonObjectInput(reader, this)
+    case _ => expectedError(JsonType.`object`)
   }
 
   def readRawJson(): String = {
@@ -102,9 +90,9 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
     reader.json.substring(startIdx, endIdx)
   }
 
-  def skip(): Unit = value match {
-    case JsonStringInput.ListMarker => readList().skipRemaining()
-    case JsonStringInput.ObjectMarker => readObject().skipRemaining()
+  def skip(): Unit = reader.jsonType match {
+    case JsonType.list => readList().skipRemaining()
+    case JsonType.`object` => readObject().skipRemaining()
     case _ =>
   }
 
@@ -170,10 +158,14 @@ final class JsonObjectInput(reader: JsonReader, callback: AfterElement) extends 
 
 final class JsonReader(val json: String) {
   private[this] var i: Int = 0
+  private[this] var value: Any = _
+  private[this] var tpe: JsonType = _
 
   def index: Int = i
+  def currentValue: Any = value
+  def jsonType: JsonType = tpe
 
-  @inline def read(): Char = {
+  @inline private def read(): Char = {
     val res = json.charAt(i)
     advance()
     res
@@ -200,12 +192,6 @@ final class JsonReader(val json: String) {
     if (r != ch) throw new ReadFailure(s"'${ch.toChar}' expected, got ${if (r == -1) "EOF" else r.toChar}")
   }
 
-  def tryPass(ch: Char): Boolean =
-    if (isNext(ch)) {
-      advance()
-      true
-    } else false
-
   private def pass(str: String): Unit = {
     var j = 0
     while (j < str.length) {
@@ -229,7 +215,6 @@ final class JsonReader(val json: String) {
 
   private def parseNumber(): Any = {
     val start = i
-    var decimal = false
 
     if (isNext('-')) {
       advance()
@@ -237,7 +222,7 @@ final class JsonReader(val json: String) {
 
     def parseDigits(): Unit = {
       if (!isNextDigit) {
-        throw new ReadFailure("Expected digit")
+        throw new ReadFailure(s"Expected digit, got ${json.charAt(i)}")
       }
       while (isNextDigit) {
         advance()
@@ -248,23 +233,23 @@ final class JsonReader(val json: String) {
       advance()
     } else if (isNextDigit) {
       parseDigits()
-    } else throw new ReadFailure("Expected '-' or digit")
+    } else throw new ReadFailure(s"Expected '-' or digit, got ${json.charAt(i)}")
 
     if (isNext('.')) {
-      decimal = true
       advance()
       parseDigits()
-      if (isNext('e') || isNext('E')) {
-        advance()
-        if (isNext('-') || isNext('+')) {
-          advance()
-          parseDigits()
-        } else throw new ReadFailure("Expected '+' or '-'")
-      }
     }
 
-    val str = json.substring(start, i)
-    if (decimal) str.toDouble else str.toInt
+    //Double.MinPositiveValue.toString is 5e-324 in JS. Written by scientists, for scientists.
+    if (isNext('e') || isNext('E')) {
+      advance()
+      if (isNext('-') || isNext('+')) {
+        advance()
+      }
+      parseDigits()
+    }
+
+    json.substring(start, i)
   }
 
   def parseString(): String = {
@@ -305,18 +290,27 @@ final class JsonReader(val json: String) {
     }
   }
 
-  def parseValue(): Any =
-    if (i < json.length) json.charAt(i) match {
-      case '"' => parseString()
-      case 't' => pass("true"); true
-      case 'f' => pass("false"); false
-      case 'n' => pass("null"); null
-      case '[' => read(); JsonStringInput.ListMarker
-      case '{' => read(); JsonStringInput.ObjectMarker
-      case '-' => parseNumber()
-      case c if Character.isDigit(c) => parseNumber()
-      case c => throw new ReadFailure(s"Unexpected character: '${c.toChar}'")
-    } else {
-      throw new ReadFailure("EOF")
+  /**
+    * @return startIndex
+    */
+  def parseValue(): Int = {
+    @inline def update(newValue: Any, newTpe: JsonType): Unit = {
+      value = newValue
+      tpe = newTpe
     }
+    skipWs()
+    val startIndex = index
+    if (i < json.length) json.charAt(i) match {
+      case '"' => update(parseString(), JsonType.string)
+      case 't' => pass("true"); update(true, JsonType.boolean)
+      case 'f' => pass("false"); update(false, JsonType.boolean)
+      case 'n' => pass("null"); update(null, JsonType.`null`)
+      case '[' => read(); update(null, JsonType.list)
+      case '{' => read(); update(null, JsonType.`object`)
+      case '-' => update(parseNumber(), JsonType.number)
+      case c if Character.isDigit(c) => update(parseNumber(), JsonType.number)
+      case c => throw new ReadFailure(s"Unexpected character: '${c.toChar}'")
+    } else throw new ReadFailure("EOF")
+    startIndex
+  }
 }

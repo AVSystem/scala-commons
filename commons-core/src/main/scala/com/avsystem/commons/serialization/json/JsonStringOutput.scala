@@ -11,7 +11,7 @@ object JsonStringOutput {
   }
 }
 
-abstract class BaseJsonOutput {
+trait BaseJsonOutput {
   protected final def writeJsonString(builder: JStringBuilder, str: String): Unit = {
     builder.append('"')
     var i = 0
@@ -44,17 +44,17 @@ final class JsonStringOutput(builder: JStringBuilder) extends BaseJsonOutput wit
   def writeString(str: String): Unit = writeJsonString(builder, str)
   def writeBoolean(boolean: Boolean): Unit = builder.append(boolean.toString)
   def writeInt(int: Int): Unit = builder.append(int.toString)
-  def writeLong(long: Long): Unit = {
-    val asInt = long.toInt
-    if (asInt == long) writeInt(asInt)
-    else writeString(long.toString)
+  def writeLong(long: Long): Unit = builder.append(long.toString)
+  def writeDouble(double: Double): Unit = {
+    if (java.lang.Double.isNaN(double) || double == Double.NegativeInfinity || double == Double.PositiveInfinity)
+      writeString(double.toString)
+    else builder.append(double.toString)
   }
-  def writeDouble(double: Double): Unit = builder.append(double.toString)
   def writeBinary(binary: Array[Byte]): Unit = {
     builder.append('"')
     var i = 0
     while (i < binary.length) {
-      builder.append(f"${binary(i)}%02x")
+      builder.append(f"${binary(i) & 0xff}%02x") //JS has signed chars
       i += 1
     }
     builder.append('"')
