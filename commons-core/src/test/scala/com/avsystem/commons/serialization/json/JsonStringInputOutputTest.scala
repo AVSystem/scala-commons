@@ -78,6 +78,8 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
 
   roundtrip("simple case classes")(TestCC(5, 123L, 432, true, "bla", 'a' :: 'b' :: Nil))
 
+  roundtrip("null")(null)
+
   test("NaN") {
     val value = Double.NaN
 
