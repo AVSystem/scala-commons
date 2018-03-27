@@ -71,7 +71,7 @@ object Benchmarks {
       },
       Benchmark("Reading foos: uPickle") {
         upickle.default.read[Map[String, Foo]](Foo.ExampleUpickleJsonString)
-      },
+      }
     )
   )
 }
