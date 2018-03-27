@@ -1,8 +1,8 @@
 package com.avsystem.commons
 package ser
 
-import com.avsystem.commons.serialization.GenCodec
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
+import com.avsystem.commons.serialization.{GenCodec, flatten}
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.parser._
@@ -49,32 +49,33 @@ object Stuff {
   implicit val rw: upickle.default.ReadWriter[Stuff] = upickle.default.macroRW
 }
 
+@flatten sealed trait FlatSealedStuff
 sealed trait SealedStuff
-case class Case1(i: Int) extends SealedStuff
+case class Case1(i: Int) extends SealedStuff with FlatSealedStuff
 object Case1 {
   implicit val rw: upickle.default.ReadWriter[Case1] = upickle.default.macroRW
 }
-case class Case2(i: Int) extends SealedStuff
+case class Case2(i: Int) extends SealedStuff with FlatSealedStuff
 object Case2 {
   implicit val rw: upickle.default.ReadWriter[Case2] = upickle.default.macroRW
 }
-case class Case3(i: Int) extends SealedStuff
+case class Case3(i: Int) extends SealedStuff with FlatSealedStuff
 object Case3 {
   implicit val rw: upickle.default.ReadWriter[Case3] = upickle.default.macroRW
 }
-case class Case4(i: Int) extends SealedStuff
+case class Case4(i: Int) extends SealedStuff with FlatSealedStuff
 object Case4 {
   implicit val rw: upickle.default.ReadWriter[Case4] = upickle.default.macroRW
 }
-case class Case5(i: Int) extends SealedStuff
+case class Case5(i: Int) extends SealedStuff with FlatSealedStuff
 object Case5 {
   implicit val rw: upickle.default.ReadWriter[Case5] = upickle.default.macroRW
 }
-case class Case6(i: Int) extends SealedStuff
+case class Case6(i: Int) extends SealedStuff with FlatSealedStuff
 object Case6 {
   implicit val rw: upickle.default.ReadWriter[Case6] = upickle.default.macroRW
 }
-case class Case7(i: Int) extends SealedStuff
+case class Case7(i: Int) extends SealedStuff with FlatSealedStuff
 object Case7 {
   implicit val rw: upickle.default.ReadWriter[Case7] = upickle.default.macroRW
 }
@@ -87,6 +88,13 @@ object SealedStuff {
   final val ExampleList = List[SealedStuff](Case5(5), Case3(3), Case1(1), Case7(7), Case2(2), Case4(4), Case6(6))
   final val ExampleJson = ExampleList.asJson
   final val ExampleJsonString = ExampleJson.noSpaces
+  final val ExampleUpickleJsonString = upickle.default.write(SealedStuff.ExampleList)
+}
+object FlatSealedStuff {
+  implicit val codec: GenCodec[FlatSealedStuff] = GenCodec.materialize
+
+  final val ExampleList = List[FlatSealedStuff](Case5(5), Case3(3), Case1(1), Case7(7), Case2(2), Case4(4), Case6(6))
+  final val ExampleJsonString = JsonStringOutput.write(ExampleList)
 }
 
 case class Foo(s: String, d: Double, i: Int, l: Long, bs: List[Boolean])
@@ -102,6 +110,7 @@ object Foo {
 
   final val ExampleJson = ExampleMap.asJson
   final val ExampleJsonString = ExampleJson.noSpaces
+  final val ExampleUpickleJsonString = upickle.default.write(ExampleMap)
 }
 
 @Warmup(iterations = 10)
@@ -185,6 +194,10 @@ class JsonWritingBenchmark extends JsonSerializationBenchmark {
     JsonStringOutput.write(SealedStuff.ExampleList)
 
   @Benchmark
+  def writeFlatSHGenCodec: String =
+    JsonStringOutput.write(FlatSealedStuff.ExampleList)
+
+  @Benchmark
   def writeSHUpickle: String =
     upickle.default.write(SealedStuff.ExampleList)
 
@@ -222,10 +235,13 @@ class JsonReadingBenchmark extends JsonSerializationBenchmark {
   def readSHGenCodec: List[SealedStuff] =
     JsonStringInput.read[List[SealedStuff]](SealedStuff.ExampleJsonString)
 
-  //upickle cannot read example circe json strings
-  //  @Benchmark
-  //  def readSHUpickle: List[SealedStuff] =
-  //    upickle.default.read[List[SealedStuff]](SealedStuff.ExampleJsonString)
+  @Benchmark
+  def readFlatSHGenCodec: List[FlatSealedStuff] =
+    JsonStringInput.read[List[FlatSealedStuff]](FlatSealedStuff.ExampleJsonString)
+
+  @Benchmark
+  def readSHUpickle: List[SealedStuff] =
+    upickle.default.read[List[SealedStuff]](SealedStuff.ExampleUpickleJsonString)
 
   @Benchmark
   def readFoosCirce: Map[String, Foo] =
@@ -235,9 +251,9 @@ class JsonReadingBenchmark extends JsonSerializationBenchmark {
   def readFoosGenCodec: Map[String, Foo] =
     JsonStringInput.read[Map[String, Foo]](Foo.ExampleJsonString)
 
-  //  @Benchmark
-  //  def readFoosUpickle: Map[String, Foo] =
-  //    upickle.default.read[Map[String, Foo]](Foo.ExampleJsonString)
+  @Benchmark
+  def readFoosUpickle: Map[String, Foo] =
+    upickle.default.read[Map[String, Foo]](Foo.ExampleUpickleJsonString)
 }
 
 object JsonSerializationBenchmark {
