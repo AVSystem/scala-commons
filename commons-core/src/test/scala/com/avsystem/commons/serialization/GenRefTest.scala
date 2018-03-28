@@ -21,20 +21,20 @@ case class CodecRef[S, T](ref: GenRef[S, T])(implicit targetCodec: GenCodec[T])
 
 class GenRefTest extends FunSuite {
   test("simple raw ref") {
-    val path = RawRef[TransparentToplevel](_.toplevel.middle.get.bottom.mapa("str")).normalize.toList
+    val path = RawRef.create[TransparentToplevel].ref(_.toplevel.middle.get.bottom.mapa("str")).normalize.toList
     assert(path == List("middle", "bot", "mapa", "str").map(RawRef.Field))
   }
 
   test("simple gen ref") {
-    val ref = GenRef[TransparentToplevel](_.toplevel.middle.get.bottom.mapa("str"))
+    val ref = GenRef.create[TransparentToplevel].ref(_.toplevel.middle.get.bottom.mapa("str"))
     val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42))).opt))
     assert(ref(obj) == 42)
   }
 
   test("gen ref splicing") {
-    val subRef = GenRef[TransparentToplevel](_.toplevel.middle)
-    val ref1 = GenRef[TransparentToplevel](t => subRef(t).get.bottom.mapa("str"))
-    val ref2 = GenRef[TransparentToplevel](subRef andThen (_.get.bottom.mapa("str")))
+    val subRef = GenRef.create[TransparentToplevel].ref(_.toplevel.middle)
+    val ref1 = GenRef.create[TransparentToplevel].ref(t => subRef(t).get.bottom.mapa("str"))
+    val ref2 = GenRef.create[TransparentToplevel].ref(subRef andThen (_.get.bottom.mapa("str")))
     val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42))).opt))
     assert(ref1(obj) == 42)
     assert(ref1.rawRef.normalize.toList == List("middle", "bot", "mapa", "str").map(RawRef.Field))
@@ -51,7 +51,7 @@ class GenRefTest extends FunSuite {
   }
 
   test("sealed trait common field test") {
-    val ref = GenRef[Toplevel](_.seal.id)
+    val ref = GenRef.create[Toplevel].ref(_.seal.id)
     assert(ref.rawRef.normalize.toList == List("seal", "_id").map(RawRef.Field))
   }
 }

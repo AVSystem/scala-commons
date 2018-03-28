@@ -28,8 +28,8 @@ class SortingTest extends FunSuite {
   }
 
   test("bsonRef tests") {
-    val someRef = BsonRef(someKey, GenCodec.StringCodec)
-    val otherRef = BsonRef(otherKey, GenCodec.IntCodec)
+    val someRef = BsonRef(someKey, GenCodec.StringCodec, null)
+    val otherRef = BsonRef(otherKey, GenCodec.IntCodec, null)
 
     assert(someRef.ascending === Sorts.ascending(someKey))
     assert(someRef.descending === Sorts.descending(someKey))
