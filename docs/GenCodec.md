@@ -5,31 +5,43 @@ serialization libraries like [Circe](https://circe.github.io/circe/) or [uPickle
 
 **[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/index.html)**
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [`GenCodec`](#gencodec)
+  - [`GenCodec` typeclass](#gencodec-typeclass)
+  - [Codecs available by default](#codecs-available-by-default)
+  - [`GenKeyCodec`](#genkeycodec)
+  - [Serializing and deserializing examples](#serializing-and-deserializing-examples)
+  - [Making your own types serializable](#making-your-own-types-serializable)
+  - [Simple types](#simple-types)
+  - [Case classes](#case-classes)
+      - [Safe evolution and refactoring - summary](#safe-evolution-and-refactoring---summary)
+    - [Case class like types](#case-class-like-types)
+  - [Singletons](#singletons)
+  - [Sealed hierarchies](#sealed-hierarchies)
+    - [Nested format](#nested-format)
+    - [Flat format](#flat-format)
+    - [Customizing sealed hierarchy codecs](#customizing-sealed-hierarchy-codecs)
+    - [Nested vs flat format](#nested-vs-flat-format)
+  - [Third party classes](#third-party-classes)
+  - [Summary](#summary)
+    - [Codec dependencies](#codec-dependencies)
+    - [Types supported by automatic materialization](#types-supported-by-automatic-materialization)
+    - [Recursive types, generic types and GADTs (generalized algebraic data types)](#recursive-types-generic-types-and-gadts-generalized-algebraic-data-types)
+    - [Customizing annotations](#customizing-annotations)
+    - [Safely introducing changes to serialized classes (retaining backwards compatibility)](#safely-introducing-changes-to-serialized-classes-retaining-backwards-compatibility)
+  - [Performance](#performance)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 Features:
 * `GenCodec` is *generic* - it supports many serialization formats. There is a JSON backend provided by default but it can support any format structurally similar to JSON (one that supports writing simple values, lists and objects). Enabling support for a particular serialization format is a matter of providing adequate implementations of [Input](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Input.html) and [Output](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Output.html). This is particularly easy to do for any of the popular JSON AST representations (Circe, Play, uPickle, etc.). Even though `GenCodec` supports JSON serialization, it's not a *JSON library*. Therefore, it does not provide its own JSON AST representation.
 * `GenCodec` is *typesafe* - it is typeclass-based, i.e. type `T` can be serialized/deserialized only when there is an implicit `GenCodec[T]` available. This is fundamental when it comes to type safety. Thanks to how typeclasses work in Scala, data types that the programmer wants to serialize are thoroughly validated during compilation to determine whether they can be serialized or not. For example `List[T]` is serializable only when `T` is serializable and a case class is serializable only if its fields are serializable. This validation goes arbitrary levels deep. Typeclass also helps making the serialization format more compact and platform independent, by avoiding usage of runtime reflection.
 * `GenCodec` is *boilerplate-free* - it provides macros for automatic derivation of codecs for case classes (and case class like types) and sealed hierarchies. This includes complex types like recursively-defined case classes and GADTs. These macro generated codecs can be further customized with annotations.
-* `GenCodec` is *fast* - the speed primarily comes from avoiding any intermediate representations during serialization and deserialization, like some JSON AST or [shapeless](https://github.com/milessabin/shapeless)' `Generic` used by many other Scala serialization libraries. (TODO: benchmarks link)
+* `GenCodec` is *fast* - the speed primarily comes from avoiding any intermediate representations during serialization and deserialization, like some JSON AST or [shapeless](https://github.com/milessabin/shapeless)' `Generic` used by many other Scala serialization libraries. See [Performance](#performance) for benchmark results.
 * `GenCodec` works in *ScalaJS*. Macro-generated codecs compile to compact and fast JavaScript.
-
-## Table of Contents
-
-  * [`GenCodec` typeclass](#gencodec-typeclass)
-  * [Codecs available by default](#codecs-available-by-default)
-    * [GenKeyCodec ](#genkeycodec)
-  * [Serializing and deserializing examples](#serializing-and-deserializing-examples)
-  * [Making your own types serializable](#making-your-own-types-serializable)
-    * [Automatic generation of codecs](#automatic-generation-of-codecs)
-      * [Case classes](#case-classes)
-      * [Sealed hierarchies](#sealed-hierarchies)
-      * [Singletons](#singletons)
-      * [Codec dependencies](#codec-dependencies)
-      * [Types supported by automatic materialization](#types-supported-by-automatic-materialization)
-      * [Recursive types, generic types and GADTs (generalized algebraic data types)](#recursive-types-generic-types-and-gadts-generalized-algebraic-data-types)
-    * [Fully automatic mode - `GenCodec.Auto`](#fully-automatic-mode---gencodecauto)
-      * [Explicit vs automatic mode](#explicit-vs-automatic-mode)
-    * [Customizing macro-materialized codecs](#customizing-macro-materialized-codecs)
-      * [Safely introducing changes to serialized classes (retaining backwards compatibility)](#safely-introducing-changes-to-serialized-classes-retaining-backwards-compatibility)
 
 ## [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html) typeclass
 
@@ -512,3 +524,34 @@ object Key {
 
 Of course, the above rules are guaranteed to work only for macro-materialized codecs.
 If you implement your codecs manually, you're on your own.
+
+## Performance
+
+There are JMH [benchmarks](https://github.com/AVSystem/scala-commons/blob/master/commons-benchmark/jvm/src/main/scala/com/avsystem/commons/ser/JsonSerializationBenchmark.scala)
+implemented for JSON serialization, comparing `GenCodec` with [Circe](https://circe.github.io/circe/) and [uPickle](https://github.com/lihaoyi/upickle).
+
+Example results (higher score is better):
+
+```
+[info] Benchmark                                  Mode  Cnt        Score       Error  Units
+[info] JsonReadingBenchmark.readCCCirce          thrpt   20   501752.517 ± 21563.049  ops/s
+[info] JsonReadingBenchmark.readCCGenCodec       thrpt   20   946505.351 ± 34501.429  ops/s
+[info] JsonReadingBenchmark.readCCUpickle        thrpt   20   623353.165 ± 15749.794  ops/s
+[info] JsonReadingBenchmark.readFoosCirce        thrpt   20     2452.081 ±   106.193  ops/s
+[info] JsonReadingBenchmark.readFoosGenCodec     thrpt   20     3232.530 ±    42.733  ops/s
+[info] JsonReadingBenchmark.readFoosUpickle      thrpt   20     3003.591 ±    74.450  ops/s
+[info] JsonReadingBenchmark.readSHCirce          thrpt   20   259242.384 ±  6019.444  ops/s
+[info] JsonReadingBenchmark.readSHGenCodec       thrpt   20   557107.475 ± 10733.433  ops/s
+[info] JsonReadingBenchmark.readFlatSHGenCodec   thrpt   20   477547.963 ±  5282.188  ops/s
+[info] JsonReadingBenchmark.readSHUpickle        thrpt   20   316055.404 ±  4679.203  ops/s
+[info] JsonWritingBenchmark.writeCCCirce         thrpt   20   593690.358 ± 13488.971  ops/s
+[info] JsonWritingBenchmark.writeCCGenCodec      thrpt   20  1462496.398 ± 29445.373  ops/s
+[info] JsonWritingBenchmark.writeCCUpickle       thrpt   20  1009314.752 ± 23001.344  ops/s
+[info] JsonWritingBenchmark.writeFoosCirce       thrpt   20     2610.398 ±    48.496  ops/s
+[info] JsonWritingBenchmark.writeFoosGenCodec    thrpt   20     4278.478 ±    35.718  ops/s
+[info] JsonWritingBenchmark.writeFoosUpickle     thrpt   20     3296.622 ±    94.771  ops/s
+[info] JsonWritingBenchmark.writeSHCirce         thrpt   20   189393.026 ±  3328.417  ops/s
+[info] JsonWritingBenchmark.writeSHGenCodec      thrpt   20   791242.582 ± 11599.197  ops/s
+[info] JsonWritingBenchmark.writeFlatSHGenCodec  thrpt   20   752330.860 ±  9901.045  ops/s
+[info] JsonWritingBenchmark.writeSHUpickle       thrpt   20   274714.996 ±  3681.794  ops/s
+```
