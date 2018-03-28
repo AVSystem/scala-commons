@@ -309,6 +309,22 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.json" visbl="pub" class="indented5 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="json"></a><a id="json:json"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/index.html#json" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="json/index.html"><span class="name">json</span></a>
+      </span>
+      
+      
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="ApplyUnapplyCodec.html" title=""></a>
@@ -426,11 +442,11 @@
                         <a class="class" href="SimpleValueFieldInput.html" title=""></a>
                         <a href="SimpleValueFieldInput.html" title="">SimpleValueFieldInput</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
+                        <a class="object" href="SimpleValueInput$.html" title=""></a>
                         <a class="class" href="SimpleValueInput.html" title="An Input for GenCodec complementary to SimpleValueOutput."></a>
                         <a href="SimpleValueInput.html" title="An Input for GenCodec complementary to SimpleValueOutput.">SimpleValueInput</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
+                        <a class="object" href="SimpleValueOutput$.html" title=""></a>
                         <a class="class" href="SimpleValueOutput.html" title="An Output for GenCodec which serializes data into plain Scala objects."></a>
                         <a href="SimpleValueOutput.html" title="An Output for GenCodec which serializes data into plain Scala objects.">SimpleValueOutput</a>
                       </li><li class="current-entities indented4">
@@ -683,7 +699,7 @@ of key-value pairs instead of JSON object.
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="FieldValues.html"><span class="name">FieldValues</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="" href="FieldValues.html"><span class="name">FieldValues</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -715,7 +731,7 @@ of key-value pairs instead of JSON object.
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Type class for types that can be serialized to Output (format-agnostic &quot;output stream&quot;) and deserialized from Input (format-agnostic &quot;input stream&quot;)." href="GenCodec.html"><span class="name">GenCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="Type class for types that can be serialized to Output (format-agnostic &quot;output stream&quot;) and deserialized from Input (format-agnostic &quot;input stream&quot;)." href="GenCodec.html"><span class="name">GenCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Type class for types that can be serialized to <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> (format-agnostic &quot;output stream&quot;) and deserialized
@@ -744,7 +760,7 @@ If you want fully automatic derivation, use <a href="GenCodec$$Auto.html" class=
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Typeclass which implements two-directional conversion between values of some type and field names used in ObjectOutput.writeField and ObjectInput.nextField (FieldInput.fieldName)." href="GenKeyCodec.html"><span class="name">GenKeyCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="Typeclass which implements two-directional conversion between values of some type and field names used in ObjectOutput.writeField and ObjectInput.nextField (FieldInput.fieldName)." href="GenKeyCodec.html"><span class="name">GenKeyCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Typeclass which implements two-directional conversion between values of some type and field names
@@ -770,7 +786,7 @@ Every type which has a natural, unambiguous string representation should have a 
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="GenRef.html"><span class="name">GenRef</span></a><span class="tparams">[<span name="S">-S</span>, <span name="T">+T</span>]</span><span class="params">(<span name="fun">fun: (<span class="extype" name="com.avsystem.commons.serialization.GenRef.S">S</span>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenRef.T">T</span></span>, <span name="rawRef">rawRef: <a href="RawRef.html" class="extype" name="com.avsystem.commons.serialization.RawRef">RawRef</a></span>)</span><span class="result"> extends (<span class="extype" name="com.avsystem.commons.serialization.GenRef.S">S</span>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenRef.T">T</span> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="GenRef.html"><span class="name">GenRef</span></a><span class="tparams">[<span name="S">-S</span>, <span name="T">+T</span>]</span><span class="params">(<span name="fun">fun: (<span class="extype" name="com.avsystem.commons.serialization.GenRef.S">S</span>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenRef.T">T</span></span>, <span name="rawRef">rawRef: <a href="RawRef.html" class="extype" name="com.avsystem.commons.serialization.RawRef">RawRef</a></span>)</span><span class="result"> extends (<span class="extype" name="com.avsystem.commons.serialization.GenRef.S">S</span>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenRef.T">T</span> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -786,7 +802,7 @@ Every type which has a natural, unambiguous string representation should have a 
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Convenience abstract class for companion objects of types that have a GenCodec." href="HasGenCodec.html"><span class="name">HasGenCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="Convenience abstract class for companion objects of types that have a GenCodec." href="HasGenCodec.html"><span class="name">HasGenCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Convenience abstract class for companion objects of types that have a <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Convenience abstract class for companion objects of types that have a <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>.
@@ -805,7 +821,7 @@ without default constructor arguments.
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Represents an abstract source from which a value may be deserialized (read)." href="Input.html"><span class="name">Input</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.Any" class="extype" name="scala.collection.immutable.List">Any</a></span>
+        <a title="Represents an abstract source from which a value may be deserialized (read)." href="Input.html"><span class="name">Input</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
       </span>
       
       <p class="shortcomment cmt">Represents an abstract source from which a value may be deserialized (read).</p><div class="fullcomment"><div class="comment cmt"><p>Represents an abstract source from which a value may be deserialized (read).
@@ -827,7 +843,7 @@ successful value or by calling <code>skip()</code>. Also, <a href="ListInput.htm
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Represents the type of value inside and Input that can be read from it." href="InputType.html"><span class="name">InputType</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="Represents the type of value inside and Input that can be read from it." href="InputType.html"><span class="name">InputType</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Represents the type of value inside and <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> that can be read from it.</p><div class="fullcomment"><div class="comment cmt"><p>Represents the type of value inside and <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> that can be read from it.</p><p>It is possible to distinguish only between four types (null, simple value, object and list) even though
@@ -837,9 +853,9 @@ implementation is able to do that. For example, JSON must represent 64-bit integ
 it can't distinguish between strings and numbers in general.
 </p></div></div>
     </li><li name="com.avsystem.commons.serialization.ListInput" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="ListInputextendsSequentialInput"></a><a id="ListInput:ListInput"></a>
+      <a id="ListInputextendsAnywithSequentialInput"></a><a id="ListInput:ListInput"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/index.html#ListInputextendsSequentialInput" title="Permalink">
+      <a href="../../../../com/avsystem/commons/serialization/index.html#ListInputextendsAnywithSequentialInput" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -859,9 +875,9 @@ an <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.
 used.
 </p></div></div>
     </li><li name="com.avsystem.commons.serialization.ListOutput" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="ListOutputextendsSequentialOutput"></a><a id="ListOutput:ListOutput"></a>
+      <a id="ListOutputextendsAnywithSequentialOutput"></a><a id="ListOutput:ListOutput"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/index.html#ListOutputextendsSequentialOutput" title="Permalink">
+      <a href="../../../../com/avsystem/commons/serialization/index.html#ListOutputextendsAnywithSequentialOutput" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -889,7 +905,7 @@ must be assumed to be stateful and used in strictly sequential manner. After all
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="MacroCodec.html"><span class="name">MacroCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="codec">codec: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.MacroCodec.T">T</span>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyVal" class="extype" name="scala.collection.immutable.List">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="MacroCodec.html"><span class="name">MacroCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="codec">codec: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.MacroCodec.T">T</span>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -910,9 +926,9 @@ must be assumed to be stateful and used in strictly sequential manner. After all
       
       
     </li><li name="com.avsystem.commons.serialization.ObjectInput" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="ObjectInputextendsSequentialInput"></a><a id="ObjectInput:ObjectInput"></a>
+      <a id="ObjectInputextendsAnywithSequentialInput"></a><a id="ObjectInput:ObjectInput"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/index.html#ObjectInputextendsSequentialInput" title="Permalink">
+      <a href="../../../../com/avsystem/commons/serialization/index.html#ObjectInputextendsAnywithSequentialInput" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -932,9 +948,9 @@ returned by <code>nextField()</code> before calling <code>nextField()</code> aga
 (<code>Iterator</code> would easily allow e.g. conversion to <code>List[(String, Input)]</code> which would be illegal).</p><p><a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> MUST always be fully exhausted.
 In order to ignore any remaining key-value mappings, <code>skipRemaining()</code> may be used.</p></div></div>
     </li><li name="com.avsystem.commons.serialization.ObjectOutput" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="ObjectOutputextendsSequentialOutput"></a><a id="ObjectOutput:ObjectOutput"></a>
+      <a id="ObjectOutputextendsAnywithSequentialOutput"></a><a id="ObjectOutput:ObjectOutput"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/index.html#ObjectOutputextendsSequentialOutput" title="Permalink">
+      <a href="../../../../com/avsystem/commons/serialization/index.html#ObjectOutputextendsAnywithSequentialOutput" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -963,7 +979,7 @@ written, <code>finish()</code> must be called to explicitly mark that the object
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Represents an abstract sink to which a value may be serialized (written)." href="Output.html"><span class="name">Output</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.Any" class="extype" name="scala.collection.immutable.List">Any</a></span>
+        <a title="Represents an abstract sink to which a value may be serialized (written)." href="Output.html"><span class="name">Output</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
       </span>
       
       <p class="shortcomment cmt">Represents an abstract sink to which a value may be serialized (written).</p><div class="fullcomment"><div class="comment cmt"><p>Represents an abstract sink to which a value may be serialized (written).
@@ -983,7 +999,7 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="ProductCodec.html"><span class="name">ProductCodec</span></a><span class="tparams">[<span name="T">T &lt;: <a href="http://www.scala-lang.org/api/2.12.4/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a></span>]</span><span class="result"> extends <a href="ApplyUnapplyCodec.html" class="extype" name="com.avsystem.commons.serialization.ApplyUnapplyCodec">ApplyUnapplyCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.ProductCodec.T">T</span>]</span>
+        <a title="" href="ProductCodec.html"><span class="name">ProductCodec</span></a><span class="tparams">[<span name="T">T &lt;: <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a></span>]</span><span class="result"> extends <a href="ApplyUnapplyCodec.html" class="extype" name="com.avsystem.commons.serialization.ApplyUnapplyCodec">ApplyUnapplyCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.ProductCodec.T">T</span>]</span>
       </span>
       
       
@@ -999,7 +1015,7 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="RawRef.html"><span class="name">RawRef</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="" href="RawRef.html"><span class="name">RawRef</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -1015,7 +1031,7 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="RecursiveAutoCodecs.html"><span class="name">RecursiveAutoCodecs</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="" href="RecursiveAutoCodecs.html"><span class="name">RecursiveAutoCodecs</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -1047,7 +1063,7 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="SequentialInput.html"><span class="name">SequentialInput</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.Any" class="extype" name="scala.collection.immutable.List">Any</a></span>
+        <a title="" href="SequentialInput.html"><span class="name">SequentialInput</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
       </span>
       
       
@@ -1063,7 +1079,7 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Base trait for outputs which allow writing of multiple values in sequence, i.e." href="SequentialOutput.html"><span class="name">SequentialOutput</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.Any" class="extype" name="scala.collection.immutable.List">Any</a></span>
+        <a title="Base trait for outputs which allow writing of multiple values in sequence, i.e." href="SequentialOutput.html"><span class="name">SequentialOutput</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
       </span>
       
       <p class="shortcomment cmt">Base trait for outputs which allow writing of multiple values in sequence, i.e.</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for outputs which allow writing of multiple values in sequence, i.e. <a href="ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a> and <a href="ObjectOutput.html" class="extype" name="com.avsystem.commons.serialization.ObjectOutput">ObjectOutput</a>.
@@ -1254,7 +1270,7 @@ standard Java serialization. However, for performance reasons it's recommended t
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="TransparentWrapperCompanion.html"><span class="name">TransparentWrapperCompanion</span></a><span class="tparams">[<span name="R">R</span>, <span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="" href="TransparentWrapperCompanion.html"><span class="name">TransparentWrapperCompanion</span></a><span class="tparams">[<span name="R">R</span>, <span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -1270,7 +1286,7 @@ standard Java serialization. However, for performance reasons it's recommended t
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="TupleGenCodecs.html"><span class="name">TupleGenCodecs</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="" href="TupleGenCodecs.html"><span class="name">TupleGenCodecs</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -1286,7 +1302,7 @@ standard Java serialization. However, for performance reasons it's recommended t
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="When materializing a GenCodec for sealed hierarchy with @flatten annotation, you can use this annotation on one of case classes or objects to mark it as the default one." href="defaultCase.html"><span class="name">defaultCase</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="When materializing a GenCodec for sealed hierarchy with @flatten annotation, you can use this annotation on one of case classes or objects to mark it as the default one." href="defaultCase.html"><span class="name">defaultCase</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">When materializing a <code>GenCodec</code> for sealed hierarchy with <code>@flatten</code> annotation, you can use this
@@ -1308,7 +1324,7 @@ a simple case class with a sealed hierarchy.
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Changes the serialization format used by GenCodecs automatically derived for sealed hierarchies." href="flatten.html"><span class="name">flatten</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Changes the serialization format used by GenCodecs automatically derived for sealed hierarchies." href="flatten.html"><span class="name">flatten</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Changes the serialization format used by <code>GenCodec</code>s automatically derived for sealed hierarchies.</p><div class="fullcomment"><div class="comment cmt"><p>Changes the serialization format used by <code>GenCodec</code>s automatically derived for sealed hierarchies.
@@ -1332,7 +1348,7 @@ as:</p><pre>{<span class="lit">"Numeric"</span>: {<span class="lit">"int"</span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="May be used on members of objects, case classes or any types having companion object with case class like apply and unapply/unapplySeq methods in order to add additional, generated fields to data serialized by auto-materialized GenCodecs." href="generated.html"><span class="name">generated</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="May be used on members of objects, case classes or any types having companion object with case class like apply and unapply/unapplySeq methods in order to add additional, generated fields to data serialized by auto-materialized GenCodecs." href="generated.html"><span class="name">generated</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">May be used on members of objects, case classes or any types having companion object with case class
@@ -1361,7 +1377,7 @@ from implemented and overridden members.
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived GenCodec to use particular name instead of just using parameter or class name." href="name.html"><span class="name">name</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived GenCodec to use particular name instead of just using parameter or class name." href="name.html"><span class="name">name</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived <code>GenCodec</code>
@@ -1388,7 +1404,7 @@ be used on that method and will affect the case class field.
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="To be used in conjunction with flatten." href="outOfOrder.html"><span class="name">outOfOrder</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="To be used in conjunction with flatten." href="outOfOrder.html"><span class="name">outOfOrder</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">To be used in conjunction with <a href="flatten.html" class="extype" name="com.avsystem.commons.serialization.flatten">flatten</a>.</p><div class="fullcomment"><div class="comment cmt"><p>To be used in conjunction with <a href="flatten.html" class="extype" name="com.avsystem.commons.serialization.flatten">flatten</a>.
@@ -1405,7 +1421,9 @@ all case classes must annotate it and give it exactly the same type. The annotat
   @outOfOrder <span class="kw">def</span> tag: <span class="std">String</span>
 }
 <span class="kw">case</span> <span class="kw">class</span> FirstCase(tag: <span class="std">String</span>, int: <span class="std">Int</span>) <span class="kw">extends</span> Base
-<span class="kw">case</span> <span class="kw">class</span> SecondCase(tag: <span class="std">String</span>, dbl: <span class="std">Double</span>) <span class="kw">extends</span> Base</pre></div></div>
+<span class="kw">case</span> <span class="kw">class</span> SecondCase(tag: <span class="std">String</span>, dbl: <span class="std">Double</span>) <span class="kw">extends</span> Base</pre><p>The direct motivation for this annotation was the ability to use <a href="flatten.html" class="extype" name="com.avsystem.commons.serialization.flatten">flatten</a> on MongoDB entities with an <code>_id</code> field.
+When reading entities from MongoDB, the <code>_id</code> field is always at the beginning of a BSON document and therefore
+<code>GenCodec</code> must be able to read it before it knows which case class of sealed hierarchy is being deserialized.</p></div></div>
     </li><li name="com.avsystem.commons.serialization.transientDefault" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="transientDefaultextendsAnnotationwithStaticAnnotation"></a><a id="transientDefault:transientDefault"></a>
       <span class="permalink">
@@ -1418,7 +1436,7 @@ all case classes must annotate it and give it exactly the same type. The annotat
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="If some case class field has default value, you can use this annotation on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value." href="transientDefault.html"><span class="name">transientDefault</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="If some case class field has default value, you can use this annotation on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value." href="transientDefault.html"><span class="name">transientDefault</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">If some case class field has default value, you can use this annotation on this field to instruct an
@@ -1442,7 +1460,7 @@ is the same as the default value.
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field." href="transparent.html"><span class="name">transparent</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field." href="transparent.html"><span class="name">transparent</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Can be used on case classes with exactly one field to instruct automatically generated <code>GenCodec</code> that the
@@ -1516,7 +1534,7 @@ field.</p>
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="GenRef$.html"><span class="name">GenRef</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="GenRef$.html"><span class="name">GenRef</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -1564,7 +1582,7 @@ field.</p>
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="MacroCodec$.html"><span class="name">MacroCodec</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="MacroCodec$.html"><span class="name">MacroCodec</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -1597,6 +1615,38 @@ field.</p>
       </span>
       <span class="symbol">
         <a title="" href="SimpleRawRef$.html"><span class="name">SimpleRawRef</span></a>
+      </span>
+      
+      
+    </li><li name="com.avsystem.commons.serialization.SimpleValueInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SimpleValueInput"></a><a id="SimpleValueInput:SimpleValueInput"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/index.html#SimpleValueInput" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="SimpleValueInput$.html"><span class="name">SimpleValueInput</span></a>
+      </span>
+      
+      
+    </li><li name="com.avsystem.commons.serialization.SimpleValueOutput" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SimpleValueOutput"></a><a id="SimpleValueOutput:SimpleValueOutput"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/index.html#SimpleValueOutput" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="SimpleValueOutput$.html"><span class="name">SimpleValueOutput</span></a>
       </span>
       
       

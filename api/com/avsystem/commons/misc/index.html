@@ -247,8 +247,8 @@
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="AbstractCase.html" title=""></a>
-                        <a href="AbstractCase.html" title="">AbstractCase</a>
+                        <a class="class" href="AbstractCase.html" title="Base class for case classes that reduces amount of code that the compiler generates for them."></a>
+                        <a href="AbstractCase.html" title="Base class for case classes that reduces amount of code that the compiler generates for them.">AbstractCase</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="AbstractNamedEnumCompanion.html" title=""></a>
@@ -532,7 +532,7 @@
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.avsystem.commons.misc.AbstractCase" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+              <ol><li name="com.avsystem.commons.misc.AbstractCase" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="AbstractCaseextendsCaseMethods"></a><a id="AbstractCase:AbstractCase"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/misc/index.html#AbstractCaseextendsCaseMethods" title="Permalink">
@@ -544,10 +544,12 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="AbstractCase.html"><span class="name">AbstractCase</span></a><span class="result"> extends <a href="CaseMethods.html" class="extype" name="com.avsystem.commons.misc.CaseMethods">CaseMethods</a></span>
+        <a title="Base class for case classes that reduces amount of code that the compiler generates for them." href="AbstractCase.html"><span class="name">AbstractCase</span></a><span class="result"> extends <a href="CaseMethods.html" class="extype" name="com.avsystem.commons.misc.CaseMethods">CaseMethods</a></span>
       </span>
       
-      
+      <p class="shortcomment cmt">Base class for case classes that reduces amount of code that the compiler generates for them.</p><div class="fullcomment"><div class="comment cmt"><p>Base class for case classes that reduces amount of code that the compiler generates for them.
+Useful primarily for JS size reduction. See <a href="CaseMethods.html" class="extype" name="com.avsystem.commons.misc.CaseMethods">CaseMethods</a> for more details.
+</p></div></div>
     </li><li name="com.avsystem.commons.misc.AbstractNamedEnumCompanion" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="AbstractNamedEnumCompanion[T&lt;:com.avsystem.commons.misc.NamedEnum]extendsAbstractSealedEnumCompanion[T]withNamedEnumCompanion[T]"></a><a id="AbstractNamedEnumCompanion[T&lt;:NamedEnum]:AbstractNamedEnumCompanion[T]"></a>
       <span class="permalink">
@@ -630,7 +632,7 @@ trait directly. See <a href="ValueEnum.html" class="extype" name="com.avsystem.c
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="Boxing.html"><span class="name">Boxing</span></a><span class="tparams">[<span name="A">-A</span>, <span name="B">+B</span>]</span><span class="params">(<span name="fun">fun: (<span class="extype" name="com.avsystem.commons.misc.Boxing.A">A</span>) ⇒ <span class="extype" name="com.avsystem.commons.misc.Boxing.B">B</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyVal" class="extype" name="scala.collection.immutable.List">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="Boxing.html"><span class="name">Boxing</span></a><span class="tparams">[<span name="A">-A</span>, <span name="B">+B</span>]</span><span class="params">(<span name="fun">fun: (<span class="extype" name="com.avsystem.commons.misc.Boxing.A">A</span>) ⇒ <span class="extype" name="com.avsystem.commons.misc.Boxing.B">B</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -646,7 +648,7 @@ trait directly. See <a href="ValueEnum.html" class="extype" name="com.avsystem.c
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Implements common case class &amp; case object methods normally synthesized by the compiler." href="CaseMethods.html"><span class="name">CaseMethods</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a></span>
+        <a title="Implements common case class &amp; case object methods normally synthesized by the compiler." href="CaseMethods.html"><span class="name">CaseMethods</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a></span>
       </span>
       
       <p class="shortcomment cmt">Implements common case class &amp; case object methods normally synthesized by the compiler.</p><div class="fullcomment"><div class="comment cmt"><p>Implements common case class &amp; case object methods normally synthesized by the compiler. Extending this trait by
@@ -667,7 +669,7 @@ If possible, prefer using <a href="AbstractCase.html" class="extype" name="com.a
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="A typeclass which witnesses that type A can be wrapped into trait or abstract class B" href="Delegation.html"><span class="name">Delegation</span></a><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="A typeclass which witnesses that type A can be wrapped into trait or abstract class B" href="Delegation.html"><span class="name">Delegation</span></a><span class="tparams">[<span name="A">A</span>, <span name="B">B</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">A typeclass which witnesses that type <code>A</code> can be wrapped into trait or abstract class <code>B</code>
@@ -684,7 +686,7 @@ If possible, prefer using <a href="AbstractCase.html" class="extype" name="com.a
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="EnumCtx.html"><span class="name">EnumCtx</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.Any" class="extype" name="scala.collection.immutable.List">Any</a></span>
+        <a title="" href="EnumCtx.html"><span class="name">EnumCtx</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
@@ -706,7 +708,7 @@ If possible, prefer using <a href="AbstractCase.html" class="extype" name="com.a
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="LowPrioBoxing.html"><span class="name">LowPrioBoxing</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="" href="LowPrioBoxing.html"><span class="name">LowPrioBoxing</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -722,7 +724,7 @@ If possible, prefer using <a href="AbstractCase.html" class="extype" name="com.a
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="LowPrioUnboxing.html"><span class="name">LowPrioUnboxing</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="" href="LowPrioUnboxing.html"><span class="name">LowPrioUnboxing</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -738,7 +740,7 @@ If possible, prefer using <a href="AbstractCase.html" class="extype" name="com.a
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Like Opt but does have a counterpart for Some(null)." href="NOpt.html"><span class="name">NOpt</span></a><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyVal" class="extype" name="scala.collection.immutable.List">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Like Opt but does have a counterpart for Some(null)." href="NOpt.html"><span class="name">NOpt</span></a><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Like <a href="Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a> but does have a counterpart for <code>Some(null)</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Like <a href="Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a> but does have a counterpart for <code>Some(null)</code>. In other words, <a href="NOpt.html" class="extype" name="com.avsystem.commons.misc.NOpt">NOpt</a> is a &quot;nullable <a href="Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a>&quot;.
@@ -755,7 +757,7 @@ If possible, prefer using <a href="AbstractCase.html" class="extype" name="com.a
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct textual representation (name)." href="NamedEnum.html"><span class="name">NamedEnum</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct textual representation (name)." href="NamedEnum.html"><span class="name">NamedEnum</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
@@ -803,7 +805,7 @@ representation. Values can then be looked up by that representation using <a hre
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Like Option but implemented as value class (avoids boxing) and treats null as no value." href="Opt.html"><span class="name">Opt</span></a><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyVal" class="extype" name="scala.collection.immutable.List">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Like Option but implemented as value class (avoids boxing) and treats null as no value." href="Opt.html"><span class="name">Opt</span></a><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Like <code>Option</code> but implemented as value class (avoids boxing) and treats <code>null</code> as no value.</p><div class="fullcomment"><div class="comment cmt"><p>Like <code>Option</code> but implemented as value class (avoids boxing) and treats <code>null</code> as no value.
@@ -822,7 +824,7 @@ use <a href="NOpt.html" class="extype" name="com.avsystem.commons.misc.NOpt">NOp
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="OptArg is like Opt except it's intended to be used to type-safely express optional method/constructor parameters while at the same time avoiding having to explicitly wrap arguments when passing them (thanks to the implicit conversion from A to OptArg[A])." href="OptArg.html"><span class="name">OptArg</span></a><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyVal" class="extype" name="scala.collection.immutable.List">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="OptArg is like Opt except it's intended to be used to type-safely express optional method/constructor parameters while at the same time avoiding having to explicitly wrap arguments when passing them (thanks to the implicit conversion from A to OptArg[A])." href="OptArg.html"><span class="name">OptArg</span></a><span class="tparams">[<span name="A">+A</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt"><a href="OptArg.html" class="extype" name="com.avsystem.commons.misc.OptArg">OptArg</a> is like <a href="Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a> except it's intended to be used to type-safely express optional method/constructor
@@ -852,7 +854,7 @@ methods like <code>map</code>, <code>flatMap</code>, <code>orElse</code>, etc. I
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Like Opt but has better Java interop thanks to the fact that wrapped value has type A instead of Any." href="OptRef.html"><span class="name">OptRef</span></a><span class="tparams">[<span name="A">+A &gt;: <span class="extype" name="scala.Null">Null</span></span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyVal" class="extype" name="scala.collection.immutable.List">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Like Opt but has better Java interop thanks to the fact that wrapped value has type A instead of Any." href="OptRef.html"><span class="name">OptRef</span></a><span class="tparams">[<span name="A">+A &gt;: <span class="extype" name="scala.Null">Null</span></span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Like <a href="Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a> but has better Java interop thanks to the fact that wrapped value has type <code>A</code> instead of <code>Any</code>.</p><div class="fullcomment"><div class="comment cmt"><p>Like <a href="Opt.html" class="extype" name="com.avsystem.commons.misc.Opt">Opt</a> but has better Java interop thanks to the fact that wrapped value has type <code>A</code> instead of <code>Any</code>.
@@ -872,7 +874,7 @@ can't add <a href="OptRef.html" class="extype" name="com.avsystem.commons.misc.O
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Trait to be extended by enums whose values are ordered by declaration order." href="OrderedEnum.html"><span class="name">OrderedEnum</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="Trait to be extended by enums whose values are ordered by declaration order." href="OrderedEnum.html"><span class="name">OrderedEnum</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Trait to be extended by enums whose values are ordered by declaration order.</p><div class="fullcomment"><div class="comment cmt"><p>Trait to be extended by enums whose values are ordered by declaration order. Ordering is derived from
@@ -897,7 +899,7 @@ can't add <a href="OptRef.html" class="extype" name="com.avsystem.commons.misc.O
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="SamCompanion.html"><span class="name">SamCompanion</span></a><span class="tparams">[<span name="T">T</span>, <span name="F">F</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="" href="SamCompanion.html"><span class="name">SamCompanion</span></a><span class="tparams">[<span name="T">T</span>, <span name="F">F</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -913,7 +915,7 @@ can't add <a href="OptRef.html" class="extype" name="com.avsystem.commons.misc.O
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Base trait for companion objects of sealed traits that serve as enums, i.e." href="SealedEnumCompanion.html"><span class="name">SealedEnumCompanion</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="Base trait for companion objects of sealed traits that serve as enums, i.e." href="SealedEnumCompanion.html"><span class="name">SealedEnumCompanion</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Base trait for companion objects of sealed traits that serve as enums, i.e.</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for companion objects of sealed traits that serve as enums, i.e. their only values are case objects.
@@ -938,7 +940,7 @@ For example:</p><pre><span class="kw">sealed</span> <span class="kw">trait</span
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Macro-materialized implicit value that provides information about callsite source file position." href="SourceInfo.html"><span class="name">SourceInfo</span></a><span class="params">(<span name="filePath">filePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="fileName">fileName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="offset">offset: <a href="http://www.scala-lang.org/api/2.12.4/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>, <span name="line">line: <a href="http://www.scala-lang.org/api/2.12.4/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>, <span name="column">column: <a href="http://www.scala-lang.org/api/2.12.4/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>, <span name="lineContent">lineContent: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="enclosingSymbols">enclosingSymbols: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Macro-materialized implicit value that provides information about callsite source file position." href="SourceInfo.html"><span class="name">SourceInfo</span></a><span class="params">(<span name="filePath">filePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="fileName">fileName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="offset">offset: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>, <span name="line">line: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>, <span name="column">column: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>, <span name="lineContent">lineContent: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="enclosingSymbols">enclosingSymbols: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Macro-materialized implicit value that provides information about callsite source file position.</p><div class="fullcomment"><div class="comment cmt"><p>Macro-materialized implicit value that provides information about callsite source file position.
@@ -957,7 +959,7 @@ Similar to Scalactic's <code>Position</code>, but contains more information.
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Base class for sealed enums which can be used as key type for a TypedMap." href="TypedKey.html"><span class="name">TypedKey</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyRef" class="extype" name="scala.collection.immutable.List">AnyRef</a></span>
+        <a title="Base class for sealed enums which can be used as key type for a TypedMap." href="TypedKey.html"><span class="name">TypedKey</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Base class for sealed enums which can be used as key type for a <a href="TypedMap.html" class="extype" name="com.avsystem.commons.misc.TypedMap">TypedMap</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Base class for sealed enums which can be used as key type for a <a href="TypedMap.html" class="extype" name="com.avsystem.commons.misc.TypedMap">TypedMap</a>. It also ensures that
@@ -991,7 +993,7 @@ the <a href="TypedMap.html" class="extype" name="com.avsystem.commons.misc.Typed
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="TypedMap.html"><span class="name">TypedMap</span></a><span class="tparams">[<span name="K">K<span class="tparams">[<span name="_">_</span>]</span></span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyVal" class="extype" name="scala.collection.immutable.List">AnyVal</a></span>
+        <a title="" href="TypedMap.html"><span class="name">TypedMap</span></a><span class="tparams">[<span name="K">K<span class="tparams">[<span name="_">_</span>]</span></span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
       </span>
       
       
@@ -1007,7 +1009,7 @@ the <a href="TypedMap.html" class="extype" name="com.avsystem.commons.misc.Typed
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="Unboxing.html"><span class="name">Unboxing</span></a><span class="tparams">[<span name="A">+A</span>, <span name="B">-B</span>]</span><span class="params">(<span name="fun">fun: (<span class="extype" name="com.avsystem.commons.misc.Unboxing.B">B</span>) ⇒ <span class="extype" name="com.avsystem.commons.misc.Unboxing.A">A</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/collection/immutable/List.html#scala.AnyVal" class="extype" name="scala.collection.immutable.List">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="Unboxing.html"><span class="name">Unboxing</span></a><span class="tparams">[<span name="A">+A</span>, <span name="B">-B</span>]</span><span class="params">(<span name="fun">fun: (<span class="extype" name="com.avsystem.commons.misc.Unboxing.B">B</span>) ⇒ <span class="extype" name="com.avsystem.commons.misc.Unboxing.A">A</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -1034,7 +1036,7 @@ This may also speed up compilation.</li><li>No need to explicitly implement <cod
 anonymous class for every value)</li><li>Scala compiler does not perform exhaustive checking for pattern matching enum values - this is however
 provided separately by <code>commons-analyzer</code> compiler plugin.</li></ul><p>Enum classes must have a companion object which extends <a href="ValueEnumCompanion.html" class="extype" name="com.avsystem.commons.misc.ValueEnumCompanion">ValueEnumCompanion</a> (prefer using
 <a href="AbstractValueEnumCompanion.html" class="extype" name="com.avsystem.commons.misc.AbstractValueEnumCompanion">AbstractValueEnumCompanion</a> where possible). Every enum constant must be declared as a <code>final val</code> in the
-companion object and must have the <code>Value</code> type explicitly ascribed.
+companion object and must have the <code>Value</code> type explicitly ascribed (which is just a type alias for enum class itself).
 The enum class itself must take an implicit <a href="EnumCtx.html" class="extype" name="com.avsystem.commons.misc.EnumCtx">EnumCtx</a> argument which provides information about
 enum ordinal and name as well as makes sure that enum value is registered in the companion object.
 If possible, you should always extend <a href="AbstractValueEnum.html" class="extype" name="com.avsystem.commons.misc.AbstractValueEnum">AbstractValueEnum</a> instead of mixing in this trait.
@@ -1104,7 +1106,7 @@ NOTE: if possible, prefer using <a href="AbstractValueEnumCompanion.html" class=
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="Boxing$.html"><span class="name">Boxing</span></a><span class="result"> extends <a href="LowPrioBoxing.html" class="extype" name="com.avsystem.commons.misc.LowPrioBoxing">LowPrioBoxing</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="Boxing$.html"><span class="name">Boxing</span></a><span class="result"> extends <a href="LowPrioBoxing.html" class="extype" name="com.avsystem.commons.misc.LowPrioBoxing">LowPrioBoxing</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -1168,7 +1170,7 @@ NOTE: if possible, prefer using <a href="AbstractValueEnumCompanion.html" class=
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="NOpt$.html"><span class="name">NOpt</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="NOpt$.html"><span class="name">NOpt</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -1184,7 +1186,7 @@ NOTE: if possible, prefer using <a href="AbstractValueEnumCompanion.html" class=
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="Opt$.html"><span class="name">Opt</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="Opt$.html"><span class="name">Opt</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -1200,7 +1202,7 @@ NOTE: if possible, prefer using <a href="AbstractValueEnumCompanion.html" class=
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="OptArg$.html"><span class="name">OptArg</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="OptArg$.html"><span class="name">OptArg</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -1216,7 +1218,7 @@ NOTE: if possible, prefer using <a href="AbstractValueEnumCompanion.html" class=
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="OptRef$.html"><span class="name">OptRef</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="OptRef$.html"><span class="name">OptRef</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -1296,7 +1298,7 @@ NOTE: if possible, prefer using <a href="AbstractValueEnumCompanion.html" class=
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="SourceInfo$.html"><span class="name">SourceInfo</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="SourceInfo$.html"><span class="name">SourceInfo</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -1328,7 +1330,7 @@ NOTE: if possible, prefer using <a href="AbstractValueEnumCompanion.html" class=
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="Unboxing$.html"><span class="name">Unboxing</span></a><span class="result"> extends <a href="LowPrioUnboxing.html" class="extype" name="com.avsystem.commons.misc.LowPrioUnboxing">LowPrioUnboxing</a> with <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="Unboxing$.html"><span class="name">Unboxing</span></a><span class="result"> extends <a href="LowPrioUnboxing.html" class="extype" name="com.avsystem.commons.misc.LowPrioUnboxing">LowPrioUnboxing</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -1344,7 +1346,7 @@ NOTE: if possible, prefer using <a href="AbstractValueEnumCompanion.html" class=
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="ValueEnum$.html"><span class="name">ValueEnum</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.4/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="ValueEnum$.html"><span class="name">ValueEnum</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
