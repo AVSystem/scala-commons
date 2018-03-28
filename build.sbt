@@ -152,6 +152,7 @@ lazy val commons = project.in(file("."))
         `commons-analyzer`,
         `commons-core-js`,
         `commons-benchmark`,
+        `commons-benchmark-js`,
       ),
   )
 
