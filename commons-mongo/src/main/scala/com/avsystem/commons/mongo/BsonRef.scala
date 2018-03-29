@@ -19,7 +19,7 @@ case class BsonRef[S, T](path: String, codec: GenCodec[T], getter: S => T) {
 object BsonRef {
   val BsonKeySeparator = "."
 
-  def identity[S](implicit codec: GenCodec[S]): BsonRef[S, S] = BsonRef("", codec, identity)
+  def identity[S](implicit codec: GenCodec[S]): BsonRef[S, S] = BsonRef("", codec, s => s)
   def create[S]: Creator[S] = new Creator[S] {}
 
   trait Creator[S] {
