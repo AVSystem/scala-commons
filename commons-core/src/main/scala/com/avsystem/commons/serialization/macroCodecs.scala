@@ -143,38 +143,43 @@ abstract class FlatSealedHierarchyCodec[T](
   final def readObject(input: ObjectInput): T = {
     val oooFields = new FieldValues(oooFieldNames, oooDeps, typeRepr)
 
-    def read(): T =
-      if (input.hasNext) {
-        val fi = input.nextField()
-        if (fi.fieldName == caseFieldName) {
-          val caseName = readCaseName(fi)
-          caseIndexByName(caseName) match {
-            case -1 => unknownCase(caseName)
-            case idx => readFlatCase(caseName, oooFields, input, caseDeps(idx))
-          }
-        } else if (!oooFields.tryReadField(fi)) {
-          if (caseDependentFieldNames.contains(fi.fieldName)) {
-            if (defaultCaseIdx != -1) {
-              val defaultCaseName = caseNames(defaultCaseIdx)
-              val wrappedInput = new DefaultCaseObjectInput(fi, input, defaultCaseName)
-              readFlatCase(defaultCaseName, oooFields, wrappedInput, caseDeps(defaultCaseIdx))
-            } else {
-              missingCase(fi.fieldName)
-            }
+    def readCase(caseNameField: FieldInput): T = {
+      val caseName = readCaseName(caseNameField)
+      caseIndexByName(caseName) match {
+        case -1 => unknownCase(caseName)
+        case idx => readFlatCase(caseName, oooFields, input, caseDeps(idx))
+      }
+    }
+
+    def read(): T = if (input.hasNext) {
+      val fi = input.nextField()
+      if (fi.fieldName == caseFieldName) readCase(fi)
+      else if (!oooFields.tryReadField(fi)) {
+        if (caseDependentFieldNames.contains(fi.fieldName)) {
+          if (defaultCaseIdx != -1) {
+            val defaultCaseName = caseNames(defaultCaseIdx)
+            val wrappedInput = new DefaultCaseObjectInput(fi, input, defaultCaseName)
+            readFlatCase(defaultCaseName, oooFields, wrappedInput, caseDeps(defaultCaseIdx))
           } else {
-            fi.skip()
-            read()
+            missingCase(fi.fieldName)
           }
         } else {
+          fi.skip()
           read()
         }
-      } else if (defaultCaseIdx != -1) {
-        readFlatCase(caseNames(defaultCaseIdx), oooFields, input, caseDeps(defaultCaseIdx))
       } else {
-        missingCase
+        read()
       }
+    } else if (defaultCaseIdx != -1) {
+      readFlatCase(caseNames(defaultCaseIdx), oooFields, input, caseDeps(defaultCaseIdx))
+    } else {
+      missingCase
+    }
 
-    read()
+    input.peekField(caseFieldName) match {
+      case Opt(fi) => readCase(fi)
+      case Opt.Empty => read()
+    }
   }
 }
 
