@@ -94,11 +94,10 @@ The library by default provides codecs for common Scala and Java types:
 * Any `Array[T]`, provided that `T` can be serialized
 * Any Scala collection extending `scala.collection.Seq[T]` or `scala.collection.Set[T]`, provided that `T` can be serialized
 * Any `java.util.Collection[T]`, provided that `T` can be serialized
-* Any `scala.collection.Map[K,V]` provided that `K` and `V` can be serialized. By default, maps are serialized as lists 
-  of key-value pairs, unless there is an implicit `GenKeyCodec` available for the key type `K` (see later). 
-  In that case, keys can be represented as `String`s and the map can be serialized as an object.
-* Any `java.util.Map[K,V]`, provided that `K` and `V` can be serialized. [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html) 
-  existence for `K` applies in the same way as for Scala `Map`.
+* Any `scala.collection.Map[K,V]` provided that `V` can be serialized and there is an implicit
+  [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html) available for `K`
+  so that it can be converted to a string and used as object key.
+* Any `java.util.Map[K,V]`, with the same restrictions as for Scala maps (there must be `GenCodec` for `V` and `GenKeyCodec` for `K`)
 * `Option[T]`, `Opt[T]`, `OptArg[T]`, `NOpt[T]`, `OptRef[T]`, provided that `T` can be serialized.
 * `Either[A,B]`, provided that `A` and `B` can be serialized.
 * [`NamedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnum.html)s 
@@ -117,10 +116,6 @@ and Java `Map` types. By default, following types have [`GenKeyCodec`](http://av
 * [`NamedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnum.html)s 
   whose companion object extends [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html)
 * Java enums
-
-If there is no [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html) 
-available for some type `K`, then `Map[K,V]` will be serialized into a list of key-value 
-pairs (each pair represented as an object with two fields).
 
 ## Serializing and deserializing examples
 
