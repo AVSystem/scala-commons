@@ -15,7 +15,7 @@ class FilteringTest extends FunSuite {
   import Filtering._
   import FilteringTest._
 
-  private def testCase(name: String)(filter: (BsonRef[SomeEntity, String]) => Bson)(verify: (String) => Bson): Unit = {
+  private def testCase(name: String)(filter: (Ref[String]) => Bson)(verify: (String) => Bson): Unit = {
     import BsonEquality.bsonEquality
 
     test(name) {
@@ -23,7 +23,7 @@ class FilteringTest extends FunSuite {
     }
   }
 
-  private def testValue(name: String)(filter: (BsonRef[SomeEntity, String], String) => Bson)(verify: (String, String) => Bson): Unit = {
+  private def testValue(name: String)(filter: (Ref[String], String) => Bson)(verify: (String, String) => Bson): Unit = {
     val someValue = "someValue"
     testCase(name)(filter(_, someValue))(verify(_, someValue))
   }
@@ -94,6 +94,6 @@ class FilteringTest extends FunSuite {
 
 object FilteringTest extends BsonRef.Creator[SomeEntity] {
   implicit val codec: GenCodec[SomeEntity] = GenCodec.materialize
-  val sRef: BsonRef[SomeEntity, String] = ref(_.s)
-  val aRef: BsonRef[SomeEntity, List[String]] = ref(_.a)
+  val sRef: Ref[String] = ref(_.s)
+  val aRef: Ref[List[String]] = ref(_.a)
 }
