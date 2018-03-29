@@ -25,8 +25,7 @@ object BsonRef {
   trait Creator[S] {
     type Ref[T] = BsonRef[S, T]
 
-    // there is an implicit macro conversion between lambdas and GenRefs
-    protected[this] def ref[T](fun: S => T): BsonRef[S, T] = macro macros.serialization.BsonRefMacros.bsonRef[S, T]
+    def ref[T](fun: S => T): BsonRef[S, T] = macro macros.serialization.BsonRefMacros.bsonRef[S, T]
   }
 
   def apply[S, T](genRef: GenRef[S, T])(implicit codec: GenCodec[T]): BsonRef[S, T] = {
