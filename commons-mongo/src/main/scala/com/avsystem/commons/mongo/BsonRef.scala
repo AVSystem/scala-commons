@@ -5,10 +5,21 @@ import com.avsystem.commons.mongo.core.ops.{BsonRefFiltering, BsonRefIterableFil
 import com.avsystem.commons.serialization.RawRef.Field
 import com.avsystem.commons.serialization.{GenCodec, GenRef}
 
-case class BsonRef[S, T](path: String, codec: GenCodec[T], getter: S => T)
+case class BsonRef[S, T](path: String, codec: GenCodec[T], getter: S => T) extends (S => T) {
+  def apply(s: S): T = getter(s)
+
+  def andThen[T0](other: BsonRef[T, T0]): BsonRef[S, T0] = {
+    val newPath = List(path, other.path).filter(_.nonEmpty).mkString(BsonRef.BsonKeySeparator)
+    BsonRef(newPath, other.codec, getter andThen other.getter)
+  }
+
+  def compose[S0](other: BsonRef[S0, S]): BsonRef[S0, T] =
+    other andThen this
+}
 object BsonRef {
   val BsonKeySeparator = "."
 
+  def identity[S](implicit codec: GenCodec[S]): BsonRef[S, S] = BsonRef("", codec, identity)
   def create[S]: Creator[S] = new Creator[S] {}
 
   trait Creator[S] {
