@@ -7,8 +7,10 @@ import org.scalatest.FunSuite
 case class InnerClass(
   map: Map[String, String]
 )
-object InnerClass {
+object InnerClass extends BsonRef.Creator[InnerClass] {
   implicit val codec: GenCodec[InnerClass] = GenCodec.materialize
+
+  final val MapRef = ref(_.map)
 }
 
 @transparent
@@ -32,6 +34,7 @@ class BsonRefTest extends FunSuite with BsonRef.Creator[TestEntity] {
     assert(ref(_.wrapper.s).path === "wrapper")
     assert(ref(_.innerClass).path === "inner")
     assert(ref(_.innerClass.map).path === "inner.map")
+    assert(ref(_.innerClass).andThen(InnerClass.MapRef).path === "inner.map")
     assert(ref(_.innerClass.map("key")).path === "inner.map.key")
     assert(ref(_.`$special.field`).path === "\\$special\\_field")
   }
