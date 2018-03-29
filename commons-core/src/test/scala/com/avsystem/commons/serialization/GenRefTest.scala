@@ -31,10 +31,10 @@ class GenRefTest extends FunSuite {
     assert(ref(obj) == 42)
   }
 
-  test("gen ref splicing") {
-    val subRef = GenRef.create[TransparentToplevel].ref(_.toplevel.middle)
-    val ref1 = GenRef.create[TransparentToplevel].ref(t => subRef(t).get.bottom.mapa("str"))
-    val ref2 = GenRef.create[TransparentToplevel].ref(subRef andThen (_.get.bottom.mapa("str")))
+  test("gen ref composition") {
+    val subRef = GenRef.create[TransparentToplevel].ref(_.toplevel.middle.get)
+    val ref1 = subRef andThen GenRef.create[Middle].ref(_.bottom.mapa("str"))
+    val ref2 = subRef andThen GenRef.create[Middle].ref(_.bottom.mapa("str"))
     val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42))).opt))
     assert(ref1(obj) == 42)
     assert(ref1.rawRef.normalize.toList == List("middle", "bot", "mapa", "str").map(RawRef.Field))
