@@ -5,7 +5,7 @@ import com.avsystem.commons.mongo.core.ops.{BsonRefFiltering, BsonRefIterableFil
 import com.avsystem.commons.serialization.RawRef.Field
 import com.avsystem.commons.serialization.{GenCodec, GenRef}
 
-case class BsonRef[S, T](path: String, codec: GenCodec[T], getter: S => T) extends (S => T) {
+case class BsonRef[S, T](path: String, codec: GenCodec[T], getter: S => T) {
   def apply(s: S): T = getter(s)
 
   def andThen[T0](other: BsonRef[T, T0]): BsonRef[S, T0] = {

@@ -34,7 +34,7 @@ object SimpleRawRef {
   implicit val codec: GenCodec[SimpleRawRef] = GenCodec.materialize[SimpleRawRef]
 }
 
-case class GenRef[-S, +T](fun: S => T, rawRef: RawRef) extends (S => T) {
+case class GenRef[-S, +T](fun: S => T, rawRef: RawRef) {
   def apply(s: S): T = fun(s)
 
   def andThen[T0](other: GenRef[T, T0]): GenRef[S, T0] =
