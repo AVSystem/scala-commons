@@ -74,9 +74,6 @@ class GenCodecTest extends CodecTestBase {
     testWriteReadAndAutoWriteRead[JHashMap[String, Int]](jHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
     testWriteReadAndAutoWriteRead[JLinkedHashMap[String, Int]](jLinkedHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
     testWriteReadAndAutoWriteRead[JHashMap[Int, Int]](jIntHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
-    testSameElementsWriteRead[JHashMap[Double, Int]](jDoubleHashMap,
-      List(Map[String, Any]("k" -> 1.0, "v" -> 1), Map[String, Any]("k" -> 2.0, "v" -> 2), Map[String, Any]("k" -> 3.0, "v" -> 3))
-    )
   }
 
   test("NoState test") {
@@ -92,8 +89,6 @@ class GenCodecTest extends CodecTestBase {
     testWriteReadAndAutoWriteRead[Set[Int]](set, set.toList)
     testWriteReadAndAutoWriteRead[Map[String, Int]](map, map)
     testWriteReadAndAutoWriteRead[Map[Int, Int]](intMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteReadAndAutoWriteRead[Map[Double, Int]](doubleMap,
-      List(Map[String, Any]("k" -> 1.0, "v" -> 1), Map[String, Any]("k" -> 2.0, "v" -> 2), Map[String, Any]("k" -> 3.0, "v" -> 3)))
     testWriteReadAndAutoWriteRead[IHashMap[String, Int]](hashMap, hashMap)
   }
 

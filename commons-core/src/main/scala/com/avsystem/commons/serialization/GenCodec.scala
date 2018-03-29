@@ -31,7 +31,7 @@ trait GenCodec[T] {
   def write(output: Output, value: T): Unit
 }
 
-object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
+object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   /**
     * Macro that automatically materializes a [[GenCodec]] for some type `T`, which must be one of:
     * <ul>
@@ -403,48 +403,6 @@ object GenCodec extends FallbackMapCodecs with TupleGenCodecs {
 
   // Needed because of SI-9453
   implicit lazy val NothingAutoCodec: GenCodec.Auto[Nothing] = GenCodec.Auto[Nothing](NothingCodec)
-}
-
-/**
-  * Contains readers for maps where there is no DBKeyCodec for key type. In such case, we assume reading from a list
-  * of key-value pairs instead of JSON object.
-  */
-trait FallbackMapCodecs extends RecursiveAutoCodecs { this: GenCodec.type =>
-  private def readKVPair[K: GenCodec, V: GenCodec](input: ObjectInput): (K, V) = {
-    val key = read[K](input.nextField().assertField("k"))
-    val value = read[V](input.nextField().assertField("v"))
-    (key, value)
-  }
-
-  private def writeKVPair[K, V](output: ObjectOutput, key: K, value: V)(implicit keyCodec: GenCodec[K], valueCodec: GenCodec[V]): Unit = {
-    keyCodec.write(output.writeField("k"), key)
-    valueCodec.write(output.writeField("v"), value)
-    output.finish()
-  }
-
-  private def collectPairsTo[K: GenCodec, V: GenCodec, C](li: ListInput)(implicit cbf: CanBuildFrom[Nothing, (K, V), C]): C = {
-    val b = cbf()
-    while (li.hasNext) {
-      b += readKVPair[K, V](li.nextElement().readObject())
-    }
-    b.result()
-  }
-
-  implicit def fallbackMapCodec[M[X, Y] <: BMap[X, Y], K: GenCodec, V: GenCodec](
-    implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenCodec[M[K, V] with BMap[K, V]] =
-    createList[M[K, V] with BMap[K, V]](
-      collectPairsTo[K, V, M[K, V]],
-      (lo, map) => map.iterator.foreach({ case (k, v) => writeKVPair(lo.writeElement().writeObject(), k, v) }),
-      allowNull = true
-    )
-
-  implicit def fallbackJMapCodec[M[X, Y] <: JMap[X, Y], K: GenCodec, V: GenCodec](
-    implicit cbf: JCanBuildFrom[(K, V), M[K, V]]): GenCodec[M[K, V] with JMap[K, V]] =
-    createList[M[K, V] with JMap[K, V]](
-      collectPairsTo[K, V, M[K, V]],
-      (lo, map) => map.asScala.iterator.foreach({ case (k, v) => writeKVPair(lo.writeElement().writeObject(), k, v) }),
-      allowNull = true
-    )
 }
 
 trait RecursiveAutoCodecs { this: GenCodec.type =>
