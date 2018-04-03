@@ -190,31 +190,32 @@ trait ObjectInput extends Any with SequentialInput { self =>
     * You MUST NOT call `nextField()` again until this [[com.avsystem.commons.serialization.FieldInput FieldInput]]
     * is fully read or skipped.
     * </p>
-    * Serialization format implemented by this [[ObjectInput]] must either preserve order of fields (as they are
-    * written by corresponding [[ObjectOutput]]) OR it must provide random field access capability.
+    * Serialization format implemented by this `ObjectInput` must either preserve order of fields (as they are
+    * written by corresponding `ObjectOutput`) OR it must provide random field access capability.
     * <ul>
-    * <li>If the serialization format is able to preserve object field order then [[nextField()]] must return
-    * object fields in exactly the same order as they were written by [[ObjectOutput.writeField(String)]]. This is
+    * <li>If the serialization format is able to preserve object field order then [[nextField]] must return
+    * object fields in exactly the same order as they were written by `ObjectOutput.writeField`. This is
     * natural for most serialization formats backed by strings, raw character or byte sequences, e.g.
     * JSON implemented by [[com.avsystem.commons.serialization.json.JsonStringOutput JsonStringOutput]]/
     * [[com.avsystem.commons.serialization.json.JsonStringInput JsonStringInput]].</li>
     * <li>If the serialization format is unable to preserve object field order (e.g. because it uses hash maps to
-    * represent objects) then it must instead support random, by-name field access by overriding [[nextField(String)]].
+    * represent objects) then it must instead support random, by-name field access by overriding [[peekField]].
     * </li>
     * </ul>
     */
   def nextField(): FieldInput
 
   /**
-    * If serialization format implemented by [[ObjectInput]] does NOT preserve field order, then this method MUST
+    * If serialization format implemented by `ObjectInput` does NOT preserve field order, then this method MUST
     * be overridden to support random field access. It should return non-empty [[Opt]] containing input for every field
-    * present in the object, regardless of field order assumed by [[nextField()]].
-    * [[Opt.Empty]] is returned when field is absent or always when this [[ObjectInput]] does not support random field
+    * present in the object, regardless of field order assumed by [[nextField]].
+    * `Opt.Empty` is returned when field is absent or always when this `ObjectInput` does not support random field
     * access (in which case it must preserve field order instead).
-    * NOTE: calling [[peekField]] and using [[FieldInput]] returned by it MUST NOT in any way influence results
-    * returned by [[nextField()]] and [[hasNext]]. For example, if a [[FieldInput]] for particular field has already been
-    * accessed using [[peekField()]] but has not yet been returned by [[nextField()]] then it MUST be returned at some
-    * point in the future by [[nextField()]].
+    * NOTE: calling [[peekField]] and using [[FieldInput]] returned by it MUST NOT change state of this `ObjectInput`.
+    * Therefore, it cannot in any way influence results returned by [[nextField]] and [[hasNext]].
+    * For example, if a [[FieldInput]] for particular field has already been
+    * accessed using [[peekField]] but has not yet been returned by [[nextField]] then it MUST be returned at some
+    * point in the future by [[nextField]].
     */
   def peekField(name: String): Opt[FieldInput] = Opt.Empty
 
