@@ -151,30 +151,31 @@ abstract class FlatSealedHierarchyCodec[T](
       }
     }
 
-    def read(): T = if (input.hasNext) {
-      val fi = input.nextField()
-      if (fi.fieldName == caseFieldName) readCase(fi)
-      else if (!oooFields.tryReadField(fi)) {
-        if (caseDependentFieldNames.contains(fi.fieldName)) {
-          if (defaultCaseIdx != -1) {
-            val defaultCaseName = caseNames(defaultCaseIdx)
-            val wrappedInput = new DefaultCaseObjectInput(fi, input, defaultCaseName)
-            readFlatCase(defaultCaseName, oooFields, wrappedInput, caseDeps(defaultCaseIdx))
+    def read(): T =
+      if (input.hasNext) {
+        val fi = input.nextField()
+        if (fi.fieldName == caseFieldName) readCase(fi)
+        else if (!oooFields.tryReadField(fi)) {
+          if (caseDependentFieldNames.contains(fi.fieldName)) {
+            if (defaultCaseIdx != -1) {
+              val defaultCaseName = caseNames(defaultCaseIdx)
+              val wrappedInput = new DefaultCaseObjectInput(fi, input, defaultCaseName)
+              readFlatCase(defaultCaseName, oooFields, wrappedInput, caseDeps(defaultCaseIdx))
+            } else {
+              missingCase(fi.fieldName)
+            }
           } else {
-            missingCase(fi.fieldName)
+            fi.skip()
+            read()
           }
         } else {
-          fi.skip()
           read()
         }
+      } else if (defaultCaseIdx != -1) {
+        readFlatCase(caseNames(defaultCaseIdx), oooFields, input, caseDeps(defaultCaseIdx))
       } else {
-        read()
+        missingCase
       }
-    } else if (defaultCaseIdx != -1) {
-      readFlatCase(caseNames(defaultCaseIdx), oooFields, input, caseDeps(defaultCaseIdx))
-    } else {
-      missingCase
-    }
 
     input.peekField(caseFieldName) match {
       case Opt(fi) => readCase(fi)
