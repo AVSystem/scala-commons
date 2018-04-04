@@ -17,16 +17,16 @@ val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.5"
 val scalacheckVersion = "1.13.5"
 val jettyVersion = "9.3.23.v20180228"
-val mongoVersion = "3.5.0"
+val mongoVersion = "3.6.3"
 val kafkaVersion = "0.11.0.1"
-val mongoScalaVersion = "2.1.0"
+val mongoScalaVersion = "2.2.1"
 val springVersion = "4.0.2.RELEASE"
 val typesafeConfigVersion = "1.3.3"
 val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.8.0"
 val akkaVersion = "2.5.11"
 val monixVersion = "2.3.3"
-val mockitoVersion = "2.16.0"
+val mockitoVersion = "2.17.0"
 val circeVersion = "0.9.2"
 val upickleVersion = "0.6.2"
 val scalajsBenchmarkVersion = "0.2.4"
@@ -275,6 +275,7 @@ lazy val `commons-mongo` = project
     jvmCommonSettings,
     libraryDependencies ++= Seq(
       "com.google.guava" % "guava" % guavaVersion,
+      "io.monix" %% "monix" % monixVersion,
       "org.mongodb" % "mongodb-driver-core" % mongoVersion,
       "org.mongodb" % "mongodb-driver" % mongoVersion % Optional,
       "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,

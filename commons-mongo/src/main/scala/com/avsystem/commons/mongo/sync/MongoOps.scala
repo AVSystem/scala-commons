@@ -20,7 +20,7 @@ trait MongoOps {
 }
 
 object MongoOps {
-  class DBOps(private val db: MongoDatabase) extends AnyVal {
+  final class DBOps(private val db: MongoDatabase) extends AnyVal {
     def getCollection[A](name: String, codec: BsonCodec[A, BsonDocument])(implicit ct: ClassTag[A]): MongoCollection[A] = {
       val mongoCodec = new MongoCodec[A, BsonDocument](codec, db.getCodecRegistry)
       val registry = CodecRegistries.fromRegistries(
@@ -31,7 +31,7 @@ object MongoOps {
     }
   }
 
-  class FindIterableOps[T](private val find: FindIterable[T]) extends AnyVal {
+  final class FindIterableOps[T](private val find: FindIterable[T]) extends AnyVal {
     def firstOpt: Option[T] = Option(find.first)
 
     def page(sort: Bson, offset: Int, maxItems: Int): Vector[T] = {
