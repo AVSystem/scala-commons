@@ -1,10 +1,12 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.serialization.HasGenCodec
 import com.github.ghik.silencer.silent
 
 
 case class Record(i: Int, fuu: String)
+object Record extends HasGenCodec[Record]
 
 @RPC trait InnerRPC {
   def proc(): Unit

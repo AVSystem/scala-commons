@@ -25,6 +25,8 @@ trait MacroCommons {
   final val SetCls = tq"$CollectionPkg.immutable.Set"
   final val NilObj = q"$CollectionPkg.immutable.Nil"
   final val MapObj = q"$CollectionPkg.immutable.Map"
+  final val MapCls = tq"$CollectionPkg.immutable.Map"
+  final val MapSym = typeOf[scala.collection.immutable.Map[_, _]].typeSymbol
   final val MaterializedCls = tq"$CommonsPackage.derivation.Materialized"
   final val FutureSym = typeOf[scala.concurrent.Future[_]].typeSymbol
   final val OptionClass = definitions.OptionClass
@@ -46,6 +48,17 @@ trait MacroCommons {
     }
     Iterator.iterate(enclosingSym)(_.owner).takeWhile(_ != NoSymbol).toList
   }
+
+  private val implicitSearchCache = new mutable.HashMap[TypeKey, Option[(TermName, Tree)]]
+
+  def inferCachedImplicit(tpe: Type): Option[TermName] = {
+    def compute = Option(c.inferImplicitValue(tpe)).filter(_ != EmptyTree).map(t => (c.freshName(TermName("")), t))
+    implicitSearchCache.getOrElseUpdate(TypeKey(tpe), compute).map({ case (n, _) => n })
+  }
+
+  def cachedImplicitDeclarations: List[Tree] = implicitSearchCache.iterator.collect {
+    case (TypeKey(tpe), Some((name, tree))) => q"private lazy val $name: $tpe = $tree"
+  }.toList
 
   implicit class treeOps[T <: Tree](t: T) {
     def debug: T = {
@@ -94,6 +107,11 @@ trait MacroCommons {
 
   def warning(msg: String) =
     c.warning(c.enclosingPosition, msg)
+
+  def ensure(condition: Boolean, msg: String): Unit =
+    if (!condition) {
+      abort(msg)
+    }
 
   case class TypeKey(tpe: Type) {
     override def equals(obj: Any) = obj match {
