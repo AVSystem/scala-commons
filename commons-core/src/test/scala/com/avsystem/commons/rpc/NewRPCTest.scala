@@ -9,6 +9,7 @@ object RawValue {
   implicit def asRawFromGc[T: GenCodec]: AsRaw[T, RawValue] = ???
   implicit def asRealFromGc[T: GenCodec]: AsReal[T, RawValue] = ???
   implicit def futureAsRealFromGc[T: GenCodec]: AsReal[Future[T], Future[RawValue]] = ???
+  implicit def futureAsRawFromGc[T: GenCodec]: AsRaw[Future[T], Future[RawValue]] = ???
 }
 
 trait NewRawRPC {
@@ -21,4 +22,6 @@ trait NewRawRPC {
 object NewRPCTest {
   implicit lazy val innerRpcAsReal: AsReal[InnerRPC, NewRawRPC] = AsReal.forRpc[InnerRPC, NewRawRPC]
   implicit lazy val testRpcAsReal: AsReal[TestRPC, NewRawRPC] = AsReal.forRpc[TestRPC, NewRawRPC]
+  implicit lazy val innerRpcAsRaw: AsRaw[InnerRPC, NewRawRPC] = AsRaw.forRpc[InnerRPC, NewRawRPC]
+  implicit lazy val testRpcAsRaw: AsRaw[TestRPC, NewRawRPC] = AsRaw.forRpc[TestRPC, NewRawRPC]
 }

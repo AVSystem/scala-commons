@@ -3,6 +3,7 @@ package macros.rpc
 
 import com.avsystem.commons.macros.AbstractMacroCommons
 
+import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.blackbox
 
 class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
@@ -44,6 +45,16 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           abort(failSigMsg)
       }
     }
+
+    def rawImpl(caseDefs: List[CaseDef]): Tree =
+      q"""
+        def $name(rpcName: $StringCls, args: $MapCls[$StringCls,$paramType]): $resultType =
+          rpcName match {
+            case ..$caseDefs
+            case _ => throw new IllegalArgumentException(
+              "RPC " + rpcName + " does not map to raw method " + ${name.decodedName.toString})
+          }
+       """
   }
 
   case class RealMethod(owner: Type, symbol: Symbol) extends RpcMethod {
@@ -61,16 +72,16 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       ValDef(Modifiers(Flag.PARAM | implicitFlag), ps.name.toTermName, TypeTree(ps.typeSignature), EmptyTree)
     })
 
-    def findMapping(rawMethods: List[RawMethod]): Mapping = {
+    def findMapping(rawMethods: List[RawMethod], forAsRaw: Boolean): Mapping = {
       val mappings = rawMethods.flatMap { rawMethod =>
-        val resultConvTpe = getType(tq"$AsRealCls[$resultType,${rawMethod.resultType}]")
+        val resultConvTpe = getType(tq"${if (forAsRaw) AsRawCls else AsRealCls}[$resultType,${rawMethod.resultType}]")
         val returnTypeConv = inferCachedImplicit(resultConvTpe)
 
         def collectParamConvs(params: List[List[Symbol]]): Option[List[List[TermName]]] = params match {
           case Nil => Some(Nil)
           case Nil :: tail => collectParamConvs(tail).map(Nil :: _)
           case (param :: rest) :: tail =>
-            val convTpe = getType(tq"$AsRawCls[${param.typeSignature},${rawMethod.paramType}]")
+            val convTpe = getType(tq"${if (forAsRaw) AsRealCls else AsRawCls}[${param.typeSignature},${rawMethod.paramType}]")
             for {
               c <- inferCachedImplicit(convTpe)
               h :: t <- collectParamConvs(rest :: tail)
@@ -92,15 +103,25 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   case class Mapping(realMethod: RealMethod, rawMethod: RawMethod, paramConverters: List[List[TermName]], resultConverter: TermName) {
     def realImpl(rawName: TermName): Tree = {
-      val encodedParams = (realMethod.paramLists.flatten zip paramConverters.flatten).map {
+      val encodedArgs = (realMethod.paramLists.flatten zip paramConverters.flatten).map {
         case (param, conv) => q"${param.name.decodedName.toString} -> $conv.asRaw(${param.name.toTermName})"
       }
 
       q"""
         def ${realMethod.name}(...${realMethod.paramDecls}): ${realMethod.resultType} =
-          $resultConverter.asReal($rawName.${rawMethod.name}(${realMethod.rpcName}, $MapObj(..$encodedParams)))
+          $resultConverter.asReal($rawName.${rawMethod.name}(${realMethod.rpcName}, $MapObj(..$encodedArgs)))
 
        """
+    }
+
+    def rawCaseImpl(realName: TermName): CaseDef = {
+      val decodedArgs = (realMethod.paramLists zip paramConverters).map {
+        case (paramList, convList) => (paramList zip convList).map {
+          case (param, conv) => q"$conv.asReal(args(${param.name.decodedName.toString}))"
+        }
+      }
+
+      cq"${realMethod.rpcName} => $resultConverter.asRaw($realName.${realMethod.name}(...$decodedArgs))"
     }
   }
 
@@ -141,19 +162,44 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val reals = extractRealMethods(realTpe)
     val rawName = c.freshName(TermName("raw"))
 
-    val realMethodImpls = reals.map(_.findMapping(raws).realImpl(rawName))
-    val res =
-      q"""
-       new $AsRealCls[$realTpe,$rawTpe] {
-         ..$cachedImplicitDeclarations
-         def asReal($rawName: $rawTpe): $realTpe = new $realTpe {
-           ..$realMethodImpls
-         }
-       }
-     """
+    val realMethodImpls = reals.map(_.findMapping(raws, forAsRaw = false).realImpl(rawName))
 
-    //    error(show(res))
-    res
+    q"""
+      new $AsRealCls[$realTpe,$rawTpe] {
+        ..$cachedImplicitDeclarations
+        def asReal($rawName: $rawTpe): $realTpe = new $realTpe {
+          ..$realMethodImpls
+        }
+      }
+    """
+  }
+
+  def rpcAsRaw[T: WeakTypeTag, R: WeakTypeTag]: Tree = {
+    val realTpe = weakTypeOf[T]
+    checkImplementable(realTpe)
+    val rawTpe = weakTypeOf[R]
+    checkImplementable(rawTpe)
+
+    val raws = extractRawMethods(rawTpe)
+    val reals = extractRealMethods(realTpe)
+    val realName = c.freshName(TermName("real"))
+
+    val caseDefs = raws.iterator.map(rm => (rm, new ListBuffer[CaseDef])).toMap
+    reals.foreach { realMethod =>
+      val mapping = realMethod.findMapping(raws, forAsRaw = true)
+      caseDefs(mapping.rawMethod) += mapping.rawCaseImpl(realName)
+    }
+
+    val rawMethodImpls = raws.map(m => m.rawImpl(caseDefs(m).result()))
+
+    q"""
+      new $AsRawCls[$realTpe,$rawTpe] {
+        ..$cachedImplicitDeclarations
+        def asRaw($realName: $realTpe): $rawTpe = new $rawTpe {
+          ..$rawMethodImpls
+        }
+      }
+     """
   }
 
 }

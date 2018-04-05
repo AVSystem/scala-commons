@@ -4,6 +4,9 @@ package rpc
 trait AsRaw[T, R] {
   def asRaw(real: T): R
 }
+object AsRaw {
+  def forRpc[T, R]: AsRaw[T, R] = macro macros.rpc.RPCMacros.rpcAsRaw[T, R]
+}
 
 trait AsReal[T, R] {
   def asReal(raw: R): T
