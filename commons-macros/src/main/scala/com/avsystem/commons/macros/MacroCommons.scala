@@ -50,11 +50,16 @@ trait MacroCommons {
   }
 
   private val implicitSearchCache = new mutable.HashMap[TypeKey, Option[(TermName, Tree)]]
+  private val registeredImplicits = new mutable.HashMap[TypeKey, TermName]
 
   def inferCachedImplicit(tpe: Type): Option[TermName] = {
     def compute = Option(c.inferImplicitValue(tpe)).filter(_ != EmptyTree).map(t => (c.freshName(TermName("")), t))
-    implicitSearchCache.getOrElseUpdate(TypeKey(tpe), compute).map({ case (n, _) => n })
+    val tkey = TypeKey(tpe)
+    registeredImplicits.get(tkey) orElse implicitSearchCache.getOrElseUpdate(tkey, compute).map(_._1)
   }
+
+  def registerImplicit(tpe: Type, name: TermName): Unit =
+    registeredImplicits(TypeKey(tpe)) = name
 
   def cachedImplicitDeclarations: List[Tree] = implicitSearchCache.iterator.collect {
     case (TypeKey(tpe), Some((name, tree))) => q"private lazy val $name: $tpe = $tree"

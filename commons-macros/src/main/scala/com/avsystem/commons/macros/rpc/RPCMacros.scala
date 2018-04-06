@@ -151,12 +151,16 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
    * - add annotated-anywhere parameters
    * - param & param lists as lists, lists of lists, lists of maps, etc.
    * - RPC name for params and using default values
+   * - generalization of map & list for parameters
    */
   def rpcAsReal[T: WeakTypeTag, R: WeakTypeTag]: Tree = {
     val realTpe = weakTypeOf[T]
     checkImplementable(realTpe)
     val rawTpe = weakTypeOf[R]
     checkImplementable(rawTpe)
+
+    val selfName = c.freshName(TermName("self"))
+    registerImplicit(getType(tq"$AsRealCls[$realTpe,$rawTpe]"), selfName)
 
     val raws = extractRawMethods(rawTpe)
     val reals = extractRealMethods(realTpe)
@@ -165,7 +169,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val realMethodImpls = reals.map(_.findMapping(raws, forAsRaw = false).realImpl(rawName))
 
     q"""
-      new $AsRealCls[$realTpe,$rawTpe] {
+      new $AsRealCls[$realTpe,$rawTpe] { $selfName: ${TypeTree()} =>
         ..$cachedImplicitDeclarations
         def asReal($rawName: $rawTpe): $realTpe = new $realTpe {
           ..$realMethodImpls
@@ -180,6 +184,9 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val rawTpe = weakTypeOf[R]
     checkImplementable(rawTpe)
 
+    val selfName = c.freshName(TermName("self"))
+    registerImplicit(getType(tq"$AsRawCls[$realTpe,$rawTpe]"), selfName)
+
     val raws = extractRawMethods(rawTpe)
     val reals = extractRealMethods(realTpe)
     val realName = c.freshName(TermName("real"))
@@ -193,7 +200,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val rawMethodImpls = raws.map(m => m.rawImpl(caseDefs(m).result()))
 
     q"""
-      new $AsRawCls[$realTpe,$rawTpe] {
+      new $AsRawCls[$realTpe,$rawTpe] { $selfName: ${TypeTree()} =>
         ..$cachedImplicitDeclarations
         def asRaw($realName: $realTpe): $rawTpe = new $rawTpe {
           ..$rawMethodImpls
