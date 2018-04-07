@@ -435,8 +435,10 @@ trait MacroCommons {
 
         if (matchingApplyUnapply(dtpe, applySig, unapplySig)) {
           def defaultValueFor(param: Symbol, idx: Int): Tree =
-            if (param.asTerm.isParamWithDefault)
-              q"$companion.${TermName(s"${param.owner.name.encodedName.toString}$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
+            if (param.asTerm.isParamWithDefault) {
+              val methodEncodedName = param.owner.name.encodedName.toString
+              q"$companion.${TermName(s"$methodEncodedName$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
+            }
             else EmptyTree
 
           val paramsWithDefaults = applySig.paramLists.head.zipWithIndex

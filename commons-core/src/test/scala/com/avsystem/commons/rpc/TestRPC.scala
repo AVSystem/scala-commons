@@ -25,7 +25,7 @@ object InnerRPC extends DummyRPC.RPCCompanion[InnerRPC]
 
   def handleMore(): Unit
 
-  def doStuff(lol: Int, fuu: String)(implicit cos: Option[Boolean]): Unit
+  def doStuff(lol: Int, fuu: String = "pisiont")(implicit cos: Option[Boolean]): Unit
 
   @RPCName("doStuffBoolean")
   def doStuff(yes: Boolean): Future[String]

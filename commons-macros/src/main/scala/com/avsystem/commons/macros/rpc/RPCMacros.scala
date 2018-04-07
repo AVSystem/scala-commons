@@ -19,6 +19,8 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val owner: Type
     val symbol: Symbol
     val name: TermName = symbol.name.toTermName
+    val encodedNameStr: String = name.encodedName.toString
+    val decodedNameStr: String = name.decodedName.toString
 
     protected def failMsg(explanation: String) =
       s"Can't proxy $symbol because $explanation"
@@ -51,8 +53,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         def $name(rpcName: $StringCls, args: $MapCls[$StringCls,$paramType]): $resultType =
           rpcName match {
             case ..$caseDefs
-            case _ => throw new IllegalArgumentException(
-              "RPC " + rpcName + " does not map to raw method " + ${name.decodedName.toString})
+            case _ => $RpcPackage.RpcUtils.unknownRpc(rpcName, $decodedNameStr)
           }
        """
   }
@@ -63,7 +64,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         case List(StringLiteral(str)) => str
         case _ => c.abort(annot.tree.pos, "The argument of @RPCName must be a string literal.")
       }
-    }.getOrElse(symbol.name.decodedName.toString)
+    }.getOrElse(decodedNameStr)
 
     val paramLists: List[List[Symbol]] = sig.paramLists
 
@@ -115,12 +116,19 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
 
     def rawCaseImpl(realName: TermName): CaseDef = {
-      val decodedArgs = (realMethod.paramLists zip paramConverters).map {
-        case (paramList, convList) => (paramList zip convList).map {
-          case (param, conv) => q"$conv.asReal(args(${param.name.decodedName.toString}))"
+      var paramIdx = 0
+      val decodedArgs = (realMethod.paramLists zip paramConverters).map { case (paramList, convList) =>
+        (paramList zip convList).map { case (param, conv) =>
+          paramIdx += 1
+          val paramName = param.name.decodedName.toString
+          val defaultValue =
+            if (param.asTerm.isParamWithDefault)
+              q"$realName.${TermName(s"${realMethod.encodedNameStr}$$default$$$paramIdx")}"
+            else
+              q"$RpcPackage.RpcUtils.missingArg(rpcName, pn)"
+          q"args.andThen($conv.asReal).applyOrElse($paramName, (pn: $StringCls) => $defaultValue)"
         }
       }
-
       cq"${realMethod.rpcName} => $resultConverter.asRaw($realName.${realMethod.name}(...$decodedArgs))"
     }
   }
