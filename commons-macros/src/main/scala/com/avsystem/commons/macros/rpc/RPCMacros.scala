@@ -76,22 +76,21 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     def findMapping(rawMethods: List[RawMethod], forAsRaw: Boolean): Mapping = {
       val mappings = rawMethods.flatMap { rawMethod =>
         val resultConvTpe = getType(tq"${if (forAsRaw) AsRawCls else AsRealCls}[$resultType,${rawMethod.resultType}]")
-        val returnTypeConv = inferCachedImplicit(resultConvTpe)
 
-        def collectParamConvs(params: List[List[Symbol]]): Option[List[List[TermName]]] = params match {
-          case Nil => Some(Nil)
-          case Nil :: tail => collectParamConvs(tail).map(Nil :: _)
+        def collectParamConvs(params: List[List[Symbol]]): List[List[TermName]] = params match {
+          case Nil => Nil
+          case Nil :: tail => Nil :: collectParamConvs(tail)
           case (param :: rest) :: tail =>
-            val convTpe = getType(tq"${if (forAsRaw) AsRealCls else AsRawCls}[${param.typeSignature},${rawMethod.paramType}]")
-            for {
-              c <- inferCachedImplicit(convTpe)
-              h :: t <- collectParamConvs(rest :: tail)
-            } yield (c :: h) :: t
+            val paramTpe = actualParamType(param)
+            val convTpe = getType(tq"${if (forAsRaw) AsRealCls else AsRawCls}[$paramTpe,${rawMethod.paramType}]")
+            val paramNameStr = param.name.decodedName.toString
+            val c = inferCachedImplicit(convTpe, s"Problem with parameter $paramNameStr of RPC $rpcName: ")
+            val h :: t = collectParamConvs(rest :: tail)
+            (c :: h) :: t
         }
-        for {
-          rtc <- returnTypeConv
-          pc <- collectParamConvs(paramLists)
-        } yield Mapping(this, rawMethod, pc, rtc)
+
+        tryInferCachedImplicit(resultConvTpe)
+          .map(rtc => Mapping(this, rawMethod, collectParamConvs(paramLists), rtc))
       }
 
       mappings match {
@@ -117,19 +116,28 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     def rawCaseImpl(realName: TermName): CaseDef = {
       var paramIdx = 0
+      val argDecls = new ListBuffer[Tree]
       val decodedArgs = (realMethod.paramLists zip paramConverters).map { case (paramList, convList) =>
         (paramList zip convList).map { case (param, conv) =>
           paramIdx += 1
-          val paramName = param.name.decodedName.toString
-          val defaultValue =
-            if (param.asTerm.isParamWithDefault)
-              q"$realName.${TermName(s"${realMethod.encodedNameStr}$$default$$$paramIdx")}"
+          val paramName = param.name.toTermName
+          val paramNameStr = paramName.decodedName.toString
+          val paramValue =
+            if (param.asTerm.isParamWithDefault) {
+              val default = q"$realName.${TermName(s"${realMethod.encodedNameStr}$$default$$$paramIdx")}"
+              q"$RpcPackage.RpcUtils.getArg(args, $paramNameStr, $conv, $default)"
+            }
             else
-              q"$RpcPackage.RpcUtils.missingArg(rpcName, pn)"
-          q"args.andThen($conv.asReal).applyOrElse($paramName, (pn: $StringCls) => $defaultValue)"
+              q"$RpcPackage.RpcUtils.tryGetArg(args, $paramNameStr, $conv, rpcName)"
+          argDecls += q"val $paramName = $paramValue"
+          if (isRepeated(param)) q"$paramName: _*" else q"$paramName"
         }
       }
-      cq"${realMethod.rpcName} => $resultConverter.asRaw($realName.${realMethod.name}(...$decodedArgs))"
+      cq"""
+        ${realMethod.rpcName} =>
+          ..$argDecls
+          $resultConverter.asRaw($realName.${realMethod.name}(...$decodedArgs))
+        """
     }
   }
 
@@ -159,6 +167,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
    * - add annotated-anywhere parameters
    * - param & param lists as lists, lists of lists, lists of maps, etc.
    * - RPC name for params and using default values
+   * - varargs and by-name params
    * - generalization of map & list for parameters
    */
   def rpcAsReal[T: WeakTypeTag, R: WeakTypeTag]: Tree = {

@@ -13,6 +13,7 @@ trait MacroCommons {
   final val StringCls = tq"_root_.java.lang.String"
   final val ClassCls = tq"_root_.java.lang.Class"
   final val CommonsPackage = q"_root_.com.avsystem.commons"
+  final val PredefObj = q"$ScalaPkg.Predef"
   final val UnitCls = tq"$ScalaPkg.Unit"
   final val OptionCls = tq"$ScalaPkg.Option"
   final val OptionObj = q"$ScalaPkg.Option"
@@ -52,11 +53,17 @@ trait MacroCommons {
   private val implicitSearchCache = new mutable.HashMap[TypeKey, Option[(TermName, Tree)]]
   private val registeredImplicits = new mutable.HashMap[TypeKey, TermName]
 
-  def inferCachedImplicit(tpe: Type): Option[TermName] = {
+  def tryInferCachedImplicit(tpe: Type): Option[TermName] = {
     def compute = Option(c.inferImplicitValue(tpe)).filter(_ != EmptyTree).map(t => (c.freshName(TermName("")), t))
     val tkey = TypeKey(tpe)
     registeredImplicits.get(tkey) orElse implicitSearchCache.getOrElseUpdate(tkey, compute).map(_._1)
   }
+
+  def inferCachedImplicit(tpe: Type, clue: String): TermName =
+    tryInferCachedImplicit(tpe).getOrElse {
+      implicitSearchCache(TypeKey(tpe)) = Some((c.freshName(TermName("")), q"$ImplicitsObj.infer[$tpe]($clue)"))
+      inferCachedImplicit(tpe, clue)
+    }
 
   def registerImplicit(tpe: Type, name: TermName): Unit =
     registeredImplicits(TypeKey(tpe)) = name
@@ -326,11 +333,19 @@ trait MacroCommons {
     meth.typeSignature.paramLists.headOption.flatMap(_.lastOption)
       .exists(_.typeSignature.typeSymbol == definitions.RepeatedParamClass)
 
-  def nonRepeatedType(tpe: Type): Type = tpe match {
+  def actualParamType(param: Symbol): Type =
+    actualParamType(param.typeSignature)
+
+  def actualParamType(tpe: Type): Type = tpe match {
     case TypeRef(_, s, List(arg)) if s == definitions.RepeatedParamClass =>
       getType(tq"$ScalaPkg.Seq[$arg]")
+    case TypeRef(_, s, List(arg)) if s == definitions.ByNameParamClass =>
+      arg
     case _ => tpe
   }
+
+  def isRepeated(param: Symbol): Boolean =
+    param.typeSignature.typeSymbol == definitions.RepeatedParamClass
 
   def isParameterless(signature: Type): Boolean =
     signature.paramLists.flatten == Nil
@@ -386,7 +401,7 @@ trait MacroCommons {
               def check(params: List[Symbol], elemTypes: List[Type]): Boolean = (params, elemTypes) match {
                 case (Nil, Nil) => true
                 case (p :: prest, et :: etrest) =>
-                  nonRepeatedType(p.typeSignature) =:= et && check(prest, etrest)
+                  actualParamType(p.typeSignature) =:= et && check(prest, etrest)
                 case _ => false
               }
 

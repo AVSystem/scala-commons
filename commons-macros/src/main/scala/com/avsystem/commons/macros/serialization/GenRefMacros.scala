@@ -79,7 +79,7 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
               val fieldSymbols = subMembers.map { case (subtype, subMember) =>
                 val fieldSym = fieldMemberFor(subtype, subMember)
-                val fieldType = nonRepeatedType(fieldSym.typeSignatureIn(subtype).finalResultType)
+                val fieldType = actualParamType(fieldSym.typeSignatureIn(subtype).finalResultType)
                 if (!(fieldType =:= bodyTpe)) {
                   c.abort(body.pos, s"$subMember in $subtype has different type ($fieldType) than $selSym in $prefixTpe ($bodyTpe)")
                 }

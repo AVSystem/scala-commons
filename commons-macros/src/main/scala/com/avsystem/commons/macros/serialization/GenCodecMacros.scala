@@ -345,7 +345,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       applyUnapplyFor(st).map { au =>
         val subTcTpe = typeClassInstance(st)
         val applyParams = au.params.zipWithIndex.map { case ((s, defaultValue), pidx) =>
-          ApplyParam(pidx, s, defaultValue, dependency(nonRepeatedType(s.typeSignature), subTcTpe, s"for field ${s.name}"))
+          ApplyParam(pidx, s, defaultValue, dependency(actualParamType(s), subTcTpe, s"for field ${s.name}"))
         }
         CaseClassInfo(idx, st, au, applyParams)
       } orElse singleValueFor(st).map { singleton =>
@@ -436,7 +436,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     applyUnapplyFor(tpe, applyUnapplyProvider) match {
       case Some(ApplyUnapply(apply, unapply, params)) =>
         val dependencies = params.zipWithIndex.map { case ((s, defaultValue), idx) =>
-          ApplyParam(idx, s, defaultValue, dependency(nonRepeatedType(s.typeSignature), tcTpe, s"for field ${s.name}"))
+          ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s"for field ${s.name}"))
         }
         forApplyUnapply(tpe, applyUnapplyProvider, apply, unapply, dependencies)
       case None =>

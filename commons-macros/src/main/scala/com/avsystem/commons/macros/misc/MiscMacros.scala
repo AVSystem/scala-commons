@@ -13,6 +13,8 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
+  // cannot use c.inferImplicitValue(silent = false) because the only error it reports is
+  // "implicit search has failed, to find out the reason turn -Xlog-implicits"
   def infer[T: c.WeakTypeTag](clue: Tree): Tree =
     unwrapAndAddClue(clue)(c.typecheck(q"implicitly[${weakTypeOf[T]}]"))
 

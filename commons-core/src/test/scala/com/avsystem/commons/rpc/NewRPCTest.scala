@@ -18,10 +18,20 @@ trait NewRawRPC {
   def invokeAsync(name: String, args: Map[String, RawValue]): Future[RawValue]
 }
 
+trait NamedVarargs {
+  def namedArgMethod(int: => Int): Unit
+  def varargsMethod(ints: Int*): Unit
+  def defaultValueMethod(int: Int = 0): Unit
+}
+object NamedVarargs {
+  implicit val asReal: AsReal[NamedVarargs, NewRawRPC] = AsReal.forRpc[NamedVarargs, NewRawRPC]
+  implicit val asRaw: AsRaw[NamedVarargs, NewRawRPC] = AsRaw.forRpc[NamedVarargs, NewRawRPC].showAst
+}
+
 @silent
 object NewRPCTest {
-  implicit lazy val innerRpcAsReal: AsReal[InnerRPC, NewRawRPC] = AsReal.forRpc[InnerRPC, NewRawRPC]
-  implicit lazy val testRpcAsReal: AsReal[TestRPC, NewRawRPC] = AsReal.forRpc[TestRPC, NewRawRPC]
-  implicit lazy val innerRpcAsRaw: AsRaw[InnerRPC, NewRawRPC] = AsRaw.forRpc[InnerRPC, NewRawRPC]
-  implicit lazy val testRpcAsRaw: AsRaw[TestRPC, NewRawRPC] = AsRaw.forRpc[TestRPC, NewRawRPC]
+  implicit val innerRpcAsReal: AsReal[InnerRPC, NewRawRPC] = AsReal.forRpc[InnerRPC, NewRawRPC]
+  implicit val testRpcAsReal: AsReal[TestRPC, NewRawRPC] = AsReal.forRpc[TestRPC, NewRawRPC]
+  implicit val innerRpcAsRaw: AsRaw[InnerRPC, NewRawRPC] = AsRaw.forRpc[InnerRPC, NewRawRPC]
+  implicit val testRpcAsRaw: AsRaw[TestRPC, NewRawRPC] = AsRaw.forRpc[TestRPC, NewRawRPC]
 }

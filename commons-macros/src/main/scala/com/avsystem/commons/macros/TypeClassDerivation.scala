@@ -83,8 +83,8 @@ trait TypeClassDerivation extends MacroCommons {
     * @param instance     tree that evaluates to type class instance for type of this parameter
     */
   case class ApplyParam(idx: Int, sym: TermSymbol, defaultValue: Tree, instance: Tree) {
-    val repeated: Boolean = sym.typeSignature.typeSymbol == definitions.RepeatedParamClass
-    def valueType: Type = nonRepeatedType(sym.typeSignature)
+    val repeated: Boolean = isRepeated(sym)
+    def valueType: Type = actualParamType(sym)
     def asArgument(tree: Tree): Tree = if (repeated) q"$tree: _*" else tree
   }
 
@@ -161,7 +161,7 @@ trait TypeClassDerivation extends MacroCommons {
     def applyUnapplyTc = applyUnapplyFor(dtpe).map {
       case ApplyUnapply(apply, unapply, params) =>
         val dependencies = params.zipWithIndex.map { case ((s, defaultValue), idx) =>
-          ApplyParam(idx, s, defaultValue, dependency(nonRepeatedType(s.typeSignature), tcTpe, s"for field ${s.name}"))
+          ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s"for field ${s.name}"))
         }
         forApplyUnapply(dtpe, apply, unapply, dependencies)
     }
