@@ -279,7 +279,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     symbols.groupBy(st => targetName(st)).map {
       case (targetName, List(sym)) => (sym, targetName)
       case (targetName, syms) =>
-        c.abort(c.enclosingPosition, s"$paramsOrSubclasses ${syms.map(_.name).mkString(", ")} have the same @name: $targetName")
+        abort(s"$paramsOrSubclasses ${syms.map(_.name).mkString(", ")} have the same @name: $targetName")
     }
   }
 

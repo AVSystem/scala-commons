@@ -59,9 +59,10 @@ trait MacroCommons { bundle =>
     registeredImplicits.get(tkey) orElse implicitSearchCache.getOrElseUpdate(tkey, compute).map(_._1)
   }
 
-  def inferCachedImplicit(tpe: Type, clue: String): TermName =
+  def inferCachedImplicit(tpe: Type, clue: String, pos: Position = NoPosition): TermName =
     tryInferCachedImplicit(tpe).getOrElse {
-      implicitSearchCache(TypeKey(tpe)) = Some((c.freshName(TermName("")), q"$ImplicitsObj.infer[$tpe]($clue)"))
+      implicitSearchCache(TypeKey(tpe)) = Some((c.freshName(TermName("")),
+        q"$ImplicitsObj.infer[$tpe](${internal.setPos(StringLiteral(clue), pos)})"))
       inferCachedImplicit(tpe, clue)
     }
 
@@ -163,6 +164,14 @@ trait MacroCommons { bundle =>
       abort(msg)
     }
 
+  def abortAt(message: String, pos: Position): Nothing =
+    if (pos != NoPosition) {
+      c.error(pos, message)
+      abort(s"Macro expansion failed: problem at ${pos.source.file.name}:${pos.line}")
+    } else {
+      abort(message)
+    }
+
   case class TypeKey(tpe: Type) {
     override def equals(obj: Any) = obj match {
       case TypeKey(otherTpe) => tpe =:= otherTpe
@@ -225,6 +234,7 @@ trait MacroCommons { bundle =>
       case Literal(Constant(str: String)) => Some(str)
       case _ => None
     }
+    def apply(str: String): Tree = Literal(Constant(str))
   }
 
   object BooleanLiteral {

@@ -22,7 +22,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     .map { annot =>
       findAnnotationArg(annot, RPCNameNameSym) match {
         case StringLiteral(name) => name
-        case p => c.abort(p.pos, "The `name` argument of @RPCName must be a string literal.")
+        case p => abortAt("The `name` argument of @RPCName must be a string literal.", p.pos)
       }
     }.getOrElse(sym.nameStr)
 
@@ -33,29 +33,33 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val nameStr: String = name.decodedName.toString
     val encodedNameStr: String = name.encodedName.toString
 
-    protected def failMsg(explanation: String) =
-      s"Can't proxy $symbol because $explanation"
-
-    ensure(symbol.isMethod, failMsg("it's not a method"))
+    if (!symbol.isMethod) {
+      abortAt(s"$nameStr of $owner is not a method", symbol.pos)
+    }
 
     val sig: Type = symbol.typeSignatureIn(owner)
-    ensure(sig.typeParams.isEmpty, failMsg("it has type parameter(s)")) // can we relax this?
+    if (sig.typeParams.nonEmpty) {
+      // can we relax this?
+      abortAt(s"$nameStr of $owner has type parameters", symbol.pos)
+    }
 
     val resultType: Type = sig.finalResultType
   }
 
   case class RawMethod(owner: Type, symbol: Symbol) extends RpcMethod {
     val paramType: Type = {
-      def failSigMsg = failMsg("it has wrong signature: it must take exactly two parameters: " +
-        "RPC name and a map of encoded real parameters")
+      def failSigMsg = s"$nameStr of $owner has wrong signature: it must take exactly two parameters: " +
+        "RPC name and a map of encoded real parameters"
       sig.paramLists match {
         case List(List(nameParam, argsParam)) =>
           val argsTpe = argsParam.typeSignature.dealias
           val validSig = nameParam.typeSignature =:= typeOf[String] && argsTpe.typeSymbol == MapSym
-          ensure(validSig, failSigMsg)
+          if (!validSig) {
+            abortAt(failSigMsg, symbol.pos)
+          }
           argsTpe.typeArgs(1)
         case _ =>
-          abort(failSigMsg)
+          abortAt(failSigMsg, symbol.pos)
       }
     }
 
@@ -75,7 +79,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val paramLists: List[List[Symbol]] = sig.paramLists
     paramLists.flatten.groupBy(rpcNameStr).foreach {
       case (_, List(_)) =>
-      case (n, _) => abort(s"Multiple parameters of RPC $nameStr have the same @RPCName $n")
+      case (n, _) => abortAt(s"Multiple parameters of RPC $nameStr have the same @RPCName $n", symbol.pos)
     }
 
     def paramDecls: List[List[ValDef]] = paramLists.map(_.map { ps =>
@@ -93,10 +97,12 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           case (param :: rest) :: tail =>
             val paramNameStr = param.name.decodedName.toString
             val problemClue = s"Problem with parameter $paramNameStr of RPC $nameStr: "
-            ensure(!param.asTerm.isByNameParam, s"${problemClue}encoded RPC parameters cannot be passed by name")
+            if (param.asTerm.isByNameParam) {
+              abortAt(s"${problemClue}encoded RPC parameters cannot be passed by name", param.pos)
+            }
             val paramTpe = actualParamType(param)
             val convTpe = getType(tq"${if (forAsRaw) AsRealCls else AsRawCls}[$paramTpe,${rawMethod.paramType}]")
-            val c = inferCachedImplicit(convTpe, problemClue)
+            val c = inferCachedImplicit(convTpe, problemClue, param.pos)
             val h :: t = collectParamConvs(rest :: tail)
             (c :: h) :: t
         }
@@ -107,7 +113,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
       mappings match {
         case List(single) => single
-        case Nil => abort(s"No raw method matches real $symbol")
+        case Nil => abortAt(s"No raw method matches real $symbol", symbol.pos)
         case multiple => abort(s"Multiple raw methods match real $symbol: ${multiple.map(_.rawMethod.symbol).mkString(", ")}")
       }
     }
@@ -157,7 +163,9 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   def checkImplementable(tpe: Type): Unit = {
     val sym = tpe.dealias.typeSymbol
-    ensure(sym.isAbstract && sym.isClass, s"$tpe must be an abstract class or trait")
+    if (!sym.isAbstract || !sym.isClass) {
+      abortAt(s"$sym must be an abstract class or trait", sym.pos)
+    }
   }
 
   def extractRawMethods(rawTpe: Type): List[RawMethod] =

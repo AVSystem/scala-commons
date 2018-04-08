@@ -24,7 +24,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   private def unwrapAndAddClue(clueTree: Tree)(expr: => Tree): Tree = clueTree match {
     case StringLiteral(clue) =>
       val wrapped = try expr catch {
-        case TypecheckException(_, msg) => abort(clue + msg)
+        case TypecheckException(_, msg) => abortAt(clue + msg, clueTree.pos)
       }
       wrapped match {
         case Apply(_, List(arg)) => arg
