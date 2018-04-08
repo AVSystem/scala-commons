@@ -4,7 +4,6 @@ package macros.rpc
 import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.blackbox
 
 class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
@@ -16,6 +15,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   val RPCNameNameSym: Symbol = RPCNameType.member(TermName("name"))
   val AsRealCls = tq"$RpcPackage.AsReal"
   val AsRawCls = tq"$RpcPackage.AsRaw"
+  val AnnotatedWithAnnotTpe: Type = getType(tq"$RpcPackage.annotatedWith[_]")
 
   def rpcNameStr(sym: Symbol): String = allAnnotations(sym)
     .find(_.tpe <:< RPCNameType)
@@ -43,21 +43,37 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       abortAt(s"$nameStr of $owner has type parameters", symbol.pos)
     }
 
+    val paramLists: List[List[Symbol]] = sig.paramLists
     val resultType: Type = sig.finalResultType
+
+    def argLists: List[List[Tree]] =
+      paramLists.map(_.map { ps =>
+        val res = q"${ps.safeName}"
+        if (isRepeated(ps)) q"$res: _*" else res
+      })
+
+    def paramDecls: List[List[Tree]] =
+      paramLists.map(_.map { ps =>
+        val implicitFlag = if (ps.isImplicit) Flag.IMPLICIT else NoFlags
+        ValDef(Modifiers(Flag.PARAM | implicitFlag), ps.safeName, TypeTree(ps.typeSignature), EmptyTree)
+      })
   }
 
   case class RawMethod(owner: Type, symbol: Symbol) extends RpcMethod {
-    val paramType: Type = {
-      def failSigMsg = s"$nameStr of $owner has wrong signature: it must take exactly two parameters: " +
-        "RPC name and a map of encoded real parameters"
+    val (rpcNameParam, encodedParams) = {
+      def failSigMsg = s"$nameStr of $owner has wrong signature: it must take RPC name as first parameter " +
+        "and maps of encoded real arguments as rest of parameters"
       sig.paramLists match {
-        case List(List(nameParam, argsParam)) =>
-          val argsTpe = argsParam.typeSignature.dealias
-          val validSig = nameParam.typeSignature =:= typeOf[String] && argsTpe.typeSymbol == MapSym
-          if (!validSig) {
-            abortAt(failSigMsg, symbol.pos)
+        case (nameParam :: tailFirst) :: rest if nameParam.typeSignature =:= typeOf[String] =>
+          val encParams = (tailFirst :: rest).flatten
+          encParams.foreach { argsParam =>
+            val argsTpe = argsParam.typeSignature.dealias
+            val validSig = argsTpe.typeSymbol == MapSym && argsTpe.typeArgs.head =:= typeOf[String]
+            if (!validSig) {
+              abortAt(failSigMsg, symbol.pos)
+            }
           }
-          argsTpe.typeArgs(1)
+          (nameParam, encParams)
         case _ =>
           abortAt(failSigMsg, symbol.pos)
       }
@@ -65,10 +81,10 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     def rawImpl(caseDefs: List[CaseDef]): Tree =
       q"""
-        def $name(rpcName: $StringCls, args: $MapCls[$StringCls,$paramType]): $resultType =
-          rpcName match {
+        def $name(...$paramDecls): $resultType =
+          ${rpcNameParam.safeName} match {
             case ..$caseDefs
-            case _ => $RpcPackage.RpcUtils.unknownRpc(rpcName, $nameStr)
+            case rpcName => $RpcPackage.RpcUtils.unknownRpc(rpcName, $nameStr)
           }
        """
   }
@@ -76,42 +92,59 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   case class RealMethod(owner: Type, symbol: Symbol) extends RpcMethod {
     val rpcName: String = rpcNameStr(symbol)
 
-    val paramLists: List[List[Symbol]] = sig.paramLists
     paramLists.flatten.groupBy(rpcNameStr).foreach {
       case (_, List(_)) =>
       case (n, _) => abortAt(s"Multiple parameters of RPC $nameStr have the same @RPCName $n", symbol.pos)
     }
 
-    def paramDecls: List[List[ValDef]] = paramLists.map(_.map { ps =>
-      val implicitFlag = if (ps.isImplicit) Flag.IMPLICIT else NoFlags
-      ValDef(Modifiers(Flag.PARAM | implicitFlag), ps.name.toTermName, TypeTree(ps.typeSignature), EmptyTree)
-    })
-
-    def findMapping(rawMethods: List[RawMethod], forAsRaw: Boolean): Mapping = {
-      val mappings = rawMethods.flatMap { rawMethod =>
+    def findMapping(rawMethods: List[RawMethod], forAsRaw: Boolean): MethodMapping = {
+      val methodMappings = rawMethods.flatMap { rawMethod =>
         val resultConvTpe = getType(tq"${if (forAsRaw) AsRawCls else AsRealCls}[$resultType,${rawMethod.resultType}]")
 
-        def collectParamConvs(params: List[List[Symbol]]): List[List[TermName]] = params match {
-          case Nil => Nil
-          case Nil :: tail => Nil :: collectParamConvs(tail)
-          case (param :: rest) :: tail =>
-            val paramNameStr = param.name.decodedName.toString
-            val problemClue = s"Problem with parameter $paramNameStr of RPC $nameStr: "
-            if (param.asTerm.isByNameParam) {
-              abortAt(s"${problemClue}encoded RPC parameters cannot be passed by name", param.pos)
-            }
-            val paramTpe = actualParamType(param)
-            val convTpe = getType(tq"${if (forAsRaw) AsRealCls else AsRawCls}[$paramTpe,${rawMethod.paramType}]")
-            val c = inferCachedImplicit(convTpe, problemClue, param.pos)
-            val h :: t = collectParamConvs(rest :: tail)
-            (c :: h) :: t
+        def inferConverter(param: Symbol, encodedType: Type): TermName = {
+          val paramNameStr = param.name.decodedName.toString
+          val problemClue = s"Problem with parameter $paramNameStr of RPC $nameStr: "
+          if (param.asTerm.isByNameParam) {
+            abortAt(s"${problemClue}encoded RPC parameters cannot be passed by name", param.pos)
+          }
+          val paramTpe = actualParamType(param)
+          val convTpe = getType(tq"${if (forAsRaw) AsRealCls else AsRawCls}[$paramTpe,$encodedType]")
+          inferCachedImplicit(convTpe, problemClue, param.pos)
         }
 
-        tryInferCachedImplicit(resultConvTpe)
-          .map(rtc => Mapping(this, rawMethod, collectParamConvs(paramLists), rtc))
+        def collectParamMappings(rawParams: List[Symbol], realParams: List[Symbol]): Option[List[(Symbol, ParamMapping)]] =
+          (rawParams, realParams) match {
+            case (Nil, Nil) => Some(Nil)
+            case (Nil, _) => None
+            case (rawParam :: rest, _) =>
+              val reqAnnotTypes = allAnnotations(rawParam).collect {
+                case annot if annot.tpe <:< AnnotatedWithAnnotTpe =>
+                  annot.tpe.dealias.typeArgs.head
+              }
+
+              val (matchingReals, remainingReals) =
+                if (reqAnnotTypes.nonEmpty)
+                  realParams.partition { realParam =>
+                    val realAnnots = allAnnotations(realParam)
+                    reqAnnotTypes.forall(rat => realAnnots.exists(_.tpe <:< rat))
+                  }
+                else (realParams, Nil)
+
+              collectParamMappings(rest, remainingReals).map { result =>
+                // V from Map[String,V]
+                val encodedType = rawParam.typeSignature.dealias.typeArgs(1)
+                val converters = matchingReals.map(param => (param, inferConverter(param, encodedType)))
+                (rawParam, ParamMapping(converters, encodedType)) :: result
+              }
+          }
+
+        for {
+          resultConv <- tryInferCachedImplicit(resultConvTpe)
+          paramMappings <- collectParamMappings(rawMethod.encodedParams, paramLists.flatten)
+        } yield MethodMapping(this, rawMethod, paramMappings, resultConv)
       }
 
-      mappings match {
+      methodMappings match {
         case List(single) => single
         case Nil => abortAt(s"No raw method matches real $symbol", symbol.pos)
         case multiple => abort(s"Multiple raw methods match real $symbol: ${multiple.map(_.rawMethod.symbol).mkString(", ")}")
@@ -119,44 +152,49 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
-  case class Mapping(realMethod: RealMethod, rawMethod: RawMethod, paramConverters: List[List[TermName]], resultConverter: TermName) {
+  case class ParamMapping(converters: List[(Symbol, TermName)], encodedType: Type)
+
+  case class MethodMapping(realMethod: RealMethod, rawMethod: RawMethod,
+    paramMappings: List[(Symbol, ParamMapping)], resultConverter: TermName) {
+
     def realImpl(rawName: TermName): Tree = {
-      val encodedArgs = (realMethod.paramLists.flatten zip paramConverters.flatten).map {
-        case (param, conv) => q"${rpcNameStr(param)} -> $conv.asRaw(${param.name.toTermName})"
+      val rawParamDefns = paramMappings.map {
+        case (rawParam, ParamMapping(converters, encodedType)) =>
+          val encoded = converters.map { case (param, conv) =>
+            q"${rpcNameStr(param)} -> $conv.asRaw(${param.safeName})"
+          }
+          q"val ${rawParam.safeName} = $MapObj[$StringCls,$encodedType](..$encoded)"
       }
-      val argsName = c.freshName(TermName("args"))
 
       q"""
         def ${realMethod.name}(...${realMethod.paramDecls}): ${realMethod.resultType} = {
-          val $argsName = $MapObj[$StringCls,${rawMethod.paramType}](..$encodedArgs)
-          $resultConverter.asReal($rawName.${rawMethod.name}(${realMethod.rpcName}, $argsName))
+          val ${rawMethod.rpcNameParam.safeName} = ${realMethod.rpcName}
+          ..$rawParamDefns
+          $resultConverter.asReal($rawName.${rawMethod.name}(...${rawMethod.argLists}))
         }
        """
     }
 
     def rawCaseImpl(realName: TermName): CaseDef = {
-      var paramIdx = 0
-      val argDecls = new ListBuffer[Tree]
-      val decodedArgs = (realMethod.paramLists zip paramConverters).map { case (paramList, convList) =>
-        (paramList zip convList).map { case (param, conv) =>
-          paramIdx += 1
-          val paramName = param.name.toTermName
-          val paramRpcName = rpcNameStr(param)
-          val paramValue =
-            if (param.asTerm.isParamWithDefault) {
-              val default = q"$realName.${TermName(s"${realMethod.encodedNameStr}$$default$$$paramIdx")}"
-              q"$RpcPackage.RpcUtils.getArg(args, $paramRpcName, $conv, $default)"
-            }
-            else
-              q"$RpcPackage.RpcUtils.tryGetArg(args, $paramRpcName, $conv, rpcName)"
-          argDecls += q"val $paramName = $paramValue"
-          if (isRepeated(param)) q"$paramName: _*" else q"$paramName"
-        }
+      val argDecls = paramMappings.flatMap {
+        case (rawParam, ParamMapping(converters, _)) =>
+          converters.map { case (realParam, conv) =>
+            val paramRpcName = rpcNameStr(realParam)
+            val paramValue =
+              if (realParam.asTerm.isParamWithDefault) {
+                val default = q"$realName.${TermName(s"${realMethod.encodedNameStr}$$default$$${paramIndex(realParam)}")}"
+                q"$RpcPackage.RpcUtils.getArg(${rawParam.safeName}, $paramRpcName, $conv, $default)"
+              }
+              else
+                q"$RpcPackage.RpcUtils.tryGetArg(${rawParam.safeName}, $paramRpcName, $conv, ${realMethod.rpcName})"
+            q"val ${realParam.safeName} = $paramValue"
+          }
       }
+
       cq"""
         ${realMethod.rpcName} =>
           ..$argDecls
-          $resultConverter.asRaw($realName.${realMethod.name}(...$decodedArgs))
+          $resultConverter.asRaw($realName.${realMethod.name}(...${realMethod.argLists}))
         """
     }
   }

@@ -15,7 +15,9 @@ object RawValue {
 
 trait NewRawRPC {
   def getter(name: String, args: Map[String, RawValue]): NewRawRPC
-  def invoke(name: String, args: Map[String, RawValue]): RawValue
+  def invoke(name: String,
+    @annotatedWith[RPCName] renamedArgs: Map[String,RawValue],
+    args: Map[String, RawValue]): RawValue
   def invokeAsync(name: String, args: Map[String, RawValue]): Future[RawValue]
 }
 
@@ -24,14 +26,14 @@ class EnhancedName(int: Int, name: String) extends AnnotationAggregate {
   type Implied
 }
 trait NamedVarargs {
-  def varargsMethod(@EnhancedName(42, "nejm") ints: Int*): Unit
+  def varargsMethod(krap: String, dubl: Double)(czy: Boolean, @EnhancedName(42, "nejm") ints: Int*): Unit
   def defaultValueMethod(int: Int = 0, bul: Boolean): Unit
   def overload(int: Int): Unit
   def overload: NamedVarargs
 }
 object NamedVarargs {
-  implicit val asReal: AsReal[NamedVarargs, NewRawRPC] = AsReal.forRpc[NamedVarargs, NewRawRPC]
-  implicit val asRaw: AsRaw[NamedVarargs, NewRawRPC] = AsRaw.forRpc[NamedVarargs, NewRawRPC]
+  implicit val asReal: AsReal[NamedVarargs, NewRawRPC] = AsReal.forRpc[NamedVarargs, NewRawRPC].showAst
+  implicit val asRaw: AsRaw[NamedVarargs, NewRawRPC] = AsRaw.forRpc[NamedVarargs, NewRawRPC].showAst
 }
 
 @silent

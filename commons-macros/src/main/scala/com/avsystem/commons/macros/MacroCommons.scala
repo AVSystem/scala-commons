@@ -59,11 +59,11 @@ trait MacroCommons { bundle =>
     registeredImplicits.get(tkey) orElse implicitSearchCache.getOrElseUpdate(tkey, compute).map(_._1)
   }
 
-  def inferCachedImplicit(tpe: Type, clue: String, pos: Position = NoPosition): TermName =
+  def inferCachedImplicit(tpe: Type, clue: String, pos: Position): TermName =
     tryInferCachedImplicit(tpe).getOrElse {
       implicitSearchCache(TypeKey(tpe)) = Some((c.freshName(TermName("")),
         q"$ImplicitsObj.infer[$tpe](${internal.setPos(StringLiteral(clue), pos)})"))
-      inferCachedImplicit(tpe, clue)
+      inferCachedImplicit(tpe, clue, pos)
     }
 
   def registerImplicit(tpe: Type, name: TermName): Unit =
@@ -85,10 +85,16 @@ trait MacroCommons { bundle =>
     }
   }
 
+  private val uniqueNameCache = new mutable.HashMap[Symbol, TermName]
+
   implicit class symbolOps(s: Symbol) {
+    def safeName: TermName = uniqueNameCache.getOrElseUpdate(s, c.freshName(s.name.toTermName))
     def nameStr: String = s.name.decodedName.toString
     def superSymbols: List[Symbol] = bundle.superSymbols(s)
   }
+
+  def paramIndex(param: Symbol): Int =
+    param.owner.typeSignature.paramLists.flatten.indexOf(param) + 1
 
   def superSymbols(s: Symbol): List[Symbol] = s match {
     case cs: ClassSymbol => cs.baseClasses
