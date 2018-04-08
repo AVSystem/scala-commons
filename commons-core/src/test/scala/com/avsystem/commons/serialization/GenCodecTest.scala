@@ -27,9 +27,11 @@ object SealedBase {
   implicit val codec: GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
 }
 
-@outOfOrder
-@name("_id")
-class mongoId extends AnnotationAggregate
+class mongoId extends AnnotationAggregate {
+  @outOfOrder
+  @name("_id")
+  type Implied
+}
 
 @flatten sealed trait FlatSealedBase {
   @mongoId def id: String

@@ -18,11 +18,11 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   val AsRawCls = tq"$RpcPackage.AsRaw"
 
   def rpcNameStr(sym: Symbol): String = allAnnotations(sym)
-    .find(_.tree.tpe <:< RPCNameType)
+    .find(_.tpe <:< RPCNameType)
     .map { annot =>
-      findAnnotationArg(annot.tree, RPCNameNameSym) match {
+      findAnnotationArg(annot, RPCNameNameSym) match {
         case StringLiteral(name) => name
-        case _ => c.abort(annot.tree.pos, "The `name` argument of @RPCName must be a string literal.")
+        case p => c.abort(p.pos, "The `name` argument of @RPCName must be a string literal.")
       }
     }.getOrElse(sym.nameStr)
 

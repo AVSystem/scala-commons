@@ -86,7 +86,6 @@ trait MacroCommons { bundle =>
 
   implicit class symbolOps(s: Symbol) {
     def nameStr: String = s.name.decodedName.toString
-    def allAnnotations: List[Annotation] = bundle.allAnnotations(s)
     def superSymbols: List[Symbol] = bundle.superSymbols(s)
   }
 
@@ -101,18 +100,51 @@ trait MacroCommons { bundle =>
     case _ => List(s)
   }
 
-  def aggregatedAnnotations(s: Symbol): List[Annotation] =
-    s.annotations.flatMap { annot =>
-      val annotTpe = annot.tree.tpe
-      val tail =
-        if (annotTpe <:< AnnotationAggregateType)
-          allAnnotations(annotTpe.dealias.typeSymbol)
-        else Nil
-      annot :: tail
+  def primaryConstructorOf(tpe: Type) =
+    alternatives(tpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor)
+      .getOrElse(abort(s"No primary constructor found for $tpe"))
+
+  class AnnotationArgInliner(baseAnnot: Tree) extends Transformer {
+    private val argsByName: Map[Name, Tree] = {
+      val Apply(_, args) = baseAnnot
+      val paramNames = primaryConstructorOf(baseAnnot.tpe).typeSignature.paramLists.head.map(_.name)
+      (paramNames zip args).toMap
     }
 
-  def allAnnotations(s: Symbol): List[Annotation] =
-    superSymbols(s).flatMap(aggregatedAnnotations)
+    override def transform(tree: Tree): Tree = tree match {
+      case Select(th@This(_), name) if th.symbol == baseAnnot.tpe.typeSymbol
+        && tree.symbol.asTerm.isParamAccessor =>
+        argsByName.get(name).map(_.duplicate).getOrElse(tree)
+      case _ => super.transform(tree)
+    }
+  }
+
+  def aggregatedAnnotations(annot: Tree): List[Tree] = {
+    val annotTpe = annot.tpe
+    if (annotTpe <:< AnnotationAggregateType) {
+      val argsInliner = new AnnotationArgInliner(annot)
+      annotTpe.member(TypeName("Implied")).annotations
+        .map(a => argsInliner.transform(a.tree))
+        .flatMap(t => t :: aggregatedAnnotations(t))
+    } else Nil
+  }
+
+  def allAnnotations(s: Symbol): List[Tree] =
+    superSymbols(s).flatMap(_.annotations).flatMap(a => a.tree :: aggregatedAnnotations(a.tree))
+
+  def findAnnotationArg(constrCall: Tree, valSym: Symbol): Tree = constrCall match {
+    case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
+      val clsTpe = tpt.tpe
+      val params = primaryConstructorOf(clsTpe).typeSignature.paramLists.head
+      ensure(params.size == args.size, s"Not a primary constructor call tree: $constrCall")
+      val subSym = clsTpe.member(valSym.name)
+      ensure(subSym.isTerm && subSym.asTerm.isParamAccessor && (subSym :: subSym.overrides).contains(valSym),
+        s"Annotation $clsTpe must override $valSym with a constructor parameter")
+      (params zip args)
+        .collectFirst { case (param, arg) if param.name == subSym.name => arg }
+        .getOrElse(abort(s"Could not find argument corresponding to constructor parameter ${subSym.name}"))
+    case _ => abort(s"Not a primary constructor call tree: $constrCall")
+  }
 
   def abort(msg: String) =
     c.abort(c.enclosingPosition, msg)
@@ -374,22 +406,6 @@ trait MacroCommons { bundle =>
 
   def hasMemberWithSig(tpe: Type, name: Name, suchThat: Type => Boolean): Boolean =
     alternatives(tpe.member(name)).exists(sym => suchThat(sym.typeSignatureIn(tpe)))
-
-  def findAnnotationArg(constrCall: Tree, valSym: Symbol): Tree = constrCall match {
-    case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
-      val clsTpe = tpt.tpe
-      val primaryConstrSym = alternatives(clsTpe.member(termNames.CONSTRUCTOR))
-        .find(_.asMethod.isPrimaryConstructor).getOrElse(abort(s"No primary constructor found on $clsTpe"))
-      val params = primaryConstrSym.typeSignature.paramLists.head
-      ensure(params.size == args.size, s"Not a primary constructor call tree: $constrCall")
-      val subSym = clsTpe.member(valSym.name)
-      ensure(subSym.isTerm && subSym.asTerm.isParamAccessor && (subSym :: subSym.overrides).contains(valSym),
-        s"Annotation $clsTpe must override $valSym with a constructor parameter")
-      (params zip args)
-        .collectFirst { case (param, arg) if param.name == subSym.name => arg }
-        .getOrElse(abort(s"Could not find argument corresponding to constructor parameter ${subSym.name}"))
-    case _ => abort(s"Not a primary constructor call tree: $constrCall")
-  }
 
   object SingleParamList {
     def unapply(paramLists: List[List[Symbol]]): Option[List[Symbol]] = paramLists match {

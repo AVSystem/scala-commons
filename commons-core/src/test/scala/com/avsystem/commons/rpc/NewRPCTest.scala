@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.serialization.GenCodec
 import com.github.ghik.silencer.silent
 
@@ -18,14 +19,19 @@ trait NewRawRPC {
   def invokeAsync(name: String, args: Map[String, RawValue]): Future[RawValue]
 }
 
-class EnhancedName(int: Int, override val name: String) extends RPCName(name)
+class EnhancedName(int: Int, name: String) extends AnnotationAggregate {
+  @RPCName(name)
+  type Implied
+}
 trait NamedVarargs {
   def varargsMethod(@EnhancedName(42, "nejm") ints: Int*): Unit
   def defaultValueMethod(int: Int = 0, bul: Boolean): Unit
+  def overload(int: Int): Unit
+  def overload: NamedVarargs
 }
 object NamedVarargs {
-  implicit val asReal: AsReal[NamedVarargs, NewRawRPC] = AsReal.forRpc[NamedVarargs, NewRawRPC].showAst
-  implicit val asRaw: AsRaw[NamedVarargs, NewRawRPC] = AsRaw.forRpc[NamedVarargs, NewRawRPC].showAst
+  implicit val asReal: AsReal[NamedVarargs, NewRawRPC] = AsReal.forRpc[NamedVarargs, NewRawRPC]
+  implicit val asRaw: AsRaw[NamedVarargs, NewRawRPC] = AsRaw.forRpc[NamedVarargs, NewRawRPC]
 }
 
 @silent

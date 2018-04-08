@@ -35,14 +35,8 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
   lazy val RawRPCSym = RawRPCType.typeSymbol
   lazy val RPCCompanionSym = RPCFrameworkType.member(TypeName("RPCCompanion"))
 
-  def allAnnotations(tpe: Type): List[Annotation] = {
-    val ts = tpe.typeSymbol
-    if (ts.isClass) allAnnotations(ts)
-    else Nil
-  }
-
   def hasRpcAnnot(tpe: Type) =
-    allAnnotations(tpe).exists(_.tree.tpe <:< RPCType)
+    allAnnotations(tpe.typeSymbol).exists(_.tpe <:< RPCType)
 
   case class Variant(rawMethod: MethodSymbol, returnType: Type)
 
@@ -72,10 +66,11 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
     val typeParams = signature.typeParams
     val paramLists = signature.paramLists
 
-    val rpcName = allAnnotations(method).find(_.tree.tpe <:< RPCNameType).map { annot =>
-      annot.tree.children.tail match {
+    val rpcName = allAnnotations(method).find(_.tpe <:< RPCNameType).map { annot =>
+      annot.children.tail match {
         case List(StringLiteral(name)) => TermName(name)
-        case _ => c.abort(annot.tree.pos, "The argument of @RPCName must be a string literal.")
+        case p :: _ => c.abort(p.pos, "The argument of @RPCName must be a string literal.")
+        case _ => c.abort(annot.pos, "No name argument found in @RPCName annotation")
       }
     }.getOrElse(method.name)
 
@@ -238,9 +233,9 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
 
   def materializeMetadata(rpcTpe: Type, proxyables: List[ProxyableMember]): Tree = {
     def reifyAnnotations(s: Symbol) = {
-      val trees = allAnnotations(s).iterator.map(_.tree).collect {
+      val trees = allAnnotations(s).collect {
         case tree if tree.tpe <:< MetadataAnnotationType => c.untypecheck(tree)
-      }.toList
+      }
       q"$ListObj(..$trees)"
     }
 

@@ -33,9 +33,9 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   def tupleGet(i: Int) = TermName(s"_${i + 1}")
 
   def targetName(sym: Symbol): String =
-    getAnnotations(sym, NameAnnotType).headOption.map(_.tree.children.tail).map {
+    getAnnotations(sym, NameAnnotType).headOption.map(_.children.tail).map {
       case StringLiteral(str) :: _ => str
-      case param :: _ => c.abort(param.pos, s"@name argument must be a string literal")
+      case p :: _ => c.abort(p.pos, s"@name argument must be a string literal")
     }.getOrElse(sym.name.decodedName.toString)
 
   def caseAccessorFor(sym: Symbol): Symbol =
@@ -53,13 +53,14 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
       else List(sym)
     } else List(sym)
 
-  def getAnnotations(sym: Symbol, annotTpe: Type): List[Annotation] = {
+  def getAnnotations(sym: Symbol, annotTpe: Type): List[Tree] = {
     val caseAccessor = caseAccessorFor(sym)
     val syms =
       if (caseAccessor != NoSymbol) sym :: caseAccessor :: caseAccessor.overrides
       else if (sym.isClass) sym.asClass.baseClasses
       else sym :: sym.overrides
-    syms.flatMap(s => withAccessed(s).flatMap(s => aggregatedAnnotations(s).filter(_.tree.tpe <:< annotTpe)))
+    syms.flatMap(s => withAccessed(s).flatMap(s =>
+      s.annotations.flatMap(a => a.tree :: aggregatedAnnotations(a.tree)).filter(_.tpe <:< annotTpe)))
   }
 
   def hasAnnotation(sym: Symbol, annotTpe: Type): Boolean =

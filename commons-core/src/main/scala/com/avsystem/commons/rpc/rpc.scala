@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package rpc
 
+import scala.annotation.StaticAnnotation
+
 trait AsRaw[T, R] {
   def asRaw(real: T): R
 }
@@ -14,3 +16,5 @@ trait AsReal[T, R] {
 object AsReal {
   def forRpc[T, R]: AsReal[T, R] = macro macros.rpc.RPCMacros.rpcAsReal[T, R]
 }
+
+class annotatedWith[T <: StaticAnnotation] extends StaticAnnotation
