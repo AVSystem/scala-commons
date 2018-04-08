@@ -18,13 +18,13 @@ trait NewRawRPC {
   def invokeAsync(name: String, args: Map[String, RawValue]): Future[RawValue]
 }
 
+class EnhancedName(int: Int, override val name: String) extends RPCName(name)
 trait NamedVarargs {
-  def namedArgMethod(int: => Int): Unit
-  def varargsMethod(ints: Int*): Unit
-  def defaultValueMethod(int: Int = 0): Unit
+  def varargsMethod(@EnhancedName(42, "nejm") ints: Int*): Unit
+  def defaultValueMethod(int: Int = 0, bul: Boolean): Unit
 }
 object NamedVarargs {
-  implicit val asReal: AsReal[NamedVarargs, NewRawRPC] = AsReal.forRpc[NamedVarargs, NewRawRPC]
+  implicit val asReal: AsReal[NamedVarargs, NewRawRPC] = AsReal.forRpc[NamedVarargs, NewRawRPC].showAst
   implicit val asRaw: AsRaw[NamedVarargs, NewRawRPC] = AsRaw.forRpc[NamedVarargs, NewRawRPC].showAst
 }
 

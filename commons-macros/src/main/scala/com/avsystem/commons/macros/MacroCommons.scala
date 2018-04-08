@@ -4,7 +4,7 @@ package macros
 import scala.collection.mutable
 import scala.reflect.macros.{TypecheckException, blackbox}
 
-trait MacroCommons {
+trait MacroCommons { bundle =>
   val c: blackbox.Context
 
   import c.universe._
@@ -84,6 +84,12 @@ trait MacroCommons {
     }
   }
 
+  implicit class symbolOps(s: Symbol) {
+    def nameStr: String = s.name.decodedName.toString
+    def allAnnotations: List[Annotation] = bundle.allAnnotations(s)
+    def superSymbols: List[Symbol] = bundle.superSymbols(s)
+  }
+
   def superSymbols(s: Symbol): List[Symbol] = s match {
     case cs: ClassSymbol => cs.baseClasses
     case ms: MethodSymbol => ms :: ms.overrides
@@ -130,7 +136,7 @@ trait MacroCommons {
       case TypeKey(otherTpe) => tpe =:= otherTpe
       case _ => false
     }
-    override lazy val hashCode = {
+    override lazy val hashCode: Int = {
       val dealiased = tpe.map(_.dealias)
       val innerSymbols = new mutable.HashSet[Symbol]
 
@@ -222,6 +228,23 @@ trait MacroCommons {
         if tree.tpe <:< typeOf[PartialFunction[Nothing, Any]] =>
         Some(cases)
       case _ => None
+    }
+  }
+
+  object MaybeTypeApply {
+    def unapply(tree: Tree): Some[(Tree, List[Tree])] = tree match {
+      case TypeApply(fun, args) => Some((fun, args))
+      case _ => Some((tree, Nil))
+    }
+  }
+
+  object MultiApply {
+    def unapply(tree: Tree): Some[(Tree, List[List[Tree]])] = {
+      def collect(tree: Tree, argLists: List[List[Tree]]): (Tree, List[List[Tree]]) = tree match {
+        case Apply(fun, args) => collect(fun, args :: argLists)
+        case fun => (fun, argLists)
+      }
+      Some(collect(tree, Nil))
     }
   }
 
@@ -329,9 +352,8 @@ trait MacroCommons {
     case _ => tpe
   }
 
-  def isVarargs(meth: Symbol): Boolean =
-    meth.typeSignature.paramLists.headOption.flatMap(_.lastOption)
-      .exists(_.typeSignature.typeSymbol == definitions.RepeatedParamClass)
+  def isFirstListVarargs(meth: Symbol): Boolean =
+    meth.typeSignature.paramLists.headOption.flatMap(_.lastOption).exists(isRepeated)
 
   def actualParamType(param: Symbol): Type =
     actualParamType(param.typeSignature)
@@ -352,6 +374,22 @@ trait MacroCommons {
 
   def hasMemberWithSig(tpe: Type, name: Name, suchThat: Type => Boolean): Boolean =
     alternatives(tpe.member(name)).exists(sym => suchThat(sym.typeSignatureIn(tpe)))
+
+  def findAnnotationArg(constrCall: Tree, valSym: Symbol): Tree = constrCall match {
+    case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
+      val clsTpe = tpt.tpe
+      val primaryConstrSym = alternatives(clsTpe.member(termNames.CONSTRUCTOR))
+        .find(_.asMethod.isPrimaryConstructor).getOrElse(abort(s"No primary constructor found on $clsTpe"))
+      val params = primaryConstrSym.typeSignature.paramLists.head
+      ensure(params.size == args.size, s"Not a primary constructor call tree: $constrCall")
+      val subSym = clsTpe.member(valSym.name)
+      ensure(subSym.isTerm && subSym.asTerm.isParamAccessor && (subSym :: subSym.overrides).contains(valSym),
+        s"Annotation $clsTpe must override $valSym with a constructor parameter")
+      (params zip args)
+        .collectFirst { case (param, arg) if param.name == subSym.name => arg }
+        .getOrElse(abort(s"Could not find argument corresponding to constructor parameter ${subSym.name}"))
+    case _ => abort(s"Not a primary constructor call tree: $constrCall")
+  }
 
   object SingleParamList {
     def unapply(paramLists: List[List[Symbol]]): Option[List[Symbol]] = paramLists match {
@@ -424,7 +462,7 @@ trait MacroCommons {
 
     val applyUnapplyPairs = for {
       apply <- alternatives(companion.tpe.member(TermName("apply")))
-      unapplyName = if (isVarargs(apply)) "unapplySeq" else "unapply"
+      unapplyName = if (isFirstListVarargs(apply)) "unapplySeq" else "unapply"
       unapply <- alternatives(companion.tpe.member(TermName(unapplyName)))
     } yield (apply, unapply)
 
@@ -499,7 +537,7 @@ trait MacroCommons {
     case t => t
   }
 
-  def isSealedHierarchyRoot(sym: Symbol) =
+  def isSealedHierarchyRoot(sym: Symbol): Boolean =
     sym.isClass && sym.isAbstract && sym.asClass.isSealed
 
   def knownNonAbstractSubclasses(sym: Symbol): Set[Symbol] =
