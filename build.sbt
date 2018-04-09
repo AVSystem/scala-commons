@@ -85,6 +85,7 @@ val commonSettings = Seq(
     "com.github.ghik" %% "silencer-lib" % silencerVersion % Optional,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
+    "org.mockito" % "mockito-core" % mockitoVersion % Test,
   ),
   dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
   ideBasePackages := Seq(organization.value),
@@ -323,6 +324,5 @@ lazy val `commons-akka` = project
       "com.typesafe.akka" %% "akka-remote" % akkaVersion,
       "io.monix" %% "monix" % monixVersion,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
-      "org.mockito" % "mockito-core" % mockitoVersion % Test,
     ),
   )
