@@ -55,7 +55,7 @@ class SimpleValueOutput(consumer: Any => Unit) extends Output {
   def writeBoolean(boolean: Boolean) = consumer(boolean)
 
   def writeObject() = new ObjectOutput {
-    private val result = new mutable.LinkedHashMap[String, Any]
+    private val result = new mutable.HashMap[String, Any]
     def writeField(key: String) = new SimpleValueOutput(v => result += ((key, v)))
     def finish() = consumer(result)
   }
@@ -95,10 +95,12 @@ class SimpleValueInput(value: Any) extends Input {
   def readNull() = if (value == null) null else throw new ReadFailure("not null")
   def readObject() =
     new ObjectInput {
-      private val it = doRead[BMap[String, Any]].iterator.map {
+      private val map = doRead[BMap[String, Any]]
+      private val it = map.iterator.map {
         case (k, v) => new SimpleValueFieldInput(k, v)
       }
       def nextField() = it.next()
+      override def peekField(name: String) = map.getOpt(name).map(new SimpleValueFieldInput(name, _))
       def hasNext = it.hasNext
     }
 

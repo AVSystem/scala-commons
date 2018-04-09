@@ -70,10 +70,10 @@ class GenCodecTest extends CodecTestBase {
     testWriteReadAndAutoWriteRead[JSortedSet[Int]](jTreeSet, List(1, 2, 3))
     testWriteReadAndAutoWriteRead[JNavigableSet[Int]](jTreeSet, List(1, 2, 3))
     testWriteReadAndAutoWriteRead[JTreeSet[Int]](jTreeSet, List(1, 2, 3))
-    testWriteReadAndAutoWriteRead[JMap[String, Int]](jHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteReadAndAutoWriteRead[JHashMap[String, Int]](jHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteReadAndAutoWriteRead[JLinkedHashMap[String, Int]](jLinkedHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
-    testWriteReadAndAutoWriteRead[JHashMap[Int, Int]](jIntHashMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JMap[String, Int]](jHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JHashMap[String, Int]](jHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JLinkedHashMap[String, Int]](jLinkedHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[JHashMap[Int, Int]](jIntHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
   }
 
   test("NoState test") {
@@ -83,12 +83,12 @@ class GenCodecTest extends CodecTestBase {
 
   test("collections and wrappers test") {
     testWriteReadAndAutoWriteRead[Option[Int]](option, List(42))
-    testWriteReadAndAutoWriteRead[Either[Int, String]](Left(42), ListMap("Left" -> 42))
-    testWriteReadAndAutoWriteRead[Either[Int, String]](Right("lol"), ListMap("Right" -> "lol"))
+    testWriteReadAndAutoWriteRead[Either[Int, String]](Left(42), Map("Left" -> 42))
+    testWriteReadAndAutoWriteRead[Either[Int, String]](Right("lol"), Map("Right" -> "lol"))
     testWriteReadAndAutoWriteRead[List[Int]](list, list)
     testWriteReadAndAutoWriteRead[Set[Int]](set, set.toList)
     testWriteReadAndAutoWriteRead[Map[String, Int]](map, map)
-    testWriteReadAndAutoWriteRead[Map[Int, Int]](intMap, ListMap("1" -> 1, "2" -> 2, "3" -> 3))
+    testWriteReadAndAutoWriteRead[Map[Int, Int]](intMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
     testWriteReadAndAutoWriteRead[IHashMap[String, Int]](hashMap, hashMap)
   }
 
@@ -122,7 +122,7 @@ class GenCodecTest extends CodecTestBase {
   object SingleArgCaseClass extends HasGenCodec[SingleArgCaseClass]
 
   test("single arg case class test") {
-    testWriteReadAndAutoWriteRead(SingleArgCaseClass("something"), ListMap("str" -> "something"))
+    testWriteReadAndAutoWriteRead(SingleArgCaseClass("something"), Map("str" -> "something"))
   }
 
   @transparent
@@ -149,7 +149,7 @@ class GenCodecTest extends CodecTestBase {
 
   test("case class test") {
     testWriteReadAndAutoWriteRead(SomeCaseClass("dafuq", List(1, 2, 3)),
-      ListMap("some.str" -> "dafuq", "intList" -> List(1, 2, 3), "someStrLen" -> 5)
+      Map("some.str" -> "dafuq", "intList" -> List(1, 2, 3), "someStrLen" -> 5)
     )
   }
 
@@ -166,7 +166,7 @@ class GenCodecTest extends CodecTestBase {
   }
 
   test("case class with wildcard test") {
-    testWriteReadAndAutoWriteRead(CaseClassWithWildcard(Stuff("lol")), ListMap("stuff" -> "lol"))
+    testWriteReadAndAutoWriteRead(CaseClassWithWildcard(Stuff("lol")), Map("stuff" -> "lol"))
   }
 
   class CaseClassLike(val str: String, val intList: List[Int])
@@ -179,7 +179,7 @@ class GenCodecTest extends CodecTestBase {
 
   test("case class like test") {
     testWriteReadAndAutoWriteRead(CaseClassLike("dafuq", List(1, 2, 3)),
-      ListMap("some.str" -> "dafuq", "intList" -> List(1, 2, 3))
+      Map("some.str" -> "dafuq", "intList" -> List(1, 2, 3))
     )
   }
 
@@ -199,7 +199,7 @@ class GenCodecTest extends CodecTestBase {
 
   test("case class like with inherited apply/unapply test") {
     testWriteReadAndAutoWriteRead(HasInheritedApply("dafuq", List(1, 2, 3)),
-      ListMap("a" -> "dafuq", "lb" -> List(1, 2, 3))
+      Map("a" -> "dafuq", "lb" -> List(1, 2, 3))
     )
   }
 
@@ -212,7 +212,7 @@ class GenCodecTest extends CodecTestBase {
   test("apply/unapply provider based codec test") {
     implicit val tpCodec: GenCodec[ThirdParty] = GenCodec.fromApplyUnapplyProvider[ThirdParty](ThirdPartyFakeCompanion)
     testWriteReadAndAutoWriteRead(ThirdParty(42, "lol"),
-      ListMap("str" -> "lol", "int" -> 42)
+      Map("str" -> "lol", "int" -> 42)
     )
   }
 
@@ -223,7 +223,7 @@ class GenCodecTest extends CodecTestBase {
 
   test("varargs case class test") {
     testWriteReadAndAutoWriteRead(VarargsCaseClass(42, "foo", "bar"),
-      ListMap("int" -> 42, "strings" -> List("foo", "bar"))
+      Map("int" -> 42, "strings" -> List("foo", "bar"))
     )
   }
 
@@ -237,7 +237,7 @@ class GenCodecTest extends CodecTestBase {
 
   test("varargs case class like test") {
     testWriteReadAndAutoWriteRead(VarargsCaseClassLike("dafuq", 1, 2, 3),
-      ListMap("some.str" -> "dafuq", "ints" -> List(1, 2, 3))
+      Map("some.str" -> "dafuq", "ints" -> List(1, 2, 3))
     )
   }
 
@@ -247,9 +247,9 @@ class GenCodecTest extends CodecTestBase {
   }
 
   test("case class with default values test") {
-    testWriteReadAndAutoWriteRead(HasDefaults(str = "lol"), ListMap("str" -> "lol"))
-    testWriteReadAndAutoWriteRead(HasDefaults(43, "lol"), ListMap("int" -> 43, "str" -> "lol"))
-    testWriteReadAndAutoWriteRead(HasDefaults(str = null), ListMap("str" -> null))
+    testWriteReadAndAutoWriteRead(HasDefaults(str = "lol"), Map("str" -> "lol"))
+    testWriteReadAndAutoWriteRead(HasDefaults(43, "lol"), Map("int" -> 43, "str" -> "lol"))
+    testWriteReadAndAutoWriteRead(HasDefaults(str = null), Map("str" -> null))
   }
 
   case class Node[T](value: T, children: List[Node[T]] = Nil)
@@ -287,41 +287,47 @@ class GenCodecTest extends CodecTestBase {
   }
 
   test("recursively defined sealed hierarchy with explicit case class codec test") {
-    testWriteReadAndAutoWriteRead[CustomList](CustomTail, ListMap("CustomTail" -> Map()))
+    testWriteReadAndAutoWriteRead[CustomList](CustomTail, Map("CustomTail" -> Map()))
     testWriteReadAndAutoWriteRead[CustomList](CustomCons(CustomCons(CustomTail)),
-      ListMap("CustomCons" -> ListMap("CustomCons" -> ListMap("CustomTail" -> Map()))))
+      Map("CustomCons" -> Map("CustomCons" -> Map("CustomTail" -> Map()))))
   }
 
   test("value class test") {
-    testWriteReadAndAutoWriteRead(ValueClass("costam"), ListMap("str" -> "costam"))
+    testWriteReadAndAutoWriteRead(ValueClass("costam"), Map("str" -> "costam"))
   }
 
   test("sealed hierarchy test") {
     testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseObject,
-      ListMap("CaseObject" -> Map()))
+      Map("CaseObject" -> Map()))
     testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseClass("fuu"),
-      ListMap("CaseClass" -> ListMap("str" -> "fuu")))
+      Map("CaseClass" -> Map("str" -> "fuu")))
     testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseObject,
-      ListMap("InnerCaseObject" -> Map()))
+      Map("InnerCaseObject" -> Map()))
     testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"),
-      ListMap("InnerCaseClass" -> ListMap("str" -> "fuu")))
+      Map("InnerCaseClass" -> Map("str" -> "fuu")))
   }
 
   test("flat sealed hierarchy test") {
     testWriteReadAndAutoWriteRead[FlatSealedBase](FlatSealedBase.FirstCase("fuu", 42),
-      ListMap("_case" -> "FirstCase", "_id" -> "fuu", "int" -> 42, "upper_id" -> "FUU"))
+      Map("_case" -> "FirstCase", "_id" -> "fuu", "int" -> 42, "upper_id" -> "FUU"))
     testWriteReadAndAutoWriteRead[FlatSealedBase](FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0),
-      ListMap("_case" -> "SecondCase", "_id" -> "bar", "dbl" -> 3.14, "moar" -> List(1.0, 2.0), "upper_id" -> "BAR"))
+      Map("_case" -> "SecondCase", "_id" -> "bar", "dbl" -> 3.14, "moar" -> List(1.0, 2.0), "upper_id" -> "BAR"))
     testWriteReadAndAutoWriteRead[FlatSealedBase](FlatSealedBase.ThirdCase,
-      ListMap("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD"))
+      Map("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD"))
+  }
+
+  test("random field access dependent flat sealed hierarchy reading test") {
+    testReadAndAutoRead[FlatSealedBase](
+      ListMap("_id" -> "fuu", "int" -> 42, "upper_id" -> "FUU", "_case" -> "FirstCase"),
+      FlatSealedBase.FirstCase("fuu", 42))
   }
 
   test("out of order field in flat sealed hierarchy test") {
     testReadAndAutoRead[FlatSealedBase](
-      ListMap("_id" -> "fuu", "upper_id" -> "FUU", "random" -> 13, "_case" -> "FirstCase", "int" -> 42),
+      Map("_id" -> "fuu", "upper_id" -> "FUU", "random" -> 13, "_case" -> "FirstCase", "int" -> 42),
       FlatSealedBase.FirstCase("fuu", 42))
     testReadAndAutoRead[FlatSealedBase](
-      ListMap("_id" -> "bar", "upper_id" -> "FUU", "random" -> 13, "_case" -> "SecondCase", "dbl" -> 3.14, "moar" -> List(1.0, 2.0)),
+      Map("_id" -> "bar", "upper_id" -> "FUU", "random" -> 13, "_case" -> "SecondCase", "dbl" -> 3.14, "moar" -> List(1.0, 2.0)),
       FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0))
   }
 
@@ -342,10 +348,10 @@ class GenCodecTest extends CodecTestBase {
   }
 
   test("GADT test") {
-    testWriteReadAndAutoWriteRead[Expr[_]](NullExpr, ListMap("NullExpr" -> Map()))
-    testWriteReadAndAutoWriteRead[Expr[_]](StringExpr("stringzor"), ListMap("StringExpr" -> ListMap("str" -> "stringzor")))
-    testWriteReadAndAutoWriteRead[Expr[String]](StringExpr("stringzor"), ListMap("StringExpr" -> ListMap("str" -> "stringzor")))
-    testWriteReadAndAutoWriteRead[BaseExpr](StringExpr("stringzor"), ListMap("StringExpr" -> ListMap("str" -> "stringzor")))
+    testWriteReadAndAutoWriteRead[Expr[_]](NullExpr, Map("NullExpr" -> Map()))
+    testWriteReadAndAutoWriteRead[Expr[_]](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
+    testWriteReadAndAutoWriteRead[Expr[String]](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
+    testWriteReadAndAutoWriteRead[BaseExpr](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
   }
 
   sealed trait Tree[T]
@@ -370,11 +376,11 @@ class GenCodecTest extends CodecTestBase {
           Leaf(3)
         )
       ),
-      ListMap("Branch" -> Map(
-        "left" -> ListMap("Leaf" -> ListMap("value" -> 1)),
-        "right" -> ListMap("Branch" -> Map(
-          "left" -> ListMap("Leaf" -> ListMap("value" -> 2)),
-          "right" -> ListMap("Leaf" -> ListMap("value" -> 3))
+      Map("Branch" -> Map(
+        "left" -> Map("Leaf" -> Map("value" -> 1)),
+        "right" -> Map("Branch" -> Map(
+          "left" -> Map("Leaf" -> Map("value" -> 2)),
+          "right" -> Map("Leaf" -> Map("value" -> 3))
         ))
       ))
     )
@@ -391,9 +397,9 @@ class GenCodecTest extends CodecTestBase {
   }
 
   test("sealed enum test") {
-    testWriteReadAndAutoWriteRead[Enumz](Enumz.First, ListMap("Primary" -> Map()))
-    testWriteReadAndAutoWriteRead[Enumz](Enumz.Second, ListMap("Second" -> Map()))
-    testWriteReadAndAutoWriteRead[Enumz](Enumz.Third, ListMap("Third" -> Map()))
+    testWriteReadAndAutoWriteRead[Enumz](Enumz.First, Map("Primary" -> Map()))
+    testWriteReadAndAutoWriteRead[Enumz](Enumz.Second, Map("Second" -> Map()))
+    testWriteReadAndAutoWriteRead[Enumz](Enumz.Third, Map("Third" -> Map()))
   }
 
   sealed trait KeyEnumz

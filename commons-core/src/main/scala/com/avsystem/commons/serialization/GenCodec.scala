@@ -142,6 +142,12 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   def createNonNullList[T](readFun: ListInput => T, writeFun: (ListOutput, T) => Any) =
     createList(readFun, writeFun, allowNull = false)
 
+  /**
+    * Helper method to manually implement a `GenCodec` that writes an object. NOTE: in most cases the easiest way to
+    * have a custom object codec is to manually implement `apply` and `unapply`/`unapplySeq` methods in companion object
+    * of your type or use [[fromApplyUnapplyProvider]] if the type comes from a third party code and you can't
+    * modify its companion object.
+    */
   def createObject[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any, allowNull: Boolean) =
     new ObjectCodec[T] {
       def nullable = allowNull
@@ -214,6 +220,11 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     }
   }
 
+  /**
+    * Convenience base class for `GenCodec`s that serialize values as objects.
+    * NOTE: if you need to implement a custom `GenCodec` that writes an object, the best way to do it is to have
+    * manually implemented `apply` and `unapply` in companion object or by using [[GenCodec.fromApplyUnapplyProvider]].
+    */
   trait ObjectCodec[T] extends NullSafeCodec[T] {
     def readObject(input: ObjectInput): T
     def writeObject(output: ObjectOutput, value: T): Unit

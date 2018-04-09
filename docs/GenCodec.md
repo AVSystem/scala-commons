@@ -9,30 +9,32 @@ serialization libraries like [Circe](https://circe.github.io/circe/) or [uPickle
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Table of Contents  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [`GenCodec`](#gencodec)
-  - [`GenCodec` typeclass](#gencodec-typeclass)
-  - [Codecs available by default](#codecs-available-by-default)
-  - [`GenKeyCodec`](#genkeycodec)
-  - [Serializing and deserializing examples](#serializing-and-deserializing-examples)
-  - [Making your own types serializable](#making-your-own-types-serializable)
-  - [Simple types](#simple-types)
-  - [Case classes](#case-classes)
-      - [Safe evolution and refactoring - summary](#safe-evolution-and-refactoring---summary)
-    - [Case class like types](#case-class-like-types)
-  - [Singletons](#singletons)
-  - [Sealed hierarchies](#sealed-hierarchies)
-    - [Nested format](#nested-format)
-    - [Flat format](#flat-format)
-    - [Customizing sealed hierarchy codecs](#customizing-sealed-hierarchy-codecs)
-    - [Nested vs flat format](#nested-vs-flat-format)
-  - [Third party classes](#third-party-classes)
-  - [Summary](#summary)
-    - [Codec dependencies](#codec-dependencies)
-    - [Types supported by automatic materialization](#types-supported-by-automatic-materialization)
-    - [Recursive types, generic types and GADTs (generalized algebraic data types)](#recursive-types-generic-types-and-gadts-generalized-algebraic-data-types)
-    - [Customizing annotations](#customizing-annotations)
-    - [Safely introducing changes to serialized classes (retaining backwards compatibility)](#safely-introducing-changes-to-serialized-classes-retaining-backwards-compatibility)
-  - [Performance](#performance)
+- [`GenCodec` typeclass](#gencodec-typeclass)
+  - [Writing *lists* and *objects*](#writing-lists-and-objects)
+    - [Object field order](#object-field-order)
+  - [Implementations of `Input` and `Output` available by default](#implementations-of-input-and-output-available-by-default)
+- [Codecs available by default](#codecs-available-by-default)
+- [`GenKeyCodec`](#genkeycodec)
+- [Serializing and deserializing examples](#serializing-and-deserializing-examples)
+- [Making your own types serializable](#making-your-own-types-serializable)
+- [Simple types](#simple-types)
+- [Case classes](#case-classes)
+    - [Safe evolution and refactoring - summary](#safe-evolution-and-refactoring---summary)
+  - [Case class like types](#case-class-like-types)
+- [Singletons](#singletons)
+- [Sealed hierarchies](#sealed-hierarchies)
+  - [Nested format](#nested-format)
+  - [Flat format](#flat-format)
+  - [Customizing sealed hierarchy codecs](#customizing-sealed-hierarchy-codecs)
+  - [Nested vs flat format](#nested-vs-flat-format)
+- [Third party classes](#third-party-classes)
+- [Summary](#summary)
+  - [Codec dependencies](#codec-dependencies)
+  - [Types supported by automatic materialization](#types-supported-by-automatic-materialization)
+  - [Recursive types, generic types and GADTs (generalized algebraic data types)](#recursive-types-generic-types-and-gadts-generalized-algebraic-data-types)
+  - [Customizing annotations](#customizing-annotations)
+  - [Safely introducing changes to serialized classes (retaining backwards compatibility)](#safely-introducing-changes-to-serialized-classes-retaining-backwards-compatibility)
+- [Performance](#performance)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -64,12 +66,50 @@ bound to any format. It only depends on the fact that this format is capable of 
 * `Char`s, `String`s, `Boolean`s and `null`s
 * arbitrary byte chunks
 * millisecond-precision timestamps
-* arbitrarily nested sequences (lists)
-* arbitrarily nested objects, i.e. sequences of (string, value) pairs
+* arbitrarily nested *lists*
+* arbitrarily nested *objects*, i.e. sequences of *fields* - key-value mappings where each key is a string
 
-Of course, if some type is not "natively" supported by some serialization format, it can be supported by representing 
-it with one of the primitive types. For example, timestamps may be serialized simply as `Long` values containing the 
+Of course, if some type is not "natively" supported by some serialization format, it can be supported by representing
+it with one of the primitive types. For example, timestamps may be serialized simply as `Long` values containing the
 number of milliseconds since 01.01.1970.
+
+### Writing *lists* and *objects*
+
+When a codec wants to write one of the simple values (e.g. `String` or `Int`) then it simply uses one of the direct methods on `Output`, e.g. `writeString` or `writeInt`.
+But it may also write a *list* (an ordered sequence of values) or an *object* (*not-necessarily-ordered* sequence of *fields* - key-value mappings). Every list element or
+object field value may be a list or object by itself, so serialized format may be arbitrarily nested, like JSON. You can think about this like a generalization
+of JSON - similar logical structure (simple values, lists and objects) but without any particular syntax or representation enforced.
+
+If a codec wants to write a *list* then it must call `writeList` on an `Output` in order to obtain a
+[`ListOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/ListOutput.html) by calling `writeList` on `Output`.
+Then it must call `writeElement` repetitively in order to obtain `Output` instances for each list element. Every element must be fully written before calling
+`writeElement` again. After all elements have been written, the codec must call `finish()`. It's rather unlikely that you will ever need to do it
+manually - usually you can just rely on macro generated codecs or use helpers like `GenCodec.createList`.
+
+If a codec wants to write an *object* then it must obtain an [`ObjectOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Output.html) by
+calling `writeObject`. `ObjectOutput` supports writing multiple named object fields. Then you can obtain `Output` instances for each object field value by calling
+`writeField` (which takes field name as an argument). Just like with lists, a codec must fully write each field value before callilng `writeField` again and after
+writing all fields, it must call `finish()`. Again, it's very unlikely that you'll have to implement this manually. Usually you can rely on macro generated codecs.
+If you need a custom codec that writes an object, your best bet is probably to implement appropriate `apply` and `unapply` methods on companion object of your class.
+And even if you can't do it (e.g. because you're writing a codec for a third party type) then you can still use
+[`fromApplyUnapplyProvider`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$.html#fromApplyUnapplyProvider[T](applyUnapplyProvider:Any):com.avsystem.commons.serialization.GenCodec[T])
+and avoid implementing your codec manually.
+
+#### Object field order
+
+For most serialization formats, it's completely natural to retain object field order. For example, a JSON string naturally has object fields stored in the order that they
+were written to `JsonObjectOutput`. For these formats it is required that an `ObjectInput` returns object fields in exactly the same order as they were written to
+a corresponding `ObjectOutput`. This normally includes all serialization formats backed by strings, byte sequences, streams, etc.
+
+However, there are also serialization formats that use memory representation where an object is usually backed by a hashtable. Such representations cannot retain field order.
+`GenCodec` can still work with these but as an alternative to preserving field order, they must implement random field access (field-by-name access). This is done by
+overriding [`peekField`](avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/ObjectInput.html#peekField(name:String):com.avsystem.commons.misc.Opt[com.avsystem.commons.serialization.FieldInput]) on `ObjectInput`.
+
+To summarize, an `ObjectInput` is generally **not** guaranteed to retain order of fields as they were written to an `ObjectOutput` but if it doesn't then it must
+provide random field access by field name. Also, note that out of all the default and macro-generated codecs provided, only [flat sealed hierarchy codecs](#flat-format) actually depend
+on this requirement. All the other (non-custom) codecs ignore field order during deserialization.
+
+### Implementations of `Input` and `Output` available by default
 
 The commons library contains example implementation of [`Input`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Input.html) 
 and [`Output`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Output.html) - 
@@ -361,7 +401,9 @@ Similarly to case classes, sealed hierarchy codecs may be customized with annota
 
 * When using flat format, one of the case classes may be annotated as [`@defaultCase`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/defaultCase.html). When marker field is missing during deserialization, the codec will assume that it's deserializing the case class annotated as `@defaultCase`. This mechanism is useful to retain backwards compatibility when refactoring a case class into a sealed hierarchy with multiple case classes.
 
-* It's important to remember that deserialization of the flat format relies on the preservation of field order by serialization backend. In particular, the marker field must come first so that the codec knows which class to create and how to deserialize the rest of the fields. However, there is one escape hatch from this requirement - a field present in one or more of case classes in the sealed hierarchy may be marked as [`@outOfOrder`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/outOfOrder.html). See the documentation of this annotation for more details. The direct motivation for introducing this annotation was to support deserialization of `_id` field in MongoDB documents - the database server always serves documents with `_id` being the very first field.
+* It's important to remember that deserialization of the flat format relies on the preservation of field order by serialization backend (or random field access):
+  In particular, the marker field must be known to the codec before it reads other fields so that it knows which class to create and how to deserialize the rest of the fields.
+  There is one escape hatch from this requirement - a field present in one or more of case classes in the sealed hierarchy may be marked as [`@outOfOrder`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/outOfOrder.html). See the documentation of this annotation for more details. The direct motivation for introducing this annotation was to support deserialization of `_id` field in MongoDB documents - the database server always serves documents with `_id` being the very first field.
 
 ### Nested vs flat format
 
