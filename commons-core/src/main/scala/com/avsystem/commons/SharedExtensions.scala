@@ -456,7 +456,16 @@ object SharedExtensions extends SharedExtensions {
   }
 
   class MapOps[M[X, Y] <: BMap[X, Y], K, V](private val map: M[K, V]) extends AnyVal {
+
+    import MapOps._
+
     def getOpt(key: K): Opt[V] = map.get(key).toOpt
+
+    /** For iterating, filtering, mapping etc without having to use tuples */
+    def entries: Iterator[Entry[K, V]] = map.iterator.map { case (k, v) => Entry(k, v) }
+  }
+  object MapOps {
+    case class Entry[K, V](key: K, value: V)
   }
 
   class IteratorOps[A](private val it: Iterator[A]) extends AnyVal {
