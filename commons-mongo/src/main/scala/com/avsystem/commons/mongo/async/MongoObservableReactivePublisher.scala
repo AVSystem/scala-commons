@@ -14,7 +14,7 @@ final class MongoObservableReactivePublisher[T](observable: mongo.Observable[T])
             private final val cancelled: AtomicBoolean = AtomicBoolean(false)
 
             def request(n: Long): Unit = {
-              if (!subscription.isUnsubscribed && n < 1) {
+              if (!subscription.isUnsubscribed && n <= 0) {
                 subscriber.onError(new IllegalArgumentException(
                   """3.9 While the Subscription is not cancelled,
                     |Subscription.request(long n) MUST throw a java.lang.IllegalArgumentException if the
