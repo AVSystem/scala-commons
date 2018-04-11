@@ -53,6 +53,9 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Se
   @inline def isDefined: Boolean = !isEmpty
   @inline def nonEmpty: Boolean = isDefined
 
+  @inline def boxedOrNull[B >: Null](implicit boxing: Boxing[A, B]): B =
+    if (isEmpty) null else boxing.fun(value)
+
   @inline def toOpt: Opt[A] =
     if (isEmpty) Opt.Empty else Opt(value)
 
@@ -101,6 +104,7 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Se
 
   /**
     * Apply side effect only if OptArg is empty. It's a bit like foreach for OptArg.Empty
+    *
     * @param sideEffect - code to be executed if optArg is empty
     * @return the same optArg
     * @example {{{captionOptArg.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
