@@ -6,7 +6,7 @@ import com.google.common.collect.AbstractIterator
 import org.bson.types.ObjectId
 import org.bson.{BsonReader, BsonType}
 
-class BsonReaderInput(private val br: BsonReader) extends BsonInput {
+class BsonReaderInput(br: BsonReader) extends BsonInput {
   override def inputType: InputType = br.getCurrentBsonType match {
     case BsonType.NULL => InputType.Null
     case BsonType.ARRAY => InputType.List

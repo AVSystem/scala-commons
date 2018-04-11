@@ -15,7 +15,7 @@ import scala.concurrent.duration.Duration
 
 class MongoObservableReactivePublisherTest extends FreeSpec with MockitoSugar {
 
-  abstract class MockedObservableTests(implicit position: Position) {
+  abstract class MockedObservableTests(implicit position: Position) extends MongoObservableExtensions {
 
     def subscribe[T](obs: mongo.Observable[T], testSubscriber: TestSubscriber[T]): Unit
 
