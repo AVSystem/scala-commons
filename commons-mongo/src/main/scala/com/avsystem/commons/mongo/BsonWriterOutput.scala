@@ -5,7 +5,7 @@ import com.avsystem.commons.serialization.{ListOutput, ObjectOutput}
 import org.bson.types.ObjectId
 import org.bson.{BsonBinary, BsonWriter}
 
-class BsonWriterOutput(bw: BsonWriter) extends BsonOutput {
+final class BsonWriterOutput(bw: BsonWriter) extends BsonOutput {
   override def writeNull(): Unit = bw.writeNull()
   override def writeString(str: String): Unit = bw.writeString(str)
   override def writeBoolean(boolean: Boolean): Unit = bw.writeBoolean(boolean)
@@ -14,12 +14,18 @@ class BsonWriterOutput(bw: BsonWriter) extends BsonOutput {
   override def writeTimestamp(millis: Long): Unit = bw.writeDateTime(millis)
   override def writeDouble(double: Double): Unit = bw.writeDouble(double)
   override def writeBinary(binary: Array[Byte]): Unit = bw.writeBinaryData(new BsonBinary(binary))
-  override def writeList(): BsonWriterListOutput = BsonWriterListOutput.startWriting(bw)
-  override def writeObject(): BsonWriterObjectOutput = BsonWriterObjectOutput.startWriting(bw)
+  override def writeList(): BsonWriterListOutput = {
+    bw.writeStartArray()
+    new BsonWriterListOutput(bw)
+  }
+  override def writeObject(): BsonWriterObjectOutput = {
+    bw.writeStartDocument()
+    new BsonWriterObjectOutput(bw)
+  }
   override def writeObjectId(objectId: ObjectId): Unit = bw.writeObjectId(objectId)
 }
 
-class BsonWriterNamedOutput(escapedName: String, bw: BsonWriter) extends BsonOutput {
+final class BsonWriterNamedOutput(escapedName: String, bw: BsonWriter) extends BsonOutput {
   override def writeNull(): Unit = bw.writeNull(escapedName)
   override def writeString(str: String): Unit = bw.writeString(escapedName, str)
   override def writeBoolean(boolean: Boolean): Unit = bw.writeBoolean(escapedName, boolean)
@@ -28,39 +34,23 @@ class BsonWriterNamedOutput(escapedName: String, bw: BsonWriter) extends BsonOut
   override def writeTimestamp(millis: Long): Unit = bw.writeDateTime(escapedName, millis)
   override def writeDouble(double: Double): Unit = bw.writeDouble(escapedName, double)
   override def writeBinary(binary: Array[Byte]): Unit = bw.writeBinaryData(escapedName, new BsonBinary(binary))
-  override def writeList(): BsonWriterListOutput = BsonWriterListOutput.startWriting(bw, escapedName)
-  override def writeObject(): BsonWriterObjectOutput = BsonWriterObjectOutput.startWriting(bw, escapedName)
+  override def writeList(): BsonWriterListOutput = {
+    bw.writeStartArray(escapedName)
+    new BsonWriterListOutput(bw)
+  }
+  override def writeObject(): BsonWriterObjectOutput = {
+    bw.writeStartDocument(escapedName)
+    new BsonWriterObjectOutput(bw)
+  }
   override def writeObjectId(objectId: ObjectId): Unit = bw.writeObjectId(escapedName, objectId)
 }
 
-class BsonWriterListOutput private(bw: BsonWriter) extends ListOutput {
+final class BsonWriterListOutput(bw: BsonWriter) extends ListOutput {
   override def writeElement() = new BsonWriterOutput(bw)
   override def finish(): Unit = bw.writeEndArray()
 }
-object BsonWriterListOutput {
-  def startWriting(bw: BsonWriter): BsonWriterListOutput = {
-    bw.writeStartArray()
-    new BsonWriterListOutput(bw)
-  }
 
-  def startWriting(bw: BsonWriter, name: String): BsonWriterListOutput = {
-    bw.writeStartArray(name)
-    new BsonWriterListOutput(bw)
-  }
-}
-
-class BsonWriterObjectOutput private(bw: BsonWriter) extends ObjectOutput {
+final class BsonWriterObjectOutput(bw: BsonWriter) extends ObjectOutput {
   override def writeField(key: String) = new BsonWriterNamedOutput(KeyEscaper.escape(key), bw)
   override def finish(): Unit = bw.writeEndDocument()
-}
-object BsonWriterObjectOutput {
-  def startWriting(bw: BsonWriter): BsonWriterObjectOutput = {
-    bw.writeStartDocument()
-    new BsonWriterObjectOutput(bw)
-  }
-
-  def startWriting(bw: BsonWriter, name: String): BsonWriterObjectOutput = {
-    bw.writeStartDocument(name)
-    new BsonWriterObjectOutput(bw)
-  }
 }

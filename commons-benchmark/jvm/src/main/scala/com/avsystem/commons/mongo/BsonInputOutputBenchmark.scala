@@ -61,9 +61,7 @@ class BsonInputOutputBenchmark {
 
   @Benchmark
   def valueEncoding(): BsonValue = {
-    val output = new BsonValueOutput()
-    Something.codec.write(output, something)
-    output.value
+    BsonValueOutput.write(something)
   }
 
   def read(bsonReader: BsonReader): Something = {
