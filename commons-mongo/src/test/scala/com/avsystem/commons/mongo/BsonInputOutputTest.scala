@@ -40,10 +40,7 @@ class BsonInputOutputTest extends FunSuite with PropertyChecks {
   }
 
   def valueEncoding(sthBefore: SomethingComplex): Unit = {
-    val output = new BsonValueOutput()
-    SomethingComplex.codec.write(output, sthBefore)
-
-    val doc = output.value.asDocument()
+    val doc = BsonValueOutput.write(sthBefore).asDocument()
     val expectedDoc = somethingComplexToBson(sthBefore)
     assert(doc === expectedDoc)
   }

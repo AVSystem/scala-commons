@@ -1,11 +1,19 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization.{ListOutput, ObjectOutput}
+import com.avsystem.commons.serialization.{GenCodec, ListOutput, ObjectOutput}
 import org.bson._
 import org.bson.types.ObjectId
 
-class BsonValueOutput(receiver: BsonValue => Unit = _ => ()) extends BsonOutput {
+object BsonValueOutput {
+  def write[T: GenCodec](value: T): BsonValue = {
+    var result: BsonValue = null
+    GenCodec.write(new BsonValueOutput(result = _), value)
+    result
+  }
+}
+
+final class BsonValueOutput(receiver: BsonValue => Unit = _ => ()) extends BsonOutput {
   private var _value: Opt[BsonValue] = Opt.empty
 
   private def setValue(bsonValue: BsonValue): Unit = {
@@ -17,8 +25,6 @@ class BsonValueOutput(receiver: BsonValue => Unit = _ => ()) extends BsonOutput 
         throw new IllegalStateException(s"Cannot set value to $bsonValue, value is already present: $oldValue")
     }
   }
-
-  def value: BsonValue = _value.getOrElse(throw new IllegalStateException("Value is not set"))
 
   override def writeNull(): Unit = setValue(BsonNull.VALUE)
   override def writeString(str: String): Unit = setValue(new BsonString(str))
@@ -33,14 +39,14 @@ class BsonValueOutput(receiver: BsonValue => Unit = _ => ()) extends BsonOutput 
   override def writeObjectId(objectId: ObjectId): Unit = setValue(new BsonObjectId(objectId))
 }
 
-class BsonValueListOutput(receiver: BsonArray => Unit) extends ListOutput {
+final class BsonValueListOutput(receiver: BsonArray => Unit) extends ListOutput {
   private val array = new BsonArray()
 
   override def writeElement(): BsonOutput = new BsonValueOutput(v => array.add(v))
   override def finish(): Unit = receiver(array)
 }
 
-class BsonValueObjectOutput(receiver: BsonDocument => Unit) extends ObjectOutput {
+final class BsonValueObjectOutput(receiver: BsonDocument => Unit) extends ObjectOutput {
   private val doc = new BsonDocument()
 
   override def writeField(key: String): BsonOutput = new BsonValueOutput(v => doc.put(KeyEscaper.escape(key), v))
