@@ -5,7 +5,7 @@ import com.avsystem.commons.serialization.{ListOutput, ObjectOutput}
 import org.bson.types.ObjectId
 import org.bson.{BsonBinary, BsonWriter}
 
-final class BsonWriterOutput(private val bw: BsonWriter) extends AnyVal with BsonOutput {
+final class BsonWriterOutput(bw: BsonWriter) extends BsonOutput {
   override def writeNull(): Unit = bw.writeNull()
   override def writeString(str: String): Unit = bw.writeString(str)
   override def writeBoolean(boolean: Boolean): Unit = bw.writeBoolean(boolean)
@@ -45,12 +45,12 @@ final class BsonWriterNamedOutput(escapedName: String, bw: BsonWriter) extends B
   override def writeObjectId(objectId: ObjectId): Unit = bw.writeObjectId(escapedName, objectId)
 }
 
-final class BsonWriterListOutput(private val bw: BsonWriter) extends AnyVal with ListOutput {
+final class BsonWriterListOutput(bw: BsonWriter) extends ListOutput {
   override def writeElement() = new BsonWriterOutput(bw)
   override def finish(): Unit = bw.writeEndArray()
 }
 
-class BsonWriterObjectOutput(private val bw: BsonWriter) extends AnyVal with ObjectOutput {
+final class BsonWriterObjectOutput(bw: BsonWriter) extends ObjectOutput {
   override def writeField(key: String) = new BsonWriterNamedOutput(KeyEscaper.escape(key), bw)
   override def finish(): Unit = bw.writeEndDocument()
 }

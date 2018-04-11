@@ -55,12 +55,12 @@ final class BsonReaderIterator[T](br: BsonReader, endCallback: BsonReader => Uni
   }
 }
 
-final class BsonReaderListInput(private val it: BsonReaderIterator[BsonReaderInput]) extends AnyVal with ListInput {
+final class BsonReaderListInput(it: BsonReaderIterator[BsonReaderInput]) extends ListInput {
   override def hasNext: Boolean = it.hasNext
   override def nextElement(): BsonReaderInput = it.next()
 }
 
-final class BsonReaderObjectInput(private val it: BsonReaderIterator[BsonReaderFieldInput]) extends AnyVal with ObjectInput {
+final class BsonReaderObjectInput(it: BsonReaderIterator[BsonReaderFieldInput]) extends ObjectInput {
   override def hasNext: Boolean = it.hasNext
   override def nextField(): BsonReaderFieldInput = it.next()
 }
