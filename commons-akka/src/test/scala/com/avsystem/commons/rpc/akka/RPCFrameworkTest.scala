@@ -23,7 +23,7 @@ trait RPCFrameworkTest extends FlatSpecLike with Matchers with MockitoSugar with
 
   val callTimeout = 200.millis
 
-  override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = Span.convertDurationToSpan(300.millis))
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = Span.convertDurationToSpan(3.seconds))
 
   /**
     * Run tests with connection between client and server.
