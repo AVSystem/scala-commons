@@ -349,7 +349,7 @@ trait MacroCommons {
           case Nil =>
             tpe =:= typeOf[Boolean]
           case List(singleParam) =>
-            hasIsEmpty && hasProperGet(resType => elemAdjust(resType) =:= singleParam.typeSignature)
+            hasIsEmpty && hasProperGet(resType => elemAdjust(resType) =:= nonRepeatedType(singleParam.typeSignature))
           case params =>
             hasIsEmpty && hasProperGet { resType =>
               val elemTypes = Iterator.range(1, 22).map { i =>
