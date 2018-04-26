@@ -221,23 +221,46 @@ class GenCodecTest extends CodecTestBase {
     implicit val codec: GenCodec[VarargsCaseClass] = GenCodec.materialize[VarargsCaseClass]
   }
 
+  case class OnlyVarargsCaseClass(strings: String*)
+  object OnlyVarargsCaseClass {
+    implicit val codec: GenCodec[OnlyVarargsCaseClass] = GenCodec.materialize[OnlyVarargsCaseClass]
+  }
+
   test("varargs case class test") {
     testWriteReadAndAutoWriteRead(VarargsCaseClass(42, "foo", "bar"),
       Map("int" -> 42, "strings" -> List("foo", "bar"))
     )
   }
 
-  class VarargsCaseClassLike(val str: String, val ints: Seq[Int])
-    extends Wrapper[VarargsCaseClassLike](str, ints)
+  test("only varargs case class test") {
+    testWriteReadAndAutoWriteRead(OnlyVarargsCaseClass("42", "420"),
+      Map("strings" -> List("42", "420"))
+    )
+  }
+
+  class VarargsCaseClassLike(val str: String, val ints: Seq[Int]) extends Wrapper[VarargsCaseClassLike](str, ints)
   object VarargsCaseClassLike {
     def apply(@name("some.str") str: String, ints: Int*): VarargsCaseClassLike = new VarargsCaseClassLike(str, ints)
     def unapplySeq(vccl: VarargsCaseClassLike): Opt[(String, Seq[Int])] = (vccl.str, vccl.ints).opt
     implicit val codec: GenCodec[VarargsCaseClassLike] = GenCodec.materialize[VarargsCaseClassLike]
   }
 
+  class OnlyVarargsCaseClassLike(val strings: Seq[String]) extends Wrapper[OnlyVarargsCaseClassLike](strings)
+  object OnlyVarargsCaseClassLike {
+    def apply(strings: String*): OnlyVarargsCaseClassLike = new OnlyVarargsCaseClassLike(strings)
+    def unapplySeq(vccl: OnlyVarargsCaseClassLike): Opt[(Seq[String])] = vccl.strings.opt
+    implicit val codec: GenCodec[OnlyVarargsCaseClassLike] = GenCodec.materialize[OnlyVarargsCaseClassLike]
+  }
+
   test("varargs case class like test") {
     testWriteReadAndAutoWriteRead(VarargsCaseClassLike("dafuq", 1, 2, 3),
       Map("some.str" -> "dafuq", "ints" -> List(1, 2, 3))
+    )
+  }
+
+  test("only varargs case class like test") {
+    testWriteReadAndAutoWriteRead(OnlyVarargsCaseClassLike("dafuq", "indeed"),
+      Map("strings" -> List("dafuq", "indeed"))
     )
   }
 
