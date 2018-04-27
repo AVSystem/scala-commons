@@ -118,7 +118,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     hasAnnotation(sym, OutOfOrderAnnotType)
 
   def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree =
-    forApplyUnapply(tpe, Ident(tpe.dealias.typeSymbol.companion), apply, unapply, params)
+    forApplyUnapply(tpe, companionOf(tpe).map(c.typecheck(_)).getOrElse(EmptyTree), apply, unapply, params)
 
   def forApplyUnapply(tpe: Type, companion: Tree, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
     val dtpe = tpe.dealias

@@ -376,11 +376,7 @@ trait MacroCommons {
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] = {
     val dtpe = tpe.dealias
-    val companionSym = dtpe.typeSymbol.companion
-    if (companionSym != NoSymbol && !companionSym.isJava)
-      applyUnapplyFor(dtpe, c.typecheck(Ident(companionSym)))
-    else
-      None
+    companionOf(dtpe).map(c.typecheck(_)).flatMap(comp => applyUnapplyFor(dtpe, comp))
   }
 
   def applyUnapplyFor(tpe: Type, companion: Tree): Option[ApplyUnapply] = {
@@ -449,6 +445,12 @@ trait MacroCommons {
       singleValueFor(pre).map(prefix => Select(prefix, sym.asClass.module))
     case _ =>
       None
+  }
+
+  def companionOf(tpe: Type): Option[Tree] = tpe match {
+    case TypeRef(pre, sym, _) if sym.companion != NoSymbol =>
+      singleValueFor(pre).map(Select(_, sym.companion)) orElse singleValueFor(tpe.companion)
+    case _ => singleValueFor(tpe.companion)
   }
 
   def typeOfTypeSymbol(sym: TypeSymbol) = sym.toType match {

@@ -54,6 +54,18 @@ abstract class Wrapper[Self <: Wrapper[Self] : ClassTag](private val args: Any*)
   override def hashCode(): Int = args.hashCode()
 }
 
+trait Framework {
+  type Field
+
+  case class Stuff(field: Field)
+}
+
+trait BetterFramework extends Framework {
+  implicit def fieldCodec: GenCodec[Field]
+
+  implicit val stuffCodec: GenCodec[Stuff] = GenCodec.materialize
+}
+
 @silent
 class GenCodecTest extends CodecTestBase {
 
