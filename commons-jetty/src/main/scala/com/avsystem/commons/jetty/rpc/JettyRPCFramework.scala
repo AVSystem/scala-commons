@@ -15,14 +15,26 @@ import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.server.{Handler, Request}
 
 object JettyRPCFramework extends StandardRPCFramework {
-  override type RawValue = String
+  class RawValue(val s: String) extends AnyVal
+
   override type Reader[T] = GenCodec[T]
   override type Writer[T] = GenCodec[T]
   override type ParamTypeMetadata[T] = ClassTag[T]
   override type ResultTypeMetadata[T] = DummyImplicit
 
-  override def read[T: Reader](raw: RawValue): T = JsonStringInput.read[T](raw)
-  override def write[T: Writer](value: T): RawValue = JsonStringOutput.write[T](value)
+  private implicit val rawValueCodec: GenCodec[RawValue] = GenCodec.create(
+    {
+      case jsi: JsonStringInput => new RawValue(jsi.readRawJson())
+      case other => new RawValue(other.readString())
+    },
+    {
+      case (jso: JsonStringOutput, v) => jso.writeRawJson(v.s)
+      case (other, v) => other.writeString(v.s)
+    }
+  )
+
+  override def read[T: Reader](raw: RawValue): T = JsonStringInput.read[T](raw.s)
+  override def write[T: Writer](value: T): RawValue = new RawValue(JsonStringOutput.write[T](value))
 
   case class Invocation(rpcName: String, argLists: List[List[RawValue]])
   object Invocation extends HasGenCodec[Invocation]
@@ -54,7 +66,7 @@ object JettyRPCFramework extends StandardRPCFramework {
           } else {
             val response = result.getResponse
             if (HttpStatus.isSuccess(response.getStatus)) {
-              promise.success(getContentAsString(StandardCharsets.UTF_8))
+              promise.success(new RawValue(getContentAsString(StandardCharsets.UTF_8)))
             } else {
               promise.failure(new HttpException(response.getStatus, response.getReason))
             }
@@ -64,7 +76,7 @@ object JettyRPCFramework extends StandardRPCFramework {
 
       val contentProvider = new StringContentProvider(
         MimeTypes.Type.APPLICATION_JSON.asString(),
-        write(call),
+        write(call).s,
         StandardCharsets.UTF_8
       )
 
@@ -91,14 +103,14 @@ object JettyRPCFramework extends StandardRPCFramework {
         .takeWhile(_ != null)
         .mkString("\n")
 
-      val call = read[Call](content)
+      val call = read[Call](new RawValue(content))
 
       HttpMethod.fromString(request.getMethod) match {
         case HttpMethod.POST =>
           val async = request.startAsync()
           handlePost(call).andThenNow {
             case Success(responseContent) =>
-              response.getWriter.write(responseContent)
+              response.getWriter.write(responseContent.s)
             case Failure(t) =>
               response.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, t.getMessage)
           }.andThenNow { case _ => async.complete() }
