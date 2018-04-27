@@ -24,6 +24,7 @@ class JettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers wit
     def keks: Future[Long]
     def isTop(keks: Long): Future[Boolean]
     def topper: Topper
+    def differentTopper(helloPattern: String): Topper
     def erroneousKeks: Future[Int]
   }
   object SomeApi {
@@ -42,28 +43,31 @@ class JettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers wit
     implicit val fullRPCInfo: BaseFullRPCInfo[Topper] = materializeFullInfo
   }
 
-  val keksResult = Long.MaxValue
-  val topKeksResult = Int.MaxValue
-  val errorMessage = "cannot into"
-
-  val impl = new SomeApi {
-    def keks = Future.successful(keksResult)
-    def isTop(keks: Long) = Future.successful(keks == Int.MaxValue)
-    object topper extends Topper {
-      def initialize = Future.successful(println("Topper initialized"))
-      def initialize2() = initialize
-      def topKeks = Future.successful(topKeksResult)
-      def hello(world: String) = Future.successful(world)
-      def hellos(world1: String, world2: Int) = Future.successful(world1 + world2)
-      def currys(curry1: String)(curry2: Int) = Future.successful(curry1 + curry2)
-    }
-    def erroneousKeks: Future[Int] = Future.failed(new RuntimeException(errorMessage))
+  class TopperImpl(helloPattern: String, topKeksResult: Int) extends Topper {
+    override def initialize: Future[Unit] = Future.eval(println("Topper initialized"))
+    override def initialize2(): Future[Unit] = initialize
+    override def topKeks: Future[Int] = Future.successful(topKeksResult)
+    override def hello(world: String): Future[String] = Future.eval(helloPattern.format(world))
+    override def hellos(world1: String, world2: Int): Future[String] = Future.successful(world1 + world2)
+    override def currys(curry1: String)(curry2: Int): Future[String] = Future.successful(curry1 + curry2)
   }
 
-  val port = 1337
-  val server = new Server(port).setup(_.setHandler(JettyRPCFramework.newHandler[SomeApi](impl)))
-  val httpClient = new HttpClient()
-  val rpc = JettyRPCFramework.newClient[SomeApi](httpClient, s"http://localhost:${1337}/")
+  val keksResult: Long = Long.MaxValue
+  val topKeksResult: Int = Int.MaxValue
+  val errorMessage: String = "cannot into"
+
+  val impl: SomeApi = new SomeApi {
+    override def keks: Future[Long] = Future.successful(keksResult)
+    override def isTop(keks: Long): Future[Boolean] = Future.successful(keks == Int.MaxValue)
+    override val topper = new TopperImpl("%s", topKeksResult)
+    override def differentTopper(helloPattern: String): Topper = new TopperImpl(helloPattern, topKeksResult)
+    override def erroneousKeks: Future[Int] = Future.failed(new RuntimeException(errorMessage))
+  }
+
+  val port: Int = 1337
+  val server: Server = new Server(port).setup(_.setHandler(JettyRPCFramework.newHandler[SomeApi](impl)))
+  val httpClient: HttpClient = new HttpClient()
+  val rpc: SomeApi = JettyRPCFramework.newClient[SomeApi](httpClient, s"http://localhost:${1337}/")
 
   test("empty-paren -> unit") {
     noException should be thrownBy rpc.topper.initialize.futureValue
@@ -85,6 +89,14 @@ class JettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers wit
 
   test("inner rpc + empty-paren -> int") {
     rpc.topper.topKeks.futureValue shouldBe topKeksResult
+  }
+
+  test("inner rpc with args + string arg -> string") {
+    val helloPattern = "Hello, %s!"
+    val world = "world"
+    rpc.differentTopper(helloPattern).hello(world).futureValue shouldBe helloPattern.format(world)
+    val anonymous = ""
+    rpc.differentTopper(helloPattern).hello(anonymous).futureValue shouldBe helloPattern.format(anonymous)
   }
 
   test("inner rpc + string arg -> string") {

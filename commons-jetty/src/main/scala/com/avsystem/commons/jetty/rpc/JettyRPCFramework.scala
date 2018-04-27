@@ -4,151 +4,140 @@ package jetty.rpc
 import java.nio.charset.StandardCharsets
 
 import com.avsystem.commons.rpc.StandardRPCFramework
-import com.avsystem.commons.serialization.GenCodec
-import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
+import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
+import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.client.api.Result
-import org.eclipse.jetty.client.util.{BufferingResponseListener, BytesContentProvider}
-import org.eclipse.jetty.http.{HttpMethod, HttpStatus}
+import org.eclipse.jetty.client.util.{BufferingResponseListener, StringContentProvider}
+import org.eclipse.jetty.http.{HttpMethod, HttpStatus, MimeTypes}
 import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.server.{Handler, Request}
 
 object JettyRPCFramework extends StandardRPCFramework {
-  type RawValue = String
-  type Reader[T] = GenCodec[T]
-  type Writer[T] = GenCodec[T]
-  type ParamTypeMetadata[T] = ClassTag[T]
-  type ResultTypeMetadata[T] = DummyImplicit
+  class RawValue(val s: String) extends AnyVal
 
-  def read[T: Reader](raw: RawValue): T = JsonStringInput.read[T](raw)
-  def write[T: Writer](value: T): RawValue = JsonStringOutput.write[T](value)
+  override type Reader[T] = GenCodec[T]
+  override type Writer[T] = GenCodec[T]
+  override type ParamTypeMetadata[T] = ClassTag[T]
+  override type ResultTypeMetadata[T] = DummyImplicit
 
-  private def argListsToRaw(argLists: List[List[RawValue]]): RawValue = {
-    val sb = new JStringBuilder
-    val listsOutput = new JsonStringOutput(sb).writeList()
-    argLists.foreach { argList =>
-      val listOutput = listsOutput.writeElement().writeList()
-      argList.foreach(rawJson => listOutput.writeElement().writeRawJson(rawJson))
-      listOutput.finish()
+  private implicit val rawValueCodec: GenCodec[RawValue] = GenCodec.create(
+    {
+      case jsi: JsonStringInput => new RawValue(jsi.readRawJson())
+      case other => new RawValue(other.readString())
+    },
+    {
+      case (jso: JsonStringOutput, v) => jso.writeRawJson(v.s)
+      case (other, v) => other.writeString(v.s)
     }
-    listsOutput.finish()
-    sb.toString
-  }
+  )
 
-  private def argListsFromRaw(s: RawValue): List[List[RawValue]] = {
-    val listsInput = new JsonStringInput(new JsonReader(s)).readList()
-    val listsBuilder = List.newBuilder[List[RawValue]]
-    while (listsInput.hasNext) {
-      val listInput = listsInput.nextElement().readList()
-      val argsBuilder = List.newBuilder[RawValue]
-      while (listInput.hasNext) {
-        argsBuilder += listInput.nextElement().readRawJson()
-      }
-      listsBuilder += argsBuilder.result()
-    }
-    listsBuilder.result()
-  }
+  override def read[T: Reader](raw: RawValue): T = JsonStringInput.read[T](raw.s)
+  override def write[T: Writer](value: T): RawValue = new RawValue(JsonStringOutput.write[T](value))
 
-  class RPCClient(httpClient: HttpClient, urlPrefix: String)(implicit ec: ExecutionContext) {
-    private class RawRPCImpl(pathPrefix: String) extends RawRPC {
-      def fire(rpcName: String, argLists: List[List[RawValue]]): Unit =
-        put(pathPrefix + rpcName, argListsToRaw(argLists))
+  case class Invocation(rpcName: String, argLists: List[List[RawValue]])
+  object Invocation extends HasGenCodec[Invocation]
 
-      def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue] =
-        post(pathPrefix + rpcName, argListsToRaw(argLists))
+  case class Call(chain: List[Invocation], leaf: Invocation)
+  object Call extends HasGenCodec[Call]
 
-      def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC = argLists match {
-        case Nil => new RawRPCImpl(s"$pathPrefix$rpcName/")
-        case _ => throw new IllegalArgumentException("Only no-arg list sub-RPCs are supported (without parentheses)")
-      }
+  class RPCClient(httpClient: HttpClient, uri: String)(implicit ec: ExecutionContext) {
+    private class RawRPCImpl(chain: List[Invocation]) extends RawRPC {
+      override def fire(rpcName: String, argLists: List[List[RawValue]]): Unit =
+        put(Call(chain, Invocation(rpcName, argLists)))
+
+      override def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue] =
+        post(Call(chain, Invocation(rpcName, argLists)))
+
+      override def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC =
+        new RawRPCImpl(chain :+ Invocation(rpcName, argLists))
     }
 
-    val rawRPC: RawRPC = new RawRPCImpl("")
+    val rawRPC: RawRPC = new RawRPCImpl(List.empty)
 
-    def request(method: HttpMethod, path: String, content: String): Future[String] = {
-      val promise = Promise[String]
-      httpClient.newRequest(urlPrefix + path)
-        .method(method)
-        .content(new BytesContentProvider(content.getBytes(StandardCharsets.UTF_8)))
-        .send(new BufferingResponseListener() {
-          override def onComplete(result: Result): Unit = {
-            if (result.isFailed) {
-              promise.tryFailure(result.getFailure)
+    def request(method: HttpMethod, call: Call): Future[RawValue] = {
+      val promise = Promise[RawValue]
+
+      val listener = new BufferingResponseListener() {
+        override def onComplete(result: Result): Unit = {
+          if (result.isFailed) {
+            promise.tryFailure(result.getFailure)
+          } else {
+            val response = result.getResponse
+            if (HttpStatus.isSuccess(response.getStatus)) {
+              promise.success(new RawValue(getContentAsString(StandardCharsets.UTF_8)))
             } else {
-              val response = result.getResponse
-              if (HttpStatus.isSuccess(response.getStatus)) {
-                promise.success(getContentAsString)
-              } else {
-                promise.failure(new HttpException(response.getStatus, response.getReason))
-              }
+              promise.failure(new HttpException(response.getStatus, response.getReason))
             }
           }
-        })
+        }
+      }
+
+      val contentProvider = new StringContentProvider(
+        MimeTypes.Type.APPLICATION_JSON.asString(),
+        write(call).s,
+        StandardCharsets.UTF_8
+      )
+
+      httpClient.newRequest(uri)
+        .method(method)
+        .content(contentProvider)
+        .send(listener)
 
       promise.future
     }
 
-    def post(path: String, content: String): Future[String] =
-      request(HttpMethod.POST, path, content)
+    def post(call: Call): Future[RawValue] =
+      request(HttpMethod.POST, call)
 
-    def put(path: String, content: String): Unit =
-      request(HttpMethod.PUT, path, content)
-
+    def put(call: Call): Unit =
+      request(HttpMethod.PUT, call)
   }
 
   class RPCHandler(rootRpc: RawRPC)(implicit ec: ExecutionContext) extends AbstractHandler {
-
-    def handle(target: String, baseRequest: Request, request: HttpServletRequest, response: HttpServletResponse): Unit = {
+    override def handle(target: String, baseRequest: Request, request: HttpServletRequest, response: HttpServletResponse): Unit = {
       baseRequest.setHandled(true)
-
-      val cleanTarget = target.stripPrefix("/").stripSuffix("/")
 
       val content = Iterator.continually(request.getReader.readLine())
         .takeWhile(_ != null)
         .mkString("\n")
 
+      val call = read[Call](new RawValue(content))
+
       HttpMethod.fromString(request.getMethod) match {
         case HttpMethod.POST =>
           val async = request.startAsync()
-          handlePost(cleanTarget, content).andThenNow {
+          handlePost(call).andThenNow {
             case Success(responseContent) =>
-              response.getWriter.write(responseContent)
+              response.getWriter.write(responseContent.s)
             case Failure(t) =>
               response.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, t.getMessage)
           }.andThenNow { case _ => async.complete() }
         case HttpMethod.PUT =>
-          handlePut(cleanTarget, content)
+          handlePut(call)
         case _ =>
           throw new IllegalArgumentException(s"Request HTTP method is ${request.getMethod}, only POST or PUT are supported")
       }
     }
 
-    type InvokeFunction[T] = (RawRPC, String, List[List[RawValue]]) => T
+    type InvokeFunction[T] = RawRPC => (String, List[List[RawValue]]) => T
 
-    def invoke[T](path: String, content: String)(f: InvokeFunction[T]): T = {
-      val parts = path.split('/')
-      val targetRpc = parts.dropRight(1).foldLeft(rootRpc)(_.get(_, Nil))
-      val rpcName = parts.last
-      val args: List[List[RawValue]] = argListsFromRaw(content)
-      f(targetRpc, rpcName, args)
+    def invoke[T](call: Call)(f: InvokeFunction[T]): T = {
+      val rpc = call.chain.foldLeft(rootRpc)((rpc, inv) => rpc.get(inv.rpcName, inv.argLists))
+      f(rpc)(call.leaf.rpcName, call.leaf.argLists)
     }
 
-    def handlePost(path: String, content: String): Future[String] =
-      invoke(path, content) { (rpc, name, args) =>
-        rpc.call(name, args)
-      }
+    def handlePost(call: Call): Future[RawValue] =
+      invoke(call)(_.call)
 
-    def handlePut(path: String, content: String): Unit = {
-      invoke(path, content) { (rpc, name, args) =>
-        rpc.fire(name, args)
-      }
-    }
+    def handlePut(call: Call): Unit =
+      invoke(call)(_.fire)
   }
 
   def newHandler[T](impl: T)(implicit ec: ExecutionContext, asRawRPC: AsRawRPC[T]): Handler =
     new RPCHandler(asRawRPC.asRaw(impl))
 
-  def newClient[T](httpClient: HttpClient, urlPrefix: String)(implicit ec: ExecutionContext, asRealRPC: AsRealRPC[T]): T =
-    asRealRPC.asReal(new RPCClient(httpClient, urlPrefix).rawRPC)
+  def newClient[T](httpClient: HttpClient, uri: String)(implicit ec: ExecutionContext, asRealRPC: AsRealRPC[T]): T =
+    asRealRPC.asReal(new RPCClient(httpClient, uri).rawRPC)
 }
