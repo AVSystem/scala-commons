@@ -33,8 +33,8 @@ val scalajsBenchmarkVersion = "0.2.4"
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  scalaVersion := "2.12.5",
-  crossScalaVersions := Seq("2.11.11", "2.12.5"),
+  scalaVersion := "2.12.6",
+  crossScalaVersions := Seq("2.11.12", "2.12.6"),
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
     "-encoding", "utf-8",
@@ -51,6 +51,8 @@ val commonSettings = Seq(
     "-Xfatal-warnings",
     s"-Xlint:-missing-interpolator,-adapted-args,${if (scalaBinaryVersion.value == "2.12") "-unused," else ""}_",
   ),
+  // some Java 8 related tests use Java interface static methods, Scala 2.11.12 requires JDK8 target for that
+  scalacOptions in Test ++= (if(scalaBinaryVersion.value == "2.11") Seq("-target:jvm-1.8") else Seq()),
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
 

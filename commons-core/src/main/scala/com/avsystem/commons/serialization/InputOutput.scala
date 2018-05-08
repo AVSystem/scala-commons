@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
+
 /**
   * Represents an abstract sink to which a value may be serialized (written).
   * An [[Output]] instance should be assumed to be stateful. After calling any of the `write` methods, it MUST NOT be
@@ -218,6 +220,20 @@ trait ObjectInput extends Any with SequentialInput { self =>
     * point in the future by [[nextField]].
     */
   def peekField(name: String): Opt[FieldInput] = Opt.Empty
+
+  /**
+    * Tries to obtain [[FieldInput]] for field with specified name, either by using [[peekField]] (assuming format with
+    * random field access) or [[nextField]] (assuming format that preserves field order). A codec that uses this method
+    * must ensure that it reads fields in the same order as they were written using `writeField` on [[ObjectOutput]].
+    */
+  def getNextNamedField(name: String): FieldInput =
+    peekField(name).getOrElse {
+      val fi = nextField()
+      if (fi.fieldName != name) {
+        throw new ReadFailure(s"Expected field $name, got ${fi.fieldName}")
+      }
+      fi
+    }
 
   def skipRemaining() = while (hasNext) nextField().skip()
   def iterator[A](readFun: Input => A): Iterator[(String, A)] =
