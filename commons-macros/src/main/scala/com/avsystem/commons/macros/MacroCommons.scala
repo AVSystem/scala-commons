@@ -2,6 +2,7 @@ package com.avsystem.commons
 package macros
 
 import scala.collection.mutable
+import scala.reflect.ClassTag
 import scala.reflect.macros.{TypecheckException, blackbox}
 
 trait MacroCommons { bundle =>
@@ -51,23 +52,35 @@ trait MacroCommons { bundle =>
   }
 
   private val implicitSearchCache = new mutable.HashMap[TypeKey, Option[(TermName, Tree)]]
+  private val inferredImplicitTypes = new mutable.HashMap[TermName, Type]
   private val registeredImplicits = new mutable.HashMap[TypeKey, TermName]
 
   def tryInferCachedImplicit(tpe: Type): Option[TermName] = {
-    def compute = Option(c.inferImplicitValue(tpe)).filter(_ != EmptyTree).map(t => (c.freshName(TermName("")), t))
+    def compute = Option(c.inferImplicitValue(tpe)).filter(_ != EmptyTree).map { t =>
+      val name = c.freshName(TermName(""))
+      inferredImplicitTypes(name) = t.tpe
+      (name, t)
+    }
     val tkey = TypeKey(tpe)
     registeredImplicits.get(tkey) orElse implicitSearchCache.getOrElseUpdate(tkey, compute).map(_._1)
   }
 
   def inferCachedImplicit(tpe: Type, clue: String, pos: Position): TermName =
     tryInferCachedImplicit(tpe).getOrElse {
-      implicitSearchCache(TypeKey(tpe)) = Some((c.freshName(TermName("")),
-        q"$ImplicitsObj.infer[$tpe](${internal.setPos(StringLiteral(clue), pos)})"))
+      val name = c.freshName(TermName(""))
+      implicitSearchCache(TypeKey(tpe)) =
+        Some((name, q"$ImplicitsObj.infer[$tpe](${internal.setPos(StringLiteral(clue), pos)})"))
+      inferredImplicitTypes(name) = tpe
       inferCachedImplicit(tpe, clue, pos)
     }
 
-  def registerImplicit(tpe: Type, name: TermName): Unit =
+  def typeOfCachedImplicit(name: TermName): Type =
+    inferredImplicitTypes.getOrElse(name, NoType)
+
+  def registerImplicit(tpe: Type, name: TermName): Unit = {
     registeredImplicits(TypeKey(tpe)) = name
+    inferredImplicitTypes(name) = tpe
+  }
 
   def cachedImplicitDeclarations: List[Tree] = implicitSearchCache.iterator.collect {
     case (TypeKey(tpe), Some((name, tree))) => q"private lazy val $name: $tpe = $tree"
@@ -87,11 +100,8 @@ trait MacroCommons { bundle =>
 
   private val uniqueNameCache = new mutable.HashMap[Symbol, TermName]
 
-  implicit class symbolOps(s: Symbol) {
-    def safeName: TermName = uniqueNameCache.getOrElseUpdate(s, c.freshName(s.name.toTermName))
-    def nameStr: String = s.name.decodedName.toString
-    def superSymbols: List[Symbol] = bundle.superSymbols(s)
-  }
+  def safeName(symbol: Symbol): TermName =
+    uniqueNameCache.getOrElseUpdate(symbol, c.freshName(symbol.name.toTermName))
 
   def paramIndex(param: Symbol): Int =
     param.owner.typeSignature.paramLists.flatten.indexOf(param) + 1
@@ -223,7 +233,7 @@ trait MacroCommons { bundle =>
     else if (sym.isModuleClass) Select(pathTo(sym.owner), if (sym.isModuleClass) sym.name.toTermName else sym.name)
     else This(sym)
 
-  def isTypeTree(tree: Tree) = tree match {
+  def isTypeTree(tree: Tree): Boolean = tree match {
     case Ident(TypeName(_)) | Select(_, TypeName(_)) => true
     case _ => tree.isType
   }
@@ -246,6 +256,21 @@ trait MacroCommons { bundle =>
   object BooleanLiteral {
     def unapply(tree: Tree): Option[Boolean] = tree match {
       case Literal(Constant(boolean: Boolean)) => Some(boolean)
+      case _ => None
+    }
+  }
+
+  object Lit {
+    def unapply(tree: Tree): Option[Any] = tree match {
+      case Literal(Constant(value)) => Some(value)
+      case _ => None
+    }
+  }
+
+  case class LitOrDefault[T: ClassTag](default: T) {
+    def unapply(tree: Tree): Option[T] = tree match {
+      case Literal(Constant(value: T)) => Some(value)
+      case Select(_, TermName(n)) if n.startsWith("$lessinit$greater$default$") => Some(default)
       case _ => None
     }
   }
@@ -457,7 +482,7 @@ trait MacroCommons { bundle =>
           case Nil =>
             tpe =:= typeOf[Boolean]
           case List(singleParam) =>
-            hasIsEmpty && hasProperGet(resType => elemAdjust(resType) =:= nonRepeatedType(singleParam.typeSignature))
+            hasIsEmpty && hasProperGet(resType => elemAdjust(resType) =:= actualParamType(singleParam.typeSignature))
           case params =>
             hasIsEmpty && hasProperGet { resType =>
               val elemTypes = Iterator.range(1, 22).map { i =>
