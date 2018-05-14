@@ -82,8 +82,8 @@ trait MacroCommons { bundle =>
     inferredImplicitTypes(name) = tpe
   }
 
-  def cachedImplicitDeclarations: List[Tree] = implicitSearchCache.iterator.collect {
-    case (TypeKey(tpe), Some((name, tree))) => q"private lazy val $name: $tpe = $tree"
+  def cachedImplicitDeclarations: List[Tree] = implicitSearchCache.valuesIterator.collect {
+    case Some((name, tree)) => q"private lazy val $name = $tree"
   }.toList
 
   implicit class treeOps[T <: Tree](t: T) {
@@ -147,7 +147,7 @@ trait MacroCommons { bundle =>
   }
 
   def allAnnotations(s: Symbol): List[Tree] =
-    superSymbols(s).flatMap(_.annotations).flatMap(a => a.tree :: aggregatedAnnotations(a.tree))
+    superSymbols(s).map(_.annotations.map(_.tree)).flatMap(as => as ::: as.flatMap(aggregatedAnnotations))
 
   def findAnnotationArg(constrCall: Tree, valSym: Symbol): Tree = constrCall match {
     case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>

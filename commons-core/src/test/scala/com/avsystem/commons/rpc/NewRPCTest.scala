@@ -13,36 +13,49 @@ object RawValue {
   implicit def futureAsRawFromGc[T: GenCodec]: AsRaw[Future[T], Future[RawValue]] = ???
 }
 
-trait NewRawRPC {
-  @encoded def getter(name: String,
-    @namedRepeated @encoded args: Map[String, RawValue]): NewRawRPC
-  @encoded def invoke(name: String,
-    @annotatedWith[RPCName] @namedRepeated @encoded renamedArgs: Map[String, RawValue],
-    @namedRepeated @encoded args: Map[String, RawValue]): RawValue
-  @encoded def invokeAsync(name: String,
-    @namedRepeated @encoded args: Map[String, RawValue]): Future[RawValue]
+class POST extends RPCAnnotation
+class header(name: String) extends RPCAnnotation with AnnotationAggregate {
+  @RPCName(name)
+  type Implied
 }
 
+trait NewRawRPC {
+  @verbatim def fire(name: String, @optional ajdi: Opt[Int],
+    @namedRepeated args: Map[String, RawValue]): Unit
+
+  def call(name: String,
+    @annotatedWith[RPCName] @namedRepeated renamedArgs: Map[String, RawValue],
+    @namedRepeated args: Map[String, RawValue]): Future[RawValue]
+
+  def get(name: String,
+    @repeated args: List[RawValue]): NewRawRPC
+
+  @annotatedWith[POST]
+  def post(name: String,
+    @annotatedWith[header] @namedRepeated @verbatim headers: Map[String, String],
+    @namedRepeated body: MLinkedHashMap[String, RawValue]): RawValue
+}
+object NewRawRPC extends RawRPCCompanion[NewRawRPC]
 
 class EnhancedName(int: Int, name: String) extends AnnotationAggregate {
   @RPCName(name)
   type Implied
 }
 trait NamedVarargs {
-  def varargsMethod(krap: String, dubl: Double)(czy: Boolean, @EnhancedName(42, "nejm") ints: Int*): Unit
-  def defaultValueMethod(int: Int = 0, bul: Boolean): Unit
+  def varargsMethod(krap: String, dubl: Double)(czy: Boolean, @EnhancedName(42, "nejm") ints: Int*): Future[Unit]
+  def defaultValueMethod(int: Int = 0, bul: Boolean): Future[Unit]
+  def flames(arg: String, otherArg: Int, varargsy: Double*): Unit
   def overload(int: Int): Unit
   def overload: NamedVarargs
+  def getit(stuff: String, otherStuff: List[Int]): NamedVarargs
+  @POST def postit(arg: String, @header("X-Bar") bar: String, int: Int, @header("X-Foo") foo: String): String
 }
 object NamedVarargs {
-  implicit val asReal: AsReal[NamedVarargs, NewRawRPC] = AsReal.forRpc[NamedVarargs, NewRawRPC]
-  implicit val asRaw: AsRaw[NamedVarargs, NewRawRPC] = AsRaw.forRpc[NamedVarargs, NewRawRPC]
+  implicit val asRealRaw: AsRealRaw[NamedVarargs, NewRawRPC] = NewRawRPC.materializeAsRealRaw[NamedVarargs].showAst
 }
 
 @silent
 object NewRPCTest {
-  implicit val innerRpcAsReal: AsReal[InnerRPC, NewRawRPC] = AsReal.forRpc[InnerRPC, NewRawRPC]
-  implicit val testRpcAsReal: AsReal[TestRPC, NewRawRPC] = AsReal.forRpc[TestRPC, NewRawRPC]
-  implicit val innerRpcAsRaw: AsRaw[InnerRPC, NewRawRPC] = AsRaw.forRpc[InnerRPC, NewRawRPC]
-  implicit val testRpcAsRaw: AsRaw[TestRPC, NewRawRPC] = AsRaw.forRpc[TestRPC, NewRawRPC]
+  implicit val innerRpcAsRealRaw: AsRealRaw[InnerRPC, NewRawRPC] = NewRawRPC.materializeAsRealRaw[InnerRPC]
+  implicit val testRpcAsRealRaw: AsRealRaw[TestRPC, NewRawRPC] = NewRawRPC.materializeAsRealRaw[TestRPC]
 }

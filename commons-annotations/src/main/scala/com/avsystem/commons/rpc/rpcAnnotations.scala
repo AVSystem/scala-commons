@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.annotation.AnnotationAggregate
+
 import scala.annotation.StaticAnnotation
 
 /**
@@ -20,9 +22,14 @@ sealed trait RPCMetaAnnotation extends StaticAnnotation
   */
 class RPCName(val name: String) extends RPCAnnotation
 
+trait VerbatimByDefault extends AnnotationAggregate {
+  @verbatim
+  type Implied
+}
+
 sealed trait RpcArity extends RPCMetaAnnotation
-final class single extends RpcArity
-final class optional extends RpcArity
+final class single extends RpcArity with VerbatimByDefault
+final class optional extends RpcArity with VerbatimByDefault
 final class repeated extends RpcArity
 final class namedRepeated extends RpcArity
 
