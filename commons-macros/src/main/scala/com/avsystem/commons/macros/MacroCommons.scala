@@ -15,6 +15,7 @@ trait MacroCommons { bundle =>
   final val ScalaPkg = q"_root_.scala"
   final val StringCls = tq"_root_.java.lang.String"
   final val ClassCls = tq"_root_.java.lang.Class"
+  final val NothingCls = tq"_root_.scala.Nothing"
   final val CommonsPackage = q"_root_.com.avsystem.commons"
   final val PredefObj = q"$ScalaPkg.Predef"
   final val UnitCls = tq"$ScalaPkg.Unit"
@@ -226,10 +227,13 @@ trait MacroCommons { bundle =>
       abort(msg)
     }
 
+  def posInfo(pos: Position): String =
+    s"${pos.source.file.name}:${pos.line}:${pos.column}"
+
   def abortAt(message: String, pos: Position): Nothing =
     if (pos != NoPosition) {
-      c.error(pos, message)
-      abort(s"Macro expansion failed: problem at ${pos.source.file.name}:${pos.line}")
+      c.error(pos, s"Macro expansion at ${posInfo(c.enclosingPosition)} failed: $message")
+      abort(s"Macro expansion failed because of error at ${posInfo(pos)}")
     } else {
       abort(message)
     }

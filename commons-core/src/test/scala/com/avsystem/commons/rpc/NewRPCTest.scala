@@ -48,7 +48,7 @@ trait NamedVarargs {
   @POST def postit(arg: String, @header("X-Bar") bar: String, int: Int, @header("X-Foo") foo: String): String
 }
 object NamedVarargs {
-  implicit val asRealRaw: AsRealRaw[NamedVarargs, NewRawRPC] = NewRawRPC.materializeAsRealRaw[NamedVarargs].showAst
+  implicit val asRealRaw: AsRealRaw[NamedVarargs, NewRawRPC] = NewRawRPC.materializeAsRealRaw[NamedVarargs]
 }
 
 @silent

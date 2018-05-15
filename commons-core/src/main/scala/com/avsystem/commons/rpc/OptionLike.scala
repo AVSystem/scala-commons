@@ -1,13 +1,13 @@
 package com.avsystem.commons
 package rpc
 
-trait OptionLike[O] {
+sealed trait OptionLike[O] {
   type Value
   def none: O
   def some(value: Value): O
   def fold[B](opt: O, ifEmpty: => B)(f: Value => B): B
 }
-abstract class BaseOptionLike[O, A] extends OptionLike[O] {
+trait BaseOptionLike[O, A] extends OptionLike[O] {
   type Value = A
 }
 object OptionLike {

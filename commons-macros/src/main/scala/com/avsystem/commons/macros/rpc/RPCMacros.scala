@@ -39,6 +39,27 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   val BIterableClass: ClassSymbol = rootMirror.staticClass("scala.collection.Iterable")
   val PartialFunctionClass: ClassSymbol = rootMirror.staticClass("scala.PartialFunction")
 
+  sealed trait Res[+A] {
+    def map[B](fun: A => B): Res[B] = this match {
+      case Ok(value) => Ok(fun(value))
+      case f: Failure => f
+    }
+    def flatMap[B](fun: A => Res[B]): Res[B] = this match {
+      case Ok(value) => fun(value)
+      case f: Failure => f
+    }
+    def toOption: Option[A] = this match {
+      case Ok(value) => Some(value)
+      case _ => None
+    }
+    def foreach(f: A => Any): Unit = this match {
+      case Ok(value) => f(value)
+      case _ =>
+    }
+  }
+  case class Ok[+T](value: T) extends Res[T]
+  case class Failure(message: String) extends Res[Nothing]
+
   sealed abstract class RpcArity(val verbatimByDefault: Boolean)
   object RpcArity {
     def fromAnnotation(annot: Tree, sym: RpcSymbol): RpcArity = {
@@ -149,17 +170,16 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     def asReal: Tree
   }
   object RpcEncoding {
-    def forParam(rawParam: RawParam, realParam: RealParam): RpcEncoding = {
+    def forParam(rawParam: RawParam, realParam: RealParam): Res[RpcEncoding] = {
       if (rawParam.verbatim) {
-        if (!(realParam.actualType =:= rawParam.encodedArgType)) {
-          realParam.reportProblem(
-            s"${rawParam.cannotMapClue}: expected RPC parameter exactly of type ${rawParam.encodedArgType}")
-        }
-        Verbatim(rawParam.encodedArgType)
-      } else {
-        RealRawEncoding(realParam.actualType, rawParam.encodedArgType,
-          Some((s"${realParam.problemStr}: ${rawParam.cannotMapClue}: ", realParam.pos)))
-      }
+        if (realParam.actualType =:= rawParam.encodedArgType)
+          Ok(Verbatim(rawParam.encodedArgType))
+        else rawParam.owner.matchFailure(
+          s"${realParam.problemStr}: ${rawParam.cannotMapClue}: expected real parameter exactly of type " +
+            s"${rawParam.encodedArgType}, got ${realParam.actualType}")
+      } else
+        Ok(RealRawEncoding(realParam.actualType, rawParam.encodedArgType,
+          Some((s"${realParam.problemStr}: ${rawParam.cannotMapClue}: ", realParam.pos))))
     }
 
     case class Verbatim(tpe: Type) extends RpcEncoding {
@@ -193,7 +213,8 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val safeName: TermName = c.freshName(symbol.name.toTermName)
     val nameStr: String = name.decodedName.toString
     val encodedNameStr: String = name.encodedName.toString
-    val annotations: List[Tree] = allAnnotations(symbol)
+
+    lazy val annotations: List[Tree] = allAnnotations(symbol)
 
     lazy val filters: List[RpcFilter] = annotations.collect {
       case filterAnnot if filterAnnot.tpe <:< RpcFilterAT => RpcFilter.fromAnnotation(filterAnnot, this)
@@ -218,10 +239,10 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   abstract class RpcMethod extends RpcSymbol {
     val owner: Type
-    def problemStr = s"Problem with method $nameStr of type $owner"
+    def problemStr = s"problem with method $nameStr of type $owner"
 
     if (!symbol.isMethod) {
-      abortAt(s"Problem with member $nameStr of type $owner: it must be a method (def)", pos)
+      abortAt(s"problem with member $nameStr of type $owner: it must be a method (def)", pos)
     }
 
     val sig: Type = symbol.typeSignatureIn(owner)
@@ -239,7 +260,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   abstract class RpcParam extends RpcSymbol {
     val owner: RpcMethod
-    def problemStr = s"Problem with param $nameStr of method ${owner.nameStr}"
+    def problemStr = s"problem with parameter $nameStr of method ${owner.nameStr}"
     val actualType: Type = actualParamType(symbol)
 
     def localValueDecl(body: Tree): Tree =
@@ -260,7 +281,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   case class RpcNameParam(owner: RawMethod, symbol: Symbol) extends RpcParam
 
   case class RawParam(owner: RawMethod, symbol: Symbol) extends RpcParam {
-    def cannotMapClue = s"cannot map it to raw param $nameStr of ${owner.nameStr}"
+    def cannotMapClue = s"cannot map it to raw parameter $nameStr of ${owner.nameStr}"
 
     val arity: RpcArity =
       annotations.find(_.tpe <:< RpcArityAT).map(RpcArity.fromAnnotation(_, this)).getOrElse(RpcArity.Single)
@@ -279,7 +300,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         val optionLikeType = typeOfCachedImplicit(optionLike)
         val valueMember = optionLikeType.member(TypeName("Value"))
         if (valueMember.isAbstract) {
-          reportProblem("could not determine actual value of optional param type")
+          reportProblem("could not determine actual value of optional parameter type")
         }
         valueMember.typeSignatureIn(optionLikeType)
       case RpcArity.Repeated =>
@@ -296,50 +317,69 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     lazy val canBuildFrom: TermName = arity match {
       case RpcArity.Repeated =>
-        infer(tq"$CanBuildFromCls[Nothing,$encodedArgType,$actualType]")
+        infer(tq"$CanBuildFromCls[$NothingCls,$encodedArgType,$actualType]")
       case RpcArity.NamedRepeated =>
-        infer(tq"$CanBuildFromCls[Nothing,($StringCls,$encodedArgType),$actualType]")
+        infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,$encodedArgType),$actualType]")
       case _ => termNames.EMPTY
     }
 
     def filtersMatch(realMethod: RealParam): Boolean =
       filters.forall(_.matches(realMethod))
 
-    def extractMapping(realParams: LinkedList[RealParam]): Option[ParamMapping] = {
+    def extractMapping(realParams: LinkedList[RealParam]): Res[ParamMapping] = {
       val it = realParams.listIterator()
 
-      def extractSingle(): Option[EncodedRealParam] = if (it.hasNext) {
-        val realParam = it.next()
-        if (filtersMatch(realParam)) {
-          it.remove()
-          Some(EncodedRealParam(realParam, RpcEncoding.forParam(this, realParam)))
-        } else extractSingle()
-      } else None
-
-      def extractOptional(): Option[EncodedRealParam] = if (it.hasNext) {
-        val realParam = it.next()
-        if (filtersMatch(realParam)) {
-          if (!verbatim || encodedArgType =:= realParam.actualType) {
+      def extractSingle(): Res[EncodedRealParam] =
+        if (it.hasNext) {
+          val realParam = it.next()
+          if (filtersMatch(realParam)) {
             it.remove()
-            Some(EncodedRealParam(realParam, RpcEncoding.forParam(this, realParam)))
-          } else None
-        } else extractOptional()
-      } else None
+            RpcEncoding.forParam(this, realParam).map(e => EncodedRealParam(realParam, e))
+          } else extractSingle()
+        } else {
+          owner.matchFailure(s"raw parameter $nameStr was not matched by real parameter")
+        }
 
-      def extractRepeated(): List[EncodedRealParam] = if (it.hasNext) {
-        val realParam = it.next()
-        if (filtersMatch(realParam)) {
-          it.remove()
-          val erp = EncodedRealParam(realParam, RpcEncoding.forParam(this, realParam))
-          erp :: extractRepeated()
-        } else extractRepeated()
-      } else Nil
+      def extractOptional(): Option[EncodedRealParam] =
+        if (it.hasNext) {
+          val realParam = it.next()
+          if (filtersMatch(realParam)) {
+            RpcEncoding.forParam(this, realParam).toOption.map { encoding =>
+              it.remove()
+              EncodedRealParam(realParam, encoding)
+            }
+          } else extractOptional()
+        } else None
+
+      def extractRepeated() = {
+        def loop(): Res[List[EncodedRealParam]] =
+          if (it.hasNext) {
+            val realParam = it.next()
+            if (filtersMatch(realParam)) {
+              it.remove()
+              for {
+                encoding <- RpcEncoding.forParam(this, realParam)
+                rest <- loop()
+              } yield EncodedRealParam(realParam, encoding) :: rest
+            } else loop()
+          } else Ok(Nil)
+        val result = loop()
+        for {
+          rps <- result
+          (rpcName, first :: rest) <- rps.groupBy(_.realParam.rpcName) if rest.nonEmpty
+        } {
+          first.realParam.owner.reportProblem(
+            s"multiple parameters matched to raw parameter $nameStr have the same @RPCName: $rpcName")
+        }
+        result
+      }
+
 
       arity match {
         case RpcArity.Single => extractSingle().map(ParamMapping.Single(this, _))
-        case RpcArity.Optional => Some(ParamMapping.Optional(this, extractOptional()))
-        case RpcArity.Repeated => Some(ParamMapping.Repeated(this, extractRepeated()))
-        case RpcArity.NamedRepeated => Some(ParamMapping.NamedRepeated(this, extractRepeated()))
+        case RpcArity.Optional => Ok(ParamMapping.Optional(this, extractOptional()))
+        case RpcArity.Repeated => extractRepeated().map(ParamMapping.Repeated(this, _))
+        case RpcArity.NamedRepeated => extractRepeated().map(ParamMapping.NamedRepeated(this, _))
       }
     }
   }
@@ -349,7 +389,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       if (symbol.asTerm.isParamWithDefault)
         q"$nameOfRealRpc.${TermName(s"${owner.encodedNameStr}$$default$$$index")}"
       else
-        q"$RpcPackage.RpcUtils.missingArg(${owner.rpcName}, $rpcName)"
+        q"$RpcPackage.RpcUtils.missingArg(${owner.mapping.rawMethod.rpcNameParam.safeName}, $rpcName)"
   }
 
   case class RawMethod(owner: Type, symbol: Symbol) extends RpcMethod {
@@ -359,6 +399,9 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     def filtersMatch(realMethod: RealMethod): Boolean =
       filters.forall(_.matches(realMethod))
+
+    def matchFailure(msg: String): Failure =
+      Failure(s"raw method $nameStr did not match because: $msg")
 
     val (rpcNameParam, rawParams, paramLists) =
       sig.paramLists match {
@@ -383,7 +426,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
        """
   }
 
-  case class RealMethod(owner: Type, symbol: Symbol) extends RpcMethod {
+  case class RealMethod(owner: Type, symbol: Symbol, rawMethods: List[RawMethod]) extends RpcMethod {
     val paramLists: List[List[RealParam]] = {
       var idx = 0
       def nextIdx() = {
@@ -395,28 +438,39 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     val realParams: List[RealParam] = paramLists.flatten
 
-    def findMapping(rawMethods: List[RawMethod], forAsRaw: Boolean): MethodMapping = {
-      val methodMappings = rawMethods.filter(_.filtersMatch(this)).flatMap { rawMethod =>
-        def resultEncoding: Option[RpcEncoding] =
-          if (rawMethod.verbatimResult)
-            Some(RpcEncoding.Verbatim(rawMethod.resultType)).filter(_.tpe =:= resultType)
-          else
-            Some(RpcEncoding.RealRawEncoding(resultType, rawMethod.resultType, None)).filter { e =>
-              val requiredConverter = if (forAsRaw) e.asRawName else e.asRealName
-              requiredConverter != termNames.EMPTY
-            }
+    val mappingRes: Res[MethodMapping] = {
+      val methodMappings = rawMethods.filter(_.filtersMatch(this)).map { rawMethod =>
+        def resultEncoding: Res[RpcEncoding] =
+          if (rawMethod.verbatimResult) {
+            if (rawMethod.resultType =:= resultType)
+              Ok(RpcEncoding.Verbatim(rawMethod.resultType))
+            else rawMethod.matchFailure(
+              s"real result type $resultType does not match raw result type ${rawMethod.resultType}")
+          } else {
+            val e = RpcEncoding.RealRawEncoding(resultType, rawMethod.resultType, None)
+            if (e.asRawName != termNames.EMPTY || e.asRealName != termNames.EMPTY)
+              Ok(e)
+            else rawMethod.matchFailure(
+              s"no encoding/decoding found between real result type $resultType and raw result type ${rawMethod.resultType}")
+          }
 
-        def collectParamMappings(rawParams: List[RawParam], realParams: List[RealParam]): Option[List[ParamMapping]] = {
+        def collectParamMappings(rawParams: List[RawParam], realParams: List[RealParam]): Res[List[ParamMapping]] = {
           val realBuf = new LinkedList[RealParam]
           realBuf.addAll(realParams.asJava)
 
-          val initialAcc = Option(List.empty[ParamMapping])
+          val initialAcc: Res[List[ParamMapping]] = Ok(Nil)
           rawParams.foldLeft(initialAcc) { (accOpt, rawParam) =>
             for {
               acc <- accOpt
               mapping <- rawParam.extractMapping(realBuf)
             } yield mapping :: acc
-          }.filter(_ => realBuf.isEmpty).map(_.reverse)
+          }.flatMap { result =>
+            if (realBuf.isEmpty) Ok(result.reverse)
+            else {
+              val unmatched = realBuf.iterator.asScala.map(_.nameStr).mkString(",")
+              rawMethod.matchFailure(s"no raw parameter(s) were found that would match real parameter(s) $unmatched")
+            }
+          }
         }
 
         for {
@@ -425,12 +479,19 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         } yield MethodMapping(this, rawMethod, paramMappings, resultConv)
       }
 
-      methodMappings match {
-        case List(single) => single
-        case Nil => reportProblem("it has no matching raw methods")
-        case multiple => reportProblem(
-          s"it has multiple matching raw methods: ${multiple.map(_.rawMethod.nameStr).mkString(",")}")
+      methodMappings.collect { case Ok(m) => m } match {
+        case List(m) => Ok(m)
+        case Nil =>
+          val unmatchedReport = methodMappings.iterator.collect({ case Failure(error) => s" * $error" }).mkString("\n")
+          Failure(s"it has no matching raw methods:\n$unmatchedReport")
+        case multiple =>
+          Failure(s"it has multiple matching raw methods: ${multiple.map(_.rawMethod.nameStr).mkString(",")}")
       }
+    }
+
+    def mapping: MethodMapping = mappingRes match {
+      case Ok(m) => m
+      case Failure(error) => reportProblem(error)
     }
   }
 
@@ -468,12 +529,32 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   def extractRawMethods(rawTpe: Type): List[RawMethod] =
     rawTpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(rawTpe, _)).toList
 
-  def extractRealMethods(realTpe: Type): List[RealMethod] =
-    realTpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RealMethod(realTpe, _)).toList
+  def extractRealMethods(realTpe: Type, rawMethods: List[RawMethod]): List[RealMethod] = {
+    val result = realTpe.members.iterator.filter(m => m.isTerm && m.isAbstract)
+      .map(RealMethod(realTpe, _, rawMethods)).toList
+    val failedMethods = result.flatMap { rm =>
+      rm.mappingRes match {
+        case Failure(msg) => Some((rm, msg))
+        case _ => None
+      }
+    }
+    if (failedMethods.nonEmpty) {
+      val failedMethodsRepr = failedMethods.map { case (rm, msg) =>
+        if (rm.pos != NoPosition) {
+          c.error(rm.pos, s"Macro expansion at ${posInfo(c.enclosingPosition)} failed: ${rm.problemStr}: $msg")
+        } else {
+          error(s"${rm.problemStr}: $msg")
+        }
+        rm.nameStr
+      }.mkString(",")
+      abort(s"Following real methods could not be mapped to raw methods: $failedMethodsRepr")
+    }
+    result
+  }
 
   private def asRealImpl(realTpe: Type, rawTpe: Type, raws: List[RawMethod], reals: List[RealMethod]): Tree = {
     val rawName = c.freshName(TermName("raw"))
-    val realMethodImpls = reals.map(_.findMapping(raws, forAsRaw = false).realImpl(rawName))
+    val realMethodImpls = reals.map(_.mapping.realImpl(rawName))
 
     q"""
       def asReal($rawName: $rawTpe): $realTpe = new $realTpe {
@@ -487,7 +568,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     val caseDefs = raws.iterator.map(rm => (rm, new mutable.LinkedHashMap[String, CaseDef])).toMap
     reals.foreach { realMethod =>
-      val mapping = realMethod.findMapping(raws, forAsRaw = true)
+      val mapping = realMethod.mapping
       val prevCaseDef = caseDefs(mapping.rawMethod).put(realMethod.rpcName, mapping.rawCaseImpl(realName))
       ensure(prevCaseDef.isEmpty,
         s"Multiple RPCs named ${realMethod.rpcName} map to raw method ${mapping.rawMethod.name}. " +
@@ -522,7 +603,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     registerCompanionImplicits(rawTpe)
 
     val raws = extractRawMethods(rawTpe)
-    val reals = extractRealMethods(realTpe)
+    val reals = extractRealMethods(realTpe, raws)
     // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
     val asRealDef = asRealImpl(realTpe, rawTpe, raws, reals)
 
@@ -545,7 +626,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     registerCompanionImplicits(rawTpe)
 
     val raws = extractRawMethods(rawTpe)
-    val reals = extractRealMethods(realTpe)
+    val reals = extractRealMethods(realTpe, raws)
     // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
     val asRawDef = asRawImpl(realTpe, rawTpe, raws, reals)
 
@@ -569,7 +650,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     registerCompanionImplicits(rawTpe)
 
     val raws = extractRawMethods(rawTpe)
-    val reals = extractRealMethods(realTpe)
+    val reals = extractRealMethods(realTpe, raws)
 
     // these two must be evaluated before `cachedImplicitDeclarations`, don't inline them into the quasiquote
     val asRealDef = asRealImpl(realTpe, rawTpe, raws, reals)
