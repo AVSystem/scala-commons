@@ -5,14 +5,6 @@ import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.serialization.GenCodec
 import com.github.ghik.silencer.silent
 
-sealed trait RawValue
-object RawValue {
-  implicit def asRawFromGc[T: GenCodec]: AsRaw[T, RawValue] = ???
-  implicit def asRealFromGc[T: GenCodec]: AsReal[T, RawValue] = ???
-  implicit def futureAsRealFromGc[T: GenCodec]: AsReal[Future[T], Future[RawValue]] = ???
-  implicit def futureAsRawFromGc[T: GenCodec]: AsRaw[Future[T], Future[RawValue]] = ???
-}
-
 class POST extends RPCAnnotation
 class header(name: String) extends RPCAnnotation with AnnotationAggregate {
   @RPCName(name)
@@ -21,21 +13,26 @@ class header(name: String) extends RPCAnnotation with AnnotationAggregate {
 
 trait NewRawRPC {
   @verbatim def fire(name: String, @optional ajdi: Opt[Int],
-    @namedRepeated args: Map[String, RawValue]): Unit
+    @namedRepeated args: Map[String, String]): Unit
 
   def call(name: String,
-    @annotatedWith[RPCName] @namedRepeated renamedArgs: Map[String, RawValue],
-    @namedRepeated args: Map[String, RawValue]): Future[RawValue]
+    @annotatedWith[RPCName] @namedRepeated renamedArgs: Map[String, String],
+    @namedRepeated args: Map[String, String]): Future[String]
 
   def get(name: String,
-    @repeated args: List[RawValue]): NewRawRPC
+    @repeated args: List[String]): NewRawRPC
 
   @annotatedWith[POST]
   def post(name: String,
     @annotatedWith[header] @namedRepeated @verbatim headers: Map[String, String],
-    @namedRepeated body: MLinkedHashMap[String, RawValue]): RawValue
+    @namedRepeated body: MLinkedHashMap[String, String]): String
 }
-object NewRawRPC extends RawRPCCompanion[NewRawRPC]
+object NewRawRPC extends RawRPCCompanion[NewRawRPC] {
+  override val implicits: this.type = this
+
+  implicit def asRealRawFromGenCodec[T: GenCodec]: AsRealRaw[T, String] = ???
+  implicit def futureAsRealRawFromGenCodec[T: GenCodec]: AsRealRaw[Future[T], Future[String]] = ???
+}
 
 class EnhancedName(int: Int, name: String) extends AnnotationAggregate {
   @RPCName(name)

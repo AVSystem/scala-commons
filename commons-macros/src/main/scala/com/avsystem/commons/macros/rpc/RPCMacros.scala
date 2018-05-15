@@ -34,6 +34,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   val VerbatimAT: Type = getType(tq"$RpcPackage.verbatim")
   val RpcFilterAT: Type = getType(tq"$RpcPackage.RpcFilter")
   val AnnotatedWithAT: Type = getType(tq"$RpcPackage.annotatedWith[_]")
+  val RawRPCCompanionTpe: Type = getType(tq"$RpcPackage.RawRPCCompanion[_]")
 
   val BIterableClass: ClassSymbol = rootMirror.staticClass("scala.collection.Iterable")
   val PartialFunctionClass: ClassSymbol = rootMirror.staticClass("scala.PartialFunction")
@@ -477,28 +478,6 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       """
   }
 
-  def rpcAsReal[T: WeakTypeTag, R: WeakTypeTag]: Tree = {
-    val realTpe = weakTypeOf[T]
-    checkImplementable(realTpe)
-    val rawTpe = weakTypeOf[R]
-    checkImplementable(rawTpe)
-
-    val selfName = c.freshName(TermName("self"))
-    registerImplicit(getType(tq"$AsRealCls[$realTpe,$rawTpe]"), selfName)
-
-    val raws = extractRawMethods(rawTpe)
-    val reals = extractRealMethods(realTpe)
-    // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
-    val asRealDef = asRealImpl(realTpe, rawTpe, raws, reals)
-
-    q"""
-      new $AsRealCls[$realTpe,$rawTpe] { $selfName: ${TypeTree()} =>
-        ..$cachedImplicitDeclarations
-        $asRealDef
-      }
-    """
-  }
-
   private def asRawImpl(realTpe: Type, rawTpe: Type, raws: List[RawMethod], reals: List[RealMethod]): Tree = {
     val realName = c.freshName(TermName("real"))
 
@@ -520,6 +499,37 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       """
   }
 
+  private def registerCompanionImplicits(rawTpe: Type): Unit =
+    companionOf(rawTpe).filter { companion =>
+      val typed = c.typecheck(q"$companion.implicits", silent = true)
+      typed != EmptyTree && !(typed.tpe.widen =:= typeOf[Any])
+    }.foreach { companion =>
+      registerImplicitImport(q"import $companion.implicits._")
+    }
+
+  def rpcAsReal[T: WeakTypeTag, R: WeakTypeTag]: Tree = {
+    val realTpe = weakTypeOf[T]
+    checkImplementable(realTpe)
+    val rawTpe = weakTypeOf[R]
+    checkImplementable(rawTpe)
+
+    val selfName = c.freshName(TermName("self"))
+    registerImplicit(getType(tq"$AsRealCls[$realTpe,$rawTpe]"), selfName)
+    registerCompanionImplicits(rawTpe)
+
+    val raws = extractRawMethods(rawTpe)
+    val reals = extractRealMethods(realTpe)
+    // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
+    val asRealDef = asRealImpl(realTpe, rawTpe, raws, reals)
+
+    q"""
+      new $AsRealCls[$realTpe,$rawTpe] { $selfName: ${TypeTree()} =>
+        ..$cachedImplicitDeclarations
+        $asRealDef
+      }
+    """
+  }
+
   def rpcAsRaw[T: WeakTypeTag, R: WeakTypeTag]: Tree = {
     val realTpe = weakTypeOf[T]
     checkImplementable(realTpe)
@@ -528,6 +538,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     val selfName = c.freshName(TermName("self"))
     registerImplicit(getType(tq"$AsRawCls[$realTpe,$rawTpe]"), selfName)
+    registerCompanionImplicits(rawTpe)
 
     val raws = extractRawMethods(rawTpe)
     val reals = extractRealMethods(realTpe)
@@ -551,6 +562,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val selfName = c.freshName(TermName("self"))
     registerImplicit(getType(tq"$AsRawCls[$realTpe,$rawTpe]"), selfName)
     registerImplicit(getType(tq"$AsRealCls[$realTpe,$rawTpe]"), selfName)
+    registerCompanionImplicits(rawTpe)
 
     val raws = extractRawMethods(rawTpe)
     val reals = extractRealMethods(realTpe)
@@ -567,5 +579,4 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       }
      """
   }
-
 }
