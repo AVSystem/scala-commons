@@ -16,7 +16,7 @@ trait NewRawRPC {
     @namedRepeated args: Map[String, String]): Unit
 
   def call(name: String,
-    @annotatedWith[RPCName] @namedRepeated renamedArgs: Map[String, String],
+    @annotatedWith[RPCName] @namedRepeated renamedArgs: => Map[String, String],
     @namedRepeated args: Map[String, String]): Future[String]
 
   def get(name: String,
@@ -41,7 +41,7 @@ class EnhancedName(int: Int, name: String) extends AnnotationAggregate {
 trait NamedVarargs {
   def varargsMethod(krap: String, dubl: Double)(czy: Boolean, @EnhancedName(42, "nejm") ints: Int*): Future[Unit]
   def defaultValueMethod(int: Int = 0, bul: Boolean): Future[Unit]
-  def flames(arg: String, otherArg: Int, varargsy: Double*): Unit
+  def flames(arg: String, otherArg: => Int, varargsy: Double*): Unit
   def overload(int: Int): Unit
   def overload: NamedVarargs
   def getit(stuff: String, otherStuff: List[Int]): NamedVarargs

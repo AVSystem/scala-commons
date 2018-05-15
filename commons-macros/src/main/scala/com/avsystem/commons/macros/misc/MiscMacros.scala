@@ -6,11 +6,6 @@ import com.avsystem.commons.macros.AbstractMacroCommons
 import scala.reflect.macros.{TypecheckException, blackbox}
 
 class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
-
-  class C[+A, +B <: A]
-
-  val aa: C[Any, Any] = new C[String, String]
-
   import c.universe._
 
   // cannot use c.inferImplicitValue(silent = false) because the only error it reports is

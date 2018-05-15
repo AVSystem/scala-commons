@@ -53,10 +53,10 @@ trait MacroCommons { bundle =>
     Iterator.iterate(enclosingSym)(_.owner).takeWhile(_ != NoSymbol).toList
   }
 
-  // in order to cache implicits aggresively, remove duplicates not only by implicit type being searched but also
-  // by actual tree of the implicit, normalized to this simple form
-  sealed trait ImplicitTrace
-  object ImplicitTrace {
+  // simplified representation of trees of implicits, used to remove duplicated implicits,
+  // i.e. implicits that were found for different types but turned out to be identical
+  private sealed trait ImplicitTrace
+  private object ImplicitTrace {
     def apply(tree: Tree): Option[ImplicitTrace] =
       try Some(extract(tree)) catch {
         case TranslationFailed => None
@@ -64,7 +64,8 @@ trait MacroCommons { bundle =>
 
     private val TranslationFailed = new RuntimeException with NoStackTrace
     private def extract(tree: Tree): ImplicitTrace = tree match {
-      case Literal(constant) => Lit(constant)
+      case Literal(Constant(tpe: Type)) => Lit(TypeKey(tpe))
+      case Literal(Constant(value)) => Lit(value)
       case Ident(_) if tree.symbol.isStatic => Static(tree.symbol)
       case Ident(name) => Id(name)
       case This(name) => Ths(name)
@@ -73,10 +74,10 @@ trait MacroCommons { bundle =>
       case TypeApply(fun, _) => extract(fun)
       case Typed(expr, _) => extract(expr)
       case Annotated(_, arg) => extract(arg)
-      case _ => throw TranslationFailed
+      case _ => throw TranslationFailed // this can probably only happen when implicit is a macro
     }
 
-    case class Lit(constant: Constant) extends ImplicitTrace
+    case class Lit(value: Any) extends ImplicitTrace
     case class Id(name: Name) extends ImplicitTrace
     case class Ths(name: Name) extends ImplicitTrace
     case class Static(sym: Symbol) extends ImplicitTrace
@@ -91,34 +92,35 @@ trait MacroCommons { bundle =>
   private val implicitsToDeclare = new ListBuffer[Tree]
 
   def tryInferCachedImplicit(tpe: Type): Option[TermName] = {
-    def compute: Option[TermName] = Option(c.typecheck(q"..$implicitImports; implicitly[$tpe]", silent = true))
-      .filter(_ != EmptyTree)
-      .map { case WrappedImplicitSearchResult(t) =>
-        def newCachedImplicit = {
-          val name = c.freshName(TermName("cachedImplicit"))
-          inferredImplicitTypes(name) = t.tpe
-          implicitsToDeclare += q"private implicit val $name = $t"
-          name
-        }
-        ImplicitTrace(t).fold(newCachedImplicit) { tr =>
-          implicitsByTrace.get(tr).filter(n => inferredImplicitTypes(n) =:= t.tpe).getOrElse {
-            val name = newCachedImplicit
-            implicitsByTrace(tr) = name
+    def compute: Option[TermName] =
+      Option(c.typecheck(q"..$implicitImports; implicitly[$tpe]", silent = true))
+        .filter(_ != EmptyTree)
+        .map { case WrappedImplicitSearchResult(t) =>
+          def newCachedImplicit(): TermName = {
+            val name = c.freshName(TermName("cachedImplicit"))
+            inferredImplicitTypes(name) = t.tpe
+            implicitsToDeclare += q"private implicit val $name = $t"
             name
           }
+          ImplicitTrace(t).fold(newCachedImplicit()) { tr =>
+            implicitsByTrace.get(tr).filter(n => inferredImplicitTypes(n) =:= t.tpe).getOrElse {
+              val name = newCachedImplicit()
+              implicitsByTrace(tr) = name
+              name
+            }
+          }
         }
-      }
     implicitSearchCache.getOrElseUpdate(TypeKey(tpe), compute)
   }
 
-  def inferCachedImplicit(tpe: Type, clue: String, pos: Position): TermName =
+  def inferCachedImplicit(tpe: Type, errorClue: String, errorPos: Position): TermName =
     tryInferCachedImplicit(tpe).getOrElse {
       val name = c.freshName(TermName(""))
       implicitSearchCache(TypeKey(tpe)) = Some(name)
       implicitsToDeclare +=
-        q"private implicit val $name = $ImplicitsObj.infer[$tpe](${internal.setPos(StringLiteral(clue), pos)})"
+        q"private implicit val $name = $ImplicitsObj.infer[$tpe](${internal.setPos(StringLiteral(errorClue), errorPos)})"
       inferredImplicitTypes(name) = tpe
-      inferCachedImplicit(tpe, clue, pos)
+      inferCachedImplicit(tpe, errorClue, errorPos)
     }
 
   def typeOfCachedImplicit(name: TermName): Type =
@@ -146,11 +148,6 @@ trait MacroCommons { bundle =>
       case _ => List(t)
     }
   }
-
-  private val uniqueNameCache = new mutable.HashMap[Symbol, TermName]
-
-  def safeName(symbol: Symbol): TermName =
-    uniqueNameCache.getOrElseUpdate(symbol, c.freshName(symbol.name.toTermName))
 
   def paramIndex(param: Symbol): Int =
     param.owner.typeSignature.paramLists.flatten.indexOf(param) + 1
@@ -237,6 +234,9 @@ trait MacroCommons { bundle =>
       abort(message)
     }
 
+  /**
+    * Wrapper over Type that implements equals/hashCode consistent with type equivalence (=:=)
+    */
   case class TypeKey(tpe: Type) {
     override def equals(obj: Any) = obj match {
       case TypeKey(otherTpe) => tpe =:= otherTpe
