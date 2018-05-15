@@ -19,34 +19,34 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
 
   "rpc caller" should {
     "should properly deserialize RPC calls" in {
-      val invocations = new ArrayBuffer[(String, List[List[Any]])]
+      val invocations = new ArrayBuffer[(String, List[Any])]
       val rawRpc = AsRawRPC[TestRPC].asRaw(TestRPC.rpcImpl((name, args, _) => {
         invocations += ((name, args))
         name
       }))
 
-      rawRpc.fire("handleMore", List(Nil))
-      rawRpc.fire("doStuff", List(List(42, "omgsrsly"), List(Some(true))))
-      assert("doStuffResult" === get(rawRpc.call("doStuffBoolean", List(List(true)))))
-      rawRpc.fire("doStuffInt", List(List(5)))
-      rawRpc.fire("handleMore", List(Nil))
+      rawRpc.fire("handleMore", Nil)
+      rawRpc.fire("doStuff", List(42, "omgsrsly", Some(true)))
+      assert("doStuffResult" === get(rawRpc.call("doStuffBoolean", List(true))))
+      rawRpc.fire("doStuffInt", List(5))
+      rawRpc.fire("handleMore", Nil)
       rawRpc.fire("handle", Nil)
-      rawRpc.fire("srslyDude", List(Nil))
-      rawRpc.get("innerRpc", List(List("innerName"))).fire("proc", List(Nil))
-      assert("innerRpc.funcResult" === get(rawRpc.get("innerRpc", List(List("innerName"))).call("func", List(List(42)))))
+      rawRpc.fire("srslyDude", Nil)
+      rawRpc.get("innerRpc", List("innerName")).fire("proc", Nil)
+      assert("innerRpc.funcResult" === get(rawRpc.get("innerRpc", List("innerName")).call("func", List(42))))
 
       assert(invocations.toList === List(
-        ("handleMore", List(Nil)),
-        ("doStuff", List(List(42, "omgsrsly"), List(Some(true)))),
-        ("doStuffBoolean", List(List(true))),
-        ("doStuffInt", List(List(5))),
-        ("handleMore", List(Nil)),
+        ("handleMore", Nil),
+        ("doStuff", List(42, "omgsrsly", Some(true))),
+        ("doStuffBoolean", List(true)),
+        ("doStuffInt", List(5)),
+        ("handleMore", Nil),
         ("handle", Nil),
-        ("srslyDude", List(Nil)),
-        ("innerRpc", List(List("innerName"))),
-        ("innerRpc.proc", List(Nil)),
-        ("innerRpc", List(List("innerName"))),
-        ("innerRpc.func", List(List(42)))
+        ("srslyDude", Nil),
+        ("innerRpc", List("innerName")),
+        ("innerRpc.proc", Nil),
+        ("innerRpc", List("innerName")),
+        ("innerRpc.func", List(42))
       ))
     }
 
@@ -56,18 +56,18 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
     }
 
     "real rpc should properly serialize calls to raw rpc" in {
-      val invocations = new ArrayBuffer[(String, List[List[Any]])]
+      val invocations = new ArrayBuffer[(String, List[Any])]
 
       object rawRpc extends RawRPC with RunNowFutureCallbacks {
-        def fire(rpcName: String, args: List[List[Any]]): Unit =
+        def fire(rpcName: String, args: List[Any]): Unit =
           invocations += ((rpcName, args))
 
-        def call(rpcName: String, args: List[List[Any]]): Future[Any] = {
+        def call(rpcName: String, args: List[Any]): Future[Any] = {
           invocations += ((rpcName, args))
           Future.successful(rpcName + "Result")
         }
 
-        def get(rpcName: String, args: List[List[Any]]): RawRPC = {
+        def get(rpcName: String, args: List[Any]): RawRPC = {
           invocations += ((rpcName, args))
           this
         }
@@ -86,24 +86,24 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       realRpc.innerRpc("innerName").moreInner("moreInner").moreInner("evenMoreInner").func(42)
 
       assert(invocations.toList === List(
-        ("handleMore", List(Nil)),
-        ("doStuff", List(List(42, "omgsrsly"), List(Some(true)))),
-        ("doStuffBoolean", List(List(true))),
-        ("doStuffInt", List(List(5))),
-        ("handleMore", List(Nil)),
+        ("handleMore", Nil),
+        ("doStuff", List(42, "omgsrsly", Some(true))),
+        ("doStuffBoolean", List(true)),
+        ("doStuffInt", List(5)),
+        ("handleMore", Nil),
         ("handle", Nil),
 
-        ("innerRpc", List(List("innerName"))),
-        ("proc", List(Nil)),
+        ("innerRpc", List("innerName")),
+        ("proc", Nil),
 
-        ("innerRpc", List(List("innerName"))),
-        ("moreInner", List(List("moreInner"))),
-        ("moreInner", List(List("evenMoreInner"))),
-        ("func", List(List(42)))
+        ("innerRpc", List("innerName")),
+        ("moreInner", List("moreInner")),
+        ("moreInner", List("evenMoreInner")),
+        ("func", List(42))
       ))
     }
 
-    @RPC trait BaseRPC[T] {
+    trait BaseRPC[T] {
       def accept(t: T): Unit
     }
 
@@ -113,7 +113,7 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       materializeFullInfo[ConcreteRPC]
     }
 
-    @RPC trait EmptyRPC
+    trait EmptyRPC
 
     "rpc should work with empty interface types" in {
       materializeFullInfo[EmptyRPC]: @silent

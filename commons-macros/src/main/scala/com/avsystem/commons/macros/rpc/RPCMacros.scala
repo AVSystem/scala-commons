@@ -384,10 +384,13 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
-  case class RealParam(owner: RealMethod, symbol: Symbol, index: Int) extends RpcParam {
+  case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexInList: Int) extends RpcParam {
     def defaultValueTree(nameOfRealRpc: TermName): Tree =
-      if (symbol.asTerm.isParamWithDefault)
-        q"$nameOfRealRpc.${TermName(s"${owner.encodedNameStr}$$default$$$index")}"
+      if (symbol.asTerm.isParamWithDefault) {
+        val prevListParams = owner.realParams.take(index - indexInList).map(rp => q"${rp.safeName}")
+        val prevListParamss = List(prevListParams).filter(_.nonEmpty)
+        q"$nameOfRealRpc.${TermName(s"${owner.encodedNameStr}$$default$$${index + 1}")}(...$prevListParamss)"
+      }
       else
         q"$RpcPackage.RpcUtils.missingArg(${owner.mapping.rawMethod.rpcNameParam.safeName}, $rpcName)"
   }
@@ -426,14 +429,20 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
        """
   }
 
-  case class RealMethod(owner: Type, symbol: Symbol, rawMethods: List[RawMethod]) extends RpcMethod {
+  case class RealMethod(owner: Type, symbol: Symbol, rawMethods: List[RawMethod],
+    forAsRaw: Boolean, forAsReal: Boolean) extends RpcMethod {
+
     val paramLists: List[List[RealParam]] = {
       var idx = 0
-      def nextIdx() = {
-        idx += 1
-        idx
+      sig.paramLists.map { ss =>
+        var listIdx = 0
+        ss.map { s =>
+          val res = RealParam(this, s, idx, listIdx)
+          idx += 1
+          listIdx += 1
+          res
+        }
       }
-      sig.paramLists.map(_.map(s => RealParam(this, s, nextIdx())))
     }
 
     val realParams: List[RealParam] = paramLists.flatten
@@ -448,7 +457,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
               s"real result type $resultType does not match raw result type ${rawMethod.resultType}")
           } else {
             val e = RpcEncoding.RealRawEncoding(resultType, rawMethod.resultType, None)
-            if (e.asRawName != termNames.EMPTY || e.asRealName != termNames.EMPTY)
+            if ((!forAsRaw || e.asRawName != termNames.EMPTY) && (!forAsReal || e.asRealName != termNames.EMPTY))
               Ok(e)
             else rawMethod.matchFailure(
               s"no encoding/decoding found between real result type $resultType and raw result type ${rawMethod.resultType}")
@@ -522,16 +531,18 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   def checkImplementable(tpe: Type): Unit = {
     val sym = tpe.dealias.typeSymbol
     if (!sym.isAbstract || !sym.isClass) {
-      abortAt(s"$sym must be an abstract class or trait", sym.pos)
+      abortAt(s"$tpe must be an abstract class or trait", sym.pos)
     }
   }
 
   def extractRawMethods(rawTpe: Type): List[RawMethod] =
     rawTpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(rawTpe, _)).toList
 
-  def extractRealMethods(realTpe: Type, rawMethods: List[RawMethod]): List[RealMethod] = {
+  def extractRealMethods(realTpe: Type, rawMethods: List[RawMethod],
+    forAsRaw: Boolean, forAsReal: Boolean): List[RealMethod] = {
+
     val result = realTpe.members.iterator.filter(m => m.isTerm && m.isAbstract)
-      .map(RealMethod(realTpe, _, rawMethods)).toList
+      .map(RealMethod(realTpe, _, rawMethods, forAsRaw, forAsReal)).toList
     val failedMethods = result.flatMap { rm =>
       rm.mappingRes match {
         case Failure(msg) => Some((rm, msg))
@@ -558,7 +569,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     q"""
       def asReal($rawName: $rawTpe): $realTpe = new $realTpe {
-        ..$realMethodImpls
+        ..$realMethodImpls; ()
       }
       """
   }
@@ -579,7 +590,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     q"""
       def asRaw($realName: $realTpe): $rawTpe = new $rawTpe {
-        ..$rawMethodImpls
+        ..$rawMethodImpls; ()
       }
       """
   }
@@ -603,7 +614,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     registerCompanionImplicits(rawTpe)
 
     val raws = extractRawMethods(rawTpe)
-    val reals = extractRealMethods(realTpe, raws)
+    val reals = extractRealMethods(realTpe, raws, forAsRaw = false, forAsReal = true)
     // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
     val asRealDef = asRealImpl(realTpe, rawTpe, raws, reals)
 
@@ -626,7 +637,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     registerCompanionImplicits(rawTpe)
 
     val raws = extractRawMethods(rawTpe)
-    val reals = extractRealMethods(realTpe, raws)
+    val reals = extractRealMethods(realTpe, raws, forAsRaw = true, forAsReal = false)
     // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
     val asRawDef = asRawImpl(realTpe, rawTpe, raws, reals)
 
@@ -650,7 +661,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     registerCompanionImplicits(rawTpe)
 
     val raws = extractRawMethods(rawTpe)
-    val reals = extractRealMethods(realTpe, raws)
+    val reals = extractRealMethods(realTpe, raws, forAsRaw = true, forAsReal = true)
 
     // these two must be evaluated before `cachedImplicitDeclarations`, don't inline them into the quasiquote
     val asRealDef = asRealImpl(realTpe, rawTpe, raws, reals)

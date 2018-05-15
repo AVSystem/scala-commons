@@ -100,7 +100,7 @@ trait MacroCommons { bundle =>
           def newCachedImplicit(): TermName = {
             val name = c.freshName(TermName("cachedImplicit"))
             inferredImplicitTypes(name) = t.tpe
-            implicitsToDeclare += q"private implicit val $name = $t"
+            implicitsToDeclare += q"private lazy val $name = $t"
             name
           }
           ImplicitTrace(t).fold(newCachedImplicit()) { tr =>

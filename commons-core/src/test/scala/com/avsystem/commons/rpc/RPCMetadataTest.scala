@@ -7,7 +7,6 @@ import org.scalatest.FunSuite
 class RPCMetadataTest extends FunSuite {
   case class Annot(str: String) extends MetadataAnnotation
 
-  @RPC
   @Annot("on base class")
   trait Base[T] {
     def genproc(p: T): Unit
@@ -19,7 +18,8 @@ class RPCMetadataTest extends FunSuite {
     def func: Future[String]
   }
   object Base {
-    implicit def fullRpcInfo[T: ParamTypeMetadata]: BaseFullRPCInfo[Base[T]] = materializeFullInfo
+    implicit def asRealRaw[T]: AsRealRawRPC[Base[T]] = materializeAsRealRaw
+    implicit def metadata[T: ParamTypeMetadata]: RPCMetadata[Base[T]] = materializeMetadata
   }
 
   @Annot("on subclass")
@@ -31,9 +31,7 @@ class RPCMetadataTest extends FunSuite {
 
     def selfGetter: Sub
   }
-  object Sub {
-    implicit lazy val fullRPCInfo: BaseFullRPCInfo[Sub] = materializeFullInfo
-  }
+  object Sub extends RPCCompanion[Sub]
 
   test("RPC metadata should be correct") {
     val metadata = RPCMetadata[Sub]

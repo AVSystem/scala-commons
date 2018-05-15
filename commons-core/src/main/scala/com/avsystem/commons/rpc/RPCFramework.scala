@@ -1,17 +1,31 @@
 package com.avsystem.commons
 package rpc
 
-import scala.annotation.implicitNotFound
 import scala.language.higherKinds
 
 trait RPCFramework {
   type RawValue
   type Reader[T]
   type Writer[T]
+
   type RawRPC
+  val RawRPC: BaseRawRPCCompanion
+
+  trait BaseRawRPCCompanion extends RawRPCCompanion[RawRPC] {
+    override val implicits: RPCFramework.this.type = RPCFramework.this
+  }
 
   def read[T: Reader](raw: RawValue): T
   def write[T: Writer](value: T): RawValue
+
+  implicit def readerBasedAsReal[T: Reader]: AsReal[T, RawValue] =
+    new AsReal[T, RawValue] {
+      def asReal(raw: RawValue): T = read(raw)
+    }
+  implicit def writerBasedAsRaw[T: Writer]: AsRaw[T, RawValue] =
+    new AsRaw[T, RawValue] {
+      def asRaw(real: T): RawValue = write(real)
+    }
 
   type ParamTypeMetadata[T]
   type ResultTypeMetadata[T]
@@ -20,41 +34,7 @@ trait RPCFramework {
     @inline def apply[T](implicit metadata: RPCMetadata[T]): RPCMetadata[T] = metadata
   }
 
-  @implicitNotFound("This RPC framework doesn't support RPC methods that return ${Real} " +
-    "or some implicit dependencies may be missing (e.g. Writer[A] when result type is Future[A])")
-  trait RealInvocationHandler[Real, Raw] {
-    def toRaw(real: Real): Raw
-  }
-  object RealInvocationHandler {
-    def apply[Real, Raw](fun: Real => Raw): RealInvocationHandler[Real, Raw] =
-      new RealInvocationHandler[Real, Raw] {
-        def toRaw(real: Real) = fun(real)
-      }
-  }
-
-  @implicitNotFound("This RPC framework doesn't support RPC methods that return ${Real} " +
-    "or some implicit dependencies may be missing (e.g. Reader[A] when result type is Future[A])")
-  trait RawInvocationHandler[Real] {
-    def toReal(rawRpc: RawRPC, rpcName: String, argLists: List[List[RawValue]]): Real
-  }
-  object RawInvocationHandler {
-    def apply[Real](fun: (RawRPC, String, List[List[RawValue]]) => Real): RawInvocationHandler[Real] =
-      new RawInvocationHandler[Real] {
-        def toReal(rawRpc: RawRPC, rpcName: String, argLists: List[List[RawValue]]) = fun(rawRpc, rpcName, argLists)
-      }
-  }
-
-  trait RawRPCUtils {
-    protected def fail(rpcTpe: String, rawMethodName: String, methodName: String, args: List[List[RawValue]]) = {
-      val argsRepr = args.map(_.mkString("[", ",", "]")).mkString("[", ",", "]")
-      throw new Exception(s"$methodName in $rpcTpe with arguments $argsRepr cannot be handled by raw method $rawMethodName")
-    }
-  }
-
-  trait AsRawRPC[T] {
-    def asRaw(rpcImpl: T): RawRPC
-  }
-
+  type AsRawRPC[T] = AsRaw[T, RawRPC]
   object AsRawRPC {
     def apply[T](implicit asRawRPC: AsRawRPC[T]): AsRawRPC[T] = asRawRPC
   }
@@ -65,12 +45,8 @@ trait RPCFramework {
     * from/to [[RawValue]] using [[Reader]] and [[Writer]] typeclasses.
     */
   def materializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRawImpl[T]
-  implicit def implicitlyMaterializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRawImpl[T]
 
-  trait AsRealRPC[T] {
-    def asReal(rawRpc: RawRPC): T
-  }
-
+  type AsRealRPC[T] = AsReal[T, RawRPC]
   object AsRealRPC {
     @inline def apply[T](implicit asRealRPC: AsRealRPC[T]): AsRealRPC[T] = asRealRPC
   }
@@ -81,10 +57,13 @@ trait RPCFramework {
     * from/to [[RawValue]] using [[Reader]] and [[Writer]] typeclasses.
     */
   def materializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealImpl[T]
-  implicit def implicitlyMaterializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealImpl[T]
 
-  /** INTERNAL API */
-  def tryToRaw[Real, Raw](real: Real): Raw = macro macros.rpc.RPCFrameworkMacros.tryToRaw[Real, Raw]
+  type AsRealRawRPC[T] = AsRealRaw[T, RawRPC]
+  object AsRealRawRPC {
+    @inline def apply[T](implicit asRealRawRPC: AsRealRawRPC[T]): AsRealRawRPC[T] = asRealRawRPC
+  }
+
+  def materializeAsRealRaw[T]: AsRealRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealRawImpl[T]
 
   trait RPCMetadata[T] {
     def name: String
@@ -103,7 +82,6 @@ trait RPCFramework {
   case class ParamMetadata(name: String, annotations: List[MetadataAnnotation], typeMetadata: ParamTypeMetadata[_])
 
   def materializeMetadata[T]: RPCMetadata[T] = macro macros.rpc.RPCFrameworkMacros.metadataImpl[T]
-  implicit def implicitlyMaterializeMetadata[T]: RPCMetadata[T] = macro macros.rpc.RPCFrameworkMacros.metadataImpl[T]
 
   /**
     * Base trait for traits or classes "implementing" [[FullRPCInfo]] in various RPC frameworks.

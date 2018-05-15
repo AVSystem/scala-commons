@@ -9,13 +9,8 @@ trait ProcedureRPCFramework extends RPCFramework {
   type RawRPC <: ProcedureRawRPC
 
   trait ProcedureRawRPC { this: RawRPC =>
-    def fire(rpcName: String, argLists: List[List[RawValue]]): Unit
+    @verbatim def fire(rpcName: String, @repeated args: List[RawValue]): Unit
   }
-
-  implicit val ProcedureRealHandler: RealInvocationHandler[Unit, Unit] =
-    RealInvocationHandler[Unit, Unit](_ => ())
-  implicit val ProcedureRawHandler: RawInvocationHandler[Unit] =
-    RawInvocationHandler[Unit](_.fire(_, _))
 }
 
 /**
@@ -26,13 +21,17 @@ trait FunctionRPCFramework extends RPCFramework {
   type RawRPC <: FunctionRawRPC
 
   trait FunctionRawRPC { this: RawRPC =>
-    def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue]
+    def call(rpcName: String, @repeated args: List[RawValue]): Future[RawValue]
   }
 
-  implicit def FunctionRealHandler[A: Writer]: RealInvocationHandler[Future[A], Future[RawValue]] =
-    RealInvocationHandler[Future[A], Future[RawValue]](_.mapNow(write[A]))
-  implicit def FunctionRawHandler[A: Reader]: RawInvocationHandler[Future[A]] =
-    RawInvocationHandler[Future[A]]((rawRpc, rpcName, argLists) => rawRpc.call(rpcName, argLists).mapNow(read[A]))
+  implicit def readerBasedFutureAsReal[T: Reader]: AsReal[Future[T], Future[RawValue]] =
+    new AsReal[Future[T], Future[RawValue]] {
+      def asReal(raw: Future[RawValue]): Future[T] = raw.mapNow(read[T])
+    }
+  implicit def writerBasedFutureAsRaw[T: Writer]: AsRaw[Future[T], Future[RawValue]] =
+    new AsRaw[Future[T], Future[RawValue]] {
+      def asRaw(raw: Future[T]): Future[RawValue] = raw.mapNow(write[T])
+    }
 }
 
 /**
@@ -41,34 +40,26 @@ trait FunctionRPCFramework extends RPCFramework {
 trait GetterRPCFramework extends RPCFramework {
   type RawRPC <: GetterRawRPC
 
-  case class RawInvocation(rpcName: String, argLists: List[List[RawValue]])
+  case class RawInvocation(rpcName: String, args: List[RawValue])
 
   trait GetterRawRPC { this: RawRPC =>
-    def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC
+    def get(rpcName: String, @repeated args: List[RawValue]): RawRPC
 
     def resolveGetterChain(getters: List[RawInvocation]): RawRPC =
-      getters.foldRight(this)((inv, rpc) => rpc.get(inv.rpcName, inv.argLists))
-  }
-
-  // these must be macros in order to properly handle recursive RPC types
-  implicit def getterRealHandler[T](implicit ev: IsRPC[T]): RealInvocationHandler[T, RawRPC] = macro macros.rpc.RPCFrameworkMacros.getterRealHandler[T]
-  implicit def getterRawHandler[T](implicit ev: IsRPC[T]): RawInvocationHandler[T] = macro macros.rpc.RPCFrameworkMacros.getterRawHandler[T]
-
-  final class GetterRealHandler[T: AsRawRPC] extends RealInvocationHandler[T, RawRPC] {
-    def toRaw(real: T): RawRPC = AsRawRPC[T].asRaw(real)
-  }
-  final class GetterRawHandler[T: AsRealRPC] extends RawInvocationHandler[T] {
-    def toReal(rawRpc: RawRPC, rpcName: String, argLists: List[List[RawValue]]): T =
-      AsRealRPC[T].asReal(rawRpc.get(rpcName, argLists))
+      getters.foldRight(this)((inv, rpc) => rpc.get(inv.rpcName, inv.args))
   }
 }
 
 trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework with ProcedureRPCFramework {
   trait RawRPC extends GetterRawRPC with FunctionRawRPC with ProcedureRawRPC
+  object RawRPC extends BaseRawRPCCompanion
+
   trait FullRPCInfo[T] extends BaseFullRPCInfo[T]
 }
 
 trait OneWayRPCFramework extends GetterRPCFramework with ProcedureRPCFramework {
   trait RawRPC extends GetterRawRPC with ProcedureRawRPC
+  object RawRPC extends BaseRawRPCCompanion
+
   trait FullRPCInfo[T] extends BaseFullRPCInfo[T]
 }

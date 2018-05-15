@@ -64,7 +64,8 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
       )
   }
 
-  private def resolveRpc(msg: InvocationMessage) = rawRPC.resolveGetterChain(msg.getterChain.map(r => AkkaRPCFramework.RawInvocation(r.rpcName, r.argLists)).toList)
+  private def resolveRpc(msg: InvocationMessage) =
+    rawRPC.resolveGetterChain(msg.getterChain.map(r => AkkaRPCFramework.RawInvocation(r.rpcName, r.args)).toList)
 
   private def logError(e: Throwable, methodName: String): Unit = {
     log.error(e,

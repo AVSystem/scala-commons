@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package jetty.rpc
 
-import com.avsystem.commons.rpc.RPC
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.server.Server
 import org.scalatest.concurrent.ScalaFutures
@@ -20,18 +19,16 @@ class JettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers wit
   override implicit def patienceConfig: PatienceConfig =
     PatienceConfig(scaled(Span(5, Seconds)), scaled(Span(50, Milliseconds)))
 
-  @RPC trait SomeApi {
+  trait SomeApi {
     def keks: Future[Long]
     def isTop(keks: Long): Future[Boolean]
     def topper: Topper
     def differentTopper(helloPattern: String): Topper
     def erroneousKeks: Future[Int]
   }
-  object SomeApi {
-    implicit val fullRPCInfo: BaseFullRPCInfo[SomeApi] = materializeFullInfo
-  }
+  object SomeApi extends RPCCompanion[SomeApi]
 
-  @RPC trait Topper {
+  trait Topper {
     def initialize: Future[Unit]
     def initialize2(): Future[Unit]
     def topKeks: Future[Int]
@@ -39,9 +36,7 @@ class JettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers wit
     def hellos(world1: String, world2: Int): Future[String]
     def currys(curry1: String)(curry2: Int = 30): Future[String]
   }
-  object Topper {
-    implicit val fullRPCInfo: BaseFullRPCInfo[Topper] = materializeFullInfo
-  }
+  object Topper extends RPCCompanion[Topper]
 
   class TopperImpl(helloPattern: String, topKeksResult: Int) extends Topper {
     override def initialize: Future[Unit] = Future.eval(println("Topper initialized"))
