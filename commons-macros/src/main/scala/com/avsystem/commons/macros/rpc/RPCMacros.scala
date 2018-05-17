@@ -13,9 +13,9 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
-  val RpcPackage = q"$CommonsPackage.rpc"
-  val RPCNameType: Type = getType(tq"$RpcPackage.RPCName")
-  val RPCNameNameSym: Symbol = RPCNameType.member(TermName("name"))
+  val RpcPackage = q"$CommonsPkg.rpc"
+  val RpcNameType: Type = getType(tq"$RpcPackage.rpcName")
+  val RpcNameNameSym: Symbol = RpcNameType.member(TermName("name"))
   val AsRealCls = tq"$RpcPackage.AsReal"
   val AsRealObj = q"$RpcPackage.AsReal"
   val AsRawCls = tq"$RpcPackage.AsRaw"
@@ -29,15 +29,23 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   val SingleArityAT: Type = getType(tq"$RpcPackage.single")
   val OptionalArityAT: Type = getType(tq"$RpcPackage.optional")
   val RepeatedArityAT: Type = getType(tq"$RpcPackage.repeated")
-  val NamedRepeatedArityAT: Type = getType(tq"$RpcPackage.namedRepeated")
   val RpcEncodingAT: Type = getType(tq"$RpcPackage.RpcEncoding")
   val VerbatimAT: Type = getType(tq"$RpcPackage.verbatim")
-  val RpcFilterAT: Type = getType(tq"$RpcPackage.RpcFilter")
-  val AnnotatedWithAT: Type = getType(tq"$RpcPackage.annotatedWith[_]")
+  val AuxiliaryAT: Type = getType(tq"$RpcPackage.verbatim")
+  val MethodTagAT: Type = getType(tq"$RpcPackage.methodTag[_,_]")
+  val ParamTagAT: Type = getType(tq"$RpcPackage.paramTag[_,_]")
+  val TaggedAT: Type = getType(tq"$RpcPackage.tagged[_]")
+  val RpcTagAT: Type = getType(tq"$RpcPackage.RpcTag")
   val RawRPCCompanionTpe: Type = getType(tq"$RpcPackage.RawRPCCompanion[_]")
 
-  val BIterableClass: ClassSymbol = rootMirror.staticClass("scala.collection.Iterable")
-  val PartialFunctionClass: ClassSymbol = rootMirror.staticClass("scala.PartialFunction")
+  val NothingTpe: Type = typeOf[Nothing]
+  val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
+  val BIterableTpe: Type = typeOf[Iterable[Any]]
+  val BIndexedSeqTpe: Type = typeOf[IndexedSeq[Any]]
+
+  val PartialFunctionClass: Symbol = StringPFTpe.typeSymbol
+  val BIterableClass: Symbol = BIterableTpe.typeSymbol
+  val BIndexedSeqClass: Symbol = BIndexedSeqTpe.typeSymbol
 
   sealed trait Res[+A] {
     def map[B](fun: A => B): Res[B] = this match {
@@ -60,21 +68,40 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   case class Ok[+T](value: T) extends Res[T]
   case class Failure(message: String) extends Res[Nothing]
 
-  sealed abstract class RpcArity(val verbatimByDefault: Boolean)
+  sealed abstract class RpcArity(val verbatimByDefault: Boolean) {
+    def encodedArgType: Type
+  }
   object RpcArity {
-    def fromAnnotation(annot: Tree, sym: RpcSymbol): RpcArity = {
+    def fromAnnotation(annot: Tree, param: RawParam): RpcArity = {
       val at = annot.tpe
-      if (at <:< SingleArityAT) RpcArity.Single
-      else if (at <:< OptionalArityAT) RpcArity.Optional
-      else if (at <:< RepeatedArityAT) RpcArity.Repeated
-      else if (at <:< NamedRepeatedArityAT) RpcArity.NamedRepeated
-      else sym.reportProblem(s"unrecognized RPC arity annotation: $annot", annot.pos)
+      if (at <:< SingleArityAT) RpcArity.Single(param.actualType)
+      else if (at <:< OptionalArityAT) {
+        val optionLikeType = typeOfCachedImplicit(param.optionLike)
+        val valueMember = optionLikeType.member(TypeName("Value"))
+        if (valueMember.isAbstract) {
+          param.reportProblem("could not determine actual value of optional parameter type")
+        }
+        RpcArity.Optional(valueMember.typeSignatureIn(optionLikeType))
+      }
+      else if (at <:< RepeatedArityAT) {
+        if (param.actualType <:< StringPFTpe)
+          NamedRepeated(param.actualType.baseType(PartialFunctionClass).typeArgs(1))
+        else if (param.actualType <:< BIndexedSeqTpe)
+          IndexedRepeated(param.actualType.baseType(BIndexedSeqClass).typeArgs.head)
+        else if (param.actualType <:< BIterableTpe)
+          IterableRepeated(param.actualType.baseType(BIterableClass).typeArgs.head)
+        else
+          param.reportProblem("@repeated raw parameter must be a PartialFunction of String (for param mapping) " +
+            "or Iterable (for param sequence)")
+      }
+      else param.reportProblem(s"unrecognized RPC arity annotation: $annot", annot.pos)
     }
 
-    case object Single extends RpcArity(true)
-    case object Optional extends RpcArity(true)
-    case object Repeated extends RpcArity(false)
-    case object NamedRepeated extends RpcArity(false)
+    case class Single(encodedArgType: Type) extends RpcArity(true)
+    case class Optional(encodedArgType: Type) extends RpcArity(true)
+    case class IterableRepeated(encodedArgType: Type) extends RpcArity(false)
+    case class IndexedRepeated(encodedArgType: Type) extends RpcArity(false)
+    case class NamedRepeated(encodedArgType: Type) extends RpcArity(false)
   }
 
   case class EncodedRealParam(realParam: RealParam, encoding: RpcEncoding) {
@@ -102,18 +129,22 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         wrapped.toList.map { erp =>
           val defaultValueTree = erp.realParam.defaultValueTree(nameOfRealRpc)
           erp.realParam.localValueDecl(
-            q"${rawParam.optionLike}.fold(${rawParam.safeName}, $defaultValueTree)(${erp.encoding.asReal}.asReal)")
+            q"${rawParam.optionLike}.fold(${rawParam.safeName}, $defaultValueTree)(${erp.encoding.asReal}.asReal(_))")
         }
     }
-    case class Repeated(rawParam: RawParam, reals: List[EncodedRealParam]) extends ParamMapping {
+    abstract class ListedRepeated extends ParamMapping {
+      protected def reals: List[EncodedRealParam]
       def rawValueTree: Tree = {
         val builderName = c.freshName(TermName("builder"))
         q"""
           val $builderName = ${rawParam.canBuildFrom}()
+          $builderName.sizeHint(${reals.size})
           ..${reals.map(erp => q"$builderName += ${erp.rawValueTree}")}
           $builderName.result()
          """
       }
+    }
+    case class IterableRepeated(rawParam: RawParam, reals: List[EncodedRealParam]) extends ListedRepeated {
       def realDecls(nameOfRealRpc: TermName): List[Tree] = {
         val itName = c.freshName(TermName("it"))
         val itDecl = q"val $itName = ${rawParam.safeName}.iterator"
@@ -129,11 +160,25 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         }
       }
     }
+    case class IndexedRepeated(rawParam: RawParam, reals: List[EncodedRealParam]) extends ListedRepeated {
+      def realDecls(nameOfRealRpc: TermName): List[Tree] = {
+        reals.zipWithIndex.map { case (erp, idx) =>
+          val rp = erp.realParam
+          val defaultValueTree = rp.defaultValueTree(nameOfRealRpc)
+          erp.realParam.localValueDecl(
+            q"""
+              ${rawParam.safeName}.andThen(${erp.encoding.asReal}.asReal(_))
+                .applyOrElse($idx, (_: $IntCls) => $defaultValueTree)
+            """)
+        }
+      }
+    }
     case class NamedRepeated(rawParam: RawParam, reals: List[EncodedRealParam]) extends ParamMapping {
       def rawValueTree: Tree = {
         val builderName = c.freshName(TermName("builder"))
         q"""
           val $builderName = ${rawParam.canBuildFrom}()
+          $builderName.sizeHint(${reals.size})
           ..${reals.map(erp => q"$builderName += ((${erp.realParam.rpcName}, ${erp.rawValueTree}))")}
           $builderName.result()
          """
@@ -143,25 +188,10 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           val defaultValueTree = erp.realParam.defaultValueTree(nameOfRealRpc)
           erp.realParam.localValueDecl(
             q"""
-            ${rawParam.safeName}.andThen(${erp.encoding.asReal}.asReal)
-              .applyOrElse(${erp.realParam.rpcName}, (_: $StringCls) => $defaultValueTree)
+              ${rawParam.safeName}.andThen(${erp.encoding.asReal}.asReal(_))
+                .applyOrElse(${erp.realParam.rpcName}, (_: $StringCls) => $defaultValueTree)
             """)
         }
-    }
-  }
-
-  sealed trait RpcFilter {
-    def matches(sym: RpcSymbol): Boolean
-  }
-  object RpcFilter {
-    def fromAnnotation(annot: Tree, sym: RpcSymbol): RpcFilter = {
-      val tpe = annot.tpe
-      if (tpe <:< AnnotatedWithAT) RpcFilter.AnnotatedWith(tpe.dealias.typeArgs.head)
-      else sym.reportProblem(s"unrecognized RPC filter annotation: $annot", annot.pos)
-    }
-
-    case class AnnotatedWith(annotTpe: Type) extends RpcFilter {
-      def matches(sym: RpcSymbol): Boolean = sym.annotations.exists(_.tpe <:< annotTpe)
     }
   }
 
@@ -171,14 +201,15 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
   object RpcEncoding {
     def forParam(rawParam: RawParam, realParam: RealParam): Res[RpcEncoding] = {
+      val encArgType = rawParam.arity.encodedArgType
       if (rawParam.verbatim) {
-        if (realParam.actualType =:= rawParam.encodedArgType)
-          Ok(Verbatim(rawParam.encodedArgType))
+        if (realParam.actualType =:= encArgType)
+          Ok(Verbatim(encArgType))
         else rawParam.owner.matchFailure(
           s"${realParam.problemStr}: ${rawParam.cannotMapClue}: expected real parameter exactly of type " +
-            s"${rawParam.encodedArgType}, got ${realParam.actualType}")
+            s"$encArgType, got ${realParam.actualType}")
       } else
-        Ok(RealRawEncoding(realParam.actualType, rawParam.encodedArgType,
+        Ok(RealRawEncoding(realParam.actualType, encArgType,
           Some((s"${realParam.problemStr}: ${rawParam.cannotMapClue}: ", realParam.pos))))
     }
 
@@ -214,20 +245,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val nameStr: String = name.decodedName.toString
     val encodedNameStr: String = name.encodedName.toString
 
-    lazy val annotations: List[Tree] = allAnnotations(symbol)
-
-    lazy val filters: List[RpcFilter] = annotations.collect {
-      case filterAnnot if filterAnnot.tpe <:< RpcFilterAT => RpcFilter.fromAnnotation(filterAnnot, this)
-    }
-
-    lazy val rpcName: String =
-      annotations.find(_.tpe <:< RPCNameType)
-        .map { annot =>
-          findAnnotationArg(annot, RPCNameNameSym) match {
-            case StringLiteral(n) => n
-            case p => reportProblem("The name argument of @RPCName must be a string literal", p.pos)
-          }
-        }.getOrElse(nameStr)
+    def annot(tpe: Type): Option[Annot] = findAnnotation(symbol, tpe)
 
     override def equals(other: Any): Boolean = other match {
       case rpcSym: RpcSymbol => symbol == rpcSym.symbol
@@ -235,6 +253,37 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
     override def hashCode: Int = symbol.hashCode
     override def toString: String = symbol.toString
+  }
+
+  trait RawRpcSymbol extends RpcSymbol {
+    def baseTag: Type
+    def defaultTag: Type
+
+    lazy val requiredTag: Type =
+      annot(TaggedAT).fold(baseTag)(_.tpe.baseType(TaggedAT.typeSymbol).typeArgs.head)
+
+    if (!(requiredTag <:< baseTag)) {
+      val msg =
+        if (baseTag =:= NothingTpe)
+          "cannot use @tagged, no tag annotation type specified with @methodTag/@paramTag"
+        else s"tag annotation type $requiredTag specified in @tagged annotation " +
+          s"must be a subtype of specified base tag $baseTag"
+      reportProblem(msg)
+    }
+
+    def matchesTag(realSymbol: RealRpcSymbol): Boolean =
+      realSymbol.tag(baseTag, defaultTag) <:< requiredTag
+  }
+
+  trait RealRpcSymbol extends RpcSymbol {
+    def tag(baseTag: Type, defaultTag: Type): Type =
+      annot(baseTag).fold(defaultTag)(_.tpe)
+
+    lazy val rpcName: String =
+      annot(RpcNameType).fold(nameStr)(_.findArg(RpcNameNameSym) match {
+        case StringLiteral(n) => n
+        case p => reportProblem("The name argument of @rpcName must be a string literal", p.pos)
+      })
   }
 
   abstract class RpcMethod extends RpcSymbol {
@@ -280,60 +329,47 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   case class RpcNameParam(owner: RawMethod, symbol: Symbol) extends RpcParam
 
-  case class RawParam(owner: RawMethod, symbol: Symbol) extends RpcParam {
+  case class RawParam(owner: RawMethod, symbol: Symbol) extends RpcParam with RawRpcSymbol {
+    def baseTag: Type = owner.baseParamTag
+    def defaultTag: Type = owner.defaultParamTag
+
     def cannotMapClue = s"cannot map it to raw parameter $nameStr of ${owner.nameStr}"
 
     val arity: RpcArity =
-      annotations.find(_.tpe <:< RpcArityAT).map(RpcArity.fromAnnotation(_, this)).getOrElse(RpcArity.Single)
+      annot(RpcArityAT).map(a => RpcArity.fromAnnotation(a.tree, this))
+        .getOrElse(RpcArity.Single(actualType))
 
     val verbatim: Boolean =
-      annotations.find(_.tpe <:< RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
+      annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
+
+    val auxiliary: Boolean =
+      annot(AuxiliaryAT).nonEmpty
 
     private def infer(tpt: Tree): TermName =
       inferCachedImplicit(getType(tpt), s"$problemStr: ", pos)
 
     lazy val optionLike: TermName = infer(tq"$OptionLikeCls[$actualType]")
 
-    lazy val encodedArgType: Type = arity match {
-      case RpcArity.Single => actualType
-      case RpcArity.Optional =>
-        val optionLikeType = typeOfCachedImplicit(optionLike)
-        val valueMember = optionLikeType.member(TypeName("Value"))
-        if (valueMember.isAbstract) {
-          reportProblem("could not determine actual value of optional parameter type")
-        }
-        valueMember.typeSignatureIn(optionLikeType)
-      case RpcArity.Repeated =>
-        if (actualType <:< typeOf[Iterable[Any]])
-          actualType.baseType(BIterableClass).typeArgs.head
-        else
-          reportProblem("@repeated raw parameter must be an Iterable")
-      case RpcArity.NamedRepeated =>
-        if (actualType <:< typeOf[PartialFunction[String, Any]])
-          actualType.baseType(PartialFunctionClass).typeArgs(1)
-        else
-          reportProblem(s"@namedRepeated raw parameter must be a PartialFunction of String")
-    }
-
     lazy val canBuildFrom: TermName = arity match {
-      case RpcArity.Repeated =>
-        infer(tq"$CanBuildFromCls[$NothingCls,$encodedArgType,$actualType]")
-      case RpcArity.NamedRepeated =>
-        infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,$encodedArgType),$actualType]")
-      case _ => termNames.EMPTY
+      case _: RpcArity.NamedRepeated =>
+        infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,${arity.encodedArgType}),$actualType]")
+      case _: RpcArity.IndexedRepeated | _: RpcArity.IterableRepeated =>
+        infer(tq"$CanBuildFromCls[$NothingCls,${arity.encodedArgType},$actualType]")
+      case _ => abort("(bug) CanBuildFrom computed for non-repeated raw parameter")
     }
-
-    def filtersMatch(realMethod: RealParam): Boolean =
-      filters.forall(_.matches(realMethod))
 
     def extractMapping(realParams: LinkedList[RealParam]): Res[ParamMapping] = {
       val it = realParams.listIterator()
+      def maybeConsume(): Unit =
+        if (!auxiliary) {
+          it.remove()
+        }
 
       def extractSingle(): Res[EncodedRealParam] =
         if (it.hasNext) {
           val realParam = it.next()
-          if (filtersMatch(realParam)) {
-            it.remove()
+          if (matchesTag(realParam)) {
+            maybeConsume()
             RpcEncoding.forParam(this, realParam).map(e => EncodedRealParam(realParam, e))
           } else extractSingle()
         } else {
@@ -343,9 +379,9 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       def extractOptional(): Option[EncodedRealParam] =
         if (it.hasNext) {
           val realParam = it.next()
-          if (filtersMatch(realParam)) {
+          if (matchesTag(realParam)) {
             RpcEncoding.forParam(this, realParam).toOption.map { encoding =>
-              it.remove()
+              maybeConsume()
               EncodedRealParam(realParam, encoding)
             }
           } else extractOptional()
@@ -355,8 +391,8 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         def loop(): Res[List[EncodedRealParam]] =
           if (it.hasNext) {
             val realParam = it.next()
-            if (filtersMatch(realParam)) {
-              it.remove()
+            if (matchesTag(realParam)) {
+              maybeConsume()
               for {
                 encoding <- RpcEncoding.forParam(this, realParam)
                 rest <- loop()
@@ -369,22 +405,22 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           (rpcName, first :: rest) <- rps.groupBy(_.realParam.rpcName) if rest.nonEmpty
         } {
           first.realParam.owner.reportProblem(
-            s"multiple parameters matched to raw parameter $nameStr have the same @RPCName: $rpcName")
+            s"multiple parameters matched to raw parameter $nameStr have the same @rpcName: $rpcName")
         }
         result
       }
 
-
       arity match {
-        case RpcArity.Single => extractSingle().map(ParamMapping.Single(this, _))
-        case RpcArity.Optional => Ok(ParamMapping.Optional(this, extractOptional()))
-        case RpcArity.Repeated => extractRepeated().map(ParamMapping.Repeated(this, _))
-        case RpcArity.NamedRepeated => extractRepeated().map(ParamMapping.NamedRepeated(this, _))
+        case _: RpcArity.Single => extractSingle().map(ParamMapping.Single(this, _))
+        case _: RpcArity.Optional => Ok(ParamMapping.Optional(this, extractOptional()))
+        case _: RpcArity.IterableRepeated => extractRepeated().map(ParamMapping.IterableRepeated(this, _))
+        case _: RpcArity.IndexedRepeated => extractRepeated().map(ParamMapping.IndexedRepeated(this, _))
+        case _: RpcArity.NamedRepeated => extractRepeated().map(ParamMapping.NamedRepeated(this, _))
       }
     }
   }
 
-  case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexInList: Int) extends RpcParam {
+  case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexInList: Int) extends RpcParam with RealRpcSymbol {
     def defaultValueTree(nameOfRealRpc: TermName): Tree =
       if (symbol.asTerm.isParamWithDefault) {
         val prevListParams = owner.realParams.take(index - indexInList).map(rp => q"${rp.safeName}")
@@ -395,13 +431,25 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         q"$RpcPackage.RpcUtils.missingArg(${owner.mapping.rawMethod.rpcNameParam.safeName}, $rpcName)"
   }
 
-  case class RawMethod(owner: Type, symbol: Symbol) extends RpcMethod {
+  case class RawMethod(owner: Type, symbol: Symbol,
+    baseTag: Type, defaultTag: Type, classBaseParamTag: Type, classDefaultParamTag: Type)
+    extends RpcMethod with RawRpcSymbol {
+
     // raw method result is encoded by default, must be explicitly annotated as @verbatim to disable encoding
     val verbatimResult: Boolean =
-      annotations.find(_.tpe <:< RpcEncodingAT).exists(_.tpe <:< VerbatimAT)
+      annot(RpcEncodingAT).exists(_.tpe <:< VerbatimAT)
 
-    def filtersMatch(realMethod: RealMethod): Boolean =
-      filters.forall(_.matches(realMethod))
+    val List(baseParamTag, defaultParamTag) =
+      annot(ParamTagAT)
+        .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
+        .getOrElse(List(classBaseParamTag, classDefaultParamTag))
+
+    def matchTag(realMethod: RealMethod): Res[Unit] =
+      if (matchesTag(realMethod)) Ok(())
+      else {
+        val tag = realMethod.tag(baseTag, defaultTag)
+        matchFailure(s"it does not accept real methods tagged with $tag")
+      }
 
     def matchFailure(msg: String): Failure =
       Failure(s"raw method $nameStr did not match because: $msg")
@@ -430,7 +478,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
 
   case class RealMethod(owner: Type, symbol: Symbol, rawMethods: List[RawMethod],
-    forAsRaw: Boolean, forAsReal: Boolean) extends RpcMethod {
+    forAsRaw: Boolean, forAsReal: Boolean) extends RpcMethod with RealRpcSymbol {
 
     val paramLists: List[List[RealParam]] = {
       var idx = 0
@@ -448,7 +496,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val realParams: List[RealParam] = paramLists.flatten
 
     val mappingRes: Res[MethodMapping] = {
-      val methodMappings = rawMethods.filter(_.filtersMatch(this)).map { rawMethod =>
+      val methodMappings = rawMethods.map { rawMethod =>
         def resultEncoding: Res[RpcEncoding] =
           if (rawMethod.verbatimResult) {
             if (rawMethod.resultType =:= resultType)
@@ -483,6 +531,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         }
 
         for {
+          _ <- rawMethod.matchTag(this)
           resultConv <- resultEncoding
           paramMappings <- collectParamMappings(rawMethod.rawParams, realParams)
         } yield MethodMapping(this, rawMethod, paramMappings, resultConv)
@@ -507,22 +556,19 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   case class MethodMapping(realMethod: RealMethod, rawMethod: RawMethod,
     paramMappings: List[ParamMapping], resultEncoding: RpcEncoding) {
 
-    def realImpl(rawName: TermName): Tree = {
-      val rawParamDefns = paramMappings.map(pm => pm.rawParam.localValueDecl(pm.rawValueTree))
-
+    def realImpl(rawName: TermName): Tree =
       q"""
         def ${realMethod.name}(...${realMethod.paramDecls}): ${realMethod.resultType} = {
           val ${rawMethod.rpcNameParam.safeName} = ${realMethod.rpcName}
-          ..$rawParamDefns
+          ..${paramMappings.map(pm => pm.rawParam.localValueDecl(pm.rawValueTree))}
           ${resultEncoding.asReal}.asReal($rawName.${rawMethod.name}(...${rawMethod.argLists}))
         }
        """
-    }
 
     def rawCaseImpl(nameOfRealRpc: TermName): CaseDef = {
       cq"""
         ${realMethod.rpcName} =>
-          ..${paramMappings.flatMap(_.realDecls(nameOfRealRpc))}
+          ..${paramMappings.filterNot(_.rawParam.auxiliary).flatMap(_.realDecls(nameOfRealRpc))}
           ${resultEncoding.asRaw}.asRaw($nameOfRealRpc.${realMethod.name}(...${realMethod.argLists}))
         """
     }
@@ -535,8 +581,20 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
-  def extractRawMethods(rawTpe: Type): List[RawMethod] =
-    rawTpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(rawTpe, _)).toList
+  def extractRawMethods(rawTpe: Type): List[RawMethod] = {
+    val List(baseMethodTag, defaultMethodTag) =
+      findAnnotation(rawTpe.typeSymbol, MethodTagAT)
+        .map(_.tpe.baseType(MethodTagAT.typeSymbol).typeArgs)
+        .getOrElse(List(NothingTpe, NothingTpe))
+    val List(baseParamTag, defaultParamTag) =
+      findAnnotation(rawTpe.typeSymbol, ParamTagAT)
+        .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
+        .getOrElse(List(NothingTpe, NothingTpe))
+
+    rawTpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(s =>
+      RawMethod(rawTpe, s, baseMethodTag, defaultMethodTag, baseParamTag, defaultParamTag)
+    ).toList
+  }
 
   def extractRealMethods(realTpe: Type, rawMethods: List[RawMethod],
     forAsRaw: Boolean, forAsReal: Boolean): List[RealMethod] = {
@@ -583,7 +641,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       val prevCaseDef = caseDefs(mapping.rawMethod).put(realMethod.rpcName, mapping.rawCaseImpl(realName))
       ensure(prevCaseDef.isEmpty,
         s"Multiple RPCs named ${realMethod.rpcName} map to raw method ${mapping.rawMethod.name}. " +
-          "If you want to overload RPCs, disambiguate them with @RPCName annotation")
+          "If you want to overload RPCs, disambiguate them with @rpcName annotation")
     }
 
     val rawMethodImpls = raws.map(m => m.rawImpl(caseDefs(m).values.toList))
@@ -604,9 +662,9 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
 
   def rpcAsReal[T: WeakTypeTag, R: WeakTypeTag]: Tree = {
-    val realTpe = weakTypeOf[T]
+    val realTpe = weakTypeOf[T].dealias
     checkImplementable(realTpe)
-    val rawTpe = weakTypeOf[R]
+    val rawTpe = weakTypeOf[R].dealias
     checkImplementable(rawTpe)
 
     val selfName = c.freshName(TermName("self"))
@@ -627,9 +685,9 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
 
   def rpcAsRaw[T: WeakTypeTag, R: WeakTypeTag]: Tree = {
-    val realTpe = weakTypeOf[T]
+    val realTpe = weakTypeOf[T].dealias
     checkImplementable(realTpe)
-    val rawTpe = weakTypeOf[R]
+    val rawTpe = weakTypeOf[R].dealias
     checkImplementable(rawTpe)
 
     val selfName = c.freshName(TermName("self"))
@@ -650,9 +708,9 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
 
   def rpcAsRealRaw[T: WeakTypeTag, R: WeakTypeTag]: Tree = {
-    val realTpe = weakTypeOf[T]
+    val realTpe = weakTypeOf[T].dealias
     checkImplementable(realTpe)
-    val rawTpe = weakTypeOf[R]
+    val rawTpe = weakTypeOf[R].dealias
     checkImplementable(rawTpe)
 
     val selfName = c.freshName(TermName("self"))

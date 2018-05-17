@@ -29,8 +29,8 @@ import scala.annotation.StaticAnnotation
   * you can pass the arguments of original annotation to aggregated annotations, e.g.
   *
   * {{{
-  *   class RPCNameAndDescription(name: String, description: String) extends AnnotationAggregate {
-  *     @RPCName(name) // passing `name` to aggregated annotation
+  *   class rpcNameAndDescription(name: String, description: String) extends AnnotationAggregate {
+  *     @rpcName(name) // passing `name` to aggregated annotation
   *     type Implied
   *   }
   * }}}

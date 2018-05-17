@@ -14,7 +14,7 @@ class RPCMetadataTest extends FunSuite {
     @Annot("on base method")
     def proc(@Annot("on base param") p: String): Unit
 
-    @RPCName("function")
+    @rpcName("function")
     def func: Future[String]
   }
   object Base {

@@ -9,7 +9,6 @@ class DelegationMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
 
   import c.universe._
 
-  val CommonsPkg = q"_root_.com.avsystem.commons"
   val DelegationCls = tq"$CommonsPkg.misc.Delegation"
 
   def delegate[A: c.WeakTypeTag, B: c.WeakTypeTag](source: c.Tree): c.Tree = {

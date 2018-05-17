@@ -32,9 +32,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   override def materializeFor(tpe: Type) = {
     val tsym = tpe.dealias.typeSymbol
-    if (isSealedHierarchyRoot(tsym)) getAnnotations(tsym, FlattenAnnotType).headOption match {
+    if (isSealedHierarchyRoot(tsym)) findAnnotation(tsym, FlattenAnnotType) match {
       case Some(annot) =>
-        val caseFieldName = annot match {
+        val caseFieldName = annot.tree match {
           case Apply(_, Nil) => DefaultCaseField
           case Apply(_, StringLiteral(str) :: _) => str
           case Apply(_, arg :: _) => c.abort(arg.pos, s"String literal expected as case field name")
@@ -308,7 +308,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val classOf: Tree = q"classOf[$subtype]"
     val generated: List[(Symbol, Type)] = generatedMembers(subtype)
     val (defaultCase, transientCase) =
-      getAnnotations(sym, DefaultCaseAnnotType).headOption.map {
+      findAnnotation(sym, DefaultCaseAnnotType).map(_.tree).map {
         case Apply(_, Nil) => (true, false)
         case Apply(_, BooleanLiteral(transient) :: _) => (true, transient)
         case Apply(_, arg :: _) => c.abort(arg.pos, s"Boolean literal expected as @defaultCase `transient` argument")

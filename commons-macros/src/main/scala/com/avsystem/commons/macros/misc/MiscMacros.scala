@@ -34,7 +34,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     val pos = c.enclosingPosition
     q"""
-      $CommonsPackage.misc.SourceInfo(
+      $CommonsPkg.misc.SourceInfo(
         ${pos.source.path},
         ${pos.source.file.name},
         ${pos.point},

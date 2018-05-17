@@ -7,16 +7,20 @@ import scala.reflect.ClassTag
 import scala.reflect.macros.{TypecheckException, blackbox}
 import scala.util.control.NoStackTrace
 
+abstract class AbstractMacroCommons(val c: blackbox.Context) extends MacroCommons
+
 trait MacroCommons { bundle =>
   val c: blackbox.Context
 
   import c.universe._
 
   final val ScalaPkg = q"_root_.scala"
-  final val StringCls = tq"_root_.java.lang.String"
-  final val ClassCls = tq"_root_.java.lang.Class"
-  final val NothingCls = tq"_root_.scala.Nothing"
-  final val CommonsPackage = q"_root_.com.avsystem.commons"
+  final val JavaLangPkg = q"_root_.java.lang"
+  final val StringCls = tq"$JavaLangPkg.String"
+  final val IntCls = tq"$ScalaPkg.Int"
+  final val ClassCls = tq"$JavaLangPkg.Class"
+  final val NothingCls = tq"$ScalaPkg.Nothing"
+  final val CommonsPkg = q"_root_.com.avsystem.commons"
   final val PredefObj = q"$ScalaPkg.Predef"
   final val UnitCls = tq"$ScalaPkg.Unit"
   final val OptionCls = tq"$ScalaPkg.Option"
@@ -32,11 +36,11 @@ trait MacroCommons { bundle =>
   final val MapObj = q"$CollectionPkg.immutable.Map"
   final val MapCls = tq"$CollectionPkg.immutable.Map"
   final val MapSym = typeOf[scala.collection.immutable.Map[_, _]].typeSymbol
-  final val MaterializedCls = tq"$CommonsPackage.derivation.Materialized"
+  final val MaterializedCls = tq"$CommonsPkg.derivation.Materialized"
   final val FutureSym = typeOf[scala.concurrent.Future[_]].typeSymbol
   final val OptionClass = definitions.OptionClass
-  final val ImplicitsObj = q"$CommonsPackage.misc.Implicits"
-  final val AnnotationAggregateType = getType(tq"$CommonsPackage.annotation.AnnotationAggregate")
+  final val ImplicitsObj = q"$CommonsPkg.misc.Implicits"
+  final val AnnotationAggregateType = getType(tq"$CommonsPkg.annotation.AnnotationAggregate")
 
   final lazy val isScalaJs =
     definitions.ScalaPackageClass.toType.member(TermName("scalajs")) != NoSymbol
@@ -53,6 +57,92 @@ trait MacroCommons { bundle =>
     }
     Iterator.iterate(enclosingSym)(_.owner).takeWhile(_ != NoSymbol).toList
   }
+
+  case class Annot(tree: Tree)(val directSource: Symbol, val aggregate: Option[Annot]) {
+    def aggregationChain: List[Annot] =
+      aggregate.fold(List.empty[Annot])(a => a :: a.aggregationChain)
+
+    def source: Symbol = aggregate.fold(directSource)(_.source)
+    def tpe: Type = tree.tpe
+
+    def findArg(valSym: Symbol): Tree = tree match {
+      case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
+        val clsTpe = tpt.tpe
+        val params = primaryConstructorOf(clsTpe).typeSignature.paramLists.head
+        ensure(params.size == args.size, s"Not a primary constructor call tree: $tree")
+        val subSym = clsTpe.member(valSym.name)
+        ensure(subSym.isTerm && subSym.asTerm.isParamAccessor && (subSym :: subSym.overrides).contains(valSym),
+          s"Annotation $clsTpe must override $valSym with a constructor parameter")
+        (params zip args)
+          .collectFirst { case (param, arg) if param.name == subSym.name => arg }
+          .getOrElse(abort(s"Could not find argument corresponding to constructor parameter ${subSym.name}"))
+      case _ => abort(s"Not a primary constructor call tree: $tree")
+    }
+
+    lazy val aggregated: List[Annot] = {
+      if (tpe <:< AnnotationAggregateType) {
+        val argsInliner = new AnnotationArgInliner(tree)
+        val impliedMember = tpe.member(TypeName("Implied"))
+        impliedMember.annotations.map(a => Annot(argsInliner.transform(a.tree))(impliedMember, Some(this)))
+      } else Nil
+    }
+
+    lazy val allAggregated: List[Annot] =
+      aggregated.flatMap(a => a :: a.allAggregated)
+
+    override def toString: String = tree match {
+      case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
+        s"@${showCode(tpt)}(${args.map(showCode(_)).mkString(",")})"
+      case _ => showCode(tree)
+    }
+  }
+
+  class AnnotationArgInliner(baseAnnot: Tree) extends Transformer {
+    private val argsByName: Map[Name, Tree] = {
+      val Apply(_, args) = baseAnnot
+      val paramNames = primaryConstructorOf(baseAnnot.tpe).typeSignature.paramLists.head.map(_.name)
+      (paramNames zip args).toMap
+    }
+
+    override def transform(tree: Tree): Tree = tree match {
+      case Select(th@This(_), name) if th.symbol == baseAnnot.tpe.typeSymbol
+        && tree.symbol.asTerm.isParamAccessor =>
+        argsByName.get(name).map(_.duplicate).getOrElse(tree)
+      case _ => super.transform(tree)
+    }
+  }
+
+  private def maybeWithSuperSymbols(s: Symbol, withSupers: Boolean): Iterator[Symbol] =
+    if (withSupers) withSuperSymbols(s) else Iterator(s)
+
+  def allAnnotations(s: Symbol, tpeFilter: Type = typeOf[Any], withInherited: Boolean = true): List[Annot] =
+    maybeWithSuperSymbols(s, withInherited)
+      .map(ss => ss.annotations.map(a => Annot(a.tree)(ss, None)))
+      .flatMap(as => as ++ as.flatMap(_.allAggregated)).toList
+
+  def findAnnotation(s: Symbol, tpe: Type, withInherited: Boolean = true): Option[Annot] =
+    maybeWithSuperSymbols(s, withInherited).map { ss =>
+      def find(annots: List[Annot]): Option[Annot] = annots match {
+        case head :: tail =>
+          val fromHead = Some(head).filter(_.tpe <:< tpe).orElse(find(head.aggregated))
+          for {
+            found <- fromHead
+            ignored <- tail.filter(_.tpe <:< tpe)
+          } {
+            val errorPos = List(ignored.tree.pos, ignored.directSource.pos, ss.pos, s.pos)
+              .find(_ != NoPosition).getOrElse(c.enclosingPosition)
+            val aggInfo =
+              if (ignored.aggregate.isEmpty) ""
+              else ignored.aggregationChain.mkString(" (aggregated by ", " aggregated by", ")")
+            c.error(errorPos, s"Annotation $ignored$aggInfo is ignored because it's overridden by $found")
+          }
+          fromHead orElse find(tail)
+        case Nil => None
+      }
+      find(ss.annotations.map(a => Annot(a.tree)(ss, None)))
+    }.collectFirst {
+      case Some(annot) => annot
+    }
 
   // simplified representation of trees of implicits, used to remove duplicated implicits,
   // i.e. implicits that were found for different types but turned out to be identical
@@ -153,62 +243,20 @@ trait MacroCommons { bundle =>
   def paramIndex(param: Symbol): Int =
     param.owner.typeSignature.paramLists.flatten.indexOf(param) + 1
 
-  def superSymbols(s: Symbol): List[Symbol] = s match {
-    case cs: ClassSymbol => cs.baseClasses
-    case ms: MethodSymbol => ms :: ms.overrides
+  def withSuperSymbols(s: Symbol): Iterator[Symbol] = s match {
+    case cs: ClassSymbol => cs.baseClasses.iterator
+    case ms: MethodSymbol => (ms :: ms.overrides).iterator
     case ps: TermSymbol if ps.isParameter && ps.owner.isMethod =>
       val oms = ps.owner.asMethod
       val paramListIdx = oms.paramLists.indexWhere(_.exists(_.name == ps.name))
       val paramIdx = oms.paramLists(paramListIdx).indexWhere(_.name == ps.name)
-      superSymbols(oms).map(_.asMethod.paramLists(paramListIdx)(paramIdx))
-    case _ => List(s)
+      withSuperSymbols(oms).map(_.asMethod.paramLists(paramListIdx)(paramIdx))
+    case _ => Iterator(s)
   }
 
   def primaryConstructorOf(tpe: Type) =
     alternatives(tpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor)
       .getOrElse(abort(s"No primary constructor found for $tpe"))
-
-  class AnnotationArgInliner(baseAnnot: Tree) extends Transformer {
-    private val argsByName: Map[Name, Tree] = {
-      val Apply(_, args) = baseAnnot
-      val paramNames = primaryConstructorOf(baseAnnot.tpe).typeSignature.paramLists.head.map(_.name)
-      (paramNames zip args).toMap
-    }
-
-    override def transform(tree: Tree): Tree = tree match {
-      case Select(th@This(_), name) if th.symbol == baseAnnot.tpe.typeSymbol
-        && tree.symbol.asTerm.isParamAccessor =>
-        argsByName.get(name).map(_.duplicate).getOrElse(tree)
-      case _ => super.transform(tree)
-    }
-  }
-
-  def aggregatedAnnotations(annot: Tree): List[Tree] = {
-    val annotTpe = annot.tpe
-    if (annotTpe <:< AnnotationAggregateType) {
-      val argsInliner = new AnnotationArgInliner(annot)
-      annotTpe.member(TypeName("Implied")).annotations
-        .map(a => argsInliner.transform(a.tree))
-        .flatMap(t => t :: aggregatedAnnotations(t))
-    } else Nil
-  }
-
-  def allAnnotations(s: Symbol): List[Tree] =
-    superSymbols(s).map(_.annotations.map(_.tree)).flatMap(as => as ::: as.flatMap(aggregatedAnnotations))
-
-  def findAnnotationArg(constrCall: Tree, valSym: Symbol): Tree = constrCall match {
-    case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
-      val clsTpe = tpt.tpe
-      val params = primaryConstructorOf(clsTpe).typeSignature.paramLists.head
-      ensure(params.size == args.size, s"Not a primary constructor call tree: $constrCall")
-      val subSym = clsTpe.member(valSym.name)
-      ensure(subSym.isTerm && subSym.asTerm.isParamAccessor && (subSym :: subSym.overrides).contains(valSym),
-        s"Annotation $clsTpe must override $valSym with a constructor parameter")
-      (params zip args)
-        .collectFirst { case (param, arg) if param.name == subSym.name => arg }
-        .getOrElse(abort(s"Could not find argument corresponding to constructor parameter ${subSym.name}"))
-    case _ => abort(s"Not a primary constructor call tree: $constrCall")
-  }
 
   def abort(msg: String) =
     c.abort(c.enclosingPosition, msg)
@@ -716,4 +764,3 @@ trait MacroCommons { bundle =>
     definitions.TupleClass.seq.contains(sym)
 }
 
-abstract class AbstractMacroCommons(val c: blackbox.Context) extends MacroCommons

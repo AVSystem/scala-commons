@@ -26,10 +26,10 @@ trait TestRPC {
 
   def doStuff(lol: Int, fuu: String = "pisiont")(implicit cos: Option[Boolean]): Unit
 
-  @RPCName("doStuffBoolean")
+  @rpcName("doStuffBoolean")
   def doStuff(yes: Boolean): Future[String]
 
-  @RPCName("doStuffInt")
+  @rpcName("doStuffInt")
   def doStuff(num: Int): Unit
 
   def takeCC(r: Record): Unit

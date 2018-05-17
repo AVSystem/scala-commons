@@ -8,34 +8,40 @@ import scala.annotation.StaticAnnotation
 /**
   * For annotations applied on real RPC traits.
   */
-trait RPCAnnotation extends StaticAnnotation
+trait RpcAnnotation extends StaticAnnotation
 
 /**
   * For annotations applied on raw RPC traits that specify how real methods are matched against raw methods.
   */
-sealed trait RPCMetaAnnotation extends StaticAnnotation
+sealed trait RawRpcAnnotation extends StaticAnnotation
+sealed trait RawMethodAnnotation extends RawRpcAnnotation
+sealed trait RawParamAnnotation extends RawRpcAnnotation
 
 /**
   * You can use this annotation on overloaded RPC methods to give them unique identifiers for RPC serialization.
   * You can also subclass this annotation provided that you always override the `name` parameter with another
   * constructor parameter.
   */
-class RPCName(val name: String) extends RPCAnnotation
+class rpcName(val name: String) extends RpcAnnotation
+
+trait RpcTag extends RpcAnnotation
 
 trait VerbatimByDefault extends AnnotationAggregate {
   @verbatim
   type Implied
 }
 
-sealed trait RpcArity extends RPCMetaAnnotation
+sealed trait RpcArity extends RawParamAnnotation
 final class single extends RpcArity with VerbatimByDefault
 final class optional extends RpcArity with VerbatimByDefault
 final class repeated extends RpcArity
-final class namedRepeated extends RpcArity
 
-sealed trait RpcEncoding extends RPCMetaAnnotation
+sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
 final class encoded extends RpcEncoding
 final class verbatim extends RpcEncoding
 
-sealed trait RpcFilter extends RPCMetaAnnotation
-final class annotatedWith[A <: RPCAnnotation] extends RpcFilter
+final class methodTag[BaseTag <: RpcTag, DefaultTag <: BaseTag] extends RawRpcAnnotation
+final class paramTag[BaseTag <: RpcTag, DefaultTag <: BaseTag] extends RawMethodAnnotation
+final class tagged[Tag <: RpcTag] extends RawMethodAnnotation with RawParamAnnotation
+
+final class auxiliary extends RawParamAnnotation

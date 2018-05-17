@@ -5,12 +5,16 @@ import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.reflect.macros.blackbox
 
+/**
+  * The "legacy" macros for RPC based on `RPCFramework`.
+  * Superseded by generalized, "framework-less" RPC macro engine, [[RPCMacros]].
+  */
 class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
   val FrameworkObj = c.prefix.tree
-  val RpcPackage = q"$CommonsPackage.rpc"
+  val RpcPackage = q"$CommonsPkg.rpc"
   val RawRPCCls = tq"$FrameworkObj.RawRPC"
   val AsRawRPCObj = q"$FrameworkObj.AsRawRPC"
   val AsRawRPCCls = tq"$FrameworkObj.AsRawRPC"
@@ -25,7 +29,8 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
   val FullRPCInfoCls = tq"$FrameworkObj.FullRPCInfo"
 
   lazy val RPCFrameworkType = getType(tq"$RpcPackage.RPCFramework")
-  lazy val RPCNameType = getType(tq"$RpcPackage.RPCName")
+  lazy val RpcNameType = getType(tq"$RpcPackage.rpcName")
+  lazy val RpcNameNameSym: Symbol = RpcNameType.member(TermName("name"))
   lazy val MetadataAnnotationType = getType(tq"$RpcPackage.MetadataAnnotation")
   lazy val RawValueType = getType(RawValueCls)
   lazy val RawValueLLType = getType(ArgListsCls)
@@ -38,13 +43,11 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
     val typeParams = signature.typeParams
     val paramLists = signature.paramLists
 
-    val rpcName = allAnnotations(method).find(_.tpe <:< RPCNameType).map { annot =>
-      annot.children.tail match {
-        case List(StringLiteral(name)) => TermName(name)
-        case p :: _ => c.abort(p.pos, "The argument of @RPCName must be a string literal.")
-        case _ => c.abort(annot.pos, "No name argument found in @RPCName annotation")
-      }
-    }.getOrElse(method.name)
+    lazy val rpcName: TermName =
+      findAnnotation(method, RpcNameType).fold(method.name)(_.findArg(RpcNameNameSym) match {
+        case StringLiteral(n) => TermName(n)
+        case p => c.abort(p.pos, "The argument of @RPCName must be a string literal.")
+      })
 
     def rpcNameString = rpcName.decodedName.toString
   }
@@ -60,7 +63,7 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
 
     proxyables.groupBy(_.rpcName).foreach {
       case (rpcName, members) if members.size > 1 =>
-        error(s"Multiple RPC methods have the same RPC name: $rpcName, you need to properly disambiguate them with @RPCName annotation")
+        error(s"Multiple RPC methods have the same RPC name: $rpcName, you need to properly disambiguate them with @rpcName annotation")
       case _ =>
     }
 
@@ -70,7 +73,7 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
 
     proxyables
   }
-  
+
   def asRealImpl[T: WeakTypeTag]: Tree =
     q"$RpcPackage.AsReal.materializeForRpc[${weakTypeOf[T]},$RawRPCType]"
 
@@ -90,9 +93,7 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
 
   def materializeMetadata(rpcTpe: Type, proxyables: List[ProxyableMember]): Tree = {
     def reifyAnnotations(s: Symbol) = {
-      val trees = allAnnotations(s).collect {
-        case tree if tree.tpe <:< MetadataAnnotationType => c.untypecheck(tree)
-      }
+      val trees = allAnnotations(s, MetadataAnnotationType).map(a => c.untypecheck(a.tree))
       q"$ListObj(..$trees)"
     }
 

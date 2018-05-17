@@ -7,10 +7,10 @@ trait TypeClassDerivation extends MacroCommons {
 
   import c.universe._
 
-  val DeferredInstanceCls = tq"$CommonsPackage.derivation.DeferredInstance"
-  val AllowImplicitMacroCls = tq"$CommonsPackage.derivation.AllowImplicitMacro"
-  val AllowImplicitMacroObj = q"$CommonsPackage.derivation.AllowImplicitMacro"
-  val RecursiveImplicitMarkerObj = q"$CommonsPackage.macros.RecursiveImplicitMarker"
+  val DeferredInstanceCls = tq"$CommonsPkg.derivation.DeferredInstance"
+  val AllowImplicitMacroCls = tq"$CommonsPkg.derivation.AllowImplicitMacro"
+  val AllowImplicitMacroObj = q"$CommonsPkg.derivation.AllowImplicitMacro"
+  val RecursiveImplicitMarkerObj = q"$CommonsPkg.macros.RecursiveImplicitMarker"
 
   /**
     * A tree that represents type constructor of the type class to be derived.
