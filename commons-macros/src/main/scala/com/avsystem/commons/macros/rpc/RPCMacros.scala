@@ -36,7 +36,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   val ParamTagAT: Type = getType(tq"$RpcPackage.paramTag[_,_]")
   val TaggedAT: Type = getType(tq"$RpcPackage.tagged[_]")
   val RpcTagAT: Type = getType(tq"$RpcPackage.RpcTag")
-  val RawRPCCompanionTpe: Type = getType(tq"$RpcPackage.RawRPCCompanion[_]")
+  val RpcImplicitsProviderTpe: Type = getType(tq"$RpcPackage.RpcImplicitsProvider")
 
   val NothingTpe: Type = typeOf[Nothing]
   val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
@@ -565,13 +565,15 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         }
        """
 
-    def rawCaseImpl(nameOfRealRpc: TermName): CaseDef = {
+    /*_*/
+    // IntelliJ doesn't understand that cq returns CaseDef
+    def rawCaseImpl(nameOfRealRpc: TermName): CaseDef =
       cq"""
         ${realMethod.rpcName} =>
           ..${paramMappings.filterNot(_.rawParam.auxiliary).flatMap(_.realDecls(nameOfRealRpc))}
           ${resultEncoding.asRaw}.asRaw($nameOfRealRpc.${realMethod.name}(...${realMethod.argLists}))
         """
-    }
+    /*_*/
   }
 
   def checkImplementable(tpe: Type): Unit = {

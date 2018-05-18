@@ -17,7 +17,7 @@ import com.avsystem.commons.serialization.{GenCodec, StreamInput, StreamOutput}
   */
 object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework with FunctionRPCFramework with MonixRPCFramework {
   trait RawRPC extends GetterRawRPC with ProcedureRawRPC with FunctionRawRPC with MonixRawRPC
-  object RawRPC extends BaseRawRPCCompanion
+  object RawRPC extends BaseRawRpcCompanion
   abstract class FullRPCInfo[T] extends BaseFullRPCInfo[T]
 
   type RawValue = ByteString

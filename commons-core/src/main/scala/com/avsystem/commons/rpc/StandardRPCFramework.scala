@@ -52,14 +52,14 @@ trait GetterRPCFramework extends RPCFramework {
 
 trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework with ProcedureRPCFramework {
   trait RawRPC extends GetterRawRPC with FunctionRawRPC with ProcedureRawRPC
-  object RawRPC extends BaseRawRPCCompanion
+  object RawRPC extends BaseRawRpcCompanion
 
   trait FullRPCInfo[T] extends BaseFullRPCInfo[T]
 }
 
 trait OneWayRPCFramework extends GetterRPCFramework with ProcedureRPCFramework {
   trait RawRPC extends GetterRawRPC with ProcedureRawRPC
-  object RawRPC extends BaseRawRPCCompanion
+  object RawRPC extends BaseRawRpcCompanion
 
   trait FullRPCInfo[T] extends BaseFullRPCInfo[T]
 }

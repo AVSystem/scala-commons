@@ -9,9 +9,9 @@ trait RPCFramework {
   type Writer[T]
 
   type RawRPC
-  val RawRPC: BaseRawRPCCompanion
+  val RawRPC: BaseRawRpcCompanion
 
-  trait BaseRawRPCCompanion extends RawRPCCompanion[RawRPC] {
+  trait BaseRawRpcCompanion extends RawRpcCompanion[RawRPC] {
     override val implicits: RPCFramework.this.type = RPCFramework.this
   }
 
