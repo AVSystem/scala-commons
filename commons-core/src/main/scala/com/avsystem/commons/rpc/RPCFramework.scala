@@ -18,12 +18,12 @@ trait RPCFramework {
   def read[T: Reader](raw: RawValue): T
   def write[T: Writer](value: T): RawValue
 
-  implicit def readerBasedAsReal[T: Reader]: AsReal[T, RawValue] =
-    new AsReal[T, RawValue] {
+  implicit def readerBasedAsReal[T: Reader]: AsReal[RawValue, T] =
+    new AsReal[RawValue, T] {
       def asReal(raw: RawValue): T = read(raw)
     }
-  implicit def writerBasedAsRaw[T: Writer]: AsRaw[T, RawValue] =
-    new AsRaw[T, RawValue] {
+  implicit def writerBasedAsRaw[T: Writer]: AsRaw[RawValue, T] =
+    new AsRaw[RawValue, T] {
       def asRaw(real: T): RawValue = write(real)
     }
 
@@ -34,7 +34,7 @@ trait RPCFramework {
     @inline def apply[T](implicit metadata: RPCMetadata[T]): RPCMetadata[T] = metadata
   }
 
-  type AsRawRPC[T] = AsRaw[T, RawRPC]
+  type AsRawRPC[T] = AsRaw[RawRPC, T]
   object AsRawRPC {
     def apply[T](implicit asRawRPC: AsRawRPC[T]): AsRawRPC[T] = asRawRPC
   }
@@ -46,7 +46,7 @@ trait RPCFramework {
     */
   def materializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRawImpl[T]
 
-  type AsRealRPC[T] = AsReal[T, RawRPC]
+  type AsRealRPC[T] = AsReal[RawRPC, T]
   object AsRealRPC {
     @inline def apply[T](implicit asRealRPC: AsRealRPC[T]): AsRealRPC[T] = asRealRPC
   }
@@ -58,7 +58,7 @@ trait RPCFramework {
     */
   def materializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealImpl[T]
 
-  type AsRealRawRPC[T] = AsRealRaw[T, RawRPC]
+  type AsRealRawRPC[T] = AsRealRaw[RawRPC, T]
   object AsRealRawRPC {
     @inline def apply[T](implicit asRealRawRPC: AsRealRawRPC[T]): AsRealRawRPC[T] = asRealRawRPC
   }

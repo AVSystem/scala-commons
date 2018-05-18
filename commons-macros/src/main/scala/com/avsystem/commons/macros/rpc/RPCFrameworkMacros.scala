@@ -75,13 +75,13 @@ class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
   }
 
   def asRealImpl[T: WeakTypeTag]: Tree =
-    q"$RpcPackage.AsReal.materializeForRpc[${weakTypeOf[T]},$RawRPCType]"
+    q"$RpcPackage.AsReal.materializeForRpc[$RawRPCType,${weakTypeOf[T]}]"
 
   def asRawImpl[T: WeakTypeTag]: Tree =
-    q"$RpcPackage.AsRaw.materializeForRpc[${weakTypeOf[T]},$RawRPCType]"
+    q"$RpcPackage.AsRaw.materializeForRpc[$RawRPCType,${weakTypeOf[T]}]"
 
   def asRealRawImpl[T: WeakTypeTag]: Tree =
-    q"$RpcPackage.AsRealRaw.materializeForRpc[${weakTypeOf[T]},$RawRPCType]"
+    q"$RpcPackage.AsRealRaw.materializeForRpc[$RawRPCType,${weakTypeOf[T]}]"
 
   def hasMetadata(tpe: Type): Boolean =
     c.inferImplicitValue(getType(tq"$RPCMetadataCls[$tpe]")) != EmptyTree

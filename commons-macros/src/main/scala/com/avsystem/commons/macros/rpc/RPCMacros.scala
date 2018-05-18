@@ -219,7 +219,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
     case class RealRawEncoding(realType: Type, rawType: Type, clueWithPos: Option[(String, Position)]) extends RpcEncoding {
       private def infer(convClass: Tree): TermName = {
-        val convTpe = getType(tq"$convClass[$realType,$rawType]")
+        val convTpe = getType(tq"$convClass[$rawType,$realType]")
         clueWithPos match {
           case Some((clue, pos)) => inferCachedImplicit(convTpe, clue, pos)
           case None => tryInferCachedImplicit(convTpe).getOrElse(termNames.EMPTY)
@@ -663,14 +663,14 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       registerImplicitImport(q"import $companion.implicits._")
     }
 
-  def rpcAsReal[T: WeakTypeTag, R: WeakTypeTag]: Tree = {
+  def rpcAsReal[R: WeakTypeTag, T: WeakTypeTag]: Tree = {
     val realTpe = weakTypeOf[T].dealias
     checkImplementable(realTpe)
     val rawTpe = weakTypeOf[R].dealias
     checkImplementable(rawTpe)
 
     val selfName = c.freshName(TermName("self"))
-    registerImplicit(getType(tq"$AsRealCls[$realTpe,$rawTpe]"), selfName)
+    registerImplicit(getType(tq"$AsRealCls[$rawTpe,$realTpe]"), selfName)
     registerCompanionImplicits(rawTpe)
 
     val raws = extractRawMethods(rawTpe)
@@ -679,21 +679,21 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val asRealDef = asRealImpl(realTpe, rawTpe, raws, reals)
 
     q"""
-      new $AsRealCls[$realTpe,$rawTpe] { $selfName: ${TypeTree()} =>
+      new $AsRealCls[$rawTpe,$realTpe] { $selfName: ${TypeTree()} =>
         ..$cachedImplicitDeclarations
         $asRealDef
       }
     """
   }
 
-  def rpcAsRaw[T: WeakTypeTag, R: WeakTypeTag]: Tree = {
+  def rpcAsRaw[R: WeakTypeTag, T: WeakTypeTag]: Tree = {
     val realTpe = weakTypeOf[T].dealias
     checkImplementable(realTpe)
     val rawTpe = weakTypeOf[R].dealias
     checkImplementable(rawTpe)
 
     val selfName = c.freshName(TermName("self"))
-    registerImplicit(getType(tq"$AsRawCls[$realTpe,$rawTpe]"), selfName)
+    registerImplicit(getType(tq"$AsRawCls[$rawTpe,$realTpe]"), selfName)
     registerCompanionImplicits(rawTpe)
 
     val raws = extractRawMethods(rawTpe)
@@ -702,22 +702,22 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val asRawDef = asRawImpl(realTpe, rawTpe, raws, reals)
 
     q"""
-      new $AsRawCls[$realTpe,$rawTpe] { $selfName: ${TypeTree()} =>
+      new $AsRawCls[$rawTpe,$realTpe] { $selfName: ${TypeTree()} =>
         ..$cachedImplicitDeclarations
         $asRawDef
       }
      """
   }
 
-  def rpcAsRealRaw[T: WeakTypeTag, R: WeakTypeTag]: Tree = {
+  def rpcAsRealRaw[R: WeakTypeTag, T: WeakTypeTag]: Tree = {
     val realTpe = weakTypeOf[T].dealias
     checkImplementable(realTpe)
     val rawTpe = weakTypeOf[R].dealias
     checkImplementable(rawTpe)
 
     val selfName = c.freshName(TermName("self"))
-    registerImplicit(getType(tq"$AsRawCls[$realTpe,$rawTpe]"), selfName)
-    registerImplicit(getType(tq"$AsRealCls[$realTpe,$rawTpe]"), selfName)
+    registerImplicit(getType(tq"$AsRawCls[$rawTpe,$realTpe]"), selfName)
+    registerImplicit(getType(tq"$AsRealCls[$rawTpe,$realTpe]"), selfName)
     registerCompanionImplicits(rawTpe)
 
     val raws = extractRawMethods(rawTpe)
@@ -728,7 +728,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val asRawDef = asRawImpl(realTpe, rawTpe, raws, reals)
 
     q"""
-      new $AsRealRawCls[$realTpe,$rawTpe] { $selfName: ${TypeTree()} =>
+      new $AsRealRawCls[$rawTpe,$realTpe] { $selfName: ${TypeTree()} =>
         ..$cachedImplicitDeclarations
         $asRealDef
         $asRawDef

@@ -11,12 +11,8 @@ trait MonixRPCFramework extends RPCFramework {
     def observe(rpcName: String, @repeated args: List[RawValue]): Observable[RawValue]
   }
 
-  implicit def readerBasedObservableAsReal[T: Reader]: AsReal[Observable[T], Observable[RawValue]] =
-    new AsReal[Observable[T], Observable[RawValue]] {
-      def asReal(raw: Observable[RawValue]): Observable[T] = raw.map(read[T])
-    }
-  implicit def writerBasedObservableAsRaw[T: Writer]: AsRaw[Observable[T], Observable[RawValue]] =
-    new AsRaw[Observable[T], Observable[RawValue]] {
-      def asRaw(raw: Observable[T]): Observable[RawValue] = raw.map(write[T])
-    }
+  implicit def readerBasedObservableAsReal[T: Reader]: AsReal[Observable[RawValue], Observable[T]] =
+    AsReal.create(_.map(read[T]))
+  implicit def writerBasedObservableAsRaw[T: Writer]: AsRaw[Observable[RawValue], Observable[T]] =
+    AsRaw.create(_.map(write[T]))
 }

@@ -24,14 +24,10 @@ trait FunctionRPCFramework extends RPCFramework {
     def call(rpcName: String, @repeated args: List[RawValue]): Future[RawValue]
   }
 
-  implicit def readerBasedFutureAsReal[T: Reader]: AsReal[Future[T], Future[RawValue]] =
-    new AsReal[Future[T], Future[RawValue]] {
-      def asReal(raw: Future[RawValue]): Future[T] = raw.mapNow(read[T])
-    }
-  implicit def writerBasedFutureAsRaw[T: Writer]: AsRaw[Future[T], Future[RawValue]] =
-    new AsRaw[Future[T], Future[RawValue]] {
-      def asRaw(raw: Future[T]): Future[RawValue] = raw.mapNow(write[T])
-    }
+  implicit def readerBasedFutureAsReal[T: Reader]: AsReal[Future[RawValue], Future[T]] =
+    AsReal.create(_.mapNow(read[T]))
+  implicit def writerBasedFutureAsRaw[T: Writer]: AsRaw[Future[RawValue], Future[T]] =
+    AsRaw.create(_.mapNow(write[T]))
 }
 
 /**

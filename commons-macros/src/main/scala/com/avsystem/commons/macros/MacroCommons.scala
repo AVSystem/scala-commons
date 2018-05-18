@@ -118,7 +118,7 @@ trait MacroCommons { bundle =>
   def allAnnotations(s: Symbol, tpeFilter: Type = typeOf[Any], withInherited: Boolean = true): List[Annot] =
     maybeWithSuperSymbols(s, withInherited)
       .flatMap(ss => ss.annotations.map(a => Annot(a.tree)(ss, None)))
-      .flatMap(_.withAllAggregated).toList
+      .flatMap(_.withAllAggregated).filter(_.tpe <:< tpeFilter).toList
 
   def findAnnotation(s: Symbol, tpe: Type, withInherited: Boolean = true): Option[Annot] =
     maybeWithSuperSymbols(s, withInherited).map { ss =>

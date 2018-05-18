@@ -109,8 +109,8 @@ sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
 
 /**
   * When a raw parameter is annotated as [[encoded]], macro generated code will translate
-  * between real parameter values and raw parameter values using implicit instances of `AsRaw[Real,Raw]`
-  * and `AsReal[Real,Raw]` typeclasses. This annotation may also be applied on a method, but this would be
+  * between real parameter values and raw parameter values using implicit instances of `AsRaw[Raw,Real]`
+  * and `AsReal[Raw,Real]` typeclasses. This annotation may also be applied on a method, but this would be
   * redundant since method results are encoded by default.
   *
   * Here's an example of raw RPC definition supposed to handle asynchronous (`Future`-based) calls that uses
@@ -136,7 +136,7 @@ sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
   *     AsRealRaw.create[T,Json](readJson[T], writeJson[T])
   *
   *   // instead of using `mapNow`, this method can also take implicit ExecutionContext and just use `map`
-  *   implicit def genCodecBasedFutureJsonEncoding[T: GenCodec]: AsRealRaw[Future[T],Future[Json]] =
+  *   implicit def genCodecBasedFutureJsonEncoding[T: GenCodec]: AsRealRaw[Future[Json],Future[T]] =
   *     AsRealRaw.create[Future[T],Future[Json]](_.mapNow(readJson[T]), _.mapNow(writeJson[T]))
   * }
   *
@@ -160,10 +160,10 @@ sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
   *     JsonStringOutput.write[T](value)
   *
   *   override object implicits {
-  *     implicit def genCodecBasedJsonEncoding[T: GenCodec]: AsRealRaw[T,String] =
-  *       AsRealRaw.create[T,String](readJson[T], writeJson[T])
-  *     implicit def genCodecBasedFutureJsonEncoding[T: GenCodec]: AsRealRaw[Future[T],Future[String]] =
-  *       AsRealRaw.create[Future[T],Future[String]](_.mapNow(readJson[T]), _.mapNow(writeJson[T]))
+  *     implicit def genCodecBasedJsonEncoding[T: GenCodec]: AsRealRaw[String,T] =
+  *       AsRealRaw.create[String,T](readJson[T], writeJson[T])
+  *     implicit def genCodecBasedFutureJsonEncoding[T: GenCodec]: AsRealRaw[Future[String],Future[T]] =
+  *       AsRealRaw.create[Future[String],Future[T]](_.mapNow(readJson[T]), _.mapNow(writeJson[T]))
   *   }
   * }
   * }}}
@@ -220,7 +220,7 @@ final class verbatim extends RpcEncoding
   *   @POST def saveUser(user: User): Future[Unit]
   * }
   * object SomeRestApi {
-  *   implicit val asRealRaw: AsRealRaw[SomeRestApi,RestRawRpc] = AsRealRaw.materializeForRpc
+  *   implicit val asRealRaw: AsRealRaw[RestRawRpc,SomeRestApi] = AsRealRaw.materializeForRpc
   * }
   * }}}
   *
