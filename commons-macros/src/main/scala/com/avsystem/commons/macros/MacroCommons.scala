@@ -87,8 +87,8 @@ trait MacroCommons { bundle =>
       } else Nil
     }
 
-    lazy val allAggregated: List[Annot] =
-      aggregated.flatMap(a => a :: a.allAggregated)
+    lazy val withAllAggregated: List[Annot] =
+      this :: aggregated.flatMap(_.withAllAggregated)
 
     override def toString: String = tree match {
       case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
@@ -117,8 +117,8 @@ trait MacroCommons { bundle =>
 
   def allAnnotations(s: Symbol, tpeFilter: Type = typeOf[Any], withInherited: Boolean = true): List[Annot] =
     maybeWithSuperSymbols(s, withInherited)
-      .map(ss => ss.annotations.map(a => Annot(a.tree)(ss, None)))
-      .flatMap(as => as ++ as.flatMap(_.allAggregated)).toList
+      .flatMap(ss => ss.annotations.map(a => Annot(a.tree)(ss, None)))
+      .flatMap(_.withAllAggregated).toList
 
   def findAnnotation(s: Symbol, tpe: Type, withInherited: Boolean = true): Option[Annot] =
     maybeWithSuperSymbols(s, withInherited).map { ss =>

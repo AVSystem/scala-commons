@@ -48,3 +48,4 @@ object AsRealRaw {
 
   def materializeForRpc[T, R]: AsRealRaw[T, R] = macro macros.rpc.RPCMacros.rpcAsRealRaw[T, R]
 }
+
