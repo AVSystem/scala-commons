@@ -286,15 +286,23 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       })
   }
 
+  abstract class RpcTrait(val symbol: Symbol) extends RpcSymbol {
+    def tpe: Type
+
+    if (!symbol.isAbstract || !symbol.isClass) {
+      reportProblem(s"it must be an abstract class or trait")
+    }
+  }
+
   abstract class RpcMethod extends RpcSymbol {
-    val owner: Type
+    val owner: RpcTrait
     def problemStr = s"problem with method $nameStr of type $owner"
 
     if (!symbol.isMethod) {
       abortAt(s"problem with member $nameStr of type $owner: it must be a method (def)", pos)
     }
 
-    val sig: Type = symbol.typeSignatureIn(owner)
+    val sig: Type = symbol.typeSignatureIn(owner.tpe)
     if (sig.typeParams.nonEmpty) {
       // can we relax this?
       reportProblem("RPC methods must not be generic")
@@ -431,9 +439,11 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         q"$RpcPackage.RpcUtils.missingArg(${owner.mapping.rawMethod.rpcNameParam.safeName}, $rpcName)"
   }
 
-  case class RawMethod(owner: Type, symbol: Symbol,
-    baseTag: Type, defaultTag: Type, classBaseParamTag: Type, classDefaultParamTag: Type)
+  case class RawMethod(owner: RawRpcTrait, symbol: Symbol)
     extends RpcMethod with RawRpcSymbol {
+
+    def baseTag: Type = owner.baseMethodTag
+    def defaultTag: Type = owner.defaultMethodTag
 
     // raw method result is encoded by default, must be explicitly annotated as @verbatim to disable encoding
     val verbatimResult: Boolean =
@@ -442,7 +452,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val List(baseParamTag, defaultParamTag) =
       annot(ParamTagAT)
         .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
-        .getOrElse(List(classBaseParamTag, classDefaultParamTag))
+        .getOrElse(List(owner.baseParamTag, owner.defaultParamTag))
 
     def matchTag(realMethod: RealMethod): Res[Unit] =
       if (matchesTag(realMethod)) Ok(())
@@ -476,8 +486,8 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
        """
   }
 
-  case class RealMethod(owner: Type, symbol: Symbol, rawMethods: List[RawMethod],
-    forAsRaw: Boolean, forAsReal: Boolean) extends RpcMethod with RealRpcSymbol {
+  case class RealMethod(owner: RealRpcTrait, symbol: Symbol)
+    extends RpcMethod with RealRpcSymbol {
 
     val paramLists: List[List[RealParam]] = {
       var idx = 0
@@ -495,7 +505,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val realParams: List[RealParam] = paramLists.flatten
 
     val mappingRes: Res[MethodMapping] = {
-      val methodMappings = rawMethods.map { rawMethod =>
+      val methodMappings = owner.rawRpc.rawMethods.map { rawMethod =>
         def resultEncoding: Res[RpcEncoding] =
           if (rawMethod.verbatimResult) {
             if (rawMethod.resultType =:= resultType)
@@ -504,7 +514,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
               s"real result type $resultType does not match raw result type ${rawMethod.resultType}")
           } else {
             val e = RpcEncoding.RealRawEncoding(resultType, rawMethod.resultType, None)
-            if ((!forAsRaw || e.asRawName != termNames.EMPTY) && (!forAsReal || e.asRealName != termNames.EMPTY))
+            if ((!owner.forAsRaw || e.asRawName != termNames.EMPTY) && (!owner.forAsReal || e.asRealName != termNames.EMPTY))
               Ok(e)
             else rawMethod.matchFailure(
               s"no encoding/decoding found between real result type $resultType and raw result type ${rawMethod.resultType}")
@@ -552,6 +562,58 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
+  case class RawRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with RawRpcSymbol {
+    def baseTag: Type = typeOf[Nothing]
+    def defaultTag: Type = typeOf[Nothing]
+
+    def problemStr: String = s"problem with raw RPC $tpe"
+
+    val List(baseMethodTag, defaultMethodTag) =
+      annot(MethodTagAT)
+        .map(_.tpe.baseType(MethodTagAT.typeSymbol).typeArgs)
+        .getOrElse(List(NothingTpe, NothingTpe))
+
+    val List(baseParamTag, defaultParamTag) =
+      annot(ParamTagAT)
+        .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
+        .getOrElse(List(NothingTpe, NothingTpe))
+
+    lazy val rawMethods: List[RawMethod] = {
+      tpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(s =>
+        RawMethod(this, s)
+      ).toList
+    }
+  }
+
+  case class RealRpcTrait(tpe: Type, rawRpc: RawRpcTrait, forAsRaw: Boolean, forAsReal: Boolean)
+    extends RpcTrait(tpe.typeSymbol) with RealRpcSymbol {
+
+    def problemStr: String = s"problem with real RPC $tpe"
+
+    lazy val realMethods: List[RealMethod] = {
+      val result = tpe.members.iterator.filter(m => m.isTerm && m.isAbstract)
+        .map(RealMethod(this, _)).toList
+      val failedMethods = result.flatMap { rm =>
+        rm.mappingRes match {
+          case Failure(msg) => Some((rm, msg))
+          case _ => None
+        }
+      }
+      if (failedMethods.nonEmpty) {
+        val failedMethodsRepr = failedMethods.map { case (rm, msg) =>
+          if (rm.pos != NoPosition) {
+            c.error(rm.pos, s"Macro expansion at ${posInfo(c.enclosingPosition)} failed: ${rm.problemStr}: $msg")
+          } else {
+            error(s"${rm.problemStr}: $msg")
+          }
+          rm.nameStr
+        }.mkString(",")
+        abort(s"Following real methods could not be mapped to raw methods: $failedMethodsRepr")
+      }
+      result
+    }
+  }
+
   case class MethodMapping(realMethod: RealMethod, rawMethod: RawMethod,
     paramMappings: List[ParamMapping], resultEncoding: RpcEncoding) {
 
@@ -582,62 +644,22 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
-  def extractRawMethods(rawTpe: Type): List[RawMethod] = {
-    val List(baseMethodTag, defaultMethodTag) =
-      findAnnotation(rawTpe.typeSymbol, MethodTagAT)
-        .map(_.tpe.baseType(MethodTagAT.typeSymbol).typeArgs)
-        .getOrElse(List(NothingTpe, NothingTpe))
-    val List(baseParamTag, defaultParamTag) =
-      findAnnotation(rawTpe.typeSymbol, ParamTagAT)
-        .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
-        .getOrElse(List(NothingTpe, NothingTpe))
-
-    rawTpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(s =>
-      RawMethod(rawTpe, s, baseMethodTag, defaultMethodTag, baseParamTag, defaultParamTag)
-    ).toList
-  }
-
-  def extractRealMethods(realTpe: Type, rawMethods: List[RawMethod],
-    forAsRaw: Boolean, forAsReal: Boolean): List[RealMethod] = {
-
-    val result = realTpe.members.iterator.filter(m => m.isTerm && m.isAbstract)
-      .map(RealMethod(realTpe, _, rawMethods, forAsRaw, forAsReal)).toList
-    val failedMethods = result.flatMap { rm =>
-      rm.mappingRes match {
-        case Failure(msg) => Some((rm, msg))
-        case _ => None
-      }
-    }
-    if (failedMethods.nonEmpty) {
-      val failedMethodsRepr = failedMethods.map { case (rm, msg) =>
-        if (rm.pos != NoPosition) {
-          c.error(rm.pos, s"Macro expansion at ${posInfo(c.enclosingPosition)} failed: ${rm.problemStr}: $msg")
-        } else {
-          error(s"${rm.problemStr}: $msg")
-        }
-        rm.nameStr
-      }.mkString(",")
-      abort(s"Following real methods could not be mapped to raw methods: $failedMethodsRepr")
-    }
-    result
-  }
-
-  private def asRealImpl(realTpe: Type, rawTpe: Type, raws: List[RawMethod], reals: List[RealMethod]): Tree = {
+  private def asRealImpl(real: RealRpcTrait, raw: RawRpcTrait): Tree = {
     val rawName = c.freshName(TermName("raw"))
-    val realMethodImpls = reals.map(_.mapping.realImpl(rawName))
+    val realMethodImpls = real.realMethods.map(_.mapping.realImpl(rawName))
 
     q"""
-      def asReal($rawName: $rawTpe): $realTpe = new $realTpe {
+      def asReal($rawName: ${raw.tpe}): ${real.tpe} = new ${real.tpe} {
         ..$realMethodImpls; ()
       }
       """
   }
 
-  private def asRawImpl(realTpe: Type, rawTpe: Type, raws: List[RawMethod], reals: List[RealMethod]): Tree = {
+  private def asRawImpl(real: RealRpcTrait, raw: RawRpcTrait): Tree = {
     val realName = c.freshName(TermName("real"))
 
-    val caseDefs = raws.iterator.map(rm => (rm, new mutable.LinkedHashMap[String, CaseDef])).toMap
-    reals.foreach { realMethod =>
+    val caseDefs = raw.rawMethods.iterator.map(rm => (rm, new mutable.LinkedHashMap[String, CaseDef])).toMap
+    real.realMethods.foreach { realMethod =>
       val mapping = realMethod.mapping
       val prevCaseDef = caseDefs(mapping.rawMethod).put(realMethod.rpcName, mapping.rawCaseImpl(realName))
       ensure(prevCaseDef.isEmpty,
@@ -645,10 +667,10 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           "If you want to overload RPCs, disambiguate them with @rpcName annotation")
     }
 
-    val rawMethodImpls = raws.map(m => m.rawImpl(caseDefs(m).values.toList))
+    val rawMethodImpls = raw.rawMethods.map(m => m.rawImpl(caseDefs(m).values.toList))
 
     q"""
-      def asRaw($realName: $realTpe): $rawTpe = new $rawTpe {
+      def asRaw($realName: ${real.tpe}): ${raw.tpe} = new ${raw.tpe} {
         ..$rawMethodImpls; ()
       }
       """
@@ -663,22 +685,18 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
 
   def rpcAsReal[R: WeakTypeTag, T: WeakTypeTag]: Tree = {
-    val realTpe = weakTypeOf[T].dealias
-    checkImplementable(realTpe)
-    val rawTpe = weakTypeOf[R].dealias
-    checkImplementable(rawTpe)
+    val raw = RawRpcTrait(weakTypeOf[R].dealias)
+    val real = RealRpcTrait(weakTypeOf[T].dealias, raw, forAsRaw = false, forAsReal = true)
 
     val selfName = c.freshName(TermName("self"))
-    registerImplicit(getType(tq"$AsRealCls[$rawTpe,$realTpe]"), selfName)
-    registerCompanionImplicits(rawTpe)
+    registerImplicit(getType(tq"$AsRealCls[${raw.tpe},${real.tpe}]"), selfName)
+    registerCompanionImplicits(raw.tpe)
 
-    val raws = extractRawMethods(rawTpe)
-    val reals = extractRealMethods(realTpe, raws, forAsRaw = false, forAsReal = true)
     // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
-    val asRealDef = asRealImpl(realTpe, rawTpe, raws, reals)
+    val asRealDef = asRealImpl(real, raw)
 
     q"""
-      new $AsRealCls[$rawTpe,$realTpe] { $selfName: ${TypeTree()} =>
+      new $AsRealCls[${raw.tpe},${real.tpe}] { $selfName: ${TypeTree()} =>
         ..$cachedImplicitDeclarations
         $asRealDef
       }
@@ -686,22 +704,18 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
 
   def rpcAsRaw[R: WeakTypeTag, T: WeakTypeTag]: Tree = {
-    val realTpe = weakTypeOf[T].dealias
-    checkImplementable(realTpe)
-    val rawTpe = weakTypeOf[R].dealias
-    checkImplementable(rawTpe)
+    val raw = RawRpcTrait(weakTypeOf[R].dealias)
+    val real = RealRpcTrait(weakTypeOf[T].dealias, raw, forAsRaw = true, forAsReal = false)
 
     val selfName = c.freshName(TermName("self"))
-    registerImplicit(getType(tq"$AsRawCls[$rawTpe,$realTpe]"), selfName)
-    registerCompanionImplicits(rawTpe)
+    registerImplicit(getType(tq"$AsRawCls[${raw.tpe},${real.tpe}]"), selfName)
+    registerCompanionImplicits(raw.tpe)
 
-    val raws = extractRawMethods(rawTpe)
-    val reals = extractRealMethods(realTpe, raws, forAsRaw = true, forAsReal = false)
     // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
-    val asRawDef = asRawImpl(realTpe, rawTpe, raws, reals)
+    val asRawDef = asRawImpl(real, raw)
 
     q"""
-      new $AsRawCls[$rawTpe,$realTpe] { $selfName: ${TypeTree()} =>
+      new $AsRawCls[${raw.tpe},${real.tpe}] { $selfName: ${TypeTree()} =>
         ..$cachedImplicitDeclarations
         $asRawDef
       }
@@ -709,29 +723,25 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
 
   def rpcAsRealRaw[R: WeakTypeTag, T: WeakTypeTag]: Tree = {
-    val realTpe = weakTypeOf[T].dealias
-    checkImplementable(realTpe)
-    val rawTpe = weakTypeOf[R].dealias
-    checkImplementable(rawTpe)
+    val raw = RawRpcTrait(weakTypeOf[R].dealias)
+    val real = RealRpcTrait(weakTypeOf[T].dealias, raw, forAsRaw = true, forAsReal = true)
 
     val selfName = c.freshName(TermName("self"))
-    registerImplicit(getType(tq"$AsRawCls[$rawTpe,$realTpe]"), selfName)
-    registerImplicit(getType(tq"$AsRealCls[$rawTpe,$realTpe]"), selfName)
-    registerCompanionImplicits(rawTpe)
-
-    val raws = extractRawMethods(rawTpe)
-    val reals = extractRealMethods(realTpe, raws, forAsRaw = true, forAsReal = true)
+    registerImplicit(getType(tq"$AsRawCls[${raw.tpe},${real.tpe}]"), selfName)
+    registerImplicit(getType(tq"$AsRealCls[${raw.tpe},${real.tpe}]"), selfName)
+    registerCompanionImplicits(raw.tpe)
 
     // these two must be evaluated before `cachedImplicitDeclarations`, don't inline them into the quasiquote
-    val asRealDef = asRealImpl(realTpe, rawTpe, raws, reals)
-    val asRawDef = asRawImpl(realTpe, rawTpe, raws, reals)
+    val asRealDef = asRealImpl(real, raw)
+    val asRawDef = asRawImpl(real, raw)
 
     q"""
-      new $AsRealRawCls[$rawTpe,$realTpe] { $selfName: ${TypeTree()} =>
+      new $AsRealRawCls[${raw.tpe},${real.tpe}] { $selfName: ${TypeTree()} =>
         ..$cachedImplicitDeclarations
         $asRealDef
         $asRawDef
       }
      """
   }
+
 }

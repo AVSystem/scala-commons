@@ -648,8 +648,11 @@ trait MacroCommons { bundle =>
             alternatives(dtpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor).getOrElse(NoSymbol)
           else NoSymbol
 
-        val applySig = if (constructor != NoSymbol) constructor.typeSignatureIn(dtpe) else setTypeArgs(apply.typeSignatureIn(companion.tpe))
-        val unapplySig = setTypeArgs(unapply.typeSignatureIn(companion.tpe))
+        val applySig =
+          if (constructor != NoSymbol) constructor.typeSignatureIn(dtpe)
+          else setTypeArgs(apply.typeSignatureIn(companion.tpe))
+        val unapplySig =
+          setTypeArgs(unapply.typeSignatureIn(companion.tpe))
 
         if (matchingApplyUnapply(dtpe, applySig, unapplySig)) {
           def defaultValueFor(param: Symbol, idx: Int): Tree =
@@ -754,13 +757,13 @@ trait MacroCommons { bundle =>
 
   def abortOnTypecheckException[T](expr: => T): T =
     try expr catch {
-      case TypecheckException(pos, msg) => abort(msg)
+      case TypecheckException(_, msg) => abort(msg)
     }
 
   def typecheckException(msg: String) =
     throw TypecheckException(c.enclosingPosition, msg)
 
-  def isTuple(sym: Symbol) =
+  def isTuple(sym: Symbol): Boolean =
     definitions.TupleClass.seq.contains(sym)
 }
 
