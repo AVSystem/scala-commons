@@ -259,20 +259,20 @@ trait MacroCommons { bundle =>
     case _ => Iterator(s)
   }
 
-  def primaryConstructorOf(tpe: Type) =
+  def primaryConstructorOf(tpe: Type): Symbol =
     alternatives(tpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor)
       .getOrElse(abort(s"No primary constructor found for $tpe"))
 
-  def abort(msg: String) =
+  def abort(msg: String): Nothing =
     c.abort(c.enclosingPosition, msg)
 
-  def echo(msg: String) =
+  def echo(msg: String): Unit =
     c.echo(c.enclosingPosition, msg)
 
-  def error(msg: String) =
+  def error(msg: String): Unit =
     c.error(c.enclosingPosition, msg)
 
-  def warning(msg: String) =
+  def warning(msg: String): Unit =
     c.warning(c.enclosingPosition, msg)
 
   def ensure(condition: Boolean, msg: String): Unit =
@@ -295,7 +295,7 @@ trait MacroCommons { bundle =>
     * Wrapper over Type that implements equals/hashCode consistent with type equivalence (=:=)
     */
   case class TypeKey(tpe: Type) {
-    override def equals(obj: Any) = obj match {
+    override def equals(obj: Any): Boolean = obj match {
       case TypeKey(otherTpe) => tpe =:= otherTpe
       case _ => false
     }
@@ -704,7 +704,7 @@ trait MacroCommons { bundle =>
     case _ => singleValueFor(tpe.companion)
   }
 
-  def typeOfTypeSymbol(sym: TypeSymbol) = sym.toType match {
+  def typeOfTypeSymbol(sym: TypeSymbol): Type = sym.toType match {
     case t@TypeRef(pre, s, Nil) if t.takesTypeArgs =>
       internal.typeRef(pre, s, t.typeParams.map(ts => internal.typeRef(NoPrefix, ts, Nil)))
     case t => t
