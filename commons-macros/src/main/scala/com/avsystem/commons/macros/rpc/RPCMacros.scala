@@ -566,15 +566,13 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   case class RpcMapping(real: RealRpcTrait, raw: RawRpcTrait, forAsReal: Boolean, forAsRaw: Boolean) {
     val selfName: TermName = c.freshName(TermName("self"))
 
-    def setupImplicits(): Unit = {
-      if(forAsReal) {
-        registerImplicit(getType(tq"$AsRealCls[${raw.tpe},${real.tpe}]"), selfName)
-      }
-      if(forAsRaw) {
-        registerImplicit(getType(tq"$AsRawCls[${raw.tpe},${real.tpe}]"), selfName)
-      }
-      registerCompanionImplicits(raw.tpe)
+    if (forAsReal) {
+      registerImplicit(getType(tq"$AsRealCls[${raw.tpe},${real.tpe}]"), selfName)
     }
+    if (forAsRaw) {
+      registerImplicit(getType(tq"$AsRawCls[${raw.tpe},${real.tpe}]"), selfName)
+    }
+    registerCompanionImplicits(raw.tpe)
 
     private def mappingRes(realMethod: RealMethod, rawMethod: RawMethod): Res[MethodMapping] = {
       def resultEncoding: Res[RpcEncoding] =
@@ -661,9 +659,11 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       val caseDefs = raw.rawMethods.iterator.map(rm => (rm, new mutable.LinkedHashMap[String, CaseDef])).toMap
       methodMappings.foreach { mapping =>
         val prevCaseDef = caseDefs(mapping.rawMethod).put(mapping.realMethod.rpcName, mapping.rawCaseImpl)
-        ensure(prevCaseDef.isEmpty,
-          s"Multiple RPCs named ${mapping.realMethod.rpcName} map to raw method ${mapping.rawMethod.name}. " +
-            "If you want to overload RPCs, disambiguate them with @rpcName annotation")
+        if (prevCaseDef.nonEmpty) {
+          mapping.realMethod.reportProblem(
+            s"multiple RPCs named ${mapping.realMethod.rpcName} map to raw method ${mapping.rawMethod.name}. " +
+              "If you want to overload RPCs, disambiguate them with @rpcName annotation")
+        }
       }
 
       val rawMethodImpls = raw.rawMethods.map(m => m.rawImpl(caseDefs(m).values.toList))
@@ -688,7 +688,6 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val raw = RawRpcTrait(weakTypeOf[R].dealias)
     val real = RealRpcTrait(weakTypeOf[T].dealias)
     val mapping = RpcMapping(real, raw, forAsRaw = false, forAsReal = true)
-    mapping.setupImplicits()
 
     // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
     val asRealDef = mapping.asRealImpl
@@ -705,7 +704,6 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val raw = RawRpcTrait(weakTypeOf[R].dealias)
     val real = RealRpcTrait(weakTypeOf[T].dealias)
     val mapping = RpcMapping(real, raw, forAsRaw = true, forAsReal = false)
-    mapping.setupImplicits()
 
     // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
     val asRawDef = mapping.asRawImpl
@@ -722,7 +720,6 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val raw = RawRpcTrait(weakTypeOf[R].dealias)
     val real = RealRpcTrait(weakTypeOf[T].dealias)
     val mapping = RpcMapping(real, raw, forAsRaw = true, forAsReal = true)
-    mapping.setupImplicits()
 
     // these two must be evaluated before `cachedImplicitDeclarations`, don't inline them into the quasiquote
     val asRealDef = mapping.asRealImpl
