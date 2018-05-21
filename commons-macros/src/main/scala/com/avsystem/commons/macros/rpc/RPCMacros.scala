@@ -28,7 +28,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   val RpcArityAT: Type = getType(tq"$RpcPackage.RpcArity")
   val SingleArityAT: Type = getType(tq"$RpcPackage.single")
   val OptionalArityAT: Type = getType(tq"$RpcPackage.optional")
-  val RepeatedArityAT: Type = getType(tq"$RpcPackage.repeated")
+  val MultiArityAT: Type = getType(tq"$RpcPackage.multi")
   val RpcEncodingAT: Type = getType(tq"$RpcPackage.RpcEncoding")
   val VerbatimAT: Type = getType(tq"$RpcPackage.verbatim")
   val AuxiliaryAT: Type = getType(tq"$RpcPackage.verbatim")
@@ -83,15 +83,15 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         }
         RpcArity.Optional(valueMember.typeSignatureIn(optionLikeType))
       }
-      else if (at <:< RepeatedArityAT) {
+      else if (at <:< MultiArityAT) {
         if (param.actualType <:< StringPFTpe)
-          NamedRepeated(param.actualType.baseType(PartialFunctionClass).typeArgs(1))
+          NamedMulti(param.actualType.baseType(PartialFunctionClass).typeArgs(1))
         else if (param.actualType <:< BIndexedSeqTpe)
-          IndexedRepeated(param.actualType.baseType(BIndexedSeqClass).typeArgs.head)
+          IndexedMulti(param.actualType.baseType(BIndexedSeqClass).typeArgs.head)
         else if (param.actualType <:< BIterableTpe)
-          IterableRepeated(param.actualType.baseType(BIterableClass).typeArgs.head)
+          IterableMulti(param.actualType.baseType(BIterableClass).typeArgs.head)
         else
-          param.reportProblem("@repeated raw parameter must be a PartialFunction of String (for param mapping) " +
+          param.reportProblem("@multi raw parameter must be a PartialFunction of String (for param mapping) " +
             "or Iterable (for param sequence)")
       }
       else param.reportProblem(s"unrecognized RPC arity annotation: $annot", annot.pos)
@@ -99,9 +99,9 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     case class Single(encodedArgType: Type) extends RpcArity(true)
     case class Optional(encodedArgType: Type) extends RpcArity(true)
-    case class IterableRepeated(encodedArgType: Type) extends RpcArity(false)
-    case class IndexedRepeated(encodedArgType: Type) extends RpcArity(false)
-    case class NamedRepeated(encodedArgType: Type) extends RpcArity(false)
+    case class IterableMulti(encodedArgType: Type) extends RpcArity(false)
+    case class IndexedMulti(encodedArgType: Type) extends RpcArity(false)
+    case class NamedMulti(encodedArgType: Type) extends RpcArity(false)
   }
 
   case class EncodedRealParam(realParam: RealParam, encoding: RpcEncoding) {
@@ -132,7 +132,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
             q"${rawParam.optionLike}.fold(${rawParam.safeName}, $defaultValueTree)(${erp.encoding.asReal}.asReal(_))")
         }
     }
-    abstract class ListedRepeated extends ParamMapping {
+    abstract class ListedMulti extends ParamMapping {
       protected def reals: List[EncodedRealParam]
       def rawValueTree: Tree = {
         val builderName = c.freshName(TermName("builder"))
@@ -144,7 +144,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
          """
       }
     }
-    case class IterableRepeated(rawParam: RawParam, reals: List[EncodedRealParam]) extends ListedRepeated {
+    case class IterableMulti(rawParam: RawParam, reals: List[EncodedRealParam]) extends ListedMulti {
       def realDecls(nameOfRealRpc: TermName): List[Tree] = {
         val itName = c.freshName(TermName("it"))
         val itDecl = q"val $itName = ${rawParam.safeName}.iterator"
@@ -153,14 +153,14 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           val defaultValueTree = rp.defaultValueTree(nameOfRealRpc)
           if (rp.symbol.asTerm.isByNameParam) {
             rp.reportProblem(
-              s"${rawParam.cannotMapClue}: by-name real parameters cannot be extracted from @repeated raw parameters")
+              s"${rawParam.cannotMapClue}: by-name real parameters cannot be extracted from @multi raw parameters")
           }
           erp.localValueDecl(
             q"if($itName.hasNext) ${erp.encoding.asReal}.asReal($itName.next()) else $defaultValueTree")
         }
       }
     }
-    case class IndexedRepeated(rawParam: RawParam, reals: List[EncodedRealParam]) extends ListedRepeated {
+    case class IndexedMulti(rawParam: RawParam, reals: List[EncodedRealParam]) extends ListedMulti {
       def realDecls(nameOfRealRpc: TermName): List[Tree] = {
         reals.zipWithIndex.map { case (erp, idx) =>
           val rp = erp.realParam
@@ -173,7 +173,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         }
       }
     }
-    case class NamedRepeated(rawParam: RawParam, reals: List[EncodedRealParam]) extends ParamMapping {
+    case class NamedMulti(rawParam: RawParam, reals: List[EncodedRealParam]) extends ParamMapping {
       def rawValueTree: Tree = {
         val builderName = c.freshName(TermName("builder"))
         q"""
@@ -351,11 +351,11 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     lazy val optionLike: TermName = infer(tq"$OptionLikeCls[$actualType]")
 
     lazy val canBuildFrom: TermName = arity match {
-      case _: RpcArity.NamedRepeated =>
+      case _: RpcArity.NamedMulti =>
         infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,${arity.encodedArgType}),$actualType]")
-      case _: RpcArity.IndexedRepeated | _: RpcArity.IterableRepeated =>
+      case _: RpcArity.IndexedMulti | _: RpcArity.IterableMulti =>
         infer(tq"$CanBuildFromCls[$NothingCls,${arity.encodedArgType},$actualType]")
-      case _ => abort("(bug) CanBuildFrom computed for non-repeated raw parameter")
+      case _ => abort("(bug) CanBuildFrom computed for non-multi raw parameter")
     }
 
     def extractMapping(realParams: LinkedList[RealParam]): Res[ParamMapping] = {
@@ -387,7 +387,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           } else extractOptional()
         } else None
 
-      def extractRepeated() = {
+      def extractMulti() = {
         def loop(): Res[List[EncodedRealParam]] =
           if (it.hasNext) {
             val realParam = it.next()
@@ -413,9 +413,9 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       arity match {
         case _: RpcArity.Single => extractSingle().map(ParamMapping.Single(this, _))
         case _: RpcArity.Optional => Ok(ParamMapping.Optional(this, extractOptional()))
-        case _: RpcArity.IterableRepeated => extractRepeated().map(ParamMapping.IterableRepeated(this, _))
-        case _: RpcArity.IndexedRepeated => extractRepeated().map(ParamMapping.IndexedRepeated(this, _))
-        case _: RpcArity.NamedRepeated => extractRepeated().map(ParamMapping.NamedRepeated(this, _))
+        case _: RpcArity.IterableMulti => extractMulti().map(ParamMapping.IterableMulti(this, _))
+        case _: RpcArity.IndexedMulti => extractMulti().map(ParamMapping.IndexedMulti(this, _))
+        case _: RpcArity.NamedMulti => extractMulti().map(ParamMapping.NamedMulti(this, _))
       }
     }
   }

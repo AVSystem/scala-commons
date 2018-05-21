@@ -27,19 +27,19 @@ class PUT extends RestMethod
 @paramTag[DummyParamTag, untagged]
 trait NewRawRpc {
   @verbatim def fire(name: String, @optional @auxiliary ajdi: Opt[Int],
-    @repeated args: Map[String, String]): Unit
+    @multi args: Map[String, String]): Unit
 
   def call(name: String,
-    @tagged[renamed] @repeated renamedArgs: => Map[String, String],
-    @repeated args: Map[String, String]): Future[String]
+    @tagged[renamed] @multi renamedArgs: => Map[String, String],
+    @multi args: Map[String, String]): Future[String]
 
   def get(name: String,
-    @repeated args: List[String]): NewRawRpc
+    @multi args: List[String]): NewRawRpc
 
   @tagged[POST]
   def post(name: String,
-    @tagged[header] @repeated @verbatim headers: Vector[String],
-    @repeated body: MLinkedHashMap[String, String]): String
+    @tagged[header] @multi @verbatim headers: Vector[String],
+    @multi body: MLinkedHashMap[String, String]): String
 }
 object NewRawRpc extends RawRpcCompanion[NewRawRpc] {
   override val implicits: this.type = this

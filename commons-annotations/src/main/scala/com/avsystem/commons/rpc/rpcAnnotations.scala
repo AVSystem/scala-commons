@@ -32,7 +32,7 @@ class rpcName(val name: String) extends RpcAnnotation
 trait RpcTag extends RpcAnnotation
 
 /**
-  * Base trait for RPC arity annotations, [[single]], [[optional]] and [[repeated]].
+  * Base trait for RPC arity annotations, [[single]], [[optional]] and [[multi]].
   * They are applied on raw parameters to tell the RPC macro engine how many real parameters the raw parameter
   * corresponds to. If no arity is specified, [[single]] is assumed by default.
   */
@@ -94,14 +94,14 @@ final class optional extends RpcArity
   * breaking backwards compatibility. You can also safely add new real parameters as long as you provide default
   * values for them.
   */
-final class repeated extends RpcArity
+final class multi extends RpcArity
 
 /**
   * Base trait for [[verbatim]] and [[encoded]]. These annotations can be applied either on a raw method or
   * raw parameter in order to specify how matching real method results or matching real parameter values are encoded
   * as raw values.
   * Currently there are two possible cases: [[verbatim]] (no encoding) and [[encoded]] (encoding using `AsRaw` and
-  * `AsReal` typeclasses). By default, method return values and [[repeated]] parameters are [[encoded]] while
+  * `AsReal` typeclasses). By default, method return values and [[multi]] parameters are [[encoded]] while
   * [[single]] and [[optional]] parameters are [[verbatim]].
   * See documentation of [[verbatim]] and [[encoded]] for more details.
   */
@@ -141,7 +141,7 @@ sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
   * }
   *
   * trait AsyncRawRpc {
-  *   def call(rpcName: String, @repeated args: Map[String,Json]): Future[Json]
+  *   def call(rpcName: String, @multi args: Map[String,Json]): Future[Json]
   * }
   * }}}
   *
@@ -151,7 +151,7 @@ sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
   *
   * {{{
   * trait AsyncRawRpc {
-  *   def call(rpcName: String, @repeated args: Map[String,String]): Future[String]
+  *   def call(rpcName: String, @multi args: Map[String,String]): Future[String]
   * }
   * object AsyncRawRpc extends RawRpcCompanion[AsyncRawRpc] {
   *   private def readJson[T: GenCodec](json: String): T =
@@ -172,7 +172,7 @@ final class encoded extends RpcEncoding
 
 /**
   * Turns off raw value encoding as specified by [[encoded]]. By default, [[single]] and [[optional]] raw parameters
-  * are already [[verbatim]], so using [[verbatim]] only makes sense on [[repeated]] raw parameters or
+  * are already [[verbatim]], so using [[verbatim]] only makes sense on [[multi]] raw parameters or
   * raw methods themselves, which means turning off encoding of method's result.
   *
   * When encoding is turned off, raw and real types must be exactly the same types. For example, the following raw RPC
@@ -180,7 +180,7 @@ final class encoded extends RpcEncoding
   *
   * {{{
   * trait VerbatimRawRpc {
-  *   @verbatim def call(rpcName: String, @repeated @verbatim args: Map[String,Int]): Double
+  *   @verbatim def call(rpcName: String, @multi @verbatim args: Map[String,Int]): Double
   * }
   * }}}
   */
@@ -197,8 +197,8 @@ final class verbatim extends RpcEncoding
   *
   * @methodTag[RestMethod,GET]
   * trait RestRawRpc {
-  *   @tagged[GET] def get(name: String, @repeated args: Map[String,Json]): Future[Json]
-  *   @tagged[POST] def post(name: String, @repeated args: Map[String,Json]): Future[Json]
+  *   @tagged[GET] def get(name: String, @multi args: Map[String,Json]): Future[Json]
+  *   @tagged[POST] def post(name: String, @multi args: Map[String,Json]): Future[Json]
   * }
   * }}}
   *
@@ -234,7 +234,7 @@ final class methodTag[BaseTag <: RpcTag, DefaultTag <: BaseTag] extends RawRpcAn
   * Parameter tagging lets you have more explicit control over which raw parameters can match which real
   * parameters. This way you can have some of the parameters annotated in order to treat them differently, e.g.
   * they may be [[verbatim]], encoded in a different way or collected to a different raw container (e.g.
-  * `Map[String,Raw]` vs `List[Raw]` - see [[repeated]] for more details).
+  * `Map[String,Raw]` vs `List[Raw]` - see [[multi]] for more details).
   *
   * Example:
   * {{{
@@ -246,9 +246,9 @@ final class methodTag[BaseTag <: RpcTag, DefaultTag <: BaseTag] extends RawRpcAn
   * @paramTag[RestParam,Body]
   * trait RestRawRpc {
   *   def get(name: String,
-  *     @repeated @verbatim @tagged[Path] pathParams: List[String],
-  *     @repeated @verbatim @tagged[Url] urlParams: Map[String,String],
-  *     @repeated @tagged[Body] bodyParams: Map[String,Json]
+  *     @multi @verbatim @tagged[Path] pathParams: List[String],
+  *     @multi @verbatim @tagged[Url] urlParams: Map[String,String],
+  *     @multi @tagged[Body] bodyParams: Map[String,Json]
   *   ): Future[Json]
   * }
   * }}}
