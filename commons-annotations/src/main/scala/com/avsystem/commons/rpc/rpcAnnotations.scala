@@ -226,7 +226,7 @@ final class verbatim extends RpcEncoding
   *
   * @tparam BaseTag    base type for tags that can be used on real RPC methods
   * @tparam DefaultTag the default tag type used for real methods not explicitly tagged - if you don't want to
-  *                    introduce any specific default tag, just use the same type as for [[BaseTag]]
+  *                    introduce any specific default tag, just use the same type as for `BaseTag`
   */
 final class methodTag[BaseTag <: RpcTag, DefaultTag <: BaseTag] extends RawRpcAnnotation
 
@@ -268,13 +268,13 @@ final class methodTag[BaseTag <: RpcTag, DefaultTag <: BaseTag] extends RawRpcAn
   *
   * @tparam BaseTag    base type for tags that can be used on real RPC parameters
   * @tparam DefaultTag the default tag type used for real parameters not explicitly tagged - if you don't want to
-  *                    introduce any specific default tag, just use the same type as for [[BaseTag]]
+  *                    introduce any specific default tag, just use the same type as for `BaseTag`
   */
 final class paramTag[BaseTag <: RpcTag, DefaultTag <: BaseTag] extends RawMethodAnnotation
 
 /**
   * Annotation applied on raw methods or raw parameters that limits matching real methods or real parameters to
-  * only these annotated as [[Tag]]. See [[methodTag]] and [[paramTag]] for more explanation. NOTE: [[Tag]] may
+  * only these annotated as `Tag`. See [[methodTag]] and [[paramTag]] for more explanation. NOTE: `Tag` may
   * also be some common supertype of multiple tags which are accepted by this raw method or param.
   *
   * @tparam Tag annotation type required to be present on real method or parameter
