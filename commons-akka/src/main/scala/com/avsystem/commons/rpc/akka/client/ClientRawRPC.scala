@@ -14,10 +14,10 @@ import monix.reactive.{Observable, OverflowStrategy}
   */
 private[akka] final class ClientRawRPC(config: AkkaRPCClientConfig, getterChain: Seq[RawInvocation] = Nil)(implicit system: ActorSystem) extends AkkaRPCFramework.RawRPC {
 
-  override def fire(rpcName: String, args: List[RawValue]): Unit = {
+  override def fire(rpcName: String)(args: List[RawValue]): Unit = {
     system.actorSelection(config.serverPath) ! ProcedureInvocationMessage(rpcName, args, getterChain)
   }
-  override def call(rpcName: String, args: List[RawValue]): Future[RawValue] = {
+  override def call(rpcName: String)(args: List[RawValue]): Future[RawValue] = {
     implicit val timeout: Timeout = Timeout(config.functionCallTimeout)
     val future = system.actorSelection(config.serverPath) ? FunctionInvocationMessage(rpcName, args, getterChain)
 
@@ -29,10 +29,10 @@ private[akka] final class ClientRawRPC(config: AkkaRPCClientConfig, getterChain:
       case value => Future.failed(new IllegalStateException(s"Illegal message type. Should be InvocationResult, but received value was: $value"))
     }
   }
-  override def get(rpcName: String, args: List[RawValue]): RawRPC =
+  override def get(rpcName: String)(args: List[RawValue]): RawRPC =
     new ClientRawRPC(config, getterChain :+ RawInvocation(rpcName, args))
 
-  override def observe(rpcName: String, args: List[RawValue]): Observable[RawValue] = {
+  override def observe(rpcName: String)(args: List[RawValue]): Observable[RawValue] = {
     Observable.create(OverflowStrategy.Unbounded) { s =>
       val actor = system.actorOf(MonixClientActor.props(s, config))
       actor ! ObservableInvocationMessage(rpcName, args, getterChain)

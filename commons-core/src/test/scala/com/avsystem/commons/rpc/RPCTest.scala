@@ -25,15 +25,15 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
         name
       }))
 
-      rawRpc.fire("handleMore", Nil)
-      rawRpc.fire("doStuff", List(42, "omgsrsly", Some(true)))
-      assert("doStuffResult" === get(rawRpc.call("doStuffBoolean", List(true))))
-      rawRpc.fire("doStuffInt", List(5))
-      rawRpc.fire("handleMore", Nil)
-      rawRpc.fire("handle", Nil)
-      rawRpc.fire("srslyDude", Nil)
-      rawRpc.get("innerRpc", List("innerName")).fire("proc", Nil)
-      assert("innerRpc.funcResult" === get(rawRpc.get("innerRpc", List("innerName")).call("func", List(42))))
+      rawRpc.fire("handleMore")(Nil)
+      rawRpc.fire("doStuff")(List(42, "omgsrsly", Some(true)))
+      assert("doStuffResult" === get(rawRpc.call("doStuffBoolean")(List(true))))
+      rawRpc.fire("doStuffInt")(List(5))
+      rawRpc.fire("handleMore")(Nil)
+      rawRpc.fire("handle")(Nil)
+      rawRpc.fire("srslyDude")(Nil)
+      rawRpc.get("innerRpc")(List("innerName")).fire("proc")(Nil)
+      assert("innerRpc.funcResult" === get(rawRpc.get("innerRpc")(List("innerName")).call("func")(List(42))))
 
       assert(invocations.toList === List(
         ("handleMore", Nil),
@@ -52,22 +52,22 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
 
     "fail on bad input" in {
       val rawRpc = AsRawRPC[TestRPC].asRaw(TestRPC.rpcImpl((_, _, _) => ()))
-      intercept[Exception](rawRpc.fire("whatever", Nil))
+      intercept[Exception](rawRpc.fire("whatever")(Nil))
     }
 
     "real rpc should properly serialize calls to raw rpc" in {
       val invocations = new ArrayBuffer[(String, List[Any])]
 
       object rawRpc extends RawRPC with RunNowFutureCallbacks {
-        def fire(rpcName: String, args: List[Any]): Unit =
+        def fire(rpcName: String)(args: List[Any]): Unit =
           invocations += ((rpcName, args))
 
-        def call(rpcName: String, args: List[Any]): Future[Any] = {
+        def call(rpcName: String)(args: List[Any]): Future[Any] = {
           invocations += ((rpcName, args))
           Future.successful(rpcName + "Result")
         }
 
-        def get(rpcName: String, args: List[Any]): RawRPC = {
+        def get(rpcName: String)(args: List[Any]): RawRPC = {
           invocations += ((rpcName, args))
           this
         }

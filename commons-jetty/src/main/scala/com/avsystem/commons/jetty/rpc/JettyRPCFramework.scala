@@ -44,13 +44,13 @@ object JettyRPCFramework extends StandardRPCFramework {
 
   class RPCClient(httpClient: HttpClient, uri: String)(implicit ec: ExecutionContext) {
     private class RawRPCImpl(chain: List[Invocation]) extends RawRPC {
-      override def fire(rpcName: String, args: List[RawValue]): Unit =
+      override def fire(rpcName: String)(args: List[RawValue]): Unit =
         put(Call(chain, Invocation(rpcName, args)))
 
-      override def call(rpcName: String, args: List[RawValue]): Future[RawValue] =
+      override def call(rpcName: String)(args: List[RawValue]): Future[RawValue] =
         post(Call(chain, Invocation(rpcName, args)))
 
-      override def get(rpcName: String, args: List[RawValue]): RawRPC =
+      override def get(rpcName: String)(args: List[RawValue]): RawRPC =
         new RawRPCImpl(chain :+ Invocation(rpcName, args))
     }
 
@@ -121,11 +121,11 @@ object JettyRPCFramework extends StandardRPCFramework {
       }
     }
 
-    type InvokeFunction[T] = RawRPC => (String, List[RawValue]) => T
+    type InvokeFunction[T] = RawRPC => String => List[RawValue] => T
 
     def invoke[T](call: Call)(f: InvokeFunction[T]): T = {
-      val rpc = call.chain.foldLeft(rootRpc)((rpc, inv) => rpc.get(inv.rpcName, inv.args))
-      f(rpc)(call.leaf.rpcName, call.leaf.args)
+      val rpc = call.chain.foldLeft(rootRpc)((rpc, inv) => rpc.get(inv.rpcName)(inv.args))
+      f(rpc)(call.leaf.rpcName)(call.leaf.args)
     }
 
     def handlePost(call: Call): Future[RawValue] =

@@ -31,7 +31,7 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   val MultiArityAT: Type = getType(tq"$RpcPackage.multi")
   val RpcEncodingAT: Type = getType(tq"$RpcPackage.RpcEncoding")
   val VerbatimAT: Type = getType(tq"$RpcPackage.verbatim")
-  val AuxiliaryAT: Type = getType(tq"$RpcPackage.verbatim")
+  val AuxiliaryAT: Type = getType(tq"$RpcPackage.auxiliary")
   val MethodTagAT: Type = getType(tq"$RpcPackage.methodTag[_,_]")
   val ParamTagAT: Type = getType(tq"$RpcPackage.paramTag[_,_]")
   val TaggedAT: Type = getType(tq"$RpcPackage.tagged[_]")
@@ -454,18 +454,17 @@ class RPCMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     def matchFailure(msg: String): Failure =
       Failure(s"raw method $nameStr did not match because: $msg")
 
-    val (rpcNameParam, rawParams, paramLists) =
+    val (rpcNameParam, rawParams) =
       sig.paramLists match {
-        case (nameParam :: tailFirst) :: rest if nameParam.typeSignature =:= typeOf[String] =>
-          val np = RpcNameParam(this, nameParam)
-          val tailFirstRaw = tailFirst.map(RawParam(this, _))
-          val restRaw = rest.map(_.map(RawParam(this, _)))
-          val rp: List[RawParam] = tailFirstRaw ::: restRaw.flatten
-          val pl: List[List[RpcParam]] = (np :: tailFirstRaw) :: restRaw
-          (np, rp, pl)
+        case List(nameParam) :: rest :: Nil if nameParam.typeSignature =:= typeOf[String] =>
+          (RpcNameParam(this, nameParam), rest.map(RawParam(this, _)))
         case _ =>
-          reportProblem("raw RPC method must take at least RPC name (a String) as its first parameter")
+          reportProblem("raw RPC method must take exactly two parameter lists, " +
+            "the first one containing only RPC name param (String)")
       }
+
+    val paramLists: List[List[RpcParam]] =
+      List(rpcNameParam) :: rawParams :: Nil
 
     def rawImpl(caseDefs: List[CaseDef]): Tree =
       q"""

@@ -9,7 +9,7 @@ trait ProcedureRPCFramework extends RPCFramework {
   type RawRPC <: ProcedureRawRPC
 
   trait ProcedureRawRPC { this: RawRPC =>
-    @verbatim def fire(rpcName: String, @multi args: List[RawValue]): Unit
+    @verbatim def fire(rpcName: String)(@multi args: List[RawValue]): Unit
   }
 }
 
@@ -21,7 +21,7 @@ trait FunctionRPCFramework extends RPCFramework {
   type RawRPC <: FunctionRawRPC
 
   trait FunctionRawRPC { this: RawRPC =>
-    def call(rpcName: String, @multi args: List[RawValue]): Future[RawValue]
+    def call(rpcName: String)(@multi args: List[RawValue]): Future[RawValue]
   }
 
   implicit def readerBasedFutureAsReal[T: Reader]: AsReal[Future[RawValue], Future[T]] =
@@ -39,10 +39,10 @@ trait GetterRPCFramework extends RPCFramework {
   case class RawInvocation(rpcName: String, args: List[RawValue])
 
   trait GetterRawRPC { this: RawRPC =>
-    def get(rpcName: String, @multi args: List[RawValue]): RawRPC
+    def get(rpcName: String)(@multi args: List[RawValue]): RawRPC
 
     def resolveGetterChain(getters: List[RawInvocation]): RawRPC =
-      getters.foldRight(this)((inv, rpc) => rpc.get(inv.rpcName, inv.args))
+      getters.foldRight(this)((inv, rpc) => rpc.get(inv.rpcName)(inv.args))
   }
 }
 
