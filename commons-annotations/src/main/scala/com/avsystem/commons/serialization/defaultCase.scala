@@ -15,6 +15,6 @@ import scala.annotation.StaticAnnotation
   * @param transient if `true`, the codec will also not emit the `_case` field during writing of default
   *                  case class/object (analogous to [[transientDefault]]).
   */
-class defaultCase(transient: Boolean) extends StaticAnnotation {
+class defaultCase(val transient: Boolean) extends StaticAnnotation {
   def this() = this(transient = false)
 }

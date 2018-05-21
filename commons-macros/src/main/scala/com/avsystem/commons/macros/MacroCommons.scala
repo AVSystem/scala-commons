@@ -248,9 +248,14 @@ trait MacroCommons { bundle =>
     case ms: MethodSymbol => (ms :: ms.overrides).iterator
     case ps: TermSymbol if ps.isParameter && ps.owner.isMethod =>
       val oms = ps.owner.asMethod
-      val paramListIdx = oms.paramLists.indexWhere(_.exists(_.name == ps.name))
-      val paramIdx = oms.paramLists(paramListIdx).indexWhere(_.name == ps.name)
-      withSuperSymbols(oms).map(_.asMethod.paramLists(paramListIdx)(paramIdx))
+      Option(oms).filter(_.isPrimaryConstructor).map(_.owner.asClass).filter(_.isCaseClass)
+        .flatMap(cc => alternatives(cc.toType.member(ps.name)).find(_.asTerm.isCaseAccessor))
+        .map(ca => Iterator(s) ++ withSuperSymbols(ca))
+        .getOrElse {
+          val paramListIdx = oms.paramLists.indexWhere(_.exists(_.name == ps.name))
+          val paramIdx = oms.paramLists(paramListIdx).indexWhere(_.name == ps.name)
+          withSuperSymbols(oms).map(_.asMethod.paramLists(paramListIdx)(paramIdx))
+        }
     case _ => Iterator(s)
   }
 
