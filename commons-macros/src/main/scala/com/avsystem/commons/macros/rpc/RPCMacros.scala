@@ -33,8 +33,6 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val TaggedAT: Type = getType(tq"$RpcPackage.tagged[_]")
   val RpcTagAT: Type = getType(tq"$RpcPackage.RpcTag")
   val RpcImplicitsSym: Symbol = getType(tq"$RpcPackage.RpcImplicitsProvider").member(TermName("implicits"))
-  val SelfAT: Type = getType(tq"$RpcPackage.self")
-  val InferAT: Type = getType(tq"$RpcPackage.infer")
 
   val NothingTpe: Type = typeOf[Nothing]
   val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
