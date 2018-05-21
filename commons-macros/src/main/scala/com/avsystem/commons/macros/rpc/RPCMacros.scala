@@ -32,7 +32,7 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val ParamTagAT: Type = getType(tq"$RpcPackage.paramTag[_,_]")
   val TaggedAT: Type = getType(tq"$RpcPackage.tagged[_]")
   val RpcTagAT: Type = getType(tq"$RpcPackage.RpcTag")
-  val RpcImplicitsProviderTpe: Type = getType(tq"$RpcPackage.RpcImplicitsProvider")
+  val RpcImplicitsSym: Symbol = getType(tq"$RpcPackage.RpcImplicitsProvider").member(TermName("implicits"))
   val SelfAT: Type = getType(tq"$RpcPackage.self")
   val InferAT: Type = getType(tq"$RpcPackage.infer")
 
@@ -48,7 +48,7 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   def registerCompanionImplicits(rawTpe: Type): Unit =
     companionOf(rawTpe).filter { companion =>
       val typed = c.typecheck(q"$companion.implicits", silent = true)
-      typed != EmptyTree && !(typed.tpe.widen =:= typeOf[Any])
+      typed != EmptyTree && typed.symbol.overrides.contains(RpcImplicitsSym)
     }.foreach { companion =>
       registerImplicitImport(q"import $companion.implicits._")
     }
