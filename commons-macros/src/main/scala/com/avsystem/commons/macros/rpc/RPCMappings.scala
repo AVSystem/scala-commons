@@ -226,13 +226,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
 
       def collectParamMappings(rawParams: List[RawParam], realParams: List[RealParam]): Res[List[ParamMapping]] = {
         val parser = new ParamsParser(realParams)
-        val initialAcc: Res[List[ParamMapping]] = Ok(Nil)
-        rawParams.foldLeft(initialAcc) { (accOpt, rawParam) =>
-          for {
-            acc <- accOpt
-            mapping <- extractMapping(rawParam, parser)
-          } yield mapping :: acc
-        }.flatMap { result =>
+        Res.traverse(rawParams)(extractMapping(_, parser)).flatMap { result =>
           if (parser.remaining.isEmpty) Ok(result.reverse)
           else {
             val unmatched = parser.remaining.iterator.map(_.nameStr).mkString(",")

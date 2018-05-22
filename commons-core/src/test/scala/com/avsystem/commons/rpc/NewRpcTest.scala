@@ -17,11 +17,14 @@ trait NamedVarargs extends SomeBase {
   def postit(arg: String, bar: String, int: Int, foo: String): String
 }
 object NamedVarargs {
-  implicit val asRealRaw: AsRealRaw[NewRawRpc, NamedVarargs] = NewRawRpc.materializeAsRealRaw[NamedVarargs]
+  implicit val asRealRaw: NewRawRpc.AsRealRawRpc[NamedVarargs] = NewRawRpc.materializeAsRealRaw[NamedVarargs]
+  implicit val metadata: NewRpcMetadata[NamedVarargs] = NewRpcMetadata.materializeForRpc[NamedVarargs].showAst
 }
 
 object NewRpcTest {
-  implicit val innerRpcAsRealRaw: AsRealRaw[NewRawRpc, InnerRPC] = NewRawRpc.materializeAsRealRaw[InnerRPC]
+  implicit val innerRpcAsRealRaw: NewRawRpc.AsRealRawRpc[InnerRPC] = NewRawRpc.materializeAsRealRaw[InnerRPC]
+  implicit val innerRpcMetadata: NewRpcMetadata[InnerRPC] = NewRpcMetadata.materializeForRpc[InnerRPC]
   @silent
-  implicit val testRpcAsRealRaw: AsRealRaw[NewRawRpc, TestRPC] = NewRawRpc.materializeAsRealRaw[TestRPC]
+  implicit val testRpcAsRealRaw: NewRawRpc.AsRealRawRpc[TestRPC] = NewRawRpc.materializeAsRealRaw[TestRPC]
+  implicit val testRpcMetadata: NewRpcMetadata[TestRPC] = NewRpcMetadata.materializeForRpc[TestRPC]
 }

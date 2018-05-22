@@ -47,3 +47,11 @@ object NewRawRpc extends RawRpcCompanion[NewRawRpc] {
   implicit def asRealRawFromGenCodec[T: GenCodec]: AsRealRaw[String, T] = ???
   implicit def futureAsRealRawFromGenCodec[T: GenCodec]: AsRealRaw[Future[String], Future[T]] = ???
 }
+
+case class NewRpcMetadata[T]()
+object NewRpcMetadata extends RpcMetadataCompanion[NewRpcMetadata]
+
+case class FireMetadata()
+case class CallMetadata()
+case class GetMetadata()
+case class PostMetadata()

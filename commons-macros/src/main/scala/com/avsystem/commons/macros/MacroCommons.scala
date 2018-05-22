@@ -259,9 +259,9 @@ trait MacroCommons { bundle =>
     case _ => Iterator(s)
   }
 
-  def primaryConstructorOf(tpe: Type): Symbol =
+  def primaryConstructorOf(tpe: Type, problemClue: => String = ""): Symbol =
     alternatives(tpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor)
-      .getOrElse(abort(s"No primary constructor found for $tpe"))
+      .getOrElse(abort(s"${problemClue}no primary constructor found for $tpe"))
 
   def abort(msg: String): Nothing =
     c.abort(c.enclosingPosition, msg)
