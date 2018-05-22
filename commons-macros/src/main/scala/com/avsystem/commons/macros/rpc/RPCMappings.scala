@@ -1,9 +1,6 @@
 package com.avsystem.commons
 package macros.rpc
 
-import java.util.LinkedList
-
-import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
@@ -15,6 +12,10 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
     def safeName: TermName = realParam.safeName
     def rawValueTree: Tree = q"${encoding.asRaw}.asRaw(${realParam.safeName})"
     def localValueDecl(body: Tree): Tree = realParam.localValueDecl(body)
+  }
+  object EncodedRealParam {
+    def create(rawParam: RawParam, realParam: RealParam): Res[EncodedRealParam] =
+      RpcEncoding.forParam(rawParam, realParam).map(EncodedRealParam(realParam, _))
   }
 
   sealed trait ParamMapping {
@@ -148,15 +149,12 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
         }
        """
 
-    /*_*/
-    // IntelliJ doesn't understand that cq returns CaseDef
     def rawCaseImpl: CaseDef =
       cq"""
         ${realMethod.rpcName} =>
           ..${paramMappings.filterNot(_.rawParam.auxiliary).flatMap(_.realDecls)}
           ${resultEncoding.asRaw}.asRaw(${realMethod.owner.safeName}.${realMethod.name}(...${realMethod.argLists}))
-        """
-    /*_*/
+      """.asInstanceOf[CaseDef] // IntelliJ doesn't understand that cq returns CaseDef
   }
 
   case class RpcMapping(real: RealRpcTrait, raw: RawRpcTrait, forAsReal: Boolean, forAsRaw: Boolean) {
@@ -170,54 +168,34 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
     }
     registerCompanionImplicits(raw.tpe)
 
-    private def extractMapping(rawParam: RawParam, realParams: LinkedList[RealParam]): Res[ParamMapping] = {
-      val it = realParams.listIterator()
-      def maybeConsume(): Unit =
-        if (!rawParam.auxiliary) {
-          it.remove()
-        }
+    private def extractMapping(rawParam: RawParam, parser: ParamsParser[RealParam]): Res[ParamMapping] = {
+      def extractSingle(): Res[EncodedRealParam] = parser.extractSingle(
+        rawParam.matchesTag,
+        EncodedRealParam.create(rawParam, _),
+        rawParam.owner.matchFailure(s"raw parameter ${rawParam.nameStr} was not matched by real parameter"),
+        !rawParam.auxiliary
+      )
 
-      def extractSingle(): Res[EncodedRealParam] =
-        if (it.hasNext) {
-          val realParam = it.next()
-          if (rawParam.matchesTag(realParam)) {
-            maybeConsume()
-            RpcEncoding.forParam(rawParam, realParam).map(e => EncodedRealParam(realParam, e))
-          } else extractSingle()
-        } else {
-          rawParam.owner.matchFailure(s"raw parameter ${rawParam.nameStr} was not matched by real parameter")
-        }
+      def extractOptional(): Option[EncodedRealParam] = parser.extractOptional(
+        rawParam.matchesTag,
+        realParam => EncodedRealParam.create(rawParam, realParam).toOption,
+        !rawParam.auxiliary
+      )
 
-      def extractOptional(): Option[EncodedRealParam] =
-        if (it.hasNext) {
-          val realParam = it.next()
-          if (rawParam.matchesTag(realParam)) {
-            RpcEncoding.forParam(rawParam, realParam).toOption.map { encoding =>
-              maybeConsume()
-              EncodedRealParam(realParam, encoding)
-            }
-          } else extractOptional()
-        } else None
-
-      def extractMulti() = {
-        def loop(): Res[List[EncodedRealParam]] =
-          if (it.hasNext) {
-            val realParam = it.next()
-            if (rawParam.matchesTag(realParam)) {
-              maybeConsume()
-              for {
-                encoding <- RpcEncoding.forParam(rawParam, realParam)
-                rest <- loop()
-              } yield EncodedRealParam(realParam, encoding) :: rest
-            } else loop()
-          } else Ok(Nil)
-        val result = loop()
-        for {
-          rps <- result
-          (rpcName, first :: rest) <- rps.groupBy(_.realParam.rpcName) if rest.nonEmpty
-        } {
-          first.realParam.owner.reportProblem(
-            s"multiple parameters matched to raw parameter ${rawParam.nameStr} have the same @rpcName: $rpcName")
+      def extractMulti(named: Boolean): Res[List[EncodedRealParam]] = {
+        val result = parser.extractMulti(
+          rawParam.matchesTag,
+          EncodedRealParam.create(rawParam, _),
+          !rawParam.auxiliary
+        )
+        if (named) {
+          for {
+            rps <- result
+            (rpcName, first :: rest) <- rps.groupBy(_.realParam.rpcName) if rest.nonEmpty
+          } {
+            first.realParam.owner.reportProblem(
+              s"multiple parameters matched to raw parameter ${rawParam.nameStr} have the same @rpcName: $rpcName")
+          }
         }
         result
       }
@@ -225,9 +203,9 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
       rawParam.arity match {
         case _: RpcArity.Single => extractSingle().map(ParamMapping.Single(rawParam, _))
         case _: RpcArity.Optional => Ok(ParamMapping.Optional(rawParam, extractOptional()))
-        case _: RpcArity.IterableMulti => extractMulti().map(ParamMapping.IterableMulti(rawParam, _))
-        case _: RpcArity.IndexedMulti => extractMulti().map(ParamMapping.IndexedMulti(rawParam, _))
-        case _: RpcArity.NamedMulti => extractMulti().map(ParamMapping.NamedMulti(rawParam, _))
+        case _: RpcArity.IterableMulti => extractMulti(named = false).map(ParamMapping.IterableMulti(rawParam, _))
+        case _: RpcArity.IndexedMulti => extractMulti(named = false).map(ParamMapping.IndexedMulti(rawParam, _))
+        case _: RpcArity.NamedMulti => extractMulti(named = true).map(ParamMapping.NamedMulti(rawParam, _))
       }
     }
 
@@ -247,19 +225,17 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
         }
 
       def collectParamMappings(rawParams: List[RawParam], realParams: List[RealParam]): Res[List[ParamMapping]] = {
-        val realBuf = new LinkedList[RealParam]
-        realBuf.addAll(realParams.asJava)
-
+        val parser = new ParamsParser(realParams)
         val initialAcc: Res[List[ParamMapping]] = Ok(Nil)
         rawParams.foldLeft(initialAcc) { (accOpt, rawParam) =>
           for {
             acc <- accOpt
-            mapping <- extractMapping(rawParam, realBuf)
+            mapping <- extractMapping(rawParam, parser)
           } yield mapping :: acc
         }.flatMap { result =>
-          if (realBuf.isEmpty) Ok(result.reverse)
+          if (parser.remaining.isEmpty) Ok(result.reverse)
           else {
-            val unmatched = realBuf.iterator.asScala.map(_.nameStr).mkString(",")
+            val unmatched = parser.remaining.iterator.map(_.nameStr).mkString(",")
             rawMethod.matchFailure(s"no raw parameter(s) were found that would match real parameter(s) $unmatched")
           }
         }
