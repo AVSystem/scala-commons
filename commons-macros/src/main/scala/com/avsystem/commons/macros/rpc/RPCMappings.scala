@@ -245,12 +245,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
     lazy val methodMappings: List[MethodMapping] = {
       val failedReals = new ListBuffer[String]
       def addFailure(realMethod: RealMethod, message: String): Unit = {
-        if (realMethod.pos != NoPosition) {
-          c.error(realMethod.pos,
-            s"Macro expansion at ${posInfo(c.enclosingPosition)} failed: ${realMethod.problemStr}: $message")
-        } else {
-          error(s"${realMethod.problemStr}: $message")
-        }
+        errorAt(s"${realMethod.problemStr}: $message", realMethod.pos)
         failedReals += realMethod.nameStr
       }
 
@@ -288,7 +283,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
         val prevCaseDef = caseDefs(mapping.rawMethod).put(mapping.realMethod.rpcName, mapping.rawCaseImpl)
         if (prevCaseDef.nonEmpty) {
           mapping.realMethod.reportProblem(
-            s"multiple RPCs named ${mapping.realMethod.rpcName} map to raw method ${mapping.rawMethod.name}. " +
+            s"multiple RPCs named ${mapping.realMethod.rpcName} map to raw method ${mapping.rawMethod.nameStr}. " +
               "If you want to overload RPCs, disambiguate them with @rpcName annotation")
         }
       }

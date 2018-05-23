@@ -58,6 +58,16 @@ trait MacroCommons { bundle =>
     Iterator.iterate(enclosingSym)(_.owner).takeWhile(_ != NoSymbol).toList
   }
 
+  final val debugEnabled: Boolean = c.prefix.tree match {
+    case Select(Apply(_, List(_)), TermName("debugMacro")) => true
+    case _ => false
+  }
+
+  def debug(msg: => String): Unit =
+    if (debugEnabled) {
+      error(msg)
+    }
+
   case class Annot(tree: Tree)(val directSource: Symbol, val aggregate: Option[Annot]) {
     def aggregationChain: List[Annot] =
       aggregate.fold(List.empty[Annot])(a => a :: a.aggregationChain)
@@ -290,6 +300,14 @@ trait MacroCommons { bundle =>
     } else {
       abort(message)
     }
+
+  def errorAt(message: String, pos: Position): Unit = {
+    if (pos != NoPosition) {
+      c.error(pos, s"Macro expansion at ${posInfo(c.enclosingPosition)} failed: $message")
+    } else {
+      error(message)
+    }
+  }
 
   /**
     * Wrapper over Type that implements equals/hashCode consistent with type equivalence (=:=)

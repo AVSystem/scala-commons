@@ -15,21 +15,21 @@ class LazyLoggingMacros(val c: blackbox.Context) extends MacroCommons {
 
   val DelegationCls = tq"$CommonsPkg.misc.Delegation"
 
-  def warning(msg: Tree) =
+  def warningImpl(msg: Tree) =
     q"""
       if(${c.prefix}.rawLog.isWarningEnabled) {
         ${c.prefix}.rawLog.warning($msg)
       }
      """
 
-  def info(msg: Tree) =
+  def infoImpl(msg: Tree) =
     q"""
       if(${c.prefix}.rawLog.isInfoEnabled) {
         ${c.prefix}.rawLog.info($msg)
       }
      """
 
-  def debug(msg: Tree) =
+  def debugImpl(msg: Tree) =
     q"""
       if(${c.prefix}.rawLog.isDebugEnabled) {
         ${c.prefix}.rawLog.debug($msg)

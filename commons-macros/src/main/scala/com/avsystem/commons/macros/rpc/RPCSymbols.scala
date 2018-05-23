@@ -208,10 +208,10 @@ trait RPCSymbols { this: RPCMacroCommons =>
         .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
         .getOrElse(List(owner.baseParamTag, owner.defaultParamTag))
 
-    def matchTag(realMethod: RealMethod): Res[Unit] =
-      if (matchesTag(realMethod)) Ok(())
+    def matchTag(realRpcSymbol: RealRpcSymbol): Res[Unit] =
+      if (matchesTag(realRpcSymbol)) Ok(())
       else {
-        val tag = realMethod.tag(baseTag, defaultTag)
+        val tag = realRpcSymbol.tag(baseTag, defaultTag)
         matchFailure(s"it does not accept real methods tagged with $tag")
       }
 

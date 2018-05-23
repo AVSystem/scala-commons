@@ -4,7 +4,7 @@ package rpc
 import com.github.ghik.silencer.silent
 
 trait SomeBase {
-  @POST def postit(arg: String, @header("X-Bar") bar: String, int: Int, @header("X-Foo") foo: String): String
+  //  @POST def postit(arg: String, @header("X-Bar") bar: String, int: Int, @header("X-Foo") foo: String): String
 }
 
 trait NamedVarargs extends SomeBase {
@@ -14,11 +14,11 @@ trait NamedVarargs extends SomeBase {
   def overload(int: Int): Unit
   def overload: NamedVarargs
   def getit(stuff: String, otherStuff: List[Int]): NamedVarargs
-  def postit(arg: String, bar: String, int: Int, foo: String): String
+  //  def postit(arg: String, bar: String, int: Int, foo: String): String
 }
 object NamedVarargs {
   implicit val asRealRaw: NewRawRpc.AsRealRawRpc[NamedVarargs] = NewRawRpc.materializeAsRealRaw[NamedVarargs]
-  implicit val metadata: NewRpcMetadata[NamedVarargs] = NewRpcMetadata.materializeForRpc[NamedVarargs].showAst
+  implicit val metadata: NewRpcMetadata[NamedVarargs] = NewRpcMetadata.materializeForRpc[NamedVarargs]
 }
 
 object NewRpcTest {

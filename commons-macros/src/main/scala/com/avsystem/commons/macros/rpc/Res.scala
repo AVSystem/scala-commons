@@ -27,6 +27,10 @@ sealed trait Res[+A] {
     case Ok(value) => f(value)
     case _ =>
   }
+  def mapFailure(f: String => String): Res[A] = this match {
+    case Fail(error) => Fail(f(error))
+    case _ => this
+  }
 }
 case class Ok[+T](value: T) extends Res[T]
 case class Fail(message: String) extends Res[Nothing]
