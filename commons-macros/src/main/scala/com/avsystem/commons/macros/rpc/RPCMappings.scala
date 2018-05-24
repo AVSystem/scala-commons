@@ -110,7 +110,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
       if (rawParam.verbatim) {
         if (realParam.actualType =:= encArgType)
           Ok(Verbatim(encArgType))
-        else rawParam.owner.matchFailure(
+        else Fail(
           s"${realParam.problemStr}: ${rawParam.cannotMapClue}: expected real parameter exactly of type " +
             s"$encArgType, got ${realParam.actualType}")
       } else
@@ -135,6 +135,42 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
       def asRaw = q"$asRawName"
       def asReal = q"$asRealName"
     }
+  }
+
+  def collectMethodMappings[R <: RawRpcSymbol, M](rawSymbols: List[R], rawShortDesc: String, realMethods: List[RealMethod])
+    (createMapping: (R, RealMethod) => Res[M]): List[M] = {
+
+    val failedReals = new ListBuffer[String]
+    def addFailure(realMethod: RealMethod, message: String): Unit = {
+      errorAt(s"${realMethod.problemStr}: $message", realMethod.pos)
+      failedReals += realMethod.nameStr
+    }
+
+    val result = realMethods.flatMap { realMethod =>
+      val methodMappings = rawSymbols.map { rawSymbol =>
+        val res = for {
+          _ <- rawSymbol.matchTag(realMethod)
+          methodMapping <- createMapping(rawSymbol, realMethod)
+        } yield (rawSymbol, methodMapping)
+        res.mapFailure(msg => s"${rawSymbol.shortDescription} ${rawSymbol.nameStr} did not match: $msg")
+      }
+      methodMappings.collect { case Ok(m) => m } match {
+        case List((_, m)) => Some(m)
+        case Nil =>
+          val unmatchedReport = methodMappings.iterator.collect({ case Fail(error) => s" * $error" }).mkString("\n")
+          addFailure(realMethod, s"it has no matching $rawShortDesc:\n$unmatchedReport")
+          None
+        case multiple =>
+          addFailure(realMethod, s"it has multiple matching $rawShortDesc: ${multiple.map(_._1.nameStr).mkString(",")}")
+          None
+      }
+    }
+
+    if (failedReals.nonEmpty) {
+      abort(s"Following real methods could not be mapped to $rawShortDesc: ${failedReals.mkString(",")}")
+    }
+
+    result
   }
 
   case class MethodMapping(realMethod: RealMethod, rawMethod: RawMethod,
@@ -172,7 +208,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
       def extractSingle(): Res[EncodedRealParam] = parser.extractSingle(
         rawParam.matchesTag,
         EncodedRealParam.create(rawParam, _),
-        rawParam.owner.matchFailure(s"raw parameter ${rawParam.nameStr} was not matched by real parameter"),
+        Fail(s"raw parameter ${rawParam.nameStr} was not matched by real parameter"),
         !rawParam.auxiliary
       )
 
@@ -209,19 +245,20 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
       }
     }
 
-    private def mappingRes(realMethod: RealMethod, rawMethod: RawMethod): Res[MethodMapping] = {
+    private def mappingRes(rawMethod: RawMethod, realMethod: RealMethod): Res[MethodMapping] = {
       def resultEncoding: Res[RpcEncoding] =
         if (rawMethod.verbatimResult) {
           if (rawMethod.resultType =:= realMethod.resultType)
             Ok(RpcEncoding.Verbatim(rawMethod.resultType))
-          else rawMethod.matchFailure(
-            s"real result type ${realMethod.resultType} does not match raw result type ${rawMethod.resultType}")
+          else
+            Fail(s"real result type ${realMethod.resultType} does not match raw result type ${rawMethod.resultType}")
         } else {
           val e = RpcEncoding.RealRawEncoding(realMethod.resultType, rawMethod.resultType, None)
           if ((!forAsRaw || e.asRawName != termNames.EMPTY) && (!forAsReal || e.asRealName != termNames.EMPTY))
             Ok(e)
-          else rawMethod.matchFailure(s"no encoding/decoding found between real result type " +
-            s"${realMethod.resultType} and raw result type ${rawMethod.resultType}")
+          else
+            Fail(s"no encoding/decoding found between real result type " +
+              s"${realMethod.resultType} and raw result type ${rawMethod.resultType}")
         }
 
       def collectParamMappings(rawParams: List[RawParam], realParams: List[RealParam]): Res[List[ParamMapping]] = {
@@ -230,45 +267,19 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
           if (parser.remaining.isEmpty) Ok(result.reverse)
           else {
             val unmatched = parser.remaining.iterator.map(_.nameStr).mkString(",")
-            rawMethod.matchFailure(s"no raw parameter(s) were found that would match real parameter(s) $unmatched")
+            Fail(s"no raw parameter(s) were found that would match real parameter(s) $unmatched")
           }
         }
       }
 
       for {
-        _ <- rawMethod.matchTag(realMethod)
         resultConv <- resultEncoding
         paramMappings <- collectParamMappings(rawMethod.rawParams, realMethod.realParams)
       } yield MethodMapping(realMethod, rawMethod, paramMappings, resultConv)
     }
 
-    lazy val methodMappings: List[MethodMapping] = {
-      val failedReals = new ListBuffer[String]
-      def addFailure(realMethod: RealMethod, message: String): Unit = {
-        errorAt(s"${realMethod.problemStr}: $message", realMethod.pos)
-        failedReals += realMethod.nameStr
-      }
-
-      val result = real.realMethods.flatMap { realMethod =>
-        val methodMappings = raw.rawMethods.map(mappingRes(realMethod, _))
-        methodMappings.collect { case Ok(m) => m } match {
-          case List(m) => Some(m)
-          case Nil =>
-            val unmatchedReport = methodMappings.iterator.collect({ case Fail(error) => s" * $error" }).mkString("\n")
-            addFailure(realMethod, s"it has no matching raw methods:\n$unmatchedReport")
-            None
-          case multiple =>
-            addFailure(realMethod, s"it has multiple matching raw methods: ${multiple.map(_.rawMethod.nameStr).mkString(",")}")
-            None
-        }
-      }
-
-      if (failedReals.nonEmpty) {
-        abort(s"Following real methods could not be mapped to raw methods: ${failedReals.mkString(",")}")
-      }
-
-      result
-    }
+    lazy val methodMappings: List[MethodMapping] =
+      collectMethodMappings(raw.rawMethods, "raw methods", real.realMethods)(mappingRes)
 
     def asRealImpl: Tree =
       q"""

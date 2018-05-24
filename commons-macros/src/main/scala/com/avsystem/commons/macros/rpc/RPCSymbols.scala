@@ -44,7 +44,9 @@ trait RPCSymbols { this: RPCMacroCommons =>
   abstract class RpcSymbol {
     def symbol: Symbol
     def pos: Position = symbol.pos
-    def problemStr: String
+    def shortDescription: String
+    def description: String
+    def problemStr: String = s"problem with $description"
 
     def reportProblem(msg: String, detailPos: Position = NoPosition): Nothing =
       abortAt(s"$problemStr: $msg", if (detailPos != NoPosition) detailPos else pos)
@@ -68,27 +70,33 @@ trait RPCSymbols { this: RPCMacroCommons =>
     def baseTag: Type
     def defaultTag: Type
 
-    lazy val requiredTag: Type =
-      annot(TaggedAT).fold(baseTag)(_.tpe.baseType(TaggedAT.typeSymbol).typeArgs.head)
-
-    if (!(requiredTag <:< baseTag)) {
-      val msg =
-        if (baseTag =:= NothingTpe)
-          "cannot use @tagged, no tag annotation type specified with @methodTag/@paramTag"
-        else s"tag annotation type $requiredTag specified in @tagged annotation " +
-          s"must be a subtype of specified base tag $baseTag"
-      reportProblem(msg)
+    lazy val requiredTag: Type = {
+      val result = annot(TaggedAT).fold(baseTag)(_.tpe.baseType(TaggedAT.typeSymbol).typeArgs.head)
+      if (!(result <:< baseTag)) {
+        val msg =
+          if (baseTag =:= NothingTpe)
+            "cannot use @tagged, no tag annotation type specified with @methodTag/@paramTag"
+          else s"tag annotation type $requiredTag specified in @tagged annotation " +
+            s"must be a subtype of specified base tag $baseTag"
+        reportProblem(msg)
+      }
+      result
     }
 
     def matchesTag(realSymbol: RealRpcSymbol): Boolean =
       realSymbol.tag(baseTag, defaultTag) <:< requiredTag
+
+    def matchTag(realRpcSymbol: RealRpcSymbol): Res[Unit] =
+      if (matchesTag(realRpcSymbol)) Ok(())
+      else {
+        val tag = realRpcSymbol.tag(baseTag, defaultTag)
+        Fail(s"it does not accept ${realRpcSymbol.shortDescription}s tagged with $tag")
+      }
   }
 
   trait RealRpcSymbol extends RpcSymbol {
     def tag(baseTag: Type, defaultTag: Type): Type =
       annot(baseTag).fold(defaultTag)(_.tpe)
-
-    def typeForMetadata: Type
 
     lazy val rpcName: String =
       annot(RpcNameType).fold(nameStr)(_.findArg(RpcNameNameSym) match {
@@ -107,7 +115,6 @@ trait RPCSymbols { this: RPCMacroCommons =>
 
   abstract class RpcMethod extends RpcSymbol {
     def ownerType: Type
-    def problemStr = s"problem with method $nameStr of type $ownerType"
 
     if (!symbol.isMethod) {
       abortAt(s"problem with member $nameStr of type $ownerType: it must be a method (def)", pos)
@@ -145,14 +152,16 @@ trait RPCSymbols { this: RPCMacroCommons =>
   }
 
   case class RpcNameParam(owner: RawMethod, symbol: Symbol) extends RpcParam {
-    def problemStr = s"problem with RPC name parameter $nameStr of raw method ${owner.nameStr}"
+    def shortDescription = "RPC name parameter"
+    def description = s"$shortDescription $nameStr of ${owner.description}"
   }
 
   case class RawParam(owner: RawMethod, symbol: Symbol) extends RpcParam with RawRpcSymbol {
     def baseTag: Type = owner.baseParamTag
     def defaultTag: Type = owner.defaultParamTag
 
-    def problemStr = s"problem with raw parameter $nameStr of raw method ${owner.nameStr}"
+    def shortDescription = "raw parameter"
+    def description = s"$shortDescription $nameStr of ${owner.description}"
     def cannotMapClue = s"cannot map it to raw parameter $nameStr of ${owner.nameStr}"
 
     val arity: RpcArity =
@@ -180,9 +189,8 @@ trait RPCSymbols { this: RPCMacroCommons =>
   }
 
   case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexInList: Int) extends RpcParam with RealRpcSymbol {
-    def problemStr = s"problem with parameter $nameStr of method ${owner.nameStr}"
-
-    def typeForMetadata: Type = actualType
+    def shortDescription = "real parameter"
+    def description = s"$shortDescription $nameStr of ${owner.description}"
 
     def defaultValueTree: Tree =
       if (symbol.asTerm.isParamWithDefault) {
@@ -195,6 +203,9 @@ trait RPCSymbols { this: RPCMacroCommons =>
   }
 
   case class RawMethod(owner: RawRpcTrait, symbol: Symbol) extends RpcMethod with RawRpcSymbol {
+    def shortDescription = "raw method"
+    def description = s"$shortDescription $nameStr of ${owner.description}"
+
     def ownerType: Type = owner.tpe
     def baseTag: Type = owner.baseMethodTag
     def defaultTag: Type = owner.defaultMethodTag
@@ -207,16 +218,6 @@ trait RPCSymbols { this: RPCMacroCommons =>
       annot(ParamTagAT)
         .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
         .getOrElse(List(owner.baseParamTag, owner.defaultParamTag))
-
-    def matchTag(realRpcSymbol: RealRpcSymbol): Res[Unit] =
-      if (matchesTag(realRpcSymbol)) Ok(())
-      else {
-        val tag = realRpcSymbol.tag(baseTag, defaultTag)
-        matchFailure(s"it does not accept real methods tagged with $tag")
-      }
-
-    def matchFailure(msg: String): Fail =
-      Fail(s"raw method $nameStr did not match because: $msg")
 
     val (rpcNameParam, rawParams) =
       sig.paramLists match {
@@ -243,7 +244,8 @@ trait RPCSymbols { this: RPCMacroCommons =>
   case class RealMethod(owner: RealRpcTrait, symbol: Symbol) extends RpcMethod with RealRpcSymbol {
     def ownerType: Type = owner.tpe
 
-    def typeForMetadata: Type = resultType
+    def shortDescription = "real method"
+    def description = s"$shortDescription $nameStr of ${owner.description}"
 
     val paramLists: List[List[RealParam]] = {
       var idx = 0
@@ -262,10 +264,11 @@ trait RPCSymbols { this: RPCMacroCommons =>
   }
 
   case class RawRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with RawRpcSymbol {
+    def shortDescription = "raw RPC"
+    def description = s"$shortDescription $tpe"
+
     def baseTag: Type = typeOf[Nothing]
     def defaultTag: Type = typeOf[Nothing]
-
-    def problemStr: String = s"problem with raw RPC $tpe"
 
     val List(baseMethodTag, defaultMethodTag) =
       annot(MethodTagAT)
@@ -284,9 +287,8 @@ trait RPCSymbols { this: RPCMacroCommons =>
   case class RealRpcTrait(tpe: Type)
     extends RpcTrait(tpe.typeSymbol) with RealRpcSymbol {
 
-    def problemStr: String = s"problem with real RPC $tpe"
-
-    def typeForMetadata: Type = tpe
+    def shortDescription = "real RPC"
+    def description = s"$shortDescription $tpe"
 
     lazy val realMethods: List[RealMethod] =
       tpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RealMethod(this, _)).toList
