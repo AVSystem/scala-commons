@@ -6,39 +6,39 @@ trait RPCSymbols { this: RPCMacroCommons =>
   import c.universe._
 
   sealed abstract class RpcArity(val verbatimByDefault: Boolean) {
-    def encodedArgType: Type
+    def perRealParamType: Type
   }
   object RpcArity {
-    def fromAnnotation(annot: Tree, param: RawParam): RpcArity = {
+    def fromAnnotation(annot: Tree, param: RawParamLike): Res[RpcArity] = {
       val at = annot.tpe
-      if (at <:< SingleArityAT) RpcArity.Single(param.actualType)
+      if (at <:< SingleArityAT) Ok(RpcArity.Single(param.actualType))
       else if (at <:< OptionalArityAT) {
         val optionLikeType = typeOfCachedImplicit(param.optionLike)
         val valueMember = optionLikeType.member(TypeName("Value"))
-        if (valueMember.isAbstract) {
-          param.reportProblem("could not determine actual value of optional parameter type")
-        }
-        RpcArity.Optional(valueMember.typeSignatureIn(optionLikeType))
+        if (valueMember.isAbstract)
+          Fail("could not determine actual value of optional parameter type")
+        else
+          Ok(RpcArity.Optional(valueMember.typeSignatureIn(optionLikeType)))
       }
       else if (at <:< MultiArityAT) {
         if (param.actualType <:< StringPFTpe)
-          NamedMulti(param.actualType.baseType(PartialFunctionClass).typeArgs(1))
+          Ok(NamedMulti(param.actualType.baseType(PartialFunctionClass).typeArgs(1)))
         else if (param.actualType <:< BIndexedSeqTpe)
-          IndexedMulti(param.actualType.baseType(BIndexedSeqClass).typeArgs.head)
+          Ok(IndexedMulti(param.actualType.baseType(BIndexedSeqClass).typeArgs.head))
         else if (param.actualType <:< BIterableTpe)
-          IterableMulti(param.actualType.baseType(BIterableClass).typeArgs.head)
+          Ok(IterableMulti(param.actualType.baseType(BIterableClass).typeArgs.head))
         else
-          param.reportProblem("@multi raw parameter must be a PartialFunction of String (for param mapping) " +
-            "or Iterable (for param sequence)")
+          Fail(s"@multi ${param.shortDescription} must be a PartialFunction of String " +
+            s"(for param mapping) or Iterable (for param sequence)")
       }
-      else param.reportProblem(s"unrecognized RPC arity annotation: $annot", annot.pos)
+      else Fail(s"unrecognized RPC arity annotation: $annot")
     }
 
-    case class Single(encodedArgType: Type) extends RpcArity(true)
-    case class Optional(encodedArgType: Type) extends RpcArity(true)
-    case class IterableMulti(encodedArgType: Type) extends RpcArity(false)
-    case class IndexedMulti(encodedArgType: Type) extends RpcArity(false)
-    case class NamedMulti(encodedArgType: Type) extends RpcArity(false)
+    case class Single(perRealParamType: Type) extends RpcArity(true)
+    case class Optional(perRealParamType: Type) extends RpcArity(true)
+    case class IterableMulti(perRealParamType: Type) extends RpcArity(false)
+    case class IndexedMulti(perRealParamType: Type) extends RpcArity(false)
+    case class NamedMulti(perRealParamType: Type) extends RpcArity(false)
   }
 
   abstract class RpcSymbol {
@@ -50,6 +50,9 @@ trait RPCSymbols { this: RPCMacroCommons =>
 
     def reportProblem(msg: String, detailPos: Position = NoPosition): Nothing =
       abortAt(s"$problemStr: $msg", if (detailPos != NoPosition) detailPos else pos)
+
+    def infer(tpt: Tree): TermName =
+      inferCachedImplicit(getType(tpt), s"$problemStr: ", pos)
 
     val name: TermName = symbol.name.toTermName
     val safeName: TermName = c.freshName(symbol.name.toTermName)
@@ -156,17 +159,10 @@ trait RPCSymbols { this: RPCMacroCommons =>
     def description = s"$shortDescription $nameStr of ${owner.description}"
   }
 
-  case class RawParam(owner: RawMethod, symbol: Symbol) extends RpcParam with RawRpcSymbol {
-    def baseTag: Type = owner.baseParamTag
-    def defaultTag: Type = owner.defaultParamTag
-
-    def shortDescription = "raw parameter"
-    def description = s"$shortDescription $nameStr of ${owner.description}"
-    def cannotMapClue = s"cannot map it to raw parameter $nameStr of ${owner.nameStr}"
-
-    val arity: RpcArity =
-      annot(RpcArityAT).map(a => RpcArity.fromAnnotation(a.tree, this))
-        .getOrElse(RpcArity.Single(actualType))
+  trait RawParamLike extends RpcParam with RawRpcSymbol {
+    val arity: RpcArity = annot(RpcArityAT)
+      .map(a => RpcArity.fromAnnotation(a.tree, this).getOrElse(reportProblem(_)))
+      .getOrElse(RpcArity.Single(actualType))
 
     val verbatim: Boolean =
       annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
@@ -174,18 +170,26 @@ trait RPCSymbols { this: RPCMacroCommons =>
     val auxiliary: Boolean =
       annot(AuxiliaryAT).nonEmpty
 
-    private def infer(tpt: Tree): TermName =
-      inferCachedImplicit(getType(tpt), s"$problemStr: ", pos)
-
     lazy val optionLike: TermName = infer(tq"$OptionLikeCls[$actualType]")
 
     lazy val canBuildFrom: TermName = arity match {
       case _: RpcArity.NamedMulti =>
-        infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,${arity.encodedArgType}),$actualType]")
+        infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,${arity.perRealParamType}),$actualType]")
       case _: RpcArity.IndexedMulti | _: RpcArity.IterableMulti =>
-        infer(tq"$CanBuildFromCls[$NothingCls,${arity.encodedArgType},$actualType]")
-      case _ => abort("(bug) CanBuildFrom computed for non-multi raw parameter")
+        infer(tq"$CanBuildFromCls[$NothingCls,${arity.perRealParamType},$actualType]")
+      case _ => abort(s"(bug) CanBuildFrom computed for non-multi $shortDescription")
     }
+
+    def cannotMapClue: String
+  }
+
+  case class RawParam(owner: RawMethod, symbol: Symbol) extends RawParamLike {
+    def baseTag: Type = owner.baseParamTag
+    def defaultTag: Type = owner.defaultParamTag
+
+    def shortDescription = "raw parameter"
+    def description = s"$shortDescription $nameStr of ${owner.description}"
+    def cannotMapClue = s"cannot map it to $shortDescription $nameStr of ${owner.nameStr}"
   }
 
   case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexInList: Int) extends RpcParam with RealRpcSymbol {
@@ -198,8 +202,7 @@ trait RPCSymbols { this: RPCMacroCommons =>
         val prevListParamss = List(prevListParams).filter(_.nonEmpty)
         q"${owner.owner.safeName}.${TermName(s"${owner.encodedNameStr}$$default$$${index + 1}")}(...$prevListParamss)"
       }
-      else
-        q"$RpcPackage.RpcUtils.missingArg(${owner.rpcName}, $rpcName)"
+      else q"$RpcPackage.RpcUtils.missingArg(${owner.rpcName}, $rpcName)"
   }
 
   case class RawMethod(owner: RawRpcTrait, symbol: Symbol) extends RpcMethod with RawRpcSymbol {

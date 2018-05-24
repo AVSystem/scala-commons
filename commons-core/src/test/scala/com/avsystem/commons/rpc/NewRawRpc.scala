@@ -51,14 +51,14 @@ object NewRawRpc extends RawRpcCompanion[NewRawRpc] {
 @methodTag[RestMethod, RestMethod]
 @paramTag[DummyParamTag, untagged]
 class NewRpcMetadata[T: ClassTag](
-  @verbatim procedures: Map[String, FireMetadata],
-  functions: Map[String, CallMetadata[_]],
-  getters: Map[String, GetterMetadata[_]],
-  @tagged[POST] posters: Map[String, PostMetadata[_]],
+  @methods @verbatim procedures: Map[String, FireMetadata],
+  @methods functions: Map[String, CallMetadata[_]],
+  @methods getters: Map[String, GetterMetadata[_]],
+  @methods @tagged[POST] posters: Map[String, PostMetadata[_]],
 )
 object NewRpcMetadata extends RpcMetadataCompanion[NewRpcMetadata]
 
-class FireMetadata extends MethodMetadata[Unit]
-class CallMetadata[T: GenCodec] extends MethodMetadata[Future[T]]
-class GetterMetadata[T: NewRpcMetadata.Lazy] extends MethodMetadata[T]
-class PostMetadata[T: GenCodec] extends MethodMetadata[T]
+class FireMetadata extends TypedMetadata[Unit]
+class CallMetadata[T: GenCodec] extends TypedMetadata[Future[T]]
+class GetterMetadata[T: NewRpcMetadata.Lazy] extends TypedMetadata[T]
+class PostMetadata[T: GenCodec] extends TypedMetadata[T]

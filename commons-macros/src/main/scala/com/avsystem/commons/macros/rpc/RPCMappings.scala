@@ -106,7 +106,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
   }
   object RpcEncoding {
     def forParam(rawParam: RawParam, realParam: RealParam): Res[RpcEncoding] = {
-      val encArgType = rawParam.arity.encodedArgType
+      val encArgType = rawParam.arity.perRealParamType
       if (rawParam.verbatim) {
         if (realParam.actualType =:= encArgType)
           Ok(Verbatim(encArgType))

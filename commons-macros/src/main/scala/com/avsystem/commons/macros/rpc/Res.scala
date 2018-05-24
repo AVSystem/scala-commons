@@ -31,6 +31,10 @@ sealed trait Res[+A] {
     case Fail(error) => Fail(f(error))
     case _ => this
   }
+  def getOrElse[B >: A](forError: String => B): B = this match {
+    case Ok(a) => a
+    case Fail(error) => forError(error)
+  }
 }
 case class Ok[+T](value: T) extends Res[T]
 case class Fail(message: String) extends Res[Nothing]

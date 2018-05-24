@@ -8,5 +8,4 @@ import scala.annotation.StaticAnnotation
   */
 trait MetadataAnnotation extends StaticAnnotation
 
-trait MethodMetadata[T]
-trait ParamMetadata[T]
+trait TypedMetadata[T]
