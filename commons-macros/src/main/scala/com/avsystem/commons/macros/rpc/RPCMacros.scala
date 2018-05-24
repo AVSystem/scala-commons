@@ -130,7 +130,7 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
 
   sealed abstract class MetadataParam(val owner: MetadataConstructor, val symbol: Symbol) extends RpcParam {
     def shortDescription = "metadata parameter"
-    def description = s"$shortDescription $nameStr of ${owner.ownerType}"
+    def description = s"$shortDescription $nameStr of ${owner.description}"
   }
 
   abstract class DirectMetadataParam(owner: MetadataConstructor, symbol: Symbol) extends MetadataParam(owner, symbol) {
@@ -144,7 +144,7 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
 
     def tryMaterializeFor(rpcSym: RealRpcSymbol): Res[Tree] =
       tryInferCachedImplicit(actualType).map(n => Ok(q"$n"))
-        .getOrElse(Fail(s"could not find implicit $actualType"))
+        .getOrElse(Fail(s"could not find implicit $actualType for $description"))
   }
 
   class ClassParam(owner: MetadataConstructor, symbol: Symbol) extends DirectMetadataParam(owner, symbol) {
@@ -213,7 +213,7 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
       }
 
     def shortDescription = "metadata class"
-    def description = s"$shortDescription $ownerType${ownerParam.fold("")(op => s" of ${op.description}")}"
+    def description = s"$shortDescription $ownerType${ownerParam.fold("")(op => s" at ${op.description}")}"
 
     val paramLists: List[List[MetadataParam]] =
       symbol.typeSignatureIn(ownerType).paramLists
