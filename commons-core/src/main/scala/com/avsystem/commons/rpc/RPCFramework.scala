@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package rpc
 
-import scala.annotation.StaticAnnotation
 import scala.language.higherKinds
 
 trait RPCFramework {
@@ -19,14 +18,8 @@ trait RPCFramework {
   def read[T: Reader](raw: RawValue): T
   def write[T: Writer](value: T): RawValue
 
-  implicit def readerBasedAsReal[T: Reader]: AsReal[RawValue, T] =
-    new AsReal[RawValue, T] {
-      def asReal(raw: RawValue): T = read(raw)
-    }
-  implicit def writerBasedAsRaw[T: Writer]: AsRaw[RawValue, T] =
-    new AsRaw[RawValue, T] {
-      def asRaw(real: T): RawValue = write(real)
-    }
+  implicit def readerBasedAsReal[T: Reader]: AsReal[RawValue, T] = AsReal.create(read[T])
+  implicit def writerBasedAsRaw[T: Writer]: AsRaw[RawValue, T] = AsRaw.create(write[T])
 
   type ParamTypeMetadata[T]
   type ResultTypeMetadata[T]
@@ -65,15 +58,11 @@ trait RPCFramework {
 
   def materializeAsRealRaw[T]: AsRealRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealRawImpl[T]
 
-  /**
-    * Annotations that extend this trait will be retained for runtime in `RPCMetadata` typeclass instances
-    */
-  trait MetadataAnnotation extends StaticAnnotation
-
   trait Signature {
     @reifyRpcName def name: String
     @multi def paramMetadata: List[ParamMetadata[_]]
-    @reify @multi def annotations: List[MetadataAnnotation]
+    @reify
+    @multi def annotations: List[MetadataAnnotation]
   }
 
   case class ParamMetadata[T](

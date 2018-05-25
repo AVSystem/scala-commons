@@ -59,7 +59,7 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
     }
 }
 
-class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx)
+final class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx)
   with RPCSymbols with RPCMappings with RPCMetadatas {
 
   import c.universe._

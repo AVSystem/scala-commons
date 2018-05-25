@@ -7,7 +7,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.util.ByteString
 import com.avsystem.commons.rpc.akka.client.ClientRawRPC
 import com.avsystem.commons.rpc.akka.server.ServerActor
-import com.avsystem.commons.rpc.{FunctionRPCFramework, GetterRPCFramework, ProcedureRPCFramework, RpcMetadataCompanion, TypedMetadata, infer, multi, reify, reifyRpcName, verbatim}
+import com.avsystem.commons.rpc.{FunctionRPCFramework, GetterRPCFramework, MetadataAnnotation, ProcedureRPCFramework, RpcMetadataCompanion, TypedMetadata, infer, multi, reify, reifyRpcName, verbatim}
 import com.avsystem.commons.serialization.{GenCodec, StreamInput, StreamOutput}
 import monix.reactive.Observable
 
