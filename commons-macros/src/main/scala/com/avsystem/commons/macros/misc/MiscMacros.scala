@@ -6,6 +6,7 @@ import com.avsystem.commons.macros.AbstractMacroCommons
 import scala.reflect.macros.{TypecheckException, blackbox}
 
 class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
+
   import c.universe._
 
   // cannot use c.inferImplicitValue(silent = false) because the only error it reports is
@@ -67,5 +68,12 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
 
     q"new ${c.prefix}.ValName(${owner.asTerm.getter.name.decodedName.toString})"
+  }
+
+  def compilationError(error: Tree): Tree = error match {
+    case StringLiteral(errorStr) =>
+      abortAt(errorStr, error.pos)
+    case t =>
+      c.abort(t.pos, "Expected string literal here")
   }
 }

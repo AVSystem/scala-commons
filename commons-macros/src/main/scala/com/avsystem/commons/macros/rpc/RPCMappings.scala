@@ -148,7 +148,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
     }
     case class Optional(rawParam: RawParam, wrapped: Option[EncodedRealParam]) extends ParamMapping {
       def rawValueTree: Tree =
-        wrapped.fold[Tree](q"${rawParam.optionLike}.none")(erp => q"${rawParam.optionLike}.some(${erp.rawValueTree})")
+        rawParam.mkOptional(wrapped.map(_.rawValueTree))
       def realDecls: List[Tree] =
         wrapped.toList.map { erp =>
           val defaultValueTree = erp.realParam.defaultValueTree
@@ -158,15 +158,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
     }
     abstract class ListedMulti extends ParamMapping {
       protected def reals: List[EncodedRealParam]
-      def rawValueTree: Tree = {
-        val builderName = c.freshName(TermName("builder"))
-        q"""
-          val $builderName = ${rawParam.canBuildFrom}()
-          $builderName.sizeHint(${reals.size})
-          ..${reals.map(erp => q"$builderName += ${erp.rawValueTree}")}
-          $builderName.result()
-         """
-      }
+      def rawValueTree: Tree = rawParam.mkMulti(reals.map(_.rawValueTree))
     }
     case class IterableMulti(rawParam: RawParam, reals: List[EncodedRealParam]) extends ListedMulti {
       def realDecls: List[Tree] = {
@@ -196,15 +188,8 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
       }
     }
     case class NamedMulti(rawParam: RawParam, reals: List[EncodedRealParam]) extends ParamMapping {
-      def rawValueTree: Tree = {
-        val builderName = c.freshName(TermName("builder"))
-        q"""
-          val $builderName = ${rawParam.canBuildFrom}()
-          $builderName.sizeHint(${reals.size})
-          ..${reals.map(erp => q"$builderName += ((${erp.realParam.rpcName}, ${erp.rawValueTree}))")}
-          $builderName.result()
-         """
-      }
+      def rawValueTree: Tree =
+        rawParam.mkMulti(reals.map(erp => q"(${erp.realParam.rpcName}, ${erp.rawValueTree})"))
       def realDecls: List[Tree] =
         reals.map { erp =>
           erp.realParam.localValueDecl(
@@ -222,7 +207,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
   }
   object RpcEncoding {
     def forParam(rawParam: RawParam, realParam: RealParam): Res[RpcEncoding] = {
-      val encArgType = rawParam.arity.perRealParamType
+      val encArgType = rawParam.arity.collectedType
       if (rawParam.verbatim) {
         if (realParam.actualType =:= encArgType)
           Ok(Verbatim(encArgType))
@@ -291,12 +276,12 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
           parser.extractSingle(rawParam, createErp).map(ParamMapping.Single(rawParam, _))
         case _: RpcArity.Optional =>
           Ok(ParamMapping.Optional(rawParam, parser.extractOptional(rawParam, createErp)))
-        case _: RpcArity.IterableMulti =>
-          parser.extractMulti(rawParam, createErp, named = false).map(ParamMapping.IterableMulti(rawParam, _))
-        case _: RpcArity.IndexedMulti =>
-          parser.extractMulti(rawParam, createErp, named = false).map(ParamMapping.IndexedMulti(rawParam, _))
-        case _: RpcArity.NamedMulti =>
+        case RpcArity.Multi(_, true) =>
           parser.extractMulti(rawParam, createErp, named = true).map(ParamMapping.NamedMulti(rawParam, _))
+        case _: RpcArity.Multi if rawParam.actualType <:< BIndexedSeqTpe =>
+          parser.extractMulti(rawParam, createErp, named = false).map(ParamMapping.IndexedMulti(rawParam, _))
+        case _: RpcArity.Multi =>
+          parser.extractMulti(rawParam, createErp, named = false).map(ParamMapping.IterableMulti(rawParam, _))
       }
     }
 

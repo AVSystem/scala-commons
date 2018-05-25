@@ -69,8 +69,10 @@ case class CallMetadata[T: GenCodec](
   @multi args: Map[String, ParamMetadata[_]]
 ) extends TypedMetadata[Future[T]]
 
-case class GetterMetadata[T: NewRpcMetadata.Lazy](
+case class GetterMetadata[T](
   @multi args: List[ParamMetadata[_]]
+)(implicit
+  @checked resultMetadata: NewRpcMetadata.Lazy[T]
 ) extends TypedMetadata[T]
 
 case class PostMetadata[T: GenCodec](
@@ -78,4 +80,6 @@ case class PostMetadata[T: GenCodec](
   @multi body: MLinkedHashMap[String, ParamMetadata[_]]
 ) extends TypedMetadata[T]
 
-class ParamMetadata[T: GenCodec] extends TypedMetadata[T]
+case class ParamMetadata[T: GenCodec](
+  @reify @multi renames: List[renamed]
+) extends TypedMetadata[T]

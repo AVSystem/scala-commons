@@ -219,7 +219,7 @@ trait MacroCommons { bundle =>
       val name = c.freshName(TermName(""))
       implicitSearchCache(TypeKey(tpe)) = Some(name)
       implicitsToDeclare +=
-        q"private implicit val $name = $ImplicitsObj.infer[$tpe](${internal.setPos(StringLiteral(errorClue), errorPos)})"
+        q"private implicit val $name = $ImplicitsObj.infer[$tpe](${StringLiteral(errorClue, errorPos)})"
       inferredImplicitTypes(name) = tpe
       inferCachedImplicit(tpe, errorClue, errorPos)
     }
@@ -374,7 +374,8 @@ trait MacroCommons { bundle =>
       case Literal(Constant(str: String)) => Some(str)
       case _ => None
     }
-    def apply(str: String): Tree = Literal(Constant(str))
+    def apply(str: String, pos: Position = NoPosition): Tree =
+      internal.setPos(Literal(Constant(str)), pos)
   }
 
   object BooleanLiteral {

@@ -37,6 +37,7 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val MetadataParamStrategyType: Type = getType(tq"$RpcPackage.MetadataParamStrategy")
   val ReifyAT: Type = getType(tq"$RpcPackage.reify")
   val InferAT: Type = getType(tq"$RpcPackage.infer")
+  val CheckedAT: Type = getType(tq"$RpcPackage.checked")
   val MetadataPFType: Type = getType(tq"$ScalaPkg.PartialFunction[$StringCls,$TypedMetadataType]")
 
   val NothingTpe: Type = typeOf[Nothing]

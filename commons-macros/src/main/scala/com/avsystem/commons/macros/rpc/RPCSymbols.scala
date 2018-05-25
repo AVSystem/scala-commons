@@ -6,39 +6,37 @@ trait RPCSymbols { this: RPCMacroCommons =>
   import c.universe._
 
   sealed abstract class RpcArity(val verbatimByDefault: Boolean) {
-    def perRealParamType: Type
+    def collectedType: Type
   }
   object RpcArity {
-    def fromAnnotation(annot: Tree, param: RawParamLike): Res[RpcArity] = {
+    def fromAnnotation(annot: Tree, param: ArityParam, allowNamed: Boolean): RpcArity = {
       val at = annot.tpe
-      if (at <:< SingleArityAT) Ok(RpcArity.Single(param.actualType))
+      if (at <:< SingleArityAT) RpcArity.Single(param.actualType)
       else if (at <:< OptionalArityAT) {
         val optionLikeType = typeOfCachedImplicit(param.optionLike)
         val valueMember = optionLikeType.member(TypeName("Value"))
         if (valueMember.isAbstract)
-          Fail("could not determine actual value of optional parameter type")
+          param.reportProblem("could not determine actual value of optional parameter type")
         else
-          Ok(RpcArity.Optional(valueMember.typeSignatureIn(optionLikeType)))
+          RpcArity.Optional(valueMember.typeSignatureIn(optionLikeType))
       }
       else if (at <:< MultiArityAT) {
-        if (param.actualType <:< StringPFTpe)
-          Ok(NamedMulti(param.actualType.baseType(PartialFunctionClass).typeArgs(1)))
-        else if (param.actualType <:< BIndexedSeqTpe)
-          Ok(IndexedMulti(param.actualType.baseType(BIndexedSeqClass).typeArgs.head))
+        if (allowNamed && param.actualType <:< StringPFTpe)
+          Multi(param.actualType.baseType(PartialFunctionClass).typeArgs(1), named = true)
         else if (param.actualType <:< BIterableTpe)
-          Ok(IterableMulti(param.actualType.baseType(BIterableClass).typeArgs.head))
+          Multi(param.actualType.baseType(BIterableClass).typeArgs.head, named = false)
+        else if (allowNamed)
+          param.reportProblem(s"@multi ${param.shortDescription} must be a PartialFunction of String " +
+            s"(for by-name mapping) or Iterable (for sequence)")
         else
-          Fail(s"@multi ${param.shortDescription} must be a PartialFunction of String " +
-            s"(for param mapping) or Iterable (for param sequence)")
+          param.reportProblem(s"@multi ${param.shortDescription} must be an Iterable")
       }
-      else Fail(s"unrecognized RPC arity annotation: $annot")
+      else param.reportProblem(s"unrecognized RPC arity annotation: $annot")
     }
 
-    case class Single(perRealParamType: Type) extends RpcArity(true)
-    case class Optional(perRealParamType: Type) extends RpcArity(true)
-    case class IterableMulti(perRealParamType: Type) extends RpcArity(false)
-    case class IndexedMulti(perRealParamType: Type) extends RpcArity(false)
-    case class NamedMulti(perRealParamType: Type) extends RpcArity(false)
+    case class Single(collectedType: Type) extends RpcArity(true)
+    case class Optional(collectedType: Type) extends RpcArity(true)
+    case class Multi(collectedType: Type, named: Boolean) extends RpcArity(false)
   }
 
   abstract class RpcSymbol {
@@ -162,26 +160,45 @@ trait RPCSymbols { this: RPCMacroCommons =>
     def description = s"$shortDescription $nameStr of ${owner.description}"
   }
 
-  trait RawParamLike extends RpcParam with RawRpcSymbol {
+  trait ArityParam extends RpcParam {
+    def allowNamedMulti: Boolean
+
     val arity: RpcArity = annot(RpcArityAT)
-      .map(a => RpcArity.fromAnnotation(a.tree, this).getOrElse(reportProblem(_)))
+      .map(a => RpcArity.fromAnnotation(a.tree, this, allowNamedMulti))
       .getOrElse(RpcArity.Single(actualType))
+
+    lazy val optionLike: TermName = infer(tq"$OptionLikeCls[$actualType]")
+
+    lazy val canBuildFrom: TermName = arity match {
+      case _: RpcArity.Multi if allowNamedMulti && actualType <:< StringPFTpe =>
+        infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,${arity.collectedType}),$actualType]")
+      case _: RpcArity.Multi =>
+        infer(tq"$CanBuildFromCls[$NothingCls,${arity.collectedType},$actualType]")
+      case _ => abort(s"(bug) CanBuildFrom computed for non-multi $shortDescription")
+    }
+
+    def mkOptional[T: Liftable](opt: Option[T]): Tree =
+      opt.map(t => q"$optionLike.some($t)").getOrElse(q"$optionLike.none")
+
+    def mkMulti[T: Liftable](elements: List[T]): Tree = {
+      val builderName = c.freshName(TermName("builder"))
+      q"""
+        val $builderName = $canBuildFrom()
+        $builderName.sizeHint(${elements.size})
+        ..${elements.map(t => q"$builderName += $t")}
+        $builderName.result()
+       """
+    }
+  }
+
+  trait RawParamLike extends ArityParam with RawRpcSymbol {
+    def allowNamedMulti: Boolean = true
 
     val verbatim: Boolean =
       annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
 
     val auxiliary: Boolean =
       annot(AuxiliaryAT).nonEmpty
-
-    lazy val optionLike: TermName = infer(tq"$OptionLikeCls[$actualType]")
-
-    lazy val canBuildFrom: TermName = arity match {
-      case _: RpcArity.NamedMulti =>
-        infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,${arity.perRealParamType}),$actualType]")
-      case _: RpcArity.IndexedMulti | _: RpcArity.IterableMulti =>
-        infer(tq"$CanBuildFromCls[$NothingCls,${arity.perRealParamType},$actualType]")
-      case _ => abort(s"(bug) CanBuildFrom computed for non-multi $shortDescription")
-    }
 
     def cannotMapClue: String
   }

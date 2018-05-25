@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.macros.misc.MiscMacros
+
 /**
   * @author ghik
   */
@@ -10,4 +12,6 @@ object RpcUtils {
 
   def unknownRpc(rpcName: String, rawMethodName: String): Nothing =
     throw new IllegalArgumentException(s"RPC $rpcName does not map to raw method $rawMethodName")
+
+  def compilationError(error: String): Nothing = macro MiscMacros.compilationError
 }
