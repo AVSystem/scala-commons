@@ -49,3 +49,8 @@ object AsRealRaw {
   def materializeForRpc[R, T]: AsRealRaw[R, T] = macro macros.rpc.RPCMacros.rpcAsRealRaw[R, T]
 }
 
+object RpcMetadata {
+  def materializeForRpc[M[_], T]: M[T] = macro macros.rpc.RPCMacros.rpcMetadata[M[T], T]
+}
+
+trait TypedMetadata[T]

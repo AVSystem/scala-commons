@@ -121,6 +121,7 @@ trait RPCMetadatas { this: RPCMacroCommons with RPCSymbols with RPCMappings =>
           .fold(defaultMetadataParam(ps)) {
             case t if t <:< InferAT => new ImplicitParam(this, ps)
             case t if t <:< ReifyAT => new ReifiedParam(this, ps)
+            case t if t <:< ReifyRpcNameAT => new ReifiedRpcNameParam(this, ps)
             case t => reportProblem(s"Unrecognized metadata param strategy type: $t")
           }
       })
@@ -274,6 +275,20 @@ trait RPCMetadatas { this: RPCMacroCommons with RPCSymbols with RPCMappings =>
       case RpcArity.Multi(annotTpe, _) =>
         mkMulti(allAnnotations(rpcSym.symbol, annotTpe).map(a => c.untypecheck(a.tree)))
     }
+
+    def tryMaterializeFor(rpcSym: RealRpcSymbol): Res[Tree] =
+      Ok(materializeFor(rpcSym))
+  }
+
+  class ReifiedRpcNameParam(owner: MetadataConstructor, symbol: Symbol)
+    extends DirectMetadataParam(owner, symbol) {
+
+    if (!(actualType =:= typeOf[String])) {
+      reportProblem(s"its type is not String")
+    }
+
+    def materializeFor(rpcSym: RealRpcSymbol): Tree =
+      q"${rpcSym.rpcName}"
 
     def tryMaterializeFor(rpcSym: RealRpcSymbol): Res[Tree] =
       Ok(materializeFor(rpcSym))

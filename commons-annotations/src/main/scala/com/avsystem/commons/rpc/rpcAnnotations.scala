@@ -296,5 +296,6 @@ final class auxiliary extends RawParamAnnotation
 sealed trait MetadataParamStrategy extends StaticAnnotation
 final class infer extends MetadataParamStrategy
 final class reify extends MetadataParamStrategy
+final class reifyRpcName extends MetadataParamStrategy
 
 final class checked extends StaticAnnotation

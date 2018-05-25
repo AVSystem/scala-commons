@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rpc
 
+import scala.annotation.StaticAnnotation
 import scala.language.higherKinds
 
 trait RPCFramework {
@@ -30,9 +31,8 @@ trait RPCFramework {
   type ParamTypeMetadata[T]
   type ResultTypeMetadata[T]
 
-  object RPCMetadata {
-    @inline def apply[T](implicit metadata: RPCMetadata[T]): RPCMetadata[T] = metadata
-  }
+  type RPCMetadata[T]
+  val RPCMetadata: RpcMetadataCompanion[RPCMetadata]
 
   type AsRawRPC[T] = AsRaw[RawRPC, T]
   object AsRawRPC {
@@ -65,21 +65,22 @@ trait RPCFramework {
 
   def materializeAsRealRaw[T]: AsRealRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealRawImpl[T]
 
-  trait RPCMetadata[T] {
-    def name: String
-    def annotations: List[MetadataAnnotation]
-    def signatures: Map[String, Signature]
-    def getterResults: Map[String, RPCMetadata[_]]
+  /**
+    * Annotations that extend this trait will be retained for runtime in `RPCMetadata` typeclass instances
+    */
+  trait MetadataAnnotation extends StaticAnnotation
+
+  trait Signature {
+    @reifyRpcName def name: String
+    @multi def paramMetadata: List[ParamMetadata[_]]
+    @reify @multi def annotations: List[MetadataAnnotation]
   }
 
-  case class Signature(
-    methodName: String,
-    paramMetadata: List[List[ParamMetadata]],
-    resultTypeMetadata: ResultTypeMetadata[_],
-    annotations: List[MetadataAnnotation]
-  )
-
-  case class ParamMetadata(name: String, annotations: List[MetadataAnnotation], typeMetadata: ParamTypeMetadata[_])
+  case class ParamMetadata[T](
+    @reifyRpcName name: String,
+    @reify @multi annotations: List[MetadataAnnotation],
+    @infer typeMetadata: ParamTypeMetadata[T]
+  ) extends TypedMetadata[T]
 
   def materializeMetadata[T]: RPCMetadata[T] = macro macros.rpc.RPCFrameworkMacros.metadataImpl[T]
 

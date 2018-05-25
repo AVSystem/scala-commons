@@ -7,8 +7,9 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.util.ByteString
 import com.avsystem.commons.rpc.akka.client.ClientRawRPC
 import com.avsystem.commons.rpc.akka.server.ServerActor
-import com.avsystem.commons.rpc.{FunctionRPCFramework, GetterRPCFramework, ProcedureRPCFramework}
+import com.avsystem.commons.rpc.{FunctionRPCFramework, GetterRPCFramework, ProcedureRPCFramework, RpcMetadataCompanion, TypedMetadata, infer, multi, reify, reifyRpcName, verbatim}
 import com.avsystem.commons.serialization.{GenCodec, StreamInput, StreamOutput}
+import monix.reactive.Observable
 
 /**
   * RPC Framework implemented with Akka as transportation layer.
@@ -26,6 +27,23 @@ object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework wi
   type Writer[T] = GenCodec[T]
   type ParamTypeMetadata[T] = DummyImplicit
   type ResultTypeMetadata[T] = DummyImplicit
+
+  case class RPCMetadata[T](
+    @reifyRpcName name: String,
+    @reify @multi annotations: List[MetadataAnnotation],
+    @verbatim procedureSignatures: Map[String, ProcedureSignature],
+    functionSignatures: Map[String, FunctionSignature[_]],
+    observeSignatures: Map[String, ObserveSignature[_]],
+    getterSignatures: Map[String, GetterSignature[_]]
+  )
+  object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
+
+  case class ObserveSignature[T](
+    name: String,
+    paramMetadata: List[ParamMetadata[_]],
+    annotations: List[MetadataAnnotation],
+    @infer resultTypeMetadata: ResultTypeMetadata[T]
+  ) extends Signature with TypedMetadata[Observable[T]]
 
   def read[T: Reader](raw: RawValue): T =
     GenCodec.read[T](new StreamInput(new DataInputStream(raw.iterator.asInputStream)))

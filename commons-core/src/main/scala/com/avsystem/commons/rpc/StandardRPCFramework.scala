@@ -11,6 +11,12 @@ trait ProcedureRPCFramework extends RPCFramework {
   trait ProcedureRawRPC { this: RawRPC =>
     @verbatim def fire(rpcName: String)(@multi args: List[RawValue]): Unit
   }
+
+  case class ProcedureSignature(
+    name: String,
+    paramMetadata: List[ParamMetadata[_]],
+    annotations: List[MetadataAnnotation]
+  ) extends Signature with TypedMetadata[Unit]
 }
 
 /**
@@ -23,6 +29,13 @@ trait FunctionRPCFramework extends RPCFramework {
   trait FunctionRawRPC { this: RawRPC =>
     def call(rpcName: String)(@multi args: List[RawValue]): Future[RawValue]
   }
+
+  case class FunctionSignature[T](
+    name: String,
+    paramMetadata: List[ParamMetadata[_]],
+    annotations: List[MetadataAnnotation],
+    @infer resultTypeMetadata: ResultTypeMetadata[T]
+  ) extends Signature with TypedMetadata[Future[T]]
 
   implicit def readerBasedFutureAsReal[T: Reader]: AsReal[Future[RawValue], Future[T]] =
     AsReal.create(_.mapNow(read[T]))
@@ -44,6 +57,13 @@ trait GetterRPCFramework extends RPCFramework {
     def resolveGetterChain(getters: List[RawInvocation]): RawRPC =
       getters.foldRight(this)((inv, rpc) => rpc.get(inv.rpcName)(inv.args))
   }
+
+  case class GetterSignature[T](
+    name: String,
+    paramMetadata: List[ParamMetadata[_]],
+    annotations: List[MetadataAnnotation],
+    @infer @checked resultMetadata: RPCMetadata.Lazy[T]
+  ) extends Signature with TypedMetadata[T]
 }
 
 trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework with ProcedureRPCFramework {
@@ -51,6 +71,15 @@ trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework 
   object RawRPC extends BaseRawRpcCompanion
 
   trait FullRPCInfo[T] extends BaseFullRPCInfo[T]
+
+  case class RPCMetadata[T](
+    @reifyRpcName name: String,
+    @reify @multi annotations: List[MetadataAnnotation],
+    @verbatim procedureSignatures: Map[String, ProcedureSignature],
+    functionSignatures: Map[String, FunctionSignature[_]],
+    getterSignatures: Map[String, GetterSignature[_]]
+  )
+  object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 }
 
 trait OneWayRPCFramework extends GetterRPCFramework with ProcedureRPCFramework {
@@ -58,4 +87,12 @@ trait OneWayRPCFramework extends GetterRPCFramework with ProcedureRPCFramework {
   object RawRPC extends BaseRawRpcCompanion
 
   trait FullRPCInfo[T] extends BaseFullRPCInfo[T]
+
+  case class RPCMetadata[T](
+    @reifyRpcName name: String,
+    @reify @multi annotations: List[MetadataAnnotation],
+    @verbatim procedureSignatures: Map[String, ProcedureSignature],
+    getterSignatures: Map[String, GetterSignature[_]]
+  )
+  object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 }

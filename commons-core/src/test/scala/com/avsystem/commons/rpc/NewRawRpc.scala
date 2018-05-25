@@ -60,26 +60,26 @@ case class NewRpcMetadata[T: ClassTag](
 object NewRpcMetadata extends RpcMetadataCompanion[NewRpcMetadata]
 
 case class FireMetadata(
-  @optional @auxiliary ajdi: Opt[ParamMetadata[Int]],
-  @multi args: Map[String, ParamMetadata[_]]
+  @optional @auxiliary ajdi: Opt[ParameterMetadata[Int]],
+  @multi args: Map[String, ParameterMetadata[_]]
 ) extends TypedMetadata[Unit]
 
 case class CallMetadata[T: GenCodec](
-  @tagged[renamed] @multi renamedArgs: Map[String, ParamMetadata[_]],
-  @multi args: Map[String, ParamMetadata[_]]
+  @tagged[renamed] @multi renamedArgs: Map[String, ParameterMetadata[_]],
+  @multi args: Map[String, ParameterMetadata[_]]
 ) extends TypedMetadata[Future[T]]
 
 case class GetterMetadata[T](
-  @multi args: List[ParamMetadata[_]]
+  @multi args: List[ParameterMetadata[_]]
 )(implicit
   @checked resultMetadata: NewRpcMetadata.Lazy[T]
 ) extends TypedMetadata[T]
 
 case class PostMetadata[T: GenCodec](
-  @tagged[header] @multi @verbatim headers: Vector[ParamMetadata[String]],
-  @multi body: MLinkedHashMap[String, ParamMetadata[_]]
+  @tagged[header] @multi @verbatim headers: Vector[ParameterMetadata[String]],
+  @multi body: MLinkedHashMap[String, ParameterMetadata[_]]
 ) extends TypedMetadata[T]
 
-case class ParamMetadata[T: GenCodec](
+case class ParameterMetadata[T: GenCodec](
   @reify @multi renames: List[renamed]
 ) extends TypedMetadata[T]

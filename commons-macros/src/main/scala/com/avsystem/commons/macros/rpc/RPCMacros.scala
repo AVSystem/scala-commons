@@ -37,6 +37,7 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val MetadataParamStrategyType: Type = getType(tq"$RpcPackage.MetadataParamStrategy")
   val ReifyAT: Type = getType(tq"$RpcPackage.reify")
   val InferAT: Type = getType(tq"$RpcPackage.infer")
+  val ReifyRpcNameAT: Type = getType(tq"$RpcPackage.reifyRpcName")
   val CheckedAT: Type = getType(tq"$RpcPackage.checked")
   val MetadataPFType: Type = getType(tq"$ScalaPkg.PartialFunction[$StringCls,$TypedMetadataType]")
 
@@ -123,8 +124,32 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx)
       case t => t
     }
 
-    val tree = new RpcMetadataConstructor(metadataTpe).materializeFor(realRpc)
-    q"..$cachedImplicitDeclarations; $tree"
+    val constructor = new RpcMetadataConstructor(metadataTpe)
+
+    companionOf(metadataTpe) match {
+      case Some(comp) =>
+        // short circuit recursive implicit searches for M.Lazy[T]
+        val lazyMetadataTpe = getType(tq"$comp.Lazy[${realRpc.tpe}]")
+        val selfName = c.freshName(TermName("self"))
+        val lazySelfName = c.freshName(TermName("lazySelf"))
+        registerImplicit(lazyMetadataTpe, lazySelfName)
+        val tree = constructor.materializeFor(realRpc)
+
+        q"""
+          var $selfName = null.asInstanceOf[$metadataTpe]
+          val $lazySelfName = $comp.Lazy($selfName)
+          ..$cachedImplicitDeclarations
+          $selfName = $tree
+          $selfName
+         """
+
+      case None =>
+        val tree = constructor.materializeFor(realRpc)
+        q"""
+          ..$cachedImplicitDeclarations
+          $tree
+         """
+    }
   }
 
   def lazyMetadata(metadata: Tree): Tree =
