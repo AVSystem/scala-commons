@@ -294,7 +294,7 @@ trait MacroCommons { bundle =>
     s"${pos.source.file.name}:${pos.line}:${pos.column}"
 
   def abortAt(message: String, pos: Position): Nothing =
-    if (pos != NoPosition) {
+    if (pos != NoPosition && pos != c.enclosingPosition) {
       c.error(pos, s"Macro expansion at ${posInfo(c.enclosingPosition)} failed: $message")
       abort(s"Macro expansion failed because of error at ${posInfo(pos)}")
     } else {
@@ -302,7 +302,7 @@ trait MacroCommons { bundle =>
     }
 
   def errorAt(message: String, pos: Position): Unit = {
-    if (pos != NoPosition) {
+    if (pos != NoPosition && pos != c.enclosingPosition) {
       c.error(pos, s"Macro expansion at ${posInfo(c.enclosingPosition)} failed: $message")
     } else {
       error(message)
