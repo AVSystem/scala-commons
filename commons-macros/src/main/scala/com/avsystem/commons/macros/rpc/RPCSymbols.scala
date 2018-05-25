@@ -52,7 +52,10 @@ trait RPCSymbols { this: RPCMacroCommons =>
       abortAt(s"$problemStr: $msg", if (detailPos != NoPosition) detailPos else pos)
 
     def infer(tpt: Tree): TermName =
-      inferCachedImplicit(getType(tpt), s"$problemStr: ", pos)
+      infer(getType(tpt))
+
+    def infer(tpe: Type): TermName =
+      inferCachedImplicit(tpe, s"$problemStr: ", pos)
 
     val name: TermName = symbol.name.toTermName
     val safeName: TermName = c.freshName(symbol.name.toTermName)
@@ -97,7 +100,7 @@ trait RPCSymbols { this: RPCMacroCommons =>
       }
   }
 
-  trait RealRpcSymbol extends RpcSymbol {
+  sealed trait RealRpcSymbol extends RpcSymbol {
     def tag(baseTag: Type, defaultTag: Type): Type =
       annot(baseTag).fold(defaultTag)(_.tpe)
 
