@@ -251,7 +251,7 @@ trait RPCSymbols { this: RPCMacroCommons =>
     def ownerType: Type = owner.tpe
 
     def shortDescription = "real method"
-    def description = s"$shortDescription $nameStr of ${owner.description}"
+    def description = s"$shortDescription $nameStr"
 
     val paramLists: List[List[RealParam]] = {
       var idx = 0

@@ -52,30 +52,30 @@ object NewRawRpc extends RawRpcCompanion[NewRawRpc] {
 @methodTag[RestMethod, RestMethod]
 @paramTag[DummyParamTag, untagged]
 case class NewRpcMetadata[T: ClassTag](
-  @methods @verbatim procedures: Map[String, FireMetadata],
-  @methods functions: Map[String, CallMetadata[_]],
-  @methods getters: Map[String, GetterMetadata[_]],
-  @methods @tagged[POST] posters: Map[String, PostMetadata[_]],
+  @verbatim procedures: Map[String, FireMetadata],
+  functions: Map[String, CallMetadata[_]],
+  getters: Map[String, GetterMetadata[_]],
+  @tagged[POST] posters: Map[String, PostMetadata[_]],
 )
 object NewRpcMetadata extends RpcMetadataCompanion[NewRpcMetadata]
 
 case class FireMetadata(
-  @params @optional @auxiliary ajdi: Opt[ParamMetadata[Int]],
-  @params @multi args: Map[String, ParamMetadata[_]]
+  @optional @auxiliary ajdi: Opt[ParamMetadata[Int]],
+  @multi args: Map[String, ParamMetadata[_]]
 ) extends TypedMetadata[Unit]
 
 case class CallMetadata[T: GenCodec](
-  @params @tagged[renamed] @multi renamedArgs: Map[String, ParamMetadata[_]],
-  @params @multi args: Map[String, ParamMetadata[_]]
+  @tagged[renamed] @multi renamedArgs: Map[String, ParamMetadata[_]],
+  @multi args: Map[String, ParamMetadata[_]]
 ) extends TypedMetadata[Future[T]]
 
 case class GetterMetadata[T: NewRpcMetadata.Lazy](
-  @params @multi args: List[ParamMetadata[_]]
+  @multi args: List[ParamMetadata[_]]
 ) extends TypedMetadata[T]
 
 case class PostMetadata[T: GenCodec](
-  @params @tagged[header] @multi @verbatim headers: Vector[ParamMetadata[String]],
-  @params @multi body: MLinkedHashMap[String, ParamMetadata[_]]
+  @tagged[header] @multi @verbatim headers: Vector[ParamMetadata[String]],
+  @multi body: MLinkedHashMap[String, ParamMetadata[_]]
 ) extends TypedMetadata[T]
 
 class ParamMetadata[T: GenCodec] extends TypedMetadata[T]

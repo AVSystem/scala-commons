@@ -36,12 +36,8 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val TypedMetadataType: Type = getType(tq"$RpcPackage.TypedMetadata[_]")
   val MetadataParamStrategyType: Type = getType(tq"$RpcPackage.MetadataParamStrategy")
   val ReifyAT: Type = getType(tq"$RpcPackage.reify")
-  val ConstructAT: Type = getType(tq"$RpcPackage.construct")
   val InferAT: Type = getType(tq"$RpcPackage.infer")
-  val MetadataParamTargetType: Type = getType(tq"$RpcPackage.MetadataParamTarget")
-  val SelfAT: Type = getType(tq"$RpcPackage.self")
-  val MethodsAT: Type = getType(tq"$RpcPackage.methods")
-  val ParamsAT: Type = getType(tq"$RpcPackage.params")
+  val MetadataPFType: Type = getType(tq"$ScalaPkg.PartialFunction[$StringCls,$TypedMetadataType]")
 
   val NothingTpe: Type = typeOf[Nothing]
   val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
@@ -132,12 +128,17 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
   def lazyMetadata(metadata: Tree): Tree =
     q"${c.prefix}($metadata)"
 
-  def actualMetadataType(baseMetadataType: Type, realType: Type, verbatim: Boolean): Res[Type] = {
+  def actualMetadataType(baseMetadataType: Type, realRpcSymbol: RealRpcSymbol, verbatim: Boolean): Res[Type] = {
     val (wildcards, underlying) = baseMetadataType match {
       case ExistentialType(wc, u) if !verbatim => (wc, u)
       case t => (Nil, t)
     }
     val baseMethodResultType = underlying.baseType(TypedMetadataType.typeSymbol).typeArgs.head
+    val (realType, realTypeDesc) = realRpcSymbol match {
+      case rpc: RealRpcTrait => (rpc.tpe, "RPC type")
+      case method: RealMethod => (method.resultType, "method result type")
+      case param: RealParam => (param.actualType, "parameter type")
+    }
 
     val result = if (wildcards.isEmpty)
       Some(baseMetadataType).filter(_ => baseMethodResultType =:= realType)
@@ -145,7 +146,7 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
       .map(typeArgs => underlying.substituteTypes(wildcards, typeArgs))
 
     result.map(Ok(_)).getOrElse(Fail(
-      s"real type $realType is incompatible with required metadata type $baseMetadataType"))
+      s"$realTypeDesc $realType is incompatible with required metadata type $baseMetadataType"))
   }
 
   sealed trait MetadataParamStrategy {
@@ -153,57 +154,43 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
     def tryMaterializeFor(rpcSym: RealRpcSymbol): Res[Tree]
   }
   object MetadataParamStrategy {
-    def apply(param: MetadataParam, metadataType: Type): MetadataParamStrategy = {
-      if (param.strategyType <:< InferAT) InferStrategy(param, metadataType)
-      else if (param.strategyType <:< ReifyAT) ReifyStrategy(param, metadataType)
-      else if (param.strategyType <:< ConstructAT) ConstructStrategy(param, metadataType)
-      else param.reportProblem(s"unknown metadata param strategy annotation type ${param.strategyType}")
-    }
-
-    case class InferStrategy(param: MetadataParam, metadataType: Type) extends MetadataParamStrategy {
-      // method matching is based on implicit search, but param matching is not
-      val escalateImplicitFailures: Boolean = param.owner match {
-        case _: MethodMetadataConstructor => true
-        case _ => false
-      }
-
+    case class InferStrategy(mdParam: MetadataParam) extends MetadataParamStrategy {
       def materializeFor(rpcSym: RealRpcSymbol): Tree =
-        q"${param.infer(metadataType)}"
+        q"${mdParam.infer(mdParam.actualType)}"
 
       def tryMaterializeFor(rpcSym: RealRpcSymbol): Res[Tree] =
-        if (escalateImplicitFailures)
-          tryInferCachedImplicit(metadataType).map(n => Ok(q"$n"))
-            .getOrElse(Fail(s"no implicit value $metadataType for parameter ${param.description} could be found"))
-        else
-          Ok(q"${param.infer(metadataType)}")
+        mdParam.owner match {
+          case _: MethodMetadataConstructor =>
+            // method matching is based on implicit search, but param matching is not
+            tryInferCachedImplicit(mdParam.actualType).map(n => Ok(q"$n"))
+              .getOrElse(Fail(s"no implicit value ${mdParam.actualType} for parameter ${mdParam.description} could be found"))
+          case _ =>
+            Ok(q"${mdParam.infer(mdParam.actualType)}")
+        }
     }
 
-    case class ReifyStrategy(param: MetadataParam, metadataType: Type) extends MetadataParamStrategy {
+    case class ReifyStrategy(mdParam: MetadataParam) extends MetadataParamStrategy {
       def materializeFor(rpcSym: RealRpcSymbol): Tree = ???
       def tryMaterializeFor(rpcSym: RealRpcSymbol): Res[Tree] = ???
     }
 
-    case class ConstructStrategy(param: MetadataParam, metadataType: Type) extends MetadataParamStrategy {
-      val constructor = new DirectMetadataConstructor(metadataType, param)
-
+    case class UnknownStrategy(mdParam: MetadataParam) extends MetadataParamStrategy {
       def materializeFor(rpcSym: RealRpcSymbol): Tree =
-        constructor.materializeFor(rpcSym)
-
+        mdParam.reportProblem(s"no strategy annotation (e.g. @infer) found")
       def tryMaterializeFor(rpcSym: RealRpcSymbol): Res[Tree] =
-        constructor.tryMaterializeFor(rpcSym)
+        Fail(s"no strategy annotation (e.g. @infer) found for ${mdParam.description}")
     }
   }
 
   sealed abstract class MetadataParam(val owner: MetadataConstructor, val symbol: Symbol) extends RpcParam {
     def shortDescription = "metadata parameter"
     def description = s"$shortDescription $nameStr of ${owner.description}"
-
-    val strategyType: Type = annot(MetadataParamStrategyType).map(_.tpe)
-      .getOrElse(if (symbol.isImplicit) InferAT else ConstructAT)
   }
 
-  class DirectMetadataParam(owner: MetadataConstructor, symbol: Symbol) extends MetadataParam(owner, symbol) {
-    val strategy: MetadataParamStrategy = MetadataParamStrategy(this, actualType)
+  class DirectMetadataParam(owner: MetadataConstructor, symbol: Symbol,
+    createStrategy: DirectMetadataParam => MetadataParamStrategy
+  ) extends MetadataParam(owner, symbol) {
+    val strategy: MetadataParamStrategy = createStrategy(this)
   }
 
   class MethodMetadataParam(owner: RpcMetadataConstructor, symbol: Symbol)
@@ -215,13 +202,12 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
     val verbatimResult: Boolean =
       annot(RpcEncodingAT).exists(_.tpe <:< VerbatimAT)
 
+    if (!(actualType <:< MetadataPFType)) {
+      reportProblem(s"its type must be a subtype of PartialFunction[String, TypedMetadata[_]]")
+    }
+
     val perMethodType: Type =
       actualType.baseType(PartialFunctionClass).typeArgs(1)
-
-    if (!(perMethodType <:< TypedMetadataType)) {
-      reportProblem(s"metadata for real method must be a subtype of TypedMetadata[T] " +
-        s"where T is matched against each real method's result type")
-    }
 
     val List(baseParamTag, defaultParamTag) =
       annot(ParamTagAT).orElse(findAnnotation(perMethodType.typeSymbol, ParamTagAT))
@@ -232,11 +218,8 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
       infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,$perMethodType),$actualType]")
 
     def mappingFor(realMethod: RealMethod): Res[MethodMetadataMapping] = for {
-      mdType <- actualMetadataType(perMethodType, realMethod.resultType, verbatimResult)
-      tree <- {
-        if (strategyType <:< ConstructAT) new MethodMetadataConstructor(mdType, this).tryMaterializeFor(realMethod)
-        else MetadataParamStrategy(this, mdType).tryMaterializeFor(realMethod)
-      }
+      mdType <- actualMetadataType(perMethodType, realMethod, verbatimResult)
+      tree <- new MethodMetadataConstructor(mdType, this).tryMaterializeFor(realMethod)
     } yield MethodMetadataMapping(realMethod, this, tree)
   }
 
@@ -248,10 +231,17 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
 
     def cannotMapClue = s"cannot map it to $shortDescription $nameStr of ${owner.ownerType}"
 
-    def metadataTree(realParam: RealParam): Res[Tree] = for {
-      mdType <- actualMetadataType(arity.perRealParamType, realParam.actualType, verbatim)
-      tree <- MetadataParamStrategy(this, mdType).tryMaterializeFor(realParam)
-    } yield tree
+    if (!(arity.perRealParamType <:< TypedMetadataType)) {
+      reportProblem(s"type ${arity.perRealParamType} is not a subtype of TypedMetadata[_]")
+    }
+
+    def metadataTree(realParam: RealParam): Res[Tree] = {
+      val result = for {
+        mdType <- actualMetadataType(arity.perRealParamType, realParam, verbatim)
+        tree <- new DirectMetadataConstructor(mdType, this).tryMaterializeFor(realParam)
+      } yield tree
+      result.mapFailure(msg => s"${realParam.problemStr}: $cannotMapClue: $msg")
+    }
 
     def mappingFor(parser: ParamsParser): Res[ParamMetadataMapping] = arity match {
       case _: RpcArity.Single =>
@@ -283,22 +273,20 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
     def shortDescription = "metadata class"
     def description = s"$shortDescription $ownerType"
 
+    def defaultMetadataParam(paramSym: Symbol): MetadataParam
+
     lazy val paramLists: List[List[MetadataParam]] =
       symbol.typeSignatureIn(ownerType).paramLists.map(_.map { ps =>
-        def failOnUnexpected(annotTpe: Type) =
-          reportProblem(s"unexpected metadata parameter annotation type $annotTpe")
-
-        val targetType = findAnnotation(ps, MetadataParamTargetType).map(_.tpe).getOrElse(SelfAT)
-        if (targetType <:< SelfAT) new DirectMetadataParam(this, ps)
-        else if (targetType <:< MethodsAT) this match {
-          case rmc: RpcMetadataConstructor => new MethodMetadataParam(rmc, ps)
-          case _ => failOnUnexpected(targetType)
-        }
-        else if (targetType <:< ParamsAT) this match {
-          case mmc: MethodMetadataConstructor => new ParamMetadataParam(mmc, ps)
-          case _ => failOnUnexpected(targetType)
-        }
-        else failOnUnexpected(targetType)
+        findAnnotation(ps, MetadataParamStrategyType)
+          .map(_.tpe).orElse(if (ps.isImplicit) Some(InferAT) else None)
+          .fold(defaultMetadataParam(ps)) {
+            case t if t <:< InferAT =>
+              new DirectMetadataParam(this, ps, MetadataParamStrategy.InferStrategy)
+            case t if t <:< ReifyAT =>
+              new DirectMetadataParam(this, ps, MetadataParamStrategy.ReifyStrategy)
+            case t =>
+              reportProblem(s"Unrecognized metadata param strategy type: $t")
+          }
       })
 
     lazy val plainParams: List[DirectMetadataParam] =
@@ -333,6 +321,9 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
 
     lazy val methodMdParams: List[MethodMetadataParam] =
       paramLists.flatten.collect({ case mmp: MethodMetadataParam => mmp })
+
+    def defaultMetadataParam(paramSym: Symbol): MetadataParam =
+      new MethodMetadataParam(this, paramSym)
 
     def materializeFor(rpc: RealRpcTrait): Tree = {
       val allMappings = collectMethodMappings(methodMdParams, "metadata parameters", rpc.realMethods)(_.mappingFor(_))
@@ -399,8 +390,8 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
     lazy val paramMdParams: List[ParamMetadataParam] =
       paramLists.flatten.collect({ case pmp: ParamMetadataParam => pmp })
 
-    override def description: String =
-      s"${super.description} at ${ownerParam.description}"
+    def defaultMetadataParam(paramSym: Symbol): MetadataParam =
+      new ParamMetadataParam(this, paramSym)
 
     def tryMaterializeFor(realMethod: RealMethod): Res[Tree] =
       for {
@@ -422,6 +413,9 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx) with RPCSymb
 
     override def description: String =
       s"${super.description} at ${ownerParam.description}"
+
+    def defaultMetadataParam(paramSym: Symbol): MetadataParam =
+      new DirectMetadataParam(this, paramSym, MetadataParamStrategy.UnknownStrategy)
 
     def materializeFor(rpc: RealRpcSymbol): Tree =
       constructorCall(plainParams.map(p => p.localValueDecl(p.strategy.materializeFor(rpc))))

@@ -61,13 +61,13 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
 
     import scala.collection.JavaConverters._
 
-    private val buf = new java.util.LinkedList[RealParam]
-    buf.addAll(realMethod.realParams.asJava)
+    private val realParams = new java.util.LinkedList[RealParam]
+    realParams.addAll(realMethod.realParams.asJava)
 
-    def remaining: Seq[RealParam] = buf.asScala
+    def remaining: Seq[RealParam] = realParams.asScala
 
     def extractSingle[B](raw: RawParamLike, matcher: RealParam => Res[B]): Res[B] = {
-      val it = buf.listIterator()
+      val it = realParams.listIterator()
       def loop(): Res[B] =
         if (it.hasNext) {
           val real = it.next()
@@ -82,7 +82,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
     }
 
     def extractOptional[B](raw: RawParamLike, matcher: RealParam => Res[B]): Option[B] = {
-      val it = buf.listIterator()
+      val it = realParams.listIterator()
       def loop(): Option[B] =
         if (it.hasNext) {
           val real = it.next()
@@ -99,7 +99,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
 
     def extractMulti[B](raw: RawParamLike, matcher: RealParam => Res[B], named: Boolean): Res[List[B]] = {
       val seenRpcNames = new mutable.HashSet[String]
-      val it = buf.listIterator()
+      val it = realParams.listIterator()
       def loop(result: ListBuffer[B]): Res[List[B]] =
         if (it.hasNext) {
           val real = it.next()

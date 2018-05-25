@@ -293,16 +293,6 @@ final class tagged[Tag <: RpcTag] extends RawMethodAnnotation with RawParamAnnot
   */
 final class auxiliary extends RawParamAnnotation
 
-/**
-  * Base trait for annotations used in RPC metadata definitions. They instruct RPC macro engine how to
-  * materialize some particular RPC metadata type for RPC traits.
-  */
 sealed trait MetadataParamStrategy extends StaticAnnotation
-final class construct extends MetadataParamStrategy
 final class infer extends MetadataParamStrategy
 final class reify extends MetadataParamStrategy
-
-sealed trait MetadataParamTarget extends StaticAnnotation
-final class self extends MetadataParamTarget
-final class methods extends MetadataParamTarget
-final class params extends MetadataParamTarget
