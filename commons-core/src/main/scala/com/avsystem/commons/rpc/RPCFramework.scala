@@ -59,14 +59,14 @@ trait RPCFramework {
   def materializeAsRealRaw[T]: AsRealRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealRawImpl[T]
 
   trait Signature {
-    @reifyRpcName def name: String
+    @reifyName def name: String
     @multi def paramMetadata: List[ParamMetadata[_]]
     @reify
     @multi def annotations: List[MetadataAnnotation]
   }
 
   case class ParamMetadata[T](
-    @reifyRpcName name: String,
+    @reifyName name: String,
     @reify @multi annotations: List[MetadataAnnotation],
     @infer typeMetadata: ParamTypeMetadata[T]
   ) extends TypedMetadata[T]

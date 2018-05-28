@@ -34,10 +34,7 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   def tupleGet(i: Int) = TermName(s"_${i + 1}")
 
   def targetName(sym: Symbol): String =
-    findAnnotation(sym, NameAnnotType).map(_.findArg(NameAnnotNameSym)).map {
-      case StringLiteral(str) => str
-      case t => c.abort(t.pos, s"@name argument must be a string literal")
-    }.getOrElse(sym.name.decodedName.toString)
+    findAnnotation(sym, NameAnnotType).fold(sym.name.decodedName.toString)(_.findArg[String](NameAnnotNameSym))
 
   def caseAccessorFor(sym: Symbol): Symbol =
     if (sym.isParameter && sym.owner.isConstructor) {

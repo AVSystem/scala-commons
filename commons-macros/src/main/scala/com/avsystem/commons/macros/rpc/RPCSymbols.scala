@@ -9,7 +9,7 @@ trait RPCSymbols { this: RPCMacroCommons =>
     def collectedType: Type
   }
   object RpcArity {
-    def fromAnnotation(annot: Tree, param: ArityParam, allowNamed: Boolean): RpcArity = {
+    def fromAnnotation(annot: Tree, param: ArityParam, allowMulti: Boolean, allowNamed: Boolean): RpcArity = {
       val at = annot.tpe
       if (at <:< SingleArityAT) RpcArity.Single(param.actualType)
       else if (at <:< OptionalArityAT) {
@@ -20,7 +20,7 @@ trait RPCSymbols { this: RPCMacroCommons =>
         else
           RpcArity.Optional(valueMember.typeSignatureIn(optionLikeType))
       }
-      else if (at <:< MultiArityAT) {
+      else if (allowMulti && at <:< MultiArityAT) {
         if (allowNamed && param.actualType <:< StringPFTpe)
           Multi(param.actualType.baseType(PartialFunctionClass).typeArgs(1), named = true)
         else if (param.actualType <:< BIterableTpe)
@@ -31,7 +31,7 @@ trait RPCSymbols { this: RPCMacroCommons =>
         else
           param.reportProblem(s"@multi ${param.shortDescription} must be an Iterable")
       }
-      else param.reportProblem(s"unrecognized RPC arity annotation: $annot")
+      else param.reportProblem(s"forbidden RPC arity annotation: $annot")
     }
 
     case class Single(collectedType: Type) extends RpcArity(true)
@@ -103,10 +103,7 @@ trait RPCSymbols { this: RPCMacroCommons =>
       annot(baseTag).fold(defaultTag)(_.tpe)
 
     lazy val rpcName: String =
-      annot(RpcNameType).fold(nameStr)(_.findArg(RpcNameNameSym) match {
-        case StringLiteral(n) => n
-        case p => reportProblem("The name argument of @rpcName must be a string literal", p.pos)
-      })
+      annot(RpcNameType).fold(nameStr)(_.findArg[String](RpcNameNameSym))
   }
 
   abstract class RpcTrait(val symbol: Symbol) extends RpcSymbol {
@@ -161,10 +158,11 @@ trait RPCSymbols { this: RPCMacroCommons =>
   }
 
   trait ArityParam extends RpcParam {
+    def allowMulti: Boolean
     def allowNamedMulti: Boolean
 
     val arity: RpcArity = annot(RpcArityAT)
-      .map(a => RpcArity.fromAnnotation(a.tree, this, allowNamedMulti))
+      .map(a => RpcArity.fromAnnotation(a.tree, this, allowMulti, allowNamed = allowNamedMulti))
       .getOrElse(RpcArity.Single(actualType))
 
     lazy val optionLike: TermName = infer(tq"$OptionLikeCls[$actualType]")
@@ -192,6 +190,7 @@ trait RPCSymbols { this: RPCMacroCommons =>
   }
 
   trait RawParamLike extends ArityParam with RawRpcSymbol {
+    def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = true
 
     val verbatim: Boolean =
@@ -212,7 +211,9 @@ trait RPCSymbols { this: RPCMacroCommons =>
     def cannotMapClue = s"cannot map it to $shortDescription $nameStr of ${owner.nameStr}"
   }
 
-  case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexInList: Int) extends RpcParam with RealRpcSymbol {
+  case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexOfList: Int, indexInList: Int)
+    extends RpcParam with RealRpcSymbol {
+
     def shortDescription = "real parameter"
     def description = s"$shortDescription $nameStr of ${owner.description}"
 
@@ -271,15 +272,18 @@ trait RPCSymbols { this: RPCMacroCommons =>
     def description = s"$shortDescription $nameStr"
 
     val paramLists: List[List[RealParam]] = {
-      var idx = 0
+      var index = 0
+      var indexOfList = 0
       sig.paramLists.map { ss =>
-        var listIdx = 0
-        ss.map { s =>
-          val res = RealParam(this, s, idx, listIdx)
-          idx += 1
-          listIdx += 1
+        var indexInList = 0
+        val res = ss.map { s =>
+          val res = RealParam(this, s, index, indexOfList, indexInList)
+          index += 1
+          indexInList += 1
           res
         }
+        indexOfList += 1
+        res
       }
     }
 

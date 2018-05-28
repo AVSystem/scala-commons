@@ -14,7 +14,7 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
     protected implicit final def executionContext: ExecutionContext = RunNowEC
   }
 
-  def get[T](f: Future[T]) =
+  def get[T](f: Future[T]): T =
     f.value.get.get
 
   "rpc caller" should {

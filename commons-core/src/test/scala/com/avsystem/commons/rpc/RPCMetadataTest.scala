@@ -54,7 +54,7 @@ class RPCMetadataTest extends FunSuite {
       ParamMetadata("p", Nil, TypeName("String"))
     ), Nil))
 
-    assert(m.functionSignatures("function") == FunctionSignature("function", Nil, Nil, classTag[String]))
+    assert(m.functionSignatures("function") == FunctionSignature("func", Nil, Nil, classTag[String]))
 
     val resultMetadata = m.getterSignatures("getter").resultMetadata.value
     assert(resultMetadata.annotations == List(Annot("on base class")))
@@ -71,6 +71,6 @@ class RPCMetadataTest extends FunSuite {
       ParamMetadata("p", Nil, TypeName("String"))
     ), Nil))
 
-    assert(resultMetadata.functionSignatures("function") == FunctionSignature("function", Nil, Nil, classTag[String]))
+    assert(resultMetadata.functionSignatures("function") == FunctionSignature("func", Nil, Nil, classTag[String]))
   }
 }

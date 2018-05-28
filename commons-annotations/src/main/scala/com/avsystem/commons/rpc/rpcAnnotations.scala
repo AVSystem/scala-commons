@@ -293,9 +293,70 @@ final class tagged[Tag <: RpcTag] extends RawMethodAnnotation with RawParamAnnot
   */
 final class auxiliary extends RawParamAnnotation
 
+/**
+  * Base trait for annotations applied on RPC metadata parameters which tell the macro engine how to materialize
+  * their values based on real RPC trait, its methods or their parameters.
+  */
 sealed trait MetadataParamStrategy extends StaticAnnotation
-final class infer extends MetadataParamStrategy
-final class reify extends MetadataParamStrategy
-final class reifyRpcName extends MetadataParamStrategy
 
+/**
+  * When a metadata parameter is annotated as `@infer`, RPC macro engine will materialize that parameter by searching
+  * for an implicit value of that parameter's type. `@infer` is the default strategy assumed for implicit parameters
+  * of metadata classes, so using this annotation explicitly is only needed when you want an implicit search done
+  * for non-implicit parameter. This may be useful if, e.g. you want an inferred parameter to be a case class field.
+  *
+  * NOTE: By default, implicit search for `@infer` parameter does NOT affect the decision about whether some real
+  * method or real parameter matches a metadata parameter. For example, if an implicit for `@infer` parameter cannot be
+  * found, you will only know about it *after* the metadata materializing macro has already been expanded.
+  * This behaviour can be changed with [[checked]] annotation.
+  */
+final class infer extends MetadataParamStrategy
+
+/**
+  * Metadata parameter annotated as `@reify` is intended to hold annotation(s) that must or may be present on the real
+  * RPC trait, method or parameter. `@reify` parameters may have arity, which means that they may be annotated as
+  * [[single]] (the default), [[optional]] or [[multi]]. Arity annotation determines what parameter type the macro
+  * engine expects:
+  *
+  * - for [[single]], metadata parameter type must extend `StaticAnnotation` and an annotation of that type must be
+  * present on the real symbol or compilation error will be raised
+  * - for [[optional]], metadata parameter type must be an `Option`/`Opt`/etc. that wraps some `StaticAnnotation`.
+  * If that annotation is present on the real symbol, it will be reified as metadata value.
+  * - for [[multi]], metadata parameter type must be a subtype of `Iterable[StaticAnnotation]`, e.g. `List[SomeAnnot]`.
+  * The macro will then reify all annotations of that particular type present on the real symbol as metadata value.
+  *
+  * NOTE: all annotations are inherited from super/overridden symbols, i.e.
+  * - for RPC traits, annotations are inherited from all superclasses and supertraits
+  * - for RPC methods, annotations are inherited from all overridden or implemented abstract methods
+  * - for RPC parameters, annotations are inherited from all corresponding parameters (by index, not name) from
+  * all methods overridden or implemented by method containing the parameter for which metadata is being reified.
+  */
+final class reify extends MetadataParamStrategy
+
+/**
+  * This annotation may only be applied on metadata parameters of type `String` and instructs the macro engine
+  * to reify the name of real RPC trait/method/parameter. Depending on the value of `rpcName` flag, the macro
+  * will either take into account or ignore potential [[rpcName]] annotation.
+  */
+final class reifyName(val rpcName: Boolean = false) extends MetadataParamStrategy
+
+/**
+  * Metadata parameter annotated with this annotation must be of type `ParamPosition` - a class that holds
+  * parameter index information - see scaladoc for `ParamPosition` for more details.
+  */
+final class reifyPosition extends MetadataParamStrategy
+
+/**
+  * Metadata parameter annotated with this annotation must be of type `ParamFlags` - a class that holds
+  * parameter flags information - see scaladoc for `ParamFlags` for more details.
+  */
+final class reifyFlags extends MetadataParamStrategy
+
+/**
+  * May be applied on metadata parameters with [[infer]] annotation (or just implicit metadata parameters -
+  * they have [[infer]] strategy by default). Metadata parameter annotated as [[checked]] makes the implicit search
+  * for that metadata parameter influence the decision about whether some metadata parameter matches real method or
+  * param or not. Without [[checked]] annotation, when implicit search for metadata parameter fails, the macro engine
+  * ignores that fact and compilation error is deferred until macro is fully expanded.
+  */
 final class checked extends StaticAnnotation

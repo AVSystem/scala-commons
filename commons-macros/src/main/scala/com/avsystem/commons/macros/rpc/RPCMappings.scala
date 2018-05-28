@@ -97,7 +97,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
       loop()
     }
 
-    def extractMulti[B](raw: RawParamLike, matcher: RealParam => Res[B], named: Boolean): Res[List[B]] = {
+    def extractMulti[B](raw: RawParamLike, matcher: (RealParam, Int) => Res[B], named: Boolean): Res[List[B]] = {
       val seenRpcNames = new mutable.HashSet[String]
       val it = realParams.listIterator()
       def loop(result: ListBuffer[B]): Res[List[B]] =
@@ -107,7 +107,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
             if (!raw.auxiliary) {
               it.remove()
             }
-            matcher(real) match {
+            matcher(real, result.size) match {
               case Ok(b) =>
                 result += b
                 if (named && !seenRpcNames.add(real.rpcName)) {
@@ -270,12 +270,12 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
     registerCompanionImplicits(raw.tpe)
 
     private def extractMapping(rawParam: RawParam, parser: ParamsParser): Res[ParamMapping] = {
-      def createErp(realParam: RealParam): Res[EncodedRealParam] = EncodedRealParam.create(rawParam, realParam)
+      def createErp(realParam: RealParam, index: Int): Res[EncodedRealParam] = EncodedRealParam.create(rawParam, realParam)
       rawParam.arity match {
         case _: RpcArity.Single =>
-          parser.extractSingle(rawParam, createErp).map(ParamMapping.Single(rawParam, _))
+          parser.extractSingle(rawParam, createErp(_, 0)).map(ParamMapping.Single(rawParam, _))
         case _: RpcArity.Optional =>
-          Ok(ParamMapping.Optional(rawParam, parser.extractOptional(rawParam, createErp)))
+          Ok(ParamMapping.Optional(rawParam, parser.extractOptional(rawParam, createErp(_, 0))))
         case RpcArity.Multi(_, true) =>
           parser.extractMulti(rawParam, createErp, named = true).map(ParamMapping.NamedMulti(rawParam, _))
         case _: RpcArity.Multi if rawParam.actualType <:< BIndexedSeqTpe =>

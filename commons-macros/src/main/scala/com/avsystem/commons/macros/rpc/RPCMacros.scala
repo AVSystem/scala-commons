@@ -20,6 +20,7 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val AsRealRawObj = q"$RpcPackage.AsRealRaw"
   val OptionLikeCls = tq"$RpcPackage.OptionLike"
   val CanBuildFromCls = tq"$CollectionPkg.generic.CanBuildFrom"
+  val ParamPositionObj = q"$RpcPackage.ParamPosition"
 
   val RpcArityAT: Type = getType(tq"$RpcPackage.RpcArity")
   val SingleArityAT: Type = getType(tq"$RpcPackage.single")
@@ -37,9 +38,13 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val MetadataParamStrategyType: Type = getType(tq"$RpcPackage.MetadataParamStrategy")
   val ReifyAT: Type = getType(tq"$RpcPackage.reify")
   val InferAT: Type = getType(tq"$RpcPackage.infer")
-  val ReifyRpcNameAT: Type = getType(tq"$RpcPackage.reifyRpcName")
+  val ReifyNameAT: Type = getType(tq"$RpcPackage.reifyName")
+  val ReifyPositionAT: Type = getType(tq"$RpcPackage.reifyPosition")
+  val ReifyFlagsAT: Type = getType(tq"$RpcPackage.reifyFlags")
   val CheckedAT: Type = getType(tq"$RpcPackage.checked")
   val MetadataPFType: Type = getType(tq"$ScalaPkg.PartialFunction[$StringCls,$TypedMetadataType]")
+  val ParamPositionTpe: Type = getType(tq"$RpcPackage.ParamPosition")
+  val ParamFlagsTpe: Type = getType(tq"$RpcPackage.ParamFlags")
 
   val NothingTpe: Type = typeOf[Nothing]
   val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]

@@ -51,11 +51,11 @@ object NewRawRpc extends RawRpcCompanion[NewRawRpc] {
 
 @methodTag[RestMethod, RestMethod]
 @paramTag[DummyParamTag, untagged]
-case class NewRpcMetadata[T: ClassTag](
+case class NewRpcMetadata[T: TypeName](
   @verbatim procedures: Map[String, FireMetadata],
   functions: Map[String, CallMetadata[_]],
   getters: Map[String, GetterMetadata[_]],
-  @tagged[POST] posters: Map[String, PostMetadata[_]]
+  @tagged[POST] posters: Map[String, PostMetadata[_]],
 )
 object NewRpcMetadata extends RpcMetadataCompanion[NewRpcMetadata]
 
@@ -76,10 +76,16 @@ case class GetterMetadata[T](
 ) extends TypedMetadata[T]
 
 case class PostMetadata[T: GenCodec](
+  @reify post: POST,
+  @reifyName name: String,
   @tagged[header] @multi @verbatim headers: Vector[ParameterMetadata[String]],
   @multi body: MLinkedHashMap[String, ParameterMetadata[_]]
 ) extends TypedMetadata[T]
 
 case class ParameterMetadata[T: GenCodec](
+  @reifyName sourceName: String,
+  @reifyName(rpcName = true) rpcName: String,
+  @reifyPosition pos: ParamPosition,
+  @reifyFlags flags: ParamFlags,
   @reify @multi renames: List[renamed]
 ) extends TypedMetadata[T]

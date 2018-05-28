@@ -3,8 +3,8 @@ package macros
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.reflect.ClassTag
 import scala.reflect.macros.{TypecheckException, blackbox}
+import scala.reflect.{ClassTag, classTag}
 import scala.util.control.NoStackTrace
 
 abstract class AbstractMacroCommons(val c: blackbox.Context) extends MacroCommons
@@ -75,16 +75,26 @@ trait MacroCommons { bundle =>
     def source: Symbol = aggregate.fold(directSource)(_.source)
     def tpe: Type = tree.tpe
 
-    def findArg(valSym: Symbol): Tree = tree match {
+    def findArg[T: ClassTag](valSym: Symbol, defaultValue: Option[T] = None): T = tree match {
       case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
         val clsTpe = tpt.tpe
         val params = primaryConstructorOf(clsTpe).typeSignature.paramLists.head
         ensure(params.size == args.size, s"Not a primary constructor call tree: $tree")
         val subSym = clsTpe.member(valSym.name)
-        ensure(subSym.isTerm && subSym.asTerm.isParamAccessor && (subSym :: subSym.overrides).contains(valSym),
+        ensure(subSym.isTerm && subSym.asTerm.isParamAccessor && withSuperSymbols(subSym).contains(valSym),
           s"Annotation $clsTpe must override $valSym with a constructor parameter")
         (params zip args)
-          .collectFirst { case (param, arg) if param.name == subSym.name => arg }
+          .collectFirst {
+            case (param, arg) if param.name == subSym.name => arg match {
+              case Literal(Constant(value: T)) => value
+              case t if param.asTerm.isParamWithDefault && t.symbol.isSynthetic &&
+                t.symbol.name.decodedName.toString.contains("$default$") =>
+                defaultValue.getOrElse(
+                  abort(s"(bug) no default value for $clsTpe parameter ${valSym.name} provided by macro"))
+              case _ =>
+                abort(s"Expected literal ${classTag[T].runtimeClass} as ${valSym.name} parameter of $clsTpe annotation")
+            }
+          }
           .getOrElse(abort(s"Could not find argument corresponding to constructor parameter ${subSym.name}"))
       case _ => abort(s"Not a primary constructor call tree: $tree")
     }
@@ -256,18 +266,20 @@ trait MacroCommons { bundle =>
   def withSuperSymbols(s: Symbol): Iterator[Symbol] = s match {
     case cs: ClassSymbol => cs.baseClasses.iterator
     case ms: MethodSymbol => (ms :: ms.overrides).iterator
-    case ps: TermSymbol if ps.isParameter && ps.owner.isMethod =>
-      val oms = ps.owner.asMethod
-      Option(oms).filter(_.isPrimaryConstructor).map(_.owner.asClass).filter(_.isCaseClass)
-        .flatMap(cc => alternatives(cc.toType.member(ps.name)).find(_.asTerm.isCaseAccessor))
-        .map(ca => Iterator(s) ++ withSuperSymbols(ca))
-        .getOrElse {
-          val paramListIdx = oms.paramLists.indexWhere(_.exists(_.name == ps.name))
-          val paramIdx = oms.paramLists(paramListIdx).indexWhere(_.name == ps.name)
-          withSuperSymbols(oms).map(_.asMethod.paramLists(paramListIdx)(paramIdx))
-        }
+    case ps: TermSymbol if ps.isParameter =>
+      // if this is a `val` constructor parameter, include `val` itself and its super symbols
+      accessorFor(ps).map(pa => Iterator(s) ++ withSuperSymbols(pa)).getOrElse {
+        val oms = ps.owner.asMethod
+        val paramListIdx = oms.paramLists.indexWhere(_.exists(_.name == ps.name))
+        val paramIdx = oms.paramLists(paramListIdx).indexWhere(_.name == ps.name)
+        withSuperSymbols(oms).map(_.asMethod.paramLists(paramListIdx)(paramIdx))
+      }
     case _ => Iterator(s)
   }
+
+  def accessorFor(cparam: Symbol): Option[Symbol] =
+    Option(cparam).filter(_.isParameter).map(_.owner.asMethod).filter(_.isPrimaryConstructor).map(_.owner.asClass)
+      .flatMap(cs => alternatives(cs.toType.member(cparam.name)).find(_.asTerm.isParamAccessor))
 
   def primaryConstructorOf(tpe: Type, problemClue: => String = ""): Symbol =
     alternatives(tpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor)
