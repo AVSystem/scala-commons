@@ -9,26 +9,26 @@ cancelable in Global := true
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
 // for binary compatibility checking
-val previousVersion = "1.25.0"
+val previousVersion = "1.27.3"
 
 val silencerVersion = "0.6"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.5"
-val scalacheckVersion = "1.13.5"
+val scalacheckVersion = "1.14.0"
 val jettyVersion = "9.3.23.v20180228"
-val mongoVersion = "3.6.3"
-val kafkaVersion = "0.11.0.1"
-val mongoScalaVersion = "2.2.1"
-val springVersion = "4.0.2.RELEASE"
+val mongoVersion = "3.7.0"
+val kafkaVersion = "1.1.0"
+val mongoScalaVersion = "2.3.0"
+val springVersion = "4.0.9.RELEASE"
 val typesafeConfigVersion = "1.3.3"
 val commonsIoVersion = "1.3.2"
-val scalaLoggingVersion = "3.8.0"
-val akkaVersion = "2.5.11"
+val scalaLoggingVersion = "3.9.0"
+val akkaVersion = "2.5.12"
 val monixVersion = "2.3.3"
-val mockitoVersion = "2.17.0"
-val circeVersion = "0.9.2"
-val upickleVersion = "0.6.2"
+val mockitoVersion = "2.18.3"
+val circeVersion = "0.9.3"
+val upickleVersion = "0.6.6"
 val scalajsBenchmarkVersion = "0.2.4"
 
 val commonSettings = Seq(
