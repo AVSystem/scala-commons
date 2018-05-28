@@ -54,39 +54,39 @@ class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
     case encls => isScalaClass(encls)
   }
 
-  private def injectDefaultValues(bd: BeanDefinition): Unit = {
-    val className = bd.getFactoryBeanName.opt getOrElse bd.getBeanClassName
-    loadClass(className).recoverToOpt[ClassNotFoundException].filter(isScalaClass).foreach { clazz =>
-      val usingConstructor = bd.getFactoryMethodName == null
-      val factoryExecs =
-        if (usingConstructor) clazz.getConstructors.toVector
-        else clazz.getMethods.iterator.filter(_.getName == bd.getFactoryMethodName).toVector
-      val factorySymbolName =
-        if (usingConstructor) "$lessinit$greater" else bd.getFactoryMethodName
+  private def injectDefaultValues(bd: BeanDefinition): Unit =
+    bd.getBeanClassName.opt.map(loadClass)
+      .recoverToOpt[ClassNotFoundException].flatten.filter(isScalaClass)
+      .foreach { clazz =>
+        val usingConstructor = bd.getFactoryMethodName == null
+        val factoryExecs =
+          if (usingConstructor) clazz.getConstructors.toVector
+          else clazz.getMethods.iterator.filter(_.getName == bd.getFactoryMethodName).toVector
+        val factorySymbolName =
+          if (usingConstructor) "$lessinit$greater" else bd.getFactoryMethodName
 
-      if (factoryExecs.size == 1) {
-        val constrVals = bd.getConstructorArgumentValues
-        val factoryExec = factoryExecs.head
-        val paramNames = factoryExec match {
-          case c: Constructor[_] => paramNameDiscoverer.getParameterNames(c)
-          case m: Method => paramNameDiscoverer.getParameterNames(m)
-        }
-        (0 until factoryExec.getParameterCount).foreach { i =>
-          def defaultValueMethod = clazz.getMethod(s"$factorySymbolName$$default$$${i + 1}")
-            .recoverToOpt[NoSuchMethodException].filter(m => Modifier.isStatic(m.getModifiers))
-          def specifiedNamed = paramNames != null &&
-            constrVals.getGenericArgumentValues.asScala.exists(_.getName == paramNames(i))
-          def specifiedIndexed =
-            constrVals.getIndexedArgumentValues.get(i) != null
-          if (!specifiedNamed && !specifiedIndexed) {
-            defaultValueMethod.foreach { dvm =>
-              constrVals.addIndexedArgumentValue(i, dvm.invoke(null))
+        if (factoryExecs.size == 1) {
+          val constrVals = bd.getConstructorArgumentValues
+          val factoryExec = factoryExecs.head
+          val paramNames = factoryExec match {
+            case c: Constructor[_] => paramNameDiscoverer.getParameterNames(c)
+            case m: Method => paramNameDiscoverer.getParameterNames(m)
+          }
+          (0 until factoryExec.getParameterCount).foreach { i =>
+            def defaultValueMethod = clazz.getMethod(s"$factorySymbolName$$default$$${i + 1}")
+              .recoverToOpt[NoSuchMethodException].filter(m => Modifier.isStatic(m.getModifiers))
+            def specifiedNamed = paramNames != null &&
+              constrVals.getGenericArgumentValues.asScala.exists(_.getName == paramNames(i))
+            def specifiedIndexed =
+              constrVals.getIndexedArgumentValues.get(i) != null
+            if (!specifiedNamed && !specifiedIndexed) {
+              defaultValueMethod.foreach { dvm =>
+                constrVals.addIndexedArgumentValue(i, dvm.invoke(null))
+              }
             }
           }
         }
       }
-    }
-  }
 
   def postProcessBeanFactory(beanFactory: ConfigurableListableBeanFactory): Unit = ()
 }
