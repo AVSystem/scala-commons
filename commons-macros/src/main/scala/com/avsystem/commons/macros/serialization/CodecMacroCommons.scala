@@ -12,6 +12,7 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   final val SerializationPkg = q"$CommonsPkg.serialization"
   final val NameAnnotType = getType(tq"$SerializationPkg.name")
   final val NameAnnotNameSym = NameAnnotType.member(TermName("name"))
+  final val WhenAbsentAnnotType = getType(tq"$SerializationPkg.whenAbsent[_]")
   final val JavaInteropObj = q"$CommonsPkg.jiop.JavaInterop"
   final val JListObj = q"$JavaInteropObj.JList"
   final val JListCls = tq"$JavaInteropObj.JList"

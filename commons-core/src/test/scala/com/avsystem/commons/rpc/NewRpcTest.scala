@@ -4,12 +4,14 @@ package rpc
 import com.github.ghik.silencer.silent
 
 trait SomeBase {
+  def difolt: Boolean = true
+
   @POST def postit(arg: String, @header("X-Bar") bar: String, int: Int, @header("X-Foo") foo: String): String
 }
 
 trait NamedVarargs extends SomeBase {
   def varargsMethod(krap: String, dubl: Double)(czy: Boolean, @renamed(42, "nejm") ints: Int*): Future[Unit]
-  def defaultValueMethod(int: Int = 0, bul: Boolean): Future[Unit]
+  def defaultValueMethod(int: Int = 0, @whenAbsent(difolt) bul: Boolean): Future[Unit]
   def flames(arg: String, otherArg: => Int, varargsy: Double*): Unit
   def overload(int: Int): Unit
   def overload: NamedVarargs

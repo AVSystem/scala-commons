@@ -19,6 +19,8 @@ trait InnerRPC {
 object InnerRPC extends DummyRPC.RPCCompanion[InnerRPC]
 
 trait TestRPC {
+  def defaultNum: Int = 42
+
   @silent
   def handle: Unit
 
@@ -30,9 +32,9 @@ trait TestRPC {
   def doStuff(yes: Boolean): Future[String]
 
   @rpcName("doStuffInt")
-  def doStuff(num: Int): Unit
+  def doStuff(@whenAbsent(defaultNum) num: Int): Unit
 
-  def takeCC(r: Record): Unit
+  def takeCC(r: Record = Record(-1, "_")): Unit
 
   def srslyDude(): Unit
 
@@ -71,14 +73,13 @@ object TestRPC extends DummyRPC.RPCCompanion[TestRPC] {
       onProcedure("handle", Nil)
 
     def takeCC(r: Record): Unit =
-      onProcedure("recordCC", List(r))
+      onProcedure("takeCC", List(r))
 
     def srslyDude(): Unit =
       onProcedure("srslyDude", Nil)
 
     def innerRpc(name: String): InnerRPC = {
-      onInvocation("innerRpc", List(name), None)
-      new InnerRPC {
+      onGet("innerRpc", List(name), new InnerRPC {
         def func(arg: Int): Future[String] =
           onCall("innerRpc.func", List(arg), "innerRpc.funcResult")
 
@@ -90,7 +91,7 @@ object TestRPC extends DummyRPC.RPCCompanion[TestRPC] {
 
         def indirectRecursion() =
           outer
-      }
+      })
     }
   }
 }

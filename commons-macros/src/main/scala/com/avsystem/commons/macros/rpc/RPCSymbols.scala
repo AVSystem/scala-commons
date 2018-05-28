@@ -103,7 +103,7 @@ trait RPCSymbols { this: RPCMacroCommons =>
       annot(baseTag).fold(defaultTag)(_.tpe)
 
     lazy val rpcName: String =
-      annot(RpcNameType).fold(nameStr)(_.findArg[String](RpcNameNameSym))
+      annot(RpcNameAT).fold(nameStr)(_.findArg[String](RpcNameNameSym))
   }
 
   abstract class RpcTrait(val symbol: Symbol) extends RpcSymbol {
@@ -217,8 +217,27 @@ trait RPCSymbols { this: RPCMacroCommons =>
     def shortDescription = "real parameter"
     def description = s"$shortDescription $nameStr of ${owner.description}"
 
+    val whenAbsent: Tree = annot(WhenAbsentAT).fold(EmptyTree) { annot =>
+      val annotatedDefault = annot.tree.children.tail.head
+      if (!(annotatedDefault.tpe <:< actualType)) {
+        reportProblem(s"expected value of type $actualType in @whenAbsent annotation, got ${annotatedDefault.tpe.widen}")
+      }
+      val transformer = new Transformer {
+        override def transform(tree: Tree): Tree = tree match {
+          case Super(t@This(_), _) if !enclosingClasses.contains(t.symbol) =>
+            reportProblem(s"illegal super-reference in @whenAbsent annotation")
+          case This(_) if tree.symbol == owner.owner.symbol => q"${owner.owner.safeName}"
+          case This(_) if !enclosingClasses.contains(tree.symbol) =>
+            reportProblem(s"illegal this-reference in @whenAbsent annotation")
+          case t => super.transform(t)
+        }
+      }
+      transformer.transform(annotatedDefault)
+    }
+
     def defaultValueTree: Tree =
-      if (symbol.asTerm.isParamWithDefault) {
+      if (whenAbsent != EmptyTree) c.untypecheck(whenAbsent)
+      else if (symbol.asTerm.isParamWithDefault) {
         val prevListParams = owner.realParams.take(index - indexInList).map(rp => q"${rp.safeName}")
         val prevListParamss = List(prevListParams).filter(_.nonEmpty)
         q"${owner.owner.safeName}.${TermName(s"${owner.encodedNameStr}$$default$$${index + 1}")}(...$prevListParamss)"

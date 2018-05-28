@@ -262,7 +262,7 @@ class GenCodecTest extends CodecTestBase {
   class OnlyVarargsCaseClassLike(val strings: Seq[String]) extends Wrapper[OnlyVarargsCaseClassLike](strings)
   object OnlyVarargsCaseClassLike {
     def apply(strings: String*): OnlyVarargsCaseClassLike = new OnlyVarargsCaseClassLike(strings)
-    def unapplySeq(vccl: OnlyVarargsCaseClassLike): Opt[(Seq[String])] = vccl.strings.opt
+    def unapplySeq(vccl: OnlyVarargsCaseClassLike): Opt[Seq[String]] = vccl.strings.opt
     implicit val codec: GenCodec[OnlyVarargsCaseClassLike] = GenCodec.materialize[OnlyVarargsCaseClassLike]
   }
 
@@ -278,7 +278,7 @@ class GenCodecTest extends CodecTestBase {
     )
   }
 
-  case class HasDefaults(@transientDefault int: Int = 42, str: String)
+  case class HasDefaults(@transientDefault int: Int = 42, @transientDefault @whenAbsent("dafuq") str: String = "kek")
   object HasDefaults {
     implicit val codec: GenCodec[HasDefaults] = GenCodec.materialize[HasDefaults]
   }
@@ -287,6 +287,7 @@ class GenCodecTest extends CodecTestBase {
     testWriteReadAndAutoWriteRead(HasDefaults(str = "lol"), Map("str" -> "lol"))
     testWriteReadAndAutoWriteRead(HasDefaults(43, "lol"), Map("int" -> 43, "str" -> "lol"))
     testWriteReadAndAutoWriteRead(HasDefaults(str = null), Map("str" -> null))
+    testWriteReadAndAutoWriteRead(HasDefaults(str = "dafuq"), Map())
   }
 
   case class Node[T](value: T, children: List[Node[T]] = Nil)

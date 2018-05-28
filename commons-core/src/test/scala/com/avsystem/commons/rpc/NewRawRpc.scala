@@ -55,7 +55,7 @@ case class NewRpcMetadata[T: TypeName](
   @verbatim procedures: Map[String, FireMetadata],
   functions: Map[String, CallMetadata[_]],
   getters: Map[String, GetterMetadata[_]],
-  @tagged[POST] posters: Map[String, PostMetadata[_]],
+  @tagged[POST] posters: Map[String, PostMetadata[_]]
 )
 object NewRpcMetadata extends RpcMetadataCompanion[NewRpcMetadata]
 

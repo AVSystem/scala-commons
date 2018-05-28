@@ -29,8 +29,10 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       rawRpc.fire("doStuff")(List(42, "omgsrsly", Some(true)))
       assert("doStuffResult" === get(rawRpc.call("doStuffBoolean")(List(true))))
       rawRpc.fire("doStuffInt")(List(5))
+      rawRpc.fire("doStuffInt")(Nil)
       rawRpc.fire("handleMore")(Nil)
       rawRpc.fire("handle")(Nil)
+      rawRpc.fire("takeCC")(Nil)
       rawRpc.fire("srslyDude")(Nil)
       rawRpc.get("innerRpc")(List("innerName")).fire("proc")(Nil)
       assert("innerRpc.funcResult" === get(rawRpc.get("innerRpc")(List("innerName")).call("func")(List(42))))
@@ -40,8 +42,10 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
         ("doStuff", List(42, "omgsrsly", Some(true))),
         ("doStuffBoolean", List(true)),
         ("doStuffInt", List(5)),
+        ("doStuffInt", List(42)),
         ("handleMore", Nil),
         ("handle", Nil),
+        ("takeCC", List(Record(-1, "_"))),
         ("srslyDude", Nil),
         ("innerRpc", List("innerName")),
         ("innerRpc.proc", Nil),

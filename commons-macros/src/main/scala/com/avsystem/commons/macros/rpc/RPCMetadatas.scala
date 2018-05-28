@@ -277,16 +277,23 @@ trait RPCMetadatas { this: RPCMacroCommons with RPCSymbols with RPCMappings =>
       reportProblem(s"${arity.collectedType} is not a subtype of StaticAnnotation")
     }
 
+    def validated(annot: Annot): Annot = {
+      if (containsInaccessibleThises(annot.tree)) {
+        reportProblem(s"reified annotation must not contain this-references inaccessible outside RPC trait")
+      }
+      annot
+    }
+
     def materializeFor(rpcSym: Real): Tree = arity match {
       case RpcArity.Single(annotTpe) =>
-        rpcSym.annot(annotTpe).map(a => c.untypecheck(a.tree)).getOrElse {
+        rpcSym.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)).getOrElse {
           val msg = s"${rpcSym.problemStr}: cannot materialize value for $description: no annotation of type $annotTpe found"
           q"$RpcPackage.RpcUtils.compilationError(${StringLiteral(msg, rpcSym.pos)})"
         }
       case RpcArity.Optional(annotTpe) =>
-        mkOptional(rpcSym.annot(annotTpe).map(a => c.untypecheck(a.tree)))
+        mkOptional(rpcSym.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)))
       case RpcArity.Multi(annotTpe, _) =>
-        mkMulti(allAnnotations(rpcSym.symbol, annotTpe).map(a => c.untypecheck(a.tree)))
+        mkMulti(allAnnotations(rpcSym.symbol, annotTpe).map(a => c.untypecheck(validated(a).tree)))
     }
 
     def tryMaterializeFor(rpcSym: Real): Res[Tree] =

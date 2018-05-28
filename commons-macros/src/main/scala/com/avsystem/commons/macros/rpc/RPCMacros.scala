@@ -10,8 +10,6 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   import c.universe._
 
   val RpcPackage = q"$CommonsPkg.rpc"
-  val RpcNameType: Type = getType(tq"$RpcPackage.rpcName")
-  val RpcNameNameSym: Symbol = RpcNameType.member(TermName("name"))
   val AsRealCls = tq"$RpcPackage.AsReal"
   val AsRealObj = q"$RpcPackage.AsReal"
   val AsRawCls = tq"$RpcPackage.AsRaw"
@@ -22,6 +20,9 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val CanBuildFromCls = tq"$CollectionPkg.generic.CanBuildFrom"
   val ParamPositionObj = q"$RpcPackage.ParamPosition"
 
+  val RpcNameAT: Type = getType(tq"$RpcPackage.rpcName")
+  val RpcNameNameSym: Symbol = RpcNameAT.member(TermName("name"))
+  val WhenAbsentAT: Type = getType(tq"$RpcPackage.whenAbsent[_]")
   val RpcArityAT: Type = getType(tq"$RpcPackage.RpcArity")
   val SingleArityAT: Type = getType(tq"$RpcPackage.single")
   val OptionalArityAT: Type = getType(tq"$RpcPackage.optional")
@@ -62,6 +63,11 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
     }.foreach { companion =>
       registerImplicitImport(q"import $companion.implicits._")
     }
+
+  def containsInaccessibleThises(tree: Tree): Boolean = tree.exists {
+    case t@This(_) if !enclosingClasses.contains(t.symbol) => true
+    case _ => false
+  }
 }
 
 final class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx)

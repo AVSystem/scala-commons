@@ -120,7 +120,17 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree =
     forApplyUnapply(tpe, companionOf(tpe).map(c.typecheck(_)).getOrElse(EmptyTree), apply, unapply, params)
 
-  def forApplyUnapply(tpe: Type, companion: Tree, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
+  def forApplyUnapply(tpe: Type, companion: Tree, apply: Symbol, unapply: Symbol, applyParams: List[ApplyParam]): Tree = {
+    val params = applyParams.map { p =>
+      findAnnotation(p.sym, WhenAbsentAnnotType).fold(p) { annot =>
+        val newDefault = annot.tree.children.tail.head
+        if (!(newDefault.tpe <:< p.valueType)) {
+          abortAt(s"expected value of type ${p.valueType} in @whenAbsent annotation, got ${newDefault.tpe.widen}", p.sym.pos)
+        }
+        p.copy(defaultValue = c.untypecheck(newDefault))
+      }
+    }
+
     val dtpe = tpe.dealias
     val tcTpe = typeClassInstance(dtpe)
     val generated = generatedMembers(dtpe)
