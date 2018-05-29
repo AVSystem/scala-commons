@@ -15,6 +15,8 @@ object DummyRPC extends StandardRPCFramework {
 
 case class TypeName[T](name: String)
 object TypeName {
+  def get[T](implicit tn: TypeName[T]): String = tn.name
+
   implicit def typeName[T: ClassTag]: TypeName[T] =
     TypeName(classTag[T].runtimeClass.getSimpleName)
 }

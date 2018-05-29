@@ -253,7 +253,7 @@ The macro will only compile if it can find a `GenCodec` instance for every field
 
 In general, the serialization framework requires that the serialized representation retains order of object fields and during deserialization supplies them in exactly the same order as they were written during serialization. This is usually a reasonable assumption because most serialization formats are either textual, binary or stream-like (the word "serialization" itself indicates a sequential order). 
 
-The codec materialized for case class guarantees that the fields are written in the order of their declaration in constructor. However, during deserialization the codec is lenient and does not require that the order of fields is the same as during serialization. It will successfully deserialize the case class as long as all the fields are present in the serialized format (in any order) or have a default value defined. Any superfluous fields will be simply ignored. This allows the programmer to refactor the case class without breaking compatibility with serialization format - fields may be reordered and removed. New fields may also be added, as long as they have a default value defined.
+The codec materialized for case class guarantees that the fields are written in the order of their declaration in constructor. However, during deserialization the codec is lenient and does not require that the order of fields is the same as during serialization. It will successfully deserialize the case class as long as all the fields are present in the serialized format (in any order) or have a default value defined (either as Scala-level default parameter value or with [`@whenAbsent`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/whenAbsent.html) annotation). Any superfluous fields will be simply ignored. This allows the programmer to refactor the case class without breaking compatibility with serialization format - fields may be reordered and removed. New fields may also be added, as long as they have a default value defined.
 
 The way macro materializes the codec may be customized with annotations:
 
@@ -264,6 +264,11 @@ The way macro materializes the codec may be customized with annotations:
   ```
   
   This is useful in particular when you want to refactor your case class and change the name of some field without changing the serialized format (in order to remain backwards compatible). Note that the annotation (like all other annotations used to customize serialization) may also be inherited from implemented/overridden member.
+
+* Using [`@whenAbsent`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/whenAbsent.html) you can provide a fallback value for case class field. This value
+  is used during deserialization when the field is missing in the encoded data. Alternatively to using `@whenAbsent`, you can simply provide Scala-level default parameter value and it
+  will also be picked up as fallback value for deserialization. However, `@whenAbsent` is better when you want the default value to be used *only* during deserialization, without
+  affecting programming interface.
   
 * Using [`@generated`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/generated.html) annotation on some additional members of your case class you can instruct the codec to serialize some additional fields into the resulting format. This can be useful when some case class field has been removed or converted to a regular `val` or `def` but we want the serialized format to be backwards compatible. Sometimes it may also be necessary to generate additional fields for the purpose of database indexing.
   
@@ -275,7 +280,7 @@ The way macro materializes the codec may be customized with annotations:
   
   Generated members may also be customized with `@name` annotation. During serialization, generated fields are emitted after all the "regular" fields have been written. Unlike for the regular fields, there is no guarantee about the order of generated fields in the serialized format. During deserialization, generated fields are simply ignored.
   
-* If one of the fields in your case class has a default value, you might want to not serialize that field if its value is the default one. To instruct the codec to omit default values, [`@transientDefault`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transientDefault.html) annotation can be used.
+* If one of the fields in your case class has a default value (in Scala or with `@whenAbsent`), you might want to not serialize that field if its value is the default one. To instruct the codec to omit default values, [`@transientDefault`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transientDefault.html) annotation can be used.
 
   ```scala
   case class Person(name: String, birthYear: Int, @transientDefault planet: String = "Earth")
@@ -544,18 +549,18 @@ object Key {
 
 ### Safely introducing changes to serialized classes (retaining backwards compatibility)
 
-1. Changing order of fields in case class is always safe, as the order of fields in serialized objects doesn't matter
-1. Adding a field to case class is safe as long as you provide default value for that field. Deserializer will use that 
-   value if field is missing in the serialized data.
-1. Removing a field from case class is always safe.
-1. Changing name of case class field is safe as long as you annotate that field with `@name` annotation containing the old name.
+1. Changing order of fields in case class is always safe - case class decoding is field order agnostic.
+1. Adding a field to case class is safe as long as you provide default value for that field (Scala-level or with `@whenAbsent`).
+   Deserializer will use that value if field is missing in the serialized data.
+1. Removing a field from case class is always safe - case class codecs simply skip unknown fields.
+1. Changing name of case class field is safe as long as you annotate that field with `@name` annotation to retain the old name in serialized format.
 1. Changing the type of case class field is safe as long as you ensure that both old and new type have the same representation. 
    The `@transparent` annotation may be useful when changing a type into some type that wraps the original type.
 1. Changing default value of case class field is always safe (i.e. will not crash), but already serialized data will still 
    contain old default value (unless you use `@transientDefault` annotation).
 1. Adding classes or objects to sealed hierarchy is always safe.
 1. Changing name of an object or class in sealed hierarchy is safe as long as you annotate that class/object with `@name` 
-   annotation containing the old name.
+   annotation to retain the old name in serialized format.
 1. Lifting a case class into a sealed hierarchy is safe as long as the flat format is used for the sealed 
    hierarchy and existing case class remains one of the cases in the sealed hierarchy, annotated as `@defaultCase`.
 

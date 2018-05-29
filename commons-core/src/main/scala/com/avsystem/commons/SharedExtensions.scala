@@ -1,5 +1,7 @@
 package com.avsystem.commons
 
+import java.util.regex.Matcher
+
 import com.avsystem.commons.SharedExtensions._
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc.{Boxing, Unboxing}
@@ -178,6 +180,9 @@ object SharedExtensions extends SharedExtensions {
 
     def ensurePrefix(prefix: String): String =
       if (str.startsWith(prefix)) str else prefix + str
+
+    def indent(ind: String): String =
+      str.replaceAll("(^|\\n)\\n*(?!$)", "$0" + Matcher.quoteReplacement(ind))
   }
 
   class IntOps(private val int: Int) extends AnyVal {

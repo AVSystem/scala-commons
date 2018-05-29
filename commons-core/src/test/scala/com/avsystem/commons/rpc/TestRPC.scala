@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.serialization.HasGenCodec
+import com.avsystem.commons.serialization.{HasGenCodec, whenAbsent}
 import com.github.ghik.silencer.silent
 
 case class Record(i: Int, fuu: String)

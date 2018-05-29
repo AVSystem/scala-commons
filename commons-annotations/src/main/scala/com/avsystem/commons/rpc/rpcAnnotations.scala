@@ -23,8 +23,6 @@ sealed trait RawParamAnnotation extends RawRpcAnnotation
   */
 class rpcName(val name: String) extends RpcAnnotation
 
-class whenAbsent[+T](v: => T) extends serialization.whenAbsent[T](v)
-
 /**
   * Base trait for RPC tag annotations. Tagging gives more direct control over how real methods
   * and their parameters are matched against raw methods and their parameters.
