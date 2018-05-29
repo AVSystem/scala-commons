@@ -65,9 +65,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     addParams(q"$prefix.$sym", sym.typeSignature.paramLists)
   }
 
-  private def mkNativeArray[T: Liftable](elemTpe: Tree, elems: Seq[T]): Tree =
+  private def mkArray[T: Liftable](elemTpe: Tree, elems: Seq[T]): Tree =
     q"""
-       val res = $CommonsPackage.misc.CrossUtils.newNativeArray[$elemTpe](${elems.size})
+       val res = new $ScalaPkg.Array[$elemTpe](${elems.size})
        ..${elems.zipWithIndex.map({ case (e, i) => q"res($i) = $e" })}
        res
      """
@@ -257,11 +257,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         new $SerializationPkg.$baseClass[$dtpe](
           ${dtpe.toString},
           ${typeOf[Null] <:< dtpe},
-          ${mkNativeArray(StringCls, params.map(p => nameBySym(p.sym)))}
+          ${mkArray(StringCls, params.map(p => nameBySym(p.sym)))}
         ) {
           def dependencies = {
             ..$reusedDeps
-            ${mkNativeArray(tq"$GenCodecCls[_]", depsWithReusing)}
+            ${mkArray(tq"$GenCodecCls[_]", depsWithReusing)}
           }
           ..${generated.collect({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
           def instantiate(fieldValues: $SerializationPkg.FieldValues) =
@@ -289,10 +289,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       new $SerializationPkg.NestedSealedHierarchyCodec[$tpe](
         ${tpe.toString},
         ${typeOf[Null] <:< tpe},
-        ${mkNativeArray(StringCls, subtypes.map(st => targetNameBySym(st.sym)))},
-        ${mkNativeArray(tq"$ClassCls[_ <: $tpe]", subtypes.map(st => q"classOf[${st.tpe}]"))}
+        ${mkArray(StringCls, subtypes.map(st => targetNameBySym(st.sym)))},
+        ${mkArray(tq"$ClassCls[_ <: $tpe]", subtypes.map(st => q"classOf[${st.tpe}]"))}
       ) {
-        def caseDependencies = ${mkNativeArray(tq"$GenCodecCls[_ <: $tpe]", subtypes.map(_.instance))}
+        def caseDependencies = ${mkArray(tq"$GenCodecCls[_ <: $tpe]", subtypes.map(_.instance))}
       }
      """
   }
@@ -401,16 +401,16 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       new $SerializationPkg.FlatSealedHierarchyCodec[$tpe](
         ${tpe.toString},
         ${typeOf[Null] <:< tpe},
-        ${mkNativeArray(StringCls, caseInfos.map(_.caseName))},
-        ${mkNativeArray(tq"$ClassCls[_ <: $tpe]", caseInfos.map(_.classOf))},
-        ${mkNativeArray(StringCls, oooParamNames)},
+        ${mkArray(StringCls, caseInfos.map(_.caseName))},
+        ${mkArray(tq"$ClassCls[_ <: $tpe]", caseInfos.map(_.classOf))},
+        ${mkArray(StringCls, oooParamNames)},
         $SetObj(..$caseDependentFieldNames),
         $caseFieldName,
         ${defaultCase.map(caseInfos.indexOf).getOrElse(-1)},
         ${defaultCase.exists(_.transientCase)}
       ) {
-        def caseDependencies = ${mkNativeArray(tq"$GenCodecObj.OOOFieldsObjectCodec[_ <: $tpe]", caseInfos.map(_.depInstance))}
-        def oooDependencies = ${mkNativeArray(tq"$GenCodecCls[_]", oooParamNames.map(oooDependency))}
+        def caseDependencies = ${mkArray(tq"$GenCodecObj.OOOFieldsObjectCodec[_ <: $tpe]", caseInfos.map(_.depInstance))}
+        def oooDependencies = ${mkArray(tq"$GenCodecCls[_]", oooParamNames.map(oooDependency))}
       }
     """
   }

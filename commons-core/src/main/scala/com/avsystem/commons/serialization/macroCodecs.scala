@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.misc.CrossUtils.NativeArray
 import com.avsystem.commons.serialization.GenCodec.{DefaultCaseField, NullSafeCodec, OOOFieldsObjectCodec, ObjectCodec, ReadFailure, WriteFailure}
 
 import scala.annotation.tailrec
@@ -18,10 +17,10 @@ class SingletonCodec[T <: Singleton](
 abstract class ApplyUnapplyCodec[T](
   protected val typeRepr: String,
   val nullable: Boolean,
-  fieldNames: NativeArray[String]
+  fieldNames: Array[String]
 ) extends OOOFieldsObjectCodec[T] with ErrorReportingCodec[T] {
 
-  protected def dependencies: NativeArray[GenCodec[_]]
+  protected def dependencies: Array[GenCodec[_]]
   protected def instantiate(fieldValues: FieldValues): T
 
   private[this] lazy val deps = dependencies
@@ -48,7 +47,7 @@ abstract class ApplyUnapplyCodec[T](
 abstract class ProductCodec[T <: Product](
   typeRepr: String,
   nullable: Boolean,
-  fieldNames: NativeArray[String]
+  fieldNames: Array[String]
 ) extends ApplyUnapplyCodec[T](typeRepr, nullable, fieldNames) {
   final def writeObject(output: ObjectOutput, value: T): Unit = {
     var i = 0
@@ -74,8 +73,8 @@ abstract class TransparentCodec[T, U](
 abstract class SealedHierarchyCodec[T](
   protected val typeRepr: String,
   val nullable: Boolean,
-  caseNames: NativeArray[String],
-  cases: NativeArray[Class[_ <: T]]
+  caseNames: Array[String],
+  cases: Array[Class[_ <: T]]
 ) extends ObjectCodec[T] with ErrorReportingCodec[T] {
 
   @tailrec protected final def caseIndexByValue(value: T, idx: Int = 0): Int =
@@ -92,11 +91,11 @@ abstract class SealedHierarchyCodec[T](
 abstract class NestedSealedHierarchyCodec[T](
   typeRepr: String,
   nullable: Boolean,
-  caseNames: NativeArray[String],
-  cases: NativeArray[Class[_ <: T]]
+  caseNames: Array[String],
+  cases: Array[Class[_ <: T]]
 ) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
 
-  protected def caseDependencies: NativeArray[GenCodec[_ <: T]]
+  protected def caseDependencies: Array[GenCodec[_ <: T]]
 
   private[this] lazy val caseDeps = caseDependencies
 
@@ -120,17 +119,17 @@ abstract class NestedSealedHierarchyCodec[T](
 abstract class FlatSealedHierarchyCodec[T](
   typeRepr: String,
   nullable: Boolean,
-  caseNames: NativeArray[String],
-  cases: NativeArray[Class[_ <: T]],
-  oooFieldNames: NativeArray[String],
+  caseNames: Array[String],
+  cases: Array[Class[_ <: T]],
+  oooFieldNames: Array[String],
   caseDependentFieldNames: Set[String],
   override protected val caseFieldName: String,
   defaultCaseIdx: Int,
   defaultCaseTransient: Boolean
 ) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
 
-  protected def oooDependencies: NativeArray[GenCodec[_]]
-  protected def caseDependencies: NativeArray[OOOFieldsObjectCodec[_ <: T]]
+  protected def oooDependencies: Array[GenCodec[_]]
+  protected def caseDependencies: Array[OOOFieldsObjectCodec[_ <: T]]
 
   private[this] lazy val oooDeps = oooDependencies
   private[this] lazy val caseDeps = caseDependencies

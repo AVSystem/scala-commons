@@ -1,24 +1,23 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.misc.CrossUtils._
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 import scala.annotation.tailrec
 
 object FieldValues {
-  final val Empty = new FieldValues(newNativeArray(0), newNativeArray(0))
+  final val Empty = new FieldValues(new Array(0), new Array(0))
   private object NullMarker
 }
 final class FieldValues(
-  private val fieldNames: NativeArray[String], codecs: NativeArray[GenCodec[_]], ofWhat: OptArg[String] = OptArg.Empty) {
+  private val fieldNames: Array[String], codecs: Array[GenCodec[_]], ofWhat: OptArg[String] = OptArg.Empty) {
 
   @tailrec private def fieldIndex(fieldName: String, idx: Int): Int =
     if (idx >= fieldNames.length) -1
     else if (fieldNames(idx) == fieldName) idx
     else fieldIndex(fieldName, idx + 1)
 
-  private val values = newNativeArray[Any](fieldNames.length)
+  private val values = new Array[Any](fieldNames.length)
 
   import FieldValues._
 
