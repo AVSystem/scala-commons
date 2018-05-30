@@ -94,6 +94,7 @@ trait JettyRPCFramework extends StandardRPCFramework {
                   httpResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500)
               }
               async.complete()
+              throw t
           }
         case HttpMethod.PUT =>
           handlePut(cleanTarget, content)
