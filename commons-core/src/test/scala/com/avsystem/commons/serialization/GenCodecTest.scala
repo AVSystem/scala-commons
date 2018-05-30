@@ -145,16 +145,16 @@ class GenCodecTest extends CodecTestBase {
     testWriteReadAndAutoWriteRead(TransparentWrapper("something"), "something")
   }
 
-  case object Lol
   @transparent
-  case class TransparentWrapperWithDependency(value: Lol.type)
+  case class TransparentWrapperWithDependency(str: String)
   object TransparentWrapperWithDependency {
+    //order matters
     implicit val codec: GenCodec[TransparentWrapperWithDependency] = GenCodec.materialize
-    implicit val lolCodec: GenCodec[Lol.type] = GenCodec.materialize
+    implicit val stringCodec: GenCodec[String] = GenCodec.StringCodec
   }
 
   test("transparent wrapper with dependency test") {
-    testWriteReadAndAutoWriteRead(TransparentWrapperWithDependency(Lol), Map.empty)
+    testWriteReadAndAutoWriteRead(TransparentWrapperWithDependency("something"), "something")
   }
 
   case class StringId(id: String)
