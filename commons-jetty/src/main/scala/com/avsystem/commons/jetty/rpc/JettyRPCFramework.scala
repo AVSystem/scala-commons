@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets
 import com.avsystem.commons.rpc.StandardRPCFramework
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
+import com.typesafe.scalalogging.LazyLogging
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.client.api.Result
@@ -14,7 +15,7 @@ import org.eclipse.jetty.http.{HttpMethod, HttpStatus, MimeTypes}
 import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.server.{Handler, Request}
 
-object JettyRPCFramework extends StandardRPCFramework {
+object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   class RawValue(val s: String) extends AnyVal
 
   override type Reader[T] = GenCodec[T]
@@ -113,6 +114,7 @@ object JettyRPCFramework extends StandardRPCFramework {
               response.getWriter.write(responseContent.s)
             case Failure(t) =>
               response.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, t.getMessage)
+              logger.error("Failed to handle RPC call", t)
           }.andThenNow { case _ => async.complete() }
         case HttpMethod.PUT =>
           handlePut(call)
