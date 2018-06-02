@@ -26,19 +26,23 @@ case class PUT() extends RestMethod
 @methodTag[RestMethod, RestMethod]
 @paramTag[DummyParamTag, untagged]
 trait NewRawRpc {
+  def doSomething(arg: Double): String
+  @optional def doSomethingElse(arg: Double): String
+
+  @multi
   @verbatim def fire(name: String)(
     @optional @auxiliary ajdi: Opt[Int],
     @multi args: Map[String, String]): Unit
 
-  def call(name: String)(
+  @multi def call(name: String)(
     @tagged[renamed] @multi renamedArgs: => Map[String, String],
     @multi args: Map[String, String]): Future[String]
 
-  def get(name: String)(
+  @multi def get(name: String)(
     @multi args: List[String]): NewRawRpc
 
-  @tagged[POST]
-  def post(name: String)(
+  @multi
+  @tagged[POST] def post(name: String)(
     @tagged[header] @multi @verbatim headers: Vector[String],
     @multi body: MLinkedHashMap[String, String]): String
 }
@@ -52,15 +56,18 @@ object NewRawRpc extends RawRpcCompanion[NewRawRpc] {
 @methodTag[RestMethod, RestMethod]
 @paramTag[DummyParamTag, untagged]
 case class NewRpcMetadata[T: TypeName](
-  @verbatim procedures: Map[String, FireMetadata],
-  functions: Map[String, CallMetadata[_]],
-  getters: Map[String, GetterMetadata[_]],
-  @tagged[POST] posters: Map[String, PostMetadata[_]]
+  doSomething: DoSomethingSignature,
+  @optional doSomethingElse: Opt[DoSomethingSignature],
+  @multi @verbatim procedures: Map[String, FireMetadata],
+  @multi functions: Map[String, CallMetadata[_]],
+  @multi getters: Map[String, GetterMetadata[_]],
+  @multi @tagged[POST] posters: Map[String, PostMetadata[_]]
 ) {
   def repr(open: List[NewRpcMetadata[_]]): String =
     if (open.contains(this)) "<recursive>" else {
       val membersStr =
-        procedures.iterator.map({ case (n, v) => s"$n -> ${v.repr}" }).mkString("PROCEDURES:\n", "\n", "") + "\n" +
+        s"DO SOMETHING ELSE: ${doSomethingElse.nonEmpty}\n" +
+          procedures.iterator.map({ case (n, v) => s"$n -> ${v.repr}" }).mkString("PROCEDURES:\n", "\n", "") + "\n" +
           functions.iterator.map({ case (n, v) => s"$n -> ${v.repr}" }).mkString("FUNCTIONS:\n", "\n", "") + "\n" +
           posters.iterator.map({ case (n, v) => s"$n -> ${v.repr}" }).mkString("POSTERS:\n", "\n", "") + "\n" +
           getters.iterator.map({ case (n, v) => s"$n -> ${v.repr(this :: open)}" }).mkString("GETTERS:\n", "\n", "")
@@ -70,6 +77,9 @@ case class NewRpcMetadata[T: TypeName](
   override def toString: String = repr(Nil)
 }
 object NewRpcMetadata extends RpcMetadataCompanion[NewRpcMetadata]
+
+case class DoSomethingSignature(arg: ArgMetadata) extends TypedMetadata[String]
+case class ArgMetadata() extends TypedMetadata[Double]
 
 trait MethodMetadata[T] {
   @reifyName def name: String

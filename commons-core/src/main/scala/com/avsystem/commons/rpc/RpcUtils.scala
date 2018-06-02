@@ -13,5 +13,8 @@ object RpcUtils {
   def unknownRpc(rpcName: String, rawMethodName: String): Nothing =
     throw new IllegalArgumentException(s"RPC $rpcName does not map to raw method $rawMethodName")
 
+  def missingOptionalRpc(rawMethodName: String): Nothing =
+    throw new IllegalArgumentException(s"no matching real method for optional raw method $rawMethodName")
+
   def compilationError(error: String): Nothing = macro MiscMacros.compilationError
 }

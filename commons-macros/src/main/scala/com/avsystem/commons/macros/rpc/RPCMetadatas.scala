@@ -36,31 +36,29 @@ trait RPCMetadatas { this: RPCMacroCommons with RPCSymbols with RPCMappings =>
   }
 
   class MethodMetadataParam(owner: RpcMetadataConstructor, symbol: Symbol)
-    extends MetadataParam[RealRpcTrait](owner, symbol) with RawRpcSymbol {
+    extends MetadataParam[RealRpcTrait](owner, symbol) with RawRpcSymbol with ArityParam {
+
+    def allowMulti: Boolean = true
+    def allowNamedMulti: Boolean = true
+    def allowListedMulti: Boolean = false
 
     def baseTag: Type = owner.baseMethodTag
     def defaultTag: Type = owner.defaultMethodTag
 
     val verbatimResult: Boolean =
-      annot(RpcEncodingAT).exists(_.tpe <:< VerbatimAT)
+      annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
 
-    if (!(actualType <:< MetadataPFType)) {
-      reportProblem(s"its type must be a subtype of PartialFunction[String, TypedMetadata[_]]")
+    if (!(arity.collectedType <:< TypedMetadataType)) {
+      reportProblem(s"method metadata type must be a subtype TypedMetadata[_]")
     }
 
-    val perMethodType: Type =
-      actualType.baseType(PartialFunctionClass).typeArgs(1)
-
     val List(baseParamTag, defaultParamTag) =
-      annot(ParamTagAT).orElse(findAnnotation(perMethodType.typeSymbol, ParamTagAT))
+      annot(ParamTagAT).orElse(findAnnotation(arity.collectedType.typeSymbol, ParamTagAT))
         .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
         .getOrElse(List(owner.baseParamTag, owner.defaultParamTag))
 
-    val canBuildFrom: TermName =
-      infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,$perMethodType),$actualType]")
-
     def mappingFor(realMethod: RealMethod): Res[MethodMetadataMapping] = for {
-      mdType <- actualMetadataType(perMethodType, realMethod, verbatimResult)
+      mdType <- actualMetadataType(arity.collectedType, realMethod, verbatimResult)
       tree <- new MethodMetadataConstructor(mdType, this).tryMaterializeFor(realMethod)
     } yield MethodMetadataMapping(realMethod, this, tree)
   }
@@ -86,13 +84,13 @@ trait RPCMetadatas { this: RPCMacroCommons with RPCSymbols with RPCMappings =>
     }
 
     def metadataFor(parser: ParamsParser): Res[Tree] = arity match {
-      case _: RpcArity.Single =>
+      case _: RpcParamArity.Single =>
         parser.extractSingle(this, metadataTree(_, 0))
-      case _: RpcArity.Optional =>
+      case _: RpcParamArity.Optional =>
         Ok(mkOptional(parser.extractOptional(this, metadataTree(_, 0))))
-      case RpcArity.Multi(_, true) =>
+      case RpcParamArity.Multi(_, true) =>
         parser.extractMulti(this, (rp, i) => metadataTree(rp, i).map(t => q"(${rp.rpcName}, $t)"), named = true).map(mkMulti(_))
-      case _: RpcArity.Multi =>
+      case _: RpcParamArity.Multi =>
         parser.extractMulti(this, metadataTree, named = false).map(mkMulti(_))
     }
   }
@@ -183,16 +181,21 @@ trait RPCMetadatas { this: RPCMacroCommons with RPCSymbols with RPCMappings =>
       val argDecls = paramLists.flatten.map {
         case dmp: DirectMetadataParam[RealRpcTrait] => dmp.localValueDecl(dmp.materializeFor(rpc))
         case mmp: MethodMetadataParam => mmp.localValueDecl {
-          val builderName = c.freshName(TermName("builder"))
-          val statements = mappingsByParam.getOrElse(mmp, Nil).iterator.map { mapping =>
-            q"$builderName += ((${mapping.realMethod.rpcName} -> ${mapping.tree}))"
-          }.toList
-          q"""
-            val $builderName = ${mmp.canBuildFrom}()
-            $builderName.sizeHint(${statements.size})
-            ..$statements
-            $builderName.result()
-           """
+          val mappings = mappingsByParam.getOrElse(mmp, Nil)
+          mmp.arity match {
+            case RpcParamArity.Single(_) => mappings match {
+              case Nil => abort(s"no real method found that would match ${mmp.description}")
+              case List(m) => m.tree
+              case _ => abort(s"multiple real methods match ${mmp.description}")
+            }
+            case RpcParamArity.Optional(_) => mappings match {
+              case Nil => mmp.mkOptional[Tree](None)
+              case List(m) => mmp.mkOptional(Some(m.tree))
+              case _ => abort(s"multiple real methods match ${mmp.description}")
+            }
+            case RpcParamArity.Multi(_, _) =>
+              mmp.mkMulti(mappings.map(m => q"(${m.realMethod.rpcName}, ${m.tree})"))
+          }
         }
       }
       constructorCall(argDecls)
@@ -272,6 +275,7 @@ trait RPCMetadatas { this: RPCMacroCommons with RPCSymbols with RPCMappings =>
 
     def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = false
+    def allowListedMulti: Boolean = true
 
     if (!(arity.collectedType <:< typeOf[StaticAnnotation])) {
       reportProblem(s"${arity.collectedType} is not a subtype of StaticAnnotation")
@@ -285,14 +289,14 @@ trait RPCMetadatas { this: RPCMacroCommons with RPCSymbols with RPCMappings =>
     }
 
     def materializeFor(rpcSym: Real): Tree = arity match {
-      case RpcArity.Single(annotTpe) =>
+      case RpcParamArity.Single(annotTpe) =>
         rpcSym.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)).getOrElse {
           val msg = s"${rpcSym.problemStr}: cannot materialize value for $description: no annotation of type $annotTpe found"
           q"$RpcPackage.RpcUtils.compilationError(${StringLiteral(msg, rpcSym.pos)})"
         }
-      case RpcArity.Optional(annotTpe) =>
+      case RpcParamArity.Optional(annotTpe) =>
         mkOptional(rpcSym.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)))
-      case RpcArity.Multi(annotTpe, _) =>
+      case RpcParamArity.Multi(annotTpe, _) =>
         mkMulti(allAnnotations(rpcSym.symbol, annotTpe).map(a => c.untypecheck(validated(a).tree)))
     }
 

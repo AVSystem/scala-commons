@@ -8,8 +8,9 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
 
   import c.universe._
 
-  def collectMethodMappings[R <: RawRpcSymbol, M](rawSymbols: List[R], rawShortDesc: String, realMethods: List[RealMethod])
-    (createMapping: (R, RealMethod) => Res[M]): List[M] = {
+  def collectMethodMappings[R <: RawRpcSymbol with AritySymbol, M](
+    rawSymbols: List[R], rawShortDesc: String, realMethods: List[RealMethod])(
+    createMapping: (R, RealMethod) => Res[M]): List[M] = {
 
     val failedReals = new ListBuffer[String]
     def addFailure(realMethod: RealMethod, message: String): Unit = {
@@ -20,6 +21,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
     val result = realMethods.flatMap { realMethod =>
       val methodMappings = rawSymbols.map { rawSymbol =>
         val res = for {
+          _ <- rawSymbol.matchName(realMethod)
           _ <- rawSymbol.matchTag(realMethod)
           methodMapping <- createMapping(rawSymbol, realMethod)
         } yield (rawSymbol, methodMapping)
@@ -241,21 +243,29 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
   case class MethodMapping(realMethod: RealMethod, rawMethod: RawMethod,
     paramMappings: List[ParamMapping], resultEncoding: RpcEncoding) {
 
-    def realImpl: Tree =
+    def realImpl: Tree = {
+      val rpcNameParamDecl: Option[Tree] = rawMethod.arity match {
+        case RpcMethodArity.Multi(rpcNameParam) =>
+          Some(q"val ${rpcNameParam.safeName} = ${realMethod.rpcName}")
+        case RpcMethodArity.Single | RpcMethodArity.Optional =>
+          None
+      }
+
       q"""
         def ${realMethod.name}(...${realMethod.paramDecls}): ${realMethod.resultType} = {
-          val ${rawMethod.rpcNameParam.safeName} = ${realMethod.rpcName}
+          ..${rpcNameParamDecl.toList}
           ..${paramMappings.map(pm => pm.rawParam.localValueDecl(pm.rawValueTree))}
           ${resultEncoding.asReal}.asReal(${rawMethod.owner.safeName}.${rawMethod.name}(...${rawMethod.argLists}))
         }
        """
+    }
 
-    def rawCaseImpl: CaseDef =
-      cq"""
-        ${realMethod.rpcName} =>
-          ..${paramMappings.filterNot(_.rawParam.auxiliary).flatMap(_.realDecls)}
-          ${resultEncoding.asRaw}.asRaw(${realMethod.owner.safeName}.${realMethod.name}(...${realMethod.argLists}))
-      """.asInstanceOf[CaseDef] // IntelliJ doesn't understand that cq returns CaseDef
+
+    def rawCaseImpl: Tree =
+      q"""
+        ..${paramMappings.filterNot(_.rawParam.auxiliary).flatMap(_.realDecls)}
+        ${resultEncoding.asRaw}.asRaw(${realMethod.owner.safeName}.${realMethod.name}(...${realMethod.argLists}))
+      """
   }
 
   case class RpcMapping(real: RealRpcTrait, raw: RawRpcTrait, forAsReal: Boolean, forAsRaw: Boolean) {
@@ -272,15 +282,15 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
     private def extractMapping(rawParam: RawParam, parser: ParamsParser): Res[ParamMapping] = {
       def createErp(realParam: RealParam, index: Int): Res[EncodedRealParam] = EncodedRealParam.create(rawParam, realParam)
       rawParam.arity match {
-        case _: RpcArity.Single =>
+        case _: RpcParamArity.Single =>
           parser.extractSingle(rawParam, createErp(_, 0)).map(ParamMapping.Single(rawParam, _))
-        case _: RpcArity.Optional =>
+        case _: RpcParamArity.Optional =>
           Ok(ParamMapping.Optional(rawParam, parser.extractOptional(rawParam, createErp(_, 0))))
-        case RpcArity.Multi(_, true) =>
+        case RpcParamArity.Multi(_, true) =>
           parser.extractMulti(rawParam, createErp, named = true).map(ParamMapping.NamedMulti(rawParam, _))
-        case _: RpcArity.Multi if rawParam.actualType <:< BIndexedSeqTpe =>
+        case _: RpcParamArity.Multi if rawParam.actualType <:< BIndexedSeqTpe =>
           parser.extractMulti(rawParam, createErp, named = false).map(ParamMapping.IndexedMulti(rawParam, _))
-        case _: RpcArity.Multi =>
+        case _: RpcParamArity.Multi =>
           parser.extractMulti(rawParam, createErp, named = false).map(ParamMapping.IterableMulti(rawParam, _))
       }
     }
@@ -318,9 +328,9 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
       """
 
     def asRawImpl: Tree = {
-      val caseDefs = raw.rawMethods.iterator.map(rm => (rm, new mutable.LinkedHashMap[String, CaseDef])).toMap
+      val caseImpls = raw.rawMethods.iterator.map(rm => (rm, new mutable.LinkedHashMap[String, Tree])).toMap
       methodMappings.foreach { mapping =>
-        val prevCaseDef = caseDefs(mapping.rawMethod).put(mapping.realMethod.rpcName, mapping.rawCaseImpl)
+        val prevCaseDef = caseImpls(mapping.rawMethod).put(mapping.realMethod.rpcName, mapping.rawCaseImpl)
         if (prevCaseDef.nonEmpty) {
           mapping.realMethod.reportProblem(
             s"multiple RPCs named ${mapping.realMethod.rpcName} map to raw method ${mapping.rawMethod.nameStr}. " +
@@ -328,7 +338,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
         }
       }
 
-      val rawMethodImpls = raw.rawMethods.map(m => m.rawImpl(caseDefs(m).values.toList))
+      val rawMethodImpls = raw.rawMethods.map(m => m.rawImpl(caseImpls(m).toList))
 
       q"""
         def asRaw(${real.safeName}: ${real.tpe}): ${raw.tpe} = new ${raw.tpe} {

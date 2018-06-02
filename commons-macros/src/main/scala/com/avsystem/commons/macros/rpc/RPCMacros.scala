@@ -43,7 +43,6 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val ReifyPositionAT: Type = getType(tq"$RpcPackage.reifyPosition")
   val ReifyFlagsAT: Type = getType(tq"$RpcPackage.reifyFlags")
   val CheckedAT: Type = getType(tq"$RpcPackage.checked")
-  val MetadataPFType: Type = getType(tq"$ScalaPkg.PartialFunction[$StringCls,$TypedMetadataType]")
   val ParamPositionTpe: Type = getType(tq"$RpcPackage.ParamPosition")
   val ParamFlagsTpe: Type = getType(tq"$RpcPackage.ParamFlags")
 

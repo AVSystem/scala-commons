@@ -31,10 +31,10 @@ object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework wi
   case class RPCMetadata[T](
     @reifyName name: String,
     @reify @multi annotations: List[MetadataAnnotation],
-    @verbatim procedureSignatures: Map[String, ProcedureSignature],
-    functionSignatures: Map[String, FunctionSignature[_]],
-    observeSignatures: Map[String, ObserveSignature[_]],
-    getterSignatures: Map[String, GetterSignature[_]]
+    @multi @verbatim procedureSignatures: Map[String, ProcedureSignature],
+    @multi functionSignatures: Map[String, FunctionSignature[_]],
+    @multi observeSignatures: Map[String, ObserveSignature[_]],
+    @multi getterSignatures: Map[String, GetterSignature[_]]
   )
   object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 

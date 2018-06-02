@@ -5,38 +5,79 @@ trait RPCSymbols { this: RPCMacroCommons =>
 
   import c.universe._
 
-  sealed abstract class RpcArity(val verbatimByDefault: Boolean) {
+  sealed abstract class RpcArity
+  object RpcArity {
+    trait Single extends RpcArity
+    trait Optional extends RpcArity
+    trait Multi extends RpcArity
+  }
+
+  sealed abstract class RpcParamArity(val verbatimByDefault: Boolean) extends RpcArity {
     def collectedType: Type
   }
-  object RpcArity {
-    def fromAnnotation(annot: Tree, param: ArityParam, allowMulti: Boolean, allowNamed: Boolean): RpcArity = {
-      val at = annot.tpe
-      if (at <:< SingleArityAT) RpcArity.Single(param.actualType)
+  object RpcParamArity {
+    def fromAnnotation(param: ArityParam,
+      allowMulti: Boolean, allowListed: Boolean, allowNamed: Boolean): RpcParamArity = {
+      val at = param.annot(RpcArityAT).fold(SingleArityAT)(_.tpe)
+      if (at <:< SingleArityAT) RpcParamArity.Single(param.actualType)
       else if (at <:< OptionalArityAT) {
         val optionLikeType = typeOfCachedImplicit(param.optionLike)
         val valueMember = optionLikeType.member(TypeName("Value"))
         if (valueMember.isAbstract)
           param.reportProblem("could not determine actual value of optional parameter type")
         else
-          RpcArity.Optional(valueMember.typeSignatureIn(optionLikeType))
+          RpcParamArity.Optional(valueMember.typeSignatureIn(optionLikeType))
       }
       else if (allowMulti && at <:< MultiArityAT) {
         if (allowNamed && param.actualType <:< StringPFTpe)
           Multi(param.actualType.baseType(PartialFunctionClass).typeArgs(1), named = true)
-        else if (param.actualType <:< BIterableTpe)
+        else if (allowListed && param.actualType <:< BIterableTpe)
           Multi(param.actualType.baseType(BIterableClass).typeArgs.head, named = false)
-        else if (allowNamed)
+        else if (allowNamed && allowListed)
           param.reportProblem(s"@multi ${param.shortDescription} must be a PartialFunction of String " +
             s"(for by-name mapping) or Iterable (for sequence)")
-        else
+        else if (allowListed)
           param.reportProblem(s"@multi ${param.shortDescription} must be an Iterable")
+        else
+          param.reportProblem(s"@multi ${param.shortDescription} must be a PartialFunction of String")
       }
-      else param.reportProblem(s"forbidden RPC arity annotation: $annot")
+      else param.reportProblem(s"forbidden RPC arity annotation: $at")
     }
 
-    case class Single(collectedType: Type) extends RpcArity(true)
-    case class Optional(collectedType: Type) extends RpcArity(true)
-    case class Multi(collectedType: Type, named: Boolean) extends RpcArity(false)
+    case class Single(collectedType: Type) extends RpcParamArity(true) with RpcArity.Single
+    case class Optional(collectedType: Type) extends RpcParamArity(true) with RpcArity.Optional
+    case class Multi(collectedType: Type, named: Boolean) extends RpcParamArity(false) with RpcArity.Multi
+  }
+
+  sealed abstract class RpcMethodArity(val verbatimByDefault: Boolean) extends RpcArity
+  object RpcMethodArity {
+    def fromAnnotation(method: RawMethod): RpcMethodArity = {
+      val at = method.annot(RpcArityAT).fold(SingleArityAT)(_.tpe)
+      if (at <:< SingleArityAT || at <:< OptionalArityAT) {
+        method.sig.paramLists match {
+          case List(_) =>
+          case _ => method.reportProblem(s"non-multi raw method can have only one parameter list")
+        }
+        if (at <:< OptionalArityAT) Optional else Single
+      }
+      else if (at <:< MultiArityAT) {
+        method.sig.paramLists match {
+          case List(rpcNameParam) :: _ :: Nil =>
+            if (!(actualParamType(rpcNameParam) <:< typeOf[String])) {
+              method.reportProblem("RPC name parameter of multi raw method must be of type String", rpcNameParam.pos)
+            }
+            Multi(RpcNameParam(method, rpcNameParam))
+          case _ =>
+            method.reportProblem(s"multi raw method must take exactly two parameter lists where the first one " +
+              "contains only RPC name parameter typed as String")
+        }
+      }
+      else method.reportProblem(s"unrecognized RPC arity annotation: $at")
+    }
+
+    case object Single extends RpcMethodArity(true) with RpcArity.Single
+    case object Optional extends RpcMethodArity(true) with RpcArity.Optional
+    case class Multi(rpcNameParam: RpcNameParam) extends RpcMethodArity(false) with RpcArity.Multi
   }
 
   abstract class RpcSymbol {
@@ -157,20 +198,33 @@ trait RPCSymbols { this: RPCMacroCommons =>
     def description = s"$shortDescription $nameStr of ${owner.description}"
   }
 
-  trait ArityParam extends RpcParam {
+  trait AritySymbol extends RpcSymbol {
+    val arity: RpcArity
+
+    // @unchecked because "The outer reference in this type test cannot be checked at runtime"
+    // Srsly scalac, from static types it should be obvious that outer references are the same
+    def matchName(realRpcSymbol: RealRpcSymbol): Res[Unit] = arity match {
+      case _: RpcArity.Single@unchecked | _: RpcArity.Optional@unchecked =>
+        if (realRpcSymbol.rpcName == nameStr) Ok(())
+        else Fail(s"it only matches ${realRpcSymbol.shortDescription}s with RPC name $nameStr")
+      case _: RpcArity.Multi@unchecked => Ok(())
+    }
+  }
+
+  trait ArityParam extends RpcParam with AritySymbol {
     def allowMulti: Boolean
     def allowNamedMulti: Boolean
+    def allowListedMulti: Boolean
 
-    val arity: RpcArity = annot(RpcArityAT)
-      .map(a => RpcArity.fromAnnotation(a.tree, this, allowMulti, allowNamed = allowNamedMulti))
-      .getOrElse(RpcArity.Single(actualType))
+    val arity: RpcParamArity =
+      RpcParamArity.fromAnnotation(this, allowMulti, allowListedMulti, allowNamedMulti)
 
     lazy val optionLike: TermName = infer(tq"$OptionLikeCls[$actualType]")
 
     lazy val canBuildFrom: TermName = arity match {
-      case _: RpcArity.Multi if allowNamedMulti && actualType <:< StringPFTpe =>
+      case _: RpcParamArity.Multi if allowNamedMulti && actualType <:< StringPFTpe =>
         infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,${arity.collectedType}),$actualType]")
-      case _: RpcArity.Multi =>
+      case _: RpcParamArity.Multi =>
         infer(tq"$CanBuildFromCls[$NothingCls,${arity.collectedType},$actualType]")
       case _ => abort(s"(bug) CanBuildFrom computed for non-multi $shortDescription")
     }
@@ -192,6 +246,7 @@ trait RPCSymbols { this: RPCMacroCommons =>
   trait RawParamLike extends ArityParam with RawRpcSymbol {
     def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = true
+    def allowListedMulti: Boolean = true
 
     val verbatim: Boolean =
       annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
@@ -245,7 +300,7 @@ trait RPCSymbols { this: RPCMacroCommons =>
       else q"$RpcPackage.RpcUtils.missingArg(${owner.rpcName}, $rpcName)"
   }
 
-  case class RawMethod(owner: RawRpcTrait, symbol: Symbol) extends RpcMethod with RawRpcSymbol {
+  case class RawMethod(owner: RawRpcTrait, symbol: Symbol) extends RpcMethod with RawRpcSymbol with AritySymbol {
     def shortDescription = "raw method"
     def description = s"$shortDescription $nameStr of ${owner.description}"
 
@@ -253,35 +308,52 @@ trait RPCSymbols { this: RPCMacroCommons =>
     def baseTag: Type = owner.baseMethodTag
     def defaultTag: Type = owner.defaultMethodTag
 
-    // raw method result is encoded by default, must be explicitly annotated as @verbatim to disable encoding
+    val arity: RpcMethodArity = RpcMethodArity.fromAnnotation(this)
+
     val verbatimResult: Boolean =
-      annot(RpcEncodingAT).exists(_.tpe <:< VerbatimAT)
+      annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
 
     val List(baseParamTag, defaultParamTag) =
       annot(ParamTagAT)
         .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
         .getOrElse(List(owner.baseParamTag, owner.defaultParamTag))
 
-    val (rpcNameParam, rawParams) =
-      sig.paramLists match {
-        case List(nameParam) :: rest :: Nil if nameParam.typeSignature =:= typeOf[String] =>
-          (RpcNameParam(this, nameParam), rest.map(RawParam(this, _)))
-        case _ =>
-          reportProblem("raw RPC method must take exactly two parameter lists, " +
-            "the first one containing only RPC name param (String)")
+    val rawParams: List[RawParam] = arity match {
+      case RpcMethodArity.Single | RpcMethodArity.Optional =>
+        sig.paramLists.head.map(RawParam(this, _))
+      case RpcMethodArity.Multi(_) =>
+        sig.paramLists(1).map(RawParam(this, _))
+    }
+
+    val paramLists: List[List[RpcParam]] = arity match {
+      case RpcMethodArity.Single | RpcMethodArity.Optional =>
+        rawParams :: Nil
+      case RpcMethodArity.Multi(rpcNameParam) =>
+        List(rpcNameParam) :: rawParams :: Nil
+    }
+
+    def rawImpl(caseDefs: List[(String, Tree)]): Tree = {
+      val body = arity match {
+        case RpcMethodArity.Single => caseDefs match {
+          case Nil => abort(s"no real method found that would match $description")
+          case List((_, single)) => single
+          case _ => abort(s"multiple real methods match $description")
+        }
+        case RpcMethodArity.Optional => caseDefs match {
+          case Nil => q"$RpcPackage.RpcUtils.missingOptionalRpc($nameStr)"
+          case List((_, single)) => single
+          case _ => abort(s"multiple real methods match $description")
+        }
+        case RpcMethodArity.Multi(rpcNameParam) =>
+          q"""
+            ${rpcNameParam.safeName} match {
+              case ..${caseDefs.map({ case (rpcName, tree) => cq"$rpcName => $tree" })}
+              case _ => $RpcPackage.RpcUtils.unknownRpc(${rpcNameParam.safeName}, $nameStr)
+            }
+           """
       }
-
-    val paramLists: List[List[RpcParam]] =
-      List(rpcNameParam) :: rawParams :: Nil
-
-    def rawImpl(caseDefs: List[CaseDef]): Tree =
-      q"""
-        def $name(...$paramDecls): $resultType =
-          ${rpcNameParam.safeName} match {
-            case ..$caseDefs
-            case _ => $RpcPackage.RpcUtils.unknownRpc(${rpcNameParam.safeName}, $nameStr)
-          }
-       """
+      q"def $name(...$paramDecls): $resultType = $body"
+    }
   }
 
   case class RealMethod(owner: RealRpcTrait, symbol: Symbol) extends RpcMethod with RealRpcSymbol {

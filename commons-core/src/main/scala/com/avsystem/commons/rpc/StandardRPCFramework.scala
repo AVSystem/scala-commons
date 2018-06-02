@@ -9,7 +9,7 @@ trait ProcedureRPCFramework extends RPCFramework {
   type RawRPC <: ProcedureRawRPC
 
   trait ProcedureRawRPC { this: RawRPC =>
-    @verbatim def fire(rpcName: String)(@multi args: List[RawValue]): Unit
+    @multi @verbatim def fire(rpcName: String)(@multi args: List[RawValue]): Unit
   }
 
   case class ProcedureSignature(
@@ -27,7 +27,7 @@ trait FunctionRPCFramework extends RPCFramework {
   type RawRPC <: FunctionRawRPC
 
   trait FunctionRawRPC { this: RawRPC =>
-    def call(rpcName: String)(@multi args: List[RawValue]): Future[RawValue]
+    @multi def call(rpcName: String)(@multi args: List[RawValue]): Future[RawValue]
   }
 
   case class FunctionSignature[T](
@@ -52,7 +52,7 @@ trait GetterRPCFramework extends RPCFramework {
   case class RawInvocation(rpcName: String, args: List[RawValue])
 
   trait GetterRawRPC { this: RawRPC =>
-    def get(rpcName: String)(@multi args: List[RawValue]): RawRPC
+    @multi def get(rpcName: String)(@multi args: List[RawValue]): RawRPC
 
     def resolveGetterChain(getters: List[RawInvocation]): RawRPC =
       getters.foldRight(this)((inv, rpc) => rpc.get(inv.rpcName)(inv.args))
@@ -75,9 +75,9 @@ trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework 
   case class RPCMetadata[T](
     @reifyName name: String,
     @reify @multi annotations: List[MetadataAnnotation],
-    @verbatim procedureSignatures: Map[String, ProcedureSignature],
-    functionSignatures: Map[String, FunctionSignature[_]],
-    getterSignatures: Map[String, GetterSignature[_]]
+    @multi @verbatim procedureSignatures: Map[String, ProcedureSignature],
+    @multi functionSignatures: Map[String, FunctionSignature[_]],
+    @multi getterSignatures: Map[String, GetterSignature[_]]
   )
   object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 }
@@ -91,8 +91,8 @@ trait OneWayRPCFramework extends GetterRPCFramework with ProcedureRPCFramework {
   case class RPCMetadata[T](
     @reifyName name: String,
     @reify @multi annotations: List[MetadataAnnotation],
-    @verbatim procedureSignatures: Map[String, ProcedureSignature],
-    getterSignatures: Map[String, GetterSignature[_]]
+    @multi @verbatim procedureSignatures: Map[String, ProcedureSignature],
+    @multi getterSignatures: Map[String, GetterSignature[_]]
   )
   object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 }
