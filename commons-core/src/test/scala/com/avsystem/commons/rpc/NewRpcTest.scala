@@ -7,7 +7,7 @@ import org.scalatest.FunSuite
 trait SomeBase {
   def difolt: Boolean = true
 
-  @POST def postit(arg: String, @header("X-Bar") bar: String, int: Int, @header("X-Foo") foo: String): String
+  @POST def postit(arg: String, @header("X-Bar") bar: String, int: Int, @header("X-Foo") @suchMeta(2, "b") foo: String): String
 }
 
 trait TestApi extends SomeBase {
@@ -18,8 +18,8 @@ trait TestApi extends SomeBase {
   def flames(arg: String, otherArg: => Int, varargsy: Double*): Unit
   def overload(int: Int): Unit
   def overload: TestApi
-  def getit(stuff: String, otherStuff: List[Int]): TestApi
-  def postit(arg: String, bar: String, int: Int, foo: String): String
+  def getit(stuff: String, @suchMeta(1, "a") otherStuff: List[Int]): TestApi
+  def postit(arg: String, bar: String, int: Int, @suchMeta(3, "c") foo: String): String
 }
 object TestApi {
   implicit val asRealRaw: NewRawRpc.AsRealRawRpc[TestApi] = NewRawRpc.materializeAsRealRaw[TestApi]
@@ -33,42 +33,42 @@ class MetadataTest extends FunSuite {
         |  DO SOMETHING ELSE: true
         |  PROCEDURES:
         |  overload -> def overload: void
-        |    AJDI: int@0:0:0:0: int
+        |    AJDI: int@0:0:0:0: int suchMeta=false
         |    ARGS:
-        |    int -> int@0:0:0:0: int
+        |    int -> int@0:0:0:0: int suchMeta=false
         |  flames -> def flames: void
         |    NO AJDI
         |    ARGS:
-        |    arg -> arg@0:0:0:0: String
-        |    otherArg -> [byName]otherArg@1:0:1:1: int
-        |    varargsy -> [repeated]varargsy@2:0:2:2: Seq
+        |    arg -> arg@0:0:0:0: String suchMeta=false
+        |    otherArg -> [byName]otherArg@1:0:1:1: int suchMeta=false
+        |    varargsy -> [repeated]varargsy@2:0:2:2: Seq suchMeta=false
         |  FUNCTIONS:
         |  defaultValueMethod -> def defaultValueMethod: void
         |    RENAMED:
         |
         |    ARGS:
-        |    int -> [hasDefaultValue]int@0:0:0:0: int
-        |    bul -> bul@1:0:1:1: boolean
+        |    int -> [hasDefaultValue]int@0:0:0:0: int suchMeta=false
+        |    bul -> bul@1:0:1:1: boolean suchMeta=false
         |  varargsMethod -> def varargsMethod: void
         |    RENAMED:
-        |    nejm -> [repeated]ints<nejm>@3:1:1:0: Seq renames=renamed(42,nejm)
+        |    nejm -> [repeated]ints<nejm>@3:1:1:0: Seq suchMeta=false
         |    ARGS:
-        |    krap -> krap@0:0:0:0: String
-        |    dubl -> dubl@1:0:1:1: double
-        |    czy -> czy@2:1:0:2: boolean
+        |    krap -> krap@0:0:0:0: String suchMeta=false
+        |    dubl -> dubl@1:0:1:1: double suchMeta=false
+        |    czy -> czy@2:1:0:2: boolean suchMeta=false
         |  POSTERS:
         |  postit -> POST() def postit: String
         |    HEADERS:
-        |    bar<X-Bar>@1:0:1:0: String
-        |    foo<X-Foo>@3:0:3:1: String
+        |    bar<X-Bar>@1:0:1:0: String suchMeta=false
+        |    foo<X-Foo>@3:0:3:1: String suchMeta=true,metas=suchMeta(3,c),suchMeta(2,b)
         |    BODY:
-        |    arg -> arg@0:0:0:0: String
-        |    int -> int@2:0:2:1: int
+        |    arg -> arg@0:0:0:0: String suchMeta=false
+        |    int -> int@2:0:2:1: int suchMeta=false
         |  GETTERS:
         |  getit -> def getit: TestApi
         |    ARGS:
-        |    stuff@0:0:0:0: String
-        |    otherStuff@1:0:1:1: List
+        |    stuff@0:0:0:0: String suchMeta=false
+        |    otherStuff@1:0:1:1: List suchMeta=true,metas=suchMeta(1,a)
         |    RESULT: <recursive>
         |  overload -> def overload: TestApi
         |    ARGS:

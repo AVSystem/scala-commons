@@ -114,10 +114,12 @@ trait RPCMetadatas { this: RPCMacroCommons with RPCSymbols with RPCMappings =>
 
     def createDirectParam(paramSym: Symbol, annot: Annot): DirectMetadataParam[Real] = annot.tpe match {
       case t if t <:< InferAT => new ImplicitParam(this, paramSym)
-      case t if t <:< ReifyAT => new ReifiedParam(this, paramSym)
+      case t if t <:< ReifyAnnotAT => new ReifiedAnnotParam(this, paramSym)
       case t if t <:< ReifyNameAT =>
         val useRpcName = annot.findArg[Boolean](ReifyNameAT.member(TermName("rpcName")), Some(false))
         new ReifiedNameParam(this, paramSym, useRpcName)
+      case t if t <:< HasAnnotAT =>
+        new HasAnnotParam(this, paramSym, t.typeArgs.head)
       case t => reportProblem(s"metadata param strategy $t is not allowed here")
     }
 
@@ -270,7 +272,7 @@ trait RPCMetadatas { this: RPCMacroCommons with RPCSymbols with RPCMappings =>
         Ok(materializeFor(rpcSym))
   }
 
-  class ReifiedParam[Real <: RealRpcSymbol](owner: MetadataConstructor[Real], symbol: Symbol)
+  class ReifiedAnnotParam[Real <: RealRpcSymbol](owner: MetadataConstructor[Real], symbol: Symbol)
     extends DirectMetadataParam[Real](owner, symbol) with ArityParam {
 
     def allowMulti: Boolean = true
@@ -302,6 +304,17 @@ trait RPCMetadatas { this: RPCMacroCommons with RPCSymbols with RPCMappings =>
 
     def tryMaterializeFor(rpcSym: Real): Res[Tree] =
       Ok(materializeFor(rpcSym))
+  }
+
+  class HasAnnotParam[Real <: RealRpcSymbol](owner: MetadataConstructor[Real], symbol: Symbol, annotTpe: Type)
+    extends DirectMetadataParam[Real](owner, symbol) {
+
+    if (!(actualType =:= typeOf[Boolean])) {
+      reportProblem("@hasAnnot can only be used on Boolean parameters")
+    }
+
+    def materializeFor(rpcSym: Real): Tree = q"${allAnnotations(rpcSym.symbol, annotTpe).nonEmpty}"
+    def tryMaterializeFor(rpcSym: Real): Res[Tree] = Ok(materializeFor(rpcSym))
   }
 
   class ReifiedNameParam[Real <: RealRpcSymbol](owner: MetadataConstructor[Real], symbol: Symbol, useRpcName: Boolean)

@@ -4,6 +4,8 @@ package rpc
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.serialization.GenCodec
 
+import scala.annotation.StaticAnnotation
+
 trait DummyParamTag extends RpcTag with AnnotationAggregate
 
 case class header(name: String) extends DummyParamTag {
@@ -15,6 +17,8 @@ case class renamed(int: Int, name: String) extends DummyParamTag {
   @rpcName(name)
   type Implied
 }
+
+case class suchMeta(intMeta: Int, strMeta: String) extends StaticAnnotation
 
 sealed trait untagged extends DummyParamTag
 
@@ -129,7 +133,7 @@ case class GetterMetadata[T](
 
 case class PostMetadata[T: TypeName](
   name: String, rpcName: String,
-  @reify post: POST,
+  @reifyAnnot post: POST,
   @tagged[header] @multi @verbatim headers: Vector[ParameterMetadata[String]],
   @multi body: MLinkedHashMap[String, ParameterMetadata[_]]
 )(implicit val typeName: TypeName[T]) extends TypedMetadata[T] with MethodMetadata[T] {
@@ -145,13 +149,14 @@ case class ParameterMetadata[T: TypeName](
   @reifyName(rpcName = true) rpcName: String,
   @reifyPosition pos: ParamPosition,
   @reifyFlags flags: ParamFlags,
-  @reify @multi renames: List[renamed]
+  @reifyAnnot @multi metas: List[suchMeta],
+  @hasAnnot[suchMeta] suchMeta: Boolean
 ) extends TypedMetadata[T] {
   def repr: String = {
     val flagsStr = if (flags != ParamFlags.Empty) s"[$flags]" else ""
     val rpcNameStr = if (rpcName != name) s"<$rpcName>" else ""
     val posStr = s"${pos.index}:${pos.indexOfList}:${pos.indexInList}:${pos.indexInRaw}"
-    val renamesStr = if (renames.nonEmpty) renames.mkString(s" renames=", ",", "") else ""
-    s"$flagsStr$name$rpcNameStr@$posStr: ${TypeName.get[T]}$renamesStr"
+    val metasStr = if (metas.nonEmpty) metas.mkString(s",metas=", ",", "") else ""
+    s"$flagsStr$name$rpcNameStr@$posStr: ${TypeName.get[T]} suchMeta=$suchMeta$metasStr"
   }
 }

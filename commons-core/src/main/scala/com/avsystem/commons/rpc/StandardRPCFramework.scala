@@ -74,7 +74,7 @@ trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework 
 
   case class RPCMetadata[T](
     @reifyName name: String,
-    @reify @multi annotations: List[MetadataAnnotation],
+    @reifyAnnot @multi annotations: List[MetadataAnnotation],
     @multi @verbatim procedureSignatures: Map[String, ProcedureSignature],
     @multi functionSignatures: Map[String, FunctionSignature[_]],
     @multi getterSignatures: Map[String, GetterSignature[_]]
@@ -90,7 +90,7 @@ trait OneWayRPCFramework extends GetterRPCFramework with ProcedureRPCFramework {
 
   case class RPCMetadata[T](
     @reifyName name: String,
-    @reify @multi annotations: List[MetadataAnnotation],
+    @reifyAnnot @multi annotations: List[MetadataAnnotation],
     @multi @verbatim procedureSignatures: Map[String, ProcedureSignature],
     @multi getterSignatures: Map[String, GetterSignature[_]]
   )

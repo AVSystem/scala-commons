@@ -61,13 +61,12 @@ trait RPCFramework {
   trait Signature {
     @reifyName def name: String
     @multi def paramMetadata: List[ParamMetadata[_]]
-    @reify
-    @multi def annotations: List[MetadataAnnotation]
+    @reifyAnnot @multi def annotations: List[MetadataAnnotation]
   }
 
   case class ParamMetadata[T](
     @reifyName name: String,
-    @reify @multi annotations: List[MetadataAnnotation],
+    @reifyAnnot @multi annotations: List[MetadataAnnotation],
     @infer typeMetadata: ParamTypeMetadata[T]
   ) extends TypedMetadata[T]
 

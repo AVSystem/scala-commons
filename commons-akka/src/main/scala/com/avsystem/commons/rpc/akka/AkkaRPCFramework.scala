@@ -7,7 +7,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.util.ByteString
 import com.avsystem.commons.rpc.akka.client.ClientRawRPC
 import com.avsystem.commons.rpc.akka.server.ServerActor
-import com.avsystem.commons.rpc.{FunctionRPCFramework, GetterRPCFramework, MetadataAnnotation, ProcedureRPCFramework, RpcMetadataCompanion, TypedMetadata, infer, multi, reify, reifyName, verbatim}
+import com.avsystem.commons.rpc.{FunctionRPCFramework, GetterRPCFramework, MetadataAnnotation, ProcedureRPCFramework, RpcMetadataCompanion, TypedMetadata, infer, multi, reifyAnnot, reifyName, verbatim}
 import com.avsystem.commons.serialization.{GenCodec, StreamInput, StreamOutput}
 import monix.reactive.Observable
 
@@ -30,7 +30,7 @@ object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework wi
 
   case class RPCMetadata[T](
     @reifyName name: String,
-    @reify @multi annotations: List[MetadataAnnotation],
+    @reifyAnnot @multi annotations: List[MetadataAnnotation],
     @multi @verbatim procedureSignatures: Map[String, ProcedureSignature],
     @multi functionSignatures: Map[String, FunctionSignature[_]],
     @multi observeSignatures: Map[String, ObserveSignature[_]],
