@@ -55,22 +55,20 @@ trait RPCSymbols { this: RPCMacroCommons =>
       val at = method.annot(RpcArityAT).fold(SingleArityAT)(_.tpe)
       if (at <:< SingleArityAT || at <:< OptionalArityAT) {
         method.sig.paramLists match {
-          case List(_) =>
-          case _ => method.reportProblem(s"non-multi raw method can have only one parameter list")
+          case Nil | List(_) =>
+          case _ => method.reportProblem(s"non-multi raw method can only have zero or one parameter list")
         }
         if (at <:< OptionalArityAT) Optional else Single
       }
-      else if (at <:< MultiArityAT) {
-        method.sig.paramLists match {
-          case List(rpcNameParam) :: _ :: Nil =>
-            if (!(actualParamType(rpcNameParam) <:< typeOf[String])) {
-              method.reportProblem("RPC name parameter of multi raw method must be of type String", rpcNameParam.pos)
-            }
-            Multi(RpcNameParam(method, rpcNameParam))
-          case _ =>
-            method.reportProblem(s"multi raw method must take exactly two parameter lists where the first one " +
-              "contains only RPC name parameter typed as String")
-        }
+      else if (at <:< MultiArityAT) method.sig.paramLists match {
+        case List(rpcNameParam) :: (Nil | List(_)) =>
+          if (!(actualParamType(rpcNameParam) <:< typeOf[String])) {
+            method.reportProblem("RPC name parameter of multi raw method must be of type String", rpcNameParam.pos)
+          }
+          Multi(RpcNameParam(method, rpcNameParam))
+        case _ =>
+          method.reportProblem(s"multi raw method must take at most two parameter lists where the first one " +
+            "must contain RPC name parameter typed as String")
       }
       else method.reportProblem(s"unrecognized RPC arity annotation: $at")
     }
@@ -318,18 +316,18 @@ trait RPCSymbols { this: RPCMacroCommons =>
         .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
         .getOrElse(List(owner.baseParamTag, owner.defaultParamTag))
 
-    val rawParams: List[RawParam] = arity match {
+    val rawParams: Option[List[RawParam]] = arity match {
       case RpcMethodArity.Single | RpcMethodArity.Optional =>
-        sig.paramLists.head.map(RawParam(this, _))
+        sig.paramLists.headOption.map(_.map(RawParam(this, _)))
       case RpcMethodArity.Multi(_) =>
-        sig.paramLists(1).map(RawParam(this, _))
+        sig.paramLists.tail.headOption.map(_.map(RawParam(this, _)))
     }
 
     val paramLists: List[List[RpcParam]] = arity match {
       case RpcMethodArity.Single | RpcMethodArity.Optional =>
-        rawParams :: Nil
+        rawParams.toList
       case RpcMethodArity.Multi(rpcNameParam) =>
-        List(rpcNameParam) :: rawParams :: Nil
+        List(rpcNameParam) :: rawParams.toList
     }
 
     def rawImpl(caseDefs: List[(String, Tree)]): Tree = {

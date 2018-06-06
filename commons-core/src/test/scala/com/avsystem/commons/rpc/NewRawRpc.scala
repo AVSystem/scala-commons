@@ -43,12 +43,14 @@ trait NewRawRpc {
     @multi args: Map[String, String]): Future[String]
 
   @multi def get(name: String)(
-    @multi args: List[String]): NewRawRpc
+    @encoded head: String, @multi tail: List[String]): NewRawRpc
 
   @multi
   @tagged[POST] def post(name: String)(
     @tagged[header] @multi @verbatim headers: Vector[String],
     @multi body: MLinkedHashMap[String, String]): String
+
+  @multi def prefix(name: String): NewRawRpc
 }
 object NewRawRpc extends RawRpcCompanion[NewRawRpc] {
   override val implicits: this.type = this
@@ -65,16 +67,18 @@ case class NewRpcMetadata[T: TypeName](
   @multi @verbatim procedures: Map[String, FireMetadata],
   @multi functions: Map[String, CallMetadata[_]],
   @multi getters: Map[String, GetterMetadata[_]],
-  @multi @tagged[POST] posters: Map[String, PostMetadata[_]]
+  @multi @tagged[POST] posters: Map[String, PostMetadata[_]],
+  @multi prefixers: Map[String, PrefixMetadata[_]]
 ) {
   def repr(open: List[NewRpcMetadata[_]]): String =
-    if (open.contains(this)) "<recursive>" else {
+    if (open.contains(this)) "<recursive>\n" else {
       val membersStr =
         s"DO SOMETHING ELSE: ${doSomethingElse.nonEmpty}\n" +
           procedures.iterator.map({ case (n, v) => s"$n -> ${v.repr}" }).mkString("PROCEDURES:\n", "\n", "") + "\n" +
           functions.iterator.map({ case (n, v) => s"$n -> ${v.repr}" }).mkString("FUNCTIONS:\n", "\n", "") + "\n" +
           posters.iterator.map({ case (n, v) => s"$n -> ${v.repr}" }).mkString("POSTERS:\n", "\n", "") + "\n" +
-          getters.iterator.map({ case (n, v) => s"$n -> ${v.repr(this :: open)}" }).mkString("GETTERS:\n", "\n", "")
+          getters.iterator.map({ case (n, v) => s"$n -> ${v.repr(this :: open)}" }).mkString("GETTERS:\n", "\n", "") +
+          prefixers.iterator.map({ case (n, v) => s"$n -> ${v.repr(this :: open)}" }).mkString("PREFIXERS:\n", "\n", "")
       s"${TypeName.get[T]}\n" + membersStr.indent("  ")
     }
 
@@ -122,12 +126,13 @@ case class CallMetadata[T](
 
 case class GetterMetadata[T](
   name: String, rpcName: String,
-  @multi args: List[ParameterMetadata[_]],
+  @encoded head: ParameterMetadata[_],
+  @multi tail: List[ParameterMetadata[_]],
   @infer @checked resultMetadata: NewRpcMetadata.Lazy[T]
 )(implicit val typeName: TypeName[T]) extends TypedMetadata[T] with MethodMetadata[T] {
   def repr(open: List[NewRpcMetadata[_]]): String =
     s"$basicRepr\n" +
-      args.map(_.repr).mkString("ARGS:\n", "\n", "").indent("  ") + "\n" +
+      (head :: tail).map(_.repr).mkString("ARGS:\n", "\n", "").indent("  ") + "\n" +
       s"RESULT: ${resultMetadata.value.repr(open)}".indent("  ")
 }
 
@@ -142,6 +147,16 @@ case class PostMetadata[T: TypeName](
     s"$post $basicRepr\n" +
       headers.map(_.repr).mkString("HEADERS:\n", "\n", "").indent("  ") + "\n" +
       body.iterator.map({ case (n, pm) => s"$n -> ${pm.repr}" }).mkString("BODY:\n", "\n", "").indent("  ")
+}
+
+case class PrefixMetadata[T](
+  name: String, rpcName: String,
+  @infer @checked resultMetadata: NewRpcMetadata.Lazy[T],
+  @infer typeName: TypeName[T]
+) extends TypedMetadata[T] with MethodMetadata[T] {
+  def repr(open: List[NewRpcMetadata[_]]): String =
+    s"$basicRepr\n" +
+      s"RESULT: ${resultMetadata.value.repr(open)}".indent("  ")
 }
 
 case class ParameterMetadata[T: TypeName](

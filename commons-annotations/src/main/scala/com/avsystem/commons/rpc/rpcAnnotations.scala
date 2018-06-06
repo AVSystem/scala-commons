@@ -33,19 +33,47 @@ trait RpcTag extends RpcAnnotation
 
 /**
   * Base trait for RPC arity annotations, [[single]], [[optional]] and [[multi]].
-  * They are applied on raw parameters to tell the RPC macro engine how many real parameters the raw parameter
-  * corresponds to. If no arity is specified, [[single]] is assumed by default.
+  * Arity annotations may be used in multiple contexts:
+  *
+  * - raw methods
+  * - raw parameters
+  * - metadata parameters for raw methods and raw parameters
+  * - metadata parameters that reify annotations (i.e. annotated with [[reifyAnnot]])
+  *
+  * See documentation of each arity annotation for more details.
   */
 sealed trait RpcArity extends RawParamAnnotation
 
 /**
-  * When applied on raw parameter, specifies that this raw parameter must be matched by exactly one real parameter.
-  * By default, [[single]] raw parameters are also [[verbatim]] which means that the real parameter must have
-  * exactly the same type as the raw parameter.
+  * The default arity annotation. Usually there is no need to use this annotation explicitly.
+  *
+  * When applied on raw method, there must be exactly one real method matching this raw method and it must have
+  * the same name (or [[rpcName]]) as raw method's name.
+  *
+  * When applied on raw parameter, specifies that this raw parameter must be matched by exactly one real parameter,
+  * on the position that matches raw parameter's position. Names are ignored because - unlike methods - parameters are
+  * identified by their position in parameter list(s) rather than their name.
+  *
+  * By default, [[single]] raw methods and parameters are [[verbatim]] which means that the real method must have
+  * exactly the same return type as raw method and real parameter must have exactly the same type as raw parameter.
+  *
+  * When applied on method metadata parameter or parameter metadata parameter, the rules above apply in the same way
+  * except that real method/parameter type is matched against the type passed as `T` to `TypedMetadata[T]` by
+  * metadata class. For example, if method metadata class extends `TypedMetadata[Unit]` then `Unit` is assumed to be
+  * the result type of raw method that this metadata class represents. Similarly, when parameter metadata class
+  * extends `TypedMetadata[Int]` then raw parameter represented by this metadata class is assumed to be of type `Int`.
+  *
+  * Finally, when applied on metadata parameter with [[reifyAnnot]], that parameter is supposed to hold exactly one
+  * instance of an annotation of given type from real trait/method/param. If there is no such annotation available,
+  * compilation error will be raised.
   */
 final class single extends RpcArity
 
 /**
+  * When applied on raw method, it works almost the same way as [[single]] except that it is not required that
+  * matching real method exists in real RPC trait. If there is no matching real method, macro-materialized `AsRaw`
+  * implementation will implement the raw method with a code that throws an exception.
+  *
   * When applied on raw parameter, specifies that this raw parameter may be matched by a real parameter but this is
   * not required. Whether a real parameter matches an optional raw parameter is determined by its type and/or tag
   * (see [[paramTag]] for more information on param tagging).
@@ -57,10 +85,24 @@ final class single extends RpcArity
   * In the macro generated code that translates a raw call into a real call, when the raw parameter value is absent
   * (the `Option[T]` is empty) then real parameter's default value will be used as fallback. This allows introducing
   * new parameters into RPC interfaces without breaking backwards compatibility.
+  *
+  * [[optional]] may also be used on method metadata parameters or parameter metadata parameters. It works the same
+  * way as with [[single]] except that metadata class must be wrapped in an `OptionLike` type (`Option`, `Opt`, etc.).
+  *
+  * Finally, [[optional]] may also be used for metadata parameters that hold reified annotations (see [[reifyAnnot]]).
+  * In that case it is not required that the annotation being reified is actually present on the real trait/method/param.
+  * For that to work, metadata param must be typed as `Option[A]`, `Opt[A]`, etc. where `A` is the type of annotation
+  * being reified.
   */
 final class optional extends RpcArity
 
 /**
+  * When applied on raw method, specifies that this raw method may be matched by many, arbitrarily named real methods.
+  * In order to distinguish between real methods, multi raw method must take real method's RPC name
+  * (a `String`) as its first parameter and the only parameter in its first parameter list.
+  * By default, result type of multi raw method is [[encoded]] and the macro engine searches for
+  * appropriate `AsRaw` or `AsReal` conversion between real method result type and raw method result type.
+  *
   * When applied on raw parameter, specifies that this raw parameter may be matched by arbitrary number of real
   * parameters whose values are typically [[encoded]] and collected into (or extracted from) raw parameter value.
   * The way real parameter values are collected and extracted depends on the type of raw parameter which must be
@@ -93,6 +135,17 @@ final class optional extends RpcArity
   * Note that when raw parameter is a name-value mapping, you can freely reorder real parameter without fear of
   * breaking backwards compatibility. You can also safely add new real parameters as long as you provide default
   * values for them.
+  *
+  * Just like [[single]] and [[optional]], [[multi]] can also be applied on metadata parameters corresponding to
+  * raw methods and raw parameters. The type of multi metadata parameter must be a collection, in the same way
+  * as it's required for multi raw parameters. Metadata classes materialized for raw methods and raw parameters
+  * must extend `TypedMetadata[T]` where `T` will be matched against each real method result type or each real
+  * parameter type.
+  *
+  * Ultimately, [[multi]] may be specified on metadata parameter that reifies annotations from real trait/method/param
+  * (see [[reifyAnnot]]). Such metadata parameter must be a collection: any subtype of `Iterable[A]` where `A` is the
+  * type of annotation being reified. The macro will then reify all matching annotations from real symbol, including
+  * inherited ones.
   */
 final class multi extends RpcArity
 
@@ -336,7 +389,7 @@ final class reifyAnnot extends MetadataParamStrategy
 /**
   * Metadata parameter typed as `Boolean` can be annotated with `@hasAnnot[SomeAnnotation]`. Boolean value will then
   * hold information about whether RPC trait, method or parameter for which metadata is materialized is annotated with
-  * `SomeAnnotaton` (or any subtype) or not.
+  * `SomeAnnotation` (or any subtype) or not.
   */
 final class hasAnnot[T <: StaticAnnotation] extends MetadataParamStrategy
 
@@ -364,6 +417,6 @@ final class reifyFlags extends MetadataParamStrategy
   * they have [[infer]] strategy by default). Metadata parameter annotated as [[checked]] makes the implicit search
   * for that metadata parameter influence the decision about whether some metadata parameter matches real method or
   * param or not. Without [[checked]] annotation, when implicit search for metadata parameter fails, the macro engine
-  * ignores that fact and compilation error is deferred until macro is fully expanded.
+  * ignores that fact and error is only reported after macro is fully expanded.
   */
 final class checked extends StaticAnnotation

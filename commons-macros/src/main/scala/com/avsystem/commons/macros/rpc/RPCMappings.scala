@@ -324,7 +324,7 @@ trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
 
       for {
         resultConv <- resultEncoding
-        paramMappings <- collectParamMappings(rawMethod.rawParams, "raw parameter", realMethod)(extractMapping)
+        paramMappings <- collectParamMappings(rawMethod.rawParams.getOrElse(Nil), "raw parameter", realMethod)(extractMapping)
       } yield MethodMapping(realMethod, rawMethod, paramMappings, resultConv)
     }
 
