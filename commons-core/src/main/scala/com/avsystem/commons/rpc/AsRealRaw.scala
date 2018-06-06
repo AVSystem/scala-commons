@@ -52,10 +52,3 @@ object AsRealRaw {
 object RpcMetadata {
   def materializeForRpc[M[_], T]: M[T] = macro macros.rpc.RPCMacros.rpcMetadata[M[T], T]
 }
-
-/**
-  * This trait must be extended by all method metadata classes and all parameter metadata classes.
-  * For method metadata, type parameter `T` will be matched against each real method result type.
-  * For parameter metadata, type parameter `T` will be matched against each real parameter type.
-  */
-trait TypedMetadata[T]

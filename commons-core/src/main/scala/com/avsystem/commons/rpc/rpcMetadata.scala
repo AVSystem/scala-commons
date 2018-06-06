@@ -4,6 +4,13 @@ package rpc
 import com.avsystem.commons.serialization.{HasGenCodec, transparent}
 
 /**
+  * This trait must be extended by all method metadata classes and all parameter metadata classes.
+  * For method metadata, type parameter `T` will be matched against each real method result type.
+  * For parameter metadata, type parameter `T` will be matched against each real parameter type.
+  */
+trait TypedMetadata[T]
+
+/**
   * Information about real parameter flags and modifiers as defined in Scala code.
   */
 @transparent
