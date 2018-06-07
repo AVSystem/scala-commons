@@ -40,23 +40,31 @@ object SimpleValueOutput {
   *
   * @param consumer consumer of serialized value, which is guaranteed to meet the above rules
   */
-class SimpleValueOutput(consumer: Any => Unit) extends Output {
+class SimpleValueOutput(
+  consumer: Any => Unit,
+  newObjectRepr: => mutable.Builder[(String, Any), BMap[String, Any]],
+  newListRepr: => mutable.Builder[Any, BSeq[Any]]
+) extends Output {
+
+  def this(consumer: Any => Unit) =
+    this(consumer, new MHashMap[String, Any], new ListBuffer[Any])
+
   def writeBinary(binary: Array[Byte]) = consumer(binary)
   def writeString(str: String) = consumer(str)
   def writeDouble(double: Double) = consumer(double)
   def writeInt(int: Int) = consumer(int)
 
   def writeList() = new ListOutput {
-    private val buffer = new ListBuffer[Any]
-    def writeElement() = new SimpleValueOutput(buffer += _)
+    private val buffer = newListRepr
+    def writeElement() = new SimpleValueOutput(buffer += _, newObjectRepr, newListRepr)
     def finish() = consumer(buffer.result())
   }
 
   def writeBoolean(boolean: Boolean) = consumer(boolean)
 
   def writeObject() = new ObjectOutput {
-    private val result = new mutable.HashMap[String, Any]
-    def writeField(key: String) = new SimpleValueOutput(v => result += ((key, v)))
+    private val result = newObjectRepr
+    def writeField(key: String) = new SimpleValueOutput(v => result += ((key, v)), newObjectRepr, newListRepr)
     def finish() = consumer(result)
   }
 
@@ -85,8 +93,8 @@ class SimpleValueInput(value: Any) extends Input {
 
   def inputType = value match {
     case null => InputType.Null
-    case _: List[Any] => InputType.List
-    case _: Map[_, Any] => InputType.Object
+    case _: BSeq[Any] => InputType.List
+    case _: BMap[_, Any] => InputType.Object
     case _ => InputType.Simple
   }
 
@@ -120,4 +128,5 @@ class SimpleValueInput(value: Any) extends Input {
   def skip() = ()
 }
 
-class SimpleValueFieldInput(val fieldName: String, value: Any) extends SimpleValueInput(value) with FieldInput
+class SimpleValueFieldInput(val fieldName: String, value: Any)
+  extends SimpleValueInput(value) with FieldInput
