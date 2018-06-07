@@ -4,7 +4,7 @@ package rpc.akka.client
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.util.Timeout
-import com.avsystem.commons.rpc.akka.AkkaRPCFramework.{RawInvocation => _, _}
+import com.avsystem.commons.rpc.akka.AkkaRPCFramework.{RawRPC, RawValue}
 import com.avsystem.commons.rpc.akka._
 import monix.execution.Cancelable
 import monix.reactive.{Observable, OverflowStrategy}

@@ -5,7 +5,7 @@ import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.reflect.macros.blackbox
 
-abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
+abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
@@ -70,8 +70,8 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   }
 }
 
-class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx)
-  with RPCSymbols with RPCMappings with RPCMetadatas {
+class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
+  with RpcSymbols with RpcMappings with RpcMetadatas {
 
   import c.universe._
 

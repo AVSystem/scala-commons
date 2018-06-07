@@ -4,7 +4,7 @@ package macros.rpc
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-trait RPCMappings { this: RPCMacroCommons with RPCSymbols =>
+trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
   import c.universe._
 

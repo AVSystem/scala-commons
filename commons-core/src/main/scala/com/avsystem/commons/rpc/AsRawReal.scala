@@ -13,7 +13,7 @@ object AsRaw {
       def asRaw(real: Real): Raw = asRawFun(real)
     }
   def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
-  def materializeForRpc[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RPCMacros.rpcAsRaw[Raw, Real]
+  def materializeForRpc[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
 }
 
 @implicitNotFound("don't know how to decode ${Raw} into ${Real}, appropriate AsReal instance not found")
@@ -26,7 +26,7 @@ object AsReal {
       def asReal(raw: Raw): Real = asRealFun(raw)
     }
   def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
-  def materializeForRpc[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RPCMacros.rpcAsReal[Raw, Real]
+  def materializeForRpc[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsReal[Raw, Real]
 }
 
 @implicitNotFound("don't know how to encode and decode between ${Real} and ${Raw}, appropriate AsRawReal instance not found")
@@ -46,9 +46,9 @@ object AsRawReal {
   def identity[A]: AsRawReal[A, A] =
     reusableIdentity.asInstanceOf[AsRawReal[A, A]]
 
-  def materializeForRpc[Raw, Real]: AsRawReal[Raw, Real] = macro macros.rpc.RPCMacros.rpcAsRawReal[Raw, Real]
+  def materializeForRpc[Raw, Real]: AsRawReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRawReal[Raw, Real]
 }
 
 object RpcMetadata {
-  def materializeForRpc[M[_], Real]: M[Real] = macro macros.rpc.RPCMacros.rpcMetadata[M[Real], Real]
+  def materializeForRpc[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.rpcMetadata[M[Real], Real]
 }

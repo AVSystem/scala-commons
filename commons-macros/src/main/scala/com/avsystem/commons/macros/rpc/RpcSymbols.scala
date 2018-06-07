@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package macros.rpc
 
-trait RPCSymbols { this: RPCMacroCommons =>
+trait RpcSymbols { this: RpcMacroCommons =>
 
   import c.universe._
 

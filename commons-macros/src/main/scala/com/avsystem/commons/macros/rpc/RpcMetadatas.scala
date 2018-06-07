@@ -3,7 +3,7 @@ package macros.rpc
 
 import scala.annotation.StaticAnnotation
 
-trait RPCMetadatas { this: RPCMacroCommons with RPCSymbols with RPCMappings =>
+trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
 
   import c.universe._
 
