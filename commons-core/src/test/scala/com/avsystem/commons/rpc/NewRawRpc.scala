@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package rpc
 
+import java.util.regex.Matcher
+
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.serialization.GenCodec
 
@@ -58,6 +60,15 @@ object NewRawRpc extends RawRpcCompanion[NewRawRpc] {
   implicit def AsRawRealFromGenCodec[T: GenCodec]: AsRawReal[String, T] = ???
   implicit def futureAsRawRealFromGenCodec[T: GenCodec]: AsRawReal[Future[String], Future[T]] = ???
 }
+
+object Utils {
+  implicit class StringUtils(private val str: String) extends AnyVal {
+    def indent(ind: String): String =
+      str.replaceAll("(^|\\n)\\n*(?!$)", "$0" + Matcher.quoteReplacement(ind))
+  }
+}
+
+import com.avsystem.commons.rpc.Utils._
 
 @methodTag[RestMethod, RestMethod]
 @paramTag[DummyParamTag, untagged]
