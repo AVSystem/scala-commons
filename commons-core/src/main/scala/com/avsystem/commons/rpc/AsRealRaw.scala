@@ -3,39 +3,39 @@ package rpc
 
 import scala.annotation.implicitNotFound
 
-@implicitNotFound("don't know how to encode ${T} as ${R}, appropriate AsRaw instance not found")
-trait AsRaw[R, T] {
-  def asRaw(real: T): R
+@implicitNotFound("don't know how to encode ${Real} as ${Raw}, appropriate AsRaw instance not found")
+trait AsRaw[Raw, Real] {
+  def asRaw(real: Real): Raw
 }
 object AsRaw {
-  def create[R, T](asRawFun: T => R): AsRaw[R, T] =
-    new AsRaw[R, T] {
-      def asRaw(real: T): R = asRawFun(real)
+  def create[Raw, Real](asRawFun: Real => Raw): AsRaw[Raw, Real] =
+    new AsRaw[Raw, Real] {
+      def asRaw(real: Real): Raw = asRawFun(real)
     }
   def identity[A]: AsRaw[A, A] = AsRealRaw.identity[A]
-  def materializeForRpc[R, T]: AsRaw[R, T] = macro macros.rpc.RPCMacros.rpcAsRaw[R, T]
+  def materializeForRpc[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RPCMacros.rpcAsRaw[Raw, Real]
 }
 
-@implicitNotFound("don't know how to decode ${R} into ${T}, appropriate AsReal instance not found")
-trait AsReal[R, T] {
-  def asReal(raw: R): T
+@implicitNotFound("don't know how to decode ${Raw} into ${Real}, appropriate AsReal instance not found")
+trait AsReal[Raw, Real] {
+  def asReal(raw: Raw): Real
 }
 object AsReal {
-  def create[R, T](asRealFun: R => T): AsReal[R, T] =
-    new AsReal[R, T] {
-      def asReal(raw: R): T = asRealFun(raw)
+  def create[Raw, Real](asRealFun: Raw => Real): AsReal[Raw, Real] =
+    new AsReal[Raw, Real] {
+      def asReal(raw: Raw): Real = asRealFun(raw)
     }
   def identity[A]: AsReal[A, A] = AsRealRaw.identity[A]
-  def materializeForRpc[R, T]: AsReal[R, T] = macro macros.rpc.RPCMacros.rpcAsReal[R, T]
+  def materializeForRpc[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RPCMacros.rpcAsReal[Raw, Real]
 }
 
-@implicitNotFound("don't know how to encode and decode between ${T} and ${R}, appropriate AsRealRaw instance not found")
-trait AsRealRaw[R, T] extends AsReal[R, T] with AsRaw[R, T]
+@implicitNotFound("don't know how to encode and decode between ${Real} and ${Raw}, appropriate AsRealRaw instance not found")
+trait AsRealRaw[Raw, Real] extends AsReal[Raw, Real] with AsRaw[Raw, Real]
 object AsRealRaw {
-  def create[R, T](asRealFun: R => T, asRawFun: T => R): AsRealRaw[R, T] =
-    new AsRealRaw[R, T] {
-      def asRaw(real: T): R = asRawFun(real)
-      def asReal(raw: R): T = asRealFun(raw)
+  def create[Raw, Real](asRealFun: Raw => Real, asRawFun: Real => Raw): AsRealRaw[Raw, Real] =
+    new AsRealRaw[Raw, Real] {
+      def asRaw(real: Real): Raw = asRawFun(real)
+      def asReal(raw: Raw): Real = asRealFun(raw)
     }
 
   private val reusableIdentity = new AsRealRaw[Any, Any] {
@@ -46,9 +46,9 @@ object AsRealRaw {
   def identity[A]: AsRealRaw[A, A] =
     reusableIdentity.asInstanceOf[AsRealRaw[A, A]]
 
-  def materializeForRpc[R, T]: AsRealRaw[R, T] = macro macros.rpc.RPCMacros.rpcAsRealRaw[R, T]
+  def materializeForRpc[Raw, Real]: AsRealRaw[Raw, Real] = macro macros.rpc.RPCMacros.rpcAsRealRaw[Raw, Real]
 }
 
 object RpcMetadata {
-  def materializeForRpc[M[_], T]: M[T] = macro macros.rpc.RPCMacros.rpcMetadata[M[T], T]
+  def materializeForRpc[M[_], Real]: M[Real] = macro macros.rpc.RPCMacros.rpcMetadata[M[Real], Real]
 }

@@ -6,14 +6,14 @@ import com.avsystem.commons.macros.rpc.RPCMacros
 /**
   * Base trait for companion objects of raw RPC traits.
   */
-trait RawRpcCompanion[R] extends RpcImplicitsProvider {
-  type AsRawRpc[T] = AsRaw[R, T]
-  type AsRealRpc[T] = AsReal[R, T]
-  type AsRealRawRpc[T] = AsRealRaw[R, T]
+trait RawRpcCompanion[Raw] extends RpcImplicitsProvider {
+  type AsRawRpc[Real] = AsRaw[Raw, Real]
+  type AsRealRpc[Real] = AsReal[Raw, Real]
+  type AsRealRawRpc[Real] = AsRealRaw[Raw, Real]
 
-  def materializeAsRaw[T]: AsRawRpc[T] = macro RPCMacros.rpcAsRaw[R, T]
-  def materializeAsReal[T]: AsRealRpc[T] = macro RPCMacros.rpcAsReal[R, T]
-  def materializeAsRealRaw[T]: AsRealRawRpc[T] = macro RPCMacros.rpcAsRealRaw[R, T]
+  def materializeAsRaw[Real]: AsRawRpc[Real] = macro RPCMacros.rpcAsRaw[Raw, Real]
+  def materializeAsReal[Real]: AsRealRpc[Real] = macro RPCMacros.rpcAsReal[Raw, Real]
+  def materializeAsRealRaw[Real]: AsRealRawRpc[Real] = macro RPCMacros.rpcAsRealRaw[Raw, Real]
 }
 
 

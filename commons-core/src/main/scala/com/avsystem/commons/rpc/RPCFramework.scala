@@ -24,12 +24,12 @@ trait RPCFramework {
   type ParamTypeMetadata[T]
   type ResultTypeMetadata[T]
 
-  type RPCMetadata[T]
+  type RPCMetadata[RealRPC]
   val RPCMetadata: RpcMetadataCompanion[RPCMetadata]
 
-  type AsRawRPC[T] = AsRaw[RawRPC, T]
+  type AsRawRPC[RealRPC] = AsRaw[RawRPC, RealRPC]
   object AsRawRPC {
-    def apply[T](implicit asRawRPC: AsRawRPC[T]): AsRawRPC[T] = asRawRPC
+    def apply[RealRPC](implicit asRawRPC: AsRawRPC[RealRPC]): AsRawRPC[RealRPC] = asRawRPC
   }
 
   /**
@@ -39,7 +39,7 @@ trait RPCFramework {
     */
   def materializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRawImpl[T]
 
-  type AsRealRPC[T] = AsReal[RawRPC, T]
+  type AsRealRPC[RealRPC] = AsReal[RawRPC, RealRPC]
   object AsRealRPC {
     @inline def apply[T](implicit asRealRPC: AsRealRPC[T]): AsRealRPC[T] = asRealRPC
   }
@@ -51,9 +51,9 @@ trait RPCFramework {
     */
   def materializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealImpl[T]
 
-  type AsRealRawRPC[T] = AsRealRaw[RawRPC, T]
+  type AsRealRawRPC[RealRPC] = AsRealRaw[RawRPC, RealRPC]
   object AsRealRawRPC {
-    @inline def apply[T](implicit asRealRawRPC: AsRealRawRPC[T]): AsRealRawRPC[T] = asRealRawRPC
+    @inline def apply[RealRPC](implicit asRealRawRPC: AsRealRawRPC[RealRPC]): AsRealRawRPC[RealRPC] = asRealRawRPC
   }
 
   def materializeAsRealRaw[T]: AsRealRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealRawImpl[T]
@@ -70,16 +70,16 @@ trait RPCFramework {
     @infer typeMetadata: ParamTypeMetadata[T]
   ) extends TypedMetadata[T]
 
-  def materializeMetadata[T]: RPCMetadata[T] = macro macros.rpc.RPCFrameworkMacros.metadataImpl[T]
+  def materializeMetadata[RealRPC]: RPCMetadata[RealRPC] = macro macros.rpc.RPCFrameworkMacros.metadataImpl[RealRPC]
 
   /**
     * Base trait for traits or classes "implementing" [[FullRPCInfo]] in various RPC frameworks.
     * Having a separate subtrait/subclass for every framework is beneficial for ScalaJS DCE.
     */
-  trait BaseFullRPCInfo[T] {
-    def asRealRPC: AsRealRPC[T]
-    def asRawRPC: AsRawRPC[T]
-    def metadata: RPCMetadata[T]
+  trait BaseFullRPCInfo[RealRPC] {
+    def asRealRPC: AsRealRPC[RealRPC]
+    def asRawRPC: AsRawRPC[RealRPC]
+    def metadata: RPCMetadata[RealRPC]
   }
   /**
     * This type must be defined as trait or class by an [[RPCFramework]] in order to be able
@@ -90,12 +90,12 @@ trait RPCFramework {
     * @example
     * {{{
     * object SomeRPCFramework extends RPCFramework {
-    *   abstract class FullRPCInfo[T] extends BaseFullRPCInfo[T]
+    *   abstract class FullRPCInfo[RealRPC] extends BaseFullRPCInfo[RealRPC]
     *   ...
     * }
     * }}}
     */
-  type FullRPCInfo[T] <: BaseFullRPCInfo[T]
+  type FullRPCInfo[RealRPC] <: BaseFullRPCInfo[RealRPC]
 
   implicit def materializeFullInfo[T]: FullRPCInfo[T] = macro macros.rpc.RPCFrameworkMacros.fullInfoImpl[T]
 
@@ -119,15 +119,15 @@ trait RPCFramework {
     *   object SomeRPC extends SomeRPCFramework.RPCCompanion[SomeRPC]
     * }}}
     */
-  abstract class RPCCompanion[T](implicit fri: FullRPCInfo[T]) {
-    final def fullRpcInfo: FullRPCInfo[T] = fri
+  abstract class RPCCompanion[RealRPC](implicit fri: FullRPCInfo[RealRPC]) {
+    final def fullRpcInfo: FullRPCInfo[RealRPC] = fri
     // You would think: why the hell are these implicits defined as macros?
     // Can't we just simply refer to members of `fullRpcInfo` in a regular method?
     // We can, but this prevents ScalaJS optimizer's DCE from distinguishing between `FullRPCInfo` traits/classes
     // of different RPC frameworks. This is important in cross-compiled code where any of these three typeclasses
     // may be completely unused on the JS side and we want to make sure that DCE gets rid of them.
-    implicit def asRealRPC: AsRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
-    implicit def asRawRPC: AsRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
-    implicit def metadata: RPCMetadata[T] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
+    implicit def asRealRPC: AsRealRPC[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
+    implicit def asRawRPC: AsRawRPC[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
+    implicit def metadata: RPCMetadata[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
   }
 }

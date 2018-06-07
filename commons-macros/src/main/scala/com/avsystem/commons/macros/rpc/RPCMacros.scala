@@ -75,9 +75,9 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx)
 
   import c.universe._
 
-  def rpcAsReal[R: WeakTypeTag, T: WeakTypeTag]: Tree = {
-    val raw = RawRpcTrait(weakTypeOf[R].dealias)
-    val real = RealRpcTrait(weakTypeOf[T].dealias)
+  def rpcAsReal[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = {
+    val raw = RawRpcTrait(weakTypeOf[Raw].dealias)
+    val real = RealRpcTrait(weakTypeOf[Real].dealias)
     val mapping = RpcMapping(real, raw, forAsRaw = false, forAsReal = true)
 
     // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
@@ -91,9 +91,9 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx)
     """
   }
 
-  def rpcAsRaw[R: WeakTypeTag, T: WeakTypeTag]: Tree = {
-    val raw = RawRpcTrait(weakTypeOf[R].dealias)
-    val real = RealRpcTrait(weakTypeOf[T].dealias)
+  def rpcAsRaw[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = {
+    val raw = RawRpcTrait(weakTypeOf[Raw].dealias)
+    val real = RealRpcTrait(weakTypeOf[Real].dealias)
     val mapping = RpcMapping(real, raw, forAsRaw = true, forAsReal = false)
 
     // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
@@ -107,9 +107,9 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx)
      """
   }
 
-  def rpcAsRealRaw[R: WeakTypeTag, T: WeakTypeTag]: Tree = {
-    val raw = RawRpcTrait(weakTypeOf[R].dealias)
-    val real = RealRpcTrait(weakTypeOf[T].dealias)
+  def rpcAsRealRaw[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = {
+    val raw = RawRpcTrait(weakTypeOf[Raw].dealias)
+    val real = RealRpcTrait(weakTypeOf[Real].dealias)
     val mapping = RpcMapping(real, raw, forAsRaw = true, forAsReal = true)
 
     // these two must be evaluated before `cachedImplicitDeclarations`, don't inline them into the quasiquote
@@ -125,8 +125,8 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx)
      """
   }
 
-  def rpcMetadata[M: WeakTypeTag, T: WeakTypeTag]: Tree = {
-    val realRpc = RealRpcTrait(weakTypeOf[T].dealias)
+  def rpcMetadata[M: WeakTypeTag, Real: WeakTypeTag]: Tree = {
+    val realRpc = RealRpcTrait(weakTypeOf[Real].dealias)
     val metadataTpe = weakTypeOf[M] match { // scalac, why do I have to do this?
       case TypeRef(pre, sym, Nil) =>
         internal.typeRef(pre, sym, List(realRpc.tpe))
@@ -139,7 +139,7 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx)
 
     companionOf(metadataTpe) match {
       case Some(comp) =>
-        // short circuit recursive implicit searches for M.Lazy[T]
+        // short circuit recursive implicit searches for M.Lazy[Real]
         val lazyMetadataTpe = getType(tq"$comp.Lazy[${realRpc.tpe}]")
         val selfName = c.freshName(TermName("self"))
         val lazySelfName = c.freshName(TermName("lazySelf"))
