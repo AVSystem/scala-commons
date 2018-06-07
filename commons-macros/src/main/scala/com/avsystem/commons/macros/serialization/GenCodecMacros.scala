@@ -32,7 +32,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   override def materializeFor(tpe: Type) = {
     val tsym = tpe.dealias.typeSymbol
-    if (isSealedHierarchyRoot(tsym)) getAnnotations(tsym, FlattenAnnotType).headOption match {
+    if (isSealedHierarchyRoot(tsym)) findAnnotation(tsym, FlattenAnnotType) match {
       case Some(annot) =>
         val caseFieldName = annot.tree match {
           case Apply(_, Nil) => DefaultCaseField
@@ -120,7 +120,17 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree =
     forApplyUnapply(tpe, companionOf(tpe).map(c.typecheck(_)).getOrElse(EmptyTree), apply, unapply, params)
 
-  def forApplyUnapply(tpe: Type, companion: Tree, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
+  def forApplyUnapply(tpe: Type, companion: Tree, apply: Symbol, unapply: Symbol, applyParams: List[ApplyParam]): Tree = {
+    val params = applyParams.map { p =>
+      findAnnotation(p.sym, WhenAbsentAnnotType).fold(p) { annot =>
+        val newDefault = annot.tree.children.tail.head
+        if (!(newDefault.tpe <:< p.valueType)) {
+          abortAt(s"expected value of type ${p.valueType} in @whenAbsent annotation, got ${newDefault.tpe.widen}", p.sym.pos)
+        }
+        p.copy(defaultValue = c.untypecheck(newDefault))
+      }
+    }
+
     val dtpe = tpe.dealias
     val tcTpe = typeClassInstance(dtpe)
     val generated = generatedMembers(dtpe)
@@ -279,7 +289,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     symbols.groupBy(st => targetName(st)).map {
       case (targetName, List(sym)) => (sym, targetName)
       case (targetName, syms) =>
-        c.abort(c.enclosingPosition, s"$paramsOrSubclasses ${syms.map(_.name).mkString(", ")} have the same @name: $targetName")
+        abort(s"$paramsOrSubclasses ${syms.map(_.name).mkString(", ")} have the same @name: $targetName")
     }
   }
 
@@ -308,12 +318,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val classOf: Tree = q"classOf[$subtype]"
     val generated: List[(Symbol, Type)] = generatedMembers(subtype)
     val (defaultCase, transientCase) =
-      getAnnotations(sym, DefaultCaseAnnotType).headOption
-        .map(a => a.tree match {
-          case Apply(_, Nil) => (true, false)
-          case Apply(_, BooleanLiteral(transient) :: _) => (true, transient)
-          case Apply(_, arg :: _) => c.abort(arg.pos, s"Boolean literal expected as @defaultCase `transient` argument")
-        }).getOrElse((false, false))
+      findAnnotation(sym, DefaultCaseAnnotType).map(_.tree).map {
+        case Apply(_, Nil) => (true, false)
+        case Apply(_, BooleanLiteral(transient) :: _) => (true, transient)
+        case Apply(_, arg :: _) => c.abort(arg.pos, s"Boolean literal expected as @defaultCase `transient` argument")
+      }.getOrElse((false, false))
 
     val targetNames: Map[Symbol, String] = targetNameMap(applyParams.map(_.sym) ++ generated.map(_._1))
     val membersByName: Map[String, (Symbol, Type)] =
@@ -345,7 +354,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       applyUnapplyFor(st).map { au =>
         val subTcTpe = typeClassInstance(st)
         val applyParams = au.params.zipWithIndex.map { case ((s, defaultValue), pidx) =>
-          ApplyParam(pidx, s, defaultValue, dependency(nonRepeatedType(s.typeSignature), subTcTpe, s"for field ${s.name}"))
+          ApplyParam(pidx, s, defaultValue, dependency(actualParamType(s), subTcTpe, s"for field ${s.name}"))
         }
         CaseClassInfo(idx, st, au, applyParams)
       } orElse singleValueFor(st).map { singleton =>
@@ -436,7 +445,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     applyUnapplyFor(tpe, applyUnapplyProvider) match {
       case Some(ApplyUnapply(apply, unapply, params)) =>
         val dependencies = params.zipWithIndex.map { case ((s, defaultValue), idx) =>
-          ApplyParam(idx, s, defaultValue, dependency(nonRepeatedType(s.typeSignature), tcTpe, s"for field ${s.name}"))
+          ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s"for field ${s.name}"))
         }
         forApplyUnapply(tpe, applyUnapplyProvider, apply, unapply, dependencies)
       case None =>

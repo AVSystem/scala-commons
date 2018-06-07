@@ -9,13 +9,14 @@ trait ProcedureRPCFramework extends RPCFramework {
   type RawRPC <: ProcedureRawRPC
 
   trait ProcedureRawRPC { this: RawRPC =>
-    def fire(rpcName: String, argLists: List[List[RawValue]]): Unit
+    @multi @verbatim def fire(rpcName: String)(@multi args: List[RawValue]): Unit
   }
 
-  implicit val ProcedureRealHandler: RealInvocationHandler[Unit, Unit] =
-    RealInvocationHandler[Unit, Unit](_ => ())
-  implicit val ProcedureRawHandler: RawInvocationHandler[Unit] =
-    RawInvocationHandler[Unit](_.fire(_, _))
+  case class ProcedureSignature(
+    name: String,
+    paramMetadata: List[ParamMetadata[_]],
+    annotations: List[MetadataAnnotation]
+  ) extends Signature with TypedMetadata[Unit]
 }
 
 /**
@@ -26,13 +27,20 @@ trait FunctionRPCFramework extends RPCFramework {
   type RawRPC <: FunctionRawRPC
 
   trait FunctionRawRPC { this: RawRPC =>
-    def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue]
+    @multi def call(rpcName: String)(@multi args: List[RawValue]): Future[RawValue]
   }
 
-  implicit def FunctionRealHandler[A: Writer]: RealInvocationHandler[Future[A], Future[RawValue]] =
-    RealInvocationHandler[Future[A], Future[RawValue]](_.mapNow(write[A]))
-  implicit def FunctionRawHandler[A: Reader]: RawInvocationHandler[Future[A]] =
-    RawInvocationHandler[Future[A]]((rawRpc, rpcName, argLists) => rawRpc.call(rpcName, argLists).mapNow(read[A]))
+  case class FunctionSignature[T](
+    name: String,
+    paramMetadata: List[ParamMetadata[_]],
+    annotations: List[MetadataAnnotation],
+    @infer resultTypeMetadata: ResultTypeMetadata[T]
+  ) extends Signature with TypedMetadata[Future[T]]
+
+  implicit def readerBasedFutureAsReal[T: Reader]: AsReal[Future[RawValue], Future[T]] =
+    AsReal.create(_.mapNow(read[T]))
+  implicit def writerBasedFutureAsRaw[T: Writer]: AsRaw[Future[RawValue], Future[T]] =
+    AsRaw.create(_.mapNow(write[T]))
 }
 
 /**
@@ -41,34 +49,50 @@ trait FunctionRPCFramework extends RPCFramework {
 trait GetterRPCFramework extends RPCFramework {
   type RawRPC <: GetterRawRPC
 
-  case class RawInvocation(rpcName: String, argLists: List[List[RawValue]])
+  case class RawInvocation(rpcName: String, args: List[RawValue])
 
   trait GetterRawRPC { this: RawRPC =>
-    def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC
+    @multi def get(rpcName: String)(@multi args: List[RawValue]): RawRPC
 
     def resolveGetterChain(getters: List[RawInvocation]): RawRPC =
-      getters.foldRight(this)((inv, rpc) => rpc.get(inv.rpcName, inv.argLists))
+      getters.foldRight(this)((inv, rpc) => rpc.get(inv.rpcName)(inv.args))
   }
 
-  // these must be macros in order to properly handle recursive RPC types
-  implicit def getterRealHandler[T](implicit ev: IsRPC[T]): RealInvocationHandler[T, RawRPC] = macro macros.rpc.RPCFrameworkMacros.getterRealHandler[T]
-  implicit def getterRawHandler[T](implicit ev: IsRPC[T]): RawInvocationHandler[T] = macro macros.rpc.RPCFrameworkMacros.getterRawHandler[T]
-
-  final class GetterRealHandler[T: AsRawRPC] extends RealInvocationHandler[T, RawRPC] {
-    def toRaw(real: T): RawRPC = AsRawRPC[T].asRaw(real)
-  }
-  final class GetterRawHandler[T: AsRealRPC] extends RawInvocationHandler[T] {
-    def toReal(rawRpc: RawRPC, rpcName: String, argLists: List[List[RawValue]]): T =
-      AsRealRPC[T].asReal(rawRpc.get(rpcName, argLists))
-  }
+  case class GetterSignature[T](
+    name: String,
+    paramMetadata: List[ParamMetadata[_]],
+    annotations: List[MetadataAnnotation],
+    @infer @checked resultMetadata: RPCMetadata.Lazy[T]
+  ) extends Signature with TypedMetadata[T]
 }
 
 trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework with ProcedureRPCFramework {
   trait RawRPC extends GetterRawRPC with FunctionRawRPC with ProcedureRawRPC
+  object RawRPC extends BaseRawRpcCompanion
+
   trait FullRPCInfo[T] extends BaseFullRPCInfo[T]
+
+  case class RPCMetadata[T](
+    @reifyName name: String,
+    @reifyAnnot @multi annotations: List[MetadataAnnotation],
+    @multi @verbatim procedureSignatures: Map[String, ProcedureSignature],
+    @multi functionSignatures: Map[String, FunctionSignature[_]],
+    @multi getterSignatures: Map[String, GetterSignature[_]]
+  )
+  object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 }
 
 trait OneWayRPCFramework extends GetterRPCFramework with ProcedureRPCFramework {
   trait RawRPC extends GetterRawRPC with ProcedureRawRPC
+  object RawRPC extends BaseRawRpcCompanion
+
   trait FullRPCInfo[T] extends BaseFullRPCInfo[T]
+
+  case class RPCMetadata[T](
+    @reifyName name: String,
+    @reifyAnnot @multi annotations: List[MetadataAnnotation],
+    @multi @verbatim procedureSignatures: Map[String, ProcedureSignature],
+    @multi getterSignatures: Map[String, GetterSignature[_]]
+  )
+  object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 }

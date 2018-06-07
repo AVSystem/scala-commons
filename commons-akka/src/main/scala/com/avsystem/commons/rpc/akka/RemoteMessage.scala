@@ -28,16 +28,16 @@ private object RemoteMessage {
   implicit val heatBeatCodec: GenCodec[MonixProtocol.Heartbeat.type] = GenCodec.materialize[MonixProtocol.Heartbeat.type]
 }
 
-private final case class RawInvocation(rpcName: String, argLists: List[List[RawValue]]) extends RemoteMessage
+private final case class RawInvocation(rpcName: String, args: List[RawValue]) extends RemoteMessage
 
 private sealed trait InvocationMessage extends RemoteMessage {
   def getterChain: Seq[RawInvocation]
   def name: String
-  def argLists: List[List[RawValue]]
+  def args: List[RawValue]
 }
-private final case class ProcedureInvocationMessage(name: String, argLists: List[List[RawValue]], getterChain: Seq[RawInvocation]) extends InvocationMessage
-private final case class FunctionInvocationMessage(name: String, argLists: List[List[RawValue]], getterChain: Seq[RawInvocation]) extends InvocationMessage
-private final case class ObservableInvocationMessage(name: String, argLists: List[List[RawValue]], getterChain: Seq[RawInvocation]) extends InvocationMessage
+private final case class ProcedureInvocationMessage(name: String, args: List[RawValue], getterChain: Seq[RawInvocation]) extends InvocationMessage
+private final case class FunctionInvocationMessage(name: String, args: List[RawValue], getterChain: Seq[RawInvocation]) extends InvocationMessage
+private final case class ObservableInvocationMessage(name: String, args: List[RawValue], getterChain: Seq[RawInvocation]) extends InvocationMessage
 
 private sealed trait InvocationResult extends RemoteMessage
 private final case class InvocationSuccess(value: RawValue) extends InvocationResult

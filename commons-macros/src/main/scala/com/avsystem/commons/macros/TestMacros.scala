@@ -8,7 +8,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   import c.universe._
 
-  val TestObj = q"$CommonsPackage.macros.TypeClassDerivationTest"
+  val TestObj = q"$CommonsPkg.macros.TypeClassDerivationTest"
   val SingletonTCObj = q"$TestObj.SingletonTC"
   val ApplyUnapplyTCObj = q"$TestObj.ApplyUnapplyTC"
   val SealedHierarchyTCObj = q"$TestObj.SealedHierarchyTC"
@@ -66,7 +66,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
     q"???"
   }
 
-  val ApplierUnapplierCls = tq"$CommonsPackage.macros.ApplierUnapplier"
+  val ApplierUnapplierCls = tq"$CommonsPkg.macros.ApplierUnapplier"
 
   def applierUnapplier[T: c.WeakTypeTag, F: c.WeakTypeTag]: c.Tree = {
     val ttpe = weakTypeOf[T]

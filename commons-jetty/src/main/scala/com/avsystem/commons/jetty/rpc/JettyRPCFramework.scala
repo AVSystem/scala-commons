@@ -37,7 +37,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   override def read[T: Reader](raw: RawValue): T = JsonStringInput.read[T](raw.s)
   override def write[T: Writer](value: T): RawValue = new RawValue(JsonStringOutput.write[T](value))
 
-  case class Invocation(rpcName: String, argLists: List[List[RawValue]])
+  case class Invocation(rpcName: String, args: List[RawValue])
   object Invocation extends HasGenCodec[Invocation]
 
   case class Call(chain: List[Invocation], leaf: Invocation)
@@ -45,14 +45,14 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
 
   class RPCClient(httpClient: HttpClient, uri: String)(implicit ec: ExecutionContext) {
     private class RawRPCImpl(chain: List[Invocation]) extends RawRPC {
-      override def fire(rpcName: String, argLists: List[List[RawValue]]): Unit =
-        put(Call(chain, Invocation(rpcName, argLists)))
+      override def fire(rpcName: String)(args: List[RawValue]): Unit =
+        put(Call(chain, Invocation(rpcName, args)))
 
-      override def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue] =
-        post(Call(chain, Invocation(rpcName, argLists)))
+      override def call(rpcName: String)(args: List[RawValue]): Future[RawValue] =
+        post(Call(chain, Invocation(rpcName, args)))
 
-      override def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC =
-        new RawRPCImpl(chain :+ Invocation(rpcName, argLists))
+      override def get(rpcName: String)(args: List[RawValue]): RawRPC =
+        new RawRPCImpl(chain :+ Invocation(rpcName, args))
     }
 
     val rawRPC: RawRPC = new RawRPCImpl(List.empty)
@@ -123,11 +123,11 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
       }
     }
 
-    type InvokeFunction[T] = RawRPC => (String, List[List[RawValue]]) => T
+    type InvokeFunction[T] = RawRPC => String => List[RawValue] => T
 
     def invoke[T](call: Call)(f: InvokeFunction[T]): T = {
-      val rpc = call.chain.foldLeft(rootRpc)((rpc, inv) => rpc.get(inv.rpcName, inv.argLists))
-      f(rpc)(call.leaf.rpcName, call.leaf.argLists)
+      val rpc = call.chain.foldLeft(rootRpc)((rpc, inv) => rpc.get(inv.rpcName)(inv.args))
+      f(rpc)(call.leaf.rpcName)(call.leaf.args)
     }
 
     def handlePost(call: Call): Future[RawValue] =

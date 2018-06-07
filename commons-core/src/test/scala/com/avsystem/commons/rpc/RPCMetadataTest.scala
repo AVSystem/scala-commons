@@ -7,7 +7,6 @@ import org.scalatest.FunSuite
 class RPCMetadataTest extends FunSuite {
   case class Annot(str: String) extends MetadataAnnotation
 
-  @RPC
   @Annot("on base class")
   trait Base[T] {
     def genproc(p: T): Unit
@@ -15,11 +14,12 @@ class RPCMetadataTest extends FunSuite {
     @Annot("on base method")
     def proc(@Annot("on base param") p: String): Unit
 
-    @RPCName("function")
+    @rpcName("function")
     def func: Future[String]
   }
   object Base {
-    implicit def fullRpcInfo[T: ParamTypeMetadata]: BaseFullRPCInfo[Base[T]] = materializeFullInfo
+    implicit def AsRawReal[T]: AsRawRealRPC[Base[T]] = materializeAsRawReal
+    implicit def metadata[T: ParamTypeMetadata]: RPCMetadata[Base[T]] = materializeMetadata
   }
 
   @Annot("on subclass")
@@ -31,42 +31,46 @@ class RPCMetadataTest extends FunSuite {
 
     def selfGetter: Sub
   }
-  object Sub {
-    implicit lazy val fullRPCInfo: BaseFullRPCInfo[Sub] = materializeFullInfo
-  }
+  object Sub extends RPCCompanion[Sub]
 
   test("RPC metadata should be correct") {
-    val metadata = RPCMetadata[Sub]
+    val m = Sub.metadata
 
-    assert(metadata.name == "Sub")
-    assert(metadata.annotations == List(Annot("on subclass"), Annot("on base class")))
+    assert(m.name == "Sub")
+    assert(m.annotations == List(Annot("on subclass"), Annot("on base class")))
 
-    assert(metadata.signatures.keySet == Set("proc", "genproc", "function", "getter", "selfGetter"))
+    assert(m.procedureSignatures.keySet == Set("proc", "genproc"))
+    assert(m.functionSignatures.keySet == Set("function"))
+    assert(m.getterSignatures.keySet == Set("getter", "selfGetter"))
 
-    assert(metadata.signatures("proc") == Signature("proc", List(List(
-      ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")), TypeName("String"))
-    )), classTag[Unit], List(Annot("on submethod"), Annot("on base method"))))
+    assert(m.procedureSignatures("proc") == ProcedureSignature("proc",
+      List(
+        ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")), TypeName("String"))
+      ),
+      List(Annot("on submethod"), Annot("on base method"))
+    ))
 
-    assert(metadata.signatures("genproc") == Signature("genproc", List(List(
+    assert(m.procedureSignatures("genproc") == ProcedureSignature("genproc", List(
       ParamMetadata("p", Nil, TypeName("String"))
-    )), classTag[Unit], Nil))
+    ), Nil))
 
-    assert(metadata.signatures("function") == Signature("func", Nil, classTag[Future[_]], Nil))
+    assert(m.functionSignatures("function") == FunctionSignature("func", Nil, Nil, classTag[String]))
 
-    val resultMetadata = metadata.getterResults("getter")
-    assert(resultMetadata.name == "Base")
+    val resultMetadata = m.getterSignatures("getter").resultMetadata.value
     assert(resultMetadata.annotations == List(Annot("on base class")))
 
-    assert(resultMetadata.signatures.keySet == Set("proc", "genproc", "function"))
+    assert(resultMetadata.procedureSignatures.keySet == Set("proc", "genproc"))
+    assert(resultMetadata.functionSignatures.keySet == Set("function"))
+    assert(resultMetadata.getterSignatures.keySet == Set())
 
-    assert(resultMetadata.signatures("proc") == Signature("proc", List(List(
+    assert(resultMetadata.procedureSignatures("proc") == ProcedureSignature("proc", List(
       ParamMetadata("p", List(Annot("on base param")), TypeName("String"))
-    )), classTag[Unit], List(Annot("on base method"))))
+    ), List(Annot("on base method"))))
 
-    assert(metadata.signatures("genproc") == Signature("genproc", List(List(
+    assert(m.procedureSignatures("genproc") == ProcedureSignature("genproc", List(
       ParamMetadata("p", Nil, TypeName("String"))
-    )), classTag[Unit], Nil))
+    ), Nil))
 
-    assert(resultMetadata.signatures("function") == Signature("func", Nil, classTag[Future[_]], Nil))
+    assert(resultMetadata.functionSignatures("function") == FunctionSignature("func", Nil, Nil, classTag[String]))
   }
 }

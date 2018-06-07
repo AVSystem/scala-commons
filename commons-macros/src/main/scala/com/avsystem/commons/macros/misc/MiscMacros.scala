@@ -7,12 +7,10 @@ import scala.reflect.macros.{TypecheckException, blackbox}
 
 class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
-  class C[+A, +B <: A]
-
-  val aa: C[Any, Any] = new C[String, String]
-
   import c.universe._
 
+  // cannot use c.inferImplicitValue(silent = false) because the only error it reports is
+  // "implicit search has failed, to find out the reason turn -Xlog-implicits"
   def infer[T: c.WeakTypeTag](clue: Tree): Tree =
     unwrapAndAddClue(clue)(c.typecheck(q"implicitly[${weakTypeOf[T]}]"))
 
@@ -22,7 +20,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   private def unwrapAndAddClue(clueTree: Tree)(expr: => Tree): Tree = clueTree match {
     case StringLiteral(clue) =>
       val wrapped = try expr catch {
-        case TypecheckException(_, msg) => abort(clue + msg)
+        case TypecheckException(_, msg) => abortAt(clue + msg, clueTree.pos)
       }
       wrapped match {
         case Apply(_, List(arg)) => arg
@@ -37,7 +35,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     val pos = c.enclosingPosition
     q"""
-      $CommonsPackage.misc.SourceInfo(
+      $CommonsPkg.misc.SourceInfo(
         ${pos.source.path},
         ${pos.source.file.name},
         ${pos.point},
@@ -70,5 +68,12 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
 
     q"new ${c.prefix}.ValName(${owner.asTerm.getter.name.decodedName.toString})"
+  }
+
+  def compilationError(error: Tree): Tree = error match {
+    case StringLiteral(errorStr) =>
+      abortAt(errorStr, error.pos)
+    case t =>
+      c.abort(t.pos, "Expected string literal here")
   }
 }

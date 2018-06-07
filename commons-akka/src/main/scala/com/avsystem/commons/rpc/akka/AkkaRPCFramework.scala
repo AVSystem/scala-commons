@@ -7,8 +7,9 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.util.ByteString
 import com.avsystem.commons.rpc.akka.client.ClientRawRPC
 import com.avsystem.commons.rpc.akka.server.ServerActor
-import com.avsystem.commons.rpc.{FunctionRPCFramework, GetterRPCFramework, ProcedureRPCFramework}
+import com.avsystem.commons.rpc.{FunctionRPCFramework, GetterRPCFramework, MetadataAnnotation, ProcedureRPCFramework, RpcMetadataCompanion, TypedMetadata, infer, multi, reifyAnnot, reifyName, verbatim}
 import com.avsystem.commons.serialization.{GenCodec, StreamInput, StreamOutput}
+import monix.reactive.Observable
 
 /**
   * RPC Framework implemented with Akka as transportation layer.
@@ -17,6 +18,7 @@ import com.avsystem.commons.serialization.{GenCodec, StreamInput, StreamOutput}
   */
 object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework with FunctionRPCFramework with MonixRPCFramework {
   trait RawRPC extends GetterRawRPC with ProcedureRawRPC with FunctionRawRPC with MonixRawRPC
+  object RawRPC extends BaseRawRpcCompanion
   abstract class FullRPCInfo[T] extends BaseFullRPCInfo[T]
 
   type RawValue = ByteString
@@ -25,6 +27,23 @@ object AkkaRPCFramework extends GetterRPCFramework with ProcedureRPCFramework wi
   type Writer[T] = GenCodec[T]
   type ParamTypeMetadata[T] = DummyImplicit
   type ResultTypeMetadata[T] = DummyImplicit
+
+  case class RPCMetadata[T](
+    @reifyName name: String,
+    @reifyAnnot @multi annotations: List[MetadataAnnotation],
+    @multi @verbatim procedureSignatures: Map[String, ProcedureSignature],
+    @multi functionSignatures: Map[String, FunctionSignature[_]],
+    @multi observeSignatures: Map[String, ObserveSignature[_]],
+    @multi getterSignatures: Map[String, GetterSignature[_]]
+  )
+  object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
+
+  case class ObserveSignature[T](
+    name: String,
+    paramMetadata: List[ParamMetadata[_]],
+    annotations: List[MetadataAnnotation],
+    @infer resultTypeMetadata: ResultTypeMetadata[T]
+  ) extends Signature with TypedMetadata[Observable[T]]
 
   def read[T: Reader](raw: RawValue): T =
     GenCodec.read[T](new StreamInput(new DataInputStream(raw.iterator.asInputStream)))

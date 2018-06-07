@@ -31,6 +31,6 @@ import scala.annotation.StaticAnnotation
   *
   * The "_case" field name can be customized with annotation parameter
   */
-class flatten(caseFieldName: String) extends StaticAnnotation {
+class flatten(val caseFieldName: String) extends StaticAnnotation {
   def this() = this("_case")
 }
