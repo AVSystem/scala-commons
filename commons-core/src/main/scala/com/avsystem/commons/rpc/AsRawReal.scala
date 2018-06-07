@@ -12,7 +12,7 @@ object AsRaw {
     new AsRaw[Raw, Real] {
       def asRaw(real: Real): Raw = asRawFun(real)
     }
-  def identity[A]: AsRaw[A, A] = AsRealRaw.identity[A]
+  def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
   def materializeForRpc[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RPCMacros.rpcAsRaw[Raw, Real]
 }
 
@@ -25,28 +25,28 @@ object AsReal {
     new AsReal[Raw, Real] {
       def asReal(raw: Raw): Real = asRealFun(raw)
     }
-  def identity[A]: AsReal[A, A] = AsRealRaw.identity[A]
+  def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
   def materializeForRpc[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RPCMacros.rpcAsReal[Raw, Real]
 }
 
-@implicitNotFound("don't know how to encode and decode between ${Real} and ${Raw}, appropriate AsRealRaw instance not found")
-trait AsRealRaw[Raw, Real] extends AsReal[Raw, Real] with AsRaw[Raw, Real]
-object AsRealRaw {
-  def create[Raw, Real](asRealFun: Raw => Real, asRawFun: Real => Raw): AsRealRaw[Raw, Real] =
-    new AsRealRaw[Raw, Real] {
+@implicitNotFound("don't know how to encode and decode between ${Real} and ${Raw}, appropriate AsRawReal instance not found")
+trait AsRawReal[Raw, Real] extends AsReal[Raw, Real] with AsRaw[Raw, Real]
+object AsRawReal {
+  def create[Raw, Real](asRealFun: Raw => Real, asRawFun: Real => Raw): AsRawReal[Raw, Real] =
+    new AsRawReal[Raw, Real] {
       def asRaw(real: Real): Raw = asRawFun(real)
       def asReal(raw: Raw): Real = asRealFun(raw)
     }
 
-  private val reusableIdentity = new AsRealRaw[Any, Any] {
+  private val reusableIdentity = new AsRawReal[Any, Any] {
     def asReal(raw: Any): Any = raw
     def asRaw(real: Any): Any = real
   }
 
-  def identity[A]: AsRealRaw[A, A] =
-    reusableIdentity.asInstanceOf[AsRealRaw[A, A]]
+  def identity[A]: AsRawReal[A, A] =
+    reusableIdentity.asInstanceOf[AsRawReal[A, A]]
 
-  def materializeForRpc[Raw, Real]: AsRealRaw[Raw, Real] = macro macros.rpc.RPCMacros.rpcAsRealRaw[Raw, Real]
+  def materializeForRpc[Raw, Real]: AsRawReal[Raw, Real] = macro macros.rpc.RPCMacros.rpcAsRawReal[Raw, Real]
 }
 
 object RpcMetadata {

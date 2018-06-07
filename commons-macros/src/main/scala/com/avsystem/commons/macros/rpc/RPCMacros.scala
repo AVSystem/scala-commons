@@ -14,8 +14,8 @@ abstract class RPCMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val AsRealObj = q"$RpcPackage.AsReal"
   val AsRawCls = tq"$RpcPackage.AsRaw"
   val AsRawObj = q"$RpcPackage.AsRaw"
-  val AsRealRawCls = tq"$RpcPackage.AsRealRaw"
-  val AsRealRawObj = q"$RpcPackage.AsRealRaw"
+  val AsRawRealCls = tq"$RpcPackage.AsRawReal"
+  val AsRawRealObj = q"$RpcPackage.AsRawReal"
   val OptionLikeCls = tq"$RpcPackage.OptionLike"
   val CanBuildFromCls = tq"$CollectionPkg.generic.CanBuildFrom"
   val ParamPositionObj = q"$RpcPackage.ParamPosition"
@@ -107,7 +107,7 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx)
      """
   }
 
-  def rpcAsRealRaw[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = {
+  def rpcAsRawReal[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = {
     val raw = RawRpcTrait(weakTypeOf[Raw].dealias)
     val real = RealRpcTrait(weakTypeOf[Real].dealias)
     val mapping = RpcMapping(real, raw, forAsRaw = true, forAsReal = true)
@@ -117,7 +117,7 @@ class RPCMacros(ctx: blackbox.Context) extends RPCMacroCommons(ctx)
     val asRawDef = mapping.asRawImpl
 
     q"""
-      new $AsRealRawCls[${raw.tpe},${real.tpe}] { ${mapping.selfName}: ${TypeTree()} =>
+      new $AsRawRealCls[${raw.tpe},${real.tpe}] { ${mapping.selfName}: ${TypeTree()} =>
         ..$cachedImplicitDeclarations
         $asRealDef
         $asRawDef

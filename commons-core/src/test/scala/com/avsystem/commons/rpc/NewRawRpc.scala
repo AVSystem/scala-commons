@@ -55,8 +55,8 @@ trait NewRawRpc {
 object NewRawRpc extends RawRpcCompanion[NewRawRpc] {
   override val implicits: this.type = this
 
-  implicit def asRealRawFromGenCodec[T: GenCodec]: AsRealRaw[String, T] = ???
-  implicit def futureAsRealRawFromGenCodec[T: GenCodec]: AsRealRaw[Future[String], Future[T]] = ???
+  implicit def AsRawRealFromGenCodec[T: GenCodec]: AsRawReal[String, T] = ???
+  implicit def futureAsRawRealFromGenCodec[T: GenCodec]: AsRawReal[Future[String], Future[T]] = ???
 }
 
 @methodTag[RestMethod, RestMethod]

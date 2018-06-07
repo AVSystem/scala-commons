@@ -51,12 +51,12 @@ trait RPCFramework {
     */
   def materializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealImpl[T]
 
-  type AsRealRawRPC[RealRPC] = AsRealRaw[RawRPC, RealRPC]
-  object AsRealRawRPC {
-    @inline def apply[RealRPC](implicit asRealRawRPC: AsRealRawRPC[RealRPC]): AsRealRawRPC[RealRPC] = asRealRawRPC
+  type AsRawRealRPC[RealRPC] = AsRawReal[RawRPC, RealRPC]
+  object AsRawRealRPC {
+    @inline def apply[RealRPC](implicit AsRawRealRPC: AsRawRealRPC[RealRPC]): AsRawRealRPC[RealRPC] = AsRawRealRPC
   }
 
-  def materializeAsRealRaw[T]: AsRealRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealRawImpl[T]
+  def materializeAsRawReal[T]: AsRawRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.AsRawRealImpl[T]
 
   trait Signature {
     @reifyName def name: String

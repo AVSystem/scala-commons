@@ -28,8 +28,8 @@ final class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommo
   def asRawImpl[T: WeakTypeTag]: Tree =
     q"$RpcPackage.AsRaw.materializeForRpc[$RawRPCCls,${weakTypeOf[T]}]"
 
-  def asRealRawImpl[T: WeakTypeTag]: Tree =
-    q"$RpcPackage.AsRealRaw.materializeForRpc[$RawRPCCls,${weakTypeOf[T]}]"
+  def AsRawRealImpl[T: WeakTypeTag]: Tree =
+    q"$RpcPackage.AsRawReal.materializeForRpc[$RawRPCCls,${weakTypeOf[T]}]"
 
   def metadataImpl[T: WeakTypeTag]: Tree =
     q"$RpcPackage.RpcMetadata.materializeForRpc[$RPCMetadataCls,${weakTypeOf[T]}]"
