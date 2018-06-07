@@ -46,12 +46,19 @@ final case class ParamFlags(rawFlags: Int) extends AnyVal {
 }
 
 object ParamFlags extends HasGenCodec[ParamFlags] {
+  private[this] var currentFlag: Int = 1
+  private[this] def nextFlag(): ParamFlags = {
+    val flag = currentFlag
+    currentFlag = currentFlag << 1
+    new ParamFlags(flag)
+  }
+
   final val Empty: ParamFlags = new ParamFlags(0)
-  final val Implicit: ParamFlags = new ParamFlags(1 << 0)
-  final val ByName: ParamFlags = new ParamFlags(1 << 1)
-  final val Repeated: ParamFlags = new ParamFlags(1 << 2)
-  final val HasDefaultValue: ParamFlags = new ParamFlags(1 << 3)
-  final val Synthetic: ParamFlags = new ParamFlags(1 << 4)
+  final val Implicit: ParamFlags = nextFlag()
+  final val ByName: ParamFlags = nextFlag()
+  final val Repeated: ParamFlags = nextFlag()
+  final val HasDefaultValue: ParamFlags = nextFlag()
+  final val Synthetic: ParamFlags = nextFlag()
 }
 
 /**
