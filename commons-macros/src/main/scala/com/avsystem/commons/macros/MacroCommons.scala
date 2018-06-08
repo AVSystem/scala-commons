@@ -166,7 +166,7 @@ trait MacroCommons { bundle =>
 
   private var companionReplacements = List.empty[(Symbol, TermName)]
 
-  def mkMacroGenerated(tree: => Tree): Tree = {
+  def mkMacroGenerated(tpe: Type, tree: => Tree): Tree = {
     def fail() =
       abort(s"invocation of this macro is allowed only to be passed as super constructor parameter of an object")
 
@@ -182,7 +182,7 @@ trait MacroCommons { bundle =>
     val compName = c.freshName(TermName("companion"))
     companionReplacements = (companionSym, compName) :: companionReplacements
     try {
-      q"new $CommonsPkg.misc.MacroGenerated(($compName: $ScalaPkg.Any) => $tree)"
+      q"new $CommonsPkg.misc.MacroGenerated[$tpe](($compName: $ScalaPkg.Any) => $tree)"
     } finally {
       companionReplacements = companionReplacements.tail
     }
