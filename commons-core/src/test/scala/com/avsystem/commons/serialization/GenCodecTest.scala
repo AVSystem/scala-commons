@@ -23,7 +23,6 @@ object SealedBase {
     case class InnerCaseClass(str: String) extends InnerBase
   }
 
-  @silent //exhaustivity checker has some problems with macro-generated match on doubly nested inner case classes/objects
   implicit val codec: GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
 }
 
@@ -44,6 +43,7 @@ object FlatSealedBase {
   case object ThirdCase extends FlatSealedBase {
     @generated def id = "third"
   }
+  case class RecursiveCase(id: String, sub: Opt[FlatSealedBase]) extends FlatSealedBase
 
   implicit val codec: GenCodec[FlatSealedBase] = GenCodec.materialize[FlatSealedBase]
 }
@@ -187,9 +187,7 @@ class GenCodecTest extends CodecTestBase {
     )
   }
   case class CaseClassWithWildcard(stuff: Stuff[_])
-  object CaseClassWithWildcard {
-    implicit val codec: GenCodec[CaseClassWithWildcard] = GenCodec.materialize[CaseClassWithWildcard]
-  }
+  object CaseClassWithWildcard extends HasGenCodec[CaseClassWithWildcard]
 
   test("case class with wildcard test") {
     testWriteReadAndAutoWriteRead(CaseClassWithWildcard(Stuff("lol")), Map("stuff" -> "lol"))
@@ -291,9 +289,7 @@ class GenCodecTest extends CodecTestBase {
   }
 
   case class HasDefaults(@transientDefault int: Int = 42, @transientDefault @whenAbsent("dafuq") str: String = "kek")
-  object HasDefaults {
-    implicit val codec: GenCodec[HasDefaults] = GenCodec.materialize[HasDefaults]
-  }
+  object HasDefaults extends HasGenCodec[HasDefaults]
 
   test("case class with default values test") {
     testWriteReadAndAutoWriteRead(HasDefaults(str = "lol"), Map("str" -> "lol"))
@@ -364,6 +360,9 @@ class GenCodecTest extends CodecTestBase {
       Map("_case" -> "SecondCase", "_id" -> "bar", "dbl" -> 3.14, "moar" -> List(1.0, 2.0), "upper_id" -> "BAR"))
     testWriteReadAndAutoWriteRead[FlatSealedBase](FlatSealedBase.ThirdCase,
       Map("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD"))
+    testWriteReadAndAutoWriteRead[FlatSealedBase](FlatSealedBase.RecursiveCase("rec", Opt(FlatSealedBase.ThirdCase)),
+      Map("_case" -> "RecursiveCase", "_id" -> "rec", "upper_id" -> "REC", "sub" ->
+        Map("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD")))
   }
 
   test("random field access dependent flat sealed hierarchy reading test") {

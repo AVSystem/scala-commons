@@ -140,16 +140,16 @@ trait TypeClassDerivation extends MacroCommons {
     val depTcTpe = typeClassInstance(depTpe)
     val allowDef = if (allowImplicitMacro)
       q"""
-          implicit val ${c.freshName(TermName("allow"))}: $AllowImplicitMacroCls[$depTcTpe] =
-            $AllowImplicitMacroObj[$depTcTpe]
-         """
+        implicit val ${c.freshName(TermName("allow"))}: $AllowImplicitMacroCls[$depTcTpe] =
+          $AllowImplicitMacroObj[$depTcTpe]
+       """
     else
       q"()"
 
     q"""
-        $allowDef
-        $ImplicitsObj.infer[$depTcTpe]($clue)
-       """
+      $allowDef
+      $ImplicitsObj.infer[$depTcTpe]($clue)
+     """
   }
 
   def materializeFor(tpe: Type): Tree = {
@@ -177,33 +177,32 @@ trait TypeClassDerivation extends MacroCommons {
       forSealedHierarchy(dtpe, dependencies)
     }
 
-    val untypedResult = singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown(dtpe)
+    singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown(dtpe)
+  }
+
+  def withRecursiveImplicitGuard(targetTpe: Type, unguarded: Tree): Tree = {
+    val dtpe = targetTpe.dealias
+    val tcTpe = typeClassInstance(dtpe)
 
     // deferred instance is necessary to handle recursively defined types
     val deferredName = c.freshName(TermName("deferred"))
     // introducing intermediate val to make sure exact type of materialized instance is not lost
     val underlyingName = c.freshName(TermName("underlying"))
-    val guardedResult@Block(List(_, ValDef(_, _, _, unguardedResult), _), _) = c.typecheck(
-      q"""
-        implicit val $deferredName: $DeferredInstanceCls[$tcTpe] with $tcTpe =
-          ${implementDeferredInstance(dtpe)}
-        val $underlyingName = $untypedResult
-        $deferredName.underlying = $underlyingName
-        $underlyingName
-       """
-    )
 
-    // check if the deferred instance was actually used and drop it if not
-    val needsGuarding = unguardedResult.exists {
-      case Ident(`deferredName`) => true
-      case _ => false
-    }
-
-    if (needsGuarding) guardedResult else unguardedResult
+    q"""
+      ..$cachedImplicitDeclarations
+      implicit val $deferredName: $DeferredInstanceCls[$tcTpe] with $tcTpe =
+        ${implementDeferredInstance(dtpe)}
+      val $underlyingName = $unguarded
+      $deferredName.underlying = $underlyingName
+      $underlyingName
+     """
   }
 
-  def materialize[T: c.WeakTypeTag]: Tree =
-    abortOnTypecheckException(materializeFor(weakTypeOf[T]))
+  def materialize[T: c.WeakTypeTag]: Tree = {
+    val tpe = weakTypeOf[T]
+    withRecursiveImplicitGuard(tpe, materializeFor(tpe))
+  }
 
   def materializeImplicitly[T: c.WeakTypeTag](allow: Tree): Tree =
     materialize[T]
@@ -216,6 +215,11 @@ trait TypeClassDerivation extends MacroCommons {
          $AllowImplicitMacroObj[$typeClass[$tName]]
        ${wrapInAuto(q"""$ImplicitsObj.infer[$tcTpe]("")""")}
      """
+  }
+
+  def materializeMacroGenerated[T: c.WeakTypeTag]: Tree = {
+    val tpe = weakTypeOf[T]
+    mkMacroGenerated(withRecursiveImplicitGuard(tpe, materializeFor(tpe)))
   }
 }
 

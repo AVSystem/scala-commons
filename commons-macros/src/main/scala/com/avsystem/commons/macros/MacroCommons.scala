@@ -164,6 +164,35 @@ trait MacroCommons { bundle =>
       case Some(annot) => annot
     }
 
+  private var companionReplacements = List.empty[(Symbol, TermName)]
+
+  def mkMacroGenerated(tree: => Tree): Tree = {
+    def fail() =
+      abort(s"invocation of this macro is allowed only to be passed as super constructor parameter of an object")
+
+    val ownerConstr = c.internal.enclosingOwner
+    if (!ownerConstr.isConstructor) {
+      fail()
+    }
+    val companionSym = ownerConstr.owner.asClass.module.asModule
+    if (companionSym == NoSymbol) {
+      fail()
+    }
+
+    val compName = c.freshName(TermName("companion"))
+    companionReplacements = (companionSym, compName) :: companionReplacements
+    try {
+      q"new $CommonsPkg.misc.MacroGenerated(($compName: $ScalaPkg.Any) => $tree)"
+    } finally {
+      companionReplacements = companionReplacements.tail
+    }
+  }
+
+  def companionOrReplacement(typedCompanion: Tree): Tree =
+    companionReplacements.collectFirst {
+      case (s, name) if s == typedCompanion.symbol => q"$name.asInstanceOf[${typedCompanion.tpe}]"
+    }.getOrElse(typedCompanion)
+
   // simplified representation of trees of implicits, used to remove duplicated implicits,
   // i.e. implicits that were found for different types but turned out to be identical
   private sealed trait ImplicitTrace
@@ -694,7 +723,7 @@ trait MacroCommons { bundle =>
           def defaultValueFor(param: Symbol, idx: Int): Tree =
             if (param.asTerm.isParamWithDefault) {
               val methodEncodedName = param.owner.name.encodedName.toString
-              q"$companion.${TermName(s"$methodEncodedName$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
+              q"${companionOrReplacement(companion)}.${TermName(s"$methodEncodedName$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
             }
             else EmptyTree
 
