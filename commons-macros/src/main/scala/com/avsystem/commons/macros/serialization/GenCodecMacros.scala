@@ -10,18 +10,18 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   import c.universe._
 
-  def mkTupleCodec[T: c.WeakTypeTag](elementCodecs: c.Tree*): c.Tree = {
+  def mkTupleCodec[T: WeakTypeTag](elementCodecs: Tree*): Tree = {
     val tupleTpe = weakTypeOf[T]
     val indices = elementCodecs.indices
     q"""
-        new $GenCodecObj.ListCodec[$tupleTpe] {
-          def nullable = true
-          def readList(input: $SerializationPkg.ListInput) =
-            (..${indices.map(i => q"${elementCodecs(i)}.read(input.nextElement())")})
-          def writeList(output: $SerializationPkg.ListOutput, value: $tupleTpe) = {
-            ..${indices.map(i => q"${elementCodecs(i)}.write(output.writeElement(), value.${tupleGet(i)})")}
-          }
+      new $GenCodecObj.ListCodec[$tupleTpe] {
+        def nullable = true
+        def readList(input: $SerializationPkg.ListInput) =
+          (..${indices.map(i => q"${elementCodecs(i)}.read(input.nextElement())")})
+        def writeList(output: $SerializationPkg.ListOutput, value: $tupleTpe) = {
+          ..${indices.map(i => q"${elementCodecs(i)}.write(output.writeElement(), value.${tupleGet(i)})")}
         }
+      }
      """
   }
 
@@ -67,9 +67,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   private def mkArray[T: Liftable](elemTpe: Tree, elems: Seq[T]): Tree =
     q"""
-       val res = new $ScalaPkg.Array[$elemTpe](${elems.size})
-       ..${elems.zipWithIndex.map({ case (e, i) => q"res($i) = $e" })}
-       res
+      val res = new $ScalaPkg.Array[$elemTpe](${elems.size})
+      ..${elems.zipWithIndex.map({ case (e, i) => q"res($i) = $e" })}
+      res
      """
 
   private def generatedMembers(tpe: Type): List[(Symbol, Type)] =
@@ -219,14 +219,14 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
 
         q"""
-           new $SerializationPkg.TransparentCodec[$dtpe,${p.valueType}](
-             ${dtpe.toString},
-             ${typeOf[Null] <:< dtpe}
-           ) {
-             lazy val underlyingCodec: $GenCodecCls[${p.valueType}] = ${p.instance}
-             def wrap(underlying: ${p.valueType}): $dtpe = ${applier(List(q"underlying"))}
-             def unwrap(value: $dtpe): ${p.valueType} = $unwrapBody
-           }
+          new $SerializationPkg.TransparentCodec[$dtpe,${p.valueType}](
+            ${dtpe.toString},
+            ${typeOf[Null] <:< dtpe}
+          ) {
+            lazy val underlyingCodec: $GenCodecCls[${p.valueType}] = ${p.instance}
+            def wrap(underlying: ${p.valueType}): $dtpe = ${applier(List(q"underlying"))}
+            def unwrap(value: $dtpe): ${p.valueType} = $unwrapBody
+          }
          """
       case _ =>
         abort(s"@transparent annotation found on class with ${params.size} parameters, expected exactly one.")
@@ -429,7 +429,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   def forUnknown(tpe: Type): Tree =
     typecheckException(s"Cannot automatically derive GenCodec for $tpe")
 
-  def materializeRecursively[T: c.WeakTypeTag]: Tree = {
+  def materializeRecursively[T: WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T].dealias
     q"""
        implicit def ${c.freshName(TermName("allow"))}[T]: $AllowImplicitMacroCls[$typeClass[T]] =
@@ -438,7 +438,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
      """
   }
 
-  def fromApplyUnapplyProvider[T: c.WeakTypeTag](applyUnapplyProvider: Tree): Tree = {
+  def fromApplyUnapplyProvider[T: WeakTypeTag](applyUnapplyProvider: Tree): Tree = {
     val tpe = weakTypeOf[T].dealias
     val tcTpe = typeClassInstance(tpe)
     applyUnapplyFor(tpe, applyUnapplyProvider) match {
@@ -452,7 +452,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     }
   }
 
-  def forSealedEnum[T: c.WeakTypeTag]: Tree = {
+  def forSealedEnum[T: WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T].dealias
     q"$GenCodecObj.fromKeyCodec($SerializationPkg.GenKeyCodec.forSealedEnum[$tpe])"
   }
