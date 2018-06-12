@@ -5,6 +5,7 @@ import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.JCanBuildFrom
 import com.avsystem.commons.misc.MacroGenerated
+import com.github.ghik.silencer.silent
 
 import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
@@ -417,6 +418,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   )
 
   // Needed because of SI-9453
+  @silent
   @deprecated("auto codecs will be removed", "1.28.0")
   implicit lazy val NothingAutoCodec: GenCodec.Auto[Nothing] = GenCodec.Auto[Nothing](NothingCodec)
 
