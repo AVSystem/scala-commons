@@ -49,7 +49,7 @@ final class ClusterMonitoringActor(
   private val connections = new mutable.HashMap[NodeAddress, ActorRef]
   private val clients = new mutable.HashMap[NodeAddress, RedisNodeClient]
   private var state = Opt.empty[ClusterState]
-  private var suspendUntil = Deadline.now
+  private var suspendUntil = Deadline(Duration.Zero)
   private var scheduledRefresh = Opt.empty[Cancellable]
   private val seedFailures = new ArrayBuffer[Throwable]
 
