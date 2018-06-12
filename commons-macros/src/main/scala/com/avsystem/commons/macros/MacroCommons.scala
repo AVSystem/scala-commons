@@ -164,7 +164,7 @@ trait MacroCommons { bundle =>
       case Some(annot) => annot
     }
 
-  private var companionReplacements = List.empty[(Symbol, TermName)]
+  private var companionReplacement = Option.empty[(Symbol, TermName)]
 
   def mkMacroGenerated(tpe: Type, tree: => Tree): Tree = {
     def fail() =
@@ -180,24 +180,27 @@ trait MacroCommons { bundle =>
     }
 
     val compName = c.freshName(TermName("companion"))
-    companionReplacements = (companionSym, compName) :: companionReplacements
-    try {
-      q"new $CommonsPkg.misc.MacroGenerated[$tpe](($compName: $ScalaPkg.Any) => $tree)"
-    } finally {
-      companionReplacements = companionReplacements.tail
-    }
+    companionReplacement = Some((companionSym, compName))
+    q"new $CommonsPkg.misc.MacroGenerated[$tpe](($compName: $ScalaPkg.Any) => $tree)"
   }
 
   // Replace references to companion object being constructed with casted reference to lambda parameter
   // of function wrapped by `MacroGenerated` class. This is all to workaround overzealous Scala validation of
   // self-reference being passed to super constructor parameter.
-  def replaceCompanion(typedTree: Tree): Tree =
-    companionReplacements.collectFirst {
-      case (s, name) if s == typedTree.symbol => q"$name.asInstanceOf[${typedTree.tpe}]"
-    }.getOrElse(typedTree match {
-      case Select(prefix, name) => Select(replaceCompanion(prefix), name)
-      case t => t
-    })
+  def replaceCompanion(typedTree: Tree): Tree = {
+    val symToCheck = typedTree match {
+      case This(_) => typedTree.symbol.asClass.module
+      case t => t.symbol
+    }
+    companionReplacement match {
+      case None => typedTree
+      case Some((s, name)) if s == symToCheck => q"$name.asInstanceOf[${typedTree.tpe}]"
+      case _ => typedTree match {
+        case Select(prefix, name) => Select(replaceCompanion(prefix), name)
+        case t => t
+      }
+    }
+  }
 
   // simplified representation of trees of implicits, used to remove duplicated implicits,
   // i.e. implicits that were found for different types but turned out to be identical

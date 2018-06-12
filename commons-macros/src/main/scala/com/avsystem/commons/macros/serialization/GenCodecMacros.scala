@@ -86,9 +86,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   def forSingleton(tpe: Type, singleValueTree: Tree): Tree = {
     val generated = generatedMembers(tpe)
+    def safeSingleValue: Tree = replaceCompanion(c.typecheck(singleValueTree))
 
     if (generated.isEmpty)
-      q"new $SerializationPkg.SingletonCodec[$tpe](${tpe.toString}, $singleValueTree)"
+      q"new $SerializationPkg.SingletonCodec[$tpe](${tpe.toString}, $safeSingleValue)"
     else {
       val tcTpe = typeClassInstance(tpe)
       val targetNames = targetNameMap(generated.map(_._1))
@@ -101,7 +102,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         q"writeField(${targetNames(sym)}, output, ${mkParamLessCall(q"value", sym)}, ${depNames(sym)})"
 
       q"""
-        new $SerializationPkg.SingletonCodec[$tpe](${tpe.toString}, $singleValueTree) {
+        new $SerializationPkg.SingletonCodec[$tpe](${tpe.toString}, $safeSingleValue) {
           ..${generated.map({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
           override def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe): $UnitCls = {
             ..${generated.map({ case (sym, _) => generatedWrite(sym) })}

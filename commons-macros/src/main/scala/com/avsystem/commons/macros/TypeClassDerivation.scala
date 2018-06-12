@@ -173,7 +173,7 @@ trait TypeClassDerivation extends MacroCommons {
       val dependencies = subtypes.zipWithIndex.map { case (depTpe, idx) =>
         val depTree = c.inferImplicitValue(typeClassInstance(depTpe), withMacrosDisabled = true) match {
           case EmptyTree => materializeFor(depTpe)
-          case t => t
+          case t => replaceCompanion(t)
         }
         KnownSubtype(idx, depTpe, depTree)
       }

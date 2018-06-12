@@ -13,17 +13,17 @@ object GenCodecTest {
 }
 
 sealed trait SealedBase
-object SealedBase {
+object SealedBase extends HasGenCodec[SealedBase] {
   case object CaseObject extends SealedBase
   case class CaseClass(str: String) extends SealedBase
+  object CaseClass extends HasGenCodec[CaseClass]
 
   sealed trait InnerBase extends SealedBase
   object InnerBase {
     case object InnerCaseObject extends InnerBase
-    case class InnerCaseClass(str: String) extends InnerBase
+    case class InnerCaseClass(str: String = "kek") extends InnerBase
+    object InnerCaseClass extends HasGenCodec[InnerCaseClass]
   }
-
-  implicit val codec: GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
 }
 
 class mongoId extends AnnotationAggregate {
@@ -37,15 +37,13 @@ class mongoId extends AnnotationAggregate {
   @generated
   @name("upper_id") def upperId: String = id.toUpperCase
 }
-object FlatSealedBase {
-  case class FirstCase(id: String, int: Int) extends FlatSealedBase
+object FlatSealedBase extends HasGenCodec[FlatSealedBase] {
+  case class FirstCase(id: String, int: Int = 42) extends FlatSealedBase
   case class SecondCase(id: String, dbl: Double, moar: Double*) extends FlatSealedBase
   case object ThirdCase extends FlatSealedBase {
     @generated def id = "third"
   }
   case class RecursiveCase(id: String, sub: Opt[FlatSealedBase]) extends FlatSealedBase
-
-  implicit val codec: GenCodec[FlatSealedBase] = GenCodec.materialize[FlatSealedBase]
 }
 
 abstract class Wrapper[Self <: Wrapper[Self] : ClassTag](private val args: Any*) { this: Self =>
