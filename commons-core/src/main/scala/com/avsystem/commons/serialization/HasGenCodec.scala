@@ -5,8 +5,6 @@ import com.avsystem.commons.misc.MacroGenerated
 
 /**
   * Convenience abstract class for companion objects of types that have a [[GenCodec]].
-  * Unfortunately, due to compiler and language limitations this only works for non-generic case classes
-  * without default constructor arguments.
   */
 abstract class HasGenCodec[T](implicit macroCodec: MacroGenerated[GenCodec[T]]) {
   /**
