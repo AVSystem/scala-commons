@@ -13,17 +13,17 @@ object GenCodecTest {
 }
 
 sealed trait SealedBase
-object SealedBase extends HasGenCodec[SealedBase] {
+object SealedBase {
   case object CaseObject extends SealedBase
   case class CaseClass(str: String) extends SealedBase
-  object CaseClass extends HasGenCodec[CaseClass]
 
   sealed trait InnerBase extends SealedBase
   object InnerBase {
     case object InnerCaseObject extends InnerBase
     case class InnerCaseClass(str: String = "kek") extends InnerBase
-    object InnerCaseClass extends HasGenCodec[InnerCaseClass]
   }
+
+  implicit val codec: GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
 }
 
 class mongoId extends AnnotationAggregate {
@@ -341,13 +341,13 @@ class GenCodecTest extends CodecTestBase {
   }
 
   test("sealed hierarchy test") {
-    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseObject,
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBaseThatHasGenCodec.CaseObject,
       Map("CaseObject" -> Map()))
-    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseClass("fuu"),
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBaseThatHasGenCodec.CaseClass("fuu"),
       Map("CaseClass" -> Map("str" -> "fuu")))
-    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseObject,
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBaseThatHasGenCodec.InnerBase.InnerCaseObject,
       Map("InnerCaseObject" -> Map()))
-    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"),
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBaseThatHasGenCodec.InnerBase.InnerCaseClass("fuu"),
       Map("InnerCaseClass" -> Map("str" -> "fuu")))
   }
 
