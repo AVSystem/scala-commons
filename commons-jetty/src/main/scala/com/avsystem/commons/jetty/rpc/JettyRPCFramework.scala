@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets
 import com.avsystem.commons.rpc.StandardRPCFramework
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
+import com.typesafe.scalalogging.LazyLogging
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.client.api.Result
@@ -14,7 +15,7 @@ import org.eclipse.jetty.http.{HttpMethod, HttpStatus, MimeTypes}
 import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.server.{Handler, Request}
 
-object JettyRPCFramework extends StandardRPCFramework {
+object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   class RawValue(val s: String) extends AnyVal
 
   override type Reader[T] = GenCodec[T]
@@ -36,7 +37,7 @@ object JettyRPCFramework extends StandardRPCFramework {
   override def read[T: Reader](raw: RawValue): T = JsonStringInput.read[T](raw.s)
   override def write[T: Writer](value: T): RawValue = new RawValue(JsonStringOutput.write[T](value))
 
-  case class Invocation(rpcName: String, argLists: List[List[RawValue]])
+  case class Invocation(rpcName: String, args: List[RawValue])
   object Invocation extends HasGenCodec[Invocation]
 
   case class Call(chain: List[Invocation], leaf: Invocation)
@@ -44,14 +45,14 @@ object JettyRPCFramework extends StandardRPCFramework {
 
   class RPCClient(httpClient: HttpClient, uri: String)(implicit ec: ExecutionContext) {
     private class RawRPCImpl(chain: List[Invocation]) extends RawRPC {
-      override def fire(rpcName: String, argLists: List[List[RawValue]]): Unit =
-        put(Call(chain, Invocation(rpcName, argLists)))
+      override def fire(rpcName: String)(args: List[RawValue]): Unit =
+        put(Call(chain, Invocation(rpcName, args)))
 
-      override def call(rpcName: String, argLists: List[List[RawValue]]): Future[RawValue] =
-        post(Call(chain, Invocation(rpcName, argLists)))
+      override def call(rpcName: String)(args: List[RawValue]): Future[RawValue] =
+        post(Call(chain, Invocation(rpcName, args)))
 
-      override def get(rpcName: String, argLists: List[List[RawValue]]): RawRPC =
-        new RawRPCImpl(chain :+ Invocation(rpcName, argLists))
+      override def get(rpcName: String)(args: List[RawValue]): RawRPC =
+        new RawRPCImpl(chain :+ Invocation(rpcName, args))
     }
 
     val rawRPC: RawRPC = new RawRPCImpl(List.empty)
@@ -113,6 +114,7 @@ object JettyRPCFramework extends StandardRPCFramework {
               response.getWriter.write(responseContent.s)
             case Failure(t) =>
               response.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, t.getMessage)
+              logger.error("Failed to handle RPC call", t)
           }.andThenNow { case _ => async.complete() }
         case HttpMethod.PUT =>
           handlePut(call)
@@ -121,11 +123,11 @@ object JettyRPCFramework extends StandardRPCFramework {
       }
     }
 
-    type InvokeFunction[T] = RawRPC => (String, List[List[RawValue]]) => T
+    type InvokeFunction[T] = RawRPC => String => List[RawValue] => T
 
     def invoke[T](call: Call)(f: InvokeFunction[T]): T = {
-      val rpc = call.chain.foldLeft(rootRpc)((rpc, inv) => rpc.get(inv.rpcName, inv.argLists))
-      f(rpc)(call.leaf.rpcName, call.leaf.argLists)
+      val rpc = call.chain.foldLeft(rootRpc)((rpc, inv) => rpc.get(inv.rpcName)(inv.args))
+      f(rpc)(call.leaf.rpcName)(call.leaf.args)
     }
 
     def handlePost(call: Call): Future[RawValue] =

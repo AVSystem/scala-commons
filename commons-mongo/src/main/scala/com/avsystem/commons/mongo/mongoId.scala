@@ -8,6 +8,8 @@ import com.avsystem.commons.serialization.{name, outOfOrder}
   * Shortcut annotation for applying `@name("_id")` and `@outOfOrder` annotation on a case class field,
   * which is typical for MongoDB ID field.
   */
-@name("_id")
-@outOfOrder
-class mongoId extends AnnotationAggregate
+class mongoId extends AnnotationAggregate {
+  @name("_id")
+  @outOfOrder
+  type Implied
+}

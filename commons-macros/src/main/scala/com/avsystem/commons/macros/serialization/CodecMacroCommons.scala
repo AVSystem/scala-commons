@@ -9,17 +9,19 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
 
   import c.universe._
 
-  final val SerializationPkg = q"$CommonsPackage.serialization"
+  final val SerializationPkg = q"$CommonsPkg.serialization"
   final val NameAnnotType = getType(tq"$SerializationPkg.name")
-  final val JavaInteropObj = q"$CommonsPackage.jiop.JavaInterop"
+  final val NameAnnotNameSym = NameAnnotType.member(TermName("name"))
+  final val WhenAbsentAnnotType = getType(tq"$SerializationPkg.whenAbsent[_]")
+  final val JavaInteropObj = q"$CommonsPkg.jiop.JavaInterop"
   final val JListObj = q"$JavaInteropObj.JList"
   final val JListCls = tq"$JavaInteropObj.JList"
   final val ListBufferCls = tq"$CollectionPkg.mutable.ListBuffer"
   final val BMapCls = tq"$CollectionPkg.Map"
-  final val NOptObj = q"$CommonsPackage.misc.NOpt"
-  final val NOptCls = tq"$CommonsPackage.misc.NOpt"
-  final val OptObj = q"$CommonsPackage.misc.Opt"
-  final val OptCls = tq"$CommonsPackage.misc.Opt"
+  final val NOptObj = q"$CommonsPkg.misc.NOpt"
+  final val NOptCls = tq"$CommonsPkg.misc.NOpt"
+  final val OptObj = q"$CommonsPkg.misc.Opt"
+  final val OptCls = tq"$CommonsPkg.misc.Opt"
   final val TransparentAnnotType = getType(tq"$SerializationPkg.transparent")
   final val TransientDefaultAnnotType = getType(tq"$SerializationPkg.transientDefault")
   final val FlattenAnnotType = getType(tq"$SerializationPkg.flatten")
@@ -33,10 +35,7 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   def tupleGet(i: Int) = TermName(s"_${i + 1}")
 
   def targetName(sym: Symbol): String =
-    getAnnotations(sym, NameAnnotType).headOption.map(_.tree.children.tail).map {
-      case StringLiteral(str) :: _ => str
-      case param :: _ => c.abort(param.pos, s"@name argument must be a string literal")
-    }.getOrElse(sym.name.decodedName.toString)
+    findAnnotation(sym, NameAnnotType).fold(sym.name.decodedName.toString)(_.findArg[String](NameAnnotNameSym))
 
   def caseAccessorFor(sym: Symbol): Symbol =
     if (sym.isParameter && sym.owner.isConstructor) {
@@ -53,17 +52,8 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
       else List(sym)
     } else List(sym)
 
-  def getAnnotations(sym: Symbol, annotTpe: Type): List[Annotation] = {
-    val caseAccessor = caseAccessorFor(sym)
-    val syms =
-      if (caseAccessor != NoSymbol) sym :: caseAccessor :: caseAccessor.overrides
-      else if (sym.isClass) sym.asClass.baseClasses
-      else sym :: sym.overrides
-    syms.flatMap(s => withAccessed(s).flatMap(s => aggregatedAnnotations(s).filter(_.tree.tpe <:< annotTpe)))
-  }
-
   def hasAnnotation(sym: Symbol, annotTpe: Type): Boolean =
-    getAnnotations(sym, annotTpe).nonEmpty
+    findAnnotation(sym, annotTpe).nonEmpty
 
   def isTransparent(sym: Symbol): Boolean =
     hasAnnotation(sym, TransparentAnnotType)

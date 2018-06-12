@@ -16,11 +16,11 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
 
   override def receive: Receive = {
     case msg@ProcedureInvocationMessage(name, argLists, getterChain) =>
-      resolveRpc(msg).fire(name, argLists)
+      resolveRpc(msg).fire(name)(argLists)
     case msg@FunctionInvocationMessage(name, argLists, getterChain) =>
       import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
       val s = sender()
-      resolveRpc(msg).call(name, argLists).onComplete {
+      resolveRpc(msg).call(name)(argLists).onComplete {
         case Success(value) => s ! InvocationSuccess(value)
         case Failure(e) =>
           logError(e, name)
@@ -37,7 +37,7 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
           Ack.Continue
         }
 
-      resolveRpc(msg).observe(name, argLists).subscribe(
+      resolveRpc(msg).observe(name)(argLists).subscribe(
         value => {
           val result = s ? InvocationSuccess(value)
           result.mapTo[MonixProtocol.RemoteAck].map {
@@ -64,7 +64,8 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
       )
   }
 
-  private def resolveRpc(msg: InvocationMessage) = rawRPC.resolveGetterChain(msg.getterChain.map(r => AkkaRPCFramework.RawInvocation(r.rpcName, r.argLists)).toList)
+  private def resolveRpc(msg: InvocationMessage) =
+    rawRPC.resolveGetterChain(msg.getterChain.map(r => AkkaRPCFramework.RawInvocation(r.rpcName, r.args)).toList)
 
   private def logError(e: Throwable, methodName: String): Unit = {
     log.error(e,

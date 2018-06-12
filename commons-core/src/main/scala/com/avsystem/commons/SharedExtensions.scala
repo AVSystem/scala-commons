@@ -142,6 +142,8 @@ object SharedExtensions extends SharedExtensions {
     def showTypeSymbol: A = macro macros.UniversalMacros.showTypeSymbol[A]
 
     def showTypeSymbolFullName: A = macro macros.UniversalMacros.showTypeSymbolFullName[A]
+
+    def debugMacro: A = a
   }
 
   class LazyUniversalOps[A](private val a: () => A) extends AnyVal {

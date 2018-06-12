@@ -40,6 +40,18 @@ class AutoGenCodecTest extends CodecTestBase {
     testAutoWriteRead(TransparentWrapper("something"), "something")
   }
 
+  @transparent
+  case class TransparentWrapperWithDependency(str: String)
+  object TransparentWrapperWithDependency {
+    //order matters
+    implicit val codec: GenCodec[TransparentWrapperWithDependency] = GenCodec.materialize
+    implicit val stringCodec: GenCodec[String] = GenCodec.StringCodec
+  }
+
+  test("transparent wrapper with dependency test") {
+    testAutoWriteRead(TransparentWrapperWithDependency("something"), "something")
+  }
+
   case class SomeCaseClass(@name("some.str") str: String, intList: List[Int])
 
   test("case class test") {

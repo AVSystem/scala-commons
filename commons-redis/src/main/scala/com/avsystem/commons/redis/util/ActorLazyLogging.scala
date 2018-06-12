@@ -21,10 +21,10 @@ trait ActorLazyLogging { self: Actor =>
         }
       }
 
-    def warning(msg: => String): Unit = macro macros.misc.LazyLoggingMacros.warning
+    def warning(msg: => String): Unit = macro macros.misc.LazyLoggingMacros.warningImpl
 
-    def info(msg: => String): Unit = macro macros.misc.LazyLoggingMacros.info
+    def info(msg: => String): Unit = macro macros.misc.LazyLoggingMacros.infoImpl
 
-    def debug(msg: => String): Unit = macro macros.misc.LazyLoggingMacros.debug
+    def debug(msg: => String): Unit = macro macros.misc.LazyLoggingMacros.debugImpl
   }
 }

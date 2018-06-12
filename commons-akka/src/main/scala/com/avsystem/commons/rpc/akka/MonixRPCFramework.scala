@@ -1,19 +1,18 @@
 package com.avsystem.commons
 package rpc.akka
 
-import com.avsystem.commons.rpc.RPCFramework
+import com.avsystem.commons.rpc._
 import monix.reactive.Observable
 
 trait MonixRPCFramework extends RPCFramework {
   override type RawRPC <: MonixRawRPC
 
-  trait MonixRawRPC {this: RawRPC =>
-    def observe(rpcName: String, argLists: List[List[RawValue]]): Observable[RawValue]
+  trait MonixRawRPC { this: RawRPC =>
+    @multi def observe(rpcName: String)(@multi args: List[RawValue]): Observable[RawValue]
   }
 
-  implicit def ObservableRealHandler[A: Writer]: RealInvocationHandler[Observable[A], Observable[RawValue]] =
-    RealInvocationHandler[Observable[A], Observable[RawValue]](_.map(write[A]))
-
-  implicit def ObservableRawHandler[A: Reader]: RawInvocationHandler[Observable[A]] =
-    RawInvocationHandler[Observable[A]]((rawRpc, rpcName, argLists) => rawRpc.observe(rpcName, argLists).map(read[A]))
+  implicit def readerBasedObservableAsReal[T: Reader]: AsReal[Observable[RawValue], Observable[T]] =
+    AsReal.create(_.map(read[T]))
+  implicit def writerBasedObservableAsRaw[T: Writer]: AsRaw[Observable[RawValue], Observable[T]] =
+    AsRaw.create(_.map(write[T]))
 }

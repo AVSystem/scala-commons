@@ -4,7 +4,6 @@ package rpc.akka
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.{ActorPath, ActorSystem}
-import com.avsystem.commons.rpc.RPC
 import com.avsystem.commons.rpc.akka.AkkaRPCFramework._
 import com.typesafe.config.{Config, ConfigFactory}
 import monix.reactive.Observable
@@ -122,21 +121,15 @@ object AkkaRPCFrameworkBenchmark {
 
 }
 
-@RPC
 trait TestRPC {
   def fireAndForget(): Unit
   def echoAsString(int: Int): Future[String]
   def stream: Observable[Int]
   def inner: InnerRPC
 }
-object TestRPC {
-  implicit val fullRPCInfo: BaseFullRPCInfo[TestRPC] = materializeFullInfo
-}
+object TestRPC extends RPCCompanion[TestRPC]
 
-@RPC
 trait InnerRPC {
   def innerFire(): Unit
 }
-object InnerRPC {
-  implicit val fullRPCInfo: BaseFullRPCInfo[InnerRPC] = materializeFullInfo
-}
+object InnerRPC extends RPCCompanion[InnerRPC]
