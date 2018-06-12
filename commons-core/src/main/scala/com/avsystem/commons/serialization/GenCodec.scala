@@ -92,6 +92,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     * cannot be freely refactored. That's why you want to always explicitly make the decision of making a type serializable.
     * <p/>
     */
+  @deprecated("auto codecs will be removed", "1.28.0")
   case class Auto[T](codec: GenCodec[T]) extends AnyVal
 
   @explicitGenerics
@@ -102,9 +103,11 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     codec.write(output, value)
 
   @explicitGenerics
+  @deprecated("auto codecs will be removed", "1.28.0")
   def autoRead[T](input: Input)(implicit autoCodec: GenCodec.Auto[T]): T =
     autoCodec.codec.read(input)
 
+  @deprecated("auto codecs will be removed", "1.28.0")
   def autoWrite[T](output: Output, value: T)(implicit autoCodec: GenCodec.Auto[T]): Unit =
     autoCodec.codec.write(output, value)
 
@@ -414,6 +417,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   )
 
   // Needed because of SI-9453
+  @deprecated("auto codecs will be removed", "1.28.0")
   implicit lazy val NothingAutoCodec: GenCodec.Auto[Nothing] = GenCodec.Auto[Nothing](NothingCodec)
 
   implicit def macroGeneratedCodec[T]: MacroGenerated[GenCodec[T]] =
@@ -433,6 +437,7 @@ trait RecursiveAutoCodecs { this: GenCodec.type =>
   implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] =
   macro macros.serialization.GenCodecMacros.materializeImplicitly[T]
 
+  @deprecated("auto codecs will be removed", "1.28.0")
   implicit def materializeAuto[T]: GenCodec.Auto[T] =
   macro macros.serialization.GenCodecMacros.materializeAuto[T]
 }

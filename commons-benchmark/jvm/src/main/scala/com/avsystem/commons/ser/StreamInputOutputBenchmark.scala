@@ -12,8 +12,8 @@ case class Toplevel(int: Int, nested: Nested, str: String)
 case class Nested(list: List[Int], int: Int)
 
 object Toplevel {
-  implicit val nestedCodec = GenCodec.materialize[Nested]
-  implicit val codec = GenCodec.materialize[Toplevel]
+  implicit val nestedCodec: GenCodec[Nested] = GenCodec.materialize[Nested]
+  implicit val codec: GenCodec[Toplevel] = GenCodec.materialize[Toplevel]
 }
 
 @Warmup(iterations = 10)
@@ -28,7 +28,7 @@ class StreamInputOutputBenchmark {
   val inputArray: Array[Byte] = {
     val os = new ByteArrayOutputStream()
 
-    GenCodec.autoWrite(new StreamOutput(new DataOutputStream(os)), something)
+    GenCodec.write(new StreamOutput(new DataOutputStream(os)), something)
     os.toByteArray
   }
 
@@ -36,7 +36,7 @@ class StreamInputOutputBenchmark {
   def testEncode(bh: Blackhole): Unit = {
     val os = new ByteArrayOutputStream(inputArray.length)
     val output = new StreamOutput(new DataOutputStream(os))
-    GenCodec.autoWrite(output, something)
+    GenCodec.write(output, something)
     bh.consume(os.toByteArray)
   }
 
