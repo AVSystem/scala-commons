@@ -428,7 +428,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   }
 
   def forUnknown(tpe: Type): Tree =
-    typecheckException(s"Cannot automatically derive GenCodec for $tpe")
+    abort(s"Cannot automatically derive GenCodec for $tpe")
 
   def materializeRecursively[T: WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T].dealias
