@@ -801,7 +801,11 @@ trait MacroCommons { bundle =>
 
   def knownSubtypes(tpe: Type): Option[List[Type]] = {
     val dtpe = tpe.dealias
-    Option(dtpe.typeSymbol).filter(isSealedHierarchyRoot).map { sym =>
+    val tpeSym = dtpe match {
+      case RefinedType(List(single), _) => single.typeSymbol
+      case _ => dtpe.typeSymbol
+    }
+    Option(tpeSym).filter(isSealedHierarchyRoot).map { sym =>
       knownNonAbstractSubclasses(sym).toList.flatMap { subSym =>
         val undetparams = subSym.asType.typeParams
         val undetSubTpe = typeOfTypeSymbol(subSym.asType)

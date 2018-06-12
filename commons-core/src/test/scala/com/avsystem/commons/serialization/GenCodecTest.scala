@@ -552,4 +552,21 @@ class GenCodecTest extends CodecTestBase {
       Map("_case" -> "HasCollCase", "coll" -> List(Map("_case" -> "DepCase", "str" -> "kek")))
     )
   }
+
+  sealed trait SealedRefined {
+    type X
+  }
+  object SealedRefined {
+    final case class First[Type](foo: Type) extends SealedRefined {
+      type X = Type
+    }
+    implicit def codec[T: GenCodec]: GenCodec[SealedRefined {type X = T}] = GenCodec.materialize
+  }
+
+  test("refined sealed type with type member") {
+    testWriteReadAndAutoWriteRead[SealedRefined {type X = Int}](
+      SealedRefined.First(42),
+      Map("First" -> Map("foo" -> 42))
+    )
+  }
 }
