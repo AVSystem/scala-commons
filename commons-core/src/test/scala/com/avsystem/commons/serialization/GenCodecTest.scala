@@ -500,4 +500,58 @@ class GenCodecTest extends CodecTestBase {
     testWriteReadAndAutoWriteRead[CustomizedSeal](CustomizedObjekt,
       Map("kejs" -> "CustomizedObjekt"))
   }
+
+  case class ItsOverTwentyTwo(
+    a1: String,
+    a2: String,
+    a3: String,
+    a4: String,
+    a5: String,
+    a6: String,
+    a7: String,
+    a8: String,
+    a9: String,
+    a10: String,
+    a11: String,
+    a12: String,
+    a13: String,
+    a14: String,
+    a15: String,
+    a16: String,
+    a17: String,
+    a18: String,
+    a19: String,
+    a20: String,
+    a21: String,
+    a22: String,
+    a23: String
+  )
+  object ItsOverTwentyTwo extends HasGenCodec[ItsOverTwentyTwo]
+
+  test("case class with more than 22 fields") {
+    val inst = ItsOverTwentyTwo(
+      "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10",
+      "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20",
+      "v21", "v22", "v23")
+    val repr = (1 to 23).map(i => s"a$i" -> s"v$i").toMap
+    testWriteReadAndAutoWriteRead[ItsOverTwentyTwo](inst, repr)
+  }
+
+  @flatten
+  sealed trait Dep
+  case class DepCase(str: String) extends Dep
+
+  @flatten
+  sealed trait HasColl
+  case class HasCollCase(coll: Seq[Dep]) extends HasColl
+  object HasColl {
+    implicit val codec: GenCodec[HasColl] = GenCodec.materializeRecursively[HasColl]
+  }
+
+  test("recursive materialization with intermediate sequence") {
+    testWriteReadAndAutoWriteRead[HasColl](
+      HasCollCase(List(DepCase("kek"))),
+      Map("_case" -> "HasCollCase", "coll" -> List(Map("_case" -> "DepCase", "str" -> "kek")))
+    )
+  }
 }

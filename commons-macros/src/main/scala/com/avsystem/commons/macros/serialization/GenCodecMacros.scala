@@ -118,7 +118,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     hasAnnotation(sym, OutOfOrderAnnotType)
 
   def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree =
-    forApplyUnapply(tpe, companionOf(tpe).map(c.typecheck(_)).getOrElse(EmptyTree), apply, unapply, params)
+    forApplyUnapply(tpe, typedCompanionOf(tpe).getOrElse(EmptyTree), apply, unapply, params)
 
   def forApplyUnapply(tpe: Type, companion: Tree, apply: Symbol, unapply: Symbol, applyParams: List[ApplyParam]): Tree = {
     val params = applyParams.map { p =>
@@ -145,13 +145,13 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
     val ts = dtpe.typeSymbol
     val caseClass = ts.isClass && ts.asClass.isCaseClass && companion.symbol == ts.companion
-    val canUseFields = caseClass && unapply.isSynthetic && params.forall { p =>
+    val canUseFields = caseClass && (unapply == NoSymbol || unapply.isSynthetic) && params.forall { p =>
       alternatives(dtpe.member(p.sym.name)).exists { f =>
         f.isTerm && f.asTerm.isCaseAccessor && f.isPublic && f.typeSignatureIn(dtpe).finalResultType =:= p.valueType
       }
     }
 
-    def safeCompanion: Tree = companionOrReplacement(companion)
+    def safeCompanion: Tree = replaceCompanion(companion)
 
     def applier(args: List[Tree]) =
       if (apply.isConstructor) q"new $dtpe(..$args)"

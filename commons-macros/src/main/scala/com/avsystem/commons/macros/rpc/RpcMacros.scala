@@ -57,7 +57,7 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val BIndexedSeqClass: Symbol = BIndexedSeqTpe.typeSymbol
 
   def registerCompanionImplicits(rawTpe: Type): Unit =
-    companionOf(rawTpe).filter { companion =>
+    typedCompanionOf(rawTpe).filter { companion =>
       val typed = c.typecheck(q"$companion.implicits", silent = true)
       typed != EmptyTree && typed.symbol.overrides.contains(RpcImplicitsSym)
     }.foreach { companion =>
@@ -137,7 +137,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
 
     val constructor = new RpcMetadataConstructor(metadataTpe)
 
-    companionOf(metadataTpe) match {
+    typedCompanionOf(metadataTpe) match {
       case Some(comp) =>
         // short circuit recursive implicit searches for M.Lazy[Real]
         val lazyMetadataTpe = getType(tq"$comp.Lazy[${realRpc.tpe}]")

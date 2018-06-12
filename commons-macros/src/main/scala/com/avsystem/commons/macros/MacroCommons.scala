@@ -188,10 +188,16 @@ trait MacroCommons { bundle =>
     }
   }
 
-  def companionOrReplacement(typedCompanion: Tree): Tree =
+  // Replace references to companion object being constructed with casted reference to lambda parameter
+  // of function wrapped by `MacroGenerated` class. This is all to workaround overzealous Scala validation of
+  // self-reference being passed to super constructor parameter.
+  def replaceCompanion(typedTree: Tree): Tree =
     companionReplacements.collectFirst {
-      case (s, name) if s == typedCompanion.symbol => q"$name.asInstanceOf[${typedCompanion.tpe}]"
-    }.getOrElse(typedCompanion)
+      case (s, name) if s == typedTree.symbol => q"$name.asInstanceOf[${typedTree.tpe}]"
+    }.getOrElse(typedTree match {
+      case Select(prefix, name) => Select(replaceCompanion(prefix), name)
+      case t => t
+    })
 
   // simplified representation of trees of implicits, used to remove duplicated implicits,
   // i.e. implicits that were found for different types but turned out to be identical
@@ -680,20 +686,28 @@ trait MacroCommons { bundle =>
 
   case class ApplyUnapply(apply: Symbol, unapply: Symbol, params: List[(TermSymbol, Tree)])
 
-  def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] = {
-    val dtpe = tpe.dealias
-    companionOf(dtpe).map(c.typecheck(_)).flatMap(comp => applyUnapplyFor(dtpe, comp))
-  }
+  def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] =
+    typedCompanionOf(tpe).flatMap(comp => applyUnapplyFor(tpe, comp))
 
-  def applyUnapplyFor(tpe: Type, companion: Tree): Option[ApplyUnapply] = {
+  def applyUnapplyFor(tpe: Type, typedCompanion: Tree): Option[ApplyUnapply] = {
     val dtpe = tpe.dealias
     val ts = dtpe.typeSymbol.asType
     val caseClass = ts.isClass && ts.asClass.isCaseClass
 
+    def defaultValueFor(param: Symbol, idx: Int): Tree =
+      if (param.asTerm.isParamWithDefault) {
+        val methodEncodedName = param.owner.name.encodedName.toString
+        q"${replaceCompanion(typedCompanion)}.${TermName(s"$methodEncodedName$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
+      }
+      else EmptyTree
+
+    def paramsWithDefaults(methodSig: Type) =
+      methodSig.paramLists.head.zipWithIndex.map({ case (p, i) => (p.asTerm, defaultValueFor(p, i)) })
+
     val applyUnapplyPairs = for {
-      apply <- alternatives(companion.tpe.member(TermName("apply")))
+      apply <- alternatives(typedCompanion.tpe.member(TermName("apply")))
       unapplyName = if (isFirstListVarargs(apply)) "unapplySeq" else "unapply"
-      unapply <- alternatives(companion.tpe.member(TermName(unapplyName)))
+      unapply <- alternatives(typedCompanion.tpe.member(TermName(unapplyName)))
     } yield (apply, unapply)
 
     def setTypeArgs(sig: Type) = sig match {
@@ -706,38 +720,33 @@ trait MacroCommons { bundle =>
       apply.typeSignature.typeParams.length == expected && unapply.typeSignature.typeParams.length == expected
     }
 
-    val applicableResults = applyUnapplyPairs.flatMap {
-      case (apply, unapply) if typeParamsMatch(apply, unapply) =>
-        val constructor =
-          if (caseClass && apply.isSynthetic)
-            alternatives(dtpe.member(termNames.CONSTRUCTOR)).find(_.asMethod.isPrimaryConstructor).getOrElse(NoSymbol)
-          else NoSymbol
+    if (caseClass && applyUnapplyPairs.isEmpty) { // case classes with more than 22 fields
+      val constructor = primaryConstructorOf(dtpe)
+      Some(ApplyUnapply(constructor, NoSymbol, paramsWithDefaults(constructor.typeSignatureIn(dtpe))))
+    } else {
+      val applicableResults = applyUnapplyPairs.flatMap {
+        case (apply, unapply) if typeParamsMatch(apply, unapply) =>
+          val constructor =
+            if (caseClass && apply.isSynthetic) primaryConstructorOf(dtpe)
+            else NoSymbol
 
-        val applySig =
-          if (constructor != NoSymbol) constructor.typeSignatureIn(dtpe)
-          else setTypeArgs(apply.typeSignatureIn(companion.tpe))
-        val unapplySig =
-          setTypeArgs(unapply.typeSignatureIn(companion.tpe))
+          val applySig =
+            if (constructor != NoSymbol) constructor.typeSignatureIn(dtpe)
+            else setTypeArgs(apply.typeSignatureIn(typedCompanion.tpe))
+          val unapplySig =
+            setTypeArgs(unapply.typeSignatureIn(typedCompanion.tpe))
 
-        if (matchingApplyUnapply(dtpe, applySig, unapplySig)) {
-          def defaultValueFor(param: Symbol, idx: Int): Tree =
-            if (param.asTerm.isParamWithDefault) {
-              val methodEncodedName = param.owner.name.encodedName.toString
-              q"${companionOrReplacement(companion)}.${TermName(s"$methodEncodedName$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
-            }
-            else EmptyTree
+          if (matchingApplyUnapply(dtpe, applySig, unapplySig))
+            Some(ApplyUnapply(constructor orElse apply, unapply, paramsWithDefaults(applySig)))
+          else None
 
-          val paramsWithDefaults = applySig.paramLists.head.zipWithIndex
-            .map({ case (p, i) => (p.asTerm, defaultValueFor(p, i)) })
-          Some(ApplyUnapply(constructor orElse apply, unapply, paramsWithDefaults))
-        } else None
+        case _ => None
+      }
 
-      case _ => None
-    }
-
-    applicableResults match {
-      case List(result) => Some(result)
-      case _ => None
+      applicableResults match {
+        case List(result) => Some(result)
+        case _ => None
+      }
     }
   }
 
@@ -758,10 +767,13 @@ trait MacroCommons { bundle =>
       None
   }
 
-  def companionOf(tpe: Type): Option[Tree] = tpe match {
-    case TypeRef(pre, sym, _) if sym.companion != NoSymbol =>
-      singleValueFor(pre).map(Select(_, sym.companion)) orElse singleValueFor(tpe.companion)
-    case _ => singleValueFor(tpe.companion)
+  def typedCompanionOf(tpe: Type): Option[Tree] = {
+    val result = tpe match {
+      case TypeRef(pre, sym, _) if sym.companion != NoSymbol =>
+        singleValueFor(pre).map(Select(_, sym.companion)) orElse singleValueFor(tpe.companion)
+      case _ => singleValueFor(tpe.companion)
+    }
+    result.map(c.typecheck(_))
   }
 
   def typeOfTypeSymbol(sym: TypeSymbol): Type = sym.toType match {

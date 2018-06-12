@@ -161,7 +161,7 @@ trait TypeClassDerivation extends MacroCommons {
     def applyUnapplyTc = applyUnapplyFor(dtpe).map {
       case ApplyUnapply(apply, unapply, params) =>
         val dependencies = params.zipWithIndex.map { case ((s, defaultValue), idx) =>
-          ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s"for field ${s.name}"))
+          ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s"for field ${s.name} of $tpe"))
         }
         forApplyUnapply(dtpe, apply, unapply, dependencies)
     }
@@ -171,7 +171,10 @@ trait TypeClassDerivation extends MacroCommons {
         abort(s"Could not find any subtypes for $dtpe")
       }
       val dependencies = subtypes.zipWithIndex.map { case (depTpe, idx) =>
-        val depTree = dependency(depTpe, tcTpe, s"for case type $depTpe", allowImplicitMacro = true)
+        val depTree = c.inferImplicitValue(typeClassInstance(depTpe), withMacrosDisabled = true) match {
+          case EmptyTree => materializeFor(depTpe)
+          case t => t
+        }
         KnownSubtype(idx, depTpe, depTree)
       }
       forSealedHierarchy(dtpe, dependencies)
