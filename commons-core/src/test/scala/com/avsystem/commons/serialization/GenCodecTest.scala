@@ -341,13 +341,13 @@ class GenCodecTest extends CodecTestBase {
   }
 
   test("sealed hierarchy test") {
-    testWriteReadAndAutoWriteRead[SealedBase](SealedBaseThatHasGenCodec.CaseObject,
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseObject,
       Map("CaseObject" -> Map()))
-    testWriteReadAndAutoWriteRead[SealedBase](SealedBaseThatHasGenCodec.CaseClass("fuu"),
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.CaseClass("fuu"),
       Map("CaseClass" -> Map("str" -> "fuu")))
-    testWriteReadAndAutoWriteRead[SealedBase](SealedBaseThatHasGenCodec.InnerBase.InnerCaseObject,
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseObject,
       Map("InnerCaseObject" -> Map()))
-    testWriteReadAndAutoWriteRead[SealedBase](SealedBaseThatHasGenCodec.InnerBase.InnerCaseClass("fuu"),
+    testWriteReadAndAutoWriteRead[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"),
       Map("InnerCaseClass" -> Map("str" -> "fuu")))
   }
 
