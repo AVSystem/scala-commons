@@ -49,71 +49,68 @@ class StreamInput(is: DataInputStream) extends Input {
       InputType.Simple
   }
 
-  def readNull(): Null = if (markerByte == NullMarker)
-    null
-  else
-    throw new ReadFailure(s"Expected null but $markerByte found")
+  def readNull(): Null =
+    if (markerByte == NullMarker) null
+    else throw new ReadFailure(s"Expected null but $markerByte found")
 
-  def readString(): String = if (markerByte == StringMarker)
-    is.readUTF()
-  else
-    throw new ReadFailure(s"Expected string but $markerByte found")
+  def readString(): String =
+    if (markerByte == StringMarker) is.readUTF()
+    else throw new ReadFailure(s"Expected string but $markerByte found")
 
-  def readBoolean(): Boolean = if (markerByte == BooleanMarker)
-    is.readBoolean()
-  else
-    throw new ReadFailure(s"Expected boolean but $markerByte found")
+  def readBoolean(): Boolean =
+    if (markerByte == BooleanMarker) is.readBoolean()
+    else throw new ReadFailure(s"Expected boolean but $markerByte found")
 
-  def readInt(): Int = if (markerByte == IntMarker)
-    is.readInt()
-  else
-    throw new ReadFailure(s"Expected int but $markerByte found")
+  def readInt(): Int =
+    if (markerByte == IntMarker) is.readInt()
+    else throw new ReadFailure(s"Expected int but $markerByte found")
 
-  def readLong(): Long = if (markerByte == LongMarker)
-    is.readLong()
-  else
-    throw new ReadFailure(s"Expected long but $markerByte found")
+  def readLong(): Long =
+    if (markerByte == LongMarker) is.readLong()
+    else throw new ReadFailure(s"Expected long but $markerByte found")
 
-  def readDouble(): Double = if (markerByte == DoubleMarker)
-    is.readDouble()
-  else
-    throw new ReadFailure(s"Expected double but $markerByte found")
+  def readDouble(): Double =
+    if (markerByte == DoubleMarker) is.readDouble()
+    else throw new ReadFailure(s"Expected double but $markerByte found")
 
-  def readBigInt(): BigInt = if (markerByte == BitIntMarker) {
-    val len = is.readInt()
-    val bytes = new Array[Byte](len)
-    is.read(bytes)
-    BigInt(bytes)
-  } else
-    throw new ReadFailure(s"Expected big integer but $markerByte found")
+  def readBigInt(): BigInt =
+    if (markerByte == BitIntMarker) {
+      val len = is.readInt()
+      val bytes = new Array[Byte](len)
+      is.read(bytes)
+      BigInt(bytes)
+    } else {
+      throw new ReadFailure(s"Expected big integer but $markerByte found")
+    }
 
-  def readBigDecimal(): BigDecimal = if (markerByte == BigDecimalMarker) {
-    val len = is.readInt()
-    val bytes = new Array[Byte](len)
-    is.read(bytes)
-    val unscaled = BigInt(bytes)
-    val scale = is.readInt()
-    BigDecimal(unscaled, scale)
-  } else
-    throw new ReadFailure(s"Expected big decimal but $markerByte found")
+  def readBigDecimal(): BigDecimal =
+    if (markerByte == BigDecimalMarker) {
+      val len = is.readInt()
+      val bytes = new Array[Byte](len)
+      is.read(bytes)
+      val unscaled = BigInt(bytes)
+      val scale = is.readInt()
+      BigDecimal(unscaled, scale)
+    } else {
+      throw new ReadFailure(s"Expected big decimal but $markerByte found")
+    }
 
-  def readBinary(): Array[Byte] = if (markerByte == ByteArrayMarker) {
-    val binary = Array.ofDim[Byte](is.readInt())
-    is.readFully(binary)
-    binary
-  } else {
-    throw new ReadFailure(s"Expected binary array but $markerByte found")
-  }
+  def readBinary(): Array[Byte] =
+    if (markerByte == ByteArrayMarker) {
+      val binary = Array.ofDim[Byte](is.readInt())
+      is.readFully(binary)
+      binary
+    } else {
+      throw new ReadFailure(s"Expected binary array but $markerByte found")
+    }
 
-  def readList(): ListInput = if (markerByte == ListStartMarker)
-    new StreamListInput(is)
-  else
-    throw new ReadFailure(s"Expected list but $markerByte found")
+  def readList(): ListInput =
+    if (markerByte == ListStartMarker) new StreamListInput(is)
+    else throw new ReadFailure(s"Expected list but $markerByte found")
 
-  def readObject(): ObjectInput = if (markerByte == ObjectStartMarker)
-    new StreamObjectInput(is)
-  else
-    throw new ReadFailure(s"Expected object but $markerByte found")
+  def readObject(): ObjectInput =
+    if (markerByte == ObjectStartMarker) new StreamObjectInput(is)
+    else throw new ReadFailure(s"Expected object but $markerByte found")
 
   def skip(): Unit = markerByte match {
     case NullMarker =>
