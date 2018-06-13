@@ -28,6 +28,8 @@ object SimpleValueOutput {
   * - `Int`
   * - `Long`
   * - `Double`
+  * - `BigInt`
+  * - `BigDecimal`
   * - `Boolean`
   * - `String`
   * - `Array[Byte]`
@@ -49,27 +51,27 @@ class SimpleValueOutput(
   def this(consumer: Any => Unit) =
     this(consumer, new MHashMap[String, Any], new ListBuffer[Any])
 
-  def writeBinary(binary: Array[Byte]) = consumer(binary)
-  def writeString(str: String) = consumer(str)
-  def writeDouble(double: Double) = consumer(double)
-  def writeInt(int: Int) = consumer(int)
+  def writeNull(): Unit = consumer(null)
+  def writeBoolean(boolean: Boolean): Unit = consumer(boolean)
+  def writeString(str: String): Unit = consumer(str)
+  def writeInt(int: Int): Unit = consumer(int)
+  def writeLong(long: Long): Unit = consumer(long)
+  def writeDouble(double: Double): Unit = consumer(double)
+  def writeBigInt(bigInt: BigInt): Unit = consumer(bigInt)
+  def writeBigDecimal(bigDecimal: BigDecimal): Unit = consumer(bigDecimal)
+  def writeBinary(binary: Array[Byte]): Unit = consumer(binary)
 
-  def writeList() = new ListOutput {
+  def writeList(): ListOutput = new ListOutput {
     private val buffer = newListRepr
     def writeElement() = new SimpleValueOutput(buffer += _, newObjectRepr, newListRepr)
-    def finish() = consumer(buffer.result())
+    def finish(): Unit = consumer(buffer.result())
   }
 
-  def writeBoolean(boolean: Boolean) = consumer(boolean)
-
-  def writeObject() = new ObjectOutput {
+  def writeObject(): ObjectOutput = new ObjectOutput {
     private val result = newObjectRepr
     def writeField(key: String) = new SimpleValueOutput(v => result += ((key, v)), newObjectRepr, newListRepr)
-    def finish() = consumer(result)
+    def finish(): Unit = consumer(result)
   }
-
-  def writeLong(long: Long) = consumer(long)
-  def writeNull() = consumer(null)
 }
 
 object SimpleValueInput {
@@ -91,41 +93,42 @@ class SimpleValueInput(value: Any) extends Input {
     case _ => throw new ReadFailure(s"Expected ${classTag[B].runtimeClass} but got ${value.getClass}")
   }
 
-  def inputType = value match {
+  def inputType: InputType = value match {
     case null => InputType.Null
     case _: BSeq[Any] => InputType.List
     case _: BMap[_, Any] => InputType.Object
     case _ => InputType.Simple
   }
 
-  def readBinary() = doRead[Array[Byte]]
-  def readLong() = doReadUnboxed[Long, JLong]
-  def readNull() = if (value == null) null else throw new ReadFailure("not null")
-  def readObject() =
+  def readNull(): Null = if (value == null) null else throw new ReadFailure("not null")
+  def readBoolean(): Boolean = doReadUnboxed[Boolean, JBoolean]
+  def readString(): String = doRead[String]
+  def readInt(): Int = doReadUnboxed[Int, JInteger]
+  def readLong(): Long = doReadUnboxed[Long, JLong]
+  def readDouble(): Double = doReadUnboxed[Double, JDouble]
+  def readBigInt(): BigInt = doRead[JBigInteger]
+  def readBigDecimal(): BigDecimal = doRead[JBigDecimal]
+  def readBinary(): Array[Byte] = doRead[Array[Byte]]
+
+  def readObject(): ObjectInput =
     new ObjectInput {
       private val map = doRead[BMap[String, Any]]
       private val it = map.iterator.map {
         case (k, v) => new SimpleValueFieldInput(k, v)
       }
-      def nextField() = it.next()
-      override def peekField(name: String) = map.getOpt(name).map(new SimpleValueFieldInput(name, _))
-      def hasNext = it.hasNext
+      def nextField(): SimpleValueFieldInput = it.next()
+      override def peekField(name: String): Opt[SimpleValueFieldInput] = map.getOpt(name).map(new SimpleValueFieldInput(name, _))
+      def hasNext: Boolean = it.hasNext
     }
 
-  def readInt() = doReadUnboxed[Int, JInteger]
-  def readString() = doRead[String]
-
-  def readList() =
+  def readList(): ListInput =
     new ListInput {
       private val it = doRead[BSeq[Any]].iterator.map(new SimpleValueInput(_))
-      def nextElement() = it.next()
-      def hasNext = it.hasNext
+      def nextElement(): SimpleValueInput = it.next()
+      def hasNext: Boolean = it.hasNext
     }
 
-  def readBoolean() = doReadUnboxed[Boolean, JBoolean]
-  def readDouble() = doReadUnboxed[Double, JDouble]
-
-  def skip() = ()
+  def skip(): Unit = ()
 }
 
 class SimpleValueFieldInput(val fieldName: String, value: Any)

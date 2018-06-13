@@ -29,6 +29,8 @@ private object FormatConstants {
   final val ObjectStartMarker: Byte = 11
   final val ListEndMarker: Byte = 12
   final val ObjectEndMarker: Byte = 13
+  final val BitIntMarker: Byte = 14
+  final val BigDecimalMarker: Byte = 15
 }
 
 import com.avsystem.commons.serialization.FormatConstants._
@@ -47,53 +49,68 @@ class StreamInput(is: DataInputStream) extends Input {
       InputType.Simple
   }
 
-  def readNull(): Null = if (markerByte == NullMarker)
-    null
-  else
-    throw new ReadFailure(s"Expected null, but $markerByte found")
+  def readNull(): Null =
+    if (markerByte == NullMarker) null
+    else throw new ReadFailure(s"Expected null but $markerByte found")
 
-  def readString(): String = if (markerByte == StringMarker)
-    is.readUTF()
-  else
-    throw new ReadFailure(s"Expected string, but $markerByte found")
+  def readString(): String =
+    if (markerByte == StringMarker) is.readUTF()
+    else throw new ReadFailure(s"Expected string but $markerByte found")
 
-  def readBoolean(): Boolean = if (markerByte == BooleanMarker)
-    is.readBoolean()
-  else
-    throw new ReadFailure(s"Expected boolean, but $markerByte found")
+  def readBoolean(): Boolean =
+    if (markerByte == BooleanMarker) is.readBoolean()
+    else throw new ReadFailure(s"Expected boolean but $markerByte found")
 
-  def readInt(): Int = if (markerByte == IntMarker)
-    is.readInt()
-  else
-    throw new ReadFailure(s"Expected int, but $markerByte found")
+  def readInt(): Int =
+    if (markerByte == IntMarker) is.readInt()
+    else throw new ReadFailure(s"Expected int but $markerByte found")
 
-  def readLong(): Long = if (markerByte == LongMarker)
-    is.readLong()
-  else
-    throw new ReadFailure(s"Expected long, but $markerByte found")
+  def readLong(): Long =
+    if (markerByte == LongMarker) is.readLong()
+    else throw new ReadFailure(s"Expected long but $markerByte found")
 
-  def readDouble(): Double = if (markerByte == DoubleMarker)
-    is.readDouble()
-  else
-    throw new ReadFailure(s"Expected double, but $markerByte found")
+  def readDouble(): Double =
+    if (markerByte == DoubleMarker) is.readDouble()
+    else throw new ReadFailure(s"Expected double but $markerByte found")
 
-  def readBinary(): Array[Byte] = if (markerByte == ByteArrayMarker) {
-    val binary = Array.ofDim[Byte](is.readInt())
-    is.readFully(binary)
-    binary
-  } else {
-    throw new ReadFailure(s"Expected binary array, but $markerByte found")
-  }
+  def readBigInt(): BigInt =
+    if (markerByte == BitIntMarker) {
+      val len = is.readInt()
+      val bytes = new Array[Byte](len)
+      is.read(bytes)
+      BigInt(bytes)
+    } else {
+      throw new ReadFailure(s"Expected big integer but $markerByte found")
+    }
 
-  def readList(): ListInput = if (markerByte == ListStartMarker)
-    new StreamListInput(is)
-  else
-    throw new ReadFailure(s"Expected list, but $markerByte found")
+  def readBigDecimal(): BigDecimal =
+    if (markerByte == BigDecimalMarker) {
+      val len = is.readInt()
+      val bytes = new Array[Byte](len)
+      is.read(bytes)
+      val unscaled = BigInt(bytes)
+      val scale = is.readInt()
+      BigDecimal(unscaled, scale)
+    } else {
+      throw new ReadFailure(s"Expected big decimal but $markerByte found")
+    }
 
-  def readObject(): ObjectInput = if (markerByte == ObjectStartMarker)
-    new StreamObjectInput(is)
-  else
-    throw new ReadFailure(s"Expected object, but $markerByte found")
+  def readBinary(): Array[Byte] =
+    if (markerByte == ByteArrayMarker) {
+      val binary = Array.ofDim[Byte](is.readInt())
+      is.readFully(binary)
+      binary
+    } else {
+      throw new ReadFailure(s"Expected binary array but $markerByte found")
+    }
+
+  def readList(): ListInput =
+    if (markerByte == ListStartMarker) new StreamListInput(is)
+    else throw new ReadFailure(s"Expected list but $markerByte found")
+
+  def readObject(): ObjectInput =
+    if (markerByte == ObjectStartMarker) new StreamObjectInput(is)
+    else throw new ReadFailure(s"Expected object but $markerByte found")
 
   def skip(): Unit = markerByte match {
     case NullMarker =>
@@ -121,6 +138,10 @@ class StreamInput(is: DataInputStream) extends Input {
       new StreamListInput(is).skipRemaining()
     case ObjectStartMarker =>
       new StreamObjectInput(is).skipRemaining()
+    case BitIntMarker =>
+      is.skipBytes(is.readInt())
+    case BigDecimalMarker =>
+      is.skipBytes(is.readInt() + Integer.BYTES)
     case unexpected =>
       throw new ReadFailure(s"Unexpected marker byte: $unexpected")
   }
@@ -182,14 +203,16 @@ private object StreamObjectInput {
   case class EmptyFieldInput(name: String) extends FieldInput {
     private def nope: Nothing = throw new ReadFailure(s"Something went horribly wrong ($name)")
 
-    def fieldName: String = nope
     def inputType: InputType = nope
+    def fieldName: String = nope
     def readNull(): Null = nope
     def readString(): String = nope
     def readBoolean(): Boolean = nope
     def readInt(): Int = nope
     def readLong(): Long = nope
     def readDouble(): Double = nope
+    def readBigInt(): BigInt = nope
+    def readBigDecimal(): BigDecimal = nope
     def readBinary(): Array[Byte] = nope
     def readList(): ListInput = nope
     def readObject(): ObjectInput = nope
@@ -230,6 +253,21 @@ class StreamOutput(os: DataOutputStream) extends Output {
   def writeDouble(double: Double): Unit = {
     os.writeByte(DoubleMarker)
     os.writeDouble(double)
+  }
+
+  def writeBigInt(bigInt: BigInt): Unit = {
+    os.writeByte(BitIntMarker)
+    val bytes = bigInt.toByteArray
+    os.writeInt(bytes.length)
+    os.write(bytes)
+  }
+
+  def writeBigDecimal(bigDecimal: BigDecimal): Unit = {
+    os.writeByte(BigDecimalMarker)
+    val bytes = bigDecimal.bigDecimal.unscaledValue.toByteArray
+    os.writeInt(bytes.length)
+    os.write(bytes)
+    os.writeInt(bigDecimal.scale)
   }
 
   def writeBinary(binary: Array[Byte]): Unit = {

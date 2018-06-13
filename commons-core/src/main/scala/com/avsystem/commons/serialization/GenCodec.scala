@@ -287,8 +287,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit lazy val LongCodec: GenCodec[Long] = create(_.readLong(), _ writeLong _)
   implicit lazy val FloatCodec: GenCodec[Float] = create(_.readFloat(), _ writeFloat _)
   implicit lazy val DoubleCodec: GenCodec[Double] = create(_.readDouble(), _ writeDouble _)
-  implicit lazy val BigIntCodec: GenCodec[BigInt] = createNullable(i => BigInt(i.readString()), (o, v) => o.writeString(v.toString))
-  implicit lazy val BigDecimalCodec: GenCodec[BigDecimal] = createNullable(i => BigDecimal(i.readString()), (o, v) => o.writeString(v.toString))
+  implicit lazy val BigIntCodec: GenCodec[BigInt] = createNullable(_.readBigInt(), _ writeBigInt _)
+  implicit lazy val BigDecimalCodec: GenCodec[BigDecimal] = createNullable(_.readBigDecimal(), _ writeBigDecimal _)
 
   implicit lazy val JBooleanCodec: GenCodec[JBoolean] = createNullable(_.readBoolean(), _ writeBoolean _)
   implicit lazy val JCharacterCodec: GenCodec[JCharacter] = createNullable(_.readChar(), _ writeChar _)
@@ -298,8 +298,10 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit lazy val JLongCodec: GenCodec[JLong] = createNullable(_.readLong(), _ writeLong _)
   implicit lazy val JFloatCodec: GenCodec[JFloat] = createNullable(_.readFloat(), _ writeFloat _)
   implicit lazy val JDoubleCodec: GenCodec[JDouble] = createNullable(_.readDouble(), _ writeDouble _)
-  implicit lazy val JBigIntegerCodec: GenCodec[JBigInteger] = createNullable(i => new JBigInteger(i.readString()), (o, v) => o.writeString(v.toString))
-  implicit lazy val JBigDecimalCodec: GenCodec[JBigDecimal] = createNullable(i => new JBigDecimal(i.readString()), (o, v) => o.writeString(v.toString))
+  implicit lazy val JBigIntegerCodec: GenCodec[JBigInteger] =
+    createNullable(_.readBigInt().bigInteger, (o, v) => o.writeBigInt(BigInt(v)))
+  implicit lazy val JBigDecimalCodec: GenCodec[JBigDecimal] =
+    createNullable(_.readBigDecimal().bigDecimal, (o, v) => o.writeBigDecimal(BigDecimal(v)))
 
   implicit lazy val JDateCodec: GenCodec[JDate] = createNullable(i => new JDate(i.readTimestamp()), (o, d) => o.writeTimestamp(d.getTime))
   implicit lazy val StringCodec: GenCodec[String] = createNullable(_.readString(), _ writeString _)

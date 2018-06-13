@@ -39,5 +39,7 @@ object DummyInput extends Input {
   def readList() = ignored
   def readBoolean() = ignored
   def readDouble() = ignored
+  def readBigInt() = ignored
+  def readBigDecimal() = ignored
   def skip() = ()
 }

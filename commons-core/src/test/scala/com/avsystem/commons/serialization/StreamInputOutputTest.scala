@@ -22,9 +22,11 @@ case class FieldTypes(
   i: Int,
   j: Long,
   k: Double,
-  l: Array[Byte],
-  m: Obj,
-  n: List[List[Obj]]
+  l: BigInt,
+  m: BigDecimal,
+  n: Array[Byte],
+  o: Obj,
+  p: List[List[Obj]]
 )
 
 class StreamInputOutputTest extends FunSuite {
@@ -42,6 +44,8 @@ class StreamInputOutputTest extends FunSuite {
     -5,
     -6,
     -7.3,
+    BigInt("5345224654563123434325343"),
+    BigDecimal(BigInt("2356342454564522135435"), 150),
     Array[Byte](1, 2, 4, 2),
     Obj(10, "x"),
     List(
@@ -90,8 +94,8 @@ class StreamInputOutputTest extends FunSuite {
 
   test("encode and decode all field types in a complicated structure") {
     val encoded = encDec(fieldTypesInstance)
-    assert(fieldTypesInstance.l sameElements encoded.l)
-    assert(fieldTypesInstance == encoded.copy(l = fieldTypesInstance.l))
+    assert(fieldTypesInstance.n sameElements encoded.n)
+    assert(fieldTypesInstance == encoded.copy(n = fieldTypesInstance.n))
   }
 
   test("raw API usage") {

@@ -26,8 +26,8 @@ trait SerializationTestUtils {
   case class CompleteItem(
     unit: Unit, string: String, char: Char,
     boolean: Boolean, byte: Byte, short: Short, int: Int,
-    long: Long, float: Float, double: Double, binary: Array[Byte], list: List[String],
-    set: Set[String], obj: TestCC, map: Map[String, Int]
+    long: Long, float: Float, double: Double, bigInt: BigInt, bigDecimal: BigDecimal,
+    binary: Array[Byte], list: List[String], set: Set[String], obj: TestCC, map: Map[String, Int]
   )
   object CompleteItem extends HasGenCodec[CompleteItem] {
     implicit val arb: Arbitrary[CompleteItem] = Arbitrary(for {
@@ -41,11 +41,13 @@ trait SerializationTestUtils {
       l <- arbitrary[Long]
       f <- arbitrary[Float]
       d <- arbitrary[Double]
+      bi <- arbitrary[BigInt]
+      bd <- arbitrary[BigDecimal]
       binary <- arbitrary[Array[Byte]]
       list <- arbitrary[List[String]]
       set <- arbitrary[Set[String]]
       obj <- arbitrary[TestCC]
       map <- arbitrary[Map[String, Int]]
-    } yield CompleteItem(u, str, c, bool, b, s, i, l, f, d, binary, list, set, obj, map))
+    } yield CompleteItem(u, str, c, bool, b, s, i, l, f, d, bi, bd, binary, list, set, obj, map))
   }
 }
