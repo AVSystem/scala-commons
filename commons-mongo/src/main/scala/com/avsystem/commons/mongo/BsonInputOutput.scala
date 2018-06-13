@@ -11,13 +11,13 @@ trait BsonInput extends Any with Input {
 }
 
 object BsonInput {
-  def bigDecimalFromBytes(bytes: Array[Byte]): JBigDecimal = {
+  def bigDecimalFromBytes(bytes: Array[Byte]): BigDecimal = {
     val buf = ByteBuffer.wrap(bytes)
     val unscaledBytes = new Array[Byte](bytes.length - 4)
     buf.get(unscaledBytes)
-    val unscaled = new JBigInteger(unscaledBytes)
+    val unscaled = BigInt(unscaledBytes)
     val scale = buf.getInt
-    new JBigDecimal(unscaled, scale)
+    BigDecimal(unscaled, scale)
   }
 }
 
@@ -26,8 +26,8 @@ trait BsonOutput extends Any with Output {
 }
 
 object BsonOutput {
-  def bigDecimalBytes(bigDecimal: JBigDecimal): Array[Byte] = {
-    val unscaledBytes = bigDecimal.unscaledValue.toByteArray
+  def bigDecimalBytes(bigDecimal: BigDecimal): Array[Byte] = {
+    val unscaledBytes = bigDecimal.bigDecimal.unscaledValue.toByteArray
     ByteBuffer.allocate(unscaledBytes.length + 4).put(unscaledBytes).putInt(bigDecimal.scale).array
   }
 }

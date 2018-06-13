@@ -29,7 +29,7 @@ private object FormatConstants {
   final val ObjectStartMarker: Byte = 11
   final val ListEndMarker: Byte = 12
   final val ObjectEndMarker: Byte = 13
-  final val BigIntegerMarker: Byte = 14
+  final val BitIntMarker: Byte = 14
   final val BigDecimalMarker: Byte = 15
 }
 
@@ -79,21 +79,21 @@ class StreamInput(is: DataInputStream) extends Input {
   else
     throw new ReadFailure(s"Expected double but $markerByte found")
 
-  def readBigInteger(): JBigInteger = if (markerByte == BigIntegerMarker) {
+  def readBigInt(): BigInt = if (markerByte == BitIntMarker) {
     val len = is.readInt()
     val bytes = new Array[Byte](len)
     is.read(bytes)
-    new JBigInteger(bytes)
+    BigInt(bytes)
   } else
     throw new ReadFailure(s"Expected big integer but $markerByte found")
 
-  def readBigDecimal(): JBigDecimal = if (markerByte == BigDecimalMarker) {
+  def readBigDecimal(): BigDecimal = if (markerByte == BigDecimalMarker) {
     val len = is.readInt()
     val bytes = new Array[Byte](len)
     is.read(bytes)
-    val unscaled = new JBigInteger(bytes)
+    val unscaled = BigInt(bytes)
     val scale = is.readInt()
-    new JBigDecimal(unscaled, scale)
+    BigDecimal(unscaled, scale)
   } else
     throw new ReadFailure(s"Expected big decimal but $markerByte found")
 
@@ -141,7 +141,7 @@ class StreamInput(is: DataInputStream) extends Input {
       new StreamListInput(is).skipRemaining()
     case ObjectStartMarker =>
       new StreamObjectInput(is).skipRemaining()
-    case BigIntegerMarker =>
+    case BitIntMarker =>
       is.skipBytes(is.readInt())
     case BigDecimalMarker =>
       is.skipBytes(is.readInt() + 4)
@@ -214,8 +214,8 @@ private object StreamObjectInput {
     def readInt(): Int = nope
     def readLong(): Long = nope
     def readDouble(): Double = nope
-    def readBigInteger(): JBigInteger = nope
-    def readBigDecimal(): JBigDecimal = nope
+    def readBigInt(): BigInt = nope
+    def readBigDecimal(): BigDecimal = nope
     def readBinary(): Array[Byte] = nope
     def readList(): ListInput = nope
     def readObject(): ObjectInput = nope
@@ -258,16 +258,16 @@ class StreamOutput(os: DataOutputStream) extends Output {
     os.writeDouble(double)
   }
 
-  def writeBigInteger(bigInteger: JBigInteger): Unit = {
-    os.writeByte(BigIntegerMarker)
-    val bytes = bigInteger.toByteArray
+  def writeBigInt(bigInt: BigInt): Unit = {
+    os.writeByte(BitIntMarker)
+    val bytes = bigInt.toByteArray
     os.writeInt(bytes.length)
     os.write(bytes)
   }
 
-  def writeBigDecimal(bigDecimal: JBigDecimal): Unit = {
+  def writeBigDecimal(bigDecimal: BigDecimal): Unit = {
     os.writeByte(BigDecimalMarker)
-    val bytes = bigDecimal.unscaledValue.toByteArray
+    val bytes = bigDecimal.bigDecimal.unscaledValue.toByteArray
     os.writeInt(bytes.length)
     os.write(bytes)
     os.writeInt(bigDecimal.scale)

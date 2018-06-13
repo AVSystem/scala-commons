@@ -28,8 +28,8 @@ object SimpleValueOutput {
   * - `Int`
   * - `Long`
   * - `Double`
-  * - `java.math.BigInteger`
-  * - `java.math.BigDecimal`
+  * - `BigInt`
+  * - `BigDecimal`
   * - `Boolean`
   * - `String`
   * - `Array[Byte]`
@@ -57,8 +57,8 @@ class SimpleValueOutput(
   def writeInt(int: Int): Unit = consumer(int)
   def writeLong(long: Long): Unit = consumer(long)
   def writeDouble(double: Double): Unit = consumer(double)
-  def writeBigInteger(bigInteger: JBigInteger): Unit = consumer(bigInteger)
-  def writeBigDecimal(bigDecimal: JBigDecimal): Unit = consumer(bigDecimal)
+  def writeBigInt(bigInt: BigInt): Unit = consumer(bigInt)
+  def writeBigDecimal(bigDecimal: BigDecimal): Unit = consumer(bigDecimal)
   def writeBinary(binary: Array[Byte]): Unit = consumer(binary)
 
   def writeList(): ListOutput = new ListOutput {
@@ -106,8 +106,8 @@ class SimpleValueInput(value: Any) extends Input {
   def readInt(): Int = doReadUnboxed[Int, JInteger]
   def readLong(): Long = doReadUnboxed[Long, JLong]
   def readDouble(): Double = doReadUnboxed[Double, JDouble]
-  def readBigInteger(): JBigInteger = doRead[JBigInteger]
-  def readBigDecimal(): JBigDecimal = doRead[JBigDecimal]
+  def readBigInt(): BigInt = doRead[JBigInteger]
+  def readBigDecimal(): BigDecimal = doRead[JBigDecimal]
   def readBinary(): Array[Byte] = doRead[Array[Byte]]
 
   def readObject(): ObjectInput =

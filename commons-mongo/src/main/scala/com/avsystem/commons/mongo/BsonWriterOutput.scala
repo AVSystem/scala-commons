@@ -13,9 +13,9 @@ final class BsonWriterOutput(bw: BsonWriter) extends BsonOutput {
   override def writeLong(long: Long): Unit = bw.writeInt64(long)
   override def writeTimestamp(millis: Long): Unit = bw.writeDateTime(millis)
   override def writeDouble(double: Double): Unit = bw.writeDouble(double)
-  override def writeBigInteger(bigInteger: JBigInteger): Unit =
-    bw.writeBinaryData(new BsonBinary(bigInteger.toByteArray))
-  override def writeBigDecimal(bigDecimal: JBigDecimal): Unit =
+  override def writeBigInt(bigInt: BigInt): Unit =
+    bw.writeBinaryData(new BsonBinary(bigInt.toByteArray))
+  override def writeBigDecimal(bigDecimal: BigDecimal): Unit =
     bw.writeBinaryData(new BsonBinary(BsonOutput.bigDecimalBytes(bigDecimal)))
   override def writeBinary(binary: Array[Byte]): Unit = bw.writeBinaryData(new BsonBinary(binary))
   override def writeList(): BsonWriterListOutput = {
@@ -37,9 +37,9 @@ final class BsonWriterNamedOutput(escapedName: String, bw: BsonWriter) extends B
   override def writeLong(long: Long): Unit = bw.writeInt64(escapedName, long)
   override def writeTimestamp(millis: Long): Unit = bw.writeDateTime(escapedName, millis)
   override def writeDouble(double: Double): Unit = bw.writeDouble(escapedName, double)
-  override def writeBigInteger(bigInteger: JBigInteger): Unit =
-    bw.writeBinaryData(escapedName, new BsonBinary(bigInteger.toByteArray))
-  override def writeBigDecimal(bigDecimal: JBigDecimal): Unit =
+  override def writeBigInt(bigInt: BigInt): Unit =
+    bw.writeBinaryData(escapedName, new BsonBinary(bigInt.toByteArray))
+  override def writeBigDecimal(bigDecimal: BigDecimal): Unit =
     bw.writeBinaryData(escapedName, new BsonBinary(BsonOutput.bigDecimalBytes(bigDecimal)))
   override def writeBinary(binary: Array[Byte]): Unit = bw.writeBinaryData(escapedName, new BsonBinary(binary))
   override def writeList(): BsonWriterListOutput = {
