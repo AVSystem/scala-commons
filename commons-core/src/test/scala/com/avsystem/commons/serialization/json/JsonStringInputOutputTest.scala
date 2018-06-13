@@ -199,6 +199,8 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
       deserialized.i2.long shouldBe item.i2.long
       deserialized.i2.float shouldBe item.i2.float
       deserialized.i2.double shouldBe item.i2.double
+      deserialized.i2.bigInt shouldBe item.i2.bigInt
+      deserialized.i2.bigDecimal shouldBe item.i2.bigDecimal
       deserialized.i2.binary shouldBe item.i2.binary
       deserialized.i2.list shouldBe item.i2.list
       deserialized.i2.set shouldBe item.i2.set
@@ -206,7 +208,6 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
       deserialized.i2.map shouldBe item.i2.map
     }
   }
-
 
   test("serialize and deserialize huge case classes") {
     implicit val arbTree: Arbitrary[DeepNestedTestCC] =

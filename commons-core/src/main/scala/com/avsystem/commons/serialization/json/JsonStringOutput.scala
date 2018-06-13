@@ -50,6 +50,8 @@ final class JsonStringOutput(builder: JStringBuilder) extends BaseJsonOutput wit
       writeString(double.toString)
     else builder.append(double.toString)
   }
+  def writeBigInteger(bigInteger: JBigInteger): Unit = builder.append(bigInteger.toString)
+  def writeBigDecimal(bigDecimal: JBigDecimal): Unit = builder.append(bigDecimal.toString)
   def writeBinary(binary: Array[Byte]): Unit = {
     builder.append('"')
     var i = 0

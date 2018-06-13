@@ -22,7 +22,9 @@ class CirceJsonOutput(consumer: Json => Any) extends Output {
   def writeInt(int: Int): Unit = consumer(Json.fromInt(int))
   def writeLong(long: Long): Unit = consumer(Json.fromLong(long))
   def writeDouble(double: Double): Unit = consumer(Json.fromDoubleOrString(double))
-  def writeBinary(binary: Array[Byte]): Unit = ???
+  def writeBigInteger(bigInteger: JBigInteger): Unit = consumer(Json.fromBigInt(BigInt(bigInteger)))
+  def writeBigDecimal(bigDecimal: JBigDecimal): Unit = consumer(Json.fromBigDecimal(BigDecimal(bigDecimal)))
+  def writeBinary(binary: Array[Byte]): Unit = consumer(Json.fromValues(binary.map(Json.fromInt(_))))
   def writeList(): ListOutput = new CirceJsonListOutput(consumer)
   def writeObject(): ObjectOutput = new CirceJsonObjectOutput(consumer)
   override def writeFloat(float: Float): Unit = consumer(Json.fromFloatOrString(float))
@@ -67,7 +69,10 @@ class CirceJsonInput(json: Json) extends Input {
   def readInt(): Int = asNumber.toInt.getOrElse(failNot("int"))
   def readLong(): Long = asNumber.toLong.getOrElse(failNot("long"))
   def readDouble(): Double = asNumber.toDouble
-  def readBinary(): Array[Byte] = ???
+  def readBigInteger(): JBigInteger = asNumber.toBigInt.getOrElse(failNot("bigInteger")).bigInteger
+  def readBigDecimal(): JBigDecimal = asNumber.toBigDecimal.getOrElse(failNot("bigDecimal")).bigDecimal
+  def readBinary(): Array[Byte] = json.asArray.getOrElse(failNot("array")).iterator
+    .map(_.asNumber.flatMap(_.toByte).getOrElse(failNot("byte"))).toArray
   def readList(): ListInput = new CirceJsonListInput(json.asArray.getOrElse(failNot("array")))
   def readObject(): ObjectInput = new CirceJsonObjectInput(json.asObject.getOrElse(failNot("object")))
   def skip(): Unit = ()

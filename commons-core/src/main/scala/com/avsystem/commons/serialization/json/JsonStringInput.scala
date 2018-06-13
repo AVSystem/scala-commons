@@ -33,7 +33,8 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
     case _ => afterElement()
   }
 
-  private def expectedError(tpe: JsonType) = throw new ReadFailure(s"Expected $tpe but got ${reader.jsonType}: ${reader.currentValue}")
+  private def expectedError(tpe: JsonType) =
+    throw new ReadFailure(s"Expected $tpe but got ${reader.jsonType}: ${reader.currentValue}")
 
   private def checkedValue[T](jsonType: JsonType): T = {
     if (reader.jsonType != jsonType) expectedError(jsonType)
@@ -64,6 +65,8 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
   def readInt(): Int = matchNumericString(_.toInt)
   def readLong(): Long = matchNumericString(_.toLong)
   def readDouble(): Double = matchNumericString(_.toDouble)
+  def readBigInteger(): JBigInteger = matchNumericString(new JBigInteger(_))
+  def readBigDecimal(): JBigDecimal = matchNumericString(new JBigDecimal(_))
   def readBinary(): Array[Byte] = {
     val hex = checkedValue[String](JsonType.string)
     val result = new Array[Byte](hex.length / 2)
@@ -213,7 +216,7 @@ final class JsonReader(val json: String) {
   private def readHex(): Int =
     fromHex(read())
 
-  private def parseNumber(): Any = {
+  private def parseNumber(): String = {
     val start = i
 
     if (isNext('-')) {

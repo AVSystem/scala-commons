@@ -24,6 +24,8 @@ class BsonReaderInput(br: BsonReader) extends BsonInput {
   override def readLong(): Long = br.readInt64()
   override def readTimestamp(): Long = br.readDateTime()
   override def readDouble(): Double = br.readDouble()
+  override def readBigInteger(): JBigInteger = new JBigInteger(br.readBinaryData().getData)
+  override def readBigDecimal(): JBigDecimal = BsonInput.bigDecimalFromBytes(br.readBinaryData().getData)
   override def readBinary(): Array[Byte] = br.readBinaryData().getData
   override def readList(): BsonReaderListInput = {
     br.readStartArray()

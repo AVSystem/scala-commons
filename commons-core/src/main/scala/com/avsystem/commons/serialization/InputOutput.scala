@@ -22,6 +22,8 @@ trait Output extends Any {
   def writeTimestamp(millis: Long): Unit = writeLong(millis)
   def writeFloat(float: Float): Unit = writeDouble(float)
   def writeDouble(double: Double): Unit
+  def writeBigInteger(bigInteger: JBigInteger): Unit
+  def writeBigDecimal(bigDecimal: JBigDecimal): Unit
   def writeBinary(binary: Array[Byte]): Unit
   def writeList(): ListOutput
   def writeObject(): ObjectOutput
@@ -139,6 +141,8 @@ trait Input extends Any {
   def readTimestamp(): Long = readLong()
   def readFloat(): Float = readDouble().toFloat
   def readDouble(): Double
+  def readBigInteger(): JBigInteger
+  def readBigDecimal(): JBigDecimal
   def readBinary(): Array[Byte]
   def readList(): ListInput
   def readObject(): ObjectInput
