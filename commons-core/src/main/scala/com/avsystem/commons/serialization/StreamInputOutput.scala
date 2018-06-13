@@ -141,7 +141,7 @@ class StreamInput(is: DataInputStream) extends Input {
     case BitIntMarker =>
       is.skipBytes(is.readInt())
     case BigDecimalMarker =>
-      is.skipBytes(is.readInt() + 4)
+      is.skipBytes(is.readInt() + Integer.BYTES)
     case unexpected =>
       throw new ReadFailure(s"Unexpected marker byte: $unexpected")
   }
