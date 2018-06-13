@@ -226,11 +226,20 @@ object SharedExtensions extends SharedExtensions {
     def flatMapNow[B](f: A => Future[B]): Future[B] =
       fut.flatMap(f)(RunNowEC)
 
+    def filterNow(p: A => Boolean): Future[A] =
+      fut.filter(p)(RunNowEC)
+
+    def collectNow[B](pf: PartialFunction[A, B]): Future[B] =
+      fut.collect(pf)(RunNowEC)
+
     def recoverNow[U >: A](pf: PartialFunction[Throwable, U]): Future[U] =
       fut.recover(pf)(RunNowEC)
 
     def recoverWithNow[B >: A](pf: PartialFunction[Throwable, Future[B]]): Future[B] =
       fut.recoverWith(pf)(RunNowEC)
+
+    def zipWithNow[B, R](that: Future[B])(f: (A, B) => R): Future[R] =
+      fut.zipWith(that)(f)(RunNowEC)
 
     def toUnit: Future[Unit] =
       mapNow(_ => ())

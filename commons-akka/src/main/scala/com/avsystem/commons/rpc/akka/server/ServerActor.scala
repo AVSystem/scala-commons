@@ -18,9 +18,8 @@ private final class ServerActor(rawRPC: AkkaRPCFramework.RawRPC, config: AkkaRPC
     case msg@ProcedureInvocationMessage(name, argLists, getterChain) =>
       resolveRpc(msg).fire(name)(argLists)
     case msg@FunctionInvocationMessage(name, argLists, getterChain) =>
-      import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
       val s = sender()
-      resolveRpc(msg).call(name)(argLists).onComplete {
+      resolveRpc(msg).call(name)(argLists).onCompleteNow {
         case Success(value) => s ! InvocationSuccess(value)
         case Failure(e) =>
           logError(e, name)
