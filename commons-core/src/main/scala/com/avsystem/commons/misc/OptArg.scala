@@ -11,6 +11,16 @@ object OptArg {
     */
   implicit def argToOptArg[A](value: A): OptArg[A] = OptArg(value)
 
+  /**
+    * This implicit conversion allows you to pass an `Opt` where `OptArg` is required.
+    */
+  implicit def optToOptArg[A](value: Opt[A]): OptArg[A] = value.toOptArg
+
+  /**
+    * This implicit conversion allows you to pass an `Option` where `OptArg` is required.
+    */
+  implicit def optionToOptArg[A](value: Option[A]): OptArg[A] = value.toOptArg
+
   private object EmptyMarker extends Serializable
 
   def apply[A](value: A): OptArg[A] = new OptArg[A](if (value != null) value else EmptyMarker)
@@ -20,7 +30,7 @@ object OptArg {
     if (value != null) new OptArg[A](value)
     else throw new NullPointerException
 
-  val Empty: OptArg[Nothing] = new OptArg(EmptyMarker)
+  final val Empty: OptArg[Nothing] = new OptArg(EmptyMarker)
   def empty[A]: OptArg[A] = Empty
 }
 
