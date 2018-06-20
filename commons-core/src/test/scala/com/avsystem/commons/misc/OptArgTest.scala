@@ -25,8 +25,31 @@ class OptArgTest extends FunSuite with Matchers {
 
   def takeMaybeString(str: OptArg[String] = OptArg.Empty): Opt[String] = str.toOpt
 
-  test("argument passing") {
+  val stringzor = "stringzor"
+  val returnedMaybeStringzor = stringzor.opt
+
+  test("empty default argument") {
     takeMaybeString() shouldEqual Opt.Empty
-    takeMaybeString("stringzor") shouldEqual "stringzor".opt
+  }
+
+  test("argument passing") {
+    takeMaybeString(stringzor) shouldEqual returnedMaybeStringzor
+  }
+
+  test("Opt argument passing") {
+    val opt = stringzor.opt
+    val empty = Opt.Empty
+    takeMaybeString(opt) shouldEqual returnedMaybeStringzor
+    takeMaybeString(empty) shouldEqual Opt.Empty
+  }
+
+  test("Option argument passing") {
+    val option: Option[String] = stringzor.option
+    val some: Some[String] = Some(stringzor)
+    val none: None.type = None
+
+    takeMaybeString(option) shouldEqual returnedMaybeStringzor
+    takeMaybeString(some) shouldEqual returnedMaybeStringzor
+    takeMaybeString(none) shouldEqual Opt.Empty
   }
 }
