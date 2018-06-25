@@ -6,11 +6,12 @@ import java.io.{PrintWriter, StringWriter}
 import scala.tools.nsc.Global
 import scala.util.control.NonFatal
 
-abstract class AnalyzerRule[C <: Global with Singleton](val global: C, val name: String) {
+abstract class AnalyzerRule[C <: Global with Singleton](
+  val global: C, val name: String, defaultLevel: Level = Level.Warn) {
 
   import global._
 
-  var level: Level = Level.Warn
+  var level: Level = defaultLevel
 
   protected def classType(fullName: String) =
     try rootMirror.staticClass(fullName).asType.toType.erasure catch {
