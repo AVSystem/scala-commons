@@ -12,6 +12,12 @@ object SealedUtils {
     */
   @explicitGenerics
   def caseObjectsFor[T]: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
+
+  /**
+    * Infers a list of instances of given typeclass `TC` for all non-abstract subtypes of a sealed hierarchy root `T`.
+    */
+  @explicitGenerics
+  def instancesFor[TC[_], T]: List[TC[_ <: T]] = macro macros.misc.SealedMacros.instancesFor[TC[_], T]
 }
 
 /**

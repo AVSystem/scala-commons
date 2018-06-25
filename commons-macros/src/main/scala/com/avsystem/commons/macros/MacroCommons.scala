@@ -806,7 +806,9 @@ trait MacroCommons { bundle =>
       case _ => dtpe.typeSymbol
     }
     Option(tpeSym).filter(isSealedHierarchyRoot).map { sym =>
-      knownNonAbstractSubclasses(sym).toList.flatMap { subSym =>
+      val subclasses = knownNonAbstractSubclasses(sym).toList
+      val sortedSubclasses = if (tpeSym.pos != NoPosition) subclasses.sortBy(_.pos.point) else subclasses
+      sortedSubclasses.flatMap { subSym =>
         val undetparams = subSym.asType.typeParams
         val undetSubTpe = typeOfTypeSymbol(subSym.asType)
 

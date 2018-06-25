@@ -12,10 +12,16 @@ class SealedEnumTest extends FunSuite {
     case object Fourth extends SomeEnum
 
     val values: List[SomeEnum] = caseObjects
+    val classTags: List[ClassTag[_ <: SomeEnum]] = SealedUtils.instancesFor[ClassTag, SomeEnum]
   }
 
-  test("case objects listing test") {
+  test("case objects listing") {
     import SomeEnum._
     assert(values == List(First, Second, Third, Fourth))
+  }
+
+  test("typeclass instance listing") {
+    import SomeEnum._
+    assert(classTags.map(_.runtimeClass) == List(First.getClass, Second.getClass, Third.getClass, Fourth.getClass))
   }
 }
