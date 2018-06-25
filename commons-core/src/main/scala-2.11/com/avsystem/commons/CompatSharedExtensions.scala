@@ -25,7 +25,7 @@ object CompatSharedExtensions {
       p.future
     }
 
-    def zipWith[U, R](that: Future[U])(f: (T, U) => R)(implicit executor: ExecutionContext): Future[R] =
+    def zipWith[U, R](that: Future[U])(f: (A, U) => R)(implicit executor: ExecutionContext): Future[R] =
       fut.flatMap(r1 => that.map(r2 => f(r1, r2)))(RunNowEC)
   }
 }
