@@ -15,5 +15,3 @@ trait RawRpcCompanion[Raw] extends RpcImplicitsProvider {
   def materializeAsReal[Real]: AsRealRpc[Real] = macro RpcMacros.rpcAsReal[Raw, Real]
   def materializeAsRawReal[Real]: AsRawRealRpc[Real] = macro RpcMacros.rpcAsRawReal[Raw, Real]
 }
-
-
