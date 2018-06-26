@@ -180,7 +180,7 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">JettyRPCFramework</span><span class="result"> extends <a href="../../rpc/StandardRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.StandardRPCFramework">StandardRPCFramework</a></span>
+        <span class="name">JettyRPCFramework</span><span class="result"> extends <a href="../../rpc/StandardRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.StandardRPCFramework">StandardRPCFramework</a> with <span class="extype" name="com.typesafe.scalalogging.LazyLogging">LazyLogging</span></span>
       </span>
       </h4>
 
@@ -189,7 +189,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="../../rpc/StandardRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.StandardRPCFramework">StandardRPCFramework</a>, <a href="../../rpc/ProcedureRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.ProcedureRPCFramework">ProcedureRPCFramework</a>, <a href="../../rpc/FunctionRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework">FunctionRPCFramework</a>, <a href="../../rpc/GetterRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework">GetterRPCFramework</a>, <a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a>, <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="com.typesafe.scalalogging.LazyLogging">LazyLogging</span>, <a href="../../rpc/StandardRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.StandardRPCFramework">StandardRPCFramework</a>, <a href="../../rpc/ProcedureRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.ProcedureRPCFramework">ProcedureRPCFramework</a>, <a href="../../rpc/FunctionRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework">FunctionRPCFramework</a>, <a href="../../rpc/GetterRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework">GetterRPCFramework</a>, <a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -215,7 +215,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework"><span>JettyRPCFramework</span></li><li class="in" name="com.avsystem.commons.rpc.StandardRPCFramework"><span>StandardRPCFramework</span></li><li class="in" name="com.avsystem.commons.rpc.ProcedureRPCFramework"><span>ProcedureRPCFramework</span></li><li class="in" name="com.avsystem.commons.rpc.FunctionRPCFramework"><span>FunctionRPCFramework</span></li><li class="in" name="com.avsystem.commons.rpc.GetterRPCFramework"><span>GetterRPCFramework</span></li><li class="in" name="com.avsystem.commons.rpc.RPCFramework"><span>RPCFramework</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework"><span>JettyRPCFramework</span></li><li class="in" name="com.typesafe.scalalogging.LazyLogging"><span>LazyLogging</span></li><li class="in" name="com.avsystem.commons.rpc.StandardRPCFramework"><span>StandardRPCFramework</span></li><li class="in" name="com.avsystem.commons.rpc.ProcedureRPCFramework"><span>ProcedureRPCFramework</span></li><li class="in" name="com.avsystem.commons.rpc.FunctionRPCFramework"><span>FunctionRPCFramework</span></li><li class="in" name="com.avsystem.commons.rpc.GetterRPCFramework"><span>GetterRPCFramework</span></li><li class="in" name="com.avsystem.commons.rpc.RPCFramework"><span>RPCFramework</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -237,7 +237,87 @@
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.ParamTypeMetadata" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+              <ol><li name="com.avsystem.commons.rpc.RPCFramework.AsRawRPC" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="AsRawRPC[RealRPC]=com.avsystem.commons.rpc.AsRaw[RPCFramework.this.RawRPC,RealRPC]"></a><a id="AsRawRPC[RealRPC]:AsRawRPC[RealRPC]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#AsRawRPC[RealRPC]=com.avsystem.commons.rpc.AsRaw[RPCFramework.this.RawRPC,RealRPC]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name">AsRawRPC</span><span class="tparams">[<span name="RealRPC">RealRPC</span>]</span><span class="result alias"> = <a href="../../rpc/AsRaw.html" class="extype" name="com.avsystem.commons.rpc.AsRaw">AsRaw</a>[<a href="#RawRPCextendsStandardRPCFramework.this.GetterRawRPCwithStandardRPCFramework.this.FunctionRawRPCwithStandardRPCFramework.this.ProcedureRawRPC" class="extmbr" name="com.avsystem.commons.rpc.StandardRPCFramework.RawRPC">RawRPC</a>, <span class="extype" name="com.avsystem.commons.rpc.RPCFramework.AsRawRPC.RealRPC">RealRPC</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.RPCFramework.AsRawRealRPC" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="AsRawRealRPC[RealRPC]=com.avsystem.commons.rpc.AsRawReal[RPCFramework.this.RawRPC,RealRPC]"></a><a id="AsRawRealRPC[RealRPC]:AsRawRealRPC[RealRPC]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#AsRawRealRPC[RealRPC]=com.avsystem.commons.rpc.AsRawReal[RPCFramework.this.RawRPC,RealRPC]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name">AsRawRealRPC</span><span class="tparams">[<span name="RealRPC">RealRPC</span>]</span><span class="result alias"> = <a href="../../rpc/AsRawReal.html" class="extype" name="com.avsystem.commons.rpc.AsRawReal">AsRawReal</a>[<a href="#RawRPCextendsStandardRPCFramework.this.GetterRawRPCwithStandardRPCFramework.this.FunctionRawRPCwithStandardRPCFramework.this.ProcedureRawRPC" class="extmbr" name="com.avsystem.commons.rpc.StandardRPCFramework.RawRPC">RawRPC</a>, <span class="extype" name="com.avsystem.commons.rpc.RPCFramework.AsRawRealRPC.RealRPC">RealRPC</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.RPCFramework.AsRealRPC" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="AsRealRPC[RealRPC]=com.avsystem.commons.rpc.AsReal[RPCFramework.this.RawRPC,RealRPC]"></a><a id="AsRealRPC[RealRPC]:AsRealRPC[RealRPC]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#AsRealRPC[RealRPC]=com.avsystem.commons.rpc.AsReal[RPCFramework.this.RawRPC,RealRPC]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name">AsRealRPC</span><span class="tparams">[<span name="RealRPC">RealRPC</span>]</span><span class="result alias"> = <a href="../../rpc/AsReal.html" class="extype" name="com.avsystem.commons.rpc.AsReal">AsReal</a>[<a href="#RawRPCextendsStandardRPCFramework.this.GetterRawRPCwithStandardRPCFramework.this.FunctionRawRPCwithStandardRPCFramework.this.ProcedureRawRPC" class="extmbr" name="com.avsystem.commons.rpc.StandardRPCFramework.RawRPC">RawRPC</a>, <span class="extype" name="com.avsystem.commons.rpc.RPCFramework.AsRealRPC.RealRPC">RealRPC</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Call" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CallextendsProductwithSerializable"></a><a id="Call:Call"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#CallextendsProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="JettyRPCFramework$$Call.html"><span class="name">Call</span></a><span class="params">(<span name="chain">chain: <span class="extype" name="scala.List">List</span>[<a href="JettyRPCFramework$$Invocation.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Invocation">Invocation</a>]</span>, <span name="leaf">leaf: <a href="JettyRPCFramework$$Invocation.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Invocation">Invocation</a></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Invocation" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="InvocationextendsProductwithSerializable"></a><a id="Invocation:Invocation"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#InvocationextendsProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="JettyRPCFramework$$Invocation.html"><span class="name">Invocation</span></a><span class="params">(<span name="rpcName">rpcName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="args">args: <span class="extype" name="scala.List">List</span>[<a href="JettyRPCFramework$$RawValue.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue">RawValue</a>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.ParamTypeMetadata" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ParamTypeMetadata[T]=com.avsystem.commons.ClassTag[T]"></a><a id="ParamTypeMetadata[T]:ParamTypeMetadata[T]"></a>
       <span class="permalink">
       <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#ParamTypeMetadata[T]=com.avsystem.commons.ClassTag[T]" title="Permalink">
@@ -249,7 +329,7 @@
         <span class="kind">type</span>
       </span>
       <span class="symbol">
-        <span class="name">ParamTypeMetadata</span><span class="tparams">[<span name="T">T</span>]</span><span class="result alias"> = <a href="http://www.scala-lang.org/api/2.12.5/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">scala.reflect.ClassTag</a>[<span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.ParamTypeMetadata.T">T</span>]</span>
+        <span class="name">ParamTypeMetadata</span><span class="tparams">[<span name="T">T</span>]</span><span class="result alias"> = <a href="http://www.scala-lang.org/api/2.12.6/scala/reflect/ClassTag.html#scala.reflect.ClassTag" class="extype" name="scala.reflect.ClassTag">scala.reflect.ClassTag</a>[<span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.ParamTypeMetadata.T">T</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework">JettyRPCFramework</a> → <a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
@@ -265,7 +345,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="JettyRPCFramework$$RPCClient.html"><span class="name">RPCClient</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="JettyRPCFramework$$RPCClient.html"><span class="name">RPCClient</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -285,22 +365,22 @@
       </span>
       
       
-    </li><li name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="RawValue=String"></a><a id="RawValue:RawValue"></a>
+    </li><li name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="RawValueextendsAnyVal"></a><a id="RawValue:RawValue"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#RawValue=String" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#RawValueextendsAnyVal" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">type</span>
+        <span class="modifier">final </span>
+        <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">RawValue</span><span class="result alias"> = <span class="extype" name="java.lang.String">String</span></span>
+        <a title="" href="JettyRPCFramework$$RawValue.html"><span class="name">RawValue</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework">JettyRPCFramework</a> → <a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+      
     </li><li name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Reader" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="Reader[T]=com.avsystem.commons.serialization.GenCodec[T]"></a><a id="Reader[T]:Reader[T]"></a>
       <span class="permalink">
@@ -361,26 +441,26 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="../../rpc/FunctionRPCFramework$FunctionRawRPC.html"><span class="name">FunctionRawRPC</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="../../rpc/FunctionRPCFramework$FunctionRawRPC.html"><span class="name">FunctionRawRPC</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/FunctionRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework">FunctionRPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.GetterRPCFramework.GetterRawHandler" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="GetterRawHandler[T]extendsGetterRPCFramework.this.RawInvocationHandler[T]"></a><a id="GetterRawHandler[T]:GetterRawHandler[T]"></a>
+    </li><li name="com.avsystem.commons.rpc.FunctionRPCFramework.FunctionSignature" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="FunctionSignature[T]extendsFunctionRPCFramework.this.SignaturewithTypedMetadata[com.avsystem.commons.Future[T]]withProductwithSerializable"></a><a id="FunctionSignature[T]:FunctionSignature[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/GetterRPCFramework.html#GetterRawHandler[T]extendsGetterRPCFramework.this.RawInvocationHandler[T]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/rpc/FunctionRPCFramework.html#FunctionSignature[T]extendsFunctionRPCFramework.this.SignaturewithTypedMetadata[com.avsystem.commons.Future[T]]withProductwithSerializable" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">class</span>
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="../../rpc/GetterRPCFramework$GetterRawHandler.html"><span class="name">GetterRawHandler</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="../../rpc/GetterRPCFramework.html#RawInvocationHandler[Real]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RawInvocationHandler">RawInvocationHandler</a>[<span class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework.GetterRawHandler.T">T</span>]</span>
+        <a title="" href="../../rpc/FunctionRPCFramework$FunctionSignature.html"><span class="name">FunctionSignature</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="paramMetadata">paramMetadata: <span class="extype" name="scala.List">List</span>[<a href="../../rpc/FunctionRPCFramework.html#ParamMetadata[T]extendsTypedMetadata[T]withProductwithSerializable" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.ParamMetadata">FunctionRPCFramework.ParamMetadata</a>[_]]</span>, <span name="annotations">annotations: <span class="extype" name="scala.List">List</span>[<a href="../../rpc/MetadataAnnotation.html" class="extype" name="com.avsystem.commons.rpc.MetadataAnnotation">MetadataAnnotation</a>]</span>, <span name="resultTypeMetadata">resultTypeMetadata: <a href="../../rpc/FunctionRPCFramework.html#ResultTypeMetadata[T]" class="extmbr" name="com.avsystem.commons.rpc.FunctionRPCFramework.ResultTypeMetadata">FunctionRPCFramework.ResultTypeMetadata</a>[<span class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework.FunctionSignature.T">T</span>]</span>)</span><span class="result"> extends <a href="../../rpc/FunctionRPCFramework.html#SignatureextendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.Signature">Signature</a> with <a href="../../rpc/TypedMetadata.html" class="extype" name="com.avsystem.commons.rpc.TypedMetadata">TypedMetadata</a>[<a href="../../index.html#Future[+T]=scala.concurrent.Future[T]" class="extmbr" name="com.avsystem.commons.Future">commons.Future</a>[<span class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework.FunctionSignature.T">T</span>]] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/GetterRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework">GetterRPCFramework</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/FunctionRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework">FunctionRPCFramework</a></dd></dl></div>
     </li><li name="com.avsystem.commons.rpc.GetterRPCFramework.GetterRawRPC" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="GetterRawRPCextendsAnyRef"></a><a id="GetterRawRPC:GetterRawRPC"></a>
       <span class="permalink">
@@ -393,23 +473,23 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="../../rpc/GetterRPCFramework$GetterRawRPC.html"><span class="name">GetterRawRPC</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="../../rpc/GetterRPCFramework$GetterRawRPC.html"><span class="name">GetterRawRPC</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/GetterRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework">GetterRPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.GetterRPCFramework.GetterRealHandler" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="GetterRealHandler[T]extendsGetterRPCFramework.this.RealInvocationHandler[T,GetterRPCFramework.this.RawRPC]"></a><a id="GetterRealHandler[T]:GetterRealHandler[T]"></a>
+    </li><li name="com.avsystem.commons.rpc.GetterRPCFramework.GetterSignature" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="GetterSignature[T]extendsGetterRPCFramework.this.SignaturewithTypedMetadata[T]withProductwithSerializable"></a><a id="GetterSignature[T]:GetterSignature[T]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/GetterRPCFramework.html#GetterRealHandler[T]extendsGetterRPCFramework.this.RealInvocationHandler[T,GetterRPCFramework.this.RawRPC]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/rpc/GetterRPCFramework.html#GetterSignature[T]extendsGetterRPCFramework.this.SignaturewithTypedMetadata[T]withProductwithSerializable" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">class</span>
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="../../rpc/GetterRPCFramework$GetterRealHandler.html"><span class="name">GetterRealHandler</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="../../rpc/GetterRPCFramework.html#RealInvocationHandler[Real,Raw]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RealInvocationHandler">RealInvocationHandler</a>[<span class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework.GetterRealHandler.T">T</span>, <a href="../../rpc/GetterRPCFramework.html#RawRPC&lt;:GetterRPCFramework.this.GetterRawRPC" class="extmbr" name="com.avsystem.commons.rpc.GetterRPCFramework.RawRPC">RawRPC</a>]</span>
+        <a title="" href="../../rpc/GetterRPCFramework$GetterSignature.html"><span class="name">GetterSignature</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="paramMetadata">paramMetadata: <span class="extype" name="scala.List">List</span>[<a href="../../rpc/GetterRPCFramework.html#ParamMetadata[T]extendsTypedMetadata[T]withProductwithSerializable" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.ParamMetadata">GetterRPCFramework.ParamMetadata</a>[_]]</span>, <span name="annotations">annotations: <span class="extype" name="scala.List">List</span>[<a href="../../rpc/MetadataAnnotation.html" class="extype" name="com.avsystem.commons.rpc.MetadataAnnotation">MetadataAnnotation</a>]</span>, <span name="resultMetadata">resultMetadata: <a href="../../rpc/RpcMetadataCompanion$Lazy.html" class="extype" name="com.avsystem.commons.rpc.RpcMetadataCompanion.Lazy">Lazy</a>[<span class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework.GetterSignature.T">T</span>]</span>)</span><span class="result"> extends <a href="../../rpc/GetterRPCFramework.html#SignatureextendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.Signature">Signature</a> with <a href="../../rpc/TypedMetadata.html" class="extype" name="com.avsystem.commons.rpc.TypedMetadata">TypedMetadata</a>[<span class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework.GetterSignature.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/GetterRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework">GetterRPCFramework</a></dd></dl></div>
@@ -425,7 +505,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="../../rpc/GetterRPCFramework$RawInvocation.html"><span class="name">RawInvocation</span></a><span class="params">(<span name="rpcName">rpcName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="argLists">argLists: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.List">List</span>[<a href="../../rpc/GetterRPCFramework.html#RawValue" class="extmbr" name="com.avsystem.commons.rpc.GetterRPCFramework.RawValue">GetterRPCFramework.RawValue</a>]]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="../../rpc/GetterRPCFramework$RawInvocation.html"><span class="name">RawInvocation</span></a><span class="params">(<span name="rpcName">rpcName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="args">args: <span class="extype" name="scala.List">List</span>[<a href="../../rpc/GetterRPCFramework.html#RawValue" class="extmbr" name="com.avsystem.commons.rpc.GetterRPCFramework.RawValue">GetterRPCFramework.RawValue</a>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/GetterRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework">GetterRPCFramework</a></dd></dl></div>
@@ -441,64 +521,14 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="../../rpc/ProcedureRPCFramework$ProcedureRawRPC.html"><span class="name">ProcedureRawRPC</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="../../rpc/ProcedureRPCFramework$ProcedureRawRPC.html"><span class="name">ProcedureRawRPC</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/ProcedureRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.ProcedureRPCFramework">ProcedureRPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework.AsRawRPC" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="AsRawRPC[T]extendsAnyRef"></a><a id="AsRawRPC[T]:AsRawRPC[T]"></a>
+    </li><li name="com.avsystem.commons.rpc.ProcedureRPCFramework.ProcedureSignature" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ProcedureSignatureextendsProcedureRPCFramework.this.SignaturewithTypedMetadata[Unit]withProductwithSerializable"></a><a id="ProcedureSignature:ProcedureSignature"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#AsRawRPC[T]extendsAnyRef" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">trait</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="../../rpc/RPCFramework$AsRawRPC.html"><span class="name">AsRawRPC</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework.AsRealRPC" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="AsRealRPC[T]extendsAnyRef"></a><a id="AsRealRPC[T]:AsRealRPC[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#AsRealRPC[T]extendsAnyRef" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">trait</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="../../rpc/RPCFramework$AsRealRPC.html"><span class="name">AsRealRPC</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework.BaseFullRPCInfo" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="BaseFullRPCInfo[T]extendsAnyRef"></a><a id="BaseFullRPCInfo[T]:BaseFullRPCInfo[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#BaseFullRPCInfo[T]extendsAnyRef" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">trait</span>
-      </span>
-      <span class="symbol">
-        <a title="Base trait for traits or classes &quot;implementing&quot; FullRPCInfo in various RPC frameworks." href="../../rpc/RPCFramework$BaseFullRPCInfo.html"><span class="name">BaseFullRPCInfo</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">Base trait for traits or classes &quot;implementing&quot; <a href="../../rpc/RPCFramework.html#FullRPCInfo[T]&lt;:RPCFramework.this.BaseFullRPCInfo[T]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.FullRPCInfo">FullRPCInfo</a> in various RPC frameworks.</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for traits or classes &quot;implementing&quot; <a href="../../rpc/RPCFramework.html#FullRPCInfo[T]&lt;:RPCFramework.this.BaseFullRPCInfo[T]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.FullRPCInfo">FullRPCInfo</a> in various RPC frameworks.
-Having a separate subtrait/subclass for every framework is beneficial for ScalaJS DCE.
-</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework.ParamMetadata" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="ParamMetadataextendsProductwithSerializable"></a><a id="ParamMetadata:ParamMetadata"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#ParamMetadataextendsProductwithSerializable" title="Permalink">
+      <a href="../../../../com/avsystem/commons/rpc/ProcedureRPCFramework.html#ProcedureSignatureextendsProcedureRPCFramework.this.SignaturewithTypedMetadata[Unit]withProductwithSerializable" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -507,14 +537,64 @@ Having a separate subtrait/subclass for every framework is beneficial for ScalaJ
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="../../rpc/RPCFramework$ParamMetadata.html"><span class="name">ParamMetadata</span></a><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="annotations">annotations: <span class="extype" name="scala.List">List</span>[<a href="../../rpc/MetadataAnnotation.html" class="extype" name="com.avsystem.commons.rpc.MetadataAnnotation">MetadataAnnotation</a>]</span>, <span name="typeMetadata">typeMetadata: <a href="../../rpc/RPCFramework.html#ParamTypeMetadata[T]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.ParamTypeMetadata">ParamTypeMetadata</a>[_]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="../../rpc/ProcedureRPCFramework$ProcedureSignature.html"><span class="name">ProcedureSignature</span></a><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="paramMetadata">paramMetadata: <span class="extype" name="scala.List">List</span>[<a href="../../rpc/ProcedureRPCFramework.html#ParamMetadata[T]extendsTypedMetadata[T]withProductwithSerializable" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.ParamMetadata">ProcedureRPCFramework.ParamMetadata</a>[_]]</span>, <span name="annotations">annotations: <span class="extype" name="scala.List">List</span>[<a href="../../rpc/MetadataAnnotation.html" class="extype" name="com.avsystem.commons.rpc.MetadataAnnotation">MetadataAnnotation</a>]</span>)</span><span class="result"> extends <a href="../../rpc/ProcedureRPCFramework.html#SignatureextendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.Signature">Signature</a> with <a href="../../rpc/TypedMetadata.html" class="extype" name="com.avsystem.commons.rpc.TypedMetadata">TypedMetadata</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/ProcedureRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.ProcedureRPCFramework">ProcedureRPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.RPCFramework.BaseFullRPCInfo" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="BaseFullRPCInfo[RealRPC]extendsAnyRef"></a><a id="BaseFullRPCInfo[RealRPC]:BaseFullRPCInfo[RealRPC]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#BaseFullRPCInfo[RealRPC]extendsAnyRef" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="Base trait for traits or classes &quot;implementing&quot; FullRPCInfo in various RPC frameworks." href="../../rpc/RPCFramework$BaseFullRPCInfo.html"><span class="name">BaseFullRPCInfo</span></a><span class="tparams">[<span name="RealRPC">RealRPC</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Base trait for traits or classes &quot;implementing&quot; <a href="../../rpc/RPCFramework.html#FullRPCInfo[RealRPC]&lt;:RPCFramework.this.BaseFullRPCInfo[RealRPC]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.FullRPCInfo">FullRPCInfo</a> in various RPC frameworks.</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for traits or classes &quot;implementing&quot; <a href="../../rpc/RPCFramework.html#FullRPCInfo[RealRPC]&lt;:RPCFramework.this.BaseFullRPCInfo[RealRPC]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.FullRPCInfo">FullRPCInfo</a> in various RPC frameworks.
+Having a separate subtrait/subclass for every framework is beneficial for ScalaJS DCE.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.RPCFramework.BaseRawRpcCompanion" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="BaseRawRpcCompanionextendsRawRpcCompanion[RPCFramework.this.RawRPC]"></a><a id="BaseRawRpcCompanion:BaseRawRpcCompanion"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#BaseRawRpcCompanionextendsRawRpcCompanion[RPCFramework.this.RawRPC]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../../rpc/RPCFramework$BaseRawRpcCompanion.html"><span class="name">BaseRawRpcCompanion</span></a><span class="result"> extends <a href="../../rpc/RawRpcCompanion.html" class="extype" name="com.avsystem.commons.rpc.RawRpcCompanion">RawRpcCompanion</a>[<a href="../../rpc/RPCFramework.html#RawRPC" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RawRPC">RawRPC</a>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.RPCFramework.ParamMetadata" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ParamMetadata[T]extendsTypedMetadata[T]withProductwithSerializable"></a><a id="ParamMetadata[T]:ParamMetadata[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#ParamMetadata[T]extendsTypedMetadata[T]withProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../../rpc/RPCFramework$ParamMetadata.html"><span class="name">ParamMetadata</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="annotations">annotations: <span class="extype" name="scala.List">List</span>[<a href="../../rpc/MetadataAnnotation.html" class="extype" name="com.avsystem.commons.rpc.MetadataAnnotation">MetadataAnnotation</a>]</span>, <span name="typeMetadata">typeMetadata: <a href="../../rpc/RPCFramework.html#ParamTypeMetadata[T]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.ParamTypeMetadata">ParamTypeMetadata</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.ParamMetadata.T">T</span>]</span>)</span><span class="result"> extends <a href="../../rpc/TypedMetadata.html" class="extype" name="com.avsystem.commons.rpc.TypedMetadata">TypedMetadata</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.ParamMetadata.T">T</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
     </li><li name="com.avsystem.commons.rpc.RPCFramework.RPCCompanion" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="RPCCompanion[T]extendsAnyRef"></a><a id="RPCCompanion[T]:RPCCompanion[T]"></a>
+      <a id="RPCCompanion[RealRPC]extendsAnyRef"></a><a id="RPCCompanion[RealRPC]:RPCCompanion[RealRPC]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#RPCCompanion[T]extendsAnyRef" title="Permalink">
+      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#RPCCompanion[RealRPC]extendsAnyRef" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -523,14 +603,14 @@ Having a separate subtrait/subclass for every framework is beneficial for ScalaJ
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Convenience abstract class for companion objects of RPC interfaces." href="../../rpc/RPCFramework$RPCCompanion.html"><span class="name">RPCCompanion</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Convenience abstract class for companion objects of RPC interfaces." href="../../rpc/RPCFramework$RPCCompanion.html"><span class="name">RPCCompanion</span></a><span class="tparams">[<span name="RealRPC">RealRPC</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Convenience abstract class for companion objects of RPC interfaces.</p><div class="fullcomment"><div class="comment cmt"><p>Convenience abstract class for companion objects of RPC interfaces. Makes sure all three RPC type classes
-(<a href="../../rpc/RPCFramework$AsRawRPC.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework.AsRawRPC">AsRawRPC</a>, <a href="../../rpc/RPCFramework$AsRealRPC.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework.AsRealRPC">AsRealRPC</a> and <a href="../../rpc/RPCFramework$RPCMetadata.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework.RPCMetadata">RPCMetadata</a>) are macro-materialized for that RPC interface and confines
+(<a href="../../rpc/RPCFramework.html#AsRawRPC[RealRPC]=com.avsystem.commons.rpc.AsRaw[RPCFramework.this.RawRPC,RealRPC]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.AsRawRPC">AsRawRPC</a>, <a href="../../rpc/RPCFramework.html#AsRealRPC[RealRPC]=com.avsystem.commons.rpc.AsReal[RPCFramework.this.RawRPC,RealRPC]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.AsRealRPC">AsRealRPC</a> and <a href="../../rpc/RPCFramework.html#RPCMetadata[RealRPC]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RPCMetadata">RPCMetadata</a>) are macro-materialized for that RPC interface and confines
 macro materialization to the same compilation unit where the RPC interface is defined.
 This is a good practice to avoid incremental compilation problems and duplication of macro-generated code
-in various callsites. In order to be able to use <a href="../../rpc/RPCFramework$RPCCompanion.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework.RPCCompanion">RPCCompanion</a>, the RPC framework must define <a href="../../rpc/RPCFramework.html#FullRPCInfo[T]&lt;:RPCFramework.this.BaseFullRPCInfo[T]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.FullRPCInfo">FullRPCInfo</a>
+in various callsites. In order to be able to use <a href="../../rpc/RPCFramework$RPCCompanion.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework.RPCCompanion">RPCCompanion</a>, the RPC framework must define <a href="../../rpc/RPCFramework.html#FullRPCInfo[RealRPC]&lt;:RPCFramework.this.BaseFullRPCInfo[RealRPC]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.FullRPCInfo">FullRPCInfo</a>
 as a trait or class. Additionally, some special wizardry has been employed to make sure that when an RPC interface
 is a part of shared (cross-compiled) code of a ScalaJS application then ScalaJS optimizer can remove unused
 instances of macro generated typeclasses.
@@ -542,10 +622,10 @@ instances of macro generated typeclasses.
 }
 <span class="kw">object</span> SomeRPC <span class="kw">extends</span> SomeRPCFramework.RPCCompanion[SomeRPC]</pre></li></ol>
             </div></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework.RPCMetadata" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="RPCMetadata[T]extendsAnyRef"></a><a id="RPCMetadata[T]:RPCMetadata[T]"></a>
+    </li><li name="com.avsystem.commons.rpc.RPCFramework.Signature" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="SignatureextendsAnyRef"></a><a id="Signature:Signature"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#RPCMetadata[T]extendsAnyRef" title="Permalink">
+      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#SignatureextendsAnyRef" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -554,83 +634,7 @@ instances of macro generated typeclasses.
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="../../rpc/RPCFramework$RPCMetadata.html"><span class="name">RPCMetadata</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework.RawInvocationHandler" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="RawInvocationHandler[Real]extendsAnyRef"></a><a id="RawInvocationHandler[Real]:RawInvocationHandler[Real]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#RawInvocationHandler[Real]extendsAnyRef" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">trait</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="../../rpc/RPCFramework$RawInvocationHandler.html"><span class="name">RawInvocationHandler</span></a><span class="tparams">[<span name="Real">Real</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd><dt>Annotations</dt><dd>
-                <span class="name">@implicitNotFound</span><span class="args">(<span>
-      
-      <span class="defval" name="&quot;This RPC framework doesn't support RPC methods that return ${Real} &quot; +<br/>    &quot;or some implicit dependencies may be missing (e.g. Reader[A] when result type is Future[A])&quot;">...</span>
-    </span>)</span>
-              
-        </dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework.RawRPCUtils" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="RawRPCUtilsextendsAnyRef"></a><a id="RawRPCUtils:RawRPCUtils"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#RawRPCUtilsextendsAnyRef" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">trait</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="../../rpc/RPCFramework$RawRPCUtils.html"><span class="name">RawRPCUtils</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework.RealInvocationHandler" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="RealInvocationHandler[Real,Raw]extendsAnyRef"></a><a id="RealInvocationHandler[Real,Raw]:RealInvocationHandler[Real,Raw]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#RealInvocationHandler[Real,Raw]extendsAnyRef" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">trait</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="../../rpc/RPCFramework$RealInvocationHandler.html"><span class="name">RealInvocationHandler</span></a><span class="tparams">[<span name="Real">Real</span>, <span name="Raw">Raw</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd><dt>Annotations</dt><dd>
-                <span class="name">@implicitNotFound</span><span class="args">(<span>
-      
-      <span class="defval" name="&quot;This RPC framework doesn't support RPC methods that return ${Real} &quot; +<br/>    &quot;or some implicit dependencies may be missing (e.g. Writer[A] when result type is Future[A])&quot;">...</span>
-    </span>)</span>
-              
-        </dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework.Signature" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="SignatureextendsProductwithSerializable"></a><a id="Signature:Signature"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#SignatureextendsProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="../../rpc/RPCFramework$Signature.html"><span class="name">Signature</span></a><span class="params">(<span name="methodName">methodName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="paramMetadata">paramMetadata: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.List">List</span>[<a href="../../rpc/RPCFramework$ParamMetadata.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework.ParamMetadata">ParamMetadata</a>]]</span>, <span name="resultTypeMetadata">resultTypeMetadata: <a href="../../rpc/RPCFramework.html#ResultTypeMetadata[T]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.ResultTypeMetadata">ResultTypeMetadata</a>[_]</span>, <span name="annotations">annotations: <span class="extype" name="scala.List">List</span>[<a href="../../rpc/MetadataAnnotation.html" class="extype" name="com.avsystem.commons.rpc.MetadataAnnotation">MetadataAnnotation</a>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="../../rpc/RPCFramework$Signature.html"><span class="name">Signature</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
@@ -646,7 +650,23 @@ instances of macro generated typeclasses.
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="../../rpc/StandardRPCFramework$FullRPCInfo.html"><span class="name">FullRPCInfo</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="../../rpc/StandardRPCFramework.html#BaseFullRPCInfo[T]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.BaseFullRPCInfo">BaseFullRPCInfo</a>[<span class="extype" name="com.avsystem.commons.rpc.StandardRPCFramework.FullRPCInfo.T">T</span>]</span>
+        <a title="" href="../../rpc/StandardRPCFramework$FullRPCInfo.html"><span class="name">FullRPCInfo</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="../../rpc/StandardRPCFramework.html#BaseFullRPCInfo[RealRPC]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.BaseFullRPCInfo">BaseFullRPCInfo</a>[<span class="extype" name="com.avsystem.commons.rpc.StandardRPCFramework.FullRPCInfo.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/StandardRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.StandardRPCFramework">StandardRPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.StandardRPCFramework.RPCMetadata" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="RPCMetadata[T]extendsProductwithSerializable"></a><a id="RPCMetadata[T]:RPCMetadata[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/rpc/StandardRPCFramework.html#RPCMetadata[T]extendsProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../../rpc/StandardRPCFramework$RPCMetadata.html"><span class="name">RPCMetadata</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="annotations">annotations: <span class="extype" name="scala.List">List</span>[<a href="../../rpc/MetadataAnnotation.html" class="extype" name="com.avsystem.commons.rpc.MetadataAnnotation">MetadataAnnotation</a>]</span>, <span name="procedureSignatures">procedureSignatures: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="../../rpc/StandardRPCFramework.html#ProcedureSignatureextendsProcedureRPCFramework.this.SignaturewithTypedMetadata[Unit]withProductwithSerializable" class="extmbr" name="com.avsystem.commons.rpc.ProcedureRPCFramework.ProcedureSignature">StandardRPCFramework.ProcedureSignature</a>]</span>, <span name="functionSignatures">functionSignatures: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="../../rpc/StandardRPCFramework.html#FunctionSignature[T]extendsFunctionRPCFramework.this.SignaturewithTypedMetadata[com.avsystem.commons.Future[T]]withProductwithSerializable" class="extmbr" name="com.avsystem.commons.rpc.FunctionRPCFramework.FunctionSignature">StandardRPCFramework.FunctionSignature</a>[_]]</span>, <span name="getterSignatures">getterSignatures: <span class="extype" name="scala.Predef.Map">Map</span>[<span class="extype" name="scala.Predef.String">String</span>, <a href="../../rpc/StandardRPCFramework.html#GetterSignature[T]extendsGetterRPCFramework.this.SignaturewithTypedMetadata[T]withProductwithSerializable" class="extmbr" name="com.avsystem.commons.rpc.GetterRPCFramework.GetterSignature">StandardRPCFramework.GetterSignature</a>[_]]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/StandardRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.StandardRPCFramework">StandardRPCFramework</a></dd></dl></div>
@@ -686,7 +706,7 @@ instances of macro generated typeclasses.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -702,7 +722,7 @@ instances of macro generated typeclasses.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -718,74 +738,10 @@ instances of macro generated typeclasses.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.FunctionRPCFramework#FunctionRawHandler" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="FunctionRawHandler[A](implicitevidence$2:FunctionRPCFramework.this.Reader[A]):FunctionRPCFramework.this.RawInvocationHandler[com.avsystem.commons.Future[A]]"></a><a id="FunctionRawHandler[A](Reader[A]):RawInvocationHandler[commons.Future[A]]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#FunctionRawHandler[A](implicitevidence$2:FunctionRPCFramework.this.Reader[A]):FunctionRPCFramework.this.RawInvocationHandler[com.avsystem.commons.Future[A]]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">FunctionRawHandler</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="#Reader[T]=com.avsystem.commons.serialization.GenCodec[T]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Reader">Reader</a>[<span class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework.FunctionRawHandler.A">A</span>]</span>)</span><span class="result">: <a href="#RawInvocationHandler[Real]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RawInvocationHandler">RawInvocationHandler</a>[<a href="../../index.html#Future[+T]=scala.concurrent.Future[T]" class="extmbr" name="com.avsystem.commons.Future">commons.Future</a>[<span class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework.FunctionRawHandler.A">A</span>]]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/FunctionRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework">FunctionRPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.FunctionRPCFramework#FunctionRealHandler" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="FunctionRealHandler[A](implicitevidence$1:FunctionRPCFramework.this.Writer[A]):FunctionRPCFramework.this.RealInvocationHandler[com.avsystem.commons.Future[A],com.avsystem.commons.Future[FunctionRPCFramework.this.RawValue]]"></a><a id="FunctionRealHandler[A](Writer[A]):RealInvocationHandler[commons.Future[A],commons.Future[RawValue]]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#FunctionRealHandler[A](implicitevidence$1:FunctionRPCFramework.this.Writer[A]):FunctionRPCFramework.this.RealInvocationHandler[com.avsystem.commons.Future[A],com.avsystem.commons.Future[FunctionRPCFramework.this.RawValue]]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">FunctionRealHandler</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="#Writer[T]=com.avsystem.commons.serialization.GenCodec[T]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Writer">Writer</a>[<span class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework.FunctionRealHandler.A">A</span>]</span>)</span><span class="result">: <a href="#RealInvocationHandler[Real,Raw]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RealInvocationHandler">RealInvocationHandler</a>[<a href="../../index.html#Future[+T]=scala.concurrent.Future[T]" class="extmbr" name="com.avsystem.commons.Future">commons.Future</a>[<span class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework.FunctionRealHandler.A">A</span>], <a href="../../index.html#Future[+T]=scala.concurrent.Future[T]" class="extmbr" name="com.avsystem.commons.Future">commons.Future</a>[<a href="#RawValue=String" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue">RawValue</a>]]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/FunctionRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework">FunctionRPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.ProcedureRPCFramework#ProcedureRawHandler" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="ProcedureRawHandler:ProcedureRPCFramework.this.RawInvocationHandler[Unit]"></a><a id="ProcedureRawHandler:RawInvocationHandler[Unit]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#ProcedureRawHandler:ProcedureRPCFramework.this.RawInvocationHandler[Unit]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">ProcedureRawHandler</span><span class="result">: <a href="#RawInvocationHandler[Real]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RawInvocationHandler">RawInvocationHandler</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/ProcedureRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.ProcedureRPCFramework">ProcedureRPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.ProcedureRPCFramework#ProcedureRealHandler" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="ProcedureRealHandler:ProcedureRPCFramework.this.RealInvocationHandler[Unit,Unit]"></a><a id="ProcedureRealHandler:RealInvocationHandler[Unit,Unit]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#ProcedureRealHandler:ProcedureRPCFramework.this.RealInvocationHandler[Unit,Unit]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">ProcedureRealHandler</span><span class="result">: <a href="#RealInvocationHandler[Real,Raw]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RealInvocationHandler">RealInvocationHandler</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a>, <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/ProcedureRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.ProcedureRPCFramework">ProcedureRPCFramework</a></dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
@@ -814,7 +770,7 @@ instances of macro generated typeclasses.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -838,7 +794,7 @@ instances of macro generated typeclasses.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -854,7 +810,7 @@ instances of macro generated typeclasses.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -870,7 +826,7 @@ instances of macro generated typeclasses.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -899,38 +855,6 @@ instances of macro generated typeclasses.
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.GetterRPCFramework#getterRawHandler" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="getterRawHandler[T](implicitev:com.avsystem.commons.rpc.IsRPC[T]):GetterRPCFramework.this.RawInvocationHandler[T]"></a><a id="getterRawHandler[T](IsRPC[T]):RawInvocationHandler[T]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#getterRawHandler[T](implicitev:com.avsystem.commons.rpc.IsRPC[T]):GetterRPCFramework.this.RawInvocationHandler[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit macro </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">getterRawHandler</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <a href="../../rpc/IsRPC.html" class="extype" name="com.avsystem.commons.rpc.IsRPC">IsRPC</a>[<span class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework.getterRawHandler.T">T</span>]</span>)</span><span class="result">: <a href="#RawInvocationHandler[Real]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RawInvocationHandler">RawInvocationHandler</a>[<span class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework.getterRawHandler.T">T</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/GetterRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework">GetterRPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.GetterRPCFramework#getterRealHandler" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="getterRealHandler[T](implicitev:com.avsystem.commons.rpc.IsRPC[T]):GetterRPCFramework.this.RealInvocationHandler[T,GetterRPCFramework.this.RawRPC]"></a><a id="getterRealHandler[T](IsRPC[T]):RealInvocationHandler[T,RawRPC]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#getterRealHandler[T](implicitev:com.avsystem.commons.rpc.IsRPC[T]):GetterRPCFramework.this.RealInvocationHandler[T,GetterRPCFramework.this.RawRPC]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit macro </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">getterRealHandler</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="ev">ev: <a href="../../rpc/IsRPC.html" class="extype" name="com.avsystem.commons.rpc.IsRPC">IsRPC</a>[<span class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework.getterRealHandler.T">T</span>]</span>)</span><span class="result">: <a href="#RealInvocationHandler[Real,Raw]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RealInvocationHandler">RealInvocationHandler</a>[<span class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework.getterRealHandler.T">T</span>, <a href="#RawRPCextendsStandardRPCFramework.this.GetterRawRPCwithStandardRPCFramework.this.FunctionRawRPCwithStandardRPCFramework.this.ProcedureRawRPC" class="extmbr" name="com.avsystem.commons.rpc.StandardRPCFramework.RawRPC">RawRPC</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/GetterRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.GetterRPCFramework">GetterRPCFramework</a></dd></dl></div>
     </li><li name="scala.AnyRef#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
       <span class="permalink">
@@ -943,61 +867,13 @@ instances of macro generated typeclasses.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework#implicitlyMaterializeAsRaw" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="implicitlyMaterializeAsRaw[T]:RPCFramework.this.AsRawRPC[T]"></a><a id="implicitlyMaterializeAsRaw[T]:AsRawRPC[T]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#implicitlyMaterializeAsRaw[T]:RPCFramework.this.AsRawRPC[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit macro </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">implicitlyMaterializeAsRaw</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="#AsRawRPC[T]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.AsRawRPC">AsRawRPC</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.implicitlyMaterializeAsRaw.T">T</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework#implicitlyMaterializeAsReal" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="implicitlyMaterializeAsReal[T]:RPCFramework.this.AsRealRPC[T]"></a><a id="implicitlyMaterializeAsReal[T]:AsRealRPC[T]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#implicitlyMaterializeAsReal[T]:RPCFramework.this.AsRealRPC[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit macro </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">implicitlyMaterializeAsReal</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="#AsRealRPC[T]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.AsRealRPC">AsRealRPC</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.implicitlyMaterializeAsReal.T">T</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework#implicitlyMaterializeMetadata" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="implicitlyMaterializeMetadata[T]:RPCFramework.this.RPCMetadata[T]"></a><a id="implicitlyMaterializeMetadata[T]:RPCMetadata[T]"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#implicitlyMaterializeMetadata[T]:RPCFramework.this.RPCMetadata[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit macro </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">implicitlyMaterializeMetadata</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="#RPCMetadata[T]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RPCMetadata">RPCMetadata</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.implicitlyMaterializeMetadata.T">T</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -1010,10 +886,29 @@ instances of macro generated typeclasses.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.typesafe.scalalogging.LazyLogging#logger" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="logger:com.typesafe.scalalogging.Logger"></a><a id="logger:Logger"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#logger:com.typesafe.scalalogging.Logger" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">lazy val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">logger</span><span class="result">: <span class="extype" name="com.typesafe.scalalogging.Logger">Logger</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd>LazyLogging</dd><dt>Annotations</dt><dd>
+                <span class="name">@transient</span><span class="args">()</span>
+              
+        </dd></dl></div>
     </li><li name="com.avsystem.commons.rpc.RPCFramework#materializeAsRaw" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="materializeAsRaw[T]:RPCFramework.this.AsRawRPC[T]"></a><a id="materializeAsRaw[T]:AsRawRPC[T]"></a>
       <span class="permalink">
@@ -1026,7 +921,7 @@ instances of macro generated typeclasses.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">materializeAsRaw</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="#AsRawRPC[T]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.AsRawRPC">AsRawRPC</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.materializeAsRaw.T">T</span>]</span>
+        <span class="name">materializeAsRaw</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="#AsRawRPC[RealRPC]=com.avsystem.commons.rpc.AsRaw[RPCFramework.this.RawRPC,RealRPC]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.AsRawRPC">AsRawRPC</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.materializeAsRaw.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Materializes a factory of implementations of <a href="../../rpc/RPCFramework.html#RawRPC" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RawRPC">RawRPC</a> which translate invocations of its raw methods
@@ -1034,6 +929,22 @@ to invocations of actual methods on <code>rpcImpl</code>.</p><div class="fullcom
 to invocations of actual methods on <code>rpcImpl</code>. Method arguments and results are serialized and deserialized
 from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RawValue">RawValue</a> using <a href="../../rpc/RPCFramework.html#Reader[T]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.Reader">Reader</a> and <a href="../../rpc/RPCFramework.html#Writer[T]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.Writer">Writer</a> typeclasses.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.RPCFramework#materializeAsRawReal" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="materializeAsRawReal[T]:RPCFramework.this.AsRawRealRPC[T]"></a><a id="materializeAsRawReal[T]:AsRawRealRPC[T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#materializeAsRawReal[T]:RPCFramework.this.AsRawRealRPC[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">macro </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">materializeAsRawReal</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="#AsRawRealRPC[RealRPC]=com.avsystem.commons.rpc.AsRawReal[RPCFramework.this.RawRPC,RealRPC]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.AsRawRealRPC">AsRawRealRPC</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.materializeAsRawReal.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
     </li><li name="com.avsystem.commons.rpc.RPCFramework#materializeAsReal" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="materializeAsReal[T]:RPCFramework.this.AsRealRPC[T]"></a><a id="materializeAsReal[T]:AsRealRPC[T]"></a>
       <span class="permalink">
@@ -1046,7 +957,7 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">materializeAsReal</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="#AsRealRPC[T]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.AsRealRPC">AsRealRPC</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.materializeAsReal.T">T</span>]</span>
+        <span class="name">materializeAsReal</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="#AsRealRPC[RealRPC]=com.avsystem.commons.rpc.AsReal[RPCFramework.this.RawRPC,RealRPC]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.AsRealRPC">AsRealRPC</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.materializeAsReal.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Materializes a factory of implementations of <code>T</code> which are proxies that implement all abstract methods of <code>T</code>
@@ -1071,9 +982,9 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
     </li><li name="com.avsystem.commons.rpc.RPCFramework#materializeMetadata" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="materializeMetadata[T]:RPCFramework.this.RPCMetadata[T]"></a><a id="materializeMetadata[T]:RPCMetadata[T]"></a>
+      <a id="materializeMetadata[RealRPC]:RPCFramework.this.RPCMetadata[RealRPC]"></a><a id="materializeMetadata[RealRPC]:RPCMetadata[RealRPC]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#materializeMetadata[T]:RPCFramework.this.RPCMetadata[T]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#materializeMetadata[RealRPC]:RPCFramework.this.RPCMetadata[RealRPC]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1082,7 +993,7 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">materializeMetadata</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="#RPCMetadata[T]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RPCMetadata">RPCMetadata</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.materializeMetadata.T">T</span>]</span>
+        <span class="name">materializeMetadata</span><span class="tparams">[<span name="RealRPC">RealRPC</span>]</span><span class="result">: <a href="#RPCMetadata[T]extendsProductwithSerializable" class="extmbr" name="com.avsystem.commons.rpc.StandardRPCFramework.RPCMetadata">RPCMetadata</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.materializeMetadata.RealRPC">RealRPC</span>]</span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
@@ -1098,14 +1009,14 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
     </li><li name="com.avsystem.commons.jetty.rpc.JettyRPCFramework#newClient" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="newClient[T](httpClient:org.eclipse.jetty.client.HttpClient,urlPrefix:String)(implicitec:com.avsystem.commons.ExecutionContext,implicitasRealRPC:com.avsystem.commons.jetty.rpc.JettyRPCFramework.AsRealRPC[T]):T"></a><a id="newClient[T](HttpClient,String)(commons.ExecutionContext,AsRealRPC[T]):T"></a>
+      <a id="newClient[T](httpClient:org.eclipse.jetty.client.HttpClient,uri:String)(implicitec:com.avsystem.commons.ExecutionContext,implicitasRealRPC:com.avsystem.commons.jetty.rpc.JettyRPCFramework.AsRealRPC[T]):T"></a><a id="newClient[T](HttpClient,String)(commons.ExecutionContext,AsRealRPC[T]):T"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#newClient[T](httpClient:org.eclipse.jetty.client.HttpClient,urlPrefix:String)(implicitec:com.avsystem.commons.ExecutionContext,implicitasRealRPC:com.avsystem.commons.jetty.rpc.JettyRPCFramework.AsRealRPC[T]):T" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#newClient[T](httpClient:org.eclipse.jetty.client.HttpClient,uri:String)(implicitec:com.avsystem.commons.ExecutionContext,implicitasRealRPC:com.avsystem.commons.jetty.rpc.JettyRPCFramework.AsRealRPC[T]):T" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1114,7 +1025,7 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">newClient</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="httpClient">httpClient: <span class="extype" name="org.eclipse.jetty.client.HttpClient">HttpClient</span></span>, <span name="urlPrefix">urlPrefix: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ec">ec: <a href="../../index.html#ExecutionContext=scala.concurrent.ExecutionContext" class="extmbr" name="com.avsystem.commons.ExecutionContext">commons.ExecutionContext</a></span>, <span name="asRealRPC">asRealRPC: <a href="#AsRealRPC[T]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.AsRealRPC">AsRealRPC</a>[<span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.newClient.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.newClient.T">T</span></span>
+        <span class="name">newClient</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="httpClient">httpClient: <span class="extype" name="org.eclipse.jetty.client.HttpClient">HttpClient</span></span>, <span name="uri">uri: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ec">ec: <a href="../../index.html#ExecutionContext=scala.concurrent.ExecutionContext" class="extmbr" name="com.avsystem.commons.ExecutionContext">commons.ExecutionContext</a></span>, <span name="asRealRPC">asRealRPC: <a href="#AsRealRPC[RealRPC]=com.avsystem.commons.rpc.AsReal[RPCFramework.this.RawRPC,RealRPC]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.AsRealRPC">AsRealRPC</a>[<span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.newClient.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.newClient.T">T</span></span>
       </span>
       
       
@@ -1130,7 +1041,7 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">newHandler</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="impl">impl: <span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.newHandler.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ec">ec: <a href="../../index.html#ExecutionContext=scala.concurrent.ExecutionContext" class="extmbr" name="com.avsystem.commons.ExecutionContext">commons.ExecutionContext</a></span>, <span name="asRawRPC">asRawRPC: <a href="#AsRawRPC[T]extendsAnyRef" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.AsRawRPC">AsRawRPC</a>[<span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.newHandler.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.eclipse.jetty.server.Handler">Handler</span></span>
+        <span class="name">newHandler</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="impl">impl: <span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.newHandler.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="ec">ec: <a href="../../index.html#ExecutionContext=scala.concurrent.ExecutionContext" class="extmbr" name="com.avsystem.commons.ExecutionContext">commons.ExecutionContext</a></span>, <span name="asRawRPC">asRawRPC: <a href="#AsRawRPC[RealRPC]=com.avsystem.commons.rpc.AsRaw[RPCFramework.this.RawRPC,RealRPC]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.AsRawRPC">AsRawRPC</a>[<span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.newHandler.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="org.eclipse.jetty.server.Handler">Handler</span></span>
       </span>
       
       
@@ -1146,7 +1057,7 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1165,7 +1076,7 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1184,10 +1095,42 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">read</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="raw">raw: <a href="#RawValue=String" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue">RawValue</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="#Reader[T]=com.avsystem.commons.serialization.GenCodec[T]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Reader">Reader</a>[<span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.read.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.read.T">T</span></span>
+        <span class="name">read</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="raw">raw: <a href="JettyRPCFramework$$RawValue.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue">RawValue</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="#Reader[T]=com.avsystem.commons.serialization.GenCodec[T]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Reader">Reader</a>[<span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.read.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.read.T">T</span></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework">JettyRPCFramework</a> → <a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.RPCFramework#readerBasedAsReal" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="readerBasedAsReal[T](implicitevidence$3:RPCFramework.this.Reader[T]):com.avsystem.commons.rpc.AsReal[RPCFramework.this.RawValue,T]"></a><a id="readerBasedAsReal[T](Reader[T]):AsReal[RawValue,T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#readerBasedAsReal[T](implicitevidence$3:RPCFramework.this.Reader[T]):com.avsystem.commons.rpc.AsReal[RPCFramework.this.RawValue,T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">readerBasedAsReal</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="#Reader[T]=com.avsystem.commons.serialization.GenCodec[T]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Reader">Reader</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.readerBasedAsReal.T">T</span>]</span>)</span><span class="result">: <a href="../../rpc/AsReal.html" class="extype" name="com.avsystem.commons.rpc.AsReal">AsReal</a>[<a href="JettyRPCFramework$$RawValue.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue">RawValue</a>, <span class="extype" name="com.avsystem.commons.rpc.RPCFramework.readerBasedAsReal.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.FunctionRPCFramework#readerBasedFutureAsReal" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="readerBasedFutureAsReal[T](implicitevidence$1:FunctionRPCFramework.this.Reader[T]):com.avsystem.commons.rpc.AsReal[com.avsystem.commons.Future[FunctionRPCFramework.this.RawValue],com.avsystem.commons.Future[T]]"></a><a id="readerBasedFutureAsReal[T](Reader[T]):AsReal[commons.Future[RawValue],commons.Future[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#readerBasedFutureAsReal[T](implicitevidence$1:FunctionRPCFramework.this.Reader[T]):com.avsystem.commons.rpc.AsReal[com.avsystem.commons.Future[FunctionRPCFramework.this.RawValue],com.avsystem.commons.Future[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">readerBasedFutureAsReal</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="#Reader[T]=com.avsystem.commons.serialization.GenCodec[T]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Reader">Reader</a>[<span class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework.readerBasedFutureAsReal.T">T</span>]</span>)</span><span class="result">: <a href="../../rpc/AsReal.html" class="extype" name="com.avsystem.commons.rpc.AsReal">AsReal</a>[<a href="../../index.html#Future[+T]=scala.concurrent.Future[T]" class="extmbr" name="com.avsystem.commons.Future">commons.Future</a>[<a href="JettyRPCFramework$$RawValue.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue">RawValue</a>], <a href="../../index.html#Future[+T]=scala.concurrent.Future[T]" class="extmbr" name="com.avsystem.commons.Future">commons.Future</a>[<span class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework.readerBasedFutureAsReal.T">T</span>]]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/FunctionRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework">FunctionRPCFramework</a></dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -1220,22 +1163,6 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework#tryToRaw" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="tryToRaw[Real,Raw](real:Real):Raw"></a><a id="tryToRaw[Real,Raw](Real):Raw"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#tryToRaw[Real,Raw](real:Real):Raw" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">macro </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">tryToRaw</span><span class="tparams">[<span name="Real">Real</span>, <span name="Raw">Raw</span>]</span><span class="params">(<span name="real">real: <span class="extype" name="com.avsystem.commons.rpc.RPCFramework.tryToRaw.Real">Real</span></span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.rpc.RPCFramework.tryToRaw.Raw">Raw</span></span>
-      </span>
-      
-      <p class="shortcomment cmt">INTERNAL API</p><div class="fullcomment"><div class="comment cmt"><p>INTERNAL API</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <span class="permalink">
@@ -1248,7 +1175,7 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1270,7 +1197,7 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1292,7 +1219,7 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1316,10 +1243,74 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">write</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="value">value: <span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.write.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="#Writer[T]=com.avsystem.commons.serialization.GenCodec[T]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Writer">Writer</a>[<span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.write.T">T</span>]</span>)</span><span class="result">: <a href="#RawValue=String" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue">RawValue</a></span>
+        <span class="name">write</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="value">value: <span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.write.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="#Writer[T]=com.avsystem.commons.serialization.GenCodec[T]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Writer">Writer</a>[<span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.write.T">T</span>]</span>)</span><span class="result">: <a href="JettyRPCFramework$$RawValue.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue">RawValue</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework">JettyRPCFramework</a> → <a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.RPCFramework#writerBasedAsRaw" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="writerBasedAsRaw[T](implicitevidence$4:RPCFramework.this.Writer[T]):com.avsystem.commons.rpc.AsRaw[RPCFramework.this.RawValue,T]"></a><a id="writerBasedAsRaw[T](Writer[T]):AsRaw[RawValue,T]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#writerBasedAsRaw[T](implicitevidence$4:RPCFramework.this.Writer[T]):com.avsystem.commons.rpc.AsRaw[RPCFramework.this.RawValue,T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">writerBasedAsRaw</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="#Writer[T]=com.avsystem.commons.serialization.GenCodec[T]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Writer">Writer</a>[<span class="extype" name="com.avsystem.commons.rpc.RPCFramework.writerBasedAsRaw.T">T</span>]</span>)</span><span class="result">: <a href="../../rpc/AsRaw.html" class="extype" name="com.avsystem.commons.rpc.AsRaw">AsRaw</a>[<a href="JettyRPCFramework$$RawValue.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue">RawValue</a>, <span class="extype" name="com.avsystem.commons.rpc.RPCFramework.writerBasedAsRaw.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.FunctionRPCFramework#writerBasedFutureAsRaw" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="writerBasedFutureAsRaw[T](implicitevidence$2:FunctionRPCFramework.this.Writer[T]):com.avsystem.commons.rpc.AsRaw[com.avsystem.commons.Future[FunctionRPCFramework.this.RawValue],com.avsystem.commons.Future[T]]"></a><a id="writerBasedFutureAsRaw[T](Writer[T]):AsRaw[commons.Future[RawValue],commons.Future[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#writerBasedFutureAsRaw[T](implicitevidence$2:FunctionRPCFramework.this.Writer[T]):com.avsystem.commons.rpc.AsRaw[com.avsystem.commons.Future[FunctionRPCFramework.this.RawValue],com.avsystem.commons.Future[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">writerBasedFutureAsRaw</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="#Writer[T]=com.avsystem.commons.serialization.GenCodec[T]" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Writer">Writer</a>[<span class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework.writerBasedFutureAsRaw.T">T</span>]</span>)</span><span class="result">: <a href="../../rpc/AsRaw.html" class="extype" name="com.avsystem.commons.rpc.AsRaw">AsRaw</a>[<a href="../../index.html#Future[+T]=scala.concurrent.Future[T]" class="extmbr" name="com.avsystem.commons.Future">commons.Future</a>[<a href="JettyRPCFramework$$RawValue.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue">RawValue</a>], <a href="../../index.html#Future[+T]=scala.concurrent.Future[T]" class="extmbr" name="com.avsystem.commons.Future">commons.Future</a>[<span class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework.writerBasedFutureAsRaw.T">T</span>]]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/FunctionRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.FunctionRPCFramework">FunctionRPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Call" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Call"></a><a id="Call:Call"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#Call" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="JettyRPCFramework$$Call$.html"><span class="name">Call</span></a><span class="result"> extends <a href="../../serialization/HasGenCodec.html" class="extype" name="com.avsystem.commons.serialization.HasGenCodec">HasGenCodec</a>[<a href="JettyRPCFramework$$Call.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Call">Call</a>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Invocation" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Invocation"></a><a id="Invocation:Invocation"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$.html#Invocation" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="JettyRPCFramework$$Invocation$.html"><span class="name">Invocation</span></a><span class="result"> extends <a href="../../serialization/HasGenCodec.html" class="extype" name="com.avsystem.commons.serialization.HasGenCodec">HasGenCodec</a>[<a href="JettyRPCFramework$$Invocation.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Invocation">Invocation</a>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
     </li><li name="com.avsystem.commons.rpc.RPCFramework.AsRawRPC" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="AsRawRPC"></a><a id="AsRawRPC:AsRawRPC"></a>
       <span class="permalink">
@@ -1333,6 +1324,22 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
       </span>
       <span class="symbol">
         <a title="" href="../../rpc/RPCFramework$AsRawRPC$.html"><span class="name">AsRawRPC</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.RPCFramework.AsRawRealRPC" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="AsRawRealRPC"></a><a id="AsRawRealRPC:AsRawRealRPC"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#AsRawRealRPC" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../../rpc/RPCFramework$AsRawRealRPC$.html"><span class="name">AsRawRealRPC</span></a>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
@@ -1352,10 +1359,10 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework.RPCMetadata" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="com.avsystem.commons.rpc.StandardRPCFramework.RPCMetadata" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="RPCMetadata"></a><a id="RPCMetadata:RPCMetadata"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#RPCMetadata" title="Permalink">
+      <a href="../../../../com/avsystem/commons/rpc/StandardRPCFramework.html#RPCMetadata" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1364,14 +1371,14 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="../../rpc/RPCFramework$RPCMetadata$.html"><span class="name">RPCMetadata</span></a>
+        <a title="" href="../../rpc/StandardRPCFramework$RPCMetadata$.html"><span class="name">RPCMetadata</span></a><span class="result"> extends <a href="../../rpc/RpcMetadataCompanion.html" class="extype" name="com.avsystem.commons.rpc.RpcMetadataCompanion">RpcMetadataCompanion</a>[<a href="../../rpc/StandardRPCFramework$RPCMetadata.html" class="extype" name="com.avsystem.commons.rpc.StandardRPCFramework.RPCMetadata">RPCMetadata</a>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework.RawInvocationHandler" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="RawInvocationHandler"></a><a id="RawInvocationHandler:RawInvocationHandler"></a>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/StandardRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.StandardRPCFramework">StandardRPCFramework</a> → <a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rpc.StandardRPCFramework.RawRPC" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="RawRPC"></a><a id="RawRPC:RawRPC"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#RawInvocationHandler" title="Permalink">
+      <a href="../../../../com/avsystem/commons/rpc/StandardRPCFramework.html#RawRPC" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1380,26 +1387,10 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="../../rpc/RPCFramework$RawInvocationHandler$.html"><span class="name">RawInvocationHandler</span></a>
+        <a title="" href="../../rpc/StandardRPCFramework$RawRPC$.html"><span class="name">RawRPC</span></a><span class="result"> extends <a href="../../rpc/StandardRPCFramework.html#BaseRawRpcCompanionextendsRawRpcCompanion[RPCFramework.this.RawRPC]" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.BaseRawRpcCompanion">BaseRawRpcCompanion</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rpc.RPCFramework.RealInvocationHandler" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="RealInvocationHandler"></a><a id="RealInvocationHandler:RealInvocationHandler"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/rpc/RPCFramework.html#RealInvocationHandler" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="../../rpc/RPCFramework$RealInvocationHandler$.html"><span class="name">RealInvocationHandler</span></a>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../rpc/StandardRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.StandardRPCFramework">StandardRPCFramework</a> → <a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></dd></dl></div>
     </li>
               </ol>
             </div>
@@ -1410,7 +1401,9 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="com.avsystem.commons.rpc.StandardRPCFramework">
+        <div class="parent" name="com.typesafe.scalalogging.LazyLogging">
+              <h3>Inherited from <span class="extype" name="com.typesafe.scalalogging.LazyLogging">LazyLogging</span></h3>
+            </div><div class="parent" name="com.avsystem.commons.rpc.StandardRPCFramework">
               <h3>Inherited from <a href="../../rpc/StandardRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.StandardRPCFramework">StandardRPCFramework</a></h3>
             </div><div class="parent" name="com.avsystem.commons.rpc.ProcedureRPCFramework">
               <h3>Inherited from <a href="../../rpc/ProcedureRPCFramework.html" class="extype" name="com.avsystem.commons.rpc.ProcedureRPCFramework">ProcedureRPCFramework</a></h3>
@@ -1421,9 +1414,9 @@ from/to <a href="../../rpc/RPCFramework.html#RawValue" class="extmbr" name="com.
             </div><div class="parent" name="com.avsystem.commons.rpc.RPCFramework">
               <h3>Inherited from <a href="../../rpc/RPCFramework.html" class="extype" name="com.avsystem.commons.rpc.RPCFramework">RPCFramework</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

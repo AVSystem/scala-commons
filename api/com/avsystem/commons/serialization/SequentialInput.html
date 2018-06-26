@@ -163,10 +163,6 @@
                         <a href="ErrorReportingCodec.html" title="">ErrorReportingCodec</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="FallbackMapCodecs.html" title="Contains readers for maps where there is no DBKeyCodec for key type."></a>
-                        <a href="FallbackMapCodecs.html" title="Contains readers for maps where there is no DBKeyCodec for key type.">FallbackMapCodecs</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
                         <a class="trait" href="FieldInput.html" title="An Input representing an object field."></a>
                         <a href="FieldInput.html" title="An Input representing an object field.">FieldInput</a>
                       </li><li class="current-entities indented4">
@@ -213,10 +209,6 @@
                         <span class="separator"></span>
                         <a class="trait" href="ListOutput.html" title="Represents an abstract sink for serialization of sequences of values."></a>
                         <a href="ListOutput.html" title="Represents an abstract sink for serialization of sequences of values.">ListOutput</a>
-                      </li><li class="current-entities indented4">
-                        <a class="object" href="MacroCodec$.html" title=""></a>
-                        <a class="class" href="MacroCodec.html" title=""></a>
-                        <a href="MacroCodec.html" title="">MacroCodec</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="NestedSealedHierarchyCodec.html" title=""></a>
@@ -327,12 +319,16 @@
                         <a href="outOfOrder.html" title="To be used in conjunction with flatten.">outOfOrder</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="transientDefault.html" title="If some case class field has default value, you can use this annotation on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value."></a>
-                        <a href="transientDefault.html" title="If some case class field has default value, you can use this annotation on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value.">transientDefault</a>
+                        <a class="class" href="transientDefault.html" title="If some case class field has default value or whenAbsent annotation, you can use transientDefault on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value."></a>
+                        <a href="transientDefault.html" title="If some case class field has default value or whenAbsent annotation, you can use transientDefault on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value.">transientDefault</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="transparent.html" title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field."></a>
                         <a href="transparent.html" title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field.">transparent</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="whenAbsent.html" title="An alternative way to provide default value for case class parameter used during deserialization with GenCodec when its field is missing in data being deserialized."></a>
+                        <a href="whenAbsent.html" title="An alternative way to provide default value for case class parameter used during deserialization with GenCodec when its field is missing in data being deserialized.">whenAbsent</a>
                       </li>
               </ul>
             </div>
@@ -356,7 +352,7 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <span class="name">SequentialInput</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
+        <span class="name">SequentialInput</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
       </span>
       </h4>
 
@@ -365,7 +361,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div><div class="toggleContainer block">
             <span class="toggle">
               Known Subclasses
@@ -448,7 +444,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hasNext</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">hasNext</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       
@@ -464,7 +460,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">skipRemaining</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">skipRemaining</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       
@@ -486,7 +482,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -502,7 +498,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -518,7 +514,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -550,7 +546,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -566,7 +562,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -582,7 +578,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -613,7 +609,7 @@
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

@@ -163,10 +163,6 @@
                         <a href="ErrorReportingCodec.html" title="">ErrorReportingCodec</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="FallbackMapCodecs.html" title="Contains readers for maps where there is no DBKeyCodec for key type."></a>
-                        <a href="FallbackMapCodecs.html" title="Contains readers for maps where there is no DBKeyCodec for key type.">FallbackMapCodecs</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
                         <a class="trait" href="FieldInput.html" title="An Input representing an object field."></a>
                         <a href="FieldInput.html" title="An Input representing an object field.">FieldInput</a>
                       </li><li class="current-entities indented4">
@@ -213,10 +209,6 @@
                         <span class="separator"></span>
                         <a class="trait" href="ListOutput.html" title="Represents an abstract sink for serialization of sequences of values."></a>
                         <a href="ListOutput.html" title="Represents an abstract sink for serialization of sequences of values.">ListOutput</a>
-                      </li><li class="current-entities indented4">
-                        <a class="object" href="MacroCodec$.html" title=""></a>
-                        <a class="class" href="MacroCodec.html" title=""></a>
-                        <a href="MacroCodec.html" title="">MacroCodec</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="NestedSealedHierarchyCodec.html" title=""></a>
@@ -327,12 +319,16 @@
                         <a href="outOfOrder.html" title="To be used in conjunction with flatten.">outOfOrder</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="transientDefault.html" title="If some case class field has default value, you can use this annotation on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value."></a>
-                        <a href="transientDefault.html" title="If some case class field has default value, you can use this annotation on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value.">transientDefault</a>
+                        <a class="class" href="transientDefault.html" title="If some case class field has default value or whenAbsent annotation, you can use transientDefault on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value."></a>
+                        <a href="transientDefault.html" title="If some case class field has default value or whenAbsent annotation, you can use transientDefault on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value.">transientDefault</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="transparent.html" title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field."></a>
                         <a href="transparent.html" title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field.">transparent</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="whenAbsent.html" title="An alternative way to provide default value for case class parameter used during deserialization with GenCodec when its field is missing in data being deserialized."></a>
+                        <a href="whenAbsent.html" title="An alternative way to provide default value for case class parameter used during deserialization with GenCodec when its field is missing in data being deserialized.">whenAbsent</a>
                       </li>
               </ul>
             </div>
@@ -371,7 +367,7 @@ In order to ignore any remaining key-value mappings, <code>skipRemaining()</code
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="SequentialInput.html" class="extype" name="com.avsystem.commons.serialization.SequentialInput">SequentialInput</a>, <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="SequentialInput.html" class="extype" name="com.avsystem.commons.serialization.SequentialInput">SequentialInput</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div><div class="toggleContainer block">
             <span class="toggle">
               Known Subclasses
@@ -454,7 +450,7 @@ In order to ignore any remaining key-value mappings, <code>skipRemaining()</code
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hasNext</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">hasNext</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="SequentialInput.html" class="extype" name="com.avsystem.commons.serialization.SequentialInput">SequentialInput</a></dd></dl></div>
@@ -475,10 +471,13 @@ In order to ignore any remaining key-value mappings, <code>skipRemaining()</code
       
       <p class="shortcomment cmt">Returns <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a> that represents next field of this object.</p><div class="fullcomment"><div class="comment cmt"><p>Returns <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a> that represents next field of this object.
 You MUST NOT call <code>nextField()</code> again until this <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a>
-is fully read or skipped.</p><p>Subsequent invocations of <code>nextField</code> MUST return fields in exactly the same order as they were written
-using <a href="ObjectOutput.html#writeField(key:String):com.avsystem.commons.serialization.Output" class="extmbr" name="com.avsystem.commons.serialization.ObjectOutput#writeField">ObjectOutput.writeField</a>.
-In other words, serialization format MUST preserve order of object fields.
-</p></div></div>
+is fully read or skipped.</p><p>Serialization format implemented by this <code>ObjectInput</code> must either preserve order of fields (as they are
+written by corresponding <code>ObjectOutput</code>) OR it must provide random field access capability.</p><ul><li>If the serialization format is able to preserve object field order then <a href="#nextField():com.avsystem.commons.serialization.FieldInput" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#nextField">nextField</a> must return
+object fields in exactly the same order as they were written by <code>ObjectOutput.writeField</code>. This is
+natural for most serialization formats backed by strings, raw character or byte sequences, e.g.
+JSON implemented by <a href="json/JsonStringOutput.html" class="extype" name="com.avsystem.commons.serialization.json.JsonStringOutput">JsonStringOutput</a>/
+<a href="json/JsonStringInput.html" class="extype" name="com.avsystem.commons.serialization.json.JsonStringInput">JsonStringInput</a>.</li><li>If the serialization format is unable to preserve object field order (e.g. because it uses hash maps to
+represent objects) then it must instead support random, by-name field access by overriding <a href="#peekField(name:String):com.avsystem.commons.Opt[com.avsystem.commons.serialization.FieldInput]" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#peekField">peekField</a>.</li></ul></div></div>
     </li></ol>
             </div>
 
@@ -497,7 +496,7 @@ In other words, serialization format MUST preserve order of object fields.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -513,7 +512,7 @@ In other words, serialization format MUST preserve order of object fields.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -529,7 +528,7 @@ In other words, serialization format MUST preserve order of object fields.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -561,10 +560,30 @@ In other words, serialization format MUST preserve order of object fields.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.ObjectInput#getNextNamedField" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getNextNamedField(name:String):com.avsystem.commons.serialization.FieldInput"></a><a id="getNextNamedField(String):FieldInput"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/ObjectInput.html#getNextNamedField(name:String):com.avsystem.commons.serialization.FieldInput" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getNextNamedField</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Tries to obtain <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a> for field with specified name, either by using <a href="#peekField(name:String):com.avsystem.commons.Opt[com.avsystem.commons.serialization.FieldInput]" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#peekField">peekField</a> (assuming format with
+random field access) or <a href="#nextField():com.avsystem.commons.serialization.FieldInput" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#nextField">nextField</a> (assuming format that preserves field order).</p><div class="fullcomment"><div class="comment cmt"><p>Tries to obtain <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a> for field with specified name, either by using <a href="#peekField(name:String):com.avsystem.commons.Opt[com.avsystem.commons.serialization.FieldInput]" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#peekField">peekField</a> (assuming format with
+random field access) or <a href="#nextField():com.avsystem.commons.serialization.FieldInput" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#nextField">nextField</a> (assuming format that preserves field order). A codec that uses this method
+must ensure that it reads fields in the same order as they were written using <code>writeField</code> on <a href="ObjectOutput.html" class="extype" name="com.avsystem.commons.serialization.ObjectOutput">ObjectOutput</a>.
+</p></div></div>
     </li><li name="scala.Any#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="hashCode():Int"></a>
       <span class="permalink">
@@ -577,7 +596,7 @@ In other words, serialization format MUST preserve order of object fields.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -593,7 +612,7 @@ In other words, serialization format MUST preserve order of object fields.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -613,6 +632,33 @@ In other words, serialization format MUST preserve order of object fields.
       </span>
       
       
+    </li><li name="com.avsystem.commons.serialization.ObjectInput#peekField" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="peekField(name:String):com.avsystem.commons.Opt[com.avsystem.commons.serialization.FieldInput]"></a><a id="peekField(String):commons.Opt[FieldInput]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/ObjectInput.html#peekField(name:String):com.avsystem.commons.Opt[com.avsystem.commons.serialization.FieldInput]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">peekField</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">If serialization format implemented by <code>ObjectInput</code> does NOT preserve field order, then this method MUST
+be overridden to support random field access.</p><div class="fullcomment"><div class="comment cmt"><p>If serialization format implemented by <code>ObjectInput</code> does NOT preserve field order, then this method MUST
+be overridden to support random field access. It should return non-empty <a href="../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">Opt</a> containing input for every field
+present in the object, regardless of field order assumed by <a href="#nextField():com.avsystem.commons.serialization.FieldInput" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#nextField">nextField</a>.
+<code>Opt.Empty</code> is returned when field is absent or always when this <code>ObjectInput</code> does not support random field
+access (in which case it must preserve field order instead).
+NOTE: calling <a href="#peekField(name:String):com.avsystem.commons.Opt[com.avsystem.commons.serialization.FieldInput]" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#peekField">peekField</a> and using <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a> returned by it MUST NOT change state of this <code>ObjectInput</code>.
+Therefore, it cannot in any way influence results returned by <a href="#nextField():com.avsystem.commons.serialization.FieldInput" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#nextField">nextField</a> and <a href="#hasNext:Boolean" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#hasNext">hasNext</a>.
+For example, if a <a href="FieldInput.html" class="extype" name="com.avsystem.commons.serialization.FieldInput">FieldInput</a> for particular field has already been
+accessed using <a href="#peekField(name:String):com.avsystem.commons.Opt[com.avsystem.commons.serialization.FieldInput]" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#peekField">peekField</a> but has not yet been returned by <a href="#nextField():com.avsystem.commons.serialization.FieldInput" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#nextField">nextField</a> then it MUST be returned at some
+point in the future by <a href="#nextField():com.avsystem.commons.serialization.FieldInput" class="extmbr" name="com.avsystem.commons.serialization.ObjectInput#nextField">nextField</a>.
+</p></div></div>
     </li><li name="com.avsystem.commons.serialization.ObjectInput#skipRemaining" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="skipRemaining():Unit"></a>
       <span class="permalink">
@@ -625,7 +671,7 @@ In other words, serialization format MUST preserve order of object fields.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">skipRemaining</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">skipRemaining</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> → <a href="SequentialInput.html" class="extype" name="com.avsystem.commons.serialization.SequentialInput">SequentialInput</a></dd></dl></div>
@@ -658,7 +704,7 @@ In other words, serialization format MUST preserve order of object fields.
         <div class="parent" name="com.avsystem.commons.serialization.SequentialInput">
               <h3>Inherited from <a href="SequentialInput.html" class="extype" name="com.avsystem.commons.serialization.SequentialInput">SequentialInput</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

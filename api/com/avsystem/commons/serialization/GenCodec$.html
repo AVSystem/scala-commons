@@ -163,10 +163,6 @@
                         <a href="ErrorReportingCodec.html" title="">ErrorReportingCodec</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="FallbackMapCodecs.html" title="Contains readers for maps where there is no DBKeyCodec for key type."></a>
-                        <a href="FallbackMapCodecs.html" title="Contains readers for maps where there is no DBKeyCodec for key type.">FallbackMapCodecs</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
                         <a class="trait" href="FieldInput.html" title="An Input representing an object field."></a>
                         <a href="FieldInput.html" title="An Input representing an object field.">FieldInput</a>
                       </li><li class="current-entities indented4">
@@ -213,10 +209,6 @@
                         <span class="separator"></span>
                         <a class="trait" href="ListOutput.html" title="Represents an abstract sink for serialization of sequences of values."></a>
                         <a href="ListOutput.html" title="Represents an abstract sink for serialization of sequences of values.">ListOutput</a>
-                      </li><li class="current-entities indented4">
-                        <a class="object" href="MacroCodec$.html" title=""></a>
-                        <a class="class" href="MacroCodec.html" title=""></a>
-                        <a href="MacroCodec.html" title="">MacroCodec</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="NestedSealedHierarchyCodec.html" title=""></a>
@@ -327,12 +319,16 @@
                         <a href="outOfOrder.html" title="To be used in conjunction with flatten.">outOfOrder</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="transientDefault.html" title="If some case class field has default value, you can use this annotation on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value."></a>
-                        <a href="transientDefault.html" title="If some case class field has default value, you can use this annotation on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value.">transientDefault</a>
+                        <a class="class" href="transientDefault.html" title="If some case class field has default value or whenAbsent annotation, you can use transientDefault on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value."></a>
+                        <a href="transientDefault.html" title="If some case class field has default value or whenAbsent annotation, you can use transientDefault on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value.">transientDefault</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="transparent.html" title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field."></a>
                         <a href="transparent.html" title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field.">transparent</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="whenAbsent.html" title="An alternative way to provide default value for case class parameter used during deserialization with GenCodec when its field is missing in data being deserialized."></a>
+                        <a href="whenAbsent.html" title="An alternative way to provide default value for case class parameter used during deserialization with GenCodec when its field is missing in data being deserialized.">whenAbsent</a>
                       </li>
               </ul>
             </div>
@@ -358,7 +354,7 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">GenCodec</span><span class="result"> extends <a href="FallbackMapCodecs.html" class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs">FallbackMapCodecs</a> with <a href="TupleGenCodecs.html" class="extype" name="com.avsystem.commons.serialization.TupleGenCodecs">TupleGenCodecs</a></span>
+        <span class="name">GenCodec</span><span class="result"> extends <a href="RecursiveAutoCodecs.html" class="extype" name="com.avsystem.commons.serialization.RecursiveAutoCodecs">RecursiveAutoCodecs</a> with <a href="TupleGenCodecs.html" class="extype" name="com.avsystem.commons.serialization.TupleGenCodecs">TupleGenCodecs</a></span>
       </span>
       </h4>
 
@@ -367,7 +363,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="TupleGenCodecs.html" class="extype" name="com.avsystem.commons.serialization.TupleGenCodecs">TupleGenCodecs</a>, <a href="FallbackMapCodecs.html" class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs">FallbackMapCodecs</a>, <a href="RecursiveAutoCodecs.html" class="extype" name="com.avsystem.commons.serialization.RecursiveAutoCodecs">RecursiveAutoCodecs</a>, <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="TupleGenCodecs.html" class="extype" name="com.avsystem.commons.serialization.TupleGenCodecs">TupleGenCodecs</a>, <a href="RecursiveAutoCodecs.html" class="extype" name="com.avsystem.commons.serialization.RecursiveAutoCodecs">RecursiveAutoCodecs</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -393,7 +389,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.avsystem.commons.serialization.GenCodec"><span>GenCodec</span></li><li class="in" name="com.avsystem.commons.serialization.TupleGenCodecs"><span>TupleGenCodecs</span></li><li class="in" name="com.avsystem.commons.serialization.FallbackMapCodecs"><span>FallbackMapCodecs</span></li><li class="in" name="com.avsystem.commons.serialization.RecursiveAutoCodecs"><span>RecursiveAutoCodecs</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.avsystem.commons.serialization.GenCodec"><span>GenCodec</span></li><li class="in" name="com.avsystem.commons.serialization.TupleGenCodecs"><span>TupleGenCodecs</span></li><li class="in" name="com.avsystem.commons.serialization.RecursiveAutoCodecs"><span>RecursiveAutoCodecs</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -415,32 +411,7 @@
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.avsystem.commons.serialization.GenCodec.Auto" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="Auto[T]extendsAnyValwithProductwithSerializable"></a><a id="Auto[T]:Auto[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#Auto[T]extendsAnyValwithProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="Wrapper over GenCodec which forces fully automatic derivation." href="GenCodec$$Auto.html"><span class="name">Auto</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="codec">codec: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.Auto.T">T</span>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">Wrapper over <code>GenCodec</code> which forces fully automatic derivation.</p><div class="fullcomment"><div class="comment cmt"><p>Wrapper over <code>GenCodec</code> which forces fully automatic derivation.</p><p>If you ask for implicit value of type <code>GenCodec[T]</code>, the codec must be explicitly declared and imported or
-put into implicit scope (e.g. companion object of <code>T</code>), even though it can be automatically implemented
-using <code>materialize</code> or <code>materializeRecursively</code>.</p><p>However, if you ask for implicit value of type <code>GenCodec.Auto[T]</code>, the compiler will always fall back to fully
-automatic derivation if it cannot find already declared <code>GenCodec</code>. Note that since <code>GenCodec.Auto</code> will always
-try to wrap already existing <code>GenCodec</code> (if there is one), you should never explicitly declare any instances
-of <code>GenCodec.Auto</code>. If you need custom serialization, just write a <code>GenCodec</code> and <code>GenCodec.Auto</code> will wrap it.</p><p>Whether you want to use <code>GenCodec</code> or <code>GenCodec.Auto</code> depends on your use case. <code>GenCodec</code> should be generally
-used when you want the programmer to always explicitly state that some type is serializable. For example, if you
-serialize your objects in order to put them into database, you probably want to use <code>GenCodec</code> and not <code>GenCodec.Auto</code>,
-because every type that has been written to database is likely to be bound by backwards compatibility constraints and
-cannot be freely refactored. That's why you want to always explicitly make the decision of making a type serializable.</p></div></div>
-    </li><li name="com.avsystem.commons.serialization.GenCodec.Deferred" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+              <ol><li name="com.avsystem.commons.serialization.GenCodec.Deferred" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="Deferred[T]extendsDeferredInstance[com.avsystem.commons.serialization.GenCodec[T]]withGenCodec[T]"></a><a id="Deferred[T]:Deferred[T]"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#Deferred[T]extendsDeferredInstance[com.avsystem.commons.serialization.GenCodec[T]]withGenCodec[T]" title="Permalink">
@@ -504,7 +475,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
       </span>
       
       
-    </li><li name="com.avsystem.commons.serialization.GenCodec.ObjectCodec" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+    </li><li name="com.avsystem.commons.serialization.GenCodec.ObjectCodec" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="ObjectCodec[T]extendsGenCodec.NullSafeCodec[T]"></a><a id="ObjectCodec[T]:ObjectCodec[T]"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#ObjectCodec[T]extendsGenCodec.NullSafeCodec[T]" title="Permalink">
@@ -516,10 +487,13 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="GenCodec$$ObjectCodec.html"><span class="name">ObjectCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="GenCodec$$NullSafeCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec">NullSafeCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.ObjectCodec.T">T</span>]</span>
+        <a title="Convenience base class for GenCodecs that serialize values as objects." href="GenCodec$$ObjectCodec.html"><span class="name">ObjectCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="GenCodec$$NullSafeCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec">NullSafeCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.ObjectCodec.T">T</span>]</span>
       </span>
       
-      
+      <p class="shortcomment cmt">Convenience base class for <code>GenCodec</code>s that serialize values as objects.</p><div class="fullcomment"><div class="comment cmt"><p>Convenience base class for <code>GenCodec</code>s that serialize values as objects.
+NOTE: if you need to implement a custom <code>GenCodec</code> that writes an object, the best way to do it is to have
+manually implemented <code>apply</code> and <code>unapply</code> in companion object or by using <a href="#fromApplyUnapplyProvider[T](applyUnapplyProvider:Any):com.avsystem.commons.serialization.GenCodec[T]" class="extmbr" name="com.avsystem.commons.serialization.GenCodec#fromApplyUnapplyProvider">GenCodec.fromApplyUnapplyProvider</a>.
+</p></div></div>
     </li><li name="com.avsystem.commons.serialization.GenCodec.ReadFailure" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ReadFailureextendsRuntimeException"></a><a id="ReadFailure:ReadFailure"></a>
       <span class="permalink">
@@ -584,6 +558,34 @@ cannot be freely refactored. That's why you want to always explicitly make the d
       </span>
       
       
+    </li><li name="com.avsystem.commons.serialization.GenCodec.Auto" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="Auto[T]extendsAnyValwithProductwithSerializable"></a><a id="Auto[T]:Auto[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#Auto[T]extendsAnyValwithProductwithSerializable" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a title="Wrapper over GenCodec which forces fully automatic derivation." href="GenCodec$$Auto.html"><span class="name deprecated" title="Deprecated: (Since version 1.28.0) auto codecs will be removed">Auto</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="codec">codec: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.Auto.T">T</span>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Wrapper over <code>GenCodec</code> which forces fully automatic derivation.</p><div class="fullcomment"><div class="comment cmt"><p>Wrapper over <code>GenCodec</code> which forces fully automatic derivation.</p><p>If you ask for implicit value of type <code>GenCodec[T]</code>, the codec must be explicitly declared and imported or
+put into implicit scope (e.g. companion object of <code>T</code>), even though it can be automatically implemented
+using <code>materialize</code> or <code>materializeRecursively</code>.</p><p>However, if you ask for implicit value of type <code>GenCodec.Auto[T]</code>, the compiler will always fall back to fully
+automatic derivation if it cannot find already declared <code>GenCodec</code>. Note that since <code>GenCodec.Auto</code> will always
+try to wrap already existing <code>GenCodec</code> (if there is one), you should never explicitly declare any instances
+of <code>GenCodec.Auto</code>. If you need custom serialization, just write a <code>GenCodec</code> and <code>GenCodec.Auto</code> will wrap it.</p><p>Whether you want to use <code>GenCodec</code> or <code>GenCodec.Auto</code> depends on your use case. <code>GenCodec</code> should be generally
+used when you want the programmer to always explicitly state that some type is serializable. For example, if you
+serialize your objects in order to put them into database, you probably want to use <code>GenCodec</code> and not <code>GenCodec.Auto</code>,
+because every type that has been written to database is likely to be bound by backwards compatibility constraints and
+cannot be freely refactored. That's why you want to always explicitly make the decision of making a type serializable.</p></div><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.28.0)</i> auto codecs will be removed</p></dd></dl></div>
     </li></ol>
             </div>
 
@@ -604,7 +606,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -620,7 +622,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -636,7 +638,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -684,7 +686,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">BooleanCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a>]</span>
+        <span class="name">BooleanCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a>]</span>
       </span>
       
       
@@ -700,7 +702,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">ByteArrayCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]]</span>
+        <span class="name">ByteArrayCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]]</span>
       </span>
       
       
@@ -716,7 +718,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">ByteCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]</span>
+        <span class="name">ByteCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]</span>
       </span>
       
       
@@ -732,7 +734,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">CharCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Char.html#scala.Char" class="extype" name="scala.Char">Char</a>]</span>
+        <span class="name">CharCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Char.html#scala.Char" class="extype" name="scala.Char">Char</a>]</span>
       </span>
       
       
@@ -764,7 +766,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">DoubleCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a>]</span>
+        <span class="name">DoubleCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a>]</span>
       </span>
       
       
@@ -780,7 +782,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">FloatCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Float.html#scala.Float" class="extype" name="scala.Float">Float</a>]</span>
+        <span class="name">FloatCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Float.html#scala.Float" class="extype" name="scala.Float">Float</a>]</span>
       </span>
       
       
@@ -796,7 +798,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">IntCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>]</span>
+        <span class="name">IntCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>]</span>
       </span>
       
       
@@ -988,23 +990,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">LongCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
-      </span>
-      
-      
-    </li><li name="com.avsystem.commons.serialization.GenCodec#NothingAutoCodec" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="NothingAutoCodec:com.avsystem.commons.serialization.GenCodec.Auto[Nothing]"></a><a id="NothingAutoCodec:Auto[Nothing]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#NothingAutoCodec:com.avsystem.commons.serialization.GenCodec.Auto[Nothing]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">lazy val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">NothingAutoCodec</span><span class="result">: <a href="GenCodec$$Auto.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.Auto">Auto</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
+        <span class="name">LongCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a>]</span>
       </span>
       
       
@@ -1020,7 +1006,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">NothingCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
+        <span class="name">NothingCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
       </span>
       
       
@@ -1052,7 +1038,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">ShortCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Short.html#scala.Short" class="extype" name="scala.Short">Short</a>]</span>
+        <span class="name">ShortCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Short.html#scala.Short" class="extype" name="scala.Short">Short</a>]</span>
       </span>
       
       
@@ -1100,7 +1086,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
-        <span class="name">UnitCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a>]</span>
+        <span class="name">UnitCodec</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a>]</span>
       </span>
       
       
@@ -1132,7 +1118,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">arrayCodec</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../index.html#ClassTag[T]=scala.reflect.ClassTag[T]" class="extmbr" name="com.avsystem.commons.ClassTag">commons.ClassTag</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.arrayCodec.T">T</span>]</span>, <span name="arg1">arg1: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.arrayCodec.T">T</span>]</span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.arrayCodec.T">T</span>]]</span>
+        <span class="name">arrayCodec</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../index.html#ClassTag[T]=scala.reflect.ClassTag[T]" class="extmbr" name="com.avsystem.commons.ClassTag">commons.ClassTag</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.arrayCodec.T">T</span>]</span>, <span name="arg1">arg1: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.arrayCodec.T">T</span>]</span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.arrayCodec.T">T</span>]]</span>
       </span>
       
       
@@ -1152,41 +1138,6 @@ cannot be freely refactored. That's why you want to always explicitly make the d
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.GenCodec#autoRead" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="autoRead[T](input:com.avsystem.commons.serialization.Input)(implicitautoCodec:com.avsystem.commons.serialization.GenCodec.Auto[T]):T"></a><a id="autoRead[T](Input)(Auto[T]):T"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#autoRead[T](input:com.avsystem.commons.serialization.Input)(implicitautoCodec:com.avsystem.commons.serialization.GenCodec.Auto[T]):T" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">autoRead</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="input">input: <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="autoCodec">autoCodec: <a href="GenCodec$$Auto.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.Auto">Auto</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.autoRead.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.serialization.GenCodec.autoRead.T">T</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@<a href="../annotation/explicitGenerics.html" class="extype" name="com.avsystem.commons.annotation.explicitGenerics">explicitGenerics</a></span><span class="args">()</span>
-              
-        </dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.GenCodec#autoWrite" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="autoWrite[T](output:com.avsystem.commons.serialization.Output,value:T)(implicitautoCodec:com.avsystem.commons.serialization.GenCodec.Auto[T]):Unit"></a><a id="autoWrite[T](Output,T)(Auto[T]):Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#autoWrite[T](output:com.avsystem.commons.serialization.Output,value:T)(implicitautoCodec:com.avsystem.commons.serialization.GenCodec.Auto[T]):Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">autoWrite</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="output">output: <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></span>, <span name="value">value: <span class="extype" name="com.avsystem.commons.serialization.GenCodec.autoWrite.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="autoCodec">autoCodec: <a href="GenCodec$$Auto.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.Auto">Auto</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.autoWrite.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
-      </span>
-      
-      
     </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="clone():Object"></a><a id="clone():AnyRef"></a>
       <span class="permalink">
@@ -1199,7 +1150,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1223,7 +1174,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">create</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.create.T">T</span></span>, <span name="writeFun">writeFun: (<a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.create.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.create.T">T</span>]</span>
+        <span class="name">create</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.create.T">T</span></span>, <span name="writeFun">writeFun: (<a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.create.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.create.T">T</span>]</span>
       </span>
       
       
@@ -1239,7 +1190,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createList</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="ListInput.html" class="extype" name="com.avsystem.commons.serialization.ListInput">ListInput</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createList.T">T</span></span>, <span name="writeFun">writeFun: (<a href="ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createList.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>, <span name="allowNull">allowNull: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>)</span><span class="result">: <a href="GenCodec$$ListCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ListCodec">ListCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createList.T">T</span>]</span>
+        <span class="name">createList</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="ListInput.html" class="extype" name="com.avsystem.commons.serialization.ListInput">ListInput</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createList.T">T</span></span>, <span name="writeFun">writeFun: (<a href="ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createList.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>, <span name="allowNull">allowNull: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>)</span><span class="result">: <a href="GenCodec$$ListCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ListCodec">ListCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createList.T">T</span>]</span>
       </span>
       
       
@@ -1255,7 +1206,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createNonNull</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNull.T">T</span></span>, <span name="writeFun">writeFun: (<a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNull.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNull.T">T</span>]</span>
+        <span class="name">createNonNull</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNull.T">T</span></span>, <span name="writeFun">writeFun: (<a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNull.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNull.T">T</span>]</span>
       </span>
       
       
@@ -1271,7 +1222,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createNonNullList</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="ListInput.html" class="extype" name="com.avsystem.commons.serialization.ListInput">ListInput</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNullList.T">T</span></span>, <span name="writeFun">writeFun: (<a href="ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNullList.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec$$ListCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ListCodec">ListCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNullList.T">T</span>]</span>
+        <span class="name">createNonNullList</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="ListInput.html" class="extype" name="com.avsystem.commons.serialization.ListInput">ListInput</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNullList.T">T</span></span>, <span name="writeFun">writeFun: (<a href="ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNullList.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec$$ListCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ListCodec">ListCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNullList.T">T</span>]</span>
       </span>
       
       
@@ -1287,7 +1238,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createNonNullObject</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNullObject.T">T</span></span>, <span name="writeFun">writeFun: (<a href="ObjectOutput.html" class="extype" name="com.avsystem.commons.serialization.ObjectOutput">ObjectOutput</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNullObject.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec$$ObjectCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ObjectCodec">ObjectCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNullObject.T">T</span>]</span>
+        <span class="name">createNonNullObject</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNullObject.T">T</span></span>, <span name="writeFun">writeFun: (<a href="ObjectOutput.html" class="extype" name="com.avsystem.commons.serialization.ObjectOutput">ObjectOutput</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNullObject.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec$$ObjectCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ObjectCodec">ObjectCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNonNullObject.T">T</span>]</span>
       </span>
       
       
@@ -1303,7 +1254,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createNullSafe</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullSafe.T">T</span></span>, <span name="writeFun">writeFun: (<a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullSafe.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>, <span name="allowNull">allowNull: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullSafe.T">T</span>]</span>
+        <span class="name">createNullSafe</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullSafe.T">T</span></span>, <span name="writeFun">writeFun: (<a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullSafe.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>, <span name="allowNull">allowNull: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullSafe.T">T</span>]</span>
       </span>
       
       
@@ -1319,7 +1270,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createNullable</span><span class="tparams">[<span name="T">T &lt;: <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>]</span><span class="params">(<span name="readFun">readFun: (<a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullable.T">T</span></span>, <span name="writeFun">writeFun: (<a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullable.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullable.T">T</span>]</span>
+        <span class="name">createNullable</span><span class="tparams">[<span name="T">T &lt;: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>]</span><span class="params">(<span name="readFun">readFun: (<a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullable.T">T</span></span>, <span name="writeFun">writeFun: (<a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullable.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullable.T">T</span>]</span>
       </span>
       
       
@@ -1335,7 +1286,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createNullableList</span><span class="tparams">[<span name="T">T &lt;: <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>]</span><span class="params">(<span name="readFun">readFun: (<a href="ListInput.html" class="extype" name="com.avsystem.commons.serialization.ListInput">ListInput</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullableList.T">T</span></span>, <span name="writeFun">writeFun: (<a href="ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullableList.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec$$ListCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ListCodec">ListCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullableList.T">T</span>]</span>
+        <span class="name">createNullableList</span><span class="tparams">[<span name="T">T &lt;: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>]</span><span class="params">(<span name="readFun">readFun: (<a href="ListInput.html" class="extype" name="com.avsystem.commons.serialization.ListInput">ListInput</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullableList.T">T</span></span>, <span name="writeFun">writeFun: (<a href="ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullableList.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec$$ListCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ListCodec">ListCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullableList.T">T</span>]</span>
       </span>
       
       
@@ -1351,11 +1302,11 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createNullableObject</span><span class="tparams">[<span name="T">T &lt;: <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>]</span><span class="params">(<span name="readFun">readFun: (<a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullableObject.T">T</span></span>, <span name="writeFun">writeFun: (<a href="ObjectOutput.html" class="extype" name="com.avsystem.commons.serialization.ObjectOutput">ObjectOutput</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullableObject.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec$$ObjectCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ObjectCodec">ObjectCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullableObject.T">T</span>]</span>
+        <span class="name">createNullableObject</span><span class="tparams">[<span name="T">T &lt;: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>]</span><span class="params">(<span name="readFun">readFun: (<a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullableObject.T">T</span></span>, <span name="writeFun">writeFun: (<a href="ObjectOutput.html" class="extype" name="com.avsystem.commons.serialization.ObjectOutput">ObjectOutput</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullableObject.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec$$ObjectCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ObjectCodec">ObjectCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createNullableObject.T">T</span>]</span>
       </span>
       
       
-    </li><li name="com.avsystem.commons.serialization.GenCodec#createObject" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="com.avsystem.commons.serialization.GenCodec#createObject" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="createObject[T](readFun:com.avsystem.commons.serialization.ObjectInput=&gt;T,writeFun:(com.avsystem.commons.serialization.ObjectOutput,T)=&gt;Any,allowNull:Boolean):com.avsystem.commons.serialization.GenCodec.ObjectCodec[T]"></a><a id="createObject[T]((ObjectInput)⇒T,(ObjectOutput,T)⇒Any,Boolean):ObjectCodec[T]"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#createObject[T](readFun:com.avsystem.commons.serialization.ObjectInput=&gt;T,writeFun:(com.avsystem.commons.serialization.ObjectOutput,T)=&gt;Any,allowNull:Boolean):com.avsystem.commons.serialization.GenCodec.ObjectCodec[T]" title="Permalink">
@@ -1367,10 +1318,14 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">createObject</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createObject.T">T</span></span>, <span name="writeFun">writeFun: (<a href="ObjectOutput.html" class="extype" name="com.avsystem.commons.serialization.ObjectOutput">ObjectOutput</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createObject.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>, <span name="allowNull">allowNull: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>)</span><span class="result">: <a href="GenCodec$$ObjectCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ObjectCodec">ObjectCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createObject.T">T</span>]</span>
+        <span class="name">createObject</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="readFun">readFun: (<a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createObject.T">T</span></span>, <span name="writeFun">writeFun: (<a href="ObjectOutput.html" class="extype" name="com.avsystem.commons.serialization.ObjectOutput">ObjectOutput</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.createObject.T">T</span>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>, <span name="allowNull">allowNull: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>)</span><span class="result">: <a href="GenCodec$$ObjectCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.ObjectCodec">ObjectCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.createObject.T">T</span>]</span>
       </span>
       
-      
+      <p class="shortcomment cmt">Helper method to manually implement a <code>GenCodec</code> that writes an object.</p><div class="fullcomment"><div class="comment cmt"><p>Helper method to manually implement a <code>GenCodec</code> that writes an object. NOTE: in most cases the easiest way to
+have a custom object codec is to manually implement <code>apply</code> and <code>unapply</code>/<code>unapplySeq</code> methods in companion object
+of your type or use <a href="#fromApplyUnapplyProvider[T](applyUnapplyProvider:Any):com.avsystem.commons.serialization.GenCodec[T]" class="extmbr" name="com.avsystem.commons.serialization.GenCodec#fromApplyUnapplyProvider">fromApplyUnapplyProvider</a> if the type comes from a third party code and you can't
+modify its companion object.
+</p></div></div>
     </li><li name="com.avsystem.commons.serialization.GenCodec#eitherCodec" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="eitherCodec[A,B](implicitevidence$21:com.avsystem.commons.serialization.GenCodec[A],implicitevidence$22:com.avsystem.commons.serialization.GenCodec[B]):com.avsystem.commons.serialization.GenCodec[Either[A,B]]"></a><a id="eitherCodec[A,B](GenCodec[A],GenCodec[B]):GenCodec[Either[A,B]]"></a>
       <span class="permalink">
@@ -1399,7 +1354,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1415,42 +1370,10 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.FallbackMapCodecs#fallbackJMapCodec" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="fallbackJMapCodec[M[X,Y]&lt;:com.avsystem.commons.JMap[X,Y],K,V](implicitevidence$30:com.avsystem.commons.serialization.GenCodec[K],implicitevidence$31:com.avsystem.commons.serialization.GenCodec[V],implicitcbf:com.avsystem.commons.jiop.JCanBuildFrom[(K,V),M[K,V]]):com.avsystem.commons.serialization.GenCodec[M[K,V]withcom.avsystem.commons.JMap[K,V]]"></a><a id="fallbackJMapCodec[M[X,Y]&lt;:commons.JMap[X,Y],K,V](GenCodec[K],GenCodec[V],JCanBuildFrom[(K,V),M[K,V]]):GenCodec[M[K,V]withcommons.JMap[K,V]]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#fallbackJMapCodec[M[X,Y]&lt;:com.avsystem.commons.JMap[X,Y],K,V](implicitevidence$30:com.avsystem.commons.serialization.GenCodec[K],implicitevidence$31:com.avsystem.commons.serialization.GenCodec[V],implicitcbf:com.avsystem.commons.jiop.JCanBuildFrom[(K,V),M[K,V]]):com.avsystem.commons.serialization.GenCodec[M[K,V]withcom.avsystem.commons.JMap[K,V]]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">fallbackJMapCodec</span><span class="tparams">[<span name="M">M<span class="tparams">[<span name="X">X</span>, <span name="Y">Y</span>]</span> &lt;: <a href="../index.html#JMap[K,V]=java.util.Map[K,V]" class="extmbr" name="com.avsystem.commons.JMap">commons.JMap</a>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.M.X">X</span>, <span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.M.Y">Y</span>]</span>, <span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.K">K</span>]</span>, <span name="arg1">arg1: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.V">V</span>]</span>, <span name="cbf">cbf: <a href="../jiop/JCanBuildFrom.html" class="extype" name="com.avsystem.commons.jiop.JCanBuildFrom">JCanBuildFrom</a>[(<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.V">V</span>), <span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.M">M</span>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.V">V</span>]]</span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.M">M</span>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.V">V</span>] with <a href="../index.html#JMap[K,V]=java.util.Map[K,V]" class="extmbr" name="com.avsystem.commons.JMap">commons.JMap</a>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackJMapCodec.V">V</span>]]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="FallbackMapCodecs.html" class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs">FallbackMapCodecs</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.FallbackMapCodecs#fallbackMapCodec" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="fallbackMapCodec[M[X,Y]&lt;:com.avsystem.commons.BMap[X,Y],K,V](implicitevidence$28:com.avsystem.commons.serialization.GenCodec[K],implicitevidence$29:com.avsystem.commons.serialization.GenCodec[V],implicitcbf:scala.collection.generic.CanBuildFrom[Nothing,(K,V),M[K,V]]):com.avsystem.commons.serialization.GenCodec[M[K,V]withcom.avsystem.commons.BMap[K,V]]"></a><a id="fallbackMapCodec[M[X,Y]&lt;:commons.BMap[X,Y],K,V](GenCodec[K],GenCodec[V],CanBuildFrom[Nothing,(K,V),M[K,V]]):GenCodec[M[K,V]withcommons.BMap[K,V]]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#fallbackMapCodec[M[X,Y]&lt;:com.avsystem.commons.BMap[X,Y],K,V](implicitevidence$28:com.avsystem.commons.serialization.GenCodec[K],implicitevidence$29:com.avsystem.commons.serialization.GenCodec[V],implicitcbf:scala.collection.generic.CanBuildFrom[Nothing,(K,V),M[K,V]]):com.avsystem.commons.serialization.GenCodec[M[K,V]withcom.avsystem.commons.BMap[K,V]]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">fallbackMapCodec</span><span class="tparams">[<span name="M">M<span class="tparams">[<span name="X">X</span>, <span name="Y">Y</span>]</span> &lt;: <a href="../index.html#BMap[A,+B]=scala.collection.Map[A,B]" class="extmbr" name="com.avsystem.commons.BMap">commons.BMap</a>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.M.X">X</span>, <span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.M.Y">Y</span>]</span>, <span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.K">K</span>]</span>, <span name="arg1">arg1: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.V">V</span>]</span>, <span name="cbf">cbf: <a href="http://www.scala-lang.org/api/2.12.5/scala/collection/generic/CanBuildFrom.html#scala.collection.generic.CanBuildFrom" class="extype" name="scala.collection.generic.CanBuildFrom">CanBuildFrom</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>, (<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.V">V</span>), <span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.M">M</span>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.V">V</span>]]</span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.M">M</span>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.V">V</span>] with <a href="../index.html#BMap[A,+B]=scala.collection.Map[A,B]" class="extmbr" name="com.avsystem.commons.BMap">commons.BMap</a>[<span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs.fallbackMapCodec.V">V</span>]]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="FallbackMapCodecs.html" class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs">FallbackMapCodecs</a></dd></dl></div>
     </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <span class="permalink">
@@ -1463,7 +1386,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1501,7 +1424,7 @@ cannot be freely refactored. That's why you want to always explicitly make the d
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">fromApplyUnapplyProvider</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="applyUnapplyProvider">applyUnapplyProvider: <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.fromApplyUnapplyProvider.T">T</span>]</span>
+        <span class="name">fromApplyUnapplyProvider</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="applyUnapplyProvider">applyUnapplyProvider: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.fromApplyUnapplyProvider.T">T</span>]</span>
       </span>
       
       <p class="shortcomment cmt">Materializes a <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a> for type <code>T</code> using <code>apply</code> and <code>unapply</code>/<code>unapplySeq</code> methods available on
@@ -1566,7 +1489,7 @@ of type <code>T</code>.</p><p>Example:</p><pre><span class="kw">class</span> Thi
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -1585,7 +1508,7 @@ of type <code>T</code>.</p><p>Example:</p><pre><span class="kw">class</span> Thi
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -1637,6 +1560,22 @@ of type <code>T</code>.</p><p>Example:</p><pre><span class="kw">class</span> Thi
       </span>
       
       
+    </li><li name="com.avsystem.commons.serialization.GenCodec#macroGeneratedCodec" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="macroGeneratedCodec[T]:com.avsystem.commons.misc.MacroGenerated[com.avsystem.commons.serialization.GenCodec[T]]"></a><a id="macroGeneratedCodec[T]:MacroGenerated[GenCodec[T]]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#macroGeneratedCodec[T]:com.avsystem.commons.misc.MacroGenerated[com.avsystem.commons.serialization.GenCodec[T]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit macro </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">macroGeneratedCodec</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="../misc/MacroGenerated.html" class="extype" name="com.avsystem.commons.misc.MacroGenerated">MacroGenerated</a>[<a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.macroGeneratedCodec.T">T</span>]]</span>
+      </span>
+      
+      
     </li><li name="com.avsystem.commons.serialization.GenCodec#mapCodec" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="mapCodec[M[X,Y]&lt;:com.avsystem.commons.BMap[X,Y],K,V](implicitevidence$12:com.avsystem.commons.serialization.GenKeyCodec[K],implicitevidence$13:com.avsystem.commons.serialization.GenCodec[V],implicitcbf:scala.collection.generic.CanBuildFrom[Nothing,(K,V),M[K,V]]):com.avsystem.commons.serialization.GenCodec[M[K,V]withcom.avsystem.commons.BMap[K,V]]"></a><a id="mapCodec[M[X,Y]&lt;:commons.BMap[X,Y],K,V](GenKeyCodec[K],GenCodec[V],CanBuildFrom[Nothing,(K,V),M[K,V]]):GenCodec[M[K,V]withcommons.BMap[K,V]]"></a>
       <span class="permalink">
@@ -1649,7 +1588,7 @@ of type <code>T</code>.</p><p>Example:</p><pre><span class="kw">class</span> Thi
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">mapCodec</span><span class="tparams">[<span name="M">M<span class="tparams">[<span name="X">X</span>, <span name="Y">Y</span>]</span> &lt;: <a href="../index.html#BMap[A,+B]=scala.collection.Map[A,B]" class="extmbr" name="com.avsystem.commons.BMap">commons.BMap</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.M.X">X</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.M.Y">Y</span>]</span>, <span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.K">K</span>]</span>, <span name="arg1">arg1: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.V">V</span>]</span>, <span name="cbf">cbf: <a href="http://www.scala-lang.org/api/2.12.5/scala/collection/generic/CanBuildFrom.html#scala.collection.generic.CanBuildFrom" class="extype" name="scala.collection.generic.CanBuildFrom">CanBuildFrom</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>, (<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.V">V</span>), <span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.M">M</span>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.V">V</span>]]</span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.M">M</span>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.V">V</span>] with <a href="../index.html#BMap[A,+B]=scala.collection.Map[A,B]" class="extmbr" name="com.avsystem.commons.BMap">commons.BMap</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.V">V</span>]]</span>
+        <span class="name">mapCodec</span><span class="tparams">[<span name="M">M<span class="tparams">[<span name="X">X</span>, <span name="Y">Y</span>]</span> &lt;: <a href="../index.html#BMap[A,+B]=scala.collection.Map[A,B]" class="extmbr" name="com.avsystem.commons.BMap">commons.BMap</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.M.X">X</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.M.Y">Y</span>]</span>, <span name="K">K</span>, <span name="V">V</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="GenKeyCodec.html" class="extype" name="com.avsystem.commons.serialization.GenKeyCodec">GenKeyCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.K">K</span>]</span>, <span name="arg1">arg1: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.V">V</span>]</span>, <span name="cbf">cbf: <a href="http://www.scala-lang.org/api/2.12.6/scala/collection/generic/CanBuildFrom.html#scala.collection.generic.CanBuildFrom" class="extype" name="scala.collection.generic.CanBuildFrom">CanBuildFrom</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>, (<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.V">V</span>), <span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.M">M</span>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.V">V</span>]]</span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.M">M</span>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.V">V</span>] with <a href="../index.html#BMap[A,+B]=scala.collection.Map[A,B]" class="extmbr" name="com.avsystem.commons.BMap">commons.BMap</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.K">K</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.mapCodec.V">V</span>]]</span>
       </span>
       
       
@@ -1674,22 +1613,6 @@ automatically materialized with the same mechanism</li></ul><p>Note that automat
 fields must have their own codecs independently declared). If you want recursive materialization, use
 <code>materializeRecursively</code>.
 </p></div></div>
-    </li><li name="com.avsystem.commons.serialization.RecursiveAutoCodecs#materializeAuto" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="materializeAuto[T]:com.avsystem.commons.serialization.GenCodec.Auto[T]"></a><a id="materializeAuto[T]:Auto[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#materializeAuto[T]:com.avsystem.commons.serialization.GenCodec.Auto[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit macro </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">materializeAuto</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="GenCodec$$Auto.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.Auto">Auto</a>[<span class="extype" name="com.avsystem.commons.serialization.RecursiveAutoCodecs.materializeAuto.T">T</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RecursiveAutoCodecs.html" class="extype" name="com.avsystem.commons.serialization.RecursiveAutoCodecs">RecursiveAutoCodecs</a></dd></dl></div>
     </li><li name="com.avsystem.commons.serialization.RecursiveAutoCodecs#materializeImplicitly" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="materializeImplicitly[T](implicitallow:com.avsystem.commons.derivation.AllowImplicitMacro[com.avsystem.commons.serialization.GenCodec[T]]):com.avsystem.commons.serialization.GenCodec[T]"></a><a id="materializeImplicitly[T](AllowImplicitMacro[GenCodec[T]]):GenCodec[T]"></a>
       <span class="permalink">
@@ -1752,7 +1675,7 @@ fields must have their own codecs independently declared). If you want recursive
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -1768,7 +1691,7 @@ fields must have their own codecs independently declared). If you want recursive
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1787,7 +1710,7 @@ fields must have their own codecs independently declared). If you want recursive
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -1854,7 +1777,7 @@ fields must have their own codecs independently declared). If you want recursive
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">optionCodec</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.optionCodec.T">T</span>]</span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.optionCodec.T">T</span>]]</span>
+        <span class="name">optionCodec</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.optionCodec.T">T</span>]</span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.optionCodec.T">T</span>]]</span>
       </span>
       
       
@@ -1889,7 +1812,7 @@ fields must have their own codecs independently declared). If you want recursive
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">seqCodec</span><span class="tparams">[<span name="C">C<span class="tparams">[<span name="X">X</span>]</span> &lt;: <a href="../index.html#BSeq[+A]=Seq[A]" class="extmbr" name="com.avsystem.commons.BSeq">commons.BSeq</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.C.X">X</span>]</span>, <span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.T">T</span>]</span>, <span name="cbf">cbf: <a href="http://www.scala-lang.org/api/2.12.5/scala/collection/generic/CanBuildFrom.html#scala.collection.generic.CanBuildFrom" class="extype" name="scala.collection.generic.CanBuildFrom">CanBuildFrom</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.T">T</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.C">C</span>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.T">T</span>]]</span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.C">C</span>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.T">T</span>] with <a href="../index.html#BSeq[+A]=Seq[A]" class="extmbr" name="com.avsystem.commons.BSeq">commons.BSeq</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.T">T</span>]]</span>
+        <span class="name">seqCodec</span><span class="tparams">[<span name="C">C<span class="tparams">[<span name="X">X</span>]</span> &lt;: <a href="../index.html#BSeq[+A]=Seq[A]" class="extmbr" name="com.avsystem.commons.BSeq">commons.BSeq</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.C.X">X</span>]</span>, <span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.T">T</span>]</span>, <span name="cbf">cbf: <a href="http://www.scala-lang.org/api/2.12.6/scala/collection/generic/CanBuildFrom.html#scala.collection.generic.CanBuildFrom" class="extype" name="scala.collection.generic.CanBuildFrom">CanBuildFrom</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.T">T</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.C">C</span>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.T">T</span>]]</span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.C">C</span>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.T">T</span>] with <a href="../index.html#BSeq[+A]=Seq[A]" class="extmbr" name="com.avsystem.commons.BSeq">commons.BSeq</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.seqCodec.T">T</span>]]</span>
       </span>
       
       
@@ -1905,7 +1828,7 @@ fields must have their own codecs independently declared). If you want recursive
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">setCodec</span><span class="tparams">[<span name="C">C<span class="tparams">[<span name="X">X</span>]</span> &lt;: <a href="../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.C.X">X</span>]</span>, <span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.T">T</span>]</span>, <span name="cbf">cbf: <a href="http://www.scala-lang.org/api/2.12.5/scala/collection/generic/CanBuildFrom.html#scala.collection.generic.CanBuildFrom" class="extype" name="scala.collection.generic.CanBuildFrom">CanBuildFrom</a>[<a href="http://www.scala-lang.org/api/2.12.5/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.T">T</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.C">C</span>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.T">T</span>]]</span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.C">C</span>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.T">T</span>] with <a href="../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.T">T</span>]]</span>
+        <span class="name">setCodec</span><span class="tparams">[<span name="C">C<span class="tparams">[<span name="X">X</span>]</span> &lt;: <a href="../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.C.X">X</span>]</span>, <span name="T">T</span>]</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.T">T</span>]</span>, <span name="cbf">cbf: <a href="http://www.scala-lang.org/api/2.12.6/scala/collection/generic/CanBuildFrom.html#scala.collection.generic.CanBuildFrom" class="extype" name="scala.collection.generic.CanBuildFrom">CanBuildFrom</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.T">T</span>, <span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.C">C</span>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.T">T</span>]]</span>)</span><span class="result">: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.C">C</span>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.T">T</span>] with <a href="../index.html#BSet[A]=scala.collection.Set[A]" class="extmbr" name="com.avsystem.commons.BSet">commons.BSet</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.setCodec.T">T</span>]]</span>
       </span>
       
       
@@ -2321,7 +2244,7 @@ fields must have their own codecs independently declared). If you want recursive
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -2343,7 +2266,7 @@ fields must have their own codecs independently declared). If you want recursive
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.5/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -2365,7 +2288,7 @@ fields must have their own codecs independently declared). If you want recursive
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.5/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -2389,7 +2312,7 @@ fields must have their own codecs independently declared). If you want recursive
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">write</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="output">output: <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></span>, <span name="value">value: <span class="extype" name="com.avsystem.commons.serialization.GenCodec.write.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="codec">codec: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.write.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.5/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">write</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="output">output: <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></span>, <span name="value">value: <span class="extype" name="com.avsystem.commons.serialization.GenCodec.write.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="codec">codec: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.write.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       
@@ -2399,20 +2322,101 @@ fields must have their own codecs independently declared). If you want recursive
 
         
 
-        
+        <div class="values members">
+              <h3>Deprecated Value Members</h3>
+              <ol><li name="com.avsystem.commons.serialization.GenCodec#NothingAutoCodec" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="NothingAutoCodec:com.avsystem.commons.serialization.GenCodec.Auto[Nothing]"></a><a id="NothingAutoCodec:Auto[Nothing]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#NothingAutoCodec:com.avsystem.commons.serialization.GenCodec.Auto[Nothing]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">lazy val</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 1.28.0) auto codecs will be removed">NothingAutoCodec</span><span class="result">: <a href="GenCodec$$Auto.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.Auto">Auto</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Nothing.html#scala.Nothing" class="extype" name="scala.Nothing">Nothing</a>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@silent</span><span class="args">()</span>
+              
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.28.0)</i> auto codecs will be removed</p></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.GenCodec#autoRead" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="autoRead[T](input:com.avsystem.commons.serialization.Input)(implicitautoCodec:com.avsystem.commons.serialization.GenCodec.Auto[T]):T"></a><a id="autoRead[T](Input)(Auto[T]):T"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#autoRead[T](input:com.avsystem.commons.serialization.Input)(implicitautoCodec:com.avsystem.commons.serialization.GenCodec.Auto[T]):T" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 1.28.0) auto codecs will be removed">autoRead</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="input">input: <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="autoCodec">autoCodec: <a href="GenCodec$$Auto.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.Auto">Auto</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.autoRead.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.serialization.GenCodec.autoRead.T">T</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@<a href="../annotation/explicitGenerics.html" class="extype" name="com.avsystem.commons.annotation.explicitGenerics">explicitGenerics</a></span><span class="args">()</span>
+              
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.28.0)</i> auto codecs will be removed</p></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.GenCodec#autoWrite" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="autoWrite[T](output:com.avsystem.commons.serialization.Output,value:T)(implicitautoCodec:com.avsystem.commons.serialization.GenCodec.Auto[T]):Unit"></a><a id="autoWrite[T](Output,T)(Auto[T]):Unit"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#autoWrite[T](output:com.avsystem.commons.serialization.Output,value:T)(implicitautoCodec:com.avsystem.commons.serialization.GenCodec.Auto[T]):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 1.28.0) auto codecs will be removed">autoWrite</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="output">output: <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></span>, <span name="value">value: <span class="extype" name="com.avsystem.commons.serialization.GenCodec.autoWrite.T">T</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="autoCodec">autoCodec: <a href="GenCodec$$Auto.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.Auto">Auto</a>[<span class="extype" name="com.avsystem.commons.serialization.GenCodec.autoWrite.T">T</span>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.28.0)</i> auto codecs will be removed</p></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.RecursiveAutoCodecs#materializeAuto" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="materializeAuto[T]:com.avsystem.commons.serialization.GenCodec.Auto[T]"></a><a id="materializeAuto[T]:Auto[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/GenCodec$.html#materializeAuto[T]:com.avsystem.commons.serialization.GenCodec.Auto[T]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit macro </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 1.28.0) auto codecs will be removed">materializeAuto</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="GenCodec$$Auto.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.Auto">Auto</a>[<span class="extype" name="com.avsystem.commons.serialization.RecursiveAutoCodecs.materializeAuto.T">T</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RecursiveAutoCodecs.html" class="extype" name="com.avsystem.commons.serialization.RecursiveAutoCodecs">RecursiveAutoCodecs</a></dd><dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.28.0)</i> auto codecs will be removed</p></dd></dl></div>
+    </li></ol>
+            </div>
         </div>
 
         <div id="inheritedMembers">
         <div class="parent" name="com.avsystem.commons.serialization.TupleGenCodecs">
               <h3>Inherited from <a href="TupleGenCodecs.html" class="extype" name="com.avsystem.commons.serialization.TupleGenCodecs">TupleGenCodecs</a></h3>
-            </div><div class="parent" name="com.avsystem.commons.serialization.FallbackMapCodecs">
-              <h3>Inherited from <a href="FallbackMapCodecs.html" class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs">FallbackMapCodecs</a></h3>
             </div><div class="parent" name="com.avsystem.commons.serialization.RecursiveAutoCodecs">
               <h3>Inherited from <a href="RecursiveAutoCodecs.html" class="extype" name="com.avsystem.commons.serialization.RecursiveAutoCodecs">RecursiveAutoCodecs</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

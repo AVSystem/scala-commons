@@ -339,10 +339,6 @@
                         <a href="ErrorReportingCodec.html" title="">ErrorReportingCodec</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="FallbackMapCodecs.html" title="Contains readers for maps where there is no DBKeyCodec for key type."></a>
-                        <a href="FallbackMapCodecs.html" title="Contains readers for maps where there is no DBKeyCodec for key type.">FallbackMapCodecs</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
                         <a class="trait" href="FieldInput.html" title="An Input representing an object field."></a>
                         <a href="FieldInput.html" title="An Input representing an object field.">FieldInput</a>
                       </li><li class="current-entities indented4">
@@ -389,10 +385,6 @@
                         <span class="separator"></span>
                         <a class="trait" href="ListOutput.html" title="Represents an abstract sink for serialization of sequences of values."></a>
                         <a href="ListOutput.html" title="Represents an abstract sink for serialization of sequences of values.">ListOutput</a>
-                      </li><li class="current-entities indented4">
-                        <a class="object" href="MacroCodec$.html" title=""></a>
-                        <a class="class" href="MacroCodec.html" title=""></a>
-                        <a href="MacroCodec.html" title="">MacroCodec</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="NestedSealedHierarchyCodec.html" title=""></a>
@@ -503,12 +495,16 @@
                         <a href="outOfOrder.html" title="To be used in conjunction with flatten.">outOfOrder</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="transientDefault.html" title="If some case class field has default value, you can use this annotation on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value."></a>
-                        <a href="transientDefault.html" title="If some case class field has default value, you can use this annotation on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value.">transientDefault</a>
+                        <a class="class" href="transientDefault.html" title="If some case class field has default value or whenAbsent annotation, you can use transientDefault on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value."></a>
+                        <a href="transientDefault.html" title="If some case class field has default value or whenAbsent annotation, you can use transientDefault on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value.">transientDefault</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="transparent.html" title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field."></a>
                         <a href="transparent.html" title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field.">transparent</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="whenAbsent.html" title="An alternative way to provide default value for case class parameter used during deserialization with GenCodec when its field is missing in data being deserialized."></a>
+                        <a href="whenAbsent.html" title="An alternative way to provide default value for case class parameter used during deserialization with GenCodec when its field is missing in data being deserialized.">whenAbsent</a>
                       </li><li name="com.avsystem.commons.spring" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="spring"></a><a id="spring:spring"></a>
       <span class="permalink">
@@ -652,24 +648,6 @@
       </span>
       
       
-    </li><li name="com.avsystem.commons.serialization.FallbackMapCodecs" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="FallbackMapCodecsextendsRecursiveAutoCodecs"></a><a id="FallbackMapCodecs:FallbackMapCodecs"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/index.html#FallbackMapCodecsextendsRecursiveAutoCodecs" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">trait</span>
-      </span>
-      <span class="symbol">
-        <a title="Contains readers for maps where there is no DBKeyCodec for key type." href="FallbackMapCodecs.html"><span class="name">FallbackMapCodecs</span></a><span class="result"> extends <a href="RecursiveAutoCodecs.html" class="extype" name="com.avsystem.commons.serialization.RecursiveAutoCodecs">RecursiveAutoCodecs</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">Contains readers for maps where there is no DBKeyCodec for key type.</p><div class="fullcomment"><div class="comment cmt"><p>Contains readers for maps where there is no DBKeyCodec for key type. In such case, we assume reading from a list
-of key-value pairs instead of JSON object.
-</p></div></div>
     </li><li name="com.avsystem.commons.serialization.FieldInput" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="FieldInputextendsInput"></a><a id="FieldInput:FieldInput"></a>
       <span class="permalink">
@@ -699,7 +677,7 @@ of key-value pairs instead of JSON object.
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="FieldValues.html"><span class="name">FieldValues</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="FieldValues.html"><span class="name">FieldValues</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -731,7 +709,7 @@ of key-value pairs instead of JSON object.
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Type class for types that can be serialized to Output (format-agnostic &quot;output stream&quot;) and deserialized from Input (format-agnostic &quot;input stream&quot;)." href="GenCodec.html"><span class="name">GenCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Type class for types that can be serialized to Output (format-agnostic &quot;output stream&quot;) and deserialized from Input (format-agnostic &quot;input stream&quot;)." href="GenCodec.html"><span class="name">GenCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Type class for types that can be serialized to <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> (format-agnostic &quot;output stream&quot;) and deserialized
@@ -760,7 +738,7 @@ If you want fully automatic derivation, use <a href="GenCodec$$Auto.html" class=
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Typeclass which implements two-directional conversion between values of some type and field names used in ObjectOutput.writeField and ObjectInput.nextField (FieldInput.fieldName)." href="GenKeyCodec.html"><span class="name">GenKeyCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Typeclass which implements two-directional conversion between values of some type and field names used in ObjectOutput.writeField and ObjectInput.nextField (FieldInput.fieldName)." href="GenKeyCodec.html"><span class="name">GenKeyCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Typeclass which implements two-directional conversion between values of some type and field names
@@ -775,9 +753,9 @@ Every type which has a natural, unambiguous string representation should have a 
               
         </dd></dl></div>
     </li><li name="com.avsystem.commons.serialization.GenRef" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="GenRef[-S,+T]extendsS=&gt;TwithProductwithSerializable"></a><a id="GenRef[-S,+T]:GenRef[S,T]"></a>
+      <a id="GenRef[-S,+T]extendsProductwithSerializable"></a><a id="GenRef[-S,+T]:GenRef[S,T]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/index.html#GenRef[-S,+T]extendsS=&gt;TwithProductwithSerializable" title="Permalink">
+      <a href="../../../../com/avsystem/commons/serialization/index.html#GenRef[-S,+T]extendsProductwithSerializable" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -786,11 +764,11 @@ Every type which has a natural, unambiguous string representation should have a 
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="GenRef.html"><span class="name">GenRef</span></a><span class="tparams">[<span name="S">-S</span>, <span name="T">+T</span>]</span><span class="params">(<span name="fun">fun: (<span class="extype" name="com.avsystem.commons.serialization.GenRef.S">S</span>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenRef.T">T</span></span>, <span name="rawRef">rawRef: <a href="RawRef.html" class="extype" name="com.avsystem.commons.serialization.RawRef">RawRef</a></span>)</span><span class="result"> extends (<span class="extype" name="com.avsystem.commons.serialization.GenRef.S">S</span>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenRef.T">T</span> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="GenRef.html"><span class="name">GenRef</span></a><span class="tparams">[<span name="S">-S</span>, <span name="T">+T</span>]</span><span class="params">(<span name="fun">fun: (<span class="extype" name="com.avsystem.commons.serialization.GenRef.S">S</span>) ⇒ <span class="extype" name="com.avsystem.commons.serialization.GenRef.T">T</span></span>, <span name="rawRef">rawRef: <a href="RawRef.html" class="extype" name="com.avsystem.commons.serialization.RawRef">RawRef</a></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
-    </li><li name="com.avsystem.commons.serialization.HasGenCodec" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+    </li><li name="com.avsystem.commons.serialization.HasGenCodec" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="HasGenCodec[T]extendsAnyRef"></a><a id="HasGenCodec[T]:HasGenCodec[T]"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/serialization/index.html#HasGenCodec[T]extendsAnyRef" title="Permalink">
@@ -802,13 +780,10 @@ Every type which has a natural, unambiguous string representation should have a 
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Convenience abstract class for companion objects of types that have a GenCodec." href="HasGenCodec.html"><span class="name">HasGenCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Convenience abstract class for companion objects of types that have a GenCodec." href="HasGenCodec.html"><span class="name">HasGenCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
-      <p class="shortcomment cmt">Convenience abstract class for companion objects of types that have a <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Convenience abstract class for companion objects of types that have a <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>.
-Unfortunately, due to compiler and language limitations this only works for non-generic case classes
-without default constructor arguments.
-</p></div></div>
+      <p class="shortcomment cmt">Convenience abstract class for companion objects of types that have a <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>.</p>
     </li><li name="com.avsystem.commons.serialization.Input" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="InputextendsAny"></a><a id="Input:Input"></a>
       <span class="permalink">
@@ -821,7 +796,7 @@ without default constructor arguments.
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Represents an abstract source from which a value may be deserialized (read)." href="Input.html"><span class="name">Input</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
+        <a title="Represents an abstract source from which a value may be deserialized (read)." href="Input.html"><span class="name">Input</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
       </span>
       
       <p class="shortcomment cmt">Represents an abstract source from which a value may be deserialized (read).</p><div class="fullcomment"><div class="comment cmt"><p>Represents an abstract source from which a value may be deserialized (read).
@@ -843,7 +818,7 @@ successful value or by calling <code>skip()</code>. Also, <a href="ListInput.htm
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Represents the type of value inside and Input that can be read from it." href="InputType.html"><span class="name">InputType</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Represents the type of value inside and Input that can be read from it." href="InputType.html"><span class="name">InputType</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Represents the type of value inside and <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> that can be read from it.</p><div class="fullcomment"><div class="comment cmt"><p>Represents the type of value inside and <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> that can be read from it.</p><p>It is possible to distinguish only between four types (null, simple value, object and list) even though
@@ -893,22 +868,6 @@ used.
 must be assumed to be stateful and used in strictly sequential manner. After all elements have been written,
 <code>finish()</code> must be called to explicitly mark that the list is complete.
 </p></div></div>
-    </li><li name="com.avsystem.commons.serialization.MacroCodec" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="MacroCodec[T]extendsAnyValwithProductwithSerializable"></a><a id="MacroCodec[T]:MacroCodec[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/index.html#MacroCodec[T]extendsAnyValwithProductwithSerializable" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">case class</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="MacroCodec.html"><span class="name">MacroCodec</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="codec">codec: <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.MacroCodec.T">T</span>]</span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
-      </span>
-      
-      
     </li><li name="com.avsystem.commons.serialization.NestedSealedHierarchyCodec" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="NestedSealedHierarchyCodec[T]extendsSealedHierarchyCodec[T]"></a><a id="NestedSealedHierarchyCodec[T]:NestedSealedHierarchyCodec[T]"></a>
       <span class="permalink">
@@ -979,7 +938,7 @@ written, <code>finish()</code> must be called to explicitly mark that the object
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Represents an abstract sink to which a value may be serialized (written)." href="Output.html"><span class="name">Output</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
+        <a title="Represents an abstract sink to which a value may be serialized (written)." href="Output.html"><span class="name">Output</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
       </span>
       
       <p class="shortcomment cmt">Represents an abstract sink to which a value may be serialized (written).</p><div class="fullcomment"><div class="comment cmt"><p>Represents an abstract sink to which a value may be serialized (written).
@@ -999,7 +958,7 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="ProductCodec.html"><span class="name">ProductCodec</span></a><span class="tparams">[<span name="T">T &lt;: <a href="http://www.scala-lang.org/api/2.12.5/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a></span>]</span><span class="result"> extends <a href="ApplyUnapplyCodec.html" class="extype" name="com.avsystem.commons.serialization.ApplyUnapplyCodec">ApplyUnapplyCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.ProductCodec.T">T</span>]</span>
+        <a title="" href="ProductCodec.html"><span class="name">ProductCodec</span></a><span class="tparams">[<span name="T">T &lt;: <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a></span>]</span><span class="result"> extends <a href="ApplyUnapplyCodec.html" class="extype" name="com.avsystem.commons.serialization.ApplyUnapplyCodec">ApplyUnapplyCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.ProductCodec.T">T</span>]</span>
       </span>
       
       
@@ -1015,7 +974,7 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="RawRef.html"><span class="name">RawRef</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="RawRef.html"><span class="name">RawRef</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -1031,7 +990,7 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="RecursiveAutoCodecs.html"><span class="name">RecursiveAutoCodecs</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="RecursiveAutoCodecs.html"><span class="name">RecursiveAutoCodecs</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -1063,7 +1022,7 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="SequentialInput.html"><span class="name">SequentialInput</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
+        <a title="" href="SequentialInput.html"><span class="name">SequentialInput</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
       </span>
       
       
@@ -1079,7 +1038,7 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Base trait for outputs which allow writing of multiple values in sequence, i.e." href="SequentialOutput.html"><span class="name">SequentialOutput</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
+        <a title="Base trait for outputs which allow writing of multiple values in sequence, i.e." href="SequentialOutput.html"><span class="name">SequentialOutput</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>
       </span>
       
       <p class="shortcomment cmt">Base trait for outputs which allow writing of multiple values in sequence, i.e.</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for outputs which allow writing of multiple values in sequence, i.e. <a href="ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a> and <a href="ObjectOutput.html" class="extype" name="com.avsystem.commons.serialization.ObjectOutput">ObjectOutput</a>.
@@ -1154,6 +1113,8 @@ to write is complex, one can use <code>writeList</code>/<code>writeSet</code> or
 - <code>Int</code>
 - <code>Long</code>
 - <code>Double</code>
+- <code>BigInt</code>
+- <code>BigDecimal</code>
 - <code>Boolean</code>
 - <code>String</code>
 - <code>Array[Byte]</code>
@@ -1270,7 +1231,7 @@ standard Java serialization. However, for performance reasons it's recommended t
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="TransparentWrapperCompanion.html"><span class="name">TransparentWrapperCompanion</span></a><span class="tparams">[<span name="R">R</span>, <span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="TransparentWrapperCompanion.html"><span class="name">TransparentWrapperCompanion</span></a><span class="tparams">[<span name="R">R</span>, <span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -1286,7 +1247,7 @@ standard Java serialization. However, for performance reasons it's recommended t
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="TupleGenCodecs.html"><span class="name">TupleGenCodecs</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="TupleGenCodecs.html"><span class="name">TupleGenCodecs</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -1302,7 +1263,7 @@ standard Java serialization. However, for performance reasons it's recommended t
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="When materializing a GenCodec for sealed hierarchy with @flatten annotation, you can use this annotation on one of case classes or objects to mark it as the default one." href="defaultCase.html"><span class="name">defaultCase</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="When materializing a GenCodec for sealed hierarchy with @flatten annotation, you can use this annotation on one of case classes or objects to mark it as the default one." href="defaultCase.html"><span class="name">defaultCase</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">When materializing a <code>GenCodec</code> for sealed hierarchy with <code>@flatten</code> annotation, you can use this
@@ -1324,7 +1285,7 @@ a simple case class with a sealed hierarchy.
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Changes the serialization format used by GenCodecs automatically derived for sealed hierarchies." href="flatten.html"><span class="name">flatten</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Changes the serialization format used by GenCodecs automatically derived for sealed hierarchies." href="flatten.html"><span class="name">flatten</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Changes the serialization format used by <code>GenCodec</code>s automatically derived for sealed hierarchies.</p><div class="fullcomment"><div class="comment cmt"><p>Changes the serialization format used by <code>GenCodec</code>s automatically derived for sealed hierarchies.
@@ -1348,7 +1309,7 @@ as:</p><pre>{<span class="lit">"Numeric"</span>: {<span class="lit">"int"</span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="May be used on members of objects, case classes or any types having companion object with case class like apply and unapply/unapplySeq methods in order to add additional, generated fields to data serialized by auto-materialized GenCodecs." href="generated.html"><span class="name">generated</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="May be used on members of objects, case classes or any types having companion object with case class like apply and unapply/unapplySeq methods in order to add additional, generated fields to data serialized by auto-materialized GenCodecs." href="generated.html"><span class="name">generated</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">May be used on members of objects, case classes or any types having companion object with case class
@@ -1377,7 +1338,7 @@ from implemented and overridden members.
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived GenCodec to use particular name instead of just using parameter or class name." href="name.html"><span class="name">name</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived GenCodec to use particular name instead of just using parameter or class name." href="name.html"><span class="name">name</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived <code>GenCodec</code>
@@ -1404,7 +1365,7 @@ be used on that method and will affect the case class field.
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="To be used in conjunction with flatten." href="outOfOrder.html"><span class="name">outOfOrder</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="To be used in conjunction with flatten." href="outOfOrder.html"><span class="name">outOfOrder</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">To be used in conjunction with <a href="flatten.html" class="extype" name="com.avsystem.commons.serialization.flatten">flatten</a>.</p><div class="fullcomment"><div class="comment cmt"><p>To be used in conjunction with <a href="flatten.html" class="extype" name="com.avsystem.commons.serialization.flatten">flatten</a>.
@@ -1436,12 +1397,14 @@ When reading entities from MongoDB, the <code>_id</code> field is always at the 
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="If some case class field has default value, you can use this annotation on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value." href="transientDefault.html"><span class="name">transientDefault</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="If some case class field has default value or whenAbsent annotation, you can use transientDefault on this field to instruct an automatically derived GenCodec to not persist the value of that field if it's equal to the default value." href="transientDefault.html"><span class="name">transientDefault</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
-      <p class="shortcomment cmt">If some case class field has default value, you can use this annotation on this field to instruct an
-automatically derived <code>GenCodec</code> to not persist the value of that field if it's equal to the default value.</p><div class="fullcomment"><div class="comment cmt"><p>If some case class field has default value, you can use this annotation on this field to instruct an
-automatically derived <code>GenCodec</code> to not persist the value of that field if it's equal to the default value.</p><p>For example:</p><pre><span class="kw">case</span> <span class="kw">class</span> Something(str: <span class="std">String</span>, @transientDefault int: <span class="std">Int</span> = <span class="num">42</span>)
+      <p class="shortcomment cmt">If some case class field has default value or <a href="whenAbsent.html" class="extype" name="com.avsystem.commons.serialization.whenAbsent">whenAbsent</a> annotation, you can use <a href="transientDefault.html" class="extype" name="com.avsystem.commons.serialization.transientDefault">transientDefault</a>
+on this field to instruct an automatically derived <code>GenCodec</code> to not persist the value of that field if
+it's equal to the default value.</p><div class="fullcomment"><div class="comment cmt"><p>If some case class field has default value or <a href="whenAbsent.html" class="extype" name="com.avsystem.commons.serialization.whenAbsent">whenAbsent</a> annotation, you can use <a href="transientDefault.html" class="extype" name="com.avsystem.commons.serialization.transientDefault">transientDefault</a>
+on this field to instruct an automatically derived <code>GenCodec</code> to not persist the value of that field if
+it's equal to the default value.</p><p>For example:</p><pre><span class="kw">case</span> <span class="kw">class</span> Something(str: <span class="std">String</span>, @transientDefault int: <span class="std">Int</span> = <span class="num">42</span>)
 <span class="kw">object</span> Something {
   <span class="kw">implicit</span> <span class="kw">val</span> codec = GenCodec.auto[Something]
 }</pre><p><code>GenCodec.write(someOutput, Something(&quot;lol&quot;, 10))</code> would yield object <code>{&quot;str&quot;: &quot;lol&quot;, &quot;int&quot;: 10}</code> but
@@ -1460,12 +1423,36 @@ is the same as the default value.
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field." href="transparent.html"><span class="name">transparent</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field." href="transparent.html"><span class="name">transparent</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Can be used on case classes with exactly one field to instruct automatically generated <code>GenCodec</code> that the
 class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole
 field.</p>
+    </li><li name="com.avsystem.commons.serialization.whenAbsent" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="whenAbsent[+T]extendsAnnotationwithStaticAnnotation"></a><a id="whenAbsent[+T]:whenAbsent[T]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/index.html#whenAbsent[+T]extendsAnnotationwithStaticAnnotation" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="An alternative way to provide default value for case class parameter used during deserialization with GenCodec when its field is missing in data being deserialized." href="whenAbsent.html"><span class="name">whenAbsent</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">An alternative way to provide default value for case class parameter used during deserialization with <code>GenCodec</code>
+when its field is missing in data being deserialized.</p><div class="fullcomment"><div class="comment cmt"><p>An alternative way to provide default value for case class parameter used during deserialization with <code>GenCodec</code>
+when its field is missing in data being deserialized. Normally, Scala-level default parameter values are picked
+up, but you may want to use this annotation instead if you don't want to pollute your Scala classes with
+unintended default parameter values (i.e. you want a default value *only* for deserialization).</p><pre><span class="kw">case</span> <span class="kw">class</span> HasDefault(@whenAbsent(<span class="lit">"default"</span>) str: <span class="std">String</span>)
+<span class="kw">object</span> HasDefault <span class="kw">extends</span> HasGenCodec[HasDefault]</pre><p>If a parameter has both Scala-level default value and is annotated with <code>@whenAbsent</code> then value from annotation
+takes priority. You can use this to have different source-level default value and different
+default value for deserialization. You can also leverage this to &quot;remove&quot; default value for deserialization:</p><pre><span class="kw">case</span> <span class="kw">class</span> HasNoDefault(@whenAbsent(<span class="kw">throw</span> <span class="kw">new</span> Exception) str: <span class="std">String</span> = <span class="lit">"default"</span>)
+<span class="kw">object</span> HasDefault <span class="kw">extends</span> HasGenCodec[HasDefault]</pre></div></div>
     </li></ol>
             </div>
 
@@ -1502,7 +1489,7 @@ field.</p>
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="GenCodec$.html"><span class="name">GenCodec</span></a><span class="result"> extends <a href="FallbackMapCodecs.html" class="extype" name="com.avsystem.commons.serialization.FallbackMapCodecs">FallbackMapCodecs</a> with <a href="TupleGenCodecs.html" class="extype" name="com.avsystem.commons.serialization.TupleGenCodecs">TupleGenCodecs</a></span>
+        <a title="" href="GenCodec$.html"><span class="name">GenCodec</span></a><span class="result"> extends <a href="RecursiveAutoCodecs.html" class="extype" name="com.avsystem.commons.serialization.RecursiveAutoCodecs">RecursiveAutoCodecs</a> with <a href="TupleGenCodecs.html" class="extype" name="com.avsystem.commons.serialization.TupleGenCodecs">TupleGenCodecs</a></span>
       </span>
       
       
@@ -1534,7 +1521,7 @@ field.</p>
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="GenRef$.html"><span class="name">GenRef</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="GenRef$.html"><span class="name">GenRef</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -1567,22 +1554,6 @@ field.</p>
       </span>
       <span class="symbol">
         <a title="" href="InputType$.html"><span class="name">InputType</span></a>
-      </span>
-      
-      
-    </li><li name="com.avsystem.commons.serialization.MacroCodec" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="MacroCodec"></a><a id="MacroCodec:MacroCodec"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/index.html#MacroCodec" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">object</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="MacroCodec$.html"><span class="name">MacroCodec</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       

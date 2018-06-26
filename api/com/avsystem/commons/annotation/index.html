@@ -135,8 +135,8 @@
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
     </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="AnnotationAggregate.html" title="When an annotation class extends this trait, annotation processing macros (e.g."></a>
-                        <a href="AnnotationAggregate.html" title="When an annotation class extends this trait, annotation processing macros (e.g.">AnnotationAggregate</a>
+                        <a class="trait" href="AnnotationAggregate.html" title="Base trait for annotations which aggregate multiple other annotations."></a>
+                        <a href="AnnotationAggregate.html" title="Base trait for annotations which aggregate multiple other annotations.">AnnotationAggregate</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="atLeast.html" title="When applied on varargs parameter, indicates that at least some number of parameters is required."></a>
@@ -149,6 +149,10 @@
                         <span class="separator"></span>
                         <a class="class" href="macroPrivate.html" title="Symbols annotated with this annotation can only be used in macro-generated code."></a>
                         <a href="macroPrivate.html" title="Symbols annotated with this annotation can only be used in macro-generated code.">macroPrivate</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="showAst.html" title="When applied on a definition (class, object, def, val, etc.) or expression, will cause the AVSystem static analyzer to print compilation error with AST of annotated code fragment."></a>
+                        <a href="showAst.html" title="When applied on a definition (class, object, def, val, etc.) or expression, will cause the AVSystem static analyzer to print compilation error with AST of annotated code fragment.">showAst</a>
                       </li><li name="com.avsystem.commons.collection" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="collection"></a><a id="collection:collection"></a>
       <span class="permalink">
@@ -408,19 +412,25 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="When an annotation class extends this trait, annotation processing macros (e.g." href="AnnotationAggregate.html"><span class="name">AnnotationAggregate</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Base trait for annotations which aggregate multiple other annotations." href="AnnotationAggregate.html"><span class="name">AnnotationAggregate</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
-      <p class="shortcomment cmt">When an annotation class extends this trait, annotation processing macros (e.g.</p><div class="fullcomment"><div class="comment cmt"><p>When an annotation class extends this trait, annotation processing macros (e.g. for <code>GenCodec</code> materialization)
-will look into annotations of the aggregating annotation itself and apply these annotations as if they were
-applied directly on the same target as the aggregating annotation. Example:</p><pre><span class="kw">import</span> com.avsystem.commons.serialization._
+      <p class="shortcomment cmt">Base trait for annotations which aggregate multiple other annotations.</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for annotations which aggregate multiple other annotations. This way annotation aggregates
+work like &quot;annotation functions&quot; - they are annotations that yield more annotations.</p><p>In order to specify aggregated annotations, the class that extends <code>AnnotationAggregate</code> must
+redefine the <code>Implied</code> dummy type member and apply the aggregated annotations on it. Macro engines
+used in <code>GenCodec</code> materialization and RPC framework will automatically pick up these annotations.</p><pre><span class="kw">import</span> com.avsystem.commons.serialization._
 
-@name(<span class="lit">"_id"</span>) @outOfOrder
-<span class="kw">class</span> mongoId <span class="kw">extends</span> AnnotationAggregate
+<span class="kw">class</span> mongoId <span class="kw">extends</span> AnnotationAggregate {
+  @name(<span class="lit">"_id"</span>) @outOfOrder
+  <span class="kw">type</span> Implied
+}
 
 <span class="kw">case</span> <span class="kw">class</span> SomeMongoEntity(@mongoId id: <span class="std">String</span>, data: <span class="std">String</span>)</pre><p>In the above example, applying <code>@mongoId</code> annotation on the <code>id</code> field has the same effect as if
-annotations <code>@name(&quot;_id&quot;) @outOfOrder</code> were applied directly on that field.
-</p></div></div>
+annotations <code>@name(&quot;_id&quot;) @outOfOrder</code> were applied directly on that field.</p><p>NOTE: thanks to the fact that aggregated annotations are applied on a type member
+you can pass the arguments of original annotation to aggregated annotations, e.g.</p><pre><span class="kw">class</span> rpcNameAndDescription(name: <span class="std">String</span>, description: <span class="std">String</span>) <span class="kw">extends</span> AnnotationAggregate {
+  @rpcName(name) <span class="cmt">// passing `name` to aggregated annotation</span>
+  <span class="kw">type</span> Implied
+}</pre></div></div>
     </li><li name="com.avsystem.commons.annotation.atLeast" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="atLeastextendsAnnotationwithStaticAnnotation"></a><a id="atLeast:atLeast"></a>
       <span class="permalink">
@@ -433,7 +443,7 @@ annotations <code>@name(&quot;_id&quot;) @outOfOrder</code> were applied directl
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="When applied on varargs parameter, indicates that at least some number of parameters is required." href="atLeast.html"><span class="name">atLeast</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="When applied on varargs parameter, indicates that at least some number of parameters is required." href="atLeast.html"><span class="name">atLeast</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">When applied on varargs parameter, indicates that at least some number of parameters is required.</p><div class="fullcomment"><div class="comment cmt"><p>When applied on varargs parameter, indicates that at least some number of parameters is required.
@@ -455,7 +465,7 @@ varargs parameter is required using the <code>: _*</code> ascription, e.g.</p><p
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="When applied on generic method, requires that all the type parameters are given explicitly (cannot be inferred by the compiler)." href="explicitGenerics.html"><span class="name">explicitGenerics</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="When applied on generic method, requires that all the type parameters are given explicitly (cannot be inferred by the compiler)." href="explicitGenerics.html"><span class="name">explicitGenerics</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">When applied on generic method, requires that all the type parameters are given explicitly
@@ -481,10 +491,30 @@ against the compiler inferring <code>Nothing</code> or <code>Null</code>.</p><pr
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Symbols annotated with this annotation can only be used in macro-generated code." href="macroPrivate.html"><span class="name">macroPrivate</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.5/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Symbols annotated with this annotation can only be used in macro-generated code." href="macroPrivate.html"><span class="name">macroPrivate</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Symbols annotated with this annotation can only be used in macro-generated code.</p>
+    </li><li name="com.avsystem.commons.annotation.showAst" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="showAstextendsAnnotationwithStaticAnnotation"></a><a id="showAst:showAst"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/annotation/index.html#showAstextendsAnnotationwithStaticAnnotation" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="When applied on a definition (class, object, def, val, etc.) or expression, will cause the AVSystem static analyzer to print compilation error with AST of annotated code fragment." href="showAst.html"><span class="name">showAst</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">When applied on a definition (<code>class</code>, <code>object</code>, <code>def</code>, <code>val</code>, etc.) or expression, will cause the
+AVSystem static analyzer to print compilation error with AST of annotated code fragment.</p><div class="fullcomment"><div class="comment cmt"><p>When applied on a definition (<code>class</code>, <code>object</code>, <code>def</code>, <code>val</code>, etc.) or expression, will cause the
+AVSystem static analyzer to print compilation error with AST of annotated code fragment.
+This is useful primarily for debugging macro expansions.
+</p></div></div>
     </li></ol>
             </div>
 
