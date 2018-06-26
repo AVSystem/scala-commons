@@ -136,29 +136,36 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
     }
 
     val constructor = new RpcMetadataConstructor(metadataTpe)
+    // separate object for cached implicits so that lazy vals are members instead of local variables
+    val depsObj = c.freshName(TermName("deps"))
+    val selfName = c.freshName(TermName("self"))
 
     typedCompanionOf(metadataTpe) match {
       case Some(comp) =>
         // short circuit recursive implicit searches for M.Lazy[Real]
         val lazyMetadataTpe = getType(tq"$comp.Lazy[${realRpc.tpe}]")
-        val selfName = c.freshName(TermName("self"))
         val lazySelfName = c.freshName(TermName("lazySelf"))
         registerImplicit(lazyMetadataTpe, lazySelfName)
         val tree = constructor.materializeFor(realRpc)
 
         q"""
-          var $selfName = null.asInstanceOf[$metadataTpe]
-          val $lazySelfName = $comp.Lazy($selfName)
-          ..$cachedImplicitDeclarations
-          $selfName = $tree
-          $selfName
+          object $depsObj {
+            var $selfName: $metadataTpe = _
+            private val $lazySelfName = $comp.Lazy($selfName)
+            ..$cachedImplicitDeclarations
+            $selfName = $tree
+          }
+          $depsObj.$selfName
          """
 
       case None =>
         val tree = constructor.materializeFor(realRpc)
         q"""
-          ..$cachedImplicitDeclarations
-          $tree
+          object $depsObj {
+            ..$cachedImplicitDeclarations
+            val $selfName = $tree
+          }
+          $depsObj.$selfName
          """
     }
   }
