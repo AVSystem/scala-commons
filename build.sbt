@@ -84,7 +84,7 @@ val commonSettings = Seq(
 
   libraryDependencies ++= Seq(
     compilerPlugin("com.github.ghik" %% "silencer-plugin" % silencerVersion),
-    "com.github.ghik" %% "silencer-lib" % silencerVersion % Optional,
+    "com.github.ghik" %% "silencer-lib" % silencerVersion % Provided,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.mockito" % "mockito-core" % mockitoVersion % Test,
