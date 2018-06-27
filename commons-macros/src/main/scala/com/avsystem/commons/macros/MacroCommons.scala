@@ -186,7 +186,7 @@ trait MacroCommons { bundle =>
 
   // Replace references to companion object being constructed with casted reference to lambda parameter
   // of function wrapped by `MacroGenerated` class. This is all to workaround overzealous Scala validation of
-  // self-reference being passed to super constructor parameter.
+  // self-reference being passed to super constructor parameter (https://github.com/scala/bug/issues/7666)
   def replaceCompanion(typedTree: Tree): Tree = {
     val symToCheck = typedTree match {
       case This(_) => typedTree.symbol.asClass.module
@@ -687,6 +687,11 @@ trait MacroCommons { bundle =>
         }
     }
 
+  /**
+    * @param apply   case class constructor or companion object's apply method
+    * @param unapply companion object'a unapply method or [[NoSymbol]] for case class with more than 22 fields
+    * @param params  parameters with trees evaluating to default values (or [[EmptyTree]]s)
+    */
   case class ApplyUnapply(apply: Symbol, unapply: Symbol, params: List[(TermSymbol, Tree)])
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] =
@@ -704,8 +709,8 @@ trait MacroCommons { bundle =>
       }
       else EmptyTree
 
-    def paramsWithDefaults(methodSig: Type) =
-      methodSig.paramLists.head.zipWithIndex.map({ case (p, i) => (p.asTerm, defaultValueFor(p, i)) })
+    def paramsWithDefaults(methodSig: Type): List[(TermSymbol, Tree)] =
+      methodSig.paramLists.head.zipWithIndex.map { case (p, i) => (p.asTerm, defaultValueFor(p, i)) }
 
     val applyUnapplyPairs = for {
       apply <- alternatives(typedCompanion.tpe.member(TermName("apply")))

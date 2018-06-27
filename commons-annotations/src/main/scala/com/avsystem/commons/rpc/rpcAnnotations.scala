@@ -149,6 +149,8 @@ final class optional extends RpcArity
   */
 final class multi extends RpcArity
 
+final class composite extends RawParamAnnotation
+
 /**
   * Base trait for [[verbatim]] and [[encoded]]. These annotations can be applied either on a raw method or
   * raw parameter in order to specify how matching real method results or matching real parameter values are encoded

@@ -70,11 +70,15 @@ object Utils {
 
 import com.avsystem.commons.rpc.Utils._
 
+case class DoSomethings(
+  doSomething: DoSomethingSignature,
+  @optional doSomethingElse: Opt[DoSomethingSignature],
+)
+
 @methodTag[RestMethod, RestMethod]
 @paramTag[DummyParamTag, untagged]
 case class NewRpcMetadata[T: TypeName](
-  doSomething: DoSomethingSignature,
-  @optional doSomethingElse: Opt[DoSomethingSignature],
+  @composite doSomethings: DoSomethings,
   @multi @verbatim procedures: Map[String, FireMetadata],
   @multi functions: Map[String, CallMetadata[_]],
   @multi getters: Map[String, GetterMetadata[_]],
@@ -84,7 +88,7 @@ case class NewRpcMetadata[T: TypeName](
   def repr(open: List[NewRpcMetadata[_]]): String =
     if (open.contains(this)) "<recursive>\n" else {
       val membersStr =
-        s"DO SOMETHING ELSE: ${doSomethingElse.nonEmpty}\n" +
+        s"DO SOMETHING ELSE: ${doSomethings.doSomethingElse.nonEmpty}\n" +
           procedures.iterator.map({ case (n, v) => s"$n -> ${v.repr}" }).mkString("PROCEDURES:\n", "\n", "") + "\n" +
           functions.iterator.map({ case (n, v) => s"$n -> ${v.repr}" }).mkString("FUNCTIONS:\n", "\n", "") + "\n" +
           posters.iterator.map({ case (n, v) => s"$n -> ${v.repr}" }).mkString("POSTERS:\n", "\n", "") + "\n" +
@@ -101,18 +105,15 @@ case class DoSomethingSignature(arg: ArgMetadata) extends TypedMetadata[String]
 case class ArgMetadata() extends TypedMetadata[Double]
 
 trait MethodMetadata[T] {
-  @reifyName def name: String
-  @reifyName(rpcName = true) def rpcName: String
+  @composite def nameInfo: NameInfo
   def typeName: TypeName[T]
 
-  def basicRepr: String = {
-    val rpcNameStr = if (rpcName != name) s"<$rpcName>" else ""
-    s"def $name$rpcNameStr: ${typeName.name}"
-  }
+  def basicRepr: String =
+    s"def ${nameInfo.repr}: ${typeName.name}"
 }
 
 case class FireMetadata(
-  name: String, rpcName: String,
+  nameInfo: NameInfo,
   @optional @auxiliary ajdi: Opt[ParameterMetadata[Int]],
   @multi args: Map[String, ParameterMetadata[_]]
 ) extends TypedMetadata[Unit] with MethodMetadata[Unit] {
@@ -124,7 +125,7 @@ case class FireMetadata(
 }
 
 case class CallMetadata[T](
-  name: String, rpcName: String,
+  nameInfo: NameInfo,
   @tagged[renamed] @multi renamed: Map[String, ParameterMetadata[_]],
   @multi args: Map[String, ParameterMetadata[_]]
 )(implicit val typeName: TypeName[T])
@@ -135,20 +136,26 @@ case class CallMetadata[T](
       args.iterator.map({ case (n, pm) => s"$n -> ${pm.repr}" }).mkString("ARGS:\n", "\n", "").indent("  ")
 }
 
-case class GetterMetadata[T](
-  name: String, rpcName: String,
+case class GetterParams(
   @encoded head: ParameterMetadata[_],
   @multi tail: List[ParameterMetadata[_]],
+) {
+  def repr: String = (head :: tail).map(_.repr).mkString("ARGS:\n", "\n", "")
+}
+
+case class GetterMetadata[T](
+  nameInfo: NameInfo,
+  @composite params: GetterParams,
   @infer @checked resultMetadata: NewRpcMetadata.Lazy[T]
 )(implicit val typeName: TypeName[T]) extends TypedMetadata[T] with MethodMetadata[T] {
   def repr(open: List[NewRpcMetadata[_]]): String =
     s"$basicRepr\n" +
-      (head :: tail).map(_.repr).mkString("ARGS:\n", "\n", "").indent("  ") + "\n" +
+      params.repr.indent("  ") + "\n" +
       s"RESULT: ${resultMetadata.value.repr(open)}".indent("  ")
 }
 
 case class PostMetadata[T: TypeName](
-  name: String, rpcName: String,
+  nameInfo: NameInfo,
   @reifyAnnot post: POST,
   @tagged[header] @multi @verbatim headers: Vector[ParameterMetadata[String]],
   @multi body: MLinkedHashMap[String, ParameterMetadata[_]]
@@ -161,7 +168,7 @@ case class PostMetadata[T: TypeName](
 }
 
 case class PrefixMetadata[T](
-  name: String, rpcName: String,
+  nameInfo: NameInfo,
   @infer @checked resultMetadata: NewRpcMetadata.Lazy[T],
   @infer typeName: TypeName[T]
 ) extends TypedMetadata[T] with MethodMetadata[T] {
@@ -171,8 +178,7 @@ case class PrefixMetadata[T](
 }
 
 case class ParameterMetadata[T: TypeName](
-  @reifyName name: String,
-  @reifyName(rpcName = true) rpcName: String,
+  @composite nameInfo: NameInfo,
   @reifyPosition pos: ParamPosition,
   @reifyFlags flags: ParamFlags,
   @reifyAnnot @multi metas: List[suchMeta],
@@ -180,9 +186,15 @@ case class ParameterMetadata[T: TypeName](
 ) extends TypedMetadata[T] {
   def repr: String = {
     val flagsStr = if (flags != ParamFlags.Empty) s"[$flags]" else ""
-    val rpcNameStr = if (rpcName != name) s"<$rpcName>" else ""
     val posStr = s"${pos.index}:${pos.indexOfList}:${pos.indexInList}:${pos.indexInRaw}"
     val metasStr = if (metas.nonEmpty) metas.mkString(s",metas=", ",", "") else ""
-    s"$flagsStr$name$rpcNameStr@$posStr: ${TypeName.get[T]} suchMeta=$suchMeta$metasStr"
+    s"$flagsStr${nameInfo.repr}@$posStr: ${TypeName.get[T]} suchMeta=$suchMeta$metasStr"
   }
+}
+
+case class NameInfo(
+  @reifyName name: String,
+  @reifyName(rpcName = true) rpcName: String,
+) {
+  def repr: String = name + (if (rpcName != name) s"<$rpcName>" else "")
 }

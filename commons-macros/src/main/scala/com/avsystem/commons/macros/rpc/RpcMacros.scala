@@ -27,6 +27,7 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val SingleArityAT: Type = getType(tq"$RpcPackage.single")
   val OptionalArityAT: Type = getType(tq"$RpcPackage.optional")
   val MultiArityAT: Type = getType(tq"$RpcPackage.multi")
+  val CompositeAnnotAT: Type = getType(tq"$RpcPackage.composite")
   val RpcEncodingAT: Type = getType(tq"$RpcPackage.RpcEncoding")
   val VerbatimAT: Type = getType(tq"$RpcPackage.verbatim")
   val AuxiliaryAT: Type = getType(tq"$RpcPackage.auxiliary")
@@ -135,7 +136,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
       case t => t
     }
 
-    val constructor = new RpcMetadataConstructor(metadataTpe)
+    val constructor = new RpcMetadataConstructor(metadataTpe, None)
     // separate object for cached implicits so that lazy vals are members instead of local variables
     val depsObj = c.freshName(TermName("deps"))
     val selfName = c.freshName(TermName("self"))
@@ -146,7 +147,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
         val lazyMetadataTpe = getType(tq"$comp.Lazy[${realRpc.tpe}]")
         val lazySelfName = c.freshName(TermName("lazySelf"))
         registerImplicit(lazyMetadataTpe, lazySelfName)
-        val tree = constructor.materializeFor(realRpc)
+        val tree = constructor.materializeFor(realRpc, constructor.methodMappings(realRpc))
 
         q"""
           object $depsObj {
@@ -159,7 +160,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
          """
 
       case None =>
-        val tree = constructor.materializeFor(realRpc)
+        val tree = constructor.materializeFor(realRpc, constructor.methodMappings(realRpc))
         q"""
           object $depsObj {
             ..$cachedImplicitDeclarations
