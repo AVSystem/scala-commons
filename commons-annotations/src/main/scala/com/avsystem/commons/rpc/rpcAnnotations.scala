@@ -149,6 +149,12 @@ final class optional extends RpcArity
   */
 final class multi extends RpcArity
 
+/**
+  * Can be applied on raw method parameters or metadata parameters. When a parameter is annotated as `@composite`,
+  * the macro engine expects its type to be a class with public primary constructor. Then, it recursively inspects its
+  * constructor parameters and treats them as if they were direct parameters. This effectively groups multiple
+  * raw parameters or multiple metadata parameters into a single class.
+  */
 final class composite extends RawParamAnnotation
 
 /**

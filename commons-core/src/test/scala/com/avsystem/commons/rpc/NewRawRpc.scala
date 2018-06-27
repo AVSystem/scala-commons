@@ -29,6 +29,11 @@ case class POST() extends RestMethod
 case class GET() extends RestMethod
 case class PUT() extends RestMethod
 
+case class HeadTail(
+  @encoded head: String,
+  @multi tail: List[String]
+)
+
 @methodTag[RestMethod, RestMethod]
 @paramTag[DummyParamTag, untagged]
 trait NewRawRpc {
@@ -44,8 +49,7 @@ trait NewRawRpc {
     @tagged[renamed] @multi renamedArgs: => Map[String, String],
     @multi args: Map[String, String]): Future[String]
 
-  @multi def get(name: String)(
-    @encoded head: String, @multi tail: List[String]): NewRawRpc
+  @multi def get(name: String)(@composite ht: HeadTail): NewRawRpc
 
   @multi
   @tagged[POST] def post(name: String)(
@@ -57,7 +61,7 @@ trait NewRawRpc {
 object NewRawRpc extends RawRpcCompanion[NewRawRpc] {
   override val implicits: this.type = this
 
-  implicit def AsRawRealFromGenCodec[T: GenCodec]: AsRawReal[String, T] = ???
+  implicit def asRawRealFromGenCodec[T: GenCodec]: AsRawReal[String, T] = ???
   implicit def futureAsRawRealFromGenCodec[T: GenCodec]: AsRawReal[Future[String], Future[T]] = ???
 }
 

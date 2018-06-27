@@ -50,6 +50,8 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
   class MethodCompositeParam(override val owner: MethodMetadataConstructor, symbol: Symbol)
     extends CompositeMetadataParam[RealMethod](owner, symbol) {
     val constructor: MethodMetadataConstructor = new MethodMetadataConstructor(actualType, Right(this))
+
+    def pathStr: String = owner.atParam.fold(_ => nameStr, cp => s"${cp.pathStr}.$nameStr")
   }
 
   class ParamCompositeParam(override val owner: ParamMetadataConstructor, symbol: Symbol)
@@ -88,7 +90,9 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
   }
 
   class ParamMetadataParam(owner: MethodMetadataConstructor, symbol: Symbol)
-    extends MetadataParam[RealMethod](owner, symbol) with RawParamLike {
+    extends MetadataParam[RealMethod](owner, symbol) with RealParamTarget {
+
+    def pathStr: String = owner.atParam.fold(_ => nameStr, cp => s"${cp.pathStr}.$nameStr")
 
     def baseTag: Type = owner.containingMethodParam.baseParamTag
     def defaultTag: Type = owner.containingMethodParam.defaultParamTag

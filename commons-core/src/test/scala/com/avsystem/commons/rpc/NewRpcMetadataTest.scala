@@ -23,7 +23,7 @@ trait TestApi extends SomeBase {
   def postit(arg: String, bar: String, int: Int, @suchMeta(3, "c") foo: String): String
 }
 object TestApi {
-  implicit val AsRawReal: NewRawRpc.AsRawRealRpc[TestApi] = NewRawRpc.materializeAsRawReal[TestApi]
+  implicit val asRawReal: NewRawRpc.AsRawRealRpc[TestApi] = NewRawRpc.materializeAsRawReal[TestApi]
   implicit val metadata: NewRpcMetadata[TestApi] = NewRpcMetadata.materializeForRpc[TestApi]
 }
 

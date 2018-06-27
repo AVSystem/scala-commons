@@ -46,12 +46,12 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     result
   }
 
-  def collectParamMappings[R <: RawParamLike, M](raws: List[R], rawShortDesc: String, realMethod: RealMethod)
+  def collectParamMappings[R <: RealParamTarget, M](raws: List[R], rawShortDesc: String, realMethod: RealMethod)
     (createMapping: (R, ParamsParser) => Res[M]): Res[List[M]] = {
 
     val parser = new ParamsParser(realMethod)
     Res.traverse(raws)(createMapping(_, parser)).flatMap { result =>
-      if (parser.remaining.isEmpty) Ok(result.reverse)
+      if (parser.remaining.isEmpty) Ok(result)
       else {
         val unmatched = parser.remaining.iterator.map(_.nameStr).mkString(",")
         Fail(s"no $rawShortDesc(s) were found that would match real parameter(s) $unmatched")
@@ -68,7 +68,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
     def remaining: Seq[RealParam] = realParams.asScala
 
-    def extractSingle[B](raw: RawParamLike, matcher: RealParam => Res[B]): Res[B] = {
+    def extractSingle[B](raw: RealParamTarget, matcher: RealParam => Res[B]): Res[B] = {
       val it = realParams.listIterator()
       def loop(): Res[B] =
         if (it.hasNext) {
@@ -79,11 +79,11 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             }
             matcher(real)
           } else loop()
-        } else Fail(s"${raw.shortDescription} ${raw.nameStr} was not matched by real parameter")
+        } else Fail(s"${raw.shortDescription} ${raw.pathStr} was not matched by real parameter")
       loop()
     }
 
-    def extractOptional[B](raw: RawParamLike, matcher: RealParam => Res[B]): Option[B] = {
+    def extractOptional[B](raw: RealParamTarget, matcher: RealParam => Res[B]): Option[B] = {
       val it = realParams.listIterator()
       def loop(): Option[B] =
         if (it.hasNext) {
@@ -99,7 +99,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       loop()
     }
 
-    def extractMulti[B](raw: RawParamLike, matcher: (RealParam, Int) => Res[B], named: Boolean): Res[List[B]] = {
+    def extractMulti[B](raw: RealParamTarget, matcher: (RealParam, Int) => Res[B], named: Boolean): Res[List[B]] = {
       val seenRpcNames = new mutable.HashSet[String]
       val it = realParams.listIterator()
       def loop(result: ListBuffer[B]): Res[List[B]] =
@@ -132,39 +132,39 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     def localValueDecl(body: Tree): Tree = realParam.localValueDecl(body)
   }
   object EncodedRealParam {
-    def create(rawParam: RawParam, realParam: RealParam): Res[EncodedRealParam] =
+    def create(rawParam: RawValueParam, realParam: RealParam): Res[EncodedRealParam] =
       RpcEncoding.forParam(rawParam, realParam).map(EncodedRealParam(realParam, _))
   }
 
   sealed trait ParamMapping {
-    def rawParam: RawParam
+    def rawParam: RawValueParam
     def rawValueTree: Tree
     def realDecls: List[Tree]
   }
   object ParamMapping {
-    case class Single(rawParam: RawParam, realParam: EncodedRealParam) extends ParamMapping {
+    case class Single(rawParam: RawValueParam, realParam: EncodedRealParam) extends ParamMapping {
       def rawValueTree: Tree =
         realParam.rawValueTree
       def realDecls: List[Tree] =
-        List(realParam.localValueDecl(realParam.encoding.applyAsReal(rawParam.safeName)))
+        List(realParam.localValueDecl(realParam.encoding.applyAsReal(rawParam.safePath)))
     }
-    case class Optional(rawParam: RawParam, wrapped: Option[EncodedRealParam]) extends ParamMapping {
+    case class Optional(rawParam: RawValueParam, wrapped: Option[EncodedRealParam]) extends ParamMapping {
       def rawValueTree: Tree =
         rawParam.mkOptional(wrapped.map(_.rawValueTree))
       def realDecls: List[Tree] = wrapped.toList.map { erp =>
         val defaultValueTree = erp.realParam.defaultValueTree
         erp.realParam.localValueDecl(erp.encoding.foldWithAsReal(
-          rawParam.optionLike, rawParam.safeName, defaultValueTree))
+          rawParam.optionLike, rawParam.safePath, defaultValueTree))
       }
     }
     abstract class ListedMulti extends ParamMapping {
       protected def reals: List[EncodedRealParam]
       def rawValueTree: Tree = rawParam.mkMulti(reals.map(_.rawValueTree))
     }
-    case class IterableMulti(rawParam: RawParam, reals: List[EncodedRealParam]) extends ListedMulti {
+    case class IterableMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends ListedMulti {
       def realDecls: List[Tree] = {
         val itName = c.freshName(TermName("it"))
-        val itDecl = q"val $itName = ${rawParam.safeName}.iterator"
+        val itDecl = q"val $itName = ${rawParam.safePath}.iterator"
         itDecl :: reals.map { erp =>
           val rp = erp.realParam
           if (rp.symbol.asTerm.isByNameParam) {
@@ -176,26 +176,26 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         }
       }
     }
-    case class IndexedMulti(rawParam: RawParam, reals: List[EncodedRealParam]) extends ListedMulti {
+    case class IndexedMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends ListedMulti {
       def realDecls: List[Tree] = {
         reals.zipWithIndex.map { case (erp, idx) =>
           val rp = erp.realParam
           erp.realParam.localValueDecl(
             q"""
-              ${erp.encoding.andThenAsReal(rawParam.safeName)}
+              ${erp.encoding.andThenAsReal(rawParam.safePath)}
                 .applyOrElse($idx, (_: $IntCls) => ${rp.defaultValueTree})
             """)
         }
       }
     }
-    case class NamedMulti(rawParam: RawParam, reals: List[EncodedRealParam]) extends ParamMapping {
+    case class NamedMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends ParamMapping {
       def rawValueTree: Tree =
         rawParam.mkMulti(reals.map(erp => q"(${erp.realParam.rpcName}, ${erp.rawValueTree})"))
       def realDecls: List[Tree] =
         reals.map { erp =>
           erp.realParam.localValueDecl(
             q"""
-              ${erp.encoding.andThenAsReal(rawParam.safeName)}
+              ${erp.encoding.andThenAsReal(rawParam.safePath)}
                 .applyOrElse(${erp.realParam.rpcName}, (_: $StringCls) => ${erp.realParam.defaultValueTree})
             """)
         }
@@ -208,12 +208,12 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
     def applyAsRaw[T: Liftable](arg: T): Tree = q"$asRaw.asRaw($arg)"
     def applyAsReal[T: Liftable](arg: T): Tree = q"$asReal.asReal($arg)"
-    def foldWithAsReal(optionLike: TermName, opt: TermName, default: Tree): Tree =
+    def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, default: Tree): Tree =
       q"$optionLike.fold($opt, $default)($asReal.asReal(_))"
-    def andThenAsReal(func: TermName): Tree = q"$func.andThen($asReal.asReal(_))"
+    def andThenAsReal[T: Liftable](func: T): Tree = q"$func.andThen($asReal.asReal(_))"
   }
   object RpcEncoding {
-    def forParam(rawParam: RawParam, realParam: RealParam): Res[RpcEncoding] = {
+    def forParam(rawParam: RawValueParam, realParam: RealParam): Res[RpcEncoding] = {
       val encArgType = rawParam.arity.collectedType
       if (rawParam.verbatim) {
         if (realParam.actualType =:= encArgType)
@@ -231,9 +231,9 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       def asReal = q"$AsRealObj.identity[$tpe]"
       override def applyAsRaw[T: Liftable](arg: T): Tree = q"$arg"
       override def applyAsReal[T: Liftable](arg: T): Tree = q"$arg"
-      override def foldWithAsReal(optionLike: TermName, opt: TermName, default: Tree): Tree =
+      override def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, default: Tree): Tree =
         q"$optionLike.getOrElse($opt, $default)"
-      override def andThenAsReal(func: TermName): Tree = q"$func"
+      override def andThenAsReal[T: Liftable](func: T): Tree = q"$func"
     }
     case class RealRawEncoding(realType: Type, rawType: Type, clueWithPos: Option[(String, Position)])
       extends RpcEncoding {
@@ -253,7 +253,19 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
   }
 
   case class MethodMapping(realMethod: RealMethod, rawMethod: RawMethod,
-    paramMappings: List[ParamMapping], resultEncoding: RpcEncoding) {
+    paramMappingList: List[ParamMapping], resultEncoding: RpcEncoding) {
+
+    val paramMappings: Map[RawValueParam, ParamMapping] =
+      paramMappingList.iterator.map(m => (m.rawParam, m)).toMap
+
+    private def rawValueTree(rawParam: RawParam): Tree = rawParam match {
+      case rvp: RawValueParam => paramMappings(rvp).rawValueTree
+      case crp: CompositeRawParam =>
+        q"""
+          ..${crp.paramLists.flatten.map(p => p.localValueDecl(rawValueTree(p)))}
+          new ${crp.actualType}(...${crp.paramLists.map(_.map(_.safeName))})
+         """
+    }
 
     def realImpl: Tree = {
       val rpcNameParamDecl: Option[Tree] = rawMethod.arity match {
@@ -266,7 +278,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       q"""
         def ${realMethod.name}(...${realMethod.paramDecls}): ${realMethod.resultType} = {
           ..${rpcNameParamDecl.toList}
-          ..${paramMappings.map(pm => pm.rawParam.localValueDecl(pm.rawValueTree))}
+          ..${rawMethod.rawParams.getOrElse(Nil).map(rp => rp.localValueDecl(rawValueTree(rp)))}
           ${resultEncoding.applyAsReal(q"${rawMethod.owner.safeName}.${rawMethod.name}(...${rawMethod.argLists})")}
         }
        """
@@ -274,7 +286,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
     def rawCaseImpl: Tree =
       q"""
-        ..${paramMappings.filterNot(_.rawParam.auxiliary).flatMap(_.realDecls)}
+        ..${paramMappings.values.filterNot(_.rawParam.auxiliary).flatMap(_.realDecls)}
         ${resultEncoding.applyAsRaw(q"${realMethod.owner.safeName}.${realMethod.name}(...${realMethod.argLists})")}
       """
   }
@@ -290,7 +302,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
     registerCompanionImplicits(raw.tpe)
 
-    private def extractMapping(rawParam: RawParam, parser: ParamsParser): Res[ParamMapping] = {
+    private def extractMapping(rawParam: RawValueParam, parser: ParamsParser): Res[ParamMapping] = {
       def createErp(realParam: RealParam, index: Int): Res[EncodedRealParam] = EncodedRealParam.create(rawParam, realParam)
       rawParam.arity match {
         case _: RpcParamArity.Single =>
@@ -324,7 +336,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
       for {
         resultConv <- resultEncoding
-        paramMappings <- collectParamMappings(rawMethod.rawParams.getOrElse(Nil), "raw parameter", realMethod)(extractMapping)
+        paramMappings <- collectParamMappings(rawMethod.allValueParams, "raw parameter", realMethod)(extractMapping)
       } yield MethodMapping(realMethod, rawMethod, paramMappings, resultConv)
     }
 

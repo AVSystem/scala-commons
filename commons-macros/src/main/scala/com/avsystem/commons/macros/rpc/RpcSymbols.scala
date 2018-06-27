@@ -241,10 +241,12 @@ trait RpcSymbols { this: RpcMacroCommons =>
     }
   }
 
-  trait RawParamLike extends ArityParam with RawRpcSymbol {
+  trait RealParamTarget extends ArityParam with RawRpcSymbol {
     def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
+
+    def pathStr: String
 
     val verbatim: Boolean =
       annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
@@ -255,13 +257,50 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def cannotMapClue: String
   }
 
-  case class RawParam(owner: RawMethod, symbol: Symbol) extends RawParamLike {
-    def baseTag: Type = owner.baseParamTag
-    def defaultTag: Type = owner.defaultParamTag
+  object RawParam {
+    def apply(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol): RawParam =
+      if (findAnnotation(symbol, CompositeAnnotAT).nonEmpty)
+        CompositeRawParam(owner, symbol)
+      else RawValueParam(owner, symbol)
+  }
+
+  sealed trait RawParam extends RpcParam {
+    val owner: Either[RawMethod, CompositeRawParam]
+    val containingRawMethod: RawMethod = owner.fold(identity, _.containingRawMethod)
+
+    def safePath: Tree = owner.fold(_ => q"$safeName", _.safeSelect(this))
+    def pathStr: String = owner.fold(_ => nameStr, cp => s"${cp.pathStr}.$nameStr")
 
     def shortDescription = "raw parameter"
-    def description = s"$shortDescription $nameStr of ${owner.description}"
-    def cannotMapClue = s"cannot map it to $shortDescription $nameStr of ${owner.nameStr}"
+    def description = s"$shortDescription $nameStr of ${owner.fold(_.description, _.description)}"
+  }
+
+  case class CompositeRawParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol) extends RawParam {
+    val constructorSig: Type = primaryConstructorOf(actualType, problemStr).typeSignatureIn(actualType)
+
+    val paramLists: List[List[RawParam]] =
+      constructorSig.paramLists.map(_.map(RawParam(Right(this), _)))
+
+    def allValueParams: List[RawValueParam] = paramLists.flatten.flatMap {
+      case rvp: RawValueParam => List(rvp)
+      case crp: CompositeRawParam => crp.allValueParams
+    }
+
+    def safeSelect(subParam: RawParam): Tree = {
+      if (!alternatives(actualType.member(subParam.name)).exists(s => s.isMethod && s.asTerm.isParamAccessor)) {
+        subParam.reportProblem(s"it is not a public member and cannot be accessed, turn it into a val")
+      }
+      q"$safePath.${subParam.name}"
+    }
+  }
+
+  case class RawValueParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol)
+    extends RawParam with RealParamTarget {
+
+    def baseTag: Type = containingRawMethod.baseParamTag
+    def defaultTag: Type = containingRawMethod.defaultParamTag
+
+    def cannotMapClue = s"cannot map it to $shortDescription $pathStr of ${containingRawMethod.nameStr}"
   }
 
   case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexOfList: Int, indexInList: Int)
@@ -318,9 +357,9 @@ trait RpcSymbols { this: RpcMacroCommons =>
 
     val rawParams: Option[List[RawParam]] = arity match {
       case RpcMethodArity.Single | RpcMethodArity.Optional =>
-        sig.paramLists.headOption.map(_.map(RawParam(this, _)))
+        sig.paramLists.headOption.map(_.map(RawParam(Left(this), _)))
       case RpcMethodArity.Multi(_) =>
-        sig.paramLists.tail.headOption.map(_.map(RawParam(this, _)))
+        sig.paramLists.tail.headOption.map(_.map(RawParam(Left(this), _)))
     }
 
     val paramLists: List[List[RpcParam]] = arity match {
@@ -329,6 +368,11 @@ trait RpcSymbols { this: RpcMacroCommons =>
       case RpcMethodArity.Multi(rpcNameParam) =>
         List(rpcNameParam) :: rawParams.toList
     }
+
+    val allValueParams: List[RawValueParam] = rawParams.map(_.flatMap {
+      case rvp: RawValueParam => List(rvp)
+      case crp: CompositeRawParam => crp.allValueParams
+    }).getOrElse(Nil)
 
     def rawImpl(caseDefs: List[(String, Tree)]): Tree = {
       val body = arity match {
