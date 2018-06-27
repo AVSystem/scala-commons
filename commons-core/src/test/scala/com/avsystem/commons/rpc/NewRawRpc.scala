@@ -76,7 +76,7 @@ import com.avsystem.commons.rpc.Utils._
 
 case class DoSomethings(
   doSomething: DoSomethingSignature,
-  @optional doSomethingElse: Opt[DoSomethingSignature],
+  @optional doSomethingElse: Opt[DoSomethingSignature]
 )
 
 @methodTag[RestMethod, RestMethod]
@@ -198,7 +198,7 @@ case class ParameterMetadata[T: TypeName](
 
 case class NameInfo(
   @reifyName name: String,
-  @reifyName(rpcName = true) rpcName: String,
+  @reifyName(rpcName = true) rpcName: String
 ) {
   def repr: String = name + (if (rpcName != name) s"<$rpcName>" else "")
 }
