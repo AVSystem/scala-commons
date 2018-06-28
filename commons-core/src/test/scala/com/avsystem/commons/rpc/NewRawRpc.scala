@@ -142,7 +142,7 @@ case class CallMetadata[T](
 
 case class GetterParams(
   @encoded head: ParameterMetadata[_],
-  @multi tail: List[ParameterMetadata[_]],
+  @multi tail: List[ParameterMetadata[_]]
 ) {
   def repr: String = (head :: tail).map(_.repr).mkString("ARGS:\n", "\n", "")
 }
