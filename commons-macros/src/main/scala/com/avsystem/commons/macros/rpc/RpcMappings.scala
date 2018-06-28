@@ -259,6 +259,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       paramMappingList.iterator.map(m => (m.rawParam, m)).toMap
 
     private def rawValueTree(rawParam: RawParam): Tree = rawParam match {
+      case _: MethodNameParam => q"${realMethod.rpcName}"
       case rvp: RawValueParam => paramMappings(rvp).rawValueTree
       case crp: CompositeRawParam =>
         q"""
@@ -267,22 +268,13 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
          """
     }
 
-    def realImpl: Tree = {
-      val rpcNameParamDecl: Option[Tree] = rawMethod.arity match {
-        case RpcMethodArity.Multi(rpcNameParam) =>
-          Some(q"val ${rpcNameParam.safeName} = ${realMethod.rpcName}")
-        case RpcMethodArity.Single | RpcMethodArity.Optional =>
-          None
-      }
-
+    def realImpl: Tree =
       q"""
         def ${realMethod.name}(...${realMethod.paramDecls}): ${realMethod.resultType} = {
-          ..${rpcNameParamDecl.toList}
-          ..${rawMethod.rawParams.getOrElse(Nil).map(rp => rp.localValueDecl(rawValueTree(rp)))}
+          ..${rawMethod.rawParams.map(rp => rp.localValueDecl(rawValueTree(rp)))}
           ${resultEncoding.applyAsReal(q"${rawMethod.owner.safeName}.${rawMethod.name}(...${rawMethod.argLists})")}
         }
        """
-    }
 
     def rawCaseImpl: Tree =
       q"""

@@ -8,7 +8,7 @@ trait MonixRPCFramework extends RPCFramework {
   override type RawRPC <: MonixRawRPC
 
   trait MonixRawRPC { this: RawRPC =>
-    @multi def observe(rpcName: String)(@multi args: List[RawValue]): Observable[RawValue]
+    @multi def observe(@composite invocation: RawInvocation): Observable[RawValue]
   }
 
   implicit def readerBasedObservableAsReal[T: Reader]: AsReal[Observable[RawValue], Observable[T]] =

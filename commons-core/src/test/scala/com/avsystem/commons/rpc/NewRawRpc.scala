@@ -29,7 +29,8 @@ case class POST() extends RestMethod
 case class GET() extends RestMethod
 case class PUT() extends RestMethod
 
-case class HeadTail(
+case class GetterInvocation(
+  @methodName name: String,
   @encoded head: String,
   @multi tail: List[String]
 )
@@ -41,22 +42,24 @@ trait NewRawRpc {
   @optional def doSomethingElse(arg: Double): String
 
   @multi
-  @verbatim def fire(name: String)(
+  @verbatim def fire(
+    @methodName name: String,
     @optional @auxiliary ajdi: Opt[Int],
     @multi args: Map[String, String]): Unit
 
-  @multi def call(name: String)(
+  @multi def call(
+    @methodName name: String,
     @tagged[renamed] @multi renamedArgs: => Map[String, String],
     @multi args: Map[String, String]): Future[String]
 
-  @multi def get(name: String)(@composite ht: HeadTail): NewRawRpc
+  @multi def get(@composite invocation: GetterInvocation): NewRawRpc
 
   @multi
-  @tagged[POST] def post(name: String)(
+  @tagged[POST] def post(@methodName name: String,
     @tagged[header] @multi @verbatim headers: Vector[String],
     @multi body: MLinkedHashMap[String, String]): String
 
-  @multi def prefix(name: String): NewRawRpc
+  @multi def prefix(@methodName name: String): NewRawRpc
 }
 object NewRawRpc extends RawRpcCompanion[NewRawRpc] {
   override val implicits: this.type = this

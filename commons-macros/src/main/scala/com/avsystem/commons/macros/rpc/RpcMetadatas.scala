@@ -156,7 +156,7 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
 
     lazy val paramLists: List[List[MetadataParam[Real]]] =
       symbol.typeSignatureIn(ownerType).paramLists.map(_.map { ps =>
-        if (findAnnotation(ps, CompositeAnnotAT).nonEmpty)
+        if (findAnnotation(ps, CompositeAT).nonEmpty)
           createCompositeParam(ps)
         else findAnnotation(ps, MetadataParamStrategyType).map(createDirectParam(ps, _))
           .getOrElse(if (ps.isImplicit) new ImplicitParam(this, ps) else createDefaultParam(ps))

@@ -9,7 +9,8 @@ trait ProcedureRPCFramework extends RPCFramework {
   type RawRPC <: ProcedureRawRPC
 
   trait ProcedureRawRPC { this: RawRPC =>
-    @multi @verbatim def fire(rpcName: String)(@multi args: List[RawValue]): Unit
+    @multi
+    @verbatim def fire(@composite invocation: RawInvocation): Unit
   }
 
   case class ProcedureSignature(
@@ -27,7 +28,7 @@ trait FunctionRPCFramework extends RPCFramework {
   type RawRPC <: FunctionRawRPC
 
   trait FunctionRawRPC { this: RawRPC =>
-    @multi def call(rpcName: String)(@multi args: List[RawValue]): Future[RawValue]
+    @multi def call(@composite invocation: RawInvocation): Future[RawValue]
   }
 
   case class FunctionSignature[T](
@@ -49,13 +50,11 @@ trait FunctionRPCFramework extends RPCFramework {
 trait GetterRPCFramework extends RPCFramework {
   type RawRPC <: GetterRawRPC
 
-  case class RawInvocation(rpcName: String, args: List[RawValue])
-
   trait GetterRawRPC { this: RawRPC =>
-    @multi def get(rpcName: String)(@multi args: List[RawValue]): RawRPC
+    @multi def get(@composite invocation: RawInvocation): RawRPC
 
-    def resolveGetterChain(getters: List[RawInvocation]): RawRPC =
-      getters.foldRight(this)((inv, rpc) => rpc.get(inv.rpcName)(inv.args))
+    def resolveGetterChain(getters: Seq[RawInvocation]): RawRPC =
+      getters.foldRight(this)((inv, rpc) => rpc.get(inv))
   }
 
   case class GetterSignature[T](

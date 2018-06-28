@@ -53,29 +53,15 @@ trait RpcSymbols { this: RpcMacroCommons =>
   object RpcMethodArity {
     def fromAnnotation(method: RawMethod): RpcMethodArity = {
       val at = method.annot(RpcArityAT).fold(SingleArityAT)(_.tpe)
-      if (at <:< SingleArityAT || at <:< OptionalArityAT) {
-        method.sig.paramLists match {
-          case Nil | List(_) =>
-          case _ => method.reportProblem(s"non-multi raw method can only have zero or one parameter list")
-        }
-        if (at <:< OptionalArityAT) Optional else Single
-      }
-      else if (at <:< MultiArityAT) method.sig.paramLists match {
-        case List(rpcNameParam) :: (Nil | List(_)) =>
-          if (!(actualParamType(rpcNameParam) <:< typeOf[String])) {
-            method.reportProblem("RPC name parameter of multi raw method must be of type String", rpcNameParam.pos)
-          }
-          Multi(RpcNameParam(method, rpcNameParam))
-        case _ =>
-          method.reportProblem(s"multi raw method must take at most two parameter lists where the first one " +
-            "must contain RPC name parameter typed as String")
-      }
+      if (at <:< SingleArityAT) Single
+      else if (at <:< OptionalArityAT) Optional
+      else if (at <:< MultiArityAT) Multi
       else method.reportProblem(s"unrecognized RPC arity annotation: $at")
     }
 
     case object Single extends RpcMethodArity(true) with RpcArity.Single
     case object Optional extends RpcMethodArity(true) with RpcArity.Optional
-    case class Multi(rpcNameParam: RpcNameParam) extends RpcMethodArity(false) with RpcArity.Multi
+    case object Multi extends RpcMethodArity(false) with RpcArity.Multi
   }
 
   abstract class RpcSymbol {
@@ -191,11 +177,6 @@ trait RpcSymbols { this: RpcMacroCommons =>
       if (isRepeated(symbol)) q"$safeName: _*" else q"$safeName"
   }
 
-  case class RpcNameParam(owner: RawMethod, symbol: Symbol) extends RpcParam {
-    def shortDescription = "RPC name parameter"
-    def description = s"$shortDescription $nameStr of ${owner.description}"
-  }
-
   trait AritySymbol extends RpcSymbol {
     val arity: RpcArity
 
@@ -259,7 +240,9 @@ trait RpcSymbols { this: RpcMacroCommons =>
 
   object RawParam {
     def apply(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol): RawParam =
-      if (findAnnotation(symbol, CompositeAnnotAT).nonEmpty)
+      if (findAnnotation(symbol, MethodNameAT).nonEmpty)
+        MethodNameParam(owner, symbol)
+      else if (findAnnotation(symbol, CompositeAT).nonEmpty)
         CompositeRawParam(owner, symbol)
       else RawValueParam(owner, symbol)
   }
@@ -275,15 +258,21 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def description = s"$shortDescription $nameStr of ${owner.fold(_.description, _.description)}"
   }
 
+  case class MethodNameParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol) extends RawParam {
+    if (!(actualType =:= typeOf[String])) {
+      reportProblem("@methodName parameter must be of type String")
+    }
+  }
+
   case class CompositeRawParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol) extends RawParam {
     val constructorSig: Type = primaryConstructorOf(actualType, problemStr).typeSignatureIn(actualType)
 
     val paramLists: List[List[RawParam]] =
       constructorSig.paramLists.map(_.map(RawParam(Right(this), _)))
 
-    def allValueParams: List[RawValueParam] = paramLists.flatten.flatMap {
-      case rvp: RawValueParam => List(rvp)
-      case crp: CompositeRawParam => crp.allValueParams
+    def allLeafParams: Iterator[RawParam] = paramLists.iterator.flatten.flatMap {
+      case crp: CompositeRawParam => crp.allLeafParams
+      case other => Iterator(other)
     }
 
     def safeSelect(subParam: RawParam): Tree = {
@@ -355,24 +344,25 @@ trait RpcSymbols { this: RpcMacroCommons =>
         .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
         .getOrElse(List(owner.baseParamTag, owner.defaultParamTag))
 
-    val rawParams: Option[List[RawParam]] = arity match {
-      case RpcMethodArity.Single | RpcMethodArity.Optional =>
-        sig.paramLists.headOption.map(_.map(RawParam(Left(this), _)))
-      case RpcMethodArity.Multi(_) =>
-        sig.paramLists.tail.headOption.map(_.map(RawParam(Left(this), _)))
+    val rawParams: List[RawParam] = sig.paramLists match {
+      case Nil | List(_) => sig.paramLists.flatten.map(RawParam(Left(this), _))
+      case _ => reportProblem(s"raw methods cannot take multiple parameter lists")
     }
 
-    val paramLists: List[List[RpcParam]] = arity match {
-      case RpcMethodArity.Single | RpcMethodArity.Optional =>
-        rawParams.toList
-      case RpcMethodArity.Multi(rpcNameParam) =>
-        List(rpcNameParam) :: rawParams.toList
+    val paramLists: List[List[RawParam]] =
+      if (sig.paramLists.isEmpty) Nil else List(rawParams)
+
+    def allLeafParams: Iterator[RawParam] = rawParams.iterator.flatMap {
+      case crp: CompositeRawParam => crp.allLeafParams
+      case other => Iterator(other)
     }
 
-    val allValueParams: List[RawValueParam] = rawParams.map(_.flatMap {
-      case rvp: RawValueParam => List(rvp)
-      case crp: CompositeRawParam => crp.allValueParams
-    }).getOrElse(Nil)
+    val allValueParams: List[RawValueParam] =
+      allLeafParams.collect({ case rvp: RawValueParam => rvp }).toList
+
+    lazy val methodNameParam: MethodNameParam =
+      allLeafParams.collectFirst({ case mnp: MethodNameParam => mnp })
+        .getOrElse(reportProblem("no @methodName parameter found on @multi raw method"))
 
     def rawImpl(caseDefs: List[(String, Tree)]): Tree = {
       val body = arity match {
@@ -386,11 +376,12 @@ trait RpcSymbols { this: RpcMacroCommons =>
           case List((_, single)) => single
           case _ => abort(s"multiple real methods match $description")
         }
-        case RpcMethodArity.Multi(rpcNameParam) =>
+        case RpcMethodArity.Multi =>
+          val methodNameName = c.freshName(TermName("methodName"))
           q"""
-            ${rpcNameParam.safeName} match {
+            ${methodNameParam.safePath} match {
               case ..${caseDefs.map({ case (rpcName, tree) => cq"$rpcName => $tree" })}
-              case _ => $RpcPackage.RpcUtils.unknownRpc(${rpcNameParam.safeName}, $nameStr)
+              case $methodNameName => $RpcPackage.RpcUtils.unknownRpc($methodNameName, $nameStr)
             }
            """
       }

@@ -32,6 +32,25 @@ class rpcName(val name: String) extends RpcAnnotation
 trait RpcTag extends RpcAnnotation
 
 /**
+  * May be applied on raw method parameter of type `String` to indicate that macro generated implementation of
+  * `AsReal` should pass real method's RPC name as this parameter and that macro generated implementation of
+  * `AsRaw` should expect real method's RPC name to be passed there.
+  *
+  * Macro generation of `AsRaw` implementations require that raw methods annotated as [[multi]] must take at least
+  * one raw parameter annotated as [[methodName]] (it may also be aggregated into some [[composite]] parameter).
+  * This is necessary to properly identify which real method should be called.
+  */
+final class methodName extends RawParamAnnotation
+
+/**
+  * Can be applied on raw method parameters or metadata parameters. When a parameter is annotated as `@composite`,
+  * the macro engine expects its type to be a class with public primary constructor. Then, it recursively inspects its
+  * constructor parameters and treats them as if they were direct parameters. This effectively groups multiple
+  * raw parameters or multiple metadata parameters into a single class.
+  */
+final class composite extends RawParamAnnotation
+
+/**
   * Base trait for RPC arity annotations, [[single]], [[optional]] and [[multi]].
   * Arity annotations may be used in multiple contexts:
   *
@@ -148,14 +167,6 @@ final class optional extends RpcArity
   * inherited ones.
   */
 final class multi extends RpcArity
-
-/**
-  * Can be applied on raw method parameters or metadata parameters. When a parameter is annotated as `@composite`,
-  * the macro engine expects its type to be a class with public primary constructor. Then, it recursively inspects its
-  * constructor parameters and treats them as if they were direct parameters. This effectively groups multiple
-  * raw parameters or multiple metadata parameters into a single class.
-  */
-final class composite extends RawParamAnnotation
 
 /**
   * Base trait for [[verbatim]] and [[encoded]]. These annotations can be applied either on a raw method or
