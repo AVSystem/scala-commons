@@ -202,19 +202,8 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
     def createCompositeParam(paramSym: Symbol): RpcCompositeParam =
       new RpcCompositeParam(this, paramSym)
 
-    def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] = {
-      val allMappings = collectMethodMappings(methodMdParams, "metadata parameters", rpc.realMethods)(_.mappingFor(_))
-      val result = allMappings.groupBy(_.mdParam)
-      result.foreach { case (mmp, mappings) =>
-        mappings.groupBy(_.realMethod.rpcName).foreach {
-          case (rpcName, MethodMetadataMapping(realMethod, _, _) :: tail) if tail.nonEmpty =>
-            realMethod.reportProblem(s"multiple RPCs named $rpcName map to metadata parameter ${mmp.nameStr}. " +
-              s"If you want to overload RPCs, disambiguate them with @rpcName annotation")
-          case _ =>
-        }
-      }
-      result
-    }
+    def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] =
+      collectMethodMappings(methodMdParams, "metadata parameters", rpc.realMethods)(_.mappingFor(_)).groupBy(_.mdParam)
 
     def materializeFor(rpc: RealRpcTrait, methodMappings: Map[MethodMetadataParam, List[MethodMetadataMapping]]): Tree = {
       val argDecls = paramLists.flatten.map {

@@ -100,7 +100,6 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
 
     def extractMulti[B](raw: RealParamTarget, matcher: (RealParam, Int) => Res[B], named: Boolean): Res[List[B]] = {
-      val seenRpcNames = new mutable.HashSet[String]
       val it = realParams.listIterator()
       def loop(result: ListBuffer[B]): Res[List[B]] =
         if (it.hasNext) {
@@ -112,10 +111,6 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             matcher(real, result.size) match {
               case Ok(b) =>
                 result += b
-                if (named && !seenRpcNames.add(real.rpcName)) {
-                  realMethod.reportProblem(s"multiple parameters matched to ${raw.shortDescription} ${raw.nameStr} " +
-                    s"have the same @rpcName: ${real.rpcName}")
-                }
                 loop(result)
               case fail: Fail =>
                 fail
@@ -345,14 +340,8 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     def asRawImpl: Tree = {
       val caseImpls = raw.rawMethods.iterator.map(rm => (rm, new mutable.LinkedHashMap[String, Tree])).toMap
       methodMappings.foreach { mapping =>
-        val prevCaseDef = caseImpls(mapping.rawMethod).put(mapping.realMethod.rpcName, mapping.rawCaseImpl)
-        if (prevCaseDef.nonEmpty) {
-          mapping.realMethod.reportProblem(
-            s"multiple RPCs named ${mapping.realMethod.rpcName} map to raw method ${mapping.rawMethod.nameStr}. " +
-              "If you want to overload RPCs, disambiguate them with @rpcName annotation")
-        }
+        caseImpls(mapping.rawMethod).put(mapping.realMethod.rpcName, mapping.rawCaseImpl)
       }
-
       val rawMethodImpls = raw.rawMethods.map(m => m.rawImpl(caseImpls(m).toList))
 
       q"""

@@ -414,7 +414,15 @@ trait RpcSymbols { this: RpcMacroCommons =>
       }
     }
 
-    val realParams: List[RealParam] = paramLists.flatten
+    val realParams: List[RealParam] = {
+      val result = paramLists.flatten
+      result.groupBy(_.rpcName).foreach {
+        case (_, head :: tail) if tail.nonEmpty =>
+          head.reportProblem(s"it has the same RPC name as ${tail.size} other parameters")
+        case _ =>
+      }
+      result
+    }
   }
 
   case class RawRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with RawRpcSymbol {
@@ -444,7 +452,15 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def shortDescription = "real RPC"
     def description = s"$shortDescription $tpe"
 
-    lazy val realMethods: List[RealMethod] =
-      tpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RealMethod(this, _)).toList
+    lazy val realMethods: List[RealMethod] = {
+      val result = tpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RealMethod(this, _)).toList
+      result.groupBy(_.rpcName).foreach {
+        case (_, head :: tail) if tail.nonEmpty =>
+          head.reportProblem(s"it has the same RPC name as ${tail.size} other methods - " +
+            s"if you want to overload RPC methods, disambiguate them with @rpcName")
+        case _ =>
+      }
+      result
+    }
   }
 }

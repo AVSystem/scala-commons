@@ -17,8 +17,8 @@ trait TestApi extends SomeBase {
   def defaultValueMethod(int: Int = 0, @whenAbsent(difolt) bul: Boolean): Future[Unit]
   def flames(arg: String, otherArg: => Int, varargsy: Double*): Unit
   def overload(int: Int): Unit
-  def overload(lel: String): TestApi
-  def overload: TestApi
+  @rpcName("ovgetter") def overload(lel: String): TestApi
+  @rpcName("ovprefix") def overload: TestApi
   def getit(stuff: String, @suchMeta(1, "a") otherStuff: List[Int]): TestApi
   def postit(arg: String, bar: String, int: Int, @suchMeta(3, "c") foo: String): String
 }
@@ -72,12 +72,12 @@ class NewRpcMetadataTest extends FunSuite {
         |    otherStuff@1:0:1:0: List suchMeta=true,metas=suchMeta(1,a)
         |    RESULT: <recursive>
         |
-        |  overload -> def overload: TestApi
+        |  ovgetter -> def overload<ovgetter>: TestApi
         |    ARGS:
         |    lel@0:0:0:0: String suchMeta=false
         |    RESULT: <recursive>
         |  PREFIXERS:
-        |  overload -> def overload: TestApi
+        |  ovprefix -> def overload<ovprefix>: TestApi
         |    RESULT: <recursive>
         |""".stripMargin
     )
