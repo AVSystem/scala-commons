@@ -801,22 +801,27 @@ trait MacroCommons { bundle =>
 
   def knownSubtypes(tpe: Type): Option[List[Type]] = {
     val dtpe = tpe.dealias
-    val tpeSym = dtpe match {
-      case RefinedType(List(single), _) => single.typeSymbol
-      case _ => dtpe.typeSymbol
+    val (tpeSym, refined) = dtpe match {
+      case RefinedType(List(single), scope) =>
+        (single.typeSymbol, scope.filter(ts => ts.isType && !ts.isAbstract).toList)
+      case _ => (dtpe.typeSymbol, Nil)
     }
     Option(tpeSym).filter(isSealedHierarchyRoot).map { sym =>
       val subclasses = knownNonAbstractSubclasses(sym).toList
       val sortedSubclasses = if (tpeSym.pos != NoPosition) subclasses.sortBy(_.pos.point) else subclasses
       sortedSubclasses.flatMap { subSym =>
-        val undetparams = subSym.asType.typeParams
-        val undetSubTpe = typeOfTypeSymbol(subSym.asType)
+        val undetTpe = typeOfTypeSymbol(subSym.asType)
+        val refinementSignatures = refined.map(rs => undetTpe.member(rs.name).typeSignatureIn(undetTpe))
+        val undetBaseTpe = undetTpe.baseType(dtpe.typeSymbol)
+        val (determinableParams, undeterminableParams) = subSym.asType.typeParams.partition(ts =>
+          undetBaseTpe.exists(_.typeSymbol == ts) || refinementSignatures.exists(_.exists(_.typeSymbol == ts)))
+        val determinableTpe = internal.existentialAbstraction(undeterminableParams, undetTpe)
 
-        if (undetparams.nonEmpty)
-          determineTypeParams(undetSubTpe, dtpe, undetparams)
-            .map(typeArgs => undetSubTpe.substituteTypes(undetparams, typeArgs))
-        else if (undetSubTpe <:< dtpe)
-          Some(undetSubTpe)
+        if (determinableParams.nonEmpty)
+          determineTypeParams(determinableTpe, dtpe, determinableParams)
+            .map(typeArgs => determinableTpe.substituteTypes(determinableParams, typeArgs))
+        else if (determinableTpe <:< dtpe)
+          Some(determinableTpe)
         else
           None
       }
