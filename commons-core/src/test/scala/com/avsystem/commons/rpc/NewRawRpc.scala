@@ -25,7 +25,9 @@ case class suchMeta(intMeta: Int, strMeta: String) extends StaticAnnotation
 sealed trait untagged extends DummyParamTag
 
 sealed trait RestMethod extends RpcTag
-case class POST() extends RestMethod
+case class POST() extends RestMethod with AnnotationAggregate {
+  @rpcNamePrefix("POST_") type Implied
+}
 case class GET() extends RestMethod
 case class PUT() extends RestMethod
 

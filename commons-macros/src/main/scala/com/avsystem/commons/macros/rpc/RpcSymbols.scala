@@ -127,8 +127,11 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def tag(baseTag: Type, defaultTag: Type): Type =
       annot(baseTag).fold(defaultTag)(_.tpe)
 
-    lazy val rpcName: String =
-      annot(RpcNameAT).fold(nameStr)(_.findArg[String](RpcNameNameSym))
+    lazy val rpcName: String = {
+      val prefixes = allAnnotations(symbol, RpcNamePrefixAT).map(_.findArg[String](RpcNamePrefixArg))
+      val rpcName = annot(RpcNameAT).fold(nameStr)(_.findArg[String](RpcNameArg))
+      prefixes.mkString("", "", rpcName)
+    }
   }
 
   abstract class RpcTrait(val symbol: Symbol) extends RpcSymbol {

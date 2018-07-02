@@ -24,6 +24,19 @@ sealed trait RawParamAnnotation extends RawRpcAnnotation
 class rpcName(val name: String) extends RpcAnnotation
 
 /**
+  * You can use this annotation on real RPC methods to instruct macro engine to prepend method name (or [[rpcName]] if
+  * specified) with given prefix. This annotation is mostly useful when aggregated by another annotation e.g.
+  *
+  * {{{
+  *   sealed trait RestMethod extends RpcTag
+  *   final class GET extends RestMethod with AnnotationAggregate {
+  *     @rpcNamePrefix("GET_") type Implied
+  *   }
+  * }}}
+  */
+class rpcNamePrefix(val prefix: String) extends RpcAnnotation
+
+/**
   * Base trait for RPC tag annotations. Tagging gives more direct control over how real methods
   * and their parameters are matched against raw methods and their parameters.
   * For more information about method tagging, see documentation of [[methodTag]].

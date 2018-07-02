@@ -5,6 +5,10 @@ import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
 
 sealed trait Res[+A] {
+  def isOk: Boolean = this match {
+    case Ok(_) => true
+    case _: Fail => false
+  }
   def map[B](fun: A => B): Res[B] = this match {
     case Ok(value) => Ok(fun(value))
     case f: Fail => f

@@ -58,7 +58,7 @@ class NewRpcMetadataTest extends FunSuite {
         |    dubl -> dubl@1:0:1:1: double suchMeta=false
         |    czy -> czy@2:1:0:2: boolean suchMeta=false
         |  POSTERS:
-        |  postit -> POST() def postit: String
+        |  POST_postit -> POST() def postit<POST_postit>: String
         |    HEADERS:
         |    bar<X-Bar>@1:0:1:0: String suchMeta=false
         |    foo<X-Foo>@3:0:3:1: String suchMeta=true,metas=suchMeta(3,c),suchMeta(2,b)
