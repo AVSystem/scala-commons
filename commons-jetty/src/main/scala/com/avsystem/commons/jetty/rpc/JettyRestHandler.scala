@@ -39,7 +39,7 @@ class JettyRestHandler(handleRequest: RestRequest => Future[RestResponse]) exten
     val bodyBuilder = new JStringBuilder
     Iterator.continually(bodyReader.read())
       .takeWhile(_ != -1)
-      .foreach(bodyBuilder.append)
+      .foreach(bodyBuilder.appendCodePoint)
     val body = BodyValue(bodyBuilder.toString)
 
     val restRequest = RestRequest(method, RestHeaders(path, headers, query), body)
