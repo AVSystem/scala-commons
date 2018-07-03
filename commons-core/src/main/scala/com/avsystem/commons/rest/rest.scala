@@ -45,23 +45,31 @@ case class QueryValue(value: String) extends AnyVal with RestValue
 case class BodyValue(value: String) extends AnyVal with RestValue
 object BodyValue {
   def combineIntoObject(fields: BIterable[(String, BodyValue)]): BodyValue = {
-    val sb = new JStringBuilder
-    val oo = new JsonStringOutput(sb).writeObject()
-    fields.foreach {
-      case (key, BodyValue(json)) =>
-        oo.writeField(key).writeRawJson(json)
+    if (fields.isEmpty) {
+      BodyValue("")
+    } else {
+      val sb = new JStringBuilder
+      val oo = new JsonStringOutput(sb).writeObject()
+      fields.foreach {
+        case (key, BodyValue(json)) =>
+          oo.writeField(key).writeRawJson(json)
+      }
+      oo.finish()
+      BodyValue(sb.toString)
     }
-    oo.finish()
-    BodyValue(sb.toString)
   }
   def uncombineFromObject(body: BodyValue): ListMap[String, BodyValue] = {
-    val oi = new JsonStringInput(new JsonReader(body.value)).readObject()
-    val builder = ListMap.newBuilder[String, BodyValue]
-    while (oi.hasNext) {
-      val fi = oi.nextField()
-      builder += ((fi.fieldName, BodyValue(fi.readRawJson())))
+    if (body.value.isEmpty) {
+      ListMap.empty
+    } else {
+      val oi = new JsonStringInput(new JsonReader(body.value)).readObject()
+      val builder = ListMap.newBuilder[String, BodyValue]
+      while (oi.hasNext) {
+        val fi = oi.nextField()
+        builder += ((fi.fieldName, BodyValue(fi.readRawJson())))
+      }
+      builder.result()
     }
-    builder.result()
   }
 }
 object RestValue {
