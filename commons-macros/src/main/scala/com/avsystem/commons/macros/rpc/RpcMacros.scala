@@ -10,6 +10,7 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   import c.universe._
 
   val RpcPackage = q"$CommonsPkg.rpc"
+  val RpcUtils = q"$RpcPackage.RpcUtils"
   val AsRealCls = tq"$RpcPackage.AsReal"
   val AsRealObj = q"$RpcPackage.AsReal"
   val AsRawCls = tq"$RpcPackage.AsRaw"

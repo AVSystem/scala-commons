@@ -349,7 +349,7 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       case RpcParamArity.Single(annotTpe) =>
         rpcSym.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)).getOrElse {
           val msg = s"${rpcSym.problemStr}: cannot materialize value for $description: no annotation of type $annotTpe found"
-          q"$RpcPackage.RpcUtils.compilationError(${StringLiteral(msg, rpcSym.pos)})"
+          q"$RpcUtils.compilationError(${StringLiteral(msg, rpcSym.pos)})"
         }
       case RpcParamArity.Optional(annotTpe) =>
         mkOptional(rpcSym.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)))

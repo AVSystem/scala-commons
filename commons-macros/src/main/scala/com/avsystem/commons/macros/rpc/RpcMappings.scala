@@ -157,7 +157,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       def rawValueTree: Tree = rawParam.mkMulti(reals.map(_.rawValueTree))
     }
     case class IterableMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends ListedMulti {
-      def realDecls: List[Tree] = {
+      def realDecls: List[Tree] = if(reals.isEmpty) Nil else {
         val itName = c.freshName(TermName("it"))
         val itDecl = q"val $itName = ${rawParam.safePath}.iterator"
         itDecl :: reals.map { erp =>

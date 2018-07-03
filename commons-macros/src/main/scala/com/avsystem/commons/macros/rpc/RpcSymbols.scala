@@ -214,15 +214,16 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def mkOptional[T: Liftable](opt: Option[T]): Tree =
       opt.map(t => q"$optionLike.some($t)").getOrElse(q"$optionLike.none")
 
-    def mkMulti[T: Liftable](elements: List[T]): Tree = {
-      val builderName = c.freshName(TermName("builder"))
-      q"""
-        val $builderName = $canBuildFrom()
-        $builderName.sizeHint(${elements.size})
-        ..${elements.map(t => q"$builderName += $t")}
-        $builderName.result()
-       """
-    }
+    def mkMulti[T: Liftable](elements: List[T]): Tree =
+      if (elements.isEmpty) q"$RpcUtils.createEmpty($canBuildFrom)"
+      else {
+        val builderName = c.freshName(TermName("builder"))
+        q"""
+          val $builderName = $RpcUtils.createBuilder($canBuildFrom, ${elements.size})
+          ..${elements.map(t => q"$builderName += $t")}
+          $builderName.result()
+        """
+      }
   }
 
   trait RealParamTarget extends ArityParam with RawRpcSymbol {
@@ -326,7 +327,7 @@ trait RpcSymbols { this: RpcMacroCommons =>
         val prevListParamss = List(prevListParams).filter(_.nonEmpty)
         q"${owner.owner.safeName}.${TermName(s"${owner.encodedNameStr}$$default$$${index + 1}")}(...$prevListParamss)"
       }
-      else q"$RpcPackage.RpcUtils.missingArg(${owner.rpcName}, $rpcName)"
+      else q"$RpcUtils.missingArg(${owner.rpcName}, $rpcName)"
   }
 
   case class RawMethod(owner: RawRpcTrait, symbol: Symbol) extends RpcMethod with RawRpcSymbol with AritySymbol {
@@ -375,7 +376,7 @@ trait RpcSymbols { this: RpcMacroCommons =>
           case _ => abort(s"multiple real methods match $description")
         }
         case RpcMethodArity.Optional => caseDefs match {
-          case Nil => q"$RpcPackage.RpcUtils.missingOptionalRpc($nameStr)"
+          case Nil => q"$RpcUtils.missingOptionalRpc($nameStr)"
           case List((_, single)) => single
           case _ => abort(s"multiple real methods match $description")
         }
@@ -384,7 +385,7 @@ trait RpcSymbols { this: RpcMacroCommons =>
           q"""
             ${methodNameParam.safePath} match {
               case ..${caseDefs.map({ case (rpcName, tree) => cq"$rpcName => $tree" })}
-              case $methodNameName => $RpcPackage.RpcUtils.unknownRpc($methodNameName, $nameStr)
+              case $methodNameName => $RpcUtils.unknownRpc($methodNameName, $nameStr)
             }
            """
       }
