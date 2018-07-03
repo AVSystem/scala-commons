@@ -689,8 +689,8 @@ trait MacroCommons { bundle =>
 
   /**
     * @param apply   case class constructor or companion object's apply method
-    * @param unapply companion object'a unapply method or [[NoSymbol]] for case class with more than 22 fields
-    * @param params  parameters with trees evaluating to default values (or [[EmptyTree]]s)
+    * @param unapply companion object'a unapply method or `NoSymbol` for case class with more than 22 fields
+    * @param params  parameters with trees evaluating to default values (or `EmptyTree`s)
     */
   case class ApplyUnapply(apply: Symbol, unapply: Symbol, params: List[(TermSymbol, Tree)])
 

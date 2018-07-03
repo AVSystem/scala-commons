@@ -207,6 +207,38 @@ object RawRest extends RawRpcCompanion[RawRest] {
 
   def apply(handleRequest: RestRequest => Future[RestResponse]): RawRest =
     new DefaultRawRest(RestHeaders.Empty, handleRequest)
+
+  trait ClientMacroInstances[Real] {
+    def asReal: AsRealRpc[Real]
+  }
+
+  trait ServerMacroInstances[Real] {
+    def metadata: RestMetadata[Real]
+    def asRaw: AsRawRpc[Real]
+  }
+
+  trait FullMacroInstances[Real] {
+    def metadata: RestMetadata[Real]
+    def asRawReal: AsRawRealRpc[Real]
+  }
+
+  implicit def clientInstances[Real]: ClientMacroInstances[Real] = macro macros.rest.RestMacros.instances[Real]
+  implicit def serverInstances[Real]: ServerMacroInstances[Real] = macro macros.rest.RestMacros.instances[Real]
+  implicit def fullInstances[Real]: FullMacroInstances[Real] = macro macros.rest.RestMacros.instances[Real]
+}
+
+abstract class RestClientApiCompanion[Real](implicit instances: RawRest.ClientMacroInstances[Real]) {
+  implicit def rawRestAsReal: RawRest.AsRealRpc[Real] = instances.asReal
+}
+
+abstract class RestServerApiCompanion[Real](implicit instances: RawRest.ServerMacroInstances[Real]) {
+  implicit def restMetadata: RestMetadata[Real] = instances.metadata
+  implicit def realAsRawRest: RawRest.AsRawRpc[Real] = instances.asRaw
+}
+
+abstract class RestApiCompanion[Real](implicit instances: RawRest.FullMacroInstances[Real]) {
+  implicit def restMetadata: RestMetadata[Real] = instances.metadata
+  implicit def restAsRealRaw: RawRest.AsRawRealRpc[Real] = instances.asRawReal
 }
 
 @methodTag[RestMethodTag, Prefix]

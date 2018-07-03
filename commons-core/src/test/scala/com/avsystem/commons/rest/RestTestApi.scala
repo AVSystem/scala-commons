@@ -12,7 +12,4 @@ trait RestTestApi {
   @GET def user(userId: String): Future[User]
   @POST def user(@Body user: User): Future[Unit]
 }
-object RestTestApi {
-  implicit val asRawReal: RawRest.AsRawRealRpc[RestTestApi] = RawRest.materializeAsRawReal[RestTestApi]
-  implicit val metadata: RestMetadata[RestTestApi] = RestMetadata.materializeForRpc[RestTestApi]
-}
+object RestTestApi extends RestApiCompanion[RestTestApi]

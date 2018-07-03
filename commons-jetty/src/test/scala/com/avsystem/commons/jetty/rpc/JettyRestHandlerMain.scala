@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jetty.rpc
 
-import com.avsystem.commons.rest.{GET, POST, Query, RawRest, RestMetadata}
+import com.avsystem.commons.rest.{GET, POST, Query, RestApiCompanion}
 import com.avsystem.commons.rpc.rpcName
 import org.eclipse.jetty.server.Server
 
@@ -14,10 +14,7 @@ object JettyRestHandlerMain {
     @rpcName("hello")
     def helloThere(who: String): Future[String]
   }
-  object SomeApi {
-    implicit val asRawReal: RawRest.AsRawRealRpc[SomeApi] = RawRest.materializeAsRawReal
-    implicit val metadata: RestMetadata[SomeApi] = RestMetadata.materializeForRpc
-  }
+  object SomeApi extends RestApiCompanion[SomeApi]
 
   def main(args: Array[String]): Unit = {
     val someApiImpl = new SomeApi {
@@ -25,7 +22,7 @@ object JettyRestHandlerMain {
       override def helloThere(who: String): Future[String] = hello(who)
     }
 
-    val handler = new JettyRestHandler(SomeApi.asRawReal.asRaw(someApiImpl).asHandleRequest(SomeApi.metadata))
+    val handler = new JettyRestHandler(SomeApi.restAsRealRaw.asRaw(someApiImpl).asHandleRequest(SomeApi.restMetadata))
     val server = new Server(9090)
     server.setHandler(handler)
     server.start()
