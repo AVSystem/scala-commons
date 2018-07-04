@@ -47,7 +47,10 @@ object RestServlet {
     Iterator.continually(bodyReader.read())
       .takeWhile(_ != -1)
       .foreach(bodyBuilder.appendCodePoint)
-    val body = HttpBody(bodyBuilder.toString, MimeTypes.getContentTypeWithoutCharset(request.getContentType))
+    val bodyString = bodyBuilder.toString
+    val body =
+      if (bodyString.isEmpty && request.getContentType == null) HttpBody.Empty
+      else HttpBody(bodyString, MimeTypes.getContentTypeWithoutCharset(request.getContentType))
 
     val restRequest = RestRequest(method, RestHeaders(path, headers, query), body)
 

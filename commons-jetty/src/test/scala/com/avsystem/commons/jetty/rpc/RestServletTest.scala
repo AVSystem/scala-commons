@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package jetty.rpc
 
+import java.nio.charset.StandardCharsets
+
 import org.eclipse.jetty.client.util.StringContentProvider
 import org.eclipse.jetty.http.{HttpMethod, HttpStatus}
 import org.eclipse.jetty.server.Server
@@ -30,7 +32,7 @@ class RestServletTest extends FunSuite with UsesHttpServer with UsesHttpClient {
   test("POST method") {
     val response = client.newRequest(s"$baseUrl/hello")
       .method(HttpMethod.POST)
-      .content(new StringContentProvider("""{"who":"World"}"""))
+      .content(new StringContentProvider("application/json", """{"who":"World"}""", StandardCharsets.UTF_8))
       .send()
 
     assert(response.getContentAsString === """"Hello, World!"""")
