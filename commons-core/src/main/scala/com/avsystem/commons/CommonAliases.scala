@@ -19,7 +19,7 @@ trait CommonAliases {
 
   type ClassTag[T] = scala.reflect.ClassTag[T]
   final val ClassTag = scala.reflect.ClassTag
-  final def classTag[T: ClassTag] = scala.reflect.classTag[T]
+  final def classTag[T: ClassTag]: ClassTag[T] = scala.reflect.classTag[T]
 
   type Opt[+T] = misc.Opt[T]
   final val Opt = misc.Opt

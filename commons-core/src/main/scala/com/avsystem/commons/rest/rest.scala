@@ -165,14 +165,14 @@ trait RawRest {
   def asHandleRequest(metadata: RestMetadata[_]): RestRequest => Future[RestResponse] = request => {
     val (pathName, headers) = request.headers.extractPathName
 
-    def forPrefix =
+    def forPrefix: Option[Future[RestResponse]] =
       metadata.prefixMethods.get(pathName.value).map { prefixMeta =>
         val (prefixHeaders, restOfHeaders) = headers.extractPrefix(prefixMeta.headersMetadata)
         prefix(pathName.value, prefixHeaders)
           .asHandleRequest(prefixMeta.result.value)(request.copy(headers = restOfHeaders))
       }
 
-    def forHttpMethod = {
+    def forHttpMethod: Option[Future[RestResponse]] = {
       val rpcName = request.method.toRpcName(pathName)
       metadata.httpMethods.get(rpcName).map { httpMeta =>
         if (httpMeta.singleBody) handleSingle(rpcName, headers, request.body)
@@ -180,7 +180,7 @@ trait RawRest {
       }
     }
 
-    def notFound =
+    def notFound: Future[RestResponse] =
       Future.successful(RestResponse(404, BodyValue(s"path ${pathName.value} not found")))
 
     forPrefix orElse forHttpMethod getOrElse notFound
@@ -188,6 +188,12 @@ trait RawRest {
 }
 
 object RawRest extends RawRpcCompanion[RawRest] {
+  def fromHandleRequest[Real: AsRealRpc](handleRequest: RestRequest => Future[RestResponse]): Real =
+    RawRest.asReal(RawRest(handleRequest))
+
+  def toHandleRequest[Real: AsRawRpc : RestMetadata](real: Real): RestRequest => Future[RestResponse] =
+    RawRest.asRaw(real).asHandleRequest(RestMetadata[Real])
+
   private final class DefaultRawRest(
     prefixHeaders: RestHeaders, handleRequest: RestRequest => Future[RestResponse]) extends RawRest {
 

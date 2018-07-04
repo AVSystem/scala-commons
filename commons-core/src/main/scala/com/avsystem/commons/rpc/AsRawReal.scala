@@ -8,6 +8,8 @@ trait AsRaw[Raw, Real] {
   def asRaw(real: Real): Raw
 }
 object AsRaw {
+  def apply[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Raw, Real] = asRaw
+
   def create[Raw, Real](asRawFun: Real => Raw): AsRaw[Raw, Real] =
     new AsRaw[Raw, Real] {
       def asRaw(real: Real): Raw = asRawFun(real)
@@ -21,6 +23,8 @@ trait AsReal[Raw, Real] {
   def asReal(raw: Raw): Real
 }
 object AsReal {
+  def apply[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Raw, Real] = asReal
+
   def create[Raw, Real](asRealFun: Raw => Real): AsReal[Raw, Real] =
     new AsReal[Raw, Real] {
       def asReal(raw: Raw): Real = asRealFun(raw)
@@ -32,6 +36,8 @@ object AsReal {
 @implicitNotFound("don't know how to encode and decode between ${Real} and ${Raw}, appropriate AsRawReal instance not found")
 trait AsRawReal[Raw, Real] extends AsReal[Raw, Real] with AsRaw[Raw, Real]
 object AsRawReal {
+  def apply[Raw, Real](implicit asRawReal: AsRawReal[Raw, Real]): AsRawReal[Raw, Real] = asRawReal
+
   def create[Raw, Real](asRawFun: Real => Raw, asRealFun: Raw => Real): AsRawReal[Raw, Real] =
     new AsRawReal[Raw, Real] {
       def asRaw(real: Real): Raw = asRawFun(real)
