@@ -57,8 +57,8 @@ object RestValue {
 }
 
 case class HttpBody(value: String, mimeType: String) {
-  def jsonValue: String = mimeType match {
-    case HttpBody.JsonType => value
+  def jsonValue: JsonValue = mimeType match {
+    case HttpBody.JsonType => JsonValue(value)
     case _ => throw new ReadFailure(s"Expected application/json type, got $mimeType")
   }
 }
@@ -67,7 +67,7 @@ object HttpBody {
   final val JsonType = "application/json"
 
   def plain(value: String): HttpBody = HttpBody(value, PlainType)
-  def json(value: String): HttpBody = HttpBody(value, JsonType)
+  def json(json: JsonValue): HttpBody = HttpBody(json.value, JsonType)
 
   final val Empty: HttpBody = HttpBody.plain("")
 
@@ -80,12 +80,12 @@ object HttpBody {
           oo.writeField(key).writeRawJson(json)
       }
       oo.finish()
-      HttpBody.json(sb.toString)
+      HttpBody.json(JsonValue(sb.toString))
     }
 
   def parseJsonBody(body: HttpBody): ListMap[String, JsonValue] =
     if (body.value.isEmpty) ListMap.empty else {
-      val oi = new JsonStringInput(new JsonReader(body.jsonValue)).readObject()
+      val oi = new JsonStringInput(new JsonReader(body.jsonValue.value)).readObject()
       val builder = ListMap.newBuilder[String, JsonValue]
       while (oi.hasNext) {
         val fi = oi.nextField()
@@ -96,8 +96,10 @@ object HttpBody {
 
   implicit val emptyBodyForUnit: AsRawReal[HttpBody, Unit] =
     AsRawReal.create(_ => HttpBody.Empty, _ => ())
-  implicit def httpBodyJsonAsRawReal[T: GenCodec]: AsRawReal[HttpBody, T] =
-    AsRawReal.create(v => HttpBody.json(JsonStringOutput.write[T](v)), v => JsonStringInput.read[T](v.jsonValue))
+  implicit def httpBodyJsonAsRaw[T](implicit jsonAsRaw: AsRaw[JsonValue, T]): AsRaw[HttpBody, T] =
+    AsRaw.create(v => HttpBody.json(jsonAsRaw.asRaw(v)))
+  implicit def httpBodyJsonAsReal[T](implicit jsonAsReal: AsReal[JsonValue, T]): AsReal[HttpBody, T] =
+    AsReal.create(v => jsonAsReal.asReal(v.jsonValue))
 }
 
 final class HttpRestMethod(implicit enumCtx: EnumCtx) extends AbstractValueEnum {

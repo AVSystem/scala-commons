@@ -34,8 +34,7 @@ class RawRestTest extends FunSuite with ScalaFutures {
       }
     }
 
-    val realProxy: RestTestApi =
-      RestTestApi.restAsRealRaw.asReal(RawRest(serverHandle))
+    val realProxy: RestTestApi = RawRest.fromHandleRequest[RestTestApi](serverHandle)
 
     def assertSame[T](call: RestTestApi => Future[T])(implicit pos: Position): Unit =
       assert(call(realProxy).futureValue == call(real).futureValue)
