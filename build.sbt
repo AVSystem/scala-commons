@@ -236,6 +236,8 @@ lazy val `commons-jetty` = project
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
       "org.eclipse.jetty" % "jetty-server" % jettyVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
+
+      "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
       "org.slf4j" % "slf4j-simple" % "1.7.25" % Test,
     ),
   )
