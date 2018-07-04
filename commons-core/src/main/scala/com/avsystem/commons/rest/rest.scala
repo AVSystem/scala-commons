@@ -12,19 +12,20 @@ import scala.collection.immutable.ListMap
 
 sealed trait RestMethodTag extends RpcTag
 sealed trait HttpMethodTag extends RestMethodTag with AnnotationAggregate
+sealed trait BodyMethodTag extends HttpMethodTag
 final class GET extends HttpMethodTag {
   @rpcNamePrefix("GET_") type Implied
 }
-final class POST extends HttpMethodTag {
+final class POST extends BodyMethodTag {
   @rpcNamePrefix("POST_") type Implied
 }
-final class PATCH extends HttpMethodTag {
+final class PATCH extends BodyMethodTag {
   @rpcNamePrefix("PATCH_") type Implied
 }
-final class PUT extends HttpMethodTag {
+final class PUT extends BodyMethodTag {
   @rpcNamePrefix("PUT_") type Implied
 }
-final class DELETE extends HttpMethodTag {
+final class DELETE extends BodyMethodTag {
   @rpcNamePrefix("DELETE_") type Implied
 }
 sealed trait Prefix extends RestMethodTag
@@ -158,7 +159,7 @@ object RestResponse {
 }
 
 @methodTag[RestMethodTag, Prefix]
-@paramTag[RestParamTag, JsonBodyParam]
+@paramTag[RestParamTag, RestParamTag]
 trait RawRest {
   @multi
   @tagged[Prefix]
@@ -166,12 +167,18 @@ trait RawRest {
   def prefix(@methodName name: String, @composite headers: RestHeaders): RawRest
 
   @multi
-  @tagged[HttpMethodTag]
+  @tagged[GET]
+  @paramTag[RestParamTag, Query]
+  def get(@methodName name: String, @composite headers: RestHeaders): Future[RestResponse]
+
+  @multi
+  @tagged[BodyMethodTag]
+  @paramTag[RestParamTag, JsonBodyParam]
   def handle(@methodName name: String, @composite headers: RestHeaders,
     @multi @tagged[JsonBodyParam] body: IListMap[String, JsonValue]): Future[RestResponse]
 
   @multi
-  @tagged[HttpMethodTag]
+  @tagged[BodyMethodTag]
   def handleSingle(@methodName name: String, @composite headers: RestHeaders,
     @encoded @tagged[Body] body: HttpBody): Future[RestResponse]
 
@@ -188,7 +195,8 @@ trait RawRest {
     def forHttpMethod: Option[Future[RestResponse]] = {
       val rpcName = request.method.toRpcName(pathName)
       metadata.httpMethods.get(rpcName).map { httpMeta =>
-        if (httpMeta.singleBody) handleSingle(rpcName, headers, request.body)
+        if (request.method == HttpRestMethod.GET) get(rpcName, headers)
+        else if (httpMeta.singleBody) handleSingle(rpcName, headers, request.body)
         else handle(rpcName, headers, HttpBody.parseJsonBody(request.body))
       }
     }
@@ -212,6 +220,9 @@ object RawRest extends RawRpcCompanion[RawRest] {
 
     def prefix(name: String, headers: RestHeaders): RawRest =
       new DefaultRawRest(prefixHeaders.append(PathValue(name), headers), handleRequest)
+
+    def get(name: String, headers: RestHeaders): Future[RestResponse] =
+      handleSingle(name, headers, HttpBody.Empty)
 
     def handle(name: String, headers: RestHeaders, body: IListMap[String, JsonValue]): Future[RestResponse] = {
       val (method, pathName) = HttpRestMethod.parseRpcName(name)

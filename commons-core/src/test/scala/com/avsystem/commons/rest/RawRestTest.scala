@@ -27,9 +27,9 @@ class RawRestTest extends FunSuite with ScalaFutures {
 
     val callRecord = new MListBuffer[(RestRequest, RestResponse)]
 
-    val real = new RestTestApiImpl(0, "")
+    val real: RestTestApi = new RestTestApiImpl(0, "")
     val serverHandle: RestRequest => Future[RestResponse] = request => {
-      RestTestApi.restAsRealRaw.asRaw(real).asHandleRequest(RestTestApi.restMetadata)(request).andThenNow {
+      RawRest.asHandleRequest(real).apply(request).andThenNow {
         case Success(response) => callRecord += ((request, response))
       }
     }
