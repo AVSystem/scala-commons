@@ -1,12 +1,12 @@
 package com.avsystem.commons
 package jetty.rpc
 
-import com.avsystem.commons.rest.{GET, POST, Query, RawRest, RestApiCompanion, RestRequest, RestResponse}
+import com.avsystem.commons.rest.{GET, POST, RawRest, RestApiCompanion, RestRequest, RestResponse}
 import com.avsystem.commons.rpc.rpcName
 
 trait SomeApi {
   @GET
-  def hello(@Query who: String): Future[String]
+  def hello(who: String): Future[String]
 
   @POST
   @rpcName("hello")
