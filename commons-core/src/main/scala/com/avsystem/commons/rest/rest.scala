@@ -204,7 +204,7 @@ object RawRest extends RawRpcCompanion[RawRest] {
   def fromHandleRequest[Real: AsRealRpc](handleRequest: RestRequest => Future[RestResponse]): Real =
     RawRest.asReal(RawRest(handleRequest))
 
-  def toHandleRequest[Real: AsRawRpc : RestMetadata](real: Real): RestRequest => Future[RestResponse] =
+  def asHandleRequest[Real: AsRawRpc : RestMetadata](real: Real): RestRequest => Future[RestResponse] =
     RawRest.asRaw(real).asHandleRequest(RestMetadata[Real])
 
   private final class DefaultRawRest(
