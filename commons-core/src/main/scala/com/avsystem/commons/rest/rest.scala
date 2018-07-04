@@ -94,6 +94,8 @@ object HttpBody {
       builder.result()
     }
 
+  implicit val emptyBodyForUnit: AsRawReal[HttpBody, Unit] =
+    AsRawReal.create(_ => HttpBody.Empty, _ => ())
   implicit def httpBodyJsonAsRawReal[T: GenCodec]: AsRawReal[HttpBody, T] =
     AsRawReal.create(v => HttpBody.json(JsonStringOutput.write[T](v)), v => JsonStringInput.read[T](v.jsonValue))
 }
