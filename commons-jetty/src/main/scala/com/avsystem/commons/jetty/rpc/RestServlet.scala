@@ -52,7 +52,7 @@ object RestServlet {
     val restRequest = RestRequest(method, RestHeaders(path, headers, query), body)
 
     val asyncContext = request.startAsync()
-    handleRequest(restRequest).andThenNow {
+    handleRequest(restRequest).catchFailures.andThenNow {
       case Success(restResponse) =>
         response.setStatus(restResponse.code)
         response.addHeader(HttpHeader.CONTENT_TYPE.asString(), MimeTypes.Type.APPLICATION_JSON_UTF_8.asString())

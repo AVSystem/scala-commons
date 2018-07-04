@@ -23,7 +23,7 @@ object SomeApi extends RestApiCompanion[SomeApi] {
 
   val impl: SomeApi = new SomeApi {
     override def hello(who: String): Future[String] = {
-      if (who == poison) Future.failed(new IllegalArgumentException(poison))
+      if (who == poison) throw new IllegalArgumentException(poison)
       else Future.successful(format(who))
     }
 
