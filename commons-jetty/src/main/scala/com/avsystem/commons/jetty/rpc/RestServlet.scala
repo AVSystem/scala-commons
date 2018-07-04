@@ -3,7 +3,7 @@ package jetty.rpc
 
 import java.util.regex.Pattern
 
-import com.avsystem.commons.rest.{BodyValue, HeaderValue, HttpRestMethod, PathValue, QueryValue, RestHeaders, RestRequest, RestResponse}
+import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpRestMethod, PathValue, QueryValue, RestHeaders, RestRequest, RestResponse}
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.http.{HttpHeader, HttpStatus, MimeTypes}
 
@@ -47,7 +47,7 @@ object RestServlet {
     Iterator.continually(bodyReader.read())
       .takeWhile(_ != -1)
       .foreach(bodyBuilder.appendCodePoint)
-    val body = BodyValue(bodyBuilder.toString)
+    val body = HttpBody(bodyBuilder.toString, MimeTypes.getContentTypeWithoutCharset(request.getContentType))
 
     val restRequest = RestRequest(method, RestHeaders(path, headers, query), body)
 
@@ -55,7 +55,7 @@ object RestServlet {
     handleRequest(restRequest).catchFailures.andThenNow {
       case Success(restResponse) =>
         response.setStatus(restResponse.code)
-        response.addHeader(HttpHeader.CONTENT_TYPE.asString(), MimeTypes.Type.APPLICATION_JSON_UTF_8.asString())
+        response.addHeader(HttpHeader.CONTENT_TYPE.asString(), s"${restResponse.body.mimeType};charset=utf-8")
         response.getWriter.write(restResponse.body.value)
       case Failure(e) =>
         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500)

@@ -4,6 +4,7 @@ package rest
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.rpc._
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
@@ -33,7 +34,7 @@ final class Path extends RestParamTag
 final class Header extends RestParamTag
 final class Query extends RestParamTag
 sealed trait BodyTag extends RestParamTag
-final class BodyParam extends BodyTag
+final class JsonBodyParam extends BodyTag
 final class Body extends BodyTag
 
 sealed trait RestValue extends Any {
@@ -42,36 +43,7 @@ sealed trait RestValue extends Any {
 case class PathValue(value: String) extends AnyVal with RestValue
 case class HeaderValue(value: String) extends AnyVal with RestValue
 case class QueryValue(value: String) extends AnyVal with RestValue
-case class BodyValue(value: String) extends AnyVal with RestValue
-object BodyValue {
-  def combineIntoObject(fields: BIterable[(String, BodyValue)]): BodyValue = {
-    if (fields.isEmpty) {
-      BodyValue("")
-    } else {
-      val sb = new JStringBuilder
-      val oo = new JsonStringOutput(sb).writeObject()
-      fields.foreach {
-        case (key, BodyValue(json)) =>
-          oo.writeField(key).writeRawJson(json)
-      }
-      oo.finish()
-      BodyValue(sb.toString)
-    }
-  }
-  def uncombineFromObject(body: BodyValue): ListMap[String, BodyValue] = {
-    if (body.value.isEmpty) {
-      ListMap.empty
-    } else {
-      val oi = new JsonStringInput(new JsonReader(body.value)).readObject()
-      val builder = ListMap.newBuilder[String, BodyValue]
-      while (oi.hasNext) {
-        val fi = oi.nextField()
-        builder += ((fi.fieldName, BodyValue(fi.readRawJson())))
-      }
-      builder.result()
-    }
-  }
-}
+case class JsonValue(value: String) extends AnyVal with RestValue
 object RestValue {
   implicit def pathValueDefaultAsRealRaw[T: GenKeyCodec]: AsRawReal[PathValue, T] =
     AsRawReal.create(v => PathValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value))
@@ -79,8 +51,50 @@ object RestValue {
     AsRawReal.create(v => HeaderValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value))
   implicit def queryValueDefaultAsRealRaw[T: GenKeyCodec]: AsRawReal[QueryValue, T] =
     AsRawReal.create(v => QueryValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value))
-  implicit def bodyValueDefaultAsRealRaw[T: GenCodec]: AsRawReal[BodyValue, T] =
-    AsRawReal.create(v => BodyValue(JsonStringOutput.write[T](v)), v => JsonStringInput.read[T](v.value))
+  implicit def jsonValueDefaultAsRealRaw[T: GenCodec]: AsRawReal[JsonValue, T] =
+    AsRawReal.create(v => JsonValue(JsonStringOutput.write[T](v)), v => JsonStringInput.read[T](v.value))
+}
+
+case class HttpBody(value: String, mimeType: String) {
+  def jsonValue: String = mimeType match {
+    case HttpBody.JsonType => value
+    case _ => throw new ReadFailure(s"Expected application/json type, got $mimeType")
+  }
+}
+object HttpBody {
+  final val PlainType = "text/plain"
+  final val JsonType = "application/json"
+
+  def plain(value: String): HttpBody = HttpBody(value, PlainType)
+  def json(value: String): HttpBody = HttpBody(value, JsonType)
+
+  final val Empty: HttpBody = HttpBody.plain("")
+
+  def createJsonBody(fields: BIterable[(String, JsonValue)]): HttpBody =
+    if (fields.isEmpty) HttpBody.Empty else {
+      val sb = new JStringBuilder
+      val oo = new JsonStringOutput(sb).writeObject()
+      fields.foreach {
+        case (key, JsonValue(json)) =>
+          oo.writeField(key).writeRawJson(json)
+      }
+      oo.finish()
+      HttpBody.json(sb.toString)
+    }
+
+  def parseJsonBody(body: HttpBody): ListMap[String, JsonValue] =
+    if (body.value.isEmpty) ListMap.empty else {
+      val oi = new JsonStringInput(new JsonReader(body.jsonValue)).readObject()
+      val builder = ListMap.newBuilder[String, JsonValue]
+      while (oi.hasNext) {
+        val fi = oi.nextField()
+        builder += ((fi.fieldName, JsonValue(fi.readRawJson())))
+      }
+      builder.result()
+    }
+
+  implicit def httpBodyJsonAsRawReal[T: GenCodec]: AsRawReal[HttpBody, T] =
+    AsRawReal.create(v => HttpBody.json(JsonStringOutput.write[T](v)), v => JsonStringInput.read[T](v.jsonValue))
 }
 
 final class HttpRestMethod(implicit enumCtx: EnumCtx) extends AbstractValueEnum {
@@ -131,21 +145,20 @@ object RestHeaders {
 class HttpErrorException(code: Int, payload: String)
   extends RuntimeException(s"$code: $payload")
 
-case class RestRequest(method: HttpRestMethod, headers: RestHeaders, body: BodyValue)
-case class RestResponse(code: Int, body: BodyValue)
+case class RestRequest(method: HttpRestMethod, headers: RestHeaders, body: HttpBody)
+case class RestResponse(code: Int, body: HttpBody)
 object RestResponse {
-  implicit def genCodecBasedFutureAsRawReal[T: GenCodec]: AsRawReal[Future[RestResponse], Future[T]] =
-    AsRawReal.create(
-      _.mapNow(v => RestResponse(200, BodyValue(JsonStringOutput.write[T](v)))),
-      _.mapNow {
-        case RestResponse(200, BodyValue(json)) => JsonStringInput.read[T](json)
-        case RestResponse(code, BodyValue(payload)) => throw new HttpErrorException(code, payload)
-      }
-    )
+  implicit def defaultFutureAsRaw[T](implicit bodyAsRaw: AsRaw[HttpBody, T]): AsRaw[Future[RestResponse], Future[T]] =
+    AsRaw.create(_.mapNow(v => RestResponse(200, bodyAsRaw.asRaw(v))))
+  implicit def defaultFutureAsReal[T](implicit bodyAsReal: AsReal[HttpBody, T]): AsReal[Future[RestResponse], Future[T]] =
+    AsReal.create(_.mapNow {
+      case RestResponse(200, body) => bodyAsReal.asReal(body)
+      case RestResponse(code, body) => throw new HttpErrorException(code, body.value)
+    })
 }
 
 @methodTag[RestMethodTag, Prefix]
-@paramTag[RestParamTag, BodyParam]
+@paramTag[RestParamTag, JsonBodyParam]
 trait RawRest {
   @multi
   @tagged[Prefix]
@@ -155,12 +168,12 @@ trait RawRest {
   @multi
   @tagged[HttpMethodTag]
   def handle(@methodName name: String, @composite headers: RestHeaders,
-    @multi @tagged[BodyParam] body: IListMap[String, BodyValue]): Future[RestResponse]
+    @multi @tagged[JsonBodyParam] body: IListMap[String, JsonValue]): Future[RestResponse]
 
   @multi
   @tagged[HttpMethodTag]
   def handleSingle(@methodName name: String, @composite headers: RestHeaders,
-    @encoded @tagged[Body] body: BodyValue): Future[RestResponse]
+    @encoded @tagged[Body] body: HttpBody): Future[RestResponse]
 
   def asHandleRequest(metadata: RestMetadata[_]): RestRequest => Future[RestResponse] = request => {
     val (pathName, headers) = request.headers.extractPathName
@@ -176,12 +189,12 @@ trait RawRest {
       val rpcName = request.method.toRpcName(pathName)
       metadata.httpMethods.get(rpcName).map { httpMeta =>
         if (httpMeta.singleBody) handleSingle(rpcName, headers, request.body)
-        else handle(rpcName, headers, BodyValue.uncombineFromObject(request.body))
+        else handle(rpcName, headers, HttpBody.parseJsonBody(request.body))
       }
     }
 
     def notFound: Future[RestResponse] =
-      Future.successful(RestResponse(404, BodyValue(s"path ${pathName.value} not found")))
+      Future.successful(RestResponse(404, HttpBody.plain(s"path ${pathName.value} not found")))
 
     forPrefix orElse forHttpMethod getOrElse notFound
   }
@@ -200,12 +213,12 @@ object RawRest extends RawRpcCompanion[RawRest] {
     def prefix(name: String, headers: RestHeaders): RawRest =
       new DefaultRawRest(prefixHeaders.append(PathValue(name), headers), handleRequest)
 
-    def handle(name: String, headers: RestHeaders, body: IListMap[String, BodyValue]): Future[RestResponse] = {
+    def handle(name: String, headers: RestHeaders, body: IListMap[String, JsonValue]): Future[RestResponse] = {
       val (method, pathName) = HttpRestMethod.parseRpcName(name)
-      handleRequest(RestRequest(method, prefixHeaders.append(pathName, headers), BodyValue.combineIntoObject(body)))
+      handleRequest(RestRequest(method, prefixHeaders.append(pathName, headers), HttpBody.createJsonBody(body)))
     }
 
-    def handleSingle(name: String, headers: RestHeaders, body: BodyValue): Future[RestResponse] = {
+    def handleSingle(name: String, headers: RestHeaders, body: HttpBody): Future[RestResponse] = {
       val (method, pathName) = HttpRestMethod.parseRpcName(name)
       handleRequest(RestRequest(method, prefixHeaders.append(pathName, headers), body))
     }
@@ -248,7 +261,7 @@ abstract class RestApiCompanion[Real](implicit instances: RawRest.FullMacroInsta
 }
 
 @methodTag[RestMethodTag, Prefix]
-@paramTag[RestParamTag, BodyParam]
+@paramTag[RestParamTag, JsonBodyParam]
 case class RestMetadata[T](
   @multi @tagged[Prefix] prefixMethods: Map[String, PrefixMetadata[_]],
   @multi @tagged[HttpMethodTag] httpMethods: Map[String, HttpMethodMetadata[_]]
