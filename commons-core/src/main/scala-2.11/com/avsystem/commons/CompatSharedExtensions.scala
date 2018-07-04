@@ -1,10 +1,13 @@
 package com.avsystem.commons
 
-import com.avsystem.commons.CompatSharedExtensions.FutureCompatOps
 import com.avsystem.commons.concurrent.RunNowEC
 
 trait CompatSharedExtensions {
+  import CompatSharedExtensions._
+
   implicit def futureCompatOps[A](fut: Future[A]): FutureCompatOps[A] = new FutureCompatOps(fut)
+
+  implicit def futureCompanionCompatOps(fut: Future.type): FutureCompanionCompatOps.type = FutureCompanionCompatOps
 }
 
 object CompatSharedExtensions {
@@ -27,5 +30,9 @@ object CompatSharedExtensions {
 
     def zipWith[U, R](that: Future[U])(f: (A, U) => R)(implicit executor: ExecutionContext): Future[R] =
       fut.flatMap(r1 => that.map(r2 => f(r1, r2)))(RunNowEC)
+  }
+
+  object FutureCompanionCompatOps {
+    final val unit: Future[Unit] = Future.successful(())
   }
 }
