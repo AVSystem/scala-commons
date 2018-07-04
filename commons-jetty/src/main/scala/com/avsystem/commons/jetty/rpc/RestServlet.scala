@@ -3,7 +3,7 @@ package jetty.rpc
 
 import java.util.regex.Pattern
 
-import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpRestMethod, PathValue, QueryValue, RestHeaders, RestRequest, RestResponse}
+import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RestHeaders, RestRequest, RestResponse}
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.http.{HttpHeader, HttpStatus, MimeTypes}
 
@@ -21,7 +21,7 @@ object RestServlet {
     request: HttpServletRequest,
     response: HttpServletResponse
   ): Unit = {
-    val method = HttpRestMethod.byName(request.getMethod)
+    val method = HttpMethod.byName(request.getMethod)
 
     val path = separatorPattern
       .splitAsStream(request.getPathInfo)

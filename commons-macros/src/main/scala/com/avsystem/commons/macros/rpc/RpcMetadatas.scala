@@ -338,23 +338,26 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       reportProblem(s"${arity.collectedType} is not a subtype of StaticAnnotation")
     }
 
-    def validated(annot: Annot): Annot = {
-      if (containsInaccessibleThises(annot.tree)) {
-        reportProblem(s"reified annotation must not contain this-references inaccessible outside RPC trait")
-      }
-      annot
-    }
-
-    def materializeFor(rpcSym: Real): Tree = arity match {
-      case RpcParamArity.Single(annotTpe) =>
-        rpcSym.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)).getOrElse {
-          val msg = s"${rpcSym.problemStr}: cannot materialize value for $description: no annotation of type $annotTpe found"
-          q"$RpcUtils.compilationError(${StringLiteral(msg, rpcSym.pos)})"
+    def materializeFor(rpcSym: Real): Tree = {
+      def validated(annot: Annot): Annot = {
+        if (containsInaccessibleThises(annot.tree)) {
+          echo(showCode(annot.tree))
+          rpcSym.reportProblem(s"reified annotation contains this-references inaccessible outside RPC trait")
         }
-      case RpcParamArity.Optional(annotTpe) =>
-        mkOptional(rpcSym.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)))
-      case RpcParamArity.Multi(annotTpe, _) =>
-        mkMulti(allAnnotations(rpcSym.symbol, annotTpe).map(a => c.untypecheck(validated(a).tree)))
+        annot
+      }
+
+      arity match {
+        case RpcParamArity.Single(annotTpe) =>
+          rpcSym.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)).getOrElse {
+            val msg = s"${rpcSym.problemStr}: cannot materialize value for $description: no annotation of type $annotTpe found"
+            q"$RpcUtils.compilationError(${StringLiteral(msg, rpcSym.pos)})"
+          }
+        case RpcParamArity.Optional(annotTpe) =>
+          mkOptional(rpcSym.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)))
+        case RpcParamArity.Multi(annotTpe, _) =>
+          mkMulti(allAnnotations(rpcSym.symbol, annotTpe).map(a => c.untypecheck(validated(a).tree)))
+      }
     }
 
     def tryMaterializeFor(rpcSym: Real): Res[Tree] =

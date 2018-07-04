@@ -9,18 +9,23 @@ import org.scalatest.concurrent.ScalaFutures
 case class User(id: String, name: String)
 object User extends HasGenCodec[User]
 
-trait RestTestApi {
-  def subApi(id: Int, @Query query: String): RestTestApi
-
+trait UserApi {
   @GET def user(userId: String): Future[User]
-  @POST def user(@Body user: User): Future[Unit]
+  @POST("user/save") def user(@Body user: User): Future[Unit]
+}
+object UserApi extends RestApiCompanion[UserApi]
+
+trait RestTestApi {
+  @Prefix("") def self: UserApi
+  def subApi(id: Int, @Query query: String): UserApi
 }
 object RestTestApi extends RestApiCompanion[RestTestApi]
 
 class RawRestTest extends FunSuite with ScalaFutures {
   test("round trip test") {
-    class RestTestApiImpl(id: Int, query: String) extends RestTestApi {
-      def subApi(newId: Int, newQuery: String): RestTestApi = new RestTestApiImpl(newId, query + newQuery)
+    class RestTestApiImpl(id: Int, query: String) extends RestTestApi with UserApi {
+      def self: UserApi = this
+      def subApi(newId: Int, newQuery: String): UserApi = new RestTestApiImpl(newId, query + newQuery)
       def user(userId: String): Future[User] = Future.successful(User(userId, s"$userId-$id-$query"))
       def user(user: User): Future[Unit] = Future.unit
     }
@@ -39,7 +44,7 @@ class RawRestTest extends FunSuite with ScalaFutures {
     def assertSame[T](call: RestTestApi => Future[T])(implicit pos: Position): Unit =
       assert(call(realProxy).futureValue == call(real).futureValue)
 
-    assertSame(_.user("ID"))
+    assertSame(_.self.user("ID"))
     assertSame(_.subApi(1, "query").user("ID"))
   }
 }

@@ -70,7 +70,7 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
     }
 
   def containsInaccessibleThises(tree: Tree): Boolean = tree.exists {
-    case t@This(_) if !enclosingClasses.contains(t.symbol) => true
+    case t@This(_) if !t.symbol.isPackageClass && !enclosingClasses.contains(t.symbol) => true
     case _ => false
   }
 }

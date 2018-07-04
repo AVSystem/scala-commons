@@ -10,25 +10,28 @@ import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
 import scala.collection.immutable.ListMap
 
-sealed trait RestMethodTag extends RpcTag
-sealed trait HttpMethodTag extends RestMethodTag with AnnotationAggregate
-sealed trait BodyMethodTag extends HttpMethodTag
-final class GET extends HttpMethodTag {
+sealed trait RestMethodTag extends RpcTag {
+  def path: OptArg[String]
+}
+sealed abstract class HttpMethodTag(val method: HttpMethod) extends RestMethodTag with AnnotationAggregate
+sealed abstract class BodyMethodTag(method: HttpMethod) extends HttpMethodTag(method)
+
+final class GET(val path: OptArg[String] = OptArg.Empty) extends HttpMethodTag(HttpMethod.GET) {
   @rpcNamePrefix("GET_") type Implied
 }
-final class POST extends BodyMethodTag {
+final class POST(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTag(HttpMethod.POST) {
   @rpcNamePrefix("POST_") type Implied
 }
-final class PATCH extends BodyMethodTag {
+final class PATCH(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTag(HttpMethod.PATCH) {
   @rpcNamePrefix("PATCH_") type Implied
 }
-final class PUT extends BodyMethodTag {
+final class PUT(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTag(HttpMethod.PUT) {
   @rpcNamePrefix("PUT_") type Implied
 }
-final class DELETE extends BodyMethodTag {
+final class DELETE(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTag(HttpMethod.DELETE) {
   @rpcNamePrefix("DELETE_") type Implied
 }
-sealed trait Prefix extends RestMethodTag
+final class Prefix(val path: OptArg[String] = OptArg.Empty) extends RestMethodTag
 
 sealed trait RestParamTag extends RpcTag
 final class Path extends RestParamTag
@@ -102,22 +105,9 @@ object HttpBody {
     AsReal.create(v => jsonAsReal.asReal(v.jsonValue))
 }
 
-final class HttpRestMethod(implicit enumCtx: EnumCtx) extends AbstractValueEnum {
-  def toRpcName(pathName: PathValue): String =
-    s"${name}_${pathName.value}"
-}
-object HttpRestMethod extends AbstractValueEnumCompanion[HttpRestMethod] {
-  final val GET, PUT, POST, PATCH, DELETE: Value = new HttpRestMethod
-
-  def parseRpcName(rpcName: String): (HttpRestMethod, PathValue) = rpcName.split("_", 2) match {
-    case Array(httpMethod, pathName) =>
-      val httpRestMethod = byName.getOrElse(httpMethod,
-        throw new IllegalArgumentException(s"Unknown REST HTTP method: $httpMethod"))
-      val pathValue = PathValue(pathName)
-      (httpRestMethod, pathValue)
-    case _ =>
-      throw new IllegalArgumentException(s"Bad RPC name for REST method: $rpcName")
-  }
+final class HttpMethod(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+object HttpMethod extends AbstractValueEnumCompanion[HttpMethod] {
+  final val GET, PUT, POST, PATCH, DELETE: Value = new HttpMethod
 }
 
 case class RestHeaders(
@@ -125,23 +115,11 @@ case class RestHeaders(
   @multi @tagged[Header] headers: ListMap[String, HeaderValue],
   @multi @tagged[Query] query: ListMap[String, QueryValue]
 ) {
-  def append(pathName: PathValue, otherHeaders: RestHeaders): RestHeaders = RestHeaders(
-    path ++ (pathName :: otherHeaders.path),
+  def append(methodPath: List[PathValue], otherHeaders: RestHeaders): RestHeaders = RestHeaders(
+    path ::: methodPath ::: otherHeaders.path,
     headers ++ otherHeaders.headers,
     query ++ otherHeaders.query
   )
-
-  def extractPathName: (PathValue, RestHeaders) = path match {
-    case pathName :: pathTail =>
-      (pathName, copy(path = pathTail))
-    case Nil =>
-      throw new IllegalArgumentException("empty path")
-  }
-
-  def extractPrefix(metadata: RestHeadersMetadata): (RestHeaders, RestHeaders) = {
-    val (prefixPath, tailPath) = path.splitAt(metadata.pathSize)
-    (copy(path = prefixPath), copy(path = tailPath))
-  }
 }
 object RestHeaders {
   final val Empty = RestHeaders(Nil, ListMap.empty, ListMap.empty)
@@ -150,7 +128,7 @@ object RestHeaders {
 class HttpErrorException(code: Int, payload: String)
   extends RuntimeException(s"$code: $payload")
 
-case class RestRequest(method: HttpRestMethod, headers: RestHeaders, body: HttpBody)
+case class RestRequest(method: HttpMethod, headers: RestHeaders, body: HttpBody)
 case class RestResponse(code: Int, body: HttpBody)
 object RestResponse {
   implicit def defaultFutureAsRaw[T](implicit bodyAsRaw: AsRaw[HttpBody, T]): AsRaw[Future[RestResponse], Future[T]] =
@@ -186,63 +164,71 @@ trait RawRest {
   def handleSingle(@methodName name: String, @composite headers: RestHeaders,
     @encoded @tagged[Body] body: HttpBody): Future[RestResponse]
 
-  def asHandleRequest(metadata: RestMetadata[_]): RestRequest => Future[RestResponse] = request => {
-    val (pathName, headers) = request.headers.extractPathName
+  def asHandleRequest(metadata: RestMetadata[_]): RestRequest => Future[RestResponse] = {
+    case RestRequest(method, headers, body) => metadata.resolvePath(method, headers.path).toList match {
+      case List(ResolvedPath(prefixes, RpcWithPath(finalRpcName, finalPathParams), singleBody)) =>
+        val finalRawRest = prefixes.foldLeft(this) {
+          case (rawRest, RpcWithPath(rpcName, pathParams)) =>
+            rawRest.prefix(rpcName, headers.copy(path = pathParams))
+        }
+        val finalHeaders = headers.copy(path = finalPathParams)
 
-    def forPrefix: Option[Future[RestResponse]] =
-      metadata.prefixMethods.get(pathName.value).map { prefixMeta =>
-        val (prefixHeaders, restOfHeaders) = headers.extractPrefix(prefixMeta.headersMetadata)
-        prefix(pathName.value, prefixHeaders)
-          .asHandleRequest(prefixMeta.result.value)(request.copy(headers = restOfHeaders))
-      }
+        if (method == HttpMethod.GET) finalRawRest.get(finalRpcName, finalHeaders)
+        else if (singleBody) finalRawRest.handleSingle(finalRpcName, finalHeaders, body)
+        else finalRawRest.handle(finalRpcName, finalHeaders, HttpBody.parseJsonBody(body))
 
-    def forHttpMethod: Option[Future[RestResponse]] = {
-      val rpcName = request.method.toRpcName(pathName)
-      metadata.httpMethods.get(rpcName).map { httpMeta =>
-        if (request.method == HttpRestMethod.GET) get(rpcName, headers)
-        else if (httpMeta.singleBody) handleSingle(rpcName, headers, request.body)
-        else handle(rpcName, headers, HttpBody.parseJsonBody(request.body))
-      }
+      case Nil =>
+        val pathStr = headers.path.iterator.map(_.value).mkString("/")
+        Future.successful(RestResponse(404, HttpBody.plain(s"path $pathStr not found")))
+
+      case multiple =>
+        val pathStr = headers.path.iterator.map(_.value).mkString("/")
+        val callsRepr = multiple.iterator.map(p => s"  ${p.rpcChainRepr}").mkString("\n", "\n", "")
+        throw new IllegalArgumentException(s"path $pathStr is ambiguous, it could map to following calls:$callsRepr")
     }
-
-    def notFound: Future[RestResponse] =
-      Future.successful(RestResponse(404, HttpBody.plain(s"path ${pathName.value} not found")))
-
-    forPrefix orElse forHttpMethod getOrElse notFound
   }
 }
 
 object RawRest extends RawRpcCompanion[RawRest] {
-  def fromHandleRequest[Real: AsRealRpc](handleRequest: RestRequest => Future[RestResponse]): Real =
-    RawRest.asReal(RawRest(handleRequest))
+  def fromHandleRequest[Real: AsRealRpc : RestMetadata](handleRequest: RestRequest => Future[RestResponse]): Real =
+    RawRest.asReal(new DefaultRawRest(RestMetadata[Real], RestHeaders.Empty, handleRequest))
 
   def asHandleRequest[Real: AsRawRpc : RestMetadata](real: Real): RestRequest => Future[RestResponse] =
     RawRest.asRaw(real).asHandleRequest(RestMetadata[Real])
 
   private final class DefaultRawRest(
-    prefixHeaders: RestHeaders, handleRequest: RestRequest => Future[RestResponse]) extends RawRest {
+    metadata: RestMetadata[_],
+    prefixHeaders: RestHeaders,
+    handleRequest: RestRequest => Future[RestResponse]
+  ) extends RawRest {
 
-    def prefix(name: String, headers: RestHeaders): RawRest =
-      new DefaultRawRest(prefixHeaders.append(PathValue(name), headers), handleRequest)
+    def prefix(name: String, headers: RestHeaders): RawRest = {
+      val prefixMeta = metadata.prefixMethods.getOrElse(name,
+        throw new IllegalArgumentException(s"no such prefix method: $name"))
+      val newHeaders = prefixHeaders.append(prefixMeta.methodPath, headers)
+      new DefaultRawRest(prefixMeta.result.value, newHeaders, handleRequest)
+    }
 
     def get(name: String, headers: RestHeaders): Future[RestResponse] =
       handleSingle(name, headers, HttpBody.Empty)
 
     def handle(name: String, headers: RestHeaders, body: IListMap[String, JsonValue]): Future[RestResponse] = {
-      val (method, pathName) = HttpRestMethod.parseRpcName(name)
-      handleRequest(RestRequest(method, prefixHeaders.append(pathName, headers), HttpBody.createJsonBody(body)))
+      val methodMeta = metadata.httpMethods.getOrElse(name,
+        throw new IllegalArgumentException(s"no such HTTP method: $name"))
+      val newHeaders = prefixHeaders.append(methodMeta.methodPath, headers)
+      handleRequest(RestRequest(methodMeta.method, newHeaders, HttpBody.createJsonBody(body)))
     }
 
     def handleSingle(name: String, headers: RestHeaders, body: HttpBody): Future[RestResponse] = {
-      val (method, pathName) = HttpRestMethod.parseRpcName(name)
-      handleRequest(RestRequest(method, prefixHeaders.append(pathName, headers), body))
+      val methodMeta = metadata.httpMethods.getOrElse(name,
+        throw new IllegalArgumentException(s"no such HTTP method: $name"))
+      val newHeaders = prefixHeaders.append(methodMeta.methodPath, headers)
+      handleRequest(RestRequest(methodMeta.method, newHeaders, body))
     }
   }
 
-  def apply(handleRequest: RestRequest => Future[RestResponse]): RawRest =
-    new DefaultRawRest(RestHeaders.Empty, handleRequest)
-
   trait ClientMacroInstances[Real] {
+    def metadata: RestMetadata[Real]
     def asReal: AsRealRpc[Real]
   }
 
@@ -251,10 +237,7 @@ object RawRest extends RawRpcCompanion[RawRest] {
     def asRaw: AsRawRpc[Real]
   }
 
-  trait FullMacroInstances[Real] {
-    def metadata: RestMetadata[Real]
-    def asRawReal: AsRawRealRpc[Real]
-  }
+  trait FullMacroInstances[Real] extends ClientMacroInstances[Real] with ServerMacroInstances[Real]
 
   implicit def clientInstances[Real]: ClientMacroInstances[Real] = macro macros.rest.RestMacros.instances[Real]
   implicit def serverInstances[Real]: ServerMacroInstances[Real] = macro macros.rest.RestMacros.instances[Real]
@@ -262,6 +245,7 @@ object RawRest extends RawRpcCompanion[RawRest] {
 }
 
 abstract class RestClientApiCompanion[Real](implicit instances: RawRest.ClientMacroInstances[Real]) {
+  implicit def restMetadata: RestMetadata[Real] = instances.metadata
   implicit def rawRestAsReal: RawRest.AsRealRpc[Real] = instances.asReal
 }
 
@@ -272,7 +256,17 @@ abstract class RestServerApiCompanion[Real](implicit instances: RawRest.ServerMa
 
 abstract class RestApiCompanion[Real](implicit instances: RawRest.FullMacroInstances[Real]) {
   implicit def restMetadata: RestMetadata[Real] = instances.metadata
-  implicit def restAsRealRaw: RawRest.AsRawRealRpc[Real] = instances.asRawReal
+  implicit def rawRestAsReal: RawRest.AsRealRpc[Real] = instances.asReal
+  implicit def realAsRawRest: RawRest.AsRawRpc[Real] = instances.asRaw
+}
+
+case class RpcWithPath(rpcName: String, pathParams: List[PathValue])
+case class ResolvedPath(prefixes: List[RpcWithPath], finalCall: RpcWithPath, singleBody: Boolean) {
+  def prepend(rpcName: String, pathParams: List[PathValue]): ResolvedPath =
+    copy(prefixes = RpcWithPath(rpcName, pathParams) :: prefixes)
+
+  def rpcChainRepr: String =
+    prefixes.iterator.map(_.rpcName).mkString("", "->", s"->${finalCall.rpcName}")
 }
 
 @methodTag[RestMethodTag, Prefix]
@@ -280,22 +274,62 @@ abstract class RestApiCompanion[Real](implicit instances: RawRest.FullMacroInsta
 case class RestMetadata[T](
   @multi @tagged[Prefix] prefixMethods: Map[String, PrefixMetadata[_]],
   @multi @tagged[HttpMethodTag] httpMethods: Map[String, HttpMethodMetadata[_]]
-)
+) {
+  def resolvePath(method: HttpMethod, path: List[PathValue]): Iterator[ResolvedPath] = {
+    val asFinalCall = for {
+      (rpcName, m) <- httpMethods.iterator if m.method == method
+      (pathParams, Nil) <- m.extractPathParams(path)
+    } yield ResolvedPath(Nil, RpcWithPath(rpcName, pathParams), m.singleBody)
+
+    val usingPrefix = for {
+      (rpcName, prefix) <- prefixMethods.iterator
+      (pathParams, pathTail) <- prefix.extractPathParams(path).iterator
+      suffixPath <- prefix.result.value.resolvePath(method, pathTail)
+    } yield suffixPath.prepend(rpcName, pathParams)
+
+    asFinalCall ++ usingPrefix
+  }
+}
 object RestMetadata extends RpcMetadataCompanion[RestMetadata]
+
+sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
+  def name: String
+  def tagPath: Opt[String]
+  def headersMetadata: RestHeadersMetadata
+
+  val methodPath: List[PathValue] =
+    tagPath.fold(List(PathValue(name)))(_.split("/").iterator.filter(_.nonEmpty).map(PathValue).toList)
+
+  def extractPathParams(path: List[PathValue]): Opt[(List[PathValue], List[PathValue])] = {
+    def suffix(prefix: List[PathValue], path: List[PathValue]): Opt[List[PathValue]] = (prefix, path) match {
+      case (Nil, result) => Opt(result)
+      case (prefixHead :: prefixTail, pathHead :: pathTail) if prefixHead == pathHead =>
+        suffix(prefixTail, pathTail)
+      case _ => Opt.Empty
+    }
+    suffix(methodPath, path).flatMap(headersMetadata.extractPathParams)
+  }
+}
 
 @paramTag[RestParamTag, Path]
 case class PrefixMetadata[T](
+  @reifyName name: String,
+  @optional @reifyAnnot methodTag: Opt[Prefix],
   @composite headersMetadata: RestHeadersMetadata,
   @checked @infer result: RestMetadata.Lazy[T]
-) extends TypedMetadata[T]
+) extends RestMethodMetadata[T] {
+  def tagPath: Opt[String] = methodTag.flatMap(_.path.toOpt)
+}
 
 case class HttpMethodMetadata[T](
-  @reifyName(rpcName = true) rpcName: String,
-  @composite headersParams: RestHeadersMetadata,
+  @reifyName name: String,
+  @reifyAnnot methodTag: HttpMethodTag,
+  @composite headersMetadata: RestHeadersMetadata,
   @multi @tagged[BodyTag] bodyParams: Map[String, ParamMetadata[_]]
-) extends TypedMetadata[Future[T]] {
-  val (httpMethod, pathName) = HttpRestMethod.parseRpcName(rpcName)
+) extends RestMethodMetadata[Future[T]] {
+  val method: HttpMethod = methodTag.method
   val singleBody: Boolean = bodyParams.values.exists(_.singleBody)
+  def tagPath: Opt[String] = methodTag.path.toOpt
 }
 
 case class RestHeadersMetadata(
@@ -303,9 +337,18 @@ case class RestHeadersMetadata(
   @multi @tagged[Header] headers: Map[String, ParamMetadata[_]],
   @multi @tagged[Query] query: Map[String, ParamMetadata[_]]
 ) {
-  val pathSize: Int = path.size
+  val pathLength: Int = path.size
+
+  def extractPathParams(path: List[PathValue]): Opt[(List[PathValue], List[PathValue])] = {
+    def loop(acc: List[PathValue], path: List[PathValue], index: Int): Opt[(List[PathValue], List[PathValue])] =
+      if (index == 0) Opt((acc.reverse, path))
+      else path match {
+        case head :: tail => loop(head :: acc, tail, index - 1)
+        case Nil => Opt.Empty
+      }
+    loop(Nil, path, pathLength)
+  }
 }
 
-case class ParamMetadata[T](
-  @hasAnnot[Body] singleBody: Boolean
-) extends TypedMetadata[T]
+case class ParamMetadata[T](@hasAnnot[Body] singleBody: Boolean)
+  extends TypedMetadata[T]
