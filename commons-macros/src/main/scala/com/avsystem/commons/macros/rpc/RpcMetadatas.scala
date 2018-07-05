@@ -174,9 +174,6 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
   class RpcMetadataConstructor(val ownerType: Type, val atParam: Option[RpcCompositeParam])
     extends MetadataConstructor[RealRpcTrait](primaryConstructor(ownerType, atParam)) with RawRpcSymbol {
 
-    override def description: String =
-      s"${super.description}${atParam.fold("")(p => s" at ${p.description}")}"
-
     def baseTag: Type = typeOf[Nothing]
     def defaultTag: Type = typeOf[Nothing]
 
@@ -239,9 +236,6 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
   ) extends MetadataConstructor[RealMethod](
     primaryConstructor(ownerType, Some(atParam.fold[RpcSymbol](identity, identity)))) {
 
-    override def description: String =
-      s"${super.description} at ${atParam.fold(_.description, _.description)}"
-
     val containingMethodParam: MethodMetadataParam =
       atParam.fold(identity, _.owner.containingMethodParam)
 
@@ -278,9 +272,6 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
     val indexInRaw: Int
   ) extends MetadataConstructor[RealParam](
     primaryConstructor(ownerType, Some(atParam.fold[RpcSymbol](identity, identity)))) {
-
-    override def description: String =
-      s"${super.description} at ${atParam.fold(_.description, _.description)}"
 
     override def createDirectParam(paramSym: Symbol, annot: Annot): DirectMetadataParam[RealParam] =
       annot.tpe match {
@@ -322,7 +313,7 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
     def tryMaterializeFor(rpcSym: Real): Res[Tree] =
       if (checked)
         tryInferCachedImplicit(actualType).map(n => Ok(q"$n"))
-          .getOrElse(Fail(s"no implicit value $actualType for parameter $description could be found"))
+          .getOrElse(Fail(s"no implicit value $actualType for $description could be found"))
       else
         Ok(materializeFor(rpcSym))
   }

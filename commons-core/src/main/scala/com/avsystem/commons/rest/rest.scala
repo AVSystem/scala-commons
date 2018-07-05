@@ -23,7 +23,7 @@ sealed trait RestMethodTag extends RpcTag {
     * HTTP URL path segment associated with REST method annotated with this tag. This path may be multipart
     * (i.e. contain slashes). It may also be empty which means that this particular REST method does not contribute
     * anything to URL path. If path is not specified explicitly, method name is used (the actual method name, not
-    * [[rpcName]]).
+    * `rpcName`).
     *
     * @example
     * {{{
@@ -151,25 +151,25 @@ sealed trait RestValue extends Any {
 }
 
 /**
-  * Value used as encoding of [[Path]] parameters. Types that have [[GenKeyCodec]] instance have automatic encoding
+  * Value used as encoding of [[Path]] parameters. Types that have `GenKeyCodec` instance have automatic encoding
   * to [[PathValue]].
   */
 case class PathValue(value: String) extends AnyVal with RestValue
 
 /**
-  * Value used as encoding of [[Header]] parameters. Types that have [[GenKeyCodec]] instance have automatic encoding
+  * Value used as encoding of [[Header]] parameters. Types that have `GenKeyCodec` instance have automatic encoding
   * to [[HeaderValue]].
   */
 case class HeaderValue(value: String) extends AnyVal with RestValue
 
 /**
-  * Value used as encoding of [[Query]] parameters. Types that have [[GenKeyCodec]] instance have automatic encoding
+  * Value used as encoding of [[Query]] parameters. Types that have `GenKeyCodec` instance have automatic encoding
   * to [[QueryValue]].
   */
 case class QueryValue(value: String) extends AnyVal with RestValue
 
 /**
-  * Value used as encoding of [[JsonBodyParam]] parameters. Types that have [[GenCodec]] instance have automatic encoding
+  * Value used as encoding of [[JsonBodyParam]] parameters. Types that have `GenCodec` instance have automatic encoding
   * to [[JsonValue]].
   */
 case class JsonValue(value: String) extends AnyVal with RestValue
