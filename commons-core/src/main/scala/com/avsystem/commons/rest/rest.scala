@@ -8,46 +8,172 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
-import scala.collection.immutable.ListMap
-
+/**
+  * Base trait for tag annotations that determine how a REST method is translated into actual HTTP request.
+  * A REST method may be annotated with one of HTTP method tags ([[GET]], [[PUT]], [[POST]], [[PATCH]], [[DELETE]])
+  * which means that this method represents actual HTTP call and is expected to return a `Future[Result]` where
+  * `Result` is encodable as [[RestResponse]].
+  *
+  * If a REST method is not annotated with any of HTTP method tags, [[Prefix]] is assumed by default which means
+  * that this method only contributes to URL path, HTTP headers and query parameters but does not yet represent an
+  * actual HTTP request. Instead, it is expected to return some other REST API trait.
+  */
 sealed trait RestMethodTag extends RpcTag {
+  /**
+    * HTTP URL path segment associated with REST method annotated with this tag. This path may be multipart
+    * (i.e. contain slashes). It may also be empty which means that this particular REST method does not contribute
+    * anything to URL path. If path is not specified explicitly, method name is used (the actual method name, not
+    * [[rpcName]]).
+    *
+    * @example
+    * {{{
+    *   trait SomeRestApi {
+    *     @GET("users/find")
+    *     def findUser(userId: String): Future[User]
+    *   }
+    *   object SomeRestApi extends RestApiCompanion[SomeRestApi]
+    * }}}
+    */
   def path: OptArg[String]
 }
+
 sealed abstract class HttpMethodTag(val method: HttpMethod) extends RestMethodTag with AnnotationAggregate
+
+/**
+  * Base trait for annotations representing HTTP methods which may define a HTTP body. This includes
+  * [[PUT]], [[POST]], [[PATCH]] and [[DELETE]]. Parameters of REST methods annotated with one of these tags are
+  * by default serialized into JSON (through encoding to [[JsonValue]]) and combined into JSON object that is sent
+  * as HTTP body.
+  *
+  * Parameters may also contribute to URL path, HTTP headers and query parameters if annotated as
+  * [[Path]], [[Header]] or [[Query]].
+  *
+  * REST method may also take a single parameter representing the entire HTTP body. Such parameter must be annotated
+  * as [[Body]] and must be the only body parameter of that method. Value of this parameter will be encoded as
+  * [[HttpBody]] which doesn't necessarily have to be JSON (it may define its own MIME type).
+  *
+  * @example
+  * {{{
+  *   trait SomeRestApi {
+  *     @POST("users/create") def createUser(@Body user: User): Future[Unit]
+  *     @PATCH("users/update") def updateUser(id: String, name: String): Future[User]
+  *   }
+  *   object SomeRestApi extends RestApiCompanion[SomeRestApi]
+  * }}}
+  */
 sealed abstract class BodyMethodTag(method: HttpMethod) extends HttpMethodTag(method)
 
+/**
+  * REST method annotated as `@GET` will translate to HTTP GET request. By default, parameters of such method
+  * are translated into URL query parameters (encoded as [[QueryValue]]). Alternatively, each parameter
+  * may be annotated as [[Path]] or [[Header]] which means that it will be translated into HTTP header value
+  *
+  * @param path see [[RestMethodTag.path]]
+  */
 final class GET(val path: OptArg[String] = OptArg.Empty) extends HttpMethodTag(HttpMethod.GET) {
   @rpcNamePrefix("GET_") type Implied
 }
+
+/** See [[BodyMethodTag]] */
 final class POST(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTag(HttpMethod.POST) {
   @rpcNamePrefix("POST_") type Implied
 }
+/** See [[BodyMethodTag]] */
 final class PATCH(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTag(HttpMethod.PATCH) {
   @rpcNamePrefix("PATCH_") type Implied
 }
+/** See [[BodyMethodTag]] */
 final class PUT(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTag(HttpMethod.PUT) {
   @rpcNamePrefix("PUT_") type Implied
 }
+/** See [[BodyMethodTag]] */
 final class DELETE(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTag(HttpMethod.DELETE) {
   @rpcNamePrefix("DELETE_") type Implied
 }
+
+/**
+  * REST methods annotated as [[Prefix]] are expected to return another REST API trait as their result.
+  * They do not yet represent an actual HTTP request but contribute to URL path, HTTP headers and query parameters.
+  *
+  * By default, parameters of a prefix method are interpreted as URL path fragments. Their values are encoded as
+  * [[PathValue]] and appended to URL path. Alternatively, each parameter may also be explicitly annotated as
+  * [[Header]] or [[Query]].
+  *
+  * NOTE: REST method is interpreted as prefix method by default which means that there is no need to apply [[Prefix]]
+  * annotation explicitly unless you want to specify a custom path.
+  *
+  * @param path see [[RestMethodTag.path]]
+  */
 final class Prefix(val path: OptArg[String] = OptArg.Empty) extends RestMethodTag
 
 sealed trait RestParamTag extends RpcTag
+
+/**
+  * REST method parameters annotated as [[Path]] will be encoded as [[PathValue]] and appended to URL path, in the
+  * declaration order. Parameters of [[Prefix]] REST methods are interpreted as [[Path]] parameters by default.
+  */
 final class Path extends RestParamTag
-final class Header extends RestParamTag
+
+/**
+  * REST method parameters annotated as [[Header]] will be encoded as [[HeaderValue]] and added to HTTP headers.
+  * Header name must be explicitly given as argument of this annotation.
+  */
+final class Header(override val name: String) extends rpcName(name) with RestParamTag
+
+/**
+  * REST method parameters annotated as [[Query]] will be encoded as [[QueryValue]] and added to URL query
+  * parameters. Parameters of [[GET]] REST methods are interpreted as [[Query]] parameters by default.
+  */
 final class Query extends RestParamTag
 sealed trait BodyTag extends RestParamTag
+
+/**
+  * REST method parameters annotated as [[JsonBodyParam]] will be encoded as [[JsonValue]] and combined into
+  * a JSON object that will be sent as HTTP body. Body parameters are allowed only in REST methods annotated as
+  * [[POST]], [[PATCH]], [[PUT]] or [[DELETE]]. Actually, parameters of these methods are interpreted as
+  * [[JsonBodyParam]] by default which means that this annotation rarely needs to be applied explicitly.
+  */
 final class JsonBodyParam extends BodyTag
+
+/**
+  * REST methods that can send HTTP body ([[POST]], [[PATCH]], [[PUT]] and [[DELETE]]) may take a single
+  * parameter annotated as [[Body]] which will be encoded as [[HttpBody]] and sent as the body of HTTP request.
+  * Such a method may not define any other body parameters (although it may take additional [[Path]], [[Header]]
+  * or [[Query]] parameters).
+  *
+  * The single body parameter may have a completely custom encoding to [[HttpBody]] which may define its own MIME type
+  * and doesn't necessarily have to be JSON.
+  */
 final class Body extends BodyTag
 
 sealed trait RestValue extends Any {
   def value: String
 }
+
+/**
+  * Value used as encoding of [[Path]] parameters. Types that have [[GenKeyCodec]] instance have automatic encoding
+  * to [[PathValue]].
+  */
 case class PathValue(value: String) extends AnyVal with RestValue
+
+/**
+  * Value used as encoding of [[Header]] parameters. Types that have [[GenKeyCodec]] instance have automatic encoding
+  * to [[HeaderValue]].
+  */
 case class HeaderValue(value: String) extends AnyVal with RestValue
+
+/**
+  * Value used as encoding of [[Query]] parameters. Types that have [[GenKeyCodec]] instance have automatic encoding
+  * to [[QueryValue]].
+  */
 case class QueryValue(value: String) extends AnyVal with RestValue
+
+/**
+  * Value used as encoding of [[JsonBodyParam]] parameters. Types that have [[GenCodec]] instance have automatic encoding
+  * to [[JsonValue]].
+  */
 case class JsonValue(value: String) extends AnyVal with RestValue
+
 object RestValue {
   implicit def pathValueDefaultAsRealRaw[T: GenKeyCodec]: AsRawReal[PathValue, T] =
     AsRawReal.create(v => PathValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value))
@@ -59,6 +185,15 @@ object RestValue {
     AsRawReal.create(v => JsonValue(JsonStringOutput.write[T](v)), v => JsonStringInput.read[T](v.value))
 }
 
+/**
+  * Value used to represent HTTP body. Also used as direct encoding of [[Body]] parameters. Types that have
+  * encoding to [[JsonValue]] (e.g. types that have [[GenCodec]] instance) automatically have encoding to [[HttpBody]]
+  * which uses application/json MIME type. There is also a specialized encoding provided for `Unit` which maps it
+  * to empty HTTP body instead of JSON containing "null".
+  *
+  * @param value    raw HTTP body content
+  * @param mimeType MIME type, i.e. HTTP `Content-Type` without charset specified
+  */
 case class HttpBody(value: String, mimeType: String) {
   def jsonValue: JsonValue = mimeType match {
     case HttpBody.JsonType => JsonValue(value)
@@ -74,7 +209,7 @@ object HttpBody {
 
   final val Empty: HttpBody = HttpBody.plain("")
 
-  def createJsonBody(fields: BIterable[(String, JsonValue)]): HttpBody =
+  def createJsonBody(fields: NamedParams[JsonValue]): HttpBody =
     if (fields.isEmpty) HttpBody.Empty else {
       val sb = new JStringBuilder
       val oo = new JsonStringOutput(sb).writeObject()
@@ -86,10 +221,10 @@ object HttpBody {
       HttpBody.json(JsonValue(sb.toString))
     }
 
-  def parseJsonBody(body: HttpBody): ListMap[String, JsonValue] =
-    if (body.value.isEmpty) ListMap.empty else {
+  def parseJsonBody(body: HttpBody): NamedParams[JsonValue] =
+    if (body.value.isEmpty) NamedParams.empty else {
       val oi = new JsonStringInput(new JsonReader(body.jsonValue.value)).readObject()
-      val builder = ListMap.newBuilder[String, JsonValue]
+      val builder = NamedParams.newBuilder[JsonValue]
       while (oi.hasNext) {
         val fi = oi.nextField()
         builder += ((fi.fieldName, JsonValue(fi.readRawJson())))
@@ -105,6 +240,9 @@ object HttpBody {
     AsReal.create(v => jsonAsReal.asReal(v.jsonValue))
 }
 
+/**
+  * Enum representing HTTP methods.
+  */
 final class HttpMethod(implicit enumCtx: EnumCtx) extends AbstractValueEnum
 object HttpMethod extends AbstractValueEnumCompanion[HttpMethod] {
   final val GET, PUT, POST, PATCH, DELETE: Value = new HttpMethod
@@ -112,8 +250,8 @@ object HttpMethod extends AbstractValueEnumCompanion[HttpMethod] {
 
 case class RestHeaders(
   @multi @tagged[Path] path: List[PathValue],
-  @multi @tagged[Header] headers: ListMap[String, HeaderValue],
-  @multi @tagged[Query] query: ListMap[String, QueryValue]
+  @multi @tagged[Header] headers: NamedParams[HeaderValue],
+  @multi @tagged[Query] query: NamedParams[QueryValue]
 ) {
   def append(methodPath: List[PathValue], otherHeaders: RestHeaders): RestHeaders = RestHeaders(
     path ::: methodPath ::: otherHeaders.path,
@@ -122,7 +260,7 @@ case class RestHeaders(
   )
 }
 object RestHeaders {
-  final val Empty = RestHeaders(Nil, ListMap.empty, ListMap.empty)
+  final val Empty = RestHeaders(Nil, NamedParams.empty, NamedParams.empty)
 }
 
 class HttpErrorException(code: Int, payload: String)
@@ -157,7 +295,7 @@ trait RawRest {
   @tagged[BodyMethodTag]
   @paramTag[RestParamTag, JsonBodyParam]
   def handle(@methodName name: String, @composite headers: RestHeaders,
-    @multi @tagged[JsonBodyParam] body: IListMap[String, JsonValue]): Future[RestResponse]
+    @multi @tagged[JsonBodyParam] body: NamedParams[JsonValue]): Future[RestResponse]
 
   @multi
   @tagged[BodyMethodTag]
@@ -212,7 +350,7 @@ object RawRest extends RawRpcCompanion[RawRest] {
     def get(name: String, headers: RestHeaders): Future[RestResponse] =
       handleSingle(name, headers, HttpBody.Empty)
 
-    def handle(name: String, headers: RestHeaders, body: IListMap[String, JsonValue]): Future[RestResponse] = {
+    def handle(name: String, headers: RestHeaders, body: NamedParams[JsonValue]): Future[RestResponse] = {
       val methodMeta = metadata.httpMethods.getOrElse(name,
         throw new IllegalArgumentException(s"no such HTTP method: $name"))
       val newHeaders = prefixHeaders.append(methodMeta.methodPath, headers)
@@ -244,16 +382,25 @@ object RawRest extends RawRpcCompanion[RawRest] {
   implicit def fullInstances[Real]: FullMacroInstances[Real] = macro macros.rest.RestMacros.instances[Real]
 }
 
+/**
+  * Base class for companions of REST API traits used only for REST clients to external services.
+  */
 abstract class RestClientApiCompanion[Real](implicit instances: RawRest.ClientMacroInstances[Real]) {
   implicit def restMetadata: RestMetadata[Real] = instances.metadata
   implicit def rawRestAsReal: RawRest.AsRealRpc[Real] = instances.asReal
 }
 
+/**
+  * Base class for companions of REST API traits used only for REST servers exposed to external world.
+  */
 abstract class RestServerApiCompanion[Real](implicit instances: RawRest.ServerMacroInstances[Real]) {
   implicit def restMetadata: RestMetadata[Real] = instances.metadata
   implicit def realAsRawRest: RawRest.AsRawRpc[Real] = instances.asRaw
 }
 
+/**
+  * Base class for companions of REST API traits used for both REST clients and servers.
+  */
 abstract class RestApiCompanion[Real](implicit instances: RawRest.FullMacroInstances[Real]) {
   implicit def restMetadata: RestMetadata[Real] = instances.metadata
   implicit def rawRestAsReal: RawRest.AsRealRpc[Real] = instances.asReal

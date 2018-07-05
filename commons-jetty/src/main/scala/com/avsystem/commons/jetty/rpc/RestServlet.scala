@@ -4,6 +4,7 @@ package jetty.rpc
 import java.util.regex.Pattern
 
 import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RestHeaders, RestRequest, RestResponse}
+import com.avsystem.commons.rpc.NamedParams
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.http.{HttpHeader, HttpStatus, MimeTypes}
 
@@ -30,13 +31,13 @@ object RestServlet {
       .map(PathValue)
       .to[List]
 
-    val headersBuilder = IListMap.newBuilder[String, HeaderValue]
+    val headersBuilder = NamedParams.newBuilder[HeaderValue]
     request.getHeaderNames.asScala.foreach { headerName =>
       headersBuilder += headerName -> HeaderValue(request.getHeader(headerName))
     }
     val headers = headersBuilder.result()
 
-    val queryBuilder = IListMap.newBuilder[String, QueryValue]
+    val queryBuilder = NamedParams.newBuilder[QueryValue]
     request.getParameterNames.asScala.foreach { parameterName =>
       queryBuilder += parameterName -> QueryValue(request.getParameter(parameterName))
     }
