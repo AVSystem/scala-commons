@@ -66,24 +66,24 @@ sealed abstract class BodyMethodTag(method: HttpMethod) extends HttpMethodTag(me
   *
   * @param path see [[RestMethodTag.path]]
   */
-final class GET(val path: String = null) extends HttpMethodTag(HttpMethod.GET) {
+class GET(val path: String = null) extends HttpMethodTag(HttpMethod.GET) {
   @rpcNamePrefix("GET_") type Implied
 }
 
 /** See [[BodyMethodTag]] */
-final class POST(val path: String = null) extends BodyMethodTag(HttpMethod.POST) {
+class POST(val path: String = null) extends BodyMethodTag(HttpMethod.POST) {
   @rpcNamePrefix("POST_") type Implied
 }
 /** See [[BodyMethodTag]] */
-final class PATCH(val path: String = null) extends BodyMethodTag(HttpMethod.PATCH) {
+class PATCH(val path: String = null) extends BodyMethodTag(HttpMethod.PATCH) {
   @rpcNamePrefix("PATCH_") type Implied
 }
 /** See [[BodyMethodTag]] */
-final class PUT(val path: String = null) extends BodyMethodTag(HttpMethod.PUT) {
+class PUT(val path: String = null) extends BodyMethodTag(HttpMethod.PUT) {
   @rpcNamePrefix("PUT_") type Implied
 }
 /** See [[BodyMethodTag]] */
-final class DELETE(val path: String = null) extends BodyMethodTag(HttpMethod.DELETE) {
+class DELETE(val path: String = null) extends BodyMethodTag(HttpMethod.DELETE) {
   @rpcNamePrefix("DELETE_") type Implied
 }
 
@@ -100,7 +100,7 @@ final class DELETE(val path: String = null) extends BodyMethodTag(HttpMethod.DEL
   *
   * @param path see [[RestMethodTag.path]]
   */
-final class Prefix(val path: String = null) extends RestMethodTag
+class Prefix(val path: String = null) extends RestMethodTag
 
 sealed trait RestParamTag extends RpcTag
 
@@ -108,20 +108,20 @@ sealed trait RestParamTag extends RpcTag
   * REST method parameters annotated as [[Path]] will be encoded as [[PathValue]] and appended to URL path, in the
   * declaration order. Parameters of [[Prefix]] REST methods are interpreted as [[Path]] parameters by default.
   */
-final class Path(val pathSuffix: String = "") extends RestParamTag
+class Path(val pathSuffix: String = "") extends RestParamTag
 
 /**
   * REST method parameters annotated as [[Header]] will be encoded as [[HeaderValue]] and added to HTTP headers.
   * Header name must be explicitly given as argument of this annotation.
   */
-final class Header(override val name: String)
+class Header(override val name: String)
   extends rpcName(name) with RestParamTag
 
 /**
   * REST method parameters annotated as [[Query]] will be encoded as [[QueryValue]] and added to URL query
   * parameters. Parameters of [[GET]] REST methods are interpreted as [[Query]] parameters by default.
   */
-final class Query(@defaultsToName override val name: String = null)
+class Query(@defaultsToName override val name: String = null)
   extends rpcName(name) with RestParamTag
 
 sealed trait BodyTag extends RestParamTag
@@ -132,7 +132,7 @@ sealed trait BodyTag extends RestParamTag
   * [[POST]], [[PATCH]], [[PUT]] or [[DELETE]]. Actually, parameters of these methods are interpreted as
   * [[JsonBodyParam]] by default which means that this annotation rarely needs to be applied explicitly.
   */
-final class JsonBodyParam(@defaultsToName override val name: String = null)
+class JsonBodyParam(@defaultsToName override val name: String = null)
   extends rpcName(name) with BodyTag
 
 /**

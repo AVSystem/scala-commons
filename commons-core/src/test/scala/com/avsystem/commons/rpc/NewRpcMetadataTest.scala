@@ -4,6 +4,8 @@ package rpc
 import com.avsystem.commons.serialization.{transientDefault, whenAbsent}
 import org.scalatest.FunSuite
 
+class td extends transientDefault
+
 trait SomeBase {
   def difolt: Boolean = true
 
@@ -14,9 +16,9 @@ trait TestApi extends SomeBase {
   def doSomething(double: Double): String
   def doSomethingElse(double: Double): String
   def varargsMethod(krap: String, dubl: Double)(czy: Boolean, @renamed(42, "nejm") ints: Int*): Future[Unit]
-  def defaultValueMethod(@transientDefault int: Int = 0, @whenAbsent(difolt) bul: Boolean): Future[Unit]
+  def defaultValueMethod(@td int: Int = 0, @whenAbsent(difolt) bul: Boolean): Future[Unit]
   def flames(arg: String, otherArg: => Int, varargsy: Double*): Unit
-  def overload(@transientDefault int: Int = 42): Unit
+  def overload(@td int: Int = 42): Unit
   @rpcName("ovgetter") def overload(lel: String): TestApi
   @rpcName("ovprefix") def overload: TestApi
   def getit(stuff: String, @suchMeta(1, "a") otherStuff: List[Int]): TestApi
