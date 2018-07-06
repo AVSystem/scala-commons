@@ -29,7 +29,7 @@ object RestTestApi extends RestApiCompanion[RestTestApi]
 
 class RawRestTest extends FunSuite with ScalaFutures {
   def repr(req: RestRequest): String = {
-    val pathRepr = req.headers.path.map(_.value).mkString("/")
+    val pathRepr = req.headers.path.map(_.value).mkString("/", "/", "")
     val queryRepr = req.headers.query.iterator
       .map({ case (k, v) => s"$k=${v.value}" }).mkStringOrEmpty("?", "&", "")
     val hasHeaders = req.headers.headers.nonEmpty
@@ -75,7 +75,7 @@ class RawRestTest extends FunSuite with ScalaFutures {
 
   test("simple GET") {
     testRestCall(_.self.user("ID"),
-      """-> GET user?userId=ID
+      """-> GET /user?userId=ID
         |<- 200 application/json
         |{"id":"ID","name":"ID-0-"}
         |""".stripMargin
@@ -84,7 +84,7 @@ class RawRestTest extends FunSuite with ScalaFutures {
 
   test("simple POST with path, header and query") {
     testRestCall(_.self.user("paf", awesome = true, 42, User("ID", "Fred")),
-      """-> POST user/save/paf/moar/path?f=42
+      """-> POST /user/save/paf/moar/path?f=42
         |X-Awesome: true
         |application/json
         |{"id":"ID","name":"Fred"}
@@ -94,7 +94,7 @@ class RawRestTest extends FunSuite with ScalaFutures {
 
   test("simple GET after prefix call") {
     testRestCall(_.subApi(1, "query").user("ID"),
-      """-> GET subApi/1/user?query=query&userId=ID
+      """-> GET /subApi/1/user?query=query&userId=ID
         |<- 200 application/json
         |{"id":"ID","name":"ID-1-query"}
         |""".stripMargin

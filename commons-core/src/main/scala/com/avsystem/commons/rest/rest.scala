@@ -311,26 +311,29 @@ trait RawRest {
     @encoded @tagged[Body] body: HttpBody): Future[RestResponse]
 
   def asHandleRequest(metadata: RestMetadata[_]): RestRequest => Future[RestResponse] = {
-    case RestRequest(method, headers, body) => metadata.resolvePath(method, headers.path).toList match {
-      case List(ResolvedPath(prefixes, RpcWithPath(finalRpcName, finalPathParams), singleBody)) =>
-        val finalRawRest = prefixes.foldLeft(this) {
-          case (rawRest, RpcWithPath(rpcName, pathParams)) =>
-            rawRest.prefix(rpcName, headers.copy(path = pathParams))
-        }
-        val finalHeaders = headers.copy(path = finalPathParams)
+    metadata.ensureUnambiguousPaths()
+    locally[RestRequest => Future[RestResponse]] {
+      case RestRequest(method, headers, body) => metadata.resolvePath(method, headers.path).toList match {
+        case List(ResolvedPath(prefixes, RpcWithPath(finalRpcName, finalPathParams), singleBody)) =>
+          val finalRawRest = prefixes.foldLeft(this) {
+            case (rawRest, RpcWithPath(rpcName, pathParams)) =>
+              rawRest.prefix(rpcName, headers.copy(path = pathParams))
+          }
+          val finalHeaders = headers.copy(path = finalPathParams)
 
-        if (method == HttpMethod.GET) finalRawRest.get(finalRpcName, finalHeaders)
-        else if (singleBody) finalRawRest.handleSingle(finalRpcName, finalHeaders, body)
-        else finalRawRest.handle(finalRpcName, finalHeaders, HttpBody.parseJsonBody(body))
+          if (method == HttpMethod.GET) finalRawRest.get(finalRpcName, finalHeaders)
+          else if (singleBody) finalRawRest.handleSingle(finalRpcName, finalHeaders, body)
+          else finalRawRest.handle(finalRpcName, finalHeaders, HttpBody.parseJsonBody(body))
 
-      case Nil =>
-        val pathStr = headers.path.iterator.map(_.value).mkString("/")
-        Future.successful(RestResponse(404, HttpBody.plain(s"path $pathStr not found")))
+        case Nil =>
+          val pathStr = headers.path.iterator.map(_.value).mkString("/")
+          Future.successful(RestResponse(404, HttpBody.plain(s"path $pathStr not found")))
 
-      case multiple =>
-        val pathStr = headers.path.iterator.map(_.value).mkString("/")
-        val callsRepr = multiple.iterator.map(p => s"  ${p.rpcChainRepr}").mkString("\n", "\n", "")
-        throw new IllegalArgumentException(s"path $pathStr is ambiguous, it could map to following calls:$callsRepr")
+        case multiple =>
+          val pathStr = headers.path.iterator.map(_.value).mkString("/")
+          val callsRepr = multiple.iterator.map(p => s"  ${p.rpcChainRepr}").mkString("\n", "\n", "")
+          throw new IllegalArgumentException(s"path $pathStr is ambiguous, it could map to following calls:$callsRepr")
+      }
     }
   }
 }
@@ -430,6 +433,20 @@ case class RestMetadata[T](
   @multi @tagged[Prefix] prefixMethods: Map[String, PrefixMetadata[_]],
   @multi @tagged[HttpMethodTag] httpMethods: Map[String, HttpMethodMetadata[_]]
 ) {
+  def ensureUnambiguousPaths(): Unit = {
+    val trie = new RestMetadata.Trie
+    trie.fillWith(this)
+    trie.mergeWildcardToNamed()
+    val ambiguities = new MListBuffer[(String, List[String])]
+    trie.collectAmbiguousCalls(ambiguities)
+    if (ambiguities.nonEmpty) {
+      val problems = ambiguities.map { case (path, chains) =>
+        s"$path may result from multiple calls:\n  ${chains.mkString("\n  ")}"
+      }
+      throw new IllegalArgumentException(s"REST API has ambiguous paths:\n${problems.mkString("\n")}")
+    }
+  }
+
   def resolvePath(method: HttpMethod, path: List[PathValue]): Iterator[ResolvedPath] = {
     val asFinalCall = for {
       (rpcName, m) <- httpMethods.iterator if m.method == method
@@ -445,13 +462,77 @@ case class RestMetadata[T](
     asFinalCall ++ usingPrefix
   }
 }
-object RestMetadata extends RpcMetadataCompanion[RestMetadata]
+object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
+  private class Trie {
+    val rpcChains: Map[HttpMethod, MBuffer[String]] =
+      HttpMethod.values.mkMap(identity, _ => new MArrayBuffer[String])
+
+    val byName: MMap[String, Trie] = new MHashMap
+    var wildcard: Opt[Trie] = Opt.Empty
+
+    def forPattern(pattern: List[Opt[PathValue]]): Trie = pattern match {
+      case Nil => this
+      case Opt(PathValue(pathName)) :: tail =>
+        byName.getOrElseUpdate(pathName, new Trie).forPattern(tail)
+      case Opt.Empty :: tail =>
+        wildcard.getOrElse(new Trie().setup(t => wildcard = Opt(t))).forPattern(tail)
+    }
+
+    def fillWith(metadata: RestMetadata[_], prefixStack: List[(String, PrefixMetadata[_])] = Nil): Unit = {
+      def prefixChain: String =
+        prefixStack.reverseIterator.map({ case (k, _) => k }).mkStringOrEmpty("", "->", "->")
+
+      metadata.prefixMethods.foreach { case entry@(rpcName, pm) =>
+        if (prefixStack.contains(entry)) {
+          throw new IllegalArgumentException(
+            s"call chain $prefixChain$rpcName is recursive, recursively defined server APIs are forbidden")
+        }
+        forPattern(pm.pathPattern).fillWith(pm.result.value, entry :: prefixStack)
+      }
+      metadata.httpMethods.foreach { case (rpcName, hm) =>
+        forPattern(hm.pathPattern).rpcChains(hm.method) += s"$prefixChain${rpcName.stripPrefix(s"${hm.method}_")}"
+      }
+    }
+
+    private def merge(other: Trie): Unit = {
+      HttpMethod.values.foreach { meth =>
+        rpcChains(meth) ++= other.rpcChains(meth)
+      }
+      for (w <- wildcard; ow <- other.wildcard) w.merge(ow)
+      wildcard = wildcard orElse other.wildcard
+      other.byName.foreach { case (name, trie) =>
+        byName.getOrElseUpdate(name, new Trie).merge(trie)
+      }
+    }
+
+    def mergeWildcardToNamed(): Unit = wildcard.foreach { wc =>
+      wc.mergeWildcardToNamed()
+      byName.values.foreach { trie =>
+        trie.merge(wc)
+        trie.mergeWildcardToNamed()
+      }
+    }
+
+    def collectAmbiguousCalls(ambiguities: MBuffer[(String, List[String])], pathPrefix: List[String] = Nil): Unit = {
+      rpcChains.foreach { case (method, chains) =>
+        if (chains.size > 1) {
+          val path = pathPrefix.reverse.mkString(s"$method /", "/", "")
+          ambiguities += ((path, chains.toList))
+        }
+      }
+      wildcard.foreach(_.collectAmbiguousCalls(ambiguities, "*" :: pathPrefix))
+      byName.foreach { case (name, trie) =>
+        trie.collectAmbiguousCalls(ambiguities, name :: pathPrefix)
+      }
+    }
+  }
+}
 
 sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
   def methodPath: List[PathValue]
   def headersMetadata: RestHeadersMetadata
 
-  private val pathPattern: List[Opt[PathValue]] =
+  val pathPattern: List[Opt[PathValue]] =
     methodPath.map(Opt(_)) ++ headersMetadata.path.flatMap(pp => Opt.Empty :: pp.pathSuffix.map(Opt(_)))
 
   def applyPathParams(params: List[PathValue]): List[PathValue] = {
