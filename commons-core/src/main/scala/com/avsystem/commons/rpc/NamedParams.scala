@@ -15,7 +15,7 @@ import scala.collection.mutable
 final class NamedParams[+V](private val wrapped: IIterable[(String, V)])
   extends IIterable[(String, V)] with PartialFunction[String, V] {
 
-  private[this] lazy val hashMap = new MHashMap[String, V].setup(_ ++= wrapped)
+  private[this] lazy val hashMap = new MLinkedHashMap[String, V].setup(_ ++= wrapped)
 
   def iterator: Iterator[(String, V)] =
     hashMap.iterator

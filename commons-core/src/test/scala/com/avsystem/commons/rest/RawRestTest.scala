@@ -11,7 +11,12 @@ object User extends HasGenCodec[User]
 
 trait UserApi {
   @GET def user(userId: String): Future[User]
-  @POST("user/save") def user(@Body user: User): Future[Unit]
+
+  @POST("user/save") def user(
+    @Path("moar/path") paf: String,
+    @Header("X-Awesome") awesome: Boolean,
+    @Body user: User
+  ): Future[Unit]
 }
 object UserApi extends RestApiCompanion[UserApi]
 
@@ -22,29 +27,76 @@ trait RestTestApi {
 object RestTestApi extends RestApiCompanion[RestTestApi]
 
 class RawRestTest extends FunSuite with ScalaFutures {
-  test("round trip test") {
-    class RestTestApiImpl(id: Int, query: String) extends RestTestApi with UserApi {
-      def self: UserApi = this
-      def subApi(newId: Int, newQuery: String): UserApi = new RestTestApiImpl(newId, query + newQuery)
-      def user(userId: String): Future[User] = Future.successful(User(userId, s"$userId-$id-$query"))
-      def user(user: User): Future[Unit] = Future.unit
+  def repr(req: RestRequest): String = {
+    val pathRepr = req.headers.path.map(_.value).mkString("/")
+    val queryRepr = req.headers.query.iterator
+      .map({ case (k, v) => s"$k=${v.value}" }).mkStringOrEmpty("?", "&", "")
+    val hasHeaders = req.headers.headers.nonEmpty
+    val headersRepr = req.headers.headers.iterator
+      .map({ case (n, v) => s"$n: ${v.value}" }).mkStringOrEmpty("\n", "\n", "\n")
+
+    val contentRepr =
+      if (req.body.content.isEmpty) ""
+      else s"${if (hasHeaders) "" else " "}${req.body.mimeType}\n${req.body.content}"
+    s"-> ${req.method} $pathRepr$queryRepr$headersRepr$contentRepr"
+  }
+
+  def repr(resp: RestResponse): String = {
+    val contentRepr =
+      if (resp.body.content.isEmpty) ""
+      else s" ${resp.body.mimeType}\n${resp.body.content}"
+    s"<- ${resp.code}$contentRepr"
+  }
+
+  class RestTestApiImpl(id: Int, query: String) extends RestTestApi with UserApi {
+    def self: UserApi = this
+    def subApi(newId: Int, newQuery: String): UserApi = new RestTestApiImpl(newId, query + newQuery)
+    def user(userId: String): Future[User] = Future.successful(User(userId, s"$userId-$id-$query"))
+    def user(paf: String, awesome: Boolean, user: User): Future[Unit] = Future.unit
+  }
+
+  var trafficLog: String = _
+
+  val real: RestTestApi = new RestTestApiImpl(0, "")
+  val serverHandle: RestRequest => Future[RestResponse] = request => {
+    RawRest.asHandleRequest(real).apply(request).andThenNow {
+      case Success(response) =>
+        trafficLog = s"${repr(request)}\n${repr(response)}\n"
     }
+  }
 
-    val callRecord = new MListBuffer[(RestRequest, RestResponse)]
+  val realProxy: RestTestApi = RawRest.fromHandleRequest[RestTestApi](serverHandle)
 
-    val real: RestTestApi = new RestTestApiImpl(0, "")
-    val serverHandle: RestRequest => Future[RestResponse] = request => {
-      RawRest.asHandleRequest(real).apply(request).andThenNow {
-        case Success(response) => callRecord += ((request, response))
-      }
-    }
+  def testRestCall[T](call: RestTestApi => Future[T], expectedTraffic: String)(implicit pos: Position): Unit = {
+    assert(call(realProxy).futureValue == call(real).futureValue)
+    assert(trafficLog == expectedTraffic)
+  }
 
-    val realProxy: RestTestApi = RawRest.fromHandleRequest[RestTestApi](serverHandle)
+  test("simple GET") {
+    testRestCall(_.self.user("ID"),
+      """-> GET user?userId=ID
+        |<- 200 application/json
+        |{"id":"ID","name":"ID-0-"}
+        |""".stripMargin
+    )
+  }
 
-    def assertSame[T](call: RestTestApi => Future[T])(implicit pos: Position): Unit =
-      assert(call(realProxy).futureValue == call(real).futureValue)
+  test("simple POST with path, header and query") {
+    testRestCall(_.self.user("paf", awesome = true, user = User("ID", "Fred")),
+      """-> POST user/save/paf/moar/path
+        |X-Awesome: true
+        |application/json
+        |{"id":"ID","name":"Fred"}
+        |<- 200
+        |""".stripMargin)
+  }
 
-    assertSame(_.self.user("ID"))
-    assertSame(_.subApi(1, "query").user("ID"))
+  test("simple GET after prefix call") {
+    testRestCall(_.subApi(1, "query").user("ID"),
+      """-> GET subApi/1/user?query=query&userId=ID
+        |<- 200 application/json
+        |{"id":"ID","name":"ID-1-query"}
+        |""".stripMargin
+    )
   }
 }

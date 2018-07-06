@@ -28,7 +28,7 @@ object RestServlet {
       .splitAsStream(request.getPathInfo)
       .asScala
       .skip(1)
-      .map(PathValue)
+      .map(PathValue(_))
       .to[List]
 
     val headersBuilder = NamedParams.newBuilder[HeaderValue]
@@ -60,7 +60,7 @@ object RestServlet {
       case Success(restResponse) =>
         response.setStatus(restResponse.code)
         response.addHeader(HttpHeader.CONTENT_TYPE.asString(), s"${restResponse.body.mimeType};charset=utf-8")
-        response.getWriter.write(restResponse.body.value)
+        response.getWriter.write(restResponse.body.content)
       case Failure(e) =>
         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500)
         response.addHeader(HttpHeader.CONTENT_TYPE.asString(), MimeTypes.Type.TEXT_PLAIN_UTF_8.asString())
