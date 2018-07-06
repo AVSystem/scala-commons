@@ -26,6 +26,7 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val RpcNamePrefixAT: Type = getType(tq"$RpcPackage.rpcNamePrefix")
   val RpcNamePrefixArg: Symbol = RpcNamePrefixAT.member(TermName("prefix"))
   val WhenAbsentAT: Type = getType(tq"$CommonsPkg.serialization.whenAbsent[_]")
+  val TransientDefaultAT: Type = getType(tq"$CommonsPkg.serialization.transientDefault")
   val MethodNameAT: Type = getType(tq"$RpcPackage.methodName")
   val CompositeAT: Type = getType(tq"$RpcPackage.composite")
   val RpcArityAT: Type = getType(tq"$RpcPackage.RpcArity")

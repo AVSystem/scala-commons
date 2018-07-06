@@ -144,10 +144,17 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         List(realParam.localValueDecl(realParam.encoding.applyAsReal(rawParam.safePath)))
     }
     case class Optional(rawParam: RawValueParam, wrapped: Option[EncodedRealParam]) extends ParamMapping {
-      def rawValueTree: Tree =
-        rawParam.mkOptional(wrapped.map(_.rawValueTree))
+      def rawValueTree: Tree = {
+        val noneRes: Tree = q"${rawParam.optionLike}.none"
+        wrapped.fold(noneRes) { erp =>
+          val baseRes = q"${rawParam.optionLike}.some(${erp.rawValueTree})"
+          if (erp.realParam.transientDefault)
+            q"if(${erp.realParam.safeName} != ${erp.realParam.transientValueTree}) $baseRes else $noneRes"
+          else baseRes
+        }
+      }
       def realDecls: List[Tree] = wrapped.toList.map { erp =>
-        val defaultValueTree = erp.realParam.defaultValueTree
+        val defaultValueTree = erp.realParam.fallbackValueTree
         erp.realParam.localValueDecl(erp.encoding.foldWithAsReal(
           rawParam.optionLike, rawParam.safePath, defaultValueTree))
       }
@@ -157,7 +164,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       def rawValueTree: Tree = rawParam.mkMulti(reals.map(_.rawValueTree))
     }
     case class IterableMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends ListedMulti {
-      def realDecls: List[Tree] = if(reals.isEmpty) Nil else {
+      def realDecls: List[Tree] = if (reals.isEmpty) Nil else {
         val itName = c.freshName(TermName("it"))
         val itDecl = q"val $itName = ${rawParam.safePath}.iterator"
         itDecl :: reals.map { erp =>
@@ -167,7 +174,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
               s"${rawParam.cannotMapClue}: by-name real parameters cannot be extracted from @multi raw parameters")
           }
           erp.localValueDecl(
-            q"if($itName.hasNext) ${erp.encoding.applyAsReal(q"$itName.next()")} else ${rp.defaultValueTree}")
+            q"if($itName.hasNext) ${erp.encoding.applyAsReal(q"$itName.next()")} else ${rp.fallbackValueTree}")
         }
       }
     }
@@ -178,20 +185,33 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           erp.realParam.localValueDecl(
             q"""
               ${erp.encoding.andThenAsReal(rawParam.safePath)}
-                .applyOrElse($idx, (_: $IntCls) => ${rp.defaultValueTree})
+                .applyOrElse($idx, (_: $IntCls) => ${rp.fallbackValueTree})
             """)
         }
       }
     }
     case class NamedMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends ParamMapping {
       def rawValueTree: Tree =
-        rawParam.mkMulti(reals.map(erp => q"(${erp.realParam.rpcName}, ${erp.rawValueTree})"))
+        if (reals.isEmpty) q"$RpcUtils.createEmpty(${rawParam.canBuildFrom})" else {
+          val builderName = c.freshName(TermName("builder"))
+          val addStatements = reals.map { erp =>
+            val baseStat = q"$builderName += ((${erp.realParam.rpcName}, ${erp.rawValueTree}))"
+            if (erp.realParam.transientDefault)
+              q"if(${erp.realParam.safeName} != ${erp.realParam.transientValueTree}) $baseStat"
+            else baseStat
+          }
+          q"""
+          val $builderName = $RpcUtils.createBuilder(${rawParam.canBuildFrom}, ${reals.size})
+          ..$addStatements
+          $builderName.result()
+        """
+        }
       def realDecls: List[Tree] =
         reals.map { erp =>
           erp.realParam.localValueDecl(
             q"""
               ${erp.encoding.andThenAsReal(rawParam.safePath)}
-                .applyOrElse(${erp.realParam.rpcName}, (_: $StringCls) => ${erp.realParam.defaultValueTree})
+                .applyOrElse(${erp.realParam.rpcName}, (_: $StringCls) => ${erp.realParam.fallbackValueTree})
             """)
         }
     }

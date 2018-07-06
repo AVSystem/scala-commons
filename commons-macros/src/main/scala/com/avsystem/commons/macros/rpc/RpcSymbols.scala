@@ -320,14 +320,27 @@ trait RpcSymbols { this: RpcMacroCommons =>
       transformer.transform(annotatedDefault)
     }
 
-    def defaultValueTree: Tree =
+    val hasDefaultValue: Boolean =
+      whenAbsent != EmptyTree || symbol.asTerm.isParamWithDefault
+
+    val transientDefault: Boolean =
+      hasDefaultValue && annot(TransientDefaultAT).nonEmpty
+
+    def fallbackValueTree: Tree =
       if (whenAbsent != EmptyTree) c.untypecheck(whenAbsent)
-      else if (symbol.asTerm.isParamWithDefault) {
-        val prevListParams = owner.realParams.take(index - indexInList).map(rp => q"${rp.safeName}")
-        val prevListParamss = List(prevListParams).filter(_.nonEmpty)
-        q"${owner.owner.safeName}.${TermName(s"${owner.encodedNameStr}$$default$$${index + 1}")}(...$prevListParamss)"
-      }
+      else if (symbol.asTerm.isParamWithDefault) defaultValue(false)
       else q"$RpcUtils.missingArg(${owner.rpcName}, $rpcName)"
+
+    def transientValueTree: Tree =
+      if (symbol.asTerm.isParamWithDefault) defaultValue(true)
+      else c.untypecheck(whenAbsent)
+
+    private def defaultValue(useThis: Boolean): Tree = {
+      val prevListParams = owner.realParams.take(index - indexInList).map(rp => q"${rp.safeName}")
+      val prevListParamss = List(prevListParams).filter(_.nonEmpty)
+      val realInst = if (useThis) q"this" else q"${owner.owner.safeName}"
+      q"$realInst.${TermName(s"${owner.encodedNameStr}$$default$$${index + 1}")}(...$prevListParamss)"
+    }
   }
 
   case class RawMethod(owner: RawRpcTrait, symbol: Symbol) extends RpcMethod with RawRpcSymbol with AritySymbol {
