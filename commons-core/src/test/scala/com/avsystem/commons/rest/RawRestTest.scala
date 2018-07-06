@@ -15,6 +15,7 @@ trait UserApi {
   @POST("user/save") def user(
     @Path("moar/path") paf: String,
     @Header("X-Awesome") awesome: Boolean,
+    @Query("f") foo: Int,
     @Body user: User
   ): Future[Unit]
 }
@@ -52,7 +53,7 @@ class RawRestTest extends FunSuite with ScalaFutures {
     def self: UserApi = this
     def subApi(newId: Int, newQuery: String): UserApi = new RestTestApiImpl(newId, query + newQuery)
     def user(userId: String): Future[User] = Future.successful(User(userId, s"$userId-$id-$query"))
-    def user(paf: String, awesome: Boolean, user: User): Future[Unit] = Future.unit
+    def user(paf: String, awesome: Boolean, f: Int, user: User): Future[Unit] = Future.unit
   }
 
   var trafficLog: String = _
@@ -82,8 +83,8 @@ class RawRestTest extends FunSuite with ScalaFutures {
   }
 
   test("simple POST with path, header and query") {
-    testRestCall(_.self.user("paf", awesome = true, user = User("ID", "Fred")),
-      """-> POST user/save/paf/moar/path
+    testRestCall(_.self.user("paf", awesome = true, 42, User("ID", "Fred")),
+      """-> POST user/save/paf/moar/path?f=42
         |X-Awesome: true
         |application/json
         |{"id":"ID","name":"Fred"}
