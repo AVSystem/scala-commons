@@ -36,9 +36,9 @@ class NewRpcMetadataTest extends FunSuite {
         |  DO SOMETHING ELSE: true
         |  PROCEDURES:
         |  overload -> def overload: void
-        |    AJDI: int@0:0:0:0: int suchMeta=false
+        |    AJDI: [hasDefaultValue]int@0:0:0:0: int suchMeta=false
         |    ARGS:
-        |    int -> int@0:0:0:0: int suchMeta=false
+        |    int -> [hasDefaultValue]int@0:0:0:0: int suchMeta=false
         |  flames -> def flames: void
         |    NO AJDI
         |    ARGS:
