@@ -19,5 +19,7 @@ import scala.annotation.StaticAnnotation
   * `GenCodec.write(someOutput, Something("lol", 10))` would yield object `{"str": "lol", "int": 10}` but
   * `GenCodec.write(someOutput, Something("lol", 42))` would yield object `{"str": "lol"}` because the value of `int`
   * is the same as the default value.
+  *
+  * NOTE: [[transientDefault]] also works for method parameters in RPC framework.
   */
 class transientDefault extends StaticAnnotation
