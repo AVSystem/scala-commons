@@ -41,6 +41,7 @@ trait MacroCommons { bundle =>
   final val OptionClass = definitions.OptionClass
   final val ImplicitsObj = q"$CommonsPkg.misc.Implicits"
   final val AnnotationAggregateType = getType(tq"$CommonsPkg.annotation.AnnotationAggregate")
+  final val DefaultsToNameAT = getType(tq"$CommonsPkg.annotation.defaultsToName")
 
   final lazy val isScalaJs =
     definitions.ScalaPackageClass.toType.member(TermName("scalajs")) != NoSymbol
@@ -68,12 +69,30 @@ trait MacroCommons { bundle =>
       error(msg)
     }
 
-  case class Annot(tree: Tree)(val directSource: Symbol, val aggregate: Option[Annot]) {
+  class Annot(annotTree: Tree, val directSource: Symbol, val aggregate: Option[Annot]) {
     def aggregationChain: List[Annot] =
       aggregate.fold(List.empty[Annot])(a => a :: a.aggregationChain)
 
     def source: Symbol = aggregate.fold(directSource)(_.source)
-    def tpe: Type = tree.tpe
+
+    lazy val tree: Tree = annotTree match {
+      case Apply(constr@Select(New(tpt), termNames.CONSTRUCTOR), args) =>
+        val clsTpe = tpt.tpe
+        val params = primaryConstructorOf(clsTpe).typeSignature.paramLists.head
+
+        val newArgs = (args zip params) map {
+          case (arg, param) if param.asTerm.isParamWithDefault && arg.symbol != null &&
+            arg.symbol.isSynthetic && arg.symbol.name.decodedName.toString.contains("$default$") &&
+            findAnnotation(param, DefaultsToNameAT).nonEmpty =>
+            q"${source.name.decodedName.toString}"
+          case (arg, _) => arg
+        }
+
+        treeCopy.Apply(annotTree, constr, newArgs)
+      case _ => annotTree
+    }
+
+    def tpe: Type = annotTree.tpe
 
     def findArg[T: ClassTag](valSym: Symbol, defaultValue: Option[T] = None): T = tree match {
       case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
@@ -103,7 +122,7 @@ trait MacroCommons { bundle =>
       if (tpe <:< AnnotationAggregateType) {
         val argsInliner = new AnnotationArgInliner(tree)
         val impliedMember = tpe.member(TypeName("Implied"))
-        impliedMember.annotations.map(a => Annot(argsInliner.transform(a.tree))(impliedMember, Some(this)))
+        impliedMember.annotations.map(a => new Annot(argsInliner.transform(a.tree), impliedMember, Some(this)))
       } else Nil
     }
 
@@ -137,7 +156,7 @@ trait MacroCommons { bundle =>
 
   def allAnnotations(s: Symbol, tpeFilter: Type = typeOf[Any], withInherited: Boolean = true): List[Annot] =
     maybeWithSuperSymbols(s, withInherited)
-      .flatMap(ss => ss.annotations.map(a => Annot(a.tree)(ss, None)))
+      .flatMap(ss => ss.annotations.map(a => new Annot(a.tree, ss, None)))
       .flatMap(_.withAllAggregated).filter(_.tpe <:< tpeFilter).toList
 
   def findAnnotation(s: Symbol, tpe: Type, withInherited: Boolean = true): Option[Annot] =
@@ -159,7 +178,7 @@ trait MacroCommons { bundle =>
           fromHead orElse find(tail)
         case Nil => None
       }
-      find(ss.annotations.map(a => Annot(a.tree)(ss, None)))
+      find(ss.annotations.map(a => new Annot(a.tree, ss, None)))
     }.collectFirst {
       case Some(annot) => annot
     }

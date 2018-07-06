@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rest
 
-import com.avsystem.commons.annotation.AnnotationAggregate
+import com.avsystem.commons.annotation.{AnnotationAggregate, defaultsToName}
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
@@ -34,7 +34,7 @@ sealed trait RestMethodTag extends RpcTag {
     *   object SomeRestApi extends RestApiCompanion[SomeRestApi]
     * }}}
     */
-  def path: OptArg[String]
+  @defaultsToName def path: String
 }
 
 sealed abstract class HttpMethodTag(val method: HttpMethod) extends RestMethodTag with AnnotationAggregate
@@ -70,24 +70,24 @@ sealed abstract class BodyMethodTag(method: HttpMethod) extends HttpMethodTag(me
   *
   * @param path see [[RestMethodTag.path]]
   */
-final class GET(val path: OptArg[String] = OptArg.Empty) extends HttpMethodTag(HttpMethod.GET) {
+final class GET(val path: String = null) extends HttpMethodTag(HttpMethod.GET) {
   @rpcNamePrefix("GET_") type Implied
 }
 
 /** See [[BodyMethodTag]] */
-final class POST(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTag(HttpMethod.POST) {
+final class POST(val path: String = null) extends BodyMethodTag(HttpMethod.POST) {
   @rpcNamePrefix("POST_") type Implied
 }
 /** See [[BodyMethodTag]] */
-final class PATCH(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTag(HttpMethod.PATCH) {
+final class PATCH(val path: String = null) extends BodyMethodTag(HttpMethod.PATCH) {
   @rpcNamePrefix("PATCH_") type Implied
 }
 /** See [[BodyMethodTag]] */
-final class PUT(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTag(HttpMethod.PUT) {
+final class PUT(val path: String = null) extends BodyMethodTag(HttpMethod.PUT) {
   @rpcNamePrefix("PUT_") type Implied
 }
 /** See [[BodyMethodTag]] */
-final class DELETE(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTag(HttpMethod.DELETE) {
+final class DELETE(val path: String = null) extends BodyMethodTag(HttpMethod.DELETE) {
   @rpcNamePrefix("DELETE_") type Implied
 }
 
@@ -104,7 +104,7 @@ final class DELETE(val path: OptArg[String] = OptArg.Empty) extends BodyMethodTa
   *
   * @param path see [[RestMethodTag.path]]
   */
-final class Prefix(val path: OptArg[String] = OptArg.Empty) extends RestMethodTag
+final class Prefix(val path: String = null) extends RestMethodTag
 
 sealed trait RestParamTag extends RpcTag
 
@@ -118,13 +118,16 @@ final class Path(val pathSuffix: String = "") extends RestParamTag
   * REST method parameters annotated as [[Header]] will be encoded as [[HeaderValue]] and added to HTTP headers.
   * Header name must be explicitly given as argument of this annotation.
   */
-final class Header(override val name: String) extends rpcName(name) with RestParamTag
+final class Header(override val name: String)
+  extends rpcName(name) with RestParamTag
 
 /**
   * REST method parameters annotated as [[Query]] will be encoded as [[QueryValue]] and added to URL query
   * parameters. Parameters of [[GET]] REST methods are interpreted as [[Query]] parameters by default.
   */
-final class Query extends RestParamTag
+final class Query(@defaultsToName override val name: String = null)
+  extends rpcName(name) with RestParamTag
+
 sealed trait BodyTag extends RestParamTag
 
 /**
@@ -133,7 +136,8 @@ sealed trait BodyTag extends RestParamTag
   * [[POST]], [[PATCH]], [[PUT]] or [[DELETE]]. Actually, parameters of these methods are interpreted as
   * [[JsonBodyParam]] by default which means that this annotation rarely needs to be applied explicitly.
   */
-final class JsonBodyParam extends BodyTag
+final class JsonBodyParam(@defaultsToName override val name: String = null)
+  extends rpcName(name) with BodyTag
 
 /**
   * REST methods that can send HTTP body ([[POST]], [[PATCH]], [[PUT]] and [[DELETE]]) may take a single
@@ -484,18 +488,17 @@ case class PrefixMetadata[T](
   @checked @infer result: RestMetadata.Lazy[T]
 ) extends RestMethodMetadata[T] {
   def methodPath: List[PathValue] =
-    PathValue.split(methodTag.flatMap(_.path.toOpt).getOrElse(name))
+    PathValue.split(methodTag.map(_.path).getOrElse(name))
 }
 
 case class HttpMethodMetadata[T](
-  @reifyName name: String,
   @reifyAnnot methodTag: HttpMethodTag,
   @composite headersMetadata: RestHeadersMetadata,
   @multi @tagged[BodyTag] bodyParams: Map[String, BodyParamMetadata[_]]
 ) extends RestMethodMetadata[Future[T]] {
   val method: HttpMethod = methodTag.method
   val singleBody: Boolean = bodyParams.values.exists(_.singleBody)
-  def methodPath: List[PathValue] = PathValue.split(methodTag.path.getOrElse(name))
+  def methodPath: List[PathValue] = PathValue.split(methodTag.path)
 }
 
 case class RestHeadersMetadata(
