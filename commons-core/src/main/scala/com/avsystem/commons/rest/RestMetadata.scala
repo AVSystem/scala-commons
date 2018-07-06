@@ -46,11 +46,11 @@ object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
     val byName: MMap[String, Trie] = new MHashMap
     var wildcard: Opt[Trie] = Opt.Empty
 
-    def forPattern(pattern: List[Opt[PathValue]]): Trie = pattern match {
+    def forPattern(pattern: List[PathPatternElement]): Trie = pattern match {
       case Nil => this
-      case Opt(PathValue(pathName)) :: tail =>
+      case PathName(PathValue(pathName)) :: tail =>
         byName.getOrElseUpdate(pathName, new Trie).forPattern(tail)
-      case Opt.Empty :: tail =>
+      case PathParam(_) :: tail =>
         wildcard.getOrElse(new Trie().setup(t => wildcard = Opt(t))).forPattern(tail)
     }
 
@@ -104,19 +104,23 @@ object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
   }
 }
 
+sealed trait PathPatternElement
+case class PathName(value: PathValue) extends PathPatternElement
+case class PathParam(parameter: PathParamMetadata[_]) extends PathPatternElement
+
 sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
   def methodPath: List[PathValue]
   def headersMetadata: RestHeadersMetadata
 
-  val pathPattern: List[Opt[PathValue]] =
-    methodPath.map(Opt(_)) ++ headersMetadata.path.flatMap(pp => Opt.Empty :: pp.pathSuffix.map(Opt(_)))
+  val pathPattern: List[PathPatternElement] =
+    methodPath.map(PathName) ++ headersMetadata.path.flatMap(pp => PathParam(pp) :: pp.pathSuffix.map(PathName))
 
   def applyPathParams(params: List[PathValue]): List[PathValue] = {
-    def loop(params: List[PathValue], pattern: List[Opt[PathValue]]): List[PathValue] =
+    def loop(params: List[PathValue], pattern: List[PathPatternElement]): List[PathValue] =
       (params, pattern) match {
         case (Nil, Nil) => Nil
-        case (_, Opt(patternHead) :: patternTail) => patternHead :: loop(params, patternTail)
-        case (param :: paramsTail, Opt.Empty :: patternTail) => param :: loop(paramsTail, patternTail)
+        case (_, PathName(patternHead) :: patternTail) => patternHead :: loop(params, patternTail)
+        case (param :: paramsTail, PathParam(_) :: patternTail) => param :: loop(paramsTail, patternTail)
         case _ => throw new IllegalArgumentException(
           s"got ${params.size} path params, expected ${headersMetadata.path.size}")
       }
@@ -124,12 +128,12 @@ sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
   }
 
   def extractPathParams(path: List[PathValue]): Opt[(List[PathValue], List[PathValue])] = {
-    def loop(path: List[PathValue], pattern: List[Opt[PathValue]]): Opt[(List[PathValue], List[PathValue])] =
+    def loop(path: List[PathValue], pattern: List[PathPatternElement]): Opt[(List[PathValue], List[PathValue])] =
       (path, pattern) match {
         case (pathTail, Nil) => Opt((Nil, pathTail))
-        case (param :: pathTail, Opt.Empty :: patternTail) =>
+        case (param :: pathTail, PathParam(_) :: patternTail) =>
           loop(pathTail, patternTail).map { case (params, tail) => (param :: params, tail) }
-        case (pathHead :: pathTail, Opt(patternHead) :: patternTail) if pathHead == patternHead =>
+        case (pathHead :: pathTail, PathName(patternHead) :: patternTail) if pathHead == patternHead =>
           loop(pathTail, patternTail)
         case _ => Opt.Empty
       }
