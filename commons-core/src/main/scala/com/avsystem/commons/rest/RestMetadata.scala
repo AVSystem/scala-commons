@@ -168,7 +168,10 @@ case class RestHeadersMetadata(
   @multi @tagged[Query] query: Map[String, QueryParamMetadata[_]]
 )
 
-case class PathParamMetadata[T](@optional @reifyAnnot pathAnnot: Opt[Path]) extends TypedMetadata[T] {
+case class PathParamMetadata[T](
+  @reifyName(rpcName = true) rpcName: String,
+  @optional @reifyAnnot pathAnnot: Opt[Path]
+) extends TypedMetadata[T] {
   val pathSuffix: List[PathValue] = PathValue.split(pathAnnot.fold("")(_.pathSuffix))
 }
 
