@@ -15,6 +15,9 @@ object SomeApi extends RestApiCompanion[SomeApi] {
   def asHandleRequest(real: SomeApi): RestRequest => Future[RestResponse] =
     RawRest.asHandleRequest(real)
 
+  def fromHandleRequest(handle: RestRequest => Future[RestResponse]): SomeApi =
+    RawRest.fromHandleRequest[SomeApi](handle)
+
   def format(who: String) = s"Hello, $who!"
   val poison: String = "poison"
 

@@ -6,7 +6,7 @@ import java.util.regex.Pattern
 import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RestHeaders, RestRequest, RestResponse}
 import com.avsystem.commons.rpc.NamedParams
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
-import org.eclipse.jetty.http.{HttpHeader, HttpStatus, MimeTypes}
+import org.eclipse.jetty.http.{HttpStatus, MimeTypes}
 
 class RestServlet(handleRequest: RestRequest => Future[RestResponse]) extends HttpServlet {
   override def service(req: HttpServletRequest, resp: HttpServletResponse): Unit = {
@@ -59,11 +59,13 @@ object RestServlet {
     handleRequest(restRequest).catchFailures.andThenNow {
       case Success(restResponse) =>
         response.setStatus(restResponse.code)
-        response.addHeader(HttpHeader.CONTENT_TYPE.asString(), s"${restResponse.body.mimeType};charset=utf-8")
+        response.setContentLength(restResponse.body.content.length)
+        response.setContentType(s"${restResponse.body.mimeType};charset=utf-8")
         response.getWriter.write(restResponse.body.content)
       case Failure(e) =>
         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500)
-        response.addHeader(HttpHeader.CONTENT_TYPE.asString(), MimeTypes.Type.TEXT_PLAIN_UTF_8.asString())
+        response.setContentLength(e.getMessage.length)
+        response.setContentType(MimeTypes.Type.TEXT_PLAIN_UTF_8.asString())
         response.getWriter.write(e.getMessage)
     }.andThenNow { case _ => asyncContext.complete() }
   }
