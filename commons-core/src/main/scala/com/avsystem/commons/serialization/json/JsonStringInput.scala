@@ -47,9 +47,7 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
   }
 
   private def matchNumericString[T](toNumber: String => T): T = {
-    if (reader.jsonType == JsonType.number ||
-      (reader.jsonType == JsonType.string &&
-        (reader.currentValue == "Infinity" || reader.currentValue == "-Infinity" || reader.currentValue == "NaN"))) {
+    if (reader.jsonType == JsonType.number || reader.jsonType == JsonType.string) {
       val str = reader.currentValue.asInstanceOf[String]
       try toNumber(str) catch {
         case e: NumberFormatException => throw new ReadFailure(s"Invalid number format: $str", e)

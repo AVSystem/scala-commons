@@ -61,7 +61,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     test(name) {
       val serialized = values.map(write[T](_))
       val deserialized = serialized.map(read[T](_))
-      deserialized shouldBe values
+      deserialized shouldEqual values
     }
   }
 
@@ -79,8 +79,6 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
   roundtrip("simple case classes")(TestCC(5, 123L, 432, true, "bla", 'a' :: 'b' :: Nil))
 
   roundtrip("null")(null)
-
-  roundtrip("binaries")(Array[Byte](1, 2, 3, 4, -1, -5))
 
   roundtrip("dates")(new JDate(0), new JDate(2452323423L))
 
@@ -114,6 +112,12 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     assert(read[String]("\"\\u0105\\u0119\"", options) == "ąę")
   }
 
+  test("no big numbers") {
+    val options = JsonOptions(bigNumbers = false)
+    assert(write[Long](Long.MaxValue, options) == "\"" + Long.MaxValue.toString + "\"")
+    assert(read[Long]("\"" + Long.MaxValue.toString + "\"", options) == Long.MaxValue)
+  }
+
   test("NaN") {
     val value = Double.NaN
 
@@ -145,11 +149,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
   test("numerical strings") {
     read[String]("\"42\"") shouldBe "42"
     a[ReadFailure] shouldBe thrownBy(read[String]("42"))
-    a[ReadFailure] shouldBe thrownBy(read[Short]("\"42\""))
-    a[ReadFailure] shouldBe thrownBy(read[Int]("\"42\""))
-    a[ReadFailure] shouldBe thrownBy(read[Long]("\"42\""))
-    a[ReadFailure] shouldBe thrownBy(read[Float]("\"42\""))
-    a[ReadFailure] shouldBe thrownBy(read[Double]("\"42\""))
+    read[Int](json = "\"42\"") shouldBe 42
   }
 
   test("serialize all types") {
