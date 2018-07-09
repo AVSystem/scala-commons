@@ -59,7 +59,7 @@ abstract class ProductCodec[T <: Product](
 }
 
 abstract class TransparentCodec[T, U](
-  protected val typeRepr: String,
+  protected val typeRepr: String
 ) extends ErrorReportingCodec[T] {
   protected def underlyingCodec: GenCodec[U]
   protected def wrap(underlying: U): T
