@@ -55,12 +55,7 @@ class CirceJsonInput(json: Json) extends Input {
 
   private def asNumber = json.asNumber.getOrElse(failNot("number"))
 
-  final def inputType: InputType =
-    if (json.isNull) InputType.Null
-    else if (json.isArray) InputType.List
-    else if (json.isObject) InputType.Object
-    else InputType.Simple
-
+  def isNull: Boolean = json.isNull
   def readNull(): Null = if (json.isNull) null else failNot("null")
   def readString(): String = json.asString.getOrElse(failNot("string"))
   def readBoolean(): Boolean = json.asBoolean.getOrElse(failNot("boolean"))

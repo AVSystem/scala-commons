@@ -203,7 +203,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
       else writeNonNull(output, value)
 
     final def read(input: Input): T =
-      if (input.inputType == InputType.Null)
+      if (input.isNull)
         if (nullable) input.readNull().asInstanceOf[T] else throw new ReadFailure("null")
       else readNonNull(input)
   }
@@ -379,12 +379,9 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   implicit def optCodec[T: GenCodec]: GenCodec[Opt[T]] =
     create[Opt[T]](
-      i => i.inputType match {
-        case InputType.Null =>
-          i.readNull()
-          Opt.Empty
-        case _ =>
-          Opt(read[T](i))
+      i => if (!i.isNull) Opt(read[T](i)) else {
+        i.readNull()
+        Opt.Empty
       },
       locally {
         case (o, Opt(t)) => write[T](o, t)

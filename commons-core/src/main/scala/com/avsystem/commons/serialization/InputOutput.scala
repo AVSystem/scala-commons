@@ -71,25 +71,6 @@ trait ObjectOutput extends Any with SequentialOutput {
 }
 
 /**
-  * Represents the type of value inside and [[Input]] that can be read from it.
-  * <p/>
-  * It is possible to distinguish only between four types (null, simple value, object and list) even though
-  * any of these types may have different representations. For example, [[InputType.Simple]] is returned for
-  * more than one actual value types (numbers, booleans, strings, timestamps, binary, etc.).
-  * <p/>
-  * It's not possible to distinguish between them based only on [[InputType]] because not every [[Input]]
-  * implementation is able to do that. For example, JSON must represent 64-bit integers as strings and therefore
-  * it can't distinguish between strings and numbers in general.
-  */
-sealed trait InputType
-object InputType {
-  case object Null extends InputType
-  case object Simple extends InputType
-  case object Object extends InputType
-  case object List extends InputType
-}
-
-/**
   * Represents an abstract source from which a value may be deserialized (read).
   * Each of the `read` methods tries to read a value of specified type and may throw an exception
   * (usually [[com.avsystem.commons.serialization.GenCodec.ReadFailure ReadFailure]]) when reading is not successful.
@@ -104,31 +85,7 @@ object InputType {
   * [[Input]] must also be fully exhausted on their own.
   */
 trait Input extends Any {
-  /**
-    * Returns the type of the value that can be read from this [[com.avsystem.commons.serialization.Input Input]].
-    * Only four types can be distinguished (see [[com.avsystem.commons.serialization.InputType InputType]] for more details on this).
-    * <p/>
-    * If this method returns [[com.avsystem.commons.serialization.InputType.Null InputType.Null]],
-    * then `readNull()` can be safely called.<br/>
-    * If this method returns [[com.avsystem.commons.serialization.InputType.Object InputType.Object]],
-    * then AT LEAST ONE OF `readObject()` and `readMap()` can be safely called.<br/>
-    * If this method returns [[com.avsystem.commons.serialization.InputType.List InputType.List]],
-    * then AT LEAST ONE OF `readList()` and `readSet()` can be safely called.<br/>
-    * If this method returns [[com.avsystem.commons.serialization.InputType.Simple InputType.Simple]]
-    * then AT LEAST ONE OF `readString()`, `readChar()`, `readBoolean()`,
-    * `readByte()`, `readShort()`, `readInt()`, `readLong()`, `readTimestamp()`, `readFloat()`, `readDouble()`,
-    * `readBinary()` can be called.
-    * <p/>
-    * It's impossible to know which of the listed methods is actually safe to call based only on
-    * [[com.avsystem.commons.serialization.InputType InputType]].
-    * It is the responsibility of [[com.avsystem.commons.serialization.GenCodec GenCodec]] implementation to have
-    * reading and writing logic consistent.
-    * For example, if `writeDouble(Double)` is used during writing then `readDouble()` must be used during reading
-    * by the same [[com.avsystem.commons.serialization.GenCodec GenCodec]].
-    *
-    * @return
-    */
-  def inputType: InputType
+  def isNull: Boolean
   def readNull(): Null
   def readUnit(): Unit = readNull()
   def readString(): String

@@ -52,13 +52,7 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
     } else expectedError(JsonType.number)
   }
 
-  def inputType: InputType = reader.jsonType match {
-    case JsonType.list => InputType.List
-    case JsonType.`object` => InputType.Object
-    case JsonType.`null` => InputType.Null
-    case _ => InputType.Simple
-  }
-
+  def isNull: Boolean = reader.jsonType == JsonType.`null`
   def readNull(): Null = checkedValue[Null](JsonType.`null`)
   def readString(): String = checkedValue[String](JsonType.string)
   def readBoolean(): Boolean = checkedValue[Boolean](JsonType.boolean)

@@ -1,19 +1,14 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization.{FieldInput, InputType, ListInput, ObjectInput}
+import com.avsystem.commons.serialization.{FieldInput, ListInput, ObjectInput}
 import com.google.common.collect.AbstractIterator
 import org.bson.types.ObjectId
 import org.bson.{BsonReader, BsonType}
 
 class BsonReaderInput(br: BsonReader) extends BsonInput {
-  override def inputType: InputType = br.getCurrentBsonType match {
-    case BsonType.NULL => InputType.Null
-    case BsonType.ARRAY => InputType.List
-    case BsonType.DOCUMENT => InputType.Object
-    case _ => InputType.Simple
-  }
-
+  override def isNull: Boolean =
+    br.getCurrentBsonType == BsonType.NULL
   override def readNull(): Null = {
     br.readNull()
     null

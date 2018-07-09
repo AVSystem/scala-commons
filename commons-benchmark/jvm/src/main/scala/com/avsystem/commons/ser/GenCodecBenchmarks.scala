@@ -22,7 +22,7 @@ object Simple {
 object DummyInput extends Input {
   private def ignored = throw new ReadFailure("don't care")
 
-  def inputType = InputType.Object
+  def isNull = false
   def readBinary() = ignored
   def readLong() = ignored
   def readNull() = ignored
