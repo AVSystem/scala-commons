@@ -1,12 +1,16 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization.{FieldInput, ListInput, ObjectInput}
+import com.avsystem.commons.serialization.{FieldInput, LegacyOptionEncodingInput, ListInput, ObjectInput}
 import com.google.common.collect.AbstractIterator
 import org.bson.types.ObjectId
 import org.bson.{BsonReader, BsonType}
 
-class BsonReaderInput(br: BsonReader) extends BsonInput {
+class BsonReaderInput(br: BsonReader, legacyOptionEncoding: Boolean = false)
+  extends BsonInput with LegacyOptionEncodingInput {
+
+  override def legacyEncodingEnabled: Boolean = legacyOptionEncoding
+
   override def isNull: Boolean =
     br.getCurrentBsonType == BsonType.NULL
   override def readNull(): Null = {
@@ -24,19 +28,20 @@ class BsonReaderInput(br: BsonReader) extends BsonInput {
   override def readBinary(): Array[Byte] = br.readBinaryData().getData
   override def readList(): BsonReaderListInput = {
     br.readStartArray()
-    new BsonReaderListInput(new BsonReaderIterator(br, _.readEndArray(), new BsonReaderInput(_)))
+    new BsonReaderListInput(new BsonReaderIterator(br, _.readEndArray(), new BsonReaderInput(_, legacyOptionEncoding)))
   }
   override def readObject(): BsonReaderObjectInput = {
     br.readStartDocument()
     new BsonReaderObjectInput(new BsonReaderIterator(br, _.readEndDocument(),
-      br => new BsonReaderFieldInput(KeyEscaper.unescape(br.readName()), br)
+      br => new BsonReaderFieldInput(KeyEscaper.unescape(br.readName()), br, legacyOptionEncoding)
     ))
   }
   override def readObjectId(): ObjectId = br.readObjectId()
   override def skip(): Unit = br.skipValue()
 }
 
-final class BsonReaderFieldInput(name: String, br: BsonReader) extends BsonReaderInput(br) with FieldInput {
+final class BsonReaderFieldInput(name: String, br: BsonReader, legacyOptionEncoding: Boolean)
+  extends BsonReaderInput(br, legacyOptionEncoding) with FieldInput {
   override def fieldName: String = name
 }
 

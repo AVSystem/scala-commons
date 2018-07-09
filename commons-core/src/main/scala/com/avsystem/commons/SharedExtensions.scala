@@ -68,6 +68,8 @@ object SharedExtensions extends SharedExtensions {
     @silent
     def discard: Unit = ()
 
+    def thenReturn[T](value: T): T = value
+
     def option: Option[A] = Option(a)
 
     def opt: Opt[A] = Opt(a)

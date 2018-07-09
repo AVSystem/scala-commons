@@ -74,7 +74,8 @@ case class SomethingComplex(
   embeddedObject: SomethingPlain,
   complexList: List[SomethingPlain],
   nestedList: List[List[String]],
-  nestedComplexList: List[List[SomethingPlain]]
+  nestedComplexList: List[List[SomethingPlain]],
+  option: Option[Int]
 )
 object SomethingComplex {
   val sthListGen: Gen[List[SomethingPlain]] = SomethingPlain.sizedListOf(8, SomethingPlain.gen)
@@ -84,11 +85,13 @@ object SomethingComplex {
     complexList <- sthListGen
     nestedList <- SomethingPlain.sizedListOf(5, SomethingPlain.stringListGen)
     nestedComplexList <- SomethingPlain.sizedListOf(5, sthListGen)
+    option <- arbitrary[Option[Int]]
   } yield SomethingComplex(
     embeddedObject,
     complexList,
     nestedList,
-    nestedComplexList
+    nestedComplexList,
+    option
   )
 
   implicit val codec: GenCodec[SomethingComplex] = GenCodec.materialize

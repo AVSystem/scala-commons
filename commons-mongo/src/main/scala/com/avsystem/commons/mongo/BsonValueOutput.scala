@@ -1,19 +1,23 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization.{GenCodec, ListOutput, ObjectOutput}
+import com.avsystem.commons.serialization.{GenCodec, LegacyOptionEncodingOutput, ListOutput, ObjectOutput}
 import org.bson._
 import org.bson.types.ObjectId
 
 object BsonValueOutput {
-  def write[T: GenCodec](value: T): BsonValue = {
+  def write[T: GenCodec](value: T, legacyOptionEncoding: Boolean = false): BsonValue = {
     var result: BsonValue = null
-    GenCodec.write(new BsonValueOutput(result = _), value)
+    GenCodec.write(new BsonValueOutput(result = _, legacyOptionEncoding), value)
     result
   }
 }
 
-final class BsonValueOutput(receiver: BsonValue => Unit = _ => ()) extends BsonOutput {
+final class BsonValueOutput(receiver: BsonValue => Unit = _ => (), legacyOptionEncoding: Boolean = false)
+  extends BsonOutput with LegacyOptionEncodingOutput {
+
+  override def legacyEncodingEnabled: Boolean = legacyOptionEncoding
+
   private var _value: Opt[BsonValue] = Opt.empty
 
   private def setValue(bsonValue: BsonValue): Unit = {
@@ -36,21 +40,27 @@ final class BsonValueOutput(receiver: BsonValue => Unit = _ => ()) extends BsonO
   override def writeBigInt(bigInt: BigInt): Unit = setValue(new BsonBinary(bigInt.toByteArray))
   override def writeBigDecimal(bigDecimal: BigDecimal): Unit = setValue(new BsonBinary(BsonOutput.bigDecimalBytes(bigDecimal)))
   override def writeBinary(binary: Array[Byte]): Unit = setValue(new BsonBinary(binary))
-  override def writeList(): ListOutput = new BsonValueListOutput(setValue)
-  override def writeObject(): ObjectOutput = new BsonValueObjectOutput(setValue)
+  override def writeList(): ListOutput = new BsonValueListOutput(setValue, legacyOptionEncoding)
+  override def writeObject(): ObjectOutput = new BsonValueObjectOutput(setValue, legacyOptionEncoding)
   override def writeObjectId(objectId: ObjectId): Unit = setValue(new BsonObjectId(objectId))
 }
 
-final class BsonValueListOutput(receiver: BsonArray => Unit) extends ListOutput {
+final class BsonValueListOutput(receiver: BsonArray => Unit, legacyOptionEncoding: Boolean)
+  extends ListOutput {
   private val array = new BsonArray()
 
-  override def writeElement(): BsonOutput = new BsonValueOutput(v => array.add(v))
+  override def writeElement(): BsonOutput =
+    new BsonValueOutput(v => array.add(v), legacyOptionEncoding)
+
   override def finish(): Unit = receiver(array)
 }
 
-final class BsonValueObjectOutput(receiver: BsonDocument => Unit) extends ObjectOutput {
+final class BsonValueObjectOutput(receiver: BsonDocument => Unit, legacyOptionEncoding: Boolean)
+  extends ObjectOutput {
   private val doc = new BsonDocument()
 
-  override def writeField(key: String): BsonOutput = new BsonValueOutput(v => doc.put(KeyEscaper.escape(key), v))
+  override def writeField(key: String): BsonOutput =
+    new BsonValueOutput(v => doc.put(KeyEscaper.escape(key), v), legacyOptionEncoding)
+
   override def finish(): Unit = receiver(doc)
 }
