@@ -4,11 +4,17 @@ package rest
 import com.avsystem.commons.rpc._
 
 @methodTag[RestMethodTag, Prefix]
-@paramTag[RestParamTag, JsonBodyParam]
 case class RestMetadata[T](
-  @multi @tagged[Prefix] prefixMethods: Map[String, PrefixMetadata[_]],
-  @multi @tagged[HttpMethodTag] httpMethods: Map[String, HttpMethodMetadata[_]]
+  @paramTag[RestParamTag, Path] @multi @tagged[Prefix]
+  prefixMethods: Map[String, PrefixMetadata[_]],
+  @paramTag[RestParamTag, Query] @multi @tagged[GET]
+  httpGetMethods: Map[String, HttpMethodMetadata[_]],
+  @paramTag[RestParamTag, JsonBodyParam] @multi @tagged[BodyMethodTag]
+  httpBodyMethods: Map[String, HttpMethodMetadata[_]]
 ) {
+  val httpMethods: Map[String, HttpMethodMetadata[_]] =
+    httpGetMethods ++ httpBodyMethods
+
   def ensureUnambiguousPaths(): Unit = {
     val trie = new RestMetadata.Trie
     trie.fillWith(this)
