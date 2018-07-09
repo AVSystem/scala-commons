@@ -65,7 +65,7 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
   def readLong(): Long = matchNumericString(_.toLong)
   def readDouble(): Double = matchNumericString(_.toDouble)
   def readBigInt(): BigInt = matchNumericString(BigInt(_))
-  def readBigDecimal(): BigDecimal = matchNumericString(BigDecimal(_))
+  def readBigDecimal(): BigDecimal = matchNumericString(BigDecimal(_, options.mathContext))
 
   override def readTimestamp(): Long = options.dateFormat match {
     case JsonDateFormat.EpochMillis => readLong()

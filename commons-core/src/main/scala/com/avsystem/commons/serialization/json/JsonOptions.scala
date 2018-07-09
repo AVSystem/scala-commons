@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization.json
 
+import java.math.MathContext
+
 sealed trait JsonBinaryFormat
 object JsonBinaryFormat {
   case object ByteArray extends JsonBinaryFormat
@@ -15,6 +17,7 @@ object JsonDateFormat {
 
 case class JsonOptions(
   asciiOutput: Boolean = false,
+  mathContext: MathContext = BigDecimal.defaultMathContext,
   dateFormat: JsonDateFormat = JsonDateFormat.IsoInstant,
   binaryFormat: JsonBinaryFormat = JsonBinaryFormat.ByteArray
 )
