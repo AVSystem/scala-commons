@@ -108,6 +108,12 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     assert(read[JDate]("0", options) == new JDate(0))
   }
 
+  test("ascii output") {
+    val options = JsonOptions(asciiOutput = true)
+    assert(write[String]("ąę", options) == "\"\\u0105\\u0119\"")
+    assert(read[String]("\"\\u0105\\u0119\"", options) == "ąę")
+  }
+
   test("NaN") {
     val value = Double.NaN
 

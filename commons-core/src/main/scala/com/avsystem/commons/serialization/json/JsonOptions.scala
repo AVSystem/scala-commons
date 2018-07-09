@@ -14,6 +14,7 @@ object JsonDateFormat {
 }
 
 case class JsonOptions(
+  asciiOutput: Boolean = false,
   dateFormat: JsonDateFormat = JsonDateFormat.IsoInstant,
   binaryFormat: JsonBinaryFormat = JsonBinaryFormat.ByteArray
 )

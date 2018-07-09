@@ -12,7 +12,7 @@ object JsonStringOutput {
 }
 
 trait BaseJsonOutput {
-  protected final def writeJsonString(builder: JStringBuilder, str: String): Unit = {
+  protected final def writeJsonString(builder: JStringBuilder, str: String, ascii: Boolean): Unit = {
     builder.append('"')
     var i = 0
     var s = 0
@@ -25,7 +25,8 @@ trait BaseJsonOutput {
         case '\n' => "\\n"
         case '\r' => "\\r"
         case '\t' => "\\t"
-        case c if Character.isISOControl(c) => c.toInt.formatted("\\u%04x")
+        case c if (ascii && c.toInt > 127) || Character.isISOControl(c) =>
+          c.toInt.formatted("\\u%04x")
         case _ => null
       }
       if (esc != null) {
@@ -43,7 +44,7 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
   extends BaseJsonOutput with Output {
 
   def writeNull(): Unit = builder.append("null")
-  def writeString(str: String): Unit = writeJsonString(builder, str)
+  def writeString(str: String): Unit = writeJsonString(builder, str, options.asciiOutput)
   def writeBoolean(boolean: Boolean): Unit = builder.append(boolean.toString)
   def writeInt(int: Int): Unit = builder.append(int.toString)
   def writeLong(long: Long): Unit = builder.append(long.toString)
@@ -107,7 +108,7 @@ final class JsonObjectOutput(builder: JStringBuilder, options: JsonOptions)
   def writeField(key: String): JsonStringOutput = {
     builder.append(if (first) '{' else ',')
     first = false
-    writeJsonString(builder, key)
+    writeJsonString(builder, key, options.asciiOutput)
     builder.append(':')
     new JsonStringOutput(builder, options)
   }
