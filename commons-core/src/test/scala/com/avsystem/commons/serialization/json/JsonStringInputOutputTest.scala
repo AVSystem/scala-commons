@@ -59,8 +59,8 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
 
   def roundtrip[T: GenCodec](name: String)(values: T*)(implicit pos: Position): Unit = {
     test(name) {
-      val serialized = values.map(write[T])
-      val deserialized = serialized.map(read[T])
+      val serialized = values.map(write[T](_))
+      val deserialized = serialized.map(read[T](_))
       deserialized shouldBe values
     }
   }
@@ -80,6 +80,34 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
 
   roundtrip("null")(null)
 
+  roundtrip("binaries")(Array[Byte](1, 2, 3, 4, -1, -5))
+
+  roundtrip("dates")(new JDate(0), new JDate(2452323423L))
+
+  test("byte array binary format") {
+    val options = JsonOptions(binaryFormat = JsonBinaryFormat.ByteArray)
+    assert(write[Array[Byte]](Array(-1, 0, 1), options) == "[-1,0,1]")
+    assert(read[Array[Byte]]("[-1,0,1]", options).toSeq == Seq[Byte](-1, 0, 1))
+  }
+
+  test("hex string binary format") {
+    val options = JsonOptions(binaryFormat = JsonBinaryFormat.HexString)
+    assert(write[Array[Byte]](Array(-1, 0, 1), options) == "\"ff0001\"")
+    assert(read[Array[Byte]]("\"ff0001\"", options).toSeq == Seq[Byte](-1, 0, 1))
+  }
+
+  test("ISO instant date format") {
+    val options = JsonOptions(dateFormat = JsonDateFormat.IsoInstant)
+    assert(write[JDate](new JDate(0), options) == "\"1970-01-01T00:00:00.000Z\"")
+    assert(read[JDate]("\"1970-01-01T00:00:00.000Z\"", options) == new JDate(0))
+  }
+
+  test("epoch millis date format") {
+    val options = JsonOptions(dateFormat = JsonDateFormat.EpochMillis)
+    assert(write[JDate](new JDate(0), options) == "0")
+    assert(read[JDate]("0", options) == new JDate(0))
+  }
+
   test("NaN") {
     val value = Double.NaN
 
@@ -93,7 +121,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     val value = -1.750470182E9
     val test = value.toString
     val serialized = Seq("-1.750470182E+9", "-1.750470182E9", test)
-    val deserialized = serialized.map(read[Double])
+    val deserialized = serialized.map(read[Double](_))
 
     deserialized should contain only value
   }
