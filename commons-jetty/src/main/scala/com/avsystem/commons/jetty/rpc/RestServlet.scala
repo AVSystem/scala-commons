@@ -44,25 +44,25 @@ object RestServlet {
     }
     val query = queryBuilder.result()
 
-    val bodyReader = request.getReader
-    val bodyBuilder = new JStringBuilder
-    Iterator.continually(bodyReader.read())
-      .takeWhile(_ != -1)
-      .foreach(bodyBuilder.appendCodePoint)
-    val bodyString = bodyBuilder.toString
-    val body =
-      if (bodyString.isEmpty && request.getContentType == null) HttpBody.Empty
-      else HttpBody(bodyString, MimeTypes.getContentTypeWithoutCharset(request.getContentType))
-
+    val body = request.getContentType.opt.fold(HttpBody.empty) { contentType =>
+      val bodyReader = request.getReader
+      val bodyBuilder = new JStringBuilder
+      Iterator.continually(bodyReader.read())
+        .takeWhile(_ != -1)
+        .foreach(bodyBuilder.appendCodePoint)
+      HttpBody(bodyBuilder.toString, MimeTypes.getContentTypeWithoutCharset(contentType))
+    }
     val restRequest = RestRequest(method, RestHeaders(path, headers, query), body)
 
     val asyncContext = request.startAsync()
     handleRequest(restRequest).catchFailures.andThenNow {
       case Success(restResponse) =>
         response.setStatus(restResponse.code)
-        response.setContentLength(restResponse.body.content.length)
-        response.setContentType(s"${restResponse.body.mimeType};charset=utf-8")
-        response.getWriter.write(restResponse.body.content)
+        restResponse.body.forNonEmpty { (content, mimeType) =>
+          response.setContentLength(content.length)
+          response.setContentType(s"$mimeType;charset=utf-8")
+          response.getWriter.write(content)
+        }
       case Failure(e) =>
         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500)
         response.setContentLength(e.getMessage.length)

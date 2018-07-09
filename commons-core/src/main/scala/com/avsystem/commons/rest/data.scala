@@ -57,24 +57,50 @@ object RestValue {
   * encoding to [[JsonValue]] (e.g. types that have `GenCodec` instance) automatically have encoding to [[HttpBody]]
   * which uses application/json MIME type. There is also a specialized encoding provided for `Unit` which maps it
   * to empty HTTP body instead of JSON containing "null".
-  *
-  * @param content  raw HTTP body content
-  * @param mimeType MIME type, i.e. HTTP `Content-Type` without charset specified
   */
-case class HttpBody(content: String, mimeType: String) {
-  def jsonValue: JsonValue = mimeType match {
-    case HttpBody.JsonType => JsonValue(content)
-    case _ => throw new ReadFailure(s"Expected application/json type, got $mimeType")
+sealed trait HttpBody {
+  def contentOpt: Opt[String] = this match {
+    case HttpBody(content, _) => Opt(content)
+    case HttpBody.Empty => Opt.Empty
+  }
+
+  def forNonEmpty(consumer: (String, String) => Unit): Unit = this match {
+    case HttpBody(content, mimeType) => consumer(content, mimeType)
+    case HttpBody.Empty =>
+  }
+
+  def readContent(): String = this match {
+    case HttpBody(content, _) => content
+    case HttpBody.Empty => throw new ReadFailure("Expected non-empty body")
+  }
+
+  def readJson(): JsonValue = this match {
+    case HttpBody(content, HttpBody.JsonType) => JsonValue(content)
+    case HttpBody(_, mimeType) =>
+      throw new ReadFailure(s"Expected body with application/json type, got $mimeType")
+    case HttpBody.Empty =>
+      throw new ReadFailure("Expected body with application/json type, got empty body")
   }
 }
 object HttpBody {
+  object Empty extends HttpBody
+  final case class NonEmpty(content: String, mimeType: String) extends HttpBody
+
+  def empty: HttpBody = Empty
+
+  def apply(content: String, mimeType: String): HttpBody =
+    NonEmpty(content, mimeType)
+
+  def unapply(body: HttpBody): Opt[(String, String)] = body match {
+    case Empty => Opt.Empty
+    case NonEmpty(content, mimeType) => Opt((content, mimeType))
+  }
+
   final val PlainType = "text/plain"
   final val JsonType = "application/json"
 
   def plain(value: String): HttpBody = HttpBody(value, PlainType)
   def json(json: JsonValue): HttpBody = HttpBody(json.value, JsonType)
-
-  final val Empty: HttpBody = HttpBody.plain("")
 
   def createJsonBody(fields: NamedParams[JsonValue]): HttpBody =
     if (fields.isEmpty) HttpBody.Empty else {
@@ -88,23 +114,24 @@ object HttpBody {
       HttpBody.json(JsonValue(sb.toString))
     }
 
-  def parseJsonBody(body: HttpBody): NamedParams[JsonValue] =
-    if (body.content.isEmpty) NamedParams.empty else {
-      val oi = new JsonStringInput(new JsonReader(body.jsonValue.value)).readObject()
+  def parseJsonBody(body: HttpBody): NamedParams[JsonValue] = body match {
+    case HttpBody.Empty => NamedParams.empty
+    case _ =>
+      val oi = new JsonStringInput(new JsonReader(body.readJson().value)).readObject()
       val builder = NamedParams.newBuilder[JsonValue]
       while (oi.hasNext) {
         val fi = oi.nextField()
         builder += ((fi.fieldName, JsonValue(fi.readRawJson())))
       }
       builder.result()
-    }
+  }
 
   implicit val emptyBodyForUnit: AsRawReal[HttpBody, Unit] =
     AsRawReal.create(_ => HttpBody.Empty, _ => ())
   implicit def httpBodyJsonAsRaw[T](implicit jsonAsRaw: AsRaw[JsonValue, T]): AsRaw[HttpBody, T] =
     AsRaw.create(v => HttpBody.json(jsonAsRaw.asRaw(v)))
   implicit def httpBodyJsonAsReal[T](implicit jsonAsReal: AsReal[JsonValue, T]): AsReal[HttpBody, T] =
-    AsReal.create(v => jsonAsReal.asReal(v.jsonValue))
+    AsReal.create(v => jsonAsReal.asReal(v.readJson()))
 }
 
 /**
@@ -130,21 +157,23 @@ object RestHeaders {
   final val Empty = RestHeaders(Nil, NamedParams.empty, NamedParams.empty)
 }
 
-case class HttpErrorException(code: Int, payload: String)
-  extends RuntimeException(s"$code: $payload") with NoStackTrace
+case class HttpErrorException(code: Int, payload: OptArg[String] = OptArg.Empty)
+  extends RuntimeException(s"HTTP ERROR $code${payload.fold("")(p => s": $p")}") with NoStackTrace
 
 case class RestRequest(method: HttpMethod, headers: RestHeaders, body: HttpBody)
 case class RestResponse(code: Int, body: HttpBody)
 object RestResponse {
   implicit def defaultFutureAsRaw[T](implicit bodyAsRaw: AsRaw[HttpBody, T]): AsRaw[Future[RestResponse], Future[T]] =
     AsRaw.create(_.transformNow {
-      case Success(v) => Success(RestResponse(200, bodyAsRaw.asRaw(v)))
-      case Failure(HttpErrorException(code, payload)) => Success(RestResponse(code, HttpBody.plain(payload)))
+      case Success(v) =>
+        Success(RestResponse(200, bodyAsRaw.asRaw(v)))
+      case Failure(HttpErrorException(code, payload)) =>
+        Success(RestResponse(code, payload.fold(HttpBody.empty)(HttpBody.plain)))
       case Failure(cause) => Failure(cause)
     })
   implicit def defaultFutureAsReal[T](implicit bodyAsReal: AsReal[HttpBody, T]): AsReal[Future[RestResponse], Future[T]] =
     AsReal.create(_.mapNow {
       case RestResponse(200, body) => bodyAsReal.asReal(body)
-      case RestResponse(code, body) => throw HttpErrorException(code, body.content)
+      case RestResponse(code, body) => throw HttpErrorException(code, body.contentOpt.toOptArg)
     })
 }

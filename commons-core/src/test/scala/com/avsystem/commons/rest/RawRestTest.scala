@@ -28,6 +28,11 @@ trait RootApi {
 object RootApi extends RestApiCompanion[RootApi]
 
 class RawRestTest extends FunSuite with ScalaFutures {
+  def repr(body: HttpBody, inNewLine: Boolean = true): String = body match {
+    case HttpBody.Empty => ""
+    case HttpBody(content, mimeType) => s"${if (inNewLine) "" else " "}$mimeType\n$content"
+  }
+
   def repr(req: RestRequest): String = {
     val pathRepr = req.headers.path.map(_.value).mkString("/", "/", "")
     val queryRepr = req.headers.query.iterator
@@ -35,19 +40,11 @@ class RawRestTest extends FunSuite with ScalaFutures {
     val hasHeaders = req.headers.headers.nonEmpty
     val headersRepr = req.headers.headers.iterator
       .map({ case (n, v) => s"$n: ${v.value}" }).mkStringOrEmpty("\n", "\n", "\n")
-
-    val contentRepr =
-      if (req.body.content.isEmpty) ""
-      else s"${if (hasHeaders) "" else " "}${req.body.mimeType}\n${req.body.content}"
-    s"-> ${req.method} $pathRepr$queryRepr$headersRepr$contentRepr"
+    s"-> ${req.method} $pathRepr$queryRepr$headersRepr${repr(req.body, hasHeaders)}".trim
   }
 
-  def repr(resp: RestResponse): String = {
-    val contentRepr =
-      if (resp.body.content.isEmpty) ""
-      else s" ${resp.body.mimeType}\n${resp.body.content}"
-    s"<- ${resp.code}$contentRepr"
-  }
+  def repr(resp: RestResponse): String =
+    s"<- ${resp.code} ${repr(resp.body)}".trim
 
   class RootApiImpl(id: Int, query: String) extends RootApi with UserApi {
     def self: UserApi = this

@@ -25,15 +25,19 @@ object RestClient {
     request.headers.headers.foreach {
       case (name, HeaderValue(value)) => httpReq.header(name, value)
     }
-    httpReq.content(new StringContentProvider(request.body.mimeType, request.body.content, StandardCharsets.UTF_8))
+
+    request.body.forNonEmpty { (content, mimeType) =>
+      httpReq.content(new StringContentProvider(s"$mimeType;charset=utf-8", content, StandardCharsets.UTF_8))
+    }
 
     val promise = Promise[RestResponse]
     httpReq.send(new BufferingResponseListener() {
       override def onComplete(result: Result): Unit =
         if (result.isSucceeded) {
           val httpResp = result.getResponse
-          val contentType = httpResp.getHeaders.get(HttpHeader.CONTENT_TYPE)
-          val body = HttpBody(getContentAsString(), MimeTypes.getContentTypeWithoutCharset(contentType))
+          val body = httpResp.getHeaders.get(HttpHeader.CONTENT_TYPE).opt.fold(HttpBody.empty) { contentType =>
+            HttpBody(getContentAsString(), MimeTypes.getContentTypeWithoutCharset(contentType))
+          }
           val response = RestResponse(httpResp.getStatus, body)
           promise.success(response)
         } else {

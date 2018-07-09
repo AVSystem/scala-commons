@@ -147,7 +147,6 @@ sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
   }
 }
 
-@paramTag[RestParamTag, Path]
 case class PrefixMetadata[T](
   @reifyName name: String,
   @optional @reifyAnnot methodTag: Opt[Prefix],
