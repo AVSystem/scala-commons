@@ -12,13 +12,13 @@ class HttpRestCallTest extends AbstractRestCallTest with UsesHttpServer with Use
   override def patienceConfig: PatienceConfig = PatienceConfig(10.seconds)
 
   protected def setupServer(server: Server): Unit = {
-    val servlet = new RestServlet(serverHandler)
+    val servlet = new RestServlet(serverHandle)
     val holder = new ServletHolder(servlet)
     val handler = new ServletHandler
     handler.addServletWithMapping(holder, "/api/*")
     server.setHandler(handler)
   }
 
-  def clientHandler: HandleRequest =
+  def clientHandle: HandleRequest =
     RestClient.asHandleRequest(client, s"$baseUrl/api")
 }

@@ -63,13 +63,13 @@ object RestTestSubApi extends RestApiCompanion[RestTestSubApi] {
 }
 
 abstract class AbstractRestCallTest extends FunSuite with ScalaFutures {
-  final val serverHandler: RawRest.HandleRequest =
+  final val serverHandle: RawRest.HandleRequest =
     RawRest.asHandleRequest[RestTestApi](RestTestApi.Impl)
 
-  def clientHandler: RawRest.HandleRequest
+  def clientHandle: RawRest.HandleRequest
 
   lazy val proxy: RestTestApi =
-    RawRest.fromHandleRequest[RestTestApi](clientHandler)
+    RawRest.fromHandleRequest[RestTestApi](clientHandle)
 
   def testCall[T](call: RestTestApi => Future[T])(implicit pos: Position): Unit =
     assert(call(proxy).wrapToTry.futureValue == call(RestTestApi.Impl).wrapToTry.futureValue)
@@ -100,5 +100,5 @@ abstract class AbstractRestCallTest extends FunSuite with ScalaFutures {
 }
 
 class DirectRestCallTest extends AbstractRestCallTest {
-  def clientHandler: HandleRequest = serverHandler
+  def clientHandle: HandleRequest = serverHandle
 }
