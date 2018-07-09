@@ -7,6 +7,8 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
+import scala.util.control.NoStackTrace
+
 sealed trait RestValue extends Any {
   def value: String
 }
@@ -128,17 +130,21 @@ object RestHeaders {
   final val Empty = RestHeaders(Nil, NamedParams.empty, NamedParams.empty)
 }
 
-class HttpErrorException(code: Int, payload: String)
-  extends RuntimeException(s"$code: $payload")
+case class HttpErrorException(code: Int, payload: String)
+  extends RuntimeException(s"$code: $payload") with NoStackTrace
 
 case class RestRequest(method: HttpMethod, headers: RestHeaders, body: HttpBody)
 case class RestResponse(code: Int, body: HttpBody)
 object RestResponse {
   implicit def defaultFutureAsRaw[T](implicit bodyAsRaw: AsRaw[HttpBody, T]): AsRaw[Future[RestResponse], Future[T]] =
-    AsRaw.create(_.mapNow(v => RestResponse(200, bodyAsRaw.asRaw(v))))
+    AsRaw.create(_.transformNow {
+      case Success(v) => Success(RestResponse(200, bodyAsRaw.asRaw(v)))
+      case Failure(HttpErrorException(code, payload)) => Success(RestResponse(code, HttpBody.plain(payload)))
+      case Failure(cause) => Failure(cause)
+    })
   implicit def defaultFutureAsReal[T](implicit bodyAsReal: AsReal[HttpBody, T]): AsReal[Future[RestResponse], Future[T]] =
     AsReal.create(_.mapNow {
       case RestResponse(200, body) => bodyAsReal.asReal(body)
-      case RestResponse(code, body) => throw new HttpErrorException(code, body.content)
+      case RestResponse(code, body) => throw HttpErrorException(code, body.content)
     })
 }

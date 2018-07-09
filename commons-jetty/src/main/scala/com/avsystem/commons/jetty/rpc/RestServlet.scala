@@ -1,14 +1,15 @@
 package com.avsystem.commons
 package jetty.rpc
 
+import java.net.URLDecoder
 import java.util.regex.Pattern
 
-import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RestHeaders, RestRequest, RestResponse}
+import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RawRest, RestHeaders, RestRequest}
 import com.avsystem.commons.rpc.NamedParams
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.http.{HttpStatus, MimeTypes}
 
-class RestServlet(handleRequest: RestRequest => Future[RestResponse]) extends HttpServlet {
+class RestServlet(handleRequest: RawRest.HandleRequest) extends HttpServlet {
   override def service(req: HttpServletRequest, resp: HttpServletResponse): Unit = {
     RestServlet.handle(handleRequest, req, resp)
   }
@@ -18,17 +19,17 @@ object RestServlet {
   val separatorPattern: Pattern = Pattern.compile("/")
 
   def handle(
-    handleRequest: RestRequest => Future[RestResponse],
+    handleRequest: RawRest.HandleRequest,
     request: HttpServletRequest,
     response: HttpServletResponse
   ): Unit = {
     val method = HttpMethod.byName(request.getMethod)
 
+    // can't use request.getPathInfo because it decodes the URL before we can split it
+    val encodedPath = request.getRequestURI.stripPrefix(request.getServletPath).stripPrefix("/")
     val path = separatorPattern
-      .splitAsStream(request.getPathInfo)
-      .asScala
-      .skip(1)
-      .map(PathValue(_))
+      .splitAsStream(encodedPath).asScala
+      .map(v => PathValue(URLDecoder.decode(v, "utf-8")))
       .to[List]
 
     val headersBuilder = NamedParams.newBuilder[HeaderValue]

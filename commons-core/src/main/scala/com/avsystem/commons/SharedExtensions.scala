@@ -453,8 +453,14 @@ object SharedExtensions extends SharedExtensions {
 
     def minOptBy[B: Ordering](f: A => B): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.minBy(f).opt
 
+    def mkStringOr(start: String, sep: String, end: String, default: String): String =
+      if (coll.nonEmpty) coll.mkString(start, sep, end) else default
+
+    def mkStringOr(sep: String, default: String): String =
+      if (coll.nonEmpty) coll.mkString(sep) else default
+
     def mkStringOrEmpty(start: String, sep: String, end: String): String =
-      if (coll.nonEmpty) coll.mkString(start, sep, end) else ""
+      mkStringOr(start, sep, end, "")
   }
 
   class SetOps[A](private val set: BSet[A]) extends AnyVal {

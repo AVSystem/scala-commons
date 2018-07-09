@@ -36,9 +36,9 @@ trait RawRest {
   def handleSingle(@methodName name: String, @composite headers: RestHeaders,
     @encoded @tagged[Body] body: HttpBody): Future[RestResponse]
 
-  def asHandleRequest(metadata: RestMetadata[_]): RestRequest => Future[RestResponse] = {
+  def asHandleRequest(metadata: RestMetadata[_]): RawRest.HandleRequest = {
     metadata.ensureUnambiguousPaths()
-    locally[RestRequest => Future[RestResponse]] {
+    locally[RawRest.HandleRequest] {
       case RestRequest(method, headers, body) => metadata.resolvePath(method, headers.path).toList match {
         case List(ResolvedPath(prefixes, RpcWithPath(finalRpcName, finalPathParams), singleBody)) =>
           val finalRawRest = prefixes.foldLeft(this) {
@@ -47,9 +47,12 @@ trait RawRest {
           }
           val finalHeaders = headers.copy(path = finalPathParams)
 
-          if (method == HttpMethod.GET) finalRawRest.get(finalRpcName, finalHeaders)
-          else if (singleBody) finalRawRest.handleSingle(finalRpcName, finalHeaders, body)
-          else finalRawRest.handle(finalRpcName, finalHeaders, HttpBody.parseJsonBody(body))
+          def result: Future[RestResponse] =
+            if (method == HttpMethod.GET) finalRawRest.get(finalRpcName, finalHeaders)
+            else if (singleBody) finalRawRest.handleSingle(finalRpcName, finalHeaders, body)
+            else finalRawRest.handle(finalRpcName, finalHeaders, HttpBody.parseJsonBody(body))
+
+          result.catchFailures
 
         case Nil =>
           val pathStr = headers.path.iterator.map(_.value).mkString("/")
@@ -65,17 +68,16 @@ trait RawRest {
 }
 
 object RawRest extends RawRpcCompanion[RawRest] {
-  def fromHandleRequest[Real: AsRealRpc : RestMetadata](handleRequest: RestRequest => Future[RestResponse]): Real =
+  type HandleRequest = RestRequest => Future[RestResponse]
+
+  def fromHandleRequest[Real: AsRealRpc : RestMetadata](handleRequest: HandleRequest): Real =
     RawRest.asReal(new DefaultRawRest(RestMetadata[Real], RestHeaders.Empty, handleRequest))
 
-  def asHandleRequest[Real: AsRawRpc : RestMetadata](real: Real): RestRequest => Future[RestResponse] =
+  def asHandleRequest[Real: AsRawRpc : RestMetadata](real: Real): HandleRequest =
     RawRest.asRaw(real).asHandleRequest(RestMetadata[Real])
 
-  private final class DefaultRawRest(
-    metadata: RestMetadata[_],
-    prefixHeaders: RestHeaders,
-    handleRequest: RestRequest => Future[RestResponse]
-  ) extends RawRest {
+  private final class DefaultRawRest(metadata: RestMetadata[_], prefixHeaders: RestHeaders, handleRequest: HandleRequest)
+    extends RawRest {
 
     def prefix(name: String, headers: RestHeaders): RawRest = {
       val prefixMeta = metadata.prefixMethods.getOrElse(name,

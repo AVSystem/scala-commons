@@ -21,11 +21,11 @@ trait UserApi {
 }
 object UserApi extends RestApiCompanion[UserApi]
 
-trait RestTestApi {
+trait RootApi {
   @Prefix("") def self: UserApi
   def subApi(id: Int, @Query query: String): UserApi
 }
-object RestTestApi extends RestApiCompanion[RestTestApi]
+object RootApi extends RestApiCompanion[RootApi]
 
 class RawRestTest extends FunSuite with ScalaFutures {
   def repr(req: RestRequest): String = {
@@ -49,26 +49,26 @@ class RawRestTest extends FunSuite with ScalaFutures {
     s"<- ${resp.code}$contentRepr"
   }
 
-  class RestTestApiImpl(id: Int, query: String) extends RestTestApi with UserApi {
+  class RootApiImpl(id: Int, query: String) extends RootApi with UserApi {
     def self: UserApi = this
-    def subApi(newId: Int, newQuery: String): UserApi = new RestTestApiImpl(newId, query + newQuery)
+    def subApi(newId: Int, newQuery: String): UserApi = new RootApiImpl(newId, query + newQuery)
     def user(userId: String): Future[User] = Future.successful(User(userId, s"$userId-$id-$query"))
     def user(paf: String, awesome: Boolean, f: Int, user: User): Future[Unit] = Future.unit
   }
 
   var trafficLog: String = _
 
-  val real: RestTestApi = new RestTestApiImpl(0, "")
-  val serverHandle: RestRequest => Future[RestResponse] = request => {
+  val real: RootApi = new RootApiImpl(0, "")
+  val serverHandle: RawRest.HandleRequest = request => {
     RawRest.asHandleRequest(real).apply(request).andThenNow {
       case Success(response) =>
         trafficLog = s"${repr(request)}\n${repr(response)}\n"
     }
   }
 
-  val realProxy: RestTestApi = RawRest.fromHandleRequest[RestTestApi](serverHandle)
+  val realProxy: RootApi = RawRest.fromHandleRequest[RootApi](serverHandle)
 
-  def testRestCall[T](call: RestTestApi => Future[T], expectedTraffic: String)(implicit pos: Position): Unit = {
+  def testRestCall[T](call: RootApi => Future[T], expectedTraffic: String)(implicit pos: Position): Unit = {
     assert(call(realProxy).futureValue == call(real).futureValue)
     assert(trafficLog == expectedTraffic)
   }

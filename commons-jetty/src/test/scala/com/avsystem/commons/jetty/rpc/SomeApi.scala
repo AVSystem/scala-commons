@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jetty.rpc
 
-import com.avsystem.commons.rest.{GET, POST, RawRest, RestApiCompanion, RestRequest, RestResponse}
+import com.avsystem.commons.rest.{GET, POST, RawRest, RestApiCompanion}
 
 trait SomeApi {
   @GET
@@ -12,10 +12,10 @@ trait SomeApi {
 }
 
 object SomeApi extends RestApiCompanion[SomeApi] {
-  def asHandleRequest(real: SomeApi): RestRequest => Future[RestResponse] =
+  def asHandleRequest(real: SomeApi): RawRest.HandleRequest =
     RawRest.asHandleRequest(real)
 
-  def fromHandleRequest(handle: RestRequest => Future[RestResponse]): SomeApi =
+  def fromHandleRequest(handle: RawRest.HandleRequest): SomeApi =
     RawRest.fromHandleRequest[SomeApi](handle)
 
   def format(who: String) = s"Hello, $who!"

@@ -4,14 +4,14 @@ package jetty.rpc
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-import com.avsystem.commons.rest.{HeaderValue, HttpBody, QueryValue, RestRequest, RestResponse}
+import com.avsystem.commons.rest.{HeaderValue, HttpBody, QueryValue, RawRest, RestResponse}
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.client.api.Result
 import org.eclipse.jetty.client.util.{BufferingResponseListener, StringContentProvider}
 import org.eclipse.jetty.http.{HttpHeader, MimeTypes}
 
 object RestClient {
-  def asHandleRequest(client: HttpClient, baseUrl: String): RestRequest => Future[RestResponse] = request => {
+  def asHandleRequest(client: HttpClient, baseUrl: String): RawRest.HandleRequest = request => {
     val path = request.headers.path.iterator
       .map(pv => URLEncoder.encode(pv.value, "utf-8"))
       .mkString(baseUrl.ensureSuffix("/"), "/", "")

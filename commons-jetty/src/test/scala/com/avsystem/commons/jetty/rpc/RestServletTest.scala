@@ -10,13 +10,11 @@ import org.eclipse.jetty.servlet.{ServletHandler, ServletHolder}
 import org.scalatest.FunSuite
 
 class RestServletTest extends FunSuite with UsesHttpServer with UsesHttpClient {
-  val baseUrl = s"http://localhost:$port/api"
-
   override protected def setupServer(server: Server): Unit = {
     val servlet = new RestServlet(SomeApi.asHandleRequest(SomeApi.impl))
     val holder = new ServletHolder(servlet)
     val handler = new ServletHandler
-    handler.addServletWithMapping(holder, "/api/*")
+    handler.addServletWithMapping(holder, "/*")
     server.setHandler(handler)
   }
 

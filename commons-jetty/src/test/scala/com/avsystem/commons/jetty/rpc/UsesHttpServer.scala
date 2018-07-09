@@ -7,6 +7,7 @@ import org.scalatest.{BeforeAndAfterAll, Suite}
 trait UsesHttpServer extends BeforeAndAfterAll { this: Suite =>
   val port: Int = 9090
   val server: Server = new Server(port)
+  val baseUrl = s"http://localhost:$port"
 
   protected def setupServer(server: Server): Unit
 
