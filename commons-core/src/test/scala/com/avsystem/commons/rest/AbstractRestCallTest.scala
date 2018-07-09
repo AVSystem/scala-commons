@@ -35,7 +35,7 @@ trait RestTestApi {
   def prefix(
     p0: String,
     @Header("X-H0") h0: String,
-    @Query q0: String,
+    @Query q0: String
   ): RestTestSubApi
 }
 object RestTestApi extends RestApiCompanion[RestTestApi] {
