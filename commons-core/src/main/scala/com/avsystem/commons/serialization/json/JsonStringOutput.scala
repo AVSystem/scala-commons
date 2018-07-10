@@ -51,17 +51,17 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
 
   def writeNull(): Unit = builder.append("null")
   def writeString(str: String): Unit = writeJsonString(builder, str, options.asciiOutput)
-  def writeBoolean(boolean: Boolean): Unit = builder.append(boolean.toString)
-  def writeInt(int: Int): Unit = builder.append(int.toString)
-  def writeLong(long: Long): Unit = builder.append(long.toString)
+  def writeBoolean(boolean: Boolean): Unit = builder.append(boolean)
+  def writeInt(int: Int): Unit = builder.append(int)
+  def writeLong(long: Long): Unit = builder.append(long)
 
   def writeDouble(double: Double): Unit =
     if (double.isNaN || double.isInfinity)
-      builder.append("\"").append(double.toString).append("\"")
-    else builder.append(double.toString)
+      builder.append("\"").append(double).append("\"")
+    else builder.append(double)
 
-  def writeBigInt(bigInt: BigInt): Unit = builder.append(bigInt.toString)
-  def writeBigDecimal(bigDecimal: BigDecimal): Unit = builder.append(bigDecimal.toString)
+  def writeBigInt(bigInt: BigInt): Unit = builder.append(bigInt)
+  def writeBigDecimal(bigDecimal: BigDecimal): Unit = builder.append(bigDecimal)
 
   override def writeTimestamp(millis: Long): Unit = options.dateFormat match {
     case JsonDateFormat.EpochMillis => writeLong(millis)
