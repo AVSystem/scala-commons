@@ -1,0 +1,28 @@
+package com.avsystem.commons
+package serialization
+
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
+import org.scalacheck.Gen
+import org.scalatest.FunSuite
+import org.scalatest.prop.PropertyChecks
+
+class IsoInstantTest extends FunSuite with PropertyChecks {
+  test("basic parsing") {
+    assert(IsoInstant.parse("1970-01-01T00:00:00Z") == 0)
+    assert(IsoInstant.parse("1970-01-01T00:00:00.000Z") == 0)
+    intercept[ReadFailure](IsoInstant.parse("1970-01-01T00:00:00"))
+    intercept[ReadFailure](IsoInstant.parse("1970-01-01"))
+    intercept[ReadFailure](IsoInstant.parse("1970-13-01T00:00:00Z"))
+    intercept[ReadFailure](IsoInstant.parse("1970-01-32T00:00:00Z"))
+    intercept[ReadFailure](IsoInstant.parse("1970-01-01T25:00:00Z"))
+    intercept[ReadFailure](IsoInstant.parse("1970-01-01T00:61:00Z"))
+    intercept[ReadFailure](IsoInstant.parse("1970-01-01T00:00:61Z"))
+  }
+
+  test("roundtrip") {
+    val genTstamp = Gen.choose[Long](-(1L << 53) + 1, 1L << 53)
+    forAll(genTstamp) { l: Long =>
+      assert(IsoInstant.parse(IsoInstant.format(l)) == l)
+    }
+  }
+}

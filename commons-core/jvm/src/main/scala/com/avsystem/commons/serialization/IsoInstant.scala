@@ -7,10 +7,8 @@ import java.time.format.DateTimeParseException
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 object IsoInstant {
-  def format(millis: Long): String = {
-    val res = Instant.ofEpochMilli(millis).toString
-    if (res.length == 20) res.substring(0, 19) + ".000Z" else res
-  }
+  def format(millis: Long): String =
+    Instant.ofEpochMilli(millis).toString
 
   def parse(string: String): Long =
     try Instant.parse(string).toEpochMilli catch {
