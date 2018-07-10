@@ -96,8 +96,8 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
 
   test("ISO instant date format") {
     val options = JsonOptions(dateFormat = JsonDateFormat.IsoInstant)
-    assert(write[JDate](new JDate(0), options) == "\"1970-01-01T00:00:00.000Z\"")
-    assert(read[JDate]("\"1970-01-01T00:00:00.000Z\"", options) == new JDate(0))
+    assert(write[JDate](new JDate(1), options) == "\"1970-01-01T00:00:00.001Z\"")
+    assert(read[JDate]("\"1970-01-01T00:00:00.001Z\"", options) == new JDate(1))
   }
 
   test("epoch millis date format") {

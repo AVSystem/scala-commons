@@ -20,7 +20,7 @@ class IsoInstantTest extends FunSuite with PropertyChecks {
   }
 
   test("roundtrip") {
-    val genTstamp = Gen.choose[Long](-(1L << 53) + 1, 1L << 53)
+    val genTstamp = Gen.choose[Long](-(1L << 50), 1L << 50)
     forAll(genTstamp) { l: Long =>
       assert(IsoInstant.parse(IsoInstant.format(l)) == l)
     }
