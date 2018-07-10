@@ -19,6 +19,11 @@ class IsoInstantTest extends FunSuite with PropertyChecks {
     intercept[ReadFailure](IsoInstant.parse("1970-01-01T00:00:61Z"))
   }
 
+  test("basic formatting") {
+    assert(IsoInstant.format(0) == "1970-01-01T00:00:00.000Z")
+    assert(IsoInstant.format(1) == "1970-01-01T00:00:00.001Z")
+  }
+
   test("roundtrip") {
     val genTstamp = Gen.choose[Long](-(1L << 50), 1L << 50)
     forAll(genTstamp) { l: Long =>
