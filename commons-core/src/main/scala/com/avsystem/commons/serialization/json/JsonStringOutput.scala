@@ -12,6 +12,12 @@ object JsonStringOutput {
 }
 
 trait BaseJsonOutput {
+  protected final def indent(builder: JStringBuilder, options: JsonOptions, depth: Int): Unit =
+    options.indentSize match {
+      case OptArg(size) => builder.append('\n').append(" " * (depth * size))
+      case OptArg.Empty =>
+    }
+
   protected final def writeJsonString(builder: JStringBuilder, str: String, ascii: Boolean): Unit = {
     builder.append('"')
     var i = 0
@@ -40,7 +46,7 @@ trait BaseJsonOutput {
   }
 }
 
-final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = JsonOptions.Default)
+final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = JsonOptions.Default, depth: Int = 0)
   extends BaseJsonOutput with Output {
 
   def writeNull(): Unit = builder.append("null")
@@ -105,39 +111,47 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
   }
 
   def writeRawJson(json: String): Unit = builder.append(json)
-  def writeList(): JsonListOutput = new JsonListOutput(builder, options)
-  def writeObject(): JsonObjectOutput = new JsonObjectOutput(builder, options)
+  def writeList(): JsonListOutput = new JsonListOutput(builder, options, depth + 1)
+  def writeObject(): JsonObjectOutput = new JsonObjectOutput(builder, options, depth + 1)
 }
 
-final class JsonListOutput(builder: JStringBuilder, options: JsonOptions) extends ListOutput {
+final class JsonListOutput(builder: JStringBuilder, options: JsonOptions, depth: Int)
+  extends BaseJsonOutput with ListOutput {
+
   private[this] var first = true
   def writeElement(): JsonStringOutput = {
     builder.append(if (first) '[' else ',')
+    indent(builder, options, depth)
     first = false
-    new JsonStringOutput(builder, options)
+    new JsonStringOutput(builder, options, depth)
   }
   def finish(): Unit = {
     if (first) {
       builder.append('[')
+    } else {
+      indent(builder, options, depth - 1)
     }
     builder.append(']')
   }
 }
 
-final class JsonObjectOutput(builder: JStringBuilder, options: JsonOptions)
+final class JsonObjectOutput(builder: JStringBuilder, options: JsonOptions, depth: Int)
   extends BaseJsonOutput with ObjectOutput {
 
   private[this] var first = true
   def writeField(key: String): JsonStringOutput = {
     builder.append(if (first) '{' else ',')
+    indent(builder, options, depth)
     first = false
     writeJsonString(builder, key, options.asciiOutput)
     builder.append(':')
-    new JsonStringOutput(builder, options)
+    new JsonStringOutput(builder, options, depth)
   }
   def finish(): Unit = {
     if (first) {
       builder.append('{')
+    } else {
+      indent(builder, options, depth - 1)
     }
     builder.append('}')
   }

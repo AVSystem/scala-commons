@@ -16,6 +16,7 @@ object JsonDateFormat {
 }
 
 case class JsonOptions(
+  indentSize: OptArg[Int] = OptArg.Empty,
   asciiOutput: Boolean = false,
   bigNumbers: Boolean = true,
   mathContext: MathContext = BigDecimal.defaultMathContext,
