@@ -112,12 +112,6 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     assert(read[String]("\"\\u0105\\u0119\"", options) == "ąę")
   }
 
-  test("no big numbers") {
-    val options = JsonOptions(bigNumbers = false)
-    assert(write[Long](Long.MaxValue, options) == "\"" + Long.MaxValue.toString + "\"")
-    assert(read[Long]("\"" + Long.MaxValue.toString + "\"", options) == Long.MaxValue)
-  }
-
   test("indentation") {
     val options = JsonOptions(indentSize = 2)
     val map = Map("a" -> List(1, 2), "b" -> List(3, 4, 5))

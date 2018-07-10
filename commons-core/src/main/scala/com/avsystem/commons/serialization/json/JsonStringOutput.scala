@@ -53,38 +53,15 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
   def writeString(str: String): Unit = writeJsonString(builder, str, options.asciiOutput)
   def writeBoolean(boolean: Boolean): Unit = builder.append(boolean.toString)
   def writeInt(int: Int): Unit = builder.append(int.toString)
-
-  private def writeSafeString(str: String): Unit =
-    builder.append("\"").append(str).append("\"")
-
-  private def isValidDouble(long: Long): Boolean = long == 0 || {
-    import java.lang.{Long => JLong}
-    val bitlen = JLong.SIZE - JLong.numberOfLeadingZeros(long) - JLong.numberOfTrailingZeros(long)
-    bitlen <= 53 // will it fit into Double mantissa?
-  }
-
-  def writeLong(long: Long): Unit =
-    if (options.bigNumbers || isValidDouble(long)) builder.append(long.toString)
-    else writeSafeString(long.toString)
+  def writeLong(long: Long): Unit = builder.append(long.toString)
 
   def writeDouble(double: Double): Unit =
     if (double.isNaN || double.isInfinity)
-      writeSafeString(double.toString)
+      builder.append("\"").append(double.toString).append("\"")
     else builder.append(double.toString)
 
-  def writeBigInt(bigInt: BigInt): Unit =
-    if (options.bigNumbers || bigInt.isValidDouble) builder.append(bigInt.toString)
-    else writeSafeString(bigInt.toString)
-
-  private def isValidDouble(bigDecimal: BigDecimal): Boolean = {
-    val d = bigDecimal.toDouble
-    !d.isInfinity && bigDecimal.equals(BigDecimal.decimal(d, options.mathContext))
-  }
-
-  def writeBigDecimal(bigDecimal: BigDecimal): Unit = {
-    if (options.bigNumbers || isValidDouble(bigDecimal)) builder.append(bigDecimal.toString)
-    else writeSafeString(bigDecimal.toString)
-  }
+  def writeBigInt(bigInt: BigInt): Unit = builder.append(bigInt.toString)
+  def writeBigDecimal(bigDecimal: BigDecimal): Unit = builder.append(bigDecimal.toString)
 
   override def writeTimestamp(millis: Long): Unit = options.dateFormat match {
     case JsonDateFormat.EpochMillis => writeLong(millis)

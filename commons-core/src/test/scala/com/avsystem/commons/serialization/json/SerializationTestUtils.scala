@@ -1,11 +1,16 @@
 package com.avsystem.commons
 package serialization.json
 
+import java.math.MathContext
+
 import com.avsystem.commons.serialization.HasGenCodec
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 
 trait SerializationTestUtils {
+  private def limitMathContext(bd: BigDecimal) =
+    if (bd.mc == MathContext.UNLIMITED) bd(BigDecimal.defaultMathContext) else bd
+
   case class TestCC(i: Int, l: Long, intAsDouble: Double, b: Boolean, s: String, list: List[Char])
   object TestCC extends HasGenCodec[TestCC] {
     implicit val arb: Arbitrary[TestCC] = Arbitrary(for {
@@ -42,7 +47,7 @@ trait SerializationTestUtils {
       f <- arbitrary[Float]
       d <- arbitrary[Double]
       bi <- arbitrary[BigInt]
-      bd <- arbitrary[BigDecimal]
+      bd <- arbitrary[BigDecimal].map(limitMathContext)
       binary <- arbitrary[Array[Byte]]
       list <- arbitrary[List[String]]
       set <- arbitrary[Set[String]]
