@@ -12,8 +12,8 @@ object JsonStringOutput {
 }
 
 trait BaseJsonOutput {
-  protected final def indent(builder: JStringBuilder, options: JsonOptions, depth: Int): Unit =
-    options.indentSize match {
+  protected final def indent(builder: JStringBuilder, indentSize: OptArg[Int], depth: Int): Unit =
+    indentSize match {
       case OptArg(size) => builder.append('\n').append(" " * (depth * size))
       case OptArg.Empty =>
     }
@@ -57,7 +57,7 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
 
   def writeDouble(double: Double): Unit =
     if (double.isNaN || double.isInfinity)
-      builder.append("\"").append(double).append("\"")
+      builder.append('"').append(double).append('"')
     else builder.append(double)
 
   def writeBigInt(bigInt: BigInt): Unit = builder.append(bigInt)
@@ -65,7 +65,7 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
 
   override def writeTimestamp(millis: Long): Unit = options.dateFormat match {
     case JsonDateFormat.EpochMillis => writeLong(millis)
-    case JsonDateFormat.IsoInstant => writeString(IsoInstant.format(millis))
+    case JsonDateFormat.IsoInstant => builder.append('"').append(IsoInstant.format(millis)).append('"')
   }
 
   def writeBinary(binary: Array[Byte]): Unit = options.binaryFormat match {
@@ -98,7 +98,7 @@ final class JsonListOutput(builder: JStringBuilder, options: JsonOptions, depth:
   private[this] var first = true
   def writeElement(): JsonStringOutput = {
     builder.append(if (first) '[' else ',')
-    indent(builder, options, depth)
+    indent(builder, options.indentSize, depth)
     first = false
     new JsonStringOutput(builder, options, depth)
   }
@@ -106,7 +106,7 @@ final class JsonListOutput(builder: JStringBuilder, options: JsonOptions, depth:
     if (first) {
       builder.append('[')
     } else {
-      indent(builder, options, depth - 1)
+      indent(builder, options.indentSize, depth - 1)
     }
     builder.append(']')
   }
@@ -118,7 +118,7 @@ final class JsonObjectOutput(builder: JStringBuilder, options: JsonOptions, dept
   private[this] var first = true
   def writeField(key: String): JsonStringOutput = {
     builder.append(if (first) '{' else ',')
-    indent(builder, options, depth)
+    indent(builder, options.indentSize, depth)
     first = false
     writeJsonString(builder, key, options.asciiOutput)
     builder.append(':')
@@ -128,7 +128,7 @@ final class JsonObjectOutput(builder: JStringBuilder, options: JsonOptions, dept
     if (first) {
       builder.append('{')
     } else {
-      indent(builder, options, depth - 1)
+      indent(builder, options.indentSize, depth - 1)
     }
     builder.append('}')
   }
