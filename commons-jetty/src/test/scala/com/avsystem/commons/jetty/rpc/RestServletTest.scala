@@ -12,7 +12,7 @@ import org.scalatest.FunSuite
 
 class RestServletTest extends FunSuite with UsesHttpServer with UsesHttpClient {
   override protected def setupServer(server: Server): Unit = {
-    val servlet = new RestServlet(SomeApi.asHandleRequest(SomeApi.impl))
+    val servlet = RestServlet[SomeApi](SomeApi.impl)
     val holder = new ServletHolder(servlet)
     val handler = new ServletHandler
     handler.addServletWithMapping(holder, "/*")

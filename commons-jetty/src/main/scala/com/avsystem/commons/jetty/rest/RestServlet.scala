@@ -4,7 +4,8 @@ package jetty.rest
 import java.net.URLDecoder
 import java.util.regex.Pattern
 
-import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RawRest, RestHeaders, RestRequest}
+import com.avsystem.commons.annotation.explicitGenerics
+import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RawRest, RestHeaders, RestMetadata, RestRequest}
 import com.avsystem.commons.rpc.NamedParams
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.http.{HttpStatus, MimeTypes}
@@ -16,7 +17,10 @@ class RestServlet(handleRequest: RawRest.HandleRequest) extends HttpServlet {
 }
 
 object RestServlet {
-  val separatorPattern: Pattern = Pattern.compile("/")
+  def apply[@explicitGenerics Real: RawRest.AsRawRpc : RestMetadata](real: Real): RestServlet =
+    new RestServlet(RawRest.asHandleRequest[Real](real))
+
+  private val SeparatorPattern: Pattern = Pattern.compile("/")
 
   def handle(
     handleRequest: RawRest.HandleRequest,
@@ -27,7 +31,7 @@ object RestServlet {
 
     // can't use request.getPathInfo because it decodes the URL before we can split it
     val encodedPath = request.getRequestURI.stripPrefix(request.getServletPath).stripPrefix("/")
-    val path = separatorPattern
+    val path = SeparatorPattern
       .splitAsStream(encodedPath).asScala
       .map(v => PathValue(URLDecoder.decode(v, "utf-8")))
       .to[List]
