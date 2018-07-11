@@ -63,13 +63,11 @@ object RestServlet {
       case Success(restResponse) =>
         response.setStatus(restResponse.code)
         restResponse.body.forNonEmpty { (content, mimeType) =>
-          response.setContentLength(content.length)
           response.setContentType(s"$mimeType;charset=utf-8")
           response.getWriter.write(content)
         }
       case Failure(e) =>
         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500)
-        response.setContentLength(e.getMessage.length)
         response.setContentType(MimeTypes.Type.TEXT_PLAIN_UTF_8.asString())
         response.getWriter.write(e.getMessage)
     }.andThenNow { case _ => asyncContext.complete() }

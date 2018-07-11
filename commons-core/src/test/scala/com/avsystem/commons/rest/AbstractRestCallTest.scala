@@ -83,15 +83,15 @@ abstract class AbstractRestCallTest extends FunSuite with ScalaFutures {
   }
 
   test("complex GET") {
-    testCall(_.complexGet(0, "a/+&", 1, "b/+&", 2, "c/+&"))
+    testCall(_.complexGet(0, "a/+&", 1, "b/+&", 2, "ć/+&"))
   }
 
   test("multi-param body POST") {
-    testCall(_.multiParamPost(0, "a/+&", 1, "b/+&", 2, "c/+&", 3, "l\"l"))
+    testCall(_.multiParamPost(0, "a/+&", 1, "b/+&", 2, "ć/+&", 3, "l\"l"))
   }
 
   test("single body PUT") {
-    testCall(_.singleBodyPut(RestEntity("id", "name")))
+    testCall(_.singleBodyPut(RestEntity("id", "señor")))
   }
 
   test("prefixed GET") {
