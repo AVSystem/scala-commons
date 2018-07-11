@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package jetty.rpc
 
+import com.avsystem.commons.jetty.rest.{RestClient, RestServlet}
 import com.avsystem.commons.rest.AbstractRestCallTest
 import com.avsystem.commons.rest.RawRest.HandleRequest
 import org.eclipse.jetty.server.Server

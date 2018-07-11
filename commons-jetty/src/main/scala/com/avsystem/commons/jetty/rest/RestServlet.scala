@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package jetty.rpc
+package jetty.rest
 
 import java.net.URLDecoder
 import java.util.regex.Pattern

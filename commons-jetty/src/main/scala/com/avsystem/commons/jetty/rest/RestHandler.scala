@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package jetty.rpc
+package jetty.rest
 
 import com.avsystem.commons.rest.RawRest
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
