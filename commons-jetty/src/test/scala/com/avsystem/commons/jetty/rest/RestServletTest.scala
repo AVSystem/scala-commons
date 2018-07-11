@@ -1,9 +1,8 @@
 package com.avsystem.commons
-package jetty.rpc
+package jetty.rest
 
 import java.nio.charset.StandardCharsets
 
-import com.avsystem.commons.jetty.rest.RestServlet
 import org.eclipse.jetty.client.util.StringContentProvider
 import org.eclipse.jetty.http.{HttpMethod, HttpStatus}
 import org.eclipse.jetty.server.Server

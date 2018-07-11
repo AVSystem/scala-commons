@@ -1,7 +1,6 @@
 package com.avsystem.commons
-package jetty.rpc
+package jetty.rest
 
-import com.avsystem.commons.jetty.rest.RestHandler
 import org.eclipse.jetty.server.Server
 
 object RestHandlerMain {

@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package jetty.rpc
+package jetty.rest
 
 import org.eclipse.jetty.client.HttpClient
 import org.scalatest.{BeforeAndAfterAll, Suite}
