@@ -143,7 +143,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
 
   def mkTypeString(tpe: Type): List[Tree] = tpe match {
-    case _ if tpe.typeSymbol == definitions.AnyRefClass => List(lit("AnyRef"))
+    case _ if tpe =:= typeOf[AnyRef] => List(lit("AnyRef"))
     case TypeRef(NoPrefix, ExistentialSingleton(_, name, _), Nil) =>
       List(lit(mkNameString(name)))
     case TypeRef(_, sym, args) if definitions.FunctionClass.seq.contains(sym) =>
@@ -156,8 +156,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       val dealiased = tpe.dealias
       if (dealiased.typeSymbol != sym && !isStaticPrefix(pre)) {
         mkTypeString(dealiased)
-      }
-      else {
+      } else {
         val argsReprs =
           if (args.isEmpty) Nil
           else lit("[") +: join(args.map(typeStringParts), ", ") :+ lit("]")

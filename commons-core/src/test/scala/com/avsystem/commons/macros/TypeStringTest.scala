@@ -100,7 +100,7 @@ class TypeStringTest extends FunSuite {
   //  testTypeString[fu.bar.q.type forSome {val fu: Fuu}]("fu.bar.q.type forSome {val fu: Fuu}")
   //  testTypeString[AnyRef with Serializable]("AnyRef with Serializable")
 
-  UnrelatedTypeString.defineTests(this)
+  UnrelatedTypeString.defineTests[String](this)
 }
 
 object UnrelatedTypeString {
