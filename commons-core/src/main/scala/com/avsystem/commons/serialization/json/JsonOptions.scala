@@ -21,7 +21,7 @@ object JsonBinaryFormat {
 sealed trait JsonDateFormat
 object JsonDateFormat {
   /**
-    * Specifies that a timestamp should be represented in ISO 8861 format with UTC time zone,
+    * Specifies that a timestamp should be represented in ISO 8601 format with UTC time zone,
     * e.g. `2012-02-13T07:30:21.232Z`
     */
   case object IsoInstant extends JsonDateFormat

@@ -9,3 +9,4 @@ trait JsInterop {
   implicit def jsDateTimestampConversions(jsDate: js.Date): TimestampConversions =
     new TimestampConversions(jsDate.getTime.toLong)
 }
+object JsInterop extends JsInterop
