@@ -36,7 +36,6 @@ trait MacroCommons { bundle =>
   final val MapObj = q"$CollectionPkg.immutable.Map"
   final val MapCls = tq"$CollectionPkg.immutable.Map"
   final val MapSym = typeOf[scala.collection.immutable.Map[_, _]].typeSymbol
-  final val MaterializedCls = tq"$CommonsPkg.derivation.Materialized"
   final val FutureSym = typeOf[scala.concurrent.Future[_]].typeSymbol
   final val OptionClass = definitions.OptionClass
   final val ImplicitsObj = q"$CommonsPkg.misc.Implicits"

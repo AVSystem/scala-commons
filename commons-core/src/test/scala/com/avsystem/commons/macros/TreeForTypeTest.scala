@@ -100,7 +100,7 @@ class TreeForTypeTest {
   }
 }
 
-object Unrelated {
+object UnrelatedTreeForType {
 
   import TreeForTypeTest._
 
