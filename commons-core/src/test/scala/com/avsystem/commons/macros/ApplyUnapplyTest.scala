@@ -11,6 +11,7 @@ object ApplyUnapplyTest {
   case class Single(int: Int)
   case class Multiple(int: Int, str: String)
   case class Gadt[T](t: T, list: List[T], cos: String)
+  case class Generic[T](value: String)
 
   trait Custom[T]
   object Custom {
@@ -25,4 +26,5 @@ object ApplyUnapplyTest {
   applierUnapplier[Multiple, (Int, String)]
   applierUnapplier[Gadt[Int], (Int, List[Int], String)]
   applierUnapplier[Custom[String], String]
+  applierUnapplier[Generic[String], String]
 }

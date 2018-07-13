@@ -23,7 +23,7 @@ object KnownSubtypesTest {
   case class RandomGenericSomething[A](a: A) extends Gadt[Int]
   case object StringSomething extends Gadt[String]
 
-  testKnownSubtypes[Gadt[Int], (Something[Int], RandomGenericSomething[Nothing])]
+  testKnownSubtypes[Gadt[Int], (Something[Int], RandomGenericSomething[_])]
   testKnownSubtypes[Gadt[String], (Something[String], StringSomething.type)]
   testKnownSubtypes[Gadt[List[Int]], (Something[List[Int]], ListSomething[Int])]
 
@@ -64,4 +64,18 @@ object KnownSubtypesTest {
   sealed trait Outer
 
   testKnownSubtypes[Outer, Outer.Inner.type]
+
+  sealed trait MemberedBase {
+    type Elem
+  }
+  class MemberedCase extends MemberedBase {
+    type Elem = String
+  }
+  class GenericMemberedCase[T] extends MemberedBase {
+    type Elem = T
+  }
+
+  testKnownSubtypes[MemberedBase, (MemberedCase, GenericMemberedCase[_])]
+  testKnownSubtypes[MemberedBase {type Elem = String}, (MemberedCase, GenericMemberedCase[String])]
+  testKnownSubtypes[MemberedBase {type Elem = Int}, GenericMemberedCase[Int]]
 }

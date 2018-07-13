@@ -59,9 +59,9 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
 
   def roundtrip[T: GenCodec](name: String)(values: T*)(implicit pos: Position): Unit = {
     test(name) {
-      val serialized = values.map(write[T])
-      val deserialized = serialized.map(read[T])
-      deserialized shouldBe values
+      val serialized = values.map(write[T](_))
+      val deserialized = serialized.map(read[T](_))
+      deserialized shouldEqual values
     }
   }
 
@@ -80,6 +80,57 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
 
   roundtrip("null")(null)
 
+  roundtrip("dates")(new JDate(0), new JDate(2452323423L))
+
+  test("byte array binary format") {
+    val options = JsonOptions(binaryFormat = JsonBinaryFormat.ByteArray)
+    assert(write[Array[Byte]](Array(-1, 0, 1), options) == "[-1,0,1]")
+    assert(read[Array[Byte]]("[-1,0,1]", options).toSeq == Seq[Byte](-1, 0, 1))
+  }
+
+  test("hex string binary format") {
+    val options = JsonOptions(binaryFormat = JsonBinaryFormat.HexString)
+    assert(write[Array[Byte]](Array(-1, 0, 1), options) == "\"ff0001\"")
+    assert(read[Array[Byte]]("\"ff0001\"", options).toSeq == Seq[Byte](-1, 0, 1))
+  }
+
+  test("ISO instant date format") {
+    val options = JsonOptions(dateFormat = JsonDateFormat.IsoInstant)
+    assert(write[JDate](new JDate(1), options) == "\"1970-01-01T00:00:00.001Z\"")
+    assert(read[JDate]("\"1970-01-01T00:00:00.001Z\"", options) == new JDate(1))
+  }
+
+  test("epoch millis date format") {
+    val options = JsonOptions(dateFormat = JsonDateFormat.EpochMillis)
+    assert(write[JDate](new JDate(0), options) == "0")
+    assert(read[JDate]("0", options) == new JDate(0))
+  }
+
+  test("ascii output") {
+    val options = JsonOptions(asciiOutput = true)
+    assert(write[String]("ąę", options) == "\"\\u0105\\u0119\"")
+    assert(read[String]("\"\\u0105\\u0119\"", options) == "ąę")
+  }
+
+  test("indentation") {
+    val options = JsonOptions(indentSize = 2)
+    val map = Map("a" -> List(1, 2), "b" -> List(3, 4, 5))
+    val prettyJson = write[Map[String, List[Int]]](map, options)
+    assert(prettyJson ==
+      """{
+        |  "a":[
+        |    1,
+        |    2
+        |  ],
+        |  "b":[
+        |    3,
+        |    4,
+        |    5
+        |  ]
+        |}""".stripMargin)
+    assert(read[Map[String, List[Int]]](prettyJson, options) == map)
+  }
+
   test("NaN") {
     val value = Double.NaN
 
@@ -93,7 +144,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     val value = -1.750470182E9
     val test = value.toString
     val serialized = Seq("-1.750470182E+9", "-1.750470182E9", test)
-    val deserialized = serialized.map(read[Double])
+    val deserialized = serialized.map(read[Double](_))
 
     deserialized should contain only value
   }
@@ -111,11 +162,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
   test("numerical strings") {
     read[String]("\"42\"") shouldBe "42"
     a[ReadFailure] shouldBe thrownBy(read[String]("42"))
-    a[ReadFailure] shouldBe thrownBy(read[Short]("\"42\""))
-    a[ReadFailure] shouldBe thrownBy(read[Int]("\"42\""))
-    a[ReadFailure] shouldBe thrownBy(read[Long]("\"42\""))
-    a[ReadFailure] shouldBe thrownBy(read[Float]("\"42\""))
-    a[ReadFailure] shouldBe thrownBy(read[Double]("\"42\""))
+    read[Int](json = "\"42\"") shouldBe 42
   }
 
   test("serialize all types") {

@@ -38,16 +38,7 @@ import com.avsystem.commons.serialization.FormatConstants._
 class StreamInput(is: DataInputStream) extends Input {
   private[serialization] val markerByte = is.readByte()
 
-  def inputType: InputType = markerByte match {
-    case NullMarker =>
-      InputType.Null
-    case ListStartMarker =>
-      InputType.List
-    case ObjectStartMarker =>
-      InputType.Object
-    case _ =>
-      InputType.Simple
-  }
+  def isNull: Boolean = markerByte == NullMarker
 
   def readNull(): Null =
     if (markerByte == NullMarker) null
@@ -203,7 +194,7 @@ private object StreamObjectInput {
   case class EmptyFieldInput(name: String) extends FieldInput {
     private def nope: Nothing = throw new ReadFailure(s"Something went horribly wrong ($name)")
 
-    def inputType: InputType = nope
+    def isNull: Boolean = nope
     def fieldName: String = nope
     def readNull(): Null = nope
     def readString(): String = nope

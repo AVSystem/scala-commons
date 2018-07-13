@@ -36,12 +36,12 @@ trait MacroCommons { bundle =>
   final val MapObj = q"$CollectionPkg.immutable.Map"
   final val MapCls = tq"$CollectionPkg.immutable.Map"
   final val MapSym = typeOf[scala.collection.immutable.Map[_, _]].typeSymbol
-  final val MaterializedCls = tq"$CommonsPkg.derivation.Materialized"
   final val FutureSym = typeOf[scala.concurrent.Future[_]].typeSymbol
   final val OptionClass = definitions.OptionClass
   final val ImplicitsObj = q"$CommonsPkg.misc.Implicits"
   final val AnnotationAggregateType = getType(tq"$CommonsPkg.annotation.AnnotationAggregate")
   final val DefaultsToNameAT = getType(tq"$CommonsPkg.annotation.defaultsToName")
+  final val SeqCompanionSym = typeOf[scala.collection.Seq.type].termSymbol
 
   final lazy val isScalaJs =
     definitions.ScalaPackageClass.toType.member(TermName("scalajs")) != NoSymbol
@@ -731,11 +731,14 @@ trait MacroCommons { bundle =>
     def paramsWithDefaults(methodSig: Type): List[(TermSymbol, Tree)] =
       methodSig.paramLists.head.zipWithIndex.map { case (p, i) => (p.asTerm, defaultValueFor(p, i)) }
 
-    val applyUnapplyPairs = for {
-      apply <- alternatives(typedCompanion.tpe.member(TermName("apply")))
-      unapplyName = if (isFirstListVarargs(apply)) "unapplySeq" else "unapply"
-      unapply <- alternatives(typedCompanion.tpe.member(TermName(unapplyName)))
-    } yield (apply, unapply)
+    // Seq is a weird corner case where technically an apply/unapplySeq pair exists but is recursive
+    val applyUnapplyPairs =
+      if (typedCompanion.symbol == SeqCompanionSym) Nil
+      else for {
+        apply <- alternatives(typedCompanion.tpe.member(TermName("apply")))
+        unapplyName = if (isFirstListVarargs(apply)) "unapplySeq" else "unapply"
+        unapply <- alternatives(typedCompanion.tpe.member(TermName(unapplyName)))
+      } yield (apply, unapply)
 
     def setTypeArgs(sig: Type) = sig match {
       case PolyType(params, resultType) => resultType.substituteTypes(params, dtpe.typeArgs)
@@ -825,22 +828,27 @@ trait MacroCommons { bundle =>
 
   def knownSubtypes(tpe: Type): Option[List[Type]] = {
     val dtpe = tpe.dealias
-    val tpeSym = dtpe match {
-      case RefinedType(List(single), _) => single.typeSymbol
-      case _ => dtpe.typeSymbol
+    val (tpeSym, refined) = dtpe match {
+      case RefinedType(List(single), scope) =>
+        (single.typeSymbol, scope.filter(ts => ts.isType && !ts.isAbstract).toList)
+      case _ => (dtpe.typeSymbol, Nil)
     }
     Option(tpeSym).filter(isSealedHierarchyRoot).map { sym =>
       val subclasses = knownNonAbstractSubclasses(sym).toList
       val sortedSubclasses = if (tpeSym.pos != NoPosition) subclasses.sortBy(_.pos.point) else subclasses
       sortedSubclasses.flatMap { subSym =>
-        val undetparams = subSym.asType.typeParams
-        val undetSubTpe = typeOfTypeSymbol(subSym.asType)
+        val undetTpe = typeOfTypeSymbol(subSym.asType)
+        val refinementSignatures = refined.map(rs => undetTpe.member(rs.name).typeSignatureIn(undetTpe))
+        val undetBaseTpe = undetTpe.baseType(dtpe.typeSymbol)
+        val (determinableParams, undeterminableParams) = subSym.asType.typeParams.partition(ts =>
+          undetBaseTpe.exists(_.typeSymbol == ts) || refinementSignatures.exists(_.exists(_.typeSymbol == ts)))
+        val determinableTpe = internal.existentialAbstraction(undeterminableParams, undetTpe)
 
-        if (undetparams.nonEmpty)
-          determineTypeParams(undetSubTpe, dtpe, undetparams)
-            .map(typeArgs => undetSubTpe.substituteTypes(undetparams, typeArgs))
-        else if (undetSubTpe <:< dtpe)
-          Some(undetSubTpe)
+        if (determinableParams.nonEmpty)
+          determineTypeParams(determinableTpe, dtpe, determinableParams)
+            .map(typeArgs => determinableTpe.substituteTypes(determinableParams, typeArgs))
+        else if (determinableTpe <:< dtpe)
+          Some(determinableTpe)
         else
           None
       }

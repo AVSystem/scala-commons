@@ -221,8 +221,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
         q"""
           new $SerializationPkg.TransparentCodec[$dtpe,${p.valueType}](
-            ${dtpe.toString},
-            ${typeOf[Null] <:< dtpe}
+            ${dtpe.toString}
           ) {
             lazy val underlyingCodec: $GenCodecCls[${p.valueType}] = ${p.instance}
             def wrap(underlying: ${p.valueType}): $dtpe = ${applier(List(q"underlying"))}
