@@ -3,7 +3,9 @@ package macros.misc
 
 import com.avsystem.commons.macros.AbstractMacroCommons
 
+import scala.collection.mutable
 import scala.reflect.macros.{TypecheckException, blackbox}
+import scala.util.control.NoStackTrace
 
 class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
@@ -77,19 +79,57 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       c.abort(t.pos, "Expected string literal here")
   }
 
+  case class NonConcreteTypeException(tpe: Type) extends RuntimeException with NoStackTrace
+
+  def javaClassName[T: WeakTypeTag]: Tree = {
+    val tpe = weakTypeOf[T].dealias
+    if (tpe.typeSymbol.isClass && tpe.typeSymbol != definitions.ArrayClass)
+      q"new $CommonsPkg.misc.JavaClassName(${javaClassName(tpe.erasure.typeSymbol)})"
+    else
+      abort(s"$tpe does not represent a regular class")
+  }
+
+  private def javaClassName(sym: Symbol): String = {
+    val nameSuffix = if (sym.isModuleClass && !sym.isPackageClass) "$" else ""
+    val selfName = sym.name.encodedName.toString + nameSuffix
+    val owner = sym.owner
+    val prefix =
+      if (owner == rootMirror.RootClass) ""
+      else if (owner.isPackageClass) javaClassName(owner) + "."
+      else if (owner.isModuleClass) javaClassName(owner)
+      else javaClassName(owner) + "$"
+    prefix + selfName
+  }
+
   def typeString[T: WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
-    typeStringParts(tpe) match {
+    try typeStringParts(tpe) match {
       case List(Select(pre, TermName("value"))) => pre
-      case trees => q"$CommonsPkg.misc.TypeString[$tpe](${mkStringConcat(trees)})"
+      case trees => q"new $CommonsPkg.misc.TypeString[$tpe](${mkStringConcat(trees)})"
+    } catch {
+      case NonConcreteTypeException(stpe) =>
+        abort(s"Could not materialize TypeString for $tpe because instance for $stpe is lacking")
     }
   }
 
-  def typeStringParts(tpe: Type): List[Tree] = {
+  private val allowedTparams: mutable.Set[Symbol] = new mutable.HashSet
+
+  def withAllowedTparams[T](tparams: List[Symbol])(code: => T): T = {
+    allowedTparams ++= tparams
+    try code finally {
+      allowedTparams --= tparams
+    }
+  }
+
+  private def maybeParens(repr: List[Tree], parens: Boolean): List[Tree] =
+    if (parens) lit("(") :: repr ::: lit(")") :: Nil
+    else repr
+
+  def typeStringParts(tpe: Type, parens: Boolean = false): List[Tree] = {
     val resultTpe = getType(tq"$CommonsPkg.misc.TypeString[$tpe]")
     c.inferImplicitValue(resultTpe, withMacrosDisabled = true) match {
-      case EmptyTree => mkTypeString(tpe)
-      case tree => List(q"$tree.value")
+      case EmptyTree => mkTypeString(tpe, parens)
+      case tree => maybeParens(List(q"$tree.value"), parens)
     }
   }
 
@@ -111,8 +151,18 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   def lit(str: String): Tree =
     StringLiteral(str)
 
-  def mkNameString(name: Name): String =
-    showCode(Ident(name))
+  private def isOpChar(ch: Char): Boolean =
+    ch != '`' && !ch.isLetter
+
+  private def isOpSafe(ch: Char): Boolean =
+    ch == '.' || ch.isWhitespace
+
+  def mkNameString(name: Name, prefix: String = "", suffix: String = ""): String = {
+    val nameRepr = showCode(Ident(name))
+    val afterPrefix = if (prefix.nonEmpty && !isOpSafe(prefix.last) && isOpChar(nameRepr.head)) " " else ""
+    val beforeSuffix = if (suffix.nonEmpty && !isOpSafe(suffix.head) && isOpChar(nameRepr.last)) " " else ""
+    s"$prefix$afterPrefix$nameRepr$beforeSuffix$suffix"
+  }
 
   def isRefTo(quantified: Symbol, arg: Type): Boolean = arg match {
     case TypeRef(NoPrefix, `quantified`, Nil) => true
@@ -122,11 +172,31 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   def areIndependent(quantified: List[Symbol]): Boolean =
     quantified.forall(first => quantified.forall(second => !first.typeSignature.contains(second)))
 
-  def mkTypeDefString(s: Symbol, wildcard: Boolean): List[Tree] = s match {
+  def mkTypeDefString(s: Symbol, wildcard: Boolean = false): List[Tree] = s match {
     case ExistentialSingleton(_, name, sig) =>
-      lit(s"val ${mkNameString(name)}: ") :: mkTypeString(sig)
+      lit(s"val ${mkNameString(name, suffix = ": ")}") :: mkTypeString(sig)
     case _ =>
-      lit(if (wildcard) "_" else s"type ${mkNameString(s.name)}") :: mkTypeString(s.typeSignature)
+      val ts = s.asType
+      val variance = if (ts.isCovariant) "+" else if (ts.isContravariant) "-" else ""
+      val beforeName = if (ts.isParameter) variance else "type "
+      val baseDecl = if (wildcard) "_" else mkNameString(ts.name, prefix = beforeName)
+      lit(baseDecl) :: withAllowedTparams(List(ts))(mkTypeDefSigString(ts.typeSignature))
+  }
+
+  def mkTypeDefSigString(sig: Type): List[Tree] = sig match {
+    case TypeBounds(lo, hi) =>
+      val loRepr =
+        if (lo =:= typeOf[Nothing]) Nil
+        else lit(" >: ") :: typeStringParts(lo)
+      val hiRepr =
+        if (hi =:= typeOf[Any]) Nil
+        else lit(" <: ") :: typeStringParts(hi)
+      loRepr ++ hiRepr
+    case PolyType(tparams, resultType) =>
+      lit("[") :: join(tparams.map(mkTypeDefString(_)), ", ") ::: lit("]") ::
+        withAllowedTparams(tparams)(mkTypeDefSigString(resultType))
+    case _ =>
+      lit(" = ") :: mkTypeString(sig)
   }
 
   private val autoImported: Set[Symbol] = Set(
@@ -137,71 +207,80 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   def isStaticPrefix(pre: Type): Boolean = pre match {
     case SingleType(ppre, _) => isStaticPrefix(ppre)
-    case ThisType(sym) => sym.isStatic && sym.isModuleClass
-    case TypeRef(ppre, sym, Nil) => sym.isStatic && sym.isModuleClass && isStaticPrefix(ppre)
+    case ThisType(sym) => sym.isPublic && sym.isStatic && sym.isModuleClass
+    case TypeRef(ppre, sym, Nil) => sym.isPublic && sym.isStatic && sym.isModuleClass && isStaticPrefix(ppre)
     case _ => false
   }
 
-  def mkTypeString(tpe: Type): List[Tree] = tpe match {
+  def mkTypeString(tpe: Type, parens: Boolean = false): List[Tree] = tpe match {
     case _ if tpe =:= typeOf[AnyRef] => List(lit("AnyRef"))
     case TypeRef(NoPrefix, ExistentialSingleton(_, name, _), Nil) =>
       List(lit(mkNameString(name)))
     case TypeRef(_, sym, args) if definitions.FunctionClass.seq.contains(sym) =>
       val fargs = args.init
       val fres = args.last
-      lit("(") :: join(fargs.map(typeStringParts), ", ") ::: lit(") => ") :: typeStringParts(fres)
+      val fargsRes = fargs match {
+        case Nil => List(lit("()"))
+        case List(single) => typeStringParts(single, parens = true)
+        case _ => maybeParens(join(fargs.map(typeStringParts(_)), ", "), parens = true)
+      }
+      val res = fargsRes ::: lit(" => ") :: typeStringParts(fres)
+      maybeParens(res, parens)
     case TypeRef(_, sym, args) if definitions.TupleClass.seq.contains(sym) =>
-      lit("(") :: join(args.map(typeStringParts), ", ") ::: lit(")") :: Nil
-    case TypeRef(pre, sym, args) if !sym.isParameter =>
+      lit("(") :: join(args.map(typeStringParts(_)), ", ") ::: lit(")") :: Nil
+    case TypeRef(pre, sym, args) if !sym.isParameter || allowedTparams.contains(sym) =>
       val dealiased = tpe.dealias
-      if (dealiased.typeSymbol != sym && !isStaticPrefix(pre)) {
+      if (dealiased.typeSymbol != sym && !isStaticPrefix(pre))
         mkTypeString(dealiased)
-      } else {
+      else {
         val argsReprs =
           if (args.isEmpty) Nil
-          else lit("[") +: join(args.map(typeStringParts), ", ") :+ lit("]")
-        mkTypePrefix(pre) ::: lit(mkNameString(sym.name)) :: argsReprs
+          else lit("[") +: join(args.map(typeStringParts(_)), ", ") :+ lit("]")
+        mkTypePath(pre, sym.name) ::: argsReprs
       }
-    case SingleType(_, _) =>
-      mkTypePrefix(tpe) :+ lit("type")
+    case SingleType(pre, sym) =>
+      mkTypePath(pre, sym.name) :+ lit(".type")
     case ThisType(sym) if sym.isStatic && sym.isModuleClass =>
       List(lit(mkStaticPrefix(sym) + "type"))
     case ExistentialType(quantified, TypeRef(pre, sym, args))
       if quantified.corresponds(args)(isRefTo) && quantified.forall(s => !pre.contains(s)) && areIndependent(quantified) =>
       val wildcards = lit("[") +: join(quantified.map(mkTypeDefString(_, wildcard = true)), ", ") :+ lit("]")
-      mkTypePrefix(pre) ::: lit(mkNameString(sym.name)) :: wildcards
+      mkTypePath(pre, sym.name) ::: wildcards
     case ExistentialType(quantified, underlying) =>
-      val typeDefs = join(quantified.map(mkTypeDefString(_, wildcard = false)), "; ")
-      typeStringParts(underlying) ::: lit(" forSome {") :: typeDefs ::: lit("}") :: Nil
-    case TypeBounds(lo, hi) =>
-      val loRepr =
-        if (lo =:= typeOf[Nothing]) Nil
-        else lit(" >: ") :: typeStringParts(lo)
-      val hiRepr =
-        if (hi =:= typeOf[Any]) Nil
-        else lit(" <: ") :: typeStringParts(hi)
-      loRepr ++ hiRepr
+      val typeDefs = join(quantified.map(mkTypeDefString(_)), "; ")
+      maybeParens(typeStringParts(underlying) ::: lit(" forSome {") :: typeDefs ::: lit("}") :: Nil, parens)
     case RefinedType(bases, scope) if scope.forall(_.isType) =>
-      val basesRepr = join(bases.map(typeStringParts), " with ")
+      val basesRepr = join(bases.map(typeStringParts(_)), " with ")
       val scopeRepr =
         if (scope.isEmpty) Nil
-        else lit(" {") :: join(scope.map(mkTypeDefString(_, wildcard = false)).toList, "; ") ::: lit("}") :: Nil
-      basesRepr ++ scopeRepr
+        else lit(" {") :: join(scope.map(mkTypeDefString(_)).toList, "; ") ::: lit("}") :: Nil
+      maybeParens(basesRepr ++ scopeRepr, parens)
+    case AnnotatedType(_, underlying) =>
+      mkTypeString(underlying)
     case _ =>
-      abort(s"Could not find nor materialize TypeString for $tpe")
+      throw NonConcreteTypeException(tpe)
   }
 
   def mkStaticPrefix(sym: Symbol): String =
     if (sym == rootMirror.RootClass) ""
     else mkStaticPrefix(sym.owner) + mkNameString(sym.name) + "."
 
-  def mkTypePrefix(tpe: Type): List[Tree] = tpe match {
-    case t if autoImported.contains(t.termSymbol) => Nil
-    case NoPrefix => Nil
-    case SingleType(pkg, sym) if sym.name == termNames.PACKAGE && pkg.typeSymbol.isPackageClass => mkTypePrefix(pkg)
-    case SingleType(pre, sym) => mkTypePrefix(pre) :+ lit(mkNameString(sym.name) + ".")
-    case ThisType(sym) if sym.isStatic && sym.isModuleClass => List(lit(mkStaticPrefix(sym)))
-    case TypeRef(NoPrefix, ExistentialSingleton(_, name, _), Nil) => List(lit(mkNameString(name) + "."))
-    case _ => mkTypeString(tpe) :+ lit(if (tpe.typeSymbol.isModuleClass || tpe.termSymbol != NoSymbol) "." else "#")
+  def mkTypePath(pre: Type, name: Name): List[Tree] = pre match {
+    case t if autoImported.contains(t.termSymbol) =>
+      List(lit(mkNameString(name)))
+    case NoPrefix =>
+      List(lit(mkNameString(name)))
+    case SingleType(pkg, sym) if sym.name == termNames.PACKAGE && pkg.typeSymbol.isPackageClass =>
+      mkTypePath(pkg, name)
+    case SingleType(ppre, sym) =>
+      mkTypePath(ppre, sym.name) ::: lit("." + mkNameString(name)) :: Nil
+    case ThisType(sym) if sym.isStatic && sym.isModuleClass =>
+      List(lit(mkStaticPrefix(sym) + mkNameString(name)))
+    case TypeRef(NoPrefix, ExistentialSingleton(_, valName, _), Nil) =>
+      List(lit(mkNameString(valName) + "." + mkNameString(name)))
+    case _ =>
+      val singletonPrefix = pre.typeSymbol.isModuleClass || pre.termSymbol != NoSymbol
+      val selection = if (singletonPrefix) "." else "#"
+      mkTypeString(pre, parens = !singletonPrefix) :+ lit(mkNameString(name, prefix = selection))
   }
 }

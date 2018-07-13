@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, transparent}
+import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
 /**
   * Typeclass that contains string representation of a concrete type. This representation should correctly parse
@@ -22,16 +22,67 @@ import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, transparent}
   * }}}
   * Then, `listTypeRepr[Int]` will produce a string `"List[Int]"`
   */
-@transparent
-case class TypeString[T](value: String) extends AnyVal
+class TypeString[T](val value: String) extends AnyVal
 object TypeString {
-  def of[T](implicit ts: TypeString[T]): String = ts.value
+  def apply[T](implicit ts: TypeString[T]): TypeString[T] = ts
+  def of[T: TypeString]: String = TypeString[T].value
 
   implicit def materialize[T]: TypeString[T] = macro macros.misc.MiscMacros.typeString[T]
 
   implicit val keyCodec: GenKeyCodec[TypeString[_]] =
-    GenKeyCodec.create[TypeString[Any]](TypeString(_), _.value).asInstanceOf[GenKeyCodec[TypeString[_]]]
+    GenKeyCodec.create[TypeString[_]](new TypeString(_), _.value)
 
   implicit val codec: GenCodec[TypeString[_]] =
-    GenCodec.materialize[TypeString[Any]].asInstanceOf[GenCodec[TypeString[_]]]
+    GenCodec.create[TypeString[_]](i => new TypeString(i.readString()), (o, ts) => o.writeString(ts.value))
+}
+
+/**
+  * Typeclass that contains JVM fully qualified class name corresponding to given type.
+  * This class name should resolve to runtime class of given type when passed to `java.lang.Class.forName`.
+  *
+  * `JavaClassName` can be used instead of `ClassTag` in ScalaJS when ScalaJS linker is configured to drop class names.
+  * Also, unlike `ClassTag`, `JavaClassName` contains just a string so it can be easily serialized and deserialized.
+  */
+class JavaClassName[T](val value: String) extends AnyVal
+object JavaClassName extends JavaClassNameLowPrio {
+  def apply[T](implicit ts: JavaClassName[T]): JavaClassName[T] = ts
+  def of[T: JavaClassName]: String = JavaClassName[T].value
+
+  implicit val NothingClassName: JavaClassName[Nothing] = new JavaClassName("scala.runtime.Nothing$")
+  implicit val NothingArrayClassName: JavaClassName[Array[Nothing]] = new JavaClassName("[Lscala.runtime.Nothing$;")
+  implicit val UnitClassName: JavaClassName[Unit] = new JavaClassName("void")
+  implicit val BooleanClassName: JavaClassName[Boolean] = new JavaClassName("boolean")
+  implicit val ByteClassName: JavaClassName[Byte] = new JavaClassName("byte")
+  implicit val ShortClassName: JavaClassName[Short] = new JavaClassName("short")
+  implicit val IntClassName: JavaClassName[Int] = new JavaClassName("int")
+  implicit val LongClassName: JavaClassName[Long] = new JavaClassName("long")
+  implicit val FloatClassName: JavaClassName[Float] = new JavaClassName("float")
+  implicit val DoubleClassName: JavaClassName[Double] = new JavaClassName("double")
+  implicit val CharClassName: JavaClassName[Char] = new JavaClassName("char")
+
+  implicit def arrayClassName[T: JavaClassName]: JavaClassName[Array[T]] = {
+    val elementName = JavaClassName.of[T] match {
+      case "void" => "Lscala.runtime.BoxedUnit;"
+      case "boolean" => "Z"
+      case "byte" => "B"
+      case "short" => "S"
+      case "int" => "I"
+      case "long" => "J"
+      case "float" => "F"
+      case "double" => "D"
+      case "char" => "C"
+      case arr if arr.startsWith("[") => arr
+      case n => s"L$n;"
+    }
+    new JavaClassName("[" + elementName)
+  }
+
+  implicit val keyCodec: GenKeyCodec[JavaClassName[_]] =
+    GenKeyCodec.create[JavaClassName[_]](new JavaClassName(_), _.value)
+
+  implicit val codec: GenCodec[JavaClassName[_]] =
+    GenCodec.create[JavaClassName[_]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
+}
+trait JavaClassNameLowPrio { this: JavaClassName.type =>
+  implicit def materialize[T]: JavaClassName[T] = macro macros.misc.MiscMacros.javaClassName[T]
 }
