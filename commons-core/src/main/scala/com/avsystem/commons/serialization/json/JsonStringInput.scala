@@ -81,11 +81,13 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
     case JsonBinaryFormat.HexString =>
       val hex = checkedValue[String](JsonType.string)
       val result = new Array[Byte](hex.length / 2)
-      var i = 0
-      while (i < result.length) {
-        result(i) = ((reader.fromHex(hex.charAt(2 * i)) << 4) | reader.fromHex(hex.charAt(2 * i + 1))).toByte
-        i += 1
+      def loop(i: Int): Unit = if (i < result.length) {
+        val msb = reader.fromHex(hex.charAt(2 * i))
+        val lsb = reader.fromHex(hex.charAt(2 * i + 1))
+        result(i) = ((msb << 4) | lsb).toByte
+        loop(i + 1)
       }
+      loop(0)
       result
   }
 
