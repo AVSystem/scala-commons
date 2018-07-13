@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization.{GenCodec, LegacyOptionEncodingOutput, ListOutput, ObjectOutput}
+import com.avsystem.commons.serialization.{GenCodec, ListOutput, ObjectOutput}
 import org.bson._
 import org.bson.types.ObjectId
 
@@ -13,10 +13,8 @@ object BsonValueOutput {
   }
 }
 
-final class BsonValueOutput(receiver: BsonValue => Unit = _ => (), legacyOptionEncoding: Boolean = false)
-  extends BsonOutput with LegacyOptionEncodingOutput {
-
-  override def legacyEncodingEnabled: Boolean = legacyOptionEncoding
+final class BsonValueOutput(receiver: BsonValue => Unit = _ => (), override val legacyOptionEncoding: Boolean = false)
+  extends BsonOutput {
 
   private var _value: Opt[BsonValue] = Opt.empty
 

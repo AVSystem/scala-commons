@@ -1,16 +1,12 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization.{FieldInput, LegacyOptionEncodingInput, ListInput, ObjectInput}
+import com.avsystem.commons.serialization.{FieldInput, ListInput, ObjectInput}
 import com.google.common.collect.AbstractIterator
 import org.bson.types.ObjectId
 import org.bson.{BsonReader, BsonType}
 
-class BsonReaderInput(br: BsonReader, legacyOptionEncoding: Boolean = false)
-  extends BsonInput with LegacyOptionEncodingInput {
-
-  override def legacyEncodingEnabled: Boolean = legacyOptionEncoding
-
+class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean = false) extends BsonInput {
   override def isNull: Boolean =
     br.getCurrentBsonType == BsonType.NULL
   override def readNull(): Null = {

@@ -1,14 +1,11 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization.{LegacyOptionEncodingOutput, ListOutput, ObjectOutput}
+import com.avsystem.commons.serialization.{ListOutput, ObjectOutput}
 import org.bson.types.ObjectId
 import org.bson.{BsonBinary, BsonWriter}
 
-final class BsonWriterOutput(bw: BsonWriter, legacyOptionEncoding: Boolean = false)
-  extends BsonOutput with LegacyOptionEncodingOutput {
-
-  override def legacyEncodingEnabled: Boolean = legacyOptionEncoding
+final class BsonWriterOutput(bw: BsonWriter, override val legacyOptionEncoding: Boolean = false) extends BsonOutput {
 
   override def writeNull(): Unit =
     bw.writeNull()
@@ -42,10 +39,8 @@ final class BsonWriterOutput(bw: BsonWriter, legacyOptionEncoding: Boolean = fal
     bw.writeObjectId(objectId)
 }
 
-final class BsonWriterNamedOutput(escapedName: String, bw: BsonWriter, legacyOptionEncoding: Boolean)
-  extends BsonOutput with LegacyOptionEncodingOutput {
-
-  override def legacyEncodingEnabled: Boolean = legacyOptionEncoding
+final class BsonWriterNamedOutput(escapedName: String, bw: BsonWriter, override val legacyOptionEncoding: Boolean)
+  extends BsonOutput {
 
   override def writeNull(): Unit =
     bw.writeNull(escapedName)

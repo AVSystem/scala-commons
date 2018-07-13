@@ -373,22 +373,26 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   implicit def optionCodec[T: GenCodec]: GenCodec[Option[T]] = create[Option[T]](
-    locally {
-      case i: LegacyOptionEncodingInput if i.legacyEncodingEnabled =>
-        val li = i.readList()
+    input =>
+      if (input.legacyOptionEncoding) {
+        val li = input.readList()
         val res = if (li.hasNext) Some(read[T](li.nextElement())) else None
         li.skipRemaining()
         res
-      case i => if (i.isNull) readNullThen(i, None) else Some(read[T](i))
-    },
-    locally {
-      case (o: LegacyOptionEncodingOutput, vo) if o.legacyEncodingEnabled =>
-        val lo = o.writeList()
-        vo.foreach(v => write[T](lo.writeElement(), v))
+      } else if (input.isNull) {
+        input.readNull()
+        None
+      } else Some(read[T](input)),
+
+    (output, valueOption) =>
+      if (output.legacyOptionEncoding) {
+        val lo = output.writeList()
+        valueOption.foreach(v => write[T](lo.writeElement(), v))
         lo.finish()
-      case (o, Some(v)) => write[T](o, v)
-      case (o, None) => o.writeNull()
-    }
+      } else valueOption match {
+        case Some(v) => write[T](output, v)
+        case None => output.writeNull()
+      }
   )
 
   implicit def nOptCodec[T: GenCodec]: GenCodec[NOpt[T]] =

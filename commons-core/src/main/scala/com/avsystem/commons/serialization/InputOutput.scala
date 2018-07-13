@@ -27,6 +27,14 @@ trait Output extends Any {
   def writeBinary(binary: Array[Byte]): Unit
   def writeList(): ListOutput
   def writeObject(): ObjectOutput
+
+  /**
+    * This ugly workaround has been introduced when standard `Option` encoding changed from zero-or-one element list
+    * encoding to unwrapped-or-null encoding which effectively disallowed serializing `null` and `Some(null)`.
+    * If some [[Input]] implementation still wants to use the list encoding, it may do it by overriding this method
+    * and returning `true`.
+    */
+  def legacyOptionEncoding: Boolean = false
 }
 /**
   * Base trait for outputs which allow writing of multiple values in sequence, i.e. [[ListOutput]] and [[ObjectOutput]].
@@ -104,6 +112,14 @@ trait Input extends Any {
   def readList(): ListInput
   def readObject(): ObjectInput
   def skip(): Unit
+
+  /**
+    * This ugly workaround has been introduced when standard `Option` encoding changed from zero-or-one element list
+    * encoding to unwrapped-or-null encoding which effectively disallowed serializing `null` and `Some(null)`.
+    * If some [[Output]] implementation still wants to use the list encoding, it may do it by overriding this method
+    * and returning `true`.
+    */
+  def legacyOptionEncoding: Boolean = false
 }
 trait SequentialInput extends Any {
   def hasNext: Boolean
