@@ -38,7 +38,7 @@ object TypeString {
 
 /**
   * Typeclass that contains JVM fully qualified class name corresponding to given type.
-  * This class name should resolve to runtime class of given type when passed to `java.lang.Class.forName`.
+  * `JavaClassName.of[T]` is always equal to `classTag[T].runtimeClass.getName`
   *
   * `JavaClassName` can be used instead of `ClassTag` in ScalaJS when ScalaJS linker is configured to drop class names.
   * Also, unlike `ClassTag`, `JavaClassName` contains just a string so it can be easily serialized and deserialized.
