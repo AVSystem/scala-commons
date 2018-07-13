@@ -31,7 +31,7 @@ trait Output extends Any {
   /**
     * This ugly workaround has been introduced when standard `Option` encoding changed from zero-or-one element list
     * encoding to unwrapped-or-null encoding which effectively disallowed serializing `null` and `Some(null)`.
-    * If some [[Input]] implementation still wants to use the list encoding, it may do it by overriding this method
+    * If some `Output` implementation still wants to use the list encoding, it may do it by overriding this method
     * and returning `true`.
     */
   def legacyOptionEncoding: Boolean = false
@@ -116,7 +116,7 @@ trait Input extends Any {
   /**
     * This ugly workaround has been introduced when standard `Option` encoding changed from zero-or-one element list
     * encoding to unwrapped-or-null encoding which effectively disallowed serializing `null` and `Some(null)`.
-    * If some [[Output]] implementation still wants to use the list encoding, it may do it by overriding this method
+    * If some `Input` implementation still wants to use the list encoding, it may do it by overriding this method
     * and returning `true`.
     */
   def legacyOptionEncoding: Boolean = false
