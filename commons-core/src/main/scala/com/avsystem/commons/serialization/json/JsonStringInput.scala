@@ -7,6 +7,7 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import com.avsystem.commons.serialization.json.JsonStringInput.{AfterElement, AfterElementNothing, JsonType}
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 object JsonStringInput {
@@ -81,7 +82,7 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
     case JsonBinaryFormat.HexString =>
       val hex = checkedValue[String](JsonType.string)
       val result = new Array[Byte](hex.length / 2)
-      def loop(i: Int): Unit = if (i < result.length) {
+      @tailrec def loop(i: Int): Unit = if (i < result.length) {
         val msb = reader.fromHex(hex.charAt(2 * i))
         val lsb = reader.fromHex(hex.charAt(2 * i + 1))
         result(i) = ((msb << 4) | lsb).toByte

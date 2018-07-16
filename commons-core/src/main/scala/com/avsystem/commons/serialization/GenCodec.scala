@@ -124,7 +124,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   def createNullSafe[T](readFun: Input => T, writeFun: (Output, T) => Any, allowNull: Boolean): GenCodec[T] =
     new NullSafeCodec[T] {
       def nullable: Boolean = allowNull
-      def readNonNull(input: Input) = readFun(input)
+      def readNonNull(input: Input): T = readFun(input)
       def writeNonNull(output: Output, value: T): Unit = writeFun(output, value)
     }
 
@@ -137,7 +137,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   def createList[T](readFun: ListInput => T, writeFun: (ListOutput, T) => Any, allowNull: Boolean): ListCodec[T] =
     new ListCodec[T] {
       def nullable: Boolean = allowNull
-      def readList(input: ListInput) = readFun(input)
+      def readList(input: ListInput): T = readFun(input)
       def writeList(output: ListOutput, value: T): Unit = writeFun(output, value)
     }
 
@@ -156,7 +156,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   def createObject[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any, allowNull: Boolean): ObjectCodec[T] =
     new ObjectCodec[T] {
       def nullable: Boolean = allowNull
-      def readObject(input: ObjectInput) = readFun(input)
+      def readObject(input: ObjectInput): T = readFun(input)
       def writeObject(output: ObjectOutput, value: T): Unit = writeFun(output, value)
     }
 

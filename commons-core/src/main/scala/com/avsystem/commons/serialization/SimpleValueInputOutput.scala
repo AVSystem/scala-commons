@@ -94,7 +94,7 @@ class SimpleValueInput(value: Any) extends Input {
   }
 
   def isNull: Boolean = value == null
-  def readNull(): Null = if (isNull) null else throw new ReadFailure("not null")
+  def readNull(): Null = if (isNull) null else throw new ReadFailure(s"not null: ${value.getClass}")
   def readBoolean(): Boolean = doReadUnboxed[Boolean, JBoolean]
   def readString(): String = doRead[String]
   def readInt(): Int = doReadUnboxed[Int, JInteger]
