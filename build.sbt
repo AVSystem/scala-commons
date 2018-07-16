@@ -11,7 +11,7 @@ val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && Sys
 // for binary compatibility checking
 val previousVersion = "1.27.3"
 
-val silencerVersion = "0.6"
+val silencerVersion = "1.1"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.5"
