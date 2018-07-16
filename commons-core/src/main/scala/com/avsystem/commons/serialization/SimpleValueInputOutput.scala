@@ -93,14 +93,8 @@ class SimpleValueInput(value: Any) extends Input {
     case _ => throw new ReadFailure(s"Expected ${classTag[B].runtimeClass} but got ${value.getClass}")
   }
 
-  def inputType: InputType = value match {
-    case null => InputType.Null
-    case _: BSeq[Any] => InputType.List
-    case _: BMap[_, Any] => InputType.Object
-    case _ => InputType.Simple
-  }
-
-  def readNull(): Null = if (value == null) null else throw new ReadFailure("not null")
+  def isNull: Boolean = value == null
+  def readNull(): Null = if (isNull) null else throw new ReadFailure(s"not null: ${value.getClass}")
   def readBoolean(): Boolean = doReadUnboxed[Boolean, JBoolean]
   def readString(): String = doRead[String]
   def readInt(): Int = doReadUnboxed[Int, JInteger]

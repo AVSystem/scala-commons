@@ -7,7 +7,7 @@ import io.circe.syntax._
 import japgolly.scalajs.benchmark.gui.GuiSuite
 import japgolly.scalajs.benchmark.{Benchmark, Suite}
 
-object Benchmarks {
+object JsonBenchmarks {
   val suite = GuiSuite(
     Suite("JSON serialization benchmarks")(
       Benchmark("Writing case class: GenCodec") {

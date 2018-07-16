@@ -94,7 +94,8 @@ class GenCodecTest extends CodecTestBase {
   }
 
   test("collections and wrappers test") {
-    testWriteReadAndAutoWriteRead[Option[Int]](option, List(42))
+    testWriteReadAndAutoWriteRead[Option[Int]](some, 42)
+    testWriteReadAndAutoWriteRead[Option[Int]](none, null)
     testWriteReadAndAutoWriteRead[Either[Int, String]](Left(42), Map("Left" -> 42))
     testWriteReadAndAutoWriteRead[Either[Int, String]](Right("lol"), Map("Right" -> "lol"))
     testWriteReadAndAutoWriteRead[List[Int]](list, list)

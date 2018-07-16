@@ -1,45 +1,54 @@
 package com.avsystem.commons
 package ser
 
-import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.json.{JsonBinaryFormat, JsonOptions, JsonStringInput, JsonStringOutput}
 import org.openjdk.jmh.annotations._
 
-@Warmup(iterations = 5)
-@Measurement(iterations = 20)
+@Warmup(iterations = 5, time = 1)
+@Measurement(iterations = 10, time = 2)
 @Fork(1)
 @BenchmarkMode(Array(Mode.Throughput))
 class GenCodecBenchmarks {
   @Benchmark
-  def testCaseClassCodec(): Simple = GenCodec.read[Simple](DummyInput)
-}
+  def someWriting: String = JsonStringOutput.write(GenCodecBenchmarks.somes)
 
-case class Simple(int: Int, str: String)
-object Simple {
-  implicit val codec: GenCodec[Simple] = GenCodec.materialize
-}
+  @Benchmark
+  def noneWriting: String = JsonStringOutput.write(GenCodecBenchmarks.nones)
 
-object DummyInput extends Input {
-  private def ignored = throw new ReadFailure("don't care")
-
-  def inputType = InputType.Object
-  def readBinary() = ignored
-  def readLong() = ignored
-  def readNull() = ignored
-  def readObject() = new ObjectInput {
-    private val it = Iterator(
-      new SimpleValueFieldInput("int", 42),
-      new SimpleValueFieldInput("str", "lol")
-    )
-    def nextField() = it.next()
-    def hasNext = it.hasNext
+  @Benchmark
+  def cleanSomeWriting: String = {
+    implicit val cleanCodec: GenCodec[Option[String]] = GenCodecBenchmarks.cleanOptionCodec[String]
+    JsonStringOutput.write(GenCodecBenchmarks.somes)
   }
-  def readInt() = ignored
-  def readString() = ignored
-  def readList() = ignored
-  def readBoolean() = ignored
-  def readDouble() = ignored
-  def readBigInt() = ignored
-  def readBigDecimal() = ignored
-  def skip() = ()
+
+  @Benchmark
+  def cleanNoneWriting: String = {
+    implicit val cleanCodec: GenCodec[Option[String]] = GenCodecBenchmarks.cleanOptionCodec[String]
+    JsonStringOutput.write(GenCodecBenchmarks.nones)
+  }
+
+  @Benchmark
+  def binaryReading: Array[Byte] =
+    JsonStringInput.read[Array[Byte]](GenCodecBenchmarks.hex, GenCodecBenchmarks.options)
+}
+
+object GenCodecBenchmarks {
+  implicit def cleanOptionCodec[T: GenCodec]: GenCodec[Option[T]] =
+    GenCodec.create[Option[T]](
+      i => if (i.isNull) {
+        i.readNull()
+        None
+      } else Some(GenCodec.read[T](i)),
+      (o, vo) => vo match {
+        case Some(v) => GenCodec.write[T](o, v)
+        case None => o.writeNull()
+      }
+    )
+
+  val somes: Seq[Option[String]] = MArrayBuffer.tabulate(1000)(i => Some(i.toString))
+  val nones: Seq[Option[String]] = MArrayBuffer.fill(1000)(None)
+
+  val options = JsonOptions(binaryFormat = JsonBinaryFormat.HexString)
+  val hex: String = JsonStringOutput.write(Array.tabulate[Byte](1024)(_.toByte), options)
 }

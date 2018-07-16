@@ -1,19 +1,14 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization.{FieldInput, InputType, ListInput, ObjectInput}
+import com.avsystem.commons.serialization.{FieldInput, ListInput, ObjectInput}
 import com.google.common.collect.AbstractIterator
 import org.bson.types.ObjectId
 import org.bson.{BsonReader, BsonType}
 
-class BsonReaderInput(br: BsonReader) extends BsonInput {
-  override def inputType: InputType = br.getCurrentBsonType match {
-    case BsonType.NULL => InputType.Null
-    case BsonType.ARRAY => InputType.List
-    case BsonType.DOCUMENT => InputType.Object
-    case _ => InputType.Simple
-  }
-
+class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean = false) extends BsonInput {
+  override def isNull: Boolean =
+    br.getCurrentBsonType == BsonType.NULL
   override def readNull(): Null = {
     br.readNull()
     null
@@ -29,19 +24,20 @@ class BsonReaderInput(br: BsonReader) extends BsonInput {
   override def readBinary(): Array[Byte] = br.readBinaryData().getData
   override def readList(): BsonReaderListInput = {
     br.readStartArray()
-    new BsonReaderListInput(new BsonReaderIterator(br, _.readEndArray(), new BsonReaderInput(_)))
+    new BsonReaderListInput(new BsonReaderIterator(br, _.readEndArray(), new BsonReaderInput(_, legacyOptionEncoding)))
   }
   override def readObject(): BsonReaderObjectInput = {
     br.readStartDocument()
     new BsonReaderObjectInput(new BsonReaderIterator(br, _.readEndDocument(),
-      br => new BsonReaderFieldInput(KeyEscaper.unescape(br.readName()), br)
+      br => new BsonReaderFieldInput(KeyEscaper.unescape(br.readName()), br, legacyOptionEncoding)
     ))
   }
   override def readObjectId(): ObjectId = br.readObjectId()
   override def skip(): Unit = br.skipValue()
 }
 
-final class BsonReaderFieldInput(name: String, br: BsonReader) extends BsonReaderInput(br) with FieldInput {
+final class BsonReaderFieldInput(name: String, br: BsonReader, legacyOptionEncoding: Boolean)
+  extends BsonReaderInput(br, legacyOptionEncoding) with FieldInput {
   override def fieldName: String = name
 }
 

@@ -7,8 +7,8 @@ import io.circe.parser._
 import io.circe.syntax._
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, Warmup}
 
-@Warmup(iterations = 10)
-@Measurement(iterations = 20)
+@Warmup(iterations = 5, time = 1)
+@Measurement(iterations = 10, time = 2)
 @Fork(1)
 @BenchmarkMode(Array(Mode.Throughput))
 abstract class JsonSerializationBenchmark

@@ -40,6 +40,7 @@ trait MacroCommons { bundle =>
   final val OptionClass = definitions.OptionClass
   final val ImplicitsObj = q"$CommonsPkg.misc.Implicits"
   final val AnnotationAggregateType = getType(tq"$CommonsPkg.annotation.AnnotationAggregate")
+  final val SeqCompanionSym = typeOf[scala.collection.Seq.type].termSymbol
 
   final lazy val isScalaJs =
     definitions.ScalaPackageClass.toType.member(TermName("scalajs")) != NoSymbol
@@ -706,11 +707,14 @@ trait MacroCommons { bundle =>
     def paramsWithDefaults(methodSig: Type) =
       methodSig.paramLists.head.zipWithIndex.map({ case (p, i) => (p.asTerm, defaultValueFor(p, i)) })
 
-    val applyUnapplyPairs = for {
-      apply <- alternatives(typedCompanion.tpe.member(TermName("apply")))
-      unapplyName = if (isFirstListVarargs(apply)) "unapplySeq" else "unapply"
-      unapply <- alternatives(typedCompanion.tpe.member(TermName(unapplyName)))
-    } yield (apply, unapply)
+    // Seq is a weird corner case where technically an apply/unapplySeq pair exists but is recursive
+    val applyUnapplyPairs =
+      if (typedCompanion.symbol == SeqCompanionSym) Nil
+      else for {
+        apply <- alternatives(typedCompanion.tpe.member(TermName("apply")))
+        unapplyName = if (isFirstListVarargs(apply)) "unapplySeq" else "unapply"
+        unapply <- alternatives(typedCompanion.tpe.member(TermName(unapplyName)))
+      } yield (apply, unapply)
 
     def setTypeArgs(sig: Type) = sig match {
       case PolyType(params, resultType) => resultType.substituteTypes(params, dtpe.typeArgs)

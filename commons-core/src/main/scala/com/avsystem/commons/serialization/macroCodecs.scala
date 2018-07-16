@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.serialization.GenCodec.{DefaultCaseField, NullSafeCodec, OOOFieldsObjectCodec, ObjectCodec, ReadFailure, WriteFailure}
+import com.avsystem.commons.serialization.GenCodec._
 
 import scala.annotation.tailrec
 
@@ -10,7 +10,7 @@ class SingletonCodec[T <: Singleton](
   singletonValue: => T
 ) extends OOOFieldsObjectCodec[T] with ErrorReportingCodec[T] {
   final def nullable = true
-  final def readObject(input: ObjectInput, outOfOrderFields: FieldValues) = singletonValue
+  final def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T = singletonValue
   def writeObject(output: ObjectOutput, value: T): Unit = ()
 }
 
@@ -59,15 +59,14 @@ abstract class ProductCodec[T <: Product](
 }
 
 abstract class TransparentCodec[T, U](
-  protected val typeRepr: String,
-  val nullable: Boolean
-) extends NullSafeCodec[T] with ErrorReportingCodec[T] {
+  protected val typeRepr: String
+) extends ErrorReportingCodec[T] {
   protected def underlyingCodec: GenCodec[U]
   protected def wrap(underlying: U): T
   protected def unwrap(value: T): U
 
-  final def readNonNull(input: Input): T = wrap(underlyingCodec.read(input))
-  final def writeNonNull(output: Output, value: T): Unit = underlyingCodec.write(output, unwrap(value))
+  final def read(input: Input): T = wrap(underlyingCodec.read(input))
+  final def write(output: Output, value: T): Unit = underlyingCodec.write(output, unwrap(value))
 }
 
 abstract class SealedHierarchyCodec[T](

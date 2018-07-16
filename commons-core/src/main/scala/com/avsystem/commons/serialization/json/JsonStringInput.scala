@@ -7,9 +7,12 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import com.avsystem.commons.serialization.json.JsonStringInput.{AfterElement, AfterElementNothing, JsonType}
 
+import scala.annotation.tailrec
+import scala.collection.mutable
+
 object JsonStringInput {
-  @explicitGenerics def read[T: GenCodec](json: String): T =
-    GenCodec.read[T](new JsonStringInput(new JsonReader(json)))
+  @explicitGenerics def read[T: GenCodec](json: String, options: JsonOptions = JsonOptions.Default): T =
+    GenCodec.read[T](new JsonStringInput(new JsonReader(json), options))
 
   final class JsonType(implicit enumCtx: EnumCtx) extends AbstractValueEnum
   object JsonType extends AbstractValueEnumCompanion[JsonType] {
@@ -24,7 +27,10 @@ object JsonStringInput {
   }
 }
 
-class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementNothing) extends Input with AfterElement {
+class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Default,
+  callback: AfterElement = AfterElementNothing
+) extends Input with AfterElement {
+
   private[this] val startIdx: Int = reader.parseValue()
   private[this] var endIdx: Int = _
 
@@ -42,9 +48,7 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
   }
 
   private def matchNumericString[T](toNumber: String => T): T = {
-    if (reader.jsonType == JsonType.number ||
-      (reader.jsonType == JsonType.string &&
-        (reader.currentValue == "Infinity" || reader.currentValue == "-Infinity" || reader.currentValue == "NaN"))) {
+    if (reader.jsonType == JsonType.number || reader.jsonType == JsonType.string) {
       val str = reader.currentValue.asInstanceOf[String]
       try toNumber(str) catch {
         case e: NumberFormatException => throw new ReadFailure(s"Invalid number format: $str", e)
@@ -52,13 +56,7 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
     } else expectedError(JsonType.number)
   }
 
-  def inputType: InputType = reader.jsonType match {
-    case JsonType.list => InputType.List
-    case JsonType.`object` => InputType.Object
-    case JsonType.`null` => InputType.Null
-    case _ => InputType.Simple
-  }
-
+  def isNull: Boolean = reader.jsonType == JsonType.`null`
   def readNull(): Null = checkedValue[Null](JsonType.`null`)
   def readString(): String = checkedValue[String](JsonType.string)
   def readBoolean(): Boolean = checkedValue[Boolean](JsonType.boolean)
@@ -66,25 +64,41 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
   def readLong(): Long = matchNumericString(_.toLong)
   def readDouble(): Double = matchNumericString(_.toDouble)
   def readBigInt(): BigInt = matchNumericString(BigInt(_))
-  def readBigDecimal(): BigDecimal = matchNumericString(BigDecimal(_))
-  def readBinary(): Array[Byte] = {
-    val hex = checkedValue[String](JsonType.string)
-    val result = new Array[Byte](hex.length / 2)
-    var i = 0
-    while (i < result.length) {
-      result(i) = ((reader.fromHex(hex.charAt(2 * i)) << 4) | reader.fromHex(hex.charAt(2 * i + 1))).toByte
-      i += 1
-    }
-    result
+  def readBigDecimal(): BigDecimal = matchNumericString(BigDecimal(_, options.mathContext))
+
+  override def readTimestamp(): Long = options.dateFormat match {
+    case JsonDateFormat.EpochMillis => readLong()
+    case JsonDateFormat.IsoInstant => IsoInstant.parse(readString())
+  }
+
+  def readBinary(): Array[Byte] = options.binaryFormat match {
+    case JsonBinaryFormat.ByteArray =>
+      val builder = new mutable.ArrayBuilder.ofByte
+      val li = readList()
+      while (li.hasNext) {
+        builder += li.nextElement().readByte()
+      }
+      builder.result()
+    case JsonBinaryFormat.HexString =>
+      val hex = checkedValue[String](JsonType.string)
+      val result = new Array[Byte](hex.length / 2)
+      @tailrec def loop(i: Int): Unit = if (i < result.length) {
+        val msb = reader.fromHex(hex.charAt(2 * i))
+        val lsb = reader.fromHex(hex.charAt(2 * i + 1))
+        result(i) = ((msb << 4) | lsb).toByte
+        loop(i + 1)
+      }
+      loop(0)
+      result
   }
 
   def readList(): JsonListInput = reader.jsonType match {
-    case JsonType.list => new JsonListInput(reader, this)
+    case JsonType.list => new JsonListInput(reader, options, this)
     case _ => expectedError(JsonType.list)
   }
 
   def readObject(): JsonObjectInput = reader.jsonType match {
-    case JsonType.`object` => new JsonObjectInput(reader, this)
+    case JsonType.`object` => new JsonObjectInput(reader, options, this)
     case _ => expectedError(JsonType.`object`)
   }
 
@@ -105,10 +119,13 @@ class JsonStringInput(reader: JsonReader, callback: AfterElement = AfterElementN
   }
 }
 
-final class JsonStringFieldInput(val fieldName: String, reader: JsonReader, objectInput: JsonObjectInput)
-  extends JsonStringInput(reader, objectInput) with FieldInput
+final class JsonStringFieldInput(
+  val fieldName: String, reader: JsonReader, options: JsonOptions, objectInput: JsonObjectInput)
+  extends JsonStringInput(reader, options, objectInput) with FieldInput
 
-final class JsonListInput(reader: JsonReader, callback: AfterElement) extends ListInput with AfterElement {
+final class JsonListInput(reader: JsonReader, options: JsonOptions, callback: AfterElement)
+  extends ListInput with AfterElement {
+
   private[this] var end = false
 
   prepareForNext(first = true)
@@ -125,11 +142,13 @@ final class JsonListInput(reader: JsonReader, callback: AfterElement) extends Li
   }
 
   def hasNext: Boolean = !end
-  def nextElement(): JsonStringInput = new JsonStringInput(reader, this)
+  def nextElement(): JsonStringInput = new JsonStringInput(reader, options, this)
   def afterElement(): Unit = prepareForNext(first = false)
 }
 
-final class JsonObjectInput(reader: JsonReader, callback: AfterElement) extends ObjectInput with AfterElement {
+final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: AfterElement)
+  extends ObjectInput with AfterElement {
+
   private[this] var end = false
 
   prepareForNext(first = true)
@@ -152,7 +171,7 @@ final class JsonObjectInput(reader: JsonReader, callback: AfterElement) extends 
     val fieldName = reader.parseString()
     reader.skipWs()
     reader.pass(':')
-    new JsonStringFieldInput(fieldName, reader, this)
+    new JsonStringFieldInput(fieldName, reader, options, this)
   }
 
   def afterElement(): Unit =
