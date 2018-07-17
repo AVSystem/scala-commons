@@ -9,7 +9,7 @@ cancelable in Global := true
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
 // for binary compatibility checking
-val previousVersion = "1.27.3"
+val previousCompatibleVersions = Set.empty[String]
 
 val silencerVersion = "1.1"
 val guavaVersion = "23.0"
@@ -100,8 +100,8 @@ val jvmCommonSettings = commonSettings ++ Seq(
   libraryDependencies ++= Seq(
     "org.apache.commons" % "commons-io" % commonsIoVersion % Test,
   ),
-  mimaPreviousArtifacts := {
-    Set(organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion)
+  mimaPreviousArtifacts := previousCompatibleVersions.map { previousVersion =>
+    organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion
   },
 )
 
