@@ -45,7 +45,7 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val TypedMetadataType: Type = getType(tq"$RpcPackage.TypedMetadata[_]")
   val MetadataParamStrategyType: Type = getType(tq"$RpcPackage.MetadataParamStrategy")
   val ReifyAnnotAT: Type = getType(tq"$RpcPackage.reifyAnnot")
-  val HasAnnotAT: Type = getType(tq"$RpcPackage.hasAnnot[_]")
+  val IsAnnotatedAT: Type = getType(tq"$RpcPackage.isAnnotated[_]")
   val InferAT: Type = getType(tq"$RpcPackage.infer")
   val ReifyNameAT: Type = getType(tq"$RpcPackage.reifyName")
   val ReifyPositionAT: Type = getType(tq"$RpcPackage.reifyPosition")
@@ -102,6 +102,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
     val raw = RawRpcTrait(weakTypeOf[Raw].dealias)
     val real = RealRpcTrait(weakTypeOf[Real].dealias)
     val mapping = RpcMapping(real, raw, forAsRaw = true, forAsReal = false)
+    mapping.ensureUniqueRpcNames()
 
     // must be evaluated before `cachedImplicitDeclarations`, don't inline it into the quasiquote
     val asRawDef = mapping.asRawImpl
@@ -118,6 +119,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
     val raw = RawRpcTrait(weakTypeOf[Raw].dealias)
     val real = RealRpcTrait(weakTypeOf[Real].dealias)
     val mapping = RpcMapping(real, raw, forAsRaw = true, forAsReal = true)
+    mapping.ensureUniqueRpcNames()
 
     // these two must be evaluated before `cachedImplicitDeclarations`, don't inline them into the quasiquote
     val asRealDef = mapping.asRealImpl

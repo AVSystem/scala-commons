@@ -94,7 +94,84 @@ trait RpcSymbols { this: RpcMacroCommons =>
     override def toString: String = symbol.toString
   }
 
-  case class FallbackTag(annotTree: Option[Tree])
+  case class FallbackTag(annotTree: Tree) {
+    def asList: List[Tree] = List(annotTree).filter(_ != EmptyTree)
+    def orElse(other: FallbackTag): FallbackTag = FallbackTag(annotTree orElse other.annotTree)
+  }
+  object FallbackTag {
+    final val Empty = FallbackTag(EmptyTree)
+  }
+
+  sealed trait MatchedRealSymbol[+Real <: RealRpcSymbol] {
+    def real: Real
+    def fallbackTagUsed: FallbackTag
+
+    def annot(tpe: Type): Option[Annot] =
+      findAnnotation(real.symbol, tpe, fallback = fallbackTagUsed.asList)
+
+    def allAnnots(tpe: Type): List[Annot] =
+      allAnnotations(real.symbol, tpe, fallback = fallbackTagUsed.asList)
+
+    val rpcName: String = {
+      val prefixes = allAnnotations(real.symbol, RpcNamePrefixAT, fallback = fallbackTagUsed.asList)
+        .map(_.findArg[String](RpcNamePrefixArg))
+      val rpcName = annot(RpcNameAT).fold(real.nameStr)(_.findArg[String](RpcNameArg))
+      prefixes.mkString("", "", rpcName)
+    }
+  }
+
+  case class MatchedRpcTrait(real: RealRpcTrait) extends MatchedRealSymbol[RealRpcTrait] {
+    def fallbackTagUsed: FallbackTag = FallbackTag.Empty
+  }
+
+  case class MatchedMethod(real: RealMethod, fallbackTagUsed: FallbackTag)
+    extends MatchedRealSymbol[RealMethod]
+
+  case class MatchedParam(real: RealParam, fallbackTagUsed: FallbackTag, matchedOwner: MatchedMethod)
+    extends MatchedRealSymbol[RealParam] {
+
+    val whenAbsent: Tree =
+      annot(WhenAbsentAT).fold(EmptyTree) { annot =>
+        val annotatedDefault = annot.tree.children.tail.head
+        if (!(annotatedDefault.tpe <:< real.actualType)) {
+          real.reportProblem(s"expected value of type ${real.actualType} in @whenAbsent annotation, " +
+            s"got ${annotatedDefault.tpe.widen}")
+        }
+        val transformer = new Transformer {
+          override def transform(tree: Tree): Tree = tree match {
+            case Super(t@This(_), _) if !enclosingClasses.contains(t.symbol) =>
+              real.reportProblem(s"illegal super-reference in @whenAbsent annotation")
+            case This(_) if tree.symbol == real.owner.owner.symbol => q"${real.owner.owner.safeName}"
+            case This(_) if !enclosingClasses.contains(tree.symbol) =>
+              real.reportProblem(s"illegal this-reference in @whenAbsent annotation")
+            case t => super.transform(t)
+          }
+        }
+        transformer.transform(annotatedDefault)
+      }
+
+    val hasDefaultValue: Boolean =
+      whenAbsent != EmptyTree || real.symbol.asTerm.isParamWithDefault
+
+    val transientDefault: Boolean =
+      hasDefaultValue && annot(TransientDefaultAT).nonEmpty
+
+    def fallbackValueTree: Tree =
+      if (whenAbsent != EmptyTree) c.untypecheck(whenAbsent)
+      else if (real.symbol.asTerm.isParamWithDefault) defaultValue(false)
+      else q"$RpcUtils.missingArg(${matchedOwner.rpcName}, $rpcName)"
+
+    def transientValueTree: Tree =
+      if (real.symbol.asTerm.isParamWithDefault) defaultValue(true)
+      else c.untypecheck(whenAbsent)
+
+    private def defaultValue(useThis: Boolean): Tree = {
+      val prevListParams = real.owner.realParams.take(real.index - real.indexInList).map(rp => q"${rp.safeName}")
+      val prevListParamss = List(prevListParams).filter(_.nonEmpty)
+      val realInst = if (useThis) q"this" else q"${real.owner.owner.safeName}"
+      q"$realInst.${TermName(s"${real.owner.encodedNameStr}$$default$$${real.index + 1}")}(...$prevListParamss)"
+    }
+  }
 
   trait RawRpcSymbol extends RpcSymbol {
     def baseTagTpe: Type
@@ -106,7 +183,7 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def tagSpec(a: Annot): (Type, FallbackTag) = {
       val tagType = a.tpe.dealias.typeArgs.head
       val defaultTagArg = a.tpe.member(TermName("defaultTag"))
-      val fallbackTag = FallbackTag(Option(a.findArg[Tree](defaultTagArg, EmptyTree)).filter(_ != EmptyTree))
+      val fallbackTag = FallbackTag(a.findArg[Tree](defaultTagArg, EmptyTree))
       (tagType, fallbackTag)
     }
 
@@ -121,33 +198,22 @@ trait RpcSymbols { this: RpcMacroCommons =>
             s"must be a subtype of specified base tag $baseTagTpe"
         reportProblem(msg)
       }
-      val whenUntaggedTagTree = taggedAnnot.map(_.findArg[Tree](WhenUntaggedArg, EmptyTree)).filter(_ != EmptyTree)
-      (requiredTagType, whenUntaggedTagTree)
+      val whenUntagged = FallbackTag(taggedAnnot.map(_.findArg[Tree](WhenUntaggedArg, EmptyTree)).getOrElse(EmptyTree))
+      (requiredTagType, whenUntagged)
     }
 
     // returns fallback tag tree only IF it was necessary
     def matchTag(realRpcSymbol: RealRpcSymbol): Res[FallbackTag] = {
       val tagAnnot = findAnnotation(realRpcSymbol.symbol, baseTagTpe)
-      val fallbackTagTree = whenUntaggedTag orElse fallbackTag.annotTree
-      val realTagTpe = tagAnnot.map(_.tpe) orElse fallbackTagTree.map(_.tpe) getOrElse baseTagTpe
-      if (realTagTpe <:< requiredTag)
-        Ok(FallbackTag(fallbackTagTree.filter(_ => tagAnnot.isEmpty)))
-      else
-        Fail(s"it does not accept ${realRpcSymbol.shortDescription}s tagged with $realTagTpe")
+      val fallbackTagUsed = if (tagAnnot.isEmpty) whenUntaggedTag orElse fallbackTag else FallbackTag.Empty
+      val realTagTpe = tagAnnot.map(_.tpe).getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
+
+      if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
+      else Fail(s"it does not accept ${realRpcSymbol.shortDescription}s tagged with $realTagTpe")
     }
   }
 
-  sealed trait RealRpcSymbol extends RpcSymbol {
-    def annot(tpe: Type, usedFallbackTag: FallbackTag): Option[Annot] =
-      findAnnotation(symbol, tpe, fallback = usedFallbackTag.annotTree.toList)
-
-    def rpcName(usedFallbackTag: FallbackTag): String = {
-      val prefixes = allAnnotations(symbol, RpcNamePrefixAT, fallback = usedFallbackTag.annotTree.toList)
-        .map(_.findArg[String](RpcNamePrefixArg))
-      val rpcName = annot(RpcNameAT, usedFallbackTag).fold(nameStr)(_.findArg[String](RpcNameArg))
-      prefixes.mkString("", "", rpcName)
-    }
-  }
+  sealed trait RealRpcSymbol extends RpcSymbol
 
   abstract class RpcTrait(val symbol: Symbol) extends RpcSymbol {
     def tpe: Type
@@ -200,10 +266,10 @@ trait RpcSymbols { this: RpcMacroCommons =>
 
     // @unchecked because "The outer reference in this type test cannot be checked at runtime"
     // Srsly scalac, from static types it should be obvious that outer references are the same
-    def matchName(realRpcSymbol: RealRpcSymbol, fallbackTag: FallbackTag): Res[Unit] = arity match {
+    def matchName(matchedReal: MatchedRealSymbol[RealRpcSymbol]): Res[Unit] = arity match {
       case _: RpcArity.Single@unchecked | _: RpcArity.Optional@unchecked =>
-        if (realRpcSymbol.rpcName(fallbackTag) == nameStr) Ok(())
-        else Fail(s"it only matches ${realRpcSymbol.shortDescription}s with RPC name $nameStr")
+        if (matchedReal.rpcName == nameStr) Ok(())
+        else Fail(s"it only matches ${matchedReal.real.shortDescription}s with RPC name $nameStr")
       case _: RpcArity.Multi@unchecked => Ok(())
     }
   }
@@ -316,32 +382,6 @@ trait RpcSymbols { this: RpcMacroCommons =>
 
     def shortDescription = "real parameter"
     def description = s"$shortDescription $nameStr of ${owner.description}"
-
-    def whenAbsent(fallbackTag: FallbackTag): Tree =
-      annot(WhenAbsentAT, fallbackTag).fold(EmptyTree) { annot =>
-        val annotatedDefault = annot.tree.children.tail.head
-        if (!(annotatedDefault.tpe <:< actualType)) {
-          reportProblem(s"expected value of type $actualType in @whenAbsent annotation, got ${annotatedDefault.tpe.widen}")
-        }
-        val transformer = new Transformer {
-          override def transform(tree: Tree): Tree = tree match {
-            case Super(t@This(_), _) if !enclosingClasses.contains(t.symbol) =>
-              reportProblem(s"illegal super-reference in @whenAbsent annotation")
-            case This(_) if tree.symbol == owner.owner.symbol => q"${owner.owner.safeName}"
-            case This(_) if !enclosingClasses.contains(tree.symbol) =>
-              reportProblem(s"illegal this-reference in @whenAbsent annotation")
-            case t => super.transform(t)
-          }
-        }
-        transformer.transform(annotatedDefault)
-      }
-
-    def defaultValue(useThis: Boolean): Tree = {
-      val prevListParams = owner.realParams.take(index - indexInList).map(rp => q"${rp.safeName}")
-      val prevListParamss = List(prevListParams).filter(_.nonEmpty)
-      val realInst = if (useThis) q"this" else q"${owner.owner.safeName}"
-      q"$realInst.${TermName(s"${owner.encodedNameStr}$$default$$${index + 1}")}(...$prevListParamss)"
-    }
   }
 
   case class RawMethod(owner: RawRpcTrait, symbol: Symbol) extends RpcMethod with RawRpcSymbol with AritySymbol {
@@ -427,15 +467,7 @@ trait RpcSymbols { this: RpcMacroCommons =>
       }
     }
 
-    val realParams: List[RealParam] = {
-      val result = paramLists.flatten
-      //      result.groupBy(_.rpcName).foreach {
-      //        case (_, head :: tail) if tail.nonEmpty =>
-      //          head.reportProblem(s"it has the same RPC name as ${tail.size} other parameters")
-      //        case _ =>
-      //      }
-      result
-    }
+    val realParams: List[RealParam] = paramLists.flatten
   }
 
   case class RawRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with RawRpcSymbol {
@@ -443,12 +475,12 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def description = s"$shortDescription $tpe"
 
     def baseTagTpe: Type = NothingTpe
-    def fallbackTag: FallbackTag = FallbackTag(None)
+    def fallbackTag: FallbackTag = FallbackTag.Empty
 
     val (baseMethodTag, fallbackMethodTag) =
-      annot(MethodTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag(None)))
+      annot(MethodTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
     val (baseParamTag, fallbackParamTag) =
-      annot(ParamTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag(None)))
+      annot(ParamTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
 
     lazy val rawMethods: List[RawMethod] =
       tpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(this, _)).toList
@@ -460,15 +492,7 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def shortDescription = "real RPC"
     def description = s"$shortDescription $tpe"
 
-    lazy val realMethods: List[RealMethod] = {
-      val result = tpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RealMethod(this, _)).toList
-      //      result.groupBy(_.rpcName).foreach {
-      //        case (_, head :: tail) if tail.nonEmpty =>
-      //          head.reportProblem(s"it has the same RPC name as ${tail.size} other methods - " +
-      //            s"if you want to overload RPC methods, disambiguate them with @rpcName")
-      //        case _ =>
-      //      }
-      result
-    }
+    lazy val realMethods: List[RealMethod] =
+      tpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RealMethod(this, _)).toList
   }
 }

@@ -80,12 +80,12 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       annot(ParamTagAT).orElse(findAnnotation(arity.collectedType.typeSymbol, ParamTagAT))
         .map(tagSpec).getOrElse(owner.baseParamTag, owner.fallbackParamTag)
 
-    def mappingFor(realMethod: RealMethod, fallbackTag: FallbackTag): Res[MethodMetadataMapping] = for {
-      mdType <- actualMetadataType(arity.collectedType, realMethod, verbatimResult)
+    def mappingFor(matchedMethod: MatchedMethod): Res[MethodMetadataMapping] = for {
+      mdType <- actualMetadataType(arity.collectedType, matchedMethod.real, verbatimResult)
       constructor = new MethodMetadataConstructor(mdType, Left(this))
-      paramMappings <- constructor.paramMappings(realMethod)
-      tree <- constructor.tryMaterializeFor(realMethod, fallbackTag, paramMappings)
-    } yield MethodMetadataMapping(realMethod, fallbackTag, this, tree)
+      paramMappings <- constructor.paramMappings(matchedMethod)
+      tree <- constructor.tryMaterializeFor(matchedMethod, paramMappings)
+    } yield MethodMetadataMapping(matchedMethod, this, tree)
   }
 
   class ParamMetadataParam(owner: MethodMetadataConstructor, symbol: Symbol)
@@ -102,22 +102,23 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       reportProblem(s"type ${arity.collectedType} is not a subtype of TypedMetadata[_]")
     }
 
-    private def metadataTree(realParam: RealParam, fallbackTag: FallbackTag, indexInRaw: Int): Res[Tree] = {
+    private def metadataTree(matchedParam: MatchedParam, indexInRaw: Int): Res[Tree] = {
+      val realParam = matchedParam.real
       val result = for {
         mdType <- actualMetadataType(arity.collectedType, realParam, verbatim)
-        tree <- new ParamMetadataConstructor(mdType, Left(this), indexInRaw).tryMaterializeFor(realParam, fallbackTag)
+        tree <- new ParamMetadataConstructor(mdType, Left(this), indexInRaw).tryMaterializeFor(matchedParam)
       } yield tree
       result.mapFailure(msg => s"${realParam.problemStr}: $cannotMapClue: $msg")
     }
 
     def metadataFor(parser: ParamsParser): Res[Tree] = arity match {
       case _: RpcParamArity.Single =>
-        parser.extractSingle(this, metadataTree(_, _, 0))
+        parser.extractSingle(this, metadataTree(_, 0))
       case _: RpcParamArity.Optional =>
-        Ok(mkOptional(parser.extractOptional(this, metadataTree(_, _, 0))))
+        Ok(mkOptional(parser.extractOptional(this, metadataTree(_, 0))))
       case RpcParamArity.Multi(_, true) =>
-        parser.extractMulti(this, (rp, ft, i) => metadataTree(rp, ft, i)
-          .map(t => q"(${rp.rpcName(ft)}, $t)"), named = true).map(mkMulti(_))
+        parser.extractMulti(this, (mp, i) => metadataTree(mp, i)
+          .map(t => q"(${mp.rpcName}, $t)"), named = true).map(mkMulti(_))
       case _: RpcParamArity.Multi =>
         parser.extractMulti(this, metadataTree, named = false).map(mkMulti(_))
     }
@@ -146,8 +147,8 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       case t if t <:< ReifyNameAT =>
         val useRpcName = annot.findArg[Boolean](ReifyNameAT.member(TermName("rpcName")), false)
         new ReifiedNameParam(this, paramSym, useRpcName)
-      case t if t <:< HasAnnotAT =>
-        new HasAnnotParam(this, paramSym, t.typeArgs.head)
+      case t if t <:< IsAnnotatedAT =>
+        new IsAnnotatedParam(this, paramSym, t.typeArgs.head)
       case t => reportProblem(s"metadata param strategy $t is not allowed here")
     }
 
@@ -169,25 +170,21 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       """
   }
 
-  case class MethodMetadataMapping(
-    realMethod: RealMethod, fallbackTag: FallbackTag, mdParam: MethodMetadataParam, tree: Tree) {
-
-    val rpcName: String = realMethod.rpcName(fallbackTag)
-  }
+  case class MethodMetadataMapping(matchedMethod: MatchedMethod, mdParam: MethodMetadataParam, tree: Tree)
 
   class RpcMetadataConstructor(val ownerType: Type, val atParam: Option[RpcCompositeParam])
     extends MetadataConstructor[RealRpcTrait](primaryConstructor(ownerType, atParam)) with RawRpcSymbol {
 
     def baseTagTpe: Type = NothingTpe
-    def fallbackTag: FallbackTag = FallbackTag(None)
+    def fallbackTag: FallbackTag = FallbackTag.Empty
 
     override def annot(tpe: Type): Option[Annot] =
       super[MetadataConstructor].annot(tpe)
 
     val (baseMethodTag, fallbackMethodTag) =
-      annot(MethodTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag(None)))
+      annot(MethodTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
     val (baseParamTag, fallbackParamTag) =
-      annot(ParamTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag(None)))
+      annot(ParamTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
 
     lazy val methodMdParams: List[MethodMetadataParam] = paramLists.flatten.flatMap {
       case mmp: MethodMetadataParam => List(mmp)
@@ -202,14 +199,14 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       new RpcCompositeParam(this, paramSym)
 
     def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] =
-      collectMethodMappings(methodMdParams, "metadata parameters", rpc.realMethods)(_.mappingFor(_, _)).groupBy(_.mdParam)
+      collectMethodMappings(methodMdParams, "metadata parameters", rpc.realMethods)(_.mappingFor(_)).groupBy(_.mdParam)
 
     def materializeFor(rpc: RealRpcTrait, methodMappings: Map[MethodMetadataParam, List[MethodMetadataMapping]]): Tree = {
       val argDecls = paramLists.flatten.map {
         case rcp: RpcCompositeParam =>
           rcp.localValueDecl(rcp.constructor.materializeFor(rpc, methodMappings))
         case dmp: DirectMetadataParam[RealRpcTrait] =>
-          dmp.localValueDecl(dmp.materializeFor(rpc, FallbackTag(None)))
+          dmp.localValueDecl(dmp.materializeFor(MatchedRpcTrait(rpc)))
         case mmp: MethodMetadataParam => mmp.localValueDecl {
           val mappings = methodMappings.getOrElse(mmp, Nil)
           mmp.arity match {
@@ -224,7 +221,7 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
               case _ => abort(s"multiple real methods match ${mmp.description}")
             }
             case RpcParamArity.Multi(_, _) =>
-              mmp.mkMulti(mappings.map(m => q"(${m.rpcName}, ${m.tree})"))
+              mmp.mkMulti(mappings.map(m => q"(${m.matchedMethod.rpcName}, ${m.tree})"))
           }
         }
       }
@@ -253,18 +250,16 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
     def createCompositeParam(paramSym: Symbol): MethodCompositeParam =
       new MethodCompositeParam(this, paramSym)
 
-    def paramMappings(realMethod: RealMethod): Res[Map[ParamMetadataParam, Tree]] =
-      collectParamMappings(paramMdParams, "metadata parameter", realMethod)(
+    def paramMappings(matchedMethod: MatchedMethod): Res[Map[ParamMetadataParam, Tree]] =
+      collectParamMappings(paramMdParams, "metadata parameter", matchedMethod)(
         (param, parser) => param.metadataFor(parser).map(t => (param, t))).map(_.toMap)
 
-    def tryMaterializeFor(realMethod: RealMethod, fallbackTag: FallbackTag,
-      paramMappings: Map[ParamMetadataParam, Tree]): Res[Tree] =
-
+    def tryMaterializeFor(matchedMethod: MatchedMethod, paramMappings: Map[ParamMetadataParam, Tree]): Res[Tree] =
       Res.traverse(paramLists.flatten) {
         case cmp: MethodCompositeParam =>
-          cmp.constructor.tryMaterializeFor(realMethod, fallbackTag, paramMappings).map(cmp.localValueDecl)
+          cmp.constructor.tryMaterializeFor(matchedMethod, paramMappings).map(cmp.localValueDecl)
         case dmp: DirectMetadataParam[RealMethod] =>
-          dmp.tryMaterializeFor(realMethod, fallbackTag).map(dmp.localValueDecl)
+          dmp.tryMaterializeFor(matchedMethod).map(dmp.localValueDecl)
         case pmp: ParamMetadataParam =>
           Ok(pmp.localValueDecl(paramMappings(pmp)))
       }.map(constructorCall)
@@ -290,20 +285,20 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
     def createCompositeParam(paramSym: Symbol): ParamCompositeParam =
       new ParamCompositeParam(this, paramSym)
 
-    def tryMaterializeFor(param: RealParam, fallbackTag: FallbackTag): Res[Tree] =
+    def tryMaterializeFor(matchedParam: MatchedParam): Res[Tree] =
       Res.traverse(paramLists.flatten) {
         case pcp: ParamCompositeParam =>
-          pcp.constructor.tryMaterializeFor(param, fallbackTag).map(pcp.localValueDecl)
+          pcp.constructor.tryMaterializeFor(matchedParam).map(pcp.localValueDecl)
         case dmp: DirectMetadataParam[RealParam] =>
-          dmp.tryMaterializeFor(param, fallbackTag).map(dmp.localValueDecl)
+          dmp.tryMaterializeFor(matchedParam).map(dmp.localValueDecl)
       }.map(constructorCall)
   }
 
   sealed abstract class DirectMetadataParam[Real <: RealRpcSymbol](owner: MetadataConstructor[Real], symbol: Symbol)
     extends MetadataParam[Real](owner, symbol) {
 
-    def materializeFor(rpcSym: Real, fallbackTag: FallbackTag): Tree
-    def tryMaterializeFor(rpcSym: Real, fallbackTag: FallbackTag): Res[Tree]
+    def materializeFor(matchedSymbol: MatchedRealSymbol[Real]): Tree
+    def tryMaterializeFor(matchedSymbol: MatchedRealSymbol[Real]): Res[Tree]
   }
 
   class ImplicitParam[Real <: RealRpcSymbol](owner: MetadataConstructor[Real], symbol: Symbol)
@@ -311,15 +306,15 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
 
     val checked: Boolean = findAnnotation(symbol, CheckedAT).nonEmpty
 
-    def materializeFor(rpcSym: Real, fallbackTag: FallbackTag): Tree =
+    def materializeFor(matchedSymbol: MatchedRealSymbol[Real]): Tree =
       q"${infer(actualType)}"
 
-    def tryMaterializeFor(rpcSym: Real, fallbackTag: FallbackTag): Res[Tree] =
+    def tryMaterializeFor(matchedSymbol: MatchedRealSymbol[Real]): Res[Tree] =
       if (checked)
         tryInferCachedImplicit(actualType).map(n => Ok(q"$n"))
           .getOrElse(Fail(s"no implicit value $actualType for $description could be found"))
       else
-        Ok(materializeFor(rpcSym, fallbackTag))
+        Ok(materializeFor(matchedSymbol))
   }
 
   class ReifiedAnnotParam[Real <: RealRpcSymbol](owner: MetadataConstructor[Real], symbol: Symbol)
@@ -333,43 +328,44 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       reportProblem(s"${arity.collectedType} is not a subtype of StaticAnnotation")
     }
 
-    def materializeFor(rpcSym: Real, fallbackTag: FallbackTag): Tree = {
+    def materializeFor(matchedSymbol: MatchedRealSymbol[Real]): Tree = {
       def validated(annot: Annot): Annot = {
         if (containsInaccessibleThises(annot.tree)) {
           echo(showCode(annot.tree))
-          rpcSym.reportProblem(s"reified annotation contains this-references inaccessible outside RPC trait")
+          matchedSymbol.real.reportProblem(s"reified annotation contains this-references inaccessible outside RPC trait")
         }
         annot
       }
 
+      val rpcSym = matchedSymbol.real
       arity match {
         case RpcParamArity.Single(annotTpe) =>
-          rpcSym.annot(annotTpe, fallbackTag).map(a => c.untypecheck(validated(a).tree)).getOrElse {
+          matchedSymbol.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)).getOrElse {
             val msg = s"${rpcSym.problemStr}: cannot materialize value for $description: no annotation of type $annotTpe found"
             q"$RpcUtils.compilationError(${StringLiteral(msg, rpcSym.pos)})"
           }
         case RpcParamArity.Optional(annotTpe) =>
-          mkOptional(rpcSym.annot(annotTpe, fallbackTag).map(a => c.untypecheck(validated(a).tree)))
+          mkOptional(matchedSymbol.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)))
         case RpcParamArity.Multi(annotTpe, _) =>
           mkMulti(allAnnotations(rpcSym.symbol, annotTpe).map(a => c.untypecheck(validated(a).tree)))
       }
     }
 
-    def tryMaterializeFor(rpcSym: Real, fallbackTag: FallbackTag): Res[Tree] =
-      Ok(materializeFor(rpcSym, fallbackTag))
+    def tryMaterializeFor(matchedSymbol: MatchedRealSymbol[Real]): Res[Tree] =
+      Ok(materializeFor(matchedSymbol))
   }
 
-  class HasAnnotParam[Real <: RealRpcSymbol](owner: MetadataConstructor[Real], symbol: Symbol, annotTpe: Type)
+  class IsAnnotatedParam[Real <: RealRpcSymbol](owner: MetadataConstructor[Real], symbol: Symbol, annotTpe: Type)
     extends DirectMetadataParam[Real](owner, symbol) {
 
     if (!(actualType =:= typeOf[Boolean])) {
       reportProblem("@hasAnnot can only be used on Boolean parameters")
     }
 
-    def materializeFor(rpcSym: Real, fallbackTag: FallbackTag): Tree =
-      q"${allAnnotations(rpcSym.symbol, annotTpe).nonEmpty}"
-    def tryMaterializeFor(rpcSym: Real, fallbackTag: FallbackTag): Res[Tree] =
-      Ok(materializeFor(rpcSym, fallbackTag))
+    def materializeFor(matchedSymbol: MatchedRealSymbol[Real]): Tree =
+      q"${matchedSymbol.allAnnots(annotTpe).nonEmpty}"
+    def tryMaterializeFor(matchedSymbol: MatchedRealSymbol[Real]): Res[Tree] =
+      Ok(materializeFor(matchedSymbol))
   }
 
   class ReifiedNameParam[Real <: RealRpcSymbol](owner: MetadataConstructor[Real], symbol: Symbol, useRpcName: Boolean)
@@ -379,11 +375,11 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       reportProblem(s"its type is not String")
     }
 
-    def materializeFor(rpcSym: Real, fallbackTag: FallbackTag): Tree =
-      q"${if (useRpcName) rpcSym.rpcName(fallbackTag) else rpcSym.nameStr}"
+    def materializeFor(matchedSymbol: MatchedRealSymbol[Real]): Tree =
+      q"${if (useRpcName) matchedSymbol.rpcName else matchedSymbol.real.nameStr}"
 
-    def tryMaterializeFor(rpcSym: Real, fallbackTag: FallbackTag): Res[Tree] =
-      Ok(materializeFor(rpcSym, fallbackTag))
+    def tryMaterializeFor(matchedSymbol: MatchedRealSymbol[Real]): Res[Tree] =
+      Ok(materializeFor(matchedSymbol))
   }
 
   class ReifiedPositionParam(owner: ParamMetadataConstructor, symbol: Symbol)
@@ -393,11 +389,13 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       reportProblem("its type is not ParamPosition")
     }
 
-    def materializeFor(rpcSym: RealParam, fallbackTag: FallbackTag): Tree =
+    def materializeFor(matchedParam: MatchedRealSymbol[RealParam]): Tree = {
+      val rpcSym = matchedParam.real
       q"$ParamPositionObj(${rpcSym.index}, ${rpcSym.indexOfList}, ${rpcSym.indexInList}, ${owner.indexInRaw})"
+    }
 
-    def tryMaterializeFor(rpcSym: RealParam, fallbackTag: FallbackTag): Res[Tree] =
-      Ok(materializeFor(rpcSym, fallbackTag))
+    def tryMaterializeFor(matchedParam: MatchedRealSymbol[RealParam]): Res[Tree] =
+      Ok(materializeFor(matchedParam))
   }
 
   class ReifiedFlagsParam(owner: ParamMetadataConstructor, symbol: Symbol)
@@ -407,7 +405,8 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       reportProblem("its type is not ParamFlags")
     }
 
-    def materializeFor(rpcSym: RealParam, fallbackTag: FallbackTag): Tree = {
+    def materializeFor(matchedParam: MatchedRealSymbol[RealParam]): Tree = {
+      val rpcSym = matchedParam.real
       def flag(cond: Boolean, bit: Int) = if (cond) 1 << bit else 0
       val s = rpcSym.symbol.asTerm
       val rawFlags =
@@ -419,16 +418,16 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       q"new $ParamFlagsTpe($rawFlags)"
     }
 
-    def tryMaterializeFor(rpcSym: RealParam, fallbackTag: FallbackTag): Res[Tree] =
-      Ok(materializeFor(rpcSym, fallbackTag))
+    def tryMaterializeFor(matchedParam: MatchedRealSymbol[RealParam]): Res[Tree] =
+      Ok(materializeFor(matchedParam))
   }
 
   class UnknownParam[Real <: RealRpcSymbol](owner: MetadataConstructor[Real], symbol: Symbol)
     extends DirectMetadataParam[Real](owner, symbol) {
 
-    def materializeFor(rpcSym: Real, fallbackTag: FallbackTag): Tree =
+    def materializeFor(matchedSymbol: MatchedRealSymbol[Real]): Tree =
       reportProblem(s"no strategy annotation (e.g. @infer) found")
-    def tryMaterializeFor(rpcSym: Real, fallbackTag: FallbackTag): Res[Tree] =
-      Ok(materializeFor(rpcSym, fallbackTag))
+    def tryMaterializeFor(matchedSymbol: MatchedRealSymbol[Real]): Res[Tree] =
+      Ok(materializeFor(matchedSymbol))
   }
 }
