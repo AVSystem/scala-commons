@@ -89,12 +89,8 @@ object RawRest extends RawRpcCompanion[RawRest] {
     def get(name: String, headers: RestHeaders): Future[RestResponse] =
       handleSingle(name, headers, HttpBody.Empty)
 
-    def handle(name: String, headers: RestHeaders, body: NamedParams[JsonValue]): Future[RestResponse] = {
-      val methodMeta = metadata.httpMethods.getOrElse(name,
-        throw new IllegalArgumentException(s"no such HTTP method: $name"))
-      val newHeaders = prefixHeaders.append(methodMeta, headers)
-      handleRequest(RestRequest(methodMeta.method, newHeaders, HttpBody.createJsonBody(body)))
-    }
+    def handle(name: String, headers: RestHeaders, body: NamedParams[JsonValue]): Future[RestResponse] =
+      handleSingle(name, headers, HttpBody.createJsonBody(body))
 
     def handleSingle(name: String, headers: RestHeaders, body: HttpBody): Future[RestResponse] = {
       val methodMeta = metadata.httpMethods.getOrElse(name,
