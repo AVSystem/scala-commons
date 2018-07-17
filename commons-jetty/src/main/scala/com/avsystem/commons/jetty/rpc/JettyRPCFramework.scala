@@ -43,7 +43,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   case class Call(chain: List[Invocation], leaf: Invocation)
   object Call extends HasGenCodec[Call]
 
-  class RPCClient(httpClient: HttpClient, uri: String)(implicit ec: ExecutionContext) {
+  class RPCClient(httpClient: HttpClient, uri: String, maxResponseLength: Int)(implicit ec: ExecutionContext) {
     private class RawRPCImpl(chain: List[Invocation]) extends RawRPC {
       override def fire(rpcName: String)(args: List[RawValue]): Unit =
         put(Call(chain, Invocation(rpcName, args)))
@@ -60,7 +60,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
     def request(method: HttpMethod, call: Call): Future[RawValue] = {
       val promise = Promise[RawValue]
 
-      val listener = new BufferingResponseListener() {
+      val listener = new BufferingResponseListener(maxResponseLength) {
         override def onComplete(result: Result): Unit = {
           if (result.isFailed) {
             promise.tryFailure(result.getFailure)
@@ -140,6 +140,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   def newHandler[T](impl: T)(implicit ec: ExecutionContext, asRawRPC: AsRawRPC[T]): Handler =
     new RPCHandler(asRawRPC.asRaw(impl))
 
-  def newClient[T](httpClient: HttpClient, uri: String)(implicit ec: ExecutionContext, asRealRPC: AsRealRPC[T]): T =
-    asRealRPC.asReal(new RPCClient(httpClient, uri).rawRPC)
+  def newClient[T](httpClient: HttpClient, uri: String, maxResponseLength: Int = 2 * 1024 * 1024)(
+    implicit ec: ExecutionContext, asRealRPC: AsRealRPC[T]): T =
+    asRealRPC.asReal(new RPCClient(httpClient, uri, maxResponseLength).rawRPC)
 }
