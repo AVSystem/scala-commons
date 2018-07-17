@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jetty.rest
 
-import com.avsystem.commons.rest.{GET, POST, RawRest, RestApiCompanion}
+import com.avsystem.commons.rest.{GET, POST, RawRest, DefaultRestApiCompanion}
 
 trait SomeApi {
   @GET
@@ -11,7 +11,7 @@ trait SomeApi {
   def helloThere(who: String): Future[String]
 }
 
-object SomeApi extends RestApiCompanion[SomeApi] {
+object SomeApi extends DefaultRestApiCompanion[SomeApi] {
   def asHandleRequest(real: SomeApi): RawRest.HandleRequest =
     RawRest.asHandleRequest(real)
 

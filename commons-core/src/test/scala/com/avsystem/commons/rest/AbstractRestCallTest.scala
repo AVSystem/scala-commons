@@ -38,7 +38,7 @@ trait RestTestApi {
     @Query q0: String
   ): RestTestSubApi
 }
-object RestTestApi extends RestApiCompanion[RestTestApi] {
+object RestTestApi extends DefaultRestApiCompanion[RestTestApi] {
   val Impl: RestTestApi = new RestTestApi {
     def trivialGet: Future[Unit] = Future.unit
     def failingGet: Future[Unit] = Future.failed(HttpErrorException(503, "nie"))
@@ -56,7 +56,7 @@ object RestTestApi extends RestApiCompanion[RestTestApi] {
 trait RestTestSubApi {
   @GET def subget(@Path p1: Int, @Header("X-H1") h1: Int, q1: Int): Future[String]
 }
-object RestTestSubApi extends RestApiCompanion[RestTestSubApi] {
+object RestTestSubApi extends DefaultRestApiCompanion[RestTestSubApi] {
   def impl(arg: String): RestTestSubApi = new RestTestSubApi {
     def subget(p1: Int, h1: Int, q1: Int): Future[String] = Future.successful(s"$arg-$p1-$h1-$q1")
   }

@@ -4,7 +4,7 @@ package rpc
 /**
   * Base for traits that aggregate multiple RPC-related typeclass instances (e.g. `AsReal` + metadata).
   * Typically such aggregating type is declared as an implicit constructor parameter of an abstract class that
-  * serves as a base class for RPC trait companions. Example: [[com.avsystem.commons.rest.RestApiCompanion]].
+  * serves as a base class for RPC trait companions. Example: [[com.avsystem.commons.rest.DefaultRestApiCompanion]].
   * This is all in order to reduce boilerplate needed to define an RPC trait.
   *
   * A trait that extends `RpcMacroInstances[Real]` must declare abstract methods, each method taking exactly

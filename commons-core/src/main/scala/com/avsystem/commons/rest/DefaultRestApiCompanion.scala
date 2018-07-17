@@ -34,13 +34,13 @@ object FullInstances {
   macro macros.rpc.RpcMacros.macroInstances[FullInstances[Real, I], Real]
 }
 
-/** @see [[FullApiCompanion]]*/
-abstract class ClientApiCompanion[Real, I](implicit instances: ClientInstances[Real, I]) { this: I =>
+/** @see [[RestApiCompanion]] */
+abstract class RestClientApiCompanion[Real, I](implicit instances: ClientInstances[Real, I]) { this: I =>
   implicit final lazy val restMetadata: RestMetadata[Real] = instances.metadata(this)
   implicit final lazy val restAsReal: AsRealRpc[Real] = instances.asReal(this)
 }
-/** @see [[FullApiCompanion]]*/
-abstract class ServerApiCompanion[Real, I](implicit instances: ServerInstances[Real, I]) { this: I =>
+/** @see [[RestApiCompanion]] */
+abstract class RestServerApiCompanion[Real, I](implicit instances: ServerInstances[Real, I]) { this: I =>
   implicit final lazy val restMetadata: RestMetadata[Real] = instances.metadata(this)
   implicit final lazy val restAsRaw: AsRawRpc[Real] = instances.asRaw(this)
 }
@@ -49,9 +49,9 @@ abstract class ServerApiCompanion[Real, I](implicit instances: ServerInstances[R
   * of `AsRawReal` and `RestMetadata` for given trait. The `I` type parameter lets you inject additional implicits
   * into macro materialization of these instances, e.g. [[DefaultRestImplicits]].
   * Usually, for even less boilerplate, this base class is extended by yet another abstract class which fixes
-  * the `I` type, e.g. [[RestApiCompanion]].
+  * the `I` type, e.g. [[DefaultRestApiCompanion]].
   */
-abstract class FullApiCompanion[Real, I](implicit instances: FullInstances[Real, I]) { this: I =>
+abstract class RestApiCompanion[Real, I](implicit instances: FullInstances[Real, I]) { this: I =>
   implicit final lazy val restMetadata: RestMetadata[Real] = instances.metadata(this)
   implicit final lazy val restAsRawReal: AsRawRealRpc[Real] = instances.asRawReal(this)
 }
@@ -76,22 +76,22 @@ object DefaultRestImplicits extends DefaultRestImplicits
   * Base class for companions of REST API traits used only for REST clients to external services.
   * Injects `GenCodec` and `GenKeyCodec` based serialization.
   */
-abstract class RestClientApiCompanion[Real](
+abstract class DefaultRestClientApiCompanion[Real](
   implicit instances: ClientInstances[Real, DefaultRestImplicits]
-) extends ClientApiCompanion[Real, DefaultRestImplicits] with DefaultRestImplicits
+) extends RestClientApiCompanion[Real, DefaultRestImplicits] with DefaultRestImplicits
 
 /**
   * Base class for companions of REST API traits used only for REST servers exposed to external world.
   * Injects `GenCodec` and `GenKeyCodec` based serialization.
   */
-abstract class RestServerApiCompanion[Real](
+abstract class DefaultRestServerApiCompanion[Real](
   implicit instances: ServerInstances[Real, DefaultRestImplicits]
-) extends ServerApiCompanion[Real, DefaultRestImplicits] with DefaultRestImplicits
+) extends RestServerApiCompanion[Real, DefaultRestImplicits] with DefaultRestImplicits
 
 /**
   * Base class for companions of REST API traits used for both REST clients and servers.
   * Injects `GenCodec` and `GenKeyCodec` based serialization.
   */
-abstract class RestApiCompanion[Real](
+abstract class DefaultRestApiCompanion[Real](
   implicit instances: FullInstances[Real, DefaultRestImplicits]
-) extends FullApiCompanion[Real, DefaultRestImplicits] with DefaultRestImplicits
+) extends RestApiCompanion[Real, DefaultRestImplicits] with DefaultRestImplicits

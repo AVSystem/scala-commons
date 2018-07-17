@@ -22,13 +22,13 @@ trait UserApi {
   def autopost(bodyarg: String): Future[String]
   def singleBodyAutopost(@Body body: String): Future[String]
 }
-object UserApi extends RestApiCompanion[UserApi]
+object UserApi extends DefaultRestApiCompanion[UserApi]
 
 trait RootApi {
   @Prefix("") def self: UserApi
   def subApi(id: Int, @Query query: String): UserApi
 }
-object RootApi extends RestApiCompanion[RootApi]
+object RootApi extends DefaultRestApiCompanion[RootApi]
 
 class RawRestTest extends FunSuite with ScalaFutures {
   def repr(body: HttpBody, inNewLine: Boolean = true): String = body match {
