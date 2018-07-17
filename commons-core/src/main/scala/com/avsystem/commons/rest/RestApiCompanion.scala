@@ -34,12 +34,12 @@ object FullInstances {
   macro macros.rpc.RpcMacros.macroInstances[FullInstances[Real, I], Real]
 }
 
-/** @see [[FullApiCompanion]] */
+/** @see [[FullApiCompanion]]*/
 abstract class ClientApiCompanion[Real, I](implicit instances: ClientInstances[Real, I]) { this: I =>
   implicit final lazy val restMetadata: RestMetadata[Real] = instances.metadata(this)
   implicit final lazy val restAsReal: AsRealRpc[Real] = instances.asReal(this)
 }
-/** @see [[FullApiCompanion]] */
+/** @see [[FullApiCompanion]]*/
 abstract class ServerApiCompanion[Real, I](implicit instances: ServerInstances[Real, I]) { this: I =>
   implicit final lazy val restMetadata: RestMetadata[Real] = instances.metadata(this)
   implicit final lazy val restAsRaw: AsRawRpc[Real] = instances.asRaw(this)
@@ -57,7 +57,8 @@ abstract class FullApiCompanion[Real, I](implicit instances: FullInstances[Real,
 }
 
 /**
-  * Defines [[GenCodec]] and [[GenKeyCodec]] based serialization for REST API traits.
+  * Defines [[com.avsystem.commons.serialization.GenCodec GenCodec]] and
+  * [[com.avsystem.commons.serialization.GenKeyCodec GenKeyCodec]] based serialization for REST API traits.
   */
 trait DefaultRestImplicits {
   implicit def pathValueDefaultAsRealRaw[T: GenKeyCodec]: AsRawReal[PathValue, T] =
@@ -73,7 +74,7 @@ object DefaultRestImplicits extends DefaultRestImplicits
 
 /**
   * Base class for companions of REST API traits used only for REST clients to external services.
-  * Injects [[GenCodec]] and [[GenKeyCodec]] based serialization.
+  * Injects `GenCodec` and `GenKeyCodec` based serialization.
   */
 abstract class RestClientApiCompanion[Real](
   implicit instances: ClientInstances[Real, DefaultRestImplicits]
@@ -81,7 +82,7 @@ abstract class RestClientApiCompanion[Real](
 
 /**
   * Base class for companions of REST API traits used only for REST servers exposed to external world.
-  * Injects [[GenCodec]] and [[GenKeyCodec]] based serialization.
+  * Injects `GenCodec` and `GenKeyCodec` based serialization.
   */
 abstract class RestServerApiCompanion[Real](
   implicit instances: ServerInstances[Real, DefaultRestImplicits]
@@ -89,7 +90,7 @@ abstract class RestServerApiCompanion[Real](
 
 /**
   * Base class for companions of REST API traits used for both REST clients and servers.
-  * Injects [[GenCodec]] and [[GenKeyCodec]] based serialization.
+  * Injects `GenCodec` and `GenKeyCodec` based serialization.
   */
 abstract class RestApiCompanion[Real](
   implicit instances: FullInstances[Real, DefaultRestImplicits]
