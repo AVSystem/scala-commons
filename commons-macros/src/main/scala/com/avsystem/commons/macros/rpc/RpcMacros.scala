@@ -184,6 +184,10 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
   def macroInstances[I: WeakTypeTag, Real: WeakTypeTag]: Tree = {
     val realTpe = weakTypeOf[Real]
 
+    if (c.macroApplication.symbol.isImplicit && c.enclosingPosition.source != realTpe.typeSymbol.pos.source) {
+      abort(s"Implicit materialization of RpcMacroInstances is only allowed in the same file where RPC trait is defined")
+    }
+
     val TypeApply(_, macroTypeArgs) = c.macroApplication
     val macroTparams = c.macroApplication.symbol.typeSignature.typeParams
     val macroTargsMap: Map[Name, Type] =
