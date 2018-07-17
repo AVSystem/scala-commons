@@ -293,11 +293,13 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       paramMappingList.iterator.map(m => (m.rawParam, m)).toMap
 
     def ensureUniqueRpcNames(): Unit =
-      paramMappings.values.toList.flatMap(_.allMatchedParams).groupBy(_.rpcName).foreach {
-        case (rpcName, head :: tail) if tail.nonEmpty =>
-          head.real.reportProblem(s"it has the same RPC name ($rpcName) as ${tail.size} other parameters")
-        case _ =>
-      }
+      paramMappings.valuesIterator.filterNot(_.rawParam.auxiliary).toList
+        .flatMap(_.allMatchedParams).groupBy(_.rpcName)
+        .foreach {
+          case (rpcName, head :: tail) if tail.nonEmpty =>
+            head.real.reportProblem(s"it has the same RPC name ($rpcName) as ${tail.size} other parameters")
+          case _ =>
+        }
 
     private def rawValueTree(rawParam: RawParam): Tree = rawParam match {
       case _: MethodNameParam => q"$rpcName"
