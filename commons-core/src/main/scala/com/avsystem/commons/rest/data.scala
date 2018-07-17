@@ -5,7 +5,6 @@ import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion,
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
-import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
 import scala.util.control.NoStackTrace
 
@@ -14,8 +13,7 @@ sealed trait RestValue extends Any {
 }
 
 /**
-  * Value used as encoding of [[Path]] parameters. Types that have `GenKeyCodec` instance have automatic encoding
-  * to [[PathValue]].
+  * Value used as encoding of [[Path]] parameters.
   */
 case class PathValue(value: String) extends AnyVal with RestValue
 object PathValue {
@@ -24,39 +22,25 @@ object PathValue {
 }
 
 /**
-  * Value used as encoding of [[Header]] parameters. Types that have `GenKeyCodec` instance have automatic encoding
-  * to [[HeaderValue]].
+  * Value used as encoding of [[Header]] parameters.
   */
 case class HeaderValue(value: String) extends AnyVal with RestValue
 
 /**
-  * Value used as encoding of [[Query]] parameters. Types that have `GenKeyCodec` instance have automatic encoding
-  * to [[QueryValue]].
+  * Value used as encoding of [[Query]] parameters.
   */
 case class QueryValue(value: String) extends AnyVal with RestValue
 
 /**
-  * Value used as encoding of [[JsonBodyParam]] parameters. Types that have `GenCodec` instance have automatic encoding
-  * to [[JsonValue]].
+  * Value used as encoding of [[JsonBodyParam]] parameters.
   */
 case class JsonValue(value: String) extends AnyVal with RestValue
 
-object RestValue {
-  implicit def pathValueDefaultAsRealRaw[T: GenKeyCodec]: AsRawReal[PathValue, T] =
-    AsRawReal.create(v => PathValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value))
-  implicit def headerValueDefaultAsRealRaw[T: GenKeyCodec]: AsRawReal[HeaderValue, T] =
-    AsRawReal.create(v => HeaderValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value))
-  implicit def queryValueDefaultAsRealRaw[T: GenKeyCodec]: AsRawReal[QueryValue, T] =
-    AsRawReal.create(v => QueryValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value))
-  implicit def jsonValueDefaultAsRealRaw[T: GenCodec]: AsRawReal[JsonValue, T] =
-    AsRawReal.create(v => JsonValue(JsonStringOutput.write[T](v)), v => JsonStringInput.read[T](v.value))
-}
-
 /**
   * Value used to represent HTTP body. Also used as direct encoding of [[Body]] parameters. Types that have
-  * encoding to [[JsonValue]] (e.g. types that have `GenCodec` instance) automatically have encoding to [[HttpBody]]
-  * which uses application/json MIME type. There is also a specialized encoding provided for `Unit` which maps it
-  * to empty HTTP body instead of JSON containing "null".
+  * encoding to [[JsonValue]] automatically have encoding to [[HttpBody]] which uses application/json MIME type.
+  * There is also a specialized encoding provided for `Unit` which returns empty HTTP body when writing and ignores
+  * the body when reading.
   */
 sealed trait HttpBody {
   def contentOpt: Opt[String] = this match {
