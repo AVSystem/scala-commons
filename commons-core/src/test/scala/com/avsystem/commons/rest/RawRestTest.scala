@@ -18,6 +18,9 @@ trait UserApi {
     @Query("f") foo: Int,
     @Body user: User
   ): Future[Unit]
+
+  def autopost(bodyarg: String): Future[String]
+  def singleBodyAutopost(@Body body: String): Future[String]
 }
 object UserApi extends RestApiCompanion[UserApi]
 
@@ -51,6 +54,8 @@ class RawRestTest extends FunSuite with ScalaFutures {
     def subApi(newId: Int, newQuery: String): UserApi = new RootApiImpl(newId, query + newQuery)
     def user(userId: String): Future[User] = Future.successful(User(userId, s"$userId-$id-$query"))
     def user(paf: String, awesome: Boolean, f: Int, user: User): Future[Unit] = Future.unit
+    def autopost(bodyarg: String): Future[String] = Future.successful(bodyarg.toUpperCase)
+    def singleBodyAutopost(@Body body: String): Future[String] = Future.successful(body.toUpperCase)
   }
 
   var trafficLog: String = _
@@ -86,6 +91,24 @@ class RawRestTest extends FunSuite with ScalaFutures {
         |application/json
         |{"id":"ID","name":"Fred"}
         |<- 200
+        |""".stripMargin)
+  }
+
+  test("auto POST") {
+    testRestCall(_.self.autopost("bod"),
+      """-> POST /autopost application/json
+        |{"bodyarg":"bod"}
+        |<- 200 application/json
+        |"BOD"
+        |""".stripMargin)
+  }
+
+  test("single body auto POST") {
+    testRestCall(_.self.singleBodyAutopost("bod"),
+      """-> POST /singleBodyAutopost application/json
+        |"bod"
+        |<- 200 application/json
+        |"BOD"
         |""".stripMargin)
   }
 

@@ -12,27 +12,27 @@ case class ResolvedPath(prefixes: List[RpcWithPath], finalCall: RpcWithPath, sin
     prefixes.iterator.map(_.rpcName).mkString("", "->", s"->${finalCall.rpcName}")
 }
 
-@methodTag[RestMethodTag, Prefix]
-@paramTag[RestParamTag, RestParamTag]
+@methodTag[RestMethodTag]
 trait RawRest {
   @multi
-  @tagged[Prefix]
-  @paramTag[RestParamTag, Path]
+  @tagged[Prefix](whenUntagged = new Prefix)
+  @paramTag[RestParamTag](defaultTag = new Path)
   def prefix(@methodName name: String, @composite headers: RestHeaders): RawRest
 
   @multi
   @tagged[GET]
-  @paramTag[RestParamTag, Query]
+  @paramTag[RestParamTag](defaultTag = new Query)
   def get(@methodName name: String, @composite headers: RestHeaders): Future[RestResponse]
 
   @multi
-  @tagged[BodyMethodTag]
-  @paramTag[RestParamTag, JsonBodyParam]
+  @tagged[BodyMethodTag](whenUntagged = new POST)
+  @paramTag[RestParamTag](defaultTag = new JsonBodyParam)
   def handle(@methodName name: String, @composite headers: RestHeaders,
     @multi @tagged[JsonBodyParam] body: NamedParams[JsonValue]): Future[RestResponse]
 
   @multi
-  @tagged[BodyMethodTag]
+  @tagged[BodyMethodTag](whenUntagged = new POST)
+  @paramTag[RestParamTag]
   def handleSingle(@methodName name: String, @composite headers: RestHeaders,
     @encoded @tagged[Body] body: HttpBody): Future[RestResponse]
 

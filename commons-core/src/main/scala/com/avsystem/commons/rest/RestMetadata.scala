@@ -3,13 +3,18 @@ package rest
 
 import com.avsystem.commons.rpc._
 
-@methodTag[RestMethodTag, Prefix]
+@methodTag[RestMethodTag]
 case class RestMetadata[T](
-  @paramTag[RestParamTag, Path] @multi @tagged[Prefix]
+  @multi @tagged[Prefix](whenUntagged = new Prefix)
+  @paramTag[RestParamTag](defaultTag = new Path)
   prefixMethods: Map[String, PrefixMetadata[_]],
-  @paramTag[RestParamTag, Query] @multi @tagged[GET]
+
+  @multi @tagged[GET]
+  @paramTag[RestParamTag](defaultTag = new Query)
   httpGetMethods: Map[String, HttpMethodMetadata[_]],
-  @paramTag[RestParamTag, JsonBodyParam] @multi @tagged[BodyMethodTag]
+
+  @multi @tagged[BodyMethodTag](whenUntagged = new POST)
+  @paramTag[RestParamTag](defaultTag = new JsonBodyParam)
   httpBodyMethods: Map[String, HttpMethodMetadata[_]]
 ) {
   val httpMethods: Map[String, HttpMethodMetadata[_]] =
@@ -148,13 +153,11 @@ sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
 }
 
 case class PrefixMetadata[T](
-  @reifyName name: String,
-  @optional @reifyAnnot methodTag: Opt[Prefix],
+  @reifyAnnot methodTag: Prefix,
   @composite headersMetadata: RestHeadersMetadata,
   @checked @infer result: RestMetadata.Lazy[T]
 ) extends RestMethodMetadata[T] {
-  def methodPath: List[PathValue] =
-    PathValue.split(methodTag.map(_.path).getOrElse(name))
+  def methodPath: List[PathValue] = PathValue.split(methodTag.path)
 }
 
 case class HttpMethodMetadata[T](
@@ -175,11 +178,11 @@ case class RestHeadersMetadata(
 
 case class PathParamMetadata[T](
   @reifyName(rpcName = true) rpcName: String,
-  @optional @reifyAnnot pathAnnot: Opt[Path]
+  @reifyAnnot pathAnnot: Path
 ) extends TypedMetadata[T] {
-  val pathSuffix: List[PathValue] = PathValue.split(pathAnnot.fold("")(_.pathSuffix))
+  val pathSuffix: List[PathValue] = PathValue.split(pathAnnot.pathSuffix)
 }
 
 case class HeaderParamMetadata[T]() extends TypedMetadata[T]
 case class QueryParamMetadata[T]() extends TypedMetadata[T]
-case class BodyParamMetadata[T](@hasAnnot[Body] singleBody: Boolean) extends TypedMetadata[T]
+case class BodyParamMetadata[T](@isAnnotated[Body] singleBody: Boolean) extends TypedMetadata[T]

@@ -22,8 +22,6 @@ case class renamed(int: Int, name: String) extends DummyParamTag {
 
 case class suchMeta(intMeta: Int, strMeta: String) extends StaticAnnotation
 
-sealed trait untagged extends DummyParamTag
-
 sealed trait RestMethod extends RpcTag
 case class POST() extends RestMethod with AnnotationAggregate {
   @rpcNamePrefix("POST_") type Implied
@@ -37,8 +35,8 @@ case class GetterInvocation(
   @multi tail: List[String]
 )
 
-@methodTag[RestMethod, RestMethod]
-@paramTag[DummyParamTag, untagged]
+@methodTag[RestMethod]
+@paramTag[DummyParamTag]
 trait NewRawRpc {
   def doSomething(arg: Double): String
   @optional def doSomethingElse(arg: Double): String
@@ -84,8 +82,8 @@ case class DoSomethings(
   @optional doSomethingElse: Opt[DoSomethingSignature]
 )
 
-@methodTag[RestMethod, RestMethod]
-@paramTag[DummyParamTag, untagged]
+@methodTag[RestMethod]
+@paramTag[DummyParamTag]
 case class NewRpcMetadata[T: TypeName](
   @composite doSomethings: DoSomethings,
   @multi @verbatim procedures: Map[String, FireMetadata],
@@ -191,7 +189,7 @@ case class ParameterMetadata[T: TypeName](
   @reifyPosition pos: ParamPosition,
   @reifyFlags flags: ParamFlags,
   @reifyAnnot @multi metas: List[suchMeta],
-  @hasAnnot[suchMeta] suchMeta: Boolean
+  @isAnnotated[suchMeta] suchMeta: Boolean
 ) extends TypedMetadata[T] {
   def repr: String = {
     val flagsStr = if (flags != ParamFlags.Empty) s"[$flags]" else ""

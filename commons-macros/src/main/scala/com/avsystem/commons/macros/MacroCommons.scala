@@ -69,11 +69,14 @@ trait MacroCommons { bundle =>
       error(msg)
     }
 
-  class Annot(annotTree: Tree, val directSource: Symbol, val aggregate: Option[Annot]) {
+  class Annot(annotTree: Tree, val subject: Symbol, val directSource: Symbol, val aggregate: Option[Annot]) {
     def aggregationChain: List[Annot] =
       aggregate.fold(List.empty[Annot])(a => a :: a.aggregationChain)
 
-    def source: Symbol = aggregate.fold(directSource)(_.source)
+    def aggregationRootSource: Symbol = aggregate.fold(directSource)(_.aggregationRootSource)
+
+    def errorPos: Option[Position] =
+      List(tree.pos, directSource.pos, aggregationRootSource.pos, subject.pos).find(_ != NoPosition)
 
     lazy val tree: Tree = annotTree match {
       case Apply(constr@Select(New(tpt), termNames.CONSTRUCTOR), args) =>
@@ -84,7 +87,7 @@ trait MacroCommons { bundle =>
           case (arg, param) if param.asTerm.isParamWithDefault && arg.symbol != null &&
             arg.symbol.isSynthetic && arg.symbol.name.decodedName.toString.contains("$default$") &&
             findAnnotation(param, DefaultsToNameAT).nonEmpty =>
-            q"${source.name.decodedName.toString}"
+            q"${subject.name.decodedName.toString}"
           case (arg, _) => arg
         }
 
@@ -94,7 +97,10 @@ trait MacroCommons { bundle =>
 
     def tpe: Type = annotTree.tpe
 
-    def findArg[T: ClassTag](valSym: Symbol, defaultValue: Option[T] = None): T = tree match {
+    def findArg[T: ClassTag](valSym: Symbol): T =
+      findArg[T](valSym, abort(s"(bug) no default value for ${tree.tpe} parameter ${valSym.name} provided by macro"))
+
+    def findArg[T: ClassTag](valSym: Symbol, whenDefault: => T): T = tree match {
       case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
         val clsTpe = tpt.tpe
         val params = primaryConstructorOf(clsTpe).typeSignature.paramLists.head
@@ -107,9 +113,8 @@ trait MacroCommons { bundle =>
             case (param, arg) if param.name == subSym.name => arg match {
               case Literal(Constant(value: T)) => value
               case t if param.asTerm.isParamWithDefault && t.symbol.isSynthetic &&
-                t.symbol.name.decodedName.toString.contains("$default$") =>
-                defaultValue.getOrElse(
-                  abort(s"(bug) no default value for $clsTpe parameter ${valSym.name} provided by macro"))
+                t.symbol.name.decodedName.toString.contains("$default$") => whenDefault
+              case t if classTag[T] == classTag[Tree] => t.asInstanceOf[T]
               case _ =>
                 abort(s"Expected literal ${classTag[T].runtimeClass} as ${valSym.name} parameter of $clsTpe annotation")
             }
@@ -122,7 +127,8 @@ trait MacroCommons { bundle =>
       if (tpe <:< AnnotationAggregateType) {
         val argsInliner = new AnnotationArgInliner(tree)
         val impliedMember = tpe.member(TypeName("Implied"))
-        impliedMember.annotations.map(a => new Annot(argsInliner.transform(a.tree), impliedMember, Some(this)))
+        impliedMember.annotations.map(a =>
+          new Annot(argsInliner.transform(a.tree), subject, impliedMember, Some(this)))
       } else Nil
     }
 
@@ -154,34 +160,37 @@ trait MacroCommons { bundle =>
   private def maybeWithSuperSymbols(s: Symbol, withSupers: Boolean): Iterator[Symbol] =
     if (withSupers) withSuperSymbols(s) else Iterator(s)
 
-  def allAnnotations(s: Symbol, tpeFilter: Type = typeOf[Any], withInherited: Boolean = true): List[Annot] =
-    maybeWithSuperSymbols(s, withInherited)
-      .flatMap(ss => ss.annotations.map(a => new Annot(a.tree, ss, None)))
-      .flatMap(_.withAllAggregated).filter(_.tpe <:< tpeFilter).toList
+  def allAnnotations(s: Symbol, tpeFilter: Type, withInherited: Boolean = true, fallback: List[Tree] = Nil): List[Annot] = {
+    val nonFallback = maybeWithSuperSymbols(s, withInherited)
+      .flatMap(ss => ss.annotations.map(a => new Annot(a.tree, s, ss, None)))
 
-  def findAnnotation(s: Symbol, tpe: Type, withInherited: Boolean = true): Option[Annot] =
-    maybeWithSuperSymbols(s, withInherited).map { ss =>
-      def find(annots: List[Annot]): Option[Annot] = annots match {
-        case head :: tail =>
-          val fromHead = Some(head).filter(_.tpe <:< tpe).orElse(find(head.aggregated))
-          for {
-            found <- fromHead
-            ignored <- tail.filter(_.tpe <:< tpe)
-          } {
-            val errorPos = List(ignored.tree.pos, ignored.directSource.pos, ss.pos, s.pos)
-              .find(_ != NoPosition).getOrElse(c.enclosingPosition)
-            val aggInfo =
-              if (ignored.aggregate.isEmpty) ""
-              else ignored.aggregationChain.mkString(" (aggregated by ", " aggregated by", ")")
-            c.error(errorPos, s"Annotation $ignored$aggInfo is ignored because it's overridden by $found")
-          }
-          fromHead orElse find(tail)
-        case Nil => None
-      }
-      find(ss.annotations.map(a => new Annot(a.tree, ss, None)))
-    }.collectFirst {
-      case Some(annot) => annot
+    (nonFallback ++ fallback.iterator.map(t => new Annot(t, s, s, None)))
+      .flatMap(_.withAllAggregated).filter(_.tpe <:< tpeFilter).toList
+  }
+
+  def findAnnotation(s: Symbol, tpe: Type, withInherited: Boolean = true, fallback: List[Tree] = Nil): Option[Annot] = {
+    def find(annots: List[Annot]): Option[Annot] = annots match {
+      case head :: tail =>
+        val fromHead = Some(head).filter(_.tpe <:< tpe).orElse(find(head.aggregated))
+        for {
+          found <- fromHead
+          ignored <- tail.filter(_.tpe <:< tpe)
+        } {
+          val errorPos = ignored.errorPos.getOrElse(c.enclosingPosition)
+          val aggInfo =
+            if (ignored.aggregate.isEmpty) ""
+            else ignored.aggregationChain.mkString(" (aggregated by ", " aggregated by", ")")
+          c.error(errorPos, s"Annotation $ignored$aggInfo is ignored because it's overridden by $found")
+        }
+        fromHead orElse find(tail)
+      case Nil => None
     }
+
+    maybeWithSuperSymbols(s, withInherited)
+      .map(ss => find(ss.annotations.map(a => new Annot(a.tree, s, ss, None))))
+      .collectFirst { case Some(annot) => annot }
+      .orElse(find(fallback.map(t => new Annot(t, s, s, None))))
+  }
 
   private var companionReplacement = Option.empty[(Symbol, TermName)]
 
