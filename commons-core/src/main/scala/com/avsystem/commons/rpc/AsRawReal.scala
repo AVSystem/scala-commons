@@ -14,7 +14,7 @@ object AsRaw {
     new AsRaw[Raw, Real] {
       def asRaw(real: Real): Raw = asRawFun(real)
     }
-  def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
+  implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
   def materializeForRpc[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
 }
 
@@ -29,7 +29,7 @@ object AsReal {
     new AsReal[Raw, Real] {
       def asReal(raw: Raw): Real = asRealFun(raw)
     }
-  def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
+  implicit def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
   def materializeForRpc[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsReal[Raw, Real]
 }
 
@@ -49,7 +49,7 @@ object AsRawReal {
     def asRaw(real: Any): Any = real
   }
 
-  def identity[A]: AsRawReal[A, A] =
+  implicit def identity[A]: AsRawReal[A, A] =
     reusableIdentity.asInstanceOf[AsRawReal[A, A]]
 
   def materializeForRpc[Raw, Real]: AsRawReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRawReal[Raw, Real]
