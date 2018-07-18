@@ -20,6 +20,33 @@ case class RestMetadata[T](
   val httpMethods: Map[String, HttpMethodMetadata[_]] =
     httpGetMethods ++ httpBodyMethods
 
+  def ensureUniqueParams(prefixes: List[(String, PrefixMetadata[_])]): Unit = {
+    def ensureUniqueParams(methodName: String, method: RestMethodMetadata[_]): Unit = {
+      for {
+        (prefixName, prefix) <- prefixes
+        headerParam <- method.headersMetadata.headers.keys
+        if prefix.headersMetadata.headers.contains(headerParam)
+      } throw new InvalidRestApiException(
+        s"Header parameter $headerParam of $methodName collides with header parameter of the same name in prefix $prefixName")
+
+      for {
+        (prefixName, prefix) <- prefixes
+        queryParam <- method.headersMetadata.query.keys
+        if prefix.headersMetadata.query.contains(queryParam)
+      } throw new InvalidRestApiException(
+        s"Query parameter $queryParam of $methodName collides with query parameter of the same name in prefix $prefixName")
+    }
+
+    prefixMethods.foreach {
+      case (name, prefix) =>
+        ensureUniqueParams(name, prefix)
+        prefix.result.value.ensureUniqueParams((name, prefix) :: prefixes)
+    }
+    (httpGetMethods ++ httpBodyMethods).foreach {
+      case (name, method) => ensureUniqueParams(name, method)
+    }
+  }
+
   def ensureUnambiguousPaths(): Unit = {
     val trie = new RestMetadata.Trie
     trie.fillWith(this)
@@ -30,7 +57,7 @@ case class RestMetadata[T](
       val problems = ambiguities.map { case (path, chains) =>
         s"$path may result from multiple calls:\n  ${chains.mkString("\n  ")}"
       }
-      throw new IllegalArgumentException(s"REST API has ambiguous paths:\n${problems.mkString("\n")}")
+      throw new InvalidRestApiException(s"REST API has ambiguous paths:\n${problems.mkString("\n")}")
     }
   }
 
@@ -71,7 +98,7 @@ object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
 
       metadata.prefixMethods.foreach { case entry@(rpcName, pm) =>
         if (prefixStack.contains(entry)) {
-          throw new IllegalArgumentException(
+          throw new InvalidRestApiException(
             s"call chain $prefixChain$rpcName is recursive, recursively defined server APIs are forbidden")
         }
         forPattern(pm.pathPattern).fillWith(pm.result.value, entry :: prefixStack)
@@ -186,3 +213,5 @@ case class PathParamMetadata[T](
 case class HeaderParamMetadata[T]() extends TypedMetadata[T]
 case class QueryParamMetadata[T]() extends TypedMetadata[T]
 case class BodyParamMetadata[T](@isAnnotated[Body] singleBody: Boolean) extends TypedMetadata[T]
+
+class InvalidRestApiException(msg: String) extends RuntimeException(msg)

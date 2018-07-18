@@ -38,6 +38,7 @@ trait RawRest {
 
   def asHandleRequest(metadata: RestMetadata[_]): RawRest.HandleRequest = {
     metadata.ensureUnambiguousPaths()
+    metadata.ensureUniqueParams(Nil)
     locally[RawRest.HandleRequest] {
       case RestRequest(method, headers, body) => metadata.resolvePath(method, headers.path).toList match {
         case List(ResolvedPath(prefixes, RpcWithPath(finalRpcName, finalPathParams), singleBody)) =>
