@@ -14,13 +14,13 @@ object ClientMain {
 
     val proxy = RestClient[UserApi](client, "http://localhost:9090/")
 
-    // just for this example, normally not recommended...
+    // just for this example, normally it's not recommended
     import scala.concurrent.ExecutionContext.Implicits.global
 
-    val result = proxy.getUsername("ID")
+    val result = proxy.createUser("Fred", 1990)
       .andThen({ case _ => client.stop() })
       .andThen {
-        case Success(name) => println(s"Hello, $name!")
+        case Success(id) => println(s"User $id created")
         case Failure(cause) => cause.printStackTrace()
       }
 

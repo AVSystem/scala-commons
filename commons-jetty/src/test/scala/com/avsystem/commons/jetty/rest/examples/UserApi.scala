@@ -4,6 +4,7 @@ package jetty.rest.examples
 import com.avsystem.commons.rest._
 
 trait UserApi {
-  @GET def getUsername(userId: String): Future[String]
+  /** Returns ID of newly created user */
+  def createUser(name: String, birthYear: Int): Future[String]
 }
 object UserApi extends DefaultRestApiCompanion[UserApi]

@@ -18,8 +18,8 @@ sealed trait RestMethodTag extends RpcTag {
   /**
     * HTTP URL path segment associated with REST method annotated with this tag. This path may be multipart
     * (i.e. contain slashes). It may also be empty which means that this particular REST method does not contribute
-    * anything to URL path. If path is not specified explicitly, method name is used (the actual method name, not
-    * `rpcName`).
+    * anything to URL path. Any special characters will be URL-encoded when creating HTTP request.
+    * If path is not specified explicitly, method name is used (the actual method name, not `rpcName`).
     *
     * @example
     * {{{

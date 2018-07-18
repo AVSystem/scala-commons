@@ -5,7 +5,7 @@ import com.avsystem.commons.jetty.rest.RestHandler
 import org.eclipse.jetty.server.Server
 
 class UserApiImpl extends UserApi {
-  def getUsername(userId: String) = Future.successful(s"$userId-name")
+  def createUser(name: String, birthYear: Int): Future[String] = Future.successful(s"$name-ID")
 }
 
 object ServerMain {
