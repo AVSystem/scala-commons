@@ -6,54 +6,47 @@ import com.avsystem.commons.rpc.{AsRawReal, RpcMacroInstances}
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
-trait ClientInstances[Real, I] extends RpcMacroInstances[Real] {
-  type Implicits = I
-  def metadata(implicits: I): RestMetadata[Real]
-  def asReal(implicits: I): AsRealRpc[Real]
+trait ClientInstances[Real] {
+  def metadata: RestMetadata[Real]
+  def asReal: AsRealRpc[Real]
 }
-object ClientInstances {
-  implicit def materialize[Real, I]: ClientInstances[Real, I] =
-  macro macros.rpc.RpcMacros.macroInstances[ClientInstances[Real, I], Real]
+trait ServerInstances[Real] {
+  def metadata: RestMetadata[Real]
+  def asRaw: AsRawRpc[Real]
 }
-trait ServerInstances[Real, I] extends RpcMacroInstances[Real] {
-  type Implicits = I
-  def metadata(implicits: I): RestMetadata[Real]
-  def asRaw(implicits: I): AsRawRpc[Real]
-}
-object ServerInstances {
-  implicit def materialize[Real, I]: ServerInstances[Real, I] =
-  macro macros.rpc.RpcMacros.macroInstances[ServerInstances[Real, I], Real]
-}
-trait FullInstances[Real, I] extends RpcMacroInstances[Real] {
-  type Implicits = I
-  def metadata(implicits: I): RestMetadata[Real]
-  def asRawReal(implicits: I): AsRawRealRpc[Real]
-}
-object FullInstances {
-  implicit def clientServerInstances[Real, I]: FullInstances[Real, I] =
-  macro macros.rpc.RpcMacros.macroInstances[FullInstances[Real, I], Real]
+trait FullInstances[Real] {
+  def metadata: RestMetadata[Real]
+  def asRawReal: AsRawRealRpc[Real]
 }
 
 /** @see [[RestApiCompanion]] */
-abstract class RestClientApiCompanion[Real, I](implicit instances: ClientInstances[Real, I]) { this: I =>
-  implicit final lazy val restMetadata: RestMetadata[Real] = instances.metadata(this)
-  implicit final lazy val restAsReal: AsRealRpc[Real] = instances.asReal(this)
+abstract class RestClientApiCompanion[Implicits, Real](implicits: Implicits)(
+  implicit inst: RpcMacroInstances[Implicits, ClientInstances, Real]
+) {
+  implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits).metadata
+  implicit final lazy val restAsReal: AsRealRpc[Real] = inst(implicits).asReal
 }
+
 /** @see [[RestApiCompanion]] */
-abstract class RestServerApiCompanion[Real, I](implicit instances: ServerInstances[Real, I]) { this: I =>
-  implicit final lazy val restMetadata: RestMetadata[Real] = instances.metadata(this)
-  implicit final lazy val restAsRaw: AsRawRpc[Real] = instances.asRaw(this)
+abstract class RestServerApiCompanion[Implicits, Real](implicits: Implicits)(
+  implicit inst: RpcMacroInstances[Implicits, ServerInstances, Real]
+) {
+  implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits).metadata
+  implicit final lazy val restAsRaw: AsRawRpc[Real] = inst(implicits).asRaw
 }
+
 /**
   * Base class for REST trait companions. Reduces boilerplate needed in order to define appropriate instances
-  * of `AsRawReal` and `RestMetadata` for given trait. The `I` type parameter lets you inject additional implicits
+  * of `AsRawReal` and `RestMetadata` for given trait. The `Implicits` type parameter lets you inject additional implicits
   * into macro materialization of these instances, e.g. [[DefaultRestImplicits]].
   * Usually, for even less boilerplate, this base class is extended by yet another abstract class which fixes
-  * the `I` type, e.g. [[DefaultRestApiCompanion]].
+  * the `Implicits` type, e.g. [[DefaultRestApiCompanion]].
   */
-abstract class RestApiCompanion[Real, I](implicit instances: FullInstances[Real, I]) { this: I =>
-  implicit final lazy val restMetadata: RestMetadata[Real] = instances.metadata(this)
-  implicit final lazy val restAsRawReal: AsRawRealRpc[Real] = instances.asRawReal(this)
+abstract class RestApiCompanion[Implicits, Real](implicits: Implicits)(
+  implicit inst: RpcMacroInstances[Implicits, FullInstances, Real]
+) {
+  implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits).metadata
+  implicit final lazy val restAsRawReal: AsRawRealRpc[Real] = inst(implicits).asRawReal
 }
 
 /**
@@ -76,22 +69,19 @@ object DefaultRestImplicits extends DefaultRestImplicits
   * Base class for companions of REST API traits used only for REST clients to external services.
   * Injects `GenCodec` and `GenKeyCodec` based serialization.
   */
-abstract class DefaultRestClientApiCompanion[Real](
-  implicit instances: ClientInstances[Real, DefaultRestImplicits]
-) extends RestClientApiCompanion[Real, DefaultRestImplicits] with DefaultRestImplicits
+abstract class DefaultRestClientApiCompanion[Real](implicit inst: RpcMacroInstances[DefaultRestImplicits, ClientInstances, Real])
+  extends RestClientApiCompanion[DefaultRestImplicits, Real](DefaultRestImplicits)
 
 /**
   * Base class for companions of REST API traits used only for REST servers exposed to external world.
   * Injects `GenCodec` and `GenKeyCodec` based serialization.
   */
-abstract class DefaultRestServerApiCompanion[Real](
-  implicit instances: ServerInstances[Real, DefaultRestImplicits]
-) extends RestServerApiCompanion[Real, DefaultRestImplicits] with DefaultRestImplicits
+abstract class DefaultRestServerApiCompanion[Real](implicit inst: RpcMacroInstances[DefaultRestImplicits, ServerInstances, Real])
+  extends RestServerApiCompanion[DefaultRestImplicits, Real](DefaultRestImplicits)
 
 /**
   * Base class for companions of REST API traits used for both REST clients and servers.
   * Injects `GenCodec` and `GenKeyCodec` based serialization.
   */
-abstract class DefaultRestApiCompanion[Real](
-  implicit instances: FullInstances[Real, DefaultRestImplicits]
-) extends RestApiCompanion[Real, DefaultRestImplicits] with DefaultRestImplicits
+abstract class DefaultRestApiCompanion[Real](implicit inst: RpcMacroInstances[DefaultRestImplicits, FullInstances, Real])
+  extends RestApiCompanion[DefaultRestImplicits, Real](DefaultRestImplicits)

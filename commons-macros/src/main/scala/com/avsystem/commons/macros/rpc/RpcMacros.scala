@@ -181,65 +181,60 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
     }
   }
 
-  def macroInstances[I: WeakTypeTag, Real: WeakTypeTag]: Tree = {
-    val realTpe = weakTypeOf[Real]
+  def macroInstances: Tree = {
+    val resultTpe = c.macroApplication.tpe
+    val realTpe = resultTpe.typeArgs.last
+    val applySig = resultTpe.member(TermName("apply")).typeSignatureIn(resultTpe)
+    val implicitsTpe = applySig.paramLists.head.head.typeSignature
+    val instancesTpe = applySig.finalResultType
 
     if (c.macroApplication.symbol.isImplicit && c.enclosingPosition.source != realTpe.typeSymbol.pos.source) {
-      abort(s"Implicit materialization of RpcMacroInstances is only allowed in the same file where RPC trait is defined")
+      abort(s"Implicit materialization of RpcMacroInstances is only allowed in the same file where RPC trait is defined ($realTpe)")
     }
-
-    val TypeApply(_, macroTypeArgs) = c.macroApplication
-    val macroTparams = c.macroApplication.symbol.typeSignature.typeParams
-    val macroTargsMap: Map[Name, Type] =
-      (macroTypeArgs zip macroTparams).map { case (targ, sym) => (sym.name, targ.tpe) }.toMap
-
-    // Scala... srsly... why?
-    val instancesTpe = weakTypeOf[I].dealias.map {
-      case t@TypeRef(NoPrefix, sym, Nil) => macroTargsMap.getOrElse(sym.name, t)
-      case t => t
-    }
-
-    val asRawTpe = getType(tq"$AsRawCls[_,$realTpe]")
-    val asRealTpe = getType(tq"$AsRealCls[_,$realTpe]")
-    val asRawRealTpe = getType(tq"$AsRawRealCls[_,$realTpe]")
 
     val instTs = instancesTpe.typeSymbol
     if (!(instTs.isClass && instTs.isAbstract)) {
       abort(s"Expected trait or abstract class type, got $instancesTpe")
     }
 
-    val implicitsTmem = instancesTpe.member(TypeName("Implicits"))
-    if (implicitsTmem.isAbstract) {
-      abort(s"Could not determine concrete Implicits type for $instancesTpe")
-    }
-    val implicitsTpe = implicitsTmem.typeSignatureIn(instancesTpe)
+    val asRawTpe = getType(tq"$AsRawCls[_,$realTpe]")
+    val asRealTpe = getType(tq"$AsRealCls[_,$realTpe]")
+    val asRawRealTpe = getType(tq"$AsRawRealCls[_,$realTpe]")
 
     val impls = instancesTpe.members.iterator.filter(m => m.isAbstract && m.isMethod).map { m =>
       val sig = m.typeSignatureIn(instancesTpe)
-      val body = (sig.typeParams, sig.paramLists) match {
-        case (Nil, List(List(single))) if single.typeSignature =:= implicitsTpe =>
-          val resultTpe = sig.finalResultType.dealias
-          if (resultTpe <:< asRawRealTpe)
-            q"$AsRawRealObj.materializeForRpc[..${resultTpe.typeArgs}]"
-          else if (resultTpe <:< asRawTpe)
-            q"$AsRawObj.materializeForRpc[..${resultTpe.typeArgs}]"
-          else if (resultTpe <:< asRealTpe)
-            q"$AsRealObj.materializeForRpc[..${resultTpe.typeArgs}]"
-          else resultTpe.typeArgs match {
-            case List(st) if st =:= realTpe =>
-              q"$RpcPackage.RpcMetadata.materializeForRpc[${resultTpe.typeConstructor}, $realTpe]"
-            case _ => abort(s"Bad result type $resultTpe of $m: " +
-              s"it must be an AsReal/AsRaw/AsRealRaw or RPC metadata instance for $realTpe")
-          }
-        case _ =>
-          abort(s"Problem with $m: expected non-generic method that takes exactly one parameter of type $implicitsTpe")
+      val resultTpe = sig.finalResultType.dealias
+      if (sig.typeParams.nonEmpty || sig.paramLists.nonEmpty) {
+        abort(s"Problem with $m: expected non-generic, parameterless method")
       }
 
-      val implicitsName = c.freshName(TermName("implicits"))
-      q"def ${m.name.toTermName}($implicitsName: $implicitsTpe) = { import $implicitsName._; $body }"
-    }
+      val body =
+        if (resultTpe <:< asRawRealTpe)
+          q"$AsRawRealObj.materializeForRpc[..${resultTpe.typeArgs}]"
+        else if (resultTpe <:< asRawTpe)
+          q"$AsRawObj.materializeForRpc[..${resultTpe.typeArgs}]"
+        else if (resultTpe <:< asRealTpe)
+          q"$AsRealObj.materializeForRpc[..${resultTpe.typeArgs}]"
+        else resultTpe.typeArgs match {
+          case List(st) if st =:= realTpe =>
+            q"$RpcPackage.RpcMetadata.materializeForRpc[${resultTpe.typeConstructor}, $realTpe]"
+          case _ => abort(s"Bad result type $resultTpe of $m: " +
+            s"it must be an AsReal/AsRaw/AsRealRaw or RPC metadata instance for $realTpe")
+        }
 
-    q"new $instancesTpe { ..${impls.toList}; () }"
+      q"def ${m.name.toTermName} = $body"
+    }.toList
+
+    val implicitsName = c.freshName(TermName("implicits"))
+
+    q"""
+      new $resultTpe {
+        def apply($implicitsName: $implicitsTpe): $instancesTpe = {
+          import $implicitsName._
+          new $instancesTpe { ..$impls; () }
+        }
+      }
+     """
   }
 
   def lazyMetadata(metadata: Tree): Tree =

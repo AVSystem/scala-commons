@@ -31,7 +31,7 @@ import com.avsystem.commons.rest._
 trait UserApi {
   @GET def getUsername(userId: String): Future[String]
 }
-object UserApi extends RestApiCompanion[UserApi]
+object UserApi extends DefaultRestApiCompanion[UserApi]
 ```
 
 Then, implement it on server side and expose it on localhost port 9090 using Jetty:
