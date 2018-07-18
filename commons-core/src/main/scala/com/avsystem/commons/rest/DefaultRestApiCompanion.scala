@@ -19,7 +19,7 @@ trait FullInstances[Real] {
   def asRawReal: AsRawRealRpc[Real]
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestClientApiCompanion[Implicits, Real](implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ClientInstances, Real]
 ) {
@@ -27,7 +27,7 @@ abstract class RestClientApiCompanion[Implicits, Real](implicits: Implicits)(
   implicit final lazy val restAsReal: AsRealRpc[Real] = inst(implicits).asReal
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestServerApiCompanion[Implicits, Real](implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ServerInstances, Real]
 ) {
@@ -53,7 +53,7 @@ abstract class RestApiCompanion[Implicits, Real](implicits: Implicits)(
   * Defines [[com.avsystem.commons.serialization.GenCodec GenCodec]] and
   * [[com.avsystem.commons.serialization.GenKeyCodec GenKeyCodec]] based serialization for REST API traits.
   */
-trait DefaultRestImplicits {
+trait DefaultRestImplicits extends FloatingPointRestImplicits {
   implicit def pathValueDefaultAsRealRaw[T: GenKeyCodec]: AsRawReal[PathValue, T] =
     AsRawReal.create(v => PathValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value))
   implicit def headerValueDefaultAsRealRaw[T: GenKeyCodec]: AsRawReal[HeaderValue, T] =
