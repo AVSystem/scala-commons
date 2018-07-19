@@ -668,7 +668,7 @@ Therefore, the only thing you need to do to expose your REST API trait as an act
 `HandleRequest` function into a server. This is usually just a matter of translating native HTTP request into `RestRequest`,
 passing them to `HandleRequest` function and translating resulting `RestResponse` to native HTTP response.
 
-See Jetty-based `RestHandler` for an example implementation.
+See [`RestServlet`](../commons-jetty/src/main/scala/com/avsystem/commons/jetty/rest/RestServlet.scala) for an example implementation.
 
 ### Implementing a client
 
@@ -679,4 +679,4 @@ method calls into invocations of provided `HandleRequest` function.
 Therefore, the only thing you need to to in order to wrap a native HTTP client into a REST API trait instance is
 to turn this native HTTP client into a `HandleRequest` function.
 
-See Jetty-based `RestClient` for an example implementation.
+See Jetty-based [`RestClient`](../commons-jetty/src/main/scala/com/avsystem/commons/jetty/rest/RestClient.scala) for an example implementation.
