@@ -82,7 +82,7 @@ object RawRest extends RawRpcCompanion[RawRest] {
 
     def prefix(name: String, headers: RestHeaders): RawRest = {
       val prefixMeta = metadata.prefixMethods.getOrElse(name,
-        throw new IllegalArgumentException(s"no such prefix method: $name"))
+        throw new RestException(s"no such prefix method: $name"))
       val newHeaders = prefixHeaders.append(prefixMeta, headers)
       new DefaultRawRest(prefixMeta.result.value, newHeaders, handleRequest)
     }
