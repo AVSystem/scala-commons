@@ -62,7 +62,7 @@ trait RawRest {
         case multiple =>
           val pathStr = headers.path.iterator.map(_.value).mkString("/")
           val callsRepr = multiple.iterator.map(p => s"  ${p.rpcChainRepr}").mkString("\n", "\n", "")
-          throw new IllegalArgumentException(s"path $pathStr is ambiguous, it could map to following calls:$callsRepr")
+          throw new RestException(s"path $pathStr is ambiguous, it could map to following calls:$callsRepr")
       }
     }
   }
@@ -95,9 +95,11 @@ object RawRest extends RawRpcCompanion[RawRest] {
 
     def handleSingle(name: String, headers: RestHeaders, body: HttpBody): Future[RestResponse] = {
       val methodMeta = metadata.httpMethods.getOrElse(name,
-        throw new IllegalArgumentException(s"no such HTTP method: $name"))
+        throw new RestException(s"no such HTTP method: $name"))
       val newHeaders = prefixHeaders.append(methodMeta, headers)
       handleRequest(RestRequest(methodMeta.method, newHeaders, body))
     }
   }
 }
+
+class RestException(msg: String, cause: Throwable = null) extends RpcException(msg, cause)

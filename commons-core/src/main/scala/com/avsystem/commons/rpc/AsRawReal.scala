@@ -56,5 +56,5 @@ object AsRawReal {
 }
 
 object RpcMetadata {
-  def materializeForRpc[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.rpcMetadata[M[Real], Real]
+  def materializeForRpc[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.rpcMetadata[Real]
 }

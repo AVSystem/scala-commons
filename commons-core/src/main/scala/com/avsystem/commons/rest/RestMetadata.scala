@@ -26,14 +26,14 @@ case class RestMetadata[T](
         (prefixName, prefix) <- prefixes
         headerParam <- method.headersMetadata.headers.keys
         if prefix.headersMetadata.headers.contains(headerParam)
-      } throw new InvalidRestApiException(
+      } throw new RestException(
         s"Header parameter $headerParam of $methodName collides with header parameter of the same name in prefix $prefixName")
 
       for {
         (prefixName, prefix) <- prefixes
         queryParam <- method.headersMetadata.query.keys
         if prefix.headersMetadata.query.contains(queryParam)
-      } throw new InvalidRestApiException(
+      } throw new RestException(
         s"Query parameter $queryParam of $methodName collides with query parameter of the same name in prefix $prefixName")
     }
 
@@ -57,7 +57,7 @@ case class RestMetadata[T](
       val problems = ambiguities.map { case (path, chains) =>
         s"$path may result from multiple calls:\n  ${chains.mkString("\n  ")}"
       }
-      throw new InvalidRestApiException(s"REST API has ambiguous paths:\n${problems.mkString("\n")}")
+      throw new RestException(s"REST API has ambiguous paths:\n${problems.mkString("\n")}")
     }
   }
 

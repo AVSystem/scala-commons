@@ -136,15 +136,9 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
      """
   }
 
-  def rpcMetadata[M: WeakTypeTag, Real: WeakTypeTag]: Tree = {
+  def rpcMetadata[Real: WeakTypeTag]: Tree = {
     val realRpc = RealRpcTrait(weakTypeOf[Real].dealias)
-    val metadataTpe = weakTypeOf[M] match { // scalac, why do I have to do this?
-      case TypeRef(pre, sym, Nil) =>
-        internal.typeRef(pre, sym, List(realRpc.tpe))
-      case TypeRef(pre, sym, List(TypeRef(NoPrefix, wc, Nil))) if wc.name == typeNames.WILDCARD =>
-        internal.typeRef(pre, sym, List(realRpc.tpe))
-      case t => t
-    }
+    val metadataTpe = c.macroApplication.tpe.dealias
 
     val constructor = new RpcMetadataConstructor(metadataTpe, None)
     // separate object for cached implicits so that lazy vals are members instead of local variables

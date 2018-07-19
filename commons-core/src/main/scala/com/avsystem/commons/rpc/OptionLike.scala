@@ -12,6 +12,8 @@ trait BaseOptionLike[O, A] extends OptionLike[O] {
   type Value = A
 }
 object OptionLike {
+  type Aux[O, V] = OptionLike[O] {type Value = V}
+
   implicit def optionOptionLike[A]: BaseOptionLike[Option[A], A] = new BaseOptionLike[Option[A], A] {
     def none: Option[A] = None
     def some(value: A): Option[A] = Some(value)
