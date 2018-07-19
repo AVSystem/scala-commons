@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package analyzer
 
+import org.scalactic.source.Position
 import org.scalatest.Assertions
 
 import scala.reflect.internal.util.BatchSourceFile
@@ -11,7 +12,8 @@ trait AnalyzerTest { this: Assertions =>
   val settings = new Settings
   settings.usejavacp.value = true
   settings.pluginOptions.value ++= List("AVSystemAnalyzer:+_")
-  val compiler = new Global(settings) { global =>
+
+  val compiler: Global = new Global(settings) { global =>
     override protected def loadRoughPluginsList(): List[Plugin] =
       new AnalyzerPlugin(global) :: super.loadRoughPluginsList()
   }
@@ -22,12 +24,17 @@ trait AnalyzerTest { this: Assertions =>
     run.compileSources(List(new BatchSourceFile("test.scala", source)))
   }
 
-  def assertErrors(source: String): Unit = {
+  def assertErrors(source: String)(implicit pos: Position): Unit = {
     compile(source)
     assert(compiler.reporter.hasErrors)
   }
 
-  def assertNoErrors(source: String): Unit = {
+  def assertErrors(errors: Int, source: String)(implicit pos: Position): Unit = {
+    compile(source)
+    assert(compiler.reporter.errorCount == errors)
+  }
+
+  def assertNoErrors(source: String)(implicit pos: Position): Unit = {
     compile(source)
     assert(!compiler.reporter.hasErrors)
   }

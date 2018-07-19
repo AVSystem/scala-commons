@@ -131,6 +131,11 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     assert(read[Map[String, List[Int]]](prettyJson, options) == map)
   }
 
+  test("whitespace skipping") {
+    val json = """ { "a" : [ 1 , 2 ] , "b" : [ ] } """
+    assert(read[Map[String, List[Int]]](json) == Map("a" -> List(1, 2), "b" -> Nil))
+  }
+
   test("NaN") {
     val value = Double.NaN
 

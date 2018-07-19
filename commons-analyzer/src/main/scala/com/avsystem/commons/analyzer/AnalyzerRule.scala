@@ -12,8 +12,9 @@ abstract class AnalyzerRule[C <: Global with Singleton](
   import global._
 
   var level: Level = defaultLevel
+  var argument: String = _
 
-  protected def classType(fullName: String) =
+  protected def classType(fullName: String): Type =
     try rootMirror.staticClass(fullName).asType.toType.erasure catch {
       case _: ScalaReflectionException => NoType
     }
@@ -29,6 +30,7 @@ abstract class AnalyzerRule[C <: Global with Singleton](
   protected def report(pos: Position, message: String): Unit =
     level match {
       case Level.Off =>
+      case Level.Info => reporter.info(pos, message, force = true)
       case Level.Warn => reporter.warning(pos, message)
       case Level.Error => reporter.error(pos, message)
     }
@@ -41,6 +43,7 @@ abstract class AnalyzerRule[C <: Global with Singleton](
 sealed trait Level
 object Level {
   case object Off extends Level
+  case object Info extends Level
   case object Warn extends Level
   case object Error extends Level
 }
