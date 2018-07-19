@@ -360,7 +360,7 @@ every parameter value and every method result into appropriate raw values which 
 be easily sent through network. Serialization in REST framework is typeclass based,
 which is a typical, functional and typesafe approach to serialization in Scala.
 
-Examples of typeclass based serialization libraries include [GenCodec](docs/GenCodec.md)
+Examples of typeclass based serialization libraries include [GenCodec](GenCodec.md)
 (which is the default serialization used by this REST framework), [circe](https://circe.github.io/circe/)
 (one of the most popular JSON libraries for Scala) or [µPickle](http://www.lihaoyi.com/upickle/).
 Any of these solutions can be plugged into REST framework.
@@ -456,11 +456,119 @@ You might want to define custom serialization straight into `Future[RestResponse
 
 ### Customizing serialization
 
+#### Introduction
+
+When Scala compiler needs to find an implicit, it searches two scopes: _lexical_ scope and _implicit_ scope.
+
+_Lexical scope_ is made of locally visible and imported implicits. It has priority over implicit scope -
+implicit scope is searched only when implicit could not be found in lexical scope.
+
+_Implicit scope_ is made of companion objects of all traits and classes _associated_ with the
+type of implicit being searched for. Consult [Scala Language Specification](https://www.scala-lang.org/files/archive/spec/2.12/07-implicits.html)
+for precise definition of the word "_associated_". As an example, implicit scope of type `AsRaw[JsonValue,MyClass]` is
+made of companion objects of `AsRaw`, `JsonValue`, `MyClass` + companion objects of all supertraits, superclasses and
+enclosing traits/classes of `MyClass`.
+
+Implicits defined in _implicit scope_ are effectively global and don't need to be imported.
+
 #### Plugging in entirely custom serialization
 
-#### Providing serialization for your own type
+REST framework deliberately provides **no** default implicits for serialization and deserialization.
+Instead, it introduces a mechanism through which serialization implicits are injected by
+[companion objects](#companion-objects) of REST API traits. Thanks to this mechanism REST framework is
+not bound to any specific serialization library. At the same time it provides a concise method to inject
+serialization implicits that does not require importing them explicitly.
+
+An example usage of this mechanism is `DefaultRestApiCompanion` which injects [`GenCodec`](GenCodec.md)-based
+serialization.
+
+Let's say you want to use e.g. [circe](https://circe.github.io/circe/) for serialization to `JsonValue`.
+
+First, define a trait that contains implicits which translate Circe's `Encoder` and `Decoder` into
+appropriate instances of `AsReal`/`AsRaw`:
+
+```scala
+import com.avsystem.commons.rest._
+import com.avsystem.commons.rpc._
+import io.circe._
+import io.circe.parser._
+import io.circe.syntax._
+
+trait CirceRestImplicits {
+  implicit def encoderBasedAsRawJson[T: Encoder]: Fallback[AsRaw[JsonValue, T]] =
+    Fallback(AsRaw.create(v => JsonValue(v.asJson.noSpaces)))
+  implicit def decoderBasedJsonAsReal[T: Decoder]: Fallback[AsReal[JsonValue, T]] =
+    Fallback(AsReal.create(json => decode(json.value).fold(throw _, identity)))
+}
+object CirceRestImplicits extends CirceRestImplicits
+```
+
+Note that implicits are wrapped into `Fallback`. This is not strictly required, but it's recommended
+because these implicits ultimately will have to be imported into lexical scope, even if a macro does it
+for us. However, we don't want these implicits to have higher priority than implicits from companion objects
+of some concrete classes which need custom serialization. Because of that, we wrap our implicits into
+`Fallback` which keeps them visible but without elevated priority.
+
+Now, in order to define a REST API trait that uses Circe-based serialization, you must appropriately
+inject it into its companion object:
+
+```scala
+trait MyRestApi { ... }
+object MyRestApi extends RestApiCompanion[CirceRestImplicits, MyRestApi](CirceRestImplicits)
+```
+
+If you happen to use this often (e.g. because you always want to use Circe) then it may be useful
+to create convenience companion base class just for Circe:
+
+```scala
+abstract class CirceRestApiCompanion[Real](
+  implicit inst: RpcMacroInstances[CirceRestImplicits, FullInstances, Real])
+) extends RestApiCompanion[CirceRestImplicits, Real](CirceRestImplicits)
+```
+
+Now you can define your trait more concisely as:
+
+```scala
+trait MyRestApi { ... }
+object MyRestApi extends CirceRestApiCompanion[MyRestApi]
+```
+
+#### Customizing serialization for your own type
+
+If you need to write manual serialization for your own type, the easiest way to do this is to
+provide appropriate implicit in its companion object:
+
+```scala
+class MyClass { ... }
+object MyClass {
+  implicit val jsonAsRawReal: AsRawReal[JsonValue, MyClass] = AsRawReal.create(...)
+}
+```
 
 #### Providing serialization for third party type
+
+If you need to define serialization implicits for a third party type, you can't do it through
+implicit scope because you can't modify its companion object. Instead, you can adjust implicits injected
+into REST API trait companion object.
+
+Assume that companion objects of your REST API traits normally extend `DefaultRestApiCompanion`, i.e.
+`GenCodec`-based serialization is used. Now, you can extend `DefaultRestImplicits` to add serialization for
+third party types:
+
+```scala
+trait EnhancedRestImplicits extends DefaultRestImplicits {
+  implicit val thirdPartyJsonAsRawReal: AsRawReal[JsonValue, ThirdParty] =
+    AsRawReal.create(...)
+}
+object EnhancedRestImplicits extends EnhancedRestImplicits
+```
+
+Then, you need to define your REST API trait as:
+
+```scala
+trait MyRestApi { ... }
+object MyRestApi extends RestApiCompanion[EnhancedRestImplicits, MyRestApi](EnhancedRestImplicits)
+```
 
 ## API evolution
 
