@@ -1,5 +1,16 @@
 # REST framework
 
+The commons library contains an RPC based REST framework for defining REST services using Scala traits.
+It may be used for implementing both client and server side and works in both JVM and JS, as long as
+appropriate network layer is implemented. For JVM, Jetty-based implementations for client and server
+are provided.
+
+The core of REST framework is platform independent and network-implementation indepenedent and therefore
+has no external dependencies. Because of that, it's a part of `commons-core` module. This is enough to
+be able to define REST interfaces. But if you want to expose your REST interface through an actual HTTP
+server or have an actual HTTP client for that interface, you need separate implementations for that.
+The `commons-jetty` module provides Jetty-based implementations for JVM.
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
@@ -36,17 +47,6 @@
   - [Implementing a client](#implementing-a-client)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-The commons library contains an RPC based REST framework for defining REST services using Scala traits.
-It may be used for implementing both client and server side and works in both JVM and JS, as long as
-appropriate network layer is implemented. For JVM, Jetty-based implementations for client and server
-are provided.
-
-The core of REST framework is platform independent and network-implementation indepenedent and therefore
-has no external dependencies. Because of that, it's a part of `commons-core` module. This is enough to
-be able to define REST interfaces. But if you want to expose your REST interface through an actual HTTP
-server or have an actual HTTP client for that interface, you need separate implementations for that.
-The `commons-jetty` module provides Jetty-based implementations for JVM.
 
 ## Quickstart example
 
