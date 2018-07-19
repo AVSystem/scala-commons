@@ -8,6 +8,8 @@ trait RpcMetadataCompanion[M[_]] extends RpcImplicitsProvider {
 
   def materializeForRpc[Real]: M[Real] = macro RpcMacros.rpcMetadata[Real]
 
+  implicit def fromFallback[Real](implicit fallback: Fallback[M[Real]]): M[Real] = fallback.value
+
   final class Lazy[Real](metadata: => M[Real]) {
     lazy val value: M[Real] = metadata
   }
