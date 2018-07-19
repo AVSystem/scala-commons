@@ -3,10 +3,10 @@ package rest
 
 import com.avsystem.commons.rpc._
 
-case class RpcWithPath(rpcName: String, pathParams: List[PathValue])
-case class ResolvedPath(prefixes: List[RpcWithPath], finalCall: RpcWithPath, singleBody: Boolean) {
-  def prepend(rpcName: String, pathParams: List[PathValue]): ResolvedPath =
-    copy(prefixes = RpcWithPath(rpcName, pathParams) :: prefixes)
+case class RestMethodCall(rpcName: String, pathParams: List[PathValue], metadata: RestMethodMetadata[_])
+case class ResolvedPath(prefixes: List[RestMethodCall], finalCall: RestMethodCall, singleBody: Boolean) {
+  def prepend(rpcName: String, pathParams: List[PathValue], metadata: PrefixMetadata[_]): ResolvedPath =
+    copy(prefixes = RestMethodCall(rpcName, pathParams, metadata) :: prefixes)
 
   def rpcChainRepr: String =
     prefixes.iterator.map(_.rpcName).mkString("", "->", s"->${finalCall.rpcName}")
@@ -41,9 +41,9 @@ trait RawRest {
     metadata.ensureUniqueParams(Nil)
     locally[RawRest.HandleRequest] {
       case RestRequest(method, headers, body) => metadata.resolvePath(method, headers.path).toList match {
-        case List(ResolvedPath(prefixes, RpcWithPath(finalRpcName, finalPathParams), singleBody)) =>
+        case List(ResolvedPath(prefixes, RestMethodCall(finalRpcName, finalPathParams, _), singleBody)) =>
           val finalRawRest = prefixes.foldLeft(this) {
-            case (rawRest, RpcWithPath(rpcName, pathParams)) =>
+            case (rawRest, RestMethodCall(rpcName, pathParams, _)) =>
               rawRest.prefix(rpcName, headers.copy(path = pathParams))
           }
           val finalHeaders = headers.copy(path = finalPathParams)

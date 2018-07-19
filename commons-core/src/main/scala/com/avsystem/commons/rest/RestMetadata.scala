@@ -65,13 +65,13 @@ case class RestMetadata[T](
     val asFinalCall = for {
       (rpcName, m) <- httpMethods.iterator if m.method == method
       (pathParams, Nil) <- m.extractPathParams(path)
-    } yield ResolvedPath(Nil, RpcWithPath(rpcName, pathParams), m.singleBody)
+    } yield ResolvedPath(Nil, RestMethodCall(rpcName, pathParams, m), m.singleBody)
 
     val usingPrefix = for {
       (rpcName, prefix) <- prefixMethods.iterator
       (pathParams, pathTail) <- prefix.extractPathParams(path).iterator
       suffixPath <- prefix.result.value.resolvePath(method, pathTail)
-    } yield suffixPath.prepend(rpcName, pathParams)
+    } yield suffixPath.prepend(rpcName, pathParams, prefix)
 
     asFinalCall ++ usingPrefix
   }
