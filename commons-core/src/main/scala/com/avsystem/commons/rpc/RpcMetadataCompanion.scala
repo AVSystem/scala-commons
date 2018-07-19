@@ -4,11 +4,11 @@ package rpc
 import com.avsystem.commons.macros.rpc.RpcMacros
 
 trait RpcMetadataCompanion[M[_]] extends RpcImplicitsProvider {
-  def apply[Real](implicit metadata: M[Real]): M[Real] = metadata
+  final def apply[Real](implicit metadata: M[Real]): M[Real] = metadata
 
   def materializeForRpc[Real]: M[Real] = macro RpcMacros.rpcMetadata[Real]
 
-  implicit def fromFallback[Real](implicit fallback: Fallback[M[Real]]): M[Real] = fallback.value
+  implicit final def fromFallback[Real](implicit fallback: Fallback[M[Real]]): M[Real] = fallback.value
 
   final class Lazy[Real](metadata: => M[Real]) {
     lazy val value: M[Real] = metadata
