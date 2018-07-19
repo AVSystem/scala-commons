@@ -19,20 +19,26 @@ trait FullInstances[Real] {
   def asRawReal: AsRawRealRpc[Real]
 }
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestClientApiCompanion[Implicits, Real](implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ClientInstances, Real]
 ) {
   implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits).metadata
   implicit final lazy val restAsReal: AsRealRpc[Real] = inst(implicits).asReal
+
+  final def fromHandleRequest(handleRequest: RawRest.HandleRequest): Real =
+    RawRest.fromHandleRequest(handleRequest)
 }
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestServerApiCompanion[Implicits, Real](implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ServerInstances, Real]
 ) {
   implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits).metadata
   implicit final lazy val restAsRaw: AsRawRpc[Real] = inst(implicits).asRaw
+
+  final def asHandleRequest(real: Real): RawRest.HandleRequest =
+    RawRest.asHandleRequest(real)
 }
 
 /**
@@ -47,6 +53,11 @@ abstract class RestApiCompanion[Implicits, Real](implicits: Implicits)(
 ) {
   implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits).metadata
   implicit final lazy val restAsRawReal: AsRawRealRpc[Real] = inst(implicits).asRawReal
+
+  final def fromHandleRequest(handleRequest: RawRest.HandleRequest): Real =
+    RawRest.fromHandleRequest(handleRequest)
+  final def asHandleRequest(real: Real): RawRest.HandleRequest =
+    RawRest.asHandleRequest(real)
 }
 
 /**
