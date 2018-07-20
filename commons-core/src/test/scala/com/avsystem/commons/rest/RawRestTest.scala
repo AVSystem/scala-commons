@@ -27,6 +27,8 @@ object UserApi extends DefaultRestApiCompanion[UserApi]
 trait RootApi {
   @Prefix("") def self: UserApi
   def subApi(id: Int, @Query query: String): UserApi
+  def fail: Future[Unit]
+  def failMore: Future[Unit]
 }
 object RootApi extends DefaultRestApiCompanion[RootApi]
 
@@ -56,22 +58,28 @@ class RawRestTest extends FunSuite with ScalaFutures {
     def user(paf: String, awesome: Boolean, f: Int, user: User): Future[Unit] = Future.unit
     def autopost(bodyarg: String): Future[String] = Future.successful(bodyarg.toUpperCase)
     def singleBodyAutopost(@Body body: String): Future[String] = Future.successful(body.toUpperCase)
+    def fail: Future[Unit] = Future.failed(HttpErrorException(400, "zuo"))
+    def failMore: Future[Unit] = throw HttpErrorException(400, "ZUO")
   }
 
   var trafficLog: String = _
 
   val real: RootApi = new RootApiImpl(0, "")
-  val serverHandle: RawRest.HandleRequest = request => {
-    RawRest.asHandleRequest(real).apply(request).andThenNow {
-      case Success(response) =>
-        trafficLog = s"${repr(request)}\n${repr(response)}\n"
+  val serverHandle: RawRest.HandleRequest = request => callback => {
+    RawRest.asHandleRequest(real).apply(request) { result =>
+      callback(result)
+      result match {
+        case Success(response) =>
+          trafficLog = s"${repr(request)}\n${repr(response)}\n"
+        case _ =>
+      }
     }
   }
 
   val realProxy: RootApi = RawRest.fromHandleRequest[RootApi](serverHandle)
 
   def testRestCall[T](call: RootApi => Future[T], expectedTraffic: String)(implicit pos: Position): Unit = {
-    assert(call(realProxy).futureValue == call(real).futureValue)
+    assert(call(realProxy).wrapToTry.futureValue == call(real).catchFailures.wrapToTry.futureValue)
     assert(trafficLog == expectedTraffic)
   }
 
@@ -117,6 +125,24 @@ class RawRestTest extends FunSuite with ScalaFutures {
       """-> GET /subApi/1/user?query=query&userId=ID
         |<- 200 application/json
         |{"id":"ID","name":"ID-1-query"}
+        |""".stripMargin
+    )
+  }
+
+  test("failing POST") {
+    testRestCall(_.fail,
+      """-> POST /fail
+        |<- 400 text/plain
+        |zuo
+        |""".stripMargin
+    )
+  }
+
+  test("throwing POST") {
+    testRestCall(_.failMore,
+      """-> POST /failMore
+        |<- 400 text/plain
+        |ZUO
         |""".stripMargin
     )
   }

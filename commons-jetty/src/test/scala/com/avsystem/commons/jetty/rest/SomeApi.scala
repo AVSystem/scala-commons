@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jetty.rest
 
-import com.avsystem.commons.rest.{GET, POST, RawRest, DefaultRestApiCompanion}
+import com.avsystem.commons.rest.{DefaultRestApiCompanion, GET, POST}
 
 trait SomeApi {
   @GET
@@ -12,12 +12,6 @@ trait SomeApi {
 }
 
 object SomeApi extends DefaultRestApiCompanion[SomeApi] {
-  def asHandleRequest(real: SomeApi): RawRest.HandleRequest =
-    RawRest.asHandleRequest(real)
-
-  def fromHandleRequest(handle: RawRest.HandleRequest): SomeApi =
-    RawRest.fromHandleRequest[SomeApi](handle)
-
   def format(who: String) = s"Hello, $who!"
   val poison: String = "poison"
 

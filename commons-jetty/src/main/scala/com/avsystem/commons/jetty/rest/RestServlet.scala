@@ -59,17 +59,19 @@ object RestServlet {
     val restRequest = RestRequest(method, RestHeaders(path, headers, query), body)
 
     val asyncContext = request.startAsync()
-    handleRequest(restRequest).catchFailures.andThenNow {
+    RawRest.safeAsync(handleRequest(restRequest)) {
       case Success(restResponse) =>
         response.setStatus(restResponse.code)
         restResponse.body.forNonEmpty { (content, mimeType) =>
           response.setContentType(s"$mimeType;charset=utf-8")
           response.getWriter.write(content)
         }
+        asyncContext.complete()
       case Failure(e) =>
         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500)
         response.setContentType(MimeTypes.Type.TEXT_PLAIN_UTF_8.asString())
         response.getWriter.write(e.getMessage)
-    }.andThenNow { case _ => asyncContext.complete() }
+        asyncContext.complete()
+    }
   }
 }

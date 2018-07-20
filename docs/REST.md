@@ -482,21 +482,29 @@ serializable to `HttpBody`.
 
 ### Result serialization
 
-Result type of every REST API method is "serialized" into `Future[RestResponse]`, which means that
-macro engine looks for an implicit instance of `AsRaw/AsReal[Future[RestResponse], MethodResultType]`.
-`RestResponse` is a simple type that encapsulates HTTP status code and body.
+Result type of every REST API method is "serialized" into `RawRest.Async[RestResponse]`.
+This means that macro engine looks for an implicit instance of `AsRaw/AsReal[RawRest.Async[RestResponse], R]`
+for every HTTP method with result type `R`.
 
-However, `RestResponse` companion object defines a default implicit instance of `AsRaw/Real[Future[RestResponse], Future[T]]`
-which depends on implicit `AsRaw/Real[HttpBody, T]`. This default serialization always uses 200 as a status code
-for successful `Future[T]` values. In practice this means that if your REST API method returns
-`Future[T]` then your `T` type must be serializable to `HttpBody`. Additionally, remember that all types serializable to
-`JsonValue` are automatically serializable to `HttpBody`.
+`RestResponse` itself is a simple class that aggregates HTTP status code and body.
 
-You might want to define custom serialization straight into `Future[RestResponse]` when:
+`RestResponse` companion object defines default implicit instances of `AsRaw/Real[RawRest.Async[RestResponse], Future[R]]`
+which depends on implicit `AsRaw/Real[RestResponse, R]`. This effectively means that if your method returns `Future[R]` then
+it's enough if `R` is serializable as `RestResponse`.
 
-* You don't want to use `Future` in your REST API traits but some other type that encapsulates asynchronous
-  computation, e.g. [Monix Task](https://monix.io/docs/2x/eval/task.html)
-* Result of your HTTP method determines HTTP status code that you want to be sent back to the client.
+However, there are even more defaults provided: if `R` is serializable as `HttpBody` then it's automatically serializable
+as `RestResponse`. This default translation of `HttpBody` into `RestResponse` always uses 200 as a status code.
+When translating `RestResponse` into `HttpBody` and response contains other status code than 200, `HttpErrorException` is thrown
+(which will be subsequently captured into failed `Future`).
+
+Going even further with defaults, all types serializable as `JsonValue` are serializable as `HttpBody`.
+This effectively means that when your method returns `Future[R]` then you can provide serialization
+of `R` into any of the following: `JsonValue`, `HttpBody`, `RestResponse` - depending on how much control
+you need.
+
+Ultimately, if you don't want to use `Future`s, you may replace it with some other asynchronous wrapper type,
+e.g. Monix Task or some IO monad.
+See [supporting result containers other than `Future`](#supporting-result-containers-other-than-future).
 
 ### Customizing serialization
 
@@ -614,6 +622,32 @@ trait MyRestApi { ... }
 object MyRestApi extends RestApiCompanion[EnhancedRestImplicits, MyRestApi](EnhancedRestImplicits)
 ```
 
+#### Supporting result containers other than `Future`
+
+By default, every HTTP method in REST API trait must return its return wrapped into a `Future`.
+However, `Future` is low level and limited in many ways (e.g. there is no way to control when the actual
+asynchronous computation starts). It is possible to use other task-like containers, e.g.
+[Monix Task](https://monix.io/docs/2x/eval/task.html) or [Cats IO](https://typelevel.org/cats-effect/).
+
+In order to do that, you must provide some additional "serialization" implicits which will translate your
+wrapped results into `RawRest.Async[RestResponse]`. Just like when
+[providing serialization for third party type](#providing-serialization-for-third-party-type),
+you should put that implicit into a trait and inject it into REST API trait's companion object.
+
+`Async` is defined as:
+
+```scala
+type Callback[T] = Try[T] => Unit
+type Async[T] => Callback[T] => Unit
+```
+
+In other words, `Async[T]` is a consumer of a callback on value of type `Try[T]`.
+When `Async[T]` is passed a callback, it should start asynchronous computation of value of type `T`
+and notify the callback when its ready (or failed).
+
+For an example on how to implement these transformations, you can look at how it's done for
+`Future`s - see `RestResponse` companion object.
+
 ## API evolution
 
 REST framework gives you a certain amount of guarantees about backwards compatibility of your API.
@@ -647,10 +681,12 @@ reference backend implementation.
 
 ### Handler function
 
-`RawRest` object defines a type alias:
+`RawRest` object defines following type aliases:
 
 ```scala
-type HandleRequest = RestRequest => Future[RestResponse]
+type Callback[T] = Try[T] => Unit
+type Async[T] = Callback[T] => Unit
+type HandleRequest = RestRequest => Async[RestResponse]
 ```
 
 `RestRequest` is a simple, immutable representation of HTTP request. It contains HTTP method, path, URL

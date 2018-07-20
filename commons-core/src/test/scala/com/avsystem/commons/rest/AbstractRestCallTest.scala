@@ -12,8 +12,8 @@ object RestEntity extends HasGenCodec[RestEntity]
 
 trait RestTestApi {
   @GET def trivialGet: Future[Unit]
-
   @GET def failingGet: Future[Unit]
+  @GET def moreFailingGet: Future[Unit]
 
   @GET("a/b") def complexGet(
     @Path("p1") p1: Int, @Path p2: String,
@@ -42,6 +42,7 @@ object RestTestApi extends DefaultRestApiCompanion[RestTestApi] {
   val Impl: RestTestApi = new RestTestApi {
     def trivialGet: Future[Unit] = Future.unit
     def failingGet: Future[Unit] = Future.failed(HttpErrorException(503, "nie"))
+    def moreFailingGet: Future[Unit] = throw HttpErrorException(503, "nie")
     def complexGet(p1: Int, p2: String, h1: Int, h2: String, q1: Int, q2: String): Future[RestEntity] =
       Future.successful(RestEntity(s"$p1-$h1-$q1", s"$p2-$h2-$q2"))
     def multiParamPost(p1: Int, p2: String, h1: Int, h2: String, q1: Int, q2: String, b1: Int, b2: String): Future[RestEntity] =
@@ -72,7 +73,7 @@ abstract class AbstractRestCallTest extends FunSuite with ScalaFutures {
     RawRest.fromHandleRequest[RestTestApi](clientHandle)
 
   def testCall[T](call: RestTestApi => Future[T])(implicit pos: Position): Unit =
-    assert(call(proxy).wrapToTry.futureValue == call(RestTestApi.Impl).wrapToTry.futureValue)
+    assert(call(proxy).wrapToTry.futureValue == call(RestTestApi.Impl).catchFailures.wrapToTry.futureValue)
 
   test("trivial GET") {
     testCall(_.trivialGet)
@@ -80,6 +81,10 @@ abstract class AbstractRestCallTest extends FunSuite with ScalaFutures {
 
   test("failing GET") {
     testCall(_.failingGet)
+  }
+
+  test("more failing GET") {
+    testCall(_.moreFailingGet)
   }
 
   test("complex GET") {

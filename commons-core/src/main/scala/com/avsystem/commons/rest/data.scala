@@ -142,22 +142,46 @@ object RestHeaders {
 }
 
 case class HttpErrorException(code: Int, payload: OptArg[String] = OptArg.Empty)
-  extends RuntimeException(s"HTTP ERROR $code${payload.fold("")(p => s": $p")}") with NoStackTrace
+  extends RuntimeException(s"HTTP ERROR $code${payload.fold("")(p => s": $p")}") with NoStackTrace {
+  def toResponse: RestResponse =
+    RestResponse(code, payload.fold(HttpBody.empty)(HttpBody.plain))
+}
 
 case class RestRequest(method: HttpMethod, headers: RestHeaders, body: HttpBody)
-case class RestResponse(code: Int, body: HttpBody)
+case class RestResponse(code: Int, body: HttpBody) {
+  def toHttpError: HttpErrorException =
+    HttpErrorException(code, body.contentOpt.toOptArg)
+  def ensure200OK: RestResponse =
+    if (code == 200) this else throw toHttpError
+}
+
 object RestResponse {
-  implicit def defaultFutureAsRaw[T](implicit bodyAsRaw: AsRaw[HttpBody, T]): AsRaw[Future[RestResponse], Future[T]] =
-    AsRaw.create(_.transformNow {
-      case Success(v) =>
-        Success(RestResponse(200, bodyAsRaw.asRaw(v)))
-      case Failure(HttpErrorException(code, payload)) =>
-        Success(RestResponse(code, payload.fold(HttpBody.empty)(HttpBody.plain)))
-      case Failure(cause) => Failure(cause)
-    })
-  implicit def defaultFutureAsReal[T](implicit bodyAsReal: AsReal[HttpBody, T]): AsReal[Future[RestResponse], Future[T]] =
-    AsReal.create(_.mapNow {
-      case RestResponse(200, body) => bodyAsReal.asReal(body)
-      case RestResponse(code, body) => throw HttpErrorException(code, body.contentOpt.toOptArg)
-    })
+  class LazyOps(private val resp: () => RestResponse) extends AnyVal {
+    def recoverHttpError: RestResponse = try resp() catch {
+      case e: HttpErrorException => e.toResponse
+    }
+  }
+  implicit def lazyOps(resp: => RestResponse): LazyOps = new LazyOps(() => resp)
+
+  def tryToResponse[T](tr: Try[T])(implicit asResponse: AsRaw[RestResponse, T]): Try[RestResponse] = tr match {
+    case Success(value) => Success(asResponse.asRaw(value))
+    case Failure(e: HttpErrorException) => Success(e.toResponse)
+    case Failure(cause) => Failure(cause)
+  }
+
+  implicit def bodyBasedFromResponse[T](implicit bodyAsReal: AsReal[HttpBody, T]): AsReal[RestResponse, T] =
+    AsReal.create(resp => bodyAsReal.asReal(resp.ensure200OK.body))
+
+  implicit def bodyBasedToResponse[T](implicit bodyAsRaw: AsRaw[HttpBody, T]): AsRaw[RestResponse, T] =
+    AsRaw.create(value => RestResponse(200, bodyAsRaw.asRaw(value)).recoverHttpError)
+
+  implicit def futureToAsyncResp[T](implicit respAsRaw: AsRaw[RestResponse, T]): AsRaw[RawRest.Async[RestResponse], Future[T]] =
+    AsRaw.create(f => callback => f.onCompleteNow(t => callback(tryToResponse(t))))
+
+  implicit def futureFromAsyncResp[T](implicit respAsReal: AsReal[RestResponse, T]): AsReal[RawRest.Async[RestResponse], Future[T]] =
+    AsReal.create { async =>
+      val promise = Promise[T]
+      async(t => promise.complete(t.map(respAsReal.asReal)))
+      promise.future
+    }
 }

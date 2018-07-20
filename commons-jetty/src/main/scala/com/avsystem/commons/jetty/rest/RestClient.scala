@@ -15,40 +15,38 @@ object RestClient {
   def apply[@explicitGenerics Real: RawRest.AsRealRpc : RestMetadata](client: HttpClient, baseUrl: String): Real =
     RawRest.fromHandleRequest[Real](asHandleRequest(client, baseUrl))
 
-  def asHandleRequest(client: HttpClient, baseUrl: String): RawRest.HandleRequest = request => {
-    val path = request.headers.path.iterator
-      .map(pv => URLEncoder.encode(pv.value, "utf-8"))
-      .mkString(baseUrl.ensureSuffix("/"), "/", "")
+  def asHandleRequest(client: HttpClient, baseUrl: String): RawRest.HandleRequest =
+    RawRest.safeHandle(request => callback => {
+      val path = request.headers.path.iterator
+        .map(pv => URLEncoder.encode(pv.value, "utf-8"))
+        .mkString(baseUrl.ensureSuffix("/"), "/", "")
 
-    val httpReq = client.newRequest(baseUrl).method(request.method.toString)
+      val httpReq = client.newRequest(baseUrl).method(request.method.toString)
 
-    httpReq.path(path)
-    request.headers.query.foreach {
-      case (name, QueryValue(value)) => httpReq.param(name, value)
-    }
-    request.headers.headers.foreach {
-      case (name, HeaderValue(value)) => httpReq.header(name, value)
-    }
+      httpReq.path(path)
+      request.headers.query.foreach {
+        case (name, QueryValue(value)) => httpReq.param(name, value)
+      }
+      request.headers.headers.foreach {
+        case (name, HeaderValue(value)) => httpReq.header(name, value)
+      }
 
-    request.body.forNonEmpty { (content, mimeType) =>
-      httpReq.content(new StringContentProvider(s"$mimeType;charset=utf-8", content, StandardCharsets.UTF_8))
-    }
+      request.body.forNonEmpty { (content, mimeType) =>
+        httpReq.content(new StringContentProvider(s"$mimeType;charset=utf-8", content, StandardCharsets.UTF_8))
+      }
 
-    val promise = Promise[RestResponse]
-    httpReq.send(new BufferingResponseListener() {
-      override def onComplete(result: Result): Unit =
-        if (result.isSucceeded) {
-          val httpResp = result.getResponse
-          val body = httpResp.getHeaders.get(HttpHeader.CONTENT_TYPE).opt.fold(HttpBody.empty) { contentType =>
-            HttpBody(getContentAsString(), MimeTypes.getContentTypeWithoutCharset(contentType))
+      httpReq.send(new BufferingResponseListener() {
+        override def onComplete(result: Result): Unit =
+          if (result.isSucceeded) {
+            val httpResp = result.getResponse
+            val body = httpResp.getHeaders.get(HttpHeader.CONTENT_TYPE).opt.fold(HttpBody.empty) { contentType =>
+              HttpBody(getContentAsString(), MimeTypes.getContentTypeWithoutCharset(contentType))
+            }
+            val response = RestResponse(httpResp.getStatus, body)
+            callback(Success(response))
+          } else {
+            callback(Failure(result.getFailure))
           }
-          val response = RestResponse(httpResp.getStatus, body)
-          promise.success(response)
-        } else {
-          promise.failure(result.getFailure)
-        }
+      })
     })
-
-    promise.future
-  }
 }
