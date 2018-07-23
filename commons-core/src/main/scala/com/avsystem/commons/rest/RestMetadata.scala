@@ -190,11 +190,23 @@ case class PrefixMetadata[T](
 case class HttpMethodMetadata[T](
   @reifyAnnot methodTag: HttpMethodTag,
   @composite headersMetadata: RestHeadersMetadata,
-  @multi @tagged[BodyTag] bodyParams: Map[String, BodyParamMetadata[_]]
-) extends RestMethodMetadata[Future[T]] {
+  @multi @tagged[BodyTag] bodyParams: Map[String, BodyParamMetadata[_]],
+  @checked @infer responseType: HttpResponseType[T]
+) extends RestMethodMetadata[T] {
   val method: HttpMethod = methodTag.method
   val singleBody: Boolean = bodyParams.values.exists(_.singleBody)
   def methodPath: List[PathValue] = PathValue.split(methodTag.path)
+}
+
+/**
+  * Currently just a marker typeclass used by [[RestMetadata]] materialization to distinguish between
+  * prefix methods and HTTP methods. In the future this typeclass may contain some additional information, e.g.
+  * type metadata for generating swagger definitions.
+  */
+trait HttpResponseType[T]
+object HttpResponseType {
+  implicit def forFuture[T]: HttpResponseType[Future[T]] =
+    new HttpResponseType[Future[T]] {}
 }
 
 case class RestHeadersMetadata(
