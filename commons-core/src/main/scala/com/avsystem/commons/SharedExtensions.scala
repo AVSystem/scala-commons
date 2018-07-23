@@ -415,6 +415,11 @@ object SharedExtensions extends SharedExtensions {
       case NoValueMarker => Opt.Empty
       case rawValue => Opt(rawValue.asInstanceOf[B])
     }
+
+    def fold[C](a: A)(forEmpty: A => C, forNonEmpty: B => C): C = pf.applyOrElse(a, NoValueMarkerFunc) match {
+      case NoValueMarker => forEmpty(a)
+      case rawValue => forNonEmpty(rawValue.asInstanceOf[B])
+    }
   }
   object PartialFunctionOps {
     private object NoValueMarker

@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package rest
 
+import java.util.concurrent.atomic.AtomicBoolean
+
 import com.avsystem.commons.rpc._
 
 case class RestMethodCall(rpcName: String, pathParams: List[PathValue], metadata: RestMethodMetadata[_])
@@ -100,21 +102,37 @@ object RawRest extends RawRpcCompanion[RawRest] {
     * an instance of `Async` that notifies its callbacks about the failure.
     */
   def safeHandle(handleRequest: HandleRequest): HandleRequest =
-    request => try handleRequest(request) catch {
-      case e: HttpErrorException => successfulAsync(e.toResponse)
-      case NonFatal(t) => failingAsync(t)
+    request => safeAsync(handleRequest(request), {
+      case e: HttpErrorException => Success(e.toResponse)
+      case t => Failure(t)
+    })
+
+  private def guardedAsync[T](async: Async[T], recovery: Throwable => Try[T]): Async[T] = callback => {
+    val called = new AtomicBoolean
+    val guardedCallback: Callback[T] = result =>
+      if (!called.getAndSet(true)) {
+        callback(result) // may possibly throw but better let it fly rather than catch and ignore
+      }
+    try async(guardedCallback) catch {
+      case NonFatal(t) =>
+        // if callback was already called then we can't do much with the failure, rethrow it
+        if (!called.getAndSet(true)) callback(recovery(t)) else throw t
+    }
+  }
+
+  def safeAsync[T](async: => Async[T], recovery: Throwable => Try[T] = Failure(_: Throwable)): Async[T] =
+    try guardedAsync(async, recovery) catch {
+      case NonFatal(t) => readyAsync(recovery(t))
     }
 
-  def safeAsync[T](async: => Async[T]): Async[T] =
-    try async catch {
-      case NonFatal(t) => failingAsync(t)
-    }
+  def readyAsync[T](result: Try[T]): Async[T] =
+    callback => callback(result)
 
   def successfulAsync[T](value: T): Async[T] =
-    callback => callback(Success(value))
+    readyAsync(Success(value))
 
   def failingAsync[T](cause: Throwable): Async[T] =
-    callback => callback(Failure(cause))
+    readyAsync(Failure(cause))
 
   def fromHandleRequest[Real: AsRealRpc : RestMetadata](handleRequest: HandleRequest): Real =
     RawRest.asReal(new DefaultRawRest(RestMetadata[Real], RestHeaders.Empty, handleRequest))
