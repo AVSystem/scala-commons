@@ -67,19 +67,42 @@ trait RawRest {
 
 object RawRest extends RawRpcCompanion[RawRest] {
   /**
-    * The most low-level realization of asynchronous computation:
-    * something that accepts a callback on a value or failure.
+    * A callback that gets notified when value of type `T` gets computed or when computation of that value fails.
+    * Callbacks should never throw exceptions. Preferably, they should be simple notifiers that delegate the real
+    * work somewhere else, e.g. schedule some handling code on a separate executor
+    * (e.g. [[scala.concurrent.ExecutionException ExecutionContext]]).
     */
   type Callback[T] = Try[T] => Unit
+
+  /**
+    * The most low-level, raw type representing an asynchronous, possibly side-effecting operation that yields a
+    * value of type `T` as a result.
+    * `Async` is a consumer of a callback. When a callback is passed to `Async`, it should start the operation
+    * and ultimately notify the callback about the result. Each time the callback is passed, the
+    * entire operation should be repeated, involving all possible side effects. Operation should never be started
+    * without the callback being passed (i.e. there should be no observable side effects before a callback is passed).
+    * Implementation of `Async` should also be prepared to accept a callback before the previous one was notified
+    * about the result (i.e. it should support concurrent execution).
+    */
   type Async[T] = Callback[T] => Unit
+
+  /**
+    * Raw type of an operation that executes a [[RestRequest]]. The operation should be run every time the
+    * resulting `Async` value is passed a callback. It should not be run before that. Each run may involve side
+    * effects, network communication, etc. Runs may be concurrent.
+    * Request handlers should never throw exceptions but rather convert them into failing implementation of
+    * `Async`. One way to do this is by wrapping the handler with [[safeHandle]].
+    */
   type HandleRequest = RestRequest => Async[RestResponse]
 
+  /**
+    * Ensures that all possible exceptions thrown by a request handler are not propagated but converted into
+    * an instance of `Async` that notifies its callbacks about the failure.
+    */
   def safeHandle(handleRequest: HandleRequest): HandleRequest =
     request => try handleRequest(request) catch {
-      case HttpErrorException(code, payload) =>
-        successfulAsync(RestResponse(code, payload.fold(HttpBody.empty)(HttpBody.plain)))
-      case NonFatal(t) =>
-        failingAsync(t)
+      case e: HttpErrorException => successfulAsync(e.toResponse)
+      case NonFatal(t) => failingAsync(t)
     }
 
   def safeAsync[T](async: => Async[T]): Async[T] =

@@ -634,19 +634,26 @@ wrapped results into `RawRest.Async[RestResponse]`. Just like when
 [providing serialization for third party type](#providing-serialization-for-third-party-type),
 you should put that implicit into a trait and inject it into REST API trait's companion object.
 
-`Async` is defined as:
+Additionally, you should provide an implicit instance of `HttpResponseType`, similar to the one defined
+in its companion object for `Future`s. This drives materialization of `RestMetadata` in a similar way
+`AsRaw` and `AsReal` drive materialization of real<->raw interface translation.
+
+Here's an example that shows what exactly must be implemented to add Monix Task support:
 
 ```scala
-type Callback[T] = Try[T] => Unit
-type Async[T] => Callback[T] => Unit
+import monix.eval.Task
+import com.avsystem.commons.rest.RawRest
+
+trait MonixTaskRestImplicits {
+  implicit def taskAsAsync[T](implicit asResp: AsRaw[RestResponse, T]): AsRaw[RawRest.Async[RestResponse], Task[T]] =
+    AsRaw.create(...)
+  implicit def asyncAsTask[T](implicit fromResp: AsReal[RestResponse, T]): AsReal[RawRest.Async[RestResponse], Task[T]] =
+    AsReal.create(...)
+  implicit def taskResponseType[T]: HttpResponseType[Task[T]] =
+    new HttpResponseType[Task[T]] {}
+}
+object MonixTaskRestImplicits
 ```
-
-In other words, `Async[T]` is a consumer of a callback on value of type `Try[T]`.
-When `Async[T]` is passed a callback, it should start asynchronous computation of value of type `T`
-and notify the callback when its ready (or failed).
-
-For an example on how to implement these transformations, you can look at how it's done for
-`Future`s - see `RestResponse` companion object.
 
 ## API evolution
 
@@ -715,4 +722,5 @@ method calls into invocations of provided `HandleRequest` function.
 Therefore, the only thing you need to to in order to wrap a native HTTP client into a REST API trait instance is
 to turn this native HTTP client into a `HandleRequest` function.
 
-See Jetty-based [`RestClient`](../commons-jetty/src/main/scala/com/avsystem/commons/jetty/rest/RestClient.scala) for an example implementation.
+See Jetty-based [`RestClient`](../commons-jetty/src/main/scala/com/avsystem/commons/jetty/rest/RestClient.scala) for
+an example implementation.
