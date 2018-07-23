@@ -40,6 +40,7 @@ The `commons-jetty` module provides Jetty-based implementations for JVM.
     - [Plugging in entirely custom serialization](#plugging-in-entirely-custom-serialization)
     - [Customizing serialization for your own type](#customizing-serialization-for-your-own-type)
     - [Providing serialization for third party type](#providing-serialization-for-third-party-type)
+    - [Supporting result containers other than `Future`](#supporting-result-containers-other-than-future)
 - [API evolution](#api-evolution)
 - [Implementing backends](#implementing-backends)
   - [Handler function](#handler-function)
