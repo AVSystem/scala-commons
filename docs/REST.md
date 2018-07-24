@@ -230,6 +230,9 @@ method into a HTTP REST call.
   by default translates it into JSON and creates a `200 OK` response with `application/json`
   content type. If response type is `Unit` (method result type is `Future[Unit]`) then empty
   body is created when serializing and body is ignored when deseriarlizing.
+* Each method may also throw a `HttpErrorException` (or return failed `Future`). It will be
+  automatically translated into appropriate HTTP error response with given status code and
+  plaintext message.
 
 For details on how exactly serialization works and how to customize it, see [serialization](#serialization).
 Note that if you don't want to use `Future`, this customization also allows you to use other wrappers for method result types.
@@ -483,13 +486,14 @@ serializable to `HttpBody`.
 
 ### Result serialization
 
-Result type of every REST API method is "serialized" into `RawRest.Async[RestResponse]`.
-This means that macro engine looks for an implicit instance of `AsRaw/AsReal[RawRest.Async[RestResponse], R]`
+Result type of every REST API method is wrapped into `Try` (in case the method throws an exception)
+and "serialized" into `RawRest.Async[RestResponse]`.
+This means that macro engine looks for an implicit instance of `AsRaw/AsReal[RawRest.Async[RestResponse], Try[R]]`
 for every HTTP method with result type `R`.
 
 `RestResponse` itself is a simple class that aggregates HTTP status code and body.
 
-`RestResponse` companion object defines default implicit instances of `AsRaw/Real[RawRest.Async[RestResponse], Future[R]]`
+`RestResponse` companion object defines default implicit instances of `AsRaw/Real[RawRest.Async[RestResponse], Try[Future[R]]]`
 which depends on implicit `AsRaw/Real[RestResponse, R]`. This effectively means that if your method returns `Future[R]` then
 it's enough if `R` is serializable as `RestResponse`.
 
@@ -635,6 +639,9 @@ wrapped results into `RawRest.Async[RestResponse]`. Just like when
 [providing serialization for third party type](#providing-serialization-for-third-party-type),
 you should put that implicit into a trait and inject it into REST API trait's companion object.
 
+Also note that the macro engine re-wraps the already wrapped result into `Try` in case some REST API method throws an
+exception. Therefore, if you want your methods to return `Task[T]` then you need serialization for `Try[Task[T]]`.
+
 Additionally, you should provide an implicit instance of `HttpResponseType`, similar to the one defined
 in its companion object for `Future`s. This drives materialization of `RestMetadata` in a similar way
 `AsRaw` and `AsReal` drive materialization of real<->raw interface translation.
@@ -646,9 +653,9 @@ import monix.eval.Task
 import com.avsystem.commons.rest.RawRest
 
 trait MonixTaskRestImplicits {
-  implicit def taskAsAsync[T](implicit asResp: AsRaw[RestResponse, T]): AsRaw[RawRest.Async[RestResponse], Task[T]] =
+  implicit def taskAsAsync[T](implicit asResp: AsRaw[RestResponse, T]): AsRaw[RawRest.Async[RestResponse], Try[Task[T]]] =
     AsRaw.create(...)
-  implicit def asyncAsTask[T](implicit fromResp: AsReal[RestResponse, T]): AsReal[RawRest.Async[RestResponse], Task[T]] =
+  implicit def asyncAsTask[T](implicit fromResp: AsReal[RestResponse, T]): AsReal[RawRest.Async[RestResponse], Try[Task[T]]] =
     AsReal.create(...)
   implicit def taskResponseType[T]: HttpResponseType[Task[T]] =
     new HttpResponseType[Task[T]] {}

@@ -272,6 +272,15 @@ final class encoded extends RpcEncoding
 final class verbatim extends RpcEncoding
 
 /**
+  * When raw method is annotated as `@tried`, invocations of real methods matching that raw method will be
+  * automatically wrapped into `Try`. Consequently, all real methods will be treated as if their result
+  * type was `Try[Result]` instead of actual `Result`. For example, if raw method is [[encoded]] and its
+  * (raw) result is `Raw` then macro engine will search for implicit `AsRaw/Real[Raw,Try[Result]]` instead of just
+  * `AsRaw/Real[Raw,Result]`
+  */
+final class tried extends RawMethodAnnotation
+
+/**
   * Method tagging lets you have more explicit control over which raw methods can match which real methods.
   * Example:
   *

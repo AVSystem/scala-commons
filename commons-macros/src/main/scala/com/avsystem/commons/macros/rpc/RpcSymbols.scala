@@ -393,6 +393,7 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def fallbackTag: FallbackTag = owner.fallbackMethodTag
 
     val arity: RpcMethodArity = RpcMethodArity.fromAnnotation(this)
+    val tried: Boolean = annot(TriedAT).nonEmpty
 
     val verbatimResult: Boolean =
       annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)

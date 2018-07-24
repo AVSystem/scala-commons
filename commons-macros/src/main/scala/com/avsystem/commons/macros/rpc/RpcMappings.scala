@@ -311,18 +311,24 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
          """
     }
 
+    private def maybeTry(tree: Tree): Tree =
+      if (rawMethod.tried) q"$TryObj($tree)" else tree
+
+    private def maybeUntry(tree: Tree): Tree =
+      if (rawMethod.tried) q"$tree.get" else tree
+
     def realImpl: Tree =
       q"""
         def ${realMethod.name}(...${realMethod.paramDecls}): ${realMethod.resultType} = {
           ..${rawMethod.rawParams.map(rp => rp.localValueDecl(rawValueTree(rp)))}
-          ${resultEncoding.applyAsReal(q"${rawMethod.owner.safeName}.${rawMethod.name}(...${rawMethod.argLists})")}
+          ${maybeUntry(resultEncoding.applyAsReal(q"${rawMethod.owner.safeName}.${rawMethod.name}(...${rawMethod.argLists})"))}
         }
        """
 
     def rawCaseImpl: Tree =
       q"""
         ..${paramMappings.values.filterNot(_.rawParam.auxiliary).flatMap(_.realDecls)}
-        ${resultEncoding.applyAsRaw(q"${realMethod.owner.safeName}.${realMethod.name}(...${realMethod.argLists})")}
+        ${resultEncoding.applyAsRaw(maybeTry(q"${realMethod.owner.safeName}.${realMethod.name}(...${realMethod.argLists})"))}
       """
   }
 
@@ -357,19 +363,21 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
     private def mappingRes(rawMethod: RawMethod, matchedMethod: MatchedMethod): Res[MethodMapping] = {
       val realMethod = matchedMethod.real
+      val realResultType =
+        if (rawMethod.tried) getType(tq"$TryCls[${realMethod.resultType}]") else realMethod.resultType
       def resultEncoding: Res[RpcEncoding] =
         if (rawMethod.verbatimResult) {
-          if (rawMethod.resultType =:= realMethod.resultType)
+          if (rawMethod.resultType =:= realResultType)
             Ok(RpcEncoding.Verbatim(rawMethod.resultType))
           else
-            Fail(s"real result type ${realMethod.resultType} does not match raw result type ${rawMethod.resultType}")
+            Fail(s"real result type $realResultType does not match raw result type ${rawMethod.resultType}")
         } else {
-          val e = RpcEncoding.RealRawEncoding(realMethod.resultType, rawMethod.resultType, None)
+          val e = RpcEncoding.RealRawEncoding(realResultType, rawMethod.resultType, None)
           if ((!forAsRaw || e.asRawName != termNames.EMPTY) && (!forAsReal || e.asRealName != termNames.EMPTY))
             Ok(e)
           else
             Fail(s"no encoding/decoding found between real result type " +
-              s"${realMethod.resultType} and raw result type ${rawMethod.resultType}")
+              s"$realResultType and raw result type ${rawMethod.resultType}")
         }
 
       for {

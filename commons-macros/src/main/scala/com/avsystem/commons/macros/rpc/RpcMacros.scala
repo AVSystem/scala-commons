@@ -38,6 +38,7 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val RpcEncodingAT: Type = getType(tq"$RpcPackage.RpcEncoding")
   val VerbatimAT: Type = getType(tq"$RpcPackage.verbatim")
   val AuxiliaryAT: Type = getType(tq"$RpcPackage.auxiliary")
+  val TriedAT: Type = getType(tq"$RpcPackage.tried")
   val MethodTagAT: Type = getType(tq"$RpcPackage.methodTag[_]")
   val ParamTagAT: Type = getType(tq"$RpcPackage.paramTag[_]")
   val TaggedAT: Type = getType(tq"$RpcPackage.tagged[_]")

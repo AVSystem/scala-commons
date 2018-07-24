@@ -15,6 +15,8 @@ object AsRaw {
       def asRaw(real: Real): Raw = asRawFun(real)
     }
   implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
+  implicit def forTry[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Try[Raw], Try[Real]] =
+    AsRaw.create(_.map(asRaw.asRaw))
   implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsRaw[Raw, Real]]): AsRaw[Raw, Real] = fallback.value
   def materializeForRpc[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
 }
@@ -31,6 +33,8 @@ object AsReal {
       def asReal(raw: Raw): Real = asRealFun(raw)
     }
   implicit def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
+  implicit def forTry[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Try[Raw], Try[Real]] =
+    AsReal.create(_.map(asReal.asReal))
   implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsReal[Raw, Real]]): AsReal[Raw, Real] = fallback.value
   def materializeForRpc[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsReal[Raw, Real]
 }

@@ -163,10 +163,11 @@ object RestResponse {
   }
   implicit def lazyOps(resp: => RestResponse): LazyOps = new LazyOps(() => resp)
 
-  def tryToResponse[T](tr: Try[T])(implicit asResponse: AsRaw[RestResponse, T]): Try[RestResponse] = tr match {
-    case Success(value) => Success(asResponse.asRaw(value))
-    case Failure(e: HttpErrorException) => Success(e.toResponse)
-    case Failure(cause) => Failure(cause)
+  implicit class TryOps(private val respTry: Try[RestResponse]) extends AnyVal {
+    def recoverHttpError: Try[RestResponse] = respTry match {
+      case Failure(e: HttpErrorException) => Success(e.toResponse)
+      case _ => respTry
+    }
   }
 
   implicit def bodyBasedFromResponse[T](implicit bodyAsReal: AsReal[HttpBody, T]): AsReal[RestResponse, T] =
@@ -175,13 +176,20 @@ object RestResponse {
   implicit def bodyBasedToResponse[T](implicit bodyAsRaw: AsRaw[HttpBody, T]): AsRaw[RestResponse, T] =
     AsRaw.create(value => RestResponse(200, bodyAsRaw.asRaw(value)).recoverHttpError)
 
-  implicit def futureToAsyncResp[T](implicit respAsRaw: AsRaw[RestResponse, T]): AsRaw[RawRest.Async[RestResponse], Future[T]] =
-    AsRaw.create(f => callback => f.onCompleteNow(t => callback(tryToResponse(t))))
+  implicit def futureToAsyncResp[T](
+    implicit respAsRaw: AsRaw[RestResponse, T]
+  ): AsRaw[RawRest.Async[RestResponse], Try[Future[T]]] =
+    AsRaw.create { triedFuture =>
+      val future = triedFuture.fold(Future.failed, identity)
+      callback => future.onCompleteNow(t => callback(t.map(respAsRaw.asRaw).recoverHttpError))
+    }
 
-  implicit def futureFromAsyncResp[T](implicit respAsReal: AsReal[RestResponse, T]): AsReal[RawRest.Async[RestResponse], Future[T]] =
+  implicit def futureFromAsyncResp[T](
+    implicit respAsReal: AsReal[RestResponse, T]
+  ): AsReal[RawRest.Async[RestResponse], Try[Future[T]]] =
     AsReal.create { async =>
       val promise = Promise[T]
       async(t => promise.complete(t.map(respAsReal.asReal)))
-      promise.future
+      Success(promise.future)
     }
 }

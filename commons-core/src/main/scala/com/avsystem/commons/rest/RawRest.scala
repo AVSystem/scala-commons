@@ -16,44 +16,58 @@ case class ResolvedPath(prefixes: List[RestMethodCall], finalCall: RestMethodCal
 
 @methodTag[RestMethodTag]
 trait RawRest {
+
+  import RawRest._
+
   @multi
+  @tried
   @tagged[Prefix](whenUntagged = new Prefix)
   @paramTag[RestParamTag](defaultTag = new Path)
-  def prefix(@methodName name: String, @composite headers: RestHeaders): RawRest
+  def prefix(@methodName name: String, @composite headers: RestHeaders): Try[RawRest]
 
   @multi
+  @tried
   @tagged[GET]
   @paramTag[RestParamTag](defaultTag = new Query)
-  def get(@methodName name: String, @composite headers: RestHeaders): RawRest.Async[RestResponse]
+  def get(@methodName name: String, @composite headers: RestHeaders): Async[RestResponse]
 
   @multi
+  @tried
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @paramTag[RestParamTag](defaultTag = new JsonBodyParam)
   def handle(@methodName name: String, @composite headers: RestHeaders,
-    @multi @tagged[JsonBodyParam] body: NamedParams[JsonValue]): RawRest.Async[RestResponse]
+    @multi @tagged[JsonBodyParam] body: NamedParams[JsonValue]): Async[RestResponse]
 
   @multi
+  @tried
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @paramTag[RestParamTag]
   def handleSingle(@methodName name: String, @composite headers: RestHeaders,
-    @encoded @tagged[Body] body: HttpBody): RawRest.Async[RestResponse]
+    @encoded @tagged[Body] body: HttpBody): Async[RestResponse]
 
-  def asHandleRequest(metadata: RestMetadata[_]): RawRest.HandleRequest = {
+  def asHandleRequest(metadata: RestMetadata[_]): HandleRequest = {
     metadata.ensureUnambiguousPaths()
     metadata.ensureUniqueParams(Nil)
     RawRest.safeHandle { case RestRequest(method, headers, body) =>
       metadata.resolvePath(method, headers.path).toList match {
         case List(ResolvedPath(prefixes, RestMethodCall(finalRpcName, finalPathParams, _), singleBody)) =>
-          val finalRawRest = prefixes.foldLeft(this) {
-            case (rawRest, RestMethodCall(rpcName, pathParams, _)) =>
-              rawRest.prefix(rpcName, headers.copy(path = pathParams))
+          def resolveCall(rawRest: RawRest, prefixes: List[RestMethodCall]): Async[RestResponse] = prefixes match {
+            case RestMethodCall(rpcName, pathParams, _) :: tail =>
+              rawRest.prefix(rpcName, headers.copy(path = pathParams)) match {
+                case Success(nextRawRest) => resolveCall(nextRawRest, tail)
+                case Failure(e: HttpErrorException) => RawRest.successfulAsync(e.toResponse)
+                case Failure(cause) => RawRest.failingAsync(cause)
+              }
+            case Nil =>
+              val finalHeaders = headers.copy(path = finalPathParams)
+              if (method == HttpMethod.GET)
+                rawRest.get(finalRpcName, finalHeaders)
+              else if (singleBody)
+                rawRest.handleSingle(finalRpcName, finalHeaders, body)
+              else
+                rawRest.handle(finalRpcName, finalHeaders, HttpBody.parseJsonBody(body))
           }
-          val finalHeaders = headers.copy(path = finalPathParams)
-
-          if (method == HttpMethod.GET) finalRawRest.get(finalRpcName, finalHeaders)
-          else if (singleBody) finalRawRest.handleSingle(finalRpcName, finalHeaders, body)
-          else finalRawRest.handle(finalRpcName, finalHeaders, HttpBody.parseJsonBody(body))
-
+          resolveCall(this, prefixes)
         case Nil =>
           val pathStr = headers.path.iterator.map(_.value).mkString("/")
           RawRest.successfulAsync(RestResponse(404, HttpBody.plain(s"path $pathStr not found")))
@@ -102,12 +116,9 @@ object RawRest extends RawRpcCompanion[RawRest] {
     * an instance of `Async` that notifies its callbacks about the failure.
     */
   def safeHandle(handleRequest: HandleRequest): HandleRequest =
-    request => safeAsync(handleRequest(request), {
-      case e: HttpErrorException => Success(e.toResponse)
-      case t => Failure(t)
-    })
+    request => safeAsync(handleRequest(request))
 
-  private def guardedAsync[T](async: Async[T], recovery: Throwable => Try[T]): Async[T] = callback => {
+  private def guardedAsync[T](async: Async[T]): Async[T] = callback => {
     val called = new AtomicBoolean
     val guardedCallback: Callback[T] = result =>
       if (!called.getAndSet(true)) {
@@ -116,13 +127,13 @@ object RawRest extends RawRpcCompanion[RawRest] {
     try async(guardedCallback) catch {
       case NonFatal(t) =>
         // if callback was already called then we can't do much with the failure, rethrow it
-        if (!called.getAndSet(true)) callback(recovery(t)) else throw t
+        if (!called.getAndSet(true)) callback(Failure(t)) else throw t
     }
   }
 
-  def safeAsync[T](async: => Async[T], recovery: Throwable => Try[T] = Failure(_: Throwable)): Async[T] =
-    try guardedAsync(async, recovery) catch {
-      case NonFatal(t) => readyAsync(recovery(t))
+  def safeAsync[T](async: => Async[T]): Async[T] =
+    try guardedAsync(async) catch {
+      case NonFatal(t) => failingAsync(t)
     }
 
   def readyAsync[T](result: Try[T]): Async[T] =
@@ -143,12 +154,11 @@ object RawRest extends RawRpcCompanion[RawRest] {
   private final class DefaultRawRest(metadata: RestMetadata[_], prefixHeaders: RestHeaders, handleRequest: HandleRequest)
     extends RawRest {
 
-    def prefix(name: String, headers: RestHeaders): RawRest = {
-      val prefixMeta = metadata.prefixMethods.getOrElse(name,
-        throw new RestException(s"no such prefix method: $name"))
-      val newHeaders = prefixHeaders.append(prefixMeta, headers)
-      new DefaultRawRest(prefixMeta.result.value, newHeaders, handleRequest)
-    }
+    def prefix(name: String, headers: RestHeaders): Try[RawRest] =
+      metadata.prefixMethods.get(name).map { prefixMeta =>
+        val newHeaders = prefixHeaders.append(prefixMeta, headers)
+        Success(new DefaultRawRest(prefixMeta.result.value, newHeaders, handleRequest))
+      } getOrElse Failure(new RestException(s"no such prefix method: $name"))
 
     def get(name: String, headers: RestHeaders): Async[RestResponse] =
       handleSingle(name, headers, HttpBody.Empty)
@@ -156,12 +166,11 @@ object RawRest extends RawRpcCompanion[RawRest] {
     def handle(name: String, headers: RestHeaders, body: NamedParams[JsonValue]): Async[RestResponse] =
       handleSingle(name, headers, HttpBody.createJsonBody(body))
 
-    def handleSingle(name: String, headers: RestHeaders, body: HttpBody): Async[RestResponse] = {
-      val methodMeta = metadata.httpMethods.getOrElse(name,
-        throw new RestException(s"no such HTTP method: $name"))
-      val newHeaders = prefixHeaders.append(methodMeta, headers)
-      handleRequest(RestRequest(methodMeta.method, newHeaders, body))
-    }
+    def handleSingle(name: String, headers: RestHeaders, body: HttpBody): Async[RestResponse] =
+      metadata.httpMethods.get(name).map { methodMeta =>
+        val newHeaders = prefixHeaders.append(methodMeta, headers)
+        handleRequest(RestRequest(methodMeta.method, newHeaders, body))
+      } getOrElse RawRest.failingAsync(new RestException(s"no such HTTP method: $name"))
   }
 }
 
