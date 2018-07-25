@@ -198,9 +198,9 @@
                         <a class="trait" href="Input.html" title="Represents an abstract source from which a value may be deserialized (read)."></a>
                         <a href="Input.html" title="Represents an abstract source from which a value may be deserialized (read).">Input</a>
                       </li><li class="current-entities indented4">
-                        <a class="object" href="InputType$.html" title=""></a>
-                        <a class="trait" href="InputType.html" title="Represents the type of value inside and Input that can be read from it."></a>
-                        <a href="InputType.html" title="Represents the type of value inside and Input that can be read from it.">InputType</a>
+                        <span class="separator"></span>
+                        <a class="object" href="IsoInstant$.html" title=""></a>
+                        <a href="IsoInstant$.html" title="">IsoInstant</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="ListInput.html" title="Represents an abstract source of sequence of values that can be deserialized."></a>
@@ -364,7 +364,8 @@ unintended default parameter values (i.e. you want a default value *only* for de
 <span class="kw">object</span> HasDefault <span class="kw">extends</span> HasGenCodec[HasDefault]</pre><p>If a parameter has both Scala-level default value and is annotated with <code>@whenAbsent</code> then value from annotation
 takes priority. You can use this to have different source-level default value and different
 default value for deserialization. You can also leverage this to &quot;remove&quot; default value for deserialization:</p><pre><span class="kw">case</span> <span class="kw">class</span> HasNoDefault(@whenAbsent(<span class="kw">throw</span> <span class="kw">new</span> Exception) str: <span class="std">String</span> = <span class="lit">"default"</span>)
-<span class="kw">object</span> HasDefault <span class="kw">extends</span> HasGenCodec[HasDefault]</pre></div><div class="toggleContainer block">
+<span class="kw">object</span> HasDefault <span class="kw">extends</span> HasGenCodec[HasDefault]</pre><p>NOTE: <a href="" class="extype" name="com.avsystem.commons.serialization.whenAbsent">whenAbsent</a> also works for method parameters in RPC framework.
+</p></div><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>

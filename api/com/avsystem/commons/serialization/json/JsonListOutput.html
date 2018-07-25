@@ -154,6 +154,14 @@
                         <a class="trait" href="BaseJsonOutput.html" title=""></a>
                         <a href="BaseJsonOutput.html" title="">BaseJsonOutput</a>
                       </li><li class="current-entities indented5">
+                        <a class="object" href="JsonBinaryFormat$.html" title=""></a>
+                        <a class="trait" href="JsonBinaryFormat.html" title="Specifies format used by JsonStringOutput.writeBinary / JsonStringInput.readBinary to represent byte arrays."></a>
+                        <a href="JsonBinaryFormat.html" title="Specifies format used by JsonStringOutput.writeBinary / JsonStringInput.readBinary to represent byte arrays.">JsonBinaryFormat</a>
+                      </li><li class="current-entities indented5">
+                        <a class="object" href="JsonDateFormat$.html" title=""></a>
+                        <a class="trait" href="JsonDateFormat.html" title="Specifies format used by JsonStringOutput.writeTimestamp / JsonStringInput.readTimestamp to represent timestamps."></a>
+                        <a href="JsonDateFormat.html" title="Specifies format used by JsonStringOutput.writeTimestamp / JsonStringInput.readTimestamp to represent timestamps.">JsonDateFormat</a>
+                      </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="JsonListInput.html" title=""></a>
                         <a href="JsonListInput.html" title="">JsonListInput</a>
@@ -169,6 +177,10 @@
                         <span class="separator"></span>
                         <a class="class" href="JsonObjectOutput.html" title=""></a>
                         <a href="JsonObjectOutput.html" title="">JsonObjectOutput</a>
+                      </li><li class="current-entities indented5">
+                        <a class="object" href="JsonOptions$.html" title=""></a>
+                        <a class="class" href="JsonOptions.html" title="Adjusts format of JSON produced by JsonStringOutput."></a>
+                        <a href="JsonOptions.html" title="Adjusts format of JSON produced by JsonStringOutput.">JsonOptions</a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
                         <a class="class" href="JsonReader.html" title=""></a>
@@ -208,7 +220,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">JsonListOutput</span><span class="result"> extends <a href="../ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a></span>
+        <span class="name">JsonListOutput</span><span class="result"> extends <a href="BaseJsonOutput.html" class="extype" name="com.avsystem.commons.serialization.json.BaseJsonOutput">BaseJsonOutput</a> with <a href="../ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a></span>
       </span>
       </h4>
 
@@ -217,7 +229,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="../ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a>, <a href="../SequentialOutput.html" class="extype" name="com.avsystem.commons.serialization.SequentialOutput">SequentialOutput</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="../ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a>, <a href="../SequentialOutput.html" class="extype" name="com.avsystem.commons.serialization.SequentialOutput">SequentialOutput</a>, <a href="BaseJsonOutput.html" class="extype" name="com.avsystem.commons.serialization.json.BaseJsonOutput">BaseJsonOutput</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -243,7 +255,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.avsystem.commons.serialization.json.JsonListOutput"><span>JsonListOutput</span></li><li class="in" name="com.avsystem.commons.serialization.ListOutput"><span>ListOutput</span></li><li class="in" name="com.avsystem.commons.serialization.SequentialOutput"><span>SequentialOutput</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.avsystem.commons.serialization.json.JsonListOutput"><span>JsonListOutput</span></li><li class="in" name="com.avsystem.commons.serialization.ListOutput"><span>ListOutput</span></li><li class="in" name="com.avsystem.commons.serialization.SequentialOutput"><span>SequentialOutput</span></li><li class="in" name="com.avsystem.commons.serialization.json.BaseJsonOutput"><span>BaseJsonOutput</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -264,9 +276,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.avsystem.commons.serialization.json.JsonListOutput#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(builder:com.avsystem.commons.JStringBuilder):com.avsystem.commons.serialization.json.JsonListOutput"></a><a id="&lt;init&gt;:JsonListOutput"></a>
+      <a id="&lt;init&gt;(builder:com.avsystem.commons.JStringBuilder,options:com.avsystem.commons.serialization.json.JsonOptions,depth:Int):com.avsystem.commons.serialization.json.JsonListOutput"></a><a id="&lt;init&gt;:JsonListOutput"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/serialization/json/JsonListOutput.html#&lt;init&gt;(builder:com.avsystem.commons.JStringBuilder):com.avsystem.commons.serialization.json.JsonListOutput" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/serialization/json/JsonListOutput.html#&lt;init&gt;(builder:com.avsystem.commons.JStringBuilder,options:com.avsystem.commons.serialization.json.JsonOptions,depth:Int):com.avsystem.commons.serialization.json.JsonListOutput" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -275,7 +287,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">JsonListOutput</span><span class="params">(<span name="builder">builder: <a href="../../index.html#JStringBuilder=StringBuilder" class="extmbr" name="com.avsystem.commons.JStringBuilder">commons.JStringBuilder</a></span>)</span>
+        <span class="name">JsonListOutput</span><span class="params">(<span name="builder">builder: <a href="../../index.html#JStringBuilder=StringBuilder" class="extmbr" name="com.avsystem.commons.JStringBuilder">commons.JStringBuilder</a></span>, <span name="options">options: <a href="JsonOptions.html" class="extype" name="com.avsystem.commons.serialization.json.JsonOptions">JsonOptions</a></span>, <span name="depth">depth: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span>
       </span>
       
       
@@ -488,6 +500,22 @@ have been written. This method MUST always be called after list/object writing h
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.json.BaseJsonOutput#indent" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="indent(builder:com.avsystem.commons.JStringBuilder,indentSize:com.avsystem.commons.OptArg[Int],depth:Int):Unit"></a><a id="indent(commons.JStringBuilder,commons.OptArg[Int],Int):Unit"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/serialization/json/JsonListOutput.html#indent(builder:com.avsystem.commons.JStringBuilder,indentSize:com.avsystem.commons.OptArg[Int],depth:Int):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">indent</span><span class="params">(<span name="builder">builder: <a href="../../index.html#JStringBuilder=StringBuilder" class="extmbr" name="com.avsystem.commons.JStringBuilder">commons.JStringBuilder</a></span>, <span name="indentSize">indentSize: <a href="../../index.html#OptArg[+T]=com.avsystem.commons.misc.OptArg[T]" class="extmbr" name="com.avsystem.commons.OptArg">commons.OptArg</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>]</span>, <span name="depth">depth: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="BaseJsonOutput.html" class="extype" name="com.avsystem.commons.serialization.json.BaseJsonOutput">BaseJsonOutput</a></dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -678,6 +706,22 @@ This <a href="../Output.html" class="extype" name="com.avsystem.commons.serializ
 before calling <a href="#writeElement():com.avsystem.commons.serialization.json.JsonStringOutput" class="extmbr" name="com.avsystem.commons.serialization.json.JsonListOutput#writeElement">writeElement</a> next time. That means, one can NOT simultaneously use multiple instances of
 <a href="../Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a> returned by subsequent calls to this method.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.serialization.json.JsonListOutput">JsonListOutput</a> → <a href="../ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.json.BaseJsonOutput#writeJsonString" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="writeJsonString(builder:com.avsystem.commons.JStringBuilder,str:String,ascii:Boolean):Unit"></a><a id="writeJsonString(commons.JStringBuilder,String,Boolean):Unit"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/serialization/json/JsonListOutput.html#writeJsonString(builder:com.avsystem.commons.JStringBuilder,str:String,ascii:Boolean):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">writeJsonString</span><span class="params">(<span name="builder">builder: <a href="../../index.html#JStringBuilder=StringBuilder" class="extmbr" name="com.avsystem.commons.JStringBuilder">commons.JStringBuilder</a></span>, <span name="str">str: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ascii">ascii: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="BaseJsonOutput.html" class="extype" name="com.avsystem.commons.serialization.json.BaseJsonOutput">BaseJsonOutput</a></dd></dl></div>
     </li>
               </ol>
             </div>
@@ -692,6 +736,8 @@ before calling <a href="#writeElement():com.avsystem.commons.serialization.json.
               <h3>Inherited from <a href="../ListOutput.html" class="extype" name="com.avsystem.commons.serialization.ListOutput">ListOutput</a></h3>
             </div><div class="parent" name="com.avsystem.commons.serialization.SequentialOutput">
               <h3>Inherited from <a href="../SequentialOutput.html" class="extype" name="com.avsystem.commons.serialization.SequentialOutput">SequentialOutput</a></h3>
+            </div><div class="parent" name="com.avsystem.commons.serialization.json.BaseJsonOutput">
+              <h3>Inherited from <a href="BaseJsonOutput.html" class="extype" name="com.avsystem.commons.serialization.json.BaseJsonOutput">BaseJsonOutput</a></h3>
             </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">

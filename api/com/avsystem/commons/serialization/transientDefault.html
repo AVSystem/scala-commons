@@ -198,9 +198,9 @@
                         <a class="trait" href="Input.html" title="Represents an abstract source from which a value may be deserialized (read)."></a>
                         <a href="Input.html" title="Represents an abstract source from which a value may be deserialized (read).">Input</a>
                       </li><li class="current-entities indented4">
-                        <a class="object" href="InputType$.html" title=""></a>
-                        <a class="trait" href="InputType.html" title="Represents the type of value inside and Input that can be read from it."></a>
-                        <a href="InputType.html" title="Represents the type of value inside and Input that can be read from it.">InputType</a>
+                        <span class="separator"></span>
+                        <a class="object" href="IsoInstant$.html" title=""></a>
+                        <a href="IsoInstant$.html" title="">IsoInstant</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="ListInput.html" title="Represents an abstract source of sequence of values that can be deserialized."></a>
@@ -364,7 +364,7 @@ it's equal to the default value.</p><p>For example:</p><pre><span class="kw">cas
   <span class="kw">implicit</span> <span class="kw">val</span> codec = GenCodec.auto[Something]
 }</pre><p><code>GenCodec.write(someOutput, Something(&quot;lol&quot;, 10))</code> would yield object <code>{&quot;str&quot;: &quot;lol&quot;, &quot;int&quot;: 10}</code> but
 <code>GenCodec.write(someOutput, Something(&quot;lol&quot;, 42))</code> would yield object <code>{&quot;str&quot;: &quot;lol&quot;}</code> because the value of <code>int</code>
-is the same as the default value.
+is the same as the default value.</p><p>NOTE: <a href="" class="extype" name="com.avsystem.commons.serialization.transientDefault">transientDefault</a> also works for method parameters in RPC framework.
 </p></div><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes

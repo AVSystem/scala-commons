@@ -198,9 +198,9 @@
                         <a class="trait" href="Input.html" title="Represents an abstract source from which a value may be deserialized (read)."></a>
                         <a href="Input.html" title="Represents an abstract source from which a value may be deserialized (read).">Input</a>
                       </li><li class="current-entities indented4">
-                        <a class="object" href="InputType$.html" title=""></a>
-                        <a class="trait" href="InputType.html" title="Represents the type of value inside and Input that can be read from it."></a>
-                        <a href="InputType.html" title="Represents the type of value inside and Input that can be read from it.">InputType</a>
+                        <span class="separator"></span>
+                        <a class="object" href="IsoInstant$.html" title=""></a>
+                        <a href="IsoInstant$.html" title="">IsoInstant</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="ListInput.html" title="Represents an abstract source of sequence of values that can be deserialized."></a>
@@ -352,7 +352,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">TransparentCodec</span><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="GenCodec$$NullSafeCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec">NullSafeCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>] with <a href="ErrorReportingCodec.html" class="extype" name="com.avsystem.commons.serialization.ErrorReportingCodec">ErrorReportingCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>]</span>
+        <span class="name">TransparentCodec</span><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="ErrorReportingCodec.html" class="extype" name="com.avsystem.commons.serialization.ErrorReportingCodec">ErrorReportingCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>]</span>
       </span>
       </h4>
 
@@ -361,7 +361,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="ErrorReportingCodec.html" class="extype" name="com.avsystem.commons.serialization.ErrorReportingCodec">ErrorReportingCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>], <a href="GenCodec$$NullSafeCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec">NullSafeCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>], <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>], <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="ErrorReportingCodec.html" class="extype" name="com.avsystem.commons.serialization.ErrorReportingCodec">ErrorReportingCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>], <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>], <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -387,7 +387,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.avsystem.commons.serialization.TransparentCodec"><span>TransparentCodec</span></li><li class="in" name="com.avsystem.commons.serialization.ErrorReportingCodec"><span>ErrorReportingCodec</span></li><li class="in" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec"><span>NullSafeCodec</span></li><li class="in" name="com.avsystem.commons.serialization.GenCodec"><span>GenCodec</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.avsystem.commons.serialization.TransparentCodec"><span>TransparentCodec</span></li><li class="in" name="com.avsystem.commons.serialization.ErrorReportingCodec"><span>ErrorReportingCodec</span></li><li class="in" name="com.avsystem.commons.serialization.GenCodec"><span>GenCodec</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -408,9 +408,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.avsystem.commons.serialization.TransparentCodec#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(typeRepr:String,nullable:Boolean):com.avsystem.commons.serialization.TransparentCodec[T,U]"></a><a id="&lt;init&gt;:TransparentCodec[T,U]"></a>
+      <a id="&lt;init&gt;(typeRepr:String):com.avsystem.commons.serialization.TransparentCodec[T,U]"></a><a id="&lt;init&gt;:TransparentCodec[T,U]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/TransparentCodec.html#&lt;init&gt;(typeRepr:String,nullable:Boolean):com.avsystem.commons.serialization.TransparentCodec[T,U]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/serialization/TransparentCodec.html#&lt;init&gt;(typeRepr:String):com.avsystem.commons.serialization.TransparentCodec[T,U]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -419,7 +419,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">TransparentCodec</span><span class="params">(<span name="typeRepr">typeRepr: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="nullable">nullable: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>)</span>
+        <span class="name">TransparentCodec</span><span class="params">(<span name="typeRepr">typeRepr: <span class="extype" name="scala.Predef.String">String</span></span>)</span>
       </span>
       
       
@@ -814,23 +814,7 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.TransparentCodec#nullable" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="nullable:Boolean"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/TransparentCodec.html#nullable:Boolean" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">nullable</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.serialization.TransparentCodec">TransparentCodec</a> → <a href="GenCodec$$NullSafeCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec">NullSafeCodec</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec#read" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="com.avsystem.commons.serialization.TransparentCodec#read" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="read(input:com.avsystem.commons.serialization.Input):T"></a><a id="read(Input):T"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/serialization/TransparentCodec.html#read(input:com.avsystem.commons.serialization.Input):T" title="Permalink">
@@ -846,7 +830,7 @@
       </span>
       
       <p class="shortcomment cmt">Deserializes a value of type <code>T</code> from an <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Deserializes a value of type <code>T</code> from an <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>.
-</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="GenCodec$$NullSafeCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec">NullSafeCodec</a> → <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a></dd></dl></div>
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.serialization.TransparentCodec">TransparentCodec</a> → <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a></dd></dl></div>
     </li><li name="com.avsystem.commons.serialization.ErrorReportingCodec#readCase" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="readCase[A](caseName:String,input:com.avsystem.commons.serialization.Input,codec:com.avsystem.commons.serialization.GenCodec[A]):A"></a><a id="readCase[A](String,Input,GenCodec[A]):A"></a>
       <span class="permalink">
@@ -927,22 +911,6 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="ErrorReportingCodec.html" class="extype" name="com.avsystem.commons.serialization.ErrorReportingCodec">ErrorReportingCodec</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.TransparentCodec#readNonNull" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="readNonNull(input:com.avsystem.commons.serialization.Input):T"></a><a id="readNonNull(Input):T"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/TransparentCodec.html#readNonNull(input:com.avsystem.commons.serialization.Input):T" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">readNonNull</span><span class="params">(<span name="input">input: <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a></span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.serialization.TransparentCodec">TransparentCodec</a> → <a href="GenCodec$$NullSafeCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec">NullSafeCodec</a></dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -1107,7 +1075,7 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec#write" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="com.avsystem.commons.serialization.TransparentCodec#write" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="write(output:com.avsystem.commons.serialization.Output,value:T):Unit"></a><a id="write(Output,T):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/serialization/TransparentCodec.html#write(output:com.avsystem.commons.serialization.Output,value:T):Unit" title="Permalink">
@@ -1123,7 +1091,7 @@
       </span>
       
       <p class="shortcomment cmt">Serializes a value of type <code>T</code> into an <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Serializes a value of type <code>T</code> into an <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>.
-</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="GenCodec$$NullSafeCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec">NullSafeCodec</a> → <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a></dd></dl></div>
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.serialization.TransparentCodec">TransparentCodec</a> → <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a></dd></dl></div>
     </li><li name="com.avsystem.commons.serialization.ErrorReportingCodec#writeCase" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="writeCase[A](fieldName:String,output:com.avsystem.commons.serialization.ObjectOutput,value:A,codec:com.avsystem.commons.serialization.GenCodec[A]):Unit"></a><a id="writeCase[A](String,ObjectOutput,A,GenCodec[A]):Unit"></a>
       <span class="permalink">
@@ -1172,22 +1140,6 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected </dd><dt>Definition Classes</dt><dd><a href="ErrorReportingCodec.html" class="extype" name="com.avsystem.commons.serialization.ErrorReportingCodec">ErrorReportingCodec</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.TransparentCodec#writeNonNull" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="writeNonNull(output:com.avsystem.commons.serialization.Output,value:T):Unit"></a><a id="writeNonNull(Output,T):Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/TransparentCodec.html#writeNonNull(output:com.avsystem.commons.serialization.Output,value:T):Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">writeNonNull</span><span class="params">(<span name="output">output: <a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></span>, <span name="value">value: <span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.serialization.TransparentCodec">TransparentCodec</a> → <a href="GenCodec$$NullSafeCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec">NullSafeCodec</a></dd></dl></div>
     </li>
               </ol>
             </div>
@@ -1200,8 +1152,6 @@
         <div id="inheritedMembers">
         <div class="parent" name="com.avsystem.commons.serialization.ErrorReportingCodec">
               <h3>Inherited from <a href="ErrorReportingCodec.html" class="extype" name="com.avsystem.commons.serialization.ErrorReportingCodec">ErrorReportingCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>]</h3>
-            </div><div class="parent" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec">
-              <h3>Inherited from <a href="GenCodec$$NullSafeCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec">NullSafeCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>]</h3>
             </div><div class="parent" name="com.avsystem.commons.serialization.GenCodec">
               <h3>Inherited from <a href="GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>]</h3>
             </div><div class="parent" name="scala.AnyRef">

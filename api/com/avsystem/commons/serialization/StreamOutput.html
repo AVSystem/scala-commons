@@ -198,9 +198,9 @@
                         <a class="trait" href="Input.html" title="Represents an abstract source from which a value may be deserialized (read)."></a>
                         <a href="Input.html" title="Represents an abstract source from which a value may be deserialized (read).">Input</a>
                       </li><li class="current-entities indented4">
-                        <a class="object" href="InputType$.html" title=""></a>
-                        <a class="trait" href="InputType.html" title="Represents the type of value inside and Input that can be read from it."></a>
-                        <a href="InputType.html" title="Represents the type of value inside and Input that can be read from it.">InputType</a>
+                        <span class="separator"></span>
+                        <a class="object" href="IsoInstant$.html" title=""></a>
+                        <a href="IsoInstant$.html" title="">IsoInstant</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="ListInput.html" title="Represents an abstract source of sequence of values that can be deserialized."></a>
@@ -629,6 +629,27 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.Output#legacyOptionEncoding" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="legacyOptionEncoding:Boolean"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/StreamOutput.html#legacyOptionEncoding:Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">legacyOptionEncoding</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">This ugly workaround has been introduced when standard <code>Option</code> encoding changed from zero-or-one element list
+encoding to unwrapped-or-null encoding which effectively disallowed serializing <code>null</code> and <code>Some(null)</code>.</p><div class="fullcomment"><div class="comment cmt"><p>This ugly workaround has been introduced when standard <code>Option</code> encoding changed from zero-or-one element list
+encoding to unwrapped-or-null encoding which effectively disallowed serializing <code>null</code> and <code>Some(null)</code>.
+If some <code>Output</code> implementation still wants to use the list encoding, it may do it by overriding this method
+and returning <code>true</code>.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
     </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
       <span class="permalink">

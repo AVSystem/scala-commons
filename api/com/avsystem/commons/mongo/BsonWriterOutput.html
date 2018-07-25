@@ -404,9 +404,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.avsystem.commons.mongo.BsonWriterOutput#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(bw:org.bson.BsonWriter):com.avsystem.commons.mongo.BsonWriterOutput"></a><a id="&lt;init&gt;:BsonWriterOutput"></a>
+      <a id="&lt;init&gt;(bw:org.bson.BsonWriter,legacyOptionEncoding:Boolean):com.avsystem.commons.mongo.BsonWriterOutput"></a><a id="&lt;init&gt;:BsonWriterOutput"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/mongo/BsonWriterOutput.html#&lt;init&gt;(bw:org.bson.BsonWriter):com.avsystem.commons.mongo.BsonWriterOutput" title="Permalink">
+      <a href="../../../../com/avsystem/commons/mongo/BsonWriterOutput.html#&lt;init&gt;(bw:org.bson.BsonWriter,legacyOptionEncoding:Boolean):com.avsystem.commons.mongo.BsonWriterOutput" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -415,7 +415,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">BsonWriterOutput</span><span class="params">(<span name="bw">bw: <span class="extype" name="org.bson.BsonWriter">BsonWriter</span></span>)</span>
+        <span class="name">BsonWriterOutput</span><span class="params">(<span name="bw">bw: <span class="extype" name="org.bson.BsonWriter">BsonWriter</span></span>, <span name="legacyOptionEncoding">legacyOptionEncoding: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">false</span></span>)</span>
       </span>
       
       
@@ -625,6 +625,27 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.avsystem.commons.mongo.BsonWriterOutput#legacyOptionEncoding" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="legacyOptionEncoding:Boolean"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/mongo/BsonWriterOutput.html#legacyOptionEncoding:Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">legacyOptionEncoding</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">This ugly workaround has been introduced when standard <code>Option</code> encoding changed from zero-or-one element list
+encoding to unwrapped-or-null encoding which effectively disallowed serializing <code>null</code> and <code>Some(null)</code>.</p><div class="fullcomment"><div class="comment cmt"><p>This ugly workaround has been introduced when standard <code>Option</code> encoding changed from zero-or-one element list
+encoding to unwrapped-or-null encoding which effectively disallowed serializing <code>null</code> and <code>Some(null)</code>.
+If some <code>Output</code> implementation still wants to use the list encoding, it may do it by overriding this method
+and returning <code>true</code>.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.mongo.BsonWriterOutput">BsonWriterOutput</a> → <a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
     </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
       <span class="permalink">

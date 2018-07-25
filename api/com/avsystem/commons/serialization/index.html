@@ -213,6 +213,22 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.jsiop" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="jsiop"></a><a id="jsiop:jsiop"></a>
+      <span class="permalink">
+      <a href="../../../com/avsystem/commons/index.html#jsiop" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../jsiop/index.html"><span class="name">jsiop</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
     </li><li name="com.avsystem.commons.kafka" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="kafka"></a><a id="kafka:kafka"></a>
       <span class="permalink">
@@ -274,6 +290,22 @@
       </span>
       <span class="symbol">
         <a title="" href="../redis/index.html"><span class="name">redis</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rest" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="rest"></a><a id="rest:rest"></a>
+      <span class="permalink">
+      <a href="../../../com/avsystem/commons/index.html#rest" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../rest/index.html"><span class="name">rest</span></a>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
@@ -374,9 +406,9 @@
                         <a class="trait" href="Input.html" title="Represents an abstract source from which a value may be deserialized (read)."></a>
                         <a href="Input.html" title="Represents an abstract source from which a value may be deserialized (read).">Input</a>
                       </li><li class="current-entities indented4">
-                        <a class="object" href="InputType$.html" title=""></a>
-                        <a class="trait" href="InputType.html" title="Represents the type of value inside and Input that can be read from it."></a>
-                        <a href="InputType.html" title="Represents the type of value inside and Input that can be read from it.">InputType</a>
+                        <span class="separator"></span>
+                        <a class="object" href="IsoInstant$.html" title=""></a>
+                        <a href="IsoInstant$.html" title="">IsoInstant</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="ListInput.html" title="Represents an abstract source of sequence of values that can be deserialized."></a>
@@ -806,27 +838,6 @@ the <a href="Input.html" class="extype" name="com.avsystem.commons.serialization
 successful value or by calling <code>skip()</code>. Also, <a href="ListInput.html" class="extype" name="com.avsystem.commons.serialization.ListInput">ListInput</a> and <a href="ObjectInput.html" class="extype" name="com.avsystem.commons.serialization.ObjectInput">ObjectInput</a> instances returned from this
 <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> must also be fully exhausted on their own.
 </p></div></div>
-    </li><li name="com.avsystem.commons.serialization.InputType" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="InputTypeextendsAnyRef"></a><a id="InputType:InputType"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/index.html#InputTypeextendsAnyRef" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">sealed </span>
-        <span class="kind">trait</span>
-      </span>
-      <span class="symbol">
-        <a title="Represents the type of value inside and Input that can be read from it." href="InputType.html"><span class="name">InputType</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">Represents the type of value inside and <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> that can be read from it.</p><div class="fullcomment"><div class="comment cmt"><p>Represents the type of value inside and <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> that can be read from it.</p><p>It is possible to distinguish only between four types (null, simple value, object and list) even though
-any of these types may have different representations. For example, <a href="InputType$$Simple$.html" class="extype" name="com.avsystem.commons.serialization.InputType.Simple">InputType.Simple</a> is returned for
-more than one actual value types (numbers, booleans, strings, timestamps, binary, etc.).</p><p>It's not possible to distinguish between them based only on <a href="InputType.html" class="extype" name="com.avsystem.commons.serialization.InputType">InputType</a> because not every <a href="Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>
-implementation is able to do that. For example, JSON must represent 64-bit integers as strings and therefore
-it can't distinguish between strings and numbers in general.
-</p></div></div>
     </li><li name="com.avsystem.commons.serialization.ListInput" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="ListInputextendsAnywithSequentialInput"></a><a id="ListInput:ListInput"></a>
       <span class="permalink">
@@ -1204,9 +1215,9 @@ standard Java serialization. However, for performance reasons it's recommended t
       
       
     </li><li name="com.avsystem.commons.serialization.TransparentCodec" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="TransparentCodec[T,U]extendsGenCodec.NullSafeCodec[T]withErrorReportingCodec[T]"></a><a id="TransparentCodec[T,U]:TransparentCodec[T,U]"></a>
+      <a id="TransparentCodec[T,U]extendsErrorReportingCodec[T]"></a><a id="TransparentCodec[T,U]:TransparentCodec[T,U]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/index.html#TransparentCodec[T,U]extendsGenCodec.NullSafeCodec[T]withErrorReportingCodec[T]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/serialization/index.html#TransparentCodec[T,U]extendsErrorReportingCodec[T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1215,7 +1226,7 @@ standard Java serialization. However, for performance reasons it's recommended t
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="TransparentCodec.html"><span class="name">TransparentCodec</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="GenCodec$$NullSafeCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.NullSafeCodec">NullSafeCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>] with <a href="ErrorReportingCodec.html" class="extype" name="com.avsystem.commons.serialization.ErrorReportingCodec">ErrorReportingCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>]</span>
+        <a title="" href="TransparentCodec.html"><span class="name">TransparentCodec</span></a><span class="tparams">[<span name="T">T</span>, <span name="U">U</span>]</span><span class="result"> extends <a href="ErrorReportingCodec.html" class="extype" name="com.avsystem.commons.serialization.ErrorReportingCodec">ErrorReportingCodec</a>[<span class="extype" name="com.avsystem.commons.serialization.TransparentCodec.T">T</span>]</span>
       </span>
       
       
@@ -1409,7 +1420,7 @@ it's equal to the default value.</p><p>For example:</p><pre><span class="kw">cas
   <span class="kw">implicit</span> <span class="kw">val</span> codec = GenCodec.auto[Something]
 }</pre><p><code>GenCodec.write(someOutput, Something(&quot;lol&quot;, 10))</code> would yield object <code>{&quot;str&quot;: &quot;lol&quot;, &quot;int&quot;: 10}</code> but
 <code>GenCodec.write(someOutput, Something(&quot;lol&quot;, 42))</code> would yield object <code>{&quot;str&quot;: &quot;lol&quot;}</code> because the value of <code>int</code>
-is the same as the default value.
+is the same as the default value.</p><p>NOTE: <a href="transientDefault.html" class="extype" name="com.avsystem.commons.serialization.transientDefault">transientDefault</a> also works for method parameters in RPC framework.
 </p></div></div>
     </li><li name="com.avsystem.commons.serialization.transparent" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="transparentextendsAnnotationwithStaticAnnotation"></a><a id="transparent:transparent"></a>
@@ -1452,7 +1463,8 @@ unintended default parameter values (i.e. you want a default value *only* for de
 <span class="kw">object</span> HasDefault <span class="kw">extends</span> HasGenCodec[HasDefault]</pre><p>If a parameter has both Scala-level default value and is annotated with <code>@whenAbsent</code> then value from annotation
 takes priority. You can use this to have different source-level default value and different
 default value for deserialization. You can also leverage this to &quot;remove&quot; default value for deserialization:</p><pre><span class="kw">case</span> <span class="kw">class</span> HasNoDefault(@whenAbsent(<span class="kw">throw</span> <span class="kw">new</span> Exception) str: <span class="std">String</span> = <span class="lit">"default"</span>)
-<span class="kw">object</span> HasDefault <span class="kw">extends</span> HasGenCodec[HasDefault]</pre></div></div>
+<span class="kw">object</span> HasDefault <span class="kw">extends</span> HasGenCodec[HasDefault]</pre><p>NOTE: <a href="whenAbsent.html" class="extype" name="com.avsystem.commons.serialization.whenAbsent">whenAbsent</a> also works for method parameters in RPC framework.
+</p></div></div>
     </li></ol>
             </div>
 
@@ -1541,10 +1553,10 @@ default value for deserialization. You can also leverage this to &quot;remove&qu
       </span>
       
       
-    </li><li name="com.avsystem.commons.serialization.InputType" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="InputType"></a><a id="InputType:InputType"></a>
+    </li><li name="com.avsystem.commons.serialization.IsoInstant" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="IsoInstant"></a><a id="IsoInstant:IsoInstant"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/index.html#InputType" title="Permalink">
+      <a href="../../../../com/avsystem/commons/serialization/index.html#IsoInstant" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -1553,7 +1565,7 @@ default value for deserialization. You can also leverage this to &quot;remove&qu
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="InputType$.html"><span class="name">InputType</span></a>
+        <a title="" href="IsoInstant$.html"><span class="name">IsoInstant</span></a>
       </span>
       
       

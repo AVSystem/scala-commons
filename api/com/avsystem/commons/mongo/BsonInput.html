@@ -430,10 +430,10 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Input#inputType" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="inputType:com.avsystem.commons.serialization.InputType"></a><a id="inputType:InputType"></a>
+    </li><li name="com.avsystem.commons.serialization.Input#isNull" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="isNull:Boolean"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/mongo/BsonInput.html#inputType:com.avsystem.commons.serialization.InputType" title="Permalink">
+      <a href="../../../../com/avsystem/commons/mongo/BsonInput.html#isNull:Boolean" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -442,26 +442,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">inputType</span><span class="result">: <a href="../serialization/InputType.html" class="extype" name="com.avsystem.commons.serialization.InputType">InputType</a></span>
+        <span class="name">isNull</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
-      <p class="shortcomment cmt">Returns the type of the value that can be read from this <a href="../serialization/Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Returns the type of the value that can be read from this <a href="../serialization/Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a>.
-Only four types can be distinguished (see <a href="../serialization/InputType.html" class="extype" name="com.avsystem.commons.serialization.InputType">InputType</a> for more details on this).</p><p>If this method returns <a href="../serialization/InputType$$Null$.html" class="extype" name="com.avsystem.commons.serialization.InputType.Null">InputType.Null</a>,
-then <code>readNull()</code> can be safely called.<br/>
-If this method returns <a href="../serialization/InputType$$Object$.html" class="extype" name="com.avsystem.commons.serialization.InputType.Object">InputType.Object</a>,
-then AT LEAST ONE OF <code>readObject()</code> and <code>readMap()</code> can be safely called.<br/>
-If this method returns <a href="../serialization/InputType$$List$.html" class="extype" name="com.avsystem.commons.serialization.InputType.List">InputType.List</a>,
-then AT LEAST ONE OF <code>readList()</code> and <code>readSet()</code> can be safely called.<br/>
-If this method returns <a href="../serialization/InputType$$Simple$.html" class="extype" name="com.avsystem.commons.serialization.InputType.Simple">InputType.Simple</a>
-then AT LEAST ONE OF <code>readString()</code>, <code>readChar()</code>, <code>readBoolean()</code>,
-<code>readByte()</code>, <code>readShort()</code>, <code>readInt()</code>, <code>readLong()</code>, <code>readTimestamp()</code>, <code>readFloat()</code>, <code>readDouble()</code>,
-<code>readBinary()</code> can be called.</p><p>It's impossible to know which of the listed methods is actually safe to call based only on
-<a href="../serialization/InputType.html" class="extype" name="com.avsystem.commons.serialization.InputType">InputType</a>.
-It is the responsibility of <a href="../serialization/GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a> implementation to have
-reading and writing logic consistent.
-For example, if <code>writeDouble(Double)</code> is used during writing then <code>readDouble()</code> must be used during reading
-by the same <a href="../serialization/GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a>.
-</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a></dd></dl></div>
     </li><li name="com.avsystem.commons.serialization.Input#readBigDecimal" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="readBigDecimal():BigDecimal"></a>
       <span class="permalink">
@@ -788,6 +772,27 @@ by the same <a href="../serialization/GenCodec.html" class="extype" name="com.av
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.Input#legacyOptionEncoding" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="legacyOptionEncoding:Boolean"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/mongo/BsonInput.html#legacyOptionEncoding:Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">legacyOptionEncoding</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">This ugly workaround has been introduced when standard <code>Option</code> encoding changed from zero-or-one element list
+encoding to unwrapped-or-null encoding which effectively disallowed serializing <code>null</code> and <code>Some(null)</code>.</p><div class="fullcomment"><div class="comment cmt"><p>This ugly workaround has been introduced when standard <code>Option</code> encoding changed from zero-or-one element list
+encoding to unwrapped-or-null encoding which effectively disallowed serializing <code>null</code> and <code>Some(null)</code>.
+If some <code>Input</code> implementation still wants to use the list encoding, it may do it by overriding this method
+and returning <code>true</code>.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a></dd></dl></div>
     </li><li name="com.avsystem.commons.serialization.Input#readByte" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="readByte():Byte"></a>
       <span class="permalink">

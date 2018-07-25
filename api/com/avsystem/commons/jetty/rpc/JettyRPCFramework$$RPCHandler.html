@@ -210,10 +210,6 @@
                         <a class="class" href="../../rpc/GetterRPCFramework$GetterSignature.html" title=""></a>
                         <a href="../../rpc/GetterRPCFramework$GetterSignature.html" title="">GetterSignature</a>
                       </li><li class="current-entities indented6">
-                        <a class="object" href="JettyRPCFramework$$Invocation$.html" title=""></a>
-                        <a class="class" href="JettyRPCFramework$$Invocation.html" title=""></a>
-                        <a href="JettyRPCFramework$$Invocation.html" title="">Invocation</a>
-                      </li><li class="current-entities indented6">
                         <span class="separator"></span>
                         <a class="class" href="../../rpc/RPCFramework$ParamMetadata.html" title=""></a>
                         <a href="../../rpc/RPCFramework$ParamMetadata.html" title="">ParamMetadata</a>
@@ -242,9 +238,9 @@
                         <a class="class" href="../../rpc/StandardRPCFramework$RPCMetadata.html" title=""></a>
                         <a href="../../rpc/StandardRPCFramework$RPCMetadata.html" title="">RPCMetadata</a>
                       </li><li class="current-entities indented6">
-                        <span class="separator"></span>
-                        <a class="class" href="../../rpc/GetterRPCFramework$RawInvocation.html" title=""></a>
-                        <a href="../../rpc/GetterRPCFramework$RawInvocation.html" title="">RawInvocation</a>
+                        <a class="object" href="../../rpc/RPCFramework$RawInvocation$.html" title=""></a>
+                        <a class="class" href="../../rpc/RPCFramework$RawInvocation.html" title=""></a>
+                        <a href="../../rpc/RPCFramework$RawInvocation.html" title="">RawInvocation</a>
                       </li><li class="current-entities indented6">
                         <a class="object" href="../../rpc/StandardRPCFramework$RawRPC$.html" title=""></a>
                         <a class="trait" href="../../rpc/StandardRPCFramework$RawRPC.html" title=""></a>
@@ -357,9 +353,9 @@
         <div id="types" class="types members">
               <h3>Type Members</h3>
               <ol><li name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RPCHandler.InvokeFunction" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="InvokeFunction[T]=com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawRPC=&gt;(String=&gt;(List[com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue]=&gt;T))"></a><a id="InvokeFunction[T]:InvokeFunction[T]"></a>
+      <a id="InvokeFunction[T]=com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawRPC=&gt;(com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawInvocation=&gt;T)"></a><a id="InvokeFunction[T]:InvokeFunction[T]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$$RPCHandler.html#InvokeFunction[T]=com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawRPC=&gt;(String=&gt;(List[com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue]=&gt;T))" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rpc/JettyRPCFramework$$RPCHandler.html#InvokeFunction[T]=com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawRPC=&gt;(com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawInvocation=&gt;T)" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -368,7 +364,7 @@
         <span class="kind">type</span>
       </span>
       <span class="symbol">
-        <span class="name">InvokeFunction</span><span class="tparams">[<span name="T">T</span>]</span><span class="result alias"> = (<a href="JettyRPCFramework$.html#RawRPCextendsStandardRPCFramework.this.GetterRawRPCwithStandardRPCFramework.this.FunctionRawRPCwithStandardRPCFramework.this.ProcedureRawRPC" class="extmbr" name="com.avsystem.commons.rpc.StandardRPCFramework.RawRPC">JettyRPCFramework.RawRPC</a>) ⇒ (<span class="extype" name="scala.Predef.String">String</span>) ⇒ (<span class="extype" name="scala.List">List</span>[<a href="JettyRPCFramework$$RawValue.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue">RawValue</a>]) ⇒ <span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RPCHandler.InvokeFunction.T">T</span></span>
+        <span class="name">InvokeFunction</span><span class="tparams">[<span name="T">T</span>]</span><span class="result alias"> = (<a href="JettyRPCFramework$.html#RawRPCextendsStandardRPCFramework.this.GetterRawRPCwithStandardRPCFramework.this.FunctionRawRPCwithStandardRPCFramework.this.ProcedureRawRPC" class="extmbr" name="com.avsystem.commons.rpc.StandardRPCFramework.RawRPC">JettyRPCFramework.RawRPC</a>) ⇒ (<a href="JettyRPCFramework$.html#RawInvocationextendsProductwithSerializable" class="extmbr" name="com.avsystem.commons.rpc.RPCFramework.RawInvocation">JettyRPCFramework.RawInvocation</a>) ⇒ <span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RPCHandler.InvokeFunction.T">T</span></span>
       </span>
       
       
@@ -1022,7 +1018,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">invoke</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="call">call: <a href="JettyRPCFramework$$Call.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Call">Call</a></span>)</span><span class="params">(<span name="f">f: <a href="#InvokeFunction[T]=com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawRPC=&gt;(String=&gt;(List[com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawValue]=&gt;T))" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RPCHandler.InvokeFunction">InvokeFunction</a>[<span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RPCHandler.invoke.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RPCHandler.invoke.T">T</span></span>
+        <span class="name">invoke</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="call">call: <a href="JettyRPCFramework$$Call.html" class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.Call">Call</a></span>)</span><span class="params">(<span name="f">f: <a href="#InvokeFunction[T]=com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawRPC=&gt;(com.avsystem.commons.jetty.rpc.JettyRPCFramework.RawInvocation=&gt;T)" class="extmbr" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RPCHandler.InvokeFunction">InvokeFunction</a>[<span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RPCHandler.invoke.T">T</span>]</span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.jetty.rpc.JettyRPCFramework.RPCHandler.invoke.T">T</span></span>
       </span>
       
       

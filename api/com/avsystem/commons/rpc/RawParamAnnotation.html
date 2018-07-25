@@ -167,6 +167,10 @@
                         <a href="BaseOptionLike.html" title="">BaseOptionLike</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="Fallback.html" title="Wrap your implicit instance of AsReal, AsRaw, AsRawReal or RPC metadata (with companion that extends RpcMetadataCompanion into Fallback in order to lower its implicit priority."></a>
+                        <a href="Fallback.html" title="Wrap your implicit instance of AsReal, AsRaw, AsRawReal or RPC metadata (with companion that extends RpcMetadataCompanion into Fallback in order to lower its implicit priority.">Fallback</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="trait" href="FunctionRPCFramework.html" title="Mix in this trait into your RPC framework to support remote functions, i.e."></a>
                         <a href="FunctionRPCFramework.html" title="Mix in this trait into your RPC framework to support remote functions, i.e.">FunctionRPCFramework</a>
                       </li><li class="current-entities indented4">
@@ -181,6 +185,10 @@
                         <span class="separator"></span>
                         <a class="trait" href="MetadataParamStrategy.html" title="Base trait for annotations applied on RPC metadata parameters which tell the macro engine how to materialize their values based on real RPC trait, its methods or their parameters."></a>
                         <a href="MetadataParamStrategy.html" title="Base trait for annotations applied on RPC metadata parameters which tell the macro engine how to materialize their values based on real RPC trait, its methods or their parameters.">MetadataParamStrategy</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="NamedParams$.html" title=""></a>
+                        <a class="class" href="NamedParams.html" title="Simple immutable structure to collect named RPC parameters while retaining their order and providing fast, hashed lookup by parameter name when necessary."></a>
+                        <a href="NamedParams.html" title="Simple immutable structure to collect named RPC parameters while retaining their order and providing fast, hashed lookup by parameter name when necessary.">NamedParams</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="OneWayRPCFramework.html" title=""></a>
@@ -235,8 +243,16 @@
                         <a href="RpcEncoding.html" title="Base trait for verbatim and encoded.">RpcEncoding</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="RpcException.html" title=""></a>
+                        <a href="RpcException.html" title="">RpcException</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="trait" href="RpcImplicitsProvider.html" title=""></a>
                         <a href="RpcImplicitsProvider.html" title="">RpcImplicitsProvider</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="RpcMacroInstances$.html" title=""></a>
+                        <a class="trait" href="RpcMacroInstances.html" title="Intermediate factory that creates an InstancesTrait for given Real RPC trait, based on provided Implicits."></a>
+                        <a href="RpcMacroInstances.html" title="Intermediate factory that creates an InstancesTrait for given Real RPC trait, based on provided Implicits.">RpcMacroInstances</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="RpcMetadata$.html" title=""></a>
@@ -271,16 +287,24 @@
                         <a href="checked.html" title="May be applied on metadata parameters with infer annotation (or just implicit metadata parameters - they have infer strategy by default).">checked</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="composite.html" title="Can be applied on raw method parameters or metadata parameters."></a>
+                        <a href="composite.html" title="Can be applied on raw method parameters or metadata parameters.">composite</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="encoded.html" title="When a raw parameter is annotated as encoded, macro generated code will translate between real parameter values and raw parameter values using implicit instances of AsRaw[Raw,Real] and AsReal[Raw,Real] typeclasses."></a>
                         <a href="encoded.html" title="When a raw parameter is annotated as encoded, macro generated code will translate between real parameter values and raw parameter values using implicit instances of AsRaw[Raw,Real] and AsReal[Raw,Real] typeclasses.">encoded</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="class" href="hasAnnot.html" title="Metadata parameter typed as Boolean can be annotated with @hasAnnot[SomeAnnotation]."></a>
-                        <a href="hasAnnot.html" title="Metadata parameter typed as Boolean can be annotated with @hasAnnot[SomeAnnotation].">hasAnnot</a>
-                      </li><li class="current-entities indented4">
-                        <span class="separator"></span>
                         <a class="class" href="infer.html" title="When a metadata parameter is annotated as @infer, RPC macro engine will materialize that parameter by searching for an implicit value of that parameter's type."></a>
                         <a href="infer.html" title="When a metadata parameter is annotated as @infer, RPC macro engine will materialize that parameter by searching for an implicit value of that parameter's type.">infer</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="isAnnotated.html" title="Metadata parameter typed as Boolean can be annotated with @isAnnotated[SomeAnnotation]."></a>
+                        <a href="isAnnotated.html" title="Metadata parameter typed as Boolean can be annotated with @isAnnotated[SomeAnnotation].">isAnnotated</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="methodName.html" title="May be applied on raw method parameter of type String to indicate that macro generated implementation of AsReal should pass real method's RPC name as this parameter and that macro generated implementation of AsRaw should expect real method's RPC name to be passed there."></a>
+                        <a href="methodName.html" title="May be applied on raw method parameter of type String to indicate that macro generated implementation of AsReal should pass real method's RPC name as this parameter and that macro generated implementation of AsRaw should expect real method's RPC name to be passed there.">methodName</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="methodTag.html" title="Method tagging lets you have more explicit control over which raw methods can match which real methods."></a>
@@ -319,12 +343,20 @@
                         <a href="rpcName.html" title="You can use this annotation on overloaded RPC methods to give them unique identifiers for RPC serialization.">rpcName</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="rpcNamePrefix.html" title="You can use this annotation on real RPC methods to instruct macro engine to prepend method name (or rpcName if specified) with given prefix."></a>
+                        <a href="rpcNamePrefix.html" title="You can use this annotation on real RPC methods to instruct macro engine to prepend method name (or rpcName if specified) with given prefix.">rpcNamePrefix</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="single.html" title="The default arity annotation."></a>
                         <a href="single.html" title="The default arity annotation.">single</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="tagged.html" title="Annotation applied on raw methods or raw parameters that limits matching real methods or real parameters to only these annotated as Tag."></a>
                         <a href="tagged.html" title="Annotation applied on raw methods or raw parameters that limits matching real methods or real parameters to only these annotated as Tag.">tagged</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="tried.html" title="When raw method is annotated as @tried, invocations of real methods matching that raw method will be automatically wrapped into Try."></a>
+                        <a href="tried.html" title="When raw method is annotated as @tried, invocations of real methods matching that raw method will be automatically wrapped into Try.">tried</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="verbatim.html" title="Turns off raw value encoding as specified by encoded."></a>
@@ -366,7 +398,7 @@
             <span class="toggle">
               Known Subclasses
             </span>
-            <div class="subClasses hiddenContent"><a href="RpcArity.html" class="extype" name="com.avsystem.commons.rpc.RpcArity">RpcArity</a>, <a href="RpcEncoding.html" class="extype" name="com.avsystem.commons.rpc.RpcEncoding">RpcEncoding</a>, <a href="auxiliary.html" class="extype" name="com.avsystem.commons.rpc.auxiliary">auxiliary</a>, <a href="encoded.html" class="extype" name="com.avsystem.commons.rpc.encoded">encoded</a>, <a href="multi.html" class="extype" name="com.avsystem.commons.rpc.multi">multi</a>, <a href="optional.html" class="extype" name="com.avsystem.commons.rpc.optional">optional</a>, <a href="single.html" class="extype" name="com.avsystem.commons.rpc.single">single</a>, <a href="tagged.html" class="extype" name="com.avsystem.commons.rpc.tagged">tagged</a>, <a href="verbatim.html" class="extype" name="com.avsystem.commons.rpc.verbatim">verbatim</a></div>
+            <div class="subClasses hiddenContent"><a href="RpcArity.html" class="extype" name="com.avsystem.commons.rpc.RpcArity">RpcArity</a>, <a href="RpcEncoding.html" class="extype" name="com.avsystem.commons.rpc.RpcEncoding">RpcEncoding</a>, <a href="auxiliary.html" class="extype" name="com.avsystem.commons.rpc.auxiliary">auxiliary</a>, <a href="composite.html" class="extype" name="com.avsystem.commons.rpc.composite">composite</a>, <a href="encoded.html" class="extype" name="com.avsystem.commons.rpc.encoded">encoded</a>, <a href="methodName.html" class="extype" name="com.avsystem.commons.rpc.methodName">methodName</a>, <a href="multi.html" class="extype" name="com.avsystem.commons.rpc.multi">multi</a>, <a href="optional.html" class="extype" name="com.avsystem.commons.rpc.optional">optional</a>, <a href="single.html" class="extype" name="com.avsystem.commons.rpc.single">single</a>, <a href="tagged.html" class="extype" name="com.avsystem.commons.rpc.tagged">tagged</a>, <a href="verbatim.html" class="extype" name="com.avsystem.commons.rpc.verbatim">verbatim</a></div>
           </div></div>
         
 

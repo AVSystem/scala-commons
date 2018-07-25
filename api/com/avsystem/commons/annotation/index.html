@@ -143,6 +143,10 @@
                         <a href="atLeast.html" title="When applied on varargs parameter, indicates that at least some number of parameters is required.">atLeast</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="defaultsToName.html" title="Meta annotation that may be used on String constructor parameter of an annotation."></a>
+                        <a href="defaultsToName.html" title="Meta annotation that may be used on String constructor parameter of an annotation.">defaultsToName</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="explicitGenerics.html" title="When applied on generic method, requires that all the type parameters are given explicitly (cannot be inferred by the compiler)."></a>
                         <a href="explicitGenerics.html" title="When applied on generic method, requires that all the type parameters are given explicitly (cannot be inferred by the compiler).">explicitGenerics</a>
                       </li><li class="current-entities indented4">
@@ -233,6 +237,22 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.jsiop" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="jsiop"></a><a id="jsiop:jsiop"></a>
+      <span class="permalink">
+      <a href="../../../com/avsystem/commons/index.html#jsiop" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../jsiop/index.html"><span class="name">jsiop</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
     </li><li name="com.avsystem.commons.kafka" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="kafka"></a><a id="kafka:kafka"></a>
       <span class="permalink">
@@ -294,6 +314,22 @@
       </span>
       <span class="symbol">
         <a title="" href="../redis/index.html"><span class="name">redis</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.rest" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="rest"></a><a id="rest:rest"></a>
+      <span class="permalink">
+      <a href="../../../com/avsystem/commons/index.html#rest" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../rest/index.html"><span class="name">rest</span></a>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
@@ -453,6 +489,30 @@ WARNING: implementation of method which takes a varargs parameter may NOT assume
 arguments will always be passed, because it's still possible to pass a <code>Seq</code> where
 varargs parameter is required using the <code>: _*</code> ascription, e.g.</p><pre>varargsMethod(<span class="std">List</span>(): _*)</pre><p>and that is not checked by the static analyzer.
 </p></div></div>
+    </li><li name="com.avsystem.commons.annotation.defaultsToName" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="defaultsToNameextendsAnnotationwithStaticAnnotation"></a><a id="defaultsToName:defaultsToName"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/annotation/index.html#defaultsToNameextendsAnnotationwithStaticAnnotation" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="Meta annotation that may be used on String constructor parameter of an annotation." href="defaultsToName.html"><span class="name">defaultsToName</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Meta annotation that may be used on <code>String</code> constructor parameter of an annotation.</p><div class="fullcomment"><div class="comment cmt"><p>Meta annotation that may be used on <code>String</code> constructor parameter of an annotation. This constructor parameter
+must take a default <code>null</code> value. <a href="defaultsToName.html" class="extype" name="com.avsystem.commons.annotation.defaultsToName">defaultsToName</a> makes annotation processing macro engines insert the name
+of annotated symbol instead of <code>null</code>.
+</p></div><dl class="attributes block"> <div class="block">Example:
+               <ol><li class="cmt"><p></p><pre><span class="kw">class</span> SomeMethodAnnotation(@defaultsToName <span class="kw">val</span> name: <span class="std">String</span> = <span class="kw">null</span>)
+
+@SomeMethodAnnotation <span class="kw">def</span> someMethod: <span class="std">String</span></pre><p>Now, when some macro engine has to inspect <code>SomeMethodAnnotation</code> of <code>someMethod</code>, it will automatically insert
+the string &quot;someMethod&quot; as the argument of <code>SomeMethodAnnotation</code>.</p></li></ol>
+            </div></dl></div>
     </li><li name="com.avsystem.commons.annotation.explicitGenerics" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="explicitGenericsextendsAnnotationwithStaticAnnotation"></a><a id="explicitGenerics:explicitGenerics"></a>
       <span class="permalink">
