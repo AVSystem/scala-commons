@@ -1,12 +1,19 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.serialization.GenCodec
+
 import scala.language.higherKinds
 
 trait RPCFramework {
   type RawValue
   type Reader[T]
   type Writer[T]
+
+  case class RawInvocation(@methodName rpcName: String, @multi args: List[RawValue])
+  object RawInvocation {
+    implicit def codec(implicit rawValueCodec: GenCodec[RawValue]): GenCodec[RawInvocation] = GenCodec.materialize
+  }
 
   type RawRPC
   val RawRPC: BaseRawRpcCompanion
@@ -61,7 +68,8 @@ trait RPCFramework {
   trait Signature {
     @reifyName def name: String
     @multi def paramMetadata: List[ParamMetadata[_]]
-    @reifyAnnot @multi def annotations: List[MetadataAnnotation]
+    @reifyAnnot
+    @multi def annotations: List[MetadataAnnotation]
   }
 
   case class ParamMetadata[T](

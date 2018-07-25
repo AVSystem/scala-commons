@@ -18,7 +18,8 @@ trait RpcSymbols { this: RpcMacroCommons =>
   object RpcParamArity {
     def fromAnnotation(param: ArityParam,
       allowMulti: Boolean, allowListed: Boolean, allowNamed: Boolean): RpcParamArity = {
-      val at = param.annot(RpcArityAT).fold(SingleArityAT)(_.tpe)
+
+      val at = findAnnotation(param.symbol, RpcArityAT).fold(SingleArityAT)(_.tpe)
       if (at <:< SingleArityAT) RpcParamArity.Single(param.actualType)
       else if (at <:< OptionalArityAT) {
         val optionLikeType = typeOfCachedImplicit(param.optionLike)
@@ -53,29 +54,15 @@ trait RpcSymbols { this: RpcMacroCommons =>
   object RpcMethodArity {
     def fromAnnotation(method: RawMethod): RpcMethodArity = {
       val at = method.annot(RpcArityAT).fold(SingleArityAT)(_.tpe)
-      if (at <:< SingleArityAT || at <:< OptionalArityAT) {
-        method.sig.paramLists match {
-          case Nil | List(_) =>
-          case _ => method.reportProblem(s"non-multi raw method can only have zero or one parameter list")
-        }
-        if (at <:< OptionalArityAT) Optional else Single
-      }
-      else if (at <:< MultiArityAT) method.sig.paramLists match {
-        case List(rpcNameParam) :: (Nil | List(_)) =>
-          if (!(actualParamType(rpcNameParam) <:< typeOf[String])) {
-            method.reportProblem("RPC name parameter of multi raw method must be of type String", rpcNameParam.pos)
-          }
-          Multi(RpcNameParam(method, rpcNameParam))
-        case _ =>
-          method.reportProblem(s"multi raw method must take at most two parameter lists where the first one " +
-            "must contain RPC name parameter typed as String")
-      }
+      if (at <:< SingleArityAT) Single
+      else if (at <:< OptionalArityAT) Optional
+      else if (at <:< MultiArityAT) Multi
       else method.reportProblem(s"unrecognized RPC arity annotation: $at")
     }
 
     case object Single extends RpcMethodArity(true) with RpcArity.Single
     case object Optional extends RpcMethodArity(true) with RpcArity.Optional
-    case class Multi(rpcNameParam: RpcNameParam) extends RpcMethodArity(false) with RpcArity.Multi
+    case object Multi extends RpcMethodArity(false) with RpcArity.Multi
   }
 
   abstract class RpcSymbol {
@@ -99,8 +86,6 @@ trait RpcSymbols { this: RpcMacroCommons =>
     val nameStr: String = name.decodedName.toString
     val encodedNameStr: String = name.encodedName.toString
 
-    def annot(tpe: Type): Option[Annot] = findAnnotation(symbol, tpe)
-
     override def equals(other: Any): Boolean = other match {
       case rpcSym: RpcSymbol => symbol == rpcSym.symbol
       case _ => false
@@ -109,41 +94,126 @@ trait RpcSymbols { this: RpcMacroCommons =>
     override def toString: String = symbol.toString
   }
 
-  trait RawRpcSymbol extends RpcSymbol {
-    def baseTag: Type
-    def defaultTag: Type
+  case class FallbackTag(annotTree: Tree) {
+    def asList: List[Tree] = List(annotTree).filter(_ != EmptyTree)
+    def orElse(other: FallbackTag): FallbackTag = FallbackTag(annotTree orElse other.annotTree)
+  }
+  object FallbackTag {
+    final val Empty = FallbackTag(EmptyTree)
+  }
 
-    lazy val requiredTag: Type = {
-      val result = annot(TaggedAT).fold(baseTag)(_.tpe.baseType(TaggedAT.typeSymbol).typeArgs.head)
-      if (!(result <:< baseTag)) {
-        val msg =
-          if (baseTag =:= NothingTpe)
-            "cannot use @tagged, no tag annotation type specified with @methodTag/@paramTag"
-          else s"tag annotation type $requiredTag specified in @tagged annotation " +
-            s"must be a subtype of specified base tag $baseTag"
-        reportProblem(msg)
+  sealed trait MatchedRealSymbol[+Real <: RealRpcSymbol] {
+    def real: Real
+    def fallbackTagUsed: FallbackTag
+
+    def annot(tpe: Type): Option[Annot] =
+      findAnnotation(real.symbol, tpe, fallback = fallbackTagUsed.asList)
+
+    def allAnnots(tpe: Type): List[Annot] =
+      allAnnotations(real.symbol, tpe, fallback = fallbackTagUsed.asList)
+
+    val rpcName: String = {
+      val prefixes = allAnnotations(real.symbol, RpcNamePrefixAT, fallback = fallbackTagUsed.asList)
+        .map(_.findArg[String](RpcNamePrefixArg))
+      val rpcName = annot(RpcNameAT).fold(real.nameStr)(_.findArg[String](RpcNameArg))
+      prefixes.mkString("", "", rpcName)
+    }
+  }
+
+  case class MatchedRpcTrait(real: RealRpcTrait) extends MatchedRealSymbol[RealRpcTrait] {
+    def fallbackTagUsed: FallbackTag = FallbackTag.Empty
+  }
+
+  case class MatchedMethod(real: RealMethod, fallbackTagUsed: FallbackTag)
+    extends MatchedRealSymbol[RealMethod]
+
+  case class MatchedParam(real: RealParam, fallbackTagUsed: FallbackTag, matchedOwner: MatchedMethod)
+    extends MatchedRealSymbol[RealParam] {
+
+    val whenAbsent: Tree =
+      annot(WhenAbsentAT).fold(EmptyTree) { annot =>
+        val annotatedDefault = annot.tree.children.tail.head
+        if (!(annotatedDefault.tpe <:< real.actualType)) {
+          real.reportProblem(s"expected value of type ${real.actualType} in @whenAbsent annotation, " +
+            s"got ${annotatedDefault.tpe.widen}")
+        }
+        val transformer = new Transformer {
+          override def transform(tree: Tree): Tree = tree match {
+            case Super(t@This(_), _) if !enclosingClasses.contains(t.symbol) =>
+              real.reportProblem(s"illegal super-reference in @whenAbsent annotation")
+            case This(_) if tree.symbol == real.owner.owner.symbol => q"${real.owner.owner.safeName}"
+            case This(_) if !enclosingClasses.contains(tree.symbol) =>
+              real.reportProblem(s"illegal this-reference in @whenAbsent annotation")
+            case t => super.transform(t)
+          }
+        }
+        transformer.transform(annotatedDefault)
       }
-      result
+
+    val hasDefaultValue: Boolean =
+      whenAbsent != EmptyTree || real.symbol.asTerm.isParamWithDefault
+
+    val transientDefault: Boolean =
+      hasDefaultValue && annot(TransientDefaultAT).nonEmpty
+
+    def fallbackValueTree: Tree =
+      if (whenAbsent != EmptyTree) c.untypecheck(whenAbsent)
+      else if (real.symbol.asTerm.isParamWithDefault) defaultValue(false)
+      else q"$RpcUtils.missingArg(${matchedOwner.rpcName}, $rpcName)"
+
+    def transientValueTree: Tree =
+      if (real.symbol.asTerm.isParamWithDefault) defaultValue(true)
+      else c.untypecheck(whenAbsent)
+
+    private def defaultValue(useThis: Boolean): Tree = {
+      val prevListParams = real.owner.realParams.take(real.index - real.indexInList).map(rp => q"${rp.safeName}")
+      val prevListParamss = List(prevListParams).filter(_.nonEmpty)
+      val realInst = if (useThis) q"this" else q"${real.owner.owner.safeName}"
+      q"$realInst.${TermName(s"${real.owner.encodedNameStr}$$default$$${real.index + 1}")}(...$prevListParamss)"
+    }
+  }
+
+  trait RawRpcSymbol extends RpcSymbol {
+    def baseTagTpe: Type
+    def fallbackTag: FallbackTag
+
+    def annot(tpe: Type): Option[Annot] =
+      findAnnotation(symbol, tpe)
+
+    def tagSpec(a: Annot): (Type, FallbackTag) = {
+      val tagType = a.tpe.dealias.typeArgs.head
+      val defaultTagArg = a.tpe.member(TermName("defaultTag"))
+      val fallbackTag = FallbackTag(a.findArg[Tree](defaultTagArg, EmptyTree))
+      (tagType, fallbackTag)
     }
 
-    def matchesTag(realSymbol: RealRpcSymbol): Boolean =
-      realSymbol.tag(baseTag, defaultTag) <:< requiredTag
-
-    def matchTag(realRpcSymbol: RealRpcSymbol): Res[Unit] =
-      if (matchesTag(realRpcSymbol)) Ok(())
-      else {
-        val tag = realRpcSymbol.tag(baseTag, defaultTag)
-        Fail(s"it does not accept ${realRpcSymbol.shortDescription}s tagged with $tag")
+    lazy val (requiredTag, whenUntaggedTag) = {
+      val taggedAnnot = annot(TaggedAT)
+      val requiredTagType = taggedAnnot.fold(baseTagTpe)(_.tpe.typeArgs.head)
+      if (!(requiredTagType <:< baseTagTpe)) {
+        val msg =
+          if (baseTagTpe =:= NothingTpe)
+            "cannot use @tagged, no tag annotation type specified with @methodTag/@paramTag"
+          else s"tag annotation type $requiredTagType specified in @tagged annotation " +
+            s"must be a subtype of specified base tag $baseTagTpe"
+        reportProblem(msg)
       }
+      val whenUntagged = FallbackTag(taggedAnnot.map(_.findArg[Tree](WhenUntaggedArg, EmptyTree)).getOrElse(EmptyTree))
+      (requiredTagType, whenUntagged)
+    }
+
+    // returns fallback tag tree only IF it was necessary
+    def matchTag(realRpcSymbol: RealRpcSymbol): Res[FallbackTag] = {
+      val tagAnnot = findAnnotation(realRpcSymbol.symbol, baseTagTpe)
+      val fallbackTagUsed = if (tagAnnot.isEmpty) whenUntaggedTag orElse fallbackTag else FallbackTag.Empty
+      val realTagTpe = tagAnnot.map(_.tpe).getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
+
+      if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
+      else Fail(s"it does not accept ${realRpcSymbol.shortDescription}s tagged with $realTagTpe")
+    }
   }
 
-  sealed trait RealRpcSymbol extends RpcSymbol {
-    def tag(baseTag: Type, defaultTag: Type): Type =
-      annot(baseTag).fold(defaultTag)(_.tpe)
-
-    lazy val rpcName: String =
-      annot(RpcNameAT).fold(nameStr)(_.findArg[String](RpcNameNameSym))
-  }
+  sealed trait RealRpcSymbol extends RpcSymbol
 
   abstract class RpcTrait(val symbol: Symbol) extends RpcSymbol {
     def tpe: Type
@@ -191,20 +261,15 @@ trait RpcSymbols { this: RpcMacroCommons =>
       if (isRepeated(symbol)) q"$safeName: _*" else q"$safeName"
   }
 
-  case class RpcNameParam(owner: RawMethod, symbol: Symbol) extends RpcParam {
-    def shortDescription = "RPC name parameter"
-    def description = s"$shortDescription $nameStr of ${owner.description}"
-  }
-
   trait AritySymbol extends RpcSymbol {
     val arity: RpcArity
 
     // @unchecked because "The outer reference in this type test cannot be checked at runtime"
     // Srsly scalac, from static types it should be obvious that outer references are the same
-    def matchName(realRpcSymbol: RealRpcSymbol): Res[Unit] = arity match {
+    def matchName(matchedReal: MatchedRealSymbol[RealRpcSymbol]): Res[Unit] = arity match {
       case _: RpcArity.Single@unchecked | _: RpcArity.Optional@unchecked =>
-        if (realRpcSymbol.rpcName == nameStr) Ok(())
-        else Fail(s"it only matches ${realRpcSymbol.shortDescription}s with RPC name $nameStr")
+        if (matchedReal.rpcName == nameStr) Ok(())
+        else Fail(s"it only matches ${matchedReal.real.shortDescription}s with RPC name $nameStr")
       case _: RpcArity.Multi@unchecked => Ok(())
     }
   }
@@ -230,21 +295,24 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def mkOptional[T: Liftable](opt: Option[T]): Tree =
       opt.map(t => q"$optionLike.some($t)").getOrElse(q"$optionLike.none")
 
-    def mkMulti[T: Liftable](elements: List[T]): Tree = {
-      val builderName = c.freshName(TermName("builder"))
-      q"""
-        val $builderName = $canBuildFrom()
-        $builderName.sizeHint(${elements.size})
-        ..${elements.map(t => q"$builderName += $t")}
-        $builderName.result()
-       """
-    }
+    def mkMulti[T: Liftable](elements: List[T]): Tree =
+      if (elements.isEmpty) q"$RpcUtils.createEmpty($canBuildFrom)"
+      else {
+        val builderName = c.freshName(TermName("builder"))
+        q"""
+          val $builderName = $RpcUtils.createBuilder($canBuildFrom, ${elements.size})
+          ..${elements.map(t => q"$builderName += $t")}
+          $builderName.result()
+        """
+      }
   }
 
-  trait RawParamLike extends ArityParam with RawRpcSymbol {
+  trait RealParamTarget extends ArityParam with RawRpcSymbol {
     def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
+
+    def pathStr: String
 
     val verbatim: Boolean =
       annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
@@ -255,13 +323,58 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def cannotMapClue: String
   }
 
-  case class RawParam(owner: RawMethod, symbol: Symbol) extends RawParamLike {
-    def baseTag: Type = owner.baseParamTag
-    def defaultTag: Type = owner.defaultParamTag
+  object RawParam {
+    def apply(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol): RawParam =
+      if (findAnnotation(symbol, MethodNameAT).nonEmpty)
+        MethodNameParam(owner, symbol)
+      else if (findAnnotation(symbol, CompositeAT).nonEmpty)
+        CompositeRawParam(owner, symbol)
+      else RawValueParam(owner, symbol)
+  }
+
+  sealed trait RawParam extends RpcParam {
+    val owner: Either[RawMethod, CompositeRawParam]
+    val containingRawMethod: RawMethod = owner.fold(identity, _.containingRawMethod)
+
+    def safePath: Tree = owner.fold(_ => q"$safeName", _.safeSelect(this))
+    def pathStr: String = owner.fold(_ => nameStr, cp => s"${cp.pathStr}.$nameStr")
 
     def shortDescription = "raw parameter"
-    def description = s"$shortDescription $nameStr of ${owner.description}"
-    def cannotMapClue = s"cannot map it to $shortDescription $nameStr of ${owner.nameStr}"
+    def description = s"$shortDescription $nameStr of ${owner.fold(_.description, _.description)}"
+  }
+
+  case class MethodNameParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol) extends RawParam {
+    if (!(actualType =:= typeOf[String])) {
+      reportProblem("@methodName parameter must be of type String")
+    }
+  }
+
+  case class CompositeRawParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol) extends RawParam {
+    val constructorSig: Type = primaryConstructorOf(actualType, problemStr).typeSignatureIn(actualType)
+
+    val paramLists: List[List[RawParam]] =
+      constructorSig.paramLists.map(_.map(RawParam(Right(this), _)))
+
+    def allLeafParams: Iterator[RawParam] = paramLists.iterator.flatten.flatMap {
+      case crp: CompositeRawParam => crp.allLeafParams
+      case other => Iterator(other)
+    }
+
+    def safeSelect(subParam: RawParam): Tree = {
+      if (!alternatives(actualType.member(subParam.name)).exists(s => s.isMethod && s.asTerm.isParamAccessor)) {
+        subParam.reportProblem(s"it is not a public member and cannot be accessed, turn it into a val")
+      }
+      q"$safePath.${subParam.name}"
+    }
+  }
+
+  case class RawValueParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol)
+    extends RawParam with RealParamTarget {
+
+    def baseTagTpe: Type = containingRawMethod.baseParamTag
+    def fallbackTag: FallbackTag = containingRawMethod.fallbackParamTag
+
+    def cannotMapClue = s"cannot map it to $shortDescription $pathStr of ${containingRawMethod.nameStr}"
   }
 
   case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexOfList: Int, indexInList: Int)
@@ -269,33 +382,6 @@ trait RpcSymbols { this: RpcMacroCommons =>
 
     def shortDescription = "real parameter"
     def description = s"$shortDescription $nameStr of ${owner.description}"
-
-    val whenAbsent: Tree = annot(WhenAbsentAT).fold(EmptyTree) { annot =>
-      val annotatedDefault = annot.tree.children.tail.head
-      if (!(annotatedDefault.tpe <:< actualType)) {
-        reportProblem(s"expected value of type $actualType in @whenAbsent annotation, got ${annotatedDefault.tpe.widen}")
-      }
-      val transformer = new Transformer {
-        override def transform(tree: Tree): Tree = tree match {
-          case Super(t@This(_), _) if !enclosingClasses.contains(t.symbol) =>
-            reportProblem(s"illegal super-reference in @whenAbsent annotation")
-          case This(_) if tree.symbol == owner.owner.symbol => q"${owner.owner.safeName}"
-          case This(_) if !enclosingClasses.contains(tree.symbol) =>
-            reportProblem(s"illegal this-reference in @whenAbsent annotation")
-          case t => super.transform(t)
-        }
-      }
-      transformer.transform(annotatedDefault)
-    }
-
-    def defaultValueTree: Tree =
-      if (whenAbsent != EmptyTree) c.untypecheck(whenAbsent)
-      else if (symbol.asTerm.isParamWithDefault) {
-        val prevListParams = owner.realParams.take(index - indexInList).map(rp => q"${rp.safeName}")
-        val prevListParamss = List(prevListParams).filter(_.nonEmpty)
-        q"${owner.owner.safeName}.${TermName(s"${owner.encodedNameStr}$$default$$${index + 1}")}(...$prevListParamss)"
-      }
-      else q"$RpcPackage.RpcUtils.missingArg(${owner.rpcName}, $rpcName)"
   }
 
   case class RawMethod(owner: RawRpcTrait, symbol: Symbol) extends RpcMethod with RawRpcSymbol with AritySymbol {
@@ -303,32 +389,37 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def description = s"$shortDescription $nameStr of ${owner.description}"
 
     def ownerType: Type = owner.tpe
-    def baseTag: Type = owner.baseMethodTag
-    def defaultTag: Type = owner.defaultMethodTag
+    def baseTagTpe: Type = owner.baseMethodTag
+    def fallbackTag: FallbackTag = owner.fallbackMethodTag
 
     val arity: RpcMethodArity = RpcMethodArity.fromAnnotation(this)
+    val tried: Boolean = annot(TriedAT).nonEmpty
 
     val verbatimResult: Boolean =
       annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
 
-    val List(baseParamTag, defaultParamTag) =
-      annot(ParamTagAT)
-        .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
-        .getOrElse(List(owner.baseParamTag, owner.defaultParamTag))
+    val (baseParamTag, fallbackParamTag) =
+      annot(ParamTagAT).map(tagSpec).getOrElse(owner.baseParamTag, owner.fallbackParamTag)
 
-    val rawParams: Option[List[RawParam]] = arity match {
-      case RpcMethodArity.Single | RpcMethodArity.Optional =>
-        sig.paramLists.headOption.map(_.map(RawParam(this, _)))
-      case RpcMethodArity.Multi(_) =>
-        sig.paramLists.tail.headOption.map(_.map(RawParam(this, _)))
+    val rawParams: List[RawParam] = sig.paramLists match {
+      case Nil | List(_) => sig.paramLists.flatten.map(RawParam(Left(this), _))
+      case _ => reportProblem(s"raw methods cannot take multiple parameter lists")
     }
 
-    val paramLists: List[List[RpcParam]] = arity match {
-      case RpcMethodArity.Single | RpcMethodArity.Optional =>
-        rawParams.toList
-      case RpcMethodArity.Multi(rpcNameParam) =>
-        List(rpcNameParam) :: rawParams.toList
+    val paramLists: List[List[RawParam]] =
+      if (sig.paramLists.isEmpty) Nil else List(rawParams)
+
+    def allLeafParams: Iterator[RawParam] = rawParams.iterator.flatMap {
+      case crp: CompositeRawParam => crp.allLeafParams
+      case other => Iterator(other)
     }
+
+    val allValueParams: List[RawValueParam] =
+      allLeafParams.collect({ case rvp: RawValueParam => rvp }).toList
+
+    lazy val methodNameParam: MethodNameParam =
+      allLeafParams.collectFirst({ case mnp: MethodNameParam => mnp })
+        .getOrElse(reportProblem("no @methodName parameter found on @multi raw method"))
 
     def rawImpl(caseDefs: List[(String, Tree)]): Tree = {
       val body = arity match {
@@ -338,15 +429,16 @@ trait RpcSymbols { this: RpcMacroCommons =>
           case _ => abort(s"multiple real methods match $description")
         }
         case RpcMethodArity.Optional => caseDefs match {
-          case Nil => q"$RpcPackage.RpcUtils.missingOptionalRpc($nameStr)"
+          case Nil => q"$RpcUtils.missingOptionalRpc($nameStr)"
           case List((_, single)) => single
           case _ => abort(s"multiple real methods match $description")
         }
-        case RpcMethodArity.Multi(rpcNameParam) =>
+        case RpcMethodArity.Multi =>
+          val methodNameName = c.freshName(TermName("methodName"))
           q"""
-            ${rpcNameParam.safeName} match {
+            ${methodNameParam.safePath} match {
               case ..${caseDefs.map({ case (rpcName, tree) => cq"$rpcName => $tree" })}
-              case _ => $RpcPackage.RpcUtils.unknownRpc(${rpcNameParam.safeName}, $nameStr)
+              case $methodNameName => $RpcUtils.unknownRpc($methodNameName, $nameStr)
             }
            """
       }
@@ -383,18 +475,13 @@ trait RpcSymbols { this: RpcMacroCommons =>
     def shortDescription = "raw RPC"
     def description = s"$shortDescription $tpe"
 
-    def baseTag: Type = typeOf[Nothing]
-    def defaultTag: Type = typeOf[Nothing]
+    def baseTagTpe: Type = NothingTpe
+    def fallbackTag: FallbackTag = FallbackTag.Empty
 
-    val List(baseMethodTag, defaultMethodTag) =
-      annot(MethodTagAT)
-        .map(_.tpe.baseType(MethodTagAT.typeSymbol).typeArgs)
-        .getOrElse(List(NothingTpe, NothingTpe))
-
-    val List(baseParamTag, defaultParamTag) =
-      annot(ParamTagAT)
-        .map(_.tpe.baseType(ParamTagAT.typeSymbol).typeArgs)
-        .getOrElse(List(NothingTpe, NothingTpe))
+    val (baseMethodTag, fallbackMethodTag) =
+      annot(MethodTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
+    val (baseParamTag, fallbackParamTag) =
+      annot(ParamTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
 
     lazy val rawMethods: List[RawMethod] =
       tpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(this, _)).toList

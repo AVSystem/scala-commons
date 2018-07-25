@@ -8,11 +8,16 @@ trait AsRaw[Raw, Real] {
   def asRaw(real: Real): Raw
 }
 object AsRaw {
+  def apply[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Raw, Real] = asRaw
+
   def create[Raw, Real](asRawFun: Real => Raw): AsRaw[Raw, Real] =
     new AsRaw[Raw, Real] {
       def asRaw(real: Real): Raw = asRawFun(real)
     }
-  def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
+  implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
+  implicit def forTry[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Try[Raw], Try[Real]] =
+    AsRaw.create(_.map(asRaw.asRaw))
+  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsRaw[Raw, Real]]): AsRaw[Raw, Real] = fallback.value
   def materializeForRpc[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
 }
 
@@ -21,17 +26,24 @@ trait AsReal[Raw, Real] {
   def asReal(raw: Raw): Real
 }
 object AsReal {
+  def apply[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Raw, Real] = asReal
+
   def create[Raw, Real](asRealFun: Raw => Real): AsReal[Raw, Real] =
     new AsReal[Raw, Real] {
       def asReal(raw: Raw): Real = asRealFun(raw)
     }
-  def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
+  implicit def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
+  implicit def forTry[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Try[Raw], Try[Real]] =
+    AsReal.create(_.map(asReal.asReal))
+  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsReal[Raw, Real]]): AsReal[Raw, Real] = fallback.value
   def materializeForRpc[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsReal[Raw, Real]
 }
 
 @implicitNotFound("don't know how to encode and decode between ${Real} and ${Raw}, appropriate AsRawReal instance not found")
 trait AsRawReal[Raw, Real] extends AsReal[Raw, Real] with AsRaw[Raw, Real]
 object AsRawReal {
+  def apply[Raw, Real](implicit asRawReal: AsRawReal[Raw, Real]): AsRawReal[Raw, Real] = asRawReal
+
   def create[Raw, Real](asRawFun: Real => Raw, asRealFun: Raw => Real): AsRawReal[Raw, Real] =
     new AsRawReal[Raw, Real] {
       def asRaw(real: Real): Raw = asRawFun(real)
@@ -43,12 +55,14 @@ object AsRawReal {
     def asRaw(real: Any): Any = real
   }
 
-  def identity[A]: AsRawReal[A, A] =
+  implicit def identity[A]: AsRawReal[A, A] =
     reusableIdentity.asInstanceOf[AsRawReal[A, A]]
+
+  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsRawReal[Raw, Real]]): AsRawReal[Raw, Real] = fallback.value
 
   def materializeForRpc[Raw, Real]: AsRawReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRawReal[Raw, Real]
 }
 
 object RpcMetadata {
-  def materializeForRpc[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.rpcMetadata[M[Real], Real]
+  def materializeForRpc[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.rpcMetadata[Real]
 }

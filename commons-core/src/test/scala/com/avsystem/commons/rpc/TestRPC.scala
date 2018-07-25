@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.rpc.DummyRPC._
 import com.avsystem.commons.serialization.{HasGenCodec, whenAbsent}
 import com.github.ghik.silencer.silent
 
@@ -16,7 +17,7 @@ trait InnerRPC {
 
   def indirectRecursion(): TestRPC
 }
-object InnerRPC extends DummyRPC.RPCCompanion[InnerRPC]
+object InnerRPC extends RPCCompanion[InnerRPC]
 
 trait TestRPC {
   def defaultNum: Int = 42
@@ -42,18 +43,18 @@ trait TestRPC {
 }
 
 @silent
-object TestRPC extends DummyRPC.RPCCompanion[TestRPC] {
-  def rpcImpl(onInvocation: (String, List[Any], Option[Any]) => Any) = new TestRPC { outer =>
+object TestRPC extends RPCCompanion[TestRPC] {
+  def rpcImpl(onInvocation: (RawInvocation, Option[Any]) => Any): TestRPC = new TestRPC { outer =>
     private def onProcedure(methodName: String, args: List[Any]): Unit =
-      onInvocation(methodName, args, None)
+      onInvocation(RawInvocation(methodName, args), None)
 
     private def onCall[T](methodName: String, args: List[Any], result: T): Future[T] = {
-      onInvocation(methodName, args, Some(result))
+      onInvocation(RawInvocation(methodName, args), Some(result))
       Future.successful(result)
     }
 
     private def onGet[T](methodName: String, args: List[Any], result: T): T = {
-      onInvocation(methodName, args, None)
+      onInvocation(RawInvocation(methodName, args), None)
       result
     }
 

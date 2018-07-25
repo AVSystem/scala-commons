@@ -19,60 +19,61 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
 
   "rpc caller" should {
     "should properly deserialize RPC calls" in {
-      val invocations = new ArrayBuffer[(String, List[Any])]
-      val rawRpc = AsRawRPC[TestRPC].asRaw(TestRPC.rpcImpl((name, args, _) => {
-        invocations += ((name, args))
-        name
+      val invocations = new ArrayBuffer[RawInvocation]
+      val rawRpc = AsRawRPC[TestRPC].asRaw(TestRPC.rpcImpl((inv, _) => {
+        invocations += inv
+        inv.rpcName
       }))
 
-      rawRpc.fire("handleMore")(Nil)
-      rawRpc.fire("doStuff")(List(42, "omgsrsly", Some(true)))
-      assert("doStuffResult" === get(rawRpc.call("doStuffBoolean")(List(true))))
-      rawRpc.fire("doStuffInt")(List(5))
-      rawRpc.fire("doStuffInt")(Nil)
-      rawRpc.fire("handleMore")(Nil)
-      rawRpc.fire("handle")(Nil)
-      rawRpc.fire("takeCC")(Nil)
-      rawRpc.fire("srslyDude")(Nil)
-      rawRpc.get("innerRpc")(List("innerName")).fire("proc")(Nil)
-      assert("innerRpc.funcResult" === get(rawRpc.get("innerRpc")(List("innerName")).call("func")(List(42))))
+      rawRpc.fire(RawInvocation("handleMore", Nil))
+      rawRpc.fire(RawInvocation("doStuff", List(42, "omgsrsly", Some(true))))
+      assert("doStuffResult" === get(rawRpc.call(RawInvocation("doStuffBoolean", List(true)))))
+      rawRpc.fire(RawInvocation("doStuffInt", List(5)))
+      rawRpc.fire(RawInvocation("doStuffInt", Nil))
+      rawRpc.fire(RawInvocation("handleMore", Nil))
+      rawRpc.fire(RawInvocation("handle", Nil))
+      rawRpc.fire(RawInvocation("takeCC", Nil))
+      rawRpc.fire(RawInvocation("srslyDude", Nil))
+      rawRpc.get(RawInvocation("innerRpc", List("innerName"))).fire(RawInvocation("proc", Nil))
+      assert("innerRpc.funcResult" === get(rawRpc.get(RawInvocation("innerRpc", List("innerName")))
+        .call(RawInvocation("func", List(42)))))
 
       assert(invocations.toList === List(
-        ("handleMore", Nil),
-        ("doStuff", List(42, "omgsrsly", Some(true))),
-        ("doStuffBoolean", List(true)),
-        ("doStuffInt", List(5)),
-        ("doStuffInt", List(42)),
-        ("handleMore", Nil),
-        ("handle", Nil),
-        ("takeCC", List(Record(-1, "_"))),
-        ("srslyDude", Nil),
-        ("innerRpc", List("innerName")),
-        ("innerRpc.proc", Nil),
-        ("innerRpc", List("innerName")),
-        ("innerRpc.func", List(42))
+        RawInvocation("handleMore", Nil),
+        RawInvocation("doStuff", List(42, "omgsrsly", Some(true))),
+        RawInvocation("doStuffBoolean", List(true)),
+        RawInvocation("doStuffInt", List(5)),
+        RawInvocation("doStuffInt", List(42)),
+        RawInvocation("handleMore", Nil),
+        RawInvocation("handle", Nil),
+        RawInvocation("takeCC", List(Record(-1, "_"))),
+        RawInvocation("srslyDude", Nil),
+        RawInvocation("innerRpc", List("innerName")),
+        RawInvocation("innerRpc.proc", Nil),
+        RawInvocation("innerRpc", List("innerName")),
+        RawInvocation("innerRpc.func", List(42))
       ))
     }
 
     "fail on bad input" in {
-      val rawRpc = AsRawRPC[TestRPC].asRaw(TestRPC.rpcImpl((_, _, _) => ()))
-      intercept[Exception](rawRpc.fire("whatever")(Nil))
+      val rawRpc = AsRawRPC[TestRPC].asRaw(TestRPC.rpcImpl((_, _) => ()))
+      intercept[Exception](rawRpc.fire(RawInvocation("whatever", Nil)))
     }
 
     "real rpc should properly serialize calls to raw rpc" in {
-      val invocations = new ArrayBuffer[(String, List[Any])]
+      val invocations = new ArrayBuffer[RawInvocation]
 
       object rawRpc extends RawRPC with RunNowFutureCallbacks {
-        def fire(rpcName: String)(args: List[Any]): Unit =
-          invocations += ((rpcName, args))
+        def fire(inv: RawInvocation): Unit =
+          invocations += inv
 
-        def call(rpcName: String)(args: List[Any]): Future[Any] = {
-          invocations += ((rpcName, args))
-          Future.successful(rpcName + "Result")
+        def call(inv: RawInvocation): Future[Any] = {
+          invocations += inv
+          Future.successful(inv.rpcName + "Result")
         }
 
-        def get(rpcName: String)(args: List[Any]): RawRPC = {
-          invocations += ((rpcName, args))
+        def get(inv: RawInvocation): RawRPC = {
+          invocations += inv
           this
         }
       }
@@ -90,20 +91,20 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       realRpc.innerRpc("innerName").moreInner("moreInner").moreInner("evenMoreInner").func(42)
 
       assert(invocations.toList === List(
-        ("handleMore", Nil),
-        ("doStuff", List(42, "omgsrsly", Some(true))),
-        ("doStuffBoolean", List(true)),
-        ("doStuffInt", List(5)),
-        ("handleMore", Nil),
-        ("handle", Nil),
+        RawInvocation("handleMore", Nil),
+        RawInvocation("doStuff", List(42, "omgsrsly", Some(true))),
+        RawInvocation("doStuffBoolean", List(true)),
+        RawInvocation("doStuffInt", List(5)),
+        RawInvocation("handleMore", Nil),
+        RawInvocation("handle", Nil),
 
-        ("innerRpc", List("innerName")),
-        ("proc", Nil),
+        RawInvocation("innerRpc", List("innerName")),
+        RawInvocation("proc", Nil),
 
-        ("innerRpc", List("innerName")),
-        ("moreInner", List("moreInner")),
-        ("moreInner", List("evenMoreInner")),
-        ("func", List(42))
+        RawInvocation("innerRpc", List("innerName")),
+        RawInvocation("moreInner", List("moreInner")),
+        RawInvocation("moreInner", List("evenMoreInner")),
+        RawInvocation("func", List(42))
       ))
     }
 

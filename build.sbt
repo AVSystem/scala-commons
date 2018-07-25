@@ -9,7 +9,7 @@ cancelable in Global := true
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
 // for binary compatibility checking
-val previousVersion = "1.27.3"
+val previousCompatibleVersions = Set.empty[String]
 
 val silencerVersion = "1.1"
 val guavaVersion = "23.0"
@@ -100,8 +100,8 @@ val jvmCommonSettings = commonSettings ++ Seq(
   libraryDependencies ++= Seq(
     "org.apache.commons" % "commons-io" % commonsIoVersion % Test,
   ),
-  mimaPreviousArtifacts := {
-    Set(organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion)
+  mimaPreviousArtifacts := previousCompatibleVersions.map { previousVersion =>
+    organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion
   },
 )
 
@@ -192,7 +192,7 @@ lazy val `commons-macros` = project.settings(
 )
 
 lazy val `commons-core` = project
-  .dependsOn(`commons-macros`, `commons-annotations`)
+  .dependsOn(`commons-macros`, `commons-annotations` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     sourceDirsSettings(_ / "jvm"),
@@ -206,7 +206,7 @@ lazy val `commons-core` = project
 lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
   .enablePlugins(ScalaJSPlugin)
   .configure(p => if (forIdeaImport) p.dependsOn(`commons-core`) else p)
-  .dependsOn(`commons-macros`, `commons-annotations-js`)
+  .dependsOn(`commons-macros`, `commons-annotations-js` % CompileAndTest)
   .settings(
     jsCommonSettings,
     name := (name in `commons-core`).value,
@@ -229,13 +229,16 @@ lazy val `commons-analyzer` = project
   )
 
 lazy val `commons-jetty` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
       "org.eclipse.jetty" % "jetty-server" % jettyVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
+
+      "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
+      "org.slf4j" % "slf4j-simple" % "1.7.25" % Test,
     ),
   )
 
@@ -283,7 +286,7 @@ lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
   )
 
 lazy val `commons-mongo` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
@@ -297,7 +300,7 @@ lazy val `commons-mongo` = project
   )
 
 lazy val `commons-kafka` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
@@ -306,7 +309,7 @@ lazy val `commons-kafka` = project
   )
 
 lazy val `commons-redis` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
@@ -318,7 +321,7 @@ lazy val `commons-redis` = project
   )
 
 lazy val `commons-spring` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
@@ -328,7 +331,7 @@ lazy val `commons-spring` = project
   )
 
 lazy val `commons-akka` = project
-  .dependsOn(`commons-core`)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(

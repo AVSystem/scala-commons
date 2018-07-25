@@ -14,6 +14,7 @@
     derivation for case classes and sealed hierarchies
   * [RPC framework](docs/RPCFramework.md): **typesafe** RPC/proxy framework used in particular by
     [Udash Framework](http://guide.udash.io/#/rpc) for client-server communication
+  * [REST framework](docs/REST.md) based on RPC framework
   * Better enumeration support for Scala -
     [`ValueEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/ValueEnum.html),
     [`SealedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/SealedEnumCompanion.html),

@@ -23,13 +23,15 @@ trait SharedExtensions extends CompatSharedExtensions {
 
   implicit def futureOps[A](fut: Future[A]): FutureOps[A] = new FutureOps(fut)
 
-  implicit def lazyFutureOps[A](fut: => Future[A]): LazyFutureOps[A] = new LazyFutureOps(fut)
+  implicit def lazyFutureOps[A](fut: => Future[A]): LazyFutureOps[A] = new LazyFutureOps(() => fut)
 
   implicit def futureCompanionOps(fut: Future.type): FutureCompanionOps.type = FutureCompanionOps
 
   implicit def optionOps[A](option: Option[A]): OptionOps[A] = new OptionOps(option)
 
   implicit def tryOps[A](tr: Try[A]): TryOps[A] = new TryOps(tr)
+
+  implicit def lazyTryOps[A](tr: => Try[A]): LazyTryOps[A] = new LazyTryOps(() => tr)
 
   implicit def tryCompanionOps(trc: Try.type): TryCompanionOps.type = TryCompanionOps
 
@@ -212,9 +214,7 @@ object SharedExtensions extends SharedExtensions {
       fut.transformWith(f)(RunNowEC)
 
     def wrapToTry: Future[Try[A]] =
-      fut.mapNow(Success(_)).recoverNow {
-        case NonFatal(t) => Failure(t)
-      }
+      fut.transformNow(Success(_))
 
     /**
       * Maps a `Future` using [[concurrent.RunNowEC RunNowEC]].
@@ -265,7 +265,7 @@ object SharedExtensions extends SharedExtensions {
       thenReturn(Future.successful {})
   }
 
-  class LazyFutureOps[A](fut: => Future[A]) {
+  class LazyFutureOps[A](private val fut: () => Future[A]) extends AnyVal {
     /**
       * Evaluates a left-hand-side expression that returns a `Future` and ensures that all exceptions thrown by
       * that expression are converted to a failed `Future`.
@@ -273,7 +273,7 @@ object SharedExtensions extends SharedExtensions {
       * `NullPointerException`.
       */
     def catchFailures: Future[A] = {
-      val result = try fut catch {
+      val result = try fut() catch {
         case NonFatal(t) => Future.failed(t)
       }
       if (result != null) result else Future.failed(new NullPointerException("null Future"))
@@ -356,6 +356,16 @@ object SharedExtensions extends SharedExtensions {
       if (tr.isFailure) OptArg.Empty else OptArg(tr.get)
   }
 
+  class LazyTryOps[A](private val tr: () => Try[A]) extends AnyVal {
+    /**
+      * Evaluates a left-hand side expression that return `Try`,
+      * catches all exceptions and converts them into a `Failure`.
+      */
+    def catchFailures: Try[A] = try tr() catch {
+      case NonFatal(t) => Failure(t)
+    }
+  }
+
   object TryCompanionOps {
 
     import scala.language.higherKinds
@@ -404,6 +414,11 @@ object SharedExtensions extends SharedExtensions {
     def applyOpt(a: A): Opt[B] = pf.applyOrElse(a, NoValueMarkerFunc) match {
       case NoValueMarker => Opt.Empty
       case rawValue => Opt(rawValue.asInstanceOf[B])
+    }
+
+    def fold[C](a: A)(forEmpty: A => C, forNonEmpty: B => C): C = pf.applyOrElse(a, NoValueMarkerFunc) match {
+      case NoValueMarker => forEmpty(a)
+      case rawValue => forNonEmpty(rawValue.asInstanceOf[B])
     }
   }
   object PartialFunctionOps {
@@ -454,6 +469,15 @@ object SharedExtensions extends SharedExtensions {
     def minOpt[B >: A : Ordering]: Opt[B] = if (coll.isEmpty) Opt.Empty else coll.min[B].opt
 
     def minOptBy[B: Ordering](f: A => B): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.minBy(f).opt
+
+    def mkStringOr(start: String, sep: String, end: String, default: String): String =
+      if (coll.nonEmpty) coll.mkString(start, sep, end) else default
+
+    def mkStringOr(sep: String, default: String): String =
+      if (coll.nonEmpty) coll.mkString(sep) else default
+
+    def mkStringOrEmpty(start: String, sep: String, end: String): String =
+      mkStringOr(start, sep, end, "")
   }
 
   class SetOps[A](private val set: BSet[A]) extends AnyVal {

@@ -3,8 +3,8 @@ package redis.util
 
 
 final class SingletonSeq[+A](value: A) extends IIndexedSeq[A] {
-  def length = 1
-  def apply(idx: Int) = idx match {
+  def length: Int = 1
+  def apply(idx: Int): A = idx match {
     case 0 => value
     case _ => throw new IndexOutOfBoundsException
   }

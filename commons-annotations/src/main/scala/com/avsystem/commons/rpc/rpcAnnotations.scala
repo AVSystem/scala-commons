@@ -24,12 +24,44 @@ sealed trait RawParamAnnotation extends RawRpcAnnotation
 class rpcName(val name: String) extends RpcAnnotation
 
 /**
+  * You can use this annotation on real RPC methods to instruct macro engine to prepend method name (or [[rpcName]] if
+  * specified) with given prefix. This annotation is mostly useful when aggregated by another annotation e.g.
+  *
+  * {{{
+  *   sealed trait RestMethod extends RpcTag
+  *   final class GET extends RestMethod with AnnotationAggregate {
+  *     @rpcNamePrefix("GET_") type Implied
+  *   }
+  * }}}
+  */
+class rpcNamePrefix(val prefix: String) extends RpcAnnotation
+
+/**
   * Base trait for RPC tag annotations. Tagging gives more direct control over how real methods
   * and their parameters are matched against raw methods and their parameters.
   * For more information about method tagging, see documentation of [[methodTag]].
   * For more information about parameter tagging, see documentation of [[paramTag]].
   */
 trait RpcTag extends RpcAnnotation
+
+/**
+  * May be applied on raw method parameter of type `String` to indicate that macro generated implementation of
+  * `AsReal` should pass real method's RPC name as this parameter and that macro generated implementation of
+  * `AsRaw` should expect real method's RPC name to be passed there.
+  *
+  * Macro generation of `AsRaw` implementations require that raw methods annotated as [[multi]] must take at least
+  * one raw parameter annotated as [[methodName]] (it may also be aggregated into some [[composite]] parameter).
+  * This is necessary to properly identify which real method should be called.
+  */
+final class methodName extends RawParamAnnotation
+
+/**
+  * Can be applied on raw method parameters or metadata parameters. When a parameter is annotated as `@composite`,
+  * the macro engine expects its type to be a class with public primary constructor. Then, it recursively inspects its
+  * constructor parameters and treats them as if they were direct parameters. This effectively groups multiple
+  * raw parameters or multiple metadata parameters into a single class.
+  */
+final class composite extends RawParamAnnotation
 
 /**
   * Base trait for RPC arity annotations, [[single]], [[optional]] and [[multi]].
@@ -98,8 +130,8 @@ final class optional extends RpcArity
 
 /**
   * When applied on raw method, specifies that this raw method may be matched by many, arbitrarily named real methods.
-  * In order to distinguish between real methods, multi raw method must take real method's RPC name
-  * (a `String`) as its first parameter and the only parameter in its first parameter list.
+  * In order to distinguish between real methods when translating raw call into real call,
+  * multi raw method must take real method's RPC name (a `String`) as one of its parameters (see [[methodName]]).
   * By default, result type of multi raw method is [[encoded]] and the macro engine searches for
   * appropriate `AsRaw` or `AsReal` conversion between real method result type and raw method result type.
   *
@@ -194,7 +226,7 @@ sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
   * }
   *
   * trait AsyncRawRpc {
-  *   def call(rpcName: String, @multi args: Map[String,Json]): Future[Json]
+  *   def call(@methodName rpcName: String, @multi args: Map[String,Json]): Future[Json]
   * }
   * }}}
   *
@@ -204,7 +236,7 @@ sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
   *
   * {{{
   * trait AsyncRawRpc {
-  *   def call(rpcName: String, @multi args: Map[String,String]): Future[String]
+  *   def call(@methodName rpcName: String, @multi args: Map[String,String]): Future[String]
   * }
   * object AsyncRawRpc extends RawRpcCompanion[AsyncRawRpc] {
   *   private def readJson[T: GenCodec](json: String): T =
@@ -233,55 +265,68 @@ final class encoded extends RpcEncoding
   *
   * {{{
   * trait VerbatimRawRpc {
-  *   @verbatim def call(rpcName: String, @multi @verbatim args: Map[String,Int]): Double
+  *   @verbatim def call(@methodName rpcName: String, @multi @verbatim args: Map[String,Int]): Double
   * }
   * }}}
   */
 final class verbatim extends RpcEncoding
 
 /**
+  * When raw method is annotated as `@tried`, invocations of real methods matching that raw method will be
+  * automatically wrapped into `Try`. Consequently, all real methods will be treated as if their result
+  * type was `Try[Result]` instead of actual `Result`. For example, if raw method is [[encoded]] and its
+  * (raw) result is `Raw` then macro engine will search for implicit `AsRaw/Real[Raw,Try[Result]]` instead of just
+  * `AsRaw/Real[Raw,Result]`
+  */
+final class tried extends RawMethodAnnotation
+
+/**
   * Method tagging lets you have more explicit control over which raw methods can match which real methods.
   * Example:
   *
   * {{{
-  * sealed trait RestMethod extends RpcTag
+  * sealed trait MethodType extends RpcTag
   * class GET extends RestMethod
   * class POST extends RestMethod
   *
-  * @methodTag[RestMethod,GET]
-  * trait RestRawRpc {
-  *   @tagged[GET] def get(name: String, @multi args: Map[String,Json]): Future[Json]
-  *   @tagged[POST] def post(name: String, @multi args: Map[String,Json]): Future[Json]
+  * @methodTag[MethodType](new GET)
+  * trait ExampleRawRpc {
+  *   @tagged[GET] def get(@methodName name: String, @multi args: Map[String,Json]): Future[Json]
+  *   @tagged[POST] def post(@methodName name: String, @multi args: Map[String,Json]): Future[Json]
   * }
   * }}}
   *
-  * In the example above, we created a hierarchy of annotations rooted at `RestMethod` which can be used
+  * In the example above, we created a hierarchy of annotations rooted at `MethodType` which can be used
   * on real methods in order to explicitly tell the RPC macro which raw methods can match it.
-  * We also specify `GET` as the default tag that will be assumed for real methods without any tag annotation.
-  * Then, using `@tagged` we specify that the raw `get` method may only match real methods annotated as `GET`
+  * We also specify `new GET` as the default tag that will be assumed for real methods without any tag annotation.
+  * Then, using [[tagged]] we specify that the raw `get` method may only match real methods annotated as `GET`
   * while `post` raw method may only match real methods annotated as `POST`.
-  * Raw methods not annotated with `@tagged` have no limitations and may still match any real methods.
+  * Raw methods not annotated with [[tagged]] have no limitations and may still match any real methods.
   *
-  * NOTE: The example above assumes there is a `Json` type defined with appropriate encodings -
+  * Also, instead of specifying `defaultTag` in `@methodTag` annotation, you may provide the `whenUntagged`
+  * parameter to [[tagged]] annotation. Raw method annotated as `@tagged[MethodType](whenUntagged = new GET)`
+  * will match real methods either explicitly tagged with `GET` or untagged. If untagged, `new GET` will be assumed
+  * as the tag. This is useful when you want to have multiple raw methods with different `whenUntagged` setting.
+  *
+  * NOTE: The example above assumes there is a Json` type defined with appropriate encodings -
   * see [[encoded]] for more details on parameter and method result encoding.
   *
-  * An example of real RPC for `RestRawRpc`:
+  * An example of real RPC for `ExampleRawRpc`:
   *
   * {{{
-  * trait SomeRestApi {
+  * trait ExampleApi {
   *   def getUser(id: UserId): Future[User]
   *   @POST def saveUser(user: User): Future[Unit]
   * }
-  * object SomeRestApi {
-  *   implicit val AsRawReal: AsRawReal[RestRawRpc,SomeRestApi] = AsRawReal.materializeForRpc
+  * object ExampleApi {
+  *   implicit val AsRawReal: AsRawReal[ExampleRawRpc,ExampleApi] = AsRawReal.materializeForRpc
   * }
   * }}}
   *
-  * @tparam BaseTag    base type for tags that can be used on real RPC methods
-  * @tparam DefaultTag the default tag type used for real methods not explicitly tagged - if you don't want to
-  *                    introduce any specific default tag, just use the same type as for `BaseTag`
+  * @tparam BaseTag base type for tags that can be used on real RPC methods
+  * @param defaultTag default tag value assumed for untagged methods
   */
-final class methodTag[BaseTag <: RpcTag, DefaultTag <: BaseTag] extends RawRpcAnnotation
+final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawRpcAnnotation
 
 /**
   * Parameter tagging lets you have more explicit control over which raw parameters can match which real
@@ -296,9 +341,10 @@ final class methodTag[BaseTag <: RpcTag, DefaultTag <: BaseTag] extends RawRpcAn
   * class Url extends RestParam
   * class Path extends RestParam
   *
-  * @paramTag[RestParam,Body]
+  * @paramTag[RestParam](new Body)
   * trait RestRawRpc {
-  *   def get(name: String,
+  *   def get(
+  *     @methodName name: String,
   *     @multi @verbatim @tagged[Path] pathParams: List[String],
   *     @multi @verbatim @tagged[Url] urlParams: Map[String,String],
   *     @multi @tagged[Body] bodyParams: Map[String,Json]
@@ -314,16 +360,15 @@ final class methodTag[BaseTag <: RpcTag, DefaultTag <: BaseTag] extends RawRpcAn
   *
   * {{{
   * trait RestRawRpc {
-  *   @paramTag[RestParam,Body]
+  *   @paramTag[RestParam](new Body)
   *   def get(...)
   * }
   * }}}
   *
-  * @tparam BaseTag    base type for tags that can be used on real RPC parameters
-  * @tparam DefaultTag the default tag type used for real parameters not explicitly tagged - if you don't want to
-  *                    introduce any specific default tag, just use the same type as for `BaseTag`
+  * @tparam BaseTag base type for tags that can be used on real RPC parameters
+  * @param defaultTag default tag value assumed for untagged real parameters
   */
-final class paramTag[BaseTag <: RpcTag, DefaultTag <: BaseTag] extends RawMethodAnnotation
+final class paramTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawMethodAnnotation
 
 /**
   * Annotation applied on raw methods or raw parameters that limits matching real methods or real parameters to
@@ -331,8 +376,12 @@ final class paramTag[BaseTag <: RpcTag, DefaultTag <: BaseTag] extends RawMethod
   * also be some common supertype of multiple tags which are accepted by this raw method or param.
   *
   * @tparam Tag annotation type required to be present on real method or parameter
+  * @param whenUntagged default tag value assumed for untagged methods/parameters - if specified, this effectively
+  *                     means that raw method/parameter will also match untagged real methods/parameters and assume
+  *                     the default tag value for them
   */
-final class tagged[Tag <: RpcTag] extends RawMethodAnnotation with RawParamAnnotation
+final class tagged[Tag <: RpcTag](val whenUntagged: Tag = null)
+  extends RawMethodAnnotation with RawParamAnnotation
 
 /**
   * Raw parameters annotated as `@auxiliary` match real parameters without "consuming" them. This means that
@@ -387,11 +436,11 @@ final class infer extends MetadataParamStrategy
 final class reifyAnnot extends MetadataParamStrategy
 
 /**
-  * Metadata parameter typed as `Boolean` can be annotated with `@hasAnnot[SomeAnnotation]`. Boolean value will then
+  * Metadata parameter typed as `Boolean` can be annotated with `@isAnnotated[SomeAnnotation]`. Boolean value will then
   * hold information about whether RPC trait, method or parameter for which metadata is materialized is annotated with
   * `SomeAnnotation` (or any subtype) or not.
   */
-final class hasAnnot[T <: StaticAnnotation] extends MetadataParamStrategy
+final class isAnnotated[T <: StaticAnnotation] extends MetadataParamStrategy
 
 /**
   * This annotation may only be applied on metadata parameters of type `String` and instructs the macro engine

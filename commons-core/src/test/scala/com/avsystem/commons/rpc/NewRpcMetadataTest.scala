@@ -1,8 +1,10 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.serialization.whenAbsent
+import com.avsystem.commons.serialization.{transientDefault, whenAbsent}
 import org.scalatest.FunSuite
+
+class td extends transientDefault
 
 trait SomeBase {
   def difolt: Boolean = true
@@ -14,16 +16,16 @@ trait TestApi extends SomeBase {
   def doSomething(double: Double): String
   def doSomethingElse(double: Double): String
   def varargsMethod(krap: String, dubl: Double)(czy: Boolean, @renamed(42, "nejm") ints: Int*): Future[Unit]
-  def defaultValueMethod(int: Int = 0, @whenAbsent(difolt) bul: Boolean): Future[Unit]
+  def defaultValueMethod(@td int: Int = 0, @whenAbsent(difolt) bul: Boolean): Future[Unit]
   def flames(arg: String, otherArg: => Int, varargsy: Double*): Unit
-  def overload(int: Int): Unit
-  def overload(lel: String): TestApi
-  def overload: TestApi
+  def overload(@td int: Int = 42): Unit
+  @rpcName("ovgetter") def overload(lel: String): TestApi
+  @rpcName("ovprefix") def overload: TestApi
   def getit(stuff: String, @suchMeta(1, "a") otherStuff: List[Int]): TestApi
   def postit(arg: String, bar: String, int: Int, @suchMeta(3, "c") foo: String): String
 }
 object TestApi {
-  implicit val AsRawReal: NewRawRpc.AsRawRealRpc[TestApi] = NewRawRpc.materializeAsRawReal[TestApi]
+  implicit val asRawReal: NewRawRpc.AsRawRealRpc[TestApi] = NewRawRpc.materializeAsRawReal[TestApi]
   implicit val metadata: NewRpcMetadata[TestApi] = NewRpcMetadata.materializeForRpc[TestApi]
 }
 
@@ -34,9 +36,9 @@ class NewRpcMetadataTest extends FunSuite {
         |  DO SOMETHING ELSE: true
         |  PROCEDURES:
         |  overload -> def overload: void
-        |    AJDI: int@0:0:0:0: int suchMeta=false
+        |    AJDI: [hasDefaultValue]int@0:0:0:0: int suchMeta=false
         |    ARGS:
-        |    int -> int@0:0:0:0: int suchMeta=false
+        |    int -> [hasDefaultValue]int@0:0:0:0: int suchMeta=false
         |  flames -> def flames: void
         |    NO AJDI
         |    ARGS:
@@ -58,7 +60,7 @@ class NewRpcMetadataTest extends FunSuite {
         |    dubl -> dubl@1:0:1:1: double suchMeta=false
         |    czy -> czy@2:1:0:2: boolean suchMeta=false
         |  POSTERS:
-        |  postit -> POST() def postit: String
+        |  POST_postit -> POST() def postit<POST_postit>: String
         |    HEADERS:
         |    bar<X-Bar>@1:0:1:0: String suchMeta=false
         |    foo<X-Foo>@3:0:3:1: String suchMeta=true,metas=suchMeta(3,c),suchMeta(2,b)
@@ -72,12 +74,12 @@ class NewRpcMetadataTest extends FunSuite {
         |    otherStuff@1:0:1:0: List suchMeta=true,metas=suchMeta(1,a)
         |    RESULT: <recursive>
         |
-        |  overload -> def overload: TestApi
+        |  ovgetter -> def overload<ovgetter>: TestApi
         |    ARGS:
         |    lel@0:0:0:0: String suchMeta=false
         |    RESULT: <recursive>
         |  PREFIXERS:
-        |  overload -> def overload: TestApi
+        |  ovprefix -> def overload<ovprefix>: TestApi
         |    RESULT: <recursive>
         |""".stripMargin
     )

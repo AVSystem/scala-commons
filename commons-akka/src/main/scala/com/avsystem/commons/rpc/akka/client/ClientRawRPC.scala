@@ -4,7 +4,7 @@ package rpc.akka.client
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.util.Timeout
-import com.avsystem.commons.rpc.akka.AkkaRPCFramework.{RawRPC, RawValue}
+import com.avsystem.commons.rpc.akka.AkkaRPCFramework._
 import com.avsystem.commons.rpc.akka._
 import monix.execution.Cancelable
 import monix.reactive.{Observable, OverflowStrategy}
@@ -14,12 +14,12 @@ import monix.reactive.{Observable, OverflowStrategy}
   */
 private[akka] final class ClientRawRPC(config: AkkaRPCClientConfig, getterChain: Seq[RawInvocation] = Nil)(implicit system: ActorSystem) extends AkkaRPCFramework.RawRPC {
 
-  override def fire(rpcName: String)(args: List[RawValue]): Unit = {
-    system.actorSelection(config.serverPath) ! ProcedureInvocationMessage(rpcName, args, getterChain)
+  override def fire(invocation: RawInvocation): Unit = {
+    system.actorSelection(config.serverPath) ! ProcedureInvocationMessage(invocation, getterChain)
   }
-  override def call(rpcName: String)(args: List[RawValue]): Future[RawValue] = {
+  override def call(invocation: RawInvocation): Future[RawValue] = {
     implicit val timeout: Timeout = Timeout(config.functionCallTimeout)
-    val future = system.actorSelection(config.serverPath) ? FunctionInvocationMessage(rpcName, args, getterChain)
+    val future = system.actorSelection(config.serverPath) ? FunctionInvocationMessage(invocation, getterChain)
 
     import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
 
@@ -29,13 +29,13 @@ private[akka] final class ClientRawRPC(config: AkkaRPCClientConfig, getterChain:
       case value => Future.failed(new IllegalStateException(s"Illegal message type. Should be InvocationResult, but received value was: $value"))
     }
   }
-  override def get(rpcName: String)(args: List[RawValue]): RawRPC =
-    new ClientRawRPC(config, getterChain :+ RawInvocation(rpcName, args))
+  override def get(invocation: RawInvocation): RawRPC =
+    new ClientRawRPC(config, getterChain :+ invocation)
 
-  override def observe(rpcName: String)(args: List[RawValue]): Observable[RawValue] = {
+  override def observe(invocation: RawInvocation): Observable[RawValue] = {
     Observable.create(OverflowStrategy.Unbounded) { s =>
       val actor = system.actorOf(MonixClientActor.props(s, config))
-      actor ! ObservableInvocationMessage(rpcName, args, getterChain)
+      actor ! ObservableInvocationMessage(invocation, getterChain)
       Cancelable.empty // TODO implement proper canceling
     }
 

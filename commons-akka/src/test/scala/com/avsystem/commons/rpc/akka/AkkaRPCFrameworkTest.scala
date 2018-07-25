@@ -14,10 +14,9 @@ import scala.concurrent.duration._
   * @author Wojciech Milewski
   */
 abstract class AkkaRPCFrameworkTest(
-  serverSystem: ActorSystem,
-  clientSystem: ActorSystem,
-  serverSystemPath: Option[String] = None)
-  extends FlatSpec with RPCFrameworkTest with ProcedureRPCTest with FunctionRPCTest with GetterRPCTest with ObservableRPCTest with BeforeAndAfterAll {
+  serverSystem: ActorSystem, clientSystem: ActorSystem, serverSystemPath: Option[String] = None)
+  extends FlatSpec with RPCFrameworkTest with ProcedureRPCTest with FunctionRPCTest with GetterRPCTest with ObservableRPCTest
+    with BeforeAndAfterAll {
 
   /**
     * Servers as identifier supplier for each test case to allow tests parallelization.

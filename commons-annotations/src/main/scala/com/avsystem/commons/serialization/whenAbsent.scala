@@ -22,6 +22,8 @@ import scala.annotation.StaticAnnotation
   *   case class HasNoDefault(@whenAbsent(throw new Exception) str: String = "default")
   *   object HasDefault extends HasGenCodec[HasDefault]
   * }}}
+  *
+  * NOTE: [[whenAbsent]] also works for method parameters in RPC framework.
   */
 class whenAbsent[+T](v: => T) extends StaticAnnotation {
   def value: T = v
