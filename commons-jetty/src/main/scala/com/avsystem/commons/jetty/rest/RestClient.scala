@@ -17,17 +17,17 @@ object RestClient {
 
   def asHandleRequest(client: HttpClient, baseUrl: String): RawRest.HandleRequest =
     RawRest.safeHandle(request => callback => {
-      val path = request.headers.path.iterator
+      val path = request.parameters.path.iterator
         .map(pv => URLEncoder.encode(pv.value, "utf-8"))
         .mkString(baseUrl.ensureSuffix("/"), "/", "")
 
       val httpReq = client.newRequest(baseUrl).method(request.method.toString)
 
       httpReq.path(path)
-      request.headers.query.foreach {
+      request.parameters.query.foreach {
         case (name, QueryValue(value)) => httpReq.param(name, value)
       }
-      request.headers.headers.foreach {
+      request.parameters.headers.foreach {
         case (name, HeaderValue(value)) => httpReq.header(name, value)
       }
 

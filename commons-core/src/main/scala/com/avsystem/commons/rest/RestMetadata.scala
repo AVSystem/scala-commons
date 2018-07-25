@@ -24,15 +24,15 @@ case class RestMetadata[T](
     def ensureUniqueParams(methodName: String, method: RestMethodMetadata[_]): Unit = {
       for {
         (prefixName, prefix) <- prefixes
-        headerParam <- method.headersMetadata.headers.keys
-        if prefix.headersMetadata.headers.contains(headerParam)
+        headerParam <- method.parametersMetadata.headers.keys
+        if prefix.parametersMetadata.headers.contains(headerParam)
       } throw new InvalidRestApiException(
         s"Header parameter $headerParam of $methodName collides with header parameter of the same name in prefix $prefixName")
 
       for {
         (prefixName, prefix) <- prefixes
-        queryParam <- method.headersMetadata.query.keys
-        if prefix.headersMetadata.query.contains(queryParam)
+        queryParam <- method.parametersMetadata.query.keys
+        if prefix.parametersMetadata.query.contains(queryParam)
       } throw new InvalidRestApiException(
         s"Query parameter $queryParam of $methodName collides with query parameter of the same name in prefix $prefixName")
     }
@@ -61,19 +61,29 @@ case class RestMetadata[T](
     }
   }
 
-  def resolvePath(method: HttpMethod, path: List[PathValue]): Iterator[ResolvedPath] = {
-    val asFinalCall = for {
-      (rpcName, m) <- httpMethods.iterator if m.method == method
-      (pathParams, Nil) <- m.extractPathParams(path)
-    } yield ResolvedPath(Nil, RestMethodCall(rpcName, pathParams, m), m.singleBody)
+  def resolvePath(method: HttpMethod, path: List[PathValue]): Opt[ResolvedPath] = {
+    def resolve(method: HttpMethod, path: List[PathValue]): Iterator[ResolvedPath] = {
+      val asFinalCall = for {
+        (rpcName, m) <- httpMethods.iterator if m.method == method
+        (pathParams, Nil) <- m.extractPathParams(path)
+      } yield ResolvedPath(Nil, RestMethodCall(rpcName, pathParams, m), m.singleBody)
 
-    val usingPrefix = for {
-      (rpcName, prefix) <- prefixMethods.iterator
-      (pathParams, pathTail) <- prefix.extractPathParams(path).iterator
-      suffixPath <- prefix.result.value.resolvePath(method, pathTail)
-    } yield suffixPath.prepend(rpcName, pathParams, prefix)
+      val usingPrefix = for {
+        (rpcName, prefix) <- prefixMethods.iterator
+        (pathParams, pathTail) <- prefix.extractPathParams(path).iterator
+        suffixPath <- prefix.result.value.resolvePath(method, pathTail)
+      } yield suffixPath.prepend(rpcName, pathParams, prefix)
 
-    asFinalCall ++ usingPrefix
+      asFinalCall ++ usingPrefix
+    }
+    resolve(method, path).toList match {
+      case Nil => Opt.Empty
+      case single :: Nil => Opt(single)
+      case multiple =>
+        val pathStr = path.iterator.map(_.value).mkString("/")
+        val callsRepr = multiple.iterator.map(p => s"  ${p.rpcChainRepr}").mkString("\n", "\n", "")
+        throw new RestException(s"path $pathStr is ambiguous, it could map to following calls:$callsRepr")
+    }
   }
 }
 object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
@@ -148,10 +158,10 @@ case class PathParam(parameter: PathParamMetadata[_]) extends PathPatternElement
 
 sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
   def methodPath: List[PathValue]
-  def headersMetadata: RestHeadersMetadata
+  def parametersMetadata: RestParametersMetadata
 
   val pathPattern: List[PathPatternElement] =
-    methodPath.map(PathName) ++ headersMetadata.path.flatMap(pp => PathParam(pp) :: pp.pathSuffix.map(PathName))
+    methodPath.map(PathName) ++ parametersMetadata.path.flatMap(pp => PathParam(pp) :: pp.pathSuffix.map(PathName))
 
   def applyPathParams(params: List[PathValue]): List[PathValue] = {
     def loop(params: List[PathValue], pattern: List[PathPatternElement]): List[PathValue] =
@@ -160,7 +170,7 @@ sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
         case (_, PathName(patternHead) :: patternTail) => patternHead :: loop(params, patternTail)
         case (param :: paramsTail, PathParam(_) :: patternTail) => param :: loop(paramsTail, patternTail)
         case _ => throw new IllegalArgumentException(
-          s"got ${params.size} path params, expected ${headersMetadata.path.size}")
+          s"got ${params.size} path params, expected ${parametersMetadata.path.size}")
       }
     loop(params, pathPattern)
   }
@@ -181,7 +191,7 @@ sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
 
 case class PrefixMetadata[T](
   @reifyAnnot methodTag: Prefix,
-  @composite headersMetadata: RestHeadersMetadata,
+  @composite parametersMetadata: RestParametersMetadata,
   @checked @infer result: RestMetadata.Lazy[T]
 ) extends RestMethodMetadata[T] {
   def methodPath: List[PathValue] = PathValue.split(methodTag.path)
@@ -189,7 +199,7 @@ case class PrefixMetadata[T](
 
 case class HttpMethodMetadata[T](
   @reifyAnnot methodTag: HttpMethodTag,
-  @composite headersMetadata: RestHeadersMetadata,
+  @composite parametersMetadata: RestParametersMetadata,
   @multi @tagged[BodyTag] bodyParams: Map[String, BodyParamMetadata[_]],
   @checked @infer responseType: HttpResponseType[T]
 ) extends RestMethodMetadata[T] {
@@ -209,7 +219,7 @@ object HttpResponseType {
     new HttpResponseType[Future[T]] {}
 }
 
-case class RestHeadersMetadata(
+case class RestParametersMetadata(
   @multi @tagged[Path] path: List[PathParamMetadata[_]],
   @multi @tagged[Header] headers: Map[String, HeaderParamMetadata[_]],
   @multi @tagged[Query] query: Map[String, QueryParamMetadata[_]]

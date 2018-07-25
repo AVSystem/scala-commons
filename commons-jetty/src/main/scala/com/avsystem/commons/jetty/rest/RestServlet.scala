@@ -5,7 +5,7 @@ import java.net.URLDecoder
 import java.util.regex.Pattern
 
 import com.avsystem.commons.annotation.explicitGenerics
-import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RawRest, RestHeaders, RestMetadata, RestRequest}
+import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RawRest, RestParameters, RestMetadata, RestRequest}
 import com.avsystem.commons.rpc.NamedParams
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.http.{HttpStatus, MimeTypes}
@@ -56,7 +56,7 @@ object RestServlet {
         .foreach(bodyBuilder.appendCodePoint)
       HttpBody(bodyBuilder.toString, MimeTypes.getContentTypeWithoutCharset(contentType))
     }
-    val restRequest = RestRequest(method, RestHeaders(path, headers, query), body)
+    val restRequest = RestRequest(method, RestParameters(path, headers, query), body)
 
     val asyncContext = request.startAsync()
     RawRest.safeAsync(handleRequest(restRequest)) {

@@ -39,11 +39,11 @@ class RawRestTest extends FunSuite with ScalaFutures {
   }
 
   def repr(req: RestRequest): String = {
-    val pathRepr = req.headers.path.map(_.value).mkString("/", "/", "")
-    val queryRepr = req.headers.query.iterator
+    val pathRepr = req.parameters.path.map(_.value).mkString("/", "/", "")
+    val queryRepr = req.parameters.query.iterator
       .map({ case (k, v) => s"$k=${v.value}" }).mkStringOrEmpty("?", "&", "")
-    val hasHeaders = req.headers.headers.nonEmpty
-    val headersRepr = req.headers.headers.iterator
+    val hasHeaders = req.parameters.headers.nonEmpty
+    val headersRepr = req.parameters.headers.iterator
       .map({ case (n, v) => s"$n: ${v.value}" }).mkStringOrEmpty("\n", "\n", "\n")
     s"-> ${req.method} $pathRepr$queryRepr$headersRepr${repr(req.body, hasHeaders)}".trim
   }

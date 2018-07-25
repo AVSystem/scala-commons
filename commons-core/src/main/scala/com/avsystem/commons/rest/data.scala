@@ -126,19 +126,20 @@ object HttpMethod extends AbstractValueEnumCompanion[HttpMethod] {
   final val GET, PUT, POST, PATCH, DELETE: Value = new HttpMethod
 }
 
-case class RestHeaders(
+case class RestParameters(
   @multi @tagged[Path] path: List[PathValue],
   @multi @tagged[Header] headers: NamedParams[HeaderValue],
   @multi @tagged[Query] query: NamedParams[QueryValue]
 ) {
-  def append(method: RestMethodMetadata[_], otherHeaders: RestHeaders): RestHeaders = RestHeaders(
-    path ::: method.applyPathParams(otherHeaders.path),
-    headers ++ otherHeaders.headers,
-    query ++ otherHeaders.query
-  )
+  def append(method: RestMethodMetadata[_], otherParameters: RestParameters): RestParameters =
+    RestParameters(
+      path ::: method.applyPathParams(otherParameters.path),
+      headers ++ otherParameters.headers,
+      query ++ otherParameters.query
+    )
 }
-object RestHeaders {
-  final val Empty = RestHeaders(Nil, NamedParams.empty, NamedParams.empty)
+object RestParameters {
+  final val Empty = RestParameters(Nil, NamedParams.empty, NamedParams.empty)
 }
 
 case class HttpErrorException(code: Int, payload: OptArg[String] = OptArg.Empty)
@@ -147,7 +148,7 @@ case class HttpErrorException(code: Int, payload: OptArg[String] = OptArg.Empty)
     RestResponse(code, payload.fold(HttpBody.empty)(HttpBody.plain))
 }
 
-case class RestRequest(method: HttpMethod, headers: RestHeaders, body: HttpBody)
+case class RestRequest(method: HttpMethod, parameters: RestParameters, body: HttpBody)
 case class RestResponse(code: Int, body: HttpBody) {
   def toHttpError: HttpErrorException =
     HttpErrorException(code, body.contentOpt.toOptArg)
