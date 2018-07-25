@@ -130,8 +130,8 @@ final class optional extends RpcArity
 
 /**
   * When applied on raw method, specifies that this raw method may be matched by many, arbitrarily named real methods.
-  * In order to distinguish between real methods, multi raw method must take real method's RPC name
-  * (a `String`) as its first parameter and the only parameter in its first parameter list.
+  * In order to distinguish between real methods when translating raw call into real call,
+  * multi raw method must take real method's RPC name (a `String`) as one of its parameters (see [[methodName]]).
   * By default, result type of multi raw method is [[encoded]] and the macro engine searches for
   * appropriate `AsRaw` or `AsReal` conversion between real method result type and raw method result type.
   *
