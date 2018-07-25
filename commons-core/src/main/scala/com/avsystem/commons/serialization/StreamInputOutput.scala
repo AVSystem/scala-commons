@@ -6,7 +6,6 @@ import java.{lang => jl}
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
-
 private object FormatConstants {
   final val ByteBytes = jl.Byte.BYTES
   final val ShortBytes = jl.Short.BYTES
