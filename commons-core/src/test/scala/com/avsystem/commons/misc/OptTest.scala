@@ -51,4 +51,10 @@ class OptTest extends FunSuite {
     assert(Opt(3).collect { case 2 => 2 } == Opt.Empty)
     assert(Opt(3).collect { case 3 => null } == Opt.Empty)
   }
+
+  test("zip") {
+    assert(Opt(3).zip(Opt(2)) == Opt((3, 2)))
+    assert(Opt.Empty.zip(Opt(2)) == Opt.Empty)
+    assert(Opt(3).zip(Opt.Empty) == Opt.Empty)
+  }
 }

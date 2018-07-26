@@ -140,6 +140,9 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
   @inline def toLeft[X](right: => X): Either[A, X] =
     if (isEmpty) Right(right) else Left(value)
 
+  @inline def zip[B](that: Opt[B]): Opt[(A, B)] =
+    flatMap(l => that.map((l, _)))
+
   /**
     * Apply side effect only if Opt is empty. It's a bit like foreach for Opt.Empty
     *
