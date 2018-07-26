@@ -22,6 +22,10 @@ object TreeForTypeTest {
   testTreeForType("Set[_]")
   testTreeForType("Map[T, T] forSome {type T <: String}")
   testTreeForType("AnyRef with Serializable")
+  testTreeForType("Int => String")
+  testTreeForType("(=> Int) => String")
+  testTreeForType("Double => Int => String")
+  testTreeForType("(Double => Int) => String")
   testTreeForType(
     """AnyRef {
     type Lol[K, V] <: Map[K, V]
