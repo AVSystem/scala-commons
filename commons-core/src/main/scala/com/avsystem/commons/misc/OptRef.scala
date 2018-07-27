@@ -124,7 +124,7 @@ final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with
     if (isEmpty) Right(right) else Left(value)
 
   @inline def zip[B >: Null](that: OptRef[B]): OptRef[(A, B)] =
-    flatMap(l => that.map((l, _)))
+    if (isEmpty || that.isEmpty) OptRef.Empty else OptRef((this.get, that.get))
 
   /**
     * Apply side effect only if OptRef is empty. It's a bit like foreach for OptRef.Empty
