@@ -29,4 +29,10 @@ class OptRefTest extends FunSuite {
       case OptRef.Boxed(num) => assert(num == 42)
     }
   }
+
+  test("zip") {
+    assert(OptRef(3).zip(OptRef(2)) == OptRef((3, 2)))
+    assert(OptRef.Empty.zip(OptRef(2)) == OptRef.Empty)
+    assert(OptRef(3).zip(OptRef.Empty) == OptRef.Empty)
+  }
 }

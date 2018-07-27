@@ -50,4 +50,10 @@ class NOptTest extends FunSuite {
     assert(NOpt(3).collect { case 3 => 2 } == NOpt.some(2))
     assert(NOpt(3).collect { case 3 => null } == NOpt.some(null))
   }
+
+  test("zip") {
+    assert(NOpt(3).zip(NOpt(2)) == NOpt((3, 2)))
+    assert(NOpt.Empty.zip(NOpt(2)) == NOpt.Empty)
+    assert(NOpt(3).zip(NOpt.Empty) == NOpt.Empty)
+  }
 }

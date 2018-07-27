@@ -145,6 +145,9 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with Seri
   @inline def toLeft[X](right: => X): Either[A, X] =
     if (isEmpty) Right(right) else Left(value)
 
+  @inline def zip[B](that: NOpt[B]): NOpt[(A, B)] =
+    if (isEmpty || that.isEmpty) NOpt.Empty else NOpt((this.get, that.get))
+
   /**
     * Apply side effect only if NOpt is empty. It's a bit like foreach for NOpt.Empty
     * @param sideEffect - code to be executed if nopt is empty
