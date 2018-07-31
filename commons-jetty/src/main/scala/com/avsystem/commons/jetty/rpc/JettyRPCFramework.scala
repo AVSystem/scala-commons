@@ -2,7 +2,6 @@ package com.avsystem.commons
 package jetty.rpc
 
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.TimeUnit
 
 import com.avsystem.commons.rpc.StandardRPCFramework
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
@@ -16,7 +15,7 @@ import org.eclipse.jetty.http.{HttpMethod, HttpStatus, MimeTypes}
 import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.server.{Handler, Request}
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   class RawValue(val s: String) extends AnyVal
@@ -137,7 +136,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
       invoke(call)(_.fire)
   }
 
-  def newHandler[T](impl: T, contextTimeout: FiniteDuration = FiniteDuration(30, TimeUnit.SECONDS))(
+  def newHandler[T](impl: T, contextTimeout: FiniteDuration = 30.seconds)(
     implicit ec: ExecutionContext, asRawRPC: AsRawRPC[T]): Handler =
     new RPCHandler(asRawRPC.asRaw(impl), contextTimeout)
 
