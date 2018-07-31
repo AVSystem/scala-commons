@@ -2,6 +2,7 @@ package com.avsystem.commons
 package jetty.rpc
 
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.TimeUnit
 
 import com.avsystem.commons.rpc.StandardRPCFramework
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
@@ -14,6 +15,8 @@ import org.eclipse.jetty.client.util.{BufferingResponseListener, StringContentPr
 import org.eclipse.jetty.http.{HttpMethod, HttpStatus, MimeTypes}
 import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.server.{Handler, Request}
+
+import scala.concurrent.duration.FiniteDuration
 
 object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   class RawValue(val s: String) extends AnyVal
@@ -93,7 +96,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
       request(HttpMethod.PUT, call)
   }
 
-  class RPCHandler(rootRpc: RawRPC)(implicit ec: ExecutionContext) extends AbstractHandler {
+  class RPCHandler(rootRpc: RawRPC, contextTimeout: FiniteDuration)(implicit ec: ExecutionContext) extends AbstractHandler {
     override def handle(target: String, baseRequest: Request, request: HttpServletRequest, response: HttpServletResponse): Unit = {
       baseRequest.setHandled(true)
 
@@ -105,7 +108,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
 
       HttpMethod.fromString(request.getMethod) match {
         case HttpMethod.POST =>
-          val async = request.startAsync()
+          val async = request.startAsync().setup(_.setTimeout(contextTimeout.toMillis))
           handlePost(call).andThenNow {
             case Success(responseContent) =>
               response.getWriter.write(responseContent.s)
@@ -134,8 +137,9 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
       invoke(call)(_.fire)
   }
 
-  def newHandler[T](impl: T)(implicit ec: ExecutionContext, asRawRPC: AsRawRPC[T]): Handler =
-    new RPCHandler(asRawRPC.asRaw(impl))
+  def newHandler[T](impl: T, contextTimeout: FiniteDuration = FiniteDuration(30, TimeUnit.SECONDS))(
+    implicit ec: ExecutionContext, asRawRPC: AsRawRPC[T]): Handler =
+    new RPCHandler(asRawRPC.asRaw(impl), contextTimeout)
 
   def newClient[T](httpClient: HttpClient, uri: String, maxResponseLength: Int = 2 * 1024 * 1024)(
     implicit ec: ExecutionContext, asRealRPC: AsRealRPC[T]): T =
