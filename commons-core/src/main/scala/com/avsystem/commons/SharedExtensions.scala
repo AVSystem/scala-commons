@@ -478,6 +478,15 @@ object SharedExtensions extends SharedExtensions {
 
     def mkStringOrEmpty(start: String, sep: String, end: String): String =
       mkStringOr(start, sep, end, "")
+
+    def asyncFoldLeft[B](zero: Future[B])(fun: (B, A) => Future[B])(implicit ec: ExecutionContext): Future[B] =
+      coll.foldLeft(zero)((fb, a) => fb.flatMap(b => fun(b, a)))
+
+    def asyncFoldRight[B](zero: Future[B])(fun: (A, B) => Future[B])(implicit ec: ExecutionContext): Future[B] =
+      coll.foldRight(zero)((a, fb) => fb.flatMap(b => fun(a, b)))
+
+    def asyncForeach(fun: A => Future[Unit])(implicit ec: ExecutionContext): Future[Unit] =
+      coll.foldLeft[Future[Unit]](Future.unit)((fu, a) => fu.flatMap(_ => fun(a)))
   }
 
   class SetOps[A](private val set: BSet[A]) extends AnyVal {
