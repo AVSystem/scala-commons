@@ -22,7 +22,9 @@ import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
   * }}}
   * Then, `listTypeRepr[Int]` will produce a string `"List[Int]"`
   */
-class TypeString[T](val value: String) extends AnyVal
+class TypeString[T](val value: String) extends AnyVal {
+  override def toString: String = value
+}
 object TypeString {
   def apply[T](implicit ts: TypeString[T]): TypeString[T] = ts
   def of[T: TypeString]: String = TypeString[T].value
@@ -43,7 +45,9 @@ object TypeString {
   * `JavaClassName` can be used instead of `ClassTag` in ScalaJS when ScalaJS linker is configured to drop class names.
   * Also, unlike `ClassTag`, `JavaClassName` contains just a string so it can be easily serialized and deserialized.
   */
-class JavaClassName[T](val value: String) extends AnyVal
+class JavaClassName[T](val value: String) extends AnyVal {
+  override def toString: String = value
+}
 object JavaClassName extends JavaClassNameLowPrio {
   def apply[T](implicit ts: JavaClassName[T]): JavaClassName[T] = ts
   def of[T: JavaClassName]: String = JavaClassName[T].value
