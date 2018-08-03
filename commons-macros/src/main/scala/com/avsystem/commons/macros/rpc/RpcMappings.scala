@@ -25,19 +25,16 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           matchedMethod = MatchedMethod(realMethod, fallbackTag)
           _ <- rawSymbol.matchName(matchedMethod)
           methodMapping <- createMapping(rawSymbol, matchedMethod)
-        } yield (rawSymbol, methodMapping)
+        } yield methodMapping
         res.mapFailure(msg => s"${rawSymbol.shortDescription} ${rawSymbol.nameStr} did not match: $msg")
       }
-      methodMappings.collect { case Ok(m) => m } match {
-        case List((_, m)) => Some(m)
-        case Nil =>
-          val unmatchedReport = methodMappings.iterator.collect({ case Fail(error) => s" * $error" }).mkString("\n")
-          addFailure(realMethod, s"it has no matching $rawShortDesc:\n$unmatchedReport")
-          None
-        case multiple =>
-          addFailure(realMethod, s"it has multiple matching $rawShortDesc: ${multiple.map(_._1.nameStr).mkString(",")}")
-          None
+      val mapping = methodMappings.collectFirst { case Ok(m) => m }
+      if (mapping.isEmpty) {
+        val unmatchedReport = methodMappings.iterator.collect({ case Fail(error) => s" * $error" }).mkString("\n")
+        addFailure(realMethod, s"it has no matching $rawShortDesc:\n$unmatchedReport")
+        None
       }
+      mapping
     }
 
     if (failedReals.nonEmpty) {

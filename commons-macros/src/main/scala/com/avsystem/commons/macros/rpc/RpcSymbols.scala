@@ -484,16 +484,14 @@ trait RpcSymbols { this: RpcMacroCommons =>
       annot(ParamTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
 
     lazy val rawMethods: List[RawMethod] =
-      tpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(this, _)).toList
+      tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(this, _)).toList
   }
 
-  case class RealRpcTrait(tpe: Type)
-    extends RpcTrait(tpe.typeSymbol) with RealRpcSymbol {
-
+  case class RealRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with RealRpcSymbol {
     def shortDescription = "real RPC"
     def description = s"$shortDescription $tpe"
 
     lazy val realMethods: List[RealMethod] =
-      tpe.members.iterator.filter(m => m.isTerm && m.isAbstract).map(RealMethod(this, _)).toList
+      tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map(RealMethod(this, _)).toList
   }
 }

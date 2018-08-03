@@ -35,23 +35,17 @@ class NewRpcMetadataTest extends FunSuite {
       """TestApi
         |  DO SOMETHING ELSE: true
         |  PROCEDURES:
-        |  overload -> def overload: void
-        |    AJDI: [hasDefaultValue]int@0:0:0:0: int suchMeta=false
-        |    ARGS:
-        |    int -> [hasDefaultValue]int@0:0:0:0: int suchMeta=false
         |  flames -> def flames: void
         |    NO AJDI
         |    ARGS:
         |    arg -> arg@0:0:0:0: String suchMeta=false
         |    otherArg -> [byName]otherArg@1:0:1:1: int suchMeta=false
         |    varargsy -> [repeated]varargsy@2:0:2:2: Seq suchMeta=false
-        |  FUNCTIONS:
-        |  defaultValueMethod -> def defaultValueMethod: void
-        |    RENAMED:
-        |
+        |  overload -> def overload: void
+        |    AJDI: [hasDefaultValue]int@0:0:0:0: int suchMeta=false
         |    ARGS:
         |    int -> [hasDefaultValue]int@0:0:0:0: int suchMeta=false
-        |    bul -> bul@1:0:1:1: boolean suchMeta=false
+        |  FUNCTIONS:
         |  varargsMethod -> def varargsMethod: void
         |    RENAMED:
         |    nejm -> [repeated]ints<nejm>@3:1:1:0: Seq suchMeta=false
@@ -59,6 +53,12 @@ class NewRpcMetadataTest extends FunSuite {
         |    krap -> krap@0:0:0:0: String suchMeta=false
         |    dubl -> dubl@1:0:1:1: double suchMeta=false
         |    czy -> czy@2:1:0:2: boolean suchMeta=false
+        |  defaultValueMethod -> def defaultValueMethod: void
+        |    RENAMED:
+        |
+        |    ARGS:
+        |    int -> [hasDefaultValue]int@0:0:0:0: int suchMeta=false
+        |    bul -> bul@1:0:1:1: boolean suchMeta=false
         |  POSTERS:
         |  POST_postit -> POST() def postit<POST_postit>: String
         |    HEADERS:
@@ -68,15 +68,15 @@ class NewRpcMetadataTest extends FunSuite {
         |    arg -> arg@0:0:0:0: String suchMeta=false
         |    int -> int@2:0:2:1: int suchMeta=false
         |  GETTERS:
+        |  ovgetter -> def overload<ovgetter>: TestApi
+        |    ARGS:
+        |    lel@0:0:0:0: String suchMeta=false
+        |    RESULT: <recursive>
+        |
         |  getit -> def getit: TestApi
         |    ARGS:
         |    stuff@0:0:0:0: String suchMeta=false
         |    otherStuff@1:0:1:0: List suchMeta=true,metas=suchMeta(1,a)
-        |    RESULT: <recursive>
-        |
-        |  ovgetter -> def overload<ovgetter>: TestApi
-        |    ARGS:
-        |    lel@0:0:0:0: String suchMeta=false
         |    RESULT: <recursive>
         |  PREFIXERS:
         |  ovprefix -> def overload<ovprefix>: TestApi
