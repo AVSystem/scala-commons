@@ -31,8 +31,8 @@ class RestValidationTest extends FunSuite {
     assert(failure.getMessage ==
       """REST API has ambiguous paths:
         |GET /p may result from multiple calls:
-        |  g2
-        |  g1""".stripMargin
+        |  g1
+        |  g2""".stripMargin
     )
   }
 
