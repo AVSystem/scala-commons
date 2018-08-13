@@ -13,7 +13,7 @@ trait SomeBase {
 }
 
 trait TestApi extends SomeBase {
-  def doSomething(double: Double): String
+  @filter def doSomething(@filter double: Double): String
   def doSomethingElse(double: Double): String
   def varargsMethod(krap: String, dubl: Double)(czy: Boolean, @renamed(42, "nejm") ints: Int*): Future[Unit]
   def defaultValueMethod(@td int: Int = 0, @whenAbsent(difolt) bul: Boolean): Future[Unit]

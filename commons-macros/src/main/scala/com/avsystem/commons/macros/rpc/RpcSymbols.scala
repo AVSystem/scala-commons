@@ -211,6 +211,15 @@ trait RpcSymbols { this: RpcMacroCommons =>
       if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
       else Fail(s"it does not accept ${realRpcSymbol.shortDescription}s tagged with $realTagTpe")
     }
+
+    lazy val requiredAnnots: List[Type] =
+      allAnnotations(symbol, AnnotatedAT).map(_.tpe.dealias.typeArgs.head)
+
+    def matchFilters(realSymbol: MatchedRealSymbol[RealRpcSymbol]): Res[Unit] =
+      Res.traverse(requiredAnnots) { annotTpe =>
+        if (realSymbol.annot(annotTpe).nonEmpty) Ok(())
+        else Fail(s"no annotation of type $annotTpe found on ${realSymbol.real.shortDescription}")
+      }.map(_ => ())
   }
 
   sealed trait RealRpcSymbol extends RpcSymbol
@@ -321,6 +330,12 @@ trait RpcSymbols { this: RpcMacroCommons =>
       annot(AuxiliaryAT).nonEmpty
 
     def cannotMapClue: String
+
+    def matchRealParam(matchedMethod: MatchedMethod, realParam: RealParam): Res[MatchedParam] = for {
+      fallbackTag <- matchTag(realParam)
+      matchedParam = MatchedParam(realParam, fallbackTag, matchedMethod)
+      _ <- matchFilters(matchedParam)
+    } yield matchedParam
   }
 
   object RawParam {

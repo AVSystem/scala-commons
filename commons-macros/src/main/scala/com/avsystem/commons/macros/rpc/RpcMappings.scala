@@ -25,9 +25,10 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             fallbackTag <- rawSymbol.matchTag(realMethod)
             matchedMethod = MatchedMethod(realMethod, fallbackTag)
             _ <- rawSymbol.matchName(matchedMethod)
+            _ <- rawSymbol.matchFilters(matchedMethod)
             methodMapping <- createMapping(rawSymbol, matchedMethod)
           } yield methodMapping
-          mappingRes match {
+          mappingRes.mapFailure(msg => s"${rawSymbol.shortDescription} ${rawSymbol.nameStr} did not match: $msg") match {
             case Ok(m) => Some(m)
             case f: Fail => findMethodMapping(f :: errorsAcc, rawSymbolsRest)
           }
@@ -73,12 +74,12 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       def loop(): Res[B] =
         if (it.hasNext) {
           val real = it.next()
-          raw.matchTag(real) match {
-            case Ok(fallbackTag) =>
+          raw.matchRealParam(matchedMethod, real) match {
+            case Ok(matchedParam) =>
               if (!raw.auxiliary) {
                 it.remove()
               }
-              matcher(MatchedParam(real, fallbackTag, matchedMethod))
+              matcher(matchedParam)
             case Fail(_) => loop()
           }
         } else Fail(s"${raw.shortDescription} ${raw.pathStr} was not matched by real parameter")
@@ -90,9 +91,9 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       def loop(): Option[B] =
         if (it.hasNext) {
           val real = it.next()
-          raw.matchTag(real) match {
-            case Ok(fallbackTag) =>
-              val res = matcher(MatchedParam(real, fallbackTag, matchedMethod)).toOption
+          raw.matchRealParam(matchedMethod, real) match {
+            case Ok(matchedParam) =>
+              val res = matcher(matchedParam).toOption
               if (!raw.auxiliary) {
                 res.foreach(_ => it.remove())
               }
@@ -108,12 +109,12 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       def loop(result: ListBuffer[B]): Res[List[B]] =
         if (it.hasNext) {
           val real = it.next()
-          raw.matchTag(real) match {
-            case Ok(fallbackTag) =>
+          raw.matchRealParam(matchedMethod, real) match {
+            case Ok(matchedParam) =>
               if (!raw.auxiliary) {
                 it.remove()
               }
-              matcher(MatchedParam(real, fallbackTag, matchedMethod), result.size) match {
+              matcher(matchedParam, result.size) match {
                 case Ok(b) =>
                   result += b
                   loop(result)

@@ -325,7 +325,7 @@ final class tried extends RawMethodAnnotation
   *
   * @tparam BaseTag base type for tags that can be used on real RPC methods
   * @param defaultTag default tag value assumed for untagged methods
-  */
+  **/
 final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawRpcAnnotation
 
 /**
@@ -382,6 +382,17 @@ final class paramTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends 
   */
 final class tagged[Tag <: RpcTag](val whenUntagged: Tag = null)
   extends RawMethodAnnotation with RawParamAnnotation
+
+/**
+  * Filter applied on raw methods or parameters which tells the macro engine that this raw method or parameter may
+  * only match real methods or parameters annotated with at least one annotation of given type `A` (or any subtype).
+  *
+  * This is similar to [[tagged]] but simplier. Tagging lets you explicitly specify all possible tag types and provide
+  * default/fallback tags when no tag is present.
+  *
+  * @tparam A type of annotation required to be present on real method or parameter
+  */
+final class annotated[A <: StaticAnnotation] extends RawRpcAnnotation
 
 /**
   * Raw parameters annotated as `@auxiliary` match real parameters without "consuming" them. This means that

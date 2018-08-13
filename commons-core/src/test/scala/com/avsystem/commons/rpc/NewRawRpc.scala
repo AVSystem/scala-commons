@@ -22,6 +22,8 @@ case class renamed(int: Int, name: String) extends DummyParamTag {
 
 case class suchMeta(intMeta: Int, strMeta: String) extends StaticAnnotation
 
+class filter extends StaticAnnotation
+
 sealed trait RestMethod extends RpcTag
 case class POST() extends RestMethod with AnnotationAggregate {
   @rpcNamePrefix("POST_") type Implied
@@ -38,7 +40,7 @@ case class GetterInvocation(
 @methodTag[RestMethod]
 @paramTag[DummyParamTag]
 trait NewRawRpc {
-  def doSomething(arg: Double): String
+  @annotated[filter] def doSomething(@annotated[filter] arg: Double): String
   @optional def doSomethingElse(arg: Double): String
 
   @multi
