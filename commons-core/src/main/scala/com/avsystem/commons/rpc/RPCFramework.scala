@@ -67,7 +67,7 @@ trait RPCFramework {
 
   trait Signature {
     @reifyName def name: String
-    @multi def paramMetadata: List[ParamMetadata[_]]
+    @multi @rpcParamMetadata def paramMetadata: List[ParamMetadata[_]]
     @reifyAnnot
     @multi def annotations: List[MetadataAnnotation]
   }

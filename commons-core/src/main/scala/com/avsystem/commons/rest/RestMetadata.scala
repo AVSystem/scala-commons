@@ -7,15 +7,15 @@ import com.avsystem.commons.rpc._
 case class RestMetadata[T](
   @multi @tagged[Prefix](whenUntagged = new Prefix)
   @paramTag[RestParamTag](defaultTag = new Path)
-  prefixMethods: Map[String, PrefixMetadata[_]],
+  @rpcMethodMetadata prefixMethods: Map[String, PrefixMetadata[_]],
 
   @multi @tagged[GET]
   @paramTag[RestParamTag](defaultTag = new Query)
-  httpGetMethods: Map[String, HttpMethodMetadata[_]],
+  @rpcMethodMetadata httpGetMethods: Map[String, HttpMethodMetadata[_]],
 
   @multi @tagged[BodyMethodTag](whenUntagged = new POST)
   @paramTag[RestParamTag](defaultTag = new JsonBodyParam)
-  httpBodyMethods: Map[String, HttpMethodMetadata[_]]
+  @rpcMethodMetadata httpBodyMethods: Map[String, HttpMethodMetadata[_]]
 ) {
   val httpMethods: Map[String, HttpMethodMetadata[_]] =
     httpGetMethods ++ httpBodyMethods
@@ -200,7 +200,7 @@ case class PrefixMetadata[T](
 case class HttpMethodMetadata[T](
   @reifyAnnot methodTag: HttpMethodTag,
   @composite parametersMetadata: RestParametersMetadata,
-  @multi @tagged[BodyTag] bodyParams: Map[String, BodyParamMetadata[_]],
+  @multi @tagged[BodyTag] @rpcParamMetadata bodyParams: Map[String, BodyParamMetadata[_]],
   @checked @infer responseType: HttpResponseType[T]
 ) extends RestMethodMetadata[T] {
   val method: HttpMethod = methodTag.method
@@ -220,9 +220,9 @@ object HttpResponseType {
 }
 
 case class RestParametersMetadata(
-  @multi @tagged[Path] path: List[PathParamMetadata[_]],
-  @multi @tagged[Header] headers: Map[String, HeaderParamMetadata[_]],
-  @multi @tagged[Query] query: Map[String, QueryParamMetadata[_]]
+  @multi @tagged[Path] @rpcParamMetadata path: List[PathParamMetadata[_]],
+  @multi @tagged[Header] @rpcParamMetadata headers: Map[String, HeaderParamMetadata[_]],
+  @multi @tagged[Query] @rpcParamMetadata query: Map[String, QueryParamMetadata[_]]
 )
 
 case class PathParamMetadata[T](

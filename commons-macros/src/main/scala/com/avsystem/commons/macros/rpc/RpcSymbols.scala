@@ -222,7 +222,7 @@ trait RpcSymbols { this: RpcMacroCommons =>
       }.map(_ => ())
   }
 
-  sealed trait RealRpcSymbol extends RpcSymbol
+  trait RealRpcSymbol extends RpcSymbol
 
   abstract class RpcTrait(val symbol: Symbol) extends RpcSymbol {
     def tpe: Type

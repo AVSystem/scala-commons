@@ -426,6 +426,18 @@ sealed trait MetadataParamStrategy extends StaticAnnotation
 final class infer extends MetadataParamStrategy
 
 /**
+  * `@rpcMethodMetadata` applied on metadata parameter of RPC trait metadata class indicates that this parameter holds
+  * metadata for RPC method(s) (one, some or all, depending on [[RpcArity]], tagging, etc.).
+  **/
+final class rpcMethodMetadata extends MetadataParamStrategy
+
+/**
+  * `@rpcParamMetadata` applied on metadata parameter of RPC method metadata class indicates that this parameter holds
+  * metadata for RPC parameter(s) (one, some or all, depending on [[RpcArity]], tagging, etc.).
+  **/
+final class rpcParamMetadata extends MetadataParamStrategy
+
+/**
   * Metadata parameter annotated as `@reifyAnnot` is intended to hold annotation(s) that must or may be present on the real
   * RPC trait, method or parameter. `@reifyAnnot` parameters may have arity, which means that they may be annotated as
   * [[single]] (the default), [[optional]] or [[multi]]. Arity annotation determines what parameter type the macro

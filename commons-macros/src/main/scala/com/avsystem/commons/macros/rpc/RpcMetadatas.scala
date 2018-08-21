@@ -127,21 +127,18 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
   private def primaryConstructor(ownerType: Type, ownerParam: Option[RpcSymbol]): Symbol =
     primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}: "))
 
-  sealed abstract class MetadataConstructor[Real <: RealRpcSymbol](val symbol: Symbol) extends RpcMethod {
+  sealed abstract class MetadataConstructor[Real <: RealRpcSymbol](constructor: Symbol) extends RpcMethod {
+    def symbol: Symbol = constructor
     def ownerType: Type
 
+    // fallback to annotations on the class itself
     def annot(tpe: Type): Option[Annot] =
-      findAnnotation(symbol, tpe) orElse {
-        // fallback to annotations on the class itself
-        if (symbol.asMethod.isConstructor)
-          findAnnotation(ownerType.typeSymbol, tpe)
-        else None
-      }
+      findAnnotation(constructor, tpe) orElse findAnnotation(ownerType.typeSymbol, tpe)
 
     def shortDescription = "metadata class"
     def description = s"$shortDescription $ownerType"
 
-    def createDirectParam(paramSym: Symbol, annot: Annot): DirectMetadataParam[Real] = annot.tpe match {
+    def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam[Real] = annot.tpe match {
       case t if t <:< InferAT => new ImplicitParam(this, paramSym)
       case t if t <:< ReifyAnnotAT => new ReifiedAnnotParam(this, paramSym)
       case t if t <:< ReifyNameAT =>
@@ -153,14 +150,15 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
     }
 
     def createCompositeParam(paramSym: Symbol): CompositeMetadataParam[Real]
-    def createDefaultParam(paramSym: Symbol): MetadataParam[Real]
 
     lazy val paramLists: List[List[MetadataParam[Real]]] =
-      symbol.typeSignatureIn(ownerType).paramLists.map(_.map { ps =>
+      constructor.typeSignatureIn(ownerType).paramLists.map(_.map { ps =>
         if (findAnnotation(ps, CompositeAT).nonEmpty)
           createCompositeParam(ps)
-        else findAnnotation(ps, MetadataParamStrategyType).map(createDirectParam(ps, _))
-          .getOrElse(if (ps.isImplicit) new ImplicitParam(this, ps) else createDefaultParam(ps))
+        else findAnnotation(ps, MetadataParamStrategyType).map(paramByStrategy(ps, _)).getOrElse {
+          if (ps.isImplicit) new ImplicitParam(this, ps)
+          else reportProblem("no metadata param strategy annotation found")
+        }
       })
 
     def constructorCall(argDecls: List[Tree]): Tree =
@@ -192,8 +190,9 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       case _ => Nil
     }
 
-    def createDefaultParam(paramSym: Symbol): MethodMetadataParam =
-      new MethodMetadataParam(this, paramSym)
+    override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam[RealRpcTrait] =
+      if (annot.tpe <:< RpcMethodMetadataAT) new MethodMetadataParam(this, paramSym)
+      else super.paramByStrategy(paramSym, annot)
 
     def createCompositeParam(paramSym: Symbol): RpcCompositeParam =
       new RpcCompositeParam(this, paramSym)
@@ -244,8 +243,9 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
       case _ => Nil
     }
 
-    def createDefaultParam(paramSym: Symbol): ParamMetadataParam =
-      new ParamMetadataParam(this, paramSym)
+    override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam[RealMethod] =
+      if (annot.tpe <:< RpcParamMetadataAT) new ParamMetadataParam(this, paramSym)
+      else super.paramByStrategy(paramSym, annot)
 
     def createCompositeParam(paramSym: Symbol): MethodCompositeParam =
       new MethodCompositeParam(this, paramSym)
@@ -272,15 +272,12 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
   ) extends MetadataConstructor[RealParam](
     primaryConstructor(ownerType, Some(atParam.fold[RpcSymbol](identity, identity)))) {
 
-    override def createDirectParam(paramSym: Symbol, annot: Annot): DirectMetadataParam[RealParam] =
+    override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam[RealParam] =
       annot.tpe match {
         case t if t <:< ReifyPositionAT => new ReifiedPositionParam(this, paramSym)
         case t if t <:< ReifyFlagsAT => new ReifiedFlagsParam(this, paramSym)
-        case _ => super.createDirectParam(paramSym, annot)
+        case _ => super.paramByStrategy(paramSym, annot)
       }
-
-    def createDefaultParam(paramSym: Symbol): UnknownParam[RealParam] =
-      new UnknownParam(this, paramSym)
 
     def createCompositeParam(paramSym: Symbol): ParamCompositeParam =
       new ParamCompositeParam(this, paramSym)
@@ -420,14 +417,5 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
 
     def tryMaterializeFor(matchedParam: MatchedRealSymbol[RealParam]): Res[Tree] =
       Ok(materializeFor(matchedParam))
-  }
-
-  class UnknownParam[Real <: RealRpcSymbol](owner: MetadataConstructor[Real], symbol: Symbol)
-    extends DirectMetadataParam[Real](owner, symbol) {
-
-    def materializeFor(matchedSymbol: MatchedRealSymbol[Real]): Tree =
-      reportProblem(s"no strategy annotation (e.g. @infer) found")
-    def tryMaterializeFor(matchedSymbol: MatchedRealSymbol[Real]): Res[Tree] =
-      Ok(materializeFor(matchedSymbol))
   }
 }
