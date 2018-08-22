@@ -102,8 +102,8 @@ trait RpcSymbols { this: RpcMacroCommons =>
     final val Empty = FallbackTag(EmptyTree)
   }
 
-  sealed trait MatchedRealSymbol[+Real <: RealRpcSymbol] {
-    def real: Real
+  sealed trait Matched {
+    def real: RealRpcSymbol
     def fallbackTagUsed: FallbackTag
 
     def annot(tpe: Type): Option[Annot] =
@@ -120,16 +120,13 @@ trait RpcSymbols { this: RpcMacroCommons =>
     }
   }
 
-  case class MatchedRpcTrait(real: RealRpcTrait) extends MatchedRealSymbol[RealRpcTrait] {
+  case class MatchedRpcTrait(real: RealRpcTrait) extends Matched {
     def fallbackTagUsed: FallbackTag = FallbackTag.Empty
   }
 
-  case class MatchedMethod(real: RealMethod, fallbackTagUsed: FallbackTag)
-    extends MatchedRealSymbol[RealMethod]
+  case class MatchedMethod(real: RealMethod, fallbackTagUsed: FallbackTag) extends Matched
 
-  case class MatchedParam(real: RealParam, fallbackTagUsed: FallbackTag, matchedOwner: MatchedMethod)
-    extends MatchedRealSymbol[RealParam] {
-
+  case class MatchedParam(real: RealParam, fallbackTagUsed: FallbackTag, matchedOwner: MatchedMethod) extends Matched {
     val whenAbsent: Tree =
       annot(WhenAbsentAT).fold(EmptyTree) { annot =>
         val annotatedDefault = annot.tree.children.tail.head
@@ -215,7 +212,7 @@ trait RpcSymbols { this: RpcMacroCommons =>
     lazy val requiredAnnots: List[Type] =
       allAnnotations(symbol, AnnotatedAT).map(_.tpe.dealias.typeArgs.head)
 
-    def matchFilters(realSymbol: MatchedRealSymbol[RealRpcSymbol]): Res[Unit] =
+    def matchFilters(realSymbol: Matched): Res[Unit] =
       Res.traverse(requiredAnnots) { annotTpe =>
         if (realSymbol.annot(annotTpe).nonEmpty) Ok(())
         else Fail(s"no annotation of type $annotTpe found on ${realSymbol.real.shortDescription}")
@@ -275,7 +272,7 @@ trait RpcSymbols { this: RpcMacroCommons =>
 
     // @unchecked because "The outer reference in this type test cannot be checked at runtime"
     // Srsly scalac, from static types it should be obvious that outer references are the same
-    def matchName(matchedReal: MatchedRealSymbol[RealRpcSymbol]): Res[Unit] = arity match {
+    def matchName(matchedReal: Matched): Res[Unit] = arity match {
       case _: RpcArity.Single@unchecked | _: RpcArity.Optional@unchecked =>
         if (matchedReal.rpcName == nameStr) Ok(())
         else Fail(s"it only matches ${matchedReal.real.shortDescription}s with RPC name $nameStr")
