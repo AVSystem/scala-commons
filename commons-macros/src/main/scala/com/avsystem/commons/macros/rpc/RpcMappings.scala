@@ -19,25 +19,23 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
 
     val result = realMethods.flatMap { realMethod =>
-      def findMethodMapping(errorsAcc: List[Fail], raws: List[R]): Option[M] = raws match {
-        case rawSymbol :: rawSymbolsRest =>
-          val mappingRes = for {
-            fallbackTag <- rawSymbol.matchTag(realMethod)
-            matchedMethod = MatchedMethod(realMethod, fallbackTag)
-            _ <- rawSymbol.matchName(matchedMethod)
-            _ <- rawSymbol.matchFilters(matchedMethod)
-            methodMapping <- createMapping(rawSymbol, matchedMethod)
-          } yield methodMapping
-          mappingRes.mapFailure(msg => s"${rawSymbol.shortDescription} ${rawSymbol.nameStr} did not match: $msg") match {
-            case Ok(m) => Some(m)
-            case f: Fail => findMethodMapping(f :: errorsAcc, rawSymbolsRest)
-          }
-        case Nil =>
-          val unmatchedReport = errorsAcc.reverseIterator.map(f => s" * ${f.message}").mkString("\n")
-          addFailure(realMethod, s"it has no matching $rawShortDesc:\n$unmatchedReport")
+      Res.firstOk(rawSymbols)(rawSymbol => for {
+        fallbackTag <- rawSymbol.matchTag(realMethod)
+        matchedMethod = MatchedMethod(realMethod, fallbackTag)
+        _ <- rawSymbol.matchName(matchedMethod)
+        _ <- rawSymbol.matchFilters(matchedMethod)
+        methodMapping <- createMapping(rawSymbol, matchedMethod)
+      } yield methodMapping) { errors =>
+        val unmatchedReport = errors.map { case (raw, err) =>
+          s" * ${raw.shortDescription} ${raw.nameStr} did not match: $err"
+        }.mkString("\n")
+        s"it has no matching $rawShortDesc:\n$unmatchedReport"
+      } match {
+        case Ok(v) => Some(v)
+        case Fail(msg) =>
+          addFailure(realMethod, msg)
           None
       }
-      findMethodMapping(Nil, rawSymbols)
     }
 
     if (failedReals.nonEmpty) {

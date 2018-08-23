@@ -2,11 +2,12 @@ package com.avsystem.commons
 package macros.rpc
 
 import scala.annotation.StaticAnnotation
-import scala.reflect.{ClassTag, classTag}
 
 trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
 
   import c.universe._
+
+  import scala.reflect.{ClassTag, classTag}
 
   def actualMetadataType(baseMetadataType: Type, realRpcSymbol: RealRpcSymbol, verbatim: Boolean): Res[Type] = {
     val (wildcards, underlying) = baseMetadataType match {
@@ -177,7 +178,7 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
 
     lazy val methodMdParams: List[MethodMetadataParam] = paramLists.flatten.flatMap {
       case mmp: MethodMetadataParam => List(mmp)
-      case rcp: CompositeParam => rcp.constructor.forRpc.methodMdParams
+      case cp: CompositeParam => cp.constructor.forRpc.methodMdParams
       case _ => Nil
     }
 
@@ -231,7 +232,7 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
 
     lazy val paramMdParams: List[ParamMetadataParam] = paramLists.flatten.flatMap {
       case pmp: ParamMetadataParam => List(pmp)
-      case mcp: CompositeParam => mcp.constructor.forMethod.paramMdParams
+      case cp: CompositeParam => cp.constructor.forMethod.paramMdParams
       case _ => Nil
     }
 
@@ -278,8 +279,8 @@ trait RpcMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
 
     def tryMaterializeFor(matchedParam: MatchedParam): Res[Tree] =
       Res.traverse(paramLists.flatten) {
-        case pcp: CompositeParam =>
-          pcp.constructor.forParam.tryMaterializeFor(matchedParam).map(pcp.localValueDecl)
+        case cp: CompositeParam =>
+          cp.constructor.forParam.tryMaterializeFor(matchedParam).map(cp.localValueDecl)
         case dmp: DirectMetadataParam =>
           dmp.tryMaterializeFor(matchedParam).map(dmp.localValueDecl)
         case _: ParamMetadataParam | _: MethodMetadataParam =>

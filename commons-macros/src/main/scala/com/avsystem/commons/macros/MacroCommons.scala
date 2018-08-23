@@ -4,7 +4,6 @@ package macros
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.{TypecheckException, blackbox}
-import scala.reflect.{ClassTag, classTag}
 import scala.util.control.NoStackTrace
 
 abstract class AbstractMacroCommons(val c: blackbox.Context) extends MacroCommons
@@ -13,6 +12,8 @@ trait MacroCommons { bundle =>
   val c: blackbox.Context
 
   import c.universe._
+
+  import scala.reflect.{ClassTag, classTag}
 
   final val ScalaPkg = q"_root_.scala"
   final val JavaLangPkg = q"_root_.java.lang"
