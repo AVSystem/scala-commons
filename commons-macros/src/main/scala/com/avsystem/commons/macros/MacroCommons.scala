@@ -46,6 +46,15 @@ trait MacroCommons { bundle =>
   final val DefaultsToNameAT = getType(tq"$CommonsPkg.annotation.defaultsToName")
   final val SeqCompanionSym = typeOf[scala.collection.Seq.type].termSymbol
 
+  final val NothingTpe: Type = typeOf[Nothing]
+  final val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
+  final val BIterableTpe: Type = typeOf[Iterable[Any]]
+  final val BIndexedSeqTpe: Type = typeOf[IndexedSeq[Any]]
+
+  final val PartialFunctionClass: Symbol = StringPFTpe.typeSymbol
+  final val BIterableClass: Symbol = BIterableTpe.typeSymbol
+  final val BIndexedSeqClass: Symbol = BIndexedSeqTpe.typeSymbol
+
   final lazy val isScalaJs =
     definitions.ScalaPackageClass.toType.member(TermName("scalajs")) != NoSymbol
 

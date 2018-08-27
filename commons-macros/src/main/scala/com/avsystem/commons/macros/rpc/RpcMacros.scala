@@ -2,23 +2,20 @@ package com.avsystem.commons
 package macros.rpc
 
 import com.avsystem.commons.macros.AbstractMacroCommons
+import com.avsystem.commons.macros.misc.MacroSymbols
 
 import scala.reflect.macros.blackbox
 
-abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
+abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) with MacroSymbols {
 
   import c.universe._
 
-  val RpcPackage = q"$CommonsPkg.rpc"
-  val RpcUtils = q"$RpcPackage.RpcUtils"
   val AsRealCls = tq"$RpcPackage.AsReal"
   val AsRealObj = q"$RpcPackage.AsReal"
   val AsRawCls = tq"$RpcPackage.AsRaw"
   val AsRawObj = q"$RpcPackage.AsRaw"
   val AsRawRealCls = tq"$RpcPackage.AsRawReal"
   val AsRawRealObj = q"$RpcPackage.AsRawReal"
-  val OptionLikeCls = tq"$RpcPackage.OptionLike"
-  val CanBuildFromCls = tq"$CollectionPkg.generic.CanBuildFrom"
   val ParamPositionObj = q"$RpcPackage.ParamPosition"
 
   val AsRealTpe: Type = getType(tq"$AsRealCls[_,_]")
@@ -31,10 +28,6 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val TransientDefaultAT: Type = getType(tq"$CommonsPkg.serialization.transientDefault")
   val MethodNameAT: Type = getType(tq"$RpcPackage.methodName")
   val CompositeAT: Type = getType(tq"$RpcPackage.composite")
-  val RpcArityAT: Type = getType(tq"$RpcPackage.RpcArity")
-  val SingleArityAT: Type = getType(tq"$RpcPackage.single")
-  val OptionalArityAT: Type = getType(tq"$RpcPackage.optional")
-  val MultiArityAT: Type = getType(tq"$RpcPackage.multi")
   val RpcEncodingAT: Type = getType(tq"$RpcPackage.RpcEncoding")
   val VerbatimAT: Type = getType(tq"$RpcPackage.verbatim")
   val AuxiliaryAT: Type = getType(tq"$RpcPackage.auxiliary")
@@ -59,15 +52,6 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val CheckedAT: Type = getType(tq"$RpcPackage.checked")
   val ParamPositionTpe: Type = getType(tq"$RpcPackage.ParamPosition")
   val ParamFlagsTpe: Type = getType(tq"$RpcPackage.ParamFlags")
-
-  val NothingTpe: Type = typeOf[Nothing]
-  val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
-  val BIterableTpe: Type = typeOf[Iterable[Any]]
-  val BIndexedSeqTpe: Type = typeOf[IndexedSeq[Any]]
-
-  val PartialFunctionClass: Symbol = StringPFTpe.typeSymbol
-  val BIterableClass: Symbol = BIterableTpe.typeSymbol
-  val BIndexedSeqClass: Symbol = BIndexedSeqTpe.typeSymbol
 
   def registerCompanionImplicits(rawTpe: Type): Unit =
     typedCompanionOf(rawTpe).filter { companion =>
