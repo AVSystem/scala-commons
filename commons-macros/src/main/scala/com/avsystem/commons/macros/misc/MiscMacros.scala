@@ -331,4 +331,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       val selection = if (singletonPrefix) "." else "#"
       mkTypeString(pre, parens = !singletonPrefix) :+ lit(mkNameString(name, prefix = selection))
   }
+
+  def lazyMetadata(metadata: Tree): Tree =
+    q"${c.prefix}($metadata)"
 }

@@ -81,6 +81,11 @@ trait MacroCommons { bundle =>
       error(msg)
     }
 
+  def containsInaccessibleThises(tree: Tree): Boolean = tree.exists {
+    case t@This(_) if !t.symbol.isPackageClass && !enclosingClasses.contains(t.symbol) => true
+    case _ => false
+  }
+
   class Annot(annotTree: Tree, val subject: Symbol, val directSource: Symbol, val aggregate: Option[Annot]) {
     def aggregationChain: List[Annot] =
       aggregate.fold(List.empty[Annot])(a => a :: a.aggregationChain)

@@ -261,22 +261,22 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     registerCompanionImplicits(raw.tpe)
 
     private def extractMapping(method: MatchedMethod, rawParam: RawValueParam, parser: ParamsParser[RealParam]): Res[ParamMapping] = {
-      def createErp(real: RealParam): Option[Res[EncodedRealParam]] =
-        rawParam.matchRealParam(method, real).toOption.map(EncodedRealParam.create(rawParam, _))
+      def createErp(real: RealParam, indexInRaw: Int): Option[Res[EncodedRealParam]] =
+        rawParam.matchRealParam(method, real, indexInRaw).toOption.map(EncodedRealParam.create(rawParam, _))
 
       val consume = !rawParam.auxiliary
       rawParam.arity match {
         case _: ParamArity.Single =>
           val unmatchedError = s"${raw.shortDescription} ${rawParam.pathStr} was not matched by real parameter"
-          parser.extractSingle(consume, createErp, unmatchedError).map(ParamMapping.Single(rawParam, _))
+          parser.extractSingle(consume, createErp(_, 0), unmatchedError).map(ParamMapping.Single(rawParam, _))
         case _: ParamArity.Optional =>
-          Ok(ParamMapping.Optional(rawParam, parser.extractOptional(consume, createErp)))
+          Ok(ParamMapping.Optional(rawParam, parser.extractOptional(consume, createErp(_, 0))))
         case ParamArity.Multi(_, true) =>
-          parser.extractMulti(consume, (r, _) => createErp(r)).map(ParamMapping.NamedMulti(rawParam, _))
+          parser.extractMulti(consume, createErp).map(ParamMapping.NamedMulti(rawParam, _))
         case _: ParamArity.Multi if rawParam.actualType <:< BIndexedSeqTpe =>
-          parser.extractMulti(consume, (r, _) => createErp(r)).map(ParamMapping.IndexedMulti(rawParam, _))
+          parser.extractMulti(consume, createErp).map(ParamMapping.IndexedMulti(rawParam, _))
         case _: ParamArity.Multi =>
-          parser.extractMulti(consume, (r, _) => createErp(r)).map(ParamMapping.IterableMulti(rawParam, _))
+          parser.extractMulti(consume, createErp).map(ParamMapping.IterableMulti(rawParam, _))
       }
     }
 

@@ -15,7 +15,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     final val Empty = FallbackTag(EmptyTree)
   }
 
-  sealed trait Matched {
+  sealed trait Matched extends MatchedSymbol {
     def real: RealRpcSymbol
     def fallbackTagUsed: FallbackTag
 
@@ -31,15 +31,22 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
       val rpcName = annot(RpcNameAT).fold(real.nameStr)(_.findArg[String](RpcNameArg))
       prefixes.mkString("", "", rpcName)
     }
+
+    def rawName: String = rpcName
   }
 
   case class MatchedRpcTrait(real: RealRpcTrait) extends Matched {
     def fallbackTagUsed: FallbackTag = FallbackTag.Empty
+    def indexInRaw: Int = 0
   }
 
-  case class MatchedMethod(real: RealMethod, fallbackTagUsed: FallbackTag) extends Matched
+  case class MatchedMethod(real: RealMethod, fallbackTagUsed: FallbackTag) extends Matched {
+    def indexInRaw: Int = 0
+  }
 
-  case class MatchedParam(real: RealParam, fallbackTagUsed: FallbackTag, matchedOwner: MatchedMethod) extends Matched {
+  case class MatchedParam(real: RealParam, fallbackTagUsed: FallbackTag, matchedOwner: MatchedMethod, indexInRaw: Int)
+    extends Matched {
+
     val whenAbsent: Tree =
       annot(WhenAbsentAT).fold(EmptyTree) { annot =>
         val annotatedDefault = annot.tree.children.tail.head
@@ -83,7 +90,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     }
   }
 
-  trait RawRpcSymbol extends MacroSymbol {
+  trait RawRpcSymbol extends MacroSymbol with FilteringSymbol {
     def baseTagTpe: Type
     def fallbackTag: FallbackTag
 
@@ -103,7 +110,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
       if (!(requiredTagType <:< baseTagTpe)) {
         val msg =
           if (baseTagTpe =:= NothingTpe)
-            "cannot use @tagged, no tag annotation type specified with @methodTag/@paramTag"
+            "cannot use @tagged, no tag annotation type specified"
           else s"tag annotation type $requiredTagType specified in @tagged annotation " +
             s"must be a subtype of specified base tag $baseTagTpe"
         reportProblem(msg)
@@ -121,15 +128,6 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
       if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
       else Fail(s"it does not accept ${realRpcSymbol.shortDescription}s tagged with $realTagTpe")
     }
-
-    lazy val requiredAnnots: List[Type] =
-      allAnnotations(symbol, AnnotatedAT).map(_.tpe.dealias.typeArgs.head)
-
-    def matchFilters(realSymbol: Matched): Res[Unit] =
-      Res.traverse(requiredAnnots) { annotTpe =>
-        if (realSymbol.annot(annotTpe).nonEmpty) Ok(())
-        else Fail(s"no annotation of type $annotTpe found on ${realSymbol.real.shortDescription}")
-      }.map(_ => ())
   }
 
   trait RealRpcSymbol extends MacroSymbol
@@ -164,11 +162,12 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
 
     def cannotMapClue: String
 
-    def matchRealParam(matchedMethod: MatchedMethod, realParam: RealParam): Res[MatchedParam] = for {
-      fallbackTag <- matchTag(realParam)
-      matchedParam = MatchedParam(realParam, fallbackTag, matchedMethod)
-      _ <- matchFilters(matchedParam)
-    } yield matchedParam
+    def matchRealParam(matchedMethod: MatchedMethod, realParam: RealParam, indexInRaw: Int): Res[MatchedParam] =
+      for {
+        fallbackTag <- matchTag(realParam)
+        matchedParam = MatchedParam(realParam, fallbackTag, matchedMethod, indexInRaw)
+        _ <- matchFilters(matchedParam)
+      } yield matchedParam
   }
 
   object RawParam {
@@ -177,7 +176,8 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
         MethodNameParam(owner, symbol)
       else if (findAnnotation(symbol, CompositeAT).nonEmpty)
         CompositeRawParam(owner, symbol)
-      else RawValueParam(owner, symbol)
+      else
+        RawValueParam(owner, symbol)
   }
 
   sealed trait RawParam extends MacroParam {

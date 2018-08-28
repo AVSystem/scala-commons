@@ -18,6 +18,9 @@ trait MacroSymbols extends MacroCommons {
   val SingleArityAT: Type = getType(tq"$RpcPackage.single")
   val OptionalArityAT: Type = getType(tq"$RpcPackage.optional")
   val MultiArityAT: Type = getType(tq"$RpcPackage.multi")
+  val CompositeAT: Type = getType(tq"$RpcPackage.composite")
+  val AuxiliaryAT: Type = getType(tq"$RpcPackage.auxiliary")
+  val AnnotatedAT: Type = getType(tq"$RpcPackage.annotated[_]")
 
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
     primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}: "))
@@ -157,6 +160,17 @@ trait MacroSymbols extends MacroCommons {
     }
   }
 
+  trait FilteringSymbol extends MacroSymbol {
+    lazy val requiredAnnots: List[Type] =
+      allAnnotations(symbol, AnnotatedAT).map(_.tpe.dealias.typeArgs.head)
+
+    def matchFilters(realSymbol: MatchedSymbol): Res[Unit] =
+      Res.traverse(requiredAnnots) { annotTpe =>
+        if (realSymbol.annot(annotTpe).nonEmpty) Ok(())
+        else Fail(s"no annotation of type $annotTpe found on ${realSymbol.real.shortDescription}")
+      }.map(_ => ())
+  }
+
   trait ArityParam extends MacroParam with AritySymbol {
     def allowMulti: Boolean
     def allowNamedMulti: Boolean
@@ -188,6 +202,14 @@ trait MacroSymbols extends MacroCommons {
           $builderName.result()
         """
       }
+  }
+
+  trait MatchedSymbol {
+    def real: MacroSymbol
+    def annot(tpe: Type): Option[Annot]
+    def allAnnots(tpe: Type): List[Annot]
+    def rawName: String
+    def indexInRaw: Int
   }
 
   def collectParamMappings[Real <: MacroParam, Raw <: MacroParam, M](
