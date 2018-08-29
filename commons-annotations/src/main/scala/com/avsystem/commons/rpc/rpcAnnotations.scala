@@ -444,6 +444,12 @@ final class rpcParamMetadata extends MetadataParamStrategy
 final class adtParamMetadata extends MetadataParamStrategy
 
 /**
+  * `@adtCaseMetadata` applied on metadata parameter of ADT hierarchy (sealed trait) metadata class indicates that
+  * this parameter holds metadata for its case classes (one, some or all, depending on [[RpcArity]], tagging, etc.).
+  **/
+final class adtCaseMetadata extends MetadataParamStrategy
+
+/**
   * Metadata parameter annotated as `@reifyAnnot` is intended to hold annotation(s) that must or may be present on the real
   * RPC trait, method or parameter. `@reifyAnnot` parameters may have arity, which means that they may be annotated as
   * [[single]] (the default), [[optional]] or [[multi]]. Arity annotation determines what parameter type the macro

@@ -30,7 +30,7 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
 
     def mappingFor(matchedMethod: MatchedMethod): Res[MethodMetadataMapping] = for {
       mdType <- actualMetadataType(arity.collectedType, matchedMethod.real.resultType, "method result type", verbatimResult)
-      constructor = new MethodMetadataConstructor(mdType, Left(this))
+      constructor = new MethodMetadataConstructor(mdType, this, None)
       paramMappings <- constructor.paramMappings(matchedMethod)
       tree <- constructor.tryMaterializeFor(matchedMethod, paramMappings)
     } yield MethodMetadataMapping(matchedMethod, this, tree)
@@ -39,16 +39,10 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
   class ParamMetadataParam(owner: MethodMetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with RealParamTarget {
 
-    def pathStr: String = {
-      def cpPath(cp: CompositeParam): String =
-        cp.owner.forMethod.atParam.fold(_ => nameStr, cp => s"${cpPath(cp)}.$nameStr")
-      owner.atParam.fold(_ => nameStr, cp => s"${cpPath(cp)}.$nameStr")
-    }
-
     def baseTagTpe: Type = owner.containingMethodParam.baseParamTag
     def fallbackTag: FallbackTag = owner.containingMethodParam.fallbackParamTag
 
-    def cannotMapClue = s"cannot map it to $shortDescription $nameStr of ${owner.ownerType}"
+    def cannotMapClue: String = s"cannot map it to $shortDescription $nameStr of ${owner.ownerType}"
 
     if (!(arity.collectedType <:< TypedMetadataType)) {
       reportProblem(s"type ${arity.collectedType} is not a subtype of TypedMetadata[_]")
@@ -61,7 +55,7 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
       val realParam = matchedParam.real
       val result = for {
         mdType <- actualMetadataType(arity.collectedType, realParam.actualType, "parameter type", verbatim)
-        tree <- new ParamMetadataConstructor(mdType, Left(this), indexInRaw).tryMaterializeFor(matchedParam)
+        tree <- new ParamMetadataConstructor(mdType, None, indexInRaw).tryMaterializeFor(matchedParam)
       } yield tree
       result.mapFailure(msg => s"${realParam.problemStr}: $cannotMapClue: $msg")
     }
@@ -80,16 +74,13 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
     }
   }
 
-  sealed abstract class MetadataConstructor(constructor: Symbol) extends BaseMetadataConstructor(constructor) {
-    def forRpc: RpcTraitMetadataConstructor = cast[RpcTraitMetadataConstructor]
-    def forMethod: MethodMetadataConstructor = cast[MethodMetadataConstructor]
-    def forParam: ParamMetadataConstructor = cast[ParamMetadataConstructor]
-  }
+  sealed abstract class MetadataConstructor(ownerType: Type, atParam: Option[CompositeParam])
+    extends BaseMetadataConstructor(ownerType, atParam)
 
   case class MethodMetadataMapping(matchedMethod: MatchedMethod, mdParam: MethodMetadataParam, tree: Tree)
 
-  class RpcTraitMetadataConstructor(val ownerType: Type, val atParam: Option[CompositeParam])
-    extends MetadataConstructor(primaryConstructor(ownerType, atParam)) with RawRpcSymbol {
+  class RpcTraitMetadataConstructor(ownerType: Type, atParam: Option[CompositeParam])
+    extends MetadataConstructor(ownerType, atParam) with RawRpcSymbol {
 
     def baseTagTpe: Type = NothingTpe
     def fallbackTag: FallbackTag = FallbackTag.Empty
@@ -102,11 +93,7 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
     val (baseParamTag, fallbackParamTag) =
       annot(ParamTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
 
-    lazy val methodMdParams: List[MethodMetadataParam] = paramLists.flatten.flatMap {
-      case mmp: MethodMetadataParam => List(mmp)
-      case cp: CompositeParam => cp.constructor.forRpc.methodMdParams
-      case _ => Nil
-    }
+    lazy val methodMdParams: List[MethodMetadataParam] = collectParams[MethodMetadataParam]
 
     override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
       if (annot.tpe <:< RpcMethodMetadataAT) new MethodMetadataParam(this, paramSym)
@@ -118,78 +105,53 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
     def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] =
       collectMethodMappings(methodMdParams, "metadata parameters", rpc.realMethods)(_.mappingFor(_)).groupBy(_.mdParam)
 
-    def materializeFor(rpc: RealRpcTrait, methodMappings: Map[MethodMetadataParam, List[MethodMetadataMapping]]): Tree = {
-      val argDecls = paramLists.flatten.map {
-        case rcp: CompositeParam =>
-          rcp.localValueDecl(rcp.constructor.forRpc.materializeFor(rpc, methodMappings))
-        case dmp: DirectMetadataParam =>
-          dmp.localValueDecl(dmp.materializeFor(MatchedRpcTrait(rpc)))
-        case mmp: MethodMetadataParam => mmp.localValueDecl {
-          val mappings = methodMappings.getOrElse(mmp, Nil)
-          mmp.arity match {
-            case ParamArity.Single(_) => mappings match {
-              case Nil => abort(s"no real method found that would match ${mmp.description}")
-              case List(m) => m.tree
-              case _ => abort(s"multiple real methods match ${mmp.description}")
-            }
-            case ParamArity.Optional(_) => mappings match {
-              case Nil => mmp.mkOptional[Tree](None)
-              case List(m) => mmp.mkOptional(Some(m.tree))
-              case _ => abort(s"multiple real methods match ${mmp.description}")
-            }
-            case ParamArity.Multi(_, _) =>
-              mmp.mkMulti(mappings.map(m => q"(${m.matchedMethod.rpcName}, ${m.tree})"))
+    def tryMaterializeFor(rpc: RealRpcTrait, methodMappings: Map[MethodMetadataParam, List[MethodMetadataMapping]]): Res[Tree] =
+      tryMaterialize(MatchedRpcTrait(rpc)) { case mmp: MethodMetadataParam =>
+        val mappings = methodMappings.getOrElse(mmp, Nil)
+        mmp.arity match {
+          case ParamArity.Single(_) => mappings match {
+            case Nil => Fail(s"no real method found that would match ${mmp.description}")
+            case List(m) => Ok(m.tree)
+            case _ => Fail(s"multiple real methods match ${mmp.description}")
           }
+          case ParamArity.Optional(_) => mappings match {
+            case Nil => Ok(mmp.mkOptional[Tree](None))
+            case List(m) => Ok(mmp.mkOptional(Some(m.tree)))
+            case _ => Fail(s"multiple real methods match ${mmp.description}")
+          }
+          case ParamArity.Multi(_, _) =>
+            Ok(mmp.mkMulti(mappings.map(m => q"(${m.matchedMethod.rpcName}, ${m.tree})")))
         }
-        case _: ParamMetadataParam => throw new Exception("unexpected ParamMetadataParam")
       }
-      constructorCall(argDecls)
-    }
   }
 
   class MethodMetadataConstructor(
-    val ownerType: Type,
-    val atParam: Either[MethodMetadataParam, CompositeParam]
-  ) extends MetadataConstructor(
-    primaryConstructor(ownerType, Some(atParam.fold[MacroSymbol](identity, identity)))) {
+    ownerType: Type,
+    val containingMethodParam: MethodMetadataParam,
+    atParam: Option[CompositeParam]
+  ) extends MetadataConstructor(ownerType, atParam) {
 
-    val containingMethodParam: MethodMetadataParam =
-      atParam.fold(identity, _.owner.forMethod.containingMethodParam)
-
-    lazy val paramMdParams: List[ParamMetadataParam] = paramLists.flatten.flatMap {
-      case pmp: ParamMetadataParam => List(pmp)
-      case cp: CompositeParam => cp.constructor.forMethod.paramMdParams
-      case _ => Nil
-    }
+    lazy val paramMdParams: List[ParamMetadataParam] = collectParams[ParamMetadataParam]
 
     override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
       if (annot.tpe <:< RpcParamMetadataAT) new ParamMetadataParam(this, paramSym)
       else super.paramByStrategy(paramSym, annot)
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
-      new MethodMetadataConstructor(param.actualType, Right(param))
+      new MethodMetadataConstructor(param.actualType, containingMethodParam, Some(param))
 
     def paramMappings(matchedMethod: MatchedMethod): Res[Map[ParamMetadataParam, Tree]] =
       collectParamMappings(matchedMethod.real.realParams, paramMdParams, "metadata parameter")(
         (param, parser) => param.metadataFor(matchedMethod, parser).map(t => (param, t))).map(_.toMap)
 
     def tryMaterializeFor(matchedMethod: MatchedMethod, paramMappings: Map[ParamMetadataParam, Tree]): Res[Tree] =
-      Res.traverse(paramLists.flatten) {
-        case cmp: CompositeParam =>
-          cmp.constructor.forMethod.tryMaterializeFor(matchedMethod, paramMappings).map(cmp.localValueDecl)
-        case dmp: DirectMetadataParam =>
-          dmp.tryMaterializeFor(matchedMethod).map(dmp.localValueDecl)
-        case pmp: ParamMetadataParam =>
-          Ok(pmp.localValueDecl(paramMappings(pmp)))
-      }.map(constructorCall)
+      tryMaterialize(matchedMethod) {
+        case pmp: ParamMetadataParam => Ok(paramMappings(pmp))
+      }
   }
 
-  class ParamMetadataConstructor(
-    val ownerType: Type,
-    val atParam: Either[ParamMetadataParam, CompositeParam],
-    val indexInRaw: Int
-  ) extends MetadataConstructor(
-    primaryConstructor(ownerType, Some(atParam.fold[MacroSymbol](identity, identity)))) {
+  class ParamMetadataConstructor(ownerType: Type, atParam: Option[CompositeParam], val indexInRaw: Int)
+    extends MetadataConstructor(ownerType, atParam) {
 
     override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
       annot.tpe match {
@@ -199,14 +161,9 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
       }
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
-      new ParamMetadataConstructor(param.actualType, Right(param), indexInRaw)
+      new ParamMetadataConstructor(param.actualType, Some(param), indexInRaw)
 
     def tryMaterializeFor(matchedParam: MatchedParam): Res[Tree] =
-      Res.traverse(paramLists.flatten) {
-        case cp: CompositeParam =>
-          cp.constructor.forParam.tryMaterializeFor(matchedParam).map(cp.localValueDecl)
-        case dmp: DirectMetadataParam =>
-          dmp.tryMaterializeFor(matchedParam).map(dmp.localValueDecl)
-      }.map(constructorCall)
+      tryMaterialize(matchedParam)(p => Fail(s"unexpected metadata parameter $p"))
   }
 }

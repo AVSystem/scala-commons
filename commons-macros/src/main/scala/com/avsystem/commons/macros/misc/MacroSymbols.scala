@@ -212,6 +212,14 @@ trait MacroSymbols extends MacroCommons {
     def indexInRaw: Int
   }
 
+  trait SelfMatchedSymbol extends MacroSymbol with MatchedSymbol {
+    def real: MacroSymbol = this
+    def annot(tpe: Type): Option[Annot] = findAnnotation(symbol, tpe)
+    def allAnnots(tpe: Type): List[Annot] = allAnnotations(symbol, tpe)
+    def indexInRaw: Int = 0
+    def rawName: String = nameStr
+  }
+
   def collectParamMappings[Real <: MacroParam, Raw <: MacroParam, M](
     reals: List[Real], raws: List[Raw], rawShortDesc: String)(
     createMapping: (Raw, ParamsParser[Real]) => Res[M]): Res[List[M]] = {

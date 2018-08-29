@@ -108,7 +108,8 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
     val realRpc = RealRpcTrait(weakTypeOf[Real].dealias)
     val metadataTpe = c.macroApplication.tpe.dealias
     val constructor = new RpcTraitMetadataConstructor(metadataTpe, None)
-    guardedMetadata(metadataTpe, realRpc.tpe)(constructor.materializeFor(realRpc, constructor.methodMappings(realRpc)))
+    guardedMetadata(metadataTpe, realRpc.tpe)(
+      constructor.tryMaterializeFor(realRpc, constructor.methodMappings(realRpc)).getOrElse(abort))
   }
 
   def macroInstances: Tree = {

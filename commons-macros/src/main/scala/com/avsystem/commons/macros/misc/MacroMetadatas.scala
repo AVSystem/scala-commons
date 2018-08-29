@@ -41,6 +41,7 @@ trait MacroMetadatas extends MacroSymbols {
   abstract class MetadataParam(val owner: MetadataConstructor, val symbol: Symbol) extends MacroParam {
     def shortDescription = "metadata parameter"
     def description = s"$shortDescription $nameStr of ${owner.description}"
+    def pathStr: String = owner.atParam.fold(nameStr)(cp => s"${cp.pathStr}.$nameStr")
   }
 
   class CompositeParam(owner: MetadataConstructor, symbol: Symbol) extends MetadataParam(owner, symbol) {
@@ -50,13 +51,14 @@ trait MacroMetadatas extends MacroSymbols {
 
   type MetadataConstructor <: BaseMetadataConstructor
 
-  abstract class BaseMetadataConstructor(constructor: Symbol) extends MacroMethod { this: MetadataConstructor =>
-    def symbol: Symbol = constructor
-    def ownerType: Type
+  abstract class BaseMetadataConstructor(val ownerType: Type, val atParam: Option[CompositeParam])
+    extends MacroMethod { this: MetadataConstructor =>
+
+    lazy val symbol: Symbol = primaryConstructor(ownerType, atParam)
 
     // fallback to annotations on the class itself
     def annot(tpe: Type): Option[Annot] =
-      findAnnotation(constructor, tpe) orElse findAnnotation(ownerType.typeSymbol, tpe)
+      findAnnotation(symbol, tpe) orElse findAnnotation(ownerType.typeSymbol, tpe)
 
     def shortDescription = "metadata class"
     def description = s"$shortDescription $ownerType"
@@ -75,7 +77,7 @@ trait MacroMetadatas extends MacroSymbols {
     def compositeConstructor(param: CompositeParam): MetadataConstructor
 
     lazy val paramLists: List[List[MetadataParam]] =
-      constructor.typeSignatureIn(ownerType).paramLists.map(_.map { ps =>
+      symbol.typeSignatureIn(ownerType).paramLists.map(_.map { ps =>
         if (findAnnotation(ps, CompositeAT).nonEmpty)
           new CompositeParam(this, ps)
         else findAnnotation(ps, MetadataParamStrategyType).map(paramByStrategy(ps, _)).getOrElse {
@@ -83,6 +85,13 @@ trait MacroMetadatas extends MacroSymbols {
           else reportProblem("no metadata param strategy annotation found")
         }
       })
+
+    protected def collectParams[P <: MetadataParam : ClassTag]: List[P] =
+      paramLists.flatten.flatMap {
+        case cp: CompositeParam => cp.constructor.collectParams[P]
+        case p: P => List(p)
+        case _ => Nil
+      }
 
     def constructorCall(argDecls: List[Tree]): Tree =
       q"""
@@ -94,12 +103,21 @@ trait MacroMetadatas extends MacroSymbols {
       case c: C => c
       case _ => throw new Exception(s"Metadata constructor $this is not a ${classTag[C].runtimeClass.getSimpleName}")
     }
+
+    protected def tryMaterialize(symbol: MatchedSymbol)(paramMaterialize: MetadataParam => Res[Tree]): Res[Tree] =
+      Res.traverse(paramLists.flatten) { mp =>
+        val res = mp match {
+          case cp: CompositeParam => cp.constructor.tryMaterialize(symbol)(paramMaterialize)
+          case dmp: DirectMetadataParam => dmp.tryMaterializeFor(symbol)
+          case _ => paramMaterialize(mp)
+        }
+        res.map(mp.localValueDecl)
+      }.map(constructorCall)
   }
 
   sealed abstract class DirectMetadataParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) {
 
-    def materializeFor(matchedSymbol: MatchedSymbol): Tree
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree]
   }
 
@@ -108,15 +126,12 @@ trait MacroMetadatas extends MacroSymbols {
 
     val checked: Boolean = findAnnotation(symbol, CheckedAT).nonEmpty
 
-    def materializeFor(matchedSymbol: MatchedSymbol): Tree =
-      q"${infer(actualType)}"
-
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
       if (checked)
         tryInferCachedImplicit(actualType).map(n => Ok(q"$n"))
           .getOrElse(Fail(s"no implicit value $actualType for $description could be found"))
       else
-        Ok(materializeFor(matchedSymbol))
+        Ok(q"${infer(actualType)}")
   }
 
   class ReifiedAnnotParam(owner: MetadataConstructor, symbol: Symbol)
@@ -130,7 +145,7 @@ trait MacroMetadatas extends MacroSymbols {
       reportProblem(s"${arity.collectedType} is not a subtype of StaticAnnotation")
     }
 
-    def materializeFor(matchedSymbol: MatchedSymbol): Tree = {
+    def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = Ok {
       def validated(annot: Annot): Annot = {
         if (containsInaccessibleThises(annot.tree)) {
           echo(showCode(annot.tree))
@@ -152,9 +167,6 @@ trait MacroMetadatas extends MacroSymbols {
           mkMulti(allAnnotations(rpcSym.symbol, annotTpe).map(a => c.untypecheck(validated(a).tree)))
       }
     }
-
-    def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
-      Ok(materializeFor(matchedSymbol))
   }
 
   class IsAnnotatedParam(owner: MetadataConstructor, symbol: Symbol, annotTpe: Type)
@@ -164,10 +176,8 @@ trait MacroMetadatas extends MacroSymbols {
       reportProblem("@hasAnnot can only be used on Boolean parameters")
     }
 
-    def materializeFor(matchedSymbol: MatchedSymbol): Tree =
-      q"${matchedSymbol.allAnnots(annotTpe).nonEmpty}"
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
-      Ok(materializeFor(matchedSymbol))
+      Ok(q"${matchedSymbol.allAnnots(annotTpe).nonEmpty}")
   }
 
   class ReifiedNameParam(owner: MetadataConstructor, symbol: Symbol, useRpcName: Boolean)
@@ -177,11 +187,8 @@ trait MacroMetadatas extends MacroSymbols {
       reportProblem(s"its type is not String")
     }
 
-    def materializeFor(matchedSymbol: MatchedSymbol): Tree =
-      q"${if (useRpcName) matchedSymbol.rawName else matchedSymbol.real.nameStr}"
-
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
-      Ok(materializeFor(matchedSymbol))
+      Ok(q"${if (useRpcName) matchedSymbol.rawName else matchedSymbol.real.nameStr}")
   }
 
   class ReifiedPositionParam(owner: MetadataConstructor, symbol: Symbol)
@@ -191,7 +198,7 @@ trait MacroMetadatas extends MacroSymbols {
       reportProblem("its type is not ParamPosition")
     }
 
-    def materializeFor(matchedParam: MatchedSymbol): Tree = {
+    def tryMaterializeFor(matchedParam: MatchedSymbol): Res[Tree] = Ok {
       val sym = matchedParam.real.symbol
       def loop(index: Int, indexInList: Int, indexOfList: Int, paramLists: List[List[Symbol]]): Tree =
         paramLists match {
@@ -206,9 +213,6 @@ trait MacroMetadatas extends MacroSymbols {
         }
       loop(0, 0, 0, sym.owner.typeSignature.paramLists)
     }
-
-    def tryMaterializeFor(matchedParam: MatchedSymbol): Res[Tree] =
-      Ok(materializeFor(matchedParam))
   }
 
   class ReifiedFlagsParam(owner: MetadataConstructor, symbol: Symbol)
@@ -218,7 +222,7 @@ trait MacroMetadatas extends MacroSymbols {
       reportProblem("its type is not ParamFlags")
     }
 
-    def materializeFor(matchedParam: MatchedSymbol): Tree = {
+    def tryMaterializeFor(matchedParam: MatchedSymbol): Res[Tree] = Ok {
       val rpcSym = matchedParam.real
       def flag(cond: Boolean, bit: Int) = if (cond) 1 << bit else 0
       val s = rpcSym.symbol.asTerm
@@ -230,9 +234,6 @@ trait MacroMetadatas extends MacroSymbols {
           flag(s.isSynthetic, 4)
       q"new $ParamFlagsTpe($rawFlags)"
     }
-
-    def tryMaterializeFor(matchedParam: MatchedSymbol): Res[Tree] =
-      Ok(materializeFor(matchedParam))
   }
 
   def guardedMetadata(metadataTpe: Type, realTpe: Type)(materialize: => Tree): Tree = {

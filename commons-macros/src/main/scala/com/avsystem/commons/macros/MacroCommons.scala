@@ -233,7 +233,7 @@ trait MacroCommons { bundle =>
   // of function wrapped by `MacroGenerated` class. This is all to workaround overzealous Scala validation of
   // self-reference being passed to super constructor parameter (https://github.com/scala/bug/issues/7666)
   def replaceCompanion(typedTree: Tree): Tree = {
-    val symToCheck = typedTree match {
+    def symToCheck: Symbol = typedTree match {
       case This(_) => typedTree.symbol.asClass.module
       case t => t.symbol
     }
@@ -242,6 +242,8 @@ trait MacroCommons { bundle =>
       case Some((s, name)) if s == symToCheck => q"$name.asInstanceOf[${typedTree.tpe}]"
       case _ => typedTree match {
         case Select(prefix, name) => Select(replaceCompanion(prefix), name)
+        case Apply(fun, args) => Apply(replaceCompanion(fun), args.map(replaceCompanion))
+        case TypeApply(fun, args) => TypeApply(replaceCompanion(fun), args)
         case t => t
       }
     }
@@ -293,7 +295,7 @@ trait MacroCommons { bundle =>
           def newCachedImplicit(): TermName = {
             val name = c.freshName(TermName("cachedImplicit"))
             inferredImplicitTypes(name) = t.tpe
-            implicitsToDeclare += q"private lazy val $name = $t"
+            implicitsToDeclare += q"private lazy val $name = ${replaceCompanion(t)}"
             name
           }
           ImplicitTrace(t).fold(newCachedImplicit()) { tr =>
