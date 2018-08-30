@@ -31,7 +31,7 @@ case class GenField[T](
 
 case class GenUnion[T](
   @multi @adtCaseMetadata classes: Map[String, GenRecord[_]],
-  @multi @adtCaseMetadata objects: Map[String, GenSingleton[_]],
+  @multi @adtCaseMetadata objects: Map[String, GenSingleton[_]]
 ) extends GenStructure[T] {
   def repr: String = {
     val forClasses = classes.iterator.map {
