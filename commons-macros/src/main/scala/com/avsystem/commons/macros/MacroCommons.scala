@@ -209,7 +209,38 @@ trait MacroCommons { bundle =>
       .orElse(find(fallback.map(t => new Annot(t, s, s, None))))
   }
 
-  private var companionReplacement = Option.empty[(Symbol, TermName)]
+  final val companionReplacementName = TermName("$companion$replacement")
+  final var forceCompanionReplace: Boolean = false
+
+  def enclosingConstructorCompanion: Symbol =
+    ownerChain.filter(_.isConstructor).map(_.owner.asClass.module).find(_ != NoSymbol).getOrElse(NoSymbol)
+
+  lazy val companionReplacement: Symbol =
+    if (forceCompanionReplace) enclosingConstructorCompanion
+    else c.typecheck(q"$companionReplacementName", silent = true) match {
+      case EmptyTree => NoSymbol
+      case _ => enclosingConstructorCompanion
+    }
+
+  // Replace references to companion object being constructed with casted reference to
+  // `$companion$replacement`. All this horrible wiring is to workaround stupid overzealous Scala validation of
+  // self-reference being passed to super constructor parameter (https://github.com/scala/bug/issues/7666)
+  def replaceCompanion(typedTree: Tree): Tree = {
+    def symToCheck: Symbol = typedTree match {
+      case This(_) => typedTree.symbol.asClass.module
+      case t => t.symbol
+    }
+    companionReplacement match {
+      case NoSymbol => typedTree
+      case s if s == symToCheck => q"$companionReplacementName.asInstanceOf[${typedTree.tpe}]"
+      case _ => typedTree match {
+        case Select(prefix, name) => Select(replaceCompanion(prefix), name)
+        case Apply(fun, args) => Apply(replaceCompanion(fun), args.map(replaceCompanion))
+        case TypeApply(fun, args) => TypeApply(replaceCompanion(fun), args)
+        case t => t
+      }
+    }
+  }
 
   def mkMacroGenerated(tpe: Type, tree: => Tree): Tree = {
     def fail() =
@@ -224,29 +255,8 @@ trait MacroCommons { bundle =>
       fail()
     }
 
-    val compName = c.freshName(TermName("companion"))
-    companionReplacement = Some((companionSym, compName))
-    q"new $CommonsPkg.misc.MacroGenerated[$tpe](($compName: $ScalaPkg.Any) => $tree)"
-  }
-
-  // Replace references to companion object being constructed with casted reference to lambda parameter
-  // of function wrapped by `MacroGenerated` class. This is all to workaround overzealous Scala validation of
-  // self-reference being passed to super constructor parameter (https://github.com/scala/bug/issues/7666)
-  def replaceCompanion(typedTree: Tree): Tree = {
-    def symToCheck: Symbol = typedTree match {
-      case This(_) => typedTree.symbol.asClass.module
-      case t => t.symbol
-    }
-    companionReplacement match {
-      case None => typedTree
-      case Some((s, name)) if s == symToCheck => q"$name.asInstanceOf[${typedTree.tpe}]"
-      case _ => typedTree match {
-        case Select(prefix, name) => Select(replaceCompanion(prefix), name)
-        case Apply(fun, args) => Apply(replaceCompanion(fun), args.map(replaceCompanion))
-        case TypeApply(fun, args) => TypeApply(replaceCompanion(fun), args)
-        case t => t
-      }
-    }
+    forceCompanionReplace = true
+    q"new $CommonsPkg.misc.MacroGenerated[$tpe](($companionReplacementName: $ScalaPkg.Any) => $tree)"
   }
 
   // simplified representation of trees of implicits, used to remove duplicated implicits,

@@ -2,10 +2,11 @@ package com.avsystem.commons
 package misc
 
 import com.avsystem.commons.rpc._
-import com.avsystem.commons.serialization.{defaultCase, flatten, name, transparent}
+import com.avsystem.commons.serialization.{GenCodec, defaultCase, flatten, name, transientDefault, transparent, whenAbsent}
 import org.scalatest.FunSuite
 
-abstract class HasGenStructure[T](implicit gs: MacroGenerated[GenStructure[T]]) {
+abstract class HasGenCodecStructure[T](implicit gc: MacroGenerated[GenCodec[T]], gs: MacroGenerated[GenStructure[T]]) {
+  implicit val genCodec: GenCodec[T] = gc.forCompanion(this)
   implicit val genStructure: GenStructure[T] = gs.forCompanion(this)
 }
 
@@ -16,17 +17,22 @@ object GenStructure extends AdtMetadataCompanion[GenStructure]
 
 case class GenField[T](
   @infer ts: TypeString[T],
-  @optional @reifyAnnot rawName: Opt[name]
+  @infer codec: GenCodec[T],
+  @reifyName sourceName: String,
+  @optional @reifyAnnot annotName: Opt[name],
+  @optional @reifyAnnot whenAbsent: Opt[whenAbsent[T]],
+  @isAnnotated[transientDefault] transientDefault: Boolean,
+  @reifyFlags flags: ParamFlags
 ) extends TypedMetadata[T] {
-
-  def repr: String = s"${rawName.fold("")(n => s"<${n.name}> ")}$ts"
+  val hasFallbackValue: Boolean = whenAbsent.fold(flags.hasDefaultValue)(wa => Try(wa.value).isSuccess)
+  def rawName: String = annotName.fold(sourceName)(_.name)
+  def repr: String = s"${annotName.fold("")(n => s"<${n.name}> ")}$ts"
 }
 
 case class GenUnion[T](
   @multi @adtCaseMetadata classes: Map[String, GenRecord[_]],
   @multi @adtCaseMetadata objects: Map[String, GenSingleton[_]],
 ) extends GenStructure[T] {
-
   def repr: String = {
     val forClasses = classes.iterator.map {
       case (name, gr) => s"case $name:\n${gr.repr(2)}"
@@ -38,13 +44,21 @@ case class GenUnion[T](
   }
 }
 
+sealed trait GenCase[T] extends GenStructure[T] {
+  def defaultCase: Boolean
+  def sourceName: String
+  def annotName: Opt[name]
+  def rawName: String = annotName.fold(sourceName)(_.name)
+}
+
 case class GenRecord[T](
   @multi @adtParamMetadata fields: Map[String, GenField[_]],
-  @optional @reifyAnnot rawName: Opt[name],
+  @reifyName sourceName: String,
+  @optional @reifyAnnot annotName: Opt[name],
   @optional @reifyAnnot flatten: Opt[flatten],
-  @optional @isAnnotated[transparent] transparent: Boolean,
-  @optional @isAnnotated[defaultCase] defaultCase: Boolean
-) extends GenStructure[T] {
+  @isAnnotated[transparent] transparent: Boolean,
+  @isAnnotated[defaultCase] defaultCase: Boolean
+) extends GenCase[T] {
 
   def repr(indent: Int): String = fields.iterator.map {
     case (name, gf) => s"${" " * indent}$name: ${gf.repr}"
@@ -55,18 +69,18 @@ case class GenRecord[T](
 
 case class GenSingleton[T](
   @infer @checked valueOf: ValueOf[T],
-  @optional @reifyAnnot rawName: Opt[name],
-  @optional @isAnnotated[defaultCase] defaultCase: Boolean
-) extends GenStructure[T] {
-
+  @reifyName sourceName: String,
+  @optional @reifyAnnot annotName: Opt[name],
+  @isAnnotated[defaultCase] defaultCase: Boolean
+) extends GenCase[T] {
   def repr: String = valueOf.value.toString
 }
 
 sealed trait Being
-object Being extends HasGenStructure[Being]
+object Being extends HasGenCodecStructure[Being]
 
 case class Person(name: String, @name("raw_age") age: Int) extends Being
-object Person extends HasGenStructure[Person]
+object Person extends HasGenCodecStructure[Person]
 
 case object God extends Being
 

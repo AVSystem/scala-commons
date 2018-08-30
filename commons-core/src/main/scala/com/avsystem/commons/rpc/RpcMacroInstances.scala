@@ -23,9 +23,13 @@ package rpc
   * implements that trait, e.g. [[com.avsystem.commons.rest.DefaultRestImplicits DefaultRestImplicits]].
   * When the macro implements `apply` method of `RpcMacroInstances` contents of `Implicits` are imported into the
   * body of `apply` and visible further by macros that materialize `InstancesTrait`.
+  *
+  * If `RpcMacroInstances` is accepted as implicit super constructor parameter of a companion object
+  * (which is the typical situation) then `this` reference should be passed as `companion`.
+  * This is in order to work around https://github.com/scala/bug/issues/7666
   */
 trait RpcMacroInstances[Implicits, InstancesTrait[_], Real] {
-  def apply(implicits: Implicits): InstancesTrait[Real]
+  def apply(implicits: Implicits, companion: Any): InstancesTrait[Real]
 }
 object RpcMacroInstances {
   /**

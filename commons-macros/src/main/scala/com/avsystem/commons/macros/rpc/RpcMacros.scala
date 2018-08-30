@@ -119,6 +119,8 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
     val implicitsTpe = applySig.paramLists.head.head.typeSignature
     val instancesTpe = applySig.finalResultType
 
+    forceCompanionReplace = true
+
     if (c.macroApplication.symbol.isImplicit && c.enclosingPosition.source != realTpe.typeSymbol.pos.source) {
       abort(s"Implicit materialization of RpcMacroInstances is only allowed in the same file where RPC trait is defined ($realTpe)")
     }
@@ -160,7 +162,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
 
     q"""
       new $resultTpe {
-        def apply($implicitsName: $implicitsTpe): $instancesTpe = {
+        def apply($implicitsName: $implicitsTpe, $companionReplacementName: Any): $instancesTpe = {
           import $implicitsName._
           new $instancesTpe { ..$impls; () }
         }

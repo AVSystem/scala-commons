@@ -23,8 +23,8 @@ trait FullInstances[Real] {
 abstract class RestClientApiCompanion[Implicits, Real](implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ClientInstances, Real]
 ) {
-  implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits).metadata
-  implicit final lazy val restAsReal: AsRealRpc[Real] = inst(implicits).asReal
+  implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits, this).metadata
+  implicit final lazy val restAsReal: AsRealRpc[Real] = inst(implicits, this).asReal
 
   final def fromHandleRequest(handleRequest: RawRest.HandleRequest): Real =
     RawRest.fromHandleRequest(handleRequest)
@@ -34,8 +34,8 @@ abstract class RestClientApiCompanion[Implicits, Real](implicits: Implicits)(
 abstract class RestServerApiCompanion[Implicits, Real](implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ServerInstances, Real]
 ) {
-  implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits).metadata
-  implicit final lazy val restAsRaw: AsRawRpc[Real] = inst(implicits).asRaw
+  implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits, this).metadata
+  implicit final lazy val restAsRaw: AsRawRpc[Real] = inst(implicits, this).asRaw
 
   final def asHandleRequest(real: Real): RawRest.HandleRequest =
     RawRest.asHandleRequest(real)
@@ -51,8 +51,8 @@ abstract class RestServerApiCompanion[Implicits, Real](implicits: Implicits)(
 abstract class RestApiCompanion[Implicits, Real](implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, FullInstances, Real]
 ) {
-  implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits).metadata
-  implicit final lazy val restAsRawReal: AsRawRealRpc[Real] = inst(implicits).asRawReal
+  implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits, this).metadata
+  implicit final lazy val restAsRawReal: AsRawRealRpc[Real] = inst(implicits, this).asRawReal
 
   final def fromHandleRequest(handleRequest: RawRest.HandleRequest): Real =
     RawRest.fromHandleRequest(handleRequest)
