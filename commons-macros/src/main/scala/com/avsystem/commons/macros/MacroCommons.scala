@@ -815,6 +815,8 @@ trait MacroCommons { bundle =>
       singleValueFor(internal.thisType(sym.owner)).map(pre => Select(pre, tpe.termSymbol))
     case ThisType(sym) =>
       Some(This(sym))
+    case SingleType(NoPrefix, sym) =>
+      Some(Ident(sym))
     case SingleType(pre, sym) =>
       singleValueFor(pre).map(prefix => Select(prefix, sym))
     case ConstantType(value) =>
