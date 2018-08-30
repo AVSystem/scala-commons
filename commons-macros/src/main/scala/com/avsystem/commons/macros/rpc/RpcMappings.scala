@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package macros.rpc
 
+import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
+
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 

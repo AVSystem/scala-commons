@@ -1,7 +1,7 @@
 package com.avsystem.commons
-package macros.misc
+package macros.meta
 
-import com.avsystem.commons.macros.rpc.{Fail, Ok, Res}
+import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
 
 import scala.annotation.StaticAnnotation
 import scala.reflect.{ClassTag, classTag}
@@ -10,18 +10,18 @@ trait MacroMetadatas extends MacroSymbols {
 
   import c.universe._
 
-  val ParamPositionObj: Tree = q"$RpcPackage.ParamPosition"
-  val TypedMetadataType: Type = getType(tq"$RpcPackage.TypedMetadata[_]")
-  val MetadataParamStrategyType: Type = getType(tq"$RpcPackage.MetadataParamStrategy")
-  val ReifyAnnotAT: Type = getType(tq"$RpcPackage.reifyAnnot")
-  val IsAnnotatedAT: Type = getType(tq"$RpcPackage.isAnnotated[_]")
-  val InferAT: Type = getType(tq"$RpcPackage.infer")
-  val ReifyNameAT: Type = getType(tq"$RpcPackage.reifyName")
-  val ReifyPositionAT: Type = getType(tq"$RpcPackage.reifyPosition")
-  val ReifyFlagsAT: Type = getType(tq"$RpcPackage.reifyFlags")
-  val CheckedAT: Type = getType(tq"$RpcPackage.checked")
-  val ParamPositionTpe: Type = getType(tq"$RpcPackage.ParamPosition")
-  val ParamFlagsTpe: Type = getType(tq"$RpcPackage.ParamFlags")
+  val ParamPositionObj: Tree = q"$MetaPackage.ParamPosition"
+  val TypedMetadataType: Type = getType(tq"$MetaPackage.TypedMetadata[_]")
+  val MetadataParamStrategyType: Type = getType(tq"$MetaPackage.MetadataParamStrategy")
+  val ReifyAnnotAT: Type = getType(tq"$MetaPackage.reifyAnnot")
+  val IsAnnotatedAT: Type = getType(tq"$MetaPackage.isAnnotated[_]")
+  val InferAT: Type = getType(tq"$MetaPackage.infer")
+  val ReifyNameAT: Type = getType(tq"$MetaPackage.reifyName")
+  val ReifyPositionAT: Type = getType(tq"$MetaPackage.reifyPosition")
+  val ReifyFlagsAT: Type = getType(tq"$MetaPackage.reifyFlags")
+  val CheckedAT: Type = getType(tq"$MetaPackage.checked")
+  val ParamPositionTpe: Type = getType(tq"$MetaPackage.ParamPosition")
+  val ParamFlagsTpe: Type = getType(tq"$MetaPackage.ParamFlags")
 
   def actualMetadataType(baseMetadataType: Type, realType: Type, realTypeDesc: String, verbatim: Boolean): Res[Type] = {
     val (wildcards, underlying) = baseMetadataType match {
@@ -67,8 +67,8 @@ trait MacroMetadatas extends MacroSymbols {
       case t if t <:< InferAT => new ImplicitParam(this, paramSym)
       case t if t <:< ReifyAnnotAT => new ReifiedAnnotParam(this, paramSym)
       case t if t <:< ReifyNameAT =>
-        val useRpcName = annot.findArg[Boolean](ReifyNameAT.member(TermName("rpcName")), false)
-        new ReifiedNameParam(this, paramSym, useRpcName)
+        val useRawName = annot.findArg[Boolean](ReifyNameAT.member(TermName("useRawName")), false)
+        new ReifiedNameParam(this, paramSym, useRawName)
       case t if t <:< IsAnnotatedAT =>
         new IsAnnotatedParam(this, paramSym, t.typeArgs.head)
       case t => reportProblem(s"metadata param strategy $t is not allowed here")
@@ -180,7 +180,7 @@ trait MacroMetadatas extends MacroSymbols {
       Ok(q"${matchedSymbol.allAnnots(annotTpe).nonEmpty}")
   }
 
-  class ReifiedNameParam(owner: MetadataConstructor, symbol: Symbol, useRpcName: Boolean)
+  class ReifiedNameParam(owner: MetadataConstructor, symbol: Symbol, useRawName: Boolean)
     extends DirectMetadataParam(owner, symbol) {
 
     if (!(actualType =:= typeOf[String])) {
@@ -188,7 +188,7 @@ trait MacroMetadatas extends MacroSymbols {
     }
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
-      Ok(q"${if (useRpcName) matchedSymbol.rawName else matchedSymbol.real.nameStr}")
+      Ok(q"${if (useRawName) matchedSymbol.rawName else matchedSymbol.real.nameStr}")
   }
 
   class ReifiedPositionParam(owner: MetadataConstructor, symbol: Symbol)

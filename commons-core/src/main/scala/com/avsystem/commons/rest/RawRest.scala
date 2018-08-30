@@ -3,6 +3,7 @@ package rest
 
 import java.util.concurrent.atomic.AtomicBoolean
 
+import com.avsystem.commons.meta._
 import com.avsystem.commons.rpc._
 
 case class RestMethodCall(rpcName: String, pathParams: List[PathValue], metadata: RestMethodMetadata[_])

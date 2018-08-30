@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rest
 
+import com.avsystem.commons.meta._
 import com.avsystem.commons.rpc._
 
 @methodTag[RestMethodTag]
@@ -226,7 +227,7 @@ case class RestParametersMetadata(
 )
 
 case class PathParamMetadata[T](
-  @reifyName(rpcName = true) rpcName: String,
+  @reifyName(useRawName = true) rpcName: String,
   @reifyAnnot pathAnnot: Path
 ) extends TypedMetadata[T] {
   val pathSuffix: List[PathValue] = PathValue.split(pathAnnot.pathSuffix)

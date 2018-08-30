@@ -5,8 +5,8 @@ import java.net.URLDecoder
 import java.util.regex.Pattern
 
 import com.avsystem.commons.annotation.explicitGenerics
-import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RawRest, RestParameters, RestMetadata, RestRequest}
-import com.avsystem.commons.rpc.NamedParams
+import com.avsystem.commons.meta.NamedParams
+import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RawRest, RestMetadata, RestParameters, RestRequest}
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.http.{HttpStatus, MimeTypes}
 

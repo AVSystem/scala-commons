@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.rpc._
+import com.avsystem.commons.meta._
 import com.avsystem.commons.serialization.{GenCodec, defaultCase, flatten, name, transientDefault, transparent, whenAbsent}
 import org.scalatest.FunSuite
 

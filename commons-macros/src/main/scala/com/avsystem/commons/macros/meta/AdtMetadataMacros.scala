@@ -1,8 +1,8 @@
 package com.avsystem.commons
-package macros.misc
+package macros.meta
 
 import com.avsystem.commons.macros.AbstractMacroCommons
-import com.avsystem.commons.macros.rpc.{Fail, Ok, Res}
+import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.blackbox
@@ -11,8 +11,8 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
 
   import c.universe._
 
-  val AdtParamMetadataAT: Type = getType(tq"$RpcPackage.adtParamMetadata")
-  val AdtCaseMetadataAT: Type = getType(tq"$RpcPackage.adtCaseMetadata")
+  val AdtParamMetadataAT: Type = getType(tq"$MetaPackage.adtParamMetadata")
+  val AdtCaseMetadataAT: Type = getType(tq"$MetaPackage.adtCaseMetadata")
 
   sealed trait AdtSymbol extends MacroSymbol with SelfMatchedSymbol {
     def tpe: Type

@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package macros.rpc
 
-import com.avsystem.commons.macros.misc.MacroMetadatas
+import com.avsystem.commons.macros.meta.MacroMetadatas
+import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
 
 trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
 

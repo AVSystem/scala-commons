@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package misc
+package meta
 
 import com.avsystem.commons.macros.misc.MiscMacros
 import com.avsystem.commons.rpc.Fallback

@@ -1,7 +1,7 @@
 package com.avsystem.commons
-package rpc
+package meta
 
-import com.avsystem.commons.rpc.NamedParams.ConcatIterable
+import com.avsystem.commons.meta.NamedParams.ConcatIterable
 import com.avsystem.commons.serialization.GenCodec
 
 import scala.collection.generic.CanBuildFrom

@@ -1,8 +1,8 @@
 package com.avsystem.commons
-package macros.misc
+package macros.meta
 
 import com.avsystem.commons.macros.MacroCommons
-import com.avsystem.commons.macros.rpc.{Fail, Ok, Res}
+import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
 
 import scala.collection.mutable.ListBuffer
 
@@ -11,16 +11,17 @@ trait MacroSymbols extends MacroCommons {
   import c.universe._
 
   val RpcPackage = q"$CommonsPkg.rpc"
+  val MetaPackage = q"$CommonsPkg.meta"
   val RpcUtils = q"$RpcPackage.RpcUtils"
-  val OptionLikeCls = tq"$RpcPackage.OptionLike"
+  val OptionLikeCls = tq"$MetaPackage.OptionLike"
   val CanBuildFromCls = tq"$CollectionPkg.generic.CanBuildFrom"
-  val RpcArityAT: Type = getType(tq"$RpcPackage.RpcArity")
-  val SingleArityAT: Type = getType(tq"$RpcPackage.single")
-  val OptionalArityAT: Type = getType(tq"$RpcPackage.optional")
-  val MultiArityAT: Type = getType(tq"$RpcPackage.multi")
-  val CompositeAT: Type = getType(tq"$RpcPackage.composite")
-  val AuxiliaryAT: Type = getType(tq"$RpcPackage.auxiliary")
-  val AnnotatedAT: Type = getType(tq"$RpcPackage.annotated[_]")
+  val RpcArityAT: Type = getType(tq"$MetaPackage.SymbolArity")
+  val SingleArityAT: Type = getType(tq"$MetaPackage.single")
+  val OptionalArityAT: Type = getType(tq"$MetaPackage.optional")
+  val MultiArityAT: Type = getType(tq"$MetaPackage.multi")
+  val CompositeAT: Type = getType(tq"$MetaPackage.composite")
+  val AuxiliaryAT: Type = getType(tq"$MetaPackage.auxiliary")
+  val AnnotatedAT: Type = getType(tq"$MetaPackage.annotated[_]")
 
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
     primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}: "))

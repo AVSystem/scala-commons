@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package rpc
+package meta
 
 import com.avsystem.commons.serialization.{HasGenCodec, transparent}
 

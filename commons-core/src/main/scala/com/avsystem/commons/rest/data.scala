@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rest
 
+import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.serialization.GenCodec.ReadFailure

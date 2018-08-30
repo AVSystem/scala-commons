@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package macros.rpc
+package macros.misc
 
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable

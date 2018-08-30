@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.meta._
 import com.avsystem.commons.serialization.GenCodec
 
 import scala.language.higherKinds

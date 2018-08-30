@@ -4,6 +4,7 @@ package rpc
 import java.util.regex.Matcher
 
 import com.avsystem.commons.annotation.AnnotationAggregate
+import com.avsystem.commons.meta._
 import com.avsystem.commons.serialization.GenCodec
 
 import scala.annotation.StaticAnnotation
@@ -203,7 +204,7 @@ case class ParameterMetadata[T: TypeName](
 
 case class NameInfo(
   @reifyName name: String,
-  @reifyName(rpcName = true) rpcName: String
+  @reifyName(useRawName = true) rpcName: String
 ) {
   def repr: String = name + (if (rpcName != name) s"<$rpcName>" else "")
 }

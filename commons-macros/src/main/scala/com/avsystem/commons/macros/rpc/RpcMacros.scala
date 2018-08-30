@@ -2,7 +2,7 @@ package com.avsystem.commons
 package macros.rpc
 
 import com.avsystem.commons.macros.AbstractMacroCommons
-import com.avsystem.commons.macros.misc.MacroSymbols
+import com.avsystem.commons.macros.meta.MacroSymbols
 
 import scala.reflect.macros.blackbox
 
