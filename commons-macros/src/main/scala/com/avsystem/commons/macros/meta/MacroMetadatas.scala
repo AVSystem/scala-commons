@@ -22,6 +22,7 @@ trait MacroMetadatas extends MacroSymbols {
   val CheckedAT: Type = getType(tq"$MetaPackage.checked")
   val ParamPositionTpe: Type = getType(tq"$MetaPackage.ParamPosition")
   val ParamFlagsTpe: Type = getType(tq"$MetaPackage.ParamFlags")
+  val TypeFlagsTpe: Type = getType(tq"$MetaPackage.TypeFlags")
 
   def actualMetadataType(baseMetadataType: Type, realType: Type, realTypeDesc: String, verbatim: Boolean): Res[Type] = {
     val (wildcards, underlying) = baseMetadataType match {
@@ -115,23 +116,35 @@ trait MacroMetadatas extends MacroSymbols {
       }.map(constructorCall)
   }
 
-  sealed abstract class DirectMetadataParam(owner: MetadataConstructor, symbol: Symbol)
+  abstract class DirectMetadataParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) {
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree]
   }
 
   class ImplicitParam(owner: MetadataConstructor, symbol: Symbol)
-    extends DirectMetadataParam(owner, symbol) {
+    extends DirectMetadataParam(owner, symbol) with ArityParam {
+
+    def allowMulti: Boolean = false
+    def allowNamedMulti: Boolean = false
+    def allowListedMulti: Boolean = false
 
     val checked: Boolean = findAnnotation(symbol, CheckedAT).nonEmpty
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
-      if (checked)
-        tryInferCachedImplicit(actualType).map(n => Ok(q"$n"))
-          .getOrElse(Fail(s"no implicit value $actualType for $description could be found"))
-      else
-        Ok(q"${infer(actualType)}")
+      arity match {
+        case ParamArity.Single(tpe) =>
+          if (checked)
+            tryInferCachedImplicit(tpe).map(n => Ok(q"$n"))
+              .getOrElse(Fail(s"no implicit value $tpe for $description could be found"))
+          else
+            Ok(q"${infer(tpe)}")
+        case ParamArity.Optional(tpe) =>
+          Ok(mkOptional(tryInferCachedImplicit(tpe).map(n => q"$n")))
+        case _: ParamArity.Multi =>
+          Fail("@multi arity not allowed on @infer params")
+      }
+
   }
 
   class ReifiedAnnotParam(owner: MetadataConstructor, symbol: Symbol)

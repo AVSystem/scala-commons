@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package meta
 
-import com.avsystem.commons.rpc.{encoded, methodName, paramTag, rpcName, tagged, verbatim}
+import com.avsystem.commons.rpc._
 
 import scala.annotation.StaticAnnotation
 
@@ -188,14 +188,14 @@ trait MetadataParamStrategy extends StaticAnnotation
 final class infer extends MetadataParamStrategy
 
 /**
-  * `@adtParamMetadata` applied on metadata parameter of ADT (case class) metadata class indicates that this parameter
-  * holds metadata for ADT parameter(s) (one, some or all, depending on [[RpcArity]], tagging, etc.).
+  * `@adtParamMetadata` applied on metadata parameter of metadata class for case class or object indicates that
+  * this parameter holds metadata for ADT parameter(s) (one, some or all, depending on [[SymbolArity]], tagging, etc.).
   **/
 final class adtParamMetadata extends MetadataParamStrategy
 
 /**
   * `@adtCaseMetadata` applied on metadata parameter of ADT hierarchy (sealed trait) metadata class indicates that
-  * this parameter holds metadata for its case classes (one, some or all, depending on [[RpcArity]], tagging, etc.).
+  * this parameter holds metadata for its case classes (one, some or all, depending on [[SymbolArity]], tagging, etc.).
   **/
 final class adtCaseMetadata extends MetadataParamStrategy
 
