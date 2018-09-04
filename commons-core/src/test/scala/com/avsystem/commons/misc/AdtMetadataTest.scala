@@ -3,7 +3,6 @@ package misc
 
 import com.avsystem.commons.meta._
 import com.avsystem.commons.serialization.{GenCaseInfo, GenCodec, GenFieldInfo, GenUnionInfo, name}
-import org.scalatest.FunSuite
 
 abstract class HasGenCodecStructure[T](
   implicit gc: MacroGenerated[GenCodec[T]], gs: MacroGenerated[GenStructure[T]]) {
@@ -80,26 +79,3 @@ object Peculiarity {
 }
 
 case object God extends Being
-
-class AdtMetadataTest extends FunSuite {
-  test("simple case class") {
-    println(Person.genStructure.repr)
-    assert(Person.genStructure.repr ==
-      """[case]
-        |name: []String
-        |age: []<raw_age> Int""".stripMargin
-    )
-  }
-
-  test("simple sealed hierarchy") {
-    println(Being.genStructure.repr)
-    assert(Being.genStructure.repr ==
-      """[abstract,sealed,trait]
-        |case Person:[case]
-        |  name: []String
-        |  age: []<raw_age> Int
-        |case God:[case,object]
-        |""".stripMargin
-    )
-  }
-}
