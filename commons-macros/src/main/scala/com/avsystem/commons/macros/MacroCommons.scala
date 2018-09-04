@@ -823,8 +823,10 @@ trait MacroCommons { bundle =>
     case t => t
   }
 
-  def isSealedHierarchyRoot(sym: Symbol): Boolean =
+  def isSealedHierarchyRoot(sym: Symbol): Boolean = {
+    sym.info // force loading of type information, sometimes it may be missing when loading from classfile
     sym.isClass && sym.isAbstract && sym.asClass.isSealed
+  }
 
   def knownNonAbstractSubclasses(sym: Symbol): Set[Symbol] =
     sym.asClass.knownDirectSubclasses.flatMap { s =>
