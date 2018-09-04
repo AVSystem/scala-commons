@@ -7,8 +7,7 @@ import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 object SealedUtils {
   /**
     * A macro which reifies a list of all case objects of a sealed trait or class `T`.
-    * WARNING: the order of case objects in the resulting list is guaranteed to be consistent with
-    * declaration order ONLY for enums extending [[OrderedEnum]]. Otherwise, the order may be arbitrary.
+    * The list is ordered consistently with declaration order of case objects.
     */
   @explicitGenerics
   def caseObjectsFor[T]: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
@@ -45,22 +44,17 @@ trait SealedEnumCompanion[T] {
   /**
     * Holds a list of all case objects of a sealed trait or class `T`. This must be implemented separately
     * for every sealed enum, but can be implemented simply by using the [[caseObjects]] macro.
-    * It's important to *always* state the type of `values` explicitly, as a workaround for SI-7046. For example:
+    * It's important to *always* state the type of `values` explicitly. For example:
     *
     * {{{
     *   val values: List[MyEnum] = caseObjects
     * }}}
-    *
-    * Also, be aware that [[caseObjects]] macro guarantees well-defined order of elements only for
-    * [[com.avsystem.commons.misc.OrderedEnum OrderedEnum]].
     */
   val values: ISeq[T]
 
   /**
     * A macro which reifies a list of all case objects of the sealed trait or class `T`.
-    * WARNING: the order of case objects in the resulting list is well defined only for enums that extend [[OrderedEnum]].
-    * In such case, the order is consistent with declaration order in source file. However, if the enum is not an
-    * [[OrderedEnum]], the order may be arbitrary.
+    * Returned list is sorted consistently with declaration order of case objects.
     */
   protected def caseObjects: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
 }
