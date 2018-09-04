@@ -31,9 +31,13 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
 
     def mappingFor(matchedMethod: MatchedMethod): Res[MethodMetadataMapping] = for {
       mdType <- actualMetadataType(arity.collectedType, matchedMethod.real.resultType, "method result type", verbatimResult)
-      constructor = new MethodMetadataConstructor(mdType, this, None)
-      paramMappings <- constructor.paramMappings(matchedMethod)
-      tree <- constructor.tryMaterializeFor(matchedMethod, paramMappings)
+      tree <- materializeOneOf(mdType) { t =>
+        val constructor = new MethodMetadataConstructor(t, this, None)
+        for {
+          paramMappings <- constructor.paramMappings(matchedMethod)
+          tree <- constructor.tryMaterializeFor(matchedMethod, paramMappings)
+        } yield tree
+      }
     } yield MethodMetadataMapping(matchedMethod, this, tree)
   }
 
@@ -56,7 +60,8 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
       val realParam = matchedParam.real
       val result = for {
         mdType <- actualMetadataType(arity.collectedType, realParam.actualType, "parameter type", verbatim)
-        tree <- new ParamMetadataConstructor(mdType, None, indexInRaw).tryMaterializeFor(matchedParam)
+        tree <- materializeOneOf(mdType)(t =>
+          new ParamMetadataConstructor(t, None, indexInRaw).tryMaterializeFor(matchedParam))
       } yield tree
       result.mapFailure(msg => s"${realParam.problemStr}: $cannotMapClue: $msg")
     }
@@ -74,9 +79,6 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
         parser.extractMulti(!auxiliary, metadataTree(matchedMethod, _, _)).map(mkMulti(_))
     }
   }
-
-  sealed abstract class MetadataConstructor(ownerType: Type, atParam: Option[CompositeParam])
-    extends BaseMetadataConstructor(ownerType, atParam)
 
   case class MethodMetadataMapping(matchedMethod: MatchedMethod, mdParam: MethodMetadataParam, tree: Tree)
 

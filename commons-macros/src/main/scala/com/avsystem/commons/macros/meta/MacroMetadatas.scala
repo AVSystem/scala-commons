@@ -29,7 +29,11 @@ trait MacroMetadatas extends MacroSymbols {
       case ExistentialType(wc, u) if !verbatim => (wc, u)
       case t => (Nil, t)
     }
-    val baseMethodResultType = underlying.baseType(TypedMetadataType.typeSymbol).typeArgs.head
+    val asTypedMetadata = underlying.baseType(TypedMetadataType.typeSymbol)
+    if(asTypedMetadata == NoType) {
+      abort(s"$baseMetadataType is not a subtype of TypedMetadata")
+    }
+    val baseMethodResultType = asTypedMetadata.typeArgs.head
     val result = if (wildcards.isEmpty)
       Some(baseMetadataType).filter(_ => baseMethodResultType =:= realType)
     else determineTypeParams(baseMethodResultType, realType, wildcards)
@@ -38,6 +42,17 @@ trait MacroMetadatas extends MacroSymbols {
     result.map(Ok(_)).getOrElse(Fail(
       s"$realTypeDesc $realType is incompatible with required metadata type $baseMetadataType"))
   }
+
+  def materializeOneOf(mdType: Type)(materialize: Type => Res[Tree]): Res[Tree] =
+    knownSubtypes(mdType) match {
+      case Some(subtypes) => Res.firstOk(subtypes)(materialize) { errorsByType =>
+        s"none of the case types of $mdType could be materialized:\n" +
+          errorsByType.iterator.map {
+            case (st, err) => s" * $st failed because: ${indent(err, " ")}"
+          }.mkString("\n")
+      }
+      case None => materialize(mdType)
+    }
 
   abstract class MetadataParam(val owner: MetadataConstructor, val symbol: Symbol) extends MacroParam {
     def shortDescription = "metadata parameter"
@@ -50,9 +65,7 @@ trait MacroMetadatas extends MacroSymbols {
     override def description: String = s"${super.description} at ${owner.description}"
   }
 
-  type MetadataConstructor <: BaseMetadataConstructor
-
-  abstract class BaseMetadataConstructor(val ownerType: Type, val atParam: Option[CompositeParam])
+  abstract class MetadataConstructor(val ownerType: Type, val atParam: Option[CompositeParam])
     extends MacroMethod { this: MetadataConstructor =>
 
     lazy val symbol: Symbol = primaryConstructor(ownerType, atParam)

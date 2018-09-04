@@ -86,6 +86,9 @@ trait MacroCommons { bundle =>
     case _ => false
   }
 
+  def indent(str: String, indent: String): String =
+    str.replaceAllLiterally("\n", s"\n$indent")
+
   class Annot(annotTree: Tree, val subject: Symbol, val directSource: Symbol, val aggregate: Option[Annot]) {
     def aggregationChain: List[Annot] =
       aggregate.fold(List.empty[Annot])(a => a :: a.aggregationChain)
@@ -866,7 +869,27 @@ trait MacroCommons { bundle =>
       directSubclasses.flatMap(allCurrentlyKnownSubclasses) + sym
     } else Set.empty
 
+  private val ownersCache = new mutable.OpenHashMap[Symbol, List[Symbol]]
+  def ownersOf(sym: Symbol): List[Symbol] =
+    ownersCache.getOrElseUpdate(sym, Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).toList.reverse)
+
   def knownSubtypes(tpe: Type): Option[List[Type]] = {
+    def isBefore(ancestor: Symbol, owners1: List[Symbol], owners2: List[Symbol]): Boolean =
+      (owners1, owners2) match {
+        case (h1 :: t1, h2 :: t2) if h1 == h2 => isBefore(h1, t1, t2)
+        case (h1 :: _, h2 :: _) =>
+          ancestor.asType.toType.decls.sorted.find(s => s == h1 || s == h2).contains(h1)
+        case (_, Nil) => false
+        case (Nil, _) => true
+      }
+
+    def isDeclaredBefore(sym1: Symbol, sym2: Symbol): Boolean =
+      if (sym1.pos != NoPosition && sym2.pos != NoPosition)
+        sym1.pos.point < sym2.pos.point
+      else if (sym1.owner == sym2.owner) //optimization for common case
+        sym1.owner.asType.toType.decls.sorted.find(s => s == sym1 || s == sym2).contains(sym1)
+      else isBefore(NoSymbol, ownersOf(sym1), ownersOf(sym2))
+
     val dtpe = tpe.dealias
     val (tpeSym, refined) = dtpe match {
       case RefinedType(List(single), scope) =>
@@ -874,9 +897,8 @@ trait MacroCommons { bundle =>
       case _ => (dtpe.typeSymbol, Nil)
     }
     Option(tpeSym).filter(isSealedHierarchyRoot).map { sym =>
-      val subclasses = knownNonAbstractSubclasses(sym).toList
-      val sortedSubclasses = if (tpeSym.pos != NoPosition) subclasses.sortBy(_.pos.point) else subclasses
-      sortedSubclasses.flatMap { subSym =>
+      val subclasses = knownNonAbstractSubclasses(sym).toList.sortWith(isDeclaredBefore)
+      subclasses.flatMap { subSym =>
         val undetTpe = typeOfTypeSymbol(subSym.asType)
         val refinementSignatures = refined.map(rs => undetTpe.member(rs.name).typeSignatureIn(undetTpe))
         val undetBaseTpe = undetTpe.baseType(dtpe.typeSymbol)

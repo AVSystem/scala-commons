@@ -14,7 +14,7 @@ object KnownSubtypesTest {
   case object SubStuff extends SubHierarchy
 
   testKnownSubtypes[Int, Nothing]
-  testKnownSubtypes[Option[String], (None.type, Some[String])]
+  testKnownSubtypes[Option[String], (Some[String], None.type)]
   testKnownSubtypes[Base, (Stuff, OtherStuff.type, MoreStuff, SubStuff.type)]
 
   sealed trait Gadt[T]
