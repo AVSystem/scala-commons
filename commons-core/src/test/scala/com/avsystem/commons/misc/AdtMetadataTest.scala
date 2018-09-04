@@ -40,9 +40,9 @@ sealed trait GenCase[T] extends TypedMetadata[T] {
 
 case class GenCustomCase[T](
   @composite info: GenCaseInfo[T],
-  @checked @infer structure: GenStructure[T]
+  @checked @infer structure: GenStructure.Lazy[T]
 ) extends GenCase[T] {
-  def repr: String = structure.repr
+  def repr: String = structure.value.repr
 }
 
 case class GenRecord[T](
