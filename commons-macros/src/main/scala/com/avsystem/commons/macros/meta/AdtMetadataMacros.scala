@@ -128,7 +128,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
 
     def tryMaterializeFor(sym: AdtSymbol,
       caseMappings: Map[AdtCaseMetadataParam, List[AdtCaseMapping]],
-      paramMappings: Map[AdtParamMetadataParam, Tree],
+      paramMappings: Map[AdtParamMetadataParam, Tree]
     ): Res[Tree] = tryMaterialize(sym) {
       case acp: AdtCaseMetadataParam =>
         val mappings = caseMappings.getOrElse(acp, Nil)
