@@ -1,13 +1,12 @@
 package com.avsystem.commons
 package rest
 
-import com.avsystem.commons.serialization.HasGenCodec
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.ScalaFutures
 
 case class User(id: String, name: String)
-object User extends HasGenCodec[User]
+object User extends RestDataCompanion[User]
 
 trait UserApi {
   @GET def user(userId: String): Future[User]

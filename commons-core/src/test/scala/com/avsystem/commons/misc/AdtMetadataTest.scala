@@ -2,7 +2,7 @@ package com.avsystem.commons
 package misc
 
 import com.avsystem.commons.meta._
-import com.avsystem.commons.serialization.{GenCaseInfo, GenCodec, GenFieldInfo, GenUnionInfo, name}
+import com.avsystem.commons.serialization.{GenCaseInfo, GenCodec, GenParamInfo, GenUnionInfo, name}
 
 abstract class HasGenCodecStructure[T](
   implicit gc: MacroGenerated[GenCodec[T]], gs: MacroGenerated[GenStructure[T]]) {
@@ -18,7 +18,7 @@ object GenStructure extends AdtMetadataCompanion[GenStructure]
 case class GenField[T](
   @infer ts: TypeString[T],
   @infer codec: GenCodec[T],
-  @composite info: GenFieldInfo[T]
+  @composite info: GenParamInfo[T]
 ) extends TypedMetadata[T] {
   def rawName: String = info.rawName
   def repr: String = s"[$info.flags]${info.annotName.fold("")(n => s"<${n.name}> ")}$ts"

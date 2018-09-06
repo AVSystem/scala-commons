@@ -2,13 +2,12 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.rest.RawRest.HandleRequest
-import com.avsystem.commons.serialization.HasGenCodec
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.ScalaFutures
 
 case class RestEntity(id: String, name: String)
-object RestEntity extends HasGenCodec[RestEntity]
+object RestEntity extends RestDataCompanion[RestEntity]
 
 trait RestTestApi {
   @GET def trivialGet: Future[Unit]

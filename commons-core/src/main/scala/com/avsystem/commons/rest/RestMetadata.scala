@@ -2,7 +2,11 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.meta._
+import com.avsystem.commons.rest.openapi._
 import com.avsystem.commons.rpc._
+import com.avsystem.commons.serialization.{transientDefault, whenAbsent}
+
+import scala.annotation.implicitNotFound
 
 @methodTag[RestMethodTag]
 case class RestMetadata[T](
@@ -86,6 +90,29 @@ case class RestMetadata[T](
         throw new RestException(s"path $pathStr is ambiguous, it could map to following calls:$callsRepr")
     }
   }
+
+  def openapiOperations: Iterator[(String, HttpMethod, Operation)] =
+    prefixMethods.valuesIterator.flatMap(_.openapiOperations) ++
+      httpMethods.valuesIterator.map(m => (m.openapiPath, m.method, m.openapiOperation))
+
+  def openapiPaths: Paths = {
+    val pathsMap = new MLinkedHashMap[String, MLinkedHashMap[HttpMethod, Operation]]
+    openapiOperations.foreach {
+      case (path, httpMethod, operation) =>
+        val opsMap = pathsMap.getOrElseUpdate(path, new MLinkedHashMap)
+        opsMap(httpMethod) = operation
+    }
+    Paths(pathsMap.iterator.map { case (path, ops) =>
+      val pathItem = PathItem(
+        get = ops.getOpt(HttpMethod.GET).toOptArg,
+        put = ops.getOpt(HttpMethod.PUT).toOptArg,
+        post = ops.getOpt(HttpMethod.POST).toOptArg,
+        patch = ops.getOpt(HttpMethod.PATCH).toOptArg,
+        delete = ops.getOpt(HttpMethod.DELETE).toOptArg,
+      )
+      (path, RefOr(pathItem))
+    }.toMap)
+  }
 }
 object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
   private class Trie {
@@ -164,6 +191,12 @@ sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
   val pathPattern: List[PathPatternElement] =
     methodPath.map(PathName) ++ parametersMetadata.path.flatMap(pp => PathParam(pp) :: pp.pathSuffix.map(PathName))
 
+  def openapiPath: String =
+    pathPattern.iterator.map {
+      case PathName(PathValue(v)) => v
+      case PathParam(param) => s"{${param.rpcName}}"
+    }.mkString("/", "/", "")
+
   def applyPathParams(params: List[PathValue]): List[PathValue] = {
     def loop(params: List[PathValue], pattern: List[PathPatternElement]): List[PathValue] =
       (params, pattern) match {
@@ -196,45 +229,94 @@ case class PrefixMetadata[T](
   @checked @infer result: RestMetadata.Lazy[T]
 ) extends RestMethodMetadata[T] {
   def methodPath: List[PathValue] = PathValue.split(methodTag.path)
+
+  def openapiOperations: Iterator[(String, HttpMethod, Operation)] = {
+    val pathPrefix = openapiPath
+    val prefixParams = parametersMetadata.openapiParameters
+    result.value.openapiOperations.map { case (path, httpMethod, operation) =>
+      (pathPrefix + path, httpMethod, operation.copy(parameters = prefixParams ++ operation.parameters))
+    }
+  }
 }
 
 case class HttpMethodMetadata[T](
   @reifyAnnot methodTag: HttpMethodTag,
   @composite parametersMetadata: RestParametersMetadata,
-  @multi @tagged[BodyTag] @rpcParamMetadata bodyParams: Map[String, BodyParamMetadata[_]],
-  @checked @infer responseType: HttpResponseType[T]
+  @multi @tagged[JsonBodyParam] @rpcParamMetadata bodyParams: Map[String, CommonParamMetadata[_]],
+  @optional @encoded @tagged[Body] @rpcParamMetadata singleBodyParam: Opt[BodyParamMetadata[_]],
+  @infer responseType: HttpResponseType[T]
 ) extends RestMethodMetadata[T] {
   val method: HttpMethod = methodTag.method
-  val singleBody: Boolean = bodyParams.values.exists(_.singleBody)
+  val singleBody: Boolean = singleBodyParam.isDefined
   def methodPath: List[PathValue] = PathValue.split(methodTag.path)
+
+  def openapiRequestBody: RefOr[RequestBody] =
+    singleBodyParam.map(_.restRequestBody.requestBody).getOrElse {
+      if (bodyParams.isEmpty) RefOr(RequestBody(content = Map.empty))
+      else {
+        val schema = Schema(`type` = DataType.Object,
+          properties = bodyParams.iterator.map {
+            case (name, pm) => (name, pm.restSchema.schema)
+          }.toMap,
+          required = bodyParams.iterator.collect {
+            case (name, pm) if !pm.hasFallbackValue => name
+          }.toList
+        )
+        RefOr(RestRequestBody.jsonRequestBody(RefOr(schema)))
+      }
+    }
+
+  def openapiOperation: Operation = Operation(
+    responseType.responses,
+    parameters = parametersMetadata.openapiParameters,
+    requestBody = openapiRequestBody
+  )
 }
 
-/**
-  * Currently just a marker typeclass used by [[RestMetadata]] materialization to distinguish between
-  * prefix methods and HTTP methods. In the future this typeclass may contain some additional information, e.g.
-  * type metadata for generating swagger definitions.
-  */
-trait HttpResponseType[T]
+@implicitNotFound("HttpResponseType for ${T} not found. It may be provided by appropriate RestSchema instance " +
+  "(e.g. RestSchema[T] implies HttpResponseType[Future[T]])")
+case class HttpResponseType[T](responses: Responses)
 object HttpResponseType {
-  implicit def forFuture[T]: HttpResponseType[Future[T]] =
-    new HttpResponseType[Future[T]] {}
+  implicit def forFuture[T: RestResponses]: HttpResponseType[Future[T]] =
+    HttpResponseType[Future[T]](RestResponses[T].responses)
 }
 
 case class RestParametersMetadata(
   @multi @tagged[Path] @rpcParamMetadata path: List[PathParamMetadata[_]],
-  @multi @tagged[Header] @rpcParamMetadata headers: Map[String, HeaderParamMetadata[_]],
-  @multi @tagged[Query] @rpcParamMetadata query: Map[String, QueryParamMetadata[_]]
-)
+  @multi @tagged[Header] @rpcParamMetadata headers: Map[String, CommonParamMetadata[_]],
+  @multi @tagged[Query] @rpcParamMetadata query: Map[String, CommonParamMetadata[_]]
+) {
+  def openapiParameters: List[RefOr[Parameter]] = {
+    val it = path.iterator.map(ppm => ppm.common.openapiParameter(ppm.rpcName, Location.Path)) ++
+      headers.iterator.map({ case (name, pm) => pm.openapiParameter(name, Location.Header) }) ++
+      headers.iterator.map({ case (name, pm) => pm.openapiParameter(name, Location.Query) })
+    it.map(RefOr(_)).toList
+  }
+}
+
+case class CommonParamMetadata[T](
+  @optional @reifyAnnot whenAbsent: Opt[whenAbsent[T]],
+  @isAnnotated[transientDefault] transientDefault: Boolean,
+  @reifyFlags flags: ParamFlags,
+  @infer restSchema: RestSchema[T]
+) extends TypedMetadata[T] {
+  val hasFallbackValue: Boolean =
+    whenAbsent.fold(flags.hasDefaultValue)(wa => Try(wa.value).isSuccess)
+
+  def openapiParameter(name: String, in: Location): Parameter =
+    Parameter(name, in, required = !hasFallbackValue, schema = restSchema.schema)
+}
 
 case class PathParamMetadata[T](
+  @composite common: CommonParamMetadata[T],
   @reifyName(useRawName = true) rpcName: String,
   @reifyAnnot pathAnnot: Path
 ) extends TypedMetadata[T] {
   val pathSuffix: List[PathValue] = PathValue.split(pathAnnot.pathSuffix)
 }
 
-case class HeaderParamMetadata[T]() extends TypedMetadata[T]
-case class QueryParamMetadata[T]() extends TypedMetadata[T]
-case class BodyParamMetadata[T](@isAnnotated[Body] singleBody: Boolean) extends TypedMetadata[T]
+case class BodyParamMetadata[T](
+  @infer restRequestBody: RestRequestBody[T]
+) extends TypedMetadata[T]
 
 class InvalidRestApiException(msg: String) extends RestException(msg)

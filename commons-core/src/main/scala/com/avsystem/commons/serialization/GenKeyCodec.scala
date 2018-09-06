@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import java.util.UUID
+
 import com.avsystem.commons.annotation.explicitGenerics
 
 import scala.annotation.implicitNotFound
@@ -52,6 +54,7 @@ object GenKeyCodec {
 
   implicit lazy val StringKeyCodec: GenKeyCodec[String] = create(identity, identity)
   implicit lazy val SymbolKeyCodec: GenKeyCodec[Symbol] = create(Symbol(_), _.name)
+  implicit lazy val UuidCodec: GenKeyCodec[UUID] = create(UUID.fromString, _.toString)
 
   implicit def jEnumKeyCodec[E <: Enum[E]](implicit ct: ClassTag[E]): GenKeyCodec[E] =
     GenKeyCodec.create(

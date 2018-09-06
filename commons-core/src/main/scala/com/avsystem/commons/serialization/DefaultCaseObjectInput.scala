@@ -3,7 +3,9 @@ package serialization
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
-final class DefaultCaseObjectInput(firstField: FieldInput, actualInput: ObjectInput, caseFieldName: String) extends ObjectInput {
+final class DefaultCaseObjectInput(firstField: FieldInput, actualInput: ObjectInput, caseFieldName: String)
+  extends ObjectInput {
+
   private[this] var atFirstField = true
 
   def hasNext = atFirstField || actualInput.hasNext

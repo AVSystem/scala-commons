@@ -182,6 +182,10 @@ object SharedExtensions extends SharedExtensions {
 
     def ensurePrefix(prefix: String): String =
       if (str.startsWith(prefix)) str else prefix + str
+
+    def uncapitalize: String =
+      if (str.isEmpty) str
+      else str.charAt(0).toLower + str.substring(1)
   }
 
   class IntOps(private val int: Int) extends AnyVal {
