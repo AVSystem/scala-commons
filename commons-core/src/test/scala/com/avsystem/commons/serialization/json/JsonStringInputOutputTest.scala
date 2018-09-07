@@ -112,17 +112,17 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     assert(read[String]("\"\\u0105\\u0119\"", options) == "ąę")
   }
 
-  test("indentation") {
-    val options = JsonOptions(indentSize = 2)
+  test("indentation and spacing") {
+    val options = JsonOptions.Pretty
     val map = Map("a" -> List(1, 2), "b" -> List(3, 4, 5))
     val prettyJson = write[Map[String, List[Int]]](map, options)
     assert(prettyJson ==
       """{
-        |  "a":[
+        |  "a": [
         |    1,
         |    2
         |  ],
-        |  "b":[
+        |  "b": [
         |    3,
         |    4,
         |    5
