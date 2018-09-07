@@ -435,7 +435,7 @@ object RefOr {
       },
       (oo, value) => value match {
         case Ref(refstr) => oo.writeField(RefField).writeString(refstr)
-        case Value(v) => GenCodec.write[A](new ObjectOutputAsOutput(oo), v)
+        case Value(v) => GenCodec.write[A](new ObjectOutputAsOutput(oo, forwardFinish = false), v)
       }
     )
 }

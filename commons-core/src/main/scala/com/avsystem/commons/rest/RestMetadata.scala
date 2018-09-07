@@ -289,7 +289,7 @@ case class RestParametersMetadata(
   def openapiParameters: List[RefOr[Parameter]] = {
     val it = path.iterator.map(ppm => ppm.common.openapiParameter(ppm.rpcName, Location.Path)) ++
       headers.iterator.map({ case (name, pm) => pm.openapiParameter(name, Location.Header) }) ++
-      headers.iterator.map({ case (name, pm) => pm.openapiParameter(name, Location.Query) })
+      query.iterator.map({ case (name, pm) => pm.openapiParameter(name, Location.Query) })
     it.map(RefOr(_)).toList
   }
 }

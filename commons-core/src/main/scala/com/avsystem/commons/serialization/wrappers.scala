@@ -22,7 +22,7 @@ final class ObjectInputAsInput(objectInput: ObjectInput) extends Input {
   def skip(): Unit = objectInput.skipRemaining()
 }
 
-final class ObjectOutputAsOutput(objectOutput: ObjectOutput) extends Output {
+final class ObjectOutputAsOutput(objectOutput: ObjectOutput, forwardFinish: Boolean) extends Output {
   private def fail(what: String): Nothing =
     throw new WriteFailure(s"could not write $what, can write only object")
 
@@ -36,5 +36,10 @@ final class ObjectOutputAsOutput(objectOutput: ObjectOutput) extends Output {
   def writeBigDecimal(bigDecimal: BigDecimal): Unit = fail("bigDecimal")
   def writeBinary(binary: Array[Byte]): Unit = fail("binary")
   def writeList(): ListOutput = fail("list")
-  def writeObject(): ObjectOutput = objectOutput
+  def writeObject(): ObjectOutput =
+    if (forwardFinish) objectOutput
+    else new ObjectOutput {
+      def writeField(key: String): Output = objectOutput.writeField(key)
+      def finish(): Unit = ()
+    }
 }
