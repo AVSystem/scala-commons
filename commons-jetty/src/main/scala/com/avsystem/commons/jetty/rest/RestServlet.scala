@@ -5,7 +5,7 @@ import java.net.URLDecoder
 import java.util.regex.Pattern
 
 import com.avsystem.commons.annotation.explicitGenerics
-import com.avsystem.commons.meta.NamedParams
+import com.avsystem.commons.meta.Mapping
 import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RawRest, RestMetadata, RestParameters, RestRequest}
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.http.{HttpStatus, MimeTypes}
@@ -36,13 +36,13 @@ object RestServlet {
       .map(v => PathValue(URLDecoder.decode(v, "utf-8")))
       .to[List]
 
-    val headersBuilder = NamedParams.newBuilder[HeaderValue]
+    val headersBuilder = Mapping.newBuilder[HeaderValue]
     request.getHeaderNames.asScala.foreach { headerName =>
       headersBuilder += headerName -> HeaderValue(request.getHeader(headerName))
     }
     val headers = headersBuilder.result()
 
-    val queryBuilder = NamedParams.newBuilder[QueryValue]
+    val queryBuilder = Mapping.newBuilder[QueryValue]
     request.getParameterNames.asScala.foreach { parameterName =>
       queryBuilder += parameterName -> QueryValue(request.getParameter(parameterName))
     }

@@ -12,17 +12,17 @@ import scala.annotation.implicitNotFound
 case class RestMetadata[T](
   @multi @tagged[Prefix](whenUntagged = new Prefix)
   @paramTag[RestParamTag](defaultTag = new Path)
-  @rpcMethodMetadata prefixMethods: Map[String, PrefixMetadata[_]],
+  @rpcMethodMetadata prefixMethods: Mapping[PrefixMetadata[_]],
 
   @multi @tagged[GET]
   @paramTag[RestParamTag](defaultTag = new Query)
-  @rpcMethodMetadata httpGetMethods: Map[String, HttpMethodMetadata[_]],
+  @rpcMethodMetadata httpGetMethods: Mapping[HttpMethodMetadata[_]],
 
   @multi @tagged[BodyMethodTag](whenUntagged = new POST)
   @paramTag[RestParamTag](defaultTag = new JsonBodyParam)
-  @rpcMethodMetadata httpBodyMethods: Map[String, HttpMethodMetadata[_]]
+  @rpcMethodMetadata httpBodyMethods: Mapping[HttpMethodMetadata[_]]
 ) {
-  val httpMethods: Map[String, HttpMethodMetadata[_]] =
+  val httpMethods: Mapping[HttpMethodMetadata[_]] =
     httpGetMethods ++ httpBodyMethods
 
   def ensureUniqueParams(prefixes: List[(String, PrefixMetadata[_])]): Unit = {
@@ -242,7 +242,7 @@ case class PrefixMetadata[T](
 case class HttpMethodMetadata[T](
   @reifyAnnot methodTag: HttpMethodTag,
   @composite parametersMetadata: RestParametersMetadata,
-  @multi @tagged[JsonBodyParam] @rpcParamMetadata bodyParams: Map[String, CommonParamMetadata[_]],
+  @multi @tagged[JsonBodyParam] @rpcParamMetadata bodyParams: Mapping[CommonParamMetadata[_]],
   @optional @encoded @tagged[Body] @rpcParamMetadata singleBodyParam: Opt[BodyParamMetadata[_]],
   @infer responseType: HttpResponseType[T]
 ) extends RestMethodMetadata[T] {
@@ -273,8 +273,8 @@ case class HttpMethodMetadata[T](
   )
 }
 
-@implicitNotFound("HttpResponseType for ${T} not found. It may be provided by appropriate RestSchema instance " +
-  "(e.g. RestSchema[T] implies HttpResponseType[Future[T]])")
+@implicitNotFound("HttpResponseType for ${T} not found. It may be provided by appropriate RestSchema or RestResponses " +
+  "instance (e.g. RestSchema[T] implies RestResponses[T] which implies HttpResponseType[Future[T]])")
 case class HttpResponseType[T](responses: Responses)
 object HttpResponseType {
   implicit def forFuture[T: RestResponses]: HttpResponseType[Future[T]] =
@@ -283,8 +283,8 @@ object HttpResponseType {
 
 case class RestParametersMetadata(
   @multi @tagged[Path] @rpcParamMetadata path: List[PathParamMetadata[_]],
-  @multi @tagged[Header] @rpcParamMetadata headers: Map[String, CommonParamMetadata[_]],
-  @multi @tagged[Query] @rpcParamMetadata query: Map[String, CommonParamMetadata[_]]
+  @multi @tagged[Header] @rpcParamMetadata headers: Mapping[CommonParamMetadata[_]],
+  @multi @tagged[Query] @rpcParamMetadata query: Mapping[CommonParamMetadata[_]]
 ) {
   def openapiParameters: List[RefOr[Parameter]] = {
     val it = path.iterator.map(ppm => ppm.common.openapiParameter(ppm.rpcName, Location.Path)) ++

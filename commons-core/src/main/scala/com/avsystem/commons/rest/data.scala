@@ -87,7 +87,7 @@ object HttpBody {
   def plain(value: String): HttpBody = HttpBody(value, PlainType)
   def json(json: JsonValue): HttpBody = HttpBody(json.value, JsonType)
 
-  def createJsonBody(fields: NamedParams[JsonValue]): HttpBody =
+  def createJsonBody(fields: Mapping[JsonValue]): HttpBody =
     if (fields.isEmpty) HttpBody.Empty else {
       val sb = new JStringBuilder
       val oo = new JsonStringOutput(sb).writeObject()
@@ -99,11 +99,11 @@ object HttpBody {
       HttpBody.json(JsonValue(sb.toString))
     }
 
-  def parseJsonBody(body: HttpBody): NamedParams[JsonValue] = body match {
-    case HttpBody.Empty => NamedParams.empty
+  def parseJsonBody(body: HttpBody): Mapping[JsonValue] = body match {
+    case HttpBody.Empty => Mapping.empty
     case _ =>
       val oi = new JsonStringInput(new JsonReader(body.readJson().value)).readObject()
-      val builder = NamedParams.newBuilder[JsonValue]
+      val builder = Mapping.newBuilder[JsonValue]
       while (oi.hasNext) {
         val fi = oi.nextField()
         builder += ((fi.fieldName, JsonValue(fi.readRawJson())))
@@ -129,8 +129,8 @@ object HttpMethod extends AbstractValueEnumCompanion[HttpMethod] {
 
 case class RestParameters(
   @multi @tagged[Path] path: List[PathValue],
-  @multi @tagged[Header] headers: NamedParams[HeaderValue],
-  @multi @tagged[Query] query: NamedParams[QueryValue]
+  @multi @tagged[Header] headers: Mapping[HeaderValue],
+  @multi @tagged[Query] query: Mapping[QueryValue]
 ) {
   def append(method: RestMethodMetadata[_], otherParameters: RestParameters): RestParameters =
     RestParameters(
@@ -140,7 +140,7 @@ case class RestParameters(
     )
 }
 object RestParameters {
-  final val Empty = RestParameters(Nil, NamedParams.empty, NamedParams.empty)
+  final val Empty = RestParameters(Nil, Mapping.empty, Mapping.empty)
 }
 
 case class HttpErrorException(code: Int, payload: OptArg[String] = OptArg.Empty)

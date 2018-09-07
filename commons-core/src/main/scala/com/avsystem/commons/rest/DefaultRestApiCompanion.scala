@@ -19,7 +19,7 @@ trait FullInstances[Real] {
   def asRawReal: AsRawRealRpc[Real]
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestClientApiCompanion[Implicits, Real](implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ClientInstances, Real]
 ) {
@@ -30,7 +30,7 @@ abstract class RestClientApiCompanion[Implicits, Real](implicits: Implicits)(
     RawRest.fromHandleRequest(handleRequest)
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestServerApiCompanion[Implicits, Real](implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ServerInstances, Real]
 ) {
