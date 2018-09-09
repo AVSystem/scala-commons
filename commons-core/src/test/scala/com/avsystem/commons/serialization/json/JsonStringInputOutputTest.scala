@@ -110,6 +110,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     val options = JsonOptions(asciiOutput = true)
     assert(write[String]("ąę", options) == "\"\\u0105\\u0119\"")
     assert(read[String]("\"\\u0105\\u0119\"", options) == "ąę")
+    intercept[ReadFailure](read[String]("\"\\x0105\""))
   }
 
   test("indentation") {

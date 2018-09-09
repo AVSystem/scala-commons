@@ -298,6 +298,7 @@ final class JsonReader(val json: String) {
             case 'r' => '\r'
             case 't' => '\t'
             case 'u' => ((readHex() << 12) + (readHex() << 8) + (readHex() << 4) + readHex()).toChar
+            case c => throw new ReadFailure(s"Unexpected character: '${c.toChar}'")
           }
           sb.append(unesc)
           plainStart = i
@@ -305,8 +306,7 @@ final class JsonReader(val json: String) {
       }
     }
     if (sb != null) {
-      sb.append(json, plainStart, i - 1)
-      sb.toString
+      sb.append(json, plainStart, i - 1).toString
     } else {
       json.substring(plainStart, i - 1)
     }
