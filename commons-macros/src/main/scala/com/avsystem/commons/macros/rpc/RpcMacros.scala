@@ -33,8 +33,6 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val TriedAT: Type = getType(tq"$RpcPackage.tried")
   val MethodTagAT: Type = getType(tq"$RpcPackage.methodTag[_]")
   val ParamTagAT: Type = getType(tq"$RpcPackage.paramTag[_]")
-  val TaggedAT: Type = getType(tq"$RpcPackage.tagged[_]")
-  val WhenUntaggedArg: Symbol = TaggedAT.member(TermName("whenUntagged"))
   val RpcTagAT: Type = getType(tq"$RpcPackage.RpcTag")
   val RpcImplicitsSym: Symbol = getType(tq"$RpcPackage.RpcImplicitsProvider").member(TermName("implicits"))
 

@@ -22,6 +22,8 @@ trait MacroSymbols extends MacroCommons {
   val CompositeAT: Type = getType(tq"$MetaPackage.composite")
   val AuxiliaryAT: Type = getType(tq"$MetaPackage.auxiliary")
   val AnnotatedAT: Type = getType(tq"$MetaPackage.annotated[_]")
+  val TaggedAT: Type = getType(tq"$RpcPackage.tagged[_]")
+  val WhenUntaggedArg: Symbol = TaggedAT.member(TermName("whenUntagged"))
 
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
     primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}: "))
@@ -170,6 +172,57 @@ trait MacroSymbols extends MacroCommons {
         if (realSymbol.annot(annotTpe).nonEmpty) Ok(())
         else Fail(s"no annotation of type $annotTpe found on ${realSymbol.real.shortDescription}")
       }.map(_ => ())
+  }
+
+  case class FallbackTag(annotTree: Tree) {
+    def asList: List[Tree] = List(annotTree).filter(_ != EmptyTree)
+    def orElse(other: FallbackTag): FallbackTag = FallbackTag(annotTree orElse other.annotTree)
+  }
+  object FallbackTag {
+    final val Empty = FallbackTag(EmptyTree)
+  }
+
+  trait TagMatchingSymbol extends MacroSymbol with FilteringSymbol {
+    def baseTagTpe: Type
+    def fallbackTag: FallbackTag
+
+    def annot(tpe: Type): Option[Annot] =
+      findAnnotation(symbol, tpe)
+
+    def tagAnnot(tpe: Type): Option[Annot] =
+      annot(tpe)
+
+    def tagSpec(a: Annot): (Type, FallbackTag) = {
+      val tagType = a.tpe.dealias.typeArgs.head
+      val defaultTagArg = a.tpe.member(TermName("defaultTag"))
+      val fallbackTag = FallbackTag(a.findArg[Tree](defaultTagArg, EmptyTree))
+      (tagType, fallbackTag)
+    }
+
+    lazy val (requiredTag, whenUntaggedTag) = {
+      val taggedAnnot = annot(TaggedAT)
+      val requiredTagType = taggedAnnot.fold(baseTagTpe)(_.tpe.typeArgs.head)
+      if (!(requiredTagType <:< baseTagTpe)) {
+        val msg =
+          if (baseTagTpe =:= NothingTpe)
+            "cannot use @tagged, no tag annotation type specified"
+          else s"tag annotation type $requiredTagType specified in @tagged annotation " +
+            s"must be a subtype of specified base tag $baseTagTpe"
+        reportProblem(msg)
+      }
+      val whenUntagged = FallbackTag(taggedAnnot.map(_.findArg[Tree](WhenUntaggedArg, EmptyTree)).getOrElse(EmptyTree))
+      (requiredTagType, whenUntagged)
+    }
+
+    // returns fallback tag tree only IF it was necessary
+    def matchTag(realSymbol: MacroSymbol): Res[FallbackTag] = {
+      val tagAnnot = findAnnotation(realSymbol.symbol, baseTagTpe)
+      val fallbackTagUsed = if (tagAnnot.isEmpty) whenUntaggedTag orElse fallbackTag else FallbackTag.Empty
+      val realTagTpe = tagAnnot.map(_.tpe).getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
+
+      if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
+      else Fail(s"it does not accept ${realSymbol.shortDescription}s tagged with $realTagTpe")
+    }
   }
 
   trait ArityParam extends MacroParam with AritySymbol {

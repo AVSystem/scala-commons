@@ -10,7 +10,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
   import c.universe._
 
-  def collectMethodMappings[Raw <: RawRpcSymbol with AritySymbol, M](
+  def collectMethodMappings[Raw <: TagMatchingSymbol with AritySymbol, M](
     rawSymbols: List[Raw], rawShortDesc: String, realMethods: List[RealMethod])(
     createMapping: (Raw, MatchedMethod) => Res[M]): List[M] = {
 

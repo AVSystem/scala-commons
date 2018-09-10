@@ -8,14 +8,6 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
 
   import c.universe._
 
-  case class FallbackTag(annotTree: Tree) {
-    def asList: List[Tree] = List(annotTree).filter(_ != EmptyTree)
-    def orElse(other: FallbackTag): FallbackTag = FallbackTag(annotTree orElse other.annotTree)
-  }
-  object FallbackTag {
-    final val Empty = FallbackTag(EmptyTree)
-  }
-
   sealed trait Matched extends MatchedSymbol {
     def real: RealRpcSymbol
     def fallbackTagUsed: FallbackTag
@@ -91,46 +83,6 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     }
   }
 
-  trait RawRpcSymbol extends MacroSymbol with FilteringSymbol {
-    def baseTagTpe: Type
-    def fallbackTag: FallbackTag
-
-    def annot(tpe: Type): Option[Annot] =
-      findAnnotation(symbol, tpe)
-
-    def tagSpec(a: Annot): (Type, FallbackTag) = {
-      val tagType = a.tpe.dealias.typeArgs.head
-      val defaultTagArg = a.tpe.member(TermName("defaultTag"))
-      val fallbackTag = FallbackTag(a.findArg[Tree](defaultTagArg, EmptyTree))
-      (tagType, fallbackTag)
-    }
-
-    lazy val (requiredTag, whenUntaggedTag) = {
-      val taggedAnnot = annot(TaggedAT)
-      val requiredTagType = taggedAnnot.fold(baseTagTpe)(_.tpe.typeArgs.head)
-      if (!(requiredTagType <:< baseTagTpe)) {
-        val msg =
-          if (baseTagTpe =:= NothingTpe)
-            "cannot use @tagged, no tag annotation type specified"
-          else s"tag annotation type $requiredTagType specified in @tagged annotation " +
-            s"must be a subtype of specified base tag $baseTagTpe"
-        reportProblem(msg)
-      }
-      val whenUntagged = FallbackTag(taggedAnnot.map(_.findArg[Tree](WhenUntaggedArg, EmptyTree)).getOrElse(EmptyTree))
-      (requiredTagType, whenUntagged)
-    }
-
-    // returns fallback tag tree only IF it was necessary
-    def matchTag(realRpcSymbol: RealRpcSymbol): Res[FallbackTag] = {
-      val tagAnnot = findAnnotation(realRpcSymbol.symbol, baseTagTpe)
-      val fallbackTagUsed = if (tagAnnot.isEmpty) whenUntaggedTag orElse fallbackTag else FallbackTag.Empty
-      val realTagTpe = tagAnnot.map(_.tpe).getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
-
-      if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
-      else Fail(s"it does not accept ${realRpcSymbol.shortDescription}s tagged with $realTagTpe")
-    }
-  }
-
   trait RealRpcSymbol extends MacroSymbol
 
   abstract class RpcTrait(val symbol: Symbol) extends MacroSymbol {
@@ -148,7 +100,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     }
   }
 
-  trait RealParamTarget extends ArityParam with RawRpcSymbol {
+  trait RealParamTarget extends ArityParam with TagMatchingSymbol {
     def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
@@ -233,7 +185,9 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     def description = s"$shortDescription $nameStr of ${owner.description}"
   }
 
-  case class RawMethod(owner: RawRpcTrait, symbol: Symbol) extends RpcMethod with RawRpcSymbol with AritySymbol {
+  case class RawMethod(owner: RawRpcTrait, symbol: Symbol)
+    extends RpcMethod with TagMatchingSymbol with AritySymbol {
+
     def shortDescription = "raw method"
     def description = s"$shortDescription $nameStr of ${owner.description}"
 
@@ -320,7 +274,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     val realParams: List[RealParam] = paramLists.flatten
   }
 
-  case class RawRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with RawRpcSymbol {
+  case class RawRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with TagMatchingSymbol {
     def shortDescription = "raw RPC"
     def description = s"$shortDescription $tpe"
 

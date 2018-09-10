@@ -132,7 +132,7 @@ object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
       case Nil => this
       case PathName(PathValue(pathName)) :: tail =>
         byName.getOrElseUpdate(pathName, new Trie).forPattern(tail)
-      case PathParam(_) :: tail =>
+      case PathParam(_, _) :: tail =>
         wildcard.getOrElse(new Trie().setup(t => wildcard = Opt(t))).forPattern(tail)
     }
 
@@ -188,19 +188,21 @@ object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
 
 sealed trait PathPatternElement
 case class PathName(value: PathValue) extends PathPatternElement
-case class PathParam(parameter: PathParamMetadata[_]) extends PathPatternElement
+case class PathParam(name: String, parameter: PathParamMetadata[_]) extends PathPatternElement
 
 sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
   def methodPath: List[PathValue]
   def parametersMetadata: RestParametersMetadata
 
   val pathPattern: List[PathPatternElement] =
-    methodPath.map(PathName) ++ parametersMetadata.path.flatMap(pp => PathParam(pp) :: pp.pathSuffix.map(PathName))
+    methodPath.map(PathName) ++ parametersMetadata.path.flatMap {
+      case (name, pp) => PathParam(name, pp) :: pp.pathSuffix.map(PathName)
+    }
 
   def openapiPath: String =
     pathPattern.iterator.map {
       case PathName(PathValue(v)) => v
-      case PathParam(param) => s"{${param.rpcName}}"
+      case PathParam(name, _) => s"{$name}"
     }.mkString("/", "/", "")
 
   def applyPathParams(params: List[PathValue]): List[PathValue] = {
@@ -208,7 +210,7 @@ sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
       (params, pattern) match {
         case (Nil, Nil) => Nil
         case (_, PathName(patternHead) :: patternTail) => patternHead :: loop(params, patternTail)
-        case (param :: paramsTail, PathParam(_) :: patternTail) => param :: loop(paramsTail, patternTail)
+        case (param :: paramsTail, PathParam(_, _) :: patternTail) => param :: loop(paramsTail, patternTail)
         case _ => throw new IllegalArgumentException(
           s"got ${params.size} path params, expected ${parametersMetadata.path.size}")
       }
@@ -219,7 +221,7 @@ sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
     def loop(path: List[PathValue], pattern: List[PathPatternElement]): Opt[(List[PathValue], List[PathValue])] =
       (path, pattern) match {
         case (pathTail, Nil) => Opt((Nil, pathTail))
-        case (param :: pathTail, PathParam(_) :: patternTail) =>
+        case (param :: pathTail, PathParam(_, _) :: patternTail) =>
           loop(pathTail, patternTail).map { case (params, tail) => (param :: params, tail) }
         case (pathHead :: pathTail, PathName(patternHead) :: patternTail) if pathHead == patternHead =>
           loop(pathTail, patternTail)
@@ -289,12 +291,12 @@ object HttpResponseType {
 }
 
 case class RestParametersMetadata(
-  @multi @tagged[Path] @rpcParamMetadata path: List[PathParamMetadata[_]],
+  @multi @tagged[Path] @rpcParamMetadata path: Mapping[PathParamMetadata[_]],
   @multi @tagged[Header] @rpcParamMetadata headers: Mapping[CommonParamMetadata[_]],
   @multi @tagged[Query] @rpcParamMetadata query: Mapping[CommonParamMetadata[_]]
 ) {
   def openapiParameters(resolver: SchemaResolver): List[RefOr[Parameter]] = {
-    val it = path.iterator.map(ppm => ppm.common.openapiParameter(resolver, ppm.rpcName, Location.Path)) ++
+    val it = path.iterator.map({ case (name, ppm) => ppm.common.openapiParameter(resolver, name, Location.Path) }) ++
       headers.iterator.map({ case (name, pm) => pm.openapiParameter(resolver, name, Location.Header) }) ++
       query.iterator.map({ case (name, pm) => pm.openapiParameter(resolver, name, Location.Query) })
     it.map(RefOr(_)).toList
@@ -316,7 +318,6 @@ case class CommonParamMetadata[T](
 
 case class PathParamMetadata[T](
   @composite common: CommonParamMetadata[T],
-  @reifyName(useRawName = true) rpcName: String,
   @reifyAnnot pathAnnot: Path
 ) extends TypedMetadata[T] {
   val pathSuffix: List[PathValue] = PathValue.split(pathAnnot.pathSuffix)

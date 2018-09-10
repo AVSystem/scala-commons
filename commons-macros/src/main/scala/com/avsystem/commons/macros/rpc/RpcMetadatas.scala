@@ -9,7 +9,7 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
   import c.universe._
 
   class MethodMetadataParam(owner: RpcTraitMetadataConstructor, symbol: Symbol)
-    extends MetadataParam(owner, symbol) with RawRpcSymbol with ArityParam {
+    extends MetadataParam(owner, symbol) with TagMatchingSymbol with ArityParam {
 
     def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = true
@@ -80,10 +80,12 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
     }
   }
 
-  case class MethodMetadataMapping(matchedMethod: MatchedMethod, mdParam: MethodMetadataParam, tree: Tree)
+  case class MethodMetadataMapping(matchedMethod: MatchedMethod, mdParam: MethodMetadataParam, tree: Tree) {
+    def collectedTree(named: Boolean): Tree = if (named) q"(${matchedMethod.rpcName}, $tree)" else tree
+  }
 
   class RpcTraitMetadataConstructor(ownerType: Type, atParam: Option[CompositeParam])
-    extends MetadataConstructor(ownerType, atParam) with RawRpcSymbol {
+    extends MetadataConstructor(ownerType, atParam) with TagMatchingSymbol {
 
     def baseTagTpe: Type = NothingTpe
     def fallbackTag: FallbackTag = FallbackTag.Empty
@@ -123,7 +125,7 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
             case _ => Fail(s"multiple real methods match ${mmp.description}")
           }
           case ParamArity.Multi(_, named) =>
-            Ok(mmp.mkMulti(mappings.map(m => if (named) q"(${m.matchedMethod.rpcName}, ${m.tree})" else m.tree)))
+            Ok(mmp.mkMulti(mappings.map(_.collectedTree(named))))
         }
       }
   }
