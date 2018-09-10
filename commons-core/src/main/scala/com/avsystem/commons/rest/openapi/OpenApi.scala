@@ -5,7 +5,7 @@ import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion,
 import com.avsystem.commons.serialization.{transientDefault => td, _}
 
 case class OpenApi(
-  openapi: String,
+  openapi: String = OpenApi.Version,
   info: Info,
   paths: Paths,
   @td servers: List[Server] = Nil,
@@ -14,7 +14,9 @@ case class OpenApi(
   @td tags: List[Tag] = Nil,
   @td externalDocs: OptArg[ExternalDocumentation] = OptArg.Empty
 )
-object OpenApi extends HasGenCodec[OpenApi]
+object OpenApi extends HasGenCodec[OpenApi] {
+  final val Version = "3.0.1"
+}
 
 case class Info(
   title: String,

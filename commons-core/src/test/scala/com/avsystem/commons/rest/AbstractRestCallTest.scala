@@ -2,12 +2,23 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.rest.RawRest.HandleRequest
+import com.avsystem.commons.rest.openapi.Info
+import com.avsystem.commons.serialization.flatten
+import com.avsystem.commons.serialization.json.{JsonOptions, JsonStringOutput}
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.ScalaFutures
 
-case class RestEntity(id: String, name: String)
+sealed trait BaseEntity
+object BaseEntity extends RestDataCompanion[BaseEntity]
+
+@flatten sealed trait FlatBaseEntity extends BaseEntity
+object FlatBaseEntity extends RestDataCompanion[FlatBaseEntity]
+
+case class RestEntity(id: String, name: String, subentity: OptArg[RestEntity] = OptArg.Empty) extends FlatBaseEntity
 object RestEntity extends RestDataCompanion[RestEntity]
+
+case object SingletonEntity extends FlatBaseEntity
 
 trait RestTestApi {
   @GET def trivialGet: Future[Unit]
@@ -36,6 +47,8 @@ trait RestTestApi {
     @Header("X-H0") h0: String,
     @Query q0: String
   ): RestTestSubApi
+
+  def complexParams(baseEntity: BaseEntity, flatBaseEntity: FlatBaseEntity): Future[Unit]
 }
 object RestTestApi extends DefaultRestApiCompanion[RestTestApi] {
   val Impl: RestTestApi = new RestTestApi {
@@ -50,6 +63,7 @@ object RestTestApi extends DefaultRestApiCompanion[RestTestApi] {
       Future.successful(entity.toString)
     def prefix(p0: String, h0: String, q0: String): RestTestSubApi =
       RestTestSubApi.impl(s"$p0-$h0-$q0")
+    def complexParams(baseEntity: BaseEntity, flatBaseEntity: FlatBaseEntity): Future[Unit] = Future.unit
   }
 }
 
@@ -105,4 +119,9 @@ abstract class AbstractRestCallTest extends FunSuite with ScalaFutures {
 
 class DirectRestCallTest extends AbstractRestCallTest {
   def clientHandle: HandleRequest = serverHandle
+
+  test("openapi") {
+    val openapi = RestTestApi.restMetadata.openapi(Info("Test API", "0.1"))
+    println(JsonStringOutput.write(openapi, JsonOptions.Pretty))
+  }
 }

@@ -143,8 +143,8 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
             case List(m) => Ok(acp.mkOptional(Some(m.tree)))
             case _ => Fail(s"multiple ADT cases match ${acp.description}")
           }
-          case ParamArity.Multi(_, _) =>
-            Ok(acp.mkMulti(mappings.map(m => q"(${m.adtCase.rawName}, ${m.tree})")))
+          case ParamArity.Multi(_, named) =>
+            Ok(acp.mkMulti(mappings.map(m => if (named) q"(${m.adtCase.rawName}, ${m.tree})" else m.tree)))
         }
       case app: AdtParamMetadataParam =>
         Ok(paramMappings(app))

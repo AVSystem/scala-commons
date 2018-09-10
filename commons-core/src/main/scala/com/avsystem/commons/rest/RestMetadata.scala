@@ -91,13 +91,13 @@ case class RestMetadata[T](
     }
   }
 
-  def openapiOperations: Iterator[(String, HttpMethod, Operation)] =
-    prefixMethods.valuesIterator.flatMap(_.openapiOperations) ++
-      httpMethods.valuesIterator.map(m => (m.openapiPath, m.method, m.openapiOperation))
+  def openapiOperations(resolver: SchemaResolver): Iterator[(String, HttpMethod, Operation)] =
+    prefixMethods.valuesIterator.flatMap(_.openapiOperations(resolver)) ++
+      httpMethods.valuesIterator.map(m => (m.openapiPath, m.method, m.openapiOperation(resolver)))
 
-  def openapiPaths: Paths = {
+  def openapiPaths(resolver: SchemaResolver): Paths = {
     val pathsMap = new MLinkedHashMap[String, MLinkedHashMap[HttpMethod, Operation]]
-    openapiOperations.foreach {
+    openapiOperations(resolver).foreach {
       case (path, httpMethod, operation) =>
         val opsMap = pathsMap.getOrElseUpdate(path, new MLinkedHashMap)
         opsMap(httpMethod) = operation
@@ -112,6 +112,12 @@ case class RestMetadata[T](
       )
       (path, RefOr(pathItem))
     }.toMap)
+  }
+
+  def openapi(info: Info): OpenApi = {
+    val registry = new SchemaRegistry(n => s"#/components/schemas/$n")
+    val paths = openapiPaths(registry)
+    OpenApi(OpenApi.Version, info, paths, components = Components(schemas = registry.registeredSchemas))
   }
 }
 object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
@@ -230,10 +236,10 @@ case class PrefixMetadata[T](
 ) extends RestMethodMetadata[T] {
   def methodPath: List[PathValue] = PathValue.split(methodTag.path)
 
-  def openapiOperations: Iterator[(String, HttpMethod, Operation)] = {
+  def openapiOperations(resolver: SchemaResolver): Iterator[(String, HttpMethod, Operation)] = {
     val pathPrefix = openapiPath
-    val prefixParams = parametersMetadata.openapiParameters
-    result.value.openapiOperations.map { case (path, httpMethod, operation) =>
+    val prefixParams = parametersMetadata.openapiParameters(resolver)
+    result.value.openapiOperations(resolver).map { case (path, httpMethod, operation) =>
       (pathPrefix + path, httpMethod, operation.copy(parameters = prefixParams ++ operation.parameters))
     }
   }
@@ -250,32 +256,33 @@ case class HttpMethodMetadata[T](
   val singleBody: Boolean = singleBodyParam.isDefined
   def methodPath: List[PathValue] = PathValue.split(methodTag.path)
 
-  def openapiRequestBody: RefOr[RequestBody] =
-    singleBodyParam.map(_.restRequestBody.requestBody).getOrElse {
-      if (bodyParams.isEmpty) RefOr(RequestBody(content = Map.empty))
-      else {
-        val schema = Schema(`type` = DataType.Object,
-          properties = bodyParams.iterator.map {
-            case (name, pm) => (name, pm.restSchema.schema)
-          }.toMap,
-          required = bodyParams.iterator.collect {
-            case (name, pm) if !pm.hasFallbackValue => name
-          }.toList
-        )
-        RefOr(RestRequestBody.jsonRequestBody(RefOr(schema)))
+  def openapiOperation(resolver: SchemaResolver): Operation = {
+    val requestBody =
+      singleBodyParam.map(_.restRequestBody.requestBody(resolver)).getOrElse {
+        if (bodyParams.isEmpty) RefOr(RequestBody(content = Map.empty))
+        else {
+          val schema = Schema(`type` = DataType.Object,
+            properties = bodyParams.iterator.map {
+              case (name, pm) => (name, resolver.resolve(pm.restSchema))
+            }.toMap,
+            required = bodyParams.iterator.collect {
+              case (name, pm) if !pm.hasFallbackValue => name
+            }.toList
+          )
+          RefOr(RestRequestBody.jsonRequestBody(RefOr(schema)))
+        }
       }
-    }
-
-  def openapiOperation: Operation = Operation(
-    responseType.responses,
-    parameters = parametersMetadata.openapiParameters,
-    requestBody = openapiRequestBody
-  )
+    Operation(
+      responseType.responses(resolver),
+      parameters = parametersMetadata.openapiParameters(resolver),
+      requestBody = requestBody
+    )
+  }
 }
 
 @implicitNotFound("HttpResponseType for ${T} not found. It may be provided by appropriate RestSchema or RestResponses " +
   "instance (e.g. RestSchema[T] implies RestResponses[T] which implies HttpResponseType[Future[T]])")
-case class HttpResponseType[T](responses: Responses)
+case class HttpResponseType[T](responses: SchemaResolver => Responses)
 object HttpResponseType {
   implicit def forFuture[T: RestResponses]: HttpResponseType[Future[T]] =
     HttpResponseType[Future[T]](RestResponses[T].responses)
@@ -286,10 +293,10 @@ case class RestParametersMetadata(
   @multi @tagged[Header] @rpcParamMetadata headers: Mapping[CommonParamMetadata[_]],
   @multi @tagged[Query] @rpcParamMetadata query: Mapping[CommonParamMetadata[_]]
 ) {
-  def openapiParameters: List[RefOr[Parameter]] = {
-    val it = path.iterator.map(ppm => ppm.common.openapiParameter(ppm.rpcName, Location.Path)) ++
-      headers.iterator.map({ case (name, pm) => pm.openapiParameter(name, Location.Header) }) ++
-      query.iterator.map({ case (name, pm) => pm.openapiParameter(name, Location.Query) })
+  def openapiParameters(resolver: SchemaResolver): List[RefOr[Parameter]] = {
+    val it = path.iterator.map(ppm => ppm.common.openapiParameter(resolver, ppm.rpcName, Location.Path)) ++
+      headers.iterator.map({ case (name, pm) => pm.openapiParameter(resolver, name, Location.Header) }) ++
+      query.iterator.map({ case (name, pm) => pm.openapiParameter(resolver, name, Location.Query) })
     it.map(RefOr(_)).toList
   }
 }
@@ -303,8 +310,8 @@ case class CommonParamMetadata[T](
   val hasFallbackValue: Boolean =
     whenAbsent.fold(flags.hasDefaultValue)(wa => Try(wa.value).isSuccess)
 
-  def openapiParameter(name: String, in: Location): Parameter =
-    Parameter(name, in, required = !hasFallbackValue, schema = restSchema.schema)
+  def openapiParameter(resolver: SchemaResolver, name: String, in: Location): Parameter =
+    Parameter(name, in, required = !hasFallbackValue, schema = resolver.resolve(restSchema))
 }
 
 case class PathParamMetadata[T](

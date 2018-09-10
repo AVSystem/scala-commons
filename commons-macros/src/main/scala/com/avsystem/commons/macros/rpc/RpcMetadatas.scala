@@ -13,7 +13,7 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
 
     def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = true
-    def allowListedMulti: Boolean = false
+    def allowListedMulti: Boolean = true
 
     def baseTagTpe: Type = owner.baseMethodTag
     def fallbackTag: FallbackTag = owner.fallbackMethodTag
@@ -122,8 +122,8 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
             case List(m) => Ok(mmp.mkOptional(Some(m.tree)))
             case _ => Fail(s"multiple real methods match ${mmp.description}")
           }
-          case ParamArity.Multi(_, _) =>
-            Ok(mmp.mkMulti(mappings.map(m => q"(${m.matchedMethod.rpcName}, ${m.tree})")))
+          case ParamArity.Multi(_, named) =>
+            Ok(mmp.mkMulti(mappings.map(m => if (named) q"(${m.matchedMethod.rpcName}, ${m.tree})" else m.tree)))
         }
       }
   }
