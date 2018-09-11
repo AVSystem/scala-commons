@@ -200,7 +200,7 @@ lazy val `commons-core` = project
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
-      "io.swagger.codegen.v3" % "swagger-codegen" % swaggerCodegenVersion % Test,
+      "io.swagger.codegen.v3" % "swagger-codegen-cli" % swaggerCodegenVersion % Test,
     ),
     ideExcludedDirectories := Seq(baseDirectory.value / "agg"),
   )

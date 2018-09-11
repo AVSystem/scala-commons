@@ -67,24 +67,24 @@ sealed abstract class BodyMethodTag(method: HttpMethod) extends HttpMethodTag(me
   * @param path see [[RestMethodTag.path]]
   */
 class GET(val path: String = null) extends HttpMethodTag(HttpMethod.GET) {
-  @rpcNamePrefix("GET_") type Implied
+  @rpcNamePrefix("get_") type Implied
 }
 
 /** See [[BodyMethodTag]] */
 class POST(val path: String = null) extends BodyMethodTag(HttpMethod.POST) {
-  @rpcNamePrefix("POST_") type Implied
+  @rpcNamePrefix("post_") type Implied
 }
 /** See [[BodyMethodTag]] */
 class PATCH(val path: String = null) extends BodyMethodTag(HttpMethod.PATCH) {
-  @rpcNamePrefix("PATCH_") type Implied
+  @rpcNamePrefix("patch_") type Implied
 }
 /** See [[BodyMethodTag]] */
 class PUT(val path: String = null) extends BodyMethodTag(HttpMethod.PUT) {
-  @rpcNamePrefix("PUT_") type Implied
+  @rpcNamePrefix("put_") type Implied
 }
 /** See [[BodyMethodTag]] */
 class DELETE(val path: String = null) extends BodyMethodTag(HttpMethod.DELETE) {
-  @rpcNamePrefix("DELETE_") type Implied
+  @rpcNamePrefix("delete_") type Implied
 }
 
 /**

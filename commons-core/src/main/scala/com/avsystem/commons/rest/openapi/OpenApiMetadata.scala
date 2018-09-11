@@ -11,24 +11,23 @@ case class OpenApiMetadata[T](
   @multi @tagged[Prefix](whenUntagged = new Prefix)
   @paramTag[RestParamTag](defaultTag = new Path)
   @rpcMethodMetadata
-  prefixes: Mapping[OpenApiPrefix[_]],
+  prefixes: List[OpenApiPrefix[_]],
 
   @multi @tagged[GET]
   @paramTag[RestParamTag](defaultTag = new Query)
   @rpcMethodMetadata
-  gets: Mapping[OpenApiGetOperation[_]],
+  gets: List[OpenApiGetOperation[_]],
 
   @multi @tagged[BodyMethodTag](whenUntagged = new POST)
   @paramTag[RestParamTag](defaultTag = new JsonBodyParam)
   @rpcMethodMetadata
-  bodyMethods: Mapping[OpenApiBodyOperation[_]]
+  bodyMethods: List[OpenApiBodyOperation[_]]
 ) {
-  val httpMethods: Mapping[OpenApiOperation[_]] =
-    (gets: Mapping[OpenApiOperation[_]]) ++ (bodyMethods: Mapping[OpenApiOperation[_]])
+  val httpMethods: List[OpenApiOperation[_]] = (gets: List[OpenApiOperation[_]]) ++ bodyMethods
 
   def operations(resolver: SchemaResolver): Iterator[(String, HttpMethod, Operation)] =
-    prefixes.valuesIterator.flatMap(_.operations(resolver)) ++
-      httpMethods.valuesIterator.map(m => (m.pathPattern, m.methodTag.method, m.operation(resolver)))
+    prefixes.iterator.flatMap(_.operations(resolver)) ++
+      httpMethods.iterator.map(m => (m.pathPattern, m.methodTag.method, m.operation(resolver)))
 
   def paths(resolver: SchemaResolver): Paths = {
     val pathsMap = new MLinkedHashMap[String, MLinkedHashMap[HttpMethod, Operation]]
@@ -49,14 +48,29 @@ case class OpenApiMetadata[T](
     }.toMap)
   }
 
-  def openapi(info: Info): OpenApi = {
+  def openapi(
+    info: Info,
+    servers: List[Server] = Nil,
+    security: List[SecurityRequirement] = Nil,
+    tags: List[Tag] = Nil,
+    externalDocs: OptArg[ExternalDocumentation] = OptArg.Empty
+  ): OpenApi = {
     val registry = new SchemaRegistry(n => s"#/components/schemas/$n")
-    OpenApi(OpenApi.Version, info, paths(registry), components = Components(schemas = registry.registeredSchemas))
+    OpenApi(OpenApi.Version,
+      info,
+      paths(registry),
+      components = Components(schemas = registry.registeredSchemas),
+      servers = servers,
+      security = security,
+      tags = tags,
+      externalDocs = externalDocs
+    )
   }
 }
 object OpenApiMetadata extends RpcMetadataCompanion[OpenApiMetadata]
 
 sealed trait OpenApiMethod[T] extends TypedMetadata[T] {
+  @reifyName(useRawName = true) def name: String
   @reifyAnnot def methodTag: RestMethodTag
   @multi
   @rpcParamMetadata
@@ -73,6 +87,7 @@ sealed trait OpenApiMethod[T] extends TypedMetadata[T] {
 }
 
 case class OpenApiPrefix[T](
+  name: String,
   methodTag: Prefix,
   parameters: List[OpenApiParameter[_]],
   @infer @checked result: OpenApiMetadata.Lazy[T]
@@ -81,7 +96,10 @@ case class OpenApiPrefix[T](
   def operations(resolver: SchemaResolver): Iterator[(String, HttpMethod, Operation)] = {
     val prefixParams = parameters.map(_.parameter(resolver))
     result.value.operations(resolver).map { case (path, httpMethod, operation) =>
-      (pathPattern + path, httpMethod, operation.copy(parameters = prefixParams ++ operation.parameters))
+      (pathPattern + path, httpMethod, operation.copy(
+        operationId = operation.operationId.toOpt.map(oid => s"${name}_$oid").toOptArg,
+        parameters = prefixParams ++ operation.parameters
+      ))
     }
   }
 }
@@ -90,25 +108,27 @@ sealed trait OpenApiOperation[T] extends OpenApiMethod[T] {
   @infer
   @checked def responseType: HttpResponseType[T]
   def methodTag: HttpMethodTag
-  def requestBody(resolver: SchemaResolver): RefOr[RequestBody]
+  def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]]
 
   def operation(resolver: SchemaResolver): Operation = Operation(
     responseType.responses(resolver),
+    operationId = name,
     parameters = parameters.map(_.parameter(resolver)),
-    requestBody = requestBody(resolver)
+    requestBody = requestBody(resolver).toOptArg
   )
 }
 
 case class OpenApiGetOperation[T](
+  name: String,
   methodTag: HttpMethodTag,
   parameters: List[OpenApiParameter[_]],
   responseType: HttpResponseType[T]
 ) extends OpenApiOperation[T] {
-  def requestBody(resolver: SchemaResolver): RefOr[RequestBody] =
-    RefOr(RequestBody(content = Map.empty))
+  def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]] = Opt.Empty
 }
 
 case class OpenApiBodyOperation[T](
+  name: String,
   methodTag: HttpMethodTag,
   parameters: List[OpenApiParameter[_]],
   @multi @rpcParamMetadata @tagged[JsonBodyParam] bodyParams: List[OpenApiParamInfo[_]],
@@ -116,10 +136,9 @@ case class OpenApiBodyOperation[T](
   responseType: HttpResponseType[T]
 ) extends OpenApiOperation[T] {
 
-  def requestBody(resolver: SchemaResolver): RefOr[RequestBody] =
-    singleBody.map(_.requestBody.requestBody(resolver)).getOrElse {
-      if (bodyParams.isEmpty) RefOr(RequestBody(content = Map.empty))
-      else {
+  def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]] =
+    singleBody.map(_.requestBody.requestBody(resolver).opt).getOrElse {
+      if (bodyParams.isEmpty) Opt.Empty else Opt {
         val schema = Schema(`type` = DataType.Object,
           properties = bodyParams.iterator.map(p => (p.name, resolver.resolve(p.restSchema))).toMap,
           required = bodyParams.collect { case p if !p.hasFallbackValue => p.name }

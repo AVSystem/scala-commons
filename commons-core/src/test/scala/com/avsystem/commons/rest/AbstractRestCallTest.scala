@@ -2,9 +2,8 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.rest.RawRest.HandleRequest
-import com.avsystem.commons.rest.openapi.{Info, RestDataCompanion}
+import com.avsystem.commons.rest.openapi.RestDataCompanion
 import com.avsystem.commons.serialization.flatten
-import com.avsystem.commons.serialization.json.{JsonOptions, JsonStringOutput}
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.ScalaFutures
@@ -119,9 +118,4 @@ abstract class AbstractRestCallTest extends FunSuite with ScalaFutures {
 
 class DirectRestCallTest extends AbstractRestCallTest {
   def clientHandle: HandleRequest = serverHandle
-
-  test("openapi") {
-    val openapi = RestTestApi.openapiMetadata.openapi(Info("Test API", "0.1"))
-    println(JsonStringOutput.write(openapi, JsonOptions.Pretty))
-  }
 }
