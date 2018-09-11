@@ -2,7 +2,7 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.rest.RawRest.HandleRequest
-import com.avsystem.commons.rest.openapi.Info
+import com.avsystem.commons.rest.openapi.{Info, RestDataCompanion}
 import com.avsystem.commons.serialization.flatten
 import com.avsystem.commons.serialization.json.{JsonOptions, JsonStringOutput}
 import org.scalactic.source.Position
@@ -121,7 +121,7 @@ class DirectRestCallTest extends AbstractRestCallTest {
   def clientHandle: HandleRequest = serverHandle
 
   test("openapi") {
-    val openapi = RestTestApi.restMetadata.openapi(Info("Test API", "0.1"))
+    val openapi = RestTestApi.openapiMetadata.openapi(Info("Test API", "0.1"))
     println(JsonStringOutput.write(openapi, JsonOptions.Pretty))
   }
 }

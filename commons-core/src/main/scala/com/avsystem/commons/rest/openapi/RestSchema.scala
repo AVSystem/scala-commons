@@ -1,11 +1,11 @@
 package com.avsystem.commons
-package rest
+package rest.openapi
 
 import java.util.UUID
 
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.{MacroGenerated, NamedEnum, NamedEnumCompanion, Timestamp, ValueOf}
-import com.avsystem.commons.rest.openapi._
+import com.avsystem.commons.rest.HttpBody
 import com.avsystem.commons.serialization._
 
 import scala.annotation.implicitNotFound
@@ -212,6 +212,14 @@ abstract class RestDataCompanion[T](
       def createSchema(resolver: SchemaResolver): RefOr[Schema] = restStructure.createSchema(resolver)
       def name: Opt[String] = restStructure.schemaName
     }
+}
+
+@implicitNotFound("HttpResponseType for ${T} not found. It may be provided by appropriate RestSchema or " +
+  "RestResponses instance (e.g. RestSchema[T] implies RestResponses[T] which implies HttpResponseType[Future[T]])")
+case class HttpResponseType[T](responses: SchemaResolver => Responses)
+object HttpResponseType {
+  implicit def forFuture[T: RestResponses]: HttpResponseType[Future[T]] =
+    HttpResponseType[Future[T]](RestResponses[T].responses)
 }
 
 @implicitNotFound("RestResponses for ${T} not found. You may provide it by defining an instance of RestSchema[${T}]")

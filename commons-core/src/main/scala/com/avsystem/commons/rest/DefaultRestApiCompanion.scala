@@ -2,6 +2,7 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.rest.RawRest.{AsRawRealRpc, AsRawRpc, AsRealRpc}
+import com.avsystem.commons.rest.openapi.OpenApiMetadata
 import com.avsystem.commons.rpc.{AsRawReal, Fallback, RpcMacroInstances}
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
@@ -12,10 +13,12 @@ trait ClientInstances[Real] {
 }
 trait ServerInstances[Real] {
   def metadata: RestMetadata[Real]
+  def openapiMetadata: OpenApiMetadata[Real]
   def asRaw: AsRawRpc[Real]
 }
 trait FullInstances[Real] {
   def metadata: RestMetadata[Real]
+  def openapiMetadata: OpenApiMetadata[Real]
   def asRawReal: AsRawRealRpc[Real]
 }
 
@@ -35,6 +38,7 @@ abstract class RestServerApiCompanion[Implicits, Real](implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ServerInstances, Real]
 ) {
   implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits, this).metadata
+  implicit final lazy val openapiMetadata: OpenApiMetadata[Real] = inst(implicits, this).openapiMetadata
   implicit final lazy val restAsRaw: AsRawRpc[Real] = inst(implicits, this).asRaw
 
   final def asHandleRequest(real: Real): RawRest.HandleRequest =
@@ -52,6 +56,7 @@ abstract class RestApiCompanion[Implicits, Real](implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, FullInstances, Real]
 ) {
   implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits, this).metadata
+  implicit final lazy val openapiMetadata: OpenApiMetadata[Real] = inst(implicits, this).openapiMetadata
   implicit final lazy val restAsRawReal: AsRawRealRpc[Real] = inst(implicits, this).asRawReal
 
   final def fromHandleRequest(handleRequest: RawRest.HandleRequest): Real =

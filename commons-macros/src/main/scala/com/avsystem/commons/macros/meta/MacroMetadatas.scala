@@ -30,7 +30,7 @@ trait MacroMetadatas extends MacroSymbols {
       case t => (Nil, t)
     }
     val asTypedMetadata = underlying.baseType(TypedMetadataType.typeSymbol)
-    if(asTypedMetadata == NoType) {
+    if (asTypedMetadata == NoType) {
       abort(s"$baseMetadataType is not a subtype of TypedMetadata")
     }
     val baseMethodResultType = asTypedMetadata.typeArgs.head
@@ -174,7 +174,6 @@ trait MacroMetadatas extends MacroSymbols {
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = Ok {
       def validated(annot: Annot): Annot = {
         if (containsInaccessibleThises(annot.tree)) {
-          echo(showCode(annot.tree))
           matchedSymbol.real.reportProblem(s"reified annotation contains this-references inaccessible outside RPC trait")
         }
         annot
