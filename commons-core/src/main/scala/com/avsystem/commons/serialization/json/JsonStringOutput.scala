@@ -23,27 +23,33 @@ trait BaseJsonOutput {
     var i = 0
     var s = 0
     while (i < str.length) {
-      val esc = str.charAt(i) match {
-        case '"' => "\\\""
-        case '\\' => "\\\\"
-        case '\b' => "\\b"
-        case '\f' => "\\f"
-        case '\n' => "\\n"
-        case '\r' => "\\r"
-        case '\t' => "\\t"
-        case c if (ascii && c.toInt > 127) || Character.isISOControl(c) =>
-          c.toInt.formatted("\\u%04x")
-        case _ => null
+      val ch = str.charAt(i)
+      val esc = ch match {
+        case '"' => '"'
+        case '\\' => '\\'
+        case '\b' => 'b'
+        case '\f' => 'f'
+        case '\n' => 'n'
+        case '\r' => 'r'
+        case '\t' => 't'
+        case _ => (if ((ascii && ch.toInt > 127) || Character.isISOControl(ch)) 1 else 0).toChar
       }
-      if (esc != null) {
-        builder.append(str, s, i).append(esc)
+      if (esc != 0) {
+        builder.append(str, s, i).append('\\')
         s = i + 1
+        if (esc != 1) {
+          builder.append(esc)
+        } else {
+          builder.append('u').append(toHex((ch >> 12) & 15)).append(toHex((ch >> 8) & 15))
+            .append(toHex((ch >> 4) & 15)).append(toHex(ch & 15))
+        }
       }
       i += 1
     }
-    builder.append(str, s, str.length)
-    builder.append('"')
+    builder.append(str, s, str.length).append('"')
   }
+
+  protected final def toHex(nibble: Int): Char = (nibble + (if (nibble >= 10) 'a' - 10 else '0')).toChar
 }
 
 final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = JsonOptions.Default, depth: Int = 0)
