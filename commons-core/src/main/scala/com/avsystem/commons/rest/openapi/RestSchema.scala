@@ -12,10 +12,22 @@ import scala.annotation.implicitNotFound
 
 sealed trait RestStructure[T] extends TypedMetadata[T] {
   def info: GenInfo[T]
-  def createSchema(resolver: SchemaResolver): RefOr[Schema]
-  def schemaName: Opt[String] = info.rawName.opt
 }
-object RestStructure extends AdtMetadataCompanion[RestStructure]
+object RestStructure extends AdtMetadataCompanion[RestStructure] {
+  implicit class LazyRestStructureOps[T](restStructure: => RestStructure[T]) {
+    def standaloneSchema: RestSchema[T] = new RestSchema[T] {
+      def createSchema(resolver: SchemaResolver): RefOr[Schema] = restStructure match {
+        case union: RestUnion[T] => union.createSchema(resolver)
+        case record: RestRecord[T] => record.createSchema(resolver, Opt.Empty)
+        case singleton: RestSingleton[T] => singleton.createSchema(resolver, Opt.Empty)
+      }
+      def name: Opt[String] = restStructure match {
+        case _: RestSingleton[_] => Opt.Empty
+        case s => s.info.rawName.opt
+      }
+    }
+  }
+}
 
 case class RestUnion[T](
   @adtCaseMetadata @multi cases: List[RestCase[_]],
@@ -23,39 +35,57 @@ case class RestUnion[T](
 ) extends RestStructure[T] {
 
   def createSchema(resolver: SchemaResolver): RefOr[Schema] = {
-    val caseSchemas = info.flatten.map(_.caseFieldName) match {
+    val caseFieldOpt = info.flatten.map(_.caseFieldName)
+    val caseSchemas = caseFieldOpt match {
       case Opt(caseFieldName) => cases.map { cs =>
-        val caseFieldSchema = RefOr(Schema.enumOf(List(cs.info.rawName)))
-        val caseRequired = if (cs.info.defaultCase) Nil else List(caseFieldName)
-        resolver.resolve(cs.restSchema) match {
-          case RefOr.Value(caseSchema) => caseSchema.copy(
-            properties = caseSchema.properties.updated(caseFieldName, caseFieldSchema),
-            required = caseRequired ::: caseSchema.required
-          )
-          case ref => Schema(allOf = List(ref, RefOr(Schema(
-            `type` = DataType.Object,
-            properties = Map(caseFieldName -> caseFieldSchema),
-            required = caseRequired
-          ))))
+        val caseName = cs.info.rawName
+        val caseRestSchema = cs match {
+          case record: RestRecord[_] => RestSchema.create(record.createSchema(_, caseFieldOpt), caseName)
+          case singleton: RestSingleton[_] => RestSchema.create(singleton.createSchema(_, caseFieldOpt), caseName)
+          case custom: RestCustomCase[_] =>
+            val caseFieldSchema = RefOr(Schema.enumOf(List(caseName)))
+            custom.restSchema.map({
+              case RefOr.Value(caseSchema) => caseSchema.copy(
+                properties = caseSchema.properties.updated(caseFieldName, caseFieldSchema),
+                required = caseFieldName :: caseSchema.required
+              )
+              case ref => Schema(allOf = List(RefOr(Schema(
+                `type` = DataType.Object,
+                properties = Map(caseFieldName -> caseFieldSchema),
+                required = List(caseFieldName)
+              )), ref))
+            }, custom.taggedName)
         }
+        resolver.resolve(caseRestSchema)
       }
       case Opt.Empty => cases.map { cs =>
         val caseName = cs.info.rawName
-        Schema(
+        val caseSchema = cs match {
+          case record: RestRecord[_] => record.createSchema(resolver, Opt.Empty)
+          case singleton: RestSingleton[_] => singleton.createSchema(resolver, Opt.Empty)
+          case custom: RestCustomCase[_] => resolver.resolve(custom.restSchema)
+        }
+        RefOr(Schema(
           `type` = DataType.Object,
-          properties = Map(caseName -> resolver.resolve(cs.restSchema)),
+          properties = Map(caseName -> caseSchema),
           required = List(caseName)
-        )
+        ))
       }
     }
-    RefOr(Schema(oneOf = caseSchemas.map(RefOr(_))))
+    val disc = caseFieldOpt.map { caseFieldName =>
+      val mapping = cases.collect {
+        case custom: RestCustomCase[_] if custom.taggedName != custom.info.rawName =>
+          (custom.info.rawName, custom.taggedName)
+      }.toMap
+      Discriminator(caseFieldName, mapping)
+    }
+    RefOr(Schema(oneOf = caseSchemas, discriminator = disc.toOptArg))
   }
 }
 object RestUnion extends AdtMetadataCompanion[RestUnion]
 
 sealed trait RestCase[T] extends TypedMetadata[T] {
   def info: GenCaseInfo[T]
-  def restSchema: RestSchema[T]
 }
 object RestCase extends AdtMetadataCompanion[RestCase]
 
@@ -65,7 +95,11 @@ object RestCase extends AdtMetadataCompanion[RestCase]
 case class RestCustomCase[T](
   @checked @infer restSchema: RestSchema[T],
   @composite info: GenCaseInfo[T],
-) extends RestCase[T]
+) extends RestCase[T] {
+  def taggedName: String =
+    if (restSchema.name.contains(info.rawName)) s"tagged${info.rawName}"
+    else info.rawName
+}
 
 /**
   * Will be inferred for types having apply/unapply(Seq) pair in their companion.
@@ -75,16 +109,17 @@ case class RestRecord[T](
   @composite info: GenCaseInfo[T],
 ) extends RestStructure[T] with RestCase[T] {
 
-  def createSchema(resolver: SchemaResolver): RefOr[Schema] = fields match {
-    case single :: Nil if info.transparent =>
-      resolver.resolve(single.restSchema)
-    case _ =>
-      val props = fields.iterator.map(f => (f.info.rawName, resolver.resolve(f.restSchema))).toMap
-      val required = fields.iterator.filterNot(_.info.hasFallbackValue).map(_.info.rawName).toList
-      RefOr(Schema(`type` = DataType.Object, properties = props, required = required))
-  }
-
-  def restSchema: RestSchema[T] = RestSchema.create(createSchema, info.rawName)
+  def createSchema(resolver: SchemaResolver, caseFieldName: Opt[String]): RefOr[Schema] =
+    (fields, caseFieldName) match {
+      case (single :: Nil, Opt.Empty) if info.transparent =>
+        resolver.resolve(single.restSchema)
+      case _ =>
+        val props = caseFieldName.map(cfn => (cfn, RefOr(Schema.enumOf(List(info.rawName))))).iterator ++
+          fields.iterator.map(f => (f.info.rawName, resolver.resolve(f.restSchema)))
+        val required = caseFieldName.iterator ++
+          fields.iterator.filterNot(_.info.hasFallbackValue).map(_.info.rawName)
+        RefOr(Schema(`type` = DataType.Object, properties = props.toMap, required = required.toList))
+    }
 }
 object RestRecord extends AdtMetadataCompanion[RestRecord]
 
@@ -96,13 +131,11 @@ case class RestSingleton[T](
   @composite info: GenCaseInfo[T],
 ) extends RestStructure[T] with RestCase[T] {
 
-  def createSchema(resolver: SchemaResolver): RefOr[Schema] =
-    RefOr(Schema(`type` = DataType.Object))
-
-  // singletons are too simple to name them
-  override def schemaName: Opt[String] = Opt.Empty
-
-  def restSchema: RestSchema[T] = RestSchema.create(createSchema)
+  def createSchema(resolver: SchemaResolver, caseFieldName: Opt[String]): RefOr[Schema] =
+    RefOr(Schema(`type` = DataType.Object,
+      properties = caseFieldName.map(cfn => (cfn, RefOr(Schema.enumOf(List(info.rawName))))).toMap,
+      required = caseFieldName.toList
+    ))
 }
 object RestSingleton extends AdtMetadataCompanion[RestSingleton]
 
@@ -117,8 +150,8 @@ trait RestSchema[T] { self =>
   def createSchema(resolver: SchemaResolver): RefOr[Schema]
   def name: Opt[String]
 
-  def map[S](fun: RefOr[Schema] => Schema): RestSchema[S] =
-    RestSchema.create(resolver => RefOr(fun(resolver.resolve(self))))
+  def map[S](fun: RefOr[Schema] => Schema, newName: OptArg[String] = OptArg.Empty): RestSchema[S] =
+    RestSchema.create(resolver => RefOr(fun(resolver.resolve(self))), newName)
   def named(name: String): RestSchema[T] =
     RestSchema.create(createSchema, name)
   def unnamed: RestSchema[T] =
@@ -207,11 +240,7 @@ abstract class RestDataCompanion[T](
   implicit macroRestStructure: MacroGenerated[RestStructure[T]], macroCodec: MacroGenerated[GenCodec[T]]
 ) extends HasGenCodec[T] {
   implicit lazy val restStructure: RestStructure[T] = macroRestStructure.forCompanion(this)
-  implicit lazy val restSchema: RestSchema[T] =
-    new RestSchema[T] { // need to be fully lazy on restStructure for recursive types
-      def createSchema(resolver: SchemaResolver): RefOr[Schema] = restStructure.createSchema(resolver)
-      def name: Opt[String] = restStructure.schemaName
-    }
+  implicit lazy val restSchema: RestSchema[T] = restStructure.standaloneSchema // lazy on restStructure
 }
 
 @implicitNotFound("HttpResponseType for ${T} not found. It may be provided by appropriate RestSchema or " +

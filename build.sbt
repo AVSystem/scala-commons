@@ -30,7 +30,6 @@ val mockitoVersion = "2.18.3"
 val circeVersion = "0.9.3"
 val upickleVersion = "0.6.6"
 val scalajsBenchmarkVersion = "0.2.4"
-val swaggerCodegenVersion = "3.0.0"
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
@@ -200,7 +199,6 @@ lazy val `commons-core` = project
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
-      "io.swagger.codegen.v3" % "swagger-codegen-cli" % swaggerCodegenVersion % Test,
     ),
     ideExcludedDirectories := Seq(baseDirectory.value / "agg"),
   )

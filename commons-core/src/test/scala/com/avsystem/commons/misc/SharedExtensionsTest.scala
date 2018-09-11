@@ -93,4 +93,17 @@ class SharedExtensionsTest extends FunSuite with Matchers {
     assert(o.compare(CC(0, 1), CC(0, 0)) > 0)
     assert(o.compare(CC(0, 0), CC(0, 0)) == 0)
   }
+
+  test("String.unwrapLines") {
+    assert("".unwrapLines == "")
+    assert("\n".unwrapLines == "")
+    assert("a\n".unwrapLines == "a")
+    assert("\na".unwrapLines == "a")
+    assert("\n\n".unwrapLines == "\n")
+    assert("a\n\nb".unwrapLines == "a\nb")
+    assert("a\nb".unwrapLines == "a b")
+    assert("a \nb".unwrapLines == "a b")
+    assert("a\n b".unwrapLines == "a b")
+    assert("a \n b".unwrapLines == "a  b")
+  }
 }

@@ -17,6 +17,8 @@ object FlatBaseEntity extends RestDataCompanion[FlatBaseEntity]
 case class RestEntity(id: String, name: String, subentity: OptArg[RestEntity] = OptArg.Empty) extends FlatBaseEntity
 object RestEntity extends RestDataCompanion[RestEntity]
 
+case class RestOtherEntity(fuu: Boolean, kek: List[String]) extends FlatBaseEntity
+
 case object SingletonEntity extends FlatBaseEntity
 
 trait RestTestApi {
@@ -47,7 +49,7 @@ trait RestTestApi {
     @Query q0: String
   ): RestTestSubApi
 
-  def complexParams(baseEntity: BaseEntity, flatBaseEntity: FlatBaseEntity): Future[Unit]
+  def complexParams(baseEntity: BaseEntity, flatBaseEntity: Opt[FlatBaseEntity] = Opt.Empty): Future[Unit]
 }
 object RestTestApi extends DefaultRestApiCompanion[RestTestApi] {
   val Impl: RestTestApi = new RestTestApi {
@@ -62,7 +64,7 @@ object RestTestApi extends DefaultRestApiCompanion[RestTestApi] {
       Future.successful(entity.toString)
     def prefix(p0: String, h0: String, q0: String): RestTestSubApi =
       RestTestSubApi.impl(s"$p0-$h0-$q0")
-    def complexParams(baseEntity: BaseEntity, flatBaseEntity: FlatBaseEntity): Future[Unit] = Future.unit
+    def complexParams(baseEntity: BaseEntity, flatBaseEntity: Opt[FlatBaseEntity]): Future[Unit] = Future.unit
   }
 }
 
