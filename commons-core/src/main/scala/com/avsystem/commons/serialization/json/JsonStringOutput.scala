@@ -49,7 +49,7 @@ trait BaseJsonOutput {
     builder.append(str, s, str.length).append('"')
   }
 
-  protected final def toHex(nibble: Int): Char = (nibble + (if (nibble >= 10) 87 else 48)).toChar
+  protected final def toHex(nibble: Int): Char = (nibble + (if (nibble >= 10) 'a' - 10 else '0')).toChar
 }
 
 final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = JsonOptions.Default, depth: Int = 0)
