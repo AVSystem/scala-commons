@@ -118,7 +118,7 @@ object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
         forPattern(pm.pathPattern).fillWith(pm.result.value, entry :: prefixStack)
       }
       metadata.httpMethods.foreach { case (rpcName, hm) =>
-        forPattern(hm.pathPattern).rpcChains(hm.method) += s"$prefixChain${rpcName.stripPrefix(s"${hm.method}_")}"
+        forPattern(hm.pathPattern).rpcChains(hm.method) += s"$prefixChain${rpcName.stripPrefix(s"${hm.method.name.toLowerCase}_")}"
       }
     }
 
