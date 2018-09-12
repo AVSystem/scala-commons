@@ -36,7 +36,7 @@ object RestStructure extends AdtMetadataCompanion[RestStructure] {
 case class RestUnion[T](
   @multi @reifyAnnot schemaAdjusters: List[SchemaAdjuster],
   @adtCaseMetadata @multi cases: List[RestCase[_]],
-  @composite info: GenUnionInfo[T],
+  @composite info: GenUnionInfo[T]
 ) extends RestStructure[T] {
 
   def createSchema(resolver: SchemaResolver): RefOr[Schema] = {

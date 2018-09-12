@@ -110,7 +110,7 @@ final case class TypeFlags(rawFlags: Int) extends AnyVal {
       repr(Sealed, "sealed"),
       repr(Case, "case"),
       repr(Trait, "trait"),
-      repr(Object, "object"),
+      repr(Object, "object")
     ).flatten.mkString(",")
   }
 }

@@ -29,7 +29,7 @@ case class GenUnionInfo[T](
   @reifyFlags flags: TypeFlags,
   @reifyName sourceName: String,
   @optional @reifyAnnot annotName: Opt[name],
-  @optional @reifyAnnot flatten: Opt[flatten],
+  @optional @reifyAnnot flatten: Opt[flatten]
 ) extends GenCodecStructure[T]
 object GenUnionInfo extends AdtMetadataCompanion[GenUnionInfo]
 

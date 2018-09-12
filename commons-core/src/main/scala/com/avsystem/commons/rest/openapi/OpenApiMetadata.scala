@@ -42,7 +42,7 @@ case class OpenApiMetadata[T](
         put = ops.getOpt(HttpMethod.PUT).toOptArg,
         post = ops.getOpt(HttpMethod.POST).toOptArg,
         patch = ops.getOpt(HttpMethod.PATCH).toOptArg,
-        delete = ops.getOpt(HttpMethod.DELETE).toOptArg,
+        delete = ops.getOpt(HttpMethod.DELETE).toOptArg
       )
       (path, RefOr(pathItem))
     }.toMap)

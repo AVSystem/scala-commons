@@ -51,7 +51,7 @@ object Server extends HasGenCodec[Server]
 case class ServerVariable(
   default: String,
   @td enum: List[String] = Nil,
-  @td description: OptArg[String] = OptArg.Empty,
+  @td description: OptArg[String] = OptArg.Empty
 )
 object ServerVariable extends HasGenCodec[ServerVariable]
 

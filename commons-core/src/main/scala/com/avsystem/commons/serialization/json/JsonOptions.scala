@@ -56,7 +56,7 @@ object JsonOptions {
 
 case class JsonFormatting(
   indentSize: OptArg[Int] = OptArg.Empty,
-  afterColon: Int = 0,
+  afterColon: Int = 0
 )
 object JsonFormatting {
   final val Compact = JsonFormatting()
