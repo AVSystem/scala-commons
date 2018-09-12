@@ -924,7 +924,7 @@ trait MacroCommons { bundle =>
     val tree = c.typecheck(
       q"""
         def $methodName[..$typeDefs](f: ${treeForType(undetTpe)} => $UnitCls): $UnitCls = ()
-        $methodName((_: ${treeForType(detTpe)}) => ())
+        $methodName((_: $detTpe) => ())
       """, silent = true
     )
 

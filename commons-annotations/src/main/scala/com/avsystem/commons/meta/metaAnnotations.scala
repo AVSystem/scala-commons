@@ -44,7 +44,7 @@ sealed trait SymbolArity extends RawParamAnnotation
   * The default arity annotation. Usually there is no need to use this annotation explicitly.
   *
   * When applied on raw method, there must be exactly one real method matching this raw method and it must have
-  * the same name (or [[rpcName]]) as raw method's name.
+  * the same name (or [[com.avsystem.commons.rpc.rpcName rpcName]]) as raw method's name.
   *
   * When applied on raw parameter, specifies that this raw parameter must be matched by exactly one real parameter,
   * on the position that matches raw parameter's position. Names are ignored because - unlike methods - parameters are
@@ -72,7 +72,7 @@ final class single extends SymbolArity
   *
   * When applied on raw parameter, specifies that this raw parameter may be matched by a real parameter but this is
   * not required. Whether a real parameter matches an optional raw parameter is determined by its type and/or tag
-  * (see [[paramTag]] for more information on param tagging).
+  * (see [[com.avsystem.commons.rpc.paramTag paramTag]] for more information on param tagging).
   *
   * Raw parameters marked as [[optional]] must be typed as `Option[T]` (or `Opt[T]`, `OptArg[T]` or whatever type that
   * has an instance of `OptionLike`). By default, [[optional]] raw parameters are [[verbatim]] which means that the
@@ -95,7 +95,8 @@ final class optional extends SymbolArity
 /**
   * When applied on raw method, specifies that this raw method may be matched by many, arbitrarily named real methods.
   * In order to distinguish between real methods when translating raw call into real call,
-  * multi raw method must take real method's RPC name (a `String`) as one of its parameters (see [[methodName]]).
+  * multi raw method must take real method's RPC name (a `String`) as one of its parameters
+  * (see [[com.avsystem.commons.rpc.methodName methodName]]).
   * By default, result type of multi raw method is [[encoded]] and the macro engine searches for
   * appropriate `AsRaw` or `AsReal` conversion between real method result type and raw method result type.
   *
@@ -123,7 +124,8 @@ final class optional extends SymbolArity
   *
   * Finally, when raw parameter is a `Mapping <: PartialFunction[String,R]` then not only values but also parameter
   * names are collected - the macro engine will search for an instance of `CanBuildFrom[Nothing,(String,R),Mapping]`
-  * in order to collect the mapping. Parameter names may be adjusted with [[rpcName]] but must be unique in the
+  * in order to collect the mapping. Parameter names may be adjusted with
+  * [[com.avsystem.commons.rpc.rpcName rpcName]] but must be unique in the
   * scope of a single raw parameter. In order to extract real values from mapping, macro generated code will
   * call `applyOrElse` on the raw value giving it the name of each real parameter and also falling back to possible
   * default parameter values, in case they are missing in the raw call.
@@ -149,7 +151,8 @@ final class multi extends SymbolArity
   * Filter applied on raw methods or parameters which tells the macro engine that this raw method or parameter may
   * only match real methods or parameters annotated with at least one annotation of given type `A` (or any subtype).
   *
-  * This is similar to [[tagged]] but simplier. Tagging lets you explicitly specify all possible tag types and provide
+  * This is similar to [[com.avsystem.commons.rpc.tagged tagged]] but simplier.
+  * Tagging lets you explicitly specify all possible tag types and provide
   * default/fallback tags when no tag is present.
   *
   * @tparam A type of annotation required to be present on real method or parameter
@@ -230,7 +233,7 @@ final class isAnnotated[T <: StaticAnnotation] extends MetadataParamStrategy
 /**
   * This annotation may only be applied on metadata parameters of type `String` and instructs the macro engine
   * to reify the name of real RPC trait/method/parameter. Depending on the value of `useRawName` flag, the macro
-  * will either take into account or ignore potential [[rpcName]] annotation.
+  * will either take into account or ignore potential [[com.avsystem.commons.rpc.rpcName rpcName]] annotation.
   */
 final class reifyName(val useRawName: Boolean = false) extends MetadataParamStrategy
 

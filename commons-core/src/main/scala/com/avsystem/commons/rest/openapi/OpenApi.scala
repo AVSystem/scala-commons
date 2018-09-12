@@ -329,7 +329,7 @@ case class Encoding(
   @td headers: Map[String, RefOr[Header]] = Map.empty,
   @td style: OptArg[Style] = OptArg.Empty,
   @td explode: OptArg[Boolean] = OptArg.Empty,
-  @td allowReserved: Boolean = false,
+  @td allowReserved: Boolean = false
 )
 object Encoding extends HasGenCodec[Encoding]
 

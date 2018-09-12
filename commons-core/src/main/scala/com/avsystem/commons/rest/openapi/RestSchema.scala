@@ -99,7 +99,7 @@ object RestCase extends AdtMetadataCompanion[RestCase]
   */
 case class RestCustomCase[T](
   @checked @infer restSchema: RestSchema[T],
-  @composite info: GenCaseInfo[T],
+  @composite info: GenCaseInfo[T]
 ) extends RestCase[T] {
   def taggedName: String =
     if (restSchema.name.contains(info.rawName)) s"tagged${info.rawName}"

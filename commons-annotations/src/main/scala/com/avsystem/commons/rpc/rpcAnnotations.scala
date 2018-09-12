@@ -36,7 +36,8 @@ trait RpcTag extends RealSymAnnotation
   * `AsReal` should pass real method's RPC name as this parameter and that macro generated implementation of
   * `AsRaw` should expect real method's RPC name to be passed there.
   *
-  * Macro generation of `AsRaw` implementations require that raw methods annotated as [[multi]] must take at least
+  * Macro generation of `AsRaw` implementations require that raw methods annotated as
+  * [[com.avsystem.commons.meta.multi multi]] must take at least
   * one raw parameter annotated as [[methodName]] (it may also be aggregated into some [[composite]] parameter).
   * This is necessary to properly identify which real method should be called.
   */
@@ -44,13 +45,13 @@ final class methodName extends RawParamAnnotation
 
 /**
   * `@rpcMethodMetadata` applied on metadata parameter of RPC trait metadata class indicates that this parameter holds
-  * metadata for RPC method(s) (one, some or all, depending on [[RpcArity]], tagging, etc.).
+  * metadata for RPC method(s) (one, some or all, depending on [[SymbolArity]], tagging, etc.).
   **/
 final class rpcMethodMetadata extends MetadataParamStrategy
 
 /**
   * `@rpcParamMetadata` applied on metadata parameter of RPC method metadata class indicates that this parameter holds
-  * metadata for RPC parameter(s) (one, some or all, depending on [[RpcArity]], tagging, etc.).
+  * metadata for RPC parameter(s) (one, some or all, depending on [[SymbolArity]], tagging, etc.).
   **/
 final class rpcParamMetadata extends MetadataParamStrategy
 
@@ -59,8 +60,9 @@ final class rpcParamMetadata extends MetadataParamStrategy
   * raw parameter in order to specify how matching real method results or matching real parameter values are encoded
   * as raw values.
   * Currently there are two possible cases: [[verbatim]] (no encoding) and [[encoded]] (encoding using `AsRaw` and
-  * `AsReal` typeclasses). By default, method return values and [[multi]] parameters are [[encoded]] while
-  * [[single]] and [[optional]] parameters are [[verbatim]].
+  * `AsReal` typeclasses). By default, method return values and [[com.avsystem.commons.meta.multi multi]]
+  * parameters are [[encoded]] while [[com.avsystem.commons.meta.single single]] and
+  * [[com.avsystem.commons.meta.optional optional]] parameters are [[verbatim]].
   * See documentation of [[verbatim]] and [[encoded]] for more details.
   */
 sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
@@ -129,9 +131,10 @@ sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
 final class encoded extends RpcEncoding
 
 /**
-  * Turns off raw value encoding as specified by [[encoded]]. By default, [[single]] and [[optional]] raw parameters
-  * are already [[verbatim]], so using [[verbatim]] only makes sense on [[multi]] raw parameters or
-  * raw methods themselves, which means turning off encoding of method's result.
+  * Turns off raw value encoding as specified by [[encoded]]. By default, [[com.avsystem.commons.meta.single single]]
+  * and [[com.avsystem.commons.meta.optional optional]] raw parameters are already [[verbatim]], so using [[verbatim]]
+  * only makes sense on [[com.avsystem.commons.meta.multi multi]] raw parameters or raw methods themselves,
+  * which means turning off encoding of method's result.
   *
   * When encoding is turned off, raw and real types must be exactly the same types. For example, the following raw RPC
   * definition will match only raw RPC traits whose methods take `Int`s as parameters and return `Double`s as values:
@@ -205,7 +208,7 @@ final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends
   * Parameter tagging lets you have more explicit control over which raw parameters can match which real
   * parameters. This way you can have some of the parameters annotated in order to treat them differently, e.g.
   * they may be [[verbatim]], encoded in a different way or collected to a different raw container (e.g.
-  * `Map[String,Raw]` vs `List[Raw]` - see [[multi]] for more details).
+  * `Map[String,Raw]` vs `List[Raw]` - see [[com.avsystem.commons.meta.multi multi]] for more details).
   *
   * Example:
   * {{{
