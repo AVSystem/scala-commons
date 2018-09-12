@@ -44,28 +44,36 @@ case class JsonValue(value: String) extends AnyVal with RestValue
   * the body when reading.
   */
 sealed trait HttpBody {
-  def contentOpt: Opt[String] = this match {
+  final def contentOpt: Opt[String] = this match {
     case HttpBody(content, _) => Opt(content)
     case HttpBody.Empty => Opt.Empty
   }
 
-  def forNonEmpty(consumer: (String, String) => Unit): Unit = this match {
+  final def forNonEmpty(consumer: (String, String) => Unit): Unit = this match {
     case HttpBody(content, mimeType) => consumer(content, mimeType)
     case HttpBody.Empty =>
   }
 
-  def readContent(): String = this match {
+  final def readContent(): String = this match {
     case HttpBody(content, _) => content
     case HttpBody.Empty => throw new ReadFailure("Expected non-empty body")
   }
 
-  def readJson(): JsonValue = this match {
+  final def readJson(): JsonValue = this match {
     case HttpBody(content, HttpBody.JsonType) => JsonValue(content)
     case HttpBody(_, mimeType) =>
       throw new ReadFailure(s"Expected body with application/json type, got $mimeType")
     case HttpBody.Empty =>
       throw new ReadFailure("Expected body with application/json type, got empty body")
   }
+
+  final def defaultStatus: Int = this match {
+    case HttpBody.Empty => 204
+    case _ => 200
+  }
+
+  final def defaultResponse: RestResponse =
+    RestResponse(defaultStatus, this)
 }
 object HttpBody {
   object Empty extends HttpBody
@@ -153,8 +161,8 @@ case class RestRequest(method: HttpMethod, parameters: RestParameters, body: Htt
 case class RestResponse(code: Int, body: HttpBody) {
   def toHttpError: HttpErrorException =
     HttpErrorException(code, body.contentOpt.toOptArg)
-  def ensure200OK: RestResponse =
-    if (code == 200) this else throw toHttpError
+  def ensureNonError: RestResponse =
+    if (code >= 200 && code < 300) this else throw toHttpError
 }
 
 object RestResponse {
@@ -173,10 +181,10 @@ object RestResponse {
   }
 
   implicit def bodyBasedFromResponse[T](implicit bodyAsReal: AsReal[HttpBody, T]): AsReal[RestResponse, T] =
-    AsReal.create(resp => bodyAsReal.asReal(resp.ensure200OK.body))
+    AsReal.create(resp => bodyAsReal.asReal(resp.ensureNonError.body))
 
   implicit def bodyBasedToResponse[T](implicit bodyAsRaw: AsRaw[HttpBody, T]): AsRaw[RestResponse, T] =
-    AsRaw.create(value => RestResponse(200, bodyAsRaw.asRaw(value)).recoverHttpError)
+    AsRaw.create(value => bodyAsRaw.asRaw(value).defaultResponse.recoverHttpError)
 
   implicit def futureToAsyncResp[T](
     implicit respAsRaw: AsRaw[RestResponse, T]

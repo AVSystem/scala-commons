@@ -98,7 +98,7 @@ class RawRestTest extends FunSuite with ScalaFutures {
         |X-Awesome: true
         |application/json
         |{"id":"ID","name":"Fred"}
-        |<- 200
+        |<- 204
         |""".stripMargin)
   }
 

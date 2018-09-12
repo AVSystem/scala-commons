@@ -258,7 +258,7 @@ object RestResponses {
 
   implicit val emptyResponseForUnit: RestResponses[Unit] =
     RestResponses(_ => Responses(byStatusCode = Map(
-      200 -> RefOr(Response())
+      204 -> RefOr(Response())
     )))
 
   implicit def fromSchema[T: RestSchema]: RestResponses[T] =

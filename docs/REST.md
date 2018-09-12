@@ -228,8 +228,8 @@ method into a HTTP REST call.
 * Result type of each method is typically expected to be a `Future` wrapping some
   arbitrary response type. This response type will be serialized into HTTP response which
   by default translates it into JSON and creates a `200 OK` response with `application/json`
-  content type. If response type is `Unit` (method result type is `Future[Unit]`) then empty
-  body is created when serializing and body is ignored when deseriarlizing.
+  content type. If response type is `Unit` (method result type is `Future[Unit]`) then a `204 No Content`
+  response with empty body is created when serializing and body is ignored when deseriarlizing.
 * Each method may also throw a `HttpErrorException` (or return failed `Future`). It will be
   automatically translated into appropriate HTTP error response with given status code and
   plaintext message.
