@@ -11,7 +11,11 @@ import com.avsystem.commons.serialization._
 import scala.annotation.implicitNotFound
 
 sealed trait RestStructure[T] extends TypedMetadata[T] {
+  def schemaAdjusters: List[SchemaAdjuster]
   def info: GenInfo[T]
+
+  protected def applyAdjusters(schema: Schema): Schema =
+    schemaAdjusters.foldRight(schema)(_ adjustSchema _)
 }
 object RestStructure extends AdtMetadataCompanion[RestStructure] {
   implicit class LazyRestStructureOps[T](restStructure: => RestStructure[T]) {
@@ -30,6 +34,7 @@ object RestStructure extends AdtMetadataCompanion[RestStructure] {
 }
 
 case class RestUnion[T](
+  @multi @reifyAnnot schemaAdjusters: List[SchemaAdjuster],
   @adtCaseMetadata @multi cases: List[RestCase[_]],
   @composite info: GenUnionInfo[T],
 ) extends RestStructure[T] {
@@ -79,7 +84,7 @@ case class RestUnion[T](
       }.toMap
       Discriminator(caseFieldName, mapping)
     }
-    RefOr(Schema(oneOf = caseSchemas, discriminator = disc.toOptArg))
+    RefOr(applyAdjusters(Schema(oneOf = caseSchemas, discriminator = disc.toOptArg)))
   }
 }
 object RestUnion extends AdtMetadataCompanion[RestUnion]
@@ -105,6 +110,7 @@ case class RestCustomCase[T](
   * Will be inferred for types having apply/unapply(Seq) pair in their companion.
   */
 case class RestRecord[T](
+  @multi @reifyAnnot schemaAdjusters: List[SchemaAdjuster],
   @adtParamMetadata @multi fields: List[RestField[_]],
   @composite info: GenCaseInfo[T],
 ) extends RestStructure[T] with RestCase[T] {
@@ -118,7 +124,7 @@ case class RestRecord[T](
           fields.iterator.map(f => (f.info.rawName, resolver.resolve(f.restSchema)))
         val required = caseFieldName.iterator ++
           fields.iterator.filterNot(_.info.hasFallbackValue).map(_.info.rawName)
-        RefOr(Schema(`type` = DataType.Object, properties = props.toMap, required = required.toList))
+        RefOr(applyAdjusters(Schema(`type` = DataType.Object, properties = props.toMap, required = required.toList)))
     }
 }
 object RestRecord extends AdtMetadataCompanion[RestRecord]
@@ -127,15 +133,16 @@ object RestRecord extends AdtMetadataCompanion[RestRecord]
   * Will be inferred for singleton types (objects).
   */
 case class RestSingleton[T](
+  @multi @reifyAnnot schemaAdjusters: List[SchemaAdjuster],
   @infer @checked value: ValueOf[T],
   @composite info: GenCaseInfo[T],
 ) extends RestStructure[T] with RestCase[T] {
 
   def createSchema(resolver: SchemaResolver, caseFieldName: Opt[String]): RefOr[Schema] =
-    RefOr(Schema(`type` = DataType.Object,
+    RefOr(applyAdjusters(Schema(`type` = DataType.Object,
       properties = caseFieldName.map(cfn => (cfn, RefOr(Schema.enumOf(List(info.rawName))))).toMap,
       required = caseFieldName.toList
-    ))
+    )))
 }
 object RestSingleton extends AdtMetadataCompanion[RestSingleton]
 

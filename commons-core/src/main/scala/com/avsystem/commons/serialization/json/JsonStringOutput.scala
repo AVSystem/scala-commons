@@ -9,6 +9,9 @@ object JsonStringOutput {
     GenCodec.write[T](new JsonStringOutput(sb, options), value)
     sb.toString
   }
+
+  def writePretty[T: GenCodec](value: T): String =
+    write[T](value, JsonOptions.Pretty)
 }
 
 trait BaseJsonOutput {

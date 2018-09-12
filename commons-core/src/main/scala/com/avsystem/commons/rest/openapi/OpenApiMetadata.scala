@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rest.openapi
 
-import com.avsystem.commons.meta._
+import com.avsystem.commons.meta.{multi, reifyAnnot, _}
 import com.avsystem.commons.rest.{Header => HeaderAnnot, _}
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.serialization.{transientDefault, whenAbsent}
@@ -78,7 +78,7 @@ sealed trait OpenApiMethod[T] extends TypedMetadata[T] {
 
   val pathPattern: String = {
     val pathParts = methodTag.path :: parameters.flatMap {
-      case OpenApiParameter(path: Path, info) =>
+      case OpenApiParameter(path: Path, info, _) =>
         s"{${info.name}}" :: path.pathSuffix :: Nil
       case _ => Nil
     }
@@ -107,22 +107,28 @@ case class OpenApiPrefix[T](
 sealed trait OpenApiOperation[T] extends OpenApiMethod[T] {
   @infer
   @checked def responseType: HttpResponseType[T]
+  @multi
+  @reifyAnnot def adjusters: List[OperationAdjuster]
   def methodTag: HttpMethodTag
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]]
 
-  def operation(resolver: SchemaResolver): Operation = Operation(
-    responseType.responses(resolver),
-    operationId = name,
-    parameters = parameters.map(_.parameter(resolver)),
-    requestBody = requestBody(resolver).toOptArg
-  )
+  def operation(resolver: SchemaResolver): Operation = {
+    val op = Operation(
+      responseType.responses(resolver),
+      operationId = name,
+      parameters = parameters.map(_.parameter(resolver)),
+      requestBody = requestBody(resolver).toOptArg
+    )
+    adjusters.foldRight(op)(_ adjustOperation _)
+  }
 }
 
 case class OpenApiGetOperation[T](
   name: String,
   methodTag: HttpMethodTag,
   parameters: List[OpenApiParameter[_]],
-  responseType: HttpResponseType[T]
+  responseType: HttpResponseType[T],
+  adjusters: List[OperationAdjuster]
 ) extends OpenApiOperation[T] {
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]] = Opt.Empty
 }
@@ -133,7 +139,8 @@ case class OpenApiBodyOperation[T](
   parameters: List[OpenApiParameter[_]],
   @multi @rpcParamMetadata @tagged[JsonBodyParam] bodyParams: List[OpenApiParamInfo[_]],
   @optional @encoded @rpcParamMetadata @tagged[Body] singleBody: Opt[OpenApiBody[_]],
-  responseType: HttpResponseType[T]
+  responseType: HttpResponseType[T],
+  adjusters: List[OperationAdjuster]
 ) extends OpenApiOperation[T] {
 
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]] =
@@ -161,7 +168,8 @@ case class OpenApiParamInfo[T](
 
 case class OpenApiParameter[T](
   @reifyAnnot paramTag: NonBodyTag,
-  @composite info: OpenApiParamInfo[T]
+  @composite info: OpenApiParamInfo[T],
+  @multi @reifyAnnot adjusters: List[ParameterAdjuster]
 ) extends TypedMetadata[T] {
 
   def parameter(resolver: SchemaResolver): RefOr[Parameter] = {
@@ -170,10 +178,10 @@ case class OpenApiParameter[T](
       case _: HeaderAnnot => Location.Header
       case _: Query => Location.Query
     }
-    RefOr(Parameter(info.name, in, required = !info.hasFallbackValue, schema = resolver.resolve(info.restSchema)))
+    val param = Parameter(info.name, in, required = !info.hasFallbackValue, schema = resolver.resolve(info.restSchema))
+    RefOr(adjusters.foldRight(param)(_ adjustParameter _))
   }
 }
 
-case class OpenApiBody[T](
-  @infer requestBody: RestRequestBody[T]
-) extends TypedMetadata[T]
+case class OpenApiBody[T](@infer requestBody: RestRequestBody[T]) extends TypedMetadata[T]
+
