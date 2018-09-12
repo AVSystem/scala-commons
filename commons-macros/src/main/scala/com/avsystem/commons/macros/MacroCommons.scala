@@ -44,6 +44,7 @@ trait MacroCommons { bundle =>
   final val ImplicitsObj = q"$CommonsPkg.misc.Implicits"
   final val AnnotationAggregateType = getType(tq"$CommonsPkg.annotation.AnnotationAggregate")
   final val DefaultsToNameAT = getType(tq"$CommonsPkg.annotation.defaultsToName")
+  final val NotInheritedFromSealedTypes = getType(tq"$CommonsPkg.annotation.NotInheritedFromSealedTypes")
   final val SeqCompanionSym = typeOf[scala.collection.Seq.type].termSymbol
 
   final val NothingTpe: Type = typeOf[Nothing]
@@ -181,8 +182,11 @@ trait MacroCommons { bundle =>
     if (withSupers) withSuperSymbols(s) else Iterator(s)
 
   def allAnnotations(s: Symbol, tpeFilter: Type, withInherited: Boolean = true, fallback: List[Tree] = Nil): List[Annot] = {
+    def inherited(annot: Annotation, superSym: Symbol): Boolean =
+      !(s.isClass && superSym != s && annot.tree.tpe <:< NotInheritedFromSealedTypes)
+
     val nonFallback = maybeWithSuperSymbols(s, withInherited)
-      .flatMap(ss => ss.annotations.map(a => new Annot(a.tree, s, ss, None)))
+      .flatMap(ss => ss.annotations.filter(inherited(_, ss)).map(a => new Annot(a.tree, s, ss, None)))
 
     (nonFallback ++ fallback.iterator.map(t => new Annot(t, s, s, None)))
       .flatMap(_.withAllAggregated).filter(_.tpe <:< tpeFilter).toList
@@ -206,8 +210,11 @@ trait MacroCommons { bundle =>
       case Nil => None
     }
 
+    def inherited(annot: Annotation, superSym: Symbol): Boolean =
+      !(superSym != s && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
+
     maybeWithSuperSymbols(s, withInherited)
-      .map(ss => find(ss.annotations.map(a => new Annot(a.tree, s, ss, None))))
+      .map(ss => find(ss.annotations.filter(inherited(_, ss)).map(a => new Annot(a.tree, s, ss, None))))
       .collectFirst { case Some(annot) => annot }
       .orElse(find(fallback.map(t => new Annot(t, s, s, None))))
   }

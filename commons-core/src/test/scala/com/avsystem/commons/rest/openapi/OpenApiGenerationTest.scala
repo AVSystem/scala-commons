@@ -346,7 +346,6 @@ class OpenApiGenerationTest extends FunSuite {
         |    "schemas": {
         |      "RestOtherEntity": {
         |        "type": "object",
-        |        "description": "Flat sealed entity with some serious cases",
         |        "properties": {
         |          "_case": {
         |            "type": "string",
@@ -388,7 +387,6 @@ class OpenApiGenerationTest extends FunSuite {
         |            "properties": {
         |              "RestOtherEntity": {
         |                "type": "object",
-        |                "description": "Flat sealed entity with some serious cases",
         |                "properties": {
         |                  "fuu": {
         |                    "type": "boolean"
@@ -414,8 +412,7 @@ class OpenApiGenerationTest extends FunSuite {
         |            "type": "object",
         |            "properties": {
         |              "SingletonEntity": {
-        |                "type": "object",
-        |                "description": "Flat sealed entity with some serious cases"
+        |                "type": "object"
         |              }
         |            },
         |            "required": [
@@ -446,7 +443,6 @@ class OpenApiGenerationTest extends FunSuite {
         |      },
         |      "RestEntity": {
         |        "type": "object",
-        |        "description": "Flat sealed entity with some serious cases",
         |        "properties": {
         |          "id": {
         |            "type": "string"
@@ -491,7 +487,6 @@ class OpenApiGenerationTest extends FunSuite {
         |      },
         |      "SingletonEntity": {
         |        "type": "object",
-        |        "description": "Flat sealed entity with some serious cases",
         |        "properties": {
         |          "_case": {
         |            "type": "string",

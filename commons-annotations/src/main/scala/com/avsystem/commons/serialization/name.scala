@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.annotation.NotInheritedFromSealedTypes
+
 import scala.annotation.StaticAnnotation
 
 /**
@@ -24,4 +26,5 @@ import scala.annotation.StaticAnnotation
   * For instance, if a case class field overrides a method of some base trait, the `@name` annotation may
   * be used on that method and will affect the case class field.
   */
-class name(val name: String) extends StaticAnnotation
+class name(val name: String) extends StaticAnnotation with NotInheritedFromSealedTypes
+

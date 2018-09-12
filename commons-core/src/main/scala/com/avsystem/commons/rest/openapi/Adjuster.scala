@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package rest.openapi
 
+import com.avsystem.commons.annotation.NotInheritedFromSealedTypes
+
 import scala.annotation.StaticAnnotation
 
 sealed trait Adjuster extends StaticAnnotation
@@ -13,7 +15,7 @@ sealed trait Adjuster extends StaticAnnotation
   * [[com.avsystem.commons.serialization.transparent transparent]] where schema is taken directly from the wrapped
   * type, without changes.
   */
-trait SchemaAdjuster extends Adjuster {
+trait SchemaAdjuster extends Adjuster with NotInheritedFromSealedTypes {
   def adjustSchema(schema: Schema): Schema
 }
 
