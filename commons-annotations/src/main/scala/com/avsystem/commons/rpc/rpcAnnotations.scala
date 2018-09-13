@@ -53,7 +53,7 @@ final class rpcMethodMetadata extends MetadataParamStrategy
 
 /**
   * `@rpcParamMetadata` applied on metadata parameter of RPC method metadata class indicates that this parameter holds
-  * metadata for RPC parameter(s) (one, some or all, depending on [[om.avsystem.commons.meta.SymbolArity SymbolArity]]],
+  * metadata for RPC parameter(s) (one, some or all, depending on [[com.avsystem.commons.meta.SymbolArity SymbolArity]]],
   * tagging, etc.).
   **/
 final class rpcParamMetadata extends MetadataParamStrategy
