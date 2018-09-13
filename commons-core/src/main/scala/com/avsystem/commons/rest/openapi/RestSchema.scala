@@ -112,16 +112,16 @@ case class RestCustomCase[T](
 case class RestRecord[T](
   @multi @reifyAnnot schemaAdjusters: List[SchemaAdjuster],
   @adtParamMetadata @multi fields: List[RestField[_]],
-  @composite info: GenCaseInfo[T],
+  @composite info: GenCaseInfo[T]
 ) extends RestStructure[T] with RestCase[T] {
 
   def createSchema(resolver: SchemaResolver, caseFieldName: Opt[String]): RefOr[Schema] =
     (fields, caseFieldName) match {
       case (single :: Nil, Opt.Empty) if info.transparent =>
-        resolver.resolve(single.restSchema)
+        SchemaAdjuster.adjustRef(schemaAdjusters, resolver.resolve(single.restSchema))
       case _ =>
         val props = caseFieldName.map(cfn => (cfn, RefOr(Schema.enumOf(List(info.rawName))))).iterator ++
-          fields.iterator.map(f => (f.info.rawName, resolver.resolve(f.restSchema)))
+          fields.iterator.map(f => (f.info.rawName, f.resolveSchema(resolver)))
         val required = caseFieldName.iterator ++
           fields.iterator.filterNot(_.info.hasFallbackValue).map(_.info.rawName)
         RefOr(applyAdjusters(Schema(`type` = DataType.Object, properties = props.toMap, required = required.toList)))
@@ -148,8 +148,12 @@ object RestSingleton extends AdtMetadataCompanion[RestSingleton]
 
 case class RestField[T](
   @composite info: GenParamInfo[T],
-  @infer restSchema: RestSchema[T]
-) extends TypedMetadata[T]
+  @infer restSchema: RestSchema[T],
+  @multi @reifyAnnot schemaAdjusters: List[SchemaAdjuster]
+) extends TypedMetadata[T] {
+  def resolveSchema(resolver: SchemaResolver): RefOr[Schema] =
+    SchemaAdjuster.adjustRef(schemaAdjusters, resolver.resolve(restSchema))
+}
 
 @implicitNotFound("RestSchema for ${T} not found. You may provide it by making companion object of ${T} " +
   "extend RestDataCompanion[${T}] (if it is a case class or sealed hierarchy).")
@@ -175,6 +179,9 @@ object RestSchema {
 
   def plain[T](schema: Schema): RestSchema[T] =
     RestSchema.create(_ => RefOr(schema))
+
+  def ref[T](refstr: String): RestSchema[T] =
+    RestSchema.create(_ => RefOr.ref(refstr))
 
   implicit lazy val NothingSchema: RestSchema[Nothing] =
     RestSchema.create(_ => throw new NotImplementedError("RestSchema[Nothing]"))
@@ -277,7 +284,9 @@ object RestResponses {
 }
 
 @implicitNotFound("RestRequestBody for ${T} not found. You may provide it by defining an instance of RestSchema[${T}]")
-case class RestRequestBody[T](requestBody: SchemaResolver => RefOr[RequestBody])
+trait RestRequestBody[T] {
+  def requestBody(resolver: SchemaResolver, schemaAdjusters: List[SchemaAdjuster]): RefOr[RequestBody]
+}
 object RestRequestBody {
   def apply[T](implicit r: RestRequestBody[T]): RestRequestBody[T] = r
 
@@ -290,7 +299,10 @@ object RestRequestBody {
     )
 
   implicit def fromSchema[T: RestSchema]: RestRequestBody[T] =
-    RestRequestBody(resolver => RefOr(jsonRequestBody(resolver.resolve(RestSchema[T]))))
+    new RestRequestBody[T] {
+      def requestBody(resolver: SchemaResolver, schemaAdjusters: List[SchemaAdjuster]): RefOr[RequestBody] =
+        RefOr(jsonRequestBody(SchemaAdjuster.adjustRef(schemaAdjusters, resolver.resolve(RestSchema[T]))))
+    }
 }
 
 trait SchemaResolver {

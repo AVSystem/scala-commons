@@ -38,20 +38,23 @@ trait RpcTag extends RealSymAnnotation
   *
   * Macro generation of `AsRaw` implementations require that raw methods annotated as
   * [[com.avsystem.commons.meta.multi multi]] must take at least
-  * one raw parameter annotated as [[methodName]] (it may also be aggregated into some [[composite]] parameter).
+  * one raw parameter annotated as [[methodName]] (it may also be aggregated into some
+  * [[com.avsystem.commons.meta.composite composite]] parameter).
   * This is necessary to properly identify which real method should be called.
   */
 final class methodName extends RawParamAnnotation
 
 /**
   * `@rpcMethodMetadata` applied on metadata parameter of RPC trait metadata class indicates that this parameter holds
-  * metadata for RPC method(s) (one, some or all, depending on [[SymbolArity]], tagging, etc.).
+  * metadata for RPC method(s) (one, some or all, depending on [[com.avsystem.commons.meta.SymbolArity SymbolArity]],
+  * tagging, etc.).
   **/
 final class rpcMethodMetadata extends MetadataParamStrategy
 
 /**
   * `@rpcParamMetadata` applied on metadata parameter of RPC method metadata class indicates that this parameter holds
-  * metadata for RPC parameter(s) (one, some or all, depending on [[SymbolArity]], tagging, etc.).
+  * metadata for RPC parameter(s) (one, some or all, depending on [[om.avsystem.commons.meta.SymbolArity SymbolArity]]],
+  * tagging, etc.).
   **/
 final class rpcParamMetadata extends MetadataParamStrategy
 

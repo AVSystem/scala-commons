@@ -193,7 +193,12 @@ case class Schema(
   @td enum: List[String] = Nil //TODO: other values than strings
 
   //TODO: default
-)
+) {
+  def unwrapSingleRefAllOf: RefOr[Schema] = allOf match {
+    case List(ref: RefOr.Ref) if this == Schema(allOf = List(ref)) => ref
+    case _ => RefOr(this)
+  }
+}
 object Schema extends HasGenCodec[Schema] {
   final val Boolean = Schema(`type` = DataType.Boolean)
   final val Char = Schema(`type` = DataType.String, minLength = 1, maxLength = 1)
@@ -224,9 +229,19 @@ object Schema extends HasGenCodec[Schema] {
   def enumOf(values: List[String]): Schema =
     Schema(`type` = DataType.String, enum = values)
 
-  def nullable(schema: RefOr[Schema]): Schema = schema match {
-    case RefOr.Value(v) => v.copy(nullable = true)
-    case ref => Schema(nullable = true, allOf = List(ref))
+  def nullable(schema: RefOr[Schema]): Schema =
+    schema.rewrapRefToAllOf.copy(nullable = true)
+
+  implicit class RefOrOps(private val refOrSchema: RefOr[Schema]) extends AnyVal {
+    /**
+      * Transforms a potential schema reference into an actual [[Schema]] by wrapping the reference into
+      * `allOf` property of the new schema, e.g. `{"$ref": "#/components/schemas/Entity"}` becomes
+      * `{"allOf": [{"$ref": "#/components/schemas/Entity"}]}`.
+      */
+    def rewrapRefToAllOf: Schema = refOrSchema match {
+      case RefOr.Value(schema) => schema
+      case ref => Schema(allOf = List(ref))
+    }
   }
 }
 

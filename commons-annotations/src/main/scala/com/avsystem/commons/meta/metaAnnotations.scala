@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package meta
 
-import com.avsystem.commons.rpc._
-
 import scala.annotation.StaticAnnotation
 
 /**
@@ -50,8 +48,9 @@ sealed trait SymbolArity extends RawParamAnnotation
   * on the position that matches raw parameter's position. Names are ignored because - unlike methods - parameters are
   * identified by their position in parameter list(s) rather than their name.
   *
-  * By default, [[single]] raw methods and parameters are [[verbatim]] which means that the real method must have
-  * exactly the same return type as raw method and real parameter must have exactly the same type as raw parameter.
+  * By default, [[single]] raw methods and parameters are [[com.avsystem.commons.rpc.verbatim verbatim]] which means
+  * that the real method must have exactly the same return type as raw method and real parameter must have exactly
+  * the same type as raw parameter.
   *
   * When applied on method metadata parameter or parameter metadata parameter, the rules above apply in the same way
   * except that real method/parameter type is matched against the type passed as `T` to `TypedMetadata[T]` by
@@ -75,8 +74,9 @@ final class single extends SymbolArity
   * (see [[com.avsystem.commons.rpc.paramTag paramTag]] for more information on param tagging).
   *
   * Raw parameters marked as [[optional]] must be typed as `Option[T]` (or `Opt[T]`, `OptArg[T]` or whatever type that
-  * has an instance of `OptionLike`). By default, [[optional]] raw parameters are [[verbatim]] which means that the
-  * option-wrapped type `T` must match exactly the type of real parameter.
+  * has an instance of `OptionLike`). By default, [[optional]] raw parameters are
+  * [[com.avsystem.commons.rpc.verbatim verbatim]] which means that the option-wrapped type `T` must match exactly
+  * the type of real parameter.
   *
   * In the macro generated code that translates a raw call into a real call, when the raw parameter value is absent
   * (the `Option[T]` is empty) then real parameter's default value will be used as fallback. This allows introducing
@@ -97,20 +97,22 @@ final class optional extends SymbolArity
   * In order to distinguish between real methods when translating raw call into real call,
   * multi raw method must take real method's RPC name (a `String`) as one of its parameters
   * (see [[com.avsystem.commons.rpc.methodName methodName]]).
-  * By default, result type of multi raw method is [[encoded]] and the macro engine searches for
+  * By default, result type of multi raw method is [[com.avsystem.commons.rpc.encoded encoded]] and the macro engine searches for
   * appropriate `AsRaw` or `AsReal` conversion between real method result type and raw method result type.
   *
   * When applied on raw parameter, specifies that this raw parameter may be matched by arbitrary number of real
-  * parameters whose values are typically [[encoded]] and collected into (or extracted from) raw parameter value.
+  * parameters whose values are typically [[com.avsystem.commons.rpc.encoded encoded]] and collected into
+  * (or extracted from) raw parameter value.
   * The way real parameter values are collected and extracted depends on the type of raw parameter which must be
   * either:
   *
   * - an `Iterable[R]` or any subtype (e.g. `List[R]`)
   * - a `PartialFunction[String,R]` or any subtype (e.g. `Map[String,R]`)
   *
-  * `R` denotes the type used to represent each real parameter value. Be default (unless [[verbatim]] is used) it means
-  * that each real value will be encoded as `R` and decoded from `R` - see [[encoded]] for more information about
-  * how parameters are encoded and decoded.
+  * `R` denotes the type used to represent each real parameter value. Be default (unless
+  * [[com.avsystem.commons.rpc.verbatim verbatim]] is used) it means
+  * that each real value will be encoded as `R` and decoded from `R` - see [[com.avsystem.commons.rpc.encoded encoded]]
+  * for more information about how parameters are encoded and decoded.
   *
   * If raw parameter is a `Coll <: Iterable[Raw]` then in order to collect real values into raw value, the macro engine
   * will search for an instance of `CanBuildFrom[Nothing,R,Coll]` and use it to build the raw value.

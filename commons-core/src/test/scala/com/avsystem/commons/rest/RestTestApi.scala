@@ -34,11 +34,11 @@ trait RestTestApi {
     @Path("p1") p1: Int, @Path p2: String,
     @Header("X-H1") h1: Int, @Header("X-H2") h2: String,
     @Query q1: Int, @Query("q=2") q2: String,
-    b1: Int, @JsonBodyParam("b\"2") b2: String
+    b1: Int, @JsonBodyParam("b\"2") @description("weird body field") b2: String
   ): Future[RestEntity]
 
   @PUT("") def singleBodyPut(
-    @Body entity: RestEntity
+    @Body @description("REST entity description") entity: RestEntity
   ): Future[String]
 
   def prefix(

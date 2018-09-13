@@ -8,15 +8,32 @@ import scala.annotation.StaticAnnotation
 sealed trait Adjuster extends StaticAnnotation
 
 /**
-  * Base trait for annotations which may adjust [[Schema]] generated for a type from its [[RestStructure]].
-  * Schema adjuster annotations only have effect on types for which [[RestStructure]] is macro-generated and
-  * [[RestSchema]] is derived from [[RestStructure]] (e.g. types with companions extending [[RestDataCompanion]]).
-  * Schema adjusters have no effect on methods or parameters. Also note that they have no effect on types annotated as
-  * [[com.avsystem.commons.serialization.transparent transparent]] where schema is taken directly from the wrapped
-  * type, without changes.
+  * Base trait for annotations which may adjust [[Schema]] derived for various symbols in REST API traits.
+  * Schema adjusters may be applied on:
+  *
+  * - Types for which [[RestStructure]] is macro materialized and [[RestSchema]] derived from it.
+  * This includes all types with companion extending [[RestDataCompanion]].
+  *
+  * - Fields of case classes for which [[RestStructure]] is macro materialized.
+  *
+  * - Body parameters of REST methods (parameters tagged with [[com.avsystem.commons.rest.JsonBodyParam JsonBodyParam]]
+  * or [[com.avsystem.commons.rest.Body Body]] annotations)
+  *
+  * Schema adjusters DO NOT WORK on REST methods themselves and their path/header/query parameters.
+  * Instead, use [[OperationAdjuster]] and [[ParameterAdjuster]].
+  *
+  * Also, be aware that schema adjusters may also be applied on schema references. In such cases, the schema reference
+  * is wrapped into a [[Schema]] object with `allOf` property containing the original reference. This effectively
+  * allows you to extend the referenced schema but you cannot inspect it in the process.
   */
 trait SchemaAdjuster extends Adjuster with NotInheritedFromSealedTypes {
   def adjustSchema(schema: Schema): Schema
+}
+object SchemaAdjuster {
+  def adjustRef(adjusters: List[SchemaAdjuster], schema: RefOr[Schema]): RefOr[Schema] =
+    if (adjusters.nonEmpty)
+      adjusters.foldRight(schema.rewrapRefToAllOf)(_ adjustSchema _).unwrapSingleRefAllOf
+    else schema
 }
 
 /**
@@ -28,8 +45,8 @@ trait ParameterAdjuster extends Adjuster {
 }
 
 /**
-  * Base trait for annotation which may adjust [[Operation]] generated for path, query or header parameters
-  * of REST RPC methods.
+  * Base trait for annotation which may adjust [[Operation]] generated for REST RPC methods which translate to
+  * HTTP operations (i.e. it doesn't work for prefix methods).
   */
 trait OperationAdjuster extends Adjuster {
   def adjustOperation(operation: Operation): Operation
@@ -48,6 +65,12 @@ class adjustOperation(f: Operation => Operation) extends OperationAdjuster {
   def adjustOperation(value: Operation): Operation = f(value)
 }
 
+/**
+  * Annotation that specifies description that will be included into generated OpenAPI specification.
+  * It can be applied on REST methods ([[OperationAdjuster]]), path/header/query parameters ([[ParameterAdjuster]]),
+  * body parameters ([[SchemaAdjuster]]), case class fields ([[SchemaAdjuster]]) and ADTs for which [[RestStructure]]
+  * is macro generated ([[SchemaAdjuster]]).
+  */
 class description(desc: String) extends SchemaAdjuster with ParameterAdjuster with OperationAdjuster {
   def adjustSchema(schema: Schema): Schema = schema.copy(description = desc)
   def adjustParameter(parameter: Parameter): Parameter = parameter.copy(description = desc)

@@ -137,18 +137,18 @@ case class OpenApiBodyOperation[T](
   name: String,
   methodTag: HttpMethodTag,
   parameters: List[OpenApiParameter[_]],
-  @multi @rpcParamMetadata @tagged[JsonBodyParam] bodyParams: List[OpenApiParamInfo[_]],
+  @multi @rpcParamMetadata @tagged[JsonBodyParam] bodyParams: List[OpenApiBodyField[_]],
   @optional @encoded @rpcParamMetadata @tagged[Body] singleBody: Opt[OpenApiBody[_]],
   responseType: HttpResponseType[T],
   adjusters: List[OperationAdjuster]
 ) extends OpenApiOperation[T] {
 
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]] =
-    singleBody.map(_.requestBody.requestBody(resolver).opt).getOrElse {
+    singleBody.map(_.requestBody(resolver).opt).getOrElse {
       if (bodyParams.isEmpty) Opt.Empty else Opt {
         val schema = Schema(`type` = DataType.Object,
-          properties = bodyParams.iterator.map(p => (p.name, resolver.resolve(p.restSchema))).toMap,
-          required = bodyParams.collect { case p if !p.hasFallbackValue => p.name }
+          properties = bodyParams.iterator.map(p => (p.info.name, p.schema(resolver))).toMap,
+          required = bodyParams.collect { case p if !p.info.hasFallbackValue => p.info.name }
         )
         RefOr(RestRequestBody.jsonRequestBody(RefOr(schema)))
       }
@@ -183,5 +183,18 @@ case class OpenApiParameter[T](
   }
 }
 
-case class OpenApiBody[T](@infer requestBody: RestRequestBody[T]) extends TypedMetadata[T]
+case class OpenApiBodyField[T](
+  @composite info: OpenApiParamInfo[T],
+  @multi @reifyAnnot schemaAdjusters: List[SchemaAdjuster]
+) extends TypedMetadata[T] {
+  def schema(resolver: SchemaResolver): RefOr[Schema] =
+    SchemaAdjuster.adjustRef(schemaAdjusters, resolver.resolve(info.restSchema))
+}
 
+case class OpenApiBody[T](
+  @infer restRequestBody: RestRequestBody[T],
+  @multi @reifyAnnot schemaAdjusters: List[SchemaAdjuster]
+) extends TypedMetadata[T] {
+  def requestBody(resolver: SchemaResolver): RefOr[RequestBody] =
+    restRequestBody.requestBody(resolver, schemaAdjusters)
+}

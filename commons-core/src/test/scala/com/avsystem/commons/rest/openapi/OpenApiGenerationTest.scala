@@ -225,7 +225,8 @@ class OpenApiGenerationTest extends FunSuite {
         |                    "format": "int32"
         |                  },
         |                  "b\"2": {
-        |                    "type": "string"
+        |                    "type": "string",
+        |                    "description": "weird body field"
         |                  }
         |                },
         |                "required": [
@@ -328,7 +329,12 @@ class OpenApiGenerationTest extends FunSuite {
         |          "content": {
         |            "application/json": {
         |              "schema": {
-        |                "$ref": "#/components/schemas/RestEntity"
+        |                "description": "REST entity description",
+        |                "allOf": [
+        |                  {
+        |                    "$ref": "#/components/schemas/RestEntity"
+        |                  }
+        |                ]
         |              }
         |            }
         |          },
