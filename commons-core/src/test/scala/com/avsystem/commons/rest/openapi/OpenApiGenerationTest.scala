@@ -449,14 +449,17 @@ class OpenApiGenerationTest extends FunSuite {
         |      },
         |      "RestEntity": {
         |        "type": "object",
+        |        "description": "REST entity",
         |        "properties": {
         |          "id": {
-        |            "type": "string"
+        |            "type": "string",
+        |            "description": "entity id"
         |          },
         |          "name": {
         |            "type": "string"
         |          },
         |          "subentity": {
+        |            "description": "recursive optional subentity",
         |            "nullable": true,
         |            "allOf": [
         |              {

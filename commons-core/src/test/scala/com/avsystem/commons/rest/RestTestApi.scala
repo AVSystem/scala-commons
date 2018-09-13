@@ -11,7 +11,12 @@ object BaseEntity extends RestDataCompanion[BaseEntity]
 @flatten sealed trait FlatBaseEntity extends BaseEntity
 object FlatBaseEntity extends RestDataCompanion[FlatBaseEntity]
 
-case class RestEntity(id: String, name: String, subentity: OptArg[RestEntity] = OptArg.Empty) extends FlatBaseEntity
+@description("REST entity")
+case class RestEntity(
+  @description("entity id") id: String,
+  name: String,
+  @description("recursive optional subentity") subentity: OptArg[RestEntity] = OptArg.Empty
+) extends FlatBaseEntity
 object RestEntity extends RestDataCompanion[RestEntity]
 
 case class RestOtherEntity(fuu: Boolean, kek: List[String]) extends FlatBaseEntity
