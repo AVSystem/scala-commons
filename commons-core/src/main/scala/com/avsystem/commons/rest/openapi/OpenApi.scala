@@ -235,8 +235,8 @@ object Schema extends HasGenCodec[Schema] {
   implicit class RefOrOps(private val refOrSchema: RefOr[Schema]) extends AnyVal {
     /**
       * Transforms a potential schema reference into an actual [[Schema]] by wrapping the reference into
-      * `allOf` property of the new schema, e.g. `{"$ref": "#/components/schemas/Entity"}` becomes
-      * `{"allOf": [{"$ref": "#/components/schemas/Entity"}]}`.
+      * `allOf` property of the new schema, e.g. `{"$$ref": "#/components/schemas/Entity"}` becomes
+      * `{"allOf": [{"$$ref": "#/components/schemas/Entity"}]}`.
       */
     def rewrapRefToAllOf: Schema = refOrSchema match {
       case RefOr.Value(schema) => schema
