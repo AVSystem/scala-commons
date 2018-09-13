@@ -44,7 +44,7 @@ trait MacroMetadatas extends MacroSymbols {
   }
 
   def materializeOneOf(mdType: Type)(materialize: Type => Res[Tree]): Res[Tree] =
-    knownSubtypes(mdType) match {
+    knownSubtypes(mdType, ordered = true) match {
       case Some(subtypes) => Res.firstOk(subtypes)(materialize) { errorsByType =>
         s"none of the case types of $mdType could be materialized:\n" +
           errorsByType.iterator.map {

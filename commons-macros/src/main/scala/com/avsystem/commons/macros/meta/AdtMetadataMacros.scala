@@ -258,7 +258,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
     val adtSymbol =
       singleValueFor(adtTpe).map(sv => new AdtObject(adtTpe, sv)) orElse
         applyUnapplyFor(adtTpe).map(au => new AdtClass(adtTpe, au)) orElse
-        knownSubtypes(adtTpe).map(st => new AdtHierarchy(adtTpe, st)) getOrElse
+        knownSubtypes(adtTpe, ordered = true).map(st => new AdtHierarchy(adtTpe, st)) getOrElse
         new AdtOtherCase(adtTpe)
 
     def tryMaterialize(metadataTpe: Type): Res[Tree] =

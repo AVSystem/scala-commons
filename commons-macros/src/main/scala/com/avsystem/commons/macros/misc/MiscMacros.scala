@@ -342,4 +342,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       case None => abort(s"$tpe is not a singleton type")
     }
   }
+
+  def posPoint: Tree =
+    q"${c.enclosingPosition.point}"
 }

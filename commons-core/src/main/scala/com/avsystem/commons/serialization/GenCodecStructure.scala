@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta._
 
 sealed trait GenInfo[T] extends TypedMetadata[T] {
@@ -25,7 +26,7 @@ sealed trait GenCodecStructure[T] extends GenInfo[T] {
   def flags: TypeFlags
 }
 
-case class GenUnionInfo[T](
+@positioned(positioned.here) case class GenUnionInfo[T](
   @reifyFlags flags: TypeFlags,
   @reifyName sourceName: String,
   @optional @reifyAnnot annotName: Opt[name],
@@ -33,7 +34,7 @@ case class GenUnionInfo[T](
 ) extends GenCodecStructure[T]
 object GenUnionInfo extends AdtMetadataCompanion[GenUnionInfo]
 
-case class GenCaseInfo[T](
+@positioned(positioned.here) case class GenCaseInfo[T](
   @reifyFlags flags: TypeFlags,
   @reifyName sourceName: String,
   @optional @reifyAnnot annotName: Opt[name],

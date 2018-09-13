@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package misc
 
+import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta._
 import com.avsystem.commons.serialization.{GenCaseInfo, GenCodec, GenParamInfo, GenUnionInfo, name}
 
@@ -24,7 +25,7 @@ case class GenField[T](
   def repr: String = s"[$info.flags]${info.annotName.fold("")(n => s"<${n.name}> ")}$ts"
 }
 
-case class GenUnion[T](
+@positioned(positioned.here) case class GenUnion[T](
   @composite info: GenUnionInfo[T],
   @multi @adtCaseMetadata cases: Map[String, GenCase[_]]
 ) extends GenStructure[T] {
@@ -38,14 +39,14 @@ sealed trait GenCase[T] extends TypedMetadata[T] {
   def info: GenCaseInfo[T]
 }
 
-case class GenCustomCase[T](
+@positioned(positioned.here) case class GenCustomCase[T](
   @composite info: GenCaseInfo[T],
   @checked @infer structure: GenStructure.Lazy[T]
 ) extends GenCase[T] {
   def repr: String = structure.value.repr
 }
 
-case class GenRecord[T](
+@positioned(positioned.here) case class GenRecord[T](
   @composite info: GenCaseInfo[T],
   @multi @adtParamMetadata fields: Map[String, GenField[_]]
 ) extends GenCase[T] with GenStructure[T] {
@@ -57,7 +58,7 @@ case class GenRecord[T](
   def repr: String = repr(0)
 }
 
-case class GenSingleton[T](
+@positioned(positioned.here) case class GenSingleton[T](
   @composite info: GenCaseInfo[T],
   @checked @infer valueOf: ValueOf[T]
 ) extends GenCase[T] with GenStructure[T] {

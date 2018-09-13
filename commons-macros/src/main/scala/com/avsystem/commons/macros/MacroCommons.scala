@@ -46,6 +46,7 @@ trait MacroCommons { bundle =>
   final val DefaultsToNameAT = getType(tq"$CommonsPkg.annotation.defaultsToName")
   final val NotInheritedFromSealedTypes = getType(tq"$CommonsPkg.annotation.NotInheritedFromSealedTypes")
   final val SeqCompanionSym = typeOf[scala.collection.Seq.type].termSymbol
+  final val PositionedAT = getType(tq"$CommonsPkg.annotation.positioned")
 
   final val NothingTpe: Type = typeOf[Nothing]
   final val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
@@ -546,6 +547,13 @@ trait MacroCommons { bundle =>
     }
   }
 
+  object MaybeTyped {
+    def unapply(t: Tree): Some[(Tree, Option[Tree])] = t match {
+      case Typed(expr, tpt) => Some((expr, Some(tpt)))
+      case _ => Some(t, None)
+    }
+  }
+
   object MaybeTypeApply {
     def unapply(tree: Tree): Some[(Tree, List[Tree])] = tree match {
       case TypeApply(fun, args) => Some((fun, args))
@@ -880,32 +888,33 @@ trait MacroCommons { bundle =>
   def ownersOf(sym: Symbol): List[Symbol] =
     ownersCache.getOrElseUpdate(sym, Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).toList.reverse)
 
-  def knownSubtypes(tpe: Type): Option[List[Type]] = {
-    def isBefore(ancestor: Symbol, owners1: List[Symbol], owners2: List[Symbol]): Boolean =
-      (owners1, owners2) match {
-        case (h1 :: t1, h2 :: t2) if h1 == h2 => isBefore(h1, t1, t2)
-        case (h1 :: _, h2 :: _) =>
-          ancestor.asType.toType.decls.sorted.find(s => s == h1 || s == h2).contains(h1)
-        case (_, Nil) => false
-        case (Nil, _) => true
-      }
+  private val positionCache = new mutable.OpenHashMap[Symbol, Int]
+  def positionPoint(sym: Symbol): Int =
+    if (c.enclosingPosition.source == sym.pos.source) sym.pos.point
+    else positionCache.getOrElseUpdate(sym,
+      sym.annotations.find(_.tree.tpe <:< PositionedAT).map(_.tree).map {
+        case Apply(_, List(MaybeTyped(Lit(point: Int), _))) => point
+        case t => abort(s"expected literal int as argument of @positioned annotation on $sym, got $t")
+      } getOrElse {
+        abort(s"Could not determine source position of $sym - " +
+          s"it resides in separate file than macro invocation and has no @positioned annotation")
+      })
 
-    def isDeclaredBefore(sym1: Symbol, sym2: Symbol): Boolean =
-      if (sym1.pos != NoPosition && sym2.pos != NoPosition)
-        sym1.pos.point < sym2.pos.point
-      else if (sym1.owner == sym2.owner) //optimization for common case
-        sym1.owner.asType.toType.decls.sorted.find(s => s == sym1 || s == sym2).contains(sym1)
-      else isBefore(NoSymbol, ownersOf(sym1), ownersOf(sym2))
-
+  def knownSubtypes(tpe: Type, ordered: Boolean = false): Option[List[Type]] = {
     val dtpe = tpe.dealias
     val (tpeSym, refined) = dtpe match {
       case RefinedType(List(single), scope) =>
         (single.typeSymbol, scope.filter(ts => ts.isType && !ts.isAbstract).toList)
       case _ => (dtpe.typeSymbol, Nil)
     }
+
+    def sort(subclasses: List[Symbol]): List[Symbol] =
+      if (ordered || c.enclosingPosition.source == tpeSym.pos.source)
+        subclasses.sortBy(positionPoint)
+      else subclasses
+
     Option(tpeSym).filter(isSealedHierarchyRoot).map { sym =>
-      val subclasses = knownNonAbstractSubclasses(sym).toList.sortWith(isDeclaredBefore)
-      subclasses.flatMap { subSym =>
+      sort(knownNonAbstractSubclasses(sym).toList).flatMap { subSym =>
         val undetTpe = typeOfTypeSymbol(subSym.asType)
         val refinementSignatures = refined.map(rs => undetTpe.member(rs.name).typeSignatureIn(undetTpe))
         val undetBaseTpe = undetTpe.baseType(dtpe.typeSymbol)
