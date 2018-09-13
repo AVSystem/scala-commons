@@ -375,7 +375,7 @@ object Header extends HasGenCodec[Header]
 @flatten("type") sealed trait SecurityScheme {
   def description: OptArg[String]
 }
-object SecurityScheme extends HasGenCodec[SecurityScheme] {
+object SecurityScheme {
   @name("apiKey") case class ApiKey(
     name: String,
     in: Location,
@@ -397,6 +397,8 @@ object SecurityScheme extends HasGenCodec[SecurityScheme] {
     openIdConnectUrl: String,
     @td description: OptArg[String] = OptArg.Empty
   ) extends SecurityScheme
+
+  implicit val codec: GenCodec[SecurityScheme] = GenCodec.materialize
 }
 
 case class OAuthFlows(
