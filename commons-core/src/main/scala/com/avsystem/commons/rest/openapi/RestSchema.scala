@@ -135,7 +135,7 @@ object RestRecord extends AdtMetadataCompanion[RestRecord]
 case class RestSingleton[T](
   @multi @reifyAnnot schemaAdjusters: List[SchemaAdjuster],
   @infer @checked value: ValueOf[T],
-  @composite info: GenCaseInfo[T],
+  @composite info: GenCaseInfo[T]
 ) extends RestStructure[T] with RestCase[T] {
 
   def createSchema(resolver: SchemaResolver, caseFieldName: Opt[String]): RefOr[Schema] =
