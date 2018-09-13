@@ -47,7 +47,7 @@ case class GenCustomCase[T](
 
 case class GenRecord[T](
   @composite info: GenCaseInfo[T],
-  @multi @adtParamMetadata fields: Map[String, GenField[_]],
+  @multi @adtParamMetadata fields: Map[String, GenField[_]]
 ) extends GenCase[T] with GenStructure[T] {
 
   def repr(indent: Int): String = fields.iterator.map {
