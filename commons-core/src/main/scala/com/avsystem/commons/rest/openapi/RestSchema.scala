@@ -175,6 +175,10 @@ final class InliningResolver extends SchemaResolver {
       schema.name.foreach(resolving.remove)
     }
 }
+object InliningResolver {
+  def resolve(schema: RestSchema[_]): RefOr[Schema] =
+    new InliningResolver().resolve(schema)
+}
 
 final class SchemaRegistry(nameToRef: String => String, initial: Iterable[(String, RefOr[Schema])] = Map.empty)
   extends SchemaResolver {
