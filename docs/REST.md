@@ -613,7 +613,7 @@ object MyRestApi extends CirceRestApiCompanion[MyRestApi]
 
 **WARNING**: if you also generate [OpenAPI documents](#generating-openapi-30-specifications) for your
 REST API, then along from custom serialization you must provide customized instances of
-[`RestSchema`](#rest-schema-typeclass) that will adequately describe your new serialization format.
+[`RestSchema`](#restschema-typeclass) that will adequately describe your new serialization format.
 
 #### Customizing serialization for your own type
 
@@ -628,7 +628,7 @@ object MyClass {
 ```
 
 **WARNING**: Remember that if you generate [OpenAPI documents](#generating-openapi-30-specifications) for your
-REST API then you must also provide custom [`RestSchema`](#rest-schema-typeclass) instance for your type that
+REST API then you must also provide custom [`RestSchema`](#restschema-typeclass) instance for your type that
 will match its serialization format.
 
 #### Providing serialization for third party type
@@ -657,7 +657,7 @@ object MyRestApi extends RestApiCompanion[EnhancedRestImplicits, MyRestApi](Enha
 ```
 
 **WARNING**: Remember that if you generate [OpenAPI documents](#generating-openapi-30-specifications) for your
-REST API then you must also provide custom [`RestSchema`](#rest-schema-typeclass) instance for your type that
+REST API then you must also provide custom [`RestSchema`](#restschema-typeclass) instance for your type that
 will match its serialization format.
 
 #### Supporting result containers other than `Future`
