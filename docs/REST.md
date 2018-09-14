@@ -863,8 +863,8 @@ Schema derived for an ADT from macro materialized `RestStructure` will describe 
 
 ##### Registered schemas
 
-By default, schemas macro materialized for case classes and sealed hierarchies will be _named_
-- this means they will not be inlined but rather registered under their name in
+By default, schemas macro materialized for case classes and sealed hierarchies will be _named_.
+This means they will not be inlined but rather registered under their name in
 [Components Object](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#componentsObject).
 By default, the name that will be used will be the simple (unqualified) name of the data type, e.g. "User".
 When referring to registered schema (e.g. in
