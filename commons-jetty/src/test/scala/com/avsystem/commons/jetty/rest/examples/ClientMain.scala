@@ -20,7 +20,7 @@ object ClientMain {
     val result = proxy.createUser("Fred", 1990)
       .andThen({ case _ => client.stop() })
       .andThen {
-        case Success(id) => println(s"User $id created")
+        case Success(user) => println(s"User ${user.id} created")
         case Failure(cause) => cause.printStackTrace()
       }
 

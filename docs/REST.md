@@ -46,6 +46,19 @@ The `commons-jetty` module provides Jetty-based implementations for JVM.
   - [Handler function](#handler-function)
   - [Implementing a server](#implementing-a-server)
   - [Implementing a client](#implementing-a-client)
+- [Generating OpenAPI 3.0 specifications](#generating-openapi-30-specifications)
+  - [`RestSchema` typeclass](#restschema-typeclass)
+    - [Macro materialized ADT schemas](#macro-materialized-adt-schemas)
+      - [Registered schemas](#registered-schemas)
+      - [Adjusting macro materialized schemas](#adjusting-macro-materialized-schemas)
+    - [Manually defined schemas](#manually-defined-schemas)
+  - [`RestResponses` typeclass](#restresponses-typeclass)
+  - [`RestRequestBody` typeclass](#restrequestbody-typeclass)
+  - [Adjusting generated OpenAPI documents with annotations](#adjusting-generated-openapi-documents-with-annotations)
+    - [Adjusting schemas](#adjusting-schemas)
+    - [Adjusting parameters](#adjusting-parameters)
+    - [Adjusting operations](#adjusting-operations)
+  - [Limitations](#limitations)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -66,9 +79,12 @@ Then, define some trivial REST interface:
 ```scala
 import com.avsystem.commons.rest._
 
+case class User(id: String, name: String, birthYear: Int)
+object User extends RestDataCompanion[User]
+
 trait UserApi {
-  /** Returns ID of newly created user */
-  def createUser(name: String, birthYear: Int): Future[String]
+  /** Returns newly created user */
+  def createUser(name: String, birthYear: Int): Future[User]
 }
 object UserApi extends DefaultRestApiCompanion[UserApi]
 ```
@@ -80,7 +96,8 @@ import com.avsystem.commons.jetty.rest.RestHandler
 import org.eclipse.jetty.server.Server
 
 class UserApiImpl extends UserApi {
-  def createUser(name: String, birthYear: Int) = Future.successful(s"$name-ID")
+  def createUser(name: String, birthYear: Int): Future[User] =
+    Future.successful(User(s"$name-ID", name, birthYear))
 }
 
 object ServerMain {
@@ -91,6 +108,7 @@ object ServerMain {
     server.join()
   }
 }
+
 ```
 
 Finally, obtain a client proxy for your API using Jetty HTTP client and make a call:
@@ -113,9 +131,9 @@ object ClientMain {
     import scala.concurrent.ExecutionContext.Implicits.global
 
     val result = proxy.createUser("Fred", 1990)
-      .andThen { case _ => client.stop() }
+      .andThen({ case _ => client.stop() })
       .andThen {
-        case Success(id) => println(s"User $id created")
+        case Success(user) => println(s"User ${user.id} created")
         case Failure(cause) => cause.printStackTrace()
       }
 
@@ -144,10 +162,10 @@ Response:
 HTTP/1.1 200 OK
 Date: Wed, 18 Jul 2018 11:43:08 GMT
 Content-Type: application/json;charset=utf-8
-Content-Length: 9
+Content-Length: 47
 Server: Jetty(9.3.23.v20180228)
 
-"Fred-ID"
+{"id":"Fred-ID","name":"Fred","birthYear":1990}
 ```
 
 ## REST API traits
@@ -209,6 +227,9 @@ object GenericApi {
   import DefaultRestImplicits._
   implicit val restAsRawReal: RawRest.AsRawRealRpc[MyApi] = RawRest.materializeAsRawReal
   implicit val restMetadata: RestMetadata[MyApi] = RestMetadata.materializeForRpc
+
+  import openapi._
+  implicit val openApiMetadata: OpenApiMetadata[MyApi] = OpenApiMetadata.materializeForRpc
 }
 ```
 
@@ -350,7 +371,7 @@ and their format (i.e. it no longer needs to be `application/json`).
 
 ```scala
 case class User(id: String, login: String)
-object User extends HasGenCodec[User]
+object User extends RestDataCompanion[User]
 
 @PUT def updateUser(@Body user: User): Future[Unit]
 ```
@@ -498,9 +519,9 @@ which depends on implicit `AsRaw/Real[RestResponse, R]`. This effectively means 
 it's enough if `R` is serializable as `RestResponse`.
 
 However, there are even more defaults provided: if `R` is serializable as `HttpBody` then it's automatically serializable
-as `RestResponse`. This default translation of `HttpBody` into `RestResponse` always uses 200 as a status code.
-When translating `RestResponse` into `HttpBody` and response contains other status code than 200, `HttpErrorException` is thrown
-(which will be subsequently captured into failed `Future`).
+as `RestResponse`. This default translation of `HttpBody` into `RestResponse` always uses 200 as a status code
+(or 204 for empty body). When translating `RestResponse` into `HttpBody` and response contains erroneous status code,
+`HttpErrorException` is thrown (which will be subsequently captured into failed `Future`).
 
 Going even further with defaults, all types serializable as `JsonValue` are serializable as `HttpBody`.
 This effectively means that when your method returns `Future[R]` then you can provide serialization
@@ -590,6 +611,10 @@ trait MyRestApi { ... }
 object MyRestApi extends CirceRestApiCompanion[MyRestApi]
 ```
 
+**WARNING**: if you also generate [OpenAPI documents](#generating-openapi-30-specifications) for your
+REST API, then along from custom serialization you must provide customized instances of
+[`RestSchema`](#rest-schema-typeclass) that will adequately describe your new serialization format.
+
 #### Customizing serialization for your own type
 
 If you need to write manual serialization for your own type, the easiest way to do this is to
@@ -601,6 +626,10 @@ object MyClass {
   implicit val jsonAsRawReal: AsRawReal[JsonValue, MyClass] = AsRawReal.create(...)
 }
 ```
+
+**WARNING**: Remember that if you generate [OpenAPI documents](#generating-openapi-30-specifications) for your
+REST API then you must also provide custom [`RestSchema`](#rest-schema-typeclass) instance for your type that
+will match its serialization format.
 
 #### Providing serialization for third party type
 
@@ -626,6 +655,10 @@ Then, you need to define your REST API trait as:
 trait MyRestApi { ... }
 object MyRestApi extends RestApiCompanion[EnhancedRestImplicits, MyRestApi](EnhancedRestImplicits)
 ```
+
+**WARNING**: Remember that if you generate [OpenAPI documents](#generating-openapi-30-specifications) for your
+REST API then you must also provide custom [`RestSchema`](#rest-schema-typeclass) instance for your type that
+will match its serialization format.
 
 #### Supporting result containers other than `Future`
 
@@ -662,6 +695,10 @@ trait MonixTaskRestImplicits {
 }
 object MonixTaskRestImplicits
 ```
+
+**WARNING**: If you generate [OpenAPI documents](#generating-openapi-30-specifications) for your
+REST API then you must also provide appropriate instance of `RestResultType` typeclass which by default
+is only defined for `Future`.
 
 ## API evolution
 
@@ -732,3 +769,245 @@ to turn this native HTTP client into a `HandleRequest` function.
 
 See Jetty-based [`RestClient`](../commons-jetty/src/main/scala/com/avsystem/commons/jetty/rest/RestClient.scala) for
 an example implementation.
+
+## Generating OpenAPI 3.0 specifications
+
+[OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md) is an open standard for describing
+REST endpoints using JSON or YAML. It can be consumed by e.g. [Swagger UI](https://swagger.io/tools/swagger-ui/) in
+order to generate nicely looking, human-readable documentation of a REST endpoint.
+
+REST framework provides automatic generation of OpenAPI documents based on REST API traits.
+In order to do this, `OpenApiMetadata` typeclass must be available for an API trait. If your trait's companion
+extends `DefaultRestApiCompanion` or `DefaultRestServerApiCompanion` then `OpenApiMetadata` is automatically
+materialized by a macro. You can then use it to generate OpenAPI specification document like this:
+
+```scala
+import com.avsystem.commons.rest._
+
+trait MyRestApi {
+  ...
+}
+object MyRestApi extends DefaultRestApiCompanion[MyRestApi]
+
+object PrintOpenApiJson {
+  def main(args: Array[String]): Unit = {
+    val openapi = MyRestApi.openapiMetadata.openapi(
+      Info("Some REST API", "0.1", description = "Some example REST API"),
+      servers = List(Server("http://localhost"))
+    )
+    println(JsonStringOutput.writePretty(openapi))
+  }
+}
+```
+
+### `RestSchema` typeclass
+
+In order to macro-materialize `OpenApiMetadata` for your REST API, you need to provide an instance of `RestSchema` typeclass
+for every type used by your API (as a parameter or result type, i.e. when your method returns `Future[T]` then
+`RestSchema[T]` will be needed). `RestSchema` contains a description of data type that is later translated into
+[OpenAPI Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#schemaObject).
+
+Most of the primitive types, collection types, `Option`, `Opt`, etc. already have an appropriate `RestSchema` instance defined
+(roughly the same set of simple types that have `GenCodec` automatically available). If `RestSchema` is not defined, there are
+usually two ways to provide it:
+
+#### Macro materialized ADT schemas
+
+If your data type is an ADT (algebraic data type) - which means case class, object or sealed hierarchy - the easiest way
+to provide schema is by making companion object of your data type extend `RestDataCompanion` - this will automatically
+materialize a `RestStructure` instance for your data type. `RestSchema` is then built based on that `RestStructure`.
+`RestDataCompanion` also automatically materializes a `GenCodec` instance.
+
+```scala
+case class User(id: String, name: String, birthYear: String)
+object User extends RestDataCompanion[User] // gives GenCodec + RestStructure + RestSchema
+```
+
+[Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#schemaObject) generated for
+`User` class will look like this:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "birthYear": {
+      "type": "integer",
+      "format": "int32"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "birthYear"
+  ]
+}
+```
+
+It's also possible to macro materialize schema without using `RestDataCompanion`:
+
+```scala
+object User {
+  implicit lazy val schema: RestSchema[User] = RestStructure.materialize[User].standaloneSchema
+}
+```
+
+Schema derived for an ADT from macro materialized `RestStructure` will describe the JSON format used by
+`GenCodec` macro materialized for that type. It will take into account all the annotations, e.g.
+`@flatten`, `@name`, `@transparent`, etc.
+
+##### Registered schemas
+
+By default, schemas macro materialized for case classes and sealed hierarchies will be _named_
+- this means they will not be inlined but rather registered under their name in
+[Components Object](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#componentsObject).
+By default, the name that will be used will be the simple (unqualified) name of the data type, e.g. "User".
+When referring to registered schema (e.g. in
+[Media Type Object](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#mediaTypeObject)),
+a [Reference Object](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#referenceObject)
+will be inserted, e.g. `{"$ref": "#/components/schemas/User"}`. This is good for schema reuse but may lead to name
+conflicts if you have multiple data types with the same name but in different packages. In such situations, you must
+disambiguate names of your data types with `@name` annotation. Unfortunately, such conflicts cannot be detected in compile
+time and will only be reported in runtime, when trying to generate OpenAPI document.
+
+##### Adjusting macro materialized schemas
+
+It's possible to adjust schemas macro materialized for ADTs using annotations. For example, you can use
+`@description` annotation on data types and case class fields to inject description into materialized schemas, e.g.
+
+```scala
+import com.avsystem.commons.rest._
+import openapi._
+
+@description("data type for users")
+case class User(id: String, @description("user name") name: User, birthYear: Int)
+object User extends RestDataCompanion[User]
+```
+
+You can also use more general `@adjustSchema` annotation which lets you define
+completely arbitrary schema transformations.
+See [Adjusting generated OpenAPI documents with annotations](#adjusting-generated-openapi-documents-with-annotations)
+for more details on this mechanism.
+
+#### Manually defined schemas
+
+You may also define `RestSchema` completely by hand. This is usually done for primitive types or types with custom
+serialization, different from macro materialized `GenCodec`. You can also insert references to externally defined
+schemas.
+
+```scala
+class CustomStringType { ... }
+object CustomStringType {
+  implicit val restSchema: RestSchema[CustomType] =
+    RestSchema.plain(Schema(`type` = DataType.String, description = "custom string type"))
+}
+```
+
+### `RestResponses` typeclass
+
+`RestResponses` is an auxiliary typeclass which is needed for result type of every HTTP REST method
+in your REST API trait. For example, if your method returns `Future[User]` then you need an instance
+of `RestResponses[User]` (this transformation is modeled by yet another intermediate typeclass, `RestResultType`).
+This typeclass governs generation of
+[Responses Object](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#responsesObject)
+
+By default, if no specific `RestResponses` instance is provided, it is created based on `RestSchema`.
+The resulting [Responses](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#responsesObject)
+will contain exactly one
+[Response](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#responseObject)
+for HTTP status code `200 OK` with a single
+[Media Type](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#mediaTypeObject)
+for `application/json` media type and
+[Schema](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#schemaObject)
+inferred from `RestSchema` instance.
+
+You may want to define `RestResponses` instance manually if you want to use other media types than
+`application/json` or you want to define multiple possible responses for different HTTP status codes.
+You may also modify responses for particular method - see [Adjusting operations](#adjusting-operations).
+Normally, manual `RestResponses` instance is needed when a type has custom `AsRaw/AsReal[RestResponse, T]`
+instance which defines custom serialization to HTTP response.
+
+### `RestRequestBody` typeclass
+
+`RestRequestBody` typeclass is an auxiliary typeclass analogous to `RestResponses`. It's necessary
+for `@Body` parameters of REST methods and governs generation of
+[Request Body Object](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#requestBodyObject).
+By default, if not defined explicitly, it's also derived from `RestSchema` and contains single
+[Media Type](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#mediaTypeObject)
+for `application/json` media type and
+[Schema](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#schemaObject)
+inferred from `RestSchema` instance.
+
+You may want to provide custom instance of `RestRequestBody` for your type if that type is serialized
+to different media type than `application/json` (which can be done by providing appropriate instance
+of `AsReal/AsRaw[HttpBody, T]`.
+
+### Adjusting generated OpenAPI documents with annotations
+
+The way OpenAPI documents are generated for your REST API can be influenced with annotations
+applied on REST methods, parameters and data types. The most common example is the `@description` annotation
+which may be applied on data types, case class fields, REST methods and parameters.
+It causes the description to be injected into appropriate
+[Schema](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#schemaObject),
+[Parameter](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#parameterObject) or
+[Operation](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#operationObject)
+objects.
+
+However, `@description` is just an example of more general mechanism - schemas, parameters and operations
+can be modified arbitrarily.
+
+#### Adjusting schemas
+
+In order to adjust schemas, one can define arbitrary annotations that extend `SchemaAdjuster`.
+There is also a default implementation of `SchemaAdjuster`, the `@adjustSchema` annotation which
+takes a lambda parameter which defines the schema transformation.
+
+Annotations extending `SchemaAdjuster` can arbitrarily transform a
+[Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#schemaObject)
+and can be applied on:
+
+* data types with macro-generated `RestSchema`
+* case class fields of data types with macro generated `RestSchema`
+* `@JsonBodyParam` and `@Body` parameters of REST methods
+
+Schema adjusters do **NOT** work on path/header/query parameters and REST methods
+themselves. Instead use [parameter adjusters](#adjusting-parameters) and
+[operation adjusters](#adjusting-operations) which can also modify schemas
+used by `Parameter` and `Operation` objects.
+
+Also, be aware that a `SchemaAdjuster` may be passed a schema reference instead of actual schema object.
+This reference is then wrapped into a
+[Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#schemaObject)
+object defined as `{"allOf": [{"$ref": <the-original-reference>}]}`.
+Therefore, a schema adjuster may extend the referenced schema using
+[Composition and Inheritance](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#schemaComposition)
+but it should not rely on the ability to inspect the referenced schema.
+
+#### Adjusting parameters
+
+Similar to `SchemaAdjuster` there is a `ParameterAdjuster` annotation trait. Its default implementation
+is `@adjustParameter` which takes transformation lambda as its parameter.
+Schema adjusters can arbitrarily transform
+[Parameter Objects](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#parameterObject)
+which are generated for path, header and query parameters of REST methods.
+
+#### Adjusting operations
+
+Finally, there is `OperationAdjuster` annotation trait with default implementation `@adjustOperation`.
+Operation adjuster can be applied on REST HTTP methods in order to transform
+[Operation Objects](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#operationObject)
+generated for them. This in particular means that operation adjusters can modify request body and responses
+of an operation.
+
+### Limitations
+
+Currently, it's not possible to include examples, default values and arbitrarily-valued enums (with values other than strings)
+in OpenAPI documents and schemas generated by AVSystem REST framework.
+
+Also, current representation of OpenAPI document does not support
+[specification extensions](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions).

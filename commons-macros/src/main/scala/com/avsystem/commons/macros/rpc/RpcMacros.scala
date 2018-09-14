@@ -136,7 +136,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
       val sig = m.typeSignatureIn(instancesTpe)
       val resultTpe = sig.finalResultType.dealias
       if (sig.typeParams.nonEmpty || sig.paramLists.nonEmpty) {
-        abort(s"Problem with $m: expected non-generic, parameterless method")
+        abort(s"Problem with $m of $instancesTpe: expected non-generic, parameterless method")
       }
 
       val body =

@@ -6,6 +6,10 @@ import com.avsystem.commons.rest.{Header => HeaderAnnot, _}
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.serialization.{transientDefault, whenAbsent}
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("OpenApiMetadata for ${T} not found. The easiest way to provide it is to make companion object of " +
+  "${T} extend one of the convenience base companion classes, e.g. DefaultRestApiCompanion")
 @methodTag[RestMethodTag]
 case class OpenApiMetadata[T](
   @multi @tagged[Prefix](whenUntagged = new Prefix)
@@ -106,7 +110,7 @@ case class OpenApiPrefix[T](
 
 sealed trait OpenApiOperation[T] extends OpenApiMethod[T] {
   @infer
-  @checked def responseType: HttpResponseType[T]
+  @checked def resultType: RestResultType[T]
   @multi
   @reifyAnnot def adjusters: List[OperationAdjuster]
   def methodTag: HttpMethodTag
@@ -114,7 +118,7 @@ sealed trait OpenApiOperation[T] extends OpenApiMethod[T] {
 
   def operation(resolver: SchemaResolver): Operation = {
     val op = Operation(
-      responseType.responses(resolver),
+      resultType.responses(resolver),
       operationId = name,
       parameters = parameters.map(_.parameter(resolver)),
       requestBody = requestBody(resolver).toOptArg
@@ -127,7 +131,7 @@ case class OpenApiGetOperation[T](
   name: String,
   methodTag: HttpMethodTag,
   parameters: List[OpenApiParameter[_]],
-  responseType: HttpResponseType[T],
+  resultType: RestResultType[T],
   adjusters: List[OperationAdjuster]
 ) extends OpenApiOperation[T] {
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]] = Opt.Empty
@@ -139,7 +143,7 @@ case class OpenApiBodyOperation[T](
   parameters: List[OpenApiParameter[_]],
   @multi @rpcParamMetadata @tagged[JsonBodyParam] bodyParams: List[OpenApiBodyField[_]],
   @optional @encoded @rpcParamMetadata @tagged[Body] singleBody: Opt[OpenApiBody[_]],
-  responseType: HttpResponseType[T],
+  resultType: RestResultType[T],
   adjusters: List[OperationAdjuster]
 ) extends OpenApiOperation[T] {
 

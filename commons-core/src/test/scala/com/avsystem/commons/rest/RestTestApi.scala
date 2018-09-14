@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rest
 
-import com.avsystem.commons.rest.openapi.{RestDataCompanion, description}
+import com.avsystem.commons.rest.openapi.description
 import com.avsystem.commons.serialization.flatten
 
 sealed trait BaseEntity

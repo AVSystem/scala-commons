@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rest.openapi
 
+import com.avsystem.commons.rest.RestDataCompanion
 import com.avsystem.commons.serialization.json.JsonStringOutput
 import com.avsystem.commons.serialization.{GenCodec, name, transparent}
 import org.scalatest.FunSuite

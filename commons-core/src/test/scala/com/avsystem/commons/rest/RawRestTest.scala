@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package rest
 
-import com.avsystem.commons.rest.openapi.RestDataCompanion
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.ScalaFutures

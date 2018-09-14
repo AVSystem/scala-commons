@@ -2,11 +2,12 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.meta._
-import com.avsystem.commons.rest.openapi._
 import com.avsystem.commons.rpc._
 
 import scala.annotation.implicitNotFound
 
+@implicitNotFound("RestMetadata for ${T} not found. The easiest way to provide it is to make companion object of " +
+  "${T} extend one of the convenience base companion classes, e.g. DefaultRestApiCompanion")
 @methodTag[RestMethodTag]
 case class RestMetadata[T](
   @multi @tagged[Prefix](whenUntagged = new Prefix)
@@ -218,7 +219,7 @@ case class HttpMethodMetadata[T](
 @implicitNotFound("${T} is not a valid result type of HTTP operation (it would be valid when e.g. wrapped in a Future)")
 case class HttpResponseType[T]()
 object HttpResponseType {
-  implicit def forFuture[T: RestResponses]: HttpResponseType[Future[T]] = HttpResponseType[Future[T]]()
+  implicit def forFuture[T]: HttpResponseType[Future[T]] = HttpResponseType[Future[T]]()
 }
 
 case class RestParametersMetadata(

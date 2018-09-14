@@ -3,8 +3,11 @@ package jetty.rest.examples
 
 import com.avsystem.commons.rest._
 
+case class User(id: String, name: String, birthYear: Int)
+object User extends RestDataCompanion[User]
+
 trait UserApi {
-  /** Returns ID of newly created user */
-  def createUser(name: String, birthYear: Int): Future[String]
+  /** Returns newly created user */
+  def createUser(name: String, birthYear: Int): Future[User]
 }
 object UserApi extends DefaultRestApiCompanion[UserApi]

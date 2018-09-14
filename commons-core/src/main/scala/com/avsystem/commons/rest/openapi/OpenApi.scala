@@ -4,6 +4,15 @@ package rest.openapi
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.serialization.{transientDefault => td, _}
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#openapi-object OpenAPI Object]]
+  * from [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md OpenAPI 3.0 specification]].
+  * It may be serialized to OpenAPI 3.0 compliant JSON using
+  * [[com.avsystem.commons.serialization.json.JsonStringOutput JsonStringOutput]].
+  * This JSON can then be consumed by tools that support OpenAPI 3.0, e.g.
+  * [[https://swagger.io/tools/swagger-ui/ Swagger UI]].
+  */
 case class OpenApi(
   openapi: String = OpenApi.Version,
   info: Info,
@@ -18,6 +27,10 @@ object OpenApi extends HasGenCodec[OpenApi] {
   final val Version = "3.0.1"
 }
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#infoObject Info Object]]
+  */
 case class Info(
   title: String,
   version: String,
@@ -28,6 +41,10 @@ case class Info(
 )
 object Info extends HasGenCodec[Info]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#contactObject Contact Object]]
+  */
 case class Contact(
   @td name: OptArg[String] = OptArg.Empty,
   @td url: OptArg[String] = OptArg.Empty,
@@ -35,12 +52,20 @@ case class Contact(
 )
 object Contact extends HasGenCodec[Contact]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#licenseObject License Object]]
+  */
 case class License(
   name: String,
   @td url: OptArg[String] = OptArg.Empty
 )
 object License extends HasGenCodec[License]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#serverObject Server Object]]
+  */
 case class Server(
   url: String,
   @td description: OptArg[String] = OptArg.Empty,
@@ -48,6 +73,10 @@ case class Server(
 )
 object Server extends HasGenCodec[Server]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#serverVariableObject Server Variable Object]]
+  */
 case class ServerVariable(
   default: String,
   @td enum: List[String] = Nil,
@@ -55,9 +84,17 @@ case class ServerVariable(
 )
 object ServerVariable extends HasGenCodec[ServerVariable]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#pathsObject Paths Object]]
+  */
 @transparent case class Paths(paths: Map[String, RefOr[PathItem]])
 object Paths extends HasGenCodec[Paths]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#pathItemObject Path Item Object]]
+  */
 case class PathItem(
   @td summary: OptArg[String] = OptArg.Empty,
   @td description: OptArg[String] = OptArg.Empty,
@@ -74,6 +111,10 @@ case class PathItem(
 )
 object PathItem extends HasGenCodec[PathItem]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#operationObject Operation Object]]
+  */
 case class Operation(
   responses: Responses,
   @td tags: List[String] = Nil,
@@ -90,6 +131,10 @@ case class Operation(
 )
 object Operation extends HasGenCodec[Operation]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#responsesObject Responses Object]]
+  */
 case class Responses(
   byStatusCode: Map[Int, RefOr[Response]] = Map.empty,
   default: OptArg[RefOr[Response]] = OptArg.Empty
@@ -122,6 +167,10 @@ object Responses {
   )
 }
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#componentsObject Components Object]]
+  */
 case class Components(
   @td schemas: Map[String, RefOr[Schema]] = Map.empty,
   @td responses: Map[String, RefOr[Response]] = Map.empty,
@@ -135,9 +184,17 @@ case class Components(
 )
 object Components extends HasGenCodec[Components]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#securityRequirementObject Security Requirement Object]]
+  */
 @transparent case class SecurityRequirement(schemes: Map[String, List[String]])
 object SecurityRequirement extends HasGenCodec[SecurityRequirement]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#tagObject Tag Object]]
+  */
 case class Tag(
   name: String,
   @td description: OptArg[String] = OptArg.Empty,
@@ -145,12 +202,20 @@ case class Tag(
 )
 object Tag extends HasGenCodec[Tag]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#externalDocumentationObject External Documentation Object]]
+  */
 case class ExternalDocumentation(
   url: String,
   @td description: OptArg[String] = OptArg.Empty
 )
 object ExternalDocumentation extends HasGenCodec[ExternalDocumentation]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#schemaObject Schema Object]]
+  */
 case class Schema(
   @td `type`: OptArg[DataType] = OptArg.Empty,
   @td format: OptArg[String] = OptArg.Empty,
@@ -266,12 +331,20 @@ object DataType extends AbstractValueEnumCompanion[DataType] {
   final val String, Number, Integer, Boolean, Array, Object: Value = new DataType
 }
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#discriminatorObject Discriminator Object]]
+  */
 case class Discriminator(
   propertyName: String,
   @td mapping: Map[String, String] = Map.empty
 )
 object Discriminator extends HasGenCodec[Discriminator]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#xmlObject Xml Object]]
+  */
 case class Xml(
   @td name: OptArg[String] = OptArg.Empty,
   @td namespace: OptArg[String] = OptArg.Empty,
@@ -281,6 +354,10 @@ case class Xml(
 )
 object Xml extends HasGenCodec[Xml]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#responseObject Response Object]]
+  */
 case class Response(
   @td description: OptArg[String] = OptArg.Empty,
   @td headers: Map[String, RefOr[Header]] = Map.empty,
@@ -289,6 +366,10 @@ case class Response(
 )
 object Response extends HasGenCodec[Response]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#parameterObject Parameter Object]]
+  */
 case class Parameter(
   name: String,
   in: Location,
@@ -325,6 +406,10 @@ object Location extends AbstractValueEnumCompanion[Location] {
   final val Query, Header, Path, Cookie: Value = new Location
 }
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#style-values parameter style]]
+  */
 final class Style(implicit enumCtx: EnumCtx) extends AbstractValueEnum {
   override val name: String = enumCtx.valName.uncapitalize
 }
@@ -332,6 +417,10 @@ object Style extends AbstractValueEnumCompanion[Style] {
   final val Matrix, Label, Form, Simple, SpaceDelimited, PipeDelimited, DeepObject: Value = new Style
 }
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#mediaTypeObject Media Type Object]]
+  */
 case class MediaType(
   @td schema: OptArg[RefOr[Schema]] = OptArg.Empty,
   @td encoding: Map[String, Encoding] = Map.empty
@@ -339,6 +428,10 @@ case class MediaType(
 )
 object MediaType extends HasGenCodec[MediaType]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#encodingObject Encoding Object]]
+  */
 case class Encoding(
   @td contentType: OptArg[String] = OptArg.Empty,
   @td headers: Map[String, RefOr[Header]] = Map.empty,
@@ -348,9 +441,13 @@ case class Encoding(
 )
 object Encoding extends HasGenCodec[Encoding]
 
-case class Example()
+case class Example() //TODO
 object Example extends HasGenCodec[Example]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#requestBodyObject Request Body Object]]
+  */
 case class RequestBody(
   content: Map[String, MediaType],
   @td description: OptArg[String] = OptArg.Empty,
@@ -358,6 +455,10 @@ case class RequestBody(
 )
 object RequestBody extends HasGenCodec[RequestBody]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#headerObject Header Object]]
+  */
 case class Header(
   @td description: OptArg[String] = OptArg.Empty,
   @td required: Boolean = false,
@@ -372,6 +473,10 @@ case class Header(
 )
 object Header extends HasGenCodec[Header]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#securitySchemeObject Security Scheme Object]]
+  */
 @flatten("type") sealed trait SecurityScheme {
   def description: OptArg[String]
 }
@@ -401,6 +506,10 @@ object SecurityScheme {
   implicit val codec: GenCodec[SecurityScheme] = GenCodec.materialize
 }
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#oauthFlowsObject OAuth Flows Object]]
+  */
 case class OAuthFlows(
   @td `implicit`: OptArg[OAuthFlow] = OptArg.Empty,
   @td password: OptArg[OAuthFlow] = OptArg.Empty,
@@ -409,6 +518,10 @@ case class OAuthFlows(
 )
 object OAuthFlows extends HasGenCodec[OAuthFlows]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#oauthFlowObject OAuth Flow Object]]
+  */
 case class OAuthFlow(
   scopes: Map[String, String],
   @td authorizationUrl: OptArg[String] = OptArg.Empty,
@@ -417,6 +530,10 @@ case class OAuthFlow(
 )
 object OAuthFlow extends HasGenCodec[OAuthFlow]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#linkObject Link Object]]
+  */
 case class Link(
   @td operationRef: OptArg[String] = OptArg.Empty,
   @td operationId: OptArg[String] = OptArg.Empty,
@@ -426,6 +543,10 @@ case class Link(
 )
 object Link extends HasGenCodec[Link]
 
+/**
+  * Representation of
+  * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#callbackObject Callback Object]]
+  */
 @transparent case class Callback(byExpression: Map[String, PathItem])
 object Callback extends HasGenCodec[Callback]
 

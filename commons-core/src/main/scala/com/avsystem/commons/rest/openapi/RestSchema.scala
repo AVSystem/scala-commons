@@ -3,14 +3,14 @@ package rest.openapi
 
 import java.util.UUID
 
-import com.avsystem.commons.misc.{MacroGenerated, NamedEnum, NamedEnumCompanion, Timestamp}
+import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Timestamp}
 import com.avsystem.commons.rest.HttpBody
-import com.avsystem.commons.serialization._
 
 import scala.annotation.implicitNotFound
 
 @implicitNotFound("RestSchema for ${T} not found. You may provide it by making companion object of ${T} " +
-  "extend RestDataCompanion[${T}] (if it is a case class or sealed hierarchy).")
+  "extend RestDataCompanion[${T}] (if it is a case class, object or sealed hierarchy). " +
+  "Note that RestDataCompanion also automatically provides a GenCodec instance.")
 trait RestSchema[T] { self =>
   def createSchema(resolver: SchemaResolver): RefOr[Schema]
   def name: Opt[String]
@@ -104,22 +104,17 @@ object RestSchema {
     RestSchema.plain(Schema.enumOf(ct.runtimeClass.getEnumConstants.iterator.map(_.asInstanceOf[E].name).toList))
 }
 
-abstract class RestDataCompanion[T](
-  implicit macroRestStructure: MacroGenerated[RestStructure[T]], macroCodec: MacroGenerated[GenCodec[T]]
-) extends HasGenCodec[T] {
-  implicit lazy val restStructure: RestStructure[T] = macroRestStructure.forCompanion(this)
-  implicit lazy val restSchema: RestSchema[T] = restStructure.standaloneSchema // lazy on restStructure
+@implicitNotFound("RestResultType for ${T} not found. It may be provided by appropriate RestSchema or " +
+  "RestResponses instance (e.g. RestSchema[T] implies RestResponses[T] which implies RestResultType[Future[T]]). " +
+  "RestSchema is usually provided by making companion object of your data type extend RestDataCompanion.")
+case class RestResultType[T](responses: SchemaResolver => Responses)
+object RestResultType {
+  implicit def forFuture[T: RestResponses]: RestResultType[Future[T]] =
+    RestResultType[Future[T]](RestResponses[T].responses)
 }
 
-@implicitNotFound("HttpResponseType for ${T} not found. It may be provided by appropriate RestSchema or " +
-  "RestResponses instance (e.g. RestSchema[T] implies RestResponses[T] which implies HttpResponseType[Future[T]])")
-case class HttpResponseType[T](responses: SchemaResolver => Responses)
-object HttpResponseType {
-  implicit def forFuture[T: RestResponses]: HttpResponseType[Future[T]] =
-    HttpResponseType[Future[T]](RestResponses[T].responses)
-}
-
-@implicitNotFound("RestResponses for ${T} not found. You may provide it by defining an instance of RestSchema[${T}]")
+@implicitNotFound("RestResponses for ${T} not found. You may provide it by defining an instance of RestSchema[${T}] " +
+  "which is usually done by making companion object of your data type extend RestDataCompanion")
 case class RestResponses[T](responses: SchemaResolver => Responses)
 object RestResponses {
   def apply[T](implicit r: RestResponses[T]): RestResponses[T] = r
@@ -137,7 +132,8 @@ object RestResponses {
     )))
 }
 
-@implicitNotFound("RestRequestBody for ${T} not found. You may provide it by defining an instance of RestSchema[${T}]")
+@implicitNotFound("RestRequestBody for ${T} not found. You may provide it by defining an instance of RestSchema[${T}] " +
+  "which is usually done by making companion object of your data type extend RestDataCompanion")
 trait RestRequestBody[T] {
   def requestBody(resolver: SchemaResolver, schemaAdjusters: List[SchemaAdjuster]): RefOr[RequestBody]
 }
@@ -183,18 +179,38 @@ final class InliningResolver extends SchemaResolver {
 final class SchemaRegistry(nameToRef: String => String, initial: Iterable[(String, RefOr[Schema])] = Map.empty)
   extends SchemaResolver {
 
-  private[this] val registry = new MLinkedHashMap[String, RefOr[Schema]].setup(_ ++= initial)
+  private[this] case class Entry(source: Opt[RestSchema[_]], schema: RefOr[Schema])
 
-  def registeredSchemas: Map[String, RefOr[Schema]] = registry.toMap
+  private[this] val resolving = new MHashSet[String]
+  private[this] val registry = new MLinkedHashMap[String, MListBuffer[Entry]]
+    .setup(_ ++= initial.iterator.map { case (n, s) => (n, MListBuffer[Entry](Entry(Opt.Empty, s))) })
 
-  def resolve(schema: RestSchema[_]): RefOr[Schema] = schema.name match {
-    case Opt.Empty => schema.createSchema(this)
-    case Opt(name) =>
-      val ref = RefOr.ref(nameToRef(name))
-      if (!registry.contains(name)) {
-        registry(name) = ref // in order to handle recursive schemas - schema created by creator may refer to itself
-        registry(name) = schema.createSchema(this)
+  def registeredSchemas: Map[String, RefOr[Schema]] =
+    registry.iterator.map { case (k, entries) =>
+      entries.result() match {
+        case Entry(_, schema) :: Nil => (k, schema)
+        case _ => throw new IllegalArgumentException(
+          s"Multiple schemas named $k detected - you may want to disambiguate them using @name annotation"
+        )
       }
-      ref
+    }.toMap
+
+  def resolve(restSchema: RestSchema[_]): RefOr[Schema] = restSchema.name match {
+    case Opt(name) =>
+      if (!resolving.contains(name)) { // handling recursive schemas
+        val entries = registry.getOrElseUpdate(name, new MListBuffer)
+        if (!entries.exists(_.source.contains(restSchema))) {
+          resolving += name
+          val newSchema = try restSchema.createSchema(this) finally {
+            resolving -= name
+          }
+          if (!entries.exists(_.schema == newSchema)) {
+            entries += Entry(Opt(restSchema), newSchema)
+          }
+        }
+      }
+      RefOr.ref(nameToRef(name))
+    case Opt.Empty =>
+      restSchema.createSchema(this)
   }
 }
