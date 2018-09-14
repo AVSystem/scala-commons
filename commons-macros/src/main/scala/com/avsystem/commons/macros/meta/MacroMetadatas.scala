@@ -96,7 +96,7 @@ trait MacroMetadatas extends MacroSymbols {
           new CompositeParam(this, ps)
         else findAnnotation(ps, MetadataParamStrategyType).map(paramByStrategy(ps, _)).getOrElse {
           if (ps.isImplicit) new ImplicitParam(this, ps)
-          else reportProblem("no metadata param strategy annotation found")
+          else new InvalidParam(this, ps, "no metadata param strategy annotation found")
         }
       })
 
@@ -259,6 +259,11 @@ trait MacroMetadatas extends MacroSymbols {
           flag(s.isSynthetic, 4)
       q"new $ParamFlagsTpe($rawFlags)"
     }
+  }
+
+  class InvalidParam(owner: MetadataConstructor, symbol: Symbol, problem: String)
+    extends MetadataParam(owner, symbol) {
+    reportProblem(problem)
   }
 
   def guardedMetadata(metadataTpe: Type, realTpe: Type)(materialize: => Tree): Tree = {
