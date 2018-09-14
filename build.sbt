@@ -175,11 +175,13 @@ def sourceDirsSettings(baseMapper: File => File) = Seq(
 )
 
 lazy val `commons-annotations` = project
+  .dependsOn(`commons-macros`)
   .settings(jvmCommonSettings)
 
 lazy val `commons-annotations-js` = project.in(`commons-annotations`.base / "js")
   .enablePlugins(ScalaJSPlugin)
   .configure(p => if (forIdeaImport) p.dependsOn(`commons-annotations`) else p)
+  .dependsOn(`commons-macros`)
   .settings(
     jsCommonSettings,
     name := (name in `commons-annotations`).value,

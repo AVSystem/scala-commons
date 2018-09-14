@@ -43,7 +43,7 @@ object JsonDateFormat {
   * @param binaryFormat format used to represent binary data (byte arrays)
   */
 case class JsonOptions(
-  indentSize: OptArg[Int] = OptArg.Empty,
+  formatting: JsonFormatting = JsonFormatting.Compact,
   asciiOutput: Boolean = false,
   mathContext: MathContext = BigDecimal.defaultMathContext,
   dateFormat: JsonDateFormat = JsonDateFormat.IsoInstant,
@@ -51,4 +51,14 @@ case class JsonOptions(
 )
 object JsonOptions {
   final val Default = JsonOptions()
+  final val Pretty = JsonOptions(formatting = JsonFormatting.Pretty)
+}
+
+case class JsonFormatting(
+  indentSize: OptArg[Int] = OptArg.Empty,
+  afterColon: Int = 0
+)
+object JsonFormatting {
+  final val Compact = JsonFormatting()
+  final val Pretty = JsonFormatting(indentSize = 2, afterColon = 1)
 }

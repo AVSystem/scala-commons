@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package rpc
+package meta
 
 sealed trait OptionLike[O] {
   type Value

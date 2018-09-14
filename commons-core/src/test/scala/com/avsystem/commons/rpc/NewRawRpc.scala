@@ -4,6 +4,7 @@ package rpc
 import java.util.regex.Matcher
 
 import com.avsystem.commons.annotation.AnnotationAggregate
+import com.avsystem.commons.meta._
 import com.avsystem.commons.serialization.GenCodec
 
 import scala.annotation.StaticAnnotation
@@ -80,19 +81,19 @@ object Utils {
 import com.avsystem.commons.rpc.Utils._
 
 case class DoSomethings(
-  doSomething: DoSomethingSignature,
-  @optional doSomethingElse: Opt[DoSomethingSignature]
+  @rpcMethodMetadata doSomething: DoSomethingSignature,
+  @optional @rpcMethodMetadata doSomethingElse: Opt[DoSomethingSignature]
 )
 
 @methodTag[RestMethod]
 @paramTag[DummyParamTag]
 case class NewRpcMetadata[T: TypeName](
   @composite doSomethings: DoSomethings,
-  @multi @verbatim procedures: Map[String, FireMetadata],
-  @multi functions: Map[String, CallMetadata[_]],
-  @multi getters: Map[String, GetterMetadata[_]],
-  @multi @tagged[POST] posters: Map[String, PostMetadata[_]],
-  @multi prefixers: Map[String, PrefixMetadata[_]]
+  @multi @verbatim @rpcMethodMetadata procedures: Map[String, FireMetadata],
+  @multi @rpcMethodMetadata functions: Map[String, CallMetadata[_]],
+  @multi @rpcMethodMetadata getters: Map[String, GetterMetadata[_]],
+  @multi @tagged[POST] @rpcMethodMetadata posters: Map[String, PostMetadata[_]],
+  @multi @rpcMethodMetadata prefixers: Map[String, PrefixMetadata[_]]
 ) {
   def repr(open: List[NewRpcMetadata[_]]): String =
     if (open.contains(this)) "<recursive>\n" else {
@@ -110,7 +111,7 @@ case class NewRpcMetadata[T: TypeName](
 }
 object NewRpcMetadata extends RpcMetadataCompanion[NewRpcMetadata]
 
-case class DoSomethingSignature(arg: ArgMetadata) extends TypedMetadata[String]
+case class DoSomethingSignature(@rpcParamMetadata arg: ArgMetadata) extends TypedMetadata[String]
 case class ArgMetadata() extends TypedMetadata[Double]
 
 trait MethodMetadata[T] {
@@ -123,8 +124,8 @@ trait MethodMetadata[T] {
 
 case class FireMetadata(
   nameInfo: NameInfo,
-  @optional @auxiliary ajdi: Opt[ParameterMetadata[Int]],
-  @multi args: Map[String, ParameterMetadata[_]]
+  @optional @auxiliary @rpcParamMetadata ajdi: Opt[ParameterMetadata[Int]],
+  @multi @rpcParamMetadata args: Map[String, ParameterMetadata[_]]
 ) extends TypedMetadata[Unit] with MethodMetadata[Unit] {
   def typeName: TypeName[Unit] = TypeName("void")
   def repr: String =
@@ -135,8 +136,8 @@ case class FireMetadata(
 
 case class CallMetadata[T](
   nameInfo: NameInfo,
-  @tagged[renamed] @multi renamed: Map[String, ParameterMetadata[_]],
-  @multi args: Map[String, ParameterMetadata[_]]
+  @tagged[renamed] @multi @rpcParamMetadata renamed: Map[String, ParameterMetadata[_]],
+  @multi @rpcParamMetadata args: Map[String, ParameterMetadata[_]]
 )(implicit val typeName: TypeName[T])
   extends TypedMetadata[Future[T]] with MethodMetadata[T] {
   def repr: String =
@@ -146,8 +147,8 @@ case class CallMetadata[T](
 }
 
 case class GetterParams(
-  @encoded head: ParameterMetadata[_],
-  @multi tail: List[ParameterMetadata[_]]
+  @encoded @rpcParamMetadata head: ParameterMetadata[_],
+  @multi @rpcParamMetadata tail: List[ParameterMetadata[_]]
 ) {
   def repr: String = (head :: tail).map(_.repr).mkString("ARGS:\n", "\n", "")
 }
@@ -166,8 +167,8 @@ case class GetterMetadata[T](
 case class PostMetadata[T: TypeName](
   nameInfo: NameInfo,
   @reifyAnnot post: POST,
-  @tagged[header] @multi @verbatim headers: Vector[ParameterMetadata[String]],
-  @multi body: MLinkedHashMap[String, ParameterMetadata[_]]
+  @tagged[header] @multi @verbatim @rpcParamMetadata headers: Vector[ParameterMetadata[String]],
+  @multi @rpcParamMetadata body: MLinkedHashMap[String, ParameterMetadata[_]]
 )(implicit val typeName: TypeName[T]) extends TypedMetadata[T] with MethodMetadata[T] {
 
   def repr: String =
@@ -203,7 +204,7 @@ case class ParameterMetadata[T: TypeName](
 
 case class NameInfo(
   @reifyName name: String,
-  @reifyName(rpcName = true) rpcName: String
+  @reifyName(useRawName = true) rpcName: String
 ) {
   def repr: String = name + (if (rpcName != name) s"<$rpcName>" else "")
 }

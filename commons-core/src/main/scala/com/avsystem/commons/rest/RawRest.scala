@@ -3,6 +3,7 @@ package rest
 
 import java.util.concurrent.atomic.AtomicBoolean
 
+import com.avsystem.commons.meta._
 import com.avsystem.commons.rpc._
 
 case class RestMethodCall(rpcName: String, pathParams: List[PathValue], metadata: RestMethodMetadata[_])
@@ -36,7 +37,7 @@ trait RawRest {
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @paramTag[RestParamTag](defaultTag = new JsonBodyParam)
   def handle(@methodName name: String, @composite parameters: RestParameters,
-    @multi @tagged[JsonBodyParam] body: NamedParams[JsonValue]): Async[RestResponse]
+    @multi @tagged[JsonBodyParam] body: Mapping[JsonValue]): Async[RestResponse]
 
   @multi
   @tried
@@ -158,7 +159,7 @@ object RawRest extends RawRpcCompanion[RawRest] {
     def get(name: String, parameters: RestParameters): Async[RestResponse] =
       handleSingle(name, parameters, HttpBody.Empty)
 
-    def handle(name: String, parameters: RestParameters, body: NamedParams[JsonValue]): Async[RestResponse] =
+    def handle(name: String, parameters: RestParameters, body: Mapping[JsonValue]): Async[RestResponse] =
       handleSingle(name, parameters, HttpBody.createJsonBody(body))
 
     def handleSingle(name: String, parameters: RestParameters, body: HttpBody): Async[RestResponse] =

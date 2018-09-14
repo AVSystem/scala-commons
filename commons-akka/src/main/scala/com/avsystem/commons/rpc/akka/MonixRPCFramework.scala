@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rpc.akka
 
+import com.avsystem.commons.meta._
 import com.avsystem.commons.rpc._
 import monix.reactive.Observable
 

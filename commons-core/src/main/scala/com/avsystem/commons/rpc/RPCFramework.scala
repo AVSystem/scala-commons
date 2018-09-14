@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.meta._
 import com.avsystem.commons.serialization.GenCodec
 
 import scala.language.higherKinds
@@ -67,7 +68,7 @@ trait RPCFramework {
 
   trait Signature {
     @reifyName def name: String
-    @multi def paramMetadata: List[ParamMetadata[_]]
+    @multi @rpcParamMetadata def paramMetadata: List[ParamMetadata[_]]
     @reifyAnnot
     @multi def annotations: List[MetadataAnnotation]
   }

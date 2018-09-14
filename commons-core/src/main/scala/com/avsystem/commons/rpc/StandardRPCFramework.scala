@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.meta._
+
 /**
   * Mix in this trait into your RPC framework to support remote procedures, i.e. fire-and-forget methods
   * with `Unit` return type.
@@ -74,9 +76,9 @@ trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework 
   case class RPCMetadata[T](
     @reifyName name: String,
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
-    @multi @verbatim procedureSignatures: Map[String, ProcedureSignature],
-    @multi functionSignatures: Map[String, FunctionSignature[_]],
-    @multi getterSignatures: Map[String, GetterSignature[_]]
+    @multi @verbatim @rpcMethodMetadata procedureSignatures: Map[String, ProcedureSignature],
+    @multi @rpcMethodMetadata functionSignatures: Map[String, FunctionSignature[_]],
+    @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[_]]
   )
   object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 }
@@ -90,8 +92,8 @@ trait OneWayRPCFramework extends GetterRPCFramework with ProcedureRPCFramework {
   case class RPCMetadata[T](
     @reifyName name: String,
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
-    @multi @verbatim procedureSignatures: Map[String, ProcedureSignature],
-    @multi getterSignatures: Map[String, GetterSignature[_]]
+    @multi @verbatim @rpcMethodMetadata procedureSignatures: Map[String, ProcedureSignature],
+    @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[_]]
   )
   object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 }

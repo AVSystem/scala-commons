@@ -9,6 +9,9 @@ object JsonStringOutput {
     GenCodec.write[T](new JsonStringOutput(sb, options), value)
     sb.toString
   }
+
+  def writePretty[T: GenCodec](value: T): String =
+    write[T](value, JsonOptions.Pretty)
 }
 
 trait BaseJsonOutput {
@@ -102,17 +105,19 @@ final class JsonListOutput(builder: JStringBuilder, options: JsonOptions, depth:
   extends BaseJsonOutput with ListOutput {
 
   private[this] var first = true
+
   def writeElement(): JsonStringOutput = {
     builder.append(if (first) '[' else ',')
-    indent(builder, options.indentSize, depth)
+    indent(builder, options.formatting.indentSize, depth)
     first = false
     new JsonStringOutput(builder, options, depth)
   }
+
   def finish(): Unit = {
     if (first) {
       builder.append('[')
     } else {
-      indent(builder, options.indentSize, depth - 1)
+      indent(builder, options.formatting.indentSize, depth - 1)
     }
     builder.append(']')
   }
@@ -122,19 +127,21 @@ final class JsonObjectOutput(builder: JStringBuilder, options: JsonOptions, dept
   extends BaseJsonOutput with ObjectOutput {
 
   private[this] var first = true
+
   def writeField(key: String): JsonStringOutput = {
     builder.append(if (first) '{' else ',')
-    indent(builder, options.indentSize, depth)
+    indent(builder, options.formatting.indentSize, depth)
     first = false
     writeJsonString(builder, key, options.asciiOutput)
-    builder.append(':')
+    builder.append(':').append(" " * options.formatting.afterColon)
     new JsonStringOutput(builder, options, depth)
   }
+
   def finish(): Unit = {
     if (first) {
       builder.append('{')
     } else {
-      indent(builder, options.indentSize, depth - 1)
+      indent(builder, options.formatting.indentSize, depth - 1)
     }
     builder.append('}')
   }

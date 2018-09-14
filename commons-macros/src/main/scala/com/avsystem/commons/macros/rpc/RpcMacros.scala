@@ -2,24 +2,20 @@ package com.avsystem.commons
 package macros.rpc
 
 import com.avsystem.commons.macros.AbstractMacroCommons
+import com.avsystem.commons.macros.meta.MacroSymbols
 
 import scala.reflect.macros.blackbox
 
-abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
+abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) with MacroSymbols {
 
   import c.universe._
 
-  val RpcPackage = q"$CommonsPkg.rpc"
-  val RpcUtils = q"$RpcPackage.RpcUtils"
   val AsRealCls = tq"$RpcPackage.AsReal"
   val AsRealObj = q"$RpcPackage.AsReal"
   val AsRawCls = tq"$RpcPackage.AsRaw"
   val AsRawObj = q"$RpcPackage.AsRaw"
   val AsRawRealCls = tq"$RpcPackage.AsRawReal"
   val AsRawRealObj = q"$RpcPackage.AsRawReal"
-  val OptionLikeCls = tq"$RpcPackage.OptionLike"
-  val CanBuildFromCls = tq"$CollectionPkg.generic.CanBuildFrom"
-  val ParamPositionObj = q"$RpcPackage.ParamPosition"
 
   val AsRealTpe: Type = getType(tq"$AsRealCls[_,_]")
   val AsRawTpe: Type = getType(tq"$AsRawCls[_,_]")
@@ -30,42 +26,15 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   val WhenAbsentAT: Type = getType(tq"$CommonsPkg.serialization.whenAbsent[_]")
   val TransientDefaultAT: Type = getType(tq"$CommonsPkg.serialization.transientDefault")
   val MethodNameAT: Type = getType(tq"$RpcPackage.methodName")
-  val CompositeAT: Type = getType(tq"$RpcPackage.composite")
-  val RpcArityAT: Type = getType(tq"$RpcPackage.RpcArity")
-  val SingleArityAT: Type = getType(tq"$RpcPackage.single")
-  val OptionalArityAT: Type = getType(tq"$RpcPackage.optional")
-  val MultiArityAT: Type = getType(tq"$RpcPackage.multi")
+  val RpcMethodMetadataAT: Type = getType(tq"$RpcPackage.rpcMethodMetadata")
+  val RpcParamMetadataAT: Type = getType(tq"$RpcPackage.rpcParamMetadata")
   val RpcEncodingAT: Type = getType(tq"$RpcPackage.RpcEncoding")
   val VerbatimAT: Type = getType(tq"$RpcPackage.verbatim")
-  val AuxiliaryAT: Type = getType(tq"$RpcPackage.auxiliary")
   val TriedAT: Type = getType(tq"$RpcPackage.tried")
   val MethodTagAT: Type = getType(tq"$RpcPackage.methodTag[_]")
   val ParamTagAT: Type = getType(tq"$RpcPackage.paramTag[_]")
-  val TaggedAT: Type = getType(tq"$RpcPackage.tagged[_]")
-  val WhenUntaggedArg: Symbol = TaggedAT.member(TermName("whenUntagged"))
   val RpcTagAT: Type = getType(tq"$RpcPackage.RpcTag")
-  val AnnotatedAT: Type = getType(tq"$RpcPackage.annotated[_]")
   val RpcImplicitsSym: Symbol = getType(tq"$RpcPackage.RpcImplicitsProvider").member(TermName("implicits"))
-  val TypedMetadataType: Type = getType(tq"$RpcPackage.TypedMetadata[_]")
-  val MetadataParamStrategyType: Type = getType(tq"$RpcPackage.MetadataParamStrategy")
-  val ReifyAnnotAT: Type = getType(tq"$RpcPackage.reifyAnnot")
-  val IsAnnotatedAT: Type = getType(tq"$RpcPackage.isAnnotated[_]")
-  val InferAT: Type = getType(tq"$RpcPackage.infer")
-  val ReifyNameAT: Type = getType(tq"$RpcPackage.reifyName")
-  val ReifyPositionAT: Type = getType(tq"$RpcPackage.reifyPosition")
-  val ReifyFlagsAT: Type = getType(tq"$RpcPackage.reifyFlags")
-  val CheckedAT: Type = getType(tq"$RpcPackage.checked")
-  val ParamPositionTpe: Type = getType(tq"$RpcPackage.ParamPosition")
-  val ParamFlagsTpe: Type = getType(tq"$RpcPackage.ParamFlags")
-
-  val NothingTpe: Type = typeOf[Nothing]
-  val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
-  val BIterableTpe: Type = typeOf[Iterable[Any]]
-  val BIndexedSeqTpe: Type = typeOf[IndexedSeq[Any]]
-
-  val PartialFunctionClass: Symbol = StringPFTpe.typeSymbol
-  val BIterableClass: Symbol = BIterableTpe.typeSymbol
-  val BIndexedSeqClass: Symbol = BIndexedSeqTpe.typeSymbol
 
   def registerCompanionImplicits(rawTpe: Type): Unit =
     typedCompanionOf(rawTpe).filter { companion =>
@@ -74,11 +43,6 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
     }.foreach { companion =>
       registerImplicitImport(q"import $companion.implicits._")
     }
-
-  def containsInaccessibleThises(tree: Tree): Boolean = tree.exists {
-    case t@This(_) if !t.symbol.isPackageClass && !enclosingClasses.contains(t.symbol) => true
-    case _ => false
-  }
 }
 
 class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
@@ -141,40 +105,9 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
   def rpcMetadata[Real: WeakTypeTag]: Tree = {
     val realRpc = RealRpcTrait(weakTypeOf[Real].dealias)
     val metadataTpe = c.macroApplication.tpe.dealias
-
-    val constructor = new RpcMetadataConstructor(metadataTpe, None)
-    // separate object for cached implicits so that lazy vals are members instead of local variables
-    val depsObj = c.freshName(TermName("deps"))
-    val selfName = c.freshName(TermName("self"))
-
-    typedCompanionOf(metadataTpe) match {
-      case Some(comp) =>
-        // short circuit recursive implicit searches for M.Lazy[Real]
-        val lazyMetadataTpe = getType(tq"$comp.Lazy[${realRpc.tpe}]")
-        val lazySelfName = c.freshName(TermName("lazySelf"))
-        registerImplicit(lazyMetadataTpe, lazySelfName)
-        val tree = constructor.materializeFor(realRpc, constructor.methodMappings(realRpc))
-
-        q"""
-          object $depsObj {
-            var $selfName: $metadataTpe = _
-            private val $lazySelfName = $comp.Lazy($selfName)
-            ..$cachedImplicitDeclarations
-            $selfName = $tree
-          }
-          $depsObj.$selfName
-         """
-
-      case None =>
-        val tree = constructor.materializeFor(realRpc, constructor.methodMappings(realRpc))
-        q"""
-          object $depsObj {
-            ..$cachedImplicitDeclarations
-            val $selfName = $tree
-          }
-          $depsObj.$selfName
-         """
-    }
+    val constructor = new RpcTraitMetadataConstructor(metadataTpe, None)
+    guardedMetadata(metadataTpe, realRpc.tpe)(
+      constructor.tryMaterializeFor(realRpc, constructor.methodMappings(realRpc)).getOrElse(abort))
   }
 
   def macroInstances: Tree = {
@@ -183,6 +116,8 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
     val applySig = resultTpe.member(TermName("apply")).typeSignatureIn(resultTpe)
     val implicitsTpe = applySig.paramLists.head.head.typeSignature
     val instancesTpe = applySig.finalResultType
+
+    forceCompanionReplace = true
 
     if (c.macroApplication.symbol.isImplicit && c.enclosingPosition.source != realTpe.typeSymbol.pos.source) {
       abort(s"Implicit materialization of RpcMacroInstances is only allowed in the same file where RPC trait is defined ($realTpe)")
@@ -201,7 +136,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
       val sig = m.typeSignatureIn(instancesTpe)
       val resultTpe = sig.finalResultType.dealias
       if (sig.typeParams.nonEmpty || sig.paramLists.nonEmpty) {
-        abort(s"Problem with $m: expected non-generic, parameterless method")
+        abort(s"Problem with $m of $instancesTpe: expected non-generic, parameterless method")
       }
 
       val body =
@@ -225,14 +160,11 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
 
     q"""
       new $resultTpe {
-        def apply($implicitsName: $implicitsTpe): $instancesTpe = {
+        def apply($implicitsName: $implicitsTpe, $companionReplacementName: Any): $instancesTpe = {
           import $implicitsName._
           new $instancesTpe { ..$impls; () }
         }
       }
      """
   }
-
-  def lazyMetadata(metadata: Tree): Tree =
-    q"${c.prefix}($metadata)"
 }

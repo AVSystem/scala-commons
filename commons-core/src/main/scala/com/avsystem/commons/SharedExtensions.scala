@@ -176,12 +176,35 @@ object SharedExtensions extends SharedExtensions {
     def optRef: OptRef[A] = OptRef(a)
   }
 
+  private val RemovableLineBreak = "\\n+".r
+
   class StringOps(private val str: String) extends AnyVal {
     def ensureSuffix(suffix: String): String =
       if (str.endsWith(suffix)) str else str + suffix
 
     def ensurePrefix(prefix: String): String =
       if (str.startsWith(prefix)) str else prefix + str
+
+    def uncapitalize: String =
+      if (str.isEmpty || str.charAt(0).isLower) str
+      else str.charAt(0).toLower + str.substring(1)
+
+    /**
+      * Removes a newline character from every sequence of consecutive newline characters. If the sequence contained
+      * just one newline character without any whitespace before and after it, a space is inserted.
+      *
+      * e.g. `My hovercraft\nis full of eels.\n\nMy hovercraft is\n full of eels.` becomes
+      * `My hovercraft is full of eels.\nMy hovercraft is full of eels.`
+      *
+      * Useful for multi-line string literals with lines wrapped in source code but without intention of including
+      * these line breaks in actual runtime string.
+      */
+    def unwrapLines: String =
+      RemovableLineBreak.replaceAllIn(str, { m =>
+        val insertSpace = m.end == m.start + 1 && m.start - 1 >= 0 && m.end < str.length &&
+          !Character.isWhitespace(str.charAt(m.start - 1)) && !Character.isWhitespace(str.charAt(m.end))
+        if (insertSpace) " " else m.matched.substring(1)
+      })
   }
 
   class IntOps(private val int: Int) extends AnyVal {

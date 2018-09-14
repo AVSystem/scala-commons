@@ -4,7 +4,6 @@ package macros
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.{TypecheckException, blackbox}
-import scala.reflect.{ClassTag, classTag}
 import scala.util.control.NoStackTrace
 
 abstract class AbstractMacroCommons(val c: blackbox.Context) extends MacroCommons
@@ -13,6 +12,8 @@ trait MacroCommons { bundle =>
   val c: blackbox.Context
 
   import c.universe._
+
+  import scala.reflect.{ClassTag, classTag}
 
   final val ScalaPkg = q"_root_.scala"
   final val JavaLangPkg = q"_root_.java.lang"
@@ -43,7 +44,18 @@ trait MacroCommons { bundle =>
   final val ImplicitsObj = q"$CommonsPkg.misc.Implicits"
   final val AnnotationAggregateType = getType(tq"$CommonsPkg.annotation.AnnotationAggregate")
   final val DefaultsToNameAT = getType(tq"$CommonsPkg.annotation.defaultsToName")
+  final val NotInheritedFromSealedTypes = getType(tq"$CommonsPkg.annotation.NotInheritedFromSealedTypes")
   final val SeqCompanionSym = typeOf[scala.collection.Seq.type].termSymbol
+  final val PositionedAT = getType(tq"$CommonsPkg.annotation.positioned")
+
+  final val NothingTpe: Type = typeOf[Nothing]
+  final val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
+  final val BIterableTpe: Type = typeOf[Iterable[Any]]
+  final val BIndexedSeqTpe: Type = typeOf[IndexedSeq[Any]]
+
+  final val PartialFunctionClass: Symbol = StringPFTpe.typeSymbol
+  final val BIterableClass: Symbol = BIterableTpe.typeSymbol
+  final val BIndexedSeqClass: Symbol = BIndexedSeqTpe.typeSymbol
 
   final lazy val isScalaJs =
     definitions.ScalaPackageClass.toType.member(TermName("scalajs")) != NoSymbol
@@ -70,6 +82,14 @@ trait MacroCommons { bundle =>
     if (debugEnabled) {
       error(msg)
     }
+
+  def containsInaccessibleThises(tree: Tree): Boolean = tree.exists {
+    case t@This(_) if !t.symbol.isPackageClass && !enclosingClasses.contains(t.symbol) => true
+    case _ => false
+  }
+
+  def indent(str: String, indent: String): String =
+    str.replaceAllLiterally("\n", s"\n$indent")
 
   class Annot(annotTree: Tree, val subject: Symbol, val directSource: Symbol, val aggregate: Option[Annot]) {
     def aggregationChain: List[Annot] =
@@ -163,8 +183,11 @@ trait MacroCommons { bundle =>
     if (withSupers) withSuperSymbols(s) else Iterator(s)
 
   def allAnnotations(s: Symbol, tpeFilter: Type, withInherited: Boolean = true, fallback: List[Tree] = Nil): List[Annot] = {
+    def inherited(annot: Annotation, superSym: Symbol): Boolean =
+      !(s.isClass && superSym != s && annot.tree.tpe <:< NotInheritedFromSealedTypes)
+
     val nonFallback = maybeWithSuperSymbols(s, withInherited)
-      .flatMap(ss => ss.annotations.map(a => new Annot(a.tree, s, ss, None)))
+      .flatMap(ss => ss.annotations.filter(inherited(_, ss)).map(a => new Annot(a.tree, s, ss, None)))
 
     (nonFallback ++ fallback.iterator.map(t => new Annot(t, s, s, None)))
       .flatMap(_.withAllAggregated).filter(_.tpe <:< tpeFilter).toList
@@ -188,13 +211,47 @@ trait MacroCommons { bundle =>
       case Nil => None
     }
 
+    def inherited(annot: Annotation, superSym: Symbol): Boolean =
+      !(superSym != s && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
+
     maybeWithSuperSymbols(s, withInherited)
-      .map(ss => find(ss.annotations.map(a => new Annot(a.tree, s, ss, None))))
+      .map(ss => find(ss.annotations.filter(inherited(_, ss)).map(a => new Annot(a.tree, s, ss, None))))
       .collectFirst { case Some(annot) => annot }
       .orElse(find(fallback.map(t => new Annot(t, s, s, None))))
   }
 
-  private var companionReplacement = Option.empty[(Symbol, TermName)]
+  final val companionReplacementName = TermName("$companion$replacement")
+  final var forceCompanionReplace: Boolean = false
+
+  def enclosingConstructorCompanion: Symbol =
+    ownerChain.filter(_.isConstructor).map(_.owner.asClass.module).find(_ != NoSymbol).getOrElse(NoSymbol)
+
+  lazy val companionReplacement: Symbol =
+    if (forceCompanionReplace) enclosingConstructorCompanion
+    else c.typecheck(q"$companionReplacementName", silent = true) match {
+      case EmptyTree => NoSymbol
+      case _ => enclosingConstructorCompanion
+    }
+
+  // Replace references to companion object being constructed with casted reference to
+  // `$companion$replacement`. All this horrible wiring is to workaround stupid overzealous Scala validation of
+  // self-reference being passed to super constructor parameter (https://github.com/scala/bug/issues/7666)
+  def replaceCompanion(typedTree: Tree): Tree = {
+    def symToCheck: Symbol = typedTree match {
+      case This(_) => typedTree.symbol.asClass.module
+      case t => t.symbol
+    }
+    companionReplacement match {
+      case NoSymbol => typedTree
+      case s if s == symToCheck => q"$companionReplacementName.asInstanceOf[${typedTree.tpe}]"
+      case _ => typedTree match {
+        case Select(prefix, name) => Select(replaceCompanion(prefix), name)
+        case Apply(fun, args) => Apply(replaceCompanion(fun), args.map(replaceCompanion))
+        case TypeApply(fun, args) => TypeApply(replaceCompanion(fun), args)
+        case t => t
+      }
+    }
+  }
 
   def mkMacroGenerated(tpe: Type, tree: => Tree): Tree = {
     def fail() =
@@ -209,27 +266,8 @@ trait MacroCommons { bundle =>
       fail()
     }
 
-    val compName = c.freshName(TermName("companion"))
-    companionReplacement = Some((companionSym, compName))
-    q"new $CommonsPkg.misc.MacroGenerated[$tpe](($compName: $ScalaPkg.Any) => $tree)"
-  }
-
-  // Replace references to companion object being constructed with casted reference to lambda parameter
-  // of function wrapped by `MacroGenerated` class. This is all to workaround overzealous Scala validation of
-  // self-reference being passed to super constructor parameter (https://github.com/scala/bug/issues/7666)
-  def replaceCompanion(typedTree: Tree): Tree = {
-    val symToCheck = typedTree match {
-      case This(_) => typedTree.symbol.asClass.module
-      case t => t.symbol
-    }
-    companionReplacement match {
-      case None => typedTree
-      case Some((s, name)) if s == symToCheck => q"$name.asInstanceOf[${typedTree.tpe}]"
-      case _ => typedTree match {
-        case Select(prefix, name) => Select(replaceCompanion(prefix), name)
-        case t => t
-      }
-    }
+    forceCompanionReplace = true
+    q"new $CommonsPkg.misc.MacroGenerated[$tpe](($companionReplacementName: $ScalaPkg.Any) => $tree)"
   }
 
   // simplified representation of trees of implicits, used to remove duplicated implicits,
@@ -278,7 +316,7 @@ trait MacroCommons { bundle =>
           def newCachedImplicit(): TermName = {
             val name = c.freshName(TermName("cachedImplicit"))
             inferredImplicitTypes(name) = t.tpe
-            implicitsToDeclare += q"private lazy val $name = $t"
+            implicitsToDeclare += q"private lazy val $name = ${replaceCompanion(t)}"
             name
           }
           ImplicitTrace(t).fold(newCachedImplicit()) { tr =>
@@ -506,6 +544,13 @@ trait MacroCommons { bundle =>
         if tree.tpe <:< typeOf[PartialFunction[Nothing, Any]] =>
         Some(cases)
       case _ => None
+    }
+  }
+
+  object MaybeTyped {
+    def unapply(t: Tree): Some[(Tree, Option[Tree])] = t match {
+      case Typed(expr, tpt) => Some((expr, Some(tpt)))
+      case _ => Some(t, None)
     }
   }
 
@@ -798,6 +843,8 @@ trait MacroCommons { bundle =>
       singleValueFor(internal.thisType(sym.owner)).map(pre => Select(pre, tpe.termSymbol))
     case ThisType(sym) =>
       Some(This(sym))
+    case SingleType(NoPrefix, sym) =>
+      Some(Ident(sym))
     case SingleType(pre, sym) =>
       singleValueFor(pre).map(prefix => Select(prefix, sym))
     case ConstantType(value) =>
@@ -839,17 +886,37 @@ trait MacroCommons { bundle =>
       directSubclasses.flatMap(allCurrentlyKnownSubclasses) + sym
     } else Set.empty
 
-  def knownSubtypes(tpe: Type): Option[List[Type]] = {
+  private val ownersCache = new mutable.OpenHashMap[Symbol, List[Symbol]]
+  def ownersOf(sym: Symbol): List[Symbol] =
+    ownersCache.getOrElseUpdate(sym, Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).toList.reverse)
+
+  private val positionCache = new mutable.OpenHashMap[Symbol, Int]
+  def positionPoint(sym: Symbol): Int =
+    if (c.enclosingPosition.source == sym.pos.source) sym.pos.point
+    else positionCache.getOrElseUpdate(sym,
+      sym.annotations.find(_.tree.tpe <:< PositionedAT).map(_.tree).map {
+        case Apply(_, List(MaybeTyped(Lit(point: Int), _))) => point
+        case t => abort(s"expected literal int as argument of @positioned annotation on $sym, got $t")
+      } getOrElse {
+        abort(s"Could not determine source position of $sym - " +
+          s"it resides in separate file than macro invocation and has no @positioned annotation")
+      })
+
+  def knownSubtypes(tpe: Type, ordered: Boolean = false): Option[List[Type]] = {
     val dtpe = tpe.dealias
     val (tpeSym, refined) = dtpe match {
       case RefinedType(List(single), scope) =>
         (single.typeSymbol, scope.filter(ts => ts.isType && !ts.isAbstract).toList)
       case _ => (dtpe.typeSymbol, Nil)
     }
+
+    def sort(subclasses: List[Symbol]): List[Symbol] =
+      if (ordered || c.enclosingPosition.source == tpeSym.pos.source)
+        subclasses.sortBy(positionPoint)
+      else subclasses
+
     Option(tpeSym).filter(isSealedHierarchyRoot).map { sym =>
-      val subclasses = knownNonAbstractSubclasses(sym).toList
-      val sortedSubclasses = if (tpeSym.pos != NoPosition) subclasses.sortBy(_.pos.point) else subclasses
-      sortedSubclasses.flatMap { subSym =>
+      sort(knownNonAbstractSubclasses(sym).toList).flatMap { subSym =>
         val undetTpe = typeOfTypeSymbol(subSym.asType)
         val refinementSignatures = refined.map(rs => undetTpe.member(rs.name).typeSignatureIn(undetTpe))
         val undetBaseTpe = undetTpe.baseType(dtpe.typeSymbol)
@@ -875,7 +942,7 @@ trait MacroCommons { bundle =>
     val tree = c.typecheck(
       q"""
         def $methodName[..$typeDefs](f: ${treeForType(undetTpe)} => $UnitCls): $UnitCls = ()
-        $methodName((_: ${treeForType(detTpe)}) => ())
+        $methodName((_: $detTpe) => ())
       """, silent = true
     )
 

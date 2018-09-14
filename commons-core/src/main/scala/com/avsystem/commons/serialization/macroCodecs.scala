@@ -28,6 +28,11 @@ abstract class ApplyUnapplyCodec[T](
   protected final def writeField[A](output: ObjectOutput, idx: Int, value: A): Unit =
     writeField(fieldNames(idx), output, value, deps(idx).asInstanceOf[GenCodec[A]])
 
+  protected final def writeField[A](output: ObjectOutput, idx: Int, value: A, transient: A): Unit =
+    if (value != transient) {
+      writeField(output, idx, value)
+    }
+
   protected final def getField[A](fieldValues: FieldValues, idx: Int, default: => A): A =
     fieldValues.getOrElse[A](idx, default)
 

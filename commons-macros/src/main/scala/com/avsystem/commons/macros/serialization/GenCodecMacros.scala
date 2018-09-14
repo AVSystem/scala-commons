@@ -170,11 +170,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
       case List(p) =>
         def writeField(value: Tree) = {
-          val baseWrite = q"writeField[${p.valueType}](output, ${p.idx}, $value)"
-          if (isTransientDefault(p))
-            q"if($value != ${p.defaultValue}) { $baseWrite }"
-          else
-            baseWrite
+          val writeArgs = q"output" :: q"${p.idx}" :: value ::
+            (if (isTransientDefault(p)) List(p.defaultValue) else Nil)
+          q"writeField[${p.valueType}](..$writeArgs)"
         }
 
         if (canUseFields)
@@ -186,11 +184,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
       case _ =>
         def writeField(p: ApplyParam, value: Tree) = {
-          val baseWrite = q"writeField[${p.valueType}](output, ${p.idx}, $value)"
-          if (isTransientDefault(p))
-            q"if($value != ${p.defaultValue}) { $baseWrite }"
-          else
-            baseWrite
+          val writeArgs = q"output" :: q"${p.idx}" :: value ::
+            (if (isTransientDefault(p)) List(p.defaultValue) else Nil)
+          q"writeField[${p.valueType}](..$writeArgs)"
         }
 
         if (canUseFields)

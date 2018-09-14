@@ -1,8 +1,9 @@
 package com.avsystem.commons
-package macros.rpc
+package macros.misc
 
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 sealed trait Res[+A] {
   def isOk: Boolean = this match {
@@ -53,5 +54,20 @@ object Res {
         }
       } else Ok(builder.result())
     loop(cbf(in))
+  }
+
+  def firstOk[A, B](coll: Iterable[A])(f: A => Res[B])(combineErrors: List[(A, String)] => String): Res[B] = {
+    val errors = new ListBuffer[(A, String)]
+    def loop(it: Iterator[A]): Res[B] =
+      if (it.hasNext) {
+        val el = it.next()
+        f(el) match {
+          case Ok(value) => Ok(value)
+          case Fail(error) =>
+            errors += ((el, error))
+            loop(it)
+        }
+      } else Fail(combineErrors(errors.result()))
+    loop(coll.iterator)
   }
 }

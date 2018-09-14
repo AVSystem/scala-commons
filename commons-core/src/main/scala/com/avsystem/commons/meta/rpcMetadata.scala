@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package rpc
+package meta
 
 import com.avsystem.commons.serialization.{HasGenCodec, transparent}
 
@@ -77,3 +77,57 @@ final case class ParamPosition(
   indexInRaw: Int
 )
 object ParamPosition extends HasGenCodec[ParamPosition]
+
+/**
+  * Information about real parameter flags and modifiers as defined in Scala code.
+  */
+@transparent
+final case class TypeFlags(rawFlags: Int) extends AnyVal {
+
+  import TypeFlags._
+
+  def |(other: TypeFlags): TypeFlags = new TypeFlags(rawFlags | other.rawFlags)
+  def &(other: TypeFlags): TypeFlags = new TypeFlags(rawFlags & other.rawFlags)
+  def ^(other: TypeFlags): TypeFlags = new TypeFlags(rawFlags ^ other.rawFlags)
+  def unary_~ : TypeFlags = new TypeFlags(~rawFlags)
+
+  def hasFlags(flags: TypeFlags): Boolean = (this & flags) == flags
+
+  def isAbstract: Boolean = hasFlags(Abstract)
+  def isFinal: Boolean = hasFlags(Final)
+  def isSealed: Boolean = hasFlags(Sealed)
+  def isCase: Boolean = hasFlags(Case)
+  def isTrait: Boolean = hasFlags(Trait)
+  def isObject: Boolean = hasFlags(Object)
+
+  override def toString: String = {
+    def repr(flags: TypeFlags, r: String): Opt[String] =
+      r.opt.filter(_ => hasFlags(flags))
+
+    List(
+      repr(Abstract, "abstract"),
+      repr(Final, "final"),
+      repr(Sealed, "sealed"),
+      repr(Case, "case"),
+      repr(Trait, "trait"),
+      repr(Object, "object")
+    ).flatten.mkString(",")
+  }
+}
+
+object TypeFlags extends HasGenCodec[TypeFlags] {
+  private[this] var currentFlag: Int = 1
+  private[this] def nextFlag(): TypeFlags = {
+    val flag = currentFlag
+    currentFlag = currentFlag << 1
+    new TypeFlags(flag)
+  }
+
+  final val Empty: TypeFlags = new TypeFlags(0)
+  final val Abstract: TypeFlags = nextFlag()
+  final val Final: TypeFlags = nextFlag()
+  final val Sealed: TypeFlags = nextFlag()
+  final val Case: TypeFlags = nextFlag()
+  final val Trait: TypeFlags = nextFlag()
+  final val Object: TypeFlags = nextFlag()
+}

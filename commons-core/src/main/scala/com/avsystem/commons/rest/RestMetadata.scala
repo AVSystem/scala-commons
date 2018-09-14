@@ -1,23 +1,28 @@
 package com.avsystem.commons
 package rest
 
+import com.avsystem.commons.meta._
 import com.avsystem.commons.rpc._
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("RestMetadata for ${T} not found. The easiest way to provide it is to make companion object of " +
+  "${T} extend one of the convenience base companion classes, e.g. DefaultRestApiCompanion")
 @methodTag[RestMethodTag]
 case class RestMetadata[T](
   @multi @tagged[Prefix](whenUntagged = new Prefix)
   @paramTag[RestParamTag](defaultTag = new Path)
-  prefixMethods: Map[String, PrefixMetadata[_]],
+  @rpcMethodMetadata prefixMethods: Mapping[PrefixMetadata[_]],
 
   @multi @tagged[GET]
   @paramTag[RestParamTag](defaultTag = new Query)
-  httpGetMethods: Map[String, HttpMethodMetadata[_]],
+  @rpcMethodMetadata httpGetMethods: Mapping[HttpMethodMetadata[_]],
 
   @multi @tagged[BodyMethodTag](whenUntagged = new POST)
   @paramTag[RestParamTag](defaultTag = new JsonBodyParam)
-  httpBodyMethods: Map[String, HttpMethodMetadata[_]]
+  @rpcMethodMetadata httpBodyMethods: Mapping[HttpMethodMetadata[_]]
 ) {
-  val httpMethods: Map[String, HttpMethodMetadata[_]] =
+  val httpMethods: Mapping[HttpMethodMetadata[_]] =
     httpGetMethods ++ httpBodyMethods
 
   def ensureUniqueParams(prefixes: List[(String, PrefixMetadata[_])]): Unit = {
@@ -98,7 +103,7 @@ object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
       case Nil => this
       case PathName(PathValue(pathName)) :: tail =>
         byName.getOrElseUpdate(pathName, new Trie).forPattern(tail)
-      case PathParam(_) :: tail =>
+      case PathParam(_, _) :: tail =>
         wildcard.getOrElse(new Trie().setup(t => wildcard = Opt(t))).forPattern(tail)
     }
 
@@ -114,7 +119,7 @@ object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
         forPattern(pm.pathPattern).fillWith(pm.result.value, entry :: prefixStack)
       }
       metadata.httpMethods.foreach { case (rpcName, hm) =>
-        forPattern(hm.pathPattern).rpcChains(hm.method) += s"$prefixChain${rpcName.stripPrefix(s"${hm.method}_")}"
+        forPattern(hm.pathPattern).rpcChains(hm.method) += s"$prefixChain${rpcName.stripPrefix(s"${hm.method.name.toLowerCase}_")}"
       }
     }
 
@@ -154,21 +159,23 @@ object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
 
 sealed trait PathPatternElement
 case class PathName(value: PathValue) extends PathPatternElement
-case class PathParam(parameter: PathParamMetadata[_]) extends PathPatternElement
+case class PathParam(name: String, parameter: PathParamMetadata[_]) extends PathPatternElement
 
 sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
   def methodPath: List[PathValue]
   def parametersMetadata: RestParametersMetadata
 
   val pathPattern: List[PathPatternElement] =
-    methodPath.map(PathName) ++ parametersMetadata.path.flatMap(pp => PathParam(pp) :: pp.pathSuffix.map(PathName))
+    methodPath.map(PathName) ++ parametersMetadata.path.flatMap {
+      case (name, pp) => PathParam(name, pp) :: pp.pathSuffix.map(PathName)
+    }
 
   def applyPathParams(params: List[PathValue]): List[PathValue] = {
     def loop(params: List[PathValue], pattern: List[PathPatternElement]): List[PathValue] =
       (params, pattern) match {
         case (Nil, Nil) => Nil
         case (_, PathName(patternHead) :: patternTail) => patternHead :: loop(params, patternTail)
-        case (param :: paramsTail, PathParam(_) :: patternTail) => param :: loop(paramsTail, patternTail)
+        case (param :: paramsTail, PathParam(_, _) :: patternTail) => param :: loop(paramsTail, patternTail)
         case _ => throw new IllegalArgumentException(
           s"got ${params.size} path params, expected ${parametersMetadata.path.size}")
       }
@@ -179,7 +186,7 @@ sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
     def loop(path: List[PathValue], pattern: List[PathPatternElement]): Opt[(List[PathValue], List[PathValue])] =
       (path, pattern) match {
         case (pathTail, Nil) => Opt((Nil, pathTail))
-        case (param :: pathTail, PathParam(_) :: patternTail) =>
+        case (param :: pathTail, PathParam(_, _) :: patternTail) =>
           loop(pathTail, patternTail).map { case (params, tail) => (param :: params, tail) }
         case (pathHead :: pathTail, PathName(patternHead) :: patternTail) if pathHead == patternHead =>
           loop(pathTail, patternTail)
@@ -192,7 +199,7 @@ sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
 case class PrefixMetadata[T](
   @reifyAnnot methodTag: Prefix,
   @composite parametersMetadata: RestParametersMetadata,
-  @checked @infer result: RestMetadata.Lazy[T]
+  @infer @checked result: RestMetadata.Lazy[T]
 ) extends RestMethodMetadata[T] {
   def methodPath: List[PathValue] = PathValue.split(methodTag.path)
 }
@@ -200,40 +207,30 @@ case class PrefixMetadata[T](
 case class HttpMethodMetadata[T](
   @reifyAnnot methodTag: HttpMethodTag,
   @composite parametersMetadata: RestParametersMetadata,
-  @multi @tagged[BodyTag] bodyParams: Map[String, BodyParamMetadata[_]],
-  @checked @infer responseType: HttpResponseType[T]
+  @multi @tagged[JsonBodyParam] @rpcParamMetadata bodyParams: Mapping[ParamMetadata[_]],
+  @optional @encoded @tagged[Body] @rpcParamMetadata singleBodyParam: Opt[ParamMetadata[_]],
+  @infer @checked responseType: HttpResponseType[T]
 ) extends RestMethodMetadata[T] {
   val method: HttpMethod = methodTag.method
-  val singleBody: Boolean = bodyParams.values.exists(_.singleBody)
+  val singleBody: Boolean = singleBodyParam.isDefined
   def methodPath: List[PathValue] = PathValue.split(methodTag.path)
 }
 
-/**
-  * Currently just a marker typeclass used by [[RestMetadata]] materialization to distinguish between
-  * prefix methods and HTTP methods. In the future this typeclass may contain some additional information, e.g.
-  * type metadata for generating swagger definitions.
-  */
-trait HttpResponseType[T]
+@implicitNotFound("${T} is not a valid result type of HTTP operation (it would be valid when e.g. wrapped in a Future)")
+case class HttpResponseType[T]()
 object HttpResponseType {
-  implicit def forFuture[T]: HttpResponseType[Future[T]] =
-    new HttpResponseType[Future[T]] {}
+  implicit def forFuture[T]: HttpResponseType[Future[T]] = HttpResponseType[Future[T]]()
 }
 
 case class RestParametersMetadata(
-  @multi @tagged[Path] path: List[PathParamMetadata[_]],
-  @multi @tagged[Header] headers: Map[String, HeaderParamMetadata[_]],
-  @multi @tagged[Query] query: Map[String, QueryParamMetadata[_]]
+  @multi @tagged[Path] @rpcParamMetadata path: Mapping[PathParamMetadata[_]],
+  @multi @tagged[Header] @rpcParamMetadata headers: Mapping[ParamMetadata[_]],
+  @multi @tagged[Query] @rpcParamMetadata query: Mapping[ParamMetadata[_]]
 )
 
-case class PathParamMetadata[T](
-  @reifyName(rpcName = true) rpcName: String,
-  @reifyAnnot pathAnnot: Path
-) extends TypedMetadata[T] {
+case class ParamMetadata[T]() extends TypedMetadata[T]
+case class PathParamMetadata[T](@reifyAnnot pathAnnot: Path) extends TypedMetadata[T] {
   val pathSuffix: List[PathValue] = PathValue.split(pathAnnot.pathSuffix)
 }
-
-case class HeaderParamMetadata[T]() extends TypedMetadata[T]
-case class QueryParamMetadata[T]() extends TypedMetadata[T]
-case class BodyParamMetadata[T](@isAnnotated[Body] singleBody: Boolean) extends TypedMetadata[T]
 
 class InvalidRestApiException(msg: String) extends RestException(msg)

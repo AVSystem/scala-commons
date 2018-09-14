@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import java.util.UUID
+
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.JCanBuildFrom
@@ -274,7 +276,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   final val DefaultCaseField = "_case"
 
-  implicit lazy val NothingCodec: GenCodec[Nothing] = create[Nothing](_ => throw new ReadFailure("read Nothing"), (_, _) => throw new WriteFailure("write Nothing"))
+  implicit lazy val NothingCodec: GenCodec[Nothing] =
+    create[Nothing](_ => throw new ReadFailure("read Nothing"), (_, _) => throw new WriteFailure("write Nothing"))
   implicit lazy val NullCodec: GenCodec[Null] = create[Null](_.readNull(), (o, _) => o.writeNull())
   implicit lazy val UnitCodec: GenCodec[Unit] = create[Unit](_.readUnit(), (o, _) => o.writeUnit())
   implicit lazy val VoidCodec: GenCodec[Void] = create[Void](_.readNull(), (o, _) => o.writeNull())
@@ -303,10 +306,16 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit lazy val JBigDecimalCodec: GenCodec[JBigDecimal] =
     createNullable(_.readBigDecimal().bigDecimal, (o, v) => o.writeBigDecimal(BigDecimal(v)))
 
-  implicit lazy val JDateCodec: GenCodec[JDate] = createNullable(i => new JDate(i.readTimestamp()), (o, d) => o.writeTimestamp(d.getTime))
-  implicit lazy val StringCodec: GenCodec[String] = createNullable(_.readString(), _ writeString _)
-  implicit lazy val SymbolCodec: GenCodec[Symbol] = createNullable(i => Symbol(i.readString()), (o, s) => o.writeString(s.name))
-  implicit lazy val ByteArrayCodec: GenCodec[Array[Byte]] = createNullable(_.readBinary(), _ writeBinary _)
+  implicit lazy val JDateCodec: GenCodec[JDate] =
+    createNullable(i => new JDate(i.readTimestamp()), (o, d) => o.writeTimestamp(d.getTime))
+  implicit lazy val StringCodec: GenCodec[String] =
+    createNullable(_.readString(), _ writeString _)
+  implicit lazy val SymbolCodec: GenCodec[Symbol] =
+    createNullable(i => Symbol(i.readString()), (o, s) => o.writeString(s.name))
+  implicit lazy val ByteArrayCodec: GenCodec[Array[Byte]] =
+    createNullable(_.readBinary(), _ writeBinary _)
+  implicit lazy val UuidCodec: GenCodec[UUID] =
+    createNullable(i => UUID.fromString(i.readString()), (o, v) => o.writeString(v.toString))
 
   private implicit class TraversableOnceOps[A](private val coll: TraversableOnce[A]) extends AnyVal {
     def writeToList(lo: ListOutput)(implicit writer: GenCodec[A]): Unit =

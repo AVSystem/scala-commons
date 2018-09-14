@@ -111,7 +111,8 @@ class SimpleValueInput(value: Any) extends Input {
         case (k, v) => new SimpleValueFieldInput(k, v)
       }
       def nextField(): SimpleValueFieldInput = it.next()
-      override def peekField(name: String): Opt[SimpleValueFieldInput] = map.getOpt(name).map(new SimpleValueFieldInput(name, _))
+      override def peekField(name: String): Opt[SimpleValueFieldInput] =
+        map.getOpt(name).map(new SimpleValueFieldInput(name, _))
       def hasNext: Boolean = it.hasNext
     }
 
