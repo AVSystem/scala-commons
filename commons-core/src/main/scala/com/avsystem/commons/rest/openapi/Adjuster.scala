@@ -16,7 +16,7 @@ sealed trait Adjuster extends StaticAnnotation
   *
   * - Fields of case classes for which [[RestStructure]] is macro materialized.
   *
-  * - Body parameters of REST methods (parameters tagged with [[com.avsystem.commons.rest.JsonBodyParam JsonBodyParam]]
+  * - Body parameters of REST methods (parameters tagged with [[com.avsystem.commons.rest.BodyParam JsonBodyParam]]
   * or [[com.avsystem.commons.rest.Body Body]] annotations)
   *
   * Schema adjusters DO NOT WORK on REST methods themselves and their path/header/query parameters.

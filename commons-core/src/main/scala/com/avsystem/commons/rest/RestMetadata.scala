@@ -19,7 +19,7 @@ case class RestMetadata[T](
   @rpcMethodMetadata httpGetMethods: Mapping[HttpMethodMetadata[_]],
 
   @multi @tagged[BodyMethodTag](whenUntagged = new POST)
-  @paramTag[RestParamTag](defaultTag = new JsonBodyParam)
+  @paramTag[RestParamTag](defaultTag = new BodyParam)
   @rpcMethodMetadata httpBodyMethods: Mapping[HttpMethodMetadata[_]]
 ) {
   val httpMethods: Mapping[HttpMethodMetadata[_]] =
@@ -71,7 +71,7 @@ case class RestMetadata[T](
       val asFinalCall = for {
         (rpcName, m) <- httpMethods.iterator if m.method == method
         (pathParams, Nil) <- m.extractPathParams(path)
-      } yield ResolvedPath(Nil, RestMethodCall(rpcName, pathParams, m), m.singleBody)
+      } yield ResolvedPath(Nil, RestMethodCall(rpcName, pathParams, m), m)
 
       val usingPrefix = for {
         (rpcName, prefix) <- prefixMethods.iterator
@@ -207,8 +207,9 @@ case class PrefixMetadata[T](
 case class HttpMethodMetadata[T](
   @reifyAnnot methodTag: HttpMethodTag,
   @composite parametersMetadata: RestParametersMetadata,
-  @multi @tagged[JsonBodyParam] @rpcParamMetadata bodyParams: Mapping[ParamMetadata[_]],
+  @multi @tagged[BodyParam] @rpcParamMetadata bodyParams: Mapping[ParamMetadata[_]],
   @optional @encoded @tagged[Body] @rpcParamMetadata singleBodyParam: Opt[ParamMetadata[_]],
+  @isAnnotated[FormBody] formBody: Boolean,
   @infer @checked responseType: HttpResponseType[T]
 ) extends RestMethodMetadata[T] {
   val method: HttpMethod = methodTag.method

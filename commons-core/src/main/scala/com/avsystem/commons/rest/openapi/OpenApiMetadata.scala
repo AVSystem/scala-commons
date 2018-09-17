@@ -23,7 +23,7 @@ case class OpenApiMetadata[T](
   gets: List[OpenApiGetOperation[_]],
 
   @multi @tagged[BodyMethodTag](whenUntagged = new POST)
-  @paramTag[RestParamTag](defaultTag = new JsonBodyParam)
+  @paramTag[RestParamTag](defaultTag = new BodyParam)
   @rpcMethodMetadata
   bodyMethods: List[OpenApiBodyOperation[_]]
 ) {
@@ -141,8 +141,9 @@ case class OpenApiBodyOperation[T](
   name: String,
   methodTag: HttpMethodTag,
   parameters: List[OpenApiParameter[_]],
-  @multi @rpcParamMetadata @tagged[JsonBodyParam] bodyParams: List[OpenApiBodyField[_]],
+  @multi @rpcParamMetadata @tagged[BodyParam] bodyParams: List[OpenApiBodyField[_]],
   @optional @encoded @rpcParamMetadata @tagged[Body] singleBody: Opt[OpenApiBody[_]],
+  @isAnnotated[FormBody] formBody: Boolean,
   resultType: RestResultType[T],
   adjusters: List[OperationAdjuster]
 ) extends OpenApiOperation[T] {
@@ -154,7 +155,8 @@ case class OpenApiBodyOperation[T](
           properties = bodyParams.iterator.map(p => (p.info.name, p.schema(resolver))).toMap,
           required = bodyParams.collect { case p if !p.info.hasFallbackValue => p.info.name }
         )
-        RefOr(RestRequestBody.jsonRequestBody(RefOr(schema)))
+        val mimeType = if (formBody) HttpBody.FormType else HttpBody.JsonType
+        RefOr(RestRequestBody.simpleRequestBody(mimeType, RefOr(schema)))
       }
     }
 }
