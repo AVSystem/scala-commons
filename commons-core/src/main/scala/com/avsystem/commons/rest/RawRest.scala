@@ -22,34 +22,28 @@ trait RawRest {
 
   // declaration order of raw methods matters - it determines their priority!
 
-  @multi
-  @tried
+  @multi @tried
   @tagged[Prefix](whenUntagged = new Prefix)
   @paramTag[RestParamTag](defaultTag = new Path)
   def prefix(@methodName name: String, @composite parameters: RestParameters): Try[RawRest]
 
-  @multi
-  @tried
+  @multi @tried
   @tagged[GET]
   @paramTag[RestParamTag](defaultTag = new Query)
   def get(@methodName name: String, @composite parameters: RestParameters): Async[RestResponse]
 
-  @multi
-  @tried
-  @annotated[FormBody]
+  @multi @tried @annotated[FormBody]
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @paramTag[RestParamTag](defaultTag = new Query)
   def handleForm(@methodName name: String, @composite parameters: RestParameters): Async[RestResponse]
 
-  @multi
-  @tried
+  @multi @tried
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @paramTag[RestParamTag](defaultTag = new BodyField)
   def handle(@methodName name: String, @composite parameters: RestParameters,
     @multi @tagged[BodyField] body: Mapping[JsonValue]): Async[RestResponse]
 
-  @multi
-  @tried
+  @multi @tried
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @paramTag[RestParamTag]
   def handleSingle(@methodName name: String, @composite parameters: RestParameters,
