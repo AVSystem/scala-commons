@@ -19,7 +19,7 @@ case class RestMetadata[T](
   @rpcMethodMetadata httpGetMethods: Mapping[HttpMethodMetadata[_]],
 
   @multi @tagged[BodyMethodTag](whenUntagged = new POST)
-  @paramTag[RestParamTag](defaultTag = new BodyParam)
+  @paramTag[RestParamTag](defaultTag = new BodyField)
   @rpcMethodMetadata httpBodyMethods: Mapping[HttpMethodMetadata[_]]
 ) {
   val httpMethods: Mapping[HttpMethodMetadata[_]] =
@@ -207,7 +207,7 @@ case class PrefixMetadata[T](
 case class HttpMethodMetadata[T](
   @reifyAnnot methodTag: HttpMethodTag,
   @composite parametersMetadata: RestParametersMetadata,
-  @multi @tagged[BodyParam] @rpcParamMetadata bodyParams: Mapping[ParamMetadata[_]],
+  @multi @tagged[BodyField] @rpcParamMetadata bodyFields: Mapping[ParamMetadata[_]],
   @optional @encoded @tagged[Body] @rpcParamMetadata singleBodyParam: Opt[ParamMetadata[_]],
   @isAnnotated[FormBody] formBody: Boolean,
   @infer @checked responseType: HttpResponseType[T]

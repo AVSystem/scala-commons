@@ -194,6 +194,14 @@ trait MacroMetadatas extends MacroSymbols {
     }
   }
 
+//  class ReifiedEncodedAnnotParam(owner: MetadataConstructor, symbol: Symbol, annotTpe: Type)
+//    extends DirectMetadataParam(owner, symbol) with ArityParam {
+//
+//    def allowMulti: Boolean = true
+//    def allowNamedMulti: Boolean = false
+//    def allowListedMulti: Boolean = true
+//  }
+
   class IsAnnotatedParam(owner: MetadataConstructor, symbol: Symbol, annotTpe: Type)
     extends DirectMetadataParam(owner, symbol) {
 

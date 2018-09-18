@@ -1,11 +1,10 @@
 package com.avsystem.commons
 package rest
 
-import java.net.{URLDecoder, URLEncoder}
-
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.rpc._
+import com.avsystem.commons.serialization.GenCodec
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
 
@@ -30,12 +29,12 @@ object PathValue {
 case class HeaderValue(value: String) extends AnyVal with RestValue
 
 /**
-  * Value used as encoding of [[Query]] parameters and [[BodyParam]] parameters of [[FormBody]] methods.
+  * Value used as encoding of [[Query]] parameters and [[BodyField]] parameters of [[FormBody]] methods.
   */
 case class QueryValue(value: String) extends AnyVal with RestValue
 
 /**
-  * Value used as encoding of [[BodyParam]] parameters of non-[[FormBody]] methods.
+  * Value used as encoding of [[BodyField]] parameters of non-[[FormBody]] methods.
   * Wrapped value MUST be a valid JSON.
   */
 case class JsonValue(value: String) extends AnyVal with RestValue
@@ -108,9 +107,8 @@ object HttpBody {
 
   def createFormBody(values: Mapping[QueryValue]): HttpBody =
     if (values.isEmpty) HttpBody.Empty else {
-      def enc(s: String): String = URLEncoder.encode(s, UTF8)
       val form = values.iterator
-        .map { case (k, v) => s"${enc(k)}$FormKVSep${enc(v.value)}" }
+        .map { case (k, v) => s"${UrlEncoding.encode(k)}$FormKVSep${UrlEncoding.encode(v.value)}" }
         .mkString(FormKVPairSep)
       HttpBody(form, FormType)
     }
@@ -119,10 +117,9 @@ object HttpBody {
     case HttpBody.Empty => Mapping.empty
     case _ =>
       val content = body.readForm()
-      def dec(s: String): String = URLDecoder.decode(s, UTF8)
       val builder = Mapping.newBuilder[QueryValue]
       content.split(FormKVPairSep).iterator.map(_.split(FormKVSep, 2)).foreach {
-        case Array(k, v) => builder += (dec(k) -> QueryValue(dec(v)))
+        case Array(k, v) => builder += (UrlEncoding.decode(k) -> QueryValue(UrlEncoding.decode(v)))
         case _ => throw new IllegalArgumentException(s"bad form string: $content")
       }
       builder.result()

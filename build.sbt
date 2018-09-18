@@ -33,8 +33,8 @@ val scalajsBenchmarkVersion = "0.2.4"
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  scalaVersion := "2.12.6",
-  crossScalaVersions := Seq("2.11.12", "2.12.6"),
+  crossScalaVersions := Seq("2.12.6", "2.11.12"),
+  scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
     "-encoding", "utf-8",

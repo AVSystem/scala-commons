@@ -2,7 +2,7 @@ package com.avsystem.commons
 package macros.rpc
 
 import com.avsystem.commons.macros.meta.MacroSymbols
-import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
+import com.avsystem.commons.macros.misc.Res
 
 trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
 

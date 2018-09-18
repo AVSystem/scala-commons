@@ -26,13 +26,14 @@ The `commons-jetty` module provides Jetty-based implementations for JVM.
   - [Path parameters](#path-parameters)
   - [Query parameters](#query-parameters)
   - [Header parameters](#header-parameters)
-  - [JSON Body parameters](#json-body-parameters)
+  - [Body parameters](#body-parameters)
   - [Single body parameters](#single-body-parameters)
+  - [`@FormBody`](#formbody)
   - [Prefix methods](#prefix-methods)
 - [Serialization](#serialization)
   - [Real and raw values](#real-and-raw-values)
   - [Path, query and header serialization](#path-query-and-header-serialization)
-  - [JSON body parameter serialization](#json-body-parameter-serialization)
+  - [Body parameter serialization](#body-parameter-serialization)
   - [Single body serialization](#single-body-serialization)
   - [Result serialization](#result-serialization)
   - [Customizing serialization](#customizing-serialization)
@@ -243,10 +244,11 @@ method into a HTTP REST call.
 
 * By default (if not annotated explicitly) each method is interpreted as HTTP `POST`.
 * Method name is appended to the URL path.
-* Every parameter is interpreted as part of the body - by default all the body parameters will be
-  combined into a JSON object sent through HTTP body. If method is annotated as `@FormBody`, body parameters will be
-  treated like query parameters, URL-encoded and combined into an `application/x-www-form-urlencoded` form body.
-  However, for `GET` methods, every parameter is interpreted as URL query parameter while the body is empty.
+* For non-`GET` methods, every (unannotated) parameter is interpreted as part of the body -
+  by default all the body parameters will be combined into a JSON object sent through HTTP body.
+  However, if a method is annotated as [`@FormBody`](#formbody), unannotated parameters will be interpreted as
+  query parameters, URL-encoded and combined into an `application/x-www-form-urlencoded` form body.
+  For `GET` methods, every parameter is interpreted as URL query parameter while the body is empty.
 * Result type of each method is typically expected to be a `Future` wrapping some
   arbitrary response type. This response type will be serialized into HTTP response which
   by default translates it into JSON and creates a `200 OK` response with `application/json`
@@ -337,6 +339,9 @@ You may explicitly request that some parameter is translated into URL query para
 using `@Query` annotation. As mentioned earlier, parameters of `GET` methods are treated
 as query parameters by default, so this is only strictly necessary for non-`GET` methods.
 
+Also, unannotated parameters of methods annotated as [`@FormBody`](#formbody) are interpreted as
+query parameters. However, they are sent in HTTP body as `application/x-www-form-urlencoded`.
+
 `@Query` annotation also takes optional `name` parameter which may be specified to customize
 URL parameter name. If not specified, trait method parameter name is used.
 
@@ -353,21 +358,20 @@ see [serialization](#path-query-and-header-serialization) for more details.
 
 ### Body parameters
 
-As mentioned earlier, every parameter of non-`GET` API trait method is interpreted either as a field
-of a JSON object sent as HTTP body or (when method is annotated as `@FormBody`) as a part of URL-encoded
-form sent as HTTP body. Just like for path, query and header parameters, there is a
-`@BodyParam` annotation which requests this explicitly. However, it only makes sense to use this
+As mentioned earlier, every unannotated parameter of non-`GET` API trait method is interpreted as a field
+of a JSON object sent as HTTP body. Just like for path, query and header parameters, there is a
+`@BodyField` annotation which requests this explicitly. However, it only makes sense to use this
 annotation when one wants to customize the field name because `GET` methods do not accept body parameters.
-A method annotated as `@GET` having a parameter annotated as `@BodyParam` will be rejected by REST
+A method annotated as `@GET` having a parameter annotated as `@BodyField` will be rejected by REST
 macro engine.
 
-Body parameters are serialized into `JsonValue` objects (by default) or `QueryValue` objects (for `@FormBody` methods),
+Body parameters are serialized into `JsonValue` objects -
 see [serialization](#body-parameter-serialization) for more details.
 
 ### Single body parameters
 
 Every non-`GET` API method may also take a single parameter annotated as `@Body` in place of multiple
-unannotated parameters (implicitly interpreted as `@BodyParam`s). This way the value of that parameter
+unannotated parameters (implicitly interpreted as `@BodyField`s). This way the value of that parameter
 will be serialized straight into HTTP body. This gives you full control over the contents sent in HTTP body
 and their format (i.e. it no longer needs to be `application/json`).
 
@@ -380,6 +384,15 @@ object User extends RestDataCompanion[User]
 
 Single body parameters are serialized into `HttpBody` objects,
 see [serialization](#single-body-serialization) for more details.
+
+### `@FormBody`
+
+A non-`GET` method may be annotated as `@FormBody`. Unannotated parameters of such method
+will be interpreted as query parameters. Then, all the query parameters will be URL-encoded
+and sent in HTTP body of the request with `application/x-www-form-urlencoded` content type.
+No query parameters will be included in the URL itself.
+
+`@FormBody` methods cannot accept `@BodyField` parameters.
 
 ### Prefix methods
 
@@ -442,7 +455,7 @@ Depending on the context where a type is used in a REST API trait, it will be se
 _raw value_:
 
 * path/query/header parameters are serialized as `PathValue`/`QueryValue`/`HeaderValue`
-* body parameters are serialized as `JsonValue` (by default) or `QueryValue` (for `@FormBody` methods)
+* body parameters are serialized as `JsonValue`
 * Single body parameters are serialized as `HttpBody`
 * Response types are serialized as `RestResponse`
 * Prefix result types (other REST API traits) are "serialized" as `RawRest`
@@ -488,8 +501,7 @@ HTTP requests. This means that serialization should not worry about that.
 Body parameters are by default serialized into `JsonValue` which is also a simple wrapper class over `String`,
 but is importantly distinct from `PathValue`/`QueryValue`/`HeaderValue` because it must always contain
 a valid JSON string. This is required because JSON body parameters are ultimately composed into a single
-JSON object sent as HTTP body. If a method is annotated as `@FormBody`, body parameters are serialized into
-`QueryValue` and combined into an URL-encoded form.
+JSON object sent as HTTP body.
 
 There are no "global" implicits defined for `JsonValue` - JSON serialization must be either imported,
 defined by each "real" type manually or plugged in by REST API trait companion. For example,
@@ -716,7 +728,7 @@ that still use the old version:
 * Splitting parameters into multiple parameter lists or making them `implicit`.
 * Renaming `@Path` parameters - their names are not used in REST requests
 * Renaming non-`@Path` parameters, as long as the previous name is explicitly configured by
-  `@Query`, `@Header` or `@BodyParam` annotation.
+  `@Query`, `@Header` or `@BodyField` annotation.
 * Removing non-`@Path` parameters - even if the client sends them, the server will just ignore them.
 * Adding new non-`@Path` parameters, as long as default value is provided for them - either as
   Scala-level default parameter value or by using `@whenAbsent` annotation. The server will simply
@@ -786,6 +798,7 @@ materialized by a macro. You can then use it to generate OpenAPI specification d
 
 ```scala
 import com.avsystem.commons.rest._
+import openapi._
 
 trait MyRestApi {
   ...
@@ -976,7 +989,7 @@ and can be applied on:
 
 * data types with macro-generated `RestSchema`
 * case class fields of data types with macro generated `RestSchema`
-* `@BodyParam` and `@Body` parameters of REST methods
+* `@BodyField` and `@Body` parameters of REST methods
 
 Schema adjusters do **NOT** work on path/header/query parameters and REST methods
 themselves. Instead use [parameter adjusters](#adjusting-parameters) and

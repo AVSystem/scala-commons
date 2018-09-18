@@ -38,16 +38,15 @@ trait RawRest {
   @tried
   @annotated[FormBody]
   @tagged[BodyMethodTag](whenUntagged = new POST)
-  @paramTag[RestParamTag](defaultTag = new BodyParam)
-  def handleForm(@methodName name: String, @composite parameters: RestParameters,
-    @multi @tagged[BodyParam] body: Mapping[QueryValue]): Async[RestResponse]
+  @paramTag[RestParamTag](defaultTag = new Query)
+  def handleForm(@methodName name: String, @composite parameters: RestParameters): Async[RestResponse]
 
   @multi
   @tried
   @tagged[BodyMethodTag](whenUntagged = new POST)
-  @paramTag[RestParamTag](defaultTag = new BodyParam)
+  @paramTag[RestParamTag](defaultTag = new BodyField)
   def handle(@methodName name: String, @composite parameters: RestParameters,
-    @multi @tagged[BodyParam] body: Mapping[JsonValue]): Async[RestResponse]
+    @multi @tagged[BodyField] body: Mapping[JsonValue]): Async[RestResponse]
 
   @multi
   @tried
@@ -76,7 +75,7 @@ trait RawRest {
               else if (finalMetadata.singleBody)
                 rawRest.handleSingle(finalRpcName, finalParameters, body)
               else if (finalMetadata.formBody)
-                rawRest.handleForm(finalRpcName, finalParameters, HttpBody.parseFormBody(body))
+                rawRest.handleForm(finalRpcName, finalParameters.copy(query = HttpBody.parseFormBody(body)))
               else
                 rawRest.handle(finalRpcName, finalParameters, HttpBody.parseJsonBody(body))
           }
@@ -174,8 +173,8 @@ object RawRest extends RawRpcCompanion[RawRest] {
     def handle(name: String, parameters: RestParameters, body: Mapping[JsonValue]): Async[RestResponse] =
       handleSingle(name, parameters, HttpBody.createJsonBody(body))
 
-    def handleForm(name: String, parameters: RestParameters, body: Mapping[QueryValue]): Async[RestResponse] =
-      handleSingle(name, parameters, HttpBody.createFormBody(body))
+    def handleForm(name: String, parameters: RestParameters): Async[RestResponse] =
+      handleSingle(name, parameters.copy(query = Mapping.empty), HttpBody.createFormBody(parameters.query))
 
     def handleSingle(name: String, parameters: RestParameters, body: HttpBody): Async[RestResponse] =
       metadata.httpMethods.get(name).map { methodMeta =>

@@ -138,12 +138,12 @@ class Query(@defaultsToName override val name: String = null)
   extends rpcName(name) with NonBodyTag
 
 /**
-  * REST method parameters annotated as [[BodyParam]] will be encoded as either [[JsonValue]] and combined into
+  * REST method parameters annotated as [[BodyField]] will be encoded as either [[JsonValue]] and combined into
   * a JSON object that will be sent as HTTP body. Body parameters are allowed only in REST methods annotated as
   * [[POST]], [[PATCH]], [[PUT]] or [[DELETE]]. Actually, parameters of these methods are interpreted as
-  * [[BodyParam]] by default which means that this annotation rarely needs to be applied explicitly.
+  * [[BodyField]] by default which means that this annotation rarely needs to be applied explicitly.
   */
-class BodyParam(@defaultsToName override val name: String = null)
+class BodyField(@defaultsToName override val name: String = null)
   extends rpcName(name) with BodyTag
 
 /**
