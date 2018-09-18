@@ -150,8 +150,10 @@ object RestRequestBody {
 
   implicit def fromSchema[T: RestSchema]: RestRequestBody[T] =
     new RestRequestBody[T] {
-      def requestBody(resolver: SchemaResolver, schemaAdjusters: List[SchemaAdjuster]): RefOr[RequestBody] =
-        RefOr(simpleRequestBody(HttpBody.JsonType, SchemaAdjuster.adjustRef(schemaAdjusters, resolver.resolve(RestSchema[T]))))
+      def requestBody(resolver: SchemaResolver, schemaAdjusters: List[SchemaAdjuster]): RefOr[RequestBody] = {
+        val schema = SchemaAdjuster.adjustRef(schemaAdjusters, resolver.resolve(RestSchema[T]))
+        RefOr(simpleRequestBody(HttpBody.JsonType, schema))
+      }
     }
 }
 
