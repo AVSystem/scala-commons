@@ -363,8 +363,9 @@ annotation when one wants to customize the field name because `GET` methods do n
 A method annotated as `@GET` having a parameter annotated as `@BodyField` will be rejected by REST
 macro engine.
 
-Body parameters are serialized into `JsonValue` objects (by default) or `QueryValue` objects (for [`@FormBody`](#formbody) methods),
-see [serialization](#body-parameter-serialization) for more details.
+Body parameters are serialized into `JsonValue` objects (by default) or `QueryValue` objects
+(for [`@FormBody`](#formbody) methods), see
+[serialization](#body-parameter-serialization) for more details.
 
 ### Single body parameters
 
@@ -553,7 +554,8 @@ _Lexical scope_ is made of locally visible and imported implicits. It has priori
 implicit scope is searched only when implicit could not be found in lexical scope.
 
 _Implicit scope_ is made of companion objects of all traits and classes _associated_ with the
-type of implicit being searched for. Consult [Scala Language Specification](https://www.scala-lang.org/files/archive/spec/2.12/07-implicits.html)
+type of implicit being searched for. Consult
+[Scala Language Specification](https://www.scala-lang.org/files/archive/spec/2.12/07-implicits.html)
 for precise definition of the word "_associated_". As an example, implicit scope of type `AsRaw[JsonValue,MyClass]` is
 made of companion objects of `AsRaw`, `JsonValue`, `MyClass` + companion objects of all supertraits, superclasses and
 enclosing traits/classes of `MyClass`.
@@ -767,7 +769,8 @@ Therefore, the only thing you need to do to expose your REST API trait as an act
 `HandleRequest` function into a server. This is usually just a matter of translating native HTTP request into `RestRequest`,
 passing them to `HandleRequest` function and translating resulting `RestResponse` to native HTTP response.
 
-See [`RestServlet`](../commons-jetty/src/main/scala/com/avsystem/commons/jetty/rest/RestServlet.scala) for an example implementation.
+See [`RestServlet`](../commons-jetty/src/main/scala/com/avsystem/commons/jetty/rest/RestServlet.scala)
+for an example implementation.
 
 ### Implementing a client
 
