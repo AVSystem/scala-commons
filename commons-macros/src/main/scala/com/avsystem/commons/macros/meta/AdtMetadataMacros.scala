@@ -271,7 +271,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
 
   def materializeMacroGenerated[Real: WeakTypeTag]: Tree = {
     val adtTpe = weakTypeOf[Real].dealias
-    val metadataTpe = c.macroApplication.tpe.dealias.typeArgs.head
-    mkMacroGenerated(metadataTpe, materializeMetadata(adtTpe, metadataTpe))
+    val List(companionTpe, metadataTpe) = c.macroApplication.tpe.dealias.typeArgs
+    mkMacroGenerated(companionTpe, metadataTpe, q"${c.prefix}.materialize[$adtTpe]")
   }
 }

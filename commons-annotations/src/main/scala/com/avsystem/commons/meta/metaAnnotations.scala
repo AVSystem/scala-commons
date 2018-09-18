@@ -226,6 +226,16 @@ final class adtCaseMetadata extends MetadataParamStrategy
 final class reifyAnnot extends MetadataParamStrategy
 
 /**
+  * Similar to [[reifyAnnot]] but the annotation is encoded into some raw type (which is the type of the parameter).
+  * Because the type of the parameter is now the raw type, annotation type must be given as type parameter of
+  * [[reifyEncodedAnnot]].
+  *
+  * Encoding is done by searching and using implicit instance of `AsRaw[ParameterType,AnnotationType]`.
+  * Arity annotations apply in the same way as for [[reifyAnnot]].
+  */
+final class reifyEncodedAnnot[T <: StaticAnnotation] extends MetadataParamStrategy
+
+/**
   * Metadata parameter typed as `Boolean` can be annotated with `@isAnnotated[SomeAnnotation]`. Boolean value will then
   * hold information about whether RPC trait, method or parameter for which metadata is materialized is annotated with
   * `SomeAnnotation` (or any subtype) or not.

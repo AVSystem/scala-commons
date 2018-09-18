@@ -6,7 +6,7 @@ import com.avsystem.commons.meta._
 import com.avsystem.commons.serialization.{GenCaseInfo, GenCodec, GenParamInfo, GenUnionInfo, name}
 
 abstract class HasGenCodecStructure[T](
-  implicit gc: MacroGenerated[GenCodec[T]], gs: MacroGenerated[GenStructure[T]]) {
+  implicit gc: MacroGenerated[Any, GenCodec[T]], gs: MacroGenerated[Any, GenStructure[T]]) {
   implicit val genCodec: GenCodec[T] = gc.forCompanion(this)
   implicit val genStructure: GenStructure[T] = gs.forCompanion(this)
 }

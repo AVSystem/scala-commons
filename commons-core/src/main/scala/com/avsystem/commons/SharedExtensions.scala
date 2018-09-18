@@ -63,6 +63,9 @@ object SharedExtensions extends SharedExtensions {
       */
     def |>[B](f: A => B): B = f(a)
 
+    def applyIf[A0 >: A](predicate: A => Boolean)(f: A => A0): A0 =
+      if (predicate(a)) f(a) else a
+
     /**
       * Explicit syntax to discard the value of a side-effecting expression.
       * Useful when `-Ywarn-value-discard` compiler option is enabled.

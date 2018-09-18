@@ -114,7 +114,20 @@ class FormBody extends StaticAnnotation
 class Prefix(val path: String = null) extends RestMethodTag
 
 sealed trait RestParamTag extends RpcTag
-sealed trait NonBodyTag extends RestParamTag
+sealed trait NonBodyTag extends RestParamTag {
+  def isPath: Boolean = this match {
+    case _: Path => true
+    case _ => false
+  }
+  def isHeader: Boolean = this match {
+    case _: Header => true
+    case _ => false
+  }
+  def isQuery: Boolean = this match {
+    case _: Query => true
+    case _ => false
+  }
+}
 sealed trait BodyTag extends RestParamTag
 
 /**

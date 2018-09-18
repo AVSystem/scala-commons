@@ -14,6 +14,7 @@ trait MacroMetadatas extends MacroSymbols {
   val TypedMetadataType: Type = getType(tq"$MetaPackage.TypedMetadata[_]")
   val MetadataParamStrategyType: Type = getType(tq"$MetaPackage.MetadataParamStrategy")
   val ReifyAnnotAT: Type = getType(tq"$MetaPackage.reifyAnnot")
+  val ReifyEncodedAnnotAT: Type = getType(tq"$MetaPackage.reifyEncodedAnnot[_]")
   val IsAnnotatedAT: Type = getType(tq"$MetaPackage.isAnnotated[_]")
   val InferAT: Type = getType(tq"$MetaPackage.infer")
   val ReifyNameAT: Type = getType(tq"$MetaPackage.reifyName")
@@ -77,16 +78,18 @@ trait MacroMetadatas extends MacroSymbols {
     def shortDescription = "metadata class"
     def description = s"$shortDescription $ownerType"
 
-    def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam = annot.tpe match {
-      case t if t <:< InferAT => new ImplicitParam(this, paramSym)
-      case t if t <:< ReifyAnnotAT => new ReifiedAnnotParam(this, paramSym)
-      case t if t <:< ReifyNameAT =>
-        val useRawName = annot.findArg[Boolean](ReifyNameAT.member(TermName("useRawName")), false)
-        new ReifiedNameParam(this, paramSym, useRawName)
-      case t if t <:< IsAnnotatedAT =>
-        new IsAnnotatedParam(this, paramSym, t.typeArgs.head)
-      case t => reportProblem(s"metadata param strategy $t is not allowed here")
-    }
+    def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
+      annot.tpe.asSeenFrom(ownerType, ownerType.typeSymbol) match {
+        case t if t <:< InferAT => new ImplicitParam(this, paramSym)
+        case t if t <:< ReifyAnnotAT => new ReifiedAnnotParam(this, paramSym)
+        case t if t <:< ReifyEncodedAnnotAT => new ReifiedEncodedAnnotParam(this, paramSym, t.typeArgs.head)
+        case t if t <:< ReifyNameAT =>
+          val useRawName = annot.findArg[Boolean](ReifyNameAT.member(TermName("useRawName")), false)
+          new ReifiedNameParam(this, paramSym, useRawName)
+        case t if t <:< IsAnnotatedAT =>
+          new IsAnnotatedParam(this, paramSym, t.typeArgs.head)
+        case t => reportProblem(s"metadata param strategy $t is not allowed here")
+      }
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor
 
@@ -160,38 +163,57 @@ trait MacroMetadatas extends MacroSymbols {
 
   }
 
-  class ReifiedAnnotParam(owner: MetadataConstructor, symbol: Symbol)
+  abstract class BaseReifiedAnnotParam(owner: MetadataConstructor, symbol: Symbol)
     extends DirectMetadataParam(owner, symbol) with ArityParam {
+
+    def annotTpe: Type
+    def encode(annotTree: Tree): Tree
 
     def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = true
 
-    if (!(arity.collectedType <:< typeOf[StaticAnnotation])) {
-      reportProblem(s"${arity.collectedType} is not a subtype of StaticAnnotation")
-    }
-
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = Ok {
-      def validated(annot: Annot): Annot = {
+      def validatedAnnotTree(annot: Annot): Tree = {
         if (containsInaccessibleThises(annot.tree)) {
-          matchedSymbol.real.reportProblem(s"reified annotation contains this-references inaccessible outside RPC trait")
+          matchedSymbol.real.reportProblem(s"reified annotation ${annot.tree} contains inaccessible this-references")
         }
-        annot
+        c.untypecheck(encode(annot.tree))
       }
 
       val rpcSym = matchedSymbol.real
       arity match {
-        case ParamArity.Single(annotTpe) =>
-          matchedSymbol.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)).getOrElse {
+        case ParamArity.Single(_) =>
+          matchedSymbol.annot(annotTpe).map(validatedAnnotTree).getOrElse {
             val msg = s"${rpcSym.problemStr}: cannot materialize value for $description: no annotation of type $annotTpe found"
             q"$RpcUtils.compilationError(${StringLiteral(msg, rpcSym.pos)})"
           }
-        case ParamArity.Optional(annotTpe) =>
-          mkOptional(matchedSymbol.annot(annotTpe).map(a => c.untypecheck(validated(a).tree)))
-        case ParamArity.Multi(annotTpe, _) =>
-          mkMulti(allAnnotations(rpcSym.symbol, annotTpe).map(a => c.untypecheck(validated(a).tree)))
+        case ParamArity.Optional(_) =>
+          mkOptional(matchedSymbol.annot(annotTpe).map(validatedAnnotTree))
+        case ParamArity.Multi(_, _) =>
+          mkMulti(allAnnotations(rpcSym.symbol, annotTpe).map(validatedAnnotTree))
       }
     }
+  }
+
+  class ReifiedAnnotParam(owner: MetadataConstructor, symbol: Symbol)
+    extends BaseReifiedAnnotParam(owner, symbol) with ArityParam {
+
+    if (!(arity.collectedType <:< typeOf[StaticAnnotation])) {
+      reportProblem(s"${arity.collectedType} is not a subtype of StaticAnnotation")
+    }
+
+    def annotTpe: Type = arity.collectedType
+    def encode(annotTree: Tree): Tree = annotTree
+  }
+
+  class ReifiedEncodedAnnotParam(owner: MetadataConstructor, symbol: Symbol, val annotTpe: Type)
+    extends BaseReifiedAnnotParam(owner, symbol) with ArityParam {
+
+    lazy val asRaw: TermName =
+      infer(tq"$CommonsPkg.rpc.AsRaw[${arity.collectedType}, $annotTpe]")
+
+    def encode(annotTree: Tree): Tree = q"$asRaw.asRaw($annotTree)"
   }
 
   class IsAnnotatedParam(owner: MetadataConstructor, symbol: Symbol, annotTpe: Type)

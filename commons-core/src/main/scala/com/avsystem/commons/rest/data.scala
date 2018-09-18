@@ -6,6 +6,7 @@ import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion,
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
+import com.avsystem.commons.serialization.{GenCodec, whenAbsent}
 
 import scala.util.control.NoStackTrace
 
@@ -55,6 +56,23 @@ object QueryValue {
   * Wrapped value MUST be a valid JSON.
   */
 case class JsonValue(value: String) extends AnyVal with RestValue
+object JsonValue {
+  // TODO: this is terrible, but GenCodec in general just can't embed arbitrary JSON at this point...
+  private[rest] implicit val codec: GenCodec[JsonValue] =
+    GenCodec.create(
+      {
+        case ji: JsonStringInput => JsonValue(ji.readRawJson())
+        case i => JsonValue(i.readString())
+      },
+      {
+        case (jo: JsonStringOutput, JsonValue(json)) => jo.writeRawJson(json)
+        case (o, JsonValue(json)) => o.writeString(json)
+      }
+    )
+
+  implicit def whenAbsentAsJson[T](implicit valueAsJson: AsRaw[JsonValue, T]): AsRaw[Try[JsonValue], whenAbsent[T]] =
+    AsRaw.create(wa => Try(wa.value).map(valueAsJson.asRaw))
+}
 
 /**
   * Value used to represent HTTP body. Also used as direct encoding of [[Body]] parameters. Types that have

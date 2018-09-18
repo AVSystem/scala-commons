@@ -20,9 +20,10 @@ import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, HasGenCodec}
   *   object User extends RestDataCompanion[User]
   * }}}
   */
-abstract class RestDataCompanion[T](
-  implicit macroRestStructure: MacroGenerated[RestStructure[T]], macroCodec: MacroGenerated[GenCodec[T]]
-) extends HasGenCodec[T] {
+abstract class RestDataCompanion[T](implicit
+  macroRestStructure: MacroGenerated[DefaultRestImplicits, RestStructure[T]],
+  macroCodec: MacroGenerated[Any, GenCodec[T]]
+) extends HasGenCodec[T] with DefaultRestImplicits {
   implicit lazy val restStructure: RestStructure[T] = macroRestStructure.forCompanion(this)
   implicit lazy val restSchema: RestSchema[T] = restStructure.standaloneSchema // lazy on restStructure
 }
@@ -46,7 +47,7 @@ trait OpenApiFullInstances[Real] extends FullInstances[Real] {
   def openapiMetadata: OpenApiMetadata[Real]
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestClientApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ClientInstances, Real]
 ) {
@@ -57,7 +58,7 @@ abstract class RestClientApiCompanion[Implicits, Real](protected val implicits: 
     RawRest.fromHandleRequest(handleRequest)
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestServerApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ServerInstances, Real]
 ) {
@@ -68,7 +69,7 @@ abstract class RestServerApiCompanion[Implicits, Real](protected val implicits: 
     RawRest.asHandleRequest(real)
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestServerOpenApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, OpenApiServerInstances, Real]
 ) {
@@ -99,7 +100,7 @@ abstract class RestApiCompanion[Implicits, Real](protected val implicits: Implic
     RawRest.asHandleRequest(real)
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestOpenApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, OpenApiFullInstances, Real]
 ) {

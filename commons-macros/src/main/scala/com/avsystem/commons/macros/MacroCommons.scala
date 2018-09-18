@@ -179,14 +179,23 @@ trait MacroCommons { bundle =>
     }
   }
 
+  private def orConstructorParam(applyParam: Symbol): Symbol = {
+    val owner = applyParam.owner
+    if (owner.name == TermName("apply") && owner.isSynthetic)
+      owner.owner.companion.asType.toType.member(termNames.CONSTRUCTOR).asMethod
+        .paramLists.flatten.find(_.name == applyParam.name).getOrElse(applyParam)
+    else applyParam
+  }
+
   private def maybeWithSuperSymbols(s: Symbol, withSupers: Boolean): Iterator[Symbol] =
     if (withSupers) withSuperSymbols(s) else Iterator(s)
 
   def allAnnotations(s: Symbol, tpeFilter: Type, withInherited: Boolean = true, fallback: List[Tree] = Nil): List[Annot] = {
+    val initSym = orConstructorParam(s)
     def inherited(annot: Annotation, superSym: Symbol): Boolean =
-      !(s.isClass && superSym != s && annot.tree.tpe <:< NotInheritedFromSealedTypes)
+      !(superSym != initSym && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
 
-    val nonFallback = maybeWithSuperSymbols(s, withInherited)
+    val nonFallback = maybeWithSuperSymbols(initSym, withInherited)
       .flatMap(ss => ss.annotations.filter(inherited(_, ss)).map(a => new Annot(a.tree, s, ss, None)))
 
     (nonFallback ++ fallback.iterator.map(t => new Annot(t, s, s, None)))
@@ -194,6 +203,7 @@ trait MacroCommons { bundle =>
   }
 
   def findAnnotation(s: Symbol, tpe: Type, withInherited: Boolean = true, fallback: List[Tree] = Nil): Option[Annot] = {
+    val initSym = orConstructorParam(s)
     def find(annots: List[Annot]): Option[Annot] = annots match {
       case head :: tail =>
         val fromHead = Some(head).filter(_.tpe <:< tpe).orElse(find(head.aggregated))
@@ -212,23 +222,21 @@ trait MacroCommons { bundle =>
     }
 
     def inherited(annot: Annotation, superSym: Symbol): Boolean =
-      !(superSym != s && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
+      !(superSym != initSym && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
 
-    maybeWithSuperSymbols(s, withInherited)
+    maybeWithSuperSymbols(initSym, withInherited)
       .map(ss => find(ss.annotations.filter(inherited(_, ss)).map(a => new Annot(a.tree, s, ss, None))))
       .collectFirst { case Some(annot) => annot }
       .orElse(find(fallback.map(t => new Annot(t, s, s, None))))
   }
 
   final val companionReplacementName = TermName("$companion$replacement")
-  final var forceCompanionReplace: Boolean = false
 
   def enclosingConstructorCompanion: Symbol =
     ownerChain.filter(_.isConstructor).map(_.owner.asClass.module).find(_ != NoSymbol).getOrElse(NoSymbol)
 
   lazy val companionReplacement: Symbol =
-    if (forceCompanionReplace) enclosingConstructorCompanion
-    else c.typecheck(q"$companionReplacementName", silent = true) match {
+    c.typecheck(q"$companionReplacementName", silent = true) match {
       case EmptyTree => NoSymbol
       case _ => enclosingConstructorCompanion
     }
@@ -253,7 +261,7 @@ trait MacroCommons { bundle =>
     }
   }
 
-  def mkMacroGenerated(tpe: Type, tree: => Tree): Tree = {
+  def mkMacroGenerated(companionTpe: Type, tpe: Type, baseMaterialize: Tree): Tree = {
     def fail() =
       abort(s"invocation of this macro is allowed only to be passed as super constructor parameter of an object")
 
@@ -266,8 +274,15 @@ trait MacroCommons { bundle =>
       fail()
     }
 
-    forceCompanionReplace = true
-    q"new $CommonsPkg.misc.MacroGenerated[$tpe](($companionReplacementName: $ScalaPkg.Any) => $tree)"
+    val companionImport = List(q"import $companionReplacementName._")
+      .filterNot(_ => companionTpe =:= definitions.AnyTpe)
+
+    q"""
+       new $CommonsPkg.misc.MacroGenerated[$companionTpe, $tpe](($companionReplacementName: $companionTpe) => {
+         ..$companionImport
+         $baseMaterialize
+       })
+     """
   }
 
   // simplified representation of trees of implicits, used to remove duplicated implicits,

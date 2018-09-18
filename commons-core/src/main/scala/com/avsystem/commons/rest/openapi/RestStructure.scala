@@ -4,6 +4,7 @@ package rest.openapi
 import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.ValueOf
+import com.avsystem.commons.rest.JsonValue
 import com.avsystem.commons.serialization._
 
 sealed trait RestStructure[T] extends TypedMetadata[T] {
@@ -118,7 +119,7 @@ object RestStructure extends AdtMetadataCompanion[RestStructure] {
           val props = caseFieldName.map(cfn => (cfn, RefOr(Schema.enumOf(List(info.rawName))))).iterator ++
             fields.iterator.map(f => (f.info.rawName, f.resolveSchema(resolver)))
           val required = caseFieldName.iterator ++
-            fields.iterator.filterNot(_.info.hasFallbackValue).map(_.info.rawName)
+            fields.iterator.filterNot(_.hasFallbackValue).map(_.info.rawName)
           RefOr(applyAdjusters(Schema(`type` = DataType.Object, properties = props.toMap, required = required.toList)))
       }
   }
@@ -144,9 +145,15 @@ object RestStructure extends AdtMetadataCompanion[RestStructure] {
   case class Field[T](
     @composite info: GenParamInfo[T],
     @infer restSchema: RestSchema[T],
+    @optional @reifyEncodedAnnot[whenAbsent[T]] whenAbsent: Opt[Try[JsonValue]],
     @multi @reifyAnnot schemaAdjusters: List[SchemaAdjuster]
   ) extends TypedMetadata[T] {
-    def resolveSchema(resolver: SchemaResolver): RefOr[Schema] =
-      SchemaAdjuster.adjustRef(schemaAdjusters, resolver.resolve(restSchema))
+    val hasFallbackValue: Boolean =
+      whenAbsent.fold(info.flags.hasDefaultValue)(_.isSuccess)
+
+    def resolveSchema(resolver: SchemaResolver): RefOr[Schema] = {
+      val bareSchema = resolver.resolve(restSchema).withDefaultValue(whenAbsent)
+      SchemaAdjuster.adjustRef(schemaAdjusters, bareSchema)
+    }
   }
 }

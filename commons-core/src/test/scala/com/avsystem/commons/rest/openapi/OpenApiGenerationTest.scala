@@ -124,12 +124,12 @@ class OpenApiGenerationTest extends FunSuite {
         |                  },
         |                  "p2": {
         |                    "type": "integer",
-        |                    "format": "int32"
+        |                    "format": "int32",
+        |                    "default": 42
         |                  }
         |                },
         |                "required": [
-        |                  "p1",
-        |                  "p2"
+        |                  "p1"
         |                ]
         |              }
         |            }
@@ -352,9 +352,9 @@ class OpenApiGenerationTest extends FunSuite {
         |          {
         |            "name": "q=2",
         |            "in": "query",
-        |            "required": true,
         |            "schema": {
-        |              "type": "string"
+        |              "type": "string",
+        |              "default": "q2def"
         |            }
         |          }
         |        ]
@@ -505,7 +505,8 @@ class OpenApiGenerationTest extends FunSuite {
         |            "description": "entity id"
         |          },
         |          "name": {
-        |            "type": "string"
+        |            "type": "string",
+        |            "default": "anonymous"
         |          },
         |          "subentity": {
         |            "description": "recursive optional subentity",
@@ -518,8 +519,7 @@ class OpenApiGenerationTest extends FunSuite {
         |          }
         |        },
         |        "required": [
-        |          "id",
-        |          "name"
+        |          "id"
         |        ]
         |      },
         |      "taggedRestEntity": {

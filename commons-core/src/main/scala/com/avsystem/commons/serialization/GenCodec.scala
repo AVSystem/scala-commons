@@ -448,7 +448,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   @deprecated("auto codecs will be removed", "1.28.0")
   implicit lazy val NothingAutoCodec: GenCodec.Auto[Nothing] = GenCodec.Auto[Nothing](NothingCodec)
 
-  implicit def macroGeneratedCodec[T]: MacroGenerated[GenCodec[T]] =
+  implicit def macroGeneratedCodec[C, T]: MacroGenerated[C, GenCodec[T]] =
   macro macros.serialization.GenCodecMacros.materializeMacroGenerated[T]
 }
 

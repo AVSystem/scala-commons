@@ -2,6 +2,8 @@ package com.avsystem.commons
 package rest.openapi
 
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
+import com.avsystem.commons.rest.JsonValue
+import com.avsystem.commons.serialization.json.JsonStringOutput
 import com.avsystem.commons.serialization.{transientDefault => td, _}
 
 /**
@@ -255,8 +257,8 @@ case class Schema(
   @td not: OptArg[RefOr[Schema]] = OptArg.Empty,
   @td discriminator: OptArg[Discriminator] = OptArg.Empty,
 
-  @td enum: List[String] = Nil, //TODO: other values than strings
-  @td default: OptArg[String] = OptArg.Empty //TODO: other values than strings
+  @td enum: List[JsonValue] = Nil,
+  @td default: OptArg[JsonValue] = OptArg.Empty
 ) {
   def unwrapSingleRefAllOf: RefOr[Schema] = allOf match {
     case List(ref: RefOr.Ref) if this == Schema(allOf = List(ref)) => ref
@@ -291,7 +293,7 @@ object Schema extends HasGenCodec[Schema] {
     Schema(`type` = DataType.Object, additionalProperties = properties)
 
   def enumOf(values: List[String]): Schema =
-    Schema(`type` = DataType.String, enum = values)
+    Schema(`type` = DataType.String, enum = values.map(s => JsonValue(JsonStringOutput.write(s))))
 
   def nullable(schema: RefOr[Schema]): Schema =
     schema.rewrapRefToAllOf.copy(nullable = true)
@@ -306,6 +308,9 @@ object Schema extends HasGenCodec[Schema] {
       case RefOr.Value(schema) => schema
       case ref => Schema(allOf = List(ref))
     }
+
+    def withDefaultValue(dv: Opt[Try[JsonValue]]): RefOr[Schema] =
+      dv.collect({ case Success(v) => v }).fold(refOrSchema)(v => RefOr(rewrapRefToAllOf.copy(default = v)))
   }
 }
 
@@ -380,7 +385,7 @@ case class Parameter(
   @td explode: OptArg[Boolean] = OptArg.Empty,
   @td allowReserved: Boolean = false,
   @td schema: OptArg[RefOr[Schema]] = OptArg.Empty,
-  @td example: OptArg[String] = OptArg.Empty, //TODO other values than strings
+  @td example: OptArg[JsonValue] = OptArg.Empty,
   @td examples: Map[String, RefOr[Example]] = Map.empty,
   @td content: OptArg[Entry[String, MediaType]] = OptArg.Empty
 )
@@ -445,7 +450,7 @@ object Encoding extends HasGenCodec[Encoding]
 case class Example(
   @td summary: OptArg[String] = OptArg.Empty,
   @td description: OptArg[String] = OptArg.Empty,
-  @td value: OptArg[String] = OptArg.Empty, //TODO other values than strings
+  @td value: OptArg[JsonValue] = OptArg.Empty,
   @td externalValue: OptArg[String] = OptArg.Empty
 )
 object Example extends HasGenCodec[Example]
@@ -474,7 +479,7 @@ case class Header(
   @td explode: OptArg[Boolean] = OptArg.Empty,
   @td allowReserved: Boolean = false,
   @td schema: OptArg[RefOr[Schema]] = OptArg.Empty,
-  @td example: OptArg[String] = OptArg.Empty, //TODO other values than strings
+  @td example: OptArg[JsonValue] = OptArg.Empty,
   @td examples: Map[String, RefOr[Example]] = Map.empty,
   @td content: OptArg[Entry[String, MediaType]] = OptArg.Empty
 )
@@ -544,8 +549,8 @@ object OAuthFlow extends HasGenCodec[OAuthFlow]
 case class Link(
   @td operationRef: OptArg[String] = OptArg.Empty,
   @td operationId: OptArg[String] = OptArg.Empty,
-  @td parameters: Map[String, String] = Map.empty, //TODO: other values than strings
-  @td requestBody: OptArg[String] = OptArg.Empty, //TODO: other values than strings
+  @td parameters: Map[String, JsonValue] = Map.empty,
+  @td requestBody: OptArg[JsonValue] = OptArg.Empty,
   @td description: OptArg[String] = OptArg.Empty,
   @td server: OptArg[Server] = OptArg.Empty
 )
