@@ -43,7 +43,7 @@ abstract class AbstractRestCallTest extends FunSuite with ScalaFutures {
   }
 
   test("form POST") {
-    testCall(_.formPost("ą=ę", 42))
+    testCall(_.formPost("ó", "ą=ę", 42))
   }
 
   test("prefixed GET") {

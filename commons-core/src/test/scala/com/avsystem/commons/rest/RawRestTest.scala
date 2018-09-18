@@ -20,7 +20,7 @@ trait UserApi {
 
   def autopost(bodyarg: String): Future[String]
   def singleBodyAutopost(@Body body: String): Future[String]
-  @FormBody def formpost(sarg: String, iarg: Int): Future[String]
+  @FormBody def formpost(@Query qarg: String, sarg: String, iarg: Int): Future[String]
 }
 object UserApi extends DefaultRestApiCompanion[UserApi]
 
@@ -58,7 +58,7 @@ class RawRestTest extends FunSuite with ScalaFutures {
     def user(paf: String, awesome: Boolean, f: Int, user: User): Future[Unit] = Future.unit
     def autopost(bodyarg: String): Future[String] = Future.successful(bodyarg.toUpperCase)
     def singleBodyAutopost(@Body body: String): Future[String] = Future.successful(body.toUpperCase)
-    def formpost(sarg: String, iarg: Int): Future[String] = Future.successful(s"$sarg-$iarg")
+    def formpost(qarg: String, sarg: String, iarg: Int): Future[String] = Future.successful(s"$qarg-$sarg-$iarg")
     def fail: Future[Unit] = Future.failed(HttpErrorException(400, "zuo"))
     def failMore: Future[Unit] = throw HttpErrorException(400, "ZUO")
   }
@@ -122,11 +122,11 @@ class RawRestTest extends FunSuite with ScalaFutures {
   }
 
   test("form POST") {
-    testRestCall(_.self.formpost("a=b", 42),
-      """-> POST /formpost application/x-www-form-urlencoded
+    testRestCall(_.self.formpost("qu", "a=b", 42),
+      """-> POST /formpost?qarg=qu application/x-www-form-urlencoded
         |sarg=a%3Db&iarg=42
         |<- 200 application/json
-        |"a=b-42"
+        |"qu-a=b-42"
         |""".stripMargin)
   }
 

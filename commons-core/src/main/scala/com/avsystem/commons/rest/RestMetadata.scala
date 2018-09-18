@@ -201,7 +201,7 @@ case class PrefixMetadata[T](
   @composite parametersMetadata: RestParametersMetadata,
   @infer @checked result: RestMetadata.Lazy[T]
 ) extends RestMethodMetadata[T] {
-  def methodPath: List[PathValue] = PathValue.split(methodTag.path)
+  def methodPath: List[PathValue] = PathValue.splitDecode(methodTag.path)
 }
 
 case class HttpMethodMetadata[T](
@@ -214,7 +214,7 @@ case class HttpMethodMetadata[T](
 ) extends RestMethodMetadata[T] {
   val method: HttpMethod = methodTag.method
   val singleBody: Boolean = singleBodyParam.isDefined
-  def methodPath: List[PathValue] = PathValue.split(methodTag.path)
+  def methodPath: List[PathValue] = PathValue.splitDecode(methodTag.path)
 }
 
 @implicitNotFound("${T} is not a valid result type of HTTP operation (it would be valid when e.g. wrapped in a Future)")
@@ -231,7 +231,7 @@ case class RestParametersMetadata(
 
 case class ParamMetadata[T]() extends TypedMetadata[T]
 case class PathParamMetadata[T](@reifyAnnot pathAnnot: Path) extends TypedMetadata[T] {
-  val pathSuffix: List[PathValue] = PathValue.split(pathAnnot.pathSuffix)
+  val pathSuffix: List[PathValue] = PathValue.splitDecode(pathAnnot.pathSuffix)
 }
 
 class InvalidRestApiException(msg: String) extends RestException(msg)

@@ -244,11 +244,11 @@ method into a HTTP REST call.
 
 * By default (if not annotated explicitly) each method is interpreted as HTTP `POST`.
 * Method name is appended to the URL path.
-* For non-`GET` methods, every (unannotated) parameter is interpreted as part of the body -
-  by default all the body parameters will be combined into a JSON object sent through HTTP body.
-  However, if a method is annotated as [`@FormBody`](#formbody), unannotated parameters will be interpreted as
-  query parameters, URL-encoded and combined into an `application/x-www-form-urlencoded` form body.
-  For `GET` methods, every parameter is interpreted as URL query parameter while the body is empty.
+* Every parameter is interpreted as part of the body - by default all the body parameters will be
+  combined into a JSON object sent through HTTP body. If method is annotated as [`@FormBody`](#formbody),
+  body parameters will be serialized like query parameters, URL-encoded and combined into an
+  `application/x-www-form-urlencoded` form body. However, for `GET` methods, every parameter is
+  interpreted as URL query parameter while the body is empty.
 * Result type of each method is typically expected to be a `Future` wrapping some
   arbitrary response type. This response type will be serialized into HTTP response which
   by default translates it into JSON and creates a `200 OK` response with `application/json`
@@ -339,9 +339,6 @@ You may explicitly request that some parameter is translated into URL query para
 using `@Query` annotation. As mentioned earlier, parameters of `GET` methods are treated
 as query parameters by default, so this is only strictly necessary for non-`GET` methods.
 
-Also, unannotated parameters of methods annotated as [`@FormBody`](#formbody) are interpreted as
-query parameters. However, they are sent in HTTP body as `application/x-www-form-urlencoded`.
-
 `@Query` annotation also takes optional `name` parameter which may be specified to customize
 URL parameter name. If not specified, trait method parameter name is used.
 
@@ -358,14 +355,15 @@ see [serialization](#path-query-and-header-serialization) for more details.
 
 ### Body parameters
 
-As mentioned earlier, every unannotated parameter of non-`GET` API trait method is interpreted as a field
-of a JSON object sent as HTTP body. Just like for path, query and header parameters, there is a
+As mentioned earlier, every parameter of non-`GET` API trait method is interpreted either as a field
+of a JSON object sent as HTTP body or (when method is annotated as [`@FormBody`](#formbody)) as a part of URL-encoded
+form sent as HTTP body. Just like for path, query and header parameters, there is a
 `@BodyField` annotation which requests this explicitly. However, it only makes sense to use this
 annotation when one wants to customize the field name because `GET` methods do not accept body parameters.
 A method annotated as `@GET` having a parameter annotated as `@BodyField` will be rejected by REST
 macro engine.
 
-Body parameters are serialized into `JsonValue` objects -
+Body parameters are serialized into `JsonValue` objects (by default) or `QueryValue` objects (for [`@FormBody`](#formbody) methods),
 see [serialization](#body-parameter-serialization) for more details.
 
 ### Single body parameters
@@ -387,12 +385,9 @@ see [serialization](#single-body-serialization) for more details.
 
 ### `@FormBody`
 
-A non-`GET` method may be annotated as `@FormBody`. Unannotated parameters of such method
-will be interpreted as query parameters. Then, all the query parameters will be URL-encoded
-and sent in HTTP body of the request with `application/x-www-form-urlencoded` content type.
-No query parameters will be included in the URL itself.
-
-`@FormBody` methods cannot accept `@BodyField` parameters.
+Non-`GET` methods may be annotated as `@FormBody`. This changes serialization of body parameters
+from JSON to HTTP form, encoded as `application/x-www-form-urlencoded`. Each body parameter itself
+is then serialized into `QueryValue` instead of `JsonValue`.
 
 ### Prefix methods
 
@@ -455,7 +450,7 @@ Depending on the context where a type is used in a REST API trait, it will be se
 _raw value_:
 
 * path/query/header parameters are serialized as `PathValue`/`QueryValue`/`HeaderValue`
-* body parameters are serialized as `JsonValue`
+* body parameters are serialized as `JsonValue` (by default) or `QueryValue` (for [`@FormBody`](#formbody) methods)
 * Single body parameters are serialized as `HttpBody`
 * Response types are serialized as `RestResponse`
 * Prefix result types (other REST API traits) are "serialized" as `RawRest`
@@ -501,7 +496,8 @@ HTTP requests. This means that serialization should not worry about that.
 Body parameters are by default serialized into `JsonValue` which is also a simple wrapper class over `String`,
 but is importantly distinct from `PathValue`/`QueryValue`/`HeaderValue` because it must always contain
 a valid JSON string. This is required because JSON body parameters are ultimately composed into a single
-JSON object sent as HTTP body.
+JSON object sent as HTTP body. If a method is annotated as [`@FormBody`](#formbody), body parameters are serialized into
+`QueryValue` and combined into an URL-encoded form.
 
 There are no "global" implicits defined for `JsonValue` - JSON serialization must be either imported,
 defined by each "real" type manually or plugged in by REST API trait companion. For example,
@@ -798,7 +794,6 @@ materialized by a macro. You can then use it to generate OpenAPI specification d
 
 ```scala
 import com.avsystem.commons.rest._
-import openapi._
 
 trait MyRestApi {
   ...

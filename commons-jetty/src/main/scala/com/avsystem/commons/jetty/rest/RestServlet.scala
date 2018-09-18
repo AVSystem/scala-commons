@@ -41,16 +41,9 @@ object RestServlet {
       headersBuilder += headerName -> HeaderValue(request.getHeader(headerName))
     }
     val headers = headersBuilder.result()
+    val query = request.getQueryString.opt.map(QueryValue.decode).getOrElse(Mapping.empty)
 
     val mimeType = request.getContentType.opt.map(MimeTypes.getContentTypeWithoutCharset)
-    val queryBuilder = Mapping.newBuilder[QueryValue]
-    if (!mimeType.contains(HttpBody.FormType)) {
-      request.getParameterNames.asScala.foreach { parameterName =>
-        queryBuilder += parameterName -> QueryValue(request.getParameter(parameterName))
-      }
-    }
-    val query = queryBuilder.result()
-
     val body = mimeType.fold(HttpBody.empty) { mimeType =>
       val bodyReader = request.getReader
       val bodyBuilder = new JStringBuilder

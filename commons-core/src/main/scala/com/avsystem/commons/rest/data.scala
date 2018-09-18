@@ -4,7 +4,6 @@ package rest
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.rpc._
-import com.avsystem.commons.serialization.GenCodec
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
 
@@ -19,8 +18,8 @@ sealed trait RestValue extends Any {
   */
 case class PathValue(value: String) extends AnyVal with RestValue
 object PathValue {
-  def split(path: String): List[PathValue] =
-    path.split("/").iterator.filter(_.nonEmpty).map(PathValue(_)).toList
+  def splitDecode(path: String): List[PathValue] =
+    path.split("/").iterator.filter(_.nonEmpty).map(s => PathValue(UrlEncoding.decode(s))).toList
 }
 
 /**
@@ -32,6 +31,24 @@ case class HeaderValue(value: String) extends AnyVal with RestValue
   * Value used as encoding of [[Query]] parameters and [[BodyField]] parameters of [[FormBody]] methods.
   */
 case class QueryValue(value: String) extends AnyVal with RestValue
+object QueryValue {
+  final val FormKVSep = "="
+  final val FormKVPairSep = "&"
+
+  def encode(query: Mapping[QueryValue]): String =
+    query.iterator.map { case (name, QueryValue(value)) =>
+      s"${UrlEncoding.encode(name)}$FormKVSep${UrlEncoding.encode(value)}"
+    }.mkString(FormKVPairSep)
+
+  def decode(queryString: String): Mapping[QueryValue] = {
+    val builder = Mapping.newBuilder[QueryValue]
+    queryString.split(FormKVPairSep).iterator.map(_.split(FormKVSep, 2)).foreach {
+      case Array(name, value) => builder += UrlEncoding.decode(name) -> QueryValue(UrlEncoding.decode(value))
+      case _ => throw new IllegalArgumentException(s"invalid query string $queryString")
+    }
+    builder.result()
+  }
+}
 
 /**
   * Value used as encoding of [[BodyField]] parameters of non-[[FormBody]] methods.
@@ -101,28 +118,12 @@ object HttpBody {
   def plain(value: String): HttpBody = HttpBody(value, PlainType)
   def json(json: JsonValue): HttpBody = HttpBody(json.value, JsonType)
 
-  final val UTF8 = "UTF-8"
-  final val FormKVSep = "="
-  final val FormKVPairSep = "&"
-
   def createFormBody(values: Mapping[QueryValue]): HttpBody =
-    if (values.isEmpty) HttpBody.Empty else {
-      val form = values.iterator
-        .map { case (k, v) => s"${UrlEncoding.encode(k)}$FormKVSep${UrlEncoding.encode(v.value)}" }
-        .mkString(FormKVPairSep)
-      HttpBody(form, FormType)
-    }
+    if (values.isEmpty) HttpBody.Empty else HttpBody(QueryValue.encode(values), FormType)
 
   def parseFormBody(body: HttpBody): Mapping[QueryValue] = body match {
     case HttpBody.Empty => Mapping.empty
-    case _ =>
-      val content = body.readForm()
-      val builder = Mapping.newBuilder[QueryValue]
-      content.split(FormKVPairSep).iterator.map(_.split(FormKVSep, 2)).foreach {
-        case Array(k, v) => builder += (UrlEncoding.decode(k) -> QueryValue(UrlEncoding.decode(v)))
-        case _ => throw new IllegalArgumentException(s"bad form string: $content")
-      }
-      builder.result()
+    case _ => QueryValue.decode(body.readForm())
   }
 
   def createJsonBody(fields: Mapping[JsonValue]): HttpBody =

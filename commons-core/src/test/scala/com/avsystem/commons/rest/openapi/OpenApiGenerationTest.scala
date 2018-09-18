@@ -103,6 +103,16 @@ class OpenApiGenerationTest extends FunSuite {
         |          }
         |        },
         |        "operationId": "post_formPost",
+        |        "parameters": [
+        |          {
+        |            "name": "q1",
+        |            "in": "query",
+        |            "required": true,
+        |            "schema": {
+        |              "type": "string"
+        |            }
+        |          }
+        |        ],
         |        "requestBody": {
         |          "content": {
         |            "application/x-www-form-urlencoded": {
