@@ -262,9 +262,8 @@ trait TypeClassDerivation extends MacroCommons {
 
   def materializeMacroGenerated[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T].dealias
-    val companionTpe = c.macroApplication.tpe.dealias.typeArgs.head
     val tcTpe = typeClassInstance(tpe)
-    mkMacroGenerated(companionTpe, tcTpe, q"${c.prefix}.materialize[$tpe]")
+    removeRedundantGuard(mkMacroGenerated(tcTpe, withRecursiveImplicitGuard(tpe, materializeFor(tpe))))
   }
 }
 

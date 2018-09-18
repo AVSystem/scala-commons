@@ -221,12 +221,14 @@ trait MacroCommons { bundle =>
   }
 
   final val companionReplacementName = TermName("$companion$replacement")
+  final var forceCompanionReplace: Boolean = false
 
   def enclosingConstructorCompanion: Symbol =
     ownerChain.filter(_.isConstructor).map(_.owner.asClass.module).find(_ != NoSymbol).getOrElse(NoSymbol)
 
   lazy val companionReplacement: Symbol =
-    c.typecheck(q"$companionReplacementName", silent = true) match {
+    if (forceCompanionReplace) enclosingConstructorCompanion
+    else c.typecheck(q"$companionReplacementName", silent = true) match {
       case EmptyTree => NoSymbol
       case _ => enclosingConstructorCompanion
     }
@@ -251,7 +253,7 @@ trait MacroCommons { bundle =>
     }
   }
 
-  def mkMacroGenerated(companionTpe: Type, tpe: Type, baseMaterialize: Tree): Tree = {
+  def mkMacroGenerated(tpe: Type, tree: => Tree): Tree = {
     def fail() =
       abort(s"invocation of this macro is allowed only to be passed as super constructor parameter of an object")
 
@@ -264,15 +266,8 @@ trait MacroCommons { bundle =>
       fail()
     }
 
-    val companionImport = List(q"import $companionReplacementName._")
-      .filterNot(_ => companionTpe =:= definitions.AnyTpe)
-
-    q"""
-       new $CommonsPkg.misc.MacroGenerated[$companionTpe, $tpe](($companionReplacementName: $companionTpe) => {
-         ..$companionImport
-         $baseMaterialize
-       })
-     """
+    forceCompanionReplace = true
+    q"new $CommonsPkg.misc.MacroGenerated[$tpe](($companionReplacementName: $ScalaPkg.Any) => $tree)"
   }
 
   // simplified representation of trees of implicits, used to remove duplicated implicits,

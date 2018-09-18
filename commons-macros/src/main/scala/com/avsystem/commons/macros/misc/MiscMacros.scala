@@ -4,9 +4,8 @@ package macros.misc
 import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.collection.mutable
-import scala.reflect.macros.{TypecheckException, blackbox, whitebox}
+import scala.reflect.macros.{TypecheckException, blackbox}
 import scala.util.control.NoStackTrace
-import scala.util.matching.Regex
 
 class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
@@ -346,52 +345,4 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   def posPoint: Tree =
     q"${c.enclosingPosition.point}"
-}
-
-class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
-
-  import c.universe._
-
-  val WhenAbsentAT: Type = getType(tq"$CommonsPkg.serialization.whenAbsent[_]")
-  val DefaultValueMethodSuffix: Regex = """(.*)\$default\$(\d+)$""".r
-
-  object DefaultValueMethod {
-    def unapply(s: Symbol): Option[Symbol] = s match {
-      case ms: MethodSymbol if ms.isSynthetic => ms.name.encodedName.toString match {
-        case DefaultValueMethodSuffix(name, idx) =>
-          val actualMethodName = TermName(name).decodedName
-          val paramIndex = idx.toInt - 1
-          val ownerMethod = actualMethodName match {
-            case termNames.CONSTRUCTOR =>
-              ms.owner.companion.asType.toType.member(termNames.CONSTRUCTOR)
-            case _ =>
-              ms.owner.asType.toType.member(actualMethodName)
-          }
-          val result = ownerMethod.asMethod.paramLists.flatten.apply(paramIndex)
-          echo(s"for $ms returning $result of $ownerMethod")
-          Some(result)
-        case _ => None
-      }
-      case _ => None
-    }
-  }
-
-  def whenAbsentValue: Tree = {
-    val param = c.internal.enclosingOwner match {
-      case DefaultValueMethod(p) => p
-      case p => p
-    }
-    val annotParam =
-      if (param.owner.name == TermName("apply") && param.owner.isSynthetic)
-        param.owner.owner.companion.asType.toType.member(termNames.CONSTRUCTOR).asMethod
-          .paramLists.flatten.find(_.name == param.name).getOrElse(NoSymbol)
-      else param
-
-    findAnnotation(annotParam, WhenAbsentAT).map(_.tree).map {
-      case Apply(_, List(MaybeTyped(arg, _))) => arg
-      case t => abort(s"unexpected tree for @whenAbsent annotation: $t")
-    } getOrElse {
-      abort(s"no @whenAbsent annotation found on $param of ${param.owner}")
-    }
-  }
 }
