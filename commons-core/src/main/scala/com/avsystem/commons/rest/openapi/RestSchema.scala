@@ -140,19 +140,19 @@ trait RestRequestBody[T] {
 object RestRequestBody {
   def apply[T](implicit r: RestRequestBody[T]): RestRequestBody[T] = r
 
-  def simpleRequestBody(mimeType: String, schema: RefOr[Schema]): RequestBody =
+  def simpleRequestBody(mimeType: String, schema: RefOr[Schema], required: Boolean): RequestBody =
     RequestBody(
       content = Map(
         mimeType -> MediaType(schema = schema)
       ),
-      required = true
+      required = required
     )
 
   implicit def fromSchema[T: RestSchema]: RestRequestBody[T] =
     new RestRequestBody[T] {
       def requestBody(resolver: SchemaResolver, schemaAdjusters: List[SchemaAdjuster]): RefOr[RequestBody] = {
         val schema = SchemaAdjuster.adjustRef(schemaAdjusters, resolver.resolve(RestSchema[T]))
-        RefOr(simpleRequestBody(HttpBody.JsonType, schema))
+        RefOr(simpleRequestBody(HttpBody.JsonType, schema, required = true))
       }
     }
 }

@@ -148,12 +148,11 @@ case class OpenApiBodyOperation[T](
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]] =
     singleBody.map(_.requestBody(resolver).opt).getOrElse {
       if (bodyFields.isEmpty) Opt.Empty else Opt {
-        val schema = Schema(`type` = DataType.Object,
-          properties = bodyFields.iterator.map(p => (p.info.name, p.schema(resolver))).toMap,
-          required = bodyFields.collect { case p if !p.info.hasFallbackValue => p.info.name }
-        )
+        val fields = bodyFields.iterator.map(p => (p.info.name, p.schema(resolver))).toMap
+        val requiredFields = bodyFields.collect { case p if !p.info.hasFallbackValue => p.info.name }
+        val schema = Schema(`type` = DataType.Object, properties = fields, required = requiredFields)
         val mimeType = if (formBody) HttpBody.FormType else HttpBody.JsonType
-        RefOr(RestRequestBody.simpleRequestBody(mimeType, RefOr(schema)))
+        RefOr(RestRequestBody.simpleRequestBody(mimeType, RefOr(schema), requiredFields.nonEmpty))
       }
     }
 }
