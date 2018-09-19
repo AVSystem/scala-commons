@@ -101,8 +101,8 @@ trait MacroSymbols extends MacroCommons {
     def infer(tpt: Tree): TermName =
       infer(getType(tpt))
 
-    def infer(tpe: Type): TermName =
-      inferCachedImplicit(tpe, s"$problemStr: ", pos)
+    def infer(tpe: Type, forSym: MacroSymbol = this): TermName =
+      inferCachedImplicit(tpe, s"${forSym.problemStr}: ", forSym.pos)
 
     val name: TermName = symbol.name.toTermName
     val safeName: TermName = c.freshName(symbol.name.toTermName)

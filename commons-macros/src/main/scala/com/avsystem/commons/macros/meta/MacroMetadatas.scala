@@ -4,7 +4,6 @@ package macros.meta
 import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
 
 import scala.annotation.StaticAnnotation
-import scala.reflect.{ClassTag, classTag}
 
 trait MacroMetadatas extends MacroSymbols {
 
@@ -152,7 +151,7 @@ trait MacroMetadatas extends MacroSymbols {
           if (checked)
             tryInferCachedImplicit(tpe).map(n => Ok(q"$n")).getOrElse(Fail(implicitNotFound(tpe)))
           else
-            Ok(q"${infer(tpe)}")
+            Ok(q"${infer(tpe, matchedSymbol.real)}")
         case ParamArity.Optional(tpe) =>
           Ok(mkOptional(tryInferCachedImplicit(tpe).map(n => q"$n")))
         case _: ParamArity.Multi =>
