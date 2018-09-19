@@ -4,6 +4,8 @@ package rest
 import com.avsystem.commons.annotation.{AnnotationAggregate, defaultsToName}
 import com.avsystem.commons.rpc._
 
+import scala.annotation.StaticAnnotation
+
 /**
   * Base trait for tag annotations that determine how a REST method is translated into actual HTTP request.
   * A REST method may be annotated with one of HTTP method tags ([[GET]], [[PUT]], [[POST]], [[PATCH]], [[DELETE]])
@@ -88,6 +90,15 @@ class DELETE(val path: String = null) extends BodyMethodTag(HttpMethod.DELETE) {
 }
 
 /**
+  * Causes the body parameters of a HTTP REST method to be encoded as `application/x-www-form-urlencoded`.
+  * Each parameter value itself will be first serialized to [[QueryValue]].
+  * This annotation only applies to methods which include HTTP body (i.e. not `GET`) and it must not be
+  * a method with a single body parameter ([[Body]]). Methods with single body parameter can send their body
+  * as `application/x-www-form-urlencoded` by defining custom serialization of its parameter into [[HttpBody]].
+  */
+class FormBody extends StaticAnnotation
+
+/**
   * REST methods annotated as [[Prefix]] are expected to return another REST API trait as their result.
   * They do not yet represent an actual HTTP request but contribute to URL path, HTTP headers and query parameters.
   *
@@ -127,12 +138,12 @@ class Query(@defaultsToName override val name: String = null)
   extends rpcName(name) with NonBodyTag
 
 /**
-  * REST method parameters annotated as [[JsonBodyParam]] will be encoded as [[JsonValue]] and combined into
+  * REST method parameters annotated as [[BodyField]] will be encoded as either [[JsonValue]] and combined into
   * a JSON object that will be sent as HTTP body. Body parameters are allowed only in REST methods annotated as
   * [[POST]], [[PATCH]], [[PUT]] or [[DELETE]]. Actually, parameters of these methods are interpreted as
-  * [[JsonBodyParam]] by default which means that this annotation rarely needs to be applied explicitly.
+  * [[BodyField]] by default which means that this annotation rarely needs to be applied explicitly.
   */
-class JsonBodyParam(@defaultsToName override val name: String = null)
+class BodyField(@defaultsToName override val name: String = null)
   extends rpcName(name) with BodyTag
 
 /**

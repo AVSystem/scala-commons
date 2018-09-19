@@ -18,8 +18,8 @@ sealed trait RestValue extends Any {
   */
 case class PathValue(value: String) extends AnyVal with RestValue
 object PathValue {
-  def split(path: String): List[PathValue] =
-    path.split("/").iterator.filter(_.nonEmpty).map(PathValue(_)).toList
+  def splitDecode(path: String): List[PathValue] =
+    path.split("/").iterator.filter(_.nonEmpty).map(s => PathValue(UrlEncoding.decode(s))).toList
 }
 
 /**
@@ -28,12 +28,31 @@ object PathValue {
 case class HeaderValue(value: String) extends AnyVal with RestValue
 
 /**
-  * Value used as encoding of [[Query]] parameters.
+  * Value used as encoding of [[Query]] parameters and [[BodyField]] parameters of [[FormBody]] methods.
   */
 case class QueryValue(value: String) extends AnyVal with RestValue
+object QueryValue {
+  final val FormKVSep = "="
+  final val FormKVPairSep = "&"
+
+  def encode(query: Mapping[QueryValue]): String =
+    query.iterator.map { case (name, QueryValue(value)) =>
+      s"${UrlEncoding.encode(name)}$FormKVSep${UrlEncoding.encode(value)}"
+    }.mkString(FormKVPairSep)
+
+  def decode(queryString: String): Mapping[QueryValue] = {
+    val builder = Mapping.newBuilder[QueryValue]
+    queryString.split(FormKVPairSep).iterator.map(_.split(FormKVSep, 2)).foreach {
+      case Array(name, value) => builder += UrlEncoding.decode(name) -> QueryValue(UrlEncoding.decode(value))
+      case _ => throw new IllegalArgumentException(s"invalid query string $queryString")
+    }
+    builder.result()
+  }
+}
 
 /**
-  * Value used as encoding of [[JsonBodyParam]] parameters.
+  * Value used as encoding of [[BodyField]] parameters of non-[[FormBody]] methods.
+  * Wrapped value MUST be a valid JSON.
   */
 case class JsonValue(value: String) extends AnyVal with RestValue
 
@@ -59,12 +78,15 @@ sealed trait HttpBody {
     case HttpBody.Empty => throw new ReadFailure("Expected non-empty body")
   }
 
-  final def readJson(): JsonValue = this match {
-    case HttpBody(content, HttpBody.JsonType) => JsonValue(content)
-    case HttpBody(_, mimeType) =>
-      throw new ReadFailure(s"Expected body with application/json type, got $mimeType")
+  final def readJson(): JsonValue = JsonValue(readContent(HttpBody.JsonType))
+  final def readForm(): String = readContent(HttpBody.FormType)
+
+  final def readContent(mimeType: String): String = this match {
+    case HttpBody(content, `mimeType`) => content
+    case HttpBody(_, actualMimeType) =>
+      throw new ReadFailure(s"Expected body with $mimeType type, got $actualMimeType")
     case HttpBody.Empty =>
-      throw new ReadFailure("Expected body with application/json type, got empty body")
+      throw new ReadFailure(s"Expected body with $mimeType type, got empty body")
   }
 
   final def defaultStatus: Int = this match {
@@ -91,9 +113,18 @@ object HttpBody {
 
   final val PlainType = "text/plain"
   final val JsonType = "application/json"
+  final val FormType = "application/x-www-form-urlencoded"
 
   def plain(value: String): HttpBody = HttpBody(value, PlainType)
   def json(json: JsonValue): HttpBody = HttpBody(json.value, JsonType)
+
+  def createFormBody(values: Mapping[QueryValue]): HttpBody =
+    if (values.isEmpty) HttpBody.Empty else HttpBody(QueryValue.encode(values), FormType)
+
+  def parseFormBody(body: HttpBody): Mapping[QueryValue] = body match {
+    case HttpBody.Empty => Mapping.empty
+    case _ => QueryValue.decode(body.readForm())
+  }
 
   def createJsonBody(fields: Mapping[JsonValue]): HttpBody =
     if (fields.isEmpty) HttpBody.Empty else {

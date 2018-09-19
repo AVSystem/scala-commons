@@ -89,6 +89,55 @@ class OpenApiGenerationTest extends FunSuite {
         |        ]
         |      }
         |    },
+        |    "/formPost": {
+        |      "post": {
+        |        "responses": {
+        |          "200": {
+        |            "content": {
+        |              "application/json": {
+        |                "schema": {
+        |                  "type": "string"
+        |                }
+        |              }
+        |            }
+        |          }
+        |        },
+        |        "operationId": "post_formPost",
+        |        "parameters": [
+        |          {
+        |            "name": "q1",
+        |            "in": "query",
+        |            "required": true,
+        |            "schema": {
+        |              "type": "string"
+        |            }
+        |          }
+        |        ],
+        |        "requestBody": {
+        |          "content": {
+        |            "application/x-www-form-urlencoded": {
+        |              "schema": {
+        |                "type": "object",
+        |                "properties": {
+        |                  "p1": {
+        |                    "type": "string"
+        |                  },
+        |                  "p2": {
+        |                    "type": "integer",
+        |                    "format": "int32"
+        |                  }
+        |                },
+        |                "required": [
+        |                  "p1",
+        |                  "p2"
+        |                ]
+        |              }
+        |            }
+        |          },
+        |          "required": true
+        |        }
+        |      }
+        |    },
         |    "/trivialGet": {
         |      "get": {
         |        "responses": {

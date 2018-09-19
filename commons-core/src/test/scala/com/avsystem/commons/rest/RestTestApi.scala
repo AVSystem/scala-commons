@@ -39,12 +39,15 @@ trait RestTestApi {
     @Path("p1") p1: Int, @Path p2: String,
     @Header("X-H1") h1: Int, @Header("X-H2") h2: String,
     @Query q1: Int, @Query("q=2") q2: String,
-    b1: Int, @JsonBodyParam("b\"2") @description("weird body field") b2: String
+    b1: Int, @BodyField("b\"2") @description("weird body field") b2: String
   ): Future[RestEntity]
 
   @PUT("") def singleBodyPut(
     @Body @description("REST entity description") entity: RestEntity
   ): Future[String]
+
+  @FormBody
+  @POST def formPost(@Query q1: String, p1: String, p2: Int): Future[String]
 
   def prefix(
     p0: String,
@@ -65,6 +68,8 @@ object RestTestApi extends DefaultRestApiCompanion[RestTestApi] {
       Future.successful(RestEntity(s"$p1-$h1-$q1-$b1", s"$p2-$h2-$q2-$b2"))
     def singleBodyPut(entity: RestEntity): Future[String] =
       Future.successful(entity.toString)
+    def formPost(q1: String, p1: String, p2: Int): Future[String] =
+      Future.successful(s"$q1-$p1-$p2")
     def prefix(p0: String, h0: String, q0: String): RestTestSubApi =
       RestTestSubApi.impl(s"$p0-$h0-$q0")
     def complexParams(baseEntity: BaseEntity, flatBaseEntity: Opt[FlatBaseEntity]): Future[Unit] = Future.unit

@@ -255,9 +255,8 @@ case class Schema(
   @td not: OptArg[RefOr[Schema]] = OptArg.Empty,
   @td discriminator: OptArg[Discriminator] = OptArg.Empty,
 
-  @td enum: List[String] = Nil //TODO: other values than strings
-
-  //TODO: default
+  @td enum: List[String] = Nil, //TODO: other values than strings
+  @td default: OptArg[String] = OptArg.Empty //TODO: other values than strings
 ) {
   def unwrapSingleRefAllOf: RefOr[Schema] = allOf match {
     case List(ref: RefOr.Ref) if this == Schema(allOf = List(ref)) => ref
@@ -381,8 +380,9 @@ case class Parameter(
   @td explode: OptArg[Boolean] = OptArg.Empty,
   @td allowReserved: Boolean = false,
   @td schema: OptArg[RefOr[Schema]] = OptArg.Empty,
+  @td example: OptArg[String] = OptArg.Empty, //TODO other values than strings
+  @td examples: Map[String, RefOr[Example]] = Map.empty,
   @td content: OptArg[Entry[String, MediaType]] = OptArg.Empty
-  //TODO example/examples
 )
 object Parameter extends HasGenCodec[Parameter]
 
@@ -423,8 +423,9 @@ object Style extends AbstractValueEnumCompanion[Style] {
   */
 case class MediaType(
   @td schema: OptArg[RefOr[Schema]] = OptArg.Empty,
+  @td example: OptArg[String] = OptArg.Empty, //TODO other values than strings
+  @td examples: Map[String, RefOr[Example]] = Map.empty,
   @td encoding: Map[String, Encoding] = Map.empty
-  //TODO: example/examples
 )
 object MediaType extends HasGenCodec[MediaType]
 
@@ -441,7 +442,12 @@ case class Encoding(
 )
 object Encoding extends HasGenCodec[Encoding]
 
-case class Example() //TODO
+case class Example(
+  @td summary: OptArg[String] = OptArg.Empty,
+  @td description: OptArg[String] = OptArg.Empty,
+  @td value: OptArg[String] = OptArg.Empty, //TODO other values than strings
+  @td externalValue: OptArg[String] = OptArg.Empty
+)
 object Example extends HasGenCodec[Example]
 
 /**
@@ -468,8 +474,9 @@ case class Header(
   @td explode: OptArg[Boolean] = OptArg.Empty,
   @td allowReserved: Boolean = false,
   @td schema: OptArg[RefOr[Schema]] = OptArg.Empty,
+  @td example: OptArg[String] = OptArg.Empty, //TODO other values than strings
+  @td examples: Map[String, RefOr[Example]] = Map.empty,
   @td content: OptArg[Entry[String, MediaType]] = OptArg.Empty
-  //TODO example/examples
 )
 object Header extends HasGenCodec[Header]
 
@@ -537,9 +544,10 @@ object OAuthFlow extends HasGenCodec[OAuthFlow]
 case class Link(
   @td operationRef: OptArg[String] = OptArg.Empty,
   @td operationId: OptArg[String] = OptArg.Empty,
+  @td parameters: Map[String, String] = Map.empty, //TODO: other values than strings
+  @td requestBody: OptArg[String] = OptArg.Empty, //TODO: other values than strings
   @td description: OptArg[String] = OptArg.Empty,
   @td server: OptArg[Server] = OptArg.Empty
-  //TODO parameters, requestBody
 )
 object Link extends HasGenCodec[Link]
 

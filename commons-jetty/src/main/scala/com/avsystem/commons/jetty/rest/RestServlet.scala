@@ -33,7 +33,7 @@ object RestServlet {
     val encodedPath = request.getRequestURI.stripPrefix(request.getServletPath).stripPrefix("/")
     val path = SeparatorPattern
       .splitAsStream(encodedPath).asScala
-      .map(v => PathValue(URLDecoder.decode(v, "utf-8")))
+      .map(v => PathValue(URLDecoder.decode(v, "UTF-8")))
       .to[List]
 
     val headersBuilder = Mapping.newBuilder[HeaderValue]
@@ -41,20 +41,16 @@ object RestServlet {
       headersBuilder += headerName -> HeaderValue(request.getHeader(headerName))
     }
     val headers = headersBuilder.result()
+    val query = request.getQueryString.opt.map(QueryValue.decode).getOrElse(Mapping.empty)
 
-    val queryBuilder = Mapping.newBuilder[QueryValue]
-    request.getParameterNames.asScala.foreach { parameterName =>
-      queryBuilder += parameterName -> QueryValue(request.getParameter(parameterName))
-    }
-    val query = queryBuilder.result()
-
-    val body = request.getContentType.opt.fold(HttpBody.empty) { contentType =>
+    val mimeType = request.getContentType.opt.map(MimeTypes.getContentTypeWithoutCharset)
+    val body = mimeType.fold(HttpBody.empty) { mimeType =>
       val bodyReader = request.getReader
       val bodyBuilder = new JStringBuilder
       Iterator.continually(bodyReader.read())
         .takeWhile(_ != -1)
         .foreach(bodyBuilder.appendCodePoint)
-      HttpBody(bodyBuilder.toString, MimeTypes.getContentTypeWithoutCharset(contentType))
+      HttpBody(bodyBuilder.toString, mimeType)
     }
     val restRequest = RestRequest(method, RestParameters(path, headers, query), body)
 

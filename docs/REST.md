@@ -26,13 +26,14 @@ The `commons-jetty` module provides Jetty-based implementations for JVM.
   - [Path parameters](#path-parameters)
   - [Query parameters](#query-parameters)
   - [Header parameters](#header-parameters)
-  - [JSON Body parameters](#json-body-parameters)
+  - [Body parameters](#body-parameters)
   - [Single body parameters](#single-body-parameters)
+  - [`@FormBody`](#formbody)
   - [Prefix methods](#prefix-methods)
 - [Serialization](#serialization)
   - [Real and raw values](#real-and-raw-values)
   - [Path, query and header serialization](#path-query-and-header-serialization)
-  - [JSON body parameter serialization](#json-body-parameter-serialization)
+  - [Body parameter serialization](#body-parameter-serialization)
   - [Single body serialization](#single-body-serialization)
   - [Result serialization](#result-serialization)
   - [Customizing serialization](#customizing-serialization)
@@ -243,9 +244,11 @@ method into a HTTP REST call.
 
 * By default (if not annotated explicitly) each method is interpreted as HTTP `POST`.
 * Method name is appended to the URL path.
-* Every parameter is interpreted as part of the body - all the body parameters will be
-  combined into a JSON object sent through HTTP body. However, for `GET` methods, every parameter
-  is interpreted as URL query parameter while the body is empty.
+* Every parameter is interpreted as part of the body - by default all the body parameters will be
+  combined into a JSON object sent through HTTP body. If method is annotated as [`@FormBody`](#formbody),
+  body parameters will be serialized like query parameters, URL-encoded and combined into an
+  `application/x-www-form-urlencoded` form body. However, for `GET` methods, every parameter is
+  interpreted as URL query parameter while the body is empty.
 * Result type of each method is typically expected to be a `Future` wrapping some
   arbitrary response type. This response type will be serialized into HTTP response which
   by default translates it into JSON and creates a `200 OK` response with `application/json`
@@ -350,22 +353,24 @@ It takes an obligatory `name` argument that specifies HTTP header name.
 Values of header parameters are serialized into `HeaderValue` objects,
 see [serialization](#path-query-and-header-serialization) for more details.
 
-### JSON Body parameters
+### Body parameters
 
-As mentioned earlier, every parameter of non-`GET` API trait method is interpreted as a field
-of a JSON object sent as HTTP body. Just like for path, query and header parameters, there is a
-`@JsonBodyParam` annotation which requests this explicitly. However, it only makes sense to use this
+As mentioned earlier, every parameter of non-`GET` API trait method is interpreted either as a field
+of a JSON object sent as HTTP body or (when method is annotated as [`@FormBody`](#formbody)) as a part of URL-encoded
+form sent as HTTP body. Just like for path, query and header parameters, there is a
+`@BodyField` annotation which requests this explicitly. However, it only makes sense to use this
 annotation when one wants to customize the field name because `GET` methods do not accept body parameters.
-A method annotated as `@GET` having a parameter annotated as `@JsonBodyParam` will be rejected by REST
+A method annotated as `@GET` having a parameter annotated as `@BodyField` will be rejected by REST
 macro engine.
 
-JSON body parameters are serialized into `JsonValue` objects,
-see [serialization](#json-body-parameter-serialization) for more details.
+Body parameters are serialized into `JsonValue` objects (by default) or `QueryValue` objects
+(for [`@FormBody`](#formbody) methods), see
+[serialization](#body-parameter-serialization) for more details.
 
 ### Single body parameters
 
 Every non-`GET` API method may also take a single parameter annotated as `@Body` in place of multiple
-unannotated parameters (implicitly interpreted as `@JsonBodyParam`s). This way the value of that parameter
+unannotated parameters (implicitly interpreted as `@BodyField`s). This way the value of that parameter
 will be serialized straight into HTTP body. This gives you full control over the contents sent in HTTP body
 and their format (i.e. it no longer needs to be `application/json`).
 
@@ -378,6 +383,12 @@ object User extends RestDataCompanion[User]
 
 Single body parameters are serialized into `HttpBody` objects,
 see [serialization](#single-body-serialization) for more details.
+
+### `@FormBody`
+
+Non-`GET` methods may be annotated as `@FormBody`. This changes serialization of body parameters
+from JSON to HTTP form, encoded as `application/x-www-form-urlencoded`. Each body parameter itself
+is then serialized into `QueryValue` instead of `JsonValue`.
 
 ### Prefix methods
 
@@ -440,7 +451,7 @@ Depending on the context where a type is used in a REST API trait, it will be se
 _raw value_:
 
 * path/query/header parameters are serialized as `PathValue`/`QueryValue`/`HeaderValue`
-* JSON body parameters are serialized as `JsonValue`
+* body parameters are serialized as `JsonValue` (by default) or `QueryValue` (for [`@FormBody`](#formbody) methods)
 * Single body parameters are serialized as `HttpBody`
 * Response types are serialized as `RestResponse`
 * Prefix result types (other REST API traits) are "serialized" as `RawRest`
@@ -481,12 +492,13 @@ representation.
 Serialized values of path & query parameters are automatically URL-encoded when being embedded into
 HTTP requests. This means that serialization should not worry about that.
 
-### JSON body parameter serialization
+### Body parameter serialization
 
-JSON body parameters are serialized into `JsonValue` which is also a simple wrapper class over `String`,
+Body parameters are by default serialized into `JsonValue` which is also a simple wrapper class over `String`,
 but is importantly distinct from `PathValue`/`QueryValue`/`HeaderValue` because it must always contain
 a valid JSON string. This is required because JSON body parameters are ultimately composed into a single
-JSON object sent as HTTP body.
+JSON object sent as HTTP body. If a method is annotated as [`@FormBody`](#formbody), body parameters are serialized into
+`QueryValue` and combined into an URL-encoded form.
 
 There are no "global" implicits defined for `JsonValue` - JSON serialization must be either imported,
 defined by each "real" type manually or plugged in by REST API trait companion. For example,
@@ -542,7 +554,8 @@ _Lexical scope_ is made of locally visible and imported implicits. It has priori
 implicit scope is searched only when implicit could not be found in lexical scope.
 
 _Implicit scope_ is made of companion objects of all traits and classes _associated_ with the
-type of implicit being searched for. Consult [Scala Language Specification](https://www.scala-lang.org/files/archive/spec/2.12/07-implicits.html)
+type of implicit being searched for. Consult
+[Scala Language Specification](https://www.scala-lang.org/files/archive/spec/2.12/07-implicits.html)
 for precise definition of the word "_associated_". As an example, implicit scope of type `AsRaw[JsonValue,MyClass]` is
 made of companion objects of `AsRaw`, `JsonValue`, `MyClass` + companion objects of all supertraits, superclasses and
 enclosing traits/classes of `MyClass`.
@@ -713,7 +726,7 @@ that still use the old version:
 * Splitting parameters into multiple parameter lists or making them `implicit`.
 * Renaming `@Path` parameters - their names are not used in REST requests
 * Renaming non-`@Path` parameters, as long as the previous name is explicitly configured by
-  `@Query`, `@Header` or `@JsonBodyParam` annotation.
+  `@Query`, `@Header` or `@BodyField` annotation.
 * Removing non-`@Path` parameters - even if the client sends them, the server will just ignore them.
 * Adding new non-`@Path` parameters, as long as default value is provided for them - either as
   Scala-level default parameter value or by using `@whenAbsent` annotation. The server will simply
@@ -756,7 +769,8 @@ Therefore, the only thing you need to do to expose your REST API trait as an act
 `HandleRequest` function into a server. This is usually just a matter of translating native HTTP request into `RestRequest`,
 passing them to `HandleRequest` function and translating resulting `RestResponse` to native HTTP response.
 
-See [`RestServlet`](../commons-jetty/src/main/scala/com/avsystem/commons/jetty/rest/RestServlet.scala) for an example implementation.
+See [`RestServlet`](../commons-jetty/src/main/scala/com/avsystem/commons/jetty/rest/RestServlet.scala)
+for an example implementation.
 
 ### Implementing a client
 
@@ -973,7 +987,7 @@ and can be applied on:
 
 * data types with macro-generated `RestSchema`
 * case class fields of data types with macro generated `RestSchema`
-* `@JsonBodyParam` and `@Body` parameters of REST methods
+* `@BodyField` and `@Body` parameters of REST methods
 
 Schema adjusters do **NOT** work on path/header/query parameters and REST methods
 themselves. Instead use [parameter adjusters](#adjusting-parameters) and

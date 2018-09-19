@@ -42,6 +42,10 @@ abstract class AbstractRestCallTest extends FunSuite with ScalaFutures {
     testCall(_.singleBodyPut(RestEntity("id", "señor")))
   }
 
+  test("form POST") {
+    testCall(_.formPost("ó", "ą=ę", 42))
+  }
+
   test("prefixed GET") {
     testCall(_.prefix("p0", "h0", "q0").subget(0, 1, 2))
   }

@@ -140,10 +140,10 @@ trait RestRequestBody[T] {
 object RestRequestBody {
   def apply[T](implicit r: RestRequestBody[T]): RestRequestBody[T] = r
 
-  def jsonRequestBody(schema: RefOr[Schema]): RequestBody =
+  def simpleRequestBody(mimeType: String, schema: RefOr[Schema]): RequestBody =
     RequestBody(
       content = Map(
-        HttpBody.JsonType -> MediaType(schema = schema)
+        mimeType -> MediaType(schema = schema)
       ),
       required = true
     )
@@ -151,7 +151,7 @@ object RestRequestBody {
   implicit def fromSchema[T: RestSchema]: RestRequestBody[T] =
     new RestRequestBody[T] {
       def requestBody(resolver: SchemaResolver, schemaAdjusters: List[SchemaAdjuster]): RefOr[RequestBody] =
-        RefOr(jsonRequestBody(SchemaAdjuster.adjustRef(schemaAdjusters, resolver.resolve(RestSchema[T]))))
+        RefOr(simpleRequestBody(HttpBody.JsonType, SchemaAdjuster.adjustRef(schemaAdjusters, resolver.resolve(RestSchema[T]))))
     }
 }
 

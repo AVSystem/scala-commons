@@ -19,7 +19,7 @@ case class RestMetadata[T](
   @rpcMethodMetadata httpGetMethods: Mapping[HttpMethodMetadata[_]],
 
   @multi @tagged[BodyMethodTag](whenUntagged = new POST)
-  @paramTag[RestParamTag](defaultTag = new JsonBodyParam)
+  @paramTag[RestParamTag](defaultTag = new BodyField)
   @rpcMethodMetadata httpBodyMethods: Mapping[HttpMethodMetadata[_]]
 ) {
   val httpMethods: Mapping[HttpMethodMetadata[_]] =
@@ -71,7 +71,7 @@ case class RestMetadata[T](
       val asFinalCall = for {
         (rpcName, m) <- httpMethods.iterator if m.method == method
         (pathParams, Nil) <- m.extractPathParams(path)
-      } yield ResolvedPath(Nil, RestMethodCall(rpcName, pathParams, m), m.singleBody)
+      } yield ResolvedPath(Nil, RestMethodCall(rpcName, pathParams, m), m)
 
       val usingPrefix = for {
         (rpcName, prefix) <- prefixMethods.iterator
@@ -201,19 +201,20 @@ case class PrefixMetadata[T](
   @composite parametersMetadata: RestParametersMetadata,
   @infer @checked result: RestMetadata.Lazy[T]
 ) extends RestMethodMetadata[T] {
-  def methodPath: List[PathValue] = PathValue.split(methodTag.path)
+  def methodPath: List[PathValue] = PathValue.splitDecode(methodTag.path)
 }
 
 case class HttpMethodMetadata[T](
   @reifyAnnot methodTag: HttpMethodTag,
   @composite parametersMetadata: RestParametersMetadata,
-  @multi @tagged[JsonBodyParam] @rpcParamMetadata bodyParams: Mapping[ParamMetadata[_]],
+  @multi @tagged[BodyField] @rpcParamMetadata bodyFields: Mapping[ParamMetadata[_]],
   @optional @encoded @tagged[Body] @rpcParamMetadata singleBodyParam: Opt[ParamMetadata[_]],
+  @isAnnotated[FormBody] formBody: Boolean,
   @infer @checked responseType: HttpResponseType[T]
 ) extends RestMethodMetadata[T] {
   val method: HttpMethod = methodTag.method
   val singleBody: Boolean = singleBodyParam.isDefined
-  def methodPath: List[PathValue] = PathValue.split(methodTag.path)
+  def methodPath: List[PathValue] = PathValue.splitDecode(methodTag.path)
 }
 
 @implicitNotFound("${T} is not a valid result type of HTTP operation (it would be valid when e.g. wrapped in a Future)")
@@ -230,7 +231,7 @@ case class RestParametersMetadata(
 
 case class ParamMetadata[T]() extends TypedMetadata[T]
 case class PathParamMetadata[T](@reifyAnnot pathAnnot: Path) extends TypedMetadata[T] {
-  val pathSuffix: List[PathValue] = PathValue.split(pathAnnot.pathSuffix)
+  val pathSuffix: List[PathValue] = PathValue.splitDecode(pathAnnot.pathSuffix)
 }
 
 class InvalidRestApiException(msg: String) extends RestException(msg)

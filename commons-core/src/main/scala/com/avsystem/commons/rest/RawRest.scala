@@ -7,7 +7,7 @@ import com.avsystem.commons.meta._
 import com.avsystem.commons.rpc._
 
 case class RestMethodCall(rpcName: String, pathParams: List[PathValue], metadata: RestMethodMetadata[_])
-case class ResolvedPath(prefixes: List[RestMethodCall], finalCall: RestMethodCall, singleBody: Boolean) {
+case class ResolvedPath(prefixes: List[RestMethodCall], finalCall: RestMethodCall, finalMetadata: HttpMethodMetadata[_]) {
   def prepend(rpcName: String, pathParams: List[PathValue], metadata: PrefixMetadata[_]): ResolvedPath =
     copy(prefixes = RestMethodCall(rpcName, pathParams, metadata) :: prefixes)
 
@@ -20,27 +20,31 @@ trait RawRest {
 
   import RawRest._
 
-  @multi
-  @tried
+  // declaration order of raw methods matters - it determines their priority!
+
+  @multi @tried
   @tagged[Prefix](whenUntagged = new Prefix)
   @paramTag[RestParamTag](defaultTag = new Path)
   def prefix(@methodName name: String, @composite parameters: RestParameters): Try[RawRest]
 
-  @multi
-  @tried
+  @multi @tried
   @tagged[GET]
   @paramTag[RestParamTag](defaultTag = new Query)
   def get(@methodName name: String, @composite parameters: RestParameters): Async[RestResponse]
 
-  @multi
-  @tried
+  @multi @tried @annotated[FormBody]
   @tagged[BodyMethodTag](whenUntagged = new POST)
-  @paramTag[RestParamTag](defaultTag = new JsonBodyParam)
-  def handle(@methodName name: String, @composite parameters: RestParameters,
-    @multi @tagged[JsonBodyParam] body: Mapping[JsonValue]): Async[RestResponse]
+  @paramTag[RestParamTag](defaultTag = new BodyField)
+  def handleForm(@methodName name: String, @composite parameters: RestParameters,
+    @multi @tagged[BodyField] body: Mapping[QueryValue]): Async[RestResponse]
 
-  @multi
-  @tried
+  @multi @tried
+  @tagged[BodyMethodTag](whenUntagged = new POST)
+  @paramTag[RestParamTag](defaultTag = new BodyField)
+  def handle(@methodName name: String, @composite parameters: RestParameters,
+    @multi @tagged[BodyField] body: Mapping[JsonValue]): Async[RestResponse]
+
+  @multi @tried
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @paramTag[RestParamTag]
   def handleSingle(@methodName name: String, @composite parameters: RestParameters,
@@ -51,7 +55,7 @@ trait RawRest {
     metadata.ensureUniqueParams(Nil)
     RawRest.safeHandle { case RestRequest(method, parameters, body) =>
       metadata.resolvePath(method, parameters.path) match {
-        case Opt(ResolvedPath(prefixes, RestMethodCall(finalRpcName, finalPathParams, _), singleBody)) =>
+        case Opt(ResolvedPath(prefixes, RestMethodCall(finalRpcName, finalPathParams, _), finalMetadata)) =>
           def resolveCall(rawRest: RawRest, prefixes: List[RestMethodCall]): Async[RestResponse] = prefixes match {
             case RestMethodCall(rpcName, pathParams, _) :: tail =>
               rawRest.prefix(rpcName, parameters.copy(path = pathParams)) match {
@@ -63,8 +67,10 @@ trait RawRest {
               val finalParameters = parameters.copy(path = finalPathParams)
               if (method == HttpMethod.GET)
                 rawRest.get(finalRpcName, finalParameters)
-              else if (singleBody)
+              else if (finalMetadata.singleBody)
                 rawRest.handleSingle(finalRpcName, finalParameters, body)
+              else if (finalMetadata.formBody)
+                rawRest.handleForm(finalRpcName, finalParameters, HttpBody.parseFormBody(body))
               else
                 rawRest.handle(finalRpcName, finalParameters, HttpBody.parseJsonBody(body))
           }
@@ -161,6 +167,9 @@ object RawRest extends RawRpcCompanion[RawRest] {
 
     def handle(name: String, parameters: RestParameters, body: Mapping[JsonValue]): Async[RestResponse] =
       handleSingle(name, parameters, HttpBody.createJsonBody(body))
+
+    def handleForm(name: String, parameters: RestParameters, body: Mapping[QueryValue]): Async[RestResponse] =
+      handleSingle(name, parameters, HttpBody.createFormBody(body))
 
     def handleSingle(name: String, parameters: RestParameters, body: HttpBody): Async[RestResponse] =
       metadata.httpMethods.get(name).map { methodMeta =>
