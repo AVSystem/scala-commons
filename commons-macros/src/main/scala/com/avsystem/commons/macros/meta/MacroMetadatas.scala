@@ -151,8 +151,7 @@ trait MacroMetadatas extends MacroSymbols {
       arity match {
         case ParamArity.Single(tpe) =>
           if (checked)
-            tryInferCachedImplicit(tpe).map(n => Ok(q"$n"))
-              .getOrElse(Fail(s"no implicit value $tpe for $description could be found"))
+            tryInferCachedImplicit(tpe).map(n => Ok(q"$n")).getOrElse(Fail(implicitNotFound(tpe)))
           else
             Ok(q"${infer(tpe)}")
         case ParamArity.Optional(tpe) =>

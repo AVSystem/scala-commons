@@ -47,6 +47,7 @@ trait MacroCommons { bundle =>
   final val NotInheritedFromSealedTypes = getType(tq"$CommonsPkg.annotation.NotInheritedFromSealedTypes")
   final val SeqCompanionSym = typeOf[scala.collection.Seq.type].termSymbol
   final val PositionedAT = getType(tq"$CommonsPkg.annotation.positioned")
+  final val ImplicitNotFoundAT = getType(tq"$ScalaPkg.annotation.implicitNotFound")
 
   final val NothingTpe: Type = typeOf[Nothing]
   final val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
@@ -368,6 +369,17 @@ trait MacroCommons { bundle =>
 
   def cachedImplicitDeclarations: List[Tree] =
     implicitsToDeclare.result()
+
+  def implicitNotFound(tpe: Type): String =
+    tpe.typeSymbol.annotations.find(_.tree.tpe <:< ImplicitNotFoundAT)
+      .map(_.tree.children.tail.head)
+      .collect { case StringLiteral(error) =>
+        val tpNames = tpe.typeSymbol.asType.typeParams.map(_.name.decodedName.toString)
+        (tpNames zip tpe.typeArgs).foldLeft(error) {
+          case (err, (tpName, tpArg)) => err.replaceAllLiterally(s"$${$tpName}", tpArg.toString)
+        }
+      }
+      .getOrElse(s"no implicit value of type $tpe found")
 
   implicit class treeOps[T <: Tree](t: T) {
     def debug: T = {
