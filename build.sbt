@@ -1,4 +1,3 @@
-import Build._
 import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys._
 
 cancelable in Global := true
@@ -127,6 +126,8 @@ val noPublishSettings = Seq(
   mimaPreviousArtifacts := Set.empty,
 )
 
+val CompileAndTest = "compile->compile;test->test"
+
 lazy val commons = project.in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
   .aggregate(
@@ -174,13 +175,13 @@ def sourceDirsSettings(baseMapper: File => File) = Seq(
 )
 
 lazy val `commons-annotations` = project
-  .dependsOnWithTests(`commons-macros`)
+  .dependsOn(`commons-macros`)
   .settings(jvmCommonSettings)
 
 lazy val `commons-annotations-js` = project.in(`commons-annotations`.base / "js")
   .enablePlugins(ScalaJSPlugin)
-  .configure(p => if (forIdeaImport) p.dependsOnWithTests(`commons-annotations`) else p)
-  .dependsOnWithTests(`commons-macros`)
+  .configure(p => if (forIdeaImport) p.dependsOn(`commons-annotations`) else p)
+  .dependsOn(`commons-macros`)
   .settings(
     jsCommonSettings,
     name := (name in `commons-annotations`).value,
@@ -193,7 +194,7 @@ lazy val `commons-macros` = project.settings(
 )
 
 lazy val `commons-core` = project
-  .dependsOnWithTests(`commons-macros`, `commons-annotations`)
+  .dependsOn(`commons-macros`, `commons-annotations` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     sourceDirsSettings(_ / "jvm"),
@@ -206,8 +207,8 @@ lazy val `commons-core` = project
 
 lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
   .enablePlugins(ScalaJSPlugin)
-  .configure(p => if (forIdeaImport) p.dependsOnWithTests(`commons-core`) else p)
-  .dependsOnWithTests(`commons-macros`, `commons-annotations-js`)
+  .configure(p => if (forIdeaImport) p.dependsOn(`commons-core`) else p)
+  .dependsOn(`commons-macros`, `commons-annotations-js` % CompileAndTest)
   .settings(
     jsCommonSettings,
     name := (name in `commons-core`).value,
@@ -230,7 +231,7 @@ lazy val `commons-analyzer` = project
   )
 
 lazy val `commons-jetty` = project
-  .dependsOnWithTests(`commons-core`)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
@@ -244,7 +245,7 @@ lazy val `commons-jetty` = project
   )
 
 lazy val `commons-benchmark` = project
-  .dependsOnWithTests(`commons-core`, `commons-akka`, `commons-redis`, `commons-mongo`)
+  .dependsOn(`commons-core`, `commons-akka`, `commons-redis`, `commons-mongo`)
   .enablePlugins(JmhPlugin)
   .settings(
     jvmCommonSettings,
@@ -269,8 +270,8 @@ lazy val `commons-benchmark` = project
 
 lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
   .enablePlugins(ScalaJSPlugin)
-  .configure(p => if (forIdeaImport) p.dependsOnWithTests(`commons-benchmark`) else p)
-  .dependsOnWithTests(`commons-macros`, `commons-core-js`)
+  .configure(p => if (forIdeaImport) p.dependsOn(`commons-benchmark`) else p)
+  .dependsOn(`commons-macros`, `commons-core-js`)
   .settings(
     jsCommonSettings,
     noPublishSettings,
@@ -287,7 +288,7 @@ lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
   )
 
 lazy val `commons-mongo` = project
-  .dependsOnWithTests(`commons-core`)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
@@ -301,7 +302,7 @@ lazy val `commons-mongo` = project
   )
 
 lazy val `commons-kafka` = project
-  .dependsOnWithTests(`commons-core`)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
@@ -310,7 +311,7 @@ lazy val `commons-kafka` = project
   )
 
 lazy val `commons-redis` = project
-  .dependsOnWithTests(`commons-core`)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
@@ -322,7 +323,7 @@ lazy val `commons-redis` = project
   )
 
 lazy val `commons-spring` = project
-  .dependsOnWithTests(`commons-core`)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
@@ -332,7 +333,7 @@ lazy val `commons-spring` = project
   )
 
 lazy val `commons-akka` = project
-  .dependsOnWithTests(`commons-core`)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(

@@ -3,6 +3,7 @@ package macros
 
 import scala.reflect.macros.blackbox
 
+private[commons]
 class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   import c.universe._
