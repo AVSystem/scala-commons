@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rest
 
-import com.avsystem.commons.rest.openapi.description
+import com.avsystem.commons.rest.openapi.adjusters.{description, example}
 import com.avsystem.commons.serialization.{flatten, whenAbsent}
 
 sealed trait BaseEntity
@@ -56,7 +56,7 @@ trait RestTestApi {
   def prefix(
     p0: String,
     @Header("X-H0") h0: String,
-    @Query q0: String
+    @Query @example("q0example") q0: String
   ): RestTestSubApi
 
   def complexParams(

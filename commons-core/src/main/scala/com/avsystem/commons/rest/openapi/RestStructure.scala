@@ -5,6 +5,7 @@ import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.rest.JsonValue
+import com.avsystem.commons.rest.openapi.adjusters.SchemaAdjuster
 import com.avsystem.commons.serialization._
 
 sealed trait RestStructure[T] extends TypedMetadata[T] {

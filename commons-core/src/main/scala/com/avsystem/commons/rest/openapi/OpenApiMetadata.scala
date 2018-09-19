@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package rest.openapi
 
-import com.avsystem.commons.meta.{multi, reifyAnnot, _}
+import com.avsystem.commons.meta._
+import com.avsystem.commons.rest.openapi.adjusters._
 import com.avsystem.commons.rest.{Header => HeaderAnnot, _}
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.serialization.{transientDefault, whenAbsent}

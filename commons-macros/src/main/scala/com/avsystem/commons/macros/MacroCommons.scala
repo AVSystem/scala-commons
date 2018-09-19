@@ -13,7 +13,8 @@ trait MacroCommons { bundle =>
 
   import c.universe._
 
-  import scala.reflect.{ClassTag, classTag}
+  type ClassTag[T] = scala.reflect.ClassTag[T]
+  final def classTag[T: ClassTag]: ClassTag[T] = scala.reflect.classTag[T]
 
   final val ScalaPkg = q"_root_.scala"
   final val JavaLangPkg = q"_root_.java.lang"
@@ -44,9 +45,11 @@ trait MacroCommons { bundle =>
   final val ImplicitsObj = q"$CommonsPkg.misc.Implicits"
   final val AnnotationAggregateType = getType(tq"$CommonsPkg.annotation.AnnotationAggregate")
   final val DefaultsToNameAT = getType(tq"$CommonsPkg.annotation.defaultsToName")
+  final val InferAT: Type = getType(tq"$CommonsPkg.meta.infer")
   final val NotInheritedFromSealedTypes = getType(tq"$CommonsPkg.annotation.NotInheritedFromSealedTypes")
   final val SeqCompanionSym = typeOf[scala.collection.Seq.type].termSymbol
   final val PositionedAT = getType(tq"$CommonsPkg.annotation.positioned")
+  final val AnnotationType = getType(tq"$ScalaPkg.annotation.Annotation")
   final val ImplicitNotFoundAT = getType(tq"$ScalaPkg.annotation.implicitNotFound")
 
   final val NothingTpe: Type = typeOf[Nothing]
@@ -104,13 +107,17 @@ trait MacroCommons { bundle =>
     lazy val tree: Tree = annotTree match {
       case Apply(constr@Select(New(tpt), termNames.CONSTRUCTOR), args) =>
         val clsTpe = tpt.tpe
-        val params = primaryConstructorOf(clsTpe).typeSignature.paramLists.head
+        val params = primaryConstructorOf(clsTpe).typeSignatureIn(clsTpe).paramLists.head
 
         val newArgs = (args zip params) map {
           case (arg, param) if param.asTerm.isParamWithDefault && arg.symbol != null &&
-            arg.symbol.isSynthetic && arg.symbol.name.decodedName.toString.contains("$default$") &&
-            findAnnotation(param, DefaultsToNameAT).nonEmpty =>
-            q"${subject.name.decodedName.toString}"
+            arg.symbol.isSynthetic && arg.symbol.name.decodedName.toString.contains("$default$") =>
+            if (findAnnotation(param, DefaultsToNameAT).nonEmpty)
+              q"${subject.name.decodedName.toString}"
+            else if (findAnnotation(param, InferAT).nonEmpty)
+              q"$ImplicitsObj.infer[${param.typeSignature}](${StringLiteral("", arg.pos)})"
+            else
+              arg
           case (arg, _) => arg
         }
 

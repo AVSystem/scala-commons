@@ -16,7 +16,6 @@ trait MacroMetadatas extends MacroSymbols {
   val ReifyAnnotAT: Type = getType(tq"$MetaPackage.reifyAnnot")
   val ReifyEncodedAnnotAT: Type = getType(tq"$MetaPackage.reifyEncodedAnnot[_]")
   val IsAnnotatedAT: Type = getType(tq"$MetaPackage.isAnnotated[_]")
-  val InferAT: Type = getType(tq"$MetaPackage.infer")
   val ReifyNameAT: Type = getType(tq"$MetaPackage.reifyName")
   val ReifyPositionAT: Type = getType(tq"$MetaPackage.reifyPosition")
   val ReifyFlagsAT: Type = getType(tq"$MetaPackage.reifyFlags")

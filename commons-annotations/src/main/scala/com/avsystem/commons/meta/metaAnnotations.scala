@@ -189,8 +189,24 @@ trait MetadataParamStrategy extends StaticAnnotation
   * method or real parameter matches a metadata parameter. For example, if an implicit for `@infer` parameter cannot be
   * found, you will only know about it *after* the metadata materializing macro has already been expanded.
   * This behaviour can be changed with [[checked]] annotation.
-  */
+  *
+  * The `@infer` annotation may also be used on a parameter of an annotation reified with [[reifyAnnot]] or
+  * [[reifyEncodedAnnot]] in order to simulate implicit parameter. This is a workaround for the fact that Scala
+  * annotations cannot accept multiple parameter lists. In such situation, `infer.value` should be used as default
+  * value of "implicit" annotation parameter:
+  *
+  * {{{
+  *   class valueWithCodec[T](value: T, @infer codec: GenCodec[T] = infer.value)
+  *     extends scala.annotation.StaticAnnotation
+  * }}}
+  **/
 final class infer extends MetadataParamStrategy
+object infer {
+  /**
+    * Can be used as default value of `@infer` annotation parameters.
+    */
+  def value[T]: T = macro macros.misc.WhiteMiscMacros.inferValue
+}
 
 /**
   * `@adtParamMetadata` applied on metadata parameter of metadata class for case class or object indicates that

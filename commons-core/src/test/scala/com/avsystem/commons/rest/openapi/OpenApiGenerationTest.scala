@@ -57,7 +57,8 @@ class OpenApiGenerationTest extends FunSuite {
         |            "required": true,
         |            "schema": {
         |              "type": "string"
-        |            }
+        |            },
+        |            "example": "q0example"
         |          },
         |          {
         |            "name": "p1",

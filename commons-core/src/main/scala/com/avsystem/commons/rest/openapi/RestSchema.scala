@@ -5,6 +5,7 @@ import java.util.UUID
 
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Timestamp}
 import com.avsystem.commons.rest.HttpBody
+import com.avsystem.commons.rest.openapi.adjusters.SchemaAdjuster
 
 import scala.annotation.implicitNotFound
 

@@ -1,7 +1,11 @@
 package com.avsystem.commons
-package rest.openapi
+package rest.openapi.adjusters
 
 import com.avsystem.commons.annotation.NotInheritedFromSealedTypes
+import com.avsystem.commons.meta.infer
+import com.avsystem.commons.rest.JsonValue
+import com.avsystem.commons.rest.openapi.{Operation, Parameter, RefOr, RestSchema, RestStructure, Schema}
+import com.avsystem.commons.rpc.AsRaw
 
 import scala.annotation.StaticAnnotation
 
@@ -76,4 +80,12 @@ class description(desc: String) extends SchemaAdjuster with ParameterAdjuster wi
   def adjustSchema(schema: Schema): Schema = schema.copy(description = desc)
   def adjustParameter(parameter: Parameter): Parameter = parameter.copy(description = desc)
   def adjustOperation(operation: Operation): Operation = operation.copy(description = desc)
+}
+
+/**
+  * Adds example to [[Parameter]] object generated for REST method parameter annotated with this annotation.
+  */
+class example[+T](value: T, @infer asJson: AsRaw[JsonValue, T] = infer.value) extends ParameterAdjuster {
+  def adjustParameter(parameter: Parameter): Parameter =
+    parameter.copy(example = asJson.asRaw(value))
 }

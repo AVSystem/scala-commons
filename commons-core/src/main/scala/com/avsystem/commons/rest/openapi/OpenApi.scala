@@ -428,7 +428,7 @@ object Style extends AbstractValueEnumCompanion[Style] {
   */
 case class MediaType(
   @td schema: OptArg[RefOr[Schema]] = OptArg.Empty,
-  @td example: OptArg[String] = OptArg.Empty, //TODO other values than strings
+  @td example: OptArg[JsonValue] = OptArg.Empty,
   @td examples: Map[String, RefOr[Example]] = Map.empty,
   @td encoding: Map[String, Encoding] = Map.empty
 )

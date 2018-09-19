@@ -353,12 +353,12 @@ class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
   import c.universe._
 
   val WhenAbsentAT: Type = getType(tq"$CommonsPkg.serialization.whenAbsent[_]")
-  val DefaultValueMethodSuffix: Regex = """(.*)\$default\$(\d+)$""".r
+  val DefaultValueMethodName: Regex = """(.*)\$default\$(\d+)$""".r
 
   object DefaultValueMethod {
     def unapply(s: Symbol): Option[Symbol] = s match {
       case ms: MethodSymbol if ms.isSynthetic => ms.name.encodedName.toString match {
-        case DefaultValueMethodSuffix(name, idx) =>
+        case DefaultValueMethodName(name, idx) =>
           val actualMethodName = TermName(name).decodedName
           val paramIndex = idx.toInt - 1
           val ownerMethod = actualMethodName match {
@@ -385,5 +385,16 @@ class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
     } getOrElse {
       abort(s"no @whenAbsent annotation found on $param of ${param.owner}")
     }
+  }
+
+  def inferValue: Tree = {
+    val param = c.internal.enclosingOwner match {
+      case DefaultValueMethod(p) => p
+      case p => p
+    }
+    if (param.owner.owner.asType.toType <:< AnnotationType && findAnnotation(param, InferAT).nonEmpty)
+      q"""throw new $ScalaPkg.NotImplementedError("infer.value")"""
+    else
+      abort(s"infer.value can be only used as default value of @infer annotation parameters")
   }
 }
