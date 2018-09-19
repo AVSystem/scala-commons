@@ -107,8 +107,10 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
       new RpcTraitMetadataConstructor(param.actualType, Some(param))
 
-    def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] =
-      collectMethodMappings(methodMdParams, "metadata parameters", rpc.realMethods)(_.mappingFor(_)).groupBy(_.mdParam)
+    def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] = {
+      val errorBase = s"it has no matching metadata parameters in $description"
+      collectMethodMappings(methodMdParams, errorBase, rpc.realMethods)(_.mappingFor(_)).groupBy(_.mdParam)
+    }
 
     def tryMaterializeFor(rpc: RealRpcTrait, methodMappings: Map[MethodMetadataParam, List[MethodMetadataMapping]]): Res[Tree] =
       tryMaterialize(MatchedRpcTrait(rpc)) { case mmp: MethodMetadataParam =>

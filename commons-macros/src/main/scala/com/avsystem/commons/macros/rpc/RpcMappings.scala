@@ -11,7 +11,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
   import c.universe._
 
   def collectMethodMappings[Raw <: TagMatchingSymbol with AritySymbol, M](
-    rawSymbols: List[Raw], rawShortDesc: String, realMethods: List[RealMethod])(
+    rawSymbols: List[Raw], errorBase: String, realMethods: List[RealMethod])(
     createMapping: (Raw, MatchedMethod) => Res[M]): List[M] = {
 
     val failedReals = new ListBuffer[String]
@@ -31,17 +31,13 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         val unmatchedReport = errors.map { case (raw, err) =>
           s" * ${raw.shortDescription} ${raw.nameStr} did not match: ${indent(err, " ")}"
         }.mkString("\n")
-        s"it has no matching $rawShortDesc:\n$unmatchedReport"
+        s"$errorBase:\n$unmatchedReport"
       } match {
         case Ok(v) => Some(v)
         case Fail(msg) =>
           addFailure(realMethod, msg)
           None
       }
-    }
-
-    if (failedReals.nonEmpty) {
-      abort(s"Following real methods could not be mapped to $rawShortDesc: ${failedReals.mkString(",")}")
     }
 
     result
@@ -307,8 +303,10 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       } yield MethodMapping(matchedMethod, rawMethod, paramMappings, resultConv)
     }
 
-    lazy val methodMappings: List[MethodMapping] =
-      collectMethodMappings(raw.rawMethods, "raw methods", real.realMethods)(mappingRes)
+    lazy val methodMappings: List[MethodMapping] = {
+      val errorBase = s"it has no matching raw methods in ${raw.description}"
+      collectMethodMappings(raw.rawMethods, errorBase, real.realMethods)(mappingRes)
+    }
 
     def ensureUniqueRpcNames(): Unit =
       methodMappings.groupBy(_.matchedMethod.rpcName).foreach {
