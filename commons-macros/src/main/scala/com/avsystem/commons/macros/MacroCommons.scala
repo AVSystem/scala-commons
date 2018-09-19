@@ -49,13 +49,14 @@ trait MacroCommons { bundle =>
   final val NotInheritedFromSealedTypes = getType(tq"$CommonsPkg.annotation.NotInheritedFromSealedTypes")
   final val SeqCompanionSym = typeOf[scala.collection.Seq.type].termSymbol
   final val PositionedAT = getType(tq"$CommonsPkg.annotation.positioned")
-  final val AnnotationType = getType(tq"$ScalaPkg.annotation.Annotation")
   final val ImplicitNotFoundAT = getType(tq"$ScalaPkg.annotation.implicitNotFound")
 
   final val NothingTpe: Type = typeOf[Nothing]
   final val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
   final val BIterableTpe: Type = typeOf[Iterable[Any]]
   final val BIndexedSeqTpe: Type = typeOf[IndexedSeq[Any]]
+  final val ProductTpe: Type = typeOf[Product]
+  final val AnnotationTpe: Type = typeOf[scala.annotation.Annotation]
 
   final val PartialFunctionClass: Symbol = StringPFTpe.typeSymbol
   final val BIterableClass: Symbol = BIterableTpe.typeSymbol
@@ -801,7 +802,9 @@ trait MacroCommons { bundle =>
     * @param unapply companion object'a unapply method or `NoSymbol` for case class with more than 22 fields
     * @param params  parameters with trees evaluating to default values (or `EmptyTree`s)
     */
-  case class ApplyUnapply(apply: Symbol, unapply: Symbol, params: List[(TermSymbol, Tree)])
+  case class ApplyUnapply(apply: Symbol, unapply: Symbol, params: List[(TermSymbol, Tree)]) {
+    def standardCaseClass: Boolean = apply.isConstructor
+  }
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] =
     typedCompanionOf(tpe).flatMap(comp => applyUnapplyFor(tpe, comp))
@@ -847,7 +850,8 @@ trait MacroCommons { bundle =>
       val applicableResults = applyUnapplyPairs.flatMap {
         case (apply, unapply) if typeParamsMatch(apply, unapply) =>
           val constructor =
-            if (caseClass && apply.isSynthetic) primaryConstructorOf(dtpe)
+            if (caseClass && apply.isSynthetic && unapply.isSynthetic)
+              primaryConstructorOf(dtpe)
             else NoSymbol
 
           val applySig =

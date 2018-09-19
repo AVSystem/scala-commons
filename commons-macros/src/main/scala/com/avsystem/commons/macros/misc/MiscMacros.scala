@@ -346,6 +346,87 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   def posPoint: Tree =
     q"${c.enclosingPosition.point}"
+
+  def applyUnapplyOrFail(tpe: Type): ApplyUnapply =
+    applyUnapplyFor(tpe).getOrElse(abort(
+      s"$tpe is not a case class or case-class like type: no matching apply/unapply pair found"))
+
+  def applyBody(rawValuesName: TermName, tpe: Type, au: ApplyUnapply): Tree = {
+    val args = au.params.zipWithIndex.map { case ((param, _), idx) =>
+      val res = q"$rawValuesName($idx).asInstanceOf[${actualParamType(param.typeSignature)}]"
+      if (isRepeated(param)) q"$res: _*" else res
+    }
+    if (au.standardCaseClass) q"new $tpe(..$args)"
+    else q"${replaceCompanion(typedCompanionOf(tpe).getOrElse(EmptyTree))}.apply[..${tpe.typeArgs}](..$args)"
+  }
+
+  def unapplyBody(valueName: TermName, tpe: Type, au: ApplyUnapply): Tree = {
+    if (au.standardCaseClass) q"$ScalaPkg.Array(..${au.params.map { case (param, _) => q"$valueName.$param" }})"
+    else {
+      val safeCompanion = replaceCompanion(typedCompanionOf(tpe).getOrElse(EmptyTree))
+      val unapplyRes = q"$safeCompanion.${au.unapply}[..${tpe.typeArgs}]($valueName)"
+      au.params match {
+        case Nil => q"$ScalaPkg.Seq.empty[$ScalaPkg.Any]"
+        case List(_) => q"$ScalaPkg.Array($unapplyRes.get)"
+        case _ =>
+          val resName = c.freshName(TermName("res"))
+          val elems = au.params.indices.map(i => q"$resName.${TermName(s"_${i + 1}")}")
+          q"""
+             val $resName = $unapplyRes.get
+             $ScalaPkg.Array[$ScalaPkg.Any](..$elems)
+           """
+      }
+    }
+  }
+
+  def applier[T: WeakTypeTag]: Tree = {
+    val tpe = weakTypeOf[T].dealias
+    val rawValuesName = c.freshName(TermName("rawValues"))
+    q"""
+      new $CommonsPkg.misc.Applier[$tpe] {
+        def apply($rawValuesName: $ScalaPkg.Seq[$ScalaPkg.Any]): $tpe =
+          ${applyBody(rawValuesName, tpe, applyUnapplyOrFail(tpe))}
+      }
+    """
+  }
+
+  def unapplier[T: WeakTypeTag]: Tree = {
+    val tpe = weakTypeOf[T].dealias
+    val valueName = c.freshName(TermName("value"))
+    val au = applyUnapplyOrFail(tpe)
+    if (au.standardCaseClass && tpe <:< ProductTpe)
+      q"new $CommonsPkg.misc.ProductUnapplier[$tpe]"
+    else
+      q"""
+        new $CommonsPkg.misc.Unapplier[$tpe] {
+          def unapply($valueName: $tpe): $ScalaPkg.Seq[$ScalaPkg.Any] =
+            ${unapplyBody(valueName, tpe, au)}
+        }
+      """
+  }
+
+  def applierUnapplier[T: WeakTypeTag]: Tree = {
+    val tpe = weakTypeOf[T].dealias
+    val rawValuesName = c.freshName(TermName("rawValues"))
+    val valueName = c.freshName(TermName("value"))
+    val au = applyUnapplyOrFail(tpe)
+    if (au.standardCaseClass && tpe <:< ProductTpe)
+      q"""
+        new $CommonsPkg.misc.ProductApplierUnapplier[$tpe] {
+          def apply($rawValuesName: $ScalaPkg.Seq[$ScalaPkg.Any]): $tpe =
+            ${applyBody(rawValuesName, tpe, au)}
+        }
+       """
+    else
+      q"""
+        new $CommonsPkg.misc.ApplierUnapplier[$tpe] {
+          def apply($rawValuesName: $ScalaPkg.Seq[$ScalaPkg.Any]): $tpe =
+            ${applyBody(rawValuesName, tpe, au)}
+          def unapply($valueName: $tpe): $ScalaPkg.Seq[$ScalaPkg.Any] =
+            ${unapplyBody(valueName, tpe, au)}
+        }
+      """
+  }
 }
 
 class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
@@ -392,7 +473,7 @@ class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
       case DefaultValueMethod(p) => p
       case p => p
     }
-    if (param.owner.owner.asType.toType <:< AnnotationType && findAnnotation(param, InferAT).nonEmpty)
+    if (param.owner.owner.asType.toType <:< AnnotationTpe && findAnnotation(param, InferAT).nonEmpty)
       q"""throw new $ScalaPkg.NotImplementedError("infer.value")"""
     else
       abort(s"infer.value can be only used as default value of @infer annotation parameters")
