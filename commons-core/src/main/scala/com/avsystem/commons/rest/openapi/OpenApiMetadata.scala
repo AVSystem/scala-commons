@@ -12,19 +12,20 @@ import scala.annotation.implicitNotFound
   "${T} extend one of the convenience base companion classes, e.g. DefaultRestApiCompanion")
 @methodTag[RestMethodTag]
 case class OpenApiMetadata[T](
-  @multi @tagged[Prefix](whenUntagged = new Prefix)
+  @multi @rpcMethodMetadata
+  @tagged[Prefix](whenUntagged = new Prefix)
   @paramTag[RestParamTag](defaultTag = new Path)
-  @rpcMethodMetadata
   prefixes: List[OpenApiPrefix[_]],
 
-  @multi @tagged[GET]
+  @multi @rpcMethodMetadata
+  @tagged[GET]
   @paramTag[RestParamTag](defaultTag = new Query)
   @rpcMethodMetadata
   gets: List[OpenApiGetOperation[_]],
 
-  @multi @tagged[BodyMethodTag](whenUntagged = new POST)
+  @multi @rpcMethodMetadata
+  @tagged[BodyMethodTag](whenUntagged = new POST)
   @paramTag[RestParamTag](defaultTag = new BodyField)
-  @rpcMethodMetadata
   bodyMethods: List[OpenApiBodyOperation[_]]
 ) {
   val httpMethods: List[OpenApiOperation[_]] = (gets: List[OpenApiOperation[_]]) ++ bodyMethods
@@ -76,9 +77,7 @@ object OpenApiMetadata extends RpcMetadataCompanion[OpenApiMetadata]
 sealed trait OpenApiMethod[T] extends TypedMetadata[T] {
   @reifyName(useRawName = true) def name: String
   @reifyAnnot def methodTag: RestMethodTag
-  @multi
-  @rpcParamMetadata
-  @tagged[NonBodyTag] def parameters: List[OpenApiParameter[_]]
+  @multi @rpcParamMetadata @tagged[NonBodyTag] def parameters: List[OpenApiParameter[_]]
 
   val pathPattern: String = {
     val pathParts = methodTag.path :: parameters.flatMap {
@@ -109,10 +108,8 @@ case class OpenApiPrefix[T](
 }
 
 sealed trait OpenApiOperation[T] extends OpenApiMethod[T] {
-  @infer
-  @checked def resultType: RestResultType[T]
-  @multi
-  @reifyAnnot def adjusters: List[OperationAdjuster]
+  @infer @checked def resultType: RestResultType[T]
+  @multi @reifyAnnot def adjusters: List[OperationAdjuster]
   def methodTag: HttpMethodTag
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]]
 
@@ -151,25 +148,27 @@ case class OpenApiBodyOperation[T](
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]] =
     singleBody.map(_.requestBody(resolver).opt).getOrElse {
       if (bodyFields.isEmpty) Opt.Empty else Opt {
-        val schema = Schema(`type` = DataType.Object,
-          properties = bodyFields.iterator.map(p => (p.info.name, p.schema(resolver))).toMap,
-          required = bodyFields.collect { case p if !p.info.hasFallbackValue => p.info.name }
-        )
+        val fields = bodyFields.iterator.map(p => (p.info.name, p.schema(resolver))).toMap
+        val requiredFields = bodyFields.collect { case p if !p.info.hasFallbackValue => p.info.name }
+        val schema = Schema(`type` = DataType.Object, properties = fields, required = requiredFields)
         val mimeType = if (formBody) HttpBody.FormType else HttpBody.JsonType
-        RefOr(RestRequestBody.simpleRequestBody(mimeType, RefOr(schema)))
+        RefOr(RestRequestBody.simpleRequestBody(mimeType, RefOr(schema), requiredFields.nonEmpty))
       }
     }
 }
 
 case class OpenApiParamInfo[T](
   @reifyName(useRawName = true) name: String,
-  @optional @reifyAnnot whenAbsent: Opt[whenAbsent[T]],
+  @optional @reifyEncodedAnnot[whenAbsent[T]] whenAbsent: Opt[Try[JsonValue]],
   @isAnnotated[transientDefault] transientDefault: Boolean,
   @reifyFlags flags: ParamFlags,
   @infer restSchema: RestSchema[T]
 ) extends TypedMetadata[T] {
   val hasFallbackValue: Boolean =
-    whenAbsent.fold(flags.hasDefaultValue)(wa => Try(wa.value).isSuccess)
+    whenAbsent.fold(flags.hasDefaultValue)(_.isSuccess)
+
+  def schema(resolver: SchemaResolver, withDefaultValue: Boolean): RefOr[Schema] =
+    resolver.resolve(restSchema) |> (s => if (withDefaultValue) s.withDefaultValue(whenAbsent) else s)
 }
 
 case class OpenApiParameter[T](
@@ -184,7 +183,11 @@ case class OpenApiParameter[T](
       case _: HeaderAnnot => Location.Header
       case _: Query => Location.Query
     }
-    val param = Parameter(info.name, in, required = !info.hasFallbackValue, schema = resolver.resolve(info.restSchema))
+    val pathParam = in == Location.Path
+    val param = Parameter(info.name, in,
+      required = pathParam || !info.hasFallbackValue,
+      schema = info.schema(resolver, withDefaultValue = !pathParam)
+    )
     RefOr(adjusters.foldRight(param)(_ adjustParameter _))
   }
 }
@@ -194,7 +197,7 @@ case class OpenApiBodyField[T](
   @multi @reifyAnnot schemaAdjusters: List[SchemaAdjuster]
 ) extends TypedMetadata[T] {
   def schema(resolver: SchemaResolver): RefOr[Schema] =
-    SchemaAdjuster.adjustRef(schemaAdjusters, resolver.resolve(info.restSchema))
+    SchemaAdjuster.adjustRef(schemaAdjusters, info.schema(resolver, withDefaultValue = true))
 }
 
 case class OpenApiBody[T](

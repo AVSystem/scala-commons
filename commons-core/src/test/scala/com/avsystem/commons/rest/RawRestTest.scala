@@ -1,12 +1,18 @@
 package com.avsystem.commons
 package rest
 
+import com.avsystem.commons.annotation.AnnotationAggregate
+import com.avsystem.commons.serialization.{transientDefault, whenAbsent}
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.ScalaFutures
 
 case class User(id: String, name: String)
 object User extends RestDataCompanion[User]
+
+class omit[T](value: => T) extends AnnotationAggregate {
+  @transientDefault @whenAbsent(value) type Implied
+}
 
 trait UserApi {
   @GET def user(userId: String): Future[User]
@@ -16,6 +22,12 @@ trait UserApi {
     @Header("X-Awesome") awesome: Boolean,
     @Query("f") foo: Int,
     @Body user: User
+  ): Future[Unit]
+
+  @POST def defaults(
+    @omit(false) @Header("X-Awesome") awesome: Boolean = whenAbsent.value,
+    @transientDefault @Query("f") foo: Int = 42,
+    @omit("lel") kek: String = whenAbsent.value
   ): Future[Unit]
 
   def autopost(bodyarg: String): Future[String]
@@ -56,6 +68,7 @@ class RawRestTest extends FunSuite with ScalaFutures {
     def subApi(newId: Int, newQuery: String): UserApi = new RootApiImpl(newId, query + newQuery)
     def user(userId: String): Future[User] = Future.successful(User(userId, s"$userId-$id-$query"))
     def user(paf: String, awesome: Boolean, f: Int, user: User): Future[Unit] = Future.unit
+    def defaults(awesome: Boolean, foo: Int, kek: String): Future[Unit] = Future.unit
     def autopost(bodyarg: String): Future[String] = Future.successful(bodyarg.toUpperCase)
     def singleBodyAutopost(@Body body: String): Future[String] = Future.successful(body.toUpperCase)
     def formpost(qarg: String, sarg: String, iarg: Int): Future[String] = Future.successful(s"$qarg-$sarg-$iarg")
@@ -99,6 +112,13 @@ class RawRestTest extends FunSuite with ScalaFutures {
         |X-Awesome: true
         |application/json
         |{"id":"ID","name":"Fred"}
+        |<- 204
+        |""".stripMargin)
+  }
+
+  test("simple POST using default transient values") {
+    testRestCall(_.self.defaults(),
+      """-> POST /defaults
         |<- 204
         |""".stripMargin)
   }

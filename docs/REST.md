@@ -30,6 +30,8 @@ The `commons-jetty` module provides Jetty-based implementations for JVM.
   - [Single body parameters](#single-body-parameters)
   - [`@FormBody`](#formbody)
   - [Prefix methods](#prefix-methods)
+  - [Default parameter values](#default-parameter-values)
+    - [`@transientDefault`](#transientdefault)
 - [Serialization](#serialization)
   - [Real and raw values](#real-and-raw-values)
   - [Path, query and header serialization](#path-query-and-header-serialization)
@@ -433,6 +435,58 @@ trait RootApi {
 object RootApi extends DefaultRestApiCompanion[RootApi]
 ```
 
+### Default parameter values
+
+`@Query`, `@Header` and `@BodyField` parameters may accept a default value which
+is picked up by REST framework macro engine and used as fallback value when actual value
+is missing in the HTTP request. This is useful primarily for [API evolution](#api-evolution) -
+it lets you add more parameters to your REST methods without breaking backwards compatibility
+with clients not aware of these new parameters.
+
+Assuming `GenCodec`-based serialization, default values may also be defined for fields of
+case classes used as parameter or result types of REST methods.
+
+There are two ways to define default values:
+
+* Scala-level default value
+  You can simply use [Scala default parameter value](https://docs.scala-lang.org/tour/default-parameter-values.html)
+  for your REST method parameters and case class parameters. They will be picked up during macro materialization and
+  used as fallback values for missing parameters during deserialization. However, Scala-level default values cannot
+  be picked up and included into [OpenAPI documents](#generating-openapi-30-specifications).
+  Therefore, it's recommended to define default values using `@whenAbsent` annotation
+
+* Using `@whenAbsent` annotation
+  Instead of defining Scala-level default value, you can use `@whenAbsent` annotation:
+  ```scala
+  case class Person(id: String, @whenAbsent("anon") name: String)
+  object Person extends RestDataCompanion[Person]
+  ```
+  This brings two advantages:
+  * The default value is for deserialization _only_ and does not affect programmer API,
+    which is often the intention of introducing it.
+  * Value from `@whenAbsent` annotation can be picked up by macro materialization of
+    [OpenAPI documents](#generating-openapi-30-specifications) and included as default value in OpenAPI
+    [Schema Objects](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#schemaObject)
+
+The two approaches can be mixed - you can define Scala-level default value and `@whenAbsent` annotation
+at the same time. During deserialization, value from `@whenAbsent` annotation takes priority over Scala-level
+default value. This way you can have different fallback value for deserialization and different one
+for Scala programming API. And if you want these values to be the same, there's also a handy `whenAbsent.value`
+macro which you can use to avoid writing the same default value twice:
+
+```scala
+case class Person(id: String, @whenAbsent("anon") name: String = whenAbsent.value)
+object Person extends RestDataCompanion[Person]
+```
+
+#### `@transientDefault`
+
+If your REST method parameter or case class parameter has a default value defined, you can
+also annotate it as `@transientDefault`. This way these parameters will not be serialized at all
+if their value is equal to the default value. During deserialization, of course, the default value
+will be picked up for them. This way you can reduce the amount of network traffic by sending only
+actually meaningful parameters.
+
 ## Serialization
 
 REST macro engine must be able to generate code that serializes and deserializes
@@ -833,7 +887,7 @@ materialize a `RestStructure` instance for your data type. `RestSchema` is then 
 `RestDataCompanion` also automatically materializes a `GenCodec` instance.
 
 ```scala
-case class User(id: String, name: String, birthYear: String)
+case class User(id: String, @whenAbsent("anon") name: String, birthYear: String)
 object User extends RestDataCompanion[User] // gives GenCodec + RestStructure + RestSchema
 ```
 
@@ -848,7 +902,8 @@ object User extends RestDataCompanion[User] // gives GenCodec + RestStructure + 
       "type": "string"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "default": "anon"
     },
     "birthYear": {
       "type": "integer",
@@ -857,7 +912,6 @@ object User extends RestDataCompanion[User] // gives GenCodec + RestStructure + 
   },
   "required": [
     "id",
-    "name",
     "birthYear"
   ]
 }
@@ -873,7 +927,7 @@ object User {
 
 Schema derived for an ADT from macro materialized `RestStructure` will describe the JSON format used by
 `GenCodec` macro materialized for that type. It will take into account all the annotations, e.g.
-`@flatten`, `@name`, `@transparent`, etc.
+`@flatten`, `@name`, `@transparent`, `@whenAbsent` etc.
 
 ##### Registered schemas
 
@@ -1020,8 +1074,7 @@ of an operation.
 
 ### Limitations
 
-Currently, it's not possible to include examples, default values and arbitrarily-valued enums (with values other than strings)
-in OpenAPI documents and schemas generated by AVSystem REST framework.
-
-Also, current representation of OpenAPI document does not support
+* Scala-level default values are not included in the OpenAPI Schema objects.
+  You need to use `@whenAbsent` annotation instead.
+* Current representation of OpenAPI document does not support
 [specification extensions](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions).

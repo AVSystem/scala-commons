@@ -177,8 +177,8 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
 
     case class Verbatim(tpe: Type) extends RpcEncoding {
-      def asRaw = q"$AsRawObj.identity[$tpe]"
-      def asReal = q"$AsRealObj.identity[$tpe]"
+      def asRaw: Tree = q"$AsRawObj.identity[$tpe]"
+      def asReal: Tree = q"$AsRealObj.identity[$tpe]"
       override def applyAsRaw[T: Liftable](arg: T): Tree = q"$arg"
       override def applyAsReal[T: Liftable](arg: T): Tree = q"$arg"
       override def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, default: Tree): Tree =
@@ -197,8 +197,8 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       }
       lazy val asRawName: TermName = infer(AsRawCls)
       lazy val asRealName: TermName = infer(AsRealCls)
-      def asRaw = q"$asRawName"
-      def asReal = q"$asRealName"
+      def asRaw: Tree = q"$asRawName"
+      def asReal: Tree = q"$asRealName"
     }
   }
 

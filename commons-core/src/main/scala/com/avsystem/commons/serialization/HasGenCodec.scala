@@ -6,7 +6,7 @@ import com.avsystem.commons.misc.MacroGenerated
 /**
   * Convenience abstract class for companion objects of types that have a [[GenCodec]].
   */
-abstract class HasGenCodec[T](implicit macroCodec: MacroGenerated[GenCodec[T]]) {
+abstract class HasGenCodec[T](implicit macroCodec: MacroGenerated[Any, GenCodec[T]]) {
   /**
     * Use this constructor and pass `GenCodec.materialize` explicitly if you're getting the
     * "super constructor cannot be passed a self reference unless parameter is declared by-name" error.

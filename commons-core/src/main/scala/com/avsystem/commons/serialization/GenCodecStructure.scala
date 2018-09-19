@@ -13,14 +13,11 @@ sealed trait GenInfo[T] extends TypedMetadata[T] {
 case class GenParamInfo[T](
   @reifyName sourceName: String,
   @optional @reifyAnnot annotName: Opt[name],
-  @optional @reifyAnnot whenAbsent: Opt[whenAbsent[T]],
+  @isAnnotated[whenAbsent[T]] hasWhenAbsent: Boolean,
   @isAnnotated[transientDefault] transientDefault: Boolean,
   @isAnnotated[outOfOrder] outOfOrder: Boolean,
   @reifyFlags flags: ParamFlags
-) extends GenInfo[T] {
-  val hasFallbackValue: Boolean =
-    whenAbsent.fold(flags.hasDefaultValue)(wa => Try(wa.value).isSuccess)
-}
+) extends GenInfo[T]
 
 sealed trait GenCodecStructure[T] extends GenInfo[T] {
   def flags: TypeFlags

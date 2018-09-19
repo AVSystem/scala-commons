@@ -2,7 +2,7 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.rest.openapi.description
-import com.avsystem.commons.serialization.flatten
+import com.avsystem.commons.serialization.{flatten, whenAbsent}
 
 sealed trait BaseEntity
 object BaseEntity extends RestDataCompanion[BaseEntity]
@@ -14,7 +14,7 @@ object FlatBaseEntity extends RestDataCompanion[FlatBaseEntity]
 @description("REST entity")
 case class RestEntity(
   @description("entity id") id: String,
-  name: String,
+  @whenAbsent("anonymous") name: String = whenAbsent.debugMacro.value,
   @description("recursive optional subentity") subentity: OptArg[RestEntity] = OptArg.Empty
 ) extends FlatBaseEntity
 object RestEntity extends RestDataCompanion[RestEntity]
@@ -32,7 +32,7 @@ trait RestTestApi {
   @GET("a/b") def complexGet(
     @Path("p1") p1: Int, @description("Very serious path parameter") @Path p2: String,
     @Header("X-H1") h1: Int, @Header("X-H2") h2: String,
-    q1: Int, @Query("q=2") q2: String
+    q1: Int, @Query("q=2") @whenAbsent("q2def") q2: String = whenAbsent.value
   ): Future[RestEntity]
 
   @POST def multiParamPost(
@@ -47,7 +47,11 @@ trait RestTestApi {
   ): Future[String]
 
   @FormBody
-  @POST def formPost(@Query q1: String, p1: String, p2: Int): Future[String]
+  @POST def formPost(
+    @Query q1: String,
+    p1: String,
+    @whenAbsent(42) p2: Int = whenAbsent.value
+  ): Future[String]
 
   def prefix(
     p0: String,
@@ -55,7 +59,10 @@ trait RestTestApi {
     @Query q0: String
   ): RestTestSubApi
 
-  def complexParams(baseEntity: BaseEntity, flatBaseEntity: Opt[FlatBaseEntity] = Opt.Empty): Future[Unit]
+  def complexParams(
+    baseEntity: BaseEntity,
+    flatBaseEntity: Opt[FlatBaseEntity] = Opt.Empty
+  ): Future[Unit]
 }
 object RestTestApi extends DefaultRestApiCompanion[RestTestApi] {
   val Impl: RestTestApi = new RestTestApi {
