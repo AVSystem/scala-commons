@@ -887,8 +887,8 @@ It's important for operations to have sensible IDs because tools that generate c
 languages for REST API defined in OpenAPI documents often reuse operation IDs as method/function names that
 map to REST requests.
 
-Note that Operation object itself may be arbitrarily adjusted with other annotations
-- see [operation adjusters](#operation-adjusters).
+Note that Operation object itself may be arbitrarily adjusted with other annotations -
+see [operation adjusters](#operation-adjusters).
 
 ### `RestSchema` typeclass
 
