@@ -11,7 +11,6 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
   class MethodMetadataParam(owner: RpcTraitMetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with TagMatchingSymbol with ArityParam {
 
-    def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
 
@@ -105,7 +104,7 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
       else super.paramByStrategy(paramSym, annot)
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
-      new RpcTraitMetadataConstructor(param.actualType, Some(param))
+      new RpcTraitMetadataConstructor(param.collectedType, Some(param))
 
     def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] = {
       val errorBase = s"it has no matching metadata parameters in $description"
@@ -145,7 +144,7 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
       else super.paramByStrategy(paramSym, annot)
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
-      new MethodMetadataConstructor(param.actualType, containingMethodParam, Some(param))
+      new MethodMetadataConstructor(param.collectedType, containingMethodParam, Some(param))
 
     def paramMappings(matchedMethod: MatchedMethod): Res[Map[ParamMetadataParam, Tree]] =
       collectParamMappings(matchedMethod.real.realParams, paramMdParams, "metadata parameter")(
@@ -162,13 +161,13 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
 
     override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
       annot.tpe match {
-        case t if t <:< ReifyPositionAT => new ReifiedPositionParam(this, paramSym)
-        case t if t <:< ReifyFlagsAT => new ReifiedFlagsParam(this, paramSym)
+        case t if t <:< ReifyPositionAT => new ParamPositionParam(this, paramSym)
+        case t if t <:< ReifyFlagsAT => new ParamFlagsParam(this, paramSym)
         case _ => super.paramByStrategy(paramSym, annot)
       }
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
-      new ParamMetadataConstructor(param.actualType, Some(param), indexInRaw)
+      new ParamMetadataConstructor(param.collectedType, Some(param), indexInRaw)
 
     def tryMaterializeFor(matchedParam: MatchedParam): Res[Tree] =
       tryMaterialize(matchedParam)(p => Fail(s"unexpected metadata parameter $p"))

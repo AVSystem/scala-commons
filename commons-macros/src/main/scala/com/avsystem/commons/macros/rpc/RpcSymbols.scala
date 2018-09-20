@@ -101,7 +101,6 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
   }
 
   trait RealParamTarget extends ArityParam with TagMatchingSymbol {
-    def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
 

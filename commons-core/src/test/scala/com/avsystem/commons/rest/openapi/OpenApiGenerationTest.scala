@@ -516,7 +516,8 @@ class OpenApiGenerationTest extends FunSuite {
         |              {
         |                "$ref": "#/components/schemas/RestEntity"
         |              }
-        |            ]
+        |            ],
+        |            "default": null
         |          }
         |        },
         |        "required": [

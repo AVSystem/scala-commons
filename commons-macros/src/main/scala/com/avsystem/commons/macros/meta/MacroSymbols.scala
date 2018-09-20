@@ -39,8 +39,7 @@ trait MacroSymbols extends MacroCommons {
     def collectedType: Type
   }
   object ParamArity {
-    def fromAnnotation(param: ArityParam,
-      allowMulti: Boolean, allowListed: Boolean, allowNamed: Boolean): ParamArity = {
+    def fromAnnotation(param: ArityParam, allowListedMulti: Boolean, allowNamedMulti: Boolean): ParamArity = {
 
       val at = findAnnotation(param.symbol, RpcArityAT).fold(SingleArityAT)(_.tpe)
       if (at <:< SingleArityAT) ParamArity.Single(param.actualType)
@@ -52,15 +51,15 @@ trait MacroSymbols extends MacroCommons {
         else
           ParamArity.Optional(valueMember.typeSignatureIn(optionLikeType))
       }
-      else if (allowMulti && at <:< MultiArityAT) {
-        if (allowNamed && param.actualType <:< StringPFTpe)
+      else if ((allowListedMulti || allowNamedMulti) && at <:< MultiArityAT) {
+        if (allowNamedMulti && param.actualType <:< StringPFTpe)
           Multi(param.actualType.baseType(PartialFunctionClass).typeArgs(1), named = true)
-        else if (allowListed && param.actualType <:< BIterableTpe)
+        else if (allowListedMulti && param.actualType <:< BIterableTpe)
           Multi(param.actualType.baseType(BIterableClass).typeArgs.head, named = false)
-        else if (allowNamed && allowListed)
+        else if (allowNamedMulti && allowListedMulti)
           param.reportProblem(s"@multi ${param.shortDescription} must be a PartialFunction of String " +
             s"(for by-name mapping) or Iterable (for sequence)")
-        else if (allowListed)
+        else if (allowListedMulti)
           param.reportProblem(s"@multi ${param.shortDescription} must be an Iterable")
         else
           param.reportProblem(s"@multi ${param.shortDescription} must be a PartialFunction of String")
@@ -226,12 +225,11 @@ trait MacroSymbols extends MacroCommons {
   }
 
   trait ArityParam extends MacroParam with AritySymbol {
-    def allowMulti: Boolean
     def allowNamedMulti: Boolean
     def allowListedMulti: Boolean
 
     val arity: ParamArity =
-      ParamArity.fromAnnotation(this, allowMulti, allowListedMulti, allowNamedMulti)
+      ParamArity.fromAnnotation(this, allowListedMulti, allowNamedMulti)
 
     lazy val optionLike: TermName = infer(tq"$OptionLikeCls[$actualType]")
 

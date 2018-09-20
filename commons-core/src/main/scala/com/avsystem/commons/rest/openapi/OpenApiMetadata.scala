@@ -5,7 +5,6 @@ import com.avsystem.commons.meta._
 import com.avsystem.commons.rest.openapi.adjusters._
 import com.avsystem.commons.rest.{Header => HeaderAnnot, _}
 import com.avsystem.commons.rpc._
-import com.avsystem.commons.serialization.{transientDefault, whenAbsent}
 
 import scala.annotation.implicitNotFound
 
@@ -160,16 +159,15 @@ case class OpenApiBodyOperation[T](
 
 case class OpenApiParamInfo[T](
   @reifyName(useRawName = true) name: String,
-  @optional @reifyEncodedAnnot[whenAbsent[T]] whenAbsent: Opt[Try[JsonValue]],
-  @isAnnotated[transientDefault] transientDefault: Boolean,
+  @optional @composite whenAbsentInfo: Opt[WhenAbsentInfo[T]],
   @reifyFlags flags: ParamFlags,
   @infer restSchema: RestSchema[T]
 ) extends TypedMetadata[T] {
-  val hasFallbackValue: Boolean =
-    whenAbsent.fold(flags.hasDefaultValue)(_.isSuccess)
+  val whenAbsentValue: Opt[JsonValue] = whenAbsentInfo.flatMap(_.fallbackValue)
+  val hasFallbackValue: Boolean = whenAbsentInfo.fold(flags.hasDefaultValue)(_.fallbackValue.isDefined)
 
   def schema(resolver: SchemaResolver, withDefaultValue: Boolean): RefOr[Schema] =
-    resolver.resolve(restSchema) |> (s => if (withDefaultValue) s.withDefaultValue(whenAbsent) else s)
+    resolver.resolve(restSchema) |> (s => if (withDefaultValue) s.withDefaultValue(whenAbsentValue) else s)
 }
 
 case class OpenApiParameter[T](

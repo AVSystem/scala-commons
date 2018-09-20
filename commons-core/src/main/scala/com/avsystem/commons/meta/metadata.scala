@@ -11,6 +11,14 @@ import com.avsystem.commons.serialization.{HasGenCodec, transparent}
 trait TypedMetadata[T]
 
 /**
+  * Captures case class parameter's default value. Used as type of ADT metadata parameter
+  * annotated with [[reifyDefaultValue]].
+  */
+final class DefaultValue[T](dv: => T) {
+  def value: T = dv
+}
+
+/**
   * Information about real parameter flags and modifiers as defined in Scala code.
   */
 @transparent

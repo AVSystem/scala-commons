@@ -13,6 +13,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
 
   val AdtParamMetadataAT: Type = getType(tq"$MetaPackage.adtParamMetadata")
   val AdtCaseMetadataAT: Type = getType(tq"$MetaPackage.adtCaseMetadata")
+  val ReifyDefaultValueAT: Type = getType(tq"$MetaPackage.reifyDefaultValue")
 
   sealed trait AdtSymbol extends MacroSymbol with SelfMatchedSymbol {
     def tpe: Type
@@ -42,7 +43,10 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
     def cases: List[AdtSymbol] = Nil
 
     val params: List[AdtParam] =
-      applyUnapply.params.map { case (sym, _) => new AdtParam(this, sym) }
+      applyUnapply.params.zipWithIndex.map { case ((sym, _), idx) => new AdtParam(this, sym, idx) }
+
+    def companion: Tree =
+      replaceCompanion(typedCompanionOf(tpe).getOrElse(reportProblem(s"could not reify companion for $tpe")))
   }
 
   class AdtObject(val tpe: Type, val singleValue: Tree) extends AdtSymbol {
@@ -61,7 +65,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
     def params: List[AdtParam] = Nil
   }
 
-  class AdtParam(owner: AdtClass, val symbol: Symbol) extends MacroParam {
+  class AdtParam(val owner: AdtClass, val symbol: Symbol, val index: Int) extends MacroParam {
     def shortDescription: String = "ADT parameter"
     def description: String = s"$shortDescription $nameStr of ${owner.description}"
   }
@@ -79,7 +83,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
     extends MetadataConstructor(ownerType, atParam) {
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
-      new AdtMetadataConstructor(param.actualType, Some(param))
+      new AdtMetadataConstructor(param.collectedType, Some(param))
 
     val paramMdParams: List[AdtParamMetadataParam] = collectParams[AdtParamMetadataParam]
     val caseMdParams: List[AdtCaseMetadataParam] = collectParams[AdtCaseMetadataParam]
@@ -169,12 +173,16 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
   class AdtParamMetadataConstructor(ownerType: Type, atParam: Option[CompositeParam])
     extends MetadataConstructor(ownerType, atParam) {
 
+    val adtParamType: Type =
+      ownerType.baseType(TypedMetadataType.typeSymbol).typeArgs.head
+
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
-      new AdtParamMetadataConstructor(param.actualType, Some(param))
+      new AdtParamMetadataConstructor(param.collectedType, Some(param))
 
     override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam = annot.tpe match {
-      case t if t <:< ReifyPositionAT => new ReifiedPositionParam(this, paramSym)
-      case t if t <:< ReifyFlagsAT => new ReifiedFlagsParam(this, paramSym)
+      case t if t <:< ReifyPositionAT => new ParamPositionParam(this, paramSym)
+      case t if t <:< ReifyFlagsAT => new ParamFlagsParam(this, paramSym)
+      case t if t <:< ReifyDefaultValueAT => new ReifiedDefaultValueParam(this, paramSym)
       case _ => super.paramByStrategy(paramSym, annot)
     }
 
@@ -185,7 +193,6 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
   class AdtCaseMetadataParam(owner: AdtMetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with ArityParam with FilteringSymbol {
 
-    def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
 
@@ -199,7 +206,6 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
   class AdtParamMetadataParam(owner: AdtMetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with ArityParam with FilteringSymbol {
 
-    def allowMulti: Boolean = true
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
 
@@ -229,7 +235,40 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
     }
   }
 
-  class ReifiedTypeFlagsParam(owner: MetadataConstructor, symbol: Symbol) extends DirectMetadataParam(owner, symbol) {
+  class ReifiedDefaultValueParam(owner: AdtParamMetadataConstructor, symbol: Symbol)
+    extends DirectMetadataParam(owner, symbol) with ArityParam {
+
+    def allowNamedMulti: Boolean = false
+    def allowListedMulti: Boolean = false
+
+    if (!(arity.collectedType =:= getType(tq"$CommonsPkg.meta.DefaultValue[${owner.adtParamType}]"))) {
+      reportProblem(s"type of @reifyDefaultValue metadata parameter must be " +
+        s"DefaultValue[${owner.adtParamType}] but got ${arity.collectedType}")
+    }
+
+    def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = matchedSymbol.real match {
+      case adtParam: AdtParam =>
+        val hasDefaultValue = adtParam.symbol.asTerm.isParamWithDefault
+        def defaultValue: Tree = {
+          val ownerMethodName = adtParam.symbol.owner.name.encodedName.toString
+          val dvMethodName = TermName(s"$ownerMethodName$$default$$${adtParam.index + 1}")
+          q"new $CommonsPkg.meta.DefaultValue[${adtParam.actualType}](${adtParam.owner.companion}.$dvMethodName)"
+        }
+        arity match {
+          case _: ParamArity.Single =>
+            if (hasDefaultValue) Ok(defaultValue)
+            else Fail(s"no default value defined")
+          case _: ParamArity.Optional =>
+            Ok(mkOptional(if (hasDefaultValue) Some(defaultValue) else None))
+          case _ => Fail("@multi arity not allowed on @reifyDefaultValue params")
+        }
+      case _ =>
+        reportProblem("@reifyDefaultValue is allowed only for case class parameter metadata")
+    }
+  }
+
+  class ReifiedTypeFlagsParam(owner: MetadataConstructor, symbol: Symbol)
+    extends DirectMetadataParam(owner, symbol) {
     if (!(actualType =:= TypeFlagsTpe)) {
       reportProblem("its type is not TypeFlags")
     }

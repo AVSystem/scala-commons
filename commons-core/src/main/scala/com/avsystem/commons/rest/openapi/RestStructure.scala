@@ -6,6 +6,7 @@ import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.rest.JsonValue
 import com.avsystem.commons.rest.openapi.adjusters.SchemaAdjuster
+import com.avsystem.commons.rpc.AsRaw
 import com.avsystem.commons.serialization._
 
 sealed trait RestStructure[T] extends TypedMetadata[T] {
@@ -146,15 +147,26 @@ object RestStructure extends AdtMetadataCompanion[RestStructure] {
   case class Field[T](
     @composite info: GenParamInfo[T],
     @infer restSchema: RestSchema[T],
-    @optional @reifyEncodedAnnot[whenAbsent[T]] whenAbsent: Opt[Try[JsonValue]],
+    @optional @composite whenAbsentInfo: Opt[WhenAbsentInfo[T]],
+    @optional @composite defaultValueInfo: Opt[DefaultValueInfo[T]],
     @multi @reifyAnnot schemaAdjusters: List[SchemaAdjuster]
   ) extends TypedMetadata[T] {
-    val hasFallbackValue: Boolean =
-      whenAbsent.fold(info.flags.hasDefaultValue)(_.isSuccess)
+
+    val fallbackValue: Opt[JsonValue] =
+      (whenAbsentInfo.map(_.fallbackValue) orElse defaultValueInfo.map(_.fallbackValue)).flatten
+    val hasFallbackValue: Boolean = fallbackValue.isDefined
 
     def resolveSchema(resolver: SchemaResolver): RefOr[Schema] = {
-      val bareSchema = resolver.resolve(restSchema).withDefaultValue(whenAbsent)
+      val bareSchema = resolver.resolve(restSchema).withDefaultValue(fallbackValue)
       SchemaAdjuster.adjustRef(schemaAdjusters, bareSchema)
     }
+  }
+
+  case class DefaultValueInfo[T](
+    @reifyDefaultValue defaultValue: DefaultValue[T],
+    @infer asJson: AsRaw[JsonValue, T]
+  ) extends TypedMetadata[T] {
+    val fallbackValue: Opt[JsonValue] =
+      Try(defaultValue.value).toOpt.map(asJson.asRaw)
   }
 }

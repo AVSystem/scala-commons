@@ -309,8 +309,8 @@ object Schema extends HasGenCodec[Schema] {
       case ref => Schema(allOf = List(ref))
     }
 
-    def withDefaultValue(dv: Opt[Try[JsonValue]]): RefOr[Schema] =
-      dv.collect({ case Success(v) => v }).fold(refOrSchema)(v => RefOr(rewrapRefToAllOf.copy(default = v)))
+    def withDefaultValue(dv: Opt[JsonValue]): RefOr[Schema] =
+      dv.fold(refOrSchema)(v => RefOr(rewrapRefToAllOf.copy(default = v)))
   }
 }
 

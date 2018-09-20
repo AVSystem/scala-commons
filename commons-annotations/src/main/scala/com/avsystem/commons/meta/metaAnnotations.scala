@@ -242,16 +242,6 @@ final class adtCaseMetadata extends MetadataParamStrategy
 final class reifyAnnot extends MetadataParamStrategy
 
 /**
-  * Similar to [[reifyAnnot]] but the annotation is encoded into some raw type (which is the type of the parameter).
-  * Because the type of the parameter is now the raw type, annotation type must be given as type parameter of
-  * [[reifyEncodedAnnot]].
-  *
-  * Encoding is done by searching and using implicit instance of `AsRaw[ParameterType,AnnotationType]`.
-  * Arity annotations apply in the same way as for [[reifyAnnot]].
-  */
-final class reifyEncodedAnnot[T <: StaticAnnotation] extends MetadataParamStrategy
-
-/**
   * Metadata parameter typed as `Boolean` can be annotated with `@isAnnotated[SomeAnnotation]`. Boolean value will then
   * hold information about whether RPC trait, method or parameter for which metadata is materialized is annotated with
   * `SomeAnnotation` (or any subtype) or not.
@@ -276,6 +266,18 @@ final class reifyPosition extends MetadataParamStrategy
   * parameter flags information - see scaladoc for `ParamFlags` for more details.
   */
 final class reifyFlags extends MetadataParamStrategy
+
+/**
+  * Metadata parameter annotated with this annotation must be of type `DefaultValue[T]` where `T` is the type
+  * of case class field for which metadata is being materialized. The parameter may also be marked as [[optional]]
+  * and wrapped into an `Option`, `Opt`, etc.
+  *
+  * As a value of this metadata parameter, macro engine will capture and reify case class field's Scala-level
+  * default value wrapped into `DefaultValue[T]`. **NOTE**: this only works for case class fields, unfortunately
+  * it does not work RPC method parameters because it's not possible to obtain default value of RPC method parameter
+  * without having some actual instance of RPC trait.
+  */
+final class reifyDefaultValue extends MetadataParamStrategy
 
 /**
   * May be applied on metadata parameters with [[infer]] annotation (or just implicit metadata parameters -
