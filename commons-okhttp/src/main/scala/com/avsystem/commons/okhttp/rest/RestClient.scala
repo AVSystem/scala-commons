@@ -20,12 +20,15 @@ object RestClient {
         .host(host)
         .port(port)
 
-      val httpReq = new Request.Builder()
-        .url(url.build())
-
       request.parameters.path.iterator.foreach(v => url.addPathSegment(v.value))
       request.parameters.query.iterator.foreach(v => url.addQueryParameter(v._1, v._2.value))
-      request.parameters.headers.foreach { case (name, HeaderValue(value)) => httpReq.addHeader(name, value)}
+
+      val httpReq = new Request.Builder()
+          .url(url.build())
+
+      request.parameters.headers.foreach {
+        case (name, HeaderValue(value)) => httpReq.addHeader(name, value)
+      }
 
       request.body match {
         case HttpBody(content, mimeType) =>

@@ -38,7 +38,7 @@ class SomeApiImpl extends SomeApi {
 
   override def helloWithHeader(who: String): Future[String] = hello(who)
 
-  override def helloWithQueryParam(who: String): _root_.com.avsystem.commons.Future[String] = hello(who)
+  override def helloWithQueryParam(who: String): Future[String] = hello(who)
 
-  override def helloWithPathParam(who: String): _root_.com.avsystem.commons.Future[String] = hello(who)
+  override def helloWithPathParam(who: String): Future[String] = hello(who)
 }

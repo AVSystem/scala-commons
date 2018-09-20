@@ -13,7 +13,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class RestTest extends FunSuite with UsesJettyHttpServer with UsesOkhttpClient with ScalaFutures {
+class RestTest extends FunSuite with UsesJettyHttpServer with UsesOkHttpClient with ScalaFutures {
 
   override protected def setupServer(server: Server): Unit = {
     val servlet = RestServlet[SomeApi](new SomeApiImpl())
