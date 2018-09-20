@@ -30,6 +30,7 @@ val mockitoVersion = "2.18.3"
 val circeVersion = "0.9.3"
 val upickleVersion = "0.6.6"
 val scalajsBenchmarkVersion = "0.2.4"
+val okhttpVersion = "3.11.0"
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
@@ -144,6 +145,7 @@ lazy val commons = project.in(file("."))
     `commons-redis`,
     `commons-akka`,
     `commons-kafka`,
+    `commons-okhttp`
   )
   .settings(
     commonSettings,
@@ -341,5 +343,17 @@ lazy val `commons-akka` = project
       "com.typesafe.akka" %% "akka-remote" % akkaVersion,
       "io.monix" %% "monix" % monixVersion,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+    ),
+  )
+
+lazy val `commons-okhttp` = project
+  .dependsOn(`commons-core` % CompileAndTest)
+  .dependsOn(`commons-jetty` % CompileAndTest)
+  .settings(
+    jvmCommonSettings,
+    libraryDependencies ++= Seq(
+      "com.squareup.okhttp3" % "okhttp" % okhttpVersion,
+      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
+      "org.slf4j" % "slf4j-simple" % "1.7.25" % Test,
     ),
   )
