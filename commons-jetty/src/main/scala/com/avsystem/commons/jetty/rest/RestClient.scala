@@ -12,10 +12,15 @@ import org.eclipse.jetty.client.util.{BufferingResponseListener, StringContentPr
 import org.eclipse.jetty.http.{HttpHeader, MimeTypes}
 
 object RestClient {
-  def apply[@explicitGenerics Real: RawRest.AsRealRpc : RestMetadata](client: HttpClient, baseUrl: String): Real =
-    RawRest.fromHandleRequest[Real](asHandleRequest(client, baseUrl))
+  final val DefaultMaxResponseLength = 2 * 1024 * 1024
 
-  def asHandleRequest(client: HttpClient, baseUrl: String): RawRest.HandleRequest =
+  def apply[@explicitGenerics Real: RawRest.AsRealRpc : RestMetadata](
+    client: HttpClient, baseUrl: String, maxResponseLength: Int = DefaultMaxResponseLength
+  ): Real = RawRest.fromHandleRequest[Real](asHandleRequest(client, baseUrl, maxResponseLength))
+
+  def asHandleRequest(
+    client: HttpClient, baseUrl: String, maxResponseLength: Int = DefaultMaxResponseLength
+  ): RawRest.HandleRequest =
     RawRest.safeHandle(request => callback => {
       val path = request.parameters.path.iterator
         .map(pv => URLEncoder.encode(pv.value, "utf-8"))
@@ -35,7 +40,7 @@ object RestClient {
         httpReq.content(new StringContentProvider(s"$mimeType;charset=utf-8", content, StandardCharsets.UTF_8))
       }
 
-      httpReq.send(new BufferingResponseListener() {
+      httpReq.send(new BufferingResponseListener(maxResponseLength) {
         override def onComplete(result: Result): Unit =
           if (result.isSucceeded) {
             val httpResp = result.getResponse

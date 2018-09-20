@@ -5,19 +5,27 @@ import java.net.URLDecoder
 import java.util.regex.Pattern
 
 import com.avsystem.commons.annotation.explicitGenerics
+import com.avsystem.commons.jetty.rest.RestServlet.DefaultHandleTimeout
 import com.avsystem.commons.meta.Mapping
 import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RawRest, RestMetadata, RestParameters, RestRequest}
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.http.{HttpStatus, MimeTypes}
 
-class RestServlet(handleRequest: RawRest.HandleRequest) extends HttpServlet {
-  override def service(req: HttpServletRequest, resp: HttpServletResponse): Unit = {
-    RestServlet.handle(handleRequest, req, resp)
-  }
+import scala.concurrent.duration._
+
+class RestServlet(handleRequest: RawRest.HandleRequest, handleTimeout: FiniteDuration = DefaultHandleTimeout)
+  extends HttpServlet {
+
+  override def service(req: HttpServletRequest, resp: HttpServletResponse): Unit =
+    RestServlet.handle(handleRequest, req, resp, handleTimeout)
 }
 
 object RestServlet {
-  def apply[@explicitGenerics Real: RawRest.AsRawRpc : RestMetadata](real: Real): RestServlet =
+  final val DefaultHandleTimeout = 30.seconds
+
+  def apply[@explicitGenerics Real: RawRest.AsRawRpc : RestMetadata](
+    real: Real, handleTimeout: FiniteDuration = DefaultHandleTimeout
+  ): RestServlet =
     new RestServlet(RawRest.asHandleRequest[Real](real))
 
   private val SeparatorPattern: Pattern = Pattern.compile("/")
@@ -25,7 +33,8 @@ object RestServlet {
   def handle(
     handleRequest: RawRest.HandleRequest,
     request: HttpServletRequest,
-    response: HttpServletResponse
+    response: HttpServletResponse,
+    handleTimeout: FiniteDuration = DefaultHandleTimeout
   ): Unit = {
     val method = HttpMethod.byName(request.getMethod)
 
@@ -54,7 +63,7 @@ object RestServlet {
     }
     val restRequest = RestRequest(method, RestParameters(path, headers, query), body)
 
-    val asyncContext = request.startAsync()
+    val asyncContext = request.startAsync().setup(_.setTimeout(handleTimeout.toMillis))
     RawRest.safeAsync(handleRequest(restRequest)) {
       case Success(restResponse) =>
         response.setStatus(restResponse.code)
