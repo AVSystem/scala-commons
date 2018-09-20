@@ -2,12 +2,13 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.meta._
-import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
+import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx, ImplicitNotFound}
 import com.avsystem.commons.rpc._
+import com.avsystem.commons.serialization.GenCodec
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
-import com.avsystem.commons.serialization.{GenCodec, whenAbsent}
 
+import scala.annotation.implicitNotFound
 import scala.util.control.NoStackTrace
 
 sealed trait RestValue extends Any {
@@ -70,8 +71,11 @@ object JsonValue {
       }
     )
 
-  implicit def whenAbsentAsJson[T](implicit valueAsJson: AsRaw[JsonValue, T]): AsRaw[Try[JsonValue], whenAbsent[T]] =
-    AsRaw.create(wa => Try(wa.value).map(valueAsJson.asRaw))
+  @implicitNotFound("Cannot serialize ${T} to JsonValue. This may be caused by a lack of GenCodec instance for ${T}.")
+  implicit def asRawNotFound[T]: ImplicitNotFound[AsRaw[JsonValue, T]] = ImplicitNotFound()
+
+  @implicitNotFound("Cannot deserialize ${T} from JsonValue. This may be caused by a lack of GenCodec instance for ${T}.")
+  implicit def asRealNotFound[T]: ImplicitNotFound[AsReal[JsonValue, T]] = ImplicitNotFound()
 }
 
 /**
@@ -251,4 +255,12 @@ object RestResponse {
       async(t => promise.complete(t.map(respAsReal.asReal)))
       Success(promise.future)
     }
+
+  @implicitNotFound("Cannot serialize ${T} into RestResponse.")
+  implicit def futureAsRawNotFound[T]: ImplicitNotFound[AsRaw[RawRest.Async[RestResponse], Try[Future[T]]]] =
+    ImplicitNotFound()
+
+  @implicitNotFound("Cannot deserialize ${T} from RestResponse.")
+  implicit def futureAsRealNotFound[T]: ImplicitNotFound[AsReal[RawRest.Async[RestResponse], Try[Future[T]]]] =
+    ImplicitNotFound()
 }

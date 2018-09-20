@@ -310,7 +310,10 @@ object Schema extends HasGenCodec[Schema] {
     }
 
     def withDefaultValue(dv: Opt[JsonValue]): RefOr[Schema] =
-      dv.fold(refOrSchema)(v => RefOr(rewrapRefToAllOf.copy(default = v)))
+      dv.fold(refOrSchema)(v => map(_.copy(default = v)))
+
+    def map(f: Schema => Schema): RefOr[Schema] =
+      f(rewrapRefToAllOf).unwrapSingleRefAllOf
   }
 }
 

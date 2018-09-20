@@ -29,7 +29,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         methodMapping <- createMapping(rawSymbol, matchedMethod)
       } yield methodMapping) { errors =>
         val unmatchedReport = errors.map { case (raw, err) =>
-          s" * ${raw.shortDescription} ${raw.nameStr} did not match: ${indent(err, " ")}"
+          s" * ${raw.shortDescription.capitalize} ${raw.nameStr} did not match: ${indent(err, " ")}"
         }.mkString("\n")
         s"$errorBase:\n$unmatchedReport"
       } match {
@@ -292,8 +292,10 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           val e = RpcEncoding.RealRawEncoding(realResultType, rawMethod.resultType, None)
           if ((!forAsRaw || e.asRawName != termNames.EMPTY) && (!forAsReal || e.asRealName != termNames.EMPTY))
             Ok(e)
-          else Fail(s"no encoding/decoding found between real result type " +
-            s"$realResultType and raw result type ${rawMethod.resultType}")
+          else {
+            val failedConv = if (forAsRaw) AsRawCls else AsRealCls
+            Fail(implicitNotFoundMsg(getType(tq"$failedConv[${rawMethod.resultType},$realResultType]")))
+          }
         }
 
       for {

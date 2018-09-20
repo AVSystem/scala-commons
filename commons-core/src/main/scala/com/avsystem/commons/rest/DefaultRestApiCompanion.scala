@@ -1,12 +1,14 @@
 package com.avsystem.commons
 package rest
 
-import com.avsystem.commons.misc.MacroGenerated
+import com.avsystem.commons.misc.{ImplicitNotFound, MacroGenerated}
 import com.avsystem.commons.rest.RawRest.{AsRawRealRpc, AsRawRpc, AsRealRpc}
 import com.avsystem.commons.rest.openapi.{OpenApiMetadata, RestSchema, RestStructure}
-import com.avsystem.commons.rpc.{AsRawReal, Fallback, RpcMacroInstances}
+import com.avsystem.commons.rpc.{AsRaw, AsRawReal, AsReal, Fallback, RpcMacroInstances}
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, HasGenCodec}
+
+import scala.annotation.implicitNotFound
 
 /**
   * Base class for companion objects of ADTs (case classes, objects, sealed hierarchies) which are used as
@@ -129,6 +131,20 @@ trait DefaultRestImplicits extends FloatingPointRestImplicits {
     Fallback(AsRawReal.create(v => QueryValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value)))
   implicit def jsonValueDefaultAsRealRaw[T: GenCodec]: Fallback[AsRawReal[JsonValue, T]] =
     Fallback(AsRawReal.create(v => JsonValue(JsonStringOutput.write[T](v)), v => JsonStringInput.read[T](v.value)))
+
+  @implicitNotFound("Cannot serialize ${T} into HttpBody. This may be caused by lack of GenCodec instance for ${T}")
+  implicit def asRawNotFound[T]: ImplicitNotFound[AsRaw[HttpBody, T]] = ImplicitNotFound()
+
+  @implicitNotFound("Cannot deserialize ${T} from HttpBody. This may be caused by lack of GenCodec instance for ${T}")
+  implicit def asRealNotFound[T]: ImplicitNotFound[AsReal[HttpBody, T]] = ImplicitNotFound()
+
+  @implicitNotFound("Cannot serialize ${T} into RestResponse. This may be caused by lack of GenCodec instance for ${T}")
+  implicit def futureAsRawNotFound[T]: ImplicitNotFound[AsRaw[RawRest.Async[RestResponse], Try[Future[T]]]] =
+    ImplicitNotFound()
+
+  @implicitNotFound("Cannot deserialize ${T} from RestResponse. This may be caused by lack of GenCodec instance for ${T}")
+  implicit def futureAsRealNotFound[T]: ImplicitNotFound[AsReal[RawRest.Async[RestResponse], Try[Future[T]]]] =
+    ImplicitNotFound()
 }
 object DefaultRestImplicits extends DefaultRestImplicits
 

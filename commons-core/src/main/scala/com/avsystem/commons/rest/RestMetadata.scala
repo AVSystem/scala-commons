@@ -217,7 +217,7 @@ case class HttpMethodMetadata[T](
   def methodPath: List[PathValue] = PathValue.splitDecode(methodTag.path)
 }
 
-@implicitNotFound("${T} is not a valid result type of HTTP operation (it would be valid when e.g. wrapped in a Future)")
+@implicitNotFound("${T} is not a valid result type of HTTP operation (it could be valid when e.g. wrapped into a Future)")
 case class HttpResponseType[T]()
 object HttpResponseType {
   implicit def forFuture[T]: HttpResponseType[Future[T]] = HttpResponseType[Future[T]]()
