@@ -190,8 +190,8 @@ trait MetadataParamStrategy extends StaticAnnotation
   * found, you will only know about it *after* the metadata materializing macro has already been expanded.
   * This behaviour can be changed with [[checked]] annotation.
   *
-  * The `@infer` annotation may also be used on a parameter of an annotation reified with [[reifyAnnot]] or
-  * [[reifyEncodedAnnot]] in order to simulate implicit parameter. This is a workaround for the fact that Scala
+  * The `@infer` annotation may also be used on a parameter of an annotation reified with [[reifyAnnot]]
+  * in order to simulate implicit parameter. This is a workaround for the fact that Scala
   * annotations cannot accept multiple parameter lists. In such situation, `infer.value` should be used as default
   * value of "implicit" annotation parameter:
   *
