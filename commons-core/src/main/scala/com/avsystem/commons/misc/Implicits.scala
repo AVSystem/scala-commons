@@ -19,7 +19,7 @@ object Implicits {
   *   object Box {
   *     implicit def boxCodecFromClassTag[T: ClassTag]: GenCodec[Box[T]] = ...
   *
-  *     @implicitNotFound("GenCodec for Box[${T}] not found. This is most likely caused by lack of ClassTag[${T}]")
+  *     @implicitNotFound("GenCodec for Box[$${T}] not found. This is most likely caused by lack of ClassTag[$${T}]")
   *     implicit def boxCodecNotFound[T]: ImplicitNotFound[GenCodec[Box[T]]] = ImplicitNotFound()
   *   }
   * }}}
