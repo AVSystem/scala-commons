@@ -48,7 +48,8 @@ class RestSchemaTest extends FunSuite {
         |    "str": {
         |      "type": "string",
         |      "description": "serious string",
-        |      "nullable": true
+        |      "nullable": true,
+        |      "default": null
         |    }
         |  },
         |  "required": [
