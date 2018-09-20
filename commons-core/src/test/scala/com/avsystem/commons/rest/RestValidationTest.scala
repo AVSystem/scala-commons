@@ -51,7 +51,7 @@ class RestValidationTest extends FunSuite {
       RestMetadata.materializeForRpc[PrefixApi1].ensureUniqueParams(Nil)
     }
     assert(failure.getMessage ==
-      "Header parameter X-Lol of post_post collides with header parameter of the same name in prefix prefix")
+      "Header parameter X-Lol of post collides with header parameter of the same name in prefix prefix")
   }
 
   trait PrefixApi2 {
@@ -69,6 +69,6 @@ class RestValidationTest extends FunSuite {
       RestMetadata.materializeForRpc[PrefixApi2].ensureUniqueParams(Nil)
     }
     assert(failure.getMessage ==
-      "Query parameter lol of post_post collides with query parameter of the same name in prefix prefix")
+      "Query parameter lol of post collides with query parameter of the same name in prefix prefix")
   }
 }
