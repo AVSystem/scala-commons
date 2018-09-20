@@ -888,7 +888,7 @@ languages for REST API defined in OpenAPI documents often reuse operation IDs as
 map to REST requests.
 
 Note that Operation object itself may be arbitrarily adjusted with other annotations -
-see [adjusting operations](#adjusting operations).
+see [adjusting operations](#adjusting-operations).
 
 ### `RestSchema` typeclass
 
