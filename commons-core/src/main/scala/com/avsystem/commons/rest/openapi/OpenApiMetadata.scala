@@ -7,6 +7,7 @@ import com.avsystem.commons.rest.{Header => HeaderAnnot, _}
 import com.avsystem.commons.rpc._
 
 import scala.annotation.implicitNotFound
+import scala.collection.mutable
 
 @implicitNotFound("OpenApiMetadata for ${T} not found. The easiest way to provide it is to make companion object of " +
   "${T} extend one of the convenience base companion classes, e.g. DefaultRestApiCompanion")
@@ -35,11 +36,18 @@ case class OpenApiMetadata[T](
       httpMethods.iterator.map(m => (m.pathPattern, m.methodTag.method, m.operation(resolver)))
 
   def paths(resolver: SchemaResolver): Paths = {
+    val operationIds = new mutable.HashSet[String]
     val pathsMap = new MLinkedHashMap[String, MLinkedHashMap[HttpMethod, Operation]]
     operations(resolver).foreach {
       case (path, httpMethod, operation) =>
         val opsMap = pathsMap.getOrElseUpdate(path, new MLinkedHashMap)
         opsMap(httpMethod) = operation
+        operation.operationId.foreach { opid =>
+          if (!operationIds.add(opid)) {
+            throw new IllegalArgumentException(s"Duplicate operation ID: $opid. " +
+              s"You can disambiguate with @operationIdPrefix and @operationId annotations.")
+          }
+        }
     }
     Paths(pathsMap.iterator.map { case (path, ops) =>
       val pathItem = PathItem(
@@ -93,16 +101,21 @@ case class OpenApiPrefix[T](
   name: String,
   methodTag: Prefix,
   parameters: List[OpenApiParameter[_]],
+  @optional @reifyAnnot operationIdPrefix: Opt[operationIdPrefix],
+  @multi @reifyAnnot operationAdjusters: List[OperationAdjuster],
   @infer @checked result: OpenApiMetadata.Lazy[T]
 ) extends OpenApiMethod[T] {
 
   def operations(resolver: SchemaResolver): Iterator[(String, HttpMethod, Operation)] = {
     val prefixParams = parameters.map(_.parameter(resolver))
+    val oidPrefix = operationIdPrefix.fold(s"${name}_")(_.prefix)
     result.value.operations(resolver).map { case (path, httpMethod, operation) =>
-      (pathPattern + path, httpMethod, operation.copy(
-        operationId = operation.operationId.toOpt.map(oid => s"${name}_$oid").toOptArg,
+      val prefixedOperation = operation.copy(
+        operationId = operation.operationId.toOpt.map(oid => s"$oidPrefix$oid").toOptArg,
         parameters = prefixParams ++ operation.parameters
-      ))
+      )
+      val adjustedOperation = operationAdjusters.foldRight(prefixedOperation)(_ adjustOperation _)
+      (pathPattern + path, httpMethod, adjustedOperation)
     }
   }
 }

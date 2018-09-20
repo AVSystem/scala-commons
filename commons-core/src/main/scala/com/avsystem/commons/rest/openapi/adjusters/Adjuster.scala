@@ -52,6 +52,8 @@ trait ParameterAdjuster extends Adjuster {
 /**
   * Base trait for annotation which may adjust [[Operation]] generated for REST RPC methods which translate to
   * HTTP operations (i.e. it doesn't work for prefix methods).
+  * Operation adjusters may also be specified on prefix methods - this way they will be applied to all operations
+  * generated for the result of this prefix method.
   */
 trait OperationAdjuster extends Adjuster {
   def adjustOperation(operation: Operation): Operation
@@ -89,3 +91,23 @@ class example[+T](value: T, @infer asJson: AsRaw[JsonValue, T] = infer.value) ex
   def adjustParameter(parameter: Parameter): Parameter =
     parameter.copy(example = asJson.asRaw(value))
 }
+
+/**
+  * Allows setting custom `operationId` for [[Operation]] objects generated for REST HTTP methods.
+  *
+  * By default, `operationId` is set to method's [[com.avsystem.commons.rpc.rpcName rpcName]] which in turn
+  * defaults to method's regular name. If method is overloaded, method name may be prepended with lowercased
+  * HTTP method followed by underscore (e.g. "post_")
+  */
+class operationId(operationId: OptArg[String] = OptArg.Empty) extends OperationAdjuster {
+  def adjustOperation(operation: Operation): Operation =
+    operation.copy(operationId = operationId)
+}
+
+/**
+  * Prefix methods may be annotated with this annotation to specify prefix that will be prepended to
+  * `operationId` of all [[Operation]] objects generated for result of that prefix method.
+  * By default, this prefix is prefix method's name with underscore,
+  * so this annotation may be used in particular to set empty prefix.
+  */
+class operationIdPrefix(val prefix: String) extends StaticAnnotation

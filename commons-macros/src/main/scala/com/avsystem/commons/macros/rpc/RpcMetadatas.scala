@@ -73,14 +73,14 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
         Ok(mkOptional(parser.extractOptional(!auxiliary, metadataTree(matchedMethod, _, 0))))
       case ParamArity.Multi(_, true) =>
         parser.extractMulti(!auxiliary, (rp, i) => matchRealParam(matchedMethod, rp, i)
-          .toOption.map(mp => metadataTree(mp, i).map(t => q"(${mp.rpcName}, $t)"))).map(mkMulti(_))
+          .toOption.map(mp => metadataTree(mp, i).map(t => q"(${mp.rawName}, $t)"))).map(mkMulti(_))
       case _: ParamArity.Multi =>
         parser.extractMulti(!auxiliary, metadataTree(matchedMethod, _, _)).map(mkMulti(_))
     }
   }
 
   case class MethodMetadataMapping(matchedMethod: MatchedMethod, mdParam: MethodMetadataParam, tree: Tree) {
-    def collectedTree(named: Boolean): Tree = if (named) q"(${matchedMethod.rpcName}, $tree)" else tree
+    def collectedTree(named: Boolean): Tree = if (named) q"(${matchedMethod.rawName}, $tree)" else tree
   }
 
   class RpcTraitMetadataConstructor(ownerType: Type, atParam: Option[CompositeParam])

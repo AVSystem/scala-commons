@@ -21,7 +21,7 @@ class rpcName(val name: String) extends RealSymAnnotation
   *   }
   * }}}
   */
-class rpcNamePrefix(val prefix: String) extends RealSymAnnotation
+class rpcNamePrefix(val prefix: String, val overloadedOnly: Boolean = false) extends RealSymAnnotation
 
 /**
   * Base trait for RPC tag annotations. Tagging gives more direct control over how real methods

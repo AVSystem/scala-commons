@@ -4,6 +4,8 @@ package macros.rpc
 import com.avsystem.commons.macros.meta.MacroSymbols
 import com.avsystem.commons.macros.misc.Res
 
+import scala.collection.mutable
+
 trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
 
   import c.universe._
@@ -11,6 +13,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
   sealed trait Matched extends MatchedSymbol {
     def real: RealRpcSymbol
     def fallbackTagUsed: FallbackTag
+    def overloaded: Boolean
 
     def annot(tpe: Type): Option[Annot] =
       findAnnotation(real.symbol, tpe, fallback = fallbackTagUsed.asList)
@@ -18,27 +21,29 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     def allAnnots(tpe: Type): List[Annot] =
       allAnnotations(real.symbol, tpe, fallback = fallbackTagUsed.asList)
 
-    val rpcName: String = {
+    val rawName: String = {
       val prefixes = allAnnotations(real.symbol, RpcNamePrefixAT, fallback = fallbackTagUsed.asList)
+        .filter(a => overloaded || !a.findArg[Boolean](RpcNameOverloadedOnlyArg, false))
         .map(_.findArg[String](RpcNamePrefixArg))
-      val rpcName = annot(RpcNameAT).fold(real.nameStr)(_.findArg[String](RpcNameArg))
-      prefixes.mkString("", "", rpcName)
+      prefixes.mkString("", "", real.rpcName)
     }
-
-    def rawName: String = rpcName
   }
 
   case class MatchedRpcTrait(real: RealRpcTrait) extends Matched {
+    def overloaded: Boolean = false
     def fallbackTagUsed: FallbackTag = FallbackTag.Empty
     def indexInRaw: Int = 0
   }
 
   case class MatchedMethod(real: RealMethod, fallbackTagUsed: FallbackTag) extends Matched {
+    def overloaded: Boolean = real.overloaded
     def indexInRaw: Int = 0
   }
 
   case class MatchedParam(real: RealParam, fallbackTagUsed: FallbackTag, matchedOwner: MatchedMethod, indexInRaw: Int)
     extends Matched {
+
+    def overloaded: Boolean = false
 
     val whenAbsent: Tree =
       annot(WhenAbsentAT).fold(EmptyTree) { annot =>
@@ -69,7 +74,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     def fallbackValueTree: Tree =
       if (whenAbsent != EmptyTree) c.untypecheck(whenAbsent)
       else if (real.symbol.asTerm.isParamWithDefault) defaultValue(false)
-      else q"$RpcUtils.missingArg(${matchedOwner.rpcName}, $rpcName)"
+      else q"$RpcUtils.missingArg(${matchedOwner.rawName}, $rawName)"
 
     def transientValueTree: Tree =
       if (real.symbol.asTerm.isParamWithDefault) defaultValue(true)
@@ -83,7 +88,10 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     }
   }
 
-  trait RealRpcSymbol extends MacroSymbol
+  trait RealRpcSymbol extends MacroSymbol {
+    val rpcName: String =
+      findAnnotation(symbol, RpcNameAT).fold(nameStr)(_.findArg[String](RpcNameArg))
+  }
 
   abstract class RpcTrait(val symbol: Symbol) extends MacroSymbol {
     def tpe: Type
@@ -248,7 +256,9 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     }
   }
 
-  case class RealMethod(owner: RealRpcTrait, symbol: Symbol) extends RpcMethod with RealRpcSymbol {
+  case class RealMethod(owner: RealRpcTrait, symbol: Symbol, overloaded: Boolean)
+    extends RpcMethod with RealRpcSymbol {
+
     def ownerType: Type = owner.tpe
 
     def shortDescription = "real method"
@@ -293,7 +303,12 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     def shortDescription = "real RPC"
     def description = s"$shortDescription $tpe"
 
-    lazy val realMethods: List[RealMethod] =
-      tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map(RealMethod(this, _)).toList
+    lazy val realMethods: List[RealMethod] = {
+      val usedRpcNames = new mutable.HashSet[String]
+      tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map { m =>
+        val rm = RealMethod(this, m, overloaded = false)
+        if (usedRpcNames.add(rm.rpcName)) rm else rm.copy(overloaded = true)
+      }.toList
+    }
   }
 }

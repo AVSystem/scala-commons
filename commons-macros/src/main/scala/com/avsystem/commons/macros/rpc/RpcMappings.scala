@@ -24,7 +24,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       Res.firstOk(rawSymbols)(rawSymbol => for {
         fallbackTag <- rawSymbol.matchTag(realMethod)
         matchedMethod = MatchedMethod(realMethod, fallbackTag)
-        _ <- rawSymbol.matchName(matchedMethod.real.shortDescription, matchedMethod.rpcName)
+        _ <- rawSymbol.matchName(matchedMethod.real.shortDescription, matchedMethod.rawName)
         _ <- rawSymbol.matchFilters(matchedMethod)
         methodMapping <- createMapping(rawSymbol, matchedMethod)
       } yield methodMapping) { errors =>
@@ -45,7 +45,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
   case class EncodedRealParam(matchedParam: MatchedParam, encoding: RpcEncoding) {
     def realParam: RealParam = matchedParam.real
-    def rpcName: String = matchedParam.rpcName
+    def rpcName: String = matchedParam.rawName
     def safeName: TermName = matchedParam.real.safeName
     def rawValueTree: Tree = encoding.applyAsRaw(matchedParam.real.safeName)
     def localValueDecl(body: Tree): Tree = matchedParam.real.localValueDecl(body)
@@ -202,14 +202,14 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     paramMappingList: List[ParamMapping], resultEncoding: RpcEncoding) {
 
     def realMethod: RealMethod = matchedMethod.real
-    def rpcName: String = matchedMethod.rpcName
+    def rpcName: String = matchedMethod.rawName
 
     val paramMappings: Map[RawValueParam, ParamMapping] =
       paramMappingList.iterator.map(m => (m.rawParam, m)).toMap
 
     def ensureUniqueRpcNames(): Unit =
       paramMappings.valuesIterator.filterNot(_.rawParam.auxiliary).toList
-        .flatMap(_.allMatchedParams).groupBy(_.rpcName)
+        .flatMap(_.allMatchedParams).groupBy(_.rawName)
         .foreach {
           case (rpcName, head :: tail) if tail.nonEmpty =>
             head.real.reportProblem(s"it has the same RPC name ($rpcName) as ${tail.size} other parameters")
@@ -309,7 +309,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
 
     def ensureUniqueRpcNames(): Unit =
-      methodMappings.groupBy(_.matchedMethod.rpcName).foreach {
+      methodMappings.groupBy(_.matchedMethod.rawName).foreach {
         case (_, single :: Nil) =>
           single.ensureUniqueRpcNames()
         case (rpcName, head :: tail) => head.realMethod.reportProblem(

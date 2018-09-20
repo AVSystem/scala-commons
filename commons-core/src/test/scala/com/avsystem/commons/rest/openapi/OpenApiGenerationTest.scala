@@ -33,7 +33,7 @@ class OpenApiGenerationTest extends FunSuite {
         |            }
         |          }
         |        },
-        |        "operationId": "prefix_get_subget",
+        |        "operationId": "prefix_subget",
         |        "parameters": [
         |          {
         |            "name": "p0",
@@ -103,7 +103,7 @@ class OpenApiGenerationTest extends FunSuite {
         |            }
         |          }
         |        },
-        |        "operationId": "post_formPost",
+        |        "operationId": "formPost",
         |        "parameters": [
         |          {
         |            "name": "q1",
@@ -144,7 +144,7 @@ class OpenApiGenerationTest extends FunSuite {
         |        "responses": {
         |          "204": {}
         |        },
-        |        "operationId": "get_trivialGet"
+        |        "operationId": "trivialGet"
         |      }
         |    },
         |    "/complexParams": {
@@ -152,7 +152,7 @@ class OpenApiGenerationTest extends FunSuite {
         |        "responses": {
         |          "204": {}
         |        },
-        |        "operationId": "post_complexParams",
+        |        "operationId": "complexParams",
         |        "requestBody": {
         |          "content": {
         |            "application/json": {
@@ -186,7 +186,7 @@ class OpenApiGenerationTest extends FunSuite {
         |        "responses": {
         |          "204": {}
         |        },
-        |        "operationId": "get_moreFailingGet"
+        |        "operationId": "moreFailingGet"
         |      }
         |    },
         |    "/failingGet": {
@@ -194,7 +194,7 @@ class OpenApiGenerationTest extends FunSuite {
         |        "responses": {
         |          "204": {}
         |        },
-        |        "operationId": "get_failingGet"
+        |        "operationId": "failingGet"
         |      }
         |    },
         |    "/multiParamPost/{p1}/p1/{p2}": {
@@ -210,7 +210,7 @@ class OpenApiGenerationTest extends FunSuite {
         |            }
         |          }
         |        },
-        |        "operationId": "post_multiParamPost",
+        |        "operationId": "multiParamPost",
         |        "parameters": [
         |          {
         |            "name": "p1",
@@ -304,7 +304,7 @@ class OpenApiGenerationTest extends FunSuite {
         |          }
         |        },
         |        "description": "A really complex GET operation",
-        |        "operationId": "get_complexGet",
+        |        "operationId": "complexGet",
         |        "parameters": [
         |          {
         |            "name": "p1",
@@ -374,7 +374,7 @@ class OpenApiGenerationTest extends FunSuite {
         |            }
         |          }
         |        },
-        |        "operationId": "put_singleBodyPut",
+        |        "operationId": "singleBodyPut",
         |        "requestBody": {
         |          "content": {
         |            "application/json": {
