@@ -4,7 +4,7 @@ package macros.misc
 import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.collection.mutable
-import scala.reflect.macros.{TypecheckException, blackbox, whitebox}
+import scala.reflect.macros.{blackbox, whitebox}
 import scala.util.control.NoStackTrace
 import scala.util.matching.Regex
 
@@ -12,25 +12,22 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
-  // cannot use c.inferImplicitValue(silent = false) because the only error it reports is
-  // "implicit search has failed, to find out the reason turn -Xlog-implicits"
   def infer[T: c.WeakTypeTag](clue: Tree): Tree =
-    unwrapAndAddClue(clue)(c.typecheck(q"implicitly[${weakTypeOf[T]}]"))
+    inferTpe(weakTypeOf[T], clueStr(clue), clue.pos, withMacrosDisabled = false)
 
   def inferNonMacro[T: c.WeakTypeTag](clue: Tree): Tree =
-    unwrapAndAddClue(clue)(c.typecheck(q"implicitly[${weakTypeOf[T]}]", withMacrosDisabled = true))
+    inferTpe(weakTypeOf[T], clueStr(clue), clue.pos, withMacrosDisabled = true)
 
-  private def unwrapAndAddClue(clueTree: Tree)(expr: => Tree): Tree = clueTree match {
-    case StringLiteral(clue) =>
-      val wrapped = try expr catch {
-        case TypecheckException(_, msg) => abortAt(clue + msg, clueTree.pos)
-      }
-      wrapped match {
-        case Apply(_, List(arg)) => arg
-        case tree => tree
-      }
-    case _ => abort(s"clue must be a String literal, $clueTree is not")
+  private def clueStr(clue: Tree): String = clue match {
+    case StringLiteral(str) => str
+    case _ => abort(s"clue must be a String literal, $clue is not")
   }
+
+  private def inferTpe(tpe: Type, clue: String, pos: Position, withMacrosDisabled: Boolean): Tree =
+    c.inferImplicitValue(tpe, withMacrosDisabled = withMacrosDisabled) match {
+      case EmptyTree => abortAt(clue + implicitNotFound(tpe), pos)
+      case t => t
+    }
 
   def sourceInfo: Tree = {
     def enclosingSymName(sym: Symbol) =
