@@ -50,6 +50,7 @@ The `commons-jetty` module provides Jetty-based implementations for JVM.
   - [Implementing a server](#implementing-a-server)
   - [Implementing a client](#implementing-a-client)
 - [Generating OpenAPI 3.0 specifications](#generating-openapi-30-specifications)
+  - [Operation IDs](#operation-ids)
   - [`RestSchema` typeclass](#restschema-typeclass)
     - [Macro materialized ADT schemas](#macro-materialized-adt-schemas)
       - [Registered schemas](#registered-schemas)
@@ -867,6 +868,27 @@ object PrintOpenApiJson {
   }
 }
 ```
+
+### Operation IDs
+
+For every HTTP REST method, an
+[Operation Object](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#operationObject)
+will be generated. `operationId` of that object will be by default set to HTTP method's `rpcName`.
+`rpcName` itself defaults to method's regular name if not specified explicitly.
+
+Additionally, if HTTP method is overloaded then all overloaded variants except for the first one will
+have `rpcName` prepended with lowercased HTTP method followed by underscore (e.g. `post_`).
+
+Finally, if HTTP method is a member of [prefix method](#prefix-methods)'s result, `operationId` will be further prepended with
+the prefix method's `rpcName` followed by underscore.
+
+All this behaviour may be customized with `@operationId` and `@operationIdPrefix` annotations.
+It's important for operations to have sensible IDs because tools that generate client code in other programming
+languages for REST API defined in OpenAPI documents often reuse operation IDs as method/function names that
+map to REST requests.
+
+Note that Operation object itself may be arbitrarily adjusted with other annotations
+- see [operation adjusters](#operation-adjusters).
 
 ### `RestSchema` typeclass
 
