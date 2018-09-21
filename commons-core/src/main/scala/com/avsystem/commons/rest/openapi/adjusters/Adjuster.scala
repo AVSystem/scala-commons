@@ -37,7 +37,7 @@ trait SchemaAdjuster extends Adjuster with NotInheritedFromSealedTypes {
 object SchemaAdjuster {
   def adjustRef(adjusters: List[SchemaAdjuster], schema: RefOr[Schema]): RefOr[Schema] =
     if (adjusters.nonEmpty)
-      adjusters.foldRight(schema.rewrapRefToAllOf)(_ adjustSchema _).unwrapSingleRefAllOf
+      schema.map(s => adjusters.foldRight(s)(_ adjustSchema _))
     else schema
 }
 
@@ -47,6 +47,11 @@ object SchemaAdjuster {
   */
 trait ParameterAdjuster extends Adjuster {
   def adjustParameter(parameter: Parameter): Parameter
+}
+
+trait ParameterSchemaAdjuster extends ParameterAdjuster { this: SchemaAdjuster =>
+  def adjustParameter(parameter: Parameter): Parameter =
+    parameter.schema.fold(parameter)(s => parameter.copy(schema = s.map(adjustSchema)))
 }
 
 /**
@@ -90,6 +95,14 @@ class description(desc: String) extends SchemaAdjuster with ParameterAdjuster wi
 class example[+T](value: T, @infer asJson: AsRaw[JsonValue, T] = infer.value) extends ParameterAdjuster {
   def adjustParameter(parameter: Parameter): Parameter =
     parameter.copy(example = asJson.asRaw(value))
+}
+
+/**
+  * Can be applied on REST method parameters, case class parameters and REST types themselves to include
+  * `"nullable": true` property into their OpenAPI Schema.
+  */
+class nullable extends SchemaAdjuster with ParameterSchemaAdjuster {
+  def adjustSchema(schema: Schema): Schema = schema.copy(nullable = true)
 }
 
 /**
