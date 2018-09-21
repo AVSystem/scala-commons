@@ -138,14 +138,13 @@ lazy val commons = project.in(file("."))
     `commons-core`,
     `commons-core-js`,
     `commons-analyzer`,
-    `commons-jetty`,
     `commons-benchmark`,
     `commons-mongo`,
     `commons-spring`,
     `commons-redis`,
     `commons-akka`,
     `commons-kafka`,
-    `commons-okhttp`
+    `commons-http`
   )
   .settings(
     commonSettings,
@@ -230,20 +229,6 @@ lazy val `commons-analyzer` = project
   .settings(
     jvmCommonSettings,
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-  )
-
-lazy val `commons-jetty` = project
-  .dependsOn(`commons-core` % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    libraryDependencies ++= Seq(
-      "org.eclipse.jetty" % "jetty-client" % jettyVersion,
-      "org.eclipse.jetty" % "jetty-server" % jettyVersion,
-      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
-
-      "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
-      "org.slf4j" % "slf4j-simple" % "1.7.25" % Test,
-    ),
   )
 
 lazy val `commons-benchmark` = project
@@ -346,14 +331,16 @@ lazy val `commons-akka` = project
     ),
   )
 
-lazy val `commons-okhttp` = project
+lazy val `commons-http` = project
   .dependsOn(`commons-core` % CompileAndTest)
-  .dependsOn(`commons-jetty` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
-      "com.squareup.okhttp3" % "okhttp" % okhttpVersion,
+      "com.squareup.okhttp3" % "okhttp" % okhttpVersion % Optional,
+      "org.eclipse.jetty" % "jetty-client" % jettyVersion % Optional,
+      "org.eclipse.jetty" % "jetty-server" % jettyVersion % Optional,
+      "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
       "org.slf4j" % "slf4j-simple" % "1.7.25" % Test,
-    ),
+    )
   )

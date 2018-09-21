@@ -96,7 +96,7 @@ object UserApi extends DefaultRestApiCompanion[UserApi]
 Then, implement it on server side and expose it on localhost port 9090 using Jetty:
 
 ```scala
-import com.avsystem.commons.jetty.rest.RestHandler
+import com.avsystem.commons.http.jetty.rest.RestHandler
 import org.eclipse.jetty.server.Server
 
 class UserApiImpl extends UserApi {
