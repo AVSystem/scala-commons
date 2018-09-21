@@ -23,12 +23,6 @@ trait TypeClassDerivation extends MacroCommons {
   def typeClassName: String
 
   /**
-    * Wraps the tree that evaluates to some instance of the type class into a tree that evaluates to an
-    * "auto" version of this type class.
-    */
-  def wrapInAuto(tree: Tree): Tree
-
-  /**
     * Returns tree that instantiates a "deferred instance" of this type class. Deferred instance
     * is a special implementation of the type class which implements the `com.avsystem.commons.derivation.DeferredInstance`
     * trait and wraps an another, actual instance of the type class and delegates all operations to that
@@ -239,16 +233,6 @@ trait TypeClassDerivation extends MacroCommons {
 
   def materializeImplicitly[T: c.WeakTypeTag](allow: Tree): Tree =
     materialize[T]
-
-  def materializeAuto[T: c.WeakTypeTag]: Tree = {
-    val tcTpe = typeClassInstance(weakTypeOf[T].dealias)
-    val tName = c.freshName(TypeName("T"))
-    q"""
-       implicit def ${c.freshName(TermName("allow"))}[$tName]: $AllowImplicitMacroCls[$typeClass[$tName]] =
-         $AllowImplicitMacroObj[$typeClass[$tName]]
-       ${wrapInAuto(q"""$ImplicitsObj.infer[$tcTpe]("")""")}
-     """
-  }
 
   def materializeMacroGenerated[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T].dealias

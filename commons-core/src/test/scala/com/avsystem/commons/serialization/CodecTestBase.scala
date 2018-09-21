@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import com.github.ghik.silencer.silent
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
 
@@ -72,38 +71,7 @@ trait CodecTestBase extends FunSuite {
     assertSameTypeValue(value, readBack)
   }
 
-  @silent
-  def testAutoWriteRead[T: GenCodec.Auto](value: T, expectedRepr: Any)(implicit pos: Position): Unit = {
-    testAutoWriteReadWithVerify[T, Any](value, w => assert(w == expectedRepr))
-  }
-
-  @silent
-  def testAutoWriteReadWithVerify[T: GenCodec.Auto, E: ClassTag](
-    value: T, verifyWritten: E => Unit)(implicit pos: Position): Unit = {
-    var written: Any = null
-    GenCodec.autoWrite[T](new SimpleValueOutput(written = _), value)
-    assert(written == null || classTag[E].runtimeClass.isInstance(written))
-    verifyWritten(written.asInstanceOf[E])
-    val readBack = GenCodec.autoRead[T](new SimpleValueInput(written))
-    assertSameTypeValue(value, readBack)
-  }
-
-  @silent
-  def testWriteReadAndAutoWriteRead[T: GenCodec : GenCodec.Auto](value: T, expectedRepr: Any)(implicit pos: Position): Unit = {
-    testWriteReadWithVerify[T, Any](value, w => assert(w == expectedRepr))
-    testAutoWriteReadWithVerify[T, Any](value, w => assert(w == expectedRepr))
-  }
-
-  @silent
-  def testSameElementsWriteRead[T: GenCodec : GenCodec.Auto](value: T, expectedRepr: Iterable[Any])(implicit pos: Position): Unit = {
-    testWriteReadWithVerify[T, Iterable[Any]](value, w => assert(w.toSet == expectedRepr.toSet))
-    testAutoWriteReadWithVerify[T, Iterable[Any]](value, w => assert(w.toSet == expectedRepr.toSet))
-  }
-
-  @silent
-  def testReadAndAutoRead[T: GenCodec : GenCodec.Auto](repr: Any, expected: T)(implicit pos: Position): Unit = {
+  def testRead[T: GenCodec](repr: Any, expected: T)(implicit pos: Position): Unit = {
     assert(expected == GenCodec.read[T](new SimpleValueInput(repr)))
-    assert(expected == GenCodec.autoRead[T](new SimpleValueInput(repr))): @silent
   }
-
 }

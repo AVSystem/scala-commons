@@ -27,7 +27,6 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   def typeClass = GenCodecCls
   def typeClassName = "GenCodec"
-  def wrapInAuto(tree: Tree) = q"$GenCodecObj.Auto($tree)"
   def implementDeferredInstance(tpe: Type): Tree = q"new $GenCodecObj.Deferred[$tpe]"
 
   override def materializeFor(tpe: Type) = {
