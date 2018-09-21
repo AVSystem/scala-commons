@@ -252,4 +252,14 @@ object RestResponse {
   implicit def asRawNotFound[T](
     implicit forBody: ImplicitNotFound[AsRaw[HttpBody, T]]
   ): ImplicitNotFound[AsRaw[RestResponse, T]] = ImplicitNotFound()
+
+  @implicitNotFound("#{forResponseType}")
+  implicit def asyncAsRealNotFound[T](
+    implicit forResponseType: ImplicitNotFound[HttpResponseType[T]]
+  ): ImplicitNotFound[AsReal[RawRest.Async[RestResponse], Try[T]]] = ImplicitNotFound()
+
+  @implicitNotFound("#{forResponseType}")
+  implicit def asyncAsRawNotFound[T](
+    implicit forResponseType: ImplicitNotFound[HttpResponseType[T]]
+  ): ImplicitNotFound[AsRaw[RawRest.Async[RestResponse], Try[T]]] = ImplicitNotFound()
 }

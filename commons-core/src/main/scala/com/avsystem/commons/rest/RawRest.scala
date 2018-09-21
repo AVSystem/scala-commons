@@ -88,10 +88,10 @@ trait RawRest {
 
 object RawRest extends RawRpcCompanion[RawRest] {
   @implicitNotFound("${T} is not a valid server REST API trait")
-  implicit def asRawNotFound[T]: ImplicitNotFound[AsRaw[RawRest, T]] = ImplicitNotFound()
+  implicit def asRawNotFound[T]: ImplicitNotFound[AsRaw[Try[RawRest], Try[T]]] = ImplicitNotFound()
 
   @implicitNotFound("${T} is not a valid client REST API trait")
-  implicit def asRealNotFound[T]: ImplicitNotFound[AsReal[RawRest, T]] = ImplicitNotFound()
+  implicit def asRealNotFound[T]: ImplicitNotFound[AsReal[Try[RawRest], Try[T]]] = ImplicitNotFound()
 
   /**
     * A callback that gets notified when value of type `T` gets computed or when computation of that value fails.

@@ -147,11 +147,11 @@ trait FutureRestImplicits {
   implicit def futureHttpResponseType[T]: HttpResponseType[Future[T]] =
     HttpResponseType[Future[T]]()
 
-  @implicitNotFound("${T} is not a valid REST HTTP method result type. You may want to wrap into a Future")
+  @implicitNotFound("${T} is not a valid REST HTTP method result type. It must be wrapped into a Future")
   implicit def httpResponseTypeNotFound[T]: ImplicitNotFound[HttpResponseType[T]] =
     ImplicitNotFound()
 
-  @implicitNotFound("${T} is not a valid result type of a REST HTTP method. You may want to wrap into a Future")
+  @implicitNotFound("${T} is not a valid result type of a REST HTTP method. It must be wrapped into a Future")
   implicit def restResultTypeNotFound[T]: ImplicitNotFound[RestResultType[T]] =
     ImplicitNotFound()
 
@@ -197,11 +197,11 @@ object GenCodecRestImplicits extends GenCodecRestImplicits
 trait DefaultRestImplicits extends FutureRestImplicits with GenCodecRestImplicits {
   @implicitNotFound("${T} is not a valid server REST API trait, does its companion extend " +
     "DefaultRestApiCompanion or DefaultRestServerApiCompanion?")
-  implicit def rawRestAsRawNotFound[T]: ImplicitNotFound[AsRaw[RawRest, T]] = ImplicitNotFound()
+  implicit def rawRestAsRawNotFound[T]: ImplicitNotFound[AsRaw[Try[RawRest], Try[T]]] = ImplicitNotFound()
 
   @implicitNotFound("${T} is not a valid client REST API trait, does its companion extend " +
     "DefaultRestApiCompanion or DefaultRestClientApiCompanion?")
-  implicit def rawRestAsRealNotFound[T]: ImplicitNotFound[AsReal[RawRest, T]] = ImplicitNotFound()
+  implicit def rawRestAsRealNotFound[T]: ImplicitNotFound[AsReal[Try[RawRest], Try[T]]] = ImplicitNotFound()
 
   @implicitNotFound("RestSchema for ${T} not found. To provide it for case classes and sealed hierarchies " +
     "use RestDataCompanion (which also provides GenCodec)")
