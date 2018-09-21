@@ -51,6 +51,7 @@ trait MacroCommons { bundle =>
   final val PositionedAT = getType(tq"$CommonsPkg.annotation.positioned")
   final val ImplicitNotFoundAT = getType(tq"$ScalaPkg.annotation.implicitNotFound")
   final val ImplicitNotFoundCls = tq"$CommonsPkg.misc.ImplicitNotFound"
+  final val ImplicitNotFoundSym = getType(tq"$CommonsPkg.misc.ImplicitNotFound[_]").typeSymbol
 
   final val NothingTpe: Type = typeOf[Nothing]
   final val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
@@ -379,29 +380,50 @@ trait MacroCommons { bundle =>
   def cachedImplicitDeclarations: List[Tree] =
     implicitsToDeclare.result()
 
-  def standardImplicitNotFoundMsg(sym: Symbol, tparams: List[Symbol], typeArgs: List[Type]): Option[String] =
+  private def standardImplicitNotFoundMsg(tpe: Type): String =
+    symbolImplicitNotFoundMsg(tpe, tpe.typeSymbol, tpe.typeSymbol.typeSignature.typeParams, tpe.typeArgs)
+
+  private def symbolImplicitNotFoundMsg(tpe: Type, sym: Symbol, tparams: List[Symbol], typeArgs: List[Type]): String =
     sym.annotations.find(_.tree.tpe <:< ImplicitNotFoundAT)
-      .map(_.tree.children.tail.head)
-      .collect { case StringLiteral(error) =>
+      .map(_.tree.children.tail.head).collect { case StringLiteral(error) => error }
+      .map { error =>
         val tpNames = tparams.map(_.name.decodedName.toString)
         (tpNames zip typeArgs).foldLeft(error) {
           case (err, (tpName, tpArg)) => err.replaceAllLiterally(s"$${$tpName}", tpArg.toString)
         }
       }
+      .getOrElse {
+        if (sym != tpe.typeSymbol) standardImplicitNotFoundMsg(tpe)
+        else s"no implicit value of type $tpe found"
+      }
 
-  def extendedImplicitNotFoundMsg(tpe: Type): Option[String] =
-    c.inferImplicitValue(getType(tq"$ImplicitNotFoundCls[$tpe]")) match {
-      case EmptyTree => None
-      case MaybeTypeApply(fun, typeArgs) =>
-        standardImplicitNotFoundMsg(fun.symbol, fun.symbol.typeSignature.typeParams, typeArgs.map(_.tpe))
+  private def replaceArgs(stack: List[Type], error: String, params: List[Symbol], args: List[Tree]): String =
+    (params zip args)
+      .flatMap { case (param, arg) =>
+        arg.tpe.baseType(ImplicitNotFoundSym).typeArgs.headOption.map { delTpe =>
+          param.name.decodedName.toString -> implicitNotFoundMsg(stack, delTpe, arg)
+        }
+      }
+      .foldLeft(error) { case (err, (paramName, replacement)) =>
+        err.replaceAllLiterally(s"#{$paramName}", replacement)
+      }
+
+  private def implicitNotFoundMsg(stack: List[Type], tpe: Type, tree: Tree): String =
+    if (stack.exists(_ =:= tpe))
+      standardImplicitNotFoundMsg(tpe)
+    else tree match {
+      case MaybeApply(MaybeTypeApply(fun, typeArgs), args) =>
+        val sym = Option(fun.symbol).getOrElse(NoSymbol)
+        val sig = sym.typeSignature
+        val targs = typeArgs.map(_.tpe)
+        val baseMsg = symbolImplicitNotFoundMsg(tpe, sym, sig.typeParams, targs)
+        replaceArgs(tpe :: stack, baseMsg, sig.paramLists.headOption.getOrElse(Nil), args)
     }
 
   def implicitNotFoundMsg(tpe: Type): String =
-    extendedImplicitNotFoundMsg(tpe)
-      .orElse(standardImplicitNotFoundMsg(tpe.typeSymbol, tpe.typeSymbol.asType.typeParams, tpe.typeArgs))
-      .getOrElse(s"no implicit value of type $tpe found")
+    implicitNotFoundMsg(Nil, tpe, c.inferImplicitValue(getType(tq"$ImplicitNotFoundCls[$tpe]")))
 
-  implicit class treeOps[T <: Tree](t: T) {
+  class treeOps[T <: Tree](t: T) {
     def debug: T = {
       c.echo(c.enclosingPosition, show(t))
       t
@@ -611,6 +633,13 @@ trait MacroCommons { bundle =>
   object MaybeTypeApply {
     def unapply(tree: Tree): Some[(Tree, List[Tree])] = tree match {
       case TypeApply(fun, args) => Some((fun, args))
+      case _ => Some((tree, Nil))
+    }
+  }
+
+  object MaybeApply {
+    def unapply(tree: Tree): Some[(Tree, List[Tree])] = tree match {
+      case Apply(fun, args) => Some((fun, args))
       case _ => Some((tree, Nil))
     }
   }

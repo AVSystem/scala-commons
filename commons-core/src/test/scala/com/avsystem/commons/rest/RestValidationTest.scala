@@ -4,6 +4,8 @@ package rest
 import org.scalatest.FunSuite
 
 class RestValidationTest extends FunSuite {
+  import DefaultRestImplicits._
+
   trait Api2 {
     def self: Api2
   }

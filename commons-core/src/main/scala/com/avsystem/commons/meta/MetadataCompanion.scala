@@ -2,7 +2,10 @@ package com.avsystem.commons
 package meta
 
 import com.avsystem.commons.macros.misc.MiscMacros
+import com.avsystem.commons.misc.ImplicitNotFound
 import com.avsystem.commons.rpc.Fallback
+
+import scala.annotation.implicitNotFound
 
 trait MetadataCompanion[M[_]] {
   final def apply[Real](implicit metadata: M[Real]): M[Real] = metadata
@@ -17,5 +20,9 @@ trait MetadataCompanion[M[_]] {
 
     // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
     implicit def lazyMetadata[Real](implicit metadata: M[Real]): Lazy[Real] = macro MiscMacros.lazyMetadata
+
+    @implicitNotFound("#{forT}")
+    implicit def notFound[T](implicit forT: ImplicitNotFound[T]): ImplicitNotFound[Lazy[T]] =
+      ImplicitNotFound()
   }
 }

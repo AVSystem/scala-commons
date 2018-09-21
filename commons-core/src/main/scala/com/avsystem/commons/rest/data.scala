@@ -70,12 +70,6 @@ object JsonValue {
         case (o, JsonValue(json)) => o.writeString(json)
       }
     )
-
-  @implicitNotFound("Cannot serialize ${T} to JsonValue. This may be caused by a lack of GenCodec instance for ${T}.")
-  implicit def asRawNotFound[T]: ImplicitNotFound[AsRaw[JsonValue, T]] = ImplicitNotFound()
-
-  @implicitNotFound("Cannot deserialize ${T} from JsonValue. This may be caused by a lack of GenCodec instance for ${T}.")
-  implicit def asRealNotFound[T]: ImplicitNotFound[AsReal[JsonValue, T]] = ImplicitNotFound()
 }
 
 /**
@@ -178,6 +172,16 @@ object HttpBody {
     AsRaw.create(v => HttpBody.json(jsonAsRaw.asRaw(v)))
   implicit def httpBodyJsonAsReal[T](implicit jsonAsReal: AsReal[JsonValue, T]): AsReal[HttpBody, T] =
     AsReal.create(v => jsonAsReal.asReal(v.readJson()))
+
+  @implicitNotFound("Cannot deserialize ${T} from HttpBody, probably because: #{forJson}")
+  implicit def asRealNotFound[T](
+    implicit forJson: ImplicitNotFound[AsReal[JsonValue, T]]
+  ): ImplicitNotFound[AsReal[HttpBody, T]] = ImplicitNotFound()
+
+  @implicitNotFound("Cannot serialize ${T} into HttpBody, probably because: #{forJson}")
+  implicit def asRawNotFound[T](
+    implicit forJson: ImplicitNotFound[AsRaw[JsonValue, T]]
+  ): ImplicitNotFound[AsRaw[HttpBody, T]] = ImplicitNotFound()
 }
 
 /**
@@ -239,28 +243,13 @@ object RestResponse {
   implicit def bodyBasedToResponse[T](implicit bodyAsRaw: AsRaw[HttpBody, T]): AsRaw[RestResponse, T] =
     AsRaw.create(value => bodyAsRaw.asRaw(value).defaultResponse.recoverHttpError)
 
-  implicit def futureToAsyncResp[T](
-    implicit respAsRaw: AsRaw[RestResponse, T]
-  ): AsRaw[RawRest.Async[RestResponse], Try[Future[T]]] =
-    AsRaw.create { triedFuture =>
-      val future = triedFuture.fold(Future.failed, identity)
-      callback => future.onCompleteNow(t => callback(t.map(respAsRaw.asRaw).recoverHttpError))
-    }
+  @implicitNotFound("Cannot deserialize ${T} from RestResponse, probably because: #{forBody}")
+  implicit def asRealNotFound[T](
+    implicit forBody: ImplicitNotFound[AsReal[HttpBody, T]]
+  ): ImplicitNotFound[AsReal[RestResponse, T]] = ImplicitNotFound()
 
-  implicit def futureFromAsyncResp[T](
-    implicit respAsReal: AsReal[RestResponse, T]
-  ): AsReal[RawRest.Async[RestResponse], Try[Future[T]]] =
-    AsReal.create { async =>
-      val promise = Promise[T]
-      async(t => promise.complete(t.map(respAsReal.asReal)))
-      Success(promise.future)
-    }
-
-  @implicitNotFound("Cannot serialize ${T} into RestResponse.")
-  implicit def futureAsRawNotFound[T]: ImplicitNotFound[AsRaw[RawRest.Async[RestResponse], Try[Future[T]]]] =
-    ImplicitNotFound()
-
-  @implicitNotFound("Cannot deserialize ${T} from RestResponse.")
-  implicit def futureAsRealNotFound[T]: ImplicitNotFound[AsReal[RawRest.Async[RestResponse], Try[Future[T]]]] =
-    ImplicitNotFound()
+  @implicitNotFound("Cannot serialize ${T} into RestResponse, probably because: #{forBody}")
+  implicit def asRawNotFound[T](
+    implicit forBody: ImplicitNotFound[AsRaw[HttpBody, T]]
+  ): ImplicitNotFound[AsRaw[RestResponse, T]] = ImplicitNotFound()
 }

@@ -27,4 +27,6 @@ object Implicits {
 sealed trait ImplicitNotFound[T]
 object ImplicitNotFound {
   def apply[T](): ImplicitNotFound[T] = throw new NotImplementedError("ImplicitNotFound.apply")
+
+  implicit def dummy[T]: ImplicitNotFound[T] = apply()
 }

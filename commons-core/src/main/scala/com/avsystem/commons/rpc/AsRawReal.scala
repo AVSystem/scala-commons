@@ -3,7 +3,7 @@ package rpc
 
 import scala.annotation.implicitNotFound
 
-@implicitNotFound("don't know how to encode ${Real} as ${Raw}, appropriate AsRaw instance not found")
+@implicitNotFound("Cannot serialize ${Real} into ${Raw}, appropriate AsRaw instance not found")
 trait AsRaw[Raw, Real] {
   def asRaw(real: Real): Raw
 }
@@ -21,7 +21,7 @@ object AsRaw {
   def materializeForRpc[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
 }
 
-@implicitNotFound("don't know how to decode ${Raw} into ${Real}, appropriate AsReal instance not found")
+@implicitNotFound("Cannot deseriralize ${Real} from ${Raw}, appropriate AsReal instance not found")
 trait AsReal[Raw, Real] {
   def asReal(raw: Raw): Real
 }
@@ -39,7 +39,7 @@ object AsReal {
   def materializeForRpc[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsReal[Raw, Real]
 }
 
-@implicitNotFound("don't know how to encode and decode between ${Real} and ${Raw}, appropriate AsRawReal instance not found")
+@implicitNotFound("Cannot serialize and deserialize between ${Real} and ${Raw}, appropriate AsRawReal instance not found")
 trait AsRawReal[Raw, Real] extends AsReal[Raw, Real] with AsRaw[Raw, Real]
 object AsRawReal {
   def apply[Raw, Real](implicit asRawReal: AsRawReal[Raw, Real]): AsRawReal[Raw, Real] = asRawReal
