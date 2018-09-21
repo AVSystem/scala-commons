@@ -135,33 +135,23 @@ trait TypeClassDerivation extends MacroCommons {
 
   def typeClassInstance(tpe: Type): Type = getType(tq"$typeClass[$tpe]")
 
-  def dependency(depTpe: Type, tcTpe: Type, hint: String, allowImplicitMacro: Boolean = false): Tree = {
-    val clue = s"Cannot automatically derive type class instance $tcTpe because ($hint):\n"
+  def dependency(depTpe: Type, tcTpe: Type, param: Symbol): Tree = {
+    val clue = s"Cannot materialize $tcTpe because of problem with parameter ${param.name}: "
     val depTcTpe = typeClassInstance(depTpe)
-    val allowDef = if (allowImplicitMacro)
-      q"""
-        implicit val ${c.freshName(TermName("allow"))}: $AllowImplicitMacroCls[$depTcTpe] =
-          $AllowImplicitMacroObj[$depTcTpe]
-       """
-    else
-      q"()"
-
-    q"""
-      $allowDef
-      $ImplicitsObj.infer[$depTcTpe]($clue)
-     """
+    q"""$ImplicitsObj.infer[$depTcTpe](${internal.setPos(StringLiteral(clue), param.pos)})"""
   }
 
   def materializeFor(tpe: Type): Tree = {
     val dtpe = tpe.dealias
     val tcTpe = typeClassInstance(dtpe)
 
-    def singleTypeTc = singleValueFor(dtpe).map(tree => forSingleton(dtpe, tree))
+    def singleTypeTc: Option[Tree] =
+      singleValueFor(dtpe).map(tree => forSingleton(dtpe, tree))
 
-    def applyUnapplyTc = applyUnapplyFor(dtpe).map {
+    def applyUnapplyTc: Option[Tree] = applyUnapplyFor(dtpe).map {
       case ApplyUnapply(apply, unapply, params) =>
         val dependencies = params.zipWithIndex.map { case ((s, defaultValue), idx) =>
-          ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s"for field ${s.name} of $tpe"))
+          ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s))
         }
         forApplyUnapply(dtpe, apply, unapply, dependencies)
     }
