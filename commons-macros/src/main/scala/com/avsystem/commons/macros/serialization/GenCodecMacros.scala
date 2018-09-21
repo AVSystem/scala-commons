@@ -27,7 +27,6 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   def typeClass = GenCodecCls
   def typeClassName = "GenCodec"
-  def wrapInAuto(tree: Tree) = q"$GenCodecObj.Auto($tree)"
   def implementDeferredInstance(tpe: Type): Tree = q"new $GenCodecObj.Deferred[$tpe]"
 
   override def materializeFor(tpe: Type) = {
@@ -96,7 +95,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       val depNames = depNamesMap(generated.map(_._1))
 
       def generatedDepDeclaration(sym: Symbol, depTpe: Type) =
-        q"lazy val ${depNames(sym)} = ${dependency(depTpe, tcTpe, s"for generated member ${sym.name}")}"
+        q"lazy val ${depNames(sym)} = ${dependency(depTpe, tcTpe, sym)}"
 
       def generatedWrite(sym: Symbol) =
         q"writeField(${targetNames(sym)}, output, ${mkParamLessCall(q"value", sym)}, ${depNames(sym)})"
@@ -140,7 +139,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val genDepNames = generated.map({ case (sym, _) => (sym, newDepName(sym)) }).toMap
 
     def generatedDepDeclaration(sym: Symbol, depTpe: Type) =
-      q"lazy val ${genDepNames(sym)} = ${dependency(depTpe, tcTpe, s"for generated member ${sym.name}")}"
+      q"lazy val ${genDepNames(sym)} = ${dependency(depTpe, tcTpe, sym)}"
 
     // don't use apply/unapply when they're synthetic (for case class) to avoid reference to companion object
 
@@ -352,7 +351,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       applyUnapplyFor(st).map { au =>
         val subTcTpe = typeClassInstance(st)
         val applyParams = au.params.zipWithIndex.map { case ((s, defaultValue), pidx) =>
-          ApplyParam(pidx, s, defaultValue, dependency(actualParamType(s), subTcTpe, s"for field ${s.name}"))
+          ApplyParam(pidx, s, defaultValue, dependency(actualParamType(s), subTcTpe, s))
         }
         CaseClassInfo(idx, st, au, applyParams)
       } orElse singleValueFor(st).map { singleton =>
@@ -372,8 +371,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       case _ => abort(s"Only one class or object may be marked as @defaultCase")
     }
 
-    val oooParams: Map[String, Type] = caseInfos.flatMap { ci =>
-      ci.oooFieldNames.iterator.map(name => (name, ci.membersByName(name)._2))
+    val oooParams: Map[String, (Symbol, Type)] = caseInfos.flatMap { ci =>
+      ci.oooFieldNames.iterator.map(name => (name, ci.membersByName(name)))
     }.toMap
     val oooParamNames = oooParams.keys.toList
 
@@ -388,7 +387,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     // Make sure that out of order params are marked with @outOfOrder in every case class in which they appear
     // and that they all have exactly the same type.
     for {
-      (name, ptpe) <- oooParams
+      (name, (_, ptpe)) <- oooParams
       ci <- caseInfos
       (otherSym, otherTpe) <- ci.membersByName.get(name)
     } {
@@ -401,8 +400,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       }
     }
 
-    def oooDependency(name: String) =
-      dependency(oooParams(name), tcTpe, s"for field $name")
+    def oooDependency(name: String): Tree = {
+      val (param, ptpe) = oooParams(name)
+      dependency(ptpe, tcTpe, param)
+    }
 
     q"""
       new $SerializationPkg.FlatSealedHierarchyCodec[$tpe](
@@ -440,7 +441,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     applyUnapplyFor(tpe, applyUnapplyProvider) match {
       case Some(ApplyUnapply(apply, unapply, params)) =>
         val dependencies = params.zipWithIndex.map { case ((s, defaultValue), idx) =>
-          ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s"for field ${s.name}"))
+          ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s))
         }
         forApplyUnapply(tpe, applyUnapplyProvider, apply, unapply, dependencies)
       case None =>

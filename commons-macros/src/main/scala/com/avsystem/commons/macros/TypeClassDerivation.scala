@@ -23,12 +23,6 @@ trait TypeClassDerivation extends MacroCommons {
   def typeClassName: String
 
   /**
-    * Wraps the tree that evaluates to some instance of the type class into a tree that evaluates to an
-    * "auto" version of this type class.
-    */
-  def wrapInAuto(tree: Tree): Tree
-
-  /**
     * Returns tree that instantiates a "deferred instance" of this type class. Deferred instance
     * is a special implementation of the type class which implements the `com.avsystem.commons.derivation.DeferredInstance`
     * trait and wraps an another, actual instance of the type class and delegates all operations to that
@@ -135,33 +129,23 @@ trait TypeClassDerivation extends MacroCommons {
 
   def typeClassInstance(tpe: Type): Type = getType(tq"$typeClass[$tpe]")
 
-  def dependency(depTpe: Type, tcTpe: Type, hint: String, allowImplicitMacro: Boolean = false): Tree = {
-    val clue = s"Cannot automatically derive type class instance $tcTpe because ($hint):\n"
+  def dependency(depTpe: Type, tcTpe: Type, param: Symbol): Tree = {
+    val clue = s"Cannot materialize $tcTpe because of problem with parameter ${param.name}: "
     val depTcTpe = typeClassInstance(depTpe)
-    val allowDef = if (allowImplicitMacro)
-      q"""
-        implicit val ${c.freshName(TermName("allow"))}: $AllowImplicitMacroCls[$depTcTpe] =
-          $AllowImplicitMacroObj[$depTcTpe]
-       """
-    else
-      q"()"
-
-    q"""
-      $allowDef
-      $ImplicitsObj.infer[$depTcTpe]($clue)
-     """
+    q"""$ImplicitsObj.infer[$depTcTpe](${internal.setPos(StringLiteral(clue), param.pos)})"""
   }
 
   def materializeFor(tpe: Type): Tree = {
     val dtpe = tpe.dealias
     val tcTpe = typeClassInstance(dtpe)
 
-    def singleTypeTc = singleValueFor(dtpe).map(tree => forSingleton(dtpe, tree))
+    def singleTypeTc: Option[Tree] =
+      singleValueFor(dtpe).map(tree => forSingleton(dtpe, tree))
 
-    def applyUnapplyTc = applyUnapplyFor(dtpe).map {
+    def applyUnapplyTc: Option[Tree] = applyUnapplyFor(dtpe).map {
       case ApplyUnapply(apply, unapply, params) =>
         val dependencies = params.zipWithIndex.map { case ((s, defaultValue), idx) =>
-          ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s"for field ${s.name} of $tpe"))
+          ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s))
         }
         forApplyUnapply(dtpe, apply, unapply, dependencies)
     }
@@ -249,16 +233,6 @@ trait TypeClassDerivation extends MacroCommons {
 
   def materializeImplicitly[T: c.WeakTypeTag](allow: Tree): Tree =
     materialize[T]
-
-  def materializeAuto[T: c.WeakTypeTag]: Tree = {
-    val tcTpe = typeClassInstance(weakTypeOf[T].dealias)
-    val tName = c.freshName(TypeName("T"))
-    q"""
-       implicit def ${c.freshName(TermName("allow"))}[$tName]: $AllowImplicitMacroCls[$typeClass[$tName]] =
-         $AllowImplicitMacroObj[$typeClass[$tName]]
-       ${wrapInAuto(q"""$ImplicitsObj.infer[$tcTpe]("")""")}
-     """
-  }
 
   def materializeMacroGenerated[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T].dealias

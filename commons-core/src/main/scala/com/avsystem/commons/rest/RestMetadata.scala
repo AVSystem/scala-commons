@@ -6,8 +6,7 @@ import com.avsystem.commons.rpc._
 
 import scala.annotation.implicitNotFound
 
-@implicitNotFound("RestMetadata for ${T} not found. The easiest way to provide it is to make companion object of " +
-  "${T} extend one of the convenience base companion classes, e.g. DefaultRestApiCompanion")
+@implicitNotFound("RestMetadata for ${T} not found, does it have a correctly defined companion?")
 @methodTag[RestMethodTag]
 case class RestMetadata[T](
   @multi @tagged[Prefix](whenUntagged = new Prefix)
@@ -119,7 +118,7 @@ object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
         forPattern(pm.pathPattern).fillWith(pm.result.value, entry :: prefixStack)
       }
       metadata.httpMethods.foreach { case (rpcName, hm) =>
-        forPattern(hm.pathPattern).rpcChains(hm.method) += s"$prefixChain$rpcName}"
+        forPattern(hm.pathPattern).rpcChains(hm.method) += s"$prefixChain$rpcName"
       }
     }
 
@@ -217,11 +216,8 @@ case class HttpMethodMetadata[T](
   def methodPath: List[PathValue] = PathValue.splitDecode(methodTag.path)
 }
 
-@implicitNotFound("${T} is not a valid result type of HTTP operation (it would be valid when e.g. wrapped in a Future)")
+@implicitNotFound("${T} is not a valid result type of HTTP REST method")
 case class HttpResponseType[T]()
-object HttpResponseType {
-  implicit def forFuture[T]: HttpResponseType[Future[T]] = HttpResponseType[Future[T]]()
-}
 
 case class RestParametersMetadata(
   @multi @tagged[Path] @rpcParamMetadata path: Mapping[PathParamMetadata[_]],

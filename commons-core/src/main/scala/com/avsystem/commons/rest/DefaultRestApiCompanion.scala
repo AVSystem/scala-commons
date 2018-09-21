@@ -1,12 +1,14 @@
 package com.avsystem.commons
 package rest
 
-import com.avsystem.commons.misc.MacroGenerated
+import com.avsystem.commons.misc.{ImplicitNotFound, MacroGenerated}
 import com.avsystem.commons.rest.RawRest.{AsRawRealRpc, AsRawRpc, AsRealRpc}
-import com.avsystem.commons.rest.openapi.{OpenApiMetadata, RestSchema, RestStructure}
-import com.avsystem.commons.rpc.{AsRawReal, Fallback, RpcMacroInstances}
+import com.avsystem.commons.rest.openapi.{OpenApiMetadata, RestResponses, RestResultType, RestSchema, RestStructure}
+import com.avsystem.commons.rpc.{AsRaw, AsRawReal, AsReal, Fallback, RpcMacroInstances}
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, HasGenCodec}
+
+import scala.annotation.implicitNotFound
 
 /**
   * Base class for companion objects of ADTs (case classes, objects, sealed hierarchies) which are used as
@@ -114,11 +116,60 @@ abstract class RestOpenApiCompanion[Implicits, Real](protected val implicits: Im
     RawRest.asHandleRequest(real)
 }
 
+trait FutureRestImplicits {
+  implicit def futureToAsyncResp[T](
+    implicit respAsRaw: AsRaw[RestResponse, T]
+  ): AsRaw[RawRest.Async[RestResponse], Try[Future[T]]] =
+    AsRaw.create { triedFuture =>
+      val future = triedFuture.fold(Future.failed, identity)
+      callback => future.onCompleteNow(t => callback(t.map(respAsRaw.asRaw).recoverHttpError))
+    }
+
+  implicit def futureFromAsyncResp[T](
+    implicit respAsReal: AsReal[RestResponse, T]
+  ): AsReal[RawRest.Async[RestResponse], Try[Future[T]]] =
+    AsReal.create { async =>
+      val promise = Promise[T]
+      async(t => promise.complete(t.map(respAsReal.asReal)))
+      Success(promise.future)
+    }
+
+  @implicitNotFound("#{forResponse}")
+  implicit def futureAsRawNotFound[T](
+    implicit forResponse: ImplicitNotFound[AsRaw[RestResponse, T]]
+  ): ImplicitNotFound[AsRaw[RawRest.Async[RestResponse], Try[Future[T]]]] = ImplicitNotFound()
+
+  @implicitNotFound("#{forResponse}")
+  implicit def futureAsRealNotFound[T](
+    implicit forResponse: ImplicitNotFound[AsReal[RestResponse, T]]
+  ): ImplicitNotFound[AsReal[RawRest.Async[RestResponse], Try[Future[T]]]] = ImplicitNotFound()
+
+  implicit def futureHttpResponseType[T]: HttpResponseType[Future[T]] =
+    HttpResponseType[Future[T]]()
+
+  @implicitNotFound("${T} is not a valid REST HTTP method result type. It must be wrapped into a Future")
+  implicit def httpResponseTypeNotFound[T]: ImplicitNotFound[HttpResponseType[T]] =
+    ImplicitNotFound()
+
+  @implicitNotFound("${T} is not a valid result type of a REST HTTP method. It must be wrapped into a Future")
+  implicit def restResultTypeNotFound[T]: ImplicitNotFound[RestResultType[T]] =
+    ImplicitNotFound()
+
+  implicit def futureRestResultType[T: RestResponses]: RestResultType[Future[T]] =
+    RestResultType[Future[T]](RestResponses[T].responses)
+
+  @implicitNotFound("#{forRestResponses}")
+  implicit def futureRestResultTypeNotFound[T](
+    implicit forRestResponses: ImplicitNotFound[RestResponses[T]]
+  ): ImplicitNotFound[RestResultType[Future[T]]] = ImplicitNotFound()
+}
+object FutureRestImplicits extends FutureRestImplicits
+
 /**
   * Defines [[com.avsystem.commons.serialization.GenCodec GenCodec]] and
   * [[com.avsystem.commons.serialization.GenKeyCodec GenKeyCodec]] based serialization for REST API traits.
   */
-trait DefaultRestImplicits extends FloatingPointRestImplicits {
+trait GenCodecRestImplicits extends FloatingPointRestImplicits {
   // Implicits wrapped into `Fallback` so that they don't get higher priority just because they're imported
   // This way concrete classes may override these implicits with implicits in their companion objects
   implicit def pathValueFallbackAsRealRaw[T: GenKeyCodec]: Fallback[AsRawReal[PathValue, T]] =
@@ -127,8 +178,34 @@ trait DefaultRestImplicits extends FloatingPointRestImplicits {
     Fallback(AsRawReal.create(v => HeaderValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value)))
   implicit def queryValueDefaultAsRealRaw[T: GenKeyCodec]: Fallback[AsRawReal[QueryValue, T]] =
     Fallback(AsRawReal.create(v => QueryValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value)))
+
   implicit def jsonValueDefaultAsRealRaw[T: GenCodec]: Fallback[AsRawReal[JsonValue, T]] =
     Fallback(AsRawReal.create(v => JsonValue(JsonStringOutput.write[T](v)), v => JsonStringInput.read[T](v.value)))
+
+  @implicitNotFound("Cannot serialize ${T} into JsonValue, probably because: #{forGenCodec}")
+  implicit def asRawJsonNotFound[T](
+    implicit forGenCodec: ImplicitNotFound[GenCodec[T]]
+  ): ImplicitNotFound[AsRaw[JsonValue, T]] = ImplicitNotFound()
+
+  @implicitNotFound("Cannot deserialize ${T} from JsonValue, probably because: #{forGenCodec}")
+  implicit def asRealJsonNotFound[T](
+    implicit forGenCodec: ImplicitNotFound[GenCodec[T]]
+  ): ImplicitNotFound[AsReal[JsonValue, T]] = ImplicitNotFound()
+}
+object GenCodecRestImplicits extends GenCodecRestImplicits
+
+trait DefaultRestImplicits extends FutureRestImplicits with GenCodecRestImplicits {
+  @implicitNotFound("${T} is not a valid server REST API trait, does its companion extend " +
+    "DefaultRestApiCompanion or DefaultRestServerApiCompanion?")
+  implicit def rawRestAsRawNotFound[T]: ImplicitNotFound[AsRaw[Try[RawRest], Try[T]]] = ImplicitNotFound()
+
+  @implicitNotFound("${T} is not a valid client REST API trait, does its companion extend " +
+    "DefaultRestApiCompanion or DefaultRestClientApiCompanion?")
+  implicit def rawRestAsRealNotFound[T]: ImplicitNotFound[AsReal[Try[RawRest], Try[T]]] = ImplicitNotFound()
+
+  @implicitNotFound("RestSchema for ${T} not found. To provide it for case classes and sealed hierarchies " +
+    "use RestDataCompanion (which also provides GenCodec)")
+  implicit def schemaNotFound[T]: ImplicitNotFound[RestSchema[T]] = ImplicitNotFound()
 }
 object DefaultRestImplicits extends DefaultRestImplicits
 

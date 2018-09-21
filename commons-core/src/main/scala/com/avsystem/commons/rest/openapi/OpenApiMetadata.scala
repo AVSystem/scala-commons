@@ -9,8 +9,7 @@ import com.avsystem.commons.rpc._
 import scala.annotation.implicitNotFound
 import scala.collection.mutable
 
-@implicitNotFound("OpenApiMetadata for ${T} not found. The easiest way to provide it is to make companion object of " +
-  "${T} extend one of the convenience base companion classes, e.g. DefaultRestApiCompanion")
+@implicitNotFound("OpenApiMetadata for ${T} not found, does it have a correctly defined companion?")
 @methodTag[RestMethodTag]
 case class OpenApiMetadata[T](
   @multi @rpcMethodMetadata

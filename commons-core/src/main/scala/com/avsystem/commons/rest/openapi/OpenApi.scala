@@ -259,12 +259,7 @@ case class Schema(
 
   @td enum: List[JsonValue] = Nil,
   @td default: OptArg[JsonValue] = OptArg.Empty
-) {
-  def unwrapSingleRefAllOf: RefOr[Schema] = allOf match {
-    case List(ref: RefOr.Ref) if this == Schema(allOf = List(ref)) => ref
-    case _ => RefOr(this)
-  }
-}
+)
 object Schema extends HasGenCodec[Schema] {
   final val Boolean = Schema(`type` = DataType.Boolean)
   final val Char = Schema(`type` = DataType.String, minLength = 1, maxLength = 1)
@@ -310,7 +305,15 @@ object Schema extends HasGenCodec[Schema] {
     }
 
     def withDefaultValue(dv: Opt[JsonValue]): RefOr[Schema] =
-      dv.fold(refOrSchema)(v => RefOr(rewrapRefToAllOf.copy(default = v)))
+      dv.fold(refOrSchema)(v => map(_.copy(default = v)))
+
+    def map(f: Schema => Schema): RefOr[Schema] = refOrSchema match {
+      case RefOr.Value(schema) => RefOr(f(schema))
+      case ref: RefOr.Ref =>
+        val wrapped = Schema(allOf = List(ref))
+        val mapped = f(wrapped)
+        if (mapped == wrapped) ref else RefOr(mapped)
+    }
   }
 }
 

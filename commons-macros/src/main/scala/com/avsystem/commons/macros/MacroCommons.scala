@@ -50,6 +50,8 @@ trait MacroCommons { bundle =>
   final val SeqCompanionSym = typeOf[scala.collection.Seq.type].termSymbol
   final val PositionedAT = getType(tq"$CommonsPkg.annotation.positioned")
   final val ImplicitNotFoundAT = getType(tq"$ScalaPkg.annotation.implicitNotFound")
+  final val ImplicitNotFoundCls = tq"$CommonsPkg.misc.ImplicitNotFound"
+  final val ImplicitNotFoundSym = getType(tq"$CommonsPkg.misc.ImplicitNotFound[_]").typeSymbol
 
   final val NothingTpe: Type = typeOf[Nothing]
   final val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
@@ -378,18 +380,50 @@ trait MacroCommons { bundle =>
   def cachedImplicitDeclarations: List[Tree] =
     implicitsToDeclare.result()
 
-  def implicitNotFound(tpe: Type): String =
-    tpe.typeSymbol.annotations.find(_.tree.tpe <:< ImplicitNotFoundAT)
-      .map(_.tree.children.tail.head)
-      .collect { case StringLiteral(error) =>
-        val tpNames = tpe.typeSymbol.asType.typeParams.map(_.name.decodedName.toString)
-        (tpNames zip tpe.typeArgs).foldLeft(error) {
+  private def standardImplicitNotFoundMsg(tpe: Type): String =
+    symbolImplicitNotFoundMsg(tpe, tpe.typeSymbol, tpe.typeSymbol.typeSignature.typeParams, tpe.typeArgs)
+
+  private def symbolImplicitNotFoundMsg(tpe: Type, sym: Symbol, tparams: List[Symbol], typeArgs: List[Type]): String =
+    sym.annotations.find(_.tree.tpe <:< ImplicitNotFoundAT)
+      .map(_.tree.children.tail.head).collect { case StringLiteral(error) => error }
+      .map { error =>
+        val tpNames = tparams.map(_.name.decodedName.toString)
+        (tpNames zip typeArgs).foldLeft(error) {
           case (err, (tpName, tpArg)) => err.replaceAllLiterally(s"$${$tpName}", tpArg.toString)
         }
       }
-      .getOrElse(s"no implicit value of type $tpe found")
+      .getOrElse {
+        if (sym != tpe.typeSymbol) standardImplicitNotFoundMsg(tpe)
+        else s"no implicit value of type $tpe found"
+      }
 
-  implicit class treeOps[T <: Tree](t: T) {
+  private def replaceArgs(stack: List[Type], error: String, params: List[Symbol], args: List[Tree]): String =
+    (params zip args)
+      .flatMap { case (param, arg) =>
+        arg.tpe.baseType(ImplicitNotFoundSym).typeArgs.headOption.map { delTpe =>
+          param.name.decodedName.toString -> implicitNotFoundMsg(stack, delTpe, arg)
+        }
+      }
+      .foldLeft(error) { case (err, (paramName, replacement)) =>
+        err.replaceAllLiterally(s"#{$paramName}", replacement)
+      }
+
+  private def implicitNotFoundMsg(stack: List[Type], tpe: Type, tree: Tree): String =
+    if (stack.exists(_ =:= tpe))
+      standardImplicitNotFoundMsg(tpe)
+    else tree match {
+      case MaybeApply(MaybeTypeApply(fun, typeArgs), args) =>
+        val sym = Option(fun.symbol).getOrElse(NoSymbol)
+        val sig = sym.typeSignature
+        val targs = typeArgs.map(_.tpe)
+        val baseMsg = symbolImplicitNotFoundMsg(tpe, sym, sig.typeParams, targs)
+        replaceArgs(tpe :: stack, baseMsg, sig.paramLists.headOption.getOrElse(Nil), args)
+    }
+
+  def implicitNotFoundMsg(tpe: Type): String =
+    implicitNotFoundMsg(Nil, tpe, c.inferImplicitValue(getType(tq"$ImplicitNotFoundCls[$tpe]")))
+
+  class treeOps[T <: Tree](t: T) {
     def debug: T = {
       c.echo(c.enclosingPosition, show(t))
       t
@@ -448,15 +482,22 @@ trait MacroCommons { bundle =>
 
   def abortAt(message: String, pos: Position): Nothing =
     if (pos != NoPosition && pos != c.enclosingPosition) {
-      c.error(pos, s"Macro expansion at ${posInfo(c.enclosingPosition)} failed: $message")
-      abort(s"Macro expansion failed because of error at ${posInfo(pos)}")
+      if (pos.source == c.enclosingPosition.source) {
+        c.abort(pos, s"Macro at line ${c.enclosingPosition.line} failed: $message")
+      } else {
+        c.error(pos, s"Macro at ${posInfo(c.enclosingPosition)} failed: $message")
+        abort(s"Macro expansion failed because of error at ${posInfo(pos)}")
+      }
     } else {
       abort(message)
     }
 
   def errorAt(message: String, pos: Position): Unit = {
     if (pos != NoPosition && pos != c.enclosingPosition) {
-      c.error(pos, s"Macro expansion at ${posInfo(c.enclosingPosition)} failed: $message")
+      val posRepr =
+        if (pos.source == c.enclosingPosition.source) s"line ${c.enclosingPosition.line}"
+        else posInfo(c.enclosingPosition)
+      c.error(pos, s"Macro at $posRepr failed: $message")
     } else {
       error(message)
     }
@@ -592,6 +633,13 @@ trait MacroCommons { bundle =>
   object MaybeTypeApply {
     def unapply(tree: Tree): Some[(Tree, List[Tree])] = tree match {
       case TypeApply(fun, args) => Some((fun, args))
+      case _ => Some((tree, Nil))
+    }
+  }
+
+  object MaybeApply {
+    def unapply(tree: Tree): Some[(Tree, List[Tree])] = tree match {
+      case Apply(fun, args) => Some((fun, args))
       case _ => Some((tree, Nil))
     }
   }

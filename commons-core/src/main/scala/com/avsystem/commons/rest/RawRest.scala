@@ -4,7 +4,10 @@ package rest
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.avsystem.commons.meta._
+import com.avsystem.commons.misc.ImplicitNotFound
 import com.avsystem.commons.rpc._
+
+import scala.annotation.implicitNotFound
 
 case class RestMethodCall(rpcName: String, pathParams: List[PathValue], metadata: RestMethodMetadata[_])
 case class ResolvedPath(prefixes: List[RestMethodCall], finalCall: RestMethodCall, finalMetadata: HttpMethodMetadata[_]) {
@@ -84,6 +87,12 @@ trait RawRest {
 }
 
 object RawRest extends RawRpcCompanion[RawRest] {
+  @implicitNotFound("${T} is not a valid server REST API trait")
+  implicit def asRawNotFound[T]: ImplicitNotFound[AsRaw[Try[RawRest], Try[T]]] = ImplicitNotFound()
+
+  @implicitNotFound("${T} is not a valid client REST API trait")
+  implicit def asRealNotFound[T]: ImplicitNotFound[AsReal[Try[RawRest], Try[T]]] = ImplicitNotFound()
+
   /**
     * A callback that gets notified when value of type `T` gets computed or when computation of that value fails.
     * Callbacks should never throw exceptions. Preferably, they should be simple notifiers that delegate the real

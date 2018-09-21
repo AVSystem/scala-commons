@@ -7,7 +7,6 @@ import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.JCanBuildFrom
 import com.avsystem.commons.misc.MacroGenerated
-import com.github.ghik.silencer.silent
 
 import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
@@ -21,7 +20,6 @@ import scala.language.higherKinds
   *
   * There are convenient macros for automatic derivation of [[GenCodec]] instances (`materialize` and `materializeRecursively`).
   * However, [[GenCodec]] instances still need to be explicitly declared and won't be derived "automagically".
-  * If you want fully automatic derivation, use [[GenCodec.Auto]].
   */
 @implicitNotFound("No GenCodec found for ${T}")
 trait GenCodec[T] {
@@ -76,43 +74,12 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     */
   def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] = macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
 
-  /**
-    * Wrapper over `GenCodec` which forces fully automatic derivation.
-    * <p/>
-    * If you ask for implicit value of type `GenCodec[T]`, the codec must be explicitly declared and imported or
-    * put into implicit scope (e.g. companion object of `T`), even though it can be automatically implemented
-    * using `materialize` or `materializeRecursively`.
-    * <p/>
-    * However, if you ask for implicit value of type `GenCodec.Auto[T]`, the compiler will always fall back to fully
-    * automatic derivation if it cannot find already declared `GenCodec`. Note that since `GenCodec.Auto` will always
-    * try to wrap already existing `GenCodec` (if there is one), you should never explicitly declare any instances
-    * of `GenCodec.Auto`. If you need custom serialization, just write a `GenCodec` and `GenCodec.Auto` will wrap it.
-    * <p/>
-    * Whether you want to use `GenCodec` or `GenCodec.Auto` depends on your use case. `GenCodec` should be generally
-    * used when you want the programmer to always explicitly state that some type is serializable. For example, if you
-    * serialize your objects in order to put them into database, you probably want to use `GenCodec` and not `GenCodec.Auto`,
-    * because every type that has been written to database is likely to be bound by backwards compatibility constraints and
-    * cannot be freely refactored. That's why you want to always explicitly make the decision of making a type serializable.
-    * <p/>
-    */
-  @deprecated("auto codecs will be removed", "1.28.0")
-  case class Auto[T](codec: GenCodec[T]) extends AnyVal
-
   @explicitGenerics
   def read[T](input: Input)(implicit codec: GenCodec[T]): T =
     codec.read(input)
 
   def write[T](output: Output, value: T)(implicit codec: GenCodec[T]): Unit =
     codec.write(output, value)
-
-  @explicitGenerics
-  @deprecated("auto codecs will be removed", "1.28.0")
-  def autoRead[T](input: Input)(implicit autoCodec: GenCodec.Auto[T]): T =
-    autoCodec.codec.read(input)
-
-  @deprecated("auto codecs will be removed", "1.28.0")
-  def autoWrite[T](output: Output, value: T)(implicit autoCodec: GenCodec.Auto[T]): Unit =
-    autoCodec.codec.write(output, value)
 
   def create[T](readFun: Input => T, writeFun: (Output, T) => Any): GenCodec[T] =
     new GenCodec[T] {
@@ -443,11 +410,6 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     allowNull = true
   )
 
-  // Needed because of SI-9453
-  @silent
-  @deprecated("auto codecs will be removed", "1.28.0")
-  implicit lazy val NothingAutoCodec: GenCodec.Auto[Nothing] = GenCodec.Auto[Nothing](NothingCodec)
-
   implicit def macroGeneratedCodec[C, T]: MacroGenerated[C, GenCodec[T]] =
   macro macros.serialization.GenCodecMacros.materializeMacroGenerated[T]
 }
@@ -464,8 +426,4 @@ trait RecursiveAutoCodecs { this: GenCodec.type =>
     */
   implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] =
   macro macros.serialization.GenCodecMacros.materializeImplicitly[T]
-
-  @deprecated("auto codecs will be removed", "1.28.0")
-  implicit def materializeAuto[T]: GenCodec.Auto[T] =
-  macro macros.serialization.GenCodecMacros.materializeAuto[T]
 }

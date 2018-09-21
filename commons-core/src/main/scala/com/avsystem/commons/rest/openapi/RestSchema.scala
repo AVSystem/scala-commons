@@ -3,15 +3,13 @@ package rest.openapi
 
 import java.util.UUID
 
-import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion, Timestamp}
+import com.avsystem.commons.misc.{ImplicitNotFound, NamedEnum, NamedEnumCompanion, Timestamp}
 import com.avsystem.commons.rest.HttpBody
 import com.avsystem.commons.rest.openapi.adjusters.SchemaAdjuster
 
 import scala.annotation.implicitNotFound
 
-@implicitNotFound("RestSchema for ${T} not found. You may provide it by making companion object of ${T} " +
-  "extend RestDataCompanion[${T}] (if it is a case class, object or sealed hierarchy). " +
-  "Note that RestDataCompanion also automatically provides a GenCodec instance.")
+@implicitNotFound("RestSchema for ${T} not found")
 trait RestSchema[T] { self =>
   def createSchema(resolver: SchemaResolver): RefOr[Schema]
   def name: Opt[String]
@@ -105,17 +103,10 @@ object RestSchema {
     RestSchema.plain(Schema.enumOf(ct.runtimeClass.getEnumConstants.iterator.map(_.asInstanceOf[E].name).toList))
 }
 
-@implicitNotFound("RestResultType for ${T} not found. It may be provided by appropriate RestSchema or " +
-  "RestResponses instance (e.g. RestSchema[T] implies RestResponses[T] which implies RestResultType[Future[T]]). " +
-  "RestSchema is usually provided by making companion object of your data type extend RestDataCompanion.")
+@implicitNotFound("${T} is not a valid result type of a REST HTTP method")
 case class RestResultType[T](responses: SchemaResolver => Responses)
-object RestResultType {
-  implicit def forFuture[T: RestResponses]: RestResultType[Future[T]] =
-    RestResultType[Future[T]](RestResponses[T].responses)
-}
 
-@implicitNotFound("RestResponses for ${T} not found. You may provide it by defining an instance of RestSchema[${T}] " +
-  "which is usually done by making companion object of your data type extend RestDataCompanion")
+@implicitNotFound("RestResponses for ${T} not found")
 case class RestResponses[T](responses: SchemaResolver => Responses)
 object RestResponses {
   def apply[T](implicit r: RestResponses[T]): RestResponses[T] = r
@@ -131,10 +122,13 @@ object RestResponses {
         HttpBody.JsonType -> MediaType(schema = resolver.resolve(RestSchema[T])))
       ))
     )))
+
+  @implicitNotFound("RestResponses instance for ${T} not found, probably because: #{forSchema}")
+  implicit def notFound[T](implicit forSchema: ImplicitNotFound[RestSchema[T]]): ImplicitNotFound[RestResponses[T]] =
+    ImplicitNotFound()
 }
 
-@implicitNotFound("RestRequestBody for ${T} not found. You may provide it by defining an instance of RestSchema[${T}] " +
-  "which is usually done by making companion object of your data type extend RestDataCompanion")
+@implicitNotFound("RestRequestBody instance for ${T} not found")
 trait RestRequestBody[T] {
   def requestBody(resolver: SchemaResolver, schemaAdjusters: List[SchemaAdjuster]): RefOr[RequestBody]
 }
@@ -156,6 +150,10 @@ object RestRequestBody {
         RefOr(simpleRequestBody(HttpBody.JsonType, schema, required = true))
       }
     }
+
+  @implicitNotFound("RestRequestBody instance for ${T} not found, probably because: #{forSchema}")
+  implicit def notFound[T](implicit forSchema: ImplicitNotFound[RestSchema[T]]): ImplicitNotFound[RestRequestBody[T]] =
+    ImplicitNotFound()
 }
 
 trait SchemaResolver {
