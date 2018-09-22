@@ -6,13 +6,15 @@ import com.avsystem.commons.macros.AbstractMacroCommons
 import scala.collection.mutable
 import scala.reflect.macros.{blackbox, whitebox}
 import scala.util.control.NoStackTrace
-import scala.util.matching.Regex
 
 class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
-  def infer[T: c.WeakTypeTag](clue: Tree): Tree =
+  def infer[T: c.WeakTypeTag]: Tree =
+    inferTpe(weakTypeOf[T], "", NoPosition, withMacrosDisabled = false)
+
+  def clueInfer[T: c.WeakTypeTag](clue: Tree): Tree =
     inferTpe(weakTypeOf[T], clueStr(clue), clue.pos, withMacrosDisabled = false)
 
   def inferNonMacro[T: c.WeakTypeTag](clue: Tree): Tree =
@@ -431,26 +433,6 @@ class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
   import c.universe._
 
   val WhenAbsentAT: Type = getType(tq"$CommonsPkg.serialization.whenAbsent[_]")
-  val DefaultValueMethodName: Regex = """(.*)\$default\$(\d+)$""".r
-
-  object DefaultValueMethod {
-    def unapply(s: Symbol): Option[Symbol] = s match {
-      case ms: MethodSymbol if ms.isSynthetic => ms.name.encodedName.toString match {
-        case DefaultValueMethodName(name, idx) =>
-          val actualMethodName = TermName(name).decodedName
-          val paramIndex = idx.toInt - 1
-          val ownerMethod = actualMethodName match {
-            case termNames.CONSTRUCTOR =>
-              ms.owner.companion.asType.toType.member(termNames.CONSTRUCTOR)
-            case _ =>
-              ms.owner.asType.toType.member(actualMethodName)
-          }
-          Some(ownerMethod.asMethod.paramLists.flatten.apply(paramIndex))
-        case _ => None
-      }
-      case _ => None
-    }
-  }
 
   def whenAbsentValue: Tree = {
     val param = c.internal.enclosingOwner match {

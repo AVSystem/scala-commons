@@ -5,6 +5,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.{TypecheckException, blackbox}
 import scala.util.control.NoStackTrace
+import scala.util.matching.Regex
 
 abstract class AbstractMacroCommons(val c: blackbox.Context) extends MacroCommons
 
@@ -660,6 +661,36 @@ trait MacroCommons { bundle =>
       case Apply(_, List(arg)) => Some(arg)
     }
   }
+
+  private val DefaultValueMethodName: Regex = """(.*)\$default\$(\d+)$""".r
+
+  object DefaultValueMethod {
+    def unapply(s: Symbol): Option[Symbol] = s match {
+      case ms: MethodSymbol if ms.isSynthetic => ms.name.encodedName.toString match {
+        case DefaultValueMethodName(name, idx) =>
+          val actualMethodName = TermName(name).decodedName
+          val paramIndex = idx.toInt - 1
+          val ownerMethod = actualMethodName match {
+            case termNames.CONSTRUCTOR =>
+              ms.owner.companion.asType.toType.member(termNames.CONSTRUCTOR)
+            case _ =>
+              ms.owner.asType.toType.member(actualMethodName)
+          }
+          Some(ownerMethod.asMethod.paramLists.flatten.apply(paramIndex))
+        case _ => None
+      }
+      case _ => None
+    }
+  }
+
+  def defaultValueMethod(param: Symbol): Symbol =
+    if (param.isTerm && param.isParameter && param.asTerm.isParamWithDefault) {
+      val owner = param.owner.asMethod
+      val idx = owner.paramLists.flatten.indexOf(param) + 1
+      val dvMethodOwner =
+        if (owner.isConstructor) owner.owner.companion else owner.owner
+      dvMethodOwner.asType.toType.member(TermName(s"${owner.name.encodedName.toString}$$default$$$idx"))
+    } else NoSymbol
 
   /**
     * Returns a `Tree` that should typecheck to the type passed as argument (without using `TypeTree`).
