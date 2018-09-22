@@ -49,7 +49,7 @@ trait OpenApiFullInstances[Real] extends FullInstances[Real] {
   def openapiMetadata: OpenApiMetadata[Real]
 }
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestClientApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ClientInstances, Real]
 ) {
@@ -60,7 +60,7 @@ abstract class RestClientApiCompanion[Implicits, Real](protected val implicits: 
     RawRest.fromHandleRequest(handleRequest)
 }
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestServerApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ServerInstances, Real]
 ) {
@@ -71,7 +71,7 @@ abstract class RestServerApiCompanion[Implicits, Real](protected val implicits: 
     RawRest.asHandleRequest(real)
 }
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestServerOpenApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, OpenApiServerInstances, Real]
 ) {
@@ -102,7 +102,7 @@ abstract class RestApiCompanion[Implicits, Real](protected val implicits: Implic
     RawRest.asHandleRequest(real)
 }
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestOpenApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, OpenApiFullInstances, Real]
 ) {
@@ -197,11 +197,11 @@ object GenCodecRestImplicits extends GenCodecRestImplicits
 trait DefaultRestImplicits extends FutureRestImplicits with GenCodecRestImplicits {
   @implicitNotFound("${T} is not a valid server REST API trait, does its companion extend " +
     "DefaultRestApiCompanion or DefaultRestServerApiCompanion?")
-  implicit def rawRestAsRawNotFound[T]: ImplicitNotFound[AsRaw[Try[RawRest], Try[T]]] = ImplicitNotFound()
+  implicit def rawRestAsRawNotFound[T]: ImplicitNotFound[AsRaw[RawRest, T]] = ImplicitNotFound()
 
   @implicitNotFound("${T} is not a valid client REST API trait, does its companion extend " +
     "DefaultRestApiCompanion or DefaultRestClientApiCompanion?")
-  implicit def rawRestAsRealNotFound[T]: ImplicitNotFound[AsReal[Try[RawRest], Try[T]]] = ImplicitNotFound()
+  implicit def rawRestAsRealNotFound[T]: ImplicitNotFound[AsReal[RawRest, T]] = ImplicitNotFound()
 
   @implicitNotFound("RestSchema for ${T} not found. To provide it for case classes and sealed hierarchies " +
     "use RestDataCompanion (which also provides GenCodec)")
