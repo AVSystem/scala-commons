@@ -131,39 +131,58 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
     val asRealTpe = getType(tq"$AsRealCls[_,$realTpe]")
     val asRawRealTpe = getType(tq"$AsRawRealCls[_,$realTpe]")
 
-    val impls = instancesTpe.members.iterator.filter(m => m.isAbstract && m.isMethod).map { m =>
-      val sig = m.typeSignatureIn(instancesTpe)
-      val resultTpe = sig.finalResultType.dealias
-      if (sig.typeParams.nonEmpty || sig.paramLists.nonEmpty) {
-        abort(s"Problem with $m of $instancesTpe: expected non-generic, parameterless method")
-      }
+    val instancesMethods = instancesTpe.members.iterator
+      .filter(m => m.isAbstract && m.isMethod).toList.reverse
 
-      val body =
-        if (resultTpe <:< asRawRealTpe)
-          q"$AsRawRealObj.materializeForRpc[..${resultTpe.typeArgs}]"
-        else if (resultTpe <:< asRawTpe)
-          q"$AsRawObj.materializeForRpc[..${resultTpe.typeArgs}]"
-        else if (resultTpe <:< asRealTpe)
-          q"$AsRealObj.materializeForRpc[..${resultTpe.typeArgs}]"
-        else resultTpe.typeArgs match {
-          case List(st) if st =:= realTpe =>
-            q"$RpcPackage.RpcMetadata.materializeForRpc[${resultTpe.typeConstructor}, $realTpe]"
-          case _ => abort(s"Bad result type $resultTpe of $m: " +
-            s"it must be an AsReal/AsRaw/AsRealRaw or RPC metadata instance for $realTpe")
+    def impl(singleMethod: Option[Symbol]): Tree = {
+
+      val impls = instancesMethods.map { m =>
+        val sig = m.typeSignatureIn(instancesTpe)
+        val resultTpe = sig.finalResultType.dealias
+        if (sig.typeParams.nonEmpty || sig.paramLists.nonEmpty) {
+          abort(s"Problem with $m of $instancesTpe: expected non-generic, parameterless method")
         }
 
-      q"def ${m.name.toTermName} = $body"
-    }.toList
+        val body =
+          if (singleMethod.exists(_ != m))
+            q"$PredefObj.???"
+          else if (resultTpe <:< asRawRealTpe)
+            q"$AsRawRealObj.materializeForRpc[..${resultTpe.typeArgs}]"
+          else if (resultTpe <:< asRawTpe)
+            q"$AsRawObj.materializeForRpc[..${resultTpe.typeArgs}]"
+          else if (resultTpe <:< asRealTpe)
+            q"$AsRealObj.materializeForRpc[..${resultTpe.typeArgs}]"
+          else resultTpe.typeArgs match {
+            case List(st) if st =:= realTpe =>
+              q"$RpcPackage.RpcMetadata.materializeForRpc[${resultTpe.typeConstructor}, $realTpe]"
+            case _ => abort(s"Bad result type $resultTpe of $m: " +
+              s"it must be an AsReal/AsRaw/AsRealRaw or RPC metadata instance for $realTpe")
+          }
 
-    val implicitsName = c.freshName(TermName("implicits"))
-
-    q"""
-      new $resultTpe {
-        def apply($implicitsName: $implicitsTpe, $companionReplacementName: Any): $instancesTpe = {
-          import $implicitsName._
-          new $instancesTpe { ..$impls; () }
-        }
+        q"def ${m.name.toTermName} = $body"
       }
-     """
+
+      val implicitsName = c.freshName(TermName("implicits"))
+
+      q"""
+        new $resultTpe {
+          def apply($implicitsName: $implicitsTpe, $companionReplacementName: Any): $instancesTpe = {
+            import $implicitsName._
+            new $instancesTpe { ..$impls; () }
+          }
+        }
+       """
+    }
+
+    //If full implementation doesn't typecheck, find the first problematic typeclass and limit
+    //compilation errors to that one in order to not overwhelm the user but rather report errors gradually
+    val fullImpl = impl(None)
+    c.typecheck(fullImpl, silent = true) match {
+      case EmptyTree =>
+        instancesMethods.iterator.map(m => impl(Some(m)))
+          .find(t => c.typecheck(t, silent = true) == EmptyTree)
+          .getOrElse(fullImpl)
+      case t => t
+    }
   }
 }

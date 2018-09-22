@@ -4,8 +4,8 @@ package rest.openapi
 import java.util.UUID
 
 import com.avsystem.commons.misc.{ImplicitNotFound, NamedEnum, NamedEnumCompanion, Timestamp}
-import com.avsystem.commons.rest.HttpBody
 import com.avsystem.commons.rest.openapi.adjusters.SchemaAdjuster
+import com.avsystem.commons.rest.{HttpBody, HttpResponseType}
 
 import scala.annotation.implicitNotFound
 
@@ -103,9 +103,10 @@ object RestSchema {
     RestSchema.plain(Schema.enumOf(ct.runtimeClass.getEnumConstants.iterator.map(_.asInstanceOf[E].name).toList))
 }
 
-@implicitNotFound("${T} is not a valid result type of a REST HTTP method")
-case class RestResultType[T](responses: SchemaResolver => Responses)
-
+/**
+  * Typeclass which defines how an OpenAPI [[Responses]] Object will look like for a given type.
+  * By default, [[RestResponses]] is derived based on [[RestSchema]] for that type.
+  */
 @implicitNotFound("RestResponses for ${T} not found")
 case class RestResponses[T](responses: SchemaResolver => Responses)
 object RestResponses {
@@ -126,6 +127,26 @@ object RestResponses {
   @implicitNotFound("RestResponses instance for ${T} not found, probably because: #{forSchema}")
   implicit def notFound[T](implicit forSchema: ImplicitNotFound[RestSchema[T]]): ImplicitNotFound[RestResponses[T]] =
     ImplicitNotFound()
+}
+
+/**
+  * Just like [[RestResponses]], [[RestResultType]] is a typeclass that defines how an OpenAPI
+  * Responses Object will look like for a HTTP method which returns given type. The difference between
+  * [[RestResultType]] and [[RestResponses]] is that [[RestResultType]] is defined for full result
+  * type which usually is some kind of asynchronous wrapper over actual result type (e.g. `Future`).
+  * In such situation, [[RestResponses]] must be provided for `T` while [[RestResultType]] is provided
+  * for `Future[T]` (or whatever async wrapper is used), based on the [[RestResponses]] instance of `T`.
+  * You can see an example of this in [[com.avsystem.commons.rest.FutureRestImplicits FutureRestImplicits]].
+  *
+  * [[RestResultType]] for [[OpenApiMetadata]] is analogous to [[HttpResponseType]]
+  * for [[com.avsystem.commons.rest.RestMetadata RestMetadata]].
+  */
+case class RestResultType[T](responses: SchemaResolver => Responses)
+object RestResultType {
+  @implicitNotFound("#{forResponseType}")
+  implicit def notFound[T](
+    implicit forResponseType: ImplicitNotFound[HttpResponseType[T]]
+  ): ImplicitNotFound[RestResultType[T]] = ImplicitNotFound()
 }
 
 @implicitNotFound("RestRequestBody instance for ${T} not found")

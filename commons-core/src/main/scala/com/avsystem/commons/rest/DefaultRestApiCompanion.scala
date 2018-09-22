@@ -2,7 +2,7 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.misc.{ImplicitNotFound, MacroGenerated}
-import com.avsystem.commons.rest.RawRest.{AsRawRealRpc, AsRawRpc, AsRealRpc}
+import com.avsystem.commons.rest.RawRest.{AsRawRpc, AsRealRpc}
 import com.avsystem.commons.rest.openapi.{OpenApiMetadata, RestResponses, RestResultType, RestSchema, RestStructure}
 import com.avsystem.commons.rpc.{AsRaw, AsRawReal, AsReal, Fallback, RpcMacroInstances}
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
@@ -31,25 +31,22 @@ abstract class RestDataCompanion[T](implicit
 }
 
 trait ClientInstances[Real] {
-  def metadata: RestMetadata[Real]
   def asReal: AsRealRpc[Real]
+  def metadata: RestMetadata[Real]
 }
 trait ServerInstances[Real] {
-  def metadata: RestMetadata[Real]
   def asRaw: AsRawRpc[Real]
-}
-trait OpenApiServerInstances[Real] extends ServerInstances[Real] {
-  def openapiMetadata: OpenApiMetadata[Real]
-}
-trait FullInstances[Real] {
   def metadata: RestMetadata[Real]
-  def asRawReal: AsRawRealRpc[Real]
 }
-trait OpenApiFullInstances[Real] extends FullInstances[Real] {
+trait FullInstances[Real] extends ServerInstances[Real] with ClientInstances[Real]
+
+trait OpenApiInstances[Real] {
   def openapiMetadata: OpenApiMetadata[Real]
 }
+trait OpenApiServerInstances[Real] extends ServerInstances[Real] with OpenApiInstances[Real]
+trait OpenApiFullInstances[Real] extends FullInstances[Real] with OpenApiInstances[Real]
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestClientApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ClientInstances, Real]
 ) {
@@ -60,7 +57,7 @@ abstract class RestClientApiCompanion[Implicits, Real](protected val implicits: 
     RawRest.fromHandleRequest(handleRequest)
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestServerApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, ServerInstances, Real]
 ) {
@@ -71,7 +68,7 @@ abstract class RestServerApiCompanion[Implicits, Real](protected val implicits: 
     RawRest.asHandleRequest(real)
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestServerOpenApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, OpenApiServerInstances, Real]
 ) {
@@ -94,7 +91,8 @@ abstract class RestApiCompanion[Implicits, Real](protected val implicits: Implic
   implicit inst: RpcMacroInstances[Implicits, FullInstances, Real]
 ) {
   implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits, this).metadata
-  implicit final lazy val restAsRawReal: AsRawRealRpc[Real] = inst(implicits, this).asRawReal
+  implicit final lazy val restAsRaw: AsRawRpc[Real] = inst(implicits, this).asRaw
+  implicit final lazy val restAsReal: AsRealRpc[Real] = inst(implicits, this).asReal
 
   final def fromHandleRequest(handleRequest: RawRest.HandleRequest): Real =
     RawRest.fromHandleRequest(handleRequest)
@@ -102,12 +100,13 @@ abstract class RestApiCompanion[Implicits, Real](protected val implicits: Implic
     RawRest.asHandleRequest(real)
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestOpenApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: RpcMacroInstances[Implicits, OpenApiFullInstances, Real]
 ) {
   implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits, this).metadata
-  implicit final lazy val restAsRawReal: AsRawRealRpc[Real] = inst(implicits, this).asRawReal
+  implicit final lazy val restAsRaw: AsRawRpc[Real] = inst(implicits, this).asRaw
+  implicit final lazy val restAsReal: AsRealRpc[Real] = inst(implicits, this).asReal
   implicit final lazy val openapiMetadata: OpenApiMetadata[Real] = inst(implicits, this).openapiMetadata
 
   final def fromHandleRequest(handleRequest: RawRest.HandleRequest): Real =
@@ -147,12 +146,8 @@ trait FutureRestImplicits {
   implicit def futureHttpResponseType[T]: HttpResponseType[Future[T]] =
     HttpResponseType[Future[T]]()
 
-  @implicitNotFound("${T} is not a valid REST HTTP method result type. It must be wrapped into a Future")
+  @implicitNotFound("${T} is not a valid REST HTTP method result type - it must be wrapped into a Future")
   implicit def httpResponseTypeNotFound[T]: ImplicitNotFound[HttpResponseType[T]] =
-    ImplicitNotFound()
-
-  @implicitNotFound("${T} is not a valid result type of a REST HTTP method. It must be wrapped into a Future")
-  implicit def restResultTypeNotFound[T]: ImplicitNotFound[RestResultType[T]] =
     ImplicitNotFound()
 
   implicit def futureRestResultType[T: RestResponses]: RestResultType[Future[T]] =

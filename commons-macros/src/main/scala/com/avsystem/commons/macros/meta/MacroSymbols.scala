@@ -169,7 +169,7 @@ trait MacroSymbols extends MacroCommons {
     def matchFilters(realSymbol: MatchedSymbol): Res[Unit] =
       Res.traverse(requiredAnnots) { annotTpe =>
         if (realSymbol.annot(annotTpe).nonEmpty) Ok(())
-        else Fail(s"no annotation of type $annotTpe found on ${realSymbol.real.shortDescription}")
+        else Fail(s"it only accepts ${realSymbol.real.shortDescription}s annotated as $annotTpe")
       }.map(_ => ())
   }
 
@@ -220,7 +220,7 @@ trait MacroSymbols extends MacroCommons {
       val realTagTpe = tagAnnot.map(_.tpe).getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
 
       if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
-      else Fail(s"it does not accept ${realSymbol.shortDescription}s tagged with $realTagTpe")
+      else Fail(s"it only accepts ${realSymbol.shortDescription}s tagged with $requiredTag")
     }
   }
 

@@ -3,8 +3,8 @@ package misc
 
 object Implicits {
   /**
-    * Similar to [[implicitly]] from standard library but implemented as a macro which materializes directly into
-    * the implicit value (without being wrapped as implicit parameter of a dummy method like [[implicitly]]).
+    * Similar to `implicitly` from standard library but implemented as a macro which materializes directly into
+    * the implicit value (without being wrapped as implicit parameter of a dummy method like `implicitly`).
     * Also, using `infer` lets you have more detailed control over implicit-not-found compilation error messages
     * through [[ImplicitNotFound]].
     */
@@ -15,7 +15,7 @@ object Implicits {
 
 /**
   * Extends the functionality of [[scala.annotation.implicitNotFound]] so that implicit-not-found error message
-  * is itself resolved using implicit search. This mechanism is used by [[Implicits.infer]] and macro engines
+  * is itself resolved using implicit search. This mechanism is used by [[Implicits.infer[T]*]] and macro engines
   * that use it.
   *
   * Example: we have a wrapper class `Box[T]` and we want a custom error message when `GenCodec[Box[T]]` for some type
