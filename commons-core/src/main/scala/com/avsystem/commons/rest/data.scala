@@ -111,7 +111,7 @@ sealed trait HttpBody {
   }
 
   final def defaultResponse: RestResponse =
-    RestResponse(defaultStatus, this)
+    RestResponse(defaultStatus, Mapping.empty, this)
 }
 object HttpBody {
   object Empty extends HttpBody
@@ -211,11 +211,11 @@ object RestParameters {
 case class HttpErrorException(code: Int, payload: OptArg[String] = OptArg.Empty)
   extends RuntimeException(s"HTTP ERROR $code${payload.fold("")(p => s": $p")}") with NoStackTrace {
   def toResponse: RestResponse =
-    RestResponse(code, payload.fold(HttpBody.empty)(HttpBody.plain))
+    RestResponse(code, Mapping.empty, payload.fold(HttpBody.empty)(HttpBody.plain))
 }
 
 case class RestRequest(method: HttpMethod, parameters: RestParameters, body: HttpBody)
-case class RestResponse(code: Int, body: HttpBody) {
+case class RestResponse(code: Int, headers: Mapping[HeaderValue], body: HttpBody) {
   def toHttpError: HttpErrorException =
     HttpErrorException(code, body.contentOpt.toOptArg)
   def ensureNonError: RestResponse =

@@ -5,7 +5,7 @@ import com.avsystem.commons.meta.Mapping.ConcatIterable
 import com.avsystem.commons.serialization.GenCodec
 
 import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable
+import scala.collection.{IterableLike, mutable}
 
 /**
   * Simple immutable structure to collect named values while retaining their order and
@@ -13,9 +13,12 @@ import scala.collection.mutable
   * Intended to be used for [[multi]] raw parameters.
   */
 final class Mapping[+V](private val wrapped: IIterable[(String, V)])
-  extends IIterable[(String, V)] with PartialFunction[String, V] {
+  extends IIterable[(String, V)] with IterableLike[(String, V), Mapping[V]] with PartialFunction[String, V] {
 
   private[this] lazy val hashMap = new MLinkedHashMap[String, V].setup(_ ++= wrapped)
+
+  override protected[this] def newBuilder: mutable.Builder[(String, V), Mapping[V]] =
+    Mapping.newBuilder[V]
 
   def iterator: Iterator[(String, V)] =
     hashMap.iterator
@@ -33,6 +36,8 @@ final class Mapping[+V](private val wrapped: IIterable[(String, V)])
     hashMap.apply(key)
   def get(key: String): Opt[V] =
     hashMap.getOpt(key)
+  def asMap: BMap[String, V] =
+    hashMap
 
   def ++[V0 >: V](other: Mapping[V0]): Mapping[V0] =
     if (wrapped.isEmpty) other
@@ -41,6 +46,8 @@ final class Mapping[+V](private val wrapped: IIterable[(String, V)])
 }
 object Mapping {
   def empty[V]: Mapping[V] = new Mapping(Nil)
+  def apply[V](pairs: (String, V)*): Mapping[V] = new Mapping(pairs.toList)
+
   def newBuilder[V]: mutable.Builder[(String, V), Mapping[V]] =
     new MListBuffer[(String, V)].mapResult(new Mapping(_))
 

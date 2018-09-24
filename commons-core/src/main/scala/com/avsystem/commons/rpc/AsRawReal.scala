@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.misc.ImplicitNotFound
+
 import scala.annotation.implicitNotFound
 
 @implicitNotFound("Cannot serialize ${Real} into ${Raw}, appropriate AsRaw instance not found")
@@ -14,11 +16,19 @@ object AsRaw {
     new AsRaw[Raw, Real] {
       def asRaw(real: Real): Raw = asRawFun(real)
     }
+
+  def materializeForRpc[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
+
   implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Try[Raw], Try[Real]] =
     AsRaw.create(_.map(asRaw.asRaw))
-  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsRaw[Raw, Real]]): AsRaw[Raw, Real] = fallback.value
-  def materializeForRpc[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
+  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsRaw[Raw, Real]]): AsRaw[Raw, Real] =
+    fallback.value
+
+  @implicitNotFound("#{forPlain}")
+  implicit def notFoundForTry[Raw, Real](
+    implicit forPlain: ImplicitNotFound[AsRaw[Raw, Real]]
+  ): ImplicitNotFound[AsRaw[Try[Raw], Try[Real]]] = ImplicitNotFound()
 }
 
 @implicitNotFound("Cannot deseriralize ${Real} from ${Raw}, appropriate AsReal instance not found")
@@ -32,11 +42,19 @@ object AsReal {
     new AsReal[Raw, Real] {
       def asReal(raw: Raw): Real = asRealFun(raw)
     }
+
+  def materializeForRpc[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsReal[Raw, Real]
+
   implicit def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Try[Raw], Try[Real]] =
     AsReal.create(_.map(asReal.asReal))
-  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsReal[Raw, Real]]): AsReal[Raw, Real] = fallback.value
-  def materializeForRpc[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsReal[Raw, Real]
+  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsReal[Raw, Real]]): AsReal[Raw, Real] =
+    fallback.value
+
+  @implicitNotFound("#{forPlain}")
+  implicit def notFoundForTry[Raw, Real](
+    implicit forPlain: ImplicitNotFound[AsReal[Raw, Real]]
+  ): ImplicitNotFound[AsReal[Try[Raw], Try[Real]]] = ImplicitNotFound()
 }
 
 @implicitNotFound("Cannot serialize and deserialize between ${Real} and ${Raw}, appropriate AsRawReal instance not found")

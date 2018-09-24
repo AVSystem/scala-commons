@@ -1,7 +1,10 @@
 package com.avsystem.commons
 package rest
 
+import com.avsystem.commons.meta.Mapping
 import com.avsystem.commons.rest.openapi.adjusters.{description, example}
+import com.avsystem.commons.rest.openapi.{Header => OASHeader, _}
+import com.avsystem.commons.rpc.AsRawReal
 import com.avsystem.commons.serialization.{flatten, whenAbsent}
 
 sealed trait BaseEntity
@@ -22,6 +25,24 @@ object RestEntity extends RestDataCompanion[RestEntity]
 case class RestOtherEntity(fuu: Boolean, kek: List[String]) extends FlatBaseEntity
 
 case object SingletonEntity extends FlatBaseEntity
+
+case class CustomResp(value: String)
+object CustomResp {
+  implicit val asResponse: AsRawReal[RestResponse, CustomResp] = AsRawReal.create(
+    cr => RestResponse(200, Mapping("X-Value" -> HeaderValue(cr.value)), HttpBody.plain("Yes")),
+    resp => CustomResp(resp.headers("X-Value").value)
+  )
+  implicit val restResponses: RestResponses[CustomResp] = RestResponses { _ =>
+    Responses(byStatusCode = Map(200 -> RefOr(Response(
+      headers = Map("X-Value" -> RefOr(OASHeader(
+        schema = RefOr(Schema.String)
+      ))),
+      content = Map(HttpBody.PlainType -> MediaType(
+        schema = RefOr(Schema.String)
+      ))
+    ))))
+  }
+}
 
 trait RestTestApi {
   @GET def trivialGet: Future[Unit]
@@ -63,6 +84,8 @@ trait RestTestApi {
     baseEntity: BaseEntity,
     flatBaseEntity: Opt[FlatBaseEntity] = Opt.Empty
   ): Future[Unit]
+
+  def customResponse(@Query value: String): Future[CustomResp]
 }
 object RestTestApi extends DefaultRestApiCompanion[RestTestApi] {
   val Impl: RestTestApi = new RestTestApi {
@@ -80,6 +103,7 @@ object RestTestApi extends DefaultRestApiCompanion[RestTestApi] {
     def prefix(p0: String, h0: String, q0: String): RestTestSubApi =
       RestTestSubApi.impl(s"$p0-$h0-$q0")
     def complexParams(baseEntity: BaseEntity, flatBaseEntity: Opt[FlatBaseEntity]): Future[Unit] = Future.unit
+    def customResponse(value: String): Future[CustomResp] = Future.successful(CustomResp(value))
   }
 }
 

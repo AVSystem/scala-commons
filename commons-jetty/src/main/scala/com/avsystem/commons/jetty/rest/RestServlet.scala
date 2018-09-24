@@ -67,6 +67,9 @@ object RestServlet {
     RawRest.safeAsync(handleRequest(restRequest)) {
       case Success(restResponse) =>
         response.setStatus(restResponse.code)
+        restResponse.headers.foreach {
+          case (name, HeaderValue(value)) => response.addHeader(name, value)
+        }
         restResponse.body.forNonEmpty { (content, mimeType) =>
           response.setContentType(s"$mimeType;charset=utf-8")
           response.getWriter.write(content)

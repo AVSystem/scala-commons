@@ -80,23 +80,13 @@ trait RawRest {
           resolveCall(this, prefixes)
         case Opt.Empty =>
           val pathStr = parameters.path.iterator.map(_.value).mkString("/")
-          RawRest.successfulAsync(RestResponse(404, HttpBody.plain(s"path $pathStr not found")))
+          RawRest.successfulAsync(RestResponse(404, Mapping.empty, HttpBody.plain(s"path $pathStr not found")))
       }
     }
   }
 }
 
 object RawRest extends RawRpcCompanion[RawRest] {
-  @implicitNotFound("#{forT}")
-  implicit def tryAsRawNotFound[T](
-    implicit forT: ImplicitNotFound[AsRaw[RawRest, T]]
-  ): ImplicitNotFound[AsRaw[Try[RawRest], Try[T]]] = ImplicitNotFound()
-
-  @implicitNotFound("#{forT}")
-  implicit def tryAsRealNotFound[T](
-    implicit forT: ImplicitNotFound[AsReal[RawRest, T]]
-  ): ImplicitNotFound[AsReal[Try[RawRest], Try[T]]] = ImplicitNotFound()
-
   /**
     * A callback that gets notified when value of type `T` gets computed or when computation of that value fails.
     * Callbacks should never throw exceptions. Preferably, they should be simple notifiers that delegate the real

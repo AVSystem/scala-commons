@@ -5,6 +5,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 import com.avsystem.commons.annotation.explicitGenerics
+import com.avsystem.commons.meta.Mapping
 import com.avsystem.commons.rest.{HeaderValue, HttpBody, QueryValue, RawRest, RestMetadata, RestResponse}
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.client.api.Result
@@ -47,7 +48,8 @@ object RestClient {
             val body = httpResp.getHeaders.get(HttpHeader.CONTENT_TYPE).opt.fold(HttpBody.empty) { contentType =>
               HttpBody(getContentAsString(), MimeTypes.getContentTypeWithoutCharset(contentType))
             }
-            val response = RestResponse(httpResp.getStatus, body)
+            val headers = httpResp.getHeaders.iterator.asScala.map(h => (h.getName, HeaderValue(h.getValue))).toList
+            val response = RestResponse(httpResp.getStatus, new Mapping(headers), body)
             callback(Success(response))
           } else {
             callback(Failure(result.getFailure))
