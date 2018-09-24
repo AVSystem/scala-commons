@@ -118,6 +118,14 @@ class operationId(operationId: OptArg[String] = OptArg.Empty) extends OperationA
 }
 
 /**
+  * Adds OpenAPI operation tags to an [[Operation]] object.
+  */
+class tags(tags: String*) extends OperationAdjuster {
+  def adjustOperation(operation: Operation): Operation =
+    operation.copy(tags = tags.toList)
+}
+
+/**
   * Prefix methods may be annotated with this annotation to specify prefix that will be prepended to
   * `operationId` of all [[Operation]] objects generated for result of that prefix method.
   * By default, this prefix is prefix method's name with underscore,

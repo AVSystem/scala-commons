@@ -57,7 +57,7 @@ case class OpenApiMetadata[T](
         delete = ops.getOpt(HttpMethod.DELETE).toOptArg
       )
       (path, RefOr(pathItem))
-    }.toMap)
+    }.intoMap[ITreeMap])
   }
 
   def openapi(
@@ -160,9 +160,9 @@ case class OpenApiBodyOperation[T](
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]] =
     singleBody.map(_.requestBody(resolver).opt).getOrElse {
       if (bodyFields.isEmpty) Opt.Empty else Opt {
-        val fields = bodyFields.iterator.map(p => (p.info.name, p.schema(resolver))).toMap
+        val fields = bodyFields.iterator.map(p => (p.info.name, p.schema(resolver))).toList
         val requiredFields = bodyFields.collect { case p if !p.info.hasFallbackValue => p.info.name }
-        val schema = Schema(`type` = DataType.Object, properties = fields, required = requiredFields)
+        val schema = Schema(`type` = DataType.Object, properties = Mapping(fields), required = requiredFields)
         val mimeType = if (formBody) HttpBody.FormType else HttpBody.JsonType
         RefOr(RestRequestBody.simpleRequestBody(mimeType, RefOr(schema), requiredFields.nonEmpty))
       }

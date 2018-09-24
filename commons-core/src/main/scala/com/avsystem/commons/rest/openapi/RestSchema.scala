@@ -8,6 +8,7 @@ import com.avsystem.commons.rest.openapi.adjusters.SchemaAdjuster
 import com.avsystem.commons.rest.{HttpBody, HttpResponseType}
 
 import scala.annotation.implicitNotFound
+import scala.collection.mutable
 
 @implicitNotFound("RestSchema for ${T} not found")
 trait RestSchema[T] { self =>
@@ -208,7 +209,7 @@ final class SchemaRegistry(nameToRef: String => String, initial: Iterable[(Strin
   private[this] case class Entry(source: Opt[RestSchema[_]], schema: RefOr[Schema])
 
   private[this] val resolving = new MHashSet[String]
-  private[this] val registry = new MLinkedHashMap[String, MListBuffer[Entry]]
+  private[this] val registry = new mutable.OpenHashMap[String, MListBuffer[Entry]]
     .setup(_ ++= initial.iterator.map { case (n, s) => (n, MListBuffer[Entry](Entry(Opt.Empty, s))) })
 
   def registeredSchemas: Map[String, RefOr[Schema]] =
@@ -219,7 +220,7 @@ final class SchemaRegistry(nameToRef: String => String, initial: Iterable[(Strin
           s"Multiple schemas named $k detected - you may want to disambiguate them using @name annotation"
         )
       }
-    }.toMap
+    }.intoMap[ITreeMap]
 
   def resolve(restSchema: RestSchema[_]): RefOr[Schema] = restSchema.name match {
     case Opt(name) =>

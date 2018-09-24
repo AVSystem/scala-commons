@@ -15,7 +15,7 @@ object Implicits {
 
 /**
   * Extends the functionality of [[scala.annotation.implicitNotFound]] so that implicit-not-found error message
-  * is itself resolved using implicit search. This mechanism is used by [[Implicits.infer[T]*]] and macro engines
+  * is itself resolved using implicit search. This mechanism is used by [[Implicits.infer[T]:T*]] and macro engines
   * that use it.
   *
   * Example: we have a wrapper class `Box[T]` and we want a custom error message when `GenCodec[Box[T]]` for some type

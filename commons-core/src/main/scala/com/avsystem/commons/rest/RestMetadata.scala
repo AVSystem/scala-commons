@@ -219,7 +219,7 @@ case class HttpMethodMetadata[T](
 /**
   * Typeclass used during [[RestMetadata]] materialization to determine whether a real method is a valid HTTP
   * method. Usually this means that the result must be a type wrapped into something that captures asynchronous
-  * computation, e.g. [[scala.concurrent.Future]]. Because REST framework core tries to be agnostic about this
+  * computation, e.g. `Future`. Because REST framework core tries to be agnostic about this
   * asynchronous wrapper (not everyone likes `Future`s), there are no default implicits provided for [[HttpResponseType]].
   * They must be provided externally.
   *
@@ -227,7 +227,7 @@ case class HttpMethodMetadata[T](
   * for arbitrary type `T`. For [[RestMetadata]] materialization this means that every method which returns a
   * `Future` is considered a valid HTTP method. [[FutureRestImplicits]] is injected into materialization of
   * [[RestMetadata]] through one of the base companion classes, e.g. [[DefaultRestApiCompanion]].
-  * See [[RpcMacroInstances]] for more information on injection of implicits.
+  * See [[com.avsystem.commons.rpc.RpcMacroInstances RpcMacroInstances]] for more information on injection of implicits.
   */
 @implicitNotFound("${T} is not a valid result type of HTTP REST method")
 case class HttpResponseType[T]()

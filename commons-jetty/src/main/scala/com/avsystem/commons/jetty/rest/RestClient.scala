@@ -49,7 +49,7 @@ object RestClient {
               HttpBody(getContentAsString(), MimeTypes.getContentTypeWithoutCharset(contentType))
             }
             val headers = httpResp.getHeaders.iterator.asScala.map(h => (h.getName, HeaderValue(h.getValue))).toList
-            val response = RestResponse(httpResp.getStatus, new Mapping(headers), body)
+            val response = RestResponse(httpResp.getStatus, Mapping(headers), body)
             callback(Success(response))
           } else {
             callback(Failure(result.getFailure))

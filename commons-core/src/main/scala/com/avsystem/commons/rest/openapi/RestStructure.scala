@@ -49,12 +49,12 @@ object RestStructure extends AdtMetadataCompanion[RestStructure] {
               val caseFieldSchema = RefOr(Schema.enumOf(List(caseName)))
               custom.restSchema.map({
                 case RefOr.Value(caseSchema) => caseSchema.copy(
-                  properties = caseSchema.properties.updated(caseFieldName, caseFieldSchema),
+                  properties = caseSchema.properties + (caseFieldName -> caseFieldSchema),
                   required = caseFieldName :: caseSchema.required
                 )
                 case ref => Schema(allOf = List(RefOr(Schema(
                   `type` = DataType.Object,
-                  properties = Map(caseFieldName -> caseFieldSchema),
+                  properties = Mapping(caseFieldName -> caseFieldSchema),
                   required = List(caseFieldName)
                 )), ref))
               }, custom.taggedName)
@@ -70,16 +70,16 @@ object RestStructure extends AdtMetadataCompanion[RestStructure] {
           }
           RefOr(Schema(
             `type` = DataType.Object,
-            properties = Map(caseName -> caseSchema),
+            properties = Mapping(caseName -> caseSchema),
             required = List(caseName)
           ))
         }
       }
       val disc = caseFieldOpt.map { caseFieldName =>
-        val mapping = cases.collect {
+        val mapping = Mapping(cases.collect {
           case custom: CustomCase[_] if custom.taggedName != custom.info.rawName =>
             (custom.info.rawName, custom.taggedName)
-        }.toMap
+        })
         Discriminator(caseFieldName, mapping)
       }
       RefOr(applyAdjusters(Schema(oneOf = caseSchemas, discriminator = disc.toOptArg)))
@@ -122,7 +122,10 @@ object RestStructure extends AdtMetadataCompanion[RestStructure] {
             fields.iterator.map(f => (f.info.rawName, f.resolveSchema(resolver)))
           val required = caseFieldName.iterator ++
             fields.iterator.filterNot(_.hasFallbackValue).map(_.info.rawName)
-          RefOr(applyAdjusters(Schema(`type` = DataType.Object, properties = props.toMap, required = required.toList)))
+          RefOr(applyAdjusters(Schema(`type` = DataType.Object,
+            properties = Mapping(props.toList),
+            required = required.toList
+          )))
       }
   }
   object Record extends AdtMetadataCompanion[Record]
@@ -138,7 +141,7 @@ object RestStructure extends AdtMetadataCompanion[RestStructure] {
 
     def createSchema(resolver: SchemaResolver, caseFieldName: Opt[String]): RefOr[Schema] =
       RefOr(applyAdjusters(Schema(`type` = DataType.Object,
-        properties = caseFieldName.map(cfn => (cfn, RefOr(Schema.enumOf(List(info.rawName))))).toMap,
+        properties = Mapping(caseFieldName.map(cfn => (cfn, RefOr(Schema.enumOf(List(info.rawName))))).toList),
         required = caseFieldName.toList
       )))
   }

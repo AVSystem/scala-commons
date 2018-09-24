@@ -35,13 +35,18 @@ trait SharedExtensions extends CompatSharedExtensions {
 
   implicit def tryCompanionOps(trc: Try.type): TryCompanionOps.type = TryCompanionOps
 
-  implicit def partialFunctionOps[A, B](pf: PartialFunction[A, B]): PartialFunctionOps[A, B] = new PartialFunctionOps(pf)
+  implicit def partialFunctionOps[A, B](pf: PartialFunction[A, B]): PartialFunctionOps[A, B] =
+    new PartialFunctionOps(pf)
 
   implicit def setOps[A](set: BSet[A]): SetOps[A] = new SetOps(set)
 
-  implicit def traversableOnceOps[C[X] <: TraversableOnce[X], A](coll: C[A]): TraversableOnceOps[C, A] = new TraversableOnceOps(coll)
+  implicit def traversableOnceOps[C[X] <: TraversableOnce[X], A](coll: C[A]): TraversableOnceOps[C, A] =
+    new TraversableOnceOps(coll)
 
   implicit def traversableOps[C[X] <: BTraversable[X], A](coll: C[A]): TraversableOps[C, A] = new TraversableOps(coll)
+
+  implicit def pairTraversableOnceOps[C[X] <: TraversableOnce[X], K, V](coll: C[(K, V)]): PairTraversableOnceOps[C, K, V] =
+    new PairTraversableOnceOps(coll)
 
   implicit def mapOps[M[X, Y] <: BMap[X, Y], K, V](map: M[K, V]): MapOps[M, K, V] = new MapOps(map)
 
@@ -513,6 +518,14 @@ object SharedExtensions extends SharedExtensions {
 
     def asyncForeach(fun: A => Future[Unit])(implicit ec: ExecutionContext): Future[Unit] =
       coll.foldLeft[Future[Unit]](Future.unit)((fu, a) => fu.flatMap(_ => fun(a)))
+  }
+
+  class PairTraversableOnceOps[C[X] <: TraversableOnce[X], K, V](private val coll: C[(K, V)]) extends AnyVal {
+    def intoMap[M[X, Y] <: BMap[X, Y]](implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): M[K, V] = {
+      val builder = cbf()
+      coll.foreach(builder += _)
+      builder.result()
+    }
   }
 
   class SetOps[A](private val set: BSet[A]) extends AnyVal {
