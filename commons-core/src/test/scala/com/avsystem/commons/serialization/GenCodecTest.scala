@@ -16,6 +16,7 @@ sealed trait SealedBase
 object SealedBase {
   case object CaseObject extends SealedBase
   case class CaseClass(str: String) extends SealedBase
+  case class Rec(sub: Opt[SealedBase], local: Opt[Rec]) extends SealedBase
 
   sealed trait InnerBase extends SealedBase
   object InnerBase {
@@ -44,6 +45,7 @@ object FlatSealedBase extends HasGenCodec[FlatSealedBase] {
     @generated def id = "third"
   }
   case class RecursiveCase(id: String, sub: Opt[FlatSealedBase]) extends FlatSealedBase
+  case class LocallyRecursiveCase(id: String, sub: Opt[LocallyRecursiveCase]) extends FlatSealedBase
 }
 
 abstract class Wrapper[Self <: Wrapper[Self] : ClassTag](private val args: Any*) { this: Self =>

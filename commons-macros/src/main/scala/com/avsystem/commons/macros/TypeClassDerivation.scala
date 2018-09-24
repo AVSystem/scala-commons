@@ -156,7 +156,7 @@ trait TypeClassDerivation extends MacroCommons {
       }
       val dependencies = subtypes.zipWithIndex.map { case (depTpe, idx) =>
         val depTree = c.inferImplicitValue(typeClassInstance(depTpe), withMacrosDisabled = true) match {
-          case EmptyTree => materializeFor(depTpe)
+          case EmptyTree => q"${c.prefix}.materialize[$depTpe]"
           case t => replaceCompanion(t)
         }
         KnownSubtype(idx, depTpe, depTree)
@@ -167,44 +167,6 @@ trait TypeClassDerivation extends MacroCommons {
     singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown(dtpe)
   }
 
-  object GuardedMark
-
-  object GuardedInstance {
-    def unapply(tree: Tree): Option[(TermName, Tree)] = tree match {
-      case Block(List(ValDef(_, deferredName, _, _), ValDef(_, _, _, unguardedResult), _), _)
-        if internal.attachments(tree).contains[GuardedMark.type] => Some((deferredName, unguardedResult))
-      case _ => None
-    }
-  }
-
-  class RedundantGuardRemover(origTree: Tree) extends Transformer {
-    def transformed: Tree = transform(origTree)
-
-    override def transform(tree: Tree): Tree = tree match {
-      case GuardedInstance(_, unguardedResult) =>
-        // In order to check if deferred instance is really needed, I MUST typecheck the tree so that implicits
-        // are resolved. However, modifying and returning typechecked tree pretty much ALWAYS screws things up,
-        // so I have to modify and return the untyped tree
-        val needsGuarding = c.typecheck(origTree, silent = true) match {
-          case EmptyTree => true
-          case t => t.exists {
-            case GuardedInstance(deferredName, typedUnguarded) =>
-              typedUnguarded.exists {
-                case Ident(`deferredName`) => true
-                case _ => false
-              }
-            case _ => false
-          }
-        }
-        if (needsGuarding) internal.removeAttachment[GuardedMark.type](tree)
-        else unguardedResult
-      case _ => super.transform(tree)
-    }
-  }
-
-  def removeRedundantGuard(tree: Tree): Tree =
-    new RedundantGuardRemover(tree).transformed
-
   def withRecursiveImplicitGuard(targetTpe: Type, unguarded: Tree): Tree = {
     val dtpe = targetTpe.dealias
     val tcTpe = typeClassInstance(dtpe)
@@ -214,21 +176,31 @@ trait TypeClassDerivation extends MacroCommons {
     // introducing intermediate val to make sure exact type of materialized instance is not lost
     val underlyingName = c.freshName(TermName("underlying"))
 
-    val result =
+    val withDummyImplicit =
+      q"""
+         implicit def $deferredName: $DeferredInstanceCls[$tcTpe] with $tcTpe = $PredefObj.???
+         $unguarded
+       """
+
+    def guarded: Tree =
       q"""
         implicit val $deferredName: $DeferredInstanceCls[$tcTpe] with $tcTpe =
-        ${implementDeferredInstance(dtpe)}
+          ${implementDeferredInstance(dtpe)}
         val $underlyingName = $unguarded
         $deferredName.underlying = $underlyingName
         $underlyingName
        """
 
-    internal.updateAttachment(result, GuardedMark)
+    c.typecheck(withDummyImplicit, silent = true) match {
+      case Block(List(deferredDef), typedUnguarded)
+        if !typedUnguarded.exists(_.symbol == deferredDef.symbol) => typedUnguarded
+      case _ => guarded
+    }
   }
 
   def materialize[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
-    removeRedundantGuard(withRecursiveImplicitGuard(tpe, materializeFor(tpe)))
+    withRecursiveImplicitGuard(tpe, materializeFor(tpe))
   }
 
   def materializeImplicitly[T: c.WeakTypeTag](allow: Tree): Tree =

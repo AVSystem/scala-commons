@@ -332,9 +332,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     }
   }
 
-  case class CaseClassInfo(idx: Int, subtype: Type, applyUnapply: ApplyUnapply, applyParams: List[ApplyParam]) extends CaseInfo {
-    def depInstance =
-      forApplyUnapply(subtype, applyUnapply.apply, applyUnapply.unapply, applyParams)
+  case class CaseClassInfo(idx: Int, subtype: Type, applyParams: List[ApplyParam]) extends CaseInfo {
+    def depInstance: Tree =
+      q"${c.prefix}.applyUnapplyCodec[$subtype]"
   }
 
   case class CaseObjectInfo(idx: Int, subtype: Type, singleton: Tree) extends CaseInfo {
@@ -353,7 +353,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         val applyParams = au.params.zipWithIndex.map { case ((s, defaultValue), pidx) =>
           ApplyParam(pidx, s, defaultValue, dependency(actualParamType(s), subTcTpe, s))
         }
-        CaseClassInfo(idx, st, au, applyParams)
+        CaseClassInfo(idx, st, applyParams)
       } orElse singleValueFor(st).map { singleton =>
         CaseObjectInfo(idx, st, singleton)
       } getOrElse abort(s"")
@@ -433,6 +433,17 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
          $AllowImplicitMacroObj[$typeClass[T]]
        $GenCodecObj.materialize[$tpe]
      """
+  }
+
+  def applyUnapplyCodec[T: WeakTypeTag]: Tree = {
+    val tpe = weakTypeOf[T].dealias
+    val subTcTpe = typeClassInstance(tpe)
+    val au = applyUnapplyFor(tpe).getOrElse(abort(s"$tpe is not a case class or case class like type"))
+    val applyParams = au.params.zipWithIndex.map { case ((s, defaultValue), pidx) =>
+      ApplyParam(pidx, s, defaultValue, dependency(actualParamType(s), subTcTpe, s))
+    }
+    val unguarded = forApplyUnapply(tpe, au.apply, au.unapply, applyParams)
+    withRecursiveImplicitGuard(tpe, unguarded)
   }
 
   def fromApplyUnapplyProvider[T: WeakTypeTag](applyUnapplyProvider: Tree): Tree = {

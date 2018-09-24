@@ -72,7 +72,11 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     *     GenCodec.fromApplyUnapplyProvider[ThirdParty](ThirdPartyFakeCompanion)
     * }}}
     */
-  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] = macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
+  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] =
+  macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
+
+  def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] =
+  macro macros.serialization.GenCodecMacros.applyUnapplyCodec[T]
 
   @explicitGenerics
   def read[T](input: Input)(implicit codec: GenCodec[T]): T =
