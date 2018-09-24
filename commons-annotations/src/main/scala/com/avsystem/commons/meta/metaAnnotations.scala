@@ -200,7 +200,7 @@ trait MetadataParamStrategy extends StaticAnnotation
   *     extends scala.annotation.StaticAnnotation
   * }}}
   **/
-final class infer extends MetadataParamStrategy
+final class infer(val clue: String = "") extends MetadataParamStrategy
 object infer {
   /**
     * Can be used as default value of `@infer` annotation parameters.

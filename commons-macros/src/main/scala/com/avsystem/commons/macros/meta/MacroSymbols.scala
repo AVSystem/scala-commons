@@ -100,8 +100,8 @@ trait MacroSymbols extends MacroCommons {
     def infer(tpt: Tree): TermName =
       infer(getType(tpt))
 
-    def infer(tpe: Type, forSym: MacroSymbol = this): TermName =
-      inferCachedImplicit(tpe, s"${forSym.problemStr}: ", forSym.pos)
+    def infer(tpe: Type, forSym: MacroSymbol = this, clue: String = ""): TermName =
+      inferCachedImplicit(tpe, s"${forSym.problemStr}: $clue", forSym.pos)
 
     val name: TermName = symbol.name.toTermName
     val safeName: TermName = c.freshName(symbol.name.toTermName)
@@ -174,6 +174,7 @@ trait MacroSymbols extends MacroCommons {
   }
 
   case class FallbackTag(annotTree: Tree) {
+    def isEmpty: Boolean = annotTree == EmptyTree
     def asList: List[Tree] = List(annotTree).filter(_ != EmptyTree)
     def orElse(other: FallbackTag): FallbackTag = FallbackTag(annotTree orElse other.annotTree)
   }
@@ -220,7 +221,10 @@ trait MacroSymbols extends MacroCommons {
       val realTagTpe = tagAnnot.map(_.tpe).getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
 
       if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
-      else Fail(s"it only accepts ${realSymbol.shortDescription}s tagged with $requiredTag")
+      else {
+        val orUntagged = if (whenUntaggedTag.isEmpty) "" else " or untagged"
+        Fail(s"it only accepts ${realSymbol.shortDescription}s tagged with $requiredTag$orUntagged")
+      }
     }
   }
 

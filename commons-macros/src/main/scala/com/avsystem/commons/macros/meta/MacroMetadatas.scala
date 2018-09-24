@@ -93,7 +93,9 @@ trait MacroMetadatas extends MacroSymbols {
 
     def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
       annot.tpe.asSeenFrom(ownerType, ownerType.typeSymbol) match {
-        case t if t <:< InferAT => new ImplicitParam(this, paramSym)
+        case t if t <:< InferAT =>
+          val clue = annot.findArg[String](InferAT.member(TermName("clue")), "")
+          new ImplicitParam(this, paramSym, clue)
         case t if t <:< ReifyAnnotAT => new ReifiedAnnotParam(this, paramSym)
         case t if t <:< ReifyNameAT =>
           val useRawName = annot.findArg[Boolean](ReifyNameAT.member(TermName("useRawName")), false)
@@ -110,7 +112,7 @@ trait MacroMetadatas extends MacroSymbols {
         if (findAnnotation(ps, CompositeAT).nonEmpty)
           new CompositeParam(this, ps)
         else findAnnotation(ps, MetadataParamStrategyType).map(paramByStrategy(ps, _)).getOrElse {
-          if (ps.isImplicit) new ImplicitParam(this, ps)
+          if (ps.isImplicit) new ImplicitParam(this, ps, "")
           else new InvalidParam(this, ps, "no metadata param strategy annotation found")
         }
       })
@@ -150,7 +152,7 @@ trait MacroMetadatas extends MacroSymbols {
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree]
   }
 
-  class ImplicitParam(owner: MetadataConstructor, symbol: Symbol)
+  class ImplicitParam(owner: MetadataConstructor, symbol: Symbol, clue: String)
     extends DirectMetadataParam(owner, symbol) with ArityParam {
 
     def allowNamedMulti: Boolean = false
@@ -162,9 +164,9 @@ trait MacroMetadatas extends MacroSymbols {
       arity match {
         case ParamArity.Single(tpe) =>
           if (checked)
-            tryInferCachedImplicit(tpe).map(n => Ok(q"$n")).getOrElse(Fail(implicitNotFoundMsg(tpe)))
+            tryInferCachedImplicit(tpe).map(n => Ok(q"$n")).getOrElse(Fail(clue + implicitNotFoundMsg(tpe)))
           else
-            Ok(q"${infer(tpe, matchedSymbol.real)}")
+            Ok(q"${infer(tpe, matchedSymbol.real, clue)}")
         case ParamArity.Optional(tpe) =>
           Ok(mkOptional(tryInferCachedImplicit(tpe).map(n => q"$n")))
         case _: ParamArity.Multi =>
