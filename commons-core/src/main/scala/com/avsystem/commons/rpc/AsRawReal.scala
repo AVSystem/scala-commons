@@ -31,7 +31,7 @@ object AsRaw {
   ): ImplicitNotFound[AsRaw[Try[Raw], Try[Real]]] = ImplicitNotFound()
 }
 
-@implicitNotFound("Cannot deseriralize ${Real} from ${Raw}, appropriate AsReal instance not found")
+@implicitNotFound("Cannot deserialize ${Real} from ${Raw}, appropriate AsReal instance not found")
 trait AsReal[Raw, Real] {
   def asReal(raw: Raw): Real
 }
