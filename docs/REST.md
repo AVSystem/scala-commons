@@ -16,6 +16,7 @@ The `commons-jetty` module provides Jetty-based implementations for JVM.
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Quickstart example](#quickstart-example)
+- [Annotations](#annotations)
 - [REST API traits](#rest-api-traits)
   - [Companion objects](#companion-objects)
     - [Manual declaration of implicits](#manual-declaration-of-implicits)
