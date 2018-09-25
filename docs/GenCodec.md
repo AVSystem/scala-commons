@@ -1,7 +1,8 @@
 # [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html)
 
 AVSystem commons library contains a typesafe, typeclass-based serialization framework, similar to other Scala 
-serialization libraries like [Circe](https://circe.github.io/circe/) or [uPickle](https://github.com/lihaoyi/upickle). `GenCodec` is not a JSON library.
+serialization libraries like [Circe](https://circe.github.io/circe/) or [uPickle](https://github.com/lihaoyi/upickle).
+However, `GenCodec` is **not** a JSON library even though it has support for JSON serialization.
 
 **[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/index.html)**
 
