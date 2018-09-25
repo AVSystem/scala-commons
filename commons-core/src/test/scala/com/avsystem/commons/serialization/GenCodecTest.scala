@@ -196,10 +196,9 @@ class GenCodecTest extends CodecTestBase {
 
   class CaseClassLike(val str: String, val intList: List[Int])
     extends Wrapper[CaseClassLike](str, intList)
-  object CaseClassLike {
+  object CaseClassLike extends HasGenCodec[CaseClassLike] {
     def apply(@name("some.str") str: String, intList: List[Int]): CaseClassLike = new CaseClassLike(str, intList)
     def unapply(ccl: CaseClassLike): Opt[(String, List[Int])] = (ccl.str, ccl.intList).opt
-    implicit val codec: GenCodec[CaseClassLike] = GenCodec.materialize[CaseClassLike]
   }
 
   test("case class like test") {
@@ -216,10 +215,9 @@ class GenCodecTest extends CodecTestBase {
     def apply(a: A, lb: List[B]): C = doApply(a, lb)
     def unapply(c: C): Option[(A, List[B])] = doUnapply(c)
   }
-  object HasInheritedApply extends ApplyAndUnapply[String, Int, HasInheritedApply] {
+  object HasInheritedApply extends HasGenCodec[HasInheritedApply] with ApplyAndUnapply[String, Int, HasInheritedApply] {
     protected def doApply(a: String, lb: List[Int]): HasInheritedApply = new HasInheritedApply(a, lb)
     protected def doUnapply(c: HasInheritedApply): Option[(String, List[Int])] = (c.str, c.intList).option
-    implicit val codec: GenCodec[HasInheritedApply] = GenCodec.materialize[HasInheritedApply]
   }
 
   test("case class like with inherited apply/unapply test") {
@@ -242,14 +240,10 @@ class GenCodecTest extends CodecTestBase {
   }
 
   case class VarargsCaseClass(int: Int, strings: String*)
-  object VarargsCaseClass {
-    implicit val codec: GenCodec[VarargsCaseClass] = GenCodec.materialize[VarargsCaseClass]
-  }
+  object VarargsCaseClass extends HasGenCodec[VarargsCaseClass]
 
   case class OnlyVarargsCaseClass(strings: String*)
-  object OnlyVarargsCaseClass {
-    implicit val codec: GenCodec[OnlyVarargsCaseClass] = GenCodec.materialize[OnlyVarargsCaseClass]
-  }
+  object OnlyVarargsCaseClass extends HasGenCodec[OnlyVarargsCaseClass]
 
   test("varargs case class test") {
     testWriteRead(VarargsCaseClass(42, "foo", "bar"),
@@ -264,17 +258,15 @@ class GenCodecTest extends CodecTestBase {
   }
 
   class VarargsCaseClassLike(val str: String, val ints: Seq[Int]) extends Wrapper[VarargsCaseClassLike](str, ints)
-  object VarargsCaseClassLike {
+  object VarargsCaseClassLike extends HasGenCodec[VarargsCaseClassLike] {
     def apply(@name("some.str") str: String, ints: Int*): VarargsCaseClassLike = new VarargsCaseClassLike(str, ints)
     def unapplySeq(vccl: VarargsCaseClassLike): Opt[(String, Seq[Int])] = (vccl.str, vccl.ints).opt
-    implicit val codec: GenCodec[VarargsCaseClassLike] = GenCodec.materialize[VarargsCaseClassLike]
   }
 
   class OnlyVarargsCaseClassLike(val strings: Seq[String]) extends Wrapper[OnlyVarargsCaseClassLike](strings)
-  object OnlyVarargsCaseClassLike {
+  object OnlyVarargsCaseClassLike extends HasGenCodec[OnlyVarargsCaseClassLike] {
     def apply(strings: String*): OnlyVarargsCaseClassLike = new OnlyVarargsCaseClassLike(strings)
     def unapplySeq(vccl: OnlyVarargsCaseClassLike): Opt[Seq[String]] = vccl.strings.opt
-    implicit val codec: GenCodec[OnlyVarargsCaseClassLike] = GenCodec.materialize[OnlyVarargsCaseClassLike]
   }
 
   test("varargs case class like test") {
@@ -326,12 +318,8 @@ class GenCodecTest extends CodecTestBase {
   sealed trait CustomList
   case object CustomTail extends CustomList
   @transparent case class CustomCons(tail: CustomList) extends CustomList
-  object CustomCons {
-    implicit val codec: GenCodec[CustomCons] = GenCodec.materialize[CustomCons]
-  }
-  object CustomList {
-    implicit val codec: GenCodec[CustomList] = GenCodec.materialize[CustomList]
-  }
+  object CustomCons extends HasGenCodec[CustomCons]
+  object CustomList extends HasGenCodec[CustomList]
 
   test("recursively defined sealed hierarchy with explicit case class codec test") {
     testWriteRead[CustomList](CustomTail, Map("CustomTail" -> Map()))
@@ -491,9 +479,7 @@ class GenCodecTest extends CodecTestBase {
   @flatten("kejs") sealed trait CustomizedSeal
   @defaultCase(transient = true) case class CustomizedCase(str: String) extends CustomizedSeal
   case object CustomizedObjekt extends CustomizedSeal
-  object CustomizedSeal {
-    implicit val codec: GenCodec[CustomizedSeal] = GenCodec.materialize[CustomizedSeal]
-  }
+  object CustomizedSeal extends HasGenCodec[CustomizedSeal]
 
   test("customized flat sealed hierarchy test") {
     testWriteRead[CustomizedSeal](CustomizedCase("dafuq"),

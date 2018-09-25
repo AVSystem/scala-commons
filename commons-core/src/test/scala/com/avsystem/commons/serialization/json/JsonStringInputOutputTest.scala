@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization.json
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization.{GenCodec, Input, Output}
+import com.avsystem.commons.serialization.{GenCodec, HasGenCodec, Input, Output, transientDefault, whenAbsent}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck._
 import org.scalactic.source.Position
@@ -281,5 +281,16 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
 
       deserialized shouldBe dncc
     }
+  }
+
+  case class NestedOne(@transientDefault n: Option[NestedOne] = None)
+  object NestedOne extends HasGenCodec[NestedOne]
+
+  case class NestedTwo(@transientDefault @whenAbsent(None) n: Option[NestedTwo])
+  object NestedTwo extends HasGenCodec[NestedTwo]
+
+  test("serializing recursively defined case classes with optional field") {
+    assert(JsonStringOutput.write(NestedOne()) == "{}")
+    assert(JsonStringOutput.write(NestedTwo(None)) == "{}")
   }
 }
