@@ -463,8 +463,8 @@ object Example extends HasGenCodec[Example]
   * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#requestBodyObject Request Body Object]]
   */
 case class RequestBody(
-  content: Map[String, MediaType],
   @td description: OptArg[String] = OptArg.Empty,
+  content: Map[String, MediaType],
   @td required: Boolean = false
 )
 object RequestBody extends HasGenCodec[RequestBody]

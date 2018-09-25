@@ -47,7 +47,8 @@ final class Mapping[+V](private val wrapped: IIterable[(String, V)])
 
   def get(key: String): Option[V] = map.get(key)
 
-  def -(key: String): Mapping[V] = Mapping(vector.filter({ case (k, _) => k == key }))
+  def -(key: String): Mapping[V] =
+    Mapping(vector.filter({ case (k, _) => k == key }))
 
   def +[V0 >: V](pair: (String, V0)): Mapping[V0] =
     Mapping(wrapped ++ List(pair))

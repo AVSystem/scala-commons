@@ -1099,15 +1099,25 @@ which are generated for path, header and query parameters of REST methods.
 
 #### Adjusting operations
 
-Finally, there is `OperationAdjuster` annotation trait with default implementation `@adjustOperation`.
-Operation adjuster can be applied on REST HTTP methods in order to transform
-[Operation Objects](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#operationObject)
+For adjusting [Operation Objects](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#operationObject)
+there is `OperationAdjuster` annotation trait with default implementation `@adjustOperation`.
+Operation adjuster can be applied on REST HTTP methods in order to transform Operation Objects
 generated for them. This in particular means that operation adjusters can modify request body and responses
-of an operation.
+of an operation. When operation adjuster is applied on a [prefix method](#prefix-methods), it will apply to all
+operations associated with result of this prefix method.
+
+#### Adjusting path items
+
+For adjusting [Path Item Objects](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#pathItemObject)
+there is `PathItemAdjuster` annotation trait with default implementagion `@adjustPathItem`.
+Path item adjuster can be applied on REST HTTP methods in order to transform Path Item objects generated for them.
+Because multiple REST HTTP methods may have the same path, adjusters are collected from all methods and ultimately all
+are applied on the associated Path Item Object. When path item adjuster is applied on a [prefix method](#prefix-methods),
+it will apply to all Path Item Objects associated with result of this prefix method.
 
 ### Limitations
 
-* Scala-level default values are not included in the OpenAPI Schema objects.
+* Scala-level default values of method parameters are not included in the OpenAPI Schema objects.
   You need to use `@whenAbsent` annotation instead.
 * Current representation of OpenAPI document does not support
 [specification extensions](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions).

@@ -30,16 +30,19 @@ case class OpenApiMetadata[T](
 ) {
   val httpMethods: List[OpenApiOperation[_]] = (gets: List[OpenApiOperation[_]]) ++ bodyMethods
 
-  def operations(resolver: SchemaResolver): Iterator[(String, HttpMethod, Operation)] =
+  def operations(resolver: SchemaResolver): Iterator[PathOperation] =
     prefixes.iterator.flatMap(_.operations(resolver)) ++
-      httpMethods.iterator.map(m => (m.pathPattern, m.methodTag.method, m.operation(resolver)))
+      httpMethods.iterator.map(_.pathOperation(resolver))
 
   def paths(resolver: SchemaResolver): Paths = {
     val operationIds = new mutable.HashSet[String]
-    val pathsMap = new MLinkedHashMap[String, MLinkedHashMap[HttpMethod, Operation]]
+    val pathsMap = new MLinkedHashMap[String, mutable.OpenHashMap[HttpMethod, Operation]]
+    // linked set to remove possible duplicates from prefix methods but to retain order
+    val pathAdjustersMap = new mutable.OpenHashMap[String, MLinkedHashSet[PathItemAdjuster]]
     operations(resolver).foreach {
-      case (path, httpMethod, operation) =>
-        val opsMap = pathsMap.getOrElseUpdate(path, new MLinkedHashMap)
+      case PathOperation(path, httpMethod, operation, pathAdjusters) =>
+        val opsMap = pathsMap.getOrElseUpdate(path, new mutable.OpenHashMap)
+        pathAdjustersMap.getOrElseUpdate(path, new MLinkedHashSet) ++= pathAdjusters
         opsMap(httpMethod) = operation
         operation.operationId.foreach { opid =>
           if (!operationIds.add(opid)) {
@@ -56,7 +59,7 @@ case class OpenApiMetadata[T](
         patch = ops.getOpt(HttpMethod.PATCH).toOptArg,
         delete = ops.getOpt(HttpMethod.DELETE).toOptArg
       )
-      (path, RefOr(pathItem))
+      (path, RefOr(pathAdjustersMap(path).foldRight(pathItem)(_ adjustPathItem _)))
     }.intoMap[ITreeMap])
   }
 
@@ -81,10 +84,19 @@ case class OpenApiMetadata[T](
 }
 object OpenApiMetadata extends RpcMetadataCompanion[OpenApiMetadata]
 
+case class PathOperation(
+  path: String,
+  method: HttpMethod,
+  operation: Operation,
+  pathAdjusters: List[PathItemAdjuster]
+)
+
 sealed trait OpenApiMethod[T] extends TypedMetadata[T] {
   @reifyName(useRawName = true) def name: String
   @reifyAnnot def methodTag: RestMethodTag
   @multi @rpcParamMetadata @tagged[NonBodyTag] def parameters: List[OpenApiParameter[_]]
+  @multi @reifyAnnot def operationAdjusters: List[OperationAdjuster]
+  @multi @reifyAnnot def pathAdjusters: List[PathItemAdjuster]
 
   val pathPattern: String = {
     val pathParts = methodTag.path :: parameters.flatMap {
@@ -100,28 +112,28 @@ case class OpenApiPrefix[T](
   name: String,
   methodTag: Prefix,
   parameters: List[OpenApiParameter[_]],
+  operationAdjusters: List[OperationAdjuster],
+  pathAdjusters: List[PathItemAdjuster],
   @optional @reifyAnnot operationIdPrefix: Opt[operationIdPrefix],
-  @multi @reifyAnnot operationAdjusters: List[OperationAdjuster],
   @infer @checked result: OpenApiMetadata.Lazy[T]
 ) extends OpenApiMethod[T] {
 
-  def operations(resolver: SchemaResolver): Iterator[(String, HttpMethod, Operation)] = {
+  def operations(resolver: SchemaResolver): Iterator[PathOperation] = {
     val prefixParams = parameters.map(_.parameter(resolver))
     val oidPrefix = operationIdPrefix.fold(s"${name}_")(_.prefix)
-    result.value.operations(resolver).map { case (path, httpMethod, operation) =>
+    result.value.operations(resolver).map { case PathOperation(path, httpMethod, operation, subAdjusters) =>
       val prefixedOperation = operation.copy(
         operationId = operation.operationId.toOpt.map(oid => s"$oidPrefix$oid").toOptArg,
         parameters = prefixParams ++ operation.parameters
       )
       val adjustedOperation = operationAdjusters.foldRight(prefixedOperation)(_ adjustOperation _)
-      (pathPattern + path, httpMethod, adjustedOperation)
+      PathOperation(pathPattern + path, httpMethod, adjustedOperation, pathAdjusters ++ subAdjusters)
     }
   }
 }
 
 sealed trait OpenApiOperation[T] extends OpenApiMethod[T] {
   @infer @checked def resultType: RestResultType[T]
-  @multi @reifyAnnot def adjusters: List[OperationAdjuster]
   def methodTag: HttpMethodTag
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]]
 
@@ -132,16 +144,20 @@ sealed trait OpenApiOperation[T] extends OpenApiMethod[T] {
       parameters = parameters.map(_.parameter(resolver)),
       requestBody = requestBody(resolver).toOptArg
     )
-    adjusters.foldRight(op)(_ adjustOperation _)
+    operationAdjusters.foldRight(op)(_ adjustOperation _)
   }
+
+  def pathOperation(resolver: SchemaResolver): PathOperation =
+    PathOperation(pathPattern, methodTag.method, operation(resolver), pathAdjusters)
 }
 
 case class OpenApiGetOperation[T](
   name: String,
   methodTag: HttpMethodTag,
+  operationAdjusters: List[OperationAdjuster],
+  pathAdjusters: List[PathItemAdjuster],
   parameters: List[OpenApiParameter[_]],
-  resultType: RestResultType[T],
-  adjusters: List[OperationAdjuster]
+  resultType: RestResultType[T]
 ) extends OpenApiOperation[T] {
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]] = Opt.Empty
 }
@@ -149,12 +165,13 @@ case class OpenApiGetOperation[T](
 case class OpenApiBodyOperation[T](
   name: String,
   methodTag: HttpMethodTag,
+  operationAdjusters: List[OperationAdjuster],
+  pathAdjusters: List[PathItemAdjuster],
   parameters: List[OpenApiParameter[_]],
   @multi @rpcParamMetadata @tagged[BodyField] bodyFields: List[OpenApiBodyField[_]],
   @optional @encoded @rpcParamMetadata @tagged[Body] singleBody: Opt[OpenApiBody[_]],
   @isAnnotated[FormBody] formBody: Boolean,
-  resultType: RestResultType[T],
-  adjusters: List[OperationAdjuster]
+  resultType: RestResultType[T]
 ) extends OpenApiOperation[T] {
 
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]] =

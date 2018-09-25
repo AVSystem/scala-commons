@@ -2,7 +2,7 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.meta.Mapping
-import com.avsystem.commons.rest.openapi.adjusters.{description, example}
+import com.avsystem.commons.rest.openapi.adjusters.{bodyDescription, description, example, pathDescription, pathSummary, responseDescription, title}
 import com.avsystem.commons.rest.openapi.{Header => OASHeader, _}
 import com.avsystem.commons.rpc.AsRawReal
 import com.avsystem.commons.serialization.{flatten, whenAbsent}
@@ -49,9 +49,10 @@ trait RestTestApi {
   @GET def failingGet: Future[Unit]
   @GET def moreFailingGet: Future[Unit]
 
+  @pathDescription("path with a followed by b")
   @description("A really complex GET operation")
   @GET("a/b") def complexGet(
-    @Path("p1") p1: Int, @description("Very serious path parameter") @Path p2: String,
+    @Path("p1") p1: Int, @description("Very serious path parameter") @title("Stri") @Path p2: String,
     @Header("X-H1") h1: Int, @Header("X-H2") h2: String,
     q1: Int, @Query("q=2") @whenAbsent("q2def") q2: String = whenAbsent.value
   ): Future[RestEntity]
@@ -63,6 +64,8 @@ trait RestTestApi {
     b1: Int, @BodyField("b\"2") @description("weird body field") b2: String
   ): Future[RestEntity]
 
+  @bodyDescription("Serious body")
+  @responseDescription("Serious response")
   @PUT("") def singleBodyPut(
     @Body @description("REST entity description") entity: RestEntity
   ): Future[String]
@@ -74,6 +77,7 @@ trait RestTestApi {
     @whenAbsent(42) p2: Int = whenAbsent.value
   ): Future[String]
 
+  @pathSummary("summary for prefix paths")
   def prefix(
     p0: String,
     @Header("X-H0") h0: String,

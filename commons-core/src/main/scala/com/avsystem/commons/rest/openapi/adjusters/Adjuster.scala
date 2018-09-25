@@ -1,10 +1,10 @@
 package com.avsystem.commons
-package rest.openapi.adjusters
+package rest.openapi
+package adjusters
 
 import com.avsystem.commons.annotation.NotInheritedFromSealedTypes
 import com.avsystem.commons.meta.infer
 import com.avsystem.commons.rest.JsonValue
-import com.avsystem.commons.rest.openapi.{Operation, Parameter, RefOr, RestSchema, RestStructure, Schema}
 import com.avsystem.commons.rpc.AsRaw
 
 import scala.annotation.StaticAnnotation
@@ -50,18 +50,64 @@ trait ParameterAdjuster extends Adjuster {
 }
 
 trait ParameterSchemaAdjuster extends ParameterAdjuster { this: SchemaAdjuster =>
-  def adjustParameter(parameter: Parameter): Parameter =
+  final def adjustParameter(parameter: Parameter): Parameter =
     parameter.schema.fold(parameter)(s => parameter.copy(schema = s.map(adjustSchema)))
 }
 
 /**
-  * Base trait for annotation which may adjust [[Operation]] generated for REST RPC methods which translate to
-  * HTTP operations (i.e. it doesn't work for prefix methods).
-  * Operation adjusters may also be specified on prefix methods - this way they will be applied to all operations
+  * Base trait for annotations which may adjust [[Operation]] generated for REST HTTP methods.
+  * Operation adjusters may also be specified on prefix methods - they will be applied to all operations
   * generated for the result of this prefix method.
   */
 trait OperationAdjuster extends Adjuster {
   def adjustOperation(operation: Operation): Operation
+}
+
+/**
+  * Base trait for annotations which may adjust [[PathItem]] generated for REST HTTP methods.
+  * Path item adjusters may also be specified on prefix methods - they will be applied to all path items
+  * generated for the result this prefix method.
+  */
+trait PathItemAdjuster extends Adjuster {
+  def adjustPathItem(pathItem: PathItem): PathItem
+}
+
+/**
+  * Convenience implementation of [[OperationAdjuster]] for adjusting [[RequestBody]] of an operation.
+  * Request body adjuster is only be applied if [[Operation]] has [[RequestBody]] defined and it's not a
+  * reference.
+  */
+trait RequestBodyAdjuster extends OperationAdjuster {
+  final def adjustOperation(operation: Operation): Operation =
+    operation.requestBody match {
+      case OptArg(RefOr.Value(requestBody)) =>
+        operation.copy(requestBody = RefOr(adjustRequestBody(requestBody)))
+      case _ => operation
+    }
+
+  def adjustRequestBody(requestBody: RequestBody): RequestBody
+}
+
+/**
+  * Convenience implementation of [[OperationAdjuster]] for adjusting [[Response]] associated with `200 OK`
+  * status code (this may be changed by overriding `statusCode` method).
+  * Default response adjuster is only applied if [[Responses]] contains a [[Response]] defined for
+  * `200 OK` and it's not a reference.
+  */
+trait SuccessfulResponseAdjuster extends OperationAdjuster {
+  def statusCode: Int = 200
+  final def adjustOperation(operation: Operation): Operation =
+    operation.responses |> { resps =>
+      resps.byStatusCode.getOpt(statusCode) match {
+        case Opt(RefOr.Value(resp)) =>
+          operation.copy(responses = resps.copy(
+            byStatusCode = resps.byStatusCode.updated(statusCode, RefOr(adjustResponse(resp)))
+          ))
+        case _ => operation
+      }
+    }
+
+  def adjustResponse(response: Response): Response
 }
 
 /** Convenience implementation of [[SchemaAdjuster]] */
@@ -76,6 +122,26 @@ class adjustParameter(f: Parameter => Parameter) extends ParameterAdjuster {
 class adjustOperation(f: Operation => Operation) extends OperationAdjuster {
   def adjustOperation(value: Operation): Operation = f(value)
 }
+/** Convenience implementation of [[PathItemAdjuster]] */
+class adjustPathItem(f: PathItem => PathItem) extends PathItemAdjuster {
+  def adjustPathItem(value: PathItem): PathItem = f(value)
+}
+
+/**
+  * Sets the `title` of a [[Schema]]. It can be applied on standard [[SchemaAdjuster]] targets and also
+  * all parameters of REST methods (not just body parameters).
+  */
+class title(title: String) extends SchemaAdjuster with ParameterSchemaAdjuster {
+  def adjustSchema(schema: Schema): Schema = schema.copy(title = title)
+}
+
+/**
+  * Like [[description]] but changes [[Schema]] description instead of [[Parameter]] description when applied
+  * on a (non-body) parameter. It has no effect when applied on a method.
+  */
+class schemaDescription(desc: String) extends SchemaAdjuster with ParameterSchemaAdjuster {
+  def adjustSchema(schema: Schema): Schema = schema.copy(description = desc)
+}
 
 /**
   * Annotation that specifies description that will be included into generated OpenAPI specification.
@@ -87,6 +153,45 @@ class description(desc: String) extends SchemaAdjuster with ParameterAdjuster wi
   def adjustSchema(schema: Schema): Schema = schema.copy(description = desc)
   def adjustParameter(parameter: Parameter): Parameter = parameter.copy(description = desc)
   def adjustOperation(operation: Operation): Operation = operation.copy(description = desc)
+}
+
+/**
+  * Annotation which may be applied on HTTP REST method to specify description for that method's [[RequestBody]].
+  */
+class bodyDescription(desc: String) extends RequestBodyAdjuster {
+  def adjustRequestBody(requestBody: RequestBody): RequestBody = requestBody.copy(description = desc)
+}
+
+/**
+  * Annotation which may be applied on HTTP REST method to specify description for that method's [[Response]]
+  * associated with `200 OK` status code.
+  */
+class responseDescription(desc: String, override val statusCode: Int = 200) extends SuccessfulResponseAdjuster {
+  def adjustResponse(response: Response): Response = response.copy(description = desc)
+}
+
+/**
+  * Annotation which may be applied on HTTP REST method to specify description for [[PathItem]] associated
+  * with that method's path.
+  */
+class pathDescription(desc: String) extends PathItemAdjuster {
+  def adjustPathItem(pathItem: PathItem): PathItem = pathItem.copy(description = desc)
+}
+
+/**
+  * Annotation which may be applied on HTTP REST method to specify summary for [[Operation]] generated for
+  * that method.
+  */
+class summary(summary: String) extends OperationAdjuster {
+  def adjustOperation(operation: Operation): Operation = operation.copy(summary = summary)
+}
+
+/**
+  * Annotation which may be applied on HTTP REST method to specify summary for [[PathItem]] associated
+  * with that method's path.
+  */
+class pathSummary(summary: String) extends PathItemAdjuster {
+  def adjustPathItem(pathItem: PathItem): PathItem = pathItem.copy(summary = summary)
 }
 
 /**

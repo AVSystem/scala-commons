@@ -24,6 +24,7 @@ class OpenApiGenerationTest extends FunSuite {
         |      "put": {
         |        "responses": {
         |          "200": {
+        |            "description": "Serious response",
         |            "content": {
         |              "application/json": {
         |                "schema": {
@@ -35,6 +36,7 @@ class OpenApiGenerationTest extends FunSuite {
         |        },
         |        "operationId": "singleBodyPut",
         |        "requestBody": {
+        |          "description": "Serious body",
         |          "content": {
         |            "application/json": {
         |              "schema": {
@@ -52,6 +54,7 @@ class OpenApiGenerationTest extends FunSuite {
         |      }
         |    },
         |    "/a/b/{p1}/p1/{p2}": {
+        |      "description": "path with a followed by b",
         |      "get": {
         |        "responses": {
         |          "200": {
@@ -82,7 +85,8 @@ class OpenApiGenerationTest extends FunSuite {
         |            "description": "Very serious path parameter",
         |            "required": true,
         |            "schema": {
-        |              "type": "string"
+        |              "type": "string",
+        |              "title": "Stri"
         |            }
         |          },
         |          {
@@ -348,6 +352,7 @@ class OpenApiGenerationTest extends FunSuite {
         |      }
         |    },
         |    "/prefix/{p0}/subget/{p1}": {
+        |      "summary": "summary for prefix paths",
         |      "get": {
         |        "responses": {
         |          "200": {
