@@ -63,6 +63,7 @@ The `commons-jetty` module provides Jetty-based implementations for JVM.
     - [Adjusting schemas](#adjusting-schemas)
     - [Adjusting parameters](#adjusting-parameters)
     - [Adjusting operations](#adjusting-operations)
+    - [Adjusting path items](#adjusting-path-items)
   - [Limitations](#limitations)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
