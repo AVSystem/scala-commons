@@ -62,8 +62,8 @@ and write a value of type `T` to an [`Output`](http://avsystem.github.io/scala-c
 [`Input`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Input.html) and [`Output`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Output.html) are abstract, raw, stream-like, mutable entities which perform the actual serialization and 
 deserialization using some  particular format hardwired into them, like JSON. Therefore, [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html) by itself is not 
 bound to any format. It only depends on the fact that this format is capable of serializing following types and structures:
-* integer numbers up to at least 64-bit precision (i.e. `Long`)
-* decimal numbers up to at least 64-bit precision (i.e. `Double`)
+* integer numbers, arbitrarily large
+* decimal numbers, arbitrarily large
 * `Char`s, `String`s, `Boolean`s and `null`s
 * arbitrary byte chunks
 * millisecond-precision timestamps
@@ -268,11 +268,12 @@ as `{"name":"Fred","birthYear":1990}`.
 
 The macro will only compile if it can find a `GenCodec` instance for every field of your case class. Otherwise, you'll get a compilation error telling you that some field can't be serialized because no implicit `GenCodec` is defined for its type. This way the macro will fully validate your case class. This is good - you'll never serialize any type by accident and if you forget to make any type serializable, the compiler will tell you about it. This way you avoid problems usually associated with runtime reflection based serialization, particularly popular in Java ecosystem.
 
-In general, the serialization framework requires that the serialized representation retains order of object fields and during deserialization supplies them in exactly the same order as they were written during serialization. This is usually a reasonable assumption because most serialization formats are either textual, binary or stream-like (the word "serialization" itself indicates a sequential order). 
+In general, the serialization framework requires that the serialized representation retains order of object fields and during deserialization supplies them in exactly the same order as they were written during serialization. This is usually a reasonable assumption because most serialization formats are either textual, binary or stream-like (the word "serialization" itself indicates a sequential order). If field order is not preserved, serialization format must support random field access instead - see [object field order](#object-field-order).
 
 The codec materialized for case class guarantees that the fields are written in the order of their declaration in constructor. However, during deserialization the codec is lenient and does not require that the order of fields is the same as during serialization. It will successfully deserialize the case class as long as all the fields are present in the serialized format (in any order) or have a default value defined (either as Scala-level default parameter value or with [`@whenAbsent`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/whenAbsent.html) annotation). Any superfluous fields will be simply ignored. This allows the programmer to refactor the case class without breaking compatibility with serialization format - fields may be reordered and removed. New fields may also be added, as long as they have a default value defined.
 
-The way macro materializes the codec may be customized with annotations:
+The way macro materializes the codec may be customized with annotations. All annotations are governed by the same
+[annotation processing](Annotations.md) rules.
 
 * Using [`@name`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/name.html) you can change the raw field name used for serialization of each case class field.
 
@@ -400,7 +401,8 @@ Instead of creating a single-field object, now the `materialize` macro will assu
 
 ### Customizing sealed hierarchy codecs
 
-Similarly to case classes, sealed hierarchy codecs may be customized with annotations:
+Similarly to case classes, sealed hierarchy codecs may be customized with annotations. All annotations are governed by
+the same [annotation processing](Annotations.md) rules.
 
 * Using [`@name`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/name.html) you can change the class name saved as marker field name in nested format or as marker field value in flat format.
 
@@ -546,6 +548,8 @@ object Key extends HasGenCodec[Key[_]]
 ```
 
 ### Customizing annotations
+
+All annotations are governed by [annotation processing](Annotations.md) rules.
 
 * [`@name`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/name.html)
 * [`@transparent`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transparent.html)

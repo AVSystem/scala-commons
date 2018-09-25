@@ -8,6 +8,21 @@
 libraryDependencies += "com.avsystem.commons" %% "commons-redis" % avsCommonsVersion
 ```
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Redis driver](#redis-driver)
+  - [Overview](#overview)
+    - [Quickstart example](#quickstart-example)
+    - [APIs and clients](#apis-and-clients)
+    - [Client types](#client-types)
+    - [API variants](#api-variants)
+  - [Examples](#examples)
+  - [Benchmarks](#benchmarks)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Overview
 
 The module `commons-redis` contains from-the-scratch implementation of Scala driver for Redis. Its most important goals

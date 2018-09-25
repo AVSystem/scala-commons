@@ -2,6 +2,21 @@
 
 `commons-akka` module contains implementation of RPC framework using Akka Remoting. It supports every basic method type (procedure, function and getter), but it also allows you to define methods returning `Observable` from Monix library.
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Akka based typesafe RPC framework](#akka-based-typesafe-rpc-framework)
+  - [Setup](#setup)
+    - [Server-side setup](#server-side-setup)
+    - [Client-side setup](#client-side-setup)
+  - [Serialization](#serialization)
+  - [Observable](#observable)
+    - [Caveats](#caveats)
+    - [Timeouts](#timeouts)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 Note: For examples purpose, let's assume that we have defined rpc:
 ```scala
 @RPC trait UserService {

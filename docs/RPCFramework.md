@@ -4,25 +4,31 @@
 
 RPC framework is cross-compiled for JVM and JS, which makes it especially useful for implementing communication layer between client and server in ScalaJS applications.
 
-## Table of Contents
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-  * [RPC traits](#rpc-traits)
-      * [Overloaded remote methods](#overloaded-remote-methods)
-      * [Non-abstract members](#non-abstract-members)
-  * [Choosing a serialization mechanism](#choosing-a-serialization-mechanism)
-  * [RPC client implementation](#rpc-client-implementation)
-    * [Implementing the transport](#implementing-the-transport)
-    * [Wrapping raw RPC into a "real" proxy](#wrapping-raw-rpc-into-a-real-proxy)
-      * [Type safety](#type-safety)
-      * [Internals](#internals)
-  * [RPC server implementation](#rpc-server-implementation)
-    * [RPC implementation](#rpc-implementation)
-    * [Wrapping "real" RCP implementation into a raw RPC](#wrapping-real-rcp-implementation-into-a-raw-rpc)
-      * [Type safety](#type-safety-1)
-      * [Internals](#internals-1)
-  * [RPC metadata](#rpc-metadata)
-    * [Example](#example)
-  * [Declaring typeclass instances explicitly](#declaring-typeclass-instances-explicitly)
+- [Typesafe RPC & proxy framework](#typesafe-rpc--proxy-framework)
+  - [Table of Contents](#table-of-contents)
+  - [RPC traits](#rpc-traits)
+      - [Overloaded remote methods](#overloaded-remote-methods)
+      - [Non-abstract members](#non-abstract-members)
+  - [Choosing a serialization mechanism](#choosing-a-serialization-mechanism)
+  - [RPC client implementation](#rpc-client-implementation)
+    - [Implementing the transport](#implementing-the-transport)
+    - [Wrapping raw RPC into a "real" proxy](#wrapping-raw-rpc-into-a-real-proxy)
+      - [Type safety](#type-safety)
+      - [Internals](#internals)
+  - [RPC server implementation](#rpc-server-implementation)
+    - [RPC implementation](#rpc-implementation)
+    - [Wrapping "real" RCP implementation into a raw RPC](#wrapping-real-rcp-implementation-into-a-raw-rpc)
+      - [Type safety](#type-safety-1)
+      - [Internals](#internals-1)
+  - [RPC metadata](#rpc-metadata)
+    - [Example](#example)
+  - [Declaring typeclass instances explicitly](#declaring-typeclass-instances-explicitly)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## RPC traits
 

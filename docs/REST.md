@@ -172,6 +172,12 @@ Server: Jetty(9.3.23.v20180228)
 {"id":"Fred-ID","name":"Fred","birthYear":1990}
 ```
 
+## Annotations
+
+REST framework relies heavily on annotations for customization. All annotations are governed by
+the same [annotation processing](Annotations.md) rules. To use annotations more effectively and with less
+boilerplate, it is highly recommended to be familiar with these rules.
+
 ## REST API traits
 
 As we saw in the quickstart example, REST API is defined by a Scala trait adjusted with annotations.
@@ -1050,6 +1056,10 @@ objects.
 
 However, `@description` is just an example of more general mechanism - schemas, parameters and operations
 can be modified arbitrarily.
+
+Also, remember that all annotations are processed with respect to the same
+[annotation processing](Annotations.md) rules. It is recommended to familiarize oneself with these rules in
+order to use them more effectively and with less boilerplate.
 
 #### Adjusting schemas
 

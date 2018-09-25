@@ -441,7 +441,6 @@ trait MacroCommons { bundle =>
 
   def withSuperSymbols(s: Symbol): Iterator[Symbol] = s match {
     case cs: ClassSymbol => cs.baseClasses.iterator
-    case ms: MethodSymbol => (ms :: ms.overrides).iterator
     case ps: TermSymbol if ps.isParameter =>
       // if this is a `val` constructor parameter, include `val` itself and its super symbols
       accessorFor(ps).map(pa => Iterator(s) ++ withSuperSymbols(pa)).getOrElse {
@@ -450,6 +449,12 @@ trait MacroCommons { bundle =>
         val paramIdx = oms.paramLists(paramListIdx).indexWhere(_.name == ps.name)
         withSuperSymbols(oms).map(_.asMethod.paramLists(paramListIdx)(paramIdx))
       }
+    case ts: TermSymbol => (ts :: ts.overrides).iterator
+    case ps: TypeSymbol if ps.isParameter && ps.owner.isMethod =>
+      val oms = ps.owner.asMethod
+      val paramIdx = oms.typeParams.indexWhere(_.name == ps.name)
+      withSuperSymbols(oms).map(_.asMethod.typeParams(paramIdx))
+    case ts: TypeSymbol => (ts :: ts.overrides).iterator
     case _ => Iterator(s)
   }
 
