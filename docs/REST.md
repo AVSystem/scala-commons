@@ -1063,6 +1063,9 @@ Also, remember that all annotations are processed with respect to the same
 [annotation processing](Annotations.md) rules. It is recommended to familiarize oneself with these rules in
 order to use them more effectively and with less boilerplate.
 
+List of predefined adjuster annotations can be found in
+[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/rest/openapi/adjusters/index.html)
+
 #### Adjusting schemas
 
 In order to adjust schemas, one can define arbitrary annotations that extend `SchemaAdjuster`.
