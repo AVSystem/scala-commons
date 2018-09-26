@@ -1,13 +1,10 @@
 package com.avsystem.commons
 package jetty.rest
 
-import java.net.URLDecoder
-import java.util.regex.Pattern
-
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.jetty.rest.RestServlet.DefaultHandleTimeout
 import com.avsystem.commons.meta.Mapping
-import com.avsystem.commons.rest.{HeaderValue, HttpBody, HttpMethod, PathValue, QueryValue, RawRest, RestMetadata, RestParameters, RestRequest}
+import com.avsystem.commons.rest._
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.http.{HttpStatus, MimeTypes}
 
@@ -28,32 +25,21 @@ object RestServlet {
   ): RestServlet =
     new RestServlet(RawRest.asHandleRequest[Real](real))
 
-  private val SeparatorPattern: Pattern = Pattern.compile("/")
-
-  def handle(
-    handleRequest: RawRest.HandleRequest,
-    request: HttpServletRequest,
-    response: HttpServletResponse,
-    handleTimeout: FiniteDuration = DefaultHandleTimeout
-  ): Unit = {
-    val method = HttpMethod.byName(request.getMethod)
-
+  def readParameters(request: HttpServletRequest): RestParameters = {
     // can't use request.getPathInfo because it decodes the URL before we can split it
-    val encodedPath = request.getRequestURI.stripPrefix(request.getServletPath).stripPrefix("/")
-    val path = SeparatorPattern
-      .splitAsStream(encodedPath).asScala
-      .map(v => PathValue(URLDecoder.decode(v, "UTF-8")))
-      .to[List]
-
+    val path = PathValue.splitDecode(request.getRequestURI.stripPrefix(request.getServletPath))
+    val query = request.getQueryString.opt.map(QueryValue.decode).getOrElse(Mapping.empty)
     val headersBuilder = Mapping.newBuilder[HeaderValue]
     request.getHeaderNames.asScala.foreach { headerName =>
       headersBuilder += headerName -> HeaderValue(request.getHeader(headerName))
     }
     val headers = headersBuilder.result()
-    val query = request.getQueryString.opt.map(QueryValue.decode).getOrElse(Mapping.empty)
+    RestParameters(path, headers, query)
+  }
 
+  def readBody(request: HttpServletRequest): HttpBody = {
     val mimeType = request.getContentType.opt.map(MimeTypes.getContentTypeWithoutCharset)
-    val body = mimeType.fold(HttpBody.empty) { mimeType =>
+    mimeType.fold(HttpBody.empty) { mimeType =>
       val bodyReader = request.getReader
       val bodyBuilder = new JStringBuilder
       Iterator.continually(bodyReader.read())
@@ -61,24 +47,46 @@ object RestServlet {
         .foreach(bodyBuilder.appendCodePoint)
       HttpBody(bodyBuilder.toString, mimeType)
     }
-    val restRequest = RestRequest(method, RestParameters(path, headers, query), body)
+  }
 
+  def readRequest(request: HttpServletRequest): RestRequest = {
+    val method = HttpMethod.byName(request.getMethod)
+    val parameters = readParameters(request)
+    val body = readBody(request)
+    RestRequest(method, parameters, body)
+  }
+
+  def writeResponse(response: HttpServletResponse, restResponse: RestResponse, charset: String = "utf-8"): Unit = {
+    response.setStatus(restResponse.code)
+    restResponse.headers.foreach {
+      case (name, HeaderValue(value)) => response.addHeader(name, value)
+    }
+    restResponse.body.forNonEmpty { (content, mimeType) =>
+      response.setContentType(s"$mimeType;charset=$charset")
+      response.getWriter.write(content)
+    }
+  }
+
+  def writeFailure(response: HttpServletResponse, message: String, charset: String = "utf-8"): Unit = {
+    response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500)
+    response.setContentType(s"text/plain;charset=$charset")
+    response.getWriter.write(message)
+  }
+
+  def handle(
+    handleRequest: RawRest.HandleRequest,
+    request: HttpServletRequest,
+    response: HttpServletResponse,
+    handleTimeout: FiniteDuration = DefaultHandleTimeout,
+    charset: String = "utf-8"
+  ): Unit = {
     val asyncContext = request.startAsync().setup(_.setTimeout(handleTimeout.toMillis))
-    RawRest.safeAsync(handleRequest(restRequest)) {
+    RawRest.safeAsync(handleRequest(readRequest(request))) {
       case Success(restResponse) =>
-        response.setStatus(restResponse.code)
-        restResponse.headers.foreach {
-          case (name, HeaderValue(value)) => response.addHeader(name, value)
-        }
-        restResponse.body.forNonEmpty { (content, mimeType) =>
-          response.setContentType(s"$mimeType;charset=utf-8")
-          response.getWriter.write(content)
-        }
+        writeResponse(response, restResponse, charset)
         asyncContext.complete()
       case Failure(e) =>
-        response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500)
-        response.setContentType(MimeTypes.Type.TEXT_PLAIN_UTF_8.asString())
-        response.getWriter.write(e.getMessage)
+        writeFailure(response, e.getMessage, charset)
         asyncContext.complete()
     }
   }
