@@ -50,35 +50,44 @@ trait RawRest {
   def handleSingle(@methodName name: String, @composite parameters: RestParameters,
     @encoded @tagged[Body] body: HttpBody): Async[RestResponse]
 
-  def asHandleRequest(metadata: RestMetadata[_]): HandleRequest = {
+  def asHandleRequest(
+    metadata: RestMetadata[_],
+    handleResolved: HandleResolvedRequest = this.handleResolved
+  ): HandleRequest = {
     metadata.ensureUnambiguousPaths()
     metadata.ensureUniqueParams(Nil)
-    RawRest.safeHandle { case RestRequest(method, parameters, body) =>
-      metadata.resolvePath(method, parameters.path) match {
-        case Right(ResolvedPath(prefixes, RestMethodCall(finalRpcName, finalPathParams, _), finalMetadata)) =>
-          def resolveCall(rawRest: RawRest, prefixes: List[RestMethodCall]): Async[RestResponse] = prefixes match {
-            case RestMethodCall(rpcName, pathParams, _) :: tail =>
-              rawRest.prefix(rpcName, parameters.copy(path = pathParams)) match {
-                case Success(nextRawRest) => resolveCall(nextRawRest, tail)
-                case Failure(e: HttpErrorException) => RawRest.successfulAsync(e.toResponse)
-                case Failure(cause) => RawRest.failingAsync(cause)
-              }
-            case Nil =>
-              val finalParameters = parameters.copy(path = finalPathParams)
-              if (method == HttpMethod.GET)
-                rawRest.get(finalRpcName, finalParameters)
-              else if (finalMetadata.singleBody)
-                rawRest.handleSingle(finalRpcName, finalParameters, body)
-              else if (finalMetadata.formBody)
-                rawRest.handleForm(finalRpcName, finalParameters, HttpBody.parseFormBody(body))
-              else
-                rawRest.handle(finalRpcName, finalParameters, HttpBody.parseJsonBody(body))
-          }
-          resolveCall(this, prefixes)
-        case Left(error) =>
-          RawRest.successfulAsync(error.toResponse)
+    RawRest.safeHandle { request =>
+      metadata.resolvePath(request.method, request.parameters.path) match {
+        case Right(resolved) => handleResolved(request, resolved)
+        case Left(error) => RawRest.successfulAsync(error.toResponse)
       }
     }
+  }
+
+  def handleResolved(request: RestRequest, resolved: ResolvedPath): Async[RestResponse] = {
+    val RestRequest(method, parameters, body) = request
+    val ResolvedPath(prefixes, finalCall, finalMetadata) = resolved
+    val RestMethodCall(finalRpcName, finalPathParams, _) = finalCall
+
+    def resolveCall(rawRest: RawRest, prefixes: List[RestMethodCall]): Async[RestResponse] = prefixes match {
+      case RestMethodCall(rpcName, pathParams, _) :: tail =>
+        rawRest.prefix(rpcName, parameters.copy(path = pathParams)) match {
+          case Success(nextRawRest) => resolveCall(nextRawRest, tail)
+          case Failure(e: HttpErrorException) => RawRest.successfulAsync(e.toResponse)
+          case Failure(cause) => RawRest.failingAsync(cause)
+        }
+      case Nil =>
+        val finalParameters = parameters.copy(path = finalPathParams)
+        if (method == HttpMethod.GET)
+          rawRest.get(finalRpcName, finalParameters)
+        else if (finalMetadata.singleBody)
+          rawRest.handleSingle(finalRpcName, finalParameters, body)
+        else if (finalMetadata.formBody)
+          rawRest.handleForm(finalRpcName, finalParameters, HttpBody.parseFormBody(body))
+        else
+          rawRest.handle(finalRpcName, finalParameters, HttpBody.parseJsonBody(body))
+    }
+    resolveCall(this, prefixes)
   }
 }
 
@@ -111,6 +120,11 @@ object RawRest extends RawRpcCompanion[RawRest] {
     * `Async`. One way to do this is by wrapping the handler with [[safeHandle]].
     */
   type HandleRequest = RestRequest => Async[RestResponse]
+
+  /**
+    * Similar to [[HandleRequest]] but accepts already resolved path as a second argument.
+    */
+  type HandleResolvedRequest = (RestRequest, ResolvedPath) => Async[RestResponse]
 
   /**
     * Ensures that all possible exceptions thrown by a request handler are not propagated but converted into
