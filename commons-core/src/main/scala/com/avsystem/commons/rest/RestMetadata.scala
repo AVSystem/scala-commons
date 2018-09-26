@@ -65,29 +65,31 @@ case class RestMetadata[T](
     }
   }
 
-  def resolvePath(method: HttpMethod, path: List[PathValue]): Opt[ResolvedPath] = {
-    def resolve(method: HttpMethod, path: List[PathValue]): Iterator[ResolvedPath] = {
+  def resolvePath(method: HttpMethod, path: List[PathValue]): Either[HttpErrorException, ResolvedPath] = {
+    def resolve(metadata: RestMetadata[_], path: List[PathValue]): Iterator[ResolvedPath] = {
       val asFinalCall = for {
-        (rpcName, m) <- httpMethods.iterator if m.method == method
+        (rpcName, m) <- metadata.httpMethods.iterator
         (pathParams, Nil) <- m.extractPathParams(path)
       } yield ResolvedPath(Nil, RestMethodCall(rpcName, pathParams, m), m)
 
       val usingPrefix = for {
-        (rpcName, prefix) <- prefixMethods.iterator
+        (rpcName, prefix) <- metadata.prefixMethods.iterator
         (pathParams, pathTail) <- prefix.extractPathParams(path).iterator
-        suffixPath <- prefix.result.value.resolvePath(method, pathTail)
+        suffixPath <- resolve(prefix.result.value, pathTail)
       } yield suffixPath.prepend(rpcName, pathParams, prefix)
 
       asFinalCall ++ usingPrefix
     }
-    resolve(method, path).toList match {
-      case Nil => Opt.Empty
-      case single :: Nil => Opt(single)
-      case multiple =>
+    val it = resolve(this, path)
+    if (it.hasNext) it.filter(_.finalMetadata.method == method).toList match {
+      case Nil => Left(HttpErrorException(405, s"$method not allowed on path ${PathValue.encodeJoin(path)}"))
+      case single :: Nil => Right(single)
+      case multiple => // this should never happen after ensureUnambiguousPaths
         val pathStr = path.iterator.map(_.value).mkString("/")
         val callsRepr = multiple.iterator.map(p => s"  ${p.rpcChainRepr}").mkString("\n", "\n", "")
         throw new RestException(s"path $pathStr is ambiguous, it could map to following calls:$callsRepr")
     }
+    else Left(HttpErrorException(404, s"path ${PathValue.encodeJoin(path)} not found"))
   }
 }
 object RestMetadata extends RpcMetadataCompanion[RestMetadata] {

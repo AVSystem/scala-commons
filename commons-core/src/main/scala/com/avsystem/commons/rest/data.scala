@@ -22,6 +22,8 @@ case class PathValue(value: String) extends AnyVal with RestValue
 object PathValue {
   def splitDecode(path: String): List[PathValue] =
     path.split("/").iterator.filter(_.nonEmpty).map(s => PathValue(UrlEncoding.decode(s))).toList
+  def encodeJoin(path: List[PathValue]): String =
+    path.iterator.map(pv => UrlEncoding.encode(pv.value)).mkString("/", "/", "")
 }
 
 /**

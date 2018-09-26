@@ -4,10 +4,7 @@ package rest
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.avsystem.commons.meta._
-import com.avsystem.commons.misc.ImplicitNotFound
 import com.avsystem.commons.rpc._
-
-import scala.annotation.implicitNotFound
 
 case class RestMethodCall(rpcName: String, pathParams: List[PathValue], metadata: RestMethodMetadata[_])
 case class ResolvedPath(prefixes: List[RestMethodCall], finalCall: RestMethodCall, finalMetadata: HttpMethodMetadata[_]) {
@@ -58,7 +55,7 @@ trait RawRest {
     metadata.ensureUniqueParams(Nil)
     RawRest.safeHandle { case RestRequest(method, parameters, body) =>
       metadata.resolvePath(method, parameters.path) match {
-        case Opt(ResolvedPath(prefixes, RestMethodCall(finalRpcName, finalPathParams, _), finalMetadata)) =>
+        case Right(ResolvedPath(prefixes, RestMethodCall(finalRpcName, finalPathParams, _), finalMetadata)) =>
           def resolveCall(rawRest: RawRest, prefixes: List[RestMethodCall]): Async[RestResponse] = prefixes match {
             case RestMethodCall(rpcName, pathParams, _) :: tail =>
               rawRest.prefix(rpcName, parameters.copy(path = pathParams)) match {
@@ -78,9 +75,8 @@ trait RawRest {
                 rawRest.handle(finalRpcName, finalParameters, HttpBody.parseJsonBody(body))
           }
           resolveCall(this, prefixes)
-        case Opt.Empty =>
-          val pathStr = parameters.path.iterator.map(_.value).mkString("/")
-          RawRest.successfulAsync(RestResponse(404, Mapping.empty, HttpBody.plain(s"path $pathStr not found")))
+        case Left(error) =>
+          RawRest.successfulAsync(error.toResponse)
       }
     }
   }
