@@ -55,19 +55,8 @@ trait RawRest {
   def handleSingle(@methodName name: String, @composite parameters: RestParameters,
     @encoded @tagged[Body] body: HttpBody): Async[RestResponse]
 
-  def asHandleRequest(
-    metadata: RestMetadata[_],
-    handleResolved: HandleResolvedRequest = this.handleResolved
-  ): HandleRequest = {
-    metadata.ensureUnambiguousPaths()
-    metadata.ensureUniqueParams(Nil)
-    RawRest.safeHandle { request =>
-      metadata.resolvePath(request.method, request.parameters.path) match {
-        case Right(resolved) => handleResolved(request, resolved)
-        case Left(error) => RawRest.successfulAsync(error.toResponse)
-      }
-    }
-  }
+  def asHandleRequest(metadata: RestMetadata[_]): HandleRequest =
+    RawRest.resolveAndHandle(metadata)(handleResolved)
 
   def handleResolved(request: RestRequest, resolved: ResolvedPath): Async[RestResponse] = {
     val RestRequest(method, parameters, body) = request
@@ -170,6 +159,16 @@ object RawRest extends RawRpcCompanion[RawRest] {
 
   def asHandleRequest[Real: AsRawRpc : RestMetadata](real: Real): HandleRequest =
     RawRest.asRaw(real).asHandleRequest(RestMetadata[Real])
+
+  def resolveAndHandle(metadata: RestMetadata[_])(handleResolved: HandleResolvedRequest): HandleRequest = {
+    metadata.ensureValid()
+    RawRest.safeHandle { request =>
+      metadata.resolvePath(request.method, request.parameters.path) match {
+        case Right(resolved) => handleResolved(request, resolved)
+        case Left(error) => RawRest.successfulAsync(error.toResponse)
+      }
+    }
+  }
 
   private final class DefaultRawRest(metadata: RestMetadata[_], prefixHeaders: RestParameters, handleRequest: HandleRequest)
     extends RawRest {

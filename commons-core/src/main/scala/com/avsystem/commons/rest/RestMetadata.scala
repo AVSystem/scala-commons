@@ -24,7 +24,14 @@ case class RestMetadata[T](
   val httpMethods: Mapping[HttpMethodMetadata[_]] =
     httpGetMethods ++ httpBodyMethods
 
-  def ensureUniqueParams(prefixes: List[(String, PrefixMetadata[_])]): Unit = {
+  private[this] lazy val valid: Unit = {
+    ensureUnambiguousPaths()
+    ensureUniqueParams(Nil)
+  }
+
+  def ensureValid(): Unit = valid
+
+  private def ensureUniqueParams(prefixes: List[(String, PrefixMetadata[_])]): Unit = {
     def ensureUniqueParams(methodName: String, method: RestMethodMetadata[_]): Unit = {
       for {
         (prefixName, prefix) <- prefixes
@@ -51,7 +58,7 @@ case class RestMetadata[T](
     }
   }
 
-  def ensureUnambiguousPaths(): Unit = {
+  private def ensureUnambiguousPaths(): Unit = {
     val trie = new RestMetadata.Trie
     trie.fillWith(this)
     trie.mergeWildcardToNamed()
