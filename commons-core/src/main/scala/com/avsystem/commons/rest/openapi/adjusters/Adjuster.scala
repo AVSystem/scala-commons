@@ -49,6 +49,9 @@ trait ParameterAdjuster extends Adjuster {
   def adjustParameter(parameter: Parameter): Parameter
 }
 
+/**
+  * A [[SchemaAdjuster]] which can also be applied on a (non-body) parameter to affect its schema.
+  */
 trait ParameterSchemaAdjuster extends ParameterAdjuster { this: SchemaAdjuster =>
   final def adjustParameter(parameter: Parameter): Parameter =
     parameter.schema.fold(parameter)(s => parameter.copy(schema = s.map(adjustSchema)))
