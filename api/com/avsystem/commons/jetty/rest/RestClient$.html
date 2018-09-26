@@ -294,10 +294,26 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="com.avsystem.commons.jetty.rest.RestClient#apply" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="apply[Real](client:org.eclipse.jetty.client.HttpClient,baseUrl:String)(implicitevidence$1:com.avsystem.commons.rest.RawRest.AsRealRpc[Real],implicitevidence$2:com.avsystem.commons.rest.RestMetadata[Real]):Real"></a><a id="apply[Real](HttpClient,String)(rest.RawRest.AsRealRpc[Real],RestMetadata[Real]):Real"></a>
+    </li><li name="com.avsystem.commons.jetty.rest.RestClient#DefaultMaxResponseLength" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DefaultMaxResponseLength:Int"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rest/RestClient$.html#apply[Real](client:org.eclipse.jetty.client.HttpClient,baseUrl:String)(implicitevidence$1:com.avsystem.commons.rest.RawRest.AsRealRpc[Real],implicitevidence$2:com.avsystem.commons.rest.RestMetadata[Real]):Real" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rest/RestClient$.html#DefaultMaxResponseLength:Int" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">DefaultMaxResponseLength</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+      </span>
+      
+      
+    </li><li name="com.avsystem.commons.jetty.rest.RestClient#apply" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="apply[Real](client:org.eclipse.jetty.client.HttpClient,baseUrl:String,maxResponseLength:Int)(implicitevidence$1:com.avsystem.commons.rest.RawRest.AsRealRpc[Real],implicitevidence$2:com.avsystem.commons.rest.RestMetadata[Real]):Real"></a><a id="apply[Real](HttpClient,String,Int)(rest.RawRest.AsRealRpc[Real],RestMetadata[Real]):Real"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rest/RestClient$.html#apply[Real](client:org.eclipse.jetty.client.HttpClient,baseUrl:String,maxResponseLength:Int)(implicitevidence$1:com.avsystem.commons.rest.RawRest.AsRealRpc[Real],implicitevidence$2:com.avsystem.commons.rest.RestMetadata[Real]):Real" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -306,14 +322,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">apply</span><span class="tparams">[<span name="Real">Real</span>]</span><span class="params">(<span name="client">client: <span class="extype" name="org.eclipse.jetty.client.HttpClient">HttpClient</span></span>, <span name="baseUrl">baseUrl: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../../rest/RawRest$.html#AsRealRpc[Real]=com.avsystem.commons.rpc.AsReal[Raw,Real]" class="extmbr" name="com.avsystem.commons.rest.RawRest.AsRealRpc">rest.RawRest.AsRealRpc</a>[<span class="extype" name="com.avsystem.commons.jetty.rest.RestClient.apply.Real">Real</span>]</span>, <span name="arg1">arg1: <a href="../../rest/RestMetadata.html" class="extype" name="com.avsystem.commons.rest.RestMetadata">RestMetadata</a>[<span class="extype" name="com.avsystem.commons.jetty.rest.RestClient.apply.Real">Real</span>]</span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.jetty.rest.RestClient.apply.Real">Real</span></span>
+        <span class="name">apply</span><span class="tparams">[<span name="Real">Real</span>]</span><span class="params">(<span name="client">client: <span class="extype" name="org.eclipse.jetty.client.HttpClient">HttpClient</span></span>, <span name="baseUrl">baseUrl: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="maxResponseLength">maxResponseLength: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol"><span class="name"><a href="#DefaultMaxResponseLength:Int">DefaultMaxResponseLength</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../../rest/RawRest$.html#AsRealRpc[Real]=com.avsystem.commons.rpc.AsReal[Raw,Real]" class="extmbr" name="com.avsystem.commons.rest.RawRest.AsRealRpc">rest.RawRest.AsRealRpc</a>[<span class="extype" name="com.avsystem.commons.jetty.rest.RestClient.apply.Real">Real</span>]</span>, <span name="arg1">arg1: <a href="../../rest/RestMetadata.html" class="extype" name="com.avsystem.commons.rest.RestMetadata">RestMetadata</a>[<span class="extype" name="com.avsystem.commons.jetty.rest.RestClient.apply.Real">Real</span>]</span>)</span><span class="result">: <span class="extype" name="com.avsystem.commons.jetty.rest.RestClient.apply.Real">Real</span></span>
       </span>
       
       
     </li><li name="com.avsystem.commons.jetty.rest.RestClient#asHandleRequest" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="asHandleRequest(client:org.eclipse.jetty.client.HttpClient,baseUrl:String):com.avsystem.commons.rest.RawRest.HandleRequest"></a><a id="asHandleRequest(HttpClient,String):HandleRequest"></a>
+      <a id="asHandleRequest(client:org.eclipse.jetty.client.HttpClient,baseUrl:String,maxResponseLength:Int):com.avsystem.commons.rest.RawRest.HandleRequest"></a><a id="asHandleRequest(HttpClient,String,Int):HandleRequest"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rest/RestClient$.html#asHandleRequest(client:org.eclipse.jetty.client.HttpClient,baseUrl:String):com.avsystem.commons.rest.RawRest.HandleRequest" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rest/RestClient$.html#asHandleRequest(client:org.eclipse.jetty.client.HttpClient,baseUrl:String,maxResponseLength:Int):com.avsystem.commons.rest.RawRest.HandleRequest" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -322,7 +338,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">asHandleRequest</span><span class="params">(<span name="client">client: <span class="extype" name="org.eclipse.jetty.client.HttpClient">HttpClient</span></span>, <span name="baseUrl">baseUrl: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="../../rest/RawRest$.html#HandleRequest=com.avsystem.commons.rest.RestRequest=&gt;com.avsystem.commons.rest.RawRest.Async[com.avsystem.commons.rest.RestResponse]" class="extmbr" name="com.avsystem.commons.rest.RawRest.HandleRequest">HandleRequest</a></span>
+        <span class="name">asHandleRequest</span><span class="params">(<span name="client">client: <span class="extype" name="org.eclipse.jetty.client.HttpClient">HttpClient</span></span>, <span name="baseUrl">baseUrl: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="maxResponseLength">maxResponseLength: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol"><span class="name"><a href="#DefaultMaxResponseLength:Int">DefaultMaxResponseLength</a></span></span></span>)</span><span class="result">: <a href="../../rest/RawRest$.html#HandleRequest=com.avsystem.commons.rest.RestRequest=&gt;com.avsystem.commons.rest.RawRest.Async[com.avsystem.commons.rest.RestResponse]" class="extmbr" name="com.avsystem.commons.rest.RawRest.HandleRequest">HandleRequest</a></span>
       </span>
       
       

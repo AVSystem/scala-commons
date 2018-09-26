@@ -296,10 +296,26 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="com.avsystem.commons.jetty.rest.RestServlet#apply" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="apply[Real](real:Real)(implicitevidence$1:com.avsystem.commons.rest.RawRest.AsRawRpc[Real],implicitevidence$2:com.avsystem.commons.rest.RestMetadata[Real]):com.avsystem.commons.jetty.rest.RestServlet"></a><a id="apply[Real](Real)(rest.RawRest.AsRawRpc[Real],RestMetadata[Real]):RestServlet"></a>
+    </li><li name="com.avsystem.commons.jetty.rest.RestServlet#DefaultHandleTimeout" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DefaultHandleTimeout:scala.concurrent.duration.FiniteDuration"></a><a id="DefaultHandleTimeout:FiniteDuration"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rest/RestServlet$.html#apply[Real](real:Real)(implicitevidence$1:com.avsystem.commons.rest.RawRest.AsRawRpc[Real],implicitevidence$2:com.avsystem.commons.rest.RestMetadata[Real]):com.avsystem.commons.jetty.rest.RestServlet" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rest/RestServlet$.html#DefaultHandleTimeout:scala.concurrent.duration.FiniteDuration" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">DefaultHandleTimeout</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a></span>
+      </span>
+      
+      
+    </li><li name="com.avsystem.commons.jetty.rest.RestServlet#apply" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="apply[Real](real:Real,handleTimeout:scala.concurrent.duration.FiniteDuration)(implicitevidence$1:com.avsystem.commons.rest.RawRest.AsRawRpc[Real],implicitevidence$2:com.avsystem.commons.rest.RestMetadata[Real]):com.avsystem.commons.jetty.rest.RestServlet"></a><a id="apply[Real](Real,FiniteDuration)(rest.RawRest.AsRawRpc[Real],RestMetadata[Real]):RestServlet"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rest/RestServlet$.html#apply[Real](real:Real,handleTimeout:scala.concurrent.duration.FiniteDuration)(implicitevidence$1:com.avsystem.commons.rest.RawRest.AsRawRpc[Real],implicitevidence$2:com.avsystem.commons.rest.RestMetadata[Real]):com.avsystem.commons.jetty.rest.RestServlet" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -308,7 +324,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">apply</span><span class="tparams">[<span name="Real">Real</span>]</span><span class="params">(<span name="real">real: <span class="extype" name="com.avsystem.commons.jetty.rest.RestServlet.apply.Real">Real</span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../../rest/RawRest$.html#AsRawRpc[Real]=com.avsystem.commons.rpc.AsRaw[Raw,Real]" class="extmbr" name="com.avsystem.commons.rest.RawRest.AsRawRpc">rest.RawRest.AsRawRpc</a>[<span class="extype" name="com.avsystem.commons.jetty.rest.RestServlet.apply.Real">Real</span>]</span>, <span name="arg1">arg1: <a href="../../rest/RestMetadata.html" class="extype" name="com.avsystem.commons.rest.RestMetadata">RestMetadata</a>[<span class="extype" name="com.avsystem.commons.jetty.rest.RestServlet.apply.Real">Real</span>]</span>)</span><span class="result">: <a href="RestServlet.html" class="extype" name="com.avsystem.commons.jetty.rest.RestServlet">RestServlet</a></span>
+        <span class="name">apply</span><span class="tparams">[<span name="Real">Real</span>]</span><span class="params">(<span name="real">real: <span class="extype" name="com.avsystem.commons.jetty.rest.RestServlet.apply.Real">Real</span></span>, <span name="handleTimeout">handleTimeout: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol"><span class="name"><a href="#DefaultHandleTimeout:scala.concurrent.duration.FiniteDuration">DefaultHandleTimeout</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../../rest/RawRest$.html#AsRawRpc[Real]=com.avsystem.commons.rpc.AsRaw[Raw,Real]" class="extmbr" name="com.avsystem.commons.rest.RawRest.AsRawRpc">rest.RawRest.AsRawRpc</a>[<span class="extype" name="com.avsystem.commons.jetty.rest.RestServlet.apply.Real">Real</span>]</span>, <span name="arg1">arg1: <a href="../../rest/RestMetadata.html" class="extype" name="com.avsystem.commons.rest.RestMetadata">RestMetadata</a>[<span class="extype" name="com.avsystem.commons.jetty.rest.RestServlet.apply.Real">Real</span>]</span>)</span><span class="result">: <a href="RestServlet.html" class="extype" name="com.avsystem.commons.jetty.rest.RestServlet">RestServlet</a></span>
       </span>
       
       
@@ -426,9 +442,9 @@
               
         </dd></dl></div>
     </li><li name="com.avsystem.commons.jetty.rest.RestServlet#handle" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="handle(handleRequest:com.avsystem.commons.rest.RawRest.HandleRequest,request:javax.servlet.http.HttpServletRequest,response:javax.servlet.http.HttpServletResponse):Unit"></a><a id="handle(HandleRequest,HttpServletRequest,HttpServletResponse):Unit"></a>
+      <a id="handle(handleRequest:com.avsystem.commons.rest.RawRest.HandleRequest,request:javax.servlet.http.HttpServletRequest,response:javax.servlet.http.HttpServletResponse,handleTimeout:scala.concurrent.duration.FiniteDuration):Unit"></a><a id="handle(HandleRequest,HttpServletRequest,HttpServletResponse,FiniteDuration):Unit"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/jetty/rest/RestServlet$.html#handle(handleRequest:com.avsystem.commons.rest.RawRest.HandleRequest,request:javax.servlet.http.HttpServletRequest,response:javax.servlet.http.HttpServletResponse):Unit" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/jetty/rest/RestServlet$.html#handle(handleRequest:com.avsystem.commons.rest.RawRest.HandleRequest,request:javax.servlet.http.HttpServletRequest,response:javax.servlet.http.HttpServletResponse,handleTimeout:scala.concurrent.duration.FiniteDuration):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -437,7 +453,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">handle</span><span class="params">(<span name="handleRequest">handleRequest: <a href="../../rest/RawRest$.html#HandleRequest=com.avsystem.commons.rest.RestRequest=&gt;com.avsystem.commons.rest.RawRest.Async[com.avsystem.commons.rest.RestResponse]" class="extmbr" name="com.avsystem.commons.rest.RawRest.HandleRequest">HandleRequest</a></span>, <span name="request">request: <span class="extype" name="javax.servlet.http.HttpServletRequest">HttpServletRequest</span></span>, <span name="response">response: <span class="extype" name="javax.servlet.http.HttpServletResponse">HttpServletResponse</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">handle</span><span class="params">(<span name="handleRequest">handleRequest: <a href="../../rest/RawRest$.html#HandleRequest=com.avsystem.commons.rest.RestRequest=&gt;com.avsystem.commons.rest.RawRest.Async[com.avsystem.commons.rest.RestResponse]" class="extmbr" name="com.avsystem.commons.rest.RawRest.HandleRequest">HandleRequest</a></span>, <span name="request">request: <span class="extype" name="javax.servlet.http.HttpServletRequest">HttpServletRequest</span></span>, <span name="response">response: <span class="extype" name="javax.servlet.http.HttpServletResponse">HttpServletResponse</span></span>, <span name="handleTimeout">handleTimeout: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol"><span class="name"><a href="#DefaultHandleTimeout:scala.concurrent.duration.FiniteDuration">DefaultHandleTimeout</a></span></span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       

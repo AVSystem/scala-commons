@@ -174,13 +174,29 @@
                         <a class="class" href="FlatSealedHierarchyCodec.html" title=""></a>
                         <a href="FlatSealedHierarchyCodec.html" title="">FlatSealedHierarchyCodec</a>
                       </li><li class="current-entities indented4">
+                        <a class="object" href="GenCaseInfo$.html" title=""></a>
+                        <a class="class" href="GenCaseInfo.html" title=""></a>
+                        <a href="GenCaseInfo.html" title="">GenCaseInfo</a>
+                      </li><li class="current-entities indented4">
                         <a class="object" href="GenCodec$.html" title=""></a>
                         <a class="trait" href="GenCodec.html" title="Type class for types that can be serialized to Output (format-agnostic &quot;output stream&quot;) and deserialized from Input (format-agnostic &quot;input stream&quot;)."></a>
                         <a href="GenCodec.html" title="Type class for types that can be serialized to Output (format-agnostic &quot;output stream&quot;) and deserialized from Input (format-agnostic &quot;input stream&quot;).">GenCodec</a>
                       </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="GenCodecStructure.html" title=""></a>
+                        <a href="GenCodecStructure.html" title="">GenCodecStructure</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="GenInfo.html" title=""></a>
+                        <a href="GenInfo.html" title="">GenInfo</a>
+                      </li><li class="current-entities indented4">
                         <a class="object" href="GenKeyCodec$.html" title=""></a>
                         <a class="trait" href="GenKeyCodec.html" title="Typeclass which implements two-directional conversion between values of some type and field names used in ObjectOutput.writeField and ObjectInput.nextField (FieldInput.fieldName)."></a>
                         <a href="GenKeyCodec.html" title="Typeclass which implements two-directional conversion between values of some type and field names used in ObjectOutput.writeField and ObjectInput.nextField (FieldInput.fieldName).">GenKeyCodec</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="GenParamInfo.html" title=""></a>
+                        <a href="GenParamInfo.html" title="">GenParamInfo</a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="GenRef$.html" title=""></a>
                         <a class="class" href="GenRef.html" title=""></a>
@@ -189,6 +205,10 @@
                         <span class="separator"></span>
                         <a class="object" href="GenTupleDBCodecs$.html" title=""></a>
                         <a href="GenTupleDBCodecs$.html" title="">GenTupleDBCodecs</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="GenUnionInfo$.html" title=""></a>
+                        <a class="class" href="GenUnionInfo.html" title=""></a>
+                        <a href="GenUnionInfo.html" title="">GenUnionInfo</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="HasGenCodec.html" title="Convenience abstract class for companion objects of types that have a GenCodec."></a>
@@ -219,12 +239,24 @@
                         <a href="ObjectInput.html" title="Represents an abstract source of key-value mappings that can be deserialized.">ObjectInput</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="ObjectInputAsInput.html" title=""></a>
+                        <a href="ObjectInputAsInput.html" title="">ObjectInputAsInput</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="trait" href="ObjectOutput.html" title="Represents an abstract sink for serialization of string-to-value mappings."></a>
                         <a href="ObjectOutput.html" title="Represents an abstract sink for serialization of string-to-value mappings.">ObjectOutput</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="ObjectOutputAsOutput.html" title=""></a>
+                        <a href="ObjectOutputAsOutput.html" title="">ObjectOutputAsOutput</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="trait" href="Output.html" title="Represents an abstract sink to which a value may be serialized (written)."></a>
                         <a href="Output.html" title="Represents an abstract sink to which a value may be serialized (written).">Output</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="PeekingObjectInput.html" title="Wrapper over ObjectInput that lets you peek next field name without advancing the input."></a>
+                        <a href="PeekingObjectInput.html" title="Wrapper over ObjectInput that lets you peek next field name without advancing the input.">PeekingObjectInput</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="ProductCodec.html" title=""></a>
@@ -326,7 +358,7 @@
                         <a class="class" href="transparent.html" title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field."></a>
                         <a href="transparent.html" title="Can be used on case classes with exactly one field to instruct automatically generated GenCodec that the class is a &quot;transparent wrapper&quot; and should be serialized to the same representation as the value of its sole field.">transparent</a>
                       </li><li class="current-entities indented4">
-                        <span class="separator"></span>
+                        <a class="object" href="whenAbsent$.html" title=""></a>
                         <a class="class" href="whenAbsent.html" title="An alternative way to provide default value for case class parameter used during deserialization with GenCodec when its field is missing in data being deserialized."></a>
                         <a href="whenAbsent.html" title="An alternative way to provide default value for case class parameter used during deserialization with GenCodec when its field is missing in data being deserialized.">whenAbsent</a>
                       </li>
@@ -809,29 +841,7 @@
 
         
 
-        <div class="values members">
-              <h3>Deprecated Value Members</h3>
-              <ol><li name="com.avsystem.commons.serialization.RecursiveAutoCodecs#materializeAuto" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="materializeAuto[T]:com.avsystem.commons.serialization.GenCodec.Auto[T]"></a><a id="materializeAuto[T]:Auto[T]"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/serialization/RecursiveAutoCodecs.html#materializeAuto[T]:com.avsystem.commons.serialization.GenCodec.Auto[T]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">implicit macro </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name deprecated" title="Deprecated: (Since version 1.28.0) auto codecs will be removed">materializeAuto</span><span class="tparams">[<span name="T">T</span>]</span><span class="result">: <a href="GenCodec$$Auto.html" class="extype" name="com.avsystem.commons.serialization.GenCodec.Auto">Auto</a>[<span class="extype" name="com.avsystem.commons.serialization.RecursiveAutoCodecs.materializeAuto.T">T</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
-                <span class="name">@deprecated</span>
-              
-        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 1.28.0)</i> auto codecs will be removed</p></dd></dl></div>
-    </li></ol>
-            </div>
+        
         </div>
 
         <div id="inheritedMembers">

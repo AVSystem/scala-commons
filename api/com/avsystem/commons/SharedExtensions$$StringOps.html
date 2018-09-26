@@ -182,6 +182,10 @@
                         <a class="class" href="SharedExtensions$$OrderingOps.html" title=""></a>
                         <a href="SharedExtensions$$OrderingOps.html" title="">OrderingOps</a>
                       </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="SharedExtensions$$PairTraversableOnceOps.html" title=""></a>
+                        <a href="SharedExtensions$$PairTraversableOnceOps.html" title="">PairTraversableOnceOps</a>
+                      </li><li class="current-entities indented4">
                         <a class="object" href="SharedExtensions$$PartialFunctionOps$.html" title=""></a>
                         <a class="class" href="SharedExtensions$$PartialFunctionOps.html" title=""></a>
                         <a href="SharedExtensions$$PartialFunctionOps.html" title="">PartialFunctionOps</a>
@@ -461,6 +465,42 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.avsystem.commons.SharedExtensions.StringOps#uncapitalize" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="uncapitalize:String"></a>
+      <span class="permalink">
+      <a href="../../../com/avsystem/commons/SharedExtensions$$StringOps.html#uncapitalize:String" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">uncapitalize</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      
+      
+    </li><li name="com.avsystem.commons.SharedExtensions.StringOps#unwrapLines" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="unwrapLines:String"></a>
+      <span class="permalink">
+      <a href="../../../com/avsystem/commons/SharedExtensions$$StringOps.html#unwrapLines:String" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">unwrapLines</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      
+      <p class="shortcomment cmt">Removes a newline character from every sequence of consecutive newline characters.</p><div class="fullcomment"><div class="comment cmt"><p>Removes a newline character from every sequence of consecutive newline characters. If the sequence contained
+just one newline character without any whitespace before and after it, a space is inserted.</p><p>e.g. <code>My hovercraft\nis full of eels.\n\nMy hovercraft is\n full of eels.</code> becomes
+<code>My hovercraft is full of eels.\nMy hovercraft is full of eels.</code></p><p>Useful for multi-line string literals with lines wrapped in source code but without intention of including
+these line breaks in actual runtime string.
+</p></div></div>
     </li>
               </ol>
             </div>

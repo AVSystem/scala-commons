@@ -154,6 +154,14 @@
                         <a class="class" href="AbstractValueEnumCompanion.html" title="Convenience abstract class implementing ValueEnumCompanion."></a>
                         <a href="AbstractValueEnumCompanion.html" title="Convenience abstract class implementing ValueEnumCompanion.">AbstractValueEnumCompanion</a>
                       </li><li class="current-entities indented4">
+                        <a class="object" href="Applier$.html" title=""></a>
+                        <a class="trait" href="Applier.html" title="Typeclass which captures case class apply method in a raw form that takes untyped sequence of arguments."></a>
+                        <a href="Applier.html" title="Typeclass which captures case class apply method in a raw form that takes untyped sequence of arguments.">Applier</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="ApplierUnapplier$.html" title=""></a>
+                        <a class="trait" href="ApplierUnapplier.html" title=""></a>
+                        <a href="ApplierUnapplier.html" title="">ApplierUnapplier</a>
+                      </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="Bidirectional$.html" title="Creates reversed partial function."></a>
                         <a href="Bidirectional$.html" title="Creates reversed partial function.">Bidirectional</a>
@@ -178,6 +186,10 @@
                         <a class="trait" href="EnumCtx.html" title=""></a>
                         <a href="EnumCtx.html" title="">EnumCtx</a>
                       </li><li class="current-entities indented4">
+                        <a class="object" href="ImplicitNotFound$.html" title=""></a>
+                        <a class="trait" href="ImplicitNotFound.html" title="Extends the functionality of scala.annotation.implicitNotFound so that implicit-not-found error message is itself resolved using implicit search."></a>
+                        <a href="ImplicitNotFound.html" title="Extends the functionality of scala.annotation.implicitNotFound so that implicit-not-found error message is itself resolved using implicit search.">ImplicitNotFound</a>
+                      </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="Implicits$.html" title=""></a>
                         <a href="Implicits$.html" title="">Implicits</a>
@@ -199,8 +211,8 @@
                         <a href="LowPrioUnboxing.html" title="">LowPrioUnboxing</a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="MacroGenerated$.html" title=""></a>
-                        <a class="class" href="" title=""></a>
-                        <a href="" title="">MacroGenerated</a>
+                        <a class="class" href="" title="Wrapper class for macro-generated typeclasses."></a>
+                        <a href="" title="Wrapper class for macro-generated typeclasses.">MacroGenerated</a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="NOpt$.html" title=""></a>
                         <a class="class" href="NOpt.html" title="Like Opt but does have a counterpart for Some(null)."></a>
@@ -229,6 +241,14 @@
                         <a class="object" href="OrderedEnum$.html" title=""></a>
                         <a class="trait" href="OrderedEnum.html" title="Trait to be extended by enums whose values are ordered by declaration order."></a>
                         <a href="OrderedEnum.html" title="Trait to be extended by enums whose values are ordered by declaration order.">OrderedEnum</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="ProductApplierUnapplier.html" title=""></a>
+                        <a href="ProductApplierUnapplier.html" title="">ProductApplierUnapplier</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="ProductUnapplier.html" title=""></a>
+                        <a href="ProductUnapplier.html" title="">ProductUnapplier</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="object" href="Sam$.html" title=""></a>
@@ -274,6 +294,10 @@
                         <a class="class" href="TypedMap.html" title=""></a>
                         <a href="TypedMap.html" title="">TypedMap</a>
                       </li><li class="current-entities indented4">
+                        <a class="object" href="Unapplier$.html" title=""></a>
+                        <a class="trait" href="Unapplier.html" title="Typeclass which captures case class unapply/unapplySeq method in a raw form that returns untyped sequence of values."></a>
+                        <a href="Unapplier.html" title="Typeclass which captures case class unapply/unapplySeq method in a raw form that returns untyped sequence of values.">Unapplier</a>
+                      </li><li class="current-entities indented4">
                         <a class="object" href="Unboxing$.html" title=""></a>
                         <a class="class" href="Unboxing.html" title=""></a>
                         <a href="Unboxing.html" title="">Unboxing</a>
@@ -285,6 +309,10 @@
                         <span class="separator"></span>
                         <a class="trait" href="ValueEnumCompanion.html" title="Base trait for companion objects of value based enums."></a>
                         <a href="ValueEnumCompanion.html" title="Base trait for companion objects of value based enums.">ValueEnumCompanion</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="ValueOf$.html" title=""></a>
+                        <a class="class" href="ValueOf.html" title=""></a>
+                        <a href="ValueOf.html" title="">ValueOf</a>
                       </li>
               </ul>
             </div>
@@ -306,20 +334,29 @@
 
       <h4 id="signature" class="signature">
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">MacroGenerated</span><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">MacroGenerated</span><span class="tparams">[<span name="C">C</span>, <span name="T">T</span>]</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></span>
       </span>
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Wrapper class for macro-generated typeclasses. Usually, a typeclass is wrapped in <code>MacroGenerated</code> when
+it's accepted as implicit super constructor parameter of some base class for companion objects of
+types for which the typeclass is being generated.
+Example: <a href="../serialization/HasGenCodec.html" class="extype" name="com.avsystem.commons.serialization.HasGenCodec">HasGenCodec</a>, which is a base class for
+companion objects of classes that want <a href="../serialization/GenCodec.html" class="extype" name="com.avsystem.commons.serialization.GenCodec">GenCodec</a> to be
+macro-generated for them.</p><p>Instead of materializing the type class instance directly, a function from some base companion type <code>C</code> is
+materialized. To obtain the actual typeclass instance, companion object must be passed as this function's
+argument. This serves two purposes:</p><p>- contents of <code>C</code> will be wildcard-imported into macro-materialization, allowing injection of additional implicits
+- working around too strict Scala validation of super constructor arguments: https://github.com/scala/bug/issues/7666
+</p></div><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -345,7 +382,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.avsystem.commons.misc.MacroGenerated"><span>MacroGenerated</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.avsystem.commons.misc.MacroGenerated"><span>MacroGenerated</span></li><li class="in" name="scala.AnyVal"><span>AnyVal</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -366,9 +403,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.avsystem.commons.misc.MacroGenerated#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(forCompanion:Any=&gt;T):com.avsystem.commons.misc.MacroGenerated[T]"></a><a id="&lt;init&gt;:MacroGenerated[T]"></a>
+      <a id="&lt;init&gt;(forCompanion:C=&gt;T):com.avsystem.commons.misc.MacroGenerated[C,T]"></a><a id="&lt;init&gt;:MacroGenerated[C,T]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#&lt;init&gt;(forCompanion:Any=&gt;T):com.avsystem.commons.misc.MacroGenerated[T]" title="Permalink">
+      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#&lt;init&gt;(forCompanion:C=&gt;T):com.avsystem.commons.misc.MacroGenerated[C,T]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -377,7 +414,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">MacroGenerated</span><span class="params">(<span name="forCompanion">forCompanion: (<a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a>) ⇒ <span class="extype" name="com.avsystem.commons.misc.MacroGenerated.T">T</span></span>)</span>
+        <span class="name">MacroGenerated</span><span class="params">(<span name="forCompanion">forCompanion: (<span class="extype" name="com.avsystem.commons.misc.MacroGenerated.C">C</span>) ⇒ <span class="extype" name="com.avsystem.commons.misc.MacroGenerated.T">T</span></span>)</span>
       </span>
       
       
@@ -391,7 +428,7 @@
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="scala.AnyRef#!=" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+                <li name="scala.Any#!=" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="!=(x$1:Any):Boolean"></a><a id="!=(Any):Boolean"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#!=(x$1:Any):Boolean" title="Permalink">
@@ -406,8 +443,8 @@
         <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="scala.AnyRef###" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="scala.Any###" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="##():Int"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html###():Int" title="Permalink">
@@ -422,8 +459,8 @@
         <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="scala.AnyRef#==" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="scala.Any#==" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="==(x$1:Any):Boolean"></a><a id="==(Any):Boolean"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#==(x$1:Any):Boolean" title="Permalink">
@@ -438,7 +475,7 @@
         <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
@@ -455,88 +492,10 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="clone():Object"></a><a id="clone():AnyRef"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#clone():Object" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@native</span><span class="args">()</span>
-              
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="defval" name="classOf[java.lang.CloneNotSupportedException]">...</span>
-    </span>)</span>
-              
-        </dd></dl></div>
-    </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#eq(x$1:AnyRef):Boolean" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="scala.AnyRef#equals" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="equals(x$1:Any):Boolean"></a><a id="equals(Any):Boolean"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#equals(x$1:Any):Boolean" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="finalize():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#finalize():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="symbol">classOf[java.lang.Throwable]</span>
-    </span>)</span>
-              
-        </dd></dl></div>
     </li><li name="com.avsystem.commons.misc.MacroGenerated#forCompanion" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="forCompanion:Any=&gt;T"></a><a id="forCompanion:(Any)⇒T"></a>
+      <a id="forCompanion:C=&gt;T"></a><a id="forCompanion:(C)⇒T"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#forCompanion:Any=&gt;T" title="Permalink">
+      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#forCompanion:C=&gt;T" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -545,33 +504,14 @@
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">forCompanion</span><span class="result">: (<a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a>) ⇒ <span class="extype" name="com.avsystem.commons.misc.MacroGenerated.T">T</span></span>
+        <span class="name">forCompanion</span><span class="result">: (<span class="extype" name="com.avsystem.commons.misc.MacroGenerated.C">C</span>) ⇒ <span class="extype" name="com.avsystem.commons.misc.MacroGenerated.T">T</span></span>
       </span>
       
       
-    </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="getClass():Class[_]"></a>
+    </li><li name="scala.AnyVal#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getClass():Class[_&lt;:AnyVal]"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#getClass():Class[_]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">Class</span>[_]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
-                <span class="name">@native</span><span class="args">()</span>
-              
-        </dd></dl></div>
-    </li><li name="scala.AnyRef#hashCode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="hashCode():Int"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#hashCode():Int" title="Permalink">
+      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#getClass():Class[_&lt;:AnyVal]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -580,13 +520,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="scala.Predef.Class">Class</span>[_ &lt;: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
-                <span class="name">@native</span><span class="args">()</span>
-              
-        </dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyVal → Any</dd></dl></div>
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -603,77 +540,7 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#ne(x$1:AnyRef):Boolean" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="scala.AnyRef#notify" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="notify():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#notify():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@native</span><span class="args">()</span>
-              
-        </dd></dl></div>
-    </li><li name="scala.AnyRef#notifyAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="notifyAll():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#notifyAll():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@native</span><span class="args">()</span>
-              
-        </dd></dl></div>
-    </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">synchronized</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="params">(<span name="arg0">arg0: ⇒ <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>)</span><span class="result">: <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
-    </li><li name="scala.AnyRef#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="scala.Any#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#toString():String" title="Permalink">
@@ -688,75 +555,7 @@
         <span class="name">toString</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="wait():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#wait():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
-    </span>)</span>
-              
-        </dd></dl></div>
-    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="wait(x$1:Long,x$2:Int):Unit"></a><a id="wait(Long,Int):Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
-    </span>)</span>
-              
-        </dd></dl></div>
-    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="wait(x$1:Long):Unit"></a><a id="wait(Long):Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/misc/MacroGenerated.html#wait(x$1:Long):Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
-                <span class="name">@native</span><span class="args">()</span>
-              
-                <span class="name">@throws</span><span class="args">(<span>
-      
-      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
-    </span>)</span>
-              
-        </dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li>
               </ol>
             </div>
@@ -767,8 +566,8 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+        <div class="parent" name="scala.AnyVal">
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyVal.html#scala.AnyVal" class="extype" name="scala.AnyVal">AnyVal</a></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>

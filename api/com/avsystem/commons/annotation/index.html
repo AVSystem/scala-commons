@@ -139,6 +139,10 @@
                         <a href="AnnotationAggregate.html" title="Base trait for annotations which aggregate multiple other annotations.">AnnotationAggregate</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="trait" href="NotInheritedFromSealedTypes.html" title="Marker trait for annotations which don't want to be inherited by subtypes of a sealed trait or class that has this annotation applied."></a>
+                        <a href="NotInheritedFromSealedTypes.html" title="Marker trait for annotations which don't want to be inherited by subtypes of a sealed trait or class that has this annotation applied.">NotInheritedFromSealedTypes</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="atLeast.html" title="When applied on varargs parameter, indicates that at least some number of parameters is required."></a>
                         <a href="atLeast.html" title="When applied on varargs parameter, indicates that at least some number of parameters is required.">atLeast</a>
                       </li><li class="current-entities indented4">
@@ -153,6 +157,10 @@
                         <span class="separator"></span>
                         <a class="class" href="macroPrivate.html" title="Symbols annotated with this annotation can only be used in macro-generated code."></a>
                         <a href="macroPrivate.html" title="Symbols annotated with this annotation can only be used in macro-generated code.">macroPrivate</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="positioned$.html" title=""></a>
+                        <a class="class" href="positioned.html" title="Annotate a symbol (i.e."></a>
+                        <a href="positioned.html" title="Annotate a symbol (i.e.">positioned</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="showAst.html" title="When applied on a definition (class, object, def, val, etc.) or expression, will cause the AVSystem static analyzer to print compilation error with AST of annotated code fragment."></a>
@@ -266,6 +274,22 @@
       </span>
       <span class="symbol">
         <a title="" href="../kafka/index.html"><span class="name">kafka</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.meta" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="meta"></a><a id="meta:meta"></a>
+      <span class="permalink">
+      <a href="../../../com/avsystem/commons/index.html#meta" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../meta/index.html"><span class="name">meta</span></a>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
@@ -428,7 +452,31 @@
           <div id="comment" class="fullcommenttop"></div>
         
 
-      
+      <div id="mbrsel">
+        <div class="toggle"></div>
+        <div id="memberfilter">
+          <i class="material-icons arrow"></i>
+          <span class="input">
+            <input id="mbrsel-input" placeholder="Filter all members" type="text" accesskey="/" />
+          </span>
+          <i class="clear material-icons"></i>
+        </div>
+        <div id="filterby">
+          <div id="order">
+            <span class="filtertype">Ordering</span>
+            <ol>
+              
+              <li class="alpha in"><span>Alphabetic</span></li>
+              
+            </ol>
+          </div>
+          
+          <div id="visbl">
+              <span class="filtertype">Visibility</span>
+              <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+            </div>
+        </div>
+      </div>
 
       <div id="template">
         <div id="allMembers">
@@ -467,6 +515,26 @@ you can pass the arguments of original annotation to aggregated annotations, e.g
   @rpcName(name) <span class="cmt">// passing `name` to aggregated annotation</span>
   <span class="kw">type</span> Implied
 }</pre></div></div>
+    </li><li name="com.avsystem.commons.annotation.NotInheritedFromSealedTypes" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="NotInheritedFromSealedTypesextendsAnnotationwithStaticAnnotation"></a><a id="NotInheritedFromSealedTypes:NotInheritedFromSealedTypes"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/annotation/index.html#NotInheritedFromSealedTypesextendsAnnotationwithStaticAnnotation" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a title="Marker trait for annotations which don't want to be inherited by subtypes of a sealed trait or class that has this annotation applied." href="NotInheritedFromSealedTypes.html"><span class="name">NotInheritedFromSealedTypes</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Marker trait for annotations which don't want to be inherited by subtypes
+of a sealed trait or class that has this annotation applied.</p><div class="fullcomment"><div class="comment cmt"><p>Marker trait for annotations which don't want to be inherited by subtypes
+of a sealed trait or class that has this annotation applied. Intended for annotations that should apply
+only to the sealed trait itself.
+</p></div></div>
     </li><li name="com.avsystem.commons.annotation.atLeast" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="atLeastextendsAnnotationwithStaticAnnotation"></a><a id="atLeast:atLeast"></a>
       <span class="permalink">
@@ -555,6 +623,27 @@ against the compiler inferring <code>Nothing</code> or <code>Null</code>.</p><pr
       </span>
       
       <p class="shortcomment cmt">Symbols annotated with this annotation can only be used in macro-generated code.</p>
+    </li><li name="com.avsystem.commons.annotation.positioned" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="positionedextendsAnnotationwithStaticAnnotation"></a><a id="positioned:positioned"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/annotation/index.html#positionedextendsAnnotationwithStaticAnnotation" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="Annotate a symbol (i.e." href="positioned.html"><span class="name">positioned</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Annotate a symbol (i.e.</p><div class="fullcomment"><div class="comment cmt"><p>Annotate a symbol (i.e. class, method, parameter, etc.) with <code>@positioned(positioned.here)</code> to retain source
+position information for that symbol to be available in macro implementations which inspect that symbol.
+This is necessary e.g. for determining declaration order of subtypes of sealed hierarchies in macro implementations.
+This annotation is only needed when macro is invoked in a different source file than the source file of inspected
+symbol. If macro is invoked in the same file, source position is always available.
+</p></div></div>
     </li><li name="com.avsystem.commons.annotation.showAst" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="showAstextendsAnnotationwithStaticAnnotation"></a><a id="showAst:showAst"></a>
       <span class="permalink">
@@ -580,7 +669,28 @@ This is useful primarily for debugging macro expansions.
 
         
 
-        
+        <div class="values members">
+              <h3>Value Members</h3>
+              <ol>
+                <li name="com.avsystem.commons.annotation.positioned" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="positioned"></a><a id="positioned:positioned"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/annotation/index.html#positioned" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="positioned$.html"><span class="name">positioned</span></a>
+      </span>
+      
+      
+    </li>
+              </ol>
+            </div>
 
         
 
