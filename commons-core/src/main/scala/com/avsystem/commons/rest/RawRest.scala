@@ -8,6 +8,11 @@ import com.avsystem.commons.rpc._
 
 case class RestMethodCall(rpcName: String, pathParams: List[PathValue], metadata: RestMethodMetadata[_])
 case class ResolvedPath(prefixes: List[RestMethodCall], finalCall: RestMethodCall, finalMetadata: HttpMethodMetadata[_]) {
+  lazy val pathPattern: List[PathPatternElement] =
+    if (prefixes.isEmpty) finalMetadata.pathPattern
+    else (prefixes.iterator.flatMap(_.metadata.pathPattern.iterator) ++
+      finalMetadata.pathPattern.iterator).toList
+
   def prepend(rpcName: String, pathParams: List[PathValue], metadata: PrefixMetadata[_]): ResolvedPath =
     copy(prefixes = RestMethodCall(rpcName, pathParams, metadata) :: prefixes)
 

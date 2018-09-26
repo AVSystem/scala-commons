@@ -104,7 +104,7 @@ object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
       case Nil => this
       case PathName(PathValue(pathName)) :: tail =>
         byName.getOrElseUpdate(pathName, new Trie).forPattern(tail)
-      case PathParam :: tail =>
+      case PathParam(_) :: tail =>
         wildcard.getOrElse(new Trie().setup(t => wildcard = Opt(t))).forPattern(tail)
     }
 
@@ -160,21 +160,21 @@ object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
 
 sealed trait PathPatternElement
 case class PathName(value: PathValue) extends PathPatternElement
-case object PathParam extends PathPatternElement
+case class PathParam(param: PathParamMetadata[_]) extends PathPatternElement
 
 sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
   def methodPath: List[PathValue]
   def parametersMetadata: RestParametersMetadata
 
   val pathPattern: List[PathPatternElement] = methodPath.map(PathName) ++
-    parametersMetadata.path.flatMap(pp => PathParam :: pp.pathSuffix.map(PathName))
+    parametersMetadata.path.flatMap(pp => PathParam(pp) :: pp.pathSuffix.map(PathName))
 
   def applyPathParams(params: List[PathValue]): List[PathValue] = {
     def loop(params: List[PathValue], pattern: List[PathPatternElement]): List[PathValue] =
       (params, pattern) match {
         case (Nil, Nil) => Nil
         case (_, PathName(patternHead) :: patternTail) => patternHead :: loop(params, patternTail)
-        case (param :: paramsTail, PathParam :: patternTail) => param :: loop(paramsTail, patternTail)
+        case (param :: paramsTail, PathParam(_) :: patternTail) => param :: loop(paramsTail, patternTail)
         case _ => throw new IllegalArgumentException(
           s"got ${params.size} path params, expected ${parametersMetadata.path.size}")
       }
@@ -185,7 +185,7 @@ sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
     def loop(path: List[PathValue], pattern: List[PathPatternElement]): Opt[(List[PathValue], List[PathValue])] =
       (path, pattern) match {
         case (pathTail, Nil) => Opt((Nil, pathTail))
-        case (param :: pathTail, PathParam :: patternTail) =>
+        case (param :: pathTail, PathParam(_) :: patternTail) =>
           loop(pathTail, patternTail).map { case (params, tail) => (param :: params, tail) }
         case (pathHead :: pathTail, PathName(patternHead) :: patternTail) if pathHead == patternHead =>
           loop(pathTail, patternTail)
@@ -239,7 +239,10 @@ case class RestParametersMetadata(
 )
 
 case class ParamMetadata[T]() extends TypedMetadata[T]
-case class PathParamMetadata[T](@reifyAnnot pathAnnot: Path) extends TypedMetadata[T] {
+case class PathParamMetadata[T](
+  @reifyName(useRawName = true) name: String,
+  @reifyAnnot pathAnnot: Path
+) extends TypedMetadata[T] {
   val pathSuffix: List[PathValue] = PathValue.splitDecode(pathAnnot.pathSuffix)
 }
 
