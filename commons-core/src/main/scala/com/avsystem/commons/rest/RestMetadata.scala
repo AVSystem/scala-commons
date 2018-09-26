@@ -85,9 +85,9 @@ case class RestMetadata[T](
       case Nil => Left(HttpErrorException(405, s"$method not allowed on path ${PathValue.encodeJoin(path)}"))
       case single :: Nil => Right(single)
       case multiple => // this should never happen after ensureUnambiguousPaths
-        val pathStr = path.iterator.map(_.value).mkString("/")
         val callsRepr = multiple.iterator.map(p => s"  ${p.rpcChainRepr}").mkString("\n", "\n", "")
-        throw new RestException(s"path $pathStr is ambiguous, it could map to following calls:$callsRepr")
+        throw new RestException(
+          s"path ${PathValue.encodeJoin(path)} is ambiguous, it could map to following calls:$callsRepr")
     }
     else Left(HttpErrorException(404, s"path ${PathValue.encodeJoin(path)} not found"))
   }
