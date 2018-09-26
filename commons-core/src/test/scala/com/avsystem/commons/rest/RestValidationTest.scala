@@ -14,7 +14,7 @@ class RestValidationTest extends FunSuite {
   }
 
   test("recursive API") {
-    val failure = intercept[InvalidRestApiException](Api2.metadata.ensureUnambiguousPaths())
+    val failure = intercept[InvalidRestApiException](Api2.metadata.ensureValid())
     assert(failure.getMessage == "call chain self->self is recursive, recursively defined server APIs are forbidden")
   }
 
@@ -28,7 +28,7 @@ class RestValidationTest extends FunSuite {
 
   test("simple ambiguous paths") {
     val failure = intercept[InvalidRestApiException] {
-      RestMetadata.materializeForRpc[Api1].ensureUnambiguousPaths()
+      RestMetadata.materializeForRpc[Api1].ensureValid()
     }
     assert(failure.getMessage ==
       """REST API has ambiguous paths:
@@ -50,7 +50,7 @@ class RestValidationTest extends FunSuite {
 
   test("conflicting header params") {
     val failure = intercept[InvalidRestApiException] {
-      RestMetadata.materializeForRpc[PrefixApi1].ensureUniqueParams(Nil)
+      RestMetadata.materializeForRpc[PrefixApi1].ensureValid()
     }
     assert(failure.getMessage ==
       "Header parameter X-Lol of post collides with header parameter of the same name in prefix prefix")
@@ -68,7 +68,7 @@ class RestValidationTest extends FunSuite {
 
   test("conflicting query params") {
     val failure = intercept[InvalidRestApiException] {
-      RestMetadata.materializeForRpc[PrefixApi2].ensureUniqueParams(Nil)
+      RestMetadata.materializeForRpc[PrefixApi2].ensureValid()
     }
     assert(failure.getMessage ==
       "Query parameter lol of post collides with query parameter of the same name in prefix prefix")
