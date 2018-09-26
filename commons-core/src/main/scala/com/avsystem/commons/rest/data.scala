@@ -191,7 +191,7 @@ object HttpBody {
   */
 final class HttpMethod(implicit enumCtx: EnumCtx) extends AbstractValueEnum
 object HttpMethod extends AbstractValueEnumCompanion[HttpMethod] {
-  final val GET, PUT, POST, PATCH, DELETE: Value = new HttpMethod
+  final val GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE, PATCH: Value = new HttpMethod
 }
 
 case class RestParameters(
