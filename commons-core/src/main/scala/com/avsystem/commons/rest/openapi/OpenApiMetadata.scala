@@ -65,16 +65,17 @@ case class OpenApiMetadata[T](
 
   def openapi(
     info: Info,
+    components: Components = Components(),
     servers: List[Server] = Nil,
     security: List[SecurityRequirement] = Nil,
     tags: List[Tag] = Nil,
     externalDocs: OptArg[ExternalDocumentation] = OptArg.Empty
   ): OpenApi = {
-    val registry = new SchemaRegistry(n => s"#/components/schemas/$n")
+    val registry = new SchemaRegistry(initial = components.schemas)
     OpenApi(OpenApi.Version,
       info,
       paths(registry),
-      components = Components(schemas = registry.registeredSchemas),
+      components = components.copy(schemas = registry.registeredSchemas),
       servers = servers,
       security = security,
       tags = tags,

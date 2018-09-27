@@ -203,8 +203,10 @@ object InliningResolver {
     new InliningResolver().resolve(schema)
 }
 
-final class SchemaRegistry(nameToRef: String => String, initial: Iterable[(String, RefOr[Schema])] = Map.empty)
-  extends SchemaResolver {
+final class SchemaRegistry(
+  nameToRef: String => String = name => s"#/components/schemas/$name",
+  initial: Iterable[(String, RefOr[Schema])] = Map.empty
+) extends SchemaResolver {
 
   private[this] case class Entry(source: Opt[RestSchema[_]], schema: RefOr[Schema])
 
