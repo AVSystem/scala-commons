@@ -210,8 +210,8 @@ object RestParameters {
   final val Empty = RestParameters(Nil, Mapping.empty, Mapping.empty)
 }
 
-case class HttpErrorException(code: Int, payload: OptArg[String] = OptArg.Empty)
-  extends RuntimeException(s"HTTP ERROR $code${payload.fold("")(p => s": $p")}") with NoStackTrace {
+case class HttpErrorException(code: Int, payload: OptArg[String] = OptArg.Empty, cause: Throwable = null)
+  extends RuntimeException(s"HTTP ERROR $code${payload.fold("")(p => s": $p")}", cause) with NoStackTrace {
   def toResponse: RestResponse =
     RestResponse(code, Mapping.empty, payload.fold(HttpBody.empty)(HttpBody.plain))
 }

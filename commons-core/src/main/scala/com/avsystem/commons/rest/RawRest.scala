@@ -81,7 +81,11 @@ trait RawRest {
         else
           rawRest.handle(finalRpcName, finalParameters, HttpBody.parseJsonBody(body))
     }
-    resolveCall(this, prefixes)
+    try resolveCall(this, prefixes) catch {
+      case e: InvalidRpcCall =>
+        val body = e.getMessage.opt.map(HttpBody.plain).getOrElse(HttpBody.Empty)
+        RawRest.successfulAsync(RestResponse(400, Mapping.empty, body))
+    }
   }
 }
 
@@ -196,4 +200,4 @@ object RawRest extends RawRpcCompanion[RawRest] {
   }
 }
 
-class RestException(msg: String, cause: Throwable = null) extends RpcException(msg, cause)
+class RestException(msg: String, cause: Throwable = null) extends InvalidRpcCall(msg, cause)

@@ -4,7 +4,8 @@ package rest
 import com.avsystem.commons.misc.{ImplicitNotFound, MacroGenerated}
 import com.avsystem.commons.rest.RawRest.{AsRawRpc, AsRealRpc}
 import com.avsystem.commons.rest.openapi.{OpenApiMetadata, RestResponses, RestResultType, RestSchema, RestStructure}
-import com.avsystem.commons.rpc.{AsRaw, AsRawReal, AsReal, Fallback, RpcMacroInstances}
+import com.avsystem.commons.rpc.{AsRaw, AsRawReal, AsReal, Fallback, InvalidRpcCall, RpcMacroInstances}
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, HasGenCodec}
 
@@ -165,17 +166,34 @@ object FutureRestImplicits extends FutureRestImplicits
   * [[com.avsystem.commons.serialization.GenKeyCodec GenKeyCodec]] based serialization for REST API traits.
   */
 trait GenCodecRestImplicits extends FloatingPointRestImplicits {
+  protected final def handleReadFailure[T](expr: => T): T =
+    try expr catch {
+      case rf: ReadFailure => throw new InvalidRpcCall(rf.getMessage, rf)
+    }
+
   // Implicits wrapped into `Fallback` so that they don't get higher priority just because they're imported
   // This way concrete classes may override these implicits with implicits in their companion objects
   implicit def pathValueFallbackAsRealRaw[T: GenKeyCodec]: Fallback[AsRawReal[PathValue, T]] =
-    Fallback(AsRawReal.create(v => PathValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value)))
+    Fallback(AsRawReal.create(
+      v => PathValue(GenKeyCodec.write[T](v)),
+      v => handleReadFailure(GenKeyCodec.read[T](v.value))
+    ))
   implicit def headerValueDefaultAsRealRaw[T: GenKeyCodec]: Fallback[AsRawReal[HeaderValue, T]] =
-    Fallback(AsRawReal.create(v => HeaderValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value)))
+    Fallback(AsRawReal.create(
+      v => HeaderValue(GenKeyCodec.write[T](v)),
+      v => handleReadFailure(GenKeyCodec.read[T](v.value))
+    ))
   implicit def queryValueDefaultAsRealRaw[T: GenKeyCodec]: Fallback[AsRawReal[QueryValue, T]] =
-    Fallback(AsRawReal.create(v => QueryValue(GenKeyCodec.write[T](v)), v => GenKeyCodec.read[T](v.value)))
+    Fallback(AsRawReal.create(
+      v => QueryValue(GenKeyCodec.write[T](v)),
+      v => handleReadFailure(GenKeyCodec.read[T](v.value))
+    ))
 
   implicit def jsonValueDefaultAsRealRaw[T: GenCodec]: Fallback[AsRawReal[JsonValue, T]] =
-    Fallback(AsRawReal.create(v => JsonValue(JsonStringOutput.write[T](v)), v => JsonStringInput.read[T](v.value)))
+    Fallback(AsRawReal.create(
+      v => JsonValue(JsonStringOutput.write[T](v)),
+      v => handleReadFailure(JsonStringInput.read[T](v.value))
+    ))
 
   @implicitNotFound("Cannot serialize ${T} into JsonValue, probably because: #{forGenCodec}")
   implicit def asRawJsonNotFound[T](

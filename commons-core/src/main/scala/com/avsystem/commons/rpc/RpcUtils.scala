@@ -6,8 +6,17 @@ import com.avsystem.commons.macros.misc.MiscMacros
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
 
-class RpcException(msg: String, cause: Throwable = null)
+class InvalidRpcCall(msg: String, cause: Throwable = null)
   extends RuntimeException(msg, cause)
+
+class MissingRpcArgument(val rpcName: String, val argName: String)
+  extends InvalidRpcCall(s"Argument $argName of RPC $rpcName is missing")
+
+class UnknownRpc(val rpcName: String, val rawMethodName: String)
+  extends InvalidRpcCall(s"Unknown RPC $rpcName for raw method $rawMethodName")
+
+class MissingOptionalRpc(val rawMethodName: String)
+  extends InvalidRpcCall(s"No matching RPC for optional raw method $rawMethodName")
 
 object RpcUtils {
   def createEmpty[Coll](cbf: CanBuildFrom[Nothing, Nothing, Coll]): Coll =
@@ -20,13 +29,13 @@ object RpcUtils {
   }
 
   def missingArg(rpcName: String, argName: String): Nothing =
-    throw new RpcException(s"Can't interpret raw RPC call $rpcName: argument $argName is missing")
+    throw new MissingRpcArgument(rpcName, argName)
 
   def unknownRpc(rpcName: String, rawMethodName: String): Nothing =
-    throw new RpcException(s"RPC $rpcName does not map to raw method $rawMethodName")
+    throw new UnknownRpc(rpcName, rawMethodName)
 
   def missingOptionalRpc(rawMethodName: String): Nothing =
-    throw new RpcException(s"no matching real method for optional raw method $rawMethodName")
+    throw new MissingOptionalRpc(rawMethodName)
 
   def compilationError(error: String): Nothing = macro MiscMacros.compilationError
 }
