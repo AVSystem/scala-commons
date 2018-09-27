@@ -46,12 +46,16 @@ final class Mapping[+V](private val wrapped: IIterable[(String, V)])
     map.apply(key)
 
   def get(key: String): Option[V] = map.get(key)
+  def -(key: String): Mapping[V] = Mapping(wrapped.filter({ case (k, _) => k == key }))
+  def +[V0 >: V](pair: (String, V0)): Mapping[V0] = append(pair)
 
-  def -(key: String): Mapping[V] =
-    Mapping(vector.filter({ case (k, _) => k == key }))
+  def append[V0 >: V](pair: (String, V0)): Mapping[V0] =
+    if (wrapped.isEmpty) Mapping(List(pair))
+    else Mapping(ConcatIterable(wrapped, List(pair)))
 
-  def +[V0 >: V](pair: (String, V0)): Mapping[V0] =
-    Mapping(wrapped ++ List(pair))
+  def prepend[V0 >: V](pair: (String, V0)): Mapping[V0] =
+    if (wrapped.isEmpty) Mapping(List(pair))
+    else Mapping(ConcatIterable(List(pair), wrapped))
 
   def ++[V0 >: V](other: Mapping[V0]): Mapping[V0] =
     if (wrapped.isEmpty) other
