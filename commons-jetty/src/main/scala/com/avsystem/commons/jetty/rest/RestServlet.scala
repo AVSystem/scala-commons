@@ -27,8 +27,8 @@ object RestServlet {
 
   def readParameters(request: HttpServletRequest): RestParameters = {
     // can't use request.getPathInfo because it decodes the URL before we can split it
-    val path = PathValue.splitDecode(request.getRequestURI
-      .stripPrefix(request.getContextPath).stripPrefix(request.getServletPath))
+    val pathPrefix = request.getContextPath.opt.getOrElse("") + request.getServletPath.opt.getOrElse("")
+    val path = PathValue.splitDecode(request.getRequestURI.stripPrefix(pathPrefix))
     val query = request.getQueryString.opt.map(QueryValue.decode).getOrElse(Mapping.empty)
     val headersBuilder = Mapping.newBuilder[HeaderValue]
     request.getHeaderNames.asScala.foreach { headerName =>
@@ -68,10 +68,12 @@ object RestServlet {
     }
   }
 
-  def writeFailure(response: HttpServletResponse, message: String, charset: String = "utf-8"): Unit = {
+  def writeFailure(response: HttpServletResponse, message: Opt[String], charset: String = "utf-8"): Unit = {
     response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500)
-    response.setContentType(s"text/plain;charset=$charset")
-    response.getWriter.write(message)
+    message.foreach { msg =>
+      response.setContentType(s"text/plain;charset=$charset")
+      response.getWriter.write(msg)
+    }
   }
 
   def handle(
@@ -87,7 +89,7 @@ object RestServlet {
         writeResponse(response, restResponse, charset)
         asyncContext.complete()
       case Failure(e) =>
-        writeFailure(response, e.getMessage, charset)
+        writeFailure(response, e.getMessage.opt, charset)
         asyncContext.complete()
     }
   }
