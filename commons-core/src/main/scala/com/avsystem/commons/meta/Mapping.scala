@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package meta
 
-import com.avsystem.commons.meta.Mapping.ConcatIterable
+import com.avsystem.commons.meta.Mapping.{ConcatIterable, KeyFilteredIterable}
 import com.avsystem.commons.serialization.GenCodec
 
 import scala.collection.generic.CanBuildFrom
@@ -46,21 +46,21 @@ final class Mapping[+V](private val wrapped: IIterable[(String, V)])
     map.apply(key)
 
   def get(key: String): Option[V] = map.get(key)
-  def -(key: String): Mapping[V] = Mapping(wrapped.filter({ case (k, _) => k == key }))
+  def -(key: String): Mapping[V] = Mapping(new KeyFilteredIterable(wrapped, _ == key))
   def +[V0 >: V](pair: (String, V0)): Mapping[V0] = append(pair)
 
   def append[V0 >: V](pair: (String, V0)): Mapping[V0] =
     if (wrapped.isEmpty) Mapping(List(pair))
-    else Mapping(ConcatIterable(wrapped, List(pair)))
+    else Mapping(new ConcatIterable(wrapped, List(pair)))
 
   def prepend[V0 >: V](pair: (String, V0)): Mapping[V0] =
     if (wrapped.isEmpty) Mapping(List(pair))
-    else Mapping(ConcatIterable(List(pair), wrapped))
+    else Mapping(new ConcatIterable(List(pair), wrapped))
 
   def ++[V0 >: V](other: Mapping[V0]): Mapping[V0] =
     if (wrapped.isEmpty) other
     else if (other.wrapped.isEmpty) this
-    else new Mapping(ConcatIterable(wrapped, other.wrapped))
+    else new Mapping(new ConcatIterable(wrapped, other.wrapped))
 }
 object Mapping {
   def empty[V]: Mapping[V] = new Mapping(Nil)
@@ -70,8 +70,15 @@ object Mapping {
   def newBuilder[V]: mutable.Builder[(String, V), Mapping[V]] =
     new MListBuffer[(String, V)].mapResult(new Mapping(_))
 
-  private case class ConcatIterable[+V](first: IIterable[V], second: IIterable[V]) extends IIterable[V] {
+  private class ConcatIterable[+V](first: IIterable[V], second: IIterable[V]) extends IIterable[V] {
     def iterator: Iterator[V] = first.iterator ++ second.iterator
+  }
+
+  private class KeyFilteredIterable[+V](original: IIterable[(String, V)], filter: String => Boolean)
+    extends IIterable[(String, V)] {
+
+    def iterator: Iterator[(String, V)] =
+      original.iterator.filter { case (k, _) => filter(k) }
   }
 
   private val reusableCBF = new CanBuildFrom[Nothing, (String, Any), Mapping[Any]] {
