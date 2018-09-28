@@ -197,9 +197,9 @@ object HttpMethod extends AbstractValueEnumCompanion[HttpMethod] {
 }
 
 case class RestParameters(
-  @multi @tagged[Path] path: List[PathValue],
-  @multi @tagged[Header] headers: Mapping[HeaderValue],
-  @multi @tagged[Query] query: Mapping[QueryValue]
+  @multi @tagged[Path] path: List[PathValue] = Nil,
+  @multi @tagged[Header] headers: Mapping[HeaderValue] = Mapping.empty,
+  @multi @tagged[Query] query: Mapping[QueryValue] = Mapping.empty
 ) {
   def append(method: RestMethodMetadata[_], otherParameters: RestParameters): RestParameters =
     RestParameters(
@@ -209,7 +209,7 @@ case class RestParameters(
     )
 }
 object RestParameters {
-  final val Empty = RestParameters(Nil, Mapping.empty, Mapping.empty)
+  final val Empty = RestParameters()
 }
 
 case class HttpErrorException(code: Int, payload: OptArg[String] = OptArg.Empty, cause: Throwable = null)

@@ -163,6 +163,12 @@ object RawRest extends RawRpcCompanion[RawRest] {
   def failingAsync[T](cause: Throwable): Async[T] =
     readyAsync(Failure(cause))
 
+  def mapAsync[A, B](async: Async[A])(f: A => B): Async[B] =
+    cb => async(contramapCallback(cb)(f))
+
+  def contramapCallback[A, B](callback: Callback[B])(f: A => B): Callback[A] =
+    ta => callback(ta.map(f))
+
   def fromHandleRequest[Real: AsRealRpc : RestMetadata](handleRequest: HandleRequest): Real =
     RawRest.asReal(new DefaultRawRest(RestMetadata[Real], RestParameters.Empty, handleRequest))
 
@@ -171,27 +177,32 @@ object RawRest extends RawRpcCompanion[RawRest] {
 
   def resolveAndHandle(metadata: RestMetadata[_])(handleResolved: HandleResolvedRequest): HandleRequest = {
     metadata.ensureValid()
+
     RawRest.safeHandle { request =>
       val path = request.parameters.path
       metadata.resolvePath(path) match {
         case Nil =>
           val message = s"path ${PathValue.encodeJoin(path)} not found"
-          RawRest.successfulAsync(RestResponse.plain(400, message))
-        case calls => calls.filter(_.method == request.method) match {
-          case Nil => request.method match {
-            case HttpMethod.OPTIONS =>
-              val allowedMethods = calls.iterator.map(_.method.name).mkString("", ",", "," + HttpMethod.OPTIONS.name)
-              RawRest.successfulAsync(RestResponse(200, Mapping("Allow" -> HeaderValue(allowedMethods)), HttpBody.Empty))
-            case _ =>
-              val message = s"${request.method} not allowed on path ${PathValue.encodeJoin(path)}"
-              RawRest.successfulAsync(RestResponse.plain(405, message))
-          }
-          case single :: Nil =>
-            handleResolved(request, single)
-          case multiple => // this should never happen after ensureValid()
-            val callsRepr = multiple.iterator.map(p => s"  ${p.rpcChainRepr}").mkString("\n", "\n", "")
-            throw new RestException(
-              s"path ${PathValue.encodeJoin(path)} is ambiguous, it could map to following calls:$callsRepr")
+          RawRest.successfulAsync(RestResponse.plain(404, message))
+        case calls => request.method match {
+          case HttpMethod.OPTIONS =>
+            val meths = calls.iterator.map(_.method).flatMap {
+              case HttpMethod.GET => List(HttpMethod.GET, HttpMethod.HEAD)
+              case m => List(m)
+            } ++ Iterator(HttpMethod.OPTIONS)
+            val response = RestResponse(200, Mapping("Allow" -> HeaderValue(meths.mkString(","))), HttpBody.Empty)
+            RawRest.successfulAsync(response)
+          case wireMethod =>
+            val head = wireMethod == HttpMethod.HEAD
+            val req = if (head) request.copy(method = HttpMethod.GET) else request
+            calls.find(_.method == req.method) match {
+              case Some(call) =>
+                val resp = handleResolved(req, call)
+                if (head) RawRest.mapAsync(resp)(_.copy(body = HttpBody.empty)) else resp
+              case None =>
+                val message = s"$wireMethod not allowed on path ${PathValue.encodeJoin(path)}"
+                RawRest.successfulAsync(RestResponse.plain(405, message))
+            }
         }
       }
     }

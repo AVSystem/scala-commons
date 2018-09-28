@@ -181,9 +181,18 @@ class RawRestTest extends FunSuite with ScalaFutures {
   }
 
   test("OPTIONS") {
-    val params = RestParameters(List(PathValue("user")), Mapping.empty, Mapping.empty)
-    val request = RestRequest(HttpMethod.OPTIONS, params, HttpBody.Empty)
-    val response = RestResponse(200, Mapping("Allow" -> HeaderValue("GET,PUT,OPTIONS")), HttpBody.Empty)
+    val request = RestRequest(HttpMethod.OPTIONS, RestParameters(List(PathValue("user"))), HttpBody.Empty)
+    val response = RestResponse(200, Mapping("Allow" -> HeaderValue("GET,HEAD,PUT,OPTIONS")), HttpBody.Empty)
+
+    val promise = Promise[RestResponse]
+    serverHandle(request).apply(promise.complete)
+    assert(promise.future.futureValue == response)
+  }
+
+  test("HEAD") {
+    val params = RestParameters(List(PathValue("user")), query = Mapping("userId" -> QueryValue("UID")))
+    val request = RestRequest(HttpMethod.HEAD, params, HttpBody.Empty)
+    val response = RestResponse(200, Mapping.empty, HttpBody.empty)
 
     val promise = Promise[RestResponse]
     serverHandle(request).apply(promise.complete)
