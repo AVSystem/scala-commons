@@ -6,15 +6,21 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.avsystem.commons.meta._
 import com.avsystem.commons.rpc._
 
-case class RestMethodCall(rpcName: String, pathParams: List[PathValue], metadata: RestMethodMetadata[_])
-case class ResolvedPath(prefixes: List[RestMethodCall], finalCall: RestMethodCall, finalMetadata: HttpMethodMetadata[_]) {
-  lazy val pathPattern: List[PathPatternElement] =
-    if (prefixes.isEmpty) finalMetadata.pathPattern
-    else (prefixes.iterator.flatMap(_.metadata.pathPattern.iterator) ++
-      finalMetadata.pathPattern.iterator).toList
+sealed abstract class RestMethodCall {
+  val rpcName: String
+  val pathParams: List[PathValue]
+  val metadata: RestMethodMetadata[_]
+}
+case class PrefixCall(rpcName: String, pathParams: List[PathValue], metadata: PrefixMetadata[_]) extends RestMethodCall
+case class HttpCall(rpcName: String, pathParams: List[PathValue], metadata: HttpMethodMetadata[_]) extends RestMethodCall
 
-  def prepend(rpcName: String, pathParams: List[PathValue], metadata: PrefixMetadata[_]): ResolvedPath =
-    copy(prefixes = RestMethodCall(rpcName, pathParams, metadata) :: prefixes)
+case class ResolvedCall(root: RestMetadata[_], prefixes: List[PrefixCall], finalCall: HttpCall) {
+  lazy val pathPattern: List[PathPatternElement] =
+    if (prefixes.isEmpty) finalCall.metadata.pathPattern
+    else (prefixes.iterator.flatMap(_.metadata.pathPattern.iterator) ++
+      finalCall.metadata.pathPattern.iterator).toList
+
+  def method: HttpMethod = finalCall.metadata.method
 
   def rpcChainRepr: String =
     prefixes.iterator.map(_.rpcName).mkString("", "->", s"->${finalCall.rpcName}")
@@ -58,13 +64,13 @@ trait RawRest {
   def asHandleRequest(metadata: RestMetadata[_]): HandleRequest =
     RawRest.resolveAndHandle(metadata)(handleResolved)
 
-  def handleResolved(request: RestRequest, resolved: ResolvedPath): Async[RestResponse] = {
+  def handleResolved(request: RestRequest, resolved: ResolvedCall): Async[RestResponse] = {
     val RestRequest(method, parameters, body) = request
-    val ResolvedPath(prefixes, finalCall, finalMetadata) = resolved
-    val RestMethodCall(finalRpcName, finalPathParams, _) = finalCall
+    val ResolvedCall(_, prefixes, finalCall) = resolved
+    val HttpCall(finalRpcName, finalPathParams, finalMetadata) = finalCall
 
-    def resolveCall(rawRest: RawRest, prefixes: List[RestMethodCall]): Async[RestResponse] = prefixes match {
-      case RestMethodCall(rpcName, pathParams, _) :: tail =>
+    def resolveCall(rawRest: RawRest, prefixes: List[PrefixCall]): Async[RestResponse] = prefixes match {
+      case PrefixCall(rpcName, pathParams, _) :: tail =>
         rawRest.prefix(rpcName, parameters.copy(path = pathParams)) match {
           case Success(nextRawRest) => resolveCall(nextRawRest, tail)
           case Failure(e: HttpErrorException) => RawRest.successfulAsync(e.toResponse)
@@ -83,8 +89,7 @@ trait RawRest {
     }
     try resolveCall(this, prefixes) catch {
       case e: InvalidRpcCall =>
-        val body = e.getMessage.opt.map(HttpBody.plain).getOrElse(HttpBody.Empty)
-        RawRest.successfulAsync(RestResponse(400, Mapping.empty, body))
+        RawRest.successfulAsync(RestResponse.plain(400, e.getMessage))
     }
   }
 }
@@ -122,7 +127,7 @@ object RawRest extends RawRpcCompanion[RawRest] {
   /**
     * Similar to [[HandleRequest]] but accepts already resolved path as a second argument.
     */
-  type HandleResolvedRequest = (RestRequest, ResolvedPath) => Async[RestResponse]
+  type HandleResolvedRequest = (RestRequest, ResolvedCall) => Async[RestResponse]
 
   /**
     * Ensures that all possible exceptions thrown by a request handler are not propagated but converted into
@@ -167,9 +172,27 @@ object RawRest extends RawRpcCompanion[RawRest] {
   def resolveAndHandle(metadata: RestMetadata[_])(handleResolved: HandleResolvedRequest): HandleRequest = {
     metadata.ensureValid()
     RawRest.safeHandle { request =>
-      metadata.resolvePath(request.method, request.parameters.path) match {
-        case Right(resolved) => handleResolved(request, resolved)
-        case Left(error) => RawRest.successfulAsync(error.toResponse)
+      val path = request.parameters.path
+      metadata.resolvePath(path) match {
+        case Nil =>
+          val message = s"path ${PathValue.encodeJoin(path)} not found"
+          RawRest.successfulAsync(RestResponse.plain(400, message))
+        case calls => calls.filter(_.method == request.method) match {
+          case Nil => request.method match {
+            case HttpMethod.OPTIONS =>
+              val allowedMethods = calls.iterator.map(_.method.name).mkString("", ",", "," + HttpMethod.OPTIONS.name)
+              RawRest.successfulAsync(RestResponse(200, Mapping("Allow" -> HeaderValue(allowedMethods)), HttpBody.Empty))
+            case _ =>
+              val message = s"${request.method} not allowed on path ${PathValue.encodeJoin(path)}"
+              RawRest.successfulAsync(RestResponse.plain(405, message))
+          }
+          case single :: Nil =>
+            handleResolved(request, single)
+          case multiple => // this should never happen after ensureValid()
+            val callsRepr = multiple.iterator.map(p => s"  ${p.rpcChainRepr}").mkString("\n", "\n", "")
+            throw new RestException(
+              s"path ${PathValue.encodeJoin(path)} is ambiguous, it could map to following calls:$callsRepr")
+        }
       }
     }
   }

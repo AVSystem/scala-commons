@@ -116,7 +116,7 @@ sealed trait HttpBody {
     RestResponse(defaultStatus, Mapping.empty, this)
 }
 object HttpBody {
-  object Empty extends HttpBody
+  case object Empty extends HttpBody
   final case class NonEmpty(content: String, mimeType: String) extends HttpBody
 
   def empty: HttpBody = Empty
@@ -133,7 +133,9 @@ object HttpBody {
   final val JsonType = "application/json"
   final val FormType = "application/x-www-form-urlencoded"
 
-  def plain(value: String): HttpBody = HttpBody(value, PlainType)
+  def plain(content: OptArg[String] = OptArg.Empty): HttpBody =
+    content.toOpt.map(HttpBody(_, PlainType)).getOrElse(Empty)
+
   def json(json: JsonValue): HttpBody = HttpBody(json.value, JsonType)
 
   def createFormBody(values: Mapping[QueryValue]): HttpBody =
@@ -212,8 +214,7 @@ object RestParameters {
 
 case class HttpErrorException(code: Int, payload: OptArg[String] = OptArg.Empty, cause: Throwable = null)
   extends RuntimeException(s"HTTP ERROR $code${payload.fold("")(p => s": $p")}", cause) with NoStackTrace {
-  def toResponse: RestResponse =
-    RestResponse(code, Mapping.empty, payload.fold(HttpBody.empty)(HttpBody.plain))
+  def toResponse: RestResponse = RestResponse.plain(code, payload)
 }
 
 case class RestRequest(method: HttpMethod, parameters: RestParameters, body: HttpBody)
@@ -225,6 +226,9 @@ case class RestResponse(code: Int, headers: Mapping[HeaderValue], body: HttpBody
 }
 
 object RestResponse {
+  def plain(status: Int, message: OptArg[String] = OptArg.Empty): RestResponse =
+    RestResponse(status, Mapping.empty, HttpBody.plain(message))
+
   class LazyOps(private val resp: () => RestResponse) extends AnyVal {
     def recoverHttpError: RestResponse = try resp() catch {
       case e: HttpErrorException => e.toResponse

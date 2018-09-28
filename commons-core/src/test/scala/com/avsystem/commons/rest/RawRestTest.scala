@@ -2,6 +2,7 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.annotation.AnnotationAggregate
+import com.avsystem.commons.meta.Mapping
 import com.avsystem.commons.serialization.{transientDefault, whenAbsent}
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
@@ -16,6 +17,7 @@ class omit[T](value: => T) extends AnnotationAggregate {
 
 trait UserApi {
   @GET def user(userId: String): Future[User]
+  @PUT def user(user: User): Future[Unit]
 
   @POST("user/save") def user(
     @Path("moar/path") paf: String,
@@ -67,6 +69,7 @@ class RawRestTest extends FunSuite with ScalaFutures {
     def self: UserApi = this
     def subApi(newId: Int, newQuery: String): UserApi = new RootApiImpl(newId, query + newQuery)
     def user(userId: String): Future[User] = Future.successful(User(userId, s"$userId-$id-$query"))
+    def user(user: User): Future[Unit] = Future.unit
     def user(paf: String, awesome: Boolean, f: Int, user: User): Future[Unit] = Future.unit
     def defaults(awesome: Boolean, foo: Int, kek: String): Future[Unit] = Future.unit
     def autopost(bodyarg: String): Future[String] = Future.successful(bodyarg.toUpperCase)
@@ -175,5 +178,15 @@ class RawRestTest extends FunSuite with ScalaFutures {
         |ZUO
         |""".stripMargin
     )
+  }
+
+  test("OPTIONS") {
+    val params = RestParameters(List(PathValue("user")), Mapping.empty, Mapping.empty)
+    val request = RestRequest(HttpMethod.OPTIONS, params, HttpBody.Empty)
+    val response = RestResponse(200, Mapping("Allow" -> HeaderValue("GET,PUT,OPTIONS")), HttpBody.Empty)
+
+    val promise = Promise[RestResponse]
+    serverHandle(request).apply(promise.complete)
+    assert(promise.future.futureValue == response)
   }
 }

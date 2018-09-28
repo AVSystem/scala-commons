@@ -72,31 +72,22 @@ case class RestMetadata[T](
     }
   }
 
-  def resolvePath(method: HttpMethod, path: List[PathValue]): Either[HttpErrorException, ResolvedPath] = {
-    def resolve(metadata: RestMetadata[_], path: List[PathValue]): Iterator[ResolvedPath] = {
+  def resolvePath(path: List[PathValue]): List[ResolvedCall] = {
+    def resolve(metadata: RestMetadata[_], path: List[PathValue]): Iterator[ResolvedCall] = {
       val asFinalCall = for {
-        (rpcName, m) <- metadata.httpMethods.iterator
-        (pathParams, Nil) <- m.extractPathParams(path)
-      } yield ResolvedPath(Nil, RestMethodCall(rpcName, pathParams, m), m)
+        (rpcName, methodMeta) <- metadata.httpMethods.iterator
+        (pathParams, Nil) <- methodMeta.extractPathParams(path)
+      } yield ResolvedCall(this, Nil, HttpCall(rpcName, pathParams, methodMeta))
 
       val usingPrefix = for {
         (rpcName, prefix) <- metadata.prefixMethods.iterator
         (pathParams, pathTail) <- prefix.extractPathParams(path).iterator
         suffixPath <- resolve(prefix.result.value, pathTail)
-      } yield suffixPath.prepend(rpcName, pathParams, prefix)
+      } yield suffixPath.copy(prefixes = PrefixCall(rpcName, pathParams, prefix) :: suffixPath.prefixes)
 
       asFinalCall ++ usingPrefix
     }
-    val it = resolve(this, path)
-    if (it.hasNext) it.filter(_.finalMetadata.method == method).toList match {
-      case Nil => Left(HttpErrorException(405, s"$method not allowed on path ${PathValue.encodeJoin(path)}"))
-      case single :: Nil => Right(single)
-      case multiple => // this should never happen after ensureUnambiguousPaths
-        val callsRepr = multiple.iterator.map(p => s"  ${p.rpcChainRepr}").mkString("\n", "\n", "")
-        throw new RestException(
-          s"path ${PathValue.encodeJoin(path)} is ambiguous, it could map to following calls:$callsRepr")
-    }
-    else Left(HttpErrorException(404, s"path ${PathValue.encodeJoin(path)} not found"))
+    resolve(this, path).toList
   }
 }
 object RestMetadata extends RpcMetadataCompanion[RestMetadata] {
