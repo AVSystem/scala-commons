@@ -278,6 +278,12 @@ As mentioned earlier, each trait method is by default translated into a `POST` r
 You can specify which HTTP method you want by explicitly annotating trait method as
 `@GET`/`@POST`/`@PATCH`/`@PUT` or `@DELETE` (from `com.avsystem.commons.rest` package).
 
+Currently it is not possible define methods to handle `HEAD`, `OPTIONS`, `TRACE` and `CONNECT`
+HTTP methods. However, `HEAD` and `OPTIONS` are handled automatically. `HEAD` requests are
+handled in exactly the same way as `GET` requests except the body is ultimately stripped from
+the response. `OPTIONS` is handled by returning a `200 OK` empty response with an
+`Allow` header containing the list of allowed HTTP methods on given path.
+
 ```scala
 @DELETE def deleteUser(id: String): Future[Unit]
 ```
