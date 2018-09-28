@@ -286,7 +286,9 @@ Currently it is not possible define methods to handle `HEAD`, `OPTIONS`, `TRACE`
 HTTP methods. However, `HEAD` and `OPTIONS` are handled automatically. `HEAD` requests are
 handled in exactly the same way as `GET` requests except the body is ultimately stripped from
 the response. `OPTIONS` is handled by returning a `200 OK` empty response with an
-`Allow` header containing the list of allowed HTTP methods on given path.
+`Allow` header containing the list of allowed HTTP methods on given path. For example, if you
+have `@GET` and `@POST` annotated methods in your REST API trait for some path, `OPTIONS` request
+for this path will return `GET,HEAD,POST,OPTIONS`.
 
 #### `GET` methods
 
@@ -306,6 +308,9 @@ User-Agent: Jetty/9.3.23.v20180228
 Host: localhost:9090
 
 ```
+
+`@GET` annotated methods are also invoked to handle `HEAD` HTTP requests.
+However, response to such request will have its body ultimately stripped.
 
 ### Customizing paths
 
