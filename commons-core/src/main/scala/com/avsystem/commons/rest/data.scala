@@ -21,7 +21,11 @@ sealed trait RestValue extends Any {
 case class PathValue(value: String) extends AnyVal with RestValue
 object PathValue {
   def splitDecode(path: String): List[PathValue] =
-    path.split("/").iterator.filter(_.nonEmpty).map(s => PathValue(UrlEncoding.decode(s))).toList
+    path.split("/").iterator.map(s => PathValue(UrlEncoding.decode(s))).toList match {
+      case PathValue("") :: tail => tail
+      case res => res
+    }
+
   def encodeJoin(path: List[PathValue]): String =
     path.iterator.map(pv => UrlEncoding.encode(pv.value)).mkString("/", "/", "")
 }
@@ -46,7 +50,7 @@ object QueryValue {
 
   def decode(queryString: String): Mapping[QueryValue] = {
     val builder = Mapping.newBuilder[QueryValue]
-    queryString.split(FormKVPairSep).iterator.map(_.split(FormKVSep, 2)).foreach {
+    queryString.split(FormKVPairSep).iterator.filter(_.nonEmpty).map(_.split(FormKVSep, 2)).foreach {
       case Array(name, value) => builder += UrlEncoding.decode(name) -> QueryValue(UrlEncoding.decode(value))
       case _ => throw new IllegalArgumentException(s"invalid query string $queryString")
     }

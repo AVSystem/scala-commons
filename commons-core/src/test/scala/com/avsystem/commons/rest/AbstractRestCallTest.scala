@@ -47,7 +47,7 @@ abstract class AbstractRestCallTest extends FunSuite with ScalaFutures {
   }
 
   test("prefixed GET") {
-    testCall(_.prefix("p0", "h0", "q0").subget(0, 1, 2))
+    testCall(_.prefix("", "h0", "q0").subget(0, 1, 2))
   }
 
   test("custom response with headers") {
