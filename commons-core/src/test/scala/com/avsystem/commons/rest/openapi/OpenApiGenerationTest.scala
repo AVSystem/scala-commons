@@ -53,80 +53,40 @@ class OpenApiGenerationTest extends FunSuite {
         |        }
         |      }
         |    },
-        |    "/a/b/{p1}/p1/{p2}": {
-        |      "description": "path with a followed by b",
-        |      "get": {
-        |        "description": "A really complex GET operation",
-        |        "operationId": "complexGet",
-        |        "parameters": [
-        |          {
-        |            "name": "p1",
-        |            "in": "path",
-        |            "required": true,
-        |            "schema": {
-        |              "type": "integer",
-        |              "format": "int32"
-        |            }
-        |          },
-        |          {
-        |            "name": "p2",
-        |            "in": "path",
-        |            "description": "Very serious path parameter",
-        |            "required": true,
-        |            "schema": {
-        |              "type": "string",
-        |              "title": "Stri"
-        |            }
-        |          },
-        |          {
-        |            "name": "X-H1",
-        |            "in": "header",
-        |            "required": true,
-        |            "schema": {
-        |              "type": "integer",
-        |              "format": "int32"
-        |            }
-        |          },
-        |          {
-        |            "name": "X-H2",
-        |            "in": "header",
-        |            "required": true,
-        |            "schema": {
-        |              "type": "string"
-        |            }
-        |          },
-        |          {
-        |            "name": "q1",
-        |            "in": "query",
-        |            "required": true,
-        |            "schema": {
-        |              "type": "integer",
-        |              "format": "int32"
-        |            }
-        |          },
-        |          {
-        |            "name": "q=2",
-        |            "in": "query",
-        |            "schema": {
-        |              "type": "string",
-        |              "default": "q2def"
-        |            }
-        |          }
-        |        ],
-        |        "responses": {
-        |          "200": {
-        |            "content": {
-        |              "application/json": {
-        |                "schema": {
-        |                  "$ref": "#/components/schemas/RestEntity"
-        |                }
+        |    "/complexParams": {
+        |      "put": {
+        |        "operationId": "put_complexParams",
+        |        "requestBody": {
+        |          "content": {
+        |            "application/json": {
+        |              "schema": {
+        |                "type": "object",
+        |                "properties": {
+        |                  "flatBaseEntity": {
+        |                    "$ref": "#/components/schemas/FlatBaseEntity"
+        |                  },
+        |                  "baseEntity": {
+        |                    "nullable": true,
+        |                    "allOf": [
+        |                      {
+        |                        "$ref": "#/components/schemas/BaseEntity"
+        |                      }
+        |                    ],
+        |                    "default": null
+        |                  }
+        |                },
+        |                "required": [
+        |                  "flatBaseEntity"
+        |                ]
         |              }
         |            }
-        |          }
+        |          },
+        |          "required": true
+        |        },
+        |        "responses": {
+        |          "204": {}
         |        }
-        |      }
-        |    },
-        |    "/complexParams": {
+        |      },
         |      "post": {
         |        "operationId": "complexParams",
         |        "requestBody": {
@@ -144,7 +104,8 @@ class OpenApiGenerationTest extends FunSuite {
         |                      {
         |                        "$ref": "#/components/schemas/FlatBaseEntity"
         |                      }
-        |                    ]
+        |                    ],
+        |                    "default": null
         |                  }
         |                },
         |                "required": [
@@ -258,7 +219,78 @@ class OpenApiGenerationTest extends FunSuite {
         |        }
         |      }
         |    },
-        |    "/multiParamPost/{p1}/p1/{p2}": {
+        |    "/multi/param/{p1}/p1/{p2}": {
+        |      "description": "path with a followed by b",
+        |      "get": {
+        |        "description": "A really complex GET operation",
+        |        "operationId": "complexGet",
+        |        "parameters": [
+        |          {
+        |            "name": "p1",
+        |            "in": "path",
+        |            "required": true,
+        |            "schema": {
+        |              "type": "integer",
+        |              "format": "int32"
+        |            }
+        |          },
+        |          {
+        |            "name": "p2",
+        |            "in": "path",
+        |            "description": "Very serious path parameter",
+        |            "required": true,
+        |            "schema": {
+        |              "type": "string",
+        |              "title": "Stri"
+        |            }
+        |          },
+        |          {
+        |            "name": "X-H1",
+        |            "in": "header",
+        |            "required": true,
+        |            "schema": {
+        |              "type": "integer",
+        |              "format": "int32"
+        |            }
+        |          },
+        |          {
+        |            "name": "X-H2",
+        |            "in": "header",
+        |            "required": true,
+        |            "schema": {
+        |              "type": "string"
+        |            }
+        |          },
+        |          {
+        |            "name": "q1",
+        |            "in": "query",
+        |            "required": true,
+        |            "schema": {
+        |              "type": "integer",
+        |              "format": "int32"
+        |            }
+        |          },
+        |          {
+        |            "name": "q=2",
+        |            "in": "query",
+        |            "schema": {
+        |              "type": "string",
+        |              "default": "q2def"
+        |            }
+        |          }
+        |        ],
+        |        "responses": {
+        |          "200": {
+        |            "content": {
+        |              "application/json": {
+        |                "schema": {
+        |                  "$ref": "#/components/schemas/RestEntity"
+        |                }
+        |              }
+        |            }
+        |          }
+        |        }
+        |      },
         |      "post": {
         |        "operationId": "multiParamPost",
         |        "parameters": [

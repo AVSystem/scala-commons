@@ -51,13 +51,13 @@ trait RestTestApi {
 
   @pathDescription("path with a followed by b")
   @description("A really complex GET operation")
-  @GET("a/b") def complexGet(
+  @GET("multi/param") def complexGet(
     @Path("p1") p1: Int, @description("Very serious path parameter") @title("Stri") @Path p2: String,
     @Header("X-H1") h1: Int, @Header("X-H2") h2: String,
     q1: Int, @Query("q=2") @whenAbsent("q2def") q2: String = whenAbsent.value
   ): Future[RestEntity]
 
-  @POST def multiParamPost(
+  @POST("multi/param") def multiParamPost(
     @Path("p1") p1: Int, @Path p2: String,
     @Header("X-H1") h1: Int, @Header("X-H2") h2: String,
     @Query q1: Int, @Query("q=2") q2: String,
@@ -86,7 +86,12 @@ trait RestTestApi {
 
   def complexParams(
     baseEntity: BaseEntity,
-    flatBaseEntity: Opt[FlatBaseEntity] = Opt.Empty
+    @whenAbsent(Opt.Empty) flatBaseEntity: Opt[FlatBaseEntity]
+  ): Future[Unit]
+
+  @PUT def complexParams(
+    flatBaseEntity: FlatBaseEntity,
+    @whenAbsent(Opt.Empty) baseEntity: Opt[BaseEntity]
   ): Future[Unit]
 
   def customResponse(@Query value: String): Future[CustomResp]
@@ -107,6 +112,7 @@ object RestTestApi extends DefaultRestApiCompanion[RestTestApi] {
     def prefix(p0: String, h0: String, q0: String): RestTestSubApi =
       RestTestSubApi.impl(s"$p0-$h0-$q0")
     def complexParams(baseEntity: BaseEntity, flatBaseEntity: Opt[FlatBaseEntity]): Future[Unit] = Future.unit
+    def complexParams(flatBaseEntity: FlatBaseEntity, baseEntity: Opt[BaseEntity]): Future[Unit] = Future.unit
     def customResponse(value: String): Future[CustomResp] = Future.successful(CustomResp(value))
   }
 }
