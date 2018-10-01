@@ -27,7 +27,7 @@ object RestServlet {
 
   def readParameters(request: HttpServletRequest): RestParameters = {
     // can't use request.getPathInfo because it decodes the URL before we can split it
-    val pathPrefix = request.getContextPath.opt.getOrElse("") + request.getServletPath.opt.getOrElse("")
+    val pathPrefix = request.getContextPath.orEmpty + request.getServletPath.orEmpty
     val path = PathValue.splitDecode(request.getRequestURI.stripPrefix(pathPrefix))
     val query = request.getQueryString.opt.map(QueryValue.decode).getOrElse(Mapping.empty)
     val headersBuilder = Mapping.newBuilder[HeaderValue]

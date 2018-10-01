@@ -187,6 +187,12 @@ object SharedExtensions extends SharedExtensions {
   private val RemovableLineBreak = "\\n+".r
 
   class StringOps(private val str: String) extends AnyVal {
+    /**
+      * Makes sure that `String` value is not `null` by replacing `null` with empty string.
+      */
+    def orEmpty: String =
+      if (str == null) "" else str
+
     def ensureSuffix(suffix: String): String =
       if (str.endsWith(suffix)) str else str + suffix
 
