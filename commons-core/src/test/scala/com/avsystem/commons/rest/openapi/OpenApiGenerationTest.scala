@@ -22,18 +22,6 @@ class OpenApiGenerationTest extends FunSuite {
         |  "paths": {
         |    "/": {
         |      "put": {
-        |        "responses": {
-        |          "200": {
-        |            "description": "Serious response",
-        |            "content": {
-        |              "application/json": {
-        |                "schema": {
-        |                  "type": "string"
-        |                }
-        |              }
-        |            }
-        |          }
-        |        },
         |        "operationId": "singleBodyPut",
         |        "requestBody": {
         |          "description": "Serious body",
@@ -50,23 +38,24 @@ class OpenApiGenerationTest extends FunSuite {
         |            }
         |          },
         |          "required": true
+        |        },
+        |        "responses": {
+        |          "200": {
+        |            "description": "Serious response",
+        |            "content": {
+        |              "application/json": {
+        |                "schema": {
+        |                  "type": "string"
+        |                }
+        |              }
+        |            }
+        |          }
         |        }
         |      }
         |    },
         |    "/a/b/{p1}/p1/{p2}": {
         |      "description": "path with a followed by b",
         |      "get": {
-        |        "responses": {
-        |          "200": {
-        |            "content": {
-        |              "application/json": {
-        |                "schema": {
-        |                  "$ref": "#/components/schemas/RestEntity"
-        |                }
-        |              }
-        |            }
-        |          }
-        |        },
         |        "description": "A really complex GET operation",
         |        "operationId": "complexGet",
         |        "parameters": [
@@ -123,14 +112,22 @@ class OpenApiGenerationTest extends FunSuite {
         |              "default": "q2def"
         |            }
         |          }
-        |        ]
+        |        ],
+        |        "responses": {
+        |          "200": {
+        |            "content": {
+        |              "application/json": {
+        |                "schema": {
+        |                  "$ref": "#/components/schemas/RestEntity"
+        |                }
+        |              }
+        |            }
+        |          }
+        |        }
         |      }
         |    },
         |    "/complexParams": {
         |      "post": {
-        |        "responses": {
-        |          "204": {}
-        |        },
         |        "operationId": "complexParams",
         |        "requestBody": {
         |          "content": {
@@ -157,11 +154,25 @@ class OpenApiGenerationTest extends FunSuite {
         |            }
         |          },
         |          "required": true
+        |        },
+        |        "responses": {
+        |          "204": {}
         |        }
         |      }
         |    },
         |    "/customResponse": {
         |      "post": {
+        |        "operationId": "customResponse",
+        |        "parameters": [
+        |          {
+        |            "name": "value",
+        |            "in": "query",
+        |            "required": true,
+        |            "schema": {
+        |              "type": "string"
+        |            }
+        |          }
+        |        ],
         |        "responses": {
         |          "200": {
         |            "headers": {
@@ -179,41 +190,19 @@ class OpenApiGenerationTest extends FunSuite {
         |              }
         |            }
         |          }
-        |        },
-        |        "operationId": "customResponse",
-        |        "parameters": [
-        |          {
-        |            "name": "value",
-        |            "in": "query",
-        |            "required": true,
-        |            "schema": {
-        |              "type": "string"
-        |            }
-        |          }
-        |        ]
+        |        }
         |      }
         |    },
         |    "/failingGet": {
         |      "get": {
+        |        "operationId": "failingGet",
         |        "responses": {
         |          "204": {}
-        |        },
-        |        "operationId": "failingGet"
+        |        }
         |      }
         |    },
         |    "/formPost": {
         |      "post": {
-        |        "responses": {
-        |          "200": {
-        |            "content": {
-        |              "application/json": {
-        |                "schema": {
-        |                  "type": "string"
-        |                }
-        |              }
-        |            }
-        |          }
-        |        },
         |        "operationId": "formPost",
         |        "parameters": [
         |          {
@@ -247,30 +236,30 @@ class OpenApiGenerationTest extends FunSuite {
         |            }
         |          },
         |          "required": true
-        |        }
-        |      }
-        |    },
-        |    "/moreFailingGet": {
-        |      "get": {
-        |        "responses": {
-        |          "204": {}
         |        },
-        |        "operationId": "moreFailingGet"
-        |      }
-        |    },
-        |    "/multiParamPost/{p1}/p1/{p2}": {
-        |      "post": {
         |        "responses": {
         |          "200": {
         |            "content": {
         |              "application/json": {
         |                "schema": {
-        |                  "$ref": "#/components/schemas/RestEntity"
+        |                  "type": "string"
         |                }
         |              }
         |            }
         |          }
-        |        },
+        |        }
+        |      }
+        |    },
+        |    "/moreFailingGet": {
+        |      "get": {
+        |        "operationId": "moreFailingGet",
+        |        "responses": {
+        |          "204": {}
+        |        }
+        |      }
+        |    },
+        |    "/multiParamPost/{p1}/p1/{p2}": {
+        |      "post": {
         |        "operationId": "multiParamPost",
         |        "parameters": [
         |          {
@@ -348,23 +337,23 @@ class OpenApiGenerationTest extends FunSuite {
         |            }
         |          },
         |          "required": true
+        |        },
+        |        "responses": {
+        |          "200": {
+        |            "content": {
+        |              "application/json": {
+        |                "schema": {
+        |                  "$ref": "#/components/schemas/RestEntity"
+        |                }
+        |              }
+        |            }
+        |          }
         |        }
         |      }
         |    },
         |    "/prefix/{p0}/subget/{p1}": {
         |      "summary": "summary for prefix paths",
         |      "get": {
-        |        "responses": {
-        |          "200": {
-        |            "content": {
-        |              "application/json": {
-        |                "schema": {
-        |                  "type": "string"
-        |                }
-        |              }
-        |            }
-        |          }
-        |        },
         |        "operationId": "prefix_subget",
         |        "parameters": [
         |          {
@@ -419,15 +408,26 @@ class OpenApiGenerationTest extends FunSuite {
         |              "format": "int32"
         |            }
         |          }
-        |        ]
+        |        ],
+        |        "responses": {
+        |          "200": {
+        |            "content": {
+        |              "application/json": {
+        |                "schema": {
+        |                  "type": "string"
+        |                }
+        |              }
+        |            }
+        |          }
+        |        }
         |      }
         |    },
         |    "/trivialGet": {
         |      "get": {
+        |        "operationId": "trivialGet",
         |        "responses": {
         |          "204": {}
-        |        },
-        |        "operationId": "trivialGet"
+        |        }
         |      }
         |    }
         |  },
