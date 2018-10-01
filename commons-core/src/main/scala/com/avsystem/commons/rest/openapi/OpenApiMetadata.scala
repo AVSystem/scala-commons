@@ -128,7 +128,7 @@ case class OpenApiPrefix[T](
         parameters = prefixParams ++ operation.parameters
       )
       val adjustedOperation = operationAdjusters.foldRight(prefixedOperation)(_ adjustOperation _)
-      PathOperation(pathPattern + path, httpMethod, adjustedOperation, pathAdjusters ++ subAdjusters)
+      PathOperation(pathPattern + path.stripSuffix("/"), httpMethod, adjustedOperation, pathAdjusters ++ subAdjusters)
     }
   }
 }
@@ -140,7 +140,7 @@ sealed trait OpenApiOperation[T] extends OpenApiMethod[T] {
 
   def operation(resolver: SchemaResolver): Operation = {
     val op = Operation(
-      resultType.responses(resolver),
+      responses = resultType.responses(resolver),
       operationId = name,
       parameters = parameters.map(_.parameter(resolver)),
       requestBody = requestBody(resolver).toOptArg

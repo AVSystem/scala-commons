@@ -118,7 +118,6 @@ object PathItem extends HasGenCodec[PathItem]
   * [[https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#operationObject Operation Object]]
   */
 case class Operation(
-  responses: Responses,
   @td tags: List[String] = Nil,
   @td summary: OptArg[String] = OptArg.Empty,
   @td description: OptArg[String] = OptArg.Empty,
@@ -126,6 +125,7 @@ case class Operation(
   @td operationId: OptArg[String] = OptArg.Empty,
   @td parameters: List[RefOr[Parameter]] = Nil,
   @td requestBody: OptArg[RefOr[RequestBody]] = OptArg.Empty,
+  responses: Responses,
   @td callbacks: Map[String, RefOr[Callback]] = Map.empty,
   @td deprecated: Boolean = false,
   @td security: List[SecurityRequirement] = Nil,

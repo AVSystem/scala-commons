@@ -31,6 +31,9 @@ object RestSchema {
       def name: Opt[String] = schemaName.toOpt
     }
 
+  def named[T](name: String)(creator: SchemaResolver => RefOr[Schema]): RestSchema[T] =
+    create(creator, name)
+
   def plain[T](schema: Schema): RestSchema[T] =
     RestSchema.create(_ => RefOr(schema))
 
