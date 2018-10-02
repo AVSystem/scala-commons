@@ -131,7 +131,8 @@ object ClientMain {
     val client = new HttpClient
     client.start()
 
-    val proxy = RestClient[UserApi](client, "http://localhost:9090/")
+    // macro generated proxy implementation of UserApi
+    val proxy: UserApi = RestClient[UserApi](client, "http://localhost:9090/")
 
     // just for this example, normally it's not recommended
     import scala.concurrent.ExecutionContext.Implicits.global
