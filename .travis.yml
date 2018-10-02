@@ -16,7 +16,13 @@ env:
     - REDIS_HOME=$PWD/redis-$REDIS_VERSION/src
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION test commons/unidoc
+  - sbt ++$TRAVIS_SCALA_VERSION test
+  - sbt commons/unidoc
+
+matrix:
+  exclude:
+  - scala: 2.11.12
+    script: sbt commons/unidoc
 
 sudo: false
 
