@@ -426,6 +426,43 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         }
       """
   }
+
+  def assertLocal(tpe: Type): Type = {
+    if (tpe.typeSymbol.pos.source != c.enclosingPosition) {
+      abort(s"Macro inspection of $tpe can only be done in the same source file where that type is defined")
+    }
+    tpe
+  }
+
+  def safeAnnotTree(annot: Annot): Tree = {
+    if (containsInaccessibleThises(annot.tree)) {
+      abortAt(s"Reified annotation ${annot.tree} contains inaccessible this-references", annot.tree.pos)
+    }
+    c.untypecheck(annot.tree)
+  }
+
+  def annotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = {
+    val atpe = weakTypeOf[A].dealias
+    val tpe = assertLocal(weakTypeOf[T].dealias)
+    val annot = findAnnotation(tpe.typeSymbol, atpe)
+      .getOrElse(abort(s"No annotation of type $atpe found on $tpe"))
+    q"$MiscPkg.AnnotationOf(${safeAnnotTree(annot)})"
+  }
+
+  def optAnnotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = {
+    val atpe = weakTypeOf[A].dealias
+    val tpe = assertLocal(weakTypeOf[T].dealias)
+    val annotTree = findAnnotation(tpe.typeSymbol, atpe)
+      .fold[Tree](q"$MiscPkg.Opt.Empty")(a => q"$MiscPkg.Opt(${safeAnnotTree(a)})")
+    q"$MiscPkg.OptAnnotationOf($annotTree)"
+  }
+
+  def annotationsOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = {
+    val atpe = weakTypeOf[A].dealias
+    val tpe = assertLocal(weakTypeOf[T].dealias)
+    val annots = allAnnotations(tpe.typeSymbol, atpe).map(safeAnnotTree)
+    q"$MiscPkg.AnnotationsOf($ListObj(..$annots))"
+  }
 }
 
 class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
