@@ -10,7 +10,7 @@ class RestValidationTest extends FunSuite {
     def self: Api2
   }
   object Api2 {
-    implicit val metadata: RestMetadata[Api2] = RestMetadata.materializeForRpc[Api2]
+    implicit val metadata: RestMetadata[Api2] = RestMetadata.materialize[Api2]
   }
 
   test("recursive API") {
@@ -28,7 +28,7 @@ class RestValidationTest extends FunSuite {
 
   test("simple ambiguous paths") {
     val failure = intercept[InvalidRestApiException] {
-      RestMetadata.materializeForRpc[Api1].ensureValid()
+      RestMetadata.materialize[Api1].ensureValid()
     }
     assert(failure.getMessage ==
       """REST API has ambiguous paths:
@@ -45,12 +45,12 @@ class RestValidationTest extends FunSuite {
     def post(@Header("X-Lol") lol: String): Future[String]
   }
   object SuffixApi1 {
-    implicit val metadata: RestMetadata[SuffixApi1] = RestMetadata.materializeForRpc
+    implicit val metadata: RestMetadata[SuffixApi1] = RestMetadata.materialize
   }
 
   test("conflicting header params") {
     val failure = intercept[InvalidRestApiException] {
-      RestMetadata.materializeForRpc[PrefixApi1].ensureValid()
+      RestMetadata.materialize[PrefixApi1].ensureValid()
     }
     assert(failure.getMessage ==
       "Header parameter X-Lol of post collides with header parameter of the same name in prefix prefix")
@@ -63,12 +63,12 @@ class RestValidationTest extends FunSuite {
     def post(@Query lol: String): Future[String]
   }
   object SuffixApi2 {
-    implicit val metadata: RestMetadata[SuffixApi2] = RestMetadata.materializeForRpc
+    implicit val metadata: RestMetadata[SuffixApi2] = RestMetadata.materialize
   }
 
   test("conflicting query params") {
     val failure = intercept[InvalidRestApiException] {
-      RestMetadata.materializeForRpc[PrefixApi2].ensureValid()
+      RestMetadata.materialize[PrefixApi2].ensureValid()
     }
     assert(failure.getMessage ==
       "Query parameter lol of post collides with query parameter of the same name in prefix prefix")

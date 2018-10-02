@@ -26,7 +26,7 @@ trait TestApi extends SomeBase {
 }
 object TestApi {
   implicit val asRawReal: NewRawRpc.AsRawRealRpc[TestApi] = NewRawRpc.materializeAsRawReal[TestApi]
-  implicit val metadata: NewRpcMetadata[TestApi] = NewRpcMetadata.materializeForRpc[TestApi]
+  implicit val metadata: NewRpcMetadata[TestApi] = NewRpcMetadata.materialize[TestApi]
 }
 
 class NewRpcMetadataTest extends FunSuite {

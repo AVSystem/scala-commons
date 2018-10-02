@@ -198,7 +198,7 @@ final class tried extends RawMethodAnnotation
   *   @POST def saveUser(user: User): Future[Unit]
   * }
   * object ExampleApi {
-  *   implicit val AsRawReal: AsRawReal[ExampleRawRpc,ExampleApi] = AsRawReal.materializeForRpc
+  *   implicit val AsRawReal: AsRawReal[ExampleRawRpc,ExampleApi] = AsRawReal.materialize
   * }
   * }}}
   *

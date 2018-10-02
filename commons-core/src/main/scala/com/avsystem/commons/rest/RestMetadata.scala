@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rest
 
-import com.avsystem.commons.meta._
+import com.avsystem.commons.meta.{MacroInstances, _}
 import com.avsystem.commons.rpc._
 
 import scala.annotation.implicitNotFound
@@ -225,7 +225,7 @@ case class HttpMethodMetadata[T](
   * for arbitrary type `T`. For [[RestMetadata]] materialization this means that every method which returns a
   * `Future` is considered a valid HTTP method. [[FutureRestImplicits]] is injected into materialization of
   * [[RestMetadata]] through one of the base companion classes, e.g. [[DefaultRestApiCompanion]].
-  * See [[com.avsystem.commons.rpc.RpcMacroInstances RpcMacroInstances]] for more information on injection of implicits.
+  * See [[MacroInstances RpcMacroInstances]] for more information on injection of implicits.
   */
 @implicitNotFound("${T} is not a valid result type of HTTP REST method")
 case class HttpResponseType[T]()

@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.meta.Fallback
 import com.avsystem.commons.misc.ImplicitNotFound
 
 import scala.annotation.implicitNotFound
@@ -17,7 +18,7 @@ object AsRaw {
       def asRaw(real: Real): Raw = asRawFun(real)
     }
 
-  def materializeForRpc[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
+  def materialize[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
 
   implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Try[Raw], Try[Real]] =
@@ -43,7 +44,7 @@ object AsReal {
       def asReal(raw: Raw): Real = asRealFun(raw)
     }
 
-  def materializeForRpc[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsReal[Raw, Real]
+  def materialize[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsReal[Raw, Real]
 
   implicit def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Try[Raw], Try[Real]] =
@@ -78,9 +79,9 @@ object AsRawReal {
 
   implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsRawReal[Raw, Real]]): AsRawReal[Raw, Real] = fallback.value
 
-  def materializeForRpc[Raw, Real]: AsRawReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRawReal[Raw, Real]
+  def materialize[Raw, Real]: AsRawReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRawReal[Raw, Real]
 }
 
 object RpcMetadata {
-  def materializeForRpc[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.rpcMetadata[Real]
+  def materialize[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.rpcMetadata[Real]
 }

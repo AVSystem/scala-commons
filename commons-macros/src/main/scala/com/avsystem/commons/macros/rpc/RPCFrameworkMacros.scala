@@ -23,16 +23,16 @@ final class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommo
   def FullRPCInfoCls: Tree = tq"$FrameworkObj.FullRPCInfo"
 
   def asRealImpl[T: WeakTypeTag]: Tree =
-    q"$RpcPackage.AsReal.materializeForRpc[$RawRPCCls,${weakTypeOf[T]}]"
+    q"$RpcPackage.AsReal.materialize[$RawRPCCls,${weakTypeOf[T]}]"
 
   def asRawImpl[T: WeakTypeTag]: Tree =
-    q"$RpcPackage.AsRaw.materializeForRpc[$RawRPCCls,${weakTypeOf[T]}]"
+    q"$RpcPackage.AsRaw.materialize[$RawRPCCls,${weakTypeOf[T]}]"
 
   def AsRawRealImpl[T: WeakTypeTag]: Tree =
-    q"$RpcPackage.AsRawReal.materializeForRpc[$RawRPCCls,${weakTypeOf[T]}]"
+    q"$RpcPackage.AsRawReal.materialize[$RawRPCCls,${weakTypeOf[T]}]"
 
   def metadataImpl[T: WeakTypeTag]: Tree =
-    q"$RpcPackage.RpcMetadata.materializeForRpc[$RPCMetadataCls,${weakTypeOf[T]}]"
+    q"$RpcPackage.RpcMetadata.materialize[$RPCMetadataCls,${weakTypeOf[T]}]"
 
   def fullInfoImpl[T: WeakTypeTag]: Tree = {
     val rpcTpe = weakTypeOf[T]

@@ -238,10 +238,10 @@ trait MyApi { ... }
 object GenericApi {
   import DefaultRestImplicits._
   implicit val restAsRawReal: RawRest.AsRawRealRpc[MyApi] = RawRest.materializeAsRawReal
-  implicit val restMetadata: RestMetadata[MyApi] = RestMetadata.materializeForRpc
+  implicit val restMetadata: RestMetadata[MyApi] = RestMetadata.materialize
 
   import openapi._
-  implicit val openApiMetadata: OpenApiMetadata[MyApi] = OpenApiMetadata.materializeForRpc
+  implicit val openApiMetadata: OpenApiMetadata[MyApi] = OpenApiMetadata.materialize
 }
 ```
 

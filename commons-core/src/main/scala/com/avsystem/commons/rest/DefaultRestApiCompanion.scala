@@ -1,15 +1,21 @@
 package com.avsystem.commons
 package rest
 
-import com.avsystem.commons.misc.{ImplicitNotFound, MacroGenerated}
+import com.avsystem.commons.meta.{Fallback, MacroInstances}
+import com.avsystem.commons.misc.ImplicitNotFound
 import com.avsystem.commons.rest.RawRest.{AsRawRpc, AsRealRpc}
 import com.avsystem.commons.rest.openapi.{OpenApiMetadata, RestResponses, RestResultType, RestSchema, RestStructure}
-import com.avsystem.commons.rpc.{AsRaw, AsRawReal, AsReal, Fallback, InvalidRpcCall, RpcMacroInstances}
+import com.avsystem.commons.rpc.{AsRaw, AsRawReal, AsReal, InvalidRpcCall}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
-import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, HasGenCodec}
+import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
 import scala.annotation.implicitNotFound
+
+trait CodecWithStructure[T] {
+  def codec: GenCodec[T]
+  def structure: RestStructure[T]
+}
 
 /**
   * Base class for companion objects of ADTs (case classes, objects, sealed hierarchies) which are used as
@@ -24,10 +30,10 @@ import scala.annotation.implicitNotFound
   * }}}
   */
 abstract class RestDataCompanion[T](implicit
-  macroRestStructure: MacroGenerated[DefaultRestImplicits, RestStructure[T]],
-  macroCodec: MacroGenerated[Any, GenCodec[T]]
-) extends HasGenCodec[T] with DefaultRestImplicits {
-  implicit lazy val restStructure: RestStructure[T] = macroRestStructure.forCompanion(this)
+  instances: MacroInstances[DefaultRestImplicits, CodecWithStructure[T]]
+) extends {
+  implicit lazy val codec: GenCodec[T] = instances(DefaultRestImplicits, this).codec
+  implicit lazy val restStructure: RestStructure[T] = instances(DefaultRestImplicits, this).structure
   implicit lazy val restSchema: RestSchema[T] = restStructure.standaloneSchema // lazy on restStructure
 }
 
@@ -47,9 +53,9 @@ trait OpenApiInstances[Real] {
 trait OpenApiServerInstances[Real] extends ServerInstances[Real] with OpenApiInstances[Real]
 trait OpenApiFullInstances[Real] extends FullInstances[Real] with OpenApiInstances[Real]
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestClientApiCompanion[Implicits, Real](protected val implicits: Implicits)(
-  implicit inst: RpcMacroInstances[Implicits, ClientInstances, Real]
+  implicit inst: MacroInstances[Implicits, ClientInstances[Real]]
 ) {
   implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits, this).metadata
   implicit final lazy val restAsReal: AsRealRpc[Real] = inst(implicits, this).asReal
@@ -58,9 +64,9 @@ abstract class RestClientApiCompanion[Implicits, Real](protected val implicits: 
     RawRest.fromHandleRequest(handleRequest)
 }
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestServerApiCompanion[Implicits, Real](protected val implicits: Implicits)(
-  implicit inst: RpcMacroInstances[Implicits, ServerInstances, Real]
+  implicit inst: MacroInstances[Implicits, ServerInstances[Real]]
 ) {
   implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits, this).metadata
   implicit final lazy val restAsRaw: AsRawRpc[Real] = inst(implicits, this).asRaw
@@ -69,9 +75,9 @@ abstract class RestServerApiCompanion[Implicits, Real](protected val implicits: 
     RawRest.asHandleRequest(real)
 }
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestServerOpenApiCompanion[Implicits, Real](protected val implicits: Implicits)(
-  implicit inst: RpcMacroInstances[Implicits, OpenApiServerInstances, Real]
+  implicit inst: MacroInstances[Implicits, OpenApiServerInstances[Real]]
 ) {
   implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits, this).metadata
   implicit final lazy val restAsRaw: AsRawRpc[Real] = inst(implicits, this).asRaw
@@ -89,7 +95,7 @@ abstract class RestServerOpenApiCompanion[Implicits, Real](protected val implici
   * the `Implicits` type, e.g. [[DefaultRestApiCompanion]].
   */
 abstract class RestApiCompanion[Implicits, Real](protected val implicits: Implicits)(
-  implicit inst: RpcMacroInstances[Implicits, FullInstances, Real]
+  implicit inst: MacroInstances[Implicits, FullInstances[Real]]
 ) {
   implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits, this).metadata
   implicit final lazy val restAsRaw: AsRawRpc[Real] = inst(implicits, this).asRaw
@@ -101,9 +107,9 @@ abstract class RestApiCompanion[Implicits, Real](protected val implicits: Implic
     RawRest.asHandleRequest(real)
 }
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestOpenApiCompanion[Implicits, Real](protected val implicits: Implicits)(
-  implicit inst: RpcMacroInstances[Implicits, OpenApiFullInstances, Real]
+  implicit inst: MacroInstances[Implicits, OpenApiFullInstances[Real]]
 ) {
   implicit final lazy val restMetadata: RestMetadata[Real] = inst(implicits, this).metadata
   implicit final lazy val restAsRaw: AsRawRpc[Real] = inst(implicits, this).asRaw
@@ -227,7 +233,7 @@ object DefaultRestImplicits extends DefaultRestImplicits
   * Injects `GenCodec` and `GenKeyCodec` based serialization.
   */
 abstract class DefaultRestClientApiCompanion[Real](implicit
-  inst: RpcMacroInstances[DefaultRestImplicits, ClientInstances, Real]
+  inst: MacroInstances[DefaultRestImplicits, ClientInstances[Real]]
 ) extends RestClientApiCompanion[DefaultRestImplicits, Real](DefaultRestImplicits)
 
 /**
@@ -236,7 +242,7 @@ abstract class DefaultRestClientApiCompanion[Real](implicit
   * [[com.avsystem.commons.rest.openapi.OpenApiMetadata OpenApiMetadata]].
   */
 abstract class DefaultRestServerApiCompanion[Real](implicit
-  inst: RpcMacroInstances[DefaultRestImplicits, OpenApiServerInstances, Real]
+  inst: MacroInstances[DefaultRestImplicits, OpenApiServerInstances[Real]]
 ) extends RestServerOpenApiCompanion[DefaultRestImplicits, Real](DefaultRestImplicits)
 
 /**
@@ -245,5 +251,5 @@ abstract class DefaultRestServerApiCompanion[Real](implicit
   * [[com.avsystem.commons.rest.openapi.OpenApiMetadata OpenApiMetadata]].
   */
 abstract class DefaultRestApiCompanion[Real](implicit
-  inst: RpcMacroInstances[DefaultRestImplicits, OpenApiFullInstances, Real]
+  inst: MacroInstances[DefaultRestImplicits, OpenApiFullInstances[Real]]
 ) extends RestOpenApiCompanion[DefaultRestImplicits, Real](DefaultRestImplicits)

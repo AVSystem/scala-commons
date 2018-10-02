@@ -3,7 +3,6 @@ package meta
 
 import com.avsystem.commons.macros.misc.MiscMacros
 import com.avsystem.commons.misc.ImplicitNotFound
-import com.avsystem.commons.rpc.Fallback
 
 import scala.annotation.implicitNotFound
 

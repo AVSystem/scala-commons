@@ -343,6 +343,61 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
+  def macroInstances: Tree = {
+    val resultTpe = c.macroApplication.tpe
+    val applySig = resultTpe.member(TermName("apply")).typeSignatureIn(resultTpe)
+    val implicitsTpe = applySig.paramLists.head.head.typeSignature
+    val instancesTpe = applySig.finalResultType
+
+    val instTs = instancesTpe.typeSymbol
+    if (!(instTs.isClass && instTs.isAbstract)) {
+      abort(s"Expected trait or abstract class type, got $instancesTpe")
+    }
+
+    val instancesMethods = instancesTpe.members.iterator
+      .filter(m => m.isAbstract && m.isMethod).toList.reverse
+
+    def impl(singleMethod: Option[Symbol]): Tree = {
+      val impls = instancesMethods.map { m =>
+        val sig = m.typeSignatureIn(instancesTpe)
+        val resultTpe = sig.finalResultType.dealias
+        if (sig.typeParams.nonEmpty || sig.paramLists.nonEmpty) {
+          abort(s"Problem with $m of $instancesTpe: expected non-generic, parameterless method")
+        }
+        val resultCompanion = typedCompanionOf(resultTpe)
+          .getOrElse(abort(s"$resultTpe has no companion object with `materialize` macro"))
+
+        val body =
+          if (singleMethod.exists(_ != m)) q"$PredefObj.???"
+          else q"$resultCompanion.materialize"
+
+        q"def ${m.name.toTermName} = $body"
+      }
+
+      val implicitsName = c.freshName(TermName("implicits"))
+
+      q"""
+        new $resultTpe {
+          def apply($implicitsName: $implicitsTpe, $companionReplacementName: Any): $instancesTpe = {
+            import $implicitsName._
+            new $instancesTpe { ..$impls; () }
+          }
+        }
+       """
+    }
+
+    //If full implementation doesn't typecheck, find the first problematic typeclass and limit
+    //compilation errors to that one in order to not overwhelm the user but rather report errors gradually
+    val fullImpl = impl(None)
+    c.typecheck(fullImpl, silent = true) match {
+      case EmptyTree =>
+        instancesMethods.iterator.map(m => impl(Some(m)))
+          .find(t => c.typecheck(t, silent = true) == EmptyTree)
+          .getOrElse(fullImpl)
+      case t => t
+    }
+  }
+
   def posPoint: Tree =
     q"${c.enclosingPosition.point}"
 

@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package ser
 
+import com.avsystem.commons.meta.Fallback
 import com.avsystem.commons.rest._
 import com.avsystem.commons.rpc._
 import io.circe._
