@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package meta
 
-import com.avsystem.commons.rpc.{AsRaw, AsRawReal, AsReal, RpcMetadataCompanion}
+import com.avsystem.commons.rpc.RpcMetadataCompanion
 
 /**
-  * Wrap your implicit instance of [[AsReal]], [[AsRaw]], [[AsRawReal]] or RPC metadata (with companion that extends
-  * [[RpcMetadataCompanion]] into `Fallback` in order to lower its implicit priority.
+  * Wrap your implicit instance of `AsReal`, `AsRaw`, `AsRawReal` or RPC metadata (with companion that extends
+  * [[RpcMetadataCompanion]] into Fallback` in order to lower its implicit priority.
   * Useful when some implicit must be imported but we don't want it to get higher priority that imports normally
   * have over implicit scope (e.g. implicits from companion objects).
   *
@@ -17,5 +17,5 @@ import com.avsystem.commons.rpc.{AsRaw, AsRawReal, AsReal, RpcMetadataCompanion}
   *     implicit def fromFallback[T](implicit f: Fallback[FallbackAwareTC[T]]): FallbackAwareTC[T] = f.value
   *   }
   * }}}
-  */
+  **/
 case class Fallback[+T](value: T) extends AnyVal

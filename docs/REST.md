@@ -687,7 +687,7 @@ to create convenience companion base class just for Circe:
 
 ```scala
 abstract class CirceRestApiCompanion[Real](
-  implicit inst: RpcMacroInstances[CirceRestImplicits, FullInstances, Real])
+  implicit inst: MacroInstances[CirceRestImplicits, FullInstances, Real])
 ) extends RestApiCompanion[CirceRestImplicits, Real](CirceRestImplicits)
 ```
 

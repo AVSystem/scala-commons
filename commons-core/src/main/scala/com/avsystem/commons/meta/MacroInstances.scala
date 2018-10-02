@@ -19,7 +19,7 @@ package meta
   *
   * The `Implicits` type is typically a trait with a collection of implicit definitions whose companion object
   * implements that trait, e.g. [[com.avsystem.commons.rest.DefaultRestImplicits DefaultRestImplicits]].
-  * When the macro implements `apply` method of `RpcMacroInstances` contents of `Implicits` are imported into the
+  * When the macro implements `apply` method of `MacroInstances` contents of `Implicits` are imported into the
   * body of `apply` and visible further by macros that materialize `InstancesTrait`.
   *
   * If `MacroInstances` is accepted as implicit super constructor parameter of a companion object
