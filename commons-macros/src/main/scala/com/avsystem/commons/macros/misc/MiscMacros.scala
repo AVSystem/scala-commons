@@ -428,7 +428,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
 
   def assertLocal(tpe: Type): Type = {
-    if (tpe.typeSymbol.pos.source != c.enclosingPosition) {
+    if (tpe.typeSymbol.pos.source != c.enclosingPosition.source) {
       abort(s"Macro inspection of $tpe can only be done in the same source file where that type is defined")
     }
     tpe
