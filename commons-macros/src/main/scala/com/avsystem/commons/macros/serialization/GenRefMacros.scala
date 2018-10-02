@@ -16,9 +16,9 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
   val MapApply = MapTpe.member(TermName("apply"))
   val JMapGet = JMapTpe.member(TermName("get"))
   val TransparentGets = Set(
-    getType(tq"$CommonsPkg.misc.Opt[_]"),
-    getType(tq"$CommonsPkg.misc.OptArg[_]"),
-    getType(tq"$CommonsPkg.misc.OptRef[_]")
+    getType(tq"$MiscPkg.Opt[_]"),
+    getType(tq"$MiscPkg.OptArg[_]"),
+    getType(tq"$MiscPkg.OptRef[_]")
   ).map(_.member(TermName("get")))
 
   object MapApplyOrGet {

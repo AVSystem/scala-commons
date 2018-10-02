@@ -37,7 +37,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     val pos = c.enclosingPosition
     q"""
-      $CommonsPkg.misc.SourceInfo(
+      $MiscPkg.SourceInfo(
         ${pos.source.path},
         ${pos.source.file.name},
         ${pos.point},
@@ -84,7 +84,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   def javaClassName[T: WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T].dealias
     if (tpe.typeSymbol.isClass && tpe.typeSymbol != definitions.ArrayClass)
-      q"new $CommonsPkg.misc.JavaClassName(${javaClassName(tpe.erasure.typeSymbol)})"
+      q"new $MiscPkg.JavaClassName(${javaClassName(tpe.erasure.typeSymbol)})"
     else
       abort(s"$tpe does not represent a regular class")
   }
@@ -105,7 +105,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val tpe = weakTypeOf[T]
     try typeStringParts(tpe) match {
       case List(Select(pre, TermName("value"))) => pre
-      case trees => q"new $CommonsPkg.misc.TypeString[$tpe](${mkStringConcat(trees)})"
+      case trees => q"new $MiscPkg.TypeString[$tpe](${mkStringConcat(trees)})"
     } catch {
       case NonConcreteTypeException(stpe) =>
         abort(s"Could not materialize TypeString for $tpe because instance for $stpe is lacking")
@@ -126,7 +126,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     else repr
 
   def typeStringParts(tpe: Type, parens: Boolean = false): List[Tree] = {
-    val resultTpe = getType(tq"$CommonsPkg.misc.TypeString[$tpe]")
+    val resultTpe = getType(tq"$MiscPkg.TypeString[$tpe]")
     c.inferImplicitValue(resultTpe, withMacrosDisabled = true) match {
       case EmptyTree => mkTypeString(tpe, parens)
       case tree => maybeParens(List(q"$tree.value"), parens)
@@ -338,7 +338,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   def mkValueOf[T: WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T].dealias
     singleValueFor(tpe) match {
-      case Some(sv) => q"new $CommonsPkg.misc.ValueOf[$tpe]($sv)"
+      case Some(sv) => q"new $MiscPkg.ValueOf[$tpe]($sv)"
       case None => abort(s"$tpe is not a singleton type")
     }
   }
@@ -382,7 +382,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val tpe = weakTypeOf[T].dealias
     val rawValuesName = c.freshName(TermName("rawValues"))
     q"""
-      new $CommonsPkg.misc.Applier[$tpe] {
+      new $MiscPkg.Applier[$tpe] {
         def apply($rawValuesName: $ScalaPkg.Seq[$ScalaPkg.Any]): $tpe =
           ${applyBody(rawValuesName, tpe, applyUnapplyOrFail(tpe))}
       }
@@ -394,10 +394,10 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val valueName = c.freshName(TermName("value"))
     val au = applyUnapplyOrFail(tpe)
     if (au.standardCaseClass && tpe <:< ProductTpe)
-      q"new $CommonsPkg.misc.ProductUnapplier[$tpe]"
+      q"new $MiscPkg.ProductUnapplier[$tpe]"
     else
       q"""
-        new $CommonsPkg.misc.Unapplier[$tpe] {
+        new $MiscPkg.Unapplier[$tpe] {
           def unapply($valueName: $tpe): $ScalaPkg.Seq[$ScalaPkg.Any] =
             ${unapplyBody(valueName, tpe, au)}
         }
@@ -411,14 +411,14 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val au = applyUnapplyOrFail(tpe)
     if (au.standardCaseClass && tpe <:< ProductTpe)
       q"""
-        new $CommonsPkg.misc.ProductApplierUnapplier[$tpe] {
+        new $MiscPkg.ProductApplierUnapplier[$tpe] {
           def apply($rawValuesName: $ScalaPkg.Seq[$ScalaPkg.Any]): $tpe =
             ${applyBody(rawValuesName, tpe, au)}
         }
        """
     else
       q"""
-        new $CommonsPkg.misc.ApplierUnapplier[$tpe] {
+        new $MiscPkg.ApplierUnapplier[$tpe] {
           def apply($rawValuesName: $ScalaPkg.Seq[$ScalaPkg.Any]): $tpe =
             ${applyBody(rawValuesName, tpe, au)}
           def unapply($valueName: $tpe): $ScalaPkg.Seq[$ScalaPkg.Any] =
@@ -432,7 +432,7 @@ class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
-  val WhenAbsentAT: Type = getType(tq"$CommonsPkg.serialization.whenAbsent[_]")
+  final lazy val WhenAbsentAT: Type = getType(tq"$CommonsPkg.serialization.whenAbsent[_]")
 
   def whenAbsentValue: Tree = {
     val param = c.internal.enclosingOwner match {

@@ -9,7 +9,7 @@ class DelegationMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
 
   import c.universe._
 
-  val DelegationCls = tq"$CommonsPkg.misc.Delegation"
+  final def DelegationCls: Tree = tq"$MiscPkg.Delegation"
 
   def delegate[A: c.WeakTypeTag, B: c.WeakTypeTag](source: c.Tree): c.Tree = {
     val targetTpe = weakTypeOf[B]

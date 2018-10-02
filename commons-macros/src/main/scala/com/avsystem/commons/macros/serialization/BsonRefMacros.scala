@@ -7,7 +7,7 @@ class BsonRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
   import c.universe._
 
-  val MongoPkg = q"$CommonsPkg.mongo"
+  final def MongoPkg: Tree = q"$CommonsPkg.mongo"
 
   def bsonRef[S: c.WeakTypeTag, T: c.WeakTypeTag](fun: Tree): Tree = {
     val sType = weakTypeOf[S]

@@ -9,27 +9,27 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
 
   import c.universe._
 
-  final val SerializationPkg = q"$CommonsPkg.serialization"
-  final val NameAnnotType = getType(tq"$SerializationPkg.name")
-  final val NameAnnotNameSym = NameAnnotType.member(TermName("name"))
-  final val WhenAbsentAnnotType = getType(tq"$SerializationPkg.whenAbsent[_]")
-  final val JavaInteropObj = q"$CommonsPkg.jiop.JavaInterop"
-  final val JListObj = q"$JavaInteropObj.JList"
-  final val JListCls = tq"$JavaInteropObj.JList"
-  final val ListBufferCls = tq"$CollectionPkg.mutable.ListBuffer"
-  final val BMapCls = tq"$CollectionPkg.Map"
-  final val NOptObj = q"$CommonsPkg.misc.NOpt"
-  final val NOptCls = tq"$CommonsPkg.misc.NOpt"
-  final val OptObj = q"$CommonsPkg.misc.Opt"
-  final val OptCls = tq"$CommonsPkg.misc.Opt"
-  final val TransparentAnnotType = getType(tq"$SerializationPkg.transparent")
-  final val TransientDefaultAnnotType = getType(tq"$SerializationPkg.transientDefault")
-  final val FlattenAnnotType = getType(tq"$SerializationPkg.flatten")
-  final val OutOfOrderAnnotType = getType(tq"$SerializationPkg.outOfOrder")
-  final val GeneratedAnnotType = getType(tq"$SerializationPkg.generated")
-  final val DefaultCaseAnnotType = getType(tq"$SerializationPkg.defaultCase")
-  final val GenCodecObj = q"$SerializationPkg.GenCodec"
-  final val GenCodecCls = tq"$SerializationPkg.GenCodec"
+  final def SerializationPkg: Tree = q"$CommonsPkg.serialization"
+  final lazy val NameAnnotType = getType(tq"$SerializationPkg.name")
+  final lazy val NameAnnotNameSym = NameAnnotType.member(TermName("name"))
+  final lazy val WhenAbsentAnnotType = getType(tq"$SerializationPkg.whenAbsent[_]")
+  final def JavaInteropObj: Tree = q"$CommonsPkg.jiop.JavaInterop"
+  final def JListObj: Tree = q"$JavaInteropObj.JList"
+  final def JListCls: Tree = tq"$JavaInteropObj.JList"
+  final def ListBufferCls: Tree = tq"$CollectionPkg.mutable.ListBuffer"
+  final def BMapCls: Tree = tq"$CollectionPkg.Map"
+  final def NOptObj: Tree = q"$MiscPkg.NOpt"
+  final def NOptCls: Tree = tq"$MiscPkg.NOpt"
+  final def OptObj: Tree = q"$MiscPkg.Opt"
+  final def OptCls: Tree = tq"$MiscPkg.Opt"
+  final lazy val TransparentAnnotType = getType(tq"$SerializationPkg.transparent")
+  final lazy val TransientDefaultAnnotType = getType(tq"$SerializationPkg.transientDefault")
+  final lazy val FlattenAnnotType = getType(tq"$SerializationPkg.flatten")
+  final lazy val OutOfOrderAnnotType = getType(tq"$SerializationPkg.outOfOrder")
+  final lazy val GeneratedAnnotType = getType(tq"$SerializationPkg.generated")
+  final lazy val DefaultCaseAnnotType = getType(tq"$SerializationPkg.defaultCase")
+  final def GenCodecObj: Tree = q"$SerializationPkg.GenCodec"
+  final def GenCodecCls: Tree = tq"$SerializationPkg.GenCodec"
   final val DefaultCaseField = "_case"
 
   def tupleGet(i: Int) = TermName(s"_${i + 1}")

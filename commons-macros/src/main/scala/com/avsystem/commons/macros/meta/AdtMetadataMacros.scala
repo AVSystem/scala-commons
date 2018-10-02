@@ -11,9 +11,9 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
 
   import c.universe._
 
-  val AdtParamMetadataAT: Type = getType(tq"$MetaPackage.adtParamMetadata")
-  val AdtCaseMetadataAT: Type = getType(tq"$MetaPackage.adtCaseMetadata")
-  val ReifyDefaultValueAT: Type = getType(tq"$MetaPackage.reifyDefaultValue")
+  final lazy val AdtParamMetadataAT: Type = getType(tq"$MetaPackage.adtParamMetadata")
+  final lazy val AdtCaseMetadataAT: Type = getType(tq"$MetaPackage.adtCaseMetadata")
+  final lazy val ReifyDefaultValueAT: Type = getType(tq"$MetaPackage.reifyDefaultValue")
 
   sealed trait AdtSymbol extends MacroSymbol with SelfMatchedSymbol {
     def tpe: Type

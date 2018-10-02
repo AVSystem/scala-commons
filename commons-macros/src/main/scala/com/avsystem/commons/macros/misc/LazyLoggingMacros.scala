@@ -13,7 +13,7 @@ class LazyLoggingMacros(val c: blackbox.Context) extends MacroCommons {
 
   import c.universe._
 
-  val DelegationCls = tq"$CommonsPkg.misc.Delegation"
+  val DelegationCls = tq"$MiscPkg.Delegation"
 
   def warningImpl(msg: Tree) =
     q"""

@@ -10,32 +10,32 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
 
   import c.universe._
 
-  val AsRealCls = tq"$RpcPackage.AsReal"
-  val AsRealObj = q"$RpcPackage.AsReal"
-  val AsRawCls = tq"$RpcPackage.AsRaw"
-  val AsRawObj = q"$RpcPackage.AsRaw"
-  val AsRawRealCls = tq"$RpcPackage.AsRawReal"
-  val AsRawRealObj = q"$RpcPackage.AsRawReal"
+  final def AsRealCls: Tree = tq"$RpcPackage.AsReal"
+  final def AsRealObj: Tree = q"$RpcPackage.AsReal"
+  final def AsRawCls: Tree = tq"$RpcPackage.AsRaw"
+  final def AsRawObj: Tree = q"$RpcPackage.AsRaw"
+  final def AsRawRealCls: Tree = tq"$RpcPackage.AsRawReal"
+  final def AsRawRealObj: Tree = q"$RpcPackage.AsRawReal"
 
-  val AsRealTpe: Type = getType(tq"$AsRealCls[_,_]")
-  val AsRawTpe: Type = getType(tq"$AsRawCls[_,_]")
-  val RpcNameAT: Type = getType(tq"$RpcPackage.rpcName")
-  val RpcNameArg: Symbol = RpcNameAT.member(TermName("name"))
-  val RpcNamePrefixAT: Type = getType(tq"$RpcPackage.rpcNamePrefix")
-  val RpcNamePrefixArg: Symbol = RpcNamePrefixAT.member(TermName("prefix"))
-  val RpcNameOverloadedOnlyArg: Symbol = RpcNamePrefixAT.member(TermName("overloadedOnly"))
-  val WhenAbsentAT: Type = getType(tq"$CommonsPkg.serialization.whenAbsent[_]")
-  val TransientDefaultAT: Type = getType(tq"$CommonsPkg.serialization.transientDefault")
-  val MethodNameAT: Type = getType(tq"$RpcPackage.methodName")
-  val RpcMethodMetadataAT: Type = getType(tq"$RpcPackage.rpcMethodMetadata")
-  val RpcParamMetadataAT: Type = getType(tq"$RpcPackage.rpcParamMetadata")
-  val RpcEncodingAT: Type = getType(tq"$RpcPackage.RpcEncoding")
-  val VerbatimAT: Type = getType(tq"$RpcPackage.verbatim")
-  val TriedAT: Type = getType(tq"$RpcPackage.tried")
-  val MethodTagAT: Type = getType(tq"$RpcPackage.methodTag[_]")
-  val ParamTagAT: Type = getType(tq"$RpcPackage.paramTag[_]")
-  val RpcTagAT: Type = getType(tq"$RpcPackage.RpcTag")
-  val RpcImplicitsSym: Symbol = getType(tq"$RpcPackage.RpcImplicitsProvider").member(TermName("implicits"))
+  final lazy val AsRealTpe: Type = getType(tq"$AsRealCls[_,_]")
+  final lazy val AsRawTpe: Type = getType(tq"$AsRawCls[_,_]")
+  final lazy val RpcNameAT: Type = getType(tq"$RpcPackage.rpcName")
+  final lazy val RpcNameArg: Symbol = RpcNameAT.member(TermName("name"))
+  final lazy val RpcNamePrefixAT: Type = getType(tq"$RpcPackage.rpcNamePrefix")
+  final lazy val RpcNamePrefixArg: Symbol = RpcNamePrefixAT.member(TermName("prefix"))
+  final lazy val RpcNameOverloadedOnlyArg: Symbol = RpcNamePrefixAT.member(TermName("overloadedOnly"))
+  final lazy val WhenAbsentAT: Type = getType(tq"$CommonsPkg.serialization.whenAbsent[_]")
+  final lazy val TransientDefaultAT: Type = getType(tq"$CommonsPkg.serialization.transientDefault")
+  final lazy val MethodNameAT: Type = getType(tq"$RpcPackage.methodName")
+  final lazy val RpcMethodMetadataAT: Type = getType(tq"$RpcPackage.rpcMethodMetadata")
+  final lazy val RpcParamMetadataAT: Type = getType(tq"$RpcPackage.rpcParamMetadata")
+  final lazy val RpcEncodingAT: Type = getType(tq"$RpcPackage.RpcEncoding")
+  final lazy val VerbatimAT: Type = getType(tq"$RpcPackage.verbatim")
+  final lazy val TriedAT: Type = getType(tq"$RpcPackage.tried")
+  final lazy val MethodTagAT: Type = getType(tq"$RpcPackage.methodTag[_]")
+  final lazy val ParamTagAT: Type = getType(tq"$RpcPackage.paramTag[_]")
+  final lazy val RpcTagAT: Type = getType(tq"$RpcPackage.RpcTag")
+  final lazy val RpcImplicitsSym: Symbol = getType(tq"$RpcPackage.RpcImplicitsProvider").member(TermName("implicits"))
 
   def registerCompanionImplicits(rawTpe: Type): Unit =
     typedCompanionOf(rawTpe).filter { companion =>

@@ -9,7 +9,7 @@ class SealedMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
-  val OrderedEnumType: Type = getType(tq"$CommonsPkg.misc.OrderedEnum")
+  final lazy val OrderedEnumType: Type = getType(tq"$MiscPkg.OrderedEnum")
 
   def caseObjectsFor[T: WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]

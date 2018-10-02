@@ -7,13 +7,13 @@ class GenKeyCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
   import c.universe._
 
-  val GenKeyCodecObj = q"$SerializationPkg.GenKeyCodec"
-  val GenKeyCodecCls = tq"$SerializationPkg.GenKeyCodec"
+  final def GenKeyCodecObj: Tree = q"$SerializationPkg.GenKeyCodec"
+  final def GenKeyCodecCls: Tree = tq"$SerializationPkg.GenKeyCodec"
 
   def forSealedEnum[T: c.WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
     knownSubtypes(tpe).map { subtypes =>
-      def singleValue(st: Type) = singleValueFor(st).getOrElse(abort(s"$st is not an object"))
+      def singleValue(st: Type): Tree = singleValueFor(st).getOrElse(abort(s"$st is not an object"))
       val nameBySym = subtypes.groupBy(st => targetName(st.typeSymbol)).map {
         case (name, List(subtype)) => (subtype.typeSymbol, name)
         case (name, kst) =>

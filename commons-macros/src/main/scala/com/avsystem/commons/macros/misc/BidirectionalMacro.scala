@@ -9,12 +9,12 @@ class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
 
   import c.universe._
 
-  val SELECTOR_DUMMY = TermName("<unapply-selector>")
-  val UNAPPLY = TermName("unapply")
-  val UNAPPLY_SEQ = TermName("unapplySeq")
-  val APPLY = TermName("apply")
+  final val SELECTOR_DUMMY: TermName = TermName("<unapply-selector>")
+  final val UNAPPLY: TermName = TermName("unapply")
+  final val UNAPPLY_SEQ: TermName = TermName("unapplySeq")
+  final val APPLY: TermName = TermName("apply")
 
-  def findAliasCompanion(tpe: Type, name: TypeName) = tpe match {
+  def findAliasCompanion(tpe: Type, name: TypeName): Option[Symbol] = tpe match {
     case MethodType(_, resultType) =>
       val resultSymbol = resultType.typeSymbol
 
@@ -31,7 +31,7 @@ class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
   }
 
   object SelectOrTypeApplySelect {
-    def unapply(tree: Tree) = tree match {
+    def unapply(tree: Tree): Option[(Tree, Name)] = tree match {
       case TypeApply(Select(fun, name), _) => Some((fun, name))
       case Select(fun, name) => Some((fun, name))
       case _ => None
@@ -127,7 +127,7 @@ class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
     c.Expr(q"($pf, $reversed)")
   }
 
-  def indent(str: String) =
+  def indent(str: String): String =
     str.split("\n").toStream.map("  " + _).mkString("\n")
 
   def prettyPrint(v: Any): String = v match {
