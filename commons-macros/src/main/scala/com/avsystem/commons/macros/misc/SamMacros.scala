@@ -9,18 +9,18 @@ class SamMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
-  def validateSam[T: c.WeakTypeTag, F: c.WeakTypeTag]: c.Tree = {
+  def validateSam[T: WeakTypeTag, F: WeakTypeTag]: Tree = {
     validateSam(weakTypeOf[T], weakTypeOf[F])
     q"null"
   }
 
-  def createSam[T: c.WeakTypeTag](fun: c.Expr[Any]): c.Tree =
-    createSam(weakTypeOf[T], fun.actualType, fun.tree)
+  def createSam[T: WeakTypeTag](fun: Tree): Tree =
+    createSam(weakTypeOf[T], fun.tpe, fun)
 
-  def toSam[T: c.WeakTypeTag, F: c.WeakTypeTag](fun: c.Expr[F]): c.Tree =
-    createSam(weakTypeOf[T], weakTypeOf[F], fun.tree)
+  def toSam[T: WeakTypeTag, F: WeakTypeTag](fun: Tree): Tree =
+    createSam(weakTypeOf[T], weakTypeOf[F], fun)
 
-  private def createSam(targetTpe: Type, funTpe: Type, fun: Tree): c.Tree = {
+  private def createSam(targetTpe: Type, funTpe: Type, fun: Tree): Tree = {
     val byName = validateSam(targetTpe, funTpe)
     val m = targetTpe.members.filter(m => m.isAbstract).head
 

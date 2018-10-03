@@ -11,7 +11,7 @@ class SealedMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   final lazy val OrderedEnumType: Type = getType(tq"$MiscPkg.OrderedEnum")
 
-  def caseObjectsFor[T: WeakTypeTag]: Tree = {
+  def caseObjectsFor[T: WeakTypeTag]: Tree = showOnDebug {
     val tpe = weakTypeOf[T]
     knownSubtypes(tpe).map { subtypes =>
       val objects = subtypes.map(subTpe => singleValueFor(subTpe)
@@ -21,7 +21,7 @@ class SealedMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }.getOrElse(abort(s"$tpe is not a sealed trait or class"))
   }
 
-  def instancesFor[TC: WeakTypeTag, T: WeakTypeTag]: Tree = {
+  def instancesFor[TC: WeakTypeTag, T: WeakTypeTag]: Tree = showOnDebug {
     val tpe = weakTypeOf[T]
     def instanceTpe(forTpe: Type): Type = weakTypeOf[TC] match {
       case TypeRef(pre, sym, Nil) => internal.typeRef(pre, sym, List(forTpe))

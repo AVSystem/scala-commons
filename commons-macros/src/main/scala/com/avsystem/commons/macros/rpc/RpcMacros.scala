@@ -51,7 +51,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
 
   import c.universe._
 
-  def rpcAsReal[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = {
+  def rpcAsReal[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = showOnDebug {
     val raw = RawRpcTrait(weakTypeOf[Raw].dealias)
     val real = RealRpcTrait(weakTypeOf[Real].dealias)
     val mapping = RpcMapping(real, raw, forAsRaw = false, forAsReal = true)
@@ -67,7 +67,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
     """
   }
 
-  def rpcAsRaw[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = {
+  def rpcAsRaw[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = showOnDebug {
     val raw = RawRpcTrait(weakTypeOf[Raw].dealias)
     val real = RealRpcTrait(weakTypeOf[Real].dealias)
     val mapping = RpcMapping(real, raw, forAsRaw = true, forAsReal = false)
@@ -84,7 +84,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
      """
   }
 
-  def rpcAsRawReal[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = {
+  def rpcAsRawReal[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = showOnDebug {
     val raw = RawRpcTrait(weakTypeOf[Raw].dealias)
     val real = RealRpcTrait(weakTypeOf[Real].dealias)
     val mapping = RpcMapping(real, raw, forAsRaw = true, forAsReal = true)
@@ -103,7 +103,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
      """
   }
 
-  def rpcMetadata[Real: WeakTypeTag]: Tree = {
+  def rpcMetadata[Real: WeakTypeTag]: Tree = showOnDebug {
     val realRpc = RealRpcTrait(weakTypeOf[Real].dealias)
     val metadataTpe = c.macroApplication.tpe.dealias
     val constructor = new RpcTraitMetadataConstructor(metadataTpe, None)

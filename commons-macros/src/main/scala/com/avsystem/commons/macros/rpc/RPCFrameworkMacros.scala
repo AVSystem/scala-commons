@@ -34,7 +34,7 @@ final class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommo
   def metadataImpl[T: WeakTypeTag]: Tree =
     q"$RpcPackage.RpcMetadata.materialize[$RPCMetadataCls,${weakTypeOf[T]}]"
 
-  def fullInfoImpl[T: WeakTypeTag]: Tree = {
+  def fullInfoImpl[T: WeakTypeTag]: Tree = showOnDebug {
     val rpcTpe = weakTypeOf[T]
     val fullRpcInfoTpe = getType(tq"$FullRPCInfoCls[$rpcTpe]").dealias
     if (!fullRpcInfoTpe.typeSymbol.isClass) {

@@ -10,7 +10,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   import c.universe._
 
-  def mkTupleCodec[T: WeakTypeTag](elementCodecs: Tree*): Tree = {
+  def mkTupleCodec[T: WeakTypeTag](elementCodecs: Tree*): Tree = showOnDebug {
     val tupleTpe = weakTypeOf[T]
     val indices = elementCodecs.indices
     q"""
@@ -426,7 +426,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   def forUnknown(tpe: Type): Tree =
     abort(s"Cannot automatically derive GenCodec for $tpe")
 
-  def materializeRecursively[T: WeakTypeTag]: Tree = {
+  def materializeRecursively[T: WeakTypeTag]: Tree = showOnDebug {
     val tpe = weakTypeOf[T].dealias
     q"""
        implicit def ${c.freshName(TermName("allow"))}[T]: $AllowImplicitMacroCls[$typeClass[T]] =
@@ -435,7 +435,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
      """
   }
 
-  def applyUnapplyCodec[T: WeakTypeTag]: Tree = {
+  def applyUnapplyCodec[T: WeakTypeTag]: Tree = showOnDebug {
     val tpe = weakTypeOf[T].dealias
     val subTcTpe = typeClassInstance(tpe)
     val au = applyUnapplyFor(tpe).getOrElse(abort(s"$tpe is not a case class or case class like type"))
@@ -446,7 +446,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     withRecursiveImplicitGuard(tpe, unguarded)
   }
 
-  def fromApplyUnapplyProvider[T: WeakTypeTag](applyUnapplyProvider: Tree): Tree = {
+  def fromApplyUnapplyProvider[T: WeakTypeTag](applyUnapplyProvider: Tree): Tree = showOnDebug {
     val tpe = weakTypeOf[T].dealias
     val tcTpe = typeClassInstance(tpe)
     applyUnapplyFor(tpe, applyUnapplyProvider) match {
@@ -460,7 +460,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     }
   }
 
-  def forSealedEnum[T: WeakTypeTag]: Tree = {
+  def forSealedEnum[T: WeakTypeTag]: Tree = showOnDebug {
     val tpe = weakTypeOf[T].dealias
     q"$GenCodecObj.fromKeyCodec($SerializationPkg.GenKeyCodec.forSealedEnum[$tpe])"
   }

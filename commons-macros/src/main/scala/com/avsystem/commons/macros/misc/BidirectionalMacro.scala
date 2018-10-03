@@ -63,10 +63,8 @@ class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
     }
   }
 
-  def impl[A: c.WeakTypeTag, B: c.WeakTypeTag](
-    pf: c.Expr[PartialFunction[A, B]]): c.Expr[(PartialFunction[A, B], PartialFunction[B, A])] = {
-
-    val AnonPartialFunction(cases) = pf.tree
+  def impl[A: WeakTypeTag, B: WeakTypeTag](pf: Tree): Tree = {
+    val AnonPartialFunction(cases) = pf
 
     def patternToExpr(pattern: Tree): Tree = pattern match {
       case Apply(tt@TypeTree(), args) if tt.original != null =>
@@ -115,7 +113,7 @@ class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
 
     val bodies = scala.collection.mutable.Set[Tree]()
 
-    def reverseCaseDef(caseDef: CaseDef) = caseDef match {
+    def reverseCaseDef(caseDef: CaseDef): CaseDef = caseDef match {
       case CaseDef(pattern, guard, body) =>
         val boundNamesSet = boundNames(pattern).toSet
         if (bodies.exists(b => body.equalsStructure(b))) c.error(pattern.pos, "Body should be unique.")
@@ -124,7 +122,7 @@ class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
     }
 
     val reversed = c.typecheck(Match(EmptyTree, cases.init.map(reverseCaseDef)), pt = weakTypeOf[PartialFunction[B, A]])
-    c.Expr(q"($pf, $reversed)")
+    q"($pf, $reversed)"
   }
 
   def indent(str: String): String =

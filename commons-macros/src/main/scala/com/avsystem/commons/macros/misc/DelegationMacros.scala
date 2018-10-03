@@ -11,7 +11,7 @@ class DelegationMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
 
   final def DelegationCls: Tree = tq"$MiscPkg.Delegation"
 
-  def delegate[A: c.WeakTypeTag, B: c.WeakTypeTag](source: c.Tree): c.Tree = {
+  def delegate[A: WeakTypeTag, B: WeakTypeTag](source: Tree): Tree = showOnDebug {
     val targetTpe = weakTypeOf[B]
 
     val targetSymbol = targetTpe.dealias.typeSymbol
@@ -54,7 +54,7 @@ class DelegationMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
      """
   }
 
-  def materializeDelegation[A: c.WeakTypeTag, B: c.WeakTypeTag]: Tree = {
+  def materializeDelegation[A: WeakTypeTag, B: WeakTypeTag]: Tree = showOnDebug {
     val targetTpe = weakTypeOf[B]
     val sourceTpe = weakTypeOf[A]
 

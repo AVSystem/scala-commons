@@ -94,6 +94,11 @@ trait MacroCommons { bundle =>
       error(msg)
     }
 
+  def showOnDebug(tree: Tree): Tree = {
+    debug(show(tree))
+    tree
+  }
+
   def containsInaccessibleThises(tree: Tree): Boolean = tree.exists {
     case t@This(_) if !t.symbol.isPackageClass && !enclosingClasses.contains(t.symbol) => true
     case _ => false

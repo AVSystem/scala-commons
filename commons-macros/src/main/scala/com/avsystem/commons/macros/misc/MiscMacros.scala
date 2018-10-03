@@ -11,14 +11,14 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
-  def infer[T: c.WeakTypeTag]: Tree =
-    inferTpe(weakTypeOf[T], "", NoPosition, withMacrosDisabled = false)
+  def infer[T: WeakTypeTag]: Tree =
+    showOnDebug(inferTpe(weakTypeOf[T], "", NoPosition, withMacrosDisabled = false))
 
-  def clueInfer[T: c.WeakTypeTag](clue: Tree): Tree =
-    inferTpe(weakTypeOf[T], clueStr(clue), clue.pos, withMacrosDisabled = false)
+  def clueInfer[T: WeakTypeTag](clue: Tree): Tree =
+    showOnDebug(inferTpe(weakTypeOf[T], clueStr(clue), clue.pos, withMacrosDisabled = false))
 
-  def inferNonMacro[T: c.WeakTypeTag](clue: Tree): Tree =
-    inferTpe(weakTypeOf[T], clueStr(clue), clue.pos, withMacrosDisabled = true)
+  def inferNonMacro[T: WeakTypeTag](clue: Tree): Tree =
+    showOnDebug(inferTpe(weakTypeOf[T], clueStr(clue), clue.pos, withMacrosDisabled = true))
 
   private def clueStr(clue: Tree): String = clue match {
     case StringLiteral(str) => str
@@ -81,7 +81,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   case class NonConcreteTypeException(tpe: Type) extends RuntimeException with NoStackTrace
 
-  def javaClassName[T: WeakTypeTag]: Tree = {
+  def javaClassName[T: WeakTypeTag]: Tree = showOnDebug {
     val tpe = weakTypeOf[T].dealias
     if (tpe.typeSymbol.isClass && tpe.typeSymbol != definitions.ArrayClass)
       q"new $MiscPkg.JavaClassName(${javaClassName(tpe.erasure.typeSymbol)})"
@@ -101,7 +101,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     prefix + selfName
   }
 
-  def typeString[T: WeakTypeTag]: Tree = {
+  def typeString[T: WeakTypeTag]: Tree = showOnDebug {
     val tpe = weakTypeOf[T]
     try typeStringParts(tpe) match {
       case List(Select(pre, TermName("value"))) => pre
@@ -335,7 +335,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   def lazyMetadata(metadata: Tree): Tree =
     q"${c.prefix}($metadata)"
 
-  def mkValueOf[T: WeakTypeTag]: Tree = {
+  def mkValueOf[T: WeakTypeTag]: Tree = showOnDebug {
     val tpe = weakTypeOf[T].dealias
     singleValueFor(tpe) match {
       case Some(sv) => q"new $MiscPkg.ValueOf[$tpe]($sv)"
@@ -433,7 +433,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
-  def applier[T: WeakTypeTag]: Tree = {
+  def applier[T: WeakTypeTag]: Tree = showOnDebug {
     val tpe = weakTypeOf[T].dealias
     val rawValuesName = c.freshName(TermName("rawValues"))
     q"""
@@ -444,7 +444,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     """
   }
 
-  def unapplier[T: WeakTypeTag]: Tree = {
+  def unapplier[T: WeakTypeTag]: Tree = showOnDebug {
     val tpe = weakTypeOf[T].dealias
     val valueName = c.freshName(TermName("value"))
     val au = applyUnapplyOrFail(tpe)
@@ -459,7 +459,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       """
   }
 
-  def applierUnapplier[T: WeakTypeTag]: Tree = {
+  def applierUnapplier[T: WeakTypeTag]: Tree = showOnDebug {
     val tpe = weakTypeOf[T].dealias
     val rawValuesName = c.freshName(TermName("rawValues"))
     val valueName = c.freshName(TermName("value"))
