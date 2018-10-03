@@ -258,7 +258,8 @@ case class Schema(
   @td discriminator: OptArg[Discriminator] = OptArg.Empty,
 
   @td enum: List[JsonValue] = Nil,
-  @td default: OptArg[JsonValue] = OptArg.Empty
+  @td default: OptArg[JsonValue] = OptArg.Empty,
+  @td example: OptArg[JsonValue] = OptArg.Empty
 )
 object Schema extends HasGenCodec[Schema] {
   final val Boolean = Schema(`type` = DataType.Boolean)

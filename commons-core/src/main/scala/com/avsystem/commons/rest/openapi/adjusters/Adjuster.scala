@@ -198,9 +198,13 @@ class pathSummary(summary: String) extends PathItemAdjuster {
 }
 
 /**
-  * Adds example to [[Parameter]] object generated for REST method parameter annotated with this annotation.
+  * Adds example to [[Schema]] or [[Parameter]] object
   */
-class example[+T](value: T, @infer asJson: AsRaw[JsonValue, T] = infer.value) extends ParameterAdjuster {
+class example[+T](value: T, @infer asJson: AsRaw[JsonValue, T] = infer.value)
+  extends SchemaAdjuster with ParameterAdjuster {
+
+  def adjustSchema(schema: Schema): Schema =
+    schema.copy(example = asJson.asRaw(value))
   def adjustParameter(parameter: Parameter): Parameter =
     parameter.copy(example = asJson.asRaw(value))
 }
