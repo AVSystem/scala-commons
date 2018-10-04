@@ -99,8 +99,10 @@ trait MacroCommons { bundle =>
   def indent(str: String, indent: String): String =
     str.replaceAllLiterally("\n", s"\n$indent")
 
-  def treeAsSeenFrom(tree: Tree, seenFrom: Type): Tree =
-    if (seenFrom == NoType) tree else {
+  def treeAsSeenFrom(tree: Tree, seenFrom: Type): Tree = seenFrom match {
+    case NoType => tree
+    case TypeRef(_, sym, Nil) if sym.isStatic => tree
+    case _ =>
       val res = tree.duplicate
       res.foreach { t =>
         if (t.tpe != null) {
@@ -108,7 +110,7 @@ trait MacroCommons { bundle =>
         }
       }
       res
-    }
+  }
 
   class Annot(annotTree: Tree, val subject: Symbol, val directSource: Symbol, val aggregate: Option[Annot]) {
     def aggregationChain: List[Annot] =
