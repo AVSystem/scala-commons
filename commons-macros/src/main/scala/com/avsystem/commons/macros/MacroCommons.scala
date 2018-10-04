@@ -99,6 +99,11 @@ trait MacroCommons { bundle =>
   def indent(str: String, indent: String): String =
     str.replaceAllLiterally("\n", s"\n$indent")
 
+  private def annotations(s: Symbol): List[Annotation] = {
+    s.info // srsly scalac, load these goddamned annotations
+    s.annotations
+  }
+
   def treeAsSeenFrom(tree: Tree, seenFrom: Type): Tree = seenFrom match {
     case NoType => tree
     case TypeRef(_, sym, Nil) if sym.isStatic => tree
@@ -191,7 +196,7 @@ trait MacroCommons { bundle =>
     lazy val aggregated: List[Annot] = {
       if (tpe <:< AnnotationAggregateType) {
         val impliedMember = tpe.member(TypeName("Implied"))
-        impliedMember.annotations.map { a =>
+        annotations(impliedMember).map { a =>
           new Annot(argsInliner.transform(treeAsSeenFrom(a.tree, tpe)), subject, impliedMember, Some(this))
         }
       } else Nil
@@ -226,7 +231,7 @@ trait MacroCommons { bundle =>
       !(superSym != initSym && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
 
     val nonFallback = maybeWithSuperSymbols(initSym, withInherited)
-      .flatMap(ss => ss.annotations.filter(inherited(_, ss))
+      .flatMap(ss => annotations(ss).filter(inherited(_, ss))
         .map(a => new Annot(treeAsSeenFrom(a.tree, seenFrom), s, ss, None)))
 
     (nonFallback ++ fallback.iterator.map(t => new Annot(t, s, s, None)))
@@ -258,7 +263,7 @@ trait MacroCommons { bundle =>
       !(superSym != initSym && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
 
     maybeWithSuperSymbols(initSym, withInherited)
-      .map(ss => find(ss.annotations.filter(inherited(_, ss))
+      .map(ss => find(annotations(ss).filter(inherited(_, ss))
         .map(a => new Annot(treeAsSeenFrom(a.tree, seenFrom), s, ss, None))))
       .collectFirst { case Some(annot) => annot }
       .orElse(find(fallback.map(t => new Annot(t, s, s, None))))
@@ -407,7 +412,7 @@ trait MacroCommons { bundle =>
     symbolImplicitNotFoundMsg(tpe, tpe.typeSymbol, tpe.typeSymbol.typeSignature.typeParams, tpe.typeArgs)
 
   private def symbolImplicitNotFoundMsg(tpe: Type, sym: Symbol, tparams: List[Symbol], typeArgs: List[Type]): String =
-    sym.annotations.find(_.tree.tpe <:< ImplicitNotFoundAT)
+    annotations(sym).find(_.tree.tpe <:< ImplicitNotFoundAT)
       .map(_.tree.children.tail.head).collect { case StringLiteral(error) => error }
       .map { error =>
         val tpNames = tparams.map(_.name.decodedName.toString)
@@ -773,19 +778,19 @@ trait MacroCommons { bundle =>
   def paramSymbolToValDef(sym: Symbol): ValDef = {
     val ts = sym.asTerm
     val implicitFlag = if (sym.isImplicit) Flag.IMPLICIT else NoFlags
-    val mods = Modifiers(Flag.PARAM | implicitFlag, typeNames.EMPTY, ts.annotations.map(_.tree))
+    val mods = Modifiers(Flag.PARAM | implicitFlag, typeNames.EMPTY, annotations(ts).map(_.tree))
     ValDef(mods, ts.name, treeForType(sym.typeSignature), EmptyTree)
   }
 
   def getterSymbolToValDef(sym: Symbol): ValDef = {
     val ms = sym.asMethod
     val mutableFlag = if (ms.isVar) Flag.MUTABLE else NoFlags
-    val mods = Modifiers(Flag.DEFERRED | mutableFlag, typeNames.EMPTY, ms.annotations.map(_.tree))
+    val mods = Modifiers(Flag.DEFERRED | mutableFlag, typeNames.EMPTY, annotations(ms).map(_.tree))
     ValDef(mods, ms.name, treeForType(sym.typeSignature), EmptyTree)
   }
 
   def existentialSingletonToValDef(sym: Symbol, name: TermName, tpe: Type): ValDef = {
-    val mods = Modifiers(Flag.DEFERRED, typeNames.EMPTY, sym.annotations.map(_.tree))
+    val mods = Modifiers(Flag.DEFERRED, typeNames.EMPTY, annotations(sym).map(_.tree))
     ValDef(mods, name, treeForType(tpe), EmptyTree)
   }
 
@@ -804,7 +809,7 @@ trait MacroCommons { bundle =>
       else NoFlags
 
     val flags = paramOrDeferredFlag | syntheticFlag | varianceFlag
-    val mods = Modifiers(flags, typeNames.EMPTY, ts.annotations.map(_.tree))
+    val mods = Modifiers(flags, typeNames.EMPTY, annotations(ts).map(_.tree))
     val (typeParams, signature) = sym.typeSignature match {
       case PolyType(polyParams, resultType) => (polyParams, resultType)
       case sig => (ts.typeParams, sig)
@@ -1038,7 +1043,7 @@ trait MacroCommons { bundle =>
   def positionPoint(sym: Symbol): Int =
     if (c.enclosingPosition.source == sym.pos.source) sym.pos.point
     else positionCache.getOrElseUpdate(sym,
-      sym.annotations.find(_.tree.tpe <:< PositionedAT).map(_.tree).map {
+      annotations(sym).find(_.tree.tpe <:< PositionedAT).map(_.tree).map {
         case Apply(_, List(MaybeTyped(Lit(point: Int), _))) => point
         case t => abort(s"expected literal int as argument of @positioned annotation on $sym, got $t")
       } getOrElse {

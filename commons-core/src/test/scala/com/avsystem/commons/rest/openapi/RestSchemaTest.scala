@@ -1,16 +1,11 @@
 package com.avsystem.commons
 package rest.openapi
 
-import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.rest.RestDataCompanion
 import com.avsystem.commons.rest.openapi.adjusters.description
 import com.avsystem.commons.serialization.json.JsonStringOutput
-import com.avsystem.commons.serialization.{GenCodec, name, transparent, whenAbsent}
+import com.avsystem.commons.serialization.{GenCodec, name, transparent}
 import org.scalatest.FunSuite
-
-class customWa[+T](value: => T) extends AnnotationAggregate {
-  @whenAbsent(value) type Implied
-}
 
 class Fuu[T](thing: T)
 
