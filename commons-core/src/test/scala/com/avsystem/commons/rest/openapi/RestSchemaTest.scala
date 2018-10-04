@@ -1,11 +1,16 @@
 package com.avsystem.commons
 package rest.openapi
 
+import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.rest.RestDataCompanion
 import com.avsystem.commons.rest.openapi.adjusters.description
 import com.avsystem.commons.serialization.json.JsonStringOutput
-import com.avsystem.commons.serialization.{GenCodec, name, transparent}
+import com.avsystem.commons.serialization.{GenCodec, name, transparent, whenAbsent}
 import org.scalatest.FunSuite
+
+class customWa[+T](value: => T) extends AnnotationAggregate {
+  @whenAbsent(value) type Implied
+}
 
 class Fuu[T](thing: T)
 
@@ -21,7 +26,7 @@ class RestSchemaTest extends FunSuite {
 
   @description("kejs klass")
   case class KejsKlass(
-    @name("integer") int: Int,
+    @name("integer") @customWa(42) int: Int,
     @description("serious dependency") dep: Dependency,
     @description("serious string") str: Opt[String] = Opt.Empty
   )
@@ -35,7 +40,8 @@ class RestSchemaTest extends FunSuite {
         |  "properties": {
         |    "integer": {
         |      "type": "integer",
-        |      "format": "int32"
+        |      "format": "int32",
+        |      "default": 42
         |    },
         |    "dep": {
         |      "description": "serious dependency",
@@ -53,7 +59,6 @@ class RestSchemaTest extends FunSuite {
         |    }
         |  },
         |  "required": [
-        |    "integer",
         |    "dep"
         |  ]
         |}""".stripMargin)
@@ -69,5 +74,24 @@ class RestSchemaTest extends FunSuite {
         |  "type": "string",
         |  "description": "wrapped string"
         |}""".stripMargin)
+  }
+
+  case class GenCC[+T >: Null](@customWa[T](null) value: T)
+  object GenCC extends RestDataCompanion[GenCC[String]]
+
+  test("generic case class") {
+    println(GenCC.restStructure.asInstanceOf[RestStructure.Record[_]].fields.head.fallbackValue)
+
+    assert(schemaStr[GenCC[String]] ==
+      """{
+        |  "type": "object",
+        |  "properties": {
+        |    "value": {
+        |      "type": "string",
+        |      "default": null
+        |    }
+        |  }
+        |}""".stripMargin
+    )
   }
 }

@@ -17,6 +17,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
 
   sealed trait AdtSymbol extends MacroSymbol with SelfMatchedSymbol {
     def tpe: Type
+    def seenFrom: Type = tpe
     lazy val symbol: Symbol = tpe.dealias.typeSymbol
 
     def cases: List[AdtSymbol]
@@ -66,14 +67,13 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
   }
 
   class AdtParam(val owner: AdtClass, val symbol: Symbol, val index: Int) extends MacroParam {
+    def seenFrom: Type = owner.tpe
     def shortDescription: String = "ADT parameter"
     def description: String = s"$shortDescription $nameStr of ${owner.description}"
   }
 
   case class MatchedAdtParam(param: AdtParam, mdParam: AdtParamMetadataParam, indexInRaw: Int) extends MatchedSymbol {
     def real: MacroSymbol = param
-    def annot(tpe: Type): Option[Annot] = findAnnotation(real.symbol, tpe)
-    def allAnnots(tpe: Type): List[Annot] = allAnnotations(real.symbol, tpe)
     def rawName: String = param.nameStr
   }
 
