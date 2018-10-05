@@ -496,7 +496,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     c.untypecheck(annot.tree)
   }
 
-  def annotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = {
+  def annotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = showOnDebug {
     val atpe = weakTypeOf[A].dealias
     val tpe = assertLocal(weakTypeOf[T].dealias)
     val annot = findAnnotation(tpe.typeSymbol, atpe)
@@ -504,7 +504,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     q"$MiscPkg.AnnotationOf(${safeAnnotTree(annot)})"
   }
 
-  def optAnnotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = {
+  def optAnnotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = showOnDebug {
     val atpe = weakTypeOf[A].dealias
     val tpe = assertLocal(weakTypeOf[T].dealias)
     val annotTree = findAnnotation(tpe.typeSymbol, atpe)
@@ -512,7 +512,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     q"$MiscPkg.OptAnnotationOf($annotTree)"
   }
 
-  def annotationsOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = {
+  def annotationsOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = showOnDebug {
     val atpe = weakTypeOf[A].dealias
     val tpe = assertLocal(weakTypeOf[T].dealias)
     val annots = allAnnotations(tpe.typeSymbol, atpe).map(safeAnnotTree)
