@@ -90,6 +90,7 @@ trait MacroSymbols extends MacroCommons {
   abstract class MacroSymbol {
     def symbol: Symbol
     def pos: Position = symbol.pos
+    def seenFrom: Type
     def shortDescription: String
     def description: String
     def problemStr: String = s"problem with $description"
@@ -118,6 +119,7 @@ trait MacroSymbols extends MacroCommons {
 
   abstract class MacroMethod extends MacroSymbol {
     def ownerType: Type
+    def seenFrom: Type = ownerType
 
     if (!symbol.isMethod) {
       abortAt(s"problem with member $nameStr of type $ownerType: it must be a method (def)", pos)
@@ -187,7 +189,7 @@ trait MacroSymbols extends MacroCommons {
     def fallbackTag: FallbackTag
 
     def annot(tpe: Type): Option[Annot] =
-      findAnnotation(symbol, tpe)
+      findAnnotation(symbol, tpe, seenFrom)
 
     def tagAnnot(tpe: Type): Option[Annot] =
       annot(tpe)
@@ -216,7 +218,7 @@ trait MacroSymbols extends MacroCommons {
 
     // returns fallback tag tree only IF it was necessary
     def matchTag(realSymbol: MacroSymbol): Res[FallbackTag] = {
-      val tagAnnot = findAnnotation(realSymbol.symbol, baseTagTpe)
+      val tagAnnot = findAnnotation(realSymbol.symbol, baseTagTpe, realSymbol.seenFrom)
       val fallbackTagUsed = if (tagAnnot.isEmpty) whenUntaggedTag orElse fallbackTag else FallbackTag.Empty
       val realTagTpe = tagAnnot.map(_.tpe).getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
 
@@ -262,16 +264,18 @@ trait MacroSymbols extends MacroCommons {
 
   trait MatchedSymbol {
     def real: MacroSymbol
-    def annot(tpe: Type): Option[Annot]
-    def allAnnots(tpe: Type): List[Annot]
     def rawName: String
     def indexInRaw: Int
+    def fallbackTagUsed: FallbackTag = FallbackTag.Empty
+
+    def annot(tpe: Type): Option[Annot] =
+      findAnnotation(real.symbol, tpe, real.seenFrom, fallback = fallbackTagUsed.asList)
+    def allAnnots(tpe: Type): List[Annot] =
+      allAnnotations(real.symbol, tpe, real.seenFrom, fallback = fallbackTagUsed.asList)
   }
 
   trait SelfMatchedSymbol extends MacroSymbol with MatchedSymbol {
     def real: MacroSymbol = this
-    def annot(tpe: Type): Option[Annot] = findAnnotation(symbol, tpe)
-    def allAnnots(tpe: Type): List[Annot] = allAnnotations(symbol, tpe)
     def indexInRaw: Int = 0
     def rawName: String = nameStr
   }

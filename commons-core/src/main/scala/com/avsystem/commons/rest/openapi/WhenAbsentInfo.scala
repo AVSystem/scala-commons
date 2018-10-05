@@ -11,5 +11,5 @@ case class WhenAbsentInfo[T](
   @infer("for @whenAbsent value: ") asJson: AsRaw[JsonValue, T]
 ) extends TypedMetadata[T] {
   val fallbackValue: Opt[JsonValue] =
-    Try(annot.value).toOpt.map(asJson.asRaw)
+    Try(annot.value).fold(_ => Opt.Empty, v => asJson.asRaw(v).opt)
 }

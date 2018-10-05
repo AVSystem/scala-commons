@@ -12,14 +12,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
 
   sealed trait Matched extends MatchedSymbol {
     def real: RealRpcSymbol
-    def fallbackTagUsed: FallbackTag
     def overloaded: Boolean
-
-    def annot(tpe: Type): Option[Annot] =
-      findAnnotation(real.symbol, tpe, fallback = fallbackTagUsed.asList)
-
-    def allAnnots(tpe: Type): List[Annot] =
-      allAnnotations(real.symbol, tpe, fallback = fallbackTagUsed.asList)
 
     val rawName: String = {
       val prefixes = allAnnotations(real.symbol, RpcNamePrefixAT, fallback = fallbackTagUsed.asList)
@@ -31,17 +24,17 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
 
   case class MatchedRpcTrait(real: RealRpcTrait) extends Matched {
     def overloaded: Boolean = false
-    def fallbackTagUsed: FallbackTag = FallbackTag.Empty
     def indexInRaw: Int = 0
   }
 
-  case class MatchedMethod(real: RealMethod, fallbackTagUsed: FallbackTag) extends Matched {
+  case class MatchedMethod(real: RealMethod, override val fallbackTagUsed: FallbackTag) extends Matched {
     def overloaded: Boolean = real.overloaded
     def indexInRaw: Int = 0
   }
 
-  case class MatchedParam(real: RealParam, fallbackTagUsed: FallbackTag, matchedOwner: MatchedMethod, indexInRaw: Int)
-    extends Matched {
+  case class MatchedParam(
+    real: RealParam, override val fallbackTagUsed: FallbackTag, matchedOwner: MatchedMethod, indexInRaw: Int
+  ) extends Matched {
 
     def overloaded: Boolean = false
 
@@ -95,6 +88,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
 
   abstract class RpcTrait(val symbol: Symbol) extends MacroSymbol {
     def tpe: Type
+    def seenFrom: Type = tpe
 
     if (!symbol.isAbstract || !symbol.isClass) {
       reportProblem(s"it must be an abstract class or trait")
@@ -144,6 +138,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     val owner: Either[RawMethod, CompositeRawParam]
     val containingRawMethod: RawMethod = owner.fold(identity, _.containingRawMethod)
 
+    def seenFrom: Type = owner.fold(_.seenFrom, _.actualType)
     def safePath: Tree = owner.fold(_ => q"$safeName", _.safeSelect(this))
     def pathStr: String = owner.fold(_ => nameStr, cp => s"${cp.pathStr}.$nameStr")
 
@@ -188,6 +183,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
   case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexOfList: Int, indexInList: Int)
     extends MacroParam with RealRpcSymbol {
 
+    def seenFrom: Type = owner.seenFrom
     def shortDescription = "real parameter"
     def description = s"$shortDescription $nameStr of ${owner.description}"
   }

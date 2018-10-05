@@ -21,7 +21,7 @@ class RestSchemaTest extends FunSuite {
 
   @description("kejs klass")
   case class KejsKlass(
-    @name("integer") int: Int,
+    @name("integer") @customWa(42) int: Int,
     @description("serious dependency") dep: Dependency,
     @description("serious string") str: Opt[String] = Opt.Empty
   )
@@ -35,7 +35,8 @@ class RestSchemaTest extends FunSuite {
         |  "properties": {
         |    "integer": {
         |      "type": "integer",
-        |      "format": "int32"
+        |      "format": "int32",
+        |      "default": 42
         |    },
         |    "dep": {
         |      "description": "serious dependency",
@@ -53,7 +54,6 @@ class RestSchemaTest extends FunSuite {
         |    }
         |  },
         |  "required": [
-        |    "integer",
         |    "dep"
         |  ]
         |}""".stripMargin)
@@ -69,5 +69,24 @@ class RestSchemaTest extends FunSuite {
         |  "type": "string",
         |  "description": "wrapped string"
         |}""".stripMargin)
+  }
+
+  case class GenCC[+T >: Null](@customWa[T](null) value: T)
+  object GenCC extends RestDataCompanion[GenCC[String]]
+
+  test("generic case class") {
+    println(GenCC.restStructure.asInstanceOf[RestStructure.Record[_]].fields.head.fallbackValue)
+
+    assert(schemaStr[GenCC[String]] ==
+      """{
+        |  "type": "object",
+        |  "properties": {
+        |    "value": {
+        |      "type": "string",
+        |      "default": null
+        |    }
+        |  }
+        |}""".stripMargin
+    )
   }
 }

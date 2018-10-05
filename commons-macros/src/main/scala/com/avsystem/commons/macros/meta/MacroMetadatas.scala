@@ -53,6 +53,7 @@ trait MacroMetadatas extends MacroSymbols {
     }
 
   abstract class MetadataParam(val owner: MetadataConstructor, val symbol: Symbol) extends MacroParam {
+    def seenFrom: Type = owner.ownerType
     def shortDescription = "metadata parameter"
     def description = s"$shortDescription $nameStr of ${owner.description}"
     def pathStr: String = owner.atParam.fold(nameStr)(cp => s"${cp.pathStr}.$nameStr")
@@ -91,19 +92,18 @@ trait MacroMetadatas extends MacroSymbols {
     def shortDescription = "metadata class"
     def description = s"$shortDescription $ownerType"
 
-    def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
-      annot.tpe.asSeenFrom(ownerType, ownerType.typeSymbol) match {
-        case t if t <:< InferAT =>
-          val clue = annot.findArg[String](InferAT.member(TermName("clue")), "")
-          new ImplicitParam(this, paramSym, clue)
-        case t if t <:< ReifyAnnotAT => new ReifiedAnnotParam(this, paramSym)
-        case t if t <:< ReifyNameAT =>
-          val useRawName = annot.findArg[Boolean](ReifyNameAT.member(TermName("useRawName")), false)
-          new ReifiedNameParam(this, paramSym, useRawName)
-        case t if t <:< IsAnnotatedAT =>
-          new IsAnnotatedParam(this, paramSym, t.typeArgs.head)
-        case t => reportProblem(s"metadata param strategy $t is not allowed here")
-      }
+    def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam = annot.tpe match {
+      case t if t <:< InferAT =>
+        val clue = annot.findArg[String](InferAT.member(TermName("clue")), "")
+        new ImplicitParam(this, paramSym, clue)
+      case t if t <:< ReifyAnnotAT => new ReifiedAnnotParam(this, paramSym)
+      case t if t <:< ReifyNameAT =>
+        val useRawName = annot.findArg[Boolean](ReifyNameAT.member(TermName("useRawName")), false)
+        new ReifiedNameParam(this, paramSym, useRawName)
+      case t if t <:< IsAnnotatedAT =>
+        new IsAnnotatedParam(this, paramSym, t.typeArgs.head)
+      case t => reportProblem(s"metadata param strategy $t is not allowed here")
+    }
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor
 
@@ -111,7 +111,7 @@ trait MacroMetadatas extends MacroSymbols {
       symbol.typeSignatureIn(ownerType).paramLists.map(_.map { ps =>
         if (findAnnotation(ps, CompositeAT).nonEmpty)
           new CompositeParam(this, ps)
-        else findAnnotation(ps, MetadataParamStrategyType).map(paramByStrategy(ps, _)).getOrElse {
+        else findAnnotation(ps, MetadataParamStrategyType, ownerType).map(paramByStrategy(ps, _)).getOrElse {
           if (ps.isImplicit) new ImplicitParam(this, ps, "")
           else new InvalidParam(this, ps, "no metadata param strategy annotation found")
         }
@@ -201,7 +201,7 @@ trait MacroMetadatas extends MacroSymbols {
         case ParamArity.Optional(_) =>
           Ok(mkOptional(matchedSymbol.annot(annotTpe).map(validatedAnnotTree)))
         case ParamArity.Multi(_, _) =>
-          Ok(mkMulti(allAnnotations(matchedSymbol.real.symbol, annotTpe).map(validatedAnnotTree)))
+          Ok(mkMulti(matchedSymbol.allAnnots(annotTpe).map(validatedAnnotTree)))
       }
     }
   }

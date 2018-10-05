@@ -107,6 +107,24 @@ trait MacroCommons { bundle =>
   def indent(str: String, indent: String): String =
     str.replaceAllLiterally("\n", s"\n$indent")
 
+  private def annotations(s: Symbol): List[Annotation] = {
+    s.info // srsly scalac, load these goddamned annotations
+    s.annotations
+  }
+
+  def treeAsSeenFrom(tree: Tree, seenFrom: Type): Tree = seenFrom match {
+    case NoType => tree
+    case TypeRef(_, sym, Nil) if sym.isStatic => tree
+    case _ =>
+      val res = tree.duplicate
+      res.foreach { t =>
+        if (t.tpe != null) {
+          internal.setType(t, t.tpe.asSeenFrom(seenFrom, seenFrom.typeSymbol))
+        }
+      }
+      res
+  }
+
   class Annot(annotTree: Tree, val subject: Symbol, val directSource: Symbol, val aggregate: Option[Annot]) {
     def aggregationChain: List[Annot] =
       aggregate.fold(List.empty[Annot])(a => a :: a.aggregationChain)
@@ -137,7 +155,17 @@ trait MacroCommons { bundle =>
       case _ => annotTree
     }
 
-    def tpe: Type = annotTree.tpe
+    def tpe: Type =
+      annotTree.tpe
+
+    def symbol: ClassSymbol =
+      tpe.typeSymbol.asClass
+
+    lazy val argsByName: Map[Name, Tree] = {
+      val Apply(_, args) = tree
+      val paramNames = primaryConstructorOf(tpe).typeSignature.paramLists.head.map(_.name)
+      (paramNames zip args).toMap
+    }
 
     def findArg[T: ClassTag](valSym: Symbol): T =
       findArg[T](valSym, abort(s"(bug) no default value for ${tree.tpe} parameter ${valSym.name} provided by macro"))
@@ -157,20 +185,28 @@ trait MacroCommons { bundle =>
               case t if param.asTerm.isParamWithDefault && t.symbol.isSynthetic &&
                 t.symbol.name.decodedName.toString.contains("$default$") => whenDefault
               case t if classTag[T] == classTag[Tree] => t.asInstanceOf[T]
-              case _ =>
-                abort(s"Expected literal ${classTag[T].runtimeClass} as ${valSym.name} parameter of $clsTpe annotation")
+              case _ => abort(s"Expected literal ${classTag[T].runtimeClass.getSimpleName} " +
+                s"as ${valSym.name} parameter of $clsTpe annotation")
             }
           }
           .getOrElse(abort(s"Could not find argument corresponding to constructor parameter ${subSym.name}"))
       case _ => abort(s"Not a primary constructor call tree: $tree")
     }
 
+    private object argsInliner extends Transformer {
+      override def transform(tree: Tree): Tree = tree match {
+        case Select(th@This(_), name) if th.symbol == symbol && tree.symbol.asTerm.isParamAccessor =>
+          argsByName.get(name).map(_.duplicate).getOrElse(tree)
+        case _ => super.transform(tree)
+      }
+    }
+
     lazy val aggregated: List[Annot] = {
       if (tpe <:< AnnotationAggregateType) {
-        val argsInliner = new AnnotationArgInliner(tree)
         val impliedMember = tpe.member(TypeName("Implied"))
-        impliedMember.annotations.map(a =>
-          new Annot(argsInliner.transform(a.tree), subject, impliedMember, Some(this)))
+        annotations(impliedMember).map { a =>
+          new Annot(argsInliner.transform(treeAsSeenFrom(a.tree, tpe)), subject, impliedMember, Some(this))
+        }
       } else Nil
     }
 
@@ -181,21 +217,6 @@ trait MacroCommons { bundle =>
       case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
         s"@${showCode(tpt)}(${args.map(showCode(_)).mkString(",")})"
       case _ => showCode(tree)
-    }
-  }
-
-  class AnnotationArgInliner(baseAnnot: Tree) extends Transformer {
-    private val argsByName: Map[Name, Tree] = {
-      val Apply(_, args) = baseAnnot
-      val paramNames = primaryConstructorOf(baseAnnot.tpe).typeSignature.paramLists.head.map(_.name)
-      (paramNames zip args).toMap
-    }
-
-    override def transform(tree: Tree): Tree = tree match {
-      case Select(th@This(_), name) if th.symbol == baseAnnot.tpe.typeSymbol
-        && tree.symbol.asTerm.isParamAccessor =>
-        argsByName.get(name).map(_.duplicate).getOrElse(tree)
-      case _ => super.transform(tree)
     }
   }
 
@@ -210,19 +231,24 @@ trait MacroCommons { bundle =>
   private def maybeWithSuperSymbols(s: Symbol, withSupers: Boolean): Iterator[Symbol] =
     if (withSupers) withSuperSymbols(s) else Iterator(s)
 
-  def allAnnotations(s: Symbol, tpeFilter: Type, withInherited: Boolean = true, fallback: List[Tree] = Nil): List[Annot] = {
+  def allAnnotations(s: Symbol, tpeFilter: Type,
+    seenFrom: Type = NoType, withInherited: Boolean = true, fallback: List[Tree] = Nil): List[Annot] = {
+
     val initSym = orConstructorParam(s)
     def inherited(annot: Annotation, superSym: Symbol): Boolean =
       !(superSym != initSym && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
 
     val nonFallback = maybeWithSuperSymbols(initSym, withInherited)
-      .flatMap(ss => ss.annotations.filter(inherited(_, ss)).map(a => new Annot(a.tree, s, ss, None)))
+      .flatMap(ss => annotations(ss).filter(inherited(_, ss))
+        .map(a => new Annot(treeAsSeenFrom(a.tree, seenFrom), s, ss, None)))
 
     (nonFallback ++ fallback.iterator.map(t => new Annot(t, s, s, None)))
       .flatMap(_.withAllAggregated).filter(_.tpe <:< tpeFilter).toList
   }
 
-  def findAnnotation(s: Symbol, tpe: Type, withInherited: Boolean = true, fallback: List[Tree] = Nil): Option[Annot] = {
+  def findAnnotation(s: Symbol, tpe: Type,
+    seenFrom: Type = NoType, withInherited: Boolean = true, fallback: List[Tree] = Nil): Option[Annot] = {
+
     val initSym = orConstructorParam(s)
     def find(annots: List[Annot]): Option[Annot] = annots match {
       case head :: tail =>
@@ -245,7 +271,8 @@ trait MacroCommons { bundle =>
       !(superSym != initSym && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
 
     maybeWithSuperSymbols(initSym, withInherited)
-      .map(ss => find(ss.annotations.filter(inherited(_, ss)).map(a => new Annot(a.tree, s, ss, None))))
+      .map(ss => find(annotations(ss).filter(inherited(_, ss))
+        .map(a => new Annot(treeAsSeenFrom(a.tree, seenFrom), s, ss, None))))
       .collectFirst { case Some(annot) => annot }
       .orElse(find(fallback.map(t => new Annot(t, s, s, None))))
   }
@@ -393,7 +420,7 @@ trait MacroCommons { bundle =>
     symbolImplicitNotFoundMsg(tpe, tpe.typeSymbol, tpe.typeSymbol.typeSignature.typeParams, tpe.typeArgs)
 
   private def symbolImplicitNotFoundMsg(tpe: Type, sym: Symbol, tparams: List[Symbol], typeArgs: List[Type]): String =
-    sym.annotations.find(_.tree.tpe <:< ImplicitNotFoundAT)
+    annotations(sym).find(_.tree.tpe <:< ImplicitNotFoundAT)
       .map(_.tree.children.tail.head).collect { case StringLiteral(error) => error }
       .map { error =>
         val tpNames = tparams.map(_.name.decodedName.toString)
@@ -759,19 +786,19 @@ trait MacroCommons { bundle =>
   def paramSymbolToValDef(sym: Symbol): ValDef = {
     val ts = sym.asTerm
     val implicitFlag = if (sym.isImplicit) Flag.IMPLICIT else NoFlags
-    val mods = Modifiers(Flag.PARAM | implicitFlag, typeNames.EMPTY, ts.annotations.map(_.tree))
+    val mods = Modifiers(Flag.PARAM | implicitFlag, typeNames.EMPTY, annotations(ts).map(_.tree))
     ValDef(mods, ts.name, treeForType(sym.typeSignature), EmptyTree)
   }
 
   def getterSymbolToValDef(sym: Symbol): ValDef = {
     val ms = sym.asMethod
     val mutableFlag = if (ms.isVar) Flag.MUTABLE else NoFlags
-    val mods = Modifiers(Flag.DEFERRED | mutableFlag, typeNames.EMPTY, ms.annotations.map(_.tree))
+    val mods = Modifiers(Flag.DEFERRED | mutableFlag, typeNames.EMPTY, annotations(ms).map(_.tree))
     ValDef(mods, ms.name, treeForType(sym.typeSignature), EmptyTree)
   }
 
   def existentialSingletonToValDef(sym: Symbol, name: TermName, tpe: Type): ValDef = {
-    val mods = Modifiers(Flag.DEFERRED, typeNames.EMPTY, sym.annotations.map(_.tree))
+    val mods = Modifiers(Flag.DEFERRED, typeNames.EMPTY, annotations(sym).map(_.tree))
     ValDef(mods, name, treeForType(tpe), EmptyTree)
   }
 
@@ -790,7 +817,7 @@ trait MacroCommons { bundle =>
       else NoFlags
 
     val flags = paramOrDeferredFlag | syntheticFlag | varianceFlag
-    val mods = Modifiers(flags, typeNames.EMPTY, ts.annotations.map(_.tree))
+    val mods = Modifiers(flags, typeNames.EMPTY, annotations(ts).map(_.tree))
     val (typeParams, signature) = sym.typeSignature match {
       case PolyType(polyParams, resultType) => (polyParams, resultType)
       case sig => (ts.typeParams, sig)
@@ -1024,7 +1051,7 @@ trait MacroCommons { bundle =>
   def positionPoint(sym: Symbol): Int =
     if (c.enclosingPosition.source == sym.pos.source) sym.pos.point
     else positionCache.getOrElseUpdate(sym,
-      sym.annotations.find(_.tree.tpe <:< PositionedAT).map(_.tree).map {
+      annotations(sym).find(_.tree.tpe <:< PositionedAT).map(_.tree).map {
         case Apply(_, List(MaybeTyped(Lit(point: Int), _))) => point
         case t => abort(s"expected literal int as argument of @positioned annotation on $sym, got $t")
       } getOrElse {

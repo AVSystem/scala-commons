@@ -122,7 +122,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   def forApplyUnapply(tpe: Type, companion: Tree, apply: Symbol, unapply: Symbol, applyParams: List[ApplyParam]): Tree = {
     val params = applyParams.map { p =>
-      findAnnotation(p.sym, WhenAbsentAnnotType).fold(p) { annot =>
+      findAnnotation(p.sym, WhenAbsentAnnotType, tpe).fold(p) { annot =>
         val newDefault = annot.tree.children.tail.head
         if (!(newDefault.tpe <:< p.valueType)) {
           abortAt(s"expected value of type ${p.valueType} in @whenAbsent annotation, got ${newDefault.tpe.widen}", p.sym.pos)
