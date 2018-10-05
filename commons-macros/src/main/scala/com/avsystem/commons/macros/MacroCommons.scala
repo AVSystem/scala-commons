@@ -967,22 +967,17 @@ trait MacroCommons { bundle =>
       Some(ApplyUnapply(constructor, NoSymbol, paramsWithDefaults(constructor.typeSignatureIn(dtpe))))
     } else {
       val applicableResults = applyUnapplyPairs.flatMap {
+        case (apply, unapply) if caseClass && apply.isSynthetic && unapply.isSynthetic =>
+          val constructor = primaryConstructorOf(dtpe)
+          Some(ApplyUnapply(constructor, unapply, paramsWithDefaults(constructor.typeSignatureIn(dtpe))))
         case (apply, unapply) if typeParamsMatch(apply, unapply) =>
-          val constructor =
-            if (caseClass && apply.isSynthetic && unapply.isSynthetic)
-              primaryConstructorOf(dtpe)
-            else NoSymbol
-
           val applySig =
-            if (constructor != NoSymbol) constructor.typeSignatureIn(dtpe)
-            else setTypeArgs(apply.typeSignatureIn(typedCompanion.tpe))
+            setTypeArgs(apply.typeSignatureIn(typedCompanion.tpe))
           val unapplySig =
             setTypeArgs(unapply.typeSignatureIn(typedCompanion.tpe))
-
           if (matchingApplyUnapply(dtpe, applySig, unapplySig))
-            Some(ApplyUnapply(constructor orElse apply, unapply, paramsWithDefaults(applySig)))
+            Some(ApplyUnapply(apply, unapply, paramsWithDefaults(applySig)))
           else None
-
         case _ => None
       }
 
