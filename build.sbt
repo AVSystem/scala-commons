@@ -149,6 +149,7 @@ lazy val commons = project.in(file("."))
     commonSettings,
     noPublishSettings,
     name := "commons",
+    ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
     scalacOptions in ScalaUnidoc in unidoc += "-Ymacro-expand:none",
     unidocProjectFilter in ScalaUnidoc in unidoc :=
       inAnyProject -- inProjects(
