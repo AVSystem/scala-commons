@@ -602,21 +602,28 @@ and "serialized" into `RawRest.Async[RestResponse]`.
 This means that macro engine looks for an implicit instance of `AsRaw/AsReal[RawRest.Async[RestResponse], Try[R]]`
 for every HTTP method with result type `R`.
 
-`RestResponse` itself is a simple class that aggregates HTTP status code and body.
+`RestResponse` itself is a simple class that aggregates HTTP status code, response headers and body.
 
-`RestResponse` companion object defines default implicit instances of `AsRaw/Real[RawRest.Async[RestResponse], Try[Future[R]]]`
-which depends on implicit `AsRaw/Real[RestResponse, R]`. This effectively means that if your method returns `Future[R]` then
-it's enough if `R` is serializable as `RestResponse`.
+`DefaultRestApiCompanion` and its friends introduce implicit instances of
+`AsRaw/Real[RawRest.Async[RestResponse], Try[Future[R]]]` which depends on implicit `AsRaw/Real[RestResponse, R]`.
+This effectively means that if your method returns `Future[R]` then it's enough if `R` is serializable as `RestResponse`.
 
 However, there are even more defaults provided: if `R` is serializable as `HttpBody` then it's automatically serializable
 as `RestResponse`. This default translation of `HttpBody` into `RestResponse` always uses 200 as a status code
-(or 204 for empty body). When translating `RestResponse` into `HttpBody` and response contains erroneous status code,
-`HttpErrorException` is thrown (which will be subsequently captured into failed `Future`).
+(or 204 for empty body) and empty response headers. When translating `RestResponse` into `HttpBody` and response
+contains erroneous status code, `HttpErrorException` is thrown (which will be subsequently captured into failed `Future`).
 
 Going even further with defaults, all types serializable as `JsonValue` are serializable as `HttpBody`.
 This effectively means that when your method returns `Future[R]` then you can provide serialization
 of `R` into any of the following: `JsonValue`, `HttpBody`, `RestResponse` - depending on how much control
-you need.
+you need. Also, remember that whe using `DefaultRestApiCompanion`, `JsonValue` serialization is automatically
+derived from `GenCodec` instance.
+
+Below is a diagram that summarizes dependencies and defaults of implicits used to serialize results of HTTP REST methods.
+Each arrow `Raw <-> Real` indicates that macro engine searches for an implicit instance of `AsRaw[Raw, Real]` or
+`AsReal[Raw, Real]` depending on whether server or client code is being materialized.
+
+![REST implicits](images/REST.svg)
 
 Ultimately, if you don't want to use `Future`s, you may replace it with some other asynchronous wrapper type,
 e.g. Monix Task or some IO monad.
