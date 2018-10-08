@@ -256,7 +256,6 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     if (forAsRaw) {
       registerImplicit(getType(tq"$AsRawCls[${raw.tpe},${real.tpe}]"), selfName)
     }
-    registerCompanionImplicits(raw.tpe)
 
     private def extractMapping(method: MatchedMethod, rawParam: RawValueParam, parser: ParamsParser[RealParam]): Res[ParamMapping] = {
       def createErp(real: RealParam, indexInRaw: Int): Option[Res[EncodedRealParam]] =

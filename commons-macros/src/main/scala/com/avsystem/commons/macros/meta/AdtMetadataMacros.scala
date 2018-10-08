@@ -44,7 +44,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
     def cases: List[AdtSymbol] = Nil
 
     val params: List[AdtParam] =
-      applyUnapply.params.zipWithIndex.map { case ((sym, _), idx) => new AdtParam(this, sym, idx) }
+      applyUnapply.params.zipWithIndex.map { case (sym, idx) => new AdtParam(this, sym, idx) }
 
     def companion: Tree =
       replaceCompanion(typedCompanionOf(tpe).getOrElse(reportProblem(s"could not reify companion for $tpe")))

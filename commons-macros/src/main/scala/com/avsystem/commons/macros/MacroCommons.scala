@@ -367,28 +367,25 @@ trait MacroCommons { bundle =>
   private val implicitSearchCache = new mutable.HashMap[TypeKey, Option[TermName]]
   private val implicitsByTrace = new mutable.HashMap[ImplicitTrace, TermName]
   private val inferredImplicitTypes = new mutable.HashMap[TermName, Type]
-  private val implicitImports = new ListBuffer[Tree]
-  private val implicitsToDeclare = new ListBuffer[Tree]
+  private val implicitsToDeclare = new ListBuffer[(TermName, Tree)]
 
   def tryInferCachedImplicit(tpe: Type): Option[TermName] = {
     def compute: Option[TermName] =
-      Option(c.typecheck(q"..$implicitImports; implicitly[$tpe]", silent = true))
-        .filter(_ != EmptyTree)
-        .map { case WrappedImplicitSearchResult(t) =>
-          def newCachedImplicit(): TermName = {
-            val name = c.freshName(TermName("cachedImplicit"))
-            inferredImplicitTypes(name) = t.tpe
-            implicitsToDeclare += q"private lazy val $name = ${replaceCompanion(t)}"
+      Option(c.inferImplicitValue(tpe)).filter(_ != EmptyTree).map { found =>
+        def newCachedImplicit(): TermName = {
+          val name = c.freshName(TermName("cachedImplicit"))
+          inferredImplicitTypes(name) = found.tpe
+          implicitsToDeclare += (name -> replaceCompanion(found))
+          name
+        }
+        ImplicitTrace(found).fold(newCachedImplicit()) { tr =>
+          implicitsByTrace.get(tr).filter(n => inferredImplicitTypes(n) =:= found.tpe).getOrElse {
+            val name = newCachedImplicit()
+            implicitsByTrace(tr) = name
             name
           }
-          ImplicitTrace(t).fold(newCachedImplicit()) { tr =>
-            implicitsByTrace.get(tr).filter(n => inferredImplicitTypes(n) =:= t.tpe).getOrElse {
-              val name = newCachedImplicit()
-              implicitsByTrace(tr) = name
-              name
-            }
-          }
         }
+      }
     implicitSearchCache.getOrElseUpdate(TypeKey(tpe), compute)
   }
 
@@ -396,8 +393,7 @@ trait MacroCommons { bundle =>
     tryInferCachedImplicit(tpe).getOrElse {
       val name = c.freshName(TermName(""))
       implicitSearchCache(TypeKey(tpe)) = Some(name)
-      implicitsToDeclare +=
-        q"private implicit val $name = $ImplicitsObj.infer[$tpe](${StringLiteral(errorClue, errorPos)})"
+      implicitsToDeclare += (name -> q"$ImplicitsObj.infer[$tpe](${StringLiteral(errorClue, errorPos)})")
       inferredImplicitTypes(name) = tpe
       inferCachedImplicit(tpe, errorClue, errorPos)
     }
@@ -410,11 +406,14 @@ trait MacroCommons { bundle =>
     inferredImplicitTypes(name) = tpe
   }
 
-  def registerImplicitImport(importTree: Tree): Unit =
-    implicitImports += importTree
-
   def cachedImplicitDeclarations: List[Tree] =
-    implicitsToDeclare.result()
+    cachedImplicitDeclarations(mkPrivateLazyVal)
+
+  def cachedImplicitDeclarations(mkDecl: (TermName, Tree) => Tree): List[Tree] =
+    implicitsToDeclare.result().map { case (n, b) => mkDecl(n, b) }
+
+  def mkPrivateLazyVal(name: TermName, body: Tree): Tree =
+    q"private lazy val $name = $body"
 
   private def standardImplicitNotFoundMsg(tpe: Type): String =
     symbolImplicitNotFoundMsg(tpe, tpe.typeSymbol, tpe.typeSymbol.typeSignature.typeParams, tpe.typeArgs)
@@ -921,8 +920,18 @@ trait MacroCommons { bundle =>
     * @param unapply companion object'a unapply method or `NoSymbol` for case class with more than 22 fields
     * @param params  parameters with trees evaluating to default values (or `EmptyTree`s)
     */
-  case class ApplyUnapply(apply: Symbol, unapply: Symbol, params: List[(TermSymbol, Tree)]) {
+  case class ApplyUnapply(ownerTpe: Type, typedCompanion: Tree, apply: Symbol, unapply: Symbol, params: List[TermSymbol]) {
     def standardCaseClass: Boolean = apply.isConstructor
+
+    def defaultValueFor(param: Symbol): Tree =
+      defaultValueFor(param, params.indexOf(param))
+
+    def defaultValueFor(param: Symbol, idx: Int): Tree =
+      if (param.asTerm.isParamWithDefault) {
+        val methodEncodedName = param.owner.name.encodedName.toString
+        q"${replaceCompanion(typedCompanion)}.${TermName(s"$methodEncodedName$$default$$${idx + 1}")}[..${ownerTpe.typeArgs}]"
+      }
+      else EmptyTree
   }
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] =
@@ -933,15 +942,8 @@ trait MacroCommons { bundle =>
     val ts = dtpe.typeSymbol.asType
     val caseClass = ts.isClass && ts.asClass.isCaseClass
 
-    def defaultValueFor(param: Symbol, idx: Int): Tree =
-      if (param.asTerm.isParamWithDefault) {
-        val methodEncodedName = param.owner.name.encodedName.toString
-        q"${replaceCompanion(typedCompanion)}.${TermName(s"$methodEncodedName$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
-      }
-      else EmptyTree
-
-    def paramsWithDefaults(methodSig: Type): List[(TermSymbol, Tree)] =
-      methodSig.paramLists.head.zipWithIndex.map { case (p, i) => (p.asTerm, defaultValueFor(p, i)) }
+    def params(methodSig: Type): List[TermSymbol] =
+      methodSig.paramLists.head.map(_.asTerm)
 
     // Seq is a weird corner case where technically an apply/unapplySeq pair exists but is recursive
     val applyUnapplyPairs =
@@ -964,19 +966,19 @@ trait MacroCommons { bundle =>
 
     if (caseClass && applyUnapplyPairs.isEmpty) { // case classes with more than 22 fields
       val constructor = primaryConstructorOf(dtpe)
-      Some(ApplyUnapply(constructor, NoSymbol, paramsWithDefaults(constructor.typeSignatureIn(dtpe))))
+      Some(ApplyUnapply(dtpe, typedCompanion, constructor, NoSymbol, params(constructor.typeSignatureIn(dtpe))))
     } else {
       val applicableResults = applyUnapplyPairs.flatMap {
         case (apply, unapply) if caseClass && apply.isSynthetic && unapply.isSynthetic =>
           val constructor = primaryConstructorOf(dtpe)
-          Some(ApplyUnapply(constructor, unapply, paramsWithDefaults(constructor.typeSignatureIn(dtpe))))
+          Some(ApplyUnapply(dtpe, typedCompanion, constructor, unapply, params(constructor.typeSignatureIn(dtpe))))
         case (apply, unapply) if typeParamsMatch(apply, unapply) =>
           val applySig =
             setTypeArgs(apply.typeSignatureIn(typedCompanion.tpe))
           val unapplySig =
             setTypeArgs(unapply.typeSignatureIn(typedCompanion.tpe))
           if (matchingApplyUnapply(dtpe, applySig, unapplySig))
-            Some(ApplyUnapply(apply, unapply, paramsWithDefaults(applySig)))
+            Some(ApplyUnapply(dtpe, typedCompanion, apply, unapply, params(applySig)))
           else None
         case _ => None
       }

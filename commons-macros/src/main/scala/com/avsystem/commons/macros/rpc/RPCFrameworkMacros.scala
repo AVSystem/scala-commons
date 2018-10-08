@@ -42,6 +42,7 @@ final class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommo
     }
     q"""
        new $fullRpcInfoTpe {
+         import $FrameworkObj._
          lazy val asRealRPC = $FrameworkObj.materializeAsReal[$rpcTpe]
          lazy val asRawRPC = $FrameworkObj.materializeAsRaw[$rpcTpe]
          lazy val metadata = $FrameworkObj.materializeMetadata[$rpcTpe]

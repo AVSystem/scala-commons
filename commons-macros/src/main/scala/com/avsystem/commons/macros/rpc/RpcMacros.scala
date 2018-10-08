@@ -35,15 +35,6 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   final lazy val MethodTagAT: Type = getType(tq"$RpcPackage.methodTag[_]")
   final lazy val ParamTagAT: Type = getType(tq"$RpcPackage.paramTag[_]")
   final lazy val RpcTagAT: Type = getType(tq"$RpcPackage.RpcTag")
-  final lazy val RpcImplicitsSym: Symbol = getType(tq"$RpcPackage.RpcImplicitsProvider").member(TermName("implicits"))
-
-  def registerCompanionImplicits(rawTpe: Type): Unit =
-    typedCompanionOf(rawTpe).filter { companion =>
-      val typed = c.typecheck(q"$companion.implicits", silent = true)
-      typed != EmptyTree && typed.symbol.overrides.contains(RpcImplicitsSym)
-    }.foreach { companion =>
-      registerImplicitImport(q"import $companion.implicits._")
-    }
 }
 
 class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)

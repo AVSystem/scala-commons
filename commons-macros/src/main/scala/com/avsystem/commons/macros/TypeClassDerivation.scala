@@ -104,12 +104,10 @@ trait TypeClassDerivation extends MacroCommons {
     * Derives type class instance for record type. Record type is a class/trait whose companion object has
     * matching `apply` and `unapply` methods. In particular, every case class is a proper record type.
     *
-    * @param tpe     the record type
-    * @param apply   symbol of the `apply` method in companion object
-    * @param unapply symbol of the `unapply` method in companion object
-    * @param params  metadata for parameters of `apply` method
+    * @param applyUnapply info about case class or case class like type
+    * @param params       metadata for parameters of `apply` method
     */
-  def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree
+  def forApplyUnapply(applyUnapply: ApplyUnapply, params: List[ApplyParam]): Tree
 
   /**
     * Derives type class instance for union type (sealed hierarchy in which every non-abstract subtype has
@@ -142,12 +140,12 @@ trait TypeClassDerivation extends MacroCommons {
     def singleTypeTc: Option[Tree] =
       singleValueFor(dtpe).map(tree => forSingleton(dtpe, tree))
 
-    def applyUnapplyTc: Option[Tree] = applyUnapplyFor(dtpe).map {
-      case ApplyUnapply(apply, unapply, params) =>
-        val dependencies = params.zipWithIndex.map { case ((s, defaultValue), idx) =>
-          ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s))
-        }
-        forApplyUnapply(dtpe, apply, unapply, dependencies)
+    def applyUnapplyTc: Option[Tree] = applyUnapplyFor(dtpe).map { au =>
+      val dependencies = au.params.zipWithIndex.map { case (s, idx) =>
+        val defaultValue = au.defaultValueFor(s, idx)
+        ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s))
+      }
+      forApplyUnapply(au, dependencies)
     }
 
     def sealedHierarchyTc = knownSubtypes(dtpe).map { subtypes =>
@@ -175,11 +173,12 @@ trait TypeClassDerivation extends MacroCommons {
     val deferredName = c.freshName(TermName("deferred"))
     // introducing intermediate val to make sure exact type of materialized instance is not lost
     val underlyingName = c.freshName(TermName("underlying"))
+    registerImplicit(tcTpe, deferredName)
 
     val withDummyImplicit =
       q"""
-         implicit def $deferredName: $DeferredInstanceCls[$tcTpe] with $tcTpe = $PredefObj.???
-         $unguarded
+        implicit def $deferredName: $DeferredInstanceCls[$tcTpe] with $tcTpe = $PredefObj.???
+        $unguarded
        """
 
     def guarded: Tree =

@@ -35,8 +35,7 @@ class mongoId extends AnnotationAggregate {
 
 @flatten sealed trait FlatSealedBase {
   @mongoId def id: String
-  @generated
-  @name("upper_id") def upperId: String = id.toUpperCase
+  @generated @name("upper_id") def upperId: String = id.toUpperCase
 }
 object FlatSealedBase extends HasGenCodec[FlatSealedBase] {
   case class FirstCase(id: String, int: Int = 42) extends FlatSealedBase

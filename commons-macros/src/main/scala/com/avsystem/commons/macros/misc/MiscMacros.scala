@@ -406,7 +406,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       s"$tpe is not a case class or case-class like type: no matching apply/unapply pair found"))
 
   def applyBody(rawValuesName: TermName, tpe: Type, au: ApplyUnapply): Tree = {
-    val args = au.params.zipWithIndex.map { case ((param, _), idx) =>
+    val args = au.params.zipWithIndex.map { case (param, idx) =>
       val res = q"$rawValuesName($idx).asInstanceOf[${actualParamType(param.typeSignature)}]"
       if (isRepeated(param)) q"$res: _*" else res
     }
@@ -415,7 +415,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
 
   def unapplyBody(valueName: TermName, tpe: Type, au: ApplyUnapply): Tree = {
-    if (au.standardCaseClass) q"$ScalaPkg.Array(..${au.params.map { case (param, _) => q"$valueName.$param" }})"
+    if (au.standardCaseClass) q"$ScalaPkg.Array(..${au.params.map(param => q"$valueName.$param")})"
     else {
       val safeCompanion = replaceCompanion(typedCompanionOf(tpe).getOrElse(EmptyTree))
       val unapplyRes = q"$safeCompanion.${au.unapply}[..${tpe.typeArgs}]($valueName)"

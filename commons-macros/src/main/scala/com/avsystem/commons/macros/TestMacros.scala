@@ -22,17 +22,17 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
   def forSingleton(tpe: Type, singleValueTree: Tree): Tree =
     q"$SingletonTCObj[$tpe](${tpe.toString}, $singleValueTree)"
 
-  def forApplyUnapply(tpe: Type, apply: Symbol, unapply: Symbol, params: List[ApplyParam]): Tree = {
+  def forApplyUnapply(au: ApplyUnapply, params: List[ApplyParam]): Tree = {
     val deps = params.map { case ApplyParam(_, s, dv, t) =>
-      val defaultValueOpt = if (dv == EmptyTree) q"None" else q"Some($DefValObj($dv))"
+      val defaultValueOpt = if (dv == EmptyTree) q"$NoneObj" else q"$SomeObj($DefValObj($dv))"
       q"(${s.name.toString}, $t, $defaultValueOpt)"
     }
-    q"$ApplyUnapplyTCObj[$tpe](${tpe.toString}, List(..$deps))"
+    q"$ApplyUnapplyTCObj[${au.ownerTpe}](${au.ownerTpe.toString}, $ListObj(..$deps))"
   }
 
   def forSealedHierarchy(tpe: Type, subtypes: List[KnownSubtype]): Tree = {
     val deps = subtypes.map({ case KnownSubtype(_, st, tree) => q"(${st.typeSymbol.name.toString}, $tree)" })
-    q"$SealedHierarchyTCObj[$tpe](${tpe.toString}, List(..$deps))"
+    q"$SealedHierarchyTCObj[$tpe](${tpe.toString}, $ListObj(..$deps))"
   }
 
   def forUnknown(tpe: Type): Tree =
@@ -53,7 +53,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
     val newTpe = getType(newTree)
 
     assertSameTypes(tpe, newTpe)
-    q"???"
+    q"$PredefObj.???"
   }
 
   def testKnownSubtypes[T: WeakTypeTag, R: WeakTypeTag]: Tree = showOnDebug {
@@ -62,7 +62,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
       .getOrElse(typeOf[Nothing])
 
     assertSameTypes(expectedResultTpe, weakTypeOf[R])
-    q"???"
+    q"$PredefObj.???"
   }
 
   val ApplierUnapplierCls = tq"$CommonsPkg.macros.ApplierUnapplier"
@@ -71,25 +71,25 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
     val ttpe = weakTypeOf[T]
     val ftpe = weakTypeOf[F]
 
-    val ApplyUnapply(_, unapply, params) = applyUnapplyFor(ttpe)
+    val au = applyUnapplyFor(ttpe)
       .getOrElse(c.abort(c.enclosingPosition,
         s"Could not find unambiguous, matching pair of apply/unapply methods for $ttpe"))
 
-    val companion = unapply.owner.asClass.module
+    val companion = au.unapply.owner.asClass.module
 
-    val expectedTpe = params match {
+    val expectedTpe = au.params match {
       case Nil => typeOf[Unit]
-      case List((single, _)) => single.typeSignature
-      case _ => getType(tq"(..${params.map(_._1.typeSignature)})")
+      case List(single) => single.typeSignature
+      case _ => getType(tq"(..${au.params.map(_.typeSignature)})")
     }
     assertSameTypes(expectedTpe, ftpe)
 
-    val applyParams = params match {
+    val applyParams = au.params match {
       case List(_) => List(Ident(TermName("f")))
-      case _ => params.indices.map(i => q"f.${TermName(s"_${i + 1}")}")
+      case _ => au.params.indices.map(i => q"f.${TermName(s"_${i + 1}")}")
     }
 
-    val unapplyResult = params match {
+    val unapplyResult = au.params match {
       case Nil => q"()"
       case _ => q"$companion.unapply(t).get"
     }
