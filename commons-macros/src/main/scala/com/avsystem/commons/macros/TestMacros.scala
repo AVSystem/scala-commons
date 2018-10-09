@@ -56,7 +56,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
     q"$PredefObj.???"
   }
 
-  def testKnownSubtypes[T: WeakTypeTag, R: WeakTypeTag]: Tree = showOnDebug {
+  def testKnownSubtypes[T: WeakTypeTag, R: WeakTypeTag]: Tree = instrument {
     val expectedResultTpe = knownSubtypes(weakTypeOf[T])
       .map(types => getType(tq"(..$types)"))
       .getOrElse(typeOf[Nothing])
@@ -67,7 +67,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   val ApplierUnapplierCls = tq"$CommonsPkg.macros.ApplierUnapplier"
 
-  def applierUnapplier[T: WeakTypeTag, F: WeakTypeTag]: Tree = showOnDebug {
+  def applierUnapplier[T: WeakTypeTag, F: WeakTypeTag]: Tree = instrument {
     val ttpe = weakTypeOf[T]
     val ftpe = weakTypeOf[F]
 

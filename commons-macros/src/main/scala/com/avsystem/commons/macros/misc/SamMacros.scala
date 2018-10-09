@@ -40,7 +40,7 @@ class SamMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       }))
 
       val unimplemented = q"???"
-      val baseResult = c.typecheck(
+      val baseResult = typecheck(
         q"""
           new $targetTpe {
             def ${m.name.toTermName}(...$defParamss): $resultType = $unimplemented
@@ -66,7 +66,7 @@ class SamMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
             rewriteParams(transformer.transform(body), dpTail)
           case (body, _) =>
             val paramss = defParamss.map(_.map(vd => Ident(vd.symbol)))
-            c.typecheck(q"$body(...$paramss)")
+            typecheck(q"$body(...$paramss)")
         }
 
       val defBody = rewriteParams(fun, typedDefParamss)

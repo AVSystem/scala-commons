@@ -364,16 +364,17 @@ lazy val `commons-comprof` = project
       s"-P:scalac-profiling:sourceroot:${baseDirectory.value}",
       "-P:scalac-profiling:generate-macro-flamegraph",
       "-P:scalac-profiling:no-profiledb",
-      "-Ystatistics",
+      "-Xmacro-settings:statsEnabled",
+      "-Ystatistics:typer",
     ),
     sourceGenerators in Compile += Def.task {
-      val originalSrc = (sourceDirectory in `commons-core`).value / 
-        "main/scala/com/avsystem/commons/rest/openapi/OpenApi.scala"
+      val originalSrc = (sourceDirectory in `commons-core`).value /
+        "test/scala/com/avsystem/commons/rest/RestTestApi.scala"
       val originalContent = IO.read(originalSrc)
-      (0 until 10).map { i =>
+      (0 until 100).map { i =>
         val pkg = f"oa$i%02d"
-        val newContent = originalContent.replaceAllLiterally("package rest.openapi", s"package rest.$pkg")
-        val newFile = (sourceManaged in Compile).value / pkg / "OpenApi.scala"
+        val newContent = originalContent.replaceAllLiterally("package rest", s"package rest\npackage $pkg")
+        val newFile = (sourceManaged in Compile).value / pkg / "RestTestApi.scala"
         IO.write(newFile, newContent)
         newFile
       }

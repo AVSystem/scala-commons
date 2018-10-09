@@ -197,15 +197,15 @@ trait TypeClassDerivation extends MacroCommons {
     }
   }
 
-  def materialize[T: WeakTypeTag]: Tree = showOnDebug {
+  def materialize[T: WeakTypeTag]: Tree = instrument {
     val tpe = weakTypeOf[T]
     withRecursiveImplicitGuard(tpe, materializeFor(tpe))
   }
 
   def materializeImplicitly[T: WeakTypeTag](allow: Tree): Tree =
-    showOnDebug(materialize[T])
+    instrument(materialize[T])
 
-  def materializeMacroGenerated[T: WeakTypeTag]: Tree = showOnDebug {
+  def materializeMacroGenerated[T: WeakTypeTag]: Tree = instrument {
     val tpe = weakTypeOf[T].dealias
     val companionTpe = c.macroApplication.tpe.dealias.typeArgs.head
     val tcTpe = typeClassInstance(tpe)

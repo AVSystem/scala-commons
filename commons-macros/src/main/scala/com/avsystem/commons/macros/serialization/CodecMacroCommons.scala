@@ -10,9 +10,9 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   import c.universe._
 
   final def SerializationPkg: Tree = q"$CommonsPkg.serialization"
-  final lazy val NameAnnotType = getType(tq"$SerializationPkg.name")
+  final lazy val NameAnnotType = staticType(tq"$SerializationPkg.name")
   final lazy val NameAnnotNameSym = NameAnnotType.member(TermName("name"))
-  final lazy val WhenAbsentAnnotType = getType(tq"$SerializationPkg.whenAbsent[_]")
+  final lazy val WhenAbsentAnnotType = staticType(tq"$SerializationPkg.whenAbsent[_]")
   final def JavaInteropObj: Tree = q"$CommonsPkg.jiop.JavaInterop"
   final def JListObj: Tree = q"$JavaInteropObj.JList"
   final def JListCls: Tree = tq"$JavaInteropObj.JList"
@@ -22,12 +22,12 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   final def NOptCls: Tree = tq"$MiscPkg.NOpt"
   final def OptObj: Tree = q"$MiscPkg.Opt"
   final def OptCls: Tree = tq"$MiscPkg.Opt"
-  final lazy val TransparentAnnotType = getType(tq"$SerializationPkg.transparent")
-  final lazy val TransientDefaultAnnotType = getType(tq"$SerializationPkg.transientDefault")
-  final lazy val FlattenAnnotType = getType(tq"$SerializationPkg.flatten")
-  final lazy val OutOfOrderAnnotType = getType(tq"$SerializationPkg.outOfOrder")
-  final lazy val GeneratedAnnotType = getType(tq"$SerializationPkg.generated")
-  final lazy val DefaultCaseAnnotType = getType(tq"$SerializationPkg.defaultCase")
+  final lazy val TransparentAnnotType = staticType(tq"$SerializationPkg.transparent")
+  final lazy val TransientDefaultAnnotType = staticType(tq"$SerializationPkg.transientDefault")
+  final lazy val FlattenAnnotType = staticType(tq"$SerializationPkg.flatten")
+  final lazy val OutOfOrderAnnotType = staticType(tq"$SerializationPkg.outOfOrder")
+  final lazy val GeneratedAnnotType = staticType(tq"$SerializationPkg.generated")
+  final lazy val DefaultCaseAnnotType = staticType(tq"$SerializationPkg.defaultCase")
   final def GenCodecObj: Tree = q"$SerializationPkg.GenCodec"
   final def GenCodecCls: Tree = tq"$SerializationPkg.GenCodec"
   final val DefaultCaseField = "_case"
