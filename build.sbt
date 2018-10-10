@@ -293,7 +293,10 @@ lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
       "com.lihaoyi" %%% "upickle" % upickleVersion,
       "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
     ),
-    scalaJSUseMainModuleInitializer := true
+    scalaJSUseMainModuleInitializer := true,
+    test := {},
+    testOnly := {},
+    testQuick := {},
   )
 
 lazy val `commons-mongo` = project
