@@ -44,7 +44,11 @@ object RestStructure extends AdtMetadataCompanion[RestStructure] {
         })
         Discriminator(caseFieldName, mapping)
       }
-      RefOr(applyAdjusters(Schema(oneOf = caseSchemas, discriminator = disc.toOptArg)))
+      RefOr(applyAdjusters(Schema(
+        `type` = DataType.Object,
+        oneOf = caseSchemas,
+        discriminator = disc.toOptArg
+      )))
     }
   }
   object Union extends AdtMetadataCompanion[Union]

@@ -471,6 +471,7 @@ class OpenApiGenerationTest extends FunSuite {
         |  "components": {
         |    "schemas": {
         |      "BaseEntity": {
+        |        "type": "object",
         |        "oneOf": [
         |          {
         |            "type": "object",
@@ -523,6 +524,7 @@ class OpenApiGenerationTest extends FunSuite {
         |        ]
         |      },
         |      "FlatBaseEntity": {
+        |        "type": "object",
         |        "description": "Flat sealed entity with some serious cases",
         |        "oneOf": [
         |          {
