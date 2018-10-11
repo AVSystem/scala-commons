@@ -15,3 +15,26 @@ case class AnnotationsOf[A, T](annots: List[A]) extends AnyVal
 object AnnotationsOf {
   implicit def materialize[A, T]: AnnotationsOf[A, T] = macro macros.misc.MiscMacros.annotationsOf[A, T]
 }
+
+final class HasAnnotation[A, T]
+object HasAnnotation {
+  private[this] val reusable = new HasAnnotation
+  def create[A, T]: HasAnnotation[A, T] = reusable.asInstanceOf
+
+  implicit def materialize[A, T]: AnnotationsOf[A, T] = macro macros.misc.MiscMacros.hasAnnotation[A, T]
+}
+
+case class SelfAnnotation[A](annot: A) extends AnyVal
+object SelfAnnotation {
+  implicit def materialize[A]: SelfAnnotation[A] = macro macros.misc.MiscMacros.selfAnnotation[A]
+}
+
+case class SelfOptAnnotation[A](annotOpt: Opt[A])
+object SelfOptAnnotationOf {
+  implicit def materialize[A]: SelfOptAnnotation[A] = macro macros.misc.MiscMacros.selfOptAnnotation[A]
+}
+
+case class SelfAnnotations[A](annots: List[A]) extends AnyVal
+object SelfAnnotations {
+  implicit def materialize[A]: SelfAnnotations[A] = macro macros.misc.MiscMacros.selfAnnotations[A]
+}

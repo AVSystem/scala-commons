@@ -48,14 +48,14 @@ trait MacroCommons { bundle =>
   final lazy val MapSym = typeOf[scala.collection.immutable.Map[_, _]].typeSymbol
   final lazy val FutureSym = typeOf[scala.concurrent.Future[_]].typeSymbol
   final lazy val OptionClass = definitions.OptionClass
-  final lazy val AnnotationAggregateType = getType(tq"$CommonsPkg.annotation.AnnotationAggregate")
-  final lazy val DefaultsToNameAT = getType(tq"$CommonsPkg.annotation.defaultsToName")
-  final lazy val InferAT: Type = getType(tq"$CommonsPkg.meta.infer")
-  final lazy val NotInheritedFromSealedTypes = getType(tq"$CommonsPkg.annotation.NotInheritedFromSealedTypes")
+  final lazy val AnnotationAggregateType = staticType(tq"$CommonsPkg.annotation.AnnotationAggregate")
+  final lazy val DefaultsToNameAT = staticType(tq"$CommonsPkg.annotation.defaultsToName")
+  final lazy val InferAT: Type = staticType(tq"$CommonsPkg.meta.infer")
+  final lazy val NotInheritedFromSealedTypes = staticType(tq"$CommonsPkg.annotation.NotInheritedFromSealedTypes")
   final lazy val SeqCompanionSym = typeOf[scala.collection.Seq.type].termSymbol
-  final lazy val PositionedAT = getType(tq"$CommonsPkg.annotation.positioned")
-  final lazy val ImplicitNotFoundAT = getType(tq"$ScalaPkg.annotation.implicitNotFound")
-  final lazy val ImplicitNotFoundSym = getType(tq"$MiscPkg.ImplicitNotFound[_]").typeSymbol
+  final lazy val PositionedAT = staticType(tq"$CommonsPkg.annotation.positioned")
+  final lazy val ImplicitNotFoundAT = staticType(tq"$ScalaPkg.annotation.implicitNotFound")
+  final lazy val ImplicitNotFoundSym = staticType(tq"$MiscPkg.ImplicitNotFound[_]").typeSymbol
 
   final lazy val NothingTpe: Type = typeOf[Nothing]
   final lazy val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
@@ -72,12 +72,12 @@ trait MacroCommons { bundle =>
     definitions.ScalaPackageClass.toType.member(TermName("scalajs")) != NoSymbol
 
   final lazy val ownerChain = {
-    val sym = c.typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
+    val sym = typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
     Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).drop(1).toList
   }
 
   final lazy val enclosingClasses = {
-    val enclosingSym = c.typecheck(q"this", silent = true) match {
+    val enclosingSym = typecheck(q"this", silent = true) match {
       case EmptyTree => Iterator.iterate(c.internal.enclosingOwner)(_.owner).find(_.isModuleClass).get
       case tree => tree.tpe.typeSymbol
     }
@@ -89,15 +89,50 @@ trait MacroCommons { bundle =>
     case _ => false
   }
 
+  final val statsEnabled: Boolean =
+    c.settings.contains("statsEnabled")
+
   def debug(msg: => String): Unit =
     if (debugEnabled) {
       error(msg)
     }
 
-  def showOnDebug(tree: Tree): Tree = {
-    debug(show(tree))
-    tree
+  def instrument(tree: => Tree): Tree = measure(c.macroApplication.symbol.fullName) {
+    val result = tree
+    debug(show(result))
+    result
   }
+
+  private[this] var measureStack = List.empty[String]
+
+  def measure[T](what: String)(expr: => T): T =
+    if (!statsEnabled || measureStack.contains(what)) expr else {
+      measureStack ::= what
+      val start = System.nanoTime()
+      try expr finally {
+        echo(s"$what ${(System.nanoTime() - start) / 1000}")
+        measureStack = measureStack.tail
+      }
+    }
+
+  def inferImplicitValue(
+    pt: Type,
+    silent: Boolean = true,
+    withMacrosDisabled: Boolean = false,
+    pos: Position = c.enclosingPosition
+  ): Tree = {
+    debug(s"macro implicit search for $pt")
+    measure("implicit")(c.inferImplicitValue(pt, silent, withMacrosDisabled, pos))
+  }
+
+  def typecheck(
+    tree: Tree,
+    mode: c.TypecheckMode = c.TERMmode,
+    pt: Type = WildcardType,
+    silent: Boolean = false,
+    withImplicitViewsDisabled: Boolean = false,
+    withMacrosDisabled: Boolean = false
+  ): Tree = measure("typecheck")(c.typecheck(tree, mode, pt, silent, withImplicitViewsDisabled, withMacrosDisabled))
 
   def containsInaccessibleThises(tree: Tree): Boolean = tree.exists {
     case t@This(_) if !t.symbol.isPackageClass && !enclosingClasses.contains(t.symbol) => true
@@ -232,7 +267,8 @@ trait MacroCommons { bundle =>
     if (withSupers) withSuperSymbols(s) else Iterator(s)
 
   def allAnnotations(s: Symbol, tpeFilter: Type,
-    seenFrom: Type = NoType, withInherited: Boolean = true, fallback: List[Tree] = Nil): List[Annot] = {
+    seenFrom: Type = NoType, withInherited: Boolean = true, fallback: List[Tree] = Nil
+  ): List[Annot] = measure("annotations") {
 
     val initSym = orConstructorParam(s)
     def inherited(annot: Annotation, superSym: Symbol): Boolean =
@@ -247,8 +283,8 @@ trait MacroCommons { bundle =>
   }
 
   def findAnnotation(s: Symbol, tpe: Type,
-    seenFrom: Type = NoType, withInherited: Boolean = true, fallback: List[Tree] = Nil): Option[Annot] = {
-
+    seenFrom: Type = NoType, withInherited: Boolean = true, fallback: List[Tree] = Nil
+  ): Option[Annot] = measure("annotations") {
     val initSym = orConstructorParam(s)
     def find(annots: List[Annot]): Option[Annot] = annots match {
       case head :: tail =>
@@ -283,7 +319,7 @@ trait MacroCommons { bundle =>
     ownerChain.filter(_.isConstructor).map(_.owner.asClass.module).find(_ != NoSymbol).getOrElse(NoSymbol)
 
   lazy val companionReplacement: Symbol =
-    c.typecheck(q"$companionReplacementName", silent = true) match {
+    typecheck(q"$companionReplacementName", silent = true) match {
       case EmptyTree => NoSymbol
       case _ => enclosingConstructorCompanion
     }
@@ -310,7 +346,7 @@ trait MacroCommons { bundle =>
 
   def mkMacroGenerated(companionTpe: Type, tpe: Type, baseMaterialize: Tree): Tree = {
     def fail() =
-      abort(s"invocation of this macro is allowed only to be passed as super constructor parameter of an object")
+      abort(s"${c.macroApplication.symbol} can only be used in super constructor argument of an object")
 
     val ownerConstr = c.internal.enclosingOwner
     if (!ownerConstr.isConstructor) {
@@ -367,28 +403,25 @@ trait MacroCommons { bundle =>
   private val implicitSearchCache = new mutable.HashMap[TypeKey, Option[TermName]]
   private val implicitsByTrace = new mutable.HashMap[ImplicitTrace, TermName]
   private val inferredImplicitTypes = new mutable.HashMap[TermName, Type]
-  private val implicitImports = new ListBuffer[Tree]
-  private val implicitsToDeclare = new ListBuffer[Tree]
+  private val implicitsToDeclare = new ListBuffer[(TermName, Tree)]
 
   def tryInferCachedImplicit(tpe: Type): Option[TermName] = {
     def compute: Option[TermName] =
-      Option(c.typecheck(q"..$implicitImports; implicitly[$tpe]", silent = true))
-        .filter(_ != EmptyTree)
-        .map { case WrappedImplicitSearchResult(t) =>
-          def newCachedImplicit(): TermName = {
-            val name = c.freshName(TermName("cachedImplicit"))
-            inferredImplicitTypes(name) = t.tpe
-            implicitsToDeclare += q"private lazy val $name = ${replaceCompanion(t)}"
+      Option(inferImplicitValue(tpe)).filter(_ != EmptyTree).map { found =>
+        def newCachedImplicit(): TermName = {
+          val name = c.freshName(TermName("cachedImplicit"))
+          inferredImplicitTypes(name) = found.tpe
+          implicitsToDeclare += (name -> replaceCompanion(found))
+          name
+        }
+        ImplicitTrace(found).fold(newCachedImplicit()) { tr =>
+          implicitsByTrace.get(tr).filter(n => inferredImplicitTypes(n) =:= found.tpe).getOrElse {
+            val name = newCachedImplicit()
+            implicitsByTrace(tr) = name
             name
           }
-          ImplicitTrace(t).fold(newCachedImplicit()) { tr =>
-            implicitsByTrace.get(tr).filter(n => inferredImplicitTypes(n) =:= t.tpe).getOrElse {
-              val name = newCachedImplicit()
-              implicitsByTrace(tr) = name
-              name
-            }
-          }
         }
+      }
     implicitSearchCache.getOrElseUpdate(TypeKey(tpe), compute)
   }
 
@@ -396,8 +429,7 @@ trait MacroCommons { bundle =>
     tryInferCachedImplicit(tpe).getOrElse {
       val name = c.freshName(TermName(""))
       implicitSearchCache(TypeKey(tpe)) = Some(name)
-      implicitsToDeclare +=
-        q"private implicit val $name = $ImplicitsObj.infer[$tpe](${StringLiteral(errorClue, errorPos)})"
+      implicitsToDeclare += (name -> q"$ImplicitsObj.infer[$tpe](${StringLiteral(errorClue, errorPos)})")
       inferredImplicitTypes(name) = tpe
       inferCachedImplicit(tpe, errorClue, errorPos)
     }
@@ -410,11 +442,14 @@ trait MacroCommons { bundle =>
     inferredImplicitTypes(name) = tpe
   }
 
-  def registerImplicitImport(importTree: Tree): Unit =
-    implicitImports += importTree
-
   def cachedImplicitDeclarations: List[Tree] =
-    implicitsToDeclare.result()
+    cachedImplicitDeclarations(mkPrivateLazyVal)
+
+  def cachedImplicitDeclarations(mkDecl: (TermName, Tree) => Tree): List[Tree] =
+    implicitsToDeclare.result().map { case (n, b) => mkDecl(n, b) }
+
+  def mkPrivateLazyVal(name: TermName, body: Tree): Tree =
+    q"private lazy val $name = $body"
 
   private def standardImplicitNotFoundMsg(tpe: Type): String =
     symbolImplicitNotFoundMsg(tpe, tpe.typeSymbol, tpe.typeSymbol.typeSignature.typeParams, tpe.typeArgs)
@@ -457,7 +492,7 @@ trait MacroCommons { bundle =>
     }
 
   def implicitNotFoundMsg(tpe: Type): String =
-    implicitNotFoundMsg(Nil, tpe, c.inferImplicitValue(getType(tq"$ImplicitNotFoundCls[$tpe]")))
+    implicitNotFoundMsg(Nil, tpe, inferImplicitValue(getType(tq"$ImplicitNotFoundCls[$tpe]")))
 
   class treeOps[T <: Tree](t: T) {
     def debug: T = {
@@ -513,7 +548,7 @@ trait MacroCommons { bundle =>
   def warning(msg: String): Unit =
     c.warning(c.enclosingPosition, msg)
 
-  def ensure(condition: Boolean, msg: String): Unit =
+  def ensure(condition: Boolean, msg: => String): Unit =
     if (!condition) {
       abort(msg)
     }
@@ -584,8 +619,11 @@ trait MacroCommons { bundle =>
     }
   }
 
+  def staticType(tpeTree: Tree): Type =
+    getType(tpeTree)
+
   def getType(typeTree: Tree): Type =
-    c.typecheck(typeTree, c.TYPEmode).tpe
+    measure("typecheck.getType")(typecheck(typeTree, c.TYPEmode).tpe)
 
   def pathTo(sym: Symbol): Tree =
     if (enclosingClasses.contains(sym)) This(sym)
@@ -921,27 +959,30 @@ trait MacroCommons { bundle =>
     * @param unapply companion object'a unapply method or `NoSymbol` for case class with more than 22 fields
     * @param params  parameters with trees evaluating to default values (or `EmptyTree`s)
     */
-  case class ApplyUnapply(apply: Symbol, unapply: Symbol, params: List[(TermSymbol, Tree)]) {
+  case class ApplyUnapply(ownerTpe: Type, typedCompanion: Tree, apply: Symbol, unapply: Symbol, params: List[TermSymbol]) {
     def standardCaseClass: Boolean = apply.isConstructor
+
+    def defaultValueFor(param: Symbol): Tree =
+      defaultValueFor(param, params.indexOf(param))
+
+    def defaultValueFor(param: Symbol, idx: Int): Tree =
+      if (param.asTerm.isParamWithDefault) {
+        val methodEncodedName = param.owner.name.encodedName.toString
+        q"${replaceCompanion(typedCompanion)}.${TermName(s"$methodEncodedName$$default$$${idx + 1}")}[..${ownerTpe.typeArgs}]"
+      }
+      else EmptyTree
   }
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] =
     typedCompanionOf(tpe).flatMap(comp => applyUnapplyFor(tpe, comp))
 
-  def applyUnapplyFor(tpe: Type, typedCompanion: Tree): Option[ApplyUnapply] = {
+  def applyUnapplyFor(tpe: Type, typedCompanion: Tree): Option[ApplyUnapply] = measure("applyUnapplyFor") {
     val dtpe = tpe.dealias
     val ts = dtpe.typeSymbol.asType
     val caseClass = ts.isClass && ts.asClass.isCaseClass
 
-    def defaultValueFor(param: Symbol, idx: Int): Tree =
-      if (param.asTerm.isParamWithDefault) {
-        val methodEncodedName = param.owner.name.encodedName.toString
-        q"${replaceCompanion(typedCompanion)}.${TermName(s"$methodEncodedName$$default$$${idx + 1}")}[..${tpe.typeArgs}]"
-      }
-      else EmptyTree
-
-    def paramsWithDefaults(methodSig: Type): List[(TermSymbol, Tree)] =
-      methodSig.paramLists.head.zipWithIndex.map { case (p, i) => (p.asTerm, defaultValueFor(p, i)) }
+    def params(methodSig: Type): List[TermSymbol] =
+      methodSig.paramLists.head.map(_.asTerm)
 
     // Seq is a weird corner case where technically an apply/unapplySeq pair exists but is recursive
     val applyUnapplyPairs =
@@ -964,25 +1005,20 @@ trait MacroCommons { bundle =>
 
     if (caseClass && applyUnapplyPairs.isEmpty) { // case classes with more than 22 fields
       val constructor = primaryConstructorOf(dtpe)
-      Some(ApplyUnapply(constructor, NoSymbol, paramsWithDefaults(constructor.typeSignatureIn(dtpe))))
+      Some(ApplyUnapply(dtpe, typedCompanion, constructor, NoSymbol, params(constructor.typeSignatureIn(dtpe))))
     } else {
       val applicableResults = applyUnapplyPairs.flatMap {
+        case (apply, unapply) if caseClass && apply.isSynthetic && unapply.isSynthetic =>
+          val constructor = primaryConstructorOf(dtpe)
+          Some(ApplyUnapply(dtpe, typedCompanion, constructor, unapply, params(constructor.typeSignatureIn(dtpe))))
         case (apply, unapply) if typeParamsMatch(apply, unapply) =>
-          val constructor =
-            if (caseClass && apply.isSynthetic && unapply.isSynthetic)
-              primaryConstructorOf(dtpe)
-            else NoSymbol
-
           val applySig =
-            if (constructor != NoSymbol) constructor.typeSignatureIn(dtpe)
-            else setTypeArgs(apply.typeSignatureIn(typedCompanion.tpe))
+            setTypeArgs(apply.typeSignatureIn(typedCompanion.tpe))
           val unapplySig =
             setTypeArgs(unapply.typeSignatureIn(typedCompanion.tpe))
-
           if (matchingApplyUnapply(dtpe, applySig, unapplySig))
-            Some(ApplyUnapply(constructor orElse apply, unapply, paramsWithDefaults(applySig)))
+            Some(ApplyUnapply(dtpe, typedCompanion, apply, unapply, params(applySig)))
           else None
-
         case _ => None
       }
 
@@ -993,7 +1029,7 @@ trait MacroCommons { bundle =>
     }
   }
 
-  def singleValueFor(tpe: Type): Option[Tree] = tpe match {
+  def singleValueFor(tpe: Type): Option[Tree] = measure("singleValueFor")(tpe match {
     case ThisType(sym) if enclosingClasses.contains(sym) =>
       Some(This(sym))
     case ThisType(sym) if sym.isModuleClass =>
@@ -1010,7 +1046,7 @@ trait MacroCommons { bundle =>
       singleValueFor(pre).map(prefix => Select(prefix, sym.asClass.module))
     case _ =>
       None
-  }
+  })
 
   def typedCompanionOf(tpe: Type): Option[Tree] = {
     val result = tpe match {
@@ -1018,7 +1054,7 @@ trait MacroCommons { bundle =>
         singleValueFor(pre).map(Select(_, sym.companion)) orElse singleValueFor(tpe.companion)
       case _ => singleValueFor(tpe.companion)
     }
-    result.map(c.typecheck(_))
+    result.map(typecheck(_))
   }
 
   def typeOfTypeSymbol(sym: TypeSymbol): Type = sym.toType match {
@@ -1059,7 +1095,7 @@ trait MacroCommons { bundle =>
           s"it resides in separate file than macro invocation and has no @positioned annotation")
       })
 
-  def knownSubtypes(tpe: Type, ordered: Boolean = false): Option[List[Type]] = {
+  def knownSubtypes(tpe: Type, ordered: Boolean = false): Option[List[Type]] = measure("knownSubtypes") {
     val dtpe = tpe.dealias
     val (tpeSym, refined) = dtpe match {
       case RefinedType(List(single), scope) =>
@@ -1096,7 +1132,7 @@ trait MacroCommons { bundle =>
     val methodName = c.freshName(TermName("m"))
     val typeDefs = typeParams.map(typeSymbolToTypeDef(_, forMethod = true))
 
-    val tree = c.typecheck(
+    val tree = typecheck(
       q"""
         def $methodName[..$typeDefs](f: ${treeForType(undetTpe)} => $UnitCls): $UnitCls = ()
         $methodName((_: $detTpe) => ())

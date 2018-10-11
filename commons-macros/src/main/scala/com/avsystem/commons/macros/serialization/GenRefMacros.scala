@@ -3,22 +3,21 @@ package macros.serialization
 
 import java.util
 
-import scala.collection
 import scala.reflect.macros.blackbox
 
 class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
   import c.universe._
 
-  val GenRefTpe = getType(tq"$SerializationPkg.GenRef[_,_]")
-  val MapTpe = typeOf[collection.Map[_, _]]
-  val JMapTpe = typeOf[util.Map[_, _]]
-  val MapApply = MapTpe.member(TermName("apply"))
-  val JMapGet = JMapTpe.member(TermName("get"))
-  val TransparentGets = Set(
-    getType(tq"$MiscPkg.Opt[_]"),
-    getType(tq"$MiscPkg.OptArg[_]"),
-    getType(tq"$MiscPkg.OptRef[_]")
+  val GenRefTpe: Type = getType(tq"$SerializationPkg.GenRef[_,_]")
+  val MapTpe: Type = typeOf[collection.Map[_, _]]
+  val JMapTpe: Type = typeOf[util.Map[_, _]]
+  val MapApply: Symbol = MapTpe.member(TermName("apply"))
+  val JMapGet: Symbol = JMapTpe.member(TermName("get"))
+  val TransparentGets: Set[Symbol] = Set(
+    staticType(tq"$MiscPkg.Opt[_]"),
+    staticType(tq"$MiscPkg.OptArg[_]"),
+    staticType(tq"$MiscPkg.OptRef[_]")
   ).map(_.member(TermName("get")))
 
   object MapApplyOrGet {

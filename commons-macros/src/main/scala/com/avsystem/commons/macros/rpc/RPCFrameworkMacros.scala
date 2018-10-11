@@ -14,7 +14,7 @@ final class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommo
   import c.universe._
 
   def RpcPackage: Tree = q"$CommonsPkg.rpc"
-  lazy val RPCFrameworkType: Type = getType(tq"$RpcPackage.RPCFramework")
+  lazy val RPCFrameworkType: Type = staticType(tq"$RpcPackage.RPCFramework")
   lazy val RPCCompanionSym: Symbol = RPCFrameworkType.member(TypeName("RPCCompanion"))
 
   def FrameworkObj: Tree = c.prefix.tree
@@ -34,7 +34,7 @@ final class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommo
   def metadataImpl[T: WeakTypeTag]: Tree =
     q"$RpcPackage.RpcMetadata.materialize[$RPCMetadataCls,${weakTypeOf[T]}]"
 
-  def fullInfoImpl[T: WeakTypeTag]: Tree = showOnDebug {
+  def fullInfoImpl[T: WeakTypeTag]: Tree = instrument {
     val rpcTpe = weakTypeOf[T]
     val fullRpcInfoTpe = getType(tq"$FullRPCInfoCls[$rpcTpe]").dealias
     if (!fullRpcInfoTpe.typeSymbol.isClass) {
@@ -42,6 +42,7 @@ final class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommo
     }
     q"""
        new $fullRpcInfoTpe {
+         import $FrameworkObj._
          lazy val asRealRPC = $FrameworkObj.materializeAsReal[$rpcTpe]
          lazy val asRawRPC = $FrameworkObj.materializeAsRaw[$rpcTpe]
          lazy val metadata = $FrameworkObj.materializeMetadata[$rpcTpe]

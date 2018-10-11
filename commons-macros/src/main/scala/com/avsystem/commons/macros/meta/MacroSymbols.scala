@@ -15,14 +15,14 @@ trait MacroSymbols extends MacroCommons {
   val RpcUtils = q"$RpcPackage.RpcUtils"
   val OptionLikeCls = tq"$MetaPackage.OptionLike"
   val CanBuildFromCls = tq"$CollectionPkg.generic.CanBuildFrom"
-  val RpcArityAT: Type = getType(tq"$MetaPackage.SymbolArity")
-  val SingleArityAT: Type = getType(tq"$MetaPackage.single")
-  val OptionalArityAT: Type = getType(tq"$MetaPackage.optional")
-  val MultiArityAT: Type = getType(tq"$MetaPackage.multi")
-  val CompositeAT: Type = getType(tq"$MetaPackage.composite")
-  val AuxiliaryAT: Type = getType(tq"$MetaPackage.auxiliary")
-  val AnnotatedAT: Type = getType(tq"$MetaPackage.annotated[_]")
-  val TaggedAT: Type = getType(tq"$RpcPackage.tagged[_]")
+  val RpcArityAT: Type = staticType(tq"$MetaPackage.SymbolArity")
+  val SingleArityAT: Type = staticType(tq"$MetaPackage.single")
+  val OptionalArityAT: Type = staticType(tq"$MetaPackage.optional")
+  val MultiArityAT: Type = staticType(tq"$MetaPackage.multi")
+  val CompositeAT: Type = staticType(tq"$MetaPackage.composite")
+  val AuxiliaryAT: Type = staticType(tq"$MetaPackage.auxiliary")
+  val AnnotatedAT: Type = staticType(tq"$MetaPackage.annotated[_]")
+  val TaggedAT: Type = staticType(tq"$RpcPackage.tagged[_]")
   val WhenUntaggedArg: Symbol = TaggedAT.member(TermName("whenUntagged"))
 
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =

@@ -6,7 +6,7 @@ import com.avsystem.commons.macros.rpc.RpcMacros
 /**
   * Base trait for companion objects of raw RPC traits.
   */
-trait RawRpcCompanion[Raw] extends RpcImplicitsProvider {
+trait RawRpcCompanion[Raw] {
   type AsRawRpc[Real] = AsRaw[Raw, Real]
   type AsRealRpc[Real] = AsReal[Raw, Real]
   type AsRawRealRpc[Real] = AsRawReal[Raw, Real]

@@ -19,9 +19,7 @@ trait RPCFramework {
   type RawRPC
   val RawRPC: BaseRawRpcCompanion
 
-  trait BaseRawRpcCompanion extends RawRpcCompanion[RawRPC] {
-    override val implicits: RPCFramework.this.type = RPCFramework.this
-  }
+  trait BaseRawRpcCompanion extends RawRpcCompanion[RawRPC]
 
   def read[T: Reader](raw: RawValue): T
   def write[T: Writer](value: T): RawValue

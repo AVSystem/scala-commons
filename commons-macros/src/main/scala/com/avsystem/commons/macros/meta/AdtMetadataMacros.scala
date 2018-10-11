@@ -11,9 +11,9 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
 
   import c.universe._
 
-  final lazy val AdtParamMetadataAT: Type = getType(tq"$MetaPackage.adtParamMetadata")
-  final lazy val AdtCaseMetadataAT: Type = getType(tq"$MetaPackage.adtCaseMetadata")
-  final lazy val ReifyDefaultValueAT: Type = getType(tq"$MetaPackage.reifyDefaultValue")
+  final lazy val AdtParamMetadataAT: Type = staticType(tq"$MetaPackage.adtParamMetadata")
+  final lazy val AdtCaseMetadataAT: Type = staticType(tq"$MetaPackage.adtCaseMetadata")
+  final lazy val ReifyDefaultValueAT: Type = staticType(tq"$MetaPackage.reifyDefaultValue")
 
   sealed trait AdtSymbol extends MacroSymbol with SelfMatchedSymbol {
     def tpe: Type
@@ -44,7 +44,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
     def cases: List[AdtSymbol] = Nil
 
     val params: List[AdtParam] =
-      applyUnapply.params.zipWithIndex.map { case ((sym, _), idx) => new AdtParam(this, sym, idx) }
+      applyUnapply.params.zipWithIndex.map { case (sym, idx) => new AdtParam(this, sym, idx) }
 
     def companion: Tree =
       replaceCompanion(typedCompanionOf(tpe).getOrElse(reportProblem(s"could not reify companion for $tpe")))
@@ -287,7 +287,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
     }
   }
 
-  def materialize[Real: WeakTypeTag]: Tree = showOnDebug {
+  def materialize[Real: WeakTypeTag]: Tree = instrument {
     val adtTpe = weakTypeOf[Real].dealias
     val metadataTpe = c.macroApplication.tpe.dealias
     materializeMetadata(adtTpe, metadataTpe)
@@ -308,7 +308,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
     }
   }
 
-  def materializeMacroGenerated[Real: WeakTypeTag]: Tree = showOnDebug {
+  def materializeMacroGenerated[Real: WeakTypeTag]: Tree = instrument {
     val adtTpe = weakTypeOf[Real].dealias
     val List(companionTpe, metadataTpe) = c.macroApplication.tpe.dealias.typeArgs
     mkMacroGenerated(companionTpe, metadataTpe, q"${c.prefix}.materialize[$adtTpe]")

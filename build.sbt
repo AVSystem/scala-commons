@@ -51,8 +51,14 @@ val commonSettings = Seq(
     "-Xfatal-warnings",
     s"-Xlint:-missing-interpolator,-adapted-args,${if (scalaBinaryVersion.value == "2.12") "-unused," else ""}_",
   ),
+  scalacOptions ++= {
+    if (scalaBinaryVersion.value == "2.12") Seq(
+      "-Ycache-plugin-class-loader:last-modified",
+      "-Ycache-macro-class-loader:last-modified",
+    ) else Seq.empty
+  },
   // some Java 8 related tests use Java interface static methods, Scala 2.11.12 requires JDK8 target for that
-  scalacOptions in Test ++= (if (scalaBinaryVersion.value == "2.11") Seq("-target:jvm-1.8") else Seq()),
+  scalacOptions in Test ++= (if (scalaBinaryVersion.value == "2.11") Seq("-target:jvm-1.8") else Nil),
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
 
@@ -131,19 +137,20 @@ val CompileAndTest = "compile->compile;test->test"
 lazy val commons = project.in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
   .aggregate(
+    `commons-analyzer`,
+    `commons-macros`,
     `commons-annotations`,
     `commons-annotations-js`,
-    `commons-macros`,
     `commons-core`,
     `commons-core-js`,
-    `commons-analyzer`,
     `commons-jetty`,
-    `commons-benchmark`,
     `commons-mongo`,
     `commons-spring`,
     `commons-redis`,
     `commons-akka`,
     `commons-kafka`,
+    `commons-benchmark`,
+    `commons-benchmark-js`,
   )
   .settings(
     commonSettings,
@@ -159,6 +166,7 @@ lazy val commons = project.in(file("."))
         `commons-core-js`,
         `commons-benchmark`,
         `commons-benchmark-js`,
+        `commons-comprof`,
       ),
   )
 
@@ -285,7 +293,10 @@ lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
       "com.lihaoyi" %%% "upickle" % upickleVersion,
       "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
     ),
-    scalaJSUseMainModuleInitializer := true
+    scalaJSUseMainModuleInitializer := true,
+    test := {},
+    testOnly := {},
+    testQuick := {},
   )
 
 lazy val `commons-mongo` = project
@@ -343,4 +354,32 @@ lazy val `commons-akka` = project
       "io.monix" %% "monix" % monixVersion,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     ),
+  )
+
+lazy val `commons-comprof` = project
+  .dependsOn(`commons-core`)
+  .settings(
+    jvmCommonSettings,
+    noPublishSettings,
+    ideSkipProject := true,
+    addCompilerPlugin("ch.epfl.scala" %% "scalac-profiling" % "1.0.0"),
+    scalacOptions ++= Seq(
+      s"-P:scalac-profiling:sourceroot:${baseDirectory.value}",
+      "-P:scalac-profiling:generate-macro-flamegraph",
+      "-P:scalac-profiling:no-profiledb",
+      "-Xmacro-settings:statsEnabled",
+      "-Ystatistics:typer",
+    ),
+    sourceGenerators in Compile += Def.task {
+      val originalSrc = (sourceDirectory in `commons-core`).value /
+        "test/scala/com/avsystem/commons/rest/RestTestApi.scala"
+      val originalContent = IO.read(originalSrc)
+      (0 until 100).map { i =>
+        val pkg = f"oa$i%02d"
+        val newContent = originalContent.replaceAllLiterally("package rest", s"package rest\npackage $pkg")
+        val newFile = (sourceManaged in Compile).value / pkg / "RestTestApi.scala"
+        IO.write(newFile, newContent)
+        newFile
+      }
+    }.taskValue
   )

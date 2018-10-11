@@ -121,7 +121,7 @@ class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
         CaseDef(c.untypecheck(exprToPattern(body, boundNamesSet)), guard, c.untypecheck(patternToExpr(pattern)))
     }
 
-    val reversed = c.typecheck(Match(EmptyTree, cases.init.map(reverseCaseDef)), pt = weakTypeOf[PartialFunction[B, A]])
+    val reversed = typecheck(Match(EmptyTree, cases.init.map(reverseCaseDef)), pt = weakTypeOf[PartialFunction[B, A]])
     q"($pf, $reversed)"
   }
 

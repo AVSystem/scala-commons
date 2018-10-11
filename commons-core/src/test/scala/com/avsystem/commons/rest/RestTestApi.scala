@@ -17,7 +17,7 @@ object FlatBaseEntity extends RestDataCompanion[FlatBaseEntity]
 @description("REST entity")
 case class RestEntity(
   @description("entity id") id: String,
-  @whenAbsent("anonymous") name: String = whenAbsent.debugMacro.value,
+  @whenAbsent("anonymous") name: String = whenAbsent.value,
   @description("recursive optional subentity") subentity: OptArg[RestEntity] = OptArg.Empty
 ) extends FlatBaseEntity
 object RestEntity extends RestDataCompanion[RestEntity]

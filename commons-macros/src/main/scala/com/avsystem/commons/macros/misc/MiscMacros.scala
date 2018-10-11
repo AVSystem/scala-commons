@@ -12,13 +12,13 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   import c.universe._
 
   def infer[T: WeakTypeTag]: Tree =
-    showOnDebug(inferTpe(weakTypeOf[T], "", NoPosition, withMacrosDisabled = false))
+    instrument(inferTpe(weakTypeOf[T], "", NoPosition, withMacrosDisabled = false))
 
   def clueInfer[T: WeakTypeTag](clue: Tree): Tree =
-    showOnDebug(inferTpe(weakTypeOf[T], clueStr(clue), clue.pos, withMacrosDisabled = false))
+    instrument(inferTpe(weakTypeOf[T], clueStr(clue), clue.pos, withMacrosDisabled = false))
 
   def inferNonMacro[T: WeakTypeTag](clue: Tree): Tree =
-    showOnDebug(inferTpe(weakTypeOf[T], clueStr(clue), clue.pos, withMacrosDisabled = true))
+    instrument(inferTpe(weakTypeOf[T], clueStr(clue), clue.pos, withMacrosDisabled = true))
 
   private def clueStr(clue: Tree): String = clue match {
     case StringLiteral(str) => str
@@ -26,7 +26,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
 
   private def inferTpe(tpe: Type, clue: String, pos: Position, withMacrosDisabled: Boolean): Tree =
-    c.inferImplicitValue(tpe, withMacrosDisabled = withMacrosDisabled) match {
+    inferImplicitValue(tpe, withMacrosDisabled = withMacrosDisabled) match {
       case EmptyTree => abortAt(clue + implicitNotFoundMsg(tpe), pos)
       case t => t
     }
@@ -81,7 +81,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   case class NonConcreteTypeException(tpe: Type) extends RuntimeException with NoStackTrace
 
-  def javaClassName[T: WeakTypeTag]: Tree = showOnDebug {
+  def javaClassName[T: WeakTypeTag]: Tree = instrument {
     val tpe = weakTypeOf[T].dealias
     if (tpe.typeSymbol.isClass && tpe.typeSymbol != definitions.ArrayClass)
       q"new $MiscPkg.JavaClassName(${javaClassName(tpe.erasure.typeSymbol)})"
@@ -101,7 +101,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     prefix + selfName
   }
 
-  def typeString[T: WeakTypeTag]: Tree = showOnDebug {
+  def typeString[T: WeakTypeTag]: Tree = instrument {
     val tpe = weakTypeOf[T]
     try typeStringParts(tpe) match {
       case List(Select(pre, TermName("value"))) => pre
@@ -127,7 +127,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   def typeStringParts(tpe: Type, parens: Boolean = false): List[Tree] = {
     val resultTpe = getType(tq"$MiscPkg.TypeString[$tpe]")
-    c.inferImplicitValue(resultTpe, withMacrosDisabled = true) match {
+    inferImplicitValue(resultTpe, withMacrosDisabled = true) match {
       case EmptyTree => mkTypeString(tpe, parens)
       case tree => maybeParens(List(q"$tree.value"), parens)
     }
@@ -335,7 +335,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   def lazyMetadata(metadata: Tree): Tree =
     q"${c.prefix}($metadata)"
 
-  def mkValueOf[T: WeakTypeTag]: Tree = showOnDebug {
+  def mkValueOf[T: WeakTypeTag]: Tree = instrument {
     val tpe = weakTypeOf[T].dealias
     singleValueFor(tpe) match {
       case Some(sv) => q"new $MiscPkg.ValueOf[$tpe]($sv)"
@@ -406,7 +406,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       s"$tpe is not a case class or case-class like type: no matching apply/unapply pair found"))
 
   def applyBody(rawValuesName: TermName, tpe: Type, au: ApplyUnapply): Tree = {
-    val args = au.params.zipWithIndex.map { case ((param, _), idx) =>
+    val args = au.params.zipWithIndex.map { case (param, idx) =>
       val res = q"$rawValuesName($idx).asInstanceOf[${actualParamType(param.typeSignature)}]"
       if (isRepeated(param)) q"$res: _*" else res
     }
@@ -415,7 +415,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
 
   def unapplyBody(valueName: TermName, tpe: Type, au: ApplyUnapply): Tree = {
-    if (au.standardCaseClass) q"$ScalaPkg.Array(..${au.params.map { case (param, _) => q"$valueName.$param" }})"
+    if (au.standardCaseClass) q"$ScalaPkg.Array(..${au.params.map(param => q"$valueName.$param")})"
     else {
       val safeCompanion = replaceCompanion(typedCompanionOf(tpe).getOrElse(EmptyTree))
       val unapplyRes = q"$safeCompanion.${au.unapply}[..${tpe.typeArgs}]($valueName)"
@@ -433,7 +433,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
-  def applier[T: WeakTypeTag]: Tree = showOnDebug {
+  def applier[T: WeakTypeTag]: Tree = instrument {
     val tpe = weakTypeOf[T].dealias
     val rawValuesName = c.freshName(TermName("rawValues"))
     q"""
@@ -444,7 +444,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     """
   }
 
-  def unapplier[T: WeakTypeTag]: Tree = showOnDebug {
+  def unapplier[T: WeakTypeTag]: Tree = instrument {
     val tpe = weakTypeOf[T].dealias
     val valueName = c.freshName(TermName("value"))
     val au = applyUnapplyOrFail(tpe)
@@ -459,7 +459,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       """
   }
 
-  def applierUnapplier[T: WeakTypeTag]: Tree = showOnDebug {
+  def applierUnapplier[T: WeakTypeTag]: Tree = instrument {
     val tpe = weakTypeOf[T].dealias
     val rawValuesName = c.freshName(TermName("rawValues"))
     val valueName = c.freshName(TermName("value"))
@@ -482,11 +482,11 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       """
   }
 
-  def assertLocal(tpe: Type): Type = {
-    if (tpe.typeSymbol.pos.source != c.enclosingPosition.source) {
-      abort(s"Macro inspection of $tpe can only be done in the same source file where that type is defined")
+  def assertLocal(sym: Symbol): Symbol = {
+    if (sym.pos.source != c.enclosingPosition.source) {
+      abort(s"Macro inspection of $sym can only be done in the same source file where it is defined")
     }
-    tpe
+    sym
   }
 
   def safeAnnotTree(annot: Annot): Tree = {
@@ -496,27 +496,76 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     c.untypecheck(annot.tree)
   }
 
-  def annotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = showOnDebug {
-    val atpe = weakTypeOf[A].dealias
-    val tpe = assertLocal(weakTypeOf[T].dealias)
-    val annot = findAnnotation(tpe.typeSymbol, atpe)
-      .getOrElse(abort(s"No annotation of type $atpe found on $tpe"))
+  def classSymbol(sym: Symbol): ClassSymbol = {
+    if (sym.isClass) sym.asClass
+    else abort(s"$sym is not a class")
+  }
+
+  def annotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
+    val atpe = weakTypeOf[A]
+    val tpe = weakTypeOf[T]
+    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
+    val annot = findAnnotation(sym, atpe)
+      .getOrElse(abort(s"No annotation of type $atpe found on $sym"))
     q"$MiscPkg.AnnotationOf(${safeAnnotTree(annot)})"
   }
 
-  def optAnnotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = showOnDebug {
-    val atpe = weakTypeOf[A].dealias
-    val tpe = assertLocal(weakTypeOf[T].dealias)
-    val annotTree = findAnnotation(tpe.typeSymbol, atpe)
+  def optAnnotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
+    val atpe = weakTypeOf[A]
+    val tpe = weakTypeOf[T]
+    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
+    val annotTree = findAnnotation(sym, atpe)
       .fold[Tree](q"$MiscPkg.Opt.Empty")(a => q"$MiscPkg.Opt(${safeAnnotTree(a)})")
     q"$MiscPkg.OptAnnotationOf($annotTree)"
   }
 
-  def annotationsOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = showOnDebug {
-    val atpe = weakTypeOf[A].dealias
-    val tpe = assertLocal(weakTypeOf[T].dealias)
-    val annots = allAnnotations(tpe.typeSymbol, atpe).map(safeAnnotTree)
+  def annotationsOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
+    val atpe = weakTypeOf[A]
+    val tpe = weakTypeOf[T]
+    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
+    val annots = allAnnotations(sym, atpe).map(safeAnnotTree)
     q"$MiscPkg.AnnotationsOf($ListObj(..$annots))"
+  }
+
+  def hasAnnotation[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
+    val atpe = weakTypeOf[A]
+    val tpe = weakTypeOf[T]
+    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
+    if (findAnnotation(sym, atpe).nonEmpty)
+      q"$MiscPkg.HasAnnotation.create[$atpe, $tpe]"
+    else
+      abort(s"No annotation of type $atpe found on $sym")
+  }
+
+  def classBeingConstructed: Symbol = {
+    val ownerConstr = c.internal.enclosingOwner
+    if (!ownerConstr.isConstructor) {
+      abort(s"${c.macroApplication.symbol} can only be used as super constructor argument")
+    }
+    classSymbol(ownerConstr.owner)
+  }
+
+  def selfAnnotation[A: WeakTypeTag]: Tree = instrument {
+    val atpe = weakTypeOf[A]
+    val sym = classBeingConstructed
+    val annot = findAnnotation(sym, atpe)
+      .getOrElse(abort(s"No annotation of type $atpe found on $sym"))
+    q"$MiscPkg.SelfAnnotation(${safeAnnotTree(annot)})"
+  }
+
+  def selfOptAnnotation[A: WeakTypeTag]: Tree = instrument {
+    val atpe = weakTypeOf[A]
+    val sym = classBeingConstructed
+    val annotTree = findAnnotation(sym, atpe)
+      .fold[Tree](q"$MiscPkg.Opt.Empty")(a => q"$MiscPkg.Opt(${safeAnnotTree(a)})")
+    q"$MiscPkg.SelfOptAnnotation($annotTree)"
+  }
+
+  def selfAnnotations[A: WeakTypeTag]: Tree = instrument {
+    val atpe = weakTypeOf[A]
+    val sym = classBeingConstructed
+    val annots = allAnnotations(sym, atpe).map(safeAnnotTree)
+    q"$MiscPkg.SelfAnnotations($ListObj(..$annots))"
   }
 }
 
@@ -524,7 +573,7 @@ class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
-  final lazy val WhenAbsentAT: Type = getType(tq"$CommonsPkg.serialization.whenAbsent[_]")
+  final lazy val WhenAbsentAT: Type = staticType(tq"$CommonsPkg.serialization.whenAbsent[_]")
 
   def whenAbsentValue: Tree = {
     val param = c.internal.enclosingOwner match {

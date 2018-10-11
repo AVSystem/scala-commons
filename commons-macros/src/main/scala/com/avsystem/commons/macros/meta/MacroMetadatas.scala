@@ -10,17 +10,17 @@ trait MacroMetadatas extends MacroSymbols {
   import c.universe._
 
   val ParamPositionObj: Tree = q"$MetaPackage.ParamPosition"
-  val TypedMetadataType: Type = getType(tq"$MetaPackage.TypedMetadata[_]")
-  val MetadataParamStrategyType: Type = getType(tq"$MetaPackage.MetadataParamStrategy")
-  val ReifyAnnotAT: Type = getType(tq"$MetaPackage.reifyAnnot")
-  val IsAnnotatedAT: Type = getType(tq"$MetaPackage.isAnnotated[_]")
-  val ReifyNameAT: Type = getType(tq"$MetaPackage.reifyName")
-  val ReifyPositionAT: Type = getType(tq"$MetaPackage.reifyPosition")
-  val ReifyFlagsAT: Type = getType(tq"$MetaPackage.reifyFlags")
-  val CheckedAT: Type = getType(tq"$MetaPackage.checked")
-  val ParamPositionTpe: Type = getType(tq"$MetaPackage.ParamPosition")
-  val ParamFlagsTpe: Type = getType(tq"$MetaPackage.ParamFlags")
-  val TypeFlagsTpe: Type = getType(tq"$MetaPackage.TypeFlags")
+  val TypedMetadataType: Type = staticType(tq"$MetaPackage.TypedMetadata[_]")
+  val MetadataParamStrategyType: Type = staticType(tq"$MetaPackage.MetadataParamStrategy")
+  val ReifyAnnotAT: Type = staticType(tq"$MetaPackage.reifyAnnot")
+  val IsAnnotatedAT: Type = staticType(tq"$MetaPackage.isAnnotated[_]")
+  val ReifyNameAT: Type = staticType(tq"$MetaPackage.reifyName")
+  val ReifyPositionAT: Type = staticType(tq"$MetaPackage.reifyPosition")
+  val ReifyFlagsAT: Type = staticType(tq"$MetaPackage.reifyFlags")
+  val CheckedAT: Type = staticType(tq"$MetaPackage.checked")
+  val ParamPositionTpe: Type = staticType(tq"$MetaPackage.ParamPosition")
+  val ParamFlagsTpe: Type = staticType(tq"$MetaPackage.ParamFlags")
+  val TypeFlagsTpe: Type = staticType(tq"$MetaPackage.TypeFlags")
 
   def actualMetadataType(baseMetadataType: Type, realType: Type, realTypeDesc: String, verbatim: Boolean): Res[Type] = {
     val (wildcards, underlying) = baseMetadataType match {
