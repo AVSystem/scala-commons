@@ -346,7 +346,7 @@ trait MacroCommons { bundle =>
 
   def mkMacroGenerated(companionTpe: Type, tpe: Type, baseMaterialize: Tree): Tree = {
     def fail() =
-      abort(s"invocation of this macro is allowed only to be passed as super constructor parameter of an object")
+      abort(s"${c.macroApplication.symbol} can only be used in super constructor argument of an object")
 
     val ownerConstr = c.internal.enclosingOwner
     if (!ownerConstr.isConstructor) {

@@ -482,11 +482,11 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       """
   }
 
-  def assertLocal(tpe: Type): Type = {
-    if (tpe.typeSymbol.pos.source != c.enclosingPosition.source) {
-      abort(s"Macro inspection of $tpe can only be done in the same source file where that type is defined")
+  def assertLocal(sym: Symbol): Symbol = {
+    if (sym.pos.source != c.enclosingPosition.source) {
+      abort(s"Macro inspection of $sym can only be done in the same source file where it is defined")
     }
-    tpe
+    sym
   }
 
   def safeAnnotTree(annot: Annot): Tree = {
@@ -496,27 +496,76 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     c.untypecheck(annot.tree)
   }
 
+  def classSymbol(sym: Symbol): ClassSymbol = {
+    if (sym.isClass) sym.asClass
+    else abort(s"$sym is not a class")
+  }
+
   def annotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
-    val atpe = weakTypeOf[A].dealias
-    val tpe = assertLocal(weakTypeOf[T].dealias)
-    val annot = findAnnotation(tpe.typeSymbol, atpe)
-      .getOrElse(abort(s"No annotation of type $atpe found on $tpe"))
+    val atpe = weakTypeOf[A]
+    val tpe = weakTypeOf[T]
+    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
+    val annot = findAnnotation(sym, atpe)
+      .getOrElse(abort(s"No annotation of type $atpe found on $sym"))
     q"$MiscPkg.AnnotationOf(${safeAnnotTree(annot)})"
   }
 
   def optAnnotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
-    val atpe = weakTypeOf[A].dealias
-    val tpe = assertLocal(weakTypeOf[T].dealias)
-    val annotTree = findAnnotation(tpe.typeSymbol, atpe)
+    val atpe = weakTypeOf[A]
+    val tpe = weakTypeOf[T]
+    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
+    val annotTree = findAnnotation(sym, atpe)
       .fold[Tree](q"$MiscPkg.Opt.Empty")(a => q"$MiscPkg.Opt(${safeAnnotTree(a)})")
     q"$MiscPkg.OptAnnotationOf($annotTree)"
   }
 
   def annotationsOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
-    val atpe = weakTypeOf[A].dealias
-    val tpe = assertLocal(weakTypeOf[T].dealias)
-    val annots = allAnnotations(tpe.typeSymbol, atpe).map(safeAnnotTree)
+    val atpe = weakTypeOf[A]
+    val tpe = weakTypeOf[T]
+    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
+    val annots = allAnnotations(sym, atpe).map(safeAnnotTree)
     q"$MiscPkg.AnnotationsOf($ListObj(..$annots))"
+  }
+
+  def hasAnnotation[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
+    val atpe = weakTypeOf[A]
+    val tpe = weakTypeOf[T]
+    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
+    if (findAnnotation(sym, atpe).nonEmpty)
+      q"$MiscPkg.HasAnnotation.create[$atpe, $tpe]"
+    else
+      abort(s"No annotation of type $atpe found on $sym")
+  }
+
+  def classBeingConstructed: Symbol = {
+    val ownerConstr = c.internal.enclosingOwner
+    if (!ownerConstr.isConstructor) {
+      abort(s"${c.macroApplication.symbol} can only be used as super constructor argument")
+    }
+    classSymbol(ownerConstr.owner)
+  }
+
+  def selfAnnotation[A: WeakTypeTag]: Tree = instrument {
+    val atpe = weakTypeOf[A]
+    val sym = classBeingConstructed
+    val annot = findAnnotation(sym, atpe)
+      .getOrElse(abort(s"No annotation of type $atpe found on $sym"))
+    q"$MiscPkg.SelfAnnotation(${safeAnnotTree(annot)})"
+  }
+
+  def selfOptAnnotation[A: WeakTypeTag]: Tree = instrument {
+    val atpe = weakTypeOf[A]
+    val sym = classBeingConstructed
+    val annotTree = findAnnotation(sym, atpe)
+      .fold[Tree](q"$MiscPkg.Opt.Empty")(a => q"$MiscPkg.Opt(${safeAnnotTree(a)})")
+    q"$MiscPkg.SelfOptAnnotation($annotTree)"
+  }
+
+  def selfAnnotations[A: WeakTypeTag]: Tree = instrument {
+    val atpe = weakTypeOf[A]
+    val sym = classBeingConstructed
+    val annots = allAnnotations(sym, atpe).map(safeAnnotTree)
+    q"$MiscPkg.SelfAnnotations($ListObj(..$annots))"
   }
 }
 
