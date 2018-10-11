@@ -40,6 +40,13 @@ object RestSchema {
   def ref[T](refstr: String): RestSchema[T] =
     RestSchema.create(_ => RefOr.ref(refstr))
 
+  def lazySchema[T](actual: => RestSchema[T]): RestSchema[T] =
+    new RestSchema[T] {
+      private lazy val actualSchema = actual
+      def createSchema(resolver: SchemaResolver): RefOr[Schema] = actualSchema.createSchema(resolver)
+      def name: Opt[String] = actualSchema.name
+    }
+
   implicit lazy val NothingSchema: RestSchema[Nothing] =
     RestSchema.create(_ => throw new NotImplementedError("RestSchema[Nothing]"))
 

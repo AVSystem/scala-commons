@@ -34,7 +34,7 @@ abstract class RestDataCompanion[T](implicit
 ) extends {
   implicit lazy val codec: GenCodec[T] = instances(DefaultRestImplicits, this).codec
   implicit lazy val restStructure: RestStructure[T] = instances(DefaultRestImplicits, this).structure
-  implicit lazy val restSchema: RestSchema[T] = restStructure.standaloneSchema // lazy on restStructure
+  implicit lazy val restSchema: RestSchema[T] = RestSchema.lazySchema(restStructure.standaloneSchema)
 }
 
 trait ClientInstances[Real] {
@@ -53,7 +53,7 @@ trait OpenApiInstances[Real] {
 trait OpenApiServerInstances[Real] extends ServerInstances[Real] with OpenApiInstances[Real]
 trait OpenApiFullInstances[Real] extends FullInstances[Real] with OpenApiInstances[Real]
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestClientApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: MacroInstances[Implicits, ClientInstances[Real]]
 ) {
@@ -64,7 +64,7 @@ abstract class RestClientApiCompanion[Implicits, Real](protected val implicits: 
     RawRest.fromHandleRequest(handleRequest)
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestServerApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: MacroInstances[Implicits, ServerInstances[Real]]
 ) {
@@ -75,7 +75,7 @@ abstract class RestServerApiCompanion[Implicits, Real](protected val implicits: 
     RawRest.asHandleRequest(real)
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestServerOpenApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: MacroInstances[Implicits, OpenApiServerInstances[Real]]
 ) {
@@ -107,7 +107,7 @@ abstract class RestApiCompanion[Implicits, Real](protected val implicits: Implic
     RawRest.asHandleRequest(real)
 }
 
-/** @see [[RestApiCompanion]] */
+/** @see [[RestApiCompanion]]*/
 abstract class RestOpenApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: MacroInstances[Implicits, OpenApiFullInstances[Real]]
 ) {

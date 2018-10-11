@@ -538,7 +538,9 @@ class OpenApiGenerationTest extends FunSuite {
         |        "discriminator": {
         |          "propertyName": "_case",
         |          "mapping": {
-        |            "RestEntity": "taggedRestEntity"
+        |            "RestEntity": "#/components/schemas/taggedRestEntity",
+        |            "RestOtherEntity": "#/components/schemas/RestOtherEntity",
+        |            "SingletonEntity": "#/components/schemas/SingletonEntity"
         |          }
         |        }
         |      },
