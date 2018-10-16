@@ -4,16 +4,17 @@ package meta
 /**
   * Intermediate factory that creates an `Instances` trait based on provided `Implicits`.
   * Normally, this factory is used as implicit constructor parameter of base classes for companion objects
-  * of RPC traits (e.g. [[com.avsystem.commons.rest.DefaultRestApiCompanion DefaultRestApiCompanion]]).
-  * This all serves to reduce boilerplate associated with RPC trait companion declarations and makes RPC trait
+  * of RPC traits (e.g. [[com.avsystem.commons.rest.DefaultRestApiCompanion DefaultRestApiCompanion]])
+  * or ADTs (e.g. [[com.avsystem.commons.rest.RestDataCompanion RestDataCompanion]]).
+  * This all serves to reduce boilerplate associated with companion declarations and makes RPC trait or ADT
   * definitions as concise as possible. It also lets the programmer easily inject additional implicits into
-  * macro-materialization of RPC-related typeclasses (`AsReal`, `AsRaw`, metadata, etc.).
+  * macro-materialization of typeclasses aggregated by `Instances` trait.
   *
   * `Instances` is a trait that aggregates multiple macro materialized typeclass instances.
-  * There is no fixed interface for `Instances`, its members are inspected by `materialize` macro and implemented
-  * automatically. `Instances` must contain only parameterless abstract methods. Return type of each method
-  * must have a companion object which contains `materialize` macro. That macro will be used to implement
-  * that method.
+  * There is no fixed interface for `Instances`, its members are inspected by `MacroInstances.materialize`
+  * macro and implemented automatically. `Instances` trait must have only parameterless abstract methods.
+  * Return type of each method must have a companion object which contains `materialize` macro.
+  * That macro will be used to implement that method.
   *
   * Example of `Instances`: [[com.avsystem.commons.rest.ClientInstances ClientInstances]]
   *
@@ -24,7 +25,10 @@ package meta
   *
   * If `MacroInstances` is accepted as implicit super constructor parameter of a companion object
   * (which is the typical situation) then `this` reference should be passed as `companion`.
-  * This is in order to work around https://github.com/scala/bug/issues/7666
+  * This is in order to work around https://github.com/scala/bug/issues/7666.
+  * Actual typeclass instances aggregated by `Instances` trait should be extracted into `implicit lazy val`
+  * definitions in the companion base class. See e.g. [[com.avsystem.commons.rest.RestDataCompanion RestDataCompanion]]
+  * for an example of how it's done.
   */
 trait MacroInstances[Implicits, Instances] {
   def apply(implicits: Implicits, companion: Any): Instances
