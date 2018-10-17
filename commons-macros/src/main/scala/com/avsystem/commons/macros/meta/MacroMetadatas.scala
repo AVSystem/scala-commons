@@ -9,18 +9,19 @@ trait MacroMetadatas extends MacroSymbols {
 
   import c.universe._
 
-  val ParamPositionObj: Tree = q"$MetaPackage.ParamPosition"
-  val TypedMetadataType: Type = staticType(tq"$MetaPackage.TypedMetadata[_]")
-  val MetadataParamStrategyType: Type = staticType(tq"$MetaPackage.MetadataParamStrategy")
-  val ReifyAnnotAT: Type = staticType(tq"$MetaPackage.reifyAnnot")
-  val IsAnnotatedAT: Type = staticType(tq"$MetaPackage.isAnnotated[_]")
-  val ReifyNameAT: Type = staticType(tq"$MetaPackage.reifyName")
-  val ReifyPositionAT: Type = staticType(tq"$MetaPackage.reifyPosition")
-  val ReifyFlagsAT: Type = staticType(tq"$MetaPackage.reifyFlags")
-  val CheckedAT: Type = staticType(tq"$MetaPackage.checked")
-  val ParamPositionTpe: Type = staticType(tq"$MetaPackage.ParamPosition")
-  val ParamFlagsTpe: Type = staticType(tq"$MetaPackage.ParamFlags")
-  val TypeFlagsTpe: Type = staticType(tq"$MetaPackage.TypeFlags")
+  final def ParamPositionObj: Tree = q"$MetaPackage.ParamPosition"
+  final lazy val TypedMetadataType: Type = staticType(tq"$MetaPackage.TypedMetadata[_]")
+  final lazy val MetadataParamStrategyType: Type = staticType(tq"$MetaPackage.MetadataParamStrategy")
+  final lazy val ReifyAnnotAT: Type = staticType(tq"$MetaPackage.reifyAnnot")
+  final lazy val IsAnnotatedAT: Type = staticType(tq"$MetaPackage.isAnnotated[_]")
+  final lazy val ReifyNameAT: Type = staticType(tq"$MetaPackage.reifyName")
+  final lazy val ReifyPositionAT: Type = staticType(tq"$MetaPackage.reifyPosition")
+  final lazy val ReifyFlagsAT: Type = staticType(tq"$MetaPackage.reifyFlags")
+  final lazy val CheckedAT: Type = staticType(tq"$MetaPackage.checked")
+  final lazy val AllowIncompleteAT: Type = staticType(tq"$MetaPackage.allowIncomplete")
+  final lazy val ParamPositionTpe: Type = staticType(tq"$MetaPackage.ParamPosition")
+  final lazy val ParamFlagsTpe: Type = staticType(tq"$MetaPackage.ParamFlags")
+  final lazy val TypeFlagsTpe: Type = staticType(tq"$MetaPackage.TypeFlags")
 
   def actualMetadataType(baseMetadataType: Type, realType: Type, realTypeDesc: String, verbatim: Boolean): Res[Type] = {
     val (wildcards, underlying) = baseMetadataType match {
@@ -83,7 +84,11 @@ trait MacroMetadatas extends MacroSymbols {
   abstract class MetadataConstructor(val ownerType: Type, val atParam: Option[CompositeParam])
     extends MacroMethod { this: MetadataConstructor =>
 
-    lazy val symbol: Symbol = primaryConstructor(ownerType, atParam)
+    lazy val symbol: Symbol =
+      primaryConstructor(ownerType, atParam)
+
+    lazy val allowIncomplete: Boolean =
+      findAnnotation(ownerType.typeSymbol, AllowIncompleteAT).nonEmpty
 
     // fallback to annotations on the class itself
     def annot(tpe: Type): Option[Annot] =

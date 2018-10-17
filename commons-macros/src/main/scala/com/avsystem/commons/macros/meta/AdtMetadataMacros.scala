@@ -100,7 +100,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
 
     def paramMappings(params: List[AdtParam]): Res[Map[AdtParamMetadataParam, Tree]] =
       if (paramMdParams.isEmpty) Ok(Map.empty)
-      else collectParamMappings(params, paramMdParams, "metadata parameter")(
+      else collectParamMappings(params, paramMdParams, "metadata parameter", allowIncomplete)(
         (param, parser) => param.metadataFor(parser).map(t => (param, t))).map(_.toMap)
 
     def collectCaseMappings(cases: List[AdtSymbol]): Res[Map[AdtCaseMetadataParam, List[AdtCaseMapping]]] =
@@ -121,7 +121,9 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
           } match {
             case Ok(m) => Some(m)
             case Fail(err) =>
-              addFailure(adtCase, err)
+              if (!allowIncomplete) {
+                addFailure(adtCase, err)
+              }
               None
           }
         }

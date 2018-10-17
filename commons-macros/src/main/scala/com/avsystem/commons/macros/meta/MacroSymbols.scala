@@ -10,20 +10,20 @@ trait MacroSymbols extends MacroCommons {
 
   import c.universe._
 
-  val RpcPackage = q"$CommonsPkg.rpc"
-  val MetaPackage = q"$CommonsPkg.meta"
-  val RpcUtils = q"$RpcPackage.RpcUtils"
-  val OptionLikeCls = tq"$MetaPackage.OptionLike"
-  val CanBuildFromCls = tq"$CollectionPkg.generic.CanBuildFrom"
-  val RpcArityAT: Type = staticType(tq"$MetaPackage.SymbolArity")
-  val SingleArityAT: Type = staticType(tq"$MetaPackage.single")
-  val OptionalArityAT: Type = staticType(tq"$MetaPackage.optional")
-  val MultiArityAT: Type = staticType(tq"$MetaPackage.multi")
-  val CompositeAT: Type = staticType(tq"$MetaPackage.composite")
-  val AuxiliaryAT: Type = staticType(tq"$MetaPackage.auxiliary")
-  val AnnotatedAT: Type = staticType(tq"$MetaPackage.annotated[_]")
-  val TaggedAT: Type = staticType(tq"$RpcPackage.tagged[_]")
-  val WhenUntaggedArg: Symbol = TaggedAT.member(TermName("whenUntagged"))
+  final def RpcPackage = q"$CommonsPkg.rpc"
+  final def MetaPackage = q"$CommonsPkg.meta"
+  final def RpcUtils = q"$RpcPackage.RpcUtils"
+  final def OptionLikeCls = tq"$MetaPackage.OptionLike"
+  final def CanBuildFromCls = tq"$CollectionPkg.generic.CanBuildFrom"
+  final lazy val RpcArityAT: Type = staticType(tq"$MetaPackage.SymbolArity")
+  final lazy val SingleArityAT: Type = staticType(tq"$MetaPackage.single")
+  final lazy val OptionalArityAT: Type = staticType(tq"$MetaPackage.optional")
+  final lazy val MultiArityAT: Type = staticType(tq"$MetaPackage.multi")
+  final lazy val CompositeAT: Type = staticType(tq"$MetaPackage.composite")
+  final lazy val AuxiliaryAT: Type = staticType(tq"$MetaPackage.auxiliary")
+  final lazy val AnnotatedAT: Type = staticType(tq"$MetaPackage.annotated[_]")
+  final lazy val TaggedAT: Type = staticType(tq"$RpcPackage.tagged[_]")
+  final lazy val WhenUntaggedArg: Symbol = TaggedAT.member(TermName("whenUntagged"))
 
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
     primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}: "))
@@ -281,12 +281,17 @@ trait MacroSymbols extends MacroCommons {
   }
 
   def collectParamMappings[Real <: MacroParam, Raw <: MacroParam, M](
-    reals: List[Real], raws: List[Raw], rawShortDesc: String)(
-    createMapping: (Raw, ParamsParser[Real]) => Res[M]): Res[List[M]] = {
+    reals: List[Real],
+    raws: List[Raw],
+    rawShortDesc: String,
+    allowIncomplete: Boolean
+  )(
+    createMapping: (Raw, ParamsParser[Real]) => Res[M]
+  ): Res[List[M]] = {
 
     val parser = new ParamsParser(reals)
     Res.traverse(raws)(createMapping(_, parser)).flatMap { result =>
-      if (parser.remaining.isEmpty) Ok(result)
+      if (allowIncomplete || parser.remaining.isEmpty) Ok(result)
       else {
         val unmatched = parser.remaining.iterator.map(_.nameStr).mkString(",")
         Fail(s"no $rawShortDesc(s) were found that would match real parameter(s) $unmatched")

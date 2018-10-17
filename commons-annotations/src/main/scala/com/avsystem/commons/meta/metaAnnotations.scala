@@ -14,6 +14,7 @@ trait RealSymAnnotation extends StaticAnnotation
   * method against raw RPC methods).
   */
 trait RawSymAnnotation extends StaticAnnotation
+trait RawRpcAnnotation extends RawSymAnnotation
 trait RawMethodAnnotation extends RawSymAnnotation
 trait RawParamAnnotation extends RawSymAnnotation
 
@@ -287,3 +288,14 @@ final class reifyDefaultValue extends MetadataParamStrategy
   * ignores that fact and error is only reported after macro is fully expanded.
   */
 final class checked extends StaticAnnotation
+
+/**
+  * When applied on:
+  * - RPC trait metadata class: does not require that all RPC methods must be matched by
+  * method metadata parameter
+  * - RPC method metadata class: does not require that all RPC params must be matched by
+  * param metadata parameter
+  * - ADT metadata class: does not require that all case types or case class parameters must be matched by
+  * metadata parameter
+  */
+final class allowIncomplete extends RawSymAnnotation

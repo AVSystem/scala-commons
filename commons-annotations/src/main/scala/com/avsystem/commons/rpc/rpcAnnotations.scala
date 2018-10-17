@@ -205,7 +205,7 @@ final class tried extends RawMethodAnnotation
   * @tparam BaseTag base type for tags that can be used on real RPC methods
   * @param defaultTag default tag value assumed for untagged methods
   **/
-final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawSymAnnotation
+final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawRpcAnnotation
 
 /**
   * Parameter tagging lets you have more explicit control over which raw parameters can match which real

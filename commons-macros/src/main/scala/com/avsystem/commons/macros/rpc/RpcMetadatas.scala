@@ -108,7 +108,9 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
 
     def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] = {
       val errorBase = s"it has no matching metadata parameters in $description"
-      collectMethodMappings(methodMdParams, errorBase, rpc.realMethods)(_.mappingFor(_)).groupBy(_.mdParam)
+      collectMethodMappings(
+        methodMdParams, errorBase, rpc.realMethods, allowIncomplete
+      )(_.mappingFor(_)).groupBy(_.mdParam)
     }
 
     def tryMaterializeFor(rpc: RealRpcTrait, methodMappings: Map[MethodMetadataParam, List[MethodMetadataMapping]]): Res[Tree] =
@@ -147,8 +149,11 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
       new MethodMetadataConstructor(param.collectedType, containingMethodParam, Some(param))
 
     def paramMappings(matchedMethod: MatchedMethod): Res[Map[ParamMetadataParam, Tree]] =
-      collectParamMappings(matchedMethod.real.realParams, paramMdParams, "metadata parameter")(
-        (param, parser) => param.metadataFor(matchedMethod, parser).map(t => (param, t))).map(_.toMap)
+      collectParamMappings(
+        matchedMethod.real.realParams, paramMdParams, "metadata parameter", allowIncomplete
+      ) { (param, parser) =>
+        param.metadataFor(matchedMethod, parser).map(t => (param, t))
+      }.map(_.toMap)
 
     def tryMaterializeFor(matchedMethod: MatchedMethod, paramMappings: Map[ParamMetadataParam, Tree]): Res[Tree] =
       tryMaterialize(matchedMethod) {

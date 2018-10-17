@@ -11,7 +11,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
   import c.universe._
 
   def collectMethodMappings[Raw <: TagMatchingSymbol with AritySymbol, M](
-    rawSymbols: List[Raw], errorBase: String, realMethods: List[RealMethod])(
+    rawSymbols: List[Raw], errorBase: String, realMethods: List[RealMethod], allowIncomplete: Boolean)(
     createMapping: (Raw, MatchedMethod) => Res[M]): List[M] = {
 
     val failedReals = new ListBuffer[String]
@@ -35,7 +35,9 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       } match {
         case Ok(v) => Some(v)
         case Fail(msg) =>
-          addFailure(realMethod, msg)
+          if (!allowIncomplete) {
+            addFailure(realMethod, msg)
+          }
           None
       }
     }
@@ -300,13 +302,14 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       for {
         resultConv <- resultEncoding
         paramMappings <- collectParamMappings(
-          matchedMethod.real.realParams, rawMethod.allValueParams, "raw parameter")(extractMapping(matchedMethod, _, _))
+          matchedMethod.real.realParams, rawMethod.allValueParams, "raw parameter", allowIncomplete = false
+        )(extractMapping(matchedMethod, _, _))
       } yield MethodMapping(matchedMethod, rawMethod, paramMappings, resultConv)
     }
 
     lazy val methodMappings: List[MethodMapping] = {
       val errorBase = s"it has no matching raw methods in ${raw.description}"
-      collectMethodMappings(raw.rawMethods, errorBase, real.realMethods)(mappingRes)
+      collectMethodMappings(raw.rawMethods, errorBase, real.realMethods, allowIncomplete = false)(mappingRes)
     }
 
     def ensureUniqueRpcNames(): Unit =

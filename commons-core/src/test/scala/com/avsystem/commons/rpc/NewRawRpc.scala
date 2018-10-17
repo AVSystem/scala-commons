@@ -206,3 +206,25 @@ case class NameInfo(
 ) {
   def repr: String = name + (if (rpcName != name) s"<$rpcName>" else "")
 }
+
+@allowIncomplete
+case class PartialMetadata[T](
+  @multi @rpcMethodMetadata @annotated[POST] posts: List[PostMethod[_]]
+) {
+  def repr: String = posts.map(_.repr).mkString("\n")
+}
+object PartialMetadata extends RpcMetadataCompanion[PartialMetadata]
+
+@allowIncomplete
+case class PostMethod[T](
+  @reifyName name: String,
+  @multi @rpcParamMetadata @annotated[header] headerParams: List[HeaderParam[_]]
+) extends TypedMetadata[T] {
+  def repr: String = s"$name(${headerParams.map(_.repr).mkString(",")})"
+}
+
+case class HeaderParam[T](
+  @reifyAnnot header: header
+) extends TypedMetadata[T] {
+  def repr: String = header.name
+}
