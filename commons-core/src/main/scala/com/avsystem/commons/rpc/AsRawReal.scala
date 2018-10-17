@@ -60,7 +60,7 @@ object AsReal {
 
 @implicitNotFound("Cannot serialize and deserialize between ${Real} and ${Raw}, appropriate AsRawReal instance not found")
 trait AsRawReal[Raw, Real] extends AsReal[Raw, Real] with AsRaw[Raw, Real]
-object AsRawReal {
+object AsRawReal extends AsRawRealLowPrio {
   def apply[Raw, Real](implicit asRawReal: AsRawReal[Raw, Real]): AsRawReal[Raw, Real] = asRawReal
 
   def create[Raw, Real](asRawFun: Real => Raw, asRealFun: Raw => Real): AsRawReal[Raw, Real] =
@@ -80,6 +80,11 @@ object AsRawReal {
   implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsRawReal[Raw, Real]]): AsRawReal[Raw, Real] = fallback.value
 
   def materialize[Raw, Real]: AsRawReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRawReal[Raw, Real]
+}
+sealed trait AsRawRealLowPrio { this: AsRawReal.type =>
+  implicit def fromSeparateAsRealAndRaw[Raw, Real](implicit
+    asRaw: AsRaw[Raw, Real], asReal: AsReal[Raw, Real]
+  ): AsRawReal[Raw, Real] = AsRawReal.create(asRaw.asRaw, asReal.asReal)
 }
 
 object RpcMetadata {

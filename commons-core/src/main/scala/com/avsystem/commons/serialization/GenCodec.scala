@@ -6,6 +6,7 @@ import java.util.UUID
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.JCanBuildFrom
+import com.avsystem.commons.meta.Fallback
 import com.avsystem.commons.misc.MacroGenerated
 
 import scala.annotation.implicitNotFound
@@ -413,6 +414,9 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     (out, value) => out.writeString(value.name),
     allowNull = true
   )
+
+  implicit def fromFallback[T](implicit fallback: Fallback[GenCodec[T]]): GenCodec[T] =
+    fallback.value
 
   implicit def macroGeneratedCodec[C, T]: MacroGenerated[C, GenCodec[T]] =
   macro macros.serialization.GenCodecMacros.materializeMacroGenerated[T]
