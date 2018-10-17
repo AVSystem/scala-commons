@@ -11,10 +11,9 @@ package meta
   * macro-materialization of typeclasses aggregated by `Instances` trait.
   *
   * `Instances` is a trait that aggregates multiple macro materialized typeclass instances.
-  * There is no fixed interface for `Instances`, its members are inspected by `MacroInstances.materialize`
-  * macro and implemented automatically. `Instances` trait must have only parameterless abstract methods.
-  * Return type of each method must have a companion object which contains `materialize` macro.
-  * That macro will be used to implement that method.
+  * There is no fixed interface for `Instances`, its abstract methods are inspected by
+  * `MacroInstances.materialize` macro and implemented automatically as `<methodReturnTypeCompanion>.materialize`
+  * Therefore, return type type of each method must have a companion object which contains `materialize` macro.
   *
   * Example of `Instances`: [[com.avsystem.commons.rest.ClientInstances ClientInstances]]
   *
@@ -22,6 +21,7 @@ package meta
   * implements that trait, e.g. [[com.avsystem.commons.rest.DefaultRestImplicits DefaultRestImplicits]].
   * When the macro implements `apply` method of `MacroInstances` contents of `Implicits` are imported into the
   * body of `apply` and visible further by macros that materialize `InstancesTrait`.
+  * If you don't want to inject additional implicits, declare `Implicits` as `Unit`.
   *
   * If `MacroInstances` is accepted as implicit super constructor parameter of a companion object
   * (which is the typical situation) then `this` reference should be passed as `companion`.

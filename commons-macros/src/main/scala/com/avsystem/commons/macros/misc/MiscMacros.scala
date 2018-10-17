@@ -355,15 +355,12 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
 
     val instancesMethods = instancesTpe.members.iterator
-      .filter(m => m.isAbstract && m.isMethod).toList.reverse
+      .filter(m => m.isAbstract && m.isMethod).map(_.asMethod).toList.reverse
 
     def impl(singleMethod: Option[Symbol]): Tree = {
       val impls = instancesMethods.map { m =>
         val sig = m.typeSignatureIn(instancesTpe)
         val resultTpe = sig.finalResultType.dealias
-        if (sig.typeParams.nonEmpty || sig.paramLists.nonEmpty) {
-          abort(s"Problem with $m of $instancesTpe: expected non-generic, parameterless method")
-        }
         val resultCompanion = typedCompanionOf(resultTpe)
           .getOrElse(abort(s"$resultTpe has no companion object with `materialize` macro"))
 
@@ -371,7 +368,9 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           if (singleMethod.exists(_ != m)) q"$PredefObj.???"
           else q"$resultCompanion.materialize"
 
-        q"def ${m.name.toTermName} = $body"
+        val tparamDefs = sig.typeParams.map(typeSymbolToTypeDef(_, forMethod = true))
+        val paramDefs = sig.paramLists.map(_.map(paramSymbolToValDef))
+        q"def ${m.name}[..$tparamDefs](...$paramDefs): ${treeForType(sig.finalResultType)} = $body"
       }
 
       val implicitsName = c.freshName(TermName("implicits"))
