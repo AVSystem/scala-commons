@@ -31,6 +31,7 @@ cache:
     - $HOME/.ivy2/cache
     - $HOME/.coursier/cache
     - $HOME/.sbt/boot/
+    - $HOME/.sbt/launchers/
     - redis-$REDIS_VERSION
 
 before_cache:
