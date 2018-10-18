@@ -14,9 +14,10 @@ env:
   global:
     - REDIS_VERSION=4.0.0
     - REDIS_HOME=$PWD/redis-$REDIS_VERSION/src
-  - JOB=commons-jvm/test
-  - JOB=commons-js/test
-  - JOB=commons/unidoc
+  matrix:
+    - JOB=commons-jvm/test
+    - JOB=commons-js/test
+    - JOB=commons/unidoc
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION $JOB
