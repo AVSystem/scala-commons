@@ -374,7 +374,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           val paramDefs = sig.paramLists.map(_.map(paramSymbolToValDef))
           q"def ${m.name}[..$tparamDefs](...$paramDefs): $instTpeTree = $body"
         }
-        else if (m.asTerm.isVar)
+        else if (m.isVar || m.setter != NoSymbol)
           q"var ${m.name}: $instTpeTree = $body"
         else
           q"val ${m.name}: $instTpeTree = $body"
