@@ -11,14 +11,17 @@ before_install:
   - ./install-redis.sh
 
 env:
+  - JOB=commons-jvm/test
+  - JOB=commons-js/test
+  - JOB=commons/unidoc
   global:
     - REDIS_VERSION=4.0.0
     - REDIS_HOME=$PWD/redis-$REDIS_VERSION/src
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION commons-jvm/test
-  - sbt ++$TRAVIS_SCALA_VERSION commons-js/test
-  - sbt ++$TRAVIS_SCALA_VERSION commons/unidoc
+  - sbt ++$TRAVIS_SCALA_VERSION $JOB
+  - sbt ++$TRAVIS_SCALA_VERSION $JOB
+  - sbt ++$TRAVIS_SCALA_VERSION $JOB
 
 sudo: false
 
