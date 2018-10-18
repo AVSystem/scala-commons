@@ -41,7 +41,7 @@ trait MacroSymbols extends MacroCommons {
   object ParamArity {
     def fromAnnotation(param: ArityParam, allowListedMulti: Boolean, allowNamedMulti: Boolean): ParamArity = {
 
-      val at = findAnnotation(param.symbol, RpcArityAT).fold(SingleArityAT)(_.tpe)
+      val at = param.annot(RpcArityAT).fold(SingleArityAT)(_.tpe)
       if (at <:< SingleArityAT) ParamArity.Single(param.actualType)
       else if (at <:< OptionalArityAT) {
         val optionLikeType = typeOfCachedImplicit(param.optionLike)
@@ -75,7 +75,7 @@ trait MacroSymbols extends MacroCommons {
   sealed abstract class MethodArity(val verbatimByDefault: Boolean) extends Arity
   object MethodArity {
     def fromAnnotation(method: MacroMethod): MethodArity = {
-      val at = findAnnotation(method.symbol, RpcArityAT).fold(SingleArityAT)(_.tpe)
+      val at = method.annot(RpcArityAT).fold(SingleArityAT)(_.tpe)
       if (at <:< SingleArityAT) Single
       else if (at <:< OptionalArityAT) Optional
       else if (at <:< MultiArityAT) Multi
@@ -89,6 +89,7 @@ trait MacroSymbols extends MacroCommons {
 
   abstract class MacroSymbol {
     def symbol: Symbol
+    def annotationSource: Symbol = symbol
     def pos: Position = symbol.pos
     def seenFrom: Type
     def shortDescription: String
@@ -98,6 +99,12 @@ trait MacroSymbols extends MacroCommons {
     def reportProblem(msg: String, detailPos: Position = NoPosition): Nothing =
       abortAt(s"$problemStr: $msg", if (detailPos != NoPosition) detailPos else pos)
 
+    def annot(tpe: Type, fallback: List[Tree] = Nil): Option[Annot] =
+      findAnnotation(annotationSource, tpe, seenFrom, withInherited = true, fallback)
+
+    def annots(tpe: Type, fallback: List[Tree] = Nil): List[Annot] =
+      allAnnotations(annotationSource, tpe, seenFrom, withInherited = true, fallback)
+
     def infer(tpt: Tree): TermName =
       infer(getType(tpt))
 
@@ -105,7 +112,7 @@ trait MacroSymbols extends MacroCommons {
       inferCachedImplicit(tpe, s"${forSym.problemStr}: $clue", forSym.pos)
 
     val name: TermName = symbol.name.toTermName
-    val safeName: TermName = c.freshName(symbol.name.toTermName)
+    val safeName: TermName = c.freshName(name)
     val nameStr: String = name.decodedName.toString
     val encodedNameStr: String = name.encodedName.toString
 
@@ -166,7 +173,7 @@ trait MacroSymbols extends MacroCommons {
 
   trait FilteringSymbol extends MacroSymbol {
     lazy val requiredAnnots: List[Type] =
-      allAnnotations(symbol, AnnotatedAT).map(_.tpe.dealias.typeArgs.head)
+      annots(AnnotatedAT).map(_.tpe.dealias.typeArgs.head)
 
     def matchFilters(realSymbol: MatchedSymbol): Res[Unit] =
       Res.traverse(requiredAnnots) { annotTpe =>
@@ -187,9 +194,6 @@ trait MacroSymbols extends MacroCommons {
   trait TagMatchingSymbol extends MacroSymbol with FilteringSymbol {
     def baseTagTpe: Type
     def fallbackTag: FallbackTag
-
-    def annot(tpe: Type): Option[Annot] =
-      findAnnotation(symbol, tpe, seenFrom)
 
     def tagAnnot(tpe: Type): Option[Annot] =
       annot(tpe)
@@ -218,7 +222,7 @@ trait MacroSymbols extends MacroCommons {
 
     // returns fallback tag tree only IF it was necessary
     def matchTag(realSymbol: MacroSymbol): Res[FallbackTag] = {
-      val tagAnnot = findAnnotation(realSymbol.symbol, baseTagTpe, realSymbol.seenFrom)
+      val tagAnnot = realSymbol.annot(baseTagTpe)
       val fallbackTagUsed = if (tagAnnot.isEmpty) whenUntaggedTag orElse fallbackTag else FallbackTag.Empty
       val realTagTpe = tagAnnot.map(_.tpe).getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
 
@@ -269,9 +273,10 @@ trait MacroSymbols extends MacroCommons {
     def fallbackTagUsed: FallbackTag = FallbackTag.Empty
 
     def annot(tpe: Type): Option[Annot] =
-      findAnnotation(real.symbol, tpe, real.seenFrom, fallback = fallbackTagUsed.asList)
-    def allAnnots(tpe: Type): List[Annot] =
-      allAnnotations(real.symbol, tpe, real.seenFrom, fallback = fallbackTagUsed.asList)
+      real.annot(tpe, fallbackTagUsed.asList)
+
+    def annots(tpe: Type): List[Annot] =
+      real.annots(tpe, fallbackTagUsed.asList)
   }
 
   trait SelfMatchedSymbol extends MacroSymbol with MatchedSymbol {

@@ -33,6 +33,7 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
       tree <- materializeOneOf(mdType) { t =>
         val constructor = new MethodMetadataConstructor(t, this, None)
         for {
+          _ <- constructor.matchFilters(matchedMethod)
           paramMappings <- constructor.paramMappings(matchedMethod)
           tree <- constructor.tryMaterializeFor(matchedMethod, paramMappings)
         } yield tree
@@ -59,8 +60,13 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
       val realParam = matchedParam.real
       val result = for {
         mdType <- actualMetadataType(arity.collectedType, realParam.actualType, "parameter type", verbatim)
-        tree <- materializeOneOf(mdType)(t =>
-          new ParamMetadataConstructor(t, None, indexInRaw).tryMaterializeFor(matchedParam))
+        tree <- materializeOneOf(mdType) { t =>
+          val constructor = new ParamMetadataConstructor(t, None, indexInRaw)
+          for {
+            _ <- constructor.matchFilters(matchedParam)
+            tree <- constructor.tryMaterializeFor(matchedParam)
+          } yield tree
+        }
       } yield tree
       result.mapFailure(msg => s"${realParam.problemStr}: $cannotMapClue: $msg")
     }
@@ -89,9 +95,6 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
     def baseTagTpe: Type = NothingTpe
     def fallbackTag: FallbackTag = FallbackTag.Empty
 
-    override def annot(tpe: Type): Option[Annot] =
-      super[MetadataConstructor].annot(tpe)
-
     val (baseMethodTag, fallbackMethodTag) =
       annot(MethodTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
     val (baseParamTag, fallbackParamTag) =
@@ -113,7 +116,10 @@ trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbol
       )(_.mappingFor(_)).groupBy(_.mdParam)
     }
 
-    def tryMaterializeFor(rpc: RealRpcTrait, methodMappings: Map[MethodMetadataParam, List[MethodMetadataMapping]]): Res[Tree] =
+    def tryMaterializeFor(
+      rpc: RealRpcTrait,
+      methodMappings: Map[MethodMetadataParam, List[MethodMetadataMapping]]
+    ): Res[Tree] =
       tryMaterialize(MatchedRpcTrait(rpc)) { case mmp: MethodMetadataParam =>
         val mappings = methodMappings.getOrElse(mmp, Nil)
         mmp.arity match {

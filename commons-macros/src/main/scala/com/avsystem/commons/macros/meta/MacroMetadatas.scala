@@ -82,17 +82,16 @@ trait MacroMetadatas extends MacroSymbols {
   }
 
   abstract class MetadataConstructor(val ownerType: Type, val atParam: Option[CompositeParam])
-    extends MacroMethod { this: MetadataConstructor =>
+    extends MacroMethod with FilteringSymbol {
 
     lazy val symbol: Symbol =
       primaryConstructor(ownerType, atParam)
 
-    lazy val allowIncomplete: Boolean =
-      findAnnotation(ownerType.typeSymbol, AllowIncompleteAT).nonEmpty
+    override def annotationSource: Symbol =
+      ownerType.typeSymbol
 
-    // fallback to annotations on the class itself
-    def annot(tpe: Type): Option[Annot] =
-      findAnnotation(symbol, tpe) orElse findAnnotation(ownerType.typeSymbol, tpe)
+    lazy val allowIncomplete: Boolean =
+      annot(AllowIncompleteAT).nonEmpty
 
     def shortDescription = "metadata class"
     def description = s"$shortDescription $ownerType"
@@ -163,7 +162,7 @@ trait MacroMetadatas extends MacroSymbols {
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = false
 
-    val checked: Boolean = findAnnotation(symbol, CheckedAT).nonEmpty
+    val checked: Boolean = annot(CheckedAT).nonEmpty
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
       arity match {
@@ -206,7 +205,7 @@ trait MacroMetadatas extends MacroSymbols {
         case ParamArity.Optional(_) =>
           Ok(mkOptional(matchedSymbol.annot(annotTpe).map(validatedAnnotTree)))
         case ParamArity.Multi(_, _) =>
-          Ok(mkMulti(matchedSymbol.allAnnots(annotTpe).map(validatedAnnotTree)))
+          Ok(mkMulti(matchedSymbol.annots(annotTpe).map(validatedAnnotTree)))
       }
     }
   }
@@ -219,7 +218,7 @@ trait MacroMetadatas extends MacroSymbols {
     }
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
-      Ok(q"${matchedSymbol.allAnnots(annotTpe).nonEmpty}")
+      Ok(q"${matchedSymbol.annots(annotTpe).nonEmpty}")
   }
 
   class ReifiedNameParam(owner: MetadataConstructor, symbol: Symbol, useRawName: Boolean)

@@ -158,6 +158,7 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
 
     def tryMaterializeFor(adtSymbol: AdtSymbol): Res[Tree] =
       for {
+        _ <- matchFilters(adtSymbol)
         _ <- if (paramMdParams.isEmpty) Ok(()) else adtSymbol match {
           case _: AdtClass => Ok(())
           case _ => Fail(s"${adtSymbol.nameStr} is not a case class or case class like type")
@@ -212,13 +213,19 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
     def allowListedMulti: Boolean = true
 
     val auxiliary: Boolean =
-      findAnnotation(symbol, AuxiliaryAT).nonEmpty
+      annot(AuxiliaryAT).nonEmpty
 
     private def metadataTree(adtParam: AdtParam, indexInRaw: Int): Option[Res[Tree]] =
       Some(MatchedAdtParam(adtParam, this, indexInRaw)).filter(m => matchFilters(m).isOk).map { matched =>
         val result = for {
           mdType <- actualMetadataType(arity.collectedType, adtParam.actualType, "parameter type", verbatim = false)
-          tree <- materializeOneOf(mdType)(t => new AdtParamMetadataConstructor(t, None).tryMaterializeFor(matched))
+          tree <- materializeOneOf(mdType) { t =>
+            val constructor = new AdtParamMetadataConstructor(t, None)
+            for {
+              _ <- constructor.matchFilters(matched)
+              tree <- constructor.tryMaterializeFor(matched)
+            } yield tree
+          }
         } yield tree
         result.mapFailure(msg => s"${adtParam.problemStr}: cannot map it to $shortDescription $pathStr: $msg")
       }

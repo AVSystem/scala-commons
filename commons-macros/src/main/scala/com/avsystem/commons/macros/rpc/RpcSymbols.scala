@@ -15,7 +15,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
     def overloaded: Boolean
 
     val rawName: String = {
-      val prefixes = allAnnotations(real.symbol, RpcNamePrefixAT, fallback = fallbackTagUsed.asList)
+      val prefixes = real.annots(RpcNamePrefixAT, fallback = fallbackTagUsed.asList)
         .filter(a => overloaded || !a.findArg[Boolean](RpcNameOverloadedOnlyArg, false))
         .map(_.findArg[String](RpcNamePrefixArg))
       prefixes.mkString("", "", real.rpcName)
@@ -83,7 +83,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
 
   trait RealRpcSymbol extends MacroSymbol {
     val rpcName: String =
-      findAnnotation(symbol, RpcNameAT).fold(nameStr)(_.findArg[String](RpcNameArg))
+      annot(RpcNameAT).fold(nameStr)(_.findArg[String](RpcNameArg))
   }
 
   abstract class RpcTrait(val symbol: Symbol) extends MacroSymbol {
@@ -295,7 +295,7 @@ trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
       tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(this, _)).toList
   }
 
-  case class RealRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with RealRpcSymbol {
+  case class RealRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with RealRpcSymbol with SelfMatchedSymbol {
     def shortDescription = "real RPC"
     def description = s"$shortDescription $tpe"
 

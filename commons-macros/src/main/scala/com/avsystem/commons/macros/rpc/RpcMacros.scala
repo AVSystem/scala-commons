@@ -3,6 +3,7 @@ package macros.rpc
 
 import com.avsystem.commons.macros.AbstractMacroCommons
 import com.avsystem.commons.macros.meta.MacroSymbols
+import com.avsystem.commons.macros.misc.Res
 
 import scala.reflect.macros.blackbox
 
@@ -98,7 +99,13 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
     val realRpc = RealRpcTrait(weakTypeOf[Real].dealias)
     val metadataTpe = c.macroApplication.tpe.dealias
     val constructor = new RpcTraitMetadataConstructor(metadataTpe, None)
-    guardedMetadata(metadataTpe, realRpc.tpe)(
-      constructor.tryMaterializeFor(realRpc, constructor.methodMappings(realRpc)).getOrElse(abort))
+    
+    def materialize: Res[Tree] = for {
+      _ <- constructor.matchFilters(realRpc)
+      methodMappings = constructor.methodMappings(realRpc)
+      tree <- constructor.tryMaterializeFor(realRpc, methodMappings)
+    } yield tree
+
+    guardedMetadata(metadataTpe, realRpc.tpe)(materialize.getOrElse(abort))
   }
 }
