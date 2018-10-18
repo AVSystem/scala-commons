@@ -20,9 +20,7 @@ env:
     - JOB="commons/unidoc"
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION $JOB
-  - sbt ++$TRAVIS_SCALA_VERSION $JOB
-  - sbt ++$TRAVIS_SCALA_VERSION $JOB
+  - sbt -mem 2048 ++$TRAVIS_SCALA_VERSION $JOB
 
 sudo: false
 
