@@ -355,7 +355,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
 
     val instancesMethods = instancesTpe.members.iterator
-      .filter(m => m.isAbstract && m.isMethod).map(_.asMethod).toList.reverse
+      .filter(m => m.isAbstract && m.isMethod && !m.asTerm.isSetter).map(_.asMethod).toList.reverse
 
     def impl(singleMethod: Option[Symbol]): Tree = {
       val impls = instancesMethods.map { m =>
@@ -368,9 +368,16 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           if (singleMethod.exists(_ != m)) q"$PredefObj.???"
           else q"$resultCompanion.materialize"
 
-        val tparamDefs = sig.typeParams.map(typeSymbolToTypeDef(_, forMethod = true))
-        val paramDefs = sig.paramLists.map(_.map(paramSymbolToValDef))
-        q"def ${m.name}[..$tparamDefs](...$paramDefs): ${treeForType(sig.finalResultType)} = $body"
+        val instTpeTree = treeForType(sig.finalResultType)
+        if (!m.isGetter) {
+          val tparamDefs = sig.typeParams.map(typeSymbolToTypeDef(_, forMethod = true))
+          val paramDefs = sig.paramLists.map(_.map(paramSymbolToValDef))
+          q"def ${m.name}[..$tparamDefs](...$paramDefs): $instTpeTree = $body"
+        }
+        else if (m.asTerm.isVar)
+          q"var ${m.name}: $instTpeTree = $body"
+        else
+          q"val ${m.name}: $instTpeTree = $body"
       }
 
       val implicitsName = c.freshName(TermName("implicits"))

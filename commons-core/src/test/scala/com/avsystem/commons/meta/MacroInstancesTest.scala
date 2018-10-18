@@ -11,8 +11,8 @@ object DependencyImplicits {
 }
 
 trait ComplexInstances[T] {
-  def plainCodec: GenCodec[Klass[Int]]
-  def codecWithGeneric: GenCodec[Klass[T]]
+  val plainCodec: GenCodec[Klass[Int]]
+  var codecWithGeneric: GenCodec[Klass[T]]
   def dependencyUsingCodec: GenCodec[Klass[Dep]]
   def parameterizedCodec[A: GenCodec]: GenCodec[Klass[A]]
 }
