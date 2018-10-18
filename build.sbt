@@ -132,25 +132,19 @@ val noPublishSettings = Seq(
   mimaPreviousArtifacts := Set.empty,
 )
 
+val aggregateProjectSettings =
+  commonSettings ++ noPublishSettings ++ Seq(
+    ideSkipProject := true,
+    ideExcludedDirectories := Seq(baseDirectory.value)
+  )
+
 val CompileAndTest = "compile->compile;test->test"
 
 lazy val commons = project.in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
   .aggregate(
-    `commons-analyzer`,
-    `commons-macros`,
-    `commons-annotations`,
-    `commons-annotations-js`,
-    `commons-core`,
-    `commons-core-js`,
-    `commons-jetty`,
-    `commons-mongo`,
-    `commons-spring`,
-    `commons-redis`,
-    `commons-akka`,
-    `commons-kafka`,
-    `commons-benchmark`,
-    `commons-benchmark-js`,
+    `commons-jvm`,
+    `commons-js`,
   )
   .settings(
     commonSettings,
@@ -169,6 +163,30 @@ lazy val commons = project.in(file("."))
         `commons-comprof`,
       ),
   )
+
+lazy val `commons-jvm` = project.in(file(".jvm"))
+  .aggregate(
+    `commons-analyzer`,
+    `commons-macros`,
+    `commons-annotations`,
+    `commons-core`,
+    `commons-jetty`,
+    `commons-mongo`,
+    `commons-spring`,
+    `commons-redis`,
+    `commons-akka`,
+    `commons-kafka`,
+    `commons-benchmark`,
+  )
+  .settings(aggregateProjectSettings)
+
+lazy val `commons-js` = project.in(file(".js"))
+  .aggregate(
+    `commons-annotations-js`,
+    `commons-core-js`,
+    `commons-benchmark-js`,
+  )
+  .settings(aggregateProjectSettings)
 
 def mkSourceDirs(base: File, scalaBinary: String, conf: String): Seq[File] = Seq(
   base / "src" / conf / "scala",
@@ -211,7 +229,6 @@ lazy val `commons-core` = project
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
     ),
-    ideExcludedDirectories := Seq(baseDirectory.value / "agg"),
   )
 
 lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
@@ -222,14 +239,6 @@ lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
     jsCommonSettings,
     name := (name in `commons-core`).value,
     sourceDirsSettings(_.getParentFile),
-  )
-
-lazy val `commons-core-agg` = project.in(`commons-core`.base / "agg")
-  .aggregate(`commons-core`, `commons-core-js`)
-  .settings(
-    commonSettings,
-    noPublishSettings,
-    ideSkipProject := true
   )
 
 lazy val `commons-analyzer` = project
