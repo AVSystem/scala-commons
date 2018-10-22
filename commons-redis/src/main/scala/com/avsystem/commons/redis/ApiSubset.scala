@@ -19,14 +19,14 @@ trait ApiSubset { self =>
   /**
     * The type of Redis keys or key patterns used in methods representing Redis commands. For example, if `Key = String`
     * then [[commands.StringsApi.get get]] returns `Result[Opt[String]]`. This type is used only for toplevel Redis keys, hash
-    * keys have their own type, [[HashKey]].
+    * keys have their own type, [[Field]].
     */
   type Key
   /**
     * The type of Redis hash keys or hash key patterns used in methods representing Redis commands that work on
     * hashes ([[commands.HashesApi HashesApi]]).
     */
-  type HashKey
+  type Field
   /**
     * The type of Redis values used in methods representing Redis commands. "Value" is the data that might be
     * stored directly under a Redis key (e.g. using [[commands.StringsApi.set set]]) but also a value of hash field, list element,
@@ -38,7 +38,7 @@ trait ApiSubset { self =>
   type Value
 
   protected implicit def keyCodec: RedisDataCodec[Key]
-  protected implicit def hashKeyCodec: RedisDataCodec[HashKey]
+  protected implicit def fieldCodec: RedisDataCodec[Field]
   protected implicit def valueCodec: RedisDataCodec[Value]
 
   def execute[A](command: RedisCommand[A]): Result[A]

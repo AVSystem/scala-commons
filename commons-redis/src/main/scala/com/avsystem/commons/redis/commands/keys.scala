@@ -85,16 +85,16 @@ trait KeyedKeysApi extends ApiSubset {
     execute(new Restore(key, ttl, dumpedValue, replace))
 
   /** Executes [[http://redis.io/commands/sort SORT]] */
-  def sort(key: Key, by: OptArg[SortPattern[Key, HashKey]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
+  def sort(key: Key, by: OptArg[SortPattern[Key, Field]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
     sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Seq[Value]] =
     execute(new Sort(key, by.toOpt, limit.toOpt, sortOrder.toOpt, alpha))
   /** Executes [[http://redis.io/commands/sort SORT]] */
-  def sortGet(key: Key, gets: Seq[SortPattern[Key, HashKey]], by: OptArg[SortPattern[Key, HashKey]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
+  def sortGet(key: Key, gets: Seq[SortPattern[Key, Field]], by: OptArg[SortPattern[Key, Field]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
     sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Seq[Seq[Opt[Value]]]] =
     execute(new SortGet(key, gets, by.toOpt, limit.toOpt, sortOrder.toOpt, alpha))
   /** Executes [[http://redis.io/commands/sort SORT]] */
-  def sortStore(key: Key, destination: Key, by: OptArg[SortPattern[Key, HashKey]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
-    gets: Seq[SortPattern[Key, HashKey]] = Nil, sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Long] =
+  def sortStore(key: Key, destination: Key, by: OptArg[SortPattern[Key, Field]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
+    gets: Seq[SortPattern[Key, Field]] = Nil, sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Long] =
     execute(new SortStore(key, destination, by.toOpt, limit.toOpt, gets, sortOrder.toOpt, alpha))
 
   /** Executes [[http://redis.io/commands/touch TOUCH]] */
@@ -222,8 +222,8 @@ trait KeyedKeysApi extends ApiSubset {
   }
 
   private abstract class AbstractSort[T](decoder: ReplyDecoder[T])
-    (key: Key, by: Opt[SortPattern[Key, HashKey]], limit: Opt[SortLimit],
-      gets: Seq[SortPattern[Key, HashKey]], sortOrder: Opt[SortOrder], alpha: Boolean, destination: Opt[Key])
+    (key: Key, by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit],
+      gets: Seq[SortPattern[Key, Field]], sortOrder: Opt[SortOrder], alpha: Boolean, destination: Opt[Key])
     extends AbstractRedisCommand[T](decoder) with NodeCommand {
     val encoded = {
       val enc = encoder("SORT").key(key).optAdd("BY", by).optAdd("LIMIT", limit)
@@ -232,14 +232,14 @@ trait KeyedKeysApi extends ApiSubset {
     }
   }
 
-  private final class Sort(key: Key, by: Opt[SortPattern[Key, HashKey]], limit: Opt[SortLimit], sortOrder: Opt[SortOrder], alpha: Boolean)
+  private final class Sort(key: Key, by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit], sortOrder: Opt[SortOrder], alpha: Boolean)
     extends AbstractSort[Seq[Value]](multiBulkSeq[Value])(key, by, limit, Nil, sortOrder, alpha, Opt.Empty)
 
-  private final class SortGet(key: Key, gets: Seq[SortPattern[Key, HashKey]], by: Opt[SortPattern[Key, HashKey]], limit: Opt[SortLimit], sortOrder: Opt[SortOrder], alpha: Boolean)
+  private final class SortGet(key: Key, gets: Seq[SortPattern[Key, Field]], by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit], sortOrder: Opt[SortOrder], alpha: Boolean)
     extends AbstractSort[Seq[Seq[Opt[Value]]]](groupedMultiBulk(gets.size min 1, nullBulkOr[Value]))(
       key, by, limit, gets, sortOrder, alpha, Opt.Empty)
 
-  private final class SortStore(key: Key, destination: Key, by: Opt[SortPattern[Key, HashKey]], limit: Opt[SortLimit], gets: Seq[SortPattern[Key, HashKey]], sortOrder: Opt[SortOrder], alpha: Boolean)
+  private final class SortStore(key: Key, destination: Key, by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit], gets: Seq[SortPattern[Key, Field]], sortOrder: Opt[SortOrder], alpha: Boolean)
     extends AbstractSort[Long](integerLong)(key, by, limit, gets, sortOrder, alpha, Opt(destination))
 
   private final class Touch(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
