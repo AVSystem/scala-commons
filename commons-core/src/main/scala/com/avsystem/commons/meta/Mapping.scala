@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package meta
 
+import java.util.Locale
+
 import com.avsystem.commons.meta.Mapping.{ConcatIterable, KeyFilteredIterable}
 import com.avsystem.commons.serialization.GenCodec
 
@@ -11,20 +13,25 @@ import scala.collection.{MapLike, mutable}
   * Simple immutable structure to collect named values while retaining their order and
   * providing fast, hashed lookup by name when necessary.
   * Intended to be used for [[multi]] raw parameters.
+  * When `caseInsensitive = true`, fetching values by name will be case-insensitive, i.e. keys in internal
+  * hashmap and those passed to `contains`, `isDefinedAt`, `apply` and `applyOrElse` will be lowercased.
   */
-final class Mapping[+V](private val wrapped: IIterable[(String, V)])
+final class Mapping[+V](private val wrapped: IIterable[(String, V)], caseInsensitive: Boolean = false)
   extends IMap[String, V] with MapLike[String, V, Mapping[V]] {
+
+  private def normKey(key: String): String =
+    if (caseInsensitive) key.toLowerCase(Locale.ENGLISH) else key
 
   private[this] lazy val vector = {
     val keys = new mutable.HashSet[String]
-    wrapped.iterator.filter({ case (k, _) => keys.add(k) }).toVector
+    wrapped.iterator.filter({ case (k, _) => keys.add(normKey(k)) }).toVector
   }
   private[this] lazy val map =
-    wrapped.toMap
+    wrapped.iterator.map({ case (k, v) => (normKey(k), v) }).toMap
 
   override def empty: Mapping[V] = Mapping.empty
   override protected[this] def newBuilder: mutable.Builder[(String, V), Mapping[V]] =
-    Mapping.newBuilder[V]
+    Mapping.newBuilder[V]()
 
   override def size: Int =
     vector.size
@@ -33,17 +40,18 @@ final class Mapping[+V](private val wrapped: IIterable[(String, V)])
   override def valuesIterator: Iterator[V] =
     vector.iterator.map({ case (_, v) => v })
   override def keys: Iterable[String] =
-    map.keys
+    vector.map({ case (k, _) => k })
   override def keySet: ISet[String] =
-    map.keySet
+    vector.iterator.map({ case (k, _) => k }).toSet
   override def contains(key: String): Boolean =
-    map.contains(key)
+    map.contains(normKey(key))
   override def isDefinedAt(key: String): Boolean =
-    map.isDefinedAt(key)
+    map.isDefinedAt(normKey(key))
   override def applyOrElse[A1 <: String, B1 >: V](key: A1, default: A1 => B1): B1 =
-    map.applyOrElse(key, default)
+    if (!caseInsensitive) map.applyOrElse(key, default)
+    else map.applyOrElse(normKey(key), (_: String) => default(key))
   override def apply(key: String): V =
-    map.apply(key)
+    map.apply(normKey(key))
 
   def get(key: String): Option[V] = map.get(key)
   def -(key: String): Mapping[V] = Mapping(new KeyFilteredIterable(wrapped, _ == key))
@@ -65,10 +73,11 @@ final class Mapping[+V](private val wrapped: IIterable[(String, V)])
 object Mapping {
   def empty[V]: Mapping[V] = new Mapping(Nil)
   def apply[V](pairs: (String, V)*): Mapping[V] = new Mapping(pairs.toList)
-  def apply[V](pairs: IIterable[(String, V)]): Mapping[V] = new Mapping(pairs)
+  def apply[V](pairs: IIterable[(String, V)], caseInsensitive: Boolean = false): Mapping[V] =
+    new Mapping(pairs, caseInsensitive)
 
-  def newBuilder[V]: mutable.Builder[(String, V), Mapping[V]] =
-    new MListBuffer[(String, V)].mapResult(new Mapping(_))
+  def newBuilder[V](caseInsensitive: Boolean = false): mutable.Builder[(String, V), Mapping[V]] =
+    new MListBuffer[(String, V)].mapResult(new Mapping(_, caseInsensitive))
 
   private class ConcatIterable[+V](first: IIterable[V], second: IIterable[V]) extends IIterable[V] {
     def iterator: Iterator[V] = first.iterator ++ second.iterator
@@ -82,8 +91,8 @@ object Mapping {
   }
 
   private val reusableCBF = new CanBuildFrom[Nothing, (String, Any), Mapping[Any]] {
-    def apply(from: Nothing): mutable.Builder[(String, Any), Mapping[Any]] = newBuilder[Any]
-    def apply(): mutable.Builder[(String, Any), Mapping[Any]] = newBuilder[Any]
+    def apply(from: Nothing): mutable.Builder[(String, Any), Mapping[Any]] = newBuilder[Any]()
+    def apply(): mutable.Builder[(String, Any), Mapping[Any]] = newBuilder[Any]()
   }
 
   implicit def canBuildFrom[V]: CanBuildFrom[Nothing, (String, V), Mapping[V]] =

@@ -49,7 +49,7 @@ object QueryValue {
     }.mkString(FormKVPairSep)
 
   def decode(queryString: String): Mapping[QueryValue] = {
-    val builder = Mapping.newBuilder[QueryValue]
+    val builder = Mapping.newBuilder[QueryValue]()
     queryString.split(FormKVPairSep).iterator.filter(_.nonEmpty).map(_.split(FormKVSep, 2)).foreach {
       case Array(name, value) => builder += UrlEncoding.decode(name) -> QueryValue(UrlEncoding.decode(value))
       case _ => throw new IllegalArgumentException(s"invalid query string $queryString")
@@ -166,7 +166,7 @@ object HttpBody {
     case HttpBody.Empty => Mapping.empty
     case _ =>
       val oi = new JsonStringInput(new JsonReader(body.readJson().value)).readObject()
-      val builder = Mapping.newBuilder[JsonValue]
+      val builder = Mapping.newBuilder[JsonValue]()
       while (oi.hasNext) {
         val fi = oi.nextField()
         builder += ((fi.fieldName, JsonValue(fi.readRawJson())))
