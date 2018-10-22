@@ -57,6 +57,10 @@ object ReplyDecoders {
     case IntegerMsg(ttl) => Opt(Opt(ttl))
   }
 
+  val integerClientId: ReplyDecoder[ClientId] = {
+    case IntegerMsg(value) => ClientId(value)
+  }
+
   def bulkNamedEnum[E <: NamedEnum](companion: NamedEnumCompanion[E]): ReplyDecoder[E] = {
     case BulkStringMsg(data) => companion.byName(data.utf8String)
   }

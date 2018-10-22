@@ -29,12 +29,22 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
     bgrewriteaof.get
   }
 
+  apiTest("CLIENT ID") {
+    clientId.get
+  }
+
   apiTest("CLIENT LIST") {
     waitFor(clientList.exec)(_.nonEmpty, 100.millis).futureValue
   }
 
   apiTest("CLIENT PAUSE") {
     clientPause(10).get
+  }
+
+  apiTest("CLIENT UNBLOCK") {
+    clientUnblock(ClientId(0)).assertEquals(false)
+    clientUnblock(ClientId(0), UnblockModifier.Timeout).assertEquals(false)
+    clientUnblock(ClientId(0), UnblockModifier.Error).assertEquals(false)
   }
 
   apiTest("COMMAND") {

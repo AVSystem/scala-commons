@@ -17,6 +17,9 @@ trait NodeServerApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/bgsave BGSAVE]] */
   def bgsave(schedule: Boolean = false): Result[String] =
     execute(new Bgsave(schedule))
+  /** Executes [[http://redis.io/commands/client-id CLIENT ID]] */
+  def clientId: Result[ClientId] =
+    execute(ClientId)
   /** Executes [[http://redis.io/commands/client-kill CLIENT KILL]] */
   def clientKill(addr: ClientAddress): Result[Unit] =
     execute(new ClientKill(addr))
@@ -29,6 +32,9 @@ trait NodeServerApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/client-pause CLIENT PAUSE]] */
   def clientPause(timeout: Long): Result[Unit] =
     execute(new ClientPause(timeout))
+  /** Executes [[http://redis.io/commands/client-unblock CLIENT UNBLOCK]] */
+  def clientUnblock(clientId: ClientId, modifier: OptArg[UnblockModifier] = OptArg.Empty): Result[Boolean] =
+    execute(new ClientUnblock(clientId, modifier.toOpt))
   /** Executes [[http://redis.io/commands/command COMMAND]] */
   def command: Result[Seq[CommandInfo]] =
     execute(Command)
@@ -127,6 +133,10 @@ trait NodeServerApi extends ApiSubset {
     val encoded = encoder("BGSAVE").addFlag("SCHEDULE", schedule).result
   }
 
+  private object ClientId extends AbstractRedisCommand[ClientId](integerClientId) with NodeCommand {
+    val encoded = encoder("CLIENT", "ID").result
+  }
+
   private final class ClientKill(address: ClientAddress) extends RedisUnitCommand with NodeCommand {
     val encoded = encoder("CLIENT", "KILL").add(address.toString).result
   }
@@ -150,6 +160,11 @@ trait NodeServerApi extends ApiSubset {
 
   private final class ClientPause(timeout: Long) extends RedisUnitCommand with NodeCommand {
     val encoded = encoder("CLIENT", "PAUSE").add(timeout).result
+  }
+
+  private final class ClientUnblock(clientId: ClientId, modifier: Opt[UnblockModifier])
+    extends RedisBooleanCommand with NodeCommand {
+    val encoded = encoder("CLIENT", "UNBLOCK").add(clientId.raw).optAdd(modifier).result
   }
 
   private abstract class AbstractCommandInfoCommand
@@ -273,7 +288,7 @@ trait ConnectionServerApi extends NodeServerApi {
 
 sealed trait ClientFilter extends Any
 case class ClientId(raw: Long) extends AnyVal with ClientFilter {
-  override def toString = java.lang.Long.toUnsignedString(raw)
+  override def toString: String = java.lang.Long.toUnsignedString(raw)
 }
 object ClientId {
   def apply(str: String): ClientId =
@@ -317,20 +332,20 @@ class ClientFlags(val raw: Int) extends AnyVal {
   def ^(other: ClientFlags) = new ClientFlags(raw ^ other.raw)
   def unary_~ : ClientFlags = new ClientFlags(~raw)
 
-  def slaveMonitor = (this & O) != NoFlags
-  def slave = (this & S) != NoFlags
-  def master = (this & M) != NoFlags
-  def transaction = (this & x) != NoFlags
-  def waitingBlocking = (this & b) != NoFlags
-  def waitingVMIO = (this & i) != NoFlags
-  def dirty = (this & d) != NoFlags
-  def closingAfterReply = (this & c) != NoFlags
-  def unblocked = (this & u) != NoFlags
-  def unixSocket = (this & U) != NoFlags
-  def clusterReadonly = (this & r) != NoFlags
-  def closingASAP = (this & A) != NoFlags
+  def slaveMonitor: Boolean = (this & O) != NoFlags
+  def slave: Boolean = (this & S) != NoFlags
+  def master: Boolean = (this & M) != NoFlags
+  def transaction: Boolean = (this & x) != NoFlags
+  def waitingBlocking: Boolean = (this & b) != NoFlags
+  def waitingVMIO: Boolean = (this & i) != NoFlags
+  def dirty: Boolean = (this & d) != NoFlags
+  def closingAfterReply: Boolean = (this & c) != NoFlags
+  def unblocked: Boolean = (this & u) != NoFlags
+  def unixSocket: Boolean = (this & U) != NoFlags
+  def clusterReadonly: Boolean = (this & r) != NoFlags
+  def closingASAP: Boolean = (this & A) != NoFlags
 
-  override def toString =
+  override def toString: String =
     if (this == NoFlags) "N"
     else reprValuePairs.iterator.collect {
       case (ch, f) if (this & f) != NoFlags => ch
@@ -381,10 +396,10 @@ class ClientEvents(val raw: Int) extends AnyVal {
   def ^(other: ClientEvents) = new ClientEvents(raw ^ other.raw)
   def unary_~ : ClientEvents = new ClientEvents(~raw)
 
-  def readable = (this & r) != NoEvents
-  def writable = (this & w) != NoEvents
+  def readable: Boolean = (this & r) != NoEvents
+  def writable: Boolean = (this & w) != NoEvents
 
-  override def toString =
+  override def toString: String =
     reprValuePairs.iterator.collect {
       case (ch, ev) if (this & ev) != NoEvents => ch
     }.mkString
@@ -412,26 +427,33 @@ case class ClientInfo(infoLine: String) {
       (name, value)
     }
 
-  def id = ClientId(attrMap("id"))
-  def addr = ClientAddress(attrMap("addr"))
-  def fd = attrMap("fd").toInt
-  def name = attrMap("name")
-  def age = attrMap("age").toLong
-  def idle = attrMap("idle").toLong
-  def flags = ClientFlags(attrMap("flags"))
-  def db = attrMap("db").toInt
-  def sub = attrMap("sub").toInt
-  def psub = attrMap("psub").toInt
-  def multi = attrMap("multi").toInt
-  def qbuf = attrMap("qbuf").toLong
-  def qbufFree = attrMap("qbuf-free").toLong
-  def obl = attrMap("obl").toLong
-  def oll = attrMap("oll").toLong
-  def omem = attrMap("omem").toLong
-  def events = ClientEvents(attrMap("events"))
-  def cmd = attrMap("cmd").opt.filter(_ != "NULL")
+  def id: ClientId = ClientId(attrMap("id"))
+  def addr: ClientAddress = ClientAddress(attrMap("addr"))
+  def fd: Int = attrMap("fd").toInt
+  def name: String = attrMap("name")
+  def age: Long = attrMap("age").toLong
+  def idle: Long = attrMap("idle").toLong
+  def flags: ClientFlags = ClientFlags(attrMap("flags"))
+  def db: Int = attrMap("db").toInt
+  def sub: Int = attrMap("sub").toInt
+  def psub: Int = attrMap("psub").toInt
+  def multi: Int = attrMap("multi").toInt
+  def qbuf: Long = attrMap("qbuf").toLong
+  def qbufFree: Long = attrMap("qbuf-free").toLong
+  def obl: Long = attrMap("obl").toLong
+  def oll: Long = attrMap("oll").toLong
+  def omem: Long = attrMap("omem").toLong
+  def events: ClientEvents = ClientEvents(attrMap("events"))
+  def cmd: Opt[String] = attrMap("cmd").opt.filter(_ != "NULL")
 
-  override def toString = infoLine
+  override def toString: String = infoLine
+}
+
+sealed abstract class UnblockModifier(val name: String) extends NamedEnum
+object UnblockModifier extends NamedEnumCompanion[UnblockModifier] {
+  object Timeout extends UnblockModifier("TIMEOUT")
+  object Error extends UnblockModifier("ERROR")
+  val values: List[UnblockModifier] = caseObjects
 }
 
 case class CommandInfo(
@@ -453,22 +475,22 @@ class CommandFlags(val raw: Int) extends AnyVal {
   def ^(other: CommandFlags) = new CommandFlags(raw ^ other.raw)
   def unary_~ : CommandFlags = new CommandFlags(~raw)
 
-  def write = (this & Write) != NoFlags
-  def readonly = (this & Readonly) != NoFlags
-  def denyoom = (this & Denyoom) != NoFlags
-  def admin = (this & Admin) != NoFlags
-  def pubsub = (this & Pubsub) != NoFlags
-  def noscript = (this & Noscript) != NoFlags
-  def random = (this & Random) != NoFlags
-  def sortForScript = (this & SortForScript) != NoFlags
-  def loading = (this & Loading) != NoFlags
-  def stale = (this & Stale) != NoFlags
-  def skipMonitor = (this & SkipMonitor) != NoFlags
-  def asking = (this & Asking) != NoFlags
-  def fast = (this & Fast) != NoFlags
-  def movablekeys = (this & Movablekeys) != NoFlags
+  def write: Boolean = (this & Write) != NoFlags
+  def readonly: Boolean = (this & Readonly) != NoFlags
+  def denyoom: Boolean = (this & Denyoom) != NoFlags
+  def admin: Boolean = (this & Admin) != NoFlags
+  def pubsub: Boolean = (this & Pubsub) != NoFlags
+  def noscript: Boolean = (this & Noscript) != NoFlags
+  def random: Boolean = (this & Random) != NoFlags
+  def sortForScript: Boolean = (this & SortForScript) != NoFlags
+  def loading: Boolean = (this & Loading) != NoFlags
+  def stale: Boolean = (this & Stale) != NoFlags
+  def skipMonitor: Boolean = (this & SkipMonitor) != NoFlags
+  def asking: Boolean = (this & Asking) != NoFlags
+  def fast: Boolean = (this & Fast) != NoFlags
+  def movablekeys: Boolean = (this & Movablekeys) != NoFlags
 
-  override def toString =
+  override def toString: String =
     byRepr.iterator.collect({ case (repr, flag) if (this & flag) != NoFlags => repr }).mkString("CommandFlags(", ",", ")")
 }
 object CommandFlags {
