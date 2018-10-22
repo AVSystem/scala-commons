@@ -6,7 +6,6 @@ import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
-import com.avsystem.commons.redis.util.SingletonSeq
 
 trait SortedSetsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/zadd ZADD]] */
@@ -54,6 +53,18 @@ trait SortedSetsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/zlexcount ZLEXCOUNT]] */
   def zlexcount(key: Key, min: LexLimit[Value] = LexLimit.MinusInf, max: LexLimit[Value] = LexLimit.PlusInf): Result[Long] =
     execute(new Zlexcount(key, min, max))
+  /** Executes [[http://redis.io/commands/zpopmax ZPOPMAX]] */
+  def zpopmax(key: Key): Result[Opt[(Value, Double)]] =
+    execute(new Zpopmax(key, Opt.Empty).map(_.headOpt))
+  /** Executes [[http://redis.io/commands/zpopmax ZPOPMAX]] */
+  def zpopmax(key: Key, count: Long): Result[Seq[(Value, Double)]] =
+    execute(new Zpopmax(key, Opt(count)))
+  /** Executes [[http://redis.io/commands/zpopmin ZPOPMIN]]] */
+  def zpopmin(key: Key): Result[Opt[(Value, Double)]] =
+    execute(new Zpopmin(key, Opt.Empty).map(_.headOpt))
+  /** Executes [[http://redis.io/commands/zpopmin ZPOPMIN]] */
+  def zpopmin(key: Key, count: Long): Result[Seq[(Value, Double)]] =
+    execute(new Zpopmin(key, Opt(count)))
   /** Executes [[http://redis.io/commands/zrange ZRANGE]] */
   def zrange(key: Key, start: Long = 0, stop: Long = -1): Result[Seq[Value]] =
     execute(new Zrange(key, start, stop))
@@ -139,7 +150,7 @@ trait SortedSetsApi extends ApiSubset {
 
   private final class Zadd(key: Key, memberScores: TraversableOnce[(Value, Double)], emptyData: Boolean, existence: Opt[Boolean], changed: Boolean)
     extends AbstractZadd[Int](integerInt)(key, memberScores, existence, changed, incr = false) {
-    override def immediateResult = if(emptyData) Opt(0) else Opt.Empty
+    override def immediateResult = if (emptyData) Opt(0) else Opt.Empty
   }
 
   private final class ZaddIncr(key: Key, member: Value, score: Double, existence: Opt[Boolean])
@@ -171,6 +182,16 @@ trait SortedSetsApi extends ApiSubset {
   private abstract class AbstractZrange[T](cmd: String, decoder: ReplyDecoder[Seq[T]])(key: Key, start: Long, stop: Long, withscores: Boolean)
     extends AbstractRedisCommand[Seq[T]](decoder) with NodeCommand {
     val encoded = encoder(cmd).key(key).add(start).add(stop).addFlag("WITHSCORES", withscores).result
+  }
+
+  private final class Zpopmin(key: Key, count: Opt[Long])
+    extends AbstractRedisCommand[Seq[(Value, Double)]](pairedMultiBulk(bulk[Value], bulkDouble)) with NodeCommand {
+    val encoded = encoder("ZPOPMIN").key(key).optAdd(count).result
+  }
+
+  private final class Zpopmax(key: Key, count: Opt[Long])
+    extends AbstractRedisCommand[Seq[(Value, Double)]](pairedMultiBulk(bulk[Value], bulkDouble)) with NodeCommand {
+    val encoded = encoder("ZPOPMAX").key(key).optAdd(count).result
   }
 
   private final class Zrange(key: Key, start: Long, stop: Long)
