@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package meta
 
-import java.util.Locale
-
 import com.avsystem.commons.meta.Mapping.{ConcatIterable, KeyFilteredIterable}
 import com.avsystem.commons.serialization.GenCodec
 
@@ -20,7 +18,7 @@ final class Mapping[+V](private val wrapped: IIterable[(String, V)], caseInsensi
   extends IMap[String, V] with MapLike[String, V, Mapping[V]] {
 
   private def normKey(key: String): String =
-    if (caseInsensitive) key.toLowerCase(Locale.ENGLISH) else key
+    if (caseInsensitive) key.toLowerCase else key
 
   private[this] lazy val vector = {
     val keys = new mutable.HashSet[String]
