@@ -27,7 +27,8 @@ object RedisDataCodec extends LowPriorityRedisDataCodecs {
   implicit val ByteStringCodec: RedisDataCodec[ByteString] = RedisDataCodec(identity, identity)
   implicit val ByteArrayCodec: RedisDataCodec[Array[Byte]] = RedisDataCodec(_.toArray, ByteString(_))
   implicit val StringCodec: RedisDataCodec[String] = RedisDataCodec(_.utf8String, ByteString(_))
-  implicit val BooleanKeyCodec: RedisDataCodec[Boolean] = RedisDataCodec(bs => bs.utf8String.toInt != 0, b => ByteString(if (b) "1" else "0"))
+  implicit val BooleanKeyCodec: RedisDataCodec[Boolean] =
+    RedisDataCodec(bs => bs.utf8String.toInt != 0, b => ByteString(if (b) "1" else "0"))
   implicit val CharCodec: RedisDataCodec[Char] = RedisDataCodec(_.utf8String.charAt(0), v => ByteString(v.toString))
   implicit val ByteCodec: RedisDataCodec[Byte] = RedisDataCodec(_.utf8String.toByte, v => ByteString(v.toString))
   implicit val ShortCodec: RedisDataCodec[Short] = RedisDataCodec(_.utf8String.toShort, v => ByteString(v.toString))
@@ -35,7 +36,8 @@ object RedisDataCodec extends LowPriorityRedisDataCodecs {
   implicit val LongCodec: RedisDataCodec[Long] = RedisDataCodec(_.utf8String.toLong, v => ByteString(v.toString))
   implicit val FloatCodec: RedisDataCodec[Float] = RedisDataCodec(_.utf8String.toFloat, v => ByteString(v.toString))
   implicit val DoubleCodec: RedisDataCodec[Double] = RedisDataCodec(_.utf8String.toDouble, v => ByteString(v.toString))
-  implicit val NothingCodec: RedisDataCodec[Nothing] = new RedisDataCodec[Nothing](_ => sys.error("nothing"), _ => sys.error("nothing"))
+  implicit val NothingCodec: RedisDataCodec[Nothing] =
+    new RedisDataCodec[Nothing](_ => sys.error("nothing"), _ => sys.error("nothing"))
   implicit def namedEnumCodec[E <: NamedEnum](implicit companion: NamedEnumCompanion[E]): RedisDataCodec[E] =
     RedisDataCodec(bs => companion.byName(bs.utf8String), v => ByteString(v.name))
 }

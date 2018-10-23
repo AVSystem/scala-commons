@@ -107,6 +107,10 @@ object ReplyDecoders {
     case BulkStringMsg(data) => Cursor(data.utf8String.toLong)
   }
 
+  val bulkXEntryId: ReplyDecoder[XEntryId] = {
+    case BulkStringMsg(data) => XEntryId.parse(data.utf8String)
+  }
+
   val simpleUTF8: ReplyDecoder[String] =
     simple(_.utf8String)
 
