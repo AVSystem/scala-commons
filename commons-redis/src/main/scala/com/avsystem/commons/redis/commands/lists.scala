@@ -27,7 +27,7 @@ trait ListsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/lpush LPUSH]]
     * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
   def lpushOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
-    if(values.nonEmpty) lpush(key, values) else llen(key)
+    if (values.nonEmpty) lpush(key, values) else llen(key)
   /** Executes [[http://redis.io/commands/lpushx LPUSHX]] */
   def lpushx(key: Key, value: Value, values: Value*): Result[Long] =
     execute(new Lpushx(key, value +:: values))
@@ -37,7 +37,7 @@ trait ListsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/lpush LPUSHX]]
     * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
   def lpushxOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
-    if(values.nonEmpty) lpushx(key, values) else llen(key)
+    if (values.nonEmpty) lpushx(key, values) else llen(key)
   /** Executes [[http://redis.io/commands/lrange LRANGE]] */
   def lrange(key: Key, start: Long = 0, stop: Long = -1): Result[Seq[Value]] =
     execute(new Lrange(key, start, stop))
@@ -66,7 +66,7 @@ trait ListsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/lpush RPUSH]]
     * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
   def rpushOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
-    if(values.nonEmpty) rpush(key, values) else llen(key)
+    if (values.nonEmpty) rpush(key, values) else llen(key)
   /** Executes [[http://redis.io/commands/rpushx RPUSHX]] */
   def rpushx(key: Key, value: Value, values: Value*): Result[Long] =
     execute(new Rpushx(key, value +:: values))
@@ -76,7 +76,7 @@ trait ListsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/lpush RPUSHX]]
     * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
   def rpushxOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
-    if(values.nonEmpty) rpushx(key, values) else llen(key)
+    if (values.nonEmpty) rpushx(key, values) else llen(key)
 
   private final class Lindex(key: Key, index: Long) extends RedisOptDataCommand[Value] with NodeCommand {
     val encoded: Encoded = encoder("LINDEX").key(key).add(index).result
@@ -191,7 +191,11 @@ trait BlockingListsApi extends ApiSubset {
   }
 }
 
-class RemCount private(val raw: Long) extends AnyVal
+class RemCount private(val raw: Long) extends AnyVal {
+  def count: Long = math.abs(raw)
+  def fromHead: Boolean = raw > 0
+  def fromTail: Boolean = raw < 0
+}
 object RemCount {
   def apply(count: Long, fromHead: Boolean): RemCount = {
     require(count > 0, "Count must be positive")
