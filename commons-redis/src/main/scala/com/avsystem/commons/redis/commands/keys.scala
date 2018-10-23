@@ -127,25 +127,25 @@ trait KeyedKeysApi extends ApiSubset {
     execute(new Unlink(keys))
 
   private final class Del(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("DEL").keys(keys).result
-    override def immediateResult = whenEmpty(keys, 0)
+    val encoded: Encoded = encoder("DEL").keys(keys).result
+    override def immediateResult: Opt[Int] = whenEmpty(keys, 0)
   }
 
   private final class Dump(key: Key) extends RedisOptCommand[Dumped](bulk(Dumped)) with NodeCommand {
-    val encoded = encoder("DUMP").key(key).result
+    val encoded: Encoded = encoder("DUMP").key(key).result
   }
 
   private final class Exists(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("EXISTS").keys(keys).result
-    override def immediateResult = whenEmpty(keys, 0)
+    val encoded: Encoded = encoder("EXISTS").keys(keys).result
+    override def immediateResult: Opt[Int] = whenEmpty(keys, 0)
   }
 
   private final class Expire(key: Key, seconds: Long) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("EXPIRE").key(key).add(seconds).result
+    val encoded: Encoded = encoder("EXPIRE").key(key).add(seconds).result
   }
 
   private final class Expireat(key: Key, timestamp: Long) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("EXPIREAT").key(key).add(timestamp).result
+    val encoded: Encoded = encoder("EXPIREAT").key(key).add(timestamp).result
   }
 
   private final class Migrate(keys: Iterable[Key], address: NodeAddress, destinationDb: Int,
@@ -153,7 +153,7 @@ trait KeyedKeysApi extends ApiSubset {
 
     private val multiKey = keys.size != 1
 
-    val encoded = {
+    val encoded: Encoded = {
       val enc = encoder("MIGRATE").add(address.ip).add(address.port)
       if (multiKey) {
         enc.add(ByteString.empty)
@@ -167,65 +167,65 @@ trait KeyedKeysApi extends ApiSubset {
       enc.result
     }
 
-    def decodeExpected = {
-      case SimpleStringStr("OK") => true
-      case SimpleStringStr("NOKEY") => false
+    def decodeExpected: ReplyDecoder[Boolean] = {
+      case RedisMsg.Ok => true
+      case RedisMsg.Nokey => false
     }
 
-    override def immediateResult = whenEmpty(keys, true)
+    override def immediateResult: Opt[Boolean] = whenEmpty(keys, true)
   }
 
   private final class ObjectRefcount(key: Key) extends RedisOptLongCommand with NodeCommand {
-    val encoded = encoder("OBJECT", "REFCOUNT").key(key).result
+    val encoded: Encoded = encoder("OBJECT", "REFCOUNT").key(key).result
   }
 
   private final class ObjectEncoding(key: Key)
     extends RedisOptCommand[Encoding](bulkNamedEnum(Encoding)) with NodeCommand {
-    val encoded = encoder("OBJECT", "ENCODING").key(key).result
+    val encoded: Encoded = encoder("OBJECT", "ENCODING").key(key).result
   }
 
   private final class ObjectIdletime(key: Key) extends RedisOptLongCommand with NodeCommand {
-    val encoded = encoder("OBJECT", "IDLETIME").key(key).result
+    val encoded: Encoded = encoder("OBJECT", "IDLETIME").key(key).result
   }
 
   private final class MemoryUsage(key: Key, samples: Opt[Long]) extends RedisOptLongCommand with NodeCommand {
-    val encoded = encoder("MEMORY", "USAGE").key(key).optAdd("SAMPLES", samples).result
+    val encoded: Encoded = encoder("MEMORY", "USAGE").key(key).optAdd("SAMPLES", samples).result
   }
 
   private final class Persist(key: Key) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("PERSIST").key(key).result
+    val encoded: Encoded = encoder("PERSIST").key(key).result
   }
 
   private final class Pexpire(key: Key, milliseconds: Long) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("PEXPIRE").key(key).add(milliseconds).result
+    val encoded: Encoded = encoder("PEXPIRE").key(key).add(milliseconds).result
   }
 
   private final class Pexpireat(key: Key, millisecondsTimestamp: Long) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("PEXPIREAT").key(key).add(millisecondsTimestamp).result
+    val encoded: Encoded = encoder("PEXPIREAT").key(key).add(millisecondsTimestamp).result
   }
 
   private final class Pttl(key: Key) extends AbstractRedisCommand[Opt[Opt[Long]]](integerTtl) with NodeCommand {
-    val encoded = encoder("PTTL").key(key).result
+    val encoded: Encoded = encoder("PTTL").key(key).result
   }
 
   private final class Rename(key: Key, newkey: Key) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("RENAME").key(key).key(newkey).result
+    val encoded: Encoded = encoder("RENAME").key(key).key(newkey).result
   }
 
   private final class Renamenx(key: Key, newkey: Key) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("RENAMENX").key(key).key(newkey).result
+    val encoded: Encoded = encoder("RENAMENX").key(key).key(newkey).result
   }
 
   private final class Restore(key: Key, ttl: Long, dumpedValue: Dumped, replace: Boolean)
     extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("RESTORE").key(key).add(ttl).add(dumpedValue.raw).addFlag("REPLACE", replace).result
+    val encoded: Encoded = encoder("RESTORE").key(key).add(ttl).add(dumpedValue.raw).addFlag("REPLACE", replace).result
   }
 
   private abstract class AbstractSort[T](decoder: ReplyDecoder[T])
     (key: Key, by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit],
       gets: Seq[SortPattern[Key, Field]], sortOrder: Opt[SortOrder], alpha: Boolean, destination: Opt[Key])
     extends AbstractRedisCommand[T](decoder) with NodeCommand {
-    val encoded = {
+    val encoded: Encoded = {
       val enc = encoder("SORT").key(key).optAdd("BY", by).optAdd("LIMIT", limit)
       gets.foreach(sp => enc.add("GET").add(sp))
       enc.optAdd(sortOrder).addFlag("ALPHA", alpha).optKey("STORE", destination).result
@@ -243,21 +243,21 @@ trait KeyedKeysApi extends ApiSubset {
     extends AbstractSort[Long](integerLong)(key, by, limit, gets, sortOrder, alpha, Opt(destination))
 
   private final class Touch(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("TOUCH").keys(keys).result
-    override def immediateResult = whenEmpty(keys, 0)
+    val encoded: Encoded = encoder("TOUCH").keys(keys).result
+    override def immediateResult: Opt[Int] = whenEmpty(keys, 0)
   }
 
   private final class Ttl(key: Key) extends AbstractRedisCommand[Opt[Opt[Long]]](integerTtl) with NodeCommand {
-    val encoded = encoder("TTL").key(key).result
+    val encoded: Encoded = encoder("TTL").key(key).result
   }
 
   private final class Type(key: Key) extends AbstractRedisCommand[RedisType](simple[RedisType]) with NodeCommand {
-    val encoded = encoder("TYPE").key(key).result
+    val encoded: Encoded = encoder("TYPE").key(key).result
   }
 
   private final class Unlink(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("UNLINK").keys(keys).result
-    override def immediateResult = whenEmpty(keys, 0)
+    val encoded: Encoded = encoder("UNLINK").keys(keys).result
+    override def immediateResult: Opt[Int] = whenEmpty(keys, 0)
   }
 }
 
@@ -279,24 +279,24 @@ trait NodeKeysApi extends KeyedKeysApi with ApiSubset {
     execute(new Wait(numslaves, timeout))
 
   private final class Move(key: Key, db: Int) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("MOVE").key(key).add(db).result
+    val encoded: Encoded = encoder("MOVE").key(key).add(db).result
   }
 
   private final class Keys(pattern: Key) extends RedisDataSetCommand[Key] with NodeCommand {
-    val encoded = encoder("KEYS").data(pattern).result
+    val encoded: Encoded = encoder("KEYS").data(pattern).result
   }
 
   private final class Scan(cursor: Cursor, matchPattern: Opt[Key], count: Opt[Long])
     extends RedisScanCommand[Key](multiBulkSeq[Key]) with NodeCommand {
-    val encoded = encoder("SCAN").add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
+    val encoded: Encoded = encoder("SCAN").add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 
   private object Randomkey extends RedisOptDataCommand[Key] with NodeCommand {
-    val encoded = encoder("RANDOMKEY").result
+    val encoded: Encoded = encoder("RANDOMKEY").result
   }
 
   private final class Wait(numslaves: Int, timeout: Long) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("WAIT").add(numslaves).add(timeout).result
+    val encoded: Encoded = encoder("WAIT").add(numslaves).add(timeout).result
   }
 }
 

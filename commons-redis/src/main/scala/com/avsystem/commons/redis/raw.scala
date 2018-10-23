@@ -17,19 +17,20 @@ trait RawCommands {
 }
 
 trait RawCommand extends RawCommandPack with RawCommands with ReplyPreprocessor {
-  def encoded: ArrayMsg[BulkStringMsg]
+  type Encoded = ArrayMsg[BulkStringMsg]
+  def encoded: Encoded
   def updateWatchState(message: RedisMsg, state: WatchState): Unit = ()
   def level: Level
 
-  final def checkLevel(minAllowed: Level, clientType: String) =
+  final def checkLevel(minAllowed: Level, clientType: String): Unit =
     if (!minAllowed.allows(level)) {
       throw new ForbiddenCommandException(this, clientType)
     }
 
-  final def rawCommands(inTransaction: Boolean) = this
-  final def emitCommands(consumer: RawCommand => Unit) = consumer(this)
-  final def createPreprocessor(replyCount: Int) = this
-  final def preprocess(message: RedisMsg, state: WatchState) = {
+  final def rawCommands(inTransaction: Boolean): RawCommand = this
+  final def emitCommands(consumer: RawCommand => Unit): Unit = consumer(this)
+  final def createPreprocessor(replyCount: Int): RawCommand = this
+  final def preprocess(message: RedisMsg, state: WatchState): Opt[RedisMsg] = {
     updateWatchState(message, state)
     Opt(message)
   }
@@ -44,16 +45,16 @@ trait RawCommand extends RawCommandPack with RawCommands with ReplyPreprocessor 
 }
 
 trait UnsafeCommand extends RawCommand {
-  def level = Level.Unsafe
+  def level: Level = Level.Unsafe
 }
 trait ConnectionCommand extends RawCommand {
-  def level = Level.Connection
+  def level: Level = Level.Connection
 }
 trait OperationCommand extends RawCommand {
-  def level = Level.Operation
+  def level: Level = Level.Operation
 }
 trait NodeCommand extends RawCommand {
-  def level = Level.Node
+  def level: Level = Level.Node
 }
 
 object RawCommand {
@@ -103,8 +104,8 @@ trait RawCommandPack extends RawCommandPacks {
   def checkLevel(minAllowed: Level, clientType: String): Unit
 
   def isAsking: Boolean = false
-  final def emitCommandPacks(consumer: RawCommandPack => Unit) = consumer(this)
-  final def computeSize(limit: Int) = limit min 1
+  final def emitCommandPacks(consumer: RawCommandPack => Unit): Unit = consumer(this)
+  final def computeSize(limit: Int): Int = limit min 1
 }
 
 trait WatchState {

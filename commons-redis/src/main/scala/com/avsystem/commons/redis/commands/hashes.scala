@@ -74,70 +74,70 @@ trait HashesApi extends ApiSubset {
     execute(new Hvals(key))
 
   private final class Hdel(key: Key, fields: Iterable[Field]) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("HDEL").key(key).datas(fields).result
-    override def immediateResult = whenEmpty(fields, 0)
+    val encoded: Encoded = encoder("HDEL").key(key).datas(fields).result
+    override def immediateResult: Opt[Int] = whenEmpty(fields, 0)
   }
 
   private final class Hexists(key: Key, field: Field) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("HEXISTS").key(key).data(field).result
+    val encoded: Encoded = encoder("HEXISTS").key(key).data(field).result
   }
 
   private final class Hget(key: Key, field: Field)
     extends RedisOptDataCommand[Value] with NodeCommand {
-    val encoded = encoder("HGET").key(key).data(field).result
+    val encoded: Encoded = encoder("HGET").key(key).data(field).result
   }
 
   private final class Hgetall(key: Key)
     extends AbstractRedisCommand[BMap[Field, Value]](mapMultiBulk[Field, Value]) with NodeCommand {
-    val encoded = encoder("HGETALL").key(key).result
+    val encoded: Encoded = encoder("HGETALL").key(key).result
   }
 
   private final class Hincrby(key: Key, field: Field, increment: Long) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("HINCRBY").key(key).data(field).add(increment).result
+    val encoded: Encoded = encoder("HINCRBY").key(key).data(field).add(increment).result
   }
 
   private final class Hincrbyfloat(key: Key, field: Field, increment: Double) extends RedisDoubleCommand with NodeCommand {
-    val encoded = encoder("HINCRBYFLOAT").key(key).data(field).add(increment).result
+    val encoded: Encoded = encoder("HINCRBYFLOAT").key(key).data(field).add(increment).result
   }
 
   private final class Hkeys(key: Key) extends RedisDataSetCommand[Field] with NodeCommand {
-    val encoded = encoder("HKEYS").key(key).result
+    val encoded: Encoded = encoder("HKEYS").key(key).result
   }
 
   private final class Hlen(key: Key) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("HLEN").key(key).result
+    val encoded: Encoded = encoder("HLEN").key(key).result
   }
 
   private final class Hmget(key: Key, fields: Iterable[Field])
     extends RedisOptDataSeqCommand[Value] with NodeCommand {
-    val encoded = encoder("HMGET").key(key).datas(fields).result
-    override def immediateResult = whenEmpty(fields, Seq.empty)
+    val encoded: Encoded = encoder("HMGET").key(key).datas(fields).result
+    override def immediateResult: Opt[Seq[Opt[Value]]] = whenEmpty(fields, Seq.empty)
   }
 
   private final class Hmset(key: Key, fieldValues: Iterable[(Field, Value)]) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("HMSET").key(key).dataPairs(fieldValues).result
-    override def immediateResult = whenEmpty(fieldValues, ())
+    val encoded: Encoded = encoder("HMSET").key(key).dataPairs(fieldValues).result
+    override def immediateResult: Opt[Unit] = whenEmpty(fieldValues, ())
   }
 
   private final class Hscan(key: Key, cursor: Cursor, matchPattern: Opt[Field], count: Opt[Int])
     extends RedisScanCommand[(Field, Value)](pairedMultiBulk[Field, Value]) with NodeCommand {
-    val encoded = encoder("HSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
+    val encoded: Encoded = encoder("HSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 
   private final class Hset(key: Key, fieldValues: Iterable[(Field, Value)]) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("HSET").key(key).dataPairs(fieldValues).result
-    override def immediateResult = whenEmpty(fieldValues, 0)
+    val encoded: Encoded = encoder("HSET").key(key).dataPairs(fieldValues).result
+    override def immediateResult: Opt[Int] = whenEmpty(fieldValues, 0)
   }
 
   private final class Hsetnx(key: Key, field: Field, value: Value) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("HSETNX").key(key).data(field).data(value).result
+    val encoded: Encoded = encoder("HSETNX").key(key).data(field).data(value).result
   }
 
   private final class Hstrlen(key: Key, field: Field) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("HSTRLEN").key(key).data(field).result
+    val encoded: Encoded = encoder("HSTRLEN").key(key).data(field).result
   }
 
   private final class Hvals(key: Key) extends RedisDataSeqCommand[Value] with NodeCommand {
-    val encoded = encoder("HVALS").key(key).result
+    val encoded: Encoded = encoder("HVALS").key(key).result
   }
 }

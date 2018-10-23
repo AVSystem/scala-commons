@@ -276,7 +276,7 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
 }
 
 trait SinglePackBatch[+A] extends RedisBatch[A] with RawCommandPack {
-  final def rawCommandPacks = this
+  final def rawCommandPacks: RawCommandPacks = this
 }
 
 trait ImmediateBatch[+A] extends RedisBatch[A] with RawCommandPacks {
@@ -284,7 +284,7 @@ trait ImmediateBatch[+A] extends RedisBatch[A] with RawCommandPacks {
   final def rawCommandPacks: RawCommandPacks = this
   final def decodeReplies(replies: Int => RedisReply, index: RedisBatch.Index, inTransaction: Boolean): A = result
   final def emitCommandPacks(consumer: RawCommandPack => Unit): Unit = ()
-  final def computeSize(limit: Int) = 0
+  final def computeSize(limit: Int): Int = 0
 }
 
 /**

@@ -79,61 +79,61 @@ trait ListsApi extends ApiSubset {
     if(values.nonEmpty) rpushx(key, values) else llen(key)
 
   private final class Lindex(key: Key, index: Long) extends RedisOptDataCommand[Value] with NodeCommand {
-    val encoded = encoder("LINDEX").key(key).add(index).result
+    val encoded: Encoded = encoder("LINDEX").key(key).add(index).result
   }
 
   private final class Linsert(key: Key, before: Boolean, pivot: Value, value: Value)
     extends RedisPositiveLongCommand with NodeCommand {
-    val encoded = encoder("LINSERT").key(key).add(if (before) "BEFORE" else "AFTER").data(pivot).data(value).result
+    val encoded: Encoded = encoder("LINSERT").key(key).add(if (before) "BEFORE" else "AFTER").data(pivot).data(value).result
   }
 
   private final class Llen(key: Key) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("LLEN").key(key).result
+    val encoded: Encoded = encoder("LLEN").key(key).result
   }
 
   private final class Lpop(key: Key) extends RedisOptDataCommand[Value] with NodeCommand {
-    val encoded = encoder("LPOP").key(key).result
+    val encoded: Encoded = encoder("LPOP").key(key).result
   }
 
   private final class Lpush(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("LPUSH").key(key).datas(values).result
+    val encoded: Encoded = encoder("LPUSH").key(key).datas(values).result
   }
 
   private final class Lpushx(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("LPUSHX").key(key).datas(values).result
+    val encoded: Encoded = encoder("LPUSHX").key(key).datas(values).result
   }
 
   private final class Lrange(key: Key, start: Long, stop: Long)
     extends RedisDataSeqCommand[Value] with NodeCommand {
-    val encoded = encoder("LRANGE").key(key).add(start).add(stop).result
+    val encoded: Encoded = encoder("LRANGE").key(key).add(start).add(stop).result
   }
 
   private final class Lrem(key: Key, count: RemCount, value: Value) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("LREM").key(key).add(count.raw).data(value).result
+    val encoded: Encoded = encoder("LREM").key(key).add(count.raw).data(value).result
   }
 
   private final class Lset(key: Key, index: Long, value: Value) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("LSET").key(key).add(index).data(value).result
+    val encoded: Encoded = encoder("LSET").key(key).add(index).data(value).result
   }
 
   private final class Ltrim(key: Key, start: Long, stop: Long) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("LTRIM").key(key).add(start).add(stop).result
+    val encoded: Encoded = encoder("LTRIM").key(key).add(start).add(stop).result
   }
 
   private final class Rpop(key: Key) extends RedisOptDataCommand[Value] with NodeCommand {
-    val encoded = encoder("RPOP").key(key).result
+    val encoded: Encoded = encoder("RPOP").key(key).result
   }
 
   private final class Rpoplpush(source: Key, destination: Key) extends RedisOptDataCommand[Value] with NodeCommand {
-    val encoded = encoder("RPOPLPUSH").key(source).key(destination).result
+    val encoded: Encoded = encoder("RPOPLPUSH").key(source).key(destination).result
   }
 
   private final class Rpush(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("RPUSH").key(key).datas(values).result
+    val encoded: Encoded = encoder("RPUSH").key(key).datas(values).result
   }
 
   private final class Rpushx(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("RPUSHX").key(key).datas(values).result
+    val encoded: Encoded = encoder("RPUSHX").key(key).datas(values).result
   }
 }
 
@@ -177,17 +177,17 @@ trait BlockingListsApi extends ApiSubset {
 
   private final class Blpop(keys: Iterable[Key], timeout: Int)
     extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkPair(bulk[Key], bulk[Value]))) with ConnectionCommand {
-    val encoded = encoder("BLPOP").keys(keys).add(timeout).result
+    val encoded: Encoded = encoder("BLPOP").keys(keys).add(timeout).result
   }
 
   private final class Brpop(keys: Iterable[Key], timeout: Int)
     extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkPair(bulk[Key], bulk[Value]))) with ConnectionCommand {
-    val encoded = encoder("BRPOP").keys(keys).add(timeout).result
+    val encoded: Encoded = encoder("BRPOP").keys(keys).add(timeout).result
   }
 
   private final class Brpoplpush(source: Key, destination: Key, timeout: Int)
     extends AbstractRedisCommand[Opt[Value]](nullMultiBulkOr(bulk[Value])) with ConnectionCommand {
-    val encoded = encoder("BRPOPLPUSH").key(source).key(destination).add(timeout).result
+    val encoded: Encoded = encoder("BRPOPLPUSH").key(source).key(destination).add(timeout).result
   }
 }
 

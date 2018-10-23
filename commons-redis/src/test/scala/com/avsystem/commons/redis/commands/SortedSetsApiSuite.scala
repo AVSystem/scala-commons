@@ -3,7 +3,6 @@ package redis.commands
 
 import com.avsystem.commons.redis._
 
-
 trait SortedSetsApiSuite extends CommandsSuite {
 
   import RedisApi.Batches.StringTyped._

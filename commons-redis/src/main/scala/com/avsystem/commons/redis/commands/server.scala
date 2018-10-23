@@ -126,23 +126,23 @@ trait NodeServerApi extends ApiSubset {
     execute(Time)
 
   private object Bgrewriteaof extends RedisSimpleStringCommand with NodeCommand {
-    val encoded = encoder("BGREWRITEAOF").result
+    val encoded: Encoded = encoder("BGREWRITEAOF").result
   }
 
   private final class Bgsave(schedule: Boolean) extends RedisSimpleStringCommand with NodeCommand {
-    val encoded = encoder("BGSAVE").addFlag("SCHEDULE", schedule).result
+    val encoded: Encoded = encoder("BGSAVE").addFlag("SCHEDULE", schedule).result
   }
 
   private object ClientId extends AbstractRedisCommand[ClientId](integerClientId) with NodeCommand {
-    val encoded = encoder("CLIENT", "ID").result
+    val encoded: Encoded = encoder("CLIENT", "ID").result
   }
 
   private final class ClientKill(address: ClientAddress) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("CLIENT", "KILL").add(address.toString).result
+    val encoded: Encoded = encoder("CLIENT", "KILL").add(address.toString).result
   }
 
   private final class ClientKillFiltered(filters: Seq[ClientFilter]) extends RedisIntCommand with NodeCommand {
-    val encoded = {
+    val encoded: Encoded = {
       val enc = encoder("CLIENT", "KILL")
       if (filters.nonEmpty) {
         enc.add(filters)
@@ -155,93 +155,93 @@ trait NodeServerApi extends ApiSubset {
   }
 
   private object ClientList extends AbstractRedisCommand[Seq[ClientInfo]](bulkClientInfos) with NodeCommand {
-    val encoded = encoder("CLIENT", "LIST").result
+    val encoded: Encoded = encoder("CLIENT", "LIST").result
   }
 
   private final class ClientPause(timeout: Long) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("CLIENT", "PAUSE").add(timeout).result
+    val encoded: Encoded = encoder("CLIENT", "PAUSE").add(timeout).result
   }
 
   private final class ClientUnblock(clientId: ClientId, modifier: Opt[UnblockModifier])
     extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("CLIENT", "UNBLOCK").add(clientId.raw).optAdd(modifier).result
+    val encoded: Encoded = encoder("CLIENT", "UNBLOCK").add(clientId.raw).optAdd(modifier).result
   }
 
   private abstract class AbstractCommandInfoCommand
     extends AbstractRedisCommand[Seq[CommandInfo]](multiBulkSeq(multiBulkCommandInfo)) with NodeCommand
 
   private object Command extends AbstractCommandInfoCommand {
-    val encoded = encoder("COMMAND").result
+    val encoded: Encoded = encoder("COMMAND").result
   }
 
   private object CommandCount extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("COMMAND", "COUNT").result
+    val encoded: Encoded = encoder("COMMAND", "COUNT").result
   }
 
   private final class CommandGetkeys(command: TraversableOnce[ByteString]) extends RedisDataSeqCommand[Key] with NodeCommand {
-    val encoded = encoder("COMMAND", "GETKEYS").add(command).result
+    val encoded: Encoded = encoder("COMMAND", "GETKEYS").add(command).result
   }
 
   private final class CommandInfoCommand(commandNames: Iterable[String]) extends AbstractCommandInfoCommand {
-    val encoded = encoder("COMMAND", "INFO").add(commandNames).result
+    val encoded: Encoded = encoder("COMMAND", "INFO").add(commandNames).result
   }
 
   private final class ConfigGet(parameter: String)
     extends AbstractRedisCommand[Seq[(String, String)]](pairedMultiBulk(bulkUTF8, bulkUTF8)) with NodeCommand {
-    val encoded = encoder("CONFIG", "GET").add(parameter).result
+    val encoded: Encoded = encoder("CONFIG", "GET").add(parameter).result
   }
 
   private object ConfigResetstat extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("CONFIG", "RESETSTAT").result
+    val encoded: Encoded = encoder("CONFIG", "RESETSTAT").result
   }
 
   private object ConfigRewrite extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("CONFIG", "REWRITE").result
+    val encoded: Encoded = encoder("CONFIG", "REWRITE").result
   }
 
   private final class ConfigSet(parameter: String, value: String) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("CONFIG", "SET").add(parameter).add(value).result
+    val encoded: Encoded = encoder("CONFIG", "SET").add(parameter).add(value).result
   }
 
   private object Dbsize extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("DBSIZE").result
+    val encoded: Encoded = encoder("DBSIZE").result
   }
 
   private object DebugSegfault extends RedisNothingCommand with NodeCommand {
-    val encoded = encoder("DEBUG", "SEGFAULT").result
+    val encoded: Encoded = encoder("DEBUG", "SEGFAULT").result
   }
 
   private final class Flushall(async: Boolean) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("FLUSHALL").addFlag("ASYNC", async).result
+    val encoded: Encoded = encoder("FLUSHALL").addFlag("ASYNC", async).result
   }
 
   private final class Flushdb(async: Boolean) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("FLUSHDB").addFlag("ASYNC", async).result
+    val encoded: Encoded = encoder("FLUSHDB").addFlag("ASYNC", async).result
   }
 
   private final class Info[T >: FullRedisInfo <: RedisInfo](section: RedisInfoSection[T], implicitDefault: Boolean)
     extends AbstractRedisCommand[T](bulk(bs => new FullRedisInfo(bs.utf8String))) with NodeCommand {
-    val encoded = encoder("INFO").setup(e => if (!implicitDefault || section != DefaultRedisInfo) e.add(section.name)).result
+    val encoded: Encoded = encoder("INFO").setup(e => if (!implicitDefault || section != DefaultRedisInfo) e.add(section.name)).result
   }
 
   private object Lastsave extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("LASTSAVE").result
+    val encoded: Encoded = encoder("LASTSAVE").result
   }
 
   private object Role extends AbstractRedisCommand[RedisRole](multiBulkRedisRole) with NodeCommand {
-    val encoded = encoder("ROLE").result
+    val encoded: Encoded = encoder("ROLE").result
   }
 
   private object Save extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("SAVE").result
+    val encoded: Encoded = encoder("SAVE").result
   }
 
   private final class Shutdown(modifier: Opt[ShutdownModifier]) extends RedisNothingCommand with NodeCommand {
-    val encoded = encoder("SHUTDOWN").optAdd(modifier).result
+    val encoded: Encoded = encoder("SHUTDOWN").optAdd(modifier).result
   }
 
   private final class Slaveof(newMaster: Opt[NodeAddress]) extends RedisUnitCommand with NodeCommand {
-    val encoded = {
+    val encoded: Encoded = {
       val enc = encoder("SLAVEOF")
       newMaster match {
         case Opt.Empty => enc.add("NO").add("ONE")
@@ -253,19 +253,19 @@ trait NodeServerApi extends ApiSubset {
 
   private final class SlowlogGet(count: Opt[Int])
     extends RedisSeqCommand[SlowlogEntry](multiBulkSlowlogEntry) with NodeCommand {
-    val encoded = encoder("SLOWLOG", "GET").optAdd(count).result
+    val encoded: Encoded = encoder("SLOWLOG", "GET").optAdd(count).result
   }
 
   private object SlowlogLen extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("SLOWLOG", "LEN").result
+    val encoded: Encoded = encoder("SLOWLOG", "LEN").result
   }
 
   private object SlowlogReset extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("SLOWLOG", "RESET").result
+    val encoded: Encoded = encoder("SLOWLOG", "RESET").result
   }
 
   private object Time extends AbstractRedisCommand[RedisTimestamp](multiBulkRedisTimestamp) with NodeCommand {
-    val encoded = encoder("TIME").result
+    val encoded: Encoded = encoder("TIME").result
   }
 }
 
@@ -278,11 +278,11 @@ trait ConnectionServerApi extends NodeServerApi {
     execute(new ClientSetname(connectionName))
 
   private object ClientGetname extends RedisOptStringCommand with ConnectionCommand {
-    val encoded = encoder("CLIENT", "GETNAME").result
+    val encoded: Encoded = encoder("CLIENT", "GETNAME").result
   }
 
   private final class ClientSetname(connectionName: String) extends RedisUnitCommand with ConnectionCommand {
-    val encoded = encoder("CLIENT", "SETNAME").add(connectionName).result
+    val encoded: Encoded = encoder("CLIENT", "SETNAME").add(connectionName).result
   }
 }
 

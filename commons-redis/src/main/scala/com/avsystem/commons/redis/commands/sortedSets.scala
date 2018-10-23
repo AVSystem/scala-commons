@@ -144,54 +144,55 @@ trait SortedSetsApi extends ApiSubset {
     (key: Key, memberScores: TraversableOnce[(Value, Double)], existence: Opt[Boolean], changed: Boolean, incr: Boolean)
     extends AbstractRedisCommand[T](decoder) with NodeCommand {
 
-    val encoded = encoder("ZADD").key(key).optAdd(existence.map(e => if (e) "XX" else "NX"))
+    val encoded: Encoded = encoder("ZADD").key(key).optAdd(existence.map(e => if (e) "XX" else "NX"))
       .addFlag("CH", changed).addFlag("INCR", incr).argDataPairs(memberScores.map(_.swap)).result
   }
 
   private final class Zadd(key: Key, memberScores: TraversableOnce[(Value, Double)], emptyData: Boolean, existence: Opt[Boolean], changed: Boolean)
     extends AbstractZadd[Int](integerInt)(key, memberScores, existence, changed, incr = false) {
-    override def immediateResult = if (emptyData) Opt(0) else Opt.Empty
+    override def immediateResult: Opt[Int] = if (emptyData) Opt(0) else Opt.Empty
   }
 
   private final class ZaddIncr(key: Key, member: Value, score: Double, existence: Opt[Boolean])
     extends AbstractZadd[Opt[Double]](nullBulkOr(bulkDouble))(key, (member, score).single, existence, changed = false, incr = true)
 
   private final class Zcard(key: Key) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("ZCARD").key(key).result
+    val encoded: Encoded = encoder("ZCARD").key(key).result
   }
 
   private final class Zcount(key: Key, min: ScoreLimit, max: ScoreLimit) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("ZCOUNT").key(key).add(min.repr).add(max.repr).result
+    val encoded: Encoded = encoder("ZCOUNT").key(key).add(min.repr).add(max.repr).result
   }
 
   private final class Zincrby(key: Key, increment: Double, member: Value) extends RedisDoubleCommand with NodeCommand {
-    val encoded = encoder("ZINCRBY").key(key).add(increment).data(member).result
+    val encoded: Encoded = encoder("ZINCRBY").key(key).add(increment).data(member).result
   }
 
   private final class Zinterstore(destination: Key, keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
     extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("ZINTERSTORE").key(destination).add(keys.size).keys(keys)
+    val encoded: Encoded = encoder("ZINTERSTORE").key(destination).add(keys.size).keys(keys)
       .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
   }
 
   private final class Zlexcount(key: Key, min: LexLimit[Value], max: LexLimit[Value])
     extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("ZLEXCOUNT").key(key).add(LexLimit.repr(min)).add(LexLimit.repr(max)).result
+    val encoded: Encoded = encoder("ZLEXCOUNT").key(key).add(LexLimit.repr(min)).add(LexLimit.repr(max)).result
   }
 
-  private abstract class AbstractZrange[T](cmd: String, decoder: ReplyDecoder[Seq[T]])(key: Key, start: Long, stop: Long, withscores: Boolean)
-    extends AbstractRedisCommand[Seq[T]](decoder) with NodeCommand {
-    val encoded = encoder(cmd).key(key).add(start).add(stop).addFlag("WITHSCORES", withscores).result
+  private abstract class AbstractZrange[T](cmd: String, decoder: ReplyDecoder[Seq[T]])(
+    key: Key, start: Long, stop: Long, withscores: Boolean
+  ) extends AbstractRedisCommand[Seq[T]](decoder) with NodeCommand {
+    val encoded: Encoded = encoder(cmd).key(key).add(start).add(stop).addFlag("WITHSCORES", withscores).result
   }
 
   private final class Zpopmin(key: Key, count: Opt[Long])
     extends AbstractRedisCommand[Seq[(Value, Double)]](pairedMultiBulk(bulk[Value], bulkDouble)) with NodeCommand {
-    val encoded = encoder("ZPOPMIN").key(key).optAdd(count).result
+    val encoded: Encoded = encoder("ZPOPMIN").key(key).optAdd(count).result
   }
 
   private final class Zpopmax(key: Key, count: Opt[Long])
     extends AbstractRedisCommand[Seq[(Value, Double)]](pairedMultiBulk(bulk[Value], bulkDouble)) with NodeCommand {
-    val encoded = encoder("ZPOPMAX").key(key).optAdd(count).result
+    val encoded: Encoded = encoder("ZPOPMAX").key(key).optAdd(count).result
   }
 
   private final class Zrange(key: Key, start: Long, stop: Long)
@@ -203,13 +204,16 @@ trait SortedSetsApi extends ApiSubset {
 
   private final class Zrangebylex(key: Key, min: LexLimit[Value], max: LexLimit[Value], limit: Opt[Limit])
     extends RedisDataSeqCommand[Value] with NodeCommand {
-    val encoded = encoder("ZRANGEBYLEX").key(key).add(LexLimit.repr(min)).add(LexLimit.repr(max)).optAdd("LIMIT", limit).result
+    val encoded: Encoded =
+      encoder("ZRANGEBYLEX").key(key).add(LexLimit.repr(min)).add(LexLimit.repr(max)).optAdd("LIMIT", limit).result
   }
 
   private abstract class AbstractZrangebyscore[T](cmd: String, decoder: ReplyDecoder[Seq[T]])(
     key: Key, firstLimit: ScoreLimit, secondLimit: ScoreLimit, withscores: Boolean, limit: Opt[Limit])
     extends AbstractRedisCommand[Seq[T]](decoder) with NodeCommand {
-    val encoded = encoder(cmd).key(key).add(firstLimit.repr).add(secondLimit.repr).addFlag("WITHSCORES", withscores).optAdd("LIMIT", limit).result
+    val encoded: Encoded =
+      encoder(cmd).key(key).add(firstLimit.repr).add(secondLimit.repr)
+        .addFlag("WITHSCORES", withscores).optAdd("LIMIT", limit).result
   }
 
   private final class Zrangebyscore(key: Key, min: ScoreLimit, max: ScoreLimit, limit: Opt[Limit])
@@ -220,27 +224,27 @@ trait SortedSetsApi extends ApiSubset {
       key, min, max, withscores = true, limit)
 
   private final class Zrank(key: Key, member: Value) extends RedisOptLongCommand with NodeCommand {
-    val encoded = encoder("ZRANK").key(key).data(member).result
+    val encoded: Encoded = encoder("ZRANK").key(key).data(member).result
   }
 
   private final class Zrem(key: Key, members: Iterable[Value]) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("ZREM").key(key).datas(members).result
-    override def immediateResult = whenEmpty(members, 0)
+    val encoded: Encoded = encoder("ZREM").key(key).datas(members).result
+    override def immediateResult: Opt[Int] = whenEmpty(members, 0)
   }
 
   private final class Zremrangebylex(key: Key, min: LexLimit[Value], max: LexLimit[Value])
     extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("ZREMRANGEBYLEX").key(key).add(LexLimit.repr(min)).add(LexLimit.repr(max)).result
+    val encoded: Encoded = encoder("ZREMRANGEBYLEX").key(key).add(LexLimit.repr(min)).add(LexLimit.repr(max)).result
   }
 
   private final class Zremrangebyrank(key: Key, start: Long, stop: Long)
     extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("ZREMRANGEBYRANK").key(key).add(start).add(stop).result
+    val encoded: Encoded = encoder("ZREMRANGEBYRANK").key(key).add(start).add(stop).result
   }
 
   private final class Zremrangebyscore(key: Key, min: ScoreLimit, max: ScoreLimit)
     extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("ZREMRANGEBYSCORE").key(key).add(min.repr).add(max.repr).result
+    val encoded: Encoded = encoder("ZREMRANGEBYSCORE").key(key).add(min.repr).add(max.repr).result
   }
 
   private final class Zrevrange(key: Key, start: Long, stop: Long)
@@ -251,7 +255,7 @@ trait SortedSetsApi extends ApiSubset {
 
   private final class Zrevrangebylex(key: Key, max: LexLimit[Value], min: LexLimit[Value], limit: Opt[Limit])
     extends RedisDataSeqCommand[Value] with NodeCommand {
-    val encoded = encoder("ZREVRANGEBYLEX").key(key).add(LexLimit.repr(max)).add(LexLimit.repr(min)).optAdd("LIMIT", limit).result
+    val encoded: Encoded = encoder("ZREVRANGEBYLEX").key(key).add(LexLimit.repr(max)).add(LexLimit.repr(min)).optAdd("LIMIT", limit).result
   }
 
   private final class Zrevrangebyscore(key: Key, max: ScoreLimit, min: ScoreLimit, limit: Opt[Limit])
@@ -262,27 +266,27 @@ trait SortedSetsApi extends ApiSubset {
       key, max, min, withscores = true, limit)
 
   private final class Zrevrank(key: Key, member: Value) extends RedisOptLongCommand with NodeCommand {
-    val encoded = encoder("ZREVRANK").key(key).data(member).result
+    val encoded: Encoded = encoder("ZREVRANK").key(key).data(member).result
   }
 
   private final class Zscan(key: Key, cursor: Cursor, matchPattern: Opt[Value], count: Opt[Int])
     extends RedisScanCommand[(Value, Double)](pairedMultiBulk(bulk[Value], bulkDouble)) with NodeCommand {
-    val encoded = encoder("ZSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
+    val encoded: Encoded = encoder("ZSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 
   private final class Zscore(key: Key, member: Value) extends RedisOptDoubleCommand with NodeCommand {
-    val encoded = encoder("ZSCORE").key(key).data(member).result
+    val encoded: Encoded = encoder("ZSCORE").key(key).data(member).result
   }
 
   private final class Zunionstore(destination: Key, keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
     extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("ZUNIONSTORE").key(destination).add(keys.size).keys(keys)
+    val encoded: Encoded = encoder("ZUNIONSTORE").key(destination).add(keys.size).keys(keys)
       .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
   }
 }
 
 case class ScoreLimit(value: Double, inclusive: Boolean) {
-  def repr = (if (!inclusive) "(" else "") + (value match {
+  def repr: String = (if (!inclusive) "(" else "") + (value match {
     case Double.NegativeInfinity => "-inf"
     case Double.PositiveInfinity => "+inf"
     case _ => value.toString
@@ -292,8 +296,8 @@ object ScoreLimit {
   def incl(value: Double) = ScoreLimit(value, inclusive = true)
   def excl(value: Double) = ScoreLimit(value, inclusive = false)
 
-  val MinusInf = ScoreLimit.incl(Double.NegativeInfinity)
-  val PlusInf = ScoreLimit.incl(Double.PositiveInfinity)
+  val MinusInf: ScoreLimit = ScoreLimit.incl(Double.NegativeInfinity)
+  val PlusInf: ScoreLimit = ScoreLimit.incl(Double.PositiveInfinity)
 }
 
 sealed trait LexLimit[+V]
@@ -307,7 +311,7 @@ object LexLimit {
   object MinusInf extends LexLimit[Nothing]
   object PlusInf extends LexLimit[Nothing]
 
-  def repr[V: RedisDataCodec](limit: LexLimit[V]) = limit match {
+  def repr[V: RedisDataCodec](limit: LexLimit[V]): ByteString = limit match {
     case Finite(value, incl) =>
       (if (incl) '[' else '(').toByte +: RedisDataCodec.write(value)
     case MinusInf => ByteString('-'.toByte)

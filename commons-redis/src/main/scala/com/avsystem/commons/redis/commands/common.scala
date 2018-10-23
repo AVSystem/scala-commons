@@ -17,7 +17,7 @@ object SortOrder extends NamedEnumCompanion[SortOrder] {
 }
 
 case class Cursor(raw: Long) extends AnyVal {
-  override def toString = raw.toString
+  override def toString: String = raw.toString
 }
 object Cursor {
   final val NoCursor = Cursor(0)
@@ -30,5 +30,5 @@ abstract class ParsedInfo(info: String, attrSeparator: String, nameValueSeparato
       (name, value)
     }
 
-  override def toString = info
+  override def toString: String = info
 }

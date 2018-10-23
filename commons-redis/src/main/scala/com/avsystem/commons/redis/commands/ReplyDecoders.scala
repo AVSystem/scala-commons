@@ -107,6 +107,10 @@ object ReplyDecoders {
     case BulkStringMsg(data) => Cursor(data.utf8String.toLong)
   }
 
+  val bulkXEntryId: ReplyDecoder[XEntryId] = {
+    case BulkStringMsg(data) => XEntryId.parse(data.utf8String)
+  }
+
   val simpleUTF8: ReplyDecoder[String] =
     simple(_.utf8String)
 
@@ -174,6 +178,12 @@ object ReplyDecoders {
       val second = secondDecoder.applyOrElse(s, (_: ValidRedisMsg) =>
         throw new UnexpectedReplyException(s"Unexpected second element in multi-bulk reply: $s"))
       (first, second)
+  }
+
+  def multiBulkZTriple[K: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[Opt[(K, Double, V)]] = {
+    case NullArrayMsg => Opt.Empty
+    case ArrayMsg(IndexedSeq(BulkStringMsg(key), BulkStringMsg(score), BulkStringMsg(value))) =>
+      Opt(RedisDataCodec.read[K](key), score.utf8String.toDouble, RedisDataCodec.read[V](value))
   }
 
   val multiBulkGeoPoint: ReplyDecoder[GeoPoint] = {

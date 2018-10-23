@@ -27,15 +27,15 @@ trait HyperLogLogApi extends ApiSubset {
     execute(new Pfmerge(destkey, sourcekeys))
 
   private final class Pfadd(key: Key, elements: Iterable[Value]) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("PFADD").key(key).datas(elements).result
+    val encoded: Encoded = encoder("PFADD").key(key).datas(elements).result
   }
 
   private final class Pfcount(keys: Iterable[Key]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("PFCOUNT").keys(keys).result
-    override def immediateResult = whenEmpty(keys, 0)
+    val encoded: Encoded = encoder("PFCOUNT").keys(keys).result
+    override def immediateResult: Opt[Long] = whenEmpty(keys, 0)
   }
 
   private final class Pfmerge(destkey: Key, sourcekeys: Iterable[Key]) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("PFMERGE").key(destkey).keys(sourcekeys).result
+    val encoded: Encoded = encoder("PFMERGE").key(destkey).keys(sourcekeys).result
   }
 }

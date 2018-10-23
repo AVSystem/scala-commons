@@ -17,15 +17,15 @@ trait NodeConnectionApi extends ApiSubset {
     execute(new Swapdb(first, second))
 
   private final class Echo(message: Value) extends RedisDataCommand[Value] with NodeCommand {
-    val encoded = encoder("ECHO").data(message).result
+    val encoded: Encoded = encoder("ECHO").data(message).result
   }
 
   private object Ping extends AbstractRedisCommand[ByteString](simpleBinary) with NodeCommand {
-    val encoded = encoder("PING").result
+    val encoded: Encoded = encoder("PING").result
   }
 
   private final class Swapdb(first: Int, second: Int) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("SWAPDB").add(first).add(second).result
+    val encoded: Encoded = encoder("SWAPDB").add(first).add(second).result
   }
 }
 
@@ -41,15 +41,15 @@ trait ConnectionConnectionApi extends NodeConnectionApi {
     execute(new Select(index))
 
   private final class Auth(password: String) extends RedisUnitCommand with ConnectionCommand {
-    val encoded = encoder("AUTH").add(password).result
+    val encoded: Encoded = encoder("AUTH").add(password).result
   }
 
   private object Quit extends RedisUnitCommand with ConnectionCommand {
-    val encoded = encoder("QUIT").result
+    val encoded: Encoded = encoder("QUIT").result
   }
 
   private final class Select(index: Int) extends RedisUnitCommand with ConnectionCommand {
-    val encoded = encoder("SELECT").add(index).result
+    val encoded: Encoded = encoder("SELECT").add(index).result
   }
 }
 

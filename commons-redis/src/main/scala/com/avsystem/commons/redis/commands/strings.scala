@@ -108,11 +108,11 @@ trait StringsApi extends ApiSubset {
     execute(new Strlen(key))
 
   private final class Append(key: Key, value: Value) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("APPEND").key(key).data(value).result
+    val encoded: Encoded = encoder("APPEND").key(key).data(value).result
   }
 
   private final class Bitcount(key: Key, range: Opt[(Int, Int)]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("BITCOUNT").key(key).optAdd(range).result
+    val encoded: Encoded = encoder("BITCOUNT").key(key).optAdd(range).result
   }
 
   private final class Bitfield(key: Key, ops: Iterable[BitFieldOp])
@@ -148,93 +148,93 @@ trait StringsApi extends ApiSubset {
   private final class Bitop(bitop: BitOp, destkey: Key, keys: Seq[Key]) extends RedisIntCommand with NodeCommand {
     require(keys.nonEmpty, "BITOP requires at least one source key")
     require(bitop != BitOp.Not || keys.size == 1, "BITOP NOT requires exactly one source key")
-    val encoded = encoder("BITOP").add(bitop).key(destkey).keys(keys).result
+    val encoded: Encoded = encoder("BITOP").add(bitop).key(destkey).keys(keys).result
   }
 
   private final class Bitpos(key: Key, bit: Boolean, range: Opt[SemiRange]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("BITPOS").key(key).add(bit).optAdd(range).result
+    val encoded: Encoded = encoder("BITPOS").key(key).add(bit).optAdd(range).result
   }
 
   private final class Decr(key: Key) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("DECR").key(key).result
+    val encoded: Encoded = encoder("DECR").key(key).result
   }
 
   private final class Decrby(key: Key, decrement: Long) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("DECRBY").key(key).add(decrement).result
+    val encoded: Encoded = encoder("DECRBY").key(key).add(decrement).result
   }
 
   private final class Get(key: Key) extends RedisOptDataCommand[Value] with NodeCommand {
-    val encoded = encoder("GET").key(key).result
+    val encoded: Encoded = encoder("GET").key(key).result
   }
 
   private final class Getbit(key: Key, offset: Int) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("GETBIT").key(key).add(offset).result
+    val encoded: Encoded = encoder("GETBIT").key(key).add(offset).result
   }
 
   private final class Getrange(key: Key, start: Int, end: Int) extends RedisDataCommand[Value] with NodeCommand {
-    val encoded = encoder("GETRANGE").key(key).add(start).add(end).result
+    val encoded: Encoded = encoder("GETRANGE").key(key).add(start).add(end).result
   }
 
   private final class Getset(key: Key, value: Value) extends RedisOptDataCommand[Value] with NodeCommand {
-    val encoded = encoder("GETSET").key(key).data(value).result
+    val encoded: Encoded = encoder("GETSET").key(key).data(value).result
   }
 
   private final class Incr(key: Key) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("INCR").key(key).result
+    val encoded: Encoded = encoder("INCR").key(key).result
   }
 
   private final class Incrby(key: Key, increment: Long) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("INCRBY").key(key).add(increment).result
+    val encoded: Encoded = encoder("INCRBY").key(key).add(increment).result
   }
 
   private final class Incrbyfloat(key: Key, increment: Double) extends RedisDoubleCommand with NodeCommand {
-    val encoded = encoder("INCRBYFLOAT").key(key).add(increment).result
+    val encoded: Encoded = encoder("INCRBYFLOAT").key(key).add(increment).result
   }
 
   private final class Mget(keys: Iterable[Key]) extends RedisOptDataSeqCommand[Value] with NodeCommand {
-    val encoded = encoder("MGET").keys(keys).result
+    val encoded: Encoded = encoder("MGET").keys(keys).result
     override def immediateResult = whenEmpty(keys, Seq.empty)
   }
 
   private final class Mset(keyValues: Iterable[(Key, Value)]) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("MSET").keyDatas(keyValues).result
+    val encoded: Encoded = encoder("MSET").keyDatas(keyValues).result
     override def immediateResult = whenEmpty(keyValues, ())
   }
 
   private final class Msetnx(keyValues: Iterable[(Key, Value)]) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("MSETNX").keyDatas(keyValues).result
+    val encoded: Encoded = encoder("MSETNX").keyDatas(keyValues).result
     override def immediateResult = whenEmpty(keyValues, true)
   }
 
   private final class Psetex(key: Key, milliseconds: Long, value: Value) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("PSETEX").key(key).add(milliseconds).data(value).result
+    val encoded: Encoded = encoder("PSETEX").key(key).add(milliseconds).data(value).result
   }
 
   private final class Set(key: Key, value: Value, expiration: Opt[Expiration], existence: Opt[Boolean])
     extends AbstractRedisCommand[Boolean](nullBulkOrSimpleOkBoolean) with NodeCommand {
 
-    val encoded = encoder("SET").key(key).data(value).optAdd(expiration)
+    val encoded: Encoded = encoder("SET").key(key).data(value).optAdd(expiration)
       .optAdd(existence.map(v => if (v) "XX" else "NX")).result
   }
 
   private final class Setbit(key: Key, offset: Long, value: Boolean) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("SETBIT").key(key).add(offset).add(value).result
+    val encoded: Encoded = encoder("SETBIT").key(key).add(offset).add(value).result
   }
 
   private final class Setex(key: Key, seconds: Long, value: Value) extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("SETEX").key(key).add(seconds).data(value).result
+    val encoded: Encoded = encoder("SETEX").key(key).add(seconds).data(value).result
   }
 
   private final class Setnx(key: Key, value: Value) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("SETNX").key(key).data(value).result
+    val encoded: Encoded = encoder("SETNX").key(key).data(value).result
   }
 
   private final class Setrange(key: Key, offset: Int, value: Value) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("SETRANGE").key(key).add(offset).data(value).result
+    val encoded: Encoded = encoder("SETRANGE").key(key).add(offset).data(value).result
   }
 
   private final class Strlen(key: Key) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("STRLEN").key(key).result
+    val encoded: Encoded = encoder("STRLEN").key(key).result
   }
 }
 

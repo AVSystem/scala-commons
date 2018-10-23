@@ -4,10 +4,9 @@ package redis.commands
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
 import com.avsystem.commons.redis.protocol._
-import ReplyDecoders._
-import com.avsystem.commons.redis.util.SingletonSeq
 
 import scala.collection.mutable.ListBuffer
 
@@ -57,23 +56,23 @@ trait GeoApi extends ApiSubset {
     execute(new GeoradiusbymemberStore(key, member, radius, unit, count.toOpt, sortOrder.toOpt, storeKey, storeDist))
 
   private final class Geoadd(key: Key, items: Iterable[(Value, GeoPoint)]) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("GEOADD").key(key).add(items.iterator.map({ case (v, p) => (p, valueCodec.write(v)) })).result
-    override def immediateResult = whenEmpty(items, 0)
+    val encoded: Encoded = encoder("GEOADD").key(key).add(items.iterator.map({ case (v, p) => (p, valueCodec.write(v)) })).result
+    override def immediateResult: Opt[Int] = whenEmpty(items, 0)
   }
 
   private final class Geohash(key: Key, members: Iterable[Value])
     extends RedisSeqCommand[Opt[GeoHash]](nullBulkOr(bulk(bs => GeoHash(bs.utf8String)))) with NodeCommand {
-    val encoded = encoder("GEOHASH").key(key).datas(members).result
+    val encoded: Encoded = encoder("GEOHASH").key(key).datas(members).result
   }
 
   private final class Geopos(key: Key, members: Iterable[Value])
     extends RedisSeqCommand[Opt[GeoPoint]](nullMultiBulkOr(multiBulkGeoPoint)) with NodeCommand {
-    val encoded = encoder("GEOPOS").key(key).datas(members).result
+    val encoded: Encoded = encoder("GEOPOS").key(key).datas(members).result
   }
 
   private final class Geodist(key: Key, member1: Value, member2: Value, unit: GeoUnit)
     extends RedisOptDoubleCommand with NodeCommand {
-    val encoded = encoder("GEODIST").key(key).data(member1).data(member2).add(unit).result
+    val encoded: Encoded = encoder("GEODIST").key(key).data(member1).data(member2).add(unit).result
   }
 
   private abstract class AbstractGeoradius[T](decoder: ReplyDecoder[T])(
@@ -82,12 +81,12 @@ trait GeoApi extends ApiSubset {
     readOnly: Boolean, storeKey: Opt[Key], storeDist: Boolean
   ) extends AbstractRedisCommand[T](decoder) with NodeCommand {
 
-    val encoded = {
-      val command = (if (point.isDefined) "GEORADIUS" else "GEORADIUSBYMEMBER") + (if(readOnly) "_RO" else "")
+    val encoded: Encoded = {
+      val command = (if (point.isDefined) "GEORADIUS" else "GEORADIUSBYMEMBER") + (if (readOnly) "_RO" else "")
       encoder(command)
         .key(key).optAdd(point).optAdd(member.map(valueCodec.write)).add(radius).add(unit).add(flags)
         .optAdd("COUNT", count).optAdd(sortOrder)
-        .optKey(if(storeDist) "STOREDIST" else "STORE", storeKey)
+        .optKey(if (storeDist) "STOREDIST" else "STORE", storeKey)
         .result
     }
   }
@@ -119,7 +118,7 @@ abstract class GeoradiusAttrs(val flags: Int) { self =>
 
   type Attributed[A]
 
-  def isEmpty = flags == NoFlags
+  def isEmpty: Boolean = flags == NoFlags
 
   def encodeFlags: List[String] = {
     val res = new ListBuffer[String]
@@ -140,7 +139,7 @@ abstract class GeoradiusAttrs(val flags: Int) { self =>
   def +(other: GeoradiusAttrs): GeoradiusAttrs {type Attributed[A] = self.Attributed[other.Attributed[A]]} =
     new GeoradiusAttrs(self.flags | other.flags) {
       type Attributed[A] = self.Attributed[other.Attributed[A]]
-      def decode[A](element: ArrayMsg[RedisMsg], finalFlags: Int, wrapped: A) =
+      def decode[A](element: ArrayMsg[RedisMsg], finalFlags: Int, wrapped: A): Attributed[A] =
         self.decode(element, finalFlags, other.decode(element, finalFlags, wrapped))
     }
 }
@@ -150,20 +149,20 @@ object GeoradiusAttrs {
   private final val HashFlag = 1 << 1
   private final val CoordFlag = 1 << 2
 
-  private def offset(flags: Int, flag: Int) =
+  private def offset(flags: Int, flag: Int): Int =
     if ((flags & flag) != 0) 1 else 0
 
   object None extends GeoradiusAttrs(NoFlags) {
     type Attributed[A] = A
 
-    def decode[A](element: ArrayMsg[RedisMsg], finalFlags: Int, wrapped: A) = wrapped
+    def decode[A](element: ArrayMsg[RedisMsg], finalFlags: Int, wrapped: A): A = wrapped
   }
 
   case class Withdist[A](dist: Double, wrapped: A)
   object Withdist extends GeoradiusAttrs(DistFlag) {
     type Attributed[A] = Withdist[A]
 
-    def decode[A](element: ArrayMsg[RedisMsg], finalFlags: Int, wrapped: A) =
+    def decode[A](element: ArrayMsg[RedisMsg], finalFlags: Int, wrapped: A): Withdist[A] =
       element.elements(1) match {
         case BulkStringMsg(dist) => Withdist(dist.utf8String.toDouble, wrapped)
         case msg => throw new UnexpectedReplyException(s"Expected bulk string for DIST, got $msg")
@@ -174,7 +173,7 @@ object GeoradiusAttrs {
   object Withhash extends GeoradiusAttrs(HashFlag) {
     type Attributed[A] = Withhash[A]
 
-    def decode[A](element: ArrayMsg[RedisMsg], finalFlags: Int, wrapped: A) =
+    def decode[A](element: ArrayMsg[RedisMsg], finalFlags: Int, wrapped: A): Withhash[A] =
       element.elements(1 + offset(finalFlags, DistFlag)) match {
         case IntegerMsg(hash) => Withhash(hash, wrapped)
         case msg => throw new UnexpectedReplyException(s"Expected integer for HASH, got $msg")
@@ -185,7 +184,7 @@ object GeoradiusAttrs {
   object Withcoord extends GeoradiusAttrs(CoordFlag) {
     type Attributed[A] = Withcoord[A]
 
-    def decode[A](element: ArrayMsg[RedisMsg], finalFlags: Int, wrapped: A) =
+    def decode[A](element: ArrayMsg[RedisMsg], finalFlags: Int, wrapped: A): Withcoord[A] =
       element.elements(1 + offset(finalFlags, DistFlag) + offset(finalFlags, HashFlag)) match {
         case ArrayMsg(IndexedSeq(BulkStringMsg(rawLong), BulkStringMsg(rawLat))) =>
           Withcoord(GeoPoint(rawLong.utf8String.toDouble, rawLat.utf8String.toDouble), wrapped)
