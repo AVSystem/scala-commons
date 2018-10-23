@@ -285,6 +285,37 @@ trait SortedSetsApi extends ApiSubset {
   }
 }
 
+trait BlockingSortedSetsApi extends ApiSubset {
+  /** Executes [[http://redis.io/commands/bzpopmax BZPOPMAX]] */
+  def bzpopmax(timeout: Int, key: Key, keys: Key*): Result[Opt[(Key, Value, Double)]] =
+    execute(new Bzpopmax(key +:: keys, timeout))
+  /** Executes [[http://redis.io/commands/bzpopmax BZPOPMAX]] */
+  def bzpopmax(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value, Double)]] =
+    execute(new Bzpopmax(keys, timeout))
+  /** Executes [[http://redis.io/commands/bzpopmin BZPOPMIN]] */
+  def bzpopmin(timeout: Int, key: Key, keys: Key*): Result[Opt[(Key, Value, Double)]] =
+    execute(new Bzpopmin(key +:: keys, timeout))
+  /** Executes [[http://redis.io/commands/bzpopmin BZPOPMIN]] */
+  def bzpopmin(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value, Double)]] =
+    execute(new Bzpopmin(keys, timeout))
+
+  private final class Bzpopmax(keys: Iterable[Key], timeout: Int)
+    extends AbstractRedisCommand[Opt[(Key, Value, Double)]](multiBulkZTriple[Key, Value]) with NodeCommand {
+    val encoded: Encoded = encoder("BZPOPMAX").keys(keys).add(timeout).result
+
+    override def immediateResult: Opt[Opt[(Key, Value, Double)]] =
+      if (keys.isEmpty) Opt(Opt.Empty) else Opt.Empty
+  }
+
+  private final class Bzpopmin(keys: Iterable[Key], timeout: Int)
+    extends AbstractRedisCommand[Opt[(Key, Value, Double)]](multiBulkZTriple[Key, Value]) with NodeCommand {
+    val encoded: Encoded = encoder("BZPOPMIN").keys(keys).add(timeout).result
+
+    override def immediateResult: Opt[Opt[(Key, Value, Double)]] =
+      if (keys.isEmpty) Opt(Opt.Empty) else Opt.Empty
+  }
+}
+
 case class ScoreLimit(value: Double, inclusive: Boolean) {
   def repr: String = (if (!inclusive) "(" else "") + (value match {
     case Double.NegativeInfinity => "-inf"

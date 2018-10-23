@@ -180,10 +180,10 @@ object ReplyDecoders {
       (first, second)
   }
 
-  def multiBulkZTriple[K: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[Opt[(K, Double, V)]] = {
+  def multiBulkZTriple[K: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[Opt[(K, V, Double)]] = {
     case NullArrayMsg => Opt.Empty
-    case ArrayMsg(IndexedSeq(BulkStringMsg(key), BulkStringMsg(score), BulkStringMsg(value))) =>
-      Opt(RedisDataCodec.read[K](key), score.utf8String.toDouble, RedisDataCodec.read[V](value))
+    case ArrayMsg(IndexedSeq(BulkStringMsg(key), BulkStringMsg(value), BulkStringMsg(score))) =>
+      Opt(RedisDataCodec.read[K](key), RedisDataCodec.read[V](value), score.utf8String.toDouble)
   }
 
   val multiBulkGeoPoint: ReplyDecoder[GeoPoint] = {
@@ -197,7 +197,10 @@ object ReplyDecoders {
         case SimpleStringMsg(flagStr) => CommandFlags.byRepr(flagStr.utf8String)
         case msg => throw new UnexpectedReplyException(s"Expected only simple strings in command flag list, got $msg")
       }).fold(CommandFlags.NoFlags)(_ | _)
-      CommandInfo(name.utf8String, CommandArity(math.abs(arity.toInt), arity < 0), flags, firstKey.toInt, lastKey.toInt, stepCount.toInt)
+      CommandInfo(
+        name.utf8String, CommandArity(math.abs(arity.toInt), arity < 0),
+        flags, firstKey.toInt, lastKey.toInt, stepCount.toInt
+      )
   }
 
   val multiBulkRedisRole: ReplyDecoder[RedisRole] = {

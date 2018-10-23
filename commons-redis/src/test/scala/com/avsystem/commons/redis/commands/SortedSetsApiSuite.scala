@@ -261,3 +261,26 @@ trait SortedSetsApiSuite extends CommandsSuite {
     zrangeWithscores("key").assertEquals(Seq("foo" -> 1.0, "bar" -> 8.0, "lol" -> 8.0))
   }
 }
+
+trait BlockingSortedSetsApiSuite extends CommandsSuite {
+
+  import RedisApi.Batches.StringTyped._
+
+  apiTest("BZPOPMAX") {
+    setup(
+      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
+      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
+    )
+    bzpopmax(1, "???").assertEquals(Opt.Empty)
+    bzpopmax(1, "{key}0", "{key}1", "{key}2").assertEquals(Opt("{key}1", "bar", 2.0))
+  }
+
+  apiTest("BZPOPMIN") {
+    setup(
+      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
+      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
+    )
+    bzpopmin(1, "???").assertEquals(Opt.Empty)
+    bzpopmin(1, "{key}0", "{key}1", "{key}2").assertEquals(Opt("{key}1", "foo", 1.0))
+  }
+}
