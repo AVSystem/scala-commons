@@ -78,8 +78,8 @@ import com.avsystem.commons.redis.config.ExecutionConfig
 object RedisApi {
   class Raw[Key: RedisDataCodec, Field: RedisDataCodec, Value: RedisDataCodec]
     extends AbstractRedisApi[Raw, Key, Field, Value] with RedisConnectionApi with RedisRawApi {
-    def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-      new Raw[K, H, V]()(newKeyCodec, newFieldCodec, newValueCodec)
+    def copy[K, F, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[F], newValueCodec: RedisDataCodec[V]) =
+      new Raw[K, F, V]()(newKeyCodec, newFieldCodec, newValueCodec)
   }
   /**
     * Entry point for API variants which return [[RawCommand]]s.
@@ -91,8 +91,8 @@ object RedisApi {
 
   class Batches[Key: RedisDataCodec, Field: RedisDataCodec, Value: RedisDataCodec]
     extends AbstractRedisApi[Batches, Key, Field, Value] with RedisConnectionApi with RedisBatchApi {
-    def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-      new Batches[K, H, V]()(newKeyCodec, newFieldCodec, newValueCodec)
+    def copy[K, F, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[F], newValueCodec: RedisDataCodec[V]) =
+      new Batches[K, F, V]()(newKeyCodec, newFieldCodec, newValueCodec)
   }
   /**
     * Entry point for API variants which return [[RedisBatch]]es.
@@ -110,8 +110,8 @@ object RedisApi {
       val executor: RedisKeyedExecutor,
       val execConfig: ExecutionConfig = ExecutionConfig.Default
     ) extends AbstractRedisApi[Async, Key, Field, Value] with RedisRecoverableKeyedApi with RedisAsyncApi {
-      def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Async[K, H, V](executor, execConfig)(newKeyCodec, newFieldCodec, newValueCodec)
+      def copy[K, F, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[F], newValueCodec: RedisDataCodec[V]) =
+        new Async[K, F, V](executor, execConfig)(newKeyCodec, newFieldCodec, newValueCodec)
     }
     /**
       * Entry point for API variants which execute commands using [[RedisKeyedExecutor]] (e.g. [[RedisClusterClient]])
@@ -128,8 +128,8 @@ object RedisApi {
       val executor: RedisKeyedExecutor,
       val execConfig: ExecutionConfig = ExecutionConfig.Default
     ) extends AbstractRedisApi[Blocking, Key, Field, Value] with RedisRecoverableKeyedApi with RedisBlockingApi {
-      def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Blocking[K, H, V](executor, execConfig)(newKeyCodec, newFieldCodec, newValueCodec)
+      def copy[K, F, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[F], newValueCodec: RedisDataCodec[V]) =
+        new Blocking[K, F, V](executor, execConfig)(newKeyCodec, newFieldCodec, newValueCodec)
     }
     /**
       * Entry point for API variants which execute commands using [[RedisKeyedExecutor]] (e.g. [[RedisClusterClient]])
@@ -152,8 +152,8 @@ object RedisApi {
       val executor: RedisNodeExecutor,
       val execConfig: ExecutionConfig = ExecutionConfig.Default
     ) extends AbstractRedisApi[Async, Key, Field, Value] with RedisRecoverableNodeApi with RedisAsyncApi {
-      def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Async[K, H, V](executor, execConfig)(newKeyCodec, newFieldCodec, newValueCodec)
+      def copy[K, F, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[F], newValueCodec: RedisDataCodec[V]) =
+        new Async[K, F, V](executor, execConfig)(newKeyCodec, newFieldCodec, newValueCodec)
     }
     /**
       * Entry point for API variants which execute commands using [[RedisNodeExecutor]] (e.g. [[RedisNodeClient]])
@@ -170,8 +170,8 @@ object RedisApi {
       val executor: RedisNodeExecutor,
       val execConfig: ExecutionConfig = ExecutionConfig.Default
     ) extends AbstractRedisApi[Blocking, Key, Field, Value] with RedisRecoverableNodeApi with RedisBlockingApi {
-      def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Blocking[K, H, V](executor, execConfig)(newKeyCodec, newFieldCodec, newValueCodec)
+      def copy[K, F, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[F], newValueCodec: RedisDataCodec[V]) =
+        new Blocking[K, F, V](executor, execConfig)(newKeyCodec, newFieldCodec, newValueCodec)
     }
     /**
       * Entry point for API variants which execute commands using [[RedisNodeExecutor]] (e.g. [[RedisNodeClient]])
@@ -194,8 +194,8 @@ object RedisApi {
       val executor: RedisConnectionExecutor,
       val execConfig: ExecutionConfig = ExecutionConfig.Default
     ) extends AbstractRedisApi[Async, Key, Field, Value] with RedisRecoverableConnectionApi with RedisAsyncApi {
-      def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Async[K, H, V](executor, execConfig)(newKeyCodec, newFieldCodec, newValueCodec)
+      def copy[K, F, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[F], newValueCodec: RedisDataCodec[V]) =
+        new Async[K, F, V](executor, execConfig)(newKeyCodec, newFieldCodec, newValueCodec)
     }
     /**
       * Entry point for API variants which execute commands using [[RedisConnectionExecutor]] (e.g. [[RedisConnectionClient]])
@@ -212,8 +212,8 @@ object RedisApi {
       val executor: RedisConnectionExecutor,
       val execConfig: ExecutionConfig = ExecutionConfig.Default
     ) extends AbstractRedisApi[Blocking, Key, Field, Value] with RedisRecoverableConnectionApi with RedisBlockingApi {
-      def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Blocking[K, H, V](executor, execConfig)(newKeyCodec, newFieldCodec, newValueCodec)
+      def copy[K, F, V](newKeyCodec: RedisDataCodec[K], newFieldCodec: RedisDataCodec[F], newValueCodec: RedisDataCodec[V]) =
+        new Blocking[K, F, V](executor, execConfig)(newKeyCodec, newFieldCodec, newValueCodec)
     }
     /**
       * Entry point for API variants which execute commands using [[RedisConnectionExecutor]] (e.g. [[RedisConnectionClient]])
@@ -228,7 +228,7 @@ object RedisApi {
   }
 }
 
-abstract class AbstractRedisApi[Self[K0, H0, V0] <: AbstractRedisApi[Self, K0, H0, V0], K, F, V](implicit
+abstract class AbstractRedisApi[Self[K0, F0, V0] <: AbstractRedisApi[Self, K0, F0, V0], K, F, V](implicit
   val keyCodec: RedisDataCodec[K], val fieldCodec: RedisDataCodec[F], val valueCodec: RedisDataCodec[V])
   extends ApiSubset {
 
@@ -265,7 +265,7 @@ abstract class AbstractRedisApi[Self[K0, H0, V0] <: AbstractRedisApi[Self, K0, H
     * Changes the type of hash key used by this API variant to some other type by directly providing
     * functions which convert between new and old type.
     */
-  def transformField[H0](read: F => H0)(write: H0 => F): WithField[H0] =
+  def transformField[F0](read: F => F0)(write: F0 => F): WithField[F0] =
     copy(newFieldCodec = RedisDataCodec(fieldCodec.read andThen read, write andThen fieldCodec.write))
 
   /**
@@ -282,9 +282,9 @@ abstract class AbstractRedisApi[Self[K0, H0, V0] <: AbstractRedisApi[Self, K0, H
   def transformValue[V0](read: V => V0)(write: V0 => V): WithValue[V0] =
     copy(newValueCodec = RedisDataCodec(valueCodec.read andThen read, write andThen valueCodec.write))
 
-  def copy[K0, H0, V0](
+  def copy[K0, F0, V0](
     newKeyCodec: RedisDataCodec[K0] = keyCodec,
-    newFieldCodec: RedisDataCodec[H0] = fieldCodec,
+    newFieldCodec: RedisDataCodec[F0] = fieldCodec,
     newValueCodec: RedisDataCodec[V0] = valueCodec
-  ): Self[K0, H0, V0]
+  ): Self[K0, F0, V0]
 }
