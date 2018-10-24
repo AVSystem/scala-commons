@@ -111,6 +111,14 @@ object ReplyDecoders {
     case BulkStringMsg(data) => XEntryId.parse(data.utf8String)
   }
 
+  val bulkXGroup: ReplyDecoder[XGroup] = {
+    case BulkStringMsg(str) => XGroup(str.utf8String)
+  }
+
+  val bulkXConsumer: ReplyDecoder[XConsumer] = {
+    case BulkStringMsg(str) => XConsumer(str.utf8String)
+  }
+
   val simpleUTF8: ReplyDecoder[String] =
     simple(_.utf8String)
 
@@ -255,6 +263,27 @@ object ReplyDecoders {
       val (masterAddr, masterId) = parseNode(master)
       SlotRangeMapping(range, masterAddr, masterId, slaves.map(parseNode))
   }
+
+  val multiBulkXPendingOverview: ReplyDecoder[XPendingOverview] = {
+    case ArrayMsg(IndexedSeq(IntegerMsg(0), NullBulkStringMsg, NullBulkStringMsg, NullArrayMsg)) =>
+      XPendingOverview.Empty
+    case ArrayMsg(IndexedSeq(IntegerMsg(count), BulkStringMsg(minid), BulkStringMsg(maxid), ArrayMsg(byConsumer))) =>
+      XPendingOverview(
+        count, XEntryId.parse(minid.utf8String), XEntryId.parse(maxid.utf8String),
+        new mutable.OpenHashMap() ++ pairedMultiBulkIterator(byConsumer, bulkXConsumer, bulkLong)
+      )
+  }
+
+  val multiBulkXPendingEntry: ReplyDecoder[XPendingEntry] = {
+    case ArrayMsg(IndexedSeq(BulkStringMsg(id), BulkStringMsg(consumer), IntegerMsg(idle), IntegerMsg(delivered))) =>
+      XPendingEntry(XEntryId.parse(id.utf8String), XConsumer(consumer.utf8String), idle, delivered.toInt)
+  }
+
+  def multiBulkXEntry[F: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[(XEntryId, BMap[F, V])] =
+    multiBulkPair(bulkXEntryId, mapMultiBulk[F, V])
+
+  def multiBulkXEntriesByKey[K: RedisDataCodec, F: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[BMap[K, Seq[(XEntryId, BMap[F, V])]]] =
+    mapMultiBulk(bulk[K], multiBulkSeq(multiBulkXEntry[F, V]))
 
   def groupedMultiBulk[T](size: Int, elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[Seq[T]]] = {
     case ArrayMsg(elements) =>

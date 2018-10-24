@@ -45,16 +45,16 @@ trait RawCommand extends RawCommandPack with RawCommands with ReplyPreprocessor 
 }
 
 trait UnsafeCommand extends RawCommand {
-  def level: Level = Level.Unsafe
+  final def level: Level = Level.Unsafe
 }
 trait ConnectionCommand extends RawCommand {
-  def level: Level = Level.Connection
+  final def level: Level = Level.Connection
 }
 trait OperationCommand extends RawCommand {
-  def level: Level = Level.Operation
+  final def level: Level = Level.Operation
 }
 trait NodeCommand extends RawCommand {
-  def level: Level = Level.Node
+  final def level: Level = Level.Node
 }
 
 object RawCommand {

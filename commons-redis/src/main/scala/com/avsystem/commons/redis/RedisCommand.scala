@@ -82,6 +82,8 @@ final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) exten
     fluent(value.foreach(t => add(t)))
   def optAdd[T: CommandArg](flag: String, value: Opt[T]): CommandEncoder =
     fluent(value.foreach(t => add(flag).add(t)))
+  def optAdd[T: CommandArg, D: CommandArg](value: Opt[T], default: D): CommandEncoder =
+    fluent(value.fold(CommandArg.add(this, default))(CommandArg.add(this, _)))
   def optKey[K: RedisDataCodec](flag: String, value: Opt[K]): CommandEncoder =
     fluent(value.foreach(t => add(flag).key(t)))
   def optData[V: RedisDataCodec](flag: String, value: Opt[V]): CommandEncoder =

@@ -3,7 +3,7 @@ package redis.commands
 
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis.commands.ReplyDecoders._
-import com.avsystem.commons.redis.{AbstractRedisCommand, ApiSubset, NodeCommand, RedisBooleanCommand, RedisIntCommand, RedisLongCommand, RedisUnitCommand}
+import com.avsystem.commons.redis.{AbstractRedisCommand, ApiSubset, NodeCommand, RedisBooleanCommand, RedisIntCommand, RedisLongCommand, RedisSeqCommand, RedisUnitCommand}
 
 trait StreamsApi extends ApiSubset {
   private final class Xack(key: Key, group: XGroup, ids: Iterable[XEntryId])
@@ -16,7 +16,7 @@ trait StreamsApi extends ApiSubset {
   private final class Xadd(key: Key, maxlen: Opt[XMaxlen], id: Opt[XEntryId], fieldValues: Iterable[(Field, Value)])
     extends AbstractRedisCommand[XEntryId](bulkXEntryId) with NodeCommand {
     val encoded: Encoded = encoder("XADD").key(key).optAdd("MAXLEN", maxlen)
-      .add(id.fold("*")(_.toString)).dataPairs(fieldValues).result
+      .optAdd(id, "*").dataPairs(fieldValues).result
   }
 
   private abstract class AbstractXclaim[A](entryDecoder: ReplyDecoder[A])(
@@ -51,12 +51,12 @@ trait StreamsApi extends ApiSubset {
   private final class XgroupCreate(key: Key, group: XGroup, id: Opt[XEntryId], mkstream: Boolean)
     extends RedisUnitCommand with NodeCommand {
     val encoded: Encoded = encoder("XGROUP", "CREATE").key(key).add(group)
-      .add(id.fold("$")(_.toString)).addFlag("MKSTREAM", mkstream).result
+      .optAdd(id, "$").addFlag("MKSTREAM", mkstream).result
   }
 
   private final class XgroupSetid(key: Key, group: XGroup, id: Opt[XEntryId])
     extends RedisUnitCommand with NodeCommand {
-    val encoded: Encoded = encoder("XGROUP", "SETID").key(key).add(group).add(id.fold("$")(_.toString)).result
+    val encoded: Encoded = encoder("XGROUP", "SETID").key(key).add(group).optAdd(id, "$").result
   }
 
   private final class XgroupDestroy(key: Key, group: XGroup)
@@ -74,20 +74,110 @@ trait StreamsApi extends ApiSubset {
   private final class Xlen(key: Key) extends RedisLongCommand with NodeCommand {
     val encoded: Encoded = encoder("XLEN").key(key).result
   }
+
+  private final class Xpending(key: Key, group: XGroup)
+    extends AbstractRedisCommand[XPendingOverview](multiBulkXPendingOverview) with NodeCommand {
+    val encoded: Encoded = encoder("XPENDING").key(key).add(group).result
+  }
+
+  private final class XpendingEntries(key: Key, group: XGroup,
+    start: Opt[XEntryId], end: Opt[XEntryId], count: Int, consumer: Opt[XConsumer]
+  ) extends RedisSeqCommand[XPendingEntry](multiBulkXPendingEntry) with NodeCommand {
+    val encoded: Encoded = encoder("XPENDING").key(key).add(group)
+      .optAdd(start, "-").optAdd(end, "+").add(count).optAdd(consumer).result
+  }
+
+  private final class Xrange(key: Key, start: Opt[XEntryId], end: Opt[XEntryId], count: Opt[Int])
+    extends RedisSeqCommand[(XEntryId, BMap[Field, Value])](multiBulkXEntry[Field, Value]) with NodeCommand {
+    val encoded: Encoded = encoder("XRANGE").key(key)
+      .optAdd(start, "-").optAdd(end, "+").optAdd("COUNT", count).result
+  }
+
+  private final class Xread(count: Opt[Int], streams: Iterable[(Key, XEntryId)])
+    extends AbstractRedisCommand[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]](
+      multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
+
+    val encoded: Encoded = encoder("XREAD").optAdd("COUNT", count)
+      .add("STREAMS").keys(streams.iterator.map(_._1)).add(streams.iterator.map(_._2)).result
+
+    override def immediateResult: Opt[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]] =
+      whenEmpty(streams, Map.empty)
+  }
+
+  private final class Xreadgroup(group: XGroup, consumer: XConsumer, count: Opt[Int], streams: Iterable[(Key, Opt[XEntryId])])
+    extends AbstractRedisCommand[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]](
+      multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
+
+    val encoded: Encoded = encoder("XREADGROUP").add("GROUP").add(group).add(consumer).optAdd("COUNT", count)
+      .add("STREAMS").keys(streams.iterator.map(_._1)).add(streams.iterator.map(_._2.fold(">")(_.toString))).result
+
+    override def immediateResult: Opt[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]] =
+      whenEmpty(streams, Map.empty)
+  }
+
+  private final class Xrevrange(key: Key, end: Opt[XEntryId], start: Opt[XEntryId], count: Opt[Int])
+    extends RedisSeqCommand[(XEntryId, BMap[Field, Value])](multiBulkXEntry[Field, Value]) with NodeCommand {
+    val encoded: Encoded = encoder("XREVRANGE").key(key)
+      .optAdd(end, "+").optAdd(start, "-").optAdd("COUNT", count).result
+  }
+
+  private final class Xtrim(key: Key, maxlen: XMaxlen) extends RedisLongCommand with NodeCommand {
+    val encoded: Encoded = encoder("XTRIM").key(key).add("MAXLEN").add(maxlen).result
+  }
+}
+
+trait BlockingStreamsApi extends ApiSubset {
+  private final class XreadBlock(count: Opt[Int], millis: Int, streams: Iterable[(Key, Opt[XEntryId])])
+    extends AbstractRedisCommand[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]](
+      multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
+
+    val encoded: Encoded = encoder("XREAD").optAdd("COUNT", count).add("BLOCK").add(millis)
+      .add("STREAMS").keys(streams.iterator.map(_._1)).add(streams.iterator.map(_._2.fold("$")(_.toString))).result
+
+    override def immediateResult: Opt[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]] =
+      whenEmpty(streams, Map.empty)
+  }
+
+  private final class XreadgroupBlock(group: XGroup, consumer: XConsumer, count: Opt[Int], millis: Int, streams: Iterable[(Key, Opt[XEntryId])])
+    extends AbstractRedisCommand[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]](
+      multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
+
+    val encoded: Encoded = encoder("XREADGROUP")
+      .add("GROUP").add(group).add(consumer).optAdd("COUNT", count).add("BLOCK").add(millis)
+      .add("STREAMS").keys(streams.iterator.map(_._1)).add(streams.iterator.map(_._2.fold(">")(_.toString))).result
+
+    override def immediateResult: Opt[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]] =
+      whenEmpty(streams, Map.empty)
+  }
 }
 
 final case class XEntryId(tstamp: Long, seq: OptArg[Long] = OptArg.Empty) {
-  override def toString: String = s"$tstamp${seq.fold("")("-" + _)}"
+  def inc: XEntryId =
+    XEntryId(tstamp, seq.getOrElse(0L) + 1)
+  def fillMinSeq: XEntryId =
+    if (seq.isDefined) this else XEntryId(tstamp, 0L)
+  def fillMaxSeq: XEntryId =
+    if (seq.isDefined) this else XEntryId(tstamp, Long.MinValue) // unsigned!
+
+  private def ultostr(ul: Long): String =
+    java.lang.Long.toUnsignedString(ul)
+
+  override def toString: String =
+    s"${ultostr(tstamp)}${seq.fold("")(v => "-" + ultostr(v))}"
 }
 object XEntryId {
   final val Zero: XEntryId = XEntryId(0)
 
+  private def strtoul(str: String): Long =
+    java.lang.Long.parseUnsignedLong(str)
+
   def parse(str: String): XEntryId = str.indexOf('-') match {
-    case -1 => XEntryId(str.toLong, OptArg.Empty)
-    case i => XEntryId(str.substring(0, i).toLong, OptArg(str.substring(i + 1).toLong))
+    case -1 => XEntryId(strtoul(str), OptArg.Empty)
+    case i => XEntryId(strtoul(str.substring(0, i)), OptArg(strtoul(str.substring(i + 1))))
   }
 
-  implicit val commandArg: CommandArg[XEntryId] = CommandArg((enc, eid) => enc.add(eid.toString))
+  implicit val commandArg: CommandArg[XEntryId] =
+    CommandArg((enc, eid) => enc.add(eid.toString))
 }
 
 case class XMaxlen(maxlen: Long, approx: Boolean = true)
@@ -106,3 +196,20 @@ final case class XConsumer(raw: String) extends AnyVal
 object XConsumer {
   implicit val commandArg: CommandArg[XConsumer] = CommandArg((e, v) => e.add(v.raw))
 }
+
+case class XPendingOverview(
+  count: Long,
+  minId: XEntryId,
+  maxId: XEntryId,
+  countByConsumer: BMap[XConsumer, Long]
+)
+object XPendingOverview {
+  final val Empty = XPendingOverview(0, XEntryId.Zero, XEntryId.Zero, Map.empty)
+}
+
+case class XPendingEntry(
+  id: XEntryId,
+  consumer: XConsumer,
+  idleTime: Long,
+  deliveredCount: Int
+)

@@ -66,12 +66,12 @@ trait RecoverableApiSubset extends ApiSubset {
 
 trait RedisRawApi extends ApiSubset {
   type Result[A] = RawCommand
-  def execute[A](command: RedisCommand[A]) = command
+  def execute[A](command: RedisCommand[A]): RedisCommand[A] = command
 }
 
 trait RedisBatchApi extends ApiSubset {
   type Result[A] = RedisBatch[A]
-  def execute[A](command: RedisCommand[A]) = command.batchOrFallback
+  def execute[A](command: RedisCommand[A]): RedisBatch[A] = command.batchOrFallback
 }
 
 trait RedisExecutedApi extends RecoverableApiSubset {
@@ -83,17 +83,17 @@ trait RedisExecutedApi extends RecoverableApiSubset {
 
 trait RedisAsyncApi extends RedisExecutedApi {
   type Result[A] = Future[A]
-  def execute[A](command: RedisCommand[A]) = executeAsync(command)
-  def recoverWith[A](executed: => Future[A])(fun: PartialFunction[Throwable, Future[A]]) =
+  def execute[A](command: RedisCommand[A]): Future[A] = executeAsync(command)
+  def recoverWith[A](executed: => Future[A])(fun: PartialFunction[Throwable, Future[A]]): Future[A] =
     executed.recoverWith(fun)(executor.executionContext)
 }
 
 trait RedisBlockingApi extends RedisExecutedApi {
   type Result[A] = A
-  def execute[A](command: RedisCommand[A]) =
+  def execute[A](command: RedisCommand[A]): A =
   // executeAsync should already handle timeouts, but just to be safe let's pass the standard timeout plus one second
     Await.result(executeAsync(command), execConfig.timeout.duration + 1.second)
-  def recoverWith[A](executed: => A)(fun: PartialFunction[Throwable, A]) =
+  def recoverWith[A](executed: => A)(fun: PartialFunction[Throwable, A]): A =
     try executed catch fun
 }
 
