@@ -43,7 +43,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
   private val queuedToWrite = new JArrayDeque[QueuedPacks]
   private var writeBuffer = ByteBuffer.allocate(config.maxWriteSizeHint.getOrElse(0) + 1024)
 
-  def receive = {
+  def receive: Receive = {
     case IncomingPacks(packs) =>
       handlePacks(packs)
     case open: Open =>
@@ -131,7 +131,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     private var open = true
     private var unwatch = false
 
-    def become(receive: Receive) =
+    def become(receive: Receive): Unit =
       context.become(receive unless {
         case Tcp.Connected(_, _) => sender() ! Tcp.Close
         case _: Tcp.Event if sender() != connection => //ignore
@@ -440,16 +440,16 @@ object RedisConnectionActor {
   sealed trait PacksResult extends (Int => RedisReply)
   object PacksResult {
     case object Empty extends PacksResult {
-      def apply(idx: Int) = throw new NoSuchElementException
+      def apply(idx: Int): RedisReply = throw new NoSuchElementException
     }
     case class Single(reply: RedisReply) extends PacksResult {
-      def apply(idx: Int) = reply
+      def apply(idx: Int): RedisReply = reply
     }
     case class Multiple(replySeq: IndexedSeq[RedisReply]) extends PacksResult {
-      def apply(idx: Int) = replySeq(idx)
+      def apply(idx: Int): RedisReply = replySeq(idx)
     }
     case class Failure(cause: Throwable) extends PacksResult {
-      def apply(idx: Int) = throw cause
+      def apply(idx: Int): RedisReply = throw cause
     }
   }
 
@@ -458,7 +458,7 @@ object RedisConnectionActor {
     def onReceive(data: ByteString): Unit
   }
   object DevNullListener extends DebugListener {
-    def onSend(data: ByteString) = ()
-    def onReceive(data: ByteString) = ()
+    def onSend(data: ByteString): Unit = ()
+    def onReceive(data: ByteString): Unit = ()
   }
 }

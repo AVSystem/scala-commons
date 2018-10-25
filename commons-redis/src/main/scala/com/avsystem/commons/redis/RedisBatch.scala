@@ -285,6 +285,7 @@ trait ImmediateBatch[+A] extends RedisBatch[A] with RawCommandPacks {
   final def decodeReplies(replies: Int => RedisReply, index: RedisBatch.Index, inTransaction: Boolean): A = result
   final def emitCommandPacks(consumer: RawCommandPack => Unit): Unit = ()
   final def computeSize(limit: Int): Int = 0
+  override final def maxBlockingMillis: Int = 0
 }
 
 /**

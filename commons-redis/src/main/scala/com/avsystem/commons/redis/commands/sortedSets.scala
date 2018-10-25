@@ -6,6 +6,7 @@ import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
+import com.avsystem.commons.redis.util.SingletonSeq
 
 trait SortedSetsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/zadd ZADD]] */
@@ -139,6 +140,19 @@ trait SortedSetsApi extends ApiSubset {
     * NOTE: `keysWeights` MUST NOT be empty */
   def zunionstoreWeights(destination: Key, keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Long] =
     execute(new Zunionstore(destination, keysWeights.map(_._1), keysWeights.map(_._2).opt, aggregation.toOpt))
+
+  /** Executes [[http://redis.io/commands/bzpopmax BZPOPMAX]] */
+  def bzpopmax(key: Key, timeout: Int): Result[Opt[(Value, Double)]] =
+    execute(new Bzpopmax(new SingletonSeq(key), timeout).map(_.map { case (_, v, s) => (v, s) }))
+  /** Executes [[http://redis.io/commands/bzpopmax BZPOPMAX]] */
+  def bzpopmax(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value, Double)]] =
+    execute(new Bzpopmax(keys, timeout))
+  /** Executes [[http://redis.io/commands/bzpopmin BZPOPMIN]] */
+  def bzpopmin(key: Key, timeout: Int): Result[Opt[(Value, Double)]] =
+    execute(new Bzpopmin(new SingletonSeq(key), timeout).map(_.map { case (_, v, s) => (v, s) }))
+  /** Executes [[http://redis.io/commands/bzpopmin BZPOPMIN]] */
+  def bzpopmin(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value, Double)]] =
+    execute(new Bzpopmin(keys, timeout))
 
   private abstract class AbstractZadd[T](decoder: ReplyDecoder[T])
     (key: Key, memberScores: TraversableOnce[(Value, Double)], existence: Opt[Boolean], changed: Boolean, incr: Boolean)
@@ -283,21 +297,6 @@ trait SortedSetsApi extends ApiSubset {
     val encoded: Encoded = encoder("ZUNIONSTORE").key(destination).add(keys.size).keys(keys)
       .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
   }
-}
-
-trait BlockingSortedSetsApi extends ApiSubset {
-  /** Executes [[http://redis.io/commands/bzpopmax BZPOPMAX]] */
-  def bzpopmax(timeout: Int, key: Key, keys: Key*): Result[Opt[(Key, Value, Double)]] =
-    execute(new Bzpopmax(key +:: keys, timeout))
-  /** Executes [[http://redis.io/commands/bzpopmax BZPOPMAX]] */
-  def bzpopmax(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value, Double)]] =
-    execute(new Bzpopmax(keys, timeout))
-  /** Executes [[http://redis.io/commands/bzpopmin BZPOPMIN]] */
-  def bzpopmin(timeout: Int, key: Key, keys: Key*): Result[Opt[(Key, Value, Double)]] =
-    execute(new Bzpopmin(key +:: keys, timeout))
-  /** Executes [[http://redis.io/commands/bzpopmin BZPOPMIN]] */
-  def bzpopmin(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value, Double)]] =
-    execute(new Bzpopmin(keys, timeout))
 
   private final class Bzpopmax(keys: Iterable[Key], timeout: Int)
     extends AbstractRedisCommand[Opt[(Key, Value, Double)]](multiBulkZTriple[Key, Value]) with NodeCommand {
@@ -305,6 +304,8 @@ trait BlockingSortedSetsApi extends ApiSubset {
 
     override def immediateResult: Opt[Opt[(Key, Value, Double)]] =
       if (keys.isEmpty) Opt(Opt.Empty) else Opt.Empty
+    override def maxBlockingMillis: Int =
+      if (timeout <= 0) Int.MaxValue else timeout * 1000
   }
 
   private final class Bzpopmin(keys: Iterable[Key], timeout: Int)
@@ -313,6 +314,8 @@ trait BlockingSortedSetsApi extends ApiSubset {
 
     override def immediateResult: Opt[Opt[(Key, Value, Double)]] =
       if (keys.isEmpty) Opt(Opt.Empty) else Opt.Empty
+    override def maxBlockingMillis: Int =
+      if (timeout <= 0) Int.MaxValue else timeout * 1000
   }
 }
 

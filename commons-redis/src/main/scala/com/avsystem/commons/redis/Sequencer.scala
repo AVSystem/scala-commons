@@ -51,7 +51,7 @@ object Sequencer extends TupleSequencers {
     implicit elSequencer: Sequencer[ElOps, ElRes], cbf: CanBuildFrom[M[ElOps], ElRes, That]): Sequencer[M[ElOps], That] =
 
     new Sequencer[M[ElOps], That] {
-      def sequence(ops: M[ElOps]) = {
+      def sequence(ops: M[ElOps]): CollectionBatch[ElRes, That] = {
         val batches: Traversable[RedisBatch[ElRes]] =
           if ((elSequencer eq reusableTrivialSequencer) && ops.isInstanceOf[Traversable[Any]])
             ops.asInstanceOf[Traversable[RedisBatch[ElRes]]]
@@ -68,12 +68,12 @@ object Sequencer extends TupleSequencers {
 final class CollectionBatch[A, C](batches: Traversable[RedisBatch[A]], builderCreator: () => mutable.Builder[A, C])
   extends RedisBatch[C] with RawCommandPacks {
 
-  def rawCommandPacks = this
-  def emitCommandPacks(consumer: RawCommandPack => Unit) =
+  def rawCommandPacks: CollectionBatch[A, C] = this
+  def emitCommandPacks(consumer: RawCommandPack => Unit): Unit =
     batches.foreach(_.rawCommandPacks.emitCommandPacks(consumer))
-  def computeSize(limit: Int) =
+  def computeSize(limit: Int): Int =
     if (limit <= 0) limit else batches.foldLeft(0)((s, b) => s + b.rawCommandPacks.computeSize(limit - s))
-  def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = {
+  def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean): C = {
     // we must invoke all decoders regardless of intermediate errors because index must be properly advanced
     var failure: Opt[Throwable] = Opt.Empty
     val builder = builderCreator()

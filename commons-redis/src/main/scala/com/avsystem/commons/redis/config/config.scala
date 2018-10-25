@@ -56,23 +56,37 @@ case class ClusterConfig(
   * Configuration of a [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]], used either as a standalone
   * client or internally by [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
   *
-  * @param poolSize          number of connections used by node client. Commands are distributed between connections using
-  *                          a round-robin scenario. Number of connections in the pool is constant and cannot be changed.
-  *                          Due to single-threaded nature of Redis, the number of concurrent connections should be kept
-  *                          low for best performance. The only situation where the number of connections should be increased
-  *                          is when using `WATCH`-`MULTI`-`EXEC` transactions with optimistic locking.
-  * @param initOp            a [[com.avsystem.commons.redis.RedisOp RedisOp]] executed by this client upon initialization.
-  *                          This may be useful for things like script loading, especially when using cluster client which
-  *                          may create and close node clients dynamically as reactions on cluster state changes.
-  * @param initTimeout       timeout used by initialization operation (`initOp`)
-  * @param connectionConfigs a function that returns [[ConnectionConfig]] for a connection given its id. Connection ID
-  *                          is its index in the connection pool, i.e. an int ranging from 0 to `poolSize`-1.
+  * @param poolSize
+  * Number of connections used by node client. Commands are distributed between connections using
+  * a round-robin scenario. Number of connections in the pool is constant and cannot be changed.
+  * Due to single-threaded nature of Redis, the number of concurrent connections should be kept
+  * low for best performance. The only situation where the number of connections should be increased
+  * is when using `WATCH`-`MULTI`-`EXEC` transactions with optimistic locking.
+  * @param maxBlockingPoolSize
+  * Maximum number of connections used by node client in order to handle blocking Redis
+  * commands, e.g. `BLPOP`. Blocking commands may not be pipelined with other, independent
+  * commands because these other commands may be delayed by the blocking command. Therefore
+  * they require their own, dynamically resizable connection pool. Maximum size of that pool
+  * is the limit of possible concurrent blocking commands that can be executed at the same time.
+  * @param initOp
+  * A [[com.avsystem.commons.redis.RedisOp RedisOp]] executed by this client upon initialization.
+  * This may be useful for things like script loading, especially when using cluster client which
+  * may create and close node clients dynamically as reactions on cluster state changes.
+  * @param initTimeout
+  * Timeout used by initialization operation (`initOp`)
+  * @param connectionConfigs
+  * A function that returns [[ConnectionConfig]] for a connection given its id. Connection ID
+  * is its index in the connection pool, i.e. an int ranging from 0 to `poolSize`-1.
+  * @param blockingConnectionConfigs
+  * Same as [[connectionConfigs]] but for connections used for handling blocking commands.
   */
 case class NodeConfig(
   poolSize: Int = 1,
+  maxBlockingPoolSize: Int = 4096,
   initOp: RedisOp[Any] = RedisOp.unit,
   initTimeout: Timeout = Timeout(10.seconds),
-  connectionConfigs: Int => ConnectionConfig = _ => ConnectionConfig()
+  connectionConfigs: Int => ConnectionConfig = _ => ConnectionConfig(),
+  blockingConnectionConfigs: Int => ConnectionConfig = _ => ConnectionConfig()
 ) {
   require(poolSize > 0, "Pool size must be positive")
 }

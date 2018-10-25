@@ -40,6 +40,8 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
         self.immediateResult.map(fun)
       override def updateWatchState(message: RedisMsg, state: WatchState): Unit =
         self.updateWatchState(message, state)
+      override def maxBlockingMillis: Int =
+        self.maxBlockingMillis
     }
 
   /**

@@ -338,7 +338,7 @@ private object RedisClusterClient {
   val GetClientTimeout = Timeout(1.seconds)
 
   case class CollectionPacks(coll: IndexedSeq[RawCommandPack]) extends RawCommandPacks {
-    def emitCommandPacks(consumer: RawCommandPack => Unit) = coll.foreach(consumer)
+    def emitCommandPacks(consumer: RawCommandPack => Unit): Unit = coll.foreach(consumer)
     def computeSize(limit: Int): Int = limit min coll.size
   }
 
@@ -351,25 +351,26 @@ private object RedisClusterClient {
       result
     }
 
+    override def maxBlockingMillis: Int = pack.maxBlockingMillis
     override def isAsking = true
 
-    def rawCommands(inTransaction: Boolean) =
+    def rawCommands(inTransaction: Boolean): RawCommands =
       if (inTransaction || pack.isAsking || !keyed) pack.rawCommands(inTransaction)
       else new RawCommands {
-        def emitCommands(consumer: RawCommand => Unit) = {
+        def emitCommands(consumer: RawCommand => Unit): Unit = {
           consumer(Asking)
           pack.rawCommands(inTransaction).emitCommands(consumer)
         }
       }
 
-    def createPreprocessor(replyCount: Int) =
+    def createPreprocessor(replyCount: Int): ReplyPreprocessor =
       if (pack.isAsking || !keyed) pack.createPreprocessor(replyCount)
       else new ReplyPreprocessor {
         private val wrapped = pack.createPreprocessor(replyCount - 1)
         private var first = true
         private var error: Opt[FailureReply] = Opt.Empty
 
-        def preprocess(message: RedisMsg, watchState: WatchState) =
+        def preprocess(message: RedisMsg, watchState: WatchState): Opt[RedisReply] =
           if (first) {
             first = false
             message match {
@@ -381,7 +382,7 @@ private object RedisClusterClient {
             .map(reply => error.getOrElse(reply))
       }
 
-    def checkLevel(minAllowed: Level, clientType: String) =
+    def checkLevel(minAllowed: Level, clientType: String): Unit =
       pack.checkLevel(minAllowed, clientType)
   }
 }

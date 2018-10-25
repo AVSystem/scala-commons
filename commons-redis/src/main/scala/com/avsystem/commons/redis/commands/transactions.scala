@@ -18,16 +18,16 @@ trait TransactionApi extends ApiSubset {
 
   private final class Watch(keys: Iterable[Key]) extends RedisUnitCommand with OperationCommand {
     val encoded: Encoded = encoder("WATCH").keys(keys).result
-    override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
+    override def updateWatchState(message: RedisMsg, state: WatchState): Unit = message match {
       case RedisMsg.Ok => state.watching = true
       case _ =>
     }
-    override def immediateResult = whenEmpty(keys, ())
+    override def immediateResult: Opt[Unit] = whenEmpty(keys, ())
   }
 
   private object Unwatch extends RedisUnitCommand with OperationCommand {
     val encoded: Encoded = encoder("UNWATCH").result
-    override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
+    override def updateWatchState(message: RedisMsg, state: WatchState): Unit = message match {
       case RedisMsg.Ok => state.watching = false
       case _ =>
     }
@@ -40,7 +40,7 @@ private[redis] object Multi extends UnsafeCommand {
 
 private[redis] object Exec extends UnsafeCommand {
   val encoded: Encoded = encoder("EXEC").result
-  override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
+  override def updateWatchState(message: RedisMsg, state: WatchState): Unit = message match {
     case _: ArrayMsg[RedisMsg] | NullArrayMsg => state.watching = false
     case err: ErrorMsg if err.errorCode == "EXECABORT" => state.watching = false
     case _ =>
@@ -49,7 +49,7 @@ private[redis] object Exec extends UnsafeCommand {
 
 private[redis] object Discard extends UnsafeCommand {
   val encoded: Encoded = encoder("DISCARD").result
-  override def updateWatchState(message: RedisMsg, state: WatchState) = message match {
+  override def updateWatchState(message: RedisMsg, state: WatchState): Unit = message match {
     case RedisMsg.Ok => state.watching = false
     case _ =>
   }

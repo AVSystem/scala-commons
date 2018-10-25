@@ -82,6 +82,13 @@ class ForbiddenCommandException(cmd: RawCommand, client: String)
   extends RedisException(s"This command cannot be executed on $client: $cmd")
 
 /**
+  * Thrown when there is too many concurrent blocking commands being executed on a node
+  * client and blocking connection pool is exhausted.
+  */
+class TooManyConnectionsException(maxPoolSize: Int)
+  extends RedisException(s"Maximum number of blocking connections ($maxPoolSize) was reached")
+
+/**
   * Thrown when [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]] is unable to fetch initial
   * cluster state from any of the seed nodes. This happens e.g. when none of the seed nodes can be contacted or when
   * they aren't Redis Cluster members.

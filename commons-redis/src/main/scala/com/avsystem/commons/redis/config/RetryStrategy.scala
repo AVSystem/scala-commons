@@ -16,7 +16,7 @@ trait RetryStrategy {
 case class ExponentialBackoff(firstDelay: FiniteDuration, maxDelay: FiniteDuration)
   extends RetryStrategy {
 
-  private def expDelay(retry: Int) =
+  private def expDelay(retry: Int): FiniteDuration =
     firstDelay * (1 << (retry - 1))
 
   private val maxRetry =
@@ -30,7 +30,7 @@ case class ExponentialBackoff(firstDelay: FiniteDuration, maxDelay: FiniteDurati
 }
 
 case object NoRetryStrategy extends RetryStrategy {
-  def retryDelay(retry: Int) = Opt.Empty
+  def retryDelay(retry: Int): Opt[FiniteDuration] = Opt.Empty
 }
 
 object ConfigDefaults {

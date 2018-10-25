@@ -43,8 +43,8 @@ trait HashesApiSuite extends CommandsSuite {
   }
 
   apiTest("HINCRBYFLOAT") {
-    hincrbyfloat("key", "field", 3.14).assertEquals(3.14)
-    hincrbyfloat("key", "field", -2.0).assertEquals(1.14)
+    hincrbyfloat("key", "field", 3.25).assertEquals(3.25)
+    hincrbyfloat("key", "field", -2.0).assertEquals(1.25)
   }
 
   apiTest("HKEYS") {

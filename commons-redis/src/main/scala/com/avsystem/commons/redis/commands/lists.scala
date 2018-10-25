@@ -78,6 +78,22 @@ trait ListsApi extends ApiSubset {
   def rpushxOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
     if (values.nonEmpty) rpushx(key, values) else llen(key)
 
+  /** Executes [[http://redis.io/commands/blpop BLPOP]] */
+  def blpop(key: Key, timeout: Int): Result[Opt[Value]] =
+    execute(new Blpop(key.single, timeout).map(_.map(_._2)))
+  /** Executes [[http://redis.io/commands/blpop BLPOP]] */
+  def blpop(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value)]] =
+    execute(new Blpop(keys, timeout))
+  /** Executes [[http://redis.io/commands/brpop BRPOP]] */
+  def brpop(key: Key, timeout: Int): Result[Opt[Value]] =
+    execute(new Brpop(key.single, timeout).map(_.map(_._2)))
+  /** Executes [[http://redis.io/commands/brpop BRPOP]] */
+  def brpop(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value)]] =
+    execute(new Brpop(keys, timeout))
+  /** Executes [[http://redis.io/commands/brpoplpush BRPOPLPUSH]] */
+  def brpoplpush(source: Key, destination: Key, timeout: Int): Result[Opt[Value]] =
+    execute(new Brpoplpush(source, destination, timeout))
+
   private final class Lindex(key: Key, index: Long) extends RedisOptDataCommand[Value] with NodeCommand {
     val encoded: Encoded = encoder("LINDEX").key(key).add(index).result
   }
@@ -135,59 +151,26 @@ trait ListsApi extends ApiSubset {
   private final class Rpushx(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {
     val encoded: Encoded = encoder("RPUSHX").key(key).datas(values).result
   }
-}
-
-trait BlockingListsApi extends ApiSubset {
-  /** Executes [[http://redis.io/commands/blpop BLPOP]] */
-  def blpop(key: Key): Result[Value] =
-    execute(new Blpop(key.single, 0).map(_.get._2))
-  /** Executes [[http://redis.io/commands/blpop BLPOP]] */
-  def blpop(key: Key, keys: Key*): Result[(Key, Value)] =
-    execute(new Blpop(key +:: keys, 0).map(_.get))
-  /** Executes [[http://redis.io/commands/blpop BLPOP]] */
-  def blpop(keys: Iterable[Key]): Result[(Key, Value)] =
-    execute(new Blpop(keys, 0).map(_.get))
-  /** Executes [[http://redis.io/commands/blpop BLPOP]] */
-  def blpop(key: Key, timeout: Int): Result[Opt[Value]] =
-    execute(new Blpop(key.single, timeout).map(_.map(_._2)))
-  /** Executes [[http://redis.io/commands/blpop BLPOP]] */
-  def blpop(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value)]] =
-    execute(new Blpop(keys, timeout))
-  /** Executes [[http://redis.io/commands/brpop BRPOP]] */
-  def brpop(key: Key): Result[Value] =
-    execute(new Brpop(key.single, 0).map(_.get._2))
-  /** Executes [[http://redis.io/commands/brpop BRPOP]] */
-  def brpop(key: Key, keys: Key*): Result[(Key, Value)] =
-    execute(new Brpop(key +:: keys, 0).map(_.get))
-  /** Executes [[http://redis.io/commands/brpop BRPOP]] */
-  def brpop(keys: Iterable[Key]): Result[(Key, Value)] =
-    execute(new Brpop(keys, 0).map(_.get))
-  /** Executes [[http://redis.io/commands/brpop BRPOP]] */
-  def brpop(key: Key, timeout: Int): Result[Opt[Value]] =
-    execute(new Brpop(key.single, timeout).map(_.map(_._2)))
-  /** Executes [[http://redis.io/commands/brpop BRPOP]] */
-  def brpop(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value)]] =
-    execute(new Brpop(keys, timeout))
-  /** Executes [[http://redis.io/commands/brpoplpush BRPOPLPUSH]] */
-  def brpoplpush(source: Key, destination: Key): Result[Value] =
-    execute(new Brpoplpush(source, destination, 0).map(_.get))
-  /** Executes [[http://redis.io/commands/brpoplpush BRPOPLPUSH]] */
-  def brpoplpush(source: Key, destination: Key, timeout: Int): Result[Opt[Value]] =
-    execute(new Brpoplpush(source, destination, timeout))
 
   private final class Blpop(keys: Iterable[Key], timeout: Int)
-    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkPair(bulk[Key], bulk[Value]))) with ConnectionCommand {
+    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkPair(bulk[Key], bulk[Value]))) with NodeCommand {
     val encoded: Encoded = encoder("BLPOP").keys(keys).add(timeout).result
+    override def maxBlockingMillis: Int =
+      if (timeout <= 0) Int.MaxValue else timeout * 1000
   }
 
   private final class Brpop(keys: Iterable[Key], timeout: Int)
-    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkPair(bulk[Key], bulk[Value]))) with ConnectionCommand {
+    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkPair(bulk[Key], bulk[Value]))) with NodeCommand {
     val encoded: Encoded = encoder("BRPOP").keys(keys).add(timeout).result
+    override def maxBlockingMillis: Int =
+      if (timeout <= 0) Int.MaxValue else timeout * 1000
   }
 
   private final class Brpoplpush(source: Key, destination: Key, timeout: Int)
-    extends AbstractRedisCommand[Opt[Value]](nullMultiBulkOr(bulk[Value])) with ConnectionCommand {
+    extends AbstractRedisCommand[Opt[Value]](nullMultiBulkOr(bulk[Value])) with NodeCommand {
     val encoded: Encoded = encoder("BRPOPLPUSH").key(source).key(destination).add(timeout).result
+    override def maxBlockingMillis: Int =
+      if (timeout == 0) Int.MaxValue else timeout * 1000
   }
 }
 

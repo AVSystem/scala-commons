@@ -10,7 +10,7 @@ import scala.io.Source
   * Created: 28/06/16.
   */
 object ClusterUtils {
-  val SlotKeys =
+  final val SlotKeys =
     Source.fromInputStream(getClass.getResourceAsStream("/slotkeys.txt"))
       .getLines().toArray
 

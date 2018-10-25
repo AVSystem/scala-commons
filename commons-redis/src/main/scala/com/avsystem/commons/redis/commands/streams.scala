@@ -93,26 +93,32 @@ trait StreamsApi extends ApiSubset {
       .optAdd(start, "-").optAdd(end, "+").optAdd("COUNT", count).result
   }
 
-  private final class Xread(count: Opt[Int], streams: Iterable[(Key, XEntryId)])
+  private final class Xread(count: Opt[Int], blockMillis: Opt[Int], streams: Iterable[(Key, XEntryId)])
     extends AbstractRedisCommand[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]](
       multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
 
-    val encoded: Encoded = encoder("XREAD").optAdd("COUNT", count)
+    val encoded: Encoded = encoder("XREAD").optAdd("COUNT", count).optAdd("BLOCK", blockMillis)
       .add("STREAMS").keys(streams.iterator.map(_._1)).add(streams.iterator.map(_._2)).result
 
     override def immediateResult: Opt[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]] =
       whenEmpty(streams, Map.empty)
+    override def maxBlockingMillis: Int =
+      blockMillis.map(m => if (m <= 0) Int.MaxValue else m).getOrElse(0)
   }
 
-  private final class Xreadgroup(group: XGroup, consumer: XConsumer, count: Opt[Int], streams: Iterable[(Key, Opt[XEntryId])])
-    extends AbstractRedisCommand[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]](
-      multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
+  private final class Xreadgroup(group: XGroup, consumer: XConsumer,
+    count: Opt[Int], blockMillis: Opt[Int], streams: Iterable[(Key, Opt[XEntryId])]
+  ) extends AbstractRedisCommand[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]](
+    multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
 
-    val encoded: Encoded = encoder("XREADGROUP").add("GROUP").add(group).add(consumer).optAdd("COUNT", count)
+    val encoded: Encoded = encoder("XREADGROUP").add("GROUP").add(group).add(consumer)
+      .optAdd("COUNT", count).optAdd("BLOCK", blockMillis)
       .add("STREAMS").keys(streams.iterator.map(_._1)).add(streams.iterator.map(_._2.fold(">")(_.toString))).result
 
     override def immediateResult: Opt[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]] =
       whenEmpty(streams, Map.empty)
+    override def maxBlockingMillis: Int =
+      blockMillis.map(m => if (m <= 0) Int.MaxValue else m).getOrElse(0)
   }
 
   private final class Xrevrange(key: Key, end: Opt[XEntryId], start: Opt[XEntryId], count: Opt[Int])
@@ -123,31 +129,6 @@ trait StreamsApi extends ApiSubset {
 
   private final class Xtrim(key: Key, maxlen: XMaxlen) extends RedisLongCommand with NodeCommand {
     val encoded: Encoded = encoder("XTRIM").key(key).add("MAXLEN").add(maxlen).result
-  }
-}
-
-trait BlockingStreamsApi extends ApiSubset {
-  private final class XreadBlock(count: Opt[Int], millis: Int, streams: Iterable[(Key, Opt[XEntryId])])
-    extends AbstractRedisCommand[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]](
-      multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
-
-    val encoded: Encoded = encoder("XREAD").optAdd("COUNT", count).add("BLOCK").add(millis)
-      .add("STREAMS").keys(streams.iterator.map(_._1)).add(streams.iterator.map(_._2.fold("$")(_.toString))).result
-
-    override def immediateResult: Opt[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]] =
-      whenEmpty(streams, Map.empty)
-  }
-
-  private final class XreadgroupBlock(group: XGroup, consumer: XConsumer, count: Opt[Int], millis: Int, streams: Iterable[(Key, Opt[XEntryId])])
-    extends AbstractRedisCommand[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]](
-      multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
-
-    val encoded: Encoded = encoder("XREADGROUP")
-      .add("GROUP").add(group).add(consumer).optAdd("COUNT", count).add("BLOCK").add(millis)
-      .add("STREAMS").keys(streams.iterator.map(_._1)).add(streams.iterator.map(_._2.fold(">")(_.toString))).result
-
-    override def immediateResult: Opt[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]] =
-      whenEmpty(streams, Map.empty)
   }
 }
 

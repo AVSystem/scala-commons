@@ -14,7 +14,12 @@ class RedisNodeClientTest extends FunSuite
   with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer with ByteStringInterpolation {
 
   def createClient(connInitCommands: RedisBatch[Any], initOp: RedisOp[Any]) =
-    new RedisNodeClient(address, config = NodeConfig(initOp = initOp, connectionConfigs = _ => ConnectionConfig(connInitCommands)))
+    new RedisNodeClient(address, config = NodeConfig(
+      initOp = initOp,
+      maxBlockingPoolSize = 100,
+      connectionConfigs = _ => ConnectionConfig(connInitCommands),
+      blockingConnectionConfigs = _ => ConnectionConfig(connInitCommands)
+    ))
 
   test("client initialization test") {
     import RedisApi.Batches.StringTyped._
@@ -62,5 +67,13 @@ class RedisNodeClientTest extends FunSuite
     client.initialized.failed.futureValue shouldBe a[NodeInitializationFailure]
     f1.failed.futureValue shouldBe a[NodeInitializationFailure]
     f2.failed.futureValue shouldBe a[NodeInitializationFailure]
+  }
+
+  test("concurrent blocking commands test") {
+    val client = createClient(RedisBatch.unit, RedisOp.unit)
+    val api = RedisApi.Node.Async.StringTyped(client)
+    def fut = Future.traverse(Seq.fill(100)(()))(_ => api.blpop("LOL", 1))
+    fut.futureValue shouldBe Seq.fill(100)(Opt.Empty)
+    fut.futureValue shouldBe Seq.fill(100)(Opt.Empty)
   }
 }

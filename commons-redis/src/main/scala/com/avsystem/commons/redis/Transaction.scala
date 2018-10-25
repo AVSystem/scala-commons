@@ -11,8 +11,11 @@ import scala.collection.mutable.ArrayBuffer
 
 final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
 
-  def rawCommands(inTransaction: Boolean) = new RawCommands {
-    def emitCommands(consumer: RawCommand => Unit) = {
+  override def maxBlockingMillis: Int =
+    batch.rawCommandPacks.maxBlockingMillis
+
+  def rawCommands(inTransaction: Boolean): RawCommands = new RawCommands {
+    def emitCommands(consumer: RawCommand => Unit): Unit = {
       if (!inTransaction) {
         consumer(Multi)
       }
@@ -23,11 +26,11 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
     }
   }
 
-  def checkLevel(minAllowed: Level, clientType: String) =
+  def checkLevel(minAllowed: Level, clientType: String): Unit =
     batch.rawCommandPacks.emitCommandPacks(_.rawCommands(inTransaction = true)
       .emitCommands(_.checkLevel(minAllowed, clientType)))
 
-  def createPreprocessor(replyCount: Int) = new ReplyPreprocessor {
+  def createPreprocessor(replyCount: Int): ReplyPreprocessor = new ReplyPreprocessor {
     private var singleError: Opt[FailureReply] = Opt.Empty
     private var errors: Opt[ArrayBuffer[ErrorMsg]] = Opt.Empty
     private var normalResult: Opt[IndexedSeq[RedisMsg]] = Opt.Empty
@@ -55,7 +58,7 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
       }
     }
 
-    def preprocess(message: RedisMsg, state: WatchState) = {
+    def preprocess(message: RedisMsg, state: WatchState): Opt[RedisReply] = {
       val LastIndex = replyCount - 1
       val c = ctr
       ctr += 1
@@ -88,7 +91,7 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
     }
   }
 
-  def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) =
+  def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean): A =
     if (inTransaction) batch.decodeReplies(replies, index, inTransaction)
     else replies(index.inc()) match {
       case TransactionReply(elements) =>
@@ -100,5 +103,5 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
         batch.decodeReplies(_ => failure, new Index, inTransaction = true)
     }
 
-  override def transaction = this
+  override def transaction: Transaction[A] = this
 }
