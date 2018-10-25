@@ -285,6 +285,15 @@ object ReplyDecoders {
   def multiBulkXEntriesByKey[K: RedisDataCodec, F: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[BMap[K, Seq[(XEntryId, BMap[F, V])]]] =
     mapMultiBulk(bulk[K], multiBulkSeq(multiBulkXEntry[F, V]))
 
+  val multiBulkXConsumerInfo: ReplyDecoder[XConsumerInfo] =
+    mapMultiBulk(bulkUTF8, undecoded).andThen(XConsumerInfo)
+
+  val multiBulkXGroupInfo: ReplyDecoder[XGroupInfo] =
+    mapMultiBulk(bulkUTF8, undecoded).andThen(XGroupInfo)
+
+  def multiBulkXStreamInfo[F: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[XStreamInfo[F, V]] =
+    mapMultiBulk(bulkUTF8, undecoded).andThen(XStreamInfo[F, V])
+
   def groupedMultiBulk[T](size: Int, elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[Seq[T]]] = {
     case ArrayMsg(elements) =>
       def elemDecode(msg: RedisMsg): T = msg match {

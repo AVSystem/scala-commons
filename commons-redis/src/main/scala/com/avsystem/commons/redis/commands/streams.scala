@@ -3,7 +3,8 @@ package redis.commands
 
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis.commands.ReplyDecoders._
-import com.avsystem.commons.redis.{AbstractRedisCommand, ApiSubset, NodeCommand, RedisBooleanCommand, RedisIntCommand, RedisLongCommand, RedisSeqCommand, RedisUnitCommand}
+import com.avsystem.commons.redis.protocol.ValidRedisMsg
+import com.avsystem.commons.redis.{AbstractRedisCommand, ApiSubset, NodeCommand, RedisBooleanCommand, RedisDataCodec, RedisIntCommand, RedisLongCommand, RedisSeqCommand, RedisUnitCommand}
 
 trait StreamsApi extends ApiSubset {
   private final class Xack(key: Key, group: XGroup, ids: Iterable[XEntryId])
@@ -69,7 +70,20 @@ trait StreamsApi extends ApiSubset {
     val encoded: Encoded = encoder("XGROUP", "DELCONSUMER").key(key).add(group).add(consumer).result
   }
 
-  // TODO: XINFO
+  private final class XinfoConsumers(key: Key, group: XGroup)
+    extends RedisSeqCommand[XConsumerInfo](multiBulkXConsumerInfo) with NodeCommand {
+    val encoded: Encoded = encoder("XINFO", "CONSUMERS").key(key).add(group).result
+  }
+
+  private final class XinfoGroups(key: Key)
+    extends RedisSeqCommand[XGroupInfo](multiBulkXGroupInfo) with NodeCommand {
+    val encoded: Encoded = encoder("XINFO", "GROUPS").key(key).result
+  }
+
+  private final class XinfoStream(key: Key)
+    extends AbstractRedisCommand[XStreamInfo[Field, Value]](multiBulkXStreamInfo) with NodeCommand {
+    val encoded: Encoded = encoder("XINFO", "STREAM").key(key).result
+  }
 
   private final class Xlen(key: Key) extends RedisLongCommand with NodeCommand {
     val encoded: Encoded = encoder("XLEN").key(key).result
@@ -210,3 +224,27 @@ case class XPendingEntry(
   idleTime: Long,
   deliveredCount: Int
 )
+
+case class XGroupInfo(raw: BMap[String, ValidRedisMsg]) {
+  def name: XGroup = bulkXGroup(raw("name"))
+  def consumers: Int = integerInt(raw("consumers"))
+  def pending: Int = integerInt(raw("pending"))
+}
+
+case class XConsumerInfo(raw: BMap[String, ValidRedisMsg]) {
+  def name: XConsumer = bulkXConsumer(raw("name"))
+  def pending: Int = integerInt(raw("pending"))
+  def idle: Long = integerLong(raw("idle"))
+}
+
+case class XStreamInfo[Field: RedisDataCodec, Value: RedisDataCodec](raw: BMap[String, ValidRedisMsg]) {
+  def length: Long = integerLong(raw("length"))
+  def radixTreeKeys: Int = integerInt(raw("radis-tree-keys"))
+  def radixTreeNodes: Int = integerInt(raw("radis-tree-nodes"))
+  def groups: Int = integerInt(raw("groups"))
+  def lastGeneratedId: XEntryId = bulkXEntryId(raw("last-generated-id"))
+  def firstEntry: (XEntryId, BMap[Field, Value]) =
+    multiBulkXEntry[Field, Value].apply(raw("first-entry"))
+  def lastEntry: (XEntryId, BMap[Field, Value]) =
+    multiBulkXEntry[Field, Value].apply(raw("last-entry"))
+}
