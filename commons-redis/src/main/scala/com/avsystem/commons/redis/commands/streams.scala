@@ -34,7 +34,7 @@ trait StreamsApi extends ApiSubset {
   private final class Xclaim(
     key: Key, group: XGroup, consumer: XConsumer, minIdleTime: Long, ids: Iterable[XEntryId],
     idle: Opt[Long], msUnixTime: Opt[Long], retrycount: Opt[Int], force: Boolean
-  ) extends AbstractXclaim[(XEntryId, BMap[Field, Value])](multiBulkPair(bulkXEntryId, mapMultiBulk[Field, Value]))(
+  ) extends AbstractXclaim[XEntry[Field, Value]](multiBulkXEntry)(
     key, group, consumer, minIdleTime, ids, idle, msUnixTime, retrycount, force, justid = false)
 
   private final class XclaimJustid(
@@ -102,19 +102,19 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class Xrange(key: Key, start: Opt[XEntryId], end: Opt[XEntryId], count: Opt[Int])
-    extends RedisSeqCommand[(XEntryId, BMap[Field, Value])](multiBulkXEntry[Field, Value]) with NodeCommand {
+    extends RedisSeqCommand[XEntry[Field, Value]](multiBulkXEntry[Field, Value]) with NodeCommand {
     val encoded: Encoded = encoder("XRANGE").key(key)
       .optAdd(start, "-").optAdd(end, "+").optAdd("COUNT", count).result
   }
 
   private abstract class AbstractXread
-    extends AbstractRedisCommand[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]](
+    extends AbstractRedisCommand[BMap[Key, Seq[XEntry[Field, Value]]]](
       multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
 
     def streams: Iterable[(Key, _)]
     def blockMillis: Opt[Int]
 
-    override def immediateResult: Opt[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]] =
+    override def immediateResult: Opt[BMap[Key, Seq[XEntry[Field, Value]]]] =
       whenEmpty(streams, Map.empty)
     override def maxBlockingMillis: Int =
       blockMillis.map(m => if (m <= 0) Int.MaxValue else m).getOrElse(0)
@@ -142,7 +142,7 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class Xrevrange(key: Key, end: Opt[XEntryId], start: Opt[XEntryId], count: Opt[Int])
-    extends RedisSeqCommand[(XEntryId, BMap[Field, Value])](multiBulkXEntry[Field, Value]) with NodeCommand {
+    extends RedisSeqCommand[XEntry[Field, Value]](multiBulkXEntry[Field, Value]) with NodeCommand {
     val encoded: Encoded = encoder("XREVRANGE").key(key)
       .optAdd(end, "+").optAdd(start, "-").optAdd("COUNT", count).result
   }
@@ -190,6 +190,8 @@ object XEntryId {
   implicit val commandArg: CommandArg[XEntryId] =
     CommandArg((enc, eid) => enc.add(eid.toString))
 }
+
+case class XEntry[Field, Value](id: XEntryId, data: BMap[Field, Value])
 
 case class XMaxlen(maxlen: Long, approx: Boolean = true)
 object XMaxlen {
@@ -243,8 +245,6 @@ case class XStreamInfo[Field: RedisDataCodec, Value: RedisDataCodec](raw: BMap[S
   def radixTreeNodes: Int = integerInt(raw("radis-tree-nodes"))
   def groups: Int = integerInt(raw("groups"))
   def lastGeneratedId: XEntryId = bulkXEntryId(raw("last-generated-id"))
-  def firstEntry: (XEntryId, BMap[Field, Value]) =
-    multiBulkXEntry[Field, Value].apply(raw("first-entry"))
-  def lastEntry: (XEntryId, BMap[Field, Value]) =
-    multiBulkXEntry[Field, Value].apply(raw("last-entry"))
+  def firstEntry: XEntry[Field, Value] = multiBulkXEntry[Field, Value].apply(raw("first-entry"))
+  def lastEntry: XEntry[Field, Value] = multiBulkXEntry[Field, Value].apply(raw("last-entry"))
 }

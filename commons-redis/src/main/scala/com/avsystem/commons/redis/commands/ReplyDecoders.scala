@@ -279,10 +279,12 @@ object ReplyDecoders {
       XPendingEntry(XEntryId.parse(id.utf8String), XConsumer(consumer.utf8String), idle, delivered.toInt)
   }
 
-  def multiBulkXEntry[F: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[(XEntryId, BMap[F, V])] =
-    multiBulkPair(bulkXEntryId, mapMultiBulk[F, V])
+  def multiBulkXEntry[F: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[XEntry[F, V]] = {
+    case ArrayMsg(IndexedSeq(BulkStringMsg(id), data: ArrayMsg[RedisMsg])) =>
+      XEntry(XEntryId.parse(id.utf8String), mapMultiBulk[F, V].apply(data))
+  }
 
-  def multiBulkXEntriesByKey[K: RedisDataCodec, F: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[BMap[K, Seq[(XEntryId, BMap[F, V])]]] =
+  def multiBulkXEntriesByKey[K: RedisDataCodec, F: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[BMap[K, Seq[XEntry[F, V]]]] =
     mapMultiBulk(bulk[K], multiBulkSeq(multiBulkXEntry[F, V]))
 
   val multiBulkXConsumerInfo: ReplyDecoder[XConsumerInfo] =
