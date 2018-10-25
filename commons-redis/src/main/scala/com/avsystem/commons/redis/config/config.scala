@@ -68,6 +68,12 @@ case class ClusterConfig(
   * commands because these other commands may be delayed by the blocking command. Therefore
   * they require their own, dynamically resizable connection pool. Maximum size of that pool
   * is the limit of possible concurrent blocking commands that can be executed at the same time.
+  * @param maxBlockingIdleTime
+  * Maximum amount of time a blocking connection may be idle before being closed and removed from
+  * the pool.
+  * @param blockingCleanupInterval
+  * Time interval between periodic blocking connection cleanup events,
+  * with respect to [[maxBlockingIdleTime]].
   * @param initOp
   * A [[com.avsystem.commons.redis.RedisOp RedisOp]] executed by this client upon initialization.
   * This may be useful for things like script loading, especially when using cluster client which
@@ -83,6 +89,8 @@ case class ClusterConfig(
 case class NodeConfig(
   poolSize: Int = 1,
   maxBlockingPoolSize: Int = 4096,
+  maxBlockingIdleTime: Duration = 1.minute,
+  blockingCleanupInterval: FiniteDuration = 1.second,
   initOp: RedisOp[Any] = RedisOp.unit,
   initTimeout: Timeout = Timeout(10.seconds),
   connectionConfigs: Int => ConnectionConfig = _ => ConnectionConfig(),

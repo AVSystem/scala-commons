@@ -93,12 +93,12 @@ trait StreamsApi extends ApiSubset {
       .optAdd(start, "-").optAdd(end, "+").optAdd("COUNT", count).result
   }
 
-  private final class Xread(count: Opt[Int], blockMillis: Opt[Int], streams: Iterable[(Key, XEntryId)])
+  private abstract class AbstractXread
     extends AbstractRedisCommand[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]](
       multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
 
-    val encoded: Encoded = encoder("XREAD").optAdd("COUNT", count).optAdd("BLOCK", blockMillis)
-      .add("STREAMS").keys(streams.iterator.map(_._1)).add(streams.iterator.map(_._2)).result
+    def streams: Iterable[(Key, _)]
+    def blockMillis: Opt[Int]
 
     override def immediateResult: Opt[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]] =
       whenEmpty(streams, Map.empty)
@@ -106,19 +106,25 @@ trait StreamsApi extends ApiSubset {
       blockMillis.map(m => if (m <= 0) Int.MaxValue else m).getOrElse(0)
   }
 
-  private final class Xreadgroup(group: XGroup, consumer: XConsumer,
-    count: Opt[Int], blockMillis: Opt[Int], streams: Iterable[(Key, Opt[XEntryId])]
-  ) extends AbstractRedisCommand[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]](
-    multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
+  private final class Xread(
+    count: Opt[Int], val blockMillis: Opt[Int], val streams: Iterable[(Key, XEntryId)]
+  ) extends AbstractXread {
+
+    val encoded: Encoded = encoder("XREAD")
+      .optAdd("COUNT", count).optAdd("BLOCK", blockMillis)
+      .add("STREAMS").keys(streams.iterator.map(_._1)).add(streams.iterator.map(_._2))
+      .result
+  }
+
+  private final class Xreadgroup(
+    group: XGroup, consumer: XConsumer,
+    count: Opt[Int], val blockMillis: Opt[Int], val streams: Iterable[(Key, Opt[XEntryId])]
+  ) extends AbstractXread {
 
     val encoded: Encoded = encoder("XREADGROUP").add("GROUP").add(group).add(consumer)
       .optAdd("COUNT", count).optAdd("BLOCK", blockMillis)
-      .add("STREAMS").keys(streams.iterator.map(_._1)).add(streams.iterator.map(_._2.fold(">")(_.toString))).result
-
-    override def immediateResult: Opt[BMap[Key, Seq[(XEntryId, BMap[Field, Value])]]] =
-      whenEmpty(streams, Map.empty)
-    override def maxBlockingMillis: Int =
-      blockMillis.map(m => if (m <= 0) Int.MaxValue else m).getOrElse(0)
+      .add("STREAMS").keys(streams.iterator.map(_._1)).add(streams.iterator.map(_._2.fold(">")(_.toString)))
+      .result
   }
 
   private final class Xrevrange(key: Key, end: Opt[XEntryId], start: Opt[XEntryId], count: Opt[Int])

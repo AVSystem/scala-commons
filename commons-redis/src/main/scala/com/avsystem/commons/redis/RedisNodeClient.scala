@@ -2,13 +2,14 @@ package com.avsystem.commons
 package redis
 
 import java.io.Closeable
-import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.avsystem.commons.concurrent.RunInQueueEC
+import com.avsystem.commons.redis.actor.ConnectionPoolActor.QueuedConn
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{ConnectionPoolActor, RedisConnectionActor, RedisOperationActor}
@@ -44,9 +45,9 @@ final class RedisNodeClient(
   private val connections = (0 until config.poolSize).iterator.map(newConnection).toArray
   private val index = new AtomicLong(0)
 
-  private val blockingConnectionQueue = new ArrayBlockingQueue[ActorRef](config.maxBlockingPoolSize)
+  private val blockingConnectionQueue = new ConcurrentLinkedDeque[QueuedConn]
   private val blockingConnectionPool =
-    system.actorOf(Props(new ConnectionPoolActor(address, config)))
+    system.actorOf(Props(new ConnectionPoolActor(address, config, blockingConnectionQueue)))
 
   private def newBlockingConnection(): Future[ActorRef] = {
     implicit val timeout: Timeout = Timeout(1.second)
@@ -88,12 +89,14 @@ final class RedisNodeClient(
       if (maxBlockMillis == 0)
         nextConnection().ask(packs)(timeout, Actor.noSender).mapNow { case pr: PacksResult => pr }
       else {
-        val adjTimeout = Timeout(math.max(maxBlockMillis, timeout.duration.toMillis).millis)
+        val adjTimeout = Timeout((maxBlockMillis.millis + 1.second) max timeout.duration)
         def executeBlocking(connection: ActorRef): Future[PacksResult] =
           connection.ask(packs)(adjTimeout, Actor.noSender)
-            .andThenNow { case _ => blockingConnectionQueue.offer(connection) }
+            .andThenNow { case _ =>
+              blockingConnectionQueue.offerFirst(QueuedConn(connection, System.nanoTime()))
+            }
             .mapNow { case pr: PacksResult => pr }
-        blockingConnectionQueue.poll().opt.map(executeBlocking)
+        blockingConnectionQueue.pollFirst().opt.map(qc => executeBlocking(qc.conn))
           .getOrElse(newBlockingConnection().flatMapNow(executeBlocking))
       }
     }
