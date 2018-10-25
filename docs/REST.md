@@ -794,7 +794,7 @@ trait MonixTaskRestImplicits {
   
   // only for OpenAPI generation
   implicit def taskResultType[T: RestResponses]: RestResultType[Task[T]] =
-    RestResultType[Future[T]](RestResponses[T].responses)
+    RestResultType[Task[T]](RestResponses[T].responses)
 }
 object MonixTaskRestImplicits
 ```
