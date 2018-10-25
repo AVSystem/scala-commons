@@ -1144,6 +1144,7 @@ it will apply to all Path Item Objects associated with result of this prefix met
 
 ### Limitations
 
+* It's not possible to use boolean values for `additionalProperties` field in Schema objects.
 * Scala-level default values of method parameters are not included in the OpenAPI Schema objects.
   You need to use `@whenAbsent` annotation instead.
 * Current representation of OpenAPI document does not support
