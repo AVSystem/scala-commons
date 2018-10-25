@@ -138,7 +138,13 @@ trait StreamsApi extends ApiSubset {
   }
 }
 
-final case class XEntryId(tstamp: Long, seq: OptArg[Long] = OptArg.Empty) {
+final case class XEntryId(tstamp: Long, seq: OptArg[Long] = OptArg.Empty) extends Ordered[XEntryId] {
+  override def compare(that: XEntryId): Int = {
+    val byTstamp = java.lang.Long.compareUnsigned(tstamp, that.tstamp)
+    if (byTstamp != 0) byTstamp
+    else java.lang.Long.compareUnsigned(seq.getOrElse(0L), that.seq.getOrElse(0L))
+  }
+
   def inc: XEntryId =
     XEntryId(tstamp, seq.getOrElse(0L) + 1)
   def fillMinSeq: XEntryId =
@@ -161,6 +167,10 @@ object XEntryId {
   def parse(str: String): XEntryId = str.indexOf('-') match {
     case -1 => XEntryId(strtoul(str), OptArg.Empty)
     case i => XEntryId(strtoul(str.substring(0, i)), OptArg(strtoul(str.substring(i + 1))))
+  }
+
+  implicit val ordering: Ordering[XEntryId] = new Ordering[XEntryId] {
+    def compare(x: XEntryId, y: XEntryId): Int = x.compare(y)
   }
 
   implicit val commandArg: CommandArg[XEntryId] =
