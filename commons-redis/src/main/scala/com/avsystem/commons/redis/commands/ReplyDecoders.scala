@@ -301,8 +301,8 @@ object ReplyDecoders {
   val multiBulkXGroupInfo: ReplyDecoder[XGroupInfo] =
     flatMultiBulkMap(bulkUTF8, undecoded).andThen(XGroupInfo)
 
-  def multiBulkXStreamInfo[F: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[XStreamInfo[F, V]] =
-    flatMultiBulkMap(bulkUTF8, undecoded).andThen(XStreamInfo[F, V])
+  def multiBulkXStreamInfo[Entry <: XEntry[_, _]](entryDecoder: ReplyDecoder[Entry]): ReplyDecoder[XStreamInfo[Entry]] =
+    flatMultiBulkMap(bulkUTF8, undecoded).andThen(XStreamInfo[Entry](_)(entryDecoder))
 
   def multiBulkGroupedSeq[T](size: Int, elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[Seq[T]]] = {
     case ArrayMsg(elements) =>

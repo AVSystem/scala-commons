@@ -5,9 +5,15 @@ import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol.ValidRedisMsg
 import com.avsystem.commons.redis.util.SingletonSeq
-import com.avsystem.commons.redis.{AbstractRedisCommand, ApiSubset, NodeCommand, RedisBooleanCommand, RedisDataCodec, RedisIntCommand, RedisLongCommand, RedisSeqCommand, RedisUnitCommand}
+import com.avsystem.commons.redis.{AbstractRedisCommand, ApiSubset, NodeCommand, RedisBooleanCommand, RedisIntCommand, RedisLongCommand, RedisSeqCommand, RedisUnitCommand}
 
 trait StreamsApi extends ApiSubset {
+  type XEntry = redis.commands.XEntry[Field, Value]
+  object XEntry {
+    def apply(id: XEntryId, data: BMap[Field, Value]): XEntry = redis.commands.XEntry(id, data)
+    def unapply(entry: XEntry): Opt[(XEntryId, BMap[Field, Value])] = Opt((entry.id, entry.data))
+  }
+
   /** Executes [[http://redis.io/commands/xack XACK]] */
   def xack(key: Key, group: XGroup, id: XEntryId): Result[Boolean] =
     execute(new Xack(key, group, new SingletonSeq(id)).map(_ > 0))
@@ -32,7 +38,7 @@ trait StreamsApi extends ApiSubset {
     execute(new Xadd(key, maxlen.toOpt, id.toOpt, fieldValues))
 
   /** Executes [[http://redis.io/commands/xadd XADD]] */
-  def xaddEntry(key: Key, entry: XEntry[Field, Value], maxlen: OptArg[XMaxlen] = OptArg.Empty): Result[XEntryId] =
+  def xaddEntry(key: Key, entry: XEntry, maxlen: OptArg[XMaxlen] = OptArg.Empty): Result[XEntryId] =
     execute(new Xadd(key, maxlen.toOpt, entry.id.opt, entry.data))
 
   /** Executes [[http://redis.io/commands/xclaim XCLAIM]] */
@@ -46,7 +52,7 @@ trait StreamsApi extends ApiSubset {
     msUnixTime: OptArg[Long] = OptArg.Empty,
     retrycount: OptArg[Int] = OptArg.Empty,
     force: Boolean = false
-  ): Result[Opt[XEntry[Field, Value]]] =
+  ): Result[Opt[XEntry]] =
     execute(new Xclaim(
       key, group, consumer, minIdleTime, new SingletonSeq(id),
       idle.toOpt, msUnixTime.toOpt, retrycount.toOpt, force
@@ -63,7 +69,7 @@ trait StreamsApi extends ApiSubset {
     msUnixTime: OptArg[Long] = OptArg.Empty,
     retrycount: OptArg[Int] = OptArg.Empty,
     force: Boolean = false
-  ): Result[Seq[XEntry[Field, Value]]] =
+  ): Result[Seq[XEntry]] =
     execute(new Xclaim(
       key, group, consumer, minIdleTime, ids,
       idle.toOpt, msUnixTime.toOpt, retrycount.toOpt, force
@@ -116,7 +122,7 @@ trait StreamsApi extends ApiSubset {
   def xinfoGroups(key: Key): Result[Seq[XGroupInfo]] =
     execute(new XinfoGroups(key))
   /** Executes [[http://redis.io/commands/xinfo XINFO STREAM]] */
-  def xinfoStream(key: Key): Result[XStreamInfo[Field, Value]] =
+  def xinfoStream(key: Key): Result[XStreamInfo[XEntry]] =
     execute(new XinfoStream(key))
 
   /** Executes [[http://redis.io/commands/xlen XLEN]] */
@@ -143,7 +149,7 @@ trait StreamsApi extends ApiSubset {
     start: OptArg[XEntryId] = OptArg.Empty,
     end: OptArg[XEntryId] = OptArg.Empty,
     count: OptArg[Int] = OptArg.Empty
-  ): Result[Seq[XEntry[Field, Value]]] =
+  ): Result[Seq[XEntry]] =
     execute(new Xrange(key, start.toOpt, end.toOpt, count.toOpt))
 
   /** Executes [[http://redis.io/commands/xread XREAD]] */
@@ -152,7 +158,7 @@ trait StreamsApi extends ApiSubset {
     id: Opt[XEntryId],
     blockMillis: OptArg[Int] = OptArg.Empty,
     count: OptArg[Int] = OptArg.Empty,
-  ): Result[Seq[XEntry[Field, Value]]] =
+  ): Result[Seq[XEntry]] =
     execute(new Xread(count.toOpt, blockMillis.toOpt, Iterator(key), Iterator(id)).map(_.apply(key)))
 
   /** Executes [[http://redis.io/commands/xread XREAD]] */
@@ -160,7 +166,7 @@ trait StreamsApi extends ApiSubset {
     streams: Iterable[(Key, Opt[XEntryId])],
     blockMillis: OptArg[Int] = OptArg.Empty,
     count: OptArg[Int] = OptArg.Empty,
-  ): Result[BMap[Key, Seq[XEntry[Field, Value]]]] =
+  ): Result[BMap[Key, Seq[XEntry]]] =
     execute(new Xread(count.toOpt, blockMillis.toOpt, streams.iterator.map(_._1), streams.iterator.map(_._2)))
 
   /** Executes [[http://redis.io/commands/xreadgroup XREADGROUP]] */
@@ -171,7 +177,7 @@ trait StreamsApi extends ApiSubset {
     consumer: XConsumer,
     blockMillis: OptArg[Int] = OptArg.Empty,
     count: OptArg[Int] = OptArg.Empty,
-  ): Result[Seq[XEntry[Field, Value]]] =
+  ): Result[Seq[XEntry]] =
     execute(new Xreadgroup(group, consumer, count.toOpt, blockMillis.toOpt,
       Iterator(key), Iterator(id)).map(_.apply(key)))
 
@@ -182,7 +188,7 @@ trait StreamsApi extends ApiSubset {
     streams: Iterable[(Key, Opt[XEntryId])],
     blockMillis: OptArg[Int] = OptArg.Empty,
     count: OptArg[Int] = OptArg.Empty,
-  ): Result[BMap[Key, Seq[XEntry[Field, Value]]]] =
+  ): Result[BMap[Key, Seq[XEntry]]] =
     execute(new Xreadgroup(group, consumer, count.toOpt, blockMillis.toOpt,
       streams.iterator.map(_._1), streams.iterator.map(_._2)))
 
@@ -192,7 +198,7 @@ trait StreamsApi extends ApiSubset {
     end: OptArg[XEntryId] = OptArg.Empty,
     start: OptArg[XEntryId] = OptArg.Empty,
     count: OptArg[Int] = OptArg.Empty
-  ): Result[Seq[XEntry[Field, Value]]] =
+  ): Result[Seq[XEntry]] =
     execute(new Xrevrange(key, end.toOpt, start.toOpt, count.toOpt))
 
   /** Executes [[http://redis.io/commands/xtrim XTRIM]] */
@@ -229,7 +235,7 @@ trait StreamsApi extends ApiSubset {
   private final class Xclaim(
     key: Key, group: XGroup, consumer: XConsumer, minIdleTime: Long, ids: Iterable[XEntryId],
     idle: Opt[Long], msUnixTime: Opt[Long], retrycount: Opt[Int], force: Boolean
-  ) extends AbstractXclaim[XEntry[Field, Value]](multiBulkXEntry)(
+  ) extends AbstractXclaim[XEntry](multiBulkXEntry)(
     key, group, consumer, minIdleTime, ids, idle, msUnixTime, retrycount, force, justid = false)
 
   private final class XclaimJustid(
@@ -276,7 +282,7 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class XinfoStream(key: Key)
-    extends AbstractRedisCommand[XStreamInfo[Field, Value]](multiBulkXStreamInfo) with NodeCommand {
+    extends AbstractRedisCommand[XStreamInfo[XEntry]](multiBulkXStreamInfo(multiBulkXEntry[Field, Value])) with NodeCommand {
     val encoded: Encoded = encoder("XINFO", "STREAM").key(key).result
   }
 
@@ -297,18 +303,18 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class Xrange(key: Key, start: Opt[XEntryId], end: Opt[XEntryId], count: Opt[Int])
-    extends RedisSeqCommand[XEntry[Field, Value]](multiBulkXEntry[Field, Value]) with NodeCommand {
+    extends RedisSeqCommand[XEntry](multiBulkXEntry[Field, Value]) with NodeCommand {
     val encoded: Encoded = encoder("XRANGE").key(key)
       .optAdd(start, "-").optAdd(end, "+").optAdd("COUNT", count).result
   }
 
   private abstract class AbstractXread(noStreams: Boolean)
-    extends AbstractRedisCommand[BMap[Key, Seq[XEntry[Field, Value]]]](
+    extends AbstractRedisCommand[BMap[Key, Seq[XEntry]]](
       multiBulkXEntriesMap[Key, Field, Value]) with NodeCommand {
 
     def blockMillis: Opt[Int]
 
-    override def immediateResult: Opt[BMap[Key, Seq[XEntry[Field, Value]]]] =
+    override def immediateResult: Opt[BMap[Key, Seq[XEntry]]] =
       if (noStreams) Opt(Map.empty) else Opt.Empty
     override def maxBlockingMillis: Int =
       blockMillis.map(m => if (m <= 0) Int.MaxValue else m).getOrElse(0)
@@ -336,7 +342,7 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class Xrevrange(key: Key, end: Opt[XEntryId], start: Opt[XEntryId], count: Opt[Int])
-    extends RedisSeqCommand[XEntry[Field, Value]](multiBulkXEntry[Field, Value]) with NodeCommand {
+    extends RedisSeqCommand[XEntry](multiBulkXEntry[Field, Value]) with NodeCommand {
     val encoded: Encoded = encoder("XREVRANGE").key(key)
       .optAdd(end, "+").optAdd(start, "-").optAdd("COUNT", count).result
   }
@@ -433,12 +439,12 @@ case class XConsumerInfo(raw: BMap[String, ValidRedisMsg]) {
   def idle: Long = integerLong(raw("idle"))
 }
 
-case class XStreamInfo[Field: RedisDataCodec, Value: RedisDataCodec](raw: BMap[String, ValidRedisMsg]) {
+case class XStreamInfo[Entry <: XEntry[_, _]](raw: BMap[String, ValidRedisMsg])(entryDecoder: ReplyDecoder[Entry]) {
   def length: Long = integerLong(raw("length"))
   def radixTreeKeys: Int = integerInt(raw("radis-tree-keys"))
   def radixTreeNodes: Int = integerInt(raw("radis-tree-nodes"))
   def groups: Int = integerInt(raw("groups"))
   def lastGeneratedId: XEntryId = bulkXEntryId(raw("last-generated-id"))
-  def firstEntry: XEntry[Field, Value] = multiBulkXEntry[Field, Value].apply(raw("first-entry"))
-  def lastEntry: XEntry[Field, Value] = multiBulkXEntry[Field, Value].apply(raw("last-entry"))
+  def firstEntry: Entry = entryDecoder(raw("first-entry"))
+  def lastEntry: Entry = entryDecoder(raw("last-entry"))
 }
