@@ -107,7 +107,7 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
     waitForPersistence()
     try save.get catch {
       // ignore spurious Redis failures
-      case e: ErrorReplyException if e.getMessage == "ERR Background save already in progress" =>
+      case e: ErrorReplyException if e.errorStr == "ERR Background save already in progress" =>
     }
   }
 

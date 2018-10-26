@@ -19,7 +19,7 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
       decodeExpected.applyOrElse(validReply, (r: ValidRedisMsg) =>
         throw new UnexpectedReplyException(r.toString))
     case err: ErrorMsg =>
-      throw new ErrorReplyException(err)
+      throw new ErrorReplyException(err, this)
     case error: FailureReply =>
       throw error.exception
     case _ =>

@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.exception
 
 import com.avsystem.commons.redis.protocol.ErrorMsg
-import com.avsystem.commons.redis.{NodeAddress, RawCommand, Redirection}
+import com.avsystem.commons.redis.{NodeAddress, RawCommand, Redirection, RedisCommand}
 
 class RedisException(msg: String = null, cause: Throwable = null)
   extends RuntimeException(msg, cause)
@@ -29,8 +29,10 @@ class UnexpectedReplyException(msg: String = null)
 /**
   * Thrown when Redis server replies with an error.
   */
-class ErrorReplyException(val reply: ErrorMsg)
-  extends RedisException(reply.errorString.utf8String)
+class ErrorReplyException(val reply: ErrorMsg, val command: RedisCommand[_])
+  extends RedisException(s"${reply.errorString.utf8String}, for command $command") {
+  def errorStr: String = reply.errorString.utf8String
+}
 
 class RedisIOException(msg: String = null, cause: Throwable = null)
   extends RedisException(msg, cause)

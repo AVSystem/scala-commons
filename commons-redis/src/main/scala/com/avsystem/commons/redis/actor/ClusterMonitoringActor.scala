@@ -118,8 +118,9 @@ final class ClusterMonitoringActor(
           }
         }
 
-      case Failure(err: ErrorReplyException) if state.isEmpty && seedNodes.size == 1 && config.fallbackToSingleNode &&
-        err.reply.errorString.utf8String == "ERR This instance has cluster support disabled" =>
+      case Failure(err: ErrorReplyException)
+        if state.isEmpty && seedNodes.size == 1 && config.fallbackToSingleNode &&
+          err.errorStr == "ERR This instance has cluster support disabled" =>
 
         val addr = seedNodes.head
         log.info(s"$addr is a non-clustered node, falling back to regular node client")

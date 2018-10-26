@@ -3,7 +3,7 @@ package redis.commands
 
 import akka.util.ByteString
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
-import com.avsystem.commons.redis.exception.{ErrorReplyException, UnexpectedReplyException}
+import com.avsystem.commons.redis.exception.UnexpectedReplyException
 import com.avsystem.commons.redis.protocol._
 import com.avsystem.commons.redis.{NodeAddress, RedisDataCodec}
 
@@ -162,7 +162,7 @@ object ReplyDecoders {
     elements.iterator.map {
       case vrm: ValidRedisMsg => elementDecoder.applyOrElse(vrm, (_: ValidRedisMsg) =>
         throw new UnexpectedReplyException(s"Unexpected element in multi-bulk reply: $vrm"))
-      case err: ErrorMsg => throw new ErrorReplyException(err)
+      case msg => throw new UnexpectedReplyException(msg.toString)
     }
 
   def multiBulkSeq[T](elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[T]] = {
@@ -309,8 +309,9 @@ object ReplyDecoders {
   def multiBulkGroupedSeq[T](size: Int, elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[Seq[T]]] = {
     case ArrayMsg(elements) =>
       def elemDecode(msg: RedisMsg): T = msg match {
-        case vrm: ValidRedisMsg => elementDecoder.applyOrElse(vrm, (_: ValidRedisMsg) => throw new UnexpectedReplyException(vrm.toString))
-        case err: ErrorMsg => throw new ErrorReplyException(err)
+        case vrm: ValidRedisMsg => elementDecoder.applyOrElse(vrm, (_: ValidRedisMsg) =>
+          throw new UnexpectedReplyException(vrm.toString))
+        case _ => throw new UnexpectedReplyException(msg.toString)
       }
       elements.iterator.grouped(size).map(_.iterator.map(elemDecode).to[ArrayBuffer]).to[ArrayBuffer]
   }
