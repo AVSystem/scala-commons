@@ -10,6 +10,7 @@ object OptArg {
     * This implicit conversion allows you to pass unwrapped values where `OptArg` is required.
     */
   implicit def argToOptArg[A](value: A): OptArg[A] = OptArg(value)
+  implicit def intToOptArgLong(int: Int): OptArg[Long] = OptArg(int)
 
   private object EmptyMarker extends Serializable
 
