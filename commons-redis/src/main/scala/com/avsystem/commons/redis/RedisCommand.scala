@@ -50,7 +50,7 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
     */
   def immediateResult: Opt[A] = Opt.Empty
 
-  protected[this] final def whenEmpty(args: Iterable[Any], value: A): Opt[A] =
+  protected[this] final def whenEmpty(args: TraversableOnce[Any], value: A): Opt[A] =
     if (args.isEmpty) Opt(value) else Opt.Empty
 
   final def batchOrFallback: RedisBatch[A] =
