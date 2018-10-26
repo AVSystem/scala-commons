@@ -187,7 +187,7 @@ trait NodeServerApi extends ApiSubset {
   }
 
   private final class ConfigGet(parameter: String)
-    extends AbstractRedisCommand[Seq[(String, String)]](pairedMultiBulk(bulkUTF8, bulkUTF8)) with NodeCommand {
+    extends AbstractRedisCommand[Seq[(String, String)]](flatMultiBulkSeq(bulkUTF8, bulkUTF8)) with NodeCommand {
     val encoded: Encoded = encoder("CONFIG", "GET").add(parameter).result
   }
 

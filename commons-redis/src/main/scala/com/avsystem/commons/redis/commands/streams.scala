@@ -165,10 +165,10 @@ trait StreamsApi extends ApiSubset {
 
   /** Executes [[http://redis.io/commands/xreadgroup XREADGROUP]] */
   def xreadgroupSingle(
-    group: XGroup,
-    consumer: XConsumer,
     key: Key,
     id: Opt[XEntryId],
+    group: XGroup,
+    consumer: XConsumer,
     blockMillis: OptArg[Int] = OptArg.Empty,
     count: OptArg[Int] = OptArg.Empty,
   ): Result[Seq[XEntry[Field, Value]]] =
@@ -304,7 +304,7 @@ trait StreamsApi extends ApiSubset {
 
   private abstract class AbstractXread(noStreams: Boolean)
     extends AbstractRedisCommand[BMap[Key, Seq[XEntry[Field, Value]]]](
-      multiBulkXEntriesByKey[Key, Field, Value]) with NodeCommand {
+      multiBulkXEntriesMap[Key, Field, Value]) with NodeCommand {
 
     def blockMillis: Opt[Int]
 

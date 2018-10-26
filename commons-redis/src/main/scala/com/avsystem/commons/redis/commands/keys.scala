@@ -236,7 +236,7 @@ trait KeyedKeysApi extends ApiSubset {
     extends AbstractSort[Seq[Value]](multiBulkSeq[Value])(key, by, limit, Nil, sortOrder, alpha, Opt.Empty)
 
   private final class SortGet(key: Key, gets: Seq[SortPattern[Key, Field]], by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit], sortOrder: Opt[SortOrder], alpha: Boolean)
-    extends AbstractSort[Seq[Seq[Opt[Value]]]](groupedMultiBulk(gets.size min 1, nullBulkOr[Value]))(
+    extends AbstractSort[Seq[Seq[Opt[Value]]]](multiBulkGroupedSeq(gets.size min 1, nullBulkOr[Value]))(
       key, by, limit, gets, sortOrder, alpha, Opt.Empty)
 
   private final class SortStore(key: Key, destination: Key, by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit], gets: Seq[SortPattern[Key, Field]], sortOrder: Opt[SortOrder], alpha: Boolean)
