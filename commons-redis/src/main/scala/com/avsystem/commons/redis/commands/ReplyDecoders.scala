@@ -293,7 +293,9 @@ object ReplyDecoders {
   }
 
   def multiBulkXEntriesMap[K: RedisDataCodec, F: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[BMap[K, Seq[XEntry[F, V]]]] =
-    multiBulkMap(bulk[K], multiBulkSeq(multiBulkXEntry[F, V]))
+    multiBulkMap(bulk[K], multiBulkSeq(multiBulkXEntry[F, V])) unless {
+      case NullArrayMsg => Map.empty
+    }
 
   val multiBulkXConsumerInfo: ReplyDecoder[XConsumerInfo] =
     flatMultiBulkMap(bulkUTF8, undecoded).andThen(XConsumerInfo)

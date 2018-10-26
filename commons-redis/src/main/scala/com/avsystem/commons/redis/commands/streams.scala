@@ -46,16 +46,16 @@ trait StreamsApi extends ApiSubset {
     key: Key,
     group: XGroup,
     consumer: XConsumer,
-    minIdleTime: Long,
+    minIdleMillis: Long,
     id: XEntryId,
-    idle: OptArg[Long] = OptArg.Empty,
+    idleMillis: OptArg[Long] = OptArg.Empty,
     msUnixTime: OptArg[Long] = OptArg.Empty,
     retrycount: OptArg[Int] = OptArg.Empty,
     force: Boolean = false
   ): Result[Opt[XEntry]] =
     execute(new Xclaim(
-      key, group, consumer, minIdleTime, new SingletonSeq(id),
-      idle.toOpt, msUnixTime.toOpt, retrycount.toOpt, force
+      key, group, consumer, minIdleMillis, new SingletonSeq(id),
+      idleMillis.toOpt, msUnixTime.toOpt, retrycount.toOpt, force
     ).map(_.headOpt))
 
   /** Executes [[http://redis.io/commands/xclaim XCLAIM]] */
@@ -63,16 +63,16 @@ trait StreamsApi extends ApiSubset {
     key: Key,
     group: XGroup,
     consumer: XConsumer,
-    minIdleTime: Long,
+    minIdleMillis: Long,
     ids: Iterable[XEntryId],
-    idle: OptArg[Long] = OptArg.Empty,
+    idleMillis: OptArg[Long] = OptArg.Empty,
     msUnixTime: OptArg[Long] = OptArg.Empty,
     retrycount: OptArg[Int] = OptArg.Empty,
     force: Boolean = false
   ): Result[Seq[XEntry]] =
     execute(new Xclaim(
-      key, group, consumer, minIdleTime, ids,
-      idle.toOpt, msUnixTime.toOpt, retrycount.toOpt, force
+      key, group, consumer, minIdleMillis, ids,
+      idleMillis.toOpt, msUnixTime.toOpt, retrycount.toOpt, force
     ))
 
   /** Executes [[http://redis.io/commands/xclaim XCLAIM]] */
@@ -80,16 +80,16 @@ trait StreamsApi extends ApiSubset {
     key: Key,
     group: XGroup,
     consumer: XConsumer,
-    minIdleTime: Long,
+    minIdleMillis: Long,
     ids: Iterable[XEntryId],
-    idle: OptArg[Long] = OptArg.Empty,
+    idleMillis: OptArg[Long] = OptArg.Empty,
     msUnixTime: OptArg[Long] = OptArg.Empty,
     retrycount: OptArg[Int] = OptArg.Empty,
     force: Boolean = false
   ): Result[Seq[XEntryId]] =
     execute(new XclaimJustid(
-      key, group, consumer, minIdleTime, ids,
-      idle.toOpt, msUnixTime.toOpt, retrycount.toOpt, force
+      key, group, consumer, minIdleMillis, ids,
+      idleMillis.toOpt, msUnixTime.toOpt, retrycount.toOpt, force
     ))
 
   /** Executes [[http://redis.io/commands/xdel XDEL]] */
@@ -159,7 +159,7 @@ trait StreamsApi extends ApiSubset {
     blockMillis: OptArg[Int] = OptArg.Empty,
     count: OptArg[Int] = OptArg.Empty,
   ): Result[Seq[XEntry]] =
-    execute(new Xread(count.toOpt, blockMillis.toOpt, Iterator(key), Iterator(id)).map(_.apply(key)))
+    execute(new Xread(count.toOpt, blockMillis.toOpt, Iterator(key), Iterator(id)).map(_.getOrElse(key, Nil)))
 
   /** Executes [[http://redis.io/commands/xread XREAD]] */
   def xread(
@@ -179,7 +179,7 @@ trait StreamsApi extends ApiSubset {
     count: OptArg[Int] = OptArg.Empty,
   ): Result[Seq[XEntry]] =
     execute(new Xreadgroup(group, consumer, count.toOpt, blockMillis.toOpt,
-      Iterator(key), Iterator(id)).map(_.apply(key)))
+      Iterator(key), Iterator(id)).map(_.getOrElse(key, Nil)))
 
   /** Executes [[http://redis.io/commands/xreadgroup XREADGROUP]] */
   def xreadgroup(

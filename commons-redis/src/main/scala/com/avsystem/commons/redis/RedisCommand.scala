@@ -16,7 +16,8 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
 
   final protected def decode(replyMsg: RedisReply): A = replyMsg match {
     case validReply: ValidRedisMsg =>
-      decodeExpected.applyOrElse(validReply, (r: ValidRedisMsg) => throw new UnexpectedReplyException(r.toString))
+      decodeExpected.applyOrElse(validReply, (r: ValidRedisMsg) =>
+        throw new UnexpectedReplyException(r.toString))
     case err: ErrorMsg =>
       throw new ErrorReplyException(err)
     case error: FailureReply =>
