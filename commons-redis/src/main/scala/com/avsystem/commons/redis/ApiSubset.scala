@@ -108,6 +108,7 @@ trait RedisKeyedApi extends AnyRef
   with ListsApi
   with SetsApi
   with HyperLogLogApi
+  with StreamsApi
 
 trait RedisRecoverableKeyedApi extends RedisKeyedApi
   with RecoverableKeyedScriptingApi
