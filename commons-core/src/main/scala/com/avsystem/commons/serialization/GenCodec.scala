@@ -108,30 +108,30 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   def nonNull[T](readFun: Input => T, writeFun: (Output, T) => Any): GenCodec[T] =
     nullSafe(readFun, writeFun, allowNull = false)
 
-  def createSimple[T](readFun: SimpleInput => T, writeFun: (SimpleOutput, T) => Any, allowNull: Boolean): SimpleCodec[T] =
+  def createSimple[T](readFun: SimpleInput => T, writeFun: (SimpleOutput, T) => Any, allowNull: Boolean): GenCodec[T] =
     new SimpleCodec[T] {
       def nullable: Boolean = allowNull
       def readSimple(input: SimpleInput): T = readFun(input)
       def writeSimple(output: SimpleOutput, value: T): Unit = writeFun(output, value)
     }
 
-  def nullableSimple[T <: AnyRef](readFun: SimpleInput => T, writeFun: (SimpleOutput, T) => Any): SimpleCodec[T] =
+  def nullableSimple[T <: AnyRef](readFun: SimpleInput => T, writeFun: (SimpleOutput, T) => Any): GenCodec[T] =
     createSimple(readFun, writeFun, allowNull = true)
 
-  def nonNullSimple[T](readFun: SimpleInput => T, writeFun: (SimpleOutput, T) => Any): SimpleCodec[T] =
+  def nonNullSimple[T](readFun: SimpleInput => T, writeFun: (SimpleOutput, T) => Any): GenCodec[T] =
     createSimple(readFun, writeFun, allowNull = false)
 
-  def createList[T](readFun: ListInput => T, writeFun: (ListOutput, T) => Any, allowNull: Boolean): ListCodec[T] =
+  def createList[T](readFun: ListInput => T, writeFun: (ListOutput, T) => Any, allowNull: Boolean): GenCodec[T] =
     new ListCodec[T] {
       def nullable: Boolean = allowNull
       def readList(input: ListInput): T = readFun(input)
       def writeList(output: ListOutput, value: T): Unit = writeFun(output, value)
     }
 
-  def nullableList[T <: AnyRef](readFun: ListInput => T, writeFun: (ListOutput, T) => Any): ListCodec[T] =
+  def nullableList[T <: AnyRef](readFun: ListInput => T, writeFun: (ListOutput, T) => Any): GenCodec[T] =
     createList(readFun, writeFun, allowNull = true)
 
-  def nonNullList[T](readFun: ListInput => T, writeFun: (ListOutput, T) => Any): ListCodec[T] =
+  def nonNullList[T](readFun: ListInput => T, writeFun: (ListOutput, T) => Any): GenCodec[T] =
     createList(readFun, writeFun, allowNull = false)
 
   /**
@@ -140,17 +140,17 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     * of your type or use [[fromApplyUnapplyProvider]] if the type comes from a third party code and you can't
     * modify its companion object.
     */
-  def createObject[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any, allowNull: Boolean): ObjectCodec[T] =
+  def createObject[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any, allowNull: Boolean): GenObjectCodec[T] =
     new ObjectCodec[T] {
       def nullable: Boolean = allowNull
       def readObject(input: ObjectInput): T = readFun(input)
       def writeObject(output: ObjectOutput, value: T): Unit = writeFun(output, value)
     }
 
-  def nullableObject[T <: AnyRef](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any): ObjectCodec[T] =
+  def nullableObject[T <: AnyRef](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any): GenObjectCodec[T] =
     createObject(readFun, writeFun, allowNull = true)
 
-  def nonNullObject[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any): ObjectCodec[T] =
+  def nonNullObject[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any): GenObjectCodec[T] =
     createObject(readFun, writeFun, allowNull = false)
 
   def fromKeyCodec[T](implicit keyCodec: GenKeyCodec[T]): GenCodec[T] = create(
@@ -184,12 +184,12 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     def readNonNull(input: Input): T
     def writeNonNull(output: Output, value: T): Unit
 
-    final def write(output: Output, value: T): Unit =
+    final override def write(output: Output, value: T): Unit =
       if (value == null)
         if (nullable) output.writeNull() else throw new WriteFailure("null")
       else writeNonNull(output, value)
 
-    final def read(input: Input): T =
+    final override def read(input: Input): T =
       if (input.isNull)
         if (nullable) input.readNull().asInstanceOf[T] else throw new ReadFailure("null")
       else readNonNull(input)
@@ -228,7 +228,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     * NOTE: if you need to implement a custom `GenCodec` that writes an object, the best way to do it is to have
     * manually implemented `apply` and `unapply` in companion object or by using [[GenCodec.fromApplyUnapplyProvider]].
     */
-  trait ObjectCodec[T] extends NullSafeCodec[T] {
+  trait ObjectCodec[T] extends GenObjectCodec[T] with NullSafeCodec[T] {
     def readObject(input: ObjectInput): T
     def writeObject(output: ObjectOutput, value: T): Unit
 
@@ -362,14 +362,14 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     nullableList[C[T] with JCollection[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
   implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenCodec[M[K, V] with BMap[K, V]] =
+    implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenObjectCodec[M[K, V] with BMap[K, V]] =
     nullableObject[M[K, V] with BMap[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })
     )
 
   implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit cbf: JCanBuildFrom[(K, V), M[K, V]]): GenCodec[M[K, V] with JMap[K, V]] =
+    implicit cbf: JCanBuildFrom[(K, V), M[K, V]]): GenObjectCodec[M[K, V] with JMap[K, V]] =
     nullableObject[M[K, V] with JMap[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.asScala.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })
