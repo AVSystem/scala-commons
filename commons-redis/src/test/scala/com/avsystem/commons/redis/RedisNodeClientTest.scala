@@ -72,15 +72,15 @@ class RedisNodeClientTest extends FunSuite
   test("concurrent blocking commands test") {
     val client = createClient(RedisBatch.unit, RedisOp.unit)
     val api = RedisApi.Node.Async.StringTyped(client)
-    def fut: Future[Seq[Opt[String]]] = Future.traverse(Seq.fill(100)(()))(_ => api.blpop("LOL", 1))
+    def fut: Future[Seq[Opt[String]]] = Future.sequence(Seq.fill(100)(api.blpop("LOL", 1)))
     fut.futureValue shouldBe Seq.fill(100)(Opt.Empty)
     fut.futureValue shouldBe Seq.fill(100)(Opt.Empty)
   }
 
   test("too many concurrent blocking commands test") {
-    val client = createClient(RedisBatch.unit, RedisOp.unit)
+    val client = createClient(RedisBatch.unit, RedisOp.unit).initialized.futureValue
     val api = RedisApi.Node.Async.StringTyped(client)
-    val fut = Future.traverse(Seq.fill(100)(()))(_ => api.blpop("LOL", 1))
+    val fut = Future.sequence(Seq.fill(100)(api.blpop("LOL", 1)))
     val failingFut = api.blpop("LOL", 1)
     fut.futureValue shouldBe Seq.fill(100)(Opt.Empty)
     failingFut.failed.futureValue shouldBe a[TooManyConnectionsException]

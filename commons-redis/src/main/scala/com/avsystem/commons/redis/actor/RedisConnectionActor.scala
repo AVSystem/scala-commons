@@ -212,8 +212,10 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         onMoreData(data)
       case Close(cause) =>
         failQueued(cause)
-        // graceful close, wait for already sent commands to finish
-        become(closing(cause))
+        if (!closeIfIdle(cause)) {
+          // graceful close, wait for already sent commands to finish
+          become(closing(cause))
+        }
     }
 
     def closing(cause: Throwable): Receive = {
@@ -228,14 +230,14 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         waitingForAck = 0
       case Tcp.CommandFailed(_: Tcp.Write) =>
         onWriteFailed()
-        closeIfPossible(cause)
+        closeIfIdle(cause)
       case cc: Tcp.ConnectionClosed =>
         onConnectionClosed(cc)
         failAlreadySent(new ConnectionClosedException(address, cc.getErrorCause.opt))
         close(cause)
       case Tcp.Received(data) =>
         onMoreData(data)
-        closeIfPossible(cause)
+        closeIfIdle(cause)
     }
 
     def onMoreData(data: ByteString): Unit = {
@@ -249,9 +251,10 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       }
     }
 
-    def closeIfPossible(cause: Throwable): Unit =
-      if (collectors.isEmpty) {
+    def closeIfIdle(cause: Throwable): Boolean =
+      collectors.isEmpty && {
         close(cause)
+        true
       }
 
     def writeIfPossible(): Unit =

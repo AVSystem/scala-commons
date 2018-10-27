@@ -7,6 +7,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.avsystem.commons.redis.NodeAddress
 import com.avsystem.commons.redis.actor.ConnectionPoolActor._
 import com.avsystem.commons.redis.config.{ConnectionConfig, NodeConfig}
+import com.avsystem.commons.redis.exception.RedisException
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.annotation.tailrec
@@ -49,6 +50,7 @@ class ConnectionPoolActor(address: NodeAddress, config: NodeConfig, queue: Concu
           if (!dequeue && stale) {
             loop(dequeue = true)
           } else if (dequeue && stale) {
+            conn ! RedisConnectionActor.Close(new RedisException("Idle blocking connection closed"))
             context.stop(conn)
             connections.remove(conn)
             loop(dequeue = false)
