@@ -165,7 +165,7 @@ trait StreamsApi extends ApiSubset {
   def xread(
     streams: Iterable[(Key, Opt[XEntryId])],
     blockMillis: OptArg[Int] = OptArg.Empty,
-    count: OptArg[Int] = OptArg.Empty,
+    count: OptArg[Int] = OptArg.Empty
   ): Result[BMap[Key, Seq[XEntry]]] =
     execute(new Xread(count.toOpt, blockMillis.toOpt, streams.iterator.map(_._1), streams.iterator.map(_._2)))
 
@@ -176,7 +176,7 @@ trait StreamsApi extends ApiSubset {
     consumer: XConsumer,
     id: OptArg[XEntryId] = OptArg.Empty,
     blockMillis: OptArg[Int] = OptArg.Empty,
-    count: OptArg[Int] = OptArg.Empty,
+    count: OptArg[Int] = OptArg.Empty
   ): Result[Seq[XEntry]] =
     execute(new Xreadgroup(group, consumer, count.toOpt, blockMillis.toOpt,
       Iterator(key), Iterator(id.toOpt)).map(_.getOrElse(key, Nil)))
@@ -187,7 +187,7 @@ trait StreamsApi extends ApiSubset {
     consumer: XConsumer,
     streams: Iterable[(Key, Opt[XEntryId])],
     blockMillis: OptArg[Int] = OptArg.Empty,
-    count: OptArg[Int] = OptArg.Empty,
+    count: OptArg[Int] = OptArg.Empty
   ): Result[BMap[Key, Seq[XEntry]]] =
     execute(new Xreadgroup(group, consumer, count.toOpt, blockMillis.toOpt,
       streams.iterator.map(_._1), streams.iterator.map(_._2)))
