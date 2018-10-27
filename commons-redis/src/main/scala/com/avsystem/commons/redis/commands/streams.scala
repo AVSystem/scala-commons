@@ -157,7 +157,7 @@ trait StreamsApi extends ApiSubset {
     key: Key,
     id: Opt[XEntryId],
     blockMillis: OptArg[Int] = OptArg.Empty,
-    count: OptArg[Int] = OptArg.Empty,
+    count: OptArg[Int] = OptArg.Empty
   ): Result[Seq[XEntry]] =
     execute(new Xread(count.toOpt, blockMillis.toOpt, Iterator(key), Iterator(id)).map(_.getOrElse(key, Nil)))
 
