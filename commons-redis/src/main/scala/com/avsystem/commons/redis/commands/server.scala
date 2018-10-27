@@ -93,6 +93,12 @@ trait NodeServerApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/lastsave LASTSAVE]] */
   def lastsave: Result[Long] =
     execute(Lastsave)
+  /** Executes [[http://redis.io/commands/replicaof REPLICAOF]] */
+  def replicaofNoOne: Result[Unit] =
+    execute(new Replicaof(Opt.Empty))
+  /** Executes [[http://redis.io/commands/replicaof REPLICAOF]] */
+  def replicaof(newMaster: NodeAddress): Result[Unit] =
+    execute(new Replicaof(newMaster.opt))
   /** Executes [[http://redis.io/commands/role ROLE]] */
   def role: Result[RedisRole] =
     execute(Role)
@@ -226,6 +232,17 @@ trait NodeServerApi extends ApiSubset {
 
   private object Lastsave extends RedisLongCommand with NodeCommand {
     val encoded: Encoded = encoder("LASTSAVE").result
+  }
+
+  private final class Replicaof(newMaster: Opt[NodeAddress]) extends RedisUnitCommand with NodeCommand {
+    val encoded: Encoded = {
+      val enc = encoder("REPLICAOF")
+      newMaster match {
+        case Opt.Empty => enc.add("NO").add("ONE")
+        case Opt(NodeAddress(ip, port)) => enc.add(ip).add(port)
+      }
+      enc.result
+    }
   }
 
   private object Role extends AbstractRedisCommand[RedisRole](multiBulkRedisRole) with NodeCommand {

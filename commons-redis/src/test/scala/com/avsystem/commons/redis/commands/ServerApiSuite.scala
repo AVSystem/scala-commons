@@ -115,6 +115,10 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
     slaveofNoOne.get
   }
 
+  apiTest("REPLICAOF") {
+    replicaofNoOne.get
+  }
+
   apiTest("SLOWLOG GET") {
     slowlogGet.get
     slowlogGet(10).get
