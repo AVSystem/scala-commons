@@ -15,6 +15,7 @@ trait KeyedFullApiSuite extends CommandsSuite
   with ListsApiSuite
   with SetsApiSuite
   with HyperLogLogApiSuite
+  with StreamsApiSuite
 
 trait NodeFullApiSuite extends KeyedFullApiSuite
   with NodeKeysApiSuite
