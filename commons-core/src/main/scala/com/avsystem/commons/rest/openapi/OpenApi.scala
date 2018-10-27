@@ -144,7 +144,7 @@ case class Responses(
 object Responses {
   final val DefaultField = "default"
 
-  implicit val codec: GenCodec[Responses] = GenCodec.createNullableObject(
+  implicit val codec: GenCodec[Responses] = GenCodec.nullableObject(
     oi => {
       var default = OptArg.empty[RefOr[Response]]
       val byStatusCode = Map.newBuilder[Int, RefOr[Response]]
@@ -398,7 +398,7 @@ object Parameter extends HasGenCodec[Parameter]
 case class Entry[K, V](key: K, value: V)
 object Entry {
   implicit def codec[K: GenKeyCodec, V: GenCodec]: GenCodec[Entry[K, V]] =
-    GenCodec.createNullableObject(
+    GenCodec.nullableObject(
       oi => {
         val fi = oi.nextField()
         Entry(GenKeyCodec.read[K](fi.fieldName), GenCodec.read[V](fi))
@@ -578,20 +578,20 @@ object RefOr {
   def ref[A](ref: String): RefOr[A] = Ref(ref)
 
   implicit def codec[A: GenCodec]: GenCodec[RefOr[A]] =
-    GenCodec.createNullableObject(
+    GenCodec.nullableObject(
       oi => {
         val poi = new PeekingObjectInput(oi)
         val refFieldInput = poi.peekField(RefField).orElse {
           if (poi.peekNextFieldName.contains(RefField)) poi.nextField().opt
           else Opt.Empty
         }
-        val res = refFieldInput.map(fi => Ref(fi.readString()))
+        val res = refFieldInput.map(fi => Ref(fi.readSimple().readString()))
           .getOrElse(Value(GenCodec.read[A](new ObjectInputAsInput(poi))))
         poi.skipRemaining()
         res
       },
       (oo, value) => value match {
-        case Ref(refstr) => oo.writeField(RefField).writeString(refstr)
+        case Ref(refstr) => oo.writeField(RefField).writeSimple().writeString(refstr)
         case Value(v) => GenCodec.write[A](new ObjectOutputAsOutput(oo, forwardFinish = false), v)
       }
     )

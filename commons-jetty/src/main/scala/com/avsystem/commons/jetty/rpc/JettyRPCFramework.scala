@@ -28,11 +28,11 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   private implicit val rawValueCodec: GenCodec[RawValue] = GenCodec.create(
     {
       case jsi: JsonStringInput => new RawValue(jsi.readRawJson())
-      case other => new RawValue(other.readString())
+      case other => new RawValue(other.readSimple().readString())
     },
     {
       case (jso: JsonStringOutput, v) => jso.writeRawJson(v.s)
-      case (other, v) => other.writeString(v.s)
+      case (other, v) => other.writeSimple().writeString(v.s)
     }
   )
 

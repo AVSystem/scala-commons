@@ -15,10 +15,9 @@ class BytesWrapper(val bytes: Array[Byte]) {
   }
 }
 object BytesWrapper {
-  implicit val codec: GenCodec[BytesWrapper] = GenCodec.createNullSafe(
+  implicit val codec: GenCodec[BytesWrapper] = GenCodec.nullableSimple(
     input => new BytesWrapper(input.readBinary()),
-    (output, bytes) => output.writeBinary(bytes.bytes),
-    allowNull = true
+    (output, bytes) => output.writeBinary(bytes.bytes)
   )
 }
 

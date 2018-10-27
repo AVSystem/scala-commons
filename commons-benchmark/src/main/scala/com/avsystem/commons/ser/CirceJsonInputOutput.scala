@@ -15,7 +15,7 @@ object CirceJsonOutput {
   }
 }
 
-class CirceJsonOutput(consumer: Json => Any) extends Output {
+class CirceJsonOutput(consumer: Json => Any) extends OutputAndSimpleOutput {
   def writeNull(): Unit = consumer(Json.Null)
   def writeString(str: String): Unit = consumer(Json.fromString(str))
   def writeBoolean(boolean: Boolean): Unit = consumer(Json.fromBoolean(boolean))
@@ -49,7 +49,7 @@ object CirceJsonInput {
     GenCodec.read[T](new CirceJsonInput(json))
 }
 
-class CirceJsonInput(json: Json) extends Input {
+class CirceJsonInput(json: Json) extends InputAndSimpleInput {
   private def failNot(what: String) =
     throw new ReadFailure(s"not $what")
 

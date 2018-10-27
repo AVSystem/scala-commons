@@ -69,11 +69,11 @@ object JsonValue {
     GenCodec.create(
       {
         case ji: JsonStringInput => JsonValue(ji.readRawJson())
-        case i => JsonValue(i.readString())
+        case i => JsonValue(i.readSimple().readString())
       },
       {
         case (jo: JsonStringOutput, JsonValue(json)) => jo.writeRawJson(json)
-        case (o, JsonValue(json)) => o.writeString(json)
+        case (o, JsonValue(json)) => o.writeSimple().writeString(json)
       }
     )
 }

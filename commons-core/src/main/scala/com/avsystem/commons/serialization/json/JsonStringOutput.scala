@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization.json
 
-import com.avsystem.commons.serialization.{GenCodec, IsoInstant, ListOutput, ObjectOutput, Output}
+import com.avsystem.commons.serialization.{GenCodec, IsoInstant, ListOutput, ObjectOutput, Output, OutputAndSimpleOutput}
 
 object JsonStringOutput {
   def write[T: GenCodec](value: T, options: JsonOptions = JsonOptions.Default): String = {
@@ -56,7 +56,7 @@ trait BaseJsonOutput {
 }
 
 final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = JsonOptions.Default, depth: Int = 0)
-  extends BaseJsonOutput with Output {
+  extends BaseJsonOutput with OutputAndSimpleOutput {
 
   def writeNull(): Unit = builder.append("null")
   def writeString(str: String): Unit = writeJsonString(builder, str, options.asciiOutput)

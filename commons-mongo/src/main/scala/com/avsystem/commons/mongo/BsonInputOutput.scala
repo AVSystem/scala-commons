@@ -3,10 +3,10 @@ package mongo
 
 import java.nio.ByteBuffer
 
-import com.avsystem.commons.serialization.{Input, Output}
+import com.avsystem.commons.serialization.{InputAndSimpleInput, OutputAndSimpleOutput}
 import org.bson.types.ObjectId
 
-trait BsonInput extends Any with Input {
+trait BsonInput extends Any with InputAndSimpleInput {
   def readObjectId(): ObjectId
 }
 
@@ -21,7 +21,7 @@ object BsonInput {
   }
 }
 
-trait BsonOutput extends Any with Output {
+trait BsonOutput extends Any with OutputAndSimpleOutput {
   def writeObjectId(objectId: ObjectId): Unit
 }
 

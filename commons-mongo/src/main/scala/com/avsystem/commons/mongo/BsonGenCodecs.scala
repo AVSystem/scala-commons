@@ -10,7 +10,7 @@ trait BsonGenCodecs {
 }
 
 object BsonGenCodecs {
-  implicit val objectIdCodec: GenCodec[ObjectId] = GenCodec.createNullable(
+  implicit val objectIdCodec: GenCodec[ObjectId] = GenCodec.nullableSimple(
     readFun = {
       case bsonInput: BsonInput => bsonInput.readObjectId()
       case otherInput => new ObjectId(otherInput.readString())

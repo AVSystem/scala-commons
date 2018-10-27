@@ -196,7 +196,7 @@ trait ErrorReportingCodec[T] extends GenCodec[T] {
     decoratedRead(fieldInput, codec, "field", fieldInput.fieldName)
 
   protected def readCaseName(fi: FieldInput): String =
-    try fi.readString() catch {
+    try fi.readSimple().readString() catch {
       case NonFatal(e) =>
         throw new ReadFailure(s"Cannot read $typeRepr, failed to read case name from $caseFieldName field", e)
     }
@@ -228,7 +228,7 @@ trait ErrorReportingCodec[T] extends GenCodec[T] {
   protected def writeFlatCase[A](caseName: String, transient: Boolean, output: ObjectOutput, value: A, codec: ObjectCodec[A]): Unit =
     try {
       if (!transient) {
-        output.writeField(caseFieldName).writeString(caseName)
+        output.writeField(caseFieldName).writeSimple().writeString(caseName)
       }
       codec.writeObject(output, value)
     } catch {

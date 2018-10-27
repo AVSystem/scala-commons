@@ -37,12 +37,12 @@ object GenCodecBenchmarks {
   implicit def cleanOptionCodec[T: GenCodec]: GenCodec[Option[T]] =
     GenCodec.create[Option[T]](
       i => if (i.isNull) {
-        i.readNull()
+        i.readSimple().readNull()
         None
       } else Some(GenCodec.read[T](i)),
       (o, vo) => vo match {
         case Some(v) => GenCodec.write[T](o, v)
-        case None => o.writeNull()
+        case None => o.writeSimple().writeNull()
       }
     )
 

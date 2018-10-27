@@ -10,6 +10,20 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
   * to write is complex, one can use `writeList`/`writeSet` or `writeObject`/`writeMap`.
   */
 trait Output extends Any {
+  def writeSimple(): SimpleOutput
+  def writeList(): ListOutput
+  def writeObject(): ObjectOutput
+
+  /**
+    * This ugly workaround has been introduced when standard `Option` encoding changed from zero-or-one element list
+    * encoding to unwrapped-or-null encoding which effectively disallowed serializing `null` and `Some(null)`.
+    * If some `Output` implementation still wants to use the list encoding, it may do it by overriding this method
+    * and returning `true`.
+    */
+  def legacyOptionEncoding: Boolean = false
+}
+
+trait SimpleOutput extends Any {
   def writeNull(): Unit
   def writeUnit(): Unit = writeNull()
   def writeString(str: String): Unit
@@ -25,17 +39,12 @@ trait Output extends Any {
   def writeBigInt(bigInt: BigInt): Unit
   def writeBigDecimal(bigDecimal: BigDecimal): Unit
   def writeBinary(binary: Array[Byte]): Unit
-  def writeList(): ListOutput
-  def writeObject(): ObjectOutput
-
-  /**
-    * This ugly workaround has been introduced when standard `Option` encoding changed from zero-or-one element list
-    * encoding to unwrapped-or-null encoding which effectively disallowed serializing `null` and `Some(null)`.
-    * If some `Output` implementation still wants to use the list encoding, it may do it by overriding this method
-    * and returning `true`.
-    */
-  def legacyOptionEncoding: Boolean = false
 }
+
+trait OutputAndSimpleOutput extends Any with Output with SimpleOutput {
+  override final def writeSimple(): SimpleOutput = this
+}
+
 /**
   * Base trait for outputs which allow writing of multiple values in sequence, i.e. [[ListOutput]] and [[ObjectOutput]].
   */
@@ -94,6 +103,21 @@ trait ObjectOutput extends Any with SequentialOutput {
   */
 trait Input extends Any {
   def isNull: Boolean
+  def readSimple(): SimpleInput
+  def readList(): ListInput
+  def readObject(): ObjectInput
+  def skip(): Unit
+
+  /**
+    * This ugly workaround has been introduced when standard `Option` encoding changed from zero-or-one element list
+    * encoding to unwrapped-or-null encoding which effectively disallowed serializing `null` and `Some(null)`.
+    * If some `Input` implementation still wants to use the list encoding, it may do it by overriding this method
+    * and returning `true`.
+    */
+  def legacyOptionEncoding: Boolean = false
+}
+
+trait SimpleInput extends Any {
   def readNull(): Null
   def readUnit(): Unit = readNull()
   def readString(): String
@@ -109,18 +133,12 @@ trait Input extends Any {
   def readBigInt(): BigInt
   def readBigDecimal(): BigDecimal
   def readBinary(): Array[Byte]
-  def readList(): ListInput
-  def readObject(): ObjectInput
-  def skip(): Unit
-
-  /**
-    * This ugly workaround has been introduced when standard `Option` encoding changed from zero-or-one element list
-    * encoding to unwrapped-or-null encoding which effectively disallowed serializing `null` and `Some(null)`.
-    * If some `Input` implementation still wants to use the list encoding, it may do it by overriding this method
-    * and returning `true`.
-    */
-  def legacyOptionEncoding: Boolean = false
 }
+
+trait InputAndSimpleInput extends Any with Input with SimpleInput {
+  override final def readSimple(): SimpleInput = this
+}
+
 trait SequentialInput extends Any {
   def hasNext: Boolean
   def skipRemaining(): Unit
@@ -144,11 +162,11 @@ trait ListInput extends Any with SequentialInput { self =>
     */
   def nextElement(): Input
 
-  def skipRemaining() = while (hasNext) nextElement().skip()
+  def skipRemaining(): Unit = while (hasNext) nextElement().skip()
   def iterator[A](readFun: Input => A): Iterator[A] =
     new Iterator[A] {
-      def hasNext = self.hasNext
-      def next() = readFun(nextElement())
+      def hasNext: Boolean = self.hasNext
+      def next(): A = readFun(nextElement())
     }
 }
 /**
@@ -212,11 +230,11 @@ trait ObjectInput extends Any with SequentialInput { self =>
       fi
     }
 
-  def skipRemaining() = while (hasNext) nextField().skip()
+  def skipRemaining(): Unit = while (hasNext) nextField().skip()
   def iterator[A](readFun: Input => A): Iterator[(String, A)] =
     new Iterator[(String, A)] {
-      def hasNext = self.hasNext
-      def next() = {
+      def hasNext: Boolean = self.hasNext
+      def next(): (String, A) = {
         val fi = nextField()
         (fi.fieldName, readFun(fi))
       }

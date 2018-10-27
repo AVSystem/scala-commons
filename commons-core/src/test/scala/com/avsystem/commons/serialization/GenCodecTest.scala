@@ -182,8 +182,8 @@ class GenCodecTest extends CodecTestBase {
   case class Stuff[T](name: String)
   object Stuff {
     implicit val codec: GenCodec[Stuff[_]] = GenCodec.create(
-      in => new Stuff[Any](in.readString()),
-      (out, value) => out.writeString(value.name)
+      in => new Stuff[Any](in.readSimple().readString()),
+      (out, value) => out.writeSimple().writeString(value.name)
     )
   }
   case class CaseClassWithWildcard(stuff: Stuff[_])

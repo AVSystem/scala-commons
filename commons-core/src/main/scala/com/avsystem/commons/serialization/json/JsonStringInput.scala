@@ -29,7 +29,7 @@ object JsonStringInput {
 
 class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Default,
   callback: AfterElement = AfterElementNothing
-) extends Input with AfterElement {
+) extends InputAndSimpleInput with AfterElement {
 
   private[this] val startIdx: Int = reader.parseValue()
   private[this] var endIdx: Int = _

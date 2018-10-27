@@ -46,7 +46,7 @@ class SimpleValueOutput(
   consumer: Any => Unit,
   newObjectRepr: => mutable.Builder[(String, Any), BMap[String, Any]],
   newListRepr: => mutable.Builder[Any, BSeq[Any]]
-) extends Output {
+) extends OutputAndSimpleOutput {
 
   def this(consumer: Any => Unit) =
     this(consumer, new MHashMap[String, Any], new ListBuffer[Any])
@@ -84,7 +84,7 @@ object SimpleValueInput {
   *
   * @param value serialized value yield by [[SimpleValueOutput]]
   */
-class SimpleValueInput(value: Any) extends Input {
+class SimpleValueInput(value: Any) extends InputAndSimpleInput {
   private def doRead[A >: Null <: AnyRef : ClassTag]: A =
     doReadUnboxed[A, A]
 
