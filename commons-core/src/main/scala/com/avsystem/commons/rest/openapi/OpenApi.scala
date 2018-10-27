@@ -246,7 +246,7 @@ case class Schema(
   @td uniqueItems: Boolean = false,
 
   @td properties: Map[String, RefOr[Schema]] = Map.empty,
-  @td additionalProperties: OptArg[RefOr[Schema]] = OptArg.Empty, //TODO: boolean value support
+  @td additionalProperties: AdditionalProperties = AdditionalProperties.Flag(true),
   @td maxProperties: OptArg[Int] = OptArg.Empty,
   @td minProperties: OptArg[Int] = OptArg.Empty,
   @td required: List[String] = Nil,
@@ -286,7 +286,7 @@ object Schema extends HasGenCodec[Schema] {
     Schema(`type` = DataType.Array, items = items, uniqueItems = uniqueItems)
 
   def mapOf(properties: RefOr[Schema]): Schema =
-    Schema(`type` = DataType.Object, additionalProperties = properties)
+    Schema(`type` = DataType.Object, additionalProperties = AdditionalProperties.SchemaObj(properties))
 
   def enumOf(values: List[String]): Schema =
     Schema(`type` = DataType.String, enum = values.map(s => JsonValue(JsonStringOutput.write(s))))
@@ -316,6 +316,22 @@ object Schema extends HasGenCodec[Schema] {
         if (mapped == wrapped) ref else RefOr(mapped)
     }
   }
+}
+
+sealed trait AdditionalProperties
+object AdditionalProperties {
+  case class Flag(value: Boolean) extends AdditionalProperties
+  case class SchemaObj(schema: RefOr[Schema]) extends AdditionalProperties
+
+  implicit val codec: GenCodec[AdditionalProperties] = GenCodec.create(
+    input =>
+      if (input.isObject) SchemaObj(GenCodec.read[RefOr[Schema]](input))
+      else Flag(input.readSimple().readBoolean()),
+    {
+      case (output, Flag(value)) => output.writeSimple().writeBoolean(value)
+      case (output, SchemaObj(schema)) => GenCodec.write[RefOr[Schema]](output, schema)
+    }
+  )
 }
 
 object Format {
