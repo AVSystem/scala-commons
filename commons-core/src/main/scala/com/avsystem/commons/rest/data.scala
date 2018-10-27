@@ -6,7 +6,7 @@ import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion,
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.serialization.GenCodec
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
+import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput, RawJsonMarker}
 
 import scala.annotation.implicitNotFound
 import scala.util.control.NoStackTrace
@@ -64,18 +64,10 @@ object QueryValue {
   */
 case class JsonValue(value: String) extends AnyVal with RestValue
 object JsonValue {
-  // TODO: this is terrible, but GenCodec in general just can't embed arbitrary JSON at this point...
-  private[rest] implicit val codec: GenCodec[JsonValue] =
-    GenCodec.create(
-      {
-        case ji: JsonStringInput => JsonValue(ji.readRawJson())
-        case i => JsonValue(i.readSimple().readString())
-      },
-      {
-        case (jo: JsonStringOutput, JsonValue(json)) => jo.writeRawJson(json)
-        case (o, JsonValue(json)) => o.writeSimple().writeString(json)
-      }
-    )
+  implicit val codec: GenCodec[JsonValue] = GenCodec.create(
+    i => i.readSimple() |> (si => JsonValue(si.readCustom(RawJsonMarker).getOrElse(si.readString()))),
+    (o, v) => o.writeSimple() |> (so => if (!so.writeCustom(RawJsonMarker, v.value)) so.writeString(v.value))
+  )
 }
 
 /**

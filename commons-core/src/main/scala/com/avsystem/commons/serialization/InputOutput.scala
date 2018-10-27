@@ -4,6 +4,12 @@ package serialization
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 /**
+  * Base trait for type markers identifying custom native types that particular [[Input]] and [[Output]]
+  * implementations might want to support.
+  */
+trait TypeMarker[T]
+
+/**
   * Represents an abstract sink to which a value may be serialized (written).
   * An [[Output]] instance should be assumed to be stateful. After calling any of the `write` methods, it MUST NOT be
   * reused. This means that [[Output]] instance can be used only to write a single value. However, if the value
@@ -39,6 +45,7 @@ trait SimpleOutput extends Any {
   def writeBigInt(bigInt: BigInt): Unit
   def writeBigDecimal(bigDecimal: BigDecimal): Unit
   def writeBinary(binary: Array[Byte]): Unit
+  def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean = false
 }
 
 trait OutputAndSimpleOutput extends Any with Output with SimpleOutput {
@@ -133,6 +140,7 @@ trait SimpleInput extends Any {
   def readBigInt(): BigInt
   def readBigDecimal(): BigDecimal
   def readBinary(): Array[Byte]
+  def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] = Opt.Empty
 }
 
 trait InputAndSimpleInput extends Any with Input with SimpleInput {

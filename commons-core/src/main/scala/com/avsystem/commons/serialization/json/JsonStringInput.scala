@@ -92,6 +92,17 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
       result
   }
 
+  def readRawJson(): String = {
+    skip()
+    reader.json.substring(startIdx, endIdx)
+  }
+
+  override def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] =
+    typeMarker match {
+      case RawJsonMarker => readRawJson().opt
+      case _ => Opt.Empty
+    }
+
   def readList(): JsonListInput = reader.jsonType match {
     case JsonType.list => new JsonListInput(reader, options, this)
     case _ => expectedError(JsonType.list)
@@ -100,11 +111,6 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
   def readObject(): JsonObjectInput = reader.jsonType match {
     case JsonType.`object` => new JsonObjectInput(reader, options, this)
     case _ => expectedError(JsonType.`object`)
-  }
-
-  def readRawJson(): String = {
-    skip()
-    reader.json.substring(startIdx, endIdx)
   }
 
   def skip(): Unit = reader.jsonType match {
