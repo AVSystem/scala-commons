@@ -278,7 +278,7 @@ object ReplyDecoders {
     case ArrayMsg(IndexedSeq(IntegerMsg(count), BulkStringMsg(minid), BulkStringMsg(maxid), ArrayMsg(byConsumer))) =>
       XPendingOverview(
         count, XEntryId.parse(minid.utf8String), XEntryId.parse(maxid.utf8String),
-        new mutable.OpenHashMap() ++ flatPairedMultiBulkIterator(byConsumer, bulkXConsumer, bulkLong)
+        new mutable.OpenHashMap() ++ multiBulkIterator(byConsumer, multiBulkPair(bulkXConsumer, bulkLong))
       )
   }
 

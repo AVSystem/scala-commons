@@ -30,7 +30,7 @@ class UnexpectedReplyException(msg: String = null)
   * Thrown when Redis server replies with an error.
   */
 class ErrorReplyException(val reply: ErrorMsg, val command: RedisCommand[_])
-  extends RedisException(s"${reply.errorString.utf8String}, for command $command") {
+  extends RedisException(s"Redis replied with error: ${reply.errorString.utf8String}, command: $command") {
   def errorStr: String = reply.errorString.utf8String
 }
 

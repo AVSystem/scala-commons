@@ -172,14 +172,14 @@ trait StreamsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/xreadgroup XREADGROUP]] */
   def xreadgroupSingle(
     key: Key,
-    id: Opt[XEntryId],
     group: XGroup,
     consumer: XConsumer,
+    id: OptArg[XEntryId] = OptArg.Empty,
     blockMillis: OptArg[Int] = OptArg.Empty,
     count: OptArg[Int] = OptArg.Empty,
   ): Result[Seq[XEntry]] =
     execute(new Xreadgroup(group, consumer, count.toOpt, blockMillis.toOpt,
-      Iterator(key), Iterator(id)).map(_.getOrElse(key, Nil)))
+      Iterator(key), Iterator(id.toOpt)).map(_.getOrElse(key, Nil)))
 
   /** Executes [[http://redis.io/commands/xreadgroup XREADGROUP]] */
   def xreadgroup(
@@ -431,6 +431,7 @@ case class XGroupInfo(raw: BMap[String, ValidRedisMsg]) {
   def name: XGroup = bulkXGroup(raw("name"))
   def consumers: Int = integerInt(raw("consumers"))
   def pending: Int = integerInt(raw("pending"))
+  def lastDeliveredId: XEntryId = bulkXEntryId(raw("last-delivered-id"))
 }
 
 case class XConsumerInfo(raw: BMap[String, ValidRedisMsg]) {
