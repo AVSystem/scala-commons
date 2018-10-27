@@ -8,9 +8,14 @@ final class ObjectInputAsInput(objectInput: ObjectInput) extends Input {
     throw new ReadFailure(s"expected $expected, got object")
 
   def isNull: Boolean = false
+  def isList: Boolean = false
+  def isObject: Boolean = true
+
+  def readNull(): Null = fail("null")
   def readSimple(): SimpleInput = fail("simple value")
   def readList(): ListInput = fail("list")
   def readObject(): ObjectInput = objectInput
+
   def skip(): Unit = objectInput.skipRemaining()
 }
 
@@ -18,6 +23,7 @@ final class ObjectOutputAsOutput(objectOutput: ObjectOutput, forwardFinish: Bool
   private def fail(what: String): Nothing =
     throw new WriteFailure(s"could not write $what, can write only object")
 
+  def writeNull(): Unit = fail("null")
   def writeSimple(): SimpleOutput = fail("simple value")
   def writeList(): ListOutput = fail("list")
   def writeObject(): ObjectOutput =

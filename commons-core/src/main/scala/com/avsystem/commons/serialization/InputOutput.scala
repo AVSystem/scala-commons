@@ -16,6 +16,7 @@ trait TypeMarker[T]
   * to write is complex, one can use `writeList`/`writeSet` or `writeObject`/`writeMap`.
   */
 trait Output extends Any {
+  def writeNull(): Unit
   def writeSimple(): SimpleOutput
   def writeList(): ListOutput
   def writeObject(): ObjectOutput
@@ -30,8 +31,6 @@ trait Output extends Any {
 }
 
 trait SimpleOutput extends Any {
-  def writeNull(): Unit
-  def writeUnit(): Unit = writeNull()
   def writeString(str: String): Unit
   def writeChar(char: Char): Unit = writeString(char.toString)
   def writeBoolean(boolean: Boolean): Unit
@@ -109,10 +108,19 @@ trait ObjectOutput extends Any with SequentialOutput {
   * [[Input]] must also be fully exhausted on their own.
   */
 trait Input extends Any {
+  /** Indicates if it is safe to call [[readNull]] on this input. */
   def isNull: Boolean
+  /** Indicates if it is safe to call [[readList]] on this input */
+  def isList: Boolean
+  /** Indicates if it is safe to call [[readObject]] on this input. */
+  def isObject: Boolean
+
+  def readNull(): Null
   def readSimple(): SimpleInput
   def readList(): ListInput
   def readObject(): ObjectInput
+
+  /** Ignores this input and skips its contents internally, if necessary */
   def skip(): Unit
 
   /**
@@ -125,8 +133,6 @@ trait Input extends Any {
 }
 
 trait SimpleInput extends Any {
-  def readNull(): Null
-  def readUnit(): Unit = readNull()
   def readString(): String
   def readChar(): Char = readString().charAt(0)
   def readBoolean(): Boolean

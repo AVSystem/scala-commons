@@ -38,6 +38,8 @@ class StreamInput(is: DataInputStream) extends InputAndSimpleInput {
   private[serialization] val markerByte = is.readByte()
 
   def isNull: Boolean = markerByte == NullMarker
+  def isList: Boolean = markerByte == ListStartMarker
+  def isObject: Boolean = markerByte == ObjectStartMarker
 
   def readNull(): Null =
     if (markerByte == NullMarker) null
@@ -194,7 +196,10 @@ private object StreamObjectInput {
   case class EmptyFieldInput(name: String) extends InputAndSimpleInput with FieldInput {
     private def nope: Nothing = throw new ReadFailure(s"Something went horribly wrong ($name)")
 
-    def isNull: Boolean = nope
+    def isNull: Boolean = false
+    def isList: Boolean = false
+    def isObject: Boolean = false
+
     def fieldName: String = nope
     def readNull(): Null = nope
     def readString(): String = nope

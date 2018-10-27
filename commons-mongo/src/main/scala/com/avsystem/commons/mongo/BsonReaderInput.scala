@@ -9,6 +9,11 @@ import org.bson.{BsonReader, BsonType}
 class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean = false) extends BsonInput {
   override def isNull: Boolean =
     br.getCurrentBsonType == BsonType.NULL
+  override def isList: Boolean =
+    br.getCurrentBsonType == BsonType.ARRAY
+  override def isObject: Boolean =
+    br.getCurrentBsonType == BsonType.DOCUMENT
+
   override def readNull(): Null = {
     br.readNull()
     null

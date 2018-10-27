@@ -57,6 +57,9 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
   }
 
   def isNull: Boolean = reader.jsonType == JsonType.`null`
+  def isList: Boolean = reader.jsonType == JsonType.list
+  def isObject: Boolean = reader.jsonType == JsonType.`object`
+
   def readNull(): Null = checkedValue[Null](JsonType.`null`)
   def readString(): String = checkedValue[String](JsonType.string)
   def readBoolean(): Boolean = checkedValue[Boolean](JsonType.boolean)

@@ -186,12 +186,12 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
     final def write(output: Output, value: T): Unit =
       if (value == null)
-        if (nullable) output.writeSimple().writeNull() else throw new WriteFailure("null")
+        if (nullable) output.writeNull() else throw new WriteFailure("null")
       else writeNonNull(output, value)
 
     final def read(input: Input): T =
       if (input.isNull)
-        if (nullable) input.readSimple().readNull().asInstanceOf[T] else throw new ReadFailure("null")
+        if (nullable) input.readNull().asInstanceOf[T] else throw new ReadFailure("null")
       else readNonNull(input)
   }
 
@@ -275,11 +275,11 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit lazy val NothingCodec: GenCodec[Nothing] =
     create[Nothing](_ => throw new ReadFailure("read Nothing"), (_, _) => throw new WriteFailure("write Nothing"))
   implicit lazy val NullCodec: GenCodec[Null] =
-    create[Null](_.readSimple().readNull(), (o, _) => o.writeSimple().writeNull())
+    create[Null](_.readNull(), (o, _) => o.writeNull())
   implicit lazy val UnitCodec: GenCodec[Unit] =
-    create[Unit](_.readSimple().readUnit(), (o, _) => o.writeSimple().writeUnit())
+    create[Unit](_.readNull(), (o, _) => o.writeNull())
   implicit lazy val VoidCodec: GenCodec[Void] =
-    create[Void](_.readSimple().readNull(), (o, _) => o.writeSimple().writeNull())
+    create[Void](_.readNull(), (o, _) => o.writeNull())
 
   implicit lazy val BooleanCodec: GenCodec[Boolean] = nonNullSimple(_.readBoolean(), _ writeBoolean _)
   implicit lazy val CharCodec: GenCodec[Char] = nonNullSimple(_.readChar(), _ writeChar _)
@@ -376,7 +376,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     )
 
   private def readNullThen[T](i: Input, value: T): T = {
-    i.readSimple().readNull()
+    i.readNull()
     value
   }
 
@@ -388,7 +388,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
         li.skipRemaining()
         res
       } else if (input.isNull) {
-        input.readSimple().readNull()
+        input.readNull()
         None
       } else Some(read[T](input)),
 
@@ -399,7 +399,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
         lo.finish()
       } else valueOption match {
         case Some(v) => write[T](output, v)
-        case None => output.writeSimple().writeNull()
+        case None => output.writeNull()
       }
   )
 
@@ -411,7 +411,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
       i => if (i.isNull) readNullThen(i, Opt.Empty) else Opt(read[T](i)),
       (o, vo) => vo match {
         case Opt(v) => write[T](o, v)
-        case Opt.Empty => o.writeSimple().writeNull()
+        case Opt.Empty => o.writeNull()
       }
     )
 

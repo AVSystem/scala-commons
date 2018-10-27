@@ -94,6 +94,9 @@ class SimpleValueInput(value: Any) extends InputAndSimpleInput {
   }
 
   def isNull: Boolean = value == null
+  def isList: Boolean = value.isInstanceOf[BSeq[Any]]
+  def isObject: Boolean = value.isInstanceOf[BMap[_, Any]]
+
   def readNull(): Null = if (isNull) null else throw new ReadFailure(s"not null: ${value.getClass}")
   def readBoolean(): Boolean = doReadUnboxed[Boolean, JBoolean]
   def readString(): String = doRead[String]
