@@ -109,8 +109,8 @@ final class RedisNodeClient(
   private[redis] def nodeRemoved(): Unit = {
     val cause = new NodeRemovedException(address)
     failure = cause.opt
-    connections.foreach(_ ! RedisConnectionActor.Close(cause))
-    blockingConnectionPool ! ConnectionPoolActor.Close(cause)
+    connections.foreach(_ ! RedisConnectionActor.Close(cause, stop = true))
+    blockingConnectionPool ! ConnectionPoolActor.Close(cause, stop = true)
   }
 
   def executionContext: ExecutionContext =
@@ -180,8 +180,9 @@ final class RedisNodeClient(
     overallInitFuture.mapNow(_ => this)
 
   def close(): Unit = {
-    failure = failure orElse new ClientStoppedException(address.opt).opt
-    connections.foreach(system.stop)
-    system.stop(blockingConnectionPool)
+    val cause = failure.getOrElse(new ClientStoppedException(address.opt))
+    failure = cause.opt
+    connections.foreach(_ ! RedisConnectionActor.Close(cause, stop = true))
+    blockingConnectionPool ! ConnectionPoolActor.Close(cause, stop = true)
   }
 }

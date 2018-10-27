@@ -103,14 +103,14 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     case Tcp.CommandFailed(_: Tcp.Connect) =>
       log.error(s"Connection attempt to Redis at $address failed")
       tryReconnect(retry + 1, new ConnectionFailedException(address))
-    case Close(cause) =>
-      close(cause, tcpConnecting = true)
+    case Close(cause, stopSelf) =>
+      close(cause, stopSelf, tcpConnecting = true)
     case _: Tcp.Event => //ignore, this is from previous connection
   }
 
   private def tryReconnect(retry: Int, failureCause: => Throwable): Unit =
     if (incarnation == 0 && mustInitiallyConnect) {
-      close(failureCause)
+      close(failureCause, stopSelf = false)
     } else config.reconnectionStrategy.retryDelay(retry) match {
       case Opt(delay) =>
         if (delay > Duration.Zero) {
@@ -119,7 +119,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         become(connecting(retry))
         system.scheduler.scheduleOnce(delay, self, Connect)
       case Opt.Empty =>
-        close(failureCause)
+        close(failureCause, stopSelf = false)
     }
 
   private final class ConnectedTo(connection: ActorRef, localAddr: InetSocketAddress, remoteAddr: InetSocketAddress)
@@ -167,8 +167,8 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         try decoder.decodeMore(data)(collector.processMessage(_, this)) catch {
           case NonFatal(cause) => onInitResult(PacksResult.Failure(cause))
         }
-      case Close(cause) =>
-        close(cause)
+      case Close(cause, stop) =>
+        close(cause, stop)
     }
 
     def onInitResult(packsResult: PacksResult): Unit =
@@ -181,7 +181,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       } catch {
         case NonFatal(cause) =>
           log.error(s"Failed to initialize Redis connection $localAddr->$remoteAddr", cause)
-          close(new ConnectionInitializationFailure(cause))
+          close(new ConnectionInitializationFailure(cause), stopSelf = false)
       }
 
     def ready: Receive = {
@@ -210,15 +210,15 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         tryReconnect(0, cause)
       case Tcp.Received(data) =>
         onMoreData(data)
-      case Close(cause) =>
+      case Close(cause, stopSelf) =>
         failQueued(cause)
-        if (!closeIfIdle(cause)) {
+        if (!closeIfIdle(cause, stopSelf)) {
           // graceful close, wait for already sent commands to finish
-          become(closing(cause))
+          become(closing(cause, stopSelf))
         }
     }
 
-    def closing(cause: Throwable): Receive = {
+    def closing(cause: Throwable, stopSelf: Boolean): Receive = {
       case open: Open =>
         onOpen(open)
         initPromise.success(())
@@ -230,14 +230,14 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         waitingForAck = 0
       case Tcp.CommandFailed(_: Tcp.Write) =>
         onWriteFailed()
-        closeIfIdle(cause)
+        closeIfIdle(cause, stopSelf)
       case cc: Tcp.ConnectionClosed =>
         onConnectionClosed(cc)
         failAlreadySent(new ConnectionClosedException(address, cc.getErrorCause.opt))
-        close(cause)
+        close(cause, stopSelf)
       case Tcp.Received(data) =>
         onMoreData(data)
-        closeIfIdle(cause)
+        closeIfIdle(cause, stopSelf)
     }
 
     def onMoreData(data: ByteString): Unit = {
@@ -247,13 +247,13 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
           collectors.removeFirst()
         }
       } catch {
-        case NonFatal(cause) => close(cause)
+        case NonFatal(cause) => close(cause, stopSelf = false)
       }
     }
 
-    def closeIfIdle(cause: Throwable): Boolean =
+    def closeIfIdle(cause: Throwable, stopSelf: Boolean): Boolean =
       collectors.isEmpty && {
-        close(cause)
+        close(cause, stopSelf)
         true
       }
 
@@ -301,13 +301,13 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         }
       }
 
-    def close(cause: Throwable): Unit = {
+    def close(cause: Throwable, stopSelf: Boolean): Unit = {
       failAlreadySent(cause)
       if (open) {
         open = false
         connection ! Tcp.Close
       }
-      actor.close(cause)
+      actor.close(cause, stopSelf)
     }
 
     def failAlreadySent(cause: Throwable): Unit = {
@@ -347,10 +347,14 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       fun(queue.removeFirst())
     }
 
-  private def close(cause: Throwable, tcpConnecting: Boolean = false): Unit = {
+  private def close(cause: Throwable, stopSelf: Boolean, tcpConnecting: Boolean = false): Unit = {
     failQueued(cause)
     initPromise.tryFailure(cause)
-    become(closed(cause, tcpConnecting))
+    if (stopSelf) {
+      stop(self)
+    } else {
+      become(closed(cause, tcpConnecting))
+    }
   }
 
   private def failQueued(cause: Throwable): Unit = {
@@ -375,12 +379,14 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       sender() ! Tcp.Close
       become(closed(cause, tcpConnecting = false))
     case _: Tcp.Event => // ignore
+    case Close(_, true) =>
+      stop(self)
   }
 }
 
 object RedisConnectionActor {
   case class Open(mustInitiallyConnect: Boolean, initPromise: Promise[Unit])
-  case class Close(cause: Throwable)
+  case class Close(cause: Throwable, stop: Boolean)
   case class Reserving(packs: RawCommandPacks)
   case object Release
 

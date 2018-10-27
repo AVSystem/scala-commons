@@ -64,7 +64,8 @@ final class RedisConnectionClient(
       .mapNow({ case or: OpResult[A@unchecked] => or.get }))
 
   def close(): Unit = {
-    failure = new ClientStoppedException(address.opt).opt
-    system.stop(connectionActor)
+    val cause = new ClientStoppedException(address.opt)
+    failure = cause.opt
+    connectionActor ! RedisConnectionActor.Close(cause, stop = true)
   }
 }

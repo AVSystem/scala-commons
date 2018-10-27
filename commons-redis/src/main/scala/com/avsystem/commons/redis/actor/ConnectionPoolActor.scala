@@ -37,8 +37,11 @@ class ConnectionPoolActor(address: NodeAddress, config: NodeConfig, queue: Concu
       sender() ! Full
     case Cleanup =>
       cleanup(System.nanoTime(), config.maxBlockingIdleTime.toNanos)
-    case Close(cause) =>
-      connections.foreach(_ ! RedisConnectionActor.Close(cause))
+    case Close(cause, stopSelf) =>
+      connections.foreach(_ ! RedisConnectionActor.Close(cause, stopSelf))
+      if (stopSelf) {
+        stop(self)
+      }
   }
 
   private def cleanup(nowNanos: Long, maxIdleNanos: Long): Unit = {
@@ -50,7 +53,7 @@ class ConnectionPoolActor(address: NodeAddress, config: NodeConfig, queue: Concu
           if (!dequeue && stale) {
             loop(dequeue = true)
           } else if (dequeue && stale) {
-            conn ! RedisConnectionActor.Close(new RedisException("Idle blocking connection closed"))
+            conn ! RedisConnectionActor.Close(new RedisException("Idle blocking connection closed"), stop = true)
             context.stop(conn)
             connections.remove(conn)
             loop(dequeue = false)
@@ -68,7 +71,7 @@ object ConnectionPoolActor {
   case class QueuedConn(conn: ActorRef, enqueuedAt: Long)
 
   object CreateNewConnection
-  case class Close(cause: Throwable)
+  case class Close(cause: Throwable, stop: Boolean)
   object Cleanup
 
   case class NewConnection(connection: ActorRef)
