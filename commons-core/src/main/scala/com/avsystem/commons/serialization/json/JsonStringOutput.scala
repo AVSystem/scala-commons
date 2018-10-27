@@ -101,6 +101,14 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
   override def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean =
     typeMarker match {
       case RawJsonMarker => writeRawJson(value); true
+      case JsonPrimitive.Marker =>
+        value match {
+          case JsonPrimitive.Null => writeNull()
+          case JsonPrimitive.Bool(b) => writeBoolean(b)
+          case JsonPrimitive.Str(s) => writeString(s)
+          case JsonPrimitive.Num(n) => builder.append(n)
+        }
+        true
       case _ => false
     }
 

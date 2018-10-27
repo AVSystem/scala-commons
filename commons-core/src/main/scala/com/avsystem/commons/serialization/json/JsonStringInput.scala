@@ -103,6 +103,13 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
   override def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] =
     typeMarker match {
       case RawJsonMarker => readRawJson().opt
+      case JsonPrimitive.Marker => reader.jsonType match {
+        case JsonType.`null` => JsonPrimitive.Null.opt
+        case JsonType.boolean => JsonPrimitive.Bool(reader.currentValue.asInstanceOf[Boolean]).opt
+        case JsonType.string => JsonPrimitive.Str(reader.currentValue.asInstanceOf[String]).opt
+        case JsonType.number => JsonPrimitive.Num(reader.currentValue.asInstanceOf[String]).opt
+        case _ => throw new ReadFailure(s"Expected JSON primitive but got ${reader.jsonType}")
+      }
       case _ => Opt.Empty
     }
 
