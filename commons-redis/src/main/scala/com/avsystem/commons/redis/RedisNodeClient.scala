@@ -27,8 +27,8 @@ import scala.concurrent.duration._
 final class RedisNodeClient(
   val address: NodeAddress = NodeAddress.Default,
   val config: NodeConfig = NodeConfig(),
-  val clusterNode: Boolean = false)
-  (implicit system: ActorSystem) extends RedisNodeExecutor with Closeable { client =>
+  val clusterNode: Boolean = false
+)(implicit system: ActorSystem) extends RedisNodeExecutor with Closeable { client =>
 
   private def newConnection(i: Int): ActorRef = {
     val connConfig: ConnectionConfig = config.connectionConfigs(i)

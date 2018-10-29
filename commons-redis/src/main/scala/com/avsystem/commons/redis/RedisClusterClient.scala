@@ -135,10 +135,19 @@ final class RedisClusterClient(
   def initialized: Future[this.type] =
     initPromise.future.mapNow(_ => this)
 
-  private def handleRedirection[T](pack: RawCommandPack, slot: Int, result: Future[RedisReply], retryStrategy: RetryStrategy)(implicit timeout: Timeout): Future[RedisReply] =
+  private def handleRedirection[T](
+    pack: RawCommandPack, slot: Int, result: Future[RedisReply],
+    retryStrategy: RetryStrategy, tryagainStrategy: RetryStrategy
+  )(implicit timeout: Timeout): Future[RedisReply] =
     result.flatMapNow {
       case RedirectionReply(red) =>
-        retryRedirected(pack, red, retryStrategy)
+        retryRedirected(pack, red, retryStrategy, tryagainStrategy)
+      case TryagainReply(reply) => tryagainStrategy.nextRetry match {
+        case Opt.Empty => Future.successful(reply)
+        case Opt((delay, nextStrat)) =>
+          val result = DelayedFuture(delay).flatMapNow(_ => state.clientForSlot(slot).executeRaw(pack).mapNow(_.apply(0)))
+          handleRedirection(pack, slot, result, config.redirectionRetryStrategy, nextStrat)
+      }
       case _ => result
     } recoverWithNow {
       case _: NodeRemovedException =>
@@ -148,13 +157,16 @@ final class RedisClusterClient(
         retryStrategy.nextRetry match {
           case Opt.Empty =>
             Future.successful(FailureReply(new TooManyRedirectionsException(Redirection(client.address, slot, ask = false))))
-          case Opt((delay, nextStrategy)) =>
+          case Opt((delay, nextStrat)) =>
             val result = DelayedFuture(delay).flatMapNow(_ => client.executeRaw(pack).mapNow(_.apply(0)))
-            handleRedirection(pack, slot, result, nextStrategy)
+            handleRedirection(pack, slot, result, nextStrat, tryagainStrategy)
         }
     }
 
-  private def retryRedirected(pack: RawCommandPack, redirection: Redirection, retryStrategy: RetryStrategy)(implicit timeout: Timeout): Future[RedisReply] = {
+  private def retryRedirected(
+    pack: RawCommandPack, redirection: Redirection,
+    retryStrategy: RetryStrategy, tryagainStrategy: RetryStrategy
+  )(implicit timeout: Timeout): Future[RedisReply] = {
     if (!redirection.ask) {
       // redirection (without ASK) indicates that we may have old cluster state, refresh it
       monitoringActor ! Refresh(new SingletonSeq(redirection.address).opt)
@@ -173,7 +185,7 @@ final class RedisClusterClient(
               askForClient(redirection.address).flatMapNow(_.executeRaw(packToResend))
           }
         }
-        handleRedirection(pack, redirection.slot, result.mapNow(_.apply(0)), nextStrategy)
+        handleRedirection(pack, redirection.slot, result.mapNow(_.apply(0)), nextStrategy, tryagainStrategy)
     }
   }
 
@@ -274,7 +286,8 @@ final class RedisClusterClient(
     val slot = determineSlot(pack)
     val client = currentState.clientForSlot(slot)
     val result = client.executeRaw(pack).mapNow(_.apply(0))
-    handleRedirection(pack, slot, result, config.redirectionRetryStrategy).mapNow(PacksResult.Single)
+    handleRedirection(pack, slot, result, config.redirectionRetryStrategy, config.tryagainStrategy)
+      .mapNow(PacksResult.Single)
   }
 
   private def executeClusteredPacks[A](packs: RawCommandPacks, currentState: ClusterState)(implicit timeout: Timeout) = {
@@ -289,7 +302,7 @@ final class RedisClusterClient(
       val result = resultsByNode.getOrElseUpdate(client,
         barrier.future.flatMapNow(_ => client.executeRaw(CollectionPacks(packBuffer)))
       ).mapNow(_.apply(idx))
-      handleRedirection(pack, slot, result, config.redirectionRetryStrategy)
+      handleRedirection(pack, slot, result, config.redirectionRetryStrategy, config.tryagainStrategy)
     }
 
     val results = new ArrayBuffer[Future[RedisReply]]
@@ -420,6 +433,14 @@ object RedirectionException {
 }
 
 case class Redirection(address: NodeAddress, slot: Int, ask: Boolean)
+
+object TryagainReply {
+  def unapply(reply: RedisReply): Opt[RedisReply] = reply match {
+    case err: ErrorMsg if err.errorCode == "TRYAGAIN" => Opt(reply)
+    case TransactionReply(elements) => elements.headOpt.flatMap(unapply).map(_ => reply)
+    case _ => Opt.Empty
+  }
+}
 
 /**
   * Current cluster state known by [[RedisClusterClient]].

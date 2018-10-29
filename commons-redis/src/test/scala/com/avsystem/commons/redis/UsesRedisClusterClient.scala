@@ -43,12 +43,12 @@ trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem { t
       } else Future.successful(())
     }
 
-  override protected def beforeAll() = {
+  override protected def beforeAll(): Unit = {
     super.beforeAll()
     redisClient = new RedisClusterClient(addresses.take(1), clusterConfig)
   }
 
-  override protected def afterAll() = {
+  override protected def afterAll(): Unit = {
     redisClient.close()
     super.afterAll()
   }
