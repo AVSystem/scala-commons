@@ -148,7 +148,7 @@ final class RedisNodeClient(
     * </ul>
     */
   def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] =
-    executeRaw(batch.rawCommandPacks.requireLevel(RawCommand.Level.Node, "NodeClient"))(config.timeout)
+    executeRaw(batch.rawCommandPacks.requireLevel(RawCommand.Level.Node, "NodeClient"))(config.responseTimeout)
       .map(result => batch.decodeReplies(result))(config.decodeOn)
 
   /**
@@ -165,7 +165,7 @@ final class RedisNodeClient(
     */
   //TODO: executionConfig.decodeOn is ignored now
   def executeOp[A](op: RedisOp[A], executionConfig: ExecutionConfig): Future[A] =
-    ifReady(executeOp(nextConnection(), op)(executionConfig.timeout))
+    ifReady(executeOp(nextConnection(), op)(executionConfig.responseTimeout))
 
   private def executeOp[A](connection: ActorRef, op: RedisOp[A])(implicit timeout: Timeout): Future[A] =
     system.actorOf(Props(new RedisOperationActor(connection))).ask(op)

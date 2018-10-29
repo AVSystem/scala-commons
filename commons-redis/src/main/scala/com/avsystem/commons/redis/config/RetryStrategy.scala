@@ -39,6 +39,9 @@ trait RetryStrategy { self =>
         case _ => Opt.Empty
       }
     })
+
+  def next: RetryStrategy =
+    nextRetry.fold(RetryStrategy.never) { case (_, n) => n }
 }
 object RetryStrategy {
   def apply(nextRetryThunk: => Opt[(FiniteDuration, RetryStrategy)]): RetryStrategy =
@@ -51,6 +54,9 @@ object RetryStrategy {
 
   def immediately: RetryStrategy =
     once(Duration.Zero)
+
+  def times(count: Int, duration: FiniteDuration = Duration.Zero): RetryStrategy =
+    if (count <= 0) never else apply(Opt(duration, times(count - 1, duration)))
 
   def once(delay: FiniteDuration): RetryStrategy =
     apply(Opt((delay, never)))

@@ -91,7 +91,7 @@ class RedisClusterClientInitDuringFailureTest extends FunSuite
 
     val client = createClient(ports.head, ports.head + 1)
     client.initialized.futureValue shouldBe client
-    client.executeBatch(get(slotKey(0)), ExecutionConfig(timeout = 120.seconds)).futureValue shouldBe Opt.Empty
+    client.executeBatch(get(slotKey(0)), ExecutionConfig(responseTimeout = 120.seconds)).futureValue shouldBe Opt.Empty
   }
 }
 

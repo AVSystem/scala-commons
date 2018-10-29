@@ -48,7 +48,7 @@ case class ClusterConfig(
   autoRefreshInterval: FiniteDuration = 5.seconds,
   minRefreshInterval: FiniteDuration = 1.seconds,
   nodesToQueryForState: Int => Int = _ min 5,
-  maxRedirections: Int = 3,
+  redirectionRetryStrategy: RetryStrategy = RetryStrategy.times(3),
   tryagainStrategy: RetryStrategy = exponentially(10.millis).maxDelay(5.seconds).maxTotal(1.minute),
   nodeClientCloseDelay: FiniteDuration = 1.seconds,
   fallbackToSingleNode: Boolean = false

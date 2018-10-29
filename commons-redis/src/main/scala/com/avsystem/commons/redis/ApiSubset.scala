@@ -92,7 +92,7 @@ trait RedisBlockingApi extends RedisExecutedApi {
   type Result[A] = A
   def execute[A](command: RedisCommand[A]): A =
   // executeAsync should already handle timeouts, but just to be safe let's pass the standard timeout plus one second
-    Await.result(executeAsync(command), execConfig.timeout.duration + 1.second)
+    Await.result(executeAsync(command), execConfig.responseTimeout.duration + 1.second)
   def recoverWith[A](executed: => A)(fun: PartialFunction[Throwable, A]): A =
     try executed catch fun
 }
