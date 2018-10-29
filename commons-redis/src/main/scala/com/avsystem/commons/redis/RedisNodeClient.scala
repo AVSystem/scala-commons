@@ -49,15 +49,13 @@ final class RedisNodeClient(
   private val blockingConnectionPool =
     system.actorOf(Props(new ConnectionPoolActor(address, config, blockingConnectionQueue)))
 
-  private def newBlockingConnection(): Future[ActorRef] = {
-    implicit val timeout: Timeout = Timeout(1.second)
-    blockingConnectionPool.ask(ConnectionPoolActor.CreateNewConnection).mapNow {
+  private def newBlockingConnection(): Future[ActorRef] =
+    blockingConnectionPool.ask(ConnectionPoolActor.CreateNewConnection)(Timeout(1.second)).mapNow {
       case ConnectionPoolActor.NewConnection(connection) =>
         connection
       case ConnectionPoolActor.Full =>
         throw new TooManyConnectionsException(config.maxBlockingPoolSize)
     }
-  }
 
   @volatile private[this] var initSuccess = false
   @volatile private[this] var failure = Opt.empty[Throwable]

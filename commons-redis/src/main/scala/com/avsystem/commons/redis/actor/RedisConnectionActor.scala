@@ -385,9 +385,9 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
 }
 
 object RedisConnectionActor {
-  case class Open(mustInitiallyConnect: Boolean, initPromise: Promise[Unit])
-  case class Close(cause: Throwable, stop: Boolean)
-  case class Reserving(packs: RawCommandPacks)
+  final case class Open(mustInitiallyConnect: Boolean, initPromise: Promise[Unit])
+  final case class Close(cause: Throwable, stop: Boolean)
+  final case class Reserving(packs: RawCommandPacks)
   case object Release
 
   private object Connect

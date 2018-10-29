@@ -229,8 +229,10 @@ object RedisApi {
 }
 
 abstract class AbstractRedisApi[Self[K0, F0, V0] <: AbstractRedisApi[Self, K0, F0, V0], K, F, V](implicit
-  val keyCodec: RedisDataCodec[K], val fieldCodec: RedisDataCodec[F], val valueCodec: RedisDataCodec[V])
-  extends ApiSubset {
+  protected val keyCodec: RedisDataCodec[K],
+  protected val fieldCodec: RedisDataCodec[F],
+  protected val valueCodec: RedisDataCodec[V]
+) extends ApiSubset {
 
   type Key = K
   type Field = F

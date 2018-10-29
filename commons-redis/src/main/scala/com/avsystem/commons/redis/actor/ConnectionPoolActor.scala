@@ -68,12 +68,12 @@ class ConnectionPoolActor(address: NodeAddress, config: NodeConfig, queue: Concu
   }
 }
 object ConnectionPoolActor {
-  case class QueuedConn(conn: ActorRef, enqueuedAt: Long)
+  final case class QueuedConn(conn: ActorRef, enqueuedAt: Long)
 
   object CreateNewConnection
-  case class Close(cause: Throwable, stop: Boolean)
+  final case class Close(cause: Throwable, stop: Boolean)
   object Cleanup
 
-  case class NewConnection(connection: ActorRef)
+  final case class NewConnection(connection: ActorRef)
   object Full
 }
