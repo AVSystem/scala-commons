@@ -8,7 +8,7 @@ import akka.actor.{Actor, ActorRef}
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.config.ConnectionConfig
+import com.avsystem.commons.redis.config.{ConnectionConfig, RetryStrategy}
 import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.protocol.{RedisMsg, RedisReply}
 import com.avsystem.commons.redis.util.ActorLazyLogging
@@ -48,7 +48,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       handlePacks(packs)
     case open: Open =>
       onOpen(open)
-      become(connecting(-1))
+      become(connecting(config.reconnectionStrategy))
       self ! Connect
   }
 
@@ -87,7 +87,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     }
   }
 
-  private def connecting(retry: Int): Receive = {
+  private def connecting(retryStrategy: RetryStrategy): Receive = {
     case open: Open =>
       onOpen(open)
     case IncomingPacks(packs) =>
@@ -102,21 +102,21 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       new ConnectedTo(sender(), localAddress, remoteAddress).initialize()
     case Tcp.CommandFailed(_: Tcp.Connect) =>
       log.error(s"Connection attempt to Redis at $address failed")
-      tryReconnect(retry + 1, new ConnectionFailedException(address))
+      tryReconnect(retryStrategy, new ConnectionFailedException(address))
     case Close(cause, stopSelf) =>
       close(cause, stopSelf, tcpConnecting = true)
     case _: Tcp.Event => //ignore, this is from previous connection
   }
 
-  private def tryReconnect(retry: Int, failureCause: => Throwable): Unit =
+  private def tryReconnect(retryStrategy: RetryStrategy, failureCause: => Throwable): Unit =
     if (incarnation == 0 && mustInitiallyConnect) {
       close(failureCause, stopSelf = false)
-    } else config.reconnectionStrategy.retryDelay(retry) match {
-      case Opt(delay) =>
+    } else retryStrategy.nextRetry match {
+      case Opt((delay, nextStrategy)) =>
         if (delay > Duration.Zero) {
           log.info(s"Next reconnection attempt to $address in $delay")
         }
-        become(connecting(retry))
+        become(connecting(nextStrategy))
         system.scheduler.scheduleOnce(delay, self, Connect)
       case Opt.Empty =>
         close(failureCause, stopSelf = false)
@@ -161,7 +161,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         onInitResult(PacksResult.Failure(new WriteFailedException(address)))
       case cc: Tcp.ConnectionClosed =>
         onConnectionClosed(cc)
-        tryReconnect(0, new ConnectionClosedException(address, cc.getErrorCause.opt))
+        tryReconnect(config.reconnectionStrategy, new ConnectionClosedException(address, cc.getErrorCause.opt))
       case Tcp.Received(data) =>
         logReceived(data)
         try decoder.decodeMore(data)(collector.processMessage(_, this)) catch {
@@ -207,7 +207,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         onConnectionClosed(cc)
         val cause = new ConnectionClosedException(address, cc.getErrorCause.opt)
         failAlreadySent(cause)
-        tryReconnect(0, cause)
+        tryReconnect(config.reconnectionStrategy, cause)
       case Tcp.Received(data) =>
         onMoreData(data)
       case Close(cause, stopSelf) =>
@@ -367,7 +367,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     case open: Open =>
       onOpen(open)
       incarnation = 0
-      become(connecting(-1))
+      become(connecting(config.reconnectionStrategy))
       if (!tcpConnecting) {
         self ! Connect
       }

@@ -9,7 +9,7 @@ import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{RedisConnectionActor, RedisOperationActor}
-import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, ExecutionConfig, NoRetryStrategy}
+import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, ExecutionConfig, RetryStrategy}
 import com.avsystem.commons.redis.exception.ClientStoppedException
 
 /**
@@ -32,7 +32,7 @@ final class RedisConnectionClient(
 
   private val initPromise = Promise[Unit]
   private val connectionActor = {
-    val props = Props(new RedisConnectionActor(address, config.copy(reconnectionStrategy = NoRetryStrategy)))
+    val props = Props(new RedisConnectionActor(address, config.copy(reconnectionStrategy = RetryStrategy.never)))
       .withDispatcher(ConfigDefaults.Dispatcher)
     config.actorName.fold(system.actorOf(props))(system.actorOf(props, _))
   }
