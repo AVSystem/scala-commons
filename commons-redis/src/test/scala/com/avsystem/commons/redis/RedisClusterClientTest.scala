@@ -160,6 +160,8 @@ class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
     super.beforeAll()
     Await.result(migrateSlot(0, 7000), Duration.Inf)
     Await.result(migrateSlot(1, 7000, incomplete = true), Duration.Inf)
+    Await.result(set(s"{${slotKey(2)}}1", "v1").exec, Duration.Inf)
+    Await.result(migrateSlot(2, 7000, incomplete = true, withoutData = true), Duration.Inf)
   }
 
   test("redirection handling after migration") {
@@ -188,7 +190,7 @@ class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
     batch.assertEquals(slots.map(_ => Opt.Empty))
   }
 
-  test("tryagain handling test") {
+  test("TRYAGAIN after redirection") {
     val k1 = s"{${slotKey(1)}}1"
     val k2 = s"{${slotKey(1)}}2"
     val mgetFut = mget(k1, k2).exec
@@ -197,6 +199,20 @@ class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
     (set(k1, "v1"), set(k2, "v2")).sequence.get
     assert(mgetFut.futureValue == Seq("v1".opt, "v2".opt))
     assert(txFut.futureValue == ("v1".opt, "v2".opt))
+    assert(listener.result().contains("-TRYAGAIN"))
+  }
+
+  test("TRYAGAIN before redirection") {
+    val k1 = s"{${slotKey(2)}}1"
+    val k2 = s"{${slotKey(2)}}2"
+    val mgetFut = mget(k1, k2).exec
+    val txFut = (get(k1), get(k2)).sequence.transaction.exec
+    Thread.sleep(500)
+    val targetAddress = redisClient.currentState.clientForSlot(7000).address
+    (migrate(Seq(k1), targetAddress, 0, 1000), set(k2, "v2")).sequence.assertEquals((true, true))
+    assert(mgetFut.futureValue == Seq("v1".opt, "v2".opt))
+    assert(txFut.futureValue == ("v1".opt, "v2".opt))
+    assert(listener.result().contains("-TRYAGAIN"))
   }
 }
 

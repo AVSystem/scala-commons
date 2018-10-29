@@ -14,7 +14,7 @@ trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem { t
 
   var redisClient: RedisClusterClient = _
 
-  protected def migrateSlot(slot: Int, targetNodeSlot: Int, incomplete: Boolean = false): Future[Unit] =
+  protected def migrateSlot(slot: Int, targetNodeSlot: Int, incomplete: Boolean = false, withoutData: Boolean = false): Future[Unit] =
     redisClient.initialized.flatMapNow { client =>
       val state = client.currentState
       val sourceClient = state.clientForSlot(slot)
@@ -24,10 +24,12 @@ trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem { t
         val targetApi = RedisApi.Node.Async.BinaryTyped(targetClient)
         val sourceIdFut = sourceApi.clusterMyid
         val targetIdFut = targetApi.clusterMyid
-        val keysToMigrateFut = for {
-          keyCount <- sourceApi.clusterCountkeysinslot(slot)
-          keys <- sourceApi.clusterGetkeysinslot(slot, keyCount.toInt)
-        } yield keys
+        val keysToMigrateFut =
+          if (withoutData) Future.successful(Seq.empty)
+          else for {
+            keyCount <- sourceApi.clusterCountkeysinslot(slot)
+            keys <- sourceApi.clusterGetkeysinslot(slot, keyCount.toInt)
+          } yield keys
         for {
           sourceId <- sourceIdFut
           targetId <- targetIdFut
