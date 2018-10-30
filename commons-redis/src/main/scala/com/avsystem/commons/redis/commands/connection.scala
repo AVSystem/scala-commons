@@ -7,7 +7,7 @@ import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait NodeConnectionApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/echo ECHO]] */
-  def echo(message: Value): Result[Value] =
+  def echo(message: ByteString): Result[ByteString] =
     execute(new Echo(message))
   /** Executes [[http://redis.io/commands/ping PING]] */
   def ping: Result[ByteString] =
@@ -16,7 +16,7 @@ trait NodeConnectionApi extends ApiSubset {
   def swapdb(first: Int, second: Int): Result[Unit] =
     execute(new Swapdb(first, second))
 
-  private final class Echo(message: Value) extends RedisDataCommand[Value] with NodeCommand {
+  private final class Echo(message: ByteString) extends RedisBinaryCommand with NodeCommand {
     val encoded: Encoded = encoder("ECHO").data(message).result
   }
 

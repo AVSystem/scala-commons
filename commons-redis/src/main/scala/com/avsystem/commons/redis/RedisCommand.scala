@@ -95,6 +95,8 @@ final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) exten
     fluent(keyDatas.foreach({ case (k, v) => key(k).data(v) }))
   def dataPairs[K: RedisDataCodec, V: RedisDataCodec](dataPairs: TraversableOnce[(K, V)]): CommandEncoder =
     fluent(dataPairs.foreach({ case (k, v) => data(k).data(v) }))
+  def dataPairs[R: RedisRecordCodec](record: R): CommandEncoder =
+    fluent(buffer ++= RedisRecordCodec[R].write(record))
   def argDataPairs[T: CommandArg, V: RedisDataCodec](argDataPairs: TraversableOnce[(T, V)]): CommandEncoder =
     fluent(argDataPairs.foreach({ case (a, v) => add(a).data(v) }))
 }

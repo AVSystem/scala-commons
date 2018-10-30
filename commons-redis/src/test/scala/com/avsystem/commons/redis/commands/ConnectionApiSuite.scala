@@ -1,8 +1,9 @@
 package com.avsystem.commons
 package redis.commands
 
+import akka.util.ByteString
 import com.avsystem.commons.redis.exception.ErrorReplyException
-import com.avsystem.commons.redis.{RedisConnectionCommandsSuite, RedisApi}
+import com.avsystem.commons.redis.{RedisApi, RedisConnectionCommandsSuite}
 
 /**
   * Author: ghik
@@ -13,7 +14,7 @@ trait ConnectionApiSuite extends RedisConnectionCommandsSuite {
   import RedisApi.Batches.StringTyped._
 
   apiTest("ECHO") {
-    echo("lol").assertEquals("lol")
+    echo(ByteString("lol")).assertEquals(ByteString("lol"))
   }
 
   apiTest("PING") {
@@ -30,7 +31,7 @@ trait ConnectionApiSuite extends RedisConnectionCommandsSuite {
 }
 
 class AuthenticationTest extends RedisConnectionCommandsSuite {
-  override def password = "hassword".opt
+  override def password: Opt[String] = "hassword".opt
 
   import RedisApi.Batches.StringTyped._
 

@@ -9,7 +9,7 @@ import com.avsystem.commons.redis.commands.ReplyDecoders._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-trait KeyedClusterApi extends ApiSubset {
+trait KeyedClusterApi extends KeyedApiSubset {
   def keySlot(key: Key): Int =
     Hash.slot(keyCodec.write(key))
 

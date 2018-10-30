@@ -4,10 +4,15 @@ package redis
 import com.avsystem.commons.redis.protocol.BulkStringMsg
 import com.avsystem.commons.serialization.ApplyUnapplyCodec
 
+import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
 
+@implicitNotFound("${T} has no RedisRecordCodec. It can be derived from ApplyUnapplyCodec which can be provided " +
+  "by making your case class companion extend HasApplyUnapplyCodec")
 case class RedisRecordCodec[T](read: IndexedSeq[BulkStringMsg] => T, write: T => IndexedSeq[BulkStringMsg])
 object RedisRecordCodec {
+  def apply[T](implicit codec: RedisRecordCodec[T]): RedisRecordCodec[T] = codec
+
   implicit def fromApplyUnapplyCodec[T](implicit codec: ApplyUnapplyCodec[T]): RedisRecordCodec[T] =
     RedisRecordCodec(
       elems => codec.readObject(new RedisRecordInput(elems)),

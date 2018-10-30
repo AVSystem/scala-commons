@@ -3,7 +3,7 @@ package redis.commands
 
 import com.avsystem.commons.redis._
 
-trait HyperLogLogApi extends ApiSubset {
+trait HyperLogLogApi extends ValueApiSubset {
   /** Executes [[http://redis.io/commands/pfadd PFADD]] */
   def pfadd(key: Key, elements: Value*): Result[Boolean] =
     execute(new Pfadd(key, elements))
