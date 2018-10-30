@@ -2,10 +2,10 @@ package com.avsystem.commons
 package redis.commands
 
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
+import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol.ValidRedisMsg
 import com.avsystem.commons.redis.util.SingletonSeq
-import com.avsystem.commons.redis.{AbstractRedisCommand, FieldValueApiSubset, NodeCommand, RecordApiSubset, RedisBooleanCommand, RedisIntCommand, RedisLongCommand, RedisRecordCodec, RedisSeqCommand, RedisUnitCommand}
 
 trait StreamsApi extends FieldValueApiSubset with RecordApiSubset {
   type XEntry = redis.commands.XEntry[Record]
