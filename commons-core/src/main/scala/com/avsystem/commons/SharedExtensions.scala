@@ -464,6 +464,13 @@ object SharedExtensions extends SharedExtensions {
   }
 
   class TraversableOnceOps[C[X] <: TraversableOnce[X], A](private val coll: C[A]) extends AnyVal {
+    def toSized[M[_]](sizeHint: Int)(implicit cbf: CanBuildFrom[Nothing, A, M[A]]): M[A] = {
+      val b = cbf()
+      b.sizeHint(sizeHint)
+      b ++= coll
+      b.result()
+    }
+
     def toMapBy[K](keyFun: A => K): Map[K, A] =
       mkMap(keyFun, identity)
 

@@ -166,14 +166,14 @@ object ReplyDecoders {
     }
 
   def multiBulkSeq[T](elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[T]] = {
-    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).to[ArrayBuffer]
+    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).toSized[ArrayBuffer](elements.size)
   }
 
   def multiBulkSeq[T: RedisDataCodec]: ReplyDecoder[Seq[T]] =
     multiBulkSeq(bulk[T])
 
   def multiBulkSet[T](elementDecoder: ReplyDecoder[T]): ReplyDecoder[BSet[T]] = {
-    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).to[MHashSet]
+    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).toSized[MHashSet](elements.size)
   }
 
   def multiBulkSet[T: RedisDataCodec]: ReplyDecoder[BSet[T]] =
@@ -313,7 +313,9 @@ object ReplyDecoders {
           throw new UnexpectedReplyException(vrm.toString))
         case _ => throw new UnexpectedReplyException(msg.toString)
       }
-      elements.iterator.grouped(size).map(_.iterator.map(elemDecode).to[ArrayBuffer]).to[ArrayBuffer]
+      elements.iterator.grouped(size)
+        .map(_.iterator.map(elemDecode).toSized[ArrayBuffer](size))
+        .toSized[ArrayBuffer](elements.size / size)
   }
 
   def nullMultiBulkOr[T](decoder: ReplyDecoder[T]): ReplyDecoder[Opt[T]] =
@@ -328,7 +330,7 @@ object ReplyDecoders {
     case ArrayMsg(elements) => elements.iterator.grouped(2).map {
       case Seq(first: ValidRedisMsg, second: ValidRedisMsg) => pairDecoder.applyOrElse((first, second),
         (p: (ValidRedisMsg, ValidRedisMsg)) => throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p"))
-    }.to[ArrayBuffer]
+    }.toSized[ArrayBuffer](elements.size / 2)
   }
 
   private def flatPairedMultiBulkIterator[A, B](elements: Seq[RedisMsg], firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): Iterator[(A, B)] =
@@ -343,12 +345,12 @@ object ReplyDecoders {
 
   def flatMultiBulkSeq[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(A, B)]] = {
     case ArrayMsg(elements) =>
-      flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).to[ArrayBuffer]
+      flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).toSized[ArrayBuffer](elements.size / 2)
   }
 
   def flatMultiBulkSeqSwapped[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(B, A)]] = {
     case ArrayMsg(elements) =>
-      flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).map(_.swap).to[ArrayBuffer]
+      flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).map(_.swap).toSized[ArrayBuffer](elements.size / 2)
   }
 
   def flatMultiBulkMap[A, B](keyDecoder: ReplyDecoder[A], valueDecoder: ReplyDecoder[B]): ReplyDecoder[BMap[A, B]] = {
