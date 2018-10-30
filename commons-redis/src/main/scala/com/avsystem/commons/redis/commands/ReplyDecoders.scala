@@ -289,7 +289,7 @@ object ReplyDecoders {
 
   def multiBulkXEntry[F: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[XEntry[F, V]] = {
     case ArrayMsg(IndexedSeq(BulkStringMsg(id), data: ArrayMsg[RedisMsg])) =>
-      XEntry(XEntryId.parse(id.utf8String), flatMultiBulkMap[F, V].apply(data))
+      XEntry(XEntryId.parse(id.utf8String), flatMultiBulkSeq[F, V].apply(data))
   }
 
   def multiBulkXEntriesMap[K: RedisDataCodec, F: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[BMap[K, Seq[XEntry[F, V]]]] =

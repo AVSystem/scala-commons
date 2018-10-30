@@ -10,8 +10,8 @@ import com.avsystem.commons.redis.{AbstractRedisCommand, ApiSubset, NodeCommand,
 trait StreamsApi extends ApiSubset {
   type XEntry = redis.commands.XEntry[Field, Value]
   object XEntry {
-    def apply(id: XEntryId, data: BMap[Field, Value]): XEntry = redis.commands.XEntry(id, data)
-    def unapply(entry: XEntry): Opt[(XEntryId, BMap[Field, Value])] = Opt((entry.id, entry.data))
+    def apply(id: XEntryId, data: Seq[(Field, Value)]): XEntry = redis.commands.XEntry(id, data)
+    def unapply(entry: XEntry): Opt[(XEntryId, Seq[(Field, Value)])] = Opt((entry.id, entry.data))
   }
 
   /** Executes [[http://redis.io/commands/xack XACK]] */
@@ -391,7 +391,9 @@ object XEntryId {
     CommandArg((enc, eid) => enc.add(eid.toString))
 }
 
-case class XEntry[Field, Value](id: XEntryId, data: BMap[Field, Value])
+case class XEntry[Field, Value](id: XEntryId, data: Seq[(Field, Value)]) {
+  lazy val map: Map[Field, Value] = data.toMap
+}
 
 case class XMaxlen(maxlen: Long, approx: Boolean = true)
 object XMaxlen {
