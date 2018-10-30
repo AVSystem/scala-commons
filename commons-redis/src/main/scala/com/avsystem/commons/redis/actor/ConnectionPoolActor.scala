@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package redis.actor
 
-import java.util.concurrent.ConcurrentLinkedDeque
-
 import akka.actor.{Actor, ActorRef, Props}
 import com.avsystem.commons.redis.NodeAddress
 import com.avsystem.commons.redis.actor.ConnectionPoolActor._
@@ -12,7 +10,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scala.annotation.tailrec
 
-class ConnectionPoolActor(address: NodeAddress, config: NodeConfig, queue: ConcurrentLinkedDeque[QueuedConn])
+class ConnectionPoolActor(address: NodeAddress, config: NodeConfig, queue: JDeque[QueuedConn])
   extends Actor with LazyLogging {
 
   import context._
