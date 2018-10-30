@@ -224,15 +224,11 @@ final class RedisClusterClient(
     * automatically distributed over Redis Cluster master nodes, in parallel, using a scatter-gather like manner.
     *
     * [[RedisClusterClient]] also automatically retries execution of commands that fail due to cluster redirections
-    * ([[http://redis.io/topics/cluster-spec#moved-redirection MOVED]] and [[http://redis.io/topics/cluster-spec#ask-redirection ASK]])
-    * and cluster state changes. However, remember that multi-key commands may still fail with
-    * `TRYAGAIN` error during resharding of the slot targeted by the multi-key operation.
-    * (see [[http://redis.io/topics/cluster-spec#multiple-keys-operations Redis Cluster specification]]).
-    * [[RedisClusterClient]] makes no attempt to recover from these errors. It would require waiting for an
-    * indeterminate time until the migration is finished. The maximum number of consecutive retries caused by
-    * redirections is configured by [[config.ClusterConfig.maxRedirections maxRedirections]].
+    * ([[http://redis.io/topics/cluster-spec#moved-redirection MOVED]] and [[http://redis.io/topics/cluster-spec#ask-redirection ASK]]),
+    * cluster state changes and `TRYAGAIN` errors which might be returned for multikey commands during slot migration.
     * See [[http://redis.io/topics/cluster-spec#redirection-and-resharding Redis Cluster specification]] for
-    * more detailed information on redirections.
+    * more detailed information on redirections and migrations.
+    * Redirection and `TRYAGAIN` handling is configured by retry strategies in [[ClusterConfig]].
     *
     * In general, you can assume that if there are no redirections involved, commands executed on the same master
     * node are executed in the same order as specified in the original batch.

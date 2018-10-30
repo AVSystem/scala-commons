@@ -160,8 +160,6 @@ class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
     super.beforeAll()
     Await.result(migrateSlot(0, 7000), Duration.Inf)
     Await.result(migrateSlot(1, 7000, incomplete = true), Duration.Inf)
-    Await.result(set(s"{${slotKey(2)}}1", "v1").exec, Duration.Inf)
-    Await.result(migrateSlot(2, 7000, incomplete = true, withoutData = true), Duration.Inf)
   }
 
   test("redirection handling after migration") {
@@ -203,6 +201,9 @@ class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
   }
 
   test("TRYAGAIN before redirection") {
+    Await.result(set(s"{${slotKey(2)}}1", "v1").exec, Duration.Inf)
+    Await.result(migrateSlot(2, 7000, incomplete = true, withoutData = true), Duration.Inf)
+
     val k1 = s"{${slotKey(2)}}1"
     val k2 = s"{${slotKey(2)}}2"
     val mgetFut = mget(k1, k2).exec
