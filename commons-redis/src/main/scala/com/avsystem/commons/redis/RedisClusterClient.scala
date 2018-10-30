@@ -228,7 +228,7 @@ final class RedisClusterClient(
     * cluster state changes and `TRYAGAIN` errors which might be returned for multikey commands during slot migration.
     * See [[http://redis.io/topics/cluster-spec#redirection-and-resharding Redis Cluster specification]] for
     * more detailed information on redirections and migrations.
-    * Redirection and `TRYAGAIN` handling is configured by retry strategies in [[ClusterConfig]].
+    * Redirection and `TRYAGAIN` handling is configured by retry strategies in [[config.ClusterConfig]].
     *
     * In general, you can assume that if there are no redirections involved, commands executed on the same master
     * node are executed in the same order as specified in the original batch.
