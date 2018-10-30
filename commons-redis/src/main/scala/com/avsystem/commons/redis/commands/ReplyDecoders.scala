@@ -327,20 +327,23 @@ object ReplyDecoders {
     nullMultiBulkOr(bulk[T])
 
   def flatPairMultiBulkSeq[T](pairDecoder: ReplyPairDecoder[T]): ReplyDecoder[Seq[T]] = {
-    case ArrayMsg(elements) => elements.iterator.grouped(2).map {
-      case Seq(first: ValidRedisMsg, second: ValidRedisMsg) => pairDecoder.applyOrElse((first, second),
+    case ArrayMsg(elements) => elements.iterator.pairs.map {
+      case (first: ValidRedisMsg, second: ValidRedisMsg) => pairDecoder.applyOrElse((first, second),
         (p: (ValidRedisMsg, ValidRedisMsg)) => throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p"))
+      case p => throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p")
     }.toSized[ArrayBuffer](elements.size / 2)
   }
 
   private def flatPairedMultiBulkIterator[A, B](elements: Seq[RedisMsg], firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): Iterator[(A, B)] =
-    elements.iterator.grouped(2).map {
-      case Seq(f: ValidRedisMsg, s: ValidRedisMsg) =>
+    elements.iterator.pairs.map {
+      case (f: ValidRedisMsg, s: ValidRedisMsg) =>
         val first = firstDecoder.applyOrElse(f, (_: ValidRedisMsg) =>
           throw new UnexpectedReplyException(s"Unexpected element in multi-bulk reply: $f"))
         val second = secondDecoder.applyOrElse(s, (_: ValidRedisMsg) =>
           throw new UnexpectedReplyException(s"Unexpected element in multi-bulk reply: $s"))
         (first, second)
+      case p =>
+        throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p")
     }
 
   def flatMultiBulkSeq[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(A, B)]] = {

@@ -20,3 +20,7 @@ abstract class HasGenCodec[T](implicit macroCodec: MacroGenerated[Any, GenCodec[
 
   implicit val codec: GenCodec[T] = macroCodec.forCompanion(this)
 }
+
+abstract class HasApplyUnapplyCodec[T](implicit macroCodec: MacroGenerated[Any, ApplyUnapplyCodec[T]]) {
+  implicit val codec: ApplyUnapplyCodec[T] = macroCodec.forCompanion(this)
+}

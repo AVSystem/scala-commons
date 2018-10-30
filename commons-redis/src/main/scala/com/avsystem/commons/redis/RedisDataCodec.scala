@@ -2,9 +2,12 @@ package com.avsystem.commons
 package redis
 
 import akka.util.ByteString
+import com.avsystem.commons.redis.protocol.BulkStringMsg
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Typeclass which expresses that values of some type are serializable to binary form (`ByteString`) and deserializable
@@ -81,6 +84,15 @@ final class RedisDataOutput(consumer: ByteString => Unit) extends Output {
   }
 }
 
+class RedisRecordOutput(buffer: ArrayBuffer[BulkStringMsg]) extends ObjectOutput {
+  def writeField(key: String): Output = {
+    buffer += BulkStringMsg(ByteString(key))
+    new RedisDataOutput(bs => buffer += BulkStringMsg(bs))
+  }
+
+  def finish(): Unit = ()
+}
+
 object RedisDataInput {
   def read[T: GenCodec](bytes: ByteString): T =
     GenCodec.read[T](new RedisDataInput(bytes))
@@ -112,4 +124,19 @@ class RedisDataInput(bytes: ByteString) extends Input {
   def readObject(): ObjectInput = jsonInput.readObject()
 
   def skip(): Unit = ()
+}
+
+class RedisFieldDataInput(val fieldName: String, bytes: ByteString)
+  extends RedisDataInput(bytes) with FieldInput
+
+class RedisRecordInput(bulks: IndexedSeq[BulkStringMsg]) extends ObjectInput {
+  private val it = bulks.iterator.map(_.string)
+
+  def nextField(): FieldInput = {
+    val fieldName = it.next.utf8String
+    val bytes = it.next
+    new RedisFieldDataInput(fieldName, bytes)
+  }
+
+  def hasNext: Boolean = it.hasNext
 }

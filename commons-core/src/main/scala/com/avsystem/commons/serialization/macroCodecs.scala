@@ -48,6 +48,9 @@ abstract class ApplyUnapplyCodec[T](
     instantiate(fieldValues)
   }
 }
+object ApplyUnapplyCodec {
+  def materialize[T]: ApplyUnapplyCodec[T] = macro macros.serialization.GenCodecMacros.applyUnapplyCodec[T]
+}
 
 abstract class ProductCodec[T <: Product](
   typeRepr: String,
