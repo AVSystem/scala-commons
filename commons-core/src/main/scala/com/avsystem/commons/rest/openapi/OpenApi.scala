@@ -542,7 +542,7 @@ object SecurityScheme {
     @td description: OptArg[String] = OptArg.Empty
   ) extends SecurityScheme
 
-  implicit val codec: GenCodec[SecurityScheme] = GenCodec.materialize
+  implicit val codec: GenObjectCodec[SecurityScheme] = GenObjectCodec.materialize
 }
 
 /**
@@ -600,7 +600,7 @@ object RefOr {
   def apply[A](value: A): RefOr[A] = Value(value)
   def ref[A](ref: String): RefOr[A] = Ref(ref)
 
-  implicit def codec[A: GenCodec]: GenObjectCodec[RefOr[A]] =
+  implicit def codec[A: GenObjectCodec]: GenObjectCodec[RefOr[A]] =
     GenCodec.nullableObject(
       oi => {
         val poi = new PeekingObjectInput(oi)
@@ -609,13 +609,13 @@ object RefOr {
           else Opt.Empty
         }
         val res = refFieldInput.map(fi => Ref(fi.readSimple().readString()))
-          .getOrElse(Value(GenCodec.read[A](new ObjectInputAsInput(poi))))
+          .getOrElse(Value(GenObjectCodec.readObject[A](poi)))
         poi.skipRemaining()
         res
       },
       (oo, value) => value match {
         case Ref(refstr) => oo.writeField(RefField).writeSimple().writeString(refstr)
-        case Value(v) => GenCodec.write[A](new ObjectOutputAsOutput(oo, forwardFinish = false), v)
+        case Value(v) => GenObjectCodec.writeObject[A](oo, v)
       }
     )
 }

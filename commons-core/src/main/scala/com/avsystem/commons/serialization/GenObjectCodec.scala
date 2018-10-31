@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.derivation.DeferredInstance
 import com.avsystem.commons.misc.MacroGenerated
 
 import scala.annotation.implicitNotFound
@@ -49,9 +50,16 @@ object GenObjectCodec {
   def transformed[T, R: GenObjectCodec](toRaw: T => R, fromRaw: R => T): GenObjectCodec[T] =
     new Transformed[T, R](GenObjectCodec[R], toRaw, fromRaw)
 
-  class Transformed[A, B](val wrapped: GenObjectCodec[B], onWrite: A => B, onRead: B => A) extends GenObjectCodec[A] {
+  final class Transformed[A, B](val wrapped: GenObjectCodec[B], onWrite: A => B, onRead: B => A)
+    extends GenObjectCodec[A] {
+
     def readObject(input: ObjectInput): A = onRead(wrapped.readObject(input))
     def writeObject(output: ObjectOutput, value: A): Unit = wrapped.writeObject(output, onWrite(value))
+  }
+
+  final class Deferred[T] extends DeferredInstance[GenObjectCodec[T]] with GenObjectCodec[T] {
+    def readObject(input: ObjectInput): T = underlying.readObject(input)
+    def writeObject(output: ObjectOutput, value: T): Unit = underlying.writeObject(output, value)
   }
 
   implicit def macroGeneratedCodec[C, T]: MacroGenerated[C, GenObjectCodec[T]] =

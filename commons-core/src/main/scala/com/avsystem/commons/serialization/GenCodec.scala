@@ -254,7 +254,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
       readObject(input, FieldValues.Empty)
   }
 
-  class Transformed[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {
+  final class Transformed[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {
     def read(input: Input): A = onRead(wrapped.read(input))
     def write(output: Output, value: A): Unit = wrapped.write(output, onWrite(value))
   }

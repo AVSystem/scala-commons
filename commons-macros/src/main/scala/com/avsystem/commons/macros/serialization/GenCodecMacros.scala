@@ -28,7 +28,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   private val CodecObj: ModuleSymbol = c.prefix.actualType.termSymbol.asModule
   private val CodecCls: ClassSymbol = CodecObj.companion.asClass
 
-  def implementDeferredInstance(tpe: Type): Tree = q"new $GenCodecObj.Deferred[$tpe]"
+  def implementDeferredInstance(tpe: Type): Tree = q"new $CodecObj.Deferred[$tpe]"
 
   override def typeClassInstance(tpe: Type): Type =
     getType(tq"$CodecCls[$tpe]")
@@ -333,7 +333,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   case class CaseClassInfo(idx: Int, subtype: Type, applyParams: List[Symbol]) extends CaseInfo {
     def depInstance: Tree =
-      q"${c.prefix}.applyUnapplyCodec[$subtype]"
+      q"$GenCodecObj.applyUnapplyCodec[$subtype]"
   }
 
   case class CaseObjectInfo(idx: Int, subtype: Type, singleton: Tree) extends CaseInfo {
