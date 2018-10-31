@@ -2,10 +2,9 @@ package com.avsystem.commons
 package serialization.json
 
 import com.avsystem.commons.annotation.explicitGenerics
-import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
-import com.avsystem.commons.serialization.json.JsonStringInput.{AfterElement, AfterElementNothing, JsonType}
+import com.avsystem.commons.serialization.json.JsonStringInput.{AfterElement, AfterElementNothing}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -13,11 +12,6 @@ import scala.collection.mutable
 object JsonStringInput {
   @explicitGenerics def read[T: GenCodec](json: String, options: JsonOptions = JsonOptions.Default): T =
     GenCodec.read[T](new JsonStringInput(new JsonReader(json), options))
-
-  final class JsonType(implicit enumCtx: EnumCtx) extends AbstractValueEnum
-  object JsonType extends AbstractValueEnumCompanion[JsonType] {
-    final val list, `object`, number, string, boolean, `null`: Value = new JsonType
-  }
 
   trait AfterElement {
     def afterElement(): Unit
@@ -56,11 +50,7 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
     } else expectedError(JsonType.number)
   }
 
-  def isNull: Boolean = reader.jsonType == JsonType.`null`
-  def isList: Boolean = reader.jsonType == JsonType.list
-  def isObject: Boolean = reader.jsonType == JsonType.`object`
-
-  def readNull(): Null = checkedValue[Null](JsonType.`null`)
+  def readNull(): Boolean = reader.jsonType == JsonType.`null`
   def readString(): String = checkedValue[String](JsonType.string)
   def readBoolean(): Boolean = checkedValue[Boolean](JsonType.boolean)
   def readInt(): Int = matchNumericString(_.toInt)
@@ -100,16 +90,14 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
     reader.json.substring(startIdx, endIdx)
   }
 
+  override def readMetadata[T](metadata: InputMetadata[T]): Opt[T] = metadata match {
+    case JsonType => Opt(reader.jsonType)
+    case _ => Opt.Empty
+  }
+
   override def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] =
     typeMarker match {
-      case RawJsonMarker => readRawJson().opt
-      case JsonPrimitive.Marker => reader.jsonType match {
-        case JsonType.`null` => JsonPrimitive.Null.opt
-        case JsonType.boolean => JsonPrimitive.Bool(reader.currentValue.asInstanceOf[Boolean]).opt
-        case JsonType.string => JsonPrimitive.Str(reader.currentValue.asInstanceOf[String]).opt
-        case JsonType.number => JsonPrimitive.Num(reader.currentValue.asInstanceOf[String]).opt
-        case _ => throw new ReadFailure(s"Expected JSON primitive but got ${reader.jsonType}")
-      }
+      case RawJson => readRawJson().opt
       case _ => Opt.Empty
     }
 

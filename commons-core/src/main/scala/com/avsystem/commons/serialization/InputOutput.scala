@@ -10,6 +10,13 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 trait TypeMarker[T]
 
 /**
+  * Base trait for metadata markers identifying custom native metadata information that particular [[Input]] and
+  * [[Output]] implementations might want to support.
+  * Example: [[com.avsystem.commons.serialization.json.JsonType JsonType]]
+  */
+trait InputMetadata[T]
+
+/**
   * Represents an abstract sink to which a value may be serialized (written).
   * An [[Output]] instance should be assumed to be stateful. After calling any of the `write` methods, it MUST NOT be
   * reused. This means that [[Output]] instance can be used only to write a single value. However, if the value
@@ -20,6 +27,8 @@ trait Output extends Any {
   def writeSimple(): SimpleOutput
   def writeList(): ListOutput
   def writeObject(): ObjectOutput
+  def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean = false
+  def keepsMetadata(metadata: InputMetadata[_]): Boolean = false
 
   /**
     * This ugly workaround has been introduced when standard `Option` encoding changed from zero-or-one element list
@@ -31,6 +40,7 @@ trait Output extends Any {
 }
 
 trait SimpleOutput extends Any {
+  def writeNull(): Unit
   def writeString(str: String): Unit
   def writeChar(char: Char): Unit = writeString(char.toString)
   def writeBoolean(boolean: Boolean): Unit
@@ -44,7 +54,6 @@ trait SimpleOutput extends Any {
   def writeBigInt(bigInt: BigInt): Unit
   def writeBigDecimal(bigDecimal: BigDecimal): Unit
   def writeBinary(binary: Array[Byte]): Unit
-  def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean = false
 }
 
 trait OutputAndSimpleOutput extends Any with Output with SimpleOutput {
@@ -108,17 +117,12 @@ trait ObjectOutput extends Any with SequentialOutput {
   * [[Input]] must also be fully exhausted on their own.
   */
 trait Input extends Any {
-  /** Indicates if it is safe to call [[readNull]] on this input. */
-  def isNull: Boolean
-  /** Indicates if it is safe to call [[readList]] on this input */
-  def isList: Boolean
-  /** Indicates if it is safe to call [[readObject]] on this input. */
-  def isObject: Boolean
-
-  def readNull(): Null
+  def readNull(): Boolean
   def readSimple(): SimpleInput
   def readList(): ListInput
   def readObject(): ObjectInput
+  def readMetadata[T](metadata: InputMetadata[T]): Opt[T] = Opt.Empty
+  def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] = Opt.Empty
 
   /** Ignores this input and skips its contents internally, if necessary */
   def skip(): Unit
@@ -146,7 +150,6 @@ trait SimpleInput extends Any {
   def readBigInt(): BigInt
   def readBigDecimal(): BigDecimal
   def readBinary(): Array[Byte]
-  def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] = Opt.Empty
 }
 
 trait InputAndSimpleInput extends Any with Input with SimpleInput {

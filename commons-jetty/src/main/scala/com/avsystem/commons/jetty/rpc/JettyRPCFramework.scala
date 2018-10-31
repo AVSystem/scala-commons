@@ -4,7 +4,7 @@ package jetty.rpc
 import java.nio.charset.StandardCharsets
 
 import com.avsystem.commons.rpc.StandardRPCFramework
-import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput, RawJsonMarker}
+import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput, RawJson}
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
 import com.typesafe.scalalogging.LazyLogging
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
@@ -26,8 +26,8 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   override type ResultTypeMetadata[T] = DummyImplicit
 
   private implicit val rawValueCodec: GenCodec[RawValue] = GenCodec.create(
-    i => i.readSimple() |> (si => new RawValue(si.readCustom(RawJsonMarker).getOrElse(si.readString()))),
-    (o, v) => o.writeSimple() |> (so => if (!so.writeCustom(RawJsonMarker, v.s)) so.writeString(v.s))
+    i => new RawValue(i.readCustom(RawJson).getOrElse(i.readSimple().readString())),
+    (o, v) => if (!o.writeCustom(RawJson, v.s)) o.writeSimple().writeString(v.s)
   )
 
   override def read[T: Reader](raw: RawValue): T = JsonStringInput.read[T](raw.s)

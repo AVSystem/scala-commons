@@ -7,11 +7,7 @@ final class ObjectInputAsInput(objectInput: ObjectInput) extends Input {
   private def fail(expected: String): Nothing =
     throw new ReadFailure(s"expected $expected, got object")
 
-  def isNull: Boolean = false
-  def isList: Boolean = false
-  def isObject: Boolean = true
-
-  def readNull(): Null = fail("null")
+  def readNull(): Boolean = false
   def readSimple(): SimpleInput = fail("simple value")
   def readList(): ListInput = fail("list")
   def readObject(): ObjectInput = objectInput

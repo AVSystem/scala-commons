@@ -6,7 +6,7 @@ import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion,
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.serialization.GenCodec
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput, RawJsonMarker}
+import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput, RawJson}
 
 import scala.annotation.implicitNotFound
 import scala.util.control.NoStackTrace
@@ -65,8 +65,8 @@ object QueryValue {
 case class JsonValue(value: String) extends AnyVal with RestValue
 object JsonValue {
   implicit val codec: GenCodec[JsonValue] = GenCodec.create(
-    i => i.readSimple() |> (si => JsonValue(si.readCustom(RawJsonMarker).getOrElse(si.readString()))),
-    (o, v) => o.writeSimple() |> (so => if (!so.writeCustom(RawJsonMarker, v.value)) so.writeString(v.value))
+    i => JsonValue(i.readCustom(RawJson).getOrElse(i.readSimple().readString())),
+    (o, v) => if (!o.writeCustom(RawJson, v.value)) o.writeSimple().writeString(v.value)
   )
 }
 

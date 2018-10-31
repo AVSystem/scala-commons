@@ -37,13 +37,8 @@ import com.avsystem.commons.serialization.FormatConstants._
 class StreamInput(is: DataInputStream) extends InputAndSimpleInput {
   private[serialization] val markerByte = is.readByte()
 
-  def isNull: Boolean = markerByte == NullMarker
-  def isList: Boolean = markerByte == ListStartMarker
-  def isObject: Boolean = markerByte == ObjectStartMarker
-
-  def readNull(): Null =
-    if (markerByte == NullMarker) null
-    else throw new ReadFailure(s"Expected null but $markerByte found")
+  def readNull(): Boolean =
+    markerByte == NullMarker
 
   def readString(): String =
     if (markerByte == StringMarker) is.readUTF()
@@ -200,8 +195,9 @@ private object StreamObjectInput {
     def isList: Boolean = false
     def isObject: Boolean = false
 
-    def fieldName: String = nope
-    def readNull(): Null = nope
+    def fieldName: String = name
+
+    def readNull(): Boolean = false
     def readString(): String = nope
     def readBoolean(): Boolean = nope
     def readInt(): Int = nope

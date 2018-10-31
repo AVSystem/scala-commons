@@ -3,7 +3,8 @@ package rest.openapi
 
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.rest.JsonValue
-import com.avsystem.commons.serialization.json.JsonStringOutput
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
+import com.avsystem.commons.serialization.json.{JsonStringOutput, JsonType}
 import com.avsystem.commons.serialization.{transientDefault => td, _}
 
 /**
@@ -323,14 +324,20 @@ object AdditionalProperties {
   case class Flag(value: Boolean) extends AdditionalProperties
   case class SchemaObj(schema: RefOr[Schema]) extends AdditionalProperties
 
+  private val escapedCodec: GenCodec[AdditionalProperties] = GenCodec.materialize
+
   implicit val codec: GenCodec[AdditionalProperties] = GenCodec.create(
-    input =>
-      if (input.isObject) SchemaObj(GenCodec.read[RefOr[Schema]](input))
-      else Flag(input.readSimple().readBoolean()),
-    {
-      case (output, Flag(value)) => output.writeSimple().writeBoolean(value)
-      case (output, SchemaObj(schema)) => GenCodec.write[RefOr[Schema]](output, schema)
-    }
+    input => input.readMetadata(JsonType).fold(escapedCodec.read(input)) {
+      case JsonType.`object` => SchemaObj(GenCodec.read[RefOr[Schema]](input))
+      case JsonType.boolean => Flag(input.readSimple().readBoolean())
+      case t => throw new ReadFailure(s"expected JSON object or boolean, got $t")
+    },
+    (output, value) =>
+      if (!output.keepsMetadata(JsonType)) escapedCodec.write(output, value)
+      else value match {
+        case Flag(flag) => output.writeSimple().writeBoolean(flag)
+        case SchemaObj(schema) => GenCodec.write[RefOr[Schema]](output, schema)
+      }
   )
 }
 

@@ -93,11 +93,7 @@ class SimpleValueInput(value: Any) extends InputAndSimpleInput {
     case _ => throw new ReadFailure(s"Expected ${classTag[B].runtimeClass} but got ${value.getClass}")
   }
 
-  def isNull: Boolean = value == null
-  def isList: Boolean = value.isInstanceOf[BSeq[Any]]
-  def isObject: Boolean = value.isInstanceOf[BMap[_, Any]]
-
-  def readNull(): Null = if (isNull) null else throw new ReadFailure(s"not null: ${value.getClass}")
+  def readNull(): Boolean = value == null
   def readBoolean(): Boolean = doReadUnboxed[Boolean, JBoolean]
   def readString(): String = doRead[String]
   def readInt(): Int = doReadUnboxed[Int, JInteger]

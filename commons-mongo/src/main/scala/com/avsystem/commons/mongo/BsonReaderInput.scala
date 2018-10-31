@@ -7,17 +7,12 @@ import org.bson.types.ObjectId
 import org.bson.{BsonReader, BsonType}
 
 class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean = false) extends BsonInput {
-  override def isNull: Boolean =
-    br.getCurrentBsonType == BsonType.NULL
-  override def isList: Boolean =
-    br.getCurrentBsonType == BsonType.ARRAY
-  override def isObject: Boolean =
-    br.getCurrentBsonType == BsonType.DOCUMENT
+  override def readNull(): Boolean =
+    br.getCurrentBsonType == BsonType.NULL && {
+      br.readNull()
+      true
+    }
 
-  override def readNull(): Null = {
-    br.readNull()
-    null
-  }
   override def readString(): String = br.readString()
   override def readBoolean(): Boolean = br.readBoolean()
   override def readInt(): Int = br.readInt32()
