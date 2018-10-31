@@ -464,6 +464,13 @@ object SharedExtensions extends SharedExtensions {
   }
 
   class TraversableOnceOps[C[X] <: TraversableOnce[X], A](private val coll: C[A]) extends AnyVal {
+    def toSized[M[_]](sizeHint: Int)(implicit cbf: CanBuildFrom[Nothing, A, M[A]]): M[A] = {
+      val b = cbf()
+      b.sizeHint(sizeHint)
+      b ++= coll
+      b.result()
+    }
+
     def toMapBy[K](keyFun: A => K): Map[K, A] =
       mkMap(keyFun, identity)
 
@@ -560,6 +567,23 @@ object SharedExtensions extends SharedExtensions {
   }
 
   class IteratorOps[A](private val it: Iterator[A]) extends AnyVal {
+    def pairs: Iterator[(A, A)] = new AbstractIterator[(A, A)] {
+      private var first: NOpt[A] = NOpt.empty
+
+      def hasNext: Boolean = it.hasNext && (first.nonEmpty || {
+        first = NOpt(it.next())
+        it.hasNext
+      })
+
+      def next(): (A, A) =
+        if (!hasNext) throw new NoSuchElementException
+        else {
+          val f = first.get // safe because hasNext was called
+          first = NOpt.Empty
+          (f, it.next())
+        }
+    }
+
     def nextOpt: Opt[A] =
       if (it.hasNext) it.next().opt else Opt.Empty
 

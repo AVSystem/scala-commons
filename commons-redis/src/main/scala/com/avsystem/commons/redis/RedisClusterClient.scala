@@ -13,10 +13,10 @@ import com.avsystem.commons.redis.actor.ClusterMonitoringActor
 import com.avsystem.commons.redis.actor.ClusterMonitoringActor.{GetClient, GetClientResponse, Refresh}
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{Asking, SlotRange}
-import com.avsystem.commons.redis.config.{ClusterConfig, ExecutionConfig}
+import com.avsystem.commons.redis.config.{ClusterConfig, ExecutionConfig, RetryStrategy}
 import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.protocol.{ErrorMsg, FailureReply, RedisMsg, RedisReply, TransactionReply}
-import com.avsystem.commons.redis.util.SingletonSeq
+import com.avsystem.commons.redis.util.{DelayedFuture, SingletonSeq}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -135,50 +135,57 @@ final class RedisClusterClient(
   def initialized: Future[this.type] =
     initPromise.future.mapNow(_ => this)
 
-  private def remainingTimeout(startTime: Long, overallTimeout: Timeout): Timeout =
-    (overallTimeout.duration - (System.nanoTime() - startTime).nanos) max Duration.Zero
-
-  private def handleRedirection[T](pack: RawCommandPack, slot: Int, result: Future[RedisReply],
-    retryCount: Int, startTime: Long, overallTimeout: Timeout): Future[RedisReply] =
+  private def handleRedirection[T](
+    pack: RawCommandPack, slot: Int, result: Future[RedisReply],
+    retryStrategy: RetryStrategy, tryagainStrategy: RetryStrategy
+  )(implicit timeout: Timeout): Future[RedisReply] =
     result.flatMapNow {
       case RedirectionReply(red) =>
-        retryRedirected(pack, red, retryCount, startTime, overallTimeout)
+        retryRedirected(pack, red, retryStrategy, tryagainStrategy)
+      case TryagainReply(reply) => tryagainStrategy.nextRetry match {
+        case Opt.Empty => Future.successful(reply)
+        case Opt((delay, nextStrat)) =>
+          val result = DelayedFuture(delay).flatMapNow(_ => state.clientForSlot(slot).executeRaw(pack).mapNow(_.apply(0)))
+          handleRedirection(pack, slot, result, config.redirectionRetryStrategy, nextStrat)
+      }
       case _ => result
     } recoverWithNow {
       case _: NodeRemovedException =>
         // Node went down and we didn't get a regular redirection but the cluster detected the failure
         // and we now have a new cluster view, so retry our not-yet-sent request using new cluster state.
-        implicit def timeout: Timeout = remainingTimeout(startTime, overallTimeout)
         val client = state.clientForSlot(slot)
-        if (retryCount >= config.maxRedirections)
-          throw new TooManyRedirectionsException(Redirection(client.address, slot, ask = false))
-        else {
-          val result = client.executeRaw(pack).mapNow(_.apply(0))
-          handleRedirection(pack, slot, result, retryCount + 1, startTime, overallTimeout)
+        retryStrategy.nextRetry match {
+          case Opt.Empty =>
+            Future.successful(FailureReply(new TooManyRedirectionsException(Redirection(client.address, slot, ask = false))))
+          case Opt((delay, nextStrat)) =>
+            val result = DelayedFuture(delay).flatMapNow(_ => client.executeRaw(pack).mapNow(_.apply(0)))
+            handleRedirection(pack, slot, result, nextStrat, tryagainStrategy)
         }
     }
 
-  private def retryRedirected(pack: RawCommandPack, redirection: Redirection,
-    retryCount: Int, startTime: Long, overallTimeout: Timeout): Future[RedisReply] = {
-
+  private def retryRedirected(
+    pack: RawCommandPack, redirection: Redirection,
+    retryStrategy: RetryStrategy, tryagainStrategy: RetryStrategy
+  )(implicit timeout: Timeout): Future[RedisReply] = {
     if (!redirection.ask) {
       // redirection (without ASK) indicates that we may have old cluster state, refresh it
       monitoringActor ! Refresh(new SingletonSeq(redirection.address).opt)
     }
     val packToResend = if (redirection.ask) new AskingPack(pack) else pack
-    if (retryCount >= config.maxRedirections)
-      Future.successful(FailureReply(new TooManyRedirectionsException(redirection)))
-    else {
-      implicit def timeout: Timeout = remainingTimeout(startTime, overallTimeout)
-      val result = readyClient(redirection.address) match {
-        case Opt(client) =>
-          client.executeRaw(packToResend)
-        case Opt.Empty =>
-          // this should only happen when a new master appears and we don't yet have a client for it
-          // because we still have old cluster state without that master
-          askForClient(redirection.address).flatMapNow(_.executeRaw(packToResend))
-      }
-      handleRedirection(pack, redirection.slot, result.mapNow(_.apply(0)), retryCount + 1, startTime, overallTimeout)
+    retryStrategy.nextRetry match {
+      case Opt.Empty => Future.successful(FailureReply(new TooManyRedirectionsException(redirection)))
+      case Opt((delay, nextStrategy)) =>
+        val result = DelayedFuture(delay).flatMapNow { _ =>
+          readyClient(redirection.address) match {
+            case Opt(client) =>
+              client.executeRaw(packToResend)
+            case Opt.Empty =>
+              // this should only happen when a new master appears and we don't yet have a client for it
+              // because we still have old cluster state without that master
+              askForClient(redirection.address).flatMapNow(_.executeRaw(packToResend))
+          }
+        }
+        handleRedirection(pack, redirection.slot, result.mapNow(_.apply(0)), nextStrategy, tryagainStrategy)
     }
   }
 
@@ -217,15 +224,11 @@ final class RedisClusterClient(
     * automatically distributed over Redis Cluster master nodes, in parallel, using a scatter-gather like manner.
     *
     * [[RedisClusterClient]] also automatically retries execution of commands that fail due to cluster redirections
-    * ([[http://redis.io/topics/cluster-spec#moved-redirection MOVED]] and [[http://redis.io/topics/cluster-spec#ask-redirection ASK]])
-    * and cluster state changes. However, remember that multi-key commands may still fail with
-    * `TRYAGAIN` error during resharding of the slot targeted by the multi-key operation.
-    * (see [[http://redis.io/topics/cluster-spec#multiple-keys-operations Redis Cluster specification]]).
-    * [[RedisClusterClient]] makes no attempt to recover from these errors. It would require waiting for an
-    * indeterminate time until the migration is finished. The maximum number of consecutive retries caused by
-    * redirections is configured by [[config.ClusterConfig.maxRedirections maxRedirections]].
+    * ([[http://redis.io/topics/cluster-spec#moved-redirection MOVED]] and [[http://redis.io/topics/cluster-spec#ask-redirection ASK]]),
+    * cluster state changes and `TRYAGAIN` errors which might be returned for multikey commands during slot migration.
     * See [[http://redis.io/topics/cluster-spec#redirection-and-resharding Redis Cluster specification]] for
-    * more detailed information on redirections.
+    * more detailed information on redirections and migrations.
+    * Redirection and `TRYAGAIN` handling is configured by retry strategies in [[config.ClusterConfig]].
     *
     * In general, you can assume that if there are no redirections involved, commands executed on the same master
     * node are executed in the same order as specified in the original batch.
@@ -251,7 +254,7 @@ final class RedisClusterClient(
     * </ul>
     */
   def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] = {
-    implicit val timeout: Timeout = config.timeout
+    implicit val timeout: Timeout = config.responseTimeout
     batch.rawCommandPacks.requireLevel(Level.Node, "ClusterClient")
     ifReady {
       val currentState = state
@@ -279,7 +282,8 @@ final class RedisClusterClient(
     val slot = determineSlot(pack)
     val client = currentState.clientForSlot(slot)
     val result = client.executeRaw(pack).mapNow(_.apply(0))
-    handleRedirection(pack, slot, result, 0, System.nanoTime(), timeout).mapNow(PacksResult.Single)
+    handleRedirection(pack, slot, result, config.redirectionRetryStrategy, config.tryagainStrategy)
+      .mapNow(PacksResult.Single)
   }
 
   private def executeClusteredPacks[A](packs: RawCommandPacks, currentState: ClusterState)(implicit timeout: Timeout) = {
@@ -294,7 +298,7 @@ final class RedisClusterClient(
       val result = resultsByNode.getOrElseUpdate(client,
         barrier.future.flatMapNow(_ => client.executeRaw(CollectionPacks(packBuffer)))
       ).mapNow(_.apply(idx))
-      handleRedirection(pack, slot, result, 0, System.nanoTime(), timeout)
+      handleRedirection(pack, slot, result, config.redirectionRetryStrategy, config.tryagainStrategy)
     }
 
     val results = new ArrayBuffer[Future[RedisReply]]
@@ -425,6 +429,14 @@ object RedirectionException {
 }
 
 case class Redirection(address: NodeAddress, slot: Int, ask: Boolean)
+
+object TryagainReply {
+  def unapply(reply: RedisReply): Opt[RedisReply] = reply match {
+    case err: ErrorMsg if err.errorCode == "TRYAGAIN" => Opt(reply)
+    case TransactionReply(elements) => elements.headOpt.flatMap(unapply).map(_ => reply)
+    case _ => Opt.Empty
+  }
+}
 
 /**
   * Current cluster state known by [[RedisClusterClient]].

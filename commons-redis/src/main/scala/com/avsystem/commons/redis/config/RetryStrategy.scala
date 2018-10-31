@@ -3,34 +3,74 @@ package redis.config
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
-trait RetryStrategy {
+trait RetryStrategy { self =>
   /**
-    * Determines a delay that will be waited before restarting a failed Redis connection.
-    * If this method returns `Opt.Empty`, the connection will not be restarted and will remain in a broken state.
-    *
-    * @param retry indicates which consecutive reconnection retry it is after the connection was lost, starting from 0
+    * Determines a delay that will be waited before retrying some operation that failed (e.g. Redis connection attempt)
+    * and also returns next retry strategy that should be used if that retry itself also fails.
+    * If this method returns `Opt.Empty`, the operation will not be retried and failure should be reported.
     */
-  def retryDelay(retry: Int): Opt[FiniteDuration]
+  def nextRetry: Opt[(FiniteDuration, RetryStrategy)]
+
+  def andThen(otherStrategy: RetryStrategy): RetryStrategy =
+    RetryStrategy(self.nextRetry match {
+      case Opt((delay, nextStrat)) => Opt((delay, nextStrat andThen otherStrategy))
+      case Opt.Empty => otherStrategy.nextRetry
+    })
+
+  def maxDelay(duration: FiniteDuration): RetryStrategy =
+    RetryStrategy(self.nextRetry.map { case (delay, retry) => (delay min duration, retry.maxDelay(duration)) })
+
+  def maxTotal(duration: FiniteDuration): RetryStrategy =
+    RetryStrategy(self.nextRetry.collect {
+      case (delay, nextStrat) =>
+        if (delay <= duration) (delay, nextStrat.maxTotal(duration - delay))
+        else (duration, RetryStrategy.never)
+    })
+
+  def maxRetries(retries: Int): RetryStrategy =
+    if (retries <= 0) RetryStrategy.never
+    else RetryStrategy(self.nextRetry.map { case (delay, nextStrat) => (delay, nextStrat.maxRetries(retries - 1)) })
+
+  def randomized(minFactor: Double, maxFactor: Double): RetryStrategy =
+    RetryStrategy(self.nextRetry.flatMap { case (delay, nextStrat) =>
+      val factor = minFactor + (maxFactor - minFactor) * math.random
+      delay * factor match {
+        case fd: FiniteDuration => Opt((fd, nextStrat.randomized(minFactor, maxFactor)))
+        case _ => Opt.Empty
+      }
+    })
+
+  def next: RetryStrategy =
+    nextRetry.fold(RetryStrategy.never) { case (_, n) => n }
 }
+object RetryStrategy {
+  def apply(nextRetryThunk: => Opt[(FiniteDuration, RetryStrategy)]): RetryStrategy =
+    new RetryStrategy {
+      def nextRetry: Opt[(FiniteDuration, RetryStrategy)] = nextRetryThunk
+    }
 
-case class ExponentialBackoff(firstDelay: FiniteDuration, maxDelay: FiniteDuration)
-  extends RetryStrategy {
+  def never: RetryStrategy =
+    apply(Opt.Empty)
 
-  private def expDelay(retry: Int): FiniteDuration =
-    firstDelay * (1 << (retry - 1))
+  def immediately: RetryStrategy =
+    once(Duration.Zero)
 
-  private val maxRetry =
-    Iterator.from(1).find(i => expDelay(i) >= maxDelay).getOrElse(Int.MaxValue)
+  def times(count: Int, duration: FiniteDuration = Duration.Zero): RetryStrategy =
+    if (count <= 0) never else apply(Opt(duration, times(count - 1, duration)))
 
-  def retryDelay(retry: Int) = Opt {
-    if (retry == 0) Duration.Zero
-    else if (retry >= maxRetry) maxDelay
-    else expDelay(retry)
+  def once(delay: FiniteDuration): RetryStrategy =
+    apply(Opt((delay, never)))
+
+  def continually(delay: FiniteDuration): RetryStrategy =
+    apply(Opt((delay, continually(delay))))
+
+  def exponentially(firstDelay: FiniteDuration, factor: Double = 2): RetryStrategy = apply {
+    val nextStrat = firstDelay * factor match {
+      case fd: FiniteDuration => exponentially(fd, factor)
+      case _ => never
+    }
+    Opt((firstDelay, nextStrat))
   }
-}
-
-case object NoRetryStrategy extends RetryStrategy {
-  def retryDelay(retry: Int): Opt[FiniteDuration] = Opt.Empty
 }
 
 object ConfigDefaults {

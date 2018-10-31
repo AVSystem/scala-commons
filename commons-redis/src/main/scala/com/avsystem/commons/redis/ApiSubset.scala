@@ -16,31 +16,6 @@ trait ApiSubset { self =>
     */
   type Result[A]
 
-  /**
-    * The type of Redis keys or key patterns used in methods representing Redis commands. For example, if `Key = String`
-    * then [[commands.StringsApi.get get]] returns `Result[Opt[String]]`. This type is used only for toplevel Redis keys, hash
-    * keys have their own type, [[Field]].
-    */
-  type Key
-  /**
-    * The type of Redis hash keys or hash key patterns used in methods representing Redis commands that work on
-    * hashes ([[commands.HashesApi HashesApi]]).
-    */
-  type Field
-  /**
-    * The type of Redis values used in methods representing Redis commands. "Value" is the data that might be
-    * stored directly under a Redis key (e.g. using [[commands.StringsApi.set set]]) but also a value of hash field, list element,
-    * set member, sorted set member, geo set member or element inserted into hyper-log-log structure.
-    * There are no separate types specified for every of those use cases because only one of them can be used in a
-    * single command (for example, there is no Redis command that works on both list elements and set members
-    * at the same time).
-    */
-  type Value
-
-  protected implicit def keyCodec: RedisDataCodec[Key]
-  protected implicit def fieldCodec: RedisDataCodec[Field]
-  protected implicit def valueCodec: RedisDataCodec[Value]
-
   def execute[A](command: RedisCommand[A]): Result[A]
 
   protected implicit def iterableTailOps[T](tail: Iterable[T]): IterableTailOps[T] = new IterableTailOps(tail)
@@ -58,6 +33,47 @@ object ApiSubset {
   class IteratorTailOps[A](private val tail: Iterator[A]) extends AnyVal {
     def +::(head: A): Iterator[A] = new HeadIterator(head, tail)
   }
+}
+
+trait KeyedApiSubset extends ApiSubset {
+  /**
+    * The type of Redis keys or key patterns used in methods representing Redis commands. For example, if `Key = String`
+    * then [[commands.StringsApi.get get]] returns `Result[Opt[String]]`. This type is used only for toplevel Redis keys, hash
+    * keys have their own type, [[FieldValueApiSubset.Field]]
+    */
+  type Key
+
+  protected implicit def keyCodec: RedisDataCodec[Key]
+}
+
+trait ValueApiSubset extends KeyedApiSubset {
+  /**
+    * The type of Redis values used in methods representing Redis commands. "Value" is the data that might be
+    * stored directly under a Redis key (e.g. using [[commands.StringsApi.set set]]) but also a value of hash field,
+    * list element, set member, sorted set member, geo set member or element inserted into hyper-log-log structure.
+    * There are no separate types specified for every of those use cases because only one of them can be used in a
+    * single command (for example, there is no Redis command that works on both list elements and set members
+    * at the same time).
+    */
+  type Value
+
+  protected implicit def valueCodec: RedisDataCodec[Value]
+}
+
+trait RecordApiSubset extends KeyedApiSubset {
+  type Record
+
+  protected implicit def recordCodec: RedisRecordCodec[Record]
+}
+
+trait FieldValueApiSubset extends ValueApiSubset {
+  /**
+    * The type of Redis hash keys or hash key patterns used in methods representing Redis commands that work on
+    * hashes ([[commands.HashesApi HashesApi]]).
+    */
+  type Field
+
+  protected implicit def fieldCodec: RedisDataCodec[Field]
 }
 
 trait RecoverableApiSubset extends ApiSubset {
@@ -92,7 +108,7 @@ trait RedisBlockingApi extends RedisExecutedApi {
   type Result[A] = A
   def execute[A](command: RedisCommand[A]): A =
   // executeAsync should already handle timeouts, but just to be safe let's pass the standard timeout plus one second
-    Await.result(executeAsync(command), execConfig.timeout.duration + 1.second)
+    Await.result(executeAsync(command), execConfig.responseTimeout.duration + 1.second)
   def recoverWith[A](executed: => A)(fun: PartialFunction[Throwable, A]): A =
     try executed catch fun
 }

@@ -12,7 +12,7 @@ import com.avsystem.commons.redis.protocol._
   * Author: ghik
   * Created: 06/04/16.
   */
-trait KeyedKeysApi extends ApiSubset {
+trait KeyedKeysApi extends FieldValueApiSubset {
   /** Executes [[http://redis.io/commands/del DEL]] */
   def del(key: Key): Result[Boolean] =
     execute(new Del(key.single).map(_ > 0))
@@ -328,16 +328,16 @@ object SortLimit {
     CommandArg((ce, sl) => ce.add(sl.offset).add(sl.count))
 }
 
-sealed trait SortPattern[+K, +H]
+sealed trait SortPattern[+K, +F]
 case object SelfPattern extends SortPattern[Nothing, Nothing]
 case class KeyPattern[+K](pattern: K) extends SortPattern[K, Nothing]
-case class HashFieldPattern[+K, +H](keyPattern: K, fieldPattern: H) extends SortPattern[K, H]
+case class FieldPattern[+K, +F](keyPattern: K, fieldPattern: F) extends SortPattern[K, F]
 object SortPattern {
-  implicit def SortPatternArg[K: RedisDataCodec, H: RedisDataCodec]: CommandArg[SortPattern[K, H]] =
+  implicit def SortPatternArg[K: RedisDataCodec, F: RedisDataCodec]: CommandArg[SortPattern[K, F]] =
     CommandArg((ce, sp) => ce.add(sp match {
       case SelfPattern => ByteString("#")
       case KeyPattern(pattern) => RedisDataCodec.write(pattern)
-      case HashFieldPattern(keyPattern, fieldPattern) =>
+      case FieldPattern(keyPattern, fieldPattern) =>
         val bsb = new ByteStringBuilder
         bsb.append(RedisDataCodec.write(keyPattern))
         bsb.append(ByteString("->"))

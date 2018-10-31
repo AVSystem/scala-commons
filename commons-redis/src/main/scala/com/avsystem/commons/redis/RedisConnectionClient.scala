@@ -9,7 +9,7 @@ import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{RedisConnectionActor, RedisOperationActor}
-import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, ExecutionConfig, NoRetryStrategy}
+import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, ExecutionConfig, RetryStrategy}
 import com.avsystem.commons.redis.exception.ClientStoppedException
 
 /**
@@ -32,7 +32,7 @@ final class RedisConnectionClient(
 
   private val initPromise = Promise[Unit]
   private val connectionActor = {
-    val props = Props(new RedisConnectionActor(address, config.copy(reconnectionStrategy = NoRetryStrategy)))
+    val props = Props(new RedisConnectionActor(address, config.copy(reconnectionStrategy = RetryStrategy.never)))
       .withDispatcher(ConfigDefaults.Dispatcher)
     config.actorName.fold(system.actorOf(props))(system.actorOf(props, _))
   }
@@ -55,12 +55,12 @@ final class RedisConnectionClient(
     system.dispatcher
 
   def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] =
-    ifReady(connectionActor.ask(batch.rawCommandPacks.requireLevel(Level.Connection, "ConnectionClient"))(config.timeout)
+    ifReady(connectionActor.ask(batch.rawCommandPacks.requireLevel(Level.Connection, "ConnectionClient"))(config.responseTimeout)
       .map({ case pr: PacksResult => batch.decodeReplies(pr) })(config.decodeOn))
 
   //TODO: don't ignore executionConfig.decodeOn
   def executeOp[A](op: RedisOp[A], executionConfig: ExecutionConfig): Future[A] =
-    ifReady(system.actorOf(Props(new RedisOperationActor(connectionActor))).ask(op)(executionConfig.timeout)
+    ifReady(system.actorOf(Props(new RedisOperationActor(connectionActor))).ask(op)(executionConfig.responseTimeout)
       .mapNow({ case or: OpResult[A@unchecked] => or.get }))
 
   def close(): Unit = {

@@ -27,8 +27,8 @@ import scala.concurrent.duration._
 final class RedisNodeClient(
   val address: NodeAddress = NodeAddress.Default,
   val config: NodeConfig = NodeConfig(),
-  val clusterNode: Boolean = false)
-  (implicit system: ActorSystem) extends RedisNodeExecutor with Closeable { client =>
+  val clusterNode: Boolean = false
+)(implicit system: ActorSystem) extends RedisNodeExecutor with Closeable { client =>
 
   private def newConnection(i: Int): ActorRef = {
     val connConfig: ConnectionConfig = config.connectionConfigs(i)
@@ -49,15 +49,13 @@ final class RedisNodeClient(
   private val blockingConnectionPool =
     system.actorOf(Props(new ConnectionPoolActor(address, config, blockingConnectionQueue)))
 
-  private def newBlockingConnection(): Future[ActorRef] = {
-    implicit val timeout: Timeout = Timeout(1.second)
-    blockingConnectionPool.ask(ConnectionPoolActor.CreateNewConnection).mapNow {
+  private def newBlockingConnection(): Future[ActorRef] =
+    blockingConnectionPool.ask(ConnectionPoolActor.CreateNewConnection)(Timeout(1.second)).mapNow {
       case ConnectionPoolActor.NewConnection(connection) =>
         connection
       case ConnectionPoolActor.Full =>
         throw new TooManyConnectionsException(config.maxBlockingPoolSize)
     }
-  }
 
   @volatile private[this] var initSuccess = false
   @volatile private[this] var failure = Opt.empty[Throwable]
@@ -148,7 +146,7 @@ final class RedisNodeClient(
     * </ul>
     */
   def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] =
-    executeRaw(batch.rawCommandPacks.requireLevel(RawCommand.Level.Node, "NodeClient"))(config.timeout)
+    executeRaw(batch.rawCommandPacks.requireLevel(RawCommand.Level.Node, "NodeClient"))(config.responseTimeout)
       .map(result => batch.decodeReplies(result))(config.decodeOn)
 
   /**
@@ -165,7 +163,7 @@ final class RedisNodeClient(
     */
   //TODO: executionConfig.decodeOn is ignored now
   def executeOp[A](op: RedisOp[A], executionConfig: ExecutionConfig): Future[A] =
-    ifReady(executeOp(nextConnection(), op)(executionConfig.timeout))
+    ifReady(executeOp(nextConnection(), op)(executionConfig.responseTimeout))
 
   private def executeOp[A](connection: ActorRef, op: RedisOp[A])(implicit timeout: Timeout): Future[A] =
     system.actorOf(Props(new RedisOperationActor(connection))).ask(op)

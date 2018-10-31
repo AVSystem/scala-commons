@@ -8,7 +8,7 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol.BulkStringMsg
 
-trait NodeServerApi extends ApiSubset {
+trait NodeServerApi extends KeyedApiSubset {
   /** Executes [[http://redis.io/commands/bgrewriteaof BGREWRITEAOF]] */
   def bgrewriteaof: Result[String] =
     execute(Bgrewriteaof)

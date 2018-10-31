@@ -2,11 +2,16 @@ package com.avsystem.commons
 package redis.commands
 
 import com.avsystem.commons.redis._
+import com.avsystem.commons.serialization.HasApplyUnapplyCodec
 
+case class HashRecord(str: String, int: OptArg[Int] = OptArg.Empty, list: List[Double] = Nil)
+object HashRecord extends HasApplyUnapplyCodec[HashRecord]
 
 trait HashesApiSuite extends CommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  private val api = RedisApi.Batches.StringTyped.recordType[HashRecord]
+
+  import api._
 
   apiTest("HDEL") {
     setup(hset("key", "field", "value"), hmset("key2", "field1" -> "value1", "field2" -> "value2"))
@@ -35,6 +40,13 @@ trait HashesApiSuite extends CommandsSuite {
     setup(hmset("key", fieldValues))
     hgetall("???").assertEquals(Map.empty)
     hgetall("key").assertEquals(fieldValues)
+  }
+
+  apiTest("HGETALL record") {
+    val data = HashRecord("fuu")
+    setup(hmsetRecord("key", data))
+    hgetallRecord("???").assertEquals(Opt.empty)
+    hgetallRecord("key").assertEquals(Opt(data))
   }
 
   apiTest("HINCRBY") {
@@ -73,11 +85,15 @@ trait HashesApiSuite extends CommandsSuite {
     hmset("key", "field" -> "value", "f2" -> "v2").get
   }
 
+  apiTest("HMSET record") {
+    hmsetRecord("key", HashRecord("fuu", 42)).get
+  }
+
   apiTest("HSCAN") {
     val scanFields = (0 until 256).map(i => (s"toscan$i", s"value$i")).toMap
     setup(hmset("key", scanFields))
     hscan("???", Cursor.NoCursor).assertEquals((Cursor.NoCursor, Seq.empty))
-    def hscanCollect(cursor: Cursor, acc: Map[String,String]): Future[Map[String,String]] =
+    def hscanCollect(cursor: Cursor, acc: Map[String, String]): Future[Map[String, String]] =
       hscan("key", cursor, "toscan*", 4).exec.flatMapNow {
         case (Cursor.NoCursor, data) => Future.successful(acc ++ data.toMap)
         case (nextCursor, data) => hscanCollect(nextCursor, acc ++ data.toMap)
@@ -90,6 +106,11 @@ trait HashesApiSuite extends CommandsSuite {
     hset("key", "field", "value").assertEquals(true)
     hset("key", "field", "value").assertEquals(false)
     hset("key", "field" -> "value", "f1" -> "v1", "f2" -> "v2").assertEquals(2)
+  }
+
+  apiTest("HSET record") {
+    hsetRecord("key", HashRecord("kek", 42)).assertEquals(3)
+    hsetRecord("key", HashRecord("keq")).assertEquals(0)
   }
 
   apiTest("HSETNX") {

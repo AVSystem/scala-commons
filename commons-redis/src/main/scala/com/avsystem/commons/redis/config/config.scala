@@ -6,6 +6,7 @@ import java.net.InetSocketAddress
 import akka.io.Inet
 import akka.util.Timeout
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{DebugListener, DevNullListener}
+import com.avsystem.commons.redis.config.RetryStrategy._
 import com.avsystem.commons.redis.{NodeAddress, RedisBatch, RedisOp}
 
 import scala.concurrent.duration._
@@ -47,7 +48,8 @@ case class ClusterConfig(
   autoRefreshInterval: FiniteDuration = 5.seconds,
   minRefreshInterval: FiniteDuration = 1.seconds,
   nodesToQueryForState: Int => Int = _ min 5,
-  maxRedirections: Int = 3,
+  redirectionRetryStrategy: RetryStrategy = RetryStrategy.times(3),
+  tryagainStrategy: RetryStrategy = exponentially(10.millis).maxDelay(5.seconds).maxTotal(1.minute),
   nodeClientCloseDelay: FiniteDuration = 1.seconds,
   fallbackToSingleNode: Boolean = false
 )
@@ -140,7 +142,6 @@ case class ConnectionConfig(
   socketOptions: List[Inet.SocketOption] = Nil,
   connectTimeout: OptArg[FiniteDuration] = OptArg.Empty,
   maxWriteSizeHint: OptArg[Int] = 50000,
-  reconnectionStrategy: RetryStrategy = ExponentialBackoff(1.seconds, 32.seconds),
+  reconnectionStrategy: RetryStrategy = immediately.andThen(exponentially(1.seconds)).maxDelay(8.seconds),
   debugListener: DebugListener = DevNullListener
 )
-

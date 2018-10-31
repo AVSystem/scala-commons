@@ -2,9 +2,9 @@ package com.avsystem.commons
 package redis.commands
 
 import com.avsystem.commons.redis.protocol.{ArrayMsg, ErrorMsg, NullArrayMsg, RedisMsg}
-import com.avsystem.commons.redis.{ApiSubset, OperationCommand, RedisUnitCommand, UnsafeCommand, WatchState}
+import com.avsystem.commons.redis.{KeyedApiSubset, OperationCommand, RedisUnitCommand, UnsafeCommand, WatchState}
 
-trait TransactionApi extends ApiSubset {
+trait TransactionApi extends KeyedApiSubset {
   /** Executes [[http://redis.io/commands/watch WATCH]] */
   def watch(key: Key, keys: Key*): Result[Unit] =
     execute(new Watch(key +:: keys))

@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.examples
 
 import akka.actor.ActorSystem
-import akka.util.{ByteString, Timeout}
+import akka.util.ByteString
 import com.avsystem.commons.redis._
 import com.avsystem.commons.serialization.GenCodec
 
@@ -13,7 +13,7 @@ import scala.concurrent.duration._
   * to represent keys, hash keys and values in Redis commands.
   */
 object ApiCustomizationExample extends App {
-  implicit val actorSystem = ActorSystem()
+  implicit val actorSystem: ActorSystem = ActorSystem()
 
   val client = new RedisNodeClient
   // By default, the driver provides textual and binary API variants, e.g.
@@ -38,7 +38,7 @@ object ApiCustomizationExample extends App {
     implicit val codec: GenCodec[Person] = GenCodec.materialize[Person]
   }
 
-  val personApi = new RedisApi.Node.Async[String, String, Person](client)
+  val personApi = new RedisApi.Node.Async[String, String, Person, Map[String, String]](client)
 
   def storePerson(person: Person): Future[Boolean] =
     personApi.set(person.name, person)

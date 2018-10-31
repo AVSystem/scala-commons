@@ -2,16 +2,16 @@ package com.avsystem.commons
 package redis.commands
 
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
+import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol.ValidRedisMsg
 import com.avsystem.commons.redis.util.SingletonSeq
-import com.avsystem.commons.redis.{AbstractRedisCommand, ApiSubset, NodeCommand, RedisBooleanCommand, RedisIntCommand, RedisLongCommand, RedisSeqCommand, RedisUnitCommand}
 
-trait StreamsApi extends ApiSubset {
-  type XEntry = redis.commands.XEntry[Field, Value]
+trait StreamsApi extends FieldValueApiSubset with RecordApiSubset {
+  type XEntry = redis.commands.XEntry[Record]
   object XEntry {
-    def apply(id: XEntryId, data: BMap[Field, Value]): XEntry = redis.commands.XEntry(id, data)
-    def unapply(entry: XEntry): Opt[(XEntryId, BMap[Field, Value])] = Opt((entry.id, entry.data))
+    def apply(id: XEntryId, data: Record): XEntry = redis.commands.XEntry(id, data)
+    def unapply(entry: XEntry): Opt[(XEntryId, Record)] = Opt((entry.id, entry.data))
   }
 
   /** Executes [[http://redis.io/commands/xack XACK]] */
@@ -25,17 +25,13 @@ trait StreamsApi extends ApiSubset {
     execute(new Xack(key, group, ids))
 
   /** Executes [[http://redis.io/commands/xadd XADD]] */
-  def xadd(key: Key, fieldValue: (Field, Value), fieldValues: (Field, Value)*): Result[XEntryId] =
-    execute(new Xadd(key, Opt.Empty, Opt.Empty, fieldValue +:: fieldValues))
-
-  /** Executes [[http://redis.io/commands/xadd XADD]] */
   def xadd(
     key: Key,
-    fieldValues: Iterable[(Field, Value)],
+    data: Record,
     id: OptArg[XEntryId] = OptArg.Empty,
     maxlen: OptArg[XMaxlen] = OptArg.Empty
   ): Result[XEntryId] =
-    execute(new Xadd(key, maxlen.toOpt, id.toOpt, fieldValues))
+    execute(new Xadd(key, maxlen.toOpt, id.toOpt, data))
 
   /** Executes [[http://redis.io/commands/xadd XADD]] */
   def xaddEntry(key: Key, entry: XEntry, maxlen: OptArg[XMaxlen] = OptArg.Empty): Result[XEntryId] =
@@ -122,7 +118,7 @@ trait StreamsApi extends ApiSubset {
   def xinfoGroups(key: Key): Result[Seq[XGroupInfo]] =
     execute(new XinfoGroups(key))
   /** Executes [[http://redis.io/commands/xinfo XINFO STREAM]] */
-  def xinfoStream(key: Key): Result[XStreamInfo[XEntry]] =
+  def xinfoStream(key: Key): Result[XStreamInfo[Record]] =
     execute(new XinfoStream(key))
 
   /** Executes [[http://redis.io/commands/xlen XLEN]] */
@@ -215,10 +211,10 @@ trait StreamsApi extends ApiSubset {
     override def immediateResult: Opt[Int] = whenEmpty(ids, 0)
   }
 
-  private final class Xadd(key: Key, maxlen: Opt[XMaxlen], id: Opt[XEntryId], fieldValues: Iterable[(Field, Value)])
+  private final class Xadd(key: Key, maxlen: Opt[XMaxlen], id: Opt[XEntryId], data: Record)
     extends AbstractRedisCommand[XEntryId](bulkXEntryId) with NodeCommand {
     val encoded: Encoded = encoder("XADD").key(key).optAdd("MAXLEN", maxlen)
-      .optAdd(id, "*").dataPairs(fieldValues).result
+      .optAdd(id, "*").dataPairs(data).result
   }
 
   private abstract class AbstractXclaim[A](entryDecoder: ReplyDecoder[A])(
@@ -282,7 +278,7 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class XinfoStream(key: Key)
-    extends AbstractRedisCommand[XStreamInfo[XEntry]](multiBulkXStreamInfo(multiBulkXEntry[Field, Value])) with NodeCommand {
+    extends AbstractRedisCommand[XStreamInfo[Record]](multiBulkXStreamInfo[Record]) with NodeCommand {
     val encoded: Encoded = encoder("XINFO", "STREAM").key(key).result
   }
 
@@ -303,14 +299,14 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class Xrange(key: Key, start: Opt[XEntryId], end: Opt[XEntryId], count: Opt[Int])
-    extends RedisSeqCommand[XEntry](multiBulkXEntry[Field, Value]) with NodeCommand {
+    extends RedisSeqCommand[XEntry](multiBulkXEntry[Record]) with NodeCommand {
     val encoded: Encoded = encoder("XRANGE").key(key)
       .optAdd(start, "-").optAdd(end, "+").optAdd("COUNT", count).result
   }
 
   private abstract class AbstractXread(noStreams: Boolean)
     extends AbstractRedisCommand[BMap[Key, Seq[XEntry]]](
-      multiBulkXEntriesMap[Key, Field, Value]) with NodeCommand {
+      multiBulkXEntriesMap[Key, Record]) with NodeCommand {
 
     def blockMillis: Opt[Int]
 
@@ -342,7 +338,7 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class Xrevrange(key: Key, end: Opt[XEntryId], start: Opt[XEntryId], count: Opt[Int])
-    extends RedisSeqCommand[XEntry](multiBulkXEntry[Field, Value]) with NodeCommand {
+    extends RedisSeqCommand[XEntry](multiBulkXEntry[Record]) with NodeCommand {
     val encoded: Encoded = encoder("XREVRANGE").key(key)
       .optAdd(end, "+").optAdd(start, "-").optAdd("COUNT", count).result
   }
@@ -391,7 +387,7 @@ object XEntryId {
     CommandArg((enc, eid) => enc.add(eid.toString))
 }
 
-case class XEntry[Field, Value](id: XEntryId, data: BMap[Field, Value])
+case class XEntry[Record](id: XEntryId, data: Record)
 
 case class XMaxlen(maxlen: Long, approx: Boolean = true)
 object XMaxlen {
@@ -440,12 +436,12 @@ case class XConsumerInfo(raw: BMap[String, ValidRedisMsg]) {
   def idle: Long = integerLong(raw("idle"))
 }
 
-case class XStreamInfo[Entry <: XEntry[_, _]](raw: BMap[String, ValidRedisMsg])(entryDecoder: ReplyDecoder[Entry]) {
+case class XStreamInfo[Record: RedisRecordCodec](raw: BMap[String, ValidRedisMsg]) {
   def length: Long = integerLong(raw("length"))
   def radixTreeKeys: Int = integerInt(raw("radis-tree-keys"))
   def radixTreeNodes: Int = integerInt(raw("radis-tree-nodes"))
   def groups: Int = integerInt(raw("groups"))
   def lastGeneratedId: XEntryId = bulkXEntryId(raw("last-generated-id"))
-  def firstEntry: Entry = entryDecoder(raw("first-entry"))
-  def lastEntry: Entry = entryDecoder(raw("last-entry"))
+  def firstEntry: XEntry[Record] = ReplyDecoders.multiBulkXEntry[Record].apply(raw("first-entry"))
+  def lastEntry: XEntry[Record] = ReplyDecoders.multiBulkXEntry[Record].apply(raw("last-entry"))
 }

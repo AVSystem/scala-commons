@@ -168,7 +168,7 @@ object ClusterMonitoringActor {
   val MappingComparator: Ordering[(SlotRange, RedisNodeClient)] =
     Ordering.by[(SlotRange, RedisNodeClient), Int](_._1.start)
 
-  case class Refresh(fromNodes: Opt[Seq[NodeAddress]] = Opt.Empty)
-  case class GetClient(addr: NodeAddress)
-  case class GetClientResponse(client: RedisNodeClient)
+  final case class Refresh(fromNodes: Opt[Seq[NodeAddress]] = Opt.Empty)
+  final case class GetClient(addr: NodeAddress)
+  final case class GetClientResponse(client: RedisNodeClient)
 }

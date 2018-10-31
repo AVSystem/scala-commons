@@ -1,15 +1,22 @@
 package com.avsystem.commons
 package redis.commands
 
+import com.avsystem.commons.redis.RedisApi.Batches
 import com.avsystem.commons.redis.{CommandsSuite, RedisApi, RedisBatch}
+import com.avsystem.commons.serialization.HasApplyUnapplyCodec
+
+case class Event(idx: Int, data: String)
+object Event extends HasApplyUnapplyCodec[Event]
 
 trait StreamsApiSuite extends CommandsSuite {
 
-  import RedisApi.Batches.StringTyped.{XEntry => Entry, _}
+  val api: Batches.StringTyped.WithRecord[Event] = RedisApi.Batches.StringTyped.recordType[Event]
+
+  import api.{XEntry => Entry, _}
 
   def id(i: Int): XEntryId = XEntryId(0, i.toLong)
   def ids(from: Int, to: Int): Seq[XEntryId] = (from to to).map(id)
-  def entry(i: Int): Entry = Entry(id(i), Map("f" -> s"v$i"))
+  def entry(i: Int): Entry = Entry(id(i), Event(i, s"value$i"))
   def entries(from: Int, to: Int): Seq[Entry] = (from to to).map(entry)
 
   apiTest("XACK") {
@@ -25,12 +32,12 @@ trait StreamsApiSuite extends CommandsSuite {
   }
 
   apiTest("XADD") {
-    xadd("key", "f" -> "v").get
-    val lastId = xadd("key", "f1" -> "v1", "f2" -> "v2").get
+    xadd("key", Event(42, "fuu")).get
+    val lastId = xadd("key", Event(42, "fag")).get
     xlen("key").assertEquals(2)
-    xadd("key", List("f1" -> "v1", "f2" -> "v2"), lastId.inc, XMaxlen(1)).assertEquals(lastId.inc)
+    xadd("key", Event(42, "lel"), lastId.inc, XMaxlen(1)).assertEquals(lastId.inc)
     xlen("key").assert(_ >= 1)
-    val entry = XEntry(lastId.inc.inc, Map("f1" -> "v1", "f2" -> "v2"))
+    val entry = XEntry(lastId.inc.inc, Event(42, "dafuq"))
     xaddEntry("key", entry, XMaxlen(1, approx = false)).assertEquals(lastId.inc.inc)
     xlen("key").assertEquals(1)
   }

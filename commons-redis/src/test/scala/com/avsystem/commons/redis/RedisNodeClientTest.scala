@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package redis
 
+import akka.util.ByteString
 import com.avsystem.commons.redis.config.{ConnectionConfig, NodeConfig}
 import com.avsystem.commons.redis.exception.{ConnectionFailedException, ConnectionInitializationFailure, NodeInitializationFailure, TooManyConnectionsException}
 import org.scalatest.concurrent.ScalaFutures
@@ -25,20 +26,20 @@ class RedisNodeClientTest extends FunSuite
     import RedisApi.Batches.StringTyped._
     val client = createClient(select(0) *> ping, ping.operation)
 
-    val f1 = client.executeBatch(echo("LOL1"))
-    val f2 = client.executeBatch(echo("LOL2"))
+    val f1 = client.executeBatch(echo(ByteString("LOL1")))
+    val f2 = client.executeBatch(echo(ByteString("LOL2")))
 
     client.initialized.futureValue shouldBe client
-    f1.futureValue shouldBe "LOL1"
-    f2.futureValue shouldBe "LOL2"
+    f1.futureValue shouldBe ByteString("LOL1")
+    f2.futureValue shouldBe ByteString("LOL2")
   }
 
   test("client connection failure test") {
     import RedisApi.Batches.StringTyped._
     val client = new RedisConnectionClient(NodeAddress(port = 63498))
 
-    val f1 = client.executeBatch(echo("LOL1"))
-    val f2 = client.executeBatch(echo("LOL2"))
+    val f1 = client.executeBatch(echo(ByteString("LOL1")))
+    val f2 = client.executeBatch(echo(ByteString("LOL2")))
 
     client.initialized.failed.futureValue shouldBe a[ConnectionFailedException]
     f1.failed.futureValue shouldBe a[ConnectionFailedException]
@@ -49,8 +50,8 @@ class RedisNodeClientTest extends FunSuite
     import RedisApi.Batches.StringTyped._
     val client = createClient(clusterInfo, RedisOp.unit)
 
-    val f1 = client.executeBatch(echo("LOL1"))
-    val f2 = client.executeBatch(echo("LOL2"))
+    val f1 = client.executeBatch(echo(ByteString("LOL1")))
+    val f2 = client.executeBatch(echo(ByteString("LOL2")))
 
     client.initialized.failed.futureValue shouldBe a[ConnectionInitializationFailure]
     f1.failed.futureValue shouldBe a[ConnectionInitializationFailure]
@@ -61,8 +62,8 @@ class RedisNodeClientTest extends FunSuite
     import RedisApi.Batches.StringTyped._
     val client = createClient(RedisBatch.unit, clusterInfo.operation)
 
-    val f1 = client.executeBatch(echo("LOL1"))
-    val f2 = client.executeBatch(echo("LOL2"))
+    val f1 = client.executeBatch(echo(ByteString("LOL1")))
+    val f2 = client.executeBatch(echo(ByteString("LOL2")))
 
     client.initialized.failed.futureValue shouldBe a[NodeInitializationFailure]
     f1.failed.futureValue shouldBe a[NodeInitializationFailure]
