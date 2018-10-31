@@ -61,7 +61,4 @@ object GenObjectCodec {
     def readObject(input: ObjectInput): T = underlying.readObject(input)
     def writeObject(output: ObjectOutput, value: T): Unit = underlying.writeObject(output, value)
   }
-
-  implicit def macroGeneratedCodec[C, T]: MacroGenerated[C, GenObjectCodec[T]] =
-  macro macros.serialization.GenCodecMacros.materializeMacroGenerated[T]
 }

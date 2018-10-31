@@ -46,7 +46,7 @@ object RedisDataOutput {
   }
 }
 
-final class RedisDataOutput(consumer: ByteString => Unit) extends Output {
+final class RedisDataOutput(consumer: ByteString => Unit) extends OutputAndSimpleOutput {
   private def writeBytes(bytes: ByteString): Unit =
     if (bytes.headOpt.contains(0: Byte)) consumer(RedisDataUtils.Null ++ bytes)
     else consumer(bytes)
@@ -98,10 +98,8 @@ object RedisDataInput {
     GenCodec.read[T](new RedisDataInput(bytes))
 }
 
-class RedisDataInput(bytes: ByteString) extends Input {
+class RedisDataInput(bytes: ByteString) extends InputAndSimpleInput {
   private lazy val jsonInput = new JsonStringInput(new JsonReader(readBytes().utf8String))
-
-  def isNull: Boolean = bytes == RedisDataUtils.Null
 
   private def fail(msg: String) = throw new ReadFailure(msg)
   private def readBytes(): ByteString = bytes match {
@@ -110,7 +108,7 @@ class RedisDataInput(bytes: ByteString) extends Input {
     case _ => bytes
   }
 
-  def readNull(): Null = if (isNull) null else fail("not null")
+  def readNull(): Boolean = bytes == RedisDataUtils.Null
   def readString(): String = readBytes().utf8String
   def readBoolean(): Boolean = readString().toInt > 0
   def readInt(): Int = readString().toInt

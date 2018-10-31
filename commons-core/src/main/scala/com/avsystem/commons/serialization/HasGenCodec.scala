@@ -14,6 +14,6 @@ abstract class HasApplyUnapplyCodec[T](implicit macroCodec: MacroInstances[Unit,
   implicit val codec: ApplyUnapplyCodec[T] = macroCodec((), this).apply()
 }
 
-abstract class HasGenObjectCodec[T](implicit macroCodec: MacroGenerated[Any, GenObjectCodec[T]]) {
-  implicit val codec: GenObjectCodec[T] = macroCodec.forCompanion(this)
+abstract class HasGenObjectCodec[T](implicit macroCodec: MacroInstances[Unit, () => GenObjectCodec[T]]) {
+  implicit val codec: GenObjectCodec[T] = macroCodec((), this).apply()
 }

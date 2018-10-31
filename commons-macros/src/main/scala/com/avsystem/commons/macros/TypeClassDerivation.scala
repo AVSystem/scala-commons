@@ -195,13 +195,6 @@ trait TypeClassDerivation extends MacroCommons {
 
   def materializeImplicitly[T: WeakTypeTag](allow: Tree): Tree =
     instrument(materialize[T])
-
-  def materializeMacroGenerated[T: WeakTypeTag]: Tree = instrument {
-    val tpe = weakTypeOf[T].dealias
-    val companionTpe = c.macroApplication.tpe.dealias.typeArgs.head
-    val tcTpe = typeClassInstance(tpe)
-    mkMacroGenerated(companionTpe, tcTpe, q"${c.prefix}.materialize[$tpe]")
-  }
 }
 
 abstract class AbstractTypeClassDerivation(c: blackbox.Context)

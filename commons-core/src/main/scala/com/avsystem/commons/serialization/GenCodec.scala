@@ -441,9 +441,6 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   implicit def fromFallback[T](implicit fallback: Fallback[GenCodec[T]]): GenCodec[T] =
     fallback.value
-
-  implicit def macroGeneratedCodec[C, T]: MacroGenerated[C, GenCodec[T]] =
-  macro macros.serialization.GenCodecMacros.materializeMacroGenerated[T]
 }
 
 trait RecursiveAutoCodecs { this: GenCodec.type =>
