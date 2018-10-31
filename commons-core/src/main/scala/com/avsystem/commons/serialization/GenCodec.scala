@@ -35,6 +35,8 @@ trait GenCodec[T] {
 }
 
 object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
+  def apply[T](implicit codec: GenCodec[T]): GenCodec[T] = codec
+
   /**
     * Macro that automatically materializes a [[GenCodec]] for some type `T`, which must be one of:
     * <ul>
@@ -80,11 +82,11 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   macro macros.serialization.GenCodecMacros.applyUnapplyCodec[T]
 
   @explicitGenerics
-  def read[T](input: Input)(implicit codec: GenCodec[T]): T =
-    codec.read(input)
+  def read[T: GenCodec](input: Input): T =
+    apply[T].read(input)
 
-  def write[T](output: Output, value: T)(implicit codec: GenCodec[T]): Unit =
-    codec.write(output, value)
+  def write[T: GenCodec](output: Output, value: T): Unit =
+    apply[T].write(output, value)
 
   def create[T](readFun: Input => T, writeFun: (Output, T) => Any): GenCodec[T] =
     new GenCodec[T] {
@@ -93,7 +95,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     }
 
   def transformed[T, R: GenCodec](toRaw: T => R, fromRaw: R => T): GenCodec[T] =
-    new TransformedCodec[T, R](implicitly[GenCodec[R]], toRaw, fromRaw)
+    new Transformed[T, R](GenCodec[R], toRaw, fromRaw)
 
   def nullSafe[T](readFun: Input => T, writeFun: (Output, T) => Any, allowNull: Boolean): GenCodec[T] =
     new NullSafeCodec[T] {
@@ -252,13 +254,13 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
       readObject(input, FieldValues.Empty)
   }
 
-  class TransformedCodec[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {
-    def read(input: Input) = onRead(wrapped.read(input))
+  class Transformed[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {
+    def read(input: Input): A = onRead(wrapped.read(input))
     def write(output: Output, value: A): Unit = wrapped.write(output, onWrite(value))
   }
 
   def underlyingCodec(codec: GenCodec[_]): GenCodec[_] = codec match {
-    case tc: TransformedCodec[_, _] => underlyingCodec(tc.wrapped)
+    case tc: Transformed[_, _] => underlyingCodec(tc.wrapped)
     case _ => codec
   }
 
@@ -400,7 +402,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   )
 
   implicit def nOptCodec[T: GenCodec]: GenCodec[NOpt[T]] =
-    new TransformedCodec[NOpt[T], Option[T]](optionCodec[T], _.toOption, _.toNOpt)
+    new Transformed[NOpt[T], Option[T]](optionCodec[T], _.toOption, _.toNOpt)
 
   implicit def optCodec[T: GenCodec]: GenCodec[Opt[T]] =
     create[Opt[T]](
@@ -412,10 +414,10 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     )
 
   implicit def optArgCodec[T: GenCodec]: GenCodec[OptArg[T]] =
-    new TransformedCodec[OptArg[T], Opt[T]](optCodec[T], _.toOpt, _.toOptArg)
+    new Transformed[OptArg[T], Opt[T]](optCodec[T], _.toOpt, _.toOptArg)
 
   implicit def optRefCodec[T >: Null : GenCodec]: GenCodec[OptRef[T]] =
-    new TransformedCodec[OptRef[T], Opt[T]](optCodec[T], _.toOpt, _.toOptRef)
+    new Transformed[OptRef[T], Opt[T]](optCodec[T], _.toOpt, _.toOptRef)
 
   implicit def eitherCodec[A: GenCodec, B: GenCodec]: GenCodec[Either[A, B]] = nullableObject(
     oi => {

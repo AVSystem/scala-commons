@@ -24,7 +24,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
      """
   }
 
-  private val CodecCls: Symbol = c.prefix.actualType.typeSymbol.companion
+  // GenCodec or GenObjectCodec
+  private val CodecObj: ModuleSymbol = c.prefix.actualType.termSymbol.asModule
+  private val CodecCls: ClassSymbol = CodecObj.companion.asClass
 
   def implementDeferredInstance(tpe: Type): Tree = q"new $GenCodecObj.Deferred[$tpe]"
 
@@ -36,9 +38,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   override def dependency(depTpe: Type, tcTpe: Type, param: Symbol): Tree = {
     val clue = s"Cannot materialize $tcTpe because of problem with parameter ${param.name}: "
-    val depTcTpe =
-      if (isTransparent(tcTpe.typeArgs.head.typeSymbol)) typeClassInstance(depTpe)
-      else dependencyType(depTpe)
+    val depTcTpe = dependencyType(depTpe)
     Ident(inferCachedImplicit(depTcTpe, clue, param.pos))
   }
 
@@ -225,17 +225,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
             if(unapplyRes.isEmpty) unapplyFailed else unapplyRes.get
            """
 
-        val TransparentCodecName = TypeName(CodecCls.name.toString.replaceFirst("Gen", "Transparent"))
-
         q"""
-          new $SerializationPkg.$TransparentCodecName[$dtpe,${p.valueType}](
-            ${dtpe.toString}
-          ) {
-            ..$cachedImplicitDeclarations
-            def underlyingCodec: $CodecCls[${p.valueType}] = ${p.instance}
-            def wrap(underlying: ${p.valueType}): $dtpe = ${applier(List(q"underlying"))}
-            def unwrap(value: $dtpe): ${p.valueType} = $unwrapBody
-          }
+          $CodecObj.transformed[$dtpe,${p.valueType}](
+            value => $unwrapBody,
+            underlying => ${applier(List(q"underlying"))}
+          )
          """
       case _ =>
         abort(s"@transparent annotation found on class with ${params.size} parameters, expected exactly one.")

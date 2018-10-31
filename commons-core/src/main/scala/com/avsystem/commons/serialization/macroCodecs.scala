@@ -63,28 +63,6 @@ abstract class ProductCodec[T <: Product](
   }
 }
 
-abstract class TransparentCodec[T, U](
-  protected val typeRepr: String
-) extends ErrorReportingCodec[T] {
-  protected def underlyingCodec: GenCodec[U]
-  protected def wrap(underlying: U): T
-  protected def unwrap(value: T): U
-
-  final def read(input: Input): T = wrap(underlyingCodec.read(input))
-  final def write(output: Output, value: T): Unit = underlyingCodec.write(output, unwrap(value))
-}
-
-abstract class TransparentObjectCodec[T, U](
-  protected val typeRepr: String
-) extends GenObjectCodec[T] with ErrorReportingCodec[T] {
-  protected def underlyingCodec: GenObjectCodec[U]
-  protected def wrap(underlying: U): T
-  protected def unwrap(value: T): U
-
-  final def readObject(input: ObjectInput): T = wrap(underlyingCodec.readObject(input))
-  final def writeObject(output: ObjectOutput, value: T): Unit = underlyingCodec.writeObject(output, unwrap(value))
-}
-
 abstract class SealedHierarchyCodec[T](
   protected val typeRepr: String,
   val nullable: Boolean,
