@@ -2,7 +2,6 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.derivation.DeferredInstance
-import com.avsystem.commons.misc.MacroGenerated
 
 import scala.annotation.implicitNotFound
 
