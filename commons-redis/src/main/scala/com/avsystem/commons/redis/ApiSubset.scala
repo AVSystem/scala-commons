@@ -38,7 +38,7 @@ trait RedisSerialization {
   type Value
 
   /**
-    * Type used to represent key-value pair sequences, primarily entries in [[StreamsApi]] but also hashes in
+    * Type used to represent key-value pair sequences, primarily entries in Streams API but also hashes in
     * [[HashesApi]]. `Record` might be a "raw" type like `Map[Key, Value]` or `Seq[(Key, Value)]` but normally
     * `Record` is customized to be an ADT - a case class or sealed hierarchy.
     */
