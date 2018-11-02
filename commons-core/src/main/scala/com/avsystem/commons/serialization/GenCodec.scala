@@ -7,7 +7,6 @@ import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.JCanBuildFrom
 import com.avsystem.commons.meta.Fallback
-import com.avsystem.commons.misc.MacroGenerated
 
 import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
@@ -93,6 +92,12 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
       def write(output: Output, value: T): Unit = writeFun(output, value)
       def read(input: Input): T = readFun(input)
     }
+
+  def makeLazy[T](codec: => GenCodec[T]): GenCodec[T] = new GenCodec[T] {
+    private lazy val underlying = codec
+    def read(input: Input): T = underlying.read(input)
+    def write(output: Output, value: T): Unit = underlying.write(output, value)
+  }
 
   def transformed[T, R: GenCodec](toRaw: T => R, fromRaw: R => T): GenCodec[T] =
     new Transformed[T, R](GenCodec[R], toRaw, fromRaw)

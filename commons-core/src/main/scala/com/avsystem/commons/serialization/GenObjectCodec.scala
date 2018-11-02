@@ -46,6 +46,12 @@ object GenObjectCodec {
       def writeObject(output: ObjectOutput, value: T): Unit = writeFun(output, value)
     }
 
+  def makeLazy[T](codec: => GenObjectCodec[T]): GenObjectCodec[T] = new GenObjectCodec[T] {
+    private lazy val underlying = codec
+    def readObject(input: ObjectInput): T = underlying.readObject(input)
+    def writeObject(output: ObjectOutput, value: T): Unit = underlying.writeObject(output, value)
+  }
+
   def transformed[T, R: GenObjectCodec](toRaw: T => R, fromRaw: R => T): GenObjectCodec[T] =
     new Transformed[T, R](GenObjectCodec[R], toRaw, fromRaw)
 
