@@ -87,8 +87,8 @@ object RedisApi {
   object Raw {
     def apply[S <: RedisSerialization : ValueOf]: Raw[S] = new Raw(ValueOf[S])
 
-    object StringTyped extends Raw[RedisSerialization.Strings.type](RedisSerialization.Strings)
-    object BinaryTyped extends Raw[RedisSerialization.ByteStrings.type](RedisSerialization.ByteStrings)
+    final val StringTyped = apply[RedisSerialization.Strings.type]
+    final val BinaryTyped = apply[RedisSerialization.ByteStrings.type]
   }
 
   class Batches[S <: RedisSerialization](val serialization: S)
@@ -104,175 +104,97 @@ object RedisApi {
   object Batches {
     def apply[S <: RedisSerialization : ValueOf]: Batches[S] = new Batches(ValueOf[S])
 
-    object StringTyped extends Batches[RedisSerialization.Strings.type](RedisSerialization.Strings)
-    object BinaryTyped extends Batches[RedisSerialization.ByteStrings.type](RedisSerialization.ByteStrings)
+    final val StringTyped = apply[RedisSerialization.Strings.type]
+    final val BinaryTyped = apply[RedisSerialization.ByteStrings.type]
   }
 
   /**
     * Entry point for API variants which expose only keyed commands.
     */
-  object Keyed {
+  object Keyed extends ExecutedApiLevel {
+    type RequiredExecutor = RedisKeyedExecutor
+
     class Async[S <: RedisSerialization](
       val serialization: S,
-      val executor: RedisKeyedExecutor,
+      val executor: RequiredExecutor,
       val execConfig: ExecutionConfig = ExecutionConfig.Default
-    ) extends AbstractRedisApi[S] with RedisRecoverableKeyedApi with RedisAsyncApi {
-      type Self[S0 <: RedisSerialization] = Async[S0]
-      def withSerialization[S0 <: RedisSerialization](ser: S0): Async[S0] = new Async(ser, executor, execConfig)
-    }
+    ) extends BaseAsync[S] with RedisRecoverableKeyedApi
+    object Async extends AsyncCompanion
 
-    /**
-      * Entry point for API variants which execute commands using [[RedisKeyedExecutor]] (e.g. [[RedisClusterClient]])
-      * and return results as `Future`s.
-      */
-    object Async {
-      def apply[S <: RedisSerialization : ValueOf](
-        executor: RedisKeyedExecutor,
-        execConfig: ExecutionConfig = ExecutionConfig.Default
-      ): Async[S] = new Async(ValueOf[S], executor, execConfig)
-
-      case class StringTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Async[RedisSerialization.Strings.type](RedisSerialization.Strings, exec, config)
-      case class BinaryTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Async[RedisSerialization.ByteStrings.type](RedisSerialization.ByteStrings, exec, config)
-    }
+    protected def createAsync[S <: RedisSerialization](
+      serialization: S, executor: RequiredExecutor, execConfig: ExecutionConfig
+    ): Async[S] = new Async(serialization, executor, execConfig)
 
     class Blocking[S <: RedisSerialization](
       val serialization: S,
-      val executor: RedisKeyedExecutor,
+      val executor: RequiredExecutor,
       val execConfig: ExecutionConfig = ExecutionConfig.Default
-    ) extends AbstractRedisApi[S] with RedisRecoverableKeyedApi with RedisBlockingApi {
-      type Self[S0 <: RedisSerialization] = Blocking[S0]
-      def withSerialization[S0 <: RedisSerialization](ser: S0): Blocking[S0] = new Blocking(ser, executor, execConfig)
-    }
+    ) extends BaseBlocking[S] with RedisRecoverableKeyedApi
+    object Blocking extends BlockingCompanion
 
-    /**
-      * Entry point for API variants which execute commands using [[RedisKeyedExecutor]] (e.g. [[RedisClusterClient]])
-      * and return results synchronously.
-      */
-    object Blocking {
-      def apply[S <: RedisSerialization : ValueOf](
-        executor: RedisKeyedExecutor,
-        execConfig: ExecutionConfig = ExecutionConfig.Default
-      ): Blocking[S] = new Blocking(ValueOf[S], executor, execConfig)
-
-      case class StringTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Blocking[RedisSerialization.Strings.type](RedisSerialization.Strings, exec, config)
-      case class BinaryTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Blocking[RedisSerialization.ByteStrings.type](RedisSerialization.ByteStrings, exec, config)
-    }
+    protected def createBlocking[S <: RedisSerialization](
+      serialization: S, executor: RequiredExecutor, execConfig: ExecutionConfig
+    ): Blocking[S] = new Blocking(serialization, executor, execConfig)
   }
 
   /**
     * Entry point for API variants which expose node-level commands, i.e. the ones that don't access or modify
     * Redis connection state.
     */
-  object Node {
+  object Node extends ExecutedApiLevel {
+    type RequiredExecutor = RedisNodeExecutor
+
     class Async[S <: RedisSerialization](
       val serialization: S,
-      val executor: RedisKeyedExecutor,
+      val executor: RequiredExecutor,
       val execConfig: ExecutionConfig = ExecutionConfig.Default
-    ) extends AbstractRedisApi[S] with RedisRecoverableNodeApi with RedisAsyncApi {
-      type Self[S0 <: RedisSerialization] = Async[S0]
-      def withSerialization[S0 <: RedisSerialization](ser: S0): Async[S0] = new Async(ser, executor, execConfig)
-    }
+    ) extends BaseAsync[S] with RedisRecoverableNodeApi
+    object Async extends AsyncCompanion
 
-    /**
-      * Entry point for API variants which execute commands using [[RedisNodeExecutor]] (e.g. [[RedisNodeClient]])
-      * and return results as `Future`s.
-      */
-    object Async {
-      def apply[S <: RedisSerialization : ValueOf](
-        executor: RedisKeyedExecutor,
-        execConfig: ExecutionConfig = ExecutionConfig.Default
-      ): Async[S] = new Async(ValueOf[S], executor, execConfig)
-
-      case class StringTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Async[RedisSerialization.Strings.type](RedisSerialization.Strings, exec, config)
-      case class BinaryTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Async[RedisSerialization.ByteStrings.type](RedisSerialization.ByteStrings, exec, config)
-    }
+    protected def createAsync[S <: RedisSerialization](
+      serialization: S, executor: RequiredExecutor, execConfig: ExecutionConfig
+    ): Async[S] = new Async(serialization, executor, execConfig)
 
     class Blocking[S <: RedisSerialization](
       val serialization: S,
-      val executor: RedisKeyedExecutor,
+      val executor: RequiredExecutor,
       val execConfig: ExecutionConfig = ExecutionConfig.Default
-    ) extends AbstractRedisApi[S] with RedisRecoverableNodeApi with RedisBlockingApi {
-      type Self[S0 <: RedisSerialization] = Blocking[S0]
-      def withSerialization[S0 <: RedisSerialization](ser: S0): Blocking[S0] = new Blocking(ser, executor, execConfig)
-    }
+    ) extends BaseBlocking[S] with RedisRecoverableNodeApi
+    object Blocking extends BlockingCompanion
 
-    /**
-      * Entry point for API variants which execute commands using [[RedisNodeExecutor]] (e.g. [[RedisNodeClient]])
-      * and return results synchronously.
-      */
-    object Blocking {
-      def apply[S <: RedisSerialization : ValueOf](
-        executor: RedisKeyedExecutor,
-        execConfig: ExecutionConfig = ExecutionConfig.Default
-      ): Blocking[S] = new Blocking(ValueOf[S], executor, execConfig)
-
-      case class StringTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Blocking[RedisSerialization.Strings.type](RedisSerialization.Strings, exec, config)
-      case class BinaryTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Blocking[RedisSerialization.ByteStrings.type](RedisSerialization.ByteStrings, exec, config)
-    }
+    protected def createBlocking[S <: RedisSerialization](
+      serialization: S, executor: RequiredExecutor, execConfig: ExecutionConfig
+    ): Blocking[S] = new Blocking(serialization, executor, execConfig)
   }
 
   /**
     * Entry point for API variants which expose all commands, including connection-level ones, i.e. the ones that
     * access or modify Redis connection state.
     */
-  object Connection {
+  object Connection extends ExecutedApiLevel {
+    type RequiredExecutor = RedisConnectionExecutor
+
     class Async[S <: RedisSerialization](
       val serialization: S,
-      val executor: RedisKeyedExecutor,
+      val executor: RequiredExecutor,
       val execConfig: ExecutionConfig = ExecutionConfig.Default
-    ) extends AbstractRedisApi[S] with RedisRecoverableConnectionApi with RedisAsyncApi {
-      type Self[S0 <: RedisSerialization] = Async[S0]
-      def withSerialization[S0 <: RedisSerialization](ser: S0): Async[S0] = new Async(ser, executor, execConfig)
-    }
+    ) extends BaseAsync[S] with RedisRecoverableConnectionApi
+    object Async extends AsyncCompanion
 
-    /**
-      * Entry point for API variants which execute commands using [[RedisConnectionExecutor]] (e.g. [[RedisConnectionClient]])
-      * and return results as `Future`s.
-      */
-    object Async {
-      def apply[S <: RedisSerialization : ValueOf](
-        executor: RedisKeyedExecutor,
-        execConfig: ExecutionConfig = ExecutionConfig.Default
-      ): Async[S] = new Async(ValueOf[S], executor, execConfig)
-
-      case class StringTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Async[RedisSerialization.Strings.type](RedisSerialization.Strings, exec, config)
-      case class BinaryTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Async[RedisSerialization.ByteStrings.type](RedisSerialization.ByteStrings, exec, config)
-    }
+    protected def createAsync[S <: RedisSerialization](
+      serialization: S, executor: RequiredExecutor, execConfig: ExecutionConfig
+    ): Async[S] = new Async(serialization, executor, execConfig)
 
     class Blocking[S <: RedisSerialization](
       val serialization: S,
-      val executor: RedisKeyedExecutor,
+      val executor: RequiredExecutor,
       val execConfig: ExecutionConfig = ExecutionConfig.Default
-    ) extends AbstractRedisApi[S] with RedisRecoverableConnectionApi with RedisBlockingApi {
-      type Self[S0 <: RedisSerialization] = Blocking[S0]
-      def withSerialization[S0 <: RedisSerialization](ser: S0): Blocking[S0] = new Blocking(ser, executor, execConfig)
-    }
+    ) extends BaseBlocking[S] with RedisRecoverableConnectionApi
+    object Blocking extends BlockingCompanion
 
-    /**
-      * Entry point for API variants which execute commands using [[RedisConnectionExecutor]]
-      * (e.g. [[RedisConnectionClient]]) and return results synchronously.
-      */
-    object Blocking {
-      def apply[S <: RedisSerialization : ValueOf](
-        executor: RedisKeyedExecutor,
-        execConfig: ExecutionConfig = ExecutionConfig.Default
-      ): Blocking[S] = new Blocking(ValueOf[S], executor, execConfig)
-
-      case class StringTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Blocking[RedisSerialization.Strings.type](RedisSerialization.Strings, exec, config)
-      case class BinaryTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Blocking[RedisSerialization.ByteStrings.type](RedisSerialization.ByteStrings, exec, config)
-    }
+    protected def createBlocking[S <: RedisSerialization](
+      serialization: S, executor: RequiredExecutor, execConfig: ExecutionConfig
+    ): Blocking[S] = new Blocking(serialization, executor, execConfig)
   }
 }
 
@@ -296,4 +218,66 @@ abstract class AbstractRedisApi[S <: RedisSerialization] extends ApiSubset {
 
   final def recordType[R: RedisRecordCodec]: WithRecord[R] =
     withSerialization(serialization.recordType[R])
+}
+
+abstract class ExecutedApiLevel {
+  type RequiredExecutor <: RedisExecutor
+
+  type Async[S <: RedisSerialization] <: BaseAsync[S]
+  val Async: AsyncCompanion
+
+  type Blocking[S <: RedisSerialization] <: BaseBlocking[S]
+  val Blocking: BlockingCompanion
+
+  abstract class AsyncCompanion {
+    def apply[S <: RedisSerialization : ValueOf](
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig = ExecutionConfig.Default
+    ): Async[S] = createAsync(ValueOf[S], executor, execConfig)
+
+    def StringTyped(
+      exec: RequiredExecutor, config: ExecutionConfig = ExecutionConfig.Default
+    ): Async[RedisSerialization.Strings.type] = createAsync(RedisSerialization.Strings, exec, config)
+
+    def BinaryTyped(
+      exec: RequiredExecutor, config: ExecutionConfig = ExecutionConfig.Default
+    ): Async[RedisSerialization.ByteStrings.type] = createAsync(RedisSerialization.ByteStrings, exec, config)
+  }
+
+  abstract class BlockingCompanion {
+    def apply[S <: RedisSerialization : ValueOf](
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig = ExecutionConfig.Default
+    ): Blocking[S] = createBlocking(ValueOf[S], executor, execConfig)
+
+    def StringTyped(
+      exec: RequiredExecutor, config: ExecutionConfig = ExecutionConfig.Default
+    ): Blocking[RedisSerialization.Strings.type] = createBlocking(RedisSerialization.Strings, exec, config)
+
+    def BinaryTyped(
+      exec: RequiredExecutor, config: ExecutionConfig = ExecutionConfig.Default
+    ): Blocking[RedisSerialization.ByteStrings.type] = createBlocking(RedisSerialization.ByteStrings, exec, config)
+  }
+
+  protected abstract class BaseAsync[S <: RedisSerialization] extends AbstractRedisApi[S] with RedisAsyncApi {
+    def executor: RequiredExecutor
+    def execConfig: ExecutionConfig
+
+    type Self[S0 <: RedisSerialization] = Async[S0]
+    def withSerialization[S0 <: RedisSerialization](ser: S0): Self[S0] = createAsync(ser, executor, execConfig)
+  }
+
+  protected def createAsync[S <: RedisSerialization](
+    serialization: S, executor: RequiredExecutor, execConfig: ExecutionConfig): Async[S]
+
+  protected abstract class BaseBlocking[S <: RedisSerialization] extends AbstractRedisApi[S] with RedisBlockingApi {
+    def executor: RequiredExecutor
+    def execConfig: ExecutionConfig
+
+    type Self[S0 <: RedisSerialization] = Blocking[S0]
+    def withSerialization[S0 <: RedisSerialization](ser: S0): Self[S0] = createBlocking(ser, executor, execConfig)
+  }
+
+  protected def createBlocking[S <: RedisSerialization](
+    serialization: S, executor: RequiredExecutor, execConfig: ExecutionConfig): Blocking[S]
 }
