@@ -4,7 +4,7 @@ package redis.commands
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
-trait SetsApi extends ValueApiSubset {
+trait SetsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/sadd SADD]] */
   def sadd(key: Key, member: Value): Result[Boolean] =
     execute(new Sadd(key, member.single).map(_ > 0))

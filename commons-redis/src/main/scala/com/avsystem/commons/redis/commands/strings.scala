@@ -6,7 +6,7 @@ import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
-trait StringsApi extends ValueApiSubset {
+trait StringsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/append APPEND]] */
   def append(key: Key, value: Value): Result[Int] =
     execute(new Append(key, value))

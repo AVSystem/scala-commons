@@ -8,7 +8,7 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.util.SingletonSeq
 
-trait SortedSetsApi extends ValueApiSubset {
+trait SortedSetsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/zadd ZADD]] */
   def zadd(key: Key, memberScore: (Value, Double), memberScores: (Value, Double)*): Result[Int] =
     zadd(key, memberScore +:: memberScores)

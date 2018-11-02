@@ -7,7 +7,7 @@ import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol.ValidRedisMsg
 import com.avsystem.commons.redis.util.SingletonSeq
 
-trait StreamsApi extends FieldValueApiSubset with RecordApiSubset {
+trait StreamsApi extends ApiSubset {
   type XEntry = redis.commands.XEntry[Record]
   object XEntry {
     def apply(id: XEntryId, data: Record): XEntry = redis.commands.XEntry(id, data)

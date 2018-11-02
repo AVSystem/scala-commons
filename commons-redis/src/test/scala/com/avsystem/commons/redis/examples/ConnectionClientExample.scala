@@ -2,9 +2,10 @@ package com.avsystem.commons
 package redis.examples
 
 import akka.actor.ActorSystem
-import akka.util.Timeout
 import com.avsystem.commons.redis._
 
+// Global execution context is used for the sake of simplicity of this example,
+// think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
@@ -12,7 +13,7 @@ import scala.concurrent.duration._
   * Basic example showing how to execute simple command on [[RedisConnectionClient]].
   */
 object ConnectionClientExample extends App {
-  implicit val actorSystem = ActorSystem()
+  implicit val actorSystem: ActorSystem = ActorSystem()
 
   // Connection client only uses a single, non-reconnectable connection
   val client = new RedisConnectionClient

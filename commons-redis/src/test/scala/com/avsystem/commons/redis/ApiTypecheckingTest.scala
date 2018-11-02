@@ -48,10 +48,11 @@ object ApiTypecheckingTest {
   }
 
   locally {
-    val api = RedisApi.Batches.StringTyped.valueType[Int]
+    val ser = RedisSerialization.Strings.valueType[Int]
+    val api = RedisApi.Batches[ser.type]
     import api._
     val transactionOp: RedisOp[Unit] = for {
-    // we're sending WATCH and GET commands in a single batch
+      // we're sending WATCH and GET commands in a single batch
       value <- watch("number") *> get("number").map(_.getOrElse(1))
       // SET command is wrapped in MULTI-EXEC block
       _ <- set("number", value * 3).transaction
@@ -59,7 +60,8 @@ object ApiTypecheckingTest {
   }
 
   locally {
-    val api = RedisApi.Batches.StringTyped.valueType[Encoding]
+    val ser = RedisSerialization.Strings.valueType[Encoding]
+    val api = RedisApi.Batches[ser.type]
     api.set("lol", Encoding.HashTable)
   }
 
