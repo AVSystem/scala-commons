@@ -2,11 +2,13 @@
 
 `commons-redis` - Scala driver for Redis
 
-**[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/index.html)**
-
 ```scala
 libraryDependencies += "com.avsystem.commons" %% "commons-redis" % avsCommonsVersion
 ```
+
+**[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/index.html)**
+
+**[Quickstart example](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/NodeClientExample.scala)**
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->

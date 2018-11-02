@@ -2,9 +2,10 @@ package com.avsystem.commons
 package redis.examples
 
 import akka.actor.ActorSystem
-import akka.util.Timeout
 import com.avsystem.commons.redis._
 
+// Global execution context is used for the sake of simplicity of this example,
+// think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
@@ -12,7 +13,7 @@ import scala.concurrent.duration._
   * Examples showing how to create and execute batches made of multiple Redis commands.
   */
 object PipeliningExample extends App {
-  implicit val actorSystem = ActorSystem()
+  implicit val actorSystem: ActorSystem = ActorSystem()
 
   // Pipelining is a technique in which multiple Redis commands are sent to server at once, without one command
   // waiting for previous one to finish. This allows sending multiple commands in a single network message, which
