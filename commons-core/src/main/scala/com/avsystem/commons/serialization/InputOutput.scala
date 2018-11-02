@@ -4,22 +4,22 @@ package serialization
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 /**
-  * Base trait for type markers identifying custom native types that particular [[Input]] and [[Output]]
+  * Base trait for type markers identifying custom native types that particular `Input` and `Output`
   * implementations might want to support.
   */
 trait TypeMarker[T]
 
 /**
-  * Base trait for metadata markers identifying custom native metadata information that particular [[Input]] and
-  * [[Output]] implementations might want to support.
+  * Base trait for metadata markers identifying custom native metadata information that particular `Input` and
+  * `Output` implementations might want to support.
   * Example: [[com.avsystem.commons.serialization.json.JsonType JsonType]]
   */
 trait InputMetadata[T]
 
 /**
   * Represents an abstract sink to which a value may be serialized (written).
-  * An [[Output]] instance should be assumed to be stateful. After calling any of the `write` methods, it MUST NOT be
-  * reused. This means that [[Output]] instance can be used only to write a single value. However, if the value
+  * An `Output` instance should be assumed to be stateful. After calling any of the `write` methods, it MUST NOT be
+  * reused. This means that `Output` instance can be used only to write a single value. However, if the value
   * to write is complex, one can use `writeList`/`writeSet` or `writeObject`/`writeMap`.
   */
 trait Output extends Any {
@@ -30,30 +30,30 @@ trait Output extends Any {
 
   /**
     * Attempts to write some arbitrary custom "native" value that this output may or may not support.
-    * The custom type is identified by an instance of [[TypeMarker]] which is usually an object (e.g. companion
-    * object of the custom `T` type itself). This way [[Input]] and [[Output]] implementations may support other
-    * native types than the ones supported by default by [[Input]] and [[Output]] interfaces.
+    * The custom type is identified by an instance of `TypeMarker` which is usually an object (e.g. companion
+    * object of the custom `T` type itself). This way `Input` and `Output` implementations may support other
+    * native types than the ones supported by default by `Input` and `Output` interfaces.
     *
-    * Codecs may use this method to optimize encoded format in case it it possible with particular [[Output]]
-    * implementation. [[GenCodec]] may generally assume that if this method returns `true` then corresponding
-    * [[Input]] will return a non-empty `Opt` from `readCustom` method.
+    * Codecs may use this method to optimize encoded format in case it it possible with particular `Output`
+    * implementation. `GenCodec` may generally assume that if this method returns `true` then corresponding
+    * `Input` will return a non-empty `Opt` from `readCustom` method.
     *
     * `false` returned by this method indicates that this output does not support this particular type.
     * In such situation the codec must fall back to some other strategy. If the native type is supported but there was
-    * some error writing it then a [[GenCodec.WriteFailure]] should be thrown instead of returning `false`.
+    * some error writing it then a `WriteFailure` should be thrown instead of returning `false`.
     */
   def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean = false
 
   /**
-    * Determines whether serialization format implemented by this [[Output]] preserves particular arbitrary
+    * Determines whether serialization format implemented by this `Output` preserves particular arbitrary
     * "metadata" which is identified by [[InputMetadata]] which is usually an object
     * (e.g. companion object of metadata value type `T`).
     * An example of [[InputMetadata]] is [[com.avsystem.commons.serialization.json.JsonType JsonType]] supported by
     * [[com.avsystem.commons.serialization.json.JsonStringOutput JsonStringOutput]].
     *
     * If this method returns `true` then codec may optimize its encoded format and assume that a corresponding
-    * [[Input]] implementation will return a non-empty `Opt` from its `readMetadata` implementation.
-    * If this method returns `false` then this [[Output]] does not support this medatata type and codec should
+    * `Input` implementation will return a non-empty `Opt` from its `readMetadata` implementation.
+    * If this method returns `false` then this `Output` does not support this medatata type and codec should
     * fall back to some other serialization strategy.
     */
   def keepsMetadata(metadata: InputMetadata[_]): Boolean = false
@@ -135,18 +135,18 @@ trait ObjectOutput extends Any with SequentialOutput {
   * Each of the `read` methods tries to read a value of specified type and may throw an exception
   * (usually [[com.avsystem.commons.serialization.GenCodec.ReadFailure ReadFailure]]) when reading is not successful.
   * <p/>
-  * An [[Input]] value should be assumed to be stateful. If any of the `readX` methods have already been called,
-  * the [[Input]] instance can no longer be used and MUST be discarded.
+  * An `Input` value should be assumed to be stateful. If any of the `readX` methods have already been called,
+  * the `Input` instance can no longer be used and MUST be discarded.
   * <p/>
-  * In order to ignore the value kept in this [[Input]], `skip()` MUST be called.
+  * In order to ignore the value kept in this `Input`, `skip()` MUST be called.
   * <p/>
-  * In summary: every [[Input]] MUST be fully exhausted by either calling one of the `read` methods which returns
+  * In summary: every `Input` MUST be fully exhausted by either calling one of the `read` methods which returns
   * successful value or by calling `skip()`. Also, [[ListInput]] and [[ObjectInput]] instances returned from this
-  * [[Input]] must also be fully exhausted on their own.
+  * `Input` must also be fully exhausted on their own.
   */
 trait Input extends Any {
   /**
-    * Attempts to read `null` value from an [[Input]]. Returning `true` means that input instance contained a
+    * Attempts to read `null` value from an `Input`. Returning `true` means that input instance contained a
     * `null` value. Its state should then be changed so that input can be considered "consumed"
     * (no other reads are possible on this instance). Returning `false` means that the input contains something else
     * than a `null` value. Its state must not change in this situation and it must be possible to call some other
@@ -164,28 +164,28 @@ trait Input extends Any {
     * An example of [[InputMetadata]] is [[com.avsystem.commons.serialization.json.JsonType JsonType]] supported by
     * [[com.avsystem.commons.serialization.json.JsonStringInput JsonStringInput]].
     *
-    * Codecs may use this method to optimize encoded format in case it it possible with particular [[Input]]
-    * implementation. [[GenCodec]] may generally assume that if the data was written by a corresponding [[Output]]
-    * that preserves particular metadata type (which may be determined by [[Output.keepsMetadata()]]) then
+    * Codecs may use this method to optimize encoded format in case it it possible with particular `Input`
+    * implementation. `GenCodec` may generally assume that if the data was written by a corresponding `Output`
+    * that preserves particular metadata type (which may be determined by `Output.keepsMetadata()`) then
     * `readMetadata` will return a non-empty value.
     *
-    * `Opt.Empty` may be returned form this method ONLY if this [[Input]] implementation does not support
-    * this metadata type AT ALL. Any errors should be signaled by throwing [[ReadFailure]].
+    * `Opt.Empty` may be returned form this method ONLY if this `Input` implementation does not support
+    * this metadata type AT ALL. Any errors should be signaled by throwing `ReadFailure`.
     */
   def readMetadata[T](metadata: InputMetadata[T]): Opt[T] = Opt.Empty
 
   /**
     * Attempts to read some arbitrary custom "native" value that this input may or may not support.
-    * The custom type is identified by an instance of [[TypeMarker]] which is usually an object (e.g. companion
-    * object of the custom `T` type itself). This way [[Input]] and [[Output]] implementations may support other
-    * native types than the ones supported by default by [[Input]] and [[Output]] interfaces.
+    * The custom type is identified by an instance of `TypeMarker` which is usually an object (e.g. companion
+    * object of the custom `T` type itself). This way `Input` and `Output` implementations may support other
+    * native types than the ones supported by default by `Input` and `Output` interfaces.
     *
-    * Codecs may use this method to optimize encoded format in case it it possible with particular [[Input]]
-    * implementation. [[GenCodec]] may generally assume that if the data was written by a corresponding [[Output]]
+    * Codecs may use this method to optimize encoded format in case it it possible with particular `Input`
+    * implementation. `GenCodec` may generally assume that if the data was written by a corresponding `Output`
     * which also support this custom native type then `readCustom` should return non-empty value.
     *
     * `Opt.Empty` returned by this method indicates that this input does not support this particular type.
-    * If it supports it but there was some error reading it then a [[ReadFailure]] should be thrown instead of
+    * If it supports it but there was some error reading it then a `ReadFailure` should be thrown instead of
     * returning `Opt.Empty`.
     */
   def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] = Opt.Empty
@@ -203,7 +203,7 @@ trait Input extends Any {
 }
 
 /**
-  * Represents an abstract source of primitive (or "simple") values. May be obtained from [[Input]].
+  * Represents an abstract source of primitive (or "simple") values. May be obtained from `Input`.
   */
 trait SimpleInput extends Any {
   def readString(): String
@@ -232,7 +232,7 @@ trait SequentialInput extends Any {
 /**
   * Represents an abstract source of sequence of values that can be deserialized.
   * [[ListInput]] instance is stateful and MUST be read strictly sequentially. This means, you MUST fully exhaust
-  * an [[Input]] instance returned by `nextElement()` before calling `nextElement()` again. For this reason,
+  * an `Input` instance returned by `nextElement()` before calling `nextElement()` again. For this reason,
   * [[ListInput]] is not an `Iterator` despite having similar interface
   * (`Iterator` would easily allow e.g. conversion to `List[Input]` which would be illegal).
   * <p/>
@@ -328,7 +328,7 @@ trait ObjectInput extends Any with SequentialInput { self =>
 }
 
 /**
-  * An [[Input]] representing an object field. The same as [[Input]] but also provides field name.
+  * An `Input` representing an object field. The same as `Input` but also provides field name.
   */
 trait FieldInput extends Input {
   def fieldName: String
