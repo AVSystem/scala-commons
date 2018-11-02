@@ -33,6 +33,50 @@ abstract class ApplyUnapplyCodec[T](
       writeField(output, idx, value)
     }
 
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Boolean): Unit =
+    deps(idx) match {
+      case GenCodec.BooleanCodec => output.writeField(fieldNames(idx)).writeSimple().writeBoolean(value)
+      case codec: GenCodec[Boolean@unchecked] => writeField(fieldNames(idx), output, value, codec)
+    }
+
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Boolean, transient: Boolean): Unit =
+    if (value != transient) {
+      writeField(output, idx, value)
+    }
+
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Int): Unit =
+    deps(idx) match {
+      case GenCodec.IntCodec => output.writeField(fieldNames(idx)).writeSimple().writeInt(value)
+      case codec: GenCodec[Int@unchecked] => writeField(fieldNames(idx), output, value, codec)
+    }
+
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Int, transient: Int): Unit =
+    if (value != transient) {
+      writeField(output, idx, value)
+    }
+
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Long): Unit =
+    deps(idx) match {
+      case GenCodec.LongCodec => output.writeField(fieldNames(idx)).writeSimple().writeLong(value)
+      case codec: GenCodec[Long@unchecked] => writeField(fieldNames(idx), output, value, codec)
+    }
+
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Long, transient: Long): Unit =
+    if (value != transient) {
+      writeField(output, idx, value)
+    }
+
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Double): Unit =
+    deps(idx) match {
+      case GenCodec.DoubleCodec => output.writeField(fieldNames(idx)).writeSimple().writeDouble(value)
+      case codec: GenCodec[Double@unchecked] => writeField(fieldNames(idx), output, value, codec)
+    }
+
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Double, transient: Double): Unit =
+    if (value != transient) {
+      writeField(output, idx, value)
+    }
+
   protected final def getField[A](fieldValues: FieldValues, idx: Int, default: => A): A =
     fieldValues.getOrElse[A](idx, default)
 

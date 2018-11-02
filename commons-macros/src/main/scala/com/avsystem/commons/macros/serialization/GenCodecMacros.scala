@@ -127,6 +127,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   def isTransientDefault(param: ApplyParam): Boolean =
     param.defaultValue.nonEmpty && hasAnnotation(param.sym, TransientDefaultAnnotType)
 
+  def isOptimizedPrimitive(param: ApplyParam): Boolean = {
+    val vt = param.valueType
+    vt =:= typeOf[Boolean] || vt =:= typeOf[Int] || vt =:= typeOf[Long] || vt =:= typeOf[Double]
+  }
+
   def isOutOfOrder(sym: Symbol): Boolean =
     hasAnnotation(sym, OutOfOrderAnnotType)
 
@@ -182,7 +187,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         def writeField(value: Tree): Tree = {
           val writeArgs = q"output" :: q"${p.idx}" :: value ::
             (if (isTransientDefault(p)) List(p.defaultValue) else Nil)
-          q"writeField[${p.valueType}](..$writeArgs)"
+          q"writeField(..$writeArgs)"
         }
 
         if (canUseFields)
@@ -196,7 +201,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         def writeField(p: ApplyParam, value: Tree): Tree = {
           val writeArgs = q"output" :: q"${p.idx}" :: value ::
             (if (isTransientDefault(p)) List(p.defaultValue) else Nil)
-          q"writeField[${p.valueType}](..$writeArgs)"
+          q"writeField(..$writeArgs)"
         }
 
         if (canUseFields)
@@ -245,7 +250,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       def generatedWrite(sym: Symbol): Tree =
         q"writeField(${nameBySym(sym)}, output, ${mkParamLessCall(q"value", sym)}, ${genDepNames(sym)})"
 
-      val useProductCodec = canUseFields && generated.isEmpty && !params.exists(isTransientDefault)
+      val useProductCodec = canUseFields && generated.isEmpty && !params.exists(isTransientDefault) &&
+        (isScalaJs || !params.exists(isOptimizedPrimitive))
+
       val baseClass = TypeName(if (useProductCodec) "ProductCodec" else "ApplyUnapplyCodec")
 
       def writeMethod: Tree = if (useProductCodec) q"()" else

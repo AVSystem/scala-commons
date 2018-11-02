@@ -69,7 +69,7 @@ trait MacroCommons { bundle =>
   final def BIndexedSeqClass: Symbol = BIndexedSeqTpe.typeSymbol
 
   final lazy val isScalaJs =
-    definitions.ScalaPackageClass.toType.member(TermName("scalajs")) != NoSymbol
+    c.compilerSettings.exists(o => o.startsWith("-Xplugin:") && o.contains("scalajs-compiler"))
 
   final lazy val ownerChain = {
     val sym = typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
