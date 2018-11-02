@@ -316,7 +316,8 @@ abstract class ErrorReportingCodec[T] extends GenCodec[T] {
     throw new ReadFailure(s"Cannot read $typeRepr, $caseFieldName field is missing")
 
   protected final def notSingleField(empty: Boolean) =
-    throw new ReadFailure(s"Cannot read $typeRepr, expected object with exactly one field but got ${if (empty) "empty object" else "more than one"}")
+    throw new ReadFailure(s"Cannot read $typeRepr, expected object with exactly one field but got " +
+      (if (empty) "empty object" else "more than one"))
 
   protected final def unapplyFailed =
     throw new WriteFailure(s"Could not write $typeRepr, unapply/unapplySeq returned false or empty value")
