@@ -10,7 +10,7 @@ import com.avsystem.commons.redis.protocol._
 
 import scala.collection.mutable.ListBuffer
 
-trait GeoApi extends ValueApiSubset {
+trait GeoApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/geoadd GEOADD]] */
   def geoadd(key: Key, member: Value, point: GeoPoint): Result[Boolean] =
     execute(new Geoadd(key, (member, point).single).map(_ > 0))

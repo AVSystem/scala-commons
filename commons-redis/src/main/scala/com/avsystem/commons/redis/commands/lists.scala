@@ -4,7 +4,7 @@ package redis.commands
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
-trait ListsApi extends ValueApiSubset {
+trait ListsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/lindex LINDEX]] */
   def lindex(key: Key, index: Long): Result[Opt[Value]] =
     execute(new Lindex(key, index))

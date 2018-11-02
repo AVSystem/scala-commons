@@ -133,9 +133,9 @@ you are using. They can differ in following ways:
   method directly (without wrapping into a `Future`). There are also API variants which return command results as 
   "unexecuted" [`RedisBatch`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisBatch.html) 
   objects that need to be manually passed to the client for execution.
-* representation of keys, hash keys and values
+* representation of keys, hash fields, values and records
 
-  Redis internally stores keys, hash keys and data as arbitrary byte sequences, but on Scala level we don't usually want
+  Redis internally stores keys, has fields and data as arbitrary byte sequences, but on Scala level we don't usually want
   to deal with raw binary data. Therefore, the driver allows you to use any types as long as you specify how they are 
   serialized to binary form. Every API object is bound to particular key type, hash key type and value type.
   

@@ -38,7 +38,7 @@ object ApiCustomizationExample extends App {
     implicit val codec: GenCodec[Person] = GenCodec.materialize[Person]
   }
 
-  val personApi = new RedisApi.Node.Async[String, String, Person, Map[String, String]](client)
+  val personApi = RedisApi.Node.Async.StringTyped(client).valueType[Person]
 
   def storePerson(person: Person): Future[Boolean] =
     personApi.set(person.name, person)

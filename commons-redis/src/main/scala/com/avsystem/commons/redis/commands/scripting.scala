@@ -12,7 +12,7 @@ import com.avsystem.commons.redis.protocol.ValidRedisMsg
 import com.github.ghik.silencer.silent
 import com.google.common.hash.Hashing
 
-trait KeyedScriptingApi extends ValueApiSubset {
+trait KeyedScriptingApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/eval EVAL]] */
   def eval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value]): Result[T] =
     execute(new Eval(script, keys, args))

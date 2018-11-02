@@ -4,7 +4,7 @@ package redis.commands
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
-trait HashesApi extends FieldValueApiSubset with RecordApiSubset {
+trait HashesApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/hdel HDEL]] */
   def hdel(key: Key, field: Field): Result[Boolean] =
     execute(new Hdel(key, field.single).map(_ > 0))

@@ -12,7 +12,7 @@ import com.avsystem.commons.redis.protocol._
   * Author: ghik
   * Created: 06/04/16.
   */
-trait KeyedKeysApi extends FieldValueApiSubset {
+trait KeyedKeysApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/del DEL]] */
   def del(key: Key): Result[Boolean] =
     execute(new Del(key.single).map(_ > 0))
