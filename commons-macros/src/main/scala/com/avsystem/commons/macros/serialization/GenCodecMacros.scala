@@ -187,7 +187,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         def writeField(value: Tree): Tree = {
           val writeArgs = q"output" :: q"${p.idx}" :: value ::
             (if (isTransientDefault(p)) List(p.defaultValue) else Nil)
-          q"writeField(..$writeArgs)"
+          val writeTargs = if(isOptimizedPrimitive(p)) Nil else List(p.valueType)
+          q"writeField[..$writeTargs](..$writeArgs)"
         }
 
         if (canUseFields)
@@ -201,7 +202,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         def writeField(p: ApplyParam, value: Tree): Tree = {
           val writeArgs = q"output" :: q"${p.idx}" :: value ::
             (if (isTransientDefault(p)) List(p.defaultValue) else Nil)
-          q"writeField(..$writeArgs)"
+          val writeTargs = if(isOptimizedPrimitive(p)) Nil else List(p.valueType)
+          q"writeField[..$writeTargs](..$writeArgs)"
         }
 
         if (canUseFields)
