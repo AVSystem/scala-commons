@@ -47,7 +47,6 @@ abstract class OutputWrapper extends Output {
 abstract class SimpleOutputWrapper extends SimpleOutput {
   protected def wrapped: SimpleOutput
 
-  def writeNull(): Unit = wrapped.writeNull()
   def writeString(str: String): Unit = wrapped.writeString(str)
   def writeBoolean(boolean: Boolean): Unit = wrapped.writeBoolean(boolean)
   def writeInt(int: Int): Unit = wrapped.writeInt(int)
