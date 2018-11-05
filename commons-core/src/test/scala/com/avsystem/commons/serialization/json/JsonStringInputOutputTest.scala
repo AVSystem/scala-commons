@@ -37,7 +37,8 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
   }
 
   test("raw json object test") {
-    val jsons = IListMap("a" -> "123", "b" -> "null", "c" -> "\"str\"", "d" -> "4.5", "e" -> "[1,2,3]", "f" -> "{\"a\": 123, \"b\": 3.14}")
+    val jsons = IListMap("a" -> "123", "b" -> "null", "c" -> "\"str\"", "d" -> "4.5", "e" -> "[1,2,3]",
+      "f" -> "{\"a\": 123, \"b\": 3.14}")
     val sb = new JStringBuilder
     val output = new JsonStringOutput(sb)
     val oo = output.writeObject()
@@ -219,7 +220,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
 
   test("work with skipping") {
     case class TwoItems(i1: CompleteItem, i2: CompleteItem)
-    implicit val skippingCodec = new GenCodec[TwoItems] {
+    implicit val skippingCodec: GenCodec[TwoItems] = new GenCodec[TwoItems] {
       override def read(input: Input): TwoItems = {
         val obj = input.readObject()
         obj.nextField().skip()
@@ -292,5 +293,9 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
   test("serializing recursively defined case classes with optional field") {
     assert(JsonStringOutput.write(NestedOne()) == "{}")
     assert(JsonStringOutput.write(NestedTwo(None)) == "{}")
+  }
+
+  test("read escaped slash") {
+    assert(JsonStringInput.read[String](""""a\/b"""") == "a/b")
   }
 }

@@ -14,6 +14,7 @@ import scala.collection.{MapLike, mutable}
   * When `caseInsensitive = true`, fetching values by name will be case-insensitive, i.e. keys in internal
   * hashmap and those passed to `contains`, `isDefinedAt`, `apply` and `applyOrElse` will be lowercased.
   */
+//TODO: this way of handling case sensitivity is horrible, change it
 final class Mapping[+V](private val wrapped: IIterable[(String, V)], caseInsensitive: Boolean = false)
   extends IMap[String, V] with MapLike[String, V, Mapping[V]] {
 

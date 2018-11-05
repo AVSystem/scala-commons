@@ -1071,6 +1071,32 @@ trait MacroCommons { bundle =>
           s"it resides in separate file than macro invocation and has no @positioned annotation")
       })
 
+  def innerTypeSymbols(tpe: Type): Set[Symbol] = {
+    val result = Set.newBuilder[Symbol]
+    tpe.foreach {
+      case PolyType(tparams, _) =>
+        result ++= tparams
+      case ExistentialType(quantified, _) =>
+        result ++= quantified
+      case RefinedType(_, scope) =>
+        result ++= scope.iterator.filter(_.isType)
+      case _ =>
+    }
+    result.result()
+  }
+
+  def outerTypeParamsIn(tpe: Type): List[Symbol] = {
+    val innerTparams = innerTypeSymbols(tpe)
+    val result = new ListBuffer[Symbol]
+    tpe.foreach { t =>
+      val ts = t.typeSymbol
+      if ((ts.isParameter || (!ts.isClass && ts.isType && ts.isAbstract)) && !innerTparams.contains(ts)) {
+        result += ts
+      }
+    }
+    result.result()
+  }
+
   def knownSubtypes(tpe: Type, ordered: Boolean = false): Option[List[Type]] = measure("knownSubtypes") {
     val dtpe = tpe.dealias
     val (tpeSym, refined) = dtpe match {

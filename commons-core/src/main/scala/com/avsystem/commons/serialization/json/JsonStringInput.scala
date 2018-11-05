@@ -296,6 +296,7 @@ final class JsonReader(val json: String) {
           val unesc = read() match {
             case '"' => '"'
             case '\\' => '\\'
+            case '/' => '/'
             case 'b' => '\b'
             case 'f' => '\f'
             case 'n' => '\n'

@@ -303,11 +303,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         ${tpe.toString},
         ${typeOf[Null] <:< tpe},
         ${mkArray(StringCls, subtypes.map(st => targetNameBySym(st.sym)))},
-        ${mkArray(tq"$ClassCls[_ <: $tpe]", subtypes.map(st => q"classOf[${st.tpe}]"))}
+        ${mkArray(tq"$ClassCls[_]", subtypes.map(st => q"classOf[${st.tpe}]"))}
       ) {
         def caseDependencies = {
           ..${cachedImplicitDeclarations((n, b) => q"val $n = $b")}
-          ${mkArray(tq"$GenCodecCls[_ <: $tpe]", subtypes.map(_.instance))}
+          ${mkArray(tq"$GenCodecCls[_]", subtypes.map(_.instance))}
         }
       }
      """
@@ -415,7 +415,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         ${tpe.toString},
         ${typeOf[Null] <:< tpe},
         ${mkArray(StringCls, caseInfos.map(_.caseName))},
-        ${mkArray(tq"$ClassCls[_ <: $tpe]", caseInfos.map(_.classOf))},
+        ${mkArray(tq"$ClassCls[_]", caseInfos.map(_.classOf))},
         ${mkArray(StringCls, oooParamNames)},
         $SetObj(..$caseDependentFieldNames),
         $caseFieldName,
@@ -423,7 +423,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         ${defaultCase.exists(_.transientCase)}
       ) {
         ..$cachedImplicitDeclarations
-        def caseDependencies = ${mkArray(tq"$GenCodecObj.OOOFieldsObjectCodec[_ <: $tpe]", caseInfos.map(_.depInstance))}
+        def caseDependencies = ${mkArray(tq"$GenCodecObj.OOOFieldsObjectCodec[_]", caseInfos.map(_.depInstance))}
         def oooDependencies = ${mkArray(tq"$GenCodecCls[_]", oooDependencies)}
       }
     """

@@ -35,8 +35,7 @@ object JsonDateFormat {
 /**
   * Adjusts format of JSON produced by [[JsonStringOutput]].
   *
-  * @param indentSize   Number of spaces to indent every object field and array element with. When undefined, resulting
-  *                     JSON is compact - it contains no whitespaces.
+  * @param formatting   JSON formatting options, controls how whitespace is added to JSON output
   * @param asciiOutput  when set, all non-ASCII characters in strings will be unicode-escaped
   * @param mathContext  `MathContext` used when deserializing `BigDecimal`s
   * @param dateFormat   format used to represent timestamps

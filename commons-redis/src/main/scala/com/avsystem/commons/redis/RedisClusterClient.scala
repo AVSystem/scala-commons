@@ -146,7 +146,7 @@ final class RedisClusterClient(
         case Opt.Empty => Future.successful(reply)
         case Opt((delay, nextStrat)) =>
           val result = DelayedFuture(delay).flatMapNow(_ => state.clientForSlot(slot).executeRaw(pack).mapNow(_.apply(0)))
-          handleRedirection(pack, slot, result, config.redirectionRetryStrategy, nextStrat)
+          handleRedirection(pack, slot, result, config.redirectionStrategy, nextStrat)
       }
       case _ => result
     } recoverWithNow {
@@ -282,7 +282,7 @@ final class RedisClusterClient(
     val slot = determineSlot(pack)
     val client = currentState.clientForSlot(slot)
     val result = client.executeRaw(pack).mapNow(_.apply(0))
-    handleRedirection(pack, slot, result, config.redirectionRetryStrategy, config.tryagainStrategy)
+    handleRedirection(pack, slot, result, config.redirectionStrategy, config.tryagainStrategy)
       .mapNow(PacksResult.Single)
   }
 
@@ -298,7 +298,7 @@ final class RedisClusterClient(
       val result = resultsByNode.getOrElseUpdate(client,
         barrier.future.flatMapNow(_ => client.executeRaw(CollectionPacks(packBuffer)))
       ).mapNow(_.apply(idx))
-      handleRedirection(pack, slot, result, config.redirectionRetryStrategy, config.tryagainStrategy)
+      handleRedirection(pack, slot, result, config.redirectionStrategy, config.tryagainStrategy)
     }
 
     val results = new ArrayBuffer[Future[RedisReply]]
