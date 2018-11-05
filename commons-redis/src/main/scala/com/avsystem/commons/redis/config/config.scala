@@ -28,9 +28,11 @@ import scala.concurrent.duration._
   * @param nodesToQueryForState        function that determines how many randomly selected masters should be queried
   *                                    for cluster state during routine state refresh operation. The function takes
   *                                    current number of known masters as its argument.
-  * @param maxRedirections             maximum number of consecutive redirections automatically handled by
-  *                                    [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
-  *                                    When set to 0, redirections are not handled at all.
+  * @param redirectionStrategy         [[RetryStrategy]] that controls Redis Cluster redirection handling
+  *                                    (`MOVED` and `ASK` responses).
+  * @param tryagainStrategy            [[RetryStrategy]] that controls retrying commands which failed with
+  *                                    `TRYAGAIN` error which may be returned for multikey commands during
+  *                                    cluster slot migration.
   * @param nodeClientCloseDelay        Delay after which [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]]
   *                                    is closed when it's master leaves cluster state (goes down or becomes a slave).
   *                                    Note that the node client is NOT operational during that delay. Trying to
@@ -48,7 +50,7 @@ case class ClusterConfig(
   autoRefreshInterval: FiniteDuration = 5.seconds,
   minRefreshInterval: FiniteDuration = 1.seconds,
   nodesToQueryForState: Int => Int = _ min 5,
-  redirectionRetryStrategy: RetryStrategy = RetryStrategy.times(3),
+  redirectionStrategy: RetryStrategy = RetryStrategy.times(3),
   tryagainStrategy: RetryStrategy = exponentially(10.millis).maxDelay(5.seconds).maxTotal(1.minute),
   nodeClientCloseDelay: FiniteDuration = 1.seconds,
   fallbackToSingleNode: Boolean = false

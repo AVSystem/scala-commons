@@ -3,6 +3,9 @@ package redis.config
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
+/**
+  * A `RetryStrategy` is conceptually a lazy sequence of delays, possibly infinite.
+  */
 trait RetryStrategy { self =>
   /**
     * Determines a delay that will be waited before retrying some operation that failed (e.g. Redis connection attempt)
@@ -11,15 +14,24 @@ trait RetryStrategy { self =>
     */
   def nextRetry: Opt[(FiniteDuration, RetryStrategy)]
 
+  /**
+    * Concatenates two retry strategies, understood as lazy sequences of delays.
+    */
   def andThen(otherStrategy: RetryStrategy): RetryStrategy =
     RetryStrategy(self.nextRetry match {
       case Opt((delay, nextStrat)) => Opt((delay, nextStrat andThen otherStrategy))
       case Opt.Empty => otherStrategy.nextRetry
     })
 
+  /**
+    * Limits the maximum delay between retries to some specified duration.
+    */
   def maxDelay(duration: FiniteDuration): RetryStrategy =
     RetryStrategy(self.nextRetry.map { case (delay, retry) => (delay min duration, retry.maxDelay(duration)) })
 
+  /**
+    * Limits the maximum total duration (sum of retry delays) to some specified duration.
+    */
   def maxTotal(duration: FiniteDuration): RetryStrategy =
     RetryStrategy(self.nextRetry.collect {
       case (delay, nextStrat) =>
@@ -27,10 +39,17 @@ trait RetryStrategy { self =>
         else (duration, RetryStrategy.never)
     })
 
+  /**
+    * Limits the maximum number of retries to some specified number.
+    */
   def maxRetries(retries: Int): RetryStrategy =
     if (retries <= 0) RetryStrategy.never
     else RetryStrategy(self.nextRetry.map { case (delay, nextStrat) => (delay, nextStrat.maxRetries(retries - 1)) })
 
+  /**
+    * Randomizes delays. Each delay is multiplied by a factor which is randomly and uniformly choosen from
+    * specified segment `[minFactor, maxFactor)` (e.g. 0.9 to 1.1)
+    */
   def randomized(minFactor: Double, maxFactor: Double): RetryStrategy =
     RetryStrategy(self.nextRetry.flatMap { case (delay, nextStrat) =>
       val factor = minFactor + (maxFactor - minFactor) * math.random
