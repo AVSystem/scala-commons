@@ -8,17 +8,17 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{FunSuite, Matchers}
 
-import scala.concurrent.duration._
 import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class RedisClusterClientNonClusteredInitTest extends FunSuite
   with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer {
 
   import RedisApi.Batches.StringTyped._
 
-  override def password = "pass".opt
+  override def password: Opt[String] = "pass".opt
 
-  def createClient(port: Int, pass: String, fallbackToSingleNode: Boolean = false) = {
+  def createClient(port: Int, pass: String, fallbackToSingleNode: Boolean = false): RedisClusterClient = {
     val connConfig = ConnectionConfig(initCommands = auth(pass))
     val nodeConfig = NodeConfig(connectionConfigs = _ => connConfig)
     val config = ClusterConfig(
@@ -59,9 +59,8 @@ class RedisClusterClientInitTest extends FunSuite
 
   import RedisApi.Batches.StringTyped._
 
-  def createClient(ports: Int*) = {
+  def createClient(ports: Int*): RedisClusterClient =
     new RedisClusterClient(ports.map(p => NodeAddress(port = p)))
-  }
 
   test("client init test") {
     val client = createClient(ports.head)
@@ -91,7 +90,7 @@ class RedisClusterClientInitDuringFailureTest extends FunSuite
 
     val client = createClient(ports.head, ports.head + 1)
     client.initialized.futureValue shouldBe client
-    client.executeBatch(get(slotKey(0)), ExecutionConfig(timeout = 120.seconds)).futureValue shouldBe Opt.Empty
+    client.executeBatch(get(slotKey(0)), ExecutionConfig(responseTimeout = 120.seconds)).futureValue shouldBe Opt.Empty
   }
 }
 
@@ -154,9 +153,10 @@ class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
   import RedisApi.Batches.StringTyped._
 
   // don't refresh cluster state
-  override def clusterConfig = super.clusterConfig.copy(minRefreshInterval = Int.MaxValue.seconds)
+  override def clusterConfig: ClusterConfig =
+    super.clusterConfig.copy(minRefreshInterval = Int.MaxValue.seconds)
 
-  override protected def beforeAll() = {
+  override protected def beforeAll(): Unit = {
     super.beforeAll()
     Await.result(migrateSlot(0, 7000), Duration.Inf)
     Await.result(migrateSlot(1, 7000, incomplete = true), Duration.Inf)
@@ -187,6 +187,34 @@ class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
     val batch = slots.map(s => get(slotKey(s))).sequence
     batch.assertEquals(slots.map(_ => Opt.Empty))
   }
+
+  test("TRYAGAIN after redirection") {
+    val k1 = s"{${slotKey(1)}}1"
+    val k2 = s"{${slotKey(1)}}2"
+    val mgetFut = mget(k1, k2).exec
+    val txFut = (get(k1), get(k2)).sequence.transaction.exec
+    Thread.sleep(500)
+    (set(k1, "v1"), set(k2, "v2")).sequence.get
+    assert(mgetFut.futureValue == Seq("v1".opt, "v2".opt))
+    assert(txFut.futureValue == ("v1".opt, "v2".opt))
+    assert(listener.result().contains("-TRYAGAIN"))
+  }
+
+  test("TRYAGAIN before redirection") {
+    Await.result(set(s"{${slotKey(2)}}1", "v1").exec, Duration.Inf)
+    Await.result(migrateSlot(2, 7000, incomplete = true, withoutData = true), Duration.Inf)
+
+    val k1 = s"{${slotKey(2)}}1"
+    val k2 = s"{${slotKey(2)}}2"
+    val mgetFut = mget(k1, k2).exec
+    val txFut = (get(k1), get(k2)).sequence.transaction.exec
+    Thread.sleep(500)
+    val targetAddress = redisClient.currentState.clientForSlot(7000).address
+    (migrate(Seq(k1), targetAddress, 0, 1000), set(k2, "v2")).sequence.assertEquals((true, true))
+    assert(mgetFut.futureValue == Seq("v1".opt, "v2".opt))
+    assert(txFut.futureValue == ("v1".opt, "v2".opt))
+    assert(listener.result().contains("-TRYAGAIN"))
+  }
 }
 
 class ClusterFailoverHandlingTest extends RedisClusterCommandsSuite {
@@ -194,9 +222,9 @@ class ClusterFailoverHandlingTest extends RedisClusterCommandsSuite {
   import RedisApi.Batches.StringTyped._
 
   // don't refresh cluster state
-  override def clusterConfig = super.clusterConfig.copy(minRefreshInterval = Int.MaxValue.seconds)
+  override def clusterConfig: ClusterConfig = super.clusterConfig.copy(minRefreshInterval = Int.MaxValue.seconds)
 
-  override protected def beforeAll() = {
+  override protected def beforeAll(): Unit = {
     super.beforeAll()
     val slaveClient = new RedisConnectionClient(NodeAddress(port = 9001))
     def failover(delay: FiniteDuration = Duration.Zero): Future[Unit] = for {

@@ -50,7 +50,7 @@ object ErrorMsg {
 final case class IntegerMsg(value: Long) extends ValidRedisMsg
 case object NullBulkStringMsg extends ValidRedisMsg
 sealed case class BulkStringMsg(string: ByteString) extends ValidRedisMsg {
-  override def toString = s"$productPrefix(${RedisMsg.escape(string)})"
+  override def toString: String = s"$productPrefix(${RedisMsg.escape(string)})"
   def isCommandKey: Boolean = false
 }
 final class CommandKeyMsg(key: ByteString) extends BulkStringMsg(key) {
@@ -58,7 +58,7 @@ final class CommandKeyMsg(key: ByteString) extends BulkStringMsg(key) {
 }
 object CommandKeyMsg {
   def apply(key: ByteString): CommandKeyMsg = new CommandKeyMsg(key)
-  def unapply(keyBulkStringMsg: CommandKeyMsg): Opt[CommandKeyMsg] = Opt(keyBulkStringMsg)
+  def unapply(keyBulkStringMsg: CommandKeyMsg): Opt[ByteString] = Opt(keyBulkStringMsg.string)
 }
 case object NullArrayMsg extends ValidRedisMsg
 final case class ArrayMsg[+E <: RedisMsg](elements: IndexedSeq[E]) extends ValidRedisMsg
@@ -74,6 +74,7 @@ object SimpleStringStr {
 object RedisMsg {
   val Ok = SimpleStringMsg(ByteString("OK"))
   val Queued = SimpleStringMsg(ByteString("QUEUED"))
+  val Nokey = SimpleStringMsg(ByteString("NOKEY"))
 
   def escape(bs: ByteString, quote: Boolean = true): String = {
     val sb = new StringBuilder(if (quote) "\"" else "")

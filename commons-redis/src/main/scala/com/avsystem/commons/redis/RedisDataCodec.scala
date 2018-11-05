@@ -2,9 +2,12 @@ package com.avsystem.commons
 package redis
 
 import akka.util.ByteString
-import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
-import com.avsystem.commons.redis.util.ByteStringSerialization
-import com.avsystem.commons.serialization.GenCodec
+import com.avsystem.commons.redis.protocol.BulkStringMsg
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
+import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Typeclass which expresses that values of some type are serializable to binary form (`ByteString`) and deserializable
@@ -25,21 +28,115 @@ object RedisDataCodec extends LowPriorityRedisDataCodecs {
   def read[T](raw: ByteString)(implicit rdc: RedisDataCodec[T]): T = rdc.read(raw)
 
   implicit val ByteStringCodec: RedisDataCodec[ByteString] = RedisDataCodec(identity, identity)
-  implicit val ByteArrayCodec: RedisDataCodec[Array[Byte]] = RedisDataCodec(_.toArray, ByteString(_))
-  implicit val StringCodec: RedisDataCodec[String] = RedisDataCodec(_.utf8String, ByteString(_))
-  implicit val BooleanKeyCodec: RedisDataCodec[Boolean] = RedisDataCodec(bs => bs.utf8String.toInt != 0, b => ByteString(if (b) "1" else "0"))
-  implicit val CharCodec: RedisDataCodec[Char] = RedisDataCodec(_.utf8String.charAt(0), v => ByteString(v.toString))
-  implicit val ByteCodec: RedisDataCodec[Byte] = RedisDataCodec(_.utf8String.toByte, v => ByteString(v.toString))
-  implicit val ShortCodec: RedisDataCodec[Short] = RedisDataCodec(_.utf8String.toShort, v => ByteString(v.toString))
-  implicit val IntCodec: RedisDataCodec[Int] = RedisDataCodec(_.utf8String.toInt, v => ByteString(v.toString))
-  implicit val LongCodec: RedisDataCodec[Long] = RedisDataCodec(_.utf8String.toLong, v => ByteString(v.toString))
-  implicit val FloatCodec: RedisDataCodec[Float] = RedisDataCodec(_.utf8String.toFloat, v => ByteString(v.toString))
-  implicit val DoubleCodec: RedisDataCodec[Double] = RedisDataCodec(_.utf8String.toDouble, v => ByteString(v.toString))
-  implicit val NothingCodec: RedisDataCodec[Nothing] = new RedisDataCodec[Nothing](_ => sys.error("nothing"), _ => sys.error("nothing"))
-  implicit def namedEnumCodec[E <: NamedEnum](implicit companion: NamedEnumCompanion[E]): RedisDataCodec[E] =
-    RedisDataCodec(bs => companion.byName(bs.utf8String), v => ByteString(v.name))
 }
 trait LowPriorityRedisDataCodecs { this: RedisDataCodec.type =>
   implicit def fromGenCodec[T: GenCodec]: RedisDataCodec[T] =
-    RedisDataCodec(bytes => ByteStringSerialization.read(bytes), value => ByteStringSerialization.write(value))
+    RedisDataCodec(bytes => RedisDataInput.read(bytes), value => RedisDataOutput.write(value))
+}
+
+object RedisDataUtils {
+  final val Null = ByteString(0)
+}
+
+object RedisDataOutput {
+  def write[T: GenCodec](value: T): ByteString = {
+    var bs: ByteString = null
+    GenCodec.write(new RedisDataOutput(bs = _), value)
+    bs
+  }
+}
+
+final class RedisDataOutput(consumer: ByteString => Unit) extends Output {
+  private def writeBytes(bytes: ByteString): Unit =
+    if (bytes.headOpt.contains(0: Byte)) consumer(RedisDataUtils.Null ++ bytes)
+    else consumer(bytes)
+
+  def writeNull(): Unit = consumer(RedisDataUtils.Null)
+  def writeBoolean(boolean: Boolean): Unit = writeInt(if (boolean) 1 else 0)
+  def writeString(str: String): Unit = writeBytes(ByteString(str))
+  def writeInt(int: Int): Unit = writeString(int.toString)
+  def writeLong(long: Long): Unit = writeString(long.toString)
+  def writeDouble(double: Double): Unit = writeString(double.toString)
+  def writeBigInt(bigInt: BigInt): Unit = writeString(bigInt.toString)
+  def writeBigDecimal(bigDecimal: BigDecimal): Unit = writeString(bigDecimal.toString)
+  def writeBinary(binary: Array[Byte]): Unit = writeBytes(ByteString(binary))
+
+  def writeList(): ListOutput = new ListOutput {
+    private val sb = new JStringBuilder
+    private val jlo = new JsonStringOutput(sb).writeList()
+
+    def writeElement(): Output = jlo.writeElement()
+    def finish(): Unit = {
+      jlo.finish()
+      consumer(ByteString(sb.toString))
+    }
+  }
+
+  def writeObject(): ObjectOutput = new ObjectOutput {
+    private val sb = new JStringBuilder
+    private val joo = new JsonStringOutput(sb).writeObject()
+
+    def writeField(key: String): Output = joo.writeField(key)
+    def finish(): Unit = {
+      joo.finish()
+      consumer(ByteString(sb.toString))
+    }
+  }
+}
+
+class RedisRecordOutput(buffer: ArrayBuffer[BulkStringMsg]) extends ObjectOutput {
+  def writeField(key: String): Output = {
+    buffer += BulkStringMsg(ByteString(key))
+    new RedisDataOutput(bs => buffer += BulkStringMsg(bs))
+  }
+
+  def finish(): Unit = ()
+}
+
+object RedisDataInput {
+  def read[T: GenCodec](bytes: ByteString): T =
+    GenCodec.read[T](new RedisDataInput(bytes))
+}
+
+class RedisDataInput(bytes: ByteString) extends Input {
+  private lazy val jsonInput = new JsonStringInput(new JsonReader(readBytes().utf8String))
+
+  def isNull: Boolean = bytes == RedisDataUtils.Null
+
+  private def fail(msg: String) = throw new ReadFailure(msg)
+  private def readBytes(): ByteString = bytes match {
+    case RedisDataUtils.Null => fail("null")
+    case _ if bytes.headOpt.contains(0: Byte) => bytes.drop(1)
+    case _ => bytes
+  }
+
+  def readNull(): Null = if (isNull) null else fail("not null")
+  def readString(): String = readBytes().utf8String
+  def readBoolean(): Boolean = readString().toInt > 0
+  def readInt(): Int = readString().toInt
+  def readLong(): Long = readString().toLong
+  def readDouble(): Double = readString().toDouble
+  def readBigInt(): BigInt = BigInt(readString())
+  def readBigDecimal(): BigDecimal = BigDecimal(readString())
+  def readBinary(): Array[Byte] = readBytes().toArray
+
+  def readList(): ListInput = jsonInput.readList()
+  def readObject(): ObjectInput = jsonInput.readObject()
+
+  def skip(): Unit = ()
+}
+
+class RedisFieldDataInput(val fieldName: String, bytes: ByteString)
+  extends RedisDataInput(bytes) with FieldInput
+
+class RedisRecordInput(bulks: IndexedSeq[BulkStringMsg]) extends ObjectInput {
+  private val it = bulks.iterator.map(_.string)
+
+  def nextField(): FieldInput = {
+    val fieldName = it.next.utf8String
+    val bytes = it.next
+    new RedisFieldDataInput(fieldName, bytes)
+  }
+
+  def hasNext: Boolean = it.hasNext
 }

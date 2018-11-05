@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.exception
 
 import com.avsystem.commons.redis.protocol.ErrorMsg
-import com.avsystem.commons.redis.{NodeAddress, RawCommand, Redirection}
+import com.avsystem.commons.redis.{NodeAddress, RawCommand, Redirection, RedisCommand}
 
 class RedisException(msg: String = null, cause: Throwable = null)
   extends RuntimeException(msg, cause)
@@ -29,8 +29,10 @@ class UnexpectedReplyException(msg: String = null)
 /**
   * Thrown when Redis server replies with an error.
   */
-class ErrorReplyException(val reply: ErrorMsg)
-  extends RedisException(reply.errorString.utf8String)
+class ErrorReplyException(val reply: ErrorMsg, val command: RedisCommand[_])
+  extends RedisException(s"Redis replied with error: ${reply.errorString.utf8String}, command: $command") {
+  def errorStr: String = reply.errorString.utf8String
+}
 
 class RedisIOException(msg: String = null, cause: Throwable = null)
   extends RedisException(msg, cause)
@@ -80,6 +82,13 @@ class NodeInitializationFailure(cause: Throwable)
   */
 class ForbiddenCommandException(cmd: RawCommand, client: String)
   extends RedisException(s"This command cannot be executed on $client: $cmd")
+
+/**
+  * Thrown when there is too many concurrent blocking commands being executed on a node
+  * client and blocking connection pool is exhausted.
+  */
+class TooManyConnectionsException(maxPoolSize: Int)
+  extends RedisException(s"Maximum number of blocking connections ($maxPoolSize) was reached")
 
 /**
   * Thrown when [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]] is unable to fetch initial

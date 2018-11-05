@@ -180,13 +180,13 @@ trait NodeKeysApiSuite extends KeyedKeysApiSuite {
   }
 
   apiTest("SORT with GET") {
-    sortGet("somelist", Seq(HashFieldPattern("hash", "*")),
+    sortGet("somelist", Seq(FieldPattern("hash", "*")),
       SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true).assert(_.isEmpty)
   }
 
   apiTest("SORT with BY") {
     sort("somelist", by = SelfPattern).assert(_.isEmpty)
     sort("somelist", by = KeyPattern("sth_*")).assert(_.isEmpty)
-    sort("somelist", by = HashFieldPattern("hash_*", "sth_*")).assert(_.isEmpty)
+    sort("somelist", by = FieldPattern("hash_*", "sth_*")).assert(_.isEmpty)
   }
 }

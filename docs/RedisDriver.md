@@ -2,11 +2,13 @@
 
 `commons-redis` - Scala driver for Redis
 
-**[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/index.html)**
-
 ```scala
 libraryDependencies += "com.avsystem.commons" %% "commons-redis" % avsCommonsVersion
 ```
+
+**[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/index.html)**
+
+**[Quickstart example](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/NodeClientExample.scala)**
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -36,7 +38,7 @@ and characteristics are:
 * good performance
 
 Features: 
-* Redis 3.2 API support (except for pub/sub API and some unsafe or debugging commands like `MONITOR`)
+* Redis 5 API support, excluding pub/sub, `MEMORY` commands and some unsafe/debugging commands like `MONITOR`.
 * three client implementations: for single connection ([`RedisConnectionClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisConnectionClient.html)), 
   connection pool to a single node ([`RedisNodeClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisNodeClient.html)) 
   and for Redis Cluster ([`RedisClusterClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisClusterClient.html)), 
@@ -133,9 +135,9 @@ you are using. They can differ in following ways:
   method directly (without wrapping into a `Future`). There are also API variants which return command results as 
   "unexecuted" [`RedisBatch`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisBatch.html) 
   objects that need to be manually passed to the client for execution.
-* representation of keys, hash keys and values
+* representation of keys, hash fields, values and records
 
-  Redis internally stores keys, hash keys and data as arbitrary byte sequences, but on Scala level we don't usually want
+  Redis internally stores keys, has fields and data as arbitrary byte sequences, but on Scala level we don't usually want
   to deal with raw binary data. Therefore, the driver allows you to use any types as long as you specify how they are 
   serialized to binary form. Every API object is bound to particular key type, hash key type and value type.
   

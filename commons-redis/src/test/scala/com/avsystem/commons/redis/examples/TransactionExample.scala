@@ -2,10 +2,11 @@ package com.avsystem.commons
 package redis.examples
 
 import akka.actor.ActorSystem
-import akka.util.Timeout
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.{NodeRemovedException, OptimisticLockException}
 
+// Global execution context is used for the sake of simplicity of this example,
+// think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
@@ -15,7 +16,7 @@ import scala.concurrent.duration._
   * `MULTI`-`EXEC` block (without optimistic locking), see [[PipeliningExample]] and [[MultiExecExample]].
   */
 object TransactionExample extends App {
-  implicit val actorSystem = ActorSystem()
+  implicit val actorSystem: ActorSystem = ActorSystem()
 
   // In order to execute Redis transaction with optimistic locking, one must execute at least two batches of
   // commands and ensure that they're all executed on the same Redis connection which is exclusively reserved
@@ -30,7 +31,7 @@ object TransactionExample extends App {
   val api = RedisApi.Batches.StringTyped.valueType[Int]
   // a transaction with optimistic locking which multiplies numeric value under key "key" by 3
   val transaction: RedisOp[Unit] = for {
-  // we send WATCH and GET commands in the same batch
+    // we send WATCH and GET commands in the same batch
     value <- api.watch("key") *> api.get("key").map(_.getOrElse(1))
     // SET command is wrapped in a MULTI-EXEC block
     _ <- api.set("key", value * 3).transaction

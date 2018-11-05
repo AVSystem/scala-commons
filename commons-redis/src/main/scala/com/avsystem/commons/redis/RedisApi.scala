@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.ByteString
+import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.redis.config.ExecutionConfig
 
 /**
@@ -37,13 +37,11 @@ import com.avsystem.commons.redis.config.ExecutionConfig
   * Every API variant may also use different types to represent Redis keys, hash keys and values.
   * You can define your own API variants for arbitrary combination of key, hash key and value types
   * as long as there is an instance of [[RedisDataCodec]] for every of these types.
+  * Also, it is possible to customize `Record` type which is used primarily for entries in Redis Stream API.
+  * `Record` type requires [[RedisRecordCodec]] instance.
   *
-  * For example, if you keep only numeric values on a Redis Cluster installation, you might define an API variant
-  * like this one:
-  * {{{
-  *   class NumericKeyedAsyncApi(executor: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-  *     extends RedisApi.Keyed.Async[String,String,Long](executor, config)
-  * }}}
+  * Key, field, value and record types and their serialization typeclass instances are enapsulated by
+  * [[RedisSerialization]] instances. API variants are then parameterized with them.
   *
   * API variants which use only `String`s (textual) or only `ByteString`s (binary) are already implemented by the driver, e.g.
   * [[RedisApi.Keyed.Async.StringTyped]], [[RedisApi.Batches.BinaryTyped]].
@@ -76,215 +74,171 @@ import com.avsystem.commons.redis.config.ExecutionConfig
   * }}}
   */
 object RedisApi {
-  class Raw[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec]
-    extends AbstractRedisApi[Raw, Key, HashKey, Value] with RedisConnectionApi with RedisRawApi {
-    def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-      new Raw[K, H, V]()(newKeyCodec, newHashKeyCodec, newValueCodec)
+  class Raw[S <: RedisSerialization](val serialization: S)
+    extends AbstractRedisApi[S] with RedisConnectionApi with RedisRawApi {
+
+    type Self[S0 <: RedisSerialization] = Raw[S0]
+    def withSerialization[S0 <: RedisSerialization](ser: S0): Raw[S0] = new Raw(ser)
   }
+
   /**
     * Entry point for API variants which return [[RawCommand]]s.
     */
   object Raw {
-    object StringTyped extends Raw[String, String, String]
-    object BinaryTyped extends Raw[ByteString, ByteString, ByteString]
+    def apply[S <: RedisSerialization : ValueOf]: Raw[S] = new Raw(ValueOf[S])
+
+    final val StringTyped = apply[RedisSerialization.Strings.type]
+    final val BinaryTyped = apply[RedisSerialization.ByteStrings.type]
   }
 
-  class Batches[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec]
-    extends AbstractRedisApi[Batches, Key, HashKey, Value] with RedisConnectionApi with RedisBatchApi {
-    def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-      new Batches[K, H, V]()(newKeyCodec, newHashKeyCodec, newValueCodec)
+  class Batches[S <: RedisSerialization](val serialization: S)
+    extends AbstractRedisApi[S] with RedisConnectionApi with RedisBatchApi {
+
+    type Self[S0 <: RedisSerialization] = Batches[S0]
+    def withSerialization[S0 <: RedisSerialization](ser: S0): Batches[S0] = new Batches(ser)
   }
+
   /**
     * Entry point for API variants which return [[RedisBatch]]es.
     */
   object Batches {
-    object StringTyped extends Batches[String, String, String]
-    object BinaryTyped extends Batches[ByteString, ByteString, ByteString]
+    def apply[S <: RedisSerialization : ValueOf]: Batches[S] = new Batches(ValueOf[S])
+
+    final val StringTyped = apply[RedisSerialization.Strings.type]
+    final val BinaryTyped = apply[RedisSerialization.ByteStrings.type]
   }
 
   /**
     * Entry point for API variants which expose only keyed commands.
     */
-  object Keyed {
-    class Async[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](
-      val executor: RedisKeyedExecutor,
-      val execConfig: ExecutionConfig = ExecutionConfig.Default
-    ) extends AbstractRedisApi[Async, Key, HashKey, Value] with RedisRecoverableKeyedApi with RedisAsyncApi {
-      def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Async[K, H, V](executor, execConfig)(newKeyCodec, newHashKeyCodec, newValueCodec)
-    }
-    /**
-      * Entry point for API variants which execute commands using [[RedisKeyedExecutor]] (e.g. [[RedisClusterClient]])
-      * and return results as `Future`s.
-      */
-    object Async {
-      case class StringTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Async[String, String, String](exec, config)
-      case class BinaryTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Async[ByteString, ByteString, ByteString](exec, config)
-    }
+  object Keyed extends ExecutedApis {
+    type RequiredExecutor = RedisKeyedExecutor
 
-    class Blocking[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](
-      val executor: RedisKeyedExecutor,
-      val execConfig: ExecutionConfig = ExecutionConfig.Default
-    ) extends AbstractRedisApi[Blocking, Key, HashKey, Value] with RedisRecoverableKeyedApi with RedisBlockingApi {
-      def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Blocking[K, H, V](executor, execConfig)(newKeyCodec, newHashKeyCodec, newValueCodec)
-    }
-    /**
-      * Entry point for API variants which execute commands using [[RedisKeyedExecutor]] (e.g. [[RedisClusterClient]])
-      * and return results synchronously.
-      */
-    object Blocking {
-      case class StringTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Blocking[String, String, String](exec, config)
-      case class BinaryTyped(exec: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Blocking[ByteString, ByteString, ByteString](exec, config)
-    }
+    case class Async[S <: RedisSerialization](
+      serialization: S,
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig
+    ) extends BaseAsync[S] with RedisRecoverableKeyedApi
+    object Async extends VariantCompanion[Async]
+
+    case class Blocking[S <: RedisSerialization](
+      serialization: S,
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig
+    ) extends BaseBlocking[S] with RedisRecoverableKeyedApi
+    object Blocking extends VariantCompanion[Blocking]
   }
 
   /**
     * Entry point for API variants which expose node-level commands, i.e. the ones that don't access or modify
     * Redis connection state.
     */
-  object Node {
-    class Async[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](
-      val executor: RedisNodeExecutor,
-      val execConfig: ExecutionConfig = ExecutionConfig.Default
-    ) extends AbstractRedisApi[Async, Key, HashKey, Value] with RedisRecoverableNodeApi with RedisAsyncApi {
-      def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Async[K, H, V](executor, execConfig)(newKeyCodec, newHashKeyCodec, newValueCodec)
-    }
-    /**
-      * Entry point for API variants which execute commands using [[RedisNodeExecutor]] (e.g. [[RedisNodeClient]])
-      * and return results as `Future`s.
-      */
-    object Async {
-      case class StringTyped(exec: RedisNodeExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Async[String, String, String](exec, config)
-      case class BinaryTyped(exec: RedisNodeExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Async[ByteString, ByteString, ByteString](exec, config)
-    }
+  object Node extends ExecutedApis {
+    type RequiredExecutor = RedisNodeExecutor
 
-    class Blocking[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](
-      val executor: RedisNodeExecutor,
-      val execConfig: ExecutionConfig = ExecutionConfig.Default
-    ) extends AbstractRedisApi[Blocking, Key, HashKey, Value] with RedisRecoverableNodeApi with RedisBlockingApi {
-      def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Blocking[K, H, V](executor, execConfig)(newKeyCodec, newHashKeyCodec, newValueCodec)
-    }
-    /**
-      * Entry point for API variants which execute commands using [[RedisNodeExecutor]] (e.g. [[RedisNodeClient]])
-      * and return results synchronously.
-      */
-    object Blocking {
-      case class StringTyped(exec: RedisNodeExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Blocking[String, String, String](exec, config)
-      case class BinaryTyped(exec: RedisNodeExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Blocking[ByteString, ByteString, ByteString](exec, config)
-    }
+    case class Async[S <: RedisSerialization](
+      serialization: S,
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig
+    ) extends BaseAsync[S] with RedisRecoverableNodeApi
+    object Async extends VariantCompanion[Async]
+
+    case class Blocking[S <: RedisSerialization](
+      serialization: S,
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig
+    ) extends BaseBlocking[S] with RedisRecoverableNodeApi
+    object Blocking extends VariantCompanion[Blocking]
   }
 
   /**
     * Entry point for API variants which expose all commands, including connection-level ones, i.e. the ones that
     * access or modify Redis connection state.
     */
-  object Connection {
-    class Async[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](
-      val executor: RedisConnectionExecutor,
-      val execConfig: ExecutionConfig = ExecutionConfig.Default
-    ) extends AbstractRedisApi[Async, Key, HashKey, Value] with RedisRecoverableConnectionApi with RedisAsyncApi {
-      def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Async[K, H, V](executor, execConfig)(newKeyCodec, newHashKeyCodec, newValueCodec)
-    }
-    /**
-      * Entry point for API variants which execute commands using [[RedisConnectionExecutor]] (e.g. [[RedisConnectionClient]])
-      * and return results as `Future`s.
-      */
-    object Async {
-      case class StringTyped(exec: RedisConnectionExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Async[String, String, String](exec, config)
-      case class BinaryTyped(exec: RedisConnectionExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Async[ByteString, ByteString, ByteString](exec, config)
-    }
+  object Connection extends ExecutedApis {
+    type RequiredExecutor = RedisConnectionExecutor
 
-    class Blocking[Key: RedisDataCodec, HashKey: RedisDataCodec, Value: RedisDataCodec](
-      val executor: RedisConnectionExecutor,
-      val execConfig: ExecutionConfig = ExecutionConfig.Default
-    ) extends AbstractRedisApi[Blocking, Key, HashKey, Value] with RedisRecoverableConnectionApi with RedisBlockingApi {
-      def copy[K, H, V](newKeyCodec: RedisDataCodec[K], newHashKeyCodec: RedisDataCodec[H], newValueCodec: RedisDataCodec[V]) =
-        new Blocking[K, H, V](executor, execConfig)(newKeyCodec, newHashKeyCodec, newValueCodec)
-    }
-    /**
-      * Entry point for API variants which execute commands using [[RedisConnectionExecutor]] (e.g. [[RedisConnectionClient]])
-      * and return results synchronously.
-      */
-    object Blocking {
-      case class StringTyped(exec: RedisConnectionExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Blocking[String, String, String](exec, config)
-      case class BinaryTyped(exec: RedisConnectionExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-        extends Blocking[ByteString, ByteString, ByteString](exec, config)
-    }
+    case class Async[S <: RedisSerialization](
+      serialization: S,
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig
+    ) extends BaseAsync[S] with RedisRecoverableConnectionApi
+    object Async extends VariantCompanion[Async]
+
+    case class Blocking[S <: RedisSerialization](
+      serialization: S,
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig
+    ) extends BaseBlocking[S] with RedisRecoverableConnectionApi
+    object Blocking extends VariantCompanion[Blocking]
   }
 }
 
-abstract class AbstractRedisApi[Self[K0, H0, V0] <: AbstractRedisApi[Self, K0, H0, V0], K, H, V](implicit
-  val keyCodec: RedisDataCodec[K], val hashKeyCodec: RedisDataCodec[H], val valueCodec: RedisDataCodec[V])
-  extends ApiSubset {
+abstract class AbstractRedisApi[S <: RedisSerialization] extends ApiSubset {
+  type Self[S0 <: RedisSerialization] <: AbstractRedisApi[S0]
+  def withSerialization[S0 <: RedisSerialization](ser: S0): Self[S0]
 
-  type Key = K
-  type HashKey = H
-  type Value = V
+  type WithKey[K] = Self[serialization.WithKey[K]]
+  type WithField[F] = Self[serialization.WithField[F]]
+  type WithValue[V] = Self[serialization.WithValue[V]]
+  type WithRecord[R] = Self[serialization.WithRecord[R]]
 
-  type WithKey[K0] = Self[K0, H, V]
-  type WithHashKey[H0] = Self[K, H0, V]
-  type WithValue[V0] = Self[K, H, V0]
+  final def keyType[K: RedisDataCodec]: WithKey[K] =
+    withSerialization(serialization.keyType[K])
 
-  /**
-    * Changes the type of key used by this API variant to some other type for which an instance of
-    * [[RedisDataCodec]] exists.
-    */
-  def keyType[K0: RedisDataCodec]: WithKey[K0] =
-    copy(newKeyCodec = RedisDataCodec[K0])
+  final def fieldType[F: RedisDataCodec]: WithField[F] =
+    withSerialization(serialization.fieldType[F])
 
-  /**
-    * Changes the type of key used by this API variant to some other type by directly providing
-    * functions which convert between new and old type.
-    */
-  def transformKey[K0](read: K => K0)(write: K0 => K): WithKey[K0] =
-    copy(newKeyCodec = RedisDataCodec(keyCodec.read andThen read, write andThen keyCodec.write))
+  final def valueType[V: RedisDataCodec]: WithValue[V] =
+    withSerialization(serialization.valueType[V])
 
-  /**
-    * Changes the type of hash key used by this API variant to some other type for which an instance of
-    * [[RedisDataCodec]] exists.
-    */
-  def hashKeyType[H0: RedisDataCodec]: WithHashKey[H0] =
-    copy(newHashKeyCodec = RedisDataCodec[H0])
+  final def recordType[R: RedisRecordCodec]: WithRecord[R] =
+    withSerialization(serialization.recordType[R])
+}
 
-  /**
-    * Changes the type of hash key used by this API variant to some other type by directly providing
-    * functions which convert between new and old type.
-    */
-  def transformHashKey[H0](read: H => H0)(write: H0 => H): WithHashKey[H0] =
-    copy(newHashKeyCodec = RedisDataCodec(hashKeyCodec.read andThen read, write andThen hashKeyCodec.write))
+abstract class ExecutedApis {
+  type RequiredExecutor <: RedisExecutor
 
-  /**
-    * Changes the type of value used by this API variant to some other type for which an instance of
-    * [[RedisDataCodec]] exists.
-    */
-  def valueType[V0: RedisDataCodec]: WithValue[V0] =
-    copy(newValueCodec = RedisDataCodec[V0])
+  type Async[S <: RedisSerialization] <: BaseAsync[S]
+  val Async: VariantCompanion[Async]
 
-  /**
-    * Changes the type of value used by this API variant to some other type by directly providing
-    * functions which convert between new and old type.
-    */
-  def transformValue[V0](read: V => V0)(write: V0 => V): WithValue[V0] =
-    copy(newValueCodec = RedisDataCodec(valueCodec.read andThen read, write andThen valueCodec.write))
+  type Blocking[S <: RedisSerialization] <: BaseBlocking[S]
+  val Blocking: VariantCompanion[Blocking]
 
-  def copy[K0, H0, V0](
-    newKeyCodec: RedisDataCodec[K0] = keyCodec,
-    newHashKeyCodec: RedisDataCodec[H0] = hashKeyCodec,
-    newValueCodec: RedisDataCodec[V0] = valueCodec
-  ): Self[K0, H0, V0]
+  abstract class VariantCompanion[Variant[S <: RedisSerialization] <: AbstractRedisApi[S]] {
+    def apply[S <: RedisSerialization](
+      serialization: S,
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig
+    ): Variant[S]
+
+    def apply[S <: RedisSerialization : ValueOf](
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig = ExecutionConfig.Default
+    ): Variant[S] = apply(ValueOf[S], executor, execConfig)
+
+    def StringTyped(
+      exec: RequiredExecutor, config: ExecutionConfig = ExecutionConfig.Default
+    ): Variant[RedisSerialization.Strings.type] = apply(RedisSerialization.Strings, exec, config)
+
+    def BinaryTyped(
+      exec: RequiredExecutor, config: ExecutionConfig = ExecutionConfig.Default
+    ): Variant[RedisSerialization.ByteStrings.type] = apply(RedisSerialization.ByteStrings, exec, config)
+  }
+
+  protected abstract class BaseAsync[S <: RedisSerialization] extends AbstractRedisApi[S] with RedisAsyncApi {
+    def executor: RequiredExecutor
+    def execConfig: ExecutionConfig
+
+    type Self[S0 <: RedisSerialization] = Async[S0]
+    def withSerialization[S0 <: RedisSerialization](ser: S0): Self[S0] = Async(ser, executor, execConfig)
+  }
+
+  protected abstract class BaseBlocking[S <: RedisSerialization] extends AbstractRedisApi[S] with RedisBlockingApi {
+    def executor: RequiredExecutor
+    def execConfig: ExecutionConfig
+
+    type Self[S0 <: RedisSerialization] = Blocking[S0]
+    def withSerialization[S0 <: RedisSerialization](ser: S0): Self[S0] = Blocking(ser, executor, execConfig)
+  }
 }

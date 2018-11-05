@@ -3,9 +3,9 @@ package redis.commands
 
 import akka.util.ByteString
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
-import com.avsystem.commons.redis.exception.{ErrorReplyException, UnexpectedReplyException}
+import com.avsystem.commons.redis.exception.UnexpectedReplyException
 import com.avsystem.commons.redis.protocol._
-import com.avsystem.commons.redis.{NodeAddress, RedisDataCodec}
+import com.avsystem.commons.redis.{NodeAddress, RedisDataCodec, RedisRecordCodec}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -57,6 +57,10 @@ object ReplyDecoders {
     case IntegerMsg(ttl) => Opt(Opt(ttl))
   }
 
+  val integerClientId: ReplyDecoder[ClientId] = {
+    case IntegerMsg(value) => ClientId(value)
+  }
+
   def bulkNamedEnum[E <: NamedEnum](companion: NamedEnumCompanion[E]): ReplyDecoder[E] = {
     case BulkStringMsg(data) => companion.byName(data.utf8String)
   }
@@ -103,6 +107,18 @@ object ReplyDecoders {
     case BulkStringMsg(data) => Cursor(data.utf8String.toLong)
   }
 
+  val bulkXEntryId: ReplyDecoder[XEntryId] = {
+    case BulkStringMsg(data) => XEntryId.parse(data.utf8String)
+  }
+
+  val bulkXGroup: ReplyDecoder[XGroup] = {
+    case BulkStringMsg(str) => XGroup(str.utf8String)
+  }
+
+  val bulkXConsumer: ReplyDecoder[XConsumer] = {
+    case BulkStringMsg(str) => XConsumer(str.utf8String)
+  }
+
   val simpleUTF8: ReplyDecoder[String] =
     simple(_.utf8String)
 
@@ -146,18 +162,18 @@ object ReplyDecoders {
     elements.iterator.map {
       case vrm: ValidRedisMsg => elementDecoder.applyOrElse(vrm, (_: ValidRedisMsg) =>
         throw new UnexpectedReplyException(s"Unexpected element in multi-bulk reply: $vrm"))
-      case err: ErrorMsg => throw new ErrorReplyException(err)
+      case msg => throw new UnexpectedReplyException(msg.toString)
     }
 
   def multiBulkSeq[T](elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[T]] = {
-    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).to[ArrayBuffer]
+    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).toSized[ArrayBuffer](elements.size)
   }
 
   def multiBulkSeq[T: RedisDataCodec]: ReplyDecoder[Seq[T]] =
     multiBulkSeq(bulk[T])
 
   def multiBulkSet[T](elementDecoder: ReplyDecoder[T]): ReplyDecoder[BSet[T]] = {
-    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).to[MHashSet]
+    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).toSized[MHashSet](elements.size)
   }
 
   def multiBulkSet[T: RedisDataCodec]: ReplyDecoder[BSet[T]] =
@@ -172,6 +188,20 @@ object ReplyDecoders {
       (first, second)
   }
 
+  def multiBulkMap[A, B](keyDecoder: ReplyDecoder[A], valueDecoder: ReplyDecoder[B]): ReplyDecoder[BMap[A, B]] = {
+    case ArrayMsg(elements) => new mutable.OpenHashMap[A, B]() ++
+      multiBulkIterator(elements, multiBulkPair(keyDecoder, valueDecoder))
+  }
+
+  def multiBulkMap[A: RedisDataCodec, B: RedisDataCodec]: ReplyDecoder[BMap[A, B]] =
+    multiBulkMap(bulk[A], bulk[B])
+
+  def multiBulkZTriple[K: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[Opt[(K, V, Double)]] = {
+    case NullArrayMsg => Opt.Empty
+    case ArrayMsg(IndexedSeq(BulkStringMsg(key), BulkStringMsg(value), BulkStringMsg(score))) =>
+      Opt(RedisDataCodec.read[K](key), RedisDataCodec.read[V](value), score.utf8String.toDouble)
+  }
+
   val multiBulkGeoPoint: ReplyDecoder[GeoPoint] = {
     case ArrayMsg(IndexedSeq(BulkStringMsg(rawLong), BulkStringMsg(rawLat))) =>
       GeoPoint(rawLong.utf8String.toDouble, rawLat.utf8String.toDouble)
@@ -183,7 +213,10 @@ object ReplyDecoders {
         case SimpleStringMsg(flagStr) => CommandFlags.byRepr(flagStr.utf8String)
         case msg => throw new UnexpectedReplyException(s"Expected only simple strings in command flag list, got $msg")
       }).fold(CommandFlags.NoFlags)(_ | _)
-      CommandInfo(name.utf8String, CommandArity(math.abs(arity.toInt), arity < 0), flags, firstKey.toInt, lastKey.toInt, stepCount.toInt)
+      CommandInfo(
+        name.utf8String, CommandArity(math.abs(arity.toInt), arity < 0),
+        flags, firstKey.toInt, lastKey.toInt, stepCount.toInt
+      )
   }
 
   val multiBulkRedisRole: ReplyDecoder[RedisRole] = {
@@ -239,13 +272,50 @@ object ReplyDecoders {
       SlotRangeMapping(range, masterAddr, masterId, slaves.map(parseNode))
   }
 
-  def groupedMultiBulk[T](size: Int, elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[Seq[T]]] = {
+  val multiBulkXPendingOverview: ReplyDecoder[XPendingOverview] = {
+    case ArrayMsg(IndexedSeq(IntegerMsg(0), NullBulkStringMsg, NullBulkStringMsg, NullArrayMsg)) =>
+      XPendingOverview.Empty
+    case ArrayMsg(IndexedSeq(IntegerMsg(count), BulkStringMsg(minid), BulkStringMsg(maxid), ArrayMsg(byConsumer))) =>
+      XPendingOverview(
+        count, XEntryId.parse(minid.utf8String), XEntryId.parse(maxid.utf8String),
+        new mutable.OpenHashMap() ++ multiBulkIterator(byConsumer, multiBulkPair(bulkXConsumer, bulkLong))
+      )
+  }
+
+  val multiBulkXPendingEntry: ReplyDecoder[XPendingEntry] = {
+    case ArrayMsg(IndexedSeq(BulkStringMsg(id), BulkStringMsg(consumer), IntegerMsg(idle), IntegerMsg(delivered))) =>
+      XPendingEntry(XEntryId.parse(id.utf8String), XConsumer(consumer.utf8String), idle, delivered.toInt)
+  }
+
+  def multiBulkXEntry[R: RedisRecordCodec]: ReplyDecoder[XEntry[R]] = {
+    case ArrayMsg(IndexedSeq(BulkStringMsg(id), data: ArrayMsg[RedisMsg])) =>
+      XEntry(XEntryId.parse(id.utf8String), flatMultiBulkRecord[R].apply(data))
+  }
+
+  def multiBulkXEntriesMap[K: RedisDataCodec, R: RedisRecordCodec]: ReplyDecoder[BMap[K, Seq[XEntry[R]]]] =
+    multiBulkMap(bulk[K], multiBulkSeq(multiBulkXEntry[R])) unless {
+      case NullArrayMsg => Map.empty
+    }
+
+  val multiBulkXConsumerInfo: ReplyDecoder[XConsumerInfo] =
+    flatMultiBulkMap(bulkUTF8, undecoded).andThen(XConsumerInfo)
+
+  val multiBulkXGroupInfo: ReplyDecoder[XGroupInfo] =
+    flatMultiBulkMap(bulkUTF8, undecoded).andThen(XGroupInfo)
+
+  def multiBulkXStreamInfo[Record: RedisRecordCodec]: ReplyDecoder[XStreamInfo[Record]] =
+    flatMultiBulkMap(bulkUTF8, undecoded).andThen(XStreamInfo[Record])
+
+  def multiBulkGroupedSeq[T](size: Int, elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[Seq[T]]] = {
     case ArrayMsg(elements) =>
       def elemDecode(msg: RedisMsg): T = msg match {
-        case vrm: ValidRedisMsg => elementDecoder.applyOrElse(vrm, (_: ValidRedisMsg) => throw new UnexpectedReplyException(vrm.toString))
-        case err: ErrorMsg => throw new ErrorReplyException(err)
+        case vrm: ValidRedisMsg => elementDecoder.applyOrElse(vrm, (_: ValidRedisMsg) =>
+          throw new UnexpectedReplyException(vrm.toString))
+        case _ => throw new UnexpectedReplyException(msg.toString)
       }
-      elements.iterator.grouped(size).map(_.iterator.map(elemDecode).to[ArrayBuffer]).to[ArrayBuffer]
+      elements.iterator.grouped(size)
+        .map(_.iterator.map(elemDecode).toSized[ArrayBuffer](size))
+        .toSized[ArrayBuffer](elements.size / size)
   }
 
   def nullMultiBulkOr[T](decoder: ReplyDecoder[T]): ReplyDecoder[Opt[T]] =
@@ -256,40 +326,56 @@ object ReplyDecoders {
   def nullMultiBulkOr[T: RedisDataCodec]: ReplyDecoder[Opt[T]] =
     nullMultiBulkOr(bulk[T])
 
-  def pairedMultiBulk[T](pairDecoder: ReplyPairDecoder[T]): ReplyDecoder[Seq[T]] = {
-    case ArrayMsg(elements) => elements.iterator.grouped(2).map {
-      case Seq(first: ValidRedisMsg, second: ValidRedisMsg) => pairDecoder.applyOrElse((first, second),
+  def flatPairMultiBulkSeq[T](pairDecoder: ReplyPairDecoder[T]): ReplyDecoder[Seq[T]] = {
+    case ArrayMsg(elements) => elements.iterator.pairs.map {
+      case (first: ValidRedisMsg, second: ValidRedisMsg) => pairDecoder.applyOrElse((first, second),
         (p: (ValidRedisMsg, ValidRedisMsg)) => throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p"))
-    }.to[ArrayBuffer]
+      case p => throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p")
+    }.toSized[ArrayBuffer](elements.size / 2)
   }
 
-  private def pairedMultiBulkIterator[A, B](elements: Seq[RedisMsg], firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): Iterator[(A, B)] =
-    elements.iterator.grouped(2).map {
-      case Seq(f: ValidRedisMsg, s: ValidRedisMsg) =>
+  private def flatPairedMultiBulkIterator[A, B](elements: Seq[RedisMsg], firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): Iterator[(A, B)] =
+    elements.iterator.pairs.map {
+      case (f: ValidRedisMsg, s: ValidRedisMsg) =>
         val first = firstDecoder.applyOrElse(f, (_: ValidRedisMsg) =>
           throw new UnexpectedReplyException(s"Unexpected element in multi-bulk reply: $f"))
         val second = secondDecoder.applyOrElse(s, (_: ValidRedisMsg) =>
           throw new UnexpectedReplyException(s"Unexpected element in multi-bulk reply: $s"))
         (first, second)
+      case p =>
+        throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p")
     }
 
-  def pairedMultiBulk[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(A, B)]] = {
-    case ArrayMsg(elements) => pairedMultiBulkIterator(elements, firstDecoder, secondDecoder).to[ArrayBuffer]
+  def flatMultiBulkSeq[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(A, B)]] = {
+    case ArrayMsg(elements) =>
+      flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).toSized[ArrayBuffer](elements.size / 2)
   }
 
-  def reversePairedMultiBulk[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(B, A)]] = {
-    case ArrayMsg(elements) => pairedMultiBulkIterator(elements, firstDecoder, secondDecoder).map(_.swap).to[ArrayBuffer]
+  def flatMultiBulkSeqSwapped[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(B, A)]] = {
+    case ArrayMsg(elements) =>
+      flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).map(_.swap).toSized[ArrayBuffer](elements.size / 2)
   }
 
-  def mapMultiBulk[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[BMap[A, B]] = {
-    case ArrayMsg(elements) => new mutable.OpenHashMap() ++ pairedMultiBulkIterator(elements, firstDecoder, secondDecoder)
+  def flatMultiBulkMap[A, B](keyDecoder: ReplyDecoder[A], valueDecoder: ReplyDecoder[B]): ReplyDecoder[BMap[A, B]] = {
+    case ArrayMsg(elements) => new mutable.OpenHashMap() ++
+      flatPairedMultiBulkIterator(elements, keyDecoder, valueDecoder)
   }
 
-  def pairedMultiBulk[A: RedisDataCodec, B: RedisDataCodec]: ReplyDecoder[Seq[(A, B)]] =
-    pairedMultiBulk(bulk(RedisDataCodec[A].read), bulk(RedisDataCodec[B].read))
+  def flatMultiBulkSeq[A: RedisDataCodec, B: RedisDataCodec]: ReplyDecoder[Seq[(A, B)]] =
+    flatMultiBulkSeq(bulk[A], bulk[B])
 
-  def mapMultiBulk[A: RedisDataCodec, B: RedisDataCodec]: ReplyDecoder[BMap[A, B]] =
-    mapMultiBulk(bulk(RedisDataCodec[A].read), bulk(RedisDataCodec[B].read))
+  def flatMultiBulkMap[A: RedisDataCodec, B: RedisDataCodec]: ReplyDecoder[BMap[A, B]] =
+    flatMultiBulkMap(bulk[A], bulk[B])
+
+  def flatMultiBulkRecord[R: RedisRecordCodec]: ReplyDecoder[R] = {
+    case ArrayMsg(elements: IndexedSeq[BulkStringMsg@unchecked]) if elements.forall(_.isInstanceOf[BulkStringMsg]) =>
+      RedisRecordCodec[R].read(elements)
+  }
+
+  def flatMultiBulkRecordOpt[R: RedisRecordCodec]: ReplyDecoder[Opt[R]] =
+    flatMultiBulkRecord[R].andThen(_.opt) unless {
+      case ArrayMsg.Empty => Opt.Empty
+    }
 
   def geoAttributed[A](attributes: GeoradiusAttrs, unattributed: ReplyDecoder[A]): ReplyDecoder[attributes.Attributed[A]] =
     if (attributes.isEmpty)

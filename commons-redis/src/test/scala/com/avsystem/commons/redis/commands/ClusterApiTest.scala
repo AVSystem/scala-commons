@@ -1,13 +1,13 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.redis.{ClusterUtils, NodeAddress, RedisApi, RedisClusterCommandsSuite}
+import com.avsystem.commons.redis.{ClusterUtils, NodeAddress, RedisApi, RedisClusterCommandsSuite, RedisNodeClient}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class ClusterApiTest extends RedisClusterCommandsSuite {
-  override def executor = Await.result(redisClient.initializedCurrentState, Duration.Inf).mapping.head._2
+  override def executor: RedisNodeClient = Await.result(redisClient.initializedCurrentState, Duration.Inf).mapping.head._2
 
   import RedisApi.Batches.StringTyped._
 

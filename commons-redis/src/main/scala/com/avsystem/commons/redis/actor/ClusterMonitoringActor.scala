@@ -69,7 +69,7 @@ final class ClusterMonitoringActor(
     pool.slice(0, count)
   }
 
-  def receive = {
+  def receive: Receive = {
     case Refresh(nodesOpt) =>
       if (suspendUntil.isOverdue) {
         val addresses = nodesOpt.getOrElse(randomMasters())
@@ -118,8 +118,9 @@ final class ClusterMonitoringActor(
           }
         }
 
-      case Failure(err: ErrorReplyException) if state.isEmpty && seedNodes.size == 1 && config.fallbackToSingleNode &&
-        err.reply.errorString.utf8String == "ERR This instance has cluster support disabled" =>
+      case Failure(err: ErrorReplyException)
+        if state.isEmpty && seedNodes.size == 1 && config.fallbackToSingleNode &&
+          err.errorStr == "ERR This instance has cluster support disabled" =>
 
         val addr = seedNodes.head
         log.info(s"$addr is a non-clustered node, falling back to regular node client")
@@ -153,7 +154,7 @@ final class ClusterMonitoringActor(
       sender() ! GetClientResponse(client)
   }
 
-  override def postStop() = {
+  override def postStop(): Unit = {
     scheduledRefresh.foreach(_.cancel())
     clients.values.foreach(_.close())
   }
@@ -164,9 +165,10 @@ object ClusterMonitoringActor {
     val api = RedisApi.Batches.BinaryTyped
     api.clusterSlots zip api.clusterNodes
   }
-  val MappingComparator = Ordering.by[(SlotRange, RedisNodeClient), Int](_._1.start)
+  val MappingComparator: Ordering[(SlotRange, RedisNodeClient)] =
+    Ordering.by[(SlotRange, RedisNodeClient), Int](_._1.start)
 
-  case class Refresh(fromNodes: Opt[Seq[NodeAddress]] = Opt.Empty)
-  case class GetClient(addr: NodeAddress)
-  case class GetClientResponse(client: RedisNodeClient)
+  final case class Refresh(fromNodes: Opt[Seq[NodeAddress]] = Opt.Empty)
+  final case class GetClient(addr: NodeAddress)
+  final case class GetClientResponse(client: RedisNodeClient)
 }

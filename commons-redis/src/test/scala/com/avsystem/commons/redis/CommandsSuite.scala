@@ -3,12 +3,13 @@ package redis
 
 import akka.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.SourceInfo
+import com.avsystem.commons.redis.config.{ClusterConfig, ConnectionConfig, NodeConfig}
 import org.scalactic.source.Position
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FunSuite, Matchers, Tag}
 
-import scala.concurrent.duration._
 import scala.concurrent.Await
+import scala.concurrent.duration._
 
 /**
   * Author: ghik
@@ -16,7 +17,7 @@ import scala.concurrent.Await
   */
 trait ByteStringInterpolation {
   implicit class bsInterpolation(sc: StringContext) {
-    def bs(args: Any*) = {
+    def bs(args: Any*): ByteString = {
       val bsb = new ByteStringBuilder
       bsb.append(ByteString(sc.parts.head))
       (sc.parts.tail zip args).foreach {
@@ -87,7 +88,7 @@ trait CommandsSuite extends FunSuite with ScalaFutures with Matchers with UsesAc
 abstract class RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
   def executor: RedisKeyedExecutor = redisClient
 
-  override def clusterConfig =
+  override def clusterConfig: ClusterConfig =
     super.clusterConfig |> { cc =>
       cc.copy(
         nodeConfigs = a => cc.nodeConfigs(a) |> { nc =>
@@ -100,7 +101,7 @@ abstract class RedisClusterCommandsSuite extends FunSuite with UsesPreconfigured
       )
     }
 
-  override protected def afterEach() = {
+  override protected def afterEach(): Unit = {
     val futures = redisClient.currentState.masters.values.map(_.executeBatch(cleanupBatch))
     Await.ready(Future.sequence(futures), Duration.Inf)
     super.afterEach()
@@ -108,9 +109,9 @@ abstract class RedisClusterCommandsSuite extends FunSuite with UsesPreconfigured
 }
 
 abstract class RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with CommandsSuite {
-  def executor = redisClient
+  def executor: RedisNodeClient = redisClient
 
-  override def nodeConfig =
+  override def nodeConfig: NodeConfig =
     super.nodeConfig |> { nc =>
       nc.copy(
         poolSize = 4,
@@ -119,19 +120,19 @@ abstract class RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient 
       )
     }
 
-  override protected def afterEach() = {
+  override protected def afterEach(): Unit = {
     Await.ready(executor.executeBatch(cleanupBatch), Duration.Inf)
     super.afterEach()
   }
 }
 
 abstract class RedisConnectionCommandsSuite extends FunSuite with UsesRedisConnectionClient with CommandsSuite {
-  def executor = redisClient
+  def executor: RedisConnectionClient = redisClient
 
-  override def connectionConfig =
+  override def connectionConfig: ConnectionConfig =
     super.connectionConfig.copy(debugListener = listener)
 
-  override protected def afterEach() = {
+  override protected def afterEach(): Unit = {
     Await.ready(executor.executeBatch(cleanupBatch), Duration.Inf)
     super.afterEach()
   }

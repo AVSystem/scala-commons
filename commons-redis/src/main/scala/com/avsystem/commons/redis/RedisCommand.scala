@@ -16,30 +16,33 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
 
   final protected def decode(replyMsg: RedisReply): A = replyMsg match {
     case validReply: ValidRedisMsg =>
-      decodeExpected.applyOrElse(validReply, (r: ValidRedisMsg) => throw new UnexpectedReplyException(r.toString))
+      decodeExpected.applyOrElse(validReply, (r: ValidRedisMsg) =>
+        throw new UnexpectedReplyException(r.toString))
     case err: ErrorMsg =>
-      throw new ErrorReplyException(err)
+      throw new ErrorReplyException(err, this)
     case error: FailureReply =>
       throw error.exception
     case _ =>
       throw new UnexpectedReplyException(replyMsg.toString)
   }
 
-  final def decodeReplies(replies: Int => RedisReply, idx: Index, inTransaction: Boolean) =
+  final def decodeReplies(replies: Int => RedisReply, idx: Index, inTransaction: Boolean): A =
     decode(replies(idx.inc()))
 
-  override def toString =
+  override def toString: String =
     encoded.elements.iterator.map(bs => RedisMsg.escape(bs.string)).mkString(" ")
 
   override def map[B](fun: A => B): RedisCommand[B] =
     new RedisCommand[B] {
-      def level = self.level
-      def encoded = self.encoded
-      def decodeExpected = self.decodeExpected andThen fun
-      override def immediateResult =
+      def level: RawCommand.Level = self.level
+      def encoded: ArrayMsg[BulkStringMsg] = self.encoded
+      def decodeExpected: ReplyDecoder[B] = self.decodeExpected andThen fun
+      override def immediateResult: Opt[B] =
         self.immediateResult.map(fun)
       override def updateWatchState(message: RedisMsg, state: WatchState): Unit =
         self.updateWatchState(message, state)
+      override def maxBlockingMillis: Int =
+        self.maxBlockingMillis
     }
 
   /**
@@ -48,7 +51,7 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
     */
   def immediateResult: Opt[A] = Opt.Empty
 
-  protected[this] final def whenEmpty(args: Iterable[Any], value: A) =
+  protected[this] final def whenEmpty(args: TraversableOnce[Any], value: A): Opt[A] =
     if (args.isEmpty) Opt(value) else Opt.Empty
 
   final def batchOrFallback: RedisBatch[A] =
@@ -66,21 +69,35 @@ final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) exten
     this
   }
 
-  def key[K: RedisDataCodec](k: K) = fluent(buffer += CommandKeyMsg(RedisDataCodec.write(k)))
-  def keys[K: RedisDataCodec](keys: TraversableOnce[K]) = fluent(keys.foreach(key[K]))
-  def data[V: RedisDataCodec](v: V) = fluent(buffer += BulkStringMsg(RedisDataCodec.write(v)))
-  def datas[V: RedisDataCodec](values: TraversableOnce[V]) = fluent(values.foreach(data[V]))
-  def add[T: CommandArg](value: T): CommandEncoder = fluent(CommandArg.add(this, value))
-  def addFlag(flag: String, value: Boolean): CommandEncoder = if (value) add(flag) else this
-  def optAdd[T: CommandArg](value: Opt[T]) = fluent(value.foreach(t => add(t)))
-  def optAdd[T: CommandArg](flag: String, value: Opt[T]) = fluent(value.foreach(t => add(flag).add(t)))
-  def optKey[K: RedisDataCodec](flag: String, value: Opt[K]) = fluent(value.foreach(t => add(flag).key(t)))
-  def optData[V: RedisDataCodec](flag: String, value: Opt[V]) = fluent(value.foreach(t => add(flag).data(t)))
-  def keyDatas[K: RedisDataCodec, V: RedisDataCodec](keyDatas: TraversableOnce[(K, V)]) =
+  def key[K: RedisDataCodec](k: K): CommandEncoder =
+    fluent(buffer += CommandKeyMsg(RedisDataCodec.write(k)))
+  def keys[K: RedisDataCodec](keys: TraversableOnce[K]): CommandEncoder =
+    fluent(keys.foreach(key[K]))
+  def data[V: RedisDataCodec](v: V): CommandEncoder =
+    fluent(buffer += BulkStringMsg(RedisDataCodec.write(v)))
+  def datas[V: RedisDataCodec](values: TraversableOnce[V]): CommandEncoder =
+    fluent(values.foreach(data[V]))
+  def add[T: CommandArg](value: T): CommandEncoder =
+    fluent(CommandArg.add(this, value))
+  def addFlag(flag: String, value: Boolean): CommandEncoder =
+    if (value) add(flag) else this
+  def optAdd[T: CommandArg](value: Opt[T]): CommandEncoder =
+    fluent(value.foreach(t => add(t)))
+  def optAdd[T: CommandArg](flag: String, value: Opt[T]): CommandEncoder =
+    fluent(value.foreach(t => add(flag).add(t)))
+  def optAdd[T: CommandArg, D: CommandArg](value: Opt[T], default: D): CommandEncoder =
+    fluent(value.fold(CommandArg.add(this, default))(CommandArg.add(this, _)))
+  def optKey[K: RedisDataCodec](flag: String, value: Opt[K]): CommandEncoder =
+    fluent(value.foreach(t => add(flag).key(t)))
+  def optData[V: RedisDataCodec](flag: String, value: Opt[V]): CommandEncoder =
+    fluent(value.foreach(t => add(flag).data(t)))
+  def keyDatas[K: RedisDataCodec, V: RedisDataCodec](keyDatas: TraversableOnce[(K, V)]): CommandEncoder =
     fluent(keyDatas.foreach({ case (k, v) => key(k).data(v) }))
-  def dataPairs[K: RedisDataCodec, V: RedisDataCodec](dataPairs: TraversableOnce[(K, V)]) =
+  def dataPairs[K: RedisDataCodec, V: RedisDataCodec](dataPairs: TraversableOnce[(K, V)]): CommandEncoder =
     fluent(dataPairs.foreach({ case (k, v) => data(k).data(v) }))
-  def argDataPairs[T: CommandArg, V: RedisDataCodec](argDataPairs: TraversableOnce[(T, V)]) =
+  def dataPairs[R: RedisRecordCodec](record: R): CommandEncoder =
+    fluent(buffer ++= RedisRecordCodec[R].write(record))
+  def argDataPairs[T: CommandArg, V: RedisDataCodec](argDataPairs: TraversableOnce[(T, V)]): CommandEncoder =
     fluent(argDataPairs.foreach({ case (a, v) => add(a).data(v) }))
 }
 

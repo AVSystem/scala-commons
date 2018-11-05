@@ -98,80 +98,80 @@ trait SetsApi extends ApiSubset {
     execute(new Sunionstore(destination, keys))
 
   private final class Sadd(key: Key, members: Iterable[Value]) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("SADD").key(key).datas(members).result
-    override def immediateResult = whenEmpty(members, 0)
+    val encoded: Encoded = encoder("SADD").key(key).datas(members).result
+    override def immediateResult: Opt[Int] = whenEmpty(members, 0)
   }
 
   private final class Scard(key: Key) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("SCARD").key(key).result
+    val encoded: Encoded = encoder("SCARD").key(key).result
   }
 
   private final class Sdiff(source: Key, keys: Iterable[Key]) extends RedisDataSetCommand[Value] with NodeCommand {
-    val encoded = encoder("SDIFF").key(source).keys(keys).result
+    val encoded: Encoded = encoder("SDIFF").key(source).keys(keys).result
   }
 
   private final class Sdiffstore(destination: Key, source: Key, keys: Iterable[Key]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("SDIFFSTORE").key(destination).key(source).keys(keys).result
+    val encoded: Encoded = encoder("SDIFFSTORE").key(destination).key(source).keys(keys).result
   }
 
   private final class Sinter(keys: Iterable[Key]) extends RedisDataSetCommand[Value] with NodeCommand {
-    val encoded = encoder("SINTER").keys(keys).result
+    val encoded: Encoded = encoder("SINTER").keys(keys).result
   }
 
   private final class Sinterstore(destination: Key, keys: Iterable[Key]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("SINTERSTORE").key(destination).keys(keys).result
+    val encoded: Encoded = encoder("SINTERSTORE").key(destination).keys(keys).result
   }
 
   private final class Sismember(key: Key, member: Value) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("SISMEMBER").key(key).data(member).result
+    val encoded: Encoded = encoder("SISMEMBER").key(key).data(member).result
   }
 
   private final class Smembers(key: Key) extends RedisDataSetCommand[Value] with NodeCommand {
-    val encoded = encoder("SMEMBERS").key(key).result
+    val encoded: Encoded = encoder("SMEMBERS").key(key).result
   }
 
   private final class Smove(source: Key, destination: Key, member: Value) extends RedisBooleanCommand with NodeCommand {
-    val encoded = encoder("SMOVE").key(source).key(destination).data(member).result
+    val encoded: Encoded = encoder("SMOVE").key(source).key(destination).data(member).result
   }
 
   private final class Spop(key: Key) extends RedisOptDataCommand[Value] with NodeCommand {
-    val encoded = encoder("SPOP").key(key).result
+    val encoded: Encoded = encoder("SPOP").key(key).result
   }
 
   private final class SpopCount(key: Key, count: Int) extends RedisDataSetCommand[Value] with NodeCommand {
-    val encoded = encoder("SPOP").key(key).add(count).result
+    val encoded: Encoded = encoder("SPOP").key(key).add(count).result
   }
 
   private final class Srandmember(key: Key) extends RedisOptDataCommand[Value] with NodeCommand {
-    val encoded = encoder("SRANDMEMBER").key(key).result
+    val encoded: Encoded = encoder("SRANDMEMBER").key(key).result
   }
 
   private final class SrandmemberCount(key: Key, count: Int) extends RedisDataSeqCommand[Value] with NodeCommand {
     require(count >= 0, "count cannot be negative")
-    val encoded = encoder("SRANDMEMBER").key(key).add(-count).result
+    val encoded: Encoded = encoder("SRANDMEMBER").key(key).add(-count).result
   }
 
   private final class SrandmemberCountDistinct(key: Key, count: Int) extends RedisDataSetCommand[Value] with NodeCommand {
     require(count >= 0, "count cannot be negative")
-    val encoded = encoder("SRANDMEMBER").key(key).add(count).result
+    val encoded: Encoded = encoder("SRANDMEMBER").key(key).add(count).result
   }
 
   private final class Srem(key: Key, members: Iterable[Value]) extends RedisIntCommand with NodeCommand {
-    val encoded = encoder("SREM").key(key).datas(members).result
-    override def immediateResult = whenEmpty(members, 0)
+    val encoded: Encoded = encoder("SREM").key(key).datas(members).result
+    override def immediateResult: Opt[Int] = whenEmpty(members, 0)
   }
 
   private final class Sscan(key: Key, cursor: Cursor, matchPattern: Opt[Value], count: Opt[Int])
     extends RedisScanCommand[Value](multiBulkSeq[Value]) with NodeCommand {
-    val encoded = encoder("SSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
+    val encoded: Encoded = encoder("SSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 
   private final class Sunion(keys: Iterable[Key]) extends RedisDataSetCommand[Value] with NodeCommand {
-    val encoded = encoder("SUNION").keys(keys).result
-    override def immediateResult = whenEmpty(keys, Set.empty)
+    val encoded: Encoded = encoder("SUNION").keys(keys).result
+    override def immediateResult: Opt[BSet[Value]] = whenEmpty(keys, Set.empty)
   }
 
   private final class Sunionstore(destination: Key, keys: Iterable[Key]) extends RedisLongCommand with NodeCommand {
-    val encoded = encoder("SUNIONSTORE").key(destination).keys(keys).result
+    val encoded: Encoded = encoder("SUNIONSTORE").key(destination).keys(keys).result
   }
 }

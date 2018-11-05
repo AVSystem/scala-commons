@@ -16,7 +16,7 @@ trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils { this: S
 
   var redisProcess: RedisProcess = _
 
-  override protected def beforeAll() = {
+  override protected def beforeAll(): Unit = {
     super.beforeAll()
 
     redisProcess = Await.result(
@@ -28,7 +28,7 @@ trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils { this: S
     )
   }
 
-  override protected def afterAll() = {
+  override protected def afterAll(): Unit = {
     Await.result(shutdownRedis(port, redisProcess), 10.seconds)
     super.afterAll()
   }

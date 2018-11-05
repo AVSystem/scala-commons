@@ -3,7 +3,6 @@ package redis.commands
 
 import com.avsystem.commons.redis._
 
-
 trait SortedSetsApiSuite extends CommandsSuite {
 
   import RedisApi.Batches.StringTyped._
@@ -75,6 +74,22 @@ trait SortedSetsApiSuite extends CommandsSuite {
     zlexcount("???").assertEquals(0)
     zlexcount("key").assertEquals(3)
     zlexcount("key", LexLimit.incl("a"), LexLimit.excl("c")).assertEquals(2)
+  }
+
+  apiTest("ZPOPMAX") {
+    setup(zadd("key", "lol" -> 1.0, "fuu" -> 2.0, "bar" -> 3.0, "fag" -> 4.0))
+    zpopmax("???").assertEquals(Opt.Empty)
+    zpopmax("???", 2).assertEquals(Seq.empty)
+    zpopmax("key").assertEquals(Opt("fag" -> 4.0))
+    zpopmax("key", 2).assertEquals(Seq("bar" -> 3.0, "fuu" -> 2.0))
+  }
+
+  apiTest("ZPOPMIN") {
+    setup(zadd("key", "lol" -> 1.0, "fuu" -> 2.0, "bar" -> 3.0, "fag" -> 4.0))
+    zpopmin("???").assertEquals(Opt.Empty)
+    zpopmin("???", 2).assertEquals(Seq.empty)
+    zpopmin("key").assertEquals(Opt("lol" -> 1.0))
+    zpopmin("key", 2).assertEquals(Seq("fuu" -> 2.0, "bar" -> 3.0))
   }
 
   apiTest("ZRANGE") {
@@ -244,5 +259,23 @@ trait SortedSetsApiSuite extends CommandsSuite {
     )
     zunionstoreWeights("key", "{key}1" -> 1.0, "{key}2" -> 2.0).assertEquals(3)
     zrangeWithscores("key").assertEquals(Seq("foo" -> 1.0, "bar" -> 8.0, "lol" -> 8.0))
+  }
+
+  apiTest("BZPOPMAX") {
+    setup(
+      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
+      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
+    )
+    bzpopmax("???", 1).assertEquals(Opt.Empty)
+    bzpopmax(List("{key}0", "{key}1", "{key}2"), 1).assertEquals(Opt("{key}1", "bar", 2.0))
+  }
+
+  apiTest("BZPOPMIN") {
+    setup(
+      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
+      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
+    )
+    bzpopmin("???", 1).assertEquals(Opt.Empty)
+    bzpopmin(List("{key}0", "{key}1", "{key}2"), 1).assertEquals(Opt("{key}1", "foo", 1.0))
   }
 }

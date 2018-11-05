@@ -141,7 +141,7 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
       value <- watch(key) *> get(key)
       _ <- set(key, value.getOrElse("v")).transaction
     } yield ()
-    client.executeOp(operation, ExecutionConfig(timeout = Timeout(2, TimeUnit.SECONDS)))
+    client.executeOp(operation, ExecutionConfig(responseTimeout = Timeout(2, TimeUnit.SECONDS)))
   }
 
   def mixedFuture(client: RedisKeyedExecutor with RedisOpExecutor, seq: Int, i: Int) =

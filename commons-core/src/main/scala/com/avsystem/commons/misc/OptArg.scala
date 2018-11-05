@@ -11,6 +11,10 @@ object OptArg {
     */
   implicit def argToOptArg[A](value: A): OptArg[A] = OptArg(value)
 
+  // additional implicits to cover most common, safe numeric promotions
+  implicit def intToOptArgLong(int: Int): OptArg[Long] = OptArg(int)
+  implicit def intToOptArgDouble(int: Int): OptArg[Double] = OptArg(int)
+
   private object EmptyMarker extends Serializable
 
   def apply[A](value: A): OptArg[A] = new OptArg[A](if (value != null) value else EmptyMarker)

@@ -14,11 +14,8 @@ trait KeyedScriptingApiSuite extends CommandsSuite {
   import RedisApi.Batches.StringTyped._
 
   object getScript extends RedisScript[Opt[String]] {
-    def source = "return redis.call('get', KEYS[1])"
-    def decoder = {
-      case BulkStringMsg(data) => data.utf8String.opt
-      case NullBulkStringMsg => Opt.Empty
-    }
+    def source: String = "return redis.call('get', KEYS[1])"
+    def decoder: ReplyDecoder[Opt[String]] = ReplyDecoders.nullBulkOr(ReplyDecoders.bulkUTF8)
   }
 
   apiTest("EVAL") {
@@ -34,7 +31,7 @@ trait KeyedScriptingApiSuite extends CommandsSuite {
 
   apiTest("EVALSHA") {
     setup(set("key", "value"))
-    intercept[ErrorReplyException](throw evalsha(getScript, Seq("key"), Nil).failed.get)
+    intercept[ErrorReplyException](evalsha(getScript, Seq("key"), Nil).get)
     eval(getScript, Seq("key"), Nil).get
     evalsha(getScript, Seq("key"), Nil).assertEquals("value".opt)
     evalsha(getScript.sha1, Seq("key"), Nil) {

@@ -2,9 +2,10 @@ package com.avsystem.commons
 package redis.examples
 
 import akka.actor.ActorSystem
-import akka.util.Timeout
 import com.avsystem.commons.redis._
 
+// Global execution context is used for the sake of simplicity of this example,
+// think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
@@ -13,7 +14,7 @@ import scala.concurrent.duration._
   */
 object NodeClientExample extends App {
   // The driver is implemented using Akka IO, so we need actor system
-  implicit val actorSystem = ActorSystem()
+  implicit val actorSystem: ActorSystem = ActorSystem()
   // The client is the object that actually talks to Redis, but does not expose Redis API
   val client = new RedisNodeClient
   // API object exposes API to access individual Redis commands. The API variant we're using here is:

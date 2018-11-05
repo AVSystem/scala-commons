@@ -15,6 +15,7 @@ trait KeyedFullApiSuite extends CommandsSuite
   with ListsApiSuite
   with SetsApiSuite
   with HyperLogLogApiSuite
+  with StreamsApiSuite
 
 trait NodeFullApiSuite extends KeyedFullApiSuite
   with NodeKeysApiSuite
@@ -23,7 +24,6 @@ trait NodeFullApiSuite extends KeyedFullApiSuite
 
 trait ConnectionFullApiSuite extends NodeFullApiSuite
   with ConnectionScriptingApiSuite
-  with BlockingListsApiSuite
 
 class RedisClusterCommandsTest extends RedisClusterCommandsSuite with KeyedFullApiSuite
 class RedisNodeCommandsTest extends RedisNodeCommandsSuite with NodeFullApiSuite

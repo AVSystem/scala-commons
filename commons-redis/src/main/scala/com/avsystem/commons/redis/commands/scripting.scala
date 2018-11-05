@@ -28,12 +28,12 @@ trait KeyedScriptingApi extends ApiSubset {
 
   private final class Eval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value])
     extends AbstractRedisCommand[T](script.decoder) with NodeCommand {
-    val encoded = encoder("EVAL").add(script.source).add(keys.size).keys(keys).datas(args).result
+    val encoded: Encoded = encoder("EVAL").add(script.source).add(keys.size).keys(keys).datas(args).result
   }
 
   private final class Evalsha[T](sha1: Sha1, decoder: PartialFunction[ValidRedisMsg, T], keys: Seq[Key], args: Seq[Value])
     extends AbstractRedisCommand[T](decoder) with NodeCommand {
-    val encoded = encoder("EVALSHA").add(sha1.raw).add(keys.size).keys(keys).datas(args).result
+    val encoded: Encoded = encoder("EVALSHA").add(sha1.raw).add(keys.size).keys(keys).datas(args).result
   }
 }
 
@@ -73,20 +73,20 @@ trait NodeScriptingApi extends KeyedScriptingApi {
 
   private final class ScriptExists(hashes: Iterable[Sha1])
     extends RedisSeqCommand[Boolean](integerBoolean) with NodeCommand {
-    val encoded = encoder("SCRIPT", "EXISTS").add(hashes).result
+    val encoded: Encoded = encoder("SCRIPT", "EXISTS").add(hashes).result
   }
 
   private object ScriptFlush extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("SCRIPT", "FLUSH").result
+    val encoded: Encoded = encoder("SCRIPT", "FLUSH").result
   }
 
   private object ScriptKill extends RedisUnitCommand with NodeCommand {
-    val encoded = encoder("SCRIPT", "KILL").result
+    val encoded: Encoded = encoder("SCRIPT", "KILL").result
   }
 
   private final class ScriptLoad(script: RedisScript[Any])
     extends AbstractRedisCommand[Sha1](bulkSha1) with NodeCommand {
-    val encoded = encoder("SCRIPT", "LOAD").add(script.source).result
+    val encoded: Encoded = encoder("SCRIPT", "LOAD").add(script.source).result
   }
 }
 
@@ -96,7 +96,7 @@ trait ConnectionScriptingApi extends NodeScriptingApi {
     execute(new ScriptDebug(mode))
 
   private final class ScriptDebug(mode: DebugMode) extends RedisUnitCommand with ConnectionCommand {
-    val encoded = encoder("SCRIPT", "DEBUG").add(mode).result
+    val encoded: Encoded = encoder("SCRIPT", "DEBUG").add(mode).result
   }
 }
 
@@ -108,12 +108,12 @@ trait RedisScript[+A] {
 object RedisScript {
   def apply[A](script: String)(replyDecoder: ReplyDecoder[A]): RedisScript[A] =
     new RedisScript[A] {
-      def source = script
-      def decoder = replyDecoder
+      def source: String = script
+      def decoder: ReplyDecoder[A] = replyDecoder
     }
 }
 case class Sha1(raw: String) extends AnyVal {
-  override def toString = raw
+  override def toString: String = raw
 }
 object Sha1 {
   @silent

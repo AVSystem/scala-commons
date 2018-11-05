@@ -203,7 +203,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
   test("EXECABORT") {
     val badCommand: RedisBatch[Unit] =
       new RedisUnitCommand with NodeCommand {
-        val encoded = encoder("GET").result
+        val encoded: Encoded = encoder("GET").result
       }
 
     val batch = (get("key").failed, badCommand.failed).sequence.transaction

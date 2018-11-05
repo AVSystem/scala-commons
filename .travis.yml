@@ -12,7 +12,7 @@ before_install:
 
 env:
   global:
-    - REDIS_VERSION=4.0.0
+    - REDIS_VERSION=5.0.0
     - REDIS_HOME=$PWD/redis-$REDIS_VERSION/src
   matrix:
     - JOB="commons-jvm/test"

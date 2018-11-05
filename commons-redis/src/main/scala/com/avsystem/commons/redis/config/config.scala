@@ -6,6 +6,7 @@ import java.net.InetSocketAddress
 import akka.io.Inet
 import akka.util.Timeout
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{DebugListener, DevNullListener}
+import com.avsystem.commons.redis.config.RetryStrategy._
 import com.avsystem.commons.redis.{NodeAddress, RedisBatch, RedisOp}
 
 import scala.concurrent.duration._
@@ -27,9 +28,11 @@ import scala.concurrent.duration._
   * @param nodesToQueryForState        function that determines how many randomly selected masters should be queried
   *                                    for cluster state during routine state refresh operation. The function takes
   *                                    current number of known masters as its argument.
-  * @param maxRedirections             maximum number of consecutive redirections automatically handled by
-  *                                    [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
-  *                                    When set to 0, redirections are not handled at all.
+  * @param redirectionStrategy         [[RetryStrategy]] that controls Redis Cluster redirection handling
+  *                                    (`MOVED` and `ASK` responses).
+  * @param tryagainStrategy            [[RetryStrategy]] that controls retrying commands which failed with
+  *                                    `TRYAGAIN` error which may be returned for multikey commands during
+  *                                    cluster slot migration.
   * @param nodeClientCloseDelay        Delay after which [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]]
   *                                    is closed when it's master leaves cluster state (goes down or becomes a slave).
   *                                    Note that the node client is NOT operational during that delay. Trying to
@@ -47,7 +50,8 @@ case class ClusterConfig(
   autoRefreshInterval: FiniteDuration = 5.seconds,
   minRefreshInterval: FiniteDuration = 1.seconds,
   nodesToQueryForState: Int => Int = _ min 5,
-  maxRedirections: Int = 3,
+  redirectionStrategy: RetryStrategy = RetryStrategy.times(3),
+  tryagainStrategy: RetryStrategy = exponentially(10.millis).maxDelay(5.seconds).maxTotal(1.minute),
   nodeClientCloseDelay: FiniteDuration = 1.seconds,
   fallbackToSingleNode: Boolean = false
 )
@@ -56,23 +60,45 @@ case class ClusterConfig(
   * Configuration of a [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]], used either as a standalone
   * client or internally by [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
   *
-  * @param poolSize          number of connections used by node client. Commands are distributed between connections using
-  *                          a round-robin scenario. Number of connections in the pool is constant and cannot be changed.
-  *                          Due to single-threaded nature of Redis, the number of concurrent connections should be kept
-  *                          low for best performance. The only situation where the number of connections should be increased
-  *                          is when using `WATCH`-`MULTI`-`EXEC` transactions with optimistic locking.
-  * @param initOp            a [[com.avsystem.commons.redis.RedisOp RedisOp]] executed by this client upon initialization.
-  *                          This may be useful for things like script loading, especially when using cluster client which
-  *                          may create and close node clients dynamically as reactions on cluster state changes.
-  * @param initTimeout       timeout used by initialization operation (`initOp`)
-  * @param connectionConfigs a function that returns [[ConnectionConfig]] for a connection given its id. Connection ID
-  *                          is its index in the connection pool, i.e. an int ranging from 0 to `poolSize`-1.
+  * @param poolSize
+  * Number of connections used by node client. Commands are distributed between connections using
+  * a round-robin scenario. Number of connections in the pool is constant and cannot be changed.
+  * Due to single-threaded nature of Redis, the number of concurrent connections should be kept
+  * low for best performance. The only situation where the number of connections should be increased
+  * is when using `WATCH`-`MULTI`-`EXEC` transactions with optimistic locking.
+  * @param maxBlockingPoolSize
+  * Maximum number of connections used by node client in order to handle blocking Redis
+  * commands, e.g. `BLPOP`. Blocking commands may not be pipelined with other, independent
+  * commands because these other commands may be delayed by the blocking command. Therefore
+  * they require their own, dynamically resizable connection pool. Maximum size of that pool
+  * is the limit of possible concurrent blocking commands that can be executed at the same time.
+  * @param maxBlockingIdleTime
+  * Maximum amount of time a blocking connection may be idle before being closed and removed from
+  * the pool.
+  * @param blockingCleanupInterval
+  * Time interval between periodic blocking connection cleanup events,
+  * with respect to [[maxBlockingIdleTime]].
+  * @param initOp
+  * A [[com.avsystem.commons.redis.RedisOp RedisOp]] executed by this client upon initialization.
+  * This may be useful for things like script loading, especially when using cluster client which
+  * may create and close node clients dynamically as reactions on cluster state changes.
+  * @param initTimeout
+  * Timeout used by initialization operation (`initOp`)
+  * @param connectionConfigs
+  * A function that returns [[ConnectionConfig]] for a connection given its id. Connection ID
+  * is its index in the connection pool, i.e. an int ranging from 0 to `poolSize`-1.
+  * @param blockingConnectionConfigs
+  * Same as [[connectionConfigs]] but for connections used for handling blocking commands.
   */
 case class NodeConfig(
   poolSize: Int = 1,
+  maxBlockingPoolSize: Int = 4096,
+  maxBlockingIdleTime: Duration = 1.minute,
+  blockingCleanupInterval: FiniteDuration = 1.second,
   initOp: RedisOp[Any] = RedisOp.unit,
   initTimeout: Timeout = Timeout(10.seconds),
-  connectionConfigs: Int => ConnectionConfig = _ => ConnectionConfig()
+  connectionConfigs: Int => ConnectionConfig = _ => ConnectionConfig(),
+  blockingConnectionConfigs: Int => ConnectionConfig = _ => ConnectionConfig()
 ) {
   require(poolSize > 0, "Pool size must be positive")
 }
@@ -118,7 +144,6 @@ case class ConnectionConfig(
   socketOptions: List[Inet.SocketOption] = Nil,
   connectTimeout: OptArg[FiniteDuration] = OptArg.Empty,
   maxWriteSizeHint: OptArg[Int] = 50000,
-  reconnectionStrategy: RetryStrategy = ExponentialBackoff(1.seconds, 32.seconds),
+  reconnectionStrategy: RetryStrategy = immediately.andThen(exponentially(1.seconds)).maxDelay(8.seconds),
   debugListener: DebugListener = DevNullListener
 )
-

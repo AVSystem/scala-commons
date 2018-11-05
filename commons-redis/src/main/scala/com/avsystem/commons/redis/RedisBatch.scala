@@ -36,21 +36,21 @@ trait RedisBatch[+A] { self =>
     */
   def map2[B, C](other: RedisBatch[B])(f: (A, B) => C): RedisBatch[C] =
     new RedisBatch[C] with RawCommandPacks {
-      def rawCommandPacks = this
+      def rawCommandPacks: RawCommandPacks = this
 
-      def emitCommandPacks(consumer: RawCommandPack => Unit) = {
+      def emitCommandPacks(consumer: RawCommandPack => Unit): Unit = {
         self.rawCommandPacks.emitCommandPacks(consumer)
         other.rawCommandPacks.emitCommandPacks(consumer)
       }
 
-      def computeSize(limit: Int) =
+      def computeSize(limit: Int): Int =
         if (limit <= 0) limit
         else {
           val selfSize = self.rawCommandPacks.computeSize(limit)
           selfSize + other.rawCommandPacks.computeSize(limit - selfSize)
         }
 
-      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = {
+      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean): C = {
         // we must invoke both decoders regardless of intermediate errors because index must be properly advanced
         var failure: Opt[Throwable] = Opt.Empty
         val a = try self.decodeReplies(replies, index, inTransaction) catch {
@@ -72,15 +72,15 @@ trait RedisBatch[+A] { self =>
 
   def transform[B](fun: Try[A] => Try[B]): RedisBatch[B] =
     new RedisBatch[B] {
-      def rawCommandPacks = self.rawCommandPacks
-      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) =
+      def rawCommandPacks: RawCommandPacks = self.rawCommandPacks
+      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean): B =
         fun(Try(self.decodeReplies(replies, index, inTransaction))).get
     }
 
   def recover[B >: A](f: PartialFunction[Throwable, B]): RedisBatch[B] =
     new RedisBatch[B] {
-      def rawCommandPacks = self.rawCommandPacks
-      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) =
+      def rawCommandPacks: RawCommandPacks = self.rawCommandPacks
+      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean): B =
         try self.decodeReplies(replies, index, inTransaction) catch f
     }
 
@@ -112,7 +112,7 @@ trait RedisBatch[+A] { self =>
 
   def map[B](f: A => B): RedisBatch[B] =
     new RedisBatch[B] {
-      def rawCommandPacks = self.rawCommandPacks
+      def rawCommandPacks: RawCommandPacks = self.rawCommandPacks
       def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) =
         f(self.decodeReplies(replies, index, inTransaction))
     }
@@ -160,13 +160,13 @@ trait RedisBatch[+A] { self =>
     */
   def asking: RedisBatch[A] =
     new RedisBatch[A] with RawCommandPacks {
-      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) =
+      def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean): A =
         self.decodeReplies(replies, index, inTransaction)
-      def emitCommandPacks(consumer: RawCommandPack => Unit) =
+      def emitCommandPacks(consumer: RawCommandPack => Unit): Unit =
         self.rawCommandPacks.emitCommandPacks(pack => consumer(new RedisClusterClient.AskingPack(pack)))
-      def computeSize(limit: Int) =
+      def computeSize(limit: Int): Int =
         self.rawCommandPacks.computeSize(limit)
-      def rawCommandPacks = this
+      def rawCommandPacks: RawCommandPacks = this
     }
 }
 
@@ -202,7 +202,7 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
     case Failure(cause) => failure(cause)
   }
 
-  val unit = success(())
+  final val unit: RedisBatch[Unit] = success(())
 
   implicit class SequenceOps[Ops, Res](private val ops: Ops) extends AnyVal {
     /**
@@ -276,7 +276,7 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
 }
 
 trait SinglePackBatch[+A] extends RedisBatch[A] with RawCommandPack {
-  final def rawCommandPacks = this
+  final def rawCommandPacks: RawCommandPacks = this
 }
 
 trait ImmediateBatch[+A] extends RedisBatch[A] with RawCommandPacks {
@@ -284,7 +284,8 @@ trait ImmediateBatch[+A] extends RedisBatch[A] with RawCommandPacks {
   final def rawCommandPacks: RawCommandPacks = this
   final def decodeReplies(replies: Int => RedisReply, index: RedisBatch.Index, inTransaction: Boolean): A = result
   final def emitCommandPacks(consumer: RawCommandPack => Unit): Unit = ()
-  final def computeSize(limit: Int) = 0
+  final def computeSize(limit: Int): Int = 0
+  override final def maxBlockingMillis: Int = 0
 }
 
 /**

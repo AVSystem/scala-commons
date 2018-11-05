@@ -960,15 +960,15 @@ trait TupleSequencers { this: Sequencer.type =>
 
 object TupleSequencers {
   private class TupleBatch[T](batches: Product, fun: Array[Any] => T) extends RedisBatch[T] with RawCommandPacks {
-    def rawCommandPacks = this
-    def emitCommandPacks(consumer: RawCommandPack => Unit) = {
+    def rawCommandPacks: TupleBatch[T] = this
+    def emitCommandPacks(consumer: RawCommandPack => Unit): Unit = {
       var i = 0
       while (i < batches.productArity) {
         batches.productElement(i).asInstanceOf[RedisBatch[Any]].rawCommandPacks.emitCommandPacks(consumer)
         i += 1
       }
     }
-    def computeSize(limit: Int) = {
+    def computeSize(limit: Int): Int = {
       var res = 0
       var i = 0
       while (i < batches.productArity && res < limit) {
@@ -977,7 +977,7 @@ object TupleSequencers {
       }
       res
     }
-    def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean) = {
+    def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean): T = {
       val result = new Array[Any](batches.productArity)
       var failure: Opt[Throwable] = Opt.Empty
       var i = 0

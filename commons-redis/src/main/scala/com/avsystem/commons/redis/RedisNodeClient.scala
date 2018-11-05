@@ -2,17 +2,19 @@ package com.avsystem.commons
 package redis
 
 import java.io.Closeable
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicLong
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.avsystem.commons.concurrent.RunInQueueEC
-import com.avsystem.commons.redis.actor.RedisConnectionActor.{Close, PacksResult}
+import com.avsystem.commons.redis.actor.ConnectionPoolActor.QueuedConn
+import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
-import com.avsystem.commons.redis.actor.{RedisConnectionActor, RedisOperationActor}
+import com.avsystem.commons.redis.actor.{ConnectionPoolActor, RedisConnectionActor, RedisOperationActor}
 import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, ExecutionConfig, NodeConfig}
-import com.avsystem.commons.redis.exception.{ClientStoppedException, NodeInitializationFailure, NodeRemovedException}
+import com.avsystem.commons.redis.exception.{ClientStoppedException, NodeInitializationFailure, NodeRemovedException, TooManyConnectionsException}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
@@ -20,16 +22,15 @@ import scala.concurrent.duration._
 /**
   * Redis client implementation for a single Redis node using a connection pool. Connection pool size is constant
   * and batches and operations are distributed over connections using round-robin scheme. Connections are automatically
-  * reconnected upon failure (possibly with an appropriate delay, see [[config.NodeConfig NodeConfig]]
-  * for details).
+  * reconnected upon failure (possibly with an appropriate delay, see [[config.NodeConfig NodeConfig]] for details).
   */
 final class RedisNodeClient(
   val address: NodeAddress = NodeAddress.Default,
   val config: NodeConfig = NodeConfig(),
-  val clusterNode: Boolean = false)
-  (implicit system: ActorSystem) extends RedisNodeExecutor with Closeable { client =>
+  val clusterNode: Boolean = false
+)(implicit system: ActorSystem) extends RedisNodeExecutor with Closeable { client =>
 
-  private def createConnection(i: Int) = {
+  private def newConnection(i: Int): ActorRef = {
     val connConfig: ConnectionConfig = config.connectionConfigs(i)
     // If this node connects to cluster master, initial connection attempt is not required to be successful
     // This is because in in RedisClusterClient only initial connections to seed nodes must be immediately successful
@@ -41,8 +42,20 @@ final class RedisNodeClient(
   }
 
   private val connInitPromises = ArrayBuffer.fill(config.poolSize)(Promise[Unit])
-  private val connections = (0 until config.poolSize).iterator.map(createConnection).toArray
+  private val connections = (0 until config.poolSize).iterator.map(newConnection).toArray
   private val index = new AtomicLong(0)
+
+  private val blockingConnectionQueue = new ConcurrentLinkedDeque[QueuedConn]
+  private val blockingConnectionPool =
+    system.actorOf(Props(new ConnectionPoolActor(address, config, blockingConnectionQueue)))
+
+  private def newBlockingConnection(): Future[ActorRef] =
+    blockingConnectionPool.ask(ConnectionPoolActor.CreateNewConnection)(Timeout(1.second)).mapNow {
+      case ConnectionPoolActor.NewConnection(connection) =>
+        connection
+      case ConnectionPoolActor.Full =>
+        throw new TooManyConnectionsException(config.maxBlockingPoolSize)
+    }
 
   @volatile private[this] var initSuccess = false
   @volatile private[this] var failure = Opt.empty[Throwable]
@@ -53,7 +66,8 @@ final class RedisNodeClient(
       .transform(identity, new NodeInitializationFailure(_))
     val res = Future.traverse(connInitPromises)(_.future).flatMap(_ => initOpFuture)
     res.onComplete {
-      case Success(_) => initSuccess = true
+      case Success(_) =>
+        initSuccess = true
       case Failure(cause) =>
         failure = cause.opt
         close()
@@ -68,7 +82,22 @@ final class RedisNodeClient(
     connections((index.getAndIncrement() % config.poolSize).toInt)
 
   private[redis] def executeRaw(packs: RawCommandPacks)(implicit timeout: Timeout): Future[PacksResult] =
-    ifReady(nextConnection().ask(packs).mapNow({ case pr: PacksResult => pr }))
+    ifReady {
+      val maxBlockMillis = packs.maxBlockingMillis
+      if (maxBlockMillis == 0)
+        nextConnection().ask(packs)(timeout, Actor.noSender).mapNow { case pr: PacksResult => pr }
+      else {
+        val adjTimeout = Timeout((maxBlockMillis.millis + 1.second) max timeout.duration)
+        def executeBlocking(connection: ActorRef): Future[PacksResult] =
+          connection.ask(packs)(adjTimeout, Actor.noSender)
+            .andThenNow { case _ =>
+              blockingConnectionQueue.offerFirst(QueuedConn(connection, System.nanoTime()))
+            }
+            .mapNow { case pr: PacksResult => pr }
+        blockingConnectionQueue.pollFirst().opt.map(qc => executeBlocking(qc.conn))
+          .getOrElse(newBlockingConnection().flatMapNow(executeBlocking))
+      }
+    }
 
   /**
     * Notifies the [[RedisNodeClient]] that its node is no longer a master in Redis Cluster and.
@@ -78,7 +107,8 @@ final class RedisNodeClient(
   private[redis] def nodeRemoved(): Unit = {
     val cause = new NodeRemovedException(address)
     failure = cause.opt
-    connections.foreach(_ ! Close(cause))
+    connections.foreach(_ ! RedisConnectionActor.Close(cause, stop = true))
+    blockingConnectionPool ! ConnectionPoolActor.Close(cause, stop = true)
   }
 
   def executionContext: ExecutionContext =
@@ -116,7 +146,7 @@ final class RedisNodeClient(
     * </ul>
     */
   def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] =
-    executeRaw(batch.rawCommandPacks.requireLevel(RawCommand.Level.Node, "NodeClient"))(config.timeout)
+    executeRaw(batch.rawCommandPacks.requireLevel(RawCommand.Level.Node, "NodeClient"))(config.responseTimeout)
       .map(result => batch.decodeReplies(result))(config.decodeOn)
 
   /**
@@ -133,7 +163,7 @@ final class RedisNodeClient(
     */
   //TODO: executionConfig.decodeOn is ignored now
   def executeOp[A](op: RedisOp[A], executionConfig: ExecutionConfig): Future[A] =
-    ifReady(executeOp(nextConnection(), op)(executionConfig.timeout))
+    ifReady(executeOp(nextConnection(), op)(executionConfig.responseTimeout))
 
   private def executeOp[A](connection: ActorRef, op: RedisOp[A])(implicit timeout: Timeout): Future[A] =
     system.actorOf(Props(new RedisOperationActor(connection))).ask(op)
@@ -148,7 +178,9 @@ final class RedisNodeClient(
     overallInitFuture.mapNow(_ => this)
 
   def close(): Unit = {
-    failure = failure orElse new ClientStoppedException(address.opt).opt
-    connections.foreach(system.stop)
+    val cause = failure.getOrElse(new ClientStoppedException(address.opt))
+    failure = cause.opt
+    connections.foreach(_ ! RedisConnectionActor.Close(cause, stop = true))
+    blockingConnectionPool ! ConnectionPoolActor.Close(cause, stop = true)
   }
 }
