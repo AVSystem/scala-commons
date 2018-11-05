@@ -2,7 +2,7 @@ package com.avsystem.commons
 package meta
 
 import com.avsystem.commons.meta.Mapping.{ConcatIterable, KeyFilteredIterable}
-import com.avsystem.commons.serialization.GenCodec
+import com.avsystem.commons.serialization.{GenCodec, GenObjectCodec}
 
 import scala.collection.generic.CanBuildFrom
 import scala.collection.{MapLike, mutable}
@@ -97,7 +97,7 @@ object Mapping {
   implicit def canBuildFrom[V]: CanBuildFrom[Nothing, (String, V), Mapping[V]] =
     reusableCBF.asInstanceOf[CanBuildFrom[Nothing, (String, V), Mapping[V]]]
 
-  implicit def genCodec[V: GenCodec]: GenCodec[Mapping[V]] = GenCodec.createNullableObject(
+  implicit def genCodec[V: GenCodec]: GenObjectCodec[Mapping[V]] = GenCodec.nullableObject(
     oi => new Mapping(oi.iterator(GenCodec.read[V]).toList),
     (oo, np) => np.foreach({ case (k, v) => GenCodec.write[V](oo.writeField(k), v) })
   )

@@ -5,10 +5,15 @@ import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta._
 import com.avsystem.commons.serialization.{GenCaseInfo, GenCodec, GenParamInfo, GenUnionInfo, name}
 
+trait GenCodecStructure[T] {
+  def codec: GenCodec[T]
+  def structure: GenStructure[T]
+}
+
 abstract class HasGenCodecStructure[T](
-  implicit gc: MacroGenerated[Any, GenCodec[T]], gs: MacroGenerated[Any, GenStructure[T]]) {
-  implicit val genCodec: GenCodec[T] = gc.forCompanion(this)
-  implicit val genStructure: GenStructure[T] = gs.forCompanion(this)
+  implicit macroInstances: MacroInstances[Unit, GenCodecStructure[T]]) {
+  implicit val genCodec: GenCodec[T] = macroInstances((), this).codec
+  implicit val genStructure: GenStructure[T] = macroInstances((), this).structure
 }
 
 sealed trait GenStructure[T] extends TypedMetadata[T] {

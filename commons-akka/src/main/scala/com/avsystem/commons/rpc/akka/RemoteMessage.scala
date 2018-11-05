@@ -12,7 +12,7 @@ private sealed trait RemoteMessage extends Serializable
 
 private object RemoteMessage {
   implicit val byteStringCodec: GenCodec[ByteString] =
-    GenCodec.create[ByteString](input => ByteString(input.readBinary()), (output, byteString) => output.writeBinary(byteString.toArray))
+    GenCodec.nullableSimple[ByteString](input => ByteString(input.readBinary()), (output, byteString) => output.writeBinary(byteString.toArray))
 
   implicit val procedureInvocationMessageCodec: GenCodec[ProcedureInvocationMessage] = GenCodec.materialize[ProcedureInvocationMessage]
   implicit val functionInvocationMessageCodec: GenCodec[FunctionInvocationMessage] = GenCodec.materialize[FunctionInvocationMessage]

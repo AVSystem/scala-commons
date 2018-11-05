@@ -68,6 +68,10 @@ class JsonDecodingBenchmark extends JsonSerializationBenchmark {
 class JsonWritingBenchmark extends JsonSerializationBenchmark {
 
   @Benchmark
+  def writePrimitivesGenCodec: String =
+    JsonStringOutput.write(Primitives.Example)
+
+  @Benchmark
   def writeCCCirce: String =
     Something.Example.asJson.noSpaces
 

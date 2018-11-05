@@ -35,7 +35,7 @@ object TypeString {
     GenKeyCodec.create[TypeString[_]](new TypeString(_), _.value)
 
   implicit val codec: GenCodec[TypeString[_]] =
-    GenCodec.create[TypeString[_]](i => new TypeString(i.readString()), (o, ts) => o.writeString(ts.value))
+    GenCodec.nonNullSimple[TypeString[_]](i => new TypeString(i.readString()), (o, ts) => o.writeString(ts.value))
 }
 
 /**
@@ -85,7 +85,7 @@ object JavaClassName extends JavaClassNameLowPrio {
     GenKeyCodec.create[JavaClassName[_]](new JavaClassName(_), _.value)
 
   implicit val codec: GenCodec[JavaClassName[_]] =
-    GenCodec.create[JavaClassName[_]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
+    GenCodec.nonNullSimple[JavaClassName[_]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
 }
 trait JavaClassNameLowPrio { this: JavaClassName.type =>
   implicit def materialize[T]: JavaClassName[T] = macro macros.misc.MiscMacros.javaClassName[T]

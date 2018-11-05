@@ -39,6 +39,24 @@ object Something {
   final val ExampleJsonString = ExampleJson.noSpaces
 }
 
+case class Primitives(
+  b: Boolean,
+  i: Int,
+  l: Long,
+  d: Double
+)
+object Primitives {
+  implicit val codec: GenCodec[Primitives] = GenCodec.materialize
+  implicit val encoder: Encoder[Primitives] = deriveEncoder[Primitives]
+  implicit val decoder: Decoder[Primitives] = deriveDecoder[Primitives]
+  implicit val rw: upickle.default.ReadWriter[Primitives] = upickle.default.macroRW
+
+  val Example = Primitives(b = true, 42, 4332565, 3.14)
+
+  final val ExampleJson = Example.asJson
+  final val ExampleJsonString = ExampleJson.noSpaces
+}
+
 case class Stuff(map: Map[String, Boolean], factor: Double)
 object Stuff {
   implicit val codec: GenCodec[Stuff] = GenCodec.materialize

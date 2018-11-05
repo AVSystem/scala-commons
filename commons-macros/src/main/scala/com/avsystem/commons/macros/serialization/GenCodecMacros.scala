@@ -24,13 +24,21 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
      """
   }
 
-  def typeClass: Tree = GenCodecCls
-  def typeClassName: String = "GenCodec"
-  def implementDeferredInstance(tpe: Type): Tree = q"new $GenCodecObj.Deferred[$tpe]"
+  // GenCodec or GenObjectCodec
+  private val CodecObj: ModuleSymbol = c.prefix.actualType.termSymbol.asModule
+  private val CodecCls: ClassSymbol = CodecObj.companion.asClass
+
+  def implementDeferredInstance(tpe: Type): Tree = q"new $CodecObj.Deferred[$tpe]"
+
+  override def typeClassInstance(tpe: Type): Type =
+    getType(tq"$CodecCls[$tpe]")
+
+  override def dependencyType(tpe: Type): Type =
+    getType(tq"$GenCodecCls[$tpe]")
 
   override def dependency(depTpe: Type, tcTpe: Type, param: Symbol): Tree = {
     val clue = s"Cannot materialize $tcTpe because of problem with parameter ${param.name}: "
-    val depTcTpe = typeClassInstance(depTpe)
+    val depTcTpe = dependencyType(depTpe)
     Ident(inferCachedImplicit(depTcTpe, clue, param.pos))
   }
 
@@ -119,6 +127,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   def isTransientDefault(param: ApplyParam): Boolean =
     param.defaultValue.nonEmpty && hasAnnotation(param.sym, TransientDefaultAnnotType)
 
+  def isOptimizedPrimitive(param: ApplyParam): Boolean = {
+    val vt = param.valueType
+    vt =:= typeOf[Boolean] || vt =:= typeOf[Int] || vt =:= typeOf[Long] || vt =:= typeOf[Double]
+  }
+
   def isOutOfOrder(sym: Symbol): Boolean =
     hasAnnotation(sym, OutOfOrderAnnotType)
 
@@ -160,7 +173,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       if (apply.isConstructor) q"new $dtpe(..$args)"
       else q"$safeCompanion.apply[..${dtpe.typeArgs}](..$args)"
 
-    def writeFields = params match {
+    def writeFields: Tree = params match {
       case Nil =>
         if (canUseFields)
           q"()"
@@ -171,10 +184,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
             }
            """
       case List(p) =>
-        def writeField(value: Tree) = {
+        def writeField(value: Tree): Tree = {
           val writeArgs = q"output" :: q"${p.idx}" :: value ::
             (if (isTransientDefault(p)) List(p.defaultValue) else Nil)
-          q"writeField[${p.valueType}](..$writeArgs)"
+          val writeTargs = if (isOptimizedPrimitive(p)) Nil else List(p.valueType)
+          q"writeField[..$writeTargs](..$writeArgs)"
         }
 
         if (canUseFields)
@@ -185,10 +199,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
             if(unapplyRes.isEmpty) unapplyFailed else ${writeField(q"unapplyRes.get")}
            """
       case _ =>
-        def writeField(p: ApplyParam, value: Tree) = {
+        def writeField(p: ApplyParam, value: Tree): Tree = {
           val writeArgs = q"output" :: q"${p.idx}" :: value ::
             (if (isTransientDefault(p)) List(p.defaultValue) else Nil)
-          q"writeField[${p.valueType}](..$writeArgs)"
+          val writeTargs = if (isOptimizedPrimitive(p)) Nil else List(p.valueType)
+          q"writeField[..$writeTargs](..$writeArgs)"
         }
 
         if (canUseFields)
@@ -218,14 +233,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
 
         q"""
-          new $SerializationPkg.TransparentCodec[$dtpe,${p.valueType}](
-            ${dtpe.toString}
-          ) {
-            ..$cachedImplicitDeclarations
-            def underlyingCodec: $GenCodecCls[${p.valueType}] = ${p.instance}
-            def wrap(underlying: ${p.valueType}): $dtpe = ${applier(List(q"underlying"))}
-            def unwrap(value: $dtpe): ${p.valueType} = $unwrapBody
-          }
+          new $CodecObj.Transformed[$dtpe,${p.valueType}](
+            $CodecObj.makeLazy($CodecObj[${p.valueType}]),
+            value => $unwrapBody,
+            underlying => ${applier(List(q"underlying"))}
+          )
          """
       case _ =>
         abort(s"@transparent annotation found on class with ${params.size} parameters, expected exactly one.")
@@ -238,13 +250,15 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           case tree => q"getField[${param.valueType}](fieldValues, ${param.idx}, $tree)"
         }
 
-      def generatedWrite(sym: Symbol) =
+      def generatedWrite(sym: Symbol): Tree =
         q"writeField(${nameBySym(sym)}, output, ${mkParamLessCall(q"value", sym)}, ${genDepNames(sym)})"
 
-      val useProductCodec = canUseFields && generated.isEmpty && !params.exists(isTransientDefault)
+      val useProductCodec = canUseFields && generated.isEmpty && !params.exists(isTransientDefault) &&
+        (isScalaJs || !params.exists(isOptimizedPrimitive))
+
       val baseClass = TypeName(if (useProductCodec) "ProductCodec" else "ApplyUnapplyCodec")
 
-      def writeMethod = if (useProductCodec) q"()" else
+      def writeMethod: Tree = if (useProductCodec) q"()" else
         q"""
           def writeObject(output: $SerializationPkg.ObjectOutput, value: $dtpe) = {
             $writeFields
@@ -329,7 +343,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   case class CaseClassInfo(idx: Int, subtype: Type, applyParams: List[Symbol]) extends CaseInfo {
     def depInstance: Tree =
-      q"${c.prefix}.applyUnapplyCodec[$subtype]"
+      q"$GenCodecObj.applyUnapplyCodec[$subtype]"
   }
 
   case class CaseObjectInfo(idx: Int, subtype: Type, singleton: Tree) extends CaseInfo {
@@ -421,8 +435,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   def materializeRecursively[T: WeakTypeTag]: Tree = instrument {
     val tpe = weakTypeOf[T].dealias
     q"""
-       implicit def ${c.freshName(TermName("allow"))}[T]: $AllowImplicitMacroCls[$typeClass[T]] =
-         $AllowImplicitMacroObj[$typeClass[T]]
+       implicit def ${c.freshName(TermName("allow"))}[T]: $AllowImplicitMacroCls[$GenCodecCls[T]] =
+         $AllowImplicitMacroObj[$GenCodecCls[T]]
        $GenCodecObj.materialize[$tpe]
      """
   }

@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization.json
 
-import com.avsystem.commons.serialization.{GenCodec, IsoInstant, ListOutput, ObjectOutput, Output}
+import com.avsystem.commons.serialization._
 
 object JsonStringOutput {
   def write[T: GenCodec](value: T, options: JsonOptions = JsonOptions.Default): String = {
@@ -56,7 +56,7 @@ trait BaseJsonOutput {
 }
 
 final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = JsonOptions.Default, depth: Int = 0)
-  extends BaseJsonOutput with Output {
+  extends BaseJsonOutput with OutputAndSimpleOutput {
 
   def writeNull(): Unit = builder.append("null")
   def writeString(str: String): Unit = writeJsonString(builder, str, options.asciiOutput)
@@ -97,6 +97,16 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
   }
 
   def writeRawJson(json: String): Unit = builder.append(json)
+
+  override def keepsMetadata(metadata: InputMetadata[_]): Boolean =
+    metadata == JsonType
+
+  override def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean =
+    typeMarker match {
+      case RawJson => writeRawJson(value); true
+      case _ => false
+    }
+
   def writeList(): JsonListOutput = new JsonListOutput(builder, options, depth + 1)
   def writeObject(): JsonObjectOutput = new JsonObjectOutput(builder, options, depth + 1)
 }

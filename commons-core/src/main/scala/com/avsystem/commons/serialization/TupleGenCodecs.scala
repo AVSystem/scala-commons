@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-trait TupleGenCodecs {this: GenCodec.type =>
+trait TupleGenCodecs { this: GenCodec.type =>
   private def mkTupleCodec[T](elementCodecs: GenCodec[_]*): GenCodec[T] =
   macro macros.serialization.GenCodecMacros.mkTupleCodec[T]
 

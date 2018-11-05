@@ -8,8 +8,8 @@ final class DefaultCaseObjectInput(firstField: FieldInput, actualInput: ObjectIn
 
   private[this] var atFirstField = true
 
-  def hasNext = atFirstField || actualInput.hasNext
-  def nextField() =
+  def hasNext: Boolean = atFirstField || actualInput.hasNext
+  def nextField(): FieldInput =
     if (atFirstField) {
       atFirstField = false
       firstField

@@ -13,16 +13,6 @@ trait TypeClassDerivation extends MacroCommons {
   final def RecursiveImplicitMarkerObj: Tree = q"$CommonsPkg.macros.RecursiveImplicitMarker"
 
   /**
-    * A tree that represents type constructor of the type class to be derived.
-    */
-  def typeClass: Tree
-
-  /**
-    * Human-friendly name of the type class. Used in error messages.
-    */
-  def typeClassName: String
-
-  /**
     * Returns tree that instantiates a "deferred instance" of this type class. Deferred instance
     * is a special implementation of the type class which implements the `com.avsystem.commons.derivation.DeferredInstance`
     * trait and wraps an another, actual instance of the type class and delegates all operations to that
@@ -89,7 +79,7 @@ trait TypeClassDerivation extends MacroCommons {
     * @param instance tree that evaluates to type class instance for this subtype
     */
   case class KnownSubtype(idx: Int, tpe: Type, instance: Tree) {
-    def sym = tpe.typeSymbol
+    def sym: Symbol = tpe.typeSymbol
   }
 
   /**
@@ -125,11 +115,12 @@ trait TypeClassDerivation extends MacroCommons {
     */
   def forUnknown(tpe: Type): Tree
 
-  def typeClassInstance(tpe: Type): Type = getType(tq"$typeClass[$tpe]")
+  def typeClassInstance(tpe: Type): Type
+  def dependencyType(tpe: Type): Type = typeClassInstance(tpe)
 
   def dependency(depTpe: Type, tcTpe: Type, param: Symbol): Tree = {
     val clue = s"Cannot materialize $tcTpe because of problem with parameter ${param.name}: "
-    val depTcTpe = typeClassInstance(depTpe)
+    val depTcTpe = dependencyType(depTpe)
     q"""$ImplicitsObj.infer[$depTcTpe](${internal.setPos(StringLiteral(clue), param.pos)})"""
   }
 
@@ -148,12 +139,12 @@ trait TypeClassDerivation extends MacroCommons {
       forApplyUnapply(au, dependencies)
     }
 
-    def sealedHierarchyTc = knownSubtypes(dtpe).map { subtypes =>
+    def sealedHierarchyTc: Option[Tree] = knownSubtypes(dtpe).map { subtypes =>
       if (subtypes.isEmpty) {
         abort(s"Could not find any subtypes for $dtpe")
       }
       val dependencies = subtypes.zipWithIndex.map { case (depTpe, idx) =>
-        val depTree = c.inferImplicitValue(typeClassInstance(depTpe), withMacrosDisabled = true) match {
+        val depTree = c.inferImplicitValue(dependencyType(depTpe), withMacrosDisabled = true) match {
           case EmptyTree => q"${c.prefix}.materialize[$depTpe]"
           case t => replaceCompanion(t)
         }
@@ -204,13 +195,6 @@ trait TypeClassDerivation extends MacroCommons {
 
   def materializeImplicitly[T: WeakTypeTag](allow: Tree): Tree =
     instrument(materialize[T])
-
-  def materializeMacroGenerated[T: WeakTypeTag]: Tree = instrument {
-    val tpe = weakTypeOf[T].dealias
-    val companionTpe = c.macroApplication.tpe.dealias.typeArgs.head
-    val tcTpe = typeClassInstance(tpe)
-    mkMacroGenerated(companionTpe, tcTpe, q"${c.prefix}.materialize[$tpe]")
-  }
 }
 
 abstract class AbstractTypeClassDerivation(c: blackbox.Context)

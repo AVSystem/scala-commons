@@ -34,14 +34,11 @@ private object FormatConstants {
 
 import com.avsystem.commons.serialization.FormatConstants._
 
-class StreamInput(is: DataInputStream) extends Input {
+class StreamInput(is: DataInputStream) extends InputAndSimpleInput {
   private[serialization] val markerByte = is.readByte()
 
-  def isNull: Boolean = markerByte == NullMarker
-
-  def readNull(): Null =
-    if (markerByte == NullMarker) null
-    else throw new ReadFailure(s"Expected null but $markerByte found")
+  def readNull(): Boolean =
+    markerByte == NullMarker
 
   def readString(): String =
     if (markerByte == StringMarker) is.readUTF()
@@ -137,7 +134,8 @@ class StreamInput(is: DataInputStream) extends Input {
   }
 }
 
-class StreamFieldInput(val fieldName: String, is: DataInputStream) extends StreamInput(is) with FieldInput
+class StreamFieldInput(val fieldName: String, is: DataInputStream)
+  extends StreamInput(is) with FieldInput
 
 private class StreamListInput(is: DataInputStream) extends ListInput {
   private[this] var currentInput: Opt[StreamInput] = Opt.empty
@@ -190,12 +188,16 @@ private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
 }
 
 private object StreamObjectInput {
-  case class EmptyFieldInput(name: String) extends FieldInput {
+  case class EmptyFieldInput(name: String) extends InputAndSimpleInput with FieldInput {
     private def nope: Nothing = throw new ReadFailure(s"Something went horribly wrong ($name)")
 
-    def isNull: Boolean = nope
-    def fieldName: String = nope
-    def readNull(): Null = nope
+    def isNull: Boolean = false
+    def isList: Boolean = false
+    def isObject: Boolean = false
+
+    def fieldName: String = name
+
+    def readNull(): Boolean = false
     def readString(): String = nope
     def readBoolean(): Boolean = nope
     def readInt(): Int = nope
@@ -213,7 +215,7 @@ private object StreamObjectInput {
   val End = EmptyFieldInput("END")
 }
 
-class StreamOutput(os: DataOutputStream) extends Output {
+class StreamOutput(os: DataOutputStream) extends OutputAndSimpleOutput {
 
   private[this] val streamList = new StreamListOutput(os, this)
   private[this] val streamObject = new StreamObjectOutput(os, this)

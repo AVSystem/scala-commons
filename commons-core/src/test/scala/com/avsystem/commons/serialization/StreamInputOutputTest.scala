@@ -102,7 +102,7 @@ class StreamInputOutputTest extends FunSuite {
     val (os, output) = outputs()
 
     val objOutput = output.writeObject()
-    objOutput.writeField("k1").writeInt(5)
+    objOutput.writeField("k1").writeSimple().writeInt(5)
     objOutput.finish()
 
     val (is, input) = inputs(os)
@@ -111,7 +111,7 @@ class StreamInputOutputTest extends FunSuite {
 
     val v = objIn.nextField()
     assert(v.fieldName == "k1")
-    assert(v.readInt() == 5)
+    assert(v.readSimple().readInt() == 5)
 
     assert(!objIn.hasNext)
     assert(is.available() == 0)
@@ -126,7 +126,7 @@ class StreamInputOutputTest extends FunSuite {
 
     (1 to 2).foreach(_ => objInput.nextField().skip())
 
-    assert(objInput.nextField().readString() == "str")
+    assert(objInput.nextField().readSimple().readString() == "str")
 
     (4 until fieldTypesInstance.productArity).foreach(_ => objInput.nextField().skip())
 
@@ -135,8 +135,8 @@ class StreamInputOutputTest extends FunSuite {
     val innerList = listInput.nextElement().readList()
     val innerObjInput = innerList.nextElement().readObject()
 
-    assert(innerObjInput.nextField().readInt() == 123)
-    assert(innerObjInput.nextField().readString() == "y")
+    assert(innerObjInput.nextField().readSimple().readInt() == 123)
+    assert(innerObjInput.nextField().readSimple().readString() == "y")
     assert(!innerObjInput.hasNext)
 
     innerList.nextElement().skip()

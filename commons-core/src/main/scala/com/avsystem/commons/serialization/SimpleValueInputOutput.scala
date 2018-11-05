@@ -46,7 +46,7 @@ class SimpleValueOutput(
   consumer: Any => Unit,
   newObjectRepr: => mutable.Builder[(String, Any), BMap[String, Any]],
   newListRepr: => mutable.Builder[Any, BSeq[Any]]
-) extends Output {
+) extends OutputAndSimpleOutput {
 
   def this(consumer: Any => Unit) =
     this(consumer, new MHashMap[String, Any], new ListBuffer[Any])
@@ -84,7 +84,7 @@ object SimpleValueInput {
   *
   * @param value serialized value yield by [[SimpleValueOutput]]
   */
-class SimpleValueInput(value: Any) extends Input {
+class SimpleValueInput(value: Any) extends InputAndSimpleInput {
   private def doRead[A >: Null <: AnyRef : ClassTag]: A =
     doReadUnboxed[A, A]
 
@@ -93,8 +93,7 @@ class SimpleValueInput(value: Any) extends Input {
     case _ => throw new ReadFailure(s"Expected ${classTag[B].runtimeClass} but got ${value.getClass}")
   }
 
-  def isNull: Boolean = value == null
-  def readNull(): Null = if (isNull) null else throw new ReadFailure(s"not null: ${value.getClass}")
+  def readNull(): Boolean = value == null
   def readBoolean(): Boolean = doReadUnboxed[Boolean, JBoolean]
   def readString(): String = doRead[String]
   def readInt(): Int = doReadUnboxed[Int, JInteger]

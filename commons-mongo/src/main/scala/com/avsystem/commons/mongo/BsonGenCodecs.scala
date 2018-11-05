@@ -10,15 +10,9 @@ trait BsonGenCodecs {
 }
 
 object BsonGenCodecs {
-  implicit val objectIdCodec: GenCodec[ObjectId] = GenCodec.createNullable(
-    readFun = {
-      case bsonInput: BsonInput => bsonInput.readObjectId()
-      case otherInput => new ObjectId(otherInput.readString())
-    },
-    writeFun = {
-      case (bsonOutput: BsonOutput, objectId) => bsonOutput.writeObjectId(objectId)
-      case (otherOutput, objectId) => otherOutput.writeString(objectId.toHexString)
-    }
+  implicit val objectIdCodec: GenCodec[ObjectId] = GenCodec.nullable(
+    i => i.readCustom(ObjectIdMarker).getOrElse(new ObjectId(i.readSimple().readString())),
+    (o, v) => if (!o.writeCustom(ObjectIdMarker, v)) o.writeSimple().writeString(v.toHexString)
   )
   implicit val objectIdKeyCodec: GenKeyCodec[ObjectId] =
     GenKeyCodec.create(new ObjectId(_), _.toHexString)

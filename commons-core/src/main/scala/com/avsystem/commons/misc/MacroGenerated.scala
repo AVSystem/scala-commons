@@ -16,6 +16,7 @@ package misc
   * - contents of `C` will be wildcard-imported into macro-materialization, allowing injection of additional implicits
   * - working around too strict Scala validation of super constructor arguments: https://github.com/scala/bug/issues/7666
   */
+@deprecated("Use MacroInstances instead", "1.34")
 class MacroGenerated[C, T](val forCompanion: C => T) extends AnyVal
 object MacroGenerated {
   def apply[C, T](instance: => T): MacroGenerated[C, T] =

@@ -316,10 +316,4 @@ class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx)
       materializeOneOf(metadataTpe)(tryMaterialize).getOrElse(abort)
     }
   }
-
-  def materializeMacroGenerated[Real: WeakTypeTag]: Tree = instrument {
-    val adtTpe = weakTypeOf[Real].dealias
-    val List(companionTpe, metadataTpe) = c.macroApplication.tpe.dealias.typeArgs
-    mkMacroGenerated(companionTpe, metadataTpe, q"${c.prefix}.materialize[$adtTpe]")
-  }
 }

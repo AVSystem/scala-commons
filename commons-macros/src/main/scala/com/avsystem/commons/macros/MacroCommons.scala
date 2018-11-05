@@ -69,7 +69,7 @@ trait MacroCommons { bundle =>
   final def BIndexedSeqClass: Symbol = BIndexedSeqTpe.typeSymbol
 
   final lazy val isScalaJs =
-    definitions.ScalaPackageClass.toType.member(TermName("scalajs")) != NoSymbol
+    c.compilerSettings.exists(o => o.startsWith("-Xplugin:") && o.contains("scalajs-compiler"))
 
   final lazy val ownerChain = {
     val sym = typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
@@ -342,30 +342,6 @@ trait MacroCommons { bundle =>
         case t => t
       }
     }
-  }
-
-  def mkMacroGenerated(companionTpe: Type, tpe: Type, baseMaterialize: Tree): Tree = {
-    def fail() =
-      abort(s"${c.macroApplication.symbol} can only be used in super constructor argument of an object")
-
-    val ownerConstr = c.internal.enclosingOwner
-    if (!ownerConstr.isConstructor) {
-      fail()
-    }
-    val companionSym = ownerConstr.owner.asClass.module.asModule
-    if (companionSym == NoSymbol) {
-      fail()
-    }
-
-    val companionImport = List(q"import $companionReplacementName._")
-      .filterNot(_ => companionTpe =:= definitions.AnyTpe)
-
-    q"""
-       new $MiscPkg.MacroGenerated[$companionTpe, $tpe](($companionReplacementName: $companionTpe) => {
-         ..$companionImport
-         $baseMaterialize
-       })
-     """
   }
 
   // simplified representation of trees of implicits, used to remove duplicated implicits,

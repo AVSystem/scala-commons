@@ -2,10 +2,9 @@ package com.avsystem.commons
 package serialization.json
 
 import com.avsystem.commons.annotation.explicitGenerics
-import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
-import com.avsystem.commons.serialization.json.JsonStringInput.{AfterElement, AfterElementNothing, JsonType}
+import com.avsystem.commons.serialization.json.JsonStringInput.{AfterElement, AfterElementNothing}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -13,11 +12,6 @@ import scala.collection.mutable
 object JsonStringInput {
   @explicitGenerics def read[T: GenCodec](json: String, options: JsonOptions = JsonOptions.Default): T =
     GenCodec.read[T](new JsonStringInput(new JsonReader(json), options))
-
-  final class JsonType(implicit enumCtx: EnumCtx) extends AbstractValueEnum
-  object JsonType extends AbstractValueEnumCompanion[JsonType] {
-    final val list, `object`, number, string, boolean, `null`: Value = new JsonType
-  }
 
   trait AfterElement {
     def afterElement(): Unit
@@ -29,7 +23,7 @@ object JsonStringInput {
 
 class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Default,
   callback: AfterElement = AfterElementNothing
-) extends Input with AfterElement {
+) extends InputAndSimpleInput with AfterElement {
 
   private[this] val startIdx: Int = reader.parseValue()
   private[this] var endIdx: Int = _
@@ -56,8 +50,7 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
     } else expectedError(JsonType.number)
   }
 
-  def isNull: Boolean = reader.jsonType == JsonType.`null`
-  def readNull(): Null = checkedValue[Null](JsonType.`null`)
+  def readNull(): Boolean = reader.jsonType == JsonType.`null`
   def readString(): String = checkedValue[String](JsonType.string)
   def readBoolean(): Boolean = checkedValue[Boolean](JsonType.boolean)
   def readInt(): Int = matchNumericString(_.toInt)
@@ -92,6 +85,22 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
       result
   }
 
+  def readRawJson(): String = {
+    skip()
+    reader.json.substring(startIdx, endIdx)
+  }
+
+  override def readMetadata[T](metadata: InputMetadata[T]): Opt[T] = metadata match {
+    case JsonType => Opt(reader.jsonType)
+    case _ => Opt.Empty
+  }
+
+  override def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] =
+    typeMarker match {
+      case RawJson => readRawJson().opt
+      case _ => Opt.Empty
+    }
+
   def readList(): JsonListInput = reader.jsonType match {
     case JsonType.list => new JsonListInput(reader, options, this)
     case _ => expectedError(JsonType.list)
@@ -100,11 +109,6 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
   def readObject(): JsonObjectInput = reader.jsonType match {
     case JsonType.`object` => new JsonObjectInput(reader, options, this)
     case _ => expectedError(JsonType.`object`)
-  }
-
-  def readRawJson(): String = {
-    skip()
-    reader.json.substring(startIdx, endIdx)
   }
 
   def skip(): Unit = reader.jsonType match {

@@ -3,11 +3,19 @@ package mongo
 
 import java.nio.ByteBuffer
 
-import com.avsystem.commons.serialization.{Input, Output}
+import com.avsystem.commons.serialization.{InputAndSimpleInput, OutputAndSimpleOutput, TypeMarker}
 import org.bson.types.ObjectId
 
-trait BsonInput extends Any with Input {
+object ObjectIdMarker extends TypeMarker[ObjectId]
+
+trait BsonInput extends Any with InputAndSimpleInput {
   def readObjectId(): ObjectId
+
+  override def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] =
+    typeMarker match {
+      case ObjectIdMarker => readObjectId().opt
+      case _ => Opt.Empty
+    }
 }
 
 object BsonInput {
@@ -21,8 +29,14 @@ object BsonInput {
   }
 }
 
-trait BsonOutput extends Any with Output {
+trait BsonOutput extends Any with OutputAndSimpleOutput {
   def writeObjectId(objectId: ObjectId): Unit
+
+  override def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean =
+    typeMarker match {
+      case ObjectIdMarker => writeObjectId(value); true
+      case _ => false
+    }
 }
 
 object BsonOutput {

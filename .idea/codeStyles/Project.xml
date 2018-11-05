@@ -2,7 +2,7 @@
   <code_scheme name="Project" version="173">
     <option name="LINE_SEPARATOR" value="&#10;" />
     <MarkdownNavigatorCodeStyleSettings>
-      <option name="RIGHT_MARGIN" value="72" />
+      <option name="RIGHT_MARGIN" value="120" />
     </MarkdownNavigatorCodeStyleSettings>
     <ScalaCodeStyleSettings>
       <option name="alwaysUsedImports">

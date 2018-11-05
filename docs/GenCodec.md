@@ -11,8 +11,12 @@ However, `GenCodec` is **not** a JSON library even though it has support for JSO
 ## Table of Contents  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [`GenCodec` typeclass](#gencodec-typeclass)
-  - [Writing *lists* and *objects*](#writing-lists-and-objects)
-    - [Object field order](#object-field-order)
+  - [Writing and reading simple (primitive) values](#writing-and-reading-simple-primitive-values)
+  - [Writing and reading *lists*](#writing-and-reading-lists)
+  - [Writing and reading *objects*](#writing-and-reading-objects)
+    - [More about object field order](#more-about-object-field-order)
+  - [Writing custom "native" types](#writing-custom-native-types)
+  - [Reading metadata from an `Input`](#reading-metadata-from-an-input)
   - [Implementations of `Input` and `Output` available by default](#implementations-of-input-and-output-available-by-default)
 - [Codecs available by default](#codecs-available-by-default)
 - [`GenKeyCodec`](#genkeycodec)
@@ -29,6 +33,7 @@ However, `GenCodec` is **not** a JSON library even though it has support for JSO
   - [Customizing sealed hierarchy codecs](#customizing-sealed-hierarchy-codecs)
   - [Nested vs flat format](#nested-vs-flat-format)
 - [Third party classes](#third-party-classes)
+- [`GenObjectCodec`](#genobjectcodec)
 - [Summary](#summary)
   - [Codec dependencies](#codec-dependencies)
   - [Types supported by automatic materialization](#types-supported-by-automatic-materialization)
@@ -62,41 +67,99 @@ and write a value of type `T` to an [`Output`](http://avsystem.github.io/scala-c
 [`Input`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Input.html) and [`Output`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Output.html) are abstract, raw, stream-like, mutable entities which perform the actual serialization and 
 deserialization using some  particular format hardwired into them, like JSON. Therefore, [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html) by itself is not 
 bound to any format. It only depends on the fact that this format is capable of serializing following types and structures:
-* integer numbers, arbitrarily large
-* decimal numbers, arbitrarily large
+* integer numbers, arbitrarily large (`Byte`s, `Short`s, `Int`s, `Long`s and `BigInt`s)
+* decimal numbers, arbitrarily large (`Float`s, `Double`s and `BigDecimal`s)
 * `Char`s, `String`s, `Boolean`s and `null`s
 * arbitrary byte chunks
 * millisecond-precision timestamps
 * arbitrarily nested *lists*
 * arbitrarily nested *objects*, i.e. sequences of *fields* - key-value mappings where each key is a string
 
-Of course, if some type is not "natively" supported by some serialization format, it can be supported by representing
-it with one of the primitive types. For example, timestamps may be serialized simply as `Long` values containing the
-number of milliseconds since 01.01.1970.
+Not all of these types must be supported "natively". Some of them may be represented using others, e.g. `Byte`s and
+`Short`s using `Int`s or timestamps using `Long`s with number of milliseconds since Unix epoch. **Serialization format
+is not required to keep type information**. It should only ensure that writing and reading the same types is consistent,
+e.g. when an `Int` was written by a codec then it should be also able to successfully read an `Int`. However, it is a
+responsibility of the codec itself to have writing and reading logic consistent with each other.
 
-### Writing *lists* and *objects*
+The only exception from this rule are `null`s - every `Input` implementation must be able to distinguish `null` value
+from any other values through its `readNull()` method. This means that e.g. empty string cannot be used as a
+representation of `null` because it would be then indistinguishable from an actual empty string. Every `Input`/`Output`
+pair must have a dedicated representation for `null`s.
 
-When a codec wants to write one of the simple values (e.g. `String` or `Int`) then it simply uses one of the direct methods on `Output`, e.g. `writeString` or `writeInt`.
-But it may also write a *list* (an ordered sequence of values) or an *object* (*not-necessarily-ordered* sequence of *fields* - key-value mappings). Every list element or
-object field value may be a list or object by itself, so serialized format may be arbitrarily nested, like JSON. You can think about this like a generalization
-of JSON - similar logical structure (simple values, lists and objects) but without any particular syntax or representation enforced.
+### Writing and reading simple (primitive) values
 
-If a codec wants to write a *list* then it must call `writeList` on an `Output` in order to obtain a
-[`ListOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/ListOutput.html) by calling `writeList` on `Output`.
-Then it must call `writeElement` repetitively in order to obtain `Output` instances for each list element. Every element must be fully written before calling
-`writeElement` again. After all elements have been written, the codec must call `finish()`. It's rather unlikely that you will ever need to do it
-manually - usually you can just rely on macro generated codecs or use helpers like `GenCodec.createList`.
+Every [`Output`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Output.html) exposes
+a [`SimpleOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleOutput.html)
+instance through its `writeSimple` method. `SimpleOutput` aggregates methods for writing simple/primitive values like
+`Int`, `String`, etc. These values are considered "simple" because they can be written as a whole with a single method
+call.
 
-If a codec wants to write an *object* then it must obtain an [`ObjectOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Output.html) by
-calling `writeObject`. `ObjectOutput` supports writing multiple named object fields. Then you can obtain `Output` instances for each object field value by calling
-`writeField` (which takes field name as an argument). Just like with lists, a codec must fully write each field value before callilng `writeField` again and after
-writing all fields, it must call `finish()`. Again, it's very unlikely that you'll have to implement this manually. Usually you can rely on macro generated codecs.
-If you need a custom codec that writes an object, your best bet is probably to implement appropriate `apply` and `unapply` methods on companion object of your class.
-And even if you can't do it (e.g. because you're writing a codec for a third party type) then you can still use
-[`fromApplyUnapplyProvider`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$.html#fromApplyUnapplyProvider[T](applyUnapplyProvider:Any):com.avsystem.commons.serialization.GenCodec[T])
-and avoid implementing your codec manually.
+**NOTE**: `SimpleOutput`'s methods like `writeString` **MUST NEVER** be passed `null` as the value to write.
+Instead, `GenCodec` must manually do null checking and use `Output`'s `writeNull()` method for explicit `null` values.
+Fortunately, there are helpers for creating nullsafe codecs, e.g. `GenCodec.nullableSimple`.
 
-#### Object field order
+Similarly, every [`Input`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Output.html)
+exposes a [`SimpleInput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleOutput.html)
+instance through `readSimple` method which can be used to read simple values. `GenCodec` should always read the same type
+as was written. For example, if `writeInt` is used to write then `readInt` should be used to read by the same codec
+implementation.
+
+If the codec wants to be nullsafe, then it can use `readNull()` on `Input`. Unlike other reading methods, `readNull()`
+returns a boolean value which indicates if the value held by `Input` was actually a `null`. If `false` is returned
+then the codec may proceed to read its actual type, e.g. with `readString`.
+
+### Writing and reading *lists*
+
+In order to write a *list*, which is an ordered sequence of arbitrary values, the codec must obtain a
+[`ListOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/ListOutput.html)
+by calling `writeList` on `Output`. Then, it may use its `writeElement()` to obtain a fresh `Output` for each consecutive
+element. `Output` returned for each element must be fully written *before* obtaining `ListOutput` for next element.
+After all elements are written, the codec is required to call `finish()` on the `ListOutput`.
+
+Reading a list from an `Input` is analogous. The codec must obtain a [`ListInput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/ListInput.html)
+using `Input`'s `readList()` method. `ListInput` exposes a `hasNext` method to check whether there are more elements to read
+and a `nextElement` method which provides an `Input` instance for next list element. This `Input` instance must be fully
+read before `hasNext` or `nextElement` is called again. At the very end, the codec may want to call `skipRemaining()`
+on then `ListInput` in order to skip any remaining elements (only necessary when list is not read until `hasNext` returns
+`false` - e.g. when a fixed number of elements is expected).
+
+Note that because serialization formats are not required to keep type information, lists may sometimes be
+indistinguishable from some primitive values. For example, `JsonStringOutput` may use JSON arrays of numbers to represent
+binary values (which are written through `SimpleInput`'s `writeBinary` method). In such situation, calling `readList()`
+on the JSON input will succeed even if `writeBinary` was originally used on the JSON output.
+
+### Writing and reading *objects*
+
+An *object* is a mapping between non-null `String` keys and arbitrary values. Internally, each serialization format
+may represent an object either as an ordered key-value pair sequence or as a random access key-value mapping (i.e.
+it must *either* preserve order of fields *or* provide random access to fields by field name).
+
+In order to write an object, `writeObject()` must be called on `Output` to obtain an
+[`ObjectOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/ObjectOutput.html)
+instance. The codec may then obtain an `Output` instance for each named field through `writeField` method.
+This instance must be fully written before `writeField` can be called again. At the very end, `finish()` must be called
+on the `ObjectOutput`.
+
+In order to read an object, the codec must call `readObject()` on `Input` in order to obtain an
+[`ObjectInput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/ObjectInput.html)
+instance. Similarly to `ListInput`, `ObjectInput` provides a `hasNext` method to check whether there are any remaining
+fields in the `ObjectInput`. In order to read each field, the codec may use `nextField()` method with returns a
+[`FieldInput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/FieldInput.html) - a
+subinterface of `Input` which additionally provides field name.
+
+If serialization format implemented by particular `Input`/`Output` implementation preserves field order then `nextField`
+is guaranteed to return fields in the same order as they were written by `ObjectOutput`. However, if the serialiaztion
+format does **not** preserve field order then it must provide random field access instead. This is done by `peekField`
+method. Codec implementations must be prepared for both situations.
+
+If you need a custom object serialization for your type then your best bet is probably to implement appropriate `apply` and `unapply`
+methods on companion object of your type. And even if you can't do it (e.g. because you're writing a codec for a third
+party type) then you can still use [`fromApplyUnapplyProvider`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$.html#fromApplyUnapplyProvider[T](applyUnapplyProvider:Any):com.avsystem.commons.serialization.GenCodec[T]) and avoid implementing your codec manually.
+
+Finally, if you *really* need to write your object codec by hand then you can make it easier by using
+`getNextNamedField` helper method on `ObjectInput` instead of `nextField` and `peekField` directly.
+
+#### More about object field order
 
 For most serialization formats, it's completely natural to retain object field order. For example, a JSON string naturally has object fields stored in the order that they
 were written to `JsonObjectOutput`. For these formats it is required that an `ObjectInput` returns object fields in exactly the same order as they were written to
@@ -108,7 +171,28 @@ overriding [`peekField`](avsystem.github.io/scala-commons/api/com/avsystem/commo
 
 To summarize, an `ObjectInput` is generally **not** guaranteed to retain order of fields as they were written to an `ObjectOutput` but if it doesn't then it must
 provide random field access by field name. Also, note that out of all the default and macro-generated codecs provided, only [flat sealed hierarchy codecs](#flat-format) actually depend
-on this requirement. All the other (non-custom) codecs ignore field order during deserialization.
+on this requirement. All the other (non-custom) codecs ignore field order during deserialization so you can e.g. freely
+reorder fields in your case classes if they use macro generated codecs.
+
+### Writing custom "native" types
+
+`Input` and `Output` interfaces provide some "backdoors" which make it possible for codec implementations to take advantage
+of particular serialization format's additional capabilities which are not exposed in standard `Input`/`Output` APIs.
+For example, [BSON](http://bsonspec.org/) used by MongoDB has special representation for Object IDs which we would like
+to use. `Input` and `Output` implementations for BSON may support it through their `writeCustom` and `readCustom` methods.
+See their documentation for more details.
+
+### Reading metadata from an `Input`
+
+As mentioned before, serialization formats in general are not required to keep any type information (except distinguishing
+`null` values from others). This way they can be as simple and compact as possible. However, many common formats
+naturally *do* keep some type information. For example, when reading a JSON we can easily check whether it contains an
+object, an array, a string, a number, a boolean or a `null` value. Codecs could use this in order to optimize layout of
+their serialized values and avoid manual writing of their own type information.
+
+`Input` may expose type information through its `readMetadata` method. `Output` on the other hand may tell the codec
+whether its corresponding `Input` is capable of keeping this type information - this is done by `Output`'s `keepsMetadata`
+method. See their documentation for more details.
 
 ### Implementations of `Input` and `Output` available by default
 
@@ -473,6 +557,13 @@ object JavaPersonFakeCompanion {
 ```
 
 Now, as long as you remember to `import JavaPersonFakeCompanion.javaPersonCodec`, `JavaPerson` instances will serialize just as if it was a regular Scala case class. The macro derives serialization format from signatures of `apply` and `unapply` methods and uses them to create and deconstruct `JavaPerson` instances.
+
+## [`GenObjectCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html)
+
+`GenObjectCodec` is a subinterface of `GenCodec` which directly exposes methods that write to `ObjectOutput` and read
+from `ObjectInput`. You can use this typeclass instead of plain `GenCodec` if you want to be sure that some particular
+type serializes to an *object*. `GenObjectCodec` instances are provided similarly to `GenCodec` instances - there is
+a `GenObjectCodec.materialize` macro and `HasGenObjectCodec` companion base class.
 
 ## Summary
 

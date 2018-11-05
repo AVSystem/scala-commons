@@ -15,8 +15,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
   val UnknownTCObj = q"$TestObj.UnknownTC"
   val DefValObj = q"$TestObj.DefVal"
 
-  def typeClass = tq"$TestObj.TC"
-  def typeClassName = "TC"
+  def typeClassInstance(tpe: Type): Type = getType(tq"$TestObj.TC[$tpe]")
   def implementDeferredInstance(tpe: Type): Tree = q"new $TestObj.TC.Deferred[$tpe]"
 
   def forSingleton(tpe: Type, singleValueTree: Tree): Tree =
