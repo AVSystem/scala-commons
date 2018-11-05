@@ -52,9 +52,9 @@ trait Output extends Any {
     * [[com.avsystem.commons.serialization.json.JsonStringOutput JsonStringOutput]].
     *
     * If this method returns `true` then codec may optimize its encoded format and assume that a corresponding
-    * `Input` implementation will return a non-empty `Opt` from its `readMetadata` implementation.
-    * If this method returns `false` then this `Output` does not support this medatata type and codec should
-    * fall back to some other serialization strategy.
+    * `Input` implementation will return a non-empty `Opt` from its `readMetadata` implementation when passed the
+    * same [[InputMetadata]] identifier. If this method returns `false` then this `Output` does not support this
+    * medatata type and codec should fall back to some other serialization strategy.
     */
   def keepsMetadata(metadata: InputMetadata[_]): Boolean = false
 
@@ -67,8 +67,13 @@ trait Output extends Any {
   def legacyOptionEncoding: Boolean = false
 }
 
+/**
+  * Represent an abstract sink for "primitive" values, i.e. ones that can be written as a whole with a simple
+  * method call (as opposed to lists and objects). Simple values must NEVER be `null`. `Output.writeNull` must
+  * be used instead to handle `null` values.
+  */
 trait SimpleOutput extends Any {
-  def writeNull(): Unit
+  /** Value written MUST NOT be `null` */
   def writeString(str: String): Unit
   def writeChar(char: Char): Unit = writeString(char.toString)
   def writeBoolean(boolean: Boolean): Unit
@@ -79,8 +84,11 @@ trait SimpleOutput extends Any {
   def writeTimestamp(millis: Long): Unit = writeLong(millis)
   def writeFloat(float: Float): Unit = writeDouble(float)
   def writeDouble(double: Double): Unit
+  /** Value written MUST NOT be `null` */
   def writeBigInt(bigInt: BigInt): Unit
+  /** Value written MUST NOT be `null` */
   def writeBigDecimal(bigDecimal: BigDecimal): Unit
+  /** Value written MUST NOT be `null` */
   def writeBinary(binary: Array[Byte]): Unit
 }
 
