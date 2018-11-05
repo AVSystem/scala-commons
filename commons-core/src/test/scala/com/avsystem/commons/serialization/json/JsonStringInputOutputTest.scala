@@ -293,4 +293,8 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     assert(JsonStringOutput.write(NestedOne()) == "{}")
     assert(JsonStringOutput.write(NestedTwo(None)) == "{}")
   }
+
+  test("read escaped slash") {
+    assert(JsonStringInput.read[String](""""a\/b"""") == "a/b")
+  }
 }
