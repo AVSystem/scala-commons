@@ -154,10 +154,11 @@ lazy val commons = project.in(file("."))
     scalacOptions in ScalaUnidoc in unidoc += "-Ymacro-expand:none",
     unidocProjectFilter in ScalaUnidoc in unidoc :=
       inAnyProject -- inProjects(
-        `commons-annotations-js`,
-        `commons-macros`,
         `commons-analyzer`,
+        `commons-macros`,
+        `commons-annotations-js`,
         `commons-core-js`,
+        `commons-rest-js`,
         `commons-benchmark`,
         `commons-benchmark-js`,
         `commons-comprof`,
@@ -170,6 +171,7 @@ lazy val `commons-jvm` = project.in(file(".jvm"))
     `commons-macros`,
     `commons-annotations`,
     `commons-core`,
+    `commons-rest`,
     `commons-jetty`,
     `commons-mongo`,
     `commons-spring`,
@@ -184,9 +186,17 @@ lazy val `commons-js` = project.in(file(".js"))
   .aggregate(
     `commons-annotations-js`,
     `commons-core-js`,
+    `commons-rest-js`,
     `commons-benchmark-js`,
   )
   .settings(aggregateProjectSettings)
+
+lazy val `commons-analyzer` = project
+  .dependsOn(`commons-core` % Test)
+  .settings(
+    jvmCommonSettings,
+    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+  )
 
 def mkSourceDirs(base: File, scalaBinary: String, conf: String): Seq[File] = Seq(
   base / "src" / conf / "scala",
@@ -241,15 +251,25 @@ lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
     sourceDirsSettings(_.getParentFile),
   )
 
-lazy val `commons-analyzer` = project
-  .dependsOn(`commons-core` % Test)
+lazy val `commons-rest` = project
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
-    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+    sourceDirsSettings(_ / "jvm"),
+  )
+
+lazy val `commons-rest-js` = project.in(`commons-rest`.base / "js")
+  .enablePlugins(ScalaJSPlugin)
+  .configure(p => if (forIdeaImport) p.dependsOn(`commons-rest`) else p)
+  .dependsOn(`commons-core-js` % CompileAndTest)
+  .settings(
+    jsCommonSettings,
+    name := (name in `commons-core`).value,
+    sourceDirsSettings(_.getParentFile),
   )
 
 lazy val `commons-jetty` = project
-  .dependsOn(`commons-core` % CompileAndTest)
+  .dependsOn(`commons-core` % CompileAndTest, `commons-rest` % Optional)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
@@ -263,7 +283,7 @@ lazy val `commons-jetty` = project
   )
 
 lazy val `commons-benchmark` = project
-  .dependsOn(`commons-core`, `commons-akka`, `commons-redis`, `commons-mongo`)
+  .dependsOn(`commons-rest`, `commons-akka`, `commons-redis`, `commons-mongo`)
   .enablePlugins(JmhPlugin)
   .settings(
     jvmCommonSettings,
@@ -289,7 +309,7 @@ lazy val `commons-benchmark` = project
 lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
   .enablePlugins(ScalaJSPlugin)
   .configure(p => if (forIdeaImport) p.dependsOn(`commons-benchmark`) else p)
-  .dependsOn(`commons-macros`, `commons-core-js`)
+  .dependsOn(`commons-macros`, `commons-rest-js`)
   .settings(
     jsCommonSettings,
     noPublishSettings,
