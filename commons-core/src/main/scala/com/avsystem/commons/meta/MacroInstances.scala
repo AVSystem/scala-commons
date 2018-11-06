@@ -4,8 +4,8 @@ package meta
 /**
   * Intermediate factory that creates an `Instances` trait based on provided `Implicits`.
   * Normally, this factory is used as implicit constructor parameter of base classes for companion objects
-  * of RPC traits (e.g. [[com.avsystem.commons.rest.DefaultRestApiCompanion DefaultRestApiCompanion]])
-  * or ADTs (e.g. [[com.avsystem.commons.rest.RestDataCompanion RestDataCompanion]]).
+  * of RPC traits (e.g. `com.avsystem.commons.rest.DefaultRestApiCompanion`)
+  * or ADTs (e.g. `com.avsystem.commons.rest.RestDataCompanion`).
   * This all serves to reduce boilerplate associated with companion declarations and makes RPC trait or ADT
   * definitions as concise as possible. It also lets the programmer easily inject additional implicits into
   * macro-materialization of typeclasses aggregated by `Instances` trait.
@@ -15,10 +15,10 @@ package meta
   * `MacroInstances.materialize` macro and implemented automatically as `<methodReturnTypeCompanion>.materialize`
   * Therefore, return type type of each method must have a companion object which contains `materialize` macro.
   *
-  * Example of `Instances`: [[com.avsystem.commons.rest.ClientInstances ClientInstances]]
+  * Example of `Instances`: `com.avsystem.commons.rest.ClientInstances`
   *
   * The `Implicits` type is typically a trait with a collection of implicit definitions whose companion object
-  * implements that trait, e.g. [[com.avsystem.commons.rest.DefaultRestImplicits DefaultRestImplicits]].
+  * implements that trait, e.g. `com.avsystem.commons.rest.DefaultRestImplicits`.
   * When the macro implements `apply` method of `MacroInstances` contents of `Implicits` are imported into the
   * body of `apply` and visible further by macros that materialize `InstancesTrait`.
   * If you don't want to inject additional implicits, declare `Implicits` as `Unit`.
@@ -27,7 +27,7 @@ package meta
   * (which is the typical situation) then `this` reference should be passed as `companion`.
   * This is in order to work around https://github.com/scala/bug/issues/7666.
   * Actual typeclass instances aggregated by `Instances` trait should be extracted into `implicit lazy val`
-  * definitions in the companion base class. See e.g. [[com.avsystem.commons.rest.RestDataCompanion RestDataCompanion]]
+  * definitions in the companion base class. See e.g. `com.avsystem.commons.rest.RestDataCompanion`
   * for an example of how it's done.
   */
 trait MacroInstances[Implicits, Instances] {
@@ -38,7 +38,7 @@ object MacroInstances {
   /**
     * Materializes an instance of `MacroInstances[Implicits, Instances]`. This macro should not be
     * invoked directly, it should only be used to materialize implicit parameters of RPC companion base classes,
-    * e.g. [[com.avsystem.commons.rest.DefaultRestApiCompanion DefaultRestApiCompanion]].
+    * e.g. `com.avsystem.commons.rest.DefaultRestApiCompanion`.
     *
     * @example
     * {{{

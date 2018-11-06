@@ -139,6 +139,7 @@ val aggregateProjectSettings =
   )
 
 val CompileAndTest = "compile->compile;test->test"
+val OptionalCompileAndTest = "optional->compile;test->test"
 
 lazy val commons = project.in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
@@ -269,7 +270,7 @@ lazy val `commons-rest-js` = project.in(`commons-rest`.base / "js")
   )
 
 lazy val `commons-jetty` = project
-  .dependsOn(`commons-core` % CompileAndTest, `commons-rest` % Optional)
+  .dependsOn(`commons-core` % CompileAndTest, `commons-rest` % OptionalCompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(

@@ -19,9 +19,7 @@ trait CodecWithStructure[T] {
 
 /**
   * Base class for companion objects of ADTs (case classes, objects, sealed hierarchies) which are used as
-  * parameter or result types in REST API traits. Automatically provides instances of
-  * [[com.avsystem.commons.serialization.GenCodec GenCodec]] and
-  * [[com.avsystem.commons.rest.openapi.RestSchema RestSchema]].
+  * parameter or result types in REST API traits. Automatically provides instances of `GenCodec` and `RestSchema`.
   *
   * @example
   * {{{
@@ -168,8 +166,8 @@ trait FutureRestImplicits {
 object FutureRestImplicits extends FutureRestImplicits
 
 /**
-  * Defines [[com.avsystem.commons.serialization.GenCodec GenCodec]] and
-  * [[com.avsystem.commons.serialization.GenKeyCodec GenKeyCodec]] based serialization for REST API traits.
+  * Defines `GenCodec` and
+  * `GenKeyCodec` based serialization for REST API traits.
   */
 trait GenCodecRestImplicits extends FloatingPointRestImplicits {
   protected final def handleReadFailure[T](expr: => T): T =
@@ -239,7 +237,7 @@ abstract class DefaultRestClientApiCompanion[Real](implicit
 /**
   * Base class for companions of REST API traits used only for REST servers exposed to external world.
   * Injects `GenCodec` and `GenKeyCodec` based serialization and forces derivation of
-  * [[com.avsystem.commons.rest.openapi.OpenApiMetadata OpenApiMetadata]].
+  * `OpenApiMetadata`.
   */
 abstract class DefaultRestServerApiCompanion[Real](implicit
   inst: MacroInstances[DefaultRestImplicits, OpenApiServerInstances[Real]]
@@ -248,7 +246,7 @@ abstract class DefaultRestServerApiCompanion[Real](implicit
 /**
   * Base class for companions of REST API traits used for both REST clients and servers.
   * Injects `GenCodec` and `GenKeyCodec` based serialization and forces derivation of
-  * [[com.avsystem.commons.rest.openapi.OpenApiMetadata OpenApiMetadata]].
+  * `OpenApiMetadata`.
   */
 abstract class DefaultRestApiCompanion[Real](implicit
   inst: MacroInstances[DefaultRestImplicits, OpenApiFullInstances[Real]]
