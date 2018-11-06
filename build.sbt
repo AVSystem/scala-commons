@@ -265,7 +265,7 @@ lazy val `commons-rest-js` = project.in(`commons-rest`.base / "js")
   .dependsOn(`commons-core-js` % CompileAndTest)
   .settings(
     jsCommonSettings,
-    name := (name in `commons-core`).value,
+    name := (name in `commons-rest`).value,
     sourceDirsSettings(_.getParentFile),
   )
 
