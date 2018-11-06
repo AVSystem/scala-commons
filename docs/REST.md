@@ -75,7 +75,7 @@ First, make sure appropriate dependencies are configured for your project (assum
 ```scala
 val commonsVersion: String = ??? // appropriate version of scala-commons here
 libraryDependencies ++= Seq(
-  "com.avsystem.commons" %% "commons-core" % commonsVersion,
+  "com.avsystem.commons" %% "commons-rest" % commonsVersion,
   "com.avsystem.commons" %% "commons-jetty" % commonsVersion
 )
 ```
