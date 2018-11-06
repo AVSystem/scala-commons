@@ -6,7 +6,7 @@ appropriate network layer is implemented. For JVM, Jetty-based implementations f
 are provided.
 
 The core of REST framework is platform independent and network-implementation indepenedent and therefore
-has no external dependencies. Because of that, it's a part of `commons-core` module. This is enough to
+has no external dependencies. It is implemented in cross-compiled `commons-rest` module. This is enough to
 be able to define REST interfaces. But if you want to expose your REST interface through an actual HTTP
 server or have an actual HTTP client for that interface, you need separate implementations for that.
 The `commons-jetty` module provides Jetty-based implementations for JVM.
