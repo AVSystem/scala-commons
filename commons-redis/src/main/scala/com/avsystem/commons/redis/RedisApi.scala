@@ -217,13 +217,17 @@ abstract class ExecutedApis {
       execConfig: ExecutionConfig = ExecutionConfig.Default
     ): Variant[S] = apply(ValueOf[S], executor, execConfig)
 
+    type StringTyped = Variant[RedisSerialization.Strings.type]
+
     def StringTyped(
       exec: RequiredExecutor, config: ExecutionConfig = ExecutionConfig.Default
-    ): Variant[RedisSerialization.Strings.type] = apply(RedisSerialization.Strings, exec, config)
+    ): StringTyped = apply(RedisSerialization.Strings, exec, config)
+
+    type BinaryTyped = Variant[RedisSerialization.ByteStrings.type]
 
     def BinaryTyped(
       exec: RequiredExecutor, config: ExecutionConfig = ExecutionConfig.Default
-    ): Variant[RedisSerialization.ByteStrings.type] = apply(RedisSerialization.ByteStrings, exec, config)
+    ): BinaryTyped = apply(RedisSerialization.ByteStrings, exec, config)
   }
 
   protected abstract class BaseAsync[S <: RedisSerialization] extends AbstractRedisApi[S] with RedisAsyncApi {
