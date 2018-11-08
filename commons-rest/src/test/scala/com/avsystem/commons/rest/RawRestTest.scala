@@ -1,6 +1,13 @@
 package com.avsystem.commons
 package rest
 
+import com.avsystem.commons.annotation.AnnotationAggregate
+import com.avsystem.commons.meta.Mapping
+import com.avsystem.commons.serialization.{transientDefault, whenAbsent}
+import org.scalactic.source.Position
+import org.scalatest.FunSuite
+import org.scalatest.concurrent.ScalaFutures
+
 case class User(id: String, name: String)
 object User extends RestDataCompanion[User]
 
