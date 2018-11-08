@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import com.avsystem.commons.meta._
 import com.avsystem.commons.rpc._
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 sealed abstract class RestMethodCall {
   val rpcName: String
@@ -69,6 +70,10 @@ trait RawRest {
     val ResolvedCall(_, prefixes, finalCall) = resolved
     val HttpCall(finalRpcName, finalPathParams, finalMetadata) = finalCall
 
+    def handleBadBody[T](expr: => T): T = try expr catch {
+      case rf: ReadFailure => throw new InvalidRpcCall(rf.getMessage, rf)
+    }
+
     def resolveCall(rawRest: RawRest, prefixes: List[PrefixCall]): Async[RestResponse] = prefixes match {
       case PrefixCall(rpcName, pathParams, _) :: tail =>
         rawRest.prefix(rpcName, parameters.copy(path = pathParams)) match {
@@ -83,9 +88,9 @@ trait RawRest {
         else if (finalMetadata.singleBody)
           rawRest.handleSingle(finalRpcName, finalParameters, body)
         else if (finalMetadata.formBody)
-          rawRest.handleForm(finalRpcName, finalParameters, HttpBody.parseFormBody(body))
+          rawRest.handleForm(finalRpcName, finalParameters, handleBadBody(HttpBody.parseFormBody(body)))
         else
-          rawRest.handle(finalRpcName, finalParameters, HttpBody.parseJsonBody(body))
+          rawRest.handle(finalRpcName, finalParameters, handleBadBody(HttpBody.parseJsonBody(body)))
     }
     try resolveCall(this, prefixes) catch {
       case e: InvalidRpcCall =>

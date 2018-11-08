@@ -1,13 +1,6 @@
 package com.avsystem.commons
 package rest
 
-import com.avsystem.commons.annotation.AnnotationAggregate
-import com.avsystem.commons.meta.Mapping
-import com.avsystem.commons.serialization.{transientDefault, whenAbsent}
-import org.scalactic.source.Position
-import org.scalatest.FunSuite
-import org.scalatest.concurrent.ScalaFutures
-
 case class User(id: String, name: String)
 object User extends RestDataCompanion[User]
 
@@ -209,6 +202,33 @@ class RawRestTest extends FunSuite with ScalaFutures {
     )
     val request = RestRequest(HttpMethod.POST, params, HttpBody.Empty)
     val response = RestResponse(200, Mapping.empty, HttpBody.json(JsonValue("\"stuff\"")))
+    val promise = Promise[RestResponse]
+    serverHandle(request).apply(promise.complete)
+    assert(promise.future.futureValue == response)
+  }
+
+  test("bad body") {
+    val request = RestRequest(HttpMethod.PUT, RestParameters(List(PathValue("user"))), HttpBody.json(JsonValue(" \n  \n {")))
+    val response = RestResponse(400, Mapping.empty, HttpBody.plain("Unexpected EOF (line 3, column 2) (line content: {)"))
+
+    val promise = Promise[RestResponse]
+    serverHandle(request).apply(promise.complete)
+    assert(promise.future.futureValue == response)
+  }
+
+  test("missing argument") {
+    val request = RestRequest(HttpMethod.GET, RestParameters(List(PathValue("user"))), HttpBody.Empty)
+    val response = RestResponse(400, Mapping.empty, HttpBody.plain("Argument userId of RPC user is missing"))
+
+    val promise = Promise[RestResponse]
+    serverHandle(request).apply(promise.complete)
+    assert(promise.future.futureValue == response)
+  }
+
+  test("missing argument in prefix") {
+    val request = RestRequest(HttpMethod.GET, RestParameters(PathValue.splitDecode("subApi/42/user")), HttpBody.Empty)
+    val response = RestResponse(400, Mapping.empty, HttpBody.plain("Argument query of RPC subApi is missing"))
+
     val promise = Promise[RestResponse]
     serverHandle(request).apply(promise.complete)
     assert(promise.future.futureValue == response)

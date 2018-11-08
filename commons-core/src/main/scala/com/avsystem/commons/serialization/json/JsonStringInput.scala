@@ -4,7 +4,7 @@ package serialization.json
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
-import com.avsystem.commons.serialization.json.JsonStringInput.{AfterElement, AfterElementNothing}
+import com.avsystem.commons.serialization.json.JsonStringInput._
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -19,6 +19,9 @@ object JsonStringInput {
   object AfterElementNothing extends AfterElement {
     def afterElement(): Unit = ()
   }
+
+  class ParseException(msg: String, cause: Throwable = null)
+    extends ReadFailure(msg, cause)
 }
 
 class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Default,
@@ -34,7 +37,7 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
   }
 
   private def expectedError(tpe: JsonType) =
-    throw new ReadFailure(s"Expected $tpe but got ${reader.jsonType}: ${reader.currentValue}")
+    throw new ParseException(s"Expected $tpe but got ${reader.jsonType}: ${reader.currentValue} ${reader.posInfo(startIdx)}")
 
   private def checkedValue[T](jsonType: JsonType): T = {
     if (reader.jsonType != jsonType) expectedError(jsonType)
@@ -45,7 +48,8 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
     if (reader.jsonType == JsonType.number || reader.jsonType == JsonType.string) {
       val str = reader.currentValue.asInstanceOf[String]
       try toNumber(str) catch {
-        case e: NumberFormatException => throw new ReadFailure(s"Invalid number format: $str", e)
+        case e: NumberFormatException =>
+          throw new ParseException(s"Invalid number format: $str ${reader.posInfo(startIdx)}", e)
       }
     } else expectedError(JsonType.number)
   }
@@ -191,11 +195,26 @@ final class JsonReader(val json: String) {
   def currentValue: Any = value
   def jsonType: JsonType = tpe
 
-  @inline private def read(): Char = {
-    val res = json.charAt(i)
-    advance()
-    res
+  def posInfo(offset: Int): String = {
+    @tailrec def loop(idx: Int, line: Int, column: Int): String =
+      if (idx >= offset) s"(line $line, column $column) (line content: ${json.substring(idx + 1 - column, idx)})"
+      else if (json.charAt(idx) == '\n') loop(idx + 1, line + 1, 0)
+      else loop(idx + 1, line, column + 1)
+    loop(0, 1, 1)
   }
+
+  private def currentCharOrEOF =
+    if (i < json.length) json.charAt(i).toString else "EOF"
+
+  private def readFailure(msg: String, cause: Throwable = null): Nothing =
+    throw new ParseException(s"$msg ${posInfo(i)}", cause)
+
+  @inline private def read(): Char =
+    if (i < json.length) {
+      val res = json.charAt(i)
+      advance()
+      res
+    } else readFailure("Unexpected EOF")
 
   @inline def isNext(ch: Char): Boolean =
     i < json.length && json.charAt(i) == ch
@@ -215,14 +234,14 @@ final class JsonReader(val json: String) {
 
   def pass(ch: Char): Unit = {
     val r = read()
-    if (r != ch) throw new ReadFailure(s"'${ch.toChar}' expected, got ${if (r == -1) "EOF" else r.toChar}")
+    if (r != ch) readFailure(s"'${ch.toChar}' expected, got ${if (r == -1) "EOF" else r.toChar}")
   }
 
   private def pass(str: String): Unit = {
     var j = 0
     while (j < str.length) {
       if (!isNext(str.charAt(j))) {
-        throw new ReadFailure(s"expected '$str'")
+        readFailure(s"expected '$str'")
       } else {
         advance()
       }
@@ -234,7 +253,7 @@ final class JsonReader(val json: String) {
     if (ch >= 'A' && ch <= 'F') ch - 'A' + 10
     else if (ch >= 'a' && ch <= 'f') ch - 'a' + 10
     else if (ch >= '0' && ch <= '9') ch - '0'
-    else throw new ReadFailure(s"Bad hex digit: ${ch.toChar}")
+    else readFailure(s"Bad hex digit: ${ch.toChar}")
 
   private def readHex(): Int =
     fromHex(read())
@@ -248,7 +267,7 @@ final class JsonReader(val json: String) {
 
     def parseDigits(): Unit = {
       if (!isNextDigit) {
-        throw new ReadFailure(s"Expected digit, got ${json.charAt(i)}")
+        readFailure(s"Expected digit, got $currentCharOrEOF")
       }
       while (isNextDigit) {
         advance()
@@ -259,7 +278,7 @@ final class JsonReader(val json: String) {
       advance()
     } else if (isNextDigit) {
       parseDigits()
-    } else throw new ReadFailure(s"Expected '-' or digit, got ${json.charAt(i)}")
+    } else readFailure(s"Expected '-' or digit, got $currentCharOrEOF")
 
     if (isNext('.')) {
       advance()
@@ -303,7 +322,7 @@ final class JsonReader(val json: String) {
             case 'r' => '\r'
             case 't' => '\t'
             case 'u' => ((readHex() << 12) + (readHex() << 8) + (readHex() << 4) + readHex()).toChar
-            case c => throw new ReadFailure(s"Unexpected character: '${c.toChar}'")
+            case c => readFailure(s"Unexpected character: '${c.toChar}'")
           }
           sb.append(unesc)
           plainStart = i
@@ -336,8 +355,8 @@ final class JsonReader(val json: String) {
       case '{' => read(); update(null, JsonType.`object`)
       case '-' => update(parseNumber(), JsonType.number)
       case c if Character.isDigit(c) => update(parseNumber(), JsonType.number)
-      case c => throw new ReadFailure(s"Unexpected character: '${c.toChar}'")
-    } else throw new ReadFailure("EOF")
+      case c => readFailure(s"Unexpected character: '${c.toChar}'")
+    } else readFailure("Unexpected EOF")
     startIndex
   }
 }
