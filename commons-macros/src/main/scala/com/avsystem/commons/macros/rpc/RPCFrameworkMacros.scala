@@ -7,7 +7,7 @@ import scala.reflect.macros.blackbox
 
 /**
   * The "legacy" macros for RPC based on `RPCFramework`.
-  * Superseded by generalized, "framework-less" RPC macro engine, [[RpcMacros]].
+  * Superseded by generalized, "framework-less" RPC macro engine, `RpcMacros`.
   */
 final class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
