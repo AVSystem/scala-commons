@@ -71,7 +71,7 @@ trait RawRest {
     val HttpCall(finalRpcName, finalPathParams, finalMetadata) = finalCall
 
     def handleBadBody[T](expr: => T): T = try expr catch {
-      case rf: ReadFailure => throw new InvalidRpcCall(rf.getMessage, rf)
+      case rf: ReadFailure => throw new InvalidRpcCall(s"Invalid HTTP body: ${rf.getMessage}", rf)
     }
 
     def resolveCall(rawRest: RawRest, prefixes: List[PrefixCall]): Async[RestResponse] = prefixes match {
