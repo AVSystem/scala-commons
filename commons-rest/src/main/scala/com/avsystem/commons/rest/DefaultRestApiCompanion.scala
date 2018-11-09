@@ -6,7 +6,6 @@ import com.avsystem.commons.misc.ImplicitNotFound
 import com.avsystem.commons.rest.RawRest.{AsRawRpc, AsRealRpc}
 import com.avsystem.commons.rest.openapi.{OpenApiMetadata, RestResponses, RestResultType, RestSchema, RestStructure}
 import com.avsystem.commons.rpc.{AsRaw, AsRawReal, AsReal, InvalidRpcCall}
-import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
@@ -175,7 +174,7 @@ trait GenCodecRestImplicits extends FloatingPointRestImplicits {
   protected final def handleReadFailure[T](expr: => T): T =
     try expr catch {
       case e: InvalidRpcCall => throw e
-      case rf: ReadFailure => throw new InvalidRpcCall(rf.getMessage, rf)
+      case NonFatal(cause) => throw new InvalidRpcCall(cause.getMessage, cause)
     }
 
   // Implicits wrapped into `Fallback` so that they don't get higher priority just because they're imported
