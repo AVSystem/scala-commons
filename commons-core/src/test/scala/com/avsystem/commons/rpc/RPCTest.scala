@@ -57,7 +57,9 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
 
     "fail on bad input" in {
       val rawRpc = AsRawRPC[TestRPC].asRaw(TestRPC.rpcImpl((_, _) => ()))
-      intercept[Exception](rawRpc.fire(RawInvocation("whatever", Nil)))
+      intercept[UnknownRpc](rawRpc.fire(RawInvocation("whatever", Nil)))
+      intercept[MissingRpcArgument](rawRpc.call(RawInvocation("doStuffBoolean", Nil)))
+      intercept[InvalidRpcArgument](rawRpc.call(RawInvocation("doStuffBoolean", List("notbool"))))
     }
 
     "real rpc should properly serialize calls to raw rpc" in {

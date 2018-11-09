@@ -18,7 +18,7 @@ class RPCMetadataTest extends FunSuite {
     def func: Future[String]
   }
   object Base {
-    implicit def AsRawReal[T]: AsRawRealRPC[Base[T]] = materializeAsRawReal
+    implicit def AsRawReal[T: ClassTag]: AsRawRealRPC[Base[T]] = materializeAsRawReal
     implicit def metadata[T: ParamTypeMetadata]: RPCMetadata[Base[T]] = materializeMetadata
   }
 

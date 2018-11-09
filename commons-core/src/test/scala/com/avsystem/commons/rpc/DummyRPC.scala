@@ -4,12 +4,13 @@ package rpc
 object DummyRPC extends StandardRPCFramework {
   type RawValue = Any
 
-  type Reader[T] = DummyImplicit
-  type Writer[T] = DummyImplicit
+  type Reader[T] = ClassTag[T]
+  type Writer[T] = ClassTag[T]
   type ParamTypeMetadata[T] = TypeName[T]
   type ResultTypeMetadata[T] = ClassTag[T]
 
-  def read[T: Reader](raw: Any): T = raw.asInstanceOf[T]
+  def read[T: Reader](raw: Any): T =
+    classTag[T].runtimeClass.asInstanceOf[Class[T]].cast(raw.asInstanceOf[AnyRef])
   def write[T: Writer](value: T): Any = value
 }
 
