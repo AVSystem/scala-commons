@@ -223,6 +223,19 @@ class RawRestTest extends FunSuite with ScalaFutures {
     assert(promise.future.futureValue == response)
   }
 
+  test("bad argument") {
+    val body = HttpBody.json(JsonValue("{\"user\": {}}"))
+    val request = RestRequest(HttpMethod.PUT, RestParameters(List(PathValue("user"))), body)
+    val response = RestResponse(400, Mapping.empty, HttpBody.plain(
+      "Argument user of RPC put_user is invalid: " +
+        "Cannot read com.avsystem.commons.rest.User, field id is missing in decoded data"
+    ))
+
+    val promise = Promise[RestResponse]
+    serverHandle(request).apply(promise.complete)
+    assert(promise.future.futureValue == response)
+  }
+
   test("missing argument") {
     val request = RestRequest(HttpMethod.GET, RestParameters(List(PathValue("user"))), HttpBody.Empty)
     val response = RestResponse(400, Mapping.empty, HttpBody.plain("Argument userId of RPC user is missing"))

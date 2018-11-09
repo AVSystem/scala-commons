@@ -6,7 +6,7 @@ import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
 
 import scala.collection.mutable.ListBuffer
 
-trait MacroSymbols extends MacroCommons {
+private[commons] trait MacroSymbols extends MacroCommons {
 
   import c.universe._
 

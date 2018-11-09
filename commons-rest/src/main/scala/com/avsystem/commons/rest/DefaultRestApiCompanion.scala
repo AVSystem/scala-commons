@@ -51,7 +51,7 @@ trait OpenApiInstances[Real] {
 trait OpenApiServerInstances[Real] extends ServerInstances[Real] with OpenApiInstances[Real]
 trait OpenApiFullInstances[Real] extends FullInstances[Real] with OpenApiInstances[Real]
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestClientApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: MacroInstances[Implicits, ClientInstances[Real]]
 ) {
@@ -62,7 +62,7 @@ abstract class RestClientApiCompanion[Implicits, Real](protected val implicits: 
     RawRest.fromHandleRequest(handleRequest)
 }
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestServerApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: MacroInstances[Implicits, ServerInstances[Real]]
 ) {
@@ -73,7 +73,7 @@ abstract class RestServerApiCompanion[Implicits, Real](protected val implicits: 
     RawRest.asHandleRequest(real)
 }
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestServerOpenApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: MacroInstances[Implicits, OpenApiServerInstances[Real]]
 ) {
@@ -105,7 +105,7 @@ abstract class RestApiCompanion[Implicits, Real](protected val implicits: Implic
     RawRest.asHandleRequest(real)
 }
 
-/** @see [[RestApiCompanion]]*/
+/** @see [[RestApiCompanion]] */
 abstract class RestOpenApiCompanion[Implicits, Real](protected val implicits: Implicits)(
   implicit inst: MacroInstances[Implicits, OpenApiFullInstances[Real]]
 ) {
@@ -170,8 +170,11 @@ object FutureRestImplicits extends FutureRestImplicits
   * `GenKeyCodec` based serialization for REST API traits.
   */
 trait GenCodecRestImplicits extends FloatingPointRestImplicits {
+  // read failure handling is now baked into macro-generated RPC `AsRaw` implementations but this
+  // method is left for backwards compatibility - for instances materialized with previous version of macro
   protected final def handleReadFailure[T](expr: => T): T =
     try expr catch {
+      case e: InvalidRpcCall => throw e
       case rf: ReadFailure => throw new InvalidRpcCall(rf.getMessage, rf)
     }
 

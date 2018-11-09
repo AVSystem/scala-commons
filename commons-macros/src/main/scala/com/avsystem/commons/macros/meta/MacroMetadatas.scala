@@ -5,7 +5,7 @@ import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
 
 import scala.annotation.StaticAnnotation
 
-trait MacroMetadatas extends MacroSymbols {
+private[commons] trait MacroMetadatas extends MacroSymbols {
 
   import c.universe._
 

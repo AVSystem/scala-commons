@@ -7,7 +7,7 @@ import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.blackbox
 
-class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) with MacroMetadatas {
+private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) with MacroMetadatas {
 
   import c.universe._
 

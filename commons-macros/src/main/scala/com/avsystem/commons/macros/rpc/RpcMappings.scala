@@ -6,7 +6,7 @@ import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
+private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
   import c.universe._
 
@@ -73,7 +73,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       def rawValueTree: Tree =
         realParam.rawValueTree
       def realDecls: List[Tree] =
-        List(realParam.localValueDecl(realParam.encoding.applyAsReal(rawParam.safePath)))
+        List(realParam.localValueDecl(realParam.encoding.paramAsReal(rawParam.safePath, realParam.matchedParam)))
     }
     case class Optional(rawParam: RawValueParam, wrapped: Option[EncodedRealParam]) extends ParamMapping {
       def rawValueTree: Tree = {
@@ -86,9 +86,8 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         }
       }
       def realDecls: List[Tree] = wrapped.toList.map { erp =>
-        val defaultValueTree = erp.matchedParam.fallbackValueTree
         erp.realParam.localValueDecl(erp.encoding.foldWithAsReal(
-          rawParam.optionLike, rawParam.safePath, defaultValueTree))
+          rawParam.optionLike, rawParam.safePath, erp.matchedParam))
       }
     }
     abstract class Multi extends ParamMapping {
@@ -107,8 +106,8 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             rp.reportProblem(
               s"${rawParam.cannotMapClue}: by-name real parameters cannot be extracted from @multi raw parameters")
           }
-          erp.localValueDecl(
-            q"if($itName.hasNext) ${erp.encoding.applyAsReal(q"$itName.next()")} else ${erp.matchedParam.fallbackValueTree}")
+          val decoded = erp.encoding.paramAsReal(q"$itName.next()", erp.matchedParam)
+          erp.localValueDecl(q"if($itName.hasNext) $decoded else ${erp.matchedParam.fallbackValueTree}")
         }
       }
     }
@@ -117,7 +116,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         reals.zipWithIndex.map { case (erp, idx) =>
           erp.localValueDecl(
             q"""
-              ${erp.encoding.andThenAsReal(rawParam.safePath)}
+              ${erp.encoding.andThenAsReal(rawParam.safePath, erp.matchedParam)}
                 .applyOrElse($idx, (_: $IntCls) => ${erp.matchedParam.fallbackValueTree})
             """)
         }
@@ -143,7 +142,7 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         reals.map { erp =>
           erp.localValueDecl(
             q"""
-              ${erp.encoding.andThenAsReal(rawParam.safePath)}
+              ${erp.encoding.andThenAsReal(rawParam.safePath, erp.matchedParam)}
                 .applyOrElse(${erp.rpcName}, (_: $StringCls) => ${erp.matchedParam.fallbackValueTree})
             """)
         }
@@ -154,11 +153,11 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     def asRaw: Tree
     def asReal: Tree
 
-    def applyAsRaw[T: Liftable](arg: T): Tree = q"$asRaw.asRaw($arg)"
-    def applyAsReal[T: Liftable](arg: T): Tree = q"$asReal.asReal($arg)"
-    def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, default: Tree): Tree =
-      q"$optionLike.fold($opt, $default)($asReal.asReal(_))"
-    def andThenAsReal[T: Liftable](func: T): Tree = q"$func.andThen($asReal.asReal(_))"
+    def applyAsRaw[T: Liftable](arg: T): Tree
+    def applyAsReal[T: Liftable](arg: T): Tree
+    def paramAsReal[T: Liftable](arg: T, param: MatchedParam): Tree
+    def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, param: MatchedParam): Tree
+    def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree
   }
   object RpcEncoding {
     def forParam(rawParam: RawValueParam, realParam: RealParam): Res[RpcEncoding] = {
@@ -177,11 +176,12 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     case class Verbatim(tpe: Type) extends RpcEncoding {
       def asRaw: Tree = q"$AsRawObj.identity[$tpe]"
       def asReal: Tree = q"$AsRealObj.identity[$tpe]"
-      override def applyAsRaw[T: Liftable](arg: T): Tree = q"$arg"
-      override def applyAsReal[T: Liftable](arg: T): Tree = q"$arg"
-      override def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, default: Tree): Tree =
-        q"$optionLike.getOrElse($opt, $default)"
-      override def andThenAsReal[T: Liftable](func: T): Tree = q"$func"
+      def applyAsRaw[T: Liftable](arg: T): Tree = q"$arg"
+      def applyAsReal[T: Liftable](arg: T): Tree = q"$arg"
+      def paramAsReal[T: Liftable](arg: T, param: MatchedParam): Tree = q"$arg"
+      def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, param: MatchedParam): Tree =
+        q"$optionLike.getOrElse($opt, ${param.fallbackValueTree})"
+      def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree = q"$func"
     }
     case class RealRawEncoding(realType: Type, rawType: Type, clueWithPos: Option[(String, Position)])
       extends RpcEncoding {
@@ -197,6 +197,17 @@ trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       lazy val asRealName: TermName = infer(AsRealCls)
       def asRaw: Tree = q"$asRawName"
       def asReal: Tree = q"$asRealName"
+
+      def applyAsRaw[T: Liftable](arg: T): Tree =
+        q"$asRaw.asRaw($arg)"
+      def applyAsReal[T: Liftable](arg: T): Tree =
+        q"$asReal.asReal($arg)"
+      def paramAsReal[T: Liftable](arg: T, param: MatchedParam): Tree =
+        q"$RpcUtils.readArg(${param.matchedOwner.rawName}, ${param.rawName}, $asReal, $arg)"
+      def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, param: MatchedParam): Tree =
+        q"$optionLike.fold($opt, ${param.fallbackValueTree})(raw => ${paramAsReal(q"raw", param)})"
+      def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree =
+        q"$func.andThen(raw => ${paramAsReal(q"raw", param)})"
     }
   }
 

@@ -9,6 +9,9 @@ import scala.collection.mutable
 class InvalidRpcCall(msg: String, cause: Throwable = null)
   extends RuntimeException(msg, cause)
 
+class InvalidRpcArgument(val rpcName: String, val argName: String, cause: Throwable)
+  extends InvalidRpcCall(s"Argument $argName of RPC $rpcName is invalid: ${cause.getMessage}", cause)
+
 class MissingRpcArgument(val rpcName: String, val argName: String)
   extends InvalidRpcCall(s"Argument $argName of RPC $rpcName is missing")
 
@@ -27,6 +30,14 @@ object RpcUtils {
     b.sizeHint(size)
     b
   }
+
+  def readArg[Raw, Real](rpcName: String, argName: String, asReal: AsReal[Raw, Real], raw: Raw): Real =
+    try asReal.asReal(raw) catch {
+      case NonFatal(cause) => invalidArg(rpcName, argName, cause)
+    }
+
+  def invalidArg(rpcName: String, argName: String, cause: Throwable): Nothing =
+    throw new InvalidRpcArgument(rpcName, argName, cause)
 
   def missingArg(rpcName: String, argName: String): Nothing =
     throw new MissingRpcArgument(rpcName, argName)

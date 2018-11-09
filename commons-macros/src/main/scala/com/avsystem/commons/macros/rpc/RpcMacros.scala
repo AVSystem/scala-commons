@@ -7,7 +7,8 @@ import com.avsystem.commons.macros.misc.Res
 
 import scala.reflect.macros.blackbox
 
-abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) with MacroSymbols {
+private[commons] abstract class RpcMacroCommons(ctx: blackbox.Context)
+  extends AbstractMacroCommons(ctx) with MacroSymbols {
 
   import c.universe._
 
@@ -38,7 +39,7 @@ abstract class RpcMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommo
   final lazy val RpcTagAT: Type = staticType(tq"$RpcPackage.RpcTag")
 }
 
-class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
+private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
   with RpcSymbols with RpcMappings with RpcMetadatas {
 
   import c.universe._
@@ -99,7 +100,7 @@ class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
     val realRpc = RealRpcTrait(weakTypeOf[Real].dealias)
     val metadataTpe = c.macroApplication.tpe.dealias
     val constructor = new RpcTraitMetadataConstructor(metadataTpe, None)
-    
+
     def materialize: Res[Tree] = for {
       _ <- constructor.matchFilters(realRpc)
       methodMappings = constructor.methodMappings(realRpc)

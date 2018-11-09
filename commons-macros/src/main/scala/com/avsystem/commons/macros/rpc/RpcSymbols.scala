@@ -6,7 +6,7 @@ import com.avsystem.commons.macros.misc.Res
 
 import scala.collection.mutable
 
-trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
+private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
 
   import c.universe._
 
