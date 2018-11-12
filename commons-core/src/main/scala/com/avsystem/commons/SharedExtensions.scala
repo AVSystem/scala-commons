@@ -327,6 +327,22 @@ object SharedExtensions extends SharedExtensions {
       try Future.successful(expr) catch {
         case NonFatal(cause) => Future.failed(cause)
       }
+
+    /**
+      * Different version of `Future.sequence`. Transforms a `TraversableOnce[Future[A]]`
+      * into a `Future[TraversableOnce[A]`, which only completes after all `in` `Future`s are completed.
+      *
+      * @tparam A the type of the value inside the Futures
+      * @tparam M the type of the `TraversableOnce` of Futures
+      * @param in the `TraversableOnce` of Futures which will be sequenced
+      * @return the `Future` of the `TraversableOnce` of results
+      */
+    def sequenceCompleted[A, M[X] <: TraversableOnce[X]](in: M[Future[A]])(
+      implicit cbf: CanBuildFrom[M[Future[A]], Try[A], M[Try[A]]],
+      cbf2: CanBuildFrom[M[Try[A]], A, M[A]],
+      executor: ExecutionContext
+    ): Future[M[A]] =
+      Future.traverse(in)(_.transformNow(t => Success(t))).mapNow(tries => Try.sequence(tries).get)
   }
 
   class OptionOps[A](private val option: Option[A]) extends AnyVal {
