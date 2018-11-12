@@ -342,7 +342,7 @@ object SharedExtensions extends SharedExtensions {
       cbf2: CanBuildFrom[M[Try[A]], A, M[A]],
       executor: ExecutionContext
     ): Future[M[A]] =
-      Future.traverse(in)(_.transformNow(t => Success(t))).mapNow(tries => Try.sequence(tries).get)
+      Future.traverse(in)(_.transformNow(Success(_))).mapNow(tries => Try.sequence(tries).get)
   }
 
   class OptionOps[A](private val option: Option[A]) extends AnyVal {
