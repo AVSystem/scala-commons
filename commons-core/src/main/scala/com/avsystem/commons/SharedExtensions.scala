@@ -327,6 +327,44 @@ object SharedExtensions extends SharedExtensions {
       try Future.successful(expr) catch {
         case NonFatal(cause) => Future.failed(cause)
       }
+
+    /** Different version of `Future.traverse`. Transforms a `TraversableOnce[A]` into a `Future[TraversableOnce[B]]`,
+      * which only completes after all `in` `Future`s are completed, using the provided function `A => Future[B]`.
+      * This is useful for performing a parallel map. For example, to apply a function to all items of a list
+      *
+      * @tparam A the type of the value inside the Futures in the `TraversableOnce`
+      * @tparam B the type of the value of the returned `Future`
+      * @tparam M the type of the `TraversableOnce` of Futures
+      * @param in the `TraversableOnce` of Futures which will be sequenced
+      * @param fn the function to apply to the `TraversableOnce` of Futures to produce the results
+      * @return the `Future` of the `TraversableOnce` of results
+      */
+    def traverseCompleted[A, B, M[X] <: TraversableOnce[X]](in: M[A])(fn: A => Future[B])(
+      implicit cbf: CanBuildFrom[M[A], B, M[B]],
+      executor: ExecutionContext
+    ): Future[M[B]] = {
+      val (barrier, i) = in.foldLeft((Future.unit, Future.successful(cbf(in)))) {
+        case ((priorFinished, fr), a) =>
+          val transformed = fn(a)
+          (transformed.thenReturn(priorFinished), fr.zipWithNow(transformed)(_ += _))
+      }
+      barrier.thenReturn(i.mapNow(_.result()))
+    }
+
+    /**
+      * Different version of `Future.sequence`. Transforms a `TraversableOnce[Future[A]]`
+      * into a `Future[TraversableOnce[A]`, which only completes after all `in` `Future`s are completed.
+      *
+      * @tparam A the type of the value inside the Futures
+      * @tparam M the type of the `TraversableOnce` of Futures
+      * @param in the `TraversableOnce` of Futures which will be sequenced
+      * @return the `Future` of the `TraversableOnce` of results
+      */
+    def sequenceCompleted[A, M[X] <: TraversableOnce[X]](in: M[Future[A]])(
+      implicit cbf: CanBuildFrom[M[Future[A]], A, M[A]],
+      executor: ExecutionContext
+    ): Future[M[A]] =
+      traverseCompleted(in)(identity)
   }
 
   class OptionOps[A](private val option: Option[A]) extends AnyVal {

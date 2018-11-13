@@ -25,6 +25,58 @@ class SharedExtensionsTest extends FunSuite with Matchers {
     assert(Future.eval(throw ex).value.contains(Failure(ex)))
   }
 
+  test("Future.sequenceCompleted") {
+    val p = Promise[Unit]()
+    val ex = new RuntimeException
+    val failed = Future.failed(ex)
+
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
+
+    val sequence = Future.sequence(Vector(failed, p.future))
+    val r1 = Future.sequenceCompleted(Vector(failed, p.future))
+    val r2 = Future.sequenceCompleted(Vector(p.future, failed))
+
+    assume(sequence.isCompleted)
+    assume(sequence.failed.value.get.get == ex)
+
+    assert(!r1.isCompleted)
+    assert(!r2.isCompleted)
+
+    p.success(())
+
+    assert(r1.isCompleted)
+    assert(r2.isCompleted)
+    assert(r1.value == r2.value)
+    assert(r1.value == sequence.value)
+  }
+
+  test("Future.traverseCompleted") {
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits.executionContext
+
+    val p = Promise[Int]()
+    val ex = new RuntimeException
+    val in = (1 to 10).toVector
+
+    def fun(i: Int): Future[Int] = i match {
+      case 2 => Future.failed(ex)
+      case 4 => p.future
+      case v => Future.successful(v)
+    }
+
+    val traverse = Future.traverse(in)(fun)
+    val completed = Future.traverseCompleted(in)(fun)
+
+    assume(traverse.isCompleted)
+    assume(traverse.failed.value.get.get == ex)
+
+    assert(!completed.isCompleted)
+
+    p.success(1)
+
+    assert(completed.isCompleted)
+    assert(completed.value == traverse.value)
+  }
+
   test("Future.transformTry") {
     import com.avsystem.commons.concurrent.RunNowEC.Implicits._
     val ex = new Exception
