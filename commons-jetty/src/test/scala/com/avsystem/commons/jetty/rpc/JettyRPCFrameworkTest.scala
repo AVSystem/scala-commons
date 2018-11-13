@@ -14,8 +14,6 @@ class JettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers wit
 
   import JettyRPCFramework._
 
-  import scala.concurrent.ExecutionContext.Implicits.global
-
   override implicit def patienceConfig: PatienceConfig =
     PatienceConfig(scaled(Span(5, Seconds)), scaled(Span(50, Milliseconds)))
 

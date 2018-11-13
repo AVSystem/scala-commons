@@ -36,7 +36,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   case class Call(chain: List[RawInvocation], leaf: RawInvocation)
   object Call extends HasGenCodec[Call]
 
-  class RPCClient(httpClient: HttpClient, uri: String, maxResponseLength: Int)(implicit ec: ExecutionContext) {
+  class RPCClient(httpClient: HttpClient, uri: String, maxResponseLength: Int) {
     private class RawRPCImpl(chain: List[RawInvocation]) extends RawRPC {
       override def fire(invocation: RawInvocation): Unit =
         put(Call(chain, invocation))
@@ -89,7 +89,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
       request(HttpMethod.PUT, call)
   }
 
-  class RPCHandler(rootRpc: RawRPC, contextTimeout: FiniteDuration)(implicit ec: ExecutionContext) extends AbstractHandler {
+  class RPCHandler(rootRpc: RawRPC, contextTimeout: FiniteDuration) extends AbstractHandler {
     override def handle(target: String, baseRequest: Request, request: HttpServletRequest, response: HttpServletResponse): Unit = {
       baseRequest.setHandled(true)
 
@@ -131,10 +131,10 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   }
 
   def newHandler[T](impl: T, contextTimeout: FiniteDuration = 30.seconds)(
-    implicit ec: ExecutionContext, asRawRPC: AsRawRPC[T]): Handler =
+    implicit asRawRPC: AsRawRPC[T]): Handler =
     new RPCHandler(asRawRPC.asRaw(impl), contextTimeout)
 
   def newClient[T](httpClient: HttpClient, uri: String, maxResponseLength: Int = 2 * 1024 * 1024)(
-    implicit ec: ExecutionContext, asRealRPC: AsRealRPC[T]): T =
+    implicit asRealRPC: AsRealRPC[T]): T =
     asRealRPC.asReal(new RPCClient(httpClient, uri, maxResponseLength).rawRPC)
 }
