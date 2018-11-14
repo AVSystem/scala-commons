@@ -27,7 +27,10 @@ object RedisDataCodec extends LowPriorityRedisDataCodecs {
   def write[T](value: T)(implicit rdc: RedisDataCodec[T]): ByteString = rdc.write(value)
   def read[T](raw: ByteString)(implicit rdc: RedisDataCodec[T]): T = rdc.read(raw)
 
-  implicit val ByteStringCodec: RedisDataCodec[ByteString] = RedisDataCodec(identity, identity)
+  implicit val ByteStringCodec: RedisDataCodec[ByteString] =
+    RedisDataCodec(identity, identity)
+  implicit val ByteArrayCodec: RedisDataCodec[Array[Byte]] =
+    RedisDataCodec(_.toArray, ByteString(_))
 }
 trait LowPriorityRedisDataCodecs { this: RedisDataCodec.type =>
   implicit def fromGenCodec[T: GenCodec]: RedisDataCodec[T] =
