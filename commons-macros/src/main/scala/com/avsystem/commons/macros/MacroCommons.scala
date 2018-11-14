@@ -938,6 +938,8 @@ trait MacroCommons { bundle =>
   case class ApplyUnapply(ownerTpe: Type, typedCompanion: Tree, apply: Symbol, unapply: Symbol, params: List[TermSymbol]) {
     def standardCaseClass: Boolean = apply.isConstructor
 
+    def synthetic: Boolean = (apply.isConstructor || apply.isSynthetic) && unapply.isSynthetic
+
     def defaultValueFor(param: Symbol): Tree =
       defaultValueFor(param, params.indexOf(param))
 
@@ -998,10 +1000,16 @@ trait MacroCommons { bundle =>
         case _ => None
       }
 
-      applicableResults match {
+      def choose(results: List[ApplyUnapply]): Option[ApplyUnapply] = results match {
+        case Nil => None
         case List(result) => Some(result)
+        case multiple if multiple.exists(_.synthetic) =>
+          // prioritize non-synthetic apply/unapply pairs
+          choose(multiple.filterNot(_.synthetic))
         case _ => None
       }
+
+      choose(applicableResults)
     }
   }
 
