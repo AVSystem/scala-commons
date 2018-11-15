@@ -361,7 +361,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         CaseClassInfo(idx, st, au.params)
       } orElse singleValueFor(st).map { singleton =>
         CaseObjectInfo(idx, st, singleton)
-      } getOrElse abort(s"")
+      } getOrElse abort(
+        s"Cannot materialize flat codec for $tpe because $st is not a case class or case object"
+      )
     }
 
     caseInfos.foreach { ci =>
