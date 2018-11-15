@@ -615,7 +615,7 @@ tries to use any already declared [`GenCodec`](http://avsystem.github.io/scala-c
 
 ```scala
 case class SimpleTree(children: List[SimpleTree])
-object SimpleTree extends HasGenCodec[Tree]
+object SimpleTree extends HasGenCodec[SimpleTree]
 ```
 
 ```scala
@@ -643,11 +643,13 @@ object Key extends HasGenCodec[Key[_]]
 All annotations are governed by [annotation processing](Annotations.md) rules.
 
 * [`@name`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/name.html)
+* [`@whenAbsent`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/whenAbsent.html)
 * [`@transparent`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transparent.html)
 * [`@transientDefault`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transientDefault.html)
 * [`@flatten`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/flatten.html)
 * [`@defaultCase`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/defaultCase.html)
 * [`@outOfOrder`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/outOfOrder.html)
+* [`@generated`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/generated.html)
 
 ### Safely introducing changes to serialized classes (retaining backwards compatibility)
 
