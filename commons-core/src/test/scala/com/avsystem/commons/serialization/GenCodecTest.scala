@@ -291,9 +291,7 @@ class GenCodecTest extends CodecTestBase {
   }
 
   case class Node[T](value: T, children: List[Node[T]] = Nil)
-  object Node {
-    implicit def codec[T: GenCodec]: GenCodec[Node[T]] = GenCodec.materialize[Node[T]]
-  }
+  object Node extends HasPolyGenCodec[Node]
 
   test("recursive generic case class test") {
     testWriteRead(
