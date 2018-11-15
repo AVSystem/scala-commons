@@ -30,3 +30,27 @@ abstract class HasApplyUnapplyCodecWithDeps[D, T](implicit deps: ValueOf[D], mac
 abstract class HasGenObjectCodecWithDeps[D, T](implicit deps: ValueOf[D], macroCodec: MacroInstances[D, () => GenObjectCodec[T]]) {
   implicit val codec: GenObjectCodec[T] = macroCodec(deps.value, this).apply()
 }
+
+trait PolyCodec[C[_]] {
+  def codec[T: GenCodec]: GenCodec[C[T]]
+}
+
+abstract class HasPolyGenCodec[C[_]](implicit macroCodec: MacroInstances[Unit, PolyCodec[C]]) {
+  implicit def codec[T: GenCodec]: GenCodec[C[T]] = macroCodec((), this).codec
+}
+
+abstract class HasPolyGenCodecWithDeps[D, C[_]](implicit deps: ValueOf[D], macroCodec: MacroInstances[D, PolyCodec[C]]) {
+  implicit def codec[T: GenCodec]: GenCodec[C[T]] = macroCodec(deps.value, this).codec
+}
+
+trait PolyObjectCodec[C[_]] {
+  def codec[T: GenCodec]: GenObjectCodec[C[T]]
+}
+
+abstract class HasPolyGenObjectCodec[C[_]](implicit macroCodec: MacroInstances[Unit, PolyObjectCodec[C]]) {
+  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = macroCodec((), this).codec
+}
+
+abstract class HasPolyGenObjectCodecWithDeps[D, C[_]](implicit deps: ValueOf[D], macroCodec: MacroInstances[D, PolyObjectCodec[C]]) {
+  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = macroCodec(deps.value, this).codec
+}
