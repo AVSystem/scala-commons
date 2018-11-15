@@ -30,7 +30,7 @@ object SelfAnnotation {
 }
 
 case class SelfOptAnnotation[A](annotOpt: Opt[A])
-object SelfOptAnnotationOf {
+object SelfOptAnnotation {
   implicit def materialize[A]: SelfOptAnnotation[A] = macro macros.misc.MiscMacros.selfOptAnnotation[A]
 }
 
