@@ -392,9 +392,7 @@ class GenCodecTest extends CodecTestBase {
   sealed trait Tree[T]
   case class Leaf[T](value: T) extends Tree[T]
   case class Branch[T](left: Tree[T], right: Tree[T]) extends Tree[T]
-  object Tree {
-    implicit def codec[A: GenCodec]: GenCodec[Tree[A]] = GenCodec.materialize[Tree[A]]
-  }
+  object Tree extends HasPolyGenCodec[Tree]
 
   // test type dealiasing during materialization
   type IntTree = Tree[Int]
