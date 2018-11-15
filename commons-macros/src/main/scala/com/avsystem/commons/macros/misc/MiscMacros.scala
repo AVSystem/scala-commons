@@ -573,6 +573,12 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val annots = allAnnotations(sym, atpe).map(safeAnnotTree)
     q"$MiscPkg.SelfAnnotations($ListObj(..$annots))"
   }
+
+  def selfInstance[C: WeakTypeTag]: Tree = instrument {
+    val TypeRef(pre, constrSym, _) = weakTypeOf[C].typeConstructor
+    val instance = internal.typeRef(pre, constrSym, List(classBeingConstructed.asType.toType))
+    q"$MiscPkg.SelfInstance($ImplicitsObj.infer[$instance])"
+  }
 }
 
 class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
