@@ -447,7 +447,7 @@ prefix methods with empty path and no parameters. This is useful when you want t
 REST API trait by grouping methods into multiple, separate traits without changing the
 format of HTTP requests.
 
-Example of prefix method that adds authentication header to the overall API:
+Example of prefix method that adds authorization header to the overall API:
 
 ```scala
 trait UserApi { ... }
@@ -473,21 +473,23 @@ case classes used as parameter or result types of REST methods.
 There are two ways to define default values:
 
 * Scala-level default value
+
   You can simply use [Scala default parameter value](https://docs.scala-lang.org/tour/default-parameter-values.html)
   for your REST method parameters and case class parameters. They will be picked up during macro materialization and
   used as fallback values for missing parameters during deserialization. However, Scala-level default values cannot
-  be picked up and included into [OpenAPI documents](#generating-openapi-30-specifications).
+  be picked up and included into [OpenAPI documents](#generating-openapi-30-specifications) due to how they are encoded
+  by Scala compiler (obtaining such value requires an actual instance of API trait).
   Therefore, it's recommended to define default values using `@whenAbsent` annotation
 
 * Using `@whenAbsent` annotation
+
   Instead of defining Scala-level default value, you can use `@whenAbsent` annotation:
   ```scala
   case class Person(id: String, @whenAbsent("anon") name: String)
   object Person extends RestDataCompanion[Person]
   ```
   This brings two advantages:
-  * The default value is for deserialization _only_ and does not affect programmer API,
-    which is often the intention of introducing it.
+  * The default value is for deserialization _only_ and does not affect programmer API, which is often desired.
   * Value from `@whenAbsent` annotation can be picked up by macro materialization of
     [OpenAPI documents](#generating-openapi-30-specifications) and included as default value in OpenAPI
     [Schema Objects](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#schemaObject)
