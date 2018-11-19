@@ -4,6 +4,7 @@ package annotation
 import scala.annotation.Annotation
 
 /**
-  * Annotation to put on symbols which exist only for binary compatibility with previous versions.
+  * Marks symbols which exist only for binary compatibility with previous versions.
+  * These symbols should never be used directly. This is checked by `commons-analyzer` plugin.
   */
 class bincompat extends Annotation
