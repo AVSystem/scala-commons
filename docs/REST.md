@@ -942,7 +942,7 @@ materialize a `RestStructure` instance for your data type. `RestSchema` is then 
 `RestDataCompanion` also automatically materializes a `GenCodec` instance.
 
 ```scala
-case class User(id: String, @whenAbsent("anon") name: String, birthYear: String)
+case class User(id: String, @whenAbsent("anon") name: String, birthYear: Int)
 object User extends RestDataCompanion[User] // gives GenCodec + RestStructure + RestSchema
 ```
 
