@@ -119,10 +119,16 @@ trait MacroCommons { bundle =>
     pt: Type,
     silent: Boolean = true,
     withMacrosDisabled: Boolean = false,
+    expandMacros: Boolean = false,
     pos: Position = c.enclosingPosition
   ): Tree = {
     debug(s"macro implicit search for $pt")
-    measure("implicit")(c.inferImplicitValue(pt, silent, withMacrosDisabled, pos))
+    measure("implicit") {
+      val basic = c.inferImplicitValue(pt, silent, withMacrosDisabled, pos)
+      if (expandMacros && basic.exists(t => t.symbol != null && t.symbol.isMacro))
+        c.typecheck(basic, silent = true, withMacrosDisabled = withMacrosDisabled)
+      else basic
+    }
   }
 
   def typecheck(
@@ -383,7 +389,7 @@ trait MacroCommons { bundle =>
 
   def tryInferCachedImplicit(tpe: Type): Option[TermName] = {
     def compute: Option[TermName] =
-      Option(inferImplicitValue(tpe)).filter(_ != EmptyTree).map { found =>
+      Option(inferImplicitValue(tpe, expandMacros = true)).filter(_ != EmptyTree).map { found =>
         def newCachedImplicit(): TermName = {
           val name = c.freshName(TermName("cachedImplicit"))
           inferredImplicitTypes(name) = found.tpe

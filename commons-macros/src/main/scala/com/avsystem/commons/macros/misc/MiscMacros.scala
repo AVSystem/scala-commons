@@ -26,7 +26,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
 
   private def inferTpe(tpe: Type, clue: String, pos: Position, withMacrosDisabled: Boolean): Tree =
-    inferImplicitValue(tpe, withMacrosDisabled = withMacrosDisabled) match {
+    inferImplicitValue(tpe, withMacrosDisabled = withMacrosDisabled, expandMacros = true) match {
       case EmptyTree => abortAt(clue + implicitNotFoundMsg(tpe), pos)
       case t => t
     }
