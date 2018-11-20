@@ -1,12 +1,11 @@
 package com.avsystem.commons
 package jetty.rest
 
-import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.meta.Mapping
-import com.avsystem.commons.rest.{HeaderValue, HttpBody, QueryValue, RawRest, RestMetadata, RestResponse}
+import com.avsystem.commons.rest.{HeaderValue, HttpBody, PathValue, QueryValue, RawRest, RestMetadata, RestResponse}
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.client.api.Result
 import org.eclipse.jetty.client.util.{BufferingResponseListener, StringContentProvider}
@@ -23,10 +22,7 @@ object RestClient {
     client: HttpClient, baseUrl: String, maxResponseLength: Int = DefaultMaxResponseLength
   ): RawRest.HandleRequest =
     RawRest.safeHandle(request => callback => {
-      val path = request.parameters.path.iterator
-        .map(pv => URLEncoder.encode(pv.value, "utf-8"))
-        .mkString(baseUrl.ensureSuffix("/"), "/", "")
-
+      val path = baseUrl + PathValue.encodeJoin(request.parameters.path)
       val httpReq = client.newRequest(baseUrl).method(request.method.toString)
 
       httpReq.path(path)
