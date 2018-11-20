@@ -4,6 +4,13 @@ package rest
 import java.net.{URLDecoder, URLEncoder}
 
 object UrlEncoding {
-  def encode(str: String): String = URLEncoder.encode(str, "UTF-8")
-  def decode(str: String): String = URLDecoder.decode(str, "UTF-8")
+  def encode(query: String, spaceAsPlus: Boolean): String = {
+    val res = URLEncoder.encode(query, "UTF-8")
+    if (spaceAsPlus) res else res.replace("+", "%20")
+  }
+
+  def decode(query: String, plusAsSpace: Boolean): String = {
+    val pre = if (plusAsSpace) query else query.replace("+", "%2B")
+    URLDecoder.decode(pre, "UTF-8")
+  }
 }
