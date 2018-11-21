@@ -11,6 +11,8 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
+  lazy val MaterializeWithAT: Type = getType(tq"$CommonsPkg.meta.MacroInstances.materializeWith")
+
   def infer[T: WeakTypeTag]: Tree =
     instrument(inferTpe(weakTypeOf[T], "", NoPosition, withMacrosDisabled = false))
 
@@ -361,12 +363,30 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       val impls = instancesMethods.map { m =>
         val sig = m.typeSignatureIn(instancesTpe)
         val resultTpe = sig.finalResultType.dealias
-        val resultCompanion = typedCompanionOf(resultTpe)
-          .getOrElse(abort(s"$resultTpe has no companion object with `materialize` macro"))
 
         val body =
-          if (singleMethod.exists(_ != m)) q"$PredefObj.???"
-          else q"$resultCompanion.materialize"
+          if (singleMethod.exists(_ != m))
+            q"$PredefObj.???"
+          else findAnnotation(m, MaterializeWithAT) match {
+            case Some(annot) =>
+              val errorPos = annot.errorPos.getOrElse(c.enclosingPosition)
+              annot.tree match {
+                case Apply(_, List(prefix, macroNameTree)) =>
+                  val macroName = macroNameTree match {
+                    case StringLiteral(name) => name
+                    case t if t.symbol.isSynthetic && t.symbol.name.decodedName == TermName("<init>$default$2") =>
+                      "materialize"
+                    case _ => abortAt("expected string literal as second argument of @materializeWith", errorPos)
+                  }
+                  q"$prefix.${TermName(macroName)}"
+                case _ =>
+                  abortAt("bad @materializeWith annotation", errorPos)
+              }
+            case None =>
+              val resultCompanion = typedCompanionOf(resultTpe)
+                .getOrElse(abort(s"$resultTpe has no companion object with `materialize` macro"))
+              q"$resultCompanion.materialize"
+          }
 
         val instTpeTree = treeForType(sig.finalResultType)
         if (!m.isGetter) {

@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package meta
 
+import scala.annotation.StaticAnnotation
+
 /**
   * Intermediate factory that creates an `Instances` trait based on provided `Implicits`.
   * Normally, this factory is used as implicit constructor parameter of base classes for companion objects
@@ -14,6 +16,7 @@ package meta
   * There is no fixed interface for `Instances`, its abstract methods are inspected by
   * `MacroInstances.materialize` macro and implemented automatically as `<methodReturnTypeCompanion>.materialize`
   * Therefore, return type type of each method must have a companion object which contains `materialize` macro.
+  * You can customize this by applying [[MacroInstances.materializeWith]] annotation on methods of `Instances` trait.
   *
   * Example of `Instances`: `com.avsystem.commons.rest.ClientInstances`
   *
@@ -35,6 +38,12 @@ trait MacroInstances[Implicits, Instances] {
 }
 
 object MacroInstances {
+  /**
+    * Annotation which may be applied on methods of `Implicits` trait in [[MacroInstances]] to instruct
+    * [[MacroInstances.materialize]] macro how to implement these methods.
+    */
+  final class materializeWith(prefix: Any, materializer: String = "materialize") extends StaticAnnotation
+
   /**
     * Materializes an instance of `MacroInstances[Implicits, Instances]`. This macro should not be
     * invoked directly, it should only be used to materialize implicit parameters of RPC companion base classes,

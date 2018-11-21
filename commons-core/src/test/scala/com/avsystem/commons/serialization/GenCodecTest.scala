@@ -572,4 +572,8 @@ class GenCodecTest extends CodecTestBase {
       implCodec
     }
   }
+
+  case class OuterThing(inner: InnerThing)
+  case class InnerThing(recursiveThing: Opt[OuterThing])
+  object OuterThing extends HasRecursiveGenCodec[OuterThing]
 }

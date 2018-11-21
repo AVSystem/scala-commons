@@ -2,6 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.meta.MacroInstances
+import com.avsystem.commons.meta.MacroInstances.materializeWith
 import com.avsystem.commons.misc.ValueOf
 
 /**
@@ -53,4 +54,13 @@ abstract class HasPolyGenObjectCodec[C[_]](implicit macroCodec: MacroInstances[U
 
 abstract class HasPolyGenObjectCodecWithDeps[D, C[_]](implicit deps: ValueOf[D], macroCodec: MacroInstances[D, PolyObjectCodec[C]]) {
   implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = macroCodec(deps.value, this).codec
+}
+
+trait RecursiveCodec[T] {
+  @materializeWith(GenCodec, "materializeRecursively")
+  def codec: GenCodec[T]
+}
+
+abstract class HasRecursiveGenCodec[T](implicit instances: MacroInstances[Unit, RecursiveCodec[T]]) {
+  implicit lazy val codec: GenCodec[T] = instances((), this).codec
 }
