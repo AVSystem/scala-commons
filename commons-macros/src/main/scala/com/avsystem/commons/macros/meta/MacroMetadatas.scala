@@ -168,11 +168,12 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       arity match {
         case ParamArity.Single(tpe) =>
           if (checked)
-            tryInferCachedImplicit(tpe).map(n => Ok(q"$n")).getOrElse(Fail(clue + implicitNotFoundMsg(tpe)))
+            tryInferCachedImplicit(tpe, expandMacros = true)
+              .map(n => Ok(q"$n")).getOrElse(Fail(clue + implicitNotFoundMsg(tpe)))
           else
             Ok(q"${infer(tpe, matchedSymbol.real, clue)}")
         case ParamArity.Optional(tpe) =>
-          Ok(mkOptional(tryInferCachedImplicit(tpe).map(n => q"$n")))
+          Ok(mkOptional(tryInferCachedImplicit(tpe, expandMacros = true).map(n => q"$n")))
         case _: ParamArity.Multi =>
           Fail("@multi arity not allowed on @infer params")
       }

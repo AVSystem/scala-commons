@@ -553,4 +553,23 @@ class GenCodecTest extends CodecTestBase {
       Map("First" -> Map("foo" -> 42))
     )
   }
+
+  case class StepOne(stepTwo: StepTwo)
+  case class StepTwo(stepOne: Opt[StepOne])
+
+  test("recursive materialization of indirectly recursive type") {
+    def testWithCodec(implicit codec: GenCodec[StepOne]): Unit = {
+      testWriteRead[StepOne](StepOne(StepTwo(Opt.Empty)),
+        Map("stepTwo" -> Map("stepOne" -> null))
+      )
+      testWriteRead[StepOne](StepOne(StepTwo(Opt(StepOne(StepTwo(Opt.Empty))))),
+        Map("stepTwo" -> Map("stepOne" -> Map("stepTwo" -> Map("stepOne" -> null))))
+      )
+    }
+    testWithCodec(GenCodec.materializeRecursively)
+    testWithCodec {
+      implicit val implCodec: GenCodec[StepOne] = GenCodec.materializeRecursively
+      implCodec
+    }
+  }
 }

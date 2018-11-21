@@ -387,9 +387,9 @@ trait MacroCommons { bundle =>
   private val inferredImplicitTypes = new mutable.HashMap[TermName, Type]
   private val implicitsToDeclare = new ListBuffer[(TermName, Tree)]
 
-  def tryInferCachedImplicit(tpe: Type): Option[TermName] = {
+  def tryInferCachedImplicit(tpe: Type, expandMacros: Boolean = false): Option[TermName] = {
     def compute: Option[TermName] =
-      Option(inferImplicitValue(tpe, expandMacros = true)).filter(_ != EmptyTree).map { found =>
+      Option(inferImplicitValue(tpe, expandMacros = expandMacros)).filter(_ != EmptyTree).map { found =>
         def newCachedImplicit(): TermName = {
           val name = c.freshName(TermName("cachedImplicit"))
           inferredImplicitTypes(name) = found.tpe
@@ -407,8 +407,8 @@ trait MacroCommons { bundle =>
     implicitSearchCache.getOrElseUpdate(TypeKey(tpe), compute)
   }
 
-  def inferCachedImplicit(tpe: Type, errorClue: String, errorPos: Position): TermName =
-    tryInferCachedImplicit(tpe).getOrElse {
+  def inferCachedImplicit(tpe: Type, errorClue: String, errorPos: Position, expandMacros: Boolean = false): TermName =
+    tryInferCachedImplicit(tpe, expandMacros).getOrElse {
       val name = c.freshName(TermName(""))
       implicitSearchCache(TypeKey(tpe)) = Some(name)
       implicitsToDeclare += (name -> q"$ImplicitsObj.infer[$tpe](${StringLiteral(errorClue, errorPos)})")
