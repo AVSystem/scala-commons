@@ -5,6 +5,7 @@ import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.jetty.rest.RestServlet.DefaultHandleTimeout
 import com.avsystem.commons.meta.Mapping
 import com.avsystem.commons.rest._
+import com.typesafe.scalalogging.StrictLogging
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.http.{HttpStatus, MimeTypes}
 
@@ -17,7 +18,8 @@ class RestServlet(handleRequest: RawRest.HandleRequest, handleTimeout: FiniteDur
     RestServlet.handle(handleRequest, req, resp, handleTimeout)
 }
 
-object RestServlet {
+object RestServlet extends StrictLogging {
+  final val DefaultExceptionLogger = (e: Throwable) => logger.error(e.getMessage, e)
   final val DefaultHandleTimeout = 30.seconds
 
   def apply[@explicitGenerics Real: RawRest.AsRawRpc : RestMetadata](
@@ -81,7 +83,8 @@ object RestServlet {
     request: HttpServletRequest,
     response: HttpServletResponse,
     handleTimeout: FiniteDuration = DefaultHandleTimeout,
-    charset: String = "utf-8"
+    charset: String = "utf-8",
+    exceptionLogger: Throwable => Unit = DefaultExceptionLogger
   ): Unit = {
     val asyncContext = request.startAsync().setup(_.setTimeout(handleTimeout.toMillis))
     RawRest.safeAsync(handleRequest(readRequest(request))) {
@@ -90,6 +93,7 @@ object RestServlet {
         asyncContext.complete()
       case Failure(e) =>
         writeFailure(response, e.getMessage.opt, charset)
+        exceptionLogger.apply(e)
         asyncContext.complete()
     }
   }
