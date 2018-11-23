@@ -222,7 +222,7 @@ lazy val `commons-annotations-js` = project.in(`commons-annotations`.base / "js"
   .dependsOn(`commons-macros`)
   .settings(
     jsCommonSettings,
-    name := (name in `commons-annotations`).value,
+    moduleName := (moduleName in `commons-annotations`).value,
     sourceDirsSettings(_.getParentFile),
   )
 
