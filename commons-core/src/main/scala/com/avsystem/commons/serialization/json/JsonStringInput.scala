@@ -202,7 +202,7 @@ final class JsonReader(val json: String) {
         val lineEnd = json.indexOf('\n', idx) |> (i => if (i == -1) json.length else i)
         s"(line $line, column $column) (line content: ${json.substring(lineStart, lineEnd)})"
       }
-      else if (json.charAt(idx) == '\n') loop(idx + 1, line + 1, 0)
+      else if (json.charAt(idx) == '\n') loop(idx + 1, line + 1, 1)
       else loop(idx + 1, line, column + 1)
     loop(0, 1, 1)
   }
