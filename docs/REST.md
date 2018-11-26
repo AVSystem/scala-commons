@@ -784,16 +784,31 @@ Task support:
 
 ```scala
 import monix.eval.Task
+import monix.execution.Scheduler
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.meta._
 import com.avsystem.commons.rest._
 import com.avsystem.commons.rest.openapi._
 
 trait MonixTaskRestImplicits extends GenCodecRestImplicits { // use whatever serialization you want instead of GenCodec
-  implicit def taskAsAsync[T](implicit asResp: AsRaw[RestResponse, T]): AsRaw[RawRest.Async[RestResponse], Try[Task[T]]] =
-    AsRaw.create(...)
-  implicit def asyncAsTask[T](implicit fromResp: AsReal[RestResponse, T]): AsReal[RawRest.Async[RestResponse], Try[Task[T]]] =
-    AsReal.create(...)
+  implicit def scheduler: Scheduler = Scheduler.global
+
+  implicit def taskToAsyncResp[T](
+    implicit respAsRaw: AsRaw[RestResponse, T]
+  ): AsRaw[RawRest.Async[RestResponse], Try[Task[T]]] =
+    AsRaw.create { triedtask =>
+      val task = triedtask.fold(Task.raiseError, identity).map(respAsRaw.asRaw)
+      callback => task.runAsync(r => callback(r.toTry))
+    }
+
+  implicit def taskFromAsyncResp[T](
+    implicit respAsReal: AsReal[RestResponse, T]
+  ): AsReal[RawRest.Async[RestResponse], Try[Task[T]]] =
+    AsReal.create { async =>
+      val task = Task.async[RestResponse](callback => async(_.fold(callback.onError, callback.onSuccess)))
+      Success(task.map(respAsReal.asReal))
+    }
+    
   implicit def taskResponseType[T]: HttpResponseType[Task[T]] =
     HttpResponseType[Task[T]]()
   
