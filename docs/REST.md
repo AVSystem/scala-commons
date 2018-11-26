@@ -779,14 +779,17 @@ Additionally, you should provide an implicit instance of `HttpResponseType`, sim
 in `FutureRestImplicits` trait for `Future`s. This drives materialization of `RestMetadata` in a similar way
 `AsRaw` and `AsReal` drive materialization of real<->raw interface translation.
 
-Here's an example that shows what exactly must be implemented to add Monix Task support:
+Here's an example that shows what exactly must be implemented to add 
+Task support:
 
 ```scala
 import monix.eval.Task
+import com.avsystem.commons.rpc._
+import com.avsystem.commons.meta._
 import com.avsystem.commons.rest._
 import com.avsystem.commons.rest.openapi._
 
-trait MonixTaskRestImplicits {
+trait MonixTaskRestImplicits extends GenCodecRestImplicits { // use whatever serialization you want instead of GenCodec
   implicit def taskAsAsync[T](implicit asResp: AsRaw[RestResponse, T]): AsRaw[RawRest.Async[RestResponse], Try[Task[T]]] =
     AsRaw.create(...)
   implicit def asyncAsTask[T](implicit fromResp: AsReal[RestResponse, T]): AsReal[RawRest.Async[RestResponse], Try[Task[T]]] =
@@ -797,8 +800,15 @@ trait MonixTaskRestImplicits {
   // only for OpenAPI generation
   implicit def taskResultType[T: RestResponses]: RestResultType[Task[T]] =
     RestResultType[Task[T]](RestResponses[T].responses)
+    
+  // possibly additional implicits which customize implicit-not-found compilation error messages, 
+  // see FutureRestImplicits for examples
 }
-object MonixTaskRestImplicits
+object MonixTaskRestImplicits extends MonixTaskRestImplicits
+
+abstract class MonixTaskRestApiCompanion[Real](
+  implicit instances: MacroInstances[MonixTaskRestImplicits, OpenApiFullInstances[Real]]
+) extends RestOpenApiCompanion[MonixTaskRestImplicits, Real](MonixTaskRestImplicits)
 ```
 
 ## API evolution
