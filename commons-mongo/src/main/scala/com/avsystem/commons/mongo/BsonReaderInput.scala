@@ -34,6 +34,7 @@ class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean
   }
   override def readObjectId(): ObjectId = br.readObjectId()
   override def skip(): Unit = br.skipValue()
+  override protected def bsonType: BsonType = br.getCurrentBsonType()
 }
 
 final class BsonReaderFieldInput(name: String, br: BsonReader, legacyOptionEncoding: Boolean)

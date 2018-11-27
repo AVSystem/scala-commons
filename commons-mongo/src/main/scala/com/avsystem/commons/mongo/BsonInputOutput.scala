@@ -3,13 +3,24 @@ package mongo
 
 import java.nio.ByteBuffer
 
-import com.avsystem.commons.serialization.{InputAndSimpleInput, OutputAndSimpleOutput, TypeMarker}
+import com.avsystem.commons.serialization.{InputAndSimpleInput, InputMetadata, OutputAndSimpleOutput, TypeMarker}
+import org.bson.BsonType
 import org.bson.types.ObjectId
 
 object ObjectIdMarker extends TypeMarker[ObjectId]
 
+object BsonTypeMetadata extends InputMetadata[BsonType]
+
 trait BsonInput extends Any with InputAndSimpleInput {
   def readObjectId(): ObjectId
+
+  protected def bsonType: BsonType
+
+  override def readMetadata[T](metadata: InputMetadata[T]): Opt[T] =
+    metadata match {
+      case BsonTypeMetadata => bsonType.opt
+      case _ => Opt.Empty
+    }
 
   override def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] =
     typeMarker match {
