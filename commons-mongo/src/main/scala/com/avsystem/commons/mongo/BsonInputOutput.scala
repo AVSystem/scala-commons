@@ -43,6 +43,9 @@ object BsonInput {
 trait BsonOutput extends Any with OutputAndSimpleOutput {
   def writeObjectId(objectId: ObjectId): Unit
 
+  override def keepsMetadata(metadata: InputMetadata[_]): Boolean =
+    BsonTypeMetadata == metadata
+
   override def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean =
     typeMarker match {
       case ObjectIdMarker => writeObjectId(value); true
