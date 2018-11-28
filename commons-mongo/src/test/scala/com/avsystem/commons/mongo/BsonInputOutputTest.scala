@@ -3,8 +3,10 @@ package mongo
 
 import java.nio.ByteBuffer
 
+import com.avsystem.commons.serialization.ObjectInput
 import org.bson._
 import org.bson.io.BasicOutputBuffer
+import org.scalactic.source.Position
 import org.scalatest.FunSuite
 import org.scalatest.prop.PropertyChecks
 
@@ -80,6 +82,57 @@ class BsonInputOutputTest extends FunSuite with PropertyChecks {
       binaryRoundtrip(sthBefore)
       documentRoundtrip(sthBefore)
       valueEncoding(sthBefore)
+    }
+  }
+
+
+  def testMetadata(input: BsonInput)(implicit position: Position): Unit = {
+    def testFieldType(input: ObjectInput)(tpe: BsonType): Unit = {
+      val fieldInput = input.nextField()
+      assert(fieldInput.readMetadata(BsonTypeMetadata).contains(tpe))
+      fieldInput.skip()
+    }
+
+    assert(input.readMetadata(BsonTypeMetadata).isEmpty)
+
+    val objectInput = input.readObject()
+    assert(input.readMetadata(BsonTypeMetadata).contains(BsonType.DOCUMENT))
+
+    //  string: String,
+    //  boolean: Boolean,
+    //  int: Int,
+    //  long: Long,
+    //  timestamp: JDate,
+    //  double: Double,
+    //  binary: BytesWrapper,
+    //  list: List[String],
+    //  map: Map[String, String]
+    testFieldType(objectInput)(BsonType.STRING)
+    testFieldType(objectInput)(BsonType.BOOLEAN)
+    testFieldType(objectInput)(BsonType.INT32)
+    testFieldType(objectInput)(BsonType.INT64)
+    testFieldType(objectInput)(BsonType.DATE_TIME)
+    testFieldType(objectInput)(BsonType.DOUBLE)
+    testFieldType(objectInput)(BsonType.BINARY)
+    testFieldType(objectInput)(BsonType.ARRAY)
+    testFieldType(objectInput)(BsonType.DOCUMENT)
+  }
+
+  test("BsonDocumentReader type metadata") {
+    forAll(SomethingPlain.gen) { sth =>
+      val document = somethingToBson(sth)
+      val input = new BsonReaderInput(new BsonDocumentReader(document))
+
+      testMetadata(input)
+    }
+  }
+
+  test("BsonBinaryReader type metadata") {
+    forAll(SomethingPlain.gen) { sth =>
+      val document = somethingToBson(sth)
+      val input = new BsonReaderInput(new BsonBinaryReader(RawBsonDocument.parse(document.toJson).getByteBuffer.asNIO()))
+
+      testMetadata(input)
     }
   }
 
