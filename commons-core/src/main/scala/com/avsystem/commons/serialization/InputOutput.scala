@@ -46,14 +46,16 @@ trait Output extends Any {
 
   /**
     * Determines whether serialization format implemented by this `Output` preserves particular arbitrary
-    * "metadata" which is identified by [[InputMetadata]] which is usually an object
+    * "metadata" which is identified by [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] which is usually an object
     * (e.g. companion object of metadata value type `T`).
-    * An example of [[InputMetadata]] is [[com.avsystem.commons.serialization.json.JsonType JsonType]] supported by
+    * An example of [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] is
+    * [[com.avsystem.commons.serialization.json.JsonType JsonType]] supported by
     * [[com.avsystem.commons.serialization.json.JsonStringOutput JsonStringOutput]].
     *
     * If this method returns `true` then codec may optimize its encoded format and assume that a corresponding
     * `Input` implementation will return a non-empty `Opt` from its `readMetadata` implementation when passed the
-    * same [[InputMetadata]] identifier. If this method returns `false` then this `Output` does not support this
+    * same [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] identifier.
+    * If this method returns `false` then this `Output` does not support this
     * medatata type and codec should fall back to some other serialization strategy.
     */
   def keepsMetadata(metadata: InputMetadata[_]): Boolean = false
@@ -167,9 +169,11 @@ trait Input extends Any {
   def readObject(): ObjectInput
 
   /**
-    * Attempts to read some arbitrary "metadata" about this input instance. Metadata is identified by [[InputMetadata]]
-    * which is usually an object (e.g. companion object of metadata value type `T`).
-    * An example of [[InputMetadata]] is [[com.avsystem.commons.serialization.json.JsonType JsonType]] supported by
+    * Attempts to read some arbitrary "metadata" about this input instance. Metadata is identified by
+    * [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] which is usually an object
+    * (e.g. companion object of metadata value type `T`).
+    * An example of [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] is
+    * [[com.avsystem.commons.serialization.json.JsonType JsonType]] supported by
     * [[com.avsystem.commons.serialization.json.JsonStringInput JsonStringInput]].
     *
     * Codecs may use this method to optimize encoded format in case it it possible with particular `Input`
