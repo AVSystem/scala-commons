@@ -212,6 +212,10 @@ def sourceDirsSettings(baseMapper: File => File) = Seq(
     mkSourceDirs(baseMapper(baseDirectory.value), scalaBinaryVersion.value, "test"),
 )
 
+def sameNameAs(proj: Project) =
+  if (forIdeaImport) Seq.empty
+  else Seq(name := (name in proj).value)
+
 lazy val `commons-annotations` = project
   .dependsOn(`commons-macros`)
   .settings(jvmCommonSettings)
@@ -222,7 +226,7 @@ lazy val `commons-annotations-js` = project.in(`commons-annotations`.base / "js"
   .dependsOn(`commons-macros`)
   .settings(
     jsCommonSettings,
-    name := (name in `commons-annotations`).value,
+    sameNameAs(`commons-annotations`),
     sourceDirsSettings(_.getParentFile),
   )
 
@@ -248,7 +252,7 @@ lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
   .dependsOn(`commons-macros`, `commons-annotations-js` % CompileAndTest)
   .settings(
     jsCommonSettings,
-    name := (name in `commons-core`).value,
+    sameNameAs(`commons-core`),
     sourceDirsSettings(_.getParentFile),
   )
 
@@ -265,7 +269,7 @@ lazy val `commons-rest-js` = project.in(`commons-rest`.base / "js")
   .dependsOn(`commons-core-js` % CompileAndTest)
   .settings(
     jsCommonSettings,
-    name := (name in `commons-rest`).value,
+    sameNameAs(`commons-rest`),
     sourceDirsSettings(_.getParentFile),
   )
 
@@ -314,7 +318,7 @@ lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
   .settings(
     jsCommonSettings,
     noPublishSettings,
-    name := (name in `commons-benchmark`).value,
+    sameNameAs(`commons-benchmark`),
     sourceDirsSettings(_.getParentFile),
     libraryDependencies ++= Seq(
       "io.circe" %%% "circe-core" % circeVersion,
