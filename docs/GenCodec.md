@@ -344,7 +344,7 @@ object Person {
 }
 ```
 
-Using `GenCodec.materialize` instead of `HasGenCodec` is sometimes necessary, e.g. when your class is generic (GADT).
+Using `GenCodec.materialize` instead of `HasGenCodec` is sometimes necessary, e.g. when some additional implicits need to be imported into macro-materialization.
 
 The macro-materialized codec for case class serializes it into an object where field names serve as keys and field 
 values as associated values. For example, `Person("Fred", 1990)` would be represented (using `JsonStringOutput`)
@@ -622,9 +622,7 @@ object SimpleTree extends HasGenCodec[SimpleTree]
 sealed trait Tree[T]
 case class Leaf[T](value: T) extends Tree[T]
 case class Branch[T](left: Tree[T], right: Tree[T]) extends Tree[T]
-object Tree {
-  implicit def codec[T: GenCodec]: GenCodec[Tree[T]] = GenCodec.materialize
-}
+object Tree extends HasPolyGenCodec[Tree]
 ```
 
 Note that for generic types it's not possible to use `HasGenCodec`, we must
