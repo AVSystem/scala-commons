@@ -625,8 +625,7 @@ case class Branch[T](left: Tree[T], right: Tree[T]) extends Tree[T]
 object Tree extends HasPolyGenCodec[Tree]
 ```
 
-Note that for generic types it's not possible to use `HasGenCodec`, we must
-resort to using `GenCodec.materialize` manually.
+Note that for generic types we must use `HasPolyGenCodec` instead of `HasGenCodec`. It should also be relatively easy to create custom versions of these base companion classes for whatever combination of type kind, bounds and implicit dependencies.
 
 ```scala
 sealed abstract class Key[T](value: T)
