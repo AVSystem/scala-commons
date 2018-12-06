@@ -5,7 +5,7 @@
 
 **[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/index.html)**
 
-**NOTE** The library is still considered to be in early development where a lot of experiments is tried. Therefore we don't make any guarantees about backwards compatibility between versions yet.
+**NOTE** This library is available to the public but it's mostly used internally at AVSystem. Therefore, API may frequently change in an incompatible way.
 
 ## Modules and features
 
