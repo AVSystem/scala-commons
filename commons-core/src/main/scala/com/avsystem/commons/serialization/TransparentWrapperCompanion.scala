@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.serialization.GenCodec.ReadFailure
+import com.avsystem.commons.serialization.GenCodec.WriteFailure
 
 abstract class TransparentWrapperCompanion[R: GenCodec, T] {
   def apply(r: R): T
@@ -9,7 +9,8 @@ abstract class TransparentWrapperCompanion[R: GenCodec, T] {
 
   implicit lazy val codec: GenCodec[T] = GenCodec.create[T](
     input => apply(GenCodec.read[R](input)),
-    (output, value) => GenCodec.write[R](output, unapply(value).getOrElse(throw new ReadFailure("unwrapping failed")))
+    (output, value) => GenCodec.write[R](output, unapply(value)
+      .getOrElse(throw new WriteFailure(s"failure unwrapping value from $value")))
   )
 }
 
