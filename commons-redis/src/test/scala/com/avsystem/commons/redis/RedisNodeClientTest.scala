@@ -2,6 +2,8 @@ package com.avsystem.commons
 package redis
 
 import akka.util.ByteString
+import com.avsystem.commons.redis.commands.`package`.ReplyDecoder
+import com.avsystem.commons.redis.commands.{RedisScript, ReplyDecoders}
 import com.avsystem.commons.redis.config.{ConnectionConfig, NodeConfig}
 import com.avsystem.commons.redis.exception.{ConnectionFailedException, ConnectionInitializationFailure, NodeInitializationFailure, TooManyConnectionsException}
 import org.scalatest.concurrent.ScalaFutures
@@ -32,6 +34,25 @@ class RedisNodeClientTest extends FunSuite
     client.initialized.futureValue shouldBe client
     f1.futureValue shouldBe ByteString("LOL1")
     f2.futureValue shouldBe ByteString("LOL2")
+  }
+
+  test("handling of loading errors during initialization test") {
+    object FakeLoadingErrorScript extends RedisScript[Unit] {
+      def source: String =
+        """
+          |local i = redis.call('incr','i')
+          |if i <= 2 then
+          |  return { err = 'LOADING Loading' }
+          |else
+          |  return { ok = 'OK' }
+          |end
+        """.stripMargin
+      def decoder: ReplyDecoder[Unit] = ReplyDecoders.simpleOkUnit
+    }
+
+    val eval = RedisApi.Batches.StringTyped.eval(FakeLoadingErrorScript, Seq.empty, Seq.empty)
+    val client = createClient(eval, RedisOp.unit)
+    client.initialized.futureValue shouldBe client
   }
 
   test("client connection failure test") {

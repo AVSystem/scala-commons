@@ -99,7 +99,10 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       IO(Tcp) ! Tcp.Connect(address.socketAddress, config.localAddress.toOption, config.socketOptions, config.connectTimeout.toOption)
     case Tcp.Connected(remoteAddress, localAddress) =>
       log.debug(s"Connected to Redis at $address")
-      new ConnectedTo(sender(), localAddress, remoteAddress).initialize()
+      val connection = sender()
+      connection ! Tcp.Register(self)
+      //TODO: use dedicated retry strategy for initialization instead of reconnection strategy
+      new ConnectedTo(connection, localAddress, remoteAddress).initialize(config.reconnectionStrategy)
     case Tcp.CommandFailed(_: Tcp.Connect) =>
       log.error(s"Connection attempt to Redis at $address failed")
       tryReconnect(retryStrategy, new ConnectionFailedException(address))
@@ -137,20 +140,21 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         case _: Tcp.Event if sender() != connection => //ignore
       })
 
-    def initialize(): Unit = {
-      connection ! Tcp.Register(self)
-      val initBuffer = ByteBuffer.allocate(config.initCommands.rawCommandPacks.encodedSize)
-      new ReplyCollector(config.initCommands.rawCommandPacks, initBuffer, onInitResult)
+    def initialize(retryStrategy: RetryStrategy): Unit = {
+      // Make sure that at least PING is sent so that LOADING errors are detected
+      val initBatch = config.initCommands *> RedisApi.Batches.StringTyped.ping
+      val initBuffer = ByteBuffer.allocate(initBatch.rawCommandPacks.encodedSize)
+      new ReplyCollector(initBatch.rawCommandPacks, initBuffer, onInitResult(_, retryStrategy))
         .sendEmptyReplyOr { collector =>
           initBuffer.flip()
           val data = ByteString(initBuffer)
           logWrite(data)
           connection ! Tcp.Write(data)
-          become(initializing(collector))
+          become(initializing(collector, retryStrategy))
         }
     }
 
-    def initializing(collector: ReplyCollector): Receive = {
+    def initializing(collector: ReplyCollector, retryStrategy: RetryStrategy): Receive = {
       case open: Open =>
         onOpen(open)
       case IncomingPacks(packs) =>
@@ -158,20 +162,22 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       case Release if reservedBy.contains(sender()) =>
         handleRelease()
       case Tcp.CommandFailed(_: Tcp.Write) =>
-        onInitResult(PacksResult.Failure(new WriteFailedException(address)))
+        onInitResult(PacksResult.Failure(new WriteFailedException(address)), retryStrategy)
       case cc: Tcp.ConnectionClosed =>
         onConnectionClosed(cc)
         tryReconnect(config.reconnectionStrategy, new ConnectionClosedException(address, cc.getErrorCause.opt))
       case Tcp.Received(data) =>
         logReceived(data)
         try decoder.decodeMore(data)(collector.processMessage(_, this)) catch {
-          case NonFatal(cause) => onInitResult(PacksResult.Failure(cause))
+          case NonFatal(cause) => onInitResult(PacksResult.Failure(cause), retryStrategy)
         }
+      case RetryInit(newStrategy) =>
+        initialize(newStrategy)
       case Close(cause, stop) =>
         close(cause, stop)
     }
 
-    def onInitResult(packsResult: PacksResult): Unit =
+    def onInitResult(packsResult: PacksResult, strategy: RetryStrategy): Unit =
       try {
         config.initCommands.decodeReplies(packsResult)
         log.debug(s"Successfully initialized Redis connection $localAddr->$remoteAddr")
@@ -179,10 +185,21 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         become(ready)
         writeIfPossible()
       } catch {
-        case NonFatal(cause) =>
-          log.error(s"Failed to initialize Redis connection $localAddr->$remoteAddr", cause)
-          close(new ConnectionInitializationFailure(cause), stopSelf = false)
+        // https://github.com/antirez/redis/issues/4624
+        case e: ErrorReplyException if e.reply.errorCode == "LOADING" => strategy.nextRetry match {
+          case Opt((delay, nextStrategy)) =>
+            val delayMsg = if (delay > Duration.Zero) s" waiting $delay before" else ""
+            log.warning(s"Redis is loading the dataset in memory,$delayMsg retrying initialization...")
+            system.scheduler.scheduleOnce(delay, self, RetryInit(nextStrategy))
+          case Opt.Empty => failInit(e)
+        }
+        case NonFatal(cause) => failInit(cause)
       }
+
+    def failInit(cause: Throwable): Unit = {
+      log.error(s"Failed to initialize Redis connection $localAddr->$remoteAddr", cause)
+      close(new ConnectionInitializationFailure(cause), stopSelf = false)
+    }
 
     def ready: Receive = {
       case open: Open =>
@@ -391,6 +408,7 @@ object RedisConnectionActor {
   case object Release
 
   private object Connect
+  private case class RetryInit(strategy: RetryStrategy)
   private object WriteAck extends Tcp.Event
 
   private case class QueuedPacks(packs: RawCommandPacks, client: Opt[ActorRef], reserve: Boolean) {
