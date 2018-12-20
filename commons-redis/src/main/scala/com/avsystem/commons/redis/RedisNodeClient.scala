@@ -57,6 +57,16 @@ final class RedisNodeClient(
         throw new TooManyConnectionsException(config.maxBlockingPoolSize)
     }
 
+  private def releaseBlockingConnection(connection: ActorRef): Unit =
+    blockingConnectionQueue.offerFirst(QueuedConn(connection, System.nanoTime()))
+
+  private def onBlockingConnection[T](operation: ActorRef => Future[T]): Future[T] = {
+    def operationWithRelease(connection: ActorRef): Future[T] =
+      operation(connection).andThenNow { case _ => releaseBlockingConnection(connection) }
+    blockingConnectionQueue.pollFirst().opt.map(qc => operationWithRelease(qc.conn))
+      .getOrElse(newBlockingConnection().flatMapNow(operationWithRelease))
+  }
+
   @volatile private[this] var initSuccess = false
   @volatile private[this] var failure = Opt.empty[Throwable]
 
@@ -88,14 +98,7 @@ final class RedisNodeClient(
         nextConnection().ask(packs)(timeout, Actor.noSender).mapNow { case pr: PacksResult => pr }
       else {
         val adjTimeout = Timeout((maxBlockMillis.millis + 1.second) max timeout.duration)
-        def executeBlocking(connection: ActorRef): Future[PacksResult] =
-          connection.ask(packs)(adjTimeout, Actor.noSender)
-            .andThenNow { case _ =>
-              blockingConnectionQueue.offerFirst(QueuedConn(connection, System.nanoTime()))
-            }
-            .mapNow { case pr: PacksResult => pr }
-        blockingConnectionQueue.pollFirst().opt.map(qc => executeBlocking(qc.conn))
-          .getOrElse(newBlockingConnection().flatMapNow(executeBlocking))
+        onBlockingConnection(_.ask(packs)(adjTimeout, Actor.noSender)).mapNow { case pr: PacksResult => pr }
       }
     }
 
