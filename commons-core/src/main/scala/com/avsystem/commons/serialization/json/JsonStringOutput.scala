@@ -3,6 +3,8 @@ package serialization.json
 
 import com.avsystem.commons.serialization._
 
+import scala.annotation.tailrec
+
 object JsonStringOutput {
   def write[T: GenCodec](value: T, options: JsonOptions = JsonOptions.Default): String = {
     val sb = new JStringBuilder
@@ -17,8 +19,10 @@ object JsonStringOutput {
 trait BaseJsonOutput {
   protected final def indent(builder: JStringBuilder, indentSize: OptArg[Int], depth: Int): Unit =
     indentSize match {
-      case OptArg(size) => builder.append('\n').append(" " * (depth * size))
       case OptArg.Empty =>
+      case OptArg(size) =>
+        builder.append('\n')
+        writeSpaces(builder, depth * size)
     }
 
   protected final def writeJsonString(builder: JStringBuilder, str: String, ascii: Boolean): Unit = {
@@ -43,13 +47,20 @@ trait BaseJsonOutput {
         if (esc != 1) {
           builder.append(esc)
         } else {
-          builder.append('u').append(toHex((ch >> 12) & 15)).append(toHex((ch >> 8) & 15))
-            .append(toHex((ch >> 4) & 15)).append(toHex(ch & 15))
+          builder.append('u').append(toHex((ch >> 12) & 0xF)).append(toHex((ch >> 8) & 0xF))
+            .append(toHex((ch >> 4) & 0xF)).append(toHex(ch & 0xF))
         }
       }
       i += 1
     }
     builder.append(str, s, str.length).append('"')
+  }
+
+  @tailrec protected final def writeSpaces(builder: JStringBuilder, n: Int): Unit = {
+    if (n > 0) {
+      builder.append(' ')
+      writeSpaces(builder, n - 1)
+    }
   }
 
   protected final def toHex(nibble: Int): Char = (nibble + (if (nibble >= 10) 'a' - 10 else '0')).toChar
@@ -64,10 +75,21 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
   def writeInt(int: Int): Unit = builder.append(int)
   def writeLong(long: Long): Unit = builder.append(long)
 
-  def writeDouble(double: Double): Unit =
-    if (double.isNaN || double.isInfinity)
+  override def writeFloat(float: Float): Unit = {
+    if (java.lang.Float.isFinite(float)) {
+      builder.append(float)
+    } else {
+      builder.append('"').append(float).append('"')
+    }
+  }
+
+  def writeDouble(double: Double): Unit = {
+    if (java.lang.Double.isFinite(double)) {
+      builder.append(double)
+    } else {
       builder.append('"').append(double).append('"')
-    else builder.append(double)
+    }
+  }
 
   def writeBigInt(bigInt: BigInt): Unit = builder.append(bigInt)
   def writeBigDecimal(bigDecimal: BigDecimal): Unit = builder.append(bigDecimal)
@@ -90,7 +112,8 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
       builder.append('"')
       var i = 0
       while (i < binary.length) {
-        builder.append(f"${binary(i) & 0xff}%02x") //JS has signed chars
+        val b = binary(i)
+        builder.append(toHex((b >> 4) & 0xF)).append(toHex(b & 0xF))
         i += 1
       }
       builder.append('"')
@@ -143,7 +166,8 @@ final class JsonObjectOutput(builder: JStringBuilder, options: JsonOptions, dept
     indent(builder, options.formatting.indentSize, depth)
     first = false
     writeJsonString(builder, key, options.asciiOutput)
-    builder.append(':').append(" " * options.formatting.afterColon)
+    builder.append(':')
+    writeSpaces(builder, options.formatting.afterColon)
     new JsonStringOutput(builder, options, depth)
   }
 

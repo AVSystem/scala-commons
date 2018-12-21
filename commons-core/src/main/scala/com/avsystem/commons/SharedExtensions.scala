@@ -674,19 +674,18 @@ object SharedExtensions extends SharedExtensions {
         private[this] val seen = new MHashSet[B]
         private[this] var nextDistinct = NOpt.empty[A]
 
-        @tailrec
-        override final def hasNext: Boolean = nextDistinct.nonEmpty || it.hasNext && {
+        @tailrec override final def hasNext: Boolean = nextDistinct.nonEmpty || it.hasNext && {
           nextDistinct = NOpt.some(it.next()).filter(a => seen.add(f(a)))
           hasNext
         }
 
-        override def next(): A =
+        override def next(): A = {
           if (hasNext) {
             val result = nextDistinct.get
             nextDistinct = NOpt.Empty
             result
-          }
-          else throw new NoSuchElementException
+          } else throw new NoSuchElementException
+        }
       }
 
     def distinct: Iterator[A] = distinctBy(identity)
