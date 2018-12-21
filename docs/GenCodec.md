@@ -266,8 +266,8 @@ JsonStringOutput.write[Int](123) // JSON: 123
 JsonStringInput.read[Int]("123") // 123
 
 // `Option`, `Opt`, `NOpt`, `OptRef` and `OptArg` are represented either as `null` (when empty) or directly
-// as the underlying value (when non-empty). `Some(null)` should not be used - it is indistinguishable from `None`
-// unless the codec for the type wrapped in `Option` has some special `null` handling.
+// as the underlying value (when non-empty). `Some(null)` should not be used - it is indistinguishable from
+// `None` unless the codec for the type wrapped in `Option` has some special `null` handling.
 val raw = simpleWrite[Option[String]](None) // JSON: null
 simpleRead[Option[String]]("null") // None
 
