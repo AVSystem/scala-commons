@@ -359,26 +359,31 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   // workaround for https://groups.google.com/forum/#!topic/scala-user/O_fkaChTtg4
 
   implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](
-    implicit cbf: CanBuildFrom[Nothing, T, C[T]]): GenCodec[C[T] with BSeq[T]] =
+    implicit cbf: CanBuildFrom[Nothing, T, C[T]]
+  ): GenCodec[C[T] with BSeq[T]] =
     nullableList[C[T] with BSeq[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
   implicit def setCodec[C[X] <: BSet[X], T: GenCodec](
-    implicit cbf: CanBuildFrom[Nothing, T, C[T]]): GenCodec[C[T] with BSet[T]] =
+    implicit cbf: CanBuildFrom[Nothing, T, C[T]]
+  ): GenCodec[C[T] with BSet[T]] =
     nullableList[C[T] with BSet[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
   implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](
-    implicit cbf: JCanBuildFrom[T, C[T]]): GenCodec[C[T] with JCollection[T]] =
+    implicit cbf: JCanBuildFrom[T, C[T]]
+  ): GenCodec[C[T] with JCollection[T]] =
     nullableList[C[T] with JCollection[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
   implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): GenObjectCodec[M[K, V] with BMap[K, V]] =
+    implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]
+  ): GenObjectCodec[M[K, V] with BMap[K, V]] =
     nullableObject[M[K, V] with BMap[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })
     )
 
   implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit cbf: JCanBuildFrom[(K, V), M[K, V]]): GenObjectCodec[M[K, V] with JMap[K, V]] =
+    implicit cbf: JCanBuildFrom[(K, V), M[K, V]]
+  ): GenObjectCodec[M[K, V] with JMap[K, V]] =
     nullableObject[M[K, V] with JMap[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.asScala.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })

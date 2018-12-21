@@ -27,13 +27,13 @@ val scalaLoggingVersion = "3.9.0"
 val akkaVersion = "2.5.12"
 val monixVersion = "2.3.3"
 val mockitoVersion = "2.18.3"
-val circeVersion = "0.9.3"
-val upickleVersion = "0.6.6"
+val circeVersion = "0.11.0"
+val upickleVersion = "0.7.1"
 val scalajsBenchmarkVersion = "0.2.4"
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  crossScalaVersions := Seq("2.12.7", "2.11.12"),
+  crossScalaVersions := Seq("2.12.8", "2.11.12"),
   scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(

@@ -78,13 +78,13 @@ bound to any format. It only depends on the fact that this format is capable of 
 Not all of these types must be supported "natively". Some of them may be represented using others, e.g. `Byte`s and
 `Short`s using `Int`s or timestamps using `Long`s with number of milliseconds since Unix epoch. **Serialization format
 is not required to keep type information**. It should only ensure that writing and reading the same types is consistent,
-e.g. when an `Int` was written by a codec then it should be also able to successfully read an `Int`. However, it is a
+e.g. when an `Int` was written by a codec then it should be also able to successfully read an `Int`. However, it is the
 responsibility of the codec itself to have writing and reading logic consistent with each other.
 
-The only exception from this rule are `null`s - every `Input` implementation must be able to distinguish `null` value
-from any other values through its `readNull()` method. This means that e.g. empty string cannot be used as a
-representation of `null` because it would be then indistinguishable from an actual empty string. Every `Input`/`Output`
-pair must have a dedicated representation for `null`s.
+The only exception to this rule is `null` handling - every `Input` implementation must be able to distinguish `null`
+value from any other values through its `readNull()` method. This means that e.g. empty string cannot be used as a
+representation of `null` because it would be then indistinguishable from an actual empty string.
+Every `Input`/`Output` pair must have a dedicated representation for `null`.
 
 ### Writing and reading simple (primitive) values
 
@@ -113,7 +113,7 @@ then the codec may proceed to read its actual type, e.g. with `readString`.
 In order to write a *list*, which is an ordered sequence of arbitrary values, the codec must obtain a
 [`ListOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/ListOutput.html)
 by calling `writeList` on `Output`. Then, it may use its `writeElement()` to obtain a fresh `Output` for each consecutive
-element. `Output` returned for each element must be fully written *before* obtaining `ListOutput` for next element.
+element. `Output` returned for each element must be fully written *before* obtaining `Output` for next element.
 After all elements are written, the codec is required to call `finish()` on the `ListOutput`.
 
 Reading a list from an `Input` is analogous. The codec must obtain a [`ListInput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/ListInput.html)
@@ -218,15 +218,22 @@ The library by default provides codecs for common Scala and Java types:
 * Any Scala tuple, provided that every tuple element type can be serialized. Tuples are serialized into lists.
 * Any `Array[T]`, provided that `T` can be serialized
 * Any Scala collection extending `scala.collection.Seq[T]` or `scala.collection.Set[T]`, provided that `T` can be serialized
+  and there is an appropriate instance of `CanBuildFrom` (e.g. `GenCodec[List[T]]` requires `CanBuildFrom[Nothing, T, List[T]]`).
+  All standard library collections have this `CanBuildFrom` instance so you only have to worry about it when dealing with
+  custom collection implementations.
 * Any `java.util.Collection[T]`, provided that `T` can be serialized
 * Any `scala.collection.Map[K,V]` provided that `V` can be serialized and there is an implicit
   [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html) available for `K`
-  so that it can be converted to a string and used as object key.
+  so that it can be converted to a string and used as object key. There must also be an appropriate instance of `CanBuildFrom` for
+  particular `Map` implementation (e.g. `HashMap[K,V]` requires `CanBuildFrom[Nothing, (K, V), HashMap[K, V]]`).
+  All standard library map implementations have this `CanBuildFrom` instance so you only have to worry about it when dealing
+  with custom map implementations.
 * Any `java.util.Map[K,V]`, with the same restrictions as for Scala maps (there must be `GenCodec` for `V` and `GenKeyCodec` for `K`)
 * `Option[T]`, `Opt[T]`, `OptArg[T]`, `NOpt[T]`, `OptRef[T]`, provided that `T` can be serialized.
 * `Either[A,B]`, provided that `A` and `B` can be serialized.
 * [`NamedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnum.html)s 
-  whose companion object extends [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html)
+  whose companion object extends [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html).
+  This includes [`ValueEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/ValueEnum.html)s.
 * Java enums
 
 ## [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html)
@@ -239,7 +246,8 @@ and Java `Map` types. By default, following types have [`GenKeyCodec`](http://av
 * `Boolean`, `Char`, `Byte`, `Short`, `Int`, `Long`
 * `JBoolean`, `JCharacter`, `JByte`, `JShort`, `JInteger`, `JLong`
 * [`NamedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnum.html)s 
-  whose companion object extends [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html)
+  whose companion object extends [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html).
+  This includes [`ValueEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/ValueEnum.html)s.
 * Java enums
 
 ## Serializing and deserializing examples
@@ -257,22 +265,14 @@ import com.avsystem.commons.serialization.json._
 JsonStringOutput.write[Int](123) // JSON: 123
 JsonStringInput.read[Int]("123") // 123
 
-// `Option`s are represented using empty list or single-element list
-// This encoding is necessary to distinguish between `None` and `Some(null)`
-// The same encoding is used by `NOpt`
-val raw = JsonStringOutput.write[Option[String]](Some("sth")) // JSON: ["sth"]
-JsonStringInput.read[Option[String]](raw) // Some("sth")
+// `Option`, `Opt`, `NOpt`, `OptRef` and `OptArg` are represented either as `null` (when empty) or directly
+// as the underlying value (when non-empty). `Some(null)` should not be used - it is indistinguishable from `None`
+// unless the codec for the type wrapped in `Option` has some special `null` handling.
+val raw = simpleWrite[Option[String]](None) // JSON: null
+simpleRead[Option[String]]("null") // None
 
-val raw = JsonStringOutput.write[Option[String]](None) // JSON: []
-JsonStringInput.read[Option[String]](raw) // None
-
-// `Opt`, `OptRef` and `OptArg` are represented either as `null` (when empty) or directly
-// as the underlying value (when non-empty).
-val raw = simpleWrite[Opt[String]](Opt.Empty) // JSON: null
-simpleRead[Opt[String]](null) // Opt.Empty
-
-val raw = JsonStringOutput.write[Opt[String]](Opt("sth")) // "sth"
-JsonStringInput.read[Opt[String]]("sth") // Opt("sth")
+val raw = JsonStringOutput.write[Option[String]](Some("sth")) // "sth"
+JsonStringInput.read[Option[String]]("sth") // Some("sth")
 
 // all collections are represented as lists
 val raw = JsonStringOutput.write(Set(1,2,3)) // JSON: [1,2,3]
