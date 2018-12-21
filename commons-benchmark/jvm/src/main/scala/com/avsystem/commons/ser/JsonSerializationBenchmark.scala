@@ -68,8 +68,16 @@ class JsonDecodingBenchmark extends JsonSerializationBenchmark {
 class JsonWritingBenchmark extends JsonSerializationBenchmark {
 
   @Benchmark
+  def writePrimitivesCirce: String =
+    Primitives.Example.asJson.noSpaces
+
+  @Benchmark
   def writePrimitivesGenCodec: String =
     JsonStringOutput.write(Primitives.Example)
+
+  @Benchmark
+  def writePrimitivesUpickle: String =
+    upickle.default.write(Primitives.Example)
 
   @Benchmark
   def writeCCCirce: String =
@@ -113,6 +121,18 @@ class JsonWritingBenchmark extends JsonSerializationBenchmark {
 }
 
 class JsonReadingBenchmark extends JsonSerializationBenchmark {
+  @Benchmark
+  def readPrimitivesCirce: Primitives =
+    decode[Primitives](Primitives.ExampleJsonString).fold(e => throw e, identity)
+
+  @Benchmark
+  def readPrimitivesGenCodec: Primitives =
+    JsonStringInput.read[Primitives](Primitives.ExampleJsonString)
+
+  @Benchmark
+  def readPrimitivesUpickle: Primitives =
+    upickle.default.read[Primitives](Primitives.ExampleJsonString)
+
   @Benchmark
   def readCCCirce: Something =
     decode[Something](Something.ExampleJsonString).fold(e => throw e, identity)
