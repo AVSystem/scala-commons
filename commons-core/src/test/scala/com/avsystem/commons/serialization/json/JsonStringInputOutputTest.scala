@@ -70,9 +70,14 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
 
   roundtrip("longs")(Int.MaxValue.toLong + 1, Long.MinValue, -783868188, 0, 783868188, Long.MaxValue)
 
+  roundtrip("floats")(
+    Float.MinPositiveValue, Float.MinValue, -1.75047014E9f, Float.MaxValue, Float.PositiveInfinity, Float.NegativeInfinity
+  )
+
   roundtrip("doubles")(
     Double.MinPositiveValue, Double.MinValue, -1.750470182E9, Double.MaxValue, Double.PositiveInfinity, Double.NegativeInfinity
   )
+
   roundtrip("booleans")(false, true)
 
   roundtrip("strings")("", "a።bc\u0676ąቢść➔Ĳ")
@@ -139,12 +144,8 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
   }
 
   test("NaN") {
-    val value = Double.NaN
-
-    val serialized = write(value)
-    val deserialized = read[Double](serialized)
-
-    assert(java.lang.Double.isNaN(deserialized))
+    assert(java.lang.Float.isNaN(read[Float](write(Float.NaN))))
+    assert(java.lang.Double.isNaN(read[Double](write(Double.NaN))))
   }
 
   test("scientific") {
@@ -154,6 +155,16 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
     val deserialized = serialized.map(read[Double](_))
 
     deserialized should contain only value
+  }
+
+  test("deserialize floats precisely") {
+    val values = Seq("1.199999988079071", "3.4028235677973366E38", "7.006492321624086E-46")
+    assert(values.map(read[Float](_)) == values.map(_.toFloat))
+  }
+
+  test("serialize floats succinctly") {
+    val values = Seq(1.1999999f, 3.4E38f, 1.4E-45f)
+    assert(values.map(write[Float](_)) == values.map(_.toString))
   }
 
   test("serialize and deserialize nested case classes") {

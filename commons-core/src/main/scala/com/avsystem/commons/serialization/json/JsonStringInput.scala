@@ -59,6 +59,7 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
   def readBoolean(): Boolean = checkedValue[Boolean](JsonType.boolean)
   def readInt(): Int = matchNumericString(_.toInt)
   def readLong(): Long = matchNumericString(_.toLong)
+  override def readFloat(): Float = matchNumericString(_.toFloat)
   def readDouble(): Double = matchNumericString(_.toDouble)
   def readBigInt(): BigInt = matchNumericString(BigInt(_))
   def readBigDecimal(): BigDecimal = matchNumericString(BigDecimal(_, options.mathContext))
