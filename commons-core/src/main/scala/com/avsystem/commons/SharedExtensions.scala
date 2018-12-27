@@ -679,13 +679,12 @@ object SharedExtensions extends SharedExtensions {
           hasNext
         }
 
-        override def next(): A = {
+        override def next(): A =
           if (hasNext) {
             val result = nextDistinct.get
             nextDistinct = NOpt.Empty
             result
           } else throw new NoSuchElementException
-        }
       }
 
     def distinct: Iterator[A] = distinctBy(identity)

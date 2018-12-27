@@ -56,12 +56,11 @@ trait BaseJsonOutput {
     builder.append(str, s, str.length).append('"')
   }
 
-  @tailrec protected final def writeSpaces(builder: JStringBuilder, n: Int): Unit = {
+  @tailrec protected final def writeSpaces(builder: JStringBuilder, n: Int): Unit =
     if (n > 0) {
       builder.append(' ')
       writeSpaces(builder, n - 1)
     }
-  }
 
   protected final def toHex(nibble: Int): Char = (nibble + (if (nibble >= 10) 'a' - 10 else '0')).toChar
 }
@@ -75,28 +74,22 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
   def writeInt(int: Int): Unit = builder.append(int)
   def writeLong(long: Long): Unit = builder.append(long)
 
-  override def writeFloat(float: Float): Unit = {
-    if (java.lang.Float.isFinite(float)) {
-      builder.append(float)
-    } else {
-      builder.append('"').append(float).append('"')
-    }
-  }
+  override def writeFloat(float: Float): Unit =
+    if (java.lang.Float.isFinite(float)) builder.append(float)
+    else builder.append('"').append(float).append('"')
 
-  def writeDouble(double: Double): Unit = {
-    if (java.lang.Double.isFinite(double)) {
-      builder.append(double)
-    } else {
-      builder.append('"').append(double).append('"')
-    }
-  }
+  def writeDouble(double: Double): Unit =
+    if (java.lang.Double.isFinite(double)) builder.append(double)
+    else builder.append('"').append(double).append('"')
 
   def writeBigInt(bigInt: BigInt): Unit = builder.append(bigInt)
   def writeBigDecimal(bigDecimal: BigDecimal): Unit = builder.append(bigDecimal)
 
   override def writeTimestamp(millis: Long): Unit = options.dateFormat match {
-    case JsonDateFormat.EpochMillis => writeLong(millis)
-    case JsonDateFormat.IsoInstant => builder.append('"').append(IsoInstant.format(millis)).append('"')
+    case JsonDateFormat.EpochMillis =>
+      writeLong(millis)
+    case JsonDateFormat.IsoInstant =>
+      builder.append('"').append(IsoInstant.format(millis)).append('"')
   }
 
   def writeBinary(binary: Array[Byte]): Unit = options.binaryFormat match {
