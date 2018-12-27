@@ -24,8 +24,8 @@ object JsonStringInput {
     extends ReadFailure(msg, cause)
 }
 
-class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Default,
-  callback: AfterElement = AfterElementNothing
+class JsonStringInput(
+  reader: JsonReader, options: JsonOptions = JsonOptions.Default, callback: AfterElement = AfterElementNothing
 ) extends InputAndSimpleInput with AfterElement {
 
   private[this] val startIdx: Int = reader.parseValue()
@@ -39,12 +39,11 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
   private def expectedError(tpe: JsonType) =
     throw new ParseException(s"Expected $tpe but got ${reader.jsonType}: ${reader.currentValue} ${reader.posInfo(startIdx)}")
 
-  private def checkedValue[T](jsonType: JsonType): T = {
+  private def checkedValue[T](jsonType: JsonType): T =
     if (reader.jsonType != jsonType) expectedError(jsonType)
     else reader.currentValue.asInstanceOf[T]
-  }
 
-  private def matchNumericString[T](toNumber: String => T): T = {
+  private def matchNumericString[T](toNumber: String => T): T =
     if (reader.jsonType == JsonType.number || reader.jsonType == JsonType.string) {
       val str = reader.currentValue.asInstanceOf[String]
       try toNumber(str) catch {
@@ -52,7 +51,6 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
           throw new ParseException(s"Invalid number format: $str ${reader.posInfo(startIdx)}", e)
       }
     } else expectedError(JsonType.number)
-  }
 
   def readNull(): Boolean = reader.jsonType == JsonType.`null`
   def readString(): String = checkedValue[String](JsonType.string)
@@ -129,8 +127,8 @@ class JsonStringInput(reader: JsonReader, options: JsonOptions = JsonOptions.Def
 }
 
 final class JsonStringFieldInput(
-  val fieldName: String, reader: JsonReader, options: JsonOptions, objectInput: JsonObjectInput)
-  extends JsonStringInput(reader, options, objectInput) with FieldInput
+  val fieldName: String, reader: JsonReader, options: JsonOptions, objectInput: JsonObjectInput
+) extends JsonStringInput(reader, options, objectInput) with FieldInput
 
 final class JsonListInput(reader: JsonReader, options: JsonOptions, callback: AfterElement)
   extends ListInput with AfterElement {
@@ -227,15 +225,13 @@ final class JsonReader(val json: String) {
   @inline def isNextDigit: Boolean =
     i < json.length && Character.isDigit(json.charAt(i))
 
-  @inline def advance(): Unit = {
+  @inline def advance(): Unit =
     i += 1
-  }
 
-  def skipWs(): Unit = {
+  def skipWs(): Unit =
     while (i < json.length && Character.isWhitespace(json.charAt(i))) {
       i += 1
     }
-  }
 
   def pass(ch: Char): Unit = {
     val r = read()
