@@ -8,9 +8,15 @@ import java.math.MathContext
   */
 sealed trait JsonBinaryFormat
 object JsonBinaryFormat {
-  /** Specifies that binary data should be represented as JSON array of numeric, signed byte values. */
+  /**
+    * Specifies that binary data should be represented as JSON array of numeric, signed byte values.
+    */
   case object ByteArray extends JsonBinaryFormat
-  /** Specifies that binary data should be represented as JSON lowercase hex string */
+
+  /**
+    * Specifies that binary data should be represented as JSON lowercase hex string. When parsing,
+    * uppercase hex digits are also accepted.
+    */
   case object HexString extends JsonBinaryFormat
 }
 
