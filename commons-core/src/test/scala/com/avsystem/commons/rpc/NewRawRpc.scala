@@ -7,18 +7,16 @@ import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.meta._
 import com.avsystem.commons.serialization.GenCodec
 
-import scala.annotation.StaticAnnotation
-
 trait DummyParamTag extends RpcTag with AnnotationAggregate
 
 case class header(name: String) extends DummyParamTag {
   @rpcName(name)
-  type Implied
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 
 case class renamed(int: Int, name: String) extends DummyParamTag {
   @rpcName(name)
-  type Implied
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 
 case class suchMeta(intMeta: Int, strMeta: String) extends StaticAnnotation
@@ -27,7 +25,8 @@ class filter extends StaticAnnotation
 
 sealed trait RestMethod extends RpcTag
 case class POST() extends RestMethod with AnnotationAggregate {
-  @rpcNamePrefix("POST_") type Implied
+  @rpcNamePrefix("POST_")
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 case class GET() extends RestMethod
 case class PUT() extends RestMethod

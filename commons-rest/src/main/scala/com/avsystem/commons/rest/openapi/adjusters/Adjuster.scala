@@ -7,8 +7,6 @@ import com.avsystem.commons.meta.infer
 import com.avsystem.commons.rest.JsonValue
 import com.avsystem.commons.rpc.AsRaw
 
-import scala.annotation.StaticAnnotation
-
 sealed trait Adjuster extends StaticAnnotation
 
 /**

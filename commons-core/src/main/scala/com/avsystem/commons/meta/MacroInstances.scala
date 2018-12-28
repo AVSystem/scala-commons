@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package meta
 
-import scala.annotation.StaticAnnotation
-
 /**
   * Intermediate factory that creates an `Instances` trait based on provided `Implicits`.
   * Normally, this factory is used as implicit constructor parameter of base classes for companion objects

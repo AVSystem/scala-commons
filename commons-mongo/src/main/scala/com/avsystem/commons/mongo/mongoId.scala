@@ -9,7 +9,6 @@ import com.avsystem.commons.serialization.{name, outOfOrder}
   * which is typical for MongoDB ID field.
   */
 class mongoId extends AnnotationAggregate {
-  @name("_id")
-  @outOfOrder
-  type Implied
+  @name("_id") @outOfOrder
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }

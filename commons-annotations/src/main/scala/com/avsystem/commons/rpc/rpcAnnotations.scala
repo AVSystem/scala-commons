@@ -17,7 +17,8 @@ class rpcName(val name: String) extends RealSymAnnotation
   * {{{
   *   sealed trait RestMethod extends RpcTag
   *   final class GET extends RestMethod with AnnotationAggregate {
-  *     @rpcNamePrefix("GET_") type Implied
+  *     @rpcNamePrefix("GET_")
+  *     final def aggregated: List[StaticAnnotation] = reifyAggregated
   *   }
   * }}}
   */

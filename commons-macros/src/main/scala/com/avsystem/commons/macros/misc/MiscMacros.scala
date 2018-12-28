@@ -599,6 +599,22 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val instance = internal.typeRef(pre, constrSym, List(classBeingConstructed.asType.toType))
     q"$MiscPkg.SelfInstance($ImplicitsObj.infer[$instance])"
   }
+
+  def aggregatedAnnots: Tree = {
+    val aggregatedMethod = c.internal.enclosingOwner
+    if (!aggregatedMethod.overrides.contains(AggregatedMethodSym)) {
+      abort("reifyAggregated macro must only be used to implement AnnotationAggregate.aggregated method")
+    }
+    if (aggregatedMethod.asMethod.isGetter || !aggregatedMethod.isFinal) {
+      abort("AnnotationAggregate.aggregated method implemented with reifyAggregated macro must be a final def")
+    }
+    val annotTrees = rawAnnotations(aggregatedMethod)
+      .filter(_.tree.tpe <:< StaticAnnotationTpe).map(a => c.untypecheck(a.tree))
+    if (annotTrees.isEmpty) {
+      warning("no aggregated annotations found on enclosing method")
+    }
+    q"$ListObj(..$annotTrees)"
+  }
 }
 
 class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {

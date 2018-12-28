@@ -12,7 +12,8 @@ case class User(id: String, name: String)
 object User extends RestDataCompanion[User]
 
 class omit[T](value: => T) extends AnnotationAggregate {
-  @transientDefault @whenAbsent(value) type Implied
+  @transientDefault @whenAbsent(value)
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 
 trait UserApi {

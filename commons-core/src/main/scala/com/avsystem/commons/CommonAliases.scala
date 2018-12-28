@@ -21,6 +21,9 @@ trait CommonAliases {
   final val ClassTag = scala.reflect.ClassTag
   final def classTag[T: ClassTag]: ClassTag[T] = scala.reflect.classTag[T]
 
+  type Annotation = scala.annotation.Annotation
+  type StaticAnnotation = scala.annotation.StaticAnnotation
+
   type Opt[+T] = misc.Opt[T]
   final val Opt = misc.Opt
   type OptRef[+T >: Null] = misc.OptRef[T]

@@ -70,38 +70,40 @@ It is possible to create your own annotations which group - or aggregate - multi
 This way you can reduce boilerplate associated with annotations.
 
 In order to do that, you must create an annotation class that extends `AnnotationAggregate` and
-redefine its dummy `Implied` type member. You can then put your aggregated annotations on that type
-member, e.g.
+implement its `aggregated` method as `final def`, using `reifyAggregated` macro as its body. 
+You can then put your aggregated annotations on that method itself, e.g.
 
 ```scala
 import com.avsystem.commons.annotation._
 import com.avsystem.commons.serialization._
 
 class id extends AnnotationAggregate {
-  @name("id") type Implied
+  @name("id") 
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 ```
 
 Now, when something is annotated as `@id`, macro engines will effectively "explode" this annotation
-into all annotations applied on the `Implied` member. This is done recursively which means that
-the `Implied` member itself may be annotated with more aggregating annotations.
+into all annotations applied on the `aggregated` method. This is done recursively which means that
+the `aggregated` method itself may be annotated with more aggregating annotations.
 
-Having to redefine the dummy `Implied` type member may seem strange. It would seem be more natural to
-put aggregated annotation on the aggregate itself, e.g. `@name("id") class id extends AnnotationAggregate`
-(this doesn't work). However, having aggregate annotation on a type member lets us refer to parameters
-of the aggregate itself, e.g.
+Having to put aggregated annotations on the `aggregated` method may seem strange. It would seem be more natural to
+put aggregated annotations on the aggregate class itself, e.g. `@name("id") class id extends AnnotationAggregate`
+(this doesn't work). However, having aggregated annotations on a member of aggregate class allows us to access its
+parameters, e.g.
 
 ```scala
 import com.avsystem.commons.annotation._
 import com.avsystem.commons.serialization._
 
 class customName(name: String) extends AnnotationAggregate {
-  @name(name) type Implied
+  @name(name) 
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 ```
 
 Now, when "exploding" the aggregate, the macro engine will _statically_ replace references to
-constructor parameters of the aggregate inside `Implied` annotations. For example, when something
+constructor parameters of the aggregate inside `aggregated` annotations. For example, when something
 is annotated as `@customName("id")` the macro will effectively see `@name("id")`.
 
 ### Annotation order

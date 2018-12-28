@@ -4,11 +4,10 @@ package misc
 import com.avsystem.commons.annotation.AnnotationAggregate
 import org.scalatest.FunSuite
 
-import scala.annotation.StaticAnnotation
-
 case class genann[T](value: T) extends StaticAnnotation
 case class genagg[T](value: T) extends AnnotationAggregate {
-  @genann(value) type Implied
+  @genann(value)
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 
 @genagg(42)

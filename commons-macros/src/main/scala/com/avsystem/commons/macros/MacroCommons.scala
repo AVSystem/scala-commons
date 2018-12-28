@@ -56,6 +56,7 @@ trait MacroCommons { bundle =>
   final lazy val PositionedAT = staticType(tq"$CommonsPkg.annotation.positioned")
   final lazy val ImplicitNotFoundAT = staticType(tq"$ScalaPkg.annotation.implicitNotFound")
   final lazy val ImplicitNotFoundSym = staticType(tq"$MiscPkg.ImplicitNotFound[_]").typeSymbol
+  final lazy val AggregatedMethodSym = staticType(tq"$CommonsPkg.annotation.AnnotationAggregate").member(TermName("aggregated"))
 
   final lazy val NothingTpe: Type = typeOf[Nothing]
   final lazy val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
@@ -63,6 +64,7 @@ trait MacroCommons { bundle =>
   final lazy val BIndexedSeqTpe: Type = typeOf[IndexedSeq[Any]]
   final lazy val ProductTpe: Type = typeOf[Product]
   final lazy val AnnotationTpe: Type = typeOf[scala.annotation.Annotation]
+  final lazy val StaticAnnotationTpe: Type = typeOf[scala.annotation.StaticAnnotation]
 
   final def PartialFunctionClass: Symbol = StringPFTpe.typeSymbol
   final def BIterableClass: Symbol = BIterableTpe.typeSymbol
@@ -148,7 +150,7 @@ trait MacroCommons { bundle =>
   def indent(str: String, indent: String): String =
     str.replaceAllLiterally("\n", s"\n$indent")
 
-  private def annotations(s: Symbol): List[Annotation] = {
+  def rawAnnotations(s: Symbol): List[Annotation] = {
     s.info // srsly scalac, load these goddamned annotations
     s.annotations
   }
@@ -244,9 +246,14 @@ trait MacroCommons { bundle =>
 
     lazy val aggregated: List[Annot] = {
       if (tpe <:< AnnotationAggregateType) {
-        val impliedMember = tpe.member(TypeName("Implied"))
-        annotations(impliedMember).map { a =>
-          new Annot(argsInliner.transform(treeAsSeenFrom(a.tree, tpe)), subject, impliedMember, Some(this))
+        val aggregatedMethodSym = tpe.member(AggregatedMethodSym.name).alternatives
+          .find(_.overrides.contains(AggregatedMethodSym)).getOrElse(NoSymbol)
+        val rawAnnots = rawAnnotations(aggregatedMethodSym)
+        if(rawAnnots.isEmpty) {
+          warning(s"no aggregated annotations found in $tpe")
+        }
+        rawAnnots.map { a =>
+          new Annot(argsInliner.transform(treeAsSeenFrom(a.tree, tpe)), subject, aggregatedMethodSym, Some(this))
         }
       } else Nil
     }
@@ -281,7 +288,7 @@ trait MacroCommons { bundle =>
       !(superSym != initSym && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
 
     val nonFallback = maybeWithSuperSymbols(initSym, withInherited)
-      .flatMap(ss => annotations(ss).filter(inherited(_, ss))
+      .flatMap(ss => rawAnnotations(ss).filter(inherited(_, ss))
         .map(a => new Annot(treeAsSeenFrom(a.tree, seenFrom), s, ss, None)))
 
     (nonFallback ++ fallback.iterator.map(t => new Annot(t, s, s, None)))
@@ -313,7 +320,7 @@ trait MacroCommons { bundle =>
       !(superSym != initSym && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
 
     maybeWithSuperSymbols(initSym, withInherited)
-      .map(ss => find(annotations(ss).filter(inherited(_, ss))
+      .map(ss => find(rawAnnotations(ss).filter(inherited(_, ss))
         .map(a => new Annot(treeAsSeenFrom(a.tree, seenFrom), s, ss, None))))
       .collectFirst { case Some(annot) => annot }
       .orElse(find(fallback.map(t => new Annot(t, s, s, None))))
@@ -437,7 +444,7 @@ trait MacroCommons { bundle =>
     symbolImplicitNotFoundMsg(tpe, tpe.typeSymbol, tpe.typeSymbol.typeSignature.typeParams, tpe.typeArgs)
 
   private def symbolImplicitNotFoundMsg(tpe: Type, sym: Symbol, tparams: List[Symbol], typeArgs: List[Type]): String =
-    annotations(sym).find(_.tree.tpe <:< ImplicitNotFoundAT)
+    rawAnnotations(sym).find(_.tree.tpe <:< ImplicitNotFoundAT)
       .map(_.tree.children.tail.head).collect { case StringLiteral(error) => error }
       .map { error =>
         val tpNames = tparams.map(_.name.decodedName.toString)
@@ -806,19 +813,19 @@ trait MacroCommons { bundle =>
   def paramSymbolToValDef(sym: Symbol): ValDef = {
     val ts = sym.asTerm
     val implicitFlag = if (sym.isImplicit) Flag.IMPLICIT else NoFlags
-    val mods = Modifiers(Flag.PARAM | implicitFlag, typeNames.EMPTY, annotations(ts).map(_.tree))
+    val mods = Modifiers(Flag.PARAM | implicitFlag, typeNames.EMPTY, rawAnnotations(ts).map(_.tree))
     ValDef(mods, ts.name, treeForType(sym.typeSignature), EmptyTree)
   }
 
   def getterSymbolToValDef(sym: Symbol): ValDef = {
     val ms = sym.asMethod
     val mutableFlag = if (ms.isVar) Flag.MUTABLE else NoFlags
-    val mods = Modifiers(Flag.DEFERRED | mutableFlag, typeNames.EMPTY, annotations(ms).map(_.tree))
+    val mods = Modifiers(Flag.DEFERRED | mutableFlag, typeNames.EMPTY, rawAnnotations(ms).map(_.tree))
     ValDef(mods, ms.name, treeForType(sym.typeSignature), EmptyTree)
   }
 
   def existentialSingletonToValDef(sym: Symbol, name: TermName, tpe: Type): ValDef = {
-    val mods = Modifiers(Flag.DEFERRED, typeNames.EMPTY, annotations(sym).map(_.tree))
+    val mods = Modifiers(Flag.DEFERRED, typeNames.EMPTY, rawAnnotations(sym).map(_.tree))
     ValDef(mods, name, treeForType(tpe), EmptyTree)
   }
 
@@ -837,7 +844,7 @@ trait MacroCommons { bundle =>
       else NoFlags
 
     val flags = paramOrDeferredFlag | syntheticFlag | varianceFlag
-    val mods = Modifiers(flags, typeNames.EMPTY, annotations(ts).map(_.tree))
+    val mods = Modifiers(flags, typeNames.EMPTY, rawAnnotations(ts).map(_.tree))
     val (typeParams, signature) = sym.typeSignature match {
       case PolyType(polyParams, resultType) => (polyParams, resultType)
       case sig => (ts.typeParams, sig)
@@ -1077,7 +1084,7 @@ trait MacroCommons { bundle =>
   def positionPoint(sym: Symbol): Int =
     if (c.enclosingPosition.source == sym.pos.source) sym.pos.point
     else positionCache.getOrElseUpdate(sym,
-      annotations(sym).find(_.tree.tpe <:< PositionedAT).map(_.tree).map {
+      rawAnnotations(sym).find(_.tree.tpe <:< PositionedAT).map(_.tree).map {
         case Apply(_, List(MaybeTyped(Lit(point: Int), _))) => point
         case t => abort(s"expected literal int as argument of @positioned annotation on $sym, got $t")
       } getOrElse {

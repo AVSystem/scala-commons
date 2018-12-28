@@ -4,8 +4,6 @@ package rest
 import com.avsystem.commons.annotation.{AnnotationAggregate, defaultsToName}
 import com.avsystem.commons.rpc._
 
-import scala.annotation.StaticAnnotation
-
 /**
   * Base trait for tag annotations that determine how a REST method is translated into actual HTTP request.
   * A REST method may be annotated with one of HTTP method tags ([[GET]], [[PUT]], [[POST]], [[PATCH]], [[DELETE]])
@@ -69,24 +67,29 @@ sealed abstract class BodyMethodTag(method: HttpMethod) extends HttpMethodTag(me
   * @param path see [[RestMethodTag.path]]
   */
 class GET(val path: String = null) extends HttpMethodTag(HttpMethod.GET) {
-  @rpcNamePrefix("get_", overloadedOnly = true) type Implied
+  @rpcNamePrefix("get_", overloadedOnly = true)
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 
 /** See [[BodyMethodTag]] */
 class POST(val path: String = null) extends BodyMethodTag(HttpMethod.POST) {
-  @rpcNamePrefix("post_", overloadedOnly = true) type Implied
+  @rpcNamePrefix("post_", overloadedOnly = true)
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 /** See [[BodyMethodTag]] */
 class PATCH(val path: String = null) extends BodyMethodTag(HttpMethod.PATCH) {
-  @rpcNamePrefix("patch_", overloadedOnly = true) type Implied
+  @rpcNamePrefix("patch_", overloadedOnly = true)
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 /** See [[BodyMethodTag]] */
 class PUT(val path: String = null) extends BodyMethodTag(HttpMethod.PUT) {
-  @rpcNamePrefix("put_", overloadedOnly = true) type Implied
+  @rpcNamePrefix("put_", overloadedOnly = true)
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 /** See [[BodyMethodTag]] */
 class DELETE(val path: String = null) extends BodyMethodTag(HttpMethod.DELETE) {
-  @rpcNamePrefix("delete_", overloadedOnly = true) type Implied
+  @rpcNamePrefix("delete_", overloadedOnly = true)
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 
 /**

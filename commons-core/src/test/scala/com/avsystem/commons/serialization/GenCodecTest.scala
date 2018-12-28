@@ -30,7 +30,7 @@ object SealedBase {
 class mongoId extends AnnotationAggregate {
   @outOfOrder
   @name("_id")
-  type Implied
+  final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 
 @flatten sealed trait FlatSealedBase {
