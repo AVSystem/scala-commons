@@ -600,14 +600,18 @@ serializable to `HttpBody`.
 ### Result serialization
 
 Result type of every REST API method is wrapped into `Try` (in case the method throws an exception)
-and "serialized" into `RawRest.Async[RestResponse]`.
-This means that macro engine looks for an implicit instance of `AsRaw/AsReal[RawRest.Async[RestResponse], Try[R]]`
+and "serialized" into `Async[RestResponse]` where `Async` is a type alias defined in `com.avsystem.commons.concurrent`
+package. `Async[T]` dealiases to `(Try[T] => Unit) => Unit` which means that it is a consumer of a callback of possibly
+failed computation of value of type `T`. It's the most raw, low-level representation of repeatable asynchronous
+computations.
+
+This means that macro engine looks for an implicit instance of `AsRaw/AsReal[Async[RestResponse], Try[R]]`
 for every HTTP method with result type `R`.
 
 `RestResponse` itself is a simple class that aggregates HTTP status code, response headers and body.
 
 `DefaultRestApiCompanion` and its friends introduce implicit instances of
-`AsRaw/Real[RawRest.Async[RestResponse], Try[Future[R]]]` which depends on implicit `AsRaw/Real[RestResponse, R]`.
+`AsRaw/Real[Async[RestResponse], Try[Future[R]]]` which depends on implicit `AsRaw/Real[RestResponse, R]`.
 This effectively means that if your method returns `Future[R]` then it's enough if `R` is serializable as `RestResponse`.
 
 However, there are even more defaults provided: if `R` is serializable as `HttpBody` then it's automatically serializable
@@ -768,7 +772,7 @@ asynchronous computation starts). It is possible to use other task-like containe
 [Monix Task](https://monix.io/docs/2x/eval/task.html) or [Cats IO](https://typelevel.org/cats-effect/).
 
 In order to do that, you must provide some additional "serialization" implicits which will translate your
-wrapped results into `RawRest.Async[RestResponse]`. Just like when
+wrapped results into `Async[RestResponse]`. Just like when
 [providing serialization for third party type](#providing-serialization-for-third-party-type),
 you should put that implicit into a trait and inject it into REST API trait's companion object.
 
@@ -785,6 +789,7 @@ Task support:
 ```scala
 import monix.eval.Task
 import monix.execution.Scheduler
+import com.avsystem.commons.concurrent._
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.meta._
 import com.avsystem.commons.rest._
@@ -795,7 +800,7 @@ trait MonixTaskRestImplicits extends GenCodecRestImplicits { // use whatever ser
 
   implicit def taskToAsyncResp[T](
     implicit respAsRaw: AsRaw[RestResponse, T]
-  ): AsRaw[RawRest.Async[RestResponse], Try[Task[T]]] =
+  ): AsRaw[Async[RestResponse], Try[Task[T]]] =
     AsRaw.create { triedtask =>
       val task = triedtask.fold(Task.raiseError, identity).map(respAsRaw.asRaw)
       callback => task.runAsync(r => callback(r.toTry))
@@ -803,7 +808,7 @@ trait MonixTaskRestImplicits extends GenCodecRestImplicits { // use whatever ser
 
   implicit def taskFromAsyncResp[T](
     implicit respAsReal: AsReal[RestResponse, T]
-  ): AsReal[RawRest.Async[RestResponse], Try[Task[T]]] =
+  ): AsReal[Async[RestResponse], Try[Task[T]]] =
     AsReal.create { async =>
       val task = Task.async[RestResponse](callback => async(_.fold(callback.onError, callback.onSuccess)))
       Success(task.map(respAsReal.asReal))
@@ -859,12 +864,17 @@ reference backend implementation.
 
 ### Handler function
 
-`RawRest` object defines following type aliases:
+`RawRest` object defines following type alias:
+
+```scala
+type HandleRequest = RestRequest => Async[RestResponse]
+```
+
+where `Async` is defined in `com.avsystem.commons.concurrent` package as:
 
 ```scala
 type Callback[T] = Try[T] => Unit
 type Async[T] = Callback[T] => Unit
-type HandleRequest = RestRequest => Async[RestResponse]
 ```
 
 `RestRequest` is a simple, immutable representation of HTTP request. It contains HTTP method, path, URL

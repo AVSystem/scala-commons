@@ -1,8 +1,7 @@
 package com.avsystem.commons
 package rest
 
-import java.util.concurrent.atomic.AtomicBoolean
-
+import com.avsystem.commons.concurrent.Async
 import com.avsystem.commons.meta._
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
@@ -78,8 +77,8 @@ trait RawRest {
       case PrefixCall(rpcName, pathParams, _) :: tail =>
         rawRest.prefix(rpcName, parameters.copy(path = pathParams)) match {
           case Success(nextRawRest) => resolveCall(nextRawRest, tail)
-          case Failure(e: HttpErrorException) => RawRest.successfulAsync(e.toResponse)
-          case Failure(cause) => RawRest.failingAsync(cause)
+          case Failure(e: HttpErrorException) => Async.successful(e.toResponse)
+          case Failure(cause) => Async.failed(cause)
         }
       case Nil =>
         val finalParameters = parameters.copy(path = finalPathParams)
@@ -94,32 +93,12 @@ trait RawRest {
     }
     try resolveCall(this, prefixes) catch {
       case e: InvalidRpcCall =>
-        RawRest.successfulAsync(RestResponse.plain(400, e.getMessage))
+        Async.successful(RestResponse.plain(400, e.getMessage))
     }
   }
 }
 
 object RawRest extends RawRpcCompanion[RawRest] {
-  /**
-    * A callback that gets notified when value of type `T` gets computed or when computation of that value fails.
-    * Callbacks should never throw exceptions. Preferably, they should be simple notifiers that delegate the real
-    * work somewhere else, e.g. schedule some handling code on a separate executor
-    * (e.g. [[scala.concurrent.ExecutionException ExecutionContext]]).
-    */
-  type Callback[T] = Try[T] => Unit
-
-  /**
-    * The most low-level, raw type representing an asynchronous, possibly side-effecting operation that yields a
-    * value of type `T` as a result.
-    * `Async` is a consumer of a callback. When a callback is passed to `Async`, it should start the operation
-    * and ultimately notify the callback about the result. Each time the callback is passed, the
-    * entire operation should be repeated, involving all possible side effects. Operation should never be started
-    * without the callback being passed (i.e. there should be no observable side effects before a callback is passed).
-    * Implementation of `Async` should also be prepared to accept a callback before the previous one was notified
-    * about the result (i.e. it should support concurrent execution).
-    */
-  type Async[T] = Callback[T] => Unit
-
   /**
     * Raw type of an operation that executes a [[RestRequest]]. The operation should be run every time the
     * resulting `Async` value is passed a callback. It should not be run before that. Each run may involve side
@@ -139,40 +118,7 @@ object RawRest extends RawRpcCompanion[RawRest] {
     * an instance of `Async` that notifies its callbacks about the failure.
     */
   def safeHandle(handleRequest: HandleRequest): HandleRequest =
-    request => safeAsync(handleRequest(request))
-
-  private def guardedAsync[T](async: Async[T]): Async[T] = callback => {
-    val called = new AtomicBoolean
-    val guardedCallback: Callback[T] = result =>
-      if (!called.getAndSet(true)) {
-        callback(result) // may possibly throw but better let it fly rather than catch and ignore
-      }
-    try async(guardedCallback) catch {
-      case NonFatal(t) =>
-        // if callback was already called then we can't do much with the failure, rethrow it
-        if (!called.getAndSet(true)) callback(Failure(t)) else throw t
-    }
-  }
-
-  def safeAsync[T](async: => Async[T]): Async[T] =
-    try guardedAsync(async) catch {
-      case NonFatal(t) => failingAsync(t)
-    }
-
-  def readyAsync[T](result: Try[T]): Async[T] =
-    callback => callback(result)
-
-  def successfulAsync[T](value: T): Async[T] =
-    readyAsync(Success(value))
-
-  def failingAsync[T](cause: Throwable): Async[T] =
-    readyAsync(Failure(cause))
-
-  def mapAsync[A, B](async: Async[A])(f: A => B): Async[B] =
-    cb => async(contramapCallback(cb)(f))
-
-  def contramapCallback[A, B](callback: Callback[B])(f: A => B): Callback[A] =
-    ta => callback(ta.map(f))
+    request => Async.safe(handleRequest(request))
 
   def fromHandleRequest[Real: AsRealRpc : RestMetadata](handleRequest: HandleRequest): Real =
     RawRest.asReal(new DefaultRawRest(RestMetadata[Real], RestParameters.Empty, handleRequest))
@@ -188,7 +134,7 @@ object RawRest extends RawRpcCompanion[RawRest] {
       metadata.resolvePath(path) match {
         case Nil =>
           val message = s"path ${PathValue.encodeJoin(path)} not found"
-          RawRest.successfulAsync(RestResponse.plain(404, message))
+          Async.successful(RestResponse.plain(404, message))
         case calls => request.method match {
           case HttpMethod.OPTIONS =>
             val meths = calls.iterator.map(_.method).flatMap {
@@ -196,17 +142,17 @@ object RawRest extends RawRpcCompanion[RawRest] {
               case m => List(m)
             } ++ Iterator(HttpMethod.OPTIONS)
             val response = RestResponse(200, Mapping("Allow" -> HeaderValue(meths.mkString(","))), HttpBody.Empty)
-            RawRest.successfulAsync(response)
+            Async.successful(response)
           case wireMethod =>
             val head = wireMethod == HttpMethod.HEAD
             val req = if (head) request.copy(method = HttpMethod.GET) else request
             calls.find(_.method == req.method) match {
               case Some(call) =>
                 val resp = handleResolved(req, call)
-                if (head) RawRest.mapAsync(resp)(_.copy(body = HttpBody.empty)) else resp
+                if (head) Async.map(resp)(_.copy(body = HttpBody.empty)) else resp
               case None =>
                 val message = s"$wireMethod not allowed on path ${PathValue.encodeJoin(path)}"
-                RawRest.successfulAsync(RestResponse.plain(405, message))
+                Async.successful(RestResponse.plain(405, message))
             }
         }
       }
@@ -235,7 +181,7 @@ object RawRest extends RawRpcCompanion[RawRest] {
       metadata.httpMethods.get(name).map { methodMeta =>
         val newHeaders = prefixHeaders.append(methodMeta, parameters)
         handleRequest(RestRequest(methodMeta.method, newHeaders, body))
-      } getOrElse RawRest.failingAsync(new RestException(s"no such HTTP method: $name"))
+      } getOrElse Async.failed(new RestException(s"no such HTTP method: $name"))
   }
 }
 

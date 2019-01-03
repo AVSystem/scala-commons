@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rest
 
+import com.avsystem.commons.concurrent.`package`.Async
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx, ImplicitNotFound}
 import com.avsystem.commons.rpc._
@@ -261,10 +262,10 @@ object RestResponse {
   @implicitNotFound("#{forResponseType}")
   implicit def asyncAsRealNotFound[T](
     implicit forResponseType: ImplicitNotFound[HttpResponseType[T]]
-  ): ImplicitNotFound[AsReal[RawRest.Async[RestResponse], Try[T]]] = ImplicitNotFound()
+  ): ImplicitNotFound[AsReal[Async[RestResponse], Try[T]]] = ImplicitNotFound()
 
   @implicitNotFound("#{forResponseType}")
   implicit def asyncAsRawNotFound[T](
     implicit forResponseType: ImplicitNotFound[HttpResponseType[T]]
-  ): ImplicitNotFound[AsRaw[RawRest.Async[RestResponse], Try[T]]] = ImplicitNotFound()
+  ): ImplicitNotFound[AsRaw[Async[RestResponse], Try[T]]] = ImplicitNotFound()
 }

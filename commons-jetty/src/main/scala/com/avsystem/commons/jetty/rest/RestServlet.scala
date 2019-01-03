@@ -2,6 +2,7 @@ package com.avsystem.commons
 package jetty.rest
 
 import com.avsystem.commons.annotation.explicitGenerics
+import com.avsystem.commons.concurrent.Async
 import com.avsystem.commons.jetty.rest.RestServlet.DefaultHandleTimeout
 import com.avsystem.commons.meta.Mapping
 import com.avsystem.commons.rest._
@@ -84,7 +85,7 @@ object RestServlet {
     charset: String = "utf-8"
   ): Unit = {
     val asyncContext = request.startAsync().setup(_.setTimeout(handleTimeout.toMillis))
-    RawRest.safeAsync(handleRequest(readRequest(request))) {
+    Async.safe(handleRequest(readRequest(request))) {
       case Success(restResponse) =>
         writeResponse(response, restResponse, charset)
         asyncContext.complete()

@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rest
 
+import com.avsystem.commons.concurrent.Async
 import com.avsystem.commons.meta.{Fallback, MacroInstances}
 import com.avsystem.commons.misc.ImplicitNotFound
 import com.avsystem.commons.rest.RawRest.{AsRawRpc, AsRealRpc}
@@ -122,7 +123,7 @@ abstract class RestOpenApiCompanion[Implicits, Real](protected val implicits: Im
 trait FutureRestImplicits {
   implicit def futureToAsyncResp[T](
     implicit respAsRaw: AsRaw[RestResponse, T]
-  ): AsRaw[RawRest.Async[RestResponse], Try[Future[T]]] =
+  ): AsRaw[Async[RestResponse], Try[Future[T]]] =
     AsRaw.create { triedFuture =>
       val future = triedFuture.fold(Future.failed, identity)
       callback => future.onCompleteNow(t => callback(t.map(respAsRaw.asRaw).recoverHttpError))
@@ -130,7 +131,7 @@ trait FutureRestImplicits {
 
   implicit def futureFromAsyncResp[T](
     implicit respAsReal: AsReal[RestResponse, T]
-  ): AsReal[RawRest.Async[RestResponse], Try[Future[T]]] =
+  ): AsReal[Async[RestResponse], Try[Future[T]]] =
     AsReal.create { async =>
       val promise = Promise[T]
       async(t => promise.complete(t.map(respAsReal.asReal)))
@@ -140,12 +141,12 @@ trait FutureRestImplicits {
   @implicitNotFound("#{forResponse}")
   implicit def futureAsRawNotFound[T](
     implicit forResponse: ImplicitNotFound[AsRaw[RestResponse, T]]
-  ): ImplicitNotFound[AsRaw[RawRest.Async[RestResponse], Try[Future[T]]]] = ImplicitNotFound()
+  ): ImplicitNotFound[AsRaw[Async[RestResponse], Try[Future[T]]]] = ImplicitNotFound()
 
   @implicitNotFound("#{forResponse}")
   implicit def futureAsRealNotFound[T](
     implicit forResponse: ImplicitNotFound[AsReal[RestResponse, T]]
-  ): ImplicitNotFound[AsReal[RawRest.Async[RestResponse], Try[Future[T]]]] = ImplicitNotFound()
+  ): ImplicitNotFound[AsReal[Async[RestResponse], Try[Future[T]]]] = ImplicitNotFound()
 
   implicit def futureHttpResponseType[T]: HttpResponseType[Future[T]] =
     HttpResponseType[Future[T]]()
