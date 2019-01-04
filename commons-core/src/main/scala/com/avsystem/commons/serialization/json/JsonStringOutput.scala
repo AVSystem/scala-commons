@@ -110,6 +110,8 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
         i += 1
       }
       builder.append('"')
+    case JsonBinaryFormat.Base64(withoutPadding, urlSafe) =>
+      builder.append('"').append(Base64.encode(binary, withoutPadding, urlSafe)).append('"')
   }
 
   def writeRawJson(json: String): Unit = builder.append(json)

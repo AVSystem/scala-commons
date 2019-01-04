@@ -18,6 +18,14 @@ object JsonBinaryFormat {
     * uppercase hex digits are also accepted.
     */
   case object HexString extends JsonBinaryFormat
+
+  /**
+    * Specifies that binary data should be represented as JSON string containing binary data encoded as
+    * Base64. When `withoutPadding` is true, padding characters will be omitted at the end.
+    * When `urlSafe` is true, an URL and filename safe alphabet will be used as defined in
+    * [[https://tools.ietf.org/html/rfc4648#section-5 RFC4648 Section 5]].
+    */
+  case class Base64(withoutPadding: Boolean = false, urlSafe: Boolean = false) extends JsonBinaryFormat
 }
 
 /**

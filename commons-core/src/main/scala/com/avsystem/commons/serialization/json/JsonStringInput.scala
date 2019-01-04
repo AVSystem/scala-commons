@@ -86,6 +86,8 @@ class JsonStringInput(
       }
       loop(0)
       result
+    case JsonBinaryFormat.Base64(_, urlSafe) =>
+      Base64.decode(checkedValue[String](JsonType.string), urlSafe)
   }
 
   def readRawJson(): String = {
