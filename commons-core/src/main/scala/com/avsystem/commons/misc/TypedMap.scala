@@ -38,7 +38,7 @@ object TypedMap {
   implicit def typedMapCodec[K[_]](implicit keyCodec: GenKeyCodec[K[_]], codecMapping: GenCodecMapping[K]): GenCodec[TypedMap[K]] =
     new GenCodec.ObjectCodec[TypedMap[K]] {
       def nullable = false
-      def readObject(input: ObjectInput) = {
+      def readObject(input: ObjectInput): TypedMap[K] = {
         val rawBuilder = Map.newBuilder[K[_], Any]
         while (input.hasNext) {
           val fieldInput = input.nextField()
@@ -47,7 +47,7 @@ object TypedMap {
         }
         new TypedMap[K](rawBuilder.result())
       }
-      def writeObject(output: ObjectOutput, typedMap: TypedMap[K]) =
+      def writeObject(output: ObjectOutput, typedMap: TypedMap[K]): Unit =
         typedMap.raw.foreach { case (key, value) =>
           codecMapping.valueCodec(key.asInstanceOf[K[Any]]).write(output.writeField(keyCodec.write(key)), value)
         }
