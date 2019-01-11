@@ -62,7 +62,8 @@ trait BaseJsonOutput {
       writeSpaces(builder, n - 1)
     }
 
-  protected final def toHex(nibble: Int): Char = (nibble + (if (nibble >= 10) 'a' - 10 else '0')).toChar
+  protected final def toHex(nibble: Int): Char =
+    (nibble + (if (nibble >= 10) 'a' - 10 else '0')).toChar
 }
 
 final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = JsonOptions.Default, depth: Int = 0)
@@ -74,16 +75,19 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
   def writeInt(int: Int): Unit = builder.append(int)
   def writeLong(long: Long): Unit = builder.append(long)
 
+  // Required by SenML spec (RFC8428), should be configurable in next binary incompatible version
+  private def lowe(str: String): String = str.replace('E', 'e')
+
   override def writeFloat(float: Float): Unit =
-    if (java.lang.Float.isFinite(float)) builder.append(float)
-    else builder.append('"').append(float).append('"')
+    if (java.lang.Float.isFinite(float)) builder.append(lowe(float.toString))
+    else builder.append('"').append(lowe(float.toString)).append('"')
 
   def writeDouble(double: Double): Unit =
-    if (java.lang.Double.isFinite(double)) builder.append(double)
-    else builder.append('"').append(double).append('"')
+    if (java.lang.Double.isFinite(double)) builder.append(lowe(double.toString))
+    else builder.append('"').append(lowe(double.toString)).append('"')
 
   def writeBigInt(bigInt: BigInt): Unit = builder.append(bigInt)
-  def writeBigDecimal(bigDecimal: BigDecimal): Unit = builder.append(bigDecimal)
+  def writeBigDecimal(bigDecimal: BigDecimal): Unit = builder.append(lowe(bigDecimal.toString))
 
   override def writeTimestamp(millis: Long): Unit = options.dateFormat match {
     case JsonDateFormat.EpochMillis =>

@@ -164,7 +164,7 @@ class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils wit
 
   test("serialize floats succinctly") {
     val values = Seq(1.1999999f, 3.4E38f, 1.4E-45f)
-    assert(values.map(write[Float](_)) == values.map(_.toString))
+    assert(values.map(write[Float](_)) == values.map(_.toString.replace('E', 'e')))
   }
 
   test("serialize and deserialize nested case classes") {
