@@ -2,7 +2,6 @@ package com.avsystem.commons
 package misc
 
 import scala.annotation.implicitNotFound
-import scala.collection.mutable.ArrayBuffer
 
 /**
   * Base trait for `val`-based enums, i.e. enums implemented as a single class with companion object keeping
