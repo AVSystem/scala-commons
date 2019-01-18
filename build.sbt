@@ -1,4 +1,4 @@
-import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys._
+
 
 cancelable in Global := true
 
@@ -11,6 +11,7 @@ val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && Sys
 // for binary compatibility checking
 val previousCompatibleVersions = Set("1.34.0")
 
+val primaryScalaVersion = "2.12.8"
 val silencerVersion = "1.2.1"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
@@ -33,8 +34,8 @@ val scalajsBenchmarkVersion = "0.2.4"
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  crossScalaVersions := Seq("2.12.8", "2.11.12"),
-  scalaVersion := crossScalaVersions.value.head,
+  crossScalaVersions := Seq(primaryScalaVersion, "2.11.12"),
+  scalaVersion := primaryScalaVersion,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
     "-encoding", "utf-8",
@@ -122,12 +123,7 @@ val jsCommonSettings = commonSettings ++ Seq(
 )
 
 val noPublishSettings = Seq(
-  publishArtifact := false,
-  publish := {},
-  publishLocal := {},
-  publishM2 := {},
-  publishSigned := {},
-  publishLocalSigned := {},
+  skip in publish := true,
   doc := (target in doc).value,
   mimaPreviousArtifacts := Set.empty,
 )
@@ -150,6 +146,7 @@ lazy val commons = project.in(file("."))
   .settings(
     commonSettings,
     noPublishSettings,
+    crossScalaVersions := Nil,
     name := "commons",
     ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
     scalacOptions in ScalaUnidoc in unidoc += "-Ymacro-expand:none",
