@@ -154,7 +154,6 @@ lazy val commons = project.in(file("."))
       inAnyProject -- inProjects(
         `commons-analyzer`,
         `commons-macros`,
-        `commons-annotations-js`,
         `commons-core-js`,
         `commons-rest-js`,
         `commons-benchmark`,
@@ -167,7 +166,6 @@ lazy val `commons-jvm` = project.in(file(".jvm"))
   .aggregate(
     `commons-analyzer`,
     `commons-macros`,
-    `commons-annotations`,
     `commons-core`,
     `commons-rest`,
     `commons-jetty`,
@@ -182,7 +180,6 @@ lazy val `commons-jvm` = project.in(file(".jvm"))
 
 lazy val `commons-js` = project.in(file(".js"))
   .aggregate(
-    `commons-annotations-js`,
     `commons-core-js`,
     `commons-rest-js`,
     `commons-benchmark-js`,
@@ -213,27 +210,13 @@ def sameNameAs(proj: Project) =
   if (forIdeaImport) Seq.empty
   else Seq(name := (name in proj).value)
 
-lazy val `commons-annotations` = project
-  .dependsOn(`commons-macros`)
-  .settings(jvmCommonSettings)
-
-lazy val `commons-annotations-js` = project.in(`commons-annotations`.base / "js")
-  .enablePlugins(ScalaJSPlugin)
-  .configure(p => if (forIdeaImport) p.dependsOn(`commons-annotations`) else p)
-  .dependsOn(`commons-macros`)
-  .settings(
-    jsCommonSettings,
-    sameNameAs(`commons-annotations`),
-    sourceDirsSettings(_.getParentFile),
-  )
-
 lazy val `commons-macros` = project.settings(
   jvmCommonSettings,
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
 )
 
 lazy val `commons-core` = project
-  .dependsOn(`commons-macros`, `commons-annotations` % CompileAndTest)
+  .dependsOn(`commons-macros`)
   .settings(
     jvmCommonSettings,
     sourceDirsSettings(_ / "jvm"),
@@ -246,7 +229,7 @@ lazy val `commons-core` = project
 lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
   .enablePlugins(ScalaJSPlugin)
   .configure(p => if (forIdeaImport) p.dependsOn(`commons-core`) else p)
-  .dependsOn(`commons-macros`, `commons-annotations-js` % CompileAndTest)
+  .dependsOn(`commons-macros`)
   .settings(
     jsCommonSettings,
     sameNameAs(`commons-core`),

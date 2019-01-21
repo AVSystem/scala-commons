@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package meta
 
-import scala.annotation.StaticAnnotation
-
 /**
   * For annotations applied on real RPC traits, their methods and parameters.
   */

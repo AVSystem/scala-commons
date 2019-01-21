@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package annotation
 
-import scala.annotation.StaticAnnotation
-
 /**
   * Meta annotation that may be used on `String` constructor parameter of an annotation. This constructor parameter
   * must take a default `null` value. [[defaultsToName]] makes annotation processing macro engines insert the name

@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package annotation
 
-import scala.annotation.StaticAnnotation
-
 /**
   * Annotate a symbol (i.e. class, method, parameter, etc.) with `@positioned(positioned.here)` to retain source
   * position information for that symbol to be available in macro implementations which inspect that symbol.

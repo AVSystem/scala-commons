@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package annotation
 
-import scala.annotation.StaticAnnotation
-
 /**
   * When applied on a definition (`class`, `object`, `def`, `val`, etc.) or expression, will cause the
   * AVSystem static analyzer to print compilation error with AST of annotated code fragment.

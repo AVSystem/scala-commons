@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package annotation
 
-import scala.annotation.StaticAnnotation
-
 /**
   * Base trait for annotations which aggregate multiple other annotations. This way annotation aggregates
   * work like "annotation functions" - they are annotations that yield more annotations.

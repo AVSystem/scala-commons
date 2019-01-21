@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package rpc
 
-import scala.annotation.StaticAnnotation
-
 /**
   * Annotations that extend this trait will be retained for runtime in `RPCMetadata` typeclass instances
   */
