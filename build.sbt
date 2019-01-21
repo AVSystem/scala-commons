@@ -1,5 +1,3 @@
-
-
 cancelable in Global := true
 
 // We need to generate slightly different structure for IntelliJ in order to better support ScalaJS cross projects.
