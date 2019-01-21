@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import scala.annotation.StaticAnnotation
-
 /**
   * If some case class field has default value or [[whenAbsent]] annotation, you can use [[transientDefault]]
   * on this field to instruct an automatically derived `GenCodec` to not persist the value of that field if

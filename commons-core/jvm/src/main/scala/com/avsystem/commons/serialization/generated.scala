@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import scala.annotation.StaticAnnotation
-
 /**
   * May be used on members of objects, case classes or any types having companion object with case class
   * like `apply` and `unapply`/`unapplySeq` methods in order to add additional, generated fields to data serialized by

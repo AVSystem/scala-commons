@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import scala.annotation.StaticAnnotation
-
 /**
   * When materializing a `GenCodec` for sealed hierarchy with `@flatten` annotation, you can use this
   * annotation on one of case classes or objects to mark it as the default one. If during deserialization the

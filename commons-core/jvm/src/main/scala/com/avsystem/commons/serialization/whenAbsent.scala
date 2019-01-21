@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import scala.annotation.StaticAnnotation
-
 /**
   * An alternative way to provide default value for case class parameter used during deserialization with `GenCodec`
   * when its field is missing in data being deserialized. Normally, Scala-level default parameter values are picked

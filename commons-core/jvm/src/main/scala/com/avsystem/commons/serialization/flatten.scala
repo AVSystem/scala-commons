@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import scala.annotation.StaticAnnotation
-
 /**
   * Changes the serialization format used by `GenCodec`s automatically derived for sealed hierarchies.
   * The format is changed from "nested" to "flat".

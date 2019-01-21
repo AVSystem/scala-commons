@@ -3,8 +3,6 @@ package serialization
 
 import com.avsystem.commons.annotation.NotInheritedFromSealedTypes
 
-import scala.annotation.StaticAnnotation
-
 /**
   * Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived `GenCodec`
   * to use particular name instead of just using parameter or class name.

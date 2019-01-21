@@ -3,8 +3,6 @@ package macros.meta
 
 import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
 
-import scala.annotation.StaticAnnotation
-
 private[commons] trait MacroMetadatas extends MacroSymbols {
 
   import c.universe._

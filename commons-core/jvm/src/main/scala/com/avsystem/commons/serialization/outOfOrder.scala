@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import scala.annotation.StaticAnnotation
-
 /**
   * To be used in conjunction with [[flatten]].
   * It can be applied on one or more of case class fields in a sealed hierarchy to instruct the
