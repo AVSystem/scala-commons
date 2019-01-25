@@ -14,12 +14,6 @@ sealed trait Res[+A] {
     case Ok(value) => Ok(fun(value))
     case f: Fail => f
   }
-  def map2[B, C](other: Res[B])(f: (A, B) => C, ferr: (String, String) => String): Res[C] = (this, other) match {
-    case (Ok(a), Ok(b)) => Ok(f(a, b))
-    case (Fail(ae), Fail(be)) => Fail(ferr(ae, be))
-    case (Ok(_), fail: Fail) => fail
-    case (fail: Fail, Ok(_)) => fail
-  }
   def flatMap[B](fun: A => Res[B]): Res[B] = this match {
     case Ok(value) => fun(value)
     case f: Fail => f
@@ -33,16 +27,20 @@ sealed trait Res[+A] {
     case _ =>
   }
   def mapFailure(f: String => String): Res[A] = this match {
-    case Fail(error) => Fail(f(error))
+    case Fail(error) => Fail(error.map(f))
     case _ => this
   }
-  def getOrElse[B >: A](forError: String => B): B = this match {
+  def getOrElse[B >: A](forError: Option[String] => B): B = this match {
     case Ok(a) => a
     case Fail(error) => forError(error)
   }
 }
 case class Ok[+T](value: T) extends Res[T]
-case class Fail(message: String) extends Res[Nothing]
+case class Fail(message: Option[String]) extends Res[Nothing]
+object Fail {
+  def apply(msg: String): Fail = Fail(Some(msg))
+  def apply(): Fail = Fail(None)
+}
 object Res {
   def traverse[M[X] <: Iterable[X], A, B](in: M[A])(f: A => Res[B])(implicit cbf: CanBuildFrom[M[A], B, M[B]]): Res[M[B]] = {
     val it = in.iterator
@@ -63,11 +61,13 @@ object Res {
         val el = it.next()
         f(el) match {
           case Ok(value) => Ok(value)
-          case Fail(error) =>
-            errors += ((el, error))
+          case Fail(errorOpt) =>
+            errorOpt.foreach { error =>
+              errors += ((el, error))
+            }
             loop(it)
         }
-      } else Fail(combineErrors(errors.result()))
+      } else Fail(Option(errors.result()).filter(_.nonEmpty).map(combineErrors))
     loop(coll.iterator)
   }
 }

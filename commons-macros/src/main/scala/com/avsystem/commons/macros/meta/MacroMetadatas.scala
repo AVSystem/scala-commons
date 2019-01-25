@@ -77,7 +77,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       arity match {
         case _: ParamArity.Single => res
         case _: ParamArity.Optional => Ok(mkOptional(res.toOption))
-        case _ => Fail(s"@multi arity not allowed for @composite params")
+        case _ => Fail(s"${arity.annotStr} not allowed for @composite params")
       }
     }
   }

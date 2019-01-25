@@ -16,7 +16,7 @@ class omit[T](value: => T) extends AnnotationAggregate {
 }
 
 trait UserApi {
-  @GET def user(@Body userId: String): Future[User]
+  @GET def user(userId: String): Future[User]
   @PUT def user(user: User): Future[Unit]
 
   @POST("user/save") def user(

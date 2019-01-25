@@ -36,7 +36,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         case Ok(v) => Some(v)
         case Fail(msg) =>
           if (!allowIncomplete) {
-            addFailure(realMethod, msg)
+            msg.foreach(addFailure(realMethod, _))
           }
           None
       }

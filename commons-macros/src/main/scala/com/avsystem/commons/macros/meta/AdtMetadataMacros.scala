@@ -122,7 +122,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
             case Ok(m) => Some(m)
             case Fail(err) =>
               if (!allowIncomplete) {
-                addFailure(adtCase, err)
+                err.foreach(addFailure(adtCase, _))
               }
               None
           }
@@ -282,7 +282,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
             else Fail(s"no default value defined")
           case _: ParamArity.Optional =>
             Ok(mkOptional(if (hasDefaultValue) Some(defaultValue) else None))
-          case _ => Fail("@multi arity not allowed on @reifyDefaultValue params")
+          case _ => Fail(s"${arity.annotStr} not allowed on @reifyDefaultValue params")
         }
       case _ =>
         reportProblem("@reifyDefaultValue is allowed only for case class parameter metadata")
@@ -337,7 +337,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
       new AdtMetadataConstructor(metadataTpe, None).tryMaterializeFor(adtSymbol)
 
     guardedMetadata(metadataTpe, adtSymbol.tpe) {
-      materializeOneOf(metadataTpe)(tryMaterialize).getOrElse(abort)
+      materializeOneOf(metadataTpe)(tryMaterialize).getOrElse(err => abort(err.getOrElse("unknown error")))
     }
   }
 }

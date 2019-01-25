@@ -193,7 +193,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def matchName(shortDescr: String, name: String): Res[Unit] = arity match {
       case _: Arity.Single@unchecked | _: Arity.Optional@unchecked =>
         if (name == nameStr) Ok(())
-        else Fail(s"it only matches ${shortDescr}s named $nameStr")
+        else Fail()
       case _ => Ok(())
     }
   }
@@ -209,7 +209,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def matchFilters(realSymbol: MatchedSymbol): Res[Unit] =
       Res.traverse(requiredAnnots) { annotTpe =>
         if (realSymbol.annot(annotTpe).nonEmpty) Ok(())
-        else Fail(s"it is not annotated as $annotTpe")
+        else Fail()
       }.map(_ => ())
   }
 
@@ -258,10 +258,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
       val realTagTpe = tagAnnot.map(_.tpe).getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
 
       if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
-      else {
-        val orUntagged = if (whenUntaggedTag.isEmpty) "" else " or untagged"
-        Fail(s"it must be tagged (annotated) with $requiredTag$orUntagged")
-      }
+      else Fail()
     }
   }
 
