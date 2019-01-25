@@ -19,29 +19,45 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final lazy val SingleArityAT: Type = staticType(tq"$MetaPackage.single")
   final lazy val OptionalArityAT: Type = staticType(tq"$MetaPackage.optional")
   final lazy val MultiArityAT: Type = staticType(tq"$MetaPackage.multi")
+  final lazy val FailArityAT: Type = staticType(tq"$MetaPackage.fail")
   final lazy val CompositeAT: Type = staticType(tq"$MetaPackage.composite")
   final lazy val AuxiliaryAT: Type = staticType(tq"$MetaPackage.auxiliary")
   final lazy val AnnotatedAT: Type = staticType(tq"$MetaPackage.annotated[_]")
   final lazy val TaggedAT: Type = staticType(tq"$RpcPackage.tagged[_]")
   final lazy val WhenUntaggedArg: Symbol = TaggedAT.member(TermName("whenUntagged"))
+  final lazy val FailArityErrorArg: Symbol = FailArityAT.member(TermName("error"))
 
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
     primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}: "))
 
-  sealed abstract class Arity
+  sealed trait Arity {
+    def annotStr: String
+  }
   object Arity {
-    trait Single extends Arity
-    trait Optional extends Arity
-    trait Multi extends Arity
+    trait Single extends Arity {
+      final def annotStr = "@single"
+    }
+    trait Optional extends Arity {
+      final def annotStr = "@optional"
+    }
+    trait Multi extends Arity {
+      final def annotStr = "@multi"
+    }
+    trait Fail extends Arity {
+      def error: String
+      final def annotStr = "@fail"
+    }
   }
 
   sealed abstract class ParamArity(val verbatimByDefault: Boolean) extends Arity {
     def collectedType: Type
   }
   object ParamArity {
-    def fromAnnotation(param: ArityParam, allowListedMulti: Boolean, allowNamedMulti: Boolean): ParamArity = {
-
-      val at = param.annot(RpcArityAT).fold(SingleArityAT)(_.tpe)
+    def fromAnnotation(
+      param: ArityParam, allowListedMulti: Boolean, allowNamedMulti: Boolean, allowFail: Boolean
+    ): ParamArity = {
+      val annot = param.annot(RpcArityAT)
+      val at = annot.fold(SingleArityAT)(_.tpe)
       if (at <:< SingleArityAT) ParamArity.Single(param.actualType)
       else if (at <:< OptionalArityAT) {
         val optionLikeType = typeOfCachedImplicit(param.optionLike)
@@ -64,12 +80,21 @@ private[commons] trait MacroSymbols extends MacroCommons {
         else
           param.reportProblem(s"@multi ${param.shortDescription} must be a PartialFunction of String")
       }
+      else if (allowFail && at <:< FailArityAT) {
+        if (param.actualType =:= UnitTpe)
+          Fail(annot.get.findArg[String](FailArityErrorArg))
+        else
+          param.reportProblem(s"@fail ${param.shortDescription} must be typed as Unit")
+      }
       else param.reportProblem(s"forbidden RPC arity annotation: $at")
     }
 
     case class Single(collectedType: Type) extends ParamArity(true) with Arity.Single
     case class Optional(collectedType: Type) extends ParamArity(true) with Arity.Optional
     case class Multi(collectedType: Type, named: Boolean) extends ParamArity(false) with Arity.Multi
+    case class Fail(error: String) extends ParamArity(true) with Arity.Fail {
+      def collectedType: Type = NothingTpe
+    }
   }
 
   sealed abstract class MethodArity(val verbatimByDefault: Boolean) extends Arity
@@ -79,7 +104,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
       if (at <:< SingleArityAT) Single
       else if (at <:< OptionalArityAT) Optional
       else if (at <:< MultiArityAT) Multi
-      else method.reportProblem(s"unrecognized RPC arity annotation: $at")
+      else method.reportProblem(s"unrecognized RPC method arity annotation: $at")
     }
 
     case object Single extends MethodArity(true) with Arity.Single
@@ -167,7 +192,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
       case _: Arity.Single@unchecked | _: Arity.Optional@unchecked =>
         if (name == nameStr) Ok(())
         else Fail(s"it only matches ${shortDescr}s named $nameStr")
-      case _: Arity.Multi@unchecked => Ok(())
+      case _ => Ok(())
     }
   }
 
@@ -237,9 +262,10 @@ private[commons] trait MacroSymbols extends MacroCommons {
   trait ArityParam extends MacroParam with AritySymbol {
     def allowNamedMulti: Boolean
     def allowListedMulti: Boolean
+    def allowFail: Boolean
 
     val arity: ParamArity =
-      ParamArity.fromAnnotation(this, allowListedMulti, allowNamedMulti)
+      ParamArity.fromAnnotation(this, allowListedMulti, allowNamedMulti, allowFail)
 
     lazy val optionLike: TermName = infer(tq"$OptionLikeCls[$actualType]")
 
@@ -370,6 +396,19 @@ private[commons] trait MacroSymbols extends MacroCommons {
           }
         } else Ok(result.result())
       loop(new ListBuffer[M])
+    }
+
+    def findFirst[M](matcher: Real => Option[M]): Option[M] = {
+      val it = realParams.listIterator()
+      def loop(): Option[M] =
+        if (it.hasNext) {
+          val real = it.next()
+          matcher(real) match {
+            case Some(m) => Some(m)
+            case None => loop()
+          }
+        } else None
+      loop()
     }
   }
 }

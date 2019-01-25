@@ -66,6 +66,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       case ParamMapping.Single(_, erp) => List(erp.matchedParam)
       case ParamMapping.Optional(_, erpOpt) => erpOpt.map(_.matchedParam).toList
       case multi: ParamMapping.Multi => multi.reals.map(_.matchedParam)
+      case ParamMapping.DummyUnit(_) => Nil
     }
   }
   object ParamMapping {
@@ -146,6 +147,10 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
                 .applyOrElse(${erp.rpcName}, (_: $StringCls) => ${erp.matchedParam.fallbackValueTree})
             """)
         }
+    }
+    case class DummyUnit(rawParam: RawValueParam) extends ParamMapping {
+      def rawValueTree: Tree = q"()"
+      def realDecls: List[Tree] = Nil
     }
   }
 
@@ -271,8 +276,11 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
 
     private def extractMapping(method: MatchedMethod, rawParam: RawValueParam, parser: ParamsParser[RealParam]): Res[ParamMapping] = {
+      def matchedParam(real: RealParam, indexInRaw: Int): Option[MatchedParam] =
+        rawParam.matchRealParam(method, real, indexInRaw).toOption
+
       def createErp(real: RealParam, indexInRaw: Int): Option[Res[EncodedRealParam]] =
-        rawParam.matchRealParam(method, real, indexInRaw).toOption.map(EncodedRealParam.create(rawParam, _))
+        matchedParam(real, indexInRaw).map(EncodedRealParam.create(rawParam, _))
 
       val consume = !rawParam.auxiliary
       rawParam.arity match {
@@ -287,6 +295,10 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           parser.extractMulti(consume, createErp).map(ParamMapping.IndexedMulti(rawParam, _))
         case _: ParamArity.Multi =>
           parser.extractMulti(consume, createErp).map(ParamMapping.IterableMulti(rawParam, _))
+        case ParamArity.Fail(error) =>
+          parser.findFirst(matchedParam(_, 0))
+            .map(m => Fail(s"${m.real.problemStr}: $error"))
+            .getOrElse(Ok(ParamMapping.DummyUnit(rawParam)))
       }
     }
 

@@ -105,6 +105,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   trait RealParamTarget extends ArityParam with TagMatchingSymbol {
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
+    def allowFail: Boolean = true
 
     def pathStr: String
 
@@ -184,7 +185,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     extends MacroParam with RealRpcSymbol {
 
     def seenFrom: Type = owner.seenFrom
-    def shortDescription = "real parameter"
+    def shortDescription = "parameter"
     def description = s"$shortDescription $nameStr of ${owner.description}"
   }
 
@@ -257,7 +258,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     def ownerType: Type = owner.tpe
 
-    def shortDescription = "real method"
+    def shortDescription = "method"
     def description = s"$shortDescription $nameStr"
 
     val paramLists: List[List[RealParam]] = {

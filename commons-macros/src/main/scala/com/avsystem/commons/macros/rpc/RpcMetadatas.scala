@@ -13,6 +13,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
 
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
+    def allowFail: Boolean = false
 
     def baseTagTpe: Type = owner.baseMethodTag
     def fallbackTag: FallbackTag = owner.fallbackMethodTag
@@ -82,6 +83,10 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
           .toOption.map(mp => metadataTree(mp, i).map(t => q"(${mp.rawName}, $t)"))).map(mkMulti(_))
       case _: ParamArity.Multi =>
         parser.extractMulti(!auxiliary, metadataTree(matchedMethod, _, _)).map(mkMulti(_))
+      case ParamArity.Fail(error) =>
+        parser.findFirst(rp => matchRealParam(matchedMethod, rp, 0).toOption)
+          .map(m => Fail(s"${m.real.problemStr}: $error"))
+          .getOrElse(Ok(q"()"))
     }
   }
 
@@ -135,6 +140,8 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
           }
           case ParamArity.Multi(_, named) =>
             Ok(mmp.mkMulti(mappings.map(_.collectedTree(named))))
+          case arity =>
+            Fail(s"${arity.annotStr} not allowed on method metadata params")
         }
       }
   }

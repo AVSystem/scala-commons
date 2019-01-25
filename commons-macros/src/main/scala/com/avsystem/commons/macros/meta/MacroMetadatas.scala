@@ -67,6 +67,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
 
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = false
+    def allowFail: Boolean = false
 
     val constructor: MetadataConstructor = owner.compositeConstructor(this)
     override def description: String = s"${super.description} at ${owner.description}"
@@ -161,6 +162,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
 
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = false
+    def allowFail: Boolean = false
 
     val checked: Boolean = annot(CheckedAT).nonEmpty
 
@@ -174,8 +176,8 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
             Ok(q"${infer(tpe, matchedSymbol.real, clue)}")
         case ParamArity.Optional(tpe) =>
           Ok(mkOptional(tryInferCachedImplicit(tpe, expandMacros = true).map(n => q"$n")))
-        case _: ParamArity.Multi =>
-          Fail("@multi arity not allowed on @infer params")
+        case _ =>
+          Fail(s"${arity.annotStr} not allowed on @infer params")
       }
   }
 
@@ -184,6 +186,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
 
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = true
+    def allowFail: Boolean = false
 
     val annotTpe: Type = arity.collectedType
 
@@ -207,6 +210,8 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
           Ok(mkOptional(matchedSymbol.annot(annotTpe).map(validatedAnnotTree)))
         case ParamArity.Multi(_, _) =>
           Ok(mkMulti(matchedSymbol.annots(annotTpe).map(validatedAnnotTree)))
+        case _ =>
+          Fail(s"${arity.annotStr} not allowed on @reifyAnnot params")
       }
     }
   }

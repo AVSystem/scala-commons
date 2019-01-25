@@ -132,7 +132,8 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
         else Fail(s"some ADT cases could not be mapped to metadata parameters:\n${errors.mkString("\n")}")
       }
 
-    def tryMaterializeFor(sym: AdtSymbol,
+    def tryMaterializeFor(
+      sym: AdtSymbol,
       caseMappings: Map[AdtCaseMetadataParam, List[AdtCaseMapping]],
       paramMappings: Map[AdtParamMetadataParam, Tree]
     ): Res[Tree] = tryMaterialize(sym) {
@@ -151,6 +152,8 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
           }
           case ParamArity.Multi(_, named) =>
             Ok(acp.mkMulti(mappings.map(m => if (named) q"(${m.adtCase.rawName}, ${m.tree})" else m.tree)))
+          case arity =>
+            Fail(s"${arity.annotStr} not allowed on ADT case metadata params")
         }
       case app: AdtParamMetadataParam =>
         Ok(paramMappings(app))
@@ -198,6 +201,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
+    def allowFail: Boolean = false
 
     def tryMaterializeFor(adtCase: AdtSymbol): Res[Tree] = for {
       _ <- matchFilters(adtCase)
@@ -211,12 +215,16 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
+    def allowFail: Boolean = true
 
     val auxiliary: Boolean =
       annot(AuxiliaryAT).nonEmpty
 
+    private def matchedParam(adtParam: AdtParam, indexInRaw: Int): Option[MatchedAdtParam] =
+      Some(MatchedAdtParam(adtParam, this, indexInRaw)).filter(m => matchFilters(m).isOk)
+
     private def metadataTree(adtParam: AdtParam, indexInRaw: Int): Option[Res[Tree]] =
-      Some(MatchedAdtParam(adtParam, this, indexInRaw)).filter(m => matchFilters(m).isOk).map { matched =>
+      matchedParam(adtParam, indexInRaw).map { matched =>
         val result = for {
           mdType <- actualMetadataType(arity.collectedType, adtParam.actualType, "parameter type", verbatim = false)
           tree <- materializeOneOf(mdType) { t =>
@@ -241,6 +249,10 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
           metadataTree(adtp, i).map(_.map(t => q"(${adtp.nameStr}, $t)"))).map(mkMulti(_))
       case _: ParamArity.Multi =>
         parser.extractMulti(!auxiliary, metadataTree).map(mkMulti(_))
+      case ParamArity.Fail(error) =>
+        parser.findFirst(matchedParam(_, 0))
+          .map(m => Fail(s"${m.real.problemStr}: $error"))
+          .getOrElse(Ok(q"()"))
     }
   }
 
@@ -249,6 +261,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = false
+    def allowFail: Boolean = false
 
     if (!(arity.collectedType =:= getType(tq"$CommonsPkg.meta.DefaultValue[${owner.adtParamType}]"))) {
       reportProblem(s"type of @reifyDefaultValue metadata parameter must be " +
