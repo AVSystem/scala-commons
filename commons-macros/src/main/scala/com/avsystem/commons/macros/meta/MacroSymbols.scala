@@ -24,8 +24,10 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final lazy val AuxiliaryAT: Type = staticType(tq"$MetaPackage.auxiliary")
   final lazy val AnnotatedAT: Type = staticType(tq"$MetaPackage.annotated[_]")
   final lazy val TaggedAT: Type = staticType(tq"$RpcPackage.tagged[_]")
+  final lazy val UnmatchedAT: Type = staticType(tq"$RpcPackage.unmatched")
   final lazy val WhenUntaggedArg: Symbol = TaggedAT.member(TermName("whenUntagged"))
   final lazy val FailArityErrorArg: Symbol = FailArityAT.member(TermName("error"))
+  final lazy val UnmatchedErrorArg: Symbol = UnmatchedAT.member(TermName("error"))
 
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
     primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}: "))
@@ -200,10 +202,14 @@ private[commons] trait MacroSymbols extends MacroCommons {
     lazy val requiredAnnots: List[Type] =
       annots(AnnotatedAT).map(_.tpe.dealias.typeArgs.head)
 
+    lazy val unmatchedError: String =
+      annot(UnmatchedAT).map(_.findArg[String](UnmatchedErrorArg))
+        .getOrElse(s"${shortDescription.capitalize} $nameStr did not match it")
+
     def matchFilters(realSymbol: MatchedSymbol): Res[Unit] =
       Res.traverse(requiredAnnots) { annotTpe =>
         if (realSymbol.annot(annotTpe).nonEmpty) Ok(())
-        else Fail(s"it only accepts ${realSymbol.real.shortDescription}s annotated as $annotTpe")
+        else Fail(s"it is not annotated as $annotTpe")
       }.map(_ => ())
   }
 
@@ -254,7 +260,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
       if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
       else {
         val orUntagged = if (whenUntaggedTag.isEmpty) "" else " or untagged"
-        Fail(s"it only accepts ${realSymbol.shortDescription}s tagged with $requiredTag$orUntagged")
+        Fail(s"it must be tagged (annotated) with $requiredTag$orUntagged")
       }
     }
   }

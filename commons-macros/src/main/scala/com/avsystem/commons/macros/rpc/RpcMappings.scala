@@ -29,7 +29,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         methodMapping <- createMapping(rawSymbol, matchedMethod)
       } yield methodMapping) { errors =>
         val unmatchedReport = errors.map { case (raw, err) =>
-          s" * ${raw.shortDescription.capitalize} ${raw.nameStr} did not match: ${indent(err, " ")}"
+          s" * ${raw.unmatchedError}: ${indent(err, " ")}"
         }.mkString("\n")
         s"$errorBase:\n$unmatchedReport"
       } match {

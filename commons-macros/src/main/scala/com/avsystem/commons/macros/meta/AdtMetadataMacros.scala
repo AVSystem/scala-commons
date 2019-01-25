@@ -115,7 +115,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
             mdParam.tryMaterializeFor(adtCase).map(t => AdtCaseMapping(adtCase, mdParam, t))
           } { errors =>
             val unmatchedReport = errors.map { case (mdParam, err) =>
-              s" * ${mdParam.shortDescription} ${mdParam.nameStr} did not match: ${indent(err, " ")}"
+              s" * ${mdParam.unmatchedError}: ${indent(err, " ")}"
             }.mkString("\n")
             s"it has no matching metadata parameters:\n$unmatchedReport"
           } match {

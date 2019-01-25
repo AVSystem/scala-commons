@@ -160,6 +160,12 @@ final class verbatim extends RpcEncoding
 final class tried extends RawMethodAnnotation
 
 /**
+  * Can be applied on raw RPC method or method metadata parameter to customize error message displayed
+  * for unmatched real method.
+  */
+final class unmatched(error: String) extends RawMethodAnnotation
+
+/**
   * Method tagging lets you have more explicit control over which raw methods can match which real methods.
   * Example:
   *
