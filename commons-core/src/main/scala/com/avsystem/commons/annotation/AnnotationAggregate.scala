@@ -25,11 +25,11 @@ package annotation
   * In the above example, applying `@mongoId` annotation on the `id` field has the same effect as if
   * annotations `@name("_id") @outOfOrder` were applied directly on that field.
   *
-  * NOTE: thanks to the fact that aggregated annotations are applied on a type member
-  * you can pass the arguments of original annotation to aggregated annotations, e.g.
+  * NOTE: thanks to the fact that aggregated annotations are applied on a method inside the aggregate
+  * you can forward arguments of the aggregate to each aggregated annotation, e.g.
   *
   * {{{
-  *   class rpcNameAndDescription(name: String, description: String) extends AnnotationAggregate {
+  *   class rpcNameWithDescription(name: String, description: String) extends AnnotationAggregate {
   *     @rpcName(name) // passing `name` to aggregated annotation
   *     final def aggregated: List[StaticAnnotation] = reifyAggregated
   *   }
