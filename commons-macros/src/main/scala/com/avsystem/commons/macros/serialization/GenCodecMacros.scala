@@ -98,7 +98,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   def forSingleton(tpe: Type, singleValueTree: Tree): Tree = {
     val generated = generatedMembers(tpe)
-    def safeSingleValue: Tree = replaceCompanion(typecheck(singleValueTree))
+    def safeSingleValue: Tree = typecheck(singleValueTree)
 
     if (generated.isEmpty)
       q"new $SerializationPkg.SingletonCodec[$tpe](${tpe.toString}, $safeSingleValue)"
@@ -167,11 +167,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       }
     }
 
-    def safeCompanion: Tree = replaceCompanion(companion)
-
     def applier(args: List[Tree]): Tree =
       if (apply.isConstructor) q"new $dtpe(..$args)"
-      else q"$safeCompanion.apply[..${dtpe.typeArgs}](..$args)"
+      else q"$companion.apply[..${dtpe.typeArgs}](..$args)"
 
     def writeFields: Tree = params match {
       case Nil =>
@@ -179,7 +177,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           q"()"
         else
           q"""
-            if(!$safeCompanion.$unapply[..${dtpe.typeArgs}](value)) {
+            if(!$companion.$unapply[..${dtpe.typeArgs}](value)) {
               unapplyFailed
             }
            """
@@ -195,7 +193,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           writeField(q"value.${p.sym.name}")
         else
           q"""
-            val unapplyRes = $safeCompanion.$unapply[..${dtpe.typeArgs}](value)
+            val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
             if(unapplyRes.isEmpty) unapplyFailed else ${writeField(q"unapplyRes.get")}
            """
       case _ =>
@@ -210,7 +208,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           q"..${params.map(p => writeField(p, q"value.${p.sym.name}"))}"
         else
           q"""
-            val unapplyRes = $safeCompanion.$unapply[..${dtpe.typeArgs}](value)
+            val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
             if(unapplyRes.isEmpty) unapplyFailed else {
               val t = unapplyRes.get
               ..${params.map(p => writeField(p, q"t.${tupleGet(p.idx)}"))}
@@ -228,7 +226,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           q"value.${p.sym.name}"
         else
           q"""
-            val unapplyRes = $safeCompanion.$unapply[..${dtpe.typeArgs}](value)
+            val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
             if(unapplyRes.isEmpty) unapplyFailed else unapplyRes.get
            """
 

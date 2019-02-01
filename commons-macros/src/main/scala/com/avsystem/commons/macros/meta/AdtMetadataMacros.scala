@@ -47,7 +47,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
       applyUnapply.params.zipWithIndex.map { case (sym, idx) => new AdtParam(this, sym, idx) }
 
     def companion: Tree =
-      replaceCompanion(typedCompanionOf(tpe).getOrElse(reportProblem(s"could not reify companion for $tpe")))
+      typedCompanionOf(tpe).getOrElse(reportProblem(s"could not reify companion for $tpe"))
   }
 
   class AdtObject(val tpe: Type, val singleValue: Tree) extends AdtSymbol {

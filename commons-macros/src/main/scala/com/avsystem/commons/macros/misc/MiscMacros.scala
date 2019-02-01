@@ -359,6 +359,8 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val instancesMethods = instancesTpe.members.iterator
       .filter(m => m.isAbstract && m.isMethod && !m.asTerm.isSetter).map(_.asMethod).toList.reverse
 
+    val CompanionParamName = c.freshName(TermName("companion"))
+
     def impl(singleMethod: Option[Symbol]): Tree = {
       val impls = instancesMethods.map { m =>
         val sig = m.typeSignatureIn(instancesTpe)
@@ -413,7 +415,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
       q"""
         new $resultTpe {
-          def apply($implicitsName: $implicitsTpe, $companionReplacementName: Any): $instancesTpe = {
+          def apply($implicitsName: $implicitsTpe, $CompanionParamName: Any): $instancesTpe = {
             ..${implicitImports(implicitsTpe, Ident(implicitsName))}
             new $instancesTpe { ..$impls; () }
           }
@@ -424,12 +426,56 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     //If full implementation doesn't typecheck, find the first problematic typeclass and limit
     //compilation errors to that one in order to not overwhelm the user but rather report errors gradually
     val fullImpl = impl(None)
-    c.typecheck(fullImpl, silent = true) match {
+    val result = c.typecheck(fullImpl, silent = true) match {
       case EmptyTree =>
         instancesMethods.iterator.map(m => impl(Some(m)))
           .find(t => c.typecheck(t, silent = true) == EmptyTree)
           .getOrElse(fullImpl)
       case t => t
+    }
+
+    enclosingConstructorCompanion match {
+      case NoSymbol => result
+      case companionSym =>
+        // Replace references to companion object being constructed with casted reference to
+        // `companion` parameter. All this horrible wiring is to workaround stupid overzealous Scala validation of
+        // self-reference being passed to super constructor parameter (https://github.com/scala/bug/issues/7666)
+        // We're going to replace some parts of already typechecked tree. This means we must insert already
+        // typechecked replacements.
+
+        val replacementDecl = result.find {
+          case ValDef(mods, CompanionParamName, _, EmptyTree) => mods.hasFlag(Flag.PARAM)
+          case _ => false
+        }
+        val replacementSym = replacementDecl.fold(NoSymbol)(_.symbol)
+
+        // must construct tree which is already fully typechecked
+        def replacementTree(orig: Tree): Tree = {
+          val replacementIdent = internal.setType(
+            internal.setSymbol(Ident(CompanionParamName), replacementSym),
+            internal.singleType(NoPrefix, replacementSym)
+          )
+          val asInstanceOfMethod = definitions.AnyTpe.member(TermName("asInstanceOf"))
+          val asInstanceOfSelect = internal.setType(
+            internal.setSymbol(Select(replacementIdent, asInstanceOfMethod), asInstanceOfMethod),
+            asInstanceOfMethod.info
+          )
+          val typeAppliedCast = internal.setType(
+            internal.setSymbol(TypeApply(asInstanceOfSelect, List(TypeTree(orig.tpe))), asInstanceOfMethod),
+            orig.tpe
+          )
+          typeAppliedCast
+        }
+
+        object replacer extends Transformer {
+          override def transform(tree: Tree): Tree = tree match {
+            case This(_) if tree.symbol == companionSym.asModule.moduleClass => replacementTree(tree)
+            case _ if tree.symbol == companionSym => replacementTree(tree)
+            case _ => super.transform(tree)
+          }
+        }
+
+        replacer.transform(result)
     }
   }
 
@@ -446,14 +492,14 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       if (isRepeated(param)) q"$res: _*" else res
     }
     if (au.standardCaseClass) q"new $tpe(..$args)"
-    else q"${replaceCompanion(typedCompanionOf(tpe).getOrElse(EmptyTree))}.apply[..${tpe.typeArgs}](..$args)"
+    else q"${typedCompanionOf(tpe).getOrElse(EmptyTree)}.apply[..${tpe.typeArgs}](..$args)"
   }
 
   def unapplyBody(valueName: TermName, tpe: Type, au: ApplyUnapply): Tree = {
     if (au.standardCaseClass) q"$ScalaPkg.Array(..${au.params.map(param => q"$valueName.$param")})"
     else {
-      val safeCompanion = replaceCompanion(typedCompanionOf(tpe).getOrElse(EmptyTree))
-      val unapplyRes = q"$safeCompanion.${au.unapply}[..${tpe.typeArgs}]($valueName)"
+      val companion = typedCompanionOf(tpe).getOrElse(EmptyTree)
+      val unapplyRes = q"$companion.${au.unapply}[..${tpe.typeArgs}]($valueName)"
       au.params match {
         case Nil => q"$ScalaPkg.Seq.empty[$ScalaPkg.Any]"
         case List(_) => q"$ScalaPkg.Array($unapplyRes.get)"
