@@ -401,11 +401,20 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       }
 
       val implicitsName = c.freshName(TermName("implicits"))
+      def implicitImports(tpe: Type, expr: Tree): List[Tree] = {
+        val dtpe = tpe.dealias
+        if (dtpe =:= typeOf[Unit]) Nil
+        else if (definitions.TupleClass.seq.contains(dtpe.typeSymbol))
+          dtpe.typeArgs.zipWithIndex.flatMap {
+            case (ctpe, idx) => implicitImports(ctpe, q"$expr.${TermName(s"_${idx + 1}")}")
+          }
+        else List(q"import $expr._")
+      }
 
       q"""
         new $resultTpe {
           def apply($implicitsName: $implicitsTpe, $companionReplacementName: Any): $instancesTpe = {
-            import $implicitsName._
+            ..${implicitImports(implicitsTpe, Ident(implicitsName))}
             new $instancesTpe { ..$impls; () }
           }
         }
