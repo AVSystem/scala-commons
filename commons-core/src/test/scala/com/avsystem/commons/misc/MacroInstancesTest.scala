@@ -4,7 +4,27 @@ package misc
 import com.avsystem.commons.meta.{AdtMetadataCompanion, MacroInstances, infer, reifyAnnot}
 import com.avsystem.commons.serialization.GenCodec
 
-import scala.annotation.StaticAnnotation
+object ComplexInstancesTest {
+  case class Dep(int: Int)
+  case class Klass[T](value: T)
+
+  object DependencyImplicits {
+    implicit val depCodec: GenCodec[Dep] = GenCodec.materialize
+  }
+
+  trait ComplexInstances[T] {
+    val plainCodec: GenCodec[Klass[Int]]
+    var codecWithGeneric: GenCodec[Klass[T]]
+    def dependencyUsingCodec: GenCodec[Klass[Dep]]
+    def parameterizedCodec[A: GenCodec]: GenCodec[Klass[A]]
+  }
+
+  abstract class HasComplexInstances[T](
+    implicit macroInstances: MacroInstances[DependencyImplicits.type, ComplexInstances[T]]
+  ) {
+    val instances: ComplexInstances[T] = macroInstances(DependencyImplicits, this)
+  }
+}
 
 object MultipleImplicitImportsTest {
   case class A(str: String)
