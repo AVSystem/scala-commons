@@ -18,11 +18,10 @@ package meta
   *
   * Example of `Instances`: `com.avsystem.commons.rest.ClientInstances`
   *
-  * The `Implicits` type is typically a trait with a collection of implicit definitions whose companion object
-  * implements that trait, e.g. `com.avsystem.commons.rest.DefaultRestImplicits`.
-  * When the macro implements `apply` method of `MacroInstances` contents of `Implicits` are imported into the
-  * body of `apply` and visible further by macros that materialize `InstancesTrait`.
-  * If you don't want to inject additional implicits, declare `Implicits` as `Unit`.
+  * The `Implicits` type specifies additional implicits that will be automatically imported into macro materialization.
+  * `Implicits` is usually a singleton type of an object which contains these implicits. It may also be a tuple -
+  * contents of each tuple component will be imported independently. This way you can combine multiple sources
+  * of additional implicits. If you don't want to import any additional implicits, simply use `Unit`.
   *
   * If `MacroInstances` is accepted as implicit super constructor parameter of a companion object
   * (which is the typical situation) then `this` reference should be passed as `companion`.
