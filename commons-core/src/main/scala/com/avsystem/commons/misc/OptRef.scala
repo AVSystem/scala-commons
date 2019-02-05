@@ -16,7 +16,7 @@ object OptRef {
       if (optRef.isEmpty) Opt.Empty else Opt(unboxing.fun(optRef.get))
   }
 
-  implicit def opt2Iterable[A >: Null](xo: OptRef[A]): Iterable[A] = xo.toList
+  implicit def opt2Iterable[A >: Null](xo: OptRef[A]): IIterable[A] = xo.toList
 
   final val Empty: OptRef[Null] = new OptRef[Null](null)
 

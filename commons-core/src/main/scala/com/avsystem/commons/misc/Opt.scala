@@ -17,7 +17,7 @@ object Opt {
     if (value != null) new Opt[A](value)
     else throw new NullPointerException
 
-  implicit def opt2Iterable[A](xo: Opt[A]): Iterable[A] = xo.toList
+  implicit def opt2Iterable[A](xo: Opt[A]): IIterable[A] = xo.toList
 
   final val Empty: Opt[Nothing] = new Opt(EmptyMarker)
 
