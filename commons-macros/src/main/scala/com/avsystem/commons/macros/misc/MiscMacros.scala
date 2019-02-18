@@ -491,8 +491,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       val res = q"$rawValuesName($idx).asInstanceOf[${actualParamType(param.typeSignature)}]"
       if (isRepeated(param)) q"$res: _*" else res
     }
-    if (au.standardCaseClass) q"new $tpe(..$args)"
-    else q"${typedCompanionOf(tpe).getOrElse(EmptyTree)}.apply[..${tpe.typeArgs}](..$args)"
+    au.mkApply(args)
   }
 
   def unapplyBody(valueName: TermName, tpe: Type, au: ApplyUnapply): Tree = {

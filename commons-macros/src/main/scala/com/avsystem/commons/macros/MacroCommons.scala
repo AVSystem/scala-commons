@@ -927,6 +927,10 @@ trait MacroCommons { bundle =>
         q"$typedCompanion.${TermName(s"$methodEncodedName$$default$$${idx + 1}")}[..${ownerTpe.typeArgs}]"
       }
       else EmptyTree
+
+    def mkApply[T: Liftable](args: Seq[T]): Tree =
+      if (standardCaseClass) q"new $ownerTpe(..$args)"
+      else q"$typedCompanion.apply[..${ownerTpe.typeArgs}](..$args)"
   }
 
   def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] =

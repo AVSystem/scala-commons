@@ -576,4 +576,12 @@ class GenCodecTest extends CodecTestBase {
   case class OuterThing(inner: InnerThing)
   case class InnerThing(recursiveThing: Opt[OuterThing])
   object OuterThing extends HasRecursiveGenCodec[OuterThing]
+
+  @transparent
+  case class ThingId(value: String)
+  object ThingId extends HasGenAndKeyCodec[ThingId]
+
+  test("auto materialized key codec") {
+    testWriteRead[Map[ThingId, ThingId]](Map(ThingId("a") -> ThingId("b")), Map("a" -> "b"))
+  }
 }
