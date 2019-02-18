@@ -1,5 +1,7 @@
 # REST framework
 
+**NOTE**: REST framework has been moved to [Udash Framework](https://github.com/UdashFramework/udash-core/blob/master/docs/REST.md)
+
 The commons library contains an RPC based REST framework for defining REST services using Scala traits.
 It may be used for implementing both client and server side and works in both JVM and JS, as long as
 appropriate network layer is implemented. For JVM, Jetty-based implementations for client and server
