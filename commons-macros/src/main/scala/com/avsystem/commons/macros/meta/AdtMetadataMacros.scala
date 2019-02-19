@@ -299,20 +299,31 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
   def materialize[Real: WeakTypeTag]: Tree = instrument {
     val adtTpe = weakTypeOf[Real].dealias
     val metadataTpe = c.macroApplication.tpe.dealias
-    materializeMetadata(adtTpe, metadataTpe)
-  }
 
-  def materializeMetadata(adtTpe: Type, metadataTpe: Type): Tree = {
     val adtSymbol =
       singleValueFor(adtTpe).map(sv => new AdtObject(adtTpe, sv)) orElse
         applyUnapplyFor(adtTpe).map(au => new AdtClass(adtTpe, au)) orElse
         knownSubtypes(adtTpe, ordered = true).map(st => new AdtHierarchy(adtTpe, st)) getOrElse
         new AdtOtherCase(adtTpe)
 
+    materializeMetadata(adtSymbol, metadataTpe)
+  }
+
+  def fromApplyUnapplyProvider[Real: WeakTypeTag](applyUnapplyProvider: Tree): Tree = instrument {
+    val adtTpe = weakTypeOf[Real].dealias
+    val metadataTpe = c.macroApplication.tpe.dealias
+    val applyUnapply = applyUnapplyFor(adtTpe, applyUnapplyProvider)
+      .getOrElse(abort(s"Cannot derive $metadataTpe from `apply` and `unapply`/`unapplySeq` methods of ${applyUnapplyProvider.tpe}"))
+    val adtSymbol = new AdtClass(adtTpe, applyUnapply)
+
+    materializeMetadata(adtSymbol, metadataTpe)
+  }
+
+  def materializeMetadata(adtSymbol: AdtSymbol, metadataTpe: Type): Tree = {
     def tryMaterialize(metadataTpe: Type): Res[Tree] =
       new AdtMetadataConstructor(metadataTpe, None).tryMaterializeFor(adtSymbol)
 
-    guardedMetadata(metadataTpe, adtTpe) {
+    guardedMetadata(metadataTpe, adtSymbol.tpe) {
       materializeOneOf(metadataTpe)(tryMaterialize).getOrElse(abort)
     }
   }

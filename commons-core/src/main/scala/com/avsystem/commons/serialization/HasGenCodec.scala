@@ -64,3 +64,18 @@ trait RecursiveCodec[T] {
 abstract class HasRecursiveGenCodec[T](implicit instances: MacroInstances[Unit, RecursiveCodec[T]]) {
   implicit lazy val codec: GenCodec[T] = instances((), this).codec
 }
+
+trait CodecWithKeyCodec[T] {
+  def codec: GenCodec[T]
+  @materializeWith(GenKeyCodec, "forTransparentWrapper")
+  def keyCodec: GenKeyCodec[T]
+}
+
+/**
+  * Automatically injects both [[GenCodec]] and [[GenKeyCodec]]. The type must be a case class or case class like
+  * type that wraps exactly one field for which [[GenKeyCodec]] exists.
+  */
+abstract class HasGenAndKeyCodec[T](implicit instances: MacroInstances[Unit, CodecWithKeyCodec[T]]) {
+  implicit lazy val codec: GenCodec[T] = instances((), this).codec
+  implicit lazy val keyCodec: GenKeyCodec[T] = instances((), this).keyCodec
+}

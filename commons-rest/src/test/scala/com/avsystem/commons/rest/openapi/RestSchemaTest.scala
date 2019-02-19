@@ -87,4 +87,34 @@ class RestSchemaTest extends FunSuite {
         |}""".stripMargin
     )
   }
+
+  sealed trait Opaque
+  object OpaqueAU {
+    def apply(int: Int, str: String): Opaque = null
+    def unapply(opaque: Opaque): Opt[(Int, String)] = Opt.Empty
+  }
+
+  implicit val opaqueSchema: RestSchema[Opaque] =
+    RestStructure.fromApplyUnapplyProvider[Opaque](OpaqueAU).standaloneSchema
+
+  test("third party type") {
+    assert(schemaStr[Opaque] ==
+      """{
+        |  "type": "object",
+        |  "properties": {
+        |    "int": {
+        |      "type": "integer",
+        |      "format": "int32"
+        |    },
+        |    "str": {
+        |      "type": "string"
+        |    }
+        |  },
+        |  "required": [
+        |    "int",
+        |    "str"
+        |  ]
+        |}""".stripMargin
+    )
+  }
 }
