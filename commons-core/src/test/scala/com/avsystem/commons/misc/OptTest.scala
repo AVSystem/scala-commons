@@ -32,9 +32,11 @@ class OptTest extends FunSuite {
 
   test("nesting test") {
     val opt: Opt[Opt[String]] = Opt(Opt.empty)
-    opt match {
-      case Opt(Opt.Empty) =>
+    val result = opt match {
+      case Opt.Empty => false
+      case Opt(Opt.Empty) => true
     }
+    assert(result)
   }
 
   test("empty hash code") {
