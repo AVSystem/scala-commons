@@ -11,8 +11,8 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
   import c.universe._
 
   def collectMethodMappings[Raw <: TagMatchingSymbol with AritySymbol, M](
-    rawSymbols: List[Raw], errorBase: String, realMethods: List[RealMethod], allowIncomplete: Boolean)(
-    createMapping: (Raw, MatchedMethod) => Res[M]): List[M] = {
+    rawSymbols: List[Raw], errorBase: String, realMethods: List[RealMethod], allowIncomplete: Boolean
+  )(createMapping: (Raw, MatchedMethod) => Res[M]): List[M] = {
 
     val failedReals = new ListBuffer[String]
     def addFailure(realMethod: RealMethod, message: String): Unit = {
@@ -22,8 +22,8 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
     val result = realMethods.flatMap { realMethod =>
       Res.firstOk(rawSymbols)(rawSymbol => for {
-        fallbackTag <- rawSymbol.matchTag(realMethod)
-        matchedMethod = MatchedMethod(realMethod, fallbackTag)
+        fallbackTags <- rawSymbol.matchTags(realMethod)
+        matchedMethod = MatchedMethod(realMethod, fallbackTags)
         _ <- rawSymbol.matchName(matchedMethod.real.shortDescription, matchedMethod.rawName)
         _ <- rawSymbol.matchFilters(matchedMethod)
         methodMapping <- createMapping(rawSymbol, matchedMethod)

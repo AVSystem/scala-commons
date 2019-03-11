@@ -213,6 +213,9 @@ private[commons] trait MacroSymbols extends MacroCommons {
       }.map(_ => ())
   }
 
+  case class BaseTagSpec(baseTagTpe: Type, fallbackTag: FallbackTag)
+  case class RequiredTag(baseTagTpe: Type, tagTpe: Type, fallbackTag: FallbackTag)
+
   case class FallbackTag(annotTree: Tree) {
     def isEmpty: Boolean = annotTree == EmptyTree
     def asList: List[Tree] = List(annotTree).filter(_ != EmptyTree)
@@ -223,42 +226,43 @@ private[commons] trait MacroSymbols extends MacroCommons {
   }
 
   trait TagMatchingSymbol extends MacroSymbol with FilteringSymbol {
-    def baseTagTpe: Type
-    def fallbackTag: FallbackTag
+    def baseTagSpecs: List[BaseTagSpec]
 
     def tagAnnot(tpe: Type): Option[Annot] =
       annot(tpe)
 
-    def tagSpec(a: Annot): (Type, FallbackTag) = {
+    def tagSpec(a: Annot): BaseTagSpec = {
       val tagType = a.tpe.dealias.typeArgs.head
       val defaultTagArg = a.tpe.member(TermName("defaultTag"))
       val fallbackTag = FallbackTag(a.findArg[Tree](defaultTagArg, EmptyTree))
-      (tagType, fallbackTag)
+      BaseTagSpec(tagType, fallbackTag)
     }
 
-    lazy val (requiredTag, whenUntaggedTag) = {
-      val taggedAnnot = annot(TaggedAT)
-      val requiredTagType = taggedAnnot.fold(baseTagTpe)(_.tpe.typeArgs.head)
-      if (!(requiredTagType <:< baseTagTpe)) {
-        val msg =
-          if (baseTagTpe =:= NothingTpe)
-            "cannot use @tagged, no tag annotation type specified"
-          else s"tag annotation type $requiredTagType specified in @tagged annotation " +
-            s"must be a subtype of specified base tag $baseTagTpe"
-        reportProblem(msg)
+    lazy val requiredTags: List[RequiredTag] = {
+      val result = baseTagSpecs.map { case BaseTagSpec(baseTagTpe, fallbackTag) =>
+        val taggedAnnot = annot(getType(tq"$RpcPackage.tagged[_ <: $baseTagTpe]"))
+        val requiredTagType = taggedAnnot.fold(baseTagTpe)(_.tpe.typeArgs.head)
+        val whenUntagged = FallbackTag(taggedAnnot.map(_.findArg[Tree](WhenUntaggedArg, EmptyTree)).getOrElse(EmptyTree))
+        RequiredTag(baseTagTpe, requiredTagType, whenUntagged orElse fallbackTag)
       }
-      val whenUntagged = FallbackTag(taggedAnnot.map(_.findArg[Tree](WhenUntaggedArg, EmptyTree)).getOrElse(EmptyTree))
-      (requiredTagType, whenUntagged)
+      annots(TaggedAT).foreach { ann =>
+        val requiredTagTpe = ann.tpe.typeArgs.head
+        if (!result.exists(_.tagTpe =:= requiredTagTpe)) {
+          reportProblem(s"annotation $ann does not have corresponding @paramTag/@methodTag set up")
+        }
+      }
+      result
     }
 
-    // returns fallback tag tree only IF it was necessary
-    def matchTag(realSymbol: MacroSymbol): Res[FallbackTag] = {
-      val tagAnnot = realSymbol.annot(baseTagTpe)
-      val fallbackTagUsed = if (tagAnnot.isEmpty) whenUntaggedTag orElse fallbackTag else FallbackTag.Empty
-      val realTagTpe = tagAnnot.map(_.tpe).getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
+    // returns list of fallback tag trees which were necessary
+    def matchTags(realSymbol: MacroSymbol): Res[List[FallbackTag]] = Res.traverse(requiredTags) {
+      case RequiredTag(baseTagTpe, requiredTag, whenUntagged) =>
+        val tagAnnot = realSymbol.annot(baseTagTpe)
+        val fallbackTagUsed = if (tagAnnot.isEmpty) whenUntagged else FallbackTag.Empty
+        val realTagTpe = tagAnnot.map(_.tpe).getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
 
-      if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
-      else Fail()
+        if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
+        else Fail()
     }
   }
 
@@ -299,13 +303,13 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def real: MacroSymbol
     def rawName: String
     def indexInRaw: Int
-    def fallbackTagUsed: FallbackTag = FallbackTag.Empty
+    def fallbackTagsUsed: List[FallbackTag] = Nil
 
     def annot(tpe: Type): Option[Annot] =
-      real.annot(tpe, fallbackTagUsed.asList)
+      real.annot(tpe, fallbackTagsUsed.flatMap(_.asList))
 
     def annots(tpe: Type): List[Annot] =
-      real.annots(tpe, fallbackTagUsed.asList)
+      real.annots(tpe, fallbackTagsUsed.flatMap(_.asList))
   }
 
   trait SelfMatchedSymbol extends MacroSymbol with MatchedSymbol {

@@ -15,8 +15,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     def allowListedMulti: Boolean = true
     def allowFail: Boolean = false
 
-    def baseTagTpe: Type = owner.baseMethodTag
-    def fallbackTag: FallbackTag = owner.fallbackMethodTag
+    def baseTagSpecs: List[BaseTagSpec] = owner.baseMethodTags
 
     val verbatimResult: Boolean =
       annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
@@ -25,9 +24,9 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       reportProblem(s"method metadata type must be a subtype TypedMetadata[_]")
     }
 
-    val (baseParamTag, fallbackParamTag) =
-      annot(ParamTagAT).orElse(findAnnotation(arity.collectedType.typeSymbol, ParamTagAT))
-        .map(tagSpec).getOrElse(owner.baseParamTag, owner.fallbackParamTag)
+    val baseParamTags: List[BaseTagSpec] =
+      (annots(ParamTagAT) ++ allAnnotations(arity.collectedType.typeSymbol, ParamTagAT)).map(tagSpec) ++
+        owner.baseParamTags
 
     def mappingFor(matchedMethod: MatchedMethod): Res[MethodMetadataMapping] = for {
       mdType <- actualMetadataType(arity.collectedType, matchedMethod.real.resultType, "method result type", verbatimResult)
@@ -45,8 +44,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
   class ParamMetadataParam(owner: MethodMetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with RealParamTarget {
 
-    def baseTagTpe: Type = owner.containingMethodParam.baseParamTag
-    def fallbackTag: FallbackTag = owner.containingMethodParam.fallbackParamTag
+    def baseTagSpecs: List[BaseTagSpec] = owner.containingMethodParam.baseParamTags
 
     def cannotMapClue: String = s"cannot map it to $shortDescription $nameStr of ${owner.ownerType}"
 
@@ -97,13 +95,10 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
   class RpcTraitMetadataConstructor(ownerType: Type, atParam: Option[CompositeParam])
     extends MetadataConstructor(ownerType, atParam) with TagMatchingSymbol {
 
-    def baseTagTpe: Type = NothingTpe
-    def fallbackTag: FallbackTag = FallbackTag.Empty
+    def baseTagSpecs: List[BaseTagSpec] = Nil
 
-    val (baseMethodTag, fallbackMethodTag) =
-      annot(MethodTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
-    val (baseParamTag, fallbackParamTag) =
-      annot(ParamTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
+    val baseMethodTags: List[BaseTagSpec] = annots(MethodTagAT).map(tagSpec)
+    val baseParamTags: List[BaseTagSpec] = annots(ParamTagAT).map(tagSpec)
 
     lazy val methodMdParams: List[MethodMetadataParam] = collectParams[MethodMetadataParam]
 
