@@ -36,7 +36,7 @@ object PathValue {
 case class HeaderValue(value: String) extends AnyVal with RestValue
 
 /**
-  * Value used as encoding of [[Query]] parameters and [[BodyField]] parameters of [[FormBody]] methods.
+  * Value used as encoding of [[Query]] parameters and [[Body]] parameters of [[FormBody]] methods.
   */
 case class QueryValue(value: String) extends AnyVal with RestValue
 object QueryValue {
@@ -62,7 +62,7 @@ object QueryValue {
 }
 
 /**
-  * Value used as encoding of [[BodyField]] parameters of non-[[FormBody]] methods.
+  * Value used as encoding of [[Body]] parameters of non-[[FormBody]] methods.
   * Wrapped value MUST be a valid JSON.
   */
 case class JsonValue(value: String) extends AnyVal with RestValue
