@@ -35,10 +35,14 @@ class NOptTest extends FunSuite {
   }
 
   test("nesting test") {
-    val opt: NOpt[NOpt[String]] = NOpt(NOpt.empty)
-    opt match {
-      case NOpt(NOpt.Empty) =>
-    }
+    assert((NOpt(NOpt.empty): Any) match {
+      case NOpt.Empty => false
+      case NOpt(NOpt.Empty) => true
+    })
+    assert((NOpt.Empty: Any) match {
+      case NOpt(NOpt.Empty) => false
+      case NOpt.Empty => true
+    })
   }
 
   test("empty hash code") {

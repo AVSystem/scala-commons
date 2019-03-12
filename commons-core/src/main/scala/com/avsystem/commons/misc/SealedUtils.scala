@@ -84,6 +84,17 @@ trait NamedEnum extends Serializable {
 }
 
 /**
+  * Subtrait of [[NamedEnum]] which requires its values to be `Product`s and uses `Product.productPrefix` as
+  * the name of each enum constant. In practice this means that all the objects extending [[AutoNamedEnum]] should
+  * be `case object`s so that object names are automatically used as enum constant names.
+  * That's because case classes and objects automatically implement `Product` and use their source
+  * name as `Product.productPrefix`.
+  */
+trait AutoNamedEnum extends NamedEnum with Product {
+  def name: String = productPrefix
+}
+
+/**
   * Base trait for companion objects of sealed traits that serve as named enums. `NamedEnumCompanion` is an
   * extension of [[SealedEnumCompanion]] which additionally requires that every enum value has distinct string
   * representation. Values can then be looked up by that representation using [[NamedEnumCompanion.byName]]
