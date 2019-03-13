@@ -100,8 +100,10 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
     def paramMappings(params: List[AdtParam]): Res[Map[AdtParamMetadataParam, Tree]] =
       if (paramMdParams.isEmpty) Ok(Map.empty)
-      else collectParamMappings(params, paramMdParams, "metadata parameter", allowIncomplete)(
-        (param, parser) => param.metadataFor(parser).map(t => (param, t))).map(_.toMap)
+      else collectParamMappings(params, paramMdParams, allowIncomplete)(
+        (param, parser) => param.metadataFor(parser).map(t => (param, t)),
+        rp => s"no ADT metadata parameter was found that would match ${rp.shortDescription} ${rp.nameStr}"
+      ).map(_.toMap)
 
     def collectCaseMappings(cases: List[AdtSymbol]): Res[Map[AdtCaseMetadataParam, List[AdtCaseMapping]]] =
       if (caseMdParams.isEmpty) Ok(Map.empty) else {
@@ -115,7 +117,9 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
             mdParam.tryMaterializeFor(adtCase).map(t => AdtCaseMapping(adtCase, mdParam, t))
           } { errors =>
             val unmatchedReport = errors.map { case (mdParam, err) =>
-              s" * ${mdParam.unmatchedError}: ${indent(err, " ")}"
+              val unmatchedError = mdParam.unmatchedError.getOrElse(
+                s"${mdParam.shortDescription.capitalize} ${mdParam.nameStr} did not match")
+              s" * $unmatchedError: ${indent(err, " ")}"
             }.mkString("\n")
             s"it has no matching metadata parameters:\n$unmatchedReport"
           } match {

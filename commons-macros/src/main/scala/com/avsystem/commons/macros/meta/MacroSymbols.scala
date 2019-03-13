@@ -19,21 +19,22 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final lazy val SingleArityAT: Type = staticType(tq"$MetaPackage.single")
   final lazy val OptionalArityAT: Type = staticType(tq"$MetaPackage.optional")
   final lazy val MultiArityAT: Type = staticType(tq"$MetaPackage.multi")
-  final lazy val FailArityAT: Type = staticType(tq"$MetaPackage.fail")
   final lazy val CompositeAT: Type = staticType(tq"$MetaPackage.composite")
   final lazy val AuxiliaryAT: Type = staticType(tq"$MetaPackage.auxiliary")
   final lazy val AnnotatedAT: Type = staticType(tq"$MetaPackage.annotated[_]")
   final lazy val TaggedAT: Type = staticType(tq"$RpcPackage.tagged[_]")
   final lazy val UnmatchedAT: Type = staticType(tq"$RpcPackage.unmatched")
+  final lazy val UnmatchedParamAT: Type = staticType(tq"$RpcPackage.unmatchedParam[_]")
   final lazy val WhenUntaggedArg: Symbol = TaggedAT.member(TermName("whenUntagged"))
-  final lazy val FailArityErrorArg: Symbol = FailArityAT.member(TermName("error"))
   final lazy val UnmatchedErrorArg: Symbol = UnmatchedAT.member(TermName("error"))
+  final lazy val UnmatchedParamErrorArg: Symbol = UnmatchedParamAT.member(TermName("error"))
 
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
     primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}: "))
 
   sealed trait Arity {
     def annotStr: String
+    def verbatimByDefault: Boolean
   }
   object Arity {
     trait Single extends Arity {
@@ -81,12 +82,6 @@ private[commons] trait MacroSymbols extends MacroCommons {
           param.reportProblem(s"@multi ${param.shortDescription} must be an Iterable")
         else
           param.reportProblem(s"@multi ${param.shortDescription} must be a PartialFunction of String")
-      }
-      else if (allowFail && at <:< FailArityAT) {
-        if (param.actualType =:= UnitTpe)
-          Fail(annot.get.findArg[String](FailArityErrorArg))
-        else
-          param.reportProblem(s"@fail ${param.shortDescription} must be typed as Unit")
       }
       else param.reportProblem(s"forbidden RPC arity annotation: $at")
     }
@@ -202,9 +197,8 @@ private[commons] trait MacroSymbols extends MacroCommons {
     lazy val requiredAnnots: List[Type] =
       annots(AnnotatedAT).map(_.tpe.dealias.typeArgs.head)
 
-    lazy val unmatchedError: String =
+    lazy val unmatchedError: Option[String] =
       annot(UnmatchedAT).map(_.findArg[String](UnmatchedErrorArg))
-        .getOrElse(s"${shortDescription.capitalize} $nameStr did not match it")
 
     def matchFilters(realSymbol: MatchedSymbol): Res[Unit] =
       Res.traverse(requiredAnnots) { annotTpe =>
@@ -321,18 +315,18 @@ private[commons] trait MacroSymbols extends MacroCommons {
   def collectParamMappings[Real <: MacroParam, Raw <: MacroParam, M](
     reals: List[Real],
     raws: List[Raw],
-    rawShortDesc: String,
     allowIncomplete: Boolean
   )(
-    createMapping: (Raw, ParamsParser[Real]) => Res[M]
+    createMapping: (Raw, ParamsParser[Real]) => Res[M],
+    unmatchedMsg: Real => String
   ): Res[List[M]] = {
 
     val parser = new ParamsParser(reals)
     Res.traverse(raws)(createMapping(_, parser)).flatMap { result =>
-      if (allowIncomplete || parser.remaining.isEmpty) Ok(result)
-      else {
-        val unmatched = parser.remaining.iterator.map(_.nameStr).mkString(",")
-        Fail(s"no $rawShortDesc(s) were found that would match real parameter(s) $unmatched")
+      parser.remaining.headOption match {
+        case _ if allowIncomplete => Ok(result)
+        case None => Ok(result)
+        case Some(firstUnmatched) => Fail(unmatchedMsg(firstUnmatched))
       }
     }
   }

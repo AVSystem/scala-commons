@@ -151,14 +151,6 @@ final class optional extends SymbolArity
 final class multi extends SymbolArity
 
 /**
-  * This annotation can be applied on a "fake" raw parameter or metadata parameter typed as `Unit`.
-  * Matching real parameter against it will always fail, with the error message specified.
-  * This is useful for customizing error messages - you can provide an explanation of why some kind of parameter
-  * is forbidden in an RPC method or an ADT constructor.
-  */
-final class fail(error: String) extends SymbolArity
-
-/**
   * Filter applied on raw methods or parameters which tells the macro engine that this raw method or parameter may
   * only match real methods or parameters annotated with at least one annotation of given type `A` (or any subtype).
   *

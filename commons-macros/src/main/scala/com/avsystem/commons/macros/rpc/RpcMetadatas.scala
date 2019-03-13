@@ -9,16 +9,13 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
   import c.universe._
 
   class MethodMetadataParam(owner: RpcTraitMetadataConstructor, symbol: Symbol)
-    extends MetadataParam(owner, symbol) with TagMatchingSymbol with ArityParam {
+    extends MetadataParam(owner, symbol) with RealMethodTarget with ArityParam {
 
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
     def allowFail: Boolean = false
 
     def baseTagSpecs: List[BaseTagSpec] = owner.baseMethodTags
-
-    val verbatimResult: Boolean =
-      annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
 
     if (!(arity.collectedType <:< TypedMetadataType)) {
       reportProblem(s"method metadata type must be a subtype TypedMetadata[_]")
@@ -46,8 +43,6 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
 
     def baseTagSpecs: List[BaseTagSpec] = owner.containingMethodParam.baseParamTags
 
-    def cannotMapClue: String = s"cannot map it to $shortDescription $nameStr of ${owner.ownerType}"
-
     if (!(arity.collectedType <:< TypedMetadataType)) {
       reportProblem(s"type ${arity.collectedType} is not a subtype of TypedMetadata[_]")
     }
@@ -67,13 +62,13 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
           } yield tree
         }
       } yield tree
-      result.mapFailure(msg => s"${realParam.problemStr}: $cannotMapClue: $msg")
+      result.mapFailure(msg => s"${realParam.problemStr}: $msg")
     }
 
     def metadataFor(matchedMethod: MatchedMethod, parser: ParamsParser[RealParam]): Res[Tree] = arity match {
       case _: ParamArity.Single =>
-        val unmatchedError = s"$shortDescription $pathStr was not matched by real parameter"
-        parser.extractSingle(!auxiliary, metadataTree(matchedMethod, _, 0), unmatchedError)
+        val errorMessage = unmatchedError.getOrElse(s"$shortDescription $pathStr was not matched by any real parameter")
+        parser.extractSingle(!auxiliary, metadataTree(matchedMethod, _, 0), errorMessage)
       case _: ParamArity.Optional =>
         Ok(mkOptional(parser.extractOptional(!auxiliary, metadataTree(matchedMethod, _, 0))))
       case ParamArity.Multi(_, true) =>
@@ -110,7 +105,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       new RpcTraitMetadataConstructor(param.collectedType, Some(param))
 
     def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] = {
-      val errorBase = s"it has no matching metadata parameters in $description"
+      val errorBase = unmatchedError.getOrElse(s"cannot materialize $this for $rpc: ")
       collectMethodMappings(
         methodMdParams, errorBase, rpc.realMethods, allowIncomplete
       )(_.mappingFor(_)).groupBy(_.mdParam)
@@ -157,11 +152,11 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       new MethodMetadataConstructor(param.collectedType, containingMethodParam, Some(param))
 
     def paramMappings(matchedMethod: MatchedMethod): Res[Map[ParamMetadataParam, Tree]] =
-      collectParamMappings(
-        matchedMethod.real.realParams, paramMdParams, "metadata parameter", allowIncomplete
-      ) { (param, parser) =>
-        param.metadataFor(matchedMethod, parser).map(t => (param, t))
-      }.map(_.toMap)
+      collectParamMappings(matchedMethod.real.realParams, paramMdParams, allowIncomplete)(
+        (param, parser) => param.metadataFor(matchedMethod, parser).map(t => (param, t)),
+        rp => containingMethodParam.errorForUnmatchedParam(rp).getOrElse(
+          s"no metadata parameter was found that would match ${rp.shortDescription} ${rp.nameStr}")
+      ).map(_.toMap)
 
     def tryMaterializeFor(matchedMethod: MatchedMethod, paramMappings: Map[ParamMetadataParam, Tree]): Res[Tree] =
       tryMaterialize(matchedMethod) {

@@ -39,29 +39,29 @@ trait RawRest {
   @tagged[Prefix](whenUntagged = new Prefix)
   @tagged[NoBody](whenUntagged = new NoBody)
   @paramTag[RestParamTag](defaultTag = new Path)
-  @unmatched("cannot interpret it as a prefix method (a method which returns another API trait)")
+  @unmatched("it is not a valid prefix method (a method which returns another API trait)")
+  @unmatchedParam[Body]("prefix methods cannot take @Body parameters")
   def prefix(
     @methodName name: String,
-    @composite parameters: RestParameters,
-    @fail(RawRest.NoPrefixBodyParams) @tagged[Body] body: Unit
+    @composite parameters: RestParameters
   ): Try[RawRest]
 
   @multi @tried
   @tagged[GET]
   @tagged[NoBody](whenUntagged = new NoBody)
   @paramTag[RestParamTag](defaultTag = new Query)
-  @unmatched("cannot interpret it as GET")
+  @unmatched("it is not a valid GET method")
+  @unmatchedParam[Body]("GET methods cannot take @Body parameters")
   def get(
     @methodName name: String,
-    @composite parameters: RestParameters,
-    @fail(RawRest.NoGetBodyParams) @tagged[Body] body: Unit
+    @composite parameters: RestParameters
   ): Async[RestResponse]
 
   @multi @tried
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @tagged[FormBody]
   @paramTag[RestParamTag](defaultTag = new Body)
-  @unmatched("cannot interpret it as POST/PUT/PATCH/DELETE with form body")
+  @unmatched("it is not a valid POST/PUT/PATCH/DELETE method with form body")
   def handleForm(
     @methodName name: String,
     @composite parameters: RestParameters,
@@ -72,7 +72,7 @@ trait RawRest {
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @tagged[JsonBody](whenUntagged = new JsonBody)
   @paramTag[RestParamTag](defaultTag = new Body)
-  @unmatched("cannot interpret it as POST/PUT/PATCH/DELETE with JSON body")
+  @unmatched("it is not a valid POST/PUT/PATCH/DELETE method")
   def handleJson(
     @methodName name: String,
     @composite parameters: RestParameters,
@@ -83,12 +83,13 @@ trait RawRest {
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @tagged[CustomBody]
   @paramTag[RestParamTag](defaultTag = new Body)
-  @unmatched("cannot interpret it as POST/PUT/PATCH/DELETE with custom body " +
+  @unmatched("it is not a valid POST/PUT/PATCH/DELETE method with custom body " +
     "(a method which takes exactly one body parameter that serializes directly to HttpBody)")
+  @unmatchedParam[Body]("expected exactly one @Body parameter but more than one was found")
   def handleCustom(
     @methodName name: String,
     @composite parameters: RestParameters,
-    @encoded @tagged[Body] body: HttpBody
+    @encoded @tagged[Body] @unmatched("expected exactly one @Body parameter but none was found") body: HttpBody
   ): Async[RestResponse]
 
   def asHandleRequest(metadata: RestMetadata[_]): HandleRequest =
@@ -105,7 +106,7 @@ trait RawRest {
 
     def resolveCall(rawRest: RawRest, prefixes: List[PrefixCall]): Async[RestResponse] = prefixes match {
       case PrefixCall(rpcName, pathParams, _) :: tail =>
-        rawRest.prefix(rpcName, parameters.copy(path = pathParams), ()) match {
+        rawRest.prefix(rpcName, parameters.copy(path = pathParams)) match {
           case Success(nextRawRest) => resolveCall(nextRawRest, tail)
           case Failure(e: HttpErrorException) => RawRest.successfulAsync(e.toResponse)
           case Failure(cause) => RawRest.failingAsync(cause)
@@ -113,7 +114,7 @@ trait RawRest {
       case Nil =>
         val finalParameters = parameters.copy(path = finalPathParams)
         if (method == HttpMethod.GET)
-          rawRest.get(finalRpcName, finalParameters, ())
+          rawRest.get(finalRpcName, finalParameters)
         else if (finalMetadata.customBody)
           rawRest.handleCustom(finalRpcName, finalParameters, body)
         else if (finalMetadata.formBody)
@@ -245,13 +246,13 @@ object RawRest extends RawRpcCompanion[RawRest] {
   private final class DefaultRawRest(metadata: RestMetadata[_], prefixHeaders: RestParameters, handleRequest: HandleRequest)
     extends RawRest {
 
-    def prefix(name: String, parameters: RestParameters, body: Unit): Try[RawRest] =
+    def prefix(name: String, parameters: RestParameters): Try[RawRest] =
       metadata.prefixMethods.get(name).map { prefixMeta =>
         val newHeaders = prefixHeaders.append(prefixMeta, parameters)
         Success(new DefaultRawRest(prefixMeta.result.value, newHeaders, handleRequest))
       } getOrElse Failure(new RestException(s"no such prefix method: $name"))
 
-    def get(name: String, parameters: RestParameters, body: Unit): Async[RestResponse] =
+    def get(name: String, parameters: RestParameters): Async[RestResponse] =
       handleCustom(name, parameters, HttpBody.Empty)
 
     def handleJson(name: String, parameters: RestParameters, body: Mapping[JsonValue]): Async[RestResponse] =

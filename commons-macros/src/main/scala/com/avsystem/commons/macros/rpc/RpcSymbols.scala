@@ -102,6 +102,37 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
   }
 
+  case class UnmatchedParamError(tagTpe: Type, error: String)
+
+  trait RealMethodTarget extends AritySymbol with TagMatchingSymbol {
+    def baseParamTags: List[BaseTagSpec]
+
+    lazy val verbatimResult: Boolean =
+      annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
+
+    lazy val unmatchedParamErrors: List[UnmatchedParamError] =
+      annots(UnmatchedParamAT).map { annot =>
+        val tagTpe = annot.tpe.typeArgs.head
+        if (!baseParamTags.exists(ts => tagTpe <:< ts.baseTagTpe)) {
+          reportProblem(s"$tagTpe is not a valid param tag type")
+        }
+        val error = annot.findArg[String](UnmatchedParamErrorArg)
+        UnmatchedParamError(tagTpe, error)
+      }
+
+    def errorForUnmatchedParam(param: RealParam): Option[String] = {
+      val allFallbackTags = baseParamTags.flatMap {
+        case BaseTagSpec(baseTagTpe, fallbackTag) =>
+          if (fallbackTag.isEmpty || param.annot(baseTagTpe).nonEmpty) None
+          else Some(fallbackTag.annotTree)
+      }
+      unmatchedParamErrors.collectFirst {
+        case UnmatchedParamError(tagTpe, error)
+          if param.annot(tagTpe, allFallbackTags).nonEmpty => error
+      }
+    }
+  }
+
   trait RealParamTarget extends ArityParam with TagMatchingSymbol {
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
@@ -114,8 +145,6 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     val auxiliary: Boolean =
       annot(AuxiliaryAT).nonEmpty
-
-    def cannotMapClue: String
 
     def matchRealParam(matchedMethod: MatchedMethod, realParam: RealParam, indexInRaw: Int): Res[MatchedParam] =
       for {
@@ -176,8 +205,6 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     extends RawParam with RealParamTarget {
 
     def baseTagSpecs: List[BaseTagSpec] = containingRawMethod.baseParamTags
-
-    def cannotMapClue = s"cannot map it to $shortDescription $pathStr of ${containingRawMethod.nameStr}"
   }
 
   case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexOfList: Int, indexInList: Int)
@@ -189,7 +216,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   }
 
   case class RawMethod(owner: RawRpcTrait, symbol: Symbol)
-    extends RpcMethod with TagMatchingSymbol with AritySymbol {
+    extends RpcMethod with RealMethodTarget {
 
     def shortDescription = "raw method"
     def description = s"$shortDescription $nameStr of ${owner.description}"
@@ -199,9 +226,6 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     val arity: MethodArity = MethodArity.fromAnnotation(this)
     val tried: Boolean = annot(TriedAT).nonEmpty
-
-    val verbatimResult: Boolean =
-      annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
 
     val baseParamTags: List[BaseTagSpec] =
       annots(ParamTagAT).map(tagSpec) ++ owner.baseParamTags
