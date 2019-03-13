@@ -298,10 +298,6 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           parser.extractMulti(consume, createErp).map(ParamMapping.IndexedMulti(rawParam, _))
         case _: ParamArity.Multi =>
           parser.extractMulti(consume, createErp).map(ParamMapping.IterableMulti(rawParam, _))
-        case ParamArity.Fail(error) =>
-          parser.findFirst(matchedParam(_, 0))
-            .map(m => Fail(s"${m.real.problemStr}: $error"))
-            .getOrElse(Ok(ParamMapping.DummyUnit(rawParam)))
       }
     }
 

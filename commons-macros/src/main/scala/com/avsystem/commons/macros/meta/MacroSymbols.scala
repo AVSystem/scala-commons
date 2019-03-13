@@ -46,10 +46,6 @@ private[commons] trait MacroSymbols extends MacroCommons {
     trait Multi extends Arity {
       final def annotStr = "@multi"
     }
-    trait Fail extends Arity {
-      def error: String
-      final def annotStr = "@fail"
-    }
   }
 
   sealed abstract class ParamArity(val verbatimByDefault: Boolean) extends Arity {
@@ -89,9 +85,6 @@ private[commons] trait MacroSymbols extends MacroCommons {
     case class Single(collectedType: Type) extends ParamArity(true) with Arity.Single
     case class Optional(collectedType: Type) extends ParamArity(true) with Arity.Optional
     case class Multi(collectedType: Type, named: Boolean) extends ParamArity(false) with Arity.Multi
-    case class Fail(error: String) extends ParamArity(true) with Arity.Fail {
-      def collectedType: Type = NothingTpe
-    }
   }
 
   sealed abstract class MethodArity(val verbatimByDefault: Boolean) extends Arity

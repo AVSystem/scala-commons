@@ -253,10 +253,6 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
           metadataTree(adtp, i).map(_.map(t => q"(${adtp.nameStr}, $t)"))).map(mkMulti(_))
       case _: ParamArity.Multi =>
         parser.extractMulti(!auxiliary, metadataTree).map(mkMulti(_))
-      case ParamArity.Fail(error) =>
-        parser.findFirst(matchedParam(_, 0))
-          .map(m => Fail(s"${m.real.problemStr}: $error"))
-          .getOrElse(Ok(q"()"))
     }
   }
 
