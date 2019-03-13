@@ -61,7 +61,7 @@ trait RawRest {
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @tagged[FormBody]
   @paramTag[RestParamTag](defaultTag = new Body)
-  @unmatched("it is not a valid POST/PUT/PATCH/DELETE method with form body")
+  @unmatched("it is not a valid HTTP method with form body")
   def handleForm(
     @methodName name: String,
     @composite parameters: RestParameters,
@@ -72,7 +72,7 @@ trait RawRest {
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @tagged[JsonBody](whenUntagged = new JsonBody)
   @paramTag[RestParamTag](defaultTag = new Body)
-  @unmatched("it is not a valid POST/PUT/PATCH/DELETE method")
+  @unmatched("it is not a valid HTTP method")
   def handleJson(
     @methodName name: String,
     @composite parameters: RestParameters,
@@ -83,8 +83,7 @@ trait RawRest {
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @tagged[CustomBody]
   @paramTag[RestParamTag](defaultTag = new Body)
-  @unmatched("it is not a valid POST/PUT/PATCH/DELETE method with custom body " +
-    "(a method which takes exactly one body parameter that serializes directly to HttpBody)")
+  @unmatched("it is not a valid HTTP method with custom body")
   @unmatchedParam[Body]("expected exactly one @Body parameter but more than one was found")
   def handleCustom(
     @methodName name: String,

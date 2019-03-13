@@ -67,7 +67,7 @@ object Res {
             }
             loop(it)
         }
-      } else Fail(Option(errors.result()).filter(_.nonEmpty).map(combineErrors))
+      } else Fail(Option(errors.result()).map(combineErrors))
     loop(coll.iterator)
   }
 }

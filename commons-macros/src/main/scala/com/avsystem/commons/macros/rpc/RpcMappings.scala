@@ -27,12 +27,15 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         _ <- rawSymbol.matchName(matchedMethod.real.shortDescription, matchedMethod.rawName)
         _ <- rawSymbol.matchFilters(matchedMethod)
         methodMapping <- createMapping(rawSymbol, matchedMethod)
-      } yield methodMapping) { errors =>
-        errors.map { case (raw, err) =>
-          val unmatchedError = raw.unmatchedError.getOrElse(
-            s"${raw.shortDescription.capitalize} ${raw.nameStr} did not match")
-          s" * $unmatchedError: ${indent(err, " ")}"
-        }.mkString("\n")
+      } yield methodMapping) {
+        case Nil =>
+          s"it has illegal combination of tags (annotations)"
+        case errors =>
+          errors.map { case (raw, err) =>
+            val unmatchedError = raw.unmatchedError.getOrElse(
+              s"${raw.shortDescription.capitalize} ${raw.nameStr} did not match")
+            s" * $unmatchedError: ${indent(err, " ")}"
+          }.mkString("\n")
       } match {
         case Ok(v) => Some(v)
         case Fail(msg) =>
