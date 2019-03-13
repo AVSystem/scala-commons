@@ -101,7 +101,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       new RpcTraitMetadataConstructor(param.collectedType, Some(param))
 
     def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] = {
-      val errorBase = unmatchedError.getOrElse(s"cannot materialize $this for $rpc")
+      val errorBase = unmatchedError.getOrElse(s"cannot materialize ${ownerType.typeSymbol} for $rpc")
       collectMethodMappings(
         methodMdParams, errorBase, rpc.realMethods, allowIncomplete
       )(_.mappingFor(_)).groupBy(_.mdParam)

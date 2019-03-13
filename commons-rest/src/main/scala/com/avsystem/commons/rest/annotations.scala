@@ -4,8 +4,6 @@ package rest
 import com.avsystem.commons.annotation.{AnnotationAggregate, defaultsToName}
 import com.avsystem.commons.rpc._
 
-import scala.annotation.StaticAnnotation
-
 /**
   * Base trait for tag annotations that determine how a REST method is translated into actual HTTP request.
   * A REST method may be annotated with one of HTTP method tags ([[GET]], [[PUT]], [[POST]], [[PATCH]], [[DELETE]])
