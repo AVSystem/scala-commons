@@ -267,9 +267,6 @@ object RawRest extends RawRpcCompanion[RawRest] {
         handleRequest(RestRequest(methodMeta.method, newHeaders, body))
       } getOrElse RawRest.failingAsync(new RestException(s"no such HTTP method: $name"))
   }
-
-  final val NoPrefixBodyParams = "prefix methods cannot have body parameters"
-  final val NoGetBodyParams = "@GET methods cannot have body parameters"
 }
 
 class RestException(msg: String, cause: Throwable = null) extends InvalidRpcCall(msg, cause)
