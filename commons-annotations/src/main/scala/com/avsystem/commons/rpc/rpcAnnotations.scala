@@ -165,7 +165,7 @@ final class tried extends RawMethodAnnotation
   *
   * When applied on raw RPC parameter or param metadata parameter, customizes error message displayed
   * when no real parameter matched annotated raw parameter. This implies that the raw parameter must have
-  * [[single]] arity (otherwise it's not required to be matched by any real parameter).
+  * `single` arity (otherwise it's not required to be matched by any real parameter).
   */
 final class unmatched(error: String) extends RawSymAnnotation
 
