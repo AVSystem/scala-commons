@@ -62,7 +62,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
           } yield tree
         }
       } yield tree
-      result.mapFailure(msg => s"${realParam.problemStr}: $msg")
+      result.mapFailure(msg => s"${realParam.problemStr}:\n$msg")
     }
 
     def metadataFor(matchedMethod: MatchedMethod, parser: ParamsParser[RealParam]): Res[Tree] = arity match {
@@ -101,7 +101,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       new RpcTraitMetadataConstructor(param.collectedType, Some(param))
 
     def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] = {
-      val errorBase = unmatchedError.getOrElse(s"cannot materialize $this for $rpc: ")
+      val errorBase = unmatchedError.getOrElse(s"cannot materialize $this for $rpc")
       collectMethodMappings(
         methodMdParams, errorBase, rpc.realMethods, allowIncomplete
       )(_.mappingFor(_)).groupBy(_.mdParam)

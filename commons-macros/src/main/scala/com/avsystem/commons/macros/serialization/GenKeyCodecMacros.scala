@@ -44,7 +44,7 @@ class GenKeyCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
     }
 
     val wrappedCodecTpe = getType(tq"$GenKeyCodecCls[${param.typeSignature}]")
-    val clue = s"Cannot materialize $codecTpe because of problem with parameter ${param.name}: "
+    val clue = s"Cannot materialize $codecTpe because of problem with parameter ${param.name}:\n"
     val wrappedCodec = inferCachedImplicit(wrappedCodecTpe, clue, param.pos)
 
     val unwrapped =

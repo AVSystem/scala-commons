@@ -109,7 +109,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
       if (caseMdParams.isEmpty) Ok(Map.empty) else {
         val errors = new ListBuffer[String]
         def addFailure(adtCase: AdtSymbol, message: String): Unit = {
-          errors += s" * ${adtCase.description}: ${indent(message, " ")}"
+          errors += s" * ${adtCase.description}:\n   ${indent(message, "   ")}"
         }
 
         val mappings = cases.flatMap { adtCase =>
@@ -119,7 +119,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
             val unmatchedReport = errors.map { case (mdParam, err) =>
               val unmatchedError = mdParam.unmatchedError.getOrElse(
                 s"${mdParam.shortDescription.capitalize} ${mdParam.nameStr} did not match")
-              s" * $unmatchedError: ${indent(err, " ")}"
+              s" * $unmatchedError:\n   ${indent(err, "   ")}"
             }.mkString("\n")
             s"it has no matching metadata parameters:\n$unmatchedReport"
           } match {
@@ -239,7 +239,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
             } yield tree
           }
         } yield tree
-        result.mapFailure(msg => s"${adtParam.problemStr}: cannot map it to $shortDescription $pathStr: $msg")
+        result.mapFailure(msg => s"${adtParam.problemStr}:\ncannot map it to $shortDescription $pathStr: $msg")
       }
 
     def metadataFor(parser: ParamsParser[AdtParam]): Res[Tree] = arity match {

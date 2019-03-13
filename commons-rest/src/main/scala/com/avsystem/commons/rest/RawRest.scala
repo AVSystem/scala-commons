@@ -7,6 +7,8 @@ import com.avsystem.commons.meta._
 import com.avsystem.commons.rpc._
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
+import scala.annotation.implicitNotFound
+
 sealed abstract class RestMethodCall {
   val rpcName: String
   val pathParams: List[PathValue]
@@ -39,7 +41,7 @@ trait RawRest {
   @tagged[Prefix](whenUntagged = new Prefix)
   @tagged[NoBody](whenUntagged = new NoBody)
   @paramTag[RestParamTag](defaultTag = new Path)
-  @unmatched("it is not a valid prefix method (a method which returns another API trait)")
+  @unmatched("it cannot be translated to a prefix method")
   @unmatchedParam[Body]("prefix methods cannot take @Body parameters")
   def prefix(
     @methodName name: String,
@@ -50,7 +52,7 @@ trait RawRest {
   @tagged[GET]
   @tagged[NoBody](whenUntagged = new NoBody)
   @paramTag[RestParamTag](defaultTag = new Query)
-  @unmatched("it is not a valid GET method")
+  @unmatched("it cannot be translated to a HTTP GET method")
   @unmatchedParam[Body]("GET methods cannot take @Body parameters")
   def get(
     @methodName name: String,
@@ -61,7 +63,7 @@ trait RawRest {
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @tagged[FormBody]
   @paramTag[RestParamTag](defaultTag = new Body)
-  @unmatched("it is not a valid HTTP method with form body")
+  @unmatched("it cannot be translated to a HTTP method with form body")
   def handleForm(
     @methodName name: String,
     @composite parameters: RestParameters,
@@ -72,7 +74,7 @@ trait RawRest {
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @tagged[JsonBody](whenUntagged = new JsonBody)
   @paramTag[RestParamTag](defaultTag = new Body)
-  @unmatched("it is not a valid HTTP method")
+  @unmatched("it cannot be translated to a HTTP method")
   def handleJson(
     @methodName name: String,
     @composite parameters: RestParameters,
@@ -83,7 +85,7 @@ trait RawRest {
   @tagged[BodyMethodTag](whenUntagged = new POST)
   @tagged[CustomBody]
   @paramTag[RestParamTag](defaultTag = new Body)
-  @unmatched("it is not a valid HTTP method with custom body")
+  @unmatched("it cannot be translated to a HTTP method with custom body")
   @unmatchedParam[Body]("expected exactly one @Body parameter but more than one was found")
   def handleCustom(
     @methodName name: String,
@@ -148,6 +150,24 @@ object RawRest extends RawRpcCompanion[RawRest] {
     * about the result (i.e. it should support concurrent execution).
     */
   type Async[T] = Callback[T] => Unit
+
+  /**
+    * Typeclass which captures the fact that some effect type constructor represents asynchronous computation and
+    * can be converted to [[RawRest.Async]].
+    */
+  @implicitNotFound("${F} is not a valid asynchronous effect, ToAsync instance is missing")
+  trait ToAsync[F[_]] {
+    def toAsync[A](fa: F[A]): Async[A]
+  }
+
+  /**
+    * Typeclass which captures the fact that some effect type constructor represents asynchronous computation and
+    * can be constructed from [[RawRest.Async]].
+    */
+  @implicitNotFound("${F} is not a valid asynchronous effect, FromAsync instance is missing")
+  trait FromAsync[F[_]] {
+    def fromAsync[A](async: Async[A]): F[A]
+  }
 
   /**
     * Raw type of an operation that executes a [[RestRequest]]. The operation should be run every time the

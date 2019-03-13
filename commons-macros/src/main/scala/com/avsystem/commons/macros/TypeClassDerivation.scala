@@ -119,7 +119,7 @@ trait TypeClassDerivation extends MacroCommons {
   def dependencyType(tpe: Type): Type = typeClassInstance(tpe)
 
   def dependency(depTpe: Type, tcTpe: Type, param: Symbol): Tree = {
-    val clue = s"Cannot materialize $tcTpe because of problem with parameter ${param.name}: "
+    val clue = s"Cannot materialize $tcTpe because of problem with parameter ${param.name}:\n"
     val depTcTpe = dependencyType(depTpe)
     q"""$ImplicitsObj.infer[$depTcTpe](${internal.setPos(StringLiteral(clue), param.pos)})"""
   }

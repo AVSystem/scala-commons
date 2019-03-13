@@ -30,7 +30,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final lazy val UnmatchedParamErrorArg: Symbol = UnmatchedParamAT.member(TermName("error"))
 
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
-    primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}: "))
+    primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}:\n"))
 
   sealed trait Arity {
     def annotStr: String
@@ -124,7 +124,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
       infer(getType(tpt))
 
     def infer(tpe: Type, forSym: MacroSymbol = this, clue: String = ""): TermName =
-      inferCachedImplicit(tpe, s"${forSym.problemStr}: $clue", forSym.pos)
+      inferCachedImplicit(tpe, s"${forSym.problemStr}:\n$clue", forSym.pos)
 
     val name: TermName = symbol.name.toTermName
     val safeName: TermName = c.freshName(name)

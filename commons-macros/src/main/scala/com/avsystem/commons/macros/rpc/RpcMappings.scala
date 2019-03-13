@@ -16,7 +16,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
     val failedReals = new ListBuffer[String]
     def addFailure(realMethod: RealMethod, message: String): Unit = {
-      errorAt(s"$errorBase${realMethod.problemStr}:\n$message", realMethod.pos)
+      errorAt(s"$errorBase:\n${realMethod.problemStr}:\n$message", realMethod.pos)
       failedReals += realMethod.nameStr
     }
 
@@ -34,7 +34,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           errors.map { case (raw, err) =>
             val unmatchedError = raw.unmatchedError.getOrElse(
               s"${raw.shortDescription.capitalize} ${raw.nameStr} did not match")
-            s" * $unmatchedError: ${indent(err, " ")}"
+            s" * $unmatchedError:\n   ${indent(err, "   ")}"
           }.mkString("\n")
       } match {
         case Ok(v) => Some(v)
@@ -174,11 +174,11 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         if (realParam.actualType =:= encArgType)
           Ok(Verbatim(encArgType))
         else Fail(
-          s"${realParam.problemStr}: expected real parameter exactly of type " +
+          s"${realParam.problemStr}:\nexpected real parameter exactly of type " +
             s"$encArgType, got ${realParam.actualType}")
       } else
         Ok(RealRawEncoding(realParam.actualType, encArgType,
-          Some((s"${realParam.problemStr}: ", realParam.pos))))
+          Some((s"${realParam.problemStr}:\n", realParam.pos))))
     }
 
     case class Verbatim(tpe: Type) extends RpcEncoding {
@@ -337,7 +337,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
 
     lazy val methodMappings: List[MethodMapping] = {
-      val errorBase = raw.unmatchedError.getOrElse(s"cannot translate between $real and $raw: ")
+      val errorBase = raw.unmatchedError.getOrElse(s"cannot translate between $real and $raw")
       collectMethodMappings(raw.rawMethods, errorBase, real.realMethods, allowIncomplete = false)(mappingRes)
     }
 
