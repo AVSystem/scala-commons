@@ -11,32 +11,36 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
   import c.universe._
 
   def collectMethodMappings[Raw <: TagMatchingSymbol with AritySymbol, M](
-    rawSymbols: List[Raw], errorBase: String, realMethods: List[RealMethod], allowIncomplete: Boolean)(
-    createMapping: (Raw, MatchedMethod) => Res[M]): List[M] = {
+    rawSymbols: List[Raw], errorBase: String, realMethods: List[RealMethod], allowIncomplete: Boolean
+  )(createMapping: (Raw, MatchedMethod) => Res[M]): List[M] = {
 
     val failedReals = new ListBuffer[String]
     def addFailure(realMethod: RealMethod, message: String): Unit = {
-      errorAt(s"${realMethod.problemStr}: $message", realMethod.pos)
+      errorAt(s"$errorBase:\n${realMethod.problemStr}:\n$message", realMethod.pos)
       failedReals += realMethod.nameStr
     }
 
     val result = realMethods.flatMap { realMethod =>
       Res.firstOk(rawSymbols)(rawSymbol => for {
-        fallbackTag <- rawSymbol.matchTag(realMethod)
-        matchedMethod = MatchedMethod(realMethod, fallbackTag)
+        fallbackTags <- rawSymbol.matchTags(realMethod)
+        matchedMethod = MatchedMethod(realMethod, fallbackTags)
         _ <- rawSymbol.matchName(matchedMethod.real.shortDescription, matchedMethod.rawName)
         _ <- rawSymbol.matchFilters(matchedMethod)
         methodMapping <- createMapping(rawSymbol, matchedMethod)
-      } yield methodMapping) { errors =>
-        val unmatchedReport = errors.map { case (raw, err) =>
-          s" * ${raw.shortDescription.capitalize} ${raw.nameStr} did not match: ${indent(err, " ")}"
-        }.mkString("\n")
-        s"$errorBase:\n$unmatchedReport"
+      } yield methodMapping) {
+        case Nil =>
+          s"it has illegal combination of tags (annotations)"
+        case errors =>
+          errors.map { case (raw, err) =>
+            val unmatchedError = raw.unmatchedError.getOrElse(
+              s"${raw.shortDescription.capitalize} ${raw.nameStr} did not match")
+            s" * $unmatchedError:\n   ${indent(err, "   ")}"
+          }.mkString("\n")
       } match {
         case Ok(v) => Some(v)
         case Fail(msg) =>
           if (!allowIncomplete) {
-            addFailure(realMethod, msg)
+            msg.foreach(addFailure(realMethod, _))
           }
           None
       }
@@ -66,6 +70,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       case ParamMapping.Single(_, erp) => List(erp.matchedParam)
       case ParamMapping.Optional(_, erpOpt) => erpOpt.map(_.matchedParam).toList
       case multi: ParamMapping.Multi => multi.reals.map(_.matchedParam)
+      case ParamMapping.DummyUnit(_) => Nil
     }
   }
   object ParamMapping {
@@ -103,8 +108,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         itDecl :: reals.map { erp =>
           val rp = erp.realParam
           if (rp.symbol.asTerm.isByNameParam) {
-            rp.reportProblem(
-              s"${rawParam.cannotMapClue}: by-name real parameters cannot be extracted from @multi raw parameters")
+            rp.reportProblem("by-name real parameters cannot be extracted from @multi raw parameters")
           }
           val decoded = erp.encoding.paramAsReal(q"$itName.next()", erp.matchedParam)
           erp.localValueDecl(q"if($itName.hasNext) $decoded else ${erp.matchedParam.fallbackValueTree}")
@@ -147,6 +151,10 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             """)
         }
     }
+    case class DummyUnit(rawParam: RawValueParam) extends ParamMapping {
+      def rawValueTree: Tree = q"()"
+      def realDecls: List[Tree] = Nil
+    }
   }
 
   sealed trait RpcEncoding {
@@ -166,11 +174,11 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         if (realParam.actualType =:= encArgType)
           Ok(Verbatim(encArgType))
         else Fail(
-          s"${realParam.problemStr}: ${rawParam.cannotMapClue}: expected real parameter exactly of type " +
+          s"${realParam.problemStr}:\nexpected real parameter exactly of type " +
             s"$encArgType, got ${realParam.actualType}")
       } else
         Ok(RealRawEncoding(realParam.actualType, encArgType,
-          Some((s"${realParam.problemStr}: ${rawParam.cannotMapClue}: ", realParam.pos))))
+          Some((s"${realParam.problemStr}:\n", realParam.pos))))
     }
 
     case class Verbatim(tpe: Type) extends RpcEncoding {
@@ -270,15 +278,21 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       registerImplicit(getType(tq"$AsRawCls[${raw.tpe},${real.tpe}]"), selfName)
     }
 
-    private def extractMapping(method: MatchedMethod, rawParam: RawValueParam, parser: ParamsParser[RealParam]): Res[ParamMapping] = {
+    private def extractMapping(
+      method: MatchedMethod, rawParam: RawValueParam, parser: ParamsParser[RealParam]
+    ): Res[ParamMapping] = {
+      def matchedParam(real: RealParam, indexInRaw: Int): Option[MatchedParam] =
+        rawParam.matchRealParam(method, real, indexInRaw).toOption
+
       def createErp(real: RealParam, indexInRaw: Int): Option[Res[EncodedRealParam]] =
-        rawParam.matchRealParam(method, real, indexInRaw).toOption.map(EncodedRealParam.create(rawParam, _))
+        matchedParam(real, indexInRaw).map(EncodedRealParam.create(rawParam, _))
 
       val consume = !rawParam.auxiliary
       rawParam.arity match {
         case _: ParamArity.Single =>
-          val unmatchedError = s"${raw.shortDescription} ${rawParam.pathStr} was not matched by real parameter"
-          parser.extractSingle(consume, createErp(_, 0), unmatchedError).map(ParamMapping.Single(rawParam, _))
+          val unmatchedErrorMsg = rawParam.unmatchedError.getOrElse(
+            s"${raw.shortDescription} ${rawParam.pathStr} was not matched by real parameter")
+          parser.extractSingle(consume, createErp(_, 0), unmatchedErrorMsg).map(ParamMapping.Single(rawParam, _))
         case _: ParamArity.Optional =>
           Ok(ParamMapping.Optional(rawParam, parser.extractOptional(consume, createErp(_, 0))))
         case ParamArity.Multi(_, true) =>
@@ -313,13 +327,17 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       for {
         resultConv <- resultEncoding
         paramMappings <- collectParamMappings(
-          matchedMethod.real.realParams, rawMethod.allValueParams, "raw parameter", allowIncomplete = false
-        )(extractMapping(matchedMethod, _, _))
+          matchedMethod.real.realParams, rawMethod.allValueParams, allowIncomplete = false
+        )(
+          extractMapping(matchedMethod, _, _),
+          rp => rawMethod.errorForUnmatchedParam(rp).getOrElse(
+            s"no raw parameter was found that would match ${rp.shortDescription} ${rp.nameStr}")
+        )
       } yield MethodMapping(matchedMethod, rawMethod, paramMappings, resultConv)
     }
 
     lazy val methodMappings: List[MethodMapping] = {
-      val errorBase = s"it has no matching raw methods in ${raw.description}"
+      val errorBase = raw.unmatchedError.getOrElse(s"cannot translate between $real and $raw")
       collectMethodMappings(raw.rawMethods, errorBase, real.realMethods, allowIncomplete = false)(mappingRes)
     }
 

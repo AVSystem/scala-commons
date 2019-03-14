@@ -161,6 +161,22 @@ final class verbatim extends RpcEncoding
 final class tried extends RawMethodAnnotation
 
 /**
+  * When applied on raw RPC method or method metadata parameter, customizes error message displayed
+  * for unmatched real method.
+  *
+  * When applied on raw RPC parameter or param metadata parameter, customizes error message displayed
+  * when no real parameter matched annotated raw parameter. This implies that the raw parameter must have
+  * `single` arity (otherwise it's not required to be matched by any real parameter).
+  */
+final class unmatched(error: String) extends RawSymAnnotation
+
+/**
+  * Can be applied on raw RPC method or method metadata parameter to customize compilation error message for
+  * unmatched real parameters tagged as `Tag`.
+  */
+final class unmatchedParam[Tag <: RpcTag](error: String) extends RawMethodAnnotation
+
+/**
   * Method tagging lets you have more explicit control over which raw methods can match which real methods.
   * Example:
   *

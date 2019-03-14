@@ -44,10 +44,6 @@ sealed abstract class HttpMethodTag(val method: HttpMethod) extends RestMethodTa
   * Parameters may also contribute to URL path, HTTP headers and query parameters if annotated as
   * [[Path]], [[Header]] or [[Query]].
   *
-  * REST method may also take a single parameter representing the entire HTTP body. Such parameter must be annotated
-  * as [[Body]] and must be the only body parameter of that method. Value of this parameter will be encoded as
-  * [[HttpBody]] which doesn't necessarily have to be JSON (it may define its own MIME type).
-  *
   * @example
   * {{{
   *   trait SomeRestApi {
@@ -93,13 +89,40 @@ class DELETE(val path: String = null) extends BodyMethodTag(HttpMethod.DELETE) {
 }
 
 /**
-  * Causes the body parameters of a HTTP REST method to be encoded as `application/x-www-form-urlencoded`.
-  * Each parameter value itself will be first serialized to [[QueryValue]].
-  * This annotation only applies to methods which include HTTP body (i.e. not `GET`) and it must not be
-  * a method with a single body parameter ([[Body]]). Methods with single body parameter can send their body
-  * as `application/x-www-form-urlencoded` by defining custom serialization of its parameter into [[HttpBody]].
+  * Base trait for tag annotations which specify how a HTTP body is built for invocation of particular
+  * method.
   */
-class FormBody extends StaticAnnotation
+sealed trait BodyTypeTag extends RpcTag
+
+/**
+  * Indicates that a HTTP REST method takes no body. This annotation is assumed by default
+  * for [[GET]] and [[Prefix]] methods. There should be no reason to use it explicitly.
+  */
+class NoBody extends BodyTypeTag
+
+sealed trait SomeBodyTag extends BodyTypeTag
+
+/**
+  * Causes the [[Body]] parameters of a HTTP REST method to be encoded as `application/json`.
+  * Each parameter value itself will be first serialized to [[JsonValue]].
+  * This annotation only applies to methods which may include HTTP body (i.e. not [[GET]])
+  * and is assumed by default, so there should be no reason to apply it explicitly.
+  */
+class JsonBody extends SomeBodyTag
+
+/**
+  * Causes the [[Body]] parameters of a HTTP REST method to be encoded as `application/x-www-form-urlencoded`.
+  * Each parameter value itself will be first serialized to [[QueryValue]].
+  * This annotation only applies to methods which may include HTTP body (i.e. not [[GET]]).
+  */
+class FormBody extends SomeBodyTag
+
+/**
+  * Requires that a method takes exactly one [[Body]] parameter which serializes directly into [[HttpBody]].
+  * Serialization may then use arbitrary body format. This annotation only applies to methods which may
+  * include HTTP body (i.e. not [[GET]]).
+  */
+class CustomBody extends SomeBodyTag
 
 /**
   * REST methods annotated as [[Prefix]] are expected to return another REST API trait as their result.
@@ -131,7 +154,6 @@ sealed trait NonBodyTag extends RestParamTag {
     case _ => false
   }
 }
-sealed trait BodyTag extends RestParamTag
 
 /**
   * REST method parameters annotated as [[Path]] will be encoded as [[PathValue]] and appended to URL path, in the
@@ -154,21 +176,14 @@ class Query(@defaultsToName override val name: String = null)
   extends rpcName(name) with NonBodyTag
 
 /**
-  * REST method parameters annotated as [[BodyField]] will be encoded as either [[JsonValue]] and combined into
-  * a JSON object that will be sent as HTTP body. Body parameters are allowed only in REST methods annotated as
-  * [[POST]], [[PATCH]], [[PUT]] or [[DELETE]]. Actually, parameters of these methods are interpreted as
-  * [[BodyField]] by default which means that this annotation rarely needs to be applied explicitly.
-  */
-class BodyField(@defaultsToName override val name: String = null)
-  extends rpcName(name) with BodyTag
-
-/**
-  * REST methods that can send HTTP body ([[POST]], [[PATCH]], [[PUT]] and [[DELETE]]) may take a single
-  * parameter annotated as [[Body]] which will be encoded as [[HttpBody]] and sent as the body of HTTP request.
-  * Such a method may not define any other body parameters (although it may take additional [[Path]], [[Header]]
-  * or [[Query]] parameters).
+  * REST method parameters annotated as [[Body]] will be used to build HTTP request body.
+  * How exactly that happens depends on [[BodyTypeTag]] applied on a method. By default, [[JsonBody]] is assumed
+  * which means that body parameters will be combined into a single JSON object sent as body.
+  * Body parameters are allowed only in REST methods annotated as [[POST]], [[PATCH]], [[PUT]] or [[DELETE]].
   *
-  * The single body parameter may have a completely custom encoding to [[HttpBody]] which may define its own MIME type
-  * and doesn't necessarily have to be JSON.
+  * [[Body]] annotation is assumed by default for parameters of all methods which may include HTTP body.
+  * This means that there's usually no reason to apply this annotation explicitly. It may only be useful when
+  * wanting to customize JSON/form field name.
   */
-final class Body extends BodyTag
+class Body(@defaultsToName override val name: String = null)
+  extends rpcName(name) with RestParamTag

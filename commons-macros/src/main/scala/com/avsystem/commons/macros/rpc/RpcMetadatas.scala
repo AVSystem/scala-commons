@@ -9,24 +9,21 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
   import c.universe._
 
   class MethodMetadataParam(owner: RpcTraitMetadataConstructor, symbol: Symbol)
-    extends MetadataParam(owner, symbol) with TagMatchingSymbol with ArityParam {
+    extends MetadataParam(owner, symbol) with RealMethodTarget with ArityParam {
 
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
+    def allowFail: Boolean = false
 
-    def baseTagTpe: Type = owner.baseMethodTag
-    def fallbackTag: FallbackTag = owner.fallbackMethodTag
-
-    val verbatimResult: Boolean =
-      annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
+    def baseTagSpecs: List[BaseTagSpec] = owner.baseMethodTags
 
     if (!(arity.collectedType <:< TypedMetadataType)) {
       reportProblem(s"method metadata type must be a subtype TypedMetadata[_]")
     }
 
-    val (baseParamTag, fallbackParamTag) =
-      annot(ParamTagAT).orElse(findAnnotation(arity.collectedType.typeSymbol, ParamTagAT))
-        .map(tagSpec).getOrElse(owner.baseParamTag, owner.fallbackParamTag)
+    val baseParamTags: List[BaseTagSpec] =
+      (annots(ParamTagAT) ++ allAnnotations(arity.collectedType.typeSymbol, ParamTagAT)).map(tagSpec) ++
+        owner.baseParamTags
 
     def mappingFor(matchedMethod: MatchedMethod): Res[MethodMetadataMapping] = for {
       mdType <- actualMetadataType(arity.collectedType, matchedMethod.real.resultType, "method result type", verbatimResult)
@@ -44,10 +41,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
   class ParamMetadataParam(owner: MethodMetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with RealParamTarget {
 
-    def baseTagTpe: Type = owner.containingMethodParam.baseParamTag
-    def fallbackTag: FallbackTag = owner.containingMethodParam.fallbackParamTag
-
-    def cannotMapClue: String = s"cannot map it to $shortDescription $nameStr of ${owner.ownerType}"
+    def baseTagSpecs: List[BaseTagSpec] = owner.containingMethodParam.baseParamTags
 
     if (!(arity.collectedType <:< TypedMetadataType)) {
       reportProblem(s"type ${arity.collectedType} is not a subtype of TypedMetadata[_]")
@@ -68,13 +62,13 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
           } yield tree
         }
       } yield tree
-      result.mapFailure(msg => s"${realParam.problemStr}: $cannotMapClue: $msg")
+      result.mapFailure(msg => s"${realParam.problemStr}:\n$msg")
     }
 
     def metadataFor(matchedMethod: MatchedMethod, parser: ParamsParser[RealParam]): Res[Tree] = arity match {
       case _: ParamArity.Single =>
-        val unmatchedError = s"$shortDescription $pathStr was not matched by real parameter"
-        parser.extractSingle(!auxiliary, metadataTree(matchedMethod, _, 0), unmatchedError)
+        val errorMessage = unmatchedError.getOrElse(s"$shortDescription $pathStr was not matched by any real parameter")
+        parser.extractSingle(!auxiliary, metadataTree(matchedMethod, _, 0), errorMessage)
       case _: ParamArity.Optional =>
         Ok(mkOptional(parser.extractOptional(!auxiliary, metadataTree(matchedMethod, _, 0))))
       case ParamArity.Multi(_, true) =>
@@ -92,13 +86,10 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
   class RpcTraitMetadataConstructor(ownerType: Type, atParam: Option[CompositeParam])
     extends MetadataConstructor(ownerType, atParam) with TagMatchingSymbol {
 
-    def baseTagTpe: Type = NothingTpe
-    def fallbackTag: FallbackTag = FallbackTag.Empty
+    def baseTagSpecs: List[BaseTagSpec] = Nil
 
-    val (baseMethodTag, fallbackMethodTag) =
-      annot(MethodTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
-    val (baseParamTag, fallbackParamTag) =
-      annot(ParamTagAT).map(tagSpec).getOrElse((NothingTpe, FallbackTag.Empty))
+    val baseMethodTags: List[BaseTagSpec] = annots(MethodTagAT).map(tagSpec)
+    val baseParamTags: List[BaseTagSpec] = annots(ParamTagAT).map(tagSpec)
 
     lazy val methodMdParams: List[MethodMetadataParam] = collectParams[MethodMetadataParam]
 
@@ -110,7 +101,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       new RpcTraitMetadataConstructor(param.collectedType, Some(param))
 
     def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] = {
-      val errorBase = s"it has no matching metadata parameters in $description"
+      val errorBase = unmatchedError.getOrElse(s"cannot materialize ${ownerType.typeSymbol} for $rpc")
       collectMethodMappings(
         methodMdParams, errorBase, rpc.realMethods, allowIncomplete
       )(_.mappingFor(_)).groupBy(_.mdParam)
@@ -135,6 +126,8 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
           }
           case ParamArity.Multi(_, named) =>
             Ok(mmp.mkMulti(mappings.map(_.collectedTree(named))))
+          case arity =>
+            Fail(s"${arity.annotStr} not allowed on method metadata params")
         }
       }
   }
@@ -155,11 +148,11 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       new MethodMetadataConstructor(param.collectedType, containingMethodParam, Some(param))
 
     def paramMappings(matchedMethod: MatchedMethod): Res[Map[ParamMetadataParam, Tree]] =
-      collectParamMappings(
-        matchedMethod.real.realParams, paramMdParams, "metadata parameter", allowIncomplete
-      ) { (param, parser) =>
-        param.metadataFor(matchedMethod, parser).map(t => (param, t))
-      }.map(_.toMap)
+      collectParamMappings(matchedMethod.real.realParams, paramMdParams, allowIncomplete)(
+        (param, parser) => param.metadataFor(matchedMethod, parser).map(t => (param, t)),
+        rp => containingMethodParam.errorForUnmatchedParam(rp).getOrElse(
+          s"no metadata parameter was found that would match ${rp.shortDescription} ${rp.nameStr}")
+      ).map(_.toMap)
 
     def tryMaterializeFor(matchedMethod: MatchedMethod, paramMappings: Map[ParamMetadataParam, Tree]): Res[Tree] =
       tryMaterialize(matchedMethod) {

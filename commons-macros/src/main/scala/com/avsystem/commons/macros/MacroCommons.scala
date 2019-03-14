@@ -58,6 +58,7 @@ trait MacroCommons { bundle =>
   final lazy val ImplicitNotFoundSym = staticType(tq"$MiscPkg.ImplicitNotFound[_]").typeSymbol
   final lazy val AggregatedMethodSym = staticType(tq"$CommonsPkg.annotation.AnnotationAggregate").member(TermName("aggregated"))
 
+  final lazy val UnitTpe: Type = typeOf[Unit]
   final lazy val NothingTpe: Type = typeOf[Nothing]
   final lazy val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
   final lazy val BIterableTpe: Type = typeOf[Iterable[Any]]

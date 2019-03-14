@@ -121,42 +121,27 @@ abstract class RestOpenApiCompanion[Implicits, Real](protected val implicits: Im
 }
 
 trait FutureRestImplicits {
-  implicit def futureToAsyncResp[T](
-    implicit respAsRaw: AsRaw[RestResponse, T]
-  ): AsRaw[Async[RestResponse], Try[Future[T]]] =
-    AsRaw.create { triedFuture =>
-      val future = triedFuture.fold(Future.failed, identity)
-      callback => future.onCompleteNow(t => callback(t.map(respAsRaw.asRaw).recoverHttpError))
+  implicit def futureToAsync: RawRest.ToAsync[Future] =
+    new RawRest.ToAsync[Future] {
+      def toAsync[A](fa: Future[A]): Async[A] =
+        fa.onCompleteNow
     }
 
-  implicit def futureFromAsyncResp[T](
-    implicit respAsReal: AsReal[RestResponse, T]
-  ): AsReal[Async[RestResponse], Try[Future[T]]] =
-    AsReal.create { async =>
-      val promise = Promise[T]
-      async(t => promise.complete(t.map(respAsReal.asReal)))
-      Success(promise.future)
+  implicit def futureFromAsync: RawRest.FromAsync[Future] =
+    new RawRest.FromAsync[Future] {
+      def fromAsync[A](async: Async[A]): Future[A] =
+        Promise[A].setup(p => async(p.complete)).future
     }
-
-  @implicitNotFound("#{forResponse}")
-  implicit def futureAsRawNotFound[T](
-    implicit forResponse: ImplicitNotFound[AsRaw[RestResponse, T]]
-  ): ImplicitNotFound[AsRaw[Async[RestResponse], Try[Future[T]]]] = ImplicitNotFound()
-
-  @implicitNotFound("#{forResponse}")
-  implicit def futureAsRealNotFound[T](
-    implicit forResponse: ImplicitNotFound[AsReal[RestResponse, T]]
-  ): ImplicitNotFound[AsReal[Async[RestResponse], Try[Future[T]]]] = ImplicitNotFound()
 
   implicit def futureHttpResponseType[T]: HttpResponseType[Future[T]] =
     HttpResponseType[Future[T]]()
 
-  @implicitNotFound("${T} is not a valid REST HTTP method result type - it must be wrapped into a Future")
-  implicit def httpResponseTypeNotFound[T]: ImplicitNotFound[HttpResponseType[T]] =
-    ImplicitNotFound()
-
   implicit def futureRestResultType[T: RestResponses]: RestResultType[Future[T]] =
     RestResultType[Future[T]](RestResponses[T].responses)
+
+  @implicitNotFound("${T} is not a valid REST HTTP method result type - it must be a Future")
+  implicit def httpResponseTypeNotFound[T]: ImplicitNotFound[HttpResponseType[T]] =
+    ImplicitNotFound()
 
   @implicitNotFound("#{forRestResponses}")
   implicit def futureRestResultTypeNotFound[T](
@@ -202,12 +187,42 @@ trait GenCodecRestImplicits extends FloatingPointRestImplicits {
       v => handleReadFailure(JsonStringInput.read[T](v.value))
     ))
 
-  @implicitNotFound("Cannot serialize ${T} into JsonValue, probably because: #{forGenCodec}")
+  @implicitNotFound("Cannot serialize ${T} into PathValue, most likely because:\n#{forKeyCodec}")
+  implicit def asRawPathNotFound[T](
+    implicit forKeyCodec: ImplicitNotFound[GenKeyCodec[T]]
+  ): ImplicitNotFound[AsRaw[PathValue, T]] = ImplicitNotFound()
+
+  @implicitNotFound("Cannot deserialize ${T} from PathValue, most likely because:\n#{forKeyCodec}")
+  implicit def asRealPathNotFound[T](
+    implicit forKeyCodec: ImplicitNotFound[GenKeyCodec[T]]
+  ): ImplicitNotFound[AsReal[PathValue, T]] = ImplicitNotFound()
+
+  @implicitNotFound("Cannot serialize ${T} into HeaderValue, most likely because:\n#{forKeyCodec}")
+  implicit def asRawHeaderNotFound[T](
+    implicit forKeyCodec: ImplicitNotFound[GenKeyCodec[T]]
+  ): ImplicitNotFound[AsRaw[HeaderValue, T]] = ImplicitNotFound()
+
+  @implicitNotFound("Cannot deserialize ${T} from HeaderValue, most likely because:\n#{forKeyCodec}")
+  implicit def asRealHeaderNotFound[T](
+    implicit forKeyCodec: ImplicitNotFound[GenKeyCodec[T]]
+  ): ImplicitNotFound[AsReal[HeaderValue, T]] = ImplicitNotFound()
+
+  @implicitNotFound("Cannot serialize ${T} into QueryValue, most likely because:\n#{forKeyCodec}")
+  implicit def asRawQueryNotFound[T](
+    implicit forKeyCodec: ImplicitNotFound[GenKeyCodec[T]]
+  ): ImplicitNotFound[AsRaw[QueryValue, T]] = ImplicitNotFound()
+
+  @implicitNotFound("Cannot deserialize ${T} from QueryValue, most likely because:\n#{forKeyCodec}")
+  implicit def asRealQueryNotFound[T](
+    implicit forKeyCodec: ImplicitNotFound[GenKeyCodec[T]]
+  ): ImplicitNotFound[AsReal[QueryValue, T]] = ImplicitNotFound()
+
+  @implicitNotFound("Cannot serialize ${T} into JsonValue, because:\n#{forGenCodec}")
   implicit def asRawJsonNotFound[T](
     implicit forGenCodec: ImplicitNotFound[GenCodec[T]]
   ): ImplicitNotFound[AsRaw[JsonValue, T]] = ImplicitNotFound()
 
-  @implicitNotFound("Cannot deserialize ${T} from JsonValue, probably because: #{forGenCodec}")
+  @implicitNotFound("Cannot deserialize ${T} from JsonValue, because:\n#{forGenCodec}")
   implicit def asRealJsonNotFound[T](
     implicit forGenCodec: ImplicitNotFound[GenCodec[T]]
   ): ImplicitNotFound[AsReal[JsonValue, T]] = ImplicitNotFound()

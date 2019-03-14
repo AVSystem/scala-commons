@@ -12,7 +12,7 @@ import scala.annotation.implicitNotFound
   * used in [[ObjectOutput.writeField]] and [[ObjectInput.nextField]] ([[FieldInput.fieldName]]).
   * Every type which has a natural, unambiguous string representation should have a `GenKeyCodec`.
   */
-@implicitNotFound("Can't convert between map key and ${T} - GenKeyCodec not found")
+@implicitNotFound("No GenKeyCodec found for ${T}")
 trait GenKeyCodec[T] {
   def read(key: String): T
   def write(value: T): String
