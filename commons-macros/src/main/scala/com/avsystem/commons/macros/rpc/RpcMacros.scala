@@ -107,6 +107,6 @@ private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCo
       tree <- constructor.tryMaterializeFor(realRpc, methodMappings)
     } yield tree
 
-    guardedMetadata(metadataTpe, realRpc.tpe)(materialize.getOrElse(abort))
+    guardedMetadata(metadataTpe, realRpc.tpe)(materialize.getOrElse(err => abort(err.getOrElse("unknown error"))))
   }
 }

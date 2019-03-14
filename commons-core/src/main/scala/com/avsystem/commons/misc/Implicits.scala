@@ -35,7 +35,7 @@ object Implicits {
   * above could reuse the implicit-not-found message for `GenCodec[T]` when building the message for `GenCodec[Box[T]]`:
   *
   * {{{
-  *   @implicitNotFound("GenCodec for Box[$${T}] not found, probably because: #{forUnboxed}")
+  *   @implicitNotFound("GenCodec for Box[$${T}] not found, because:\n#{forUnboxed}")
   *   implicit def boxCodecNotFound[T](
   *     implicit forUnboxed: ImplicitNotFound[GenCodec[T]]
   *   ): ImplicitNotFound[GenCodec[Box[T]]] = ImplicitNotFound()

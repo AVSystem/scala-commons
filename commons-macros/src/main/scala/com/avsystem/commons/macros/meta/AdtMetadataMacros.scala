@@ -100,14 +100,16 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
     def paramMappings(params: List[AdtParam]): Res[Map[AdtParamMetadataParam, Tree]] =
       if (paramMdParams.isEmpty) Ok(Map.empty)
-      else collectParamMappings(params, paramMdParams, "metadata parameter", allowIncomplete)(
-        (param, parser) => param.metadataFor(parser).map(t => (param, t))).map(_.toMap)
+      else collectParamMappings(params, paramMdParams, allowIncomplete)(
+        (param, parser) => param.metadataFor(parser).map(t => (param, t)),
+        rp => s"no ADT metadata parameter was found that would match ${rp.shortDescription} ${rp.nameStr}"
+      ).map(_.toMap)
 
     def collectCaseMappings(cases: List[AdtSymbol]): Res[Map[AdtCaseMetadataParam, List[AdtCaseMapping]]] =
       if (caseMdParams.isEmpty) Ok(Map.empty) else {
         val errors = new ListBuffer[String]
         def addFailure(adtCase: AdtSymbol, message: String): Unit = {
-          errors += s" * ${adtCase.description}: ${indent(message, " ")}"
+          errors += s" * ${adtCase.description}:\n   ${indent(message, "   ")}"
         }
 
         val mappings = cases.flatMap { adtCase =>
@@ -115,14 +117,16 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
             mdParam.tryMaterializeFor(adtCase).map(t => AdtCaseMapping(adtCase, mdParam, t))
           } { errors =>
             val unmatchedReport = errors.map { case (mdParam, err) =>
-              s" * ${mdParam.shortDescription} ${mdParam.nameStr} did not match: ${indent(err, " ")}"
+              val unmatchedError = mdParam.unmatchedError.getOrElse(
+                s"${mdParam.shortDescription.capitalize} ${mdParam.nameStr} did not match")
+              s" * $unmatchedError:\n   ${indent(err, "   ")}"
             }.mkString("\n")
             s"it has no matching metadata parameters:\n$unmatchedReport"
           } match {
             case Ok(m) => Some(m)
             case Fail(err) =>
               if (!allowIncomplete) {
-                addFailure(adtCase, err)
+                err.foreach(addFailure(adtCase, _))
               }
               None
           }
@@ -132,7 +136,8 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
         else Fail(s"some ADT cases could not be mapped to metadata parameters:\n${errors.mkString("\n")}")
       }
 
-    def tryMaterializeFor(sym: AdtSymbol,
+    def tryMaterializeFor(
+      sym: AdtSymbol,
       caseMappings: Map[AdtCaseMetadataParam, List[AdtCaseMapping]],
       paramMappings: Map[AdtParamMetadataParam, Tree]
     ): Res[Tree] = tryMaterialize(sym) {
@@ -151,6 +156,8 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
           }
           case ParamArity.Multi(_, named) =>
             Ok(acp.mkMulti(mappings.map(m => if (named) q"(${m.adtCase.rawName}, ${m.tree})" else m.tree)))
+          case arity =>
+            Fail(s"${arity.annotStr} not allowed on ADT case metadata params")
         }
       case app: AdtParamMetadataParam =>
         Ok(paramMappings(app))
@@ -198,6 +205,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
+    def allowFail: Boolean = false
 
     def tryMaterializeFor(adtCase: AdtSymbol): Res[Tree] = for {
       _ <- matchFilters(adtCase)
@@ -211,12 +219,16 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
+    def allowFail: Boolean = true
 
     val auxiliary: Boolean =
       annot(AuxiliaryAT).nonEmpty
 
+    private def matchedParam(adtParam: AdtParam, indexInRaw: Int): Option[MatchedAdtParam] =
+      Some(MatchedAdtParam(adtParam, this, indexInRaw)).filter(m => matchFilters(m).isOk)
+
     private def metadataTree(adtParam: AdtParam, indexInRaw: Int): Option[Res[Tree]] =
-      Some(MatchedAdtParam(adtParam, this, indexInRaw)).filter(m => matchFilters(m).isOk).map { matched =>
+      matchedParam(adtParam, indexInRaw).map { matched =>
         val result = for {
           mdType <- actualMetadataType(arity.collectedType, adtParam.actualType, "parameter type", verbatim = false)
           tree <- materializeOneOf(mdType) { t =>
@@ -227,7 +239,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
             } yield tree
           }
         } yield tree
-        result.mapFailure(msg => s"${adtParam.problemStr}: cannot map it to $shortDescription $pathStr: $msg")
+        result.mapFailure(msg => s"${adtParam.problemStr}:\ncannot map it to $shortDescription $pathStr: $msg")
       }
 
     def metadataFor(parser: ParamsParser[AdtParam]): Res[Tree] = arity match {
@@ -249,6 +261,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = false
+    def allowFail: Boolean = false
 
     if (!(arity.collectedType =:= getType(tq"$CommonsPkg.meta.DefaultValue[${owner.adtParamType}]"))) {
       reportProblem(s"type of @reifyDefaultValue metadata parameter must be " +
@@ -269,7 +282,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
             else Fail(s"no default value defined")
           case _: ParamArity.Optional =>
             Ok(mkOptional(if (hasDefaultValue) Some(defaultValue) else None))
-          case _ => Fail("@multi arity not allowed on @reifyDefaultValue params")
+          case _ => Fail(s"${arity.annotStr} not allowed on @reifyDefaultValue params")
         }
       case _ =>
         reportProblem("@reifyDefaultValue is allowed only for case class parameter metadata")
@@ -324,7 +337,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
       new AdtMetadataConstructor(metadataTpe, None).tryMaterializeFor(adtSymbol)
 
     guardedMetadata(metadataTpe, adtSymbol.tpe) {
-      materializeOneOf(metadataTpe)(tryMaterialize).getOrElse(abort)
+      materializeOneOf(metadataTpe)(tryMaterialize).getOrElse(err => abort(err.getOrElse("unknown error")))
     }
   }
 }
