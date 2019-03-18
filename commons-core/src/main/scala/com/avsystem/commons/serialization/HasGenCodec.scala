@@ -31,7 +31,7 @@ abstract class HasGenObjectCodec[T](implicit macroCodec: MacroInstances[Unit, ()
 
 /**
   * A version of [[HasGenCodec]] which injects additional implicits into macro materialization. Implicits are imported
-  * from an object specified with type parameter [[D]]. It must be a singleton object type, i.e. `SomeObject.type`.
+  * from an object specified with type parameter `D`. It must be a singleton object type, i.e. `SomeObject.type`.
   */
 abstract class HasGenCodecWithDeps[D, T](implicit deps: ValueOf[D], macroCodec: MacroInstances[D, () => GenCodec[T]]) {
   implicit val codec: GenCodec[T] = macroCodec(deps.value, this).apply()
@@ -39,7 +39,7 @@ abstract class HasGenCodecWithDeps[D, T](implicit deps: ValueOf[D], macroCodec: 
 
 /**
   * A version of [[HasApplyUnapplyCodecWithDeps]] which injects additional implicits into macro materialization.
-  * Implicits are imported from an object specified with type parameter [[D]].
+  * Implicits are imported from an object specified with type parameter `D`.
   * It must be a singleton object type, i.e. `SomeObject.type`.
   */
 abstract class HasApplyUnapplyCodecWithDeps[D, T](implicit deps: ValueOf[D], macroCodec: MacroInstances[D, () => ApplyUnapplyCodec[T]]) {
@@ -48,7 +48,7 @@ abstract class HasApplyUnapplyCodecWithDeps[D, T](implicit deps: ValueOf[D], mac
 
 /**
   * A version of [[HasGenObjectCodec]] which injects additional implicits into macro materialization.
-  * Implicits are imported from an object specified with type parameter [[D]].
+  * Implicits are imported from an object specified with type parameter `D`.
   * It must be a singleton object type, i.e. `SomeObject.type`.
   */
 abstract class HasGenObjectCodecWithDeps[D, T](implicit deps: ValueOf[D], macroCodec: MacroInstances[D, () => GenObjectCodec[T]]) {
@@ -68,7 +68,7 @@ abstract class HasPolyGenCodec[C[_]](implicit macroCodec: MacroInstances[Unit, P
 
 /**
   * A version of [[HasPolyGenCodec]] which injects additional implicits into macro materialization.
-  * Implicits are imported from an object specified with type parameter [[D]].
+  * Implicits are imported from an object specified with type parameter `D`.
   * It must be a singleton object type, i.e. `SomeObject.type`.
   */
 abstract class HasPolyGenCodecWithDeps[D, C[_]](implicit deps: ValueOf[D], macroCodec: MacroInstances[D, PolyCodec[C]]) {
@@ -88,7 +88,7 @@ abstract class HasPolyGenObjectCodec[C[_]](implicit macroCodec: MacroInstances[U
 
 /**
   * A version of [[HasPolyGenObjectCodec]] which injects additional implicits into macro materialization.
-  * Implicits are imported from an object specified with type parameter [[D]].
+  * Implicits are imported from an object specified with type parameter `D`.
   * It must be a singleton object type, i.e. `SomeObject.type`.
   */
 abstract class HasPolyGenObjectCodecWithDeps[D, C[_]](implicit deps: ValueOf[D], macroCodec: MacroInstances[D, PolyObjectCodec[C]]) {
@@ -131,7 +131,7 @@ trait AUCodec[AU, T] {
   * Like [[HasGenCodec]] but derives the codec from a separately provided custom object which has appropriate
   * `apply` and `unapply` (or `unapplySeq`) methods implemented. Materialization is done by
   * [[GenCodec.fromApplyUnapplyProvider]] macro. The object containing `apply` and `unapply` must be specified
-  * with object singleton type passed as type parameter [[AU]].
+  * with object singleton type passed as type parameter `AU`.
   */
 abstract class HasGenCodecFromAU[AU, T](implicit
   applyUnapplyProvider: ValueOf[AU],
