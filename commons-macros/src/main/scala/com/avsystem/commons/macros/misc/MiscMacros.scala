@@ -366,7 +366,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         val sig = m.typeSignatureIn(instancesTpe)
         val resultTpe = sig.finalResultType.dealias
 
-        val body =
+        val materializer =
           if (singleMethod.exists(_ != m))
             q"$PredefObj.???"
           else findAnnotation(m, MaterializeWithAT) match {
@@ -394,12 +394,16 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         if (!m.isGetter) {
           val tparamDefs = sig.typeParams.map(typeSymbolToTypeDef(_, forMethod = true))
           val paramDefs = sig.paramLists.map(_.map(paramSymbolToValDef))
-          q"def ${m.name}[..$tparamDefs](...$paramDefs): $instTpeTree = $body"
+          val argss = sig.paramLists match {
+            case List(Nil) => Nil
+            case paramss => paramss.filterNot(_.exists(_.isImplicit)).map(_.map(s => q"${s.name.toTermName}"))
+          }
+          q"def ${m.name}[..$tparamDefs](...$paramDefs): $instTpeTree = $materializer(...$argss)"
         }
         else if (m.isVar || m.setter != NoSymbol)
-          q"var ${m.name}: $instTpeTree = $body"
+          q"var ${m.name}: $instTpeTree = $materializer"
         else
-          q"val ${m.name}: $instTpeTree = $body"
+          q"val ${m.name}: $instTpeTree = $materializer"
       }
 
       val implicitsName = c.freshName(TermName("implicits"))
@@ -426,6 +430,7 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     //If full implementation doesn't typecheck, find the first problematic typeclass and limit
     //compilation errors to that one in order to not overwhelm the user but rather report errors gradually
     val fullImpl = impl(None)
+    debug(show(fullImpl))
     val result = c.typecheck(fullImpl, silent = true) match {
       case EmptyTree =>
         instancesMethods.iterator.map(m => impl(Some(m)))
