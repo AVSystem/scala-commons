@@ -1,6 +1,9 @@
 package com.avsystem.commons
 package misc
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("${T} is not annotated with ${A}")
 case class AnnotationOf[A, T](annot: A) extends AnyVal
 object AnnotationOf {
   implicit def materialize[A, T]: AnnotationOf[A, T] = macro macros.misc.MiscMacros.annotationOf[A, T]
@@ -16,12 +19,13 @@ object AnnotationsOf {
   implicit def materialize[A, T]: AnnotationsOf[A, T] = macro macros.misc.MiscMacros.annotationsOf[A, T]
 }
 
+@implicitNotFound("${T} is not annotated with ${A}")
 final class HasAnnotation[A, T]
 object HasAnnotation {
   private[this] val reusable = new HasAnnotation
   def create[A, T]: HasAnnotation[A, T] = reusable.asInstanceOf
 
-  implicit def materialize[A, T]: AnnotationsOf[A, T] = macro macros.misc.MiscMacros.hasAnnotation[A, T]
+  implicit def materialize[A, T]: HasAnnotation[A, T] = macro macros.misc.MiscMacros.hasAnnotation[A, T]
 }
 
 case class SelfAnnotation[A](annot: A) extends AnyVal

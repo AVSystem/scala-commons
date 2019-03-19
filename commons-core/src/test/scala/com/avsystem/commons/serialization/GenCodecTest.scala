@@ -159,7 +159,7 @@ class GenCodecTest extends CodecTestBase {
     testWriteRead(TransparentWrapperWithDependency("something"), "something")
   }
 
-  case class StringId(id: String)
+  @transparent case class StringId(id: String)
   object StringId extends TransparentWrapperCompanion[String, StringId]
 
   test("transparent wrapper companion test") {

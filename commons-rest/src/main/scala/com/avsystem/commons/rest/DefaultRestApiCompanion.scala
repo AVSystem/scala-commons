@@ -2,12 +2,13 @@ package com.avsystem.commons
 package rest
 
 import com.avsystem.commons.meta.{Fallback, MacroInstances}
-import com.avsystem.commons.misc.ImplicitNotFound
+import com.avsystem.commons.misc.{AnnotationsOf, ImplicitNotFound}
 import com.avsystem.commons.rest.RawRest.{AsRawRpc, AsRealRpc, Async}
+import com.avsystem.commons.rest.openapi.adjusters.SchemaAdjuster
 import com.avsystem.commons.rest.openapi.{OpenApiMetadata, RestResponses, RestResultType, RestSchema, RestStructure}
 import com.avsystem.commons.rpc.{AsRaw, AsRawReal, AsReal, InvalidRpcCall}
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
-import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
+import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, SerializationName, TransparentWrapperCompanion}
 
 import scala.annotation.implicitNotFound
 
@@ -32,6 +33,15 @@ abstract class RestDataCompanion[T](implicit
   implicit lazy val codec: GenCodec[T] = instances(DefaultRestImplicits, this).codec
   implicit lazy val restStructure: RestStructure[T] = instances(DefaultRestImplicits, this).structure
   implicit lazy val restSchema: RestSchema[T] = RestSchema.lazySchema(restStructure.standaloneSchema)
+}
+
+abstract class RestDataWrapperCompanion[T, R](implicit
+  serializationName: SerializationName[T],
+  schemaAdjusters: AnnotationsOf[SchemaAdjuster, T],
+  wrappedSchema: RestSchema[R]
+) extends TransparentWrapperCompanion[R, T] {
+  implicit lazy val schema: RestSchema[T] = RestSchema.create(
+    r => SchemaAdjuster.adjustRef(schemaAdjusters.annots, r.resolve(wrappedSchema)), serializationName.name)
 }
 
 trait ClientInstances[Real] {

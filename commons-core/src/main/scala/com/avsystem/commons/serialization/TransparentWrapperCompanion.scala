@@ -1,18 +1,26 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.serialization.GenCodec.WriteFailure
-
-abstract class TransparentWrapperCompanion[R: GenCodec, T] {
-  def apply(r: R): T
-  def unapply(t: T): Option[R]
-
-  implicit lazy val codec: GenCodec[T] = GenCodec.create[T](
-    input => apply(GenCodec.read[R](input)),
-    (output, value) => GenCodec.write[R](output, unapply(value)
-      .getOrElse(throw new WriteFailure(s"failure unwrapping value from $value")))
-  )
+trait TransparentWrapping[T] {
+  type Wrapped
+  def apply(r: Wrapped): T
+  def unapply(t: T): Option[Wrapped]
+}
+object TransparentWrapping {
+  // Type member for wrapped type and Aux pattern is a workaround for divergent implicit expansion
+  // when TransparentWrapping is used as implicit
+  type Aux[R, T] = TransparentWrapping[T] {type Wrapped = R}
 }
 
-abstract class StringWrapperCompanion[T]
-  extends TransparentWrapperCompanion[String, T]
+abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[T] {
+  type Wrapped = R
+
+  implicit def self: this.type = this
+
+  def apply(r: R): T
+  def unapply(t: T): Option[R]
+}
+
+abstract class StringWrapperCompanion[T] extends TransparentWrapperCompanion[String, T]
+abstract class IntWrapperCompanion[T] extends TransparentWrapperCompanion[Int, T]
+abstract class LongWrapperCompanion[T] extends TransparentWrapperCompanion[Long, T]

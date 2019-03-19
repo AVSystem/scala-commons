@@ -658,6 +658,11 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val instance = internal.typeRef(pre, constrSym, List(classBeingConstructed.asType.toType))
     q"$MiscPkg.SelfInstance($ImplicitsObj.infer[$instance])"
   }
+
+  def simpleClassName[T: WeakTypeTag]: Tree = instrument {
+    val sym = classSymbol(weakTypeOf[T].dealias.typeSymbol)
+    q"$MiscPkg.SimpleClassName(${sym.name.decodedName.toString})"
+  }
 }
 
 class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {

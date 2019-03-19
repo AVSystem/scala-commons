@@ -63,4 +63,9 @@ object GenKeyCodec {
       string => Enum.valueOf(ct.runtimeClass.asInstanceOf[Class[E]], string),
       enum => enum.name()
     )
+
+  implicit def fromTransparentWrapping[R, T](
+    implicit tw: TransparentWrapping.Aux[R, T], wrappedCodec: GenKeyCodec[R]
+  ): GenKeyCodec[T] =
+    GenKeyCodec.create(s => tw.apply(wrappedCodec.read(s)), t => wrappedCodec.write(tw.unapply(t).get))
 }

@@ -1,10 +1,10 @@
 package com.avsystem.commons
 package rest.openapi
 
-import com.avsystem.commons.rest.RestDataCompanion
 import com.avsystem.commons.rest.openapi.adjusters.description
+import com.avsystem.commons.rest.{RestDataCompanion, RestDataWrapperCompanion}
 import com.avsystem.commons.serialization.json.JsonStringOutput
-import com.avsystem.commons.serialization.{GenCodec, name, transparent}
+import com.avsystem.commons.serialization.{GenCodec, name}
 import org.scalatest.FunSuite
 
 class Fuu[T](thing: T)
@@ -60,8 +60,8 @@ class RestSchemaTest extends FunSuite {
   }
 
   @description("wrapped string")
-  @transparent case class Wrap(str: String)
-  object Wrap extends RestDataCompanion[Wrap]
+  case class Wrap(str: String)
+  object Wrap extends RestDataWrapperCompanion[Wrap, String]
 
   test("transparent wrapper") {
     assert(schemaStr[Wrap] ==
