@@ -226,13 +226,14 @@ class GenCodecTest extends CodecTestBase {
   }
 
   case class ThirdParty(i: Int, s: String)
+  object ThirdParty extends HasGenCodecFromAU[ThirdPartyFakeCompanion.type, ThirdParty]
+
   object ThirdPartyFakeCompanion {
     def apply(str: String, int: Int): ThirdParty = ThirdParty(int, str)
     def unapply(tp: ThirdParty): Opt[(String, Int)] = (tp.s, tp.i).opt
   }
 
   test("apply/unapply provider based codec test") {
-    implicit val tpCodec: GenCodec[ThirdParty] = GenCodec.fromApplyUnapplyProvider[ThirdParty](ThirdPartyFakeCompanion)
     testWriteRead(ThirdParty(42, "lol"),
       Map("str" -> "lol", "int" -> 42)
     )
@@ -526,9 +527,7 @@ class GenCodecTest extends CodecTestBase {
   @flatten
   sealed trait HasColl
   case class HasCollCase(coll: Seq[Dep]) extends HasColl
-  object HasColl {
-    implicit val codec: GenCodec[HasColl] = GenCodec.materializeRecursively[HasColl]
-  }
+  object HasColl extends HasRecursiveGenCodec[HasColl]
 
   test("recursive materialization with intermediate sequence") {
     testWriteRead[HasColl](

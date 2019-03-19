@@ -12,9 +12,16 @@ package meta
   *
   * `Instances` is a trait that aggregates multiple macro materialized typeclass instances.
   * There is no fixed interface for `Instances`, its abstract methods are inspected by
-  * `MacroInstances.materialize` macro and implemented automatically as `<methodReturnTypeCompanion>.materialize`
-  * Therefore, return type type of each method must have a companion object which contains `materialize` macro.
-  * You can customize this by applying [[MacroInstances.materializeWith]] annotation on methods of `Instances` trait.
+  * `MacroInstances.materialize` macro and implemented by inserting appropriate materializer macro invocation
+  * for each typeclass. By default it will be assumed that the typeclass has a macro named `materialize` in its
+  * companion object so each method will get `<ResultTypeCompanion>.materialize` as its implementation.
+  * This may be overridden with [[com.avsystem.commons.meta.MacroInstances.materializeWith materializeWith]]
+  * annotation used on the method. This way you can specify both the object which contains the materializer macro
+  * and its name.
+  *
+  * Additionally, all non-implicit parameters of each method in `Instances` trait will be automatically passed to
+  * the materializer macro. See [[com.avsystem.commons.serialization.HasGenCodecFromAU HasGenCodecFromAU]] for
+  * an example of this mechanism.
   *
   * Example of `Instances`: `com.avsystem.commons.rest.ClientInstances`
   *
