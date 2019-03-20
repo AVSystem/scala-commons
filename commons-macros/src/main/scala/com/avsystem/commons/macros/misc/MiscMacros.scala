@@ -674,6 +674,11 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
     q"$ListObj(..$annotTrees)"
   }
+
+  def simpleClassName[T: WeakTypeTag]: Tree = instrument {
+    val sym = classSymbol(weakTypeOf[T].dealias.typeSymbol)
+    q"$MiscPkg.SimpleClassName(${sym.name.decodedName.toString})"
+  }
 }
 
 class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
