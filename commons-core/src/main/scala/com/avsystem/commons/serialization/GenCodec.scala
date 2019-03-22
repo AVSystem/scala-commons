@@ -449,10 +449,6 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     (out, value) => out.writeString(value.name)
   )
 
-  implicit def fromTransparentWrapping[R, T](
-    implicit tw: TransparentWrapping.Aux[R, T], wrappedCodec: GenCodec[R]
-  ): GenCodec[T] = new GenCodec.Transformed[T, R](wrappedCodec, t => tw.unapply(t).get, tw.apply)
-
   implicit def fromFallback[T](implicit fallback: Fallback[GenCodec[T]]): GenCodec[T] =
     fallback.value
 }

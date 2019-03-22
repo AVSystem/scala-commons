@@ -3,6 +3,7 @@ package rpc
 
 import com.avsystem.commons.meta.Fallback
 import com.avsystem.commons.misc.ImplicitNotFound
+import com.avsystem.commons.serialization.TransparentWrapping
 
 import scala.annotation.implicitNotFound
 
@@ -10,7 +11,7 @@ import scala.annotation.implicitNotFound
 trait AsRaw[Raw, Real] {
   def asRaw(real: Real): Raw
 }
-object AsRaw {
+object AsRaw extends FallbackAsRaw {
   def apply[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Raw, Real] = asRaw
 
   def create[Raw, Real](asRawFun: Real => Raw): AsRaw[Raw, Real] =
@@ -23,20 +24,27 @@ object AsRaw {
   implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Try[Raw], Try[Real]] =
     AsRaw.create(_.map(asRaw.asRaw))
-  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsRaw[Raw, Real]]): AsRaw[Raw, Real] =
-    fallback.value
+
+  implicit def fromTransparentWrapping[Wrapped, Raw, Real](implicit
+    tw: TransparentWrapping.Aux[Wrapped, Real],
+    forWrapped: AsRaw[Raw, Wrapped]
+  ): AsRaw[Raw, Real] = AsRaw.create(real => forWrapped.asRaw(tw.unapply(real).get))
 
   @implicitNotFound("#{forPlain}")
   implicit def notFoundForTry[Raw, Real](
     implicit forPlain: ImplicitNotFound[AsRaw[Raw, Real]]
   ): ImplicitNotFound[AsRaw[Try[Raw], Try[Real]]] = ImplicitNotFound()
 }
+trait FallbackAsRaw { this: AsRaw.type =>
+  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsRaw[Raw, Real]]): AsRaw[Raw, Real] =
+    fallback.value
+}
 
 @implicitNotFound("Cannot deserialize ${Real} from ${Raw}, appropriate AsReal instance not found")
 trait AsReal[Raw, Real] {
   def asReal(raw: Raw): Real
 }
-object AsReal {
+object AsReal extends FallbackAsReal {
   def apply[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Raw, Real] = asReal
 
   def create[Raw, Real](asRealFun: Raw => Real): AsReal[Raw, Real] =
@@ -49,13 +57,20 @@ object AsReal {
   implicit def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Try[Raw], Try[Real]] =
     AsReal.create(_.map(asReal.asReal))
-  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsReal[Raw, Real]]): AsReal[Raw, Real] =
-    fallback.value
+
+  implicit def fromTransparentWrapping[Wrapped, Raw, Real](implicit
+    tw: TransparentWrapping.Aux[Wrapped, Real],
+    forWrapped: AsReal[Raw, Wrapped]
+  ): AsReal[Raw, Real] = AsReal.create(raw => tw.apply(forWrapped.asReal(raw)))
 
   @implicitNotFound("#{forPlain}")
   implicit def notFoundForTry[Raw, Real](
     implicit forPlain: ImplicitNotFound[AsReal[Raw, Real]]
   ): ImplicitNotFound[AsReal[Try[Raw], Try[Real]]] = ImplicitNotFound()
+}
+trait FallbackAsReal { this: AsReal.type =>
+  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsReal[Raw, Real]]): AsReal[Raw, Real] =
+    fallback.value
 }
 
 @implicitNotFound("Cannot serialize and deserialize between ${Real} and ${Raw}, appropriate AsRawReal instance not found")
@@ -77,14 +92,16 @@ object AsRawReal extends AsRawRealLowPrio {
   implicit def identity[A]: AsRawReal[A, A] =
     reusableIdentity.asInstanceOf[AsRawReal[A, A]]
 
-  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsRawReal[Raw, Real]]): AsRawReal[Raw, Real] = fallback.value
-
   def materialize[Raw, Real]: AsRawReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRawReal[Raw, Real]
 }
-sealed trait AsRawRealLowPrio { this: AsRawReal.type =>
+trait AsRawRealLowPrio extends FallbackAsRawReal { this: AsRawReal.type =>
   implicit def fromSeparateAsRealAndRaw[Raw, Real](implicit
     asRaw: AsRaw[Raw, Real], asReal: AsReal[Raw, Real]
   ): AsRawReal[Raw, Real] = AsRawReal.create(asRaw.asRaw, asReal.asReal)
+}
+trait FallbackAsRawReal { this: AsRawReal.type =>
+  implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsRawReal[Raw, Real]]): AsRawReal[Raw, Real] =
+    fallback.value
 }
 
 object RpcMetadata {

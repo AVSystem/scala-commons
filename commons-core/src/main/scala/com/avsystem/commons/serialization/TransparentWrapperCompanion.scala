@@ -12,13 +12,17 @@ object TransparentWrapping {
   type Aux[R, T] = TransparentWrapping[T] {type Wrapped = R}
 }
 
-abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[T] {
+abstract class TransparentWrapperCompanion[R: GenCodec, T] extends TransparentWrapping[T] {
   type Wrapped = R
 
   implicit def self: this.type = this
 
   def apply(r: R): T
   def unapply(t: T): Option[R]
+
+  // TODO: in 1.35.0 remove and replace with `fromTransparentWrapper` implicit in `GenCodec` object in
+  implicit val codec: GenCodec[T] =
+    new GenCodec.Transformed[T, R](GenCodec[R], t => unapply(t).get, apply)
 }
 
 abstract class StringWrapperCompanion[T] extends TransparentWrapperCompanion[String, T]
