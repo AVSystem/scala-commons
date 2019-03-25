@@ -4,6 +4,7 @@ package serialization
 import java.util.UUID
 
 import com.avsystem.commons.annotation.explicitGenerics
+import com.avsystem.commons.serialization.GenCodec.{ReadFailure, WriteFailure}
 
 import scala.annotation.implicitNotFound
 
@@ -16,9 +17,14 @@ import scala.annotation.implicitNotFound
 trait GenKeyCodec[T] {
   def read(key: String): T
   def write(value: T): String
+
+  final def transform[U](onWrite: U => T, onRead: T => U): GenKeyCodec[U] =
+    new GenKeyCodec.Transformed(this, onWrite, onRead)
 }
 
 object GenKeyCodec {
+  def apply[T](implicit gkc: GenKeyCodec[T]): GenKeyCodec[T] = gkc
+
   /**
     * Materializes a `GenKeyCodec` for a "sealed enum" (sealed hierarchy with case objects at the bottom).
     * The generated codec uses object name by default as key value.
@@ -37,6 +43,22 @@ object GenKeyCodec {
       def read(key: String): T = readFun(key)
       def write(value: T): String = writeFun(value)
     }
+
+  final class Transformed[A, B](val wrapped: GenKeyCodec[B], onWrite: A => B, onRead: B => A) extends GenKeyCodec[A] {
+    def read(key: String): A = {
+      val wrappedValue = wrapped.read(key)
+      try onRead(wrappedValue) catch {
+        case NonFatal(cause) => throw new ReadFailure(s"onRead conversion failed", cause)
+      }
+    }
+
+    def write(value: A): String = {
+      val wrappedValue = try onWrite(value) catch {
+        case NonFatal(cause) => throw new WriteFailure(s"onWrite conversion failed", cause)
+      }
+      wrapped.write(wrappedValue)
+    }
+  }
 
   implicit lazy val BooleanKeyCodec: GenKeyCodec[Boolean] = create(_.toBoolean, _.toString)
   implicit lazy val CharKeyCodec: GenKeyCodec[Char] = create(_.charAt(0), _.toString)
@@ -64,8 +86,9 @@ object GenKeyCodec {
       enum => enum.name()
     )
 
-  implicit def fromTransparentWrapping[R, T](
-    implicit tw: TransparentWrapping.Aux[R, T], wrappedCodec: GenKeyCodec[R]
+  // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
+  implicit def fromTransparentWrapping[R, T](implicit
+    tw: TransparentWrapping[R, T], wrappedCodec: GenKeyCodec[R]
   ): GenKeyCodec[T] =
-    GenKeyCodec.create(s => tw.apply(wrappedCodec.read(s)), t => wrappedCodec.write(tw.unapply(t).get))
+    new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
 }

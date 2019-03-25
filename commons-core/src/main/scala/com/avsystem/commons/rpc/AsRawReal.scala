@@ -19,16 +19,17 @@ object AsRaw extends FallbackAsRaw {
       def asRaw(real: Real): Raw = asRawFun(real)
     }
 
+  // deliberately not implicit so that each raw type can turn it into an implicit with appropriate priority if desired
+  def fromTransparentWrapping[Wrapped, Raw, Real](implicit
+    tw: TransparentWrapping[Wrapped, Real],
+    forWrapped: AsRaw[Raw, Wrapped]
+  ): AsRaw[Raw, Real] = AsRaw.create(real => forWrapped.asRaw(tw.unwrap(real)))
+
   def materialize[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
 
   implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Try[Raw], Try[Real]] =
     AsRaw.create(_.map(asRaw.asRaw))
-
-  implicit def fromTransparentWrapping[Wrapped, Raw, Real](implicit
-    tw: TransparentWrapping.Aux[Wrapped, Real],
-    forWrapped: AsRaw[Raw, Wrapped]
-  ): AsRaw[Raw, Real] = AsRaw.create(real => forWrapped.asRaw(tw.unapply(real).get))
 
   @implicitNotFound("#{forPlain}")
   implicit def notFoundForTry[Raw, Real](
@@ -52,16 +53,17 @@ object AsReal extends FallbackAsReal {
       def asReal(raw: Raw): Real = asRealFun(raw)
     }
 
+  // deliberately not implicit so that each raw type can turn it into an implicit with appropriate priority if desired
+  def fromTransparentWrapping[Wrapped, Raw, Real](implicit
+    tw: TransparentWrapping[Wrapped, Real],
+    forWrapped: AsReal[Raw, Wrapped]
+  ): AsReal[Raw, Real] = AsReal.create(raw => tw.wrap(forWrapped.asReal(raw)))
+
   def materialize[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsReal[Raw, Real]
 
   implicit def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Try[Raw], Try[Real]] =
     AsReal.create(_.map(asReal.asReal))
-
-  implicit def fromTransparentWrapping[Wrapped, Raw, Real](implicit
-    tw: TransparentWrapping.Aux[Wrapped, Real],
-    forWrapped: AsReal[Raw, Wrapped]
-  ): AsReal[Raw, Real] = AsReal.create(raw => tw.apply(forWrapped.asReal(raw)))
 
   @implicitNotFound("#{forPlain}")
   implicit def notFoundForTry[Raw, Real](

@@ -27,10 +27,18 @@ trait GenCodec[T] {
     * Deserializes a value of type `T` from an [[Input]].
     */
   def read(input: Input): T
+
   /**
     * Serializes a value of type `T` into an [[Output]].
     */
   def write(output: Output, value: T): Unit
+
+  /**
+    * Transforms this codec into a codec of other type using a bidirectional conversion
+    * between the original and new type.
+    */
+  final def transform[U](onWrite: U => T, onRead: T => U): GenCodec[U] =
+    new GenCodec.Transformed[U, T](this, onWrite, onRead)
 }
 
 object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
@@ -260,8 +268,19 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   final class Transformed[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {
-    def read(input: Input): A = onRead(wrapped.read(input))
-    def write(output: Output, value: A): Unit = wrapped.write(output, onWrite(value))
+    def read(input: Input): A = {
+      val wrappedValue = wrapped.read(input)
+      try onRead(wrappedValue) catch {
+        case NonFatal(cause) => throw new ReadFailure(s"onRead conversion failed", cause)
+      }
+    }
+
+    def write(output: Output, value: A): Unit = {
+      val wrappedValue = try onWrite(value) catch {
+        case NonFatal(cause) => throw new WriteFailure(s"onWrite conversion failed", cause)
+      }
+      wrapped.write(output, wrappedValue)
+    }
   }
 
   def underlyingCodec(codec: GenCodec[_]): GenCodec[_] = codec match {
@@ -448,6 +467,12 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     in => Enum.valueOf(classTag[E].runtimeClass.asInstanceOf[Class[E]], in.readString()),
     (out, value) => out.writeString(value.name)
   )
+
+  // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
+  implicit def fromTransparentWrapping[R, T](implicit
+    tw: TransparentWrapping[R, T], wrappedCodec: GenCodec[R]
+  ): GenCodec[T] =
+    new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
 
   implicit def fromFallback[T](implicit fallback: Fallback[GenCodec[T]]): GenCodec[T] =
     fallback.value

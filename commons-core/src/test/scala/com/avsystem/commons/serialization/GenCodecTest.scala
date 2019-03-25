@@ -578,7 +578,7 @@ class GenCodecTest extends CodecTestBase {
 
   @transparent
   case class ThingId(value: String)
-  object ThingId extends HasGenAndKeyCodec[ThingId]
+  object ThingId extends StringWrapperCompanion[ThingId]
 
   test("auto materialized key codec") {
     testWriteRead[Map[ThingId, ThingId]](Map(ThingId("a") -> ThingId("b")), Map("a" -> "b"))
