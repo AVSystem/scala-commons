@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.annotation.bincompat
+
 /**
   * A typeclass which serves as evidence that some type `T` is a "transparent" wrapper of some other type.
   * This usually means that instances of various typeclasses (e.g. [[GenCodec]]) for type `T` could be automatically
@@ -17,7 +19,14 @@ trait TransparentWrapping[R, T] {
   * This is the usual way of providing [[TransparentWrapping]] for some type and is intended as a replacement for
   * [[transparent]] annotation.
   */
-abstract class TransparentWrapperCompanion[R: GenCodec, T] extends TransparentWrapping[R, T] {
+abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, T] {
+  @bincompat private[this] var transformedCodec: GenCodec[T] = _
+
+  @bincompat private[commons] def this(wrappedCodec: GenCodec[R]) = {
+    this()
+    transformedCodec = new GenCodec.Transformed(wrappedCodec, unwrap, wrap)
+  }
+
   implicit def self: this.type = this
 
   def apply(r: R): T
@@ -26,9 +35,7 @@ abstract class TransparentWrapperCompanion[R: GenCodec, T] extends TransparentWr
   final def wrap(r: R): T = apply(r)
   final def unwrap(t: T): R = unapply(t).getOrElse(throw new NoSuchElementException(s"unapply for $t failed"))
 
-  // TODO: in 1.35.0 remove and replace with `fromTransparentWrapper` implicit in `GenCodec` object
-  implicit val codec: GenCodec[T] =
-    new GenCodec.Transformed[T, R](GenCodec[R], unwrap, wrap)
+  @bincompat private[commons] def codec: GenCodec[T] = transformedCodec
 }
 
 abstract class StringWrapperCompanion[T] extends TransparentWrapperCompanion[String, T]
