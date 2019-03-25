@@ -19,7 +19,7 @@ trait TransparentWrapping[R, T] {
   * This is the usual way of providing [[TransparentWrapping]] for some type and is intended as a replacement for
   * [[transparent]] annotation.
   */
-abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, T] {
+abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, T] with (R => T) {
   @bincompat private[this] var transformedCodec: GenCodec[T] = _
 
   @bincompat private[commons] def this(wrappedCodec: GenCodec[R]) = {
