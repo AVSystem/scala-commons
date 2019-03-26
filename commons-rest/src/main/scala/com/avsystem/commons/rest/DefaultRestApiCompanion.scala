@@ -36,7 +36,7 @@ abstract class RestDataCompanion[T](implicit
   implicit lazy val restSchema: RestSchema[T] = RestSchema.lazySchema(restStructure.standaloneSchema)
 }
 
-abstract class RestDataWrapperCompanion[T, R](implicit
+abstract class RestDataWrapperCompanion[T, R: GenCodec](implicit
   serializationName: SerializationName[T],
   schemaAdjusters: AnnotationsOf[SchemaAdjuster, T],
   wrappedSchema: RestSchema[R]

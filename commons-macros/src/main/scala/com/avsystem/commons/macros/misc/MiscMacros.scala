@@ -7,7 +7,7 @@ import scala.collection.mutable
 import scala.reflect.macros.{blackbox, whitebox}
 import scala.util.control.NoStackTrace
 
-class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
+final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
@@ -681,11 +681,11 @@ class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   }
 }
 
-class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
+final class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
 
   import c.universe._
 
-  final lazy val WhenAbsentAT: Type = staticType(tq"$CommonsPkg.serialization.whenAbsent[_]")
+  lazy val WhenAbsentAT: Type = staticType(tq"$CommonsPkg.serialization.whenAbsent[_]")
 
   def whenAbsentValue: Tree = {
     val param = c.internal.enclosingOwner match {
