@@ -153,8 +153,6 @@ lazy val commons = project.in(file("."))
         `commons-analyzer`,
         `commons-macros`,
         `commons-core-js`,
-        `commons-rest`,
-        `commons-rest-js`,
         `commons-benchmark`,
         `commons-benchmark-js`,
         `commons-comprof`,
@@ -166,13 +164,11 @@ lazy val `commons-jvm` = project.in(file(".jvm"))
     `commons-analyzer`,
     `commons-macros`,
     `commons-core`,
-    `commons-rest`,
     `commons-jetty`,
     `commons-mongo`,
     `commons-spring`,
     `commons-redis`,
     `commons-akka`,
-    `commons-kafka`,
     `commons-benchmark`,
   )
   .settings(aggregateProjectSettings)
@@ -180,7 +176,6 @@ lazy val `commons-jvm` = project.in(file(".jvm"))
 lazy val `commons-js` = project.in(file(".js"))
   .aggregate(
     `commons-core-js`,
-    `commons-rest-js`,
     `commons-benchmark-js`,
   )
   .settings(aggregateProjectSettings)
@@ -235,25 +230,8 @@ lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
     sourceDirsSettings(_.getParentFile),
   )
 
-lazy val `commons-rest` = project
-  .dependsOn(`commons-core` % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    sourceDirsSettings(_ / "jvm"),
-  )
-
-lazy val `commons-rest-js` = project.in(`commons-rest`.base / "js")
-  .enablePlugins(ScalaJSPlugin)
-  .configure(p => if (forIdeaImport) p.dependsOn(`commons-rest`) else p)
-  .dependsOn(`commons-core-js` % CompileAndTest)
-  .settings(
-    jsCommonSettings,
-    sameNameAs(`commons-rest`),
-    sourceDirsSettings(_.getParentFile),
-  )
-
 lazy val `commons-jetty` = project
-  .dependsOn(`commons-core` % CompileAndTest, `commons-rest` % OptionalCompileAndTest)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
@@ -267,7 +245,7 @@ lazy val `commons-jetty` = project
   )
 
 lazy val `commons-benchmark` = project
-  .dependsOn(`commons-rest`, `commons-akka`, `commons-redis`, `commons-mongo`)
+  .dependsOn(`commons-akka`, `commons-redis`, `commons-mongo`)
   .enablePlugins(JmhPlugin)
   .settings(
     jvmCommonSettings,
@@ -293,7 +271,7 @@ lazy val `commons-benchmark` = project
 lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
   .enablePlugins(ScalaJSPlugin)
   .configure(p => if (forIdeaImport) p.dependsOn(`commons-benchmark`) else p)
-  .dependsOn(`commons-macros`, `commons-rest-js`)
+  .dependsOn(`commons-macros`)
   .settings(
     jsCommonSettings,
     noPublishSettings,
@@ -323,15 +301,6 @@ lazy val `commons-mongo` = project
       "org.mongodb" % "mongodb-driver" % mongoVersion % Optional,
       "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,
       "org.mongodb.scala" %% "mongo-scala-driver" % mongoScalaVersion % Optional,
-    ),
-  )
-
-lazy val `commons-kafka` = project
-  .dependsOn(`commons-core` % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    libraryDependencies ++= Seq(
-      "org.apache.kafka" % "kafka-streams" % kafkaVersion,
     ),
   )
 
