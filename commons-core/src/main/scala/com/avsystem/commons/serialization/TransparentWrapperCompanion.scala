@@ -38,6 +38,6 @@ abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, 
   @bincompat private[commons] def codec: GenCodec[T] = transformedCodec
 }
 
-abstract class StringWrapperCompanion[T] extends TransparentWrapperCompanion[String, T]
-abstract class IntWrapperCompanion[T] extends TransparentWrapperCompanion[Int, T]
-abstract class LongWrapperCompanion[T] extends TransparentWrapperCompanion[Long, T]
+abstract class StringWrapperCompanion[T] extends TransparentWrapperCompanion[String, T](GenCodec.StringCodec)
+abstract class IntWrapperCompanion[T] extends TransparentWrapperCompanion[Int, T](GenCodec.IntCodec)
+abstract class LongWrapperCompanion[T] extends TransparentWrapperCompanion[Long, T](GenCodec.LongCodec)
