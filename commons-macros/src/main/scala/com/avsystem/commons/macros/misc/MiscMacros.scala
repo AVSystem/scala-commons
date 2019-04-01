@@ -4,6 +4,7 @@ package macros.misc
 import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.{blackbox, whitebox}
 import scala.util.control.NoStackTrace
 
@@ -693,5 +694,42 @@ final class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(
       q"""throw new $ScalaPkg.NotImplementedError("infer.value")"""
     else
       abort(s"infer.value can be only used as default value of @infer annotation parameters")
+  }
+
+  def normalizeGadtSubtype(tpref: Tree, value: Tree): Tree = {
+    val StringLiteral(tprefStr) = tpref
+    val quantified = new ListBuffer[Symbol]
+
+    val unrefined = value.tpe match {
+      case RefinedType(List(_, second), _) => second
+      case t => t
+    }
+
+    val withFullyDetermined = unrefined.map { t =>
+      if (t.typeSymbol.name.toString.startsWith(tprefStr)) {
+        t.typeSymbol.typeSignature match {
+          case TypeBounds(lo, hi) if lo =:= hi =>
+            lo
+          case _ =>
+            quantified += t.typeSymbol
+            t
+        }
+      } else t
+    }
+    val withoutMatchedTypes = internal.existentialAbstraction(quantified.result(), withFullyDetermined)
+
+    val innerQuantified = new mutable.HashSet[Symbol]
+    val outerQuantified = new ListBuffer[Symbol]
+    withoutMatchedTypes.foreach {
+      case ExistentialType(iq, _) => innerQuantified ++= iq
+      case t if t.typeSymbol.isType =>
+        if(t.typeSymbol.asType.isExistential && !innerQuantified.contains(t.typeSymbol)) {
+          outerQuantified += t.typeSymbol
+        }
+      case _ =>
+    }
+
+    val normTpe = internal.existentialAbstraction(outerQuantified.result(), withoutMatchedTypes)
+    q"$value: ${treeForType(normTpe)}"
   }
 }

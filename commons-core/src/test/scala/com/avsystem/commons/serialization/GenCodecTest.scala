@@ -378,16 +378,41 @@ class GenCodecTest extends CodecTestBase {
   case class StringExpr(str: String) extends Expr[String](str)
   case object NullExpr extends Expr[Null](null)
   object BaseExpr {
-    implicit val baseCodec: GenCodec[BaseExpr] = GenCodec.materialize[BaseExpr]
-    implicit val codec: GenCodec[Expr[_]] = GenCodec.materialize[Expr[_]]
-    implicit val stringCodec: GenCodec[Expr[String]] = GenCodec.materialize[Expr[String]]
+    implicit val baseCodec: GenCodec[BaseExpr] = GenCodec.materialize
+    implicit val codec: GenCodec[Expr[_]] = GenCodec.materialize
+    implicit val stringCodec: GenCodec[Expr[String]] = GenCodec.materialize
+    implicit def baseGenericCodec[T]: GenCodec[BaseExpr {type Value = T}] = GenCodec.materialize
+    implicit def genericCodec[T]: GenCodec[Expr[T]] = GenCodec.materialize
   }
 
   test("GADT test") {
     testWriteRead[Expr[_]](NullExpr, Map("NullExpr" -> Map()))
     testWriteRead[Expr[_]](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
     testWriteRead[Expr[String]](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
+    testWriteRead[Expr[Int]](IntExpr(42), Map("IntExpr" -> Map("int" -> 42)))
     testWriteRead[BaseExpr](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
+    testWriteRead[BaseExpr {type Value = String}](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
+  }
+
+  @flatten sealed trait RecExpr[+T]
+  case class IntRecExpr(int: Int) extends RecExpr[Int]
+  case class StringRecExpr(str: String) extends RecExpr[String]
+  case object NothingRecExpr extends RecExpr[Nothing]
+  case class ArbitraryRecExpr[+T](value: T) extends RecExpr[T]
+  case class LazyRecExpr[+T](expr: RecExpr[T]) extends RecExpr[T]
+  object RecExpr {
+    implicit def codec[T: GenCodec]: GenCodec[RecExpr[T]] = GenCodec.materialize
+  }
+
+  test("recursive GADT test") {
+    testWriteRead[RecExpr[Int]](IntRecExpr(42),
+      Map("_case" -> "IntRecExpr", "int" -> 42))
+    testWriteRead[RecExpr[Int]](NothingRecExpr,
+      Map("_case" -> "NothingRecExpr"))
+    testWriteRead[RecExpr[Int]](ArbitraryRecExpr(42),
+      Map("_case" -> "ArbitraryRecExpr", "value" -> 42))
+    testWriteRead[RecExpr[Int]](LazyRecExpr(IntRecExpr(42)),
+      Map("_case" -> "LazyRecExpr", "expr" -> Map("_case" -> "IntRecExpr", "int" -> 42)))
   }
 
   sealed trait Tree[T]
