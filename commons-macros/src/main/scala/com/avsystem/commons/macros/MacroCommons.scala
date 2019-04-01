@@ -1096,7 +1096,8 @@ trait MacroCommons { bundle =>
   }
 
   def knownSubtypes(tpe: Type, ordered: Boolean = false): Option[List[Type]] = measure("knownSubtypes") {
-    val dtpe = tpe.dealias
+    val dtpe = tpe.map(_.dealias)
+    val baseWithoutAbstractRefs = internal.existentialAbstraction(outerTypeParamsIn(dtpe), dtpe)
     val (tpeSym, refined) = dtpe match {
       case RefinedType(List(single), scope) =>
         (single.typeSymbol, scope.filter(ts => ts.isType && !ts.isAbstract).toList)
@@ -1109,24 +1110,35 @@ trait MacroCommons { bundle =>
       else subclasses
 
     Option(tpeSym).filter(isSealedHierarchyRoot).map { sym =>
-      sort(knownNonAbstractSubclasses(sym).toList).flatMap { subSym =>
-        val undetTpe = typeOfTypeSymbol(subSym.asType)
-        val refinementSignatures = refined.map(rs => undetTpe.member(rs.name).typeSignatureIn(undetTpe))
-        val undetBaseTpe = undetTpe.baseType(dtpe.typeSymbol)
-        val (determinableParams, undeterminableParams) = subSym.asType.typeParams.partition(ts =>
-          undetBaseTpe.exists(_.typeSymbol == ts) || refinementSignatures.exists(_.exists(_.typeSymbol == ts)))
-        val determinableTpe = internal.existentialAbstraction(undeterminableParams, undetTpe)
-
-        if (determinableParams.nonEmpty)
-          determineTypeParams(determinableTpe, dtpe, determinableParams)
-            .map(typeArgs => determinableTpe.substituteTypes(determinableParams, typeArgs))
-        else if (determinableTpe <:< dtpe)
-          Some(determinableTpe)
-        else
-          None
-      }
+      sort(knownNonAbstractSubclasses(sym).toList)
+        .flatMap(subSym => determineSubtype(dtpe, subSym.asType))
+        .filter(_ <:< baseWithoutAbstractRefs)
     }
   }
+
+  def determineSubtype(baseTpe: Type, subclass: TypeSymbol): Option[Type] =
+    if (subclass.typeParams.isEmpty) Some(subclass.toType) else {
+      val vname = c.freshName(TermName("v"))
+      val normName = c.freshName(TermName("norm"))
+      val tpref = c.freshName("tpref")
+      val tparamBinds = subclass.typeParams.map(tp => Bind(TypeName(tpref + tp.name.toString), EmptyTree))
+      val matchedTpe = AppliedTypeTree(treeForType(subclass.toTypeConstructor), tparamBinds)
+
+      // heavy wizardry employed to trick the compiler into performing the type computation that I need
+      val fakeMatch =
+        q"""
+        def $normName(tpref: $StringCls, value: $ScalaPkg.Any): $ScalaPkg.Any =
+          macro $CommonsPkg.macros.misc.WhiteMiscMacros.normalizeGadtSubtype
+        ($PredefObj.??? : $baseTpe) match {
+          case $vname: $matchedTpe => $normName($tpref, $vname)
+        }
+       """
+
+      c.typecheck(fakeMatch, silent = !debugEnabled) match {
+        case EmptyTree => None
+        case t => t.collect({ case Typed(Ident(`vname`), tpt) => tpt.tpe }).headOption
+      }
+    }
 
   def determineTypeParams(undetTpe: Type, detTpe: Type, typeParams: List[Symbol]): Option[List[Type]] = {
     val methodName = c.freshName(TermName("m"))

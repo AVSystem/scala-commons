@@ -27,6 +27,6 @@ abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, 
   final def unwrap(t: T): R = unapply(t).getOrElse(throw new NoSuchElementException(s"unapply for $t failed"))
 }
 
-abstract class StringWrapperCompanion[T] extends TransparentWrapperCompanion[String, T]
-abstract class IntWrapperCompanion[T] extends TransparentWrapperCompanion[Int, T]
-abstract class LongWrapperCompanion[T] extends TransparentWrapperCompanion[Long, T]
+abstract class StringWrapperCompanion[T] extends TransparentWrapperCompanion[String, T](GenCodec.StringCodec)
+abstract class IntWrapperCompanion[T] extends TransparentWrapperCompanion[Int, T](GenCodec.IntCodec)
+abstract class LongWrapperCompanion[T] extends TransparentWrapperCompanion[Long, T](GenCodec.LongCodec)

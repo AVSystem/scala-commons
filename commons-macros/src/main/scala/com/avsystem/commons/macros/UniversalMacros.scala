@@ -33,13 +33,13 @@ class UniversalMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   def showType[A]: Tree = {
     val Apply(_, List(prefix)) = c.prefix.tree
-    c.error(prefix.pos, showCode(tq"${prefix.tpe}"))
+    c.error(prefix.pos, showCode(tq"${prefix.tpe.widen}"))
     prefix
   }
 
   def showRawType[A]: Tree = {
     val Apply(_, List(prefix)) = c.prefix.tree
-    c.error(prefix.pos, showRaw(prefix.tpe))
+    c.error(prefix.pos, showRaw(prefix.tpe.widen))
     prefix
   }
 

@@ -39,7 +39,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   def assertSameTypes(expected: Type, actual: Type): Unit = {
     if (!(expected =:= actual)) {
-      abort(s"Types don't match, expected $expected")
+      abort(s"Types don't match, got $actual")
     }
   }
 
@@ -56,11 +56,11 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
   }
 
   def testKnownSubtypes[T: WeakTypeTag, R: WeakTypeTag]: Tree = instrument {
-    val expectedResultTpe = knownSubtypes(weakTypeOf[T])
+    val computedResultType = knownSubtypes(weakTypeOf[T])
       .map(types => getType(tq"(..$types)"))
       .getOrElse(typeOf[Nothing])
 
-    assertSameTypes(expectedResultTpe, weakTypeOf[R])
+    assertSameTypes(weakTypeOf[R], computedResultType)
     q"$PredefObj.???"
   }
 
