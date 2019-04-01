@@ -1117,7 +1117,14 @@ trait MacroCommons { bundle =>
       val tparamBinds = subclass.typeParams.map(tp => Bind(TypeName(tpref + tp.name.toString), EmptyTree))
       val matchedTpe = AppliedTypeTree(treeForType(subclass.toTypeConstructor), tparamBinds)
 
-      // heavy wizardry employed to trick the compiler into performing the type computation that I need
+      // Heavy wizardry employed to trick the compiler into performing the type computation that I need.
+      // Nested macro call is required because _reasons_.
+      // No, really, it's actually required because we're taking advantage of "GADT type refinement" performed
+      // by the compiler when typechecking pattern matches. It involves some absolutely horrible mutation of
+      // compiler-internal data structures (see `scala.tools.nsc.typechecker.Contexts.pushTypeBounds/restoreTypeBounds`
+      // if you _really_ want to take a glimpse of it). As a consequence, the type that we want can only be accessed
+      // while typechecking case body and not after that. Therefore we need a macro which will inject itself exactly
+      // into that moment.
       val fakeMatch =
         q"""
           import scala.language.experimental.macros
@@ -1126,7 +1133,7 @@ trait MacroCommons { bundle =>
           ($PredefObj.??? : $baseTpe) match {
             case $vname: $matchedTpe => $normName($tpref, $vname)
           }
-       """
+         """
 
       c.typecheck(fakeMatch, silent = !debugEnabled) match {
         case EmptyTree => None
