@@ -1120,11 +1120,12 @@ trait MacroCommons { bundle =>
       // heavy wizardry employed to trick the compiler into performing the type computation that I need
       val fakeMatch =
         q"""
-        def $normName(tpref: $StringCls, value: $ScalaPkg.Any): $ScalaPkg.Any =
-          macro $CommonsPkg.macros.misc.WhiteMiscMacros.normalizeGadtSubtype
-        ($PredefObj.??? : $baseTpe) match {
-          case $vname: $matchedTpe => $normName($tpref, $vname)
-        }
+          import scala.language.experimental.macros
+          def $normName(tpref: $StringCls, value: $ScalaPkg.Any): $ScalaPkg.Any =
+            macro $CommonsPkg.macros.misc.WhiteMiscMacros.normalizeGadtSubtype
+          ($PredefObj.??? : $baseTpe) match {
+            case $vname: $matchedTpe => $normName($tpref, $vname)
+          }
        """
 
       c.typecheck(fakeMatch, silent = !debugEnabled) match {
