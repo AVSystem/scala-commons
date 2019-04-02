@@ -759,6 +759,11 @@ trait MacroCommons { bundle =>
         case ExistentialSingleton(sym, name, signature) => existentialSingletonToValDef(sym, name, signature)
         case sym => typeSymbolToTypeDef(sym)
       })
+    case PolyType(tparams, result) =>
+      val tcname = c.freshName(TypeName("tc"))
+      val mods = Modifiers(NoFlags, typeNames.EMPTY, Nil)
+      val typedef = TypeDef(mods, tcname, tparams.map(typeSymbolToTypeDef(_)), treeForType(result))
+      SelectFromTypeTree(CompoundTypeTree(Template(Nil, noSelfType, List(typedef))), tcname)
     case NullaryMethodType(resultType) =>
       treeForType(resultType)
     case AnnotatedType(annots, underlying) =>
