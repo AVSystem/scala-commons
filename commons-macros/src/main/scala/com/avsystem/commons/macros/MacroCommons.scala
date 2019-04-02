@@ -763,7 +763,8 @@ trait MacroCommons { bundle =>
       val tcname = c.freshName(TypeName("tc"))
       val mods = Modifiers(NoFlags, typeNames.EMPTY, Nil)
       val typedef = TypeDef(mods, tcname, tparams.map(typeSymbolToTypeDef(_)), treeForType(result))
-      SelectFromTypeTree(CompoundTypeTree(Template(Nil, noSelfType, List(typedef))), tcname)
+      val parents = List(pathTo(definitions.AnyRefClass))
+      SelectFromTypeTree(CompoundTypeTree(Template(parents, noSelfType, List(typedef))), tcname)
     case NullaryMethodType(resultType) =>
       treeForType(resultType)
     case AnnotatedType(annots, underlying) =>
