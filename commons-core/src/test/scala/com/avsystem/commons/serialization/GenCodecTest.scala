@@ -382,8 +382,8 @@ class GenCodecTest extends CodecTestBase {
     implicit val codec: GenCodec[Expr[_]] = GenCodec.materialize
     implicit val stringCodec: GenCodec[Expr[String]] = GenCodec.materialize
     implicit def baseGenericCodec[T]: GenCodec[BaseExpr {type Value = T}] = GenCodec.materialize
-    implicit def genericCodec[T]: GenCodec[Expr[T]] = GenCodec.materialize
   }
+  object Expr extends HasGadtCodec[Expr]
 
   test("GADT test") {
     testWriteRead[Expr[_]](NullExpr, Map("NullExpr" -> Map()))
@@ -413,6 +413,22 @@ class GenCodecTest extends CodecTestBase {
       Map("_case" -> "ArbitraryRecExpr", "value" -> 42))
     testWriteRead[RecExpr[Int]](LazyRecExpr(IntRecExpr(42)),
       Map("_case" -> "LazyRecExpr", "expr" -> Map("_case" -> "IntRecExpr", "int" -> 42)))
+  }
+
+  @flatten sealed trait PureGadtExpr[T]
+  case class StringLiteral(value: String) extends PureGadtExpr[String]
+  case class IntLiteral(value: Int) extends PureGadtExpr[Int]
+  case object NullLiteral extends PureGadtExpr[Null]
+  case class Plus[T](lhs: PureGadtExpr[T], rhs: PureGadtExpr[T]) extends PureGadtExpr[T]
+  object PureGadtExpr extends HasGadtCodec[PureGadtExpr]
+
+  test("pure GADT test") {
+    testWriteRead[PureGadtExpr[String]](StringLiteral("str"), Map("_case" -> "StringLiteral", "value" -> "str"))
+    testWriteRead[PureGadtExpr[String]](Plus(StringLiteral("str"), StringLiteral("fag")),
+      Map("_case" -> "Plus",
+        "lhs" -> Map("_case" -> "StringLiteral", "value" -> "str"),
+        "rhs" -> Map("_case" -> "StringLiteral", "value" -> "fag")
+      ))
   }
 
   sealed trait Tree[T]

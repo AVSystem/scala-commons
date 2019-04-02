@@ -95,6 +95,17 @@ abstract class HasPolyGenObjectCodecWithDeps[D, C[_]](implicit deps: ValueOf[D],
   implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = macroCodec(deps.value, this).codec
 }
 
+trait GadtCodec[C[_]] {
+  def codec[T]: GenCodec[C[T]]
+}
+
+/**
+  * Like [[HasPolyGenCodec]] but does not require [[GenCodec]] for the type parameter of type constructor `C`.
+  */
+abstract class HasGadtCodec[C[_]](implicit macroCodec: MacroInstances[Unit, GadtCodec[C]]) {
+  implicit def codec[T]: GenCodec[C[T]] = macroCodec((), this).codec
+}
+
 trait RecursiveCodec[T] {
   @materializeWith(GenCodec, "materializeRecursively")
   def codec: GenCodec[T]

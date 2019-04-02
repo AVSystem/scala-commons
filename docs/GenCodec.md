@@ -625,15 +625,18 @@ case class Branch[T](left: Tree[T], right: Tree[T]) extends Tree[T]
 object Tree extends HasPolyGenCodec[Tree]
 ```
 
-Note that for generic types we must use `HasPolyGenCodec` instead of `HasGenCodec`. It should also be relatively easy to create custom versions of these base companion classes for whatever combination of type kind, bounds and implicit dependencies.
-
 ```scala
-sealed abstract class Key[T](value: T)
-case class StringKey(value: String) extends Key[String](value)
-case class IntKey(value: Int) extends Key[Int](value)
-case object NullKey extends Key[Null](null)
-object Key extends HasGenCodec[Key[_]]
+sealed trait Expr[T]
+case class StringLiteral(value: String) extends Expr[String]
+case class IntLiteral(value: Int) extends Expr[Int]
+case object NullLiteral extends Expr[Null]
+case class Plus[T](lhs: Expr[T], rhs: Expr[T]) extends Expr[T]
+object Expr extends HasGadtCodec[Expr]
 ```
+
+Note that for generic types we must use `HasPolyGenCodec` or `HasGadtCodec` instead of `HasGenCodec`. It should also be
+relatively easy to create custom versions of these base companion classes for whatever combination of type kind, bounds
+and implicit dependencies you need to use.
 
 ### Customizing annotations
 
