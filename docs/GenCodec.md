@@ -611,12 +611,14 @@ tries to use any already declared [`GenCodec`](http://avsystem.github.io/scala-c
 
 ### Recursive types, generic types and GADTs (generalized algebraic data types)
 
-`materialize` and `materializeRecursively` support recursive and generic types, e.g.
+A recursively defined case class:
 
 ```scala
 case class SimpleTree(children: List[SimpleTree])
 object SimpleTree extends HasGenCodec[SimpleTree]
 ```
+
+A generic (and recursive) data type:
 
 ```scala
 sealed trait Tree[T]
@@ -624,6 +626,8 @@ case class Leaf[T](value: T) extends Tree[T]
 case class Branch[T](left: Tree[T], right: Tree[T]) extends Tree[T]
 object Tree extends HasPolyGenCodec[Tree]
 ```
+
+A generalized algebraic data type (also recursive):
 
 ```scala
 sealed trait Expr[T]
