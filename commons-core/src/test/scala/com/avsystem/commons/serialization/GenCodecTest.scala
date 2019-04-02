@@ -379,7 +379,6 @@ class GenCodecTest extends CodecTestBase {
   case object NullExpr extends Expr[Null](null)
   object BaseExpr {
     implicit val baseCodec: GenCodec[BaseExpr] = GenCodec.materialize
-    implicit val codec: GenCodec[Expr[_]] = GenCodec.materialize
     implicit val stringCodec: GenCodec[Expr[String]] = GenCodec.materialize
     implicit def baseGenericCodec[T]: GenCodec[BaseExpr {type Value = T}] = GenCodec.materialize
   }

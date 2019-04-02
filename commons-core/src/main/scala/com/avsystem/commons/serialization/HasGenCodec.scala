@@ -101,9 +101,11 @@ trait GadtCodec[C[_]] {
 
 /**
   * Like [[HasPolyGenCodec]] but does not require [[GenCodec]] for the type parameter of type constructor `C`.
+  * It also provides a [[GenCodec]] for wildcard, i.e. `C[_]`.
   */
 abstract class HasGadtCodec[C[_]](implicit macroCodec: MacroInstances[Unit, GadtCodec[C]]) {
-  implicit def codec[T]: GenCodec[C[T]] = macroCodec((), this).codec
+  implicit lazy val wildcardCodec: GenCodec[C[_]] = macroCodec((), this).codec[Any].asInstanceOf[GenCodec[C[_]]]
+  implicit def codec[T]: GenCodec[C[T]] = wildcardCodec.asInstanceOf[GenCodec[C[T]]]
 }
 
 trait RecursiveCodec[T] {
