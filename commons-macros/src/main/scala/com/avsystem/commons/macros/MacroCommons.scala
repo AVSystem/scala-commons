@@ -1097,10 +1097,9 @@ trait MacroCommons { bundle =>
   def knownSubtypes(tpe: Type, ordered: Boolean = false): Option[List[Type]] = measure("knownSubtypes") {
     val dtpe = tpe.map(_.dealias)
     val baseWithoutAbstractRefs = internal.existentialAbstraction(outerTypeParamsIn(dtpe), dtpe)
-    val (tpeSym, refined) = dtpe match {
-      case RefinedType(List(single), scope) =>
-        (single.typeSymbol, scope.filter(ts => ts.isType && !ts.isAbstract).toList)
-      case _ => (dtpe.typeSymbol, Nil)
+    val tpeSym = dtpe match {
+      case RefinedType(List(single), _) => single.typeSymbol
+      case _ => dtpe.typeSymbol
     }
 
     def sort(subclasses: List[Symbol]): List[Symbol] =
