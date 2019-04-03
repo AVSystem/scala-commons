@@ -1140,7 +1140,7 @@ trait MacroCommons { bundle =>
           }
          """
 
-      c.typecheck(fakeMatch, silent = !debugEnabled) match {
+      c.typecheck(fakeMatch, silent = true) match {
         case EmptyTree => None
         case t => t.collect({ case Typed(Ident(`vname`), tpt) => tpt.tpe }).headOption
       }
