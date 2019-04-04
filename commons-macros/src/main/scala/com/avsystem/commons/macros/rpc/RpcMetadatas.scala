@@ -22,7 +22,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     }
 
     val baseParamTags: List[BaseTagSpec] =
-      (annots(ParamTagAT) ++ allAnnotations(arity.collectedType.typeSymbol, ParamTagAT)).map(tagSpec) ++
+      (annots(ParamTagAT) ++ allAnnotations(arity.collectedType.typeSymbol, ParamTagAT)).map(BaseTagSpec.apply) ++
         owner.baseParamTags
 
     def mappingFor(matchedMethod: MatchedMethod): Res[MethodMetadataMapping] = for {
@@ -88,8 +88,8 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
 
     def baseTagSpecs: List[BaseTagSpec] = Nil
 
-    val baseMethodTags: List[BaseTagSpec] = annots(MethodTagAT).map(tagSpec)
-    val baseParamTags: List[BaseTagSpec] = annots(ParamTagAT).map(tagSpec)
+    val baseMethodTags: List[BaseTagSpec] = annots(MethodTagAT).map(BaseTagSpec.apply)
+    val baseParamTags: List[BaseTagSpec] = annots(ParamTagAT).map(BaseTagSpec.apply)
 
     lazy val methodMdParams: List[MethodMetadataParam] = collectParams[MethodMetadataParam]
 

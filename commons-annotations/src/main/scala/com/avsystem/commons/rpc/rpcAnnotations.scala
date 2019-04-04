@@ -263,7 +263,13 @@ final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends
   * @tparam BaseTag base type for tags that can be used on real RPC parameters
   * @param defaultTag default tag value assumed for untagged real parameters
   */
-final class paramTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawMethodAnnotation
+final class paramTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawSymAnnotation
+
+/**
+  * Like [[paramTag]] or [[methodTag]] but used for tagging case classes in sealed hierarchies when
+  * materializing ADT metadata for them.
+  */
+final class caseTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawSymAnnotation
 
 /**
   * Annotation applied on raw methods or raw parameters that limits matching real methods or real parameters to

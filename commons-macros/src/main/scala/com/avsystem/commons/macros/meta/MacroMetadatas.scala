@@ -94,6 +94,9 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     lazy val allowIncomplete: Boolean =
       annot(AllowIncompleteAT).nonEmpty
 
+    def tagSpecs(baseTagAnnot: Type): List[BaseTagSpec] =
+      atParam.map(_.owner.tagSpecs(baseTagAnnot)).getOrElse(Nil) ++ annots(baseTagAnnot).map(BaseTagSpec.apply)
+
     def shortDescription = "metadata class"
     def description = s"$shortDescription $ownerType"
 

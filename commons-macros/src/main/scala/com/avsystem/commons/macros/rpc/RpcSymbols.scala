@@ -228,7 +228,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     val tried: Boolean = annot(TriedAT).nonEmpty
 
     val baseParamTags: List[BaseTagSpec] =
-      annots(ParamTagAT).map(tagSpec) ++ owner.baseParamTags
+      annots(ParamTagAT).map(BaseTagSpec.apply) ++ owner.baseParamTags
 
     val rawParams: List[RawParam] = sig.paramLists match {
       case Nil | List(_) => sig.paramLists.flatten.map(RawParam(Left(this), _))
@@ -308,8 +308,8 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     def baseTagSpecs: List[BaseTagSpec] = Nil
 
-    val baseMethodTags: List[BaseTagSpec] = annots(MethodTagAT).map(tagSpec)
-    val baseParamTags: List[BaseTagSpec] = annots(ParamTagAT).map(tagSpec)
+    val baseMethodTags: List[BaseTagSpec] = annots(MethodTagAT).map(BaseTagSpec.apply)
+    val baseParamTags: List[BaseTagSpec] = annots(ParamTagAT).map(BaseTagSpec.apply)
 
     lazy val rawMethods: List[RawMethod] =
       tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(this, _)).toList

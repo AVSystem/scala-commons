@@ -25,6 +25,9 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final lazy val TaggedAT: Type = staticType(tq"$RpcPackage.tagged[_]")
   final lazy val UnmatchedAT: Type = staticType(tq"$RpcPackage.unmatched")
   final lazy val UnmatchedParamAT: Type = staticType(tq"$RpcPackage.unmatchedParam[_]")
+  final lazy val ParamTagAT: Type = staticType(tq"$RpcPackage.paramTag[_]")
+  final lazy val CaseTagAT: Type = staticType(tq"$RpcPackage.caseTag[_]")
+  final lazy val RpcTagAT: Type = staticType(tq"$RpcPackage.RpcTag")
   final lazy val WhenUntaggedArg: Symbol = TaggedAT.member(TermName("whenUntagged"))
   final lazy val UnmatchedErrorArg: Symbol = UnmatchedAT.member(TermName("error"))
   final lazy val UnmatchedParamErrorArg: Symbol = UnmatchedParamAT.member(TermName("error"))
@@ -201,6 +204,15 @@ private[commons] trait MacroSymbols extends MacroCommons {
   }
 
   case class BaseTagSpec(baseTagTpe: Type, fallbackTag: FallbackTag)
+  object BaseTagSpec {
+    def apply(a: Annot): BaseTagSpec = {
+      val tagType = a.tpe.dealias.typeArgs.head
+      val defaultTagArg = a.tpe.member(TermName("defaultTag"))
+      val fallbackTag = FallbackTag(a.findArg[Tree](defaultTagArg, EmptyTree))
+      BaseTagSpec(tagType, fallbackTag)
+    }
+  }
+
   case class RequiredTag(baseTagTpe: Type, tagTpe: Type, fallbackTag: FallbackTag)
 
   case class FallbackTag(annotTree: Tree) {
@@ -218,13 +230,6 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def tagAnnot(tpe: Type): Option[Annot] =
       annot(tpe)
 
-    def tagSpec(a: Annot): BaseTagSpec = {
-      val tagType = a.tpe.dealias.typeArgs.head
-      val defaultTagArg = a.tpe.member(TermName("defaultTag"))
-      val fallbackTag = FallbackTag(a.findArg[Tree](defaultTagArg, EmptyTree))
-      BaseTagSpec(tagType, fallbackTag)
-    }
-
     lazy val requiredTags: List[RequiredTag] = {
       val result = baseTagSpecs.map { case BaseTagSpec(baseTagTpe, fallbackTag) =>
         val taggedAnnot = annot(getType(tq"$RpcPackage.tagged[_ <: $baseTagTpe]"))
@@ -235,7 +240,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
       annots(TaggedAT).foreach { ann =>
         val requiredTagTpe = ann.tpe.typeArgs.head
         if (!result.exists(_.tagTpe =:= requiredTagTpe)) {
-          reportProblem(s"annotation $ann does not have corresponding @paramTag/@methodTag set up")
+          reportProblem(s"annotation $ann does not have corresponding @paramTag/@methodTag/@caseTag set up")
         }
       }
       result
