@@ -27,7 +27,7 @@ abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, 
     transformedCodec = new GenCodec.Transformed(wrappedCodec, unwrap, wrap)
   }
 
-  implicit def self: this.type = this
+  implicit def self: TransparentWrapping[R, T] = this
 
   def apply(r: R): T
   def unapply(t: T): Option[R]
