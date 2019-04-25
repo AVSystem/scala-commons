@@ -697,39 +697,52 @@ final class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(
   }
 
   def normalizeGadtSubtype(tpref: Tree, value: Tree): Tree = {
+    def print(msg: String): Unit =
+      if (c.enclosingPosition.line == 57) {
+        echo(msg)
+      }
+
     val StringLiteral(tprefStr) = tpref
     val quantified = new ListBuffer[Symbol]
+
+    print(show(value.tpe))
 
     val unrefined = value.tpe match {
       case RefinedType(List(_, second), _) => second
       case t => t
     }
+    print(show(unrefined))
 
     val withFullyDetermined = unrefined.map { t =>
       if (t.typeSymbol.name.toString.startsWith(tprefStr)) {
         t.typeSymbol.typeSignature match {
           case TypeBounds(lo, hi) if lo =:= hi =>
             lo
-          case _ =>
+          case ts =>
+            print(t.typeSymbol.name + show(ts))
             quantified += t.typeSymbol
             t
         }
       } else t
     }
+    print(show(withFullyDetermined))
+
     val withoutMatchedTypes = internal.existentialAbstraction(quantified.result(), withFullyDetermined)
+    print(show(withoutMatchedTypes))
 
     val innerQuantified = new mutable.HashSet[Symbol]
     val outerQuantified = new ListBuffer[Symbol]
     withoutMatchedTypes.foreach {
       case ExistentialType(iq, _) => innerQuantified ++= iq
       case t if t.typeSymbol.isType =>
-        if(t.typeSymbol.asType.isExistential && !innerQuantified.contains(t.typeSymbol)) {
+        if (t.typeSymbol.asType.isExistential && !innerQuantified.contains(t.typeSymbol)) {
           outerQuantified += t.typeSymbol
         }
       case _ =>
     }
 
     val normTpe = internal.existentialAbstraction(outerQuantified.result(), withoutMatchedTypes)
+    print(show(normTpe))
     q"$value: ${treeForType(normTpe)}"
   }
 }

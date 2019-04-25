@@ -393,14 +393,21 @@ class GenCodecTest extends CodecTestBase {
     testWriteRead[BaseExpr {type Value = String}](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
   }
 
+  trait RecBound[+T]
+  case class RecBounded(int: Int) extends RecBound[RecBounded]
+  object RecBounded extends HasGenCodec[RecBounded]
+
   @flatten sealed trait RecExpr[+T]
   case class IntRecExpr(int: Int) extends RecExpr[Int]
   case class StringRecExpr(str: String) extends RecExpr[String]
   case object NothingRecExpr extends RecExpr[Nothing]
   case class ArbitraryRecExpr[+T](value: T) extends RecExpr[T]
+  case class RecBoundedExpr[+T <: RecBound[T]](value: T) extends RecExpr[T]
   case class LazyRecExpr[+T](expr: RecExpr[T]) extends RecExpr[T]
   object RecExpr {
-    implicit def codec[T: GenCodec]: GenCodec[RecExpr[T]] = GenCodec.materialize
+    private def mkCodec[T <: RecBound[T] : GenCodec]: GenCodec[RecExpr[T]] = GenCodec.materialize
+    implicit def codec[T: GenCodec]: GenCodec[RecExpr[T]] =
+      mkCodec[Nothing](GenCodec[T].asInstanceOf[GenCodec[Nothing]]).asInstanceOf[GenCodec[RecExpr[T]]]
   }
 
   test("recursive GADT test") {
@@ -412,6 +419,9 @@ class GenCodecTest extends CodecTestBase {
       Map("_case" -> "ArbitraryRecExpr", "value" -> 42))
     testWriteRead[RecExpr[Int]](LazyRecExpr(IntRecExpr(42)),
       Map("_case" -> "LazyRecExpr", "expr" -> Map("_case" -> "IntRecExpr", "int" -> 42)))
+    testWriteRead[RecExpr[RecBounded]](RecBoundedExpr(RecBounded(42)),
+      Map("_case" -> "RecBoundedExpr", "value" -> Map("int" -> 42))
+    )
   }
 
   @flatten sealed trait PureGadtExpr[T]

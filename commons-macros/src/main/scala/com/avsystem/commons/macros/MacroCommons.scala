@@ -688,6 +688,13 @@ trait MacroCommons { bundle =>
     }
   }
 
+  object MaybeExistentialType {
+    def unapply(tpe: Type): Some[(List[Symbol], Type)] = tpe match {
+      case ExistentialType(quantified, underlying) => Some((quantified, underlying))
+      case _ => Some((Nil, tpe))
+    }
+  }
+
   object WrappedImplicitSearchResult {
     def unapply(tree: Tree): Option[Tree] = tree match {
       case Block(_, expr) => unapply(expr)
@@ -1096,7 +1103,6 @@ trait MacroCommons { bundle =>
 
   def knownSubtypes(tpe: Type, ordered: Boolean = false): Option[List[Type]] = measure("knownSubtypes") {
     val dtpe = tpe.map(_.dealias)
-    val baseWithoutAbstractRefs = internal.existentialAbstraction(outerTypeParamsIn(dtpe), dtpe)
     val tpeSym = dtpe match {
       case RefinedType(List(single), _) => single.typeSymbol
       case _ => dtpe.typeSymbol
@@ -1110,12 +1116,58 @@ trait MacroCommons { bundle =>
     Option(tpeSym).filter(isSealedHierarchyRoot).map { sym =>
       sort(knownNonAbstractSubclasses(sym).toList)
         .flatMap(subSym => determineSubtype(dtpe, subSym.asType))
-        .filter(_ <:< baseWithoutAbstractRefs)
     }
   }
 
+  // determine subtype assuming that we're dealing with simple TypeRefs (no structural types etc.)
+  // and subtype simply passes its type parameters to base type without wrapping them into anything
+  private def simplifiedDetermineSubtype(baseTpe: Type, subclass: TypeSymbol): Option[Type] =
+    if (subclass.typeParams.isEmpty) Some(subclass.toType)
+    else baseTpe match {
+      case ExistentialType(quantified, underlying) =>
+        simplifiedDetermineSubtype(underlying, subclass).map(internal.existentialAbstraction(quantified, _))
+      case TypeRef(_, sym, baseArgs) => subclass.toType.baseType(sym) match {
+        case TypeRef(_, _, undetBaseArgs) =>
+
+          case class BaseArgMapping(baseTparam: TypeSymbol, baseArg: Type, undetSubBaseArg: Type)
+
+          val tparamMapping = new mutable.HashMap[Symbol, Tree]
+          val moreWildcards = new ListBuffer[MemberDef]
+
+          def matchBaseArgs(baseArgs: List[BaseArgMapping]): Option[Type] = baseArgs match {
+            case BaseArgMapping(basetp, arg, TypeRef(NoPrefix, s, Nil)) :: tail if subclass.typeParams.contains(s) =>
+              val newArgTree =
+                if (basetp.isCovariant && !s.asType.isCovariant || basetp.isContravariant && !s.asType.isContravariant) {
+                  val bounds =
+                    if (basetp.isCovariant) TypeBoundsTree(EmptyTree, TypeTree(arg))
+                    else TypeBoundsTree(TypeTree(arg), EmptyTree)
+                  moreWildcards += TypeDef(Modifiers(Flag.DEFERRED), s.name.toTypeName, Nil, bounds)
+                  Ident(s.name)
+                }
+                else TypeTree(arg)
+
+              tparamMapping(s) = newArgTree
+              matchBaseArgs(tail)
+            case Nil =>
+              val subargs = subclass.typeParams.map(tp => tparamMapping.getOrElse(tp, Ident(tp)))
+              val appliedSubclass = tq"$subclass[..$subargs]"
+              val subtpeTree =
+                if (moreWildcards.nonEmpty) ExistentialTypeTree(appliedSubclass, moreWildcards.result())
+                else appliedSubclass
+
+              val undetTparams = subclass.typeParams.filterNot(tparamMapping.contains)
+              Some(internal.existentialAbstraction(undetTparams, getType(subtpeTree)))
+            case _ => None
+          }
+          matchBaseArgs((sym.asType.typeParams zip baseArgs zip undetBaseArgs).map {
+            case ((s, t), ut) => BaseArgMapping(s.asType, t, ut)
+          })
+      }
+      case _ => None
+    }
+
   def determineSubtype(baseTpe: Type, subclass: TypeSymbol): Option[Type] =
-    if (subclass.typeParams.isEmpty) Some(subclass.toType) else {
+    simplifiedDetermineSubtype(baseTpe, subclass) orElse {
       val vname = c.freshName(TermName("v"))
       val normName = c.freshName(TermName("norm"))
       val tpref = c.freshName("tpref")
@@ -1131,7 +1183,7 @@ trait MacroCommons { bundle =>
       // while typechecking case body and not after that. Therefore we need a macro which will inject itself exactly
       // into that moment.
       val fakeMatch =
-        q"""
+      q"""
           import scala.language.experimental.macros
           def $normName(tpref: $StringCls, value: $ScalaPkg.Any): $ScalaPkg.Any =
             macro $CommonsPkg.macros.misc.WhiteMiscMacros.normalizeGadtSubtype

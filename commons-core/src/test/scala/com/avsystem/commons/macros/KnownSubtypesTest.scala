@@ -3,7 +3,7 @@ package macros
 
 import scala.language.experimental.macros
 
-class KnownSubtypesTest[A, B <: AnyRef] {
+class KnownSubtypesTest[A, B <: AnyRef, C <: Ordered[C]] {
   def testKnownSubtypes[T, R]: Nothing = macro com.avsystem.commons.macros.TestMacros.testKnownSubtypes[T, R]
 
   sealed trait Base
@@ -24,9 +24,9 @@ class KnownSubtypesTest[A, B <: AnyRef] {
   case class RandomGenericSomething[T](t: T) extends Gadt[Int]
   case object StringSomething extends Gadt[String]
 
-  testKnownSubtypes[Gadt[Int], (Something[Int], RandomGenericSomething[_])]
+  testKnownSubtypes[Gadt[Int], (Something[Int], RandomGenericSomething[_], StringSomething.type)]
   testKnownSubtypes[Gadt[String], (Something[String], StringSomething.type)]
-  testKnownSubtypes[Gadt[List[Int]], (Something[List[Int]], ListSomething[Int])]
+  testKnownSubtypes[Gadt[List[Int]], (Something[List[Int]], ListSomething[Int], StringSomething.type)]
   testKnownSubtypes[Gadt[A], (Something[A], ListSomething[_], RandomGenericSomething[_], StringSomething.type)]
 
   sealed trait InvGadt[T]
@@ -34,16 +34,30 @@ class KnownSubtypesTest[A, B <: AnyRef] {
   case class InvString(str: String) extends InvGadt[String]
   case class InvGen[T](t: T) extends InvGadt[T]
   case class InvBounded[T <: AnyRef](t: T) extends InvGadt[T]
+  case class InvRecBounded[T <: Ordered[T]](t: T) extends InvGadt[T]
 
-  testKnownSubtypes[InvGadt[_], (InvInt, InvString, InvGen[_], InvBounded[_ <: AnyRef])]
-  testKnownSubtypes[InvGadt[_ <: String], (InvString, InvGen[_ <: String], InvBounded[_ <: String])]
-  testKnownSubtypes[InvGadt[Set[_]], (InvGen[Set[_]], InvBounded[Set[_]])]
+  testKnownSubtypes[InvGadt[_],
+    (InvInt, InvString, InvGen[_], InvBounded[_], InvRecBounded[_])]
+  testKnownSubtypes[InvGadt[_ <: String],
+    (InvInt, InvString, InvGen[_ <: String], InvBounded[_ <: String], InvRecBounded[_ <: String])]
+  testKnownSubtypes[InvGadt[Set[_]],
+    (InvInt, InvString, InvGen[Set[_]], InvBounded[Set[_]], InvRecBounded[Set[_]])]
   testKnownSubtypes[InvGadt[Set[X]] forSome {type X},
-    (InvGen[Set[X]] forSome {type X}, InvBounded[Set[X]] forSome {type X})]
-  testKnownSubtypes[InvGadt[Any], InvGen[Any]]
-  testKnownSubtypes[InvGadt[Nothing], (InvGen[Nothing], InvBounded[Nothing])]
-  testKnownSubtypes[InvGadt[A], (InvInt, InvString, InvGen[A], InvBounded[_ <: AnyRef])]
-  testKnownSubtypes[InvGadt[B], (InvString, InvGen[B], InvBounded[B])]
+    (InvInt, InvString, InvGen[Set[X]] forSome {type X}, InvBounded[Set[X]] forSome {type X}, InvRecBounded[Set[X]] forSome {type X})]
+  testKnownSubtypes[InvGadt[Any],
+    (InvInt, InvString, InvGen[Any], InvBounded[Any], InvRecBounded[Any])]
+  testKnownSubtypes[InvGadt[T] forSome {type T <: Ordered[T]},
+    (InvInt, InvString, InvGen[T] forSome {type T <: Ordered[T]}, InvBounded[T] forSome {type T <: Ordered[T]}, InvRecBounded[T] forSome {type T <: Ordered[T]})]
+  testKnownSubtypes[InvGadt[Nothing],
+    (InvInt, InvString, InvGen[Nothing], InvBounded[Nothing], InvRecBounded[Nothing])]
+  testKnownSubtypes[InvGadt[A],
+    (InvInt, InvString, InvGen[A], InvBounded[A], InvRecBounded[A])]
+  testKnownSubtypes[InvGadt[B],
+    (InvInt, InvString, InvGen[B], InvBounded[B], InvRecBounded[B])]
+  testKnownSubtypes[InvGadt[C],
+    (InvInt, InvString, InvGen[C], InvBounded[C], InvRecBounded[C])]
+  testKnownSubtypes[InvGadt[String],
+    (InvInt, InvString, InvGen[String], InvBounded[String], InvRecBounded[String])]
 
   sealed trait CovGadt[+T]
   case class CovInt(lol: Int) extends CovGadt[Int]
@@ -53,7 +67,7 @@ class KnownSubtypesTest[A, B <: AnyRef] {
 
   testKnownSubtypes[CovGadt[_], (CovInt, CovString, CovGen[Any], CovInvGen[_])]
   testKnownSubtypes[CovGadt[Any], (CovInt, CovString, CovGen[Any], CovInvGen[_])]
-  testKnownSubtypes[CovGadt[Nothing], (CovGen[Nothing], CovInvGen[Nothing])]
+  testKnownSubtypes[CovGadt[Nothing], (CovInt, CovString, CovGen[Nothing], CovInvGen[_ <: Nothing])]
   testKnownSubtypes[CovGadt[A], (CovInt, CovString, CovGen[A], CovInvGen[_ <: A])]
 
   sealed trait ContraGadt[-T]
@@ -62,11 +76,10 @@ class KnownSubtypesTest[A, B <: AnyRef] {
   case class ContraGen[-T]() extends ContraGadt[T]
   case class ContraInvGen[T](t: T) extends ContraGadt[T]
 
-  //type inferred for ContraInvGen is unnecessarily bloated but it's an unlikely corner case
-  testKnownSubtypes[ContraGadt[_],
-    (ContraInt, ContraString, ContraGen[_], ContraInvGen[X] forSome {type Y; type X >: Y})]
-  testKnownSubtypes[ContraGadt[Any], (ContraGen[Any], ContraInvGen[Any])]
-  testKnownSubtypes[ContraGadt[Nothing], (ContraInt, ContraString, ContraGen[_], ContraInvGen[_])]
+  // ContraInvGen case unnecessarily bloated but that shouldn't be a problem
+  testKnownSubtypes[ContraGadt[_], (ContraInt, ContraString, ContraGen[_], ContraInvGen[X] forSome {type Y; type X >: Y})]
+  testKnownSubtypes[ContraGadt[Any], (ContraInt, ContraString, ContraGen[Any], ContraInvGen[_ >: Any])]
+  testKnownSubtypes[ContraGadt[Nothing], (ContraInt, ContraString, ContraGen[Nothing], ContraInvGen[_])]
   testKnownSubtypes[ContraGadt[A], (ContraInt, ContraString, ContraGen[A], ContraInvGen[_ >: A])]
 
   sealed trait CovGeneric[+T]
@@ -97,5 +110,5 @@ class KnownSubtypesTest[A, B <: AnyRef] {
 
   testKnownSubtypes[MemberedBase, (MemberedCase, GenericMemberedCase[_])]
   testKnownSubtypes[MemberedBase {type Elem = String}, (MemberedCase, GenericMemberedCase[String])]
-  testKnownSubtypes[MemberedBase {type Elem = Int}, GenericMemberedCase[Int]]
+  testKnownSubtypes[MemberedBase {type Elem = Int}, (MemberedCase, GenericMemberedCase[Int])]
 }
