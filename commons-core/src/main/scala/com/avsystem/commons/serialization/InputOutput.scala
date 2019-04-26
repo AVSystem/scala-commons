@@ -306,18 +306,20 @@ trait ObjectInput extends Any with SequentialInput { self =>
     * present in the object, regardless of field order assumed by [[nextField]].
     * `Opt.Empty` is returned when field is absent or always when this `ObjectInput` does not support random field
     * access (in which case it must preserve field order instead).
-    * NOTE: calling [[peekField]] and using [[FieldInput]] returned by it MUST NOT change state of this `ObjectInput`.
+    * NOTE: calling [[peekField]] and using [[com.avsystem.commons.serialization.FieldInput FieldInput]] returned by
+    * it MUST NOT change state of this `ObjectInput`.
     * Therefore, it cannot in any way influence results returned by [[nextField]] and [[hasNext]].
-    * For example, if a [[FieldInput]] for particular field has already been
+    * For example, if a [[com.avsystem.commons.serialization.FieldInput FieldInput]] for particular field has already been
     * accessed using [[peekField]] but has not yet been returned by [[nextField]] then it MUST be returned at some
     * point in the future by [[nextField]].
     */
   def peekField(name: String): Opt[FieldInput] = Opt.Empty
 
   /**
-    * Tries to obtain [[FieldInput]] for field with specified name, either by using [[peekField]] (assuming format with
-    * random field access) or [[nextField]] (assuming format that preserves field order). A codec that uses this method
-    * must ensure that it reads fields in the same order as they were written using `writeField` on [[ObjectOutput]].
+    * Tries to obtain [[com.avsystem.commons.serialization.FieldInput FieldInput]] for field with specified name,
+    * either by using [[peekField]] (assuming format with random field access) or [[nextField]] (assuming format that
+    * preserves field order). A codec that uses this method must ensure that it reads fields in the same order as they
+    * were written using `writeField` on [[ObjectOutput]].
     */
   def getNextNamedField(name: String): FieldInput =
     peekField(name).getOrElse {

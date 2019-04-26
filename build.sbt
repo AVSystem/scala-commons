@@ -176,6 +176,7 @@ lazy val `commons-jvm` = project.in(file(".jvm"))
     `commons-rest`,
     `commons-jetty`,
     `commons-mongo`,
+    `commons-hocon`,
     `commons-spring`,
     `commons-redis`,
     `commons-akka`,
@@ -369,13 +370,21 @@ lazy val `commons-redis` = project
     parallelExecution in Test := false,
   )
 
-lazy val `commons-spring` = project
+lazy val `commons-hocon` = project
   .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
-      "org.springframework" % "spring-context" % springVersion,
       "com.typesafe" % "config" % typesafeConfigVersion,
+    ),
+  )
+
+lazy val `commons-spring` = project
+  .dependsOn(`commons-hocon` % CompileAndTest)
+  .settings(
+    jvmCommonSettings,
+    libraryDependencies ++= Seq(
+      "org.springframework" % "spring-context" % springVersion,
     ),
   )
 
