@@ -12,8 +12,8 @@
 * `commons-core` - basic language utilities and generic features not associated with any particular library of framework:
   * [`GenCodec`](docs/GenCodec.md): format-agnostic, typeclass based serialization framework with automatic typeclass
     derivation for case classes and sealed hierarchies
-  * [RPC framework](docs/RPCFramework.md): **typesafe** RPC/proxy framework used in particular by
-    [Udash Framework](http://guide.udash.io/#/rpc) for client-server communication
+  * **Typesafe** RPC/proxy framework used in particular by [Udash Framework](http://guide.udash.io/#/rpc) for
+    client-server communication
   * [REST framework](docs/REST.md) based on RPC framework
   * Better enumeration support for Scala -
     [`ValueEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/ValueEnum.html),
