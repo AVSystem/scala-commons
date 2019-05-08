@@ -11,7 +11,7 @@ trait SimpleIOCodecTest extends AbstractCodecTest {
 
   def writeToOutput(write: Output => Unit): Any = {
     var result: Any = null
-    new SimpleValueOutput(result = _)
+    write(new SimpleValueOutput(result = _))
     result
   }
 
