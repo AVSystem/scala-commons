@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
-trait JCodecTestBase extends CodecTestBase {
+import CodecTestData._
+
+trait JCodecTestBase extends AbstractCodecTest {
   val jTreeMap = stringMap(new JTreeMap[String, Int])
 }
