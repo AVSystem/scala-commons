@@ -42,7 +42,8 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
     new ValueEnumExhaustiveMatch[global.type](global),
     new ShowAst[global.type](global),
     new FindUsages[global.type](global),
-    new CheckBincompat[global.type](global)
+    new CheckBincompat[global.type](global),
+    new Any2StringAdd[global.type](global)
   )
   private lazy val rulesByName = rules.map(r => (r.name, r)).toMap
 
