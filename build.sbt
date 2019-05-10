@@ -38,6 +38,7 @@ val commonSettings = Seq(
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
     "-encoding", "utf-8",
+    "-Yrangepos",
     "-explaintypes",
     "-feature",
     "-deprecation",
