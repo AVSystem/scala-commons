@@ -173,4 +173,8 @@ class SharedExtensionsTest extends FunSuite with Matchers {
         |  val x = 5 + 2
         |}""".stripMargin)
   }
+
+  test("withSourceCode") {
+    assert(123.withSourceCode == (123, "123"))
+  }
 }

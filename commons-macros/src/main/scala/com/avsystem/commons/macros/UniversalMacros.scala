@@ -26,6 +26,11 @@ class UniversalMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     q"$stripped"
   }
 
+  def withSourceCode: Tree = {
+    val Apply(_, List(prefix)) = c.prefix.tree
+    q"($prefix, $sourceCode)"
+  }
+
   def showAst[A]: Tree = {
     val Apply(_, List(prefix)) = c.prefix.tree
     c.error(prefix.pos, showCode(prefix))
