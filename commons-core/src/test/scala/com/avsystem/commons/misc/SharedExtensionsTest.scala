@@ -158,4 +158,23 @@ class SharedExtensionsTest extends FunSuite with Matchers {
     assert("a\n b".unwrapLines == "a b")
     assert("a \n b".unwrapLines == "a  b")
   }
+
+  test("sourceCode") {
+    assert(123.sourceCode == "123")
+
+    val src = {
+      println(123)
+      val x = 5 + 2
+    }.sourceCode
+
+    assert(src ==
+      """{
+        |  println(123)
+        |  val x = 5 + 2
+        |}""".stripMargin)
+  }
+
+  test("withSourceCode") {
+    assert(123.withSourceCode == (123, "123"))
+  }
 }
