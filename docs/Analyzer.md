@@ -20,6 +20,7 @@ Here's a list of currently supported rules:
 | --- | --- | --- |
 | `importJavaUtil` | warning | Rejects direct imports of `java.util` package. |
 | `valueEnumExhaustiveMatch` | warning | Enables (limited) exhaustive pattern match checking for [`ValueEnum`s](https://github.com/AVSystem/scala-commons/blob/1.34.x/commons-core/src/main/scala/com/avsystem/commons/misc/ValueEnum.scala). |
+| `any2stringadd` | off | Disables `any2stringadd` (concatenating arbitrary values with strings using `+`). |
 | `bincompat` | warning | Enables [`@bincompat`](https://github.com/AVSystem/scala-commons/blob/1.34.x/commons-annotations/src/main/scala/com/avsystem/commons/annotation/bincompat.scala) checking |
 | `showAst` | error | Handles [`@showAst`](https://github.com/AVSystem/scala-commons/blob/1.34.x/commons-annotations/src/main/scala/com/avsystem/commons/annotation/showAst.scala). |
 | `findUsages` | warning | Issues a message for every occurrence of any of the symbols listed in the argument of this rule |
