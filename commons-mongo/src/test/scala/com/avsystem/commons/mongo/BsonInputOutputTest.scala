@@ -3,12 +3,56 @@ package mongo
 
 import java.nio.ByteBuffer
 
-import com.avsystem.commons.serialization.ObjectInput
+import com.avsystem.commons.serialization.{GenCodecRoundtripTest, Input, ObjectInput, Output}
 import org.bson._
 import org.bson.io.BasicOutputBuffer
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
 import org.scalatest.prop.PropertyChecks
+
+class BinaryBsonGenCodecRoundtripTest extends GenCodecRoundtripTest {
+  type Raw = Array[Byte]
+
+  def legacyOptionEncoding: Boolean = false
+
+  def writeToOutput(write: Output => Unit): Array[Byte] = {
+    val bsonOutput = new BasicOutputBuffer()
+    val writer = new BsonBinaryWriter(bsonOutput)
+    val output = new BsonWriterOutput(writer, legacyOptionEncoding)
+    val objOutput = output.writeObject()
+    write(objOutput.writeField("fakeField")) // BSON must be an object
+    objOutput.finish()
+    bsonOutput.toByteArray
+  }
+
+  def createInput(raw: Array[Byte]): Input = {
+    val reader = new BsonBinaryReader(ByteBuffer.wrap(raw))
+    val input = new BsonReaderInput(reader, legacyOptionEncoding)
+    input.readObject().nextField()
+  }
+}
+
+class DocumentBsonGenCodecRoundtripTest extends GenCodecRoundtripTest {
+  type Raw = BsonDocument
+
+  def legacyOptionEncoding: Boolean = false
+
+  def writeToOutput(write: Output => Unit): BsonDocument = {
+    val doc = new BsonDocument()
+    val writer = new BsonDocumentWriter(doc)
+    val output = new BsonWriterOutput(writer, legacyOptionEncoding)
+    val objOutput = output.writeObject()
+    write(objOutput.writeField("fakeField")) // BSON must be an object
+    objOutput.finish()
+    doc
+  }
+
+  def createInput(raw: BsonDocument): Input = {
+    val reader = new BsonDocumentReader(raw)
+    val input = new BsonReaderInput(reader, legacyOptionEncoding)
+    input.readObject().nextField()
+  }
+}
 
 class BsonInputOutputTest extends FunSuite with PropertyChecks {
   def binaryRoundtrip(sthBefore: SomethingComplex, legacyOptionEncoding: Boolean = false): Unit = {
