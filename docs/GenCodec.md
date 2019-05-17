@@ -196,18 +196,18 @@ method. See their documentation for more details.
 
 ### Implementations of `Input` and `Output` available by default
 
-The commons library contains example implementation of [`Input`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Input.html) 
-and [`Output`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Output.html) - 
-[`SimpleValueInput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueInput.html) 
-and [`SimpleValueOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueOutput.html) 
-which translate serialized values to simple Scala objects. Primitive types are represented by themselves, lists are 
-represented by standard Scala `List[T]` values and objects are represented by standard Scala `Map[String,T]` values. 
-You can use this representation as an intermediate representation that can be further serialized e.g. by some Java 
-serialization framework. However, for performance reasons it is recommended to have direct implementations of 
-[`Input`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Input.html) 
-and [`Output`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Output.html) for the final format.
-
-There is also a minimal JSON backend provided: [`JsonStringInput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringInput.html) and [`JsonStringOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringOutput.html)
+Implementations of `Input` and `Output` provided by `scala-commons` by default are:
+* `SimpleValueInput`/`SimpleValueOutput` - translate serialized values into simple Scala objects. 
+  Primitive types are represented by themselves, lists are represented by standard Scala `List[T]` values and objects
+  are represented by standard Scala `Map[String, T]` values. 
+* `JsonStringInput`/`JsonStringOutput` - JSON implementations that work
+directly on `String` values, without intermediate JSON AST
+* `CborInput`/`CborOutput` - [Concise Binary Object Representation, CBOR](https://tools.ietf.org/html/rfc7049)
+* `StreamInput`/`StreamOutput` - simple opaque binary format
+* `HoconInput` (in `commons-hocon` module) - for reading from
+  [Human Optimized Config Object Notation, HOCON](https://github.com/lightbend/config/blob/master/HOCON.md)
+* `BsonReaderInput`/`BsonWriterOutput`,`BsonWriterNamedOutput`,`BsonValueOutput` (in `commons-mongo` module) - for
+  reading and writing from [Binary JSON, BSON](http://bsonspec.org/), format used by MongoDB wire protocol.
 
 ## Codecs available by default
 
