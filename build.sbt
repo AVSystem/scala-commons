@@ -28,7 +28,7 @@ val akkaVersion = "2.5.12"
 val monixVersion = "2.3.3"
 val mockitoVersion = "2.18.3"
 val circeVersion = "0.11.0"
-val upickleVersion = "0.7.1"
+val upickleVersion = "0.7.4"
 val scalajsBenchmarkVersion = "0.2.4"
 
 val commonSettings = Seq(
