@@ -29,7 +29,7 @@ val monixVersion = "2.3.3"
 val mockitoVersion = "2.18.3"
 val circeVersion = "0.11.0"
 val upickleVersion = "0.7.1"
-val scalajsBenchmarkVersion = "0.2.4"
+val scalajsBenchmarkVersion = "0.2.6"
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
