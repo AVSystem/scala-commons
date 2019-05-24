@@ -11,7 +11,7 @@ val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && Sys
 // for binary compatibility checking
 val previousCompatibleVersions = Set("1.34.8")
 
-val silencerVersion = "1.3.1"
+val silencerVersion = "1.3.3"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.5"
@@ -21,15 +21,15 @@ val mongoVersion = "3.7.0"
 val kafkaVersion = "1.1.1"
 val mongoScalaVersion = "2.3.0"
 val springVersion = "4.0.9.RELEASE"
-val typesafeConfigVersion = "1.3.3"
+val typesafeConfigVersion = "1.3.4"
 val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.0"
-val akkaVersion = "2.5.12"
+val akkaVersion = "2.5.23"
 val monixVersion = "2.3.3"
 val mockitoVersion = "2.27.0"
 val circeVersion = "0.11.1"
-val upickleVersion = "0.7.1"
-val scalajsBenchmarkVersion = "0.2.4"
+val upickleVersion = "0.7.4"
+val scalajsBenchmarkVersion = "0.2.6"
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
