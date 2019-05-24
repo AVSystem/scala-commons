@@ -16,9 +16,9 @@ val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.5"
 val scalacheckVersion = "1.14.0"
-val jettyVersion = "9.3.23.v20180228"
+val jettyVersion = "9.3.27.v20190418"
 val mongoVersion = "3.7.0"
-val kafkaVersion = "1.1.0"
+val kafkaVersion = "1.1.1"
 val mongoScalaVersion = "2.3.0"
 val springVersion = "4.0.9.RELEASE"
 val typesafeConfigVersion = "1.3.3"
@@ -26,7 +26,7 @@ val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.0"
 val akkaVersion = "2.5.12"
 val monixVersion = "2.3.3"
-val mockitoVersion = "2.18.3"
+val mockitoVersion = "2.27.0"
 val circeVersion = "0.11.1"
 val upickleVersion = "0.7.1"
 val scalajsBenchmarkVersion = "0.2.4"
@@ -286,7 +286,7 @@ lazy val `commons-jetty` = project
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
 
       "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
-      "org.slf4j" % "slf4j-simple" % "1.7.25" % Test,
+      "org.slf4j" % "slf4j-simple" % "1.7.26" % Test,
     ),
   )
 
