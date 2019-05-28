@@ -11,7 +11,7 @@ val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && Sys
 // for binary compatibility checking
 val previousCompatibleVersions = Set("1.34.8")
 
-val silencerVersion = "1.3.4"
+val silencerVersion = "1.4.0"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.5"
@@ -51,6 +51,7 @@ val commonSettings = Seq(
     "-Xfuture",
     "-Xfatal-warnings",
     s"-Xlint:-missing-interpolator,-adapted-args,${if (scalaBinaryVersion.value == "2.12") "-unused," else ""}_",
+    "-P:silencer:checkUnused",
   ),
   scalacOptions ++= {
     if (scalaBinaryVersion.value == "2.12") Seq(
