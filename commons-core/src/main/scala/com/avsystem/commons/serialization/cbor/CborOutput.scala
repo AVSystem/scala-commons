@@ -9,6 +9,10 @@ import com.avsystem.commons.serialization._
 
 object ListOrObjectSizeMarker extends TypeMarker[Int]
 
+/**
+  * Defines translation between textual object field names and corresponding numeric labels. May be used to reduce
+  * size of CBOR representation of objects.
+  */
 trait FieldLabels {
   def label(field: String): Opt[Int]
   def field(label: Int): Opt[String]
@@ -66,6 +70,10 @@ object CborOutput {
   }
 }
 
+/**
+  * An [[com.avsystem.commons.serialization.Output Output]] implementation that serializes into
+  * [[https://tools.ietf.org/html/rfc7049 CBOR]].
+  */
 class CborOutput(out: DataOutput, fieldLabels: FieldLabels)
   extends BaseCborOutput(out) with OutputAndSimpleOutput {
 
@@ -96,8 +104,8 @@ class CborOutput(out: DataOutput, fieldLabels: FieldLabels)
       out.writeShort(HFloat.NaN.raw)
     } else {
       val float = double.toFloat
-      val hfloat = HFloat.fromFloat(float)
       if (float.toDouble == double) {
+        val hfloat = HFloat.fromFloat(float)
         if (hfloat.toFloat == float) {
           write(InitialByte.HalfPrecisionFloat)
           out.writeShort(hfloat.raw)

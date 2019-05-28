@@ -155,6 +155,10 @@ object CborInput {
   private final val Two64 = BigInt(1) << 64
 }
 
+/**
+  * An [[com.avsystem.commons.serialization.Input Input]] implementation that deserializes from
+  * [[https://tools.ietf.org/html/rfc7049 CBOR]].
+  */
 class CborInput(reader: CborReader, fieldLabels: FieldLabels) extends InputAndSimpleInput {
 
   import reader._
