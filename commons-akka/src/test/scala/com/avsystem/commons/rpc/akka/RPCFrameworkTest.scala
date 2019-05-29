@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package rpc.akka
 
-import com.github.ghik.silencer.silent
 import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
