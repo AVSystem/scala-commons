@@ -22,5 +22,5 @@ out
 *.aof
 *.pid
 
-local.sbt
+local.*
 cluster
