@@ -80,7 +80,6 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
         }
       }
 
-      @silent
       val realRpc = AsRealRPC[TestRPC].asReal(rawRpc)
 
       realRpc.handleMore()
@@ -123,7 +122,7 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
     trait EmptyRPC
 
     "rpc should work with empty interface types" in {
-      materializeFullInfo[EmptyRPC]: @silent
+      materializeFullInfo[EmptyRPC]
     }
   }
 }

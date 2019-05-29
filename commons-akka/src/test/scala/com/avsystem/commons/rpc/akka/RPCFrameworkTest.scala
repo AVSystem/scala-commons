@@ -16,7 +16,6 @@ import scala.concurrent.duration._
 /**
   * @author Wojciech Milewski
   */
-@silent
 trait RPCFrameworkTest extends FlatSpecLike with Matchers with MockitoSugar with ScalaFutures {
 
   import RPCFrameworkTest._
@@ -95,7 +94,7 @@ trait RPCFrameworkTest extends FlatSpecLike with Matchers with MockitoSugar with
 object RPCFrameworkTest {
 
   private def whenFailedGeneric[T, U](future: Future[T], awaitCode: Waiter => Any)(fun: Exception => U)(implicit ec: ExecutionContext): U = {
-    @silent val w = new Waiter
+    val w = new Waiter
     future onComplete {
       case Failure(e) => w(throw e); w.dismiss()
       case Success(_) => w.dismiss()
