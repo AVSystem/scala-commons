@@ -1,4 +1,4 @@
-import PgpKeys.{publishLocalSigned, publishSigned}
+import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys.{publishLocalSigned, publishSigned}
 
 cancelable in Global := true
 
@@ -7,11 +7,6 @@ cancelable in Global := true
 // SBT shell. In order for this technique to work, you MUST NOT set the "Use the sbt shell for build and import"
 // option in IntelliJ's SBT settings.
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
-
-version in ThisBuild := sys.env.get("TRAVIS_TAG").fold("1.34-SNAPSHOT")(_.stripPrefix("v"))
-
-// for binary compatibility checking
-val previousCompatibleVersions = Set("1.34.8")
 
 val silencerVersion = "1.4.0"
 val guavaVersion = "23.0"
@@ -35,6 +30,19 @@ val scalajsBenchmarkVersion = "0.2.6"
 
 pgpPublicRing := file("./travis/local.pubring.asc")
 pgpSecretRing := file("./travis/local.secring.asc")
+
+credentials in Global += Credentials(
+  "Sonatype Nexus Repository Manager",
+  "oss.sonatype.org",
+  sys.env.getOrElse("SONATYPE_USERNAME", ""),
+  sys.env.getOrElse("SONATYPE_PASSWORD", "")
+)
+
+version in ThisBuild := 
+  sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("1.34-SNAPSHOT")
+
+// for binary compatibility checking
+val previousCompatibleVersions = Set("1.34.8")
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
@@ -72,12 +80,6 @@ val commonSettings = Seq(
 
   publishTo := Some(Opts.resolver.sonatypeStaging),
   sonatypeProfileName := "com.avsystem",
-  credentials += Credentials(
-    "Sonatype Nexus Repository Manager",
-    "oss.sonatype.org",
-    sys.env.getOrElse("SONATYPE_USERNAME", ""),
-    sys.env.getOrElse("SONATYPE_PASSWORD", "")
-  ),
 
   projectInfo := ModuleInfo(
     nameFormal = "AVSystem commons",
