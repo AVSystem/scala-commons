@@ -673,25 +673,31 @@ implemented for JSON serialization, comparing `GenCodec` with [Circe](https://ci
 Example results (higher score is better):
 
 ```
-[info] Benchmark                                  Mode  Cnt        Score       Error  Units
-[info] JsonReadingBenchmark.readCCCirce          thrpt   20   501752.517 ± 21563.049  ops/s
-[info] JsonReadingBenchmark.readCCGenCodec       thrpt   20   946505.351 ± 34501.429  ops/s
-[info] JsonReadingBenchmark.readCCUpickle        thrpt   20   623353.165 ± 15749.794  ops/s
-[info] JsonReadingBenchmark.readFoosCirce        thrpt   20     2452.081 ±   106.193  ops/s
-[info] JsonReadingBenchmark.readFoosGenCodec     thrpt   20     3232.530 ±    42.733  ops/s
-[info] JsonReadingBenchmark.readFoosUpickle      thrpt   20     3003.591 ±    74.450  ops/s
-[info] JsonReadingBenchmark.readSHCirce          thrpt   20   259242.384 ±  6019.444  ops/s
-[info] JsonReadingBenchmark.readSHGenCodec       thrpt   20   557107.475 ± 10733.433  ops/s
-[info] JsonReadingBenchmark.readFlatSHGenCodec   thrpt   20   477547.963 ±  5282.188  ops/s
-[info] JsonReadingBenchmark.readSHUpickle        thrpt   20   316055.404 ±  4679.203  ops/s
-[info] JsonWritingBenchmark.writeCCCirce         thrpt   20   593690.358 ± 13488.971  ops/s
-[info] JsonWritingBenchmark.writeCCGenCodec      thrpt   20  1462496.398 ± 29445.373  ops/s
-[info] JsonWritingBenchmark.writeCCUpickle       thrpt   20  1009314.752 ± 23001.344  ops/s
-[info] JsonWritingBenchmark.writeFoosCirce       thrpt   20     2610.398 ±    48.496  ops/s
-[info] JsonWritingBenchmark.writeFoosGenCodec    thrpt   20     4278.478 ±    35.718  ops/s
-[info] JsonWritingBenchmark.writeFoosUpickle     thrpt   20     3296.622 ±    94.771  ops/s
-[info] JsonWritingBenchmark.writeSHCirce         thrpt   20   189393.026 ±  3328.417  ops/s
-[info] JsonWritingBenchmark.writeSHGenCodec      thrpt   20   791242.582 ± 11599.197  ops/s
-[info] JsonWritingBenchmark.writeFlatSHGenCodec  thrpt   20   752330.860 ±  9901.045  ops/s
-[info] JsonWritingBenchmark.writeSHUpickle       thrpt   20   274714.996 ±  3681.794  ops/s
+[info] Benchmark                                      Mode  Cnt        Score        Error  Units
+[info] JsonReadingBenchmark.readCCCirce              thrpt   10   649967.336 ±  12828.283  ops/s
+[info] JsonReadingBenchmark.readCCGenCodec           thrpt   10  1050431.352 ±  16007.544  ops/s
+[info] JsonReadingBenchmark.readCCUpickle            thrpt   10   698061.199 ±  13618.354  ops/s
+[info] JsonReadingBenchmark.readFlatSHGenCodec       thrpt   10   457469.129 ±   7083.221  ops/s
+[info] JsonReadingBenchmark.readFoosCirce            thrpt   10     3016.276 ±     39.010  ops/s
+[info] JsonReadingBenchmark.readFoosGenCodec         thrpt   10     3098.885 ±     39.858  ops/s
+[info] JsonReadingBenchmark.readFoosUpickle          thrpt   10     3083.453 ±     29.865  ops/s
+[info] JsonReadingBenchmark.readPrimitivesCirce      thrpt   10  1438760.846 ±  26739.354  ops/s
+[info] JsonReadingBenchmark.readPrimitivesGenCodec   thrpt   10  1852565.866 ±  16059.918  ops/s
+[info] JsonReadingBenchmark.readPrimitivesUpickle    thrpt   10  1889290.939 ±  24997.719  ops/s
+[info] JsonReadingBenchmark.readSHCirce              thrpt   10   278322.679 ±   3304.612  ops/s
+[info] JsonReadingBenchmark.readSHGenCodec           thrpt   10   533291.220 ±   4675.452  ops/s
+[info] JsonReadingBenchmark.readSHUpickle            thrpt   10   298463.522 ±   3644.145  ops/s
+[info] JsonWritingBenchmark.writeCCCirce             thrpt   10   688167.968 ±   8117.737  ops/s
+[info] JsonWritingBenchmark.writeCCGenCodec          thrpt   10  1529662.369 ±  26909.344  ops/s
+[info] JsonWritingBenchmark.writeCCUpickle           thrpt   10   985345.145 ±  43860.322  ops/s
+[info] JsonWritingBenchmark.writeFlatSHGenCodec      thrpt   10   810840.889 ±  52376.100  ops/s
+[info] JsonWritingBenchmark.writeFoosCirce           thrpt   10     2896.501 ±    327.638  ops/s
+[info] JsonWritingBenchmark.writeFoosGenCodec        thrpt   10     4520.711 ±    182.557  ops/s
+[info] JsonWritingBenchmark.writeFoosUpickle         thrpt   10     3096.716 ±    199.797  ops/s
+[info] JsonWritingBenchmark.writePrimitivesCirce     thrpt   10  1263376.319 ±  49751.056  ops/s
+[info] JsonWritingBenchmark.writePrimitivesGenCodec  thrpt   10  2904553.884 ± 207071.275  ops/s
+[info] JsonWritingBenchmark.writePrimitivesUpickle   thrpt   10  2142443.367 ±  85212.161  ops/s
+[info] JsonWritingBenchmark.writeSHCirce             thrpt   10   190421.595 ±   4475.344  ops/s
+[info] JsonWritingBenchmark.writeSHGenCodec          thrpt   10   912956.930 ±  17628.358  ops/s
+[info] JsonWritingBenchmark.writeSHUpickle           thrpt   10   239291.635 ±   8626.623  ops/s
 ```
