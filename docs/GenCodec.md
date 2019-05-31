@@ -22,7 +22,7 @@ However, `GenCodec` is **not** a JSON library even though it has support for JSO
 - [`GenKeyCodec`](#genkeycodec)
 - [Serializing and deserializing examples](#serializing-and-deserializing-examples)
 - [Making your own types serializable](#making-your-own-types-serializable)
-- [Simple types](#simple-types)
+- [Simple wrappers](#simple-wrappers)
 - [Case classes](#case-classes)
     - [Safe evolution and refactoring - summary](#safe-evolution-and-refactoring---summary)
   - [Case class like types](#case-class-like-types)
@@ -268,8 +268,8 @@ JsonStringInput.read[Int]("123") // 123
 // `Option`, `Opt`, `NOpt`, `OptRef` and `OptArg` are represented either as `null` (when empty) or directly
 // as the underlying value (when non-empty). `Some(null)` should not be used - it is indistinguishable from
 // `None` unless the codec for the type wrapped in `Option` has some special `null` handling.
-val raw = simpleWrite[Option[String]](None) // JSON: null
-simpleRead[Option[String]]("null") // None
+val raw = JsonStringOutput.write[Option[String]](None) // JSON: null
+JsonStringInput.read[Option[String]]("null") // None
 
 val raw = JsonStringOutput.write[Option[String]](Some("sth")) // "sth"
 JsonStringInput.read[Option[String]]("sth") // Some("sth")
@@ -302,28 +302,18 @@ with companion object of your type or by using the
 [`GenCodec.materialize`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$.html#materialize[T]:com.avsystem.commons.serialization.GenCodec[T])
 macro directly.
 
-## Simple types
+## Simple wrappers
 
-When your type is simple, e.g. it has a straightforward `String` representation, you can easily implement a `GenCodec` by using one of `GenCodec.create*` helper methods:
-
-```scala
-class SomeIdentifier(private val rawValue: String)
-object SomeIdentifier {
-  implicit val codec: GenCodec[SomeIdentifier] = GenCodec.createNullable(
-    input => new SomeIdentifier(input.readString()),
-    (output, identifier) => output.writeString(identifier.rawValue)
-  )
-}
-```
-
-Alternatively, you can provide a two-way conversion with an existing type that already has a `GenCodec` (in this case `String`):
+When your type is a simple wrapper over a type that already has a `GenCodec` instance, the easiest way to provide a codec for the wrapper type is to use `TransparentWrapperCompanion` as base class for its companion object:
 
 ```scala
-  implicit val codec: GenCodec[SomeIdentifier] = 
-    GenCodec.transformed[SomeIdentifier,String](_.rawValue, new SomeIdentifier(_))
+case class BinaryData(bytes: Array[Byte]) extends AnyVal
+object BinaryData extends TransparentWrapperCompanion[Array[Byte], BinaryData]
 ```
 
-However, in most cases when your class simply wraps another type, you can use [`@transparent`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/transparent.html) annotation and macro-materialize the codec.
+NOTE: if your type wraps `String`, `Int` or `Long` then you can use `StringWrapperCompanion`, `IntWrapperCompanion` and `LongWrapperCompanion` for brevity.
+
+Using `TransparentWrapperCompanion` not only derives a `GenCodec` instance from the wrapped type's instance but also other typeclass instances, e.g. [`GenKeyCodec`](#genkeycodec). This mechanism is extensible and can be used by any typeclass that wants to "understand" wrapping. Therefore, `TransparentWrapperCompanion` is a generic tool, not specifically bound in any way to `GenCodec`.
 
 ## Case classes
 
