@@ -24,6 +24,19 @@ class rpcName(val name: String) extends RealSymAnnotation
 class rpcNamePrefix(val prefix: String, val overloadedOnly: Boolean = false) extends RealSymAnnotation
 
 /**
+  * Enables name-mangling of overloaded RPC methods. Each overloaded variant (except for the first one) will get
+  * a suffix `_<idx>` appended, where `<idx>` is an index of the overload, starting from 1 for the first actual
+  * overload. The first method is not considered an "overload" and will get no suffix appended.
+  *
+  * This allows overloading methods in RPC traits without manual disambiguation using [[rpcName]]
+  * or [[rpcNamePrefix]]. However, such approach is much more prone to breaking API changes,
+  * e.g. by reordering methods.
+  *
+  * This annotation must be applied on a raw method or method metadata param.
+  */
+class mangleOverloads extends RawMethodAnnotation
+
+/**
   * Base trait for RPC tag annotations. Tagging gives more direct control over how real methods
   * and their parameters are matched against raw methods and their parameters.
   * For more information about method tagging, see documentation of [[methodTag]].

@@ -3,7 +3,7 @@ package macros.meta
 
 import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
 
-import scala.annotation.StaticAnnotation
+import scala.annotation.{StaticAnnotation, tailrec}
 
 private[commons] trait MacroMetadatas extends MacroSymbols {
 
@@ -250,7 +250,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
 
     def tryMaterializeFor(matchedParam: MatchedSymbol): Res[Tree] = Ok {
       val sym = matchedParam.real.symbol
-      def loop(index: Int, indexInList: Int, indexOfList: Int, paramLists: List[List[Symbol]]): Tree =
+      @tailrec def loop(index: Int, indexInList: Int, indexOfList: Int, paramLists: List[List[Symbol]]): Tree =
         paramLists match {
           case (`sym` :: _) :: _ =>
             q"$ParamPositionObj($index, $indexOfList, $indexInList, ${matchedParam.indexInRaw})"

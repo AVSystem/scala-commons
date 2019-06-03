@@ -10,7 +10,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
   import c.universe._
 
-  def collectMethodMappings[Raw <: TagMatchingSymbol with AritySymbol, M](
+  def collectMethodMappings[Raw <: RealMethodTarget with AritySymbol, M](
     rawSymbols: List[Raw], errorBase: String, realMethods: List[RealMethod], allowIncomplete: Boolean
   )(createMapping: (Raw, MatchedMethod) => Res[M]): List[M] = {
 
@@ -23,7 +23,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     val result = realMethods.flatMap { realMethod =>
       Res.firstOk(rawSymbols)(rawSymbol => for {
         fallbackTags <- rawSymbol.matchTags(realMethod)
-        matchedMethod = MatchedMethod(realMethod, fallbackTags)
+        matchedMethod = MatchedMethod(realMethod, rawSymbol, fallbackTags)
         _ <- rawSymbol.matchName(matchedMethod.real.shortDescription, matchedMethod.rawName)
         _ <- rawSymbol.matchFilters(matchedMethod)
         methodMapping <- createMapping(rawSymbol, matchedMethod)

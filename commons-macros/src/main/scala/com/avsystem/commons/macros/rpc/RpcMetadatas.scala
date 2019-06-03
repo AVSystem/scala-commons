@@ -111,7 +111,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       rpc: RealRpcTrait,
       methodMappings: Map[MethodMetadataParam, List[MethodMetadataMapping]]
     ): Res[Tree] =
-      tryMaterialize(MatchedRpcTrait(rpc)) { case mmp: MethodMetadataParam =>
+      tryMaterialize(rpc) { case mmp: MethodMetadataParam =>
         val mappings = methodMappings.getOrElse(mmp, Nil)
         mmp.arity match {
           case ParamArity.Single(_) => mappings match {

@@ -10,33 +10,27 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
   import c.universe._
 
-  sealed trait Matched extends MatchedSymbol {
-    def real: RealRpcSymbol
-    def overloaded: Boolean
+  case class MatchedMethod(
+    real: RealMethod,
+    raw: RealMethodTarget,
+    override val fallbackTagsUsed: List[FallbackTag]
+  ) extends MatchedSymbol {
+    def indexInRaw: Int = 0
 
     val rawName: String = {
       val prefixes = real.annots(RpcNamePrefixAT, fallback = fallbackTagsUsed.flatMap(_.asList))
-        .filter(a => overloaded || !a.findArg[Boolean](RpcNameOverloadedOnlyArg, false))
+        .filter(a => real.overloadIdx > 0 || !a.findArg[Boolean](RpcNameOverloadedOnlyArg, false))
         .map(_.findArg[String](RpcNamePrefixArg))
-      prefixes.mkString("", "", real.rpcName)
+      val overloadSuffix = if (real.overloadIdx > 0 && raw.mangleOverloads) "_" + real.overloadIdx else ""
+      prefixes.mkString("", "", real.rpcName + overloadSuffix)
     }
-  }
-
-  case class MatchedRpcTrait(real: RealRpcTrait) extends Matched {
-    def overloaded: Boolean = false
-    def indexInRaw: Int = 0
-  }
-
-  case class MatchedMethod(real: RealMethod, override val fallbackTagsUsed: List[FallbackTag]) extends Matched {
-    def overloaded: Boolean = real.overloaded
-    def indexInRaw: Int = 0
   }
 
   case class MatchedParam(
     real: RealParam, override val fallbackTagsUsed: List[FallbackTag], matchedOwner: MatchedMethod, indexInRaw: Int
-  ) extends Matched {
+  ) extends MatchedSymbol {
 
-    def overloaded: Boolean = false
+    def rawName: String = real.rpcName
 
     val whenAbsent: Tree =
       annot(WhenAbsentAT).fold(EmptyTree) { annot =>
@@ -109,6 +103,9 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     lazy val verbatimResult: Boolean =
       annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
+
+    lazy val mangleOverloads: Boolean =
+      annot(MangleOverloadsAT).nonEmpty
 
     lazy val unmatchedParamErrors: List[UnmatchedParamError] =
       annots(UnmatchedParamAT).map { annot =>
@@ -275,7 +272,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
   }
 
-  case class RealMethod(owner: RealRpcTrait, symbol: Symbol, overloaded: Boolean)
+  case class RealMethod(owner: RealRpcTrait, symbol: Symbol, overloadIdx: Int)
     extends RpcMethod with RealRpcSymbol {
 
     def ownerType: Type = owner.tpe
@@ -320,10 +317,11 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     def description = s"$shortDescription $tpe"
 
     lazy val realMethods: List[RealMethod] = {
-      val usedRpcNames = new mutable.HashSet[String]
+      val overloadIndices = new mutable.HashMap[Name, Int]
       tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map { m =>
-        val rm = RealMethod(this, m, overloaded = false)
-        if (usedRpcNames.add(rm.rpcName)) rm else rm.copy(overloaded = true)
+        val overloadIdx = overloadIndices.getOrElseUpdate(m.name, 0)
+        overloadIndices(m.name) = overloadIdx + 1
+        RealMethod(this, m, overloadIdx)
       }.toList
     }
   }
