@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package macros.rpc
 
-import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
+import com.avsystem.commons.macros.misc.{Fail, FailMsg, Ok, Res}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -22,10 +22,8 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
     val result = realMethods.flatMap { realMethod =>
       Res.firstOk(rawSymbols)(rawSymbol => for {
-        fallbackTags <- rawSymbol.matchTags(realMethod)
-        matchedMethod = MatchedMethod(realMethod, rawSymbol, fallbackTags)
+        matchedMethod <- rawSymbol.matchTagsAndFilters(MatchedMethod(realMethod, rawSymbol, Nil))
         _ <- rawSymbol.matchName(matchedMethod.real.shortDescription, matchedMethod.rawName)
-        _ <- rawSymbol.matchFilters(matchedMethod)
         methodMapping <- createMapping(rawSymbol, matchedMethod)
       } yield methodMapping) {
         case Nil =>
@@ -38,10 +36,12 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           }.mkString("\n")
       } match {
         case Ok(v) => Some(v)
-        case Fail(msg) =>
+        case FailMsg(msg) =>
           if (!allowIncomplete) {
-            msg.foreach(addFailure(realMethod, _))
+            addFailure(realMethod, msg)
           }
+          None
+        case Fail =>
           None
       }
     }
@@ -173,7 +173,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       if (rawParam.verbatim) {
         if (realParam.actualType =:= encArgType)
           Ok(Verbatim(encArgType))
-        else Fail(
+        else FailMsg(
           s"${realParam.problemStr}:\nexpected real parameter exactly of type " +
             s"$encArgType, got ${realParam.actualType}")
       } else
@@ -257,7 +257,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       q"""
         def ${realMethod.name}(...${realMethod.paramDecls}): ${realMethod.resultType} = {
           ..${rawMethod.rawParams.map(rp => rp.localValueDecl(rawValueTree(rp)))}
-          ${maybeUntry(resultEncoding.applyAsReal(q"${rawMethod.owner.safeName}.${rawMethod.name}(...${rawMethod.argLists})"))}
+          ${maybeUntry(resultEncoding.applyAsReal(q"${rawMethod.ownerTrait.safeName}.${rawMethod.name}(...${rawMethod.argLists})"))}
         }
        """
 
@@ -313,14 +313,14 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           if (rawMethod.resultType =:= realResultType)
             Ok(RpcEncoding.Verbatim(rawMethod.resultType))
           else
-            Fail(s"real result type $realResultType does not match raw result type ${rawMethod.resultType}")
+            FailMsg(s"real result type $realResultType does not match raw result type ${rawMethod.resultType}")
         } else {
           val e = RpcEncoding.RealRawEncoding(realResultType, rawMethod.resultType, None)
           if ((!forAsRaw || e.asRawName != termNames.EMPTY) && (!forAsReal || e.asRealName != termNames.EMPTY))
             Ok(e)
           else {
             val failedConv = if (forAsRaw) AsRawCls else AsRealCls
-            Fail(implicitNotFoundMsg(getType(tq"$failedConv[${rawMethod.resultType},$realResultType]")))
+            FailMsg(implicitNotFoundMsg(getType(tq"$failedConv[${rawMethod.resultType},$realResultType]")))
           }
         }
 

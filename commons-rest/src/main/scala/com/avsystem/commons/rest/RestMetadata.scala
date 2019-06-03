@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package rest
 
-import com.avsystem.commons.meta._
+import com.avsystem.commons.annotation.positioned
+import com.avsystem.commons.meta.{reifyAnnot, _}
 import com.avsystem.commons.rpc._
 
 import scala.annotation.implicitNotFound
@@ -10,27 +11,9 @@ import scala.annotation.implicitNotFound
 @methodTag[RestMethodTag]
 @methodTag[BodyTypeTag]
 case class RestMetadata[T](
-  @multi
-  @tagged[Prefix](whenUntagged = new Prefix)
-  @tagged[NoBody](whenUntagged = new NoBody)
-  @paramTag[RestParamTag](defaultTag = new Path)
-  @rpcMethodMetadata prefixMethods: Mapping[PrefixMetadata[_]],
-
-  @multi
-  @tagged[GET]
-  @tagged[NoBody](whenUntagged = new NoBody)
-  @paramTag[RestParamTag](defaultTag = new Query)
-  @rpcMethodMetadata httpGetMethods: Mapping[HttpMethodMetadata[_]],
-
-  @multi
-  @tagged[BodyMethodTag](whenUntagged = new POST)
-  @tagged[SomeBodyTag](whenUntagged = new JsonBody)
-  @paramTag[RestParamTag](defaultTag = new Body)
-  @rpcMethodMetadata httpBodyMethods: Mapping[HttpMethodMetadata[_]]
+  @multi @rpcMethodMetadata prefixMethods: Mapping[PrefixMetadata[_]],
+  @multi @rpcMethodMetadata httpMethods: Mapping[HttpMethodMetadata[_]]
 ) {
-  val httpMethods: Mapping[HttpMethodMetadata[_]] =
-    httpGetMethods ++ httpBodyMethods
-
   private[this] lazy val valid: Unit = {
     ensureUnambiguousPaths()
     ensureUniqueParams(Nil)
@@ -60,7 +43,7 @@ case class RestMetadata[T](
         ensureUniqueParams(name, prefix)
         prefix.result.value.ensureUniqueParams((name, prefix) :: prefixes)
     }
-    (httpGetMethods ++ httpBodyMethods).foreach {
+    httpMethods.foreach {
       case (name, method) => ensureUniqueParams(name, method)
     }
   }
@@ -168,7 +151,8 @@ case class PathName(value: PathValue) extends PathPatternElement
 case class PathParam(param: PathParamMetadata[_]) extends PathPatternElement
 
 sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
-  def methodPath: List[PathValue]
+  def methodTag: RestMethodTag
+  def methodPath: List[PathValue] = PathValue.splitDecode(methodTag.path)
   def parametersMetadata: RestParametersMetadata
 
   val pathPattern: List[PathPatternElement] = methodPath.map(PathName) ++
@@ -200,22 +184,36 @@ sealed abstract class RestMethodMetadata[T] extends TypedMetadata[T] {
   }
 }
 
+@tagged[Prefix](whenUntagged = new Prefix)
+@tagged[NoBody](whenUntagged = new NoBody)
+@paramTag[RestParamTag](defaultTag = new Path)
+@positioned(positioned.here)
 case class PrefixMetadata[T](
   @reifyAnnot methodTag: Prefix,
   @composite parametersMetadata: RestParametersMetadata,
   @infer @checked result: RestMetadata.Lazy[T]
-) extends RestMethodMetadata[T] {
-  def methodPath: List[PathValue] = PathValue.splitDecode(methodTag.path)
+) extends RestMethodMetadata[T]
+
+sealed trait HttpMethodMetadata[T] extends RestMethodMetadata[T] {
+  def method: HttpMethod
+  def methodTag: HttpMethodTag
+  def responseType: HttpResponseType[T]
+  def customBody: Boolean
+  def formBody: Boolean
 }
 
-case class HttpMethodMetadata[T](
-  @reifyAnnot methodTag: HttpMethodTag,
-  @reifyAnnot bodyTypeTag: BodyTypeTag,
+@tagged[BodyMethodTag](whenUntagged = new POST)
+@tagged[SomeBodyTag](whenUntagged = new JsonBody)
+@paramTag[RestParamTag](defaultTag = new Body)
+@positioned(positioned.here)
+case class HttpBodyMethodMetadata[T](
+  @reifyAnnot methodTag: BodyMethodTag,
+  @reifyAnnot bodyTypeTag: SomeBodyTag,
   @composite parametersMetadata: RestParametersMetadata,
   @multi @tagged[Body] @rpcParamMetadata bodyParams: Mapping[ParamMetadata[_]],
   @isAnnotated[FormBody] formBody: Boolean,
   @infer @checked responseType: HttpResponseType[T]
-) extends RestMethodMetadata[T] {
+) extends HttpMethodMetadata[T] {
   val method: HttpMethod = methodTag.method
 
   val customBody: Boolean = bodyTypeTag match {
@@ -224,10 +222,21 @@ case class HttpMethodMetadata[T](
   }
 
   def singleBodyParam: Opt[ParamMetadata[_]] =
-    if(customBody) bodyParams.values.headOpt else Opt.Empty
+    if (customBody) bodyParams.values.headOpt else Opt.Empty
+}
 
-  def methodPath: List[PathValue] =
-    PathValue.splitDecode(methodTag.path)
+@tagged[GET]
+@tagged[NoBody](whenUntagged = new NoBody)
+@paramTag[RestParamTag](defaultTag = new Query)
+@positioned(positioned.here)
+case class GetMethodMetadata[T](
+  @reifyAnnot methodTag: GET,
+  @composite parametersMetadata: RestParametersMetadata,
+  @infer @checked responseType: HttpResponseType[T]
+) extends HttpMethodMetadata[T] {
+  def method: HttpMethod = HttpMethod.GET
+  def customBody: Boolean = false
+  def formBody: Boolean = false
 }
 
 /**

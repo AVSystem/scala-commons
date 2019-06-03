@@ -2,7 +2,7 @@ package com.avsystem.commons
 package macros.rpc
 
 import com.avsystem.commons.macros.meta.MacroMetadatas
-import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
+import com.avsystem.commons.macros.misc.{FailMsg, Ok, Res}
 
 private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
 
@@ -15,24 +15,20 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     def allowListedMulti: Boolean = true
     def allowFail: Boolean = false
 
-    def baseTagSpecs: List[BaseTagSpec] = owner.baseMethodTags
+    def baseTagSpecs: List[BaseTagSpec] = tagSpecs(MethodTagAT)
 
     if (!(arity.collectedType <:< TypedMetadataType)) {
       reportProblem(s"method metadata type must be a subtype TypedMetadata[_]")
     }
 
-    val baseParamTags: List[BaseTagSpec] =
-      (annots(ParamTagAT) ++ allAnnotations(arity.collectedType.typeSymbol, ParamTagAT)).map(BaseTagSpec.apply) ++
-        owner.baseParamTags
-
     def mappingFor(matchedMethod: MatchedMethod): Res[MethodMetadataMapping] = for {
       mdType <- actualMetadataType(arity.collectedType, matchedMethod.real.resultType, "method result type", verbatimResult)
       tree <- materializeOneOf(mdType) { t =>
-        val constructor = new MethodMetadataConstructor(t, this, None)
+        val constructor = new MethodMetadataConstructor(t, this, this)
         for {
-          _ <- constructor.matchFilters(matchedMethod)
-          paramMappings <- constructor.paramMappings(matchedMethod)
-          tree <- constructor.tryMaterializeFor(matchedMethod, paramMappings)
+          newMatchedMethod <- constructor.matchTagsAndFilters(matchedMethod)
+          paramMappings <- constructor.paramMappings(newMatchedMethod)
+          tree <- constructor.tryMaterializeFor(newMatchedMethod, paramMappings)
         } yield tree
       }
     } yield MethodMetadataMapping(matchedMethod, this, tree)
@@ -41,7 +37,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
   class ParamMetadataParam(owner: MethodMetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with RealParamTarget {
 
-    def baseTagSpecs: List[BaseTagSpec] = owner.containingMethodParam.baseParamTags
+    def baseTagSpecs: List[BaseTagSpec] = tagSpecs(ParamTagAT)
 
     if (!(arity.collectedType <:< TypedMetadataType)) {
       reportProblem(s"type ${arity.collectedType} is not a subtype of TypedMetadata[_]")
@@ -55,10 +51,10 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       val result = for {
         mdType <- actualMetadataType(arity.collectedType, realParam.actualType, "parameter type", verbatim)
         tree <- materializeOneOf(mdType) { t =>
-          val constructor = new ParamMetadataConstructor(t, None, indexInRaw)
+          val constructor = new ParamMetadataConstructor(t, this, this, indexInRaw)
           for {
-            _ <- constructor.matchFilters(matchedParam)
-            tree <- constructor.tryMaterializeFor(matchedParam)
+            newMatchedParam <- constructor.matchTagsAndFilters(matchedParam)
+            tree <- constructor.tryMaterializeFor(newMatchedParam)
           } yield tree
         }
       } yield tree
@@ -83,13 +79,10 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     def collectedTree(named: Boolean): Tree = if (named) q"(${matchedMethod.rawName}, $tree)" else tree
   }
 
-  class RpcTraitMetadataConstructor(ownerType: Type, atParam: Option[CompositeParam])
-    extends MetadataConstructor(ownerType, atParam) with TagMatchingSymbol {
+  class RpcTraitMetadataConstructor(constructed: Type, ownerParam: Option[MetadataParam])
+    extends MetadataConstructor(constructed, ownerParam) with TagMatchingSymbol {
 
     def baseTagSpecs: List[BaseTagSpec] = Nil
-
-    val baseMethodTags: List[BaseTagSpec] = annots(MethodTagAT).map(BaseTagSpec.apply)
-    val baseParamTags: List[BaseTagSpec] = annots(ParamTagAT).map(BaseTagSpec.apply)
 
     lazy val methodMdParams: List[MethodMetadataParam] = collectParams[MethodMetadataParam]
 
@@ -100,43 +93,42 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
       new RpcTraitMetadataConstructor(param.collectedType, Some(param))
 
-    def methodMappings(rpc: RealRpcTrait): Map[MethodMetadataParam, List[MethodMetadataMapping]] = {
-      val errorBase = unmatchedError.getOrElse(s"cannot materialize ${ownerType.typeSymbol} for $rpc")
-      collectMethodMappings(
-        methodMdParams, errorBase, rpc.realMethods, allowIncomplete
-      )(_.mappingFor(_)).groupBy(_.mdParam)
-    }
+    def tryMaterializeFor(rpc: RealRpcTrait): Res[Tree] = {
+      val errorBase = unmatchedError.getOrElse(s"cannot materialize ${constructed.typeSymbol} for $rpc")
+      val methodMappings =
+        collectMethodMappings(
+          methodMdParams, errorBase, rpc.realMethods, allowIncomplete
+        )(_.mappingFor(_)).groupBy(_.mdParam)
 
-    def tryMaterializeFor(
-      rpc: RealRpcTrait,
-      methodMappings: Map[MethodMetadataParam, List[MethodMetadataMapping]]
-    ): Res[Tree] =
       tryMaterialize(rpc) { case mmp: MethodMetadataParam =>
         val mappings = methodMappings.getOrElse(mmp, Nil)
         mmp.arity match {
           case ParamArity.Single(_) => mappings match {
-            case Nil => Fail(s"no real method found that would match ${mmp.description}")
+            case Nil => FailMsg(s"no real method found that would match ${mmp.description}")
             case List(m) => Ok(m.tree)
-            case _ => Fail(s"multiple real methods match ${mmp.description}")
+            case _ => FailMsg(s"multiple real methods match ${mmp.description}")
           }
           case ParamArity.Optional(_) => mappings match {
             case Nil => Ok(mmp.mkOptional[Tree](None))
             case List(m) => Ok(mmp.mkOptional(Some(m.tree)))
-            case _ => Fail(s"multiple real methods match ${mmp.description}")
+            case _ => FailMsg(s"multiple real methods match ${mmp.description}")
           }
           case ParamArity.Multi(_, named) =>
             Ok(mmp.mkMulti(mappings.map(_.collectedTree(named))))
           case arity =>
-            Fail(s"${arity.annotStr} not allowed on method metadata params")
+            FailMsg(s"${arity.annotStr} not allowed on method metadata params")
         }
       }
+    }
   }
 
   class MethodMetadataConstructor(
-    ownerType: Type,
+    constructed: Type,
     val containingMethodParam: MethodMetadataParam,
-    atParam: Option[CompositeParam]
-  ) extends MetadataConstructor(ownerType, atParam) {
+    owner: MetadataParam
+  ) extends MetadataConstructor(constructed, Some(owner)) {
+
+    def baseTagSpecs: List[BaseTagSpec] = tagSpecs(MethodTagAT)
 
     lazy val paramMdParams: List[ParamMetadataParam] = collectParams[ParamMetadataParam]
 
@@ -145,7 +137,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       else super.paramByStrategy(paramSym, annot)
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
-      new MethodMetadataConstructor(param.collectedType, containingMethodParam, Some(param))
+      new MethodMetadataConstructor(param.collectedType, containingMethodParam, param)
 
     def paramMappings(matchedMethod: MatchedMethod): Res[Map[ParamMetadataParam, Tree]] =
       collectParamMappings(matchedMethod.real.realParams, paramMdParams, allowIncomplete)(
@@ -160,8 +152,14 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       }
   }
 
-  class ParamMetadataConstructor(ownerType: Type, atParam: Option[CompositeParam], val indexInRaw: Int)
-    extends MetadataConstructor(ownerType, atParam) {
+  class ParamMetadataConstructor(
+    constructed: Type,
+    containingParamMdParam: ParamMetadataParam,
+    owner: MetadataParam,
+    val indexInRaw: Int
+  ) extends MetadataConstructor(constructed, Some(owner)) {
+
+    def baseTagSpecs: List[BaseTagSpec] = tagSpecs(ParamTagAT)
 
     override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
       annot.tpe match {
@@ -171,9 +169,9 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       }
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
-      new ParamMetadataConstructor(param.collectedType, Some(param), indexInRaw)
+      new ParamMetadataConstructor(param.collectedType, containingParamMdParam, param, indexInRaw)
 
     def tryMaterializeFor(matchedParam: MatchedParam): Res[Tree] =
-      tryMaterialize(matchedParam)(p => Fail(s"unexpected metadata parameter $p"))
+      tryMaterialize(matchedParam)(p => FailMsg(s"unexpected metadata parameter $p"))
   }
 }

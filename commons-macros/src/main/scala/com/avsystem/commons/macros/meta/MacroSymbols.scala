@@ -2,8 +2,10 @@ package com.avsystem.commons
 package macros.meta
 
 import com.avsystem.commons.macros.MacroCommons
-import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
+import com.avsystem.commons.macros.misc.{Fail, FailMsg, Ok, Res}
 
+import scala.annotation.tailrec
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 private[commons] trait MacroSymbols extends MacroCommons {
@@ -107,7 +109,6 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
   abstract class MacroSymbol {
     def symbol: Symbol
-    def annotationSource: Symbol = symbol
     def pos: Position = symbol.pos
     def seenFrom: Type
     def shortDescription: String
@@ -118,10 +119,10 @@ private[commons] trait MacroSymbols extends MacroCommons {
       abortAt(s"$problemStr: $msg", if (detailPos != NoPosition) detailPos else pos)
 
     def annot(tpe: Type, fallback: List[Tree] = Nil): Option[Annot] =
-      findAnnotation(annotationSource, tpe, seenFrom, withInherited = true, fallback)
+      findAnnotation(symbol, tpe, seenFrom, withInherited = true, fallback)
 
     def annots(tpe: Type, fallback: List[Tree] = Nil): List[Annot] =
-      allAnnotations(annotationSource, tpe, seenFrom, withInherited = true, fallback)
+      allAnnotations(symbol, tpe, seenFrom, withInherited = true, fallback)
 
     def infer(tpt: Tree): TermName =
       infer(getType(tpt))
@@ -184,7 +185,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def matchName(shortDescr: String, name: String): Res[Unit] = arity match {
       case _: Arity.Single@unchecked | _: Arity.Optional@unchecked =>
         if (name == nameStr) Ok(())
-        else Fail()
+        else Fail
       case _ => Ok(())
     }
   }
@@ -199,7 +200,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def matchFilters(realSymbol: MatchedSymbol): Res[Unit] =
       Res.traverse(requiredAnnots) { annotTpe =>
         if (realSymbol.annot(annotTpe).nonEmpty) Ok(())
-        else Fail()
+        else Fail
       }.map(_ => ())
   }
 
@@ -224,6 +225,16 @@ private[commons] trait MacroSymbols extends MacroCommons {
     final val Empty = FallbackTag(EmptyTree)
   }
 
+  trait TagSpecifyingSymbol extends MacroSymbol {
+    def tagSpecifyingOwner: Option[TagSpecifyingSymbol]
+
+    private val tagSpecsCache = new mutable.HashMap[TypeKey, List[BaseTagSpec]]
+
+    def tagSpecs(baseTagAnnot: Type): List[BaseTagSpec] =
+      tagSpecsCache.getOrElseUpdate(TypeKey(baseTagAnnot),
+        annots(baseTagAnnot).map(BaseTagSpec.apply) ++ tagSpecifyingOwner.map(_.tagSpecs(baseTagAnnot)).getOrElse(Nil))
+  }
+
   trait TagMatchingSymbol extends MacroSymbol with FilteringSymbol {
     def baseTagSpecs: List[BaseTagSpec]
 
@@ -246,16 +257,19 @@ private[commons] trait MacroSymbols extends MacroCommons {
       result
     }
 
-    // returns list of fallback tag trees which were necessary
-    def matchTags(realSymbol: MacroSymbol): Res[List[FallbackTag]] = Res.traverse(requiredTags) {
-      case RequiredTag(baseTagTpe, requiredTag, whenUntagged) =>
-        val tagAnnot = realSymbol.annot(baseTagTpe)
-        val fallbackTagUsed = if (tagAnnot.isEmpty) whenUntagged else FallbackTag.Empty
-        val realTagTpe = tagAnnot.map(_.tpe).getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
+    def matchTagsAndFilters(matched: MatchedSymbol): Res[matched.Self] = for {
+      fallbackTagsUsed <- Res.traverse(requiredTags) {
+        case RequiredTag(baseTagTpe, requiredTag, whenUntagged) =>
+          val annotTagTpeOpt = matched.annot(baseTagTpe).map(_.tpe)
+          val fallbackTagUsed = if (annotTagTpeOpt.isEmpty) whenUntagged else FallbackTag.Empty
+          val realTagTpe = annotTagTpeOpt.getOrElse(NoType) orElse fallbackTagUsed.annotTree.tpe orElse baseTagTpe
 
-        if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
-        else Fail()
-    }
+          if (realTagTpe <:< requiredTag) Ok(fallbackTagUsed)
+          else Fail
+      }
+      newMatched = matched.addFallbackTags(fallbackTagsUsed)
+      _ <- matchFilters(newMatched)
+    } yield newMatched
   }
 
   trait ArityParam extends MacroParam with AritySymbol {
@@ -280,7 +294,8 @@ private[commons] trait MacroSymbols extends MacroCommons {
       opt.map(t => q"$optionLike.some($t)").getOrElse(q"$optionLike.none")
 
     def mkMulti[T: Liftable](elements: List[T]): Tree =
-      if (elements.isEmpty) q"$RpcUtils.createEmpty($canBuildFrom)"
+      if (elements.isEmpty)
+        q"$RpcUtils.createEmpty($canBuildFrom)"
       else {
         val builderName = c.freshName(TermName("builder"))
         q"""
@@ -292,10 +307,13 @@ private[commons] trait MacroSymbols extends MacroCommons {
   }
 
   trait MatchedSymbol {
+    type Self >: this.type <: MatchedSymbol
+
     def real: MacroSymbol
     def rawName: String
     def indexInRaw: Int
-    def fallbackTagsUsed: List[FallbackTag] = Nil
+    def fallbackTagsUsed: List[FallbackTag]
+    def addFallbackTags(fallbackTags: List[FallbackTag]): Self
 
     def annot(tpe: Type): Option[Annot] =
       real.annot(tpe, fallbackTagsUsed.flatMap(_.asList))
@@ -308,6 +326,8 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def real: MacroSymbol = this
     def indexInRaw: Int = 0
     def rawName: String = nameStr
+    def fallbackTagsUsed: List[FallbackTag] = Nil
+    def addFallbackTags(fallbackTagsUsed: List[FallbackTag]): Self = this
   }
 
   def collectParamMappings[Real <: MacroParam, Raw <: MacroParam, M](
@@ -324,7 +344,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
       parser.remaining.headOption match {
         case _ if allowIncomplete => Ok(result)
         case None => Ok(result)
-        case Some(firstUnmatched) => Fail(unmatchedMsg(firstUnmatched))
+        case Some(firstUnmatched) => FailMsg(unmatchedMsg(firstUnmatched))
       }
     }
   }
@@ -340,7 +360,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
     def extractSingle[M](consume: Boolean, matcher: Real => Option[Res[M]], unmatchedError: String): Res[M] = {
       val it = realParams.listIterator()
-      def loop(): Res[M] =
+      @tailrec def loop(): Res[M] =
         if (it.hasNext) {
           val real = it.next()
           matcher(real) match {
@@ -352,13 +372,13 @@ private[commons] trait MacroSymbols extends MacroCommons {
             case None =>
               loop()
           }
-        } else Fail(unmatchedError)
+        } else FailMsg(unmatchedError)
       loop()
     }
 
     def extractOptional[M](consume: Boolean, matcher: Real => Option[Res[M]]): Option[M] = {
       val it = realParams.listIterator()
-      def loop(): Option[M] =
+      @tailrec def loop(): Option[M] =
         if (it.hasNext) {
           val real = it.next()
           matcher(real) match {
@@ -367,7 +387,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
                 it.remove()
               }
               Some(res)
-            case Some(Fail(_)) => None
+            case Some(_) => None
             case None => loop()
           }
         } else None
@@ -376,7 +396,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
     def extractMulti[M](consume: Boolean, matcher: (Real, Int) => Option[Res[M]]): Res[List[M]] = {
       val it = realParams.listIterator()
-      def loop(result: ListBuffer[M]): Res[List[M]] =
+      @tailrec def loop(result: ListBuffer[M]): Res[List[M]] =
         if (it.hasNext) {
           val real = it.next()
           matcher(real, result.size) match {
@@ -388,8 +408,10 @@ private[commons] trait MacroSymbols extends MacroCommons {
                 case Ok(value) =>
                   result += value
                   loop(result)
-                case fail: Fail =>
+                case fail: FailMsg =>
                   fail
+                case Fail =>
+                  Fail
               }
             case None => loop(result)
           }
@@ -399,7 +421,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
     def findFirst[M](matcher: Real => Option[M]): Option[M] = {
       val it = realParams.listIterator()
-      def loop(): Option[M] =
+      @tailrec def loop(): Option[M] =
         if (it.hasNext) {
           val real = it.next()
           matcher(real) match {

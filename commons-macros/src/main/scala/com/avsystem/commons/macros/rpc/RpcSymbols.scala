@@ -13,9 +13,14 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   case class MatchedMethod(
     real: RealMethod,
     raw: RealMethodTarget,
-    override val fallbackTagsUsed: List[FallbackTag]
+    fallbackTagsUsed: List[FallbackTag]
   ) extends MatchedSymbol {
+    type Self = MatchedMethod
+
     def indexInRaw: Int = 0
+
+    def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedMethod =
+      copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
 
     val rawName: String = {
       val prefixes = real.annots(RpcNamePrefixAT, fallback = fallbackTagsUsed.flatMap(_.asList))
@@ -27,8 +32,16 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   }
 
   case class MatchedParam(
-    real: RealParam, override val fallbackTagsUsed: List[FallbackTag], matchedOwner: MatchedMethod, indexInRaw: Int
+    real: RealParam,
+    fallbackTagsUsed: List[FallbackTag],
+    matchedOwner: MatchedMethod,
+    indexInRaw: Int
   ) extends MatchedSymbol {
+
+    type Self = MatchedParam
+
+    def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedParam =
+      copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
 
     def rawName: String = real.rpcName
 
@@ -98,9 +111,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
   case class UnmatchedParamError(tagTpe: Type, error: String)
 
-  trait RealMethodTarget extends AritySymbol with TagMatchingSymbol {
-    def baseParamTags: List[BaseTagSpec]
-
+  trait RealMethodTarget extends AritySymbol with TagMatchingSymbol with TagSpecifyingSymbol {
     lazy val verbatimResult: Boolean =
       annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
 
@@ -110,7 +121,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     lazy val unmatchedParamErrors: List[UnmatchedParamError] =
       annots(UnmatchedParamAT).map { annot =>
         val tagTpe = annot.tpe.typeArgs.head
-        if (!baseParamTags.exists(ts => tagTpe <:< ts.baseTagTpe)) {
+        if (!tagSpecs(ParamTagAT).exists(ts => tagTpe <:< ts.baseTagTpe)) {
           reportProblem(s"$tagTpe is not a valid param tag type")
         }
         val error = annot.findArg[String](UnmatchedParamErrorArg)
@@ -118,7 +129,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
       }
 
     def errorForUnmatchedParam(param: RealParam): Option[String] = {
-      val allFallbackTags = baseParamTags.flatMap {
+      val allFallbackTags = tagSpecs(ParamTagAT).flatMap {
         case BaseTagSpec(baseTagTpe, fallbackTag) =>
           if (fallbackTag.isEmpty || param.annot(baseTagTpe).nonEmpty) None
           else Some(fallbackTag.annotTree)
@@ -144,11 +155,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
       annot(AuxiliaryAT).nonEmpty
 
     def matchRealParam(matchedMethod: MatchedMethod, realParam: RealParam, indexInRaw: Int): Res[MatchedParam] =
-      for {
-        fallbackTag <- matchTags(realParam)
-        matchedParam = MatchedParam(realParam, fallbackTag, matchedMethod, indexInRaw)
-        _ <- matchFilters(matchedParam)
-      } yield matchedParam
+      matchTagsAndFilters(MatchedParam(realParam, Nil, matchedMethod, indexInRaw))
   }
 
   object RawParam {
@@ -180,7 +187,8 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   }
 
   case class CompositeRawParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol) extends RawParam {
-    val constructorSig: Type = primaryConstructorOf(actualType, problemStr).typeSignatureIn(actualType)
+    val constructorSig: Type =
+      primaryConstructorOf(actualType, problemStr).typeSignatureIn(actualType)
 
     val paramLists: List[List[RawParam]] =
       constructorSig.paramLists.map(_.map(RawParam(Right(this), _)))
@@ -201,7 +209,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   case class RawValueParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol)
     extends RawParam with RealParamTarget {
 
-    def baseTagSpecs: List[BaseTagSpec] = containingRawMethod.baseParamTags
+    def baseTagSpecs: List[BaseTagSpec] = containingRawMethod.tagSpecs(ParamTagAT)
   }
 
   case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexOfList: Int, indexInList: Int)
@@ -212,20 +220,18 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     def description = s"$shortDescription $nameStr of ${owner.description}"
   }
 
-  case class RawMethod(owner: RawRpcTrait, symbol: Symbol)
+  case class RawMethod(ownerTrait: RawRpcTrait, symbol: Symbol)
     extends RpcMethod with RealMethodTarget {
 
     def shortDescription = "raw method"
-    def description = s"$shortDescription $nameStr of ${owner.description}"
+    def description = s"$shortDescription $nameStr of ${ownerTrait.description}"
 
-    def ownerType: Type = owner.tpe
-    def baseTagSpecs: List[BaseTagSpec] = owner.baseMethodTags
+    def tagSpecifyingOwner: Option[TagSpecifyingSymbol] = Some(ownerTrait)
+    def ownerType: Type = ownerTrait.tpe
+    def baseTagSpecs: List[BaseTagSpec] = tagSpecs(MethodTagAT)
 
     val arity: MethodArity = MethodArity.fromAnnotation(this)
     val tried: Boolean = annot(TriedAT).nonEmpty
-
-    val baseParamTags: List[BaseTagSpec] =
-      annots(ParamTagAT).map(BaseTagSpec.apply) ++ owner.baseParamTags
 
     val rawParams: List[RawParam] = sig.paramLists match {
       case Nil | List(_) => sig.paramLists.flatten.map(RawParam(Left(this), _))
@@ -299,14 +305,12 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     val realParams: List[RealParam] = paramLists.flatten
   }
 
-  case class RawRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with TagMatchingSymbol {
+  case class RawRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with TagMatchingSymbol with TagSpecifyingSymbol {
     def shortDescription = "raw RPC"
     def description = s"$shortDescription $tpe"
 
+    def tagSpecifyingOwner: Option[TagSpecifyingSymbol] = None
     def baseTagSpecs: List[BaseTagSpec] = Nil
-
-    val baseMethodTags: List[BaseTagSpec] = annots(MethodTagAT).map(BaseTagSpec.apply)
-    val baseParamTags: List[BaseTagSpec] = annots(ParamTagAT).map(BaseTagSpec.apply)
 
     lazy val rawMethods: List[RawMethod] =
       tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(this, _)).toList

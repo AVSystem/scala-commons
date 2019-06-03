@@ -101,9 +101,8 @@ private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCo
     val constructor = new RpcTraitMetadataConstructor(metadataTpe, None)
 
     def materialize: Res[Tree] = for {
-      _ <- constructor.matchFilters(realRpc)
-      methodMappings = constructor.methodMappings(realRpc)
-      tree <- constructor.tryMaterializeFor(realRpc, methodMappings)
+      _ <- constructor.matchTagsAndFilters(realRpc)
+      tree <- constructor.tryMaterializeFor(realRpc)
     } yield tree
 
     guardedMetadata(metadataTpe, realRpc.tpe)(materialize.getOrElse(err => abort(err.getOrElse("unknown error"))))

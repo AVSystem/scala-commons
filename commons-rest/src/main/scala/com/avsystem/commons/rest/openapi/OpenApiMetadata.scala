@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rest.openapi
 
+import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta._
 import com.avsystem.commons.rest.openapi.adjusters._
 import com.avsystem.commons.rest.{Header => HeaderAnnot, _}
@@ -14,31 +15,11 @@ import scala.collection.mutable
 @methodTag[BodyTypeTag]
 case class OpenApiMetadata[T](
   @multi @rpcMethodMetadata
-  @tagged[Prefix](whenUntagged = new Prefix)
-  @tagged[NoBody](whenUntagged = new NoBody)
-  @paramTag[RestParamTag](defaultTag = new Path)
   prefixes: List[OpenApiPrefix[_]],
 
   @multi @rpcMethodMetadata
-  @tagged[GET]
-  @tagged[NoBody](whenUntagged = new NoBody)
-  @paramTag[RestParamTag](defaultTag = new Query)
-  @rpcMethodMetadata
-  gets: List[OpenApiGetOperation[_]],
-
-  @multi @rpcMethodMetadata
-  @tagged[BodyMethodTag](whenUntagged = new POST)
-  @tagged[CustomBody]
-  @paramTag[RestParamTag](defaultTag = new Body)
-  customBodyMethods: List[OpenApiCustomBodyOperation[_]],
-
-  @multi @rpcMethodMetadata
-  @tagged[BodyMethodTag](whenUntagged = new POST)
-  @tagged[SomeBodyTag](whenUntagged = new JsonBody)
-  @paramTag[RestParamTag](defaultTag = new Body)
-  bodyMethods: List[OpenApiBodyOperation[_]]
+  httpMethods: List[OpenApiOperation[_]]
 ) {
-  val httpMethods: List[OpenApiOperation[_]] = (gets: List[OpenApiOperation[_]]) ++ customBodyMethods ++ bodyMethods
 
   def operations(resolver: SchemaResolver): Iterator[PathOperation] =
     prefixes.iterator.flatMap(_.operations(resolver)) ++
@@ -119,6 +100,9 @@ sealed trait OpenApiMethod[T] extends TypedMetadata[T] {
   }
 }
 
+@tagged[Prefix](whenUntagged = new Prefix)
+@tagged[NoBody](whenUntagged = new NoBody)
+@paramTag[RestParamTag](defaultTag = new Path)
 case class OpenApiPrefix[T](
   name: String,
   methodTag: Prefix,
@@ -162,6 +146,10 @@ sealed trait OpenApiOperation[T] extends OpenApiMethod[T] {
     PathOperation(pathPattern, methodTag.method, operation(resolver), pathAdjusters)
 }
 
+@tagged[GET]
+@tagged[NoBody](whenUntagged = new NoBody)
+@paramTag[RestParamTag](defaultTag = new Query)
+@positioned(positioned.here)
 case class OpenApiGetOperation[T](
   name: String,
   methodTag: HttpMethodTag,
@@ -173,6 +161,10 @@ case class OpenApiGetOperation[T](
   def requestBody(resolver: SchemaResolver): Opt[RefOr[RequestBody]] = Opt.Empty
 }
 
+@tagged[BodyMethodTag](whenUntagged = new POST)
+@tagged[CustomBody]
+@paramTag[RestParamTag](defaultTag = new Body)
+@positioned(positioned.here)
 case class OpenApiCustomBodyOperation[T](
   name: String,
   methodTag: HttpMethodTag,
@@ -186,6 +178,10 @@ case class OpenApiCustomBodyOperation[T](
     singleBody.requestBody(resolver).opt
 }
 
+@tagged[BodyMethodTag](whenUntagged = new POST)
+@tagged[SomeBodyTag](whenUntagged = new JsonBody)
+@paramTag[RestParamTag](defaultTag = new Body)
+@positioned(positioned.here)
 case class OpenApiBodyOperation[T](
   name: String,
   methodTag: HttpMethodTag,
