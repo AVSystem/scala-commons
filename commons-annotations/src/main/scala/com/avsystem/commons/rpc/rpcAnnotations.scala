@@ -72,6 +72,13 @@ final class rpcMethodMetadata extends MetadataParamStrategy
 final class rpcParamMetadata extends MetadataParamStrategy
 
 /**
+  * `@rpcTypeParamMetadata` applied on metadata parameter of RPC method metadata class indicates that this parameter holds
+  * metadata for RPC type parameter(s) (one, some or all, depending on [[com.avsystem.commons.meta.SymbolArity SymbolArity]]],
+  * tagging, etc.).
+  **/
+final class rpcTypeParamMetadata extends MetadataParamStrategy
+
+/**
   * Base trait for [[verbatim]] and [[encoded]]. These annotations can be applied either on a raw method or
   * raw parameter in order to specify how matching real method results or matching real parameter values are encoded
   * as raw values.

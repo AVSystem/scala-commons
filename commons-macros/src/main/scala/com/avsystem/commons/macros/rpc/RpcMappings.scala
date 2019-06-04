@@ -255,7 +255,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
     def realImpl: Tree =
       q"""
-        def ${realMethod.name}(...${realMethod.paramDecls}): ${realMethod.resultType} = {
+        def ${realMethod.name}[..${realMethod.typeParamDecls}](...${realMethod.paramDecls}): ${realMethod.resultType} = {
           ..${rawMethod.rawParams.map(rp => rp.localValueDecl(rawValueTree(rp)))}
           ${maybeUntry(resultEncoding.applyAsReal(q"${rawMethod.ownerTrait.safeName}.${rawMethod.name}(...${rawMethod.argLists})"))}
         }

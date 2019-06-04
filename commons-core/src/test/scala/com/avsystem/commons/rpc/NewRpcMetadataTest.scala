@@ -23,6 +23,7 @@ trait TestApi extends SomeBase {
   @rpcName("ovprefix") def overload: TestApi
   def getit(stuff: String, @suchMeta(1, "a") otherStuff: List[Int]): TestApi
   def postit(arg: String, bar: String, int: Int, @suchMeta(3, "c") foo: String): String
+  def generyk[T](lel: Int): Future[Int]
 }
 object TestApi {
   import NewRawRpc._
@@ -61,6 +62,11 @@ class NewRpcMetadataTest extends FunSuite {
         |    ARGS:
         |    int -> [hasDefaultValue]int@0:0:0:0: int suchMeta=false
         |    bul -> bul@1:0:1:1: boolean suchMeta=false
+        |  generyk -> def generyk[T]: int
+        |    RENAMED:
+        |
+        |    ARGS:
+        |    lel -> lel@0:0:0:0: int suchMeta=false
         |  POSTERS:
         |  POST_postit -> POST() def postit<POST_postit>: String
         |    HEADERS:

@@ -134,12 +134,13 @@ case class FireMetadata(
 
 case class CallMetadata[T](
   nameInfo: NameInfo,
+  @multi @rpcTypeParamMetadata generics: List[TypeParameterMetadata],
   @tagged[renamed] @multi @rpcParamMetadata renamed: Map[String, ParameterMetadata[_]],
   @multi @rpcParamMetadata args: Map[String, ParameterMetadata[_]]
 )(implicit val typeName: TypeName[T])
   extends TypedMetadata[Future[T]] with MethodMetadata[T] {
   def repr: String =
-    s"$basicRepr\n" +
+    s"def ${nameInfo.repr}${generics.map(_.name).mkStringOrEmpty("[", ",", "]")}: ${typeName.name}\n" +
       renamed.iterator.map({ case (n, pm) => s"$n -> ${pm.repr}" }).mkString("RENAMED:\n", "\n", "").indent("  ") + "\n" +
       args.iterator.map({ case (n, pm) => s"$n -> ${pm.repr}" }).mkString("ARGS:\n", "\n", "").indent("  ")
 }
@@ -184,6 +185,8 @@ case class PrefixMetadata[T](
     s"$basicRepr\n" +
       s"RESULT: ${resultMetadata.value.repr(open)}".indent("  ")
 }
+
+case class TypeParameterMetadata(@reifyName name: String)
 
 case class ParameterMetadata[T: TypeName](
   @composite nameInfo: NameInfo,

@@ -64,6 +64,7 @@ trait MacroCommons { bundle =>
   final lazy val BIndexedSeqTpe: Type = typeOf[IndexedSeq[Any]]
   final lazy val ProductTpe: Type = typeOf[Product]
   final lazy val AnnotationTpe: Type = typeOf[scala.annotation.Annotation]
+  final lazy val EmptyTypeBounds: Type = internal.typeBounds(definitions.NothingTpe, definitions.AnyTpe)
 
   final def PartialFunctionClass: Symbol = StringPFTpe.typeSymbol
   final def BIterableClass: Symbol = BIterableTpe.typeSymbol

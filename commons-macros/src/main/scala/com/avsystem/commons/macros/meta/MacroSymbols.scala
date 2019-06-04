@@ -152,11 +152,17 @@ private[commons] trait MacroSymbols extends MacroCommons {
     }
 
     val sig: Type = symbol.typeSignatureIn(ownerType)
+    def typeParams: List[MacroTypeParam]
     def paramLists: List[List[MacroParam]]
     val resultType: Type = sig.finalResultType
 
     def argLists: List[List[Tree]] = paramLists.map(_.map(_.argToPass))
+    def typeParamDecls: List[Tree] = typeParams.map(_.typeParamDecl)
     def paramDecls: List[List[Tree]] = paramLists.map(_.map(_.paramDecl))
+  }
+
+  abstract class MacroTypeParam extends MacroSymbol {
+    def typeParamDecl: Tree
   }
 
   abstract class MacroParam extends MacroSymbol {
@@ -332,7 +338,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def addFallbackTags(fallbackTagsUsed: List[FallbackTag]): Self = this
   }
 
-  def collectParamMappings[Real <: MacroParam, Raw <: MacroParam, M](
+  def collectParamMappings[Real, Raw, M](
     reals: List[Real],
     raws: List[Raw],
     allowIncomplete: Boolean
@@ -351,7 +357,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     }
   }
 
-  class ParamsParser[Real <: MacroParam](reals: Seq[Real]) {
+  class ParamsParser[Real](reals: Seq[Real]) {
 
     import scala.collection.JavaConverters._
 
