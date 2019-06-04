@@ -16,6 +16,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   final lazy val IsAnnotatedAT: Type = staticType(tq"$MetaPackage.isAnnotated[_]")
   final lazy val ReifyNameAT: Type = staticType(tq"$MetaPackage.reifyName")
   final lazy val ReifyPositionAT: Type = staticType(tq"$MetaPackage.reifyPosition")
+  final lazy val ReifyParamListCountAT: Type = staticType(tq"$MetaPackage.reifyParamListCount")
   final lazy val ReifyFlagsAT: Type = staticType(tq"$MetaPackage.reifyFlags")
   final lazy val CheckedAT: Type = staticType(tq"$MetaPackage.checked")
   final lazy val AllowIncompleteAT: Type = staticType(tq"$MetaPackage.allowIncomplete")

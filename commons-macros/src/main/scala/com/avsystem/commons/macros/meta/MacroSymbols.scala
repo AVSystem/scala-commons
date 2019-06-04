@@ -323,6 +323,8 @@ private[commons] trait MacroSymbols extends MacroCommons {
   }
 
   trait SelfMatchedSymbol extends MacroSymbol with MatchedSymbol {
+    type Self = this.type
+
     def real: MacroSymbol = this
     def indexInRaw: Int = 0
     def rawName: String = nameStr

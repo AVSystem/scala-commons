@@ -62,6 +62,16 @@ private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCo
   def rpcAsRaw[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = instrument {
     val raw = RawRpcTrait(weakTypeOf[Raw].dealias)
     val real = RealRpcTrait(weakTypeOf[Real].dealias)
+    mkAsRaw(raw, real)
+  }
+
+  def apiAsRaw[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = instrument {
+    val raw = RawRpcTrait(weakTypeOf[Raw].dealias)
+    val real = RealApiClass(weakTypeOf[Real].dealias)
+    mkAsRaw(raw, real)
+  }
+
+  private def mkAsRaw(raw: RawRpcTrait, real: RealRpcApi): Tree = {
     val mapping = RpcMapping(real, raw, forAsRaw = true, forAsReal = false)
     mapping.ensureUniqueRpcNames()
 
@@ -95,16 +105,21 @@ private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCo
      """
   }
 
-  def rpcMetadata[Real: WeakTypeTag]: Tree = instrument {
-    val realRpc = RealRpcTrait(weakTypeOf[Real].dealias)
+  def rpcMetadata[Real: WeakTypeTag]: Tree =
+    instrument(mkMetadata(RealRpcTrait(weakTypeOf[Real].dealias)))
+
+  def apiMetadata[Real: WeakTypeTag]: Tree =
+    instrument(mkMetadata(RealApiClass(weakTypeOf[Real].dealias)))
+
+  private def mkMetadata(real: RealRpcApi): Tree = {
     val metadataTpe = c.macroApplication.tpe.dealias
     val constructor = new RpcTraitMetadataConstructor(metadataTpe, None)
 
     def materialize: Res[Tree] = for {
-      _ <- constructor.matchTagsAndFilters(realRpc)
-      tree <- constructor.tryMaterializeFor(realRpc)
+      _ <- constructor.matchTagsAndFilters(real)
+      tree <- constructor.tryMaterializeFor(real)
     } yield tree
 
-    guardedMetadata(metadataTpe, realRpc.tpe)(materialize.getOrElse(err => abort(err.getOrElse("unknown error"))))
+    guardedMetadata(metadataTpe, real.tpe)(materialize.getOrElse(err => abort(err.getOrElse("unknown error"))))
   }
 }

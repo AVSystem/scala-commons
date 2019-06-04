@@ -1,0 +1,6 @@
+com.avsystem.commons.rpc.SimpleApi {
+  def noParamLists: Int
+  def noParams(): String
+  def multiParamLists(int: Int)(str: String)(): Double
+  def takesImplicits(int: Int)(implicit ord: Ordering[Int], moar: DummyImplicit): String
+}

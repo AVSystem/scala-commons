@@ -268,7 +268,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       """
   }
 
-  case class RpcMapping(real: RealRpcTrait, raw: RawRpcTrait, forAsReal: Boolean, forAsRaw: Boolean) {
+  case class RpcMapping(real: RealRpcApi, raw: RawRpcTrait, forAsReal: Boolean, forAsRaw: Boolean) {
     val selfName: TermName = c.freshName(TermName("self"))
 
     if (forAsReal) {

@@ -1226,5 +1226,10 @@ trait MacroCommons { bundle =>
 
   def isTuple(sym: Symbol): Boolean =
     definitions.TupleClass.seq.contains(sym)
-}
 
+  def isToplevelClass(s: Symbol): Boolean =
+    s == definitions.AnyClass || s == definitions.ObjectClass || s == definitions.AnyValClass
+
+  def isFromToplevelType(s: Symbol): Boolean =
+    isToplevelClass(s.owner) || s.overrides.exists(ss => isToplevelClass(ss.owner))
+}

@@ -281,6 +281,12 @@ final class reifyFlags extends MetadataParamStrategy
 final class reifyDefaultValue extends MetadataParamStrategy
 
 /**
+  * Metadata parameter annotated with this annotation must be of type `Int`. Macro engine will reify the number
+  * of parameter lists that a method has.
+  */
+final class reifyParamListCount extends MetadataParamStrategy
+
+/**
   * May be applied on metadata parameters with [[infer]] annotation (or just implicit metadata parameters -
   * they have [[infer]] strategy by default). Metadata parameter annotated as [[checked]] makes the implicit search
   * for that metadata parameter influence the decision about whether some metadata parameter matches real method or

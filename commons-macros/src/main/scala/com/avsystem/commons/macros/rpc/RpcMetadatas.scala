@@ -93,7 +93,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
       new RpcTraitMetadataConstructor(param.collectedType, Some(param))
 
-    def tryMaterializeFor(rpc: RealRpcTrait): Res[Tree] = {
+    def tryMaterializeFor(rpc: RealRpcApi): Res[Tree] = {
       val errorBase = unmatchedError.getOrElse(s"cannot materialize ${constructed.typeSymbol} for $rpc")
       val methodMappings =
         collectMethodMappings(
@@ -133,7 +133,8 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     lazy val paramMdParams: List[ParamMetadataParam] = collectParams[ParamMetadataParam]
 
     override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
-      if (annot.tpe <:< RpcParamMetadataAT) new ParamMetadataParam(this, paramSym)
+      if (annot.tpe <:< ReifyParamListCountAT) new ReifiedParamListCountParam(this, paramSym)
+      else if (annot.tpe <:< RpcParamMetadataAT) new ParamMetadataParam(this, paramSym)
       else super.paramByStrategy(paramSym, annot)
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
@@ -173,5 +174,16 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
 
     def tryMaterializeFor(matchedParam: MatchedParam): Res[Tree] =
       tryMaterialize(matchedParam)(p => FailMsg(s"unexpected metadata parameter $p"))
+  }
+
+  class ReifiedParamListCountParam(owner: MethodMetadataConstructor, symbol: Symbol)
+    extends DirectMetadataParam(owner, symbol) {
+
+    if (!(actualType =:= definitions.IntTpe)) {
+      reportProblem("its type is not Int")
+    }
+
+    def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
+      Ok(q"${matchedSymbol.real.symbol.asMethod.paramLists.length}")
   }
 }

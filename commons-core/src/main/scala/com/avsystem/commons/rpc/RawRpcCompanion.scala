@@ -21,4 +21,10 @@ trait RawRpcCompanion[Raw] {
   def materializeAsRaw[Real]: AsRawRpc[Real] = macro RpcMacros.rpcAsRaw[Raw, Real]
   def materializeAsReal[Real]: AsRealRpc[Real] = macro RpcMacros.rpcAsReal[Raw, Real]
   def materializeAsRawReal[Real]: AsRawRealRpc[Real] = macro RpcMacros.rpcAsRawReal[Raw, Real]
+
+  /**
+    * Like [[materializeAsRaw]] but for arbitrary real type instead of RPC trait.
+    * Scans all public methods of the real type (instead of abstract methods for RPC trait).
+    */
+  def materializeApiAsRaw[Real]: AsRawRpc[Real] = macro RpcMacros.apiAsRaw[Raw, Real]
 }

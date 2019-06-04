@@ -93,10 +93,13 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
       annot(RpcNameAT).fold(nameStr)(_.findArg[String](RpcNameArg))
   }
 
-  abstract class RpcTrait(val symbol: Symbol) extends MacroSymbol {
+  trait RpcApi extends MacroSymbol {
     def tpe: Type
+    def symbol: Symbol = tpe.typeSymbol
     def seenFrom: Type = tpe
+  }
 
+  trait RpcTrait extends RpcApi {
     if (!symbol.isAbstract || !symbol.isClass) {
       reportProblem(s"it must be an abstract class or trait")
     }
@@ -104,7 +107,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
   abstract class RpcMethod extends MacroMethod {
     if (sig.typeParams.nonEmpty) {
-      // can we relax this?
+      // TODO: can we relax this?
       reportProblem("RPC methods must not be generic")
     }
   }
@@ -278,7 +281,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
   }
 
-  case class RealMethod(owner: RealRpcTrait, symbol: Symbol, overloadIdx: Int)
+  case class RealMethod(owner: RealRpcApi, symbol: Symbol, overloadIdx: Int)
     extends RpcMethod with RealRpcSymbol {
 
     def ownerType: Type = owner.tpe
@@ -305,7 +308,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     val realParams: List[RealParam] = paramLists.flatten
   }
 
-  case class RawRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with TagMatchingSymbol with TagSpecifyingSymbol {
+  case class RawRpcTrait(tpe: Type) extends RpcTrait with TagMatchingSymbol with TagSpecifyingSymbol {
     def shortDescription = "raw RPC"
     def description = s"$shortDescription $tpe"
 
@@ -316,17 +319,31 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
       tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(this, _)).toList
   }
 
-  case class RealRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with RealRpcSymbol with SelfMatchedSymbol {
-    def shortDescription = "real RPC"
+  abstract class RealRpcApi(tpe: Type) extends RpcApi with RealRpcSymbol with SelfMatchedSymbol {
     def description = s"$shortDescription $tpe"
+
+    def isApiMethod(s: TermSymbol): Boolean
 
     lazy val realMethods: List[RealMethod] = {
       val overloadIndices = new mutable.HashMap[Name, Int]
-      tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map { m =>
+      tpe.members.sorted.iterator.filter(m => m.isTerm && isApiMethod(m.asTerm)).map { m =>
         val overloadIdx = overloadIndices.getOrElseUpdate(m.name, 0)
         overloadIndices(m.name) = overloadIdx + 1
         RealMethod(this, m, overloadIdx)
       }.toList
     }
+  }
+
+  case class RealRpcTrait(tpe: Type) extends RealRpcApi(tpe) with RpcTrait {
+    def shortDescription = "real RPC"
+
+    def isApiMethod(s: TermSymbol): Boolean = s.isAbstract
+  }
+
+  case class RealApiClass(tpe: Type) extends RealRpcApi(tpe) {
+    def shortDescription = "real API"
+
+    def isApiMethod(s: TermSymbol): Boolean =
+      s.isPublic && !s.isConstructor && !s.isSynthetic && !isFromToplevelType(s)
   }
 }
