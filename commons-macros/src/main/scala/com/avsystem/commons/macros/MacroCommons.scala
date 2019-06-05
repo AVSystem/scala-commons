@@ -381,13 +381,15 @@ trait MacroCommons { bundle =>
     implicitSearchCache.getOrElseUpdate(TypeKey(tpe), compute)
   }
 
-  def inferCachedImplicit(tpe: Type, errorClue: String, errorPos: Position, expandMacros: Boolean = false): TermName =
+  case class ErrorCtx(clue: String, pos: Position)
+
+  def inferCachedImplicit(tpe: Type, errorCtx: ErrorCtx, expandMacros: Boolean = false): TermName =
     tryInferCachedImplicit(tpe, expandMacros).getOrElse {
       val name = c.freshName(TermName(""))
       implicitSearchCache(TypeKey(tpe)) = Some(name)
-      implicitsToDeclare += (name -> q"$ImplicitsObj.infer[$tpe](${StringLiteral(errorClue, errorPos)})")
+      implicitsToDeclare += (name -> q"$ImplicitsObj.infer[$tpe](${StringLiteral(errorCtx.clue, errorCtx.pos)})")
       inferredImplicitTypes(name) = tpe
-      inferCachedImplicit(tpe, errorClue, errorPos)
+      inferCachedImplicit(tpe, errorCtx)
     }
 
   def typeOfCachedImplicit(name: TermName): Type =

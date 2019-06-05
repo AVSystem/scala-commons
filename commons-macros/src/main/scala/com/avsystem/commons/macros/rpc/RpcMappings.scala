@@ -178,7 +178,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             s"$encArgType, got ${realParam.actualType}")
       } else
         Ok(RealRawEncoding(realParam.actualType, encArgType,
-          Some((s"${realParam.problemStr}:\n", realParam.pos)), realParam.containsTparamRefs))
+          Some(ErrorCtx(s"${realParam.problemStr}:\n", realParam.pos)), realParam.tparamReferences.nonEmpty))
     }
 
     case class Verbatim(tpe: Type) extends RpcEncoding {
@@ -192,13 +192,13 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         q"$optionLike.getOrElse($opt, ${param.fallbackValueTree})"
       def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree = q"$func"
     }
-    case class RealRawEncoding(realType: Type, rawType: Type, clueWithPos: Option[(String, Position)], requiresCasts: Boolean)
+    case class RealRawEncoding(realType: Type, rawType: Type, errorCtx: Option[ErrorCtx], requiresCasts: Boolean)
       extends RpcEncoding {
 
       private def infer(convClass: Tree): TermName = {
         val convTpe = getType(tq"$convClass[$rawType,$realType]")
-        clueWithPos match {
-          case Some((clue, pos)) => inferCachedImplicit(convTpe, clue, pos)
+        errorCtx match {
+          case Some(ctx) => inferCachedImplicit(convTpe, ctx)
           case None => tryInferCachedImplicit(convTpe).getOrElse(termNames.EMPTY)
         }
       }
@@ -321,7 +321,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             FailMsg(s"real result type $realResultType does not match raw result type ${rawMethod.resultType}")
         } else {
           val enc = RpcEncoding.RealRawEncoding(
-            realResultType, rawMethod.resultType, None, realMethod.resultContainsTparamRefs)
+            realResultType, rawMethod.resultType, None, realMethod.resultTparamReferences.nonEmpty)
           if ((!forAsRaw || enc.asRawName != termNames.EMPTY) && (!forAsReal || enc.asRealName != termNames.EMPTY))
             Ok(enc)
           else {

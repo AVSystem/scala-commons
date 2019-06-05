@@ -128,7 +128,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
       infer(getType(tpt))
 
     def infer(tpe: Type, forSym: MacroSymbol = this, clue: String = ""): TermName =
-      inferCachedImplicit(tpe, s"${forSym.problemStr}:\n$clue", forSym.pos)
+      inferCachedImplicit(tpe, ErrorCtx(s"${forSym.problemStr}:\n$clue", forSym.pos))
 
     val name: TermName = symbol.name.toTermName
     val safeName: TermName = c.freshName(name)
