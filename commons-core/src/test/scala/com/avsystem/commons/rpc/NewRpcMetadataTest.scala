@@ -70,11 +70,11 @@ class NewRpcMetadataTest extends FunSuite {
         |    ARGS:
         |    int -> [hasDefaultValue]int@0:0:0:0: int suchMeta=false
         |    bul -> bul@1:0:1:1: boolean suchMeta=false
-        |  generyk -> def generyk[T]: int
+        |  generyk -> def generyk[T]: Box
         |    RENAMED:
         |
         |    ARGS:
-        |    lel -> lel@0:0:0:0: int suchMeta=false
+        |    lel -> lel@0:0:0:0: Box suchMeta=false
         |  POSTERS:
         |  POST_postit -> POST() def postit<POST_postit>: String
         |    HEADERS:
