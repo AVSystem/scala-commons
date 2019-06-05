@@ -5,7 +5,6 @@ import java.util.regex.Matcher
 
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.meta._
-import com.avsystem.commons.serialization.GenCodec
 
 import scala.annotation.StaticAnnotation
 

@@ -3,7 +3,6 @@ package rpc
 
 import com.avsystem.commons.meta.{ParamFlags, ParamPosition, TypedMetadata, infer, multi, reifyFlags, reifyName, reifyParamListCount, reifyPosition}
 import com.avsystem.commons.misc.TypeString
-import com.google.common.io.ByteStreams
 import org.scalatest.FunSuite
 
 case class ApiInfo[T](
