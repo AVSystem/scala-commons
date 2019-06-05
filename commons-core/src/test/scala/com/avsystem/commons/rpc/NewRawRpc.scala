@@ -64,10 +64,7 @@ trait NewRawRpc {
 
   @multi def prefix(@methodName name: String): NewRawRpc
 }
-object NewRawRpc extends RawRpcCompanion[NewRawRpc] {
-  implicit def asRawRealFromGenCodec[T: GenCodec]: AsRawReal[String, T] = ???
-  implicit def futureAsRawRealFromGenCodec[T: GenCodec]: AsRawReal[Future[String], Future[T]] = ???
-}
+object NewRawRpc extends RawRpcCompanion[NewRawRpc]
 
 object Utils {
   implicit class StringUtils(private val str: String) extends AnyVal {

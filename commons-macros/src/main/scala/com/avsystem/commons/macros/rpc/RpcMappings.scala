@@ -158,8 +158,8 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
   }
 
   sealed trait RpcEncoding {
-    def asRaw: Tree
-    def asReal: Tree
+    protected def asRaw: Tree
+    protected def asReal: Tree
 
     def applyAsRaw[T: Liftable](arg: T): Tree
     def applyAsReal[T: Liftable](arg: T): Tree
@@ -178,12 +178,13 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             s"$encArgType, got ${realParam.actualType}")
       } else
         Ok(RealRawEncoding(realParam.actualType, encArgType,
-          Some((s"${realParam.problemStr}:\n", realParam.pos))))
+          Some((s"${realParam.problemStr}:\n", realParam.pos)), realParam.containsTparamRefs))
     }
 
     case class Verbatim(tpe: Type) extends RpcEncoding {
-      def asRaw: Tree = q"$AsRawObj.identity[$tpe]"
-      def asReal: Tree = q"$AsRealObj.identity[$tpe]"
+      protected def asRaw: Tree = q"$AsRawObj.identity[$tpe]"
+      protected def asReal: Tree = q"$AsRealObj.identity[$tpe]"
+
       def applyAsRaw[T: Liftable](arg: T): Tree = q"$arg"
       def applyAsReal[T: Liftable](arg: T): Tree = q"$arg"
       def paramAsReal[T: Liftable](arg: T, param: MatchedParam): Tree = q"$arg"
@@ -191,7 +192,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         q"$optionLike.getOrElse($opt, ${param.fallbackValueTree})"
       def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree = q"$func"
     }
-    case class RealRawEncoding(realType: Type, rawType: Type, clueWithPos: Option[(String, Position)])
+    case class RealRawEncoding(realType: Type, rawType: Type, clueWithPos: Option[(String, Position)], requiresCasts: Boolean)
       extends RpcEncoding {
 
       private def infer(convClass: Tree): TermName = {
@@ -203,8 +204,11 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       }
       lazy val asRawName: TermName = infer(AsRawCls)
       lazy val asRealName: TermName = infer(AsRealCls)
-      def asRaw: Tree = q"$asRawName"
-      def asReal: Tree = q"$asRealName"
+      // casts only necessary when real method takes type params, TODO: handle generics better
+      protected def asRaw: Tree =
+        if(requiresCasts) q"$asRawName.asInstanceOf[$AsRawCls[$rawType, $realType]]" else q"$asRawName"
+      protected def asReal: Tree =
+        if(requiresCasts) q"$asRealName.asInstanceOf[$AsRealCls[$rawType, $realType]]" else q"$asRealName"
 
       def applyAsRaw[T: Liftable](arg: T): Tree =
         q"$asRaw.asRaw($arg)"
@@ -253,13 +257,14 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     private def maybeUntry(tree: Tree): Tree =
       if (rawMethod.tried) q"$tree.get" else tree
 
-    def realImpl: Tree =
+    def realImpl: Tree = stripTparamRefs(realMethod.sig.typeParams) {
       q"""
         def ${realMethod.name}[..${realMethod.typeParamDecls}](...${realMethod.paramDecls}): ${realMethod.resultType} = {
           ..${rawMethod.rawParams.map(rp => rp.localValueDecl(rawValueTree(rp)))}
           ${maybeUntry(resultEncoding.applyAsReal(q"${rawMethod.ownerTrait.safeName}.${rawMethod.name}(...${rawMethod.argLists})"))}
         }
        """
+    }
 
     def rawCaseImpl: Tree =
       q"""
@@ -315,9 +320,10 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           else
             FailMsg(s"real result type $realResultType does not match raw result type ${rawMethod.resultType}")
         } else {
-          val e = RpcEncoding.RealRawEncoding(realResultType, rawMethod.resultType, None)
-          if ((!forAsRaw || e.asRawName != termNames.EMPTY) && (!forAsReal || e.asRealName != termNames.EMPTY))
-            Ok(e)
+          val enc = RpcEncoding.RealRawEncoding(
+            realResultType, rawMethod.resultType, None, realMethod.resultContainsTparamRefs)
+          if ((!forAsRaw || enc.asRawName != termNames.EMPTY) && (!forAsReal || enc.asRealName != termNames.EMPTY))
+            Ok(enc)
           else {
             val failedConv = if (forAsRaw) AsRawCls else AsRealCls
             FailMsg(implicitNotFoundMsg(getType(tq"$failedConv[${rawMethod.resultType},$realResultType]")))

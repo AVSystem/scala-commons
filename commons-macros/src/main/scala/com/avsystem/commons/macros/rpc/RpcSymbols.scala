@@ -250,6 +250,9 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     def seenFrom: Type = owner.seenFrom
     def shortDescription = "parameter"
     def description = s"$shortDescription $nameStr of ${owner.description}"
+
+    val containsTparamRefs: Boolean =
+      owner.typeParams.exists(tp => actualType.contains(tp.symbol))
   }
 
   case class RawMethod(ownerTrait: RawRpcTrait, symbol: Symbol)
@@ -343,6 +346,9 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
 
     val realParams: List[RealParam] = paramLists.flatten
+
+    val resultContainsTparamRefs: Boolean =
+      typeParams.exists(tp => resultType.contains(tp.symbol))
   }
 
   case class RawRpcTrait(tpe: Type) extends RpcTrait with TagMatchingSymbol with TagSpecifyingSymbol {

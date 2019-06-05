@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.serialization.{transientDefault, whenAbsent}
+import com.avsystem.commons.serialization.{GenCodec, transientDefault, whenAbsent}
 import org.scalatest.FunSuite
 
 class td extends transientDefault
@@ -10,6 +10,11 @@ trait SomeBase {
   def difolt: Boolean = true
 
   @POST def postit(arg: String, @header("X-Bar") bar: String, int: Int, @header("X-Foo") @suchMeta(2, "b") foo: String): String
+}
+
+trait Box[T]
+object Box {
+  implicit def codec[T]: GenCodec[Box[T]] = ???
 }
 
 trait TestApi extends SomeBase {
@@ -23,11 +28,14 @@ trait TestApi extends SomeBase {
   @rpcName("ovprefix") def overload: TestApi
   def getit(stuff: String, @suchMeta(1, "a") otherStuff: List[Int]): TestApi
   def postit(arg: String, bar: String, int: Int, @suchMeta(3, "c") foo: String): String
-  def generyk[T](lel: Int): Future[Int]
+  def generyk[T](lel: Box[T]): Future[Box[List[T]]]
 }
 object TestApi {
-  import NewRawRpc._
-  implicit val asRawReal: NewRawRpc.AsRawRealRpc[TestApi] = NewRawRpc.materializeAsRawReal[TestApi]
+  implicit def asRawRealFromGenCodec[T: GenCodec]: AsRawReal[String, T] = ???
+  implicit def futureAsRawRealFromGenCodec[T: GenCodec]: AsRawReal[Future[String], Future[T]] = ???
+
+  implicit val asRaw: NewRawRpc.AsRawRpc[TestApi] = NewRawRpc.materializeAsRaw[TestApi]
+  implicit val asReal: NewRawRpc.AsRealRpc[TestApi] = NewRawRpc.materializeAsReal[TestApi]
   implicit val metadata: NewRpcMetadata[TestApi] = NewRpcMetadata.materialize[TestApi]
   implicit val partialMetadata: PartialMetadata[TestApi] = PartialMetadata.materialize[TestApi]
 }

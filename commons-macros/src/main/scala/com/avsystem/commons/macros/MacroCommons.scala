@@ -1233,4 +1233,16 @@ trait MacroCommons { bundle =>
 
   def isFromToplevelType(s: Symbol): Boolean =
     isToplevelClass(s.owner) || s.overrides.exists(ss => isToplevelClass(ss.owner))
+
+  private class TparamRefStripper(tparams: List[Symbol]) extends Transformer {
+    override def transform(tree: Tree): Tree = tree match {
+      case TypeTree() if tree.tpe != null && tree.tpe.exists(t => tparams.contains(t.typeSymbol)) =>
+        treeForType(tree.tpe)
+      case _ => super.transform(tree)
+    }
+  }
+
+  def stripTparamRefs(tparams: List[Symbol])(tree: Tree): Tree =
+    if (tparams.isEmpty) tree
+    else new TparamRefStripper(tparams).transform(tree)
 }
