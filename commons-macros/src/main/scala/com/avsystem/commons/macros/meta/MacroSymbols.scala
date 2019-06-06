@@ -129,8 +129,14 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def infer(tpt: Tree): CachedImplicit =
       infer(getType(tpt))
 
-    def infer(tpe: Type, forSym: MacroSymbol = this, clue: String = ""): CachedImplicit =
-      inferCachedImplicit(tpe, ErrorCtx(s"${forSym.problemStr}:\n$clue", forSym.pos))
+    def infer(
+      tpe: Type,
+      typeParams: List[Symbol] = Nil,
+      availableImplicits: List[Type] = Nil,
+      forSym: MacroSymbol = this,
+      clue: String = ""
+    ): CachedImplicit =
+      inferCachedImplicit(tpe, ErrorCtx(s"${forSym.problemStr}:\n$clue", forSym.pos), typeParams, availableImplicits)
 
     protected def asName(name: Name): NameType
 
@@ -179,10 +185,13 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
   abstract class MacroTypeParam extends MacroTypeSymbol {
     def typeParamDecl: Tree
+
+    val instanceName: TermName = safeName.toTermName
   }
 
   abstract class MacroParam extends MacroTermSymbol {
     val actualType: Type = actualParamType(symbol)
+    def collectedType: Type = actualType
     def isImplicit: Boolean = symbol.isImplicit
 
     def localValueDecl(body: Tree): Tree =
@@ -201,7 +210,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
   }
 
   trait AritySymbol extends MacroSymbol {
-    val arity: Arity
+    def arity: Arity
 
     // @unchecked because "The outer reference in this type test cannot be checked at runtime"
     // Srsly scalac, from static types it should be obvious that outer references are the same
@@ -300,8 +309,10 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def allowListedMulti: Boolean
     def allowFail: Boolean
 
-    val arity: ParamArity =
+    lazy val arity: ParamArity =
       ParamArity.fromAnnotation(this, allowListedMulti, allowNamedMulti, allowFail)
+
+    override def collectedType: Type = arity.collectedType
 
     lazy val optionLike: CachedImplicit = infer(tq"$OptionLikeCls[$actualType]")
 
@@ -337,6 +348,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def indexInRaw: Int
     def fallbackTagsUsed: List[FallbackTag]
     def addFallbackTags(fallbackTags: List[FallbackTag]): Self
+    def typeParamsInContext: List[MacroTypeParam]
 
     def annot(tpe: Type): Option[Annot] =
       real.annot(tpe, fallbackTagsUsed.flatMap(_.asList))
@@ -351,6 +363,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def real: MacroSymbol = this
     def indexInRaw: Int = 0
     def rawName: String = nameStr
+    def typeParamsInContext: List[MacroTypeParam] = Nil
     def fallbackTagsUsed: List[FallbackTag] = Nil
     def addFallbackTags(fallbackTagsUsed: List[FallbackTag]): Self = this
   }

@@ -24,6 +24,8 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   final lazy val ParamFlagsTpe: Type = staticType(tq"$MetaPackage.ParamFlags")
   final lazy val TypeFlagsTpe: Type = staticType(tq"$MetaPackage.TypeFlags")
 
+  final lazy val ForTypeParamsAT: Type = staticType(tq"$RpcPackage.forTypeParams")
+
   def actualMetadataType(baseMetadataType: Type, realType: Type, realTypeDesc: String, verbatim: Boolean): Res[Type] = {
     val (wildcards, underlying) = baseMetadataType match {
       case ExistentialType(wc, u) if !verbatim => (wc, u)
@@ -54,6 +56,28 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       case None => materialize(mdType)
     }
 
+  case class TypeParamInstances(paramType: Type, param: MetadataParam) {
+    val typeClass: Symbol => Type = paramType.baseType(BIterableClass) match {
+      case TypeRef(_, _, List(ExistentialType(List(q), TypeRef(pre, sym, List(wc)))))
+        if wc =:= internal.typeRef(NoPrefix, q, Nil) =>
+        targ => internal.typeRef(pre, sym, List(internal.typeRef(NoPrefix, targ, Nil)))
+      case _ =>
+        param.reportProblem(s"bad input type of @forTypeParams parameter: $paramType")
+    }
+
+    def withInstances(tree: Tree, typeParams: List[MacroTypeParam]): Tree = {
+      val funParamName = c.freshName(TermName("instances"))
+      val itName = c.freshName(TermName("it"))
+      val itDecl = q"val $itName = $funParamName.iterator"
+      val statements =
+        if (typeParams.isEmpty) Nil
+        else itDecl :: typeParams.map { tp =>
+          q"val ${tp.instanceName} = $itName.next().asInstanceOf[${typeClass(tp.symbol)}]"
+        }
+      q"($funParamName: $paramType) => {..$statements; $tree}"
+    }
+  }
+
   abstract class MetadataParam(val ownerConstr: MetadataConstructor, val symbol: Symbol)
     extends MacroParam with TagSpecifyingSymbol {
 
@@ -63,12 +87,25 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     def shortDescription = "metadata parameter"
     def description = s"$shortDescription $nameStr of ${ownerConstr.description}"
     def pathStr: String = ownerConstr.ownerParam.fold(nameStr)(cp => s"${cp.pathStr}.$nameStr")
+
+    val (typeParamInstances, typeGivenInstances) =
+      if (annot(ForTypeParamsAT).isEmpty) (None, collectedType)
+      else collectedType.baseType(definitions.FunctionClass(1)) match {
+        case TypeRef(_, _, List(in, out)) =>
+          (Some(TypeParamInstances(in, this)), out)
+        case _ =>
+          reportProblem(s"the type of a @forTypeParams parameter must be a function")
+      }
+
+    def typeParamTypeClassInContext: Option[Symbol => Type] =
+      typeParamInstances.map(_.typeClass) orElse ownerConstr.ownerParam.flatMap(_.typeParamTypeClassInContext)
+
+    def withTypeParamInstances(typeParamsInContext: List[MacroTypeParam])(tree: Tree): Tree =
+      typeParamInstances.fold(tree)(_.withInstances(tree, typeParamsInContext))
   }
 
   class CompositeParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with ArityParam {
-
-    def collectedType: Type = arity.collectedType
 
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = false
@@ -78,15 +115,16 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     override def description: String = s"${super.description} at ${owner.description}"
 
     def tryMaterialize(symbol: MatchedSymbol)(paramMaterialize: MetadataParam => Res[Tree]): Res[Tree] = {
-      val res = for {
+      val withoutArity = for {
         newMatched <- constructor.matchTagsAndFilters(symbol)
         tree <- constructor.tryMaterialize(newMatched)(paramMaterialize)
       } yield tree
-      arity match {
-        case _: ParamArity.Single => res
-        case _: ParamArity.Optional => Ok(mkOptional(res.toOption))
+      val res = arity match {
+        case _: ParamArity.Single => withoutArity
+        case _: ParamArity.Optional => Ok(mkOptional(withoutArity.toOption))
         case _ => FailMsg(s"${arity.annotStr} not allowed for @composite params")
       }
+      res.map(withTypeParamInstances(symbol.typeParamsInContext))
     }
   }
 
@@ -180,19 +218,28 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
 
     val checked: Boolean = annot(CheckedAT).nonEmpty
 
-    def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
-      arity match {
-        case ParamArity.Single(tpe) =>
+    def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = {
+      val tparams = matchedSymbol.typeParamsInContext
+      val tparamInstanceTypes = typeParamTypeClassInContext.fold(List.empty[Type]) { typeClass =>
+        tparams.map(tp => typeClass(tp.symbol))
+      }
+      val tparamInstances = tparams.map(tp => q"${tp.instanceName}")
+      val tpe = typeGivenInstances
+      val res = arity match {
+        case ParamArity.Single(_) =>
           if (checked)
-            tryInferCachedImplicit(tpe, expandMacros = true)
-              .map(ci => Ok(q"${ci.name}")).getOrElse(FailMsg(clue + implicitNotFoundMsg(tpe)))
+            tryInferCachedImplicit(tpe, Nil, tparamInstanceTypes, expandMacros = true)
+              .map(ci => Ok(q"${ci.reference(tparamInstances)}")).getOrElse(FailMsg(clue + implicitNotFoundMsg(tpe)))
           else
-            Ok(q"${infer(tpe, matchedSymbol.real, clue).name}")
-        case ParamArity.Optional(tpe) =>
-          Ok(mkOptional(tryInferCachedImplicit(tpe, expandMacros = true).map(ci => q"${ci.name}")))
+            Ok(q"${infer(tpe, Nil, tparamInstanceTypes, matchedSymbol.real, clue).reference(tparamInstances)}")
+        case ParamArity.Optional(_) =>
+          Ok(mkOptional(tryInferCachedImplicit(tpe, Nil, tparamInstanceTypes, expandMacros = true)
+            .map(ci => q"${ci.reference(tparamInstances)}")))
         case _ =>
           FailMsg(s"${arity.annotStr} not allowed on @infer params")
       }
+      res.map(withTypeParamInstances(tparams))
+    }
   }
 
   class ReifiedAnnotParam(owner: MetadataConstructor, symbol: Symbol)
@@ -202,10 +249,8 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     def allowListedMulti: Boolean = true
     def allowFail: Boolean = false
 
-    val annotTpe: Type = arity.collectedType
-
-    if (!(annotTpe <:< typeOf[StaticAnnotation])) {
-      reportProblem(s"$annotTpe is not a subtype of StaticAnnotation")
+    if (!(typeGivenInstances <:< typeOf[StaticAnnotation])) {
+      reportProblem(s"$typeGivenInstances is not a subtype of StaticAnnotation")
     }
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = {
@@ -216,7 +261,8 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
         c.untypecheck(annot.tree)
       }
 
-      arity match {
+      val annotTpe = typeGivenInstances
+      val res = arity match {
         case ParamArity.Single(_) =>
           matchedSymbol.annot(annotTpe).map(a => Ok(validatedAnnotTree(a)))
             .getOrElse(FailMsg(s"no annotation of type $annotTpe found"))
@@ -227,6 +273,8 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
         case _ =>
           FailMsg(s"${arity.annotStr} not allowed on @reifyAnnot params")
       }
+
+      res.map(withTypeParamInstances(matchedSymbol.typeParamsInContext))
     }
   }
 

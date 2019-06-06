@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.misc.TypeString
 import com.avsystem.commons.rpc.DummyRPC._
 import com.avsystem.commons.serialization.GenCodec
 import org.scalatest.FunSuite
@@ -16,11 +17,12 @@ class RPCMetadataTest extends FunSuite {
     def proc(@Annot("on base param") p: String): Unit
 
     @rpcName("function")
-    def func[A]: Future[String]
+    def func[A](a: A)(implicit tag: Tag[A]): Future[A]
   }
   object Base {
-    implicit def AsRawReal[T: GenCodec]: AsRawRealRPC[Base[T]] = RawRPC.materializeAsRawReal
-    implicit def metadata[T: TypeName]: RPCMetadata[Base[T]] = RPCMetadata.materialize
+    implicit def codecFromTag[T: Tag]: GenCodec[T] = Tag[T].codec
+    implicit def asRawReal[T: GenCodec]: AsRawRealRPC[Base[T]] = RawRPC.materializeAsRawReal
+    implicit def metadata[T: TypeString]: RPCMetadata[Base[T]] = RPCMetadata.materialize
   }
 
   @Annot("on subclass")
@@ -46,17 +48,27 @@ class RPCMetadataTest extends FunSuite {
 
     assert(m.procedureSignatures("proc") == ProcedureSignature("proc",
       List(
-        ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")), TypeName("String"))
+        ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")), new TypeString("String"))
       ),
       List(Annot("on submethod"), Annot("on base method"))
     ))
 
     assert(m.procedureSignatures("genproc") == ProcedureSignature("genproc", List(
-      ParamMetadata("p", Nil, TypeName("String"))
+      ParamMetadata("p", Nil, new TypeString("String"))
     ), Nil))
 
-    assert(m.functionSignatures("function") ==
-      FunctionSignature("func", List(TypeParamMetadata("A")), Nil, Nil, classTag[String]))
+    m.functionSignatures("function") uncheckedMatch {
+      case FunctionSignature("func", List(TypeParamMetadata("A")), List(apm, tagpm), Nil, resTnFun) =>
+        assert(resTnFun(List(classTag[String])) == classTag[String])
+        apm uncheckedMatch {
+          case GenericParamMetadata("a", Nil, tnFun) =>
+            assert(tnFun(List(new TypeString("AAA"))) == new TypeString("AAA"))
+        }
+        tagpm uncheckedMatch {
+          case GenericParamMetadata("tag", Nil, tnFun) =>
+            assert(tnFun(List(new TypeString("AAA"))) == new TypeString("com.avsystem.commons.rpc.Tag[AAA]"))
+        }
+    }
 
     val resultMetadata = m.getterSignatures("getter").resultMetadata.value
     assert(resultMetadata.annotations == List(Annot("on base class")))
@@ -66,14 +78,11 @@ class RPCMetadataTest extends FunSuite {
     assert(resultMetadata.getterSignatures.keySet == Set())
 
     assert(resultMetadata.procedureSignatures("proc") == ProcedureSignature("proc", List(
-      ParamMetadata("p", List(Annot("on base param")), TypeName("String"))
+      ParamMetadata("p", List(Annot("on base param")), new TypeString("String"))
     ), List(Annot("on base method"))))
 
     assert(m.procedureSignatures("genproc") == ProcedureSignature("genproc", List(
-      ParamMetadata("p", Nil, TypeName("String"))
+      ParamMetadata("p", Nil, new TypeString("String"))
     ), Nil))
-
-    assert(resultMetadata.functionSignatures("function") ==
-      FunctionSignature("func", List(TypeParamMetadata("A")), Nil, Nil, classTag[String]))
   }
 }

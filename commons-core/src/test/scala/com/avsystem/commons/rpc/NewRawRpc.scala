@@ -5,6 +5,7 @@ import java.util.regex.Matcher
 
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.meta._
+import com.avsystem.commons.misc.TypeString
 
 import scala.annotation.StaticAnnotation
 
@@ -82,7 +83,7 @@ case class DoSomethings(
 
 @methodTag[RestMethod]
 @paramTag[DummyParamTag]
-case class NewRpcMetadata[T: TypeName](
+case class NewRpcMetadata[T: TypeString](
   @composite doSomethings: DoSomethings,
   @multi @verbatim @rpcMethodMetadata procedures: Map[String, FireMetadata],
   @multi @rpcMethodMetadata functions: Map[String, CallMetadata[_]],
@@ -99,7 +100,7 @@ case class NewRpcMetadata[T: TypeName](
           posters.iterator.map({ case (n, v) => s"$n -> ${v.repr}" }).mkString("POSTERS:\n", "\n", "") + "\n" +
           getters.iterator.map({ case (n, v) => s"$n -> ${v.repr(this :: open)}" }).mkString("GETTERS:\n", "\n", "") +
           prefixers.iterator.map({ case (n, v) => s"$n -> ${v.repr(this :: open)}" }).mkString("PREFIXERS:\n", "\n", "")
-      s"${TypeName.get[T]}\n" + membersStr.indent("  ")
+      s"${TypeString.of[T]}\n" + membersStr.indent("  ")
     }
 
   override def toString: String = repr(Nil)
@@ -111,10 +112,10 @@ case class ArgMetadata() extends TypedMetadata[Double]
 
 trait MethodMetadata[T] {
   @composite def nameInfo: NameInfo
-  def typeName: TypeName[T]
+  def typeString: TypeString[T]
 
   def basicRepr: String =
-    s"def ${nameInfo.repr}: ${typeName.name}"
+    s"def ${nameInfo.repr}: ${typeString.value}"
 }
 
 case class FireMetadata(
@@ -122,7 +123,7 @@ case class FireMetadata(
   @optional @auxiliary @rpcParamMetadata ajdi: Opt[ParameterMetadata[Int]],
   @multi @rpcParamMetadata args: Map[String, ParameterMetadata[_]]
 ) extends TypedMetadata[Unit] with MethodMetadata[Unit] {
-  def typeName: TypeName[Unit] = TypeName("void")
+  def typeString: TypeString[Unit] = new TypeString("void")
   def repr: String =
     s"$basicRepr\n" +
       ajdi.fold("NO AJDI")(pm => s"AJDI: ${pm.repr}").indent("  ") + "\n" +
@@ -133,11 +134,13 @@ case class CallMetadata[T](
   nameInfo: NameInfo,
   @multi @rpcTypeParamMetadata generics: List[TypeParameterMetadata],
   @tagged[renamed] @multi @rpcParamMetadata renamed: Map[String, ParameterMetadata[_]],
-  @multi @rpcParamMetadata args: Map[String, ParameterMetadata[_]]
-)(implicit val typeName: TypeName[T])
-  extends TypedMetadata[Future[T]] with MethodMetadata[T] {
+  @multi @rpcParamMetadata args: Map[String, ParameterMetadata[_]],
+  @forTypeParams @infer typeStringFun: List[TypeString[_]] => TypeString[T]
+) extends TypedMetadata[Future[T]] with MethodMetadata[T] {
+  def typeString: TypeString[T] = typeStringFun(generics.map(tpm => new TypeString(tpm.name)))
+
   def repr: String =
-    s"def ${nameInfo.repr}${generics.map(_.name).mkStringOrEmpty("[", ",", "]")}: ${typeName.name}\n" +
+    s"def ${nameInfo.repr}${generics.map(_.name).mkStringOrEmpty("[", ",", "]")}: ${typeString.value}\n" +
       renamed.iterator.map({ case (n, pm) => s"$n -> ${pm.repr}" }).mkString("RENAMED:\n", "\n", "").indent("  ") + "\n" +
       args.iterator.map({ case (n, pm) => s"$n -> ${pm.repr}" }).mkString("ARGS:\n", "\n", "").indent("  ")
 }
@@ -153,19 +156,19 @@ case class GetterMetadata[T](
   nameInfo: NameInfo,
   @composite params: GetterParams,
   @infer @checked resultMetadata: NewRpcMetadata.Lazy[T]
-)(implicit val typeName: TypeName[T]) extends TypedMetadata[T] with MethodMetadata[T] {
+)(implicit val typeString: TypeString[T]) extends TypedMetadata[T] with MethodMetadata[T] {
   def repr(open: List[NewRpcMetadata[_]]): String =
     s"$basicRepr\n" +
       params.repr.indent("  ") + "\n" +
       s"RESULT: ${resultMetadata.value.repr(open)}".indent("  ")
 }
 
-case class PostMetadata[T: TypeName](
+case class PostMetadata[T: TypeString](
   nameInfo: NameInfo,
   @reifyAnnot post: POST,
   @tagged[header] @multi @verbatim @rpcParamMetadata headers: Vector[ParameterMetadata[String]],
   @multi @rpcParamMetadata body: MLinkedHashMap[String, ParameterMetadata[_]]
-)(implicit val typeName: TypeName[T]) extends TypedMetadata[T] with MethodMetadata[T] {
+)(implicit val typeString: TypeString[T]) extends TypedMetadata[T] with MethodMetadata[T] {
 
   def repr: String =
     s"$post $basicRepr\n" +
@@ -176,7 +179,7 @@ case class PostMetadata[T: TypeName](
 case class PrefixMetadata[T](
   nameInfo: NameInfo,
   @infer @checked resultMetadata: NewRpcMetadata.Lazy[T],
-  @infer typeName: TypeName[T]
+  @infer typeString: TypeString[T]
 ) extends TypedMetadata[T] with MethodMetadata[T] {
   def repr(open: List[NewRpcMetadata[_]]): String =
     s"$basicRepr\n" +
@@ -185,18 +188,19 @@ case class PrefixMetadata[T](
 
 case class TypeParameterMetadata(@reifyName name: String)
 
-case class ParameterMetadata[T: TypeName](
+case class ParameterMetadata[T](
   @composite nameInfo: NameInfo,
   @reifyPosition pos: ParamPosition,
   @reifyFlags flags: ParamFlags,
   @reifyAnnot @multi metas: List[suchMeta],
-  @isAnnotated[suchMeta] suchMeta: Boolean
+  @isAnnotated[suchMeta] suchMeta: Boolean,
+  @forTypeParams @infer typeString: List[TypeString[_]] => TypeString[T]
 ) extends TypedMetadata[T] {
   def repr: String = {
     val flagsStr = if (flags != ParamFlags.Empty) s"[$flags]" else ""
     val posStr = s"${pos.index}:${pos.indexOfList}:${pos.indexInList}:${pos.indexInRaw}"
     val metasStr = if (metas.nonEmpty) metas.mkString(s",metas=", ",", "") else ""
-    s"$flagsStr${nameInfo.repr}@$posStr: ${TypeName.get[T]} suchMeta=$suchMeta$metasStr"
+    s"$flagsStr${nameInfo.repr}@$posStr: ${typeString(List(new TypeString(nameInfo.name)))} suchMeta=$suchMeta$metasStr"
   }
 }
 

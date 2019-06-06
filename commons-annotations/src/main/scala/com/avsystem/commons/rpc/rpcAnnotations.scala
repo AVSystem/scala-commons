@@ -58,6 +58,17 @@ trait RpcTag extends RealSymAnnotation
 final class methodName extends RawParamAnnotation
 
 /**
+  * Can be used on metadata parameters to instruct macro materialization that some particular metadata depends
+  * on some implicit typeclass instances for method's type parameters.
+  *
+  * Type of a parameter annotated with this annotation must be a function which takes an `AnyIterable[TypeClass[_]]`
+  * as an argument and returns actual metadata class as a result.
+  * `AnyIterable` is any class that extends `Iterable`, e.g. `List`.
+  * `TypeClass` is any type constructor of kind (* -> *)
+  */
+final class forTypeParams extends RawParamAnnotation
+
+/**
   * `@rpcMethodMetadata` applied on metadata parameter of RPC trait metadata class indicates that this parameter holds
   * metadata for RPC method(s) (one, some or all, depending on [[com.avsystem.commons.meta.SymbolArity SymbolArity]],
   * tagging, etc.).

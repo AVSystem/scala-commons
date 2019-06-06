@@ -80,6 +80,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
     def real: MacroSymbol = param
     def rawName: String = param.nameStr
+    def typeParamsInContext: List[MacroTypeParam] = Nil
 
     def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedAdtParam =
       copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
@@ -95,6 +96,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     def real: MacroSymbol = adtCase
     def rawName: String = adtCase.nameStr
     def indexInRaw: Int = 0
+    def typeParamsInContext: List[MacroTypeParam] = Nil
 
     def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedAdtCase =
       copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)

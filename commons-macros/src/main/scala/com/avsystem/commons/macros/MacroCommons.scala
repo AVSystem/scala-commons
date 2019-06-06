@@ -57,8 +57,8 @@ trait MacroCommons { bundle =>
   final lazy val ImplicitNotFoundAT = staticType(tq"$ScalaPkg.annotation.implicitNotFound")
   final lazy val ImplicitNotFoundSym = staticType(tq"$MiscPkg.ImplicitNotFound[_]").typeSymbol
 
-  final lazy val UnitTpe: Type = typeOf[Unit]
-  final lazy val NothingTpe: Type = typeOf[Nothing]
+  final lazy val UnitTpe: Type = definitions.UnitTpe
+  final lazy val NothingTpe: Type = definitions.NothingTpe
   final lazy val StringPFTpe: Type = typeOf[PartialFunction[String, Any]]
   final lazy val BIterableTpe: Type = typeOf[Iterable[Any]]
   final lazy val BIndexedSeqTpe: Type = typeOf[IndexedSeq[Any]]

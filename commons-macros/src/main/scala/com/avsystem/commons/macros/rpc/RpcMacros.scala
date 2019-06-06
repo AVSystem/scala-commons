@@ -108,7 +108,7 @@ private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCo
   }
 
   def rpcMetadata[Real: WeakTypeTag]: Tree =
-    instrument(mkMetadata(RealRpcTrait(weakTypeOf[Real].dealias)))
+    instrument(mkMetadata(RealRpcTrait(weakTypeOf[Real].dealias))).debug("meta")
 
   def apiMetadata[Real: WeakTypeTag]: Tree =
     instrument(mkMetadata(RealApiClass(weakTypeOf[Real].dealias)))

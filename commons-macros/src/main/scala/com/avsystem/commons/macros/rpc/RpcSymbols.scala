@@ -18,6 +18,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     type Self = MatchedMethod
 
     def indexInRaw: Int = 0
+    def typeParamsInContext: List[MacroTypeParam] = real.typeParams
 
     def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedMethod =
       copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
@@ -40,6 +41,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     type Self = MatchedTypeParam
 
     def rawName: String = real.rpcName
+    def typeParamsInContext: List[MacroTypeParam] = Nil
 
     def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedTypeParam =
       copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
@@ -58,6 +60,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
       copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
 
     def rawName: String = real.rpcName
+    def typeParamsInContext: List[MacroTypeParam] = matchedOwner.typeParamsInContext
 
     val whenAbsent: Tree =
       annot(WhenAbsentAT).fold(EmptyTree) { annot =>
