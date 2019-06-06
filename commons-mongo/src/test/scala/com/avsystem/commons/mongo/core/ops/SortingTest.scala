@@ -18,25 +18,25 @@ class SortingTest extends FunSuite {
     val someDocKey = DocKey(someKey, BsonCodec.string)
     val otherDocKey = DocKey(otherKey, BsonCodec.int32)
 
-    assert(someDocKey.ascending == Sorts.ascending(someKey))
-    assert(someDocKey.descending == Sorts.descending(someKey))
-    assert(someDocKey.metaTextScore == Sorts.metaTextScore(someKey))
+    assert(someDocKey.ascending === Sorts.ascending(someKey))
+    assert(someDocKey.descending === Sorts.descending(someKey))
+    assert(someDocKey.metaTextScore === Sorts.metaTextScore(someKey))
 
-    assert(ascending(someDocKey, otherDocKey) == Sorts.ascending(someKey, otherKey))
-    assert(descending(someDocKey, otherDocKey) == Sorts.descending(someKey, otherKey))
-    assert(orderBy(someDocKey.ascending, otherDocKey.descending) == Sorts.orderBy(Sorts.ascending(someKey), Sorts.descending(otherKey)))
+    assert(ascending(someDocKey, otherDocKey) === Sorts.ascending(someKey, otherKey))
+    assert(descending(someDocKey, otherDocKey) === Sorts.descending(someKey, otherKey))
+    assert(orderBy(someDocKey.ascending, otherDocKey.descending) === Sorts.orderBy(Sorts.ascending(someKey), Sorts.descending(otherKey)))
   }
 
   test("bsonRef tests") {
     val someRef = BsonRef(someKey, GenCodec.StringCodec, null)
     val otherRef = BsonRef(otherKey, GenCodec.IntCodec, null)
 
-    assert(someRef.ascending == Sorts.ascending(someKey))
-    assert(someRef.descending == Sorts.descending(someKey))
-    assert(someRef.metaTextScore == Sorts.metaTextScore(someKey))
+    assert(someRef.ascending === Sorts.ascending(someKey))
+    assert(someRef.descending === Sorts.descending(someKey))
+    assert(someRef.metaTextScore === Sorts.metaTextScore(someKey))
 
-    assert(ascending(someRef, otherRef) == Sorts.ascending(someKey, otherKey))
-    assert(descending(someRef, otherRef) == Sorts.descending(someKey, otherKey))
-    assert(orderBy(someRef.ascending, otherRef.descending) == Sorts.orderBy(Sorts.ascending(someKey), Sorts.descending(otherKey)))
+    assert(ascending(someRef, otherRef) === Sorts.ascending(someKey, otherKey))
+    assert(descending(someRef, otherRef) === Sorts.descending(someKey, otherKey))
+    assert(orderBy(someRef.ascending, otherRef.descending) === Sorts.orderBy(Sorts.ascending(someKey), Sorts.descending(otherKey)))
   }
 }
