@@ -15,7 +15,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
   final lazy val AdtCaseMetadataAT: Type = staticType(tq"$MetaPackage.adtCaseMetadata")
   final lazy val ReifyDefaultValueAT: Type = staticType(tq"$MetaPackage.reifyDefaultValue")
 
-  sealed trait AdtSymbol extends MacroSymbol with SelfMatchedSymbol {
+  sealed trait AdtSymbol extends MacroTypeSymbol with SelfMatchedSymbol {
     def tpe: Type
     def seenFrom: Type = tpe
     lazy val symbol: Symbol = tpe.dealias.typeSymbol

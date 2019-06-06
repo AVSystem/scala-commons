@@ -79,6 +79,17 @@ final class rpcParamMetadata extends MetadataParamStrategy
 final class rpcTypeParamMetadata extends MetadataParamStrategy
 
 /**
+  * When put on raw RPC trait or raw RPC method, allows implicit parameters of real methods to be used as
+  * implicit dependencies of `AsRaw` and `AsReal` instances used for serializing and deserializing parameters and
+  * method results.
+  *
+  * Applying this annotation may change effective order of parameters when serializing and deserializing invocations:
+  * because they may affect serialization of regular parameters, such implicit parameters must be serialized
+  * <b>before</b> them.
+  */
+final class allowImplicitDependencyParams extends RawRpcAnnotation with RawMethodAnnotation
+
+/**
   * Base trait for [[verbatim]] and [[encoded]]. These annotations can be applied either on a raw method or
   * raw parameter in order to specify how matching real method results or matching real parameter values are encoded
   * as raw values.

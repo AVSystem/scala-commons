@@ -82,9 +82,9 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
     case class Optional(rawParam: RawValueParam, wrapped: Option[EncodedRealParam]) extends ParamMapping {
       def rawValueTree: Tree = {
-        val noneRes: Tree = q"${rawParam.optionLike}.none"
+        val noneRes: Tree = q"${rawParam.optionLike.name}.none"
         wrapped.fold(noneRes) { erp =>
-          val baseRes = q"${rawParam.optionLike}.some(${erp.rawValueTree})"
+          val baseRes = q"${rawParam.optionLike.name}.some(${erp.rawValueTree})"
           if (erp.matchedParam.transientDefault)
             q"if(${erp.safeName} != ${erp.matchedParam.transientValueTree}) $baseRes else $noneRes"
           else baseRes
@@ -92,7 +92,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       }
       def realDecls: List[Tree] = wrapped.toList.map { erp =>
         erp.realParam.localValueDecl(erp.encoding.foldWithAsReal(
-          rawParam.optionLike, rawParam.safePath, erp.matchedParam))
+          rawParam.optionLike.name, rawParam.safePath, erp.matchedParam))
       }
     }
     abstract class Multi extends ParamMapping {
@@ -128,7 +128,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
     case class NamedMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends Multi {
       def rawValueTree: Tree =
-        if (reals.isEmpty) q"$RpcUtils.createEmpty(${rawParam.canBuildFrom})" else {
+        if (reals.isEmpty) q"$RpcUtils.createEmpty(${rawParam.canBuildFrom.name})" else {
           val builderName = c.freshName(TermName("builder"))
           val addStatements = reals.map { erp =>
             val baseStat = q"$builderName += ((${erp.rpcName}, ${erp.rawValueTree}))"
@@ -137,7 +137,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             else baseStat
           }
           q"""
-          val $builderName = $RpcUtils.createBuilder(${rawParam.canBuildFrom}, ${reals.size})
+          val $builderName = $RpcUtils.createBuilder(${rawParam.canBuildFrom.name}, ${reals.size})
           ..$addStatements
           $builderName.result()
         """
@@ -176,9 +176,13 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         else FailMsg(
           s"${realParam.problemStr}:\nexpected real parameter exactly of type " +
             s"$encArgType, got ${realParam.actualType}")
-      } else
-        Ok(RealRawEncoding(realParam.actualType, encArgType,
-          Some(ErrorCtx(s"${realParam.problemStr}:\n", realParam.pos)), realParam.tparamReferences.nonEmpty))
+      } else {
+        val errorCtx = ErrorCtx(s"${realParam.problemStr}:\n", realParam.pos)
+        val implicitParams =
+          if (!rawParam.containingRawMethod.allowImplicitDepParams || realParam.isImplicit) Nil
+          else realParam.owner.implicitParams
+        Ok(RealRawEncoding(realParam.actualType, encArgType, Some(errorCtx), realParam.tparamReferences, implicitParams))
+      }
     }
 
     case class Verbatim(tpe: Type) extends RpcEncoding {
@@ -192,23 +196,33 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         q"$optionLike.getOrElse($opt, ${param.fallbackValueTree})"
       def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree = q"$func"
     }
-    case class RealRawEncoding(realType: Type, rawType: Type, errorCtx: Option[ErrorCtx], requiresCasts: Boolean)
-      extends RpcEncoding {
 
-      private def infer(convClass: Tree): TermName = {
+    case class RealRawEncoding(
+      realType: Type,
+      rawType: Type,
+      errorCtx: Option[ErrorCtx],
+      typeParams: List[RealTypeParam],
+      implicitParams: List[RealParam]
+    ) extends RpcEncoding {
+
+      private def infer(convClass: Tree): Tree = {
         val convTpe = getType(tq"$convClass[$rawType,$realType]")
+        val tparams = typeParams.map(_.symbol)
+        val implicitDeps = implicitParams.map(_.actualType)
         errorCtx match {
-          case Some(ctx) => inferCachedImplicit(convTpe, ctx)
-          case None => tryInferCachedImplicit(convTpe).getOrElse(termNames.EMPTY)
+          case Some(ctx) =>
+            inferCachedImplicit(convTpe, ctx, tparams, implicitDeps)
+              .reference(implicitParams.map(_.argToPass))
+          case None =>
+            tryInferCachedImplicit(convTpe, tparams, implicitDeps)
+              .map(_.reference(implicitParams.map(_.argToPass))).getOrElse(EmptyTree)
         }
       }
-      lazy val asRawName: TermName = infer(AsRawCls)
-      lazy val asRealName: TermName = infer(AsRealCls)
-      // casts only necessary when real method takes type params, TODO: handle generics better
-      protected def asRaw: Tree =
-        if(requiresCasts) q"$asRawName.asInstanceOf[$AsRawCls[$rawType, $realType]]" else q"$asRawName"
-      protected def asReal: Tree =
-        if(requiresCasts) q"$asRealName.asInstanceOf[$AsRealCls[$rawType, $realType]]" else q"$asRealName"
+      protected lazy val asRaw: Tree = infer(AsRawCls)
+      protected lazy val asReal: Tree = infer(AsRealCls)
+
+      def hasAsRaw: Boolean = asRaw != EmptyTree
+      def hasAsReal: Boolean = asReal != EmptyTree
 
       def applyAsRaw[T: Liftable](arg: T): Tree =
         q"$asRaw.asRaw($arg)"
@@ -223,8 +237,12 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
   }
 
-  case class MethodMapping(matchedMethod: MatchedMethod, rawMethod: RawMethod,
-    paramMappingList: List[ParamMapping], resultEncoding: RpcEncoding) {
+  case class MethodMapping(
+    matchedMethod: MatchedMethod,
+    rawMethod: RawMethod,
+    paramMappingList: List[ParamMapping],
+    resultEncoding: RpcEncoding
+  ) {
 
     def realMethod: RealMethod = matchedMethod.real
     def rpcName: String = matchedMethod.rawName
@@ -258,19 +276,29 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       if (rawMethod.tried) q"$tree.get" else tree
 
     def realImpl: Tree = stripTparamRefs(realMethod.sig.typeParams) {
+      val rawCall = q"${rawMethod.ownerTrait.safeTermName}.${rawMethod.name}(...${rawMethod.argLists})"
       q"""
         def ${realMethod.name}[..${realMethod.typeParamDecls}](...${realMethod.paramDecls}): ${realMethod.resultType} = {
           ..${rawMethod.rawParams.map(rp => rp.localValueDecl(rawValueTree(rp)))}
-          ${maybeUntry(resultEncoding.applyAsReal(q"${rawMethod.ownerTrait.safeName}.${rawMethod.name}(...${rawMethod.argLists})"))}
+          ${maybeUntry(resultEncoding.applyAsReal(rawCall))}
         }
        """
     }
 
-    def rawCaseImpl: Tree =
-      q"""
-        ..${paramMappings.values.filterNot(_.rawParam.auxiliary).flatMap(_.realDecls)}
-        ${resultEncoding.applyAsRaw(maybeTry(q"${realMethod.owner.safeName}.${realMethod.name}(...${realMethod.argLists})"))}
-      """
+    def rawCaseImpl: Tree = {
+      val realCall = q"${realMethod.ownerApi.safeTermName}.${realMethod.name}(...${realMethod.argLists})"
+      val caseImpl =
+        q"""
+          ..${paramMappings.values.filterNot(_.rawParam.auxiliary).flatMap(_.realDecls)}
+          ${resultEncoding.applyAsRaw(maybeTry(realCall))}
+        """
+
+      if (realMethod.typeParams.isEmpty) caseImpl
+      else stripTparamRefs(realMethod.sig.typeParams) {
+        val fakeMethodName = c.freshName(TermName("gendef"))
+        q"def $fakeMethodName[..${realMethod.typeParams.map(_.typeParamDecl)}] = $caseImpl; $fakeMethodName"
+      }
+    }
   }
 
   case class RpcMapping(real: RealRpcApi, raw: RawRpcTrait, forAsReal: Boolean, forAsRaw: Boolean) {
@@ -313,6 +341,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       val realMethod = matchedMethod.real
       val realResultType =
         if (rawMethod.tried) getType(tq"$TryCls[${realMethod.resultType}]") else realMethod.resultType
+
       def resultEncoding: Res[RpcEncoding] =
         if (rawMethod.verbatimResult) {
           if (rawMethod.resultType =:= realResultType)
@@ -320,9 +349,10 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           else
             FailMsg(s"real result type $realResultType does not match raw result type ${rawMethod.resultType}")
         } else {
+          val implicitDeps = if (rawMethod.allowImplicitDepParams) realMethod.implicitParams else Nil
           val enc = RpcEncoding.RealRawEncoding(
-            realResultType, rawMethod.resultType, None, realMethod.resultTparamReferences.nonEmpty)
-          if ((!forAsRaw || enc.asRawName != termNames.EMPTY) && (!forAsReal || enc.asRealName != termNames.EMPTY))
+            realResultType, rawMethod.resultType, None, realMethod.resultTparamReferences, implicitDeps)
+          if ((!forAsRaw || enc.hasAsRaw) && (!forAsReal || enc.hasAsReal))
             Ok(enc)
           else {
             val failedConv = if (forAsRaw) AsRawCls else AsRealCls
@@ -330,11 +360,15 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           }
         }
 
+      def realParams: List[RealParam] =
+        if (rawMethod.allowImplicitDepParams)
+          matchedMethod.real.implicitParams ++ matchedMethod.real.regularParams
+        else
+          matchedMethod.real.realParams
+
       for {
         resultConv <- resultEncoding
-        paramMappings <- collectParamMappings(
-          matchedMethod.real.realParams, rawMethod.allValueParams, allowIncomplete = false
-        )(
+        paramMappings <- collectParamMappings(realParams, rawMethod.allValueParams, allowIncomplete = false)(
           extractMapping(matchedMethod, _, _),
           rp => rawMethod.errorForUnmatchedParam(rp).getOrElse(
             s"no raw parameter was found that would match ${rp.shortDescription} ${rp.nameStr}")
@@ -359,7 +393,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
     def asRealImpl: Tree =
       q"""
-        def asReal(${raw.safeName}: ${raw.tpe}): ${real.tpe} = new ${real.tpe} {
+        def asReal(${raw.safeTermName}: ${raw.tpe}): ${real.tpe} = new ${real.tpe} {
           ..${methodMappings.map(_.realImpl)}; ()
         }
       """
@@ -372,7 +406,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       val rawMethodImpls = raw.rawMethods.map(m => m.rawImpl(caseImpls(m).toList))
 
       q"""
-        def asRaw(${real.safeName}: ${real.tpe}): ${raw.tpe} = new ${raw.tpe} {
+        def asRaw(${real.safeTermName}: ${real.tpe}): ${raw.tpe} = new ${raw.tpe} {
           ..$rawMethodImpls; ()
         }
       """

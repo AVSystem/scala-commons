@@ -27,8 +27,8 @@ class KeyEscaperTest extends FunSuite with PropertyChecks {
     for ((input, expected) <- customCases) {
       val escaped = escape(input)
       assert(validator.validate(escaped))
-      assert(escaped === expected)
-      assert(unescape(escaped) === input)
+      assert(escaped == expected)
+      assert(unescape(escaped) == input)
     }
   }
 
@@ -36,8 +36,8 @@ class KeyEscaperTest extends FunSuite with PropertyChecks {
     forAll(plainKeyGen) { plainKey =>
       val escaped = escape(plainKey)
       assert(validator.validate(escaped))
-      assert(escaped === plainKey)
-      assert(unescape(escaped) === plainKey)
+      assert(escaped == plainKey)
+      assert(unescape(escaped) == plainKey)
     }
   }
 
@@ -45,7 +45,7 @@ class KeyEscaperTest extends FunSuite with PropertyChecks {
     forAll(deniedKeyGen) { arbitraryKey =>
       val escaped = escape(arbitraryKey)
       assert(validator.validate(escaped))
-      assert(unescape(escaped) === arbitraryKey)
+      assert(unescape(escaped) == arbitraryKey)
     }
   }
 }

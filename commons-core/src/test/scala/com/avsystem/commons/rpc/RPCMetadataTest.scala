@@ -2,6 +2,7 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.rpc.DummyRPC._
+import com.avsystem.commons.serialization.GenCodec
 import org.scalatest.FunSuite
 
 class RPCMetadataTest extends FunSuite {
@@ -15,11 +16,11 @@ class RPCMetadataTest extends FunSuite {
     def proc(@Annot("on base param") p: String): Unit
 
     @rpcName("function")
-    def func: Future[String]
+    def func[A]: Future[String]
   }
   object Base {
-    implicit def AsRawReal[T: ClassTag]: AsRawRealRPC[Base[T]] = materializeAsRawReal
-    implicit def metadata[T: ParamTypeMetadata]: RPCMetadata[Base[T]] = materializeMetadata
+    implicit def AsRawReal[T: GenCodec]: AsRawRealRPC[Base[T]] = RawRPC.materializeAsRawReal
+    implicit def metadata[T: TypeName]: RPCMetadata[Base[T]] = RPCMetadata.materialize
   }
 
   @Annot("on subclass")
@@ -54,7 +55,8 @@ class RPCMetadataTest extends FunSuite {
       ParamMetadata("p", Nil, TypeName("String"))
     ), Nil))
 
-    assert(m.functionSignatures("function") == FunctionSignature("func", Nil, Nil, classTag[String]))
+    assert(m.functionSignatures("function") ==
+      FunctionSignature("func", List(TypeParamMetadata("A")), Nil, Nil, classTag[String]))
 
     val resultMetadata = m.getterSignatures("getter").resultMetadata.value
     assert(resultMetadata.annotations == List(Annot("on base class")))
@@ -71,6 +73,7 @@ class RPCMetadataTest extends FunSuite {
       ParamMetadata("p", Nil, TypeName("String"))
     ), Nil))
 
-    assert(resultMetadata.functionSignatures("function") == FunctionSignature("func", Nil, Nil, classTag[String]))
+    assert(resultMetadata.functionSignatures("function") ==
+      FunctionSignature("func", List(TypeParamMetadata("A")), Nil, Nil, classTag[String]))
   }
 }

@@ -70,6 +70,13 @@ trait MacroCommons { bundle =>
   final def BIterableClass: Symbol = BIterableTpe.typeSymbol
   final def BIndexedSeqClass: Symbol = BIndexedSeqTpe.typeSymbol
 
+  implicit class debugOps[T](v: T) {
+    def debug(prefix: String): T = {
+      echo(prefix + ": " + show(v))
+      v
+    }
+  }
+
   final lazy val isScalaJs =
     c.compilerSettings.exists(o => o.startsWith("-Xplugin:") && o.contains("scalajs-compiler"))
 
@@ -356,58 +363,148 @@ trait MacroCommons { bundle =>
     case class App(prefix: ImplicitTrace, args: List[ImplicitTrace]) extends ImplicitTrace
   }
 
-  private val implicitSearchCache = new mutable.HashMap[TypeKey, Option[TermName]]
-  private val implicitsByTrace = new mutable.HashMap[ImplicitTrace, TermName]
-  private val inferredImplicitTypes = new mutable.HashMap[TermName, Type]
-  private val implicitsToDeclare = new ListBuffer[(TermName, Tree)]
+  case class ErrorCtx(clue: String, pos: Position)
 
-  def tryInferCachedImplicit(tpe: Type, expandMacros: Boolean = false): Option[TermName] = {
-    def compute: Option[TermName] =
+  sealed abstract class CachedImplicit {
+    def actualType: Type
+    def name: TermName
+    def reference(allImplicitArgs: List[Tree]): Tree
+  }
+  case class RegisteredImplicit(name: TermName, actualType: Type) extends CachedImplicit {
+    def reference(allImplicitArgs: List[Tree]): Tree = q"$name"
+  }
+  case class ImplicitDep(idx: Int, name: TermName, tpe: Type) {
+    def mkImplicitParam: ValDef =
+      ValDef(Modifiers(Flag.PARAM | Flag.IMPLICIT), name, tq"$tpe", EmptyTree)
+  }
+  case class InferredImplicit(
+    name: TermName,
+    tparams: List[Symbol],
+    implicits: List[ImplicitDep],
+    tpe: Type,
+    body: Tree
+  ) extends CachedImplicit {
+
+    def actualType: Type = body.tpe orElse tpe
+
+    def reference(allImplicitArgs: List[Tree]): Tree = {
+      def collectArgs(idx: Int, deps: List[ImplicitDep], allArgs: List[Tree]): List[Tree] =
+        (deps, allArgs) match {
+          case (Nil, _) => Nil
+          case (ImplicitDep(`idx`, _, _) :: depsRest, arg :: argsRest) =>
+            arg :: collectArgs(idx + 1, depsRest, argsRest)
+          case (_, _ :: argsRest) => collectArgs(idx + 1, deps, argsRest)
+          case (_, Nil) => abort("too few arguments to satisfy implicit dependencies")
+        }
+
+      val implicitArgs = collectArgs(0, implicits, allImplicitArgs)
+      val implicitArgss = if (implicitArgs.isEmpty) Nil else List(implicitArgs)
+      q"$name[..${tparams.map(_.name)}](...$implicitArgss)"
+    }
+
+    def recreateDef(mods: Modifiers): Tree = {
+      val typeDefs = tparams.map(typeSymbolToTypeDef(_, forMethod = true))
+      val implicitDepDefs = List(implicits.map(_.mkImplicitParam)).filter(_.nonEmpty)
+      stripTparamRefs(tparams) {
+        q"$mods def $name[..$typeDefs](...$implicitDepDefs) = $ImplicitsObj.infer[$tpe]"
+      }
+    }
+
+    def reusableBody: Boolean =
+      tparams.isEmpty && implicits.isEmpty && body != EmptyTree && !body.exists(_.isDef)
+  }
+
+  private val implicitSearchCache = new mutable.HashMap[TypeKey, Option[CachedImplicit]]
+  private val implicitsByTrace = new mutable.HashMap[ImplicitTrace, CachedImplicit]
+  private val implicitsToDeclare = new mutable.ListBuffer[InferredImplicit]
+
+  def tryInferCachedImplicit(
+    tpe: Type,
+    typeParams: List[Symbol] = Nil,
+    availableImplicits: List[Type] = Nil,
+    expandMacros: Boolean = false
+  ): Option[CachedImplicit] = {
+
+    def computeAsDef(): Option[CachedImplicit] = {
+      val name = c.freshName(TermName("cachedImplicit"))
+      val implicitDeps = availableImplicits.zipWithIndex.map {
+        case (tpe, idx) => ImplicitDep(idx, c.freshName(TermName("dep")), tpe)
+      }
+      val ci = InferredImplicit(name, typeParams, implicitDeps, tpe, EmptyTree)
+      val resolved = c.typecheck(ci.recreateDef(NoMods), silent = true)
+      Option(resolved).collect { case dd: DefDef =>
+        val actuallyUsedImplicitDeps =
+          dd.vparamss.flatten.zip(implicitDeps).flatMap { case (vd, id) =>
+            val used = dd.rhs.exists {
+              case Ident(n) => n == vd.name
+              case _ => false
+            }
+            if (used) Some(id) else None
+          }
+
+        val ciOptimized = ci.copy(implicits = actuallyUsedImplicitDeps, body = dd)
+        ImplicitTrace(dd.rhs).flatMap { tr =>
+          implicitsByTrace.get(tr).filter(_.actualType =:= ciOptimized.body.tpe)
+        }.getOrElse {
+          implicitsToDeclare += ciOptimized
+          ciOptimized
+        }
+      }
+    }
+
+    def computeSingle(): Option[CachedImplicit] =
       Option(inferImplicitValue(tpe, expandMacros = expandMacros)).filter(_ != EmptyTree).map { found =>
-        def newCachedImplicit(): TermName = {
+        def newCachedImplicit(): CachedImplicit = {
           val name = c.freshName(TermName("cachedImplicit"))
-          inferredImplicitTypes(name) = found.tpe
-          implicitsToDeclare += (name -> found)
-          name
+          val ci = InferredImplicit(name, Nil, Nil, tpe, found)
+          implicitsToDeclare += ci
+          ci
         }
         ImplicitTrace(found).fold(newCachedImplicit()) { tr =>
-          implicitsByTrace.get(tr).filter(n => inferredImplicitTypes(n) =:= found.tpe).getOrElse {
-            val name = newCachedImplicit()
-            implicitsByTrace(tr) = name
-            name
+          implicitsByTrace.get(tr).filter(_.actualType =:= found.tpe).getOrElse {
+            val ci = newCachedImplicit()
+            implicitsByTrace(tr) = ci
+            ci
           }
         }
       }
-    implicitSearchCache.getOrElseUpdate(TypeKey(tpe), compute)
+
+    implicitSearchCache.getOrElseUpdate(TypeKey(tpe), {
+      if (typeParams.isEmpty && availableImplicits.isEmpty) computeSingle()
+      else computeAsDef()
+    })
   }
 
-  case class ErrorCtx(clue: String, pos: Position)
-
-  def inferCachedImplicit(tpe: Type, errorCtx: ErrorCtx, expandMacros: Boolean = false): TermName =
-    tryInferCachedImplicit(tpe, expandMacros).getOrElse {
-      val name = c.freshName(TermName(""))
-      implicitSearchCache(TypeKey(tpe)) = Some(name)
-      implicitsToDeclare += (name -> q"$ImplicitsObj.infer[$tpe](${StringLiteral(errorCtx.clue, errorCtx.pos)})")
-      inferredImplicitTypes(name) = tpe
-      inferCachedImplicit(tpe, errorCtx)
+  def inferCachedImplicit(
+    tpe: Type,
+    errorCtx: ErrorCtx,
+    typeParams: List[Symbol] = Nil,
+    availableImplicits: List[Type] = Nil,
+    expandMacros: Boolean = false
+  ): CachedImplicit =
+    tryInferCachedImplicit(tpe, typeParams, availableImplicits, expandMacros).getOrElse {
+      val rhsThatWillFail = q"$ImplicitsObj.infer[$tpe](${StringLiteral(errorCtx.clue, errorCtx.pos)})"
+      val ci = InferredImplicit(c.freshName(TermName("")), Nil, Nil, tpe, rhsThatWillFail)
+      implicitSearchCache(TypeKey(tpe)) = Some(ci)
+      implicitsToDeclare += ci
+      inferCachedImplicit(tpe, errorCtx, typeParams, availableImplicits, expandMacros)
     }
 
-  def typeOfCachedImplicit(name: TermName): Type =
-    inferredImplicitTypes.getOrElse(name, NoType)
-
   def registerImplicit(tpe: Type, name: TermName): Unit = {
-    implicitSearchCache(TypeKey(tpe)) = Some(name)
-    inferredImplicitTypes(name) = tpe
+    implicitSearchCache(TypeKey(tpe)) = Some(RegisteredImplicit(name, tpe))
   }
 
   def cachedImplicitDeclarations: List[Tree] =
-    cachedImplicitDeclarations(mkPrivateLazyVal)
+    cachedImplicitDeclarations(mkPrivateLazyValOrDef)
 
-  def cachedImplicitDeclarations(mkDecl: (TermName, Tree) => Tree): List[Tree] =
-    implicitsToDeclare.result().map { case (n, b) => mkDecl(n, b) }
+  def cachedImplicitDeclarations(mkDecl: InferredImplicit => Tree): List[Tree] =
+    implicitsToDeclare.map(mkDecl).result()
 
-  def mkPrivateLazyVal(name: TermName, body: Tree): Tree =
-    q"private lazy val $name = $body"
+  def mkPrivateLazyValOrDef(cachedImplicit: InferredImplicit): Tree =
+    if (cachedImplicit.reusableBody)
+      q"private lazy val ${cachedImplicit.name} = ${cachedImplicit.body}"
+    else
+      cachedImplicit.recreateDef(Modifiers(Flag.PRIVATE))
 
   private def standardImplicitNotFoundMsg(tpe: Type): String =
     symbolImplicitNotFoundMsg(tpe, tpe.typeSymbol, tpe.typeSymbol.typeSignature.typeParams, tpe.typeArgs)
@@ -756,7 +853,9 @@ trait MacroCommons { bundle =>
     case SingleType(pre, sym) =>
       select(treeForType(pre), sym.name)
     case TypeBounds(lo, hi) =>
-      TypeBoundsTree(treeForType(lo), treeForType(hi))
+      val loTree = if (lo =:= definitions.NothingTpe) EmptyTree else treeForType(lo)
+      val hiTree = if (hi =:= definitions.AnyTpe) EmptyTree else treeForType(hi)
+      TypeBoundsTree(loTree, hiTree)
     case RefinedType(parents, scope) =>
       val defns = scope.iterator.filterNot(s => s.isMethod && s.asMethod.isSetter).map {
         case ts: TypeSymbol => typeSymbolToTypeDef(ts)

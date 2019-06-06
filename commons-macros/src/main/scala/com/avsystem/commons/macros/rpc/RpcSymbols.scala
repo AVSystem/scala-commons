@@ -70,7 +70,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
           override def transform(tree: Tree): Tree = tree match {
             case Super(t@This(_), _) if !enclosingClasses.contains(t.symbol) =>
               real.reportProblem(s"illegal super-reference in @whenAbsent annotation")
-            case This(_) if tree.symbol == real.owner.owner.symbol => q"${real.owner.owner.safeName}"
+            case This(_) if tree.symbol == real.owner.ownerApi.symbol => q"${real.owner.ownerApi.safeTermName}"
             case This(_) if !enclosingClasses.contains(tree.symbol) =>
               real.reportProblem(s"illegal this-reference in @whenAbsent annotation")
             case t => super.transform(t)
@@ -95,9 +95,12 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
       else c.untypecheck(whenAbsent)
 
     private def defaultValue(useThis: Boolean): Tree = {
+      if (real.isImplicit && matchedOwner.raw.allowImplicitDepParams) {
+        real.reportProblem("implicit dependency parameters cannot have default values, use @whenAbsent instead")
+      }
       val prevListParams = real.owner.realParams.take(real.index - real.indexInList).map(rp => q"${rp.safeName}")
       val prevListParamss = List(prevListParams).filter(_.nonEmpty)
-      val realInst = if (useThis) q"this" else q"${real.owner.owner.safeName}"
+      val realInst = if (useThis) q"this" else q"${real.owner.ownerApi.safeTermName}"
       q"$realInst.${TermName(s"${real.owner.encodedNameStr}$$default$$${real.index + 1}")}(...$prevListParamss)"
     }
   }
@@ -107,10 +110,12 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
       annot(RpcNameAT).fold(nameStr)(_.findArg[String](RpcNameArg))
   }
 
-  trait RpcApi extends MacroSymbol {
+  trait RpcApi extends MacroTypeSymbol {
     def tpe: Type
     def symbol: Symbol = tpe.typeSymbol
     def seenFrom: Type = tpe
+
+    def safeTermName: TermName = safeName.toTermName
   }
 
   trait RpcTrait extends RpcApi {
@@ -149,6 +154,8 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
           if param.annot(tagTpe, allFallbackTags).nonEmpty => error
       }
     }
+
+    def allowImplicitDepParams: Boolean
   }
 
   trait RealParamOrTypeParamTarget extends ArityParam with TagMatchingSymbol {
@@ -176,39 +183,48 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   }
 
   object RawParam {
-    def apply(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol): RawParam =
+    def apply(containingRawMethod: RawMethod, ownerParam: Option[CompositeRawParam], symbol: Symbol): RawParam =
       if (findAnnotation(symbol, MethodNameAT).nonEmpty)
-        MethodNameParam(owner, symbol)
+        MethodNameParam(containingRawMethod, ownerParam, symbol)
       else if (findAnnotation(symbol, CompositeAT).nonEmpty)
-        CompositeRawParam(owner, symbol)
+        CompositeRawParam(containingRawMethod, ownerParam, symbol)
       else
-        RawValueParam(owner, symbol)
+        RawValueParam(containingRawMethod, ownerParam, symbol)
   }
 
-  sealed trait RawParam extends MacroParam {
-    val owner: Either[RawMethod, CompositeRawParam]
-    val containingRawMethod: RawMethod = owner.fold(identity, _.containingRawMethod)
+  sealed abstract class RawParam extends MacroParam {
+    def containingRawMethod: RawMethod
+    def ownerParam: Option[CompositeRawParam]
 
-    def seenFrom: Type = owner.fold(_.seenFrom, _.actualType)
-    def safePath: Tree = owner.fold(_ => q"$safeName", _.safeSelect(this))
-    def pathStr: String = owner.fold(_ => nameStr, cp => s"${cp.pathStr}.$nameStr")
+    def seenFrom: Type = ownerParam.fold(containingRawMethod.seenFrom)(_.actualType)
+    def safePath: Tree = ownerParam.fold(q"$safeName": Tree)(_.safeSelect(this))
+    def pathStr: String = ownerParam.fold(nameStr)(cp => s"${cp.pathStr}.$nameStr")
 
     def shortDescription = "raw parameter"
-    def description = s"$shortDescription $nameStr of ${owner.fold(_.description, _.description)}"
+    def description: String =
+      s"$shortDescription $nameStr of ${ownerParam.fold(containingRawMethod.description)(_.description)}"
   }
 
-  case class MethodNameParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol) extends RawParam {
+  case class MethodNameParam(
+    containingRawMethod: RawMethod,
+    ownerParam: Option[CompositeRawParam],
+    symbol: Symbol
+  ) extends RawParam {
     if (!(actualType =:= typeOf[String])) {
       reportProblem("@methodName parameter must be of type String")
     }
   }
 
-  case class CompositeRawParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol) extends RawParam {
+  case class CompositeRawParam(
+    containingRawMethod: RawMethod,
+    ownerParam: Option[CompositeRawParam],
+    symbol: Symbol
+  ) extends RawParam {
     val constructorSig: Type =
       primaryConstructorOf(actualType, problemStr).typeSignatureIn(actualType)
 
     val paramLists: List[List[RawParam]] =
-      constructorSig.paramLists.map(_.map(RawParam(Right(this), _)))
+      constructorSig.paramLists.map(_.map(RawParam(containingRawMethod, Some(this), _)))
 
     def allLeafParams: Iterator[RawParam] = paramLists.iterator.flatten.flatMap {
       case crp: CompositeRawParam => crp.allLeafParams
@@ -223,8 +239,11 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
   }
 
-  case class RawValueParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol)
-    extends RawParam with RealParamTarget {
+  case class RawValueParam(
+    containingRawMethod: RawMethod,
+    ownerParam: Option[CompositeRawParam],
+    symbol: Symbol
+  ) extends RawParam with RealParamTarget {
 
     def baseTagSpecs: List[BaseTagSpec] = containingRawMethod.tagSpecs(ParamTagAT)
   }
@@ -272,9 +291,11 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     val arity: MethodArity = MethodArity.fromAnnotation(this)
     val tried: Boolean = annot(TriedAT).nonEmpty
+    val allowImplicitDepParams: Boolean =
+      ownerTrait.allowImplicitDepParams || annot(AllowImplicitDependencyParamsAT).nonEmpty
 
     val rawParams: List[RawParam] = sig.paramLists match {
-      case Nil | List(_) => sig.paramLists.flatten.map(RawParam(Left(this), _))
+      case Nil | List(_) => sig.paramLists.flatten.map(RawParam(this, None, _))
       case _ => reportProblem(s"raw methods cannot take multiple parameter lists")
     }
 
@@ -318,10 +339,10 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
   }
 
-  case class RealMethod(owner: RealRpcApi, symbol: Symbol, overloadIdx: Int)
+  case class RealMethod(ownerApi: RealRpcApi, symbol: Symbol, overloadIdx: Int)
     extends MacroMethod with RealRpcSymbol {
 
-    def ownerType: Type = owner.tpe
+    def ownerType: Type = ownerApi.tpe
 
     def shortDescription = "method"
     def description = s"$shortDescription $nameStr"
@@ -346,6 +367,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
 
     val realParams: List[RealParam] = paramLists.flatten
+    val (regularParams, implicitParams) = realParams.span(p => !p.isImplicit)
 
     val resultTparamReferences: List[RealTypeParam] =
       typeParams.filter(tp => resultType.contains(tp.symbol))
@@ -360,6 +382,9 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     lazy val rawMethods: List[RawMethod] =
       tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(this, _)).toList
+
+    val allowImplicitDepParams: Boolean =
+      annot(AllowImplicitDependencyParamsAT).nonEmpty
   }
 
   abstract class RealRpcApi(tpe: Type) extends RpcApi with RealRpcSymbol with SelfMatchedSymbol {

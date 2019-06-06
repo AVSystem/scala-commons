@@ -30,12 +30,12 @@ object TestEntity extends BsonRef.Creator[TestEntity] {
 
 class BsonRefTest extends FunSuite with BsonRef.Creator[TestEntity] {
   test("basic test") {
-    assert(ref(_.wrapper).path === "wrapper")
-    assert(ref(_.wrapper.s).path === "wrapper")
-    assert(ref(_.innerClass).path === "inner")
-    assert(ref(_.innerClass.map).path === "inner.map")
-    assert(ref(_.innerClass).andThen(InnerClass.MapRef).path === "inner.map")
-    assert(ref(_.innerClass.map("key")).path === "inner.map.key")
-    assert(ref(_.`$special.field`).path === "\\$special\\_field")
+    assert(ref(_.wrapper).path == "wrapper")
+    assert(ref(_.wrapper.s).path == "wrapper")
+    assert(ref(_.innerClass).path == "inner")
+    assert(ref(_.innerClass.map).path == "inner.map")
+    assert(ref(_.innerClass).andThen(InnerClass.MapRef).path == "inner.map")
+    assert(ref(_.innerClass.map("key")).path == "inner.map.key")
+    assert(ref(_.`$special.field`).path == "\\$special\\_field")
   }
 }

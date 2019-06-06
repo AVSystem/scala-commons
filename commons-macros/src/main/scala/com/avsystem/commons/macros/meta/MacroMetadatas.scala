@@ -91,7 +91,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   }
 
   abstract class MetadataConstructor(val constructed: Type, val ownerParam: Option[MetadataParam])
-    extends MacroSymbol with TagMatchingSymbol with TagSpecifyingSymbol {
+    extends MacroTypeSymbol with TagMatchingSymbol with TagSpecifyingSymbol {
 
     def seenFrom: Type = constructed
     def tagSpecifyingOwner: Option[TagSpecifyingSymbol] = ownerParam
@@ -185,11 +185,11 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
         case ParamArity.Single(tpe) =>
           if (checked)
             tryInferCachedImplicit(tpe, expandMacros = true)
-              .map(n => Ok(q"$n")).getOrElse(FailMsg(clue + implicitNotFoundMsg(tpe)))
+              .map(ci => Ok(q"${ci.name}")).getOrElse(FailMsg(clue + implicitNotFoundMsg(tpe)))
           else
-            Ok(q"${infer(tpe, matchedSymbol.real, clue)}")
+            Ok(q"${infer(tpe, matchedSymbol.real, clue).name}")
         case ParamArity.Optional(tpe) =>
-          Ok(mkOptional(tryInferCachedImplicit(tpe, expandMacros = true).map(n => q"$n")))
+          Ok(mkOptional(tryInferCachedImplicit(tpe, expandMacros = true).map(ci => q"${ci.name}")))
         case _ =>
           FailMsg(s"${arity.annotStr} not allowed on @infer params")
       }

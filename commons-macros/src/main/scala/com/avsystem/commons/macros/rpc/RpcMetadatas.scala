@@ -33,6 +33,8 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
         } yield tree
       }
     } yield MethodMetadataMapping(matchedMethod, this, tree)
+
+    def allowImplicitDepParams: Boolean = false
   }
 
   class TypeParamMetadataParam(owner: MethodMetadataConstructor, symbol: Symbol)

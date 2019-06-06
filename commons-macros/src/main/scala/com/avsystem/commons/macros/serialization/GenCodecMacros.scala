@@ -39,7 +39,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   override def dependency(depTpe: Type, tcTpe: Type, param: Symbol): Tree = {
     val clue = s"Cannot materialize $tcTpe because of problem with parameter ${param.name}:\n"
     val depTcTpe = dependencyType(depTpe)
-    Ident(inferCachedImplicit(depTcTpe, ErrorCtx(clue, param.pos)))
+    Ident(inferCachedImplicit(depTcTpe, ErrorCtx(clue, param.pos)).name)
   }
 
   override def materializeFor(tpe: Type): Tree = {
@@ -267,7 +267,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           ${mkArray(StringCls, params.map(p => nameBySym(p.sym)))}
         ) {
           def dependencies = {
-            ..${cachedImplicitDeclarations((n, b) => q"val $n = $b")}
+            ..${cachedImplicitDeclarations(ci => q"val ${ci.name} = ${ci.body}")}
             ${mkArray(tq"$GenCodecCls[_]", params.map(_.instance))}
           }
           ..${generated.collect({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
@@ -300,7 +300,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         ${mkArray(tq"$ClassCls[_]", subtypes.map(st => q"classOf[${st.tpe}]"))}
       ) {
         def caseDependencies = {
-          ..${cachedImplicitDeclarations((n, b) => q"val $n = $b")}
+          ..${cachedImplicitDeclarations(ci => q"val ${ci.name} = ${ci.body}")}
           ${mkArray(tq"$GenCodecCls[_]", subtypes.map(_.instance))}
         }
       }

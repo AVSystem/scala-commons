@@ -24,7 +24,7 @@ class RestServletTest extends FunSuite with UsesHttpServer with UsesHttpClient {
       .param("who", "World")
       .send()
 
-    assert(response.getContentAsString === """"Hello, World!"""")
+    assert(response.getContentAsString == """"Hello, World!"""")
   }
 
   test("POST method") {
@@ -33,7 +33,7 @@ class RestServletTest extends FunSuite with UsesHttpServer with UsesHttpClient {
       .content(new StringContentProvider("application/json", """{"who":"World"}""", StandardCharsets.UTF_8))
       .send()
 
-    assert(response.getContentAsString === """"Hello, World!"""")
+    assert(response.getContentAsString == """"Hello, World!"""")
   }
 
   test("error handling") {
@@ -42,8 +42,8 @@ class RestServletTest extends FunSuite with UsesHttpServer with UsesHttpClient {
       .param("who", SomeApi.poison)
       .send()
 
-    assert(response.getStatus === HttpStatus.INTERNAL_SERVER_ERROR_500)
-    assert(response.getContentAsString === SomeApi.poison)
+    assert(response.getStatus == HttpStatus.INTERNAL_SERVER_ERROR_500)
+    assert(response.getContentAsString == SomeApi.poison)
   }
 
   test("invalid path") {
@@ -51,6 +51,6 @@ class RestServletTest extends FunSuite with UsesHttpServer with UsesHttpClient {
       .method(HttpMethod.GET)
       .send()
 
-    assert(response.getStatus === HttpStatus.NOT_FOUND_404)
+    assert(response.getStatus == HttpStatus.NOT_FOUND_404)
   }
 }

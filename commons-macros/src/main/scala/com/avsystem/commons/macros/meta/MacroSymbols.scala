@@ -64,7 +64,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
       val at = annot.fold(SingleArityAT)(_.tpe)
       if (at <:< SingleArityAT) ParamArity.Single(param.actualType)
       else if (at <:< OptionalArityAT) {
-        val optionLikeType = typeOfCachedImplicit(param.optionLike)
+        val optionLikeType = param.optionLike.actualType
         val valueMember = optionLikeType.member(TypeName("Value"))
         if (valueMember.isAbstract)
           param.reportProblem("could not determine actual value of optional parameter type")
@@ -108,6 +108,8 @@ private[commons] trait MacroSymbols extends MacroCommons {
   }
 
   abstract class MacroSymbol {
+    type NameType <: Name
+
     def symbol: Symbol
     def pos: Position = symbol.pos
     def seenFrom: Type
@@ -124,14 +126,16 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def annots(tpe: Type, fallback: List[Tree] = Nil): List[Annot] =
       allAnnotations(symbol, tpe, seenFrom, withInherited = true, fallback)
 
-    def infer(tpt: Tree): TermName =
+    def infer(tpt: Tree): CachedImplicit =
       infer(getType(tpt))
 
-    def infer(tpe: Type, forSym: MacroSymbol = this, clue: String = ""): TermName =
+    def infer(tpe: Type, forSym: MacroSymbol = this, clue: String = ""): CachedImplicit =
       inferCachedImplicit(tpe, ErrorCtx(s"${forSym.problemStr}:\n$clue", forSym.pos))
 
-    val name: TermName = symbol.name.toTermName
-    val safeName: TermName = c.freshName(name)
+    protected def asName(name: Name): NameType
+
+    val name: NameType = asName(symbol.name)
+    val safeName: NameType = c.freshName(name)
     val nameStr: String = name.decodedName.toString
     val encodedNameStr: String = name.encodedName.toString
 
@@ -143,7 +147,19 @@ private[commons] trait MacroSymbols extends MacroCommons {
     override def toString: String = symbol.toString
   }
 
-  abstract class MacroMethod extends MacroSymbol {
+  abstract class MacroTermSymbol extends MacroSymbol {
+    type NameType = TermName
+
+    protected def asName(name: Name): TermName = name.toTermName
+  }
+
+  abstract class MacroTypeSymbol extends MacroSymbol {
+    type NameType = TypeName
+
+    protected def asName(name: Name): TypeName = name.toTypeName
+  }
+
+  abstract class MacroMethod extends MacroTermSymbol {
     def ownerType: Type
     def seenFrom: Type = ownerType
 
@@ -161,12 +177,13 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def paramDecls: List[List[Tree]] = paramLists.map(_.map(_.paramDecl))
   }
 
-  abstract class MacroTypeParam extends MacroSymbol {
+  abstract class MacroTypeParam extends MacroTypeSymbol {
     def typeParamDecl: Tree
   }
 
-  abstract class MacroParam extends MacroSymbol {
+  abstract class MacroParam extends MacroTermSymbol {
     val actualType: Type = actualParamType(symbol)
+    def isImplicit: Boolean = symbol.isImplicit
 
     def localValueDecl(body: Tree): Tree =
       if (symbol.asTerm.isByNameParam)
@@ -286,9 +303,9 @@ private[commons] trait MacroSymbols extends MacroCommons {
     val arity: ParamArity =
       ParamArity.fromAnnotation(this, allowListedMulti, allowNamedMulti, allowFail)
 
-    lazy val optionLike: TermName = infer(tq"$OptionLikeCls[$actualType]")
+    lazy val optionLike: CachedImplicit = infer(tq"$OptionLikeCls[$actualType]")
 
-    lazy val canBuildFrom: TermName = arity match {
+    lazy val canBuildFrom: CachedImplicit = arity match {
       case _: ParamArity.Multi if allowNamedMulti && actualType <:< StringPFTpe =>
         infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,${arity.collectedType}),$actualType]")
       case _: ParamArity.Multi =>
@@ -297,15 +314,15 @@ private[commons] trait MacroSymbols extends MacroCommons {
     }
 
     def mkOptional[T: Liftable](opt: Option[T]): Tree =
-      opt.map(t => q"$optionLike.some($t)").getOrElse(q"$optionLike.none")
+      opt.map(t => q"${optionLike.name}.some($t)").getOrElse(q"${optionLike.name}.none")
 
     def mkMulti[T: Liftable](elements: List[T]): Tree =
       if (elements.isEmpty)
-        q"$RpcUtils.createEmpty($canBuildFrom)"
+        q"$RpcUtils.createEmpty(${canBuildFrom.name})"
       else {
         val builderName = c.freshName(TermName("builder"))
         q"""
-          val $builderName = $RpcUtils.createBuilder($canBuildFrom, ${elements.size})
+          val $builderName = $RpcUtils.createBuilder(${canBuildFrom.name}, ${elements.size})
           ..${elements.map(t => q"$builderName += $t")}
           $builderName.result()
         """

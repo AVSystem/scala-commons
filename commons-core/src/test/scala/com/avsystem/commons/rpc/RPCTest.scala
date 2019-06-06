@@ -3,7 +3,6 @@ package rpc
 
 import com.avsystem.commons.concurrent.{HasExecutionContext, RunNowEC}
 import com.avsystem.commons.rpc.DummyRPC._
-import com.github.ghik.silencer.silent
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
 
 import scala.collection.mutable.ArrayBuffer
@@ -12,6 +11,10 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
 
   trait RunNowFutureCallbacks extends HasExecutionContext {
     protected implicit final def executionContext: ExecutionContext = RunNowEC
+  }
+
+  implicit class jsInterpolation(sc: StringContext) {
+    def js(): String = write(sc.parts.mkString)
   }
 
   def get[T](f: Future[T]): T =
@@ -26,32 +29,35 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       }))
 
       rawRpc.fire(RawInvocation("handleMore", Nil))
-      rawRpc.fire(RawInvocation("doStuff", List(42, "omgsrsly", Some(true))))
-      assert("doStuffResult" === get(rawRpc.call(RawInvocation("doStuffBoolean", List(true)))))
-      rawRpc.fire(RawInvocation("doStuffInt", List(5)))
+      rawRpc.fire(RawInvocation("doStuff", List("42", js"omgsrsly", "true")))
+      assert(js"doStuffResult" == get(rawRpc.call(RawInvocation("doStuffBoolean", List("true")))))
+      rawRpc.fire(RawInvocation("doStuffInt", List("5")))
       rawRpc.fire(RawInvocation("doStuffInt", Nil))
       rawRpc.fire(RawInvocation("handleMore", Nil))
       rawRpc.fire(RawInvocation("handle", Nil))
       rawRpc.fire(RawInvocation("takeCC", Nil))
       rawRpc.fire(RawInvocation("srslyDude", Nil))
-      rawRpc.get(RawInvocation("innerRpc", List("innerName"))).fire(RawInvocation("proc", Nil))
-      assert("innerRpc.funcResult" === get(rawRpc.get(RawInvocation("innerRpc", List("innerName")))
-        .call(RawInvocation("func", List(42)))))
+      rawRpc.get(RawInvocation("innerRpc", List(js"innerName"))).fire(RawInvocation("proc", Nil))
+      assert(js"innerRpc.funcResult" == get(rawRpc.get(RawInvocation("innerRpc", List(js"innerName")))
+        .call(RawInvocation("func", List("42")))))
+      assert(js"generallyDoStuffResult" ==
+        get(rawRpc.call(RawInvocation("generallyDoStuff", List(js"String", "[\"generallyDoStuffResult\"]")))))
 
-      assert(invocations.toList === List(
+      assert(invocations.toList == List(
         RawInvocation("handleMore", Nil),
-        RawInvocation("doStuff", List(42, "omgsrsly", Some(true))),
-        RawInvocation("doStuffBoolean", List(true)),
-        RawInvocation("doStuffInt", List(5)),
-        RawInvocation("doStuffInt", List(42)),
+        RawInvocation("doStuff", List("42", js"omgsrsly", "true")),
+        RawInvocation("doStuffBoolean", List("true")),
+        RawInvocation("doStuffInt", List("5")),
+        RawInvocation("doStuffInt", List("42")),
         RawInvocation("handleMore", Nil),
         RawInvocation("handle", Nil),
-        RawInvocation("takeCC", List(Record(-1, "_"))),
+        RawInvocation("takeCC", List("""{"i":-1,"fuu":"_"}""")),
         RawInvocation("srslyDude", Nil),
-        RawInvocation("innerRpc", List("innerName")),
+        RawInvocation("innerRpc", List(js"innerName")),
         RawInvocation("innerRpc.proc", Nil),
-        RawInvocation("innerRpc", List("innerName")),
-        RawInvocation("innerRpc.func", List(42))
+        RawInvocation("innerRpc", List(js"innerName")),
+        RawInvocation("innerRpc.func", List("42")),
+        RawInvocation("generallyDoStuff", List(js"String", "[\"generallyDoStuffResult\"]"))
       ))
     }
 
@@ -69,9 +75,9 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
         def fire(inv: RawInvocation): Unit =
           invocations += inv
 
-        def call(inv: RawInvocation): Future[Any] = {
+        def call(inv: RawInvocation): Future[String] = {
           invocations += inv
-          Future.successful(inv.rpcName + "Result")
+          Future.successful(write(inv.rpcName + "Result"))
         }
 
         def get(inv: RawInvocation): RawRPC = {
@@ -84,45 +90,41 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
 
       realRpc.handleMore()
       realRpc.doStuff(42, "omgsrsly")(Some(true))
-      assert("doStuffBooleanResult" === get(realRpc.doStuff(true)))
+      assert("doStuffBooleanResult" == get(realRpc.doStuff(true)))
       realRpc.doStuff(5)
       realRpc.handleMore()
       realRpc.handle
       realRpc.innerRpc("innerName").proc()
       realRpc.innerRpc("innerName").moreInner("moreInner").moreInner("evenMoreInner").func(42)
+      assert(get(realRpc.generallyDoStuff(List("generallyDoStuffResult"))).contains("generallyDoStuffResult"))
 
-      assert(invocations.toList === List(
+      assert(invocations.toList == List(
         RawInvocation("handleMore", Nil),
-        RawInvocation("doStuff", List(42, "omgsrsly", Some(true))),
-        RawInvocation("doStuffBoolean", List(true)),
-        RawInvocation("doStuffInt", List(5)),
+        RawInvocation("doStuff", List("42", js"omgsrsly", "true")),
+        RawInvocation("doStuffBoolean", List("true")),
+        RawInvocation("doStuffInt", List("5")),
         RawInvocation("handleMore", Nil),
         RawInvocation("handle", Nil),
 
-        RawInvocation("innerRpc", List("innerName")),
+        RawInvocation("innerRpc", List(js"innerName")),
         RawInvocation("proc", Nil),
 
-        RawInvocation("innerRpc", List("innerName")),
-        RawInvocation("moreInner", List("moreInner")),
-        RawInvocation("moreInner", List("evenMoreInner")),
-        RawInvocation("func", List(42))
+        RawInvocation("innerRpc", List(js"innerName")),
+        RawInvocation("moreInner", List(js"moreInner")),
+        RawInvocation("moreInner", List(js"evenMoreInner")),
+        RawInvocation("func", List("42")),
+        RawInvocation("generallyDoStuff", List(js"String", "[\"generallyDoStuffResult\"]"))
       ))
     }
-
-    trait BaseRPC[T] {
-      def accept(t: T): Unit
-    }
-
-    trait ConcreteRPC extends BaseRPC[String]
-
-    "rpc should work with parameterized interface types" in {
-      materializeFullInfo[ConcreteRPC]
-    }
-
-    trait EmptyRPC
-
-    "rpc should work with empty interface types" in {
-      materializeFullInfo[EmptyRPC]
-    }
   }
+
+  trait BaseRPC[T] {
+    def accept(t: T): Unit
+  }
+
+  trait ConcreteRPC extends BaseRPC[String]
+  object ConcreteRPC extends RPCCompanion[ConcreteRPC]
+
+  trait EmptyRPC
+  object EmptyRPC extends RPCCompanion[EmptyRPC]
 }
