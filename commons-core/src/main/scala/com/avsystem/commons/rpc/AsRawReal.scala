@@ -120,4 +120,6 @@ object RpcMetadata {
     * Scans all public methods of the real type (instead of abstract methods for RPC trait).
     */
   def materializeForApi[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.apiMetadata[Real]
+
+  def auto[T]: T = macro macros.rpc.RpcMacros.autoAnnotationMetadata
 }

@@ -124,4 +124,15 @@ private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCo
 
     guardedMetadata(metadataTpe, real.tpe)(materialize.getOrElse(err => abort(err.getOrElse("unknown error"))))
   }
+
+  def autoAnnotationMetadata: Tree = {
+    val param = c.internal.enclosingOwner match {
+      case DefaultValueMethod(p) => p
+      case p => p
+    }
+    if (param.owner.owner.asType.toType <:< AnnotationTpe)
+      q"""throw new $ScalaPkg.NotImplementedError("RpcMetadata.auto")"""
+    else
+      abort(s"RpcMetadata.auto can be only used as default value of annotation parameters")
+  }
 }

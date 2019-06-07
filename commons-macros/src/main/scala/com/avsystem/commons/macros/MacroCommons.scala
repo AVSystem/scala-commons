@@ -184,12 +184,15 @@ trait MacroCommons { bundle =>
     def errorPos: Option[Position] =
       List(tree.pos, directSource.pos, aggregationRootSource.pos, subject.pos).find(_ != NoPosition)
 
-    lazy val tree: Tree = annotTree match {
-      case Apply(constr@Select(New(tpt), termNames.CONSTRUCTOR), args) =>
+    lazy val constructorSig: Type = annotTree match {
+      case Apply(constr@Select(New(tpt), termNames.CONSTRUCTOR), _) =>
         val clsTpe = tpt.tpe
-        val params = primaryConstructorOf(clsTpe).typeSignatureIn(clsTpe).paramLists.head
+        constr.symbol.typeSignatureIn(clsTpe)
+    }
 
-        val newArgs = (args zip params) map {
+    def mkTree(paramMaterializer: PartialFunction[Symbol, Tree]): Tree = annotTree match {
+      case Apply(constr, args) =>
+        val newArgs = (args zip constructorSig.paramLists.head) map {
           case (arg, param) if param.asTerm.isParamWithDefault && arg.symbol != null &&
             arg.symbol.isSynthetic && arg.symbol.name.decodedName.toString.contains("$default$") =>
             if (findAnnotation(param, DefaultsToNameAT).nonEmpty)
@@ -197,13 +200,15 @@ trait MacroCommons { bundle =>
             else if (findAnnotation(param, InferAT).nonEmpty)
               q"$ImplicitsObj.infer[${param.typeSignature}](${StringLiteral("", arg.pos)})"
             else
-              arg
+              paramMaterializer.applyOrElse(arg.symbol, (_: Symbol) => arg)
           case (arg, _) => arg
         }
 
         treeCopy.Apply(annotTree, constr, newArgs)
       case _ => annotTree
     }
+
+    lazy val tree: Tree = mkTree(PartialFunction.empty)
 
     def tpe: Type =
       annotTree.tpe
