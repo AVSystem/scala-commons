@@ -33,7 +33,7 @@ private[commons] abstract class RpcMacroCommons(ctx: blackbox.Context)
   final lazy val RpcMethodMetadataAT: Type = staticType(tq"$RpcPackage.rpcMethodMetadata")
   final lazy val RpcParamMetadataAT: Type = staticType(tq"$RpcPackage.rpcParamMetadata")
   final lazy val RpcTypeParamMetadataAT: Type = staticType(tq"$RpcPackage.rpcTypeParamMetadata")
-  final lazy val AllowImplicitDependencyParamsAT: Type = staticType(tq"$RpcPackage.allowImplicitDependencyParams")
+  final lazy val EncodingDependencyAT: Type = staticType(tq"$RpcPackage.encodingDependency")
   final lazy val RpcEncodingAT: Type = staticType(tq"$RpcPackage.RpcEncoding")
   final lazy val VerbatimAT: Type = staticType(tq"$RpcPackage.verbatim")
   final lazy val TriedAT: Type = staticType(tq"$RpcPackage.tried")
@@ -108,7 +108,7 @@ private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCo
   }
 
   def rpcMetadata[Real: WeakTypeTag]: Tree =
-    instrument(mkMetadata(RealRpcTrait(weakTypeOf[Real].dealias))).debug("meta")
+    instrument(mkMetadata(RealRpcTrait(weakTypeOf[Real].dealias)))
 
   def apiMetadata[Real: WeakTypeTag]: Tree =
     instrument(mkMetadata(RealApiClass(weakTypeOf[Real].dealias)))

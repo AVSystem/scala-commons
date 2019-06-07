@@ -178,9 +178,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             s"$encArgType, got ${realParam.actualType}")
       } else {
         val errorCtx = ErrorCtx(s"${realParam.problemStr}:\n", realParam.pos)
-        val implicitParams =
-          if (!rawParam.containingRawMethod.allowImplicitDepParams || realParam.isImplicit) Nil
-          else realParam.owner.implicitParams
+        val implicitParams = realParam.owner.encodingDeps.takeWhile(_ != realParam)
         Ok(RealRawEncoding(realParam.actualType, encArgType, Some(errorCtx), realParam.tparamReferences, implicitParams))
       }
     }
@@ -349,9 +347,8 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           else
             FailMsg(s"real result type $realResultType does not match raw result type ${rawMethod.resultType}")
         } else {
-          val implicitDeps = if (rawMethod.allowImplicitDepParams) realMethod.implicitParams else Nil
           val enc = RpcEncoding.RealRawEncoding(
-            realResultType, rawMethod.resultType, None, realMethod.resultTparamReferences, implicitDeps)
+            realResultType, rawMethod.resultType, None, realMethod.resultTparamReferences, realMethod.encodingDeps)
           if ((!forAsRaw || enc.hasAsRaw) && (!forAsReal || enc.hasAsReal))
             Ok(enc)
           else {
@@ -360,14 +357,9 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           }
         }
 
-      def realParams: List[RealParam] =
-        if (rawMethod.allowImplicitDepParams)
-          matchedMethod.real.implicitParams ++ matchedMethod.real.regularParams
-        else
-          matchedMethod.real.realParams
-
       for {
         resultConv <- resultEncoding
+        realParams = matchedMethod.real.encodingDeps ++ matchedMethod.real.regularParams
         paramMappings <- collectParamMappings(realParams, rawMethod.allValueParams, allowIncomplete = false)(
           extractMapping(matchedMethod, _, _),
           rp => rawMethod.errorForUnmatchedParam(rp).getOrElse(

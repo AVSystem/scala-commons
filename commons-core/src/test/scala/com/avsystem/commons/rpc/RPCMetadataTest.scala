@@ -17,7 +17,7 @@ class RPCMetadataTest extends FunSuite {
     def proc(@Annot("on base param") p: String): Unit
 
     @rpcName("function")
-    def func[A](a: A)(implicit tag: Tag[A]): Future[A]
+    def func[A](a: A)(implicit @encodingDependency tag: Tag[A]): Future[A]
   }
   object Base {
     implicit def codecFromTag[T: Tag]: GenCodec[T] = Tag[T].codec

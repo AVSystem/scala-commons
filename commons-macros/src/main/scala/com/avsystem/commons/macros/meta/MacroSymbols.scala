@@ -192,7 +192,6 @@ private[commons] trait MacroSymbols extends MacroCommons {
   abstract class MacroParam extends MacroTermSymbol {
     val actualType: Type = actualParamType(symbol)
     def collectedType: Type = actualType
-    def isImplicit: Boolean = symbol.isImplicit
 
     def localValueDecl(body: Tree): Tree =
       if (symbol.asTerm.isByNameParam)

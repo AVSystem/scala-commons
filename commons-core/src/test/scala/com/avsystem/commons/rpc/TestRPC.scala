@@ -41,7 +41,7 @@ trait TestRPC {
 
   def innerRpc(name: String): InnerRPC
 
-  def generallyDoStuff[T](list: List[T])(implicit tag: Tag[T]): Future[Option[T]]
+  def generallyDoStuff[T](list: List[T])(implicit @encodingDependency tag: Tag[T]): Future[Option[T]]
 }
 
 @silent("side-effecting nullary methods")

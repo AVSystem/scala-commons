@@ -98,10 +98,11 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
       else c.untypecheck(whenAbsent)
 
     private def defaultValue(useThis: Boolean): Tree = {
-      if (real.isImplicit && matchedOwner.raw.allowImplicitDepParams) {
-        real.reportProblem("implicit dependency parameters cannot have default values, use @whenAbsent instead")
-      }
       val prevListParams = real.owner.realParams.take(real.index - real.indexInList).map(rp => q"${rp.safeName}")
+      if (real.encodingDependency && prevListParams.nonEmpty) {
+        real.reportProblem("implicit dependency parameters cannot have default values " +
+          "unless they are in the first parameter list - note: you can use @whenAbsent instead")
+      }
       val prevListParamss = List(prevListParams).filter(_.nonEmpty)
       val realInst = if (useThis) q"this" else q"${real.owner.ownerApi.safeTermName}"
       q"$realInst.${TermName(s"${real.owner.encodedNameStr}$$default$$${real.index + 1}")}(...$prevListParamss)"
@@ -157,8 +158,6 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
           if param.annot(tagTpe, allFallbackTags).nonEmpty => error
       }
     }
-
-    def allowImplicitDepParams: Boolean
   }
 
   trait RealParamOrTypeParamTarget extends ArityParam with TagMatchingSymbol {
@@ -273,6 +272,9 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     def shortDescription = "parameter"
     def description = s"$shortDescription $nameStr of ${owner.description}"
 
+    val encodingDependency: Boolean =
+      annot(EncodingDependencyAT).nonEmpty
+
     val tparamReferences: List[RealTypeParam] =
       owner.typeParams.filter(tp => actualType.contains(tp.symbol))
   }
@@ -294,8 +296,6 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     val arity: MethodArity = MethodArity.fromAnnotation(this)
     val tried: Boolean = annot(TriedAT).nonEmpty
-    val allowImplicitDepParams: Boolean =
-      ownerTrait.allowImplicitDepParams || annot(AllowImplicitDependencyParamsAT).nonEmpty
 
     val rawParams: List[RawParam] = sig.paramLists match {
       case Nil | List(_) => sig.paramLists.flatten.map(RawParam(this, None, _))
@@ -370,7 +370,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
 
     val realParams: List[RealParam] = paramLists.flatten
-    val (regularParams, implicitParams) = realParams.span(p => !p.isImplicit)
+    val (encodingDeps, regularParams) = realParams.partition(_.encodingDependency)
 
     val resultTparamReferences: List[RealTypeParam] =
       typeParams.filter(tp => resultType.contains(tp.symbol))
@@ -385,9 +385,6 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     lazy val rawMethods: List[RawMethod] =
       tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(this, _)).toList
-
-    val allowImplicitDepParams: Boolean =
-      annot(AllowImplicitDependencyParamsAT).nonEmpty
   }
 
   abstract class RealRpcApi(tpe: Type) extends RpcApi with RealRpcSymbol with SelfMatchedSymbol {

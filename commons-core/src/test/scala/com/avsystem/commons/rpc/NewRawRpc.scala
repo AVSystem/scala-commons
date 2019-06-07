@@ -50,7 +50,6 @@ trait NewRawRpc {
     @optional @auxiliary ajdi: Opt[Int],
     @multi args: Map[String, String]): Unit
 
-  @allowImplicitDependencyParams
   @multi def call(
     @methodName name: String,
     @tagged[renamed] @multi renamedArgs: => Map[String, String],

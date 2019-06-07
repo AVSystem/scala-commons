@@ -14,7 +14,7 @@ trait SomeBase {
 
 trait Box[T]
 object Box {
-  implicit def codec[T: Tag]: GenCodec[Box[T]] = ???
+  implicit def codec[T: GenCodec]: GenCodec[Box[T]] = ???
 }
 
 trait TestApi extends SomeBase {
@@ -28,9 +28,10 @@ trait TestApi extends SomeBase {
   @rpcName("ovprefix") def overload: TestApi
   def getit(stuff: String, @suchMeta(1, "a") otherStuff: List[Int]): TestApi
   def postit(arg: String, bar: String, int: Int, @suchMeta(3, "c") foo: String): String
-  def generyk[T](lel: Box[T])(implicit tag: Tag[T]): Future[Box[T]]
+  def generyk[T](lel: Box[T])(implicit @encodingDependency tag: Tag[T]): Future[Box[T]]
 }
 object TestApi {
+  implicit def codecFromTag[T: Tag]: GenCodec[T] = Tag[T].codec
   implicit def asRawRealFromGenCodec[T: GenCodec]: AsRawReal[String, T] = ???
   implicit def futureAsRawRealFromGenCodec[T: GenCodec]: AsRawReal[Future[String], Future[T]] = ???
 

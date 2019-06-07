@@ -13,7 +13,7 @@ object DummyRPC {
     @multi @verbatim def
     fire(@composite invocation: RawInvocation): Unit
 
-    @multi @encoded @allowImplicitDependencyParams
+    @multi @encoded
     def call(@composite invocation: RawInvocation): Future[String]
 
     @multi @encoded
