@@ -219,11 +219,10 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     val checked: Boolean = annot(CheckedAT).nonEmpty
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = {
-      val tparams = matchedSymbol.typeParamsInContext
-      val tparamInstanceTypes = typeParamTypeClassInContext.fold(List.empty[Type]) { typeClass =>
-        tparams.map(tp => typeClass(tp.symbol))
-      }
+      val tpTypeClass = typeParamTypeClassInContext
+      val tparams = if (tpTypeClass.isDefined) matchedSymbol.typeParamsInContext else Nil
       val tparamInstances = tparams.map(tp => q"${tp.instanceName}")
+      val tparamInstanceTypes = tpTypeClass.fold(List.empty[Type])(tc => tparams.map(tp => tc(tp.symbol)))
       val tpe = typeGivenInstances
       val res = arity match {
         case ParamArity.Single(_) =>
