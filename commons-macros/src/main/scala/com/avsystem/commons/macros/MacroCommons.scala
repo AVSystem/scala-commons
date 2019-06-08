@@ -337,12 +337,12 @@ trait MacroCommons { bundle =>
     seenFrom: Type = NoType, withInherited: Boolean = true, fallback: List[Tree] = Nil
   ): Option[Annot] = measure("annotations") {
     val initSym = orConstructorParam(s)
-    def find(annots: List[Annot]): Option[Annot] = annots match {
+    def find(annots: List[Annot], rejectDuplicates: Boolean): Option[Annot] = annots match {
       case head :: tail =>
-        val fromHead = Some(head).filter(_.tpe <:< tpe).orElse(find(head.aggregated))
+        val fromHead = Some(head).filter(_.tpe <:< tpe).orElse(find(head.aggregated, rejectDuplicates))
         for {
           found <- fromHead
-          ignored <- tail.filter(_.tpe <:< tpe)
+          ignored <- tail.filter(_.tpe <:< tpe) if rejectDuplicates
         } {
           val errorPos = ignored.errorPos.getOrElse(c.enclosingPosition)
           val aggInfo =
@@ -350,7 +350,7 @@ trait MacroCommons { bundle =>
             else ignored.aggregationChain.mkString(" (aggregated by ", " aggregated by", ")")
           c.error(errorPos, s"Annotation $ignored$aggInfo is ignored because it's overridden by $found")
         }
-        fromHead orElse find(tail)
+        fromHead orElse find(tail, rejectDuplicates)
       case Nil => None
     }
 
@@ -358,10 +358,13 @@ trait MacroCommons { bundle =>
       !(superSym != initSym && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
 
     maybeWithSuperSymbols(initSym, withInherited)
-      .map(ss => find(annotations(ss).filter(inherited(_, ss))
-        .map(a => new Annot(correctAnnotTree(a.tree, seenFrom), s, ss, None))))
+      .map(ss => find(
+        annotations(ss).filter(inherited(_, ss))
+          .map(a => new Annot(correctAnnotTree(a.tree, seenFrom), s, ss, None)),
+        rejectDuplicates = true
+      ))
       .collectFirst { case Some(annot) => annot }
-      .orElse(find(fallback.map(t => new Annot(t, s, s, None))))
+      .orElse(find(fallback.map(t => new Annot(t, s, s, None)), rejectDuplicates = false))
   }
 
   def enclosingConstructorCompanion: Symbol =
