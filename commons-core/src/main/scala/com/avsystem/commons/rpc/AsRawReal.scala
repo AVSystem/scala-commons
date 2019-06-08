@@ -122,4 +122,8 @@ object RpcMetadata {
   def materializeForApi[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.apiMetadata[Real]
 
   def auto[T]: T = macro macros.misc.WhiteMiscMacros.autoAnnotationMetadata
+
+  def nextInstance[T](it: Iterator[_], description: String): T =
+    if (it.hasNext) it.next().asInstanceOf[T]
+    else throw new NoSuchElementException(s"typeclass instance for $description was not provided")
 }
