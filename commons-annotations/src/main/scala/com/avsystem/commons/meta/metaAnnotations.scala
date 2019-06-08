@@ -180,6 +180,8 @@ final class auxiliary extends RawParamAnnotation
   */
 trait MetadataParamStrategy extends StaticAnnotation
 
+trait DirectMetadataParamStrategy extends MetadataParamStrategy
+
 /**
   * When a metadata parameter is annotated as `@infer`, RPC macro engine will materialize that parameter by searching
   * for an implicit value of that parameter's type. `@infer` is the default strategy assumed for implicit parameters
@@ -201,7 +203,7 @@ trait MetadataParamStrategy extends StaticAnnotation
   *     extends scala.annotation.StaticAnnotation
   * }}}
   **/
-final class infer(val clue: String = "") extends MetadataParamStrategy
+final class infer(val clue: String = "") extends DirectMetadataParamStrategy
 object infer {
   /**
     * Can be used as default value of `@infer` annotation parameters.
@@ -240,33 +242,33 @@ final class adtCaseMetadata extends MetadataParamStrategy
   * - for RPC parameters, annotations are inherited from all corresponding parameters (by index, not name) from
   * all methods overridden or implemented by method containing the parameter for which metadata is being reified.
   */
-final class reifyAnnot extends MetadataParamStrategy
+final class reifyAnnot extends DirectMetadataParamStrategy
 
 /**
   * Metadata parameter typed as `Boolean` can be annotated with `@isAnnotated[SomeAnnotation]`. Boolean value will then
   * hold information about whether RPC trait, method or parameter for which metadata is materialized is annotated with
   * `SomeAnnotation` (or any subtype) or not.
   */
-final class isAnnotated[T <: StaticAnnotation] extends MetadataParamStrategy
+final class isAnnotated[T <: StaticAnnotation] extends DirectMetadataParamStrategy
 
 /**
   * This annotation may only be applied on metadata parameters of type `String` and instructs the macro engine
   * to reify the name of real RPC trait/method/parameter. Depending on the value of `useRawName` flag, the macro
   * will either take into account or ignore potential [[com.avsystem.commons.rpc.rpcName rpcName]] annotation.
   */
-final class reifyName(val useRawName: Boolean = false) extends MetadataParamStrategy
+final class reifyName(val useRawName: Boolean = false) extends DirectMetadataParamStrategy
 
 /**
   * Metadata parameter annotated with this annotation must be of type `ParamPosition` - a class that holds
   * parameter index information - see scaladoc for `ParamPosition` for more details.
   */
-final class reifyPosition extends MetadataParamStrategy
+final class reifyPosition extends DirectMetadataParamStrategy
 
 /**
   * Metadata parameter annotated with this annotation must be of type `ParamFlags` - a class that holds
   * parameter flags information - see scaladoc for `ParamFlags` for more details.
   */
-final class reifyFlags extends MetadataParamStrategy
+final class reifyFlags extends DirectMetadataParamStrategy
 
 /**
   * Metadata parameter annotated with this annotation must be of type `DefaultValue[T]` where `T` is the type
@@ -278,13 +280,13 @@ final class reifyFlags extends MetadataParamStrategy
   * it does not work RPC method parameters because it's not possible to obtain default value of RPC method parameter
   * without having some actual instance of RPC trait.
   */
-final class reifyDefaultValue extends MetadataParamStrategy
+final class reifyDefaultValue extends DirectMetadataParamStrategy
 
 /**
   * Metadata parameter annotated with this annotation must be of type `Int`. Macro engine will reify the number
   * of parameter lists that a method has.
   */
-final class reifyParamListCount extends MetadataParamStrategy
+final class reifyParamListCount extends DirectMetadataParamStrategy
 
 /**
   * May be applied on metadata parameters with [[infer]] annotation (or just implicit metadata parameters -

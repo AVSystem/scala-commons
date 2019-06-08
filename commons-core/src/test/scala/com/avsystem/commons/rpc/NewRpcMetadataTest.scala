@@ -1,8 +1,12 @@
 package com.avsystem.commons
 package rpc
 
+import com.avsystem.commons.meta.infer
+import com.avsystem.commons.misc.TypeString
 import com.avsystem.commons.serialization.{GenCodec, transientDefault, whenAbsent}
 import org.scalatest.FunSuite
+
+import scala.annotation.StaticAnnotation
 
 class td extends transientDefault
 
@@ -17,6 +21,8 @@ object Box {
   implicit def codec[T: GenCodec]: GenCodec[Box[T]] = ???
 }
 
+class annotTypeString[T](@infer val ts: TypeString[T] = RpcMetadata.auto) extends StaticAnnotation
+
 trait TestApi extends SomeBase {
   @filter def doSomething(@filter double: Double): String
   def doSomethingElse(double: Double): String
@@ -28,7 +34,7 @@ trait TestApi extends SomeBase {
   @rpcName("ovprefix") def overload: TestApi
   def getit(stuff: String, @suchMeta(1, "a") otherStuff: List[Int]): TestApi
   def postit(arg: String, bar: String, int: Int, @suchMeta(3, "c") foo: String): String
-  def generyk[T](lel: Box[T])(implicit @encodingDependency tag: Tag[T]): Future[Box[T]]
+  def generyk[T](@annotTypeString[Box[T]] lel: Box[T])(implicit @encodingDependency tag: Tag[T]): Future[List[T]]
 }
 object TestApi {
   implicit def codecFromTag[T: Tag]: GenCodec[T] = Tag[T].codec
@@ -71,17 +77,17 @@ class NewRpcMetadataTest extends FunSuite {
         |    ARGS:
         |    int -> [hasDefaultValue]int@0:0:0:0: Int suchMeta=false
         |    bul -> bul@1:0:1:1: Boolean suchMeta=false
-        |  generyk -> def generyk[T]: com.avsystem.commons.rpc.Box[T]
+        |  generyk -> def generyk[T]: List[T]
         |    RENAMED:
         |
         |    ARGS:
-        |    lel -> lel@0:0:0:0: com.avsystem.commons.rpc.Box[lel] suchMeta=false
-        |    tag -> [implicit]tag@1:1:0:1: com.avsystem.commons.rpc.Tag[tag] suchMeta=false
+        |    lel -> lel@0:0:0:0: com.avsystem.commons.rpc.Box[T] suchMeta=false @annotTypeString[com.avsystem.commons.rpc.Box[T]]
+        |    tag -> [implicit]tag@1:1:0:1: com.avsystem.commons.rpc.Tag[T] suchMeta=false
         |  POSTERS:
         |  POST_postit -> POST() def postit<POST_postit>: String
         |    HEADERS:
         |    bar<X-Bar>@1:0:1:0: String suchMeta=false
-        |    foo<X-Foo>@3:0:3:1: String suchMeta=true,metas=suchMeta(3,c),suchMeta(2,b)
+        |    foo<X-Foo>@3:0:3:1: String suchMeta=true @suchMeta(3,c) @suchMeta(2,b)
         |    BODY:
         |    arg -> arg@0:0:0:0: String suchMeta=false
         |    int -> int@2:0:2:1: Int suchMeta=false
@@ -94,7 +100,7 @@ class NewRpcMetadataTest extends FunSuite {
         |  getit -> def getit: com.avsystem.commons.rpc.TestApi
         |    ARGS:
         |    stuff@0:0:0:0: String suchMeta=false
-        |    otherStuff@1:0:1:0: List[Int] suchMeta=true,metas=suchMeta(1,a)
+        |    otherStuff@1:0:1:0: List[Int] suchMeta=true @suchMeta(1,a)
         |    RESULT: <recursive>
         |  PREFIXERS:
         |  ovprefix -> def overload<ovprefix>: com.avsystem.commons.rpc.TestApi

@@ -57,9 +57,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def collectedType: Type
   }
   object ParamArity {
-    def fromAnnotation(
-      param: ArityParam, allowListedMulti: Boolean, allowNamedMulti: Boolean, allowFail: Boolean
-    ): ParamArity = {
+    def apply(param: ArityParam): ParamArity = {
       val annot = param.annot(RpcArityAT)
       val at = annot.fold(SingleArityAT)(_.tpe)
       if (at <:< SingleArityAT) ParamArity.Single(param.actualType)
@@ -71,15 +69,15 @@ private[commons] trait MacroSymbols extends MacroCommons {
         else
           ParamArity.Optional(valueMember.typeSignatureIn(optionLikeType))
       }
-      else if ((allowListedMulti || allowNamedMulti) && at <:< MultiArityAT) {
-        if (allowNamedMulti && param.actualType <:< StringPFTpe)
+      else if ((param.allowListedMulti || param.allowNamedMulti) && at <:< MultiArityAT) {
+        if (param.allowNamedMulti && param.actualType <:< StringPFTpe)
           Multi(param.actualType.baseType(PartialFunctionClass).typeArgs(1), named = true)
-        else if (allowListedMulti && param.actualType <:< BIterableTpe)
+        else if (param.allowListedMulti && param.actualType <:< BIterableTpe)
           Multi(param.actualType.baseType(BIterableClass).typeArgs.head, named = false)
-        else if (allowNamedMulti && allowListedMulti)
+        else if (param.allowNamedMulti && param.allowListedMulti)
           param.reportProblem(s"@multi ${param.shortDescription} must be a PartialFunction of String " +
             s"(for by-name mapping) or Iterable (for sequence)")
-        else if (allowListedMulti)
+        else if (param.allowListedMulti)
           param.reportProblem(s"@multi ${param.shortDescription} must be an Iterable")
         else
           param.reportProblem(s"@multi ${param.shortDescription} must be a PartialFunction of String")
@@ -308,8 +306,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def allowListedMulti: Boolean
     def allowFail: Boolean
 
-    lazy val arity: ParamArity =
-      ParamArity.fromAnnotation(this, allowListedMulti, allowNamedMulti, allowFail)
+    lazy val arity: ParamArity = ParamArity(this)
 
     override def collectedType: Type = arity.collectedType
 

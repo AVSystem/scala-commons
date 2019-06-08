@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package macros
 
+import com.avsystem.commons.macros.misc.{Ok, Res}
+
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.{TypecheckException, blackbox}
@@ -162,17 +164,44 @@ trait MacroCommons { bundle =>
     s.annotations
   }
 
+  def correctAnnotTree(tree: Tree, seenFrom: Type): Tree =
+    treeAsSeenFrom(fixMethodTparamRefs(tree.duplicate), seenFrom)
+
   def treeAsSeenFrom(tree: Tree, seenFrom: Type): Tree = seenFrom match {
     case NoType => tree
     case TypeRef(_, sym, Nil) if sym.isStatic => tree
     case _ =>
-      val res = tree.duplicate
-      res.foreach { t =>
+      tree.foreach { t =>
         if (t.tpe != null) {
           internal.setType(t, t.tpe.asSeenFrom(seenFrom, seenFrom.typeSymbol))
         }
       }
-      res
+      tree
+  }
+
+  // For some unknown reason references to method type params
+  // in annotations are wrong and we have to replace them with correct method type params
+  def fixMethodTparamRefs(tree: Tree): Tree = {
+    tree.foreach { t =>
+      if (t.tpe != null) {
+        val newTpe = t.tpe.map {
+          case it@TypeRef(NoPrefix, tp, targs) if tp.owner.isMethod =>
+            tp.owner.asMethod.typeParams
+              .find(mtp => mtp != tp && mtp.name == tp.name)
+              .map(internal.typeRef(NoPrefix, _, targs))
+              .getOrElse(it)
+          case it => it
+        }
+        internal.setType(t, newTpe)
+      }
+      val sym = t.symbol
+      if (sym != null && sym.isType && sym.isParameter && sym.owner.isMethod) {
+        sym.owner.asMethod.typeParams
+          .find(tp => tp != sym && tp.name == sym.name)
+          .foreach(internal.setSymbol(t, _))
+      }
+    }
+    tree
   }
 
   class Annot(annotTree: Tree, val subject: Symbol, val directSource: Symbol, val aggregate: Option[Annot]) {
@@ -185,30 +214,32 @@ trait MacroCommons { bundle =>
       List(tree.pos, directSource.pos, aggregationRootSource.pos, subject.pos).find(_ != NoPosition)
 
     lazy val constructorSig: Type = annotTree match {
-      case Apply(constr@Select(New(tpt), termNames.CONSTRUCTOR), _) =>
+      case Apply(Select(New(tpt), termNames.CONSTRUCTOR), _) =>
         val clsTpe = tpt.tpe
-        constr.symbol.typeSignatureIn(clsTpe)
+        primaryConstructorOf(clsTpe).typeSignatureIn(clsTpe)
     }
 
-    def mkTree(paramMaterializer: PartialFunction[Symbol, Tree]): Tree = annotTree match {
+    def mkTree(paramMaterializer: Symbol => Option[Res[Tree]]): Res[Tree] = annotTree match {
       case Apply(constr, args) =>
         val newArgs = (args zip constructorSig.paramLists.head) map {
           case (arg, param) if param.asTerm.isParamWithDefault && arg.symbol != null &&
             arg.symbol.isSynthetic && arg.symbol.name.decodedName.toString.contains("$default$") =>
             if (findAnnotation(param, DefaultsToNameAT).nonEmpty)
-              q"${subject.name.decodedName.toString}"
-            else if (findAnnotation(param, InferAT).nonEmpty)
-              q"$ImplicitsObj.infer[${param.typeSignature}](${StringLiteral("", arg.pos)})"
+              Ok(q"${subject.name.decodedName.toString}")
             else
-              paramMaterializer.applyOrElse(arg.symbol, (_: Symbol) => arg)
-          case (arg, _) => arg
+              paramMaterializer(param).getOrElse(Ok(arg))
+          case (arg, _) =>
+            Ok(arg)
         }
 
-        treeCopy.Apply(annotTree, constr, newArgs)
-      case _ => annotTree
+        Res.sequence(newArgs).map(treeCopy.Apply(annotTree, constr, _))
+      case _ =>
+        Ok(annotTree)
     }
 
-    lazy val tree: Tree = mkTree(PartialFunction.empty)
+    lazy val tree: Tree = mkTree(_ => None).getOrElse { errOpt =>
+      c.abort(errorPos.getOrElse(c.enclosingPosition), errOpt.getOrElse("unknown error"))
+    }
 
     def tpe: Type =
       annotTree.tpe
@@ -260,7 +291,7 @@ trait MacroCommons { bundle =>
       if (tpe <:< AnnotationAggregateType) {
         val impliedMember = tpe.member(TypeName("Implied"))
         annotations(impliedMember).map { a =>
-          new Annot(argsInliner.transform(treeAsSeenFrom(a.tree, tpe)), subject, impliedMember, Some(this))
+          new Annot(argsInliner.transform(correctAnnotTree(a.tree, tpe)), subject, impliedMember, Some(this))
         }
       } else Nil
     }
@@ -296,7 +327,7 @@ trait MacroCommons { bundle =>
 
     val nonFallback = maybeWithSuperSymbols(initSym, withInherited)
       .flatMap(ss => annotations(ss).filter(inherited(_, ss))
-        .map(a => new Annot(treeAsSeenFrom(a.tree, seenFrom), s, ss, None)))
+        .map(a => new Annot(correctAnnotTree(a.tree, seenFrom), s, ss, None)))
 
     (nonFallback ++ fallback.iterator.map(t => new Annot(t, s, s, None)))
       .flatMap(_.withAllAggregated).filter(_.tpe <:< tpeFilter).toList
@@ -328,7 +359,7 @@ trait MacroCommons { bundle =>
 
     maybeWithSuperSymbols(initSym, withInherited)
       .map(ss => find(annotations(ss).filter(inherited(_, ss))
-        .map(a => new Annot(treeAsSeenFrom(a.tree, seenFrom), s, ss, None))))
+        .map(a => new Annot(correctAnnotTree(a.tree, seenFrom), s, ss, None))))
       .collectFirst { case Some(annot) => annot }
       .orElse(find(fallback.map(t => new Annot(t, s, s, None))))
   }
@@ -390,7 +421,7 @@ trait MacroCommons { bundle =>
     body: Tree
   ) extends CachedImplicit {
 
-    def actualType: Type = body.tpe orElse tpe
+    def actualType: Type = Option(body.tpe).getOrElse(NoType) orElse tpe
 
     def reference(allImplicitArgs: List[Tree]): Tree = {
       def collectArgs(idx: Int, deps: List[ImplicitDep], allArgs: List[Tree]): List[Tree] =
@@ -433,7 +464,7 @@ trait MacroCommons { bundle =>
     def computeAsDef(): Option[CachedImplicit] = {
       val name = c.freshName(TermName("cachedImplicit"))
       val implicitDeps = availableImplicits.zipWithIndex.map {
-        case (tpe, idx) => ImplicitDep(idx, c.freshName(TermName("dep")), tpe)
+        case (t, idx) => ImplicitDep(idx, c.freshName(TermName("dep")), t)
       }
       val ci = InferredImplicit(name, typeParams, implicitDeps, tpe, EmptyTree)
       val resolved = c.typecheck(ci.recreateDef(NoMods), silent = true)

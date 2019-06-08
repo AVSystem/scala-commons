@@ -56,6 +56,14 @@ object Res {
     loop(cbf(in))
   }
 
+  def sequence[M[X] <: Iterable[X], A](in: M[Res[A]])(implicit cbf: CanBuildFrom[M[Res[A]], A, M[A]]): Res[M[A]] =
+    traverse(in)(identity)
+
+  def sequence[A](in: Option[Res[A]]): Res[Option[A]] = in match {
+    case Some(res) => res.map(Some(_))
+    case None => Ok(None)
+  }
+
   def firstOk[A, B](coll: Iterable[A])(f: A => Res[B])(combineErrors: List[(A, String)] => String): Res[B] = {
     val errors = new ListBuffer[(A, String)]
     def loop(it: Iterator[A]): Res[B] =

@@ -122,11 +122,11 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
       reportProblem(s"having both @adtParamMetadata and @adtCaseMetadata parameters in the same class doesn't make sense")
     }
 
-    override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
-      if (annot.tpe <:< AdtParamMetadataAT) new AdtParamMetadataParam(this, paramSym)
-      else if (annot.tpe <:< AdtCaseMetadataAT) new AdtCaseMetadataParam(this, paramSym)
-      else if (annot.tpe <:< ReifyFlagsAT) new ReifiedTypeFlagsParam(this, paramSym)
-      else super.paramByStrategy(paramSym, annot)
+    override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor): MetadataParam =
+      if (annot.tpe <:< AdtParamMetadataAT) new AdtParamMetadataParam(ownerConstr, paramSym)
+      else if (annot.tpe <:< AdtCaseMetadataAT) new AdtCaseMetadataParam(ownerConstr, paramSym)
+      else if (annot.tpe <:< ReifyFlagsAT) new ReifiedTypeFlagsParam(ownerConstr, paramSym)
+      else super.paramByStrategy(paramSym, annot, ownerConstr)
 
     def paramMappings(params: List[AdtParam]): Res[Map[AdtParamMetadataParam, Tree]] =
       if (paramMdParams.isEmpty) Ok(Map.empty)
@@ -218,24 +218,22 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
     def baseTagSpecs: List[BaseTagSpec] = tagSpecs(ParamTagAT)
 
-    val adtParamType: Type =
-      constructed.baseType(TypedMetadataType.typeSymbol).typeArgs.head
-
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
       new AdtParamMetadataConstructor(param.collectedType, containingAdtParamMdParam, param)
 
-    override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam = annot.tpe match {
-      case t if t <:< ReifyPositionAT => new ParamPositionParam(this, paramSym)
-      case t if t <:< ReifyFlagsAT => new ParamFlagsParam(this, paramSym)
-      case t if t <:< ReifyDefaultValueAT => new ReifiedDefaultValueParam(this, paramSym)
-      case _ => super.paramByStrategy(paramSym, annot)
-    }
+    override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor): MetadataParam =
+      annot.tpe match {
+        case t if t <:< ReifyPositionAT => new ParamPositionParam(ownerConstr, paramSym)
+        case t if t <:< ReifyFlagsAT => new ParamFlagsParam(ownerConstr, paramSym)
+        case t if t <:< ReifyDefaultValueAT => new ReifiedDefaultValueParam(ownerConstr, paramSym)
+        case _ => super.paramByStrategy(paramSym, annot, ownerConstr)
+      }
 
     def tryMaterializeFor(matchedParam: MatchedAdtParam): Res[Tree] =
       tryMaterialize(matchedParam)(p => FailMsg(s"unexpected metadata parameter $p"))
   }
 
-  class AdtCaseMetadataParam(owner: AdtMetadataConstructor, symbol: Symbol)
+  class AdtCaseMetadataParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with ArityParam with TagMatchingSymbol {
 
     def baseTagSpecs: List[BaseTagSpec] = tagSpecs(CaseTagAT)
@@ -251,7 +249,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     } yield AdtCaseMapping(matchedCase, tree)
   }
 
-  class AdtParamMetadataParam(owner: AdtMetadataConstructor, symbol: Symbol)
+  class AdtParamMetadataParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with ArityParam with TagMatchingSymbol {
 
     def allowNamedMulti: Boolean = true
@@ -295,16 +293,19 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     }
   }
 
-  class ReifiedDefaultValueParam(owner: AdtParamMetadataConstructor, symbol: Symbol)
+  class ReifiedDefaultValueParam(owner: MetadataConstructor, symbol: Symbol)
     extends DirectMetadataParam(owner, symbol) with ArityParam {
 
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = false
     def allowFail: Boolean = false
 
-    if (!(arity.collectedType =:= getType(tq"$CommonsPkg.meta.DefaultValue[${owner.adtParamType}]"))) {
+    val adtParamType: Type =
+      owner.constructed.baseType(TypedMetadataType.typeSymbol).typeArgs.head
+
+    if (!(arity.collectedType =:= getType(tq"$CommonsPkg.meta.DefaultValue[$adtParamType]"))) {
       reportProblem(s"type of @reifyDefaultValue metadata parameter must be " +
-        s"DefaultValue[${owner.adtParamType}] but got ${arity.collectedType}")
+        s"DefaultValue[$adtParamType] but got ${arity.collectedType}")
     }
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = matchedSymbol.real match {

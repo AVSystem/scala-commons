@@ -125,8 +125,8 @@ case class FireMetadata(
   def typeString: TypeString[Unit] = new TypeString("void")
   def repr: String =
     s"$basicRepr\n" +
-      ajdi.fold("NO AJDI")(pm => s"AJDI: ${pm.repr}").indent("  ") + "\n" +
-      args.iterator.map({ case (n, pm) => s"$n -> ${pm.repr}" }).mkString("ARGS:\n", "\n", "").indent("  ")
+      ajdi.fold("NO AJDI")(pm => s"AJDI: ${pm.repr(Nil)}").indent("  ") + "\n" +
+      args.iterator.map({ case (n, pm) => s"$n -> ${pm.repr(Nil)}" }).mkString("ARGS:\n", "\n", "").indent("  ")
 }
 
 case class CallMetadata[T](
@@ -134,21 +134,21 @@ case class CallMetadata[T](
   @multi @rpcTypeParamMetadata generics: List[TypeParameterMetadata],
   @tagged[renamed] @multi @rpcParamMetadata renamed: Map[String, ParameterMetadata[_]],
   @multi @rpcParamMetadata args: Map[String, ParameterMetadata[_]],
-  @forTypeParams @infer typeStringFun: List[TypeString[_]] => TypeString[T]
+  @forTypeParams @infer("for method result") typeStringFun: List[TypeString[_]] => TypeString[T]
 ) extends TypedMetadata[Future[T]] with MethodMetadata[T] {
-  def typeString: TypeString[T] = typeStringFun(generics.map(tpm => new TypeString(tpm.name)))
+  def typeString: TypeString[T] = typeStringFun(generics.map(_.typeString))
 
   def repr: String =
     s"def ${nameInfo.repr}${generics.map(_.name).mkStringOrEmpty("[", ",", "]")}: ${typeString.value}\n" +
-      renamed.iterator.map({ case (n, pm) => s"$n -> ${pm.repr}" }).mkString("RENAMED:\n", "\n", "").indent("  ") + "\n" +
-      args.iterator.map({ case (n, pm) => s"$n -> ${pm.repr}" }).mkString("ARGS:\n", "\n", "").indent("  ")
+      renamed.iterator.map({ case (n, pm) => s"$n -> ${pm.repr(generics)}" }).mkString("RENAMED:\n", "\n", "").indent("  ") + "\n" +
+      args.iterator.map({ case (n, pm) => s"$n -> ${pm.repr(generics)}" }).mkString("ARGS:\n", "\n", "").indent("  ")
 }
 
 case class GetterParams(
   @encoded @rpcParamMetadata head: ParameterMetadata[_],
   @multi @rpcParamMetadata tail: List[ParameterMetadata[_]]
 ) {
-  def repr: String = (head :: tail).map(_.repr).mkString("ARGS:\n", "\n", "")
+  def repr: String = (head :: tail).map(_.repr(Nil)).mkString("ARGS:\n", "\n", "")
 }
 
 case class GetterMetadata[T](
@@ -171,8 +171,8 @@ case class PostMetadata[T: TypeString](
 
   def repr: String =
     s"$post $basicRepr\n" +
-      headers.map(_.repr).mkString("HEADERS:\n", "\n", "").indent("  ") + "\n" +
-      body.iterator.map({ case (n, pm) => s"$n -> ${pm.repr}" }).mkString("BODY:\n", "\n", "").indent("  ")
+      headers.map(_.repr(Nil)).mkString("HEADERS:\n", "\n", "").indent("  ") + "\n" +
+      body.iterator.map({ case (n, pm) => s"$n -> ${pm.repr(Nil)}" }).mkString("BODY:\n", "\n", "").indent("  ")
 }
 
 case class PrefixMetadata[T](
@@ -185,7 +185,9 @@ case class PrefixMetadata[T](
       s"RESULT: ${resultMetadata.value.repr(open)}".indent("  ")
 }
 
-case class TypeParameterMetadata(@reifyName name: String)
+case class TypeParameterMetadata(@reifyName name: String) {
+  def typeString: TypeString[_] = new TypeString(name)
+}
 
 case class ParameterMetadata[T](
   @composite nameInfo: NameInfo,
@@ -193,13 +195,16 @@ case class ParameterMetadata[T](
   @reifyFlags flags: ParamFlags,
   @reifyAnnot @multi metas: List[suchMeta],
   @isAnnotated[suchMeta] suchMeta: Boolean,
+  @optional @forTypeParams @reifyAnnot annotTypeStringOpt: Opt[List[TypeString[_]] => annotTypeString[T]],
   @forTypeParams @infer typeString: List[TypeString[_]] => TypeString[T]
 ) extends TypedMetadata[T] {
-  def repr: String = {
+  def repr(tparams: List[TypeParameterMetadata]): String = {
+    val tparamTss = tparams.map(tp => new TypeString(tp.name))
     val flagsStr = if (flags != ParamFlags.Empty) s"[$flags]" else ""
     val posStr = s"${pos.index}:${pos.indexOfList}:${pos.indexInList}:${pos.indexInRaw}"
-    val metasStr = if (metas.nonEmpty) metas.mkString(s",metas=", ",", "") else ""
-    s"$flagsStr${nameInfo.repr}@$posStr: ${typeString(List(new TypeString(nameInfo.name)))} suchMeta=$suchMeta$metasStr"
+    val metasStr = metas.map(m => s"@suchMeta(${m.intMeta},${m.strMeta})").mkStringOrEmpty(" ", " ", "")
+    val annotTsStr = annotTypeStringOpt.fold("")(ats => s" @annotTypeString[${ats(tparamTss).ts}]")
+    s"$flagsStr${nameInfo.repr}@$posStr: ${typeString(tparamTss)} suchMeta=$suchMeta$metasStr$annotTsStr"
   }
 }
 

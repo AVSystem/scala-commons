@@ -696,6 +696,17 @@ final class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(
       abort(s"infer.value can be only used as default value of @infer annotation parameters")
   }
 
+  def autoAnnotationMetadata: Tree = {
+    val param = c.internal.enclosingOwner match {
+      case DefaultValueMethod(p) => p
+      case p => p
+    }
+    if (param.owner.owner.asType.toType <:< AnnotationTpe)
+      q"""throw new $ScalaPkg.NotImplementedError("RpcMetadata.auto")"""
+    else
+      abort(s"RpcMetadata.auto can be only used as default value of annotation parameters")
+  }
+
   def normalizeGadtSubtype(tpref: Tree, value: Tree): Tree = {
     def print(msg: String): Unit =
       if (c.enclosingPosition.line == 57) {

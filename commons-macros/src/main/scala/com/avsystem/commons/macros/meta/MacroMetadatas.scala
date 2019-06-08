@@ -12,6 +12,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   final def ParamPositionObj: Tree = q"$MetaPackage.ParamPosition"
   final lazy val TypedMetadataType: Type = staticType(tq"$MetaPackage.TypedMetadata[_]")
   final lazy val MetadataParamStrategyType: Type = staticType(tq"$MetaPackage.MetadataParamStrategy")
+  final lazy val DirectMetadataParamStrategyType: Type = staticType(tq"$MetaPackage.DirectMetadataParamStrategy")
   final lazy val ReifyAnnotAT: Type = staticType(tq"$MetaPackage.reifyAnnot")
   final lazy val IsAnnotatedAT: Type = staticType(tq"$MetaPackage.isAnnotated[_]")
   final lazy val ReifyNameAT: Type = staticType(tq"$MetaPackage.reifyName")
@@ -146,18 +147,19 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     def shortDescription = "metadata class"
     def description = s"$shortDescription $constructed"
 
-    def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam = annot.tpe match {
-      case t if t <:< InferAT =>
-        val clue = annot.findArg[String](InferAT.member(TermName("clue")), "")
-        new ImplicitParam(this, paramSym, clue)
-      case t if t <:< ReifyAnnotAT => new ReifiedAnnotParam(this, paramSym)
-      case t if t <:< ReifyNameAT =>
-        val useRawName = annot.findArg[Boolean](ReifyNameAT.member(TermName("useRawName")), false)
-        new ReifiedNameParam(this, paramSym, useRawName)
-      case t if t <:< IsAnnotatedAT =>
-        new IsAnnotatedParam(this, paramSym, t.typeArgs.head)
-      case t => reportProblem(s"metadata param strategy $t is not allowed here")
-    }
+    def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor = this): MetadataParam =
+      annot.tpe match {
+        case t if t <:< InferAT =>
+          val clue = annot.findArg[String](InferAT.member(TermName("clue")), "")
+          new ImplicitParam(ownerConstr, paramSym, clue)
+        case t if t <:< ReifyAnnotAT => new ReifiedAnnotParam(ownerConstr, paramSym)
+        case t if t <:< ReifyNameAT =>
+          val useRawName = annot.findArg[Boolean](ReifyNameAT.member(TermName("useRawName")), false)
+          new ReifiedNameParam(ownerConstr, paramSym, useRawName)
+        case t if t <:< IsAnnotatedAT =>
+          new IsAnnotatedParam(ownerConstr, paramSym, t.typeArgs.head)
+        case t => reportProblem(s"metadata param strategy $t is not allowed here")
+      }
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor
 
@@ -224,21 +226,36 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       val tparamInstances = tparams.map(tp => q"${tp.instanceName}")
       val tparamInstanceTypes = tpTypeClass.fold(List.empty[Type])(tc => tparams.map(tp => tc(tp.symbol)))
       val tpe = typeGivenInstances
-      val res = arity match {
+
+      def referImplicit(ci: CachedImplicit): Tree =
+        withTypeParamInstances(tparams)(ci.reference(tparamInstances))
+
+      arity match {
         case ParamArity.Single(_) =>
           if (checked)
             tryInferCachedImplicit(tpe, Nil, tparamInstanceTypes, expandMacros = true)
-              .map(ci => Ok(q"${ci.reference(tparamInstances)}")).getOrElse(FailMsg(clue + implicitNotFoundMsg(tpe)))
+              .map(ci => Ok(referImplicit(ci)))
+              .getOrElse(FailMsg(clue + implicitNotFoundMsg(tpe)))
           else
-            Ok(q"${infer(tpe, Nil, tparamInstanceTypes, matchedSymbol.real, clue).reference(tparamInstances)}")
+            Ok(referImplicit(infer(tpe, Nil, tparamInstanceTypes, matchedSymbol.real, clue)))
         case ParamArity.Optional(_) =>
-          Ok(mkOptional(tryInferCachedImplicit(tpe, Nil, tparamInstanceTypes, expandMacros = true)
-            .map(ci => q"${ci.reference(tparamInstances)}")))
+          Ok(mkOptional(tryInferCachedImplicit(tpe, Nil, tparamInstanceTypes, expandMacros = true).map(referImplicit)))
         case _ =>
           FailMsg(s"${arity.annotStr} not allowed on @infer params")
       }
-      res.map(withTypeParamInstances(tparams))
     }
+  }
+
+  class ReifiedAnnotConstructor(annotTpe: Type, reifiedAnnotParam: ReifiedAnnotParam)
+    extends MetadataConstructor(annotTpe, Some(reifiedAnnotParam)) {
+
+    def baseTagSpecs: List[BaseTagSpec] = reifiedAnnotParam.ownerConstr.baseTagSpecs
+
+    def compositeConstructor(param: CompositeParam): MetadataConstructor =
+      param.ownerConstr.compositeConstructor(param)
+
+    override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor): MetadataParam =
+      reifiedAnnotParam.ownerConstr.paramByStrategy(paramSym, annot, ownerConstr)
   }
 
   class ReifiedAnnotParam(owner: MetadataConstructor, symbol: Symbol)
@@ -253,27 +270,41 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     }
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = {
-      def validatedAnnotTree(annot: Annot): Tree = {
-        if (containsInaccessibleThises(annot.tree)) {
-          matchedSymbol.real.reportProblem(s"reified annotation ${annot.tree} contains inaccessible this-references")
+      val annotTpe = typeGivenInstances
+      val annotConstr = new ReifiedAnnotConstructor(annotTpe, this)
+
+      def resolvedAnnotTree(annot: Annot): Res[Tree] = {
+        val treeRes = annot.mkTree {
+          case param if findAnnotation(param, CompositeAT).nonEmpty =>
+            Some(new CompositeParam(annotConstr, param)
+              .tryMaterialize(matchedSymbol)(p => FailMsg(s"unexpected metadata parameter $p")))
+          case param =>
+            findAnnotation(param, DirectMetadataParamStrategyType)
+              .map(annot => annotConstr.paramByStrategy(param, annot))
+              .map {
+                case dmp: DirectMetadataParam => dmp.tryMaterializeFor(matchedSymbol)
+                case p => FailMsg(s"unexpected metadata parameter $p")
+              }
         }
-        c.untypecheck(annot.tree)
+        treeRes.map { tree =>
+          if (containsInaccessibleThises(tree)) {
+            matchedSymbol.real.reportProblem(s"reified annotation $tree contains inaccessible this-references")
+          }
+          withTypeParamInstances(matchedSymbol.typeParamsInContext)(c.untypecheck(tree))
+        }
       }
 
-      val annotTpe = typeGivenInstances
-      val res = arity match {
+      arity match {
         case ParamArity.Single(_) =>
-          matchedSymbol.annot(annotTpe).map(a => Ok(validatedAnnotTree(a)))
+          matchedSymbol.annot(annotTpe).map(resolvedAnnotTree)
             .getOrElse(FailMsg(s"no annotation of type $annotTpe found"))
         case ParamArity.Optional(_) =>
-          Ok(mkOptional(matchedSymbol.annot(annotTpe).map(validatedAnnotTree)))
+          Res.sequence(matchedSymbol.annot(annotTpe).map(resolvedAnnotTree)).map(ot => mkOptional(ot))
         case ParamArity.Multi(_, _) =>
-          Ok(mkMulti(matchedSymbol.annots(annotTpe).map(validatedAnnotTree)))
+          Res.sequence(matchedSymbol.annots(annotTpe).map(resolvedAnnotTree)).map(tl => mkMulti(tl))
         case _ =>
           FailMsg(s"${arity.annotStr} not allowed on @reifyAnnot params")
       }
-
-      res.map(withTypeParamInstances(matchedSymbol.typeParamsInContext))
     }
   }
 

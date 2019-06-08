@@ -121,5 +121,5 @@ object RpcMetadata {
     */
   def materializeForApi[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.apiMetadata[Real]
 
-  def auto[T]: T = macro macros.rpc.RpcMacros.autoAnnotationMetadata
+  def auto[T]: T = macro macros.misc.WhiteMiscMacros.autoAnnotationMetadata
 }

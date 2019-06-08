@@ -8,7 +8,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
 
   import c.universe._
 
-  class MethodMetadataParam(owner: RpcTraitMetadataConstructor, symbol: Symbol)
+  class MethodMetadataParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with RealMethodTarget with ArityParam {
 
     def allowNamedMulti: Boolean = true
@@ -37,7 +37,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     def allowImplicitDepParams: Boolean = false
   }
 
-  class TypeParamMetadataParam(owner: MethodMetadataConstructor, symbol: Symbol)
+  class TypeParamMetadataParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with RealTypeParamTarget {
 
     def baseTagSpecs: List[BaseTagSpec] = Nil //TODO: introduce `typeParamTag` just for the sake of consistency?
@@ -73,7 +73,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     }
   }
 
-  class ParamMetadataParam(owner: MethodMetadataConstructor, symbol: Symbol)
+  class ParamMetadataParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with RealParamTarget {
 
     def baseTagSpecs: List[BaseTagSpec] = tagSpecs(ParamTagAT)
@@ -128,9 +128,9 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
 
     lazy val methodMdParams: List[MethodMetadataParam] = collectParams[MethodMetadataParam]
 
-    override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
-      if (annot.tpe <:< RpcMethodMetadataAT) new MethodMetadataParam(this, paramSym)
-      else super.paramByStrategy(paramSym, annot)
+    override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor): MetadataParam =
+      if (annot.tpe <:< RpcMethodMetadataAT) new MethodMetadataParam(ownerConstr, paramSym)
+      else super.paramByStrategy(paramSym, annot, ownerConstr)
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
       new RpcTraitMetadataConstructor(param.collectedType, Some(param))
@@ -175,11 +175,11 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     lazy val paramMdParams: List[ParamMetadataParam] = collectParams[ParamMetadataParam]
     lazy val typeParamMdParams: List[TypeParamMetadataParam] = collectParams[TypeParamMetadataParam]
 
-    override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
-      if (annot.tpe <:< ReifyParamListCountAT) new ReifiedParamListCountParam(this, paramSym)
-      else if (annot.tpe <:< RpcParamMetadataAT) new ParamMetadataParam(this, paramSym)
-      else if (annot.tpe <:< RpcTypeParamMetadataAT) new TypeParamMetadataParam(this, paramSym)
-      else super.paramByStrategy(paramSym, annot)
+    override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor = this): MetadataParam =
+      if (annot.tpe <:< ReifyParamListCountAT) new ReifiedParamListCountParam(ownerConstr, paramSym)
+      else if (annot.tpe <:< RpcParamMetadataAT) new ParamMetadataParam(ownerConstr, paramSym)
+      else if (annot.tpe <:< RpcTypeParamMetadataAT) new TypeParamMetadataParam(ownerConstr, paramSym)
+      else super.paramByStrategy(paramSym, annot, ownerConstr)
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
       new MethodMetadataConstructor(param.collectedType, containingMethodParam, param)
@@ -217,10 +217,10 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
   ) extends MetadataConstructor(constructed, Some(owner)) {
     def baseTagSpecs: List[BaseTagSpec] = Nil
 
-    override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
+    override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor): MetadataParam =
       annot.tpe match {
         // TODO: metadata for lower/upper bound or something?
-        case _ => super.paramByStrategy(paramSym, annot)
+        case _ => super.paramByStrategy(paramSym, annot, ownerConstr)
       }
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
@@ -239,11 +239,11 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
 
     def baseTagSpecs: List[BaseTagSpec] = tagSpecs(ParamTagAT)
 
-    override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
+    override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor): MetadataParam =
       annot.tpe match {
-        case t if t <:< ReifyPositionAT => new ParamPositionParam(this, paramSym)
-        case t if t <:< ReifyFlagsAT => new ParamFlagsParam(this, paramSym)
-        case _ => super.paramByStrategy(paramSym, annot)
+        case t if t <:< ReifyPositionAT => new ParamPositionParam(ownerConstr, paramSym)
+        case t if t <:< ReifyFlagsAT => new ParamFlagsParam(ownerConstr, paramSym)
+        case _ => super.paramByStrategy(paramSym, annot, ownerConstr)
       }
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
@@ -253,7 +253,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       tryMaterialize(matchedParam)(p => FailMsg(s"unexpected metadata parameter $p"))
   }
 
-  class ReifiedParamListCountParam(owner: MethodMetadataConstructor, symbol: Symbol)
+  class ReifiedParamListCountParam(owner: MetadataConstructor, symbol: Symbol)
     extends DirectMetadataParam(owner, symbol) {
 
     if (!(actualType =:= definitions.IntTpe)) {
