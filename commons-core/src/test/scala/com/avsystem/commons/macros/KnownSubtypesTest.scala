@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package macros
 
-import scala.language.experimental.macros
-
 class KnownSubtypesTest[A, B <: AnyRef, C <: Ordered[C]] {
   def testKnownSubtypes[T, R]: Nothing = macro com.avsystem.commons.macros.TestMacros.testKnownSubtypes[T, R]
 

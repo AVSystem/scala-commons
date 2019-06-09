@@ -5,7 +5,7 @@ import com.avsystem.commons.redis.RedisBatch.Index
 import com.avsystem.commons.redis.protocol.RedisReply
 
 import scala.annotation.implicitNotFound
-import scala.collection.generic.CanBuildFrom
+import scala.collection.BuildFrom
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -47,25 +47,25 @@ object Sequencer extends TupleSequencers {
   implicit def trivialSequencer[A]: Sequencer[RedisBatch[A], A] =
     reusableTrivialSequencer.asInstanceOf[Sequencer[RedisBatch[A], A]]
 
-  implicit def collectionSequencer[ElOps, ElRes, M[X] <: TraversableOnce[X], That](
-    implicit elSequencer: Sequencer[ElOps, ElRes], cbf: CanBuildFrom[M[ElOps], ElRes, That]): Sequencer[M[ElOps], That] =
+  implicit def collectionSequencer[ElOps, ElRes, M[X] <: IterableOnce[X], That](
+    implicit elSequencer: Sequencer[ElOps, ElRes], bf: BuildFrom[M[ElOps], ElRes, That]): Sequencer[M[ElOps], That] =
 
     new Sequencer[M[ElOps], That] {
       def sequence(ops: M[ElOps]): CollectionBatch[ElRes, That] = {
-        val batches: Traversable[RedisBatch[ElRes]] =
-          if ((elSequencer eq reusableTrivialSequencer) && ops.isInstanceOf[Traversable[Any]])
-            ops.asInstanceOf[Traversable[RedisBatch[ElRes]]]
+        val batches: Iterable[RedisBatch[ElRes]] =
+          if ((elSequencer eq reusableTrivialSequencer) && ops.isInstanceOf[Iterable[Any]])
+            ops.asInstanceOf[Iterable[RedisBatch[ElRes]]]
           else {
             val buf = new ArrayBuffer[RedisBatch[ElRes]]
             ops.foreach(el => buf += elSequencer.sequence(el))
             buf
           }
-        new CollectionBatch[ElRes, That](batches, () => cbf(ops))
+        new CollectionBatch[ElRes, That](batches, () => bf.newBuilder(ops))
       }
     }
 }
 
-final class CollectionBatch[A, C](batches: Traversable[RedisBatch[A]], builderCreator: () => mutable.Builder[A, C])
+final class CollectionBatch[A, C](batches: Iterable[RedisBatch[A]], builderCreator: () => mutable.Builder[A, C])
   extends RedisBatch[C] with RawCommandPacks {
 
   def rawCommandPacks: CollectionBatch[A, C] = this

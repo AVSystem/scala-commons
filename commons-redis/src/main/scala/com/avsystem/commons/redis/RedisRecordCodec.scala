@@ -5,7 +5,7 @@ import com.avsystem.commons.redis.protocol.BulkStringMsg
 import com.avsystem.commons.serialization.GenObjectCodec
 
 import scala.annotation.implicitNotFound
-import scala.collection.generic.CanBuildFrom
+import scala.collection.BuildFrom
 
 @implicitNotFound("${T} has no RedisRecordCodec. It can be derived from GenObjectCodec which can be provided " +
   "by making your case class companion extend HasGenObjectCodec")
@@ -14,19 +14,19 @@ object RedisRecordCodec extends LowPriorityRedisRecordCodecs {
   def apply[T](implicit codec: RedisRecordCodec[T]): RedisRecordCodec[T] = codec
 
   implicit def forDataMap[M[X, Y] <: BMap[X, Y], F: RedisDataCodec, V: RedisDataCodec](
-    implicit cbf: CanBuildFrom[Nothing, (F, V), M[F, V]]
+    implicit fac: Factory[(F, V), M[F, V]]
   ): RedisRecordCodec[M[F, V] with BMap[F, V]] =
     RedisRecordCodec(elems => record[F, V, M[F, V]](elems), map => bulks(map.iterator, map.size))
 
   implicit def forDataSeq[M[X] <: Seq[X], F: RedisDataCodec, V: RedisDataCodec](
-    implicit cbf: CanBuildFrom[Nothing, (F, V), M[(F, V)]]
+    implicit fac: Factory[(F, V), M[(F, V)]]
   ): RedisRecordCodec[M[(F, V)] with Seq[(F, V)]] =
     RedisRecordCodec(elems => record[F, V, M[(F, V)]](elems), seq => bulks(seq.iterator, seq.size))
 
   private def record[F: RedisDataCodec, V: RedisDataCodec, To](
-    elems: IndexedSeq[BulkStringMsg])(implicit cbf: CanBuildFrom[Nothing, (F, V), To]
+    elems: IndexedSeq[BulkStringMsg])(implicit fac: Factory[(F, V), To]
   ): To = {
-    val b = cbf()
+    val b = bf.newBuilder()
     b.sizeHint(elems.size)
     elems.iterator.pairs.foreach {
       case (BulkStringMsg(f), BulkStringMsg(v)) =>

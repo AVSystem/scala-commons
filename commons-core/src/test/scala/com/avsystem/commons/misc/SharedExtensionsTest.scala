@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package misc
 
+import com.github.ghik.silencer.silent
 import org.scalatest.{FunSuite, Matchers}
 
 class SharedExtensionsTest extends FunSuite with Matchers {
@@ -162,6 +163,7 @@ class SharedExtensionsTest extends FunSuite with Matchers {
   test("sourceCode") {
     assert(123.sourceCode == "123")
 
+    @silent("is never used")
     val src = {
       println(123)
       val x = 5 + 2

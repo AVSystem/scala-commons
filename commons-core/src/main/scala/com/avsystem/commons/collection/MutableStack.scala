@@ -10,8 +10,8 @@ final class MutableStack[T] {
     ssize += 1
   }
 
-  def pushAll(elems: TraversableOnce[T]): Unit =
-    elems.foreach(push)
+  def pushAll(elems: IterableOnce[T]): Unit =
+    elems.iterator.foreach(push)
 
   def pop(): T = stack match {
     case head :: tail =>

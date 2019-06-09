@@ -105,7 +105,7 @@ object GuavaInterop extends GuavaInterop {
 
     @throws(classOf[Exception])
     def result(atMost: Duration)(implicit permit: CanAwait): T =
-      if (atMost.isFinite())
+      if (atMost.isFinite)
         unwrapFailures(gfut.get(atMost.length, atMost.unit))
       else
         unwrapFailures(gfut.get())

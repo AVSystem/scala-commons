@@ -3,8 +3,7 @@ package jiop
 
 import java.util.DoubleSummaryStatistics
 
-import scala.collection.generic.CanBuildFrom
-import scala.language.higherKinds
+import scala.collection.Factory
 
 final class ScalaJDoubleStream(private val jStream: JDoubleStream) extends AnyVal {
   def asJava = jStream
@@ -117,8 +116,8 @@ final class ScalaJDoubleStream(private val jStream: JDoubleStream) extends AnyVa
   def toArray: Array[Double] =
     jStream.toArray
 
-  def to[Col[_]](implicit cbf: CanBuildFrom[Nothing, Double, Col[Double]]): Col[Double] = {
-    val b = cbf.apply()
+  def to[Col[_]](implicit fac: Factory[Double, Col[Double]]): Col[Double] = {
+    val b = fac.newBuilder
     forEachOrdered(b += _)
     b.result()
   }

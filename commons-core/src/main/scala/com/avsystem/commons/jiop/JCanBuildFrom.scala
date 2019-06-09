@@ -1,18 +1,22 @@
 package com.avsystem.commons
 package jiop
 
-import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable
+import scala.collection.{Factory, mutable}
 
-trait JCanBuildFrom[-Elem, +To] extends CanBuildFrom[Nothing, Elem, To]
-object JCanBuildFrom extends JCanBuildFroms
+trait JBuildFrom[-Elem, +To] extends Factory[Elem, To] {
+  def fromSpecific(it: IterableOnce[Elem]): To = {
+    val b = newBuilder
+    b.addAll(it)
+    b.result()
+  }
+}
+object JBuildFrom extends JBuildFroms
 
-final class JCollectionCBF[A, C <: JCollection[A]](creator: => C) extends JCanBuildFrom[A, C] {
-  def apply(from: Nothing) = apply()
-  def apply() = new mutable.Builder[A, C] {
+final class JCollectionCBF[A, C <: JCollection[A]](creator: => C) extends JBuildFrom[A, C] {
+  def newBuilder = new mutable.Builder[A, C] {
     val coll = creator
 
-    def +=(elem: A): this.type = {
+    def addOne(elem: A): this.type = {
       coll.add(elem)
       this
     }
@@ -25,12 +29,11 @@ final class JCollectionCBF[A, C <: JCollection[A]](creator: => C) extends JCanBu
   }
 }
 
-final class JMapCBF[K, V, M <: JMap[K, V]](creator: => M) extends JCanBuildFrom[(K, V), M] {
-  def apply(from: Nothing) = apply()
-  def apply() = new mutable.Builder[(K, V), M] {
+final class JMapCBF[K, V, M <: JMap[K, V]](creator: => M) extends JBuildFrom[(K, V), M] {
+  def newBuilder = new mutable.Builder[(K, V), M] {
     val map = creator
 
-    def +=(elem: (K, V)): this.type = {
+    def addOne(elem: (K, V)): this.type = {
       map.put(elem._1, elem._2)
       this
     }
@@ -43,9 +46,9 @@ final class JMapCBF[K, V, M <: JMap[K, V]](creator: => M) extends JCanBuildFrom[
   }
 }
 
-trait JCanBuildFroms extends JCollectionCanBuildFroms with JMapCanBuildFroms
+trait JBuildFroms extends JCollectionBuildFroms with JMapBuildFroms
 
-trait JCollectionCanBuildFroms extends JIterableCBF
+trait JCollectionBuildFroms extends JIterableCBF
 
 trait JIterableCBF extends JSetCBF with JLinkedListCBF {
   // for JIterable, JCollection, JList and JArrayList
@@ -75,7 +78,7 @@ trait JLinkedListCBF {
     new JCollectionCBF(new JLinkedList)
 }
 
-trait JMapCanBuildFroms extends JSortedMapCBF with JLinkedHashMapCBF {
+trait JMapBuildFroms extends JSortedMapCBF with JLinkedHashMapCBF {
   // for JMap and JHashMap
   implicit def jHashMapCBF[K, V]: JMapCBF[K, V, JHashMap[K, V]] =
     new JMapCBF(new JHashMap)

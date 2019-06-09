@@ -1,12 +1,12 @@
 package com.avsystem.commons
 package jiop
 
-import scala.collection.convert.{DecorateAsJava, DecorateAsScala}
+import scala.collection.convert.{AsJavaExtensions, AsScalaExtensions}
 
 trait JavaInterop extends AnyRef
   with JBasicUtils
   with JCollectionUtils
-  with DecorateAsJava
-  with DecorateAsScala
+  with AsJavaExtensions
+  with AsScalaExtensions
 
 object JavaInterop extends JavaInterop

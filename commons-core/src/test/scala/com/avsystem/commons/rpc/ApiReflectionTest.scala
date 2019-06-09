@@ -3,6 +3,7 @@ package rpc
 
 import com.avsystem.commons.meta.{ParamFlags, ParamPosition, TypedMetadata, infer, multi, reifyFlags, reifyName, reifyParamListCount, reifyPosition}
 import com.avsystem.commons.misc.TypeString
+import com.github.ghik.silencer.silent
 import org.scalatest.FunSuite
 
 case class ApiInfo[T](
@@ -62,7 +63,7 @@ class SimpleApi {
   def noParamLists: Int = 42
   def noParams(): String = ""
   def multiParamLists(int: Int)(str: String)(): Double = int.toDouble
-  def takesImplicits(int: Int)(implicit ord: Ordering[Int], moar: DummyImplicit): String = int.toString
+  def takesImplicits(int: Int)(implicit @silent ord: Ordering[Int], moar: DummyImplicit): String = int.toString
   def takesTypeArgs[A, B](as: List[A], bs: Set[B]): Map[A, B] = Map.empty
 }
 

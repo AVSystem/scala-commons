@@ -507,13 +507,13 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
       val unapplyRes = q"$companion.${au.unapply}[..${tpe.typeArgs}]($valueName)"
       au.params match {
         case Nil => q"$ScalaPkg.Seq.empty[$ScalaPkg.Any]"
-        case List(_) => q"$ScalaPkg.Array($unapplyRes.get)"
+        case List(_) => q"$ScalaPkg.Seq($unapplyRes.get)"
         case _ =>
           val resName = c.freshName(TermName("res"))
           val elems = au.params.indices.map(i => q"$resName.${TermName(s"_${i + 1}")}")
           q"""
              val $resName = $unapplyRes.get
-             $ScalaPkg.Array[$ScalaPkg.Any](..$elems)
+             $ImmutablePkg.ArraySeq[$ScalaPkg.Any](..$elems)
            """
       }
     }
@@ -746,7 +746,7 @@ final class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(
           case TypeBounds(lo, hi) if lo =:= hi =>
             lo
           case ts =>
-            print(t.typeSymbol.name + show(ts))
+            print(t.typeSymbol.name.toString + show(ts))
             quantified += t.typeSymbol
             t
         }

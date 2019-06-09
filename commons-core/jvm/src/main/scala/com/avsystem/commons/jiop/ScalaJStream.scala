@@ -2,8 +2,7 @@ package com.avsystem.commons
 package jiop
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.collection.generic.CanBuildFrom
-import scala.language.higherKinds
+import scala.collection.Factory
 
 final class ScalaJStream[+A](private val jStream: JStream[A@uV]) extends AnyVal {
   def asJava[B >: A]: JStream[B] =
@@ -132,8 +131,8 @@ final class ScalaJStream[+A](private val jStream: JStream[A@uV]) extends AnyVal 
   def toArray[B >: A <: AnyRef : ClassTag]: Array[B] =
     jStream.toArray[B](jIntFunction(n => new Array[B](n)))
 
-  def to[Col[_]](implicit cbf: CanBuildFrom[Nothing, A, Col[A@uV]]): Col[A@uV] = {
-    val b = cbf.apply()
+  def to[C](fac: Factory[A, C]): C = {
+    val b = fac.newBuilder
     forEachOrdered(b += _)
     b.result()
   }

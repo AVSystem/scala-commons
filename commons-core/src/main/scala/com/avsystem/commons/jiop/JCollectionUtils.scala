@@ -3,10 +3,9 @@ package jiop
 
 import java.{lang => jl, util => ju}
 
-import scala.collection.generic.CanBuildFrom
-import scala.language.{higherKinds, implicitConversions}
+import scala.collection.{Factory, IterableFactory, mutable}
 
-trait JCollectionUtils extends JCanBuildFroms {
+trait JCollectionUtils extends JBuildFroms {
   type JIterator[T] = ju.Iterator[T]
   type JIterable[T] = jl.Iterable[T]
   type JCollection[T] = ju.Collection[T]
@@ -32,21 +31,31 @@ trait JCollectionUtils extends JCanBuildFroms {
   type JDeque[E] = ju.Deque[E]
   type JArrayDeque[E] = ju.ArrayDeque[E]
 
-  abstract class JCollectionCreator[C[T] <: JCollection[T]] {
+  abstract class JCollectionCreator[C[T] <: JCollection[T]] extends IterableFactory[C] {
     protected def instantiate[T]: C[T]
 
-    def empty[T]: C[T] = instantiate[T]
-
-    def apply[T](values: T*): C[T] = {
+    def from[T](source: IterableOnce[T]): C[T] = {
       val result = instantiate[T]
-      result.addAll(values.asJava)
+      source.iterator.foreach(result.add)
       result
     }
+
+    def newBuilder[A]: mutable.Builder[A, C[A]] = new mutable.Builder[A, C[A]] {
+      private val res = instantiate[A]
+      def result(): C[A] = res
+      def clear(): Unit = res.clear()
+      def addOne(elem: A): this.type = {
+        res.add(elem)
+        this
+      }
+    }
+
+    def empty[T]: C[T] = instantiate[T]
   }
 
   abstract class JListCreator[C[T] <: JList[T]] extends JCollectionCreator[C] {
     def unapplySeq[T](list: C[T]): Option[Seq[T]] =
-      Some(list.asScala)
+      Some(list.asScala.toSeq)
   }
 
   abstract class JSortedSetCreator[C[T] <: JSortedSet[T]] {
@@ -61,7 +70,7 @@ trait JCollectionUtils extends JCanBuildFroms {
     }
 
     def unapplySeq[T](set: C[T]): Option[Seq[T]] =
-      Some(set.iterator.asScala.toStream)
+      Some(set.iterator.asScala.toSeq)
   }
 
   object JIterable {
@@ -97,7 +106,7 @@ trait JCollectionUtils extends JCanBuildFroms {
     protected def instantiate[T]: JLinkedHashSet[T] = new JLinkedHashSet[T]
 
     def unapplySeq[T](set: JLinkedHashSet[T]): Option[Seq[T]] =
-      Some(set.iterator.asScala.toStream)
+      Some(set.iterator.asScala.toSeq)
   }
 
   object JSortedSet extends JSortedSetCreator[JSortedSet] {
@@ -148,7 +157,7 @@ trait JCollectionUtils extends JCanBuildFroms {
     }
 
     def unapplySeq[K, V](map: M[K, V]): Option[Seq[(K, V)]] =
-      Some(map.asScala.iterator.toStream)
+      Some(map.asScala.iterator.toSeq)
   }
 
   object JMap extends JMapCreator[JMap] {
@@ -163,7 +172,7 @@ trait JCollectionUtils extends JCanBuildFroms {
     protected def instantiate[K, V]: JLinkedHashMap[K, V] = new JLinkedHashMap[K, V]
 
     def unapplySeq[K, V](map: JLinkedHashMap[K, V]): Option[Seq[(K, V)]] =
-      Some(map.asScala.iterator.toStream)
+      Some(map.asScala.iterator.toSeq)
   }
 
   object JSortedMap extends JSortedMapCreator[JSortedMap] {
@@ -193,14 +202,14 @@ trait JCollectionUtils extends JCanBuildFroms {
 
   import JCollectionUtils._
 
-  implicit def pairTraversableOps[A, B](coll: TraversableOnce[(A, B)]): pairTraversableOps[A, B] = new pairTraversableOps(coll)
+  implicit def pairIterableOps[A, B](coll: IterableOnce[(A, B)]): pairIterableOps[A, B] = new pairIterableOps(coll)
 }
 
 object JCollectionUtils {
-  class pairTraversableOps[A, B](private val coll: TraversableOnce[(A, B)]) extends AnyVal {
-    def toJMap[M[K, V] <: JMap[K, V]](implicit cbf: CanBuildFrom[Nothing, (A, B), M[A, B]]): M[A, B] = {
-      val b = cbf()
-      coll.foreach(b += _)
+  class pairIterableOps[A, B](private val coll: IterableOnce[(A, B)]) extends AnyVal {
+    def toJMap[M[K, V] <: JMap[K, V]](implicit fac: Factory[(A, B), M[A, B]]): M[A, B] = {
+      val b = fac.newBuilder
+      coll.iterator.foreach(b += _)
       b.result()
     }
   }

@@ -3,8 +3,7 @@ package jiop
 
 import java.util.IntSummaryStatistics
 
-import scala.collection.generic.CanBuildFrom
-import scala.language.higherKinds
+import scala.collection.Factory
 
 final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
   def asJava = jStream
@@ -123,8 +122,8 @@ final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
   def toArray: Array[Int] =
     jStream.toArray
 
-  def to[Col[_]](implicit cbf: CanBuildFrom[Nothing, Int, Col[Int]]): Col[Int] = {
-    val b = cbf.apply()
+  def to[Col[_]](implicit fac: Factory[Int, Col[Int]]): Col[Int] = {
+    val b = fac.newBuilder
     forEachOrdered(b += _)
     b.result()
   }

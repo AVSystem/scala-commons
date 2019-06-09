@@ -71,7 +71,7 @@ object RawCommand {
 }
 
 /**
-  * One or more [[RawCommandPack]]s. Conceptually pretty much the same as `Traversable[RawCommandPack]]`
+  * One or more [[RawCommandPack]]s. Conceptually pretty much the same as `Iterable[RawCommandPack]]`
   * but more lightweight.
   */
 trait RawCommandPacks {

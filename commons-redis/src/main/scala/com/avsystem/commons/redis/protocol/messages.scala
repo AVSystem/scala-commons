@@ -138,7 +138,7 @@ object RedisMsg {
     builder.result()
   }
 
-  def encode(msgs: TraversableOnce[RedisMsg]): ByteString = {
+  def encode(msgs: IterableOnce[RedisMsg]): ByteString = {
     val builder = new ByteStringBuilder
     msgs.foreach(encode(_, builder))
     builder.result()

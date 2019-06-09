@@ -4,8 +4,8 @@ package meta
 import com.avsystem.commons.meta.Mapping.{ConcatIterable, KeyFilteredIterable}
 import com.avsystem.commons.serialization.{GenCodec, GenObjectCodec}
 
-import scala.collection.generic.CanBuildFrom
-import scala.collection.{MapLike, mutable}
+import scala.annotation.unchecked.uncheckedVariance
+import scala.collection.{Factory, mutable}
 
 /**
   * Simple immutable structure to collect named values while retaining their order and
@@ -16,7 +16,7 @@ import scala.collection.{MapLike, mutable}
   */
 //TODO: this way of handling case sensitivity is horrible, change it
 final class Mapping[+V](private val wrapped: IIterable[(String, V)], caseInsensitive: Boolean = false)
-  extends IMap[String, V] with MapLike[String, V, Mapping[V]] {
+  extends IMap[String, V] {
 
   private def normKey(key: String): String =
     if (caseInsensitive) key.toLowerCase else key
@@ -29,7 +29,7 @@ final class Mapping[+V](private val wrapped: IIterable[(String, V)], caseInsensi
     wrapped.iterator.map({ case (k, v) => (normKey(k), v) }).toMap
 
   override def empty: Mapping[V] = Mapping.empty
-  override protected[this] def newBuilder: mutable.Builder[(String, V), Mapping[V]] =
+  override protected def newSpecificBuilder: mutable.Builder[(String, V@uncheckedVariance), Mapping[V]] =
     Mapping.newBuilder[V]()
 
   override def size: Int =
@@ -53,8 +53,8 @@ final class Mapping[+V](private val wrapped: IIterable[(String, V)], caseInsensi
     map.apply(normKey(key))
 
   def get(key: String): Option[V] = map.get(key)
-  def -(key: String): Mapping[V] = Mapping(new KeyFilteredIterable(wrapped, _ == key))
-  def +[V0 >: V](pair: (String, V0)): Mapping[V0] = append(pair)
+  def removed(key: String): Mapping[V] = Mapping(new KeyFilteredIterable(wrapped, _ == key))
+  def updated[V0 >: V](key: String, value: V0): Mapping[V0] = append((key, value))
 
   def append[V0 >: V](pair: (String, V0)): Mapping[V0] =
     if (wrapped.isEmpty) Mapping(List(pair))
@@ -89,13 +89,19 @@ object Mapping {
       original.iterator.filter { case (k, _) => filter(k) }
   }
 
-  private val reusableCBF = new CanBuildFrom[Nothing, (String, Any), Mapping[Any]] {
-    def apply(from: Nothing): mutable.Builder[(String, Any), Mapping[Any]] = newBuilder[Any]()
-    def apply(): mutable.Builder[(String, Any), Mapping[Any]] = newBuilder[Any]()
+  private val reusableFactory = new Factory[(String, Any), Mapping[Any]] {
+    def fromSpecific(it: IterableOnce[(String, Any)]): Mapping[Any] = {
+      val b = newBuilder
+      b.addAll(it)
+      b.result()
+    }
+
+    def newBuilder: mutable.Builder[(String, Any), Mapping[Any]] =
+      Mapping.newBuilder[Any]()
   }
 
-  implicit def canBuildFrom[V]: CanBuildFrom[Nothing, (String, V), Mapping[V]] =
-    reusableCBF.asInstanceOf[CanBuildFrom[Nothing, (String, V), Mapping[V]]]
+  implicit def factory[V]: Factory[(String, V), Mapping[V]] =
+    reusableFactory.asInstanceOf[Factory[(String, V), Mapping[V]]]
 
   implicit def genCodec[V: GenCodec]: GenObjectCodec[Mapping[V]] = GenCodec.nullableObject(
     oi => new Mapping(oi.iterator(GenCodec.read[V]).toList),

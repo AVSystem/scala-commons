@@ -155,14 +155,14 @@ trait SortedSetsApi extends ApiSubset {
     execute(new Bzpopmin(keys, timeout))
 
   private abstract class AbstractZadd[T](decoder: ReplyDecoder[T])
-    (key: Key, memberScores: TraversableOnce[(Value, Double)], existence: Opt[Boolean], changed: Boolean, incr: Boolean)
+    (key: Key, memberScores: IterableOnce[(Value, Double)], existence: Opt[Boolean], changed: Boolean, incr: Boolean)
     extends AbstractRedisCommand[T](decoder) with NodeCommand {
 
     val encoded: Encoded = encoder("ZADD").key(key).optAdd(existence.map(e => if (e) "XX" else "NX"))
       .addFlag("CH", changed).addFlag("INCR", incr).argDataPairs(memberScores.map(_.swap)).result
   }
 
-  private final class Zadd(key: Key, memberScores: TraversableOnce[(Value, Double)], emptyData: Boolean, existence: Opt[Boolean], changed: Boolean)
+  private final class Zadd(key: Key, memberScores: IterableOnce[(Value, Double)], emptyData: Boolean, existence: Opt[Boolean], changed: Boolean)
     extends AbstractZadd[Int](integerInt)(key, memberScores, existence, changed, incr = false) {
     override def immediateResult: Opt[Int] = if (emptyData) Opt(0) else Opt.Empty
   }

@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization
 
+import com.github.ghik.silencer.silent
 import org.scalatest.FunSuite
 
 @flatten sealed trait Seal {
@@ -17,7 +18,7 @@ case class Middle(@name("bot") bottom: Bottom)
 case class Toplevel(middle: Opt[Middle], seal: Seal = Objekt)
 @transparent case class TransparentToplevel(toplevel: Toplevel)
 
-case class CodecRef[S, T](ref: GenRef[S, T])(implicit targetCodec: GenCodec[T])
+case class CodecRef[S, T](ref: GenRef[S, T])(implicit @silent targetCodec: GenCodec[T])
 
 class GenRefTest extends FunSuite {
   test("simple raw ref") {

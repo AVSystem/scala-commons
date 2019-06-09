@@ -4,7 +4,7 @@ package jiop
 import java.{util => ju}
 
 trait JStreamUtils {
-  type JBaseStream[T, S <: JBaseStream[T, S]] = ju.stream.BaseStream[T, S]
+  type JBaseStream[T, S <: ju.stream.BaseStream[T, S]] = ju.stream.BaseStream[T, S]
   type JStream[T] = ju.stream.Stream[T]
   type JDoubleStream = ju.stream.DoubleStream
   type JIntStream = ju.stream.IntStream

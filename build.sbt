@@ -9,7 +9,7 @@ val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && Sys
 val silencerVersion = "1.4.1"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
-val scalatestVersion = "3.0.5"
+val scalatestVersion = "3.0.8-RC5"
 val scalacheckVersion = "1.14.0"
 val jettyVersion = "9.4.19.v20190610"
 val mongoVersion = "3.7.0"
@@ -45,8 +45,8 @@ val previousCompatibleVersions = Set("1.34.8")
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  crossScalaVersions := Seq("2.12.8", "2.11.12"),
-  scalaVersion := crossScalaVersions.value.head,
+  scalaVersion := "2.12.8",
+  crossScalaVersions := Seq("2.13.0-RC3", "2.12.8", "2.11.12"),
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
     "-encoding", "utf-8",
@@ -60,11 +60,11 @@ val commonSettings = Seq(
     "-language:dynamics",
     "-language:experimental.macros",
     "-language:higherKinds",
-    "-Xfuture",
     "-Xfatal-warnings",
     s"-Xlint:-missing-interpolator,-adapted-args,${if (scalaBinaryVersion.value == "2.12") "-unused," else ""}_",
     "-P:silencer:checkUnused",
   ),
+  ideSkipProject := scalaVersion.value != "2.13.0-RC3",
   scalacOptions ++= {
     if (scalaBinaryVersion.value == "2.12") Seq(
       "-Ycache-plugin-class-loader:last-modified",
@@ -110,7 +110,6 @@ val commonSettings = Seq(
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.mockito" % "mockito-core" % mockitoVersion % Test,
   ),
-  dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
   ideBasePackages := Seq(organization.value),
   ideOutputDirectory in Compile := Some(target.value.getParentFile / "out/production"),
   ideOutputDirectory in Test := Some(target.value.getParentFile / "out/test"),
@@ -162,6 +161,7 @@ lazy val commons = project.in(file("."))
     name := "commons",
     ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
     scalacOptions in ScalaUnidoc in unidoc += "-Ymacro-expand:none",
+    scalaVersion := "2.13.0-RC3",
     unidocProjectFilter in ScalaUnidoc in unidoc :=
       inAnyProject -- inProjects(
         `commons-analyzer`,
@@ -221,6 +221,7 @@ def sameNameAs(proj: Project) =
 
 lazy val `commons-macros` = project.settings(
   jvmCommonSettings,
+  scalaVersion := "2.13.0-RC3",
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
 )
 
@@ -229,6 +230,7 @@ lazy val `commons-core` = project
   .settings(
     jvmCommonSettings,
     sourceDirsSettings(_ / "jvm"),
+    scalaVersion := "2.13.0-RC3",
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
@@ -241,6 +243,7 @@ lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
   .dependsOn(`commons-macros`)
   .settings(
     jsCommonSettings,
+    scalaVersion := "2.13.0-RC3",
     sameNameAs(`commons-core`),
     sourceDirsSettings(_.getParentFile),
   )

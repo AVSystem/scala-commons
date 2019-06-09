@@ -3,8 +3,7 @@ package rpc
 
 import com.avsystem.commons.meta._
 import com.avsystem.commons.serialization.GenCodec
-
-import scala.language.higherKinds
+import com.github.ghik.silencer.silent
 
 trait RPCFramework {
   type RawValue
@@ -13,7 +12,7 @@ trait RPCFramework {
 
   case class RawInvocation(@methodName rpcName: String, @multi args: List[RawValue])
   object RawInvocation {
-    implicit def codec(implicit rawValueCodec: GenCodec[RawValue]): GenCodec[RawInvocation] = GenCodec.materialize
+    implicit def codec(implicit @silent rawValueCodec: GenCodec[RawValue]): GenCodec[RawInvocation] = GenCodec.materialize
   }
 
   type RawRPC

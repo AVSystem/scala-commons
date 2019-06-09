@@ -3,8 +3,6 @@ package misc
 
 import com.avsystem.commons.misc.OptArg.EmptyMarker
 
-import scala.language.implicitConversions
-
 object OptArg {
   /**
     * This implicit conversion allows you to pass unwrapped values where `OptArg` is required.

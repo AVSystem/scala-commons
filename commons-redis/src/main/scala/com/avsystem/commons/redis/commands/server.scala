@@ -184,7 +184,7 @@ trait NodeServerApi extends ApiSubset {
     val encoded: Encoded = encoder("COMMAND", "COUNT").result
   }
 
-  private final class CommandGetkeys(command: TraversableOnce[ByteString]) extends RedisDataSeqCommand[Key] with NodeCommand {
+  private final class CommandGetkeys(command: IterableOnce[ByteString]) extends RedisDataSeqCommand[Key] with NodeCommand {
     val encoded: Encoded = encoder("COMMAND", "GETKEYS").add(command).result
   }
 
