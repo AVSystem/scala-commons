@@ -17,8 +17,9 @@ case class MethodInfo[T](
   @reifyName name: String,
   @reifyName(useRawName = true) rawName: String,
   @reifyParamListCount paramListCount: Int,
+  @multi @rpcTypeParamMetadata typeParams: List[TypeParamInfo],
   @multi @rpcParamMetadata params: List[ParamInfo[_]],
-  @infer resultTs: TypeString[T]
+  @forTypeParams @infer resultTs: List[TypeString[_]] => TypeString[T]
 ) extends TypedMetadata[T] {
 
   val paramLists: List[List[ParamInfo[_]]] = {
@@ -31,18 +32,29 @@ case class MethodInfo[T](
     extract(0, params)
   }
 
-  def repr = s"def $name${paramLists.map(_.map(_.repr).mkString("(", ", ", ")")).mkString}: ${resultTs.value}"
+  def repr: String = {
+    val typeParamsRepr = typeParams.map(_.name).mkStringOrEmpty("[", ", ", "]")
+    val paramsRepr = paramLists.map(_.map(_.repr(typeParams)).mkString("(", ", ", ")")).mkString
+    val resultTypeString = resultTs(typeParams.map(_.typeString))
+    s"def $name$typeParamsRepr$paramsRepr: $resultTypeString"
+  }
+}
+
+case class TypeParamInfo(
+  @reifyName name: String
+) {
+  def typeString: TypeString[_] = new TypeString(name)
 }
 
 case class ParamInfo[T](
   @reifyName name: String,
   @reifyPosition pos: ParamPosition,
   @reifyFlags flags: ParamFlags,
-  @infer ts: TypeString[T]
+  @forTypeParams @infer ts: List[TypeString[_]] => TypeString[T]
 ) extends TypedMetadata[T] {
-  def repr: String = {
+  def repr(tparams: List[TypeParamInfo]): String = {
     val implicitMod = if (pos.indexInList == 0 && flags.isImplicit) "implicit " else ""
-    s"$implicitMod$name: ${ts.value}"
+    s"$implicitMod$name: ${ts(tparams.map(_.typeString))}"
   }
 }
 
@@ -51,6 +63,7 @@ class SimpleApi {
   def noParams(): String = ""
   def multiParamLists(int: Int)(str: String)(): Double = int.toDouble
   def takesImplicits(int: Int)(implicit ord: Ordering[Int], moar: DummyImplicit): String = int.toString
+  def takesTypeArgs[A, B](as: List[A], bs: Set[B]): Map[A, B] = Map.empty
 }
 
 class ApiReflectionTest extends FunSuite {
@@ -120,6 +133,7 @@ class ApiReflectionTest extends FunSuite {
         |  def noParams(): String
         |  def multiParamLists(int: Int)(str: String)(): Double
         |  def takesImplicits(int: Int)(implicit ord: Ordering[Int], moar: DummyImplicit): String
+        |  def takesTypeArgs[A, B](as: List[A], bs: Set[B]): Map[A, B]
         |}""".stripMargin)
   }
 }
