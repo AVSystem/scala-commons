@@ -4,7 +4,7 @@ package collection
 import scala.collection.immutable.ArraySeq
 import scala.collection.{Factory, mutable}
 
-final class UnsafeArraySeqBuilder[A](expectedSize: Int) extends mutable.Builder[A, ArraySeq[A]] {
+final class UnsafeSizedSeqBuilder[A](expectedSize: Int) extends mutable.Builder[A, IndexedSeq[A]] {
   private[this] var array = new Array[AnyRef](expectedSize).asInstanceOf[Array[A]]
   private[this] var idx: Int = 0
 
@@ -15,7 +15,7 @@ final class UnsafeArraySeqBuilder[A](expectedSize: Int) extends mutable.Builder[
     idx = 0
   }
 
-  def result(): ArraySeq[A] = {
+  def result(): IndexedSeq[A] = {
     if (idx < expectedSize) {
       throw new IllegalStateException(s"exactly $expectedSize elements were expected but only $idx were added")
     }
@@ -34,19 +34,19 @@ final class UnsafeArraySeqBuilder[A](expectedSize: Int) extends mutable.Builder[
     }
 }
 
-final class UnsafeArraySeqFactory[A](size: Int) extends Factory[A, ArraySeq[A]] {
-  def fromSpecific(it: IterableOnce[A]): ArraySeq[A] =
+final class UnsafeSizedSeqFactory[A](size: Int) extends Factory[A, IndexedSeq[A]] {
+  def fromSpecific(it: IterableOnce[A]): IndexedSeq[A] =
     it.knownSize match {
       case -1 =>
         val b = new MArrayBuffer[A]
         b.addAll(it)
         ArraySeq.unsafeWrapArray(b.toArray[Any].asInstanceOf[Array[A]])
       case size =>
-        val b = new UnsafeArraySeqBuilder[A](size)
+        val b = new UnsafeSizedSeqBuilder[A](size)
         b.addAll(it)
         b.result()
     }
 
-  def newBuilder: MBuilder[A, ArraySeq[A]] =
-    new UnsafeArraySeqBuilder[A](size)
+  def newBuilder: MBuilder[A, IndexedSeq[A]] =
+    new UnsafeSizedSeqBuilder[A](size)
 }

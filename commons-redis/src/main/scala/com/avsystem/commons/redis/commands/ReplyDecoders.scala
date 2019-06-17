@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.ByteString
-import com.avsystem.commons.collection.UnsafeArraySeqFactory
+import com.avsystem.commons.collection.UnsafeSizedSeqFactory
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
 import com.avsystem.commons.redis.protocol._
@@ -167,7 +167,7 @@ object ReplyDecoders {
     }
 
   def multiBulkSeq[T](elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[T]] = {
-    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).to(new UnsafeArraySeqFactory[T](elements.size))
+    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).to(new UnsafeSizedSeqFactory[T](elements.size))
   }
 
   def multiBulkSeq[T: RedisDataCodec]: ReplyDecoder[Seq[T]] =
@@ -315,8 +315,8 @@ object ReplyDecoders {
         case _ => throw new UnexpectedReplyException(msg.toString)
       }
       elements.iterator.grouped(size)
-        .map(_.iterator.map(elemDecode).to(new UnsafeArraySeqFactory[T](size)))
-        .to(new UnsafeArraySeqFactory(elements.size / size))
+        .map(_.iterator.map(elemDecode).to(new UnsafeSizedSeqFactory[T](size)))
+        .to(new UnsafeSizedSeqFactory(elements.size / size))
   }
 
   def nullMultiBulkOr[T](decoder: ReplyDecoder[T]): ReplyDecoder[Opt[T]] =
@@ -332,7 +332,7 @@ object ReplyDecoders {
       case (first: ValidRedisMsg, second: ValidRedisMsg) => pairDecoder.applyOrElse((first, second),
         (p: (ValidRedisMsg, ValidRedisMsg)) => throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p"))
       case p => throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p")
-    }.to(new UnsafeArraySeqFactory[T](elements.size / 2))
+    }.to(new UnsafeSizedSeqFactory[T](elements.size / 2))
   }
 
   private def flatPairedMultiBulkIterator[A, B](elements: Seq[RedisMsg], firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): Iterator[(A, B)] =
@@ -349,13 +349,13 @@ object ReplyDecoders {
 
   def flatMultiBulkSeq[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(A, B)]] = {
     case ArrayMsg(elements) =>
-      flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).to(new UnsafeArraySeqFactory(elements.size / 2))
+      flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).to(new UnsafeSizedSeqFactory(elements.size / 2))
   }
 
   def flatMultiBulkSeqSwapped[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(B, A)]] = {
     case ArrayMsg(elements) =>
       flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).map(_.swap)
-        .to(new UnsafeArraySeqFactory(elements.size / 2))
+        .to(new UnsafeSizedSeqFactory(elements.size / 2))
   }
 
   def flatMultiBulkMap[A, B](keyDecoder: ReplyDecoder[A], valueDecoder: ReplyDecoder[B]): ReplyDecoder[BMap[A, B]] = {

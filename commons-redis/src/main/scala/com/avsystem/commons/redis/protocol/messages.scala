@@ -4,7 +4,7 @@ package redis.protocol
 import java.nio.ByteBuffer
 
 import akka.util.{ByteString, ByteStringBuilder}
-import com.avsystem.commons.collection.UnsafeArraySeqBuilder
+import com.avsystem.commons.collection.UnsafeSizedSeqBuilder
 import com.avsystem.commons.misc.Sam
 import com.avsystem.commons.redis.exception.{InvalidDataException, RedisException}
 
@@ -269,7 +269,7 @@ object RedisMsg {
 
     import Decoder._
 
-    private[this] var arrayStack: List[(Int, UnsafeArraySeqBuilder[RedisMsg])] = Nil
+    private[this] var arrayStack: List[(Int, UnsafeSizedSeqBuilder[RedisMsg])] = Nil
     private[this] var state: Int = Initial
     private[this] var currentType: Byte = 0
     private[this] var readingLength: Boolean = false
@@ -369,7 +369,7 @@ object RedisMsg {
                     case 0 => completed(ArrayMsg.Empty)
                     case size if size > 0 =>
                       val is = size.toInt
-                      arrayStack = (is, new UnsafeArraySeqBuilder[RedisMsg](is)) :: arrayStack
+                      arrayStack = (is, new UnsafeSizedSeqBuilder[RedisMsg](is)) :: arrayStack
                     case _ => fail("Invalid array size")
                   }
                 case _ => fail("Length can be read only for bulk strings or arrays")
