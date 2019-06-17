@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package spring
 
-import java.{lang => jl, util => ju}
+import java.{util => ju}
 
 import com.avsystem.commons.spring.AttrNames._
 import com.typesafe.config._
@@ -63,7 +63,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   }
 
   private def getProps(obj: ConfigObject) =
-    obj.asScala.filterKeys(k => !k.startsWith("%") && !k.startsWith("_"))
+    obj.asScala.view.filterKeys(k => !k.startsWith("%") && !k.startsWith("_"))
 
   private def badAttr(key: String, value: ConfigValue) =
     throw new IllegalArgumentException(s"Unexpected attribute $key at ${value.origin.description}")

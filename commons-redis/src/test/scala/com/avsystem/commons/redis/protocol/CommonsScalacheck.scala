@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package redis.protocol
 
+import com.github.ghik.silencer.silent
 import org.scalacheck.Shrink
 
 /**
@@ -8,6 +9,7 @@ import org.scalacheck.Shrink
   * Created: 04/04/16.
   */
 object CommonsScalacheck {
+  @silent("deprecated")
   implicit def shrinkOpt[T: Shrink]: Shrink[Opt[T]] = Shrink {
     case Opt.Empty => Stream.empty
     case Opt(x) => Stream.cons(Opt.Empty, for (y <- Shrink.shrink(x)) yield Opt(y))

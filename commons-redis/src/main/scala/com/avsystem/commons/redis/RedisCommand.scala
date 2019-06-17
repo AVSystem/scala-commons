@@ -9,7 +9,7 @@ import com.avsystem.commons.redis.commands.{Cursor, ReplyDecoder}
 import com.avsystem.commons.redis.exception.{ErrorReplyException, UnexpectedReplyException}
 import com.avsystem.commons.redis.protocol._
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.immutable.ArraySeq
 
 trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
   protected def decodeExpected: ReplyDecoder[A]
@@ -52,7 +52,7 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
   def immediateResult: Opt[A] = Opt.Empty
 
   protected[this] final def whenEmpty(args: IterableOnce[Any], value: A): Opt[A] =
-    if (args.isEmpty) Opt(value) else Opt.Empty
+    if (args.iterator.isEmpty) Opt(value) else Opt.Empty
 
   final def batchOrFallback: RedisBatch[A] =
     immediateResult.fold(this: RedisBatch[A])(RedisBatch.success)
@@ -61,8 +61,8 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
 abstract class AbstractRedisCommand[A](protected val decodeExpected: ReplyDecoder[A])
   extends RedisCommand[A]
 
-final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) extends AnyVal {
-  def result: ArrayMsg[BulkStringMsg] = ArrayMsg(buffer)
+final class CommandEncoder(private val builder: MColBuilder[BulkStringMsg, ArraySeq]) extends AnyVal {
+  def result: ArrayMsg[BulkStringMsg] = ArrayMsg(builder.result())
 
   private def fluent(code: => Unit): CommandEncoder = {
     code
@@ -70,13 +70,13 @@ final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) exten
   }
 
   def key[K: RedisDataCodec](k: K): CommandEncoder =
-    fluent(buffer += CommandKeyMsg(RedisDataCodec.write(k)))
+    fluent(builder += CommandKeyMsg(RedisDataCodec.write(k)))
   def keys[K: RedisDataCodec](keys: IterableOnce[K]): CommandEncoder =
-    fluent(keys.foreach(key[K]))
+    fluent(keys.iterator.foreach(key[K]))
   def data[V: RedisDataCodec](v: V): CommandEncoder =
-    fluent(buffer += BulkStringMsg(RedisDataCodec.write(v)))
+    fluent(builder += BulkStringMsg(RedisDataCodec.write(v)))
   def datas[V: RedisDataCodec](values: IterableOnce[V]): CommandEncoder =
-    fluent(values.foreach(data[V]))
+    fluent(values.iterator.foreach(data[V]))
   def add[T: CommandArg](value: T): CommandEncoder =
     fluent(CommandArg.add(this, value))
   def addFlag(flag: String, value: Boolean): CommandEncoder =
@@ -92,13 +92,13 @@ final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) exten
   def optData[V: RedisDataCodec](flag: String, value: Opt[V]): CommandEncoder =
     fluent(value.foreach(t => add(flag).data(t)))
   def keyDatas[K: RedisDataCodec, V: RedisDataCodec](keyDatas: IterableOnce[(K, V)]): CommandEncoder =
-    fluent(keyDatas.foreach({ case (k, v) => key(k).data(v) }))
+    fluent(keyDatas.iterator.foreach({ case (k, v) => key(k).data(v) }))
   def dataPairs[K: RedisDataCodec, V: RedisDataCodec](dataPairs: IterableOnce[(K, V)]): CommandEncoder =
-    fluent(dataPairs.foreach({ case (k, v) => data(k).data(v) }))
+    fluent(dataPairs.iterator.foreach({ case (k, v) => data(k).data(v) }))
   def dataPairs[R: RedisRecordCodec](record: R): CommandEncoder =
-    fluent(buffer ++= RedisRecordCodec[R].write(record))
+    fluent(builder ++= RedisRecordCodec[R].write(record))
   def argDataPairs[T: CommandArg, V: RedisDataCodec](argDataPairs: IterableOnce[(T, V)]): CommandEncoder =
-    fluent(argDataPairs.foreach({ case (a, v) => add(a).data(v) }))
+    fluent(argDataPairs.iterator.foreach({ case (a, v) => add(a).data(v) }))
 }
 
 object CommandEncoder {
@@ -107,7 +107,7 @@ object CommandEncoder {
     def add[T](ce: CommandEncoder, value: T)(implicit ca: CommandArg[T]): Unit =
       ca.add(ce, value)
 
-    implicit val ByteStringArg: CommandArg[ByteString] = CommandArg((ce, v) => ce.buffer += BulkStringMsg(v))
+    implicit val ByteStringArg: CommandArg[ByteString] = CommandArg((ce, v) => ce.builder += BulkStringMsg(v))
     implicit val BooleanArg: CommandArg[Boolean] = CommandArg((ce, v) => ce.add(if (v) 1 else 0))
     implicit val StringArg: CommandArg[String] = CommandArg((ce, v) => ce.add(ByteString(v)))
     implicit val IntArg: CommandArg[Int] = CommandArg((ce, v) => ce.add(v.toString))
@@ -115,7 +115,7 @@ object CommandEncoder {
     implicit val DoubleArg: CommandArg[Double] = CommandArg((ce, v) => ce.add(v.toString))
     implicit val NamedEnumArg: CommandArg[NamedEnum] = CommandArg((ce, v) => ce.add(v.name))
     implicit def CollArg[T: CommandArg]: CommandArg[IterableOnce[T]] =
-      CommandArg((ce, v) => v.foreach(t => ce.add(t)))
+      CommandArg((ce, v) => v.iterator.foreach(t => ce.add(t)))
 
     implicit def PairArg[A: CommandArg, B: CommandArg]: CommandArg[(A, B)] =
       CommandArg {

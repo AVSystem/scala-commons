@@ -2,13 +2,10 @@ package com.avsystem.commons
 package redis.examples
 
 import akka.actor.ActorSystem
-import akka.util.Timeout
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.{RedisScript, ReplyDecoders}
 import com.avsystem.commons.redis.config.{ClusterConfig, NodeConfig}
 import com.avsystem.commons.redis.protocol.{BulkStringMsg, NullBulkStringMsg}
-
-import scala.concurrent.duration._
 
 /**
   * Example which shows how to execute LUA scripts.

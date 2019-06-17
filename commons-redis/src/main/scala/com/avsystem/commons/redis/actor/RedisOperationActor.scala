@@ -10,8 +10,6 @@ import com.avsystem.commons.redis.exception.RedisException
 import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{RedisBatch, RedisOp}
 
-import scala.concurrent.duration.FiniteDuration
-
 /**
   * Implements execution of [[RedisOp]] (sequence of redis operations).
   * Separate [[RedisOperationActor]] is spawned of every [[RedisOp]] and lives only to

@@ -7,7 +7,6 @@ import com.avsystem.commons.redis._
 // Global execution context is used for the sake of simplicity of this example,
 // think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 
 /**
   * Examples showing how to create and execute batches made of multiple Redis commands.

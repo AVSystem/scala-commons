@@ -6,8 +6,8 @@ import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
 trait KeyedClusterApi extends ApiSubset {
   def keySlot(key: Key): Int =
@@ -246,11 +246,12 @@ case class NodeInfo(infoLine: String) {
   val pongRecv: Long = splitLine(5).toLong
   val configEpoch: Long = splitLine(6).toLong
   val connected: Boolean = splitLine(7) == "connected"
+
   val (slots: Seq[SlotRange], importingSlots: Seq[(Int, NodeId)], migratingSlots: Seq[(Int, NodeId)]) = {
 
-    val slots = new ArrayBuffer[SlotRange]
-    val importingSlots = new ArrayBuffer[(Int, NodeId)]
-    val migratingSlots = new ArrayBuffer[(Int, NodeId)]
+    val slots = ArraySeq.newBuilder[SlotRange]
+    val importingSlots = ArraySeq.newBuilder[(Int, NodeId)]
+    val migratingSlots = ArraySeq.newBuilder[(Int, NodeId)]
 
     splitLine.iterator.drop(8).foreach { str =>
       (str.indexOf("-<-"), str.indexOf("->-"), str.indexOf('-')) match {
@@ -266,7 +267,7 @@ case class NodeInfo(infoLine: String) {
         case _ =>
       }
     }
-    (slots, importingSlots, migratingSlots)
+    (slots.result(), importingSlots.result(), migratingSlots.result())
   }
 
   override def toString: String = infoLine
@@ -317,7 +318,7 @@ object NodeFlags {
   )
 
   def apply(str: String): NodeFlags = {
-    val flagSet = str.split(',').to[mutable.HashSet]
+    val flagSet = str.split(',').to(mutable.HashSet)
     reprValuePairs.foldLeft(Noflags) {
       case (res, (s, flags)) => if (flagSet(s)) res | flags else res
     }

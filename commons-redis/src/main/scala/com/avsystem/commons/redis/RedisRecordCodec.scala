@@ -5,7 +5,8 @@ import com.avsystem.commons.redis.protocol.BulkStringMsg
 import com.avsystem.commons.serialization.GenObjectCodec
 
 import scala.annotation.implicitNotFound
-import scala.collection.BuildFrom
+import scala.collection.Factory
+import scala.collection.immutable.ArraySeq
 
 @implicitNotFound("${T} has no RedisRecordCodec. It can be derived from GenObjectCodec which can be provided " +
   "by making your case class companion extend HasGenObjectCodec")
@@ -26,7 +27,7 @@ object RedisRecordCodec extends LowPriorityRedisRecordCodecs {
   private def record[F: RedisDataCodec, V: RedisDataCodec, To](
     elems: IndexedSeq[BulkStringMsg])(implicit fac: Factory[(F, V), To]
   ): To = {
-    val b = bf.newBuilder()
+    val b = fac.newBuilder
     b.sizeHint(elems.size)
     elems.iterator.pairs.foreach {
       case (BulkStringMsg(f), BulkStringMsg(v)) =>
@@ -37,16 +38,16 @@ object RedisRecordCodec extends LowPriorityRedisRecordCodecs {
 
   private def bulks[F: RedisDataCodec, V: RedisDataCodec](it: Iterator[(F, V)], size: Int): IndexedSeq[BulkStringMsg] =
     it.flatMap { case (f, v) => List(RedisDataCodec.write(f), RedisDataCodec.write(v)) }
-      .map(BulkStringMsg).toSized[MArrayBuffer](size)
+      .map(BulkStringMsg).toSized(ArraySeq, size)
 }
 sealed trait LowPriorityRedisRecordCodecs { this: RedisRecordCodec.type =>
   implicit def fromApplyUnapplyCodec[T](implicit codec: GenObjectCodec[T]): RedisRecordCodec[T] =
     RedisRecordCodec(
       elems => codec.readObject(new RedisRecordInput(elems)),
       value => {
-        val result = new MArrayBuffer[BulkStringMsg]
-        codec.writeObject(new RedisRecordOutput(result), value)
-        result
+        val builder = ArraySeq.newBuilder[BulkStringMsg]
+        codec.writeObject(new RedisRecordOutput(builder), value)
+        builder.result()
       }
     )
 }

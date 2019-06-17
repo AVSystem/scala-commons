@@ -509,7 +509,7 @@ object SharedExtensionsUtils extends SharedExtensions {
   class IterableOnceOps[C[X] <: IterableOnce[X], A](private val coll: C[A]) extends AnyVal {
     private def it: Iterator[A] = coll.iterator
     
-    def toSized[M[_]](sizeHint: Int)(implicit fac: Factory[A, M[A]]): M[A] = {
+    def toSized[To](fac: Factory[A, To], sizeHint: Int): To = {
       val b = fac.newBuilder
       b.sizeHint(sizeHint)
       b ++= coll

@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class FindUsages[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "findUsages") {
+class FindUsages(g: Global) extends AnalyzerRule(g, "findUsages") {
 
   import global._
 

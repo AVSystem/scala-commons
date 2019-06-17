@@ -2,13 +2,14 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.ByteString
+import com.avsystem.commons.collection.UnsafeArraySeqFactory
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
 import com.avsystem.commons.redis.protocol._
 import com.avsystem.commons.redis.{NodeAddress, RedisDataCodec, RedisRecordCodec}
 
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 object `package` {
@@ -89,7 +90,7 @@ object ReplyDecoders {
   val bulkClientInfos: ReplyDecoder[Seq[ClientInfo]] = {
     case BulkStringMsg(data) =>
       Source.fromInputStream(data.iterator.asInputStream).getLines()
-        .map(_.trim).filter(_.nonEmpty).map(line => ClientInfo(line)).to[ArrayBuffer]
+        .map(_.trim).filter(_.nonEmpty).map(line => ClientInfo(line)).to(ArraySeq)
   }
 
   val bulkNodeInfos: ReplyDecoder[Seq[NodeInfo]] = {
@@ -166,14 +167,14 @@ object ReplyDecoders {
     }
 
   def multiBulkSeq[T](elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[T]] = {
-    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).toSized[ArrayBuffer](elements.size)
+    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).to(new UnsafeArraySeqFactory[T](elements.size))
   }
 
   def multiBulkSeq[T: RedisDataCodec]: ReplyDecoder[Seq[T]] =
     multiBulkSeq(bulk[T])
 
   def multiBulkSet[T](elementDecoder: ReplyDecoder[T]): ReplyDecoder[BSet[T]] = {
-    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).toSized[MHashSet](elements.size)
+    case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).toSized(MHashSet, elements.size)
   }
 
   def multiBulkSet[T: RedisDataCodec]: ReplyDecoder[BSet[T]] =
@@ -189,7 +190,7 @@ object ReplyDecoders {
   }
 
   def multiBulkMap[A, B](keyDecoder: ReplyDecoder[A], valueDecoder: ReplyDecoder[B]): ReplyDecoder[BMap[A, B]] = {
-    case ArrayMsg(elements) => new mutable.OpenHashMap[A, B]() ++
+    case ArrayMsg(elements) => new mutable.HashMap[A, B]() ++
       multiBulkIterator(elements, multiBulkPair(keyDecoder, valueDecoder))
   }
 
@@ -278,7 +279,7 @@ object ReplyDecoders {
     case ArrayMsg(IndexedSeq(IntegerMsg(count), BulkStringMsg(minid), BulkStringMsg(maxid), ArrayMsg(byConsumer))) =>
       XPendingOverview(
         count, XEntryId.parse(minid.utf8String), XEntryId.parse(maxid.utf8String),
-        new mutable.OpenHashMap() ++ multiBulkIterator(byConsumer, multiBulkPair(bulkXConsumer, bulkLong))
+        new mutable.HashMap() ++ multiBulkIterator(byConsumer, multiBulkPair(bulkXConsumer, bulkLong))
       )
   }
 
@@ -304,7 +305,7 @@ object ReplyDecoders {
     flatMultiBulkMap(bulkUTF8, undecoded).andThen(XGroupInfo)
 
   def multiBulkXStreamInfo[Record: RedisRecordCodec]: ReplyDecoder[XStreamInfo[Record]] =
-    flatMultiBulkMap(bulkUTF8, undecoded).andThen(XStreamInfo[Record])
+    flatMultiBulkMap(bulkUTF8, undecoded).andThen(XStreamInfo[Record](_))
 
   def multiBulkGroupedSeq[T](size: Int, elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[Seq[T]]] = {
     case ArrayMsg(elements) =>
@@ -314,8 +315,8 @@ object ReplyDecoders {
         case _ => throw new UnexpectedReplyException(msg.toString)
       }
       elements.iterator.grouped(size)
-        .map(_.iterator.map(elemDecode).toSized[ArrayBuffer](size))
-        .toSized[ArrayBuffer](elements.size / size)
+        .map(_.iterator.map(elemDecode).to(new UnsafeArraySeqFactory[T](size)))
+        .to(new UnsafeArraySeqFactory(elements.size / size))
   }
 
   def nullMultiBulkOr[T](decoder: ReplyDecoder[T]): ReplyDecoder[Opt[T]] =
@@ -331,7 +332,7 @@ object ReplyDecoders {
       case (first: ValidRedisMsg, second: ValidRedisMsg) => pairDecoder.applyOrElse((first, second),
         (p: (ValidRedisMsg, ValidRedisMsg)) => throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p"))
       case p => throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p")
-    }.toSized[ArrayBuffer](elements.size / 2)
+    }.to(new UnsafeArraySeqFactory[T](elements.size / 2))
   }
 
   private def flatPairedMultiBulkIterator[A, B](elements: Seq[RedisMsg], firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): Iterator[(A, B)] =
@@ -348,16 +349,17 @@ object ReplyDecoders {
 
   def flatMultiBulkSeq[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(A, B)]] = {
     case ArrayMsg(elements) =>
-      flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).toSized[ArrayBuffer](elements.size / 2)
+      flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).to(new UnsafeArraySeqFactory(elements.size / 2))
   }
 
   def flatMultiBulkSeqSwapped[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(B, A)]] = {
     case ArrayMsg(elements) =>
-      flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).map(_.swap).toSized[ArrayBuffer](elements.size / 2)
+      flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).map(_.swap)
+        .to(new UnsafeArraySeqFactory(elements.size / 2))
   }
 
   def flatMultiBulkMap[A, B](keyDecoder: ReplyDecoder[A], valueDecoder: ReplyDecoder[B]): ReplyDecoder[BMap[A, B]] = {
-    case ArrayMsg(elements) => new mutable.OpenHashMap() ++
+    case ArrayMsg(elements) => new mutable.HashMap() ++
       flatPairedMultiBulkIterator(elements, keyDecoder, valueDecoder)
   }
 

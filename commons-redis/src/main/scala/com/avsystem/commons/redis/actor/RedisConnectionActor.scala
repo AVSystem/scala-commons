@@ -13,8 +13,8 @@ import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.protocol.{RedisMsg, RedisReply}
 import com.avsystem.commons.redis.util.ActorLazyLogging
 
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.Duration
 
 final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
@@ -416,7 +416,7 @@ object RedisConnectionActor {
   }
 
   class ReplyCollector(packs: RawCommandPacks, writeBuffer: ByteBuffer, val callback: PacksResult => Unit) {
-    private[this] var replies: ArrayBuffer[RedisReply] = _
+    private[this] var replies: MColBuilder[RedisReply, ArraySeq] = _
     private[this] var preprocessors: Any = _
 
     packs.emitCommandPacks { pack =>
@@ -440,11 +440,11 @@ object RedisConnectionActor {
         case queue: mutable.Queue[ReplyPreprocessor@unchecked] =>
           queue.front.preprocess(message, state).flatMap { preprocessedMsg =>
             if (replies == null) {
-              replies = new ArrayBuffer(queue.length)
+              replies = ArraySeq.newBuilder
             }
             queue.dequeue()
             replies += preprocessedMsg
-            if (queue.isEmpty) Opt(PacksResult.Multiple(replies)) else Opt.Empty
+            if (queue.isEmpty) Opt(PacksResult.Multiple(replies.result())) else Opt.Empty
           }
       }
       packsResultOpt match {

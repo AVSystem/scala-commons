@@ -159,7 +159,7 @@ trait SortedSetsApi extends ApiSubset {
     extends AbstractRedisCommand[T](decoder) with NodeCommand {
 
     val encoded: Encoded = encoder("ZADD").key(key).optAdd(existence.map(e => if (e) "XX" else "NX"))
-      .addFlag("CH", changed).addFlag("INCR", incr).argDataPairs(memberScores.map(_.swap)).result
+      .addFlag("CH", changed).addFlag("INCR", incr).argDataPairs(memberScores.iterator.map(_.swap)).result
   }
 
   private final class Zadd(key: Key, memberScores: IterableOnce[(Value, Double)], emptyData: Boolean, existence: Opt[Boolean], changed: Boolean)
@@ -347,7 +347,7 @@ object LexLimit {
 
   def repr[V: RedisDataCodec](limit: LexLimit[V]): ByteString = limit match {
     case Finite(value, incl) =>
-      (if (incl) '[' else '(').toByte +: RedisDataCodec.write(value)
+      ByteString((if (incl) '[' else '(').toByte) ++ RedisDataCodec.write(value)
     case MinusInf => ByteString('-'.toByte)
     case PlusInf => ByteString('+'.toByte)
   }

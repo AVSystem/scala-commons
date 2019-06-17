@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class ShowAst[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "showAst", Level.Error) {
+class ShowAst(g: Global) extends AnalyzerRule(g, "showAst", Level.Error) {
 
   import global._
 

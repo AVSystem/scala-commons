@@ -34,17 +34,18 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
     true
   }
 
-  private lazy val rules = List[AnalyzerRule[global.type]](
-    new ImportJavaUtil[global.type](global),
-    new VarargsAtLeast[global.type](global),
-    new CheckMacroPrivate[global.type](global),
-    new ExplicitGenerics[global.type](global),
-    new ValueEnumExhaustiveMatch[global.type](global),
-    new ShowAst[global.type](global),
-    new FindUsages[global.type](global),
-    new CheckBincompat[global.type](global),
-    new Any2StringAdd[global.type](global)
+  private lazy val rules = List(
+    new ImportJavaUtil(global),
+    new VarargsAtLeast(global),
+    new CheckMacroPrivate(global),
+    new ExplicitGenerics(global),
+    new ValueEnumExhaustiveMatch(global),
+    new ShowAst(global),
+    new FindUsages(global),
+    new CheckBincompat(global),
+    new Any2StringAdd(global)
   )
+
   private lazy val rulesByName = rules.map(r => (r.name, r)).toMap
 
   val name = "AVSystemAnalyzer"
@@ -61,7 +62,7 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
 
     def newPhase(prev: Phase) = new StdPhase(prev) {
       def apply(unit: CompilationUnit): Unit =
-        rules.foreach(rule => if (rule.level != Level.Off) rule.analyze(unit))
+        rules.foreach(rule => if (rule.level != Level.Off) rule.analyze(unit.asInstanceOf[rule.global.CompilationUnit]))
     }
   }
 

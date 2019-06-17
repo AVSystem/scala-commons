@@ -4,7 +4,7 @@ package analyzer
 import scala.collection.mutable
 import scala.tools.nsc.Global
 
-class ValueEnumExhaustiveMatch[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "valueEnumExhaustiveMatch") {
+class ValueEnumExhaustiveMatch(g: Global) extends AnalyzerRule(g, "valueEnumExhaustiveMatch") {
 
   import global._
 
@@ -21,7 +21,7 @@ class ValueEnumExhaustiveMatch[C <: Global with Singleton](g: C) extends Analyze
         if (companionTpe <:< expectedCompanionTpe) {
           val unmatched = companionTpe.decls.iterator
             .filter(s => s.isVal && s.isFinal && !s.isLazy && s.typeSignature <:< selector.tpe)
-            .map(_.getterIn(companion)).filter(_.isPublic).to[mutable.LinkedHashSet]
+            .map(_.getterIn(companion)).filter(_.isPublic).to(mutable.LinkedHashSet)
 
           def findMatchedEnums(pattern: Tree): Unit = pattern match {
             case Bind(_, body) => findMatchedEnums(body)

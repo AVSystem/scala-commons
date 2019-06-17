@@ -57,7 +57,7 @@ object Sequencer extends TupleSequencers {
             ops.asInstanceOf[Iterable[RedisBatch[ElRes]]]
           else {
             val buf = new ArrayBuffer[RedisBatch[ElRes]]
-            ops.foreach(el => buf += elSequencer.sequence(el))
+            ops.iterator.foreach(el => buf += elSequencer.sequence(el))
             buf
           }
         new CollectionBatch[ElRes, That](batches, () => bf.newBuilder(ops))

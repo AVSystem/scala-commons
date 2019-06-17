@@ -110,6 +110,9 @@ trait CollectionAliases {
   type MBuffer[A] = scm.Buffer[A]
   final def MBuffer: scm.Buffer.type = scm.Buffer
 
+  type MBuilder[-Elem, +To] = scm.Builder[Elem, To]
+  type MColBuilder[Elem, +Col[_]] = scm.Builder[Elem, Col[Elem]]
+
   type MListBuffer[A] = scm.ListBuffer[A]
   final def MListBuffer: scm.ListBuffer.type = scm.ListBuffer
 

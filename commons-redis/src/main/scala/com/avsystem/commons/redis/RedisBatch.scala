@@ -258,13 +258,13 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
   def traverse[M[X] <: IterableOnce[X], A, B, That](coll: M[A])(opFun: A => RedisBatch[B])
     (implicit bf: BuildFrom[M[A], B, That]): RedisBatch[That] = {
     val batches = new ArrayBuffer[RedisBatch[B]]
-    coll.foreach(a => batches += opFun(a))
+    coll.iterator.foreach(a => batches += opFun(a))
     new CollectionBatch[B, That](batches, () => bf.newBuilder(coll))
   }
 
   def foldLeftMap[A, B, T](coll: IterableOnce[A], zero: T)(opFun: A => RedisBatch[B])(fun: (T, B) => T): RedisBatch[T] = {
     val batches = new ArrayBuffer[RedisBatch[B]]
-    coll.foreach(a => batches += opFun(a))
+    coll.iterator.foreach(a => batches += opFun(a))
     new CollectionBatch[B, T](batches, () => new FoldingBuilder(zero, fun))
   }
 

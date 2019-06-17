@@ -8,7 +8,6 @@ import com.avsystem.commons.redis.exception.{NodeRemovedException, OptimisticLoc
 // Global execution context is used for the sake of simplicity of this example,
 // think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 
 /**
   * Example that shows execution of Redis transactions with optimistic locking

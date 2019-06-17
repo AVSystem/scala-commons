@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package spring
 
-import java.{lang => jl, util => ju}
+import java.{util => ju}
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.FunSuite

@@ -37,7 +37,7 @@ credentials in Global += Credentials(
   sys.env.getOrElse("SONATYPE_PASSWORD", "")
 )
 
-version in ThisBuild := 
+version in ThisBuild :=
   sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("1.34-SNAPSHOT")
 
 // for binary compatibility checking
@@ -45,8 +45,8 @@ val previousCompatibleVersions = Set("1.34.8")
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  scalaVersion := "2.12.8",
-  crossScalaVersions := Seq("2.13.0", "2.12.8", "2.11.12"),
+  crossScalaVersions := Seq("2.12.8", "2.11.12"),
+  scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
     "-encoding", "utf-8",
@@ -61,7 +61,7 @@ val commonSettings = Seq(
     "-language:experimental.macros",
     "-language:higherKinds",
     "-Xfatal-warnings",
-    s"-Xlint:-missing-interpolator,-adapted-args,${if (scalaBinaryVersion.value == "2.12") "-unused," else ""}_",
+    "-Xlint:-missing-interpolator,-adapted-args,_",
     "-P:silencer:checkUnused",
   ),
   ideSkipProject := scalaVersion.value != "2.13.0",
@@ -135,6 +135,10 @@ val jsCommonSettings = commonSettings ++ Seq(
   fork in Test := false,
 )
 
+val scala213Settings = Seq(
+  crossScalaVersions := "2.13.0" +: crossScalaVersions.value
+)
+
 val noPublishSettings = Seq(
   skip in publish := true,
   mimaPreviousArtifacts := Set.empty,
@@ -158,10 +162,10 @@ lazy val commons = project.in(file("."))
   .settings(
     commonSettings,
     noPublishSettings,
+    scala213Settings,
     name := "commons",
     ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
     scalacOptions in ScalaUnidoc in unidoc += "-Ymacro-expand:none",
-    scalaVersion := "2.13.0",
     unidocProjectFilter in ScalaUnidoc in unidoc :=
       inAnyProject -- inProjects(
         `commons-analyzer`,
@@ -199,6 +203,7 @@ lazy val `commons-analyzer` = project
   .dependsOn(`commons-core` % Test)
   .settings(
     jvmCommonSettings,
+    scala213Settings,
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
   )
 
@@ -221,7 +226,7 @@ def sameNameAs(proj: Project) =
 
 lazy val `commons-macros` = project.settings(
   jvmCommonSettings,
-  scalaVersion := "2.13.0",
+  scala213Settings,
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
 )
 
@@ -229,8 +234,8 @@ lazy val `commons-core` = project
   .dependsOn(`commons-macros`)
   .settings(
     jvmCommonSettings,
+    scala213Settings,
     sourceDirsSettings(_ / "jvm"),
-    scalaVersion := "2.13.0",
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
@@ -243,7 +248,7 @@ lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
   .dependsOn(`commons-macros`)
   .settings(
     jsCommonSettings,
-    scalaVersion := "2.13.0",
+    scala213Settings,
     sameNameAs(`commons-core`),
     sourceDirsSettings(_.getParentFile),
   )
@@ -252,6 +257,7 @@ lazy val `commons-jetty` = project
   .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
+    scala213Settings,
     libraryDependencies ++= Seq(
       "org.eclipse.jetty" % "jetty-client" % jettyVersion,
       "org.eclipse.jetty" % "jetty-server" % jettyVersion,
@@ -270,7 +276,7 @@ lazy val `commons-benchmark` = project
     noPublishSettings,
     sourceDirsSettings(_ / "jvm"),
     libraryDependencies ++= {
-      if (scalaBinaryVersion.value != "2.12") Seq(
+      if (scalaBinaryVersion.value == "2.11") Seq(
         "com.github.etaty" %% "rediscala" % "1.6.0",
         "com.livestream" %% "scredis" % "2.0.8",
       )
@@ -326,6 +332,7 @@ lazy val `commons-redis` = project
   .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
+    scala213Settings,
     libraryDependencies ++= Seq(
       "com.google.guava" % "guava" % guavaVersion,
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
@@ -338,6 +345,7 @@ lazy val `commons-hocon` = project
   .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
+    scala213Settings,
     libraryDependencies ++= Seq(
       "com.typesafe" % "config" % typesafeConfigVersion,
     ),
@@ -347,6 +355,7 @@ lazy val `commons-spring` = project
   .dependsOn(`commons-hocon` % CompileAndTest)
   .settings(
     jvmCommonSettings,
+    scala213Settings,
     libraryDependencies ++= Seq(
       "org.springframework" % "spring-context" % springVersion,
     ),

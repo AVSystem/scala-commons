@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets
 import com.avsystem.commons.rpc.StandardRPCFramework
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput, RawJson}
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
+import com.github.ghik.silencer.silent
 import com.typesafe.scalalogging.LazyLogging
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.HttpClient
@@ -25,6 +26,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   override type ParamTypeMetadata[T] = ClassTag[T]
   override type ResultTypeMetadata[T] = DummyImplicit
 
+  @silent("is never used")
   private implicit val rawValueCodec: GenCodec[RawValue] = GenCodec.create(
     i => new RawValue(i.readCustom(RawJson).getOrElse(i.readSimple().readString())),
     (o, v) => if (!o.writeCustom(RawJson, v.s)) o.writeSimple().writeString(v.s)
