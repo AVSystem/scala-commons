@@ -7,6 +7,7 @@ cancelable in Global := true
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
 val silencerVersion = "1.4.1"
+val collectionCompatVersion = "2.0.0"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.8"
@@ -106,6 +107,7 @@ val commonSettings = Seq(
   libraryDependencies ++= Seq(
     compilerPlugin("com.github.ghik" %% "silencer-plugin" % silencerVersion),
     "com.github.ghik" %% "silencer-lib" % silencerVersion % Provided,
+    "org.scala-lang.modules" %% "scala-collection-compat" % collectionCompatVersion,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.mockito" % "mockito-core" % mockitoVersion % Test,
