@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 /**
   * @author Wojciech Milewski
   */
-trait FunctionRPCTest {this: RPCFrameworkTest =>
+trait FunctionRPCTest { this: RPCFrameworkTest =>
 
   it should "successfully call future method" in fixture { f =>
     when(f.mockRpc.echoAsString(5)).thenReturn(Future.successful("5"))

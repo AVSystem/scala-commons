@@ -10,6 +10,8 @@ object TreeForTypeTest {
   val x = "x"
 
   type A
+  trait Higher[T[_]]
+  type Id[T] = T
 
   testTreeForType("Int")
   testTreeForType("Integer")
@@ -26,6 +28,7 @@ object TreeForTypeTest {
   testTreeForType("(=> Int) => String")
   testTreeForType("Double => Int => String")
   testTreeForType("(Double => Int) => String")
+  testTreeForType("Higher[Id]")
   testTreeForType(
     """AnyRef {
     type Lol[K, V] <: Map[K, V]
@@ -66,6 +69,7 @@ class TreeForTypeTest {
   testTreeForType("fu.z.type forSome {val fu: Fuu with Singleton}")
   testTreeForType("fu.bar.q.type forSome {val fu: Fuu}")
   testTreeForType("AnyRef with Serializable")
+  testTreeForType("Higher[Id]")
   testTreeForType(
     """AnyRef {
     type Lol[K, V] <: Map[K, V]
@@ -94,6 +98,7 @@ class TreeForTypeTest {
     testTreeForType("fu.z.type forSome {val fu: Fuu}")
     testTreeForType("fu.bar.q.type forSome {val fu: Fuu}")
     testTreeForType("AnyRef with Serializable")
+    testTreeForType("Higher[Id]")
     testTreeForType(
       """AnyRef {
       type Lol[K, V] <: Map[K, V]
@@ -119,6 +124,7 @@ object UnrelatedTreeForType {
   testTreeForType("Set[_]")
   testTreeForType("Map[T, T] forSome {type T <: String}")
   testTreeForType("AnyRef with Serializable")
+  testTreeForType("Higher[Id]")
   testTreeForType(
     """AnyRef {
     type Lol[K, V] <: Map[K, V]

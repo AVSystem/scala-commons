@@ -22,7 +22,7 @@ object InnerRPC extends RPCCompanion[InnerRPC]
 trait TestRPC {
   def defaultNum: Int = 42
 
-  @silent
+  @silent("side-effecting nullary methods")
   def handle: Unit
 
   def handleMore(): Unit
@@ -40,20 +40,22 @@ trait TestRPC {
   def srslyDude(): Unit
 
   def innerRpc(name: String): InnerRPC
+
+  def generallyDoStuff[T](list: List[T])(implicit @encodingDependency tag: Tag[T]): Future[Option[T]]
 }
 
-@silent
+@silent("side-effecting nullary methods")
 object TestRPC extends RPCCompanion[TestRPC] {
   def rpcImpl(onInvocation: (RawInvocation, Option[Any]) => Any): TestRPC = new TestRPC { outer =>
-    private def onProcedure(methodName: String, args: List[Any]): Unit =
+    private def onProcedure(methodName: String, args: List[String]): Unit =
       onInvocation(RawInvocation(methodName, args), None)
 
-    private def onCall[T](methodName: String, args: List[Any], result: T): Future[T] = {
+    private def onCall[T](methodName: String, args: List[String], result: T): Future[T] = {
       onInvocation(RawInvocation(methodName, args), Some(result))
       Future.successful(result)
     }
 
-    private def onGet[T](methodName: String, args: List[Any], result: T): T = {
+    private def onGet[T](methodName: String, args: List[String], result: T): T = {
       onInvocation(RawInvocation(methodName, args), None)
       result
     }
@@ -62,37 +64,40 @@ object TestRPC extends RPCCompanion[TestRPC] {
       onProcedure("handleMore", Nil)
 
     def doStuff(lol: Int, fuu: String)(implicit cos: Option[Boolean]): Unit =
-      onProcedure("doStuff", List(lol, fuu, cos))
+      onProcedure("doStuff", List(write(lol), write(fuu), write(cos)))
 
     def doStuff(yes: Boolean): Future[String] =
-      onCall("doStuffBoolean", List(yes), "doStuffResult")
+      onCall("doStuffBoolean", List(write(yes)), "doStuffResult")
 
     def doStuff(num: Int): Unit =
-      onProcedure("doStuffInt", List(num))
+      onProcedure("doStuffInt", List(write(num)))
 
     def handle: Unit =
       onProcedure("handle", Nil)
 
     def takeCC(r: Record): Unit =
-      onProcedure("takeCC", List(r))
+      onProcedure("takeCC", List(write(r)))
 
     def srslyDude(): Unit =
       onProcedure("srslyDude", Nil)
 
     def innerRpc(name: String): InnerRPC = {
-      onGet("innerRpc", List(name), new InnerRPC {
+      onGet("innerRpc", List(write(name)), new InnerRPC {
         def func(arg: Int): Future[String] =
-          onCall("innerRpc.func", List(arg), "innerRpc.funcResult")
+          onCall("innerRpc.func", List(write(arg)), "innerRpc.funcResult")
 
         def proc(): Unit =
           onProcedure("innerRpc.proc", Nil)
 
-        def moreInner(name: String) =
+        def moreInner(name: String): InnerRPC =
           this
 
-        def indirectRecursion() =
+        def indirectRecursion(): TestRPC =
           outer
       })
     }
+
+    def generallyDoStuff[T](list: List[T])(implicit tag: Tag[T]): Future[Option[T]] =
+      onCall("generallyDoStuff", List(write(tag), write(list)), list.headOption)
   }
 }

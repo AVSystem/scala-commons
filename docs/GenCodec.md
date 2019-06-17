@@ -22,7 +22,7 @@ However, `GenCodec` is **not** a JSON library even though it has support for JSO
 - [`GenKeyCodec`](#genkeycodec)
 - [Serializing and deserializing examples](#serializing-and-deserializing-examples)
 - [Making your own types serializable](#making-your-own-types-serializable)
-- [Simple types](#simple-types)
+- [Simple wrappers](#simple-wrappers)
 - [Case classes](#case-classes)
     - [Safe evolution and refactoring - summary](#safe-evolution-and-refactoring---summary)
   - [Case class like types](#case-class-like-types)
@@ -196,18 +196,18 @@ method. See their documentation for more details.
 
 ### Implementations of `Input` and `Output` available by default
 
-The commons library contains example implementation of [`Input`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Input.html) 
-and [`Output`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Output.html) - 
-[`SimpleValueInput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueInput.html) 
-and [`SimpleValueOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/SimpleValueOutput.html) 
-which translate serialized values to simple Scala objects. Primitive types are represented by themselves, lists are 
-represented by standard Scala `List[T]` values and objects are represented by standard Scala `Map[String,T]` values. 
-You can use this representation as an intermediate representation that can be further serialized e.g. by some Java 
-serialization framework. However, for performance reasons it is recommended to have direct implementations of 
-[`Input`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Input.html) 
-and [`Output`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/Output.html) for the final format.
-
-There is also a minimal JSON backend provided: [`JsonStringInput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringInput.html) and [`JsonStringOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringOutput.html)
+Implementations of `Input` and `Output` provided by `scala-commons` by default are:
+* `SimpleValueInput`/`SimpleValueOutput` - translate serialized values into simple Scala objects. 
+  Primitive types are represented by themselves, lists are represented by standard Scala `List[T]` values and objects
+  are represented by standard Scala `Map[String, T]` values. 
+* `JsonStringInput`/`JsonStringOutput` - JSON implementations that work
+directly on `String` values, without intermediate JSON AST
+* `CborInput`/`CborOutput` - [Concise Binary Object Representation, CBOR](https://tools.ietf.org/html/rfc7049)
+* `StreamInput`/`StreamOutput` - simple opaque binary format
+* `HoconInput` (in `commons-hocon` module) - for reading from
+  [Human Optimized Config Object Notation, HOCON](https://github.com/lightbend/config/blob/master/HOCON.md)
+* `BsonReaderInput`/`BsonWriterOutput`,`BsonWriterNamedOutput`,`BsonValueOutput` (in `commons-mongo` module) - for
+  reading and writing from [Binary JSON, BSON](http://bsonspec.org/), format used by MongoDB wire protocol.
 
 ## Codecs available by default
 
@@ -268,8 +268,8 @@ JsonStringInput.read[Int]("123") // 123
 // `Option`, `Opt`, `NOpt`, `OptRef` and `OptArg` are represented either as `null` (when empty) or directly
 // as the underlying value (when non-empty). `Some(null)` should not be used - it is indistinguishable from
 // `None` unless the codec for the type wrapped in `Option` has some special `null` handling.
-val raw = simpleWrite[Option[String]](None) // JSON: null
-simpleRead[Option[String]]("null") // None
+val raw = JsonStringOutput.write[Option[String]](None) // JSON: null
+JsonStringInput.read[Option[String]]("null") // None
 
 val raw = JsonStringOutput.write[Option[String]](Some("sth")) // "sth"
 JsonStringInput.read[Option[String]]("sth") // Some("sth")
@@ -305,18 +305,16 @@ macro directly.
 
 ## Simple wrappers
 
-If your type is a simple wrapper case class over a type that already has `GenCodec` instance, the easiest way is
-to give it a companion object which extends `TransparentWrapperCompanion`, e.g.
+When your type is a simple wrapper over a type that already has a `GenCodec` instance, the easiest way to provide a codec for the wrapper type is to use `TransparentWrapperCompanion` as base class for its companion object:
 
 ```scala
-case class UserId(rawId: String) extends AnyVal
-object UserId extends TransparentWrapperCompanion[String, UserId] // or just StringWrapperCompanion[UserId]
+case class BinaryData(bytes: Array[Byte]) extends AnyVal
+object BinaryData extends TransparentWrapperCompanion[Array[Byte], BinaryData]
 ```
 
-This will establish a relation between the wrapper type and the wrapped type so that `GenCodec[UserId]` is automatically
-derived from `GenCodec[String]`. It will also automatically derive `GenKeyCodec[UserId]` from `GenKeyCodec[String]`
-(see [`GenKeyCodec`](#genkeycodec) for more information).
-The wrapping will be "transparent", i.e. serialization formats of wrapper type and wrapped type will be identical.
+NOTE: if your type wraps `String`, `Int` or `Long` then you can use `StringWrapperCompanion`, `IntWrapperCompanion` and `LongWrapperCompanion` for brevity.
+
+Using `TransparentWrapperCompanion` not only derives a `GenCodec` instance from the wrapped type's instance but also other typeclass instances, e.g. [`GenKeyCodec`](#genkeycodec). This mechanism is extensible and can be used by any typeclass that wants to "understand" wrapping. Therefore, `TransparentWrapperCompanion` is a generic tool, not specifically bound in any way to `GenCodec`.
 
 ## Case classes
 
@@ -608,12 +606,14 @@ tries to use any already declared [`GenCodec`](http://avsystem.github.io/scala-c
 
 ### Recursive types, generic types and GADTs (generalized algebraic data types)
 
-`materialize` and `materializeRecursively` support recursive and generic types, e.g.
+A recursively defined case class:
 
 ```scala
 case class SimpleTree(children: List[SimpleTree])
 object SimpleTree extends HasGenCodec[SimpleTree]
 ```
+
+A generic (and recursive) data type:
 
 ```scala
 sealed trait Tree[T]
@@ -622,15 +622,20 @@ case class Branch[T](left: Tree[T], right: Tree[T]) extends Tree[T]
 object Tree extends HasPolyGenCodec[Tree]
 ```
 
-Note that for generic types we must use `HasPolyGenCodec` instead of `HasGenCodec`. It should also be relatively easy to create custom versions of these base companion classes for whatever combination of type kind, bounds and implicit dependencies.
+A generalized algebraic data type (also recursive):
 
 ```scala
-sealed abstract class Key[T](value: T)
-case class StringKey(value: String) extends Key[String](value)
-case class IntKey(value: Int) extends Key[Int](value)
-case object NullKey extends Key[Null](null)
-object Key extends HasGenCodec[Key[_]]
+sealed trait Expr[T]
+case class StringLiteral(value: String) extends Expr[String]
+case class IntLiteral(value: Int) extends Expr[Int]
+case object NullLiteral extends Expr[Null]
+case class Plus[T](lhs: Expr[T], rhs: Expr[T]) extends Expr[T]
+object Expr extends HasGadtCodec[Expr]
 ```
+
+Note that for generic types we must use `HasPolyGenCodec` or `HasGadtCodec` instead of `HasGenCodec`. It should also be
+relatively easy to create custom versions of these base companion classes for whatever combination of type kind, bounds
+and implicit dependencies you need to use.
 
 ### Customizing annotations
 
@@ -673,25 +678,31 @@ implemented for JSON serialization, comparing `GenCodec` with [Circe](https://ci
 Example results (higher score is better):
 
 ```
-[info] Benchmark                                  Mode  Cnt        Score       Error  Units
-[info] JsonReadingBenchmark.readCCCirce          thrpt   20   501752.517 ± 21563.049  ops/s
-[info] JsonReadingBenchmark.readCCGenCodec       thrpt   20   946505.351 ± 34501.429  ops/s
-[info] JsonReadingBenchmark.readCCUpickle        thrpt   20   623353.165 ± 15749.794  ops/s
-[info] JsonReadingBenchmark.readFoosCirce        thrpt   20     2452.081 ±   106.193  ops/s
-[info] JsonReadingBenchmark.readFoosGenCodec     thrpt   20     3232.530 ±    42.733  ops/s
-[info] JsonReadingBenchmark.readFoosUpickle      thrpt   20     3003.591 ±    74.450  ops/s
-[info] JsonReadingBenchmark.readSHCirce          thrpt   20   259242.384 ±  6019.444  ops/s
-[info] JsonReadingBenchmark.readSHGenCodec       thrpt   20   557107.475 ± 10733.433  ops/s
-[info] JsonReadingBenchmark.readFlatSHGenCodec   thrpt   20   477547.963 ±  5282.188  ops/s
-[info] JsonReadingBenchmark.readSHUpickle        thrpt   20   316055.404 ±  4679.203  ops/s
-[info] JsonWritingBenchmark.writeCCCirce         thrpt   20   593690.358 ± 13488.971  ops/s
-[info] JsonWritingBenchmark.writeCCGenCodec      thrpt   20  1462496.398 ± 29445.373  ops/s
-[info] JsonWritingBenchmark.writeCCUpickle       thrpt   20  1009314.752 ± 23001.344  ops/s
-[info] JsonWritingBenchmark.writeFoosCirce       thrpt   20     2610.398 ±    48.496  ops/s
-[info] JsonWritingBenchmark.writeFoosGenCodec    thrpt   20     4278.478 ±    35.718  ops/s
-[info] JsonWritingBenchmark.writeFoosUpickle     thrpt   20     3296.622 ±    94.771  ops/s
-[info] JsonWritingBenchmark.writeSHCirce         thrpt   20   189393.026 ±  3328.417  ops/s
-[info] JsonWritingBenchmark.writeSHGenCodec      thrpt   20   791242.582 ± 11599.197  ops/s
-[info] JsonWritingBenchmark.writeFlatSHGenCodec  thrpt   20   752330.860 ±  9901.045  ops/s
-[info] JsonWritingBenchmark.writeSHUpickle       thrpt   20   274714.996 ±  3681.794  ops/s
+[info] Benchmark                                      Mode  Cnt        Score        Error  Units
+[info] JsonReadingBenchmark.readCCCirce              thrpt   10   649967.336 ±  12828.283  ops/s
+[info] JsonReadingBenchmark.readCCGenCodec           thrpt   10  1050431.352 ±  16007.544  ops/s
+[info] JsonReadingBenchmark.readCCUpickle            thrpt   10   698061.199 ±  13618.354  ops/s
+[info] JsonReadingBenchmark.readFlatSHGenCodec       thrpt   10   457469.129 ±   7083.221  ops/s
+[info] JsonReadingBenchmark.readFoosCirce            thrpt   10     3016.276 ±     39.010  ops/s
+[info] JsonReadingBenchmark.readFoosGenCodec         thrpt   10     3098.885 ±     39.858  ops/s
+[info] JsonReadingBenchmark.readFoosUpickle          thrpt   10     3083.453 ±     29.865  ops/s
+[info] JsonReadingBenchmark.readPrimitivesCirce      thrpt   10  1438760.846 ±  26739.354  ops/s
+[info] JsonReadingBenchmark.readPrimitivesGenCodec   thrpt   10  1852565.866 ±  16059.918  ops/s
+[info] JsonReadingBenchmark.readPrimitivesUpickle    thrpt   10  1889290.939 ±  24997.719  ops/s
+[info] JsonReadingBenchmark.readSHCirce              thrpt   10   278322.679 ±   3304.612  ops/s
+[info] JsonReadingBenchmark.readSHGenCodec           thrpt   10   533291.220 ±   4675.452  ops/s
+[info] JsonReadingBenchmark.readSHUpickle            thrpt   10   298463.522 ±   3644.145  ops/s
+[info] JsonWritingBenchmark.writeCCCirce             thrpt   10   688167.968 ±   8117.737  ops/s
+[info] JsonWritingBenchmark.writeCCGenCodec          thrpt   10  1529662.369 ±  26909.344  ops/s
+[info] JsonWritingBenchmark.writeCCUpickle           thrpt   10   985345.145 ±  43860.322  ops/s
+[info] JsonWritingBenchmark.writeFlatSHGenCodec      thrpt   10   810840.889 ±  52376.100  ops/s
+[info] JsonWritingBenchmark.writeFoosCirce           thrpt   10     2896.501 ±    327.638  ops/s
+[info] JsonWritingBenchmark.writeFoosGenCodec        thrpt   10     4520.711 ±    182.557  ops/s
+[info] JsonWritingBenchmark.writeFoosUpickle         thrpt   10     3096.716 ±    199.797  ops/s
+[info] JsonWritingBenchmark.writePrimitivesCirce     thrpt   10  1263376.319 ±  49751.056  ops/s
+[info] JsonWritingBenchmark.writePrimitivesGenCodec  thrpt   10  2904553.884 ± 207071.275  ops/s
+[info] JsonWritingBenchmark.writePrimitivesUpickle   thrpt   10  2142443.367 ±  85212.161  ops/s
+[info] JsonWritingBenchmark.writeSHCirce             thrpt   10   190421.595 ±   4475.344  ops/s
+[info] JsonWritingBenchmark.writeSHGenCodec          thrpt   10   912956.930 ±  17628.358  ops/s
+[info] JsonWritingBenchmark.writeSHUpickle           thrpt   10   239291.635 ±   8626.623  ops/s
 ```

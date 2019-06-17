@@ -190,7 +190,9 @@ trait TypeClassDerivation extends MacroCommons {
 
   def materialize[T: WeakTypeTag]: Tree = instrument {
     val tpe = weakTypeOf[T]
-    withRecursiveImplicitGuard(tpe, materializeFor(tpe))
+    val res = withRecursiveImplicitGuard(tpe, materializeFor(tpe))
+    debug(show(res))
+    res
   }
 
   def materializeImplicitly[T: WeakTypeTag](allow: Tree): Tree =

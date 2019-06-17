@@ -38,21 +38,57 @@ trait GeoApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/geodist GEODIST]] */
   def geodist(key: Key, member1: Value, member2: Value, unit: GeoUnit = GeoUnit.M): Result[Opt[Double]] =
     execute(new Geodist(key, member1, member2, unit))
+
   /** Executes [[http://redis.io/commands/georadius GEORADIUS]] */
-  def georadius[A <: GeoradiusAttrs](key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
-    attributes: A = GeoradiusAttrs.None, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty, readOnly: Boolean = false): Result[Seq[A#Attributed[Value]]] =
+  def georadius[A <: GeoradiusAttrs](
+    key: Key,
+    point: GeoPoint,
+    radius: Double,
+    unit: GeoUnit,
+    attributes: A = GeoradiusAttrs.None,
+    count: OptArg[Long] = OptArg.Empty,
+    sortOrder: OptArg[SortOrder] = OptArg.Empty,
+    readOnly: Boolean = false
+  ): Result[Seq[A#Attributed[Value]]] =
     execute(new Georadius(key, point, radius, unit, attributes, count.toOpt, sortOrder.toOpt, readOnly))
+
   /** Executes [[http://redis.io/commands/georadiusbymember GEORADIUSBYMEMBER]] */
-  def georadiusbymember[A <: GeoradiusAttrs](key: Key, member: Value, radius: Double, unit: GeoUnit,
-    attributes: A = GeoradiusAttrs.None, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty, readOnly: Boolean = false): Result[Seq[A#Attributed[Value]]] =
+  def georadiusbymember[A <: GeoradiusAttrs](
+    key: Key,
+    member: Value,
+    radius: Double,
+    unit: GeoUnit,
+    attributes: A = GeoradiusAttrs.None,
+    count: OptArg[Long] = OptArg.Empty,
+    sortOrder: OptArg[SortOrder] = OptArg.Empty,
+    readOnly: Boolean = false
+  ): Result[Seq[A#Attributed[Value]]] =
     execute(new Georadiusbymember(key, member, radius, unit, attributes, count.toOpt, sortOrder.toOpt, readOnly))
+
   /** Executes [[http://redis.io/commands/georadius GEORADIUS]] */
-  def georadiusStore(key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
-    storeKey: Key, storeDist: Boolean = false, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty): Result[Opt[Long]] =
+  def georadiusStore(
+    key: Key,
+    point: GeoPoint,
+    radius: Double,
+    unit: GeoUnit,
+    storeKey: Key,
+    storeDist: Boolean = false,
+    count: OptArg[Long] = OptArg.Empty,
+    sortOrder: OptArg[SortOrder] = OptArg.Empty
+  ): Result[Opt[Long]] =
     execute(new GeoradiusStore(key, point, radius, unit, count.toOpt, sortOrder.toOpt, storeKey, storeDist))
+
   /** Executes [[http://redis.io/commands/georadiusbymember GEORADIUSBYMEMBER]] */
-  def georadiusbymemberStore(key: Key, member: Value, radius: Double, unit: GeoUnit,
-    storeKey: Key, storeDist: Boolean = false, count: OptArg[Long] = OptArg.Empty, sortOrder: OptArg[SortOrder] = OptArg.Empty): Result[Opt[Long]] =
+  def georadiusbymemberStore(
+    key: Key,
+    member: Value,
+    radius: Double,
+    unit: GeoUnit,
+    storeKey: Key,
+    storeDist: Boolean = false,
+    count: OptArg[Long] = OptArg.Empty,
+    sortOrder: OptArg[SortOrder] = OptArg.Empty
+  ): Result[Opt[Long]] =
     execute(new GeoradiusbymemberStore(key, member, radius, unit, count.toOpt, sortOrder.toOpt, storeKey, storeDist))
 
   private final class Geoadd(key: Key, items: Iterable[(Value, GeoPoint)]) extends RedisIntCommand with NodeCommand {

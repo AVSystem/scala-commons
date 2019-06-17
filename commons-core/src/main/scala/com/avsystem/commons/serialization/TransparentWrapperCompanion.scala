@@ -18,7 +18,7 @@ trait TransparentWrapping[R, T] {
   * [[transparent]] annotation.
   */
 abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, T] with (R => T) {
-  implicit def self: this.type = this
+  implicit def self: TransparentWrapping[R, T] = this
 
   def apply(r: R): T
   def unapply(t: T): Option[R]

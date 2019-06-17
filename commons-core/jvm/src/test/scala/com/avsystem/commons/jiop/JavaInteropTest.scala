@@ -13,11 +13,11 @@ import scala.concurrent.duration.Duration
 class JavaInteropTest extends FunSuite {
 
   def assertSame[A](s1: JStream[A], s2: JStream[A]): Unit =
-    assert(s1.collect(Collectors.toList[A]) === s2.collect(Collectors.toList[A]))
+    assert(s1.collect(Collectors.toList[A]) == s2.collect(Collectors.toList[A]))
 
   def assertSameTypeValue(v1: Any, v2: Any): Unit = {
-    assert(v1 === v2)
-    assert(v1.getClass === v2.getClass)
+    assert(v1 == v2)
+    assert(v1.getClass == v2.getClass)
   }
 
   def col[T <: JCollection[Int]](col: T): T = {
@@ -179,15 +179,15 @@ class JavaInteropTest extends FunSuite {
     val gfut = sfut.asGuava
     var listenerCalled: Boolean = false
 
-    assert(gfut.isDone === sfut.isCompleted)
+    assert(gfut.isDone == sfut.isCompleted)
 
     gfut.addListener(jRunnable {
       listenerCalled = true
     }, MoreExecutors.directExecutor())
     promise.success(123)
 
-    assert(Await.result(sfut, Duration.Inf) === gfut.get)
-    assert(gfut.isDone === sfut.isCompleted)
+    assert(Await.result(sfut, Duration.Inf) == gfut.get)
+    assert(gfut.isDone == sfut.isCompleted)
     assert(listenerCalled)
   }
 
@@ -198,15 +198,15 @@ class JavaInteropTest extends FunSuite {
     val sfut = gfut.asScala
     var listenerCalled: Boolean = false
 
-    assert(gfut.isDone === sfut.isCompleted)
-    assert(None === sfut.value)
+    assert(gfut.isDone == sfut.isCompleted)
+    assert(None == sfut.value)
 
     sfut.onComplete(_ => listenerCalled = true)
     gfut.set(123)
 
-    assert(Await.result(sfut, Duration.Inf) === gfut.get)
-    assert(gfut.isDone === sfut.isCompleted)
-    assert(sfut.value === Some(Success(123)))
+    assert(Await.result(sfut, Duration.Inf) == gfut.get)
+    assert(gfut.isDone == sfut.isCompleted)
+    assert(sfut.value == Some(Success(123)))
     assert(listenerCalled)
   }
 
@@ -245,37 +245,37 @@ class JavaInteropTest extends FunSuite {
 
   test("toJMap should work") {
     val jmap = Iterator(1 -> "jeden", 2 -> "dwa").toJMap
-    assert(jmap === JMap(1 -> "jeden", 2 -> "dwa"))
+    assert(jmap == JMap(1 -> "jeden", 2 -> "dwa"))
   }
 
   test("JOptional companion object should act as factory") {
     val string = "alamakota"
     val stringOpt = JOptional(string)
-    assert(stringOpt.isPresent === true)
-    assert(stringOpt.get() === string)
+    assert(stringOpt.isPresent == true)
+    assert(stringOpt.get() == string)
 
     val nullOpt = JOptional[String](null)
-    assert(nullOpt.isPresent === false)
+    assert(nullOpt.isPresent == false)
 
-    assert(JOptional.empty.isPresent === false)
+    assert(JOptional.empty.isPresent == false)
 
-    assert(JOptionalInt(3).getAsInt === 3)
-    assert(JOptionalLong(3L).getAsLong === 3L)
-    assert(JOptionalDouble(3.0).getAsDouble === 3.0)
+    assert(JOptionalInt(3).getAsInt == 3)
+    assert(JOptionalLong(3L).getAsLong == 3L)
+    assert(JOptionalDouble(3.0).getAsDouble == 3.0)
   }
 
   test("option to optional converter should work") {
     val string: String = "alamakota"
     val empty: String = null
 
-    assert(Option(string).asJava === JOptional(string))
-    assert(Option(empty).asJava === JOptional.empty)
+    assert(Option(string).asJava == JOptional(string))
+    assert(Option(empty).asJava == JOptional.empty)
 
-    assert(Option(3).asJavaInt === JOptionalInt(3))
-    assert(Option(3).asJava === JOptional(3))
+    assert(Option(3).asJavaInt == JOptionalInt(3))
+    assert(Option(3).asJava == JOptional(3))
 
-    assert(Option(3L).asJava === JOptional(3L))
-    assert(Option(3L).asJavaLong === JOptionalLong(3l))
+    assert(Option(3L).asJava == JOptional(3L))
+    assert(Option(3L).asJavaLong == JOptionalLong(3l))
 
     assert(Option(3.0).asJava == JOptional(3.0))
     assert(Option(3.0).asJavaDouble == JOptionalDouble(3.0))
@@ -285,16 +285,16 @@ class JavaInteropTest extends FunSuite {
     val string: String = "alamakota"
     val empty: String = null
 
-    assert(Option(string) === JOptional(string).asScala)
-    assert(Option(empty) === JOptional.empty.asScala)
+    assert(Option(string) == JOptional(string).asScala)
+    assert(Option(empty) == JOptional.empty.asScala)
 
-    assert(Option(3) === JOptionalInt(3).asScala)
-    assert(Option(3) === JOptional(3).asScala)
+    assert(Option(3) == JOptionalInt(3).asScala)
+    assert(Option(3) == JOptional(3).asScala)
 
-    assert(Option(3L) === JOptional(3L).asScala)
-    assert(Option(3L) === JOptionalLong(3l).asScala)
+    assert(Option(3L) == JOptional(3L).asScala)
+    assert(Option(3L) == JOptionalLong(3l).asScala)
 
-    assert(Option(3.0) === JOptional(3.0).asScala)
-    assert(Option(3.0) === JOptionalDouble(3.0).asScala)
+    assert(Option(3.0) == JOptional(3.0).asScala)
+    assert(Option(3.0) == JOptionalDouble(3.0).asScala)
   }
 }

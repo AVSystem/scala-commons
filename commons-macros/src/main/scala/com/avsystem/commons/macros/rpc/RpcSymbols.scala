@@ -10,33 +10,57 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
   import c.universe._
 
-  sealed trait Matched extends MatchedSymbol {
-    def real: RealRpcSymbol
-    def overloaded: Boolean
+  case class MatchedMethod(
+    real: RealMethod,
+    raw: RealMethodTarget,
+    fallbackTagsUsed: List[FallbackTag]
+  ) extends MatchedSymbol {
+    type Self = MatchedMethod
+
+    def indexInRaw: Int = 0
+    def typeParamsInContext: List[MacroTypeParam] = real.typeParams
+
+    def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedMethod =
+      copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
 
     val rawName: String = {
       val prefixes = real.annots(RpcNamePrefixAT, fallback = fallbackTagsUsed.flatMap(_.asList))
-        .filter(a => overloaded || !a.findArg[Boolean](RpcNameOverloadedOnlyArg, false))
+        .filter(a => real.overloadIdx > 0 || !a.findArg[Boolean](RpcNameOverloadedOnlyArg, false))
         .map(_.findArg[String](RpcNamePrefixArg))
-      prefixes.mkString("", "", real.rpcName)
+      val overloadSuffix = if (real.overloadIdx > 0 && raw.mangleOverloads) "_" + real.overloadIdx else ""
+      prefixes.mkString("", "", real.rpcName + overloadSuffix)
     }
   }
 
-  case class MatchedRpcTrait(real: RealRpcTrait) extends Matched {
-    def overloaded: Boolean = false
-    def indexInRaw: Int = 0
-  }
+  case class MatchedTypeParam(
+    real: RealTypeParam,
+    fallbackTagsUsed: List[FallbackTag],
+    matchedOwner: MatchedMethod,
+    indexInRaw: Int
+  ) extends MatchedSymbol {
+    type Self = MatchedTypeParam
 
-  case class MatchedMethod(real: RealMethod, override val fallbackTagsUsed: List[FallbackTag]) extends Matched {
-    def overloaded: Boolean = real.overloaded
-    def indexInRaw: Int = 0
+    def rawName: String = real.rpcName
+    def typeParamsInContext: List[MacroTypeParam] = Nil
+
+    def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedTypeParam =
+      copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
   }
 
   case class MatchedParam(
-    real: RealParam, override val fallbackTagsUsed: List[FallbackTag], matchedOwner: MatchedMethod, indexInRaw: Int
-  ) extends Matched {
+    real: RealParam,
+    fallbackTagsUsed: List[FallbackTag],
+    matchedOwner: MatchedMethod,
+    indexInRaw: Int
+  ) extends MatchedSymbol {
 
-    def overloaded: Boolean = false
+    type Self = MatchedParam
+
+    def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedParam =
+      copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
+
+    def rawName: String = real.rpcName
+    def typeParamsInContext: List[MacroTypeParam] = matchedOwner.typeParamsInContext
 
     val whenAbsent: Tree =
       annot(WhenAbsentAT).fold(EmptyTree) { annot =>
@@ -49,7 +73,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
           override def transform(tree: Tree): Tree = tree match {
             case Super(t@This(_), _) if !enclosingClasses.contains(t.symbol) =>
               real.reportProblem(s"illegal super-reference in @whenAbsent annotation")
-            case This(_) if tree.symbol == real.owner.owner.symbol => q"${real.owner.owner.safeName}"
+            case This(_) if tree.symbol == real.owner.ownerApi.symbol => q"${real.owner.ownerApi.safeTermName}"
             case This(_) if !enclosingClasses.contains(tree.symbol) =>
               real.reportProblem(s"illegal this-reference in @whenAbsent annotation")
             case t => super.transform(t)
@@ -75,8 +99,12 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     private def defaultValue(useThis: Boolean): Tree = {
       val prevListParams = real.owner.realParams.take(real.index - real.indexInList).map(rp => q"${rp.safeName}")
+      if (real.encodingDependency && prevListParams.nonEmpty) {
+        real.reportProblem("implicit dependency parameters cannot have default values " +
+          "unless they are in the first parameter list - note: you can use @whenAbsent instead")
+      }
       val prevListParamss = List(prevListParams).filter(_.nonEmpty)
-      val realInst = if (useThis) q"this" else q"${real.owner.owner.safeName}"
+      val realInst = if (useThis) q"this" else q"${real.owner.ownerApi.safeTermName}"
       q"$realInst.${TermName(s"${real.owner.encodedNameStr}$$default$$${real.index + 1}")}(...$prevListParamss)"
     }
   }
@@ -86,42 +114,41 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
       annot(RpcNameAT).fold(nameStr)(_.findArg[String](RpcNameArg))
   }
 
-  abstract class RpcTrait(val symbol: Symbol) extends MacroSymbol {
+  trait RpcApi extends MacroTypeSymbol {
     def tpe: Type
+    def symbol: Symbol = tpe.typeSymbol
     def seenFrom: Type = tpe
 
+    def safeTermName: TermName = safeName.toTermName
+  }
+
+  trait RpcTrait extends RpcApi {
     if (!symbol.isAbstract || !symbol.isClass) {
       reportProblem(s"it must be an abstract class or trait")
     }
   }
 
-  abstract class RpcMethod extends MacroMethod {
-    if (sig.typeParams.nonEmpty) {
-      // can we relax this?
-      reportProblem("RPC methods must not be generic")
-    }
-  }
-
   case class UnmatchedParamError(tagTpe: Type, error: String)
 
-  trait RealMethodTarget extends AritySymbol with TagMatchingSymbol {
-    def baseParamTags: List[BaseTagSpec]
-
+  trait RealMethodTarget extends AritySymbol with TagMatchingSymbol with TagSpecifyingSymbol {
     lazy val verbatimResult: Boolean =
       annot(RpcEncodingAT).map(_.tpe <:< VerbatimAT).getOrElse(arity.verbatimByDefault)
+
+    lazy val mangleOverloads: Boolean =
+      annot(MangleOverloadsAT).nonEmpty
 
     lazy val unmatchedParamErrors: List[UnmatchedParamError] =
       annots(UnmatchedParamAT).map { annot =>
         val tagTpe = annot.tpe.typeArgs.head
-        if (!baseParamTags.exists(ts => tagTpe <:< ts.baseTagTpe)) {
+        if (!tagSpecs(ParamTagAT).exists(ts => tagTpe <:< ts.baseTagTpe)) {
           reportProblem(s"$tagTpe is not a valid param tag type")
         }
         val error = annot.findArg[String](UnmatchedParamErrorArg)
         UnmatchedParamError(tagTpe, error)
       }
 
-    def errorForUnmatchedParam(param: RealParam): Option[String] = {
-      val allFallbackTags = baseParamTags.flatMap {
+    def errorForUnmatchedParam(param: MacroSymbol): Option[String] = {
+      val allFallbackTags = tagSpecs(ParamTagAT).flatMap {
         case BaseTagSpec(baseTagTpe, fallbackTag) =>
           if (fallbackTag.isEmpty || param.annot(baseTagTpe).nonEmpty) None
           else Some(fallbackTag.annotTree)
@@ -133,7 +160,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
   }
 
-  trait RealParamTarget extends ArityParam with TagMatchingSymbol {
+  trait RealParamOrTypeParamTarget extends ArityParam with TagMatchingSymbol {
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
     def allowFail: Boolean = true
@@ -145,48 +172,61 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     val auxiliary: Boolean =
       annot(AuxiliaryAT).nonEmpty
+  }
 
+  trait RealParamTarget extends RealParamOrTypeParamTarget {
     def matchRealParam(matchedMethod: MatchedMethod, realParam: RealParam, indexInRaw: Int): Res[MatchedParam] =
-      for {
-        fallbackTag <- matchTags(realParam)
-        matchedParam = MatchedParam(realParam, fallbackTag, matchedMethod, indexInRaw)
-        _ <- matchFilters(matchedParam)
-      } yield matchedParam
+      matchTagsAndFilters(MatchedParam(realParam, Nil, matchedMethod, indexInRaw))
+  }
+
+  trait RealTypeParamTarget extends RealParamOrTypeParamTarget {
+    def matchRealTypeParam(matchedMethod: MatchedMethod, realTypeParam: RealTypeParam, indexInRaw: Int): Res[MatchedTypeParam] =
+      matchTagsAndFilters(MatchedTypeParam(realTypeParam, Nil, matchedMethod, indexInRaw))
   }
 
   object RawParam {
-    def apply(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol): RawParam =
+    def apply(containingRawMethod: RawMethod, ownerParam: Option[CompositeRawParam], symbol: Symbol): RawParam =
       if (findAnnotation(symbol, MethodNameAT).nonEmpty)
-        MethodNameParam(owner, symbol)
+        MethodNameParam(containingRawMethod, ownerParam, symbol)
       else if (findAnnotation(symbol, CompositeAT).nonEmpty)
-        CompositeRawParam(owner, symbol)
+        CompositeRawParam(containingRawMethod, ownerParam, symbol)
       else
-        RawValueParam(owner, symbol)
+        RawValueParam(containingRawMethod, ownerParam, symbol)
   }
 
-  sealed trait RawParam extends MacroParam {
-    val owner: Either[RawMethod, CompositeRawParam]
-    val containingRawMethod: RawMethod = owner.fold(identity, _.containingRawMethod)
+  sealed abstract class RawParam extends MacroParam {
+    def containingRawMethod: RawMethod
+    def ownerParam: Option[CompositeRawParam]
 
-    def seenFrom: Type = owner.fold(_.seenFrom, _.actualType)
-    def safePath: Tree = owner.fold(_ => q"$safeName", _.safeSelect(this))
-    def pathStr: String = owner.fold(_ => nameStr, cp => s"${cp.pathStr}.$nameStr")
+    def seenFrom: Type = ownerParam.fold(containingRawMethod.seenFrom)(_.actualType)
+    def safePath: Tree = ownerParam.fold(q"$safeName": Tree)(_.safeSelect(this))
+    def pathStr: String = ownerParam.fold(nameStr)(cp => s"${cp.pathStr}.$nameStr")
 
     def shortDescription = "raw parameter"
-    def description = s"$shortDescription $nameStr of ${owner.fold(_.description, _.description)}"
+    def description: String =
+      s"$shortDescription $nameStr of ${ownerParam.fold(containingRawMethod.description)(_.description)}"
   }
 
-  case class MethodNameParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol) extends RawParam {
+  case class MethodNameParam(
+    containingRawMethod: RawMethod,
+    ownerParam: Option[CompositeRawParam],
+    symbol: Symbol
+  ) extends RawParam {
     if (!(actualType =:= typeOf[String])) {
       reportProblem("@methodName parameter must be of type String")
     }
   }
 
-  case class CompositeRawParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol) extends RawParam {
-    val constructorSig: Type = primaryConstructorOf(actualType, problemStr).typeSignatureIn(actualType)
+  case class CompositeRawParam(
+    containingRawMethod: RawMethod,
+    ownerParam: Option[CompositeRawParam],
+    symbol: Symbol
+  ) extends RawParam {
+    val constructorSig: Type =
+      primaryConstructorOf(actualType, problemStr).typeSignatureIn(actualType)
 
     val paramLists: List[List[RawParam]] =
-      constructorSig.paramLists.map(_.map(RawParam(Right(this), _)))
+      constructorSig.paramLists.map(_.map(RawParam(containingRawMethod, Some(this), _)))
 
     def allLeafParams: Iterator[RawParam] = paramLists.iterator.flatten.flatMap {
       case crp: CompositeRawParam => crp.allLeafParams
@@ -201,10 +241,28 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
   }
 
-  case class RawValueParam(owner: Either[RawMethod, CompositeRawParam], symbol: Symbol)
-    extends RawParam with RealParamTarget {
+  case class RawValueParam(
+    containingRawMethod: RawMethod,
+    ownerParam: Option[CompositeRawParam],
+    symbol: Symbol
+  ) extends RawParam with RealParamTarget {
 
-    def baseTagSpecs: List[BaseTagSpec] = containingRawMethod.baseParamTags
+    def baseTagSpecs: List[BaseTagSpec] = containingRawMethod.tagSpecs(ParamTagAT)
+  }
+
+  case class RealTypeParam(owner: RealMethod, symbol: Symbol) extends MacroTypeParam with RealRpcSymbol {
+    if (symbol.typeSignature.takesTypeArgs) {
+      reportProblem(s"real RPC type parameters must not be higher-kinded")
+    }
+    if (!(symbol.typeSignature =:= EmptyTypeBounds)) {
+      reportProblem(s"real RPC type parameters must not have bounds")
+    }
+
+    def seenFrom: Type = owner.seenFrom
+    def shortDescription: String = "type parameter"
+    def description: String = s"$shortDescription $nameStr of ${owner.description}"
+
+    def typeParamDecl: Tree = typeSymbolToTypeDef(symbol, forMethod = true)
   }
 
   case class RealParam(owner: RealMethod, symbol: Symbol, index: Int, indexOfList: Int, indexInList: Int)
@@ -213,25 +271,34 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     def seenFrom: Type = owner.seenFrom
     def shortDescription = "parameter"
     def description = s"$shortDescription $nameStr of ${owner.description}"
+
+    val encodingDependency: Boolean =
+      annot(EncodingDependencyAT).nonEmpty
+
+    val tparamReferences: List[RealTypeParam] =
+      owner.typeParams.filter(tp => actualType.contains(tp.symbol))
   }
 
-  case class RawMethod(owner: RawRpcTrait, symbol: Symbol)
-    extends RpcMethod with RealMethodTarget {
+  case class RawMethod(ownerTrait: RawRpcTrait, symbol: Symbol)
+    extends MacroMethod with RealMethodTarget {
+
+    if (sig.typeParams.nonEmpty) {
+      reportProblem("raw RPC methods must not be generic")
+    }
 
     def shortDescription = "raw method"
-    def description = s"$shortDescription $nameStr of ${owner.description}"
+    def description = s"$shortDescription $nameStr of ${ownerTrait.description}"
 
-    def ownerType: Type = owner.tpe
-    def baseTagSpecs: List[BaseTagSpec] = owner.baseMethodTags
+    def tagSpecifyingOwner: Option[TagSpecifyingSymbol] = Some(ownerTrait)
+    def ownerType: Type = ownerTrait.tpe
+    def baseTagSpecs: List[BaseTagSpec] = tagSpecs(MethodTagAT)
+    def typeParams: List[MacroTypeParam] = Nil
 
     val arity: MethodArity = MethodArity.fromAnnotation(this)
     val tried: Boolean = annot(TriedAT).nonEmpty
 
-    val baseParamTags: List[BaseTagSpec] =
-      annots(ParamTagAT).map(tagSpec) ++ owner.baseParamTags
-
     val rawParams: List[RawParam] = sig.paramLists match {
-      case Nil | List(_) => sig.paramLists.flatten.map(RawParam(Left(this), _))
+      case Nil | List(_) => sig.paramLists.flatten.map(RawParam(this, None, _))
       case _ => reportProblem(s"raw methods cannot take multiple parameter lists")
     }
 
@@ -275,13 +342,16 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
   }
 
-  case class RealMethod(owner: RealRpcTrait, symbol: Symbol, overloaded: Boolean)
-    extends RpcMethod with RealRpcSymbol {
+  case class RealMethod(ownerApi: RealRpcApi, symbol: Symbol, overloadIdx: Int)
+    extends MacroMethod with RealRpcSymbol {
 
-    def ownerType: Type = owner.tpe
+    def ownerType: Type = ownerApi.tpe
 
     def shortDescription = "method"
     def description = s"$shortDescription $nameStr"
+
+    val typeParams: List[RealTypeParam] =
+      sig.typeParams.map(RealTypeParam(this, _))
 
     val paramLists: List[List[RealParam]] = {
       var index = 0
@@ -300,31 +370,48 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
 
     val realParams: List[RealParam] = paramLists.flatten
+    val (encodingDeps, regularParams) = realParams.partition(_.encodingDependency)
+
+    val resultTparamReferences: List[RealTypeParam] =
+      typeParams.filter(tp => resultType.contains(tp.symbol))
   }
 
-  case class RawRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with TagMatchingSymbol {
+  case class RawRpcTrait(tpe: Type) extends RpcTrait with TagMatchingSymbol with TagSpecifyingSymbol {
     def shortDescription = "raw RPC"
     def description = s"$shortDescription $tpe"
 
+    def tagSpecifyingOwner: Option[TagSpecifyingSymbol] = None
     def baseTagSpecs: List[BaseTagSpec] = Nil
-
-    val baseMethodTags: List[BaseTagSpec] = annots(MethodTagAT).map(tagSpec)
-    val baseParamTags: List[BaseTagSpec] = annots(ParamTagAT).map(tagSpec)
 
     lazy val rawMethods: List[RawMethod] =
       tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map(RawMethod(this, _)).toList
   }
 
-  case class RealRpcTrait(tpe: Type) extends RpcTrait(tpe.typeSymbol) with RealRpcSymbol with SelfMatchedSymbol {
-    def shortDescription = "real RPC"
+  abstract class RealRpcApi(tpe: Type) extends RpcApi with RealRpcSymbol with SelfMatchedSymbol {
     def description = s"$shortDescription $tpe"
 
+    def isApiMethod(s: TermSymbol): Boolean
+
     lazy val realMethods: List[RealMethod] = {
-      val usedRpcNames = new mutable.HashSet[String]
-      tpe.members.sorted.iterator.filter(m => m.isTerm && m.isAbstract).map { m =>
-        val rm = RealMethod(this, m, overloaded = false)
-        if (usedRpcNames.add(rm.rpcName)) rm else rm.copy(overloaded = true)
+      val overloadIndices = new mutable.HashMap[Name, Int]
+      tpe.members.sorted.iterator.filter(m => m.isTerm && isApiMethod(m.asTerm)).map { m =>
+        val overloadIdx = overloadIndices.getOrElseUpdate(m.name, 0)
+        overloadIndices(m.name) = overloadIdx + 1
+        RealMethod(this, m, overloadIdx)
       }.toList
     }
+  }
+
+  case class RealRpcTrait(tpe: Type) extends RealRpcApi(tpe) with RpcTrait {
+    def shortDescription = "real RPC"
+
+    def isApiMethod(s: TermSymbol): Boolean = s.isAbstract
+  }
+
+  case class RealApiClass(tpe: Type) extends RealRpcApi(tpe) {
+    def shortDescription = "real API"
+
+    def isApiMethod(s: TermSymbol): Boolean =
+      s.isPublic && !s.isConstructor && !s.isSynthetic && !isFromToplevelType(s)
   }
 }

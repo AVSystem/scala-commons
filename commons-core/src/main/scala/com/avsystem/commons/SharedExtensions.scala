@@ -155,6 +155,14 @@ object SharedExtensions extends SharedExtensions {
 
     def showTypeSymbolFullName: A = macro macros.UniversalMacros.showTypeSymbolFullName[A]
 
+    /**
+      * Returns source code of the prefix expression as string, exactly as in the source file.
+      * Strips common indentation. Requires -Yrangepos enabled.
+      */
+    def sourceCode: String = macro macros.UniversalMacros.sourceCode
+
+    def withSourceCode: (A, String) = macro macros.UniversalMacros.withSourceCode
+
     def debugMacro: A = a
   }
 

@@ -27,6 +27,12 @@ object AsRaw extends FallbackAsRaw {
 
   def materialize[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
 
+  /**
+    * Like [[materialize]] but for arbitrary real type instead of RPC trait.
+    * Scans all public methods of the real type (instead of abstract methods for RPC trait).
+    */
+  def materializeForApi[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.apiAsRaw[Raw, Real]
+
   implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Try[Raw], Try[Real]] =
     AsRaw.create(_.map(asRaw.asRaw))
@@ -108,4 +114,16 @@ trait FallbackAsRawReal { this: AsRawReal.type =>
 
 object RpcMetadata {
   def materialize[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.rpcMetadata[Real]
+
+  /**
+    * Like [[materialize]] but for arbitrary real type instead of RPC trait.
+    * Scans all public methods of the real type (instead of abstract methods for RPC trait).
+    */
+  def materializeForApi[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.apiMetadata[Real]
+
+  def auto[T]: T = macro macros.misc.WhiteMiscMacros.autoAnnotationMetadata
+
+  def nextInstance[T](it: Iterator[_], description: String): T =
+    if (it.hasNext) it.next().asInstanceOf[T]
+    else throw new NoSuchElementException(s"typeclass instance for $description was not provided")
 }

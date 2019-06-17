@@ -15,12 +15,18 @@ env:
     - REDIS_VERSION=5.0.0
     - REDIS_HOME=$PWD/redis-$REDIS_VERSION/src
   matrix:
-    - JOB="commons-jvm/test"
-    - JOB="commons-js/test"
-    - JOB="commons/unidoc"
+    - TASK="commons-jvm/test"
+    - TASK="commons-js/test"
+    - TASK="commons/unidoc"
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION $JOB
+  - sbt ++$TRAVIS_SCALA_VERSION $TASK
+
+jobs:
+  include:
+    - stage: deploy
+      script: if [ "$TRAVIS_PULL_REQUEST" = 'false' ]; then ./deploy.sh; fi
+      if: tag =~ ^v
 
 sudo: false
 

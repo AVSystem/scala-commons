@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-class OverloadedApplyCodecTest extends CodecTestBase {
+class OverloadedApplyCodecTest extends SimpleIOCodecTest {
   case class OverloadedApply(private val fields: Map[String, Int])
   object OverloadedApply extends HasGenCodec[OverloadedApply] {
     def apply(fields: Seq[Int]): OverloadedApply = OverloadedApply(fields.toMapBy(_.toString))
@@ -9,7 +9,7 @@ class OverloadedApplyCodecTest extends CodecTestBase {
   }
 
   test("overloaded apply/unapply") {
-    testWriteRead(OverloadedApply(List(1, 2, 3)),
+    testWrite(OverloadedApply(List(1, 2, 3)),
       Map("fields" -> List(1, 2, 3))
     )
   }

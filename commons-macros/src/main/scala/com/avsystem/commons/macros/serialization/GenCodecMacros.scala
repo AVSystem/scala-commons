@@ -39,7 +39,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   override def dependency(depTpe: Type, tcTpe: Type, param: Symbol): Tree = {
     val clue = s"Cannot materialize $tcTpe because of problem with parameter ${param.name}:\n"
     val depTcTpe = dependencyType(depTpe)
-    Ident(inferCachedImplicit(depTcTpe, clue, param.pos))
+    Ident(inferCachedImplicit(depTcTpe, ErrorCtx(clue, param.pos)).name)
   }
 
   override def materializeFor(tpe: Type): Tree = {
@@ -136,7 +136,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     hasAnnotation(sym, OutOfOrderAnnotType)
 
   def forApplyUnapply(applyUnapply: ApplyUnapply, applyParams: List[ApplyParam]): Tree = {
-    val ApplyUnapply(tpe, companion, apply, unapply, _) = applyUnapply
+    val ApplyUnapply(tpe, companion, _, unapply, _) = applyUnapply
     val params = applyParams.map { p =>
       findAnnotation(p.sym, WhenAbsentAnnotType, tpe).fold(p) { annot =>
         val newDefault = annot.tree.children.tail.head
@@ -166,10 +166,6 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         f.isTerm && f.asTerm.isCaseAccessor && f.isPublic && f.typeSignatureIn(dtpe).finalResultType =:= p.valueType
       }
     }
-
-    def applier(args: List[Tree]): Tree =
-      if (apply.isConstructor) q"new $dtpe(..$args)"
-      else q"$companion.apply[..${dtpe.typeArgs}](..$args)"
 
     def writeFields: Tree = params match {
       case Nil =>
@@ -234,7 +230,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           new $CodecObj.Transformed[$dtpe,${p.valueType}](
             $CodecObj.makeLazy($CodecObj[${p.valueType}]),
             value => $unwrapBody,
-            underlying => ${applier(List(q"underlying"))}
+            underlying => ${applyUnapply.mkApply(List(q"underlying"))}
           )
          """
       case _ =>
@@ -271,12 +267,12 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           ${mkArray(StringCls, params.map(p => nameBySym(p.sym)))}
         ) {
           def dependencies = {
-            ..${cachedImplicitDeclarations((n, b) => q"val $n = $b")}
+            ..${cachedImplicitDeclarations(ci => q"val ${ci.name} = ${ci.body}")}
             ${mkArray(tq"$GenCodecCls[_]", params.map(_.instance))}
           }
           ..${generated.collect({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
           def instantiate(fieldValues: $SerializationPkg.FieldValues) =
-            ${applier(params.map(p => p.asArgument(readField(p))))}
+            ${applyUnapply.mkApply(params.map(p => p.asArgument(readField(p))))}
           $writeMethod
         }
        """
@@ -304,7 +300,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         ${mkArray(tq"$ClassCls[_]", subtypes.map(st => q"classOf[${st.tpe}]"))}
       ) {
         def caseDependencies = {
-          ..${cachedImplicitDeclarations((n, b) => q"val $n = $b")}
+          ..${cachedImplicitDeclarations(ci => q"val ${ci.name} = ${ci.body}")}
           ${mkArray(tq"$GenCodecCls[_]", subtypes.map(_.instance))}
         }
       }

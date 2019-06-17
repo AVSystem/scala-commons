@@ -8,15 +8,18 @@ import scala.collection.mutable.ListBuffer
 sealed trait Res[+A] {
   def isOk: Boolean = this match {
     case Ok(_) => true
-    case _: Fail => false
+    case _: FailMsg => false
+    case Fail => false
   }
   def map[B](fun: A => B): Res[B] = this match {
     case Ok(value) => Ok(fun(value))
-    case f: Fail => f
+    case f: FailMsg => f
+    case Fail => Fail
   }
   def flatMap[B](fun: A => Res[B]): Res[B] = this match {
     case Ok(value) => fun(value)
-    case f: Fail => f
+    case f: FailMsg => f
+    case Fail => Fail
   }
   def toOption: Option[A] = this match {
     case Ok(value) => Some(value)
@@ -27,20 +30,18 @@ sealed trait Res[+A] {
     case _ =>
   }
   def mapFailure(f: String => String): Res[A] = this match {
-    case Fail(error) => Fail(error.map(f))
+    case FailMsg(error) => FailMsg(f(error))
     case _ => this
   }
   def getOrElse[B >: A](forError: Option[String] => B): B = this match {
     case Ok(a) => a
-    case Fail(error) => forError(error)
+    case FailMsg(error) => forError(Some(error))
+    case Fail => forError(None)
   }
 }
 case class Ok[+T](value: T) extends Res[T]
-case class Fail(message: Option[String]) extends Res[Nothing]
-object Fail {
-  def apply(msg: String): Fail = Fail(Some(msg))
-  def apply(): Fail = Fail(None)
-}
+case class FailMsg(message: String) extends Res[Nothing]
+object Fail extends Res[Nothing]
 object Res {
   def traverse[M[X] <: Iterable[X], A, B](in: M[A])(f: A => Res[B])(implicit cbf: CanBuildFrom[M[A], B, M[B]]): Res[M[B]] = {
     val it = in.iterator
@@ -48,10 +49,19 @@ object Res {
       if (it.hasNext) {
         f(it.next()) match {
           case Ok(b) => loop(builder += b)
-          case fail: Fail => fail
+          case fail: FailMsg => fail
+          case Fail => Fail
         }
       } else Ok(builder.result())
     loop(cbf(in))
+  }
+
+  def sequence[M[X] <: Iterable[X], A](in: M[Res[A]])(implicit cbf: CanBuildFrom[M[Res[A]], A, M[A]]): Res[M[A]] =
+    traverse(in)(identity)
+
+  def sequence[A](in: Option[Res[A]]): Res[Option[A]] = in match {
+    case Some(res) => res.map(Some(_))
+    case None => Ok(None)
   }
 
   def firstOk[A, B](coll: Iterable[A])(f: A => Res[B])(combineErrors: List[(A, String)] => String): Res[B] = {
@@ -61,13 +71,13 @@ object Res {
         val el = it.next()
         f(el) match {
           case Ok(value) => Ok(value)
-          case Fail(errorOpt) =>
-            errorOpt.foreach { error =>
-              errors += ((el, error))
-            }
+          case FailMsg(error) =>
+            errors += ((el, error))
+            loop(it)
+          case Fail =>
             loop(it)
         }
-      } else Fail(Option(errors.result()).map(combineErrors))
+      } else FailMsg(combineErrors(errors.result()))
     loop(coll.iterator)
   }
 }

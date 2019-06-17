@@ -25,6 +25,19 @@ class rpcName(val name: String) extends RealSymAnnotation
 class rpcNamePrefix(val prefix: String, val overloadedOnly: Boolean = false) extends RealSymAnnotation
 
 /**
+  * Enables name-mangling of overloaded RPC methods. Each overloaded variant (except for the first one) will get
+  * a suffix `_<idx>` appended, where `<idx>` is an index of the overload, starting from 1 for the first actual
+  * overload. The first method is not considered an "overload" and will get no suffix appended.
+  *
+  * This allows overloading methods in RPC traits without manual disambiguation using [[rpcName]]
+  * or [[rpcNamePrefix]]. However, such approach is much more prone to breaking API changes,
+  * e.g. by reordering methods.
+  *
+  * This annotation must be applied on a raw method or method metadata param.
+  */
+class mangleOverloads extends RawMethodAnnotation
+
+/**
   * Base trait for RPC tag annotations. Tagging gives more direct control over how real methods
   * and their parameters are matched against raw methods and their parameters.
   * For more information about method tagging, see documentation of [[methodTag]].
@@ -46,6 +59,17 @@ trait RpcTag extends RealSymAnnotation
 final class methodName extends RawParamAnnotation
 
 /**
+  * Can be used on metadata parameters to instruct macro materialization that some particular metadata depends
+  * on some implicit typeclass instances for method's type parameters.
+  *
+  * Type of a parameter annotated with this annotation must be a function which takes an `AnyIterable[TypeClass[_]]`
+  * as an argument and returns actual metadata class as a result.
+  * `AnyIterable` is any class that extends `Iterable`, e.g. `List`.
+  * `TypeClass` is any type constructor of kind (* -> *)
+  */
+final class forTypeParams extends RawParamAnnotation
+
+/**
   * `@rpcMethodMetadata` applied on metadata parameter of RPC trait metadata class indicates that this parameter holds
   * metadata for RPC method(s) (one, some or all, depending on [[com.avsystem.commons.meta.SymbolArity SymbolArity]],
   * tagging, etc.).
@@ -58,6 +82,25 @@ final class rpcMethodMetadata extends MetadataParamStrategy
   * tagging, etc.).
   **/
 final class rpcParamMetadata extends MetadataParamStrategy
+
+/**
+  * `@rpcTypeParamMetadata` applied on metadata parameter of RPC method metadata class indicates that this parameter holds
+  * metadata for RPC type parameter(s) (one, some or all, depending on [[com.avsystem.commons.meta.SymbolArity SymbolArity]]],
+  * tagging, etc.).
+  **/
+final class rpcTypeParamMetadata extends MetadataParamStrategy
+
+/**
+  * When applied on a real parameter, this parameter becomes an implicit dependency for encoders
+  * (`AsRaw` and `AsReal` instances) of other parameters of the same method and for encoder of that method's result.
+  *
+  * This is primarily useful for generic (type-parameterized) real methods where an ad-hoc (per each call)
+  * encoding must be provided for type parameters.
+  *
+  * NOTE: `@encodingDependency` parameters are serialized <b>before</b> other parameters, regardless of parameter
+  * declaration order.
+  */
+final class encodingDependency extends RealSymAnnotation
 
 /**
   * Base trait for [[verbatim]] and [[encoded]]. These annotations can be applied either on a raw method or
@@ -264,7 +307,13 @@ final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends
   * @tparam BaseTag base type for tags that can be used on real RPC parameters
   * @param defaultTag default tag value assumed for untagged real parameters
   */
-final class paramTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawMethodAnnotation
+final class paramTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawSymAnnotation
+
+/**
+  * Like [[paramTag]] or [[methodTag]] but used for tagging case classes in sealed hierarchies when
+  * materializing ADT metadata for them.
+  */
+final class caseTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawSymAnnotation
 
 /**
   * Annotation applied on raw methods or raw parameters that limits matching real methods or real parameters to

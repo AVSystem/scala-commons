@@ -2,7 +2,7 @@ package com.avsystem.commons
 package macros.meta
 
 import com.avsystem.commons.macros.AbstractMacroCommons
-import com.avsystem.commons.macros.misc.{Fail, Ok, Res}
+import com.avsystem.commons.macros.misc.{Fail, FailMsg, Ok, Res}
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.blackbox
@@ -15,12 +15,12 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
   final lazy val AdtCaseMetadataAT: Type = staticType(tq"$MetaPackage.adtCaseMetadata")
   final lazy val ReifyDefaultValueAT: Type = staticType(tq"$MetaPackage.reifyDefaultValue")
 
-  sealed trait AdtSymbol extends MacroSymbol with SelfMatchedSymbol {
+  sealed trait AdtSymbol extends MacroTypeSymbol with SelfMatchedSymbol {
     def tpe: Type
     def seenFrom: Type = tpe
     lazy val symbol: Symbol = tpe.dealias.typeSymbol
 
-    def cases: List[AdtSymbol]
+    def cases: List[AdtCase]
     def params: List[AdtParam]
   }
 
@@ -28,7 +28,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     def shortDescription: String = "ADT hierarchy"
     def description: String = s"$shortDescription $tpe"
 
-    val cases: List[AdtSymbol] = knownSubtypes.map { st =>
+    val cases: List[AdtCase] = knownSubtypes.map { st =>
       singleValueFor(st).map(sv => new AdtObject(st, sv)) orElse
         applyUnapplyFor(st).map(au => new AdtClass(st, au)) getOrElse
         new AdtOtherCase(st)
@@ -37,11 +37,13 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     def params: List[AdtParam] = Nil
   }
 
-  class AdtClass(val tpe: Type, applyUnapply: ApplyUnapply) extends AdtSymbol {
+  sealed trait AdtCase extends AdtSymbol {
+    def cases: List[AdtCase] = Nil
+  }
+
+  class AdtClass(val tpe: Type, applyUnapply: ApplyUnapply) extends AdtCase {
     def shortDescription: String = "ADT class"
     def description: String = s"$shortDescription $tpe"
-
-    def cases: List[AdtSymbol] = Nil
 
     val params: List[AdtParam] =
       applyUnapply.params.zipWithIndex.map { case (sym, idx) => new AdtParam(this, sym, idx) }
@@ -50,19 +52,15 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
       typedCompanionOf(tpe).getOrElse(reportProblem(s"could not reify companion for $tpe"))
   }
 
-  class AdtObject(val tpe: Type, val singleValue: Tree) extends AdtSymbol {
+  class AdtObject(val tpe: Type, val singleValue: Tree) extends AdtCase {
     def shortDescription: String = "ADT object"
     def description: String = s"$shortDescription $nameStr"
-
-    def cases: List[AdtSymbol] = Nil
     def params: List[AdtParam] = Nil
   }
 
-  class AdtOtherCase(val tpe: Type) extends AdtSymbol {
+  class AdtOtherCase(val tpe: Type) extends AdtCase {
     def shortDescription: String = "ADT case type"
     def description: String = s"$shortDescription $nameStr"
-
-    def cases: List[AdtSymbol] = Nil
     def params: List[AdtParam] = Nil
   }
 
@@ -72,18 +70,50 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     def description: String = s"$shortDescription $nameStr of ${owner.description}"
   }
 
-  case class MatchedAdtParam(param: AdtParam, mdParam: AdtParamMetadataParam, indexInRaw: Int) extends MatchedSymbol {
+  case class MatchedAdtParam(
+    param: AdtParam,
+    mdParam: AdtParamMetadataParam,
+    indexInRaw: Int,
+    fallbackTagsUsed: List[FallbackTag]
+  ) extends MatchedSymbol {
+    type Self = MatchedAdtParam
+
     def real: MacroSymbol = param
     def rawName: String = param.nameStr
+    def typeParamsInContext: List[MacroTypeParam] = Nil
+
+    def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedAdtParam =
+      copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
   }
 
-  case class AdtCaseMapping(adtCase: AdtSymbol, param: AdtCaseMetadataParam, tree: Tree)
+  case class MatchedAdtCase(
+    adtCase: AdtCase,
+    mdParam: AdtCaseMetadataParam,
+    fallbackTagsUsed: List[FallbackTag]
+  ) extends MatchedSymbol {
+    type Self = MatchedAdtCase
 
-  class AdtMetadataConstructor(ownerType: Type, atParam: Option[CompositeParam])
-    extends MetadataConstructor(ownerType, atParam) {
+    def real: MacroSymbol = adtCase
+    def rawName: String = adtCase.nameStr
+    def indexInRaw: Int = 0
+    def typeParamsInContext: List[MacroTypeParam] = Nil
+
+    def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedAdtCase =
+      copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
+  }
+
+  case class AdtCaseMapping(adtCase: MatchedAdtCase, tree: Tree)
+
+  class AdtMetadataConstructor(
+    constructed: Type,
+    containingAdtCaseMdParam: Option[AdtCaseMetadataParam],
+    ownerParam: Option[MetadataParam]
+  ) extends MetadataConstructor(constructed, ownerParam) {
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
-      new AdtMetadataConstructor(param.collectedType, Some(param))
+      new AdtMetadataConstructor(param.collectedType, containingAdtCaseMdParam, Some(param))
+
+    def baseTagSpecs: List[BaseTagSpec] = tagSpecs(CaseTagAT)
 
     val paramMdParams: List[AdtParamMetadataParam] = collectParams[AdtParamMetadataParam]
     val caseMdParams: List[AdtCaseMetadataParam] = collectParams[AdtCaseMetadataParam]
@@ -92,11 +122,11 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
       reportProblem(s"having both @adtParamMetadata and @adtCaseMetadata parameters in the same class doesn't make sense")
     }
 
-    override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam =
-      if (annot.tpe <:< AdtParamMetadataAT) new AdtParamMetadataParam(this, paramSym)
-      else if (annot.tpe <:< AdtCaseMetadataAT) new AdtCaseMetadataParam(this, paramSym)
-      else if (annot.tpe <:< ReifyFlagsAT) new ReifiedTypeFlagsParam(this, paramSym)
-      else super.paramByStrategy(paramSym, annot)
+    override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor): MetadataParam =
+      if (annot.tpe <:< AdtParamMetadataAT) new AdtParamMetadataParam(ownerConstr, paramSym)
+      else if (annot.tpe <:< AdtCaseMetadataAT) new AdtCaseMetadataParam(ownerConstr, paramSym)
+      else if (annot.tpe <:< ReifyFlagsAT) new ReifiedTypeFlagsParam(ownerConstr, paramSym)
+      else super.paramByStrategy(paramSym, annot, ownerConstr)
 
     def paramMappings(params: List[AdtParam]): Res[Map[AdtParamMetadataParam, Tree]] =
       if (paramMdParams.isEmpty) Ok(Map.empty)
@@ -105,17 +135,15 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
         rp => s"no ADT metadata parameter was found that would match ${rp.shortDescription} ${rp.nameStr}"
       ).map(_.toMap)
 
-    def collectCaseMappings(cases: List[AdtSymbol]): Res[Map[AdtCaseMetadataParam, List[AdtCaseMapping]]] =
-      if (caseMdParams.isEmpty) Ok(Map.empty) else {
+    def collectCaseMappings(cases: List[AdtCase]): Res[List[AdtCaseMapping]] =
+      if (caseMdParams.isEmpty) Ok(Nil) else {
         val errors = new ListBuffer[String]
-        def addFailure(adtCase: AdtSymbol, message: String): Unit = {
+        def addFailure(adtCase: AdtCase, message: String): Unit = {
           errors += s" * ${adtCase.description}:\n   ${indent(message, "   ")}"
         }
 
         val mappings = cases.flatMap { adtCase =>
-          Res.firstOk(caseMdParams) { mdParam =>
-            mdParam.tryMaterializeFor(adtCase).map(t => AdtCaseMapping(adtCase, mdParam, t))
-          } { errors =>
+          Res.firstOk(caseMdParams)(_.tryMaterializeFor(adtCase)) { errors =>
             val unmatchedReport = errors.map { case (mdParam, err) =>
               val unmatchedError = mdParam.unmatchedError.getOrElse(
                 s"${mdParam.shortDescription.capitalize} ${mdParam.nameStr} did not match")
@@ -124,19 +152,21 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
             s"it has no matching metadata parameters:\n$unmatchedReport"
           } match {
             case Ok(m) => Some(m)
-            case Fail(err) =>
+            case FailMsg(err) =>
               if (!allowIncomplete) {
-                err.foreach(addFailure(adtCase, _))
+                addFailure(adtCase, err)
               }
+              None
+            case Fail =>
               None
           }
         }
 
-        if (errors.isEmpty) Ok(mappings.groupBy(_.param))
-        else Fail(s"some ADT cases could not be mapped to metadata parameters:\n${errors.mkString("\n")}")
+        if (errors.isEmpty) Ok(mappings)
+        else FailMsg(s"some ADT cases could not be mapped to metadata parameters:\n${errors.mkString("\n")}")
       }
 
-    def tryMaterializeFor(
+    private def tryMaterializeFor(
       sym: AdtSymbol,
       caseMappings: Map[AdtCaseMetadataParam, List[AdtCaseMapping]],
       paramMappings: Map[AdtParamMetadataParam, Tree]
@@ -145,19 +175,19 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
         val mappings = caseMappings.getOrElse(acp, Nil)
         acp.arity match {
           case ParamArity.Single(_) => mappings match {
-            case Nil => Fail(s"no ADT case found that would match ${acp.description}")
+            case Nil => FailMsg(s"no ADT case found that would match ${acp.description}")
             case List(m) => Ok(m.tree)
-            case _ => Fail(s"multiple ADT cases match ${acp.description}")
+            case _ => FailMsg(s"multiple ADT cases match ${acp.description}")
           }
           case ParamArity.Optional(_) => mappings match {
             case Nil => Ok(acp.mkOptional[Tree](None))
             case List(m) => Ok(acp.mkOptional(Some(m.tree)))
-            case _ => Fail(s"multiple ADT cases match ${acp.description}")
+            case _ => FailMsg(s"multiple ADT cases match ${acp.description}")
           }
           case ParamArity.Multi(_, named) =>
             Ok(acp.mkMulti(mappings.map(m => if (named) q"(${m.adtCase.rawName}, ${m.tree})" else m.tree)))
           case arity =>
-            Fail(s"${arity.annotStr} not allowed on ADT case metadata params")
+            FailMsg(s"${arity.annotStr} not allowed on ADT case metadata params")
         }
       case app: AdtParamMetadataParam =>
         Ok(paramMappings(app))
@@ -165,77 +195,84 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
     def tryMaterializeFor(adtSymbol: AdtSymbol): Res[Tree] =
       for {
-        _ <- matchFilters(adtSymbol)
+        _ <- matchTagsAndFilters(adtSymbol)
         _ <- if (paramMdParams.isEmpty) Ok(()) else adtSymbol match {
           case _: AdtClass => Ok(())
-          case _ => Fail(s"${adtSymbol.nameStr} is not a case class or case class like type")
+          case _ => FailMsg(s"${adtSymbol.nameStr} is not a case class or case class like type")
         }
         _ <- if (caseMdParams.isEmpty) Ok(()) else adtSymbol match {
           case _: AdtHierarchy => Ok(())
-          case _ => Fail(s"${adtSymbol.nameStr} is not a sealed hierarchy root")
+          case _ => FailMsg(s"${adtSymbol.nameStr} is not a sealed hierarchy root")
         }
         pmappings <- paramMappings(adtSymbol.params)
-        cmappings <- collectCaseMappings(adtSymbol.cases)
+        cmappings <- collectCaseMappings(adtSymbol.cases).map(_.groupBy(_.adtCase.mdParam))
         tree <- tryMaterializeFor(adtSymbol, cmappings, pmappings)
       } yield tree
   }
 
-  class AdtParamMetadataConstructor(ownerType: Type, atParam: Option[CompositeParam])
-    extends MetadataConstructor(ownerType, atParam) {
+  class AdtParamMetadataConstructor(
+    constructed: Type,
+    containingAdtParamMdParam: AdtParamMetadataParam,
+    owner: MetadataParam
+  ) extends MetadataConstructor(constructed, Some(owner)) {
 
-    val adtParamType: Type =
-      ownerType.baseType(TypedMetadataType.typeSymbol).typeArgs.head
+    def baseTagSpecs: List[BaseTagSpec] = tagSpecs(ParamTagAT)
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
-      new AdtParamMetadataConstructor(param.collectedType, Some(param))
+      new AdtParamMetadataConstructor(param.collectedType, containingAdtParamMdParam, param)
 
-    override def paramByStrategy(paramSym: Symbol, annot: Annot): MetadataParam = annot.tpe match {
-      case t if t <:< ReifyPositionAT => new ParamPositionParam(this, paramSym)
-      case t if t <:< ReifyFlagsAT => new ParamFlagsParam(this, paramSym)
-      case t if t <:< ReifyDefaultValueAT => new ReifiedDefaultValueParam(this, paramSym)
-      case _ => super.paramByStrategy(paramSym, annot)
-    }
+    override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor): MetadataParam =
+      annot.tpe match {
+        case t if t <:< ReifyPositionAT => new ParamPositionParam(ownerConstr, paramSym)
+        case t if t <:< ReifyFlagsAT => new ParamFlagsParam(ownerConstr, paramSym)
+        case t if t <:< ReifyDefaultValueAT => new ReifiedDefaultValueParam(ownerConstr, paramSym)
+        case _ => super.paramByStrategy(paramSym, annot, ownerConstr)
+      }
 
     def tryMaterializeFor(matchedParam: MatchedAdtParam): Res[Tree] =
-      tryMaterialize(matchedParam)(p => Fail(s"unexpected metadata parameter $p"))
+      tryMaterialize(matchedParam)(p => FailMsg(s"unexpected metadata parameter $p"))
   }
 
-  class AdtCaseMetadataParam(owner: AdtMetadataConstructor, symbol: Symbol)
-    extends MetadataParam(owner, symbol) with ArityParam with FilteringSymbol {
+  class AdtCaseMetadataParam(owner: MetadataConstructor, symbol: Symbol)
+    extends MetadataParam(owner, symbol) with ArityParam with TagMatchingSymbol {
+
+    def baseTagSpecs: List[BaseTagSpec] = tagSpecs(CaseTagAT)
 
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
     def allowFail: Boolean = false
 
-    def tryMaterializeFor(adtCase: AdtSymbol): Res[Tree] = for {
-      _ <- matchFilters(adtCase)
+    def tryMaterializeFor(adtCase: AdtCase): Res[AdtCaseMapping] = for {
+      matchedCase <- matchTagsAndFilters(MatchedAdtCase(adtCase, this, Nil))
       mdType <- actualMetadataType(arity.collectedType, adtCase.tpe, "data type", verbatim = false)
-      tree <- materializeOneOf(mdType)(t => new AdtMetadataConstructor(t, None).tryMaterializeFor(adtCase))
-    } yield tree
+      tree <- materializeOneOf(mdType)(t => new AdtMetadataConstructor(t, Some(this), Some(this)).tryMaterializeFor(adtCase))
+    } yield AdtCaseMapping(matchedCase, tree)
   }
 
-  class AdtParamMetadataParam(owner: AdtMetadataConstructor, symbol: Symbol)
-    extends MetadataParam(owner, symbol) with ArityParam with FilteringSymbol {
+  class AdtParamMetadataParam(owner: MetadataConstructor, symbol: Symbol)
+    extends MetadataParam(owner, symbol) with ArityParam with TagMatchingSymbol {
 
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
     def allowFail: Boolean = true
 
+    def baseTagSpecs: List[BaseTagSpec] = tagSpecs(ParamTagAT)
+
     val auxiliary: Boolean =
       annot(AuxiliaryAT).nonEmpty
 
-    private def matchedParam(adtParam: AdtParam, indexInRaw: Int): Option[MatchedAdtParam] =
-      Some(MatchedAdtParam(adtParam, this, indexInRaw)).filter(m => matchFilters(m).isOk)
+    private def matchedParam(adtParam: AdtParam, indexInRaw: Int): Res[MatchedAdtParam] =
+      matchTagsAndFilters(MatchedAdtParam(adtParam, this, indexInRaw, Nil))
 
     private def metadataTree(adtParam: AdtParam, indexInRaw: Int): Option[Res[Tree]] =
-      matchedParam(adtParam, indexInRaw).map { matched =>
+      matchedParam(adtParam, indexInRaw).toOption.map { matched =>
         val result = for {
           mdType <- actualMetadataType(arity.collectedType, adtParam.actualType, "parameter type", verbatim = false)
           tree <- materializeOneOf(mdType) { t =>
-            val constructor = new AdtParamMetadataConstructor(t, None)
+            val constructor = new AdtParamMetadataConstructor(t, this, this)
             for {
-              _ <- constructor.matchFilters(matched)
-              tree <- constructor.tryMaterializeFor(matched)
+              newMatched <- constructor.matchTagsAndFilters(matched)
+              tree <- constructor.tryMaterializeFor(newMatched)
             } yield tree
           }
         } yield tree
@@ -256,16 +293,19 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     }
   }
 
-  class ReifiedDefaultValueParam(owner: AdtParamMetadataConstructor, symbol: Symbol)
+  class ReifiedDefaultValueParam(owner: MetadataConstructor, symbol: Symbol)
     extends DirectMetadataParam(owner, symbol) with ArityParam {
 
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = false
     def allowFail: Boolean = false
 
-    if (!(arity.collectedType =:= getType(tq"$CommonsPkg.meta.DefaultValue[${owner.adtParamType}]"))) {
+    val adtParamType: Type =
+      owner.constructed.baseType(TypedMetadataType.typeSymbol).typeArgs.head
+
+    if (!(arity.collectedType =:= getType(tq"$CommonsPkg.meta.DefaultValue[$adtParamType]"))) {
       reportProblem(s"type of @reifyDefaultValue metadata parameter must be " +
-        s"DefaultValue[${owner.adtParamType}] but got ${arity.collectedType}")
+        s"DefaultValue[$adtParamType] but got ${arity.collectedType}")
     }
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = matchedSymbol.real match {
@@ -279,10 +319,10 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
         arity match {
           case _: ParamArity.Single =>
             if (hasDefaultValue) Ok(defaultValue)
-            else Fail(s"no default value defined")
+            else FailMsg(s"no default value defined")
           case _: ParamArity.Optional =>
             Ok(mkOptional(if (hasDefaultValue) Some(defaultValue) else None))
-          case _ => Fail(s"${arity.annotStr} not allowed on @reifyDefaultValue params")
+          case _ => FailMsg(s"${arity.annotStr} not allowed on @reifyDefaultValue params")
         }
       case _ =>
         reportProblem("@reifyDefaultValue is allowed only for case class parameter metadata")
@@ -334,7 +374,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
   def materializeMetadata(adtSymbol: AdtSymbol, metadataTpe: Type): Tree = {
     def tryMaterialize(metadataTpe: Type): Res[Tree] =
-      new AdtMetadataConstructor(metadataTpe, None).tryMaterializeFor(adtSymbol)
+      new AdtMetadataConstructor(metadataTpe, None, None).tryMaterializeFor(adtSymbol)
 
     guardedMetadata(metadataTpe, adtSymbol.tpe) {
       materializeOneOf(metadataTpe)(tryMaterialize).getOrElse(err => abort(err.getOrElse("unknown error")))

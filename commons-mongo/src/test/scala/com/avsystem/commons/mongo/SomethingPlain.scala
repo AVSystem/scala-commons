@@ -1,25 +1,10 @@
 package com.avsystem.commons
 package mongo
 
+import com.avsystem.commons.misc.Bytes
 import com.avsystem.commons.serialization.GenCodec
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-
-import _root_.scala.util.hashing.MurmurHash3
-
-class BytesWrapper(val bytes: Array[Byte]) {
-  override def hashCode(): Int = MurmurHash3.bytesHash(bytes)
-  override def equals(other: Any): Boolean = other match {
-    case b: BytesWrapper => java.util.Arrays.equals(bytes, b.bytes)
-    case _ => false
-  }
-}
-object BytesWrapper {
-  implicit val codec: GenCodec[BytesWrapper] = GenCodec.nullableSimple(
-    input => new BytesWrapper(input.readBinary()),
-    (output, bytes) => output.writeBinary(bytes.bytes)
-  )
-}
 
 case class SomethingPlain(
   string: String,
@@ -28,7 +13,7 @@ case class SomethingPlain(
   long: Long,
   timestamp: JDate,
   double: Double,
-  binary: BytesWrapper,
+  binary: Bytes,
   list: List[String],
   map: Map[String, String]
 )
@@ -51,7 +36,7 @@ object SomethingPlain {
     long <- arbitrary[Long]
     timestamp <- arbitrary[JDate]
     double <- arbitrary[Double]
-    binary <- Gen.buildableOf[Array[Byte], Byte](arbitrary[Byte]).map(new BytesWrapper(_))
+    binary <- Gen.buildableOf[Array[Byte], Byte](arbitrary[Byte]).map(new Bytes(_))
     list <- stringListGen
     map <- Gen.mapOf(entryGen)
   } yield SomethingPlain(

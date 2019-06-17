@@ -12,9 +12,8 @@
 * `commons-core` - basic language utilities and generic features not associated with any particular library of framework:
   * [`GenCodec`](docs/GenCodec.md): format-agnostic, typeclass based serialization framework with automatic typeclass
     derivation for case classes and sealed hierarchies
-  * [RPC framework](docs/RPCFramework.md): **typesafe** RPC/proxy framework used in particular by
-    [Udash Framework](http://guide.udash.io/#/rpc) for client-server communication
-  * ~~REST framework based on RPC framework~~ moved to [Udash REST](https://github.com/UdashFramework/udash-core/blob/master/docs/REST.md)
+  * **Typesafe** RPC/proxy framework used in particular by [Udash Framework](http://guide.udash.io/#/rpc) for
+    client-server communication
   * Better enumeration support for Scala -
     [`ValueEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/ValueEnum.html),
     [`SealedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/SealedEnumCompanion.html),
@@ -37,7 +36,7 @@
 * `commons-macros` contains implementations of macros used in other modules and reusable macro utilities:
   * `MacroCommons` trait with several convenience functions for implementing macros
   * `TypeClassDerivation` - implements infrastructure for automatic type class derivation
-* `commons-analyzer` - static analyzer for Scala code, i.e. a compiler plugin that enforces various (mostly unrelated) rules and conventions on source code
+* [`commons-analyzer`](docs/Analyzer.md) - static analyzer for Scala code, i.e. a compiler plugin that enforces various (mostly unrelated) rules and conventions on source code
 * `commons-annotations` - contains annotations used by macros and static analyzer
 * `commons-jetty` - Jetty server utilities
 * `commons-mongo` - MongoDB utilities for Scala & Java MongoDB drivers, integration with `GenCodec`

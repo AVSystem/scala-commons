@@ -6,37 +6,51 @@ cancelable in Global := true
 // option in IntelliJ's SBT settings.
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-// for binary compatibility checking
-val previousCompatibleVersions = Set("1.34.8")
-
-val primaryScalaVersion = "2.12.8"
-val silencerVersion = "1.3.1"
+val silencerVersion = "1.4.1"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.5"
 val scalacheckVersion = "1.14.0"
-val jettyVersion = "9.3.23.v20180228"
+val jettyVersion = "9.4.19.v20190610"
 val mongoVersion = "3.7.0"
-val kafkaVersion = "1.1.0"
+val kafkaVersion = "2.2.1"
 val mongoScalaVersion = "2.3.0"
 val springVersion = "4.0.9.RELEASE"
-val typesafeConfigVersion = "1.3.3"
+val typesafeConfigVersion = "1.3.4"
 val commonsIoVersion = "1.3.2"
-val scalaLoggingVersion = "3.9.0"
-val akkaVersion = "2.5.12"
+val scalaLoggingVersion = "3.9.2"
+val akkaVersion = "2.5.23"
 val monixVersion = "2.3.3"
-val mockitoVersion = "2.18.3"
-val circeVersion = "0.11.0"
-val upickleVersion = "0.7.1"
-val scalajsBenchmarkVersion = "0.2.4"
+val mockitoVersion = "2.28.2"
+val circeVersion = "0.11.1"
+val upickleVersion = "0.7.4"
+val scalajsBenchmarkVersion = "0.2.6"
+
+pgpPublicRing := file("./travis/local.pubring.asc")
+pgpSecretRing := file("./travis/local.secring.asc")
+pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toCharArray)
+
+credentials in Global += Credentials(
+  "Sonatype Nexus Repository Manager",
+  "oss.sonatype.org",
+  sys.env.getOrElse("SONATYPE_USERNAME", ""),
+  sys.env.getOrElse("SONATYPE_PASSWORD", "")
+)
+
+version in ThisBuild := 
+  sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("1.34-SNAPSHOT")
+
+// for binary compatibility checking
+val previousCompatibleVersions = Set("1.34.8")
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  crossScalaVersions := Seq(primaryScalaVersion, "2.11.12"),
-  scalaVersion := primaryScalaVersion,
+  crossScalaVersions := Seq("2.12.8", "2.11.12"),
+  scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
     "-encoding", "utf-8",
+    "-Yrangepos",
     "-explaintypes",
     "-feature",
     "-deprecation",
@@ -49,6 +63,7 @@ val commonSettings = Seq(
     "-Xfuture",
     "-Xfatal-warnings",
     s"-Xlint:-missing-interpolator,-adapted-args,${if (scalaBinaryVersion.value == "2.12") "-unused," else ""}_",
+    "-P:silencer:checkUnused",
   ),
   scalacOptions ++= {
     if (scalaBinaryVersion.value == "2.12") Seq(
@@ -58,7 +73,7 @@ val commonSettings = Seq(
   },
   // some Java 8 related tests use Java interface static methods, Scala 2.11.12 requires JDK8 target for that
   scalacOptions in Test ++= (if (scalaBinaryVersion.value == "2.11") Seq("-target:jvm-1.8") else Nil),
-  sources in (Compile, doc) := Seq.empty, // relying on unidoc
+  sources in(Compile, doc) := Seq.empty, // relying on unidoc
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
 
@@ -144,7 +159,6 @@ lazy val commons = project.in(file("."))
   .settings(
     commonSettings,
     noPublishSettings,
-    crossScalaVersions := Nil,
     name := "commons",
     ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
     scalacOptions in ScalaUnidoc in unidoc += "-Ymacro-expand:none",
@@ -166,6 +180,7 @@ lazy val `commons-jvm` = project.in(file(".jvm"))
     `commons-core`,
     `commons-jetty`,
     `commons-mongo`,
+    `commons-hocon`,
     `commons-spring`,
     `commons-redis`,
     `commons-akka`,
@@ -240,7 +255,7 @@ lazy val `commons-jetty` = project
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
 
       "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
-      "org.slf4j" % "slf4j-simple" % "1.7.25" % Test,
+      "org.slf4j" % "slf4j-simple" % "1.7.26" % Test,
     ),
   )
 
@@ -316,13 +331,21 @@ lazy val `commons-redis` = project
     parallelExecution in Test := false,
   )
 
-lazy val `commons-spring` = project
+lazy val `commons-hocon` = project
   .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
-      "org.springframework" % "spring-context" % springVersion,
       "com.typesafe" % "config" % typesafeConfigVersion,
+    ),
+  )
+
+lazy val `commons-spring` = project
+  .dependsOn(`commons-hocon` % CompileAndTest)
+  .settings(
+    jvmCommonSettings,
+    libraryDependencies ++= Seq(
+      "org.springframework" % "spring-context" % springVersion,
     ),
   )
 
