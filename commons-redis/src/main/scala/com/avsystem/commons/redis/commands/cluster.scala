@@ -1,13 +1,13 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.collection.CrossArraySeqFactory
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 import scala.collection.compat._
+import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 
 trait KeyedClusterApi extends ApiSubset {
@@ -249,9 +249,9 @@ case class NodeInfo(infoLine: String) {
   val connected: Boolean = splitLine(7) == "connected"
 
   val (slots: Seq[SlotRange], importingSlots: Seq[(Int, NodeId)], migratingSlots: Seq[(Int, NodeId)]) = {
-    val slots = CrossArraySeqFactory.newBuilder[SlotRange]
-    val importingSlots = CrossArraySeqFactory.newBuilder[(Int, NodeId)]
-    val migratingSlots = CrossArraySeqFactory.newBuilder[(Int, NodeId)]
+    val slots = mutable.ArrayBuilder.make[SlotRange]
+    val importingSlots = mutable.ArrayBuilder.make[(Int, NodeId)]
+    val migratingSlots = mutable.ArrayBuilder.make[(Int, NodeId)]
 
     splitLine.iterator.drop(8).foreach { str =>
       (str.indexOf("-<-"), str.indexOf("->-"), str.indexOf('-')) match {
@@ -267,7 +267,11 @@ case class NodeInfo(infoLine: String) {
         case _ =>
       }
     }
-    (slots.result(), importingSlots.result(), migratingSlots.result())
+
+    def res[T](b: mutable.ArrayBuilder[T]): IndexedSeq[T] =
+      ArraySeq.unsafeWrapArray(b.result())
+
+    (res(slots), res(importingSlots), res(migratingSlots))
   }
 
   override def toString: String = infoLine

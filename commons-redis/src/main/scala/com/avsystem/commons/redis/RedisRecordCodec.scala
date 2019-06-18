@@ -1,12 +1,14 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.collection.{CrossArraySeqFactory, SizedArraySeqFactory}
+import com.avsystem.commons.collection.SizedArraySeqFactory
 import com.avsystem.commons.redis.protocol.BulkStringMsg
 import com.avsystem.commons.serialization.GenObjectCodec
 
 import scala.annotation.implicitNotFound
 import scala.collection.compat._
+import scala.collection.compat.immutable.ArraySeq
+import scala.collection.mutable
 
 @implicitNotFound("${T} has no RedisRecordCodec. It can be derived from GenObjectCodec which can be provided " +
   "by making your case class companion extend HasGenObjectCodec")
@@ -45,9 +47,9 @@ sealed trait LowPriorityRedisRecordCodecs { this: RedisRecordCodec.type =>
     RedisRecordCodec(
       elems => codec.readObject(new RedisRecordInput(elems)),
       value => {
-        val buf = CrossArraySeqFactory.newBuilder[BulkStringMsg]
+        val buf = mutable.ArrayBuilder.make[BulkStringMsg]
         codec.writeObject(new RedisRecordOutput(buf), value)
-        buf.result()
+        ArraySeq.unsafeWrapArray(buf.result())
       }
     )
 }

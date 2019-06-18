@@ -7,7 +7,6 @@ import java.nio.ByteBuffer
 import akka.actor.{Actor, ActorRef}
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
-import com.avsystem.commons.collection.CrossArraySeqFactory
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.config.{ConnectionConfig, RetryStrategy}
 import com.avsystem.commons.redis.exception._
@@ -15,6 +14,7 @@ import com.avsystem.commons.redis.protocol.{RedisMsg, RedisReply}
 import com.avsystem.commons.redis.util.ActorLazyLogging
 
 import scala.collection.compat._
+import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 
@@ -417,7 +417,7 @@ object RedisConnectionActor {
   }
 
   class ReplyCollector(packs: RawCommandPacks, writeBuffer: ByteBuffer, val callback: PacksResult => Unit) {
-    private[this] var replies: MColBuilder[RedisReply, IndexedSeq] = _
+    private[this] var replies: MColBuilder[RedisReply, Array] = _
     private[this] var preprocessors: Any = _
 
     packs.emitCommandPacks { pack =>
@@ -441,11 +441,11 @@ object RedisConnectionActor {
         case queue: mutable.Queue[ReplyPreprocessor@unchecked] =>
           queue.front.preprocess(message, state).flatMap { preprocessedMsg =>
             if (replies == null) {
-              replies = CrossArraySeqFactory.newBuilder
+              replies = mutable.ArrayBuilder.make[RedisReply]
             }
             queue.dequeue()
             replies += preprocessedMsg
-            if (queue.isEmpty) Opt(PacksResult.Multiple(replies.result())) else Opt.Empty
+            if (queue.isEmpty) Opt(PacksResult.Multiple(ArraySeq.unsafeWrapArray(replies.result()))) else Opt.Empty
           }
       }
       packsResultOpt match {

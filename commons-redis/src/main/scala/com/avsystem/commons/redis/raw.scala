@@ -2,10 +2,11 @@ package com.avsystem.commons
 package redis
 
 import akka.util.ByteString
-import com.avsystem.commons.collection.CrossArraySeqFactory
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.exception.ForbiddenCommandException
 import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, RedisMsg, RedisReply}
+
+import scala.collection.mutable
 
 /**
   * One or more raw Redis commands. More lightweight than regular Scala collection
@@ -38,10 +39,10 @@ trait RawCommand extends RawCommandPack with RawCommands with ReplyPreprocessor 
   override final def isAsking = false
 
   protected final def encoder(command: String): CommandEncoder =
-    new CommandEncoder(CrossArraySeqFactory.newBuilder).add(command)
+    new CommandEncoder(mutable.ArrayBuilder.make[BulkStringMsg]).add(command)
 
   protected final def encoder(command: String, subcommand: String): CommandEncoder =
-    new CommandEncoder(CrossArraySeqFactory.newBuilder).add(command).add(subcommand)
+    new CommandEncoder(mutable.ArrayBuilder.make[BulkStringMsg]).add(command).add(subcommand)
 }
 
 trait UnsafeCommand extends RawCommand {
