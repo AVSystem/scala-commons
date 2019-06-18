@@ -7,13 +7,14 @@ import java.nio.ByteBuffer
 import akka.actor.{Actor, ActorRef}
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
+import com.avsystem.commons.collection.CrossArraySeqFactory
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.config.{ConnectionConfig, RetryStrategy}
 import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.protocol.{RedisMsg, RedisReply}
 import com.avsystem.commons.redis.util.ActorLazyLogging
 
-import scala.collection.immutable.ArraySeq
+import scala.collection.compat._
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 
@@ -416,7 +417,7 @@ object RedisConnectionActor {
   }
 
   class ReplyCollector(packs: RawCommandPacks, writeBuffer: ByteBuffer, val callback: PacksResult => Unit) {
-    private[this] var replies: MColBuilder[RedisReply, ArraySeq] = _
+    private[this] var replies: MColBuilder[RedisReply, IndexedSeq] = _
     private[this] var preprocessors: Any = _
 
     packs.emitCommandPacks { pack =>
@@ -440,7 +441,7 @@ object RedisConnectionActor {
         case queue: mutable.Queue[ReplyPreprocessor@unchecked] =>
           queue.front.preprocess(message, state).flatMap { preprocessedMsg =>
             if (replies == null) {
-              replies = ArraySeq.newBuilder
+              replies = CrossArraySeqFactory.newBuilder
             }
             queue.dequeue()
             replies += preprocessedMsg

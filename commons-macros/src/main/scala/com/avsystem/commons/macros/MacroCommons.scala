@@ -36,6 +36,7 @@ trait MacroCommons { bundle =>
   final def CollectionPkg: Tree = q"$ScalaPkg.collection"
   final def ImmutablePkg: Tree = q"$CollectionPkg.immutable"
   final def MutablePkg: Tree = q"$CollectionPkg.mutable"
+  final def ArrayObj: Tree = q"$ScalaPkg.Array"
   final def ListObj: Tree = q"$ImmutablePkg.List"
   final def ListCls: Tree = tq"$ImmutablePkg.List"
   final def SetObj: Tree = q"$ImmutablePkg.Set"

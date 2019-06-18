@@ -4,7 +4,6 @@ package redis
 import com.avsystem.commons.redis.commands.Encoding
 import com.github.ghik.silencer.silent
 
-@silent("is never used")
 object ApiTypecheckingTest {
 
   locally {

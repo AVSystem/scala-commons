@@ -5,7 +5,7 @@ import com.avsystem.commons.redis.RedisBatch.Index
 import com.avsystem.commons.redis.protocol.RedisReply
 
 import scala.annotation.implicitNotFound
-import scala.collection.BuildFrom
+import scala.collection.compat._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 

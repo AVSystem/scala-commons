@@ -5,7 +5,7 @@ import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 import com.avsystem.commons.redis.protocol._
 import com.avsystem.commons.redis.util.FoldingBuilder
 
-import scala.collection.BuildFrom
+import scala.collection.compat._
 import scala.collection.mutable.ArrayBuffer
 
 /**

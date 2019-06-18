@@ -1,12 +1,13 @@
 package com.avsystem.commons
 package redis.commands
 
+import com.avsystem.commons.collection.CrossArraySeqFactory
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
-import scala.collection.immutable.ArraySeq
+import scala.collection.compat._
 import scala.collection.mutable
 
 trait KeyedClusterApi extends ApiSubset {
@@ -248,10 +249,9 @@ case class NodeInfo(infoLine: String) {
   val connected: Boolean = splitLine(7) == "connected"
 
   val (slots: Seq[SlotRange], importingSlots: Seq[(Int, NodeId)], migratingSlots: Seq[(Int, NodeId)]) = {
-
-    val slots = ArraySeq.newBuilder[SlotRange]
-    val importingSlots = ArraySeq.newBuilder[(Int, NodeId)]
-    val migratingSlots = ArraySeq.newBuilder[(Int, NodeId)]
+    val slots = CrossArraySeqFactory.newBuilder[SlotRange]
+    val importingSlots = CrossArraySeqFactory.newBuilder[(Int, NodeId)]
+    val migratingSlots = CrossArraySeqFactory.newBuilder[(Int, NodeId)]
 
     splitLine.iterator.drop(8).foreach { str =>
       (str.indexOf("-<-"), str.indexOf("->-"), str.indexOf('-')) match {

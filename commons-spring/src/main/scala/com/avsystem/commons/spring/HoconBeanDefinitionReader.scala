@@ -4,6 +4,7 @@ package spring
 import java.{util => ju}
 
 import com.avsystem.commons.spring.AttrNames._
+import com.github.ghik.silencer.silent
 import com.typesafe.config._
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder

@@ -5,9 +5,10 @@ import com.avsystem.commons.misc.{Boxing, Unboxing}
 import com.github.ghik.silencer.silent
 
 import scala.annotation.tailrec
-import scala.collection.{AbstractIterator, BuildFrom, Factory, mutable}
+import scala.collection.compat._
+import scala.collection.{AbstractIterator, mutable}
 
-trait SharedExtensions extends CompatSharedExtensions {
+trait SharedExtensions {
 
   import com.avsystem.commons.SharedExtensionsUtils._
 
@@ -254,7 +255,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       fut.transform(s, f)(RunNowEC)
 
     def transformNow[S](f: Try[A] => Try[S]): Future[S] =
-      fut.transformTry(f)(RunNowEC)
+      fut.transform(f)(RunNowEC)
 
     def transformWithNow[S](f: Try[A] => Future[S]): Future[S] =
       fut.transformWith(f)(RunNowEC)
@@ -508,7 +509,7 @@ object SharedExtensionsUtils extends SharedExtensions {
 
   class IterableOnceOps[C[X] <: IterableOnce[X], A](private val coll: C[A]) extends AnyVal {
     private def it: Iterator[A] = coll.iterator
-    
+
     def toSized[To](fac: Factory[A, To], sizeHint: Int): To = {
       val b = fac.newBuilder
       b.sizeHint(sizeHint)

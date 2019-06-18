@@ -9,7 +9,7 @@ import org.mockito.Mockito._
 import org.mongodb.scala.{Completed, Document, FindObservable, MongoCollection, SingleObservable}
 import org.scalactic.source.Position
 import org.scalatest.FreeSpec
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 
 import scala.concurrent.duration.Duration
 

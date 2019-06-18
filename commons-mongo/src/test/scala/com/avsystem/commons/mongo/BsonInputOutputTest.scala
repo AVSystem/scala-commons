@@ -8,7 +8,7 @@ import org.bson._
 import org.bson.io.BasicOutputBuffer
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class BinaryBsonGenCodecRoundtripTest extends GenCodecRoundtripTest {
   type Raw = Array[Byte]
@@ -54,7 +54,7 @@ class DocumentBsonGenCodecRoundtripTest extends GenCodecRoundtripTest {
   }
 }
 
-class BsonInputOutputTest extends FunSuite with PropertyChecks {
+class BsonInputOutputTest extends FunSuite with ScalaCheckPropertyChecks {
   def binaryRoundtrip(sthBefore: SomethingComplex, legacyOptionEncoding: Boolean = false): Unit = {
     val bsonOutput = new BasicOutputBuffer()
     val writer = new BsonBinaryWriter(bsonOutput)

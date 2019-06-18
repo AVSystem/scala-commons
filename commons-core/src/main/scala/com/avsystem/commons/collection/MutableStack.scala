@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package collection
 
+import scala.collection.compat._
+
 final class MutableStack[T] {
   private[this] var ssize: Int = 0
   private[this] var stack = List.empty[T]

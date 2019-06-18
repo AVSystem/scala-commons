@@ -3,9 +3,9 @@ package jiop
 
 import java.{lang => jl, util => ju}
 
-import scala.collection.{Factory, IterableFactory, mutable}
+import scala.collection.compat._
 
-trait JCollectionUtils extends JBuildFroms {
+trait JCollectionUtils extends JFactories {
   type JIterator[T] = ju.Iterator[T]
   type JIterable[T] = jl.Iterable[T]
   type JCollection[T] = ju.Collection[T]
@@ -31,31 +31,20 @@ trait JCollectionUtils extends JBuildFroms {
   type JDeque[E] = ju.Deque[E]
   type JArrayDeque[E] = ju.ArrayDeque[E]
 
-  abstract class JCollectionCreator[C[T] <: JCollection[T]] extends IterableFactory[C] {
+  abstract class JCollectionCreator[C[T] <: JCollection[T]] {
     protected def instantiate[T]: C[T]
 
-    def from[T](source: IterableOnce[T]): C[T] = {
-      val result = instantiate[T]
-      source.iterator.foreach(result.add)
-      result
-    }
-
-    def newBuilder[A]: mutable.Builder[A, C[A]] = new mutable.Builder[A, C[A]] {
-      private val res = instantiate[A]
-      def result(): C[A] = res
-      def clear(): Unit = res.clear()
-      def addOne(elem: A): this.type = {
-        res.add(elem)
-        this
-      }
+    def apply[T](elems: T*): C[T] = {
+      val res = instantiate[T]
+      elems.foreach(res.add)
+      res
     }
 
     def empty[T]: C[T] = instantiate[T]
   }
-
-  abstract class JListCreator[C[T] <: JList[T]] extends JCollectionCreator[C] {
-    def unapplySeq[T](list: C[T]): Option[Seq[T]] =
-      Some(list.asScala.toSeq)
+  object JCollectionCreator {
+    implicit def asJCollectionFactory[C[X] <: JCollection[X], T](creator: JCollectionCreator[C]): Factory[T, C[T]] =
+      new JCollectionFactory(creator.empty[T])
   }
 
   abstract class JSortedSetCreator[C[T] <: JSortedSet[T]] {
@@ -72,10 +61,22 @@ trait JCollectionUtils extends JBuildFroms {
     def unapplySeq[T](set: C[T]): Option[Seq[T]] =
       Some(set.iterator.asScala.toSeq)
   }
+  object JSortedSetCreator {
+    implicit def asJSortedSetFactory[C[X] <: JSortedSet[X], T: Ordering](creator: JSortedSetCreator[C]): Factory[T, C[T]] =
+      new JCollectionFactory[T, C[T]](creator.empty[T])
+  }
+
+  abstract class JListCreator[C[T] <: JList[T]] extends JCollectionCreator[C] {
+    def unapplySeq[T](list: C[T]): Option[Seq[T]] =
+      Some(list.asScala.toSeq)
+  }
 
   object JIterable {
     def apply[T](values: T*): JIterable[T] =
       JArrayList(values: _*)
+
+    implicit def asJIterableFactory[T](obj: JIterable.type): Factory[T, JIterable[T]] =
+      new JCollectionFactory(new JArrayList)
   }
 
   object JCollection extends JCollectionCreator[JCollection] {
@@ -146,9 +147,15 @@ trait JCollectionUtils extends JBuildFroms {
       result
     }
   }
+  object JMapCreator {
+    implicit def asJMapFactory[M[X, Y] <: JMap[X, Y], K, V](creator: JMapCreator[M]): Factory[(K, V), M[K, V]] =
+      new JMapFactory(creator.empty[K, V])
+  }
 
   abstract class JSortedMapCreator[M[K, V] <: JSortedMap[K, V]] {
     protected def instantiate[K, V](ord: Ordering[K]): M[K, V]
+
+    def empty[K: Ordering, V]: M[K, V] = instantiate[K, V](Ordering[K])
 
     def apply[K: Ordering, V](entries: (K, V)*): M[K, V] = {
       val result = instantiate[K, V](Ordering[K])
@@ -158,6 +165,12 @@ trait JCollectionUtils extends JBuildFroms {
 
     def unapplySeq[K, V](map: M[K, V]): Option[Seq[(K, V)]] =
       Some(map.asScala.iterator.toSeq)
+  }
+  object JSortedMapCreator {
+    implicit def asJSortedMapFactory[M[X, Y] <: JSortedMap[X, Y], K: Ordering, V](
+      creator: JSortedMapCreator[M]
+    ): Factory[(K, V), M[K, V]] =
+      new JMapFactory(creator.empty[K, V])
   }
 
   object JMap extends JMapCreator[JMap] {

@@ -16,7 +16,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final def MetaPackage = q"$CommonsPkg.meta"
   final def RpcUtils = q"$RpcPackage.RpcUtils"
   final def OptionLikeCls = tq"$MetaPackage.OptionLike"
-  final def FactoryCls = tq"$CollectionPkg.Factory"
+  final def FactoryCls = tq"$CollectionPkg.compat.Factory"
   final lazy val RpcArityAT: Type = staticType(tq"$MetaPackage.SymbolArity")
   final lazy val SingleArityAT: Type = staticType(tq"$MetaPackage.single")
   final lazy val OptionalArityAT: Type = staticType(tq"$MetaPackage.optional")
@@ -385,12 +385,19 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
   class ParamsParser[Real](reals: Seq[Real]) {
 
-    import scala.jdk.CollectionConverters._
-
     private val realParams = new java.util.LinkedList[Real]
-    realParams.addAll(reals.asJava)
+    reals.foreach(realParams.add)
 
-    def remaining: Seq[Real] = realParams.asScala.toSeq
+    // avoiding asScala/asJava extensions because of problems because of 2.12/2.13 cross building
+    // https://github.com/scala/scala-collection-compat/issues/208
+    def remaining: Seq[Real] = {
+      val lb = new ListBuffer[Real]
+      val it = realParams.iterator()
+      while (it.hasNext) {
+        lb += it.next()
+      }
+      lb.result()
+    }
 
     def extractSingle[M](consume: Boolean, matcher: Real => Option[Res[M]], unmatchedError: String): Res[M] = {
       val it = realParams.listIterator()

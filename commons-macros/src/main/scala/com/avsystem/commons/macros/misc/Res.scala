@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package macros.misc
 
-import scala.collection.{BuildFrom, mutable}
+import scala.collection.compat.BuildFrom
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 sealed trait Res[+A] {

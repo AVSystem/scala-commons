@@ -5,7 +5,7 @@ import com.avsystem.commons.meta.Fallback
 import com.avsystem.commons.misc.ImplicitNotFound
 import com.avsystem.commons.serialization.TransparentWrapping
 
-import scala.annotation.{implicitNotFound, unused}
+import scala.annotation.implicitNotFound
 
 @implicitNotFound("Cannot serialize ${Real} into ${Raw}, appropriate AsRaw instance not found")
 trait AsRaw[Raw, Real] {
@@ -39,7 +39,7 @@ object AsRaw extends FallbackAsRaw {
 
   @implicitNotFound("#{forPlain}")
   implicit def notFoundForTry[Raw, Real](
-    implicit @unused forPlain: ImplicitNotFound[AsRaw[Raw, Real]]
+    implicit forPlain: ImplicitNotFound[AsRaw[Raw, Real]]
   ): ImplicitNotFound[AsRaw[Try[Raw], Try[Real]]] = ImplicitNotFound()
 }
 trait FallbackAsRaw { this: AsRaw.type =>
@@ -73,7 +73,7 @@ object AsReal extends FallbackAsReal {
 
   @implicitNotFound("#{forPlain}")
   implicit def notFoundForTry[Raw, Real](
-    implicit @unused forPlain: ImplicitNotFound[AsReal[Raw, Real]]
+    implicit forPlain: ImplicitNotFound[AsReal[Raw, Real]]
   ): ImplicitNotFound[AsReal[Try[Raw], Try[Real]]] = ImplicitNotFound()
 }
 trait FallbackAsReal { this: AsReal.type =>

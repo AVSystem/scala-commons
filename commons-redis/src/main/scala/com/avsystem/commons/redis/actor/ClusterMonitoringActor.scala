@@ -9,7 +9,8 @@ import com.avsystem.commons.redis.exception.{ClusterInitializationException, Err
 import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{ClusterState, NodeAddress, RedisApi, RedisBatch, RedisNodeClient}
 
-import scala.collection.immutable.ArraySeq
+import scala.collection.compat._
+import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._

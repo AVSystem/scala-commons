@@ -39,14 +39,14 @@ credentials in Global += Credentials(
 )
 
 version in ThisBuild :=
-  sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("1.34-SNAPSHOT")
+  sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("2.0.0-SNAPSHOT")
 
 // for binary compatibility checking
 val previousCompatibleVersions = Set("1.34.8")
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  crossScalaVersions := Seq("2.12.8", "2.11.12"),
+  crossScalaVersions := Seq("2.12.8"),
   scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
@@ -62,8 +62,7 @@ val commonSettings = Seq(
     "-language:experimental.macros",
     "-language:higherKinds",
     "-Xfatal-warnings",
-    "-Xlint:-missing-interpolator,-adapted-args,_",
-    "-P:silencer:checkUnused",
+    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
   ),
   ideSkipProject := scalaVersion.value != "2.13.0",
   scalacOptions ++= {
@@ -72,8 +71,6 @@ val commonSettings = Seq(
       "-Ycache-macro-class-loader:last-modified",
     ) else Seq.empty
   },
-  // some Java 8 related tests use Java interface static methods, Scala 2.11.12 requires JDK8 target for that
-  scalacOptions in Test ++= (if (scalaBinaryVersion.value == "2.11") Seq("-target:jvm-1.8") else Nil),
   sources in(Compile, doc) := Seq.empty, // relying on unidoc
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
@@ -107,7 +104,7 @@ val commonSettings = Seq(
   libraryDependencies ++= Seq(
     compilerPlugin("com.github.ghik" %% "silencer-plugin" % silencerVersion),
     "com.github.ghik" %% "silencer-lib" % silencerVersion % Provided,
-    "org.scala-lang.modules" %% "scala-collection-compat" % collectionCompatVersion,
+    "org.scala-lang.modules" %%% "scala-collection-compat" % collectionCompatVersion,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.mockito" % "mockito-core" % mockitoVersion % Test,
@@ -277,13 +274,6 @@ lazy val `commons-benchmark` = project
     jvmCommonSettings,
     noPublishSettings,
     sourceDirsSettings(_ / "jvm"),
-    libraryDependencies ++= {
-      if (scalaBinaryVersion.value == "2.11") Seq(
-        "com.github.etaty" %% "rediscala" % "1.6.0",
-        "com.livestream" %% "scredis" % "2.0.8",
-      )
-      else Seq.empty
-    },
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,

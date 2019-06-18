@@ -9,6 +9,7 @@
         <array>
           <option value="com.avsystem.commons.commons.collection.CollectionAliases._" />
           <option value="com.avsystem.commons.jiop.JavaInterop._" />
+          <option value="scala.collection.compat._" />
           <option value="scala.concurrent.duration._" />
         </array>
       </option>

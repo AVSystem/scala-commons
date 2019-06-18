@@ -3,10 +3,10 @@ package jiop
 
 import java.util.DoubleSummaryStatistics
 
-import scala.collection.Factory
+import scala.collection.compat._
 
 final class ScalaJDoubleStream(private val jStream: JDoubleStream) extends AnyVal {
-  def asJava = jStream
+  def asJava: JDoubleStream = jStream
 
   def close(): Unit =
     jStream.close()
@@ -116,7 +116,7 @@ final class ScalaJDoubleStream(private val jStream: JDoubleStream) extends AnyVa
   def toArray: Array[Double] =
     jStream.toArray
 
-  def to[Col[_]](implicit fac: Factory[Double, Col[Double]]): Col[Double] = {
+  def to[C](implicit fac: Factory[Double, C]): C = {
     val b = fac.newBuilder
     forEachOrdered(b += _)
     b.result()

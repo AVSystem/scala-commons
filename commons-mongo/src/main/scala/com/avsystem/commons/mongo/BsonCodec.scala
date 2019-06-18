@@ -6,7 +6,7 @@ import java.time.Instant
 import org.bson.types.ObjectId
 import org.bson.{BsonArray, BsonBinary, BsonBoolean, BsonDateTime, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonObjectId, BsonString, BsonValue}
 
-import _root_.scala.collection.BuildFrom
+import _root_.scala.collection.compat._
 import _root_.scala.language.higherKinds
 
 /**

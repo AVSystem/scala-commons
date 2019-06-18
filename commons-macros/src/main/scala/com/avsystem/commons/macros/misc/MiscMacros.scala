@@ -513,7 +513,7 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
           val elems = au.params.indices.map(i => q"$resName.${TermName(s"_${i + 1}")}")
           q"""
              val $resName = $unapplyRes.get
-             $ImmutablePkg.ArraySeq[$ScalaPkg.Any](..$elems)
+             $CollectionPkg.compat.immutable.ArraySeq.unsafeWrapArray($ArrayObj[$ScalaPkg.Any](..$elems))
            """
       }
     }

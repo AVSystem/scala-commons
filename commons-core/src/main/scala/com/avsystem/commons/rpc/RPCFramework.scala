@@ -4,8 +4,6 @@ package rpc
 import com.avsystem.commons.meta._
 import com.avsystem.commons.serialization.GenCodec
 
-import scala.annotation.unused
-
 trait RPCFramework {
   type RawValue
   type Reader[T]
@@ -13,7 +11,7 @@ trait RPCFramework {
 
   case class RawInvocation(@methodName rpcName: String, @multi args: List[RawValue])
   object RawInvocation {
-    implicit def codec(implicit @unused rawValueCodec: GenCodec[RawValue]): GenCodec[RawInvocation] = GenCodec.materialize
+    implicit def codec(implicit rawValueCodec: GenCodec[RawValue]): GenCodec[RawInvocation] = GenCodec.materialize
   }
 
   type RawRPC

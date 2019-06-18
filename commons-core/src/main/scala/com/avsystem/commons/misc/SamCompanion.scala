@@ -3,9 +3,7 @@ package misc
 
 import com.avsystem.commons.misc.SamCompanion.ValidSam
 
-import scala.annotation.unused
-
-abstract class SamCompanion[T, F](implicit @unused vs: ValidSam[T, F]) {
+abstract class SamCompanion[T, F](implicit vs: ValidSam[T, F]) {
   def apply(fun: F): T = macro com.avsystem.commons.macros.misc.SamMacros.toSam[T, F]
 }
 

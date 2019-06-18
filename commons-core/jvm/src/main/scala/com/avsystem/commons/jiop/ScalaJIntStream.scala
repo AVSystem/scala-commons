@@ -3,10 +3,10 @@ package jiop
 
 import java.util.IntSummaryStatistics
 
-import scala.collection.Factory
+import scala.collection.compat._
 
 final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
-  def asJava = jStream
+  def asJava: JIntStream = jStream
 
   def close(): Unit =
     jStream.close()
@@ -122,7 +122,7 @@ final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
   def toArray: Array[Int] =
     jStream.toArray
 
-  def to[Col[_]](implicit fac: Factory[Int, Col[Int]]): Col[Int] = {
+  def to[C](implicit fac: Factory[Int, C]): C = {
     val b = fac.newBuilder
     forEachOrdered(b += _)
     b.result()

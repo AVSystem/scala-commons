@@ -103,9 +103,9 @@ trait CollectionAliases {
 
   type ITreeMap[A, +B] = sci.TreeMap[A, B]
   final def ITreeMap: sci.TreeMap.type = sci.TreeMap
-  // Coming in Scala 2.12
-  // type MTreeMap[A, B] = scm.TreeMap[A, B]
-  // final def MTreeMap: scm.TreeMap.type = scm.TreeMap
+
+  type MTreeMap[A, B] = scm.TreeMap[A, B]
+  final def MTreeMap: scm.TreeMap.type = scm.TreeMap
 
   type MBuffer[A] = scm.Buffer[A]
   final def MBuffer: scm.Buffer.type = scm.Buffer

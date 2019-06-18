@@ -8,7 +8,7 @@ import com.avsystem.commons.redis.exception.{OptimisticLockException, RedisExcep
 import com.avsystem.commons.redis.protocol._
 
 import scala.annotation.tailrec
-import scala.collection.immutable.ArraySeq
+import scala.collection.compat.immutable.ArraySeq
 
 final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
 

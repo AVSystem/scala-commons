@@ -3,6 +3,7 @@ package analyzer
 
 import scala.collection.mutable
 import scala.tools.nsc.Global
+import scala.collection.compat._
 
 class ValueEnumExhaustiveMatch(g: Global) extends AnalyzerRule(g, "valueEnumExhaustiveMatch") {
 

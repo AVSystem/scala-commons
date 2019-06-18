@@ -5,7 +5,7 @@ import com.mongodb.client.model.{Filters => F}
 import org.bson.conversions.Bson
 import org.bson.{BsonArray, BsonDateTime, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
 
-import _root_.scala.collection.BuildFrom
+import _root_.scala.collection.compat._
 
 /**
   * @author MKej
@@ -48,7 +48,7 @@ object Filter {
 
   def contains[A, COL <: Iterable[A]](key: DocKey[COL, _ <: BsonArray], value: A)
     (implicit fac: Factory[A, COL]): Bson =
-    F.eq(key.key, key.codec.toBson((bf.newBuilder() += value).result()).asScala.head)
+    F.eq(key.key, key.codec.toBson((fac.newBuilder += value).result()).asScala.head)
 
   object Limitations {
     trait CanCompare[BSON <: BsonValue]

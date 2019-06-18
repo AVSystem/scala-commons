@@ -5,11 +5,11 @@ import java.util.UUID
 
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
-import com.avsystem.commons.jiop.JBuildFrom
+import com.avsystem.commons.jiop.JFactory
 import com.avsystem.commons.meta.Fallback
 
 import scala.annotation.implicitNotFound
-import scala.collection.Factory
+import scala.collection.compat._
 
 /**
   * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized
@@ -387,7 +387,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     nullableList[C[T] with BSet[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
   implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](
-    implicit cbf: JBuildFrom[T, C[T]]
+    implicit cbf: JFactory[T, C[T]]
   ): GenCodec[C[T] with JCollection[T]] =
     nullableList[C[T] with JCollection[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
@@ -400,7 +400,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     )
 
   implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit cbf: JBuildFrom[(K, V), M[K, V]]
+    implicit cbf: JFactory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V] with JMap[K, V]] =
     nullableObject[M[K, V] with JMap[K, V]](
       _.collectTo[K, V, M[K, V]],

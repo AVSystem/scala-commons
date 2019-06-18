@@ -3,7 +3,7 @@ package rpc
 
 import com.avsystem.commons.macros.misc.MiscMacros
 
-import scala.collection.{Factory, mutable}
+import scala.collection.compat._
 
 class InvalidRpcCall(msg: String, cause: Throwable = null)
   extends RuntimeException(msg, cause)
@@ -24,7 +24,7 @@ object RpcUtils {
   def createEmpty[Coll](fac: Factory[Nothing, Coll]): Coll =
     createBuilder[Nothing, Coll](fac, 0).result()
 
-  def createBuilder[Elem, Coll](fac: Factory[Elem, Coll], size: Int): mutable.Builder[Elem, Coll] = {
+  def createBuilder[Elem, Coll](fac: Factory[Elem, Coll], size: Int): MBuilder[Elem, Coll] = {
     val b = fac.newBuilder
     b.sizeHint(size)
     b

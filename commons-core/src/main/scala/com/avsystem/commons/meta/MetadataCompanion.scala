@@ -4,7 +4,7 @@ package meta
 import com.avsystem.commons.macros.misc.MiscMacros
 import com.avsystem.commons.misc.ImplicitNotFound
 
-import scala.annotation.{implicitNotFound, unused}
+import scala.annotation.implicitNotFound
 
 trait MetadataCompanion[M[_]] {
   final def apply[Real](implicit metadata: M[Real]): M[Real] = metadata
@@ -21,7 +21,7 @@ trait MetadataCompanion[M[_]] {
     implicit def lazyMetadata[Real](implicit metadata: M[Real]): Lazy[Real] = macro MiscMacros.lazyMetadata
 
     @implicitNotFound("#{forNotLazy}")
-    implicit def notFound[T](implicit @unused forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =
+    implicit def notFound[T](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =
       ImplicitNotFound()
   }
 }

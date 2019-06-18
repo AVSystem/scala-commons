@@ -9,6 +9,7 @@ import GuavaInterop._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.collection.compat._
 
 class JavaInteropTest extends FunSuite {
 
@@ -34,14 +35,14 @@ class JavaInteropTest extends FunSuite {
     map
   }
 
-  val arrayList = col(new JArrayList[Int])
-  val linkedList = col(new JLinkedList[Int])
-  val hashSet = col(new JHashSet[Int])
-  val linkedHashSet = col(new JLinkedHashSet[Int])
-  val treeSet = col(new JTreeSet[Int])
-  val hashMap = map(new JHashMap[Int, String])
-  val linkedHashMap = map(new JLinkedHashMap[Int, String])
-  val treeMap = map(new JTreeMap[Int, String])
+  final val arrayList = col(new JArrayList[Int])
+  final val linkedList = col(new JLinkedList[Int])
+  final val hashSet = col(new JHashSet[Int])
+  final val linkedHashSet = col(new JLinkedHashSet[Int])
+  final val treeSet = col(new JTreeSet[Int])
+  final val hashMap = map(new JHashMap[Int, String])
+  final val linkedHashMap = map(new JLinkedHashMap[Int, String])
+  final val treeMap = map(new JTreeMap[Int, String])
 
   test("adapted java stream api should work") {
     val input = JArrayList("a", "b", "c", "d", "e", "f", "g")
@@ -98,12 +99,12 @@ class JavaInteropTest extends FunSuite {
     assertSameTypeValue(intList.to(JList), arrayList)
     assertSameTypeValue(intList.to(JLinkedHashSet), linkedHashSet)
     assertSameTypeValue(intList.to(JHashSet), hashSet)
-//    assertSameTypeValue(intList.to(JTreeSet), treeSet)
-//    assertSameTypeValue(intList.to(JNavigableSet), treeSet)
-//    assertSameTypeValue(intList.to(JSortedSet), treeSet)
-//    assertSameTypeValue(intList.to(JSet), hashSet)
-//    assertSameTypeValue(intList.to(JCollection), arrayList)
-//    assertSameTypeValue(intList.to(JIterable), arrayList)
+    assertSameTypeValue(intList.to(JTreeSet), treeSet)
+    assertSameTypeValue(intList.to(JNavigableSet), treeSet)
+    assertSameTypeValue(intList.to(JSortedSet), treeSet)
+    assertSameTypeValue(intList.to(JSet), hashSet)
+    assertSameTypeValue(intList.to(JCollection), arrayList)
+    assertSameTypeValue(intList.to(JIterable), arrayList)
     assertSameTypeValue(pairList.toJMap, hashMap)
     assertSameTypeValue(pairList.toJMap[JMap], hashMap)
     assertSameTypeValue(pairList.toJMap[JHashMap], hashMap)
@@ -198,14 +199,14 @@ class JavaInteropTest extends FunSuite {
     var listenerCalled: Boolean = false
 
     assert(gfut.isDone == sfut.isCompleted)
-    assert(None == sfut.value)
+    assert(sfut.value.isEmpty)
 
     sfut.onComplete(_ => listenerCalled = true)
     gfut.set(123)
 
     assert(Await.result(sfut, Duration.Inf) == gfut.get)
     assert(gfut.isDone == sfut.isCompleted)
-    assert(sfut.value == Some(Success(123)))
+    assert(sfut.value.contains(Success(123)))
     assert(listenerCalled)
   }
 
@@ -242,21 +243,16 @@ class JavaInteropTest extends FunSuite {
     assert(fres == Failure(exception))
   }
 
-  test("toJMap should work") {
-    val jmap = Iterator(1 -> "jeden", 2 -> "dwa").toJMap
-    assert(jmap == JMap(1 -> "jeden", 2 -> "dwa"))
-  }
-
   test("JOptional companion object should act as factory") {
     val string = "alamakota"
     val stringOpt = JOptional(string)
-    assert(stringOpt.isPresent == true)
+    assert(stringOpt.isPresent)
     assert(stringOpt.get() == string)
 
     val nullOpt = JOptional[String](null)
-    assert(nullOpt.isPresent == false)
+    assert(!nullOpt.isPresent)
 
-    assert(JOptional.empty.isPresent == false)
+    assert(!JOptional.empty.isPresent)
 
     assert(JOptionalInt(3).getAsInt == 3)
     assert(JOptionalLong(3L).getAsLong == 3L)
