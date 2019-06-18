@@ -3,7 +3,7 @@ package collection
 
 import scala.collection.compat._
 import scala.collection.compat.immutable.ArraySeq
-import scala.collection.mutable.WrappedArrayBuilder
+import scala.collection.mutable
 
 trait CrossBuilder[-Elem, +To] extends MBuilder[Elem, To] {
   def addOne(elem: Elem): this.type
@@ -24,5 +24,5 @@ class CrossArraySeqFactory[A: ClassTag] extends Factory[A, ArraySeq[A]] {
 }
 object CrossArraySeqFactory {
   def newBuilder[A: ClassTag]: MBuilder[A, ArraySeq[A]] =
-    new WrappedArrayBuilder[A]().mapResult(wa => ArraySeq.unsafeWrapArray(wa.array))
+    new mutable.WrappedArrayBuilder[A](classTag[A]).mapResult(wa => ArraySeq.unsafeWrapArray(wa.array))
 }
