@@ -63,8 +63,9 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     }
   }
 
+  @silent("deprecated")
   private def getProps(obj: ConfigObject) =
-    obj.asScala.view.filterKeys(k => !k.startsWith("%") && !k.startsWith("_"))
+    obj.asScala.filterKeys(k => !k.startsWith("%") && !k.startsWith("_"))
 
   private def badAttr(key: String, value: ConfigValue) =
     throw new IllegalArgumentException(s"Unexpected attribute $key at ${value.origin.description}")
