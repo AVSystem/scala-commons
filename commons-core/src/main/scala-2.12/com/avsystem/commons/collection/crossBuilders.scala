@@ -3,6 +3,7 @@ package collection
 
 import scala.collection.compat._
 import scala.collection.compat.immutable.ArraySeq
+import scala.collection.mutable.WrappedArrayBuilder
 
 trait CrossBuilder[-Elem, +To] extends MBuilder[Elem, To] {
   def addOne(elem: Elem): this.type
