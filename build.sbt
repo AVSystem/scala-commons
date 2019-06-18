@@ -287,7 +287,7 @@ lazy val `commons-benchmark` = project
 lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
   .enablePlugins(ScalaJSPlugin)
   .configure(p => if (forIdeaImport) p.dependsOn(`commons-benchmark`) else p)
-  .dependsOn(`commons-macros`)
+  .dependsOn(`commons-core-js`)
   .settings(
     jsCommonSettings,
     noPublishSettings,
