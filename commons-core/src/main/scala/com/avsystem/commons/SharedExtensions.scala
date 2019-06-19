@@ -6,7 +6,7 @@ import com.github.ghik.silencer.silent
 
 import scala.annotation.tailrec
 import scala.collection.compat._
-import scala.collection.{AbstractIterator, mutable}
+import scala.collection.{AbstractIterator, IndexedSeqLike, mutable}
 
 trait SharedExtensions {
 
@@ -509,6 +509,15 @@ object SharedExtensionsUtils extends SharedExtensions {
 
   class IterableOnceOps[C[X] <: IterableOnce[X], A](private val coll: C[A]) extends AnyVal {
     private def it: Iterator[A] = coll.iterator
+
+    /**
+      * Provided as a Scala 2.12 "backport" of Scala 2.13 regular method.
+      * In Scala 2.13 this extension method is always be hidden by an actual method available on `IterableOnce`.
+      */
+    def knownSize: Int = coll match {
+      case is: IndexedSeqLike[_, _] => is.size
+      case _ => -1
+    }
 
     def toSized[To](fac: Factory[A, To], sizeHint: Int): To = {
       val b = fac.newBuilder
