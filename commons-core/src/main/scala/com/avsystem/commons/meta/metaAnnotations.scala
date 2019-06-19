@@ -114,7 +114,7 @@ final class optional extends SymbolArity
   * for more information about how parameters are encoded and decoded.
   *
   * If raw parameter is a `Coll <: Iterable[Raw]` then in order to collect real values into raw value, the macro engine
-  * will search for an instance of `BuildFrom[Nothing,R,Coll]` and use it to build the raw value.
+  * will search for an instance of `Factory[R,Coll]` and use it to build the raw value.
   * In order to extract real values from raw value, macro generated code will obtain an `Iterator[R]` from the raw value
   * and pull and possibly decode all the values. If the iterator is exhausted before all real values could be obtained
   * then default parameter values specified on real parameters (if any) will be used as fallback values instead of
@@ -124,7 +124,7 @@ final class optional extends SymbolArity
   * values are extracted by index (potentially also falling back to default values of real parameters).
   *
   * Finally, when raw parameter is a `Mapping <: PartialFunction[String,R]` then not only values but also parameter
-  * names are collected - the macro engine will search for an instance of `BuildFrom[Nothing,(String,R),Mapping]`
+  * names are collected - the macro engine will search for an instance of `Factory[(String,R),Mapping]`
   * in order to collect the mapping. Parameter names may be adjusted with
   * [[com.avsystem.commons.rpc.rpcName rpcName]] but must be unique in the
   * scope of a single raw parameter. In order to extract real values from mapping, macro generated code will

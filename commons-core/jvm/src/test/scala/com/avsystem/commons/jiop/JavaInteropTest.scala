@@ -87,7 +87,7 @@ class JavaInteropTest extends FunSuite {
   }
 
   test("streams should be collectible to java collections") {
-//    assertSameTypeValue(arrayList.scalaStream.to(JIterable), arrayList)
+    assertSameTypeValue(arrayList.scalaStream.to(JIterable), arrayList)
     assertSameTypeValue(arrayList.scalaStream.to(JArrayList), arrayList)
   }
 
@@ -241,6 +241,11 @@ class JavaInteropTest extends FunSuite {
 
     assert(sres == Success("lol"))
     assert(fres == Failure(exception))
+  }
+
+  test("toJMap should work") {
+    val jmap = Iterator(1 -> "jeden", 2 -> "dwa").toJMap
+    assert(jmap == JMap(1 -> "jeden", 2 -> "dwa"))
   }
 
   test("JOptional companion object should act as factory") {

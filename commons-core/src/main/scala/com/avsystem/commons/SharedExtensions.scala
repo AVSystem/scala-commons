@@ -41,7 +41,7 @@ trait SharedExtensions {
 
   implicit def setOps[A](set: BSet[A]): SetOps[A] = new SetOps(set)
 
-  implicit def IterableOnceOps[C[X] <: IterableOnce[X], A](coll: C[A]): IterableOnceOps[C, A] =
+  implicit def iterableOnceOps[C[X] <: IterableOnce[X], A](coll: C[A]): IterableOnceOps[C, A] =
     new IterableOnceOps(coll)
 
   implicit def traversableOps[C[X] <: BIterable[X], A](coll: C[A]): IterableOps[C, A] = new IterableOps(coll)
