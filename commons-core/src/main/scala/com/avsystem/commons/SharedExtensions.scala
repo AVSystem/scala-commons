@@ -515,7 +515,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * In Scala 2.13 this extension method is always be hidden by an actual method available on `IterableOnce`.
       */
     def knownSize: Int = coll match {
-      case is: IndexedSeqLike[_, _] => is.size
+      case is: BIndexedSeq[_] => is.size
       case _ => -1
     }
 
