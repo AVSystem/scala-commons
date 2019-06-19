@@ -50,18 +50,16 @@ object Sequencer extends TupleSequencers {
   implicit def collectionSequencer[ElOps, ElRes, M[X] <: IterableOnce[X], That](
     implicit elSequencer: Sequencer[ElOps, ElRes], bf: BuildFrom[M[ElOps], ElRes, That]): Sequencer[M[ElOps], That] =
 
-    new Sequencer[M[ElOps], That] {
-      def sequence(ops: M[ElOps]): CollectionBatch[ElRes, That] = {
-        val batches: Iterable[RedisBatch[ElRes]] =
-          if ((elSequencer eq reusableTrivialSequencer) && ops.isInstanceOf[Iterable[Any]])
-            ops.asInstanceOf[Iterable[RedisBatch[ElRes]]]
-          else {
-            val buf = new ArrayBuffer[RedisBatch[ElRes]]
-            ops.iterator.foreach(el => buf += elSequencer.sequence(el))
-            buf
-          }
-        new CollectionBatch[ElRes, That](batches, () => bf.newBuilder(ops))
-      }
+    (ops: M[ElOps]) => {
+      val batches: Iterable[RedisBatch[ElRes]] =
+        if ((elSequencer eq reusableTrivialSequencer) && ops.isInstanceOf[Iterable[Any]])
+          ops.asInstanceOf[Iterable[RedisBatch[ElRes]]]
+        else {
+          val buf = new ArrayBuffer[RedisBatch[ElRes]]
+          ops.iterator.foreach(el => buf += elSequencer.sequence(el))
+          buf
+        }
+      new CollectionBatch[ElRes, That](batches, () => bf.newBuilder(ops))
     }
 }
 

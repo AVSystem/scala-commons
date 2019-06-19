@@ -2,8 +2,6 @@ package com.avsystem.commons
 package rpc.akka
 
 import org.mockito.Mockito._
-import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.Answer
 import org.scalatest.concurrent.Waiters.Waiter
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
 import org.scalatest.time.Span
@@ -78,16 +76,12 @@ trait RPCFrameworkTest extends FlatSpecLike with Matchers with MockitoSugar with
 
   protected final def registerForCallWithReturnValue[T](mockCode: => T, returnValue: => T): Future[Unit] = {
     val calledMethodPromise = Promise[Unit]
-    when(mockCode).thenAnswer(new Answer[T] {
-      override def answer(invocation: InvocationOnMock): T = {
-        calledMethodPromise.trySuccess(Unit)
-        returnValue
-      }
-    })
+    when(mockCode).thenAnswer { _ =>
+      calledMethodPromise.trySuccess(Unit)
+      returnValue
+    }
     calledMethodPromise.future
   }
-
-
 }
 
 object RPCFrameworkTest {

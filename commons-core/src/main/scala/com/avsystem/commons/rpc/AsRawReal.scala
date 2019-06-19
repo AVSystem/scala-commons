@@ -15,9 +15,7 @@ object AsRaw extends FallbackAsRaw {
   def apply[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Raw, Real] = asRaw
 
   def create[Raw, Real](asRawFun: Real => Raw): AsRaw[Raw, Real] =
-    new AsRaw[Raw, Real] {
-      def asRaw(real: Real): Raw = asRawFun(real)
-    }
+    (real: Real) => asRawFun(real)
 
   // deliberately not implicit so that each raw type can turn it into an implicit with appropriate priority if desired
   def fromTransparentWrapping[Wrapped, Raw, Real](implicit
@@ -55,9 +53,7 @@ object AsReal extends FallbackAsReal {
   def apply[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Raw, Real] = asReal
 
   def create[Raw, Real](asRealFun: Raw => Real): AsReal[Raw, Real] =
-    new AsReal[Raw, Real] {
-      def asReal(raw: Raw): Real = asRealFun(raw)
-    }
+    (raw: Raw) => asRealFun(raw)
 
   // deliberately not implicit so that each raw type can turn it into an implicit with appropriate priority if desired
   def fromTransparentWrapping[Wrapped, Raw, Real](implicit

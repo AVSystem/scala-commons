@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.meta.{ParamFlags, ParamPosition, TypedMetadata, infer, multi, reifyFlags, reifyName, reifyParamListCount, reifyPosition}
+import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.TypeString
 import org.scalatest.FunSuite
 

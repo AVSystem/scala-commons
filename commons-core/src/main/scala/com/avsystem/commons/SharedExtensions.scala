@@ -713,7 +713,7 @@ object SharedExtensionsUtils extends SharedExtensions {
         private[this] var fetched = false
         private[this] var value = Opt.empty[T]
 
-        def hasNext = {
+        def hasNext: Boolean = {
           if (!fetched) {
             value = elem
             fetched = true
@@ -721,7 +721,7 @@ object SharedExtensionsUtils extends SharedExtensions {
           value.isDefined
         }
 
-        def next = {
+        def next: T = {
           if (!fetched) {
             value = elem
           }
@@ -740,7 +740,7 @@ object SharedExtensionsUtils extends SharedExtensions {
         private[this] var fetched = true
         private[this] var value = start
 
-        def hasNext = {
+        def hasNext: Boolean = {
           if (!fetched) {
             value = nextFun(value.get)
             fetched = true
@@ -748,7 +748,7 @@ object SharedExtensionsUtils extends SharedExtensions {
           value.isDefined
         }
 
-        def next = {
+        def next: T = {
           if (!fetched) {
             value = nextFun(value.get)
           }
@@ -765,13 +765,12 @@ object SharedExtensionsUtils extends SharedExtensions {
 
   final class OrderingOps[A](private val ordering: Ordering[A]) extends AnyVal {
     def orElse(whenEqual: Ordering[A]): Ordering[A] =
-      new Ordering[A] {
-        override def compare(x: A, y: A): Int = ordering.compare(x, y) match {
-          case 0 => whenEqual.compare(x, y)
-          case res => res
-        }
+      (x, y) => ordering.compare(x, y) match {
+        case 0 => whenEqual.compare(x, y)
+        case res => res
       }
 
-    def orElseBy[B: Ordering](f: A => B): Ordering[A] = orElse(Ordering.by(f))
+    def orElseBy[B: Ordering](f: A => B): Ordering[A] =
+      orElse(Ordering.by(f))
   }
 }
