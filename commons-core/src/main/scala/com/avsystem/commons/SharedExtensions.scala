@@ -6,7 +6,7 @@ import com.github.ghik.silencer.silent
 
 import scala.annotation.tailrec
 import scala.collection.compat._
-import scala.collection.{AbstractIterator, IndexedSeqLike, mutable}
+import scala.collection.{AbstractIterator, mutable}
 
 trait SharedExtensions {
 
