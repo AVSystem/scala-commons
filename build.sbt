@@ -190,7 +190,6 @@ lazy val `commons-jvm` = project.in(file(".jvm"))
     `commons-hocon`,
     `commons-spring`,
     `commons-redis`,
-    `commons-akka`,
     `commons-benchmark`,
   )
   .settings(aggregateProjectSettings)
@@ -267,7 +266,7 @@ lazy val `commons-jetty` = project
   )
 
 lazy val `commons-benchmark` = project
-  .dependsOn(`commons-akka`, `commons-redis`, `commons-mongo`)
+  .dependsOn(`commons-redis`, `commons-mongo`)
   .enablePlugins(JmhPlugin)
   .settings(
     jvmCommonSettings,
@@ -350,19 +349,6 @@ lazy val `commons-spring` = project
     libraryDependencies ++= Seq(
       "org.springframework" % "spring-context" % springVersion,
     ),
-  )
-
-lazy val `commons-akka` = project
-  .dependsOn(`commons-core` % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-      "com.typesafe.akka" %% "akka-remote" % akkaVersion,
-      "io.monix" %% "monix" % monixVersion,
-      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
-    ),
-    noScala213Settings,
   )
 
 lazy val `commons-comprof` = project
