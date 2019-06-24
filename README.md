@@ -37,10 +37,10 @@
   * `MacroCommons` trait with several convenience functions for implementing macros
   * `TypeClassDerivation` - implements infrastructure for automatic type class derivation
 * [`commons-analyzer`](docs/Analyzer.md) - static analyzer for Scala code, i.e. a compiler plugin that enforces various (mostly unrelated) rules and conventions on source code
-* `commons-annotations` - contains annotations used by macros and static analyzer
 * `commons-jetty` - Jetty server utilities
 * `commons-mongo` - MongoDB utilities for Scala & Java MongoDB drivers, integration with `GenCodec`
-* `commons-kafka` - Kafka utilities
+* `commons-hocon` - Utilities for handling [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md), e.g. a
+  `HoconInput` implementation for `GenCodec`
 * `commons-spring` - Spring framework utilities:
   * `HoconBeanDefinitionReader` - an utility that allows you to define Spring application context using HOCON format
 
