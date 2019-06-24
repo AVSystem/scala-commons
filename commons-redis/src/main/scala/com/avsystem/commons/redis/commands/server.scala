@@ -8,6 +8,8 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol.BulkStringMsg
 
+import scala.collection.compat._
+
 trait NodeServerApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/bgrewriteaof BGREWRITEAOF]] */
   def bgrewriteaof: Result[String] =
@@ -184,7 +186,7 @@ trait NodeServerApi extends ApiSubset {
     val encoded: Encoded = encoder("COMMAND", "COUNT").result
   }
 
-  private final class CommandGetkeys(command: TraversableOnce[ByteString]) extends RedisDataSeqCommand[Key] with NodeCommand {
+  private final class CommandGetkeys(command: IterableOnce[ByteString]) extends RedisDataSeqCommand[Key] with NodeCommand {
     val encoded: Encoded = encoder("COMMAND", "GETKEYS").add(command).result
   }
 

@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class ImplicitTypes[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "implicitTypes") {
+class ImplicitTypes(g: Global) extends AnalyzerRule(g, "implicitTypes") {
 
   import global._
 

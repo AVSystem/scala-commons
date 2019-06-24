@@ -213,22 +213,25 @@ directly on `String` values, without intermediate JSON AST
 
 In order to serialize/deserialize value of some type, there needs to be an implicit value of type `GenCodec[T]` available.
 The library by default provides codecs for common Scala and Java types:
-* `Unit`, `Null`, `String`, `Symbol`, `Char`, `Boolean`, `Byte`, `Short`, `Int`, `Long`, `Float`, `Double`, `java.util.Date`, 
-  `Array[Byte]`, `BigInt`, `BigDecimal` and all their Java boxed counterparts (like `java.lang.Integer`).
+* `Unit`, `Null`, `String`, `Symbol`, `Char`, `Boolean`, `Byte`, `Short`, `Int`, `Long`, `Float`, `Double`,
+  `java.util.Date`, `Array[Byte]`, `BigInt`, `BigDecimal` and all their Java boxed counterparts 
+  (like `java.lang.Integer`).
 * Any Scala tuple, provided that every tuple element type can be serialized. Tuples are serialized into lists.
 * Any `Array[T]`, provided that `T` can be serialized
-* Any Scala collection extending `scala.collection.Seq[T]` or `scala.collection.Set[T]`, provided that `T` can be serialized
-  and there is an appropriate instance of `CanBuildFrom` (e.g. `GenCodec[List[T]]` requires `CanBuildFrom[Nothing, T, List[T]]`).
-  All standard library collections have this `CanBuildFrom` instance so you only have to worry about it when dealing with
+* Any Scala collection extending `scala.collection.Seq[T]` or `scala.collection.Set[T]`, provided that `T` can be 
+  serialized
+  and there is an appropriate instance of `Factory` (e.g. `GenCodec[List[T]]` requires `Factory[T, List[T]]`).
+  All standard library collections have this `Factory` instance so you only have to worry about it when dealing with
   custom collection implementations.
 * Any `java.util.Collection[T]`, provided that `T` can be serialized
 * Any `scala.collection.Map[K,V]` provided that `V` can be serialized and there is an implicit
-  [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html) available for `K`
-  so that it can be converted to a string and used as object key. There must also be an appropriate instance of `CanBuildFrom` for
-  particular `Map` implementation (e.g. `HashMap[K,V]` requires `CanBuildFrom[Nothing, (K, V), HashMap[K, V]]`).
-  All standard library map implementations have this `CanBuildFrom` instance so you only have to worry about it when dealing
-  with custom map implementations.
-* Any `java.util.Map[K,V]`, with the same restrictions as for Scala maps (there must be `GenCodec` for `V` and `GenKeyCodec` for `K`)
+  [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html)
+   available for `K` so that it can be converted to a string and used as object key. 
+  There must also be an appropriate instance of `Factory` for particular `Map` implementation (e.g. `HashMap[K,V]` 
+  requires `Factory[(K, V), HashMap[K, V]]`). All standard library map implementations have this `Factory` instance
+  so you only have to worry about it when dealing with custom map implementations.
+* Any `java.util.Map[K,V]`, with the same restrictions as for Scala maps (there must be `GenCodec` for `V` and 
+  `GenKeyCodec` for `K`)
 * `Option[T]`, `Opt[T]`, `OptArg[T]`, `NOpt[T]`, `OptRef[T]`, provided that `T` can be serialized.
 * `Either[A,B]`, provided that `A` and `B` can be serialized.
 * [`NamedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnum.html)s 

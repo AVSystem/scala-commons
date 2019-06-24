@@ -4,7 +4,6 @@ package redis
 import com.avsystem.commons.redis.commands.NodeId
 import org.scalatest.Suite
 
-import scala.concurrent.duration._
 import scala.sys.process._
 
 /**

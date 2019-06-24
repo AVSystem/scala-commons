@@ -16,7 +16,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final def MetaPackage = q"$CommonsPkg.meta"
   final def RpcUtils = q"$RpcPackage.RpcUtils"
   final def OptionLikeCls = tq"$MetaPackage.OptionLike"
-  final def CanBuildFromCls = tq"$CollectionPkg.generic.CanBuildFrom"
+  final def FactoryCls = tq"$CollectionPkg.compat.Factory"
   final lazy val RpcArityAT: Type = staticType(tq"$MetaPackage.SymbolArity")
   final lazy val SingleArityAT: Type = staticType(tq"$MetaPackage.single")
   final lazy val OptionalArityAT: Type = staticType(tq"$MetaPackage.optional")
@@ -312,12 +312,12 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
     lazy val optionLike: CachedImplicit = infer(tq"$OptionLikeCls[$actualType]")
 
-    lazy val canBuildFrom: CachedImplicit = arity match {
+    lazy val factory: CachedImplicit = arity match {
       case _: ParamArity.Multi if allowNamedMulti && actualType <:< StringPFTpe =>
-        infer(tq"$CanBuildFromCls[$NothingCls,($StringCls,${arity.collectedType}),$actualType]")
+        infer(tq"$FactoryCls[($StringCls,${arity.collectedType}),$actualType]")
       case _: ParamArity.Multi =>
-        infer(tq"$CanBuildFromCls[$NothingCls,${arity.collectedType},$actualType]")
-      case _ => abort(s"(bug) CanBuildFrom computed for non-multi $shortDescription")
+        infer(tq"$FactoryCls[${arity.collectedType},$actualType]")
+      case _ => abort(s"(bug) BuildFrom computed for non-multi $shortDescription")
     }
 
     def mkOptional[T: Liftable](opt: Option[T]): Tree =
@@ -325,11 +325,11 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
     def mkMulti[T: Liftable](elements: List[T]): Tree =
       if (elements.isEmpty)
-        q"$RpcUtils.createEmpty(${canBuildFrom.name})"
+        q"$RpcUtils.createEmpty(${factory.name})"
       else {
         val builderName = c.freshName(TermName("builder"))
         q"""
-          val $builderName = $RpcUtils.createBuilder(${canBuildFrom.name}, ${elements.size})
+          val $builderName = $RpcUtils.createBuilder(${factory.name}, ${elements.size})
           ..${elements.map(t => q"$builderName += $t")}
           $builderName.result()
         """
@@ -385,12 +385,19 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
   class ParamsParser[Real](reals: Seq[Real]) {
 
-    import scala.collection.JavaConverters._
-
     private val realParams = new java.util.LinkedList[Real]
-    realParams.addAll(reals.asJava)
+    reals.foreach(realParams.add)
 
-    def remaining: Seq[Real] = realParams.asScala
+    // avoiding asScala/asJava extensions because of problems because of 2.12/2.13 cross building
+    // https://github.com/scala/scala-collection-compat/issues/208
+    def remaining: Seq[Real] = {
+      val lb = new ListBuffer[Real]
+      val it = realParams.iterator()
+      while (it.hasNext) {
+        lb += it.next()
+      }
+      lb.result()
+    }
 
     def extractSingle[M](consume: Boolean, matcher: Real => Option[Res[M]], unmatchedError: String): Res[M] = {
       val it = realParams.listIterator()

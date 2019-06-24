@@ -4,8 +4,6 @@ package misc
 import com.avsystem.commons.misc.TypedMap.GenCodecMapping
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, ObjectInput, ObjectOutput}
 
-import scala.language.{higherKinds, implicitConversions}
-
 class TypedMap[K[_]](val raw: Map[K[_], Any]) extends AnyVal {
   def apply[T](key: K[T]): Option[T] =
     raw.get(key).map(_.asInstanceOf[T])

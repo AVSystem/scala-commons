@@ -226,7 +226,7 @@ trait SortedSetsApiSuite extends CommandsSuite {
         case (Cursor.NoCursor, data) => Future.successful(acc ++ data)
         case (nextCursor, data) => zscanCollect(nextCursor, acc ++ data)
       }
-    zscanCollect(Cursor.NoCursor, Vector.empty).futureValue.sortBy(_._2) shouldEqual scanMembers
+    zscanCollect(Cursor.NoCursor, Vector.empty).futureValue.sortBy(_._2.toInt) shouldEqual scanMembers
   }
 
   apiTest("ZSCORE") {

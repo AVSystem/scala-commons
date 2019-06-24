@@ -13,13 +13,6 @@ import scala.{collection => sc}
   * `M` stands for mutable
   */
 trait CollectionAliases {
-  type BTraversable[+A] = sc.Traversable[A]
-  final def BTraversable: sc.Traversable.type = sc.Traversable
-  type ITraversable[+A] = sci.Traversable[A]
-  final def ITraversable: sci.Traversable.type = sci.Traversable
-  type MTraversable[A] = scm.Traversable[A]
-  final def MTraversable: scm.Traversable.type = scm.Traversable
-
   type BIterable[+A] = sc.Iterable[A]
   final def BIterable: sc.Iterable.type = sc.Iterable
   type IIterable[+A] = sci.Iterable[A]
@@ -45,8 +38,6 @@ trait CollectionAliases {
   final def BLinearSeq: sc.LinearSeq.type = sc.LinearSeq
   type ILinearSeq[+A] = sci.LinearSeq[A]
   final def ILinearSeq: sci.LinearSeq.type = sci.LinearSeq
-  type MLinearSeq[A] = scm.LinearSeq[A]
-  final def MLinearSeq: scm.LinearSeq.type = scm.LinearSeq
 
   type IQueue[+A] = sci.Queue[A]
   final def IQueue: sci.Queue.type = sci.Queue
@@ -104,8 +95,6 @@ trait CollectionAliases {
 
   type IListMap[A, +B] = sci.ListMap[A, B]
   final def IListMap: sci.ListMap.type = sci.ListMap
-  type MListMap[A, B] = scm.ListMap[A, B]
-  final def MListMap: scm.ListMap.type = scm.ListMap
 
   type BSortedMap[A, +B] = sc.SortedMap[A, B]
   final def BSortedMap: sc.SortedMap.type = sc.SortedMap
@@ -114,12 +103,15 @@ trait CollectionAliases {
 
   type ITreeMap[A, +B] = sci.TreeMap[A, B]
   final def ITreeMap: sci.TreeMap.type = sci.TreeMap
-  // Coming in Scala 2.12
-  // type MTreeMap[A, B] = scm.TreeMap[A, B]
-  // final def MTreeMap: scm.TreeMap.type = scm.TreeMap
+
+  type MTreeMap[A, B] = scm.TreeMap[A, B]
+  final def MTreeMap: scm.TreeMap.type = scm.TreeMap
 
   type MBuffer[A] = scm.Buffer[A]
   final def MBuffer: scm.Buffer.type = scm.Buffer
+
+  type MBuilder[-Elem, +To] = scm.Builder[Elem, To]
+  type MColBuilder[Elem, +Col[_]] = scm.Builder[Elem, Col[Elem]]
 
   type MListBuffer[A] = scm.ListBuffer[A]
   final def MListBuffer: scm.ListBuffer.type = scm.ListBuffer

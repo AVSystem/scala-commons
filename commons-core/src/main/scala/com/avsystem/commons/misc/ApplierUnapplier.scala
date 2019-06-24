@@ -2,6 +2,7 @@ package com.avsystem.commons
 package misc
 
 import scala.annotation.implicitNotFound
+import scala.collection.compat.immutable.ArraySeq
 
 /**
   * Typeclass which captures case class `apply` method in a raw form that takes untyped sequence of arguments.
@@ -27,7 +28,7 @@ object Unapplier {
 }
 
 class ProductUnapplier[T <: Product] extends Unapplier[T] {
-  def unapply(value: T): Seq[Any] = value.productIterator.toArray[Any]
+  def unapply(value: T): Seq[Any] = ArraySeq.unsafeWrapArray(value.productIterator.toArray)
 }
 abstract class ProductApplierUnapplier[T <: Product] extends ProductUnapplier[T] with ApplierUnapplier[T]
 

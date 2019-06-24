@@ -3,11 +3,10 @@ package jiop
 
 import java.util.LongSummaryStatistics
 
-import scala.collection.generic.CanBuildFrom
-import scala.language.higherKinds
+import scala.collection.compat._
 
 final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
-  def asJava = jStream
+  def asJava: JLongStream = jStream
 
   def close(): Unit =
     jStream.close()
@@ -120,8 +119,8 @@ final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
   def toArray: Array[Long] =
     jStream.toArray
 
-  def to[Col[_]](implicit cbf: CanBuildFrom[Nothing, Long, Col[Long]]): Col[Long] = {
-    val b = cbf.apply()
+  def to[C](implicit fac: Factory[Long, C]): C = {
+    val b = fac.newBuilder
     forEachOrdered(b += _)
     b.result()
   }

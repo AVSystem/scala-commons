@@ -6,7 +6,7 @@ import java.time.Instant
 import org.bson.types.ObjectId
 import org.bson.{BsonArray, BsonBinary, BsonBoolean, BsonDateTime, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonObjectId, BsonString, BsonValue}
 
-import _root_.scala.collection.generic.CanBuildFrom
+import _root_.scala.collection.compat._
 import _root_.scala.language.higherKinds
 
 /**
@@ -23,7 +23,7 @@ trait BsonCodec[A, BSON <: BsonValue] {self =>
 
   def key(key: String): DocKey[A, BSON] = new DocKey[A, BSON](key, this)
 
-  def collection[C[X] <: TraversableOnce[X]](implicit cbf: CanBuildFrom[Nothing, A, C[A]]): BsonCodec[C[A], BsonArray] =
+  def collection[C[X] <: IterableOnce[X]](implicit fac: Factory[A, C[A]]): BsonCodec[C[A], BsonArray] =
     BsonCodec.create[C[A], BsonArray](
       ba => ba.iterator().asScala.map(bv => self.fromBson(bv.asInstanceOf[BSON])).to[C],
       col => new BsonArray(col.toIterator.map(self.toBson).to[JList])

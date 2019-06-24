@@ -379,9 +379,7 @@ object XEntryId {
     case i => XEntryId(strtoul(str.substring(0, i)), OptArg(strtoul(str.substring(i + 1))))
   }
 
-  implicit val ordering: Ordering[XEntryId] = new Ordering[XEntryId] {
-    def compare(x: XEntryId, y: XEntryId): Int = x.compare(y)
-  }
+  implicit val ordering: Ordering[XEntryId] = _ compare _
 
   implicit val commandArg: CommandArg[XEntryId] =
     CommandArg((enc, eid) => enc.add(eid.toString))

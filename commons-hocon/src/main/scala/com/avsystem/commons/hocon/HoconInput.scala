@@ -9,8 +9,6 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import com.typesafe.config._
 
-import scala.concurrent.duration.FiniteDuration
-
 object HoconInput {
   def read[T: GenCodec](value: ConfigValue): T =
     GenCodec.read[T](new HoconInput(value))

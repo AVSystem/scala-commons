@@ -6,7 +6,7 @@ import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.exception.ForbiddenCommandException
 import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, RedisMsg, RedisReply}
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
 
 /**
   * One or more raw Redis commands. More lightweight than regular Scala collection
@@ -39,10 +39,10 @@ trait RawCommand extends RawCommandPack with RawCommands with ReplyPreprocessor 
   override final def isAsking = false
 
   protected final def encoder(command: String): CommandEncoder =
-    new CommandEncoder(new ArrayBuffer).add(command)
+    new CommandEncoder(mutable.ArrayBuilder.make[BulkStringMsg]).add(command)
 
   protected final def encoder(command: String, subcommand: String): CommandEncoder =
-    new CommandEncoder(new ArrayBuffer).add(command).add(subcommand)
+    new CommandEncoder(mutable.ArrayBuilder.make[BulkStringMsg]).add(command).add(subcommand)
 }
 
 trait UnsafeCommand extends RawCommand {
@@ -71,7 +71,7 @@ object RawCommand {
 }
 
 /**
-  * One or more [[RawCommandPack]]s. Conceptually pretty much the same as `Traversable[RawCommandPack]]`
+  * One or more [[RawCommandPack]]s. Conceptually pretty much the same as `Iterable[RawCommandPack]]`
   * but more lightweight.
   */
 trait RawCommandPacks {

@@ -3,8 +3,6 @@ package redis.commands
 
 import com.avsystem.commons.redis._
 
-import scala.concurrent.duration._
-
 trait KeyedFullApiSuite extends CommandsSuite
   with GeoApiSuite
   with KeyedScriptingApiSuite

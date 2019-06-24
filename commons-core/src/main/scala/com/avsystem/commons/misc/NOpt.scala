@@ -4,8 +4,6 @@ package misc
 
 import com.avsystem.commons.misc.NOpt.{EmptyMarker, NullMarker}
 
-import scala.language.implicitConversions
-
 object NOpt {
   // These two are used as NOpt's raw value to represent empty NOpt and NOpt(null).
   // Unfortunately, null itself can't be used for that purpose because https://github.com/scala/bug/issues/7396

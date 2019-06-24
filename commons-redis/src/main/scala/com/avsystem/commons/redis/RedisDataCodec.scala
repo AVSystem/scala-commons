@@ -7,8 +7,6 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
 
-import scala.collection.mutable.ArrayBuffer
-
 /**
   * Typeclass which expresses that values of some type are serializable to binary form (`ByteString`) and deserializable
   * from it in order to use them as keys, hash keys and values in Redis commands.
@@ -87,10 +85,10 @@ final class RedisDataOutput(consumer: ByteString => Unit) extends OutputAndSimpl
   }
 }
 
-class RedisRecordOutput(buffer: ArrayBuffer[BulkStringMsg]) extends ObjectOutput {
+class RedisRecordOutput(builder: MBuilder[BulkStringMsg, _]) extends ObjectOutput {
   def writeField(key: String): Output = {
-    buffer += BulkStringMsg(ByteString(key))
-    new RedisDataOutput(bs => buffer += BulkStringMsg(bs))
+    builder += BulkStringMsg(ByteString(key))
+    new RedisDataOutput(bs => builder += BulkStringMsg(bs))
   }
 
   def finish(): Unit = ()

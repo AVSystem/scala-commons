@@ -36,6 +36,7 @@ trait MacroCommons { bundle =>
   final def CollectionPkg: Tree = q"$ScalaPkg.collection"
   final def ImmutablePkg: Tree = q"$CollectionPkg.immutable"
   final def MutablePkg: Tree = q"$CollectionPkg.mutable"
+  final def ArrayObj: Tree = q"$ScalaPkg.Array"
   final def ListObj: Tree = q"$ImmutablePkg.List"
   final def ListCls: Tree = tq"$ImmutablePkg.List"
   final def SetObj: Tree = q"$ImmutablePkg.Set"
@@ -1207,11 +1208,11 @@ trait MacroCommons { bundle =>
       directSubclasses.flatMap(allCurrentlyKnownSubclasses) + sym
     } else Set.empty
 
-  private val ownersCache = new mutable.OpenHashMap[Symbol, List[Symbol]]
+  private val ownersCache = new mutable.HashMap[Symbol, List[Symbol]]
   def ownersOf(sym: Symbol): List[Symbol] =
     ownersCache.getOrElseUpdate(sym, Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).toList.reverse)
 
-  private val positionCache = new mutable.OpenHashMap[Symbol, Int]
+  private val positionCache = new mutable.HashMap[Symbol, Int]
   def positionPoint(sym: Symbol): Int =
     if (c.enclosingPosition.source == sym.pos.source) sym.pos.point
     else positionCache.getOrElseUpdate(sym,

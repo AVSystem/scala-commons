@@ -1,9 +1,10 @@
 package com.avsystem.commons
 package spring
 
-import java.{lang => jl, util => ju}
+import java.{util => ju}
 
 import com.avsystem.commons.spring.AttrNames._
+import com.github.ghik.silencer.silent
 import com.typesafe.config._
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder
@@ -62,6 +63,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     }
   }
 
+  @silent("deprecated")
   private def getProps(obj: ConfigObject) =
     obj.asScala.filterKeys(k => !k.startsWith("%") && !k.startsWith("_"))
 

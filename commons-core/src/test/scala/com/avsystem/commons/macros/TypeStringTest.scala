@@ -5,9 +5,6 @@ import com.avsystem.commons.misc.TypeString
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
 
-import scala.language.experimental.macros
-import scala.language.higherKinds
-
 object TypeStringTest {
   val x = "x"
 

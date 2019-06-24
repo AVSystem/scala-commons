@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package macros.misc
 
-import scala.collection.generic.CanBuildFrom
+import scala.collection.compat.BuildFrom
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
@@ -43,7 +43,7 @@ case class Ok[+T](value: T) extends Res[T]
 case class FailMsg(message: String) extends Res[Nothing]
 object Fail extends Res[Nothing]
 object Res {
-  def traverse[M[X] <: Iterable[X], A, B](in: M[A])(f: A => Res[B])(implicit cbf: CanBuildFrom[M[A], B, M[B]]): Res[M[B]] = {
+  def traverse[M[X] <: Iterable[X], A, B](in: M[A])(f: A => Res[B])(implicit bf: BuildFrom[M[A], B, M[B]]): Res[M[B]] = {
     val it = in.iterator
     def loop(builder: mutable.Builder[B, M[B]]): Res[M[B]] =
       if (it.hasNext) {
@@ -53,10 +53,10 @@ object Res {
           case Fail => Fail
         }
       } else Ok(builder.result())
-    loop(cbf(in))
+    loop(bf.newBuilder(in))
   }
 
-  def sequence[M[X] <: Iterable[X], A](in: M[Res[A]])(implicit cbf: CanBuildFrom[M[Res[A]], A, M[A]]): Res[M[A]] =
+  def sequence[M[X] <: Iterable[X], A](in: M[Res[A]])(implicit bf: BuildFrom[M[Res[A]], A, M[A]]): Res[M[A]] =
     traverse(in)(identity)
 
   def sequence[A](in: Option[Res[A]]): Res[Option[A]] = in match {

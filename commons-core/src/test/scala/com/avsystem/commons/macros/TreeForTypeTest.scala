@@ -1,9 +1,6 @@
 package com.avsystem.commons
 package macros
 
-import scala.language.experimental.macros
-import scala.language.higherKinds
-
 object TreeForTypeTest {
   def testTreeForType(tpeRepr: String): Nothing = macro com.avsystem.commons.macros.TestMacros.testTreeForType
 
@@ -32,7 +29,7 @@ object TreeForTypeTest {
   testTreeForType(
     """AnyRef {
     type Lol[K, V] <: Map[K, V]
-    def stuff[C[+X] <: Traversable[X]](c: C[Int]): C[String]
+    def stuff[C[+X] <: Iterable[X]](c: C[Int]): C[String]
     val lulz: Map[String, Int]
   }""")
 }
@@ -74,7 +71,7 @@ class TreeForTypeTest {
     """AnyRef {
     type Lol[K, V] <: Map[K, V]
     type Stuff[K, V] = Map[K, V]
-    def stuff[C[+X] <: Traversable[X]](c: C[Int]): C[String]
+    def stuff[C[+X] <: Iterable[X]](c: C[Int]): C[String]
     val lulz: Map[String, Int]
   }""")
 
@@ -103,7 +100,7 @@ class TreeForTypeTest {
       """AnyRef {
       type Lol[K, V] <: Map[K, V]
       type Stuff[K, V] = Map[K, V]
-      def stuff[C[+X] <: Traversable[X]](c: C[Int]): C[String]
+      def stuff[C[+X] <: Iterable[X]](c: C[Int]): C[String]
       val lulz: Map[String, Int]
     }""")
   }
@@ -129,7 +126,7 @@ object UnrelatedTreeForType {
     """AnyRef {
     type Lol[K, V] <: Map[K, V]
     type Stuff[K, V] = Map[K, V]
-    def stuff[C[+X] <: Traversable[X]](c: C[Int]): C[String]
+    def stuff[C[+X] <: Iterable[X]](c: C[Int]): C[String]
     val lulz: Map[String, Int]
   }""")
 }

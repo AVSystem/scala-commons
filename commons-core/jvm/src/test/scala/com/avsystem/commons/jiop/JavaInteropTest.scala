@@ -9,6 +9,7 @@ import GuavaInterop._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.collection.compat._
 
 class JavaInteropTest extends FunSuite {
 
@@ -34,14 +35,14 @@ class JavaInteropTest extends FunSuite {
     map
   }
 
-  val arrayList = col(new JArrayList[Int])
-  val linkedList = col(new JLinkedList[Int])
-  val hashSet = col(new JHashSet[Int])
-  val linkedHashSet = col(new JLinkedHashSet[Int])
-  val treeSet = col(new JTreeSet[Int])
-  val hashMap = map(new JHashMap[Int, String])
-  val linkedHashMap = map(new JLinkedHashMap[Int, String])
-  val treeMap = map(new JTreeMap[Int, String])
+  final val arrayList = col(new JArrayList[Int])
+  final val linkedList = col(new JLinkedList[Int])
+  final val hashSet = col(new JHashSet[Int])
+  final val linkedHashSet = col(new JLinkedHashSet[Int])
+  final val treeSet = col(new JTreeSet[Int])
+  final val hashMap = map(new JHashMap[Int, String])
+  final val linkedHashMap = map(new JLinkedHashMap[Int, String])
+  final val treeMap = map(new JTreeMap[Int, String])
 
   test("adapted java stream api should work") {
     val input = JArrayList("a", "b", "c", "d", "e", "f", "g")
@@ -78,33 +79,32 @@ class JavaInteropTest extends FunSuite {
   }
 
   test("streams should be collectible to scala collections") {
-    assertSameTypeValue(arrayList.scalaStream.to[Traversable], Iterator(1, 2, 3).to[Traversable])
-    assertSameTypeValue(arrayList.scalaStream.to[Iterable], Iterator(1, 2, 3).to[Iterable])
-    assertSameTypeValue(arrayList.scalaStream.to[Seq], Iterator(1, 2, 3).to[Seq])
-    assertSameTypeValue(arrayList.scalaStream.to[List], Iterator(1, 2, 3).to[List])
-    assertSameTypeValue(arrayList.scalaStream.to[Vector], Iterator(1, 2, 3).to[Vector])
-    assertSameTypeValue(arrayList.scalaStream.to[Set], Iterator(1, 2, 3).to[Set])
+    assertSameTypeValue(arrayList.scalaStream.to(Iterable), Iterator(1, 2, 3).to(Iterable))
+    assertSameTypeValue(arrayList.scalaStream.to(Seq), Iterator(1, 2, 3).to(Seq))
+    assertSameTypeValue(arrayList.scalaStream.to(List), Iterator(1, 2, 3).to(List))
+    assertSameTypeValue(arrayList.scalaStream.to(Vector), Iterator(1, 2, 3).to(Vector))
+    assertSameTypeValue(arrayList.scalaStream.to(Set), Iterator(1, 2, 3).to(Set))
   }
 
   test("streams should be collectible to java collections") {
-    assertSameTypeValue(arrayList.scalaStream.to[JIterable], arrayList)
-    assertSameTypeValue(arrayList.scalaStream.to[JArrayList], arrayList)
+    assertSameTypeValue(arrayList.scalaStream.to(JIterable), arrayList)
+    assertSameTypeValue(arrayList.scalaStream.to(JArrayList), arrayList)
   }
 
-  test("java collection CanBuildFroms should have proper priority") {
+  test("java collection BuildFroms should have proper priority") {
     val intList = List(1, 2, 3)
     val pairList = intList.map(i => (i, i.toString))
-    assertSameTypeValue(intList.to[JArrayList], arrayList)
-    assertSameTypeValue(intList.to[JLinkedList], linkedList)
-    assertSameTypeValue(intList.to[JList], arrayList)
-    assertSameTypeValue(intList.to[JLinkedHashSet], linkedHashSet)
-    assertSameTypeValue(intList.to[JHashSet], hashSet)
-    assertSameTypeValue(intList.to[JTreeSet], treeSet)
-    assertSameTypeValue(intList.to[JNavigableSet], treeSet)
-    assertSameTypeValue(intList.to[JSortedSet], treeSet)
-    assertSameTypeValue(intList.to[JSet], hashSet)
-    assertSameTypeValue(intList.to[JCollection], arrayList)
-    assertSameTypeValue(intList.to[JIterable], arrayList)
+    assertSameTypeValue(intList.to(JArrayList), arrayList)
+    assertSameTypeValue(intList.to(JLinkedList), linkedList)
+    assertSameTypeValue(intList.to(JList), arrayList)
+    assertSameTypeValue(intList.to(JLinkedHashSet), linkedHashSet)
+    assertSameTypeValue(intList.to(JHashSet), hashSet)
+    assertSameTypeValue(intList.to(JTreeSet), treeSet)
+    assertSameTypeValue(intList.to(JNavigableSet), treeSet)
+    assertSameTypeValue(intList.to(JSortedSet), treeSet)
+    assertSameTypeValue(intList.to(JSet), hashSet)
+    assertSameTypeValue(intList.to(JCollection), arrayList)
+    assertSameTypeValue(intList.to(JIterable), arrayList)
     assertSameTypeValue(pairList.toJMap, hashMap)
     assertSameTypeValue(pairList.toJMap[JMap], hashMap)
     assertSameTypeValue(pairList.toJMap[JHashMap], hashMap)
@@ -199,14 +199,14 @@ class JavaInteropTest extends FunSuite {
     var listenerCalled: Boolean = false
 
     assert(gfut.isDone == sfut.isCompleted)
-    assert(None == sfut.value)
+    assert(sfut.value.isEmpty)
 
     sfut.onComplete(_ => listenerCalled = true)
     gfut.set(123)
 
     assert(Await.result(sfut, Duration.Inf) == gfut.get)
     assert(gfut.isDone == sfut.isCompleted)
-    assert(sfut.value == Some(Success(123)))
+    assert(sfut.value.contains(Success(123)))
     assert(listenerCalled)
   }
 
@@ -251,13 +251,13 @@ class JavaInteropTest extends FunSuite {
   test("JOptional companion object should act as factory") {
     val string = "alamakota"
     val stringOpt = JOptional(string)
-    assert(stringOpt.isPresent == true)
+    assert(stringOpt.isPresent)
     assert(stringOpt.get() == string)
 
     val nullOpt = JOptional[String](null)
-    assert(nullOpt.isPresent == false)
+    assert(!nullOpt.isPresent)
 
-    assert(JOptional.empty.isPresent == false)
+    assert(!JOptional.empty.isPresent)
 
     assert(JOptionalInt(3).getAsInt == 3)
     assert(JOptionalLong(3L).getAsLong == 3L)
@@ -275,7 +275,7 @@ class JavaInteropTest extends FunSuite {
     assert(Option(3).asJava == JOptional(3))
 
     assert(Option(3L).asJava == JOptional(3L))
-    assert(Option(3L).asJavaLong == JOptionalLong(3l))
+    assert(Option(3L).asJavaLong == JOptionalLong(3L))
 
     assert(Option(3.0).asJava == JOptional(3.0))
     assert(Option(3.0).asJavaDouble == JOptionalDouble(3.0))
@@ -292,7 +292,7 @@ class JavaInteropTest extends FunSuite {
     assert(Option(3) == JOptional(3).asScala)
 
     assert(Option(3L) == JOptional(3L).asScala)
-    assert(Option(3L) == JOptionalLong(3l).asScala)
+    assert(Option(3L) == JOptionalLong(3L).asScala)
 
     assert(Option(3.0) == JOptional(3.0).asScala)
     assert(Option(3.0) == JOptionalDouble(3.0).asScala)

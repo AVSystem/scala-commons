@@ -9,6 +9,8 @@ import com.avsystem.commons.redis.exception.{ClusterInitializationException, Err
 import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{ClusterState, NodeAddress, RedisApi, RedisBatch, RedisNodeClient}
 
+import scala.collection.compat._
+import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
@@ -66,7 +68,7 @@ final class ClusterMonitoringActor(
       pool(i) = node
       i += 1
     }
-    pool.slice(0, count)
+    ArraySeq.unsafeWrapArray(pool.slice(0, count))
   }
 
   def receive: Receive = {
@@ -86,16 +88,16 @@ final class ClusterMonitoringActor(
             (srm.range, clients.getOrElseUpdate(srm.master, createClient(srm.master)))
           }.toArray
           java.util.Arrays.sort(res, MappingComparator)
-          res: IndexedSeq[(SlotRange, RedisNodeClient)]
+          ArraySeq.unsafeWrapArray(res)
         }
 
         masters = nodeInfos.iterator.filter(n => n.flags.master && !n.flags.fail)
-          .map(_.address).to[mutable.LinkedHashSet]
+          .map(_.address).to(mutable.LinkedHashSet)
         masters.foreach { addr =>
           openConnection(addr, seed = false)
         }
 
-        val mappedMasters = slotRangeMapping.iterator.map(_.master).to[mutable.LinkedHashSet]
+        val mappedMasters = slotRangeMapping.iterator.map(_.master).to(mutable.LinkedHashSet)
 
         if (state.forall(_.mapping != newMapping)) {
           log.info(s"New cluster slot mapping received:\n${slotRangeMapping.mkString("\n")}")

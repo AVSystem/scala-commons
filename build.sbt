@@ -7,9 +7,10 @@ cancelable in Global := true
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
 val silencerVersion = "1.4.1"
+val collectionCompatVersion = "2.0.0"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
-val scalatestVersion = "3.0.5"
+val scalatestVersion = "3.0.8"
 val scalacheckVersion = "1.14.0"
 val jettyVersion = "9.4.19.v20190610"
 val mongoVersion = "3.7.0"
@@ -37,15 +38,15 @@ credentials in Global += Credentials(
   sys.env.getOrElse("SONATYPE_PASSWORD", "")
 )
 
-version in ThisBuild := 
-  sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("1.34-SNAPSHOT")
+version in ThisBuild :=
+  sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("2.0.0-SNAPSHOT")
 
 // for binary compatibility checking
 val previousCompatibleVersions = Set("1.34.8")
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  crossScalaVersions := Seq("2.12.8", "2.11.12"),
+  crossScalaVersions := Seq("2.12.8", "2.13.0"),
   scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
@@ -60,10 +61,8 @@ val commonSettings = Seq(
     "-language:dynamics",
     "-language:experimental.macros",
     "-language:higherKinds",
-    "-Xfuture",
     "-Xfatal-warnings",
-    s"-Xlint:-missing-interpolator,-adapted-args,${if (scalaBinaryVersion.value == "2.12") "-unused," else ""}_",
-    "-P:silencer:checkUnused",
+    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
   ),
   scalacOptions ++= {
     if (scalaBinaryVersion.value == "2.12") Seq(
@@ -71,8 +70,6 @@ val commonSettings = Seq(
       "-Ycache-macro-class-loader:last-modified",
     ) else Seq.empty
   },
-  // some Java 8 related tests use Java interface static methods, Scala 2.11.12 requires JDK8 target for that
-  scalacOptions in Test ++= (if (scalaBinaryVersion.value == "2.11") Seq("-target:jvm-1.8") else Nil),
   sources in(Compile, doc) := Seq.empty, // relying on unidoc
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
@@ -106,11 +103,11 @@ val commonSettings = Seq(
   libraryDependencies ++= Seq(
     compilerPlugin("com.github.ghik" %% "silencer-plugin" % silencerVersion),
     "com.github.ghik" %% "silencer-lib" % silencerVersion % Provided,
+    "org.scala-lang.modules" %%% "scala-collection-compat" % collectionCompatVersion,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.mockito" % "mockito-core" % mockitoVersion % Test,
   ),
-  dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
   ideBasePackages := Seq(organization.value),
   ideOutputDirectory in Compile := Some(target.value.getParentFile / "out/production"),
   ideOutputDirectory in Test := Some(target.value.getParentFile / "out/test"),
@@ -134,6 +131,16 @@ val jsCommonSettings = commonSettings ++ Seq(
   },
   jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
   fork in Test := false,
+)
+
+val noScala213Settings = Seq(
+  unmanagedSourceDirectories in Compile :=
+    (if (scalaBinaryVersion.value == "2.13") Seq.empty else (unmanagedSourceDirectories in Compile).value),
+  unmanagedSourceDirectories in Test :=
+    (if (scalaBinaryVersion.value == "2.13") Seq.empty else (unmanagedSourceDirectories in Test).value),
+  libraryDependencies :=
+    (if (scalaBinaryVersion.value == "2.13") Seq.empty else libraryDependencies.value),
+  skip in publish := scalaBinaryVersion.value == "2.13",
 )
 
 val noPublishSettings = Seq(
@@ -266,13 +273,6 @@ lazy val `commons-benchmark` = project
     jvmCommonSettings,
     noPublishSettings,
     sourceDirsSettings(_ / "jvm"),
-    libraryDependencies ++= {
-      if (scalaBinaryVersion.value != "2.12") Seq(
-        "com.github.etaty" %% "rediscala" % "1.6.0",
-        "com.livestream" %% "scredis" % "2.0.8",
-      )
-      else Seq.empty
-    },
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
@@ -280,13 +280,14 @@ lazy val `commons-benchmark` = project
       "io.circe" %% "circe-parser" % circeVersion,
       "com.lihaoyi" %% "upickle" % upickleVersion,
     ),
+    noScala213Settings,
     ideExcludedDirectories := (managedSourceDirectories in Jmh).value,
   )
 
 lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
   .enablePlugins(ScalaJSPlugin)
   .configure(p => if (forIdeaImport) p.dependsOn(`commons-benchmark`) else p)
-  .dependsOn(`commons-macros`)
+  .dependsOn(`commons-core-js`)
   .settings(
     jsCommonSettings,
     noPublishSettings,
@@ -299,6 +300,7 @@ lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
       "com.lihaoyi" %%% "upickle" % upickleVersion,
       "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
     ),
+    noScala213Settings,
     scalaJSUseMainModuleInitializer := true,
     test := {},
     testOnly := {},
@@ -317,6 +319,7 @@ lazy val `commons-mongo` = project
       "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,
       "org.mongodb.scala" %% "mongo-scala-driver" % mongoScalaVersion % Optional,
     ),
+    noScala213Settings,
   )
 
 lazy val `commons-redis` = project
@@ -359,6 +362,7 @@ lazy val `commons-akka` = project
       "io.monix" %% "monix" % monixVersion,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     ),
+    noScala213Settings,
   )
 
 lazy val `commons-comprof` = project

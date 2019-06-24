@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package misc
 
-import scala.language.implicitConversions
-
 object OptRef {
   def apply[A >: Null](value: A): OptRef[A] = new OptRef[A](value)
   def unapply[A >: Null](opt: OptRef[A]) = opt //name-based extractor

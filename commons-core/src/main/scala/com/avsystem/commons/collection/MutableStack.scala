@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package collection
 
+import scala.collection.compat._
+
 final class MutableStack[T] {
   private[this] var ssize: Int = 0
   private[this] var stack = List.empty[T]
@@ -10,8 +12,8 @@ final class MutableStack[T] {
     ssize += 1
   }
 
-  def pushAll(elems: TraversableOnce[T]): Unit =
-    elems.foreach(push)
+  def pushAll(elems: IterableOnce[T]): Unit =
+    elems.iterator.foreach(push)
 
   def pop(): T = stack match {
     case head :: tail =>

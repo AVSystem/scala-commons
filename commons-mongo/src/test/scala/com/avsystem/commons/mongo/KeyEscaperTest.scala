@@ -4,9 +4,9 @@ package mongo
 import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.FunSuite
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class KeyEscaperTest extends FunSuite with PropertyChecks {
+class KeyEscaperTest extends FunSuite with ScalaCheckPropertyChecks {
 
   import KeyEscaper._
   import KeyEscaperTest._

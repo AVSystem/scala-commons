@@ -5,12 +5,11 @@ import java.util.UUID
 
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
-import com.avsystem.commons.jiop.JCanBuildFrom
+import com.avsystem.commons.jiop.JFactory
 import com.avsystem.commons.meta.Fallback
 
 import scala.annotation.implicitNotFound
-import scala.collection.generic.CanBuildFrom
-import scala.language.higherKinds
+import scala.collection.compat._
 
 /**
   * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized
@@ -344,14 +343,14 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit lazy val UuidCodec: GenCodec[UUID] =
     nullableSimple(i => UUID.fromString(i.readString()), (o, v) => o.writeString(v.toString))
 
-  private implicit class TraversableOnceOps[A](private val coll: TraversableOnce[A]) extends AnyVal {
+  private implicit class IterableOnceOps[A](private val coll: IterableOnce[A]) extends AnyVal {
     def writeToList(lo: ListOutput)(implicit writer: GenCodec[A]): Unit =
-      coll.foreach(writer.write(lo.writeElement(), _))
+      coll.iterator.foreach(writer.write(lo.writeElement(), _))
   }
 
   private implicit class ListInputOps(private val li: ListInput) extends AnyVal {
-    def collectTo[A: GenCodec, C](implicit cbf: CanBuildFrom[Nothing, A, C]): C = {
-      val b = cbf()
+    def collectTo[A: GenCodec, C](implicit fac: Factory[A, C]): C = {
+      val b = fac.newBuilder
       while (li.hasNext) {
         b += read[A](li.nextElement())
       }
@@ -360,8 +359,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   private implicit class ObjectInputOps(private val oi: ObjectInput) extends AnyVal {
-    def collectTo[K: GenKeyCodec, V: GenCodec, C](implicit cbf: CanBuildFrom[Nothing, (K, V), C]): C = {
-      val b = cbf()
+    def collectTo[K: GenKeyCodec, V: GenCodec, C](implicit fac: Factory[(K, V), C]): C = {
+      val b = fac.newBuilder
       while (oi.hasNext) {
         val fi = oi.nextField()
         b += ((GenKeyCodec.read[K](fi.fieldName), read[V](fi)))
@@ -378,22 +377,22 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   // workaround for https://groups.google.com/forum/#!topic/scala-user/O_fkaChTtg4
 
   implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](
-    implicit cbf: CanBuildFrom[Nothing, T, C[T]]
+    implicit fac: Factory[T, C[T]]
   ): GenCodec[C[T] with BSeq[T]] =
     nullableList[C[T] with BSeq[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
   implicit def setCodec[C[X] <: BSet[X], T: GenCodec](
-    implicit cbf: CanBuildFrom[Nothing, T, C[T]]
+    implicit fac: Factory[T, C[T]]
   ): GenCodec[C[T] with BSet[T]] =
     nullableList[C[T] with BSet[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
   implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](
-    implicit cbf: JCanBuildFrom[T, C[T]]
+    implicit cbf: JFactory[T, C[T]]
   ): GenCodec[C[T] with JCollection[T]] =
     nullableList[C[T] with JCollection[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
   implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]
+    implicit fac: Factory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V] with BMap[K, V]] =
     nullableObject[M[K, V] with BMap[K, V]](
       _.collectTo[K, V, M[K, V]],
@@ -401,7 +400,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     )
 
   implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit cbf: JCanBuildFrom[(K, V), M[K, V]]
+    implicit cbf: JFactory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V] with JMap[K, V]] =
     nullableObject[M[K, V] with JMap[K, V]](
       _.collectTo[K, V, M[K, V]],

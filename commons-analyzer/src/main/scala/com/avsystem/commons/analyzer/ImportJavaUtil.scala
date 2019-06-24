@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class ImportJavaUtil[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "importJavaUtil") {
+class ImportJavaUtil(g: Global) extends AnalyzerRule(g, "importJavaUtil") {
 
   import global._
 

@@ -77,15 +77,6 @@ class SharedExtensionsTest extends FunSuite with Matchers {
     assert(completed.value == traverse.value)
   }
 
-  test("Future.transformTry") {
-    import com.avsystem.commons.concurrent.RunNowEC.Implicits._
-    val ex = new Exception
-    assert(Future.successful(42).transformTry(t => Success(t.get - 1)).value.contains(Success(41)))
-    assert(Future.successful(42).transformTry(_ => Failure(ex)).value.contains(Failure(ex)))
-    assert(Future.failed[Int](ex).transformTry(t => Success(t.failed.get)).value.contains(Success(ex)))
-    assert(Future.failed[Int](ex).transformTry(_ => Failure(ex)).value.contains(Failure(ex)))
-  }
-
   test("Future.transformWith") {
     import com.avsystem.commons.concurrent.RunNowEC.Implicits._
     val ex = new Exception

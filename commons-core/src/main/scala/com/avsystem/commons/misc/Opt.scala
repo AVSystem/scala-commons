@@ -3,8 +3,6 @@ package misc
 
 import com.avsystem.commons.misc.Opt.EmptyMarker
 
-import scala.language.implicitConversions
-
 object Opt {
   // Used as Opt's raw value to represent empty Opt. Unfortunately, null can't be used for that purpose
   // because https://github.com/scala/bug/issues/7396
