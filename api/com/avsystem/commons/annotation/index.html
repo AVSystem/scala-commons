@@ -147,6 +147,10 @@
                         <a href="atLeast.html" title="When applied on varargs parameter, indicates that at least some number of parameters is required.">atLeast</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="bincompat.html" title="Marks symbols which exist only for binary compatibility with previous versions."></a>
+                        <a href="bincompat.html" title="Marks symbols which exist only for binary compatibility with previous versions.">bincompat</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="defaultsToName.html" title="Meta annotation that may be used on String constructor parameter of an annotation."></a>
                         <a href="defaultsToName.html" title="Meta annotation that may be used on String constructor parameter of an annotation.">defaultsToName</a>
                       </li><li class="current-entities indented4">
@@ -210,6 +214,22 @@
       </span>
       <span class="symbol">
         <a title="" href="../derivation/index.html"><span class="name">derivation</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.hocon" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="hocon"></a><a id="hocon:hocon"></a>
+      <span class="permalink">
+      <a href="../../../com/avsystem/commons/index.html#hocon" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../hocon/index.html"><span class="name">hocon</span></a>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
@@ -338,22 +358,6 @@
       </span>
       <span class="symbol">
         <a title="" href="../redis/index.html"><span class="name">redis</span></a>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.rest" visbl="pub" class="indented4 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="rest"></a><a id="rest:rest"></a>
-      <span class="permalink">
-      <a href="../../../com/avsystem/commons/index.html#rest" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">package</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="../rest/index.html"><span class="name">rest</span></a>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
@@ -496,7 +500,7 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Base trait for annotations which aggregate multiple other annotations." href="AnnotationAggregate.html"><span class="name">AnnotationAggregate</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Base trait for annotations which aggregate multiple other annotations." href="AnnotationAggregate.html"><span class="name">AnnotationAggregate</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Base trait for annotations which aggregate multiple other annotations.</p><div class="fullcomment"><div class="comment cmt"><p>Base trait for annotations which aggregate multiple other annotations. This way annotation aggregates
@@ -527,7 +531,7 @@ you can pass the arguments of original annotation to aggregated annotations, e.g
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Marker trait for annotations which don't want to be inherited by subtypes of a sealed trait or class that has this annotation applied." href="NotInheritedFromSealedTypes.html"><span class="name">NotInheritedFromSealedTypes</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Marker trait for annotations which don't want to be inherited by subtypes of a sealed trait or class that has this annotation applied." href="NotInheritedFromSealedTypes.html"><span class="name">NotInheritedFromSealedTypes</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Marker trait for annotations which don't want to be inherited by subtypes
@@ -547,7 +551,7 @@ only to the sealed trait itself.
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="When applied on varargs parameter, indicates that at least some number of parameters is required." href="atLeast.html"><span class="name">atLeast</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="When applied on varargs parameter, indicates that at least some number of parameters is required." href="atLeast.html"><span class="name">atLeast</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">When applied on varargs parameter, indicates that at least some number of parameters is required.</p><div class="fullcomment"><div class="comment cmt"><p>When applied on varargs parameter, indicates that at least some number of parameters is required.
@@ -556,6 +560,26 @@ This is later checked by the static analyzer.
 WARNING: implementation of method which takes a varargs parameter may NOT assume that given number of
 arguments will always be passed, because it's still possible to pass a <code>Seq</code> where
 varargs parameter is required using the <code>: _*</code> ascription, e.g.</p><pre>varargsMethod(<span class="std">List</span>(): _*)</pre><p>and that is not checked by the static analyzer.
+</p></div></div>
+    </li><li name="com.avsystem.commons.annotation.bincompat" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="bincompatextendsAnnotation"></a><a id="bincompat:bincompat"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/annotation/index.html#bincompatextendsAnnotation" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="Marks symbols which exist only for binary compatibility with previous versions." href="bincompat.html"><span class="name">bincompat</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Marks symbols which exist only for binary compatibility with previous versions.</p><div class="fullcomment"><div class="comment cmt"><p>Marks symbols which exist only for binary compatibility with previous versions.
+These symbols should never be used directly. This is checked by <code>commons-analyzer</code> plugin.
+Additionally, it's recommended to make these symbols package private so that they cannot be used
+directly from Scala code but remain public in bytecode.
 </p></div></div>
     </li><li name="com.avsystem.commons.annotation.defaultsToName" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="defaultsToNameextendsAnnotationwithStaticAnnotation"></a><a id="defaultsToName:defaultsToName"></a>
@@ -569,7 +593,7 @@ varargs parameter is required using the <code>: _*</code> ascription, e.g.</p><p
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Meta annotation that may be used on String constructor parameter of an annotation." href="defaultsToName.html"><span class="name">defaultsToName</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Meta annotation that may be used on String constructor parameter of an annotation." href="defaultsToName.html"><span class="name">defaultsToName</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Meta annotation that may be used on <code>String</code> constructor parameter of an annotation.</p><div class="fullcomment"><div class="comment cmt"><p>Meta annotation that may be used on <code>String</code> constructor parameter of an annotation. This constructor parameter
@@ -593,7 +617,7 @@ the string &quot;someMethod&quot; as the argument of <code>SomeMethodAnnotation<
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="When applied on generic method, requires that all the type parameters are given explicitly (cannot be inferred by the compiler)." href="explicitGenerics.html"><span class="name">explicitGenerics</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="When applied on generic method, requires that all the type parameters are given explicitly (cannot be inferred by the compiler)." href="explicitGenerics.html"><span class="name">explicitGenerics</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">When applied on generic method, requires that all the type parameters are given explicitly
@@ -619,7 +643,7 @@ against the compiler inferring <code>Nothing</code> or <code>Null</code>.</p><pr
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Symbols annotated with this annotation can only be used in macro-generated code." href="macroPrivate.html"><span class="name">macroPrivate</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Symbols annotated with this annotation can only be used in macro-generated code." href="macroPrivate.html"><span class="name">macroPrivate</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Symbols annotated with this annotation can only be used in macro-generated code.</p>
@@ -635,7 +659,7 @@ against the compiler inferring <code>Nothing</code> or <code>Null</code>.</p><pr
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="Annotate a symbol (i.e." href="positioned.html"><span class="name">positioned</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="Annotate a symbol (i.e." href="positioned.html"><span class="name">positioned</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">Annotate a symbol (i.e.</p><div class="fullcomment"><div class="comment cmt"><p>Annotate a symbol (i.e. class, method, parameter, etc.) with <code>@positioned(positioned.here)</code> to retain source
@@ -656,7 +680,7 @@ symbol. If macro is invoked in the same file, source position is always availabl
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="When applied on a definition (class, object, def, val, etc.) or expression, will cause the AVSystem static analyzer to print compilation error with AST of annotated code fragment." href="showAst.html"><span class="name">showAst</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
+        <a title="When applied on a definition (class, object, def, val, etc.) or expression, will cause the AVSystem static analyzer to print compilation error with AST of annotated code fragment." href="showAst.html"><span class="name">showAst</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></span>
       </span>
       
       <p class="shortcomment cmt">When applied on a definition (<code>class</code>, <code>object</code>, <code>def</code>, <code>val</code>, etc.) or expression, will cause the

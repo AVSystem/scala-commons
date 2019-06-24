@@ -167,20 +167,12 @@
                         <a href="ExecutionConfig.html" title="Additional options for executing a RedisBatch on a RedisExecutor">ExecutionConfig</a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
-                        <a class="class" href="ExponentialBackoff.html" title=""></a>
-                        <a href="ExponentialBackoff.html" title="">ExponentialBackoff</a>
-                      </li><li class="current-entities indented5">
-                        <span class="separator"></span>
-                        <a class="object" href="NoRetryStrategy$.html" title=""></a>
-                        <a href="NoRetryStrategy$.html" title="">NoRetryStrategy</a>
-                      </li><li class="current-entities indented5">
-                        <span class="separator"></span>
                         <a class="class" href="NodeConfig.html" title="Configuration of a RedisNodeClient, used either as a standalone client or internally by RedisClusterClient."></a>
                         <a href="NodeConfig.html" title="Configuration of a RedisNodeClient, used either as a standalone client or internally by RedisClusterClient.">NodeConfig</a>
                       </li><li class="current-entities indented5">
-                        <span class="separator"></span>
-                        <a class="trait" href="" title=""></a>
-                        <a href="" title="">RetryStrategy</a>
+                        <a class="object" href="RetryStrategy$.html" title=""></a>
+                        <a class="trait" href="" title="A RetryStrategy is conceptually a lazy sequence of delays, possibly infinite."></a>
+                        <a href="" title="A RetryStrategy is conceptually a lazy sequence of delays, possibly infinite.">RetryStrategy</a>
                       </li>
               </ul>
             </div>
@@ -188,14 +180,16 @@
           <div id="content">
             <body class="trait type">
       <div id="definition">
-        <div class="big-circle trait">t</div>
+        <a href="RetryStrategy$.html" title="See companion object"><div class="big-circle trait-companion-object">t</div></a>
         <p id="owner"><a href="../../../../index.html" class="extype" name="com">com</a>.<a href="../../../index.html" class="extype" name="com.avsystem">avsystem</a>.<a href="../../index.html" class="extype" name="com.avsystem.commons">commons</a>.<a href="../index.html" class="extype" name="com.avsystem.commons.redis">redis</a>.<a href="index.html" class="extype" name="com.avsystem.commons.redis.config">config</a></p>
-        <h1>RetryStrategy<span class="permalink">
+        <h1><a href="RetryStrategy$.html" title="See companion object">RetryStrategy</a><span class="permalink">
       <a href="../../../../../com/avsystem/commons/redis/config/RetryStrategy.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span></h1>
-        <h3><span class="morelinks"></span></h3>
+        <h3><span class="morelinks"><div>
+            Companion <a href="RetryStrategy$.html" title="See companion object">object RetryStrategy</a>
+          </div></span></h3>
       </div>
 
       <h4 id="signature" class="signature">
@@ -204,22 +198,18 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <span class="name">RetryStrategy</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">RetryStrategy</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>A <code>RetryStrategy</code> is conceptually a lazy sequence of delays, possibly infinite.
+</p></div><dl class="attributes block"> <dt>Self Type</dt><dd><a href="" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a></dd></dl><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
-        </div><div class="toggleContainer block">
-            <span class="toggle">
-              Known Subclasses
-            </span>
-            <div class="subClasses hiddenContent"><a href="ExponentialBackoff.html" class="extype" name="com.avsystem.commons.redis.config.ExponentialBackoff">ExponentialBackoff</a>, <a href="NoRetryStrategy$.html" class="extype" name="com.avsystem.commons.redis.config.NoRetryStrategy">NoRetryStrategy</a></div>
-          </div></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+        </div></div>
         
 
       <div id="mbrsel">
@@ -268,10 +258,10 @@
 
         <div class="values members">
               <h3>Abstract Value Members</h3>
-              <ol><li name="com.avsystem.commons.redis.config.RetryStrategy#retryDelay" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="retryDelay(retry:Int):com.avsystem.commons.Opt[scala.concurrent.duration.FiniteDuration]"></a><a id="retryDelay(Int):commons.Opt[FiniteDuration]"></a>
+              <ol><li name="com.avsystem.commons.redis.config.RetryStrategy#nextRetry" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="nextRetry:com.avsystem.commons.Opt[(scala.concurrent.duration.FiniteDuration,com.avsystem.commons.redis.config.RetryStrategy)]"></a><a id="nextRetry:commons.Opt[(FiniteDuration,RetryStrategy)]"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/config/RetryStrategy.html#retryDelay(retry:Int):com.avsystem.commons.Opt[scala.concurrent.duration.FiniteDuration]" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/RetryStrategy.html#nextRetry:com.avsystem.commons.Opt[(scala.concurrent.duration.FiniteDuration,com.avsystem.commons.redis.config.RetryStrategy)]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -280,12 +270,13 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">retryDelay</span><span class="params">(<span name="retry">retry: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="../../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a>]</span>
+        <span class="name">nextRetry</span><span class="result">: <a href="../../index.html#Opt[+T]=com.avsystem.commons.misc.Opt[T]" class="extmbr" name="com.avsystem.commons.Opt">commons.Opt</a>[(<a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a>, <a href="" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a>)]</span>
       </span>
       
-      <p class="shortcomment cmt">Determines a delay that will be waited before restarting a failed Redis connection.</p><div class="fullcomment"><div class="comment cmt"><p>Determines a delay that will be waited before restarting a failed Redis connection.
-If this method returns <code>Opt.Empty</code>, the connection will not be restarted and will remain in a broken state.
-</p></div><dl class="paramcmts block"><dt class="param">retry</dt><dd class="cmt"><p>indicates which consecutive reconnection retry it is after the connection was lost, starting from 0</p></dd></dl></div>
+      <p class="shortcomment cmt">Determines a delay that will be waited before retrying some operation that failed (e.g.</p><div class="fullcomment"><div class="comment cmt"><p>Determines a delay that will be waited before retrying some operation that failed (e.g. Redis connection attempt)
+and also returns next retry strategy that should be used if that retry itself also fails.
+If this method returns <code>Opt.Empty</code>, the operation will not be retried and failure should be reported.
+</p></div></div>
     </li></ol>
             </div>
 
@@ -304,7 +295,7 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -320,7 +311,7 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -336,10 +327,26 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.config.RetryStrategy#andThen" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="andThen(otherStrategy:com.avsystem.commons.redis.config.RetryStrategy):com.avsystem.commons.redis.config.RetryStrategy"></a><a id="andThen(RetryStrategy):RetryStrategy"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/RetryStrategy.html#andThen(otherStrategy:com.avsystem.commons.redis.config.RetryStrategy):com.avsystem.commons.redis.config.RetryStrategy" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">andThen</span><span class="params">(<span name="otherStrategy">otherStrategy: <a href="" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a></span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Concatenates two retry strategies, understood as lazy sequences of delays.</p>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
@@ -368,7 +375,7 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -392,7 +399,7 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -408,7 +415,7 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -424,7 +431,7 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -465,7 +472,7 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -484,10 +491,58 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.config.RetryStrategy#maxDelay" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="maxDelay(duration:scala.concurrent.duration.FiniteDuration):com.avsystem.commons.redis.config.RetryStrategy"></a><a id="maxDelay(FiniteDuration):RetryStrategy"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/RetryStrategy.html#maxDelay(duration:scala.concurrent.duration.FiniteDuration):com.avsystem.commons.redis.config.RetryStrategy" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">maxDelay</span><span class="params">(<span name="duration">duration: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a></span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Limits the maximum delay between retries to some specified duration.</p>
+    </li><li name="com.avsystem.commons.redis.config.RetryStrategy#maxRetries" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="maxRetries(retries:Int):com.avsystem.commons.redis.config.RetryStrategy"></a><a id="maxRetries(Int):RetryStrategy"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/RetryStrategy.html#maxRetries(retries:Int):com.avsystem.commons.redis.config.RetryStrategy" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">maxRetries</span><span class="params">(<span name="retries">retries: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Limits the maximum number of retries to some specified number.</p>
+    </li><li name="com.avsystem.commons.redis.config.RetryStrategy#maxTotal" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="maxTotal(duration:scala.concurrent.duration.FiniteDuration):com.avsystem.commons.redis.config.RetryStrategy"></a><a id="maxTotal(FiniteDuration):RetryStrategy"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/RetryStrategy.html#maxTotal(duration:scala.concurrent.duration.FiniteDuration):com.avsystem.commons.redis.config.RetryStrategy" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">maxTotal</span><span class="params">(<span name="duration">duration: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a></span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Limits the maximum total duration (sum of retry delays) to some specified duration.</p>
     </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -500,10 +555,26 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.config.RetryStrategy#next" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="next:com.avsystem.commons.redis.config.RetryStrategy"></a><a id="next:RetryStrategy"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/RetryStrategy.html#next:com.avsystem.commons.redis.config.RetryStrategy" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">next</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a></span>
+      </span>
+      
+      
     </li><li name="scala.AnyRef#notify" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="notify():Unit"></a>
       <span class="permalink">
@@ -516,7 +587,7 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -535,13 +606,31 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.config.RetryStrategy#randomized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="randomized(minFactor:Double,maxFactor:Double):com.avsystem.commons.redis.config.RetryStrategy"></a><a id="randomized(Double,Double):RetryStrategy"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/RetryStrategy.html#randomized(minFactor:Double,maxFactor:Double):com.avsystem.commons.redis.config.RetryStrategy" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">randomized</span><span class="params">(<span name="minFactor">minFactor: <a href="http://www.scala-lang.org/api/2.12.8/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a></span>, <span name="maxFactor">maxFactor: <a href="http://www.scala-lang.org/api/2.12.8/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a></span>)</span><span class="result">: <a href="" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Randomizes delays.</p><div class="fullcomment"><div class="comment cmt"><p>Randomizes delays. Each delay is multiplied by a factor which is randomly and uniformly choosen from
+specified segment <code>[minFactor, maxFactor)</code> (e.g. 0.9 to 1.1)
+</p></div></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -586,7 +675,7 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -608,7 +697,7 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -630,7 +719,7 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -653,9 +742,9 @@ If this method returns <code>Opt.Empty</code>, the connection will not be restar
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

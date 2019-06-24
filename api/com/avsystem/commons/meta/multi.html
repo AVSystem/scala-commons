@@ -146,6 +146,18 @@
                         <a class="class" href="DefaultValue.html" title="Captures case class parameter's default value."></a>
                         <a href="DefaultValue.html" title="Captures case class parameter's default value.">DefaultValue</a>
                       </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="trait" href="DirectMetadataParamStrategy.html" title=""></a>
+                        <a href="DirectMetadataParamStrategy.html" title="">DirectMetadataParamStrategy</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="Fallback.html" title="Wrap your implicit instance of AsReal, AsRaw, AsRawReal or RPC metadata (with companion that extends RpcMetadataCompanion) into Fallback in order to lower its implicit priority. Useful when some implicit must be imported but we don't want it to get higher priority that imports normally have over implicit scope (e.g. implicits from companion objects)."></a>
+                        <a href="Fallback.html" title="Wrap your implicit instance of AsReal, AsRaw, AsRawReal or RPC metadata (with companion that extends RpcMetadataCompanion) into Fallback in order to lower its implicit priority. Useful when some implicit must be imported but we don't want it to get higher priority that imports normally have over implicit scope (e.g. implicits from companion objects).">Fallback</a>
+                      </li><li class="current-entities indented4">
+                        <a class="object" href="MacroInstances$.html" title=""></a>
+                        <a class="trait" href="MacroInstances.html" title="Intermediate factory that creates an Instances trait based on provided Implicits."></a>
+                        <a href="MacroInstances.html" title="Intermediate factory that creates an Instances trait based on provided Implicits.">MacroInstances</a>
+                      </li><li class="current-entities indented4">
                         <a class="object" href="Mapping$.html" title=""></a>
                         <a class="class" href="Mapping.html" title="Simple immutable structure to collect named values while retaining their order and providing fast, hashed lookup by name when necessary."></a>
                         <a href="Mapping.html" title="Simple immutable structure to collect named values while retaining their order and providing fast, hashed lookup by name when necessary.">Mapping</a>
@@ -179,6 +191,10 @@
                         <a href="RawParamAnnotation.html" title="">RawParamAnnotation</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="trait" href="RawRpcAnnotation.html" title=""></a>
+                        <a href="RawRpcAnnotation.html" title="">RawRpcAnnotation</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="trait" href="RawSymAnnotation.html" title="For annotations applied on raw RPC traits, their methods, parameters and also metadata parameters for RPC traits and data types."></a>
                         <a href="RawSymAnnotation.html" title="For annotations applied on raw RPC traits, their methods, parameters and also metadata parameters for RPC traits and data types.">RawSymAnnotation</a>
                       </li><li class="current-entities indented4">
@@ -205,6 +221,10 @@
                         <span class="separator"></span>
                         <a class="class" href="adtParamMetadata.html" title="@adtParamMetadata applied on metadata parameter of metadata class for case class or object indicates that this parameter holds metadata for ADT parameter(s) (one, some or all, depending on SymbolArity, tagging, etc.)."></a>
                         <a href="adtParamMetadata.html" title="@adtParamMetadata applied on metadata parameter of metadata class for case class or object indicates that this parameter holds metadata for ADT parameter(s) (one, some or all, depending on SymbolArity, tagging, etc.).">adtParamMetadata</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
+                        <a class="class" href="allowIncomplete.html" title="When applied on: - RPC trait metadata class: does not require that all RPC methods must be matched by method metadata parameter - RPC method metadata class: does not require that all RPC params must be matched by param metadata parameter - ADT metadata class: does not require that all case types or case class parameters must be matched by metadata parameter"></a>
+                        <a href="allowIncomplete.html" title="When applied on: - RPC trait metadata class: does not require that all RPC methods must be matched by method metadata parameter - RPC method metadata class: does not require that all RPC params must be matched by param metadata parameter - ADT metadata class: does not require that all case types or case class parameters must be matched by metadata parameter">allowIncomplete</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="class" href="annotated.html" title="Filter applied on raw methods or parameters which tells the macro engine that this raw method or parameter may only match real methods or parameters annotated with at least one annotation of given type A (or any subtype)."></a>
@@ -255,6 +275,10 @@
                         <a href="reifyName.html" title="This annotation may only be applied on metadata parameters of type String and instructs the macro engine to reify the name of real RPC trait/method/parameter.">reifyName</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="class" href="reifyParamListCount.html" title="Metadata parameter annotated with this annotation must be of type Int."></a>
+                        <a href="reifyParamListCount.html" title="Metadata parameter annotated with this annotation must be of type Int.">reifyParamListCount</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="reifyPosition.html" title="Metadata parameter annotated with this annotation must be of type ParamPosition - a class that holds parameter index information - see scaladoc for ParamPosition for more details."></a>
                         <a href="reifyPosition.html" title="Metadata parameter annotated with this annotation must be of type ParamPosition - a class that holds parameter index information - see scaladoc for ParamPosition for more details.">reifyPosition</a>
                       </li><li class="current-entities indented4">
@@ -284,7 +308,7 @@
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <span class="name">multi</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="SymbolArity.html" class="extype" name="com.avsystem.commons.meta.SymbolArity">SymbolArity</a></span>
+        <span class="name">multi</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a> with <a href="SymbolArity.html" class="extype" name="com.avsystem.commons.meta.SymbolArity">SymbolArity</a></span>
       </span>
       </h4>
 
@@ -328,7 +352,7 @@ inherited ones.
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="SymbolArity.html" class="extype" name="com.avsystem.commons.meta.SymbolArity">SymbolArity</a>, <a href="RawParamAnnotation.html" class="extype" name="com.avsystem.commons.meta.RawParamAnnotation">RawParamAnnotation</a>, <a href="RawSymAnnotation.html" class="extype" name="com.avsystem.commons.meta.RawSymAnnotation">RawSymAnnotation</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="SymbolArity.html" class="extype" name="com.avsystem.commons.meta.SymbolArity">SymbolArity</a>, <a href="RawParamAnnotation.html" class="extype" name="com.avsystem.commons.meta.RawParamAnnotation">RawParamAnnotation</a>, <a href="RawSymAnnotation.html" class="extype" name="com.avsystem.commons.meta.RawSymAnnotation">RawSymAnnotation</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -412,7 +436,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -428,7 +452,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -444,7 +468,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -476,7 +500,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -500,7 +524,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -516,7 +540,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -532,7 +556,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -573,7 +597,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -592,7 +616,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -608,7 +632,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -624,7 +648,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -643,7 +667,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -694,7 +718,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -716,7 +740,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -738,7 +762,7 @@ inherited ones.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -767,13 +791,13 @@ inherited ones.
             </div><div class="parent" name="com.avsystem.commons.meta.RawSymAnnotation">
               <h3>Inherited from <a href="RawSymAnnotation.html" class="extype" name="com.avsystem.commons.meta.RawSymAnnotation">RawSymAnnotation</a></h3>
             </div><div class="parent" name="scala.annotation.StaticAnnotation">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/StaticAnnotation.html#scala.annotation.StaticAnnotation" class="extype" name="scala.annotation.StaticAnnotation">StaticAnnotation</a></h3>
             </div><div class="parent" name="scala.annotation.Annotation">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/annotation/Annotation.html#scala.annotation.Annotation" class="extype" name="scala.annotation.Annotation">Annotation</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

@@ -255,6 +255,10 @@
                         <a href="BsonRef.html" title="">BsonRef</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="object" href="BsonTypeMetadata$.html" title=""></a>
+                        <a href="BsonTypeMetadata$.html" title="">BsonTypeMetadata</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="class" href="BsonValueListOutput.html" title=""></a>
                         <a href="BsonValueListOutput.html" title="">BsonValueListOutput</a>
                       </li><li class="current-entities indented4">
@@ -315,6 +319,10 @@
                         <a href="MongoCodec.html" title="">MongoCodec</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
+                        <a class="object" href="ObjectIdMarker$.html" title=""></a>
+                        <a href="ObjectIdMarker$.html" title="">ObjectIdMarker</a>
+                      </li><li class="current-entities indented4">
+                        <span class="separator"></span>
                         <a class="object" href="Sort$.html" title=""></a>
                         <a href="Sort$.html" title="">Sort</a>
                       </li><li class="current-entities indented4">
@@ -350,7 +358,7 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <span class="name">BsonOutput</span><span class="result"> extends <a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></span>
+        <span class="name">BsonOutput</span><span class="result"> extends <a href="../serialization/OutputAndSimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.OutputAndSimpleOutput">OutputAndSimpleOutput</a></span>
       </span>
       </h4>
 
@@ -359,7 +367,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="../serialization/OutputAndSimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.OutputAndSimpleOutput">OutputAndSimpleOutput</a>, <a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a>, <a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div><div class="toggleContainer block">
             <span class="toggle">
               Known Subclasses
@@ -390,7 +398,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.avsystem.commons.mongo.BsonOutput"><span>BsonOutput</span></li><li class="in" name="com.avsystem.commons.serialization.Output"><span>Output</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.avsystem.commons.mongo.BsonOutput"><span>BsonOutput</span></li><li class="in" name="com.avsystem.commons.serialization.OutputAndSimpleOutput"><span>OutputAndSimpleOutput</span></li><li class="in" name="com.avsystem.commons.serialization.SimpleOutput"><span>SimpleOutput</span></li><li class="in" name="com.avsystem.commons.serialization.Output"><span>Output</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -430,7 +438,7 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeBigDecimal" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeBigDecimal" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="writeBigDecimal(bigDecimal:BigDecimal):Unit"></a><a id="writeBigDecimal(BigDecimal):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeBigDecimal(bigDecimal:BigDecimal):Unit" title="Permalink">
@@ -442,11 +450,11 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeBigDecimal</span><span class="params">(<span name="bigDecimal">bigDecimal: <span class="extype" name="scala.BigDecimal">BigDecimal</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeBigDecimal</span><span class="params">(<span name="bigDecimal">bigDecimal: <span class="extype" name="scala.BigDecimal">BigDecimal</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeBigInt" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <p class="shortcomment cmt">Value written MUST NOT be <code>null</code></p><div class="fullcomment"><div class="comment cmt"><p>Value written MUST NOT be <code>null</code></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeBigInt" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="writeBigInt(bigInt:BigInt):Unit"></a><a id="writeBigInt(BigInt):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeBigInt(bigInt:BigInt):Unit" title="Permalink">
@@ -458,11 +466,11 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeBigInt</span><span class="params">(<span name="bigInt">bigInt: <span class="extype" name="scala.BigInt">BigInt</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeBigInt</span><span class="params">(<span name="bigInt">bigInt: <span class="extype" name="scala.BigInt">BigInt</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeBinary" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <p class="shortcomment cmt">Value written MUST NOT be <code>null</code></p><div class="fullcomment"><div class="comment cmt"><p>Value written MUST NOT be <code>null</code></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeBinary" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="writeBinary(binary:Array[Byte]):Unit"></a><a id="writeBinary(Array[Byte]):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeBinary(binary:Array[Byte]):Unit" title="Permalink">
@@ -474,11 +482,11 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeBinary</span><span class="params">(<span name="binary">binary: <a href="http://www.scala-lang.org/api/2.12.6/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeBinary</span><span class="params">(<span name="binary">binary: <a href="http://www.scala-lang.org/api/2.12.8/scala/Array.html#scala.Array" class="extype" name="scala.Array">Array</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a>]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeBoolean" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <p class="shortcomment cmt">Value written MUST NOT be <code>null</code></p><div class="fullcomment"><div class="comment cmt"><p>Value written MUST NOT be <code>null</code></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeBoolean" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="writeBoolean(boolean:Boolean):Unit"></a><a id="writeBoolean(Boolean):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeBoolean(boolean:Boolean):Unit" title="Permalink">
@@ -490,11 +498,11 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeBoolean</span><span class="params">(<span name="boolean">boolean: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeBoolean</span><span class="params">(<span name="boolean">boolean: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeDouble" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeDouble" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="writeDouble(double:Double):Unit"></a><a id="writeDouble(Double):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeDouble(double:Double):Unit" title="Permalink">
@@ -506,11 +514,11 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeDouble</span><span class="params">(<span name="double">double: <a href="http://www.scala-lang.org/api/2.12.6/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeDouble</span><span class="params">(<span name="double">double: <a href="http://www.scala-lang.org/api/2.12.8/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeInt" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeInt" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="writeInt(int:Int):Unit"></a><a id="writeInt(Int):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeInt(int:Int):Unit" title="Permalink">
@@ -522,10 +530,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeInt</span><span class="params">(<span name="int">int: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeInt</span><span class="params">(<span name="int">int: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
     </li><li name="com.avsystem.commons.serialization.Output#writeList" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="writeList():com.avsystem.commons.serialization.ListOutput"></a><a id="writeList():ListOutput"></a>
       <span class="permalink">
@@ -542,7 +550,7 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeLong" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeLong" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="writeLong(long:Long):Unit"></a><a id="writeLong(Long):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeLong(long:Long):Unit" title="Permalink">
@@ -554,10 +562,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeLong</span><span class="params">(<span name="long">long: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeLong</span><span class="params">(<span name="long">long: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
     </li><li name="com.avsystem.commons.serialization.Output#writeNull" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="writeNull():Unit"></a>
       <span class="permalink">
@@ -570,7 +578,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeNull</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeNull</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
@@ -602,11 +610,11 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeObjectId</span><span class="params">(<span name="objectId">objectId: <span class="extype" name="org.bson.types.ObjectId">ObjectId</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeObjectId</span><span class="params">(<span name="objectId">objectId: <span class="extype" name="org.bson.types.ObjectId">ObjectId</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       
-    </li><li name="com.avsystem.commons.serialization.Output#writeString" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeString" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="writeString(str:String):Unit"></a><a id="writeString(String):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeString(str:String):Unit" title="Permalink">
@@ -618,10 +626,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeString</span><span class="params">(<span name="str">str: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeString</span><span class="params">(<span name="str">str: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
+      <p class="shortcomment cmt">Value written MUST NOT be <code>null</code></p><div class="fullcomment"><div class="comment cmt"><p>Value written MUST NOT be <code>null</code></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
     </li></ol>
             </div>
 
@@ -640,7 +648,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -656,7 +664,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -672,7 +680,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -704,7 +712,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -720,7 +728,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -736,10 +744,38 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="com.avsystem.commons.mongo.BsonOutput#keepsMetadata" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="keepsMetadata(metadata:com.avsystem.commons.serialization.InputMetadata[_]):Boolean"></a><a id="keepsMetadata(InputMetadata[_]):Boolean"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#keepsMetadata(metadata:com.avsystem.commons.serialization.InputMetadata[_]):Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">keepsMetadata</span><span class="params">(<span name="metadata">metadata: <a href="../serialization/InputMetadata.html" class="extype" name="com.avsystem.commons.serialization.InputMetadata">InputMetadata</a>[_]</span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Determines whether serialization format implemented by this <code>Output</code> preserves particular arbitrary
+&quot;metadata&quot; which is identified by <a href="../serialization/InputMetadata.html" class="extype" name="com.avsystem.commons.serialization.InputMetadata">InputMetadata</a> which is usually an object
+(e.g.</p><div class="fullcomment"><div class="comment cmt"><p>Determines whether serialization format implemented by this <code>Output</code> preserves particular arbitrary
+&quot;metadata&quot; which is identified by <a href="../serialization/InputMetadata.html" class="extype" name="com.avsystem.commons.serialization.InputMetadata">InputMetadata</a> which is usually an object
+(e.g. companion object of metadata value type <code>T</code>).
+An example of <a href="../serialization/InputMetadata.html" class="extype" name="com.avsystem.commons.serialization.InputMetadata">InputMetadata</a> is
+<a href="../serialization/json/JsonType.html" class="extype" name="com.avsystem.commons.serialization.json.JsonType">JsonType</a> supported by
+<a href="../serialization/json/JsonStringOutput.html" class="extype" name="com.avsystem.commons.serialization.json.JsonStringOutput">JsonStringOutput</a>.</p><p>If this method returns <code>true</code> then codec may optimize its encoded format and assume that a corresponding
+<code>Input</code> implementation will return a non-empty <code>Opt</code> from its <code>readMetadata</code> implementation when passed the
+same <a href="../serialization/InputMetadata.html" class="extype" name="com.avsystem.commons.serialization.InputMetadata">InputMetadata</a> identifier.
+If this method returns <code>false</code> then this <code>Output</code> does not support this
+medatata type and codec should fall back to some other serialization strategy.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.mongo.BsonOutput">BsonOutput</a> → <a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
     </li><li name="com.avsystem.commons.serialization.Output#legacyOptionEncoding" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="legacyOptionEncoding:Boolean"></a>
       <span class="permalink">
@@ -752,7 +788,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">legacyOptionEncoding</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">legacyOptionEncoding</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <p class="shortcomment cmt">This ugly workaround has been introduced when standard <code>Option</code> encoding changed from zero-or-one element list
@@ -777,7 +813,7 @@ and returning <code>true</code>.
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeByte" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeByte" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="writeByte(byte:Byte):Unit"></a><a id="writeByte(Byte):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeByte(byte:Byte):Unit" title="Permalink">
@@ -789,11 +825,11 @@ and returning <code>true</code>.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeByte</span><span class="params">(<span name="byte">byte: <a href="http://www.scala-lang.org/api/2.12.6/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeByte</span><span class="params">(<span name="byte">byte: <a href="http://www.scala-lang.org/api/2.12.8/scala/Byte.html#scala.Byte" class="extype" name="scala.Byte">Byte</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeChar" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeChar" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="writeChar(char:Char):Unit"></a><a id="writeChar(Char):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeChar(char:Char):Unit" title="Permalink">
@@ -805,11 +841,35 @@ and returning <code>true</code>.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeChar</span><span class="params">(<span name="char">char: <a href="http://www.scala-lang.org/api/2.12.6/scala/Char.html#scala.Char" class="extype" name="scala.Char">Char</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeChar</span><span class="params">(<span name="char">char: <a href="http://www.scala-lang.org/api/2.12.8/scala/Char.html#scala.Char" class="extype" name="scala.Char">Char</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeFloat" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.mongo.BsonOutput#writeCustom" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="writeCustom[T](typeMarker:com.avsystem.commons.serialization.TypeMarker[T],value:T):Boolean"></a><a id="writeCustom[T](TypeMarker[T],T):Boolean"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeCustom[T](typeMarker:com.avsystem.commons.serialization.TypeMarker[T],value:T):Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">writeCustom</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="typeMarker">typeMarker: <a href="../serialization/TypeMarker.html" class="extype" name="com.avsystem.commons.serialization.TypeMarker">TypeMarker</a>[<span class="extype" name="com.avsystem.commons.mongo.BsonOutput.writeCustom.T">T</span>]</span>, <span name="value">value: <span class="extype" name="com.avsystem.commons.mongo.BsonOutput.writeCustom.T">T</span></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <p class="shortcomment cmt">Attempts to write some arbitrary custom &quot;native&quot; value that this output may or may not support.</p><div class="fullcomment"><div class="comment cmt"><p>Attempts to write some arbitrary custom &quot;native&quot; value that this output may or may not support.
+The custom type is identified by an instance of <code>TypeMarker</code> which is usually an object (e.g. companion
+object of the custom <code>T</code> type itself). This way <code>Input</code> and <code>Output</code> implementations may support other
+native types than the ones supported by default by <code>Input</code> and <code>Output</code> interfaces.</p><p>Codecs may use this method to optimize encoded format in case it it possible with particular <code>Output</code>
+implementation. <code>GenCodec</code> may generally assume that if this method returns <code>true</code> then corresponding
+<code>Input</code> will return a non-empty <code>Opt</code> from <code>readCustom</code> method.</p><p><code>false</code> returned by this method indicates that this output does not support this particular type.
+In such situation the codec must fall back to some other strategy. If the native type is supported but there was
+some error writing it then a <code>WriteFailure</code> should be thrown instead of returning <code>false</code>.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.avsystem.commons.mongo.BsonOutput">BsonOutput</a> → <a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeFloat" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="writeFloat(float:Float):Unit"></a><a id="writeFloat(Float):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeFloat(float:Float):Unit" title="Permalink">
@@ -821,11 +881,11 @@ and returning <code>true</code>.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeFloat</span><span class="params">(<span name="float">float: <a href="http://www.scala-lang.org/api/2.12.6/scala/Float.html#scala.Float" class="extype" name="scala.Float">Float</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeFloat</span><span class="params">(<span name="float">float: <a href="http://www.scala-lang.org/api/2.12.8/scala/Float.html#scala.Float" class="extype" name="scala.Float">Float</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeShort" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeShort" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="writeShort(short:Short):Unit"></a><a id="writeShort(Short):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeShort(short:Short):Unit" title="Permalink">
@@ -837,11 +897,27 @@ and returning <code>true</code>.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeShort</span><span class="params">(<span name="short">short: <a href="http://www.scala-lang.org/api/2.12.6/scala/Short.html#scala.Short" class="extype" name="scala.Short">Short</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeShort</span><span class="params">(<span name="short">short: <a href="http://www.scala-lang.org/api/2.12.8/scala/Short.html#scala.Short" class="extype" name="scala.Short">Short</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeTimestamp" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.OutputAndSimpleOutput#writeSimple" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="writeSimple():com.avsystem.commons.serialization.SimpleOutput"></a><a id="writeSimple():SimpleOutput"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeSimple():com.avsystem.commons.serialization.SimpleOutput" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">writeSimple</span><span class="params">()</span><span class="result">: <a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/OutputAndSimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.OutputAndSimpleOutput">OutputAndSimpleOutput</a> → <a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.SimpleOutput#writeTimestamp" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="writeTimestamp(millis:Long):Unit"></a><a id="writeTimestamp(Long):Unit"></a>
       <span class="permalink">
       <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeTimestamp(millis:Long):Unit" title="Permalink">
@@ -853,26 +929,10 @@ and returning <code>true</code>.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">writeTimestamp</span><span class="params">(<span name="millis">millis: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">writeTimestamp</span><span class="params">(<span name="millis">millis: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
-    </li><li name="com.avsystem.commons.serialization.Output#writeUnit" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="writeUnit():Unit"></a>
-      <span class="permalink">
-      <a href="../../../../com/avsystem/commons/mongo/BsonOutput.html#writeUnit():Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">writeUnit</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></dd></dl></div>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></dd></dl></div>
     </li>
               </ol>
             </div>
@@ -883,10 +943,14 @@ and returning <code>true</code>.
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="com.avsystem.commons.serialization.Output">
+        <div class="parent" name="com.avsystem.commons.serialization.OutputAndSimpleOutput">
+              <h3>Inherited from <a href="../serialization/OutputAndSimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.OutputAndSimpleOutput">OutputAndSimpleOutput</a></h3>
+            </div><div class="parent" name="com.avsystem.commons.serialization.SimpleOutput">
+              <h3>Inherited from <a href="../serialization/SimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.SimpleOutput">SimpleOutput</a></h3>
+            </div><div class="parent" name="com.avsystem.commons.serialization.Output">
               <h3>Inherited from <a href="../serialization/Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

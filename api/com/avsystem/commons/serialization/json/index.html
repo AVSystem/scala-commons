@@ -133,6 +133,22 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../index.html" class="extype" name="com.avsystem.commons">commons</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.serialization.cbor" visbl="pub" class="indented5 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="cbor"></a><a id="cbor:cbor"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/serialization/index.html#cbor" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../cbor/index.html"><span class="name">cbor</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="com.avsystem.commons.serialization">serialization</a></dd></dl></div>
     </li><li name="com.avsystem.commons.serialization.json" visbl="pub" class="indented5 current" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="json"></a><a id="json:json"></a>
       <span class="permalink">
@@ -201,6 +217,14 @@
                         <a class="object" href="JsonStringOutput$.html" title=""></a>
                         <a class="class" href="JsonStringOutput.html" title=""></a>
                         <a href="JsonStringOutput.html" title="">JsonStringOutput</a>
+                      </li><li class="current-entities indented5">
+                        <a class="object" href="JsonType$.html" title=""></a>
+                        <a class="class" href="JsonType.html" title=""></a>
+                        <a href="JsonType.html" title="">JsonType</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
+                        <a class="object" href="RawJson$.html" title=""></a>
+                        <a href="RawJson$.html" title="">RawJson</a>
                       </li>
               </ul>
             </div>
@@ -276,7 +300,7 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="" href="BaseJsonOutput.html"><span class="name">BaseJsonOutput</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="BaseJsonOutput.html"><span class="name">BaseJsonOutput</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -292,7 +316,7 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Specifies format used by JsonStringOutput.writeBinary / JsonStringInput.readBinary to represent byte arrays." href="JsonBinaryFormat.html"><span class="name">JsonBinaryFormat</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Specifies format used by JsonStringOutput.writeBinary / JsonStringInput.readBinary to represent byte arrays." href="JsonBinaryFormat.html"><span class="name">JsonBinaryFormat</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Specifies format used by <code>JsonStringOutput.writeBinary</code> / <code>JsonStringInput.readBinary</code> to represent byte arrays.</p>
@@ -308,7 +332,7 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Specifies format used by JsonStringOutput.writeTimestamp / JsonStringInput.readTimestamp to represent timestamps." href="JsonDateFormat.html"><span class="name">JsonDateFormat</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="Specifies format used by JsonStringOutput.writeTimestamp / JsonStringInput.readTimestamp to represent timestamps." href="JsonDateFormat.html"><span class="name">JsonDateFormat</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <p class="shortcomment cmt">Specifies format used by <code>JsonStringOutput.writeTimestamp</code> / <code>JsonStringInput.readTimestamp</code>
@@ -325,7 +349,7 @@ to represent timestamps.</p>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="JsonFormatting.html"><span class="name">JsonFormatting</span></a><span class="params">(<span name="indentSize">indentSize: <a href="../../index.html#OptArg[+T]=com.avsystem.commons.misc.OptArg[T]" class="extmbr" name="com.avsystem.commons.OptArg">commons.OptArg</a>[<a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>] = <span class="symbol"><span class="name"><a href="../../CommonAliases.html#OptArg:com.avsystem.commons.misc.OptArg.type">OptArg.Empty</a></span></span></span>, <span name="afterColon">afterColon: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">0</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="JsonFormatting.html"><span class="name">JsonFormatting</span></a><span class="params">(<span name="indentSize">indentSize: <a href="../../index.html#OptArg[+T]=com.avsystem.commons.misc.OptArg[T]" class="extmbr" name="com.avsystem.commons.OptArg">commons.OptArg</a>[<a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>] = <span class="symbol"><span class="name"><a href="../../CommonAliases.html#OptArg:com.avsystem.commons.misc.OptArg.type">OptArg.Empty</a></span></span></span>, <span name="afterColon">afterColon: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">0</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -405,11 +429,11 @@ to represent timestamps.</p>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="Adjusts format of JSON produced by JsonStringOutput." href="JsonOptions.html"><span class="name">JsonOptions</span></a><span class="params">(<span name="formatting">formatting: <a href="JsonFormatting.html" class="extype" name="com.avsystem.commons.serialization.json.JsonFormatting">JsonFormatting</a> = <span class="symbol"><span class="name"><a href="JsonFormatting$.html">JsonFormatting.Compact</a></span></span></span>, <span name="asciiOutput">asciiOutput: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">false</span></span>, <span name="mathContext">mathContext: <span class="extype" name="java.math.MathContext">MathContext</span> = <span class="symbol">BigDecimal.defaultMathContext</span></span>, <span name="dateFormat">dateFormat: <a href="JsonDateFormat.html" class="extype" name="com.avsystem.commons.serialization.json.JsonDateFormat">JsonDateFormat</a> = <span class="symbol"><span class="name"><a href="JsonDateFormat$.html">JsonDateFormat.IsoInstant</a></span></span></span>, <span name="binaryFormat">binaryFormat: <a href="JsonBinaryFormat.html" class="extype" name="com.avsystem.commons.serialization.json.JsonBinaryFormat">JsonBinaryFormat</a> = <span class="symbol"><span class="name"><a href="JsonBinaryFormat$.html">JsonBinaryFormat.ByteArray</a></span></span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="Adjusts format of JSON produced by JsonStringOutput." href="JsonOptions.html"><span class="name">JsonOptions</span></a><span class="params">(<span name="formatting">formatting: <a href="JsonFormatting.html" class="extype" name="com.avsystem.commons.serialization.json.JsonFormatting">JsonFormatting</a> = <span class="symbol"><span class="name"><a href="JsonFormatting$.html">JsonFormatting.Compact</a></span></span></span>, <span name="asciiOutput">asciiOutput: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">false</span></span>, <span name="mathContext">mathContext: <span class="extype" name="java.math.MathContext">MathContext</span> = <span class="symbol">BigDecimal.defaultMathContext</span></span>, <span name="dateFormat">dateFormat: <a href="JsonDateFormat.html" class="extype" name="com.avsystem.commons.serialization.json.JsonDateFormat">JsonDateFormat</a> = <span class="symbol"><span class="name"><a href="JsonDateFormat$.html">JsonDateFormat.IsoInstant</a></span></span></span>, <span name="binaryFormat">binaryFormat: <a href="JsonBinaryFormat.html" class="extype" name="com.avsystem.commons.serialization.json.JsonBinaryFormat">JsonBinaryFormat</a> = <span class="symbol"><span class="name"><a href="JsonBinaryFormat$.html">JsonBinaryFormat.ByteArray</a></span></span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       <p class="shortcomment cmt">Adjusts format of JSON produced by <a href="JsonStringOutput.html" class="extype" name="com.avsystem.commons.serialization.json.JsonStringOutput">JsonStringOutput</a>.</p><div class="fullcomment"><div class="comment cmt"><p>Adjusts format of JSON produced by <a href="JsonStringOutput.html" class="extype" name="com.avsystem.commons.serialization.json.JsonStringOutput">JsonStringOutput</a>.
-</p></div><dl class="paramcmts block"><dt class="param">asciiOutput</dt><dd class="cmt"><p>when set, all non-ASCII characters in strings will be unicode-escaped</p></dd><dt class="param">mathContext</dt><dd class="cmt"><p><code>MathContext</code> used when deserializing <code>BigDecimal</code>s</p></dd><dt class="param">dateFormat</dt><dd class="cmt"><p>format used to represent timestamps</p></dd><dt class="param">binaryFormat</dt><dd class="cmt"><p>format used to represent binary data (byte arrays)</p></dd></dl></div>
+</p></div><dl class="paramcmts block"><dt class="param">formatting</dt><dd class="cmt"><p>JSON formatting options, controls how whitespace is added to JSON output</p></dd><dt class="param">asciiOutput</dt><dd class="cmt"><p>when set, all non-ASCII characters in strings will be unicode-escaped</p></dd><dt class="param">mathContext</dt><dd class="cmt"><p><code>MathContext</code> used when deserializing <code>BigDecimal</code>s</p></dd><dt class="param">dateFormat</dt><dd class="cmt"><p>format used to represent timestamps</p></dd><dt class="param">binaryFormat</dt><dd class="cmt"><p>format used to represent binary data (byte arrays)</p></dd></dl></div>
     </li><li name="com.avsystem.commons.serialization.json.JsonReader" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="JsonReaderextendsAnyRef"></a><a id="JsonReader:JsonReader"></a>
       <span class="permalink">
@@ -422,7 +446,7 @@ to represent timestamps.</p>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="JsonReader.html"><span class="name">JsonReader</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <a title="" href="JsonReader.html"><span class="name">JsonReader</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       
@@ -443,9 +467,9 @@ to represent timestamps.</p>
       
       
     </li><li name="com.avsystem.commons.serialization.json.JsonStringInput" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="JsonStringInputextendsInputwithJsonStringInput.AfterElement"></a><a id="JsonStringInput:JsonStringInput"></a>
+      <a id="JsonStringInputextendsInputAndSimpleInputwithJsonStringInput.AfterElement"></a><a id="JsonStringInput:JsonStringInput"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/serialization/json/index.html#JsonStringInputextendsInputwithJsonStringInput.AfterElement" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/serialization/json/index.html#JsonStringInputextendsInputAndSimpleInputwithJsonStringInput.AfterElement" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -454,14 +478,14 @@ to represent timestamps.</p>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="JsonStringInput.html"><span class="name">JsonStringInput</span></a><span class="result"> extends <a href="../Input.html" class="extype" name="com.avsystem.commons.serialization.Input">Input</a> with <a href="JsonStringInput$$AfterElement.html" class="extype" name="com.avsystem.commons.serialization.json.JsonStringInput.AfterElement">AfterElement</a></span>
+        <a title="" href="JsonStringInput.html"><span class="name">JsonStringInput</span></a><span class="result"> extends <a href="../InputAndSimpleInput.html" class="extype" name="com.avsystem.commons.serialization.InputAndSimpleInput">InputAndSimpleInput</a> with <a href="JsonStringInput$$AfterElement.html" class="extype" name="com.avsystem.commons.serialization.json.JsonStringInput.AfterElement">AfterElement</a></span>
       </span>
       
       
     </li><li name="com.avsystem.commons.serialization.json.JsonStringOutput" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="JsonStringOutputextendsBaseJsonOutputwithOutput"></a><a id="JsonStringOutput:JsonStringOutput"></a>
+      <a id="JsonStringOutputextendsBaseJsonOutputwithOutputAndSimpleOutput"></a><a id="JsonStringOutput:JsonStringOutput"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/serialization/json/index.html#JsonStringOutputextendsBaseJsonOutputwithOutput" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/serialization/json/index.html#JsonStringOutputextendsBaseJsonOutputwithOutputAndSimpleOutput" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -470,7 +494,23 @@ to represent timestamps.</p>
         <span class="kind">class</span>
       </span>
       <span class="symbol">
-        <a title="" href="JsonStringOutput.html"><span class="name">JsonStringOutput</span></a><span class="result"> extends <a href="BaseJsonOutput.html" class="extype" name="com.avsystem.commons.serialization.json.BaseJsonOutput">BaseJsonOutput</a> with <a href="../Output.html" class="extype" name="com.avsystem.commons.serialization.Output">Output</a></span>
+        <a title="" href="JsonStringOutput.html"><span class="name">JsonStringOutput</span></a><span class="result"> extends <a href="BaseJsonOutput.html" class="extype" name="com.avsystem.commons.serialization.json.BaseJsonOutput">BaseJsonOutput</a> with <a href="../OutputAndSimpleOutput.html" class="extype" name="com.avsystem.commons.serialization.OutputAndSimpleOutput">OutputAndSimpleOutput</a></span>
+      </span>
+      
+      
+    </li><li name="com.avsystem.commons.serialization.json.JsonType" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JsonTypeextendsAbstractValueEnum"></a><a id="JsonType:JsonType"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/serialization/json/index.html#JsonTypeextendsAbstractValueEnum" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="JsonType.html"><span class="name">JsonType</span></a><span class="result"> extends <a href="../../misc/AbstractValueEnum.html" class="extype" name="com.avsystem.commons.misc.AbstractValueEnum">AbstractValueEnum</a></span>
       </span>
       
       
@@ -526,7 +566,7 @@ to represent timestamps.</p>
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="JsonFormatting$.html"><span class="name">JsonFormatting</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="JsonFormatting$.html"><span class="name">JsonFormatting</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -542,7 +582,7 @@ to represent timestamps.</p>
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="JsonOptions$.html"><span class="name">JsonOptions</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <a title="" href="JsonOptions$.html"><span class="name">JsonOptions</span></a><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       
       
@@ -575,6 +615,38 @@ to represent timestamps.</p>
       </span>
       <span class="symbol">
         <a title="" href="JsonStringOutput$.html"><span class="name">JsonStringOutput</span></a>
+      </span>
+      
+      
+    </li><li name="com.avsystem.commons.serialization.json.JsonType" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JsonType"></a><a id="JsonType:JsonType"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/serialization/json/index.html#JsonType" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="JsonType$.html"><span class="name">JsonType</span></a><span class="result"> extends <a href="../../misc/AbstractValueEnumCompanion.html" class="extype" name="com.avsystem.commons.misc.AbstractValueEnumCompanion">AbstractValueEnumCompanion</a>[<a href="JsonType.html" class="extype" name="com.avsystem.commons.serialization.json.JsonType">JsonType</a>] with <a href="../InputMetadata.html" class="extype" name="com.avsystem.commons.serialization.InputMetadata">InputMetadata</a>[<a href="JsonType.html" class="extype" name="com.avsystem.commons.serialization.json.JsonType">JsonType</a>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      
+      
+    </li><li name="com.avsystem.commons.serialization.json.RawJson" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="RawJson"></a><a id="RawJson:RawJson"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/serialization/json/index.html#RawJson" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="RawJson$.html"><span class="name">RawJson</span></a><span class="result"> extends <a href="../TypeMarker.html" class="extype" name="com.avsystem.commons.serialization.TypeMarker">TypeMarker</a>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       
       

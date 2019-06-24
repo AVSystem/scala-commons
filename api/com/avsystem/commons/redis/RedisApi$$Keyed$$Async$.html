@@ -162,10 +162,11 @@ to their <code>Async</code> counterparts but execution is blocking and results a
 subset of Redis commands. This reflects the fact that not every <a href="RedisExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisExecutor">RedisExecutor</a> (client implementation) supports
 every command (e.g. you can't execute unkeyed commands using <a href="RedisClusterClient.html" class="extype" name="com.avsystem.commons.redis.RedisClusterClient">RedisClusterClient</a>).</p><ul><li>Variants from <a href="RedisApi$$Keyed$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed">RedisApi.Keyed</a> include only commands with keys (so that they can be executed on Redis Cluster)</li><li>Variants from <a href="RedisApi$$Node$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Node">RedisApi.Node</a> include only commands which don't access connection state</li><li>Variants from <a href="RedisApi$$Connection$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Connection">RedisApi.Connection</a> include all commands supported by the driver</li></ul><p>Every API variant may also use different types to represent Redis keys, hash keys and values.
 You can define your own API variants for arbitrary combination of key, hash key and value types
-as long as there is an instance of <a href="RedisDataCodec.html" class="extype" name="com.avsystem.commons.redis.RedisDataCodec">RedisDataCodec</a> for every of these types.</p><p>For example, if you keep only numeric values on a Redis Cluster installation, you might define an API variant
-like this one:</p><pre><span class="kw">class</span> NumericKeyedAsyncApi(executor: RedisKeyedExecutor, config: ExecutionConfig = ExecutionConfig.Default)
-  <span class="kw">extends</span> RedisApi.Keyed.Async[<span class="std">String</span>,<span class="std">String</span>,<span class="std">Long</span>](executor, config)</pre><p>API variants which use only <code>String</code>s (textual) or only <code>ByteString</code>s (binary) are already implemented by the driver, e.g.
-<a href="RedisApi$$Keyed$$Async$$StringTyped.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async.StringTyped">RedisApi.Keyed.Async.StringTyped</a>, <a href="RedisApi$$Batches$$BinaryTyped$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Batches.BinaryTyped">RedisApi.Batches.BinaryTyped</a>.</p><p>Note that <a href="RedisDataCodec.html" class="extype" name="com.avsystem.commons.redis.RedisDataCodec">RedisDataCodec</a> is automatically provided for many simple types and also all types which have a
+as long as there is an instance of <a href="RedisDataCodec.html" class="extype" name="com.avsystem.commons.redis.RedisDataCodec">RedisDataCodec</a> for every of these types.
+Also, it is possible to customize <code>Record</code> type which is used primarily for entries in Redis Stream API.
+<code>Record</code> type requires <a href="RedisRecordCodec.html" class="extype" name="com.avsystem.commons.redis.RedisRecordCodec">RedisRecordCodec</a> instance.</p><p>Key, field, value and record types and their serialization typeclass instances are enapsulated by
+<a href="RedisSerialization.html" class="extype" name="com.avsystem.commons.redis.RedisSerialization">RedisSerialization</a> instances. API variants are then parameterized with them.</p><p>API variants which use only <code>String</code>s (textual) or only <code>ByteString</code>s (binary) are already implemented by the driver, e.g.
+<a href="#StringTyped=Variant[com.avsystem.commons.redis.RedisSerialization.Strings.type]" class="extmbr" name="com.avsystem.commons.redis.RedisApi.Keyed.Async.StringTyped">RedisApi.Keyed.Async.StringTyped</a>, <a href="RedisApi$$Batches$.html#BinaryTyped:com.avsystem.commons.redis.RedisApi.Batches[com.avsystem.commons.redis.RedisSerialization.ByteStrings.type]" class="extmbr" name="com.avsystem.commons.redis.RedisApi.Batches#BinaryTyped">RedisApi.Batches.BinaryTyped</a>.</p><p>Note that <a href="RedisDataCodec.html" class="extype" name="com.avsystem.commons.redis.RedisDataCodec">RedisDataCodec</a> is automatically provided for many simple types and also all types which have a
 <code>GenCodec</code>. This effectively gives you a complete serialization
 framework for keys, hash keys and values stored in Redis.</p><p>Note that chosen key, hash key and value types can be adjusted &quot;on the fly&quot; with a convenient syntax.
 For example, if you need to use some case class as a value type in a single, specific place, you can do it
@@ -197,19 +198,31 @@ api.valueType[Person].set(<span class="lit">"binaryDataKey"</span>, Person(<span
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="Entry point for API variants which expose only keyed commands." href="RedisApi$$Keyed$.html"><span class="name">Keyed</span></a>
+        <a title="Entry point for API variants which expose only keyed commands." href="RedisApi$$Keyed$.html"><span class="name">Keyed</span></a><span class="result"> extends <a href="ExecutedApis.html" class="extype" name="com.avsystem.commons.redis.ExecutedApis">ExecutedApis</a></span>
       </span>
       
       <p class="shortcomment cmt">Entry point for API variants which expose only keyed commands.</p><div class="fullcomment"><div class="comment cmt"><p>Entry point for API variants which expose only keyed commands.
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisApi$.html" class="extype" name="com.avsystem.commons.redis.RedisApi">RedisApi</a></dd></dl></div>
     </li><li class="current-entities indented6">
-                        <a class="object" href="" title="Entry point for API variants which execute commands using RedisKeyedExecutor (e.g."></a>
+                        <a class="object" href="" title=""></a>
                         <a class="class" href="RedisApi$$Keyed$$Async.html" title=""></a>
                         <a href="RedisApi$$Keyed$$Async.html" title="">Async</a>
                       </li><li class="current-entities indented6">
-                        <a class="object" href="RedisApi$$Keyed$$Blocking$.html" title="Entry point for API variants which execute commands using RedisKeyedExecutor (e.g."></a>
+                        <span class="separator"></span>
+                        <a class="class" href="ExecutedApis$BaseAsync.html" title=""></a>
+                        <a href="ExecutedApis$BaseAsync.html" title="">BaseAsync</a>
+                      </li><li class="current-entities indented6">
+                        <span class="separator"></span>
+                        <a class="class" href="ExecutedApis$BaseBlocking.html" title=""></a>
+                        <a href="ExecutedApis$BaseBlocking.html" title="">BaseBlocking</a>
+                      </li><li class="current-entities indented6">
+                        <a class="object" href="RedisApi$$Keyed$$Blocking$.html" title=""></a>
                         <a class="class" href="RedisApi$$Keyed$$Blocking.html" title=""></a>
                         <a href="RedisApi$$Keyed$$Blocking.html" title="">Blocking</a>
+                      </li><li class="current-entities indented6">
+                        <span class="separator"></span>
+                        <a class="class" href="ExecutedApis$VariantCompanion.html" title=""></a>
+                        <a href="ExecutedApis$VariantCompanion.html" title="">VariantCompanion</a>
                       </li>
               </ul>
             </div>
@@ -235,18 +248,16 @@ api.valueType[Person].set(<span class="lit">"binaryDataKey"</span>, Person(<span
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">Async</span>
+        <span class="name">Async</span><span class="result"> extends <a href="RedisApi$$Keyed$.html#VariantCompanion[Variant[S&lt;:com.avsystem.commons.redis.RedisSerialization]&lt;:com.avsystem.commons.redis.AbstractRedisApi[S]]extendsAnyRef" class="extmbr" name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion">VariantCompanion</a>[<a href="RedisApi$$Keyed$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async">Async</a>] with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>Entry point for API variants which execute commands using <a href="RedisKeyedExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisKeyedExecutor">RedisKeyedExecutor</a> (e.g. <a href="RedisClusterClient.html" class="extype" name="com.avsystem.commons.redis.RedisClusterClient">RedisClusterClient</a>)
-and return results as <code>Future</code>s.
-</p></div><div class="toggleContainer block">
+          <div id="comment" class="fullcommenttop"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="RedisApi$$Keyed$.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed">Keyed</a> → <a href="ExecutedApis.html" class="extype" name="com.avsystem.commons.redis.ExecutedApis">ExecutedApis</a></dd></dl><div class="toggleContainer block">
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a>, <span class="extype" name="java.io.Serializable">Serializable</span>, <a href="RedisApi$$Keyed$.html#VariantCompanion[Variant[S&lt;:com.avsystem.commons.redis.RedisSerialization]&lt;:com.avsystem.commons.redis.AbstractRedisApi[S]]extendsAnyRef" class="extmbr" name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion">Keyed.VariantCompanion</a>[<a href="RedisApi$$Keyed$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async">Async</a>], <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -272,7 +283,7 @@ and return results as <code>Future</code>s.
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="com.avsystem.commons.redis.RedisApi.Keyed.Async"><span>Async</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="com.avsystem.commons.redis.RedisApi.Keyed.Async"><span>Async</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion"><span>VariantCompanion</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -294,38 +305,38 @@ and return results as <code>Future</code>s.
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="com.avsystem.commons.redis.RedisApi.Keyed.Async.BinaryTyped" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="BinaryTypedextendsRedisApi.Keyed.Async[akka.util.ByteString,akka.util.ByteString,akka.util.ByteString]withProductwithSerializable"></a><a id="BinaryTyped:BinaryTyped"></a>
+              <ol><li name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion.BinaryTyped" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="BinaryTyped=Variant[com.avsystem.commons.redis.RedisSerialization.ByteStrings.type]"></a><a id="BinaryTyped:BinaryTyped"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/RedisApi$$Keyed$$Async$.html#BinaryTypedextendsRedisApi.Keyed.Async[akka.util.ByteString,akka.util.ByteString,akka.util.ByteString]withProductwithSerializable" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/RedisApi$$Keyed$$Async$.html#BinaryTyped=Variant[com.avsystem.commons.redis.RedisSerialization.ByteStrings.type]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">case class</span>
+        <span class="kind">type</span>
       </span>
       <span class="symbol">
-        <a title="" href="RedisApi$$Keyed$$Async$$BinaryTyped.html"><span class="name">BinaryTyped</span></a><span class="params">(<span name="exec">exec: <a href="RedisKeyedExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisKeyedExecutor">RedisKeyedExecutor</a></span>, <span name="config">config: <a href="config/ExecutionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ExecutionConfig">ExecutionConfig</a> = <span class="symbol"><span class="name"><a href="../../../index.html">ExecutionConfig.Default</a></span></span></span>)</span><span class="result"> extends <a href="RedisApi$$Keyed$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async">Async</a>[<a href="http://doc.akka.io/api/akka/2.5.12/akka/util/ByteString.html#akka.util.ByteString" class="extype" name="akka.util.ByteString">ByteString</a>, <a href="http://doc.akka.io/api/akka/2.5.12/akka/util/ByteString.html#akka.util.ByteString" class="extype" name="akka.util.ByteString">ByteString</a>, <a href="http://doc.akka.io/api/akka/2.5.12/akka/util/ByteString.html#akka.util.ByteString" class="extype" name="akka.util.ByteString">ByteString</a>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <span class="name">BinaryTyped</span><span class="result alias"> = <a href="RedisApi$$Keyed$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async">Async</a>[<a href="RedisSerialization$$ByteStrings$.html" class="extype" name="com.avsystem.commons.redis.RedisSerialization.ByteStrings">ByteStrings</a>.type]</span>
       </span>
       
-      
-    </li><li name="com.avsystem.commons.redis.RedisApi.Keyed.Async.StringTyped" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="StringTypedextendsRedisApi.Keyed.Async[String,String,String]withProductwithSerializable"></a><a id="StringTyped:StringTyped"></a>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ExecutedApis$VariantCompanion.html" class="extype" name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion">VariantCompanion</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion.StringTyped" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="StringTyped=Variant[com.avsystem.commons.redis.RedisSerialization.Strings.type]"></a><a id="StringTyped:StringTyped"></a>
       <span class="permalink">
-      <a href="../../../../com/avsystem/commons/redis/RedisApi$$Keyed$$Async$.html#StringTypedextendsRedisApi.Keyed.Async[String,String,String]withProductwithSerializable" title="Permalink">
+      <a href="../../../../com/avsystem/commons/redis/RedisApi$$Keyed$$Async$.html#StringTyped=Variant[com.avsystem.commons.redis.RedisSerialization.Strings.type]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">case class</span>
+        <span class="kind">type</span>
       </span>
       <span class="symbol">
-        <a title="" href="RedisApi$$Keyed$$Async$$StringTyped.html"><span class="name">StringTyped</span></a><span class="params">(<span name="exec">exec: <a href="RedisKeyedExecutor.html" class="extype" name="com.avsystem.commons.redis.RedisKeyedExecutor">RedisKeyedExecutor</a></span>, <span name="config">config: <a href="config/ExecutionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ExecutionConfig">ExecutionConfig</a> = <span class="symbol"><span class="name"><a href="../../../index.html">ExecutionConfig.Default</a></span></span></span>)</span><span class="result"> extends <a href="RedisApi$$Keyed$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async">Async</a>[<span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>, <span class="extype" name="scala.Predef.String">String</span>] with <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <span class="name">StringTyped</span><span class="result alias"> = <a href="RedisApi$$Keyed$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async">Async</a>[<a href="RedisSerialization$$Strings$.html" class="extype" name="com.avsystem.commons.redis.RedisSerialization.Strings">Strings</a>.type]</span>
       </span>
       
-      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ExecutedApis$VariantCompanion.html" class="extype" name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion">VariantCompanion</a></dd></dl></div>
     </li></ol>
             </div>
 
@@ -346,7 +357,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -362,7 +373,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -378,10 +389,58 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion#BinaryTyped" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="BinaryTyped(exec:ExecutedApis.this.RequiredExecutor,config:com.avsystem.commons.redis.config.ExecutionConfig):VariantCompanion.this.BinaryTyped"></a><a id="BinaryTyped(RequiredExecutor,ExecutionConfig):BinaryTyped"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/redis/RedisApi$$Keyed$$Async$.html#BinaryTyped(exec:ExecutedApis.this.RequiredExecutor,config:com.avsystem.commons.redis.config.ExecutionConfig):VariantCompanion.this.BinaryTyped" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">BinaryTyped</span><span class="params">(<span name="exec">exec: <a href="RedisApi$$Keyed$.html#RequiredExecutor=com.avsystem.commons.redis.RedisKeyedExecutor" class="extmbr" name="com.avsystem.commons.redis.RedisApi.Keyed.RequiredExecutor">RequiredExecutor</a></span>, <span name="config">config: <a href="config/ExecutionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ExecutionConfig">ExecutionConfig</a> = <span class="symbol"><span class="name"><a href="../../../index.html">ExecutionConfig.Default</a></span></span></span>)</span><span class="result">: <a href="#BinaryTyped=Variant[com.avsystem.commons.redis.RedisSerialization.ByteStrings.type]" class="extmbr" name="com.avsystem.commons.redis.RedisApi.Keyed.Async.BinaryTyped">BinaryTyped</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ExecutedApis$VariantCompanion.html" class="extype" name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion">VariantCompanion</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion#StringTyped" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="StringTyped(exec:ExecutedApis.this.RequiredExecutor,config:com.avsystem.commons.redis.config.ExecutionConfig):VariantCompanion.this.StringTyped"></a><a id="StringTyped(RequiredExecutor,ExecutionConfig):StringTyped"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/redis/RedisApi$$Keyed$$Async$.html#StringTyped(exec:ExecutedApis.this.RequiredExecutor,config:com.avsystem.commons.redis.config.ExecutionConfig):VariantCompanion.this.StringTyped" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">StringTyped</span><span class="params">(<span name="exec">exec: <a href="RedisApi$$Keyed$.html#RequiredExecutor=com.avsystem.commons.redis.RedisKeyedExecutor" class="extmbr" name="com.avsystem.commons.redis.RedisApi.Keyed.RequiredExecutor">RequiredExecutor</a></span>, <span name="config">config: <a href="config/ExecutionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ExecutionConfig">ExecutionConfig</a> = <span class="symbol"><span class="name"><a href="../../../index.html">ExecutionConfig.Default</a></span></span></span>)</span><span class="result">: <a href="#StringTyped=Variant[com.avsystem.commons.redis.RedisSerialization.Strings.type]" class="extmbr" name="com.avsystem.commons.redis.RedisApi.Keyed.Async.StringTyped">StringTyped</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ExecutedApis$VariantCompanion.html" class="extype" name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion">VariantCompanion</a></dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion#apply" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="apply[S&lt;:com.avsystem.commons.redis.RedisSerialization](executor:ExecutedApis.this.RequiredExecutor,execConfig:com.avsystem.commons.redis.config.ExecutionConfig)(implicitevidence$7:com.avsystem.commons.misc.ValueOf[S]):Variant[S]"></a><a id="apply[S&lt;:RedisSerialization](RequiredExecutor,ExecutionConfig)(ValueOf[S]):Async[S]"></a>
+      <span class="permalink">
+      <a href="../../../../com/avsystem/commons/redis/RedisApi$$Keyed$$Async$.html#apply[S&lt;:com.avsystem.commons.redis.RedisSerialization](executor:ExecutedApis.this.RequiredExecutor,execConfig:com.avsystem.commons.redis.config.ExecutionConfig)(implicitevidence$7:com.avsystem.commons.misc.ValueOf[S]):Variant[S]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">apply</span><span class="tparams">[<span name="S">S &lt;: <a href="RedisSerialization.html" class="extype" name="com.avsystem.commons.redis.RedisSerialization">RedisSerialization</a></span>]</span><span class="params">(<span name="executor">executor: <a href="RedisApi$$Keyed$.html#RequiredExecutor=com.avsystem.commons.redis.RedisKeyedExecutor" class="extmbr" name="com.avsystem.commons.redis.RedisApi.Keyed.RequiredExecutor">RequiredExecutor</a></span>, <span name="execConfig">execConfig: <a href="config/ExecutionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ExecutionConfig">ExecutionConfig</a> = <span class="symbol"><span class="name"><a href="../../../index.html">ExecutionConfig.Default</a></span></span></span>)</span><span class="params">(<span class="implicit">implicit </span><span name="arg0">arg0: <a href="../misc/ValueOf.html" class="extype" name="com.avsystem.commons.misc.ValueOf">ValueOf</a>[<span class="extype" name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion.apply.S">S</span>]</span>)</span><span class="result">: <a href="RedisApi$$Keyed$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async">Async</a>[<span class="extype" name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion.apply.S">S</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ExecutedApis$VariantCompanion.html" class="extype" name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion">VariantCompanion</a></dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
@@ -410,7 +469,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -434,7 +493,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -450,7 +509,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -466,7 +525,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -507,7 +566,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
@@ -526,7 +585,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
@@ -542,7 +601,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -558,7 +617,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -577,7 +636,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -628,7 +687,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -650,7 +709,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -672,7 +731,7 @@ and return results as <code>Future</code>s.
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -694,10 +753,16 @@ and return results as <code>Future</code>s.
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+        <div class="parent" name="scala.Serializable">
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></h3>
+            </div><div class="parent" name="java.io.Serializable">
+              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion">
+              <h3>Inherited from <a href="RedisApi$$Keyed$.html#VariantCompanion[Variant[S&lt;:com.avsystem.commons.redis.RedisSerialization]&lt;:com.avsystem.commons.redis.AbstractRedisApi[S]]extendsAnyRef" class="extmbr" name="com.avsystem.commons.redis.ExecutedApis.VariantCompanion">Keyed.VariantCompanion</a>[<a href="RedisApi$$Keyed$$Async.html" class="extype" name="com.avsystem.commons.redis.RedisApi.Keyed.Async">Async</a>]</h3>
+            </div><div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>

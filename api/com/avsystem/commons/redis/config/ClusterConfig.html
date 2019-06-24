@@ -167,20 +167,12 @@
                         <a href="ExecutionConfig.html" title="Additional options for executing a RedisBatch on a RedisExecutor">ExecutionConfig</a>
                       </li><li class="current-entities indented5">
                         <span class="separator"></span>
-                        <a class="class" href="ExponentialBackoff.html" title=""></a>
-                        <a href="ExponentialBackoff.html" title="">ExponentialBackoff</a>
-                      </li><li class="current-entities indented5">
-                        <span class="separator"></span>
-                        <a class="object" href="NoRetryStrategy$.html" title=""></a>
-                        <a href="NoRetryStrategy$.html" title="">NoRetryStrategy</a>
-                      </li><li class="current-entities indented5">
-                        <span class="separator"></span>
                         <a class="class" href="NodeConfig.html" title="Configuration of a RedisNodeClient, used either as a standalone client or internally by RedisClusterClient."></a>
                         <a href="NodeConfig.html" title="Configuration of a RedisNodeClient, used either as a standalone client or internally by RedisClusterClient.">NodeConfig</a>
                       </li><li class="current-entities indented5">
-                        <span class="separator"></span>
-                        <a class="trait" href="RetryStrategy.html" title=""></a>
-                        <a href="RetryStrategy.html" title="">RetryStrategy</a>
+                        <a class="object" href="RetryStrategy$.html" title=""></a>
+                        <a class="trait" href="RetryStrategy.html" title="A RetryStrategy is conceptually a lazy sequence of delays, possibly infinite."></a>
+                        <a href="RetryStrategy.html" title="A RetryStrategy is conceptually a lazy sequence of delays, possibly infinite.">RetryStrategy</a>
                       </li>
               </ul>
             </div>
@@ -204,7 +196,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">ClusterConfig</span><span class="params">(<span name="nodeConfigs">nodeConfigs: (<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>) ⇒ <a href="NodeConfig.html" class="extype" name="com.avsystem.commons.redis.config.NodeConfig">NodeConfig</a> = <span class="symbol">_ =&gt; NodeConfig()</span></span>, <span name="monitoringConnectionConfigs">monitoringConnectionConfigs: (<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> = <span class="symbol">_ =&gt; ConnectionConfig()</span></span>, <span name="autoRefreshInterval">autoRefreshInterval: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol">5.seconds</span></span>, <span name="minRefreshInterval">minRefreshInterval: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol">1.seconds</span></span>, <span name="nodesToQueryForState">nodesToQueryForState: (<a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">_ min 5</span></span>, <span name="maxRedirections">maxRedirections: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">3</span></span>, <span name="nodeClientCloseDelay">nodeClientCloseDelay: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol">1.seconds</span></span>, <span name="fallbackToSingleNode">fallbackToSingleNode: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+        <span class="name">ClusterConfig</span><span class="params">(<span name="nodeConfigs">nodeConfigs: (<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>) ⇒ <a href="NodeConfig.html" class="extype" name="com.avsystem.commons.redis.config.NodeConfig">NodeConfig</a> = <span class="symbol">_ =&gt; NodeConfig()</span></span>, <span name="monitoringConnectionConfigs">monitoringConnectionConfigs: (<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> = <span class="symbol">_ =&gt; ConnectionConfig()</span></span>, <span name="autoRefreshInterval">autoRefreshInterval: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol">5.seconds</span></span>, <span name="minRefreshInterval">minRefreshInterval: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol">1.seconds</span></span>, <span name="nodesToQueryForState">nodesToQueryForState: (<a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">_ min 5</span></span>, <span name="redirectionStrategy">redirectionStrategy: <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> = <span class="symbol"><span class="name"><a href="RetryStrategy$.html">RetryStrategy.times(3)</a></span></span></span>, <span name="tryagainStrategy">tryagainStrategy: <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> = <span class="defval" name='<span class="name"><a href="../../../../index.html">exponentially(10.millis).maxDelay(5.seconds).maxTotal(1.minute)</a></span>'>...</span></span>, <span name="nodeClientCloseDelay">nodeClientCloseDelay: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol">1.seconds</span></span>, <span name="fallbackToSingleNode">fallbackToSingleNode: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">false</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
       </span>
       </h4>
 
@@ -219,9 +211,10 @@
                                    cluster redirections are observed. <code>minRefreshInterval</code> prevents too many
                                    refresh operations from being executed in such situations.</p></dd><dt class="param">nodesToQueryForState</dt><dd class="cmt"><p>function that determines how many randomly selected masters should be queried
                                    for cluster state during routine state refresh operation. The function takes
-                                   current number of known masters as its argument.</p></dd><dt class="param">maxRedirections</dt><dd class="cmt"><p>maximum number of consecutive redirections automatically handled by
-                                   <a href="../RedisClusterClient.html" class="extype" name="com.avsystem.commons.redis.RedisClusterClient">RedisClusterClient</a>.
-                                   When set to 0, redirections are not handled at all.</p></dd><dt class="param">nodeClientCloseDelay</dt><dd class="cmt"><p>Delay after which <a href="../RedisNodeClient.html" class="extype" name="com.avsystem.commons.redis.RedisNodeClient">RedisNodeClient</a>
+                                   current number of known masters as its argument.</p></dd><dt class="param">redirectionStrategy</dt><dd class="cmt"><p><a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> that controls Redis Cluster redirection handling
+                                   (<code>MOVED</code> and <code>ASK</code> responses).</p></dd><dt class="param">tryagainStrategy</dt><dd class="cmt"><p><a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> that controls retrying commands which failed with
+                                   <code>TRYAGAIN</code> error which may be returned for multikey commands during
+                                   cluster slot migration.</p></dd><dt class="param">nodeClientCloseDelay</dt><dd class="cmt"><p>Delay after which <a href="../RedisNodeClient.html" class="extype" name="com.avsystem.commons.redis.RedisNodeClient">RedisNodeClient</a>
                                    is closed when it's master leaves cluster state (goes down or becomes a slave).
                                    Note that the node client is NOT operational during that delay. Trying to
                                    execute commands on it will result in
@@ -233,7 +226,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a>, <span class="extype" name="java.io.Serializable">Serializable</span>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Equals.html#scala.Equals" class="extype" name="scala.Equals">Equals</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a>, <span class="extype" name="java.io.Serializable">Serializable</span>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Equals.html#scala.Equals" class="extype" name="scala.Equals">Equals</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
         </div></div>
         
 
@@ -280,9 +273,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="com.avsystem.commons.redis.config.ClusterConfig#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="&lt;init&gt;(nodeConfigs:com.avsystem.commons.redis.NodeAddress=&gt;com.avsystem.commons.redis.config.NodeConfig,monitoringConnectionConfigs:com.avsystem.commons.redis.NodeAddress=&gt;com.avsystem.commons.redis.config.ConnectionConfig,autoRefreshInterval:scala.concurrent.duration.FiniteDuration,minRefreshInterval:scala.concurrent.duration.FiniteDuration,nodesToQueryForState:Int=&gt;Int,maxRedirections:Int,nodeClientCloseDelay:scala.concurrent.duration.FiniteDuration,fallbackToSingleNode:Boolean):com.avsystem.commons.redis.config.ClusterConfig"></a><a id="&lt;init&gt;:ClusterConfig"></a>
+      <a id="&lt;init&gt;(nodeConfigs:com.avsystem.commons.redis.NodeAddress=&gt;com.avsystem.commons.redis.config.NodeConfig,monitoringConnectionConfigs:com.avsystem.commons.redis.NodeAddress=&gt;com.avsystem.commons.redis.config.ConnectionConfig,autoRefreshInterval:scala.concurrent.duration.FiniteDuration,minRefreshInterval:scala.concurrent.duration.FiniteDuration,nodesToQueryForState:Int=&gt;Int,redirectionStrategy:com.avsystem.commons.redis.config.RetryStrategy,tryagainStrategy:com.avsystem.commons.redis.config.RetryStrategy,nodeClientCloseDelay:scala.concurrent.duration.FiniteDuration,fallbackToSingleNode:Boolean):com.avsystem.commons.redis.config.ClusterConfig"></a><a id="&lt;init&gt;:ClusterConfig"></a>
       <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/config/ClusterConfig.html#&lt;init&gt;(nodeConfigs:com.avsystem.commons.redis.NodeAddress=&gt;com.avsystem.commons.redis.config.NodeConfig,monitoringConnectionConfigs:com.avsystem.commons.redis.NodeAddress=&gt;com.avsystem.commons.redis.config.ConnectionConfig,autoRefreshInterval:scala.concurrent.duration.FiniteDuration,minRefreshInterval:scala.concurrent.duration.FiniteDuration,nodesToQueryForState:Int=&gt;Int,maxRedirections:Int,nodeClientCloseDelay:scala.concurrent.duration.FiniteDuration,fallbackToSingleNode:Boolean):com.avsystem.commons.redis.config.ClusterConfig" title="Permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/ClusterConfig.html#&lt;init&gt;(nodeConfigs:com.avsystem.commons.redis.NodeAddress=&gt;com.avsystem.commons.redis.config.NodeConfig,monitoringConnectionConfigs:com.avsystem.commons.redis.NodeAddress=&gt;com.avsystem.commons.redis.config.ConnectionConfig,autoRefreshInterval:scala.concurrent.duration.FiniteDuration,minRefreshInterval:scala.concurrent.duration.FiniteDuration,nodesToQueryForState:Int=&gt;Int,redirectionStrategy:com.avsystem.commons.redis.config.RetryStrategy,tryagainStrategy:com.avsystem.commons.redis.config.RetryStrategy,nodeClientCloseDelay:scala.concurrent.duration.FiniteDuration,fallbackToSingleNode:Boolean):com.avsystem.commons.redis.config.ClusterConfig" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -291,7 +284,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">ClusterConfig</span><span class="params">(<span name="nodeConfigs">nodeConfigs: (<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>) ⇒ <a href="NodeConfig.html" class="extype" name="com.avsystem.commons.redis.config.NodeConfig">NodeConfig</a> = <span class="symbol">_ =&gt; NodeConfig()</span></span>, <span name="monitoringConnectionConfigs">monitoringConnectionConfigs: (<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> = <span class="symbol">_ =&gt; ConnectionConfig()</span></span>, <span name="autoRefreshInterval">autoRefreshInterval: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol">5.seconds</span></span>, <span name="minRefreshInterval">minRefreshInterval: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol">1.seconds</span></span>, <span name="nodesToQueryForState">nodesToQueryForState: (<a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">_ min 5</span></span>, <span name="maxRedirections">maxRedirections: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">3</span></span>, <span name="nodeClientCloseDelay">nodeClientCloseDelay: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol">1.seconds</span></span>, <span name="fallbackToSingleNode">fallbackToSingleNode: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">false</span></span>)</span>
+        <span class="name">ClusterConfig</span><span class="params">(<span name="nodeConfigs">nodeConfigs: (<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>) ⇒ <a href="NodeConfig.html" class="extype" name="com.avsystem.commons.redis.config.NodeConfig">NodeConfig</a> = <span class="symbol">_ =&gt; NodeConfig()</span></span>, <span name="monitoringConnectionConfigs">monitoringConnectionConfigs: (<a href="../NodeAddress.html" class="extype" name="com.avsystem.commons.redis.NodeAddress">NodeAddress</a>) ⇒ <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> = <span class="symbol">_ =&gt; ConnectionConfig()</span></span>, <span name="autoRefreshInterval">autoRefreshInterval: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol">5.seconds</span></span>, <span name="minRefreshInterval">minRefreshInterval: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol">1.seconds</span></span>, <span name="nodesToQueryForState">nodesToQueryForState: (<a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a> = <span class="symbol">_ min 5</span></span>, <span name="redirectionStrategy">redirectionStrategy: <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> = <span class="symbol"><span class="name"><a href="RetryStrategy$.html">RetryStrategy.times(3)</a></span></span></span>, <span name="tryagainStrategy">tryagainStrategy: <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> = <span class="defval" name='<span class="name"><a href="../../../../index.html">exponentially(10.millis).maxDelay(5.seconds).maxTotal(1.minute)</a></span>'>...</span></span>, <span name="nodeClientCloseDelay">nodeClientCloseDelay: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a> = <span class="symbol">1.seconds</span></span>, <span name="fallbackToSingleNode">fallbackToSingleNode: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">false</span></span>)</span>
       </span>
       
       <p class="shortcomment cmt"></p><div class="fullcomment"><div class="comment cmt"></div><dl class="paramcmts block"><dt class="param">nodeConfigs</dt><dd class="cmt"><p>function that returns <a href="NodeConfig.html" class="extype" name="com.avsystem.commons.redis.config.NodeConfig">NodeConfig</a> given the address of the node.</p></dd><dt class="param">monitoringConnectionConfigs</dt><dd class="cmt"><p>function that returns <a href="ConnectionConfig.html" class="extype" name="com.avsystem.commons.redis.config.ConnectionConfig">ConnectionConfig</a> for a monitoring connection
@@ -303,9 +296,10 @@
                                    cluster redirections are observed. <code>minRefreshInterval</code> prevents too many
                                    refresh operations from being executed in such situations.</p></dd><dt class="param">nodesToQueryForState</dt><dd class="cmt"><p>function that determines how many randomly selected masters should be queried
                                    for cluster state during routine state refresh operation. The function takes
-                                   current number of known masters as its argument.</p></dd><dt class="param">maxRedirections</dt><dd class="cmt"><p>maximum number of consecutive redirections automatically handled by
-                                   <a href="../RedisClusterClient.html" class="extype" name="com.avsystem.commons.redis.RedisClusterClient">RedisClusterClient</a>.
-                                   When set to 0, redirections are not handled at all.</p></dd><dt class="param">nodeClientCloseDelay</dt><dd class="cmt"><p>Delay after which <a href="../RedisNodeClient.html" class="extype" name="com.avsystem.commons.redis.RedisNodeClient">RedisNodeClient</a>
+                                   current number of known masters as its argument.</p></dd><dt class="param">redirectionStrategy</dt><dd class="cmt"><p><a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> that controls Redis Cluster redirection handling
+                                   (<code>MOVED</code> and <code>ASK</code> responses).</p></dd><dt class="param">tryagainStrategy</dt><dd class="cmt"><p><a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a> that controls retrying commands which failed with
+                                   <code>TRYAGAIN</code> error which may be returned for multikey commands during
+                                   cluster slot migration.</p></dd><dt class="param">nodeClientCloseDelay</dt><dd class="cmt"><p>Delay after which <a href="../RedisNodeClient.html" class="extype" name="com.avsystem.commons.redis.RedisNodeClient">RedisNodeClient</a>
                                    is closed when it's master leaves cluster state (goes down or becomes a slave).
                                    Note that the node client is NOT operational during that delay. Trying to
                                    execute commands on it will result in
@@ -336,7 +330,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -352,7 +346,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -368,7 +362,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
@@ -400,7 +394,7 @@
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">autoRefreshInterval</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a></span>
+        <span class="name">autoRefreshInterval</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a></span>
       </span>
       
       
@@ -416,7 +410,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -440,7 +434,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -456,7 +450,7 @@
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">fallbackToSingleNode</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">fallbackToSingleNode</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       
@@ -472,7 +466,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../../../../../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -513,26 +507,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="com.avsystem.commons.redis.config.ClusterConfig#maxRedirections" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="maxRedirections:Int"></a>
-      <span class="permalink">
-      <a href="../../../../../com/avsystem/commons/redis/config/ClusterConfig.html#maxRedirections:Int" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">maxRedirections</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
-      </span>
-      
-      
     </li><li name="com.avsystem.commons.redis.config.ClusterConfig#minRefreshInterval" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="minRefreshInterval:scala.concurrent.duration.FiniteDuration"></a><a id="minRefreshInterval:FiniteDuration"></a>
       <span class="permalink">
@@ -545,7 +523,7 @@
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">minRefreshInterval</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a></span>
+        <span class="name">minRefreshInterval</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a></span>
       </span>
       
       
@@ -577,7 +555,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
@@ -593,7 +571,7 @@
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">nodeClientCloseDelay</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a></span>
+        <span class="name">nodeClientCloseDelay</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/concurrent/duration/FiniteDuration.html#scala.concurrent.duration.FiniteDuration" class="extype" name="scala.concurrent.duration.FiniteDuration">FiniteDuration</a></span>
       </span>
       
       
@@ -625,7 +603,7 @@
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">nodesToQueryForState</span><span class="result">: (<a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+        <span class="name">nodesToQueryForState</span><span class="result">: (<a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a>) ⇒ <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
       </span>
       
       
@@ -641,7 +619,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -660,13 +638,29 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.config.ClusterConfig#redirectionStrategy" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="redirectionStrategy:com.avsystem.commons.redis.config.RetryStrategy"></a><a id="redirectionStrategy:RetryStrategy"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/ClusterConfig.html#redirectionStrategy:com.avsystem.commons.redis.config.RetryStrategy" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">redirectionStrategy</span><span class="result">: <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a></span>
+      </span>
+      
+      
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -683,6 +677,22 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="com.avsystem.commons.redis.config.ClusterConfig#tryagainStrategy" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="tryagainStrategy:com.avsystem.commons.redis.config.RetryStrategy"></a><a id="tryagainStrategy:RetryStrategy"></a>
+      <span class="permalink">
+      <a href="../../../../../com/avsystem/commons/redis/config/ClusterConfig.html#tryagainStrategy:com.avsystem.commons.redis.config.RetryStrategy" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">tryagainStrategy</span><span class="result">: <a href="RetryStrategy.html" class="extype" name="com.avsystem.commons.redis.config.RetryStrategy">RetryStrategy</a></span>
+      </span>
+      
+      
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <span class="permalink">
@@ -695,7 +705,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -717,7 +727,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.8/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -739,7 +749,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.8/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
@@ -762,17 +772,17 @@
 
         <div id="inheritedMembers">
         <div class="parent" name="scala.Serializable">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></h3>
             </div><div class="parent" name="java.io.Serializable">
               <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
             </div><div class="parent" name="scala.Product">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a></h3>
             </div><div class="parent" name="scala.Equals">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Equals.html#scala.Equals" class="extype" name="scala.Equals">Equals</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Equals.html#scala.Equals" class="extype" name="scala.Equals">Equals</a></h3>
             </div><div class="parent" name="scala.AnyRef">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
             </div><div class="parent" name="scala.Any">
-              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.8/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
             </div>
         
         </div>
