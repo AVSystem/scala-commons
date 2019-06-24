@@ -33,6 +33,7 @@ sudo: false
 cache:
   directories:
     - $HOME/.ivy2/cache
+    - $HOME/.coursier/cache
     - $HOME/.cache
     - $HOME/.sbt
     - redis-$REDIS_VERSION
