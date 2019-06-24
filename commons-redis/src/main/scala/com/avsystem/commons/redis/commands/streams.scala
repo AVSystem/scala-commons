@@ -440,6 +440,6 @@ case class XStreamInfo[Record: RedisRecordCodec](raw: BMap[String, ValidRedisMsg
   def radixTreeNodes: Int = integerInt(raw("radis-tree-nodes"))
   def groups: Int = integerInt(raw("groups"))
   def lastGeneratedId: XEntryId = bulkXEntryId(raw("last-generated-id"))
-  def firstEntry: XEntry[Record] = ReplyDecoders.multiBulkXEntry[Record].apply(raw("first-entry"))
-  def lastEntry: XEntry[Record] = ReplyDecoders.multiBulkXEntry[Record].apply(raw("last-entry"))
+  def firstEntry: XEntry[Record] = multiBulkXEntry[Record].apply(raw("first-entry"))
+  def lastEntry: XEntry[Record] = multiBulkXEntry[Record].apply(raw("last-entry"))
 }

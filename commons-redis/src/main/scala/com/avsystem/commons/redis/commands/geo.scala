@@ -224,7 +224,8 @@ object GeoradiusAttrs {
       element.elements(1 + offset(finalFlags, DistFlag) + offset(finalFlags, HashFlag)) match {
         case ArrayMsg(IndexedSeq(BulkStringMsg(rawLong), BulkStringMsg(rawLat))) =>
           Withcoord(GeoPoint(rawLong.utf8String.toDouble, rawLat.utf8String.toDouble), wrapped)
-        case msg => throw new UnexpectedReplyException(s"Expected two-element array of bulk strings for COORD, got $msg")
+        case msg => throw new UnexpectedReplyException(
+          s"Expected two-element array of bulk strings for COORD, got $msg")
       }
   }
 }
