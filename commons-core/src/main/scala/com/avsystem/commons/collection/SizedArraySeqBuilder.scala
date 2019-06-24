@@ -2,9 +2,8 @@ package com.avsystem.commons
 package collection
 
 import scala.collection.compat._
-import scala.collection.compat.immutable.ArraySeq
 
-final class SizedArraySeqBuilder[A](expectedSize: Int) extends CrossBuilder[A, ArraySeq[A]] {
+final class SizedArraySeqBuilder[A](expectedSize: Int) extends CrossBuilder[A, IArraySeq[A]] {
   private[this] val array = new Array[AnyRef](expectedSize).asInstanceOf[Array[A]]
   private[this] var idx: Int = 0
 
@@ -14,11 +13,11 @@ final class SizedArraySeqBuilder[A](expectedSize: Int) extends CrossBuilder[A, A
     idx = 0
   }
 
-  def result(): ArraySeq[A] = {
+  def result(): IArraySeq[A] = {
     if (idx < expectedSize) {
       throw new IllegalStateException(s"exactly $expectedSize elements were expected but only $idx were added")
     }
-    ArraySeq.unsafeWrapArray(array)
+    IArraySeq.unsafeWrapArray(array)
   }
 
   def addOne(elem: A): this.type = {
@@ -33,10 +32,10 @@ final class SizedArraySeqBuilder[A](expectedSize: Int) extends CrossBuilder[A, A
     }
 }
 
-final class SizedArraySeqFactory[A](size: Int) extends CrossFactory[A, ArraySeq[A]] {
-  def fromSpecific(it: IterableOnce[A]): ArraySeq[A] =
-    ArraySeq.unsafeWrapArray(it.iterator.toArray[Any].asInstanceOf[Array[A]])
+final class SizedArraySeqFactory[A](size: Int) extends CrossFactory[A, IArraySeq[A]] {
+  def fromSpecific(it: IterableOnce[A]): IArraySeq[A] =
+    IArraySeq.unsafeWrapArray(it.iterator.toArray[Any].asInstanceOf[Array[A]])
 
-  def newBuilder: MBuilder[A, ArraySeq[A]] =
+  def newBuilder: MBuilder[A, IArraySeq[A]] =
     new SizedArraySeqBuilder[A](size)
 }

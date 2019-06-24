@@ -10,7 +10,6 @@ import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{ClusterState, NodeAddress, RedisApi, RedisBatch, RedisNodeClient}
 
 import scala.collection.compat._
-import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
@@ -68,7 +67,7 @@ final class ClusterMonitoringActor(
       pool(i) = node
       i += 1
     }
-    ArraySeq.unsafeWrapArray(pool.slice(0, count))
+    IArraySeq.unsafeWrapArray(pool.slice(0, count))
   }
 
   def receive: Receive = {
@@ -88,7 +87,7 @@ final class ClusterMonitoringActor(
             (srm.range, clients.getOrElseUpdate(srm.master, createClient(srm.master)))
           }.toArray
           java.util.Arrays.sort(res, MappingComparator)
-          ArraySeq.unsafeWrapArray(res)
+          IArraySeq.unsafeWrapArray(res)
         }
 
         masters = nodeInfos.iterator.filter(n => n.flags.master && !n.flags.fail)

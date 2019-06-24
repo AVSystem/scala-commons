@@ -7,7 +7,6 @@ import com.avsystem.commons.serialization.GenObjectCodec
 
 import scala.annotation.implicitNotFound
 import scala.collection.compat._
-import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 
 @implicitNotFound("${T} has no RedisRecordCodec. It can be derived from GenObjectCodec which can be provided " +
@@ -49,7 +48,7 @@ sealed trait LowPriorityRedisRecordCodecs { this: RedisRecordCodec.type =>
       value => {
         val buf = mutable.ArrayBuilder.make[BulkStringMsg]
         codec.writeObject(new RedisRecordOutput(buf), value)
-        ArraySeq.unsafeWrapArray(buf.result())
+        IArraySeq.unsafeWrapArray(buf.result())
       }
     )
 }

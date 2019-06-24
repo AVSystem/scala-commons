@@ -10,7 +10,6 @@ import com.avsystem.commons.redis.exception.{ErrorReplyException, UnexpectedRepl
 import com.avsystem.commons.redis.protocol._
 
 import scala.collection.compat._
-import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 
 trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
@@ -64,7 +63,7 @@ abstract class AbstractRedisCommand[A](protected val decodeExpected: ReplyDecode
   extends RedisCommand[A]
 
 final class CommandEncoder(private val builder: mutable.ArrayBuilder[BulkStringMsg]) extends AnyVal {
-  def result: ArrayMsg[BulkStringMsg] = ArrayMsg(ArraySeq.unsafeWrapArray(builder.result()))
+  def result: ArrayMsg[BulkStringMsg] = ArrayMsg(IArraySeq.unsafeWrapArray(builder.result()))
 
   private def fluent(code: => Unit): CommandEncoder = {
     code

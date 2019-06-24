@@ -14,7 +14,6 @@ import com.avsystem.commons.redis.protocol.{RedisMsg, RedisReply}
 import com.avsystem.commons.redis.util.ActorLazyLogging
 
 import scala.collection.compat._
-import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 
@@ -445,7 +444,7 @@ object RedisConnectionActor {
             }
             queue.dequeue()
             replies += preprocessedMsg
-            if (queue.isEmpty) Opt(PacksResult.Multiple(ArraySeq.unsafeWrapArray(replies.result()))) else Opt.Empty
+            if (queue.isEmpty) Opt(PacksResult.Multiple(IArraySeq.unsafeWrapArray(replies.result()))) else Opt.Empty
           }
       }
       packsResultOpt match {

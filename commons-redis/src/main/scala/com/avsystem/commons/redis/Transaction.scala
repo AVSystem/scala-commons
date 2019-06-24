@@ -8,7 +8,6 @@ import com.avsystem.commons.redis.exception.{OptimisticLockException, RedisExcep
 import com.avsystem.commons.redis.protocol._
 
 import scala.annotation.tailrec
-import scala.collection.compat.immutable.ArraySeq
 
 final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
 
@@ -81,7 +80,7 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
             case _ => setSingleError(new UnexpectedReplyException(s"Unexpected reply for EXEC: $message"))
           }
           singleError orElse
-            errors.map(a => TransactionReply(ArraySeq.unsafeWrapArray(a))) orElse
+            errors.map(a => TransactionReply(IArraySeq.unsafeWrapArray(a))) orElse
             normalResult.map(TransactionReply)
         case i =>
           message match {

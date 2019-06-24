@@ -7,7 +7,6 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 import scala.collection.compat._
-import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 
 trait KeyedClusterApi extends ApiSubset {
@@ -269,7 +268,7 @@ case class NodeInfo(infoLine: String) {
     }
 
     def res[T](b: mutable.ArrayBuilder[T]): IndexedSeq[T] =
-      ArraySeq.unsafeWrapArray(b.result())
+      IArraySeq.unsafeWrapArray(b.result())
 
     (res(slots), res(importingSlots), res(migratingSlots))
   }
