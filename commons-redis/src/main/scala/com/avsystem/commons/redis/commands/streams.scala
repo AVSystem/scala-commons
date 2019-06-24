@@ -172,9 +172,10 @@ trait StreamsApi extends ApiSubset {
     consumer: XConsumer,
     id: OptArg[XEntryId] = OptArg.Empty,
     blockMillis: OptArg[Int] = OptArg.Empty,
-    count: OptArg[Int] = OptArg.Empty
+    count: OptArg[Int] = OptArg.Empty,
+    noack: Boolean = false
   ): Result[Seq[XEntry]] =
-    execute(new Xreadgroup(group, consumer, count.toOpt, blockMillis.toOpt,
+    execute(new Xreadgroup(group, consumer, count.toOpt, blockMillis.toOpt, noack,
       Iterator(key), Iterator(id.toOpt)).map(_.getOrElse(key, Nil)))
 
   /** Executes [[http://redis.io/commands/xreadgroup XREADGROUP]] */
@@ -183,9 +184,10 @@ trait StreamsApi extends ApiSubset {
     consumer: XConsumer,
     streams: Iterable[(Key, Opt[XEntryId])],
     blockMillis: OptArg[Int] = OptArg.Empty,
-    count: OptArg[Int] = OptArg.Empty
+    count: OptArg[Int] = OptArg.Empty,
+    noack: Boolean = false
   ): Result[BMap[Key, Seq[XEntry]]] =
-    execute(new Xreadgroup(group, consumer, count.toOpt, blockMillis.toOpt,
+    execute(new Xreadgroup(group, consumer, count.toOpt, blockMillis.toOpt, noack,
       streams.iterator.map(_._1), streams.iterator.map(_._2)))
 
   /** Executes [[http://redis.io/commands/xrevrange XREVRANGE]] */
@@ -328,11 +330,11 @@ trait StreamsApi extends ApiSubset {
 
   private final class Xreadgroup(
     group: XGroup, consumer: XConsumer,
-    count: Opt[Int], val blockMillis: Opt[Int],
+    count: Opt[Int], val blockMillis: Opt[Int], noack: Boolean,
     streamKeys: Iterator[Key], streamIds: Iterator[Opt[XEntryId]]
   ) extends AbstractXread(streamKeys.isEmpty) {
     val encoded: Encoded = encoder("XREADGROUP").add("GROUP").add(group).add(consumer)
-      .optAdd("COUNT", count).optAdd("BLOCK", blockMillis)
+      .optAdd("COUNT", count).optAdd("BLOCK", blockMillis).addFlag("NOACK", noack)
       .add("STREAMS").keys(streamKeys).add(streamIds.map(_.fold(">")(_.toString)))
       .result
   }
