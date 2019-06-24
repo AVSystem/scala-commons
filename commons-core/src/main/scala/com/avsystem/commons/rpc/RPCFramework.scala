@@ -22,8 +22,8 @@ trait RPCFramework {
   def read[T: Reader](raw: RawValue): T
   def write[T: Writer](value: T): RawValue
 
-  implicit def readerBasedAsReal[T: Reader]: AsReal[RawValue, T] = AsReal.create(read[T])
-  implicit def writerBasedAsRaw[T: Writer]: AsRaw[RawValue, T] = AsRaw.create(write[T])
+  implicit def readerBasedAsReal[T: Reader]: AsReal[RawValue, T] = read[T](_)
+  implicit def writerBasedAsRaw[T: Writer]: AsRaw[RawValue, T] = write[T](_)
 
   type ParamTypeMetadata[T]
   type ResultTypeMetadata[T]

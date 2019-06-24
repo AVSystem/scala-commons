@@ -40,10 +40,8 @@ trait FunctionRPCFramework extends RPCFramework {
     @infer resultTypeMetadata: ResultTypeMetadata[T]
   ) extends Signature with TypedMetadata[Future[T]]
 
-  implicit def readerBasedFutureAsReal[T: Reader]: AsReal[Future[RawValue], Future[T]] =
-    AsReal.create(_.mapNow(read[T]))
-  implicit def writerBasedFutureAsRaw[T: Writer]: AsRaw[Future[RawValue], Future[T]] =
-    AsRaw.create(_.mapNow(write[T]))
+  implicit def readerBasedFutureAsReal[T: Reader]: AsReal[Future[RawValue], Future[T]] = _.mapNow(read[T])
+  implicit def writerBasedFutureAsRaw[T: Writer]: AsRaw[Future[RawValue], Future[T]] = _.mapNow(write[T])
 }
 
 /**

@@ -44,7 +44,7 @@ trait SharedExtensions {
   implicit def iterableOnceOps[C[X] <: IterableOnce[X], A](coll: C[A]): IterableOnceOps[C, A] =
     new IterableOnceOps(coll)
 
-  implicit def traversableOps[C[X] <: BIterable[X], A](coll: C[A]): IterableOps[C, A] = new IterableOps(coll)
+  implicit def iterableOps[C[X] <: BIterable[X], A](coll: C[A]): IterableOps[C, A] = new IterableOps(coll)
 
   implicit def pairIterableOnceOps[C[X] <: IterableOnce[X], K, V](coll: C[(K, V)]): PairIterableOnceOps[C, K, V] =
     new PairIterableOnceOps(coll)
@@ -211,7 +211,7 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     def uncapitalize: String =
       if (str.isEmpty || str.charAt(0).isLower) str
-      else str.charAt(0).toLower.toString + str.substring(1)
+      else str.substring(0, 1).toLowerCase + str.substring(1)
 
     /**
       * Removes a newline character from every sequence of consecutive newline characters. If the sequence contained

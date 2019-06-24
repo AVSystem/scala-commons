@@ -153,12 +153,12 @@ trait JCollectionUtils extends JFactories {
   }
 
   abstract class JSortedMapCreator[M[K, V] <: JSortedMap[K, V]] {
-    protected def instantiate[K, V](ord: Ordering[K]): M[K, V]
+    protected def instantiate[K: Ordering, V]: M[K, V]
 
-    def empty[K: Ordering, V]: M[K, V] = instantiate[K, V](Ordering[K])
+    def empty[K: Ordering, V]: M[K, V] = instantiate[K, V]
 
     def apply[K: Ordering, V](entries: (K, V)*): M[K, V] = {
-      val result = instantiate[K, V](Ordering[K])
+      val result = instantiate[K, V]
       entries.foreach { case (k, v) => result.put(k, v) }
       result
     }
@@ -189,15 +189,15 @@ trait JCollectionUtils extends JFactories {
   }
 
   object JSortedMap extends JSortedMapCreator[JSortedMap] {
-    protected def instantiate[K, V](ord: Ordering[K]): JSortedMap[K, V] = new JTreeMap[K, V](ord)
+    protected def instantiate[K: Ordering, V]: JSortedMap[K, V] = new JTreeMap[K, V](Ordering[K])
   }
 
   object JNavigableMap extends JSortedMapCreator[JNavigableMap] {
-    protected def instantiate[K, V](ord: Ordering[K]): JNavigableMap[K, V] = new JTreeMap[K, V](ord)
+    protected def instantiate[K: Ordering, V]: JNavigableMap[K, V] = new JTreeMap[K, V](Ordering[K])
   }
 
   object JTreeMap extends JSortedMapCreator[JTreeMap] {
-    protected def instantiate[K, V](ord: Ordering[K]): JTreeMap[K, V] = new JTreeMap[K, V](ord)
+    protected def instantiate[K: Ordering, V]: JTreeMap[K, V] = new JTreeMap[K, V](Ordering[K])
   }
 
   object JEnumMap {

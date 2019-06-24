@@ -102,11 +102,8 @@ object DummyRPC {
   implicit def anyAsRawReal[T: GenCodec]: AsRawReal[String, T] =
     AsRawReal.create(write[T], read[T])
 
-  implicit def readerBasedFutureAsReal[T: GenCodec]: AsReal[Future[String], Future[T]] =
-    AsReal.create(_.mapNow(read[T]))
-
-  implicit def writerBasedFutureAsRaw[T: GenCodec]: AsRaw[Future[String], Future[T]] =
-    AsRaw.create(_.mapNow(write[T]))
+  implicit def readerBasedFutureAsReal[T: GenCodec]: AsReal[Future[String], Future[T]] = _.mapNow(read[T])
+  implicit def writerBasedFutureAsRaw[T: GenCodec]: AsRaw[Future[String], Future[T]] = _.mapNow(write[T])
 
   implicit def codecFromTag[T](implicit tag: Tag[T]): GenCodec[T] = tag.codec
 
