@@ -3,7 +3,7 @@ package redis.util
 
 import com.avsystem.commons.collection.{CrossBuilder, CrossFactory}
 
-import scala.collection.compat.IterableOnce
+import scala.collection.compat._
 
 final class SizedArraySeqBuilder[A](val expectedSize: Int) extends CrossBuilder[A, IArraySeq[A]] {
   private[this] val array = new Array[AnyRef](expectedSize).asInstanceOf[Array[A]]

@@ -1,8 +1,8 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.collection.SizedArraySeqFactory
 import com.avsystem.commons.redis.protocol.BulkStringMsg
+import com.avsystem.commons.redis.util.SizedArraySeqFactory
 import com.avsystem.commons.serialization.GenObjectCodec
 
 import scala.annotation.implicitNotFound
