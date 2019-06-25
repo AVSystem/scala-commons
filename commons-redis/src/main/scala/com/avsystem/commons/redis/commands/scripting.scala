@@ -72,7 +72,7 @@ trait NodeScriptingApi extends KeyedScriptingApi {
     execute(new ScriptLoad(script))
 
   private final class ScriptExists(hashes: Iterable[Sha1])
-    extends RedisSeqCommand[Boolean](integerBoolean) with NodeCommand {
+    extends RedisSeqCommand[Boolean](integerAsBoolean) with NodeCommand {
     val encoded: Encoded = encoder("SCRIPT", "EXISTS").add(hashes).result
   }
 
@@ -85,7 +85,7 @@ trait NodeScriptingApi extends KeyedScriptingApi {
   }
 
   private final class ScriptLoad(script: RedisScript[Any])
-    extends AbstractRedisCommand[Sha1](bulkSha1) with NodeCommand {
+    extends AbstractRedisCommand[Sha1](bulkAsSha1) with NodeCommand {
     val encoded: Encoded = encoder("SCRIPT", "LOAD").add(script.source).result
   }
 }

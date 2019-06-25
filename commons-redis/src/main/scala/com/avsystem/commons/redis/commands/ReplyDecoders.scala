@@ -26,104 +26,104 @@ object ReplyDecoders {
     case msg => msg
   }
 
-  val simpleOkUnit: ReplyDecoder[Unit] = {
+  val simpleOkAsUnit: ReplyDecoder[Unit] = {
     case RedisMsg.Ok => ()
   }
 
-  val nullBulkOrSimpleOkBoolean: ReplyDecoder[Boolean] = {
+  val nullBulkOrSimpleOkAsBoolean: ReplyDecoder[Boolean] = {
     case RedisMsg.Ok => true
     case NullBulkStringMsg => false
   }
 
-  val integerLong: ReplyDecoder[Long] = {
+  val integerAsLong: ReplyDecoder[Long] = {
     case IntegerMsg(value) => value
   }
 
-  val positiveIntegerLongOpt: ReplyDecoder[Opt[Long]] = {
+  val positiveIntegerAsLongOpt: ReplyDecoder[Opt[Long]] = {
     case IntegerMsg(value) => if (value > 0) value.opt else Opt.Empty
   }
 
-  val integerInt: ReplyDecoder[Int] = {
+  val integerAsInt: ReplyDecoder[Int] = {
     case IntegerMsg(value) => value.toInt
   }
 
-  val integerBoolean: ReplyDecoder[Boolean] = {
+  val integerAsBoolean: ReplyDecoder[Boolean] = {
     case IntegerMsg(0) => false
     case IntegerMsg(1) => true
   }
 
-  val integerTtl: ReplyDecoder[Opt[Opt[Long]]] = {
+  val integerAsTtl: ReplyDecoder[Opt[Opt[Long]]] = {
     case IntegerMsg(-2) => Opt.Empty
     case IntegerMsg(-1) => Opt(Opt.Empty)
     case IntegerMsg(ttl) => Opt(Opt(ttl))
   }
 
-  val integerClientId: ReplyDecoder[ClientId] = {
+  val integerAsClientId: ReplyDecoder[ClientId] = {
     case IntegerMsg(value) => ClientId(value)
   }
 
-  def bulkNamedEnum[E <: NamedEnum](companion: NamedEnumCompanion[E]): ReplyDecoder[E] = {
+  def bulkAsNamedEnum[E <: NamedEnum](companion: NamedEnumCompanion[E]): ReplyDecoder[E] = {
     case BulkStringMsg(data) => companion.byName(data.utf8String)
   }
 
-  val bulkLong: ReplyDecoder[Long] =
+  val bulkAsLong: ReplyDecoder[Long] =
     bulk(_.utf8String.toLong)
 
-  val bulkInt: ReplyDecoder[Long] =
+  val bulkAsInt: ReplyDecoder[Long] =
     bulk(_.utf8String.toInt)
 
-  val bulkDouble: ReplyDecoder[Double] =
+  val bulkAsDouble: ReplyDecoder[Double] =
     bulk(_.utf8String.toDouble)
 
-  val bulkUTF8: ReplyDecoder[String] =
+  val bulkAsUTF8: ReplyDecoder[String] =
     bulk(_.utf8String)
 
-  val bulkBinary: ReplyDecoder[ByteString] =
+  val bulkAsBinary: ReplyDecoder[ByteString] =
     bulk(bs => bs)
 
-  val bulkSha1: ReplyDecoder[Sha1] =
+  val bulkAsSha1: ReplyDecoder[Sha1] =
     bulk(bs => Sha1(bs.utf8String))
 
-  val bulkNodeId: ReplyDecoder[NodeId] =
+  val bulkAsNodeId: ReplyDecoder[NodeId] =
     bulk(bs => NodeId(bs.utf8String))
 
-  val bulkClientInfos: ReplyDecoder[Seq[ClientInfo]] = {
+  val bulkAsClientInfos: ReplyDecoder[Seq[ClientInfo]] = {
     case BulkStringMsg(data) =>
       Source.fromInputStream(data.iterator.asInputStream).getLines()
         .map(_.trim).filter(_.nonEmpty).map(line => ClientInfo(line)).toIndexedSeq
   }
 
-  val bulkNodeInfos: ReplyDecoder[Seq[NodeInfo]] = {
+  val bulkAsNodeInfos: ReplyDecoder[Seq[NodeInfo]] = {
     case BulkStringMsg(nodeInfos) =>
       nodeInfos.utf8String.split("\n").iterator.filter(_.nonEmpty).map(NodeInfo).toIndexedSeq
   }
 
-  val bulkNodeInfo: ReplyDecoder[NodeInfo] =
+  val bulkAsNodeInfo: ReplyDecoder[NodeInfo] =
     bulk(bs => NodeInfo(bs.utf8String))
 
-  val multiBulkNodeInfos: ReplyDecoder[Seq[NodeInfo]] =
-    multiBulkSeq(bulkNodeInfo)
+  val multiBulkAsNodeInfos: ReplyDecoder[Seq[NodeInfo]] =
+    multiBulkAsSeq(bulkAsNodeInfo)
 
-  val bulkCursor: ReplyDecoder[Cursor] = {
+  val bulkAsCursor: ReplyDecoder[Cursor] = {
     case BulkStringMsg(data) => Cursor(data.utf8String.toLong)
   }
 
-  val bulkXEntryId: ReplyDecoder[XEntryId] = {
+  val bulkAsXEntryId: ReplyDecoder[XEntryId] = {
     case BulkStringMsg(data) => XEntryId.parse(data.utf8String)
   }
 
-  val bulkXGroup: ReplyDecoder[XGroup] = {
+  val bulkAsXGroup: ReplyDecoder[XGroup] = {
     case BulkStringMsg(str) => XGroup(str.utf8String)
   }
 
-  val bulkXConsumer: ReplyDecoder[XConsumer] = {
+  val bulkAsXConsumer: ReplyDecoder[XConsumer] = {
     case BulkStringMsg(str) => XConsumer(str.utf8String)
   }
 
-  val simpleUTF8: ReplyDecoder[String] =
+  val simpleAsUTF8: ReplyDecoder[String] =
     simple(_.utf8String)
 
-  val simpleBinary: ReplyDecoder[ByteString] =
+  val simpleAsBinary: ReplyDecoder[ByteString] =
     simple(bs => bs)
 
   def simple[T](fun: ByteString => T): ReplyDecoder[T] = {
@@ -166,21 +166,21 @@ object ReplyDecoders {
       case msg => throw new UnexpectedReplyException(msg.toString)
     }
 
-  def multiBulkSeq[T](elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[T]] = {
+  def multiBulkAsSeq[T](elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[T]] = {
     case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).to(new SizedArraySeqFactory[T](elements.size))
   }
 
-  def multiBulkSeq[T: RedisDataCodec]: ReplyDecoder[Seq[T]] =
-    multiBulkSeq(bulk[T])
+  def multiBulkAsSeq[T: RedisDataCodec]: ReplyDecoder[Seq[T]] =
+    multiBulkAsSeq(bulk[T])
 
-  def multiBulkSet[T](elementDecoder: ReplyDecoder[T]): ReplyDecoder[BSet[T]] = {
+  def multiBulkAsSet[T](elementDecoder: ReplyDecoder[T]): ReplyDecoder[BSet[T]] = {
     case ArrayMsg(elements) => multiBulkIterator(elements, elementDecoder).toSized(MHashSet, elements.size)
   }
 
-  def multiBulkSet[T: RedisDataCodec]: ReplyDecoder[BSet[T]] =
-    multiBulkSet(bulk[T])
+  def multiBulkAsSet[T: RedisDataCodec]: ReplyDecoder[BSet[T]] =
+    multiBulkAsSet(bulk[T])
 
-  def multiBulkPair[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[(A, B)] = {
+  def multiBulkAsPair[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[(A, B)] = {
     case ArrayMsg(IndexedSeq(f: ValidRedisMsg, s: ValidRedisMsg)) =>
       val first = firstDecoder.applyOrElse(f, (_: ValidRedisMsg) =>
         throw new UnexpectedReplyException(s"Unexpected first element in multi-bulk reply: $f"))
@@ -189,26 +189,26 @@ object ReplyDecoders {
       (first, second)
   }
 
-  def multiBulkMap[A, B](keyDecoder: ReplyDecoder[A], valueDecoder: ReplyDecoder[B]): ReplyDecoder[BMap[A, B]] = {
+  def multiBulkAsMap[A, B](keyDecoder: ReplyDecoder[A], valueDecoder: ReplyDecoder[B]): ReplyDecoder[BMap[A, B]] = {
     case ArrayMsg(elements) => new mutable.HashMap[A, B]() ++
-      multiBulkIterator(elements, multiBulkPair(keyDecoder, valueDecoder))
+      multiBulkIterator(elements, multiBulkAsPair(keyDecoder, valueDecoder))
   }
 
-  def multiBulkMap[A: RedisDataCodec, B: RedisDataCodec]: ReplyDecoder[BMap[A, B]] =
-    multiBulkMap(bulk[A], bulk[B])
+  def multiBulkAsMap[A: RedisDataCodec, B: RedisDataCodec]: ReplyDecoder[BMap[A, B]] =
+    multiBulkAsMap(bulk[A], bulk[B])
 
-  def multiBulkZTriple[K: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[Opt[(K, V, Double)]] = {
+  def multiBulkAsZTriple[K: RedisDataCodec, V: RedisDataCodec]: ReplyDecoder[Opt[(K, V, Double)]] = {
     case NullArrayMsg => Opt.Empty
     case ArrayMsg(IndexedSeq(BulkStringMsg(key), BulkStringMsg(value), BulkStringMsg(score))) =>
       Opt(RedisDataCodec.read[K](key), RedisDataCodec.read[V](value), score.utf8String.toDouble)
   }
 
-  val multiBulkGeoPoint: ReplyDecoder[GeoPoint] = {
+  val multiBulkAsGeoPoint: ReplyDecoder[GeoPoint] = {
     case ArrayMsg(IndexedSeq(BulkStringMsg(rawLong), BulkStringMsg(rawLat))) =>
       GeoPoint(rawLong.utf8String.toDouble, rawLat.utf8String.toDouble)
   }
 
-  val multiBulkCommandInfo: ReplyDecoder[CommandInfo] = {
+  val multiBulkAsCommandInfo: ReplyDecoder[CommandInfo] = {
     case ArrayMsg(IndexedSeq(BulkStringMsg(name), IntegerMsg(arity), ArrayMsg(flagArray), IntegerMsg(firstKey), IntegerMsg(lastKey), IntegerMsg(stepCount))) =>
       val flags = flagArray.iterator.map({
         case SimpleStringMsg(flagStr) => CommandFlags.byRepr(flagStr.utf8String)
@@ -220,7 +220,7 @@ object ReplyDecoders {
       )
   }
 
-  val multiBulkRedisRole: ReplyDecoder[RedisRole] = {
+  val multiBulkAsRedisRole: ReplyDecoder[RedisRole] = {
     case ArrayMsg(IndexedSeq(RedisRole.MasterStr, IntegerMsg(replOffset), ArrayMsg(rawSlaveOffsets))) =>
       val slaveOffsets = rawSlaveOffsets.map {
         case ArrayMsg(IndexedSeq(BulkStringMsg(ip), BulkStringMsg(port), BulkStringMsg(offset))) =>
@@ -238,7 +238,7 @@ object ReplyDecoders {
       SentinelRole(masterNames)
   }
 
-  val multiBulkSlowlogEntry: ReplyDecoder[SlowlogEntry] = {
+  val multiBulkAsSlowlogEntry: ReplyDecoder[SlowlogEntry] = {
     case msg@ArrayMsg(IndexedSeq(IntegerMsg(id), IntegerMsg(timestamp), IntegerMsg(duration), ArrayMsg(rawCommand), rest@_*)) =>
       val commandArgs = rawCommand.map {
         case BulkStringMsg(arg) => arg
@@ -253,12 +253,12 @@ object ReplyDecoders {
       SlowlogEntry(id, timestamp, duration, commandArgs, clientAddr, clientName)
   }
 
-  val multiBulkRedisTimestamp: ReplyDecoder[RedisTimestamp] = {
+  val multiBulkAsRedisTimestamp: ReplyDecoder[RedisTimestamp] = {
     case ArrayMsg(IndexedSeq(BulkStringMsg(seconds), BulkStringMsg(useconds))) =>
       RedisTimestamp(seconds.utf8String.toLong, useconds.utf8String.toLong)
   }
 
-  val multiBulkSlotRangeMapping: ReplyDecoder[SlotRangeMapping] = {
+  val multiBulkAsSlotRangeMapping: ReplyDecoder[SlotRangeMapping] = {
     case ArrayMsg(IndexedSeq(IntegerMsg(from), IntegerMsg(to), master, slaves@_*)) =>
       val range = SlotRange(from.toInt, to.toInt)
       def parseNode(rr: RedisMsg) = rr match {
@@ -273,41 +273,41 @@ object ReplyDecoders {
       SlotRangeMapping(range, masterAddr, masterId, slaves.map(parseNode))
   }
 
-  val multiBulkXPendingOverview: ReplyDecoder[XPendingOverview] = {
+  val multiBulkAsXPendingOverview: ReplyDecoder[XPendingOverview] = {
     case ArrayMsg(IndexedSeq(IntegerMsg(0), NullBulkStringMsg, NullBulkStringMsg, NullArrayMsg)) =>
       XPendingOverview.Empty
     case ArrayMsg(IndexedSeq(IntegerMsg(count), BulkStringMsg(minid), BulkStringMsg(maxid), ArrayMsg(byConsumer))) =>
       XPendingOverview(
         count, XEntryId.parse(minid.utf8String), XEntryId.parse(maxid.utf8String),
-        new mutable.HashMap() ++ multiBulkIterator(byConsumer, multiBulkPair(bulkXConsumer, bulkLong))
+        new mutable.HashMap() ++ multiBulkIterator(byConsumer, multiBulkAsPair(bulkAsXConsumer, bulkAsLong))
       )
   }
 
-  val multiBulkXPendingEntry: ReplyDecoder[XPendingEntry] = {
+  val multiBulkAsXPendingEntry: ReplyDecoder[XPendingEntry] = {
     case ArrayMsg(IndexedSeq(BulkStringMsg(id), BulkStringMsg(consumer), IntegerMsg(idle), IntegerMsg(delivered))) =>
       XPendingEntry(XEntryId.parse(id.utf8String), XConsumer(consumer.utf8String), idle, delivered.toInt)
   }
 
-  def multiBulkXEntry[R: RedisRecordCodec]: ReplyDecoder[XEntry[R]] = {
+  def multiBulkAsXEntry[R: RedisRecordCodec]: ReplyDecoder[XEntry[R]] = {
     case ArrayMsg(IndexedSeq(BulkStringMsg(id), data: ArrayMsg[RedisMsg])) =>
-      XEntry(XEntryId.parse(id.utf8String), flatMultiBulkRecord[R].apply(data))
+      XEntry(XEntryId.parse(id.utf8String), flatMultiBulkAsRecord[R].apply(data))
   }
 
-  def multiBulkXEntriesMap[K: RedisDataCodec, R: RedisRecordCodec]: ReplyDecoder[BMap[K, Seq[XEntry[R]]]] =
-    multiBulkMap(bulk[K], multiBulkSeq(multiBulkXEntry[R])) unless {
+  def multiBulkAsXEntriesMap[K: RedisDataCodec, R: RedisRecordCodec]: ReplyDecoder[BMap[K, Seq[XEntry[R]]]] =
+    multiBulkAsMap(bulk[K], multiBulkAsSeq(multiBulkAsXEntry[R])) unless {
       case NullArrayMsg => Map.empty
     }
 
-  val multiBulkXConsumerInfo: ReplyDecoder[XConsumerInfo] =
-    flatMultiBulkMap(bulkUTF8, undecoded).andThen(XConsumerInfo)
+  val multiBulkAsXConsumerInfo: ReplyDecoder[XConsumerInfo] =
+    flatMultiBulkAsMap(bulkAsUTF8, undecoded).andThen(XConsumerInfo)
 
-  val multiBulkXGroupInfo: ReplyDecoder[XGroupInfo] =
-    flatMultiBulkMap(bulkUTF8, undecoded).andThen(XGroupInfo)
+  val multiBulkAsXGroupInfo: ReplyDecoder[XGroupInfo] =
+    flatMultiBulkAsMap(bulkAsUTF8, undecoded).andThen(XGroupInfo)
 
-  def multiBulkXStreamInfo[Record: RedisRecordCodec]: ReplyDecoder[XStreamInfo[Record]] =
-    flatMultiBulkMap(bulkUTF8, undecoded).andThen(XStreamInfo[Record](_))
+  def multiBulkAsXStreamInfo[Record: RedisRecordCodec]: ReplyDecoder[XStreamInfo[Record]] =
+    flatMultiBulkAsMap(bulkAsUTF8, undecoded).andThen(XStreamInfo[Record](_))
 
-  def multiBulkGroupedSeq[T](size: Int, elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[Seq[T]]] = {
+  def multiBulkAsGroupedSeq[T](size: Int, elementDecoder: ReplyDecoder[T]): ReplyDecoder[Seq[Seq[T]]] = {
     case ArrayMsg(elements) =>
       def elemDecode(msg: RedisMsg): T = msg match {
         case vrm: ValidRedisMsg => elementDecoder.applyOrElse(vrm, (_: ValidRedisMsg) =>
@@ -327,7 +327,7 @@ object ReplyDecoders {
   def nullMultiBulkOr[T: RedisDataCodec]: ReplyDecoder[Opt[T]] =
     nullMultiBulkOr(bulk[T])
 
-  def flatPairMultiBulkSeq[T](pairDecoder: ReplyPairDecoder[T]): ReplyDecoder[Seq[T]] = {
+  def flatPairMultiBulkAsSeq[T](pairDecoder: ReplyPairDecoder[T]): ReplyDecoder[Seq[T]] = {
     case ArrayMsg(elements) => elements.iterator.pairs.map {
       case (first: ValidRedisMsg, second: ValidRedisMsg) => pairDecoder.applyOrElse((first, second),
         (p: (ValidRedisMsg, ValidRedisMsg)) => throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p"))
@@ -347,35 +347,35 @@ object ReplyDecoders {
         throw new UnexpectedReplyException(s"Unexpected element pair in multi-bulk reply: $p")
     }
 
-  def flatMultiBulkSeq[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(A, B)]] = {
+  def flatMultiBulkAsPairSeq[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(A, B)]] = {
     case ArrayMsg(elements) =>
       flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).to(new SizedArraySeqFactory(elements.size / 2))
   }
 
-  def flatMultiBulkSeqSwapped[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(B, A)]] = {
+  def flatMultiBulkAsSwappedPairSeq[A, B](firstDecoder: ReplyDecoder[A], secondDecoder: ReplyDecoder[B]): ReplyDecoder[Seq[(B, A)]] = {
     case ArrayMsg(elements) =>
       flatPairedMultiBulkIterator(elements, firstDecoder, secondDecoder).map(_.swap)
         .to(new SizedArraySeqFactory(elements.size / 2))
   }
 
-  def flatMultiBulkMap[A, B](keyDecoder: ReplyDecoder[A], valueDecoder: ReplyDecoder[B]): ReplyDecoder[BMap[A, B]] = {
+  def flatMultiBulkAsMap[A, B](keyDecoder: ReplyDecoder[A], valueDecoder: ReplyDecoder[B]): ReplyDecoder[BMap[A, B]] = {
     case ArrayMsg(elements) => new mutable.HashMap() ++
       flatPairedMultiBulkIterator(elements, keyDecoder, valueDecoder)
   }
 
-  def flatMultiBulkSeq[A: RedisDataCodec, B: RedisDataCodec]: ReplyDecoder[Seq[(A, B)]] =
-    flatMultiBulkSeq(bulk[A], bulk[B])
+  def flatMultiBulkAsPairSeq[A: RedisDataCodec, B: RedisDataCodec]: ReplyDecoder[Seq[(A, B)]] =
+    flatMultiBulkAsPairSeq(bulk[A], bulk[B])
 
-  def flatMultiBulkMap[A: RedisDataCodec, B: RedisDataCodec]: ReplyDecoder[BMap[A, B]] =
-    flatMultiBulkMap(bulk[A], bulk[B])
+  def flatMultiBulkAsMap[A: RedisDataCodec, B: RedisDataCodec]: ReplyDecoder[BMap[A, B]] =
+    flatMultiBulkAsMap(bulk[A], bulk[B])
 
-  def flatMultiBulkRecord[R: RedisRecordCodec]: ReplyDecoder[R] = {
+  def flatMultiBulkAsRecord[R: RedisRecordCodec]: ReplyDecoder[R] = {
     case ArrayMsg(elements: IndexedSeq[BulkStringMsg@unchecked]) if elements.forall(_.isInstanceOf[BulkStringMsg]) =>
       RedisRecordCodec[R].read(elements)
   }
 
-  def flatMultiBulkRecordOpt[R: RedisRecordCodec]: ReplyDecoder[Opt[R]] =
-    flatMultiBulkRecord[R].andThen(_.opt) unless {
+  def flatMultiBulkAsRecordOpt[R: RedisRecordCodec]: ReplyDecoder[Opt[R]] =
+    flatMultiBulkAsRecord[R].andThen(_.opt) unless {
       case ArrayMsg.Empty => Opt.Empty
     }
 

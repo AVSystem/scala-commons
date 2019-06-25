@@ -136,13 +136,13 @@ abstract class RedisOptDataCommand[A: RedisDataCodec]
   extends AbstractRedisCommand(nullBulkOr[A])
 
 abstract class RedisDataSeqCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[Seq[A]](multiBulkSeq[A])
+  extends AbstractRedisCommand[Seq[A]](multiBulkAsSeq[A])
 
 abstract class RedisDataSetCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[BSet[A]](multiBulkSet[A])
+  extends AbstractRedisCommand[BSet[A]](multiBulkAsSet[A])
 
 abstract class RedisOptDataSeqCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[Seq[Opt[A]]](multiBulkSeq(nullBulkOr[A]))
+  extends AbstractRedisCommand[Seq[Opt[A]]](multiBulkAsSeq(nullBulkOr[A]))
 
 abstract class RedisRawCommand
   extends AbstractRedisCommand[ValidRedisMsg](undecoded)
@@ -151,49 +151,49 @@ abstract class RedisNothingCommand
   extends AbstractRedisCommand(failing)
 
 abstract class RedisUnitCommand
-  extends AbstractRedisCommand[Unit](simpleOkUnit)
+  extends AbstractRedisCommand[Unit](simpleOkAsUnit)
 
 abstract class RedisLongCommand
-  extends AbstractRedisCommand[Long](integerLong)
+  extends AbstractRedisCommand[Long](integerAsLong)
 
 abstract class RedisIntCommand
-  extends AbstractRedisCommand[Int](integerInt)
+  extends AbstractRedisCommand[Int](integerAsInt)
 
 abstract class RedisOptLongCommand
-  extends AbstractRedisCommand[Opt[Long]](nullBulkOr(integerLong))
+  extends AbstractRedisCommand[Opt[Long]](nullBulkOr(integerAsLong))
 
 abstract class RedisPositiveLongCommand
-  extends AbstractRedisCommand[Opt[Long]](positiveIntegerLongOpt)
+  extends AbstractRedisCommand[Opt[Long]](positiveIntegerAsLongOpt)
 
 abstract class RedisOptDoubleCommand
-  extends AbstractRedisCommand[Opt[Double]](nullOrEmptyBulkOr(bulkDouble))
+  extends AbstractRedisCommand[Opt[Double]](nullOrEmptyBulkOr(bulkAsDouble))
 
 abstract class RedisOptStringCommand
-  extends AbstractRedisCommand[Opt[String]](nullBulkOr(bulkUTF8))
+  extends AbstractRedisCommand[Opt[String]](nullBulkOr(bulkAsUTF8))
 
 abstract class RedisBooleanCommand
-  extends AbstractRedisCommand[Boolean](integerBoolean)
+  extends AbstractRedisCommand[Boolean](integerAsBoolean)
 
 abstract class RedisSimpleStringCommand
-  extends AbstractRedisCommand[String](simpleUTF8)
+  extends AbstractRedisCommand[String](simpleAsUTF8)
 
 abstract class RedisBinaryCommand
-  extends AbstractRedisCommand[ByteString](bulkBinary)
+  extends AbstractRedisCommand[ByteString](bulkAsBinary)
 
 abstract class RedisDoubleCommand
-  extends AbstractRedisCommand[Double](bulkDouble)
+  extends AbstractRedisCommand[Double](bulkAsDouble)
 
 abstract class RedisScanCommand[T](decoder: ReplyDecoder[Seq[T]])
-  extends AbstractRedisCommand[(Cursor, Seq[T])](multiBulkPair(bulkCursor, decoder))
+  extends AbstractRedisCommand[(Cursor, Seq[T])](multiBulkAsPair(bulkAsCursor, decoder))
 
 abstract class RedisSeqCommand[T](elementDecoder: ReplyDecoder[T])
-  extends AbstractRedisCommand[Seq[T]](multiBulkSeq(elementDecoder))
+  extends AbstractRedisCommand[Seq[T]](multiBulkAsSeq(elementDecoder))
 
 abstract class RedisOptSeqCommand[T](elementDecoder: ReplyDecoder[T])
-  extends AbstractRedisCommand[Opt[Seq[T]]](nullMultiBulkOr(multiBulkSeq(elementDecoder)))
+  extends AbstractRedisCommand[Opt[Seq[T]]](nullMultiBulkOr(multiBulkAsSeq(elementDecoder)))
 
 abstract class RedisOptCommand[T](elementDecoder: ReplyDecoder[T])
   extends AbstractRedisCommand[Opt[T]](nullBulkOr(elementDecoder))
 
 abstract class RedisEnumCommand[E <: NamedEnum](companion: NamedEnumCompanion[E])
-  extends AbstractRedisCommand[E](bulkNamedEnum(companion))
+  extends AbstractRedisCommand[E](bulkAsNamedEnum(companion))

@@ -134,11 +134,11 @@ trait NodeClusterApi extends KeyedClusterApi {
     val encoded: Encoded = encoder("CLUSTER", "MEET").add(address.ip).add(address.port).result
   }
 
-  private final object ClusterMyid extends AbstractRedisCommand[NodeId](bulkNodeId) with NodeCommand {
+  private final object ClusterMyid extends AbstractRedisCommand[NodeId](bulkAsNodeId) with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "MYID").result
   }
 
-  private object ClusterNodes extends AbstractRedisCommand[Seq[NodeInfo]](bulkNodeInfos) with NodeCommand {
+  private object ClusterNodes extends AbstractRedisCommand[Seq[NodeInfo]](bulkAsNodeInfos) with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "NODES").result
   }
 
@@ -162,12 +162,12 @@ trait NodeClusterApi extends KeyedClusterApi {
     val encoded: Encoded = encoder("CLUSTER", "SETSLOT").add(slot).add(subcommand).result
   }
 
-  private final class ClusterSlaves(nodeId: NodeId) extends AbstractRedisCommand[Seq[NodeInfo]](multiBulkNodeInfos) with NodeCommand {
+  private final class ClusterSlaves(nodeId: NodeId) extends AbstractRedisCommand[Seq[NodeInfo]](multiBulkAsNodeInfos) with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "SLAVES").add(nodeId.raw).result
   }
 
   private object ClusterSlots
-    extends RedisSeqCommand[SlotRangeMapping](multiBulkSlotRangeMapping) with NodeCommand {
+    extends RedisSeqCommand[SlotRangeMapping](multiBulkAsSlotRangeMapping) with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "SLOTS").result
   }
 }

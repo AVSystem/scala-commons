@@ -212,7 +212,7 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class Xadd(key: Key, maxlen: Opt[XMaxlen], id: Opt[XEntryId], data: Record)
-    extends AbstractRedisCommand[XEntryId](bulkXEntryId) with NodeCommand {
+    extends AbstractRedisCommand[XEntryId](bulkAsXEntryId) with NodeCommand {
     val encoded: Encoded = encoder("XADD").key(key).optAdd("MAXLEN", maxlen)
       .optAdd(id, "*").dataPairs(data).result
   }
@@ -220,7 +220,7 @@ trait StreamsApi extends ApiSubset {
   private abstract class AbstractXclaim[A](entryDecoder: ReplyDecoder[A])(
     key: Key, group: XGroup, consumer: XConsumer, minIdleTime: Long, ids: Iterable[XEntryId],
     idle: Opt[Long], msUnixTime: Opt[Long], retrycount: Opt[Int], force: Boolean, justid: Boolean
-  ) extends AbstractRedisCommand[Seq[A]](multiBulkSeq(entryDecoder)) with NodeCommand {
+  ) extends AbstractRedisCommand[Seq[A]](multiBulkAsSeq(entryDecoder)) with NodeCommand {
     val encoded: Encoded = encoder("XCLAIM").key(key).add(group).add(consumer).add(minIdleTime)
       .add(ids).optAdd("IDLE", idle).optAdd("TIME", msUnixTime).optAdd("RETRYCOUNT", retrycount)
       .addFlag("FORCE", force).addFlag("JUSTID", justid).result
@@ -231,13 +231,13 @@ trait StreamsApi extends ApiSubset {
   private final class Xclaim(
     key: Key, group: XGroup, consumer: XConsumer, minIdleTime: Long, ids: Iterable[XEntryId],
     idle: Opt[Long], msUnixTime: Opt[Long], retrycount: Opt[Int], force: Boolean
-  ) extends AbstractXclaim[XEntry](multiBulkXEntry)(
+  ) extends AbstractXclaim[XEntry](multiBulkAsXEntry)(
     key, group, consumer, minIdleTime, ids, idle, msUnixTime, retrycount, force, justid = false)
 
   private final class XclaimJustid(
     key: Key, group: XGroup, consumer: XConsumer, minIdleTime: Long, ids: Iterable[XEntryId],
     idle: Opt[Long], msUnixTime: Opt[Long], retrycount: Opt[Int], force: Boolean
-  ) extends AbstractXclaim[XEntryId](bulkXEntryId)(
+  ) extends AbstractXclaim[XEntryId](bulkAsXEntryId)(
     key, group, consumer, minIdleTime, ids, idle, msUnixTime, retrycount, force, justid = true)
 
   private final class Xdel(key: Key, ids: Iterable[XEntryId]) extends RedisLongCommand with NodeCommand {
@@ -268,17 +268,17 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class XinfoConsumers(key: Key, group: XGroup)
-    extends RedisSeqCommand[XConsumerInfo](multiBulkXConsumerInfo) with NodeCommand {
+    extends RedisSeqCommand[XConsumerInfo](multiBulkAsXConsumerInfo) with NodeCommand {
     val encoded: Encoded = encoder("XINFO", "CONSUMERS").key(key).add(group).result
   }
 
   private final class XinfoGroups(key: Key)
-    extends RedisSeqCommand[XGroupInfo](multiBulkXGroupInfo) with NodeCommand {
+    extends RedisSeqCommand[XGroupInfo](multiBulkAsXGroupInfo) with NodeCommand {
     val encoded: Encoded = encoder("XINFO", "GROUPS").key(key).result
   }
 
   private final class XinfoStream(key: Key)
-    extends AbstractRedisCommand[XStreamInfo[Record]](multiBulkXStreamInfo[Record]) with NodeCommand {
+    extends AbstractRedisCommand[XStreamInfo[Record]](multiBulkAsXStreamInfo[Record]) with NodeCommand {
     val encoded: Encoded = encoder("XINFO", "STREAM").key(key).result
   }
 
@@ -287,26 +287,26 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class Xpending(key: Key, group: XGroup)
-    extends AbstractRedisCommand[XPendingOverview](multiBulkXPendingOverview) with NodeCommand {
+    extends AbstractRedisCommand[XPendingOverview](multiBulkAsXPendingOverview) with NodeCommand {
     val encoded: Encoded = encoder("XPENDING").key(key).add(group).result
   }
 
   private final class XpendingEntries(key: Key, group: XGroup,
     start: Opt[XEntryId], end: Opt[XEntryId], count: Int, consumer: Opt[XConsumer]
-  ) extends RedisSeqCommand[XPendingEntry](multiBulkXPendingEntry) with NodeCommand {
+  ) extends RedisSeqCommand[XPendingEntry](multiBulkAsXPendingEntry) with NodeCommand {
     val encoded: Encoded = encoder("XPENDING").key(key).add(group)
       .optAdd(start, "-").optAdd(end, "+").add(count).optAdd(consumer).result
   }
 
   private final class Xrange(key: Key, start: Opt[XEntryId], end: Opt[XEntryId], count: Opt[Int])
-    extends RedisSeqCommand[XEntry](multiBulkXEntry[Record]) with NodeCommand {
+    extends RedisSeqCommand[XEntry](multiBulkAsXEntry[Record]) with NodeCommand {
     val encoded: Encoded = encoder("XRANGE").key(key)
       .optAdd(start, "-").optAdd(end, "+").optAdd("COUNT", count).result
   }
 
   private abstract class AbstractXread(noStreams: Boolean)
     extends AbstractRedisCommand[BMap[Key, Seq[XEntry]]](
-      multiBulkXEntriesMap[Key, Record]) with NodeCommand {
+      multiBulkAsXEntriesMap[Key, Record]) with NodeCommand {
 
     def blockMillis: Opt[Int]
 
@@ -338,7 +338,7 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class Xrevrange(key: Key, end: Opt[XEntryId], start: Opt[XEntryId], count: Opt[Int])
-    extends RedisSeqCommand[XEntry](multiBulkXEntry[Record]) with NodeCommand {
+    extends RedisSeqCommand[XEntry](multiBulkAsXEntry[Record]) with NodeCommand {
     val encoded: Encoded = encoder("XREVRANGE").key(key)
       .optAdd(end, "+").optAdd(start, "-").optAdd("COUNT", count).result
   }
@@ -422,24 +422,24 @@ case class XPendingEntry(
 )
 
 case class XGroupInfo(raw: BMap[String, ValidRedisMsg]) {
-  def name: XGroup = bulkXGroup(raw("name"))
-  def consumers: Int = integerInt(raw("consumers"))
-  def pending: Int = integerInt(raw("pending"))
-  def lastDeliveredId: XEntryId = bulkXEntryId(raw("last-delivered-id"))
+  def name: XGroup = bulkAsXGroup(raw("name"))
+  def consumers: Int = integerAsInt(raw("consumers"))
+  def pending: Int = integerAsInt(raw("pending"))
+  def lastDeliveredId: XEntryId = bulkAsXEntryId(raw("last-delivered-id"))
 }
 
 case class XConsumerInfo(raw: BMap[String, ValidRedisMsg]) {
-  def name: XConsumer = bulkXConsumer(raw("name"))
-  def pending: Int = integerInt(raw("pending"))
-  def idle: Long = integerLong(raw("idle"))
+  def name: XConsumer = bulkAsXConsumer(raw("name"))
+  def pending: Int = integerAsInt(raw("pending"))
+  def idle: Long = integerAsLong(raw("idle"))
 }
 
 case class XStreamInfo[Record: RedisRecordCodec](raw: BMap[String, ValidRedisMsg]) {
-  def length: Long = integerLong(raw("length"))
-  def radixTreeKeys: Int = integerInt(raw("radis-tree-keys"))
-  def radixTreeNodes: Int = integerInt(raw("radis-tree-nodes"))
-  def groups: Int = integerInt(raw("groups"))
-  def lastGeneratedId: XEntryId = bulkXEntryId(raw("last-generated-id"))
-  def firstEntry: XEntry[Record] = multiBulkXEntry[Record].apply(raw("first-entry"))
-  def lastEntry: XEntry[Record] = multiBulkXEntry[Record].apply(raw("last-entry"))
+  def length: Long = integerAsLong(raw("length"))
+  def radixTreeKeys: Int = integerAsInt(raw("radis-tree-keys"))
+  def radixTreeNodes: Int = integerAsInt(raw("radis-tree-nodes"))
+  def groups: Int = integerAsInt(raw("groups"))
+  def lastGeneratedId: XEntryId = bulkAsXEntryId(raw("last-generated-id"))
+  def firstEntry: XEntry[Record] = multiBulkAsXEntry[Record].apply(raw("first-entry"))
+  def lastEntry: XEntry[Record] = multiBulkAsXEntry[Record].apply(raw("last-entry"))
 }

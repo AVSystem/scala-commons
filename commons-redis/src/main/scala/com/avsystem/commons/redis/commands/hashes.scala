@@ -99,12 +99,12 @@ trait HashesApi extends ApiSubset {
   }
 
   private final class Hgetall(key: Key)
-    extends AbstractRedisCommand[BMap[Field, Value]](flatMultiBulkMap[Field, Value]) with NodeCommand {
+    extends AbstractRedisCommand[BMap[Field, Value]](flatMultiBulkAsMap[Field, Value]) with NodeCommand {
     val encoded: Encoded = encoder("HGETALL").key(key).result
   }
 
   private final class HgetallRecord(key: Key)
-    extends AbstractRedisCommand[Opt[Record]](flatMultiBulkRecordOpt) with NodeCommand {
+    extends AbstractRedisCommand[Opt[Record]](flatMultiBulkAsRecordOpt) with NodeCommand {
     val encoded: Encoded = encoder("HGETALL").key(key).result
   }
 
@@ -141,7 +141,7 @@ trait HashesApi extends ApiSubset {
   }
 
   private final class Hscan(key: Key, cursor: Cursor, matchPattern: Opt[Field], count: Opt[Int])
-    extends RedisScanCommand[(Field, Value)](flatMultiBulkSeq[Field, Value]) with NodeCommand {
+    extends RedisScanCommand[(Field, Value)](flatMultiBulkAsPairSeq[Field, Value]) with NodeCommand {
     val encoded: Encoded = encoder("HSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 

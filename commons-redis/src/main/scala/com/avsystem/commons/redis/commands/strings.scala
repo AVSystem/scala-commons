@@ -116,7 +116,7 @@ trait StringsApi extends ApiSubset {
   }
 
   private final class Bitfield(key: Key, ops: Iterable[BitFieldOp])
-    extends RedisSeqCommand[Opt[Long]](nullBulkOr(integerLong)) with NodeCommand {
+    extends RedisSeqCommand[Opt[Long]](nullBulkOr(integerAsLong)) with NodeCommand {
 
     val encoded = {
       import BitFieldOp._
@@ -211,7 +211,7 @@ trait StringsApi extends ApiSubset {
   }
 
   private final class Set(key: Key, value: Value, expiration: Opt[Expiration], existence: Opt[Boolean])
-    extends AbstractRedisCommand[Boolean](nullBulkOrSimpleOkBoolean) with NodeCommand {
+    extends AbstractRedisCommand[Boolean](nullBulkOrSimpleOkAsBoolean) with NodeCommand {
 
     val encoded: Encoded = encoder("SET").key(key).data(value).optAdd(expiration)
       .optAdd(existence.map(v => if (v) "XX" else "NX")).result

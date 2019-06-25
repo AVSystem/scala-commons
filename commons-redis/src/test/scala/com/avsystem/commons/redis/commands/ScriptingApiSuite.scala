@@ -15,7 +15,7 @@ trait KeyedScriptingApiSuite extends CommandsSuite {
 
   object getScript extends RedisScript[Opt[String]] {
     def source: String = "return redis.call('get', KEYS[1])"
-    def decoder: ReplyDecoder[Opt[String]] = ReplyDecoders.nullBulkOr(ReplyDecoders.bulkUTF8)
+    def decoder: ReplyDecoder[Opt[String]] = ReplyDecoders.nullBulkOr(ReplyDecoders.bulkAsUTF8)
   }
 
   apiTest("EVAL") {

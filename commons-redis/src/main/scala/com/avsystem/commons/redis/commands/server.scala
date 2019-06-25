@@ -141,7 +141,7 @@ trait NodeServerApi extends ApiSubset {
     val encoded: Encoded = encoder("BGSAVE").addFlag("SCHEDULE", schedule).result
   }
 
-  private object ClientId extends AbstractRedisCommand[ClientId](integerClientId) with NodeCommand {
+  private object ClientId extends AbstractRedisCommand[ClientId](integerAsClientId) with NodeCommand {
     val encoded: Encoded = encoder("CLIENT", "ID").result
   }
 
@@ -162,7 +162,7 @@ trait NodeServerApi extends ApiSubset {
     }
   }
 
-  private object ClientList extends AbstractRedisCommand[Seq[ClientInfo]](bulkClientInfos) with NodeCommand {
+  private object ClientList extends AbstractRedisCommand[Seq[ClientInfo]](bulkAsClientInfos) with NodeCommand {
     val encoded: Encoded = encoder("CLIENT", "LIST").result
   }
 
@@ -176,7 +176,7 @@ trait NodeServerApi extends ApiSubset {
   }
 
   private abstract class AbstractCommandInfoCommand
-    extends AbstractRedisCommand[Seq[CommandInfo]](multiBulkSeq(multiBulkCommandInfo)) with NodeCommand
+    extends AbstractRedisCommand[Seq[CommandInfo]](multiBulkAsSeq(multiBulkAsCommandInfo)) with NodeCommand
 
   private object Command extends AbstractCommandInfoCommand {
     val encoded: Encoded = encoder("COMMAND").result
@@ -195,7 +195,7 @@ trait NodeServerApi extends ApiSubset {
   }
 
   private final class ConfigGet(parameter: String)
-    extends AbstractRedisCommand[Seq[(String, String)]](flatMultiBulkSeq(bulkUTF8, bulkUTF8)) with NodeCommand {
+    extends AbstractRedisCommand[Seq[(String, String)]](flatMultiBulkAsPairSeq(bulkAsUTF8, bulkAsUTF8)) with NodeCommand {
     val encoded: Encoded = encoder("CONFIG", "GET").add(parameter).result
   }
 
@@ -247,7 +247,7 @@ trait NodeServerApi extends ApiSubset {
     }
   }
 
-  private object Role extends AbstractRedisCommand[RedisRole](multiBulkRedisRole) with NodeCommand {
+  private object Role extends AbstractRedisCommand[RedisRole](multiBulkAsRedisRole) with NodeCommand {
     val encoded: Encoded = encoder("ROLE").result
   }
 
@@ -271,7 +271,7 @@ trait NodeServerApi extends ApiSubset {
   }
 
   private final class SlowlogGet(count: Opt[Int])
-    extends RedisSeqCommand[SlowlogEntry](multiBulkSlowlogEntry) with NodeCommand {
+    extends RedisSeqCommand[SlowlogEntry](multiBulkAsSlowlogEntry) with NodeCommand {
     val encoded: Encoded = encoder("SLOWLOG", "GET").optAdd(count).result
   }
 
@@ -283,7 +283,7 @@ trait NodeServerApi extends ApiSubset {
     val encoded: Encoded = encoder("SLOWLOG", "RESET").result
   }
 
-  private object Time extends AbstractRedisCommand[RedisTimestamp](multiBulkRedisTimestamp) with NodeCommand {
+  private object Time extends AbstractRedisCommand[RedisTimestamp](multiBulkAsRedisTimestamp) with NodeCommand {
     val encoded: Encoded = encoder("TIME").result
   }
 }

@@ -153,14 +153,14 @@ trait ListsApi extends ApiSubset {
   }
 
   private final class Blpop(keys: Iterable[Key], timeout: Int)
-    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkPair(bulk[Key], bulk[Value]))) with NodeCommand {
+    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkAsPair(bulk[Key], bulk[Value]))) with NodeCommand {
     val encoded: Encoded = encoder("BLPOP").keys(keys).add(timeout).result
     override def maxBlockingMillis: Int =
       if (timeout <= 0) Int.MaxValue else timeout * 1000
   }
 
   private final class Brpop(keys: Iterable[Key], timeout: Int)
-    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkPair(bulk[Key], bulk[Value]))) with NodeCommand {
+    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkAsPair(bulk[Key], bulk[Value]))) with NodeCommand {
     val encoded: Encoded = encoder("BRPOP").keys(keys).add(timeout).result
     override def maxBlockingMillis: Int =
       if (timeout <= 0) Int.MaxValue else timeout * 1000
