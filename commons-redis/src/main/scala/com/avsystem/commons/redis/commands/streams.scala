@@ -231,7 +231,7 @@ trait StreamsApi extends ApiSubset {
   private final class Xclaim(
     key: Key, group: XGroup, consumer: XConsumer, minIdleTime: Long, ids: Iterable[XEntryId],
     idle: Opt[Long], msUnixTime: Opt[Long], retrycount: Opt[Int], force: Boolean
-  ) extends AbstractXclaim[XEntry](multiBulkAsXEntry)(
+  ) extends AbstractXclaim[XEntry](multiBulkAsXEntryOf)(
     key, group, consumer, minIdleTime, ids, idle, msUnixTime, retrycount, force, justid = false)
 
   private final class XclaimJustid(
@@ -278,7 +278,7 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class XinfoStream(key: Key)
-    extends AbstractRedisCommand[XStreamInfo[Record]](multiBulkAsXStreamInfo[Record]) with NodeCommand {
+    extends AbstractRedisCommand[XStreamInfo[Record]](multiBulkAsXStreamInfoOf[Record]) with NodeCommand {
     val encoded: Encoded = encoder("XINFO", "STREAM").key(key).result
   }
 
@@ -299,14 +299,14 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class Xrange(key: Key, start: Opt[XEntryId], end: Opt[XEntryId], count: Opt[Int])
-    extends RedisSeqCommand[XEntry](multiBulkAsXEntry[Record]) with NodeCommand {
+    extends RedisSeqCommand[XEntry](multiBulkAsXEntryOf[Record]) with NodeCommand {
     val encoded: Encoded = encoder("XRANGE").key(key)
       .optAdd(start, "-").optAdd(end, "+").optAdd("COUNT", count).result
   }
 
   private abstract class AbstractXread(noStreams: Boolean)
     extends AbstractRedisCommand[BMap[Key, Seq[XEntry]]](
-      multiBulkAsXEntriesMap[Key, Record]) with NodeCommand {
+      multiBulkAsXEntriesMapOf[Key, Record]) with NodeCommand {
 
     def blockMillis: Opt[Int]
 
@@ -338,7 +338,7 @@ trait StreamsApi extends ApiSubset {
   }
 
   private final class Xrevrange(key: Key, end: Opt[XEntryId], start: Opt[XEntryId], count: Opt[Int])
-    extends RedisSeqCommand[XEntry](multiBulkAsXEntry[Record]) with NodeCommand {
+    extends RedisSeqCommand[XEntry](multiBulkAsXEntryOf[Record]) with NodeCommand {
     val encoded: Encoded = encoder("XREVRANGE").key(key)
       .optAdd(end, "+").optAdd(start, "-").optAdd("COUNT", count).result
   }
@@ -440,6 +440,6 @@ case class XStreamInfo[Record: RedisRecordCodec](raw: BMap[String, ValidRedisMsg
   def radixTreeNodes: Int = integerAsInt(raw("radis-tree-nodes"))
   def groups: Int = integerAsInt(raw("groups"))
   def lastGeneratedId: XEntryId = bulkAsXEntryId(raw("last-generated-id"))
-  def firstEntry: XEntry[Record] = multiBulkAsXEntry[Record].apply(raw("first-entry"))
-  def lastEntry: XEntry[Record] = multiBulkAsXEntry[Record].apply(raw("last-entry"))
+  def firstEntry: XEntry[Record] = multiBulkAsXEntryOf[Record].apply(raw("first-entry"))
+  def lastEntry: XEntry[Record] = multiBulkAsXEntryOf[Record].apply(raw("last-entry"))
 }

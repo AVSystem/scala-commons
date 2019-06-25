@@ -30,7 +30,7 @@ object ScriptingExample extends App {
 
   // Script with decoder created using ReplyDecoders
   val script2: RedisScript[Opt[String]] =
-    RedisScript("return redis.call('get', KEYS[1])")(ReplyDecoders.nullBulkOr[String])
+    RedisScript("return redis.call('get', KEYS[1])")(ReplyDecoders.nullBulkOrAs[String])
 
   // The safest way to execute script with Async API is to use evalshaOrEval which first tries to execute the script
   // using EVALSHA and falls back to EVAL if the script is not yet loaded into Redis. This way we avoid sending

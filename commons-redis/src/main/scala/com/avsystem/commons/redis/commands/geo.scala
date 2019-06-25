@@ -129,7 +129,7 @@ trait GeoApi extends ApiSubset {
 
   private final class Georadius[A <: GeoradiusAttrs](key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
     attributes: A, count: Opt[Long], sortOrder: Opt[SortOrder], readOnly: Boolean)
-    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulkAsSeq(geoAttributed(attributes, bulk[Value])))(
+    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulkAsSeq(geoAttributed(attributes, bulkAs[Value])))(
       key, point.opt, Opt.Empty, radius, unit, attributes.encodeFlags, count, sortOrder, readOnly, Opt.Empty, storeDist = false)
 
   private final class GeoradiusStore(key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
@@ -139,7 +139,7 @@ trait GeoApi extends ApiSubset {
 
   private final class Georadiusbymember[A <: GeoradiusAttrs](key: Key, member: Value, radius: Double, unit: GeoUnit,
     attributes: A, count: Opt[Long], sortOrder: Opt[SortOrder], readOnly: Boolean)
-    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulkAsSeq(geoAttributed(attributes, bulk[Value])))(
+    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulkAsSeq(geoAttributed(attributes, bulkAs[Value])))(
       key, Opt.Empty, member.opt, radius, unit, attributes.encodeFlags, count, sortOrder, readOnly, Opt.Empty, storeDist = false)
 
   private final class GeoradiusbymemberStore(key: Key, member: Value, radius: Double, unit: GeoUnit,

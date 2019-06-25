@@ -233,10 +233,10 @@ trait KeyedKeysApi extends ApiSubset {
   }
 
   private final class Sort(key: Key, by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit], sortOrder: Opt[SortOrder], alpha: Boolean)
-    extends AbstractSort[Seq[Value]](multiBulkAsSeq[Value])(key, by, limit, Nil, sortOrder, alpha, Opt.Empty)
+    extends AbstractSort[Seq[Value]](multiBulkAsSeqOf[Value])(key, by, limit, Nil, sortOrder, alpha, Opt.Empty)
 
   private final class SortGet(key: Key, gets: Seq[SortPattern[Key, Field]], by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit], sortOrder: Opt[SortOrder], alpha: Boolean)
-    extends AbstractSort[Seq[Seq[Opt[Value]]]](multiBulkAsGroupedSeq(gets.size min 1, nullBulkOr[Value]))(
+    extends AbstractSort[Seq[Seq[Opt[Value]]]](multiBulkAsGroupedSeq(gets.size min 1, nullBulkOrAs[Value]))(
       key, by, limit, gets, sortOrder, alpha, Opt.Empty)
 
   private final class SortStore(key: Key, destination: Key, by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit], gets: Seq[SortPattern[Key, Field]], sortOrder: Opt[SortOrder], alpha: Boolean)
@@ -251,7 +251,7 @@ trait KeyedKeysApi extends ApiSubset {
     val encoded: Encoded = encoder("TTL").key(key).result
   }
 
-  private final class Type(key: Key) extends AbstractRedisCommand[RedisType](simple[RedisType]) with NodeCommand {
+  private final class Type(key: Key) extends AbstractRedisCommand[RedisType](simpleAs[RedisType]) with NodeCommand {
     val encoded: Encoded = encoder("TYPE").key(key).result
   }
 
@@ -287,7 +287,7 @@ trait NodeKeysApi extends KeyedKeysApi with ApiSubset {
   }
 
   private final class Scan(cursor: Cursor, matchPattern: Opt[Key], count: Opt[Long])
-    extends RedisScanCommand[Key](multiBulkAsSeq[Key]) with NodeCommand {
+    extends RedisScanCommand[Key](multiBulkAsSeqOf[Key]) with NodeCommand {
     val encoded: Encoded = encoder("SCAN").add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 

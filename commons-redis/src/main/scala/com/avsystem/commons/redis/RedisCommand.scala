@@ -130,19 +130,19 @@ object CommandEncoder {
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 abstract class RedisDataCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand(bulk[A])
+  extends AbstractRedisCommand(bulkAs[A])
 
 abstract class RedisOptDataCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand(nullBulkOr[A])
+  extends AbstractRedisCommand(nullBulkOrAs[A])
 
 abstract class RedisDataSeqCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[Seq[A]](multiBulkAsSeq[A])
+  extends AbstractRedisCommand[Seq[A]](multiBulkAsSeqOf[A])
 
 abstract class RedisDataSetCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[BSet[A]](multiBulkAsSet[A])
+  extends AbstractRedisCommand[BSet[A]](multiBulkAsSetOf[A])
 
 abstract class RedisOptDataSeqCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[Seq[Opt[A]]](multiBulkAsSeq(nullBulkOr[A]))
+  extends AbstractRedisCommand[Seq[Opt[A]]](multiBulkAsSeq(nullBulkOrAs[A]))
 
 abstract class RedisRawCommand
   extends AbstractRedisCommand[ValidRedisMsg](undecoded)

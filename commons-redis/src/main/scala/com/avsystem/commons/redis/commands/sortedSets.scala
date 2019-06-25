@@ -202,20 +202,20 @@ trait SortedSetsApi extends ApiSubset {
   }
 
   private final class Zpopmin(key: Key, count: Opt[Long])
-    extends AbstractRedisCommand[Seq[(Value, Double)]](flatMultiBulkAsPairSeq(bulk[Value], bulkAsDouble)) with NodeCommand {
+    extends AbstractRedisCommand[Seq[(Value, Double)]](flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble)) with NodeCommand {
     val encoded: Encoded = encoder("ZPOPMIN").key(key).optAdd(count).result
   }
 
   private final class Zpopmax(key: Key, count: Opt[Long])
-    extends AbstractRedisCommand[Seq[(Value, Double)]](flatMultiBulkAsPairSeq(bulk[Value], bulkAsDouble)) with NodeCommand {
+    extends AbstractRedisCommand[Seq[(Value, Double)]](flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble)) with NodeCommand {
     val encoded: Encoded = encoder("ZPOPMAX").key(key).optAdd(count).result
   }
 
   private final class Zrange(key: Key, start: Long, stop: Long)
-    extends AbstractZrange[Value]("ZRANGE", multiBulkAsSeq[Value])(key, start, stop, withscores = false)
+    extends AbstractZrange[Value]("ZRANGE", multiBulkAsSeqOf[Value])(key, start, stop, withscores = false)
 
   private final class ZrangeWithscores(key: Key, start: Long, stop: Long)
-    extends AbstractZrange[(Value, Double)]("ZRANGE", flatMultiBulkAsPairSeq(bulk[Value], bulkAsDouble))(
+    extends AbstractZrange[(Value, Double)]("ZRANGE", flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble))(
       key, start, stop, withscores = true)
 
   private final class Zrangebylex(key: Key, min: LexLimit[Value], max: LexLimit[Value], limit: Opt[Limit])
@@ -233,10 +233,10 @@ trait SortedSetsApi extends ApiSubset {
   }
 
   private final class Zrangebyscore(key: Key, min: ScoreLimit, max: ScoreLimit, limit: Opt[Limit])
-    extends AbstractZrangebyscore[Value]("ZRANGEBYSCORE", multiBulkAsSeq[Value])(key, min, max, withscores = false, limit)
+    extends AbstractZrangebyscore[Value]("ZRANGEBYSCORE", multiBulkAsSeqOf[Value])(key, min, max, withscores = false, limit)
 
   private final class ZrangebyscoreWithscores(key: Key, min: ScoreLimit, max: ScoreLimit, limit: Opt[Limit])
-    extends AbstractZrangebyscore[(Value, Double)]("ZRANGEBYSCORE", flatMultiBulkAsPairSeq(bulk[Value], bulkAsDouble))(
+    extends AbstractZrangebyscore[(Value, Double)]("ZRANGEBYSCORE", flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble))(
       key, min, max, withscores = true, limit)
 
   private final class Zrank(key: Key, member: Value) extends RedisOptLongCommand with NodeCommand {
@@ -264,10 +264,10 @@ trait SortedSetsApi extends ApiSubset {
   }
 
   private final class Zrevrange(key: Key, start: Long, stop: Long)
-    extends AbstractZrange[Value]("ZREVRANGE", multiBulkAsSeq[Value])(key, start, stop, withscores = false)
+    extends AbstractZrange[Value]("ZREVRANGE", multiBulkAsSeqOf[Value])(key, start, stop, withscores = false)
 
   private final class ZrevrangeWithscores(key: Key, start: Long, stop: Long)
-    extends AbstractZrange[(Value, Double)]("ZREVRANGE", flatMultiBulkAsPairSeq(bulk[Value], bulkAsDouble))(key, start, stop, withscores = true)
+    extends AbstractZrange[(Value, Double)]("ZREVRANGE", flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble))(key, start, stop, withscores = true)
 
   private final class Zrevrangebylex(key: Key, max: LexLimit[Value], min: LexLimit[Value], limit: Opt[Limit])
     extends RedisDataSeqCommand[Value] with NodeCommand {
@@ -275,10 +275,10 @@ trait SortedSetsApi extends ApiSubset {
   }
 
   private final class Zrevrangebyscore(key: Key, max: ScoreLimit, min: ScoreLimit, limit: Opt[Limit])
-    extends AbstractZrangebyscore[Value]("ZREVRANGEBYSCORE", multiBulkAsSeq[Value])(key, max, min, withscores = false, limit)
+    extends AbstractZrangebyscore[Value]("ZREVRANGEBYSCORE", multiBulkAsSeqOf[Value])(key, max, min, withscores = false, limit)
 
   private final class ZrevrangebyscoreWithscores(key: Key, max: ScoreLimit, min: ScoreLimit, limit: Opt[Limit])
-    extends AbstractZrangebyscore[(Value, Double)]("ZREVRANGEBYSCORE", flatMultiBulkAsPairSeq(bulk[Value], bulkAsDouble))(
+    extends AbstractZrangebyscore[(Value, Double)]("ZREVRANGEBYSCORE", flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble))(
       key, max, min, withscores = true, limit)
 
   private final class Zrevrank(key: Key, member: Value) extends RedisOptLongCommand with NodeCommand {
@@ -286,7 +286,7 @@ trait SortedSetsApi extends ApiSubset {
   }
 
   private final class Zscan(key: Key, cursor: Cursor, matchPattern: Opt[Value], count: Opt[Int])
-    extends RedisScanCommand[(Value, Double)](flatMultiBulkAsPairSeq(bulk[Value], bulkAsDouble)) with NodeCommand {
+    extends RedisScanCommand[(Value, Double)](flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble)) with NodeCommand {
     val encoded: Encoded = encoder("ZSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 
@@ -301,7 +301,7 @@ trait SortedSetsApi extends ApiSubset {
   }
 
   private final class Bzpopmax(keys: Iterable[Key], timeout: Int)
-    extends AbstractRedisCommand[Opt[(Key, Value, Double)]](multiBulkAsZTriple[Key, Value]) with NodeCommand {
+    extends AbstractRedisCommand[Opt[(Key, Value, Double)]](multiBulkAsZTripleOf[Key, Value]) with NodeCommand {
     val encoded: Encoded = encoder("BZPOPMAX").keys(keys).add(timeout).result
 
     override def immediateResult: Opt[Opt[(Key, Value, Double)]] =
@@ -311,7 +311,7 @@ trait SortedSetsApi extends ApiSubset {
   }
 
   private final class Bzpopmin(keys: Iterable[Key], timeout: Int)
-    extends AbstractRedisCommand[Opt[(Key, Value, Double)]](multiBulkAsZTriple[Key, Value]) with NodeCommand {
+    extends AbstractRedisCommand[Opt[(Key, Value, Double)]](multiBulkAsZTripleOf[Key, Value]) with NodeCommand {
     val encoded: Encoded = encoder("BZPOPMIN").keys(keys).add(timeout).result
 
     override def immediateResult: Opt[Opt[(Key, Value, Double)]] =
