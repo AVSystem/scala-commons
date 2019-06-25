@@ -376,6 +376,14 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   // have these weird return types (e.g. GenCodec[C[T] with BSeq[T]] instead of just GenCodec[C[T]]) because it's a
   // workaround for https://groups.google.com/forum/#!topic/scala-user/O_fkaChTtg4
 
+  // https://github.com/scala/bug/issues/11027 - only for Scala 2.12
+  implicit def forcedAsListSeqCodec[T: GenCodec]: GenCodec[BSeq[T]] =
+    seqCodec[BSeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
+
+  // https://github.com/scala/bug/issues/11027 - only for Scala 2.12
+  implicit def forcedAsListImmutableSeqCodec[T: GenCodec]: GenCodec[ISeq[T]] =
+    seqCodec[ISeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
+
   implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](
     implicit fac: Factory[T, C[T]]
   ): GenCodec[C[T] with BSeq[T]] =

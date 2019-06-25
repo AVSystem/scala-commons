@@ -52,6 +52,8 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
     testWrite[Option[Int]](none, null)
     testWrite[Either[Int, String]](Left(42), Map("Left" -> 42))
     testWrite[Either[Int, String]](Right("lol"), Map("Right" -> "lol"))
+    testWrite[BSeq[Int]](list, list)
+    testWrite[ISeq[Int]](list, list)
     testWrite[List[Int]](list, list)
     testWrite[Set[Int]](set, set.toList)
     testWrite[Map[String, Int]](map, map)

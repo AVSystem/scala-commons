@@ -32,6 +32,8 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip[Option[Int]](none)
     testRoundtrip[Either[Int, String]](Left(42))
     testRoundtrip[Either[Int, String]](Right("lol"))
+    testRoundtrip[BSeq[Int]](list)
+    testRoundtrip[ISeq[Int]](list)
     testRoundtrip[List[Int]](list)
     testRoundtrip[Set[Int]](set)
     testRoundtrip[Map[String, Int]](map)
