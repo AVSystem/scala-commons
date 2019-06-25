@@ -259,10 +259,12 @@ object RedisMsg {
     private final val NineDigitByte: Byte = '9'
     private final val MinusByte: Byte = '-'
 
+    private class Digit(private val b: Byte) extends AnyVal {
+      def isEmpty: Boolean = b < ZeroDigitByte || b > NineDigitByte
+      def get: Long = b - ZeroDigitByte
+    }
     private object Digit {
-      def unapply(b: Byte): Opt[Long] =
-        if (b >= ZeroDigitByte && b <= NineDigitByte) Opt(b - ZeroDigitByte)
-        else Opt.Empty
+      def unapply(b: Byte): Digit = new Digit(b)
     }
   }
 
