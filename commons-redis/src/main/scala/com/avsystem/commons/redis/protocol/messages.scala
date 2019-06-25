@@ -4,13 +4,13 @@ package redis.protocol
 import java.nio.ByteBuffer
 
 import akka.util.{ByteString, ByteStringBuilder}
-import com.avsystem.commons.collection.SizedArraySeqBuilder
 import com.avsystem.commons.misc.Sam
 import com.avsystem.commons.redis.exception.{InvalidDataException, RedisException}
+import com.avsystem.commons.redis.util.SizedArraySeqBuilder
 
 import scala.annotation.tailrec
-import scala.collection.immutable.VectorBuilder
 import scala.collection.compat._
+import scala.collection.immutable.VectorBuilder
 
 /**
   * Raw result of executing a single [[com.avsystem.commons.redis.RawCommandPack]].
@@ -270,7 +270,7 @@ object RedisMsg {
 
     import Decoder._
 
-    private[this] var arrayStack: List[(Int, SizedArraySeqBuilder[RedisMsg])] = Nil
+    private[this] var arrayStack: List[SizedArraySeqBuilder[RedisMsg]] = Nil
     private[this] var state: Int = Initial
     private[this] var currentType: Byte = 0
     private[this] var readingLength: Boolean = false
@@ -284,11 +284,11 @@ object RedisMsg {
       @tailrec def completed(msg: RedisMsg): Unit = {
         arrayStack match {
           case Nil => consumer(msg)
-          case (expected, collected) :: tail =>
-            collected += msg
-            if (collected.size >= expected) {
+          case builder :: tail =>
+            builder += msg
+            if (builder.complete) {
               arrayStack = tail
-              completed(ArrayMsg(collected.result()))
+              completed(ArrayMsg(builder.result()))
             }
         }
       }
@@ -370,7 +370,7 @@ object RedisMsg {
                     case 0 => completed(ArrayMsg.Empty)
                     case size if size > 0 =>
                       val is = size.toInt
-                      arrayStack = (is, new SizedArraySeqBuilder[RedisMsg](is)) :: arrayStack
+                      arrayStack = new SizedArraySeqBuilder[RedisMsg](is) :: arrayStack
                     case _ => fail("Invalid array size")
                   }
                 case _ => fail("Length can be read only for bulk strings or arrays")

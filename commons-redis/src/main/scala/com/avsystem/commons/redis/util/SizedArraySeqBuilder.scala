@@ -1,26 +1,32 @@
 package com.avsystem.commons
-package collection
+package redis.util
 
-import scala.collection.compat._
+import com.avsystem.commons.collection.{CrossBuilder, CrossFactory}
 
-final class SizedArraySeqBuilder[A](expectedSize: Int) extends CrossBuilder[A, IArraySeq[A]] {
+import scala.collection.compat.IterableOnce
+
+final class SizedArraySeqBuilder[A](val expectedSize: Int) extends CrossBuilder[A, IArraySeq[A]] {
   private[this] val array = new Array[AnyRef](expectedSize).asInstanceOf[Array[A]]
   private[this] var idx: Int = 0
 
-  def size: Int = idx
+  def complete: Boolean =
+    idx >= expectedSize
 
   def clear(): Unit = {
     idx = 0
   }
 
   def result(): IArraySeq[A] = {
-    if (idx < expectedSize) {
+    if (!complete) {
       throw new IllegalStateException(s"exactly $expectedSize elements were expected but only $idx were added")
     }
     IArraySeq.unsafeWrapArray(array)
   }
 
   def addOne(elem: A): this.type = {
+    if (complete) {
+      throw new IllegalStateException(s"exactly $expectedSize elements were expected but more were added")
+    }
     array(idx) = elem
     idx += 1
     this

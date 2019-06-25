@@ -2,10 +2,10 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.ByteString
-import com.avsystem.commons.collection.SizedArraySeqFactory
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.exception.UnexpectedReplyException
 import com.avsystem.commons.redis.protocol._
+import com.avsystem.commons.redis.util.SizedArraySeqFactory
 import com.avsystem.commons.redis.{NodeAddress, RedisDataCodec, RedisRecordCodec}
 
 import scala.collection.compat._
