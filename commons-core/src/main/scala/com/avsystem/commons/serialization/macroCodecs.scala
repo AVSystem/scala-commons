@@ -11,7 +11,8 @@ class SingletonCodec[T <: Singleton](
 ) extends ErrorReportingCodec[T] with OOOFieldsObjectCodec[T] {
   final def nullable = true
   final def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T = singletonValue
-  def writeObject(output: ObjectOutput, value: T): Unit = ()
+  def size(value: T): Int = 0
+  def writeFields(output: ObjectOutput, value: T): Unit = ()
 }
 
 abstract class ApplyUnapplyCodec[T](
@@ -101,12 +102,16 @@ abstract class ProductCodec[T <: Product](
   nullable: Boolean,
   fieldNames: Array[String]
 ) extends ApplyUnapplyCodec[T](typeRepr, nullable, fieldNames) {
-  final def writeObject(output: ObjectOutput, value: T): Unit = {
-    var i = 0
-    while (i < value.productArity) {
-      writeField(output, i, value.productElement(i))
-      i += 1
-    }
+  def size(value: T): Int = value.productArity
+
+  final def writeFields(output: ObjectOutput, value: T): Unit = {
+    val size = value.productArity
+    @tailrec def loop(idx: Int): Unit =
+      if (idx < size) {
+        writeField(output, idx, value.productElement(idx))
+        loop(idx + 1)
+      }
+    loop(0)
   }
 }
 
@@ -141,6 +146,7 @@ abstract class NestedSealedHierarchyCodec[T](
 
   final def writeObject(output: ObjectOutput, value: T): Unit = {
     val caseIdx = caseIndexByValue(value)
+    output.declareSize(1)
     writeCase(caseNames(caseIdx), output, value, caseDeps(caseIdx).asInstanceOf[GenCodec[T]])
   }
 
@@ -177,8 +183,11 @@ abstract class FlatSealedHierarchyCodec[T](
   final def writeObject(output: ObjectOutput, value: T): Unit = {
     val caseIdx = caseIndexByValue(value)
     val transient = defaultCaseTransient && defaultCaseIdx == caseIdx
-    writeFlatCase(caseNames(caseIdx), transient, output, value,
-      caseDeps(caseIdx).asInstanceOf[OOOFieldsObjectCodec[T]])
+    val caseCodec = caseDeps(caseIdx).asInstanceOf[OOOFieldsObjectCodec[T]]
+    if (output.sizePolicy != SizePolicy.Never) {
+      output.declareSize((if (transient) 0 else 1) + caseCodec.size(value))
+    }
+    writeFlatCase(caseNames(caseIdx), transient, output, value, caseCodec)
   }
 
   final def readObject(input: ObjectInput): T = {
@@ -193,7 +202,7 @@ abstract class FlatSealedHierarchyCodec[T](
       }
     }
 
-    def read(): T =
+    @tailrec def read(): T =
       if (input.hasNext) {
         val fi = input.nextField()
         if (fi.fieldName == caseFieldName) readCase(fi)
@@ -289,12 +298,12 @@ abstract class ErrorReportingCodec[T] extends GenCodec[T] {
     decoratedWrite(fieldName, output, value, codec, "case")
 
   protected final def writeFlatCase[A](
-    caseName: String, transient: Boolean, output: ObjectOutput, value: A, codec: ObjectCodec[A]
+    caseName: String, transient: Boolean, output: ObjectOutput, value: A, codec: OOOFieldsObjectCodec[A]
   ): Unit = try {
     if (!transient) {
       output.writeField(caseFieldName).writeSimple().writeString(caseName)
     }
-    codec.writeObject(output, value)
+    codec.writeFields(output, value)
   } catch {
     case NonFatal(e) => throw new WriteFailure(s"Failed to write case $caseName of $typeRepr", e)
   }

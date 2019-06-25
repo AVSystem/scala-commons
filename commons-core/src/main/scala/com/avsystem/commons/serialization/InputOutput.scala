@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 /**
@@ -98,10 +99,36 @@ trait OutputAndSimpleOutput extends Any with Output with SimpleOutput {
   override final def writeSimple(): SimpleOutput = this
 }
 
+final class SizePolicy(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+object SizePolicy extends AbstractValueEnumCompanion[SizePolicy] {
+  final val Never, WhenCheap, Always: Value = new SizePolicy
+}
+
 /**
   * Base trait for outputs which allow writing of multiple values in sequence, i.e. [[ListOutput]] and [[ObjectOutput]].
   */
 trait SequentialOutput extends Any {
+  /**
+    * Gives the output explicit information about the number of elements or fields that will be written to this
+    * output by the codec. This method must be called only once, before any elements or fields have been written.
+    * The codec is then required to write exactly the declared number of elements or fields.
+    * Whether the codec should or must call this method depends on [[sizePolicy]].
+    */
+  def declareSize(size: Int): Unit = ()
+
+  /**
+    * Can be used by codec implementation in order to determine whether a [[declareSize]] call is beneficial or
+    * required:
+    * - [[SizePolicy.Never]] means that this output does not use size information and the call to [[declareSize]]
+    * may always be omitted.
+    * - [[SizePolicy.WhenCheap]] means that this output may use size information when provided but it's not required -
+    * therefore the codec may provide it only when it can be computed cheaply. For example, the size of a `Vector`
+    * can be known in constant time but computing the size of a `List` requires linear time.
+    * - [[SizePolicy.Always]] means that this output requires explicit size information, even if it cannot be cheaply
+    * computed.
+    */
+  def sizePolicy: SizePolicy = SizePolicy.WhenCheap
+
   /**
     * Indicates that all elements or fields in this [[com.avsystem.commons.serialization.SequentialOutput SequentialOutput]]
     * have been written. This method MUST always be called after list/object writing has been finished.
@@ -238,6 +265,12 @@ trait InputAndSimpleInput extends Any with Input with SimpleInput {
 }
 
 trait SequentialInput extends Any {
+  /**
+    * Returns total number of elements or fields in this input or -1 if it is unknown.
+    * This method can be used by codecs in order to optimize decoding of collections.
+    */
+  def knownSize: Int = -1
+
   def hasNext: Boolean
   def skipRemaining(): Unit
 }

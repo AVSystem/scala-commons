@@ -4,7 +4,7 @@ package serialization.cbor
 import java.io.{ByteArrayOutputStream, DataOutputStream}
 
 import com.avsystem.commons.misc.{Bytes, Timestamp}
-import com.avsystem.commons.serialization.{GenCodec, GenCodecRoundtripTest, HasGenCodec, Input, Output}
+import com.avsystem.commons.serialization.{GenCodec, GenCodecRoundtripTest, HasGenCodec, Input, Output, SizePolicy, transientDefault}
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
 
@@ -13,7 +13,7 @@ case class Record(
   i: Int,
   l: List[String],
   d: Double,
-  s: String
+  @transientDefault s: String = ""
 )
 object Record extends HasGenCodec[Record]
 
@@ -21,13 +21,11 @@ class CborInputOutputTest extends FunSuite {
   private def roundtrip[T: GenCodec](
     value: T,
     binary: String,
-    size: OptArg[Int] = OptArg.Empty,
     labels: FieldLabels = FieldLabels.NoLabels
   )(implicit pos: Position): Unit =
     test(s"${pos.lineNumber}: $value") {
       val baos = new ByteArrayOutputStream
-      val output = new CborOutput(new DataOutputStream(baos), labels)
-      size.foreach(output.writeCustom(ListOrObjectSizeMarker, _))
+      val output = new CborOutput(new DataOutputStream(baos), labels, SizePolicy.WhenCheap)
       GenCodec.write[T](output, value)
       val bytes = baos.toByteArray
       assert(Bytes(bytes).toString == binary)
@@ -113,10 +111,10 @@ class CborInputOutputTest extends FunSuite {
   roundtrip(Bytes("a" * 30), "581E616161616161616161616161616161616161616161616161616161616161")
 
   roundtrip(List(1, 2, 3), "9F010203FF")
-  roundtrip(List(1, 2, 3), "83010203", 3)
+  roundtrip(Vector(1, 2, 3), "83010203")
 
-  roundtrip(Map("a" -> 1, "b" -> 2, "c" -> 3), "BF616101616202616303FF")
-  roundtrip(Map("a" -> 1, "b" -> 2, "c" -> 3), "A3616101616202616303", 3)
+  roundtrip(IListMap("a" -> 1, "b" -> 2, "c" -> 3), "BF616101616202616303FF")
+  roundtrip(Map("a" -> 1, "b" -> 2, "c" -> 3), "A3616101616202616303")
 
   val labels: FieldLabels = new FieldLabels {
     def label(field: String): Opt[Int] = field match {
@@ -130,11 +128,15 @@ class CborInputOutputTest extends FunSuite {
       case _ => Opt.Empty
     }
   }
-  roundtrip(Map("a" -> 1, "b" -> 2, "c" -> 3), "A320010002616303", 3, labels)
+  roundtrip(Map("a" -> 1, "b" -> 2, "c" -> 3), "A320010002616303", labels)
 
   roundtrip(
     Record(b = true, 42, List("a", "ajskd", "kek"), 3.14, "fuuuu"),
-    "BF6162F56169182A616C9F616165616A736B64636B656BFF6164FB40091EB851EB851F6173656675757575FF"
+    "A56162F56169182A616C9F616165616A736B64636B656BFF6164FB40091EB851EB851F6173656675757575"
+  )
+  roundtrip(
+    Record(b = true, 42, List("a", "ajskd", "kek"), 3.14),
+    "A46162F56169182A616C9F616165616A736B64636B656BFF6164FB40091EB851EB851F"
   )
 
   test("chunked text string") {
@@ -151,7 +153,7 @@ class CborGenCodecRoundtripTest extends GenCodecRoundtripTest {
 
   def writeToOutput(write: Output => Unit): RawCbor = {
     val baos = new ByteArrayOutputStream
-    write(new CborOutput(new DataOutputStream(baos), FieldLabels.NoLabels))
+    write(new CborOutput(new DataOutputStream(baos), FieldLabels.NoLabels, SizePolicy.WhenCheap))
     RawCbor(baos.toByteArray)
   }
 

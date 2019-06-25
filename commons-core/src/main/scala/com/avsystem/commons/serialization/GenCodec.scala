@@ -8,7 +8,7 @@ import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.JFactory
 import com.avsystem.commons.meta.Fallback
 
-import scala.annotation.implicitNotFound
+import scala.annotation.{implicitNotFound, tailrec}
 import scala.collection.compat._
 
 /**
@@ -260,10 +260,23 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   trait OOOFieldsObjectCodec[T] extends ObjectCodec[T] {
+    def size(value: T): Int
+
+    protected final def declareSizeFor(output: ObjectOutput, value: T): Unit =
+      if (output.sizePolicy != SizePolicy.Never) {
+        output.declareSize(size(value))
+      }
+
     def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T
+    def writeFields(output: ObjectOutput, value: T): Unit
 
     final def readObject(input: ObjectInput): T =
       readObject(input, FieldValues.Empty)
+
+    final def writeObject(output: ObjectOutput, value: T): Unit = {
+      declareSizeFor(output, value)
+      writeFields(output, value)
+    }
   }
 
   final class Transformed[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {
@@ -343,14 +356,43 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit lazy val UuidCodec: GenCodec[UUID] =
     nullableSimple(i => UUID.fromString(i.readString()), (o, v) => o.writeString(v.toString))
 
-  private implicit class IterableOnceOps[A](private val coll: IterableOnce[A]) extends AnyVal {
-    def writeToList(lo: ListOutput)(implicit writer: GenCodec[A]): Unit =
-      coll.iterator.foreach(writer.write(lo.writeElement(), _))
+  private def declareSize(o: SequentialOutput, coll: BIterable[_]): Unit =
+    o.sizePolicy match {
+      case SizePolicy.Never =>
+      case SizePolicy.WhenCheap =>
+        if (coll.isEmpty) {
+          o.declareSize(0)
+        } else coll.knownSize match {
+          case -1 =>
+          case size => o.declareSize(size)
+        }
+      case SizePolicy.Always =>
+        o.declareSize(coll.size)
+    }
+
+  private implicit class IterableOps[A](private val coll: BIterable[A]) extends AnyVal {
+    def writeToList(lo: ListOutput)(implicit writer: GenCodec[A]): Unit = {
+      declareSize(lo, coll)
+      coll.foreach(writer.write(lo.writeElement(), _))
+    }
+  }
+
+  private implicit class PairIterableOps[A, B](private val coll: BIterable[(A, B)]) extends AnyVal {
+    def writeToObject(oo: ObjectOutput)(implicit keyWriter: GenKeyCodec[A], writer: GenCodec[B]): Unit = {
+      declareSize(oo, coll)
+      coll.foreach { case (key, value) =>
+        writer.write(oo.writeField(keyWriter.write(key)), value)
+      }
+    }
   }
 
   private implicit class ListInputOps(private val li: ListInput) extends AnyVal {
     def collectTo[A: GenCodec, C](implicit fac: Factory[A, C]): C = {
       val b = fac.newBuilder
+      li.knownSize match {
+        case -1 =>
+        case size => b.sizeHint(size)
+      }
       while (li.hasNext) {
         b += read[A](li.nextElement())
       }
@@ -361,6 +403,10 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   private implicit class ObjectInputOps(private val oi: ObjectInput) extends AnyVal {
     def collectTo[K: GenKeyCodec, V: GenCodec, C](implicit fac: Factory[(K, V), C]): C = {
       val b = fac.newBuilder
+      oi.knownSize match {
+        case -1 =>
+        case size => b.sizeHint(size)
+      }
       while (oi.hasNext) {
         val fi = oi.nextField()
         b += ((GenKeyCodec.read[K](fi.fieldName), read[V](fi)))
@@ -370,7 +416,15 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   implicit def arrayCodec[T: ClassTag : GenCodec]: GenCodec[Array[T]] =
-    nullableList[Array[T]](_.iterator(read[T]).toArray[T], (lo, arr) => arr.iterator.writeToList(lo))
+    nullableList[Array[T]](_.iterator(read[T]).toArray[T], (lo, arr) => {
+      lo.declareSize(arr.length)
+      @tailrec def loop(idx: Int): Unit =
+        if (idx < arr.length) {
+          GenCodec.write(lo.writeElement(), arr(idx))
+          loop(idx + 1)
+        }
+      loop(0)
+    })
 
   // seqCodec, setCodec, jCollectionCodec, mapCodec, jMapCodec, fallbackMapCodec and fallbackJMapCodec
   // have these weird return types (e.g. GenCodec[C[T] with BSeq[T]] instead of just GenCodec[C[T]]) because it's a
@@ -404,7 +458,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   ): GenObjectCodec[M[K, V] with BMap[K, V]] =
     nullableObject[M[K, V] with BMap[K, V]](
       _.collectTo[K, V, M[K, V]],
-      (oo, value) => value.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })
+      (oo, value) => value.writeToObject(oo)
     )
 
   implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
@@ -412,7 +466,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   ): GenObjectCodec[M[K, V] with JMap[K, V]] =
     nullableObject[M[K, V] with JMap[K, V]](
       _.collectTo[K, V, M[K, V]],
-      (oo, value) => value.asScala.foreach({ case (k, v) => write[V](oo.writeField(GenKeyCodec.write(k)), v) })
+      (oo, value) => value.asScala.writeToObject(oo)
     )
 
   implicit def optionCodec[T: GenCodec]: GenCodec[Option[T]] = create[Option[T]](
