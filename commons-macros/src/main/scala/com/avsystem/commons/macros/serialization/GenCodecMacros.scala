@@ -18,6 +18,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         def readList(input: $SerializationPkg.ListInput) =
           (..${indices.map(i => q"${elementCodecs(i)}.read(input.nextElement())")})
         def writeList(output: $SerializationPkg.ListOutput, value: $tupleTpe) = {
+          output.declareSize(${elementCodecs.size})
           ..${indices.map(i => q"${elementCodecs(i)}.write(output.writeElement(), value.${tupleGet(i)})")}
         }
       }

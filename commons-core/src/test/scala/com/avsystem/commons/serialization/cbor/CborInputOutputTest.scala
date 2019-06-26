@@ -110,6 +110,8 @@ class CborInputOutputTest extends FunSuite {
   roundtrip(Bytes("ąć"), "44C485C487")
   roundtrip(Bytes("a" * 30), "581E616161616161616161616161616161616161616161616161616161616161")
 
+  roundtrip(("foo", 42, 3.14), "8363666F6F182AFB40091EB851EB851F")
+
   roundtrip(List(1, 2, 3), "9F010203FF")
   roundtrip(Vector(1, 2, 3), "83010203")
 
