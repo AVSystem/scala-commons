@@ -110,9 +110,9 @@ object SizePolicy extends AbstractValueEnumCompanion[SizePolicy] {
 trait SequentialOutput extends Any {
   /**
     * Gives the output explicit information about the number of elements or fields that will be written to this
-    * output by the codec. This method must be called only once, before any elements or fields have been written.
+    * output by the codec. This method must be called at most once, before any elements or fields have been written.
     * The codec is then required to write exactly the declared number of elements or fields.
-    * Whether the codec should or must call this method depends on [[sizePolicy]].
+    * Whether the codec should or must call this method depends on [[sizePolicy]] and the cost of computing the size.
     */
   def declareSize(size: Int): Unit = ()
 
