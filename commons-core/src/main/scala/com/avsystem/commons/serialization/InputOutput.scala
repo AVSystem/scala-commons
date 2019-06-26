@@ -47,8 +47,9 @@ trait Output extends Any {
 
   /**
     * Determines whether serialization format implemented by this `Output` preserves particular arbitrary
-    * "metadata" which is identified by [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] which is usually an object
-    * (e.g. companion object of metadata value type `T`).
+    * "metadata" which is identified by [[com.avsystem.commons.serialization.InputMetadata InputMetadata]]
+    * which is usually an object (e.g. companion object of metadata value type `T`).
+    *
     * An example of [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] is
     * [[com.avsystem.commons.serialization.json.JsonType JsonType]] supported by
     * [[com.avsystem.commons.serialization.json.JsonStringOutput JsonStringOutput]].
@@ -99,9 +100,34 @@ trait OutputAndSimpleOutput extends Any with Output with SimpleOutput {
   override final def writeSimple(): SimpleOutput = this
 }
 
+/**
+  * Using `SizePolicy`, a [[SequentialOutput]] ([[ListOutput]] or [[ObjectOutput]]) may hint the codec whether it
+  * makes use or requires explicit list or object size to be declared with [[SequentialOutput.declareSize]].
+  */
 final class SizePolicy(implicit enumCtx: EnumCtx) extends AbstractValueEnum
 object SizePolicy extends AbstractValueEnumCompanion[SizePolicy] {
-  final val Never, WhenCheap, Always: Value = new SizePolicy
+  /**
+    * Indicates that the [[SequentialOutput]] implementation does not utilize explicitly declared size in any way.
+    * This means that the codec may always omit the `declareSize` invocation.
+    */
+  final val Ignored: Value = new SizePolicy
+
+  /**
+    * Indicates that the [[SequentialOutput]] implementation is able to take advantage of explicitly declared size
+    * (e.g. in order to preallocate some buffers with accurate size or use more compact representation) but it is still
+    * able to work without size known upfront. With this policy, the codec may decide on its own whether it's worth
+    * computing the size upfront. Typically it will do it only when that computation is cheap, e.g. for a Scala `Vector`
+    * but omit it when it could degrade performance, e.g. for a Scala `List` which requires entire list traversal to
+    * compute its size.
+    */
+  final val Optional: Value = new SizePolicy
+
+  /**
+    * Indicates that the [[SequentialOutput]] implementation always requires the codec to declare list or object size
+    * explicitly. The codec is then obliged to call [[SequentialOutput.declareSize]] before writing any elements or
+    * fields, regardless of the cost of computing that size.
+    */
+  final val Required: Value = new SizePolicy
 }
 
 /**
@@ -117,17 +143,10 @@ trait SequentialOutput extends Any {
   def declareSize(size: Int): Unit = ()
 
   /**
-    * Can be used by codec implementation in order to determine whether a [[declareSize]] call is beneficial or
-    * required:
-    * - [[SizePolicy.Never]] means that this output does not use size information and the call to [[declareSize]]
-    * may always be omitted.
-    * - [[SizePolicy.WhenCheap]] means that this output may use size information when provided but it's not required -
-    * therefore the codec may provide it only when it can be computed cheaply. For example, the size of a `Vector`
-    * can be known in constant time but computing the size of a `List` requires linear time.
-    * - [[SizePolicy.Always]] means that this output requires explicit size information, even if it cannot be cheaply
-    * computed.
+    * Provides information about whether this output makes use of list or object size explicitly declared with
+    * [[declareSize]]. See [[SizePolicy]] for more details.
     */
-  def sizePolicy: SizePolicy = SizePolicy.WhenCheap
+  def sizePolicy: SizePolicy = SizePolicy.Optional
 
   /**
     * Indicates that all elements or fields in this [[com.avsystem.commons.serialization.SequentialOutput SequentialOutput]]

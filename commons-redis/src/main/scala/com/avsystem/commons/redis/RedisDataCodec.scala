@@ -66,7 +66,7 @@ final class RedisDataOutput(consumer: ByteString => Unit) extends OutputAndSimpl
     private val sb = new JStringBuilder
     private val jlo = new JsonStringOutput(sb).writeList()
 
-    override def sizePolicy: SizePolicy = SizePolicy.Never
+    override def sizePolicy: SizePolicy = SizePolicy.Ignored
     def writeElement(): Output = jlo.writeElement()
     def finish(): Unit = {
       jlo.finish()
@@ -78,7 +78,7 @@ final class RedisDataOutput(consumer: ByteString => Unit) extends OutputAndSimpl
     private val sb = new JStringBuilder
     private val joo = new JsonStringOutput(sb).writeObject()
 
-    override def sizePolicy: SizePolicy = SizePolicy.Never
+    override def sizePolicy: SizePolicy = SizePolicy.Ignored
     def writeField(key: String): Output = joo.writeField(key)
     def finish(): Unit = {
       joo.finish()

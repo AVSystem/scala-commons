@@ -25,7 +25,7 @@ class CborInputOutputTest extends FunSuite {
   )(implicit pos: Position): Unit =
     test(s"${pos.lineNumber}: $value") {
       val baos = new ByteArrayOutputStream
-      val output = new CborOutput(new DataOutputStream(baos), labels, SizePolicy.WhenCheap)
+      val output = new CborOutput(new DataOutputStream(baos), labels, SizePolicy.Optional)
       GenCodec.write[T](output, value)
       val bytes = baos.toByteArray
       assert(Bytes(bytes).toString == binary)
@@ -155,7 +155,7 @@ class CborGenCodecRoundtripTest extends GenCodecRoundtripTest {
 
   def writeToOutput(write: Output => Unit): RawCbor = {
     val baos = new ByteArrayOutputStream
-    write(new CborOutput(new DataOutputStream(baos), FieldLabels.NoLabels, SizePolicy.WhenCheap))
+    write(new CborOutput(new DataOutputStream(baos), FieldLabels.NoLabels, SizePolicy.Optional))
     RawCbor(baos.toByteArray)
   }
 

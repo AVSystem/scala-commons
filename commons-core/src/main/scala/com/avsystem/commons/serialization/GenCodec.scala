@@ -263,7 +263,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     def size(value: T): Int
 
     protected final def declareSizeFor(output: ObjectOutput, value: T): Unit =
-      if (output.sizePolicy != SizePolicy.Never) {
+      if (output.sizePolicy != SizePolicy.Ignored) {
         output.declareSize(size(value))
       }
 
@@ -358,15 +358,15 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   private def declareSize(o: SequentialOutput, coll: BIterable[_]): Unit =
     o.sizePolicy match {
-      case SizePolicy.Never =>
-      case SizePolicy.WhenCheap =>
+      case SizePolicy.Ignored =>
+      case SizePolicy.Optional =>
         if (coll.isEmpty) {
           o.declareSize(0)
         } else coll.knownSize match {
           case -1 =>
           case size => o.declareSize(size)
         }
-      case SizePolicy.Always =>
+      case SizePolicy.Required =>
         o.declareSize(coll.size)
     }
 

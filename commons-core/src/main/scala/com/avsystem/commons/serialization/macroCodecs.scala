@@ -184,7 +184,7 @@ abstract class FlatSealedHierarchyCodec[T](
     val caseIdx = caseIndexByValue(value)
     val transient = defaultCaseTransient && defaultCaseIdx == caseIdx
     val caseCodec = caseDeps(caseIdx).asInstanceOf[OOOFieldsObjectCodec[T]]
-    if (output.sizePolicy != SizePolicy.Never) {
+    if (output.sizePolicy != SizePolicy.Ignored) {
       output.declareSize((if (transient) 0 else 1) + caseCodec.size(value))
     }
     writeFlatCase(caseNames(caseIdx), transient, output, value, caseCodec)

@@ -64,7 +64,7 @@ object CborOutput {
   def write[T: GenCodec](
     value: T,
     fieldLabels: FieldLabels = FieldLabels.NoLabels,
-    sizePolicy: SizePolicy = SizePolicy.WhenCheap
+    sizePolicy: SizePolicy = SizePolicy.Optional
   ): Array[Byte] = {
     val baos = new ByteArrayOutputStream
     GenCodec.write[T](new CborOutput(new DataOutputStream(baos), fieldLabels, sizePolicy), value)
@@ -186,7 +186,7 @@ abstract class CborSequentialOutput(
       fresh = false
       if (size >= 0) {
         writeValue(major, size)
-      } else if (sizePolicy != SizePolicy.Always) {
+      } else if (sizePolicy != SizePolicy.Required) {
         write(InitialByte(major, InitialByte.IndefiniteLengthInfo))
       } else {
         throw new WriteFailure("explicit size for an array or object was required but it was not declared")
