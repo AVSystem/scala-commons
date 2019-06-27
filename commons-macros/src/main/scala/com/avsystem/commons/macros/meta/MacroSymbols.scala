@@ -118,11 +118,11 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def reportProblem(msg: String, detailPos: Position = NoPosition): Nothing =
       abortAt(s"$problemStr: $msg", if (detailPos != NoPosition) detailPos else pos)
 
-    def annot(tpe: Type, fallback: List[Tree] = Nil): Option[Annot] =
-      findAnnotation(symbol, tpe, seenFrom, withInherited = true, fallback)
+    def annot(tpe: Type, fallback: List[Tree] = Nil, paramMaterializer: Symbol => Option[Res[Tree]] = _ => None): Option[Annot] =
+      findAnnotation(symbol, tpe, seenFrom, withInherited = true, fallback, paramMaterializer)
 
-    def annots(tpe: Type, fallback: List[Tree] = Nil): List[Annot] =
-      allAnnotations(symbol, tpe, seenFrom, withInherited = true, fallback)
+    def annots(tpe: Type, fallback: List[Tree] = Nil, paramMaterializer: Symbol => Option[Res[Tree]] = _ => None): List[Annot] =
+      allAnnotations(symbol, tpe, seenFrom, withInherited = true, fallback, paramMaterializer)
 
     def infer(tpt: Tree): CachedImplicit =
       infer(getType(tpt))
@@ -349,8 +349,14 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def annot(tpe: Type): Option[Annot] =
       real.annot(tpe, fallbackTagsUsed.flatMap(_.asList))
 
+    def annot(tpe: Type, paramMaterializer: Symbol => Option[Res[Tree]]): Option[Annot] =
+      real.annot(tpe, fallbackTagsUsed.flatMap(_.asList), paramMaterializer)
+
     def annots(tpe: Type): List[Annot] =
       real.annots(tpe, fallbackTagsUsed.flatMap(_.asList))
+
+    def annots(tpe: Type, paramMaterializer: Symbol => Option[Res[Tree]]): List[Annot] =
+      real.annots(tpe, fallbackTagsUsed.flatMap(_.asList), paramMaterializer)
   }
 
   trait SelfMatchedSymbol extends MacroSymbol with MatchedSymbol {
