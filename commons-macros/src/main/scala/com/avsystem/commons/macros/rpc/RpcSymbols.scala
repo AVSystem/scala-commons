@@ -66,9 +66,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
       if (findAnnotation(param, InferAT).nonEmpty) {
         val clue = s"problem with annotation parameter ${param.name}: "
         Some(Ok(inferCachedImplicit(param.typeSignature, ErrorCtx(clue, real.pos)).reference(Nil)))
-      }
-      else
-        None
+      } else None
 
     val whenAbsent: Tree =
       annot(WhenAbsentAT, materializeImplicit).fold(EmptyTree) { annot =>
