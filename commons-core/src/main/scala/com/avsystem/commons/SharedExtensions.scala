@@ -412,6 +412,12 @@ object SharedExtensions extends SharedExtensions {
       }
       option
     }
+
+    /**
+      * The same as [[Option.fold]] but takes arguments in a single parameter list for better type inference.
+      */
+    def mapOr[B](ifEmpty: => B, f: A => B): B =
+      option.fold(ifEmpty)(f)
   }
 
   class TryOps[A](private val tr: Try[A]) extends AnyVal {

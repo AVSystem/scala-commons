@@ -87,6 +87,12 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
   @inline def fold[B](ifEmpty: => B)(f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
+  /**
+    * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
+    */
+  @inline def mapOr[B](ifEmpty: => B, f: A => B): B =
+    if (isEmpty) ifEmpty else f(value)
+
   @inline def flatMap[B](f: A => Opt[B]): Opt[B] =
     if (isEmpty) Opt.Empty else f(value)
 
