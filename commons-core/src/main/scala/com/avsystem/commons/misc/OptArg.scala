@@ -46,7 +46,7 @@ object OptArg {
   * methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that [[OptArg]] is converted to [[Opt]],
   * [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption` methods).
   */
-final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
+final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
   private def value: A = rawValue.asInstanceOf[A]
 
   @inline def get: A = if (isEmpty) throw new NoSuchElementException("empty OptArg") else value

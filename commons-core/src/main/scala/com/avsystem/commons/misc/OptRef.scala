@@ -46,7 +46,7 @@ object OptRef {
   * which unfortunately makes [[OptRef]] suffer from SI-7396 (`hashCode` fails on `OptRef.Empty` which means that you
   * can't add [[OptRef]] values into hash sets or use them as hash map keys).
   */
-final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with Serializable {
+final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with OptBase[A] with Serializable {
   @inline def isEmpty: Boolean = value == null
   @inline def isDefined: Boolean = !isEmpty
   @inline def nonEmpty: Boolean = isDefined

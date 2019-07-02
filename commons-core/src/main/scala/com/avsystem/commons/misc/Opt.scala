@@ -38,7 +38,7 @@ object Opt {
   * If you need a value-class version of `Option` which differentiates between no value and `null` value,
   * use [[NOpt]].
   */
-final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
+final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
   private def value: A = rawValue.asInstanceOf[A]
 
   @inline def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker
