@@ -414,7 +414,7 @@ object SharedExtensions extends SharedExtensions {
     }
 
     /**
-      * The same as [[Option.fold]] but takes arguments in a single parameter list for better type inference.
+      * The same as `fold` but takes arguments in a single parameter list for better type inference.
       */
     def mapOr[B](ifEmpty: => B, f: A => B): B =
       option.fold(ifEmpty)(f)
