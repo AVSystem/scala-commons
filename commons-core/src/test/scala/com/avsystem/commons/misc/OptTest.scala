@@ -61,4 +61,9 @@ class OptTest extends FunSuite {
     assert(Opt.Empty.zip(Opt(2)) == Opt.Empty)
     assert(Opt(3).zip(Opt.Empty) == Opt.Empty)
   }
+
+  test("mapOr") {
+    val seq: Seq[Int] = Opt(5).mapOr(Nil, i => 0 until i)
+    assert(seq == (0 until 5))
+  }
 }

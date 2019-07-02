@@ -26,17 +26,20 @@ abstract class AnalyzerRule(val global: Global, val name: String, defaultLevel: 
         reporter.error(tree.pos, s"Analyzer rule $this failed: " + sw.toString)
     }
 
+  private def adjustMsg(msg: String): String = s"[AVS] $msg"
+
   protected def report(pos: Position, message: String): Unit =
     level match {
       case Level.Off =>
-      case Level.Info => reporter.echo(pos, message)
-      case Level.Warn => reporter.warning(pos, message)
-      case Level.Error => reporter.error(pos, message)
+      case Level.Info => reporter.echo(pos, adjustMsg(message))
+      case Level.Warn => reporter.warning(pos, adjustMsg(message))
+      case Level.Error => reporter.error(pos, adjustMsg(message))
     }
 
   def analyze(unit: CompilationUnit): Unit
 
-  override def toString = getClass.getSimpleName
+  override def toString: String =
+    getClass.getSimpleName
 }
 
 sealed trait Level

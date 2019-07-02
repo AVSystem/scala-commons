@@ -273,35 +273,34 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       val annotTpe = typeGivenInstances
       val annotConstr = new ReifiedAnnotConstructor(annotTpe, this)
 
-      def resolvedAnnotTree(annot: Annot): Res[Tree] = {
-        val treeRes = annot.mkTree {
-          case param if findAnnotation(param, CompositeAT).nonEmpty =>
-            Some(new CompositeParam(annotConstr, param)
-              .tryMaterialize(matchedSymbol)(p => FailMsg(s"unexpected metadata parameter $p")))
-          case param =>
-            findAnnotation(param, DirectMetadataParamStrategyType)
-              .map(annot => annotConstr.paramByStrategy(param, annot))
-              .map {
-                case dmp: DirectMetadataParam => dmp.tryMaterializeFor(matchedSymbol)
-                case p => FailMsg(s"unexpected metadata parameter $p")
-              }
-        }
-        treeRes.map { tree =>
+      def materializeAnnotParam(param: Symbol): Option[Res[Tree]] =
+        if(findAnnotation(param, CompositeAT).nonEmpty)
+          Some(new CompositeParam(annotConstr, param)
+            .tryMaterialize(matchedSymbol)(p => FailMsg(s"unexpected metadata parameter $p")))
+        else
+          findAnnotation(param, DirectMetadataParamStrategyType)
+            .map(annot => annotConstr.paramByStrategy(param, annot))
+            .map {
+              case dmp: DirectMetadataParam => dmp.tryMaterializeFor(matchedSymbol)
+              case p => FailMsg(s"unexpected metadata parameter $p")
+            }
+
+      def resolvedAnnotTree(annot: Annot): Res[Tree] =
+        annot.treeRes.map { tree =>
           if (containsInaccessibleThises(tree)) {
             matchedSymbol.real.reportProblem(s"reified annotation $tree contains inaccessible this-references")
           }
           withTypeParamInstances(matchedSymbol.typeParamsInContext)(c.untypecheck(tree))
         }
-      }
 
       arity match {
         case ParamArity.Single(_) =>
-          matchedSymbol.annot(annotTpe).map(resolvedAnnotTree)
+          matchedSymbol.annot(annotTpe, materializeAnnotParam).map(resolvedAnnotTree)
             .getOrElse(FailMsg(s"no annotation of type $annotTpe found"))
         case ParamArity.Optional(_) =>
-          Res.sequence(matchedSymbol.annot(annotTpe).map(resolvedAnnotTree)).map(ot => mkOptional(ot))
+          Res.sequence(matchedSymbol.annot(annotTpe, materializeAnnotParam).map(resolvedAnnotTree)).map(ot => mkOptional(ot))
         case ParamArity.Multi(_, _) =>
-          Res.sequence(matchedSymbol.annots(annotTpe).map(resolvedAnnotTree)).map(tl => mkMulti(tl))
+          Res.sequence(matchedSymbol.annots(annotTpe, materializeAnnotParam).map(resolvedAnnotTree)).map(tl => mkMulti(tl))
         case _ =>
           FailMsg(s"${arity.annotStr} not allowed on @reifyAnnot params")
       }

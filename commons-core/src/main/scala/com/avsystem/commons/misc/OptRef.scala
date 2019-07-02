@@ -78,6 +78,12 @@ final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with
   @inline def fold[B](ifEmpty: => B)(f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
+  /**
+    * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
+    */
+  @inline def mapOr[B](ifEmpty: => B, f: A => B): B =
+    if (isEmpty) ifEmpty else f(value)
+
   @inline def flatMap[B >: Null](f: A => OptRef[B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else f(value)
 

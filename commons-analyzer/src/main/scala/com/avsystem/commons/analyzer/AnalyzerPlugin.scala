@@ -43,7 +43,8 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
     new ShowAst(global),
     new FindUsages(global),
     new CheckBincompat(global),
-    new Any2StringAdd(global)
+    new Any2StringAdd(global),
+    new ThrowableObjects(global)
   )
 
   private lazy val rulesByName = rules.map(r => (r.name, r)).toMap

@@ -94,6 +94,12 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with Seri
   @inline def fold[B](ifEmpty: => B)(f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
+  /**
+    * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
+    */
+  @inline def mapOr[B](ifEmpty: => B, f: A => B): B =
+    if (isEmpty) ifEmpty else f(value)
+
   @inline def flatMap[B](f: A => NOpt[B]): NOpt[B] =
     if (isEmpty) NOpt.Empty else f(value)
 

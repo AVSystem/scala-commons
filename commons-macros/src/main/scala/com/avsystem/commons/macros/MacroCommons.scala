@@ -207,7 +207,13 @@ trait MacroCommons { bundle =>
     tree
   }
 
-  class Annot(annotTree: Tree, val subject: Symbol, val directSource: Symbol, val aggregate: Option[Annot]) {
+  final class Annot(
+    annotTree: Tree,
+    val subject: Symbol,
+    val directSource: Symbol,
+    val aggregate: Option[Annot],
+    paramMaterializer: Symbol => Option[Res[Tree]]
+  ) {
     def aggregationChain: List[Annot] =
       aggregate.fold(List.empty[Annot])(a => a :: a.aggregationChain)
 
@@ -222,7 +228,7 @@ trait MacroCommons { bundle =>
         primaryConstructorOf(clsTpe).typeSignatureIn(clsTpe)
     }
 
-    def mkTree(paramMaterializer: Symbol => Option[Res[Tree]]): Res[Tree] = annotTree match {
+    lazy val treeRes: Res[Tree] = annotTree match {
       case Apply(constr, args) =>
         val newArgs = (args zip constructorSig.paramLists.head) map {
           case (arg, param) if param.asTerm.isParamWithDefault && arg.symbol != null &&
@@ -240,7 +246,7 @@ trait MacroCommons { bundle =>
         Ok(annotTree)
     }
 
-    lazy val tree: Tree = mkTree(_ => None).getOrElse { errOpt =>
+    def tree: Tree = treeRes.getOrElse { errOpt =>
       c.abort(errorPos.getOrElse(c.enclosingPosition), errOpt.getOrElse("unknown error"))
     }
 
@@ -299,7 +305,8 @@ trait MacroCommons { bundle =>
           warning(s"no aggregated annotations found in $tpe")
         }
         rawAnnots.map { a =>
-          new Annot(argsInliner.transform(correctAnnotTree(a.tree, tpe)), subject, aggregatedMethodSym, Some(this))
+          val tree = argsInliner.transform(correctAnnotTree(a.tree, tpe))
+          new Annot(tree, subject, aggregatedMethodSym, Some(this), paramMaterializer)
         }
       } else Nil
     }
@@ -325,8 +332,13 @@ trait MacroCommons { bundle =>
   private def maybeWithSuperSymbols(s: Symbol, withSupers: Boolean): Iterator[Symbol] =
     if (withSupers) withSuperSymbols(s) else Iterator(s)
 
-  def allAnnotations(s: Symbol, tpeFilter: Type,
-    seenFrom: Type = NoType, withInherited: Boolean = true, fallback: List[Tree] = Nil
+  def allAnnotations(
+    s: Symbol,
+    tpeFilter: Type,
+    seenFrom: Type = NoType,
+    withInherited: Boolean = true,
+    fallback: List[Tree] = Nil,
+    paramMaterializer: Symbol => Option[Res[Tree]] = _ => None
   ): List[Annot] = measure("annotations") {
 
     val initSym = orConstructorParam(s)
@@ -335,14 +347,19 @@ trait MacroCommons { bundle =>
 
     val nonFallback = maybeWithSuperSymbols(initSym, withInherited)
       .flatMap(ss => rawAnnotations(ss).filter(inherited(_, ss))
-        .map(a => new Annot(correctAnnotTree(a.tree, seenFrom), s, ss, None)))
+        .map(a => new Annot(correctAnnotTree(a.tree, seenFrom), s, ss, None, paramMaterializer)))
 
-    (nonFallback ++ fallback.iterator.map(t => new Annot(t, s, s, None)))
+    (nonFallback ++ fallback.iterator.map(t => new Annot(t, s, s, None, paramMaterializer)))
       .flatMap(_.withAllAggregated).filter(_.tpe <:< tpeFilter).toList
   }
 
-  def findAnnotation(s: Symbol, tpe: Type,
-    seenFrom: Type = NoType, withInherited: Boolean = true, fallback: List[Tree] = Nil
+  def findAnnotation(
+    s: Symbol,
+    tpe: Type,
+    seenFrom: Type = NoType,
+    withInherited: Boolean = true,
+    fallback: List[Tree] = Nil,
+    paramMaterializer: Symbol => Option[Res[Tree]] = _ => None
   ): Option[Annot] = measure("annotations") {
     val initSym = orConstructorParam(s)
     def find(annots: List[Annot], rejectDuplicates: Boolean): Option[Annot] = annots match {
@@ -368,11 +385,11 @@ trait MacroCommons { bundle =>
     maybeWithSuperSymbols(initSym, withInherited)
       .map(ss => find(
         rawAnnotations(ss).filter(inherited(_, ss))
-          .map(a => new Annot(correctAnnotTree(a.tree, seenFrom), s, ss, None)),
+          .map(a => new Annot(correctAnnotTree(a.tree, seenFrom), s, ss, None, paramMaterializer)),
         rejectDuplicates = true
       ))
       .collectFirst { case Some(annot) => annot }
-      .orElse(find(fallback.map(t => new Annot(t, s, s, None)), rejectDuplicates = false))
+      .orElse(find(fallback.map(t => new Annot(t, s, s, None, paramMaterializer)), rejectDuplicates = false))
   }
 
   def enclosingConstructorCompanion: Symbol =

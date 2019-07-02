@@ -2,7 +2,7 @@ package com.avsystem.commons
 package macros.rpc
 
 import com.avsystem.commons.macros.meta.MacroSymbols
-import com.avsystem.commons.macros.misc.Res
+import com.avsystem.commons.macros.misc.{Ok, Res}
 
 import scala.collection.mutable
 
@@ -62,8 +62,14 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     def rawName: String = real.rpcName
     def typeParamsInContext: List[MacroTypeParam] = matchedOwner.typeParamsInContext
 
+    private def materializeImplicit(param: Symbol): Option[Res[Tree]] =
+      if (findAnnotation(param, InferAT).nonEmpty) {
+        val clue = s"problem with annotation parameter ${param.name}: "
+        Some(Ok(inferCachedImplicit(param.typeSignature, ErrorCtx(clue, real.pos)).reference(Nil)))
+      } else None
+
     val whenAbsent: Tree =
-      annot(WhenAbsentAT).fold(EmptyTree) { annot =>
+      annot(WhenAbsentAT, materializeImplicit).fold(EmptyTree) { annot =>
         val annotatedDefault = annot.tree.children.tail.head
         if (!(annotatedDefault.tpe <:< real.actualType)) {
           real.reportProblem(s"expected value of type ${real.actualType} in @whenAbsent annotation, " +
