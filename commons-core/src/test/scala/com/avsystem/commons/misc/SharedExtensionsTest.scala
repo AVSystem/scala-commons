@@ -168,4 +168,13 @@ class SharedExtensionsTest extends FunSuite with Matchers {
   test("withSourceCode") {
     assert(123.withSourceCode == (123, "123"))
   }
+
+  test("flatCollect") {
+    val it = Iterator(69, 42)
+    val fc = it.flatCollect { case i if i % 2 == 0 => Iterator(-i, i) }
+    assert(it.hasNext) //flatCollect should not consume eagerly
+    assert(fc.hasNext)
+    assert(!it.hasNext)
+    fc.toSeq should contain theSameElementsInOrderAs Seq(-42, 42)
+  }
 }

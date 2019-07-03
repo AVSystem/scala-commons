@@ -553,11 +553,8 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     def findOpt(p: A => Boolean): Opt[A] = it.find(p).toOpt
 
-    def flatCollect[B, That](f: PartialFunction[A, IterableOnce[B]])(implicit bf: BuildFrom[C[A], B, That]): That = {
-      val b = bf.newBuilder(coll)
-      it.foreach(f.runWith(_.iterator.foreach(b += _)))
-      b.result()
-    }
+    def flatCollect[B](f: PartialFunction[A, IterableOnce[B]])(implicit fac: Factory[B, C[B]]): C[B] =
+      coll.iterator.collect(f).flatten.to(fac)
 
     def collectFirstOpt[B](pf: PartialFunction[A, B]): Opt[B] = it.collectFirst(pf).toOpt
 
@@ -711,6 +708,9 @@ object SharedExtensionsUtils extends SharedExtensions {
       }
 
     def distinct: Iterator[A] = distinctBy(identity)
+
+    //overloaded to avoid eager iterator consumption in 2.12
+    def flatCollect[B](f: PartialFunction[A, IterableOnce[B]]): Iterator[B] = it.collect(f).flatten
   }
 
   object IteratorCompanionOps {
