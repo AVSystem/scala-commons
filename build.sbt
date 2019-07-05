@@ -24,7 +24,7 @@ val akkaVersion = "2.5.23"
 val monixVersion = "2.3.3"
 val mockitoVersion = "2.28.2"
 val circeVersion = "0.11.1"
-val upickleVersion = "0.7.4"
+val upickleVersion = "0.7.5"
 val scalajsBenchmarkVersion = "0.2.6"
 
 pgpPublicRing := file("./travis/local.pubring.asc")
