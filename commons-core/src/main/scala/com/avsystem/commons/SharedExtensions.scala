@@ -521,7 +521,11 @@ object SharedExtensionsUtils extends SharedExtensions {
       * In Scala 2.13 this extension method is always be hidden by an actual method available on `IterableOnce`.
       */
     def knownSize: Int = coll match {
+      case c: BIterable[_] if c.isEmpty => 0
       case is: BIndexedSeq[_] => is.size
+      case _: IListMap[_, _] => -1
+      case m: BMap[_, _] => m.size
+      case s: BSet[_] => s.size
       case _ => -1
     }
 

@@ -7,8 +7,6 @@ import java.nio.charset.StandardCharsets
 import com.avsystem.commons.serialization.GenCodec.WriteFailure
 import com.avsystem.commons.serialization._
 
-object ListOrObjectSizeMarker extends TypeMarker[Int]
-
 /**
   * Defines translation between textual object field names and corresponding numeric labels. May be used to reduce
   * size of CBOR representation of objects.
@@ -55,7 +53,7 @@ abstract class BaseCborOutput(out: DataOutput) {
   protected final def writeTag(tag: Tag): Unit =
     writeValue(MajorType.Tag, tag.value)
 
-  protected def writeText(str: String): Unit = {
+  protected final def writeText(str: String): Unit = {
     val bytes = str.getBytes(StandardCharsets.UTF_8)
     writeValue(MajorType.TextString, bytes.length)
     out.write(bytes)
@@ -63,9 +61,13 @@ abstract class BaseCborOutput(out: DataOutput) {
 }
 
 object CborOutput {
-  def write[T: GenCodec](value: T, fieldLabels: FieldLabels = FieldLabels.NoLabels): Array[Byte] = {
+  def write[T: GenCodec](
+    value: T,
+    fieldLabels: FieldLabels = FieldLabels.NoLabels,
+    sizePolicy: SizePolicy = SizePolicy.Optional
+  ): Array[Byte] = {
     val baos = new ByteArrayOutputStream
-    GenCodec.write[T](new CborOutput(new DataOutputStream(baos), fieldLabels), value)
+    GenCodec.write[T](new CborOutput(new DataOutputStream(baos), fieldLabels, sizePolicy), value)
     baos.toByteArray
   }
 }
@@ -74,12 +76,8 @@ object CborOutput {
   * An [[com.avsystem.commons.serialization.Output Output]] implementation that serializes into
   * [[https://tools.ietf.org/html/rfc7049 CBOR]].
   */
-class CborOutput(out: DataOutput, fieldLabels: FieldLabels)
+class CborOutput(out: DataOutput, fieldLabels: FieldLabels, sizePolicy: SizePolicy)
   extends BaseCborOutput(out) with OutputAndSimpleOutput {
-
-  // Output currently does not support writing lists or objects with size known upfront
-  // so we have to handle this less nicely because SenML requires it
-  private[this] var listOrObjectSize: Int = -1
 
   def writeNull(): Unit =
     write(InitialByte.Null)
@@ -151,26 +149,17 @@ class CborOutput(out: DataOutput, fieldLabels: FieldLabels)
       writeDouble(millis.toDouble / 1000)
   }
 
-  def writeList(): ListOutput = {
-    if (listOrObjectSize >= 0) writeValue(MajorType.Array, listOrObjectSize)
-    else write(InitialByte(MajorType.Array, InitialByte.IndefiniteLengthInfo))
-    new CborListOutput(out, fieldLabels, listOrObjectSize)
-  }
+  def writeList(): ListOutput =
+    new CborListOutput(out, fieldLabels, sizePolicy)
 
-  def writeObject(): ObjectOutput = {
-    if (listOrObjectSize >= 0) writeValue(MajorType.Map, listOrObjectSize)
-    else write(InitialByte(MajorType.Map, InitialByte.IndefiniteLengthInfo))
-    new CborObjectOutput(out, fieldLabels, listOrObjectSize)
-  }
+  def writeObject(): ObjectOutput =
+    new CborObjectOutput(out, fieldLabels, sizePolicy)
 
   def writeRawCbor(raw: RawCbor): Unit =
     out.write(raw.bytes, raw.offset, raw.length)
 
   override def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean =
     typeMarker match {
-      case ListOrObjectSizeMarker =>
-        listOrObjectSize = value
-        true
       case RawCbor =>
         writeRawCbor(value)
         true
@@ -184,30 +173,68 @@ class CborOutput(out: DataOutput, fieldLabels: FieldLabels)
   }
 }
 
-class CborListOutput(out: DataOutput, fieldLabels: FieldLabels, private[this] var size: Int)
-  extends BaseCborOutput(out) with ListOutput {
+abstract class CborSequentialOutput(
+  out: DataOutput,
+  override val sizePolicy: SizePolicy
+) extends BaseCborOutput(out) with SequentialOutput {
+
+  protected[this] var size: Int = -1
+  protected[this] var fresh: Boolean = true
+
+  protected final def writeInitial(major: MajorType): Unit =
+    if (fresh) {
+      fresh = false
+      if (size >= 0) {
+        writeValue(major, size)
+      } else if (sizePolicy != SizePolicy.Required) {
+        write(InitialByte(major, InitialByte.IndefiniteLengthInfo))
+      } else {
+        throw new WriteFailure("explicit size for an array or object was required but it was not declared")
+      }
+    }
+
+  override final def declareSize(size: Int): Unit =
+    if (fresh) {
+      this.size = size
+    } else {
+      throw new IllegalStateException("Cannot declare size after elements or fields have already been written")
+    }
+}
+
+class CborListOutput(
+  out: DataOutput,
+  fieldLabels: FieldLabels,
+  sizePolicy: SizePolicy
+) extends CborSequentialOutput(out, sizePolicy) with ListOutput {
 
   def writeElement(): Output = {
+    writeInitial(MajorType.Array)
     if (size > 0) {
       size -= 1
     } else if (size == 0) {
       throw new WriteFailure("explicit size was given and all the elements have already been written")
     }
-    new CborOutput(out, fieldLabels)
+    new CborOutput(out, fieldLabels, sizePolicy)
   }
 
-  def finish(): Unit =
+  def finish(): Unit = {
+    writeInitial(MajorType.Array)
     if (size < 0) {
       write(InitialByte.Break)
     } else if (size > 0) {
       throw new WriteFailure("explicit size was given but not enough elements were written")
     }
+  }
 }
 
-class CborObjectOutput(out: DataOutput, fieldLabels: FieldLabels, private[this] var size: Int)
-  extends BaseCborOutput(out) with ObjectOutput {
+class CborObjectOutput(
+  out: DataOutput,
+  fieldLabels: FieldLabels,
+  sizePolicy: SizePolicy
+) extends CborSequentialOutput(out, sizePolicy) with ObjectOutput {
 
   def writeField(key: String): Output = {
+    writeInitial(MajorType.Map)
     if (size > 0) {
       size -= 1
     } else if (size == 0) {
@@ -217,13 +244,15 @@ class CborObjectOutput(out: DataOutput, fieldLabels: FieldLabels, private[this] 
       case Opt(label) => writeSigned(label)
       case Opt.Empty => writeText(key)
     }
-    new CborOutput(out, fieldLabels)
+    new CborOutput(out, fieldLabels, sizePolicy)
   }
 
-  def finish(): Unit =
+  def finish(): Unit = {
+    writeInitial(MajorType.Map)
     if (size < 0) {
       write(InitialByte.Break)
     } else if (size > 0) {
       throw new WriteFailure("explicit size was given but not enough fields were written")
     }
+  }
 }

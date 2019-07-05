@@ -136,6 +136,8 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
 final class JsonListOutput(builder: JStringBuilder, options: JsonOptions, depth: Int)
   extends BaseJsonOutput with ListOutput {
 
+  override def sizePolicy: SizePolicy = SizePolicy.Ignored
+
   private[this] var first = true
 
   def writeElement(): JsonStringOutput = {
@@ -157,6 +159,8 @@ final class JsonListOutput(builder: JStringBuilder, options: JsonOptions, depth:
 
 final class JsonObjectOutput(builder: JStringBuilder, options: JsonOptions, depth: Int)
   extends BaseJsonOutput with ObjectOutput {
+
+  override def sizePolicy: SizePolicy = SizePolicy.Ignored
 
   private[this] var first = true
 
