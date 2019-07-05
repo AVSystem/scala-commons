@@ -360,9 +360,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     o.sizePolicy match {
       case SizePolicy.Ignored =>
       case SizePolicy.Optional =>
-        if (coll.isEmpty) {
-          o.declareSize(0)
-        } else coll.knownSize match {
+        coll.knownSize match {
           case -1 =>
           case size => o.declareSize(size)
         }

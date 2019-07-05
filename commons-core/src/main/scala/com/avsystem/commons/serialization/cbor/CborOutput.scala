@@ -53,7 +53,7 @@ abstract class BaseCborOutput(out: DataOutput) {
   protected final def writeTag(tag: Tag): Unit =
     writeValue(MajorType.Tag, tag.value)
 
-  protected def writeText(str: String): Unit = {
+  protected final def writeText(str: String): Unit = {
     val bytes = str.getBytes(StandardCharsets.UTF_8)
     writeValue(MajorType.TextString, bytes.length)
     out.write(bytes)
@@ -181,7 +181,7 @@ abstract class CborSequentialOutput(
   protected[this] var size: Int = -1
   protected[this] var fresh: Boolean = true
 
-  protected def writeInitial(major: MajorType): Unit =
+  protected final def writeInitial(major: MajorType): Unit =
     if (fresh) {
       fresh = false
       if (size >= 0) {
@@ -193,7 +193,7 @@ abstract class CborSequentialOutput(
       }
     }
 
-  override def declareSize(size: Int): Unit =
+  override final def declareSize(size: Int): Unit =
     if (fresh) {
       this.size = size
     } else {
