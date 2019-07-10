@@ -54,6 +54,21 @@ class DocumentBsonGenCodecRoundtripTest extends GenCodecRoundtripTest {
   }
 }
 
+class BsonValueGenCodecRoundtripTest extends GenCodecRoundtripTest {
+  type Raw = BsonValue
+
+  def legacyOptionEncoding: Boolean = false
+
+  def writeToOutput(write: Output => Unit): BsonValue = {
+    var bsonValue: BsonValue = null
+    write(new BsonValueOutput(bsonValue = _, legacyOptionEncoding))
+    bsonValue
+  }
+
+  def createInput(raw: BsonValue): Input =
+    new BsonValueInput(raw, legacyOptionEncoding)
+}
+
 class BsonInputOutputTest extends FunSuite with PropertyChecks {
   def binaryRoundtrip(sthBefore: SomethingComplex, legacyOptionEncoding: Boolean = false): Unit = {
     val bsonOutput = new BasicOutputBuffer()
