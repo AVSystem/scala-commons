@@ -7,8 +7,8 @@ import org.bson._
 import org.bson.types.ObjectId
 
 object BsonValueInput {
-  def read[T: GenCodec](bsonValue: BsonValue): T =
-    GenCodec.read[T](new BsonValueInput(bsonValue))
+  def read[T: GenCodec](bsonValue: BsonValue, legacyOptionEncoding: Boolean = false): T =
+    GenCodec.read[T](new BsonValueInput(bsonValue, legacyOptionEncoding))
 }
 
 class BsonValueInput(bsonValue: BsonValue, override val legacyOptionEncoding: Boolean = false) extends BsonInput {
