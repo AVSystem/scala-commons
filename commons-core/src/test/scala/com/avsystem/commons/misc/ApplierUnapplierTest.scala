@@ -59,4 +59,7 @@ class ApplierUnapplierTest extends FunSuite {
   test("custom") {
     roundtrip(Custom("", 42))
   }
+  test("tuple") {
+    roundtrip(("", 42, 3.14))
+  }
 }
