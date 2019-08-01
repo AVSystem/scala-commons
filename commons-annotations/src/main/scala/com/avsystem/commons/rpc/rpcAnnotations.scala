@@ -194,6 +194,34 @@ final class encoded extends RpcEncoding
 final class verbatim extends RpcEncoding
 
 /**
+  * Base trait for annotations which - when applied on a real parameter or method - change the way its value is
+  * serialized. The `Raw` type parameter must match the original raw type into which the value is serialized.
+  * The annotation may then specify a `NewRaw` type. Macro engine will then look for a different implicit for
+  * serialization - instead of looking for `AsRaw[Raw,Real]` it will now look for `AsRaw[NewRaw,Real]`.
+  * The annotation must therefore provide a conversion from its new raw type to the original raw type.
+  *
+  * `NewRaw` may also be the same type as `Raw` - this is useful if we only want to modify the raw value after
+  * serialization without changing its type.
+  */
+trait EncodingInterceptor[NewRaw, Raw] extends RealSymAnnotation {
+  def toOriginalRaw(newRaw: NewRaw): Raw
+}
+
+/**
+  * Base trait for annotations which - when applied on a real parameter or method - change the way its value is
+  * deserialized. The `Raw` type parameter must match the original raw type into which the value is serialized.
+  * The annotation may then specify a `NewRaw` type. Macro engine will then look for a different implicit for
+  * deserialization - instead of looking for `AsReal[Raw,Real]` it will now look for `AsReal[NewRaw,Real]`.
+  * The annotation must therefore provide a conversion from the original raw type to the new raw type.
+  *
+  * `NewRaw` may also be the same type as `Raw` - this is useful if we only want to modify the raw value before
+  * deserialization without changing its type.
+  */
+trait DecodingInterceptor[NewRaw, Raw] extends RealSymAnnotation {
+  def toNewRaw(raw: Raw): NewRaw
+}
+
+/**
   * When raw method is annotated as `@tried`, invocations of real methods matching that raw method will be
   * automatically wrapped into `Try`. Consequently, all real methods will be treated as if their result
   * type was `Try[Result]` instead of actual `Result`. For example, if raw method is [[encoded]] and its

@@ -69,6 +69,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
       } else None
 
     val whenAbsent: Tree =
+    // TODO: materialize arbitrary metadata into @whenAbsent?
       annot(WhenAbsentAT, materializeImplicit).fold(EmptyTree) { annot =>
         val annotatedDefault = annot.tree.children.tail.head
         if (!(annotatedDefault.tpe <:< real.actualType)) {

@@ -5,6 +5,11 @@ import com.avsystem.commons.rpc.DummyRPC._
 import com.avsystem.commons.serialization.{HasGenCodec, whenAbsent}
 import com.github.ghik.silencer.silent
 
+class prepend(prefix: String) extends EncodingInterceptor[String, String] with DecodingInterceptor[String, String] {
+  def toOriginalRaw(newRaw: String): String = prefix + newRaw
+  def toNewRaw(raw: String): String = raw.stripPrefix(prefix)
+}
+
 case class Record(i: Int, fuu: String)
 object Record extends HasGenCodec[Record]
 
@@ -30,7 +35,7 @@ trait TestRPC {
   def doStuff(lol: Int, fuu: String = "pisiont")(implicit cos: Option[Boolean]): Unit
 
   @rpcName("doStuffBoolean")
-  def doStuff(yes: Boolean): Future[String]
+  def doStuff(@prepend("bul:") yes: Boolean): Future[String]
 
   @rpcName("doStuffInt")
   def doStuff(@whenAbsent(defaultNum) num: Int): Unit

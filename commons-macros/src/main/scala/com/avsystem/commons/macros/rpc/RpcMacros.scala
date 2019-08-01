@@ -38,6 +38,8 @@ private[commons] abstract class RpcMacroCommons(ctx: blackbox.Context)
   final lazy val VerbatimAT: Type = staticType(tq"$RpcPackage.verbatim")
   final lazy val TriedAT: Type = staticType(tq"$RpcPackage.tried")
   final lazy val MethodTagAT: Type = staticType(tq"$RpcPackage.methodTag[_]")
+  final lazy val EncodingInterceptorTpe = staticType(tq"$RpcPackage.EncodingInterceptor[_,_]")
+  final lazy val DecodingInterceptorTpe = staticType(tq"$RpcPackage.DecodingInterceptor[_,_]")
 }
 
 private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)

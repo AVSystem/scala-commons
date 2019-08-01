@@ -58,7 +58,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
   }
   object EncodedRealParam {
     def create(rawParam: RawValueParam, matchedParam: MatchedParam): Res[EncodedRealParam] =
-      RpcEncoding.forParam(rawParam, matchedParam.real).map(EncodedRealParam(matchedParam, _))
+      RpcEncoding.forParam(rawParam, matchedParam).map(EncodedRealParam(matchedParam, _))
   }
 
   sealed trait ParamMapping {
@@ -168,7 +168,8 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree
   }
   object RpcEncoding {
-    def forParam(rawParam: RawValueParam, realParam: RealParam): Res[RpcEncoding] = {
+    def forParam(rawParam: RawValueParam, matchedParam: MatchedParam): Res[RpcEncoding] = {
+      val realParam = matchedParam.real
       val encArgType = rawParam.arity.collectedType
       if (rawParam.verbatim) {
         if (realParam.actualType =:= encArgType)
@@ -179,8 +180,27 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       } else {
         val errorCtx = ErrorCtx(s"${realParam.problemStr}:\n", realParam.pos)
         val implicitParams = realParam.owner.encodingDeps.takeWhile(_ != realParam)
-        Ok(RealRawEncoding(realParam.actualType, encArgType, Some(errorCtx), realParam.tparamReferences, implicitParams))
+        val encInterceptors = interceptors(encArgType, matchedParam, EncodingInterceptorTpe)
+        val decInterceptors = interceptors(encArgType, matchedParam, DecodingInterceptorTpe)
+        Ok(RealRawEncoding(realParam.actualType, encInterceptors, decInterceptors, encArgType,
+          Some(errorCtx), realParam.tparamReferences, implicitParams))
       }
+    }
+
+    def interceptors(rawType: Type, sym: MatchedSymbol, baseIcTpe: Type): List[Annot] = {
+      val baseIcSym = baseIcTpe.typeSymbol
+      def filter(interceptors: List[Annot]): (List[Annot], Type) = interceptors match {
+        case Nil => (Nil, rawType)
+        case head :: tail =>
+          val (filteredTail, tailNewRawType) = filter(tail)
+          val List(newRawType, oldRawType) = head.tpe.baseType(baseIcSym).typeArgs
+          if (oldRawType =:= tailNewRawType)
+            (head :: filteredTail, newRawType)
+          else
+            (filteredTail, tailNewRawType)
+      }
+      val (res, _) = filter(sym.annots(baseIcTpe))
+      res
     }
 
     case class Verbatim(tpe: Type) extends RpcEncoding {
@@ -197,17 +217,24 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
     case class RealRawEncoding(
       realType: Type,
+      encInterceptors: List[Annot],
+      decInterceptors: List[Annot],
       rawType: Type,
       errorCtx: Option[ErrorCtx],
       typeParams: List[RealTypeParam],
       implicitParams: List[RealParam]
     ) extends RpcEncoding {
 
-      private def infer(convClass: Tree): Tree = {
-        val convTpe = getType(tq"$convClass[$rawType,$realType]")
+      private def infer(encNotDec: Boolean): Tree = {
+        val convClass = if (encNotDec) AsRawCls else AsRealCls
+        val interceptors = if (encNotDec) encInterceptors else decInterceptors
+        val interceptorBase = if (encNotDec) EncodingInterceptorTpe else DecodingInterceptorTpe
+        val finalRawType =
+          interceptors.headOption.map(_.tpe.baseType(interceptorBase.typeSymbol).typeArgs.head).getOrElse(rawType)
+        val convTpe = getType(tq"$convClass[$finalRawType,$realType]")
         val tparams = typeParams.map(_.symbol)
         val implicitDeps = implicitParams.map(_.actualType)
-        errorCtx match {
+        val res = errorCtx match {
           case Some(ctx) =>
             inferCachedImplicit(convTpe, ctx, tparams, implicitDeps)
               .reference(implicitParams.map(_.argToPass))
@@ -215,9 +242,16 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             tryInferCachedImplicit(convTpe, tparams, implicitDeps)
               .map(_.reference(implicitParams.map(_.argToPass))).getOrElse(EmptyTree)
         }
+        // TODO: avoid wrapping and unnecessary instantiation of AsRaw/AsReal, cache interceptors
+        val interceptMethod = TermName(if (encNotDec) "interceptEnc" else "interceptDec")
+        if (res == EmptyTree) res
+        else interceptors.foldLeft(res) {
+          (acc, interceptor) => q"$RpcUtils.$interceptMethod($acc, ${c.untypecheck(interceptor.tree)})"
+        }
       }
-      protected lazy val asRaw: Tree = infer(AsRawCls)
-      protected lazy val asReal: Tree = infer(AsRealCls)
+
+      protected lazy val asRaw: Tree = infer(true)
+      protected lazy val asReal: Tree = infer(false)
 
       def hasAsRaw: Boolean = asRaw != EmptyTree
       def hasAsReal: Boolean = asReal != EmptyTree
@@ -347,8 +381,10 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           else
             FailMsg(s"real result type $realResultType does not match raw result type ${rawMethod.resultType}")
         } else {
-          val enc = RpcEncoding.RealRawEncoding(
-            realResultType, rawMethod.resultType, None, realMethod.resultTparamReferences, realMethod.encodingDeps)
+          val encInterceptors = RpcEncoding.interceptors(rawMethod.resultType, matchedMethod, EncodingInterceptorTpe)
+          val decInterceptors = RpcEncoding.interceptors(rawMethod.resultType, matchedMethod, DecodingInterceptorTpe)
+          val enc = RpcEncoding.RealRawEncoding(realResultType, encInterceptors, decInterceptors, rawMethod.resultType,
+            None, realMethod.resultTparamReferences, realMethod.encodingDeps)
           if ((!forAsRaw || enc.hasAsRaw) && (!forAsReal || enc.hasAsReal))
             Ok(enc)
           else {

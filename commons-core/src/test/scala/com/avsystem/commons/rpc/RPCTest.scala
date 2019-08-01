@@ -101,7 +101,7 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       assert(invocations.toList == List(
         RawInvocation("handleMore", Nil),
         RawInvocation("doStuff", List("42", js"omgsrsly", "true")),
-        RawInvocation("doStuffBoolean", List("true")),
+        RawInvocation("doStuffBoolean", List("bul:true")),
         RawInvocation("doStuffInt", List("5")),
         RawInvocation("handleMore", Nil),
         RawInvocation("handle", Nil),
