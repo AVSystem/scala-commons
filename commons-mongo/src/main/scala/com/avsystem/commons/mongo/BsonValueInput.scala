@@ -4,7 +4,7 @@ package mongo
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{FieldInput, GenCodec, Input, ListInput, ObjectInput}
 import org.bson._
-import org.bson.types.ObjectId
+import org.bson.types.{Decimal128, ObjectId}
 
 object BsonValueInput {
   def read[T: GenCodec](bsonValue: BsonValue, legacyOptionEncoding: Boolean = false): T =
@@ -29,6 +29,7 @@ class BsonValueInput(bsonValue: BsonValue, override val legacyOptionEncoding: Bo
   def readBigDecimal(): BigDecimal = handleFailures(BsonInput.bigDecimalFromBytes(bsonValue.asBinary().getData))
   def readBinary(): Array[Byte] = handleFailures(bsonValue.asBinary().getData)
   def readObjectId(): ObjectId = handleFailures(bsonValue.asObjectId().getValue)
+  def readDecimal128(): Decimal128 = handleFailures(bsonValue.asDecimal128().getValue)
 
   def readNull(): Boolean = bsonValue == BsonNull.VALUE
   def readList(): ListInput = new BsonValueListInput(handleFailures(bsonValue.asArray()), legacyOptionEncoding)

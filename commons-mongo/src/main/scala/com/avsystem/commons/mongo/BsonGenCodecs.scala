@@ -2,11 +2,13 @@ package com.avsystem.commons
 package mongo
 
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
-import org.bson.types.ObjectId
+import org.bson.types.{Decimal128, ObjectId}
 
 trait BsonGenCodecs {
   implicit def objectIdCodec: GenCodec[ObjectId] = BsonGenCodecs.objectIdCodec
   implicit def objectIdKeyCodec: GenKeyCodec[ObjectId] = BsonGenCodecs.objectIdKeyCodec
+
+  implicit def decimal128Codec: GenCodec[Decimal128] = BsonGenCodecs.decimal128Codec
 }
 
 object BsonGenCodecs {
@@ -16,4 +18,9 @@ object BsonGenCodecs {
   )
   implicit val objectIdKeyCodec: GenKeyCodec[ObjectId] =
     GenKeyCodec.create(new ObjectId(_), _.toHexString)
+
+  implicit val decimal128Codec: GenCodec[Decimal128] = GenCodec.nullable(
+    i => i.readCustom(Decimal128Marker).getOrElse(new Decimal128(i.readSimple().readBigDecimal().bigDecimal)),
+    (o, v) => if (!o.writeCustom(Decimal128Marker, v)) o.writeSimple().writeBigDecimal(v.bigDecimalValue())
+  )
 }

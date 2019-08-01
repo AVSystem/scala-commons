@@ -2,7 +2,7 @@ package com.avsystem.commons
 package mongo
 
 import com.avsystem.commons.serialization.{ListOutput, ObjectOutput}
-import org.bson.types.ObjectId
+import org.bson.types.{Decimal128, ObjectId}
 import org.bson.{BsonBinary, BsonWriter}
 
 final class BsonWriterOutput(bw: BsonWriter, override val legacyOptionEncoding: Boolean = false) extends BsonOutput {
@@ -37,6 +37,8 @@ final class BsonWriterOutput(bw: BsonWriter, override val legacyOptionEncoding: 
   }
   override def writeObjectId(objectId: ObjectId): Unit =
     bw.writeObjectId(objectId)
+  override def writeDecimal128(decimal128: Decimal128): Unit =
+    bw.writeDecimal128(decimal128)
 }
 
 final class BsonWriterNamedOutput(escapedName: String, bw: BsonWriter, override val legacyOptionEncoding: Boolean)
@@ -72,6 +74,8 @@ final class BsonWriterNamedOutput(escapedName: String, bw: BsonWriter, override 
   }
   override def writeObjectId(objectId: ObjectId): Unit =
     bw.writeObjectId(escapedName, objectId)
+  override def writeDecimal128(decimal128: Decimal128): Unit =
+    bw.writeDecimal128(escapedName, decimal128)
 }
 
 final class BsonWriterListOutput(bw: BsonWriter, legacyOptionEncoding: Boolean) extends ListOutput {
