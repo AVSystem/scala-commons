@@ -3,7 +3,7 @@ package mongo
 
 import com.avsystem.commons.serialization.{FieldInput, ListInput, ObjectInput}
 import com.google.common.collect.AbstractIterator
-import org.bson.types.ObjectId
+import org.bson.types.{Decimal128, ObjectId}
 import org.bson.{BsonReader, BsonType}
 
 class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean = false) extends BsonInput {
@@ -33,8 +33,9 @@ class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean
     ))
   }
   override def readObjectId(): ObjectId = br.readObjectId()
+  override def readDecimal128(): Decimal128 = br.readDecimal128()
   override def skip(): Unit = br.skipValue()
-  override protected def bsonType: BsonType = br.getCurrentBsonType()
+  override protected def bsonType: BsonType = br.getCurrentBsonType
 }
 
 final class BsonReaderFieldInput(name: String, br: BsonReader, legacyOptionEncoding: Boolean)
