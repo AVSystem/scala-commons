@@ -221,6 +221,8 @@ trait DecodingInterceptor[NewRaw, Raw] extends RealSymAnnotation {
   def toNewRaw(raw: Raw): NewRaw
 }
 
+class rawWhenAbsent[+Raw](val value: Raw) extends RealSymAnnotation
+
 /**
   * When raw method is annotated as `@tried`, invocations of real methods matching that raw method will be
   * automatically wrapped into `Try`. Consequently, all real methods will be treated as if their result

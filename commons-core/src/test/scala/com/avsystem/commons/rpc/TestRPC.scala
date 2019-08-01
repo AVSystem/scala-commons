@@ -2,7 +2,7 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.rpc.DummyRPC._
-import com.avsystem.commons.serialization.{HasGenCodec, whenAbsent}
+import com.avsystem.commons.serialization.{HasGenCodec, transientDefault, whenAbsent}
 import com.github.ghik.silencer.silent
 
 class prepend(prefix: String) extends EncodingInterceptor[String, String] with DecodingInterceptor[String, String] {
@@ -40,6 +40,9 @@ trait TestRPC {
   @rpcName("doStuffInt")
   def doStuff(@whenAbsent(defaultNum) num: Int): Unit
 
+  @namedArgs
+  def doStuffNamed(@transientDefault @rawWhenAbsent("42") int: Int): Unit
+
   def takeCC(r: Record = Record(-1, "_")): Unit
 
   def srslyDude(): Unit
@@ -76,6 +79,9 @@ object TestRPC extends RPCCompanion[TestRPC] {
 
     def doStuff(num: Int): Unit =
       onProcedure("doStuffInt", List(write(num)))
+
+    def doStuffNamed(int: Int): Unit =
+      onProcedure("doStuffNamed", List(write(int)))
 
     def handle: Unit =
       onProcedure("handle", Nil)

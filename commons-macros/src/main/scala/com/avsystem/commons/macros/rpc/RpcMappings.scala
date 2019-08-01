@@ -55,6 +55,71 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     def safeName: TermName = matchedParam.real.safeName
     def rawValueTree: Tree = encoding.applyAsRaw(matchedParam.real.safeName)
     def localValueDecl(body: Tree): Tree = matchedParam.real.localValueDecl(body)
+
+    private def materializeImplicit(param: Symbol): Option[Res[Tree]] =
+      if (findAnnotation(param, InferAT).nonEmpty) {
+        val clue = s"problem with annotation parameter ${param.name}: "
+        Some(Ok(inferCachedImplicit(param.typeSignature, ErrorCtx(clue, realParam.pos)).reference(Nil)))
+      } else None
+
+    private def validatedWhenAbsentValue(annotatedDefault: Tree, expectedTpe: Type): Tree = {
+      if (!(annotatedDefault.tpe <:< expectedTpe)) {
+        realParam.reportProblem(s"expected value of type $expectedTpe in @whenAbsent annotation, " +
+          s"got ${annotatedDefault.tpe.widen}")
+      }
+      val transformer = new Transformer {
+        override def transform(tree: Tree): Tree = tree match {
+          case Super(t@This(_), _) if !enclosingClasses.contains(t.symbol) =>
+            realParam.reportProblem(s"illegal super-reference in @whenAbsent annotation")
+          case This(_) if tree.symbol == realParam.owner.ownerApi.symbol => q"${realParam.owner.ownerApi.safeTermName}"
+          case This(_) if !enclosingClasses.contains(tree.symbol) =>
+            realParam.reportProblem(s"illegal this-reference in @whenAbsent annotation")
+          case t => super.transform(t)
+        }
+      }
+      transformer.transform(annotatedDefault)
+    }
+
+    // TODO: materialize arbitrary metadata into @whenAbsent?
+    val whenAbsent: Tree =
+      matchedParam.annot(WhenAbsentAT, materializeImplicit)
+        .fold(EmptyTree)(annot => validatedWhenAbsentValue(annot.tree.children.tail.head, realParam.actualType))
+
+    val rawWhenAbsent: Tree = encoding match {
+      case rre: RpcEncoding.RealRawEncoding =>
+        matchedParam.annot(RawWhenAbsentAT, materializeImplicit)
+          .fold(EmptyTree)(annot => validatedWhenAbsentValue(annot.tree.children.tail.head, rre.decRawType))
+      case _: RpcEncoding.Verbatim => EmptyTree
+    }
+
+    val hasDefaultValue: Boolean =
+      whenAbsent != EmptyTree || rawWhenAbsent != EmptyTree || realParam.symbol.asTerm.isParamWithDefault
+
+    val transientDefault: Boolean =
+      hasDefaultValue && matchedParam.annot(TransientDefaultAT).nonEmpty
+
+    def fallbackValueTree: Tree =
+      if (whenAbsent != EmptyTree) c.untypecheck(whenAbsent)
+      else if (rawWhenAbsent != EmptyTree) encoding.applyAsReal(c.untypecheck(rawWhenAbsent))
+      else if (realParam.symbol.asTerm.isParamWithDefault) defaultValue(false)
+      else q"$RpcUtils.missingArg(${matchedParam.matchedOwner.rawName}, ${matchedParam.rawName})"
+
+    def transientValueTree: Tree =
+      if (realParam.symbol.asTerm.isParamWithDefault) defaultValue(true)
+      else if (whenAbsent != EmptyTree) c.untypecheck(whenAbsent)
+      else encoding.applyAsReal(c.untypecheck(rawWhenAbsent))
+
+    private def defaultValue(useThis: Boolean): Tree = {
+      val prevListParams = realParam.owner.realParams
+        .take(realParam.index - realParam.indexInList).map(rp => q"${rp.safeName}")
+      if (realParam.encodingDependency && prevListParams.nonEmpty) {
+        realParam.reportProblem("implicit dependency parameters cannot have default values " +
+          "unless they are in the first parameter list - note: you can use @whenAbsent instead")
+      }
+      val prevListParamss = List(prevListParams).filter(_.nonEmpty)
+      val realInst = if (useThis) q"this" else q"${realParam.owner.ownerApi.safeTermName}"
+      q"$realInst.${TermName(s"${realParam.owner.encodedNameStr}$$default$$${realParam.index + 1}")}(...$prevListParamss)"
+    }
   }
   object EncodedRealParam {
     def create(rawParam: RawValueParam, matchedParam: MatchedParam): Res[EncodedRealParam] =
@@ -85,14 +150,14 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         val noneRes: Tree = q"${rawParam.optionLike.name}.none"
         wrapped.fold(noneRes) { erp =>
           val baseRes = q"${rawParam.optionLike.name}.some(${erp.rawValueTree})"
-          if (erp.matchedParam.transientDefault)
-            q"if(${erp.safeName} != ${erp.matchedParam.transientValueTree}) $baseRes else $noneRes"
+          if (erp.transientDefault)
+            q"if(${erp.safeName} != ${erp.transientValueTree}) $baseRes else $noneRes"
           else baseRes
         }
       }
       def realDecls: List[Tree] = wrapped.toList.map { erp =>
         erp.realParam.localValueDecl(erp.encoding.foldWithAsReal(
-          rawParam.optionLike.name, rawParam.safePath, erp.matchedParam))
+          rawParam.optionLike.name, rawParam.safePath, erp.matchedParam, erp.fallbackValueTree))
       }
     }
     abstract class Multi extends ParamMapping {
@@ -111,7 +176,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             rp.reportProblem("by-name real parameters cannot be extracted from @multi raw parameters")
           }
           val decoded = erp.encoding.paramAsReal(q"$itName.next()", erp.matchedParam)
-          erp.localValueDecl(q"if($itName.hasNext) $decoded else ${erp.matchedParam.fallbackValueTree}")
+          erp.localValueDecl(q"if($itName.hasNext) $decoded else ${erp.fallbackValueTree}")
         }
       }
     }
@@ -121,7 +186,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           erp.localValueDecl(
             q"""
               ${erp.encoding.andThenAsReal(rawParam.safePath, erp.matchedParam)}
-                .applyOrElse($idx, (_: $IntCls) => ${erp.matchedParam.fallbackValueTree})
+                .applyOrElse($idx, (_: $IntCls) => ${erp.fallbackValueTree})
             """)
         }
       }
@@ -132,8 +197,8 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           val builderName = c.freshName(TermName("builder"))
           val addStatements = reals.map { erp =>
             val baseStat = q"$builderName += ((${erp.rpcName}, ${erp.rawValueTree}))"
-            if (erp.matchedParam.transientDefault)
-              q"if(${erp.safeName} != ${erp.matchedParam.transientValueTree}) $baseStat"
+            if (erp.transientDefault)
+              q"if(${erp.safeName} != ${erp.transientValueTree}) $baseStat"
             else baseStat
           }
           q"""
@@ -147,7 +212,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
           erp.localValueDecl(
             q"""
               ${erp.encoding.andThenAsReal(rawParam.safePath, erp.matchedParam)}
-                .applyOrElse(${erp.rpcName}, (_: $StringCls) => ${erp.matchedParam.fallbackValueTree})
+                .applyOrElse(${erp.rpcName}, (_: $StringCls) => ${erp.fallbackValueTree})
             """)
         }
     }
@@ -164,7 +229,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     def applyAsRaw[T: Liftable](arg: T): Tree
     def applyAsReal[T: Liftable](arg: T): Tree
     def paramAsReal[T: Liftable](arg: T, param: MatchedParam): Tree
-    def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, param: MatchedParam): Tree
+    def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, param: MatchedParam, fallbackValueTree: Tree): Tree
     def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree
   }
   object RpcEncoding {
@@ -210,8 +275,8 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       def applyAsRaw[T: Liftable](arg: T): Tree = q"$arg"
       def applyAsReal[T: Liftable](arg: T): Tree = q"$arg"
       def paramAsReal[T: Liftable](arg: T, param: MatchedParam): Tree = q"$arg"
-      def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, param: MatchedParam): Tree =
-        q"$optionLike.getOrElse($opt, ${param.fallbackValueTree})"
+      def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, param: MatchedParam, fallbackValueTree: Tree): Tree =
+        q"$optionLike.getOrElse($opt, $fallbackValueTree)"
       def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree = q"$func"
     }
 
@@ -224,6 +289,10 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       typeParams: List[RealTypeParam],
       implicitParams: List[RealParam]
     ) extends RpcEncoding {
+
+      val decRawType: Type = decInterceptors.headOption
+        .map(_.tpe.baseType(DecodingInterceptorTpe.typeSymbol).typeArgs.head)
+        .getOrElse(rawType)
 
       private def infer(encNotDec: Boolean): Tree = {
         val convClass = if (encNotDec) AsRawCls else AsRealCls
@@ -262,8 +331,8 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         q"$asReal.asReal($arg)"
       def paramAsReal[T: Liftable](arg: T, param: MatchedParam): Tree =
         q"$RpcUtils.readArg(${param.matchedOwner.rawName}, ${param.rawName}, $asReal, $arg)"
-      def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, param: MatchedParam): Tree =
-        q"$optionLike.fold($opt, ${param.fallbackValueTree})(raw => ${paramAsReal(q"raw", param)})"
+      def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, param: MatchedParam, fallbackValueTree: Tree): Tree =
+        q"$optionLike.fold($opt, $fallbackValueTree)(raw => ${paramAsReal(q"raw", param)})"
       def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree =
         q"$func.andThen(raw => ${paramAsReal(q"raw", param)})"
     }
