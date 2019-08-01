@@ -3,7 +3,7 @@ package mongo
 
 import com.avsystem.commons.serialization.{GenCodec, ListOutput, ObjectOutput}
 import org.bson._
-import org.bson.types.ObjectId
+import org.bson.types.{Decimal128, ObjectId}
 
 object BsonValueOutput {
   def write[T: GenCodec](value: T, legacyOptionEncoding: Boolean = false): BsonValue = {
@@ -41,6 +41,7 @@ final class BsonValueOutput(receiver: BsonValue => Unit = _ => (), override val 
   override def writeList(): ListOutput = new BsonValueListOutput(setValue, legacyOptionEncoding)
   override def writeObject(): ObjectOutput = new BsonValueObjectOutput(setValue, legacyOptionEncoding)
   override def writeObjectId(objectId: ObjectId): Unit = setValue(new BsonObjectId(objectId))
+  override def writeDecimal128(decimal128: Decimal128): Unit = setValue(new BsonDecimal128(decimal128))
 }
 
 final class BsonValueListOutput(receiver: BsonArray => Unit, legacyOptionEncoding: Boolean)

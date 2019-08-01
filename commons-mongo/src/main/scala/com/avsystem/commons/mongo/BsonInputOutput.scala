@@ -5,14 +5,16 @@ import java.nio.ByteBuffer
 
 import com.avsystem.commons.serialization.{InputAndSimpleInput, InputMetadata, OutputAndSimpleOutput, TypeMarker}
 import org.bson.BsonType
-import org.bson.types.ObjectId
+import org.bson.types.{Decimal128, ObjectId}
 
 object ObjectIdMarker extends TypeMarker[ObjectId]
+object Decimal128Marker extends TypeMarker[Decimal128]
 
 object BsonTypeMetadata extends InputMetadata[BsonType]
 
 trait BsonInput extends Any with InputAndSimpleInput {
   def readObjectId(): ObjectId
+  def readDecimal128(): Decimal128
 
   protected def bsonType: BsonType
 
@@ -25,6 +27,7 @@ trait BsonInput extends Any with InputAndSimpleInput {
   override def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] =
     typeMarker match {
       case ObjectIdMarker => readObjectId().opt
+      case Decimal128Marker => readDecimal128().opt
       case _ => Opt.Empty
     }
 }
@@ -42,6 +45,7 @@ object BsonInput {
 
 trait BsonOutput extends Any with OutputAndSimpleOutput {
   def writeObjectId(objectId: ObjectId): Unit
+  def writeDecimal128(decimal128: Decimal128): Unit
 
   override def keepsMetadata(metadata: InputMetadata[_]): Boolean =
     BsonTypeMetadata == metadata
@@ -49,6 +53,7 @@ trait BsonOutput extends Any with OutputAndSimpleOutput {
   override def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean =
     typeMarker match {
       case ObjectIdMarker => writeObjectId(value); true
+      case Decimal128Marker => writeDecimal128(value); true
       case _ => false
     }
 }
