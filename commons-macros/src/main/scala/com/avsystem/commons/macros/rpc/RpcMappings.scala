@@ -131,6 +131,9 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     def rawValueTree: Tree
     def realDecls: List[Tree]
 
+    def cachedAsRawDecls: List[Tree]
+    def cachedAsRealDecls: List[Tree]
+
     def allMatchedParams: List[MatchedParam] = this match {
       case ParamMapping.Single(_, erp) => List(erp.matchedParam)
       case ParamMapping.Optional(_, erpOpt) => erpOpt.map(_.matchedParam).toList
@@ -144,6 +147,9 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         realParam.rawValueTree
       def realDecls: List[Tree] =
         List(realParam.localValueDecl(realParam.encoding.paramAsReal(rawParam.safePath, realParam.matchedParam)))
+
+      def cachedAsRawDecls: List[Tree] = realParam.encoding.cachedAsRawDecl.toList
+      def cachedAsRealDecls: List[Tree] = realParam.encoding.cachedAsRealDecl.toList
     }
     case class Optional(rawParam: RawValueParam, wrapped: Option[EncodedRealParam]) extends ParamMapping {
       def rawValueTree: Tree = {
@@ -159,9 +165,15 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         erp.realParam.localValueDecl(erp.encoding.foldWithAsReal(
           rawParam.optionLike.name, rawParam.safePath, erp.matchedParam, erp.fallbackValueTree))
       }
+
+      def cachedAsRawDecls: List[Tree] = wrapped.flatMap(_.encoding.cachedAsRawDecl).toList
+      def cachedAsRealDecls: List[Tree] = wrapped.flatMap(_.encoding.cachedAsRealDecl).toList
     }
     abstract class Multi extends ParamMapping {
       def reals: List[EncodedRealParam]
+
+      def cachedAsRawDecls: List[Tree] = reals.flatMap(_.encoding.cachedAsRawDecl)
+      def cachedAsRealDecls: List[Tree] = reals.flatMap(_.encoding.cachedAsRealDecl)
     }
     abstract class ListedMulti extends Multi {
       def rawValueTree: Tree = rawParam.mkMulti(reals.map(_.rawValueTree))
@@ -219,12 +231,18 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     case class DummyUnit(rawParam: RawValueParam) extends ParamMapping {
       def rawValueTree: Tree = q"()"
       def realDecls: List[Tree] = Nil
+
+      def cachedAsRawDecls: List[Tree] = Nil
+      def cachedAsRealDecls: List[Tree] = Nil
     }
   }
 
   sealed trait RpcEncoding {
     protected def asRaw: Tree
     protected def asReal: Tree
+
+    def cachedAsRawDecl: Option[Tree]
+    def cachedAsRealDecl: Option[Tree]
 
     def applyAsRaw[T: Liftable](arg: T): Tree
     def applyAsReal[T: Liftable](arg: T): Tree
@@ -271,6 +289,9 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     case class Verbatim(tpe: Type) extends RpcEncoding {
       protected def asRaw: Tree = q"$AsRawObj.identity[$tpe]"
       protected def asReal: Tree = q"$AsRealObj.identity[$tpe]"
+
+      def cachedAsRawDecl: Option[Tree] = None
+      def cachedAsRealDecl: Option[Tree] = None
 
       def applyAsRaw[T: Liftable](arg: T): Tree = q"$arg"
       def applyAsReal[T: Liftable](arg: T): Tree = q"$arg"
@@ -319,11 +340,22 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         }
       }
 
-      protected lazy val asRaw: Tree = infer(true)
-      protected lazy val asReal: Tree = infer(false)
+      private lazy val asRawTree: Tree = infer(true)
+      private lazy val asRealTree: Tree = infer(false)
 
-      def hasAsRaw: Boolean = asRaw != EmptyTree
-      def hasAsReal: Boolean = asReal != EmptyTree
+      protected def asRaw: Tree = if (encInterceptors.nonEmpty) q"$cachedAsRawName" else asRawTree
+      protected def asReal: Tree = if (decInterceptors.nonEmpty) q"$cachedAsRealName" else asRealTree
+
+      private val cachedAsRawName = c.freshName(TermName("asRaw"))
+      private val cachedAsRealName = c.freshName(TermName("asReal"))
+
+      def cachedAsRawDecl: Option[Tree] =
+        if (encInterceptors.nonEmpty) Some(q"val $cachedAsRawName = $asRawTree") else None
+      def cachedAsRealDecl: Option[Tree] =
+        if (encInterceptors.nonEmpty) Some(q"val $cachedAsRealName = $asRealTree") else None
+
+      def hasAsRaw: Boolean = asRawTree != EmptyTree
+      def hasAsReal: Boolean = asRealTree != EmptyTree
 
       def applyAsRaw[T: Liftable](arg: T): Tree =
         q"$asRaw.asRaw($arg)"
@@ -380,7 +412,9 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       val rawCall = q"${rawMethod.ownerTrait.safeTermName}.${rawMethod.name}(...${rawMethod.argLists})"
       q"""
         def ${realMethod.name}[..${realMethod.typeParamDecls}](...${realMethod.paramDecls}): ${realMethod.resultType} = {
+          ..${paramMappings.values.flatMap(_.cachedAsRawDecls)}
           ..${rawMethod.rawParams.map(rp => rp.localValueDecl(rawValueTree(rp)))}
+          ..${resultEncoding.cachedAsRealDecl}
           ${maybeUntry(resultEncoding.applyAsReal(rawCall))}
         }
        """
@@ -390,7 +424,9 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       val realCall = q"${realMethod.ownerApi.safeTermName}.${realMethod.name}(...${realMethod.argLists})"
       val caseImpl =
         q"""
+          ..${paramMappings.values.flatMap(_.cachedAsRealDecls)}
           ..${paramMappings.values.filterNot(_.rawParam.auxiliary).flatMap(_.realDecls)}
+          ..${resultEncoding.cachedAsRawDecl}
           ${resultEncoding.applyAsRaw(maybeTry(realCall))}
         """
 

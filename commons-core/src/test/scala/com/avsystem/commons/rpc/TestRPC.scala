@@ -16,7 +16,7 @@ object Record extends HasGenCodec[Record]
 trait InnerRPC {
   def proc(): Unit
 
-  def func(arg: Int): Future[String]
+  def func(@prepend("bul:") arg: Int): Future[String]
 
   def moreInner(name: String): InnerRPC
 
