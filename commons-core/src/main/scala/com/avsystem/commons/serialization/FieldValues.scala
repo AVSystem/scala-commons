@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.serialization.GenCodec.ReadFailure
+import com.avsystem.commons.serialization.GenCodec.{FieldReadFailed, ReadFailure}
 
 import scala.annotation.tailrec
 
@@ -30,8 +30,10 @@ final class FieldValues(
     case -1 => false
     case idx =>
       val value = try codecs(idx).read(input) catch {
-        case NonFatal(e) => throw new ReadFailure(
-          s"Failed to read field ${input.fieldName}${ofWhat.fold("")(what => s" of $what")}", e)
+        case NonFatal(e) => ofWhat match {
+          case OptArg(typeRepr) => throw FieldReadFailed(typeRepr, input.fieldName, e)
+          case OptArg.Empty => throw new ReadFailure(s"Failed to read field ${input.fieldName}", e)
+        }
       }
       values(idx) = if (value == null) NullMarker else value
       true

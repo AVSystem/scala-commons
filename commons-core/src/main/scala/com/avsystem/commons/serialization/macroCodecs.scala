@@ -233,60 +233,59 @@ abstract class ErrorReportingCodec[T] extends GenCodec[T] {
   protected def caseFieldName: String = DefaultCaseField
 
   protected final def readField[A](fieldInput: FieldInput, codec: GenCodec[A]): A =
-    decoratedRead(fieldInput, codec, "field", fieldInput.fieldName)
+    try codec.read(fieldInput) catch {
+      case NonFatal(e) => throw FieldReadFailed(typeRepr, fieldInput.fieldName, e)
+    }
 
   protected final def readCaseName(fi: FieldInput): String =
     try fi.readSimple().readString() catch {
-      case NonFatal(e) =>
-        throw new ReadFailure(s"Cannot read $typeRepr, failed to read case name from $caseFieldName field", e)
+      case NonFatal(e) => throw FieldReadFailed(typeRepr, fi.fieldName, e)
     }
 
   protected final def readCase[A](caseName: String, input: Input, codec: GenCodec[A]): A =
-    decoratedRead(input, codec, "case", caseName)
+    try codec.read(input) catch {
+      case NonFatal(e) => throw CaseReadFailed(typeRepr, caseName, e)
+    }
 
   protected final def readFlatCase[A](caseName: String, outOfOrderFields: FieldValues, input: ObjectInput, codec: OOOFieldsObjectCodec[A]): A =
     try codec.readObject(input, outOfOrderFields) catch {
-      case NonFatal(e) => throw new ReadFailure(s"Failed to read case $caseName of $typeRepr", e)
+      case NonFatal(e) => throw CaseReadFailed(typeRepr, caseName, e)
     }
 
   protected final def readFlatCase[A](caseName: String, input: ObjectInput, codec: GenCodec.ObjectCodec[A]): A =
     try codec.readObject(input) catch {
-      case NonFatal(e) => throw new ReadFailure(s"Failed to read case $caseName of $typeRepr", e)
+      case NonFatal(e) => throw CaseReadFailed(typeRepr, caseName, e)
     }
-
-  private def decoratedRead[A](input: Input, codec: GenCodec[A], what: String, name: String): A =
-    try codec.read(input) catch {
-      case NonFatal(e) => throw new ReadFailure(s"Failed to read $what $name of $typeRepr", e)
-    }
-
-  private def fieldWriteFailed(fieldName: String, cause: Throwable) =
-    throw new WriteFailure(s"Failed to write field $fieldName of $typeRepr", cause)
 
   protected final def writeField[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
-    decoratedWrite(fieldName, output, value, codec, "field")
+    try codec.write(output.writeField(fieldName), value) catch {
+      case NonFatal(e) => throw FieldWriteFailed(typeRepr, fieldName, e)
+    }
 
   protected final def writeField(fieldName: String, output: ObjectOutput, value: Boolean): Unit =
     try output.writeField(fieldName).writeSimple().writeBoolean(value) catch {
-      case NonFatal(e) => fieldWriteFailed(fieldName, e)
+      case NonFatal(e) => throw FieldWriteFailed(typeRepr, fieldName, e)
     }
 
   protected final def writeField(fieldName: String, output: ObjectOutput, value: Int): Unit =
     try output.writeField(fieldName).writeSimple().writeInt(value) catch {
-      case NonFatal(e) => fieldWriteFailed(fieldName, e)
+      case NonFatal(e) => throw FieldWriteFailed(typeRepr, fieldName, e)
     }
 
   protected final def writeField(fieldName: String, output: ObjectOutput, value: Long): Unit =
     try output.writeField(fieldName).writeSimple().writeLong(value) catch {
-      case NonFatal(e) => fieldWriteFailed(fieldName, e)
+      case NonFatal(e) => throw FieldWriteFailed(typeRepr, fieldName, e)
     }
 
   protected final def writeField(fieldName: String, output: ObjectOutput, value: Double): Unit =
     try output.writeField(fieldName).writeSimple().writeDouble(value) catch {
-      case NonFatal(e) => fieldWriteFailed(fieldName, e)
+      case NonFatal(e) => throw FieldWriteFailed(typeRepr, fieldName, e)
     }
 
-  protected final def writeCase[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
-    decoratedWrite(fieldName, output, value, codec, "case")
+  protected final def writeCase[A](caseName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
+    try codec.write(output.writeField(caseName), value) catch {
+      case NonFatal(e) => throw CaseWriteFailed(typeRepr, caseName, e)
+    }
 
   protected final def writeFlatCase[A](
     caseName: String, transient: Boolean, output: ObjectOutput, value: A, codec: ObjectCodec[A]
@@ -296,33 +295,27 @@ abstract class ErrorReportingCodec[T] extends GenCodec[T] {
     }
     codec.writeObject(output, value)
   } catch {
-    case NonFatal(e) => throw new WriteFailure(s"Failed to write case $caseName of $typeRepr", e)
+    case NonFatal(e) => throw CaseWriteFailed(typeRepr, caseName, e)
   }
 
-  private def decoratedWrite[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A], what: String): Unit =
-    try codec.write(output.writeField(fieldName), value) catch {
-      case NonFatal(e) => throw new WriteFailure(s"Failed to write $what $fieldName of $typeRepr", e)
-    }
-
   protected final def unknownCase(value: T) =
-    throw new WriteFailure(s"Failed to write $typeRepr: value $value does not match any of known subtypes")
+    throw UnknownWrittenCase(typeRepr, value)
 
   protected final def fieldMissing(field: String) =
-    throw new ReadFailure(s"Cannot read $typeRepr, field $field is missing in decoded data")
+    throw MissingField(typeRepr, field)
 
   protected final def unknownCase(caseName: String) =
-    throw new ReadFailure(s"Cannot read $typeRepr, unknown case: $caseName")
+    throw UnknownCase(typeRepr, caseName)
 
   protected final def missingCase(fieldToRead: String) =
-    throw new ReadFailure(s"Cannot read field $fieldToRead of $typeRepr before $caseFieldName field is read")
+    throw MissingCase(typeRepr, caseFieldName, Opt(fieldToRead))
 
   protected final def missingCase =
-    throw new ReadFailure(s"Cannot read $typeRepr, $caseFieldName field is missing")
+    throw MissingCase(typeRepr, caseFieldName, Opt.Empty)
 
   protected final def notSingleField(empty: Boolean) =
-    throw new ReadFailure(s"Cannot read $typeRepr, expected object with exactly one field but got " +
-      (if (empty) "empty object" else "more than one"))
+    throw NotSingleField(typeRepr, empty)
 
   protected final def unapplyFailed =
-    throw new WriteFailure(s"Could not write $typeRepr, unapply/unapplySeq returned false or empty value")
+    throw UnapplyFailed(typeRepr)
 }
