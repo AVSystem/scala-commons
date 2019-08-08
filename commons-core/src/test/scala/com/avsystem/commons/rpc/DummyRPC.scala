@@ -6,8 +6,6 @@ import com.avsystem.commons.misc.TypeString
 import com.avsystem.commons.serialization.GenCodec
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 
-import scala.annotation.StaticAnnotation
-
 class namedArgs extends StaticAnnotation
 
 object DummyRPC {
