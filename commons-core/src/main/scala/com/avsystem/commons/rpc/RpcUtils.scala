@@ -47,5 +47,11 @@ object RpcUtils {
   def missingOptionalRpc(rawMethodName: String): Nothing =
     throw new MissingOptionalRpc(rawMethodName)
 
+  def interceptEnc[NewRaw, Raw, Real](asRaw: AsRaw[NewRaw, Real], interceptor: EncodingInterceptor[NewRaw, Raw]): AsRaw[Raw, Real] =
+    AsRaw.create(real => interceptor.toOriginalRaw(asRaw.asRaw(real)))
+
+  def interceptDec[NewRaw, Raw, Real](asReal: AsReal[NewRaw, Real], interceptor: DecodingInterceptor[NewRaw, Raw]): AsReal[Raw, Real] =
+    AsReal.create(raw => asReal.asReal(interceptor.toNewRaw(raw)))
+
   def compilationError(error: String): Nothing = macro MiscMacros.compilationError
 }

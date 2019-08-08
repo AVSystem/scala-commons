@@ -33,13 +33,15 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       assert(js"doStuffResult" == get(rawRpc.call(RawInvocation("doStuffBoolean", List("true")))))
       rawRpc.fire(RawInvocation("doStuffInt", List("5")))
       rawRpc.fire(RawInvocation("doStuffInt", Nil))
+      rawRpc.fireNamed(RawNamedInvocation("doStuffNamed", IListMap("int" -> "5")))
+      rawRpc.fireNamed(RawNamedInvocation("doStuffNamed", IListMap.empty))
       rawRpc.fire(RawInvocation("handleMore", Nil))
       rawRpc.fire(RawInvocation("handle", Nil))
       rawRpc.fire(RawInvocation("takeCC", Nil))
       rawRpc.fire(RawInvocation("srslyDude", Nil))
       rawRpc.get(RawInvocation("innerRpc", List(js"innerName"))).fire(RawInvocation("proc", Nil))
       assert(js"innerRpc.funcResult" == get(rawRpc.get(RawInvocation("innerRpc", List(js"innerName")))
-        .call(RawInvocation("func", List("42")))))
+        .call(RawInvocation("func", List("bul:42")))))
       assert(js"generallyDoStuffResult" ==
         get(rawRpc.call(RawInvocation("generallyDoStuff", List(js"String", "[\"generallyDoStuffResult\"]")))))
 
@@ -49,6 +51,8 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
         RawInvocation("doStuffBoolean", List("true")),
         RawInvocation("doStuffInt", List("5")),
         RawInvocation("doStuffInt", List("42")),
+        RawInvocation("doStuffNamed", List("5")),
+        RawInvocation("doStuffNamed", List("42")),
         RawInvocation("handleMore", Nil),
         RawInvocation("handle", Nil),
         RawInvocation("takeCC", List("""{"i":-1,"fuu":"_"}""")),
@@ -72,6 +76,9 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       val invocations = new ArrayBuffer[RawInvocation]
 
       object rawRpc extends RawRPC with RunNowFutureCallbacks {
+        def fireNamed(invocation: RawNamedInvocation): Unit =
+          invocations += RawInvocation(invocation.rpcName, invocation.args.values.toList)
+
         def fire(inv: RawInvocation): Unit =
           invocations += inv
 
@@ -92,6 +99,8 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       realRpc.doStuff(42, "omgsrsly")(Some(true))
       assert("doStuffBooleanResult" == get(realRpc.doStuff(true)))
       realRpc.doStuff(5)
+      realRpc.doStuffNamed(5)
+      realRpc.doStuffNamed(42)
       realRpc.handleMore()
       realRpc.handle
       realRpc.innerRpc("innerName").proc()
@@ -101,8 +110,10 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
       assert(invocations.toList == List(
         RawInvocation("handleMore", Nil),
         RawInvocation("doStuff", List("42", js"omgsrsly", "true")),
-        RawInvocation("doStuffBoolean", List("true")),
+        RawInvocation("doStuffBoolean", List("bul:true")),
         RawInvocation("doStuffInt", List("5")),
+        RawInvocation("doStuffNamed", List("5")),
+        RawInvocation("doStuffNamed", List()),
         RawInvocation("handleMore", Nil),
         RawInvocation("handle", Nil),
 
@@ -112,7 +123,7 @@ class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
         RawInvocation("innerRpc", List(js"innerName")),
         RawInvocation("moreInner", List(js"moreInner")),
         RawInvocation("moreInner", List(js"evenMoreInner")),
-        RawInvocation("func", List("42")),
+        RawInvocation("func", List("bul:42")),
         RawInvocation("generallyDoStuff", List(js"String", "[\"generallyDoStuffResult\"]"))
       ))
     }

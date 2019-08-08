@@ -1,17 +1,25 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.meta.{MacroInstances, TypedMetadata, checked, composite, infer, multi, reifyAnnot, reifyName}
+import com.avsystem.commons.meta.{MacroInstances, TypedMetadata, annotated, checked, composite, infer, multi, reifyAnnot, reifyName}
 import com.avsystem.commons.misc.TypeString
 import com.avsystem.commons.serialization.GenCodec
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 
+import scala.annotation.StaticAnnotation
+
+class namedArgs extends StaticAnnotation
+
 object DummyRPC {
   case class RawInvocation(@methodName rpcName: String, @multi args: List[String])
+  case class RawNamedInvocation(@methodName rpcName: String, @multi args: IListMap[String, String])
 
   trait RawRPC {
-    @multi @verbatim def
-    fire(@composite invocation: RawInvocation): Unit
+    @multi @verbatim @annotated[namedArgs]
+    def fireNamed(@composite invocation: RawNamedInvocation): Unit
+
+    @multi @verbatim
+    def fire(@composite invocation: RawInvocation): Unit
 
     @multi @encoded
     def call(@composite invocation: RawInvocation): Future[String]

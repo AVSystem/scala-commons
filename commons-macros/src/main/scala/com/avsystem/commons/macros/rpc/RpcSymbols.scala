@@ -61,58 +61,6 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     def rawName: String = real.rpcName
     def typeParamsInContext: List[MacroTypeParam] = matchedOwner.typeParamsInContext
-
-    private def materializeImplicit(param: Symbol): Option[Res[Tree]] =
-      if (findAnnotation(param, InferAT).nonEmpty) {
-        val clue = s"problem with annotation parameter ${param.name}: "
-        Some(Ok(inferCachedImplicit(param.typeSignature, ErrorCtx(clue, real.pos)).reference(Nil)))
-      } else None
-
-    val whenAbsent: Tree =
-      annot(WhenAbsentAT, materializeImplicit).fold(EmptyTree) { annot =>
-        val annotatedDefault = annot.tree.children.tail.head
-        if (!(annotatedDefault.tpe <:< real.actualType)) {
-          real.reportProblem(s"expected value of type ${real.actualType} in @whenAbsent annotation, " +
-            s"got ${annotatedDefault.tpe.widen}")
-        }
-        val transformer = new Transformer {
-          override def transform(tree: Tree): Tree = tree match {
-            case Super(t@This(_), _) if !enclosingClasses.contains(t.symbol) =>
-              real.reportProblem(s"illegal super-reference in @whenAbsent annotation")
-            case This(_) if tree.symbol == real.owner.ownerApi.symbol => q"${real.owner.ownerApi.safeTermName}"
-            case This(_) if !enclosingClasses.contains(tree.symbol) =>
-              real.reportProblem(s"illegal this-reference in @whenAbsent annotation")
-            case t => super.transform(t)
-          }
-        }
-        transformer.transform(annotatedDefault)
-      }
-
-    val hasDefaultValue: Boolean =
-      whenAbsent != EmptyTree || real.symbol.asTerm.isParamWithDefault
-
-    val transientDefault: Boolean =
-      hasDefaultValue && annot(TransientDefaultAT).nonEmpty
-
-    def fallbackValueTree: Tree =
-      if (whenAbsent != EmptyTree) c.untypecheck(whenAbsent)
-      else if (real.symbol.asTerm.isParamWithDefault) defaultValue(false)
-      else q"$RpcUtils.missingArg(${matchedOwner.rawName}, $rawName)"
-
-    def transientValueTree: Tree =
-      if (real.symbol.asTerm.isParamWithDefault) defaultValue(true)
-      else c.untypecheck(whenAbsent)
-
-    private def defaultValue(useThis: Boolean): Tree = {
-      val prevListParams = real.owner.realParams.take(real.index - real.indexInList).map(rp => q"${rp.safeName}")
-      if (real.encodingDependency && prevListParams.nonEmpty) {
-        real.reportProblem("implicit dependency parameters cannot have default values " +
-          "unless they are in the first parameter list - note: you can use @whenAbsent instead")
-      }
-      val prevListParamss = List(prevListParams).filter(_.nonEmpty)
-      val realInst = if (useThis) q"this" else q"${real.owner.ownerApi.safeTermName}"
-      q"$realInst.${TermName(s"${real.owner.encodedNameStr}$$default$$${real.index + 1}")}(...$prevListParamss)"
-    }
   }
 
   trait RealRpcSymbol extends MacroSymbol {

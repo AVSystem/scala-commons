@@ -2,8 +2,13 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.rpc.DummyRPC._
-import com.avsystem.commons.serialization.{HasGenCodec, whenAbsent}
+import com.avsystem.commons.serialization.{HasGenCodec, transientDefault, whenAbsent}
 import com.github.ghik.silencer.silent
+
+class prepend(prefix: String) extends EncodingInterceptor[String, String] with DecodingInterceptor[String, String] {
+  def toOriginalRaw(newRaw: String): String = prefix + newRaw
+  def toNewRaw(raw: String): String = raw.stripPrefix(prefix)
+}
 
 case class Record(i: Int, fuu: String)
 object Record extends HasGenCodec[Record]
@@ -11,7 +16,7 @@ object Record extends HasGenCodec[Record]
 trait InnerRPC {
   def proc(): Unit
 
-  def func(arg: Int): Future[String]
+  def func(@prepend("bul:") arg: Int): Future[String]
 
   def moreInner(name: String): InnerRPC
 
@@ -30,10 +35,13 @@ trait TestRPC {
   def doStuff(lol: Int, fuu: String = "pisiont")(implicit cos: Option[Boolean]): Unit
 
   @rpcName("doStuffBoolean")
-  def doStuff(yes: Boolean): Future[String]
+  def doStuff(@prepend("bul:") yes: Boolean): Future[String]
 
   @rpcName("doStuffInt")
   def doStuff(@whenAbsent(defaultNum) num: Int): Unit
+
+  @namedArgs
+  def doStuffNamed(@transientDefault @rawWhenAbsent("42") int: Int): Unit
 
   def takeCC(r: Record = Record(-1, "_")): Unit
 
@@ -71,6 +79,9 @@ object TestRPC extends RPCCompanion[TestRPC] {
 
     def doStuff(num: Int): Unit =
       onProcedure("doStuffInt", List(write(num)))
+
+    def doStuffNamed(int: Int): Unit =
+      onProcedure("doStuffNamed", List(write(int)))
 
     def handle: Unit =
       onProcedure("handle", Nil)
