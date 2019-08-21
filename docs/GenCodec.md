@@ -446,7 +446,7 @@ Singleton codecs may not seem very useful as standalone codes - they're primaril
 
 `HasGenCodec` base companion class and all its variants can also be used to derive a `GenCodec` for a sealed trait or
 class. There are two possible serialization formats for sealed hierarchies: *nested* (the default one) and *flat* 
-(enabled using [`@flatten`] (http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/flatten.html)
+(enabled using [`@flatten`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/flatten.html)
 annotation). The nested format is the default one for historical reasons - it is generally recommended to use the flat 
 format as it's more robust and customizable. The advantage of nested format is that it does not depend on the order of 
 object fields.
@@ -462,9 +462,8 @@ object Timeout extends HasGenCodec[Timeout]
 
 In nested format, values of sealed traits or classes are serialized into objects with just one field. The name of that 
 field is the name of actual class being serialized. The value of that field will be the serialized class itself, using 
-its own codec. For example, `FiniteTimeout(60)` would be represented (using [`JsonStringOutput`](http://avsystem.github
-.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringOutput.html)) as 
-`{"FiniteTimeout":{"seconds":60}}`
+its own codec. For example, `FiniteTimeout(60)` would be represented (using [`JsonStringOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringOutput.html)) 
+as `{"FiniteTimeout":{"seconds":60}}`
 
 `GenCodec` for each case class/object may be provided explicitly or left for the macro to materialize. In other words, the `materialize` macro called for sealed trait *will* descend into its subtypes and materialize their codecs recursively. However, it will still *not* descend into any case class fields.
 
