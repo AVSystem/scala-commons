@@ -33,6 +33,7 @@ However, `GenCodec` is **not** a JSON library even though it has support for JSO
   - [Customizing sealed hierarchy codecs](#customizing-sealed-hierarchy-codecs)
   - [Nested vs flat format](#nested-vs-flat-format)
 - [Third party classes](#third-party-classes)
+  - [Injecting additional implicits into `GenCodec` materialization](#injecting-additional-implicits-into-gencodec-materialization)
 - [`GenObjectCodec`](#genobjectcodec)
 - [Summary](#summary)
   - [Codec dependencies](#codec-dependencies)
@@ -553,7 +554,35 @@ object JavaPersonFakeCompanion {
 
 ```
 
-Now, as long as you remember to `import JavaPersonFakeCompanion.javaPersonCodec`, `JavaPerson` instances will serialize just as if it was a regular Scala case class. The macro derives serialization format from signatures of `apply` and `unapply` methods and uses them to create and deconstruct `JavaPerson` instances.
+Now, as long as `JavaPersonFakeCompanion.javaPersonCodec` is in scope, `JavaPerson` instances will serialize just as if it was a regular Scala case class. The macro derives serialization format from signatures of `apply` and `unapply` methods and uses them to create and deconstruct `JavaPerson` instances.
+
+### Injecting additional implicits into `GenCodec` materialization
+
+When possible, you should keep all your `GenCodec` instances (and other implicits) in companion objects of your data types.
+This way they will be effectively globally visible and won't need to be imported. However, this is not always possible -
+a `GenCodec` instance for a third party class is the most common example of such situation.
+
+Of course, you can always import third party implicits explicitly into the scope. However, this is problematic because it 
+doesn't always work (presumably due to compiler bugs) and IDEs like IntelliJ IDEA tend to recognize such imports as unused.
+Because of this, `GenCodec` comes with a handy base companion class, similar to `HasGenCodec` but capable of injecting additional implicits. It is called `HasGenCodecWithDeps`.
+
+```scala
+object MyAdditionalImplicits {
+  implicit val javaPersonCodec: GenCodec[JavaPerson] = ...
+  ...
+}
+
+case class UsesJavaPerson(javaPerson: JavaPerson)
+object UsesJavaPerson extends HasGenCodecWithDeps[MyAdditionalImplicits.type, JavaPerson]
+```
+
+In order to reduce boilerplate, you can make your own base companion class which automatically injects desired implicits:
+
+```scala
+abstract class HasCustomizedGenCodec[T](
+  implicit macroCodec: MacroInstances[MyAdditionalImplicits.type, () => GenCodec[T]]
+) extends HasGenCodecWithDeps[MyAdditionalImplicits.type, T]
+```
 
 ## [`GenObjectCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html)
 
