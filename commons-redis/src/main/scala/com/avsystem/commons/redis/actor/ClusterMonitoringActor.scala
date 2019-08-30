@@ -74,15 +74,13 @@ final class ClusterMonitoringActor(
     case Refresh(nodeOpt) =>
       if (suspendUntil.isOverdue) {
         val addresses = nodeOpt.map(new SingletonSeq(_)).getOrElse {
-          val seedsUsed =
-            if (fallbackToSeedsAfter.isOverdue()) {
-              if (state.isDefined) {
-                log.info(s"Could not fetch cluster state from current masters for " +
-                  s"${config.refreshUsingSeedNodesAfter}, falling back to seed nodes")
-              }
-              seedNodes
-            } else Nil
-          seedsUsed ++ randomMasters()
+          if (fallbackToSeedsAfter.isOverdue()) {
+            if (state.isDefined) {
+              log.info(s"Could not fetch cluster state from current masters for " +
+                s"${config.refreshUsingSeedNodesAfter}, falling back to seed nodes")
+            }
+            seedNodes ++ randomMasters().filterNot(seedNodes.contains)
+          } else randomMasters()
         }
         log.debug(s"Asking ${addresses.mkString(",")} for cluster state")
         addresses.foreach { node =>
