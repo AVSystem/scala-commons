@@ -6,7 +6,7 @@ import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{NodeInfo, SlotRange, SlotRangeMapping}
 import com.avsystem.commons.redis.config.ClusterConfig
 import com.avsystem.commons.redis.exception.{ClusterInitializationException, ErrorReplyException}
-import com.avsystem.commons.redis.util.ActorLazyLogging
+import com.avsystem.commons.redis.util.{ActorLazyLogging, SingletonSeq}
 import com.avsystem.commons.redis.{ClusterState, NodeAddress, RedisApi, RedisBatch, RedisNodeClient}
 
 import scala.collection.mutable
@@ -50,10 +50,11 @@ final class ClusterMonitoringActor(
   private val clients = new mutable.HashMap[NodeAddress, RedisNodeClient]
   private var state = Opt.empty[ClusterState]
   private var suspendUntil = Deadline(Duration.Zero)
+  private var fallbackToSeedsAfter = Deadline(Duration.Zero)
   private var scheduledRefresh = Opt.empty[Cancellable]
   private val seedFailures = new ArrayBuffer[Throwable]
 
-  self ! Refresh(Opt(seedNodes))
+  self ! Refresh(Opt.Empty)
 
   private def randomMasters(): Seq[NodeAddress] = {
     val pool = masters.toArray
@@ -70,15 +71,26 @@ final class ClusterMonitoringActor(
   }
 
   def receive: Receive = {
-    case Refresh(nodesOpt) =>
+    case Refresh(nodeOpt) =>
       if (suspendUntil.isOverdue) {
-        val addresses = nodesOpt.getOrElse(randomMasters())
+        val addresses = nodeOpt.map(new SingletonSeq(_)).getOrElse {
+          val seedsUsed =
+            if (fallbackToSeedsAfter.isOverdue()) {
+              if (state.isDefined) {
+                log.info(s"Could not fetch cluster state from current masters for " +
+                  s"${config.refreshUsingSeedNodesAfter}, falling back to seed nodes")
+              }
+              seedNodes
+            } else Nil
+          seedsUsed ++ randomMasters()
+        }
         log.debug(s"Asking ${addresses.mkString(",")} for cluster state")
         addresses.foreach { node =>
           getConnection(node, state.isEmpty) ! StateRefresh
         }
         suspendUntil = config.minRefreshInterval.fromNow
       }
+
     case pr: PacksResult => Try(StateRefresh.decodeReplies(pr)) match {
       case Success((slotRangeMapping, nodeInfos)) =>
         val newMapping = {
@@ -105,8 +117,10 @@ final class ClusterMonitoringActor(
         }
 
         if (scheduledRefresh.isEmpty) {
-          scheduledRefresh = system.scheduler.schedule(config.autoRefreshInterval, config.autoRefreshInterval, self, Refresh()).opt
+          val refreshInterval = config.autoRefreshInterval
+          scheduledRefresh = system.scheduler.schedule(refreshInterval, refreshInterval, self, Refresh(Opt.Empty)).opt
         }
+        fallbackToSeedsAfter = Deadline(config.refreshUsingSeedNodesAfter)
 
         (connections.keySet diff masters).foreach { addr =>
           connections.remove(addr).foreach(context.stop)
@@ -145,6 +159,7 @@ final class ClusterMonitoringActor(
           }
         }
     }
+
     case GetClient(addr) =>
       val client = clients.getOrElseUpdate(addr, {
         val tempClient = createClient(addr)
@@ -168,7 +183,7 @@ object ClusterMonitoringActor {
   val MappingComparator: Ordering[(SlotRange, RedisNodeClient)] =
     Ordering.by[(SlotRange, RedisNodeClient), Int](_._1.start)
 
-  final case class Refresh(fromNodes: Opt[Seq[NodeAddress]] = Opt.Empty)
+  final case class Refresh(node: Opt[NodeAddress])
   final case class GetClient(addr: NodeAddress)
   final case class GetClientResponse(client: RedisNodeClient)
 }

@@ -16,8 +16,9 @@ import com.avsystem.commons.redis.commands.{Asking, SlotRange}
 import com.avsystem.commons.redis.config.{ClusterConfig, ExecutionConfig, RetryStrategy}
 import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.protocol.{ErrorMsg, FailureReply, RedisMsg, RedisReply, TransactionReply}
-import com.avsystem.commons.redis.util.{DelayedFuture, SingletonSeq}
+import com.avsystem.commons.redis.util.DelayedFuture
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
@@ -169,7 +170,7 @@ final class RedisClusterClient(
   )(implicit timeout: Timeout): Future[RedisReply] = {
     if (!redirection.ask) {
       // redirection (without ASK) indicates that we may have old cluster state, refresh it
-      monitoringActor ! Refresh(new SingletonSeq(redirection.address).opt)
+      monitoringActor ! Refresh(redirection.address.opt)
     }
     val packToResend = if (redirection.ask) new AskingPack(pack) else pack
     retryStrategy.nextRetry match {
@@ -339,7 +340,7 @@ final class RedisClusterClient(
 }
 
 private object RedisClusterClient {
-  val GetClientTimeout = Timeout(1.seconds)
+  final val GetClientTimeout = Timeout(1.seconds)
 
   case class CollectionPacks(coll: IndexedSeq[RawCommandPack]) extends RawCommandPacks {
     def emitCommandPacks(consumer: RawCommandPack => Unit): Unit = coll.foreach(consumer)
@@ -396,7 +397,7 @@ object RedirectionReply {
     case RedirectionError(redirection) =>
       redirection.opt
     case TransactionReply(elements) =>
-      def collectRedirection(acc: Opt[Redirection], idx: Int): Opt[Redirection] =
+      @tailrec def collectRedirection(acc: Opt[Redirection], idx: Int): Opt[Redirection] =
         if (idx >= elements.size) acc
         else elements(idx) match {
           case RedirectionError(redirection) if acc.forall(_ == redirection) =>
@@ -488,7 +489,7 @@ case class ClusterState(
     * ([[exception.NodeRemovedException NodeRemovedException]])
     */
   def clientForSlot(slot: Int): RedisNodeClient = {
-    def binsearch(from: Int, to: Int): RedisNodeClient =
+    @tailrec def binsearch(from: Int, to: Int): RedisNodeClient =
       if (from >= to) throw new UnmappedSlotException(slot)
       else {
         val mid = (from + to) / 2
@@ -501,7 +502,8 @@ case class ClusterState(
   }
 }
 object ClusterState {
-  val Empty = ClusterState(IndexedSeq.empty, BMap.empty)
+  final val Empty = ClusterState(IndexedSeq.empty, BMap.empty)
+
   def nonClustered(client: RedisNodeClient): ClusterState =
     ClusterState(IndexedSeq(SlotRange.Full -> client), Map(client.address -> client), client.opt)
 }

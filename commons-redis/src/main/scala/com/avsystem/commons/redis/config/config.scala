@@ -43,6 +43,9 @@ import scala.concurrent.duration._
   *                                    then cluster client will not fail initialization but internally create a
   *                                    [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]] for that node
   *                                    and forward all operations to it.
+  * @param refreshUsingSeedNodesAfter  if the client cannot successfully refresh cluster state for this amount of time,
+  *                                    it will try to fetch it once again from the seed nodes rather than only from
+  *                                    currently known master nodes
   */
 case class ClusterConfig(
   nodeConfigs: NodeAddress => NodeConfig = _ => NodeConfig(),
@@ -53,7 +56,8 @@ case class ClusterConfig(
   redirectionStrategy: RetryStrategy = RetryStrategy.times(3),
   tryagainStrategy: RetryStrategy = exponentially(10.millis).maxDelay(5.seconds).maxTotal(1.minute),
   nodeClientCloseDelay: FiniteDuration = 1.seconds,
-  fallbackToSingleNode: Boolean = false
+  fallbackToSingleNode: Boolean = false,
+  refreshUsingSeedNodesAfter: FiniteDuration = 30.seconds
 )
 
 /**
