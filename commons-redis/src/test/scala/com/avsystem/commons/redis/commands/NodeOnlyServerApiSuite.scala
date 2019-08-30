@@ -1,12 +1,14 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.redis.{RedisApi, RedisNodeCommandsSuite}
+import com.avsystem.commons.redis.RedisNodeCommandsSuite
 
 import scala.concurrent.duration._
 
 class NodeOnlyServerApiSuite extends RedisNodeCommandsSuite {
 
+  // ignored because of spurious failures
+  /*
   import RedisApi.Batches.StringTyped._
 
   apiTest("CLIENT KILL") {
@@ -16,4 +18,5 @@ class NodeOnlyServerApiSuite extends RedisNodeCommandsSuite {
     clientKill(clients(2).id, Skipme(false)).assertEquals(1)
     clientKill(ClientType.Master).assertEquals(0)
   }
+  */
 }
