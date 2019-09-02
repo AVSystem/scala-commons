@@ -14,7 +14,7 @@ object ClusterUtils {
     Source.fromInputStream(getClass.getResourceAsStream("/slotkeys.txt"))
       .getLines().toArray
 
-  def keyWithSameSlotAs(key: String) =
+  def keyWithSameSlotAs(key: String): String =
     SlotKeys(Hash.slot(ByteString(key)))
 
   def strings(length: Int): Iterator[String] =

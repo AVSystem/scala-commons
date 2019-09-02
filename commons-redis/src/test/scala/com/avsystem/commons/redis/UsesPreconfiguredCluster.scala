@@ -6,8 +6,8 @@ import java.io.File
 import org.apache.commons.io.FileUtils
 import org.scalatest.Suite
 
-import scala.concurrent.duration._
 import scala.concurrent.Await
+import scala.concurrent.duration._
 
 /**
   * Author: ghik
@@ -15,13 +15,13 @@ import scala.concurrent.Await
   */
 trait UsesPreconfiguredCluster extends UsesActorSystem with UsesClusterServers { this: Suite =>
 
-  final def ports = 9000 to 9005
+  def ports: Range = 9000 to 9005
+  def preconfiguredDir: File = new File("preconfiguredCluster")
 
-  protected def prepareDirectory() = {
-    FileUtils.copyDirectory(new File("preconfiguredCluster"), clusterDir)
-  }
+  protected def prepareDirectory(): Unit =
+    FileUtils.copyDirectory(preconfiguredDir, clusterDir)
 
-  override protected def beforeAll() = {
+  override protected def beforeAll(): Unit = {
     super.beforeAll()
 
     val clients = addresses.map(addr => new RedisConnectionClient(addr))
