@@ -3,7 +3,7 @@ package redis
 
 import akka.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.SourceInfo
-import com.avsystem.commons.redis.config.{ClusterConfig, ConnectionConfig, NodeConfig}
+import com.avsystem.commons.redis.config.{ClusterConfig, ConnectionConfig, ExecutionConfig, NodeConfig}
 import org.scalactic.source.Position
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FunSuite, Matchers, Tag}
@@ -60,17 +60,19 @@ trait CommandsSuite extends FunSuite with ScalaFutures with Matchers with UsesAc
   with ByteStringInterpolation with CommunicationLogging {
 
   def executor: RedisKeyedExecutor
+  def executionConfig: ExecutionConfig = ExecutionConfig.Default
 
-  protected lazy val asyncKeyedCommands = RedisApi.Keyed.Async.StringTyped(executor)
+  protected lazy val asyncKeyedCommands: RedisApi.Keyed.Async.StringTyped =
+    RedisApi.Keyed.Async.StringTyped(executor)
 
   protected def setup(batches: RedisBatch[Any]*): Unit = {
-    Await.result(executor.executeBatch(batches.sequence), Duration.Inf)
+    Await.result(executor.executeBatch(batches.sequence, executionConfig), Duration.Inf)
     listener.clear()
   }
 
   protected implicit class BatchOps[T](batch: RedisBatch[T]) {
     def get: T = Await.result(exec, patienceConfig.timeout.totalNanos.nanos)
-    def exec: Future[T] = executor.executeBatch(batch)
+    def exec: Future[T] = executor.executeBatch(batch, executionConfig)
     def assert(pred: T => Boolean)(implicit pos: Position): Unit = CommandsSuite.this.assert(pred(get))
     def assertEquals(t: T)(implicit pos: Position): Unit = assertResult(t)(get)
     def intercept[E <: Throwable : ClassTag](implicit pos: Position): E = CommandsSuite.this.intercept[E](get)

@@ -19,8 +19,8 @@ final class ClusterMonitoringActor(
   config: ClusterConfig,
   onClusterInitFailure: Throwable => Any,
   onNewClusterState: ClusterState => Any,
-  onTemporaryClient: RedisNodeClient => Any)
-  extends Actor with ActorLazyLogging {
+  onTemporaryClient: RedisNodeClient => Any
+) extends Actor with ActorLazyLogging {
 
   import ClusterMonitoringActor._
   import context._
@@ -76,8 +76,7 @@ final class ClusterMonitoringActor(
         val addresses = nodeOpt.map(new SingletonSeq(_)).getOrElse {
           if (fallbackToSeedsAfter.isOverdue()) {
             if (state.isDefined) {
-              log.info(s"Could not fetch cluster state from current masters for " +
-                s"${config.refreshUsingSeedNodesAfter}, falling back to seed nodes")
+              log.warning(s"Could not fetch cluster state from current masters, using seed nodes")
             }
             seedNodes ++ randomMasters().filterNot(seedNodes.contains)
           } else randomMasters()
