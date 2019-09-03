@@ -5,8 +5,8 @@ import java.io.File
 
 import org.scalatest.Suite
 
-import scala.concurrent.duration._
 import scala.concurrent.Await
+import scala.concurrent.duration._
 
 /**
   * Author: ghik
@@ -14,24 +14,24 @@ import scala.concurrent.Await
   */
 trait UsesFreshCluster extends UsesActorSystem with UsesClusterServers { this: Suite =>
 
-  def ports = 8000 to 8005
+  def ports: Range = 8000 to 8005
   def masterOf(idx: Int): Int = idx - (idx % 2)
 
-  lazy val masterIndices = ports.indices.filter(i => masterOf(i) == i)
-  lazy val slotRanges = ports.indices.map { i =>
+  lazy val masterIndices: IIndexedSeq[Int] = ports.indices.filter(i => masterOf(i) == i)
+  lazy val slotRanges: IIndexedSeq[Range] = ports.indices.map { i =>
     val masterNo = masterIndices.indexOf(masterOf(i))
     firstSlot(masterNo) until firstSlot(masterNo + 1)
   }
 
-  protected def prepareDirectory() = {
+  protected def prepareDirectory(): Unit = {
     ports.foreach { port =>
       new File(clusterDir, port.toString).mkdirs()
     }
   }
 
-  def firstSlot(masterNo: Int) = masterNo * Hash.TotalSlots / masterIndices.size
+  def firstSlot(masterNo: Int): Int = masterNo * Hash.TotalSlots / masterIndices.size
 
-  override protected def beforeAll() = {
+  override protected def beforeAll(): Unit = {
     super.beforeAll()
 
     val clients = addresses.map(addr => new RedisConnectionClient(addr))

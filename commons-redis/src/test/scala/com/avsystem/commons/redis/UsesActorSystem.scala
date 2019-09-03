@@ -17,10 +17,10 @@ trait UsesActorSystem extends BeforeAndAfterAll with PatienceConfiguration { thi
   implicit lazy val actorSystem: ActorSystem = ActorSystem()
   implicit def executionContext: ExecutionContext = actorSystem.dispatcher
 
-  override implicit def patienceConfig =
+  override implicit def patienceConfig: PatienceConfig =
     PatienceConfig(scaled(Span(10, Seconds)), scaled(Span(10, Milliseconds)))
 
-  override protected def afterAll() = {
+  override protected def afterAll(): Unit = {
     Await.ready(actorSystem.terminate(), Duration.Inf)
     super.afterAll()
   }
