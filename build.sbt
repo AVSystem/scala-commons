@@ -1,5 +1,3 @@
-import com.typesafe.sbt.SbtPgp.autoImportImpl.PgpKeys.{publishLocalSigned, publishSigned}
-
 cancelable in Global := true
 
 // We need to generate slightly different structure for IntelliJ in order to better support ScalaJS cross projects.
@@ -28,6 +26,7 @@ val circeVersion = "0.11.1"
 val upickleVersion = "0.7.4"
 val scalajsBenchmarkVersion = "0.2.6"
 
+useGpg := false // TODO: use sbt-ci-release
 pgpPublicRing := file("./travis/local.pubring.asc")
 pgpSecretRing := file("./travis/local.secring.asc")
 pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toCharArray)
@@ -79,7 +78,7 @@ val commonSettings = Seq(
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
 
-  publishTo := Some(Opts.resolver.sonatypeStaging),
+  publishTo := sonatypePublishToBundle.value,
   sonatypeProfileName := "com.avsystem",
 
   projectInfo := ModuleInfo(
@@ -143,8 +142,8 @@ val noPublishSettings = Seq(
   publish := {},
   publishLocal := {},
   publishM2 := {},
-  publishSigned := {},
-  publishLocalSigned := {},
+  PgpKeys.publishSigned := {},
+  PgpKeys.publishLocalSigned := {},
   mimaPreviousArtifacts := Set.empty,
 )
 
