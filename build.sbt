@@ -27,6 +27,7 @@ val circeVersion = "0.11.1"
 val upickleVersion = "0.7.5"
 val scalajsBenchmarkVersion = "0.2.6"
 
+useGpg := false // TODO: use sbt-ci-release
 pgpPublicRing := file("./travis/local.pubring.asc")
 pgpSecretRing := file("./travis/local.secring.asc")
 pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toCharArray)
@@ -74,7 +75,7 @@ val commonSettings = Seq(
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
 
-  publishTo := Some(Opts.resolver.sonatypeStaging),
+  publishTo := sonatypePublishToBundle.value,
   sonatypeProfileName := "com.avsystem",
 
   projectInfo := ModuleInfo(

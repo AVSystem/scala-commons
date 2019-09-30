@@ -118,7 +118,7 @@ final class ClusterMonitoringActor(
           val refreshInterval = config.autoRefreshInterval
           scheduledRefresh = system.scheduler.schedule(refreshInterval, refreshInterval, self, Refresh(Opt.Empty)).opt
         }
-        fallbackToSeedsAfter = Deadline(config.refreshUsingSeedNodesAfter)
+        fallbackToSeedsAfter = config.refreshUsingSeedNodesAfter.fromNow
 
         (connections.keySet diff masters).foreach { addr =>
           connections.remove(addr).foreach(context.stop)
