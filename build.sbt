@@ -6,12 +6,12 @@ cancelable in Global := true
 // option in IntelliJ's SBT settings.
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-val silencerVersion = "1.4.3"
+val silencerVersion = "1.4.4"
 val collectionCompatVersion = "2.1.2"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.8"
-val scalacheckVersion = "1.14.2"
+val scalacheckVersion = "1.14.1"
 val jettyVersion = "9.4.20.v20190813"
 val mongoVersion = "3.7.1"
 val kafkaVersion = "2.2.1"
@@ -21,12 +21,13 @@ val typesafeConfigVersion = "1.3.4"
 val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.2"
 val akkaVersion = "2.5.25"
-val monixVersion = "2.3.3"
+val monixVersion = "3.0.0"
 val mockitoVersion = "3.0.0"
-val circeVersion = "0.11.1"
+val circeVersion = "0.12.1"
 val upickleVersion = "0.7.5"
 val scalajsBenchmarkVersion = "0.2.6"
 
+useGpg := false // TODO: use sbt-ci-release
 pgpPublicRing := file("./travis/local.pubring.asc")
 pgpSecretRing := file("./travis/local.secring.asc")
 pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toCharArray)
@@ -74,7 +75,7 @@ val commonSettings = Seq(
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
 
-  publishTo := Some(Opts.resolver.sonatypeStaging),
+  publishTo := sonatypePublishToBundle.value,
   sonatypeProfileName := "com.avsystem",
 
   projectInfo := ModuleInfo(
