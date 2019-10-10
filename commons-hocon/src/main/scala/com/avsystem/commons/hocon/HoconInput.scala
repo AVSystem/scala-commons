@@ -30,7 +30,7 @@ trait BaseHoconInput {
 
 /**
   * An [[com.avsystem.commons.serialization.Input Input]] implementation which allows deserialization from
-  * HOCON (represented as [[com.typesafe.config.Config Config]] or [[com.typesafe.config.ConfigValue ConfigValue]])
+  * HOCON (represented as `com.typesafe.config.Config` or `com.typesafe.config.ConfigValue`)
   * using [[com.avsystem.commons.serialization.GenCodec GenCodec]].
   */
 class HoconInput(value: ConfigValue) extends InputAndSimpleInput with BaseHoconInput {
