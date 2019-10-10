@@ -1,9 +1,10 @@
 package com.avsystem.commons
-package misc
+
+import com.avsystem.commons.misc.{OptBase, Unboxing}
 
 object OptRef {
   def apply[A >: Null](value: A): OptRef[A] = new OptRef[A](value)
-  def unapply[A >: Null](opt: OptRef[A]) = opt //name-based extractor
+  def unapply[A >: Null](opt: OptRef[A]): OptRef[A] = opt //name-based extractor
 
   def some[A >: Null](value: A): OptRef[A] =
     if (value != null) new OptRef[A](value)

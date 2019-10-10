@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package misc
 
+import com.avsystem.commons
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
 
@@ -27,7 +28,7 @@ class Custom(val str: String, val i: Int) {
 }
 object Custom {
   def apply(str: String, i: Int): Custom = new Custom(str, i)
-  def unapply(custom: Custom): Opt[(String, Int)] = Opt((custom.str, custom.i))
+  def unapply(custom: Custom): commons.Opt[(String, Int)] = Opt((custom.str, custom.i))
 }
 
 class ApplierUnapplierTest extends FunSuite {

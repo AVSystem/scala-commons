@@ -23,15 +23,6 @@ trait CommonAliases {
 
   type Annotation = scala.annotation.Annotation
   type StaticAnnotation = scala.annotation.StaticAnnotation
-
-  type Opt[+T] = misc.Opt[T]
-  final val Opt = misc.Opt
-  type OptRef[+T >: Null] = misc.OptRef[T]
-  final val OptRef = misc.OptRef
-  type NOpt[+T] = misc.NOpt[T]
-  final val NOpt = misc.NOpt
-  type OptArg[+T] = misc.OptArg[T]
-  final val OptArg = misc.OptArg
 }
 
 object CommonAliases extends CommonAliases

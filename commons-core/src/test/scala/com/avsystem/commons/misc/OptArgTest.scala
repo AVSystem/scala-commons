@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package misc
 
+import com.avsystem.commons
 import org.scalatest.{FunSuite, Matchers}
 
 class OptArgTest extends FunSuite with Matchers {
@@ -23,7 +24,7 @@ class OptArgTest extends FunSuite with Matchers {
     intercept[NullPointerException](OptArg.some[String](null))
   }
 
-  def takeMaybeString(str: OptArg[String] = OptArg.Empty): Opt[String] = str.toOpt
+  def takeMaybeString(str: commons.OptArg[String] = OptArg.Empty): commons.Opt[String] = str.toOpt
 
   test("argument passing") {
     takeMaybeString() shouldEqual Opt.Empty

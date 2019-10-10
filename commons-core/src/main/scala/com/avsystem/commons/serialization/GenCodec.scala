@@ -390,6 +390,11 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit lazy val UuidCodec: GenCodec[UUID] =
     nullableSimple(i => UUID.fromString(i.readString()), (o, v) => o.writeString(v.toString))
 
+  implicit lazy val TimestampCodec: GenCodec[Timestamp] =
+    GenCodec.nonNullSimple(i => Timestamp(i.readTimestamp()), (o, t) => o.writeTimestamp(t.millis))
+  implicit lazy val BytesCodec: GenCodec[Bytes] =
+    GenCodec.nullableSimple(i => Bytes(i.readBinary()), (o, b) => o.writeBinary(b.bytes))
+
   private def declareSize(o: SequentialOutput, coll: BIterable[_]): Unit =
     o.sizePolicy match {
       case SizePolicy.Ignored =>

@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jsiop
 
-import com.avsystem.commons.misc.TimestampConversions
+import com.avsystem.commons.TimestampConversions
 
 import scala.scalajs.js
 

@@ -1,7 +1,7 @@
 package com.avsystem.commons
-package misc
 
-import com.avsystem.commons.misc.Opt.EmptyMarker
+import com.avsystem.commons.Opt.EmptyMarker
+import com.avsystem.commons.misc.{Boxing, OptBase, Unboxing}
 
 object Opt {
   // Used as Opt's raw value to represent empty Opt. Unfortunately, null can't be used for that purpose

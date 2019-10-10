@@ -12,10 +12,10 @@ val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.8"
 val scalacheckVersion = "1.14.2"
-val jettyVersion = "9.4.21.v20190926"
-val mongoVersion = "3.7.1"
+val jettyVersion = "9.4.20.v20190813"
+val mongoVersion = "3.11.0"
 val kafkaVersion = "2.2.1"
-val mongoScalaVersion = "2.3.0"
+val mongoScalaVersion = "2.7.0"
 val springVersion = "4.0.9.RELEASE"
 val typesafeConfigVersion = "1.3.4"
 val commonsIoVersion = "1.3.2"
@@ -25,7 +25,7 @@ val monixVersion = "3.0.0"
 val mockitoVersion = "3.1.0"
 val circeVersion = "0.12.1"
 val upickleVersion = "0.8.0"
-val scalajsBenchmarkVersion = "0.2.6"
+val scalajsBenchmarkVersion = "0.3.0-RC1"
 
 useGpg := false // TODO: use sbt-ci-release
 pgpPublicRing := file("./travis/local.pubring.asc")
@@ -43,11 +43,11 @@ version in ThisBuild :=
   sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("2.0.0-SNAPSHOT")
 
 // for binary compatibility checking
-val previousCompatibleVersions = Set("1.34.8")
+val previousCompatibleVersions = Set("1.39.14")
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  crossScalaVersions := Seq("2.12.9", "2.13.0"),
+  crossScalaVersions := Seq("2.12.10", "2.13.1"),
   scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
@@ -132,16 +132,6 @@ val jsCommonSettings = commonSettings ++ Seq(
   },
   jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
   fork in Test := false,
-)
-
-val noScala213Settings = Seq(
-  unmanagedSourceDirectories in Compile :=
-    (if (scalaBinaryVersion.value == "2.13") Seq.empty else (unmanagedSourceDirectories in Compile).value),
-  unmanagedSourceDirectories in Test :=
-    (if (scalaBinaryVersion.value == "2.13") Seq.empty else (unmanagedSourceDirectories in Test).value),
-  libraryDependencies :=
-    (if (scalaBinaryVersion.value == "2.13") Seq.empty else libraryDependencies.value),
-  skip in publish := scalaBinaryVersion.value == "2.13",
 )
 
 val noPublishSettings = Seq(
@@ -280,7 +270,6 @@ lazy val `commons-benchmark` = project
       "io.circe" %% "circe-parser" % circeVersion,
       "com.lihaoyi" %% "upickle" % upickleVersion,
     ),
-    noScala213Settings,
     ideExcludedDirectories := (managedSourceDirectories in Jmh).value,
   )
 
@@ -300,7 +289,6 @@ lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
       "com.lihaoyi" %%% "upickle" % upickleVersion,
       "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
     ),
-    noScala213Settings,
     scalaJSUseMainModuleInitializer := true,
     test := {},
     testOnly := {},
@@ -319,7 +307,6 @@ lazy val `commons-mongo` = project
       "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,
       "org.mongodb.scala" %% "mongo-scala-driver" % mongoScalaVersion % Optional,
     ),
-    noScala213Settings,
   )
 
 lazy val `commons-redis` = project

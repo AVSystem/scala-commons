@@ -4,7 +4,6 @@ package jiop
 import java.time.Instant
 
 import com.avsystem.commons.jiop.JavaTimeInterop.InstantOps
-import com.avsystem.commons.misc.Timestamp
 
 trait JavaTimeInterop {
   implicit def instantOps(instant: Instant): InstantOps = new InstantOps(instant)

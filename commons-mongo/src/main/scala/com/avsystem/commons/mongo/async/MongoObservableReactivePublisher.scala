@@ -1,10 +1,12 @@
 package com.avsystem.commons
 package mongo.async
 
+import com.github.ghik.silencer.silent
 import com.mongodb.async.{client => mongo}
 import monix.execution.atomic.AtomicBoolean
 import org.{reactivestreams => reactive}
 
+@silent("deprecated")
 final class MongoObservableReactivePublisher[T](observable: mongo.Observable[T]) extends reactive.Publisher[T] {
   def subscribe(subscriber: reactive.Subscriber[_ >: T]): Unit = {
     observable.subscribe(
