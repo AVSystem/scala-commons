@@ -1,6 +1,5 @@
-package com.avsystem.commons.misc // no chained package because of ambiguity of Opt
-
-import com.avsystem.commons.macros
+package com.avsystem.commons
+package misc
 
 import scala.annotation.implicitNotFound
 

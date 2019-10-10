@@ -3,7 +3,7 @@ package serialization.cbor
 
 import java.io.{ByteArrayOutputStream, DataOutputStream}
 
-import com.avsystem.commons.misc.{Bytes, Timestamp}
+import com.avsystem.commons.Bytes
 import com.avsystem.commons.serialization.{GenCodec, GenCodecRoundtripTest, HasGenCodec, Input, Output, SizePolicy, transientDefault}
 import org.scalactic.source.Position
 import org.scalatest.FunSuite
@@ -142,11 +142,11 @@ class CborInputOutputTest extends FunSuite {
   )
 
   test("chunked text string") {
-    assert(CborInput.read[String](Bytes.parse("7F626162626162626162FF").bytes) == "ababab")
+    assert(CborInput.read[String](Bytes.fromHex("7F626162626162626162FF").bytes) == "ababab")
   }
 
   test("chunked byte string") {
-    assert(CborInput.read[Bytes](Bytes.parse("5F426162426162426162FF").bytes) == Bytes("ababab"))
+    assert(CborInput.read[Bytes](Bytes.fromHex("5F426162426162426162FF").bytes) == Bytes("ababab"))
   }
 }
 

@@ -1,7 +1,7 @@
 package com.avsystem.commons
-package misc
 
-import com.avsystem.commons.misc.OptArg.EmptyMarker
+import com.avsystem.commons.OptArg.EmptyMarker
+import com.avsystem.commons.misc.{Boxing, OptBase}
 
 object OptArg {
   /**

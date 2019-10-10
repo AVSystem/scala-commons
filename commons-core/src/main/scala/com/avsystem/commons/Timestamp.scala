@@ -1,5 +1,4 @@
 package com.avsystem.commons
-package misc
 
 import java.util.concurrent.TimeUnit
 
@@ -42,12 +41,6 @@ object Timestamp {
 
   implicit def conversions(tstamp: Timestamp): TimestampConversions =
     new TimestampConversions(tstamp.millis)
-
-  implicit val keyCodec: GenKeyCodec[Timestamp] =
-    GenKeyCodec.create(parse, _.toString)
-
-  implicit val codec: GenCodec[Timestamp] =
-    GenCodec.nonNullSimple(i => Timestamp(i.readTimestamp()), (o, t) => o.writeTimestamp(t.millis))
 
   implicit val ordering: Ordering[Timestamp] =
     Ordering.by(_.millis)

@@ -20,8 +20,8 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   final def BMapCls: Tree = tq"$CollectionPkg.Map"
   final def NOptObj: Tree = q"$MiscPkg.NOpt"
   final def NOptCls: Tree = tq"$MiscPkg.NOpt"
-  final def OptObj: Tree = q"$MiscPkg.Opt"
-  final def OptCls: Tree = tq"$MiscPkg.Opt"
+  final def OptObj: Tree = q"$CommonsPkg.Opt"
+  final def OptCls: Tree = tq"$CommonsPkg.Opt"
   final lazy val TransparentAnnotType = staticType(tq"$SerializationPkg.transparent")
   final lazy val TransientDefaultAnnotType = staticType(tq"$SerializationPkg.transientDefault")
   final lazy val FlattenAnnotType = staticType(tq"$SerializationPkg.flatten")

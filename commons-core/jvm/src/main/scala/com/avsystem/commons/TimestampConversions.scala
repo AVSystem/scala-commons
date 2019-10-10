@@ -1,5 +1,4 @@
 package com.avsystem.commons
-package misc
 
 import java.time.Instant
 

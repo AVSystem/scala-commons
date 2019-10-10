@@ -601,7 +601,7 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
     val tpe = weakTypeOf[T]
     val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
     val annotTree = findAnnotation(sym, atpe)
-      .fold[Tree](q"$MiscPkg.Opt.Empty")(a => q"$MiscPkg.Opt(${safeAnnotTree(a)})")
+      .fold[Tree](q"$CommonsPkg.Opt.Empty")(a => q"$CommonsPkg.Opt(${safeAnnotTree(a)})")
     q"$MiscPkg.OptAnnotationOf($annotTree)"
   }
 
@@ -643,7 +643,7 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
     val atpe = weakTypeOf[A]
     val sym = classBeingConstructed
     val annotTree = findAnnotation(sym, atpe)
-      .fold[Tree](q"$MiscPkg.Opt.Empty")(a => q"$MiscPkg.Opt(${safeAnnotTree(a)})")
+      .fold[Tree](q"$CommonsPkg.Opt.Empty")(a => q"$CommonsPkg.Opt(${safeAnnotTree(a)})")
     q"$MiscPkg.SelfOptAnnotation($annotTree)"
   }
 

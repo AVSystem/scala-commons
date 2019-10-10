@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package misc
 
+import com.avsystem.commons
 import org.scalatest.FunSuite
 
 class OptTest extends FunSuite {
@@ -24,9 +25,9 @@ class OptTest extends FunSuite {
   }
 
   test("boxing unboxing test") {
-    val opt: Opt[Int] = Opt(42)
-    val boxedOpt: Opt[JInteger] = opt.boxed
-    val unboxedOpt: Opt[Int] = boxedOpt.unboxed
+    val opt: commons.Opt[Int] = Opt(42)
+    val boxedOpt: commons.Opt[JInteger] = opt.boxed
+    val unboxedOpt: commons.Opt[Int] = boxedOpt.unboxed
     assert(opt == unboxedOpt)
   }
 

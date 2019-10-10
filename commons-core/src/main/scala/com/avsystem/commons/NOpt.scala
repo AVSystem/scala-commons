@@ -1,8 +1,7 @@
 package com.avsystem.commons
-package misc
 
-
-import com.avsystem.commons.misc.NOpt.{EmptyMarker, NullMarker}
+import com.avsystem.commons.NOpt.{EmptyMarker, NullMarker}
+import com.avsystem.commons.misc.{Boxing, OptBase, Unboxing}
 
 object NOpt {
   // These two are used as NOpt's raw value to represent empty NOpt and NOpt(null).
