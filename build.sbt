@@ -25,7 +25,7 @@ val monixVersion = "3.0.0"
 val mockitoVersion = "3.1.0"
 val circeVersion = "0.12.1"
 val upickleVersion = "0.8.0"
-val scalajsBenchmarkVersion = "0.2.6"
+val scalajsBenchmarkVersion = "0.3.0-RC1"
 
 useGpg := false // TODO: use sbt-ci-release
 pgpPublicRing := file("./travis/local.pubring.asc")
@@ -132,16 +132,6 @@ val jsCommonSettings = commonSettings ++ Seq(
   },
   jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
   fork in Test := false,
-)
-
-val noScala213Settings = Seq(
-  unmanagedSourceDirectories in Compile :=
-    (if (scalaBinaryVersion.value == "2.13") Seq.empty else (unmanagedSourceDirectories in Compile).value),
-  unmanagedSourceDirectories in Test :=
-    (if (scalaBinaryVersion.value == "2.13") Seq.empty else (unmanagedSourceDirectories in Test).value),
-  libraryDependencies :=
-    (if (scalaBinaryVersion.value == "2.13") Seq.empty else libraryDependencies.value),
-  skip in publish := scalaBinaryVersion.value == "2.13",
 )
 
 val noPublishSettings = Seq(
@@ -280,7 +270,6 @@ lazy val `commons-benchmark` = project
       "io.circe" %% "circe-parser" % circeVersion,
       "com.lihaoyi" %% "upickle" % upickleVersion,
     ),
-    noScala213Settings,
     ideExcludedDirectories := (managedSourceDirectories in Jmh).value,
   )
 
@@ -300,7 +289,6 @@ lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
       "com.lihaoyi" %%% "upickle" % upickleVersion,
       "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
     ),
-    noScala213Settings,
     scalaJSUseMainModuleInitializer := true,
     test := {},
     testOnly := {},
@@ -319,7 +307,6 @@ lazy val `commons-mongo` = project
       "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,
       "org.mongodb.scala" %% "mongo-scala-driver" % mongoScalaVersion % Optional,
     ),
-    noScala213Settings,
   )
 
 lazy val `commons-redis` = project
