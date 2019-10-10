@@ -43,7 +43,7 @@ version in ThisBuild :=
   sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("2.0.0-SNAPSHOT")
 
 // for binary compatibility checking
-val previousCompatibleVersions = Set("1.34.8")
+val previousCompatibleVersions = Set("1.39.14")
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
