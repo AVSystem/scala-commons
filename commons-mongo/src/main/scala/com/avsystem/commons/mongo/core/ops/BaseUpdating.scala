@@ -6,7 +6,7 @@ import org.bson.conversions.Bson
 
 trait BaseUpdating[T] extends Any with KeyValueHandling[T] {
   def set(t: T): Bson = use(t)(Updates.set)
-  def setOnInsert(t: T): Bson = use(t)(Updates.setOnInsert)
+  def setOnInsert(t: T): Bson = use(t)(Updates.setOnInsert(_, _))
   def unset(): Bson = Updates.unset(key)
 
   def rename(newName: String): Bson = Updates.rename(key, newName)

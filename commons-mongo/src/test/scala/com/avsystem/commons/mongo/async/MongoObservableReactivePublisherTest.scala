@@ -2,6 +2,7 @@ package com.avsystem.commons
 package mongo.async
 
 import com.avsystem.commons.concurrent.RunNowEC
+import com.github.ghik.silencer.silent
 import com.mongodb.async.{client => mongo}
 import monix.execution.{Cancelable, Scheduler}
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
@@ -13,6 +14,7 @@ import org.scalatest.mockito.MockitoSugar
 
 import scala.concurrent.duration.Duration
 
+@silent("deprecated")
 class MongoObservableReactivePublisherTest extends FreeSpec with MockitoSugar {
 
   abstract class MockedObservableTests(implicit position: Position) extends MongoObservableExtensions {
