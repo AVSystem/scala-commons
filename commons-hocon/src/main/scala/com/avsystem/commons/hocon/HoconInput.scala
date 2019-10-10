@@ -5,6 +5,7 @@ import java.time.temporal.TemporalAmount
 import java.time.{Duration, Period}
 import java.util.Base64
 
+import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import com.typesafe.config._
@@ -12,10 +13,10 @@ import com.typesafe.config._
 import scala.concurrent.duration.FiniteDuration
 
 object HoconInput {
-  def read[T: GenCodec](value: ConfigValue): T =
+  @explicitGenerics def read[T: GenCodec](value: ConfigValue): T =
     GenCodec.read[T](new HoconInput(value))
 
-  def read[T: GenCodec](config: Config): T =
+  @explicitGenerics def read[T: GenCodec](config: Config): T =
     GenCodec.read[T](new HoconInput(config.root))
 }
 
@@ -27,6 +28,11 @@ trait BaseHoconInput {
     }
 }
 
+/**
+  * An [[com.avsystem.commons.serialization.Input Input]] implementation which allows deserialization from
+  * HOCON (represented as [[com.typesafe.config.Config Config]] or [[com.typesafe.config.ConfigValue ConfigValue]])
+  * using [[com.avsystem.commons.serialization.GenCodec GenCodec]].
+  */
 class HoconInput(value: ConfigValue) extends InputAndSimpleInput with BaseHoconInput {
   // For wrapping ConfigValue into Config in order to use its rich API
   // Why is this API not available directly on ConfigValue?
