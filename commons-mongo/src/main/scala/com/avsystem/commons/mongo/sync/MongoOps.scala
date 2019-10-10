@@ -2,7 +2,6 @@ package com.avsystem.commons
 package mongo.sync
 
 import com.avsystem.commons.mongo.{BsonCodec, MongoCodec}
-import com.mongodb.Block
 import com.mongodb.client.{FindIterable, MongoCollection, MongoDatabase}
 import org.bson.BsonDocument
 import org.bson.codecs.configuration.CodecRegistries
@@ -36,8 +35,8 @@ object MongoOps {
 
     def page(sort: Bson, offset: Int, maxItems: Int): Vector[T] = {
       val b = Vector.newBuilder[T]
-      find.sort(sort).skip(offset).limit(maxItems).forEach(new Block[T] {
-        def apply(t: T) = b += t
+      find.sort(sort).skip(offset).limit(maxItems).forEach(new JConsumer[T] {
+        def accept(t: T) = b += t
       })
       b.result()
     }
