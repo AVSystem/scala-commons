@@ -14,8 +14,9 @@ val scalatestVersion = "3.0.8"
 val scalacheckVersion = "1.14.2"
 val jettyVersion = "9.4.20.v20190813"
 val mongoVersion = "3.11.0"
-val kafkaVersion = "2.2.1"
+val mongoReactiveVersion = "1.12.0"
 val mongoScalaVersion = "2.7.0"
+val kafkaVersion = "2.2.1"
 val springVersion = "4.0.9.RELEASE"
 val typesafeConfigVersion = "1.3.4"
 val commonsIoVersion = "1.3.2"
@@ -305,6 +306,7 @@ lazy val `commons-mongo` = project
       "org.mongodb" % "mongodb-driver-core" % mongoVersion,
       "org.mongodb" % "mongodb-driver" % mongoVersion % Optional,
       "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,
+      "org.mongodb" % "mongodb-driver-reactivestreams" % mongoReactiveVersion % Optional,
       "org.mongodb.scala" %% "mongo-scala-driver" % mongoScalaVersion % Optional,
     ),
   )
