@@ -12,6 +12,6 @@ trait KeyElementHandling[E] extends Any with KeyHandling {
   }
 
   protected def useEs(es: Seq[E])(f: (String, JList[BsonValue]) => Bson): Bson = {
-    f(key, es.iterator.map(encodeElement).to[JList])
+    f(key, es.iterator.map(encodeElement).to(JList))
   }
 }

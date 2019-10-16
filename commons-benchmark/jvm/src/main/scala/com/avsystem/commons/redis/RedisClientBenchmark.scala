@@ -6,7 +6,6 @@ import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, TimeUnit}
 
 import akka.actor.ActorSystem
 import akka.util.{ByteString, Timeout}
-import com.avsystem.commons.benchmark.CrossRedisBenchmark
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.redis.RedisClientBenchmark._
 import com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener
@@ -93,7 +92,7 @@ object RedisClientBenchmark {
 }
 
 @OperationsPerInvocation(ConcurrentCommands)
-class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
+class RedisClientBenchmark extends RedisBenchmark {
 
   import RedisApi.Batches.StringTyped._
 

@@ -13,18 +13,18 @@ val jsr305Version = "3.0.2"
 val scalatestVersion = "3.0.8"
 val scalacheckVersion = "1.14.2"
 val jettyVersion = "9.4.20.v20190813"
-val mongoVersion = "3.11.0"
+val mongoVersion = "3.11.1"
 val mongoReactiveVersion = "1.12.0"
 val mongoScalaVersion = "2.7.0"
 val kafkaVersion = "2.2.1"
 val springVersion = "4.0.9.RELEASE"
-val typesafeConfigVersion = "1.3.4"
+val typesafeConfigVersion = "1.4.0"
 val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.2"
 val akkaVersion = "2.5.25"
 val monixVersion = "3.0.0"
 val mockitoVersion = "3.1.0"
-val circeVersion = "0.12.1"
+val circeVersion = "0.12.2"
 val upickleVersion = "0.8.0"
 val scalajsBenchmarkVersion = "0.3.0-RC1"
 
@@ -44,7 +44,7 @@ version in ThisBuild :=
   sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("2.0.0-SNAPSHOT")
 
 // for binary compatibility checking
-val previousCompatibleVersions = Set("1.34.8")
+val previousCompatibleVersions = Set("1.39.14")
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",

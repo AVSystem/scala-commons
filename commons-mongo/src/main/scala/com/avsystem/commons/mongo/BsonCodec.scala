@@ -25,8 +25,8 @@ trait BsonCodec[A, BSON <: BsonValue] {self =>
 
   def collection[C[X] <: IterableOnce[X]](implicit fac: Factory[A, C[A]]): BsonCodec[C[A], BsonArray] =
     BsonCodec.create[C[A], BsonArray](
-      ba => ba.iterator().asScala.map(bv => self.fromBson(bv.asInstanceOf[BSON])).to[C],
-      col => new BsonArray(col.toIterator.map(self.toBson).to[JList])
+      ba => ba.iterator().asScala.map(bv => self.fromBson(bv.asInstanceOf[BSON])).to(fac),
+      col => new BsonArray(col.iterator.map(self.toBson).to(JList))
     )
 }
 

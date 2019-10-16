@@ -43,8 +43,8 @@ object GenCodecBenchmarks {
       }
     )
 
-  val somes: Seq[Option[String]] = MArrayBuffer.tabulate(1000)(i => Some(i.toString))
-  val nones: Seq[Option[String]] = MArrayBuffer.fill(1000)(None)
+  val somes: BSeq[Option[String]] = MArrayBuffer.tabulate(1000)(i => Some(i.toString))
+  val nones: BSeq[Option[String]] = MArrayBuffer.fill(1000)(None)
 
   val options = JsonOptions(binaryFormat = JsonBinaryFormat.HexString)
   val hex: String = JsonStringOutput.write(Array.tabulate[Byte](1024)(_.toByte), options)
