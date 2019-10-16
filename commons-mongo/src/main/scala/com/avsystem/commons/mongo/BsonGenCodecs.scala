@@ -99,7 +99,7 @@ object BsonGenCodecs {
 
   implicit val bsonValueCodec: GenCodec[BsonValue] = GenCodec.create(
     i => {
-      val bvOpt = i.readMetadata(BsonTypeMetadata) collect {
+      val bvOpt = i.readMetadata(BsonTypeMetadata) map {
         case BsonType.ARRAY => bsonArrayCodec.read(i)
         case BsonType.BINARY => bsonBinaryCodec.read(i)
         case BsonType.BOOLEAN => bsonBooleanCodec.read(i)
