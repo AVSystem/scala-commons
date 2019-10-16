@@ -83,7 +83,7 @@ object BsonGenCodecs {
 
   implicit val bsonNullCodec: GenCodec[BsonNull] =
     GenCodec.create(i => {
-      i.readNull()
+      if (!i.readNull()) throw new ReadFailure("Input did not contain expected null value")
       BsonNull.VALUE
     }, (o, _) => o.writeNull())
 
