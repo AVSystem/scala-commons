@@ -46,7 +46,7 @@ object BsonGenCodecs {
 
   implicit val bsonArrayCodec: GenCodec[BsonArray] = GenCodec.nullableList(
     li => new BsonArray(li.iterator(bsonValueCodec.read).to[JList]),
-    (lo, ba) => ba.getValues.forEach(bsonValueCodec.write(lo.writeElement(), _))
+    (lo, ba) => ba.asScala.foreach(bsonValueCodec.write(lo.writeElement(), _))
   )
 
   implicit val bsonBinaryCodec: GenCodec[BsonBinary] =
@@ -64,8 +64,8 @@ object BsonGenCodecs {
     oi => new BsonDocument(oi.iterator(bsonValueCodec.read).map {
       case (k, v) => new BsonElement(k, v)
     }.to[JList]),
-    (oo, bd) => bd.entrySet().iterator().forEachRemaining { entry =>
-      bsonValueCodec.write(oo.writeField(entry.getKey), entry.getValue)
+    (oo, bd) => bd.asScala.foreach { case (key, value) =>
+      bsonValueCodec.write(oo.writeField(key), value)
     }
   )
 
