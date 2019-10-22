@@ -24,7 +24,7 @@ val scalaLoggingVersion = "3.9.2"
 val akkaVersion = "2.5.26"
 val monixVersion = "3.0.0"
 val mockitoVersion = "3.1.0"
-val circeVersion = "0.12.2"
+val circeVersion = "0.12.3"
 val upickleVersion = "0.8.0"
 val scalajsBenchmarkVersion = "0.3.0-RC1"
 
