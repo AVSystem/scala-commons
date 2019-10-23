@@ -227,7 +227,7 @@ lazy val `commons-core` = project
     jvmCommonSettings,
     sourceDirsSettings(_ / "jvm"),
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %%% "scala-collection-compat" % collectionCompatVersion,
+      "org.scala-lang.modules" %% "scala-collection-compat" % collectionCompatVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
     ),
@@ -241,6 +241,9 @@ lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
     jsCommonSettings,
     sameNameAs(`commons-core`),
     sourceDirsSettings(_.getParentFile),
+    libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %%% "scala-collection-compat" % collectionCompatVersion,
+    )
   )
 
 lazy val `commons-jetty` = project
