@@ -105,7 +105,6 @@ val commonSettings = Seq(
   libraryDependencies ++= Seq(
     compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
     "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
-    "org.scala-lang.modules" %%% "scala-collection-compat" % collectionCompatVersion,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.mockito" % "mockito-core" % mockitoVersion % Test,
@@ -228,6 +227,7 @@ lazy val `commons-core` = project
     jvmCommonSettings,
     sourceDirsSettings(_ / "jvm"),
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %%% "scala-collection-compat" % collectionCompatVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
     ),
