@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package macros.misc
 
-import scala.collection.compat.BuildFrom
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
@@ -43,9 +42,9 @@ case class Ok[+T](value: T) extends Res[T]
 case class FailMsg(message: String) extends Res[Nothing]
 object Fail extends Res[Nothing]
 object Res {
-  def traverse[M[X] <: Iterable[X], A, B](in: M[A])(f: A => Res[B])(implicit bf: BuildFrom[M[A], B, M[B]]): Res[M[B]] = {
+  def traverse[A, B](in: List[A])(f: A => Res[B]): Res[List[B]] = {
     val it = in.iterator
-    def loop(builder: mutable.Builder[B, M[B]]): Res[M[B]] =
+    def loop(builder: mutable.Builder[B, List[B]]): Res[List[B]] =
       if (it.hasNext) {
         f(it.next()) match {
           case Ok(b) => loop(builder += b)
@@ -53,10 +52,10 @@ object Res {
           case Fail => Fail
         }
       } else Ok(builder.result())
-    loop(bf.newBuilder(in))
+    loop(new ListBuffer[B])
   }
 
-  def sequence[M[X] <: Iterable[X], A](in: M[Res[A]])(implicit bf: BuildFrom[M[Res[A]], A, M[A]]): Res[M[A]] =
+  def sequence[A](in: List[Res[A]]): Res[List[A]] =
     traverse(in)(identity)
 
   def sequence[A](in: Option[Res[A]]): Res[Option[A]] = in match {
