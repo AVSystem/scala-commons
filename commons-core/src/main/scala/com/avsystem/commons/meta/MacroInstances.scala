@@ -58,7 +58,7 @@ object MacroInstances {
     *   trait SomeRawRpc { ... }
     *   class SomeMetadata[Real](...)
     *
-    *   trait SomeInstances[Real} {
+    *   trait SomeInstances[Real] {
     *     def asReal: AsReal[SomeRawRpc, Real]
     *     def metadata: SomeMetadata[Real]
     *   }
