@@ -47,14 +47,13 @@ class JettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers wit
 
   val keksResult: Long = Long.MaxValue
   val topKeksResult: Int = Int.MaxValue
-  val errorMessage: String = "cannot into"
 
   val impl: SomeApi = new SomeApi {
     override def keks: Future[Long] = Future.successful(keksResult)
     override def isTop(keks: Long): Future[Boolean] = Future.successful(keks == Int.MaxValue)
     override val topper = new TopperImpl("%s", topKeksResult)
     override def differentTopper(helloPattern: String): Topper = new TopperImpl(helloPattern, topKeksResult)
-    override def erroneousKeks: Future[Int] = Future.failed(new RuntimeException(errorMessage))
+    override def erroneousKeks: Future[Int] = Future.failed(new RuntimeException("cannot into"))
   }
 
   val port: Int = 1337
@@ -115,7 +114,6 @@ class JettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers wit
     val failed = rpc.erroneousKeks.failed.futureValue
     failed shouldBe a[HttpException]
     val exception = failed.asInstanceOf[HttpException]
-    exception.reason shouldBe errorMessage
     exception.status shouldBe 500
   }
 
