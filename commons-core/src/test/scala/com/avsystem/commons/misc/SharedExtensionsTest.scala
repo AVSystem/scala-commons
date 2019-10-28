@@ -177,4 +177,13 @@ class SharedExtensionsTest extends FunSuite with Matchers {
   test("withSourceCode") {
     assert(123.withSourceCode == (123, "123"))
   }
+
+  test("partitionEither") {
+    val list = List("1", "2", "3", "4", "5", "fds", "fasd", "d2s")
+    val (strings, numbers) = list.partitionEither { elem =>
+      Try(elem.toInt).toEither.swap.map(_ => elem).swap
+    }
+    assert(numbers == List(1, 2, 3, 4, 5))
+    assert(strings == List("fds", "fasd", "d2s"))
+  }
 }
