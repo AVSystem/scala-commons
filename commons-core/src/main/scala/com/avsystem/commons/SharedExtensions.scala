@@ -584,14 +584,16 @@ object SharedExtensions extends SharedExtensions {
     def asyncForeach(fun: A => Future[Unit])(implicit ec: ExecutionContext): Future[Unit] =
       coll.foldLeft[Future[Unit]](Future.unit)((fu, a) => fu.flatMap(_ => fun(a)))
 
-    def partitionEither[L, R](fun: A => Either[L, R])(implicit cbfL: CanBuildFrom[Nothing, L, C[L]], cbfR: CanBuildFrom[Nothing, R, C[R]]): (C[L], C[R]) = {
-      val left = cbfL()
-      val right = cbfR()
+    def partitionEither[L, R](
+      fun: A => Either[L, R]
+    )(implicit cbfL: CanBuildFrom[Nothing, L, C[L]], cbfR: CanBuildFrom[Nothing, R, C[R]]): (C[L], C[R]) = {
+      val leftBuilder = cbfL()
+      val rightBuilder = cbfR()
       coll.foreach(fun(_) match {
-        case Left(l) => left += l
-        case Right(r) => right += r
+        case Left(l) => leftBuilder += l
+        case Right(r) => rightBuilder += r
       })
-      (left.result(), right.result())
+      (leftBuilder.result(), rightBuilder.result())
     }
   }
 

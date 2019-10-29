@@ -179,11 +179,11 @@ class SharedExtensionsTest extends FunSuite with Matchers {
   }
 
   test("partitionEither") {
-    val list = List("1", "2", "3", "4", "5", "fds", "fasd", "d2s")
+    val list = List("1", "2", "3", "fds", "fasd", "4", "d2s", "5")
     val (strings, numbers) = list.partitionEither { elem =>
-      Try(elem.toInt).toEither.swap.map(_ => elem).swap
+      Try(elem.toInt).fold(_ => Left(elem), Right(_))
     }
-    assert(numbers == List(1, 2, 3, 4, 5))
     assert(strings == List("fds", "fasd", "d2s"))
+    assert(numbers == List(1, 2, 3, 4, 5))
   }
 }
