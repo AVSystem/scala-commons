@@ -46,11 +46,4 @@ class SharedExtensionsPropertyTest extends FunSuite with Matchers with Generator
       elemList.indexWhere(_ == element) shouldEqual elemList.indexWhereOpt(_ == element).getOrElse(-1)
     }
   }
-
-  test("indexWhereOpt(elem, from).getOrElse(-1) should behave identically to indexWhere(elem, from)") {
-    forAll(listWithIndexGen, elementGen) { case ((elemList, idx), element) =>
-      elemList.indexWhere(_ == element, idx) shouldEqual elemList.indexWhereOpt(_ == element, idx).getOrElse(-1)
-    }
-  }
-
 }

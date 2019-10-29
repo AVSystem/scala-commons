@@ -568,7 +568,7 @@ object SharedExtensions extends SharedExtensions {
 
     def indexOfOpt(elem: A, from: Int = 0): Opt[Int] = coll.toIterator.indexOf(elem, from).opt.filter(_ != -1)
 
-    def indexWhereOpt(p: A => Boolean, from: Int = 0): Opt[Int] = coll.toIterator.indexWhere(p, from).opt.filter(_ != -1)
+    def indexWhereOpt(p: A => Boolean): Opt[Int] = coll.toIterator.indexWhere(p).opt.filter(_ != -1)
 
     def mkStringOr(start: String, sep: String, end: String, default: String): String =
       if (coll.nonEmpty) coll.mkString(start, sep, end) else default
