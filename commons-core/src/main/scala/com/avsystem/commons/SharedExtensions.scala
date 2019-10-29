@@ -566,7 +566,7 @@ object SharedExtensions extends SharedExtensions {
 
     def minOptBy[B: Ordering](f: A => B): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.minBy(f).opt
 
-    def indexOfOpt(elem: A, from: Int = 0): Opt[Int] = coll.toIterator.indexOf(elem, from).opt.filter(_ != -1)
+    def indexOfOpt(elem: A): Opt[Int] = coll.toIterator.indexOf(elem).opt.filter(_ != -1)
 
     def indexWhereOpt(p: A => Boolean): Opt[Int] = coll.toIterator.indexWhere(p).opt.filter(_ != -1)
 
