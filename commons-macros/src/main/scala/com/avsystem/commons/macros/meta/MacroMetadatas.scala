@@ -274,7 +274,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       val annotConstr = new ReifiedAnnotConstructor(annotTpe, this)
 
       def materializeAnnotParam(param: Symbol): Option[Res[Tree]] =
-        if(findAnnotation(param, CompositeAT).nonEmpty)
+        if (findAnnotation(param, CompositeAT).nonEmpty)
           Some(new CompositeParam(annotConstr, param)
             .tryMaterialize(matchedSymbol)(p => FailMsg(s"unexpected metadata parameter $p")))
         else
@@ -337,19 +337,19 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     }
 
     def tryMaterializeFor(matchedParam: MatchedSymbol): Res[Tree] = Ok {
-      val sym = matchedParam.real.symbol
+      val paramSym = matchedParam.real.symbol
       @tailrec def loop(index: Int, indexInList: Int, indexOfList: Int, paramLists: List[List[Symbol]]): Tree =
         paramLists match {
-          case (`sym` :: _) :: _ =>
+          case (sym :: _) :: _ if sym.name == paramSym.name =>
             q"$ParamPositionObj($index, $indexOfList, $indexInList, ${matchedParam.indexInRaw})"
           case (_ :: rest) :: tail =>
             loop(index + 1, indexInList + 1, indexOfList, rest :: tail)
           case Nil :: rest =>
             loop(index, 0, indexOfList + 1, rest)
           case Nil =>
-            abort(s"$sym not found in its owner param lists")
+            abort(s"$paramSym not found in its owner param lists")
         }
-      loop(0, 0, 0, sym.owner.typeSignature.paramLists)
+      loop(0, 0, 0, paramSym.owner.typeSignature.paramLists)
     }
   }
 
