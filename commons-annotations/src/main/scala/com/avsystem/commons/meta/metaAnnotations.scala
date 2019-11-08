@@ -163,6 +163,11 @@ final class multi extends SymbolArity
 final class annotated[A <: StaticAnnotation] extends RawSymAnnotation
 
 /**
+  * A negated version of [[annotated]]
+  */
+final class notAnnotated[A <: StaticAnnotation] extends RawSymAnnotation
+
+/**
   * Raw parameters annotated as `@auxiliary` match real parameters without "consuming" them. This means that
   * real parameters matched by an auxiliary raw parameter must also be matched by some non-auxiliary raw parameter.
   * This way these real params will be matched to more than one raw parameter and effectively duplicated.

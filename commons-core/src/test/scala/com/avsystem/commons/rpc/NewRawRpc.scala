@@ -24,6 +24,7 @@ case class renamed(int: Int, name: String) extends DummyParamTag {
 case class suchMeta(intMeta: Int, strMeta: String) extends StaticAnnotation
 
 class filter extends StaticAnnotation
+class negFilter extends StaticAnnotation
 
 sealed trait RestMethod extends RpcTag
 case class POST() extends RestMethod with AnnotationAggregate {
@@ -48,19 +49,22 @@ trait NewRawRpc {
   @verbatim def fire(
     @methodName name: String,
     @optional @auxiliary ajdi: Opt[Int],
-    @multi args: Map[String, String]): Unit
+    @multi args: Map[String, String]
+  ): Unit
 
   @multi def call(
     @methodName name: String,
     @tagged[renamed] @multi renamedArgs: => Map[String, String],
-    @multi args: Map[String, String]): Future[String]
+    @multi args: Map[String, String]
+  ): Future[String]
 
   @multi def get(@composite invocation: GetterInvocation): NewRawRpc
 
   @multi
   @tagged[POST] def post(@methodName name: String,
     @tagged[header] @multi @verbatim headers: Vector[String],
-    @multi body: MLinkedHashMap[String, String]): String
+    @multi body: MLinkedHashMap[String, String]
+  ): String
 
   @multi def prefix(@methodName name: String): NewRawRpc
 }
@@ -217,7 +221,7 @@ case class NameInfo(
 
 @allowIncomplete
 case class PartialMetadata[T](
-  @multi @rpcMethodMetadata @annotated[POST] posts: List[PostMethod[_]]
+  @multi @rpcMethodMetadata @annotated[POST] @notAnnotated[negFilter] posts: List[PostMethod[_]]
 ) {
   def repr: String = posts.map(_.repr).mkString("\n")
 }

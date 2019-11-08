@@ -24,6 +24,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final lazy val CompositeAT: Type = staticType(tq"$MetaPackage.composite")
   final lazy val AuxiliaryAT: Type = staticType(tq"$MetaPackage.auxiliary")
   final lazy val AnnotatedAT: Type = staticType(tq"$MetaPackage.annotated[_]")
+  final lazy val NotAnnotatedAT: Type = staticType(tq"$MetaPackage.notAnnotated[_]")
   final lazy val TaggedAT: Type = staticType(tq"$RpcPackage.tagged[_]")
   final lazy val UnmatchedAT: Type = staticType(tq"$RpcPackage.unmatched")
   final lazy val UnmatchedParamAT: Type = staticType(tq"$RpcPackage.unmatchedParam[_]")
@@ -223,14 +224,23 @@ private[commons] trait MacroSymbols extends MacroCommons {
     lazy val requiredAnnots: List[Type] =
       annots(AnnotatedAT).map(_.tpe.dealias.typeArgs.head)
 
+    lazy val rejectedAnnots: List[Type] =
+      annots(NotAnnotatedAT).map(_.tpe.dealias.typeArgs.head)
+
     lazy val unmatchedError: Option[String] =
       annot(UnmatchedAT).map(_.findArg[String](UnmatchedErrorArg))
 
-    def matchFilters(realSymbol: MatchedSymbol): Res[Unit] =
-      Res.traverse(requiredAnnots) { annotTpe =>
-        if (realSymbol.annot(annotTpe).nonEmpty) Ok(())
+    private def checkAnnots(realSymbol: MatchedSymbol, annots: List[Type], required: Boolean): Res[Unit] =
+      Res.traverse(annots) { annotTpe =>
+        val annot = realSymbol.annot(annotTpe)
+        if (required && annot.isDefined || !required && annot.isEmpty) Ok(())
         else Fail
       }.map(_ => ())
+
+    def matchFilters(realSymbol: MatchedSymbol): Res[Unit] = for {
+      _ <- checkAnnots(realSymbol, requiredAnnots, required = true)
+      _ <- checkAnnots(realSymbol, rejectedAnnots, required = false)
+    } yield ()
   }
 
   case class BaseTagSpec(baseTagTpe: Type, fallbackTag: FallbackTag)
