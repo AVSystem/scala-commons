@@ -312,3 +312,10 @@ final class checked extends StaticAnnotation
   * metadata parameter
   */
 final class allowIncomplete extends RawSymAnnotation
+
+/**
+  * May be applied on real API methods in order to exclude them from raw-to-real API translation
+  * and metadata generation. This annotation is only taken into account when translating APIs in to raw RPC using
+  * `AsRaw.materializeForApi` and when generating metadata using `RpcMetadata.materializeForApi`.
+  */
+final class ignore extends RealSymAnnotation

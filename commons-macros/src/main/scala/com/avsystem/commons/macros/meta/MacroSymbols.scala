@@ -25,6 +25,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final lazy val AuxiliaryAT: Type = staticType(tq"$MetaPackage.auxiliary")
   final lazy val AnnotatedAT: Type = staticType(tq"$MetaPackage.annotated[_]")
   final lazy val NotAnnotatedAT: Type = staticType(tq"$MetaPackage.notAnnotated[_]")
+  final lazy val IgnoreAT: Type = staticType(tq"$MetaPackage.ignore")
   final lazy val TaggedAT: Type = staticType(tq"$RpcPackage.tagged[_]")
   final lazy val UnmatchedAT: Type = staticType(tq"$RpcPackage.unmatched")
   final lazy val UnmatchedParamAT: Type = staticType(tq"$RpcPackage.unmatchedParam[_]")

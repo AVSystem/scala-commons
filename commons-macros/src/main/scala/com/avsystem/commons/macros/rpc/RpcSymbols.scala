@@ -2,7 +2,7 @@ package com.avsystem.commons
 package macros.rpc
 
 import com.avsystem.commons.macros.meta.MacroSymbols
-import com.avsystem.commons.macros.misc.{Ok, Res}
+import com.avsystem.commons.macros.misc.Res
 
 import scala.collection.mutable
 
@@ -366,6 +366,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     def shortDescription = "real API"
 
     def isApiMethod(s: TermSymbol): Boolean =
-      s.isPublic && !s.isConstructor && !s.isSynthetic && !isFromToplevelType(s)
+      s.isPublic && !s.isConstructor && !s.isSynthetic && !isFromToplevelType(s) &&
+        findAnnotation(s, IgnoreAT).isEmpty
   }
 }

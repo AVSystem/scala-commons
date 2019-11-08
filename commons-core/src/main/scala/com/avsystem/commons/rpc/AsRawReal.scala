@@ -30,6 +30,7 @@ object AsRaw extends FallbackAsRaw {
   /**
     * Like [[materialize]] but for arbitrary real type instead of RPC trait.
     * Scans all public methods of the real type (instead of abstract methods for RPC trait).
+    * Methods can be manually excluded using [[com.avsystem.commons.meta.ignore ignore]] annotation.
     */
   def materializeForApi[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.apiAsRaw[Raw, Real]
 
@@ -118,6 +119,7 @@ object RpcMetadata {
   /**
     * Like [[materialize]] but for arbitrary real type instead of RPC trait.
     * Scans all public methods of the real type (instead of abstract methods for RPC trait).
+    * Methods can be manually excluded using [[com.avsystem.commons.meta.ignore ignore]] annotation.
     */
   def materializeForApi[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.apiMetadata[Real]
 
