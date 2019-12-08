@@ -3,7 +3,7 @@ package macros
 
 import com.avsystem.commons.misc.TypeString
 import org.scalactic.source.Position
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 object TypeStringTest {
   val x = "x"
@@ -87,7 +87,7 @@ object TypeStringTest {
   }
 }
 
-class TypeStringTest extends FunSuite {
+class TypeStringTest extends AnyFunSuite {
 
   def testTypeString[T: TypeString](expected: String)(implicit pos: Position): Unit =
     test(s"${pos.lineNumber}:$expected") {

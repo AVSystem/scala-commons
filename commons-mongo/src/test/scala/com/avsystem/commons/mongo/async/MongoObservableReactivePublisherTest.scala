@@ -9,13 +9,13 @@ import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.mongodb.scala.{Completed, Document, FindObservable, MongoCollection, SingleObservable}
 import org.scalactic.source.Position
-import org.scalatest.FreeSpec
 import org.scalatestplus.mockito.MockitoSugar
 
 import scala.concurrent.duration.Duration
+import org.scalatest.freespec.AnyFreeSpec
 
 @silent("deprecated")
-class MongoObservableReactivePublisherTest extends FreeSpec with MockitoSugar {
+class MongoObservableReactivePublisherTest extends AnyFreeSpec with MockitoSugar {
 
   abstract class MockedObservableTests(implicit position: Position) extends MongoObservableExtensions {
 

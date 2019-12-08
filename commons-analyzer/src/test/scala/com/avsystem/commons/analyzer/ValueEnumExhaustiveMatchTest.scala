@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package analyzer
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class ValueEnumExhaustiveMatchTest extends FunSuite with AnalyzerTest {
+class ValueEnumExhaustiveMatchTest extends AnyFunSuite with AnalyzerTest {
   def source(caseDefs: String): String =
     s"""
        |import com.avsystem.commons.misc._

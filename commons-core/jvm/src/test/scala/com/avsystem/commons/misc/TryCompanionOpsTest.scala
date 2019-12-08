@@ -1,12 +1,13 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author Wojciech Milewski
   */
-class TryCompanionOpsTest extends FlatSpec with Matchers {
+class TryCompanionOpsTest extends AnyFlatSpec with Matchers {
 
   "Try.sequence" should "convert empty list" in {
     val list: List[Try[Int]] = Nil

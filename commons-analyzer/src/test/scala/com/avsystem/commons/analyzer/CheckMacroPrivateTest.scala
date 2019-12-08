@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package analyzer
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class CheckMacroPrivateTest extends FunSuite with AnalyzerTest {
+class CheckMacroPrivateTest extends AnyFunSuite with AnalyzerTest {
   test("macro private method invoked directly should be rejected") {
     assertErrors(
       """

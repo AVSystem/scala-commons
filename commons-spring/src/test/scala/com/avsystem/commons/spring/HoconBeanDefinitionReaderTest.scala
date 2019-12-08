@@ -4,11 +4,11 @@ package spring
 import java.{util => ju}
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.scalatest.FunSuite
 import org.springframework.beans.factory.support.DefaultListableBeanFactory
 import org.springframework.context.support.GenericApplicationContext
 
 import scala.beans.BeanProperty
+import org.scalatest.funsuite.AnyFunSuite
 
 class TestBean(val constrInt: Int = 1, val constrString: String = "constrDefault") {
   @BeanProperty var int: Int = _
@@ -24,7 +24,7 @@ object TestBean {
     new TestBean(theInt, theString)
 }
 
-class HoconBeanDefinitionReaderTest extends FunSuite {
+class HoconBeanDefinitionReaderTest extends AnyFunSuite {
   def createContext(resource: String): GenericApplicationContext = {
     val pnd = new ScalaParameterNameDiscoverer
 

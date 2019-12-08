@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 @flatten sealed trait Seal {
   def id: String
@@ -19,7 +19,7 @@ case class Toplevel(middle: Opt[Middle], seal: Seal = Objekt)
 
 case class CodecRef[S, T](ref: GenRef[S, T])(implicit targetCodec: GenCodec[T])
 
-class GenRefTest extends FunSuite {
+class GenRefTest extends AnyFunSuite {
   test("simple raw ref") {
     val path = RawRef.create[TransparentToplevel].ref(_.toplevel.middle.get.bottom.mapa("str")).normalize.toList
     assert(path == List("middle", "bot", "mapa", "str").map(RawRef.Field))

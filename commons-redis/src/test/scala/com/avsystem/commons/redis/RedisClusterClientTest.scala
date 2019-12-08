@@ -6,12 +6,13 @@ import com.avsystem.commons.redis.config.{ClusterConfig, ConnectionConfig, Execu
 import com.avsystem.commons.redis.exception.{ClusterInitializationException, CrossSlotException, ForbiddenCommandException, NoKeysException}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
-import org.scalatest.{FunSuite, Matchers}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class RedisClusterClientNonClusteredInitTest extends FunSuite
+class RedisClusterClientNonClusteredInitTest extends AnyFunSuite
   with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer {
 
   import RedisApi.Batches.StringTyped._
@@ -54,7 +55,7 @@ class RedisClusterClientNonClusteredInitTest extends FunSuite
   }
 }
 
-class RedisClusterClientInitTest extends FunSuite
+class RedisClusterClientInitTest extends AnyFunSuite
   with Matchers with ScalaFutures with UsesActorSystem with UsesPreconfiguredCluster {
 
   import RedisApi.Batches.StringTyped._
@@ -75,7 +76,7 @@ class RedisClusterClientInitTest extends FunSuite
   }
 }
 
-class RedisClusterClientInitDuringFailureTest extends FunSuite
+class RedisClusterClientInitDuringFailureTest extends AnyFunSuite
   with Matchers with ScalaFutures with UsesActorSystem with UsesPreconfiguredCluster {
 
   import RedisApi.Batches.StringTyped._

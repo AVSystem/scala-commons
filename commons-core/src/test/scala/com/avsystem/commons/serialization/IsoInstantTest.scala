@@ -3,10 +3,10 @@ package serialization
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import org.scalacheck.Gen
-import org.scalatest.FunSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import org.scalatest.funsuite.AnyFunSuite
 
-class IsoInstantTest extends FunSuite with ScalaCheckPropertyChecks {
+class IsoInstantTest extends AnyFunSuite with ScalaCheckPropertyChecks {
   test("basic parsing") {
     assert(IsoInstant.parse("1970-01-01T00:00:00Z") == 0)
     assert(IsoInstant.parse("1970-01-01T00:00:00.000Z") == 0)

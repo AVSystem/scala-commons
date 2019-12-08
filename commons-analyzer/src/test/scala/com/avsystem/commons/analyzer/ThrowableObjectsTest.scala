@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package analyzer
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class ThrowableObjectsTest extends FunSuite with AnalyzerTest {
+class ThrowableObjectsTest extends AnyFunSuite with AnalyzerTest {
   test("throwable objects with stack trace should be rejected") {
     assertErrors(1,
       """

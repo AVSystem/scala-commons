@@ -3,7 +3,7 @@ package rpc
 
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.TypeString
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 case class ApiInfo[T](
   @infer ts: TypeString[T],
@@ -66,7 +66,7 @@ class SimpleApi {
   def takesTypeArgs[A, B](as: List[A], bs: Set[B]): Map[A, B] = Map.empty
 }
 
-class ApiReflectionTest extends FunSuite {
+class ApiReflectionTest extends AnyFunSuite {
   test("String API") {
     assert(ApiInfo.materialize[String].repr ==
       """String {

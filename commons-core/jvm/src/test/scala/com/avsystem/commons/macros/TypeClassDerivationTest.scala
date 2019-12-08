@@ -2,9 +2,9 @@ package com.avsystem.commons
 package macros
 
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
-import org.scalatest.FunSuite
 
 import scala.reflect.runtime.{universe => ru}
+import org.scalatest.funsuite.AnyFunSuite
 
 object TypeClassDerivationTest {
 
@@ -65,7 +65,7 @@ object TypeClassDerivationTest {
   }
 }
 
-class TypeClassDerivationTest extends FunSuite {
+class TypeClassDerivationTest extends AnyFunSuite {
 
   import TypeClassDerivationTest._
 

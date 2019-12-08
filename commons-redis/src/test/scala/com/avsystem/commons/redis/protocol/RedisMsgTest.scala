@@ -4,16 +4,16 @@ package redis.protocol
 import akka.util.ByteString
 import com.avsystem.commons.redis.protocol.RedisMsgScalacheck._
 import org.scalacheck.Gen
-import org.scalatest.FunSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.collection.immutable.VectorBuilder
+import org.scalatest.funsuite.AnyFunSuite
 
 /**
   * Author: ghik
   * Created: 01/04/16.
   */
-class RedisMsgTest extends FunSuite with ScalaCheckPropertyChecks {
+class RedisMsgTest extends AnyFunSuite with ScalaCheckPropertyChecks {
   def splitAtIndices(repr: ByteString, indices: Seq[Int]): Seq[ByteString] =
     (indices :+ repr.length).foldLeft((0, Vector.empty[ByteString])) {
       case ((prevIdx, acc), nextIdx) => (nextIdx, acc :+ repr.slice(prevIdx, nextIdx))

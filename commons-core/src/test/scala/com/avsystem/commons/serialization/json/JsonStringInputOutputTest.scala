@@ -6,12 +6,13 @@ import com.avsystem.commons.serialization.{GenCodec, HasGenCodec, Input, Output,
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck._
 import org.scalactic.source.Position
-import org.scalatest.{FunSuite, Matchers}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.collection.mutable.ListBuffer
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils with Matchers with ScalaCheckPropertyChecks {
+class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils with Matchers with ScalaCheckPropertyChecks {
 
   import JsonStringInput.read
   import JsonStringOutput.write

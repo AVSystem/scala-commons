@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package analyzer
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class VarargsAtLeastTest extends FunSuite with AnalyzerTest {
+class VarargsAtLeastTest extends AnyFunSuite with AnalyzerTest {
   test("too few varargs parameters should be rejected") {
     assertErrors(
       """

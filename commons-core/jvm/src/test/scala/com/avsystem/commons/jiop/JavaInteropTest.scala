@@ -4,14 +4,14 @@ package jiop
 import java.util.stream.{Collectors, DoubleStream, IntStream, LongStream}
 
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
-import org.scalatest.FunSuite
 import GuavaInterop._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.collection.compat._
+import org.scalatest.funsuite.AnyFunSuite
 
-class JavaInteropTest extends FunSuite {
+class JavaInteropTest extends AnyFunSuite {
 
   def assertSame[A](s1: JStream[A], s2: JStream[A]): Unit =
     assert(s1.collect(Collectors.toList[A]) == s2.collect(Collectors.toList[A]))
