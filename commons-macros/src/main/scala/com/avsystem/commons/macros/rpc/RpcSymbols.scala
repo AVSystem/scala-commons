@@ -18,7 +18,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     type Self = MatchedMethod
 
     def indexInRaw: Int = 0
-    def typeParamsInContext: List[MacroTypeParam] = real.typeParams
+    def typeParamsInContext: List[MacroTypeParam] = real.ownerApi.typeParams ++ real.typeParams
 
     def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedMethod =
       copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
@@ -35,7 +35,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   case class MatchedTypeParam(
     real: RealTypeParam,
     fallbackTagsUsed: List[FallbackTag],
-    matchedOwner: MatchedMethod,
+    matchedOwner: MatchedSymbol,
     indexInRaw: Int
   ) extends MatchedSymbol {
     type Self = MatchedTypeParam
@@ -134,8 +134,8 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   }
 
   trait RealTypeParamTarget extends RealParamOrTypeParamTarget {
-    def matchRealTypeParam(matchedMethod: MatchedMethod, realTypeParam: RealTypeParam, indexInRaw: Int): Res[MatchedTypeParam] =
-      matchTagsAndFilters(MatchedTypeParam(realTypeParam, Nil, matchedMethod, indexInRaw))
+    def matchRealTypeParam(matched: MatchedSymbol, realTypeParam: RealTypeParam, indexInRaw: Int): Res[MatchedTypeParam] =
+      matchTagsAndFilters(MatchedTypeParam(realTypeParam, Nil, matched, indexInRaw))
   }
 
   object RawParam {
@@ -204,7 +204,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     def baseTagSpecs: List[BaseTagSpec] = containingRawMethod.tagSpecs(ParamTagAT)
   }
 
-  case class RealTypeParam(owner: RealMethod, symbol: Symbol) extends MacroTypeParam with RealRpcSymbol {
+  case class RealTypeParam(owner: RealRpcSymbol, symbol: Symbol) extends MacroTypeParam with RealRpcSymbol {
     if (symbol.typeSignature.takesTypeArgs) {
       reportProblem(s"real RPC type parameters must not be higher-kinded")
     }
@@ -344,7 +344,12 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   abstract class RealRpcApi(tpe: Type) extends RpcApi with RealRpcSymbol with SelfMatchedSymbol {
     def description = s"$shortDescription $tpe"
 
+    def forTypeConstructor: RealRpcApi
     def isApiMethod(s: TermSymbol): Boolean
+    override def typeParamsInContext: List[MacroTypeParam] = typeParams
+
+    lazy val typeParams: List[RealTypeParam] =
+      tpe.typeParams.map(RealTypeParam(this, _))
 
     lazy val realMethods: List[RealMethod] = {
       val overloadIndices = new mutable.HashMap[Name, Int]
@@ -359,12 +364,14 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   case class RealRpcTrait(tpe: Type) extends RealRpcApi(tpe) with RpcTrait {
     def shortDescription = "real RPC"
 
+    def forTypeConstructor: RealRpcTrait = RealRpcTrait(tpe.typeConstructor)
     def isApiMethod(s: TermSymbol): Boolean = s.isAbstract
   }
 
   case class RealApiClass(tpe: Type) extends RealRpcApi(tpe) {
     def shortDescription = "real API"
 
+    def forTypeConstructor: RealApiClass = RealApiClass(tpe.typeConstructor)
     def isApiMethod(s: TermSymbol): Boolean =
       s.isPublic && !s.isConstructor && !s.isSynthetic && !isFromToplevelType(s) &&
         findAnnotation(s, IgnoreAT).isEmpty

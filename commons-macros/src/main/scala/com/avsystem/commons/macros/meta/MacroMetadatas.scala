@@ -24,7 +24,6 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   final lazy val ParamPositionTpe: Type = staticType(tq"$MetaPackage.ParamPosition")
   final lazy val ParamFlagsTpe: Type = staticType(tq"$MetaPackage.ParamFlags")
   final lazy val TypeFlagsTpe: Type = staticType(tq"$MetaPackage.TypeFlags")
-
   final lazy val ForTypeParamsAT: Type = staticType(tq"$RpcPackage.forTypeParams")
 
   def actualMetadataType(baseMetadataType: Type, realType: Type, realTypeDesc: String, verbatim: Boolean): Res[Type] = {

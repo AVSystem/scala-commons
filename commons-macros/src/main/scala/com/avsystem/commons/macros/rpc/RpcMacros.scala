@@ -118,11 +118,12 @@ private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCo
 
   private def mkMetadata(real: RealRpcApi): Tree = {
     val metadataTpe = c.macroApplication.tpe.dealias
-    val constructor = new RpcTraitMetadataConstructor(metadataTpe, None)
+    val constructor = new RpcApiMetadataConstructor(metadataTpe, None)
+    val actualReal = if(constructor.abstractsTypeParams) real.forTypeConstructor else real
 
     def materialize: Res[Tree] = for {
-      _ <- constructor.matchTagsAndFilters(real)
-      tree <- constructor.tryMaterializeFor(real)
+      _ <- constructor.matchTagsAndFilters(actualReal)
+      tree <- constructor.tryMaterializeFor(actualReal)
     } yield tree
 
     guardedMetadata(metadataTpe, real.tpe)(materialize.getOrElse(err => abort(err.getOrElse("unknown error"))))

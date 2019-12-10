@@ -42,8 +42,8 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
 
     def baseTagSpecs: List[BaseTagSpec] = Nil //TODO: introduce `typeParamTag` just for the sake of consistency?
 
-    private def metadataTree(matchedMethod: MatchedMethod, realParam: RealTypeParam, indexInRaw: Int): Option[Res[Tree]] =
-      matchRealTypeParam(matchedMethod, realParam, indexInRaw).toOption.map(metadataTree(_, indexInRaw))
+    private def metadataTree(matched: MatchedSymbol, realParam: RealTypeParam, indexInRaw: Int): Option[Res[Tree]] =
+      matchRealTypeParam(matched, realParam, indexInRaw).toOption.map(metadataTree(_, indexInRaw))
 
     private def metadataTree(matchedParam: MatchedTypeParam, indexInRaw: Int): Res[Tree] = {
       val realParam = matchedParam.real
@@ -59,17 +59,17 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       result.mapFailure(msg => s"${realParam.problemStr}:\n$msg")
     }
 
-    def metadataFor(matchedMethod: MatchedMethod, parser: ParamsParser[RealTypeParam]): Res[Tree] = arity match {
+    def metadataFor(matched: MatchedSymbol, parser: ParamsParser[RealTypeParam]): Res[Tree] = arity match {
       case _: ParamArity.Single =>
         val errorMessage = unmatchedError.getOrElse(s"$shortDescription $pathStr was not matched by any real type parameter")
-        parser.extractSingle(!auxiliary, metadataTree(matchedMethod, _, 0), errorMessage)
+        parser.extractSingle(!auxiliary, metadataTree(matched, _, 0), errorMessage)
       case _: ParamArity.Optional =>
-        Ok(mkOptional(parser.extractOptional(!auxiliary, metadataTree(matchedMethod, _, 0))))
+        Ok(mkOptional(parser.extractOptional(!auxiliary, metadataTree(matched, _, 0))))
       case ParamArity.Multi(_, true) =>
-        parser.extractMulti(!auxiliary, (rp, i) => matchRealTypeParam(matchedMethod, rp, i)
+        parser.extractMulti(!auxiliary, (rp, i) => matchRealTypeParam(matched, rp, i)
           .toOption.map(mp => metadataTree(mp, i).map(t => q"(${mp.rawName}, $t)"))).map(mkMulti(_))
       case _: ParamArity.Multi =>
-        parser.extractMulti(!auxiliary, metadataTree(matchedMethod, _, _)).map(mkMulti(_))
+        parser.extractMulti(!auxiliary, metadataTree(matched, _, _)).map(mkMulti(_))
     }
   }
 
@@ -121,45 +121,57 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     def collectedTree(named: Boolean): Tree = if (named) q"(${matchedMethod.rawName}, $tree)" else tree
   }
 
-  class RpcTraitMetadataConstructor(constructed: Type, ownerParam: Option[MetadataParam])
+  class RpcApiMetadataConstructor(constructed: Type, ownerParam: Option[MetadataParam])
     extends MetadataConstructor(constructed, ownerParam) with TagMatchingSymbol {
 
     def baseTagSpecs: List[BaseTagSpec] = Nil
 
+    lazy val typeParamMdParams: List[TypeParamMetadataParam] = collectParams[TypeParamMetadataParam]
     lazy val methodMdParams: List[MethodMetadataParam] = collectParams[MethodMetadataParam]
+
+    def abstractsTypeParams: Boolean = typeParamMdParams.nonEmpty
 
     override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor): MetadataParam =
       if (annot.tpe <:< RpcMethodMetadataAT) new MethodMetadataParam(ownerConstr, paramSym)
+      else if (annot.tpe <:< RpcTypeParamMetadataAT) new TypeParamMetadataParam(ownerConstr, paramSym)
       else super.paramByStrategy(paramSym, annot, ownerConstr)
 
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
-      new RpcTraitMetadataConstructor(param.collectedType, Some(param))
+      new RpcApiMetadataConstructor(param.collectedType, Some(param))
 
-    def tryMaterializeFor(rpc: RealRpcApi): Res[Tree] = {
+    def typeParamMappings(matched: RealRpcApi): Res[Map[TypeParamMetadataParam, Tree]] =
+      collectParamMappings(matched.typeParams, typeParamMdParams, allowIncomplete)(
+        (param, parser) => param.metadataFor(matched, parser).map(t => (param, t)),
+        rp => s"no metadata parameter was found that would match ${rp.shortDescription} ${rp.nameStr}"
+      ).map(_.toMap)
+
+    def tryMaterializeFor(rpc: RealRpcApi): Res[Tree] = typeParamMappings(rpc).flatMap { tpMappings =>
       val errorBase = unmatchedError.getOrElse(s"cannot materialize ${constructed.typeSymbol} for $rpc")
       val methodMappings =
         collectMethodMappings(
           methodMdParams, errorBase, rpc.realMethods, allowIncomplete
         )(_.mappingFor(_)).groupBy(_.mdParam)
 
-      tryMaterialize(rpc) { case mmp: MethodMetadataParam =>
-        val mappings = methodMappings.getOrElse(mmp, Nil)
-        mmp.arity match {
-          case ParamArity.Single(_) => mappings match {
-            case Nil => FailMsg(s"no real method found that would match ${mmp.description}")
-            case List(m) => Ok(m.tree)
-            case _ => FailMsg(s"multiple real methods match ${mmp.description}")
+      tryMaterialize(rpc) {
+        case tpmp: TypeParamMetadataParam => Ok(tpMappings(tpmp))
+        case mmp: MethodMetadataParam =>
+          val mappings = methodMappings.getOrElse(mmp, Nil)
+          mmp.arity match {
+            case ParamArity.Single(_) => mappings match {
+              case Nil => FailMsg(s"no real method found that would match ${mmp.description}")
+              case List(m) => Ok(m.tree)
+              case _ => FailMsg(s"multiple real methods match ${mmp.description}")
+            }
+            case ParamArity.Optional(_) => mappings match {
+              case Nil => Ok(mmp.mkOptional[Tree](None))
+              case List(m) => Ok(mmp.mkOptional(Some(m.tree)))
+              case _ => FailMsg(s"multiple real methods match ${mmp.description}")
+            }
+            case ParamArity.Multi(_, named) =>
+              Ok(mmp.mkMulti(mappings.map(_.collectedTree(named))))
+            case arity =>
+              FailMsg(s"${arity.annotStr} not allowed on method metadata params")
           }
-          case ParamArity.Optional(_) => mappings match {
-            case Nil => Ok(mmp.mkOptional[Tree](None))
-            case List(m) => Ok(mmp.mkOptional(Some(m.tree)))
-            case _ => FailMsg(s"multiple real methods match ${mmp.description}")
-          }
-          case ParamArity.Multi(_, named) =>
-            Ok(mmp.mkMulti(mappings.map(_.collectedTree(named))))
-          case arity =>
-            FailMsg(s"${arity.annotStr} not allowed on method metadata params")
-        }
       }
     }
   }
