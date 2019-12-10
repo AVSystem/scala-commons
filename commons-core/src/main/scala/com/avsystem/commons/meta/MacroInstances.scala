@@ -87,12 +87,4 @@ object MacroInstances {
     */
   implicit def materialize[Implicits, Instances]: MacroInstances[Implicits, Instances] =
   macro macros.misc.MiscMacros.macroInstances
-
-  /**
-    * Implicit-search-only variance for type params of [[MacroInstances]]
-    */
-  implicit def fromSubtype[Implicits, Instances, SuperImplicits >: Implicits, SubInstances <: Instances](
-    implicit subInstances: MacroInstances[SuperImplicits, SubInstances]
-  ): MacroInstances[Implicits, Instances] =
-    subInstances.asInstanceOf[MacroInstances[Implicits, Instances]]
 }
