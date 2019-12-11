@@ -576,9 +576,9 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     def minOptBy[B: Ordering](f: A => B): Opt[A] = if (it.isEmpty) Opt.Empty else it.minBy(f).opt
 
-    def indexOfOpt(elem: A): Opt[Int] = coll.toIterator.indexOf(elem).opt.filter(_ != -1)
+    def indexOfOpt(elem: A): Opt[Int] = coll.iterator.indexOf(elem).opt.filter(_ != -1)
 
-    def indexWhereOpt(p: A => Boolean): Opt[Int] = coll.toIterator.indexWhere(p).opt.filter(_ != -1)
+    def indexWhereOpt(p: A => Boolean): Opt[Int] = coll.iterator.indexWhere(p).opt.filter(_ != -1)
 
     def mkStringOr(start: String, sep: String, end: String, default: String): String =
       if (it.nonEmpty) it.mkString(start, sep, end) else default
@@ -603,7 +603,7 @@ object SharedExtensionsUtils extends SharedExtensions {
     )(implicit facL: Factory[L, C[L]], facR: Factory[R, C[R]]): (C[L], C[R]) = {
       val leftBuilder = facL.newBuilder
       val rightBuilder = facR.newBuilder
-      coll.foreach(fun(_) match {
+      coll.iterator.foreach(fun(_) match {
         case Left(l) => leftBuilder += l
         case Right(r) => rightBuilder += r
       })
