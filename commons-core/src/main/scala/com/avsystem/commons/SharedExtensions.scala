@@ -576,6 +576,10 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     def minOptBy[B: Ordering](f: A => B): Opt[A] = if (it.isEmpty) Opt.Empty else it.minBy(f).opt
 
+    def indexOfOpt(elem: A): Opt[Int] = coll.toIterator.indexOf(elem).opt.filter(_ != -1)
+
+    def indexWhereOpt(p: A => Boolean): Opt[Int] = coll.toIterator.indexWhere(p).opt.filter(_ != -1)
+
     def mkStringOr(start: String, sep: String, end: String, default: String): String =
       if (it.nonEmpty) it.mkString(start, sep, end) else default
 
@@ -593,6 +597,19 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     def asyncForeach(fun: A => Future[Unit])(implicit ec: ExecutionContext): Future[Unit] =
       it.foldLeft[Future[Unit]](Future.unit)((fu, a) => fu.flatMap(_ => fun(a)))
+
+    def partitionEither[L, R](
+      fun: A => Either[L, R]
+    )(implicit facL: Factory[L, C[L]], facR: Factory[R, C[R]]): (C[L], C[R]) = {
+      val leftBuilder = facL.newBuilder
+      val rightBuilder = facR.newBuilder
+      coll.foreach(fun(_) match {
+        case Left(l) => leftBuilder += l
+        case Right(r) => rightBuilder += r
+      })
+      (leftBuilder.result(), rightBuilder.result())
+    }
+  }
   }
 
   class PairIterableOnceOps[C[X] <: IterableOnce[X], K, V](private val coll: C[(K, V)]) extends AnyVal {

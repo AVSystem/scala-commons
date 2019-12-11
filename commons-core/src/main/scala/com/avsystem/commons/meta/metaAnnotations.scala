@@ -161,6 +161,11 @@ final class multi extends SymbolArity
 final class annotated[A <: StaticAnnotation] extends RawSymAnnotation
 
 /**
+  * A negated version of [[annotated]]
+  */
+final class notAnnotated[A <: StaticAnnotation] extends RawSymAnnotation
+
+/**
   * Raw parameters annotated as `@auxiliary` match real parameters without "consuming" them. This means that
   * real parameters matched by an auxiliary raw parameter must also be matched by some non-auxiliary raw parameter.
   * This way these real params will be matched to more than one raw parameter and effectively duplicated.
@@ -305,3 +310,10 @@ final class checked extends StaticAnnotation
   * metadata parameter
   */
 final class allowIncomplete extends RawSymAnnotation
+
+/**
+  * May be applied on real API methods in order to exclude them from raw-to-real API translation
+  * and metadata generation. This annotation is only taken into account when translating APIs in to raw RPC using
+  * `AsRaw.materializeForApi` and when generating metadata using `RpcMetadata.materializeForApi`.
+  */
+final class ignore extends RealSymAnnotation

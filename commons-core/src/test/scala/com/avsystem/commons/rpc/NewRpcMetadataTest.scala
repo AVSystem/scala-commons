@@ -32,6 +32,7 @@ trait TestApi extends SomeBase {
   @rpcName("ovprefix") def overload: TestApi
   def getit(stuff: String, @suchMeta(1, "a") otherStuff: List[Int]): TestApi
   def postit(arg: String, bar: String, int: Int, @suchMeta(3, "c") foo: String): String
+  @POST @negFilter def otherPost(arg: String): String
   def generyk[T](@annotTypeString[Box[T]] lel: Box[T])(implicit @encodingDependency tag: Tag[T]): Future[List[T]]
 }
 object TestApi {
@@ -89,6 +90,11 @@ class NewRpcMetadataTest extends FunSuite {
         |    BODY:
         |    arg -> arg@0:0:0:0: String suchMeta=false
         |    int -> int@2:0:2:1: Int suchMeta=false
+        |  POST_otherPost -> POST() def otherPost<POST_otherPost>: String
+        |    HEADERS:
+        |
+        |    BODY:
+        |    arg -> arg@0:0:0:0: String suchMeta=false
         |  GETTERS:
         |  ovgetter -> def overload<ovgetter>: com.avsystem.commons.rpc.TestApi
         |    ARGS:
