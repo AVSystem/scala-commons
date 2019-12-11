@@ -610,7 +610,6 @@ object SharedExtensionsUtils extends SharedExtensions {
       (leftBuilder.result(), rightBuilder.result())
     }
   }
-  }
 
   class PairIterableOnceOps[C[X] <: IterableOnce[X], K, V](private val coll: C[(K, V)]) extends AnyVal {
     def intoMap[M[X, Y] <: BMap[X, Y]](implicit fac: Factory[(K, V), M[K, V]]): M[K, V] = {
