@@ -3,17 +3,16 @@ package rpc
 
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.TypeString
-import com.avsystem.commons.rpc.GenericMeta._
 import org.scalatest.FunSuite
 
 class GenericMeta[T](
   @reifyName name: String,
-  @multi @rpcTypeParamMetadata typeParams: List[TypeParam],
-  @multi @rpcMethodMetadata methods: List[Method[_]]
+  @multi @rpcTypeParamMetadata typeParams: List[GenericMeta.TypeParam],
+  @multi @rpcMethodMetadata methods: List[GenericMeta.Method[_]]
 ) {
   def repr: String = {
     val targs = typeParams.map(_.typeString)
-    s"$name${tparams(typeParams)} {\n  ${methods.iterator.map(_.repr(targs)).mkString("\n  ")}\n}"
+    s"$name${GenericMeta.tparams(typeParams)} {\n  ${methods.iterator.map(_.repr(targs)).mkString("\n  ")}\n}"
   }
 }
 object GenericMeta extends RpcMetadataCompanion[GenericMeta] {
