@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class SealedEnumTest extends FunSuite {
+class SealedEnumTest extends AnyFunSuite {
   sealed abstract class SomeEnum(implicit val sourceInfo: SourceInfo) extends OrderedEnum
   object SomeEnum extends SealedEnumCompanion[SomeEnum] {
     case object First extends SomeEnum

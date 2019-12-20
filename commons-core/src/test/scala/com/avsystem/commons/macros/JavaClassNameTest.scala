@@ -3,7 +3,7 @@ package macros
 
 import com.avsystem.commons.misc.{JavaClassName, TypeString}
 import org.scalactic.source.Position
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 object JavaClassNameTest {
   class Inner {
@@ -17,7 +17,7 @@ object JavaClassNameTest {
   }
 }
 
-class JavaClassNameTest extends FunSuite {
+class JavaClassNameTest extends AnyFunSuite {
   def test[T: ClassTag : JavaClassName : TypeString](implicit pos: Position): Unit =
     test(TypeString.of[T])(assert(JavaClassName.of[T] == classTag[T].runtimeClass.getName))
 

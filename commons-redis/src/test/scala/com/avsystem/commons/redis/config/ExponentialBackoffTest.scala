@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package redis.config
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
@@ -9,7 +10,7 @@ import scala.concurrent.duration._
   * Author: ghik
   * Created: 31/08/16.
   */
-class ExponentialBackoffTest extends FunSuite with Matchers {
+class ExponentialBackoffTest extends AnyFunSuite with Matchers {
   test("simple") {
     import RetryStrategy._
     val eb = immediately.andThen(exponentially(1.second)).maxDelay(20.seconds).maxRetries(8)

@@ -1,9 +1,10 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class SourceInfoTest extends FunSuite with Matchers {
+class SourceInfoTest extends AnyFunSuite with Matchers {
   val srcInfo = SourceInfo.here
 
   test("simple") {

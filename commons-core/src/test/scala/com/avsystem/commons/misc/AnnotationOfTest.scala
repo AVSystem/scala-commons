@@ -2,7 +2,7 @@ package com.avsystem.commons
 package misc
 
 import com.avsystem.commons.annotation.AnnotationAggregate
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 case class genann[T](value: T) extends StaticAnnotation
 case class genagg[T](value: T) extends AnnotationAggregate {
@@ -17,7 +17,7 @@ abstract class SelfAnnots(implicit val annots: SelfAnnotations[genann[_]])
 @genagg(42) @genann("fuu") class Klass extends SelfAnnots
 @genagg(42) @genann("fuu") object Objekt extends SelfAnnots
 
-class AnnotationOfTest extends FunSuite {
+class AnnotationOfTest extends AnyFunSuite {
   test("aggregate with generic") {
     assert(AnnotationOf.materialize[genann[Int], Subject].annot.value == 42)
   }

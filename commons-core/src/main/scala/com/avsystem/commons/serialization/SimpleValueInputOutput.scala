@@ -114,7 +114,7 @@ class SimpleValueInput(value: Any) extends InputAndSimpleInput {
       override def knownSize: Int = if(map.isEmpty) 0 else map.knownSize
       def nextField(): SimpleValueFieldInput = it.next()
       override def peekField(name: String): Opt[SimpleValueFieldInput] =
-        map.getOpt(name).map(new SimpleValueFieldInput(name, _))
+        map.get(name).map(new SimpleValueFieldInput(name, _)).toOpt // values may be null!
       def hasNext: Boolean = it.hasNext
     }
 

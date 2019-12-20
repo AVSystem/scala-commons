@@ -2,9 +2,9 @@ package com.avsystem.commons
 package serialization
 
 import org.scalactic.source.Position
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-trait AbstractCodecTest extends FunSuite {
+trait AbstractCodecTest extends AnyFunSuite {
   def assertSameTypeValue[T](v1: T, v2: T)(implicit pos: Position): Unit = {
     assert(v1 == v2)
     assert(v1 == null || v1.getClass == v2.getClass)

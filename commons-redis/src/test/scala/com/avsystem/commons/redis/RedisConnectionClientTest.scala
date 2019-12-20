@@ -5,13 +5,14 @@ import akka.util.ByteString
 import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception.{ConnectionFailedException, ConnectionInitializationFailure}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 /**
   * Author: ghik
   * Created: 27/06/16.
   */
-class RedisConnectionClientTest extends FunSuite
+class RedisConnectionClientTest extends AnyFunSuite
   with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer with ByteStringInterpolation {
 
   def createClient(initCommands: RedisBatch[Any]): RedisConnectionClient =

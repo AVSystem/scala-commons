@@ -6,23 +6,23 @@ import com.github.ghik.silencer.silent
 import com.mongodb.async.{client => mongo}
 import monix.execution.{Cancelable, Scheduler}
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
+import org.mockito.Mockito
 import org.mockito.Mockito._
 import org.mongodb.scala.{Completed, Document, FindObservable, MongoCollection, SingleObservable}
 import org.scalactic.source.Position
-import org.scalatest.FreeSpec
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.freespec.AnyFreeSpec
 
 import scala.concurrent.duration.Duration
 
 @silent("deprecated")
-class MongoObservableReactivePublisherTest extends FreeSpec with MockitoSugar {
+class MongoObservableReactivePublisherTest extends AnyFreeSpec {
 
   abstract class MockedObservableTests(implicit position: Position) extends MongoObservableExtensions {
 
     def subscribe[T](obs: mongo.Observable[T], testSubscriber: TestSubscriber[T]): Unit
 
     "should drop test collection" in {
-      val collection: MongoCollection[Document] = mock[MongoCollection[Document]]
+      val collection = Mockito.mock(classOf[MongoCollection[Document]])
       when(collection.drop()).thenReturn(SingleObservable(Completed()))
       val dropSubscriber = TestSubscriber[Completed]()
 
@@ -39,7 +39,7 @@ class MongoObservableReactivePublisherTest extends FreeSpec with MockitoSugar {
     }
 
     "should insert documents" in {
-      val collection: MongoCollection[Document] = mock[MongoCollection[Document]]
+      val collection = Mockito.mock(classOf[MongoCollection[Document]])
       val insertSubscriber = TestSubscriber[Completed]()
       when(collection.insertMany(any())).thenReturn(SingleObservable(Completed()))
 
@@ -56,7 +56,7 @@ class MongoObservableReactivePublisherTest extends FreeSpec with MockitoSugar {
 
     "should find documents" in {
       val documents: IndexedSeq[Document] = (1 to 100) map { i: Int => Document("_id" -> i) }
-      val original = mock[FindObservable[Document]]
+      val original = Mockito.mock(classOf[FindObservable[Document]])
       val findSubscriber = TestSubscriber[Document]()
       doNothing().when(original).subscribe(any())
 

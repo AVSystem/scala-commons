@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class SamTest extends FunSuite {
+class SamTest extends AnyFunSuite {
 
   test("no arg lists by name") {
     trait NoArgListsSam {

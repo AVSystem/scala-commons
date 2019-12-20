@@ -3,7 +3,7 @@ package serialization
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, DataOutputStream}
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 case class Wrap(x: Int)
 
@@ -29,7 +29,7 @@ case class FieldTypes(
   p: List[List[Obj]]
 )
 
-class StreamInputOutputTest extends FunSuite {
+class StreamInputOutputTest extends AnyFunSuite {
 
   val fieldTypesInstance = FieldTypes(
     null,

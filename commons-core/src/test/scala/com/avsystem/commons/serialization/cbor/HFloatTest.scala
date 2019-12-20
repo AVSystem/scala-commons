@@ -2,9 +2,9 @@ package com.avsystem.commons
 package serialization.cbor
 
 import org.scalactic.source.Position
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class HFloatTest extends FunSuite {
+class HFloatTest extends AnyFunSuite {
   def testConv(name: String)(floatBits: Int, hfloatBits: Int, roundedBits: Int)(implicit pos: Position): Unit = {
     val float = java.lang.Float.intBitsToFloat(floatBits)
     test(name) {

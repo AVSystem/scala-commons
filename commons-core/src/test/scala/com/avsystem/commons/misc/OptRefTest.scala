@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class OptRefTest extends FunSuite {
+class OptRefTest extends AnyFunSuite {
   test("nonempty test") {
     val opt = OptRef("lol")
     opt match {

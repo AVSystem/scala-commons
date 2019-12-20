@@ -3,15 +3,15 @@ package jiop
 
 import java.util.stream.{Collectors, DoubleStream, IntStream, LongStream}
 
+import com.avsystem.commons.jiop.GuavaInterop._
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
-import org.scalatest.FunSuite
-import GuavaInterop._
+import org.scalatest.funsuite.AnyFunSuite
 
+import scala.collection.compat._
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.collection.compat._
 
-class JavaInteropTest extends FunSuite {
+class JavaInteropTest extends AnyFunSuite {
 
   def assertSame[A](s1: JStream[A], s2: JStream[A]): Unit =
     assert(s1.collect(Collectors.toList[A]) == s2.collect(Collectors.toList[A]))
@@ -217,7 +217,9 @@ class JavaInteropTest extends FunSuite {
     val sfut = gfut.asScala.transform(identity, identity)
 
     var value: Try[Int] = null
-    sfut.onComplete({value = _})
+    sfut.onComplete({
+      value = _
+    })
     gfut.set(42)
 
     assert(value == Success(42))
@@ -232,8 +234,12 @@ class JavaInteropTest extends FunSuite {
     var sres: Try[String] = null
     var fres: Try[String] = null
 
-    sprom.future.onComplete({sres = _})
-    fprom.future.onComplete({fres = _})
+    sprom.future.onComplete({
+      sres = _
+    })
+    fprom.future.onComplete({
+      fres = _
+    })
 
     object exception extends Exception
     sprom.complete(Success("lol"))
