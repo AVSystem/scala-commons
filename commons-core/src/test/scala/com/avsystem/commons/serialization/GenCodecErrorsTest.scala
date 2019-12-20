@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.serialization.GenCodec.{ReadFailure, WriteFailure}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.collection.immutable.ListMap
 
@@ -22,7 +22,7 @@ case class Outer(inner: Inner) extends Base
 case class Other(unwritable: Unwritable) extends Base
 object Base extends HasGenCodec[Base]
 
-class GenCodecErrorsTest extends FunSuite {
+class GenCodecErrorsTest extends AnyFunSuite {
   def causeChain(t: Throwable): List[Throwable] =
     if (t == null) Nil
     else t :: causeChain(t.getCause)

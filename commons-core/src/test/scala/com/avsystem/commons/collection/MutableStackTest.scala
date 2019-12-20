@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package collection
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class MutableStackTest extends FunSuite {
+class MutableStackTest extends AnyFunSuite {
   test("push") {
     val stack = new MutableStack[String]
     stack.push("lol1")

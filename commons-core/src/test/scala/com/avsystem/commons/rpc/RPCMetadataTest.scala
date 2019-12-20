@@ -4,9 +4,9 @@ package rpc
 import com.avsystem.commons.misc.TypeString
 import com.avsystem.commons.rpc.DummyRPC._
 import com.avsystem.commons.serialization.GenCodec
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class RPCMetadataTest extends FunSuite {
+class RPCMetadataTest extends AnyFunSuite {
   case class Annot(str: String) extends MetadataAnnotation
 
   @Annot("on base class")

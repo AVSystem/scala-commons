@@ -1,12 +1,13 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author Wojciech Milewski
   */
-class TryCompanionOpsTest extends FlatSpec with Matchers {
+class TryCompanionOpsTest extends AnyFlatSpec with Matchers {
 
   "Try.sequence" should "convert empty list" in {
     val list: List[Try[Int]] = Nil
@@ -32,9 +33,9 @@ class TryCompanionOpsTest extends FlatSpec with Matchers {
 
     val result = Try.sequence(list)
 
-    val exception = the [NullPointerException] thrownBy result.get
+    val exception = the[NullPointerException] thrownBy result.get
     exception shouldBe npe
-    exception.getSuppressed should contain (ise)
+    exception.getSuppressed should contain(ise)
   }
 
   "Try.traverse" should "convert empty list" in {
@@ -65,9 +66,9 @@ class TryCompanionOpsTest extends FlatSpec with Matchers {
       else Success(i)
     }
 
-    val exception = the [NullPointerException] thrownBy result.get
+    val exception = the[NullPointerException] thrownBy result.get
     exception shouldBe npe
-    exception.getSuppressed should contain (ise)
+    exception.getSuppressed should contain(ise)
   }
 
 }

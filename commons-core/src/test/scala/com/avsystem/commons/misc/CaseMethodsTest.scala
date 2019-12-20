@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 case class Whatever(str: String, int: Int) extends AbstractCase
 
-class CaseMethodsTest extends FunSuite {
+class CaseMethodsTest extends AnyFunSuite {
   val first = Whatever("lol", 42)
   val second = Whatever("lol", 42)
   val other = Whatever("lol", 41)

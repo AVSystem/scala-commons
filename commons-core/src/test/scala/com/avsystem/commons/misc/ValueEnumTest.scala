@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class ValueEnumTest extends FunSuite {
+class ValueEnumTest extends AnyFunSuite {
   class SomeValueEnum(implicit enumCtx: EnumCtx) extends AbstractValueEnum
   object SomeValueEnum extends AbstractValueEnumCompanion[SomeValueEnum] {
     final val One, Two, Three: Value = new SomeValueEnum

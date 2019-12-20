@@ -2,7 +2,7 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.meta.multi
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 trait MangleOverloadsRaw {
   @multi @mangleOverloads def select(@methodName name: String, @multi args: List[Int]): String
@@ -20,7 +20,7 @@ object Overloads {
   implicit val asRawReal: AsRawReal[MangleOverloadsRaw, Overloads] = MangleOverloadsRaw.materializeAsRawReal
 }
 
-class MangleOverloadsTest extends FunSuite {
+class MangleOverloadsTest extends AnyFunSuite {
   test("overload mangling") {
     val raw = new MangleOverloadsRaw {
       def select(name: String, args: List[Int]): String = args.mkString(name + "(", ",", ")")

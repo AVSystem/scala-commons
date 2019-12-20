@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 case class RecordWithDefaults(
   @transientDefault a: String = "",
@@ -25,7 +25,7 @@ object CustomWrapper extends HasApplyUnapplyCodec[CustomWrapper] {
   def unapply(cw: CustomWrapper): Opt[String] = Opt(cw.a)
 }
 
-class ObjectSizeTest extends FunSuite {
+class ObjectSizeTest extends AnyFunSuite {
   test("computing object size") {
     assert(RecordWithDefaults.codec.size(RecordWithDefaults()) == 2)
     assert(RecordWithDefaults.codec.size(RecordWithDefaults("fuu")) == 3)

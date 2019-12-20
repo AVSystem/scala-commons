@@ -1,9 +1,10 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class BidirectionalTest extends WordSpec with Matchers {
+class BidirectionalTest extends AnyWordSpec with Matchers {
   "Bidirectional" should {
     "create reversed partial function" in {
       val (pf, rpf) = Bidirectional[Int, String]({

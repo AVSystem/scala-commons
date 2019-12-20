@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 object Obj {
   val x: String = "fuu"
@@ -14,7 +14,7 @@ object Obj {
   }
 }
 
-class ValueOfTest extends FunSuite {
+class ValueOfTest extends AnyFunSuite {
   test("object") {
     assert(ValueOf[Obj.type] == Obj)
   }

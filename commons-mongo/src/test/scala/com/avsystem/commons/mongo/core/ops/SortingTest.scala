@@ -5,9 +5,9 @@ import com.avsystem.commons.mongo.core.ops.BsonEquality.bsonEquality
 import com.avsystem.commons.mongo.{BsonCodec, BsonRef, DocKey}
 import com.avsystem.commons.serialization.GenCodec
 import com.mongodb.client.model.Sorts
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class SortingTest extends FunSuite {
+class SortingTest extends AnyFunSuite {
 
   import Sorting._
 

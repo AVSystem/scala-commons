@@ -10,8 +10,9 @@ val silencerVersion = "1.4.4"
 val collectionCompatVersion = "2.1.2"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
-val scalatestVersion = "3.0.8"
+val scalatestVersion = "3.1.0"
 val scalacheckVersion = "1.14.2"
+val scalatestplusScalacheckVersion = "3.1.0.0"
 val jettyVersion = "9.4.24.v20191120"
 val mongoVersion = "3.12.0"
 val mongoReactiveVersion = "1.12.0"
@@ -107,6 +108,7 @@ val commonSettings = Seq(
     "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
+    "org.scalatestplus" %%% "scalacheck-1-14" % scalatestplusScalacheckVersion % Test,
     "org.mockito" % "mockito-core" % mockitoVersion % Test,
   ),
   ideBasePackages := Seq(organization.value),

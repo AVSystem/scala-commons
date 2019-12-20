@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package analyzer
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class ImplicitTypesTest extends FunSuite with AnalyzerTest {
+class ImplicitTypesTest extends AnyFunSuite with AnalyzerTest {
   ignore("implicit definitions without explicit types should be rejected") {
     assertErrors(2,
       """
