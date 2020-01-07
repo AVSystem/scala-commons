@@ -13,12 +13,15 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   case class MatchedMethod(
     real: RealMethod,
     raw: RealMethodTarget,
+    indexInRaw: Int,
     fallbackTagsUsed: List[FallbackTag]
   ) extends MatchedSymbol {
     type Self = MatchedMethod
 
-    def indexInRaw: Int = 0
-    def typeParamsInContext: List[MacroTypeParam] = real.ownerApi.typeParams ++ real.typeParams
+    def index: Int = real.index
+
+    def typeParamsInContext: List[MacroTypeParam] =
+      real.ownerApi.typeParams ++ real.typeParams
 
     def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedMethod =
       copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
@@ -40,6 +43,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   ) extends MatchedSymbol {
     type Self = MatchedTypeParam
 
+    def index: Int = real.index
     def rawName: String = real.rpcName
     def typeParamsInContext: List[MacroTypeParam] = Nil
 
@@ -59,11 +63,14 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedParam =
       copy(fallbackTagsUsed = fallbackTagsUsed ++ fallbackTags)
 
+    def index: Int = real.index
     def rawName: String = real.rpcName
     def typeParamsInContext: List[MacroTypeParam] = matchedOwner.typeParamsInContext
   }
 
   trait RealRpcSymbol extends MacroSymbol {
+    def index: Int
+
     val rpcName: String =
       annot(RpcNameAT).fold(nameStr)(_.findArg[String](RpcNameArg))
   }
@@ -204,7 +211,9 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     def baseTagSpecs: List[BaseTagSpec] = containingRawMethod.tagSpecs(ParamTagAT)
   }
 
-  case class RealTypeParam(owner: RealRpcSymbol, symbol: Symbol) extends MacroTypeParam with RealRpcSymbol {
+  case class RealTypeParam(owner: RealRpcSymbol, index: Int, symbol: Symbol)
+    extends MacroTypeParam with RealRpcSymbol {
+
     if (symbol.typeSignature.takesTypeArgs) {
       reportProblem(s"real RPC type parameters must not be higher-kinded")
     }
@@ -296,7 +305,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     }
   }
 
-  case class RealMethod(ownerApi: RealRpcApi, symbol: Symbol, overloadIdx: Int)
+  case class RealMethod(ownerApi: RealRpcApi, symbol: Symbol, index: Int, overloadIdx: Int)
     extends MacroMethod with RealRpcSymbol {
 
     def ownerType: Type = ownerApi.tpe
@@ -305,7 +314,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
     def description = s"$shortDescription $nameStr"
 
     val typeParams: List[RealTypeParam] =
-      sig.typeParams.map(RealTypeParam(this, _))
+      sig.typeParams.iterator.zipWithIndex.map({ case (s, i) => RealTypeParam(this, i, s) }).toList
 
     val paramLists: List[List[RealParam]] = {
       var index = 0
@@ -343,21 +352,24 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
   abstract class RealRpcApi(tpe: Type) extends RpcApi with RealRpcSymbol with SelfMatchedSymbol {
     def description = s"$shortDescription $tpe"
+    def index: Int = 0
 
     def forTypeConstructor: RealRpcApi
     def isApiMethod(s: TermSymbol): Boolean
     override def typeParamsInContext: List[MacroTypeParam] = typeParams
 
     lazy val typeParams: List[RealTypeParam] =
-      tpe.typeParams.map(RealTypeParam(this, _))
+      tpe.typeParams.iterator.zipWithIndex.map({ case (s, i) => RealTypeParam(this, i, s) }).toList
 
     lazy val realMethods: List[RealMethod] = {
       val overloadIndices = new mutable.HashMap[Name, Int]
-      tpe.members.sorted.iterator.filter(m => m.isTerm && isApiMethod(m.asTerm)).map { m =>
-        val overloadIdx = overloadIndices.getOrElseUpdate(m.name, 0)
-        overloadIndices(m.name) = overloadIdx + 1
-        RealMethod(this, m, overloadIdx)
-      }.toList
+      tpe.members.sorted.iterator
+        .filter(m => m.isTerm && isApiMethod(m.asTerm)).zipWithIndex
+        .map { case (m, idx) =>
+          val overloadIdx = overloadIndices.getOrElseUpdate(m.name, 0)
+          overloadIndices(m.name) = overloadIdx + 1
+          RealMethod(this, m, idx, overloadIdx)
+        }.toList
     }
   }
 

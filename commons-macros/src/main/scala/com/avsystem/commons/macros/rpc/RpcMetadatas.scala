@@ -189,6 +189,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
 
     override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor = this): MetadataParam =
       if (annot.tpe <:< ReifyParamListCountAT) new ParamListCountParam(ownerConstr, paramSym)
+      else if (annot.tpe <:< ReifyPositionAT) new MethodPositionParam(ownerConstr, paramSym)
       else if (annot.tpe <:< ReifyFlagsAT) new MethodFlagsParam(ownerConstr, paramSym)
       else if (annot.tpe <:< RpcParamMetadataAT) new ParamMetadataParam(ownerConstr, paramSym)
       else if (annot.tpe <:< RpcTypeParamMetadataAT) new TypeParamMetadataParam(ownerConstr, paramSym)
@@ -275,6 +276,13 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
       Ok(q"${matchedSymbol.real.symbol.asMethod.paramLists.length}")
+  }
+
+  class MethodPositionParam(owner: MetadataConstructor, symbol: Symbol)
+    extends DirectMetadataParam(owner, symbol) {
+
+    def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
+      Ok(q"$MethodPositionObj(${matchedSymbol.index}, ${matchedSymbol.indexInRaw})")
   }
 
   class MethodFlagsParam(owner: MetadataConstructor, symbol: Symbol)

@@ -87,6 +87,19 @@ final case class ParamPosition(
 object ParamPosition extends HasGenCodec[ParamPosition]
 
 /**
+  * Information about real method position in its containing API. Order of methods is determined
+  * by declaration order and linearization order (inherited methods come after directly defined or overridden methods).
+  *
+  * @param index      overall index of the method
+  * @param indexInRaw index of the method in its corresponding `@multi` metadata parameter (or zero of not `@multi`)
+  */
+final case class MethodPosition(
+  index: Int,
+  indexInRaw: Int
+)
+object MethodPosition extends HasGenCodec[MethodPosition]
+
+/**
   * Information about class or trait flags and modifiers as defined in Scala code.
   */
 @transparent
@@ -164,9 +177,9 @@ final case class MethodFlags(rawFlags: Int) extends AnyVal {
   def isVar: Boolean = hasFlags(Var)
 
   def baseDecl: String = {
-    val finalRepr = if(isFinal) "final " else ""
-    val lazyRepr = if(isLazy) "lazy " else ""
-    val kw = if(isVal) "val" else if(isVar && !isSetter) "var" else "def"
+    val finalRepr = if (isFinal) "final " else ""
+    val lazyRepr = if (isLazy) "lazy " else ""
+    val kw = if (isVal) "val" else if (isVar && !isSetter) "var" else "def"
     s"$finalRepr$lazyRepr$kw"
   }
 

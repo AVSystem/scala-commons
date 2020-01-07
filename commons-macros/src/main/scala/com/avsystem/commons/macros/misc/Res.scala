@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package macros.misc
 
+import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -64,9 +65,12 @@ object Res {
     case None => Ok(None)
   }
 
-  def firstOk[A, B](coll: Iterable[A])(f: A => Res[B])(combineErrors: List[(A, String)] => String): Res[B] = {
+  def firstOk[A, B](coll: Iterable[A])(f: A => Res[B])(combineErrors: List[(A, String)] => String): Res[B] =
+    firstOk(coll.iterator)(f)(combineErrors)
+
+  def firstOk[A, B](it: Iterator[A])(f: A => Res[B])(combineErrors: List[(A, String)] => String): Res[B] = {
     val errors = new ListBuffer[(A, String)]
-    def loop(it: Iterator[A]): Res[B] =
+    @tailrec def loop(it: Iterator[A]): Res[B] =
       if (it.hasNext) {
         val el = it.next()
         f(el) match {
@@ -78,6 +82,6 @@ object Res {
             loop(it)
         }
       } else FailMsg(combineErrors(errors.result()))
-    loop(coll.iterator)
+    loop(it)
   }
 }

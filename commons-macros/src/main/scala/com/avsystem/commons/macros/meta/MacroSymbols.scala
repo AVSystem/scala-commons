@@ -356,6 +356,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
     def real: MacroSymbol
     def rawName: String
+    def index: Int
     def indexInRaw: Int
     def fallbackTagsUsed: List[FallbackTag]
     def addFallbackTags(fallbackTags: List[FallbackTag]): Self

@@ -4,6 +4,7 @@ package macros.meta
 import com.avsystem.commons.macros.AbstractMacroCommons
 import com.avsystem.commons.macros.misc.{Fail, FailMsg, Ok, Res}
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.blackbox
 
@@ -24,24 +25,25 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     def params: List[AdtParam]
   }
 
-  class AdtHierarchy(val tpe: Type, knownSubtypes: List[Type]) extends AdtSymbol {
+  class AdtHierarchy(val tpe: Type, val index: Int, knownSubtypes: List[Type]) extends AdtSymbol {
     def shortDescription: String = "ADT hierarchy"
     def description: String = s"$shortDescription $tpe"
 
-    val cases: List[AdtCase] = knownSubtypes.map { st =>
-      singleValueFor(st).map(sv => new AdtObject(st, sv)) orElse
-        applyUnapplyFor(st).map(au => new AdtClass(st, au)) getOrElse
-        new AdtOtherCase(st)
-    }
+    val cases: List[AdtCase] = knownSubtypes.iterator.zipWithIndex.map { case (st, idx) =>
+      singleValueFor(st).map(sv => new AdtObject(st, idx, sv)) orElse
+        applyUnapplyFor(st).map(au => new AdtClass(st, idx, au)) getOrElse
+        new AdtOtherCase(st, idx)
+    }.toList
 
     def params: List[AdtParam] = Nil
   }
 
   sealed trait AdtCase extends AdtSymbol {
+    def index: Int
     def cases: List[AdtCase] = Nil
   }
 
-  class AdtClass(val tpe: Type, applyUnapply: ApplyUnapply) extends AdtCase {
+  class AdtClass(val tpe: Type, val index: Int, applyUnapply: ApplyUnapply) extends AdtCase {
     def shortDescription: String = "ADT class"
     def description: String = s"$shortDescription $tpe"
 
@@ -52,13 +54,13 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
       typedCompanionOf(tpe).getOrElse(reportProblem(s"could not reify companion for $tpe"))
   }
 
-  class AdtObject(val tpe: Type, val singleValue: Tree) extends AdtCase {
+  class AdtObject(val tpe: Type, val index: Int, val singleValue: Tree) extends AdtCase {
     def shortDescription: String = "ADT object"
     def description: String = s"$shortDescription $nameStr"
     def params: List[AdtParam] = Nil
   }
 
-  class AdtOtherCase(val tpe: Type) extends AdtCase {
+  class AdtOtherCase(val tpe: Type, val index: Int) extends AdtCase {
     def shortDescription: String = "ADT case type"
     def description: String = s"$shortDescription $nameStr"
     def params: List[AdtParam] = Nil
@@ -78,6 +80,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
   ) extends MatchedSymbol {
     type Self = MatchedAdtParam
 
+    def index: Int = param.index
     def real: MacroSymbol = param
     def rawName: String = param.nameStr
     def typeParamsInContext: List[MacroTypeParam] = Nil
@@ -89,13 +92,14 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
   case class MatchedAdtCase(
     adtCase: AdtCase,
     mdParam: AdtCaseMetadataParam,
+    indexInRaw: Int,
     fallbackTagsUsed: List[FallbackTag]
   ) extends MatchedSymbol {
     type Self = MatchedAdtCase
 
     def real: MacroSymbol = adtCase
     def rawName: String = adtCase.nameStr
-    def indexInRaw: Int = 0
+    def index: Int = adtCase.index
     def typeParamsInContext: List[MacroTypeParam] = Nil
 
     def addFallbackTags(fallbackTags: List[FallbackTag]): MatchedAdtCase =
@@ -142,8 +146,18 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
           errors += s" * ${adtCase.description}:\n   ${indent(message, "   ")}"
         }
 
+        val indicesInRaw = new mutable.HashMap[AdtCaseMetadataParam, Int]
+        def tryMaterialize(caseParam: AdtCaseMetadataParam, adtCase: AdtCase): Res[AdtCaseMapping] = {
+          val indexInRaw = indicesInRaw.getOrElse(caseParam, 0)
+          val res = caseParam.tryMaterializeFor(adtCase, indexInRaw)
+          if(res.isOk) {
+            indicesInRaw(caseParam) = indexInRaw + 1
+          }
+          res
+        }
+
         val mappings = cases.flatMap { adtCase =>
-          Res.firstOk(caseMdParams)(_.tryMaterializeFor(adtCase)) { errors =>
+          Res.firstOk(caseMdParams)(tryMaterialize(_, adtCase)) { errors =>
             val unmatchedReport = errors.map { case (mdParam, err) =>
               val unmatchedError = mdParam.unmatchedError.getOrElse(
                 s"${mdParam.shortDescription.capitalize} ${mdParam.nameStr} did not match")
@@ -242,8 +256,8 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     def allowListedMulti: Boolean = true
     def allowFail: Boolean = false
 
-    def tryMaterializeFor(adtCase: AdtCase): Res[AdtCaseMapping] = for {
-      matchedCase <- matchTagsAndFilters(MatchedAdtCase(adtCase, this, Nil))
+    def tryMaterializeFor(adtCase: AdtCase, indexInRaw: Int): Res[AdtCaseMapping] = for {
+      matchedCase <- matchTagsAndFilters(MatchedAdtCase(adtCase, this, indexInRaw, Nil))
       mdType <- actualMetadataType(arity.collectedType, adtCase.tpe, "data type", verbatim = false)
       tree <- materializeOneOf(mdType)(t => new AdtMetadataConstructor(t, Some(this), Some(this)).tryMaterializeFor(adtCase))
     } yield AdtCaseMapping(matchedCase, tree)
@@ -354,10 +368,10 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     val metadataTpe = c.macroApplication.tpe.dealias
 
     val adtSymbol =
-      singleValueFor(adtTpe).map(sv => new AdtObject(adtTpe, sv)) orElse
-        applyUnapplyFor(adtTpe).map(au => new AdtClass(adtTpe, au)) orElse
-        knownSubtypes(adtTpe, ordered = true).map(st => new AdtHierarchy(adtTpe, st)) getOrElse
-        new AdtOtherCase(adtTpe)
+      singleValueFor(adtTpe).map(sv => new AdtObject(adtTpe, 0, sv)) orElse
+        applyUnapplyFor(adtTpe).map(au => new AdtClass(adtTpe, 0, au)) orElse
+        knownSubtypes(adtTpe, ordered = true).map(st => new AdtHierarchy(adtTpe, 0, st)) getOrElse
+        new AdtOtherCase(adtTpe, 0)
 
     materializeMetadata(adtSymbol, metadataTpe)
   }
@@ -367,7 +381,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     val metadataTpe = c.macroApplication.tpe.dealias
     val applyUnapply = applyUnapplyFor(adtTpe, applyUnapplyProvider)
       .getOrElse(abort(s"Cannot derive $metadataTpe from `apply` and `unapply`/`unapplySeq` methods of ${applyUnapplyProvider.tpe}"))
-    val adtSymbol = new AdtClass(adtTpe, applyUnapply)
+    val adtSymbol = new AdtClass(adtTpe, 0, applyUnapply)
 
     materializeMetadata(adtSymbol, metadataTpe)
   }

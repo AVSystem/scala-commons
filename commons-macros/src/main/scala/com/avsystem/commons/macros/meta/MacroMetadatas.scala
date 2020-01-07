@@ -10,6 +10,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   import c.universe._
 
   final def ParamPositionObj: Tree = q"$MetaPackage.ParamPosition"
+  final def MethodPositionObj: Tree = q"$MetaPackage.MethodPosition"
   final lazy val TypedMetadataType: Type = staticType(tq"$MetaPackage.TypedMetadata[_]")
   final lazy val MetadataParamStrategyType: Type = staticType(tq"$MetaPackage.MetadataParamStrategy")
   final lazy val DirectMetadataParamStrategyType: Type = staticType(tq"$MetaPackage.DirectMetadataParamStrategy")
