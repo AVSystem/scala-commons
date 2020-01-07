@@ -87,7 +87,20 @@ final case class ParamPosition(
 object ParamPosition extends HasGenCodec[ParamPosition]
 
 /**
-  * Information about real parameter flags and modifiers as defined in Scala code.
+  * Information about real method position in its containing API. Order of methods is determined
+  * by declaration order and linearization order (inherited methods come after directly defined or overridden methods).
+  *
+  * @param index      overall index of the method
+  * @param indexInRaw index of the method in its corresponding `@multi` metadata parameter (or zero of not `@multi`)
+  */
+final case class MethodPosition(
+  index: Int,
+  indexInRaw: Int
+)
+object MethodPosition extends HasGenCodec[MethodPosition]
+
+/**
+  * Information about class or trait flags and modifiers as defined in Scala code.
   */
 @transparent
 final case class TypeFlags(rawFlags: Int) extends AnyVal {
@@ -138,4 +151,65 @@ object TypeFlags extends HasGenCodec[TypeFlags] {
   final val Case: TypeFlags = nextFlag()
   final val Trait: TypeFlags = nextFlag()
   final val Object: TypeFlags = nextFlag()
+}
+
+/**
+  * Information about method (also `val` or `var`) flags and modifiers as defined in Scala code.
+  */
+@transparent
+final case class MethodFlags(rawFlags: Int) extends AnyVal {
+
+  import MethodFlags._
+
+  def |(other: MethodFlags): MethodFlags = new MethodFlags(rawFlags | other.rawFlags)
+  def &(other: MethodFlags): MethodFlags = new MethodFlags(rawFlags & other.rawFlags)
+  def ^(other: MethodFlags): MethodFlags = new MethodFlags(rawFlags ^ other.rawFlags)
+  def unary_~ : MethodFlags = new MethodFlags(~rawFlags)
+
+  def hasFlags(flags: MethodFlags): Boolean = (this & flags) == flags
+
+  def isAbstract: Boolean = hasFlags(Abstract)
+  def isFinal: Boolean = hasFlags(Final)
+  def isLazy: Boolean = hasFlags(Lazy)
+  def isGetter: Boolean = hasFlags(Getter)
+  def isSetter: Boolean = hasFlags(Setter)
+  def isVal: Boolean = isGetter && !isVar
+  def isVar: Boolean = hasFlags(Var)
+
+  def baseDecl: String = {
+    val finalRepr = if (isFinal) "final " else ""
+    val lazyRepr = if (isLazy) "lazy " else ""
+    val kw = if (isVal) "val" else if (isVar && !isSetter) "var" else "def"
+    s"$finalRepr$lazyRepr$kw"
+  }
+
+  override def toString: String = {
+    def repr(flags: MethodFlags, r: String): Opt[String] =
+      r.opt.filter(_ => hasFlags(flags))
+
+    List(
+      repr(Abstract, "abstract"),
+      repr(Final, "final"),
+      repr(Lazy, "lazy"),
+      repr(Getter, "getter"),
+      repr(Setter, "setter"),
+      repr(Var, "var")
+    ).flatten.mkString(",")
+  }
+}
+object MethodFlags extends HasGenCodec[MethodFlags] {
+  private[this] var currentFlag: Int = 1
+  private[this] def nextFlag(): MethodFlags = {
+    val flag = currentFlag
+    currentFlag = currentFlag << 1
+    new MethodFlags(flag)
+  }
+
+  final val Empty: MethodFlags = new MethodFlags(0)
+  final val Abstract: MethodFlags = nextFlag()
+  final val Final: MethodFlags = nextFlag()
+  final val Lazy: MethodFlags = nextFlag()
+  final val Getter: MethodFlags = nextFlag()
+  final val Setter: MethodFlags = nextFlag()
+  final val Var: MethodFlags = nextFlag()
 }

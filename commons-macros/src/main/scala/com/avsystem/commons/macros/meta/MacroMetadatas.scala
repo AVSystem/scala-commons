@@ -10,6 +10,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   import c.universe._
 
   final def ParamPositionObj: Tree = q"$MetaPackage.ParamPosition"
+  final def MethodPositionObj: Tree = q"$MetaPackage.MethodPosition"
   final lazy val TypedMetadataType: Type = staticType(tq"$MetaPackage.TypedMetadata[_]")
   final lazy val MetadataParamStrategyType: Type = staticType(tq"$MetaPackage.MetadataParamStrategy")
   final lazy val DirectMetadataParamStrategyType: Type = staticType(tq"$MetaPackage.DirectMetadataParamStrategy")
@@ -23,6 +24,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   final lazy val AllowIncompleteAT: Type = staticType(tq"$MetaPackage.allowIncomplete")
   final lazy val ParamPositionTpe: Type = staticType(tq"$MetaPackage.ParamPosition")
   final lazy val ParamFlagsTpe: Type = staticType(tq"$MetaPackage.ParamFlags")
+  final lazy val MethodFlagsTpe: Type = staticType(tq"$MetaPackage.MethodFlags")
   final lazy val TypeFlagsTpe: Type = staticType(tq"$MetaPackage.TypeFlags")
   final lazy val ForTypeParamsAT: Type = staticType(tq"$RpcPackage.forTypeParams")
 

@@ -20,12 +20,23 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       failedReals += realMethod.nameStr
     }
 
-    val result = realMethods.flatMap { realMethod =>
-      Res.firstOk(rawSymbols)(rawSymbol => for {
-        matchedMethod <- rawSymbol.matchTagsAndFilters(MatchedMethod(realMethod, rawSymbol, Nil))
+    val indicesInRaw = new mutable.HashMap[Raw, Int]
+
+    def matchRealAgainst(realMethod: RealMethod, rawSymbol: Raw): Res[M] = {
+      val indexInRaw = indicesInRaw.getOrElse(rawSymbol, 0)
+      val matchedMethod = MatchedMethod(realMethod, rawSymbol, indexInRaw, Nil)
+      for {
+        _ <- rawSymbol.matchTagsAndFilters(matchedMethod)
         _ <- rawSymbol.matchName(matchedMethod.real.shortDescription, matchedMethod.rawName)
         methodMapping <- createMapping(rawSymbol, matchedMethod)
-      } yield methodMapping) {
+      } yield {
+        indicesInRaw(rawSymbol) = indexInRaw + 1
+        methodMapping
+      }
+    }
+
+    val result = realMethods.flatMap { realMethod =>
+      Res.firstOk(rawSymbols)(matchRealAgainst(realMethod, _)) {
         case Nil =>
           s"it has illegal combination of tags (annotations)"
         case errors =>
@@ -140,6 +151,17 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       case multi: ParamMapping.Multi => multi.reals.map(_.matchedParam)
       case ParamMapping.DummyUnit(_) => Nil
     }
+
+    def ensureUniqueRpcNames(): Unit = this match {
+      case multi: ParamMapping.Multi => multi.reals.groupBy(_.rpcName).foreach {
+        case (rpcName, head :: tail) if tail.nonEmpty =>
+          head.matchedParam.real.reportProblem(
+            s"it has the same RPC name ($rpcName) as ${tail.size} other parameters")
+        case _ =>
+      }
+      case _ =>
+    }
+
   }
   object ParamMapping {
     case class Single(rawParam: RawValueParam, realParam: EncodedRealParam) extends ParamMapping {

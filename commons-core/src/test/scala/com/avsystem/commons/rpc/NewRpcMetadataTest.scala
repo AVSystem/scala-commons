@@ -52,62 +52,62 @@ class NewRpcMetadataTest extends AnyFunSuite {
       """com.avsystem.commons.rpc.TestApi
         |  DO SOMETHING ELSE: true
         |  PROCEDURES:
-        |  flames -> def flames: void
+        |  flames -> def flames@4:0: void
         |    NO AJDI
         |    ARGS:
         |    arg -> arg@0:0:0:0: String suchMeta=false
         |    otherArg -> [byName]otherArg@1:0:1:1: Int suchMeta=false
         |    varargsy -> [repeated]varargsy@2:0:2:2: Seq[Double] suchMeta=false
-        |  overload -> def overload: void
+        |  overload -> def overload@5:1: void
         |    AJDI: [hasDefaultValue]int@0:0:0:0: Int suchMeta=false
         |    ARGS:
         |    int -> [hasDefaultValue]int@0:0:0:0: Int suchMeta=false
         |  FUNCTIONS:
-        |  varargsMethod -> def varargsMethod: Unit
+        |  varargsMethod -> def varargsMethod@2:0: Unit
         |    RENAMED:
         |    nejm -> [repeated]ints<nejm>@3:1:1:0: Seq[Int] suchMeta=false
         |    ARGS:
         |    krap -> krap@0:0:0:0: String suchMeta=false
         |    dubl -> dubl@1:0:1:1: Double suchMeta=false
         |    czy -> czy@2:1:0:2: Boolean suchMeta=false
-        |  defaultValueMethod -> def defaultValueMethod: Unit
+        |  defaultValueMethod -> def defaultValueMethod@3:1: Unit
         |    RENAMED:
         |
         |    ARGS:
         |    int -> [hasDefaultValue]int@0:0:0:0: Int suchMeta=false
         |    bul -> bul@1:0:1:1: Boolean suchMeta=false
-        |  generyk -> def generyk[T]: List[T]
+        |  generyk -> def generyk@11:2[T]: List[T]
         |    RENAMED:
         |
         |    ARGS:
         |    lel -> lel@0:0:0:0: com.avsystem.commons.rpc.Box[T] suchMeta=false @annotTypeString[com.avsystem.commons.rpc.Box[T]]
         |    tag -> [implicit]tag@1:1:0:1: com.avsystem.commons.rpc.Tag[T] suchMeta=false
         |  POSTERS:
-        |  POST_postit -> POST() def postit<POST_postit>: String
+        |  POST_postit -> POST() def postit<POST_postit>@9:0: String
         |    HEADERS:
         |    bar<X-Bar>@1:0:1:0: String suchMeta=false
         |    foo<X-Foo>@3:0:3:1: String suchMeta=true @suchMeta(3,c) @suchMeta(2,b)
         |    BODY:
         |    arg -> arg@0:0:0:0: String suchMeta=false
         |    int -> int@2:0:2:1: Int suchMeta=false
-        |  POST_otherPost -> POST() def otherPost<POST_otherPost>: String
+        |  POST_otherPost -> POST() def otherPost<POST_otherPost>@10:1: String
         |    HEADERS:
         |
         |    BODY:
         |    arg -> arg@0:0:0:0: String suchMeta=false
         |  GETTERS:
-        |  ovgetter -> def overload<ovgetter>: com.avsystem.commons.rpc.TestApi
+        |  ovgetter -> def overload<ovgetter>@6:0: com.avsystem.commons.rpc.TestApi
         |    ARGS:
         |    lel@0:0:0:0: String suchMeta=false
         |    RESULT: <recursive>
         |
-        |  getit -> def getit: com.avsystem.commons.rpc.TestApi
+        |  getit -> def getit@8:1: com.avsystem.commons.rpc.TestApi
         |    ARGS:
         |    stuff@0:0:0:0: String suchMeta=false
         |    otherStuff@1:0:1:0: List[Int] suchMeta=true @suchMeta(1,a)
         |    RESULT: <recursive>
         |  PREFIXERS:
-        |  ovprefix -> def overload<ovprefix>: com.avsystem.commons.rpc.TestApi
+        |  ovprefix -> def overload<ovprefix>@7:0: com.avsystem.commons.rpc.TestApi
         |    RESULT: <recursive>
         |""".stripMargin
     )

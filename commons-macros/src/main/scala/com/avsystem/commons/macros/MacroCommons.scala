@@ -164,7 +164,10 @@ trait MacroCommons { bundle =>
 
   def rawAnnotations(s: Symbol): List[Annotation] = {
     s.info // srsly scalac, load these goddamned annotations
-    s.annotations
+    // for vals or vars, fetch annotations from underlying field
+    if (s.isMethod && s.asMethod.isGetter)
+      s.annotations ++ s.asMethod.accessed.annotations
+    else s.annotations
   }
 
   def correctAnnotTree(tree: Tree, seenFrom: Type): Tree =

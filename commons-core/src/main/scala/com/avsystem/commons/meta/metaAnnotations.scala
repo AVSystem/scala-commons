@@ -268,8 +268,8 @@ final class reifyName(val useRawName: Boolean = false) extends DirectMetadataPar
 final class reifyPosition extends DirectMetadataParamStrategy
 
 /**
-  * Metadata parameter annotated with this annotation must be of type `ParamFlags` - a class that holds
-  * parameter flags information - see scaladoc for `ParamFlags` for more details.
+  * Metadata parameter annotated with this annotation must be of type `ParamFlags`, `MethodFlags` or `TypeFlags` -
+  * a class that holds parameter/method/type flags information - see scaladoc for flag types for more information.
   */
 final class reifyFlags extends DirectMetadataParamStrategy
 

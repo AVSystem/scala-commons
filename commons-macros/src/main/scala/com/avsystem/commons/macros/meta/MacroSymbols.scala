@@ -176,7 +176,11 @@ private[commons] trait MacroSymbols extends MacroCommons {
     val sig: Type = symbol.typeSignatureIn(ownerType)
     def typeParams: List[MacroTypeParam]
     def paramLists: List[List[MacroParam]]
-    val resultType: Type = sig.finalResultType
+
+    val resultType: Type = sig.finalResultType match {
+      case ct: ConstantType => ct.widen
+      case t => t
+    }
 
     def argLists: List[List[Tree]] = paramLists.map(_.map(_.argToPass))
     def typeParamDecls: List[Tree] = typeParams.map(_.typeParamDecl)
@@ -352,6 +356,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
     def real: MacroSymbol
     def rawName: String
+    def index: Int
     def indexInRaw: Int
     def fallbackTagsUsed: List[FallbackTag]
     def addFallbackTags(fallbackTags: List[FallbackTag]): Self
