@@ -129,7 +129,7 @@ class ApiReflectionTest extends FunSuite {
         |  def trim(): String
         |  def toCharArray(): Array[Char]
         |  def intern(): String
-        |  def +(x$1: Any): String
+        |  final def +(x$1: Any): String
         |  def chars(): java.util.stream.IntStream
         |  def codePoints(): java.util.stream.IntStream
         |}""".stripMargin
