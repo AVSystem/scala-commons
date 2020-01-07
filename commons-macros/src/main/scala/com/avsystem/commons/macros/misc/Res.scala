@@ -45,7 +45,7 @@ object Fail extends Res[Nothing]
 object Res {
   def traverse[A, B](in: List[A])(f: A => Res[B]): Res[List[B]] = {
     val it = in.iterator
-    def loop(builder: mutable.Builder[B, List[B]]): Res[List[B]] =
+    @tailrec def loop(builder: mutable.Builder[B, List[B]]): Res[List[B]] =
       if (it.hasNext) {
         f(it.next()) match {
           case Ok(b) => loop(builder += b)
