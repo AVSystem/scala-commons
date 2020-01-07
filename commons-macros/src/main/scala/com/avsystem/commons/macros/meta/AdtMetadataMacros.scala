@@ -125,7 +125,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor): MetadataParam =
       if (annot.tpe <:< AdtParamMetadataAT) new AdtParamMetadataParam(ownerConstr, paramSym)
       else if (annot.tpe <:< AdtCaseMetadataAT) new AdtCaseMetadataParam(ownerConstr, paramSym)
-      else if (annot.tpe <:< ReifyFlagsAT) new ReifiedTypeFlagsParam(ownerConstr, paramSym)
+      else if (annot.tpe <:< ReifyFlagsAT) new TypeFlagsParam(ownerConstr, paramSym)
       else super.paramByStrategy(paramSym, annot, ownerConstr)
 
     def paramMappings(params: List[AdtParam]): Res[Map[AdtParamMetadataParam, Tree]] =
@@ -329,7 +329,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     }
   }
 
-  class ReifiedTypeFlagsParam(owner: MetadataConstructor, symbol: Symbol)
+  class TypeFlagsParam(owner: MetadataConstructor, symbol: Symbol)
     extends DirectMetadataParam(owner, symbol) {
     if (!(actualType =:= TypeFlagsTpe)) {
       reportProblem("its type is not TypeFlags")

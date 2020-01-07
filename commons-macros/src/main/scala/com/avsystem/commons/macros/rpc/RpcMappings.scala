@@ -140,6 +140,17 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       case multi: ParamMapping.Multi => multi.reals.map(_.matchedParam)
       case ParamMapping.DummyUnit(_) => Nil
     }
+
+    def ensureUniqueRpcNames(): Unit = this match {
+      case multi: ParamMapping.Multi => multi.reals.groupBy(_.rpcName).foreach {
+        case (rpcName, head :: tail) if tail.nonEmpty =>
+          head.matchedParam.real.reportProblem(
+            s"it has the same RPC name ($rpcName) as ${tail.size} other parameters")
+        case _ =>
+      }
+      case _ =>
+    }
+
   }
   object ParamMapping {
     case class Single(rawParam: RawValueParam, realParam: EncodedRealParam) extends ParamMapping {

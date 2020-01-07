@@ -23,6 +23,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   final lazy val AllowIncompleteAT: Type = staticType(tq"$MetaPackage.allowIncomplete")
   final lazy val ParamPositionTpe: Type = staticType(tq"$MetaPackage.ParamPosition")
   final lazy val ParamFlagsTpe: Type = staticType(tq"$MetaPackage.ParamFlags")
+  final lazy val MethodFlagsTpe: Type = staticType(tq"$MetaPackage.MethodFlags")
   final lazy val TypeFlagsTpe: Type = staticType(tq"$MetaPackage.TypeFlags")
   final lazy val ForTypeParamsAT: Type = staticType(tq"$RpcPackage.forTypeParams")
 

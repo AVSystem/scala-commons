@@ -188,7 +188,8 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     lazy val typeParamMdParams: List[TypeParamMetadataParam] = collectParams[TypeParamMetadataParam]
 
     override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor = this): MetadataParam =
-      if (annot.tpe <:< ReifyParamListCountAT) new ReifiedParamListCountParam(ownerConstr, paramSym)
+      if (annot.tpe <:< ReifyParamListCountAT) new ParamListCountParam(ownerConstr, paramSym)
+      else if (annot.tpe <:< ReifyFlagsAT) new MethodFlagsParam(ownerConstr, paramSym)
       else if (annot.tpe <:< RpcParamMetadataAT) new ParamMetadataParam(ownerConstr, paramSym)
       else if (annot.tpe <:< RpcTypeParamMetadataAT) new TypeParamMetadataParam(ownerConstr, paramSym)
       else super.paramByStrategy(paramSym, annot, ownerConstr)
@@ -265,7 +266,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
       tryMaterialize(matchedParam)(p => FailMsg(s"unexpected metadata parameter $p"))
   }
 
-  class ReifiedParamListCountParam(owner: MetadataConstructor, symbol: Symbol)
+  class ParamListCountParam(owner: MetadataConstructor, symbol: Symbol)
     extends DirectMetadataParam(owner, symbol) {
 
     if (!(actualType =:= definitions.IntTpe)) {
@@ -274,5 +275,27 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
       Ok(q"${matchedSymbol.real.symbol.asMethod.paramLists.length}")
+  }
+
+  class MethodFlagsParam(owner: MetadataConstructor, symbol: Symbol)
+    extends DirectMetadataParam(owner, symbol) {
+
+    if (!(actualType =:= MethodFlagsTpe)) {
+      reportProblem("its type is not MethodFlags")
+    }
+
+    def tryMaterializeFor(matchedParam: MatchedSymbol): Res[Tree] = Ok {
+      val rpcSym = matchedParam.real
+      def flag(cond: Boolean, bit: Int) = if (cond) 1 << bit else 0
+      val s = rpcSym.symbol.asTerm
+      val rawFlags =
+        flag(s.isAbstract, 0) |
+          flag(s.isFinal, 1) |
+          flag(s.isLazy, 2) |
+          flag(s.isGetter, 3) |
+          flag(s.isSetter, 4) |
+          flag(s.isVar, 5)
+      q"new $MethodFlagsTpe($rawFlags)"
+    }
   }
 }
