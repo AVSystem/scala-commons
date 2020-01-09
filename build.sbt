@@ -27,7 +27,7 @@ val monixVersion = "3.1.0"
 val mockitoVersion = "3.2.0"
 val circeVersion = "0.12.3"
 val upickleVersion = "0.8.0"
-val scalajsBenchmarkVersion = "0.3.0-RC1"
+val scalajsBenchmarkVersion = "0.3.0"
 
 useGpg := false // TODO: use sbt-ci-release
 pgpPublicRing := file("./travis/local.pubring.asc")
