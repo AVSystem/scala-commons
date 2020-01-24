@@ -182,6 +182,8 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     owner: MetadataParam
   ) extends MetadataConstructor(constructed, Some(owner)) {
 
+    override def inheritFrom: Option[TagMatchingSymbol] = Some(containingMethodParam)
+
     def baseTagSpecs: List[BaseTagSpec] = tagSpecs(MethodTagAT)
 
     lazy val paramMdParams: List[ParamMetadataParam] = collectParams[ParamMetadataParam]
@@ -229,6 +231,8 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     owner: MetadataParam,
     val indexInRaw: Int
   ) extends MetadataConstructor(constructed, Some(owner)) {
+    override def inheritFrom: Option[TagMatchingSymbol] = Some(containingTypeParamMdParam)
+
     def baseTagSpecs: List[BaseTagSpec] = Nil
 
     override def paramByStrategy(paramSym: Symbol, annot: Annot, ownerConstr: MetadataConstructor): MetadataParam =
@@ -250,6 +254,8 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     owner: MetadataParam,
     val indexInRaw: Int
   ) extends MetadataConstructor(constructed, Some(owner)) {
+
+    override def inheritFrom: Option[TagMatchingSymbol] = Some(containingParamMdParam)
 
     def baseTagSpecs: List[BaseTagSpec] = tagSpecs(ParamTagAT)
 

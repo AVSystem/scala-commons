@@ -226,14 +226,16 @@ private[commons] trait MacroSymbols extends MacroCommons {
   }
 
   trait FilteringSymbol extends MacroSymbol {
-    lazy val requiredAnnots: List[Type] =
-      annots(AnnotatedAT).map(_.tpe.dealias.typeArgs.head)
+    def inheritFrom: Option[FilteringSymbol] = None
 
-    lazy val rejectedAnnots: List[Type] =
-      annots(NotAnnotatedAT).map(_.tpe.dealias.typeArgs.head)
+    private lazy val requiredAnnots: List[Type] =
+      inheritFrom.map(_.requiredAnnots).getOrElse(Nil) ++ annots(AnnotatedAT).map(_.tpe.dealias.typeArgs.head)
+
+    private lazy val rejectedAnnots: List[Type] =
+      inheritFrom.map(_.rejectedAnnots).getOrElse(Nil) ++ annots(NotAnnotatedAT).map(_.tpe.dealias.typeArgs.head)
 
     lazy val unmatchedError: Option[String] =
-      annot(UnmatchedAT).map(_.findArg[String](UnmatchedErrorArg))
+      annot(UnmatchedAT).map(_.findArg[String](UnmatchedErrorArg)) orElse inheritFrom.flatMap(_.unmatchedError)
 
     private def checkAnnots(realSymbol: MatchedSymbol, annots: List[Type], required: Boolean): Res[Unit] =
       Res.traverse(annots) { annotTpe =>
@@ -280,13 +282,16 @@ private[commons] trait MacroSymbols extends MacroCommons {
   }
 
   trait TagMatchingSymbol extends MacroSymbol with FilteringSymbol {
+    override def inheritFrom: Option[TagMatchingSymbol] = None
+
     def baseTagSpecs: List[BaseTagSpec]
 
     def tagAnnot(tpe: Type): Option[Annot] =
       annot(tpe)
 
-    lazy val requiredTags: List[RequiredTag] = {
-      val result = baseTagSpecs.map { case BaseTagSpec(baseTagTpe, fallbackTag) =>
+    private lazy val requiredTags: List[RequiredTag] = {
+      val allBaseTagSpecs = inheritFrom.map(_.baseTagSpecs).getOrElse(Nil) ++ baseTagSpecs
+      val result = allBaseTagSpecs.map { case BaseTagSpec(baseTagTpe, fallbackTag) =>
         val taggedAnnot = annot(getType(tq"$RpcPackage.tagged[_ <: $baseTagTpe]"))
         val requiredTagType = taggedAnnot.fold(baseTagTpe)(_.tpe.typeArgs.head)
         val whenUntagged = FallbackTag(taggedAnnot.map(_.findArg[Tree](WhenUntaggedArg, EmptyTree)).getOrElse(EmptyTree))
@@ -302,7 +307,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     }
 
     def matchTagsAndFilters(matched: MatchedSymbol): Res[matched.Self] = for {
-      fallbackTagsUsed <- Res.traverse(requiredTags) {
+      fallbackTagsUsed <- Res.traverse(inheritFrom.map(_.requiredTags).getOrElse(Nil) ++ requiredTags) {
         case RequiredTag(baseTagTpe, requiredTag, whenUntagged) =>
           val annotTagTpeOpt = matched.annot(baseTagTpe).map(_.tpe)
           val fallbackTagUsed = if (annotTagTpeOpt.isEmpty) whenUntagged else FallbackTag.Empty
