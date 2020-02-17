@@ -6,7 +6,7 @@ cancelable in Global := true
 // option in IntelliJ's SBT settings.
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-val silencerVersion = "1.4.4"
+val silencerVersion = "1.5.0"
 val collectionCompatVersion = "2.1.2"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
