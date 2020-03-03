@@ -305,7 +305,7 @@ trait MacroCommons { bundle =>
         val aggregatedMethodSym = tpe.member(AggregatedMethodSym.name).alternatives
           .find(_.overrides.contains(AggregatedMethodSym)).getOrElse(NoSymbol)
         val rawAnnots = rawAnnotations(aggregatedMethodSym)
-        if(rawAnnots.isEmpty) {
+        if (rawAnnots.isEmpty) {
           warning(s"no aggregated annotations found in $tpe")
         }
         rawAnnots.map { a =>
@@ -423,6 +423,7 @@ trait MacroCommons { bundle =>
 
     private val TranslationFailed = new RuntimeException with NoStackTrace
     private def extract(tree: Tree): ImplicitTrace = tree match {
+      case t if t.symbol != null && t.symbol.isMacro => throw TranslationFailed
       case Literal(Constant(tpe: Type)) => Lit(TypeKey(tpe))
       case Literal(Constant(value)) => Lit(value)
       case Ident(_) => Id(tree.symbol)
@@ -432,7 +433,7 @@ trait MacroCommons { bundle =>
       case TypeApply(fun, _) => extract(fun)
       case Typed(expr, _) => extract(expr)
       case Annotated(_, arg) => extract(arg)
-      case _ => throw TranslationFailed // this can probably only happen when implicit is a macro
+      case _ => throw TranslationFailed
     }
 
     case class Lit(value: Any) extends ImplicitTrace
@@ -449,7 +450,7 @@ trait MacroCommons { bundle =>
     def reference(allImplicitArgs: List[Tree]): Tree
 
     def castTo(tpe: Type): CachedImplicit =
-      if(actualType <:< tpe) this else CastImplicit(this, tpe)
+      if (actualType <:< tpe) this else CastImplicit(this, tpe)
   }
   case class RegisteredImplicit(name: TermName, actualType: Type) extends CachedImplicit {
     def reference(allImplicitArgs: List[Tree]): Tree = q"$name"
