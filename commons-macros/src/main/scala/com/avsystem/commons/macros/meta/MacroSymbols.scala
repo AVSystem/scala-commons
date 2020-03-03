@@ -173,7 +173,17 @@ private[commons] trait MacroSymbols extends MacroCommons {
       abortAt(s"problem with member $nameStr of type $ownerType: it must be a method (def)", pos)
     }
 
-    val sig: Type = symbol.typeSignatureIn(ownerType)
+    val sig: Type = {
+      // for whatever reason, when passing type constructor to `typeSignatureIn`, type param references in
+      // resulting signature are bad (different symbols than `typeParams` of type constructor)
+      val ownerTpeForSignature = ownerType match {
+        case TypeRef(pre, sym, Nil) if ownerType.typeParams.nonEmpty =>
+          internal.typeRef(pre, sym, ownerType.typeParams.map(tp => internal.typeRef(NoPrefix, tp, Nil)))
+        case _ => ownerType
+      }
+      symbol.typeSignatureIn(ownerTpeForSignature)
+    }
+
     def typeParams: List[MacroTypeParam]
     def paramLists: List[List[MacroParam]]
 

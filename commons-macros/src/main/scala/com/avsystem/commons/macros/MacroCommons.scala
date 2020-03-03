@@ -442,7 +442,7 @@ trait MacroCommons { bundle =>
   }
   case class ImplicitDep(idx: Int, name: TermName, tpe: Type) {
     def mkImplicitParam: ValDef =
-      ValDef(Modifiers(Flag.PARAM | Flag.IMPLICIT), name, tq"${treeForType(tpe)}", EmptyTree)
+      ValDef(Modifiers(Flag.PARAM | Flag.IMPLICIT), name, tq"$tpe", EmptyTree)
   }
   case class InferredImplicit(
     name: TermName,
@@ -472,7 +472,9 @@ trait MacroCommons { bundle =>
     def recreateDef(mods: Modifiers): Tree = {
       val typeDefs = tparams.map(typeSymbolToTypeDef(_, forMethod = true))
       val implicitDepDefs = List(implicits.map(_.mkImplicitParam)).filter(_.nonEmpty)
-      q"$mods def $name[..$typeDefs](...$implicitDepDefs) = $ImplicitsObj.infer[${treeForType(tpe)}]"
+      stripTparamRefs(tparams) {
+        q"$mods def $name[..$typeDefs](...$implicitDepDefs) = $ImplicitsObj.infer[$tpe]"
+      }
     }
 
     def reusableBody: Boolean =

@@ -75,8 +75,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       val statements =
         if (typeParams.isEmpty) Nil
         else itDecl :: typeParams.map { tp =>
-          val targ = treeForType(typeClass(tp.symbol))
-          q"val ${tp.instanceName} = $RpcPackage.RpcMetadata.nextInstance[$targ]($itName, ${tp.description})"
+          q"val ${tp.instanceName} = $RpcPackage.RpcMetadata.nextInstance[${typeClass(tp.symbol)}]($itName, ${tp.description})"
         }
       q"($funParamName: $paramType) => {..$statements; $tree}"
     }
@@ -189,7 +188,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     def constructorCall(argDecls: List[Tree]): Tree =
       q"""
         ..$argDecls
-        new ${treeForType(constructed)}(...$argLists)
+        new $constructed(...$argLists)
       """
 
     protected def cast[C <: MetadataConstructor : ClassTag]: C = this match {
@@ -229,7 +228,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
 
       val tparams =
         if (tpTypeClass.isEmpty) Nil
-        else matchedSymbol.typeParamsInContext // TODO: filter out unused
+        else matchedSymbol.typeParamsInContext.filter(tp => tpe.contains(tp.symbol))
 
       val tparamSymbols = tparams.map(_.symbol)
       val tparamInstances = tparams.map(tp => q"${tp.instanceName}")
@@ -302,7 +301,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
             matchedSymbol.real.reportProblem(s"reified annotation $tree contains inaccessible this-references")
           }
 
-          withTypeParamInstances(tparams)(c.untypecheck(stripTparamRefs(tparamSymbols)(tree)))
+          withTypeParamInstances(tparams)(c.untypecheck(tree))
         }
 
       arity match {
