@@ -39,7 +39,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   override def dependency(depTpe: Type, tcTpe: Type, param: Symbol): Tree = {
     val clue = s"Cannot materialize $tcTpe because of problem with parameter ${param.name}:\n"
     val depTcTpe = dependencyType(depTpe)
-    Ident(inferCachedImplicit(depTcTpe, ErrorCtx(clue, param.pos)).name)
+    inferCachedImplicit(depTcTpe, ErrorCtx(clue, param.pos)).reference(Nil)
   }
 
   override def materializeFor(tpe: Type): Tree = {

@@ -124,7 +124,10 @@ private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCo
     def materialize: Res[Tree] = for {
       _ <- constructor.matchTagsAndFilters(actualReal)
       tree <- constructor.tryMaterializeFor(actualReal)
-    } yield tree
+    } yield {
+      val tparams = actualReal.typeParams
+      q"..${tparams.map(_.typeParamDecl)}; ${stripTparamRefs(tparams.map(_.symbol))(tree)}"
+    }
 
     guardedMetadata(metadataTpe, real.tpe)(materialize.getOrElse(err => abort(err.getOrElse("unknown error"))))
   }

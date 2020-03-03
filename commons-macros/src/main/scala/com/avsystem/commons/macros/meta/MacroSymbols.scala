@@ -173,7 +173,17 @@ private[commons] trait MacroSymbols extends MacroCommons {
       abortAt(s"problem with member $nameStr of type $ownerType: it must be a method (def)", pos)
     }
 
-    val sig: Type = symbol.typeSignatureIn(ownerType)
+    val sig: Type = {
+      // for whatever reason, when passing type constructor to `typeSignatureIn`, type param references in
+      // resulting signature are bad (different symbols than `typeParams` of type constructor)
+      val ownerTpeForSignature = ownerType match {
+        case TypeRef(pre, sym, Nil) if ownerType.typeParams.nonEmpty =>
+          internal.typeRef(pre, sym, ownerType.typeParams.map(tp => internal.typeRef(NoPrefix, tp, Nil)))
+        case _ => ownerType
+      }
+      symbol.typeSignatureIn(ownerTpeForSignature)
+    }
+
     def typeParams: List[MacroTypeParam]
     def paramLists: List[List[MacroParam]]
 
@@ -330,6 +340,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
     override def collectedType: Type = arity.collectedType
 
+    // TODO: type parameters may leak into these implicits, do something about them!
     lazy val optionLike: CachedImplicit = infer(tq"$OptionLikeCls[$actualType]")
 
     lazy val canBuildFrom: CachedImplicit = arity match {
@@ -341,15 +352,15 @@ private[commons] trait MacroSymbols extends MacroCommons {
     }
 
     def mkOptional[T: Liftable](opt: Option[T]): Tree =
-      opt.map(t => q"${optionLike.name}.some($t)").getOrElse(q"${optionLike.name}.none")
+      opt.map(t => q"${optionLike.reference(Nil)}.some($t)").getOrElse(q"${optionLike.reference(Nil)}.none")
 
     def mkMulti[T: Liftable](elements: List[T]): Tree =
       if (elements.isEmpty)
-        q"$RpcUtils.createEmpty(${canBuildFrom.name})"
+        q"$RpcUtils.createEmpty(${canBuildFrom.reference(Nil)})"
       else {
         val builderName = c.freshName(TermName("builder"))
         q"""
-          val $builderName = $RpcUtils.createBuilder(${canBuildFrom.name}, ${elements.size})
+          val $builderName = $RpcUtils.createBuilder(${canBuildFrom.reference(Nil)}, ${elements.size})
           ..${elements.map(t => q"$builderName += $t")}
           $builderName.result()
         """

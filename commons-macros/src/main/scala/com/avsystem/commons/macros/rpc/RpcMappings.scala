@@ -175,9 +175,9 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
     case class Optional(rawParam: RawValueParam, wrapped: Option[EncodedRealParam]) extends ParamMapping {
       def rawValueTree: Tree = {
-        val noneRes: Tree = q"${rawParam.optionLike.name}.none"
+        val noneRes: Tree = q"${rawParam.optionLike.reference(Nil)}.none"
         wrapped.fold(noneRes) { erp =>
-          val baseRes = q"${rawParam.optionLike.name}.some(${erp.rawValueTree})"
+          val baseRes = q"${rawParam.optionLike.reference(Nil)}.some(${erp.rawValueTree})"
           if (erp.transientDefault)
             q"if(${erp.safeName} != ${erp.transientValueTree}) $baseRes else $noneRes"
           else baseRes
@@ -185,7 +185,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       }
       def realDecls: List[Tree] = wrapped.toList.map { erp =>
         erp.realParam.localValueDecl(erp.encoding.foldWithAsReal(
-          rawParam.optionLike.name, rawParam.safePath, erp.matchedParam, erp.fallbackValueTree))
+          rawParam.optionLike.reference(Nil), rawParam.safePath, erp.matchedParam, erp.fallbackValueTree))
       }
 
       def cachedAsRawDecls: List[Tree] = wrapped.flatMap(_.encoding.cachedAsRawDecl).toList
@@ -227,7 +227,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
     case class NamedMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends Multi {
       def rawValueTree: Tree =
-        if (reals.isEmpty) q"$RpcUtils.createEmpty(${rawParam.canBuildFrom.name})" else {
+        if (reals.isEmpty) q"$RpcUtils.createEmpty(${rawParam.canBuildFrom.reference(Nil)})" else {
           val builderName = c.freshName(TermName("builder"))
           val addStatements = reals.map { erp =>
             val baseStat = q"$builderName += ((${erp.rpcName}, ${erp.rawValueTree}))"
@@ -236,7 +236,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             else baseStat
           }
           q"""
-          val $builderName = $RpcUtils.createBuilder(${rawParam.canBuildFrom.name}, ${reals.size})
+          val $builderName = $RpcUtils.createBuilder(${rawParam.canBuildFrom.reference(Nil)}, ${reals.size})
           ..$addStatements
           $builderName.result()
         """
@@ -269,7 +269,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     def applyAsRaw[T: Liftable](arg: T): Tree
     def applyAsReal[T: Liftable](arg: T): Tree
     def paramAsReal[T: Liftable](arg: T, param: MatchedParam): Tree
-    def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, param: MatchedParam, fallbackValueTree: Tree): Tree
+    def foldWithAsReal[T: Liftable](optionLike: Tree, opt: T, param: MatchedParam, fallbackValueTree: Tree): Tree
     def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree
   }
   object RpcEncoding {
@@ -318,7 +318,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       def applyAsRaw[T: Liftable](arg: T): Tree = q"$arg"
       def applyAsReal[T: Liftable](arg: T): Tree = q"$arg"
       def paramAsReal[T: Liftable](arg: T, param: MatchedParam): Tree = q"$arg"
-      def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, param: MatchedParam, fallbackValueTree: Tree): Tree =
+      def foldWithAsReal[T: Liftable](optionLike: Tree, opt: T, param: MatchedParam, fallbackValueTree: Tree): Tree =
         q"$optionLike.getOrElse($opt, $fallbackValueTree)"
       def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree = q"$func"
     }
@@ -385,7 +385,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         q"$asReal.asReal($arg)"
       def paramAsReal[T: Liftable](arg: T, param: MatchedParam): Tree =
         q"$RpcUtils.readArg(${param.matchedOwner.rawName}, ${param.rawName}, $asReal, $arg)"
-      def foldWithAsReal[T: Liftable](optionLike: TermName, opt: T, param: MatchedParam, fallbackValueTree: Tree): Tree =
+      def foldWithAsReal[T: Liftable](optionLike: Tree, opt: T, param: MatchedParam, fallbackValueTree: Tree): Tree =
         q"$optionLike.fold($opt, $fallbackValueTree)(raw => ${paramAsReal(q"raw", param)})"
       def andThenAsReal[T: Liftable](func: T, param: MatchedParam): Tree =
         q"$func.andThen(raw => ${paramAsReal(q"raw", param)})"
