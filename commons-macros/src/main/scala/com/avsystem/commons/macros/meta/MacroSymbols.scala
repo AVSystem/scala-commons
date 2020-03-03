@@ -352,15 +352,15 @@ private[commons] trait MacroSymbols extends MacroCommons {
     }
 
     def mkOptional[T: Liftable](opt: Option[T]): Tree =
-      opt.map(t => q"${optionLike.name}.some($t)").getOrElse(q"${optionLike.name}.none")
+      opt.map(t => q"${optionLike.reference(Nil)}.some($t)").getOrElse(q"${optionLike.reference(Nil)}.none")
 
     def mkMulti[T: Liftable](elements: List[T]): Tree =
       if (elements.isEmpty)
-        q"$RpcUtils.createEmpty(${factory.name})"
+        q"$RpcUtils.createEmpty(${factory.reference(Nil)})"
       else {
         val builderName = c.freshName(TermName("builder"))
         q"""
-          val $builderName = $RpcUtils.createBuilder(${factory.name}, ${elements.size})
+          val $builderName = $RpcUtils.createBuilder(${factory.reference(Nil)}, ${elements.size})
           ..${elements.map(t => q"$builderName += $t")}
           $builderName.result()
         """

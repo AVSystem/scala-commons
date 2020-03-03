@@ -225,26 +225,25 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = {
       val tpe = typeGivenInstances
       val tpTypeClass = typeParamTypeClassInContext
-      val tparams = if (tpTypeClass.isEmpty) Nil else matchedSymbol.typeParamsInContext
-      val tparamInstances = tparams.map(tp => q"${tp.instanceName}")
-      val tparamInstanceTypes = tpTypeClass.fold(List.empty[Type])(tc => tparams.map(tp => tc(tp.symbol)))
+      val allTparams = if (tpTypeClass.isEmpty) Nil else matchedSymbol.typeParamsInContext
+      val usedTparams = allTparams.filter(tp => tpe.contains(tp.symbol))
+      val tparamSymbols = usedTparams.map(_.symbol)
+      val tparamInstanceTypes = tpTypeClass.fold(List.empty[Type])(tc => tparamSymbols.map(tc))
 
       def referImplicit(ci: CachedImplicit): Tree =
-        withTypeParamInstances(tparams)(ci.reference(tparamInstances))
-
-      val implicitTparams = tparams.map(_.symbol).filter(tpe.contains)
+        withTypeParamInstances(allTparams)(ci.reference(usedTparams.map(tp => q"${tp.instanceName}")))
 
       arity match {
         case ParamArity.Single(_) =>
           if (checked)
-            tryInferCachedImplicit(tpe, implicitTparams, tparamInstanceTypes, expandMacros = true)
+            tryInferCachedImplicit(tpe, tparamSymbols, tparamInstanceTypes, expandMacros = true)
               .map(ci => Ok(referImplicit(ci)))
               .getOrElse(FailMsg(clue + implicitNotFoundMsg(tpe)))
           else
-            Ok(referImplicit(infer(tpe, implicitTparams, tparamInstanceTypes, matchedSymbol.real, clue)))
+            Ok(referImplicit(infer(tpe, tparamSymbols, tparamInstanceTypes, matchedSymbol.real, clue)))
         case ParamArity.Optional(_) =>
           Ok(mkOptional(tryInferCachedImplicit(
-            tpe, implicitTparams, tparamInstanceTypes, expandMacros = true).map(referImplicit)))
+            tpe, tparamSymbols, tparamInstanceTypes, expandMacros = true).map(referImplicit)))
         case _ =>
           FailMsg(s"${arity.annotStr} not allowed on @infer params")
       }

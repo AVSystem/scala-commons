@@ -398,8 +398,10 @@ trait MacroCommons { bundle =>
   def enclosingConstructorCompanion: Symbol =
     ownerChain.filter(_.isConstructor).map(_.owner.asClass.module).find(_ != NoSymbol).getOrElse(NoSymbol)
 
-  // simplified representation of trees of implicits, used to remove duplicated implicits,
+  // Simplified representation of trees of implicits, used to remove duplicated implicits,
   // i.e. implicits that were found for different types but turned out to be identical
+  // If implicit traces for two found implicits are identical then they are guaranteed to evaluate
+  // to the same runtime value. Therefore we can reuse the same implicit for different types by casting it.
   private sealed trait ImplicitTrace
   private object ImplicitTrace {
     def apply(tree: Tree): Option[ImplicitTrace] =
@@ -434,8 +436,10 @@ trait MacroCommons { bundle =>
 
   sealed abstract class CachedImplicit {
     def actualType: Type
-    def name: TermName
     def reference(allImplicitArgs: List[Tree]): Tree
+
+    def castTo(tpe: Type): CachedImplicit =
+      if(actualType <:< tpe) this else CastImplicit(this, tpe)
   }
   case class RegisteredImplicit(name: TermName, actualType: Type) extends CachedImplicit {
     def reference(allImplicitArgs: List[Tree]): Tree = q"$name"
@@ -479,6 +483,11 @@ trait MacroCommons { bundle =>
 
     def reusableBody: Boolean =
       tparams.isEmpty && implicits.isEmpty && body != EmptyTree && !body.exists(_.isDef)
+  }
+  case class CastImplicit(cast: CachedImplicit, tpe: Type) extends CachedImplicit {
+    def actualType: Type = tpe
+    def reference(allImplicitArgs: List[Tree]): Tree =
+      q"${cast.reference(allImplicitArgs)}.asInstanceOf[$tpe]"
   }
 
   private val implicitSearchCache = new mutable.HashMap[TypeKey, Option[CachedImplicit]]
@@ -528,7 +537,7 @@ trait MacroCommons { bundle =>
           ci
         }
         ImplicitTrace(found).fold(newCachedImplicit()) { tr =>
-          implicitsByTrace.get(tr).filter(_.actualType =:= found.tpe).getOrElse {
+          implicitsByTrace.get(tr).map(_.castTo(found.tpe)).getOrElse {
             val ci = newCachedImplicit()
             implicitsByTrace(tr) = ci
             ci
