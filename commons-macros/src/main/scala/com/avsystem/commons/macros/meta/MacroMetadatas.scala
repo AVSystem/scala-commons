@@ -4,7 +4,6 @@ package macros.meta
 import com.avsystem.commons.macros.misc.{FailMsg, Ok, Res}
 
 import scala.annotation.{StaticAnnotation, tailrec}
-import scala.collection.mutable.ListBuffer
 
 private[commons] trait MacroMetadatas extends MacroSymbols {
 
