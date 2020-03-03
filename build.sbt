@@ -50,7 +50,7 @@ val previousCompatibleVersions = Set("1.39.14")
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
   crossScalaVersions := Seq("2.12.10", "2.13.1"),
-  scalaVersion := crossScalaVersions.value.head,
+  scalaVersion := crossScalaVersions.value.last,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
     "-encoding", "utf-8",

@@ -30,7 +30,10 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
           paramMappings <- constructor.paramMappings(newMatchedMethod)
           typeParamMappings <- constructor.typeParamMappings(newMatchedMethod)
           tree <- constructor.tryMaterializeFor(newMatchedMethod, paramMappings, typeParamMappings)
-        } yield withTypeParamInstances(matchedMethod.typeParamsInContext)(tree)
+        } yield {
+          val res = withTypeParamInstances(matchedMethod.typeParamsInContext)(tree)
+          q"..${matchedMethod.real.typeParamDecls}; $res"
+        }
       }
     } yield MethodMetadataMapping(matchedMethod, this, tree)
 

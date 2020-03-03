@@ -330,6 +330,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
     override def collectedType: Type = arity.collectedType
 
+    // TODO: type parameters may leak into these implicits, do something about them!
     lazy val optionLike: CachedImplicit = infer(tq"$OptionLikeCls[$actualType]")
 
     lazy val factory: CachedImplicit = arity match {
