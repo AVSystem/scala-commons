@@ -3,6 +3,7 @@ package macros
 
 import com.avsystem.commons.macros.misc.{Ok, Res}
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.{TypecheckException, blackbox}
@@ -402,7 +403,18 @@ trait MacroCommons { bundle =>
   // i.e. implicits that were found for different types but turned out to be identical
   // If implicit traces for two found implicits are identical then they are guaranteed to evaluate
   // to the same runtime value. Therefore we can reuse the same implicit for different types by casting it.
-  private sealed trait ImplicitTrace
+  private sealed trait ImplicitTrace {
+    private def stable(sym: Symbol): Boolean = sym.isStatic || sym.isModule ||
+      (sym.isTerm && (sym.asTerm.isVal || sym.asTerm.isGetter && sym.asTerm.setter == NoSymbol))
+
+    @tailrec final def stable: Boolean = this match {
+      case ImplicitTrace.Lit(_) => true
+      case ImplicitTrace.Id(sym) => stable(sym)
+      case ImplicitTrace.Ths(_) => true
+      case ImplicitTrace.Sel(pre, sym) => stable(sym) && pre.stable
+      case ImplicitTrace.App(_, _) => false
+    }
+  }
   private object ImplicitTrace {
     def apply(tree: Tree): Option[ImplicitTrace] =
       try Some(extract(tree)) catch {
@@ -413,10 +425,9 @@ trait MacroCommons { bundle =>
     private def extract(tree: Tree): ImplicitTrace = tree match {
       case Literal(Constant(tpe: Type)) => Lit(TypeKey(tpe))
       case Literal(Constant(value)) => Lit(value)
-      case Ident(_) if tree.symbol.isStatic => Static(tree.symbol)
-      case Ident(name) => Id(name)
-      case This(name) => Ths(name)
-      case Select(pre, name) => Sel(extract(pre), name)
+      case Ident(_) => Id(tree.symbol)
+      case This(_) => Ths(tree.symbol)
+      case Select(pre, _) => Sel(extract(pre), tree.symbol)
       case Apply(pre, args) => App(extract(pre), args.map(extract))
       case TypeApply(fun, _) => extract(fun)
       case Typed(expr, _) => extract(expr)
@@ -425,10 +436,9 @@ trait MacroCommons { bundle =>
     }
 
     case class Lit(value: Any) extends ImplicitTrace
-    case class Id(name: Name) extends ImplicitTrace
-    case class Ths(name: Name) extends ImplicitTrace
-    case class Static(sym: Symbol) extends ImplicitTrace
-    case class Sel(prefix: ImplicitTrace, name: Name) extends ImplicitTrace
+    case class Id(sym: Symbol) extends ImplicitTrace
+    case class Ths(sym: Symbol) extends ImplicitTrace
+    case class Sel(prefix: ImplicitTrace, sym: Symbol) extends ImplicitTrace
     case class App(prefix: ImplicitTrace, args: List[ImplicitTrace]) extends ImplicitTrace
   }
 
@@ -453,7 +463,9 @@ trait MacroCommons { bundle =>
     tparams: List[Symbol],
     implicits: List[ImplicitDep],
     tpe: Type,
-    body: Tree
+    body: Tree,
+    // stable=true means that implicit is a stable path (objects, vals, lazy vals) and needs no caching in lazy val
+    stable: Boolean
   ) extends CachedImplicit {
 
     def actualType: Type = Option(body.tpe).getOrElse(NoType) orElse tpe
@@ -506,7 +518,7 @@ trait MacroCommons { bundle =>
       val implicitDeps = availableImplicits.zipWithIndex.map {
         case (t, idx) => ImplicitDep(idx, c.freshName(TermName("dep")), t)
       }
-      val ci = InferredImplicit(name, typeParams, implicitDeps, tpe, EmptyTree)
+      val ci = InferredImplicit(name, typeParams, implicitDeps, tpe, EmptyTree, stable = false)
       val resolved = c.typecheck(ci.recreateDef(NoMods), silent = true)
       Option(resolved).collect { case dd: DefDef =>
         val actuallyUsedImplicitDeps =
@@ -530,15 +542,15 @@ trait MacroCommons { bundle =>
 
     def computeSingle(): Option[CachedImplicit] =
       Option(inferImplicitValue(tpe, expandMacros = expandMacros)).filter(_ != EmptyTree).map { found =>
-        def newCachedImplicit(): CachedImplicit = {
+        def newCachedImplicit(stable: Boolean): CachedImplicit = {
           val name = c.freshName(TermName("cachedImplicit"))
-          val ci = InferredImplicit(name, Nil, Nil, tpe, found)
+          val ci = InferredImplicit(name, Nil, Nil, tpe, found, stable)
           implicitsToDeclare += ci
           ci
         }
-        ImplicitTrace(found).fold(newCachedImplicit()) { tr =>
+        ImplicitTrace(found).fold(newCachedImplicit(stable = false)) { tr =>
           implicitsByTrace.get(tr).map(_.castTo(found.tpe)).getOrElse {
-            val ci = newCachedImplicit()
+            val ci = newCachedImplicit(tr.stable)
             implicitsByTrace(tr) = ci
             ci
           }
@@ -560,7 +572,7 @@ trait MacroCommons { bundle =>
   ): CachedImplicit =
     tryInferCachedImplicit(tpe, typeParams, availableImplicits, expandMacros).getOrElse {
       val rhsThatWillFail = q"$ImplicitsObj.infer[$tpe](${StringLiteral(errorCtx.clue, errorCtx.pos)})"
-      val ci = InferredImplicit(c.freshName(TermName("")), Nil, Nil, tpe, rhsThatWillFail)
+      val ci = InferredImplicit(c.freshName(TermName("")), Nil, Nil, tpe, rhsThatWillFail, stable = true)
       implicitSearchCache(TypeKey(tpe)) = Some(ci)
       implicitsToDeclare += ci
       inferCachedImplicit(tpe, errorCtx, typeParams, availableImplicits, expandMacros)
@@ -577,7 +589,9 @@ trait MacroCommons { bundle =>
     implicitsToDeclare.map(mkDecl).result()
 
   def mkPrivateLazyValOrDef(cachedImplicit: InferredImplicit): Tree =
-    if (cachedImplicit.reusableBody)
+    if (cachedImplicit.stable)
+      q"private def ${cachedImplicit.name} = ${cachedImplicit.body}"
+    else if (cachedImplicit.reusableBody)
       q"private lazy val ${cachedImplicit.name} = ${cachedImplicit.body}"
     else
       cachedImplicit.recreateDef(Modifiers(Flag.PRIVATE))
