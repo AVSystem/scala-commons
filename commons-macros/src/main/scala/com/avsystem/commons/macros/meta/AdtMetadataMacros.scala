@@ -114,6 +114,8 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     ownerParam: Option[MetadataParam]
   ) extends MetadataConstructor(constructed, ownerParam) {
 
+    override def inheritFrom: Option[TagMatchingSymbol] = containingAdtCaseMdParam
+
     def compositeConstructor(param: CompositeParam): MetadataConstructor =
       new AdtMetadataConstructor(param.collectedType, containingAdtCaseMdParam, Some(param))
 
@@ -229,6 +231,8 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     containingAdtParamMdParam: AdtParamMetadataParam,
     owner: MetadataParam
   ) extends MetadataConstructor(constructed, Some(owner)) {
+
+    override def inheritFrom: Option[TagMatchingSymbol] = Some(containingAdtParamMdParam)
 
     def baseTagSpecs: List[BaseTagSpec] = tagSpecs(ParamTagAT)
 

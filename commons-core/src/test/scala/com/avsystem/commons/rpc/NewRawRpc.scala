@@ -206,7 +206,8 @@ case class ParameterMetadata[T](
   @reifyFlags flags: ParamFlags,
   @reifyAnnot @multi metas: List[suchMeta],
   @isAnnotated[suchMeta] suchMeta: Boolean,
-  @optional @forTypeParams @reifyAnnot annotTypeStringOpt: Opt[List[TypeString[_]] => annotTypeString[T]],
+  // TODO: macro has problems when real type param leaks into metadata param type
+//  @optional @forTypeParams @reifyAnnot annotTypeStringOpt: Opt[List[TypeString[_]] => annotTypeString[T]],
   @forTypeParams @infer typeString: List[TypeString[_]] => TypeString[T]
 ) extends TypedMetadata[T] {
   def repr(tparams: List[TypeParameterMetadata]): String = {
@@ -214,8 +215,7 @@ case class ParameterMetadata[T](
     val flagsStr = if (flags != ParamFlags.Empty) s"[$flags]" else ""
     val posStr = s"${pos.index}:${pos.indexOfList}:${pos.indexInList}:${pos.indexInRaw}"
     val metasStr = metas.map(m => s"@suchMeta(${m.intMeta},${m.strMeta})").mkStringOrEmpty(" ", " ", "")
-    val annotTsStr = annotTypeStringOpt.fold("")(ats => s" @annotTypeString[${ats(tparamTss).ts}]")
-    s"$flagsStr${nameInfo.repr}@$posStr: ${typeString(tparamTss)} suchMeta=$suchMeta$metasStr$annotTsStr"
+    s"$flagsStr${nameInfo.repr}@$posStr: ${typeString(tparamTss)} suchMeta=$suchMeta$metasStr"
   }
 }
 

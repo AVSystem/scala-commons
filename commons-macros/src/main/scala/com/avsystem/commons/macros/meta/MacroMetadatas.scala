@@ -4,6 +4,7 @@ package macros.meta
 import com.avsystem.commons.macros.misc.{FailMsg, Ok, Res}
 
 import scala.annotation.{StaticAnnotation, tailrec}
+import scala.collection.mutable.ListBuffer
 
 private[commons] trait MacroMetadatas extends MacroSymbols {
 
@@ -74,7 +75,8 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       val statements =
         if (typeParams.isEmpty) Nil
         else itDecl :: typeParams.map { tp =>
-          q"val ${tp.instanceName} = $RpcPackage.RpcMetadata.nextInstance[${typeClass(tp.symbol)}]($itName, ${tp.description})"
+          val targ = treeForType(typeClass(tp.symbol))
+          q"val ${tp.instanceName} = $RpcPackage.RpcMetadata.nextInstance[$targ]($itName, ${tp.description})"
         }
       q"($funParamName: $paramType) => {..$statements; $tree}"
     }
@@ -187,7 +189,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     def constructorCall(argDecls: List[Tree]): Tree =
       q"""
         ..$argDecls
-        new $constructed(...$argLists)
+        new ${treeForType(constructed)}(...$argLists)
       """
 
     protected def cast[C <: MetadataConstructor : ClassTag]: C = this match {
@@ -222,11 +224,16 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     val checked: Boolean = annot(CheckedAT).nonEmpty
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = {
+      val tpe = typeGivenInstances
       val tpTypeClass = typeParamTypeClassInContext
-      val tparams = if (tpTypeClass.isDefined) matchedSymbol.typeParamsInContext else Nil
+
+      val tparams =
+        if (tpTypeClass.isEmpty) Nil
+        else matchedSymbol.typeParamsInContext // TODO: filter out unused
+
+      val tparamSymbols = tparams.map(_.symbol)
       val tparamInstances = tparams.map(tp => q"${tp.instanceName}")
       val tparamInstanceTypes = tpTypeClass.fold(List.empty[Type])(tc => tparams.map(tp => tc(tp.symbol)))
-      val tpe = typeGivenInstances
 
       def referImplicit(ci: CachedImplicit): Tree =
         withTypeParamInstances(tparams)(ci.reference(tparamInstances))
@@ -234,13 +241,14 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       arity match {
         case ParamArity.Single(_) =>
           if (checked)
-            tryInferCachedImplicit(tpe, Nil, tparamInstanceTypes, expandMacros = true)
+            tryInferCachedImplicit(tpe, tparamSymbols, tparamInstanceTypes, expandMacros = true)
               .map(ci => Ok(referImplicit(ci)))
               .getOrElse(FailMsg(clue + implicitNotFoundMsg(tpe)))
           else
-            Ok(referImplicit(infer(tpe, Nil, tparamInstanceTypes, matchedSymbol.real, clue)))
+            Ok(referImplicit(infer(tpe, tparamSymbols, tparamInstanceTypes, matchedSymbol.real, clue)))
         case ParamArity.Optional(_) =>
-          Ok(mkOptional(tryInferCachedImplicit(tpe, Nil, tparamInstanceTypes, expandMacros = true).map(referImplicit)))
+          Ok(mkOptional(tryInferCachedImplicit(
+            tpe, tparamSymbols, tparamInstanceTypes, expandMacros = true).map(referImplicit)))
         case _ =>
           FailMsg(s"${arity.annotStr} not allowed on @infer params")
       }
@@ -273,6 +281,8 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = {
       val annotTpe = typeGivenInstances
       val annotConstr = new ReifiedAnnotConstructor(annotTpe, this)
+      val tparams = matchedSymbol.typeParamsInContext
+      val tparamSymbols = tparams.map(_.symbol)
 
       def materializeAnnotParam(param: Symbol): Option[Res[Tree]] =
         if (findAnnotation(param, CompositeAT).nonEmpty)
@@ -291,7 +301,8 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
           if (containsInaccessibleThises(tree)) {
             matchedSymbol.real.reportProblem(s"reified annotation $tree contains inaccessible this-references")
           }
-          withTypeParamInstances(matchedSymbol.typeParamsInContext)(c.untypecheck(tree))
+
+          withTypeParamInstances(tparams)(c.untypecheck(stripTparamRefs(tparamSymbols)(tree)))
         }
 
       arity match {
@@ -299,9 +310,11 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
           matchedSymbol.annot(annotTpe, materializeAnnotParam).map(resolvedAnnotTree)
             .getOrElse(FailMsg(s"no annotation of type $annotTpe found"))
         case ParamArity.Optional(_) =>
-          Res.sequence(matchedSymbol.annot(annotTpe, materializeAnnotParam).map(resolvedAnnotTree)).map(ot => mkOptional(ot))
+          Res.sequence(matchedSymbol.annot(annotTpe, materializeAnnotParam).map(resolvedAnnotTree))
+            .map(ot => mkOptional(ot))
         case ParamArity.Multi(_, _) =>
-          Res.sequence(matchedSymbol.annots(annotTpe, materializeAnnotParam).map(resolvedAnnotTree)).map(tl => mkMulti(tl))
+          Res.sequence(matchedSymbol.annots(annotTpe, materializeAnnotParam).map(resolvedAnnotTree))
+            .map(tl => mkMulti(tl))
         case _ =>
           FailMsg(s"${arity.annotStr} not allowed on @reifyAnnot params")
       }
