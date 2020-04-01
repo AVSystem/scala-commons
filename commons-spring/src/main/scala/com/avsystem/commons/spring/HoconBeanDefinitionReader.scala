@@ -45,10 +45,12 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
       case (key, value) => propFun(key, value)
     }
 
-  private def validateObj(required: Set[String] = Set.empty,
+  private def validateObj(
+    required: Set[String] = Set.empty,
     requiredAny: Set[String] = Set.empty,
     allowed: Set[String] = Set.empty,
-    props: Boolean = false)(obj: ConfigObject): Unit = {
+    props: Boolean = false
+  )(obj: ConfigObject): Unit = {
     require(required.forall(obj.containsKey),
       s"Attributes ${required.mkString(", ")} must be present in object at ${obj.origin.description}")
     require(requiredAny.isEmpty || requiredAny.exists(obj.containsKey),
@@ -221,7 +223,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     obj.get(DependencyCheckAttr).as[Option[String]].map(dependencyCheckMapping).foreach(bd.setDependencyCheck)
     obj.get(DescriptionAttr).as[Option[String]].foreach(bd.setDescription)
     obj.get(DestroyMethodAttr).as[Option[String]].foreach(bd.setDestroyMethodName)
-    obj.get(DependsOnAttr).as[Option[ju.List[String]]].map(_.asScala.toArray).foreach(bd.setDependsOn)
+    obj.get(DependsOnAttr).as[Option[ju.List[String]]].map(_.asScala.toArray).foreach(bd.setDependsOn(_: _*))
     obj.get(FactoryBeanAttr).as[Option[String]].foreach(bd.setFactoryBeanName)
     obj.get(FactoryMethodAttr).as[Option[String]].foreach(bd.setFactoryMethodName)
     obj.get(InitMethodAttr).as[Option[String]].foreach(bd.setInitMethodName)
