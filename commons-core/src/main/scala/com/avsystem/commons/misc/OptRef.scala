@@ -1,6 +1,4 @@
-package com.avsystem.commons
-
-import com.avsystem.commons.misc.{OptBase, Unboxing}
+package com.avsystem.commons.misc
 
 object OptRef {
   def apply[A >: Null](value: A): OptRef[A] = new OptRef[A](value)

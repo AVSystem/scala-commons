@@ -1,8 +1,8 @@
-package com.avsystem.commons
-package misc
+package com.avsystem.commons.misc
 
 import com.avsystem.commons
 import org.scalatest.funsuite.AnyFunSuite
+import com.avsystem.commons.JInteger
 
 class OptTest extends AnyFunSuite {
   test("nonempty test") {
@@ -25,9 +25,9 @@ class OptTest extends AnyFunSuite {
   }
 
   test("boxing unboxing test") {
-    val opt: commons.Opt[Int] = Opt(42)
-    val boxedOpt: commons.Opt[JInteger] = opt.boxed
-    val unboxedOpt: commons.Opt[Int] = boxedOpt.unboxed
+    val opt: Opt[Int] = Opt(42)
+    val boxedOpt: Opt[JInteger] = opt.boxed
+    val unboxedOpt: Opt[Int] = boxedOpt.unboxed
     assert(opt == unboxedOpt)
   }
 

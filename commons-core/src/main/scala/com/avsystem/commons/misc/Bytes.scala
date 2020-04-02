@@ -1,4 +1,5 @@
 package com.avsystem.commons
+package misc
 
 import java.nio.charset.StandardCharsets
 

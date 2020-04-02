@@ -24,5 +24,4 @@ trait CommonAliases {
   type Annotation = scala.annotation.Annotation
   type StaticAnnotation = scala.annotation.StaticAnnotation
 }
-
 object CommonAliases extends CommonAliases

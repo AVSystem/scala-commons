@@ -1,8 +1,7 @@
-package com.avsystem.commons
-package misc
+package com.avsystem.commons.misc
 
-import com.avsystem.commons
 import org.scalatest.funsuite.AnyFunSuite
+import com.avsystem.commons.JInteger
 
 class NOptTest extends AnyFunSuite {
   test("nonempty test") {
@@ -29,9 +28,9 @@ class NOptTest extends AnyFunSuite {
   }
 
   test("boxing unboxing test") {
-    val opt: commons.NOpt[Int] = NOpt(42)
-    val boxedNOpt: commons.NOpt[JInteger] = opt.boxed
-    val unboxedNOpt: commons.NOpt[Int] = boxedNOpt.unboxed
+    val opt: NOpt[Int] = NOpt(42)
+    val boxedNOpt: NOpt[JInteger] = opt.boxed
+    val unboxedNOpt: NOpt[Int] = boxedNOpt.unboxed
     assert(opt == unboxedNOpt)
   }
 

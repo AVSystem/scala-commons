@@ -1,7 +1,4 @@
-package com.avsystem.commons
-
-import com.avsystem.commons.OptArg.EmptyMarker
-import com.avsystem.commons.misc.{Boxing, OptBase}
+package com.avsystem.commons.misc
 
 object OptArg {
   /**
@@ -47,6 +44,8 @@ object OptArg {
   * [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption` methods).
   */
 final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+  import OptArg._
+
   private def value: A = rawValue.asInstanceOf[A]
 
   @inline def get: A = if (isEmpty) throw new NoSuchElementException("empty OptArg") else value

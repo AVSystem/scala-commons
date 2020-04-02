@@ -1,7 +1,4 @@
-package com.avsystem.commons
-
-import com.avsystem.commons.Opt.EmptyMarker
-import com.avsystem.commons.misc.{Boxing, OptBase, Unboxing}
+package com.avsystem.commons.misc
 
 object Opt {
   // Used as Opt's raw value to represent empty Opt. Unfortunately, null can't be used for that purpose
@@ -39,6 +36,8 @@ object Opt {
   * use [[NOpt]].
   */
 final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+  import Opt._
+
   private def value: A = rawValue.asInstanceOf[A]
 
   @inline def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker

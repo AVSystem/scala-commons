@@ -1,7 +1,4 @@
-package com.avsystem.commons
-
-import com.avsystem.commons.NOpt.{EmptyMarker, NullMarker}
-import com.avsystem.commons.misc.{Boxing, OptBase, Unboxing}
+package com.avsystem.commons.misc
 
 object NOpt {
   // These two are used as NOpt's raw value to represent empty NOpt and NOpt(null).
@@ -43,6 +40,9 @@ object NOpt {
   * Like [[Opt]] but does have a counterpart for `Some(null)`. In other words, [[NOpt]] is a "nullable [[Opt]]".
   */
 final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+
+  import NOpt._
+
   private def value: A = (if (rawValue.asInstanceOf[AnyRef] eq NullMarker) null else rawValue).asInstanceOf[A]
 
   @inline def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker

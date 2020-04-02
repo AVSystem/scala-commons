@@ -5,7 +5,7 @@ import java.util.Comparator
 import java.util.concurrent.Callable
 import java.{lang => jl, math => jm, util => ju}
 
-import com.avsystem.commons.misc.Sam
+import com.avsystem.commons.misc.{Sam, TimestampConversions}
 
 trait JBasicUtils {
   def jRunnable(code: => Any) = Sam[Runnable](code)

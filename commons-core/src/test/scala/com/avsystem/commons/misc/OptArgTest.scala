@@ -1,7 +1,6 @@
-package com.avsystem.commons
-package misc
+package com.avsystem.commons.misc
 
-import com.avsystem.commons
+import com.avsystem.commons.SharedExtensions._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -25,7 +24,7 @@ class OptArgTest extends AnyFunSuite with Matchers {
     intercept[NullPointerException](OptArg.some[String](null))
   }
 
-  def takeMaybeString(str: commons.OptArg[String] = OptArg.Empty): commons.Opt[String] = str.toOpt
+  def takeMaybeString(str: OptArg[String] = OptArg.Empty): Opt[String] = str.toOpt
 
   test("argument passing") {
     takeMaybeString() shouldEqual Opt.Empty

@@ -1,8 +1,8 @@
-package com.avsystem.commons
+package com.avsystem.commons.misc
 
 import java.util.concurrent.TimeUnit
 
-import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, IsoInstant}
+import com.avsystem.commons.serialization.IsoInstant
 
 import scala.concurrent.duration.{FiniteDuration, TimeUnit}
 

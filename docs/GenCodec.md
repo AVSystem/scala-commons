@@ -168,7 +168,7 @@ a corresponding `ObjectOutput`. This normally includes all serialization formats
 
 However, there are also serialization formats that use memory representation where an object is usually backed by a hashtable. Such representations cannot retain field order.
 `GenCodec` can still work with these but as an alternative to preserving field order, they must implement random field access (field-by-name access). This is done by
-overriding [`peekField`](avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/ObjectInput.html#peekField(name:String):com.avsystem.commons.Opt[com.avsystem.commons.serialization.FieldInput]) on `ObjectInput`.
+overriding [`peekField`](avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/ObjectInput.html#peekField(name:String):com.avsystem.commons.misc.Opt[com.avsystem.commons.serialization.FieldInput]) on `ObjectInput`.
 
 To summarize, an `ObjectInput` is generally **not** guaranteed to retain order of fields as they were written to an `ObjectOutput` but if it doesn't then it must
 provide random field access by field name. Also, note that out of all the default and macro-generated codecs provided, only [flat sealed hierarchy codecs](#flat-format) actually depend

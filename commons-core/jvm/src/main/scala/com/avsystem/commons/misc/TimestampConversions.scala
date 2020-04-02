@@ -1,6 +1,8 @@
-package com.avsystem.commons
+package com.avsystem.commons.misc
 
 import java.time.Instant
+
+import com.avsystem.commons.{JDate, Timestamp}
 
 final class TimestampConversions(private val millis: Long) extends AnyVal {
   def toTimestamp: Timestamp = Timestamp(millis)

@@ -1,8 +1,10 @@
-package com.avsystem.commons
-package misc
+package com.avsystem.commons.misc
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+
+import com.avsystem.commons.SharedExtensions._
+import com.avsystem.commons.CommonAliases._
 
 class SharedExtensionsTest extends AnyFunSuite with Matchers {
   test("mkMap") {

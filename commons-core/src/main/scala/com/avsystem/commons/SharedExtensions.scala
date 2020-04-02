@@ -1,7 +1,7 @@
 package com.avsystem.commons
 
 import com.avsystem.commons.concurrent.RunNowEC
-import com.avsystem.commons.misc.{Boxing, Unboxing}
+import com.avsystem.commons.misc._
 import com.github.ghik.silencer.silent
 
 import scala.annotation.tailrec

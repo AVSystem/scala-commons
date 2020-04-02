@@ -3,8 +3,7 @@ package serialization.cbor
 
 import java.io.{ByteArrayOutputStream, DataOutputStream}
 
-import com.avsystem.commons.Bytes
-import com.avsystem.commons.serialization.{GenCodec, GenCodecRoundtripTest, HasGenCodec, Input, Output, SizePolicy, transientDefault}
+import com.avsystem.commons.serialization._
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 
