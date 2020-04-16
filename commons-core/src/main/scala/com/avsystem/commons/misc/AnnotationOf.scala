@@ -1,5 +1,6 @@
-package com.avsystem.commons
-package misc
+package com.avsystem.commons.misc
+
+import com.avsystem.commons.macros
 
 import scala.annotation.implicitNotFound
 

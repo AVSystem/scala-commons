@@ -1,6 +1,4 @@
-package com.avsystem.commons
-package misc
-
+package com.avsystem.commons.misc
 
 import com.avsystem.commons.misc.NOpt.{EmptyMarker, NullMarker}
 
