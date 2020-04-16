@@ -385,12 +385,18 @@ object ReplyDecoders {
         attributes.decode(arr, attributes.flags, unattributed(mem))
     }
 
-  val pubSubChannelEvent: ReplyDecoder[PubSubChannelEvent] = {
-    case ArrayMsg(IndexedSeq(RedisMsg.Subscribe, BulkStringMsg(channel), IntegerMsg(subscribed))) =>
-      PubSubEvent.Subscribe(channel.utf8String, subscribed.toInt)
-    case ArrayMsg(IndexedSeq(RedisMsg.Unsubscribe, BulkStringMsg(channel), IntegerMsg(subscribed))) =>
-      PubSubEvent.Unsubscribe(channel.utf8String, subscribed.toInt)
+  val pubSubEvent: ReplyDecoder[PubSubEvent] = {
     case ArrayMsg(IndexedSeq(RedisMsg.Message, BulkStringMsg(channel), message: ValidRedisMsg)) =>
       PubSubEvent.Message(channel.utf8String, message)
+    case ArrayMsg(IndexedSeq(RedisMsg.Pmessage, BulkStringMsg(pattern), BulkStringMsg(channel), message: ValidRedisMsg)) =>
+      PubSubEvent.Pmessage(pattern.utf8String, channel.utf8String, message)
+    case ArrayMsg(IndexedSeq(RedisMsg.Subscribe, BulkStringMsg(channel), IntegerMsg(subscribed))) =>
+      PubSubEvent.Subscribe(channel.utf8String, subscribed.toInt)
+    case ArrayMsg(IndexedSeq(RedisMsg.Psubscribe, BulkStringMsg(pattern), IntegerMsg(subscribed))) =>
+      PubSubEvent.Psubscribe(pattern.utf8String, subscribed.toInt)
+    case ArrayMsg(IndexedSeq(RedisMsg.Unsubscribe, BulkStringMsg(channel), IntegerMsg(subscribed))) =>
+      PubSubEvent.Unsubscribe(channel.utf8String, subscribed.toInt)
+    case ArrayMsg(IndexedSeq(RedisMsg.Punsubscribe, BulkStringMsg(pattern), IntegerMsg(subscribed))) =>
+      PubSubEvent.Punsubscribe(pattern.utf8String, subscribed.toInt)
   }
 }

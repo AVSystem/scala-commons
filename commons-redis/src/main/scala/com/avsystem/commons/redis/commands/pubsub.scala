@@ -26,12 +26,12 @@ private[redis] final class Punsubscribe(patterns: Iterable[String]) extends PubS
 }
 
 sealed abstract class PubSubEvent
-sealed abstract class PubSubChannelEvent extends PubSubEvent {
-  def channel: String
-}
 object PubSubEvent {
-  final case class Subscribe(channel: String, subscribed: Int) extends PubSubChannelEvent
-  final case class Unsubscribe(channel: String, subscribed: Int) extends PubSubChannelEvent
-  final case class Message(channel: String, message: ValidRedisMsg) extends PubSubChannelEvent
+  final case class Subscribe(channel: String, subscribed: Int) extends PubSubEvent
+  final case class Psubscribe(pattern: String, subscribed: Int) extends PubSubEvent
+  final case class Unsubscribe(channel: String, subscribed: Int) extends PubSubEvent
+  final case class Punsubscribe(pattern: String, subscribed: Int) extends PubSubEvent
+  final case class Message(channel: String, message: ValidRedisMsg) extends PubSubEvent
+  final case class Pmessage(pattern: String, channel: String, message: ValidRedisMsg) extends PubSubEvent
   case object ConnectionLost extends PubSubEvent
 }

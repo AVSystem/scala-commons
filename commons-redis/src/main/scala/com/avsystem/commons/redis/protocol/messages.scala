@@ -76,9 +76,12 @@ object RedisMsg {
   final val Queued = SimpleStringMsg(ByteString("QUEUED"))
   final val Nokey = SimpleStringMsg(ByteString("NOKEY"))
 
-  final val Subscribe = BulkStringMsg(ByteString("subscribe"))
-  final val Unsubscribe = BulkStringMsg(ByteString("unsubscribe"))
   final val Message = BulkStringMsg(ByteString("message"))
+  final val Pmessage = BulkStringMsg(ByteString("pmessage"))
+  final val Subscribe = BulkStringMsg(ByteString("subscribe"))
+  final val Psubscribe = BulkStringMsg(ByteString("psubscribe"))
+  final val Unsubscribe = BulkStringMsg(ByteString("unsubscribe"))
+  final val Punsubscribe = BulkStringMsg(ByteString("punsubscribe"))
 
   def escape(bs: ByteString, quote: Boolean = true): String = {
     val sb = new StringBuilder(if (quote) "\"" else "")

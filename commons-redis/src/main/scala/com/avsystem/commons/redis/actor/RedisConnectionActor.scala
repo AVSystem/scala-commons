@@ -279,11 +279,11 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     def onPubSubEvent(msg: RedisMsg): Unit =
       for {
         receiver <- subscribed
-        event <- Opt(msg).collect({ case vm: ValidRedisMsg => vm }).collect(ReplyDecoders.pubSubChannelEvent)
+        event <- Opt(msg).collect({ case vm: ValidRedisMsg => vm }).collect(ReplyDecoders.pubSubEvent)
       } {
         receiver ! event
         event match {
-          case PubSubEvent.Unsubscribe(_, 0) =>
+          case PubSubEvent.Unsubscribe(_, 0) | PubSubEvent.Punsubscribe(_, 0) =>
             // exiting subscribed mode, move on with regular commands
             subscribed = Opt.Empty
             writeIfPossible()
