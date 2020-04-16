@@ -118,7 +118,7 @@ trait StringsApi extends ApiSubset {
   private final class Bitfield(key: Key, ops: Iterable[BitFieldOp])
     extends RedisSeqCommand[Opt[Long]](nullBulkOr(integerLong)) with NodeCommand {
 
-    val encoded = {
+    val encoded: Encoded = {
       import BitFieldOp._
       val enc = encoder("BITFIELD").key(key)
       def loop(it: Iterator[BitFieldOp], curOverflow: Overflow): Unit = if (it.hasNext) {
@@ -193,17 +193,17 @@ trait StringsApi extends ApiSubset {
 
   private final class Mget(keys: Iterable[Key]) extends RedisOptDataSeqCommand[Value] with NodeCommand {
     val encoded: Encoded = encoder("MGET").keys(keys).result
-    override def immediateResult = whenEmpty(keys, Seq.empty)
+    override def immediateResult: Opt[Seq[Opt[Value]]] = whenEmpty(keys, Seq.empty)
   }
 
   private final class Mset(keyValues: Iterable[(Key, Value)]) extends RedisUnitCommand with NodeCommand {
     val encoded: Encoded = encoder("MSET").keyDatas(keyValues).result
-    override def immediateResult = whenEmpty(keyValues, ())
+    override def immediateResult: Opt[Unit] = whenEmpty(keyValues, ())
   }
 
   private final class Msetnx(keyValues: Iterable[(Key, Value)]) extends RedisBooleanCommand with NodeCommand {
     val encoded: Encoded = encoder("MSETNX").keyDatas(keyValues).result
-    override def immediateResult = whenEmpty(keyValues, true)
+    override def immediateResult: Opt[Boolean] = whenEmpty(keyValues, true)
   }
 
   private final class Psetex(key: Key, milliseconds: Long, value: Value) extends RedisUnitCommand with NodeCommand {

@@ -384,4 +384,13 @@ object ReplyDecoders {
       case arr@ArrayMsg(IndexedSeq(mem: ValidRedisMsg, _*)) if unattributed.isDefinedAt(mem) =>
         attributes.decode(arr, attributes.flags, unattributed(mem))
     }
+
+  val pubSubChannelEvent: ReplyDecoder[PubSubChannelEvent] = {
+    case ArrayMsg(IndexedSeq(RedisMsg.Subscribe, BulkStringMsg(channel), IntegerMsg(subscribed))) =>
+      PubSubEvent.Subscribe(channel.utf8String, subscribed.toInt)
+    case ArrayMsg(IndexedSeq(RedisMsg.Unsubscribe, BulkStringMsg(channel), IntegerMsg(subscribed))) =>
+      PubSubEvent.Unsubscribe(channel.utf8String, subscribed.toInt)
+    case ArrayMsg(IndexedSeq(RedisMsg.Message, BulkStringMsg(channel), message: ValidRedisMsg)) =>
+      PubSubEvent.Message(channel.utf8String, message)
+  }
 }
