@@ -10,7 +10,7 @@ import com.avsystem.commons.redis.protocol.BulkStringMsg
 import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{NodeAddress, RedisApi, RedisBatch, RedisNodeClient}
 
-class SentinelsMonitoringActor(
+final class SentinelsMonitoringActor(
   masterName: String,
   seedSentinels: Seq[NodeAddress],
   config: MasterSlaveConfig,
