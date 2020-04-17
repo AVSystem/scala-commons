@@ -15,7 +15,7 @@ class SentinelsMonitoringActor(
   seedSentinels: Seq[NodeAddress],
   config: MasterSlaveConfig,
   onInitFailure: Throwable => Unit,
-  onMasterChange: RedisNodeClient => Unit,
+  onMasterChange: RedisNodeClient => Unit
 ) extends Actor with ActorLazyLogging {
 
   import RedisApi.Batches.StringTyped._
