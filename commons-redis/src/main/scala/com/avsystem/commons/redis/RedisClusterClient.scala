@@ -45,8 +45,8 @@ import scala.concurrent.duration._
   */
 final class RedisClusterClient(
   val seedNodes: Seq[NodeAddress] = List(NodeAddress.Default),
-  val config: ClusterConfig = ClusterConfig())
-  (implicit system: ActorSystem) extends RedisKeyedExecutor with Closeable {
+  val config: ClusterConfig = ClusterConfig()
+)(implicit system: ActorSystem) extends RedisKeyedExecutor with Closeable {
 
   require(seedNodes.nonEmpty, "No seed nodes provided")
 
@@ -58,6 +58,7 @@ final class RedisClusterClient(
   @volatile private[this] var temporaryClients = List.empty[RedisNodeClient]
   // ensures that all operations fail fast after client is closed instead of being sent further
   @volatile private[this] var failure = Opt.empty[Throwable]
+
   private val initPromise = Promise[Unit]
   initPromise.future.foreachNow(_ => initSuccess = true)
 
@@ -454,7 +455,7 @@ case class ClusterState(
 ) {
 
   nonClustered.foreach { client =>
-    require(!client.clusterNode && mapping == IndexedSeq(SlotRange.Full -> client) && masters == Map(client.address -> client))
+    require(!client.managed && mapping == IndexedSeq(SlotRange.Full -> client) && masters == Map(client.address -> client))
   }
 
   /**

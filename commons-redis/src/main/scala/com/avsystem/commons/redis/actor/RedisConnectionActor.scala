@@ -464,7 +464,8 @@ object RedisConnectionActor {
   private object WriteAck extends Tcp.Event
 
   private case class QueuedPacks(packs: RawCommandPacks, client: Opt[ActorRef], reserve: Boolean) {
-    def reply(result: PacksResult): Unit = client.foreach(_ ! result)
+    def reply(result: PacksResult)(implicit sender: ActorRef): Unit =
+      client.foreach(_ ! result)
   }
 
   class ReplyCollector(packs: RawCommandPacks, writeBuffer: ByteBuffer, val callback: PacksResult => Unit) {

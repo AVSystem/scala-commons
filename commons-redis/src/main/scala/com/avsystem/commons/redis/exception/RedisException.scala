@@ -67,7 +67,7 @@ class ClientStoppedException(val address: Opt[NodeAddress])
   * detected that this node is no longer a master before the command could be sent to it.
   */
 class NodeRemovedException(val address: NodeAddress)
-  extends RedisException(s"Node $address is no longer a master in Redis Cluster")
+  extends RedisException(s"Node $address is no longer a master in Redis Cluster or Redis Master/Slave")
 
 class ConnectionInitializationFailure(cause: Throwable)
   extends RedisException(s"Failed to initialize Redis connection", cause)
@@ -98,7 +98,10 @@ class TooManyConnectionsException(maxPoolSize: Int)
   * @param seedNodes seed node addresses passed to [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]]
   */
 class ClusterInitializationException(val seedNodes: Seq[NodeAddress])
-  extends RedisException(s"Failed to read cluster state from any of the seed nodes ${seedNodes.mkString(",")}")
+  extends RedisException(s"Failed to read cluster state from all of the seed nodes ${seedNodes.mkString(",")}")
+
+class MasterSlaveInitializationException(val masterName: String, val seedSentiels: Seq[NodeAddress])
+  extends RedisException(s"Failed to fetch master node for $masterName from all of the seed sentinels: ${seedSentiels.mkString(", ")}")
 
 /**
   * Thrown when some multi-keyed command or `MULTI`-`EXEC` block executed by

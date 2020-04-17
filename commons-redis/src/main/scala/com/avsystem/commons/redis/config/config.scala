@@ -60,6 +60,11 @@ case class ClusterConfig(
   refreshUsingSeedNodesAfter: FiniteDuration = 30.seconds
 )
 
+case class MasterSlaveConfig(
+  masterConfig: NodeAddress => NodeConfig = _ => NodeConfig(),
+  sentinelConnectionConfigs: NodeAddress => ConnectionConfig = _ => ConnectionConfig()
+)
+
 /**
   * Configuration of a [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]], used either as a standalone
   * client or internally by [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].

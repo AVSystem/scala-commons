@@ -7,7 +7,7 @@ import com.avsystem.commons.redis.commands.{NodeInfo, SlotRange, SlotRangeMappin
 import com.avsystem.commons.redis.config.ClusterConfig
 import com.avsystem.commons.redis.exception.{ClusterInitializationException, ErrorReplyException}
 import com.avsystem.commons.redis.util.{ActorLazyLogging, SingletonSeq}
-import com.avsystem.commons.redis.{ClusterState, NodeAddress, RedisApi, RedisBatch, RedisNodeClient}
+import com.avsystem.commons.redis._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -20,7 +20,7 @@ final class ClusterMonitoringActor(
   onClusterInitFailure: Throwable => Any,
   onNewClusterState: ClusterState => Any,
   onTemporaryClient: RedisNodeClient => Any
-) extends Actor with ActorLazyLogging {
+) extends MonitoringActor with ActorLazyLogging {
 
   import ClusterMonitoringActor._
   import context._
@@ -45,9 +45,9 @@ final class ClusterMonitoringActor(
     new RedisNodeClient(addr, config.nodeConfigs(addr), clusterNode)
 
   private val random = new Random
-  private var masters = mutable.LinkedHashSet.empty[NodeAddress]
-  private val connections = new mutable.HashMap[NodeAddress, ActorRef]
-  private val clients = new mutable.HashMap[NodeAddress, RedisNodeClient]
+  private var masters = MLinkedHashSet.empty[NodeAddress]
+  private val connections = new MHashMap[NodeAddress, ActorRef]
+  private val clients = new MHashMap[NodeAddress, RedisNodeClient]
   private var state = Opt.empty[ClusterState]
   private var suspendUntil = Deadline(Duration.Zero)
   private var fallbackToSeedsAfter = Deadline(Duration.Zero)
@@ -146,7 +146,7 @@ final class ClusterMonitoringActor(
         connections.clear()
 
       case Failure(cause) =>
-        log.error(s"Failed to refresh cluster state", cause)
+        log.error("Failed to refresh cluster state", cause)
         if (state.isEmpty) {
           seedFailures += cause
           if (seedFailures.size == seedNodes.size) {

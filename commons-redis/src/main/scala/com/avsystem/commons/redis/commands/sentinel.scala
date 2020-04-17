@@ -37,7 +37,7 @@ trait SentinelApi extends ApiSubset {
 
   private final class SentinelSentinels(masterName: String)
     extends AbstractRedisCommand(multiBulkSeq(flatMultiBulkMap[String, String])) with NodeCommand {
-    val encoded: Encoded = encoder("SENTINEL", "slaves").add(masterName).result
+    val encoded: Encoded = encoder("SENTINEL", "sentinels").add(masterName).result
   }
 
   private final class SentinelGetMasterAddrByName(masterName: String)
