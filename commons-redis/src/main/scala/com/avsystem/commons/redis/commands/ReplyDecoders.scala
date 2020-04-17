@@ -385,6 +385,11 @@ object ReplyDecoders {
         attributes.decode(arr, attributes.flags, unattributed(mem))
     }
 
+  val multiBulkNodeAddress: ReplyDecoder[NodeAddress] = {
+    case ArrayMsg(IndexedSeq(BulkStringMsg(ip), BulkStringMsg(port))) =>
+      NodeAddress(ip.utf8String, port.utf8String.toInt)
+  }
+
   val pubSubEvent: ReplyDecoder[PubSubEvent] = {
     case ArrayMsg(IndexedSeq(RedisMsg.Message, BulkStringMsg(channel), message: ValidRedisMsg)) =>
       PubSubEvent.Message(channel.utf8String, message)
