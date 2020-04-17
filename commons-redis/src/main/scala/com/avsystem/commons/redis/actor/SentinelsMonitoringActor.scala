@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.actor
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.{Actor, ActorRef, Props}
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{PubSubEvent, Subscribe}
 import com.avsystem.commons.redis.config.MasterSlaveConfig
@@ -16,7 +16,7 @@ class SentinelsMonitoringActor(
   config: MasterSlaveConfig,
   onInitFailure: Throwable => Unit,
   onMasterChange: RedisNodeClient => Unit,
-) extends MonitoringActor with ActorLazyLogging {
+) extends Actor with ActorLazyLogging {
 
   import RedisApi.Batches.StringTyped._
   import SentinelsMonitoringActor._

@@ -2,12 +2,12 @@ package com.avsystem.commons
 package redis.actor
 
 import akka.actor.{Actor, ActorRef, Cancellable, Props}
+import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{NodeInfo, SlotRange, SlotRangeMapping}
 import com.avsystem.commons.redis.config.ClusterConfig
 import com.avsystem.commons.redis.exception.{ClusterInitializationException, ErrorReplyException}
 import com.avsystem.commons.redis.util.{ActorLazyLogging, SingletonSeq}
-import com.avsystem.commons.redis._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -20,7 +20,7 @@ final class ClusterMonitoringActor(
   onClusterInitFailure: Throwable => Any,
   onNewClusterState: ClusterState => Any,
   onTemporaryClient: RedisNodeClient => Any
-) extends MonitoringActor with ActorLazyLogging {
+) extends Actor with ActorLazyLogging {
 
   import ClusterMonitoringActor._
   import context._
