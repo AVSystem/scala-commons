@@ -1,7 +1,8 @@
 package com.avsystem.commons.redis.commands
 
+import akka.util.ByteString
 import com.avsystem.commons.redis.UnsafeCommand
-import com.avsystem.commons.redis.protocol.ValidRedisMsg
+import com.avsystem.commons.redis.protocol.{BulkStringMsg, ValidRedisMsg}
 
 private[redis] sealed abstract class PubSubCommand extends UnsafeCommand
 
@@ -34,4 +35,11 @@ object PubSubEvent {
   final case class Message(channel: String, message: ValidRedisMsg) extends PubSubEvent
   final case class Pmessage(pattern: String, channel: String, message: ValidRedisMsg) extends PubSubEvent
   case object ConnectionLost extends PubSubEvent
+
+  final val MessageStr = BulkStringMsg(ByteString("message"))
+  final val PmessageStr = BulkStringMsg(ByteString("pmessage"))
+  final val SubscribeStr = BulkStringMsg(ByteString("subscribe"))
+  final val PsubscribeStr = BulkStringMsg(ByteString("psubscribe"))
+  final val UnsubscribeStr = BulkStringMsg(ByteString("unsubscribe"))
+  final val PunsubscribeStr = BulkStringMsg(ByteString("punsubscribe"))
 }

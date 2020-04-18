@@ -4,8 +4,6 @@ package redis
 import java.io.Closeable
 
 import akka.actor.{ActorSystem, Props}
-import akka.util.Timeout
-import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.actor.SentinelsMonitoringActor
 import com.avsystem.commons.redis.config.{ExecutionConfig, MasterSlaveConfig}
 import com.avsystem.commons.redis.exception.{ClientStoppedException, NodeRemovedException}
@@ -14,7 +12,7 @@ final class RedisMasterSlaveClient(
   val masterName: String,
   val seedSentinels: Seq[NodeAddress] = Seq(NodeAddress.DefaultSentinel),
   val config: MasterSlaveConfig = MasterSlaveConfig()
-)(implicit system: ActorSystem) extends RedisKeyedExecutor with Closeable {
+)(implicit system: ActorSystem) extends RedisNodeExecutor with Closeable {
 
   require(seedSentinels.nonEmpty, "No seed sentinel nodes provided")
 
@@ -65,15 +63,14 @@ final class RedisMasterSlaveClient(
 
   def executionContext: ExecutionContext = system.dispatcher
 
-  def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] = {
-    implicit val timeout: Timeout = config.responseTimeout
-    batch.rawCommandPacks.requireLevel(Level.Node, "ClusterClient")
-    ifReady {
-      master.executeBatch(batch, config).recoverWithNow {
-        case _: NodeRemovedException => executeBatch(batch, config)
-      }
+  def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] = ifReady {
+    master.executeBatch(batch, config).recoverWithNow {
+      case _: NodeRemovedException => executeBatch(batch, config)
     }
   }
+
+  def executeOp[A](op: RedisOp[A], executionConfig: ExecutionConfig): Future[A] =
+    ifReady(master.executeOp(op, executionConfig))
 
   def close(): Unit = {
     failure = new ClientStoppedException(Opt.Empty).opt

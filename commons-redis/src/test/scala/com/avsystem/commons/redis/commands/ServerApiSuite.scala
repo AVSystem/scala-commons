@@ -100,7 +100,7 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
   }
 
   apiTest("ROLE") {
-    role.assertEquals(MasterRole(0, Seq.empty))
+    role.get
   }
 
   apiTest("SAVE") {
