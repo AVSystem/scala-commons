@@ -14,6 +14,14 @@ trait UsesRedisMasterSlaveClient extends UsesMasterSlaveServers with UsesActorSy
 
   var redisClient: RedisMasterSlaveClient = _
 
+  def switchMaster(): Future[Unit] = {
+    val client = new RedisConnectionClient(seedSentinels.head)
+    val api = RedisApi.Connection.Async.StringTyped(client)
+    val result = api.sentinelFailover(masterName)
+    result.onCompleteNow(_ => client.close())
+    result
+  }
+
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     redisClient = new RedisMasterSlaveClient(masterName, seedSentinels, masterSlaveConfig)
