@@ -60,6 +60,16 @@ case class ClusterConfig(
   refreshUsingSeedNodesAfter: FiniteDuration = 30.seconds
 )
 
+/**
+  * Configuration of a [[com.avsystem.commons.redis.RedisMasterSlaveClient RedisMasterSlaveClient]].
+  *
+  * @param masterConfig              function that returns [[NodeConfig]] for the master node, given its current address
+  * @param sentinelConnectionConfigs function that returns [[ConnectionConfig]] for a monitoring connection that
+  *                                  the client maintains with every Sentinel
+  * @param failoverBackoutStrategy   [[RetryStrategy]] used by the client when a command receives a `READONLY` Redis
+  *                                  error, indicating that current master is no longer a master and a failover is
+  *                                  likely in progress
+  */
 case class MasterSlaveConfig(
   masterConfig: NodeAddress => NodeConfig = _ => NodeConfig(),
   sentinelConnectionConfigs: NodeAddress => ConnectionConfig = _ => ConnectionConfig(),

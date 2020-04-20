@@ -12,6 +12,13 @@ import com.avsystem.commons.redis.exception.{ClientStoppedException, NoMasterExc
 import com.avsystem.commons.redis.protocol.{ErrorMsg, RedisReply, TransactionReply}
 import com.avsystem.commons.redis.util.DelayedFuture
 
+/**
+  * Redis client implementation for master-slave installations with Redis Sentinels.
+  * [[RedisMasterSlaveClient]] is able to execute the same set of commands as [[RedisNodeClient]].
+  *
+  * @param masterName    name of the master, as configured in the sentinels
+  * @param seedSentinels sentinel seed addresses - must point to at least one reachable sentinel
+  */
 final class RedisMasterSlaveClient(
   val masterName: String,
   val seedSentinels: Seq[NodeAddress] = Seq(NodeAddress.DefaultSentinel),
