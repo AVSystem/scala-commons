@@ -1,7 +1,7 @@
 package com.avsystem.commons.redis.commands
 
 import akka.util.ByteString
-import com.avsystem.commons.redis.UnsafeCommand
+import com.avsystem.commons.redis.{RawCommandPack, RawCommandPacks, RedisBatch, UnsafeCommand}
 import com.avsystem.commons.redis.protocol.{BulkStringMsg, ValidRedisMsg}
 
 private[redis] sealed abstract class PubSubCommand extends UnsafeCommand

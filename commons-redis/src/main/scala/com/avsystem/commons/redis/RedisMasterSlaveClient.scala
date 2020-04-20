@@ -4,9 +4,13 @@ package redis
 import java.io.Closeable
 
 import akka.actor.{ActorSystem, Props}
+import akka.util.Timeout
+import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.SentinelsMonitoringActor
-import com.avsystem.commons.redis.config.{ExecutionConfig, MasterSlaveConfig}
-import com.avsystem.commons.redis.exception.{ClientStoppedException, NodeRemovedException}
+import com.avsystem.commons.redis.config.{ExecutionConfig, MasterSlaveConfig, RetryStrategy}
+import com.avsystem.commons.redis.exception.{ClientStoppedException, NoMasterException, NodeRemovedException}
+import com.avsystem.commons.redis.protocol.{ErrorMsg, RedisReply, TransactionReply}
+import com.avsystem.commons.redis.util.DelayedFuture
 
 final class RedisMasterSlaveClient(
   val masterName: String,
@@ -63,11 +67,35 @@ final class RedisMasterSlaveClient(
 
   def executionContext: ExecutionContext = system.dispatcher
 
-  def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] = ifReady {
-    master.executeBatch(batch, config).recoverWithNow {
-      case _: NodeRemovedException => executeBatch(batch, config)
-    }
+  def executeBatch[A](batch: RedisBatch[A], execConfig: ExecutionConfig): Future[A] = ifReady {
+    implicit val timeout: Timeout = execConfig.responseTimeout
+    val packs = batch.rawCommandPacks
+    val replyFut = handleFailover(master.executeRaw(packs), packs, config.failoverBackoutStrategy)
+    replyFut.map(batch.decodeReplies(_))(execConfig.decodeOn)
   }
+
+  private def handleFailover(
+    resultFut: Future[PacksResult], packs: RawCommandPacks, retryStrategy: RetryStrategy
+  )(implicit timeout: Timeout): Future[PacksResult] =
+    resultFut.flatMapNow { pr =>
+      pr.collectFirstOpt { case ReadonlyReply(err) => err } match {
+        case Opt.Empty => resultFut
+        case Opt(err) =>
+          // Got READONLY error for at least one command, this means failover is in progress and we should soon obtain
+          // information about new master. Until that happens, back out and retry.
+          // NOTE: it is safe (and better) to retry _all_ commands in the batch - the ones that didn't fail are read-only.
+          retryStrategy.nextRetry match {
+            case Opt.Empty =>
+              Future.successful(PacksResult.Failure(new NoMasterException(err)))
+            case Opt((delay, nextStrategy)) =>
+              DelayedFuture(delay).flatMapNow(_ => handleFailover(master.executeRaw(packs), packs, nextStrategy))
+          }
+      }
+    } recoverWithNow {
+      case _: NodeRemovedException =>
+        // this means the master changed before the batch could be sent, retry immediately
+        handleFailover(master.executeRaw(packs), packs, config.failoverBackoutStrategy)
+    }
 
   def executeOp[A](op: RedisOp[A], executionConfig: ExecutionConfig): Future[A] =
     ifReady(master.executeOp(op, executionConfig))
@@ -75,5 +103,13 @@ final class RedisMasterSlaveClient(
   def close(): Unit = {
     failure = new ClientStoppedException(Opt.Empty).opt
     system.stop(monitoringActor)
+  }
+}
+
+object ReadonlyReply {
+  def unapply(reply: RedisReply): Opt[ErrorMsg] = reply match {
+    case err: ErrorMsg if err.errorCode == "READONLY" => Opt(err)
+    case TransactionReply(elements) => elements.headOpt.flatMap(unapply)
+    case _ => Opt.Empty
   }
 }

@@ -100,6 +100,13 @@ class TooManyConnectionsException(maxPoolSize: Int)
 class ClusterInitializationException(val seedNodes: Seq[NodeAddress])
   extends RedisException(s"Failed to read cluster state from all of the seed nodes ${seedNodes.mkString(",")}")
 
+/**
+  * Thrown when [[com.avsystem.commons.redis.RedisMasterSlaveClient RedisMasterSlaveClient]] is unable
+  * to fetch current master address from any of the sentinel seed nodes.
+  *
+  * @param masterName   name of the master monitored by sentinels
+  * @param seedSentiels seed sentinel addresses passed to [[com.avsystem.commons.redis.RedisMasterSlaveClient RedisMasterSlaveClient]]
+  */
 class MasterSlaveInitializationException(val masterName: String, val seedSentiels: Seq[NodeAddress])
   extends RedisException(s"Failed to fetch master node for $masterName from all of the seed sentinels: ${seedSentiels.mkString(", ")}")
 
@@ -135,3 +142,11 @@ class NoKeysException
 class TooManyRedirectionsException(val lastRedirection: Redirection)
   extends RedisException(s"Too many Redis cluster redirections, last one to: " +
     s"${lastRedirection.address} (slot ${lastRedirection.slot}${if (lastRedirection.ask) ", ASK" else ""})")
+
+/**
+  * Thrown by [[com.avsystem.commons.redis.RedisMasterSlaveClient RedisMasterSlaveClient]] when - despite multiple
+  * retries - the master responds with a `READONLY` error code indicating that it is no longer a master. This happens
+  * when for some reason failover cannot be performed by Redis Sentinel or it takes too long.
+  */
+class NoMasterException(val err: ErrorMsg)
+  extends RedisException(s"No master available - READONLY error is being received consistently")

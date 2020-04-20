@@ -62,7 +62,8 @@ case class ClusterConfig(
 
 case class MasterSlaveConfig(
   masterConfig: NodeAddress => NodeConfig = _ => NodeConfig(),
-  sentinelConnectionConfigs: NodeAddress => ConnectionConfig = _ => ConnectionConfig()
+  sentinelConnectionConfigs: NodeAddress => ConnectionConfig = _ => ConnectionConfig(),
+  failoverBackoutStrategy: RetryStrategy = exponentially(10.millis).maxDelay(5.seconds).maxTotal(3.minutes)
 )
 
 /**

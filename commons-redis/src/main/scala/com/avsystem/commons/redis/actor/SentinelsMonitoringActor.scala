@@ -43,9 +43,15 @@ final class SentinelsMonitoringActor(
     val conn = actorOf(Props(new RedisConnectionActor(addr, config.sentinelConnectionConfigs(addr))))
     sentinels(addr) = conn
     conn ! RedisConnectionActor.Open(seed, Promise[Unit])
+    onReconnection(conn)
+    conn
+  }
+
+  private def onReconnection(conn: ActorRef): Unit = {
+    // there is a unlikely race condition here: an event about new master may be lost if it happens
+    // *exactly* between these two messages (extremely unlikely especially as we have multiple sentinels)
     conn ! FetchState
     conn ! SentinelSubscription
-    conn
   }
 
   private def updateMaster(masterAddr: NodeAddress): Unit =
@@ -100,9 +106,9 @@ final class SentinelsMonitoringActor(
       }
 
     case PubSubEvent.ConnectionLost =>
-      val sentinel = sender()
-      sentinel ! FetchState
-      sentinel ! SentinelSubscription
+      // note: we are doing this before the connection is re-established but that's no problem because
+      // messages will be queued in RedisConnectionActor until the connection is restored
+      onReconnection(sender())
 
     case _: PubSubEvent =>
     // ignore

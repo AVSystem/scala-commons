@@ -15,7 +15,7 @@ import com.avsystem.commons.redis.protocol.{RedisMsg, RedisReply, ValidRedisMsg}
 import com.avsystem.commons.redis.util.ActorLazyLogging
 
 import scala.annotation.tailrec
-import scala.collection.mutable
+import scala.collection.{IndexedSeqOptimized, mutable}
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.Duration
 
@@ -517,19 +517,24 @@ object RedisConnectionActor {
       }
   }
 
-  sealed trait PacksResult extends (Int => RedisReply)
+  sealed abstract class PacksResult
+    extends IIndexedSeq[RedisReply] with IndexedSeqOptimized[RedisReply, IIndexedSeq[RedisReply]]
   object PacksResult {
     case object Empty extends PacksResult {
-      def apply(idx: Int): RedisReply = throw new NoSuchElementException
+      def apply(idx: Int): RedisReply = throw new IndexOutOfBoundsException
+      def length: Int = 0
     }
     case class Single(reply: RedisReply) extends PacksResult {
-      def apply(idx: Int): RedisReply = reply
+      def apply(idx: Int): RedisReply = if(idx == 0) reply else throw new IndexOutOfBoundsException
+      def length: Int = 1
     }
     case class Multiple(replySeq: IndexedSeq[RedisReply]) extends PacksResult {
       def apply(idx: Int): RedisReply = replySeq(idx)
+      def length: Int = replySeq.size
     }
     case class Failure(cause: Throwable) extends PacksResult {
       def apply(idx: Int): RedisReply = throw cause
+      def length: Int = 0
     }
   }
 
