@@ -11,8 +11,8 @@ import scala.concurrent.{Await, Promise}
   * Created: 14/04/16.
   */
 trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils { this: Suite =>
-  def port = 7000
-  def address = NodeAddress(port = port)
+  def port: Int = 7000
+  def address: NodeAddress = NodeAddress(port = port)
 
   var redisProcess: RedisProcess = _
 
@@ -29,7 +29,7 @@ trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils { this: S
   }
 
   override protected def afterAll(): Unit = {
-    Await.result(shutdownRedis(port, redisProcess), 10.seconds)
+    Await.result(shutdownRedis(redisProcess), 10.seconds)
     super.afterAll()
   }
 }

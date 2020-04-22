@@ -4,9 +4,12 @@ package redis
 import java.net.InetSocketAddress
 
 object NodeAddress {
-  final val Default = NodeAddress()
   final val DefaultIP = "127.0.0.1"
   final val DefaultPort = 6379
+  final val DefaultSentinelPort = 26379
+
+  final val Default = NodeAddress()
+  final val DefaultSentinel = NodeAddress(port = DefaultSentinelPort)
 
   def parse(str: String): NodeAddress = {
     val Array(ip, port) = str.split(':')

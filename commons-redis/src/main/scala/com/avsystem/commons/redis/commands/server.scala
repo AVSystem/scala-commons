@@ -550,9 +550,9 @@ case class MasterRole(replOffset: Long, slaveOffsets: Seq[(NodeAddress, Long)]) 
 case class SlaveRole(master: NodeAddress, replState: ReplState, receivedDataOffset: Long) extends RedisRole
 case class SentinelRole(masterNames: Seq[String]) extends RedisRole
 object RedisRole {
-  val MasterStr = BulkStringMsg(ByteString("master"))
-  val SlaveStr = BulkStringMsg(ByteString("slave"))
-  val SentinelStr = BulkStringMsg(ByteString("sentinel"))
+  final val MasterStr = BulkStringMsg(ByteString("master"))
+  final val SlaveStr = BulkStringMsg(ByteString("slave"))
+  final val SentinelStr = BulkStringMsg(ByteString("sentinel"))
 }
 
 sealed abstract class ReplState(val name: String) extends NamedEnum

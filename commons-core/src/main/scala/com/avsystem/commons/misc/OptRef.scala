@@ -1,5 +1,4 @@
-package com.avsystem.commons
-package misc
+package com.avsystem.commons.misc
 
 import scala.language.implicitConversions
 

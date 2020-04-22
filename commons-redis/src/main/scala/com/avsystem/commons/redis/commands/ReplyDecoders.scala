@@ -384,4 +384,24 @@ object ReplyDecoders {
       case arr@ArrayMsg(IndexedSeq(mem: ValidRedisMsg, _*)) if unattributed.isDefinedAt(mem) =>
         attributes.decode(arr, attributes.flags, unattributed(mem))
     }
+
+  val multiBulkNodeAddress: ReplyDecoder[NodeAddress] = {
+    case ArrayMsg(IndexedSeq(BulkStringMsg(ip), BulkStringMsg(port))) =>
+      NodeAddress(ip.utf8String, port.utf8String.toInt)
+  }
+
+  val pubSubEvent: ReplyDecoder[PubSubEvent] = {
+    case ArrayMsg(IndexedSeq(PubSubEvent.MessageStr, BulkStringMsg(channel), message: ValidRedisMsg)) =>
+      PubSubEvent.Message(channel.utf8String, message)
+    case ArrayMsg(IndexedSeq(PubSubEvent.PmessageStr, BulkStringMsg(pattern), BulkStringMsg(channel), message: ValidRedisMsg)) =>
+      PubSubEvent.Pmessage(pattern.utf8String, channel.utf8String, message)
+    case ArrayMsg(IndexedSeq(PubSubEvent.SubscribeStr, BulkStringMsg(channel), IntegerMsg(subscribed))) =>
+      PubSubEvent.Subscribe(channel.utf8String, subscribed.toInt)
+    case ArrayMsg(IndexedSeq(PubSubEvent.PsubscribeStr, BulkStringMsg(pattern), IntegerMsg(subscribed))) =>
+      PubSubEvent.Psubscribe(pattern.utf8String, subscribed.toInt)
+    case ArrayMsg(IndexedSeq(PubSubEvent.UnsubscribeStr, BulkStringMsg(channel), IntegerMsg(subscribed))) =>
+      PubSubEvent.Unsubscribe(channel.utf8String, subscribed.toInt)
+    case ArrayMsg(IndexedSeq(PubSubEvent.PunsubscribeStr, BulkStringMsg(pattern), IntegerMsg(subscribed))) =>
+      PubSubEvent.Punsubscribe(pattern.utf8String, subscribed.toInt)
+  }
 }

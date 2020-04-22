@@ -1,8 +1,8 @@
 package com.avsystem.commons
 package redis.commands
 
+import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.protocol.{ArrayMsg, ErrorMsg, NullArrayMsg, RedisMsg}
-import com.avsystem.commons.redis.{ApiSubset, OperationCommand, RedisUnitCommand, UnsafeCommand, WatchState}
 
 trait TransactionApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/watch WATCH]] */
