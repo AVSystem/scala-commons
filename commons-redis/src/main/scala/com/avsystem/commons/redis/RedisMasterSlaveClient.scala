@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package redis
 
-import java.io.Closeable
-
 import akka.actor.{ActorSystem, Props}
 import akka.util.Timeout
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
@@ -23,7 +21,7 @@ final class RedisMasterSlaveClient(
   val masterName: String,
   val seedSentinels: Seq[NodeAddress] = Seq(NodeAddress.DefaultSentinel),
   val config: MasterSlaveConfig = MasterSlaveConfig()
-)(implicit system: ActorSystem) extends RedisNodeExecutor with Closeable {
+)(implicit system: ActorSystem) extends RedisClient with RedisNodeExecutor {
 
   require(seedSentinels.nonEmpty, "No seed sentinel nodes provided")
 
