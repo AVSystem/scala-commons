@@ -1,6 +1,7 @@
-package com.avsystem.commons
+package com.avsystem.commons.misc
 
 import scala.scalajs.js
+import com.avsystem.commons.JDate
 
 final class TimestampConversions(private val millis: Long) extends AnyVal {
   def toTimestamp: Timestamp = Timestamp(millis)
