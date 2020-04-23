@@ -19,8 +19,8 @@ trait RawCommands {
 trait RawCommand extends RawCommandPack with RawCommands with ReplyPreprocessor {
   type Encoded = ArrayMsg[BulkStringMsg]
   def encoded: Encoded
-  def updateWatchState(message: RedisMsg, state: WatchState): Unit = ()
   def level: Level
+  def updateWatchState(message: RedisMsg, state: WatchState): Unit = ()
   override def maxBlockingMillis: Int = 0
 
   final def checkLevel(minAllowed: Level, clientType: String): Unit =

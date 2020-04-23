@@ -8,12 +8,13 @@ import akka.actor.{Actor, ActorRef}
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
 import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.commands.{PubSubCommand, PubSubEvent, ReplyDecoders}
 import com.avsystem.commons.redis.config.{ConnectionConfig, RetryStrategy}
 import com.avsystem.commons.redis.exception._
-import com.avsystem.commons.redis.protocol.{RedisMsg, RedisReply}
+import com.avsystem.commons.redis.protocol.{RedisMsg, RedisReply, ValidRedisMsg}
 import com.avsystem.commons.redis.util.ActorLazyLogging
 
-import scala.collection.compat._
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 
@@ -42,6 +43,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
   private val queuedToReserve = new JArrayDeque[QueuedPacks]
   private val queuedToWrite = new JArrayDeque[QueuedPacks]
   private var writeBuffer = ByteBuffer.allocate(config.maxWriteSizeHint.getOrElse(0) + 1024)
+  private var subscribed = Opt.empty[ActorRef]
 
   def receive: Receive = {
     case IncomingPacks(packs) =>
@@ -260,19 +262,44 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     def onMoreData(data: ByteString): Unit = {
       logReceived(data)
       try decoder.decodeMore(data) { msg =>
-        if (collectors.peekFirst.processMessage(msg, this)) {
-          collectors.removeFirst()
+        collectors.peekFirst() match {
+          // no collectors registered, assuming this is a pub/sub message
+          case null => onPubSubEvent(msg)
+          case collector =>
+            if (collector.processMessage(msg, this)) {
+              collectors.removeFirst()
+            }
         }
       } catch {
         case NonFatal(cause) => close(cause, stopSelf = false)
       }
     }
 
+    def onPubSubEvent(msg: RedisMsg): Unit =
+      for {
+        receiver <- subscribed
+        event <- Opt(msg).collect({ case vm: ValidRedisMsg => vm }).collect(ReplyDecoders.pubSubEvent)
+      } {
+        receiver ! event
+        event match {
+          case PubSubEvent.Unsubscribe(_, 0) | PubSubEvent.Punsubscribe(_, 0) =>
+            // exiting subscribed mode, move on with regular commands
+            subscribed = Opt.Empty
+            writeIfPossible()
+          case _ =>
+        }
+      }
+
     def closeIfIdle(cause: Throwable, stopSelf: Boolean): Boolean =
       collectors.isEmpty && {
         close(cause, stopSelf)
         true
       }
+
+    def isPubSub(packs: RawCommandPacks): Boolean = packs match {
+      case _: PubSubCommand => true
+      case _ => false
+    }
 
     def writeIfPossible(): Unit =
       if (waitingForAck == 0 && !queuedToWrite.isEmpty) {
@@ -285,12 +312,22 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         }
 
         var bufferSize = 0
-        var packsCount = 0
         val it = queuedToWrite.iterator()
-        while (it.hasNext && config.maxWriteSizeHint.forall(_ > bufferSize)) {
-          packsCount += 1
-          bufferSize += it.next().packs.encodedSize
-        }
+
+        @tailrec def computeBufferSize(packsCount: Int): Int =
+          if (it.hasNext && config.maxWriteSizeHint.forall(_ > bufferSize)) {
+            val nextPacks = it.next().packs
+            if (isPubSub(nextPacks)) {
+              bufferSize += nextPacks.encodedSize
+              packsCount + 1 // stopping at pub/sub command
+            } else if (subscribed.isEmpty) {
+              bufferSize += nextPacks.encodedSize
+              computeBufferSize(packsCount + 1)
+            } else packsCount // don't send non-pubsub commands until unsubscribed
+          } else packsCount
+
+        var packsCount = computeBufferSize(0)
+
         waitingForAck = packsCount
         if (writeBuffer.capacity < bufferSize) {
           writeBuffer = ByteBuffer.allocate(bufferSize)
@@ -299,8 +336,18 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         while (packsCount > 0) {
           packsCount -= 1
           val queued = queuedToWrite.removeFirst()
-          new ReplyCollector(queued.packs, writeBuffer, queued.reply)
-            .sendEmptyReplyOr(collectors.addLast)
+          queued.packs match {
+            // assuming that pub/sub commands are always sent as single commands, outside batches
+            case pubsub: PubSubCommand =>
+              // this may actually be UNSUBSCRIBE command but this is fine:
+              // we're going to get an "unsubscribed" message from Redis and clear the `subscribed` field if necessary
+              subscribed = queued.client
+              // just encode, we don't expect response
+              RedisMsg.encode(pubsub.encoded, writeBuffer)
+            case packs =>
+              new ReplyCollector(packs, writeBuffer, queued.reply)
+                .sendEmptyReplyOr(collectors.addLast)
+          }
         }
 
         if (waitingForAck > 0) {
@@ -344,6 +391,10 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     def onConnectionClosed(cc: Tcp.ConnectionClosed): Unit = {
       open = false
       incarnation += 1
+      subscribed.foreach { receiver =>
+        receiver ! PubSubEvent.ConnectionLost
+        subscribed = Opt.Empty
+      }
       val closeCause = cc.getErrorCause.opt
       log.error(s"Redis connection $localAddr->$remoteAddr was unexpectedly closed${closeCause.fold("")(c => s": $c")}")
     }
@@ -412,7 +463,8 @@ object RedisConnectionActor {
   private object WriteAck extends Tcp.Event
 
   private case class QueuedPacks(packs: RawCommandPacks, client: Opt[ActorRef], reserve: Boolean) {
-    def reply(result: PacksResult): Unit = client.foreach(_ ! result)
+    def reply(result: PacksResult)(implicit sender: ActorRef): Unit =
+      client.foreach(_ ! result)
   }
 
   class ReplyCollector(packs: RawCommandPacks, writeBuffer: ByteBuffer, val callback: PacksResult => Unit) {
@@ -464,19 +516,23 @@ object RedisConnectionActor {
       }
   }
 
-  sealed trait PacksResult extends (Int => RedisReply)
+  sealed abstract class PacksResult extends IIndexedSeq[RedisReply]
   object PacksResult {
     case object Empty extends PacksResult {
-      def apply(idx: Int): RedisReply = throw new NoSuchElementException
+      def apply(idx: Int): RedisReply = throw new IndexOutOfBoundsException
+      def length: Int = 0
     }
     case class Single(reply: RedisReply) extends PacksResult {
-      def apply(idx: Int): RedisReply = reply
+      def apply(idx: Int): RedisReply = if (idx == 0) reply else throw new IndexOutOfBoundsException
+      def length: Int = 1
     }
     case class Multiple(replySeq: IndexedSeq[RedisReply]) extends PacksResult {
       def apply(idx: Int): RedisReply = replySeq(idx)
+      def length: Int = replySeq.size
     }
     case class Failure(cause: Throwable) extends PacksResult {
       def apply(idx: Int): RedisReply = throw cause
+      def length: Int = 0
     }
   }
 

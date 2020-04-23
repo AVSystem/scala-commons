@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package redis
 
-import java.io.Closeable
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicLong
 
@@ -27,8 +26,8 @@ import scala.concurrent.duration._
 final class RedisNodeClient(
   val address: NodeAddress = NodeAddress.Default,
   val config: NodeConfig = NodeConfig(),
-  val clusterNode: Boolean = false
-)(implicit system: ActorSystem) extends RedisNodeExecutor with Closeable { client =>
+  val managed: Boolean = false // true when used internally by RedisClusterClient or RedisMasterSlaveClient
+)(implicit system: ActorSystem) extends RedisClient with RedisNodeExecutor { client =>
 
   private def newConnection(i: Int): ActorRef = {
     val connConfig: ConnectionConfig = config.connectionConfigs(i)
@@ -37,7 +36,7 @@ final class RedisNodeClient(
     val props = Props(new RedisConnectionActor(address, connConfig))
       .withDispatcher(ConfigDefaults.Dispatcher)
     val connection = connConfig.actorName.fold(system.actorOf(props))(system.actorOf(props, _))
-    connection ! RedisConnectionActor.Open(!clusterNode, connInitPromises(i))
+    connection ! RedisConnectionActor.Open(!managed, connInitPromises(i))
     connection
   }
 

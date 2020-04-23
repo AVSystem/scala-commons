@@ -23,4 +23,5 @@ out
 *.pid
 
 local.*
-cluster
+cluster/
+masterSlave/
