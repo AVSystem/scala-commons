@@ -7,13 +7,14 @@ import com.avsystem.commons.redis.commands.{RedisScript, ReplyDecoders}
 import com.avsystem.commons.redis.config.{ConnectionConfig, NodeConfig}
 import com.avsystem.commons.redis.exception.{ConnectionFailedException, ConnectionInitializationFailure, NodeInitializationFailure, TooManyConnectionsException}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 /**
   * Author: ghik
   * Created: 27/06/16.
   */
-class RedisNodeClientTest extends FunSuite
+class RedisNodeClientTest extends AnyFunSuite
   with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer with ByteStringInterpolation {
 
   def createClient(connInitCommands: RedisBatch[Any], initOp: RedisOp[Any]) =

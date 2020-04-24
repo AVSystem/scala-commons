@@ -4,7 +4,7 @@ package rpc
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.TypeString
 import com.avsystem.commons.rpc.GenericMeta._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 class GenericMeta[T](
   @reifyName name: String,
@@ -54,7 +54,7 @@ object GenericTrait {
   implicit val meta: GenericMeta[GenericTrait[_, _]] = GenericMeta.materialize
 }
 
-class GenericMetadataTest extends FunSuite {
+class GenericMetadataTest extends AnyFunSuite {
   test("generic metadata") {
     assert(GenericTrait.meta.repr ==
       """GenericTrait[A, B] {

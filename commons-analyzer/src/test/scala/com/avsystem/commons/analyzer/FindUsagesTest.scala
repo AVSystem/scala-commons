@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package analyzer
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class FindUsagesTest extends FunSuite with AnalyzerTest {
+class FindUsagesTest extends AnyFunSuite with AnalyzerTest {
   settings.pluginOptions.value ++= List("AVSystemAnalyzer:+findUsages:java.lang.String")
 
   test("java.lang.String usages should be found") {

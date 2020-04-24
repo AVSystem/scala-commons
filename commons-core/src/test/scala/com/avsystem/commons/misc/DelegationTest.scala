@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.language.higherKinds
 
-class DelegationTest extends FunSuite {
+class DelegationTest extends AnyFunSuite {
   trait Destination[T] {
     val te: T
     def simple(omg: Int): String

@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package analyzer
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class CheckBincompatTest extends FunSuite with AnalyzerTest {
+class CheckBincompatTest extends AnyFunSuite with AnalyzerTest {
   test("definitions of @bincompat annotated symbols should not be rejected") {
     assertNoErrors(
       """

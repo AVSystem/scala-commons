@@ -3,9 +3,10 @@ package redis
 
 import com.avsystem.commons.redis.exception.MasterSlaveInitializationException
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class RedisMasterSlaveClientInitTest extends FunSuite
+class RedisMasterSlaveClientInitTest extends AnyFunSuite
   with Matchers with ScalaFutures with UsesActorSystem with UsesPreconfiguredMasterSlave {
 
   import RedisApi.Batches.StringTyped._

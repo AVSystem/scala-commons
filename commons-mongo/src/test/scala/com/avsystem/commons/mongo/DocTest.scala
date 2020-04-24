@@ -2,12 +2,12 @@ package com.avsystem.commons
 package mongo
 
 import org.bson.BsonString
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 /**
   * @author MKej
   */
-class DocTest extends FunSuite {
+class DocTest extends AnyFunSuite {
 
   import DocTest._
 

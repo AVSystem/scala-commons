@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 case class CodeSizeTester00(
   int: Int,
@@ -118,7 +118,7 @@ object Person {
   implicit val codec: GenCodec[Person] = GenCodec.materialize
 }
 
-class CodeSizeTester extends FunSuite {
+class CodeSizeTester extends AnyFunSuite {
   ignore("fake test to see how much JS is generated") {
     println(CodeSizeTester00.codec.write(null, null))
 //    println(CodeSizeTester01.codec.write(null, null))

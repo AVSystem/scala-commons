@@ -1,10 +1,10 @@
 package com.avsystem.commons
 package misc
 
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-import org.scalatest.{FunSuite, Matchers}
-
-class NamedEnumTest extends FunSuite with Matchers {
+class NamedEnumTest extends AnyFunSuite with Matchers {
 
   sealed trait SomeNamedEnum extends NamedEnum
 

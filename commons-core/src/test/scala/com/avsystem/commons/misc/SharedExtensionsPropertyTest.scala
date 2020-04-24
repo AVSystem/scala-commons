@@ -2,10 +2,11 @@ package com.avsystem.commons
 package misc
 
 import org.scalacheck.{Gen, Shrink}
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class SharedExtensionsPropertyTest extends FunSuite with Matchers with GeneratorDrivenPropertyChecks {
+class SharedExtensionsPropertyTest extends AnyFunSuite with Matchers with ScalaCheckPropertyChecks {
   implicit def shrinkNonEmpty[C[_] <: Iterable[_], T](implicit base: Shrink[C[T]]): Shrink[C[T]] =
     Shrink(base.shrink(_).filter(_.nonEmpty))
 

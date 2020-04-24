@@ -4,7 +4,7 @@ package rpc
 import com.avsystem.commons.meta.infer
 import com.avsystem.commons.misc.TypeString
 import com.avsystem.commons.serialization.{GenCodec, transientDefault, whenAbsent}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.annotation.StaticAnnotation
 
@@ -51,7 +51,7 @@ object TestApi {
   implicit val partialMetadata: PartialMetadata[TestApi] = PartialMetadata.materialize[TestApi]
 }
 
-class NewRpcMetadataTest extends FunSuite {
+class NewRpcMetadataTest extends AnyFunSuite {
   test("TestApi metadata") {
     assert(TestApi.metadata.toString ==
       """com.avsystem.commons.rpc.TestApi

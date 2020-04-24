@@ -5,7 +5,7 @@ import com.avsystem.commons.serialization.{GenCodec, HasGenCodecWithDeps}
 import org.bson.json.JsonReader
 import org.bson.types.{Decimal128, ObjectId}
 import org.bson.{BsonArray, BsonBinary, BsonBoolean, BsonDateTime, BsonDecimal128, BsonDocument, BsonDouble, BsonElement, BsonInt32, BsonInt64, BsonNull, BsonObjectId, BsonString, BsonValue}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 case class AllTypesInABag(
   array: BsonArray,
@@ -23,7 +23,7 @@ case class AllTypesInABag(
 )
 object AllTypesInABag extends HasGenCodecWithDeps[BsonGenCodecs.type, AllTypesInABag]
 
-class BsonValueCodecsTest extends FunSuite {
+class BsonValueCodecsTest extends AnyFunSuite {
   test("codec roundtrip") {
     val doc = new BsonDocument(JList(
       new BsonElement("someInt64", new BsonInt64(64)),

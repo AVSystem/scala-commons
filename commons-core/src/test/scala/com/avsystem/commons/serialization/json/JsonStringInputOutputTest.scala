@@ -2,16 +2,17 @@ package com.avsystem.commons
 package serialization.json
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization.{GenCodec, HasGenCodec, Input, Output, transientDefault, whenAbsent}
+import com.avsystem.commons.serialization._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck._
 import org.scalactic.source.Position
-import org.scalatest.prop.PropertyChecks
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.collection.mutable.ListBuffer
 
-class JsonStringInputOutputTest extends FunSuite with SerializationTestUtils with Matchers with PropertyChecks {
+class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils with Matchers with ScalaCheckPropertyChecks {
 
   import JsonStringInput.read
   import JsonStringOutput.write

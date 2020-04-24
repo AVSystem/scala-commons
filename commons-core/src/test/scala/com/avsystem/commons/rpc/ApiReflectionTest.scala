@@ -3,7 +3,7 @@ package rpc
 
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.TypeString
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.annotation.StaticAnnotation
 
@@ -76,7 +76,7 @@ class SimpleApi {
   @ignore def completelyIgnoredMethod(int: Int, string: String): Unit = ()
 }
 
-class ApiReflectionTest extends FunSuite {
+class ApiReflectionTest extends AnyFunSuite {
   test("String API") {
     assert(ApiInfo.materialize[String].repr ==
       """String {

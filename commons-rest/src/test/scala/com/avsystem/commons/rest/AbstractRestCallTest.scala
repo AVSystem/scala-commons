@@ -3,10 +3,10 @@ package rest
 
 import com.avsystem.commons.rest.RawRest.HandleRequest
 import org.scalactic.source.Position
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.concurrent.ScalaFutures
 
-abstract class AbstractRestCallTest extends FunSuite with ScalaFutures {
+abstract class AbstractRestCallTest extends AnyFunSuite with ScalaFutures {
   final val serverHandle: RawRest.HandleRequest =
     RawRest.asHandleRequest[RestTestApi](RestTestApi.Impl)
 

@@ -1,9 +1,10 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class OptArgTest extends FunSuite with Matchers {
+class OptArgTest extends AnyFunSuite with Matchers {
   test("nonempty") {
     val opt = OptArg(23)
     opt match {

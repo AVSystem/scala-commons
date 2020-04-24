@@ -4,8 +4,10 @@ package rpc.akka
 import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.{ActorPath, ActorSystem, Inbox, Terminated}
+import org.mockito.Mockito
 import org.mockito.Mockito.when
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -14,9 +16,12 @@ import scala.concurrent.duration._
   * @author Wojciech Milewski
   */
 abstract class AkkaRPCFrameworkTest(
-  serverSystem: ActorSystem, clientSystem: ActorSystem, serverSystemPath: Option[String] = None)
-  extends FlatSpec with RPCFrameworkTest with ProcedureRPCTest with FunctionRPCTest with GetterRPCTest with ObservableRPCTest
-    with BeforeAndAfterAll {
+  serverSystem: ActorSystem, clientSystem: ActorSystem, serverSystemPath: Option[String] = None
+) extends AnyFlatSpec with RPCFrameworkTest with ProcedureRPCTest with FunctionRPCTest with GetterRPCTest with ObservableRPCTest
+  with BeforeAndAfterAll {
+
+  private def mock[T: ClassTag]: T =
+    Mockito.mock(classTag[T].runtimeClass.asInstanceOf[Class[T]])
 
   /**
     * Servers as identifier supplier for each test case to allow tests parallelization.

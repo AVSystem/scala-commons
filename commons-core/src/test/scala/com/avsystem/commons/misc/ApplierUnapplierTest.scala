@@ -2,7 +2,7 @@ package com.avsystem.commons
 package misc
 
 import org.scalactic.source.Position
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 case class Empty()
 case class Single(str: String)
@@ -30,7 +30,7 @@ object Custom {
   def unapply(custom: Custom): Opt[(String, Int)] = Opt((custom.str, custom.i))
 }
 
-class ApplierUnapplierTest extends FunSuite {
+class ApplierUnapplierTest extends AnyFunSuite {
   def roundtrip[T](value: T)(implicit
     applier: Applier[T], unapplier: Unapplier[T], applierUnapplier: ApplierUnapplier[T], pos: Position
   ): Unit = {

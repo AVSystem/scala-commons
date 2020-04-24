@@ -9,8 +9,9 @@ val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && Sys
 val silencerVersion = "1.4.3"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
-val scalatestVersion = "3.0.5"
-val scalacheckVersion = "1.14.0"
+val scalatestVersion = "3.1.1"
+val scalatestplusScalacheckVersion = "3.1.1.1"
+val scalacheckVersion = "1.14.3"
 val jettyVersion = "9.4.19.v20190610"
 val mongoVersion = "3.11.0"
 val mongoReactiveVersion = "1.12.0"
@@ -110,6 +111,7 @@ val commonSettings = Seq(
     "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
+    "org.scalatestplus" %%% "scalacheck-1-14" % scalatestplusScalacheckVersion % Test,
     "org.mockito" % "mockito-core" % mockitoVersion % Test,
   ),
   dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",

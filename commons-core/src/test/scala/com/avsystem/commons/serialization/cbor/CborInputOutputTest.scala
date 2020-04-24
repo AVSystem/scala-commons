@@ -6,7 +6,7 @@ import java.io.{ByteArrayOutputStream, DataOutputStream}
 import com.avsystem.commons.misc.{Bytes, Timestamp}
 import com.avsystem.commons.serialization.{GenCodec, GenCodecRoundtripTest, HasGenCodec, Input, Output}
 import org.scalactic.source.Position
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 case class Record(
   b: Boolean,
@@ -17,7 +17,7 @@ case class Record(
 )
 object Record extends HasGenCodec[Record]
 
-class CborInputOutputTest extends FunSuite {
+class CborInputOutputTest extends AnyFunSuite {
   private def roundtrip[T: GenCodec](
     value: T,
     binary: String,

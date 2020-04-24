@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package analyzer
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class Any2StringAddTest extends FunSuite with AnalyzerTest {
+class Any2StringAddTest extends AnyFunSuite with AnalyzerTest {
   test("any2stringadd should be rejected") {
     assertErrors(
       """

@@ -4,7 +4,7 @@ package spring
 import java.{lang => jl, util => ju}
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.springframework.beans.factory.support.DefaultListableBeanFactory
 import org.springframework.context.support.GenericApplicationContext
 
@@ -24,7 +24,7 @@ object TestBean {
     new TestBean(theInt, theString)
 }
 
-class HoconBeanDefinitionReaderTest extends FunSuite {
+class HoconBeanDefinitionReaderTest extends AnyFunSuite {
   def createContext(resource: String): GenericApplicationContext = {
     val pnd = new ScalaParameterNameDiscoverer
 

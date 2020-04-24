@@ -2,7 +2,7 @@ package com.avsystem.commons
 package mongo
 
 import com.avsystem.commons.serialization.{GenCodec, name, transparent}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 case class InnerClass(
   map: Map[String, String]
@@ -28,7 +28,7 @@ object TestEntity extends BsonRef.Creator[TestEntity] {
   implicit val codec: GenCodec[TestEntity] = GenCodec.materialize
 }
 
-class BsonRefTest extends FunSuite with BsonRef.Creator[TestEntity] {
+class BsonRefTest extends AnyFunSuite with BsonRef.Creator[TestEntity] {
   test("basic test") {
     assert(ref(_.wrapper).path == "wrapper")
     assert(ref(_.wrapper.s).path == "wrapper")

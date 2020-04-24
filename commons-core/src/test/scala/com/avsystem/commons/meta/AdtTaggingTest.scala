@@ -2,9 +2,9 @@ package com.avsystem.commons
 package meta
 
 import com.avsystem.commons.rpc.{RpcTag, caseTag, paramTag, tagged}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class AdtTaggingTest extends FunSuite {
+class AdtTaggingTest extends AnyFunSuite {
   sealed trait AdtTag extends RpcTag
   class Good extends AdtTag
   class Bad extends AdtTag

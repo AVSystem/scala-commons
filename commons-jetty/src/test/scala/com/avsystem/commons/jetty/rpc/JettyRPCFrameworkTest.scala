@@ -3,14 +3,16 @@ package jetty.rpc
 
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.server.Server
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Milliseconds, Seconds, Span}
-import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
 /**
   * @author MKej
   */
-class JettyRPCFrameworkTest extends FunSuite with ScalaFutures with Matchers with BeforeAndAfterAll {
+class JettyRPCFrameworkTest extends AnyFunSuite with ScalaFutures with Matchers with BeforeAndAfterAll {
 
   import JettyRPCFramework._
 

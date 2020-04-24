@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package rest
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class RestValidationTest extends FunSuite {
+class RestValidationTest extends AnyFunSuite {
   import DefaultRestImplicits._
 
   trait Api2 {

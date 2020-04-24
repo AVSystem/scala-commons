@@ -8,9 +8,9 @@ import com.avsystem.commons.serialization.GenCodec
 import com.mongodb.client.model.Filters
 import org.bson.BsonType
 import org.bson.conversions.Bson
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class FilteringTest extends FunSuite {
+class FilteringTest extends AnyFunSuite {
 
   import Filtering._
   import FilteringTest._

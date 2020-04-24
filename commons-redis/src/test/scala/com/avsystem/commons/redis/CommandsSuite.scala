@@ -6,7 +6,9 @@ import com.avsystem.commons.misc.SourceInfo
 import com.avsystem.commons.redis.config._
 import org.scalactic.source.Position
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{FunSuite, Matchers, Tag}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.Tag
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -56,7 +58,7 @@ trait ByteStringInterpolation {
   }
 }
 
-trait CommandsSuite extends FunSuite with ScalaFutures with Matchers with UsesActorSystem
+trait CommandsSuite extends AnyFunSuite with ScalaFutures with Matchers with UsesActorSystem
   with ByteStringInterpolation with CommunicationLogging {
 
   def executor: RedisKeyedExecutor
@@ -87,7 +89,8 @@ trait CommandsSuite extends FunSuite with ScalaFutures with Matchers with UsesAc
   }
 }
 
-abstract class RedisClusterCommandsSuite extends FunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
+abstract class RedisClusterCommandsSuite
+  extends AnyFunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
   def executor: RedisKeyedExecutor = redisClient
 
   override def clusterConfig: ClusterConfig =
@@ -111,7 +114,7 @@ abstract class RedisClusterCommandsSuite extends FunSuite with UsesPreconfigured
 }
 
 abstract class RedisMasterSlaveCommandsSuite
-  extends FunSuite with UsesPreconfiguredMasterSlave with UsesRedisMasterSlaveClient with CommandsSuite {
+  extends AnyFunSuite with UsesPreconfiguredMasterSlave with UsesRedisMasterSlaveClient with CommandsSuite {
 
   def executor: RedisKeyedExecutor = redisClient
 
@@ -135,7 +138,8 @@ abstract class RedisMasterSlaveCommandsSuite
   }
 }
 
-abstract class RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient with CommandsSuite {
+abstract class RedisNodeCommandsSuite
+  extends AnyFunSuite with UsesRedisNodeClient with CommandsSuite {
   def executor: RedisNodeClient = redisClient
 
   override def nodeConfig: NodeConfig =
@@ -153,7 +157,8 @@ abstract class RedisNodeCommandsSuite extends FunSuite with UsesRedisNodeClient 
   }
 }
 
-abstract class RedisConnectionCommandsSuite extends FunSuite with UsesRedisConnectionClient with CommandsSuite {
+abstract class RedisConnectionCommandsSuite
+  extends AnyFunSuite with UsesRedisConnectionClient with CommandsSuite {
   def executor: RedisConnectionClient = redisClient
 
   override def connectionConfig: ConnectionConfig =

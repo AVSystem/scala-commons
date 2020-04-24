@@ -1,9 +1,10 @@
 package com.avsystem.commons
 package misc
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class SharedExtensionsTest extends FunSuite with Matchers {
+class SharedExtensionsTest extends AnyFunSuite with Matchers {
   test("mkMap") {
     List.range(0, 3).mkMap(identity, _.toString) shouldEqual
       Map(0 -> "0", 1 -> "1", 2 -> "2")

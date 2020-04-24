@@ -6,9 +6,9 @@ import java.io.ByteArrayOutputStream
 import com.avsystem.commons.kafka.exceptions.UnsupportedVersionEvent
 import com.avsystem.commons.serialization.GenCodec
 import org.apache.kafka.common.serialization.Serializer
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class CodecSerdeTest extends FunSuite {
+class CodecSerdeTest extends AnyFunSuite {
 
   sealed trait TestEvent
 

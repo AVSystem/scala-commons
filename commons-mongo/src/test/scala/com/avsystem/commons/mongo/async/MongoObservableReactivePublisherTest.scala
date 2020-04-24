@@ -6,16 +6,19 @@ import com.github.ghik.silencer.silent
 import com.mongodb.async.{client => mongo}
 import monix.execution.{Cancelable, Scheduler}
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
+import org.mockito.Mockito
 import org.mockito.Mockito._
 import org.mongodb.scala.{Completed, Document, FindObservable, MongoCollection, SingleObservable}
 import org.scalactic.source.Position
-import org.scalatest.FreeSpec
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.freespec.AnyFreeSpec
 
 import scala.concurrent.duration.Duration
 
 @silent("deprecated")
-class MongoObservableReactivePublisherTest extends FreeSpec with MockitoSugar {
+class MongoObservableReactivePublisherTest extends AnyFreeSpec {
+
+  private def mock[T: ClassTag]: T =
+    Mockito.mock(classTag[T].runtimeClass.asInstanceOf[Class[T]])
 
   abstract class MockedObservableTests(implicit position: Position) extends MongoObservableExtensions {
 

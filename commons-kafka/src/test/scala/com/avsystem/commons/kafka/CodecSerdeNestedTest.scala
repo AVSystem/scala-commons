@@ -5,9 +5,9 @@ import java.util.Date
 
 import com.avsystem.commons.serialization.GenCodec
 import org.apache.kafka.common.serialization.Serializer
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class CodecSerdeNestedTest extends FunSuite {
+class CodecSerdeNestedTest extends AnyFunSuite {
 
   trait TestEvent
 

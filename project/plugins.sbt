@@ -4,7 +4,7 @@ resolvers += Resolver.url("jetbrains-bintray",
   url("https://dl.bintray.com/jetbrains/sbt-plugins/"))(Resolver.ivyStylePatterns)
 
 val scalaJSVersion =
-  Option(System.getenv("SCALAJS_VERSION")).getOrElse("0.6.28")
+  Option(System.getenv("SCALAJS_VERSION")).getOrElse("0.6.32")
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % scalaJSVersion)
 addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.0.0")

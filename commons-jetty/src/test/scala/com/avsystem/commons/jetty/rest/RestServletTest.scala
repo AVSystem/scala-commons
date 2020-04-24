@@ -7,9 +7,9 @@ import org.eclipse.jetty.client.util.StringContentProvider
 import org.eclipse.jetty.http.{HttpMethod, HttpStatus}
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.{ServletHandler, ServletHolder}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class RestServletTest extends FunSuite with UsesHttpServer with UsesHttpClient {
+class RestServletTest extends AnyFunSuite with UsesHttpServer with UsesHttpClient {
   override protected def setupServer(server: Server): Unit = {
     val servlet = RestServlet[SomeApi](SomeApi.impl)
     val holder = new ServletHolder(servlet)

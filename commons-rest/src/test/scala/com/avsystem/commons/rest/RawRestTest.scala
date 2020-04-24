@@ -5,7 +5,7 @@ import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.meta.Mapping
 import com.avsystem.commons.serialization.{transientDefault, whenAbsent}
 import org.scalactic.source.Position
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.concurrent.ScalaFutures
 
 case class User(id: String, name: String)
@@ -49,7 +49,7 @@ trait RootApi {
 }
 object RootApi extends DefaultRestApiCompanion[RootApi]
 
-class RawRestTest extends FunSuite with ScalaFutures {
+class RawRestTest extends AnyFunSuite with ScalaFutures {
   def repr(body: HttpBody, inNewLine: Boolean = true): String = body match {
     case HttpBody.Empty => ""
     case HttpBody(content, mimeType) => s"${if (inNewLine) "" else " "}$mimeType\n$content"

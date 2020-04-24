@@ -3,11 +3,13 @@ package rpc
 
 import com.avsystem.commons.concurrent.{HasExecutionContext, RunNowEC}
 import com.avsystem.commons.rpc.DummyRPC._
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import scala.collection.mutable.ArrayBuffer
 
-class RPCTest extends WordSpec with Matchers with BeforeAndAfterAll {
+class RPCTest extends AnyWordSpec with Matchers with BeforeAndAfterAll {
 
   trait RunNowFutureCallbacks extends HasExecutionContext {
     protected implicit final def executionContext: ExecutionContext = RunNowEC

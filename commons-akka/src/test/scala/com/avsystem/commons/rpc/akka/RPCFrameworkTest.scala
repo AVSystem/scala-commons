@@ -6,16 +6,16 @@ import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.scalatest.concurrent.Waiters.Waiter
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.Span
-import org.scalatest.{FlatSpecLike, Matchers}
 
 import scala.concurrent.duration._
 
 /**
   * @author Wojciech Milewski
   */
-trait RPCFrameworkTest extends FlatSpecLike with Matchers with MockitoSugar with ScalaFutures {
+trait RPCFrameworkTest extends AnyFlatSpecLike with Matchers with ScalaFutures {
 
   import RPCFrameworkTest._
 
