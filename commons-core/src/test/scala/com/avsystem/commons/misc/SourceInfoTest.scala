@@ -9,7 +9,7 @@ class SourceInfoTest extends AnyFunSuite with Matchers {
 
   test("simple") {
     srcInfo should matchPattern {
-      case SourceInfo(_, "SourceInfoTest.scala", 167, 7, 28,
+      case SourceInfo(_, "SourceInfoTest.scala", 216, 8, 28,
       "  val srcInfo = SourceInfo.here",
       List("srcInfo", "SourceInfoTest", "misc", "commons", "avsystem", "com")) =>
     }
