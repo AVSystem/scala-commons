@@ -2,7 +2,7 @@ language: scala
 
 scala:
   - 2.11.12
-  - 2.12.10
+  - 2.12.11
 
 jdk:
   - openjdk8
@@ -27,6 +27,9 @@ jobs:
     - env:
       - TASK="commons-js/test"
       - SCALAJS_VERSION="1.0.1"
+      scala:
+        - 2.11.12
+        - 2.12.11
     - stage: deploy
       script: if [ "$TRAVIS_PULL_REQUEST" = 'false' ]; then ./deploy.sh; fi
       if: tag =~ ^v
