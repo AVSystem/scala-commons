@@ -16,7 +16,7 @@ final class OptionLikeImpl[O, A](
   empty: O,
   someFun: A => O,
   isDefinedFun: O => Boolean,
-  getFun: O => A,
+  getFun: O => A
 ) extends OptionLike[O] {
   type Value = A
   def none: O = empty
