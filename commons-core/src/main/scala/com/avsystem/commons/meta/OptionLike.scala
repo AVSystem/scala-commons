@@ -8,7 +8,7 @@ sealed trait OptionLike[O] {
   def fold[B](opt: O, ifEmpty: => B)(f: Value => B): B
   def getOrElse[B >: Value](opt: O, default: => B): B = fold(opt, default)(v => v)
 }
-trait BaseOptionLike[O, A] extends OptionLike[O] {
+abstract class BaseOptionLike[O, A] extends OptionLike[O] {
   type Value = A
 }
 object OptionLike {
