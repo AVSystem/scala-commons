@@ -208,9 +208,9 @@ object ReplyDecoders {
   }
 
   val multiBulkCommandInfo: ReplyDecoder[CommandInfo] = {
-    case ArrayMsg(IndexedSeq(BulkStringMsg(name), IntegerMsg(arity), ArrayMsg(flagArray), IntegerMsg(firstKey), IntegerMsg(lastKey), IntegerMsg(stepCount))) =>
+    case ArrayMsg(IndexedSeq(BulkStringMsg(name), IntegerMsg(arity), ArrayMsg(flagArray), IntegerMsg(firstKey), IntegerMsg(lastKey), IntegerMsg(stepCount), _*)) =>
       val flags = flagArray.iterator.map({
-        case SimpleStringMsg(flagStr) => CommandFlags.byRepr(flagStr.utf8String)
+        case SimpleStringMsg(flagStr) => CommandFlags.byRepr.getOrElse(flagStr.utf8String, CommandFlags.NoFlags)
         case msg => throw new UnexpectedReplyException(s"Expected only simple strings in command flag list, got $msg")
       }).fold(CommandFlags.NoFlags)(_ | _)
       CommandInfo(
