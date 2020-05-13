@@ -52,8 +52,8 @@ class WriteFailedException(val address: NodeAddress)
   * such command cannot be resent because we don't know whether it was actually executed on the Redis instance or not.
   * In a Redis Cluster deployment, this is likely to happen when a node fails.
   */
-class ConnectionClosedException(val address: NodeAddress, val cause: Opt[String])
-  extends RedisIOException(s"Redis connection to $address was closed${cause.fold("")(c => s": $c")}")
+class ConnectionClosedException(val address: NodeAddress, val cause: Opt[Throwable])
+  extends RedisIOException(s"Redis connection to $address was closed", cause.orNull)
 
 class ConnectionBusyException(val address: NodeAddress)
   extends RedisIOException(s"Redis connection to $address is currently busy writing other request")
