@@ -29,7 +29,7 @@ trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils { this: S
         "--tls-port", tlsPort.toString,
         "--tls-cert-file", "./tls/redis.crt",
         "--tls-key-file", "./tls/redis.key",
-        "--tls-ca-cert-file", "./tls/ca.crt",
+        "--tls-ca-cert-file", "./tls/ca.crt"
       ),
       10.seconds
     )
