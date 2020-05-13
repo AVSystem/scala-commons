@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis
 
 import akka.util.ByteString
-import com.avsystem.commons.redis.config.ConnectionConfig
+import com.avsystem.commons.redis.config.{ConnectionConfig, TlsConfig}
 import com.avsystem.commons.redis.exception.{ConnectionFailedException, ConnectionInitializationFailure}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
@@ -67,4 +67,9 @@ class RedisConnectionClientTest extends AnyFunSuite
     api.keyType[ByteString].set(ByteString("key"), "value").futureValue shouldEqual true
     bvApi.keyType[ByteString].set(ByteString("key"), ByteString.empty).futureValue shouldEqual true
   }
+}
+
+class RedisTlsConnectionClientTest extends RedisConnectionClientTest with UsesSslContext {
+  override def createClient(initCommands: RedisBatch[Any]): RedisConnectionClient =
+    new RedisConnectionClient(tlsAddress, config = ConnectionConfig(initCommands, TlsConfig(sslContext)))
 }

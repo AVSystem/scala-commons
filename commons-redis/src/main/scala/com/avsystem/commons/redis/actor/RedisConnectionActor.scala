@@ -125,15 +125,35 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     // using Akka IO, this was implemented as:
     // IO(Tcp) ! Tcp.Connect(address.socketAddress,
     //   config.localAddress.toOption, config.socketOptions, config.connectTimeout.toOption)
-    val src = Source.actorRefWithAck[ByteString](WriteAck)
-    val conn = Tcp().outgoingConnection(
-      address.socketAddress,
-      config.localAddress.toOption,
-      config.socketOptions,
-      connectTimeout = config.connectTimeout.getOrElse(Duration.Inf)
-    )
+    val src = Source.actorRefWithAck[ByteString](ackMessage = WriteAck)
+
+    val conn = config.tlsConfig match {
+      case OptArg(tlsConfig) => Tcp().outgoingTlsConnection(
+        address.socketAddress,
+        tlsConfig.sslContext,
+        tlsConfig.negotiateNewSession,
+        config.localAddress.toOption,
+        config.socketOptions,
+        config.connectTimeout.getOrElse(Duration.Inf),
+        config.idleTimeout.getOrElse(Duration.Inf)
+      )
+      case OptArg.Empty => Tcp().outgoingConnection(
+        address.socketAddress,
+        config.localAddress.toOption,
+        config.socketOptions,
+        connectTimeout = config.connectTimeout.getOrElse(Duration.Inf),
+        idleTimeout = config.idleTimeout.getOrElse(Duration.Inf)
+      )
+    }
+
     val sink = Sink.actorRefWithAck(
-      self, ReadInit, ReadAck, ConnectionClosed(Opt.Empty), cause => ConnectionClosed(Opt(cause)))
+      ref = self,
+      onInitMessage = ReadInit,
+      ackMessage = ReadAck,
+      onCompleteMessage = ConnectionClosed(Opt.Empty),
+      onFailureMessage = cause => ConnectionClosed(Opt(cause))
+    )
+
     val (actorRef, connFuture) = src.viaMat(conn)((_, _)).to(sink).run()
     connFuture.onCompleteNow {
       case Success(Tcp.OutgoingConnection(remoteAddress, localAddress)) =>

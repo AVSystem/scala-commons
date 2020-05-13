@@ -9,16 +9,16 @@ import org.scalatest.Suite
   * Created: 14/04/16.
   */
 trait UsesRedisNodeClient extends UsesRedisServer with UsesActorSystem { this: Suite =>
-  def nodeConfig = NodeConfig()
+  def nodeConfig: NodeConfig = NodeConfig()
 
   var redisClient: RedisNodeClient = _
 
-  override protected def beforeAll() = {
+  override protected def beforeAll(): Unit = {
     super.beforeAll()
     redisClient = new RedisNodeClient(address, nodeConfig)
   }
 
-  override protected def afterAll() = {
+  override protected def afterAll(): Unit = {
     redisClient.close()
     super.afterAll()
   }

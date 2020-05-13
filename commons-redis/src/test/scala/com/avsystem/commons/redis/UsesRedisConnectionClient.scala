@@ -13,12 +13,12 @@ trait UsesRedisConnectionClient extends UsesRedisServer with UsesActorSystem { t
 
   var redisClient: RedisConnectionClient = _
 
-  override protected def beforeAll() = {
+  override protected def beforeAll(): Unit = {
     super.beforeAll()
     redisClient = new RedisConnectionClient(address, connectionConfig)
   }
 
-  override protected def afterAll() = {
+  override protected def afterAll(): Unit = {
     redisClient.close()
     super.afterAll()
   }

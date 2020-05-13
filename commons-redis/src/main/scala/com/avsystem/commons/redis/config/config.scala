@@ -4,10 +4,12 @@ package redis.config
 import java.net.InetSocketAddress
 
 import akka.io.Inet
+import akka.stream.TLSProtocol.NegotiateNewSession
 import akka.util.Timeout
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{DebugListener, DevNullListener}
 import com.avsystem.commons.redis.config.RetryStrategy._
 import com.avsystem.commons.redis.{NodeAddress, RedisBatch, RedisOp}
+import javax.net.ssl.SSLContext
 
 import scala.concurrent.duration._
 
@@ -146,10 +148,12 @@ case class NodeConfig(
   *                             Note that these are all commands that can't be executed directly by
   *                             [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]] or
   *                             [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
+  * @param tlsConfig            enables connection over TLS
   * @param actorName            name of the actor representing the connection
   * @param localAddress         local bind address for the connection
   * @param socketOptions        socket options for the connection
   * @param connectTimeout       timeout for establishing connection
+  * @param idleTimeout          maximum idle time for the connection
   * @param maxWriteSizeHint     hint for maximum number of bytes sent in a single network write message (the actual number
   *                             of bytes sent may be slightly larger)
   * @param reconnectionStrategy a [[RetryStrategy]] used to determine what delay should be used when reconnecting
@@ -159,11 +163,21 @@ case class NodeConfig(
   */
 case class ConnectionConfig(
   initCommands: RedisBatch[Any] = RedisBatch.unit,
+  tlsConfig: OptArg[TlsConfig] = OptArg.Empty,
   actorName: OptArg[String] = OptArg.Empty,
   localAddress: OptArg[InetSocketAddress] = OptArg.Empty,
   socketOptions: List[Inet.SocketOption] = Nil,
   connectTimeout: OptArg[FiniteDuration] = OptArg.Empty,
+  idleTimeout: OptArg[FiniteDuration] = OptArg.Empty,
   maxWriteSizeHint: OptArg[Int] = 50000,
   reconnectionStrategy: RetryStrategy = immediately.andThen(exponentially(1.seconds)).maxDelay(8.seconds),
   debugListener: DebugListener = DevNullListener
+)
+
+/**
+  * Configuration options for TLS connection.
+  */
+case class TlsConfig(
+  sslContext: SSLContext = SSLContext.getDefault,
+  negotiateNewSession: NegotiateNewSession = NegotiateNewSession
 )
