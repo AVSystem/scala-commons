@@ -125,6 +125,11 @@ object ReplyDecoders {
   val simpleBinary: ReplyDecoder[ByteString] =
     simple(bs => bs)
 
+  val simpleBumpepochResult: ReplyDecoder[BumpepochResult] = {
+    case BumpepochResult.Bumped.encoded => BumpepochResult.Bumped
+    case BumpepochResult.Still.encoded => BumpepochResult.Still
+  }
+
   def simple[T](fun: ByteString => T): ReplyDecoder[T] = {
     case SimpleStringMsg(data) => fun(data)
   }

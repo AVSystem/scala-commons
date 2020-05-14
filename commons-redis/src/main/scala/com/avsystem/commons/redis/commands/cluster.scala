@@ -1,10 +1,11 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
+import com.avsystem.commons.misc._
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
+import com.avsystem.commons.redis.protocol.SimpleStringMsg
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -32,6 +33,10 @@ trait NodeClusterApi extends KeyedClusterApi {
   def clusterAddslots(slots: Iterable[Int]): Result[Unit] =
     execute(new ClusterAddslots(slots))
 
+  /** Executes [[http://redis.io/commands/cluster-bumpepoch CLUSTER BUMPEPOCH]] */
+  def clusterBumpepoch: Result[BumpepochResult] =
+    execute(ClusterBumpepoch)
+
   /** Executes [[http://redis.io/commands/cluster-count-failure-reports CLUSTER COUNT-FAILURE-REPORTS]] */
   def clusterCountFailureReports(nodeId: NodeId): Result[Long] =
     execute(new ClusterCountFailureReports(nodeId))
@@ -56,6 +61,7 @@ trait NodeClusterApi extends KeyedClusterApi {
   def clusterFailover(option: OptArg[FailoverOption] = OptArg.Empty): Result[Unit] =
     execute(new ClusterFailover(option.toOpt))
 
+  /** Executes [[http://redis.io/commands/cluster-flushslots CLUSTER FLUSHSLOTS]] */
   def clusterFlushslots: Result[Unit] =
     execute(ClusterFlushslots)
 
@@ -117,6 +123,10 @@ trait NodeClusterApi extends KeyedClusterApi {
   private final class ClusterAddslots(slots: Iterable[Int]) extends RedisUnitCommand with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "ADDSLOTS").add(slots).result
     override def immediateResult: Opt[Unit] = whenEmpty(slots, ())
+  }
+
+  private object ClusterBumpepoch extends AbstractRedisCommand[BumpepochResult](simpleBumpepochResult) with NodeCommand {
+    val encoded: Encoded = encoder("CLUSTER", "BUMPEPOCH").result
   }
 
   private final class ClusterCountFailureReports(nodeId: NodeId) extends RedisLongCommand with NodeCommand {
@@ -363,4 +373,11 @@ case class SlotRange(start: Int, end: Int) {
 object SlotRange {
   final val LastSlot = Hash.TotalSlots - 1
   final val Full = SlotRange(0, LastSlot)
+}
+
+final class BumpepochResult(implicit enumCtx: EnumCtx) extends AbstractValueEnum {
+  val encoded: SimpleStringMsg = SimpleStringMsg(name.toUpperCase)
+}
+object BumpepochResult extends AbstractValueEnumCompanion[BumpepochResult] {
+  final val Bumped, Still: Value = new BumpepochResult
 }
