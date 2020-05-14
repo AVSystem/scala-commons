@@ -34,7 +34,11 @@ trait NodeConnectionApi extends ApiSubset {
 trait ConnectionConnectionApi extends NodeConnectionApi {
   /** Executes [[http://redis.io/commands/auth AUTH]] */
   def auth(password: String): Result[Unit] =
-    execute(new Auth(password))
+    execute(new Auth(Opt.Empty, password))
+
+  /** Executes [[http://redis.io/commands/auth AUTH]] */
+  def auth(username: String, password: String): Result[Unit] =
+    execute(new Auth(Opt(username), password))
 
   /** Executes [[http://redis.io/commands/quit QUIT]] */
   def quit: Result[Unit] =
@@ -44,8 +48,8 @@ trait ConnectionConnectionApi extends NodeConnectionApi {
   def select(index: Int): Result[Unit] =
     execute(new Select(index))
 
-  private final class Auth(password: String) extends RedisUnitCommand with ConnectionCommand {
-    val encoded: Encoded = encoder("AUTH").add(password).result
+  private final class Auth(username: Opt[String], password: String) extends RedisUnitCommand with ConnectionCommand {
+    val encoded: Encoded = encoder("AUTH").optAdd(username).add(password).result
   }
 
   private object Quit extends RedisUnitCommand with ConnectionCommand {

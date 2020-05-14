@@ -331,6 +331,7 @@ trait ConnectionServerApi extends NodeServerApi {
   /** Executes [[http://redis.io/commands/client-getname CLIENT GETNAME]] */
   def clientGetname: Result[Opt[String]] =
     execute(ClientGetname)
+
   /** Executes [[http://redis.io/commands/client-setname CLIENT SETNAME]] */
   def clientSetname(connectionName: String): Result[Unit] =
     execute(new ClientSetname(connectionName))
