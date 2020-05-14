@@ -188,7 +188,8 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
 
     def become(receive: Receive): Unit =
       context.become(receive unless {
-        case Connected(connection, _, _) => connection ! Status.Success(CompletionStrategy.immediately)
+        case Connected(oldConnection, _, _) if oldConnection != connection =>
+          oldConnection ! Status.Success(CompletionStrategy.immediately)
       })
 
     def initialize(retryStrategy: RetryStrategy): Unit = {
