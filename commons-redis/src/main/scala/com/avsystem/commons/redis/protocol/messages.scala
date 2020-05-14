@@ -64,7 +64,7 @@ object CommandKeyMsg {
 case object NullArrayMsg extends ValidRedisMsg
 final case class ArrayMsg[+E <: RedisMsg](elements: IndexedSeq[E]) extends ValidRedisMsg
 object ArrayMsg {
-  val Empty = ArrayMsg(IndexedSeq.empty)
+  final val Empty = ArrayMsg(IndexedSeq.empty)
 }
 
 object SimpleStringStr {
@@ -73,9 +73,9 @@ object SimpleStringStr {
 }
 
 object RedisMsg {
-  val Ok = SimpleStringMsg(ByteString("OK"))
-  val Queued = SimpleStringMsg(ByteString("QUEUED"))
-  val Nokey = SimpleStringMsg(ByteString("NOKEY"))
+  final val Ok = SimpleStringMsg(ByteString("OK"))
+  final val Queued = SimpleStringMsg(ByteString("QUEUED"))
+  final val Nokey = SimpleStringMsg(ByteString("NOKEY"))
 
   def escape(bs: ByteString, quote: Boolean = true): String = {
     val sb = new StringBuilder(if (quote) "\"" else "")

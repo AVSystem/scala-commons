@@ -58,7 +58,6 @@ Features:
 * genericity - ability to easily create your own API flavors
 
 Missing features:
-* Support for regular master-slave replication and Redis Sentinel (in favor of Redis Cluster)
 * Publish/Subscribe
 
 ### Quickstart example
@@ -108,11 +107,17 @@ AVSystem Redis driver comes with three client types.
   failures. If you need a single-connection client which automatically reconnects, you might use [`RedisConnectionClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisNodeClient.html) configured
   with connection pool size equal to 1, but you won't be able to invoke connection-state-changing commands on it
   (except for initialization, e.g. `AUTH`)
-* [`RedisNodeClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisNodeClient.html) uses a fixed-size round-robin connection pool to a single Redis instance. It can execute almost all 
+* [`RedisNodeClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisNodeClient.html) uses 
+  a fixed-size round-robin connection pool to a single Redis instance. It can execute almost all 
   commands available in the driver except for the ones which change connection state. When connections are lost, they are
   automatically reconnected, using an exponential backoff procedure (each consecutive reconnection attempt is appropriately
   delayed to avoid too many reconnection attempts when node is down).
-* [`RedisClusterClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisClusterClient.html) connects to a Redis Cluster deployment. It uses dynamically allocated [`RedisNodeClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisNodeClient.html) instances
+* [`RedisMasterSlaveClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisMasterSlaveClient.html)
+  connects to a Redis Master/Slave installation with Redis Sentinels. It maintains connections to all known Sentinels
+  and uses them to obtain and monitor the address of the current master node. Internally, a [`RedisNodeClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisNodeClient.html)
+  is allocated for the master node. Master/Slave client can execute the same set of commands as `RedisNodeClient`.
+* [`RedisClusterClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisClusterClient.html) 
+  connects to a Redis Cluster deployment. It uses dynamically allocated [`RedisNodeClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisNodeClient.html) instances
   for every cluster master known at given moment. Cluster state is monitored with separate monitoring connections.
   Cluster client can only execute commands which contain keys. It automatically dispatches every command to appropriate
   master. It is also possible to gain direct access to individual master node clients.
@@ -167,6 +172,7 @@ Examples can be found in [test sources](https://github.com/AVSystem/scala-common
 * quickstart, simple node client usage - [NodeClientExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/NodeClientExample.scala)
 * API customization, serialization - [ApiCustomizationExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ApiCustomizationExample.scala)
 * connection client usage - [ConnectionClientExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ConnectionClientExample.scala)
+* master/slave client usage - [MasterSlaveClientExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/MasterSlaveClientExample.scala)
 * cluster client usage - [ClusterClientExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ClusterClientExample.scala)
 * authentication, database selection - [ConnectionSetupExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/ConnectionSetupExample.scala)
 * pipelining - [PipeliningExample](https://github.com/AVSystem/scala-commons/blob/master/commons-redis/src/test/scala/com/avsystem/commons/redis/examples/PipeliningExample.scala)

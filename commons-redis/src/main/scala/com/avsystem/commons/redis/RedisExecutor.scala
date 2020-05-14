@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package redis
 
+import java.io.Closeable
+
 import com.avsystem.commons.redis.config.ExecutionConfig
 
 /**
@@ -51,3 +53,7 @@ trait RedisNodeExecutor extends RedisKeyedExecutor with RedisOpExecutor
   * the driver, including the ones that change or access connection state.
   */
 trait RedisConnectionExecutor extends RedisNodeExecutor
+
+abstract class RedisClient extends RedisExecutor with Closeable {
+  def initialized: Future[this.type]
+}

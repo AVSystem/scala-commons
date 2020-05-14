@@ -28,8 +28,6 @@ jobs:
       script: if [ "$TRAVIS_PULL_REQUEST" = 'false' ]; then ./deploy.sh; fi
       if: tag =~ ^v
 
-sudo: false
-
 cache:
   directories:
     - $HOME/.ivy2/cache

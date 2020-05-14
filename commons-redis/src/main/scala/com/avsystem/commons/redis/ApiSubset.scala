@@ -186,6 +186,7 @@ trait RedisNodeApi extends RedisKeyedApi
   with NodeClusterApi
   with NodeConnectionApi
   with NodeScriptingApi
+  with SentinelApi
 
 trait RedisRecoverableNodeApi extends RedisRecoverableKeyedApi with RedisNodeApi
 

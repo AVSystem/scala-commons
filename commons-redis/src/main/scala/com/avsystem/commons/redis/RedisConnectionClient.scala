@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package redis
 
-import java.io.Closeable
-
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import com.avsystem.commons.redis.RawCommand.Level
@@ -27,8 +25,9 @@ import com.avsystem.commons.redis.exception.ClientStoppedException
   */
 final class RedisConnectionClient(
   val address: NodeAddress = NodeAddress.Default,
-  val config: ConnectionConfig = ConnectionConfig())
-  (implicit system: ActorSystem) extends RedisConnectionExecutor with Closeable { self =>
+  val config: ConnectionConfig = ConnectionConfig()
+)
+  (implicit system: ActorSystem) extends RedisClient with RedisConnectionExecutor { self =>
 
   private val initPromise = Promise[Unit]
   private val connectionActor = {

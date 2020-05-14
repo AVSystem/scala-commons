@@ -3,7 +3,7 @@ package redis
 
 import akka.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.SourceInfo
-import com.avsystem.commons.redis.config.{ClusterConfig, ConnectionConfig, ExecutionConfig, NodeConfig}
+import com.avsystem.commons.redis.config._
 import org.scalactic.source.Position
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.Tag
@@ -107,6 +107,31 @@ abstract class RedisClusterCommandsSuite extends AnyFunSuite with UsesPreconfigu
 
   override protected def afterEach(): Unit = {
     val futures = redisClient.currentState.masters.values.map(_.executeBatch(cleanupBatch))
+    Await.ready(Future.sequence(futures), Duration.Inf)
+    super.afterEach()
+  }
+}
+
+abstract class RedisMasterSlaveCommandsSuite
+  extends AnyFunSuite with UsesPreconfiguredMasterSlave with UsesRedisMasterSlaveClient with CommandsSuite {
+
+  def executor: RedisKeyedExecutor = redisClient
+
+  override def masterSlaveConfig: MasterSlaveConfig =
+    super.masterSlaveConfig |> { msc =>
+      msc.copy(
+        masterConfig = a => msc.masterConfig(a) |> { mc =>
+          mc.copy(
+            poolSize = 4,
+            connectionConfigs = i =>
+              mc.connectionConfigs(i).copy(debugListener = listener)
+          )
+        }
+      )
+    }
+
+  override protected def afterEach(): Unit = {
+    val futures = redisClient.currentMaster.toList.map(_.executeBatch(cleanupBatch))
     Await.ready(Future.sequence(futures), Duration.Inf)
     super.afterEach()
   }

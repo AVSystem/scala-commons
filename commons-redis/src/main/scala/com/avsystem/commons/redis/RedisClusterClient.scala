@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package redis
 
-import java.io.Closeable
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.{ActorSystem, Props}
@@ -15,7 +14,7 @@ import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{Asking, SlotRange}
 import com.avsystem.commons.redis.config.{ClusterConfig, ExecutionConfig, RetryStrategy}
 import com.avsystem.commons.redis.exception._
-import com.avsystem.commons.redis.protocol.{ErrorMsg, FailureReply, RedisMsg, RedisReply, TransactionReply}
+import com.avsystem.commons.redis.protocol._
 import com.avsystem.commons.redis.util.DelayedFuture
 
 import scala.annotation.tailrec
@@ -45,8 +44,8 @@ import scala.concurrent.duration._
   */
 final class RedisClusterClient(
   val seedNodes: Seq[NodeAddress] = List(NodeAddress.Default),
-  val config: ClusterConfig = ClusterConfig())
-  (implicit system: ActorSystem) extends RedisKeyedExecutor with Closeable {
+  val config: ClusterConfig = ClusterConfig()
+)(implicit system: ActorSystem) extends RedisClient with RedisKeyedExecutor {
 
   require(seedNodes.nonEmpty, "No seed nodes provided")
 
@@ -58,6 +57,7 @@ final class RedisClusterClient(
   @volatile private[this] var temporaryClients = List.empty[RedisNodeClient]
   // ensures that all operations fail fast after client is closed instead of being sent further
   @volatile private[this] var failure = Opt.empty[Throwable]
+
   private val initPromise = Promise[Unit]
   initPromise.future.foreachNow(_ => initSuccess = true)
 
@@ -454,7 +454,7 @@ case class ClusterState(
 ) {
 
   nonClustered.foreach { client =>
-    require(!client.clusterNode && mapping == IndexedSeq(SlotRange.Full -> client) && masters == Map(client.address -> client))
+    require(!client.managed && mapping == IndexedSeq(SlotRange.Full -> client) && masters == Map(client.address -> client))
   }
 
   /**
