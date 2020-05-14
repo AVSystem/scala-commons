@@ -16,32 +16,41 @@ trait KeyedKeysApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/del DEL]] */
   def del(key: Key): Result[Boolean] =
     execute(new Del(key.single).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/del DEL]] */
   def del(key: Key, keys: Key*): Result[Int] =
     execute(new Del(key +:: keys))
+
   /** Executes [[http://redis.io/commands/del DEL]]
     * or simply returns 0 if `keys` is empty, without sending the command to Redis */
   def del(keys: Iterable[Key]): Result[Int] =
     execute(new Del(keys))
+
   /** Executes [[http://redis.io/commands/dump DUMP]] */
   def dump(key: Key): Result[Opt[Dumped]] =
     execute(new Dump(key))
+
   /** Executes [[http://redis.io/commands/exists EXISTS]] */
   def exists(key: Key): Result[Boolean] =
     execute(new Exists(key.single).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/exists EXISTS]] */
   def exists(key: Key, keys: Key*): Result[Int] =
     execute(new Exists(key +:: keys))
+
   /** Executes [[http://redis.io/commands/exists EXISTS]]
     * or simply returns 0 when `keys` is empty, without sending the command to Redis */
   def exists(keys: Iterable[Key]): Result[Int] =
     execute(new Exists(keys))
+
   /** Executes [[http://redis.io/commands/expire EXPIRE]] */
   def expire(key: Key, seconds: Long): Result[Boolean] =
     execute(new Expire(key, seconds))
+
   /** Executes [[http://redis.io/commands/expireat EXPIREAT]] */
   def expireat(key: Key, timestamp: Long): Result[Boolean] =
     execute(new Expireat(key, timestamp))
+
   /** Executes [[http://redis.io/commands/migrate MIGRATE]]
     * or simply returns `true` when `keys` is empty, without sending the command to Redis */
   def migrate(keys: Iterable[Key], address: NodeAddress, destinationDb: Int,
@@ -51,9 +60,11 @@ trait KeyedKeysApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/object OBJECT]] */
   def objectRefcount(key: Key): Result[Opt[Long]] =
     execute(new ObjectRefcount(key))
+
   /** Executes [[http://redis.io/commands/object OBJECT]] */
   def objectEncoding(key: Key): Result[Opt[Encoding]] =
     execute(new ObjectEncoding(key))
+
   /** Executes [[http://redis.io/commands/object OBJECT]] */
   def objectIdletime(key: Key): Result[Opt[Long]] =
     execute(new ObjectIdletime(key))
@@ -64,12 +75,15 @@ trait KeyedKeysApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/persist PERSIST]] */
   def persist(key: Key): Result[Boolean] =
     execute(new Persist(key))
+
   /** Executes [[http://redis.io/commands/pexpire PEXPIRE]] */
   def pexpire(key: Key, milliseconds: Long): Result[Boolean] =
     execute(new Pexpire(key, milliseconds))
+
   /** Executes [[http://redis.io/commands/pexpireat PEXPIREAT]] */
   def pexpireat(key: Key, millisecondsTimestamp: Long): Result[Boolean] =
     execute(new Pexpireat(key, millisecondsTimestamp))
+
   /** Executes [[http://redis.io/commands/pttl PTTL]] */
   def pttl(key: Key): Result[Opt[Opt[Long]]] =
     execute(new Pttl(key))
@@ -77,9 +91,11 @@ trait KeyedKeysApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/rename RENAME]] */
   def rename(key: Key, newkey: Key): Result[Unit] =
     execute(new Rename(key, newkey))
+
   /** Executes [[http://redis.io/commands/renamenx RENAMENX]] */
   def renamenx(key: Key, newkey: Key): Result[Boolean] =
     execute(new Renamenx(key, newkey))
+
   /** Executes [[http://redis.io/commands/restore RESTORE]] */
   def restore(key: Key, ttl: Long, dumpedValue: Dumped, replace: Boolean = false): Result[Unit] =
     execute(new Restore(key, ttl, dumpedValue, replace))
@@ -88,10 +104,12 @@ trait KeyedKeysApi extends ApiSubset {
   def sort(key: Key, by: OptArg[SortPattern[Key, Field]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
     sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Seq[Value]] =
     execute(new Sort(key, by.toOpt, limit.toOpt, sortOrder.toOpt, alpha))
+
   /** Executes [[http://redis.io/commands/sort SORT]] */
   def sortGet(key: Key, gets: Seq[SortPattern[Key, Field]], by: OptArg[SortPattern[Key, Field]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
     sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Seq[Seq[Opt[Value]]]] =
     execute(new SortGet(key, gets, by.toOpt, limit.toOpt, sortOrder.toOpt, alpha))
+
   /** Executes [[http://redis.io/commands/sort SORT]] */
   def sortStore(key: Key, destination: Key, by: OptArg[SortPattern[Key, Field]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
     gets: Seq[SortPattern[Key, Field]] = Nil, sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Long] =
@@ -100,9 +118,11 @@ trait KeyedKeysApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/touch TOUCH]] */
   def touch(key: Key): Result[Boolean] =
     execute(new Touch(key.single).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/touch TOUCH]] */
   def touch(key: Key, keys: Key*): Result[Int] =
     execute(new Touch(key +:: keys))
+
   /** Executes [[http://redis.io/commands/touch TOUCH]]
     * or simply returns 0 when `keys` is empty, without sending the command to Redis */
   def touch(keys: Iterable[Key]): Result[Int] =
@@ -111,6 +131,7 @@ trait KeyedKeysApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/ttl TTL]] */
   def ttl(key: Key): Result[Opt[Opt[Long]]] =
     execute(new Ttl(key))
+
   /** Executes [[http://redis.io/commands/type TYPE]] */
   def `type`(key: Key): Result[RedisType] =
     execute(new Type(key))
@@ -118,9 +139,11 @@ trait KeyedKeysApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/unlink UNLINK]] */
   def unlink(key: Key): Result[Boolean] =
     execute(new Unlink(key.single).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/unlink UNLINK]] */
   def unlink(key: Key, keys: Key*): Result[Int] =
     execute(new Unlink(key +:: keys))
+
   /** Executes [[http://redis.io/commands/unlink UNLINK]]
     * or simply returns 0 when `keys` is empty, without sending the command to Redis */
   def unlink(keys: Iterable[Key]): Result[Int] =

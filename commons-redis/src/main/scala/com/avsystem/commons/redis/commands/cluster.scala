@@ -26,67 +26,90 @@ trait NodeClusterApi extends KeyedClusterApi {
   /** Executes [[http://redis.io/commands/cluster-addslots CLUSTER ADDSLOTS]] */
   def clusterAddslots(slot: Int, slots: Int*): Result[Unit] =
     execute(new ClusterAddslots(slot +:: slots))
+
   /** Executes [[http://redis.io/commands/cluster-addslots CLUSTER ADDSLOTS]]
     * or does nothing when `slots` is empty. */
   def clusterAddslots(slots: Iterable[Int]): Result[Unit] =
     execute(new ClusterAddslots(slots))
+
   /** Executes [[http://redis.io/commands/cluster-count-failure-reports CLUSTER COUNT-FAILURE-REPORTS]] */
   def clusterCountFailureReports(nodeId: NodeId): Result[Long] =
     execute(new ClusterCountFailureReports(nodeId))
+
   /** Executes [[http://redis.io/commands/cluster-countkeysinslot CLUSTER COUNTKEYSINSLOT]] */
   def clusterCountkeysinslot(slot: Int): Result[Long] =
     execute(new ClusterCountkeysinslot(slot))
+
   /** Executes [[http://redis.io/commands/cluster-delslots CLUSTER DELSLOTS]] */
   def clusterDelslots(slot: Int, slots: Int*): Result[Unit] =
     execute(new ClusterDelslots(slot +:: slots))
+
   /** Executes [[http://redis.io/commands/cluster-delslots CLUSTER DELSLOTS]]
     * or does nothing when `slots` is empty */
   def clusterDelslots(slots: Iterable[Int]): Result[Unit] =
     execute(new ClusterDelslots(slots))
+
   /** Executes [[http://redis.io/commands/cluster-failover CLUSTER FAILOVER]] */
   def clusterFailover: Result[Unit] = clusterFailover()
+
   /** Executes [[http://redis.io/commands/cluster-failover CLUSTER FAILOVER]] */
   def clusterFailover(option: OptArg[FailoverOption] = OptArg.Empty): Result[Unit] =
     execute(new ClusterFailover(option.toOpt))
+
   def clusterFlushslots: Result[Unit] =
     execute(ClusterFlushslots)
+
   /** Executes [[http://redis.io/commands/cluster-forget CLUSTER FORGET]] */
   def clusterForget(nodeId: NodeId): Result[Unit] =
     execute(new ClusterForget(nodeId))
+
   /** Executes [[http://redis.io/commands/cluster-getkeysinslot CLUSTER GETKEYSINSLOT]] */
   def clusterGetkeysinslot(slot: Int, count: Int): Result[Seq[Key]] =
     execute(new ClusterGetkeysinslot(slot, count))
+
   /** Executes [[http://redis.io/commands/cluster-info CLUSTER INFO]] */
   def clusterInfo: Result[ClusterStateInfo] =
     execute(ClusterInfo)
+
   /** Executes [[http://redis.io/commands/cluster-meet CLUSTER MEET]] */
   def clusterMeet(address: NodeAddress): Result[Unit] =
     execute(new ClusterMeet(address))
+
+  /** Executes [[http://redis.io/commands/cluster-myid CLUSTER MYID]] */
   def clusterMyid: Result[NodeId] =
     execute(ClusterMyid)
+
   /** Executes [[http://redis.io/commands/cluster-nodes CLUSTER NODES]] */
   def clusterNodes: Result[Seq[NodeInfo]] =
     execute(ClusterNodes)
+
   /** Executes [[http://redis.io/commands/cluster-replicate CLUSTER REPLICATE]] */
   def clusterReplicate(nodeId: NodeId): Result[Unit] =
     execute(new ClusterReplicate(nodeId))
+
   /** Executes [[http://redis.io/commands/cluster-reset CLUSTER RESET]] */
   def clusterReset: Result[Unit] = clusterReset()
+
   /** Executes [[http://redis.io/commands/cluster-reset CLUSTER RESET]] */
   def clusterReset(hard: Boolean = false): Result[Unit] =
     execute(new ClusterReset(hard))
+
   /** Executes [[http://redis.io/commands/cluster-saveconfig CLUSTER SAVECONFIG]] */
   def clusterSaveconfig: Result[Unit] =
     execute(ClusterSaveconfig)
+
   /** Executes [[http://redis.io/commands/cluster-set-config-epoch CLUSTER SET-CONFIG-EPOCH]] */
   def clusterSetConfigEpoch(configEpoch: Long): Result[Unit] =
     execute(new ClusterSetConfigEpoch(configEpoch))
+
   /** Executes [[http://redis.io/commands/cluster-setslot CLUSTER SETSLOT]] */
   def clusterSetslot(slot: Int, subcommand: SetslotCmd): Result[Unit] =
     execute(new ClusterSetslot(slot, subcommand))
+
   /** Executes [[http://redis.io/commands/cluster-slaves CLUSTER SLAVES]] */
   def clusterSlaves(nodeId: NodeId): Result[Seq[NodeInfo]] =
     execute(new ClusterSlaves(nodeId))
+
   /** Executes [[http://redis.io/commands/cluster-slots CLUSTER SLOTS]] */
   def clusterSlots: Result[Seq[SlotRangeMapping]] =
     execute(ClusterSlots)

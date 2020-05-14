@@ -14,27 +14,34 @@ trait GeoApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/geoadd GEOADD]] */
   def geoadd(key: Key, member: Value, point: GeoPoint): Result[Boolean] =
     execute(new Geoadd(key, (member, point).single).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/geoadd GEOADD]] */
   def geoadd(key: Key, item: (Value, GeoPoint), items: (Value, GeoPoint)*): Result[Int] =
     execute(new Geoadd(key, item +:: items))
+
   /** Executes [[http://redis.io/commands/geoadd GEOADD]]
     * or simply returns 0 when `items` is empty, without sending the command Redis */
   def geoadd(key: Key, items: Iterable[(Value, GeoPoint)]): Result[Int] =
     execute(new Geoadd(key, items))
+
   /** Executes [[http://redis.io/commands/geohash GEOHASH]] */
   def geohash(key: Key, members: Value*): Result[Seq[Opt[GeoHash]]] =
     execute(new Geohash(key, members))
+
   /** Executes [[http://redis.io/commands/geohash GEOHASH]]
     * NOTE: `members` CAN be empty (Redis accepts it) */
   def geohash(key: Key, members: Iterable[Value]): Result[Seq[Opt[GeoHash]]] =
     execute(new Geohash(key, members))
+
   /** Executes [[http://redis.io/commands/geopos GEOPOS]] */
   def geopos(key: Key, members: Value*): Result[Seq[Opt[GeoPoint]]] =
     execute(new Geopos(key, members))
+
   /** Executes [[http://redis.io/commands/geopos GEOPOS]]
     * NOTE: `members` CAN be empty (Redis accepts it) */
   def geopos(key: Key, members: Iterable[Value]): Result[Seq[Opt[GeoPoint]]] =
     execute(new Geopos(key, members))
+
   /** Executes [[http://redis.io/commands/geodist GEODIST]] */
   def geodist(key: Key, member1: Value, member2: Value, unit: GeoUnit = GeoUnit.M): Result[Opt[Double]] =
     execute(new Geodist(key, member1, member2, unit))

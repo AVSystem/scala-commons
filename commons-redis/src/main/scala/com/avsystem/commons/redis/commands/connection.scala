@@ -9,9 +9,11 @@ trait NodeConnectionApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/echo ECHO]] */
   def echo(message: ByteString): Result[ByteString] =
     execute(new Echo(message))
+
   /** Executes [[http://redis.io/commands/ping PING]] */
   def ping: Result[ByteString] =
     execute(Ping)
+
   /** Executes [[http://redis.io/commands/swapdb SWAPDB]] */
   def swapdb(first: Int, second: Int): Result[Unit] =
     execute(new Swapdb(first, second))
@@ -33,9 +35,11 @@ trait ConnectionConnectionApi extends NodeConnectionApi {
   /** Executes [[http://redis.io/commands/auth AUTH]] */
   def auth(password: String): Result[Unit] =
     execute(new Auth(password))
+
   /** Executes [[http://redis.io/commands/quit QUIT]] */
   def quit: Result[Unit] =
     execute(Quit)
+
   /** Executes [[http://redis.io/commands/select SELECT]] */
   def select(index: Int): Result[Unit] =
     execute(new Select(index))
