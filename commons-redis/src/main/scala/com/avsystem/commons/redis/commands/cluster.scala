@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.misc._
+import com.avsystem.commons.misc.{Opt => _, OptArg => _, _}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
