@@ -178,6 +178,6 @@ case class ConnectionConfig(
   * Configuration options for TLS connection.
   */
 case class TlsConfig(
-  sslContext: SSLContext = SSLContext.getDefault,
+  sslContext: SSLContext,
   negotiateNewSession: NegotiateNewSession = NegotiateNewSession
 )
