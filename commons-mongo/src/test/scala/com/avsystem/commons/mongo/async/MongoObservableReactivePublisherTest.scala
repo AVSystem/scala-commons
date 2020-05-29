@@ -84,7 +84,7 @@ class MongoObservableReactivePublisherTest extends AnyFreeSpec {
   }
   "A Mongo-Monix observable" - new MockedObservableTests {
     override def subscribe[T](obs: mongo.Observable[T], testSubscriber: TestSubscriber[T]): Unit =
-      obs.asMonix.subscribe(
+      monix.reactive.Observable.fromReactivePublisher(obs.asReactive).subscribe(
         monix.reactive.observers.Subscriber.fromReactiveSubscriber(testSubscriber, Cancelable.empty)(Scheduler(RunNowEC))
       )
   }

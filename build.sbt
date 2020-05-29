@@ -359,7 +359,7 @@ lazy val `commons-mongo` = project
     jvmCommonSettings,
     libraryDependencies ++= Seq(
       "com.google.guava" % "guava" % guavaVersion,
-      "io.monix" %% "monix" % monixVersion,
+      "io.monix" %% "monix" % monixVersion % Test,
       "org.mongodb" % "mongodb-driver-core" % mongoVersion,
       "org.mongodb" % "mongodb-driver" % mongoVersion % Optional,
       "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,
