@@ -6,7 +6,7 @@ import java.nio.ByteBuffer
 
 import akka.actor.{Actor, ActorRef, Status}
 import akka.stream.scaladsl._
-import akka.stream.{ActorMaterializer, CompletionStrategy, Materializer}
+import akka.stream.{CompletionStrategy, Materializer, SystemMaterializer}
 import akka.util.ByteString
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.{PubSubCommand, PubSubEvent, ReplyDecoders}
@@ -26,7 +26,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
   import RedisConnectionActor._
   import context._
 
-  implicit val materializer: Materializer = ActorMaterializer()(context)
+  implicit val materializer: Materializer = SystemMaterializer(system).materializer
 
   private object IncomingPacks {
     def unapply(msg: Any): Opt[QueuedPacks] = msg match {
@@ -182,7 +182,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
 
     private val decoder = new RedisMsg.Decoder
     private val collectors = new JArrayDeque[ReplyCollector]
-    private var waitingForAck = 0
+    private var waitingForAck = false
     private var open = true
     private var unwatch = false
 
@@ -216,10 +216,13 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       case cc: ConnectionClosed =>
         onConnectionClosed(cc)
         tryReconnect(config.reconnectionStrategy, new ConnectionClosedException(address, cc.error))
+      case WriteAck =>
       case data: ByteString =>
         logReceived(data)
         try decoder.decodeMore(data)(collector.processMessage(_, this)) catch {
-          case NonFatal(cause) => onInitResult(PacksResult.Failure(cause), retryStrategy)
+          case NonFatal(cause) =>
+            // TODO: is there a possibility to NOT receive WriteAck up to this point? currently assuming that no
+            onInitResult(PacksResult.Failure(cause), retryStrategy)
         } finally {
           sender() ! ReadAck
         }
@@ -269,7 +272,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         }
         writeIfPossible()
       case WriteAck =>
-        waitingForAck = 0
+        waitingForAck = false
         writeIfPossible()
       case cc: ConnectionClosed =>
         onConnectionClosed(cc)
@@ -297,7 +300,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         packs.reply(PacksResult.Failure(cause))
       case Release => //ignore
       case WriteAck =>
-        waitingForAck = 0
+        waitingForAck = false
       case cc: ConnectionClosed =>
         onConnectionClosed(cc)
         failAlreadySent(new ConnectionClosedException(address, cc.error))
@@ -354,7 +357,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     }
 
     def writeIfPossible(): Unit =
-      if (waitingForAck == 0 && !queuedToWrite.isEmpty) {
+      if (!waitingForAck && !queuedToWrite.isEmpty) {
         // Implementation of RedisOperationActor will not send more than one batch at once (before receiving response to
         // previous one). This guarantees that only the last batch in write queue can be a reserving one.
         val startingReservation = queuedToWrite.peekLast.reserve
@@ -380,7 +383,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
 
         var packsCount = computeBufferSize(0)
 
-        waitingForAck = packsCount
+        waitingForAck = packsCount > 0
         if (writeBuffer.capacity < bufferSize) {
           writeBuffer = ByteBuffer.allocate(bufferSize)
         }
@@ -402,7 +405,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
           }
         }
 
-        if (waitingForAck > 0) {
+        if (waitingForAck) {
           if (startingReservation) {
             // We're about to write first batch in a RedisOp (transaction). Save current incarnation so that in case
             // connection is restarted we can fail any subsequent batches from that RedisOp (RedisOp must be fully
