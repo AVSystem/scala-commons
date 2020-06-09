@@ -3,7 +3,7 @@ package rpc.akka
 
 import java.util.concurrent.atomic.AtomicLong
 
-import akka.actor.{ActorPath, ActorSystem, Inbox, Terminated}
+import akka.actor.{ActorPath, ActorSystem}
 import org.mockito.Mockito
 import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterAll
@@ -48,12 +48,7 @@ abstract class AkkaRPCFrameworkTest(
     try {
       testCode(Fixture(rpc = rpc, mockRpc = testRpcMock, mockInnerRpc = innerRpcMock))
     } finally {
-      val inbox = Inbox.create(serverSystem)
-      inbox.watch(serverActor)
       serverSystem.stop(serverActor)
-      inbox.receive(2.seconds) match {
-        case Terminated(_) =>
-      }
     }
   }
 

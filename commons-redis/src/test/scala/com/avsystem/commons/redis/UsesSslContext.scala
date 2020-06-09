@@ -4,7 +4,7 @@ package redis
 import java.io.FileInputStream
 import java.security.{KeyStore, SecureRandom}
 
-import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
+import javax.net.ssl.{KeyManagerFactory, SSLContext, SSLEngine, TrustManagerFactory}
 
 trait UsesSslContext {
   lazy val sslContext: SSLContext = SSLContext.getInstance("TLSv1.2").setup { sslc =>

@@ -4,12 +4,11 @@ package redis.config
 import java.net.InetSocketAddress
 
 import akka.io.Inet
-import akka.stream.TLSProtocol.NegotiateNewSession
 import akka.util.Timeout
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{DebugListener, DevNullListener}
 import com.avsystem.commons.redis.config.RetryStrategy._
 import com.avsystem.commons.redis.{NodeAddress, RedisBatch, RedisOp}
-import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLEngine
 
 import scala.concurrent.duration._
 
@@ -148,7 +147,7 @@ case class NodeConfig(
   *                             Note that these are all commands that can't be executed directly by
   *                             [[com.avsystem.commons.redis.RedisNodeClient RedisNodeClient]] or
   *                             [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]].
-  * @param tlsConfig            enables connection over TLS
+  * @param sslEngineCreator     enables connection over TLS
   * @param actorName            name of the actor representing the connection
   * @param localAddress         local bind address for the connection
   * @param socketOptions        socket options for the connection
@@ -163,7 +162,7 @@ case class NodeConfig(
   */
 case class ConnectionConfig(
   initCommands: RedisBatch[Any] = RedisBatch.unit,
-  tlsConfig: OptArg[TlsConfig] = OptArg.Empty,
+  sslEngineCreator: OptArg[() => SSLEngine] = OptArg.Empty,
   actorName: OptArg[String] = OptArg.Empty,
   localAddress: OptArg[InetSocketAddress] = OptArg.Empty,
   socketOptions: List[Inet.SocketOption] = Nil,
@@ -172,12 +171,4 @@ case class ConnectionConfig(
   maxWriteSizeHint: OptArg[Int] = 50000,
   reconnectionStrategy: RetryStrategy = immediately.andThen(exponentially(1.seconds)).maxDelay(8.seconds),
   debugListener: DebugListener = DevNullListener
-)
-
-/**
-  * Configuration options for TLS connection.
-  */
-case class TlsConfig(
-  sslContext: SSLContext,
-  negotiateNewSession: NegotiateNewSession = NegotiateNewSession
 )

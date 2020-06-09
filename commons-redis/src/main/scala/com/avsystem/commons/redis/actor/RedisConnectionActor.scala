@@ -4,9 +4,9 @@ package redis.actor
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 
-import akka.actor.{Actor, ActorRef, Status}
+import akka.actor.{Actor, ActorRef}
 import akka.stream.scaladsl._
-import akka.stream.{ActorMaterializer, CompletionStrategy, Materializer}
+import akka.stream.{ActorMaterializer, CompletionStrategy, EagerClose, IgnoreBoth, IgnoreComplete, Materializer, SystemMaterializer}
 import akka.util.ByteString
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.{PubSubCommand, PubSubEvent, ReplyDecoders}
@@ -26,7 +26,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
   import RedisConnectionActor._
   import context._
 
-  implicit val materializer: Materializer = ActorMaterializer()(context)
+  implicit val materializer: Materializer = SystemMaterializer(system).materializer
 
   private object IncomingPacks {
     def unapply(msg: Any): Opt[QueuedPacks] = msg match {
@@ -125,17 +125,25 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     // using Akka IO, this was implemented as:
     // IO(Tcp) ! Tcp.Connect(address.socketAddress,
     //   config.localAddress.toOption, config.socketOptions, config.connectTimeout.toOption)
-    val src = Source.actorRefWithAck[ByteString](ackMessage = WriteAck)
+    val src = Source.actorRefWithBackpressure[ByteString](
+      ackMessage = WriteAck,
+      completionMatcher = {
+        case CloseConnection(true) => CompletionStrategy.immediately
+        case CloseConnection(false) => CompletionStrategy.draining
+      },
+      failureMatcher = PartialFunction.empty
+    )
 
-    val conn = config.tlsConfig match {
-      case OptArg(tlsConfig) => Tcp().outgoingTlsConnection(
+    val conn = config.sslEngineCreator match {
+      case OptArg(creator) => Tcp().outgoingConnectionWithTls(
         address.socketAddress,
-        tlsConfig.sslContext,
-        tlsConfig.negotiateNewSession,
+        () => creator().setup(_.setUseClientMode(true)),
         config.localAddress.toOption,
         config.socketOptions,
         config.connectTimeout.getOrElse(Duration.Inf),
-        config.idleTimeout.getOrElse(Duration.Inf)
+        config.idleTimeout.getOrElse(Duration.Inf),
+        _ => Success(()),
+        IgnoreComplete
       )
       case OptArg.Empty => Tcp().outgoingConnection(
         address.socketAddress,
@@ -146,7 +154,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       )
     }
 
-    val sink = Sink.actorRefWithAck(
+    val sink = Sink.actorRefWithBackpressure(
       ref = self,
       onInitMessage = ReadInit,
       ackMessage = ReadAck,
@@ -189,7 +197,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     def become(receive: Receive): Unit =
       context.become(receive unless {
         case Connected(oldConnection, _, _) if oldConnection != connection =>
-          oldConnection ! Status.Success(CompletionStrategy.immediately)
+          oldConnection ! CloseConnection(immediate = true)
       })
 
     def initialize(retryStrategy: RetryStrategy): Unit = {
@@ -421,7 +429,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       failAlreadySent(cause)
       if (open) {
         open = false
-        connection ! Status.Success(CompletionStrategy.immediately)
+        connection ! CloseConnection()
       }
       actor.close(cause, stopSelf)
     }
@@ -486,7 +494,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     case Release => // ignore
     case Connected(connection, _, _) if tcpConnecting =>
       // failure may have happened while connecting, simply close the connection
-      connection ! Status.Success(CompletionStrategy.immediately)
+      connection ! CloseConnection(immediate = true)
       become(closed(cause, tcpConnecting = false))
     case _: TcpEvent => // ignore
     case Close(_, true) =>
@@ -516,6 +524,8 @@ object RedisConnectionActor {
 
   private case class ConnectionFailed(cause: Throwable) extends TcpEvent
   private case class ConnectionClosed(error: Opt[Throwable]) extends TcpEvent
+
+  private case class CloseConnection(immediate: Boolean = false) extends TcpEvent
 
   private case class QueuedPacks(packs: RawCommandPacks, client: Opt[ActorRef], reserve: Boolean) {
     def reply(result: PacksResult)(implicit sender: ActorRef): Unit =
