@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package redis
 
+import java.io.FileInputStream
+import java.security.{KeyStore, SecureRandom}
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, TimeUnit}
 
@@ -13,6 +15,7 @@ import com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener
 import com.avsystem.commons.redis.commands.SlotRange
 import com.avsystem.commons.redis.config._
 import com.typesafe.config._
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import org.openjdk.jmh.annotations._
 
 import scala.concurrent.Await
@@ -42,7 +45,7 @@ object OutgoingTraffictStats extends DebugListener {
 @Threads(4)
 @BenchmarkMode(Array(Mode.Throughput))
 @State(Scope.Benchmark)
-abstract class RedisBenchmark {
+abstract class RedisBenchmark(useTls: Boolean) {
 
   import RedisApi.Batches.StringTyped._
 
@@ -54,14 +57,50 @@ abstract class RedisBenchmark {
   implicit val system: ActorSystem = ActorSystem("redis",
     ConfigFactory.parseString(Config).withFallback(ConfigFactory.defaultReference()).resolve)
 
-  val connectionConfig: ConnectionConfig = ConnectionConfig(initCommands = clientSetname("benchmark"))
-  val monConnectionConfig: ConnectionConfig = ConnectionConfig(initCommands = clientSetname("benchmarkMon"))
-  val nodeConfig: NodeConfig = NodeConfig(poolSize = 4, connectionConfigs = _ => connectionConfig)
-  val clusterConfig: ClusterConfig = ClusterConfig(nodeConfigs = _ => nodeConfig, monitoringConnectionConfigs = _ => monConnectionConfig)
+  lazy val sslContext: SSLContext = SSLContext.getInstance("TLSv1.2").setup { sslc =>
+    val ks = KeyStore.getInstance("PKCS12")
+    ks.load(new FileInputStream("../commons-redis/tls/redis.p12"), Array.empty)
 
-  lazy val clusterClient: RedisClusterClient = Await.result(new RedisClusterClient(List(NodeAddress(port = 33333)), clusterConfig).initialized, Duration.Inf)
-  lazy val nodeClient: RedisNodeClient = Await.result(new RedisNodeClient(config = nodeConfig).initialized, Duration.Inf)
-  lazy val connectionClient: RedisConnectionClient = Await.result(new RedisConnectionClient(config = connectionConfig).initialized, Duration.Inf)
+    val kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
+    kmf.init(ks, Array.empty)
+
+    val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
+    tmf.init(ks)
+
+    sslc.init(kmf.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
+  }
+
+  val connectionConfig: ConnectionConfig = ConnectionConfig(
+    tlsConfig = if(useTls) OptArg(TlsConfig(sslContext)) else OptArg.Empty,
+    initCommands = clientSetname("benchmark")
+  )
+
+  val monConnectionConfig: ConnectionConfig = ConnectionConfig(
+    tlsConfig = if(useTls) OptArg(TlsConfig(sslContext)) else OptArg.Empty,
+    initCommands = clientSetname("benchmarkMon")
+  )
+
+  val address: NodeAddress =
+    if(useTls) NodeAddress(port = 7379) else NodeAddress.Default
+
+  val nodeConfig: NodeConfig = NodeConfig(
+    poolSize = 4,
+    connectionConfigs = _ => connectionConfig
+  )
+
+  val clusterConfig: ClusterConfig = ClusterConfig(
+    nodeConfigs = _ => nodeConfig,
+    monitoringConnectionConfigs = _ => monConnectionConfig
+  )
+
+  lazy val clusterClient: RedisClusterClient =
+    Await.result(new RedisClusterClient(List(NodeAddress(port = 33333)), clusterConfig).initialized, Duration.Inf)
+
+  lazy val nodeClient: RedisNodeClient =
+    Await.result(new RedisNodeClient(address, nodeConfig).initialized, Duration.Inf)
+
+  lazy val connectionClient: RedisConnectionClient =
+    Await.result(new RedisConnectionClient(address, connectionConfig).initialized, Duration.Inf)
 
   @TearDown
   def teardownClient(): Unit = {
@@ -94,7 +133,8 @@ object RedisClientBenchmark {
 }
 
 @OperationsPerInvocation(ConcurrentCommands)
-class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
+abstract class AbstractRedisClientBenchmark(useTls: Boolean)
+  extends RedisBenchmark(useTls) with CrossRedisBenchmark {
 
   import RedisApi.Batches.StringTyped._
 
@@ -250,3 +290,6 @@ class RedisClientBenchmark extends RedisBenchmark with CrossRedisBenchmark {
   def connectionClientMixedBenchmark(): Unit =
     redisClientBenchmark(ConcurrentBatches, mixedFuture(connectionClient, seq, _))
 }
+
+class RedisClientBenchmark extends AbstractRedisClientBenchmark(useTls = false)
+class RedisTlsClientBenchmark extends AbstractRedisClientBenchmark(useTls = true)
