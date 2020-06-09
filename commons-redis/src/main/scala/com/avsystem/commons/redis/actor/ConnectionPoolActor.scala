@@ -19,7 +19,7 @@ class ConnectionPoolActor(address: NodeAddress, config: NodeConfig, queue: JDequ
 
   if (config.maxBlockingIdleTime.isFinite) {
     val interval = config.blockingCleanupInterval
-    system.scheduler.scheduleWithFixedDelay(interval, interval, self, Cleanup)
+    system.scheduler.schedule(interval, interval, self, Cleanup)
   }
 
   def receive: Receive = {
