@@ -1,10 +1,9 @@
 package com.avsystem.commons
 package mongo.async
 
-import java.util.concurrent.atomic.AtomicBoolean
-
 import com.github.ghik.silencer.silent
 import com.mongodb.async.{client => mongo}
+import monix.execution.atomic.AtomicBoolean
 import org.{reactivestreams => reactive}
 
 @silent("deprecated")
@@ -14,7 +13,7 @@ final class MongoObservableReactivePublisher[T](observable: mongo.Observable[T])
       new mongo.Observer[T]() {
         override def onSubscribe(subscription: mongo.Subscription): Unit = {
           subscriber.onSubscribe(new reactive.Subscription() {
-            private final val cancelled: AtomicBoolean = new AtomicBoolean(false)
+            private final val cancelled: AtomicBoolean = AtomicBoolean(false)
 
             def request(n: Long): Unit = {
               if (!subscription.isUnsubscribed && n <= 0) {
