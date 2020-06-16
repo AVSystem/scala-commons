@@ -49,6 +49,7 @@ final class ClusterMonitoringActor(
   private val connections = new MHashMap[NodeAddress, ActorRef]
   private val clients = new MHashMap[NodeAddress, RedisNodeClient]
   private var state = Opt.empty[ClusterState]
+  private var lastEpoch: Long = 0
   private var suspendUntil = Deadline(Duration.Zero)
   private var fallbackToSeedsAfter = Deadline(Duration.Zero)
   private var scheduledRefresh = Opt.empty[Cancellable]
@@ -89,7 +90,11 @@ final class ClusterMonitoringActor(
       }
 
     case pr: PacksResult => Try(StateRefresh.decodeReplies(pr)) match {
-      case Success((slotRangeMapping, nodeInfos)) =>
+      case Success((slotRangeMapping, NodeInfosWithMyself(nodeInfos, thisNodeInfo)))
+        if thisNodeInfo.configEpoch >= lastEpoch =>
+
+        lastEpoch = thisNodeInfo.configEpoch
+
         val newMapping = {
           val res = slotRangeMapping.iterator.map { srm =>
             (srm.range, clients.getOrElseUpdate(srm.master, createClient(srm.master)))
@@ -183,4 +188,9 @@ object ClusterMonitoringActor {
   final case class Refresh(node: Opt[NodeAddress])
   final case class GetClient(addr: NodeAddress)
   final case class GetClientResponse(client: RedisNodeClient)
+
+  private object NodeInfosWithMyself {
+    def unapply(nodeInfos: Seq[NodeInfo]): Opt[(Seq[NodeInfo], NodeInfo)] =
+      nodeInfos.findOpt(_.flags.myself).map(tni => (nodeInfos, tni))
+  }
 }
