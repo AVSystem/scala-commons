@@ -134,6 +134,9 @@ final class ClusterMonitoringActor(
           }
         }
 
+      case Success(_) =>
+        // obsolete cluster state, ignore
+
       case Failure(err: ErrorReplyException)
         if state.isEmpty && seedNodes.size == 1 && config.fallbackToSingleNode &&
           err.errorStr == "ERR This instance has cluster support disabled" =>
