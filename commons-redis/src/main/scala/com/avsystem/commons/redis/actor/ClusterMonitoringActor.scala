@@ -77,6 +77,7 @@ final class ClusterMonitoringActor(
         val addresses = nodeOpt.map(new SingletonSeq(_)).getOrElse {
           if (fallbackToSeedsAfter.isOverdue()) {
             if (state.isDefined) {
+              lastEpoch = 0
               log.warning(s"Could not fetch cluster state from current masters, using seed nodes")
             }
             seedNodes ++ randomMasters().filterNot(seedNodes.contains)
