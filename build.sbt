@@ -384,6 +384,7 @@ lazy val `commons-redis` = project
     libraryDependencies ++= Seq(
       "com.google.guava" % "guava" % guavaVersion,
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-stream" % akkaVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
     ),
     parallelExecution in Test := false,
