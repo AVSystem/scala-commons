@@ -50,7 +50,10 @@ class JsonStringInput(
   private def isInteger(str: String): Boolean = {
     @tailrec def loop(i: Int): Boolean =
       i >= str.length || str.charAt(i).isDigit && loop(i + 1)
-    str.nonEmpty && loop(if (str.charAt(0) == '-') 1 else 0)
+    str.nonEmpty && {
+      if (str.charAt(0) == '-') str.length > 1 && loop(1)
+      else loop(0)
+    }
   }
 
   private def parseNumber[T](parse: String => T): T = {
@@ -69,7 +72,7 @@ class JsonStringInput(
     if (isInteger(str)) str.toByte
     else {
       val dbl = str.toDouble
-      if(dbl.isValidByte) dbl.toByte
+      if (dbl.isValidByte) dbl.toByte
       else throw new NumberFormatException(str)
     }
   }
@@ -78,7 +81,7 @@ class JsonStringInput(
     if (isInteger(str)) str.toShort
     else {
       val dbl = str.toDouble
-      if(dbl.isValidShort) dbl.toShort
+      if (dbl.isValidShort) dbl.toShort
       else throw new NumberFormatException(str)
     }
   }
@@ -87,7 +90,7 @@ class JsonStringInput(
     if (isInteger(str)) str.toInt
     else {
       val dbl = str.toDouble
-      if(dbl.isValidInt) dbl.toInt
+      if (dbl.isValidInt) dbl.toInt
       else throw new NumberFormatException(str)
     }
   }
@@ -96,7 +99,7 @@ class JsonStringInput(
     if (isInteger(str)) str.toLong
     else {
       val bd = BigDecimal(str, options.mathContext)
-      if(bd.isValidLong) bd.toLong
+      if (bd.isValidLong) bd.toLong
       else throw new NumberFormatException(str)
     }
   }
@@ -111,7 +114,7 @@ class JsonStringInput(
     if (isInteger(str)) BigInt(str)
     else {
       val bd = BigDecimal(str, options.mathContext)
-      if(bd.isWhole) bd.toBigInt
+      if (bd.isWhole) bd.toBigInt
       else throw new NumberFormatException(str)
     }
   }
