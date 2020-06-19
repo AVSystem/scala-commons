@@ -89,6 +89,12 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
 
   roundtrip("dates")(new JDate(0), new JDate(2452323423L))
 
+  test("reading decimal numbers as integers") {
+    assert(read[Int]("3e5") == 300000)
+    assert(read[Long]("3e5") == 300000L)
+    assert(read[BigInt]("3e5") == BigInt(300000))
+  }
+
   test("byte array binary format") {
     val options = JsonOptions(binaryFormat = JsonBinaryFormat.ByteArray)
     assert(write[Array[Byte]](Array(-1, 0, 1), options) == "[-1,0,1]")
