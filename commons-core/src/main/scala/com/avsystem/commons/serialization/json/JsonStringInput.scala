@@ -95,7 +95,7 @@ class JsonStringInput(
   def readLong(): Long = parseNumber { str =>
     if (isInteger(str)) str.toLong
     else {
-      val bd = BigDecimal(str)
+      val bd = BigDecimal(str, options.mathContext)
       if(bd.isValidLong) bd.toLong
       else throw new NumberFormatException(str)
     }
@@ -110,14 +110,14 @@ class JsonStringInput(
   def readBigInt(): BigInt = parseNumber { str =>
     if (isInteger(str)) BigInt(str)
     else {
-      val bd = BigDecimal(str)
+      val bd = BigDecimal(str, options.mathContext)
       if(bd.isWhole) bd.toBigInt
       else throw new NumberFormatException(str)
     }
   }
 
   def readBigDecimal(): BigDecimal =
-    parseNumber(BigDecimal(_))
+    parseNumber(BigDecimal(_, options.mathContext))
 
   override def readTimestamp(): Long = options.dateFormat match {
     case JsonDateFormat.EpochMillis => readLong()
