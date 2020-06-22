@@ -90,9 +90,22 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
   roundtrip("dates")(new JDate(0), new JDate(2452323423L))
 
   test("reading decimal numbers as integers") {
+    assert(read[Byte]("1e2") == 100)
+    assert(read[Short]("3e4") == 30000)
     assert(read[Int]("3e5") == 300000)
     assert(read[Long]("3e5") == 300000L)
     assert(read[BigInt]("3e5") == BigInt(300000))
+  }
+
+  test("attempting to read number from not a number or string") {
+    intercept[ReadFailure](read[Byte]("true"))
+    intercept[ReadFailure](read[Short]("true"))
+    intercept[ReadFailure](read[Int]("true"))
+    intercept[ReadFailure](read[Long]("true"))
+    intercept[ReadFailure](read[BigInt]("true"))
+    intercept[ReadFailure](read[Float]("true"))
+    intercept[ReadFailure](read[Double]("true"))
+    intercept[ReadFailure](read[BigDecimal]("true"))
   }
 
   test("byte array binary format") {
@@ -213,27 +226,72 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
     }
   }
 
-  test("handle plain numbers in JSON as Int, Long and Double") {
+  test("handle plain numbers in JSON as Byte, Short, Int, Long, Double, BigInt and BigDecimal") {
     val json = "123"
+    read[Byte](json) shouldBe 123
+    read[Short](json) shouldBe 123
     read[Int](json) shouldBe 123
     read[Long](json) shouldBe 123
     read[Double](json) shouldBe 123
+    read[BigInt](json) shouldBe BigInt(123)
+    read[BigDecimal](json) shouldBe BigDecimal(123)
+
+    val maxBytePlusOne: Int = Byte.MaxValue + 1
+    val jsonShort = maxBytePlusOne.toString
+    intercept[ReadFailure](read[Byte](jsonShort))
+    read[Short](jsonShort) shouldBe maxBytePlusOne
+    read[Int](jsonShort) shouldBe maxBytePlusOne
+    read[Long](jsonShort) shouldBe maxBytePlusOne
+    read[Double](jsonShort) shouldBe maxBytePlusOne
+    read[BigInt](jsonShort) shouldBe BigInt(maxBytePlusOne)
+    read[BigDecimal](jsonShort) shouldBe BigDecimal(maxBytePlusOne)
+
+    val maxShortPlusOne: Int = Short.MaxValue + 1
+    val jsonInt = maxShortPlusOne.toString
+    intercept[ReadFailure](read[Byte](jsonInt))
+    intercept[ReadFailure](read[Short](jsonInt))
+    read[Int](jsonInt) shouldBe maxShortPlusOne
+    read[Long](jsonInt) shouldBe maxShortPlusOne
+    read[Double](jsonInt) shouldBe maxShortPlusOne
+    read[BigInt](jsonInt) shouldBe BigInt(maxShortPlusOne)
+    read[BigDecimal](jsonInt) shouldBe BigDecimal(maxShortPlusOne)
 
     val maxIntPlusOne: Long = Int.MaxValue.toLong + 1
     val jsonLong = maxIntPlusOne.toString
+    intercept[ReadFailure](read[Byte](jsonLong))
+    intercept[ReadFailure](read[Short](jsonLong))
     intercept[ReadFailure](read[Int](jsonLong))
     read[Long](jsonLong) shouldBe maxIntPlusOne
     read[Double](jsonLong) shouldBe maxIntPlusOne
+    read[BigInt](jsonLong) shouldBe BigInt(maxIntPlusOne)
+    read[BigDecimal](jsonLong) shouldBe BigDecimal(maxIntPlusOne)
 
     val jsonLongMax = Long.MaxValue.toString
-    intercept[ReadFailure](read[Int](jsonLong))
+    intercept[ReadFailure](read[Byte](jsonLongMax))
+    intercept[ReadFailure](read[Short](jsonLongMax))
+    intercept[ReadFailure](read[Int](jsonLongMax))
     read[Long](jsonLongMax) shouldBe Long.MaxValue
     read[Double](jsonLongMax) shouldBe Long.MaxValue
+    read[BigInt](jsonLongMax) shouldBe BigInt(Long.MaxValue)
+    read[BigDecimal](jsonLongMax) shouldBe BigDecimal(Long.MaxValue)
+
+    val overMaxLong = BigInt(Long.MaxValue) + 1
+    val overMaxLongStr = overMaxLong.toString
+    intercept[ReadFailure](read[Byte](overMaxLongStr))
+    intercept[ReadFailure](read[Short](overMaxLongStr))
+    intercept[ReadFailure](read[Int](overMaxLongStr))
+    intercept[ReadFailure](read[Long](overMaxLongStr))
+    read[Double](overMaxLongStr) shouldBe overMaxLong.toDouble
+    read[BigInt](overMaxLongStr) shouldBe overMaxLong
+    read[BigDecimal](overMaxLongStr) shouldBe BigDecimal(overMaxLong)
 
     val jsonDouble = Double.MaxValue.toString
+    intercept[ReadFailure](read[Byte](jsonDouble))
+    intercept[ReadFailure](read[Short](jsonDouble))
     intercept[ReadFailure](read[Int](jsonDouble))
     intercept[ReadFailure](read[Long](jsonDouble))
     read[Double](jsonDouble) shouldBe Double.MaxValue
+    read[BigDecimal](jsonDouble) shouldBe BigDecimal(Double.MaxValue)
   }
 
   test("work with skipping") {
