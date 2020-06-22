@@ -49,6 +49,7 @@ final class ClusterMonitoringActor(
   private val connections = new MHashMap[NodeAddress, ActorRef]
   private val clients = new MHashMap[NodeAddress, RedisNodeClient]
   private var state = Opt.empty[ClusterState]
+  private var lastEpoch: Long = 0
   private var suspendUntil = Deadline(Duration.Zero)
   private var fallbackToSeedsAfter = Deadline(Duration.Zero)
   private var scheduledRefresh = Opt.empty[Cancellable]
@@ -76,6 +77,7 @@ final class ClusterMonitoringActor(
         val addresses = nodeOpt.map(new SingletonSeq(_)).getOrElse {
           if (fallbackToSeedsAfter.isOverdue()) {
             if (state.isDefined) {
+              lastEpoch = 0
               log.warning(s"Could not fetch cluster state from current masters, using seed nodes")
             }
             seedNodes ++ randomMasters().filterNot(seedNodes.contains)
@@ -89,7 +91,11 @@ final class ClusterMonitoringActor(
       }
 
     case pr: PacksResult => Try(StateRefresh.decodeReplies(pr)) match {
-      case Success((slotRangeMapping, nodeInfos)) =>
+      case Success((slotRangeMapping, NodeInfosWithMyself(nodeInfos, thisNodeInfo)))
+        if thisNodeInfo.configEpoch >= lastEpoch =>
+
+        lastEpoch = thisNodeInfo.configEpoch
+
         val newMapping = {
           val res = slotRangeMapping.iterator.map { srm =>
             (srm.range, clients.getOrElseUpdate(srm.master, createClient(srm.master)))
@@ -128,6 +134,9 @@ final class ClusterMonitoringActor(
             context.system.scheduler.scheduleOnce(config.nodeClientCloseDelay)(client.close())
           }
         }
+
+      case Success(_) =>
+        // obsolete cluster state, ignore
 
       case Failure(err: ErrorReplyException)
         if state.isEmpty && seedNodes.size == 1 && config.fallbackToSingleNode &&
@@ -183,4 +192,9 @@ object ClusterMonitoringActor {
   final case class Refresh(node: Opt[NodeAddress])
   final case class GetClient(addr: NodeAddress)
   final case class GetClientResponse(client: RedisNodeClient)
+
+  private object NodeInfosWithMyself {
+    def unapply(nodeInfos: Seq[NodeInfo]): Opt[(Seq[NodeInfo], NodeInfo)] =
+      nodeInfos.findOpt(_.flags.myself).map(tni => (nodeInfos, tni))
+  }
 }
