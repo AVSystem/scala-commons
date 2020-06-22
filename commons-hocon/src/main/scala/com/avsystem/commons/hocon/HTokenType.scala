@@ -41,7 +41,10 @@ final class HTokenRange(val allTokens: IndexedSeq[HToken], val start: Int, val e
   require(end >= 0 && end <= allTokens.length)
   require(end >= start)
 
-  val pos: SourcePos = allTokens(start).pos join allTokens(end - 1).pos
+  val pos: SourcePos =
+    if(start == end) allTokens(start).pos.emptyStartPos else
+    allTokens(start).pos join allTokens(end - 1).pos
+
   def input: SourceFile = pos.input
 
   def length: Int = end - start
