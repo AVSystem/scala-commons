@@ -1,0 +1,117 @@
+include required(url("costam"))
+include classpath("fag")
+include "plain"
+
+// comment
+x = 5
+x "fag" .kej = null
+b = true
+a.b.c = true kek.fuu()
+kek = ${a.b.c} {include "fuu", a = c}
+quek = ${?foo . bar} "" //faggot
+arr += fag
+moar: wincyj
+# also comment
+array = [a, b, c,]
+
+multiline = """
+moar
+moar
+"""
+
+costam {
+  field = value
+}
+-----
+<1:1:HSource(HObject(
+ <1:1:HInclude(<1:9:HRequiredInclude(<1:18:HQualifiedInclude[url](<1:22:HString[Quoted]("costam"):1:30>):1:31>):1:32>):1:32>
+ <2:1:HInclude(<2:9:HQualifiedInclude[classpath](<2:19:HString[Quoted]("fag"):2:24>):2:25>):2:25>
+ <3:1:HInclude(<3:9:HString[Quoted]("plain"):3:16>):3:16>
+ <6:1:HField(
+  <6:1:HPath(HKey(HString[Unquoted]("x"))):6:2>
+  <6:5:HNumber(5):6:6>
+ ):6:6>
+ <7:1:HField(
+  <7:1:HPath(
+   <7:1:HPath(HKey(
+    <7:1:HString[Unquoted]("x "):7:3>
+    <7:3:HString[Quoted]("fag"):7:8>
+    <7:8:HString[Whitespace](" "):7:9>
+   )):7:9>
+   <7:10:HKey(HString[Unquoted]("kej")):7:13>
+  ):7:13>
+  <7:16:HNull():7:20>
+ ):7:20>
+ <8:1:HField(
+  <8:1:HPath(HKey(HString[Unquoted]("b"))):8:2>
+  <8:5:HBoolean(true):8:9>
+ ):8:9>
+ <9:1:HField(
+  <9:1:HPath(
+   <9:1:HPath(
+    <9:1:HPath(HKey(HString[Unquoted]("a"))):9:2>
+    <9:3:HKey(HString[Unquoted]("b")):9:4>
+   ):9:4>
+   <9:5:HKey(HString[Unquoted]("c")):9:6>
+  ):9:6>
+  <9:9:HString[Unquoted]("true kek.fuu()"):9:23>
+ ):9:23>
+ <10:1:HField(
+  <10:1:HPath(HKey(HString[Unquoted]("kek"))):10:4>
+  <10:7:HConcat(
+   <10:7:HSubst(<10:9:HPath(
+    <10:9:HPath(
+     <10:9:HPath(HKey(HString[Unquoted]("a"))):10:10>
+     <10:11:HKey(HString[Unquoted]("b")):10:12>
+    ):10:12>
+    <10:13:HKey(HString[Unquoted]("c")):10:14>
+   ):10:14>):10:15>
+   <10:15:HString[Whitespace](" "):10:16>
+   <10:16:HObject(
+    <10:17:HInclude(<10:25:HString[Quoted]("fuu"):10:30>):10:30>
+    <10:32:HField(
+     <10:32:HPath(HKey(HString[Unquoted]("a"))):10:33>
+     <10:36:HString[Unquoted]("c"):10:37>
+    ):10:37>
+   ):10:38>
+  ):10:38>
+ ):10:38>
+ <11:1:HField(
+  <11:1:HPath(HKey(HString[Unquoted]("quek"))):11:5>
+  <11:8:HConcat(
+   <11:8:HSubst[optional](<11:11:HPath(
+    <11:11:HPath(HKey(HString[Unquoted]("foo "))):11:15>
+    <11:17:HKey(HString[Unquoted]("bar")):11:20>
+   ):11:20>):11:21>
+   <11:21:HString[Whitespace](" "):11:22>
+   <11:22:HString[Quoted](""):11:24>
+  ):11:25>
+ ):11:25>
+ <12:1:HField[append](
+  <12:1:HPath(HKey(HString[Unquoted]("arr"))):12:4>
+  <12:8:HString[Unquoted]("fag"):12:11>
+ ):12:11>
+ <13:1:HField(
+  <13:1:HPath(HKey(HString[Unquoted]("moar"))):13:5>
+  <13:7:HString[Unquoted]("wincyj"):13:13>
+ ):13:13>
+ <15:1:HField(
+  <15:1:HPath(HKey(HString[Unquoted]("array"))):15:6>
+  <15:9:HArray(
+   <15:10:HString[Unquoted]("a"):15:11>
+   <15:13:HString[Unquoted]("b"):15:14>
+   <15:16:HString[Unquoted]("c"):15:17>
+  ):15:19>
+ ):15:19>
+ <17:1:HField(
+  <17:1:HPath(HKey(HString[Unquoted]("multiline"))):17:10>
+  <17:13:HString[Multiline]("\nmoar\nmoar\n"):20:4>
+ ):20:4>
+ <22:1:HField(
+  <22:1:HPath(HKey(HString[Unquoted]("costam "))):22:8>
+  <22:8:HObject(<23:3:HField(
+   <23:3:HPath(HKey(HString[Unquoted]("field"))):23:8>
+   <23:11:HString[Unquoted]("value"):23:16>
+  ):23:16>):24:2>
+ ):24:2>
+)):25:1>

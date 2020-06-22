@@ -1,0 +1,199 @@
+include required(url("costam"))
+include classpath("fag")
+include "plain"
+
+// comment
+x = 5
+x "fag" .kej = null
+b = true
+a.b.c = true kek.fuu
+kek = ${a.b.c} {include "fuu", a = c}
+quek = ${?foo . bar} "" //faggot
+arr += fag
+moar: wincyj
+# also comment
+array = [a, b, c,]
+
+multiline = """
+moar
+moar
+"""
+
+costam {
+  field = value
+}
+-----
+<1:1:Unquoted(include):1:8>
+<1:8:Whitespace( ):1:9>
+<1:9:Unquoted(required):1:17>
+<1:17:LParen(():1:18>
+<1:18:Unquoted(url):1:21>
+<1:21:LParen(():1:22>
+<1:22:QuotedString("costam"):1:30>
+<1:30:RParen()):1:31>
+<1:31:RParen()):1:32>
+<1:32:Whitespace(
+):2:1>
+<2:1:Unquoted(include):2:8>
+<2:8:Whitespace( ):2:9>
+<2:9:Unquoted(classpath):2:18>
+<2:18:LParen(():2:19>
+<2:19:QuotedString("fag"):2:24>
+<2:24:RParen()):2:25>
+<2:25:Whitespace(
+):3:1>
+<3:1:Unquoted(include):3:8>
+<3:8:Whitespace( ):3:9>
+<3:9:QuotedString("plain"):3:16>
+<3:16:Whitespace(
+
+):5:1>
+<5:1:Comment(// comment):5:11>
+<5:11:Whitespace(
+):6:1>
+<6:1:Unquoted(x):6:2>
+<6:2:Whitespace( ):6:3>
+<6:3:Equals(=):6:4>
+<6:4:Whitespace( ):6:5>
+<6:5:Unquoted(5):6:6>
+<6:6:Whitespace(
+):7:1>
+<7:1:Unquoted(x):7:2>
+<7:2:Whitespace( ):7:3>
+<7:3:QuotedString("fag"):7:8>
+<7:8:Whitespace( ):7:9>
+<7:9:Dot(.):7:10>
+<7:10:Unquoted(kej):7:13>
+<7:13:Whitespace( ):7:14>
+<7:14:Equals(=):7:15>
+<7:15:Whitespace( ):7:16>
+<7:16:Unquoted(null):7:20>
+<7:20:Whitespace(
+):8:1>
+<8:1:Unquoted(b):8:2>
+<8:2:Whitespace( ):8:3>
+<8:3:Equals(=):8:4>
+<8:4:Whitespace( ):8:5>
+<8:5:Unquoted(true):8:9>
+<8:9:Whitespace(
+):9:1>
+<9:1:Unquoted(a):9:2>
+<9:2:Dot(.):9:3>
+<9:3:Unquoted(b):9:4>
+<9:4:Dot(.):9:5>
+<9:5:Unquoted(c):9:6>
+<9:6:Whitespace( ):9:7>
+<9:7:Equals(=):9:8>
+<9:8:Whitespace( ):9:9>
+<9:9:Unquoted(true):9:13>
+<9:13:Whitespace( ):9:14>
+<9:14:Unquoted(kek):9:17>
+<9:17:Dot(.):9:18>
+<9:18:Unquoted(fuu):9:21>
+<9:21:Whitespace(
+):10:1>
+<10:1:Unquoted(kek):10:4>
+<10:4:Whitespace( ):10:5>
+<10:5:Equals(=):10:6>
+<10:6:Whitespace( ):10:7>
+<10:7:Splice($):10:8>
+<10:8:LBrace({):10:9>
+<10:9:Unquoted(a):10:10>
+<10:10:Dot(.):10:11>
+<10:11:Unquoted(b):10:12>
+<10:12:Dot(.):10:13>
+<10:13:Unquoted(c):10:14>
+<10:14:RBrace(}):10:15>
+<10:15:Whitespace( ):10:16>
+<10:16:LBrace({):10:17>
+<10:17:Unquoted(include):10:24>
+<10:24:Whitespace( ):10:25>
+<10:25:QuotedString("fuu"):10:30>
+<10:30:Comma(,):10:31>
+<10:31:Whitespace( ):10:32>
+<10:32:Unquoted(a):10:33>
+<10:33:Whitespace( ):10:34>
+<10:34:Equals(=):10:35>
+<10:35:Whitespace( ):10:36>
+<10:36:Unquoted(c):10:37>
+<10:37:RBrace(}):10:38>
+<10:38:Whitespace(
+):11:1>
+<11:1:Unquoted(quek):11:5>
+<11:5:Whitespace( ):11:6>
+<11:6:Equals(=):11:7>
+<11:7:Whitespace( ):11:8>
+<11:8:Splice($):11:9>
+<11:9:LBrace({):11:10>
+<11:10:Qmark(?):11:11>
+<11:11:Unquoted(foo):11:14>
+<11:14:Whitespace( ):11:15>
+<11:15:Dot(.):11:16>
+<11:16:Whitespace( ):11:17>
+<11:17:Unquoted(bar):11:20>
+<11:20:RBrace(}):11:21>
+<11:21:Whitespace( ):11:22>
+<11:22:QuotedString(""):11:24>
+<11:24:Whitespace( ):11:25>
+<11:25:Comment(//faggot):11:33>
+<11:33:Whitespace(
+):12:1>
+<12:1:Unquoted(arr):12:4>
+<12:4:Whitespace( ):12:5>
+<12:5:PlusEquals(+=):12:7>
+<12:7:Whitespace( ):12:8>
+<12:8:Unquoted(fag):12:11>
+<12:11:Whitespace(
+):13:1>
+<13:1:Unquoted(moar):13:5>
+<13:5:Colon(:):13:6>
+<13:6:Whitespace( ):13:7>
+<13:7:Unquoted(wincyj):13:13>
+<13:13:Whitespace(
+):14:1>
+<14:1:Comment(# also comment):14:15>
+<14:15:Whitespace(
+):15:1>
+<15:1:Unquoted(array):15:6>
+<15:6:Whitespace( ):15:7>
+<15:7:Equals(=):15:8>
+<15:8:Whitespace( ):15:9>
+<15:9:LBracket([):15:10>
+<15:10:Unquoted(a):15:11>
+<15:11:Comma(,):15:12>
+<15:12:Whitespace( ):15:13>
+<15:13:Unquoted(b):15:14>
+<15:14:Comma(,):15:15>
+<15:15:Whitespace( ):15:16>
+<15:16:Unquoted(c):15:17>
+<15:17:Comma(,):15:18>
+<15:18:RBracket(]):15:19>
+<15:19:Whitespace(
+
+):17:1>
+<17:1:Unquoted(multiline):17:10>
+<17:10:Whitespace( ):17:11>
+<17:11:Equals(=):17:12>
+<17:12:Whitespace( ):17:13>
+<17:13:MultilineString("""
+moar
+moar
+"""):20:4>
+<20:4:Whitespace(
+
+):22:1>
+<22:1:Unquoted(costam):22:7>
+<22:7:Whitespace( ):22:8>
+<22:8:LBrace({):22:9>
+<22:9:Whitespace(
+  ):23:3>
+<23:3:Unquoted(field):23:8>
+<23:8:Whitespace( ):23:9>
+<23:9:Equals(=):23:10>
+<23:10:Whitespace( ):23:11>
+<23:11:Unquoted(value):23:16>
+<23:16:Whitespace(
+):24:1>
+<24:1:RBrace(}):24:2>
+<24:2:Whitespace(
+):25:1>
