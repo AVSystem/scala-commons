@@ -1,3 +1,5 @@
+import org.scalajs.jsenv.nodejs.NodeJSEnv
+
 cancelable in Global := true
 
 // We need to generate slightly different structure for IntelliJ in order to better support ScalaJS cross projects.
@@ -128,6 +130,9 @@ val jvmCommonSettings = commonSettings ++ Seq(
   mimaPreviousArtifacts := previousCompatibleVersions.map { previousVersion =>
     organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion
   },
+  Test / jsEnv := new NodeJSEnv(NodeJSEnv.Config().withEnv(Map(
+    "RESOURCES_DIR" -> (Test / resourceDirectory).value.absolutePath)
+  )),
 )
 
 val jsCommonSettings = commonSettings ++ Seq(
