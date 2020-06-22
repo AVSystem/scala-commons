@@ -294,14 +294,14 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
     read[BigInt](jsonDouble) shouldBe BigDecimal(Double.MaxValue).toBigInt
     read[BigDecimal](jsonDouble) shouldBe BigDecimal(Double.MaxValue)
 
-    val jsonSmallDouble = Double.MinValue.toString
+    val jsonSmallDouble = Double.MinPositiveValue.toString
     intercept[ReadFailure](read[Byte](jsonSmallDouble))
     intercept[ReadFailure](read[Short](jsonSmallDouble))
     intercept[ReadFailure](read[Int](jsonSmallDouble))
     intercept[ReadFailure](read[Long](jsonSmallDouble))
-    read[Double](jsonSmallDouble) shouldBe Double.MinValue
+    read[Double](jsonSmallDouble) shouldBe Double.MinPositiveValue
     intercept[ReadFailure](read[BigInt](jsonSmallDouble))
-    read[BigDecimal](jsonSmallDouble) shouldBe BigDecimal(Double.MinValue)
+    read[BigDecimal](jsonSmallDouble) shouldBe BigDecimal(Double.MinPositiveValue)
   }
 
   test("work with skipping") {
