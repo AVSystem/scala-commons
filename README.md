@@ -43,7 +43,11 @@
 * `commons-mongo` - MongoDB utilities for Scala & Java MongoDB drivers, integration with `GenCodec`
 * `commons-kafka` - Kafka utilities
 * `commons-spring` - Spring framework utilities:
-  * `HoconBeanDefinitionReader` - an utility that allows you to define Spring application context using HOCON format
+  * `HoconBeanDefinitionReader` - an utility that allows you to define Spring application context using 
+  [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md) format
+* `commons-hocon` - Utilities for working with [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md)
+  * `HoconInput` - an `Input` implementation for `GenCodec` that can read Lightbend Config (`com.typesafe.config.Config`)
+  * An AST (`HTree`) and a lexer/parser for HOCON (`HLexer`, `HParser`)
 
 ## Development
 

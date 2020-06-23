@@ -2,7 +2,6 @@ package com.avsystem.commons
 package hocon
 
 import java.io.EOFException
-import java.text.ParseException
 
 import com.avsystem.commons.misc.{CharSubSequence, SealedEnumCompanion}
 import com.avsystem.commons.serialization.json.JsonReader
@@ -42,8 +41,8 @@ final class HTokenRange(val allTokens: IndexedSeq[HToken], val start: Int, val e
   require(end >= start)
 
   val pos: SourcePos =
-    if(start == end) allTokens(start).pos.emptyStartPos else
-    allTokens(start).pos join allTokens(end - 1).pos
+    if (start == end) allTokens(start).pos.emptyStartPos else
+      allTokens(start).pos join allTokens(end - 1).pos
 
   def input: SourceFile = pos.input
 

@@ -24,7 +24,7 @@ final class CharSubSequence private(
 }
 object CharSubSequence {
   /**
-    * Creates a subsequence of a [[CharSequence]] which is guaranteed to be a wrapper and never a copy
+    * Creates a subsequence of a `CharSequence` which is guaranteed to be a wrapper and never a copy
     * (unlike standard `subSequence` method).
     */
   def apply(seq: CharSequence, start: Int, end: Int): CharSequence =
