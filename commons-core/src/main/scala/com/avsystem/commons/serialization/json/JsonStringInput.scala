@@ -43,24 +43,84 @@ class JsonStringInput(
     if (reader.jsonType != jsonType) expectedError(jsonType)
     else reader.currentValue.asInstanceOf[T]
 
-  private def matchNumericString[T](toNumber: String => T): T =
-    if (reader.jsonType == JsonType.number || reader.jsonType == JsonType.string) {
-      val str = reader.currentValue.asInstanceOf[String]
-      try toNumber(str) catch {
-        case e: NumberFormatException =>
-          throw new ParseException(s"Invalid number format: $str ${reader.posInfo(startIdx)}", e)
-      }
-    } else expectedError(JsonType.number)
-
   def readNull(): Boolean = reader.jsonType == JsonType.`null`
   def readString(): String = checkedValue[String](JsonType.string)
   def readBoolean(): Boolean = checkedValue[Boolean](JsonType.boolean)
-  def readInt(): Int = matchNumericString(_.toInt)
-  def readLong(): Long = matchNumericString(_.toLong)
-  override def readFloat(): Float = matchNumericString(_.toFloat)
-  def readDouble(): Double = matchNumericString(_.toDouble)
-  def readBigInt(): BigInt = matchNumericString(BigInt(_))
-  def readBigDecimal(): BigDecimal = matchNumericString(BigDecimal(_, options.mathContext))
+
+  private def isInteger(str: String): Boolean = {
+    @tailrec def loop(i: Int): Boolean =
+      i >= str.length || str.charAt(i).isDigit && loop(i + 1)
+    str.nonEmpty && {
+      if (str.charAt(0) == '-') str.length > 1 && loop(1)
+      else loop(0)
+    }
+  }
+
+  private def parseNumber[T](parse: String => T): T = {
+    val str = reader.jsonType match {
+      // accepting JSON strings as numbers (also because they may be Infinity/-Infinity/NaN)
+      case JsonType.number | JsonType.string => reader.currentValue.asInstanceOf[String]
+      case _ => expectedError(JsonType.number)
+    }
+    try parse(str) catch {
+      case e: NumberFormatException =>
+        throw new ParseException(s"Invalid number format: $str ${reader.posInfo(startIdx)}", e)
+    }
+  }
+
+  override def readByte(): Byte = parseNumber { str =>
+    if (isInteger(str)) str.toByte
+    else {
+      val dbl = str.toDouble
+      if (dbl.isValidByte) dbl.toByte
+      else throw new NumberFormatException(str)
+    }
+  }
+
+  override def readShort(): Short = parseNumber { str =>
+    if (isInteger(str)) str.toShort
+    else {
+      val dbl = str.toDouble
+      if (dbl.isValidShort) dbl.toShort
+      else throw new NumberFormatException(str)
+    }
+  }
+
+  def readInt(): Int = parseNumber { str =>
+    if (isInteger(str)) str.toInt
+    else {
+      val dbl = str.toDouble
+      if (dbl.isValidInt) dbl.toInt
+      else throw new NumberFormatException(str)
+    }
+  }
+
+  def readLong(): Long = parseNumber { str =>
+    if (isInteger(str)) str.toLong
+    else {
+      val bd = BigDecimal(str, options.mathContext)
+      if (bd.isValidLong) bd.toLong
+      else throw new NumberFormatException(str)
+    }
+  }
+
+  override def readFloat(): Float =
+    parseNumber(_.toFloat)
+
+  def readDouble(): Double =
+    parseNumber(_.toDouble)
+
+  def readBigInt(): BigInt = parseNumber { str =>
+    if (isInteger(str)) BigInt(str)
+    else {
+      val bd = BigDecimal(str, options.mathContext)
+      if (bd.isWhole) bd.toBigInt
+      else throw new NumberFormatException(str)
+    }
+  }
+
+  def readBigDecimal(): BigDecimal =
+    parseNumber(BigDecimal(_, options.mathContext))
 
   override def readTimestamp(): Long = options.dateFormat match {
     case JsonDateFormat.EpochMillis => readLong()
@@ -94,6 +154,8 @@ class JsonStringInput(
     skip()
     reader.json.substring(startIdx, endIdx)
   }
+
+  def jsonType: JsonType = reader.jsonType
 
   override def readMetadata[T](metadata: InputMetadata[T]): Opt[T] = metadata match {
     case JsonType => Opt(reader.jsonType)
