@@ -122,7 +122,8 @@ final class ClusterMonitoringActor(
 
         if (scheduledRefresh.isEmpty) {
           val refreshInterval = config.autoRefreshInterval
-          scheduledRefresh = system.scheduler.scheduleWithFixedDelay(refreshInterval, refreshInterval, self, Refresh(Opt.Empty)).opt
+          scheduledRefresh = system.scheduler.scheduleWithFixedDelay(
+            refreshInterval, refreshInterval, self, Refresh(Opt.Empty)).opt
         }
         fallbackToSeedsAfter = config.refreshUsingSeedNodesAfter.fromNow
 

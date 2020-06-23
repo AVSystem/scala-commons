@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.redis.config.{ConnectionConfig, NodeConfig, TlsConfig}
+import com.avsystem.commons.redis.config.{ConnectionConfig, NodeConfig}
 import org.scalatest.Suite
 
 /**
@@ -12,7 +12,7 @@ trait UsesRedisNodeClient extends UsesRedisServer with UsesActorSystem with Uses
   def useTls: Boolean = false
 
   def connectionConfig: ConnectionConfig =
-    ConnectionConfig(tlsConfig = if (useTls) OptArg(TlsConfig(sslContext)) else OptArg.Empty)
+    ConnectionConfig(sslEngineCreator = if (useTls) OptArg(() => sslContext.createSSLEngine()) else OptArg.Empty)
 
   def nodeConfig: NodeConfig = NodeConfig(
     connectionConfigs = _ => connectionConfig,

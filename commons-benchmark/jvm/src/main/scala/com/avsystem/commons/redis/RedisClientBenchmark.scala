@@ -70,12 +70,12 @@ abstract class RedisBenchmark(useTls: Boolean) {
   }
 
   val connectionConfig: ConnectionConfig = ConnectionConfig(
-    tlsConfig = if(useTls) OptArg(TlsConfig(sslContext)) else OptArg.Empty,
+    sslEngineCreator = if(useTls) OptArg(() => sslContext.createSSLEngine()) else OptArg.Empty,
     initCommands = clientSetname("benchmark")
   )
 
   val monConnectionConfig: ConnectionConfig = ConnectionConfig(
-    tlsConfig = if(useTls) OptArg(TlsConfig(sslContext)) else OptArg.Empty,
+    sslEngineCreator = if(useTls) OptArg(() => sslContext.createSSLEngine()) else OptArg.Empty,
     initCommands = clientSetname("benchmarkMon")
   )
 
@@ -133,7 +133,7 @@ object RedisClientBenchmark {
 
 @OperationsPerInvocation(ConcurrentCommands)
 abstract class AbstractRedisClientBenchmark(useTls: Boolean)
-  extends RedisBenchmark(useTls) with CrossRedisBenchmark {
+  extends RedisBenchmark(useTls) {
 
   import RedisApi.Batches.StringTyped._
 

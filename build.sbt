@@ -24,7 +24,7 @@ val springVersion = "4.3.26.RELEASE"
 val typesafeConfigVersion = "1.4.0"
 val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.2"
-val akkaVersion = "2.6.5"
+val akkaVersion = "2.6.6"
 val monixVersion = "3.2.1"
 val mockitoVersion = "3.3.3"
 val circeVersion = "0.13.0"
@@ -106,8 +106,8 @@ val commonSettings = Seq(
   pomIncludeRepository := { _ => false },
 
   libraryDependencies ++= Seq(
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion.value cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % silencerVersion.value % Provided cross CrossVersion.full,
+    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
+    "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.scalatestplus" %%% "scalacheck-1-14" % scalatestplusScalacheckVersion % Test,

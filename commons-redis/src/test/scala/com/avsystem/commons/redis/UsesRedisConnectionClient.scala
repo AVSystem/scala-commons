@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.redis.config.{ConnectionConfig, TlsConfig}
+import com.avsystem.commons.redis.config.ConnectionConfig
 import org.scalatest.Suite
 
 /**
@@ -12,13 +12,13 @@ trait UsesRedisConnectionClient extends UsesRedisServer with UsesActorSystem wit
   def useTls: Boolean = false
 
   def connectionConfig: ConnectionConfig =
-    ConnectionConfig(tlsConfig = if (useTls) OptArg(TlsConfig(sslContext)) else OptArg.Empty)
+    ConnectionConfig(sslEngineCreator = if (useTls) OptArg(() => sslContext.createSSLEngine()) else OptArg.Empty)
 
   var redisClient: RedisConnectionClient = _
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    redisClient = new RedisConnectionClient(if(useTls) tlsAddress else address, connectionConfig)
+    redisClient = new RedisConnectionClient(if (useTls) tlsAddress else address, connectionConfig)
   }
 
   override protected def afterAll(): Unit = {

@@ -7,7 +7,7 @@ import com.avsystem.commons.misc.{CharSubSequence, SealedEnumCompanion}
 import com.avsystem.commons.serialization.json.JsonReader
 
 import scala.annotation.tailrec
-import scala.collection.{AbstractSeq, IndexedSeqOptimized}
+import scala.collection.AbstractSeq
 import scala.util.matching.Regex
 
 final case class HToken(tokenType: HTokenType, idx: Int, pos: SourcePos) {
@@ -33,7 +33,7 @@ final case class HToken(tokenType: HTokenType, idx: Int, pos: SourcePos) {
 }
 
 final class HTokenRange(val allTokens: IndexedSeq[HToken], val start: Int, val end: Int)
-  extends AbstractSeq[HToken] with IndexedSeq[HToken] with IndexedSeqOptimized[HToken, IndexedSeq[HToken]] {
+  extends AbstractSeq[HToken] with IndexedSeq[HToken] { //TODO: IndexedSeqOptimized
 
   require(allTokens.nonEmpty)
   require(start >= 0 && start <= allTokens.length)
@@ -148,10 +148,10 @@ class HLexer(input: SourceFile) {
     }
 
   def tokenize(): IndexedSeq[HToken] = {
-    val res = new MArrayBuffer[HToken]
+    val res = IArraySeq.newBuilder[HToken]
     while (off < chars.length) {
       res += next()
     }
-    res
+    res.result()
   }
 }
