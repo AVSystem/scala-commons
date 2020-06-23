@@ -27,3 +27,10 @@ class RedisClusterCommandsTest extends RedisClusterCommandsSuite with KeyedFullA
 class RedisMasterSlaveCommandsTest extends RedisMasterSlaveCommandsSuite with NodeFullApiSuite
 class RedisNodeCommandsTest extends RedisNodeCommandsSuite with NodeFullApiSuite
 class RedisConnectionCommandsTest extends RedisConnectionCommandsSuite with ConnectionFullApiSuite
+
+class RedisTlsNodeCommandsTest extends RedisNodeCommandsSuite with NodeFullApiSuite {
+  override def useTls: Boolean = true
+}
+class RedisTlsConnectionCommandsTest extends RedisConnectionCommandsSuite with ConnectionFullApiSuite {
+  override def useTls: Boolean = true
+}

@@ -12,7 +12,7 @@ before_install:
 
 env:
   global:
-    - REDIS_VERSION=5.0.0
+    - REDIS_VERSION=6.0.1
     - REDIS_HOME=$PWD/redis-$REDIS_VERSION/src
   matrix:
     - TASK="commons-jvm/test"
@@ -24,13 +24,22 @@ script:
 
 jobs:
   include:
+    - env:
+      - TASK="commons-js/test"
+      - SCALAJS_VERSION="1.0.1"
+      scala: [2.11.12]
+    - env:
+      - TASK="commons-js/test"
+      - SCALAJS_VERSION="1.0.1"
+      scala: [2.12.11]
     - stage: deploy
       script: if [ "$TRAVIS_PULL_REQUEST" = 'false' ]; then ./deploy.sh; fi
       if: tag =~ ^v
 
 cache:
   directories:
-    - $HOME/.ivy2/cache
+    - $HOME/.ivy2/cache/
+    - $HOME/.coursier/cache/
     - $HOME/.cache/
     - $HOME/.sbt/
     - $HOME/.m2/

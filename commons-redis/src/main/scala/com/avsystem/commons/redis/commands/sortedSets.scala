@@ -14,130 +14,171 @@ trait SortedSetsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/zadd ZADD]] */
   def zadd(key: Key, memberScore: (Value, Double), memberScores: (Value, Double)*): Result[Int] =
     zadd(key, memberScore +:: memberScores)
+
   /** Executes [[http://redis.io/commands/zadd ZADD]] */
   def zadd(key: Key, member: Value, score: Double): Result[Boolean] =
     execute(new Zadd(key, (member, score).single, emptyData = false, Opt.Empty, changed = false).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/zadd ZADD]] */
   def zadd(key: Key, score: Double, member: Value, members: Value*): Result[Int] =
     execute(new Zadd(key, (member, score) +:: members.iterator.map((_, score)), emptyData = false, Opt.Empty, changed = false))
+
   /** Executes [[http://redis.io/commands/zadd ZADD]]
     * or simply returns 0 when `members` is empty */
   def zadd(key: Key, score: Double, members: Iterable[Value]): Result[Int] =
     execute(new Zadd(key, members.iterator.map((_, score)), members.isEmpty, Opt.Empty, changed = false))
+
   /** Executes [[http://redis.io/commands/zadd ZADD]]
     * or simply returns 0 when `memberScores` is empty */
   def zadd(key: Key, memberScores: Iterable[(Value, Double)], existence: OptArg[Boolean] = OptArg.Empty, changed: Boolean = false): Result[Int] =
     execute(new Zadd(key, memberScores, memberScores.isEmpty, existence.toOpt, changed))
+
   /** Executes [[http://redis.io/commands/zadd ZADD]] */
   def zaddIncr(key: Key, member: Value, score: Double, existence: OptArg[Boolean] = OptArg.Empty): Result[Opt[Double]] =
     execute(new ZaddIncr(key, member, score, existence.toOpt))
+
   /** Executes [[http://redis.io/commands/zcard ZCARD]] */
   def zcard(key: Key): Result[Long] =
     execute(new Zcard(key))
+
   /** Executes [[http://redis.io/commands/zcount ZCOUNT]] */
   def zcount(key: Key, min: ScoreLimit = ScoreLimit.MinusInf, max: ScoreLimit = ScoreLimit.PlusInf): Result[Long] =
     execute(new Zcount(key, min, max))
+
   /** Executes [[http://redis.io/commands/zincrby ZINCRBY]] */
   def zincrby(key: Key, increment: Double, member: Value): Result[Double] =
     execute(new Zincrby(key, increment, member))
+
   /** Executes [[http://redis.io/commands/zinterstore ZINTERSTORE]] */
   def zinterstore(destination: Key, key: Key, keys: Key*): Result[Long] = zinterstore(destination, key +:: keys)
+
   /** Executes [[http://redis.io/commands/zinterstore ZINTERSTORE]]
     * NOTE: `keys` MUST NOT be empty */
   def zinterstore(destination: Key, keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Long] =
     execute(new Zinterstore(destination, keys, Opt.Empty, aggregation.toOpt))
+
   /** Executes [[http://redis.io/commands/zinterstore ZINTERSTORE]] */
   def zinterstoreWeights(destination: Key, keyWeight: (Key, Double), keysWeights: (Key, Double)*): Result[Long] =
     zinterstoreWeights(destination, keyWeight +:: keysWeights)
+
   /** Executes [[http://redis.io/commands/zinterstore ZINTERSTORE]]
     * NOTE: `keysWeights` MUST NOT be empty */
   def zinterstoreWeights(destination: Key, keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Long] =
     execute(new Zinterstore(destination, keysWeights.map(_._1), keysWeights.map(_._2).opt, aggregation.toOpt))
+
   /** Executes [[http://redis.io/commands/zlexcount ZLEXCOUNT]] */
   def zlexcount(key: Key, min: LexLimit[Value] = LexLimit.MinusInf, max: LexLimit[Value] = LexLimit.PlusInf): Result[Long] =
     execute(new Zlexcount(key, min, max))
+
   /** Executes [[http://redis.io/commands/zpopmax ZPOPMAX]] */
   def zpopmax(key: Key): Result[Opt[(Value, Double)]] =
     execute(new Zpopmax(key, Opt.Empty).map(_.headOpt))
+
   /** Executes [[http://redis.io/commands/zpopmax ZPOPMAX]] */
   def zpopmax(key: Key, count: Long): Result[Seq[(Value, Double)]] =
     execute(new Zpopmax(key, Opt(count)))
+
   /** Executes [[http://redis.io/commands/zpopmin ZPOPMIN]]] */
   def zpopmin(key: Key): Result[Opt[(Value, Double)]] =
     execute(new Zpopmin(key, Opt.Empty).map(_.headOpt))
+
   /** Executes [[http://redis.io/commands/zpopmin ZPOPMIN]] */
   def zpopmin(key: Key, count: Long): Result[Seq[(Value, Double)]] =
     execute(new Zpopmin(key, Opt(count)))
+
   /** Executes [[http://redis.io/commands/zrange ZRANGE]] */
   def zrange(key: Key, start: Long = 0, stop: Long = -1): Result[Seq[Value]] =
     execute(new Zrange(key, start, stop))
+
   /** Executes [[http://redis.io/commands/zrange ZRANGE]] */
   def zrangeWithscores(key: Key, start: Long = 0, stop: Long = -1): Result[Seq[(Value, Double)]] =
     execute(new ZrangeWithscores(key, start, stop))
+
   /** Executes [[http://redis.io/commands/zrangebylex ZRANGEBYLEX]] */
   def zrangebylex(key: Key, min: LexLimit[Value] = LexLimit.MinusInf, max: LexLimit[Value] = LexLimit.PlusInf, limit: OptArg[Limit] = OptArg.Empty): Result[Seq[Value]] =
     execute(new Zrangebylex(key, min, max, limit.toOpt))
+
   /** Executes [[http://redis.io/commands/zrangebyscore ZRANGEBYSCORE]] */
   def zrangebyscore(key: Key, min: ScoreLimit = ScoreLimit.MinusInf, max: ScoreLimit = ScoreLimit.PlusInf, limit: OptArg[Limit] = OptArg.Empty): Result[Seq[Value]] =
     execute(new Zrangebyscore(key, min, max, limit.toOpt))
+
   /** Executes [[http://redis.io/commands/zrangebyscore ZRANGEBYSCORE]] */
   def zrangebyscoreWithscores(key: Key, min: ScoreLimit = ScoreLimit.MinusInf, max: ScoreLimit = ScoreLimit.PlusInf, limit: OptArg[Limit] = OptArg.Empty): Result[Seq[(Value, Double)]] =
     execute(new ZrangebyscoreWithscores(key, min, max, limit.toOpt))
+
   /** Executes [[http://redis.io/commands/zrank ZRANK]] */
   def zrank(key: Key, member: Value): Result[Opt[Long]] =
     execute(new Zrank(key, member))
+
   /** Executes [[http://redis.io/commands/zrem ZREM]] */
   def zrem(key: Key, member: Value): Result[Boolean] =
     execute(new Zrem(key, member.single).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/zrem ZREM]] */
   def zrem(key: Key, member: Value, members: Value*): Result[Int] =
     execute(new Zrem(key, member +:: members))
+
   /** Executes [[http://redis.io/commands/zrem ZREM]]
     * or simply returns 0 when `members` is empty */
   def zrem(key: Key, members: Iterable[Value]): Result[Int] =
     execute(new Zrem(key, members))
+
   /** Executes [[http://redis.io/commands/zremrangebylex ZREMRANGEBYLEX]] */
   def zremrangebylex(key: Key, min: LexLimit[Value] = LexLimit.MinusInf, max: LexLimit[Value] = LexLimit.PlusInf): Result[Long] =
     execute(new Zremrangebylex(key, min, max))
+
   /** Executes [[http://redis.io/commands/zremrangebyrank ZREMRANGEBYRANK]] */
   def zremrangebyrank(key: Key, start: Long = 0, stop: Long = -1): Result[Long] =
     execute(new Zremrangebyrank(key, start, stop))
+
   /** Executes [[http://redis.io/commands/zremrangebyscore ZREMRANGEBYSCORE]] */
   def zremrangebyscore(key: Key, min: ScoreLimit = ScoreLimit.MinusInf, max: ScoreLimit = ScoreLimit.PlusInf): Result[Long] =
     execute(new Zremrangebyscore(key, min, max))
+
   /** Executes [[http://redis.io/commands/zrevrange ZREVRANGE]] */
   def zrevrange(key: Key, start: Long = 0, stop: Long = -1): Result[Seq[Value]] =
     execute(new Zrevrange(key, start, stop))
+
   /** Executes [[http://redis.io/commands/zrevrange ZREVRANGE]] */
   def zrevrangeWithscores(key: Key, start: Long = 0, stop: Long = -1): Result[Seq[(Value, Double)]] =
     execute(new ZrevrangeWithscores(key, start, stop))
+
   /** Executes [[http://redis.io/commands/zrevrangebylex ZREVRANGEBYLEX]] */
   def zrevrangebylex(key: Key, max: LexLimit[Value] = LexLimit.PlusInf, min: LexLimit[Value] = LexLimit.MinusInf, limit: OptArg[Limit] = OptArg.Empty): Result[Seq[Value]] =
     execute(new Zrevrangebylex(key, max, min, limit.toOpt))
+
   /** Executes [[http://redis.io/commands/zrevrangebyscore ZREVRANGEBYSCORE]] */
   def zrevrangebyscore(key: Key, max: ScoreLimit = ScoreLimit.PlusInf, min: ScoreLimit = ScoreLimit.MinusInf, limit: OptArg[Limit] = OptArg.Empty): Result[Seq[Value]] =
     execute(new Zrevrangebyscore(key, max, min, limit.toOpt))
+
   /** Executes [[http://redis.io/commands/zrevrangebyscore ZREVRANGEBYSCORE]] */
   def zrevrangebyscoreWithscores(key: Key, max: ScoreLimit = ScoreLimit.PlusInf, min: ScoreLimit = ScoreLimit.MinusInf, limit: OptArg[Limit] = OptArg.Empty): Result[Seq[(Value, Double)]] =
     execute(new ZrevrangebyscoreWithscores(key, max, min, limit.toOpt))
+
   /** Executes [[http://redis.io/commands/zrevrank ZREVRANK]] */
   def zrevrank(key: Key, member: Value): Result[Opt[Long]] =
     execute(new Zrevrank(key, member))
+
   /** Executes [[http://redis.io/commands/zscan ZSCAN]] */
   def zscan(key: Key, cursor: Cursor, matchPattern: OptArg[Value] = OptArg.Empty, count: OptArg[Int] = OptArg.Empty): Result[(Cursor, Seq[(Value, Double)])] =
     execute(new Zscan(key, cursor, matchPattern.toOpt, count.toOpt))
+
   /** Executes [[http://redis.io/commands/zscore ZSCORE]] */
   def zscore(key: Key, member: Value): Result[Opt[Double]] =
     execute(new Zscore(key, member))
+
   /** Executes [[http://redis.io/commands/zunionstore ZUNIONSTORE]] */
   def zunionstore(destination: Key, key: Key, keys: Key*): Result[Long] = zunionstore(destination, key +:: keys)
+
   /** Executes [[http://redis.io/commands/zunionstore ZUNIONSTORE]]
     * NOTE: `keys` MUST NOT be empty */
   def zunionstore(destination: Key, keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Long] =
     execute(new Zunionstore(destination, keys, Opt.Empty, aggregation.toOpt))
+
   /** Executes [[http://redis.io/commands/zunionstore ZUNIONSTORE]] */
   def zunionstoreWeights(destination: Key, keyWeight: (Key, Double), keysWeights: (Key, Double)*): Result[Long] =
     zunionstoreWeights(destination, keyWeight +:: keysWeights)
+
   /** Executes [[http://redis.io/commands/zunionstore ZUNIONSTORE]]
     * NOTE: `keysWeights` MUST NOT be empty */
   def zunionstoreWeights(destination: Key, keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Long] =
@@ -146,12 +187,15 @@ trait SortedSetsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/bzpopmax BZPOPMAX]] */
   def bzpopmax(key: Key, timeout: Int): Result[Opt[(Value, Double)]] =
     execute(new Bzpopmax(new SingletonSeq(key), timeout).map(_.map { case (_, v, s) => (v, s) }))
+
   /** Executes [[http://redis.io/commands/bzpopmax BZPOPMAX]] */
   def bzpopmax(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value, Double)]] =
     execute(new Bzpopmax(keys, timeout))
+
   /** Executes [[http://redis.io/commands/bzpopmin BZPOPMIN]] */
   def bzpopmin(key: Key, timeout: Int): Result[Opt[(Value, Double)]] =
     execute(new Bzpopmin(new SingletonSeq(key), timeout).map(_.map { case (_, v, s) => (v, s) }))
+
   /** Executes [[http://redis.io/commands/bzpopmin BZPOPMIN]] */
   def bzpopmin(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value, Double)]] =
     execute(new Bzpopmin(keys, timeout))

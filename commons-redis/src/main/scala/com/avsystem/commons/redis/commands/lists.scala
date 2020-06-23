@@ -8,71 +8,92 @@ trait ListsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/lindex LINDEX]] */
   def lindex(key: Key, index: Long): Result[Opt[Value]] =
     execute(new Lindex(key, index))
+
   /** Executes [[http://redis.io/commands/linsert LINSERT]] */
   def linsert(key: Key, pivot: Value, value: Value, before: Boolean = false): Result[Opt[Long]] =
     execute(new Linsert(key, before, pivot, value))
+
   /** Executes [[http://redis.io/commands/llen LLEN]] */
   def llen(key: Key): Result[Long] =
     execute(new Llen(key))
+
   /** Executes [[http://redis.io/commands/lpop LPOP]] */
   def lpop(key: Key): Result[Opt[Value]] =
     execute(new Lpop(key))
+
   /** Executes [[http://redis.io/commands/lpush LPUSH]] */
   def lpush(key: Key, value: Value, values: Value*): Result[Long] =
     execute(new Lpush(key, value +:: values))
+
   /** Executes [[http://redis.io/commands/lpush LPUSH]]
     * NOTE: `values` MUST NOT be empty - consider using [[lpushOrLlen]] in such case. */
   def lpush(key: Key, values: Iterable[Value]): Result[Long] =
     execute(new Lpush(key, values))
+
   /** Executes [[http://redis.io/commands/lpush LPUSH]]
     * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
   def lpushOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
     if (values.nonEmpty) lpush(key, values) else llen(key)
+
   /** Executes [[http://redis.io/commands/lpushx LPUSHX]] */
   def lpushx(key: Key, value: Value, values: Value*): Result[Long] =
     execute(new Lpushx(key, value +:: values))
+
   /** Executes [[http://redis.io/commands/lpushx LPUSHX]] */
   def lpushx(key: Key, values: Iterable[Value]): Result[Long] =
     execute(new Lpushx(key, values))
+
   /** Executes [[http://redis.io/commands/lpush LPUSHX]]
     * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
   def lpushxOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
     if (values.nonEmpty) lpushx(key, values) else llen(key)
+
   /** Executes [[http://redis.io/commands/lrange LRANGE]] */
   def lrange(key: Key, start: Long = 0, stop: Long = -1): Result[Seq[Value]] =
     execute(new Lrange(key, start, stop))
+
   /** Executes [[http://redis.io/commands/lrem LREM]] */
   def lrem(key: Key, value: Value, count: RemCount = RemCount.All): Result[Long] =
     execute(new Lrem(key, count, value))
+
   /** Executes [[http://redis.io/commands/lset LSET]] */
   def lset(key: Key, index: Long, value: Value): Result[Unit] =
     execute(new Lset(key, index, value))
+
   /** Executes [[http://redis.io/commands/ltrim LTRIM]] */
   def ltrim(key: Key, start: Long = 0, stop: Long = -1): Result[Unit] =
     execute(new Ltrim(key, start, stop))
+
   /** Executes [[http://redis.io/commands/rpop RPOP]] */
   def rpop(key: Key): Result[Opt[Value]] =
     execute(new Rpop(key))
+
   /** Executes [[http://redis.io/commands/rpoplpush RPOPLPUSH]] */
   def rpoplpush(source: Key, destination: Key): Result[Opt[Value]] =
     execute(new Rpoplpush(source, destination))
+
   /** Executes [[http://redis.io/commands/rpush RPUSH]] */
   def rpush(key: Key, value: Value, values: Value*): Result[Long] =
     execute(new Rpush(key, value +:: values))
+
   /** Executes [[http://redis.io/commands/rpush RPUSH]]
     * NOTE: `values` MUST NOT be empty - consider using [[rpushOrLlen]] in such case. */
   def rpush(key: Key, values: Iterable[Value]): Result[Long] =
     execute(new Rpush(key, values))
+
   /** Executes [[http://redis.io/commands/lpush RPUSH]]
     * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
   def rpushOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
     if (values.nonEmpty) rpush(key, values) else llen(key)
+
   /** Executes [[http://redis.io/commands/rpushx RPUSHX]] */
   def rpushx(key: Key, value: Value, values: Value*): Result[Long] =
     execute(new Rpushx(key, value +:: values))
+
   /** Executes [[http://redis.io/commands/rpushx RPUSHX]] */
   def rpushx(key: Key, values: Iterable[Value]): Result[Long] =
     execute(new Rpushx(key, values))
+
   /** Executes [[http://redis.io/commands/lpush RPUSHX]]
     * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
   def rpushxOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
@@ -81,15 +102,19 @@ trait ListsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/blpop BLPOP]] */
   def blpop(key: Key, timeout: Int): Result[Opt[Value]] =
     execute(new Blpop(key.single, timeout).map(_.map(_._2)))
+
   /** Executes [[http://redis.io/commands/blpop BLPOP]] */
   def blpop(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value)]] =
     execute(new Blpop(keys, timeout))
+
   /** Executes [[http://redis.io/commands/brpop BRPOP]] */
   def brpop(key: Key, timeout: Int): Result[Opt[Value]] =
     execute(new Brpop(key.single, timeout).map(_.map(_._2)))
+
   /** Executes [[http://redis.io/commands/brpop BRPOP]] */
   def brpop(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value)]] =
     execute(new Brpop(keys, timeout))
+
   /** Executes [[http://redis.io/commands/brpoplpush BRPOPLPUSH]] */
   def brpoplpush(source: Key, destination: Key, timeout: Int): Result[Opt[Value]] =
     execute(new Brpoplpush(source, destination, timeout))

@@ -1,3 +1,5 @@
+import org.scalajs.jsenv.nodejs.NodeJSEnv
+
 cancelable in Global := true
 
 // We need to generate slightly different structure for IntelliJ in order to better support ScalaJS cross projects.
@@ -104,8 +106,8 @@ val commonSettings = Seq(
   pomIncludeRepository := { _ => false },
 
   libraryDependencies ++= Seq(
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
+    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion.value cross CrossVersion.full),
+    "com.github.ghik" % "silencer-lib" % silencerVersion.value % Provided cross CrossVersion.full,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.scalatestplus" %%% "scalacheck-1-14" % scalatestplusScalacheckVersion % Test,
@@ -124,6 +126,9 @@ val jvmCommonSettings = commonSettings ++ Seq(
   mimaPreviousArtifacts := previousCompatibleVersions.map { previousVersion =>
     organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion
   },
+  Test / jsEnv := new NodeJSEnv(NodeJSEnv.Config().withEnv(Map(
+    "RESOURCES_DIR" -> (Test / resourceDirectory).value.absolutePath)
+  )),
 )
 
 val jsCommonSettings = commonSettings ++ Seq(
@@ -325,6 +330,7 @@ lazy val `commons-redis` = project
     libraryDependencies ++= Seq(
       "com.google.guava" % "guava" % guavaVersion,
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-stream" % akkaVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
     ),
     parallelExecution in Test := false,

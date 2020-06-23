@@ -8,89 +8,116 @@ trait SetsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/sadd SADD]] */
   def sadd(key: Key, member: Value): Result[Boolean] =
     execute(new Sadd(key, member.single).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/sadd SADD]] */
   def sadd(key: Key, member: Value, members: Value*): Result[Int] =
     execute(new Sadd(key, member +:: members))
+
   /** Executes [[http://redis.io/commands/sadd SADD]]
     * or simply returns 0 when `members` is empty */
   def sadd(key: Key, members: Iterable[Value]): Result[Int] =
     execute(new Sadd(key, members))
+
   /** Executes [[http://redis.io/commands/scard SCARD]] */
   def scard(key: Key): Result[Long] =
     execute(new Scard(key))
+
   /** Executes [[http://redis.io/commands/sdiff SDIFF]] */
   def sdiff(source: Key, keys: Key*): Result[BSet[Value]] =
     execute(new Sdiff(source, keys))
+
   /** Executes [[http://redis.io/commands/sdiff SDIFF]] */
   def sdiff(source: Key, keys: Iterable[Key]): Result[BSet[Value]] =
     execute(new Sdiff(source, keys))
+
   /** Executes [[http://redis.io/commands/sdiffstore SDIFFSTORE]] */
   def sdiffstore(destination: Key, source: Key, keys: Key*): Result[Long] =
     execute(new Sdiffstore(destination, source, keys))
+
   /** Executes [[http://redis.io/commands/sdiffstore SDIFFSTORE]] */
   def sdiffstore(destination: Key, source: Key, keys: Iterable[Key]): Result[Long] =
     execute(new Sdiffstore(destination, source, keys))
+
   /** Executes [[http://redis.io/commands/sinter SINTER]] */
   def sinter(key: Key, keys: Key*): Result[BSet[Value]] =
     execute(new Sinter(key +:: keys))
+
   /** Executes [[http://redis.io/commands/sinter SINTER]]
     * NOTE: `keys` MUST NOT be empty */
   def sinter(keys: Iterable[Key]): Result[BSet[Value]] =
     execute(new Sinter(keys))
+
   /** Executes [[http://redis.io/commands/sinterstore SINTERSTORE]] */
   def sinterstore(destination: Key, key: Key, keys: Key*): Result[Long] =
     execute(new Sinterstore(destination, key +:: keys))
+
   /** Executes [[http://redis.io/commands/sinterstore SINTERSTORE]]
     * NOTE: `keys` MUST NOT be empty */
   def sinterstore(destination: Key, keys: Iterable[Key]): Result[Long] =
     execute(new Sinterstore(destination, keys))
+
   /** Executes [[http://redis.io/commands/sismember SISMEMBER]] */
   def sismember(key: Key, member: Value): Result[Boolean] =
     execute(new Sismember(key, member))
+
   /** Executes [[http://redis.io/commands/smembers SMEMBERS]] */
   def smembers(key: Key): Result[BSet[Value]] =
     execute(new Smembers(key))
+
   /** Executes [[http://redis.io/commands/smove SMOVE]] */
   def smove(source: Key, destination: Key, member: Value): Result[Boolean] =
     execute(new Smove(source, destination, member))
+
   /** Executes [[http://redis.io/commands/spop SPOP]] */
   def spop(key: Key): Result[Opt[Value]] =
     execute(new Spop(key))
+
   /** Executes [[http://redis.io/commands/spop SPOP]] */
   def spop(key: Key, count: Int): Result[BSet[Value]] =
     execute(new SpopCount(key, count))
+
   /** Executes [[http://redis.io/commands/srandmember SRANDMEMBER]] */
   def srandmember(key: Key): Result[Opt[Value]] =
     execute(new Srandmember(key))
+
   /** Executes [[http://redis.io/commands/srandmember SRANDMEMBER]] */
   def srandmember(key: Key, count: Int): Result[Seq[Value]] =
     execute(new SrandmemberCount(key, count))
+
   /** Executes [[http://redis.io/commands/srandmember SRANDMEMBER]] */
   def srandmemberDistinct(key: Key, count: Int): Result[BSet[Value]] =
     execute(new SrandmemberCountDistinct(key, count))
+
   /** Executes [[http://redis.io/commands/srem SREM]] */
   def srem(key: Key, member: Value): Result[Boolean] =
     execute(new Srem(key, member.single).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/srem SREM]] */
   def srem(key: Key, member: Value, members: Value*): Result[Int] =
     execute(new Srem(key, member +:: members))
+
   /** Executes [[http://redis.io/commands/srem SREM]]
     * or simply returns 0 when `members` is empty */
   def srem(key: Key, members: Iterable[Value]): Result[Int] =
     execute(new Srem(key, members))
+
   /** Executes [[http://redis.io/commands/sscan SSCAN]] */
   def sscan(key: Key, cursor: Cursor, matchPattern: OptArg[Value] = OptArg.Empty, count: OptArg[Int] = OptArg.Empty): Result[(Cursor, Seq[Value])] =
     execute(new Sscan(key, cursor, matchPattern.toOpt, count.toOpt))
+
   /** Executes [[http://redis.io/commands/sunion SUNION]] */
   def sunion(key: Key, keys: Key*): Result[BSet[Value]] =
     execute(new Sunion(key +:: keys))
+
   /** Executes [[http://redis.io/commands/sunion SUNION]]
     * or simply returns empty set when `keys` is empty */
   def sunion(keys: Iterable[Key]): Result[BSet[Value]] =
     execute(new Sunion(keys))
+
   /** Executes [[http://redis.io/commands/sunionstore SUNIONSTORE]] */
   def sunionstore(destination: Key, key: Key, keys: Key*): Result[Long] =
     execute(new Sunionstore(destination, key +:: keys))
+
   /** Executes [[http://redis.io/commands/sunionstore SUNIONSTORE]]
     * NOTE: unlike in `SUNION` `keys` MUST NOT be empty because `SUNIONSTORE` overwrites destination key.
     * An operation equivalent to invoking `SUNIONSTORE` with only `destination` and no `keys` would be `DEL destination` */

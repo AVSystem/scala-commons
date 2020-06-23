@@ -126,6 +126,11 @@ object ReplyDecoders {
   val simpleAsBinary: ReplyDecoder[ByteString] =
     simple(bs => bs)
 
+  val simpleBumpepochResult: ReplyDecoder[BumpepochResult] = {
+    case BumpepochResult.Bumped.encoded => BumpepochResult.Bumped
+    case BumpepochResult.Still.encoded => BumpepochResult.Still
+  }
+
   def simple[T](fun: ByteString => T): ReplyDecoder[T] = {
     case SimpleStringMsg(data) => fun(data)
   }
@@ -209,9 +214,9 @@ object ReplyDecoders {
   }
 
   val multiBulkAsCommandInfo: ReplyDecoder[CommandInfo] = {
-    case ArrayMsg(IndexedSeq(BulkStringMsg(name), IntegerMsg(arity), ArrayMsg(flagArray), IntegerMsg(firstKey), IntegerMsg(lastKey), IntegerMsg(stepCount))) =>
+    case ArrayMsg(IndexedSeq(BulkStringMsg(name), IntegerMsg(arity), ArrayMsg(flagArray), IntegerMsg(firstKey), IntegerMsg(lastKey), IntegerMsg(stepCount), _*)) =>
       val flags = flagArray.iterator.map({
-        case SimpleStringMsg(flagStr) => CommandFlags.byRepr(flagStr.utf8String)
+        case SimpleStringMsg(flagStr) => CommandFlags.byRepr.getOrElse(flagStr.utf8String, CommandFlags.NoFlags)
         case msg => throw new UnexpectedReplyException(s"Expected only simple strings in command flag list, got $msg")
       }).fold(CommandFlags.NoFlags)(_ | _)
       CommandInfo(

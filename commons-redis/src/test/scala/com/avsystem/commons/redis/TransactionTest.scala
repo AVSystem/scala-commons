@@ -8,7 +8,6 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.Await
 
 class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
-
   import RedisApi.Batches.StringTyped._
 
   test("empty transaction") {
@@ -154,7 +153,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
       value <- watch("key") *> get("key").map(_.getOrElse("0"))
       _ <- RedisOp.success {
         // simulate concurrent client reading watched key
-        val client = new RedisConnectionClient(redisClient.address)
+        val client = new RedisConnectionClient(redisClient.address, connectionConfig)
         Await.result(client.executeBatch(set("key", "42")), Duration.Inf)
         client.close()
       }

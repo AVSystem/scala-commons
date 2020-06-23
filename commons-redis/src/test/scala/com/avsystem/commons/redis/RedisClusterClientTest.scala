@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis
 
-import com.avsystem.commons.redis.commands.ShutdownModifier
+import com.avsystem.commons.redis.commands.{FailoverOption, ShutdownModifier}
 import com.avsystem.commons.redis.config.{ClusterConfig, ConnectionConfig, ExecutionConfig, NodeConfig}
 import com.avsystem.commons.redis.exception.{ClusterInitializationException, CrossSlotException, ForbiddenCommandException, NoKeysException}
 import org.scalatest.concurrent.ScalaFutures
@@ -234,12 +234,12 @@ class ClusterFailoverHandlingTest extends RedisClusterCommandsSuite {
         if (master) Future.successful(())
         else for {
           _ <- wait(delay)
-          _ <- slaveClient.executeBatch(clusterFailover.ignoreFailures)
+          _ <- slaveClient.executeBatch(clusterFailover(FailoverOption.Force).ignoreFailures)
           _ <- failover(1.seconds)
         } yield ()
       }
     } yield ()
-    Await.result(redisClient.initialized.flatMapNow(_ => failover()), Duration.Inf)
+    Await.result(redisClient.initialized.flatMapNow(_ => failover()), 2.minutes)
   }
 
   test("redirection caused by failover handling") {

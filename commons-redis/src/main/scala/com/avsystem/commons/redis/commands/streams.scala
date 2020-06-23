@@ -17,9 +17,11 @@ trait StreamsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/xack XACK]] */
   def xack(key: Key, group: XGroup, id: XEntryId): Result[Boolean] =
     execute(new Xack(key, group, new SingletonSeq(id)).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/xack XACK]] */
   def xack(key: Key, group: XGroup, id: XEntryId, ids: XEntryId*): Result[Int] =
     execute(new Xack(key, group, id +:: ids))
+
   /** Executes [[http://redis.io/commands/xack XACK]] */
   def xack(key: Key, group: XGroup, ids: Iterable[XEntryId]): Result[Int] =
     execute(new Xack(key, group, ids))
@@ -91,9 +93,11 @@ trait StreamsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/xdel XDEL]] */
   def xdel(key: Key, id: XEntryId): Result[Boolean] =
     execute(new Xdel(key, new SingletonSeq(id)).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/xdel XDEL]] */
   def xdel(key: Key, id: XEntryId, ids: XEntryId*): Result[Long] =
     execute(new Xdel(key, id +:: ids))
+
   /** Executes [[http://redis.io/commands/xdel XDEL]] */
   def xdel(key: Key, ids: Iterable[XEntryId]): Result[Long] =
     execute(new Xdel(key, ids))
@@ -101,12 +105,15 @@ trait StreamsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/xgroup XGROUP CREATE]] */
   def xgroupCreate(key: Key, group: XGroup, id: OptArg[XEntryId] = OptArg.Empty, mkstream: Boolean = false): Result[Unit] =
     execute(new XgroupCreate(key, group, id.toOpt, mkstream))
+
   /** Executes [[http://redis.io/commands/xgroup XGROUP DELCONSUMER]] */
   def xgroupDelconsumer(key: Key, group: XGroup, consumer: XConsumer): Result[Boolean] =
     execute(new XgroupDelconsumer(key, group, consumer))
+
   /** Executes [[http://redis.io/commands/xgroup XGROUP DESTROY]] */
   def xgroupDestroy(key: Key, group: XGroup): Result[Boolean] =
     execute(new XgroupDestroy(key, group))
+
   /** Executes [[http://redis.io/commands/xgroup XGROUP SETID]] */
   def xgroupSetid(key: Key, group: XGroup, id: OptArg[XEntryId] = OptArg.Empty): Result[Unit] =
     execute(new XgroupSetid(key, group, id.toOpt))
@@ -114,9 +121,11 @@ trait StreamsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/xinfo XINFO CONSUMERS]] */
   def xinfoConsumers(key: Key, group: XGroup): Result[Seq[XConsumerInfo]] =
     execute(new XinfoConsumers(key, group))
+
   /** Executes [[http://redis.io/commands/xinfo XINFO GROUPS]] */
   def xinfoGroups(key: Key): Result[Seq[XGroupInfo]] =
     execute(new XinfoGroups(key))
+
   /** Executes [[http://redis.io/commands/xinfo XINFO STREAM]] */
   def xinfoStream(key: Key): Result[XStreamInfo[Record]] =
     execute(new XinfoStream(key))
@@ -128,6 +137,7 @@ trait StreamsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/xpending XPENDING]] */
   def xpending(key: Key, group: XGroup): Result[XPendingOverview] =
     execute(new Xpending(key, group))
+
   /** Executes [[http://redis.io/commands/xpending XPENDING]] */
   def xpendingEntries(
     key: Key,
@@ -202,6 +212,7 @@ trait StreamsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/xtrim XTRIM]] */
   def xtrim(key: Key, maxlen: Long, approx: Boolean = true): Result[Long] =
     execute(new Xtrim(key, XMaxlen(maxlen, approx)))
+
   /** Executes [[http://redis.io/commands/xtrim XTRIM]] */
   def xtrim(key: Key, maxlen: XMaxlen): Result[Long] =
     execute(new Xtrim(key, maxlen))

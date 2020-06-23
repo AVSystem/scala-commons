@@ -8,78 +8,101 @@ trait HashesApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/hdel HDEL]] */
   def hdel(key: Key, field: Field): Result[Boolean] =
     execute(new Hdel(key, field.single).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/hdel HDEL]] */
   def hdel(key: Key, field: Field, fields: Field*): Result[Int] =
     execute(new Hdel(key, field +:: fields))
+
   /** Executes [[http://redis.io/commands/hdel HDEL]]
     * or simply returns 0 when `fields` is empty, without sending the command to Redis */
   def hdel(key: Key, fields: Iterable[Field]): Result[Int] =
     execute(new Hdel(key, fields))
+
   /** Executes [[http://redis.io/commands/hexists HEXISTS]] */
   def hexists(key: Key, field: Field): Result[Boolean] =
     execute(new Hexists(key, field))
+
   /** Executes [[http://redis.io/commands/hget HGET]] */
   def hget(key: Key, field: Field): Result[Opt[Value]] =
     execute(new Hget(key, field))
+
   /** Executes [[http://redis.io/commands/hgetall HGETALL]] */
   def hgetall(key: Key): Result[BMap[Field, Value]] =
     execute(new Hgetall(key))
+
   /** Executes [[http://redis.io/commands/hgetall HGETALL]] */
   def hgetallRecord(key: Key): Result[Opt[Record]] =
     execute(new HgetallRecord(key))
+
   /** Executes [[http://redis.io/commands/hincrby HINCRBY]] */
   def hincrby(key: Key, field: Field, increment: Long): Result[Long] =
     execute(new Hincrby(key, field, increment))
+
   /** Executes [[http://redis.io/commands/hincrbyfloat HINCRBYFLOAT]] */
   def hincrbyfloat(key: Key, field: Field, increment: Double): Result[Double] =
     execute(new Hincrbyfloat(key, field, increment))
+
   /** Executes [[http://redis.io/commands/hkeys HKEYS]] */
   def hkeys(key: Key): Result[BSet[Field]] =
     execute(new Hkeys(key))
+
   /** Executes [[http://redis.io/commands/hlen HLEN]] */
   def hlen(key: Key): Result[Long] =
     execute(new Hlen(key))
+
   /** Executes [[http://redis.io/commands/hmget HMGET]] */
   def hmget(key: Key, field: Field, fields: Field*): Result[Seq[Opt[Value]]] =
     execute(new Hmget(key, field +:: fields))
+
   /** Executes [[http://redis.io/commands/hmget HMGET]]
     * or simply returns empty `Seq` when `fields` is empty, without sending the command to Redis */
   def hmget(key: Key, fields: Iterable[Field]): Result[Seq[Opt[Value]]] =
     execute(new Hmget(key, fields))
+
   /** Executes [[http://redis.io/commands/hmset HMSET]] */
   def hmset(key: Key, fieldValue: (Field, Value), fieldValues: (Field, Value)*): Result[Unit] =
     execute(new Hmset(key, fieldValue +:: fieldValues))
+
   /** Executes [[http://redis.io/commands/hmset HMSET]]
     * or does nothing when `fieldValues` is empty, without sending the command to Redis */
   def hmset(key: Key, fieldValues: Iterable[(Field, Value)]): Result[Unit] =
     execute(new Hmset(key, fieldValues))
+
   /** Executes [[http://redis.io/commands/hmset HMSET]]
     * or does nothing when `data` is empty, without sending the command to Redis */
   def hmsetRecord(key: Key, data: Record): Result[Unit] =
     execute(new HmsetRecord(key, data))
+
   /** Executes [[http://redis.io/commands/hscan HSCAN]] */
   def hscan(key: Key, cursor: Cursor, matchPattern: OptArg[Field] = OptArg.Empty, count: OptArg[Int] = OptArg.Empty): Result[(Cursor, Seq[(Field, Value)])] =
     execute(new Hscan(key, cursor, matchPattern.toOpt, count.toOpt))
+
   /** Executes [[http://redis.io/commands/hset HSET]] */
   def hset(key: Key, field: Field, value: Value): Result[Boolean] =
     execute(new Hset(key, (field, value).single).map(_ > 0))
+
   /** Executes [[http://redis.io/commands/hset HSET]] */
   def hset(key: Key, fieldValue: (Field, Value), fieldValues: (Field, Value)*): Result[Int] =
     execute(new Hset(key, fieldValue +:: fieldValues))
+
   /** Executes [[http://redis.io/commands/hset HSET]]
     * or does nothing when `fieldValues` is empty, without sending the command to Redis */
   def hset(key: Key, fieldValues: Iterable[(Field, Value)]): Result[Int] =
     execute(new Hset(key, fieldValues))
+
   /** Executes [[http://redis.io/commands/hset HSET]]
     * or does nothing when `data` is empty, without sending the command to Redis */
   def hsetRecord(key: Key, data: Record): Result[Int] =
     execute(new HsetRecord(key, data))
+
   /** Executes [[http://redis.io/commands/hsetnx HSETNX]] */
   def hsetnx(key: Key, field: Field, value: Value): Result[Boolean] =
     execute(new Hsetnx(key, field, value))
+
   /** Executes [[http://redis.io/commands/hstrlen HSTRLEN]] */
   def hstrlen(key: Key, field: Field): Result[Int] =
     execute(new Hstrlen(key, field))
+
   /** Executes [[http://redis.io/commands/hvals HVALS]] */
   def hvals(key: Key): Result[Iterable[Value]] =
     execute(new Hvals(key))

@@ -12,7 +12,10 @@ import scala.concurrent.duration._
   */
 trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils { this: Suite =>
   def port: Int = 7000
+  def tlsPort: Int = 8000
+
   def address: NodeAddress = NodeAddress(port = port)
+  def tlsAddress: NodeAddress = NodeAddress(port = tlsPort)
 
   var redisProcess: RedisProcess = _
 
@@ -22,7 +25,11 @@ trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils { this: S
     redisProcess = Await.result(
       launchRedis(
         "--daemonize", "no",
-        "--port", port.toString
+        "--port", port.toString,
+        "--tls-port", tlsPort.toString,
+        "--tls-cert-file", "./tls/redis.crt",
+        "--tls-key-file", "./tls/redis.key",
+        "--tls-ca-cert-file", "./tls/ca.crt"
       ),
       10.seconds
     )

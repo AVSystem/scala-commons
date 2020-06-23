@@ -35,7 +35,6 @@ class JavaClassNameTest extends AnyFunSuite {
   test[Double]
   test[String]
   test[Nothing]
-  //test[Array[Unit]] https://github.com/scala-js/scala-js/issues/4005
   test[Array[Boolean]]
   test[Array[Char]]
   test[Array[Byte]]
