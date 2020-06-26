@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package hocon
 
-import java.time.{Duration, Period}
 import java.time.temporal.TemporalAmount
+import java.time.{Duration, Period}
 
-import com.avsystem.commons.serialization.{InputMetadata, TypeMarker}
-import com.typesafe.config.{ConfigMemorySize, ConfigValue, ConfigValueType}
+import com.avsystem.commons.serialization.TypeMarker
+import com.typesafe.config.{ConfigMemorySize, ConfigValue}
 
 sealed trait HoconTypeMarker[T] extends TypeMarker[T]
 
