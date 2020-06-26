@@ -3,7 +3,6 @@ package hocon
 
 import java.time.temporal.TemporalAmount
 import java.time.{Duration, Period}
-import java.util.Base64
 
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
@@ -19,6 +18,13 @@ object HoconInput {
   @explicitGenerics def read[T: GenCodec](config: Config): T =
     GenCodec.read[T](new HoconInput(config.root))
 }
+
+/**
+  * [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] marker object which allows inspection of
+  * `com.typesafe.config.ConfigValueType` on a [[HoconInput]] in a
+  * [[com.avsystem.commons.serialization.GenCodec GenCodec]] implementation.
+  */
+object ConfigValueTypeMarker extends InputMetadata[ConfigValueType]
 
 trait BaseHoconInput {
   protected final def handleFailures[T](code: => T): T =
@@ -53,7 +59,7 @@ class HoconInput(value: ConfigValue) extends InputAndSimpleInput with BaseHoconI
   def readDouble(): Double = handleFailures(config.getDouble(FakePath))
   def readBigInt(): BigInt = handleFailures(BigInt(config.getString(FakePath)))
   def readBigDecimal(): BigDecimal = handleFailures(BigDecimal(config.getString(FakePath)))
-  def readBinary(): Array[Byte] = handleFailures(Base64.getDecoder.decode(config.getString(FakePath)))
+  def readBinary(): Array[Byte] = handleFailures(Base64.decode(config.getString(FakePath)))
 
   // HOCON-only extensions
   def readValue(): ConfigValue = value
@@ -112,66 +118,3 @@ class HoconObjectInput(configObject: ConfigObject) extends ObjectInput with Base
 
 class HoconFieldInput(val fieldName: String, value: ConfigValue)
   extends HoconInput(value) with FieldInput
-
-/**
-  * [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] marker object which allows inspection of
-  * `com.typesafe.config.ConfigValueType` on a [[HoconInput]] in a
-  * [[com.avsystem.commons.serialization.GenCodec GenCodec]] implementation.
-  */
-object ConfigValueTypeMarker extends InputMetadata[ConfigValueType]
-
-sealed trait HoconTypeMarker[T] extends TypeMarker[T]
-
-/**
-  * [[com.avsystem.commons.serialization.TypeMarker TypeMarker]] which allows you to read raw
-  * `com.typesafe.config.ConfigValue` from a [[HoconInput]] in a
-  * [[com.avsystem.commons.serialization.GenCodec GenCodec]] implementation.
-  */
-object ConfigValueMarker extends HoconTypeMarker[ConfigValue]
-
-/**
-  * [[com.avsystem.commons.serialization.TypeMarker TypeMarker]] which allows direct reading of a `Duration`
-  * from [[HoconInput]] in a [[com.avsystem.commons.serialization.GenCodec GenCodec]] implementation, taking advantage
-  * of the [[https://github.com/lightbend/config/blob/master/HOCON.md#duration-format recommended HOCON format for durations]],
-  * implemented by `Config.getDuration`.
-  */
-object DurationMarker extends HoconTypeMarker[Duration]
-
-/**
-  * [[com.avsystem.commons.serialization.TypeMarker TypeMarker]] which allows direct reading of a size in bytes
-  * from [[HoconInput]] in a [[com.avsystem.commons.serialization.GenCodec GenCodec]] implementation, taking advantage
-  * of the [[https://github.com/lightbend/config/blob/master/HOCON.md#size-in-bytes-format HOCON format for size in bytes]],
-  * implemented by `Config.getBytes`.
-  */
-object SizeInBytesMarker extends HoconTypeMarker[Long]
-
-/**
-  * [[com.avsystem.commons.serialization.TypeMarker TypeMarker]] which allows direct reading of a `ConfigMemorySize`
-  * from [[HoconInput]] in a [[com.avsystem.commons.serialization.GenCodec GenCodec]] implementation, taking advantage
-  * of the [[https://github.com/lightbend/config/blob/master/HOCON.md#size-in-bytes-format HOCON format for size in bytes]],
-  * implemented by `Config.getMemorySize`.
-  */
-object ConfigMemorySizeMarker extends HoconTypeMarker[ConfigMemorySize]
-
-/**
-  * [[com.avsystem.commons.serialization.TypeMarker TypeMarker]] which allows direct reading of a `Period`
-  * from [[HoconInput]] in a [[com.avsystem.commons.serialization.GenCodec GenCodec]] implementation, taking advantage
-  * of the [[https://github.com/lightbend/config/blob/master/HOCON.md#period-format HOCON format for period]],
-  * implemented by `Config.getPeriod`.
-  */
-object PeriodMarker extends HoconTypeMarker[Period]
-
-/**
-  * [[com.avsystem.commons.serialization.TypeMarker TypeMarker]] which allows direct reading of a `TemporalAmount`
-  * from [[HoconInput]] in a [[com.avsystem.commons.serialization.GenCodec GenCodec]] implementation, taking advantage
-  * of the [[https://github.com/lightbend/config/blob/master/HOCON.md#period-format HOCON format for period]],
-  * implemented by `Config.getTemporal`.
-  */
-object TemporalAmountMarker extends HoconTypeMarker[TemporalAmount]
-
-/**
-  * [[com.avsystem.commons.serialization.TypeMarker TypeMarker]] which allows direct reading of a `java.lang.Number`
-  * from [[HoconInput]] in a [[com.avsystem.commons.serialization.GenCodec GenCodec]] implementation, taking advantage
-  * of the parsing implemented by `Config.getNumber`.
-  */
-object NumberMarker extends HoconTypeMarker[Number]
