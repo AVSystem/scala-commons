@@ -1424,7 +1424,7 @@ trait MacroCommons { bundle =>
     s == definitions.AnyClass ||
       s == definitions.ObjectClass ||
       s == definitions.AnyValClass ||
-      s == definitions.ProductClass
+      s == ProductTpe.typeSymbol
 
   def isFromToplevelType(s: Symbol): Boolean =
     isToplevelClass(s.owner) || s.overrides.exists(ss => isToplevelClass(ss.owner))
