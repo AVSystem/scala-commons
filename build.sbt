@@ -28,7 +28,7 @@ val akkaVersion = "2.6.6"
 val monixVersion = "3.2.1"
 val mockitoVersion = "3.3.3"
 val circeVersion = "0.13.0"
-val upickleVersion = "1.0.0"
+val upickleVersion = "1.2.0"
 val scalajsBenchmarkVersion = "0.3.0"
 
 useGpg := false // TODO: use sbt-ci-release
