@@ -66,47 +66,75 @@ trait JOptionalUtils {
 object JOptionalUtils {
 
   final class optional2AsScala[T](private val optional: JOptional[T]) extends AnyVal {
-    def asScala: Option[T] =
+    def toOption: Option[T] =
       if (optional.isPresent) Some(optional.get) else None
+
+    def toOpt: Opt[T] =
+      if (optional.isPresent) Opt(optional.get) else Opt.Empty
+
+    def asScala: Option[T] = toOption
   }
 
   final class optionalDouble2AsScala(private val optional: JOptionalDouble) extends AnyVal {
-    def asScala: Option[Double] =
+    def toOption: Option[Double] =
       if (optional.isPresent) Some(optional.getAsDouble) else None
+
+    def toOpt: Opt[Double] =
+      if (optional.isPresent) Opt(optional.getAsDouble) else Opt.Empty
+
+    def asScala: Option[Double] = toOption
   }
 
   final class optionalInt2AsScala(private val optional: JOptionalInt) extends AnyVal {
-    def asScala: Option[Int] =
+    def toOption: Option[Int] =
       if (optional.isPresent) Some(optional.getAsInt) else None
+
+    def toOpt: Opt[Int] =
+      if (optional.isPresent) Opt(optional.getAsInt) else Opt.Empty
+
+    def asScala: Option[Int] = toOption
   }
 
   final class optionalLong2AsScala(private val optional: JOptionalLong) extends AnyVal {
-    def asScala: Option[Long] =
+    def toOption: Option[Long] =
       if (optional.isPresent) Some(optional.getAsLong) else None
+
+    def toOpt: Opt[Long] =
+      if (optional.isPresent) Opt(optional.getAsLong) else Opt.Empty
+
+    def asScala: Option[Long] = toOption
   }
 
   final class option2AsJava[T](private val option: Option[T]) extends AnyVal {
     /**
-      *Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional
-      *  is not able to hold null
+      * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional
+      * is not able to hold null
       */
-    def asJava: JOptional[T] =
+    def toJOptional: JOptional[T] =
       if (option.isDefined) ju.Optional.of(option.get) else ju.Optional.empty()
+
+    def asJava: JOptional[T] = toJOptional
   }
 
   final class option2AsJavaDouble(private val option: Option[Double]) extends AnyVal {
-    def asJavaDouble: JOptionalDouble =
+    def toJOptionalDouble: JOptionalDouble =
       if (option.isDefined) ju.OptionalDouble.of(option.get) else ju.OptionalDouble.empty()
+
+    def asJavaDouble: JOptionalDouble = toJOptionalDouble
   }
 
   final class option2AsJavaInt(private val option: Option[Int]) extends AnyVal {
-    def asJavaInt: JOptionalInt =
+    def toJOptionalInt: JOptionalInt =
       if (option.isDefined) ju.OptionalInt.of(option.get) else ju.OptionalInt.empty()
+
+    def asJavaInt: JOptionalInt = toJOptionalInt
   }
 
   final class option2AsJavaLong(private val option: Option[Long]) extends AnyVal {
-    def asJavaLong: JOptionalLong =
+    def toJOptionalLong: JOptionalLong =
       if (option.isDefined) ju.OptionalLong.of(option.get) else ju.OptionalLong.empty()
+
+    def asJavaLong: JOptionalLong = toJOptionalLong
   }
 
 }

@@ -1,7 +1,9 @@
 package com.avsystem.commons.misc
 
+import com.avsystem.commons.jiop.JavaInterop._
 import com.avsystem.commons.misc.Opt.EmptyMarker
 
+import scala.annotation.unchecked.uncheckedVariance
 import scala.language.implicitConversions
 
 object Opt {
@@ -60,6 +62,9 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
 
   @inline def toOption: Option[A] =
     if (isEmpty) None else Some(value)
+
+  @inline def toJOptional: JOptional[A@uncheckedVariance] =
+    if (isEmpty) JOptional.empty else JOptional(value)
 
   @inline def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))

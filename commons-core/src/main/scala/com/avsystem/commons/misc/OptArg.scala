@@ -1,7 +1,9 @@
 package com.avsystem.commons.misc
 
+import com.avsystem.commons.jiop.JavaInterop.JOptional
 import com.avsystem.commons.misc.OptArg.EmptyMarker
 
+import scala.annotation.unchecked.uncheckedVariance
 import scala.language.implicitConversions
 
 object OptArg {
@@ -64,6 +66,9 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Se
 
   @inline def toOption: Option[A] =
     if (isEmpty) None else Some(value)
+
+  @inline def toJOptional: JOptional[A@uncheckedVariance] =
+    if (isEmpty) JOptional.empty else JOptional(value)
 
   @inline def toNOpt: NOpt[A] =
     if (isEmpty) NOpt.Empty else NOpt.some(value)
