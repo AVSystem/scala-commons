@@ -63,9 +63,6 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Seria
   @inline def toOption: Option[A] =
     if (isEmpty) None else Some(value)
 
-  @inline def toJOptional: JOptional[A@uncheckedVariance] =
-    if (isEmpty) JOptional.empty else JOptional(value)
-
   @inline def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
 

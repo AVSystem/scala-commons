@@ -67,9 +67,6 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Se
   @inline def toOption: Option[A] =
     if (isEmpty) None else Some(value)
 
-  @inline def toJOptional: JOptional[A@uncheckedVariance] =
-    if (isEmpty) JOptional.empty else JOptional(value)
-
   @inline def toNOpt: NOpt[A] =
     if (isEmpty) NOpt.Empty else NOpt.some(value)
 

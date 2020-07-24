@@ -64,9 +64,6 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with Seri
   @inline def toOption: Option[A] =
     if (isEmpty) None else Some(value)
 
-  @inline def toJOptional: JOptional[A@uncheckedVariance] =
-    if (isEmpty) JOptional.empty else JOptional(value)
-
   /**
     * Converts this `NOpt` into `Opt`. Because `Opt` cannot hold `null`, `NOpt(null)` is translated to `Opt.Empty`.
     */

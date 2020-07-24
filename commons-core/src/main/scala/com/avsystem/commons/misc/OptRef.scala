@@ -64,9 +64,6 @@ final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with
   @inline def toOption: Option[A] =
     Option(value)
 
-  @inline def toJOptional: JOptional[A@uncheckedVariance] =
-    if (isEmpty) JOptional.empty else JOptional(value)
-
   @inline def toNOpt: NOpt[A] =
     if (isEmpty) NOpt.Empty else NOpt(value)
 

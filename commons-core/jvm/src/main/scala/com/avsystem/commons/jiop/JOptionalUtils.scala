@@ -27,6 +27,16 @@ trait JOptionalUtils {
   implicit def option2AsJava[T](option: Option[T]): option2AsJava[T] =
     new option2AsJava(option)
 
+  implicit def opt2AsJava[T](opt: Opt[T]): opt2AsJava[T] =
+    new opt2AsJava((opt: Opt[Any]).orNull)
+
+  // NOTE: losing information about NOpt(null) vs NOpt.Empty but this is fine because JOptional doesn't distinguish
+  implicit def nopt2AsJava[T](opt: NOpt[T]): nopt2AsJava[T] =
+    new nopt2AsJava((opt: NOpt[Any]).orNull)
+
+  implicit def optArg2AsJava[T](opt: OptArg[T]): optArg2AsJava[T] =
+    new optArg2AsJava((opt: OptArg[Any]).orNull)
+
   implicit def option2AsJavaDouble(option: Option[Double]): option2AsJavaDouble =
     new option2AsJavaDouble(option)
 
@@ -112,6 +122,47 @@ object JOptionalUtils {
       */
     def toJOptional: JOptional[T] =
       if (option.isDefined) ju.Optional.of(option.get) else ju.Optional.empty()
+
+    def asJava: JOptional[T] = toJOptional
+  }
+
+  final class opt2AsJava[T](private val rawOrNull: Any) extends AnyVal {
+    private def opt: Opt[T] = Opt(rawOrNull.asInstanceOf[T])
+
+    /**
+      * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional
+      * is not able to hold null
+      */
+    def toJOptional: JOptional[T] =
+      if (opt.isDefined) ju.Optional.of(opt.get) else ju.Optional.empty()
+
+    def asJava: JOptional[T] = toJOptional
+  }
+
+  // note: we have lost information about NOpt.Empty vs NOpt(null) but it doesn't matter because we only convert
+  // to JOptional which doesn't distinguish between them
+  final class nopt2AsJava[T](private val rawOrNull: Any) extends AnyVal {
+    private def opt: NOpt[T] = NOpt(rawOrNull.asInstanceOf[T])
+
+    /**
+      * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional
+      * is not able to hold null
+      */
+    def toJOptional: JOptional[T] =
+      if (opt.isDefined) ju.Optional.of(opt.get) else ju.Optional.empty()
+
+    def asJava: JOptional[T] = toJOptional
+  }
+
+  final class optArg2AsJava[T](private val rawOrNull: Any) extends AnyVal {
+    private def opt: OptArg[T] = OptArg(rawOrNull.asInstanceOf[T])
+
+    /**
+      * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional
+      * is not able to hold null
+      */
+    def toJOptional: JOptional[T] =
+      if (opt.isDefined) ju.Optional.of(opt.get) else ju.Optional.empty()
 
     def asJava: JOptional[T] = toJOptional
   }
