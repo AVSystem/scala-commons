@@ -1,9 +1,7 @@
 package com.avsystem.commons.misc
 
-import com.avsystem.commons.jiop.JavaInterop.JOptional
 import com.avsystem.commons.misc.NOpt.{EmptyMarker, NullMarker}
 
-import scala.annotation.unchecked.uncheckedVariance
 import scala.language.implicitConversions
 
 object NOpt {
@@ -24,7 +22,7 @@ object NOpt {
   def unapply[A](opt: NOpt[A]): NOpt[A] = opt //name-based extractor
 
   def some[A](value: A): NOpt[A] =
-    new NOpt(if(value == null) NullMarker else value)
+    new NOpt(if (value == null) NullMarker else value)
 
   implicit def opt2Iterable[A](xo: NOpt[A]): Iterable[A] = xo.toList
 
@@ -156,6 +154,7 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with Seri
 
   /**
     * Apply side effect only if NOpt is empty. It's a bit like foreach for NOpt.Empty
+    *
     * @param sideEffect - code to be executed if nopt is empty
     * @return the same nopt
     * @example {{{captionNOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}

@@ -1,9 +1,7 @@
 package com.avsystem.commons.misc
 
-import com.avsystem.commons.jiop.JavaInterop.JOptional
 import com.avsystem.commons.misc.OptArg.EmptyMarker
 
-import scala.annotation.unchecked.uncheckedVariance
 import scala.language.implicitConversions
 
 object OptArg {
