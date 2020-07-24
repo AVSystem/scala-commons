@@ -345,12 +345,6 @@ final class paramTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends 
 final class caseTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawSymAnnotation
 
 /**
-  * Annotate your ADT metadata class with this annotation if you don't care about the order of subclasses of
-  * sealed traits that this metadata will be materialized for.
-  */
-final class allowUnorderedSubtypes extends RawSymAnnotation
-
-/**
   * Annotation applied on raw methods or raw parameters that limits matching real methods or real parameters to
   * only these annotated as `Tag`. See [[methodTag]] and [[paramTag]] for more explanation. NOTE: `Tag` may
   * also be some common supertype of multiple tags which are accepted by this raw method or param.

@@ -319,3 +319,9 @@ final class allowIncomplete extends RawSymAnnotation
   * `AsRaw.materializeForApi` and when generating metadata using `RpcMetadata.materializeForApi`.
   */
 final class ignore extends RealSymAnnotation
+
+/**
+  * Annotate your ADT metadata class with this annotation if you don't care about the order of subclasses of
+  * sealed traits that this metadata will be materialized for.
+  */
+final class allowUnorderedSubtypes extends RawSymAnnotation
