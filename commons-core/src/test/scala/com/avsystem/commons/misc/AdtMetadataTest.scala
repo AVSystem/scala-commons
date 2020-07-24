@@ -76,7 +76,7 @@ case class GenUnorderedUnion[T](
   @multi @adtCaseMetadata cases: Map[String, GenCase[_]]
 ) extends TypedMetadata[T]
 object GenUnorderedUnion extends AdtMetadataCompanion[GenUnorderedUnion] {
-  materialize[Option[String]].showAst
+  materialize[Option[String]]
 }
 
 sealed trait Being
