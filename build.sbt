@@ -10,7 +10,7 @@ val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && Sys
 
 val silencerVersion = "1.6.0"
 val collectionCompatVersion = "2.1.6"
-val guavaVersion = "23.0"
+val guavaVersion = "23.6.1-jre"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.2.0"
 val scalacheckVersion = "1.14.3"
