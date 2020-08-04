@@ -31,6 +31,7 @@ object ScalaParameterNameDiscoverer {
   }
 }
 
+@deprecated("this class is useless on JDK >= 1.8, use StandardReflectionParameterNameDiscoverer")
 class ScalaParameterNameDiscoverer extends ParameterNameDiscoverer {
 
   import ScalaParameterNameDiscoverer._

@@ -5,15 +5,15 @@ import java.lang.reflect.{Constructor, Method, Modifier}
 
 import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder
 import org.springframework.beans.factory.config.{BeanDefinition, BeanDefinitionHolder, ConfigurableListableBeanFactory}
-import org.springframework.beans.factory.support.{BeanDefinitionRegistry, BeanDefinitionRegistryPostProcessor, ManagedList, ManagedMap, ManagedSet}
-import org.springframework.core.ParameterNameDiscoverer
+import org.springframework.beans.factory.support._
+import org.springframework.core.{ParameterNameDiscoverer, StandardReflectionParameterNameDiscoverer}
 
 import scala.beans.BeanProperty
 import scala.reflect.{ScalaLongSignature, ScalaSignature}
 
 class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
   @BeanProperty var paramNameDiscoverer: ParameterNameDiscoverer =
-    new ScalaParameterNameDiscoverer
+    new StandardReflectionParameterNameDiscoverer
 
   def classLoader: ClassLoader =
     Thread.currentThread.getContextClassLoader.opt getOrElse getClass.getClassLoader
