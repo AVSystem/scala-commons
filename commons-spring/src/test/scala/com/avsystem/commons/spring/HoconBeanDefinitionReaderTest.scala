@@ -7,6 +7,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.funsuite.AnyFunSuite
 import org.springframework.beans.factory.support.DefaultListableBeanFactory
 import org.springframework.context.support.GenericApplicationContext
+import org.springframework.core.StandardReflectionParameterNameDiscoverer
 
 import scala.beans.BeanProperty
 
@@ -26,10 +27,8 @@ object TestBean {
 
 class HoconBeanDefinitionReaderTest extends AnyFunSuite {
   def createContext(resource: String): GenericApplicationContext = {
-    val pnd = new ScalaParameterNameDiscoverer
-
     val beanFactory = new DefaultListableBeanFactory
-    beanFactory.setParameterNameDiscoverer(pnd)
+    beanFactory.setParameterNameDiscoverer(new StandardReflectionParameterNameDiscoverer)
 
     val ctx = new GenericApplicationContext(beanFactory)
     ctx.addBeanFactoryPostProcessor(new ScalaDefaultValuesInjector)
