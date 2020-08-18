@@ -70,6 +70,15 @@ sealed trait GenCase[T] extends TypedMetadata[T] {
   def repr: String = valueOf.value.toString
 }
 
+@allowUnorderedSubtypes
+case class GenUnorderedUnion[T](
+  @composite info: GenUnionInfo[T],
+  @multi @adtCaseMetadata cases: Map[String, GenCase[_]]
+) extends TypedMetadata[T]
+object GenUnorderedUnion extends AdtMetadataCompanion[GenUnorderedUnion] {
+  materialize[Option[String]]
+}
+
 sealed trait Being
 object Being extends HasGenCodecStructure[Being]
 
