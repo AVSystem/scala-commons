@@ -8,18 +8,17 @@ cancelable in Global := true
 // option in IntelliJ's SBT settings.
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-val silencerVersion = "1.6.0"
+val silencerVersion = "1.7.1"
 val collectionCompatVersion = "2.1.6"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
-val scalatestVersion = "3.2.0"
+val scalatestVersion = "3.2.1"
 val scalacheckVersion = "1.14.3"
 val scalatestplusScalacheckVersion = "3.2.1.0"
 val jettyVersion = "9.4.31.v20200723"
 val mongoVersion = "3.12.4"
 val mongoReactiveVersion = "1.13.1"
 val mongoScalaVersion = "2.9.0"
-val kafkaVersion = "2.2.1"
 val springVersion = "4.3.26.RELEASE"
 val typesafeConfigVersion = "1.4.0"
 val commonsIoVersion = "1.3.2"
@@ -51,7 +50,7 @@ val previousCompatibleVersions = Set("1.39.14")
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  crossScalaVersions := Seq("2.12.11", "2.13.1"),
+  crossScalaVersions := Seq("2.12.12", "2.13.3"),
   scalaVersion := crossScalaVersions.value.last,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
