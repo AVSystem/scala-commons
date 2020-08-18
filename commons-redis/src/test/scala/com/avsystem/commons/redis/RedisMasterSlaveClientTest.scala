@@ -38,7 +38,7 @@ class RedisMasterSlaveFailoverTest extends RedisMasterSlaveCommandsSuite {
   import RedisApi.Batches.StringTyped._
 
   test("failover test") {
-    val failoverPromise = Promise[Unit]
+    val failoverPromise = Promise[Unit]()
     redisClient.setMasterListener { client =>
       if (client.address.port != ports.head) {
         failoverPromise.success(())
