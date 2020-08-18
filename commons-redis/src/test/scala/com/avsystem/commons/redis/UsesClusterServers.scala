@@ -16,7 +16,7 @@ import scala.concurrent.duration._
 trait UsesClusterServers extends BeforeAndAfterAll with RedisProcessUtils { this: Suite =>
 
   val clusterPath: String = "cluster/" + System.currentTimeMillis()
-  val clusterDir: File = new File(clusterPath.replaceAllLiterally("/", File.separator))
+  val clusterDir: File = new File(clusterPath.replace("/", File.separator))
 
   def ports: Seq[Int]
 

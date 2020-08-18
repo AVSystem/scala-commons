@@ -161,7 +161,7 @@ trait MacroCommons { bundle =>
   }
 
   def indent(str: String, indent: String): String =
-    str.replaceAllLiterally("\n", s"\n$indent")
+    str.replace("\n", s"\n$indent")
 
   def rawAnnotations(s: Symbol): List[Annotation] = {
     s.info // srsly scalac, load these goddamned annotations
@@ -606,7 +606,7 @@ trait MacroCommons { bundle =>
       .map { error =>
         val tpNames = tparams.map(_.name.decodedName.toString)
         (tpNames zip typeArgs).foldLeft(error) {
-          case (err, (tpName, tpArg)) => err.replaceAllLiterally(s"$${$tpName}", tpArg.toString)
+          case (err, (tpName, tpArg)) => err.replace(s"$${$tpName}", tpArg.toString)
         }
       }
       .getOrElse {
@@ -622,7 +622,7 @@ trait MacroCommons { bundle =>
         }
       }
       .foldLeft(error) { case (err, (paramName, replacement)) =>
-        err.replaceAllLiterally(s"#{$paramName}", replacement)
+        err.replace(s"#{$paramName}", replacement)
       }
 
   private def implicitNotFoundMsg(stack: List[Type], tpe: Type, tree: Tree): String =
@@ -1021,7 +1021,7 @@ trait MacroCommons { bundle =>
       case PolyType(polyParams, resultType) => (polyParams, resultType)
       case sig => (ts.typeParams, sig)
     }
-    TypeDef(mods, ts.name, typeParams.map(typeSymbolToTypeDef(_)), treeForType(signature))
+    TypeDef(mods, ts.name, typeParams.map(typeSymbolToTypeDef(_, forMethod = false)), treeForType(signature))
   }
 
   def alternatives(sym: Symbol): List[Symbol] = sym match {

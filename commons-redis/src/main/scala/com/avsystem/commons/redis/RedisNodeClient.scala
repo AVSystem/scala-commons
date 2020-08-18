@@ -40,7 +40,7 @@ final class RedisNodeClient(
     connection
   }
 
-  private val connInitPromises = ArrayBuffer.fill(config.poolSize)(Promise[Unit])
+  private val connInitPromises = ArrayBuffer.fill(config.poolSize)(Promise[Unit]())
   private val connections = (0 until config.poolSize).iterator.map(newConnection).toArray
   private val index = new AtomicLong(0)
 

@@ -5,11 +5,12 @@ import akka.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.SourceInfo
 import com.avsystem.commons.redis.config._
 import org.scalactic.source.Position
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.Tag
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
+import scala.collection.compat.BuildFrom
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -68,7 +69,10 @@ trait CommandsSuite extends AnyFunSuite with ScalaFutures with Matchers with Use
     RedisApi.Keyed.Async.StringTyped(executor)
 
   protected def setup(batches: RedisBatch[Any]*): Unit = {
-    Await.result(executor.executeBatch(batches.sequence, executionConfig), Duration.Inf)
+    // TODO: Scala 2.13.x regression, diverging implicit expansion
+    val sequencer: Sequencer[Seq[RedisBatch[Any]], Seq[Any]] =
+      Sequencer.collectionSequencer(Sequencer.trivialSequencer[Any], implicitly[BuildFrom[Seq[RedisBatch[Any]], Any, Seq[Any]]])
+    Await.result(executor.executeBatch(batches.sequence(sequencer), executionConfig), Duration.Inf)
     listener.clear()
   }
 

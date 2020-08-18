@@ -373,7 +373,7 @@ lazy val `commons-comprof` = project
       val originalContent = IO.read(originalSrc)
       (0 until 100).map { i =>
         val pkg = f"oa$i%02d"
-        val newContent = originalContent.replaceAllLiterally("package rest", s"package rest\npackage $pkg")
+        val newContent = originalContent.replace("package rest", s"package rest\npackage $pkg")
         val newFile = (sourceManaged in Compile).value / pkg / "RestTestApi.scala"
         IO.write(newFile, newContent)
         newFile

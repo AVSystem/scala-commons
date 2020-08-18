@@ -268,7 +268,7 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
     case TypeRef(pre, sym, args) if pre != NoPrefix || isAllowedWithoutPrefix(sym) =>
       val dealiased = tpe.dealias
       if (dealiased.typeSymbol != sym && !isStaticPrefix(pre))
-        mkTypeString(dealiased)
+        mkTypeString(dealiased, parens = false)
       else {
         val argsReprs =
           if (args.isEmpty) Nil
@@ -305,7 +305,7 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
       val space = if (basesRepr.nonEmpty && scopeRepr.nonEmpty) " " else ""
       maybeParens(basesRepr ::: lit(space) :: scopeRepr, parens)
     case AnnotatedType(_, underlying) =>
-      mkTypeString(underlying)
+      mkTypeString(underlying, parens = false)
     case _ =>
       throw NonConcreteTypeException(tpe)
   }

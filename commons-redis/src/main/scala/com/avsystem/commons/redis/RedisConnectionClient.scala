@@ -29,7 +29,7 @@ final class RedisConnectionClient(
 )
   (implicit system: ActorSystem) extends RedisClient with RedisConnectionExecutor { self =>
 
-  private val initPromise = Promise[Unit]
+  private val initPromise = Promise[Unit]()
   private val connectionActor = {
     val props = Props(new RedisConnectionActor(address, config.copy(reconnectionStrategy = RetryStrategy.never)))
       .withDispatcher(ConfigDefaults.Dispatcher)

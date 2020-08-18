@@ -139,8 +139,8 @@ class RedisRecordInput(bulks: IndexedSeq[BulkStringMsg]) extends ObjectInput {
   override def knownSize: Int = bulks.size
 
   def nextField(): FieldInput = {
-    val fieldName = it.next.utf8String
-    val bytes = it.next
+    val fieldName = it.next().utf8String
+    val bytes = it.next()
     new RedisFieldDataInput(fieldName, bytes)
   }
 

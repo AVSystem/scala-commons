@@ -20,7 +20,7 @@ object IO {
 
   def writeTestResource(path: String, data: String): Unit = {
     // assuming working dir used by intellij
-    val writer = new FileWriter(s"src/test/resources$path".replaceAllLiterally("/", File.separator))
+    val writer = new FileWriter(s"src/test/resources$path".replace("/", File.separator))
     try writer.write(data) finally writer.close()
   }
 }

@@ -452,12 +452,12 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     }
 
     def logReceived(data: ByteString): Unit = {
-      log.debug(s"$localAddr <<<< $remoteAddr\n${RedisMsg.escape(data, quote = false).replaceAllLiterally("\\n", "\\n\n")}")
+      log.debug(s"$localAddr <<<< $remoteAddr\n${RedisMsg.escape(data, quote = false).replace("\\n", "\\n\n")}")
       config.debugListener.onReceive(data)
     }
 
     def logWrite(data: ByteString): Unit = {
-      log.debug(s"$localAddr >>>> $remoteAddr\n${RedisMsg.escape(data, quote = false).replaceAllLiterally("\\n", "\\n\n")}")
+      log.debug(s"$localAddr >>>> $remoteAddr\n${RedisMsg.escape(data, quote = false).replace("\\n", "\\n\n")}")
       config.debugListener.onSend(data)
     }
   }

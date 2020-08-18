@@ -52,7 +52,7 @@ trait RetryStrategy { self =>
     */
   def randomized(minFactor: Double, maxFactor: Double): RetryStrategy =
     RetryStrategy(self.nextRetry.flatMap { case (delay, nextStrat) =>
-      val factor = minFactor + (maxFactor - minFactor) * math.random
+      val factor = minFactor + (maxFactor - minFactor) * math.random()
       delay * factor match {
         case fd: FiniteDuration => Opt((fd, nextStrat.randomized(minFactor, maxFactor)))
         case _ => Opt.Empty

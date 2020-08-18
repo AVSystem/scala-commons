@@ -69,7 +69,6 @@ class JettyRPCFrameworkTest extends AnyFunSuite with ScalaFutures with Matchers 
 
   test("paren -> unit") {
     noException should be thrownBy rpc.topper.initialize2().futureValue
-    noException should be thrownBy rpc.topper.initialize2.futureValue
   }
 
   test("empty-paren -> long") {

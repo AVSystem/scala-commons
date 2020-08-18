@@ -747,7 +747,7 @@ object SharedExtensionsUtils extends SharedExtensions {
           value.isDefined
         }
 
-        def next: T = {
+        def next(): T = {
           if (!fetched) {
             value = elem
           }
@@ -774,7 +774,7 @@ object SharedExtensionsUtils extends SharedExtensions {
           value.isDefined
         }
 
-        def next: T = {
+        def next(): T = {
           if (!fetched) {
             value = nextFun(value.get)
           }
