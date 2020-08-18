@@ -15,6 +15,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
   final lazy val AdtParamMetadataAT: Type = staticType(tq"$MetaPackage.adtParamMetadata")
   final lazy val AdtCaseMetadataAT: Type = staticType(tq"$MetaPackage.adtCaseMetadata")
   final lazy val ReifyDefaultValueAT: Type = staticType(tq"$MetaPackage.reifyDefaultValue")
+  final lazy val AllowUnorderedSubtypesAT: Type = staticType(tq"$MetaPackage.allowUnorderedSubtypes")
 
   sealed trait AdtSymbol extends MacroTypeSymbol with SelfMatchedSymbol {
     def tpe: Type
@@ -152,7 +153,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
         def tryMaterialize(caseParam: AdtCaseMetadataParam, adtCase: AdtCase): Res[AdtCaseMapping] = {
           val indexInRaw = indicesInRaw.getOrElse(caseParam, 0)
           val res = caseParam.tryMaterializeFor(adtCase, indexInRaw)
-          if(res.isOk) {
+          if (res.isOk) {
             indicesInRaw(caseParam) = indexInRaw + 1
           }
           res
@@ -370,11 +371,12 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
   def materialize[Real: WeakTypeTag]: Tree = instrument {
     val adtTpe = weakTypeOf[Real].dealias
     val metadataTpe = c.macroApplication.tpe.dealias
+    val orderedSubtypes = findAnnotation(metadataTpe.typeSymbol, AllowUnorderedSubtypesAT).isEmpty
 
     val adtSymbol =
       singleValueFor(adtTpe).map(sv => new AdtObject(adtTpe, 0, sv)) orElse
         applyUnapplyFor(adtTpe).map(au => new AdtClass(adtTpe, 0, au)) orElse
-        knownSubtypes(adtTpe, ordered = true).map(st => new AdtHierarchy(adtTpe, 0, st)) getOrElse
+        knownSubtypes(adtTpe, orderedSubtypes).map(st => new AdtHierarchy(adtTpe, 0, st)) getOrElse
         new AdtOtherCase(adtTpe, 0)
 
     materializeMetadata(adtSymbol, metadataTpe)

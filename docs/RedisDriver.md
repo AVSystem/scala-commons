@@ -39,10 +39,12 @@ and characteristics are:
 
 Features: 
 * Redis 5 API support, excluding pub/sub, `MEMORY` commands and some unsafe/debugging commands like `MONITOR`.
-* three client implementations: for single connection ([`RedisConnectionClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisConnectionClient.html)), 
-  connection pool to a single node ([`RedisNodeClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisNodeClient.html)) 
+* four client implementations: for single connection ([`RedisConnectionClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisConnectionClient.html)), 
+  connection pool to a single node ([`RedisNodeClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisNodeClient.html)),
+  for master-slave installations with Redis Sentinel ([`RedisMasterSlaveClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisMasterSlaveClient.html))
   and for Redis Cluster ([`RedisClusterClient`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisClusterClient.html)), 
-  each client supporting only appropriate API subset
+  each client supporting only appropriate API subset.
+* TLS support (requires Redis 6 with TLS support enabled)
 * support for batching (pipelining), with functional design (composable [`RedisBatch`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisBatch.html) objects)
   and automatic distribution of batch contents over multiple Redis Cluster masters
 * dedicated support for atomic transactions (every [`RedisBatch`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/redis/RedisBatch.html) 
@@ -59,6 +61,7 @@ Features:
 
 Missing features:
 * Publish/Subscribe
+* Full Redis 6 support (RESP3 protocol, new commands)
 
 ### Quickstart example
 

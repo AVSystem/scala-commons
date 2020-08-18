@@ -122,6 +122,12 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   def nonNull[T](readFun: Input => T, writeFun: (Output, T) => Any): GenCodec[T] =
     nullSafe(readFun, writeFun, allowNull = false)
 
+  def nonNullString[T](readFun: String => T, writeFun: T => String): GenCodec[T] =
+    nonNullSimple(i => readFun(i.readString()), (o, v) => o.writeString(writeFun(v)))
+
+  def nullableString[T <: AnyRef](readFun: String => T, writeFun: T => String): GenCodec[T] =
+    nullableSimple(i => readFun(i.readString()), (o, v) => o.writeString(writeFun(v)))
+
   def createSimple[T](readFun: SimpleInput => T, writeFun: (SimpleOutput, T) => Any, allowNull: Boolean): GenCodec[T] =
     new SimpleCodec[T] {
       def nullable: Boolean = allowNull
