@@ -24,6 +24,14 @@ script:
 
 jobs:
   include:
+    - env:
+        - TASK="commons-js/test"
+        - SCALAJS_VERSION="0.6.33"
+      scala: [2.12.12]
+    - env:
+        - TASK="commons-js/test"
+        - SCALAJS_VERSION="0.6.33"
+      scala: [2.13.3]
     - stage: deploy
       script: if [ "$TRAVIS_PULL_REQUEST" = 'false' ]; then ./deploy.sh; fi
       if: tag =~ ^v
