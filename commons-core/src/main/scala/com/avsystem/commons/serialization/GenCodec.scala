@@ -7,6 +7,7 @@ import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.JFactory
 import com.avsystem.commons.meta.Fallback
+import com.avsystem.commons.misc.{Bytes, Timestamp}
 
 import scala.annotation.{implicitNotFound, tailrec}
 import scala.collection.compat._

@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package mongo
 
+import com.avsystem.commons.misc.Bytes
 import com.avsystem.commons.serialization.GenCodec
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
