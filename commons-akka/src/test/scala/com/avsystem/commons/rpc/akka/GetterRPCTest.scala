@@ -10,7 +10,7 @@ trait GetterRPCTest {this: RPCFrameworkTest =>
   it should "not call any remote method when only getters are called" in fixture { f =>
     f.rpc.inner
 
-    verifyZeroInteractions(f.mockRpc, f.mockInnerRpc)
+    verifyNoInteractions(f.mockRpc, f.mockInnerRpc)
   }
 
   it should "call proper method of inner rpc" in fixture { f =>

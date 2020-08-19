@@ -11,24 +11,25 @@ val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && Sys
 val silencerVersion = "1.7.1"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
-val scalatestVersion = "3.1.1"
-val scalatestplusScalacheckVersion = "3.1.1.1"
+val scalatestVersion = "3.2.1"
+val scalatestplusScalacheckVersion = "3.2.1.0"
 val scalacheckVersion = "1.14.3"
-val jettyVersion = "9.4.19.v20190610"
-val mongoVersion = "3.11.0"
-val mongoReactiveVersion = "1.12.0"
-val mongoScalaVersion = "2.7.0"
-val kafkaVersion = "2.2.1"
+val jettyVersion = "9.4.31.v20200723"
+val mongoVersion = "3.12.7"
+val mongoReactiveVersion = "1.13.1"
+val mongoScalaVersion = "2.9.0"
+val kafkaVersion = "2.6.0"
 val springVersion = "4.0.9.RELEASE"
-val typesafeConfigVersion = "1.3.4"
+val typesafeConfigVersion = "1.4.0"
 val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.2"
 val akkaVersion = "2.5.31"
 val monixVersion = "2.3.3"
-val mockitoVersion = "2.28.2"
-val circeVersion = "0.11.1"
+val mockitoVersion = "3.5.2"
+val circeVersion = "0.11.2"
 val upickleVersion = "0.7.4"
 val scalajsBenchmarkVersion = "0.2.6"
+val slf4jVersion = "1.7.30"
 
 useGpg := false // TODO: use sbt-ci-release
 pgpPublicRing := file("./travis/local.pubring.asc")
@@ -308,7 +309,7 @@ lazy val `commons-jetty` = project
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
 
       "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
-      "org.slf4j" % "slf4j-simple" % "1.7.26" % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
     ),
   )
 
