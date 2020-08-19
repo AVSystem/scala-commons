@@ -13,10 +13,10 @@ val collectionCompatVersion = "2.1.6"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.2.1"
-val scalacheckVersion = "1.14.3"
 val scalatestplusScalacheckVersion = "3.2.1.0"
+val scalacheckVersion = "1.14.3"
 val jettyVersion = "9.4.31.v20200723"
-val mongoVersion = "3.12.4"
+val mongoVersion = "3.12.7"
 val mongoReactiveVersion = "1.13.1"
 val mongoScalaVersion = "2.9.0"
 val springVersion = "4.3.26.RELEASE"
@@ -25,10 +25,11 @@ val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.2"
 val akkaVersion = "2.6.6"
 val monixVersion = "3.2.1"
-val mockitoVersion = "3.3.3"
+val mockitoVersion = "3.5.2"
 val circeVersion = "0.13.0"
-val upickleVersion = "1.0.0"
+val upickleVersion = "1.2.0"
 val scalajsBenchmarkVersion = "0.3.0"
+val slf4jVersion = "1.7.30"
 
 useGpg := false // TODO: use sbt-ci-release
 pgpPublicRing := file("./travis/local.pubring.asc")
@@ -262,7 +263,7 @@ lazy val `commons-jetty` = project
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
 
       "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
-      "org.slf4j" % "slf4j-simple" % "1.7.29" % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
     ),
   )
 
