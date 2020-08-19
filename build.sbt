@@ -8,7 +8,7 @@ cancelable in Global := true
 // option in IntelliJ's SBT settings.
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-val silencerVersion = Def.setting(if(scalaBinaryVersion.value == "2.11") "1.4.4" else "1.6.0")
+val silencerVersion = "1.7.1"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.1.1"
@@ -50,7 +50,7 @@ val previousCompatibleVersions = Set("1.34.8")
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  crossScalaVersions := Seq("2.11.12", "2.12.10"),
+  crossScalaVersions := Seq("2.11.12", "2.12.12"),
   scalaVersion := crossScalaVersions.value.last,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
@@ -109,8 +109,8 @@ val commonSettings = Seq(
   pomIncludeRepository := { _ => false },
 
   libraryDependencies ++= Seq(
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion.value cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % silencerVersion.value % Provided cross CrossVersion.full,
+    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
+    "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.scalatestplus" %%% "scalacheck-1-14" % scalatestplusScalacheckVersion % Test,
