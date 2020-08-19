@@ -20,7 +20,7 @@ env:
     - TASK="commons/unidoc"
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION $TASK
+  - sbt -Dsbt.color=true ++$TRAVIS_SCALA_VERSION $TASK
 
 jobs:
   include:
