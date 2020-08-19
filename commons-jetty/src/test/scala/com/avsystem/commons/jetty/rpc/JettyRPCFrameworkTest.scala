@@ -117,7 +117,8 @@ class JettyRPCFrameworkTest extends AnyFunSuite with ScalaFutures with Matchers 
     val failed = rpc.erroneousKeks.failed.futureValue
     failed shouldBe a[HttpException]
     val exception = failed.asInstanceOf[HttpException]
-    exception.reason shouldBe errorMessage
+    // looks like Jetty no longer forwards exception message, probably for security reasons
+    exception.reason shouldBe "Server Error"
     exception.status shouldBe 500
   }
 
