@@ -69,7 +69,8 @@ final class BsonWriterNamedOutput(escapedName: String, bw: BsonWriter, override 
     new BsonWriterListOutput(bw, legacyOptionEncoding)
   }
   override def writeObject(): BsonWriterObjectOutput = {
-    bw.writeStartDocument(escapedName)
+    bw.writeName(escapedName) // org.bson.BsonWriter.writeStartDocument(java.lang.String) fails when writing _id in 4.0 driver
+    bw.writeStartDocument()
     new BsonWriterObjectOutput(bw, legacyOptionEncoding)
   }
   override def writeObjectId(objectId: ObjectId): Unit =
