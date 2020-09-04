@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package mongo.async
+package mongo.scala
 
 trait MongoObservableExtensions {
   import MongoObservableExtensions._
