@@ -6,6 +6,7 @@ import java.nio.ByteBuffer
 import com.avsystem.commons.serialization.{GenCodecRoundtripTest, Input, ObjectInput, Output}
 import org.bson._
 import org.bson.io.BasicOutputBuffer
+import org.bson.json.{JsonMode, JsonWriterSettings}
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -189,7 +190,8 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
   test("BsonBinaryReader type metadata") {
     forAll(SomethingPlain.gen) { sth =>
       val document = somethingToBson(sth)
-      val input = new BsonReaderInput(new BsonBinaryReader(RawBsonDocument.parse(document.toJson).getByteBuffer.asNIO()))
+      val rawJson = document.toJson(JsonWriterSettings.builder.outputMode(JsonMode.EXTENDED).build)
+      val input = new BsonReaderInput(new BsonBinaryReader(RawBsonDocument.parse(rawJson).getByteBuffer.asNIO()))
 
       testMetadata(input)
     }
