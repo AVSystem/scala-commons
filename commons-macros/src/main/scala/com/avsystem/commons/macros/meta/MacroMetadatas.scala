@@ -276,7 +276,6 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       val annotTpe = typeGivenInstances
       val annotConstr = new ReifiedAnnotConstructor(annotTpe, this)
       val tparams = matchedSymbol.typeParamsInContext
-      val tparamSymbols = tparams.map(_.symbol)
 
       def materializeAnnotParam(param: Symbol): Option[Res[Tree]] =
         if (findAnnotation(param, CompositeAT).nonEmpty)

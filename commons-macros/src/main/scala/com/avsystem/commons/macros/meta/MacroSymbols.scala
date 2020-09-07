@@ -39,6 +39,16 @@ private[commons] trait MacroSymbols extends MacroCommons {
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
     primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}:\n"))
 
+  def optionLikeValueType(optionLike: CachedImplicit, subject: MacroSymbol): Type = {
+    val optionLikeType = optionLike.actualType
+    val valueMember = optionLikeType.member(TypeName("Value"))
+    if (valueMember.isAbstract)
+      subject.reportProblem("could not determine actual value of optional parameter type;" +
+        "optional parameters must be typed as Option/Opt/OptArg etc.")
+    else
+      valueMember.typeSignatureIn(optionLikeType)
+  }
+
   sealed trait Arity {
     def annotStr: String
     def verbatimByDefault: Boolean
@@ -62,15 +72,10 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def apply(param: ArityParam): ParamArity = {
       val annot = param.annot(RpcArityAT)
       val at = annot.fold(SingleArityAT)(_.tpe)
-      if (at <:< SingleArityAT) ParamArity.Single(param.actualType)
-      else if (at <:< OptionalArityAT) {
-        val optionLikeType = param.optionLike.actualType
-        val valueMember = optionLikeType.member(TypeName("Value"))
-        if (valueMember.isAbstract)
-          param.reportProblem("could not determine actual value of optional parameter type")
-        else
-          ParamArity.Optional(valueMember.typeSignatureIn(optionLikeType))
-      }
+      if (at <:< SingleArityAT)
+        ParamArity.Single(param.actualType)
+      else if (at <:< OptionalArityAT)
+        ParamArity.Optional(optionLikeValueType(param.optionLike, param))
       else if ((param.allowListedMulti || param.allowNamedMulti) && at <:< MultiArityAT) {
         if (param.allowNamedMulti && param.actualType <:< StringPFTpe)
           Multi(param.actualType.baseType(PartialFunctionClass).typeArgs(1), named = true)
