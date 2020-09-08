@@ -23,6 +23,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final lazy val MultiArityAT: Type = staticType(tq"$MetaPackage.multi")
   final lazy val CompositeAT: Type = staticType(tq"$MetaPackage.composite")
   final lazy val AuxiliaryAT: Type = staticType(tq"$MetaPackage.auxiliary")
+  final lazy val AllowOptionalAT: Type = staticType(tq"$MetaPackage.allowOptional")
   final lazy val AnnotatedAT: Type = staticType(tq"$MetaPackage.annotated[_]")
   final lazy val NotAnnotatedAT: Type = staticType(tq"$MetaPackage.notAnnotated[_]")
   final lazy val IgnoreAT: Type = staticType(tq"$MetaPackage.ignore")

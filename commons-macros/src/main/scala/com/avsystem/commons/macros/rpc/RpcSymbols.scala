@@ -242,7 +242,7 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
       owner.typeParams.filter(tp => actualType.contains(tp.symbol))
 
     lazy val optionLike: Option[CachedImplicit] =
-      annot(RpcOptionalAT).map(_ => infer(tq"$OptionLikeCls[$actualType]"))
+      annot(OptionalParamAT).map(_ => infer(tq"$OptionLikeCls[$actualType]"))
 
     lazy val nonOptionalType: Type =
       optionLike.fold(actualType)(optionLikeValueType(_, this))

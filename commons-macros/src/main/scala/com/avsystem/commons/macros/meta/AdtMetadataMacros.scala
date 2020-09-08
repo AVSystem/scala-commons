@@ -71,6 +71,12 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     def seenFrom: Type = owner.tpe
     def shortDescription: String = "ADT parameter"
     def description: String = s"$shortDescription $nameStr of ${owner.description}"
+
+    lazy val optionLike: Option[CachedImplicit] =
+      annot(OptionalParamAT).map(_ => infer(tq"$OptionLikeCls[$actualType]"))
+
+    lazy val nonOptionalType: Type =
+      optionLike.fold(actualType)(optionLikeValueType(_, this))
   }
 
   case class MatchedAdtParam(
@@ -80,6 +86,10 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     fallbackTagsUsed: List[FallbackTag]
   ) extends MatchedSymbol {
     type Self = MatchedAdtParam
+
+    def nonOptionalType: Type =
+      if(mdParam.allowOptional) param.nonOptionalType
+      else param.actualType
 
     def index: Int = param.index
     def real: MacroSymbol = param
@@ -280,13 +290,16 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     val auxiliary: Boolean =
       annot(AuxiliaryAT).nonEmpty
 
+    val allowOptional: Boolean =
+      annot(AllowOptionalAT).nonEmpty
+
     private def matchedParam(adtParam: AdtParam, indexInRaw: Int): Res[MatchedAdtParam] =
       matchTagsAndFilters(MatchedAdtParam(adtParam, this, indexInRaw, Nil))
 
     private def metadataTree(adtParam: AdtParam, indexInRaw: Int): Option[Res[Tree]] =
       matchedParam(adtParam, indexInRaw).toOption.map { matched =>
         val result = for {
-          mdType <- actualMetadataType(arity.collectedType, adtParam.actualType, "parameter type", verbatim = false)
+          mdType <- actualMetadataType(arity.collectedType, matched.nonOptionalType, "parameter type", verbatim = false)
           tree <- materializeOneOf(mdType) { t =>
             val constructor = new AdtParamMetadataConstructor(t, this, this)
             for {
