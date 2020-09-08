@@ -258,7 +258,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
               case Some(realOptionLike) =>
                 val realValue = c.freshName(TermName("realValue"))
                 val realPair = q"(${erp.rpcName}, ${erp.encoding.applyAsRaw(realValue)})"
-                q"${realOptionLike.reference(Nil)}.fold(${erp.safeName}, ())(($realValue: ${erp.realParam.nonOptionalType}) => $builderName += ($realPair))"
+                q"${realOptionLike.reference(Nil)}.foreach(${erp.safeName}, ($realValue: ${erp.realParam.nonOptionalType}) => $builderName += ($realPair))"
               case None =>
                 val baseStat = q"$builderName += ((${erp.rpcName}, ${erp.rawValueTree}))"
                 if (erp.transientDefault)

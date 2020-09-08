@@ -24,13 +24,6 @@ class rpcName(val name: String) extends RealSymAnnotation
 class rpcNamePrefix(val prefix: String, val overloadedOnly: Boolean = false) extends RealSymAnnotation
 
 /**
-  * Can be applied on RPC parameters collected into a map of raw values. Makes the parameter optional, meaning that
-  * its type must be an `Option`, `Opt`, `OptArg`, etc. When the value is empty, the resulting raw values map simply
-  * lacks the entry corresponding to this parameter.
-  */
-class rpcOptional extends RealSymAnnotation
-
-/**
   * Enables name-mangling of overloaded RPC methods. Each overloaded variant (except for the first one) will get
   * a suffix `_<idx>` appended, where `<idx>` is an index of the overload, starting from 1 for the first actual
   * overload. The first method is not considered an "overload" and will get no suffix appended.

@@ -59,6 +59,7 @@ trait MacroCommons { bundle =>
   final lazy val PositionedAT = staticType(tq"$CommonsPkg.annotation.positioned")
   final lazy val ImplicitNotFoundAT = staticType(tq"$ScalaPkg.annotation.implicitNotFound")
   final lazy val ImplicitNotFoundSym = staticType(tq"$MiscPkg.ImplicitNotFound[_]").typeSymbol
+  final lazy val OptionalParamAT = staticType(tq"$CommonsPkg.serialization.optionalParam")
 
   final lazy val UnitTpe: Type = definitions.UnitTpe
   final lazy val NothingTpe: Type = definitions.NothingTpe

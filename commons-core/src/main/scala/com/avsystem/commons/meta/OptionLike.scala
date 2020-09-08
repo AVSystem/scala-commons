@@ -12,6 +12,7 @@ sealed trait OptionLike[O] {
 
   def fold[B](opt: O, ifEmpty: => B)(f: Value => B): B = if (isDefined(opt)) f(get(opt)) else ifEmpty
   def getOrElse[B >: Value](opt: O, default: => B): B = if (isDefined(opt)) get(opt) else default
+  def foreach(opt: O, f: Value => Unit): Unit = if (isDefined(opt)) f(get(opt))
 
   final def convert[OO, V](opt: O, into: OptionLike.Aux[OO, V])(fun: Value => V): OO =
     fold(opt, into.none)(v => into.some(fun(v)))

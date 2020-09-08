@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.meta.OptionLike
 import com.avsystem.commons.serialization.GenCodec.{FieldReadFailed, ReadFailure}
 
 import scala.annotation.tailrec
@@ -10,7 +11,8 @@ object FieldValues {
   private object NullMarker
 }
 final class FieldValues(
-  private val fieldNames: Array[String], codecs: Array[GenCodec[_]], ofWhat: OptArg[String] = OptArg.Empty) {
+  private val fieldNames: Array[String], codecs: Array[GenCodec[_]], ofWhat: OptArg[String] = OptArg.Empty
+) {
 
   @tailrec private def fieldIndex(fieldName: String, idx: Int): Int =
     if (idx >= fieldNames.length) -1
@@ -44,6 +46,13 @@ final class FieldValues(
     if (res == null) default
     else if (res.asInstanceOf[AnyRef] eq NullMarker) null.asInstanceOf[T]
     else res.asInstanceOf[T]
+  }
+
+  def getOpt[O, T](idx: Int, optionLike: OptionLike.Aux[O, T]): O = {
+    val res = values(idx)
+    if (res == null) optionLike.none
+    else if (res.asInstanceOf[AnyRef] eq NullMarker) optionLike.some(null.asInstanceOf[T])
+    else optionLike.some(res.asInstanceOf[T])
   }
 
   def rewriteFrom(other: FieldValues): Unit = {
