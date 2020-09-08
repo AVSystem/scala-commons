@@ -262,7 +262,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           }
          """
 
-      val allOptionLikes = params.flatMap(_.optionLike)
+      val allOptionLikes = params.flatMap(_.optionLike).toSet
       val optionLikeDecls = allOptionLikes.collect {
         case ii: InferredImplicit => mkPrivateLazyValOrDef(ii)
       }
