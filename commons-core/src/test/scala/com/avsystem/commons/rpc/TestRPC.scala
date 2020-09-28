@@ -2,7 +2,7 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.rpc.DummyRPC._
-import com.avsystem.commons.serialization.{HasGenCodec, transientDefault, whenAbsent}
+import com.avsystem.commons.serialization.{HasGenCodec, optionalParam, transientDefault, whenAbsent}
 import com.github.ghik.silencer.silent
 
 class prepend(prefix: String) extends EncodingInterceptor[String, String] with DecodingInterceptor[String, String] {
@@ -43,6 +43,9 @@ trait TestRPC {
   @namedArgs
   def doStuffNamed(@transientDefault @rawWhenAbsent("42") int: Int): Unit
 
+  @namedArgs
+  def doStuffOptional(@optionalParam thing: Opt[Int]): Unit
+
   def takeCC(r: Record = Record(-1, "_")): Unit
 
   def srslyDude(): Unit
@@ -54,6 +57,10 @@ trait TestRPC {
 
 @silent("side-effecting nullary methods")
 object TestRPC extends RPCCompanion[TestRPC] {
+
+  //  AsRaw.materialize[DummyRPC.RawRPC, TestRPC].showAst
+  //  AsReal.materialize[DummyRPC.RawRPC, TestRPC].showAst
+
   def rpcImpl(onInvocation: (RawInvocation, Option[Any]) => Any): TestRPC = new TestRPC { outer =>
     private def onProcedure(methodName: String, args: List[String]): Unit =
       onInvocation(RawInvocation(methodName, args), None)
@@ -82,6 +89,9 @@ object TestRPC extends RPCCompanion[TestRPC] {
 
     def doStuffNamed(int: Int): Unit =
       onProcedure("doStuffNamed", List(write(int)))
+
+    def doStuffOptional(@optionalParam thing: Opt[Int]): Unit =
+      onProcedure("doStuffOptional", thing.map(_.toString).toList)
 
     def handle: Unit =
       onProcedure("handle", Nil)

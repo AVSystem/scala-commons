@@ -22,7 +22,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
     q"$SingletonTCObj[$tpe](${tpe.toString}, $singleValueTree)"
 
   def forApplyUnapply(au: ApplyUnapply, params: List[ApplyParam]): Tree = {
-    val deps = params.map { case ApplyParam(_, s, dv, t) =>
+    val deps = params.map { case ApplyParam(_, s, dv, t, _) =>
       val defaultValueOpt = if (dv == EmptyTree) q"$NoneObj" else q"$SomeObj($DefValObj($dv))"
       q"(${s.name.toString}, $t, $defaultValueOpt)"
     }

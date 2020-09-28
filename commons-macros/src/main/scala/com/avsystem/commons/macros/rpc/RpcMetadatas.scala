@@ -92,7 +92,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     private def metadataTree(matchedParam: MatchedParam, indexInRaw: Int): Res[Tree] = {
       val realParam = matchedParam.real
       val result = for {
-        mdType <- actualMetadataType(typeGivenInstances, realParam.actualType, "parameter type", verbatim)
+        mdType <- actualMetadataType(typeGivenInstances, realParam.nonOptionalType, "parameter type", verbatim)
         tree <- materializeOneOf(mdType) { t =>
           val constructor = new ParamMetadataConstructor(t, this, this, indexInRaw)
           for {

@@ -205,7 +205,7 @@ trait DirectMetadataParamStrategy extends MetadataParamStrategy
   *   class valueWithCodec[T](value: T, @infer codec: GenCodec[T] = infer.value)
   *     extends scala.annotation.StaticAnnotation
   * }}}
-  **/
+  * */
 final class infer(val clue: String = "") extends DirectMetadataParamStrategy
 object infer {
   /**
@@ -217,13 +217,19 @@ object infer {
 /**
   * `@adtParamMetadata` applied on metadata parameter of metadata class for case class or object indicates that
   * this parameter holds metadata for ADT parameter(s) (one, some or all, depending on [[SymbolArity]], tagging, etc.).
-  **/
+  * */
 final class adtParamMetadata extends MetadataParamStrategy
+
+/**
+  * To be used along [[adtParamMetadata]] to indicate that optional parameters (annotated with
+  * [[com.avsystem.commons.serialization.optionalParam optionalParam]]) are allowed.
+  */
+final class allowOptional extends RawParamAnnotation
 
 /**
   * `@adtCaseMetadata` applied on metadata parameter of ADT hierarchy (sealed trait) metadata class indicates that
   * this parameter holds metadata for its case classes (one, some or all, depending on [[SymbolArity]], tagging, etc.).
-  **/
+  * */
 final class adtCaseMetadata extends MetadataParamStrategy
 
 /**

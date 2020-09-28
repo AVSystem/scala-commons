@@ -79,6 +79,12 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip(CaseClassWithWildcard(Stuff("lol")))
   }
 
+  test("case class with optional fields") {
+    testRoundtrip(CaseClassWithOptionalFields("foo", Opt(42), Some(true)))
+    testRoundtrip(CaseClassWithOptionalFields("foo", Opt.Empty, Some(true)))
+    testRoundtrip(CaseClassWithOptionalFields("foo", Opt.Empty, None))
+  }
+
   test("case class like") {
     testRoundtrip(CaseClassLike("dafuq", List(1, 2, 3)))
   }

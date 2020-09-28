@@ -155,6 +155,13 @@ object CodecTestData {
   case class CaseClassWithWildcard(stuff: Stuff[_])
   object CaseClassWithWildcard extends HasGenCodec[CaseClassWithWildcard]
 
+  case class CaseClassWithOptionalFields(
+    str: String,
+    @optionalParam int: Opt[Int],
+    @optionalParam bul: Option[Boolean]
+  )
+  object CaseClassWithOptionalFields extends HasGenCodec[CaseClassWithOptionalFields]
+
   class CaseClassLike(val str: String, val intList: List[Int])
     extends Wrapper[CaseClassLike](str, intList)
   object CaseClassLike extends HasGenCodec[CaseClassLike] {

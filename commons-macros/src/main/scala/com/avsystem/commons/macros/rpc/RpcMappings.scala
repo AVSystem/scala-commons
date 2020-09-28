@@ -164,7 +164,14 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
   }
   object ParamMapping {
+    private def rejectOptional(erp: EncodedRealParam): Unit =
+      if (erp.realParam.optional) {
+        erp.realParam.reportProblem("optional parameter is not allowed here")
+      }
+
     case class Single(rawParam: RawValueParam, realParam: EncodedRealParam) extends ParamMapping {
+      rejectOptional(realParam)
+
       def rawValueTree: Tree =
         realParam.rawValueTree
       def realDecls: List[Tree] =
@@ -175,17 +182,33 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
     case class Optional(rawParam: RawValueParam, wrapped: Option[EncodedRealParam]) extends ParamMapping {
       def rawValueTree: Tree = {
-        val noneRes: Tree = q"${rawParam.optionLike.reference(Nil)}.none"
+        def optionLike = rawParam.optionLike.reference(Nil)
+        val noneRes: Tree = q"$optionLike.none"
         wrapped.fold(noneRes) { erp =>
-          val baseRes = q"${rawParam.optionLike.reference(Nil)}.some(${erp.rawValueTree})"
-          if (erp.transientDefault)
-            q"if(${erp.safeName} != ${erp.transientValueTree}) $baseRes else $noneRes"
-          else baseRes
+          erp.realParam.optionLike match {
+            case Some(realOptionLike) =>
+              val realValue = c.freshName(TermName("realValue"))
+              val realValueTree = erp.encoding.applyAsRaw(realValue)
+              q"${realOptionLike.reference(Nil)}.convert(${erp.safeName}, $optionLike)(($realValue: ${erp.realParam.nonOptionalType}) => $realValueTree)"
+            case None =>
+              val baseRes = q"$optionLike.some(${erp.rawValueTree})"
+              if (erp.transientDefault)
+                q"if(${erp.safeName} != ${erp.transientValueTree}) $baseRes else $noneRes"
+              else baseRes
+          }
         }
       }
       def realDecls: List[Tree] = wrapped.toList.map { erp =>
-        erp.realParam.localValueDecl(erp.encoding.foldWithAsReal(
-          rawParam.optionLike.reference(Nil), rawParam.safePath, erp.matchedParam, erp.fallbackValueTree))
+        def optionLike = rawParam.optionLike.reference(Nil)
+        val realValueTree = erp.realParam.optionLike match {
+          case Some(realOptionLike) =>
+            val rawValue = c.freshName(TermName("rawValue"))
+            val rawValueTree = erp.encoding.applyAsReal(rawValue)
+            q"$optionLike.convert(${rawParam.safePath}, ${realOptionLike.reference(Nil)})(($rawValue: ${rawParam.collectedType}) => $rawValueTree)"
+          case None =>
+            erp.encoding.foldWithAsReal(optionLike, rawParam.safePath, erp.matchedParam, erp.fallbackValueTree)
+        }
+        erp.realParam.localValueDecl(realValueTree)
       }
 
       def cachedAsRawDecls: List[Tree] = wrapped.flatMap(_.encoding.cachedAsRawDecl).toList
@@ -198,6 +221,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       def cachedAsRealDecls: List[Tree] = reals.flatMap(_.encoding.cachedAsRealDecl)
     }
     abstract class ListedMulti extends Multi {
+      reals.foreach(rejectOptional)
       def rawValueTree: Tree = rawParam.mkMulti(reals.map(_.rawValueTree))
     }
     case class IterableMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends ListedMulti {
@@ -230,25 +254,36 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         if (reals.isEmpty) q"$RpcUtils.createEmpty(${rawParam.factory.reference(Nil)})" else {
           val builderName = c.freshName(TermName("builder"))
           val addStatements = reals.map { erp =>
-            val baseStat = q"$builderName += ((${erp.rpcName}, ${erp.rawValueTree}))"
-            if (erp.transientDefault)
-              q"if(${erp.safeName} != ${erp.transientValueTree}) $baseStat"
-            else baseStat
+            erp.realParam.optionLike match {
+              case Some(realOptionLike) =>
+                val realValue = c.freshName(TermName("realValue"))
+                val realPair = q"(${erp.rpcName}, ${erp.encoding.applyAsRaw(realValue)})"
+                q"${realOptionLike.reference(Nil)}.foreach(${erp.safeName}, ($realValue: ${erp.realParam.nonOptionalType}) => $builderName += ($realPair))"
+              case None =>
+                val baseStat = q"$builderName += ((${erp.rpcName}, ${erp.rawValueTree}))"
+                if (erp.transientDefault)
+                  q"if(${erp.safeName} != ${erp.transientValueTree}) $baseStat"
+                else baseStat
+            }
           }
           q"""
-          val $builderName = $RpcUtils.createBuilder(${rawParam.factory.reference(Nil)}, ${reals.size})
-          ..$addStatements
-          $builderName.result()
-        """
+            val $builderName = $RpcUtils.createBuilder(${rawParam.factory.reference(Nil)}, ${reals.size})
+            ..$addStatements
+            $builderName.result()
+          """
         }
-      def realDecls: List[Tree] =
-        reals.map { erp =>
-          erp.localValueDecl(
-            q"""
-              ${erp.encoding.andThenAsReal(rawParam.safePath, erp.matchedParam)}
-                .applyOrElse(${erp.rpcName}, (_: $StringCls) => ${erp.fallbackValueTree})
-            """)
+
+      def realDecls: List[Tree] = reals.map { erp =>
+        val mappedPf = erp.encoding.andThenAsReal(rawParam.safePath, erp.matchedParam)
+        val realValueTree = erp.realParam.optionLike match {
+          case Some(realOptionLike) =>
+            def optionLike = realOptionLike.reference(Nil)
+            q"$mappedPf.andThen($optionLike.some(_)).applyOrElse(${erp.rpcName}, (_: $StringCls) => $optionLike.none)"
+          case None =>
+            q"$mappedPf.applyOrElse(${erp.rpcName}, (_: $StringCls) => ${erp.fallbackValueTree})"
         }
+        erp.localValueDecl(realValueTree)
+      }
     }
     case class DummyUnit(rawParam: RawValueParam) extends ParamMapping {
       def rawValueTree: Tree = q"()"
@@ -287,7 +322,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         val implicitParams = realParam.owner.encodingDeps.takeWhile(_ != realParam)
         val encInterceptors = interceptors(encArgType, matchedParam, EncodingInterceptorTpe)
         val decInterceptors = interceptors(encArgType, matchedParam, DecodingInterceptorTpe)
-        Ok(RealRawEncoding(realParam.actualType, encInterceptors, decInterceptors, encArgType,
+        Ok(RealRawEncoding(realParam.nonOptionalType, encInterceptors, decInterceptors, encArgType,
           Some(errorCtx), realParam.tparamReferences, implicitParams))
       }
     }
@@ -436,7 +471,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         def ${realMethod.name}[..${realMethod.typeParamDecls}](...${realMethod.paramDecls}): ${realMethod.resultType} = {
           ..${paramMappings.values.flatMap(_.cachedAsRawDecls)}
           ..${rawMethod.rawParams.map(rp => rp.localValueDecl(rawValueTree(rp)))}
-          ..${resultEncoding.cachedAsRealDecl}
+          ..${resultEncoding.cachedAsRealDecl.toList}
           ${maybeUntry(resultEncoding.applyAsReal(rawCall))}
         }
        """
@@ -448,7 +483,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         q"""
           ..${paramMappings.values.flatMap(_.cachedAsRealDecls)}
           ..${paramMappings.values.filterNot(_.rawParam.auxiliary).flatMap(_.realDecls)}
-          ..${resultEncoding.cachedAsRawDecl}
+          ..${resultEncoding.cachedAsRawDecl.toList}
           ${resultEncoding.applyAsRaw(maybeTry(realCall))}
         """
 

@@ -12,6 +12,10 @@ sealed trait OptionLike[O] {
 
   def fold[B](opt: O, ifEmpty: => B)(f: Value => B): B = if (isDefined(opt)) f(get(opt)) else ifEmpty
   def getOrElse[B >: Value](opt: O, default: => B): B = if (isDefined(opt)) get(opt) else default
+  def foreach(opt: O, f: Value => Unit): Unit = if (isDefined(opt)) f(get(opt))
+
+  final def convert[OO, V](opt: O, into: OptionLike.Aux[OO, V])(fun: Value => V): OO =
+    fold(opt, into.none)(v => into.some(fun(v)))
 }
 
 @bincompat
@@ -37,14 +41,14 @@ object OptionLike {
     new OptionLikeImpl(None, Some(_), _.isDefined, _.get)
 
   implicit def optOptionLike[A]: BaseOptionLike[Opt[A], A] =
-    new OptionLikeImpl(Opt.Empty, Opt(_), _.isDefined, _.get)
+    new OptionLikeImpl(Opt.Empty, Opt.some, _.isDefined, _.get)
 
   implicit def optRefOptionLike[A >: Null]: BaseOptionLike[OptRef[A], A] =
-    new OptionLikeImpl(OptRef.Empty, OptRef(_), _.isDefined, _.get)
+    new OptionLikeImpl(OptRef.Empty, OptRef.some, _.isDefined, _.get)
 
   implicit def optArgOptionLike[A]: BaseOptionLike[OptArg[A], A] =
-    new OptionLikeImpl(OptArg.Empty, OptArg(_), _.isDefined, _.get)
+    new OptionLikeImpl(OptArg.Empty, OptArg.some, _.isDefined, _.get)
 
   implicit def nOptOptionLike[A]: BaseOptionLike[NOpt[A], A] =
-    new OptionLikeImpl(NOpt.Empty, NOpt(_), _.isDefined, _.get)
+    new OptionLikeImpl(NOpt.Empty, NOpt.some, _.isDefined, _.get)
 }

@@ -103,6 +103,8 @@ class RPCTest extends AnyWordSpec with Matchers with BeforeAndAfterAll {
       realRpc.doStuff(5)
       realRpc.doStuffNamed(5)
       realRpc.doStuffNamed(42)
+      realRpc.doStuffOptional(Opt(5))
+      realRpc.doStuffOptional(Opt.Empty)
       realRpc.handleMore()
       realRpc.handle
       realRpc.innerRpc("innerName").proc()
@@ -116,6 +118,8 @@ class RPCTest extends AnyWordSpec with Matchers with BeforeAndAfterAll {
         RawInvocation("doStuffInt", List("5")),
         RawInvocation("doStuffNamed", List("5")),
         RawInvocation("doStuffNamed", List()),
+        RawInvocation("doStuffOptional", List("5")),
+        RawInvocation("doStuffOptional", List()),
         RawInvocation("handleMore", Nil),
         RawInvocation("handle", Nil),
 

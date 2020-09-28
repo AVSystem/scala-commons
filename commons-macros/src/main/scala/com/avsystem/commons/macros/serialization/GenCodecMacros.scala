@@ -9,6 +9,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   import c.universe._
 
+  override def allowOptionalParams: Boolean = true
+
   def mkTupleCodec[T: WeakTypeTag](elementCodecs: Tree*): Tree = instrument {
     val tupleTpe = weakTypeOf[T]
     val indices = elementCodecs.indices
@@ -169,6 +171,16 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       }
     }
 
+    def writeField(p: ApplyParam, value: Tree): Tree = p.optionLike match {
+      case Some(optionLike) =>
+        q"writeOptField(output, ${p.idx}, $value, ${optionLike.reference(Nil)})"
+      case None =>
+        val writeArgs = q"output" :: q"${p.idx}" :: value ::
+          (if (isTransientDefault(p)) List(p.defaultValue) else Nil)
+        val writeTargs = if (isOptimizedPrimitive(p)) Nil else List(p.valueType)
+        q"writeField[..$writeTargs](..$writeArgs)"
+    }
+
     def writeFields: Tree = params match {
       case Nil =>
         if (canUseFields)
@@ -180,28 +192,14 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
             }
            """
       case List(p: ApplyParam) =>
-        def writeField(value: Tree): Tree = {
-          val writeArgs = q"output" :: q"${p.idx}" :: value ::
-            (if (isTransientDefault(p)) List(p.defaultValue) else Nil)
-          val writeTargs = if (isOptimizedPrimitive(p)) Nil else List(p.valueType)
-          q"writeField[..$writeTargs](..$writeArgs)"
-        }
-
         if (canUseFields)
-          writeField(q"value.${p.sym.name}")
+          writeField(p, q"value.${p.sym.name}")
         else
           q"""
             val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
-            if(unapplyRes.isEmpty) unapplyFailed else ${writeField(q"unapplyRes.get")}
+            if(unapplyRes.isEmpty) unapplyFailed else ${writeField(p, q"unapplyRes.get")}
            """
       case _ =>
-        def writeField(p: ApplyParam, value: Tree): Tree = {
-          val writeArgs = q"output" :: q"${p.idx}" :: value ::
-            (if (isTransientDefault(p)) List(p.defaultValue) else Nil)
-          val writeTargs = if (isOptimizedPrimitive(p)) Nil else List(p.valueType)
-          q"writeField[..$writeTargs](..$writeArgs)"
-        }
-
         if (canUseFields)
           q"..${params.map(p => writeField(p, q"value.${p.sym.name}"))}"
         else
@@ -265,16 +263,20 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
     } else {
 
-      def readField(param: ApplyParam): Tree =
-        param.defaultValue match {
+      def readField(param: ApplyParam): Tree = param.optionLike match {
+        case Some(optionLike) =>
+          q"getOptField(fieldValues, ${param.idx}, ${optionLike.reference(Nil)})"
+        case None => param.defaultValue match {
           case EmptyTree => q"getField[${param.valueType}](fieldValues, ${param.idx})"
           case tree => q"getField[${param.valueType}](fieldValues, ${param.idx}, $tree)"
         }
+      }
 
       def generatedWrite(sym: Symbol): Tree =
         q"writeField(${nameBySym(sym)}, output, ${mkParamLessCall(q"value", sym)}, ${genDepNames(sym)})"
 
-      val useProductCodec = canUseFields && generated.isEmpty && !params.exists(isTransientDefault) &&
+      val useProductCodec = canUseFields && generated.isEmpty &&
+        !params.exists(p => isTransientDefault(p) || p.optionLike.isDefined) &&
         (isScalaJs || !params.exists(isOptimizedPrimitive))
 
       val baseClass = TypeName(if (useProductCodec) "ProductCodec" else "ApplyUnapplyCodec")
@@ -296,14 +298,20 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           }
          """
 
+      val allOptionLikes = params.flatMap(_.optionLike).toSet
+      val optionLikeDecls = allOptionLikes.collect {
+        case ii: InferredImplicit => mkPrivateLazyValOrDef(ii)
+      }
+
       q"""
         new $SerializationPkg.$baseClass[$dtpe](
           ${dtpe.toString},
           ${typeOf[Null] <:< dtpe},
           ${mkArray(StringCls, params.map(p => nameBySym(p.sym)))}
         ) {
+          ..$optionLikeDecls
           def dependencies = {
-            ..${cachedImplicitDeclarations(ci => q"val ${ci.name} = ${ci.body}")}
+            ..${cachedImplicitDeclarations(ci => if(!allOptionLikes.contains(ci)) q"val ${ci.name} = ${ci.body}" else q"()")}
             ${mkArray(tq"$GenCodecCls[_]", params.map(_.instance))}
           }
           ..${generated.collect({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
@@ -478,11 +486,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val tpe = weakTypeOf[T].dealias
     val subTcTpe = typeClassInstance(tpe)
     val au = applyUnapplyFor(tpe).getOrElse(abort(s"$tpe is not a case class or case class like type"))
-    val applyParams = au.params.zipWithIndex.map { case (s, pidx) =>
-      val defaultValue = au.defaultValueFor(s, pidx)
-      ApplyParam(pidx, s, defaultValue, dependency(actualParamType(s), subTcTpe, s))
-    }
-    val unguarded = forApplyUnapply(au, applyParams)
+    val unguarded = forApplyUnapply(au, applyParams(au, subTcTpe))
     withRecursiveImplicitGuard(tpe, unguarded)
   }
 
@@ -491,11 +495,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val tcTpe = typeClassInstance(tpe)
     applyUnapplyFor(tpe, applyUnapplyProvider) match {
       case Some(au) =>
-        val dependencies = au.params.zipWithIndex.map { case (s, pidx) =>
-          val defaultValue = au.defaultValueFor(s, pidx)
-          ApplyParam(pidx, s, defaultValue, dependency(actualParamType(s), tcTpe, s))
-        }
-        forApplyUnapply(au, dependencies)
+        forApplyUnapply(au, applyParams(au, tcTpe))
       case None =>
         abort(s"Cannot derive GenCodec for $tpe from `apply` and `unapply`/`unapplySeq` methods of ${applyUnapplyProvider.tpe}")
     }

@@ -73,21 +73,21 @@ final class forTypeParams extends RawParamAnnotation
   * `@rpcMethodMetadata` applied on metadata parameter of RPC trait metadata class indicates that this parameter holds
   * metadata for RPC method(s) (one, some or all, depending on [[com.avsystem.commons.meta.SymbolArity SymbolArity]],
   * tagging, etc.).
-  **/
+  * */
 final class rpcMethodMetadata extends MetadataParamStrategy
 
 /**
   * `@rpcParamMetadata` applied on metadata parameter of RPC method metadata class indicates that this parameter holds
   * metadata for RPC parameter(s) (one, some or all, depending on [[com.avsystem.commons.meta.SymbolArity SymbolArity]]],
   * tagging, etc.).
-  **/
+  * */
 final class rpcParamMetadata extends MetadataParamStrategy
 
 /**
   * `@rpcTypeParamMetadata` applied on metadata parameter of RPC method metadata class indicates that this parameter holds
   * metadata for RPC type parameter(s) (one, some or all, depending on [[com.avsystem.commons.meta.SymbolArity SymbolArity]]],
   * tagging, etc.).
-  **/
+  * */
 final class rpcTypeParamMetadata extends MetadataParamStrategy
 
 /**
@@ -294,7 +294,7 @@ final class unmatchedParam[Tag <: RpcTag](error: String) extends RawMethodAnnota
   *
   * @tparam BaseTag base type for tags that can be used on real RPC methods
   * @param defaultTag default tag value assumed for untagged methods
-  **/
+  * */
 final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawRpcAnnotation
 
 /**
