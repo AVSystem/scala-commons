@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import scala.annotation.StaticAnnotation
-
 /**
   * Can be applied on case class fields (for `GenCodec` generation) and RPC parameters (for RPC interfaces)
   * collected into a map of raw values.
