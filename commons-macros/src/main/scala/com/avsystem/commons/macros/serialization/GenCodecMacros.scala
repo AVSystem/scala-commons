@@ -212,21 +212,29 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
     }
 
+    def mayBeTransient(p: ApplyParam): Boolean =
+      p.optionLike.nonEmpty || isTransientDefault(p)
+
+    def transientValue(p: ApplyParam): Tree = p.optionLike match {
+      case Some(optionLike) => q"${optionLike.reference(Nil)}.none"
+      case None => p.defaultValue
+    }
+
     def countTransientFields: Tree =
       if (canUseFields)
-        params.filter(isTransientDefault).foldLeft[Tree](q"0") {
-          (acc, p) => q"$acc + (if(value.${p.sym.name} == ${p.defaultValue}) 1 else 0)"
+        params.filter(mayBeTransient).foldLeft[Tree](q"0") {
+          (acc, p) => q"$acc + (if(value.${p.sym.name} == ${transientValue(p)}) 1 else 0)"
         }
-      else if (!params.exists(isTransientDefault)) q"0"
+      else if (!params.exists(mayBeTransient)) q"0"
       else params match {
         case List(p: ApplyParam) =>
           q"""
             val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
-            if(unapplyRes.isEmpty) unapplyFailed else if(unapplyRes.get == ${p.defaultValue}) 1 else 0
+            if(unapplyRes.isEmpty) unapplyFailed else if(unapplyRes.get == ${transientValue(p)}) 1 else 0
           """
         case _ =>
-          val res = params.filter(isTransientDefault).foldLeft[Tree](q"0") {
-            (acc, p) => q"$acc + (if(t.${tupleGet(p.idx)} == ${p.defaultValue}) 1 else 0)"
+          val res = params.filter(mayBeTransient).foldLeft[Tree](q"0") {
+            (acc, p) => q"$acc + (if(t.${tupleGet(p.idx)} == ${transientValue(p)}) 1 else 0)"
           }
           q"""
             val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
@@ -275,8 +283,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       def generatedWrite(sym: Symbol): Tree =
         q"writeField(${nameBySym(sym)}, output, ${mkParamLessCall(q"value", sym)}, ${genDepNames(sym)})"
 
-      val useProductCodec = canUseFields && generated.isEmpty &&
-        !params.exists(p => isTransientDefault(p) || p.optionLike.isDefined) &&
+      val useProductCodec = canUseFields && generated.isEmpty && !params.exists(mayBeTransient) &&
         (isScalaJs || !params.exists(isOptimizedPrimitive))
 
       val baseClass = TypeName(if (useProductCodec) "ProductCodec" else "ApplyUnapplyCodec")
