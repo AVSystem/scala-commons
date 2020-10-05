@@ -458,16 +458,16 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
     implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]
-  ): GenObjectCodec[M[K, V] with BMap[K, V]] =
-    nullableObject[M[K, V] with BMap[K, V]](
+  ): GenObjectCodec[M[K, V]] =
+    nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.foreach({ case (k, v) => writeMapEntry(oo, k, v) })
     )
 
   implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
     implicit cbf: JCanBuildFrom[(K, V), M[K, V]]
-  ): GenObjectCodec[M[K, V] with JMap[K, V]] =
-    nullableObject[M[K, V] with JMap[K, V]](
+  ): GenObjectCodec[M[K, V]] =
+    nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.entrySet.asScala.foreach(e => writeMapEntry(oo, e.getKey, e.getValue))
     )
