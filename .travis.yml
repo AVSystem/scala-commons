@@ -5,7 +5,7 @@ scala:
   - 2.12.12
 
 jdk:
-  - openjdk8
+  - openjdk11
 
 before_install:
   - ./install-redis.sh
