@@ -106,17 +106,6 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
       }.toMap
     }
 
-    def caseRefFor[E, T0 <: T](prefix: MongoRef[E, T], subclass: Class[T0]): MongoRef[E, T0] = {
-      def asAdtFormat[C](cse: Case[_], codec: GenCodec[_]): MongoAdtFormat[C] =
-        cse.asInstanceOf[Case[C]].asAdtFormat(codec.asInstanceOf[GenCodec[C]])
-
-      val (caseNames, format) = casesByClass.getOpt(subclass).map(c => (List(c.info.rawName), asAdtFormat[T0](c, codec)))
-        .orElse(subUnionsByClass.getOpt(subclass).map(u => (u.cases.map(_.info.rawName), u.asInstanceOf[Union[T0]])))
-        .getOrElse(throw new NoSuchElementException(s"unrecognized subclass: $subclass"))
-
-      MongoRef.AsSubtype(prefix, flattenAnnot.caseFieldName, caseNames, format)
-    }
-
     def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoRef[E, T0] = {
       @tailrec def loop(cases: List[Case[_]], rawName: Opt[String]): Unit = cases match {
         case cse :: tail =>
@@ -133,6 +122,25 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
       cases.headOpt
         .map(_.asInstanceOf[Case[T]].fieldRefFor[E, T0](prefix, scalaFieldName))
         .getOrElse(throw new IllegalArgumentException("empty sealed hierarchy"))
+    }
+
+    private def subtypeInfo[T0](subclass: Class[T0]): (List[String], MongoFormat[T0]) = {
+      def asAdtFormat[C](cse: Case[_], codec: GenCodec[_]): MongoAdtFormat[C] =
+        cse.asInstanceOf[Case[C]].asAdtFormat(codec.asInstanceOf[GenCodec[C]])
+
+      casesByClass.getOpt(subclass).map(c => (List(c.info.rawName), asAdtFormat[T0](c, codec)))
+        .orElse(subUnionsByClass.getOpt(subclass).map(u => (u.cases.map(_.info.rawName), u.asInstanceOf[Union[T0]])))
+        .getOrElse(throw new NoSuchElementException(s"unrecognized subclass: $subclass"))
+    }
+
+    def caseRefFor[E, T0 <: T](prefix: MongoRef[E, T], subclass: Class[T0]): MongoRef[E, T0] = {
+      val (caseNames, format) = subtypeInfo(subclass)
+      MongoRef.AsSubtype(prefix, flattenAnnot.caseFieldName, caseNames, format)
+    }
+
+    def caseConditionFor[E, T0 <: T](prefix: MongoRef[E, T], subclass: Class[T0]): MongoCondition[E] = {
+      val (caseNames, _) = subtypeInfo(subclass)
+      MongoCondition.IsSubtype(prefix, flattenAnnot.caseFieldName, caseNames)
     }
   }
 

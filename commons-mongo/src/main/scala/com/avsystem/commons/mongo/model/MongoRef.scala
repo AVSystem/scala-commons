@@ -10,17 +10,13 @@ sealed trait MongoProjection[E, T]
 sealed trait MongoRef[E, T] extends MongoProjection[E, T] { self =>
   def format: MongoFormat[T]
 
+  // this macro effectively calls `caseRefFor` while doing some additional static checks
   def ref[T0](fun: T => T0): MongoRef[E, T0] = macro MongoMacros.refImpl
-
-  @macroPrivate def fieldRefFor[T0](scalaFieldName: String): MongoRef[E, T0] =
-    format.assumeAdt.fieldRefFor(this, scalaFieldName)
-
-  @macroPrivate def caseRefFor[C <: T : ClassTag]: MongoRef[E, C] =
-    format.assumeUnion.caseRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 
   def andThen[T0](other: MongoRef[T, T0]): MongoRef[E, T0] =
     MongoRef.AndThen(this, other)
 
+  // this macro effectively calls `fieldRefFor` while doing some additional static checks
   def as[C <: T]: MongoRef[E, C] = macro MongoMacros.asSubtype[C]
 
   def satisfies(subQuery: MongoCondition[T]): MongoCondition[E] = subQuery.on(this)
@@ -40,7 +36,8 @@ sealed trait MongoRef[E, T] extends MongoProjection[E, T] { self =>
   def isNot(value: T): MongoCondition[E] =
     MongoCondition.ValueSatisfies(this, MongoRefCondition.Ne(value))
 
-  def is[C <: T]: MongoCondition[E] = ???
+  // this macro effectively calls `caseConditionFor` while doing some additional static checks
+  def is[C <: T]: MongoCondition[E] = macro MongoMacros.isSubtype[C]
 
   def in(values: Iterable[T]): MongoCondition[E] =
     MongoCondition.ValueSatisfies(this, MongoRefCondition.In(values))
@@ -63,6 +60,18 @@ sealed trait MongoRef[E, T] extends MongoProjection[E, T] { self =>
 
   def <=(value: T): MongoCondition[E] =
     MongoCondition.ValueSatisfies(this, MongoRefCondition.Lte(value))
+
+  // The format passed as implicit is not used in runtime but serves as a static check
+  // to detect situations where someone forgot about MongoDataCompanion on their data type
+  // (fields that only have GenCodec are valid and their fallback format is MongoFormat.Leaf)
+  @macroPrivate def fieldRefFor[T0](scalaFieldName: String)(implicit f: MongoAdtFormat[_ >: T]): MongoRef[E, T0] =
+    format.assumeAdt.fieldRefFor(this, scalaFieldName)
+
+  @macroPrivate def caseRefFor[C <: T : ClassTag]: MongoRef[E, C] =
+    format.assumeUnion.caseRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
+
+  @macroPrivate def caseConditionFor[C <: T: ClassTag]: MongoCondition[E] =
+    format.assumeUnion.caseConditionFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 }
 object MongoRef {
   implicit class IterableRefOps[C[X] <: Iterable[X], E, T](private val ref: MongoRef[E, C[T]]) extends AnyVal {
@@ -86,7 +95,9 @@ object MongoRef {
   }
 
   // Deliberately not calling this IdentityRef so that it doesn't get confused with IdRef (for database ID field)
-  final case class SelfRef[T](format: MongoFormat[T]) extends MongoRef[T, T]
+  final case class SelfRef[T](
+    format: MongoFormat[T]
+  ) extends MongoRef[T, T]
 
   final case class FieldRef[E, E0, T](
     prefix: MongoRef[E, E0],
@@ -104,7 +115,7 @@ object MongoRef {
   final case class AsSubtype[E, T0, T <: T0](
     ref: MongoRef[E, T0],
     caseFieldName: String,
-    caseValues: Iterable[String],
+    caseNames: Iterable[String],
     format: MongoFormat[T]
   ) extends MongoRef[E, T]
 }
@@ -148,8 +159,8 @@ object MongoCondition {
   final case class IsSubtype[E, T](
     ref: MongoRef[E, T],
     caseFieldName: String,
-    caseValues: Iterable[String]
-  )
+    caseNames: Iterable[String]
+  ) extends MongoCondition[E]
 
   def True[E]: MongoCondition[E] = Constant(true)
   def False[E]: MongoCondition[E] = Constant(false)

@@ -58,15 +58,24 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
   def selfRefImpl(fun: Tree): Tree =
     q"${c.prefix}.SelfRef.ref($fun)"
 
+  private def validateSubtype(tpe: Type): Type = {
+    val cSym = tpe.typeSymbol
+    if (!cSym.isClass || (!cSym.asClass.isSealed && cSym.isAbstract)) {
+      abort(s"$tpe is not a case class/object or intermediate sealed trait/class")
+    }
+    tpe
+  }
+
   def asSubtype[C: c.WeakTypeTag]: Tree = {
-    val cTpe = weakTypeOf[C].dealias //TODO: protect against Null/Nothing/singletons?
-    val cSym = cTpe.typeSymbol
-    if (cSym.isClass && (cSym.asClass.isSealed || !cSym.isAbstract))
-      q"${c.prefix.tree}.caseRefFor[$cTpe]"
-    else
-      abort(s"$cTpe is not a case class/object or intermediate sealed trait/class")
+    val cTpe = validateSubtype(weakTypeOf[C].dealias)
+    q"${c.prefix.tree}.caseRefFor[$cTpe]"
   }
 
   def selfAsSubtype[C: c.WeakTypeTag]: Tree =
     q"${c.prefix}.SelfRef.as[${weakTypeOf[C]}]"
+
+  def isSubtype[C: c.WeakTypeTag]: Tree = {
+    val cTpe = validateSubtype(weakTypeOf[C].dealias)
+    q"${c.prefix.tree}.caseConditionFor[$cTpe]"
+  }
 }
