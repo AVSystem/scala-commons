@@ -77,16 +77,22 @@ trait MongoFormatLowPriority { this: MongoFormat.type =>
 }
 
 sealed trait MongoAdtFormat[T] extends MongoFormat[T] with TypedMetadata[T] {
+  implicit def codec: GenObjectCodec[T]
+  // this is not named `classTag` in order to avoid naming conflict with `com.avsystem.commons.classTag`
+  implicit def dataClassTag: ClassTag[T]
+
   def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoRef[E, T0]
 }
 object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
   @positioned(positioned.here)
-  case class Union[T](
-    @composite info: GenUnionInfo[T],
-    @infer codec: GenCodec[T],
-    @reifyAnnot flattenAnnot: flatten,
-    @multi @adtCaseMetadata cases: List[Case[_]],
+  final class Union[T](
+    @composite val info: GenUnionInfo[T],
+    @infer val codec: GenObjectCodec[T],
+    @infer val dataClassTag: ClassTag[T],
+    @reifyAnnot val flattenAnnot: flatten,
+    @multi @adtCaseMetadata val cases: List[Case[_]],
   ) extends MongoAdtFormat[T] {
+
     lazy val casesByClass: Map[Class[_], Case[_]] =
       cases.toMapBy(_.classTag.runtimeClass)
 
@@ -101,8 +107,11 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
           case (_, buf) => buf += cse
         }
       }
-      casesPerClass.valuesIterator.map { case (subUnion: SealedParent[p], cases) =>
-        (subUnion.classTag.runtimeClass, Union(subUnion.info, codec.asInstanceOf[GenCodec[p]], flattenAnnot, cases.result()))
+      // using collect (not map) because apparently scalac thinks the match is not exhaustive
+      casesPerClass.valuesIterator.collect {
+        case (parent: SealedParent[p], cases) =>
+          val subUnion = new Union(parent.info, codec.asInstanceOf[GenObjectCodec[p]], parent.classTag, flattenAnnot, cases.result())
+          (parent.classTag.runtimeClass, subUnion)
       }.toMap
     }
 
@@ -125,8 +134,8 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     }
 
     private def subtypeInfo[T0](subclass: Class[T0]): (List[String], MongoFormat[T0]) = {
-      def asAdtFormat[C](cse: Case[_], codec: GenCodec[_]): MongoAdtFormat[C] =
-        cse.asInstanceOf[Case[C]].asAdtFormat(codec.asInstanceOf[GenCodec[C]])
+      def asAdtFormat[C](cse: Case[_], codec: GenObjectCodec[_]): MongoAdtFormat[C] =
+        cse.asInstanceOf[Case[C]].asAdtFormat(codec.asInstanceOf[GenObjectCodec[C]])
 
       casesByClass.getOpt(subclass).map(c => (List(c.info.rawName), asAdtFormat[T0](c, codec)))
         .orElse(subUnionsByClass.getOpt(subclass).map(u => (u.cases.map(_.info.rawName), u.asInstanceOf[Union[T0]])))
@@ -147,19 +156,23 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
   // this class exists only because I can't put GenCodec into Record/Singleton when they are used as Union cases
   // because GenCodec may not be declared explicitly for case classes in a sealed hierarchy
   @positioned(positioned.here)
-  case class Record[T](
-    @composite record: RecordCase[T],
-    @infer codec: GenCodec[T]
+  final class Record[T](
+    @composite val record: RecordCase[T],
+    @infer val codec: GenObjectCodec[T]
   ) extends MongoAdtFormat[T] {
+    def dataClassTag: ClassTag[T] = record.classTag
+
     def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoRef[E, T0] =
       record.fieldRefFor(prefix, scalaFieldName)
   }
 
   @positioned(positioned.here)
-  case class Singleton[T](
-    @composite singleton: SingletonCase[T],
-    @infer codec: GenCodec[T]
+  final class Singleton[T](
+    @composite val singleton: SingletonCase[T],
+    @infer val codec: GenObjectCodec[T]
   ) extends MongoAdtFormat[T] {
+    def dataClassTag: ClassTag[T] = singleton.classTag
+
     def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoRef[E, T0] =
       singleton.fieldRefFor(prefix, scalaFieldName)
   }
@@ -172,18 +185,18 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     def getField(scalaFieldName: String): Opt[Field[_]]
     def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoRef[E, T0]
 
-    def asAdtFormat(codec: GenCodec[T]): MongoAdtFormat[T]
+    def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T]
   }
 
   @positioned(positioned.here)
-  case class RecordCase[T](
-    @composite info: GenCaseInfo[T],
-    @infer classTag: ClassTag[T],
-    @multi @adtParamMetadata @allowOptional fields: List[Field[_]],
-    @multi @adtCaseSealedParentMetadata sealedParents: List[SealedParent[_]]
+  final class RecordCase[T](
+    @composite val info: GenCaseInfo[T],
+    @infer val classTag: ClassTag[T],
+    @multi @adtParamMetadata @allowOptional val fields: List[Field[_]],
+    @multi @adtCaseSealedParentMetadata val sealedParents: List[SealedParent[_]]
   ) extends Case[T] {
-    def asAdtFormat(codec: GenCodec[T]): MongoAdtFormat[T] =
-      Record(this, codec)
+    def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T] =
+      new Record(this, codec)
 
     def transparentWrapper: Boolean =
       info.transparent && fields.size == 1
@@ -204,14 +217,14 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
   }
 
   @positioned(positioned.here)
-  case class SingletonCase[T](
-    @composite info: GenCaseInfo[T],
-    @infer classTag: ClassTag[T],
-    @multi @adtCaseSealedParentMetadata sealedParents: List[SealedParent[_]],
-    @infer @checked value: ValueOf[T],
+  final class SingletonCase[T](
+    @composite val info: GenCaseInfo[T],
+    @infer val classTag: ClassTag[T],
+    @multi @adtCaseSealedParentMetadata val sealedParents: List[SealedParent[_]],
+    @infer @checked val value: ValueOf[T],
   ) extends Case[T] {
-    def asAdtFormat(codec: GenCodec[T]): MongoAdtFormat[T] =
-      Singleton(this, codec)
+    def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T] =
+      new Singleton(this, codec)
 
     //TODO: @generated
     def getField(scalaFieldName: String): Opt[Field[_]] = Opt.Empty
@@ -220,26 +233,26 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
       throw new NoSuchElementException(s"Field $scalaFieldName not found")
   }
 
-  case class Field[T](
-    @composite info: GenParamInfo[T],
-    @infer format: MongoFormat[T]
+  final class Field[T](
+    @composite val info: GenParamInfo[T],
+    @infer val format: MongoFormat[T]
   ) extends TypedMetadata[T]
 
-  case class SealedParent[T](
-    @composite info: GenUnionInfo[T],
-    @infer classTag: ClassTag[T]
+  final class SealedParent[T](
+    @composite val info: GenUnionInfo[T],
+    @infer val classTag: ClassTag[T]
   ) extends TypedMetadata[T]
 }
 
 trait MongoAdtInstances[T] {
-  def codec: GenCodec[T]
+  def codec: GenObjectCodec[T]
   def format: MongoAdtFormat[T]
 }
 
 object MongoImplicits extends BsonGenCodecs
 
 abstract class MongoDataCompanion[E](implicit instances: MacroInstances[MongoImplicits.type, MongoAdtInstances[E]]) {
-  implicit val codec: GenCodec[E] = instances(MongoImplicits, this).codec
+  implicit val codec: GenObjectCodec[E] = instances(MongoImplicits, this).codec
   implicit val format: MongoAdtFormat[E] = instances(MongoImplicits, this).format
 
   type Ref[T] = MongoRef[E, T]
