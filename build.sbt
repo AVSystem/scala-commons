@@ -15,9 +15,7 @@ val scalatestVersion = "3.2.1"
 val scalatestplusScalacheckVersion = "3.2.1.0"
 val scalacheckVersion = "1.14.3"
 val jettyVersion = "9.4.31.v20200723"
-val mongoVersion = "3.12.7"
-val mongoReactiveVersion = "1.13.1"
-val mongoScalaVersion = "2.9.0"
+val mongoVersion = "4.1.1"
 val kafkaVersion = "2.6.0"
 val springVersion = "4.0.9.RELEASE"
 val typesafeConfigVersion = "1.4.0"
@@ -366,11 +364,7 @@ lazy val `commons-mongo` = project
     libraryDependencies ++= Seq(
       "com.google.guava" % "guava" % guavaVersion,
       "io.monix" %% "monix" % monixVersion,
-      "org.mongodb" % "mongodb-driver-core" % mongoVersion,
-      "org.mongodb" % "mongodb-driver" % mongoVersion % Optional,
-      "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,
-      "org.mongodb" % "mongodb-driver-reactivestreams" % mongoReactiveVersion % Optional,
-      "org.mongodb.scala" %% "mongo-scala-driver" % mongoScalaVersion % Optional,
+      "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion,
     ),
   )
 
