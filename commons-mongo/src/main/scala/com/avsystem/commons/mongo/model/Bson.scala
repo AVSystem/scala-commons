@@ -7,20 +7,6 @@ object Bson {
   final val And = "$and"
   final val Or = "$or"
   final val Nor = "$nor"
-  final val Exists = "$exists"
-  final val Type = "$type"
-  final val Size = "$size"
-  final val Not = "$not"
-  final val Eq = "$eq"
-  final val Ne = "$ne"
-  final val In = "$in"
-  final val Nin = "$nin"
-  final val Gt = "$gt"
-  final val Gte = "$gte"
-  final val Lt = "$lt"
-  final val Lte = "$lte"
-  final val ElemMatch = "$elemMatch"
-  final val All = "$all"
 
   def document(key: String, value: BsonValue): BsonDocument =
     new BsonDocument(key, value)

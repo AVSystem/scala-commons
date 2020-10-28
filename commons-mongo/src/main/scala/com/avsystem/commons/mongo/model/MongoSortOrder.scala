@@ -16,6 +16,8 @@ case class MongoSortOrder[E](refs: Vector[(MongoPropertyRef[E, _], Boolean)]) {
   def andThenDescendingBy(ref: MongoPropertyRef[E, _]): MongoSortOrder[E] =
     andThenBy(ref, ascending = false)
 
+  //TODO: lambda-macro versions of andThenBy
+
   def toBson: BsonDocument =
     Bson.document(refs.iterator.map { case (ref, asc) => (ref.propertyPath, Bson.int(if (asc) 1 else -1)) })
 }

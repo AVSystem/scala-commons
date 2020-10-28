@@ -60,80 +60,62 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T] {
   private[mongo] def filterCreator: MongoFilter.Creator[T] =
     new MongoFilter.Creator(format)
 
-  def satisfies(filter: MongoFilter.Creator[T] => MongoFilter[T]): MongoDocumentFilter[E] =
-    satisfies(filter(new MongoFilter.Creator[T](format)))
-
-  def satisfies(filter: MongoFilter[T]): MongoDocumentFilter[E] =
+  def satisfiesFilter(filter: MongoFilter[T]): MongoDocumentFilter[E] =
     MongoDocumentFilter.PropertyValueFilter(this, filter)
 
-  def not(filter: MongoFilter.Creator[T] => MongoOperatorsFilter[T]): MongoDocumentFilter[E] =
-    not(filter(new MongoFilter.Creator[T](format)))
+  def satisfies(filter: MongoFilter.Creator[T] => MongoFilter[T]): MongoDocumentFilter[E] =
+    MongoDocumentFilter.PropertyValueFilter(this, filter(new MongoFilter.Creator[T](format)))
 
-  def not(filter: MongoOperatorsFilter[T]): MongoDocumentFilter[E] =
-    satisfies(filter.negated)
+  def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoDocumentFilter[E] =
+    satisfies(_.satisfiesOperators(operators))
+
+  def not(filter: MongoFilter.Creator[T] => MongoOperatorsFilter[T]): MongoDocumentFilter[E] =
+    satisfiesFilter(filter(new MongoFilter.Creator[T](format)).negated)
 
   def exists: MongoDocumentFilter[E] =
     exists(true)
 
   def exists(exists: Boolean): MongoDocumentFilter[E] =
-    satisfies(filterCreator.exists(exists))
+    satisfiesFilter(filterCreator.exists(exists))
 
   def hasType(bsonType: BsonType): MongoDocumentFilter[E] =
-    satisfies(filterCreator.hasType(bsonType))
+    satisfiesFilter(filterCreator.hasType(bsonType))
 
   def is(value: T): MongoDocumentFilter[E] =
-    satisfies(filterCreator.is(value))
+    satisfiesFilter(filterCreator.is(value))
 
   def isNot(value: T): MongoDocumentFilter[E] =
-    satisfies(filterCreator.isNot(value))
+    satisfiesFilter(filterCreator.isNot(value))
 
   def in(values: Iterable[T]): MongoDocumentFilter[E] =
-    satisfies(filterCreator.in(values))
+    satisfiesFilter(filterCreator.in(values))
 
   def in(values: T*): MongoDocumentFilter[E] = in(values)
 
   def notIn(values: Iterable[T]): MongoDocumentFilter[E] =
-    satisfies(filterCreator.nin(values))
+    satisfiesFilter(filterCreator.nin(values))
 
   def notIn(values: T*): MongoDocumentFilter[E] = notIn(values)
 
   def gt(value: T): MongoDocumentFilter[E] =
-    satisfies(filterCreator.gt(value))
+    satisfiesFilter(filterCreator.gt(value))
 
   def >(value: T): MongoDocumentFilter[E] = gt(value)
 
   def gte(value: T): MongoDocumentFilter[E] =
-    satisfies(filterCreator.gte(value))
+    satisfiesFilter(filterCreator.gte(value))
 
   def >=(value: T): MongoDocumentFilter[E] = gte(value)
 
   def lt(value: T): MongoDocumentFilter[E] =
-    satisfies(filterCreator.lt(value))
+    satisfiesFilter(filterCreator.lt(value))
 
   def <(value: T): MongoDocumentFilter[E] = lt(value)
 
   def lte(value: T): MongoDocumentFilter[E] =
-    satisfies(filterCreator.lte(value))
+    satisfiesFilter(filterCreator.lte(value))
 
   def <=(value: T): MongoDocumentFilter[E] = lte(value)
-
-  def rawFilter(bson: BsonDocument): MongoDocumentFilter[E] =
-    satisfies(filterCreator.rawFilter(bson))
-
-  def valueSatisfies(
-    exists: OptArg[Boolean] = OptArg.Empty,
-    bsonType: OptArg[BsonType] = OptArg.Empty,
-    eq: OptArg[T] = OptArg.Empty,
-    ne: OptArg[T] = OptArg.Empty,
-    gt: OptArg[T] = OptArg.Empty,
-    gte: OptArg[T] = OptArg.Empty,
-    lt: OptArg[T] = OptArg.Empty,
-    lte: OptArg[T] = OptArg.Empty,
-    in: OptArg[Iterable[T]] = OptArg.Empty,
-    nin: OptArg[Iterable[T]] = OptArg.Empty,
-    not: OptArg[MongoOperatorsFilter[T]] = OptArg.Empty
-  ): MongoDocumentFilter[E] =
-    satisfies(filterCreator.satisfies(exists, bsonType, eq, ne, gt, gte, lt, lte, in, nin, not))
 
   def sortOrder(ascending: Boolean): MongoSortOrder[E] =
     MongoSortOrder(this -> ascending)
@@ -167,38 +149,30 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T] {
   }
 }
 object MongoPropertyRef {
-  implicit class IterableRefOps[C[X] <: Iterable[X], E, T](private val ref: MongoPropertyRef[E, C[T]]) extends AnyVal {
-    def elementFormat: MongoFormat[T] =
-      ref.format.assumeCollection.elementFormat
-
+  implicit class CollectionRefOps[C[X] <: Iterable[X], E, T](private val ref: MongoPropertyRef[E, C[T]]) extends AnyVal {
     def size(size: Int): MongoDocumentFilter[E] =
-      ref.satisfies(ref.filterCreator.size(size))
+      ref.satisfiesFilter(ref.filterCreator.size(size))
+
+    def isEmpty: MongoDocumentFilter[E] =
+      ref.satisfiesFilter(ref.filterCreator.isEmpty)
 
     def elemMatch(filter: MongoFilter.Creator[T] => MongoFilter[T]): MongoDocumentFilter[E] =
-      elemMatch(filter(new MongoFilter.Creator[T](elementFormat)))
+      ref.satisfiesFilter(ref.filterCreator.elemMatch(filter))
 
-    def elemMatch(filter: MongoFilter[T]): MongoDocumentFilter[E] =
-      ref.satisfies(ref.filterCreator.elemMatch(filter))
+    def contains(value: T): MongoDocumentFilter[E] =
+      ref.satisfiesFilter(ref.filterCreator.contains(value))
 
-    def all(values: T*): MongoDocumentFilter[E] =
-      all(values)
+    def containsAny(values: T*): MongoDocumentFilter[E] =
+      ref.satisfiesFilter(ref.filterCreator.containsAny(values))
 
-    def all(values: Iterable[T]): MongoDocumentFilter[E] =
-      ref.satisfies(ref.filterCreator.all(values))
+    def containsAny(values: Iterable[T]): MongoDocumentFilter[E] =
+      ref.satisfiesFilter(ref.filterCreator.containsAny(values))
 
-    def collectionValueSatisfies(
-      exists: OptArg[Boolean] = OptArg.Empty,
-      bsonType: OptArg[BsonType] = OptArg.Empty,
-      eq: OptArg[C[T]] = OptArg.Empty,
-      ne: OptArg[C[T]] = OptArg.Empty,
-      in: OptArg[Iterable[C[T]]] = OptArg.Empty,
-      nin: OptArg[Iterable[C[T]]] = OptArg.Empty,
-      not: OptArg[MongoOperatorsFilter[C[T]]] = OptArg.Empty,
-      size: OptArg[Int] = OptArg.Empty,
-      elemMatch: OptArg[MongoFilter[T]] = OptArg.Empty,
-      all: OptArg[Iterable[T]] = OptArg.Empty,
-    ): MongoDocumentFilter[E] =
-      ref.satisfies(ref.filterCreator.collectionSatisfies(exists, bsonType, eq, ne, in, nin, not, size, elemMatch, all))
+    def containsAll(values: T*): MongoDocumentFilter[E] =
+      ref.satisfiesFilter(ref.filterCreator.containsAll(values))
+
+    def containsAll(values: Iterable[T]): MongoDocumentFilter[E] =
+      ref.satisfiesFilter(ref.filterCreator.containsAll(values))
   }
 }
 

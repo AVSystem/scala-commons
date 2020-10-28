@@ -4,7 +4,7 @@ package mongo.model
 import com.avsystem.commons.annotation.{macroPrivate, positioned}
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.ValueOf
-import com.avsystem.commons.mongo.{BsonGenCodecs, BsonValueInput}
+import com.avsystem.commons.mongo.{BsonGenCodecs, BsonValueInput, BsonValueOutput}
 import com.avsystem.commons.serialization._
 import org.bson.BsonValue
 
@@ -12,6 +12,9 @@ import scala.annotation.tailrec
 
 sealed trait MongoFormat[T] {
   implicit def codec: GenCodec[T]
+
+  def writeBson(value: T): BsonValue =
+    BsonValueOutput.write(value)
 
   def readBson(bsonValue: BsonValue): T =
     BsonValueInput.read[T](bsonValue)
