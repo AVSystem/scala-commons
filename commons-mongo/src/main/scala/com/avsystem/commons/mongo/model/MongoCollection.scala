@@ -19,7 +19,7 @@ class MongoCollection[E: MongoAdtFormat](rawCollection: ReactiveCollection[BsonD
   }
 
   def find[T](
-    filter: MongoDocumentFilter[E] = MongoDocumentFilter.Empty(),
+    filter: MongoDocumentFilter[E] = MongoDocumentFilter.empty,
     projection: MongoProjection[E, T] = MongoRef.SelfRef(format),
     sort: MongoSortOrder[E] = MongoSortOrder.Empty
     //TODO: all the freaking other options

@@ -208,7 +208,7 @@ object MongoRef {
     format: MongoAdtFormat[T]
   ) extends MongoDataRef[T, T] {
     def fullFormat: MongoAdtFormat[T] = format
-    def impliedFilter: MongoDocumentFilter[T] = MongoDocumentFilter.Empty()
+    def impliedFilter: MongoDocumentFilter[T] = MongoDocumentFilter.empty
   }
 
   final case class SelfAsSubtype[E, T <: E](
@@ -226,7 +226,7 @@ object MongoRef {
     fieldName: String,
     format: MongoFormat[T]
   ) extends MongoPropertyRef[E, T] {
-    def impliedFilter: MongoDocumentFilter[E] = MongoDocumentFilter.Empty()
+    def impliedFilter: MongoDocumentFilter[E] = MongoDocumentFilter.empty
   }
 
   final case class PropertyAsSubtype[E, T0, T <: T0](

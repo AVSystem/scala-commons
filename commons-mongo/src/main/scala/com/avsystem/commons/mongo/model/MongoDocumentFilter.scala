@@ -231,7 +231,7 @@ sealed trait MongoDocumentFilter[E] extends MongoFilter[E] {
   def &&(other: MongoDocumentFilter[E]): MongoDocumentFilter[E] = and(other)
 
   def or(other: MongoDocumentFilter[E]): MongoDocumentFilter[E] = (this, other) match {
-    case (Empty(), _) | (_, Empty()) => Empty()
+    case (Empty(), _) | (_, Empty()) => empty
     case (Or(thisFilters), Or(otherFilters)) => Or(thisFilters ++ otherFilters)
     case (Or(thisFilters), other) => Or(thisFilters :+ other)
     case (thiz, Or(otherFilters)) => Or(thiz +: otherFilters)
@@ -277,6 +277,10 @@ sealed trait MongoDocumentFilter[E] extends MongoFilter[E] {
   }
 }
 object MongoDocumentFilter {
+  private[this] val reusableEmpty = Empty()
+
+  def empty[E]: MongoDocumentFilter[E] = reusableEmpty.asInstanceOf[MongoDocumentFilter[E]]
+
   final case class Empty[E]() extends MongoDocumentFilter[E]
   final case class And[E](filters: Vector[MongoDocumentFilter[E]]) extends MongoDocumentFilter[E]
   final case class Or[E](filters: Vector[MongoDocumentFilter[E]]) extends MongoDocumentFilter[E]

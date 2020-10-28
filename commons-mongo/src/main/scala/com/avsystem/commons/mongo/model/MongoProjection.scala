@@ -31,7 +31,7 @@ trait MongoProjection[E, T] {
 
 object MongoProjection {
   final class Empty[E] extends MongoProjection[E, Unit] {
-    def impliedFilter: MongoDocumentFilter[E] = MongoDocumentFilter.Empty()
+    def impliedFilter: MongoDocumentFilter[E] = MongoDocumentFilter.empty
     def documentPaths: Opt[Set[String]] = Opt(Set.empty)
     def decode(doc: BsonDocument): Unit = ()
   }

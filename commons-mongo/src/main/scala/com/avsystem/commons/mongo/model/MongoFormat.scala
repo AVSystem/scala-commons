@@ -262,7 +262,7 @@ object MongoImplicits extends BsonGenCodecs
 
 abstract class MongoDataCompanion[E](
   implicit instances: MacroInstances[MongoImplicits.type, MongoAdtInstances[E]]
-) extends HasRefMacros[E, E] {
+) extends HasRefMacros[E, E] with TupleProjections[E] {
   implicit val codec: GenObjectCodec[E] = instances(MongoImplicits, this).codec
   implicit val format: MongoAdtFormat[E] = instances(MongoImplicits, this).format
 
