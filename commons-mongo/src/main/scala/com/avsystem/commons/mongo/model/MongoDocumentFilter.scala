@@ -2,9 +2,7 @@ package com.avsystem.commons
 package mongo.model
 
 import com.avsystem.commons.annotation.macroPrivate
-import org.bson.{BsonArray, BsonDocument, BsonType}
-
-import scala.util.matching.Regex
+import org.bson.{BsonArray, BsonDocument}
 
 sealed trait MongoFilter[T] {
   def on[E](prefix: MongoPropertyRef[E, T]): MongoDocumentFilter[E] =
@@ -17,58 +15,20 @@ sealed trait MongoFilter[T] {
 }
 
 object MongoFilter {
-  def apply[T: MongoFormat]: Creator[T] = new Creator(MongoFormat[T])
+  def creator[T: MongoFormat]: Creator[T] = new Creator(MongoFormat[T])
 
-  implicit def creatorForCollection[C[X] <: Iterable[X], T](creator: Creator[C[T]]): CreatorForCollection[C, T] =
-    new CreatorForCollection(creator.format)
+  class Creator[T](val format: MongoFormat[T])
+    extends QueryOperatorsDsl[T, MongoOperatorsFilter[T]] with DataTypeDsl[T, T] {
 
-  class Creator[T](private[MongoFilter] val format: MongoFormat[T]) extends AnyVal with HasRefMacros[T, T] {
     type ThisDataRef[C <: T] = MongoDataRef[T, C]
 
     @macroPrivate def thisDataRef: ThisDataRef[T] = MongoRef.SelfRef(format.assumeAdt)
 
-    private def singleOp(op: MongoQueryOperator.Creator[T] => MongoQueryOperator[T]): MongoOperatorsFilter[T] =
-      satisfiesOperators(c => Seq(op(c)))
+    protected def wrapQueryOperator(op: MongoQueryOperator[T]): MongoOperatorsFilter[T] =
+      MongoOperatorsFilter(Seq(op))
 
     def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoOperatorsFilter[T] =
       MongoOperatorsFilter(operators(new MongoQueryOperator.Creator(format)))
-
-    def exists: MongoOperatorsFilter[T] = exists(true)
-    def exists(exists: Boolean): MongoOperatorsFilter[T] = singleOp(_.exists(exists))
-    def hasType(bsonType: BsonType): MongoOperatorsFilter[T] = singleOp(_.hasType(bsonType))
-    def is(value: T): MongoOperatorsFilter[T] = singleOp(_.is(value))
-    def isNot(value: T): MongoOperatorsFilter[T] = singleOp(_.isNot(value))
-    def in(values: T*): MongoOperatorsFilter[T] = in(values)
-    def in(values: Iterable[T]): MongoOperatorsFilter[T] = singleOp(_.in(values))
-    def nin(values: T*): MongoOperatorsFilter[T] = nin(values)
-    def nin(values: Iterable[T]): MongoOperatorsFilter[T] = singleOp(_.nin(values))
-    def gt(value: T): MongoOperatorsFilter[T] = singleOp(_.gt(value))
-    def >(value: T): MongoOperatorsFilter[T] = gt(value)
-    def gte(value: T): MongoOperatorsFilter[T] = singleOp(_.gte(value))
-    def >=(value: T): MongoOperatorsFilter[T] = gte(value)
-    def lt(value: T): MongoOperatorsFilter[T] = singleOp(_.lt(value))
-    def <(value: T): MongoOperatorsFilter[T] = lt(value)
-    def lte(value: T): MongoOperatorsFilter[T] = singleOp(_.lte(value))
-    def <=(value: T): MongoOperatorsFilter[T] = lte(value)
-    def regex(pattern: Regex): MongoOperatorsFilter[T] = singleOp(_.regex(pattern))
-    def regex(pattern: String): MongoOperatorsFilter[T] = singleOp(_.regex(pattern))
-    def startsWith(prefix: String): MongoOperatorsFilter[T] = regex(new Regex("^" + Regex.quote(prefix)))
-  }
-
-  class CreatorForCollection[C[X] <: Iterable[X], T](private val format: MongoFormat[C[T]]) extends AnyVal {
-    def elementFormat: MongoFormat[T] = format.assumeCollection.elementFormat
-
-    private def singleOp(op: MongoQueryOperator.CreatorForCollection[C, T] => MongoQueryOperator[C[T]]): MongoOperatorsFilter[C[T]] =
-      MongoOperatorsFilter(Seq(op(new MongoQueryOperator.CreatorForCollection(elementFormat))))
-
-    def size(size: Int): MongoOperatorsFilter[C[T]] = singleOp(_.size(size))
-    def isEmpty: MongoOperatorsFilter[C[T]] = singleOp(_.size(0))
-    def elemMatch(filter: Creator[T] => MongoFilter[T]): MongoOperatorsFilter[C[T]] = singleOp(_.elemMatch(filter))
-    def contains(value: T): MongoOperatorsFilter[C[T]] = elemMatch(_.is(value))
-    def containsAny(values: T*): MongoOperatorsFilter[C[T]] = containsAny(values)
-    def containsAny(values: Iterable[T]): MongoOperatorsFilter[C[T]] = elemMatch(_.in(values))
-    def containsAll(values: T*): MongoOperatorsFilter[C[T]] = containsAll(values)
-    def containsAll(values: Iterable[T]): MongoOperatorsFilter[C[T]] = singleOp(_.all(values))
   }
 }
 

@@ -42,46 +42,12 @@ sealed trait MongoQueryOperator[T] extends Product {
 }
 
 object MongoQueryOperator {
-  implicit def creatorForCollection[C[X] <: Iterable[X], T](creator: Creator[C[T]]): CreatorForCollection[C, T] =
-    new CreatorForCollection(creator.format.assumeCollection.elementFormat)
+  def creator[T: MongoFormat]: Creator[T] = new Creator(MongoFormat[T])
 
-  final class Creator[T](private[MongoQueryOperator] val format: MongoFormat[T]) {
-    def is(value: T): MongoQueryOperator[T] = Eq(value, format)
-    def isNot(value: T): MongoQueryOperator[T] = Ne(value, format)
-    def gt(value: T): MongoQueryOperator[T] = Gt(value, format)
-    def gte(value: T): MongoQueryOperator[T] = Gte(value, format)
-    def lt(value: T): MongoQueryOperator[T] = Lt(value, format)
-    def lte(value: T): MongoQueryOperator[T] = Lte(value, format)
-    def in(values: Iterable[T]): MongoQueryOperator[T] = In(values, format)
-    def in(values: T*): MongoQueryOperator[T] = in(values)
-    def nin(values: Iterable[T]): MongoQueryOperator[T] = Nin(values, format)
-    def nin(values: T*): MongoQueryOperator[T] = nin(values)
-    def exists: MongoQueryOperator[T] = exists(true)
-    def exists(exists: Boolean): MongoQueryOperator[T] = Exists(exists)
-    def hasType(bsonType: BsonType): MongoQueryOperator[T] = Type(bsonType)
-    def regex(pattern: SRegex): MongoQueryOperator[T] = Regex(pattern)
-    def regex(pattern: String): MongoQueryOperator[T] = regex(new SRegex(pattern))
+  final class Creator[T](val format: MongoFormat[T])
+    extends VanillaQueryOperatorsDsl[T, MongoQueryOperator[T]] {
 
-    def text(
-      search: String,
-      language: OptArg[String] = OptArg.Empty,
-      caseSensitive: OptArg[Boolean] = OptArg.Empty,
-      diacriticSensitive: OptArg[Boolean] = OptArg.Empty,
-    ): MongoQueryOperator[T] =
-      Text(search, language.toOpt, caseSensitive.toOpt, diacriticSensitive.toOpt)
-
-    def not(filter: MongoFilter.Creator[T] => MongoOperatorsFilter[T]): MongoQueryOperator[T] = Not(filter(new MongoFilter.Creator(format)))
-    def raw(rawOperator: String, bson: BsonValue): MongoQueryOperator[T] = Raw(rawOperator, bson)
-  }
-
-  final class CreatorForCollection[C[X] <: Iterable[X], T](format: MongoFormat[T]) {
-    def size(size: Int): MongoQueryOperator[C[T]] = Size(size)
-
-    def elemMatch(filter: MongoFilter.Creator[T] => MongoFilter[T]): MongoQueryOperator[C[T]] =
-      ElemMatch(filter(new MongoFilter.Creator(format)))
-
-    def all(values: T*): MongoQueryOperator[C[T]] = all(values)
-    def all(values: Iterable[T]): MongoQueryOperator[C[T]] = All(values, format)
+    protected def wrapQueryOperator(operator: MongoQueryOperator[T]): MongoQueryOperator[T] = operator
   }
 
   final case class Eq[T](value: T, format: MongoFormat[T]) extends MongoQueryOperator[T]
