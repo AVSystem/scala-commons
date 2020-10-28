@@ -43,7 +43,7 @@ object ContainsUnion extends MongoDataCompanion[ContainsUnion] {
   final val MoreSpecificUnionRef = ref(_.union).as[MoreSpecificUnion]
 
   final val IntsRef = MoreSpecificUnionRef.ref(_.record.ints)
-  final val Filter = IntsRef.satisfiesOperators(c => Seq(c.exists, c.not(_.size(0))))
+  final val Filter = IntsRef.elemMatch(_.satisfiesOperators(c => Seq(c.gt(0), c.lt(10))))
 }
 
 object Testujo {

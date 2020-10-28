@@ -360,6 +360,9 @@ final class ProductProjection[E, T](componentProjections: Seq[MongoProjection[E,
     loop(Set.empty, componentProjections.iterator)
   }
 
+  def showRecordId: Boolean =
+    componentProjections.exists(_.showRecordId)
+
   def decode(doc: BsonDocument): T =
     applier.apply(componentProjections.map(_.decode(doc)))
 }

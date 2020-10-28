@@ -24,6 +24,7 @@ trait HasRefMacros[E, T] extends Any {
 
 sealed trait MongoRef[E, T] extends MongoProjection[E, T] with HasRefMacros[E, T] { self =>
   def format: MongoFormat[T]
+  def showRecordId: Boolean = false
 
   @macroPrivate def subtypeRefFor[C <: T : ClassTag]: ThisDataRef[C]
 
