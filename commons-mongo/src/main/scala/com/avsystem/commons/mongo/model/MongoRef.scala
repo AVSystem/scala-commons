@@ -22,13 +22,6 @@ trait HasRefMacros[E, T] extends Any {
   def is[C <: T]: MongoDocumentFilter[E] = macro MongoMacros.isSubtype[C]
 }
 
-sealed trait MongoProjection[E, T] {
-  def impliedFilter: MongoDocumentFilter[E]
-
-  def toProjectionBson: BsonDocument
-  def decode(doc: BsonDocument): T
-}
-
 sealed trait MongoRef[E, T] extends MongoProjection[E, T] with HasRefMacros[E, T] { self =>
   def format: MongoFormat[T]
 
@@ -52,7 +45,7 @@ sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
   @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoDataRef[E, C] =
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 
-  def toProjectionBson: BsonDocument = Bson.document()
+  def documentPaths: Opt[Set[String]] = Opt.empty
   def decode(doc: BsonDocument): T = BsonValueInput.read(doc)(format.codec)
 }
 
@@ -149,7 +142,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T] {
 
   def descendingSortOrder: MongoSortOrder[E] = sortOrder(false)
 
-  def propertyPath: String = this match {
+  lazy val propertyPath: String = this match {
     case FieldRef(_: MongoDataRef[_, _], fieldName, _) =>
       KeyEscaper.escape(fieldName)
 
@@ -160,8 +153,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T] {
       ref.propertyPath
   }
 
-  def toProjectionBson: BsonDocument =
-    Bson.document(propertyPath, Bson.int(1))
+  def documentPaths: Opt[Set[String]] = Opt(Set(propertyPath))
 
   def decode(doc: BsonDocument): T = {
     val bsonValue = propertyPath.split('.').toList.foldLeft(doc: BsonValue) {
