@@ -3,165 +3,250 @@ package mongo.model
 
 import com.avsystem.commons.annotation.macroPrivate
 import com.avsystem.commons.macros.serialization.MongoMacros
-import org.bson.BsonType
+import com.avsystem.commons.mongo.model.MongoRef.{FieldRef, PropertyAsSubtype}
+import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
+import org.bson.{BsonDocument, BsonType, BsonValue}
 
-sealed trait MongoProjection[E, T]
+trait HasRefMacros[E, T] extends Any {
+  type ThisDataRef[T0 <: T] <: MongoRef[E, T0]
 
-sealed trait MongoRef[E, T] extends MongoProjection[E, T] { self =>
-  def format: MongoFormat[T]
-
-  // this macro effectively calls `caseRefFor` while doing some additional static checks
-  def ref[T0](fun: T => T0): MongoRef[E, T0] = macro MongoMacros.refImpl
-
-  def andThen[T0](other: MongoRef[T, T0]): MongoRef[E, T0] =
-    MongoRef.AndThen(this, other)
+  @macroPrivate def thisDataRef: ThisDataRef[T]
 
   // this macro effectively calls `fieldRefFor` while doing some additional static checks
-  def as[C <: T]: MongoRef[E, C] = macro MongoMacros.asSubtype[C]
+  def ref[T0](fun: T => T0): MongoPropertyRef[E, T0] = macro MongoMacros.refImpl
 
-  def satisfies(subQuery: MongoCondition[T]): MongoCondition[E] = subQuery.on(this)
+  // this macro effectively calls `subtypeRefFor` while doing some additional static checks
+  def as[C <: T]: ThisDataRef[C] = macro MongoMacros.asSubtype[C]
 
-  def exists: MongoCondition[E] =
-    MongoCondition.ValueSatisfies(this, MongoRefCondition.Exists(true))
+  // this macro effectively calls `subtypeConditionFor` while doing some additional static checks
+  def is[C <: T]: MongoDocumentFilter[E] = macro MongoMacros.isSubtype[C]
+}
 
-  def exists(exists: Boolean): MongoCondition[E] =
-    MongoCondition.ValueSatisfies(this, MongoRefCondition.Exists(exists))
+sealed trait MongoProjection[E, T] {
+  def impliedFilter: MongoDocumentFilter[E]
 
-  def hasType(bsonType: BsonType): MongoCondition[E] =
-    MongoCondition.ValueSatisfies(this, MongoRefCondition.Type(bsonType))
+  def toProjectionBson: BsonDocument
+  def decode(doc: BsonDocument): T
+}
 
-  def is(value: T): MongoCondition[E] =
-    MongoCondition.ValueSatisfies(this, MongoRefCondition.Eq(value))
+sealed trait MongoRef[E, T] extends MongoProjection[E, T] with HasRefMacros[E, T] { self =>
+  def format: MongoFormat[T]
 
-  def isNot(value: T): MongoCondition[E] =
-    MongoCondition.ValueSatisfies(this, MongoRefCondition.Ne(value))
+  @macroPrivate def subtypeRefFor[C <: T : ClassTag]: ThisDataRef[C]
 
-  // this macro effectively calls `caseConditionFor` while doing some additional static checks
-  def is[C <: T]: MongoCondition[E] = macro MongoMacros.isSubtype[C]
-
-  def in(values: Iterable[T]): MongoCondition[E] =
-    MongoCondition.ValueSatisfies(this, MongoRefCondition.In(values))
-
-  def in(values: T*): MongoCondition[E] = in(values)
-
-  def notIn(values: Iterable[T]): MongoCondition[E] =
-    MongoCondition.ValueSatisfies(this, MongoRefCondition.Nin(values))
-
-  def notIn(values: T*): MongoCondition[E] = notIn(values)
-
-  def >(value: T): MongoCondition[E] =
-    MongoCondition.ValueSatisfies(this, MongoRefCondition.Gt(value))
-
-  def >=(value: T): MongoCondition[E] =
-    MongoCondition.ValueSatisfies(this, MongoRefCondition.Gte(value))
-
-  def <(value: T): MongoCondition[E] =
-    MongoCondition.ValueSatisfies(this, MongoRefCondition.Lt(value))
-
-  def <=(value: T): MongoCondition[E] =
-    MongoCondition.ValueSatisfies(this, MongoRefCondition.Lte(value))
-
-  // The format passed as implicit is not used in runtime but serves as a static check
-  // to detect situations where someone forgot about MongoDataCompanion on their data type
-  // (fields that only have GenCodec are valid and their fallback format is MongoFormat.Leaf)
-  @macroPrivate def fieldRefFor[T0](scalaFieldName: String)(implicit f: MongoAdtFormat[_ >: T]): MongoRef[E, T0] =
+  @macroPrivate def fieldRefFor[T0](scalaFieldName: String): MongoPropertyRef[E, T0] =
     format.assumeAdt.fieldRefFor(this, scalaFieldName)
 
-  @macroPrivate def caseRefFor[C <: T : ClassTag]: MongoRef[E, C] =
-    format.assumeUnion.caseRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
-
-  @macroPrivate def caseConditionFor[C <: T: ClassTag]: MongoCondition[E] =
-    format.assumeUnion.caseConditionFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
+  @macroPrivate def subtypeConditionFor[C <: T : ClassTag]: MongoDocumentFilter[E] =
+    format.assumeUnion.subtypeConditionFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 }
-object MongoRef {
-  implicit class IterableRefOps[C[X] <: Iterable[X], E, T](private val ref: MongoRef[E, C[T]]) extends AnyVal {
-    def hasSize(size: Int): MongoCondition[E] =
-      MongoCondition.ValueSatisfies(ref, MongoRefCondition.HasSize[C, T](size))
 
-    def exists(condition: MongoCondition[T]): MongoCondition[E] =
-      MongoCondition.ValueSatisfies(ref, MongoRefCondition.ElemMatch[C, T](condition))
+sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
+  type ThisDataRef[C <: T] = MongoDataRef[E, C]
 
-    def forall(condition: MongoCondition[T]): MongoCondition[E] =
-      MongoCondition.ValueSatisfies(ref, MongoRefCondition.All[C, T](condition))
+  @macroPrivate final def thisDataRef: ThisDataRef[T] = this
 
-    def contains(value: T): MongoCondition[E] =
-      exists(SelfRef[T](ref.format.assumeCollection.elementFormat).is(value))
+  def fullFormat: MongoAdtFormat[E]
+  def format: MongoAdtFormat[T]
 
-    def containsAny(values: Iterable[T]): MongoCondition[E] =
-      exists(SelfRef[T](ref.format.assumeCollection.elementFormat).in(values))
+  @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoDataRef[E, C] =
+    format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 
-    def containsAny(values: T*): MongoCondition[E] =
-      containsAny(values)
+  def toProjectionBson: BsonDocument = Bson.document()
+  def decode(doc: BsonDocument): T = BsonValueInput.read(doc)(format.codec)
+}
+
+sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T] {
+  type ThisDataRef[T0 <: T] = MongoPropertyRef[E, T0]
+
+  @macroPrivate final def thisDataRef: ThisDataRef[T] = this
+
+  @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoPropertyRef[E, C] =
+    format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
+
+  private[mongo] def filterCreator: MongoFilter.Creator[T] =
+    new MongoFilter.Creator(format)
+
+  def satisfies(filter: MongoFilter.Creator[T] => MongoFilter[T]): MongoDocumentFilter[E] =
+    satisfies(filter(new MongoFilter.Creator[T](format)))
+
+  def satisfies(filter: MongoFilter[T]): MongoDocumentFilter[E] =
+    MongoDocumentFilter.PropertyValueFilter(this, filter)
+
+  def not(filter: MongoFilter.Creator[T] => MongoOperatorsFilter[T]): MongoDocumentFilter[E] =
+    not(filter(new MongoFilter.Creator[T](format)))
+
+  def not(filter: MongoOperatorsFilter[T]): MongoDocumentFilter[E] =
+    satisfies(filter.negated)
+
+  def exists: MongoDocumentFilter[E] =
+    exists(true)
+
+  def exists(exists: Boolean): MongoDocumentFilter[E] =
+    satisfies(filterCreator.exists(exists))
+
+  def hasType(bsonType: BsonType): MongoDocumentFilter[E] =
+    satisfies(filterCreator.hasType(bsonType))
+
+  def is(value: T): MongoDocumentFilter[E] =
+    satisfies(filterCreator.is(value))
+
+  def isNot(value: T): MongoDocumentFilter[E] =
+    satisfies(filterCreator.isNot(value))
+
+  def in(values: Iterable[T]): MongoDocumentFilter[E] =
+    satisfies(filterCreator.in(values))
+
+  def in(values: T*): MongoDocumentFilter[E] = in(values)
+
+  def notIn(values: Iterable[T]): MongoDocumentFilter[E] =
+    satisfies(filterCreator.nin(values))
+
+  def notIn(values: T*): MongoDocumentFilter[E] = notIn(values)
+
+  def gt(value: T): MongoDocumentFilter[E] =
+    satisfies(filterCreator.gt(value))
+
+  def >(value: T): MongoDocumentFilter[E] = gt(value)
+
+  def gte(value: T): MongoDocumentFilter[E] =
+    satisfies(filterCreator.gte(value))
+
+  def >=(value: T): MongoDocumentFilter[E] = gte(value)
+
+  def lt(value: T): MongoDocumentFilter[E] =
+    satisfies(filterCreator.lt(value))
+
+  def <(value: T): MongoDocumentFilter[E] = lt(value)
+
+  def lte(value: T): MongoDocumentFilter[E] =
+    satisfies(filterCreator.lte(value))
+
+  def <=(value: T): MongoDocumentFilter[E] = lte(value)
+
+  def rawFilter(bson: BsonDocument): MongoDocumentFilter[E] =
+    satisfies(filterCreator.rawFilter(bson))
+
+  def valueSatisfies(
+    exists: OptArg[Boolean] = OptArg.Empty,
+    bsonType: OptArg[BsonType] = OptArg.Empty,
+    eq: OptArg[T] = OptArg.Empty,
+    ne: OptArg[T] = OptArg.Empty,
+    gt: OptArg[T] = OptArg.Empty,
+    gte: OptArg[T] = OptArg.Empty,
+    lt: OptArg[T] = OptArg.Empty,
+    lte: OptArg[T] = OptArg.Empty,
+    in: OptArg[Iterable[T]] = OptArg.Empty,
+    nin: OptArg[Iterable[T]] = OptArg.Empty,
+    not: OptArg[MongoOperatorsFilter[T]] = OptArg.Empty
+  ): MongoDocumentFilter[E] =
+    satisfies(filterCreator.satisfies(exists, bsonType, eq, ne, gt, gte, lt, lte, in, nin, not))
+
+  def sortOrder(ascending: Boolean): MongoSortOrder[E] =
+    MongoSortOrder(this -> ascending)
+
+  def ascendingSortOrder: MongoSortOrder[E] = sortOrder(true)
+
+  def descendingSortOrder: MongoSortOrder[E] = sortOrder(false)
+
+  def propertyPath: String = this match {
+    case FieldRef(_: MongoDataRef[_, _], fieldName, _) =>
+      KeyEscaper.escape(fieldName)
+
+    case FieldRef(prefix: MongoPropertyRef[_, _], fieldName, _) =>
+      prefix.propertyPath + "." + KeyEscaper.escape(fieldName)
+
+    case PropertyAsSubtype(ref, _, _, _) =>
+      ref.propertyPath
   }
 
+  def toProjectionBson: BsonDocument =
+    Bson.document(propertyPath, Bson.int(1))
+
+  def decode(doc: BsonDocument): T = {
+    val bsonValue = propertyPath.split('.').toList.foldLeft(doc: BsonValue) {
+      case (doc: BsonDocument, key) => doc.get(key)
+      case _ => null
+    }
+    bsonValue match {
+      case null => throw new NoSuchElementException(s"path $propertyPath not found in BSON document")
+      case _ => BsonValueInput.read(bsonValue)(format.codec)
+    }
+  }
+}
+object MongoPropertyRef {
+  implicit class IterableRefOps[C[X] <: Iterable[X], E, T](private val ref: MongoPropertyRef[E, C[T]]) extends AnyVal {
+    def elementFormat: MongoFormat[T] =
+      ref.format.assumeCollection.elementFormat
+
+    def size(size: Int): MongoDocumentFilter[E] =
+      ref.satisfies(ref.filterCreator.size(size))
+
+    def elemMatch(filter: MongoFilter.Creator[T] => MongoFilter[T]): MongoDocumentFilter[E] =
+      elemMatch(filter(new MongoFilter.Creator[T](elementFormat)))
+
+    def elemMatch(filter: MongoFilter[T]): MongoDocumentFilter[E] =
+      ref.satisfies(ref.filterCreator.elemMatch(filter))
+
+    def all(values: T*): MongoDocumentFilter[E] =
+      all(values)
+
+    def all(values: Iterable[T]): MongoDocumentFilter[E] =
+      ref.satisfies(ref.filterCreator.all(values))
+
+    def collectionValueSatisfies(
+      exists: OptArg[Boolean] = OptArg.Empty,
+      bsonType: OptArg[BsonType] = OptArg.Empty,
+      eq: OptArg[C[T]] = OptArg.Empty,
+      ne: OptArg[C[T]] = OptArg.Empty,
+      in: OptArg[Iterable[C[T]]] = OptArg.Empty,
+      nin: OptArg[Iterable[C[T]]] = OptArg.Empty,
+      not: OptArg[MongoOperatorsFilter[C[T]]] = OptArg.Empty,
+      size: OptArg[Int] = OptArg.Empty,
+      elemMatch: OptArg[MongoFilter[T]] = OptArg.Empty,
+      all: OptArg[Iterable[T]] = OptArg.Empty,
+    ): MongoDocumentFilter[E] =
+      ref.satisfies(ref.filterCreator.collectionSatisfies(exists, bsonType, eq, ne, in, nin, not, size, elemMatch, all))
+  }
+}
+
+object MongoRef {
   // Deliberately not calling this IdentityRef so that it doesn't get confused with IdRef (for database ID field)
   final case class SelfRef[T](
-    format: MongoFormat[T]
-  ) extends MongoRef[T, T]
+    format: MongoAdtFormat[T]
+  ) extends MongoDataRef[T, T] {
+    def fullFormat: MongoAdtFormat[T] = format
+    def impliedFilter: MongoDocumentFilter[T] = MongoDocumentFilter.Empty()
+  }
+
+  final case class SelfAsSubtype[E, T <: E](
+    fullFormat: MongoAdtFormat[E],
+    caseFieldName: String,
+    caseNames: List[String],
+    format: MongoAdtFormat[T],
+  ) extends MongoDataRef[E, T] {
+    def impliedFilter: MongoDocumentFilter[E] =
+      MongoDocumentFilter.subtypeFilter(this, caseFieldName, caseNames)
+  }
 
   final case class FieldRef[E, E0, T](
     prefix: MongoRef[E, E0],
-    fieldName: Opt[String], // raw name, Opt.Empty in case of a transparent wrapper
+    fieldName: String,
     format: MongoFormat[T]
-  ) extends MongoRef[E, T]
-
-  final case class AndThen[E, E0, T](
-    prefix: MongoRef[E, E0],
-    suffix: MongoRef[E0, T]
-  ) extends MongoRef[E, T] {
-    def format: MongoFormat[T] = suffix.format
+  ) extends MongoPropertyRef[E, T] {
+    def impliedFilter: MongoDocumentFilter[E] = MongoDocumentFilter.Empty()
   }
 
-  final case class AsSubtype[E, T0, T <: T0](
-    ref: MongoRef[E, T0],
+  final case class PropertyAsSubtype[E, T0, T <: T0](
+    ref: MongoPropertyRef[E, T0],
     caseFieldName: String,
-    caseNames: Iterable[String],
-    format: MongoFormat[T]
-  ) extends MongoRef[E, T]
-}
+    caseNames: List[String],
+    format: MongoAdtFormat[T]
+  ) extends MongoPropertyRef[E, T] {
+    def impliedFilter: MongoDocumentFilter[E] =
+      ref.impliedFilter && MongoDocumentFilter.subtypeFilter(ref, caseFieldName, caseNames)
+  }
 
-sealed trait MongoRefCondition[T]
-object MongoRefCondition {
-  final case class Exists[T](exists: Boolean) extends MongoRefCondition[T]
-  final case class Type[T](bsonType: BsonType) extends MongoRefCondition[T]
-  final case class Eq[T](value: T) extends MongoRefCondition[T]
-  final case class Ne[T](value: T) extends MongoRefCondition[T]
-  final case class In[T](values: Iterable[T]) extends MongoRefCondition[T]
-  final case class Nin[T](values: Iterable[T]) extends MongoRefCondition[T]
-  final case class Lt[T](value: T) extends MongoRefCondition[T]
-  final case class Lte[T](value: T) extends MongoRefCondition[T]
-  final case class Gt[T](value: T) extends MongoRefCondition[T]
-  final case class Gte[T](value: T) extends MongoRefCondition[T]
-  final case class HasSize[C[X] <: Iterable[X], T](size: Int) extends MongoRefCondition[C[T]]
-  final case class ElemMatch[C[X] <: Iterable[X], T](condition: MongoCondition[T]) extends MongoRefCondition[C[T]]
-  final case class All[C[X] <: Iterable[X], T](condition: MongoCondition[T]) extends MongoRefCondition[C[T]]
-}
-
-sealed trait MongoCondition[E] {
-  def unary_! : MongoCondition[E] = MongoCondition.Not(this)
-  def &&(other: MongoCondition[E]): MongoCondition[E] = MongoCondition.And(this, other)
-  def ||(other: MongoCondition[E]): MongoCondition[E] = MongoCondition.Or(this, other)
-
-  def on[E0](prefix: MongoRef[E0, E]): MongoCondition[E0] = MongoCondition.OnPrefix(prefix, this)
-}
-object MongoCondition {
-  final case class Constant[E](value: Boolean) extends MongoCondition[E]
-  final case class OnPrefix[E, E0](prefix: MongoRef[E, E0], condition: MongoCondition[E0]) extends MongoCondition[E]
-  final case class And[E](left: MongoCondition[E], right: MongoCondition[E]) extends MongoCondition[E]
-  final case class Or[E](left: MongoCondition[E], right: MongoCondition[E]) extends MongoCondition[E]
-  final case class Not[E](condition: MongoCondition[E]) extends MongoCondition[E]
-
-  final case class ValueSatisfies[E, T](
-    ref: MongoRef[E, T],
-    refCondition: MongoRefCondition[T]
-  ) extends MongoCondition[E]
-
-  final case class IsSubtype[E, T](
-    ref: MongoRef[E, T],
-    caseFieldName: String,
-    caseNames: Iterable[String]
-  ) extends MongoCondition[E]
-
-  def True[E]: MongoCondition[E] = Constant(true)
-  def False[E]: MongoCondition[E] = Constant(false)
+  def caseNameRef[E, T](prefix: MongoRef[E, T], caseFieldName: String): MongoPropertyRef[E, String] =
+    FieldRef(prefix, caseFieldName, MongoFormat[String])
 }

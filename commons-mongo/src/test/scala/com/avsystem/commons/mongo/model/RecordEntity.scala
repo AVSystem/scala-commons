@@ -32,4 +32,22 @@ object UnionEntity extends MongoDataCompanion[UnionEntity] {
   final val AsCaseOne = as[CaseOne]
   final val AsMoreSpecific = as[MoreSpecificUnion]
   final val RecordStrRef = as[MoreSpecificUnion].ref(_.record.str)
+  final val RecordStrRef2 = as[MoreSpecificUnion].ref(_.record).ref(_.str)
+}
+
+case class ContainsUnion(
+  @mongoId id: ObjectId,
+  union: UnionEntity
+)
+object ContainsUnion extends MongoDataCompanion[ContainsUnion] {
+  final val MoreSpecificUnionRef = ref(_.union).as[MoreSpecificUnion]
+
+  final val IntsRef = MoreSpecificUnionRef.ref(_.record.ints)
+  final val Filter = IntsRef.elemMatch(_.is(20)) || IntsRef.elemMatch(_.is(30))
+}
+
+object Testujo {
+  def main(args: Array[String]): Unit = {
+    println(ContainsUnion.Filter.toBson)
+  }
 }

@@ -42,7 +42,7 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
           val newPrefixRef = extractRefStep(prefix)
           val termSym = body.symbol.asTerm
           if (termSym.isCaseAccessor || isSealedHierarchySharedField(prefix.tpe, body.symbol.asTerm))
-            q"$newPrefixRef.fieldRefFor(${name.decodedName.toString})"
+            q"$newPrefixRef.thisDataRef.fieldRefFor(${name.decodedName.toString})"
           else wrongRef(body)
 
         case _ =>
@@ -55,9 +55,6 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
       abortAt("wrong mongo reference lambda", fun.pos)
   }
 
-  def selfRefImpl(fun: Tree): Tree =
-    q"${c.prefix}.SelfRef.ref($fun)"
-
   private def validateSubtype(tpe: Type): Type = {
     val cSym = tpe.typeSymbol
     if (!cSym.isClass || (!cSym.asClass.isSealed && cSym.isAbstract)) {
@@ -68,14 +65,11 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
   def asSubtype[C: c.WeakTypeTag]: Tree = {
     val cTpe = validateSubtype(weakTypeOf[C].dealias)
-    q"${c.prefix.tree}.caseRefFor[$cTpe]"
+    q"${c.prefix.tree}.thisDataRef.subtypeRefFor[$cTpe]"
   }
-
-  def selfAsSubtype[C: c.WeakTypeTag]: Tree =
-    q"${c.prefix}.SelfRef.as[${weakTypeOf[C]}]"
 
   def isSubtype[C: c.WeakTypeTag]: Tree = {
     val cTpe = validateSubtype(weakTypeOf[C].dealias)
-    q"${c.prefix.tree}.caseConditionFor[$cTpe]"
+    q"${c.prefix.tree}.thisDataRef.subtypeConditionFor[$cTpe]"
   }
 }
