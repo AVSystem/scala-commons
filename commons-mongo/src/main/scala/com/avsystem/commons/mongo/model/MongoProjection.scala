@@ -18,7 +18,7 @@ trait MongoProjection[E, T] {
     val result = Bson.document(paths.iterator.map(_ -> Bson.int(1)))
     if (!result.containsKey(mongoId.Id)) {
       // partial projection didn't specify that it wants _id - exclude it explicitly
-      result.put(mongoId.Id, Bson.int(-1))
+      result.put(mongoId.Id, Bson.int(0))
     }
     result
   }

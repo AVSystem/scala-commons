@@ -3,7 +3,6 @@ package mongo.model
 
 import com.avsystem.commons.annotation.macroPrivate
 import com.avsystem.commons.macros.serialization.MongoMacros
-import com.avsystem.commons.mongo.model.MongoRef.{FieldRef, PropertyAsSubtype}
 import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
 import org.bson.{BsonDocument, BsonType, BsonValue}
 
@@ -51,6 +50,9 @@ sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
 }
 
 sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T] {
+
+  import MongoRef._
+
   type ThisDataRef[T0 <: T] = MongoPropertyRef[E, T0]
 
   @macroPrivate final def thisDataRef: ThisDataRef[T] = this
