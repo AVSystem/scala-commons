@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package mongo.model
+package mongo.typed
 
 import com.avsystem.commons.annotation.macroPrivate
 import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}

@@ -1,4 +1,5 @@
-package com.avsystem.commons.mongo.model
+package com.avsystem.commons
+package mongo.typed
 
 import com.avsystem.commons.annotation.macroPrivate
 import com.avsystem.commons.macros.serialization.MongoMacros

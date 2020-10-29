@@ -1,4 +1,5 @@
-package com.avsystem.commons.mongo.model
+package com.avsystem.commons
+package mongo.typed
 
 import com.mongodb.client.model._
 

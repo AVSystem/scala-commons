@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package mongo.model
+package mongo.typed
 
 trait UpdateOperatorsDsl[T, R] {
 

@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package mongo.model
+package mongo.typed
 
 import com.avsystem.commons.mongo.mongoId
 import com.avsystem.commons.serialization.{flatten, name}

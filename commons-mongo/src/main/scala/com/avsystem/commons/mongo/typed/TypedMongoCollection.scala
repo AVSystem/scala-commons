@@ -1,10 +1,10 @@
 package com.avsystem.commons
-package mongo.model
+package mongo.typed
 
 import com.avsystem.commons.mongo.core.GenCodecRegistry
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.client.model._
-import com.mongodb.client.result.{DeleteResult, InsertManyResult, InsertOneResult, UpdateResult}
+import com.mongodb.client.result.{DeleteResult, UpdateResult}
 import com.mongodb.reactivestreams.client.{DistinctPublisher, FindPublisher, MongoCollection}
 import monix.eval.Task
 import monix.reactive.Observable
@@ -144,14 +144,14 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   def insertOne(
     value: E,
     setupOptions: InsertOneOptions => InsertOneOptions = identity
-  ): Task[InsertOneResult] =
-    single(nativeCollection.insertOne(value, setupOptions(new InsertOneOptions)))
+  ): Task[Unit] =
+    single(nativeCollection.insertOne(value, setupOptions(new InsertOneOptions))).map(_ => ())
 
   def insertMany(
     values: Seq[E],
     setupOptions: InsertManyOptions => InsertManyOptions = identity
-  ): Task[InsertManyResult] =
-    single(nativeCollection.insertMany(values.asJava, setupOptions(new InsertManyOptions)))
+  ): Task[Unit] =
+    single(nativeCollection.insertMany(values.asJava, setupOptions(new InsertManyOptions))).map(_ => ())
 
   def deleteOne(
     filter: MongoDocumentFilter[E],
