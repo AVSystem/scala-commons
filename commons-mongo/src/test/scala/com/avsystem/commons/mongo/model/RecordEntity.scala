@@ -36,10 +36,10 @@ object UnionEntity extends MongoDataCompanion[UnionEntity] {
 }
 
 case class ContainsUnion(
-  @mongoId id: ObjectId,
+  id: ObjectId,
   union: UnionEntity
-)
-object ContainsUnion extends MongoDataCompanion[ContainsUnion] {
+) extends MongoEntity[ObjectId]
+object ContainsUnion extends MongoEntityCompanion[ContainsUnion] {
   final val MoreSpecificUnionRef = ref(_.union).as[MoreSpecificUnion]
 
   final val IntsRef = MoreSpecificUnionRef.ref(_.record.ints)
@@ -52,5 +52,6 @@ object Testujo {
     println(ContainsUnion.ref(_.union).is[MoreSpecificUnion].toBson)
     println(ContainsUnion.Filter.toBson)
     println(ContainsUnion.Filter2.toBson)
+    println((ContainsUnion.Filter && ContainsUnion.Filter2).toBson)
   }
 }

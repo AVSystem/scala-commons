@@ -2,7 +2,7 @@ package com.avsystem.commons
 package mongo.model
 
 import com.avsystem.commons.mongo.core.GenCodecRegistry
-import com.mongodb.client.model.{CountOptions, DeleteOptions, EstimatedDocumentCountOptions, InsertManyOptions, InsertOneOptions}
+import com.mongodb.client.model._
 import com.mongodb.client.result.{DeleteResult, InsertManyResult, InsertOneResult}
 import com.mongodb.reactivestreams.client.{FindPublisher, MongoCollection => ReactiveCollection}
 import monix.eval.Task
@@ -11,9 +11,12 @@ import org.bson.BsonDocument
 import org.bson.codecs.configuration.CodecRegistry
 import org.reactivestreams.Publisher
 
-class MongoCollection[E: MongoAdtFormat](rawCollection: ReactiveCollection[BsonDocument]) {
+class MongoCollection[E <: BaseMongoEntity : MongoAdtFormat](rawCollection: ReactiveCollection[BsonDocument]) {
+  type ID = E#IDType
 
-  val format: MongoAdtFormat[E] = MongoAdtFormat[E]
+  final val format: MongoAdtFormat[E] = MongoAdtFormat[E]
+  final val SelfRef: MongoDataRef[E, E] = MongoRef.SelfRef(format)
+  final val IdRef: MongoPropertyRef[E, ID] = format.fieldRefFor(SelfRef, MongoEntity.Id)
 
   val nativeCollection: ReactiveCollection[E] = {
     import format._
@@ -63,9 +66,12 @@ class MongoCollection[E: MongoAdtFormat](rawCollection: ReactiveCollection[BsonD
   ): Task[Long] =
     first(nativeCollection.estimatedDocumentCount(setupOptions(new EstimatedDocumentCountOptions))).asInstanceOf[Task[Long]]
 
+  def findById(id: ID): Task[Opt[E]] =
+    find(IdRef === id, setupOptions = _.limit(1)).firstOptionL.map(_.toOpt)
+
   def find[T](
     filter: MongoDocumentFilter[E] = MongoDocumentFilter.empty,
-    projection: MongoProjection[E, T] = MongoRef.SelfRef(format),
+    projection: MongoProjection[E, T] = SelfRef,
     sort: MongoSortOrder[E] = MongoSortOrder.empty,
     setupOptions: FindPublisher[Any] => FindPublisher[Any] = identity
     //TODO: min, max, hint
@@ -84,7 +90,7 @@ class MongoCollection[E: MongoAdtFormat](rawCollection: ReactiveCollection[BsonD
       Observable.fromReactivePublisher(setupPublisher(publisher))
 
     projection match {
-      case MongoRef.SelfRef(`format`) =>
+      case SelfRef =>
         toObservable(nativeCollection.find()).asInstanceOf[Observable[T]]
       case proj =>
         toObservable(nativeCollection.find(classOf[BsonDocument])).map(proj.decode)

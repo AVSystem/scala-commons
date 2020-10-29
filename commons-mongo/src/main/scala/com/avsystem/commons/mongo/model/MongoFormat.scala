@@ -4,7 +4,7 @@ package mongo.model
 import com.avsystem.commons.annotation.{macroPrivate, positioned}
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.ValueOf
-import com.avsystem.commons.mongo.{BsonGenCodecs, BsonValueInput, BsonValueOutput}
+import com.avsystem.commons.mongo.{BsonGenCodecs, BsonValueInput, BsonValueOutput, mongoId}
 import com.avsystem.commons.serialization._
 import org.bson.BsonValue
 
@@ -276,4 +276,25 @@ abstract class MongoDataCompanion[E](
 
   type ThisDataRef[C <: E] = MongoDataRef[E, C]
   @macroPrivate def thisDataRef: ThisDataRef[E] = SelfRef
+}
+
+sealed trait BaseMongoEntity {
+  type IDType
+  @mongoId def id: IDType
+}
+
+trait MongoEntity[ID] extends BaseMongoEntity {
+  type IDType = ID
+}
+object MongoEntity {
+  final val Id = "id"
+}
+
+abstract class MongoEntityCompanion[E <: BaseMongoEntity](
+  implicit instances: MacroInstances[MongoImplicits.type, MongoAdtInstances[E]]
+) extends MongoDataCompanion[E] {
+
+  type ID = E#IDType
+
+  final val IdRef: PropertyRef[ID] = format.fieldRefFor(SelfRef, MongoEntity.Id)
 }
