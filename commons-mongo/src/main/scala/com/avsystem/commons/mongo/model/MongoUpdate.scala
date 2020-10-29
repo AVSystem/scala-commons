@@ -9,7 +9,7 @@ sealed trait MongoUpdate[E] {
   import MongoUpdate._
 
   // distinction between MultiUpdate and PropertyUpdate is mostly to avoid creating too many Vectors
-  def add(other: MongoUpdate[E]): MongoUpdate[E] = (this, other) match {
+  def and(other: MongoUpdate[E]): MongoUpdate[E] = (this, other) match {
     case (MultiUpdate(propUpdates), propUpdate: PropertyUpdate[E, _]) =>
       MultiUpdate(propUpdates :+ propUpdate)
     case (propUpdate: PropertyUpdate[E, _], MultiUpdate(propUpdates)) =>
@@ -20,8 +20,8 @@ sealed trait MongoUpdate[E] {
       MultiUpdate(propUpdates1 ++ propUpdates2)
   }
 
-  def +(other: MongoUpdate[E]): MongoUpdate[E] =
-    add(other)
+  def &(other: MongoUpdate[E]): MongoUpdate[E] =
+    and(other)
 
   def toBson: BsonDocument = this match {
     case MultiUpdate(propertyUpdates) =>
@@ -81,12 +81,7 @@ sealed trait MongoUpdateOperator[T] extends Product {
       doc.put("$each", Bson.array(push.values.iterator.map(push.format.writeBson)))
       push.position.foreach(v => doc.put("$position", Bson.int(v)))
       push.slice.foreach(v => doc.put("$slice", Bson.int(v)))
-      push.sort.foreach { v =>
-        doc.put("$sort", v match {
-          case Left(asc) => Bson.int(if (asc) 1 else -1)
-          case Right(filter) => filter.toBson
-        })
-      }
+      push.sort.foreach(v => doc.put("$sort", v.toBson))
       doc
 
     case addToSet: AddToSet[_, ct] =>
@@ -122,7 +117,7 @@ object MongoUpdateOperator {
     values: Iterable[T],
     position: Opt[Int],
     slice: Opt[Int],
-    sort: Opt[Either[Boolean, MongoSortOrder[T]]],
+    sort: Opt[MongoOrder[T]],
     format: MongoFormat[T],
   ) extends MongoUpdateOperator[C[T]]
 

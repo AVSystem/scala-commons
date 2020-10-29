@@ -33,7 +33,9 @@ sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
   def decode(doc: BsonDocument): T = BsonValueInput.read(doc)(format.codec)
 }
 
-sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T] with QueryOperatorsDsl[T, MongoDocumentFilter[E]] {
+sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
+  with QueryOperatorsDsl[T, MongoDocumentFilter[E]]
+  with UpdateOperatorsDsl[T, MongoUpdate[E]] {
 
   import MongoRef._
 
@@ -47,6 +49,9 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T] with QueryOperatorsDs
   protected def wrapQueryOperator(operator: MongoQueryOperator[T]): MongoDocumentFilter[E] =
     MongoDocumentFilter.PropertyValueFilter(this, MongoOperatorsFilter(Seq(operator)))
 
+  protected def wrapUpdateOperator(operator: MongoUpdateOperator[T]): MongoUpdate[E] =
+    MongoUpdate.PropertyUpdate(this, operator)
+
   def satisfiesFilter(filter: MongoFilter[T]): MongoDocumentFilter[E] =
     MongoDocumentFilter.PropertyValueFilter(this, filter)
 
@@ -56,12 +61,12 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T] with QueryOperatorsDs
   def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoDocumentFilter[E] =
     satisfies(_.satisfiesOperators(operators))
 
-  def sortOrder(ascending: Boolean): MongoSortOrder[E] =
-    MongoSortOrder(this -> ascending)
+  def sortOrder(ascending: Boolean): MongoDocumentOrder[E] =
+    MongoDocumentOrder(this -> ascending)
 
-  def ascendingSortOrder: MongoSortOrder[E] = sortOrder(true)
+  def ascendingSortOrder: MongoDocumentOrder[E] = sortOrder(true)
 
-  def descendingSortOrder: MongoSortOrder[E] = sortOrder(false)
+  def descendingSortOrder: MongoDocumentOrder[E] = sortOrder(false)
 
   lazy val propertyPath: String = this match {
     case FieldRef(_: MongoDataRef[_, _], fieldName, _) =>
