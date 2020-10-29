@@ -62,12 +62,17 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoDocumentFilter[E] =
     satisfies(_.satisfiesOperators(operators))
 
-  def order(ascending: Boolean): MongoDocumentOrder[E] =
-    MongoDocumentOrder(this -> ascending)
-
+  def order(ascending: Boolean): MongoDocumentOrder[E] = MongoDocumentOrder(this -> ascending)
   def ascending: MongoDocumentOrder[E] = order(true)
-
   def descending: MongoDocumentOrder[E] = order(false)
+
+  def index(indexType: MongoIndexType): MongoIndex[E] = MongoIndex(this -> indexType)
+  def ascendingIndex: MongoIndex[E] = index(MongoIndexType.Ascending)
+  def descendingIndex: MongoIndex[E] = index(MongoIndexType.Descending)
+  def hashedIndex: MongoIndex[E] = index(MongoIndexType.Hashed)
+  def textIndex: MongoIndex[E] = index(MongoIndexType.Text)
+  def twoDimIndex: MongoIndex[E] = index(MongoIndexType.TwoDim)
+  def twoDimSphereIndex: MongoIndex[E] = index(MongoIndexType.TwoDimSphere)
 
   lazy val propertyPath: String = this match {
     case FieldRef(_: MongoDataRef[_, _], fieldName, _) =>

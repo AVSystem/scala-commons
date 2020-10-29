@@ -193,4 +193,20 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     val requests = writes.iterator.map(_.toWriteModel).to[JList]
     single(nativeCollection.bulkWrite(requests, setupOptions(new BulkWriteOptions)))
   }
+
+  def createIndex(
+    index: MongoIndex[E],
+    setupOptions: IndexOptions => IndexOptions = identity
+  ): Task[String] =
+    single(nativeCollection.createIndex(index.toBson, setupOptions(new IndexOptions)))
+
+  def createIndexes(
+    indexes: Seq[(MongoIndex[E], IndexOptions)],
+    setupOptions: CreateIndexOptions => CreateIndexOptions = identity
+  ): Task[String] = {
+    val indexModels = indexes.iterator.map {
+      case (index, options) => new IndexModel(index.toBson, options)
+    }.to[JList]
+    single(nativeCollection.createIndexes(indexModels, setupOptions(new CreateIndexOptions)))
+  }
 }
