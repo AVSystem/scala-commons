@@ -100,14 +100,17 @@ sealed trait MongoDocumentFilter[E] extends MongoFilter[E] {
       case Or(filters) => filterDocs.add(Bson.document(Bson.Or, Bson.array(filters.iterator.map(_.toFilterBson(prefixPath)))))
       case Nor(filters) => filterDocs.add(Bson.document(Bson.Nor, Bson.array(filters.iterator.map(_.toFilterBson(prefixPath)))))
 
-      case PropertyValueFilter(prop, filter) => filter match {
-        case docFilter: MongoDocumentFilter[_] =>
-          docFilter.addToFilters(fullPath(prop.propertyPath).opt, filterDocs)
+      case PropertyValueFilter(prop, filter) =>
+        prop.impliedFilter.addToFilters(prefixPath, filterDocs)
 
-        case opFilter: MongoOperatorsFilter[_] =>
-          val path = fullPath(prop.propertyPath)
-          findFilterDoc(path).put(path, opFilter.toOperatorsBson)
-      }
+        filter match {
+          case docFilter: MongoDocumentFilter[_] =>
+            docFilter.addToFilters(fullPath(prop.propertyPath).opt, filterDocs)
+
+          case opFilter: MongoOperatorsFilter[_] =>
+            val path = fullPath(prop.propertyPath)
+            findFilterDoc(path).put(path, opFilter.toOperatorsBson)
+        }
     }
   }
 }

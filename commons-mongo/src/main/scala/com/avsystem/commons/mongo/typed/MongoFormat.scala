@@ -33,6 +33,13 @@ sealed trait MongoFormat[T] {
         "do you have any custom implicit MongoFormat for that type?"
     )
   }
+
+  def assumeOptional[I](implicit optionLike: OptionLike.Aux[T, I]): MongoFormat.Optional[T, I] = this match {
+    case optional: MongoFormat.Optional[T, I@unchecked] => optional
+    case _ => throw new IllegalArgumentException(
+      "Encountered a non-optional MongoFormat for an Option-like type - " +
+        "do you have a custom implicit MongoFormat for that type?")
+  }
 }
 object MongoFormat extends MongoFormatLowPriority {
   def apply[T](implicit format: MongoFormat[T]): MongoFormat[T] = format
@@ -62,15 +69,6 @@ object MongoFormat extends MongoFormatLowPriority {
       case coll: Collection[C, T] => coll
       case _ => throw new IllegalArgumentException(
         "Encountered a non-collection MongoFormat for a collection type - " +
-          "do you have a custom implicit MongoFormat for that type?")
-    }
-  }
-
-  implicit class optionalFormatOps[O, T](private val format: MongoFormat[O]) extends AnyVal {
-    def assumeOptional(implicit optionLike: OptionLike.Aux[O, T]): MongoFormat.Optional[O, T] = format match {
-      case optional: Optional[O, T] => optional
-      case _ => throw new IllegalArgumentException(
-        "Encountered a non-optional MongoFormat for an Option-like type - " +
           "do you have a custom implicit MongoFormat for that type?")
     }
   }

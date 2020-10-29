@@ -16,6 +16,7 @@ case class RecordEntity(
 ) extends MongoEntity[ObjectId]
 object RecordEntity extends MongoEntityCompanion[RecordEntity] {
   final val StrRef = SelfRef.ref(_.str)
+  final val BoolRef = ref(_.maybeBool).get
 }
 
 @flatten sealed trait UnionEntity extends MongoEntity[ObjectId] {
@@ -70,5 +71,6 @@ object Testujo {
     println(Filter2.toBson)
     println((Filter && Filter2).toBson)
     println(Update.toBson)
+    println(RecordEntity.BoolRef.is(true).toBson)
   }
 }

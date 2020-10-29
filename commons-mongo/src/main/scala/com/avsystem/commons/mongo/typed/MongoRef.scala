@@ -2,6 +2,7 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.annotation.macroPrivate
+import com.avsystem.commons.meta.OptionLike
 import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
 import org.bson.{BsonDocument, BsonValue}
 
@@ -78,6 +79,9 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     case ArrayIndexRef(prefix, index, _) =>
       prefix.propertyPath + "." + index
 
+    case GetFromOptional(prefix, _, _) =>
+      prefix.propertyPath
+
     case PropertyAsSubtype(ref, _, _, _) =>
       ref.propertyPath
   }
@@ -101,6 +105,13 @@ object MongoPropertyRef {
 
     def apply(index: Int): MongoPropertyRef[E, T] =
       MongoRef.ArrayIndexRef(ref, index, ref.format.assumeCollection.elementFormat)
+  }
+
+  implicit class OptionalRefOps[E, O, T](ref: MongoPropertyRef[E, O])(implicit optionLike: OptionLike.Aux[O, T]) {
+    def get: MongoPropertyRef[E, T] = {
+      val format = ref.format.assumeOptional
+      MongoRef.GetFromOptional(ref, format.wrappedFormat, optionLike)
+    }
   }
 }
 
@@ -128,7 +139,7 @@ object MongoRef {
     fieldName: String,
     format: MongoFormat[T]
   ) extends MongoPropertyRef[E, T] {
-    def impliedFilter: MongoDocumentFilter[E] = MongoDocumentFilter.empty
+    def impliedFilter: MongoDocumentFilter[E] = prefix.impliedFilter
   }
 
   final case class ArrayIndexRef[E, C[X] <: Iterable[X], T](
@@ -138,7 +149,7 @@ object MongoRef {
   ) extends MongoPropertyRef[E, T] {
     require(index >= 0, "array index must be non-negative")
 
-    def impliedFilter: MongoDocumentFilter[E] = MongoDocumentFilter.empty
+    def impliedFilter: MongoDocumentFilter[E] = prefix.impliedFilter
 
     // array index references are not allowed in projections, we must fetch the entire array and extract element manually
     // https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#project-specific-array-elements-in-the-returned-array
@@ -146,14 +157,23 @@ object MongoRef {
     override def decodeFrom(doc: BsonDocument): T = prefix.decodeFrom(doc).toSeq.apply(index)
   }
 
+  final case class GetFromOptional[E, O, T](
+    prefix: MongoPropertyRef[E, O],
+    format: MongoFormat[T],
+    optionLike: OptionLike.Aux[O, T]
+  ) extends MongoPropertyRef[E, T] {
+    def impliedFilter: MongoDocumentFilter[E] = prefix.impliedFilter && prefix.isNot(optionLike.none)
+    override def decodeFrom(doc: BsonDocument): T = optionLike.get(prefix.decodeFrom(doc))
+  }
+
   final case class PropertyAsSubtype[E, T0, T <: T0](
-    ref: MongoPropertyRef[E, T0],
+    prefix: MongoPropertyRef[E, T0],
     caseFieldName: String,
     caseNames: List[String],
     format: MongoAdtFormat[T]
   ) extends MongoPropertyRef[E, T] {
     def impliedFilter: MongoDocumentFilter[E] =
-      ref.impliedFilter && MongoDocumentFilter.subtypeFilter(ref, caseFieldName, caseNames)
+      prefix.impliedFilter && MongoDocumentFilter.subtypeFilter(prefix, caseFieldName, caseNames)
   }
 
   def caseNameRef[E, T](prefix: MongoRef[E, T], caseFieldName: String): MongoPropertyRef[E, String] =
