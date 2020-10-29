@@ -7,14 +7,14 @@ import org.bson.BsonDocument
 trait MongoProjection[E, T] {
   def impliedFilter: MongoDocumentFilter[E]
 
-  def documentPaths: Opt[Set[String]]
-  def decode(doc: BsonDocument): T
+  def projectionPaths: Opt[Set[String]]
+  def decodeFrom(doc: BsonDocument): T
   def showRecordId: Boolean
 
   def withRecordId: MongoProjection[E, WithRecordId[T]] =
     MongoProjection.ShowRecordId(this)
 
-  final def toProjectionBson: BsonDocument = documentPaths.fold(Bson.document()) { paths =>
+  final def toProjectionBson: BsonDocument = projectionPaths.fold(Bson.document()) { paths =>
     val result = Bson.document(paths.iterator.map(_ -> Bson.int(1)))
     if (!result.containsKey(mongoId.Id)) {
       // partial projection didn't specify that it wants _id - exclude it explicitly
@@ -36,16 +36,16 @@ trait MongoProjection[E, T] {
 object MongoProjection extends ProjectionZippers {
   final class Empty[E] extends MongoProjection[E, Unit] {
     def impliedFilter: MongoDocumentFilter[E] = MongoDocumentFilter.empty
-    def documentPaths: Opt[Set[String]] = Opt(Set.empty)
+    def projectionPaths: Opt[Set[String]] = Opt(Set.empty)
     def showRecordId: Boolean = false
-    def decode(doc: BsonDocument): Unit = ()
+    def decodeFrom(doc: BsonDocument): Unit = ()
   }
 
   final case class Mapped[E, T, T0](prev: MongoProjection[E, T], fun: T => T0) extends MongoProjection[E, T0] {
     def impliedFilter: MongoDocumentFilter[E] = prev.impliedFilter
-    def documentPaths: Opt[Set[String]] = prev.documentPaths
+    def projectionPaths: Opt[Set[String]] = prev.projectionPaths
     def showRecordId: Boolean = prev.showRecordId
-    def decode(doc: BsonDocument): T0 = fun(prev.decode(doc))
+    def decodeFrom(doc: BsonDocument): T0 = fun(prev.decodeFrom(doc))
   }
 
   final case class Composed[E, T, T0, T1](
@@ -53,26 +53,26 @@ object MongoProjection extends ProjectionZippers {
   ) extends MongoProjection[E, T1] {
     def impliedFilter: MongoDocumentFilter[E] = first.impliedFilter && second.impliedFilter
 
-    def documentPaths: Opt[Set[String]] =
+    def projectionPaths: Opt[Set[String]] =
       for {
-        firstPaths <- first.documentPaths
-        secondPaths <- second.documentPaths
+        firstPaths <- first.projectionPaths
+        secondPaths <- second.projectionPaths
       } yield firstPaths ++ secondPaths
 
     def showRecordId: Boolean = first.showRecordId || second.showRecordId
 
-    def decode(doc: BsonDocument): T1 =
-      fun(first.decode(doc), second.decode(doc))
+    def decodeFrom(doc: BsonDocument): T1 =
+      fun(first.decodeFrom(doc), second.decodeFrom(doc))
   }
 
   final val RecordId = "$recordId"
 
   final case class ShowRecordId[E, T](projection: MongoProjection[E, T]) extends MongoProjection[E, WithRecordId[T]] {
     def impliedFilter: MongoDocumentFilter[E] = projection.impliedFilter
-    def documentPaths: Opt[Set[String]] = projection.documentPaths
+    def projectionPaths: Opt[Set[String]] = projection.projectionPaths
 
-    def decode(doc: BsonDocument): WithRecordId[T] =
-      WithRecordId(projection.decode(doc), doc.getInt64(RecordId).getValue)
+    def decodeFrom(doc: BsonDocument): WithRecordId[T] =
+      WithRecordId(projection.decodeFrom(doc), doc.getInt64(RecordId).getValue)
 
     def showRecordId: Boolean = true
   }

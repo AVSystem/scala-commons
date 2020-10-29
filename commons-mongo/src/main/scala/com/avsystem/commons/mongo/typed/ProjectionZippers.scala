@@ -355,10 +355,10 @@ final class ProductProjection[E, T](componentProjections: Seq[MongoProjection[E,
   def impliedFilter: MongoDocumentFilter[E] =
     componentProjections.iterator.map(_.impliedFilter).foldLeft(MongoDocumentFilter.empty[E])(_ && _)
 
-  def documentPaths: Opt[Set[String]] = {
+  def projectionPaths: Opt[Set[String]] = {
     @tailrec def loop(acc: Set[String], it: Iterator[MongoProjection[E, _]]): Opt[Set[String]] =
       if (!it.hasNext) Opt(acc)
-      else it.next().documentPaths match {
+      else it.next().projectionPaths match {
         case Opt(paths) => loop(acc ++ paths, it)
         case Opt.Empty => Opt.Empty
       }
@@ -368,8 +368,8 @@ final class ProductProjection[E, T](componentProjections: Seq[MongoProjection[E,
   def showRecordId: Boolean =
     componentProjections.exists(_.showRecordId)
 
-  def decode(doc: BsonDocument): T =
-    applier.apply(componentProjections.map(_.decode(doc)))
+  def decodeFrom(doc: BsonDocument): T =
+    applier.apply(componentProjections.map(_.decodeFrom(doc)))
 }
 
 object GenTupleProjections {

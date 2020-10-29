@@ -44,7 +44,7 @@ object ContainsUnion extends MongoEntityCompanion[ContainsUnion] {
 
   final val IntsRef = MoreSpecificUnionRef.ref(_.record.ints)
   final val Filter = IntsRef.elemMatch(_.satisfiesOperators(c => Seq(c.gt(0), c.lt(10))))
-  final val Filter2 = IntsRef.containsAny(1, 2, 3)
+  final val Filter2 = IntsRef(2).is(5)
 
   final val Update = IntsRef.push(sort = MongoOrder.ascending[Int]) & IntsRef.setOnInsert(Seq.empty)
 }

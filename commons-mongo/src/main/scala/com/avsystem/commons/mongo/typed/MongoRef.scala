@@ -29,8 +29,8 @@ sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
   @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoDataRef[E, C] =
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 
-  def documentPaths: Opt[Set[String]] = Opt.empty
-  def decode(doc: BsonDocument): T = BsonValueInput.read(doc)(format.codec)
+  def projectionPaths: Opt[Set[String]] = Opt.empty
+  def decodeFrom(doc: BsonDocument): T = BsonValueInput.read(doc)(format.codec)
 }
 
 sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
@@ -75,13 +75,16 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     case FieldRef(prefix: MongoPropertyRef[_, _], fieldName, _) =>
       prefix.propertyPath + "." + KeyEscaper.escape(fieldName)
 
+    case ArrayIndexRef(prefix, index, _) =>
+      prefix.propertyPath + "." + index
+
     case PropertyAsSubtype(ref, _, _, _) =>
       ref.propertyPath
   }
 
-  def documentPaths: Opt[Set[String]] = Opt(Set(propertyPath))
+  def projectionPaths: Opt[Set[String]] = Opt(Set(propertyPath))
 
-  def decode(doc: BsonDocument): T = {
+  def decodeFrom(doc: BsonDocument): T = {
     val bsonValue = propertyPath.split('.').toList.foldLeft(doc: BsonValue) {
       case (doc: BsonDocument, key) => doc.get(key)
       case _ => null
@@ -90,6 +93,14 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
       case null => throw new NoSuchElementException(s"path $propertyPath not found in BSON document")
       case _ => BsonValueInput.read(bsonValue)(format.codec)
     }
+  }
+}
+object MongoPropertyRef {
+  implicit class CollectionRefOps[E, C[X] <: Iterable[X], T](private val ref: MongoPropertyRef[E, C[T]]) extends AnyVal {
+    def head: MongoPropertyRef[E, T] = apply(0)
+
+    def apply(index: Int): MongoPropertyRef[E, T] =
+      MongoRef.ArrayIndexRef(ref, index, ref.format.assumeCollection.elementFormat)
   }
 }
 
@@ -118,6 +129,21 @@ object MongoRef {
     format: MongoFormat[T]
   ) extends MongoPropertyRef[E, T] {
     def impliedFilter: MongoDocumentFilter[E] = MongoDocumentFilter.empty
+  }
+
+  final case class ArrayIndexRef[E, C[X] <: Iterable[X], T](
+    prefix: MongoPropertyRef[E, C[T]],
+    index: Int,
+    format: MongoFormat[T]
+  ) extends MongoPropertyRef[E, T] {
+    require(index >= 0, "array index must be non-negative")
+
+    def impliedFilter: MongoDocumentFilter[E] = MongoDocumentFilter.empty
+
+    // array index references are not allowed in projections, we must fetch the entire array and extract element manually
+    // https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#project-specific-array-elements-in-the-returned-array
+    override def projectionPaths: Opt[Set[String]] = prefix.projectionPaths
+    override def decodeFrom(doc: BsonDocument): T = prefix.decodeFrom(doc).toSeq.apply(index)
   }
 
   final case class PropertyAsSubtype[E, T0, T <: T0](

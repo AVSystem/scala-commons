@@ -77,7 +77,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
       case SelfRef =>
         toObservable(nativeCollection.find()).asInstanceOf[Observable[T]]
       case proj =>
-        toObservable(docCollection.find()).map(proj.decode)
+        toObservable(docCollection.find()).map(proj.decodeFrom)
     }
   }
 
@@ -93,7 +93,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
       nullableSingle(nativeCollection.findOneAndUpdate(filter.toBson, update.toBson, options).asInstanceOf[Publisher[T]])
     case proj =>
       val options = setupOptions(new FindOneAndUpdateOptions).projection(proj.toProjectionBson).sort(sort.toBson)
-      nullableSingle(docCollection.findOneAndUpdate(filter.toBson, update.toBson, options)).map(_.map(proj.decode))
+      nullableSingle(docCollection.findOneAndUpdate(filter.toBson, update.toBson, options)).map(_.map(proj.decodeFrom))
   }
 
   def findOneAndReplace[T](
@@ -108,7 +108,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
       nullableSingle(nativeCollection.findOneAndReplace(filter.toBson, replacement, options).asInstanceOf[Publisher[T]])
     case proj =>
       val options = setupOptions(new FindOneAndReplaceOptions).projection(proj.toProjectionBson).sort(sort.toBson)
-      nullableSingle(docCollection.findOneAndReplace(filter.toBson, format.writeBson(replacement).asDocument(), options)).map(_.map(proj.decode))
+      nullableSingle(docCollection.findOneAndReplace(filter.toBson, format.writeBson(replacement).asDocument(), options)).map(_.map(proj.decodeFrom))
   }
 
   def findOneAndDelete[T](
@@ -122,7 +122,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
       nullableSingle(nativeCollection.findOneAndDelete(filter.toBson, options).asInstanceOf[Publisher[T]])
     case proj =>
       val options = setupOptions(new FindOneAndDeleteOptions).projection(proj.toProjectionBson).sort(sort.toBson)
-      nullableSingle(docCollection.findOneAndDelete(filter.toBson, options)).map(_.map(proj.decode))
+      nullableSingle(docCollection.findOneAndDelete(filter.toBson, options)).map(_.map(proj.decodeFrom))
   }
 
   def distinct[T](
