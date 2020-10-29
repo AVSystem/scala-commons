@@ -30,22 +30,22 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     rawCollection.withCodecRegistry(codecRegistry).withDocumentClass(documentClass)
   }
 
-  private def first[T](publisher: Publisher[T]): Task[T] =
+  private def single[T](publisher: Publisher[T]): Task[T] =
     Observable.fromReactivePublisher(publisher).firstL
 
-  private def firstOpt[T](publisher: Publisher[T]): Task[Option[T]] =
-    Observable.fromReactivePublisher(publisher).firstOptionL
+  private def nullableSingle[T](publisher: Publisher[T]): Task[Option[T]] =
+    single(publisher).map(_.option)
 
   def countDocuments(
     filter: MongoDocumentFilter[E] = MongoDocumentFilter.empty,
     setupOptions: CountOptions => CountOptions = identity
   ): Task[Long] =
-    first(nativeCollection.countDocuments(filter.toBson, setupOptions(new CountOptions))).asInstanceOf[Task[Long]]
+    single(nativeCollection.countDocuments(filter.toBson, setupOptions(new CountOptions))).asInstanceOf[Task[Long]]
 
   def estimatedDocumentCount(
     setupOptions: EstimatedDocumentCountOptions => EstimatedDocumentCountOptions = identity
   ): Task[Long] =
-    first(nativeCollection.estimatedDocumentCount(setupOptions(new EstimatedDocumentCountOptions))).asInstanceOf[Task[Long]]
+    single(nativeCollection.estimatedDocumentCount(setupOptions(new EstimatedDocumentCountOptions))).asInstanceOf[Task[Long]]
 
   def findById(
     id: ID,
@@ -89,10 +89,10 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   ): Task[Option[T]] = projection match {
     case SelfRef =>
       val options = setupOptions(new FindOneAndUpdateOptions).sort(sort.toBson)
-      firstOpt(nativeCollection.findOneAndUpdate(filter.toBson, update.toBson, options).asInstanceOf[Publisher[T]])
+      nullableSingle(nativeCollection.findOneAndUpdate(filter.toBson, update.toBson, options).asInstanceOf[Publisher[T]])
     case proj =>
       val options = setupOptions(new FindOneAndUpdateOptions).projection(proj.toProjectionBson).sort(sort.toBson)
-      firstOpt(docCollection.findOneAndUpdate(filter.toBson, update.toBson, options)).map(_.map(proj.decode))
+      nullableSingle(docCollection.findOneAndUpdate(filter.toBson, update.toBson, options)).map(_.map(proj.decode))
   }
 
   def findOneAndReplace[T](
@@ -104,10 +104,10 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   ): Task[Option[T]] = projection match {
     case SelfRef =>
       val options = setupOptions(new FindOneAndReplaceOptions).sort(sort.toBson)
-      firstOpt(nativeCollection.findOneAndReplace(filter.toBson, replacement, options).asInstanceOf[Publisher[T]])
+      nullableSingle(nativeCollection.findOneAndReplace(filter.toBson, replacement, options).asInstanceOf[Publisher[T]])
     case proj =>
       val options = setupOptions(new FindOneAndReplaceOptions).projection(proj.toProjectionBson).sort(sort.toBson)
-      firstOpt(docCollection.findOneAndReplace(filter.toBson, format.writeBson(replacement).asDocument(), options)).map(_.map(proj.decode))
+      nullableSingle(docCollection.findOneAndReplace(filter.toBson, format.writeBson(replacement).asDocument(), options)).map(_.map(proj.decode))
   }
 
   def findOneAndDelete[T](
@@ -118,10 +118,10 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   ): Task[Option[T]] = projection match {
     case SelfRef =>
       val options = setupOptions(new FindOneAndDeleteOptions).sort(sort.toBson)
-      firstOpt(nativeCollection.findOneAndDelete(filter.toBson, options).asInstanceOf[Publisher[T]])
+      nullableSingle(nativeCollection.findOneAndDelete(filter.toBson, options).asInstanceOf[Publisher[T]])
     case proj =>
       val options = setupOptions(new FindOneAndDeleteOptions).projection(proj.toProjectionBson).sort(sort.toBson)
-      firstOpt(docCollection.findOneAndDelete(filter.toBson, options)).map(_.map(proj.decode))
+      nullableSingle(docCollection.findOneAndDelete(filter.toBson, options)).map(_.map(proj.decode))
   }
 
   def distinct[T](
@@ -144,44 +144,44 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     value: E,
     setupOptions: InsertOneOptions => InsertOneOptions = identity
   ): Task[InsertOneResult] =
-    first(nativeCollection.insertOne(value, setupOptions(new InsertOneOptions)))
+    single(nativeCollection.insertOne(value, setupOptions(new InsertOneOptions)))
 
   def insertMany(
     values: Seq[E],
     setupOptions: InsertManyOptions => InsertManyOptions = identity
   ): Task[InsertManyResult] =
-    first(nativeCollection.insertMany(values.asJava, setupOptions(new InsertManyOptions)))
+    single(nativeCollection.insertMany(values.asJava, setupOptions(new InsertManyOptions)))
 
   def deleteOne(
     filter: MongoDocumentFilter[E],
     setupOptions: DeleteOptions => DeleteOptions = identity
   ): Task[DeleteResult] =
-    first(nativeCollection.deleteOne(filter.toBson, setupOptions(new DeleteOptions)))
+    single(nativeCollection.deleteOne(filter.toBson, setupOptions(new DeleteOptions)))
 
   def deleteMany(
     filter: MongoDocumentFilter[E],
     setupOptions: DeleteOptions => DeleteOptions = identity
   ): Task[DeleteResult] =
-    first(nativeCollection.deleteMany(filter.toBson, setupOptions(new DeleteOptions)))
+    single(nativeCollection.deleteMany(filter.toBson, setupOptions(new DeleteOptions)))
 
   def updateOne(
     filter: MongoDocumentFilter[E],
     update: MongoUpdate[E],
     setupOptions: UpdateOptions => UpdateOptions = identity
   ): Task[UpdateResult] =
-    first(nativeCollection.updateOne(filter.toBson, update.toBson, setupOptions(new UpdateOptions)))
+    single(nativeCollection.updateOne(filter.toBson, update.toBson, setupOptions(new UpdateOptions)))
 
   def updateMany(
     filter: MongoDocumentFilter[E],
     update: MongoUpdate[E],
     setupOptions: UpdateOptions => UpdateOptions = identity
   ): Task[UpdateResult] =
-    first(nativeCollection.updateMany(filter.toBson, update.toBson, setupOptions(new UpdateOptions)))
+    single(nativeCollection.updateMany(filter.toBson, update.toBson, setupOptions(new UpdateOptions)))
 
   def replaceOne(
     filter: MongoDocumentFilter[E],
     replacement: E,
     setupOptions: ReplaceOptions => ReplaceOptions = identity
   ): Task[UpdateResult] =
-    first(nativeCollection.replaceOne(filter.toBson, replacement, setupOptions(new ReplaceOptions)))
+    single(nativeCollection.replaceOne(filter.toBson, replacement, setupOptions(new ReplaceOptions)))
 }
