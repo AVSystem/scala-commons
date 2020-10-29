@@ -51,7 +51,7 @@ object Testujo {
   def main(args: Array[String]): Unit = {
     val client = MongoClients.create()
     val rawCollection = client.getDatabase("test").getCollection("containsUnion")
-    val collection = new MongoTypedCollection[ContainsUnion](rawCollection)
+    val collection = new TypedMongoCollection[ContainsUnion](rawCollection)
 
     val tuples = collection.find(
       ContainsUnion.ref(_.union.id).is(new ObjectId),
