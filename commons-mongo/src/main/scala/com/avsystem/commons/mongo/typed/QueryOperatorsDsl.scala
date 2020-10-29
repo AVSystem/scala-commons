@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
+import com.avsystem.commons.mongo.text.TextSearchLanguage
 import org.bson.{BsonType, BsonValue}
 
 import scala.util.matching.{Regex => SRegex}
@@ -31,7 +32,7 @@ trait VanillaQueryOperatorsDsl[T, R] {
 
   def text(
     search: String,
-    language: OptArg[String] = OptArg.Empty,
+    language: OptArg[TextSearchLanguage] = OptArg.Empty,
     caseSensitive: OptArg[Boolean] = OptArg.Empty,
     diacriticSensitive: OptArg[Boolean] = OptArg.Empty,
   ): R =

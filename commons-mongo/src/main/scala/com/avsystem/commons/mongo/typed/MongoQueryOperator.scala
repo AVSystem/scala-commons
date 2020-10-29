@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
+import com.avsystem.commons.mongo.text.TextSearchLanguage
 import org.bson.{BsonDocument, BsonRegularExpression, BsonType, BsonValue}
 
 import scala.util.matching.{Regex => SRegex}
@@ -29,7 +30,7 @@ sealed trait MongoQueryOperator[T] extends Product {
     case Mod(divisor, remainder) => Bson.array(Bson.long(divisor), Bson.long(remainder))
     case Text(search, language, caseSensitive, diacriticSensitive) =>
       val doc = new BsonDocument("$search", Bson.string(search))
-      language.foreach(v => doc.put("$language", Bson.string(v)))
+      language.foreach(v => doc.put("$language", Bson.string(v.name)))
       caseSensitive.foreach(v => doc.put("$caseSensitive", Bson.boolean(v)))
       diacriticSensitive.foreach(v => doc.put("$diacriticSensitive", Bson.boolean(v)))
       doc
@@ -65,7 +66,7 @@ object MongoQueryOperator {
 
   final case class Text[T](
     search: String,
-    language: Opt[String],
+    language: Opt[TextSearchLanguage],
     caseSensitive: Opt[Boolean],
     diacriticSensitive: Opt[Boolean]
   ) extends MongoQueryOperator[T]
