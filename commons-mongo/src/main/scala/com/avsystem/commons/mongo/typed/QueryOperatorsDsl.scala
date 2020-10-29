@@ -34,7 +34,7 @@ trait VanillaQueryOperatorsDsl[T, R] {
     search: String,
     language: OptArg[TextSearchLanguage] = OptArg.Empty,
     caseSensitive: OptArg[Boolean] = OptArg.Empty,
-    diacriticSensitive: OptArg[Boolean] = OptArg.Empty,
+    diacriticSensitive: OptArg[Boolean] = OptArg.Empty
   ): R =
     wrapQueryOperator(Text(search, language.toOpt, caseSensitive.toOpt, diacriticSensitive.toOpt))
 

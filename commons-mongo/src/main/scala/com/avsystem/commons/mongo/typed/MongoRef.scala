@@ -143,7 +143,7 @@ object MongoRef {
     fullFormat: MongoAdtFormat[E],
     caseFieldName: String,
     caseNames: List[String],
-    format: MongoAdtFormat[T],
+    format: MongoAdtFormat[T]
   ) extends MongoDataRef[E, T] {
     def impliedFilter: MongoDocumentFilter[E] =
       MongoDocumentFilter.subtypeFilter(this, caseFieldName, caseNames)

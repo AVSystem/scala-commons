@@ -117,11 +117,12 @@ object MongoUpdateOperator {
     position: Opt[Int],
     slice: Opt[Int],
     sort: Opt[MongoOrder[T]],
-    format: MongoFormat[T],
+    format: MongoFormat[T]
   ) extends MongoUpdateOperator[C[T]]
 
   final case class AddToSet[C[X] <: Iterable[X], T](
-    values: Iterable[T], format: MongoFormat[T]
+    values: Iterable[T],
+    format: MongoFormat[T]
   ) extends MongoUpdateOperator[C[T]]
 
   final case class Pop[C[X] <: Iterable[X], T](first: Boolean) extends MongoUpdateOperator[C[T]]

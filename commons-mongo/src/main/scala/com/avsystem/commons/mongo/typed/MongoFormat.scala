@@ -60,7 +60,7 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
   final case class Optional[O, T](
     codec: GenCodec[O],
     optionLike: OptionLike.Aux[O, T],
-    wrappedFormat: MongoFormat[T],
+    wrappedFormat: MongoFormat[T]
   ) extends MongoFormat[O]
 
   implicit def collectionFormat[C[X] <: Iterable[X], T](
