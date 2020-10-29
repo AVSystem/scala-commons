@@ -114,10 +114,13 @@ object MongoPropertyRef {
     }
   }
 
-  implicit class OptionalRefOps[E, O, T](ref: MongoPropertyRef[E, O])(implicit optionLike: OptionLike.Aux[O, T]) {
+  implicit def optionalRefOps[E, O, T](ref: MongoPropertyRef[E, O])(implicit optionLike: OptionLike.Aux[O, T]): OptionalRefOps[E, O, T] =
+    new OptionalRefOps[E, O, T](ref)
+
+  class OptionalRefOps[E, O, T](private val ref: MongoPropertyRef[E, O]) extends AnyVal {
     def get: MongoPropertyRef[E, T] = {
-      val format = ref.format.assumeOptional
-      MongoRef.GetFromOptional(ref, format.wrappedFormat, optionLike)
+      val format = ref.format.assumeOptional[T]
+      MongoRef.GetFromOptional(ref, format.wrappedFormat, format.optionLike)
     }
   }
 }

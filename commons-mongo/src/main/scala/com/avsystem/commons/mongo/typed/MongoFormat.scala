@@ -34,8 +34,8 @@ sealed trait MongoFormat[T] {
     )
   }
 
-  def assumeOptional[I](implicit optionLike: OptionLike.Aux[T, I]): MongoFormat.Optional[T, I] = this match {
-    case optional: MongoFormat.Optional[T, I@unchecked] => optional
+  def assumeOptional[W]: MongoFormat.Optional[T, W] = this match {
+    case optional: MongoFormat.Optional[T, W@unchecked] => optional
     case _ => throw new IllegalArgumentException(
       "Encountered a non-optional MongoFormat for an Option-like type - " +
         "do you have a custom implicit MongoFormat for that type?")
@@ -59,7 +59,8 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
 
   final case class Optional[O, T](
     codec: GenCodec[O],
-    wrappedFormat: MongoFormat[T]
+    optionLike: OptionLike.Aux[O, T],
+    wrappedFormat: MongoFormat[T],
   ) extends MongoFormat[O]
 
   implicit def collectionFormat[C[X] <: Iterable[X], T](
@@ -72,7 +73,7 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
 
   implicit def optionalFormat[O, T](
     implicit optionLike: OptionLike.Aux[O, T], optionCodec: GenCodec[O], wrappedFormat: MongoFormat[T]
-  ): MongoFormat[O] = Optional(optionCodec, wrappedFormat)
+  ): MongoFormat[O] = Optional(optionCodec, optionLike, wrappedFormat)
 
   implicit class collectionFormatOps[C[X] <: Iterable[X], T](private val format: MongoFormat[C[T]]) extends AnyVal {
     def assumeCollection: Collection[C, T] = format match {
@@ -217,7 +218,7 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
   final class RecordCase[T](
     @composite val info: GenCaseInfo[T],
     @infer val classTag: ClassTag[T],
-    @multi @adtParamMetadata @allowOptional val fields: List[Field[_]],
+    @multi @adtParamMetadata val fields: List[Field[_]],
     @multi @adtCaseSealedParentMetadata val sealedParents: List[SealedParent[_]]
   ) extends Case[T] {
     def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T] =

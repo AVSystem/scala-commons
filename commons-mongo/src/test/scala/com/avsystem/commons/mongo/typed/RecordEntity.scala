@@ -2,7 +2,7 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.mongo.mongoId
-import com.avsystem.commons.serialization.{StringWrapperCompanion, flatten, name}
+import com.avsystem.commons.serialization.{StringWrapperCompanion, flatten, name, optionalParam}
 import com.mongodb.reactivestreams.client.MongoClients
 import monix.reactive.Observable
 import org.bson.types.ObjectId
@@ -15,7 +15,7 @@ case class RecordEntity(
   @name("stringy") str: String,
   ints: Seq[Int],
   mapencja: Map[Wraper, RecordEntity],
-  maybeBool: Opt[Boolean],
+  @optionalParam maybeBool: Opt[Boolean],
   maybeSelf: Opt[RecordEntity]
 ) extends MongoEntity[ObjectId]
 object RecordEntity extends MongoEntityCompanion[RecordEntity] {
