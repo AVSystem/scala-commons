@@ -6,21 +6,26 @@ import org.bson.BsonDocument
 
 import scala.annotation.tailrec
 
-trait TupleProjections[E] {
-  def tupleProjection[T1, T2](
+trait ProjectionZippers { this: MongoProjection.type =>
+  def zip[E, T1](
+    p1: MongoProjection[E, T1]
+  ): MongoProjection[E, Tuple1[T1]] =
+    new ProductProjection(Seq(p1))
+
+  def zip[E, T1, T2](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
   ): MongoProjection[E, (T1, T2)] =
     new ProductProjection(Seq(p1, p2))
 
-  def tupleProjection[T1, T2, T3](
+  def zip[E, T1, T2, T3](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
   ): MongoProjection[E, (T1, T2, T3)] =
     new ProductProjection(Seq(p1, p2, p3))
 
-  def tupleProjection[T1, T2, T3, T4](
+  def zip[E, T1, T2, T3, T4](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -28,7 +33,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4)] =
     new ProductProjection(Seq(p1, p2, p3, p4))
 
-  def tupleProjection[T1, T2, T3, T4, T5](
+  def zip[E, T1, T2, T3, T4, T5](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -37,7 +42,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6](
+  def zip[E, T1, T2, T3, T4, T5, T6](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -47,7 +52,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -58,7 +63,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -70,7 +75,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -83,7 +88,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -97,7 +102,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -112,7 +117,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -128,7 +133,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -145,7 +150,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -163,7 +168,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -182,7 +187,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -202,7 +207,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -223,7 +228,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -245,7 +250,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -268,7 +273,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -292,7 +297,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -317,7 +322,7 @@ trait TupleProjections[E] {
   ): MongoProjection[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)] =
     new ProductProjection(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21))
 
-  def tupleProjection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22](
+  def zip[E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22](
     p1: MongoProjection[E, T1],
     p2: MongoProjection[E, T2],
     p3: MongoProjection[E, T3],
@@ -377,7 +382,7 @@ object GenTupleProjections {
 
       print(
         s"""
-           |def tupleProjection[$tparams](
+           |def zip[E, $tparams](
            |$projectionParams
            |): MongoProjection[E, ($tparams)] =
            |  new ProductProjection(Seq($projectionArgs))

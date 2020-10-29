@@ -33,7 +33,7 @@ trait MongoProjection[E, T] {
     map2(other)((_, _))
 }
 
-object MongoProjection {
+object MongoProjection extends ProjectionZippers {
   final class Empty[E] extends MongoProjection[E, Unit] {
     def impliedFilter: MongoDocumentFilter[E] = MongoDocumentFilter.empty
     def documentPaths: Opt[Set[String]] = Opt(Set.empty)

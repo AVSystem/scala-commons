@@ -4,6 +4,7 @@ package mongo.typed
 import com.avsystem.commons.mongo.mongoId
 import com.avsystem.commons.serialization.{flatten, name}
 import com.mongodb.reactivestreams.client.MongoClients
+import monix.reactive.Observable
 import org.bson.types.ObjectId
 
 case class RecordEntity(
@@ -39,6 +40,7 @@ case class ContainsUnion(
 ) extends MongoEntity[ObjectId]
 object ContainsUnion extends MongoEntityCompanion[ContainsUnion] {
   final val MoreSpecificUnionRef = ref(_.union).as[MoreSpecificUnion]
+  final val UnionRecordInts = ref(_.union).as[MoreSpecificUnion].ref(_.record.ints)
 
   final val IntsRef = MoreSpecificUnionRef.ref(_.record.ints)
   final val Filter = IntsRef.elemMatch(_.satisfiesOperators(c => Seq(c.gt(0), c.lt(10))))
@@ -49,20 +51,24 @@ object ContainsUnion extends MongoEntityCompanion[ContainsUnion] {
 
 object Testujo {
   def main(args: Array[String]): Unit = {
+    import ContainsUnion._
+
     val client = MongoClients.create()
     val rawCollection = client.getDatabase("test").getCollection("containsUnion")
     val collection = new TypedMongoCollection[ContainsUnion](rawCollection)
 
-    val tuples = collection.find(
-      ContainsUnion.ref(_.union.id).is(new ObjectId),
-      ContainsUnion.tupleProjection(ContainsUnion.ref(_.union).as[MoreSpecificUnion].ref(_.record.ints), ContainsUnion.IdRef),
-      ContainsUnion.IdRef.ascendingSortOrder
+    case class Partial(ints: Seq[Int], id: ObjectId)
+
+    val partials: Observable[Partial] = collection.find(
+      ref(_.union.id).is(new ObjectId),
+      MongoProjection.zip(UnionRecordInts, IdRef).map(Partial.tupled),
+      IdRef.ascending
     )
 
-    println(ContainsUnion.ref(_.union).is[MoreSpecificUnion].toBson)
-    println(ContainsUnion.Filter.toBson)
-    println(ContainsUnion.Filter2.toBson)
-    println((ContainsUnion.Filter && ContainsUnion.Filter2).toBson)
-    println(ContainsUnion.Update.toBson)
+    println(ref(_.union).is[MoreSpecificUnion].toBson)
+    println(Filter.toBson)
+    println(Filter2.toBson)
+    println((Filter && Filter2).toBson)
+    println(Update.toBson)
   }
 }
