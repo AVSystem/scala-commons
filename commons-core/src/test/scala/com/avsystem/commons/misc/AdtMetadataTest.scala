@@ -60,7 +60,7 @@ case class GenSealedParent[T](
 @positioned(positioned.here) case class GenRecord[T](
   @composite info: GenCaseInfo[T],
   @multi @adtParamMetadata fields: Map[String, GenField[_]],
-  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]],
+  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]]
 ) extends GenCase[T] with GenStructure[T] {
 
   def repr(indent: Int): String = fields.iterator.map {
@@ -73,7 +73,7 @@ case class GenSealedParent[T](
 @positioned(positioned.here) case class GenSingleton[T](
   @composite info: GenCaseInfo[T],
   @checked @infer valueOf: ValueOf[T],
-  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]],
+  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]]
 ) extends GenCase[T] with GenStructure[T] {
   def repr: String = valueOf.value.toString
 }
