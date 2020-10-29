@@ -6,6 +6,8 @@ import com.avsystem.commons.meta.OptionLike
 import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
 import org.bson.{BsonDocument, BsonValue}
 
+import scala.annotation.tailrec
+
 sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataRefDsl[E, T] { self =>
   def format: MongoFormat[T]
   def showRecordId: Boolean = false
@@ -74,32 +76,39 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   def twoDimIndex: MongoIndex[E] = index(MongoIndexType.TwoDim)
   def twoDimSphereIndex: MongoIndex[E] = index(MongoIndexType.TwoDimSphere)
 
-  lazy val propertyPath: String = this match {
-    case FieldRef(_: MongoDataRef[_, _], fieldName, _) =>
-      KeyEscaper.escape(fieldName)
+  lazy val propertyPath: List[String] = {
+    @tailrec def loop[T0](ref: MongoPropertyRef[E, T0], acc: List[String]): List[String] = ref match {
+      case FieldRef(_: MongoDataRef[_, _], fieldName, _) =>
+        KeyEscaper.escape(fieldName) :: acc
 
-    case FieldRef(prefix: MongoPropertyRef[_, _], fieldName, _) =>
-      prefix.propertyPath + "." + KeyEscaper.escape(fieldName)
+      case FieldRef(prefix: MongoPropertyRef[E, _], fieldName, _) =>
+        loop(prefix, KeyEscaper.escape(fieldName) :: acc)
 
-    case ArrayIndexRef(prefix, index, _) =>
-      prefix.propertyPath + "." + index
+      case ArrayIndexRef(prefix, index, _) =>
+        loop(prefix, index.toString :: acc)
 
-    case GetFromOptional(prefix, _, _) =>
-      prefix.propertyPath
+      case GetFromOptional(prefix, _, _) =>
+        loop(prefix, acc)
 
-    case PropertyAsSubtype(ref, _, _, _) =>
-      ref.propertyPath
+      case PropertyAsSubtype(prefix, _, _, _) =>
+        loop(prefix, acc)
+    }
+    loop(this, Nil)
   }
 
-  def projectionPaths: Opt[Set[String]] = Opt(Set(propertyPath))
+  lazy val propertyPathString: String =
+    propertyPath.mkString(".")
+
+  def projectionPaths: Opt[Set[String]] =
+    Opt(Set(propertyPathString))
 
   def decodeFrom(doc: BsonDocument): T = {
-    val bsonValue = propertyPath.split('.').toList.foldLeft(doc: BsonValue) {
+    val bsonValue = propertyPath.foldLeft(doc: BsonValue) {
       case (doc: BsonDocument, key) => doc.get(key)
       case _ => null
     }
     bsonValue match {
-      case null => throw new NoSuchElementException(s"path $propertyPath not found in BSON document")
+      case null => throw new NoSuchElementException(s"path $propertyPathString not found in BSON document")
       case _ => BsonValueInput.read(bsonValue)(format.codec)
     }
   }

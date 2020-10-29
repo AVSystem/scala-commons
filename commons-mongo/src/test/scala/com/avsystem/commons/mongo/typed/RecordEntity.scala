@@ -2,10 +2,13 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.mongo.mongoId
-import com.avsystem.commons.serialization.{HasGenCodec, StringWrapperCompanion, flatten, name, optionalParam}
+import com.avsystem.commons.serialization._
 import com.mongodb.reactivestreams.client.MongoClients
-import monix.reactive.Observable
+import monix.execution.Scheduler
 import org.bson.types.ObjectId
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 case class Wraper(str: String) extends AnyVal
 object Wraper extends StringWrapperCompanion[Wraper]
@@ -64,18 +67,6 @@ object Testujo {
   def main(args: Array[String]): Unit = {
     import ContainsUnion._
 
-    val client = MongoClients.create()
-    val rawCollection = client.getDatabase("test").getCollection("containsUnion")
-    val collection = new TypedMongoCollection[ContainsUnion](rawCollection)
-
-    case class Partial(ints: Seq[Int], id: ObjectId)
-
-    val partials: Observable[Partial] = collection.find(
-      ref(_.union.id).is(new ObjectId),
-      MongoProjection.zip(UnionRecordInts, IdRef).map(Partial.tupled),
-      IdRef.ascending
-    )
-
     println(ref(_.union).is[MoreSpecificUnion].toBson)
     println(Filter.toBson)
     println(Filter2.toBson)
@@ -84,5 +75,31 @@ object Testujo {
     println(RecordEntity.BoolRef.is(true).toBson)
     println(RecordEntity.DeepStrRef.is("fu").toBson)
     println((UnionEntity.as[CaseOne].ref(_.other).is(0) || UnionEntity.as[CaseTwo].ref(_.other).is(true)).toBson)
+
+    val client = MongoClients.create()
+    val rawCollection = client.getDatabase("test").getCollection("containsUnion")
+    val collection = new TypedMongoCollection[ContainsUnion](rawCollection)
+
+    case class Partial(ints: Seq[Int], id: ObjectId)
+
+    val fullTask = for {
+      _ <- collection.insertMany(Seq(
+        ContainsUnion(ObjectId.get(), CaseOne(ObjectId.get(), 42)),
+        ContainsUnion(ObjectId.get(), CaseTwo(ObjectId.get(), other = true, RecordEntity(
+          ObjectId.get(), "fujTwo", Seq(1, 2, 3), OpaqueIshData("zuoTwo"), Map.empty, Opt.Empty, Opt.Empty)
+        )),
+        ContainsUnion(ObjectId.get(), CaseThree(ObjectId.get(), "other", RecordEntity(
+          ObjectId.get(), "zuoThree", Seq(3, 4, 5), OpaqueIshData("zuoThree"), Map.empty, Opt(true), Opt.Empty)
+        ))
+      ))
+      partials = collection.find(
+        MongoDocumentFilter.empty,
+        MongoProjection.zip(UnionRecordInts, IdRef).map(Partial.tupled),
+        IdRef.ascending
+      )
+      _ <- partials.foreachL(println)
+    } yield ()
+
+    Await.result(fullTask.runAsync(Scheduler.global), Duration.Inf)
   }
 }
