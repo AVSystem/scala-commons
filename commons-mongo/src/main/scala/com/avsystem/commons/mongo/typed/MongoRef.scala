@@ -107,6 +107,13 @@ object MongoPropertyRef {
       MongoRef.ArrayIndexRef(ref, index, ref.format.assumeCollection.elementFormat)
   }
 
+  implicit class DictionaryRefOps[E, M[X, Y] <: BMap[X, Y], K, V](private val ref: MongoPropertyRef[E, M[K, V]]) extends AnyVal {
+    def apply(key: K): MongoPropertyRef[E, V] = {
+      val dictFormat = ref.format.assumeDictionary
+      MongoRef.FieldRef(ref, dictFormat.keyCodec.write(key), dictFormat.valueFormat)
+    }
+  }
+
   implicit class OptionalRefOps[E, O, T](ref: MongoPropertyRef[E, O])(implicit optionLike: OptionLike.Aux[O, T]) {
     def get: MongoPropertyRef[E, T] = {
       val format = ref.format.assumeOptional

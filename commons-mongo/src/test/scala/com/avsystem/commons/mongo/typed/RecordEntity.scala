@@ -2,21 +2,26 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.mongo.mongoId
-import com.avsystem.commons.serialization.{flatten, name}
+import com.avsystem.commons.serialization.{StringWrapperCompanion, flatten, name}
 import com.mongodb.reactivestreams.client.MongoClients
 import monix.reactive.Observable
 import org.bson.types.ObjectId
+
+case class Wraper(str: String) extends AnyVal
+object Wraper extends StringWrapperCompanion[Wraper]
 
 case class RecordEntity(
   id: ObjectId,
   @name("stringy") str: String,
   ints: Seq[Int],
+  mapencja: Map[Wraper, RecordEntity],
   maybeBool: Opt[Boolean],
   maybeSelf: Opt[RecordEntity]
 ) extends MongoEntity[ObjectId]
 object RecordEntity extends MongoEntityCompanion[RecordEntity] {
   final val StrRef = SelfRef.ref(_.str)
   final val BoolRef = ref(_.maybeBool).get
+  final val DeepStrRef = ref(_.mapencja).apply(Wraper("level1")).ref(_.mapencja)(Wraper("level2")).ref(_.str)
 }
 
 @flatten sealed trait UnionEntity extends MongoEntity[ObjectId] {
@@ -72,5 +77,6 @@ object Testujo {
     println((Filter && Filter2).toBson)
     println(Update.toBson)
     println(RecordEntity.BoolRef.is(true).toBson)
+    println(RecordEntity.DeepStrRef.is("fu").toBson)
   }
 }

@@ -41,15 +41,19 @@ sealed trait MongoFormat[T] {
         "do you have a custom implicit MongoFormat for that type?")
   }
 }
-object MongoFormat extends MongoFormatLowPriority {
-  def apply[T](implicit format: MongoFormat[T]): MongoFormat[T] = format
-
+object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPriority {
   final case class Leaf[T](codec: GenCodec[T]) extends MongoFormat[T]
 
   final case class Collection[C[X] <: Iterable[X], T](
     codec: GenCodec[C[T]],
     elementFormat: MongoFormat[T]
   ) extends MongoFormat[C[T]]
+
+  final case class Dictionary[M[X, Y] <: BMap[X, Y], K, V](
+    codec: GenCodec[M[K, V]],
+    keyCodec: GenKeyCodec[K],
+    valueFormat: MongoFormat[V]
+  ) extends MongoFormat[M[K, V]]
 
   final case class Optional[O, T](
     codec: GenCodec[O],
@@ -60,15 +64,28 @@ object MongoFormat extends MongoFormatLowPriority {
     implicit collectionCodec: GenCodec[C[T]], elementFormat: MongoFormat[T]
   ): MongoFormat[C[T]] = Collection(collectionCodec, elementFormat)
 
+  implicit def dictionaryFormat[M[X, Y] <: BMap[X, Y], K, V](
+    implicit mapCodec: GenCodec[M[K, V]], keyCodec: GenKeyCodec[K], valueFormat: MongoFormat[V]
+  ): MongoFormat[M[K, V]] = Dictionary(mapCodec, keyCodec, valueFormat)
+
   implicit def optionalFormat[O, T](
     implicit optionLike: OptionLike.Aux[O, T], optionCodec: GenCodec[O], wrappedFormat: MongoFormat[T]
   ): MongoFormat[O] = Optional(optionCodec, wrappedFormat)
 
   implicit class collectionFormatOps[C[X] <: Iterable[X], T](private val format: MongoFormat[C[T]]) extends AnyVal {
-    def assumeCollection: MongoFormat.Collection[C, T] = format match {
+    def assumeCollection: Collection[C, T] = format match {
       case coll: Collection[C, T] => coll
       case _ => throw new IllegalArgumentException(
         "Encountered a non-collection MongoFormat for a collection type - " +
+          "do you have a custom implicit MongoFormat for that type?")
+    }
+  }
+
+  implicit class dictionaryFormatOps[M[X, Y] <: BMap[X, Y], K, V](private val format: MongoFormat[M[K, V]]) extends AnyVal {
+    def assumeDictionary: Dictionary[M, K, V] = format match {
+      case dict: Dictionary[M, K, V] => dict
+      case _ => throw new IllegalArgumentException(
+        "Encountered a non-dictionary MongoFormat for a dictionary type - " +
           "do you have a custom implicit MongoFormat for that type?")
     }
   }
@@ -219,9 +236,9 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
       ).asInstanceOf[MongoAdtFormat.Field[T0]]
       prefix match {
         case fieldRef: MongoRef.FieldRef[E, _, T] if transparentWrapper =>
-          fieldRef.copy(format = field.format)
+          fieldRef.copy(format = field.format.value)
         case _ =>
-          MongoRef.FieldRef(prefix, field.info.rawName, field.format)
+          MongoRef.FieldRef(prefix, field.info.rawName, field.format.value)
       }
     }
   }
@@ -245,7 +262,7 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
 
   final class Field[T](
     @composite val info: GenParamInfo[T],
-    @infer val format: MongoFormat[T]
+    @infer val format: MongoFormat.Lazy[T]
   ) extends TypedMetadata[T]
 
   final class SealedParent[T](
