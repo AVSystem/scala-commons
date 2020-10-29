@@ -1,10 +1,10 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.avsystem.commons.annotation.{macroPrivate, positioned}
+import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.ValueOf
-import com.avsystem.commons.mongo.{BsonGenCodecs, BsonValueInput, BsonValueOutput, mongoId}
+import com.avsystem.commons.mongo.{BsonValueInput, BsonValueOutput}
 import com.avsystem.commons.serialization._
 import org.bson.BsonValue
 
@@ -42,7 +42,9 @@ sealed trait MongoFormat[T] {
   }
 }
 object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPriority {
-  final case class Leaf[T](codec: GenCodec[T]) extends MongoFormat[T]
+  final case class Opaque[T](
+    codec: GenCodec[T]
+  ) extends MongoFormat[T]
 
   final case class Collection[C[X] <: Iterable[X], T](
     codec: GenCodec[C[T]],
@@ -91,7 +93,7 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
   }
 }
 trait MongoFormatLowPriority { this: MongoFormat.type =>
-  implicit def leafFormat[T: GenCodec]: MongoFormat[T] = Leaf(GenCodec[T])
+  implicit def leafFormat[T: GenCodec]: MongoFormat[T] = Opaque(GenCodec[T])
 }
 
 sealed trait MongoAdtFormat[T] extends MongoFormat[T] with TypedMetadata[T] {
