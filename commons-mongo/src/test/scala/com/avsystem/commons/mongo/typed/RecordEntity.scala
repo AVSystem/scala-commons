@@ -20,8 +20,8 @@ case class RecordEntity(
 ) extends MongoEntity[ObjectId]
 object RecordEntity extends MongoEntityCompanion[RecordEntity] {
   final val StrRef = SelfRef.ref(_.str)
-  final val BoolRef = ref(_.maybeBool).get
-  final val DeepStrRef = ref(_.mapencja).apply(Wraper("level1")).ref(_.mapencja)(Wraper("level2")).ref(_.str)
+  final val BoolRef = ref(_.maybeBool.get)
+  final val DeepStrRef = ref(_.mapencja(Wraper("level1")).mapencja(Wraper("level2")).str)
 }
 
 @flatten sealed trait UnionEntity extends MongoEntity[ObjectId] {
@@ -49,6 +49,7 @@ object ContainsUnion extends MongoEntityCompanion[ContainsUnion] {
   final val UnionRecordInts = ref(_.union).as[MoreSpecificUnion].ref(_.record.ints)
 
   final val IntsRef = MoreSpecificUnionRef.ref(_.record.ints)
+  final val IntsHeadRef = MoreSpecificUnionRef.ref(_.record.ints.head)
   final val Filter = IntsRef.elemMatch(_.satisfiesOperators(c => Seq(c.gt(0), c.lt(10))))
   final val Filter2 = IntsRef(2).is(5)
 
@@ -78,5 +79,6 @@ object Testujo {
     println(Update.toBson)
     println(RecordEntity.BoolRef.is(true).toBson)
     println(RecordEntity.DeepStrRef.is("fu").toBson)
+    println(IntsHeadRef.is(0).toBson)
   }
 }

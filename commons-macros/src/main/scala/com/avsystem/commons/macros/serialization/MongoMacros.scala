@@ -9,6 +9,9 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
   def MongoModelPkg: Tree = q"$CommonsPkg.mongo.model"
   lazy val MongoRefCls: Symbol = getType(tq"$MongoModelPkg.MongoRef[_, _]").typeSymbol
+  lazy val SeqApplySym: Symbol = typeOf[scala.collection.Seq[Any]].member(TermName("apply"))
+  lazy val SeqHeadRef: Symbol = typeOf[scala.collection.Seq[Any]].member(TermName("head"))
+  lazy val MapApplySym: Symbol = typeOf[scala.collection.Map[Any, Any]].member(TermName("apply"))
 
   // check if some symbol is an abstract method of a sealed trait/class implemented in every case class
   // by a field with exactly the same type
@@ -27,6 +30,15 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
     }
   }
 
+  def isOptionLike(fullTpe: Type, wrappedTpe: Type): Boolean =
+    fullTpe != null && fullTpe != NoType && wrappedTpe != null && wrappedTpe != NoType &&
+      c.inferImplicitValue(getType(tq"$CommonsPkg.meta.OptionLike.Aux[$fullTpe, $wrappedTpe]")) != EmptyTree
+
+  def overridesAnyOf(sym: Symbol, superSymbols: Symbol*): Boolean = {
+    val overrides = sym :: sym.overrides
+    overrides.exists(superSymbols.contains)
+  }
+
   def refImpl(fun: Tree): Tree = fun match {
     case Function(List(param), body) =>
       //TODO: more detailed message
@@ -41,9 +53,22 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
         case Select(prefix, name: TermName) =>
           val newPrefixRef = extractRefStep(prefix)
           val termSym = body.symbol.asTerm
-          if (termSym.isCaseAccessor || isSealedHierarchySharedField(prefix.tpe, body.symbol.asTerm))
-            q"$newPrefixRef.thisDataRef.fieldRefFor(${name.decodedName.toString})"
-          else wrongRef(body)
+          val prefixTpe = prefix.tpe.widen
+          val bodyTpe = body.tpe.widen
+
+          if (termSym.isCaseAccessor || isSealedHierarchySharedField(prefixTpe, body.symbol.asTerm))
+            q"$newPrefixRef.thisDataRef.fieldRefFor[$bodyTpe](${name.decodedName.toString})"
+          else if (name == TermName("get") && isOptionLike(prefixTpe, bodyTpe))
+            q"$newPrefixRef.get"
+          else if (name == TermName("head") && overridesAnyOf(body.symbol, SeqHeadRef))
+            q"$newPrefixRef.head"
+          else
+            wrongRef(body)
+
+        case Apply(Select(prefix, TermName("apply")), List(argument))
+          if overridesAnyOf(body.symbol, SeqApplySym, MapApplySym) =>
+
+          q"${extractRefStep(prefix)}.apply($argument)"
 
         case _ =>
           wrongRef(body)
