@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.avsystem.commons.annotation.macroPrivate
 import com.avsystem.commons.meta.MacroInstances
 import com.avsystem.commons.mongo.{BsonGenCodecs, mongoId}
 import com.avsystem.commons.serialization.GenObjectCodec
@@ -35,7 +34,7 @@ sealed trait IsMongoAdtOrSubtype[T]
 
 abstract class AbstractMongoDataCompanion[Implicits, E](implicits: Implicits)(
   implicit instances: MacroInstances[Implicits, MongoAdtInstances[E]]
-) extends DataTypeDsl[E, E] {
+) extends DataTypeDsl[E] {
   implicit val codec: GenObjectCodec[E] = instances(implicits, this).codec
   implicit val format: MongoAdtFormat[E] = instances(implicits, this).format
 
@@ -46,9 +45,9 @@ abstract class AbstractMongoDataCompanion[Implicits, E](implicits: Implicits)(
 
   final val SelfRef: TypeRef[E] = MongoRef.SelfRef(format)
 
-  type ThisDataRef[C <: E] = MongoDataRef[E, C]
+  type ThisRef[C <: E] = MongoDataRef[E, C]
 
-  @macroPrivate def thisDataRef(implicit ev: IsMongoAdtOrSubtype[E]): ThisDataRef[E] = SelfRef
+  protected def thisRef: ThisRef[E] = SelfRef
 }
 
 abstract class AbstractMongoEntityCompanion[Implicits, E <: BaseMongoEntity](implicits: Implicits)(

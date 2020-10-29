@@ -57,7 +57,7 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
           val bodyTpe = body.tpe.widen
 
           if (termSym.isCaseAccessor || isSealedHierarchySharedField(prefixTpe, body.symbol.asTerm))
-            q"$newPrefixRef.thisDataRef.fieldRefFor[$bodyTpe](${name.decodedName.toString})"
+            q"$newPrefixRef.asAdtRef.fieldRefFor[$bodyTpe](${name.decodedName.toString})"
           else if (name == TermName("get") && isOptionLike(prefixTpe, bodyTpe))
             q"$newPrefixRef.get"
           else if (name == TermName("head") && overridesAnyOf(body.symbol, SeqHeadRef))
@@ -90,11 +90,11 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
   def asSubtype[C: c.WeakTypeTag]: Tree = {
     val cTpe = validateSubtype(weakTypeOf[C].dealias)
-    q"${c.prefix.tree}.thisDataRef.subtypeRefFor[$cTpe]"
+    q"${c.prefix.tree}.asAdtRef.subtypeRefFor[$cTpe]"
   }
 
   def isSubtype[C: c.WeakTypeTag]: Tree = {
     val cTpe = validateSubtype(weakTypeOf[C].dealias)
-    q"${c.prefix.tree}.thisDataRef.subtypeConditionFor[$cTpe]"
+    q"${c.prefix.tree}.asAdtRef.subtypeConditionFor[$cTpe]"
   }
 }

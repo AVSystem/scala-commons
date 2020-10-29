@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.avsystem.commons.annotation.macroPrivate
 import org.bson.{BsonArray, BsonDocument}
 
 sealed trait MongoFilter[T] {
@@ -18,11 +17,11 @@ object MongoFilter {
   def creator[T: MongoFormat]: Creator[T] = new Creator(MongoFormat[T])
 
   class Creator[T](val format: MongoFormat[T])
-    extends QueryOperatorsDsl[T, MongoOperatorsFilter[T]] with DataTypeDsl[T, T] {
+    extends QueryOperatorsDsl[T, MongoOperatorsFilter[T]] with DataTypeDsl[T] {
 
-    type ThisDataRef[C <: T] = MongoDataRef[T, C]
+    type ThisRef[C <: T] = MongoDataRef[T, C]
 
-    @macroPrivate def thisDataRef(implicit ev: IsMongoAdtOrSubtype[T]): ThisDataRef[T] =
+    protected def thisRef: ThisRef[T] =
       MongoRef.SelfRef(format.assumeAdt)
 
     protected def wrapQueryOperator(op: MongoQueryOperator[T]): MongoOperatorsFilter[T] =

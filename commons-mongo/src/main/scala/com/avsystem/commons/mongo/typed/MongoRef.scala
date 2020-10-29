@@ -6,11 +6,11 @@ import com.avsystem.commons.meta.OptionLike
 import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
 import org.bson.{BsonDocument, BsonValue}
 
-sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataTypeDsl[E, T] { self =>
+sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataRefDsl[E, T] { self =>
   def format: MongoFormat[T]
   def showRecordId: Boolean = false
 
-  @macroPrivate def subtypeRefFor[C <: T : ClassTag]: ThisDataRef[C]
+  @macroPrivate def subtypeRefFor[C <: T : ClassTag]: ThisRef[C]
 
   @macroPrivate def fieldRefFor[T0](scalaFieldName: String): MongoPropertyRef[E, T0] =
     format.assumeAdt.fieldRefFor(this, scalaFieldName)
@@ -20,9 +20,9 @@ sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataTypeDsl[E, T]
 }
 
 sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
-  type ThisDataRef[C <: T] = MongoDataRef[E, C]
+  type ThisRef[C <: T] = MongoDataRef[E, C]
 
-  @macroPrivate final def thisDataRef(implicit ev: IsMongoAdtOrSubtype[T]): ThisDataRef[T] = this
+  protected def thisRef: ThisRef[T] = this
 
   def fullFormat: MongoAdtFormat[E]
   def format: MongoAdtFormat[T]
@@ -40,9 +40,9 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
 
   import MongoRef._
 
-  type ThisDataRef[T0 <: T] = MongoPropertyRef[E, T0]
+  type ThisRef[T0 <: T] = MongoPropertyRef[E, T0]
 
-  @macroPrivate final def thisDataRef(implicit ev: IsMongoAdtOrSubtype[T]): ThisDataRef[T] = this
+  protected def thisRef: ThisRef[T] = this
 
   @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoPropertyRef[E, C] =
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
