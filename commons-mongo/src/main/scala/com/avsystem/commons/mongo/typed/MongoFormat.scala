@@ -276,23 +276,6 @@ trait MongoAdtInstances[T] {
   def format: MongoAdtFormat[T]
 }
 
-object MongoImplicits extends BsonGenCodecs
-
-abstract class MongoDataCompanion[E](
-  implicit instances: MacroInstances[MongoImplicits.type, MongoAdtInstances[E]]
-) extends DataTypeDsl[E, E] {
-  implicit val codec: GenObjectCodec[E] = instances(MongoImplicits, this).codec
-  implicit val format: MongoAdtFormat[E] = instances(MongoImplicits, this).format
-
-  type PropertyRef[T] = MongoPropertyRef[E, T]
-  type TypeRef[C <: E] = MongoDataRef[E, C]
-
-  final val SelfRef: TypeRef[E] = MongoRef.SelfRef(format)
-
-  type ThisDataRef[C <: E] = MongoDataRef[E, C]
-  @macroPrivate def thisDataRef: ThisDataRef[E] = SelfRef
-}
-
 sealed trait BaseMongoEntity {
   type IDType
   @mongoId def id: IDType
@@ -305,11 +288,34 @@ object MongoEntity {
   final val Id = "id"
 }
 
-abstract class MongoEntityCompanion[E <: BaseMongoEntity](
-  implicit instances: MacroInstances[MongoImplicits.type, MongoAdtInstances[E]]
-) extends MongoDataCompanion[E] {
+abstract class AbstractMongoDataCompanion[Implicits, E](implicits: Implicits)(
+  implicit instances: MacroInstances[Implicits, MongoAdtInstances[E]]
+) extends DataTypeDsl[E, E] {
+  implicit val codec: GenObjectCodec[E] = instances(implicits, this).codec
+  implicit val format: MongoAdtFormat[E] = instances(implicits, this).format
+
+  type PropertyRef[T] = MongoPropertyRef[E, T]
+  type TypeRef[C <: E] = MongoDataRef[E, C]
+
+  final val SelfRef: TypeRef[E] = MongoRef.SelfRef(format)
+
+  type ThisDataRef[C <: E] = MongoDataRef[E, C]
+  @macroPrivate def thisDataRef: ThisDataRef[E] = SelfRef
+}
+
+abstract class AbstractMongoEntityCompanion[Implicits, E <: BaseMongoEntity](implicits: Implicits)(
+  implicit instances: MacroInstances[Implicits, MongoAdtInstances[E]]
+) extends AbstractMongoDataCompanion[Implicits, E](implicits) {
 
   type ID = E#IDType
 
   final val IdRef: PropertyRef[ID] = format.fieldRefFor(SelfRef, MongoEntity.Id)
 }
+
+abstract class MongoDataCompanion[E](
+  implicit instances: MacroInstances[BsonGenCodecs.type, MongoAdtInstances[E]]
+) extends AbstractMongoDataCompanion[BsonGenCodecs.type, E](BsonGenCodecs)
+
+abstract class MongoEntityCompanion[E <: BaseMongoEntity](
+  implicit instances: MacroInstances[BsonGenCodecs.type, MongoAdtInstances[E]]
+) extends AbstractMongoEntityCompanion[BsonGenCodecs.type, E](BsonGenCodecs)
