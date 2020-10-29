@@ -6,7 +6,7 @@ import org.bson.{BsonArray, BsonDocument}
 
 sealed trait MongoFilter[T] {
   def on[E](prefix: MongoPropertyRef[E, T]): MongoDocumentFilter[E] =
-    MongoDocumentFilter.PropertyValueFilter(prefix, this)
+    prefix.impliedFilter && MongoDocumentFilter.PropertyValueFilter(prefix, this)
 
   final def toBson: BsonDocument = this match {
     case docFilter: MongoDocumentFilter[T] => docFilter.toFilterBson(Opt.Empty)
@@ -100,17 +100,14 @@ sealed trait MongoDocumentFilter[E] extends MongoFilter[E] {
       case Or(filters) => filterDocs.add(Bson.document(Bson.Or, Bson.array(filters.iterator.map(_.toFilterBson(prefixPath)))))
       case Nor(filters) => filterDocs.add(Bson.document(Bson.Nor, Bson.array(filters.iterator.map(_.toFilterBson(prefixPath)))))
 
-      case PropertyValueFilter(prop, filter) =>
-        prop.impliedFilter.addToFilters(prefixPath, filterDocs)
+      case PropertyValueFilter(prop, filter) => filter match {
+        case docFilter: MongoDocumentFilter[_] =>
+          docFilter.addToFilters(fullPath(prop.propertyPath).opt, filterDocs)
 
-        filter match {
-          case docFilter: MongoDocumentFilter[_] =>
-            docFilter.addToFilters(fullPath(prop.propertyPath).opt, filterDocs)
-
-          case opFilter: MongoOperatorsFilter[_] =>
-            val path = fullPath(prop.propertyPath)
-            findFilterDoc(path).put(path, opFilter.toOperatorsBson)
-        }
+        case opFilter: MongoOperatorsFilter[_] =>
+          val path = fullPath(prop.propertyPath)
+          findFilterDoc(path).put(path, opFilter.toOperatorsBson)
+      }
     }
   }
 }
@@ -130,6 +127,11 @@ object MongoDocumentFilter {
     filter: MongoFilter[T]
   ) extends MongoDocumentFilter[E]
 
-  def subtypeFilter[E, T](prefix: MongoRef[E, T], caseFieldName: String, caseNames: List[String]): MongoDocumentFilter[E] =
-    MongoRef.caseNameRef(prefix, caseFieldName).in(caseNames)
+  def subtypeFilter[E, T](prefix: MongoRef[E, T], caseFieldName: String, caseNames: List[String]): MongoDocumentFilter[E] = {
+    val operator = caseNames match {
+      case List(single) => MongoQueryOperator.Eq(single, MongoFormat[String])
+      case multiple => MongoQueryOperator.In(multiple, MongoFormat[String])
+    }
+    PropertyValueFilter(MongoRef.caseNameRef(prefix, caseFieldName), MongoOperatorsFilter(Seq(operator)))
+  }
 }

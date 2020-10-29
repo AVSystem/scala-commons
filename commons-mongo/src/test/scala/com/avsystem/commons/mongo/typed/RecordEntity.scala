@@ -79,6 +79,6 @@ object Testujo {
     println(Update.toBson)
     println(RecordEntity.BoolRef.is(true).toBson)
     println(RecordEntity.DeepStrRef.is("fu").toBson)
-    println(IntsHeadRef.is(0).toBson)
+    println((UnionEntity.as[CaseOne].ref(_.other).is(0) || UnionEntity.as[CaseTwo].ref(_.other).is(true)).toBson)
   }
 }

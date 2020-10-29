@@ -48,16 +48,16 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 
   protected def wrapQueryOperator(operator: MongoQueryOperator[T]): MongoDocumentFilter[E] =
-    MongoDocumentFilter.PropertyValueFilter(this, MongoOperatorsFilter(Seq(operator)))
+    satisfiesFilter(MongoOperatorsFilter(Seq(operator)))
 
   protected def wrapUpdateOperator(operator: MongoUpdateOperator[T]): MongoUpdate[E] =
     MongoUpdate.PropertyUpdate(this, operator)
 
   def satisfiesFilter(filter: MongoFilter[T]): MongoDocumentFilter[E] =
-    MongoDocumentFilter.PropertyValueFilter(this, filter)
+    impliedFilter && MongoDocumentFilter.PropertyValueFilter(this, filter)
 
   def satisfies(filter: MongoFilter.Creator[T] => MongoFilter[T]): MongoDocumentFilter[E] =
-    MongoDocumentFilter.PropertyValueFilter(this, filter(new MongoFilter.Creator[T](format)))
+    satisfiesFilter(filter(new MongoFilter.Creator[T](format)))
 
   def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoDocumentFilter[E] =
     satisfies(_.satisfiesOperators(operators))
