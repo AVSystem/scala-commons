@@ -127,11 +127,17 @@ class ApiReflectionTest extends AnyFunSuite {
         |  def toUpperCase(x$1: java.util.Locale): String
         |  def toUpperCase(): String
         |  def trim(): String
-        |  def toCharArray(): Array[Char]
-        |  def intern(): String
-        |  final def +(x$1: Any): String
+        |  def strip(): String
+        |  def stripLeading(): String
+        |  def stripTrailing(): String
+        |  def isBlank(): Boolean
+        |  def lines(): java.util.stream.Stream[String]
         |  def chars(): java.util.stream.IntStream
         |  def codePoints(): java.util.stream.IntStream
+        |  def toCharArray(): Array[Char]
+        |  def intern(): String
+        |  def repeat(x$1: Int): String
+        |  final def +(x$1: Any): String
         |}""".stripMargin
     )
   }
