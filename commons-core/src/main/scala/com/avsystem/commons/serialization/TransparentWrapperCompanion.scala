@@ -13,15 +13,6 @@ trait TransparentWrapping[R, T] {
   def wrap(r: R): T
   def unwrap(t: T): R
 }
-object TransparentWrapping {
-  private[this] object IdentityWrapping extends TransparentWrapping[Any, Any] {
-    def wrap(r: Any): Any = r
-    def unwrap(t: Any): Any = t
-  }
-
-  implicit def identity[T]: TransparentWrapping[T, T] =
-    IdentityWrapping.asInstanceOf[TransparentWrapping[T, T]]
-}
 
 /**
   * Base class for companion objects of case classes which are transparent wrappers over their only field.
