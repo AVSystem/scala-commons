@@ -3,10 +3,10 @@ package mongo.typed
 
 import com.avsystem.commons.annotation.macroPrivate
 import com.avsystem.commons.meta.MacroInstances
-import com.avsystem.commons.mongo.BsonGenCodecs
+import com.avsystem.commons.mongo.{BsonGenCodecs, mongoId}
 import com.avsystem.commons.serialization.GenObjectCodec
 
-import com.avsystem.commons.mongo.mongoId
+import scala.annotation.implicitNotFound
 
 sealed trait BaseMongoEntity {
   type IDType
@@ -25,11 +25,21 @@ trait MongoAdtInstances[T] {
   def format: MongoAdtFormat[T]
 }
 
+/**
+  * Provides additional static validation for `as`, `is` and `ref` macros from [[DataTypeDsl]].
+  * Catches mistakes when someone forgets to use [[MongoDataCompanion]] or [[MongoEntityCompanion]] for its
+  * case class or sealed hierarchy.
+  */
+@implicitNotFound("${T} is an opaque data type - does it have a companion that extends MongoDataCompanion?")
+sealed trait IsMongoAdtOrSubtype[T]
+
 abstract class AbstractMongoDataCompanion[Implicits, E](implicits: Implicits)(
   implicit instances: MacroInstances[Implicits, MongoAdtInstances[E]]
 ) extends DataTypeDsl[E, E] {
   implicit val codec: GenObjectCodec[E] = instances(implicits, this).codec
   implicit val format: MongoAdtFormat[E] = instances(implicits, this).format
+
+  implicit def isMongoAdtOrSubtype[C <: E]: IsMongoAdtOrSubtype[C] = null
 
   type PropertyRef[T] = MongoPropertyRef[E, T]
   type TypeRef[C <: E] = MongoDataRef[E, C]
@@ -37,7 +47,8 @@ abstract class AbstractMongoDataCompanion[Implicits, E](implicits: Implicits)(
   final val SelfRef: TypeRef[E] = MongoRef.SelfRef(format)
 
   type ThisDataRef[C <: E] = MongoDataRef[E, C]
-  @macroPrivate def thisDataRef: ThisDataRef[E] = SelfRef
+
+  @macroPrivate def thisDataRef(implicit ev: IsMongoAdtOrSubtype[E]): ThisDataRef[E] = SelfRef
 }
 
 abstract class AbstractMongoEntityCompanion[Implicits, E <: BaseMongoEntity](implicits: Implicits)(

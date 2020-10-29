@@ -7,7 +7,7 @@ import com.avsystem.commons.macros.serialization.MongoMacros
 trait DataTypeDsl[E, T] {
   type ThisDataRef[T0 <: T] <: MongoRef[E, T0]
 
-  @macroPrivate def thisDataRef: ThisDataRef[T]
+  @macroPrivate def thisDataRef(implicit ev: IsMongoAdtOrSubtype[T]): ThisDataRef[T]
 
   // this macro effectively calls `fieldRefFor` while doing some additional static checks
   def ref[T0](fun: T => T0): MongoPropertyRef[E, T0] = macro MongoMacros.refImpl

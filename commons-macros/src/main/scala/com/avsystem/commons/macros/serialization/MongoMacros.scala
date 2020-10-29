@@ -42,8 +42,8 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
   def refImpl(fun: Tree): Tree = fun match {
     case Function(List(param), body) =>
       //TODO: more detailed message
-      def wrongRef(tree: Tree): Nothing =
-        abortAt("wrong Mongo field reference", tree.pos)
+      def invalid(tree: Tree): Nothing =
+        c.abort(tree.pos, "invalid MongoDB field reference")
 
       def extractRefStep(body: Tree): Tree = body match {
         // TODO: allow body to be annotated/type-ascribed etc.
@@ -63,7 +63,7 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
           else if (name == TermName("head") && overridesAnyOf(body.symbol, SeqHeadRef))
             q"$newPrefixRef.head"
           else
-            wrongRef(body)
+            invalid(body)
 
         case Apply(Select(prefix, TermName("apply")), List(argument))
           if overridesAnyOf(body.symbol, SeqApplySym, MapApplySym) =>
@@ -71,7 +71,7 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
           q"${extractRefStep(prefix)}.apply($argument)"
 
         case _ =>
-          wrongRef(body)
+          invalid(body)
       }
 
       extractRefStep(body)

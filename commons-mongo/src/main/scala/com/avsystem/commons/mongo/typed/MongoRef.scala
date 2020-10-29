@@ -22,7 +22,7 @@ sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataTypeDsl[E, T]
 sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
   type ThisDataRef[C <: T] = MongoDataRef[E, C]
 
-  @macroPrivate final def thisDataRef: ThisDataRef[T] = this
+  @macroPrivate final def thisDataRef(implicit ev: IsMongoAdtOrSubtype[T]): ThisDataRef[T] = this
 
   def fullFormat: MongoAdtFormat[E]
   def format: MongoAdtFormat[T]
@@ -42,7 +42,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
 
   type ThisDataRef[T0 <: T] = MongoPropertyRef[E, T0]
 
-  @macroPrivate final def thisDataRef: ThisDataRef[T] = this
+  @macroPrivate final def thisDataRef(implicit ev: IsMongoAdtOrSubtype[T]): ThisDataRef[T] = this
 
   @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoPropertyRef[E, C] =
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])

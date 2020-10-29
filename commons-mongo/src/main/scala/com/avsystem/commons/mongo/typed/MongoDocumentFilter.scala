@@ -22,7 +22,8 @@ object MongoFilter {
 
     type ThisDataRef[C <: T] = MongoDataRef[T, C]
 
-    @macroPrivate def thisDataRef: ThisDataRef[T] = MongoRef.SelfRef(format.assumeAdt)
+    @macroPrivate def thisDataRef(implicit ev: IsMongoAdtOrSubtype[T]): ThisDataRef[T] =
+      MongoRef.SelfRef(format.assumeAdt)
 
     protected def wrapQueryOperator(op: MongoQueryOperator[T]): MongoOperatorsFilter[T] =
       MongoOperatorsFilter(Seq(op))

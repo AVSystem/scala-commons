@@ -2,7 +2,7 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.mongo.mongoId
-import com.avsystem.commons.serialization.{StringWrapperCompanion, flatten, name, optionalParam}
+import com.avsystem.commons.serialization.{HasGenCodec, StringWrapperCompanion, flatten, name, optionalParam}
 import com.mongodb.reactivestreams.client.MongoClients
 import monix.reactive.Observable
 import org.bson.types.ObjectId
@@ -10,10 +10,14 @@ import org.bson.types.ObjectId
 case class Wraper(str: String) extends AnyVal
 object Wraper extends StringWrapperCompanion[Wraper]
 
+case class OpaqueIshData(notAccessible: String)
+object OpaqueIshData extends HasGenCodec[OpaqueIshData]
+
 case class RecordEntity(
   id: ObjectId,
   @name("stringy") str: String,
   ints: Seq[Int],
+  opaque: OpaqueIshData,
   mapencja: Map[Wraper, RecordEntity],
   @optionalParam maybeBool: Opt[Boolean],
   maybeSelf: Opt[RecordEntity]
