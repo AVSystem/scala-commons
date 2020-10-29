@@ -2,6 +2,7 @@ package com.avsystem.commons
 package mongo.model
 
 import com.avsystem.commons.mongo.core.GenCodecRegistry
+import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.client.model._
 import com.mongodb.client.result.{DeleteResult, InsertManyResult, InsertOneResult, UpdateResult}
 import com.mongodb.reactivestreams.client.{DistinctPublisher, FindPublisher, MongoCollection}
@@ -184,4 +185,12 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     setupOptions: ReplaceOptions => ReplaceOptions = identity
   ): Task[UpdateResult] =
     single(nativeCollection.replaceOne(filter.toBson, replacement, setupOptions(new ReplaceOptions)))
+
+  def bulkWrite(
+    writes: Seq[MongoWrite[E]],
+    setupOptions: BulkWriteOptions => BulkWriteOptions = identity
+  ): Task[BulkWriteResult] = {
+    val requests = writes.iterator.map(_.toWriteModel).to[JList]
+    single(nativeCollection.bulkWrite(requests, setupOptions(new BulkWriteOptions)))
+  }
 }
