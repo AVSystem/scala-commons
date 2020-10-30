@@ -43,7 +43,7 @@ case class CaseThree(id: ObjectId, other: String, record: RecordEntity) extends 
 object UnionEntity extends MongoEntityCompanion[UnionEntity] {
   final val AsCaseOne = as[CaseOne]
   final val AsMoreSpecific = as[MoreSpecificUnion]
-  final val RecordStrRef = as[MoreSpecificUnion].ref(_.record.str)
+  final val RecordStrRef = ref(_.as[MoreSpecificUnion].record.str)
   final val RecordStrRef2 = as[MoreSpecificUnion].ref(_.record).ref(_.str)
 }
 
@@ -74,7 +74,7 @@ object Testujo {
     println(Update.toBson)
     println(RecordEntity.BoolRef.is(true).toBson)
     println(RecordEntity.DeepStrRef.is("fu").toBson)
-    println((UnionEntity.as[CaseOne].ref(_.other).is(0) || UnionEntity.as[CaseTwo].ref(_.other).is(true)).toBson)
+    println((UnionEntity.ref(_.as[CaseOne].other).is(0) || UnionEntity.ref(_.as[CaseTwo].other).is(true)).toBson)
 
     val client = MongoClients.create()
     val rawCollection = client.getDatabase("test").getCollection("containsUnion")
@@ -83,21 +83,10 @@ object Testujo {
     case class Partial(ints: Seq[Int], id: ObjectId)
 
     val fullTask = for {
-      _ <- collection.insertMany(Seq(
-        ContainsUnion(ObjectId.get(), CaseOne(ObjectId.get(), 42)),
-        ContainsUnion(ObjectId.get(), CaseTwo(ObjectId.get(), other = true, RecordEntity(
-          ObjectId.get(), "fujTwo", Seq(1, 2, 3), OpaqueIshData("zuoTwo"), Map.empty, Opt.Empty, Opt.Empty)
-        )),
-        ContainsUnion(ObjectId.get(), CaseThree(ObjectId.get(), "other", RecordEntity(
-          ObjectId.get(), "zuoThree", Seq(3, 4, 5), OpaqueIshData("zuoThree"), Map.empty, Opt(true), Opt.Empty)
-        ))
-      ))
-      partials = collection.find(
-        MongoDocumentFilter.empty,
-        MongoProjection.zip(UnionRecordInts, IdRef).map(Partial.tupled),
-        IdRef.ascending
-      )
-      _ <- partials.foreachL(println)
+      _ <- collection.find(
+        ContainsUnion.ref(_.union.as[MoreSpecificUnion].record.ints).head.isNot(1),
+        ContainsUnion.ref(_.union.as[MoreSpecificUnion].record.ints).head
+      ).foreachL(println)
     } yield ()
 
     Await.result(fullTask.runAsync(Scheduler.global), Duration.Inf)

@@ -7,11 +7,12 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
   import c.universe._
 
-  def MongoModelPkg: Tree = q"$CommonsPkg.mongo.model"
-  lazy val MongoRefCls: Symbol = getType(tq"$MongoModelPkg.MongoRef[_, _]").typeSymbol
+  def MongoTypedPkg: Tree = q"$CommonsPkg.mongo.typed"
+  lazy val MongoRefCls: Symbol = getType(tq"$MongoTypedPkg.MongoRef[_, _]").typeSymbol
   lazy val SeqApplySym: Symbol = typeOf[scala.collection.Seq[Any]].member(TermName("apply"))
   lazy val SeqHeadRef: Symbol = typeOf[scala.collection.Seq[Any]].member(TermName("head"))
   lazy val MapApplySym: Symbol = typeOf[scala.collection.Map[Any, Any]].member(TermName("apply"))
+  lazy val AdtAsSym: Symbol = getType(tq"$MongoTypedPkg.RefMacroDslExtensions[_]").member(TermName("as"))
 
   // check if some symbol is an abstract method of a sealed trait/class implemented in every case class
   // by a field with exactly the same type
@@ -49,6 +50,9 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
         // TODO: allow body to be annotated/type-ascribed etc.
         case body: Ident if body.symbol == param.symbol =>
           c.prefix.tree
+
+        case TypeApply(Select(Apply(_, List(prefix)), TermName("as")), List(subtpe)) if body.symbol == AdtAsSym =>
+          q"${extractRefStep(prefix)}.as[$subtpe]"
 
         case Select(prefix, name: TermName) =>
           val newPrefixRef = extractRefStep(prefix)
