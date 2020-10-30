@@ -35,10 +35,11 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   }
 
   private def single[T](publisher: Publisher[T]): Task[T] =
-    Observable.fromReactivePublisher(publisher).firstL
+    Observable.fromReactivePublisher(publisher, 1).firstL
 
-  private def nullableSingle[T](publisher: Publisher[T]): Task[Option[T]] =
-    single(publisher).map(_.option)
+  // handles both an empty Publisher and and a single null item
+  private def singleOpt[T](publisher: Publisher[T]): Task[Option[T]] =
+    Observable.fromReactivePublisher(publisher, 1).filter(_ != null).firstOptionL
 
   def countDocuments(
     filter: MongoDocumentFilter[E] = MongoDocumentFilter.empty,
@@ -54,8 +55,11 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   def findById(
     id: ID,
     setupOptions: FindPublisher[Any] => FindPublisher[Any] = identity
-  ): Task[Option[E]] =
-    find(IdRef === id, setupOptions = publisher => setupOptions(publisher).limit(1)).firstOptionL
+  ): Task[Option[E]] = {
+    val publisher = nativeCollection.find((IdRef === id).toBson)
+    val publisherWithOptions = setupOptions(publisher.asInstanceOf[FindPublisher[Any]]).asInstanceOf[FindPublisher[E]]
+    singleOpt(publisherWithOptions.limit(1).first())
+  }
 
   def find[T](
     filter: MongoDocumentFilter[E] = MongoDocumentFilter.empty,
@@ -93,10 +97,10 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   ): Task[Option[T]] = projection match {
     case SelfRef =>
       val options = setupOptions(new FindOneAndUpdateOptions).sort(sort.toBson)
-      nullableSingle(nativeCollection.findOneAndUpdate(filter.toBson, update.toBson, options).asInstanceOf[Publisher[T]])
+      singleOpt(nativeCollection.findOneAndUpdate(filter.toBson, update.toBson, options).asInstanceOf[Publisher[T]])
     case proj =>
       val options = setupOptions(new FindOneAndUpdateOptions).projection(proj.toProjectionBson).sort(sort.toBson)
-      nullableSingle(docCollection.findOneAndUpdate(filter.toBson, update.toBson, options)).map(_.map(proj.decodeFrom))
+      singleOpt(docCollection.findOneAndUpdate(filter.toBson, update.toBson, options)).map(_.map(proj.decodeFrom))
   }
 
   def findOneAndReplace[T](
@@ -108,10 +112,10 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   ): Task[Option[T]] = projection match {
     case SelfRef =>
       val options = setupOptions(new FindOneAndReplaceOptions).sort(sort.toBson)
-      nullableSingle(nativeCollection.findOneAndReplace(filter.toBson, replacement, options).asInstanceOf[Publisher[T]])
+      singleOpt(nativeCollection.findOneAndReplace(filter.toBson, replacement, options).asInstanceOf[Publisher[T]])
     case proj =>
       val options = setupOptions(new FindOneAndReplaceOptions).projection(proj.toProjectionBson).sort(sort.toBson)
-      nullableSingle(docCollection.findOneAndReplace(filter.toBson, format.writeBson(replacement).asDocument(), options)).map(_.map(proj.decodeFrom))
+      singleOpt(docCollection.findOneAndReplace(filter.toBson, format.writeBson(replacement).asDocument(), options)).map(_.map(proj.decodeFrom))
   }
 
   def findOneAndDelete[T](
@@ -122,10 +126,10 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   ): Task[Option[T]] = projection match {
     case SelfRef =>
       val options = setupOptions(new FindOneAndDeleteOptions).sort(sort.toBson)
-      nullableSingle(nativeCollection.findOneAndDelete(filter.toBson, options).asInstanceOf[Publisher[T]])
+      singleOpt(nativeCollection.findOneAndDelete(filter.toBson, options).asInstanceOf[Publisher[T]])
     case proj =>
       val options = setupOptions(new FindOneAndDeleteOptions).projection(proj.toProjectionBson).sort(sort.toBson)
-      nullableSingle(docCollection.findOneAndDelete(filter.toBson, options)).map(_.map(proj.decodeFrom))
+      singleOpt(docCollection.findOneAndDelete(filter.toBson, options)).map(_.map(proj.decodeFrom))
   }
 
   def distinct[T](
