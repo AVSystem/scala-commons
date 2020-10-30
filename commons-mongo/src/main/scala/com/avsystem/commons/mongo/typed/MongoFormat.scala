@@ -251,7 +251,7 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     @composite val info: GenCaseInfo[T],
     @infer val classTag: ClassTag[T],
     @multi @adtCaseSealedParentMetadata val sealedParents: List[SealedParent[_]],
-    @infer @checked val value: ValueOf[T],
+    @infer @checked val value: ValueOf[T]
   ) extends Case[T] {
     def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T] =
       new Singleton(this, codec)
