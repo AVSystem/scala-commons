@@ -78,14 +78,14 @@ object Testujo {
 
     val client = MongoClients.create()
     val rawCollection = client.getDatabase("test").getCollection("containsUnion")
-    val collection = new TypedMongoCollection[ContainsUnion](rawCollection)
+    val coll = new TypedMongoCollection[ContainsUnion](rawCollection)
 
     case class Partial(ints: Seq[Int], id: ObjectId)
 
     val fullTask = for {
-      _ <- collection.find(
-        ContainsUnion.ref(_.union.as[MoreSpecificUnion].record.ints).head.isNot(1),
-        ContainsUnion.ref(_.union.as[MoreSpecificUnion].record.ints).head
+      _ <- coll.find(
+        coll.ref(_.union.as[MoreSpecificUnion].record.ints).head.isNot(1),
+        coll.ref(_.union.as[MoreSpecificUnion].record.ints).head
       ).foreachL(println)
     } yield ()
 
