@@ -111,7 +111,7 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     @infer val codec: GenObjectCodec[T],
     @infer val dataClassTag: ClassTag[T],
     @reifyAnnot val flattenAnnot: flatten,
-    @multi @adtCaseMetadata val cases: List[Case[_]],
+    @multi @adtCaseMetadata val cases: List[Case[_]]
   ) extends MongoAdtFormat[T] {
 
     lazy val casesByClass: Map[Class[_], Case[_]] =
