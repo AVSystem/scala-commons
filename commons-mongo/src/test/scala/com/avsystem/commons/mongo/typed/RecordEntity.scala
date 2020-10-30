@@ -49,7 +49,8 @@ object UnionEntity extends MongoEntityCompanion[UnionEntity] {
 
 case class ContainsUnion(
   id: ObjectId,
-  union: UnionEntity
+  union: UnionEntity,
+  newField: String = "jakbyco"
 ) extends MongoEntity[ObjectId]
 object ContainsUnion extends MongoEntityCompanion[ContainsUnion] {
   final val MoreSpecificUnionRef = ref(_.union).as[MoreSpecificUnion]
@@ -85,7 +86,7 @@ object Testujo {
     val fullTask = for {
       _ <- coll.find(
         coll.ref(_.union.as[MoreSpecificUnion].record.ints).head.isNot(1),
-        coll.ref(_.union.as[MoreSpecificUnion].record.ints).head
+        coll.ref(_.newField)
       ).foreachL(println)
     } yield ()
 

@@ -4,6 +4,7 @@ package mongo.typed
 import com.avsystem.commons.annotation.macroPrivate
 import com.avsystem.commons.meta.OptionLike
 import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import org.bson.{BsonDocument, BsonValue}
 
 import scala.annotation.tailrec
@@ -78,10 +79,10 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
 
   lazy val propertyPath: List[String] = {
     @tailrec def loop[T0](ref: MongoPropertyRef[E, T0], acc: List[String]): List[String] = ref match {
-      case FieldRef(_: MongoDataRef[_, _], fieldName, _) =>
+      case FieldRef(_: MongoDataRef[_, _], fieldName, _, _) =>
         KeyEscaper.escape(fieldName) :: acc
 
-      case FieldRef(prefix: MongoPropertyRef[E, _], fieldName, _) =>
+      case FieldRef(prefix: MongoPropertyRef[E, _], fieldName, _, _) =>
         loop(prefix, KeyEscaper.escape(fieldName) :: acc)
 
       case ArrayIndexRef(prefix, index, _) =>
@@ -102,16 +103,29 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   def projectionPaths: Opt[Set[String]] =
     Opt(Set(propertyPathString))
 
-  def decodeFrom(doc: BsonDocument): T = {
-    val bsonValue = propertyPath.foldLeft(doc: BsonValue) {
-      case (doc: BsonDocument, key) => doc.get(key)
-      case _ => null
-    }
-    bsonValue match {
-      case null => throw new NoSuchElementException(s"path $propertyPathString not found in BSON document")
-      case _ => BsonValueInput.read(bsonValue)(format.codec)
-    }
+  private def notFound =
+    throw new ReadFailure(s"path $propertyPathString absent in incoming document")
+
+  private def extractBson(doc: BsonDocument): BsonValue = this match {
+    case FieldRef(_: MongoDataRef[_, _], fieldName, _, fallback) =>
+      doc.get(KeyEscaper.escape(fieldName)).opt.orElse(fallback).getOrElse(notFound)
+
+    case FieldRef(prefix: MongoPropertyRef[E, _], fieldName, _, fallback) =>
+      prefix.extractBson(doc).asDocument.get(KeyEscaper.escape(fieldName)).opt.orElse(fallback).getOrElse(notFound)
+
+    case ArrayIndexRef(prefix, index, _) =>
+      val array = prefix.extractBson(doc).asArray
+      if (index < array.size) array.get(index) else notFound
+
+    case GetFromOptional(prefix, _, _) =>
+      prefix.extractBson(doc)
+
+    case PropertyAsSubtype(prefix, _, _, _) =>
+      prefix.extractBson(doc)
   }
+
+  def decodeFrom(doc: BsonDocument): T =
+    BsonValueInput.read(extractBson(doc))(format.codec)
 }
 object MongoPropertyRef {
   implicit class CollectionRefOps[E, C[X] <: Iterable[X], T](private val ref: MongoPropertyRef[E, C[T]]) extends AnyVal {
@@ -124,7 +138,7 @@ object MongoPropertyRef {
   implicit class DictionaryRefOps[E, M[X, Y] <: BMap[X, Y], K, V](private val ref: MongoPropertyRef[E, M[K, V]]) extends AnyVal {
     def apply(key: K): MongoPropertyRef[E, V] = {
       val dictFormat = ref.format.assumeDictionary
-      MongoRef.FieldRef(ref, dictFormat.keyCodec.write(key), dictFormat.valueFormat)
+      MongoRef.FieldRef(ref, dictFormat.keyCodec.write(key), dictFormat.valueFormat, Opt.Empty)
     }
   }
 
@@ -161,7 +175,8 @@ object MongoRef {
   final case class FieldRef[E, E0, T](
     prefix: MongoRef[E, E0],
     fieldName: String,
-    format: MongoFormat[T]
+    format: MongoFormat[T],
+    fallbackBson: Opt[BsonValue]
   ) extends MongoPropertyRef[E, T] {
     def impliedFilter: MongoDocumentFilter[E] = prefix.impliedFilter
   }
@@ -178,7 +193,6 @@ object MongoRef {
     // array index references are not allowed in projections, we must fetch the entire array and extract element manually
     // https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#project-specific-array-elements-in-the-returned-array
     override def projectionPaths: Opt[Set[String]] = prefix.projectionPaths
-    override def decodeFrom(doc: BsonDocument): T = prefix.decodeFrom(doc).toSeq.apply(index)
   }
 
   final case class GetFromOptional[E, O, T](
@@ -187,7 +201,6 @@ object MongoRef {
     optionLike: OptionLike.Aux[O, T]
   ) extends MongoPropertyRef[E, T] {
     def impliedFilter: MongoDocumentFilter[E] = prefix.impliedFilter && prefix.isNot(optionLike.none)
-    override def decodeFrom(doc: BsonDocument): T = optionLike.get(prefix.decodeFrom(doc))
   }
 
   final case class PropertyAsSubtype[E, T0, T <: T0](
@@ -201,5 +214,5 @@ object MongoRef {
   }
 
   def caseNameRef[E, T](prefix: MongoRef[E, T], caseFieldName: String): MongoPropertyRef[E, String] =
-    FieldRef(prefix, caseFieldName, MongoFormat[String])
+    FieldRef(prefix, caseFieldName, MongoFormat[String], Opt.Empty)
 }

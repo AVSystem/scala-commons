@@ -6,7 +6,7 @@ import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.mongo.{BsonValueInput, BsonValueOutput}
 import com.avsystem.commons.serialization._
-import org.bson.BsonValue
+import org.bson.{BsonNull, BsonValue}
 
 import scala.annotation.tailrec
 
@@ -241,7 +241,7 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
         case fieldRef: MongoRef.FieldRef[E, _, T] if transparentWrapper =>
           fieldRef.copy(format = field.format.value)
         case _ =>
-          MongoRef.FieldRef(prefix, field.info.rawName, field.format.value)
+          MongoRef.FieldRef(prefix, field.info.rawName, field.format.value, field.fallbackBson)
       }
     }
   }
@@ -265,12 +265,19 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
 
   final class Field[T](
     @composite val info: GenParamInfo[T],
+    @optional @reifyDefaultValue defaultValue: Opt[DefaultValue[T]],
+    @optional @reifyAnnot whenAbsentAnnot: Opt[whenAbsent[T]],
     @infer val format: MongoFormat.Lazy[T]
-  ) extends TypedMetadata[T]
+  ) extends TypedMetadata[T] {
+    lazy val fallbackBson: Opt[BsonValue] = {
+      if (info.optional) Opt(BsonNull.VALUE)
+      else whenAbsentAnnot.map(a => Try(a.value)).orElse(defaultValue.map(a => Try(a.value)))
+        .flatMap(_.toOpt).map(v => BsonValueOutput.write(v)(format.value.codec))
+    }
+  }
 
   final class SealedParent[T](
     @composite val info: GenUnionInfo[T],
     @infer val classTag: ClassTag[T]
   ) extends TypedMetadata[T]
 }
-
