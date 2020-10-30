@@ -77,34 +77,38 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   def twoDimIndex: MongoIndex[E] = index(MongoIndexType.TwoDim)
   def twoDimSphereIndex: MongoIndex[E] = index(MongoIndexType.TwoDimSphere)
 
-  lazy val propertyPath: List[String] = {
-    @tailrec def loop[T0](ref: MongoPropertyRef[E, T0], acc: List[String]): List[String] = ref match {
-      case FieldRef(_: MongoDataRef[_, _], fieldName, _, _) =>
-        KeyEscaper.escape(fieldName) :: acc
+  @tailrec private def computePath[T0](
+    onlyUpToArray: Boolean,
+    ref: MongoPropertyRef[E, T0],
+    acc: List[String]
+  ): List[String] = ref match {
+    case FieldRef(_: MongoDataRef[_, _], fieldName, _, _) =>
+      KeyEscaper.escape(fieldName) :: acc
 
-      case FieldRef(prefix: MongoPropertyRef[E, _], fieldName, _, _) =>
-        loop(prefix, KeyEscaper.escape(fieldName) :: acc)
+    case FieldRef(prefix: MongoPropertyRef[E, _], fieldName, _, _) =>
+      computePath(onlyUpToArray, prefix, KeyEscaper.escape(fieldName) :: acc)
 
-      case ArrayIndexRef(prefix, index, _) =>
-        loop(prefix, index.toString :: acc)
+    case ArrayIndexRef(prefix, index, _) =>
+      val newAcc = if(onlyUpToArray) Nil else index.toString :: acc
+      computePath(onlyUpToArray, prefix, newAcc)
 
-      case GetFromOptional(prefix, _, _) =>
-        loop(prefix, acc)
+    case GetFromOptional(prefix, _, _) =>
+      computePath(onlyUpToArray, prefix, acc)
 
-      case PropertyAsSubtype(prefix, _, _, _) =>
-        loop(prefix, acc)
-    }
-    loop(this, Nil)
+    case PropertyAsSubtype(prefix, _, _, _) =>
+      computePath(onlyUpToArray, prefix, acc)
   }
 
-  lazy val propertyPathString: String =
-    propertyPath.mkString(".")
+  lazy val filterPath: String =
+    computePath(onlyUpToArray = false, this, Nil).mkString(".")
 
-  def projectionPaths: Opt[Set[String]] =
-    Opt(Set(propertyPathString))
+  lazy val projectionPath: String =
+    computePath(onlyUpToArray = true, this, Nil).mkString(".")
+
+  def projectionPaths: Opt[Set[String]] = Opt(Set(projectionPath))
 
   private def notFound =
-    throw new ReadFailure(s"path $propertyPathString absent in incoming document")
+    throw new ReadFailure(s"path $filterPath absent in incoming document")
 
   private def extractBson(doc: BsonDocument): BsonValue = this match {
     case FieldRef(_: MongoDataRef[_, _], fieldName, _, fallback) =>

@@ -102,10 +102,10 @@ sealed trait MongoDocumentFilter[E] extends MongoFilter[E] {
 
       case PropertyValueFilter(prop, filter) => filter match {
         case docFilter: MongoDocumentFilter[_] =>
-          docFilter.addToFilters(fullPath(prop.propertyPathString).opt, filterDocs)
+          docFilter.addToFilters(fullPath(prop.filterPath).opt, filterDocs)
 
         case opFilter: MongoOperatorsFilter[_] =>
-          val path = fullPath(prop.propertyPathString)
+          val path = fullPath(prop.filterPath)
           findFilterDoc(path).put(path, opFilter.toOperatorsBson)
       }
     }

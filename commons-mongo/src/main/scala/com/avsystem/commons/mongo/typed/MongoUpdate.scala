@@ -29,7 +29,7 @@ sealed trait MongoUpdate[E] {
       doc
 
     case PropertyUpdate(property, operator) =>
-      Bson.document(operator.rawOperator, Bson.document(property.propertyPathString, operator.toBson))
+      Bson.document(operator.rawOperator, Bson.document(property.filterPath, operator.toBson))
   }
 }
 
@@ -44,7 +44,7 @@ object MongoUpdate {
   ) extends MongoUpdate[E] {
     def updateBson(updateDoc: BsonDocument): Unit = {
       val rawOp = operator.rawOperator
-      val path = property.propertyPathString
+      val path = property.filterPath
       if (!updateDoc.containsKey(rawOp)) {
         updateDoc.put(rawOp, new BsonDocument)
       }

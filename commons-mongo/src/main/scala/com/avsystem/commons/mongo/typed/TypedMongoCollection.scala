@@ -139,7 +139,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   ): Observable[T] = {
 
     val publisher = nativeCollection
-      .distinct(property.propertyPathString, classOf[BsonValue])
+      .distinct(property.filterPath, classOf[BsonValue])
       .filter((property.impliedFilter && filter).toBson)
 
     val publisherWithOptions =
