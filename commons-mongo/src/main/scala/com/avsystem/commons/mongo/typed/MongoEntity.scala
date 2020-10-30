@@ -33,11 +33,6 @@ trait MongoAdtInstances[T] {
 @implicitNotFound("${T} is an opaque data type - does it have a companion that extends MongoDataCompanion?")
 sealed trait IsMongoAdtOrSubtype[T]
 
-sealed trait RefMacroDslExtensions[E] {
-  @explicitGenerics
-  def as[T <: E]: T
-}
-
 abstract class AbstractMongoDataCompanion[Implicits, E](implicits: Implicits)(
   implicit instances: MacroInstances[Implicits, MongoAdtInstances[E]]
 ) extends DataTypeDsl[E] {
@@ -46,8 +41,11 @@ abstract class AbstractMongoDataCompanion[Implicits, E](implicits: Implicits)(
 
   implicit def isMongoAdtOrSubtype[C <: E]: IsMongoAdtOrSubtype[C] = null
 
-  @compileTimeOnly("the .as[Subtype] construct can only be used inside lambda passed to .ref(...) macro")
-  implicit def refMacroDslExtensions(e: E): RefMacroDslExtensions[E] = sys.error("stub")
+  implicit class macroDslExtensions(value: E) {
+    @explicitGenerics
+    @compileTimeOnly("the .as[Subtype] construct can only be used inside lambda passed to .ref(...) macro")
+    def as[T <: E]: T = sys.error("stub")
+  }
 
   type PropertyRef[T] = MongoPropertyRef[E, T]
   type TypeRef[C <: E] = MongoDataRef[E, C]

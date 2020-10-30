@@ -12,7 +12,7 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
   lazy val SeqApplySym: Symbol = typeOf[scala.collection.Seq[Any]].member(TermName("apply"))
   lazy val SeqHeadRef: Symbol = typeOf[scala.collection.Seq[Any]].member(TermName("head"))
   lazy val MapApplySym: Symbol = typeOf[scala.collection.Map[Any, Any]].member(TermName("apply"))
-  lazy val AdtAsSym: Symbol = getType(tq"$MongoTypedPkg.RefMacroDslExtensions[_]").member(TermName("as"))
+  lazy val AdtAsSym: Symbol = getType(tq"$MongoTypedPkg.AbstractMongoDataCompanion[Any, Any]#macroDslExtensions").member(TermName("as"))
 
   // check if some symbol is an abstract method of a sealed trait/class implemented in every case class
   // by a field with exactly the same type
