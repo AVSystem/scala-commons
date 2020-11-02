@@ -11,14 +11,14 @@ trait DataRefDsl[E, T] {
 
   @macroPrivate def asAdtRef(implicit ev: IsMongoAdtOrSubtype[T]): ThisRef[T] = thisRef
 
-  // this macro effectively calls `fieldRefFor` while doing some additional static checks
+  // this macro effectively calls `asAdtRef.fieldRefFor` while doing some additional static checks
   def ref[T0](fun: T => T0): MongoPropertyRef[E, T0] = macro MongoMacros.refImpl
 
-  // this macro effectively calls `subtypeRefFor` while doing some additional static checks
+  // this macro effectively calls `asAdtRef.subtypeRefFor` while doing some additional static checks
   @explicitGenerics
   def as[C <: T]: ThisRef[C] = macro MongoMacros.asSubtype[C]
 
-  // this macro effectively calls `subtypeConditionFor` while doing some additional static checks
+  // this macro effectively calls `asAdtRef.subtypeFilterFor` while doing some additional static checks
   @explicitGenerics
   def is[C <: T]: MongoDocumentFilter[E] = macro MongoMacros.isSubtype[C]
 }

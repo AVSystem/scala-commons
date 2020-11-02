@@ -99,6 +99,6 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
   def isSubtype[C: c.WeakTypeTag]: Tree = {
     val cTpe = validateSubtype(weakTypeOf[C].dealias)
-    q"${c.prefix.tree}.asAdtRef.subtypeConditionFor[$cTpe]"
+    q"${c.prefix.tree}.asAdtRef.subtypeFilterFor[$cTpe]"
   }
 }

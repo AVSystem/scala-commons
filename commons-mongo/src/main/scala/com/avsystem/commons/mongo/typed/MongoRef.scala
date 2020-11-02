@@ -11,6 +11,8 @@ import scala.annotation.tailrec
 
 sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataRefDsl[E, T] { self =>
   def format: MongoFormat[T]
+
+  def projectionRefs: Set[MongoRef[E, _]] = Set(this)
   def showRecordId: Boolean = false
 
   @macroPrivate def subtypeRefFor[C <: T : ClassTag]: ThisRef[C]
@@ -18,8 +20,8 @@ sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataRefDsl[E, T] 
   @macroPrivate def fieldRefFor[T0](scalaFieldName: String): MongoPropertyRef[E, T0] =
     format.assumeAdt.fieldRefFor(this, scalaFieldName)
 
-  @macroPrivate def subtypeConditionFor[C <: T : ClassTag]: MongoDocumentFilter[E] =
-    format.assumeUnion.subtypeConditionFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
+  @macroPrivate def subtypeFilterFor[C <: T : ClassTag]: MongoDocumentFilter[E] =
+    format.assumeUnion.subtypeFilterFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 }
 
 sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
@@ -27,13 +29,12 @@ sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
 
   protected def thisRef: ThisRef[T] = this
 
-  def fullFormat: MongoAdtFormat[E]
+  def fullRef: MongoRef.SelfRef[E]
   def format: MongoAdtFormat[T]
 
   @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoDataRef[E, C] =
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 
-  def projectionPaths: Opt[Set[String]] = Opt.empty
   def decodeFrom(doc: BsonDocument): T = BsonValueInput.read(doc)(format.codec)
 }
 
@@ -57,7 +58,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     MongoUpdate.PropertyUpdate(this, operator)
 
   def satisfiesFilter(filter: MongoFilter[T]): MongoDocumentFilter[E] =
-    impliedFilter && MongoDocumentFilter.PropertyValueFilter(this, filter)
+    MongoFilter.PropertyValueFilter(this, filter)
 
   def satisfies(filter: MongoFilter.Creator[T] => MongoFilter[T]): MongoDocumentFilter[E] =
     satisfiesFilter(filter(new MongoFilter.Creator[T](format)))
@@ -89,7 +90,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
       computePath(onlyUpToArray, prefix, KeyEscaper.escape(fieldName) :: acc)
 
     case ArrayIndexRef(prefix, index, _) =>
-      val newAcc = if(onlyUpToArray) Nil else index.toString :: acc
+      val newAcc = if (onlyUpToArray) Nil else index.toString :: acc
       computePath(onlyUpToArray, prefix, newAcc)
 
     case GetFromOptional(prefix, _, _) =>
@@ -104,8 +105,6 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
 
   lazy val projectionPath: String =
     computePath(onlyUpToArray = true, this, Nil).mkString(".")
-
-  def projectionPaths: Opt[Set[String]] = Opt(Set(projectionPath))
 
   private def notFound =
     throw new ReadFailure(s"path $filterPath absent in incoming document")
@@ -162,28 +161,22 @@ object MongoRef {
   final case class SelfRef[T](
     format: MongoAdtFormat[T]
   ) extends MongoDataRef[T, T] {
-    def fullFormat: MongoAdtFormat[T] = format
-    def impliedFilter: MongoDocumentFilter[T] = MongoDocumentFilter.empty
+    def fullRef: SelfRef[T] = this
   }
 
   final case class SelfAsSubtype[E, T <: E](
-    fullFormat: MongoAdtFormat[E],
+    fullRef: SelfRef[E],
     caseFieldName: String,
     caseNames: List[String],
     format: MongoAdtFormat[T]
-  ) extends MongoDataRef[E, T] {
-    def impliedFilter: MongoDocumentFilter[E] =
-      MongoDocumentFilter.subtypeFilter(this, caseFieldName, caseNames)
-  }
+  ) extends MongoDataRef[E, T]
 
   final case class FieldRef[E, E0, T](
     prefix: MongoRef[E, E0],
     fieldName: String,
     format: MongoFormat[T],
     fallbackBson: Opt[BsonValue]
-  ) extends MongoPropertyRef[E, T] {
-    def impliedFilter: MongoDocumentFilter[E] = prefix.impliedFilter
-  }
+  ) extends MongoPropertyRef[E, T]
 
   final case class ArrayIndexRef[E, C[X] <: Iterable[X], T](
     prefix: MongoPropertyRef[E, C[T]],
@@ -191,31 +184,20 @@ object MongoRef {
     format: MongoFormat[T]
   ) extends MongoPropertyRef[E, T] {
     require(index >= 0, "array index must be non-negative")
-
-    def impliedFilter: MongoDocumentFilter[E] = prefix.impliedFilter
-
-    // array index references are not allowed in projections, we must fetch the entire array and extract element manually
-    // https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/#project-specific-array-elements-in-the-returned-array
-    override def projectionPaths: Opt[Set[String]] = prefix.projectionPaths
   }
 
   final case class GetFromOptional[E, O, T](
     prefix: MongoPropertyRef[E, O],
     format: MongoFormat[T],
     optionLike: OptionLike.Aux[O, T]
-  ) extends MongoPropertyRef[E, T] {
-    def impliedFilter: MongoDocumentFilter[E] = prefix.impliedFilter && prefix.isNot(optionLike.none)
-  }
+  ) extends MongoPropertyRef[E, T]
 
   final case class PropertyAsSubtype[E, T0, T <: T0](
     prefix: MongoPropertyRef[E, T0],
     caseFieldName: String,
     caseNames: List[String],
     format: MongoAdtFormat[T]
-  ) extends MongoPropertyRef[E, T] {
-    def impliedFilter: MongoDocumentFilter[E] =
-      prefix.impliedFilter && MongoDocumentFilter.subtypeFilter(prefix, caseFieldName, caseNames)
-  }
+  ) extends MongoPropertyRef[E, T]
 
   def caseNameRef[E, T](prefix: MongoRef[E, T], caseFieldName: String): MongoPropertyRef[E, String] =
     FieldRef(prefix, caseFieldName, MongoFormat[String], Opt.Empty)

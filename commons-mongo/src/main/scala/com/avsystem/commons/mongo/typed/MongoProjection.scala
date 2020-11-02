@@ -4,23 +4,31 @@ package mongo.typed
 import com.avsystem.commons.mongo.mongoId
 import org.bson.BsonDocument
 
-trait MongoProjection[E, T] {
-  def impliedFilter: MongoDocumentFilter[E]
+import scala.annotation.tailrec
 
-  def projectionPaths: Opt[Set[String]]
+trait MongoProjection[E, T] {
+  def projectionRefs: Set[MongoRef[E, _]]
   def decodeFrom(doc: BsonDocument): T
   def showRecordId: Boolean
 
   def withRecordId: MongoProjection[E, WithRecordId[T]] =
     MongoProjection.ShowRecordId(this)
 
-  final def toProjectionBson: BsonDocument = projectionPaths.fold(Bson.document()) { paths =>
-    val result = Bson.document(paths.iterator.map(_ -> Bson.int(1)))
-    if (!result.containsKey(mongoId.Id)) {
-      // partial projection didn't specify that it wants _id - exclude it explicitly
-      result.put(mongoId.Id, Bson.int(0))
+  final def toProjectionBson: BsonDocument = {
+    val doc = new BsonDocument
+    @tailrec def loop(it: Iterator[MongoRef[E, _]]): Unit =
+      if (it.hasNext) it.next() match {
+        case propRef: MongoPropertyRef[E, _] =>
+          doc.put(propRef.projectionPath, Bson.int(1))
+          loop(it)
+        case _: MongoDataRef[E, _] =>
+          doc.clear()
+      }
+    loop(projectionRefs.iterator)
+    if (!doc.isEmpty && !doc.containsKey(mongoId.Id)) {
+      doc.put(mongoId.Id, Bson.int(0))
     }
-    result
+    doc
   }
 
   final def map[T0](fun: T => T0): MongoProjection[E, T0] =
@@ -34,16 +42,14 @@ trait MongoProjection[E, T] {
 }
 
 object MongoProjection extends ProjectionZippers {
-  final class Empty[E] extends MongoProjection[E, Unit] {
-    def impliedFilter: MongoDocumentFilter[E] = MongoDocumentFilter.empty
-    def projectionPaths: Opt[Set[String]] = Opt(Set.empty)
+  final class Empty[E]() extends MongoProjection[E, Unit] {
+    def projectionRefs: Set[MongoRef[E, _]] = Set.empty
     def showRecordId: Boolean = false
     def decodeFrom(doc: BsonDocument): Unit = ()
   }
 
   final case class Mapped[E, T, T0](prev: MongoProjection[E, T], fun: T => T0) extends MongoProjection[E, T0] {
-    def impliedFilter: MongoDocumentFilter[E] = prev.impliedFilter
-    def projectionPaths: Opt[Set[String]] = prev.projectionPaths
+    def projectionRefs: Set[MongoRef[E, _]] = prev.projectionRefs
     def showRecordId: Boolean = prev.showRecordId
     def decodeFrom(doc: BsonDocument): T0 = fun(prev.decodeFrom(doc))
   }
@@ -51,13 +57,8 @@ object MongoProjection extends ProjectionZippers {
   final case class Composed[E, T, T0, T1](
     first: MongoProjection[E, T], second: MongoProjection[E, T0], fun: (T, T0) => T1
   ) extends MongoProjection[E, T1] {
-    def impliedFilter: MongoDocumentFilter[E] = first.impliedFilter && second.impliedFilter
-
-    def projectionPaths: Opt[Set[String]] =
-      for {
-        firstPaths <- first.projectionPaths
-        secondPaths <- second.projectionPaths
-      } yield firstPaths ++ secondPaths
+    def projectionRefs: Set[MongoRef[E, _]] =
+      first.projectionRefs ++ second.projectionRefs
 
     def showRecordId: Boolean = first.showRecordId || second.showRecordId
 
@@ -68,8 +69,7 @@ object MongoProjection extends ProjectionZippers {
   final val RecordId = "$recordId"
 
   final case class ShowRecordId[E, T](projection: MongoProjection[E, T]) extends MongoProjection[E, WithRecordId[T]] {
-    def impliedFilter: MongoDocumentFilter[E] = projection.impliedFilter
-    def projectionPaths: Opt[Set[String]] = projection.projectionPaths
+    def projectionRefs: Set[MongoRef[E, _]] = projection.projectionRefs
 
     def decodeFrom(doc: BsonDocument): WithRecordId[T] =
       WithRecordId(projection.decodeFrom(doc), doc.getInt64(RecordId).getValue)

@@ -165,7 +165,7 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
 
     def subtypeRefFor[E >: T, T0 <: T](prefix: MongoDataRef[E, T], subclass: Class[T0]): MongoDataRef[E, T0] = {
       val (caseNames, format) = subtypeInfo(subclass)
-      MongoRef.SelfAsSubtype[E, T0](prefix.fullFormat, flattenAnnot.caseFieldName, caseNames, format)
+      MongoRef.SelfAsSubtype[E, T0](prefix.fullRef, flattenAnnot.caseFieldName, caseNames, format)
     }
 
     def subtypeRefFor[E, T0 <: T](prefix: MongoPropertyRef[E, T], subclass: Class[T0]): MongoPropertyRef[E, T0] = {
@@ -173,9 +173,9 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
       MongoRef.PropertyAsSubtype(prefix, flattenAnnot.caseFieldName, caseNames, format)
     }
 
-    def subtypeConditionFor[E, T0 <: T](prefix: MongoRef[E, T], subclass: Class[T0]): MongoDocumentFilter[E] = {
+    def subtypeFilterFor[E, T0 <: T](prefix: MongoRef[E, T], subclass: Class[T0]): MongoDocumentFilter[E] = {
       val (caseNames, _) = subtypeInfo(subclass)
-      MongoDocumentFilter.subtypeFilter(prefix, flattenAnnot.caseFieldName, caseNames)
+      MongoFilter.subtypeFilter(prefix, flattenAnnot.caseFieldName, caseNames)
     }
   }
 

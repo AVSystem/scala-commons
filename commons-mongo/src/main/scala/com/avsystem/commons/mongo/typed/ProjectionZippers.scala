@@ -4,8 +4,6 @@ package mongo.typed
 import com.avsystem.commons.misc.Applier
 import org.bson.BsonDocument
 
-import scala.annotation.tailrec
-
 trait ProjectionZippers { this: MongoProjection.type =>
   def zip[E, T1](
     p1: MongoProjection[E, T1]
@@ -352,18 +350,8 @@ trait ProjectionZippers { this: MongoProjection.type =>
 final class ProductProjection[E, T](componentProjections: Seq[MongoProjection[E, _]])(implicit applier: Applier[T])
   extends MongoProjection[E, T] {
 
-  def impliedFilter: MongoDocumentFilter[E] =
-    componentProjections.iterator.map(_.impliedFilter).foldLeft(MongoDocumentFilter.empty[E])(_ && _)
-
-  def projectionPaths: Opt[Set[String]] = {
-    @tailrec def loop(acc: Set[String], it: Iterator[MongoProjection[E, _]]): Opt[Set[String]] =
-      if (!it.hasNext) Opt(acc)
-      else it.next().projectionPaths match {
-        case Opt(paths) => loop(acc ++ paths, it)
-        case Opt.Empty => Opt.Empty
-      }
-    loop(Set.empty, componentProjections.iterator)
-  }
+  def projectionRefs: Set[MongoRef[E, _]] =
+    componentProjections.iterator.flatMap(_.projectionRefs.iterator).toSet
 
   def showRecordId: Boolean =
     componentProjections.exists(_.showRecordId)
@@ -372,7 +360,7 @@ final class ProductProjection[E, T](componentProjections: Seq[MongoProjection[E,
     applier.apply(componentProjections.map(_.decodeFrom(doc)))
 }
 
-object GenTupleProjections {
+object GenProjectionZippers {
   def main(args: Array[String]): Unit = {
     for (n <- 2 to 22) {
       val indices = 1 to n

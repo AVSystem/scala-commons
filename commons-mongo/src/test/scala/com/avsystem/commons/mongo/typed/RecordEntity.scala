@@ -73,7 +73,7 @@ object Testujo {
     println(Filter2.toBson)
     println((Filter && Filter2).toBson)
     println(Update.toBson)
-    println(RecordEntity.BoolRef.is(true).toBson)
+    println(RecordEntity.BoolRef.isNot(true).toBson)
     println(RecordEntity.DeepStrRef.is("fu").toBson)
     println((UnionEntity.ref(_.as[CaseOne].other).is(0) || UnionEntity.ref(_.as[CaseTwo].other).is(true)).toBson)
 
