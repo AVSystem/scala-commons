@@ -16,10 +16,10 @@ private final class FilterDocBuilder(prefixPath: Opt[String], filterDocs: BsonAr
     case MongoRef.SelfRef(_) =>
 
     case MongoRef.SelfAsSubtype(fullRef, caseFieldName, caseNames, _) =>
-      addFilter(MongoFilter.subtypeFilter(fullRef, caseFieldName, caseNames))
+      addFilter(MongoFilter.subtypeFilter(fullRef, caseFieldName, caseNames, negated = false))
 
     case MongoRef.PropertyAsSubtype(prefix, caseFieldName, caseNames, _) =>
-      addFilter(MongoFilter.subtypeFilter(prefix, caseFieldName, caseNames))
+      addFilter(MongoFilter.subtypeFilter(prefix, caseFieldName, caseNames, negated = false))
       addImpliedFilters(prefix)
 
     case MongoRef.GetFromOptional(prefix, _, optionLike) =>

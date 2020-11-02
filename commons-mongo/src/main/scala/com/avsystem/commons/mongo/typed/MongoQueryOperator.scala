@@ -2,9 +2,7 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.mongo.text.TextSearchLanguage
-import org.bson.{BsonDocument, BsonRegularExpression, BsonType, BsonValue}
-
-import scala.util.matching.{Regex => SRegex}
+import org.bson.{BsonDocument, BsonType, BsonValue}
 
 sealed trait MongoQueryOperator[T] extends Product {
 
@@ -26,11 +24,11 @@ sealed trait MongoQueryOperator[T] extends Product {
     case Nin(values, format) => Bson.array(values.iterator.map(format.writeBson))
     case Exists(exists) => Bson.boolean(exists)
     case Type(bsonType) => Bson.int(bsonType.getValue)
-    case Regex(pattern) => new BsonRegularExpression(pattern.toString)
+    case Regex(pattern) => Bson.string(pattern)
     case Mod(divisor, remainder) => Bson.array(Bson.long(divisor), Bson.long(remainder))
     case Text(search, language, caseSensitive, diacriticSensitive) =>
       val doc = new BsonDocument("$search", Bson.string(search))
-      language.foreach(v => doc.put("$language", Bson.string(v.name)))
+      language.foreach(v => doc.put("$language", Bson.string(v.code)))
       caseSensitive.foreach(v => doc.put("$caseSensitive", Bson.boolean(v)))
       diacriticSensitive.foreach(v => doc.put("$diacriticSensitive", Bson.boolean(v)))
       doc
@@ -61,7 +59,7 @@ object MongoQueryOperator {
   final case class Nin[T](values: Iterable[T], format: MongoFormat[T]) extends MongoQueryOperator[T]
   final case class Exists[T](exists: Boolean) extends MongoQueryOperator[T]
   final case class Type[T](bsonType: BsonType) extends MongoQueryOperator[T]
-  final case class Regex[T](pattern: SRegex) extends MongoQueryOperator[T]
+  final case class Regex[T](pattern: String) extends MongoQueryOperator[T] //TODO: options
   final case class Mod[T](divisor: Long, remainder: Long) extends MongoQueryOperator[T]
 
   final case class Text[T](

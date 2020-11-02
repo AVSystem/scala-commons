@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
+import com.avsystem.commons.meta.OptionLike
 import com.avsystem.commons.mongo.text.TextSearchLanguage
 import org.bson.{BsonType, BsonValue}
 
@@ -12,7 +13,7 @@ trait VanillaQueryOperatorsDsl[T, R] {
 
   def format: MongoFormat[T]
 
-  protected def wrapQueryOperator(operator: MongoQueryOperator[T]): R
+  protected def wrapQueryOperator(operators: MongoQueryOperator[T]): R
 
   def is(value: T): R = wrapQueryOperator(Eq(value, format))
   def isNot(value: T): R = wrapQueryOperator(Ne(value, format))
@@ -27,8 +28,8 @@ trait VanillaQueryOperatorsDsl[T, R] {
   def exists: R = exists(true)
   def exists(exists: Boolean): R = wrapQueryOperator(Exists(exists))
   def hasType(bsonType: BsonType): R = wrapQueryOperator(Type(bsonType))
-  def regex(pattern: SRegex): R = wrapQueryOperator(Regex(pattern))
-  def regex(pattern: String): R = regex(new SRegex(pattern))
+  def regex(pattern: String): R = wrapQueryOperator(Regex(pattern))
+  def mod(divisor: Long, remainder: Long): R = wrapQueryOperator(Mod(divisor, remainder))
 
   def text(
     search: String,
@@ -71,7 +72,7 @@ trait QueryOperatorsDsl[T, R] extends VanillaQueryOperatorsDsl[T, R] {
   def <=(value: T): R = lte(value)
 
   def startsWith(prefix: String): R =
-    regex(new SRegex("^" + SRegex.quote(prefix)))
+    regex("^" + SRegex.quote(prefix))
 
   def containsSubstring(infix: String): R =
     regex(SRegex.quote(infix))
@@ -84,5 +85,15 @@ object QueryOperatorsDsl {
     def containsAny(values: Iterable[T]): R = dsl.elemMatch(_.in(values))
     def containsAll(values: T*): R = containsAll(values)
     def containsAll(values: Iterable[T]): R = dsl.all(values)
+  }
+
+  implicit def forOptional[O, T, R](dsl: QueryOperatorsDsl[O, R])(implicit optionLike: OptionLike.Aux[O, T]): ForOptional[O, T, R] =
+    new ForOptional(dsl)
+
+  class ForOptional[O, T, R](private val dsl: QueryOperatorsDsl[O, R]) extends AnyVal {
+    private def optionLike: OptionLike.Aux[O, T] = dsl.format.assumeOptional[T].optionLike
+
+    def isEmpty: R = dsl.is(optionLike.none)
+    def isDefined: R = dsl.isNot(optionLike.none)
   }
 }

@@ -37,6 +37,9 @@ object MongoFilter {
   private[this] val reusableEmpty = Empty()
 
   def empty[E]: MongoDocumentFilter[E] = reusableEmpty.asInstanceOf[MongoDocumentFilter[E]]
+  def and[E](filters: MongoDocumentFilter[E]*): MongoDocumentFilter[E] = And(filters.toVector)
+  def or[E](filters: MongoDocumentFilter[E]*): MongoDocumentFilter[E] = Or(filters.toVector)
+  def nor[E](filters: MongoDocumentFilter[E]*): MongoDocumentFilter[E] = Nor(filters.toVector)
 
   final case class Empty[E]() extends MongoDocumentFilter[E]
   final case class And[E](filters: Vector[MongoDocumentFilter[E]]) extends MongoDocumentFilter[E]
@@ -49,9 +52,11 @@ object MongoFilter {
     filter: MongoFilter[T]
   ) extends MongoDocumentFilter[E]
 
-  def subtypeFilter[E, T](prefix: MongoRef[E, T], caseFieldName: String, caseNames: List[String]): MongoDocumentFilter[E] = {
+  def subtypeFilter[E, T](prefix: MongoRef[E, T], caseFieldName: String, caseNames: List[String], negated: Boolean): MongoDocumentFilter[E] = {
     val operator = caseNames match {
+      case List(single) if negated => MongoQueryOperator.Ne(single, MongoFormat[String])
       case List(single) => MongoQueryOperator.Eq(single, MongoFormat[String])
+      case multiple if negated => MongoQueryOperator.Nin(multiple, MongoFormat[String])
       case multiple => MongoQueryOperator.In(multiple, MongoFormat[String])
     }
     PropertyValueFilter(MongoRef.caseNameRef(prefix, caseFieldName), MongoOperatorsFilter(Seq(operator)))

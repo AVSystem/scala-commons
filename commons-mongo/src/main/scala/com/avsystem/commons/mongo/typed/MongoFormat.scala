@@ -173,9 +173,9 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
       MongoRef.PropertyAsSubtype(prefix, flattenAnnot.caseFieldName, caseNames, format)
     }
 
-    def subtypeFilterFor[E, T0 <: T](prefix: MongoRef[E, T], subclass: Class[T0]): MongoDocumentFilter[E] = {
+    def subtypeFilterFor[E, T0 <: T](prefix: MongoRef[E, T], subclass: Class[T0], negated: Boolean): MongoDocumentFilter[E] = {
       val (caseNames, _) = subtypeInfo(subclass)
-      MongoFilter.subtypeFilter(prefix, flattenAnnot.caseFieldName, caseNames)
+      MongoFilter.subtypeFilter(prefix, flattenAnnot.caseFieldName, caseNames, negated)
     }
   }
 

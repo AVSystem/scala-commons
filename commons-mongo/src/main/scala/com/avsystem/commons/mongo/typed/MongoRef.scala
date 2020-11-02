@@ -20,8 +20,8 @@ sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataRefDsl[E, T] 
   @macroPrivate def fieldRefFor[T0](scalaFieldName: String): MongoPropertyRef[E, T0] =
     format.assumeAdt.fieldRefFor(this, scalaFieldName)
 
-  @macroPrivate def subtypeFilterFor[C <: T : ClassTag]: MongoDocumentFilter[E] =
-    format.assumeUnion.subtypeFilterFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
+  @macroPrivate def subtypeFilterFor[C <: T : ClassTag](negated: Boolean): MongoDocumentFilter[E] =
+    format.assumeUnion.subtypeFilterFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]], negated)
 }
 
 sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
@@ -57,7 +57,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   protected def wrapUpdateOperator(operator: MongoUpdateOperator[T]): MongoUpdate[E] =
     MongoUpdate.PropertyUpdate(this, operator)
 
-  def satisfiesFilter(filter: MongoFilter[T]): MongoDocumentFilter[E] =
+  private def satisfiesFilter(filter: MongoFilter[T]): MongoDocumentFilter[E] =
     MongoFilter.PropertyValueFilter(this, filter)
 
   def satisfies(filter: MongoFilter.Creator[T] => MongoFilter[T]): MongoDocumentFilter[E] =

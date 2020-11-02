@@ -21,6 +21,10 @@ trait DataRefDsl[E, T] {
   // this macro effectively calls `asAdtRef.subtypeFilterFor` while doing some additional static checks
   @explicitGenerics
   def is[C <: T]: MongoDocumentFilter[E] = macro MongoMacros.isSubtype[C]
+
+  // this macro effectively calls `asAdtRef.subtypeFilterFor` while doing some additional static checks
+  @explicitGenerics
+  def isNot[C <: T]: MongoDocumentFilter[E] = macro MongoMacros.isNotSubtype[C]
 }
 
 trait DataTypeDsl[T] extends DataRefDsl[T, T]
