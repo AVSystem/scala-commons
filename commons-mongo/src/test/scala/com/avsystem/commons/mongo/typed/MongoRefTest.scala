@@ -33,6 +33,8 @@ class MongoRefTest extends AnyFunSuite {
     assert(Ute.ref(_.as[HasInner].inner).filterPath == "inner")
     assert(Ute.as[HasInner].ref(_.inner).filterPath == "inner")
     assert(Ute.ref(_.as[HasInner].inner.union.as[HasInner].inner).filterPath == "inner.union.inner")
+    assert((Ute.ref(_.as[HasInner].inner) andThen Rte.ref(_.union.as[HasInner].inner)).filterPath == "inner.union.inner")
+    assert((Rte.ref(_.union.as[HasInner].inner) compose Ute.ref(_.as[HasInner].inner)).filterPath == "inner.union.inner")
   }
 
   test("projectionPath") {

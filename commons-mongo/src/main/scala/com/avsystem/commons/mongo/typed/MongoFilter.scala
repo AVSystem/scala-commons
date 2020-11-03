@@ -22,10 +22,8 @@ object MongoFilter {
   class Creator[T](val format: MongoFormat[T])
     extends QueryOperatorsDsl[T, MongoOperatorsFilter[T]] with DataTypeDsl[T] {
 
-    type ThisRef[C <: T] = MongoDataRef[T, C]
-
-    protected def thisRef: ThisRef[T] =
-      MongoRef.SelfRef(format.assumeAdt)
+    def SelfRef: MongoRef[T, T] =
+      MongoRef.RootRef(format.assumeAdt)
 
     protected def wrapQueryOperator(op: MongoQueryOperator[T]): MongoOperatorsFilter[T] =
       MongoOperatorsFilter(Seq(op))

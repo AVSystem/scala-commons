@@ -47,14 +47,7 @@ abstract class AbstractMongoDataCompanion[Implicits, E](implicits: Implicits)(
     def as[T <: E]: T = sys.error("stub")
   }
 
-  type PropertyRef[T] = MongoPropertyRef[E, T]
-  type TypeRef[C <: E] = MongoDataRef[E, C]
-
-  final val SelfRef: TypeRef[E] = MongoRef.SelfRef(format)
-
-  type ThisRef[C <: E] = MongoDataRef[E, C]
-
-  protected def thisRef: ThisRef[E] = SelfRef
+  final val SelfRef: MongoRef[E, E] = MongoRef.RootRef(format)
 }
 
 abstract class AbstractMongoEntityCompanion[Implicits, E <: BaseMongoEntity](implicits: Implicits)(

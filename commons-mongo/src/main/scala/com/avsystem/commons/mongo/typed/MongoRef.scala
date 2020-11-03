@@ -11,25 +11,27 @@ import scala.annotation.tailrec
 
 sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataRefDsl[E, T] { self =>
   def format: MongoFormat[T]
-
   def projectionRefs: Set[MongoRef[E, _]] = Set(this)
   def showRecordId: Boolean = false
 
-  @macroPrivate def subtypeRefFor[C <: T : ClassTag]: ThisRef[C]
+  @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoRef[E, C]
 
   @macroPrivate def fieldRefFor[T0](scalaFieldName: String): MongoPropertyRef[E, T0] =
     format.assumeAdt.fieldRefFor(this, scalaFieldName)
 
   @macroPrivate def subtypeFilterFor[C <: T : ClassTag](negated: Boolean): MongoDocumentFilter[E] =
     format.assumeUnion.subtypeFilterFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]], negated)
+
+  def compose[P](prefix: MongoRef[P, E]): ThisRef[P, T]
+  def andThen[S](suffix: MongoRef[T, S]): suffix.ThisRef[E, S] = suffix compose this
 }
 
 sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
-  type ThisRef[C <: T] = MongoDataRef[E, C]
+  // no need to expose this as MongoDataRef, MongoRef is enough
+  type ThisRef[E0, T0] = MongoRef[E0, T0]
+  def SelfRef: MongoRef[E, T] = this
 
-  protected def thisRef: ThisRef[T] = this
-
-  def fullRef: MongoRef.SelfRef[E]
+  def fullRef: MongoRef.RootRef[E]
   def format: MongoAdtFormat[T]
 
   @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoDataRef[E, C] =
@@ -42,11 +44,10 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   with QueryOperatorsDsl[T, MongoDocumentFilter[E]]
   with UpdateOperatorsDsl[T, MongoUpdate[E]] {
 
+  type ThisRef[E0, T0] = MongoPropertyRef[E0, T0]
+  def SelfRef: MongoPropertyRef[E, T] = this
+
   import MongoRef._
-
-  type ThisRef[T0 <: T] = MongoPropertyRef[E, T0]
-
-  protected def thisRef: ThisRef[T] = this
 
   @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoPropertyRef[E, C] =
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
@@ -158,25 +159,37 @@ object MongoPropertyRef {
 
 object MongoRef {
   // Deliberately not calling this IdentityRef so that it doesn't get confused with IdRef (for database ID field)
-  final case class SelfRef[T](
+  final case class RootRef[T](
     format: MongoAdtFormat[T]
   ) extends MongoDataRef[T, T] {
-    def fullRef: SelfRef[T] = this
+    def fullRef: RootRef[T] = this
+    def compose[P](prefix: MongoRef[P, T]): MongoRef[P, T] = prefix
   }
 
   final case class SelfAsSubtype[E, T <: E](
-    fullRef: SelfRef[E],
+    fullRef: RootRef[E],
     caseFieldName: String,
     caseNames: List[String],
     format: MongoAdtFormat[T]
-  ) extends MongoDataRef[E, T]
+  ) extends MongoDataRef[E, T] {
+    def compose[P](prefix: MongoRef[P, E]): MongoRef[P, T] = prefix match {
+      case _: MongoDataRef[P, E] =>
+        // fullRef is guaranteed to be the same as prefix.fullRef
+        // must cast because the compiler cannot infer the fact that E <: P in this case
+        SelfAsSubtype(fullRef, caseFieldName, caseNames, format).asInstanceOf[MongoRef[P, T]]
+      case ref: MongoPropertyRef[P, E] => PropertyAsSubtype(ref, caseFieldName, caseNames, format)
+    }
+  }
 
   final case class FieldRef[E, E0, T](
     prefix: MongoRef[E, E0],
     fieldName: String,
     format: MongoFormat[T],
     fallbackBson: Opt[BsonValue]
-  ) extends MongoPropertyRef[E, T]
+  ) extends MongoPropertyRef[E, T] {
+    def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
+      copy(prefix = this.prefix compose newPrefix)
+  }
 
   final case class ArrayIndexRef[E, C[X] <: Iterable[X], T](
     prefix: MongoPropertyRef[E, C[T]],
@@ -184,20 +197,28 @@ object MongoRef {
     format: MongoFormat[T]
   ) extends MongoPropertyRef[E, T] {
     require(index >= 0, "array index must be non-negative")
+    def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
+      copy(prefix = this.prefix compose newPrefix)
   }
 
   final case class GetFromOptional[E, O, T](
     prefix: MongoPropertyRef[E, O],
     format: MongoFormat[T],
     optionLike: OptionLike.Aux[O, T]
-  ) extends MongoPropertyRef[E, T]
+  ) extends MongoPropertyRef[E, T] {
+    def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
+      copy(prefix = prefix compose newPrefix)
+  }
 
   final case class PropertyAsSubtype[E, T0, T <: T0](
     prefix: MongoPropertyRef[E, T0],
     caseFieldName: String,
     caseNames: List[String],
     format: MongoAdtFormat[T]
-  ) extends MongoPropertyRef[E, T]
+  ) extends MongoPropertyRef[E, T] {
+    def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
+      copy(prefix = prefix compose newPrefix)
+  }
 
   def caseNameRef[E, T](prefix: MongoRef[E, T], caseFieldName: String): MongoPropertyRef[E, String] =
     FieldRef(prefix, caseFieldName, MongoFormat[String], Opt.Empty)

@@ -19,11 +19,8 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
 
   val format: MongoAdtFormat[E] = MongoAdtFormat[E]
 
-  val SelfRef: MongoDataRef[E, E] = MongoRef.SelfRef(format)
+  val SelfRef: MongoRef[E, E] = MongoRef.RootRef(format)
   val IdRef: MongoPropertyRef[E, ID] = format.fieldRefFor(SelfRef, MongoEntity.Id)
-
-  type ThisRef[T <: E] = MongoDataRef[E, T]
-  protected def thisRef: MongoDataRef[E, E] = SelfRef
 
   private val docCollection = rawCollection.withDocumentClass(classOf[BsonDocument])
 
