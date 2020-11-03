@@ -8,11 +8,26 @@ import com.avsystem.commons.serialization.GenObjectCodec
 
 import scala.annotation.{compileTimeOnly, implicitNotFound}
 
+/**
+  * Type-member version of [[MongoEntity]]. Used in type bounds where wildcards would wreak havoc
+  * (if `<: MongoEntity[_]` was used instead of `<: BaseMongoEntity`).
+  */
 sealed trait BaseMongoEntity {
   type IDType
+
+  /**
+    * ID of the entity. Maps to `_id` field in MongoDB documents.
+    */
   @mongoId def id: IDType
 }
 
+/**
+  * Base trait for all MongoDB entities.
+  * A MongoDB entity must be a case class or a sealed hierarchy with `@flatten` annotation.
+  * Its companion must extend [[MongoEntityCompanion]].
+  *
+  * @tparam ID type of `_id` field of the entity
+  */
 trait MongoEntity[ID] extends BaseMongoEntity {
   type IDType = ID
 }
@@ -59,10 +74,23 @@ abstract class AbstractMongoEntityCompanion[Implicits, E <: BaseMongoEntity](imp
   final val IdRef: PropertyRef[ID] = format.fieldRefFor(SelfRef, MongoEntity.Id)
 }
 
+/**
+  * Base class for companion objects of types that represent inner documents of MongoDB entities.
+  * Just like entities, inner documents may be case classes or sealed hierarchies with `@flatten` annotation.
+  *
+  * NOTE: It is enough for a MongoDB field type to have just `GenCodec` defined (i.e. you can get away with
+  * using `HasGenCodec` instead of `MongoDataCompanion`). However, data type which only has codec will be considered
+  * opaque and you won't be able to reference its inner fields in filters, updates, indices, etc.
+  */
 abstract class MongoDataCompanion[E](
   implicit instances: MacroInstances[BsonGenCodecs.type, MongoAdtInstances[E]]
 ) extends AbstractMongoDataCompanion[BsonGenCodecs.type, E](BsonGenCodecs)
 
+/**
+  * Base class for companion objects of types representing MongoDB entities.
+  * Entities may be case classes or sealed hierarchies with `@flatten` annotation.
+  * They must extend [[MongoEntity]].
+  */
 abstract class MongoEntityCompanion[E <: BaseMongoEntity](
   implicit instances: MacroInstances[BsonGenCodecs.type, MongoAdtInstances[E]]
 ) extends AbstractMongoEntityCompanion[BsonGenCodecs.type, E](BsonGenCodecs)

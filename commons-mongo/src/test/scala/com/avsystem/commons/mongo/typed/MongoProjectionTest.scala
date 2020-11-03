@@ -8,8 +8,6 @@ class MongoProjectionTest extends AnyFunSuite {
   final val Ute = UnionTestEntity
   final val Ir = InnerRecord
 
-  import UnionTestEntity._
-
   def bsonStr(proj: MongoProjection[_, _]): String =
     proj.toProjectionBson.toString
 

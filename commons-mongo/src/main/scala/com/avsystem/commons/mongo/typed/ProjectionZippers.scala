@@ -358,6 +358,9 @@ final class ProductProjection[E, T](componentProjections: Seq[MongoProjection[E,
 
   def decodeFrom(doc: BsonDocument): T =
     applier.apply(componentProjections.map(_.decodeFrom(doc)))
+
+  def on[E0](ref: MongoRef[E0, E]): MongoProjection[E0, T] =
+    new ProductProjection(componentProjections.map(_.on(ref)))
 }
 
 object GenProjectionZippers {

@@ -37,7 +37,7 @@ case class RecordTestEntity(
   innerList: List[InnerRecord],
   innerMap: Map[InnerId, InnerRecord],
   complex: Opt[Map[InnerId, List[InnerRecord]]],
-  @transientDefault union: UnionTestEntity = UnionTestEntity.CaseOne("uid", "ustr", data = false)
+  @transientDefault union: UnionTestEntity = CaseOne("uid", "ustr", data = false)
 ) extends MongoEntity[String]
 object RecordTestEntity extends MongoEntityCompanion[RecordTestEntity] {
   final val Example = RecordTestEntity(
@@ -54,8 +54,7 @@ object RecordTestEntity extends MongoEntityCompanion[RecordTestEntity] {
 sealed trait HasInner extends UnionTestEntity {
   def inner: RecordTestEntity
 }
-object UnionTestEntity extends MongoEntityCompanion[UnionTestEntity] {
-  case class CaseOne(id: String, str: String, data: Boolean) extends UnionTestEntity
-  case class CaseTwo(id: String, str: String, data: Int, inner: RecordTestEntity) extends HasInner
-  case class CaseThree(id: String, str: String, data: String, inner: RecordTestEntity) extends HasInner
-}
+case class CaseOne(id: String, str: String, data: Boolean) extends UnionTestEntity
+case class CaseTwo(id: String, str: String, data: Int, inner: RecordTestEntity) extends HasInner
+case class CaseThree(id: String, str: String, data: String, inner: RecordTestEntity) extends HasInner
+object UnionTestEntity extends MongoEntityCompanion[UnionTestEntity]

@@ -8,8 +8,6 @@ class MongoRefTest extends AnyFunSuite {
   final val Ute = UnionTestEntity
   final val Ir = InnerRecord
 
-  import UnionTestEntity._
-
   test("filterPath") {
     assert(Rte.IdRef.filterPath == "_id")
     assert(Rte.ref(_.id).filterPath == "_id")

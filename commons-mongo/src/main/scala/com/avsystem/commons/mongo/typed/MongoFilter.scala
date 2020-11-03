@@ -3,6 +3,15 @@ package mongo.typed
 
 import org.bson.{BsonArray, BsonDocument}
 
+/**
+  * Represents a MongoDB filter. In particular, this may be a [[MongoDocumentFilter]] which can be used
+  * directly in database queries.
+  *
+  * [[MongoFilter]] may also represent a filter for a non-document value. Such filters may be used e.g. in
+  * queries that apply filters on values of an array.
+  *
+  * @tparam T type of the filtered value
+  */
 sealed trait MongoFilter[T] {
 
   import MongoFilter._
@@ -28,6 +37,7 @@ object MongoFilter {
     protected def wrapQueryOperator(op: MongoQueryOperator[T]): MongoOperatorsFilter[T] =
       MongoOperatorsFilter(Seq(op))
 
+    /** See [[MongoPropertyRef.satisfiesOperators]] */
     def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoOperatorsFilter[T] =
       MongoOperatorsFilter(operators(new MongoQueryOperator.Creator(format)))
   }
@@ -61,6 +71,16 @@ object MongoFilter {
   }
 }
 
+/**
+  * Represents a filter that applies a set of query operators on a value (e.g. `$eq`, `$lte`, etc.)
+  * Every operator may be used at most once. Such filter usually translates into a BSON document that looks like this:
+  *
+  * {{{
+  *   {"$ne": 5, "$gte": 0, ...more operators}
+  * }}}
+  *
+  * @tparam T type of the filtered value
+  */
 final case class MongoOperatorsFilter[T](operators: Seq[MongoQueryOperator[T]]) extends MongoFilter[T] {
   def negated: MongoOperatorsFilter[T] =
     MongoOperatorsFilter(Seq(MongoQueryOperator.Not(this)))
@@ -79,6 +99,25 @@ final case class MongoOperatorsFilter[T](operators: Seq[MongoQueryOperator[T]]) 
   }
 }
 
+/**
+  * Represents a [[https://docs.mongodb.com/manual/tutorial/query-documents/ MongoDB query document]].
+  *
+  * A [[MongoDocumentFilter]] is usually built by using [[MongoPropertyRef]] and its API.
+  *
+  * {{{
+  *   case class MyEntity(id: String, number: Int) extends MongoEntity[MyEntity]
+  *   object MyEntity extends MongoEntityCompanion[MyEntity]
+  *
+  *   val filter: MongoDocumentFilter[MyEntity] =
+  *     MyEntity.ref(_.id).is("ID") && MyEntity.ref(_.number) > 8
+  * }}}
+  *
+  * NOTE: even though you can combine filters using logical `$and` and `$or` operators,
+  * MongoDB does not allow using the `$not` operator on this level.
+  * It may only be specified for field-level filters.
+  *
+  * @tparam E type of the filtered value (that must translate into a document)
+  */
 sealed trait MongoDocumentFilter[E] extends MongoFilter[E] {
 
   import MongoFilter._

@@ -7,8 +7,6 @@ import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import org.bson.{BsonDocument, BsonValue}
 
-import scala.annotation.tailrec
-
 sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataRefDsl[E, T] { self =>
   def format: MongoFormat[T]
   def projectionRefs: Set[MongoRef[E, _]] = Set(this)
@@ -22,8 +20,19 @@ sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataRefDsl[E, T] 
   @macroPrivate def subtypeFilterFor[C <: T : ClassTag](negated: Boolean): MongoDocumentFilter[E] =
     format.assumeUnion.subtypeFilterFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]], negated)
 
+  /**
+    * Composes this reference with another one, effectively prepending a "prefix" to this reference.
+    * This is conceptually similar to composing functions using `scala.Function1.compose`.
+    */
   def compose[P](prefix: MongoRef[P, E]): ThisRef[P, T]
+
+  /**
+    * Composes this reference with another one, effectively appending a "suffix" to this reference.
+    * This is conceptually similar to composing functions using `scala.Function1.andThen`.
+    */
   def andThen[S](suffix: MongoRef[T, S]): suffix.ThisRef[E, S] = suffix compose this
+
+  def on[E0](ref: MongoRef[E0, E]): MongoProjection[E0, T] = compose(ref)
 }
 
 sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
@@ -40,6 +49,35 @@ sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
   def decodeFrom(doc: BsonDocument): T = BsonValueInput.read(doc)(format.codec)
 }
 
+/**
+  * Represents a path inside a MongoDB document.
+  *
+  * A [[MongoPropertyRef]] is usually obtained using the [[DataRefDsl.ref]] macro -
+  * see its documentation for more details.
+  *
+  * [[MongoPropertyRef]] has a rich API so that it can be used for creating [[MongoDocumentFilter]]s, [[MongoUpdate]]s,
+  * [[MongoDocumentOrder]]s and [[MongoIndex]]es.
+  *
+  * {{{
+  *   case class MyEntity(id: String, number: Int) extends MongoEntity[MyEntity]
+  *   object MyEntity extends MongoEntityCompanion[MyEntity]
+  *
+  *   val filter: MongoDocumentFilter[MyEntity] =
+  *     MyEntity.ref(_.id).is("ID") && MyEntity.ref(_.number) > 8
+  *
+  *   val update: MongoUpdate[MyEntity] =
+  *     MyEntity.ref(_.number).inc(5)
+  *
+  *   val order: MongoDocumentOrder[MyEntity] =
+  *     MyEntity.ref(_.number).descending
+  * }}}
+  *
+  * [[MongoPropertyRef]] may also be used as a [[MongoProjection]]
+  * or as a part of a more complex, multi-field projection.
+  *
+  * @tparam E data type representing the whole document
+  * @tparam T type of the value under the referenced field or path
+  */
 sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   with QueryOperatorsDsl[T, MongoDocumentFilter[E]]
   with UpdateOperatorsDsl[T, MongoUpdate[E]] {
@@ -61,9 +99,54 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   private def satisfiesFilter(filter: MongoFilter[T]): MongoDocumentFilter[E] =
     MongoFilter.PropertyValueFilter(this, filter)
 
+  /**
+    * Creates a [[MongoDocumentFilter]] which applies some other filter on the value pointed by this
+    * reference. This method accepts a lambda simply for syntactic convenience - the "creator" gives you all the
+    * API for creating filters on the value type which is usually shorter than creating them manually.
+    *
+    * {{{
+    *   case class MyEntity(id: String, data: InnerData) extends MongoEntity[MyEntity]
+    *   object MyEntity extends MongoEntityCompanion[MyEntity]
+    *
+    *   case class InnerData(number: Int, text: String)
+    *   object InnerData extends MongoDataCompanion[InnerData]
+    *
+    *   val filter: MongoDocumentFilter[MyEntity] =
+    *     MyEntity.ref(_.number).satisfies(c => c.ref(_.number) > 0 && c.ref(_.text).startsWith("prefix"))
+    * }}}
+    */
   def satisfies(filter: MongoFilter.Creator[T] => MongoFilter[T]): MongoDocumentFilter[E] =
     satisfiesFilter(filter(new MongoFilter.Creator[T](format)))
 
+  /**
+    * Creates a filter that applies multiple query operators on this reference (which means that all the operators
+    * must be satisfied). Note that every operator may be used only once and this is not validated statically
+    * (a runtime error is thrown when some operator is used twice).
+    *
+    * {{{
+    *   case class MyEntity(id: String, number: Int) extends MongoEntity[MyEntity]
+    *   object MyEntity extends MongoEntityCompanion[MyEntity]
+    *
+    *   val filter: MongoDocumentFilter[MyEntity] =
+    *     MyEntity.ref(_.number).satisfiesOperators(c => Seq(c.gte(0), c.lt(10)))
+    * }}}
+    *
+    * The above produces a filter document that looks like this:
+    *
+    * {{{
+    *   {"number": {"$gte": 0, "$lt": 10}}
+    * }}}
+    *
+    * Note that the same can be usually achieved using logical operators, i.e.
+    *
+    * {{{
+    *   val filter: MongoDocumentFilter[MyEntity] =
+    *     MyEntity.ref(_.number) >= 0 && MyEntity.ref(_.number) < 10
+    * }}}
+    *
+    * However, there are some places where this is not possible, e.g. when specifying a filter in
+    * [[VanillaQueryOperatorsDsl.ForCollection.elemMatch elemMatch]].
+    */
   def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoDocumentFilter[E] =
     satisfies(_.satisfiesOperators(operators))
 

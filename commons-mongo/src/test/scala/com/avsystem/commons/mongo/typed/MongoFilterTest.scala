@@ -15,8 +15,6 @@ class MongoFilterTest extends AnyFunSuite {
   final val IntsRef = Rte.ref(_.intList)
   final val StrRef = Rte.ref(_.renamedStr)
 
-  import UnionTestEntity._
-
   test("empty") {
     assert(MongoFilter.empty[UnionTestEntity].toBson.toString == "{}")
   }
