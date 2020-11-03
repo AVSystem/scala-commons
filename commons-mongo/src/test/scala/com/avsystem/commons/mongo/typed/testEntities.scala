@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
+import com.avsystem.commons.misc.Timestamp
 import com.avsystem.commons.serialization._
 
 case class RecordId(id: String) extends AnyVal
@@ -26,6 +27,7 @@ case class RecordTestEntity(
   id: String,
   int: Int,
   @name("str") renamedStr: String,
+  tstamp: Timestamp,
   strOpt: Opt[String],
   @optionalParam intOpt: Opt[Int],
   intList: List[Int],
@@ -39,7 +41,7 @@ case class RecordTestEntity(
 ) extends MongoEntity[String]
 object RecordTestEntity extends MongoEntityCompanion[RecordTestEntity] {
   final val Example = RecordTestEntity(
-    "rid", 42, "str", Opt("stropt"), Opt.Empty,
+    "rid", 42, "str", Timestamp.Zero, Opt("stropt"), Opt.Empty,
     List(1, 2, 3), Map("one" -> 1, "two" -> 2), InnerRecord.Example,
     Opt(InnerRecord.Example), List(InnerRecord.Example), Map(InnerId("iid") -> InnerRecord.Example),
     Opt(Map(InnerId("iid") -> List(InnerRecord.Example)))
@@ -49,11 +51,10 @@ object RecordTestEntity extends MongoEntityCompanion[RecordTestEntity] {
 @flatten sealed trait UnionTestEntity extends MongoEntity[String] {
   def str: String
 }
+sealed trait HasInner extends UnionTestEntity {
+  def inner: RecordTestEntity
+}
 object UnionTestEntity extends MongoEntityCompanion[UnionTestEntity] {
-  sealed trait HasInner extends UnionTestEntity {
-    def inner: RecordTestEntity
-  }
-
   case class CaseOne(id: String, str: String, data: Boolean) extends UnionTestEntity
   case class CaseTwo(id: String, str: String, data: Int, inner: RecordTestEntity) extends HasInner
   case class CaseThree(id: String, str: String, data: String, inner: RecordTestEntity) extends HasInner

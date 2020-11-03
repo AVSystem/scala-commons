@@ -67,6 +67,8 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoDocumentFilter[E] =
     satisfies(_.satisfiesOperators(operators))
 
+  def rename(newRef: MongoPropertyRef[E, T]): MongoUpdate[E] = rename(newRef.filterPath)
+
   def order(ascending: Boolean): MongoDocumentOrder[E] = MongoDocumentOrder(this -> ascending)
   def ascending: MongoDocumentOrder[E] = order(true)
   def descending: MongoDocumentOrder[E] = order(false)

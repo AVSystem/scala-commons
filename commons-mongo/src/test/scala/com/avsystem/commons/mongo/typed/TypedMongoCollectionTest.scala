@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
+import com.avsystem.commons.misc.Timestamp
 import com.mongodb.reactivestreams.client.MongoClients
 import monix.eval.Task
 import monix.execution.Scheduler
@@ -20,6 +21,8 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
 
   final val Rte = RecordTestEntity
 
+  import UnionTestEntity._
+
   private val client = MongoClients.create()
   private val db = client.getDatabase("test")
   private val rteColl = new TypedMongoCollection[RecordTestEntity](db.getCollection("rte"))
@@ -30,10 +33,15 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
     )
 
     RecordTestEntity(
-      s"rid$i", i, "str", Opt("stropt"), Opt(i).filter(_ % 2 == 0),
+      s"rid$i", i, "str", Timestamp.Zero, Opt("stropt"), Opt(i).filter(_ % 2 == 0),
       List(1, 2, 3), Map("one" -> 1, "two" -> 2), innerRecord,
       Opt(innerRecord), List(innerRecord), Map(InnerId("iid") -> innerRecord),
-      Opt(Map(InnerId("iid") -> List(innerRecord)))
+      Opt(Map(InnerId("iid") -> List(innerRecord))),
+      i % 3 match {
+        case 0 => CaseOne(s"uid$i", "ustr", i % 2 == 0)
+        case 1 => CaseTwo(s"uid$i", "ustr", i, Rte.Example)
+        case 2 => CaseThree(s"uid$i", "ustr", "udata", Rte.Example)
+      }
     )
   }
 
@@ -55,19 +63,24 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
 
   test("find") {
     assert(rteColl.find().toListL.value == entities)
-    assert(rteColl.find(Rte.ref(_.int) < 10).toListL.value == entities.take(10))
+    assert(rteColl.find(Rte.ref(_.int) < 10).toListL.value == entities.filter(_.int < 10))
   }
 
   test("find with projection") {
     assert(rteColl.find(projection = Rte.ref(_.int)).toListL.value == entities.map(_.int))
-    assert(rteColl.find(Rte.ref(_.int) < 10, Rte.ref(_.int)).toListL.value == entities.map(_.int).take(10))
+    assert(rteColl.find(Rte.ref(_.int) < 10, Rte.ref(_.int)).toListL.value == entities.filter(_.int < 10).map(_.int))
 
     val intWithStr = MongoProjection.zip(Rte.ref(_.int), Rte.ref(_.renamedStr))
     assert(rteColl.find(projection = intWithStr).toListL.value == entities.map(r => (r.int, r.renamedStr)))
   }
 
   test("find with filtering projection") {
-    assert(rteColl.find(projection = Rte.ref(_.intOpt.get)).toListL.value == entities.flatMap(_.intOpt))
+    assert(rteColl.find(projection = Rte.ref(_.intOpt.get)).toListL.value ==
+      entities.flatMap(_.intOpt))
+    assert(rteColl.find(projection = Rte.ref(_.union.as[CaseOne].id)).toListL.value ==
+      entities.map(_.union).collect { case c1: CaseOne => c1.id })
+    assert(rteColl.find(Rte.ref(_.int) < 10, projection = Rte.ref(_.union.as[CaseOne].id)).toListL.value ==
+      entities.filter(_.int < 10).map(_.union).collect { case c1: CaseOne => c1.id })
   }
 
   test("find with sort") {
