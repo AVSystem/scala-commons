@@ -79,7 +79,9 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   def twoDimIndex: MongoIndex[E] = index(MongoIndexType.TwoDim)
   def twoDimSphereIndex: MongoIndex[E] = index(MongoIndexType.TwoDimSphere)
 
-  @tailrec private def computePath[T0](
+  //noinspection NoTailRecursionAnnotation
+  //no @tailrec because Scala 2.11 has problems with it
+  private def computePath[T0](
     onlyUpToArray: Boolean,
     ref: MongoPropertyRef[E, T0],
     acc: List[String]
