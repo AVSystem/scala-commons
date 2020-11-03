@@ -13,16 +13,6 @@ class MongoProjectionTest extends AnyFunSuite {
   def bsonStr(proj: MongoProjection[_, _]): String =
     proj.toProjectionBson.toString
 
-  private val innerRecord = InnerRecord(
-    24, "istr", Opt("istropt"), Opt.Empty, List(3, 4, 5), Map("ione" -> 1, "ithree" -> 3))
-
-  private val record = RecordTestEntity(
-    "rid", 42, "str", Opt("stropt"), Opt.Empty,
-    List(1, 2, 3), Map("one" -> 1, "two" -> 2), innerRecord,
-    Opt(innerRecord), List(innerRecord), Map(InnerId("iid") -> innerRecord),
-    Opt(Map(InnerId("iid") -> List(innerRecord)))
-  )
-
   test("empty") {
     assert(bsonStr(Rte.SelfRef) == """{}""")
     assert(bsonStr(Ute.as[HasInner]) == """{}""")
@@ -42,11 +32,11 @@ class MongoProjectionTest extends AnyFunSuite {
   }
 
   test("reading bson") {
-    val rteBson = Rte.format.writeBson(record).asDocument
+    val rteBson = Rte.format.writeBson(Rte.Example).asDocument
     assert(!rteBson.containsKey("intOpt"))
     assert(!rteBson.containsKey("union"))
 
-    assert(Rte.SelfRef.decodeFrom(rteBson) == record)
+    assert(Rte.SelfRef.decodeFrom(rteBson) == Rte.Example)
     assert(Rte.IdRef.decodeFrom(rteBson) == "rid")
     assert(Rte.ref(_.int).decodeFrom(rteBson) == 42)
     assert(Rte.ref(_.intOpt).decodeFrom(rteBson) == Opt.Empty)

@@ -17,7 +17,10 @@ case class InnerRecord(
   intList: List[Int],
   intMap: Map[String, Int]
 )
-object InnerRecord extends MongoDataCompanion[InnerRecord]
+object InnerRecord extends MongoDataCompanion[InnerRecord] {
+  final val Example = InnerRecord(
+    24, "istr", Opt("istropt"), Opt.Empty, List(3, 4, 5), Map("ione" -> 1, "ithree" -> 3))
+}
 
 case class RecordTestEntity(
   id: String,
@@ -34,7 +37,14 @@ case class RecordTestEntity(
   complex: Opt[Map[InnerId, List[InnerRecord]]],
   @transientDefault union: UnionTestEntity = UnionTestEntity.CaseOne("uid", "ustr", data = false)
 ) extends MongoEntity[String]
-object RecordTestEntity extends MongoEntityCompanion[RecordTestEntity]
+object RecordTestEntity extends MongoEntityCompanion[RecordTestEntity] {
+  final val Example = RecordTestEntity(
+    "rid", 42, "str", Opt("stropt"), Opt.Empty,
+    List(1, 2, 3), Map("one" -> 1, "two" -> 2), InnerRecord.Example,
+    Opt(InnerRecord.Example), List(InnerRecord.Example), Map(InnerId("iid") -> InnerRecord.Example),
+    Opt(Map(InnerId("iid") -> List(InnerRecord.Example)))
+  )
+}
 
 @flatten sealed trait UnionTestEntity extends MongoEntity[String] {
   def str: String

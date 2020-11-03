@@ -2,6 +2,7 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.mongo.core.GenCodecRegistry
+import com.mongodb.{MongoNamespace, ReadConcern, ReadPreference, WriteConcern}
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.client.model._
 import com.mongodb.client.result.{DeleteResult, UpdateResult}
@@ -37,6 +38,36 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   // handles both an empty Publisher and and a single null item
   private def singleOpt[T](publisher: Publisher[T]): Task[Option[T]] =
     Observable.fromReactivePublisher(publisher, 1).filter(_ != null).firstOptionL
+
+  def namespace: MongoNamespace =
+    nativeCollection.getNamespace
+
+  def writeConcern: WriteConcern =
+    nativeCollection.getWriteConcern
+
+  def withWriteConcern(writeConcern: WriteConcern): TypedMongoCollection[E] =
+    new TypedMongoCollection(rawCollection.withWriteConcern(writeConcern))
+
+  def readConcern: ReadConcern =
+    nativeCollection.getReadConcern
+
+  def withReadConcern(readConcern: ReadConcern): TypedMongoCollection[E] =
+    new TypedMongoCollection(rawCollection.withReadConcern(readConcern))
+
+  def readPreference: ReadPreference =
+    nativeCollection.getReadPreference
+
+  def withReadPreference(readPreference: ReadPreference): TypedMongoCollection[E] =
+    new TypedMongoCollection(rawCollection.withReadPreference(readPreference))
+
+  def drop(): Task[Unit] =
+    single(nativeCollection.drop()).map(_ => ())
+
+  def renameCollection(
+    namespace: MongoNamespace,
+    setupOptions: RenameCollectionOptions => RenameCollectionOptions = identity
+  ): Task[Unit] =
+    single(nativeCollection.renameCollection(namespace, setupOptions(new RenameCollectionOptions))).map(_ => ())
 
   def countDocuments(
     filter: MongoDocumentFilter[E] = MongoFilter.empty,
