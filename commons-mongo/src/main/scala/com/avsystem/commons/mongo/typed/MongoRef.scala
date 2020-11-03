@@ -129,7 +129,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   }
 
   def decodeFrom(doc: BsonDocument): T =
-    BsonValueInput.read(extractBson(doc))(format.codec)
+    format.readBson(extractBson(doc))
 }
 object MongoPropertyRef {
   implicit class CollectionRefOps[E, C[X] <: Iterable[X], T](private val ref: MongoPropertyRef[E, C[T]]) extends AnyVal {

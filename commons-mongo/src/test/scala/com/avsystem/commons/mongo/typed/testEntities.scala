@@ -32,7 +32,7 @@ case class RecordTestEntity(
   innerList: List[InnerRecord],
   innerMap: Map[InnerId, InnerRecord],
   complex: Opt[Map[InnerId, List[InnerRecord]]],
-  union: UnionTestEntity
+  @transientDefault union: UnionTestEntity = UnionTestEntity.CaseOne("uid", "ustr", data = false)
 ) extends MongoEntity[String]
 object RecordTestEntity extends MongoEntityCompanion[RecordTestEntity]
 
