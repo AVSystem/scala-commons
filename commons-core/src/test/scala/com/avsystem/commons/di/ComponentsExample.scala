@@ -66,7 +66,7 @@ object ApplicationContext {
 
   def main(args: Array[String]): Unit = {
     val config = DynamicConfig("whatever", BulbulatorConfig(List("jeden", "drugi")))
-    val fut = new ApplicationContext(config).fullApplication.init()
+    val fut = new ApplicationContext(config).fullApplication.parallelInit()
     Await.result(fut, Duration.Inf)
   }
 }

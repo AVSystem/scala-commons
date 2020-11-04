@@ -22,6 +22,7 @@ abstract class Component[+T] {
   def name: String
 
   private[this] val savedFuture = new AtomicReference[Future[T]]
+  private[this] lazy val syncResult = create(dependencies.map(_.doInit()))
 
   @compileTimeOnly(".ref can only be used inside argument to Component(...) macro")
   def ref: T = sys.error("stub")
@@ -29,9 +30,16 @@ abstract class Component[+T] {
   def dependsOn(deps: Component[_]*): Component[T] =
     new Component.WithAdditionalDeps(this, deps)
 
-  final def init()(implicit ec: ExecutionContext): Future[T] = {
+  final def init(): T = {
     detectCycles(Nil, new MHashSet)
-    doInit
+    doInit()
+  }
+
+  final def parallelInit()(implicit ec: ExecutionContext): Future[T] = try {
+    detectCycles(Nil, new MHashSet)
+    doParallelInit()
+  } catch {
+    case NonFatal(cause) => Future.failed(cause)
   }
 
   private def detectCycles(stack: List[Component[_]], visited: MHashSet[Component[_]]): Unit =
@@ -45,15 +53,15 @@ abstract class Component[+T] {
       }
     }
 
-  private def doInit(implicit ec: ExecutionContext): Future[T] = try {
+  private def doInit(): T = syncResult
+
+  private def doParallelInit()(implicit ec: ExecutionContext): Future[T] = {
     val promise = Promise[T]()
     if (savedFuture.compareAndSet(null, promise.future)) {
-      val resultFuture = Future.traverse(dependencies)(_.doInit).map(deps => create(deps.toIndexedSeq))
+      val resultFuture = Future.traverse(dependencies)(_.doParallelInit()).map(deps => create(deps.toIndexedSeq))
       promise.completeWith(resultFuture)
     }
     savedFuture.get()
-  } catch {
-    case NonFatal(cause) => Future.failed(cause)
   }
 
   def dependencies: IndexedSeq[Component[_]]
