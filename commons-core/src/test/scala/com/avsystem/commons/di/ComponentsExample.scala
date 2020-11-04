@@ -32,7 +32,10 @@ class BulbulatorDao(
   name: ComponentName
 ) extends MyComponent
 
-class DeviceDao(implicit db: Database, name: ComponentName) extends MyComponent
+class DeviceDao(implicit
+  db: Database,
+  name: ComponentName
+) extends MyComponent
 
 class FullApplication(implicit
   bulbulatorDao: BulbulatorDao,

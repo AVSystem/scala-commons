@@ -15,6 +15,9 @@ object ComponentName {
   implicit def componentName: ComponentName = sys.error("stub")
 }
 
+case class DependencyCycleException(cyclePath: List[Component[_]])
+  extends Exception(s"component dependency cycle detected: ${cyclePath.map(_.name).mkString("", " -> ", cyclePath.head.name)}")
+
 abstract class Component[+T] {
   def name: String
 
@@ -26,15 +29,26 @@ abstract class Component[+T] {
   def dependsOn(deps: Component[_]*): Component[T] =
     new Component.WithAdditionalDeps(this, deps)
 
-  def init()(implicit ec: ExecutionContext): Future[T] =
-    init(ComponentInitContext(ec, Nil))
+  final def init()(implicit ec: ExecutionContext): Future[T] = {
+    detectCycles(Nil, new MHashSet)
+    doInit
+  }
 
-  final def init(ctx: ComponentInitContext): Future[T] = try {
-    implicit val ec: ExecutionContext = ctx.executor
-    val newCtx = ctx.push(this)
+  private def detectCycles(stack: List[Component[_]], visited: MHashSet[Component[_]]): Unit =
+    if (!visited.contains(this)) {
+      if (!stack.contains(this)) {
+        val newStack = this :: stack
+        dependencies.foreach(_.detectCycles(newStack, visited))
+        visited.add(this)
+      } else {
+        throw DependencyCycleException(this :: stack.takeWhile(_ != this))
+      }
+    }
+
+  private def doInit(implicit ec: ExecutionContext): Future[T] = try {
     val promise = Promise[T]()
     if (savedFuture.compareAndSet(null, promise.future)) {
-      val resultFuture = Future.traverse(dependencies)(_.init(newCtx)).map(deps => create(deps.toIndexedSeq))
+      val resultFuture = Future.traverse(dependencies)(_.doInit).map(deps => create(deps.toIndexedSeq))
       promise.completeWith(resultFuture)
     }
     savedFuture.get()
@@ -53,21 +67,6 @@ object Component {
     def name: String = wrapped.name
     def dependencies: IndexedSeq[Component[_]] = wrapped.dependencies ++ deps
     protected def create(resolvedDeps: IndexedSeq[Any]): T = wrapped.create(resolvedDeps)
-  }
-}
-
-case class ComponentCycleException(cyclePath: List[Component[_]])
-  extends Exception(s"component dependency cycle detected: ${cyclePath.map(_.name).mkString(" -> ")}")
-
-case class ComponentInitContext(
-  executor: ExecutionContext,
-  stack: List[Component[_]]
-) {
-  def push(component: Component[_]): ComponentInitContext = {
-    if (stack.contains(component)) {
-      throw ComponentCycleException((component :: stack.takeWhile(_ != component)).reverse)
-    }
-    ComponentInitContext(executor, component :: stack)
   }
 }
 
