@@ -7,6 +7,15 @@ import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import org.bson.{BsonDocument, BsonValue}
 
+/**
+  * Represents a reference to a particular "place" in a MongoDB document. The "place" may be an actual path
+  * inside the document ([[MongoPropertyRef]]) or the whole document _itself_ (you can think of it as an empty path).
+  *
+  * When the [[MongoRef]] points to the whole document, it may also narrow the type only to some subtype(s).
+  * See the [[DataRefDsl.as]] macro for more details on narrowing.
+  *
+  * @tparam E the data type
+  */
 sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataRefDsl[E, T] { self =>
   def format: MongoFormat[T]
   def projectionRefs: Set[MongoRef[E, _]] = Set(this)
@@ -184,7 +193,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     case GetFromOptional(prefix, _, _) =>
       computePath(onlyUpToArray, prefix, acc)
 
-    case PropertyAsSubtype(prefix, _, _, _) =>
+    case PropertySubtypeRef(prefix, _, _, _) =>
       computePath(onlyUpToArray, prefix, acc)
   }
 
@@ -211,7 +220,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     case GetFromOptional(prefix, _, _) =>
       prefix.extractBson(doc)
 
-    case PropertyAsSubtype(prefix, _, _, _) =>
+    case PropertySubtypeRef(prefix, _, _, _) =>
       prefix.extractBson(doc)
   }
 
@@ -253,7 +262,7 @@ object MongoRef {
     def compose[P](prefix: MongoRef[P, T]): MongoRef[P, T] = prefix
   }
 
-  final case class SelfAsSubtype[E, T <: E](
+  final case class RootSubtypeRef[E, T <: E](
     fullRef: RootRef[E],
     caseFieldName: String,
     caseNames: List[String],
@@ -263,8 +272,8 @@ object MongoRef {
       case _: MongoDataRef[P, E] =>
         // fullRef is guaranteed to be the same as prefix.fullRef
         // must cast because the compiler cannot infer the fact that E <: P in this case
-        SelfAsSubtype(fullRef, caseFieldName, caseNames, format).asInstanceOf[MongoRef[P, T]]
-      case ref: MongoPropertyRef[P, E] => PropertyAsSubtype(ref, caseFieldName, caseNames, format)
+        RootSubtypeRef(fullRef, caseFieldName, caseNames, format).asInstanceOf[MongoRef[P, T]]
+      case ref: MongoPropertyRef[P, E] => PropertySubtypeRef(ref, caseFieldName, caseNames, format)
     }
   }
 
@@ -297,7 +306,7 @@ object MongoRef {
       copy(prefix = prefix compose newPrefix)
   }
 
-  final case class PropertyAsSubtype[E, T0, T <: T0](
+  final case class PropertySubtypeRef[E, T0, T <: T0](
     prefix: MongoPropertyRef[E, T0],
     caseFieldName: String,
     caseNames: List[String],

@@ -15,10 +15,10 @@ private final class FilterDocBuilder(prefixPath: Opt[String], filterDocs: BsonAr
   @tailrec def addImpliedFilters(ref: MongoRef[_, _]): Unit = ref match {
     case MongoRef.RootRef(_) =>
 
-    case MongoRef.SelfAsSubtype(fullRef, caseFieldName, caseNames, _) =>
+    case MongoRef.RootSubtypeRef(fullRef, caseFieldName, caseNames, _) =>
       addFilter(MongoFilter.subtypeFilter(fullRef, caseFieldName, caseNames, negated = false))
 
-    case MongoRef.PropertyAsSubtype(prefix, caseFieldName, caseNames, _) =>
+    case MongoRef.PropertySubtypeRef(prefix, caseFieldName, caseNames, _) =>
       addFilter(MongoFilter.subtypeFilter(prefix, caseFieldName, caseNames, negated = false))
       addImpliedFilters(prefix)
 
