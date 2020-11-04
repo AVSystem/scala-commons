@@ -13,7 +13,7 @@ case class BulbulatorConfig(
   types: List[String]
 )
 
-abstract class MyComponent(implicit name: ComponentName) extends Injectable {
+abstract class MyComponent(implicit name: ComponentName) {
   println(s"starting $name initialization")
   Thread.sleep(100)
   println(s"finished $name initialization")
@@ -44,7 +44,7 @@ class FullApplication(implicit
   println("full initialization")
 }
 
-trait DatabaseComponents {
+trait DatabaseComponents extends Components {
   def config: DynamicConfig
 
   implicit val database: Component[Database] =
@@ -57,7 +57,7 @@ trait DatabaseComponents {
     Component(new DeviceDao)
 }
 
-class ApplicationContext(val config: DynamicConfig) extends DatabaseComponents {
+class ApplicationContext(val config: DynamicConfig) extends Components with DatabaseComponents {
   val fullApplication: Component[FullApplication] = Component(new FullApplication)
 }
 object ApplicationContext {

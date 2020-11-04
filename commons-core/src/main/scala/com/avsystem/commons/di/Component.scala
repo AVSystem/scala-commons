@@ -16,7 +16,7 @@ object ComponentName {
 }
 
 case class DependencyCycleException(cyclePath: List[Component[_]])
-  extends Exception(s"component dependency cycle detected: ${cyclePath.map(_.name).mkString("", " -> ", cyclePath.head.name)}")
+  extends Exception(s"component dependency cycle detected: ${cyclePath.map(_.name).mkString("", " -> ", " -> " + cyclePath.head.name)}")
 
 abstract class Component[+T] {
   def name: String
@@ -78,8 +78,7 @@ object Component {
   }
 }
 
-trait Injectable extends Any
-object Injectable {
+trait Components {
   @compileTimeOnly("implicit Component[T] => implicit T inference only works inside argument to Component(...) macro")
-  implicit def inject[T <: Injectable](implicit component: Component[T]): T = sys.error("stub")
+  implicit def inject[T](implicit component: Component[T]): T = sys.error("stub")
 }

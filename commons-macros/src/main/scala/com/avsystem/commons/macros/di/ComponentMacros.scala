@@ -15,9 +15,8 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   def ComponentCls: Tree = tq"$DiPkg.Component"
 
   lazy val ComponentTpe: Type = getType(tq"$ComponentCls[_]")
-  lazy val InjectableTpe: Type = getType(tq"$DiPkg.Injectable")
   lazy val ComponentRefSym: Symbol = ComponentTpe.member(TermName("ref"))
-  lazy val InjectSym: Symbol = getType(tq"$DiPkg.Injectable.type").member(TermName("inject"))
+  lazy val InjectSym: Symbol = getType(tq"$DiPkg.Components").member(TermName("inject"))
   lazy val ComponentNameSym: Symbol = getType(tq"$DiPkg.ComponentName.type").member(TermName("componentName"))
 
   object ComponentRef {
@@ -42,10 +41,6 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val name = enclosingSym.name.decodedName.toString
 
     val ttpe = weakTypeOf[T]
-    if (!(ttpe <:< InjectableTpe) && (enclosingSym :: enclosingSym.overrides).exists(_.isImplicit)) {
-      abort(s"component $name is declared as implicit but $ttpe is not an Injectable")
-    }
-
     val depArrayName = c.freshName(TermName("deps"))
     val depsBuf = new ListBuffer[Tree]
 
