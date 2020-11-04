@@ -17,7 +17,7 @@ class VarargsAtLeast[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "
 
     unit.body.foreach(analyzeTree {
       case t@Apply(fun, args)
-        if fun.tpe.params.lastOption.map(_.tpe.typeSymbol).contains(definitions.RepeatedParamClass) &&
+        if fun.tpe != null && fun.tpe.params.lastOption.map(_.tpe.typeSymbol).contains(definitions.RepeatedParamClass) &&
           !args.lastOption.exists(isVarargParam) =>
 
         val required =
