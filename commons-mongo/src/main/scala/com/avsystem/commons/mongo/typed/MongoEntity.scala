@@ -71,7 +71,7 @@ abstract class AbstractMongoEntityCompanion[Implicits, E <: BaseMongoEntity](imp
 
   type ID = E#IDType
 
-  final val IdRef: PropertyRef[ID] = format.fieldRefFor(SelfRef, MongoEntity.Id)
+  final val IdRef: Ref[ID] = format.fieldRefFor(SelfRef, MongoEntity.Id)
 }
 
 /**

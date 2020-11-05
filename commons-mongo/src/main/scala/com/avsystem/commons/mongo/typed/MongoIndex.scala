@@ -29,6 +29,12 @@ case class MongoIndex[E](fields: Vector[(MongoPropertyRef[E, _], MongoIndexType)
 object MongoIndex {
   def apply[E](fields: (MongoPropertyRef[E, _], MongoIndexType)*): MongoIndex[E] =
     MongoIndex(fields.toVector)
+
+  def ascending[E](fields: MongoPropertyRef[E, _]*): MongoIndex[E] =
+    MongoIndex(fields.iterator.map(f => f -> MongoIndexType.Ascending).toVector)
+
+  def descending[E](fields: MongoPropertyRef[E, _]*): MongoIndex[E] =
+    MongoIndex(fields.iterator.map(f => f -> MongoIndexType.Ascending).toVector)
 }
 
 final class MongoIndexType(implicit enumCtx: EnumCtx) extends AbstractValueEnum {

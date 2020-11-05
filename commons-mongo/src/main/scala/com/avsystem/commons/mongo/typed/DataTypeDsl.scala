@@ -5,9 +5,8 @@ import com.avsystem.commons.annotation.{explicitGenerics, macroPrivate}
 import com.avsystem.commons.macros.serialization.MongoMacros
 
 trait DataRefDsl[E, T] {
-  // just convenience type aliases
-  type Ref[T0] = MongoRef[E, T0]
-  type PropertyRef[T0] = MongoPropertyRef[E, T0]
+  // convenience type alias
+  type Ref[T0] = MongoPropertyRef[E, T0]
 
   // ThisRef = MongoPropertyRef for MongoPropertyRef and MongoRef for all other types
   // This makes it possible to refine the result type of `as`, `compose`, `andThen` etc. in MongoPropertyRef
