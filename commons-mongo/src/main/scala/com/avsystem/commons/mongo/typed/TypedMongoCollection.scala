@@ -2,11 +2,11 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.mongo.core.GenCodecRegistry
-import com.mongodb.{MongoNamespace, ReadConcern, ReadPreference, WriteConcern}
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.client.model._
 import com.mongodb.client.result.{DeleteResult, UpdateResult}
 import com.mongodb.reactivestreams.client.{DistinctPublisher, FindPublisher, MongoCollection}
+import com.mongodb.{MongoNamespace, ReadConcern, ReadPreference, WriteConcern}
 import monix.eval.Task
 import monix.reactive.Observable
 import org.bson.codecs.configuration.CodecRegistry
@@ -80,14 +80,25 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   ): Task[Long] =
     single(nativeCollection.estimatedDocumentCount(setupOptions(new EstimatedDocumentCountOptions))).asInstanceOf[Task[Long]]
 
+  def exists(
+    filter: MongoDocumentFilter[E],
+    setupOptions: FindPublisher[Any] => FindPublisher[Any] = identity
+  ): Task[Boolean] =
+    findOne(filter, projection = MongoProjection.empty, setupOptions = setupOptions).map(_.isDefined)
+
   def findById(
     id: ID,
     setupOptions: FindPublisher[Any] => FindPublisher[Any] = identity
-  ): Task[Option[E]] = {
-    val publisher = nativeCollection.find((IdRef === id).toBson)
-    val publisherWithOptions = setupOptions(publisher.asInstanceOf[FindPublisher[Any]]).asInstanceOf[FindPublisher[E]]
-    singleOpt(publisherWithOptions.limit(1).first())
-  }
+  ): Task[Option[E]] =
+    findOne(IdRef === id, setupOptions = setupOptions)
+
+  def findOne[T](
+    filter: MongoDocumentFilter[E] = MongoFilter.empty,
+    projection: MongoProjection[E, T] = SelfRef,
+    sort: MongoDocumentOrder[E] = MongoDocumentOrder.empty,
+    setupOptions: FindPublisher[Any] => FindPublisher[Any] = identity
+  ): Task[Option[T]] =
+    find(filter, projection, sort, o => setupOptions(o).limit(1)).firstOptionL
 
   def find[T](
     filter: MongoDocumentFilter[E] = MongoFilter.empty,

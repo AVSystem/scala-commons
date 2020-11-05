@@ -16,7 +16,7 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
   implicit val scheduler: Scheduler = Scheduler.fixedPool("test", 2)
 
   implicit class taskOps[T](task: Task[T]) {
-    def value: T = task.runAsync.futureValue
+    def value: T = task.runToFuture.futureValue
   }
 
   final val Rte = RecordTestEntity
@@ -47,8 +47,8 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    Await.result(rteColl.drop().runAsync, Duration.Inf)
-    Await.result(rteColl.insertMany(entities).runAsync, Duration.Inf)
+    Await.result(rteColl.drop().runToFuture, Duration.Inf)
+    Await.result(rteColl.insertMany(entities).runToFuture, Duration.Inf)
   }
 
   test("findById") {

@@ -20,7 +20,7 @@ sealed trait MongoUpdate[E] {
       MultiUpdate(propUpdates1 ++ propUpdates2)
   }
 
-  def &(other: MongoUpdate[E]): MongoUpdate[E] = and(other)
+  def &&(other: MongoUpdate[E]): MongoUpdate[E] = and(other)
 
   def toBson: BsonDocument = this match {
     case MultiUpdate(propertyUpdates) =>

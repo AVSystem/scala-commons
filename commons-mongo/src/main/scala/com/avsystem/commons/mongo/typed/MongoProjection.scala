@@ -88,6 +88,8 @@ trait MongoProjection[E, T] {
 }
 
 object MongoProjection extends ProjectionZippers {
+  def empty[E]: MongoProjection[E, Unit] = new Empty()
+
   final class Empty[E]() extends MongoProjection[E, Unit] {
     def projectionRefs: Set[MongoRef[E, _]] = Set.empty
     def showRecordId: Boolean = false

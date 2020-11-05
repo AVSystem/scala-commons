@@ -58,7 +58,7 @@ class MongoUpdateTest extends AnyFunSuite {
   }
 
   test("compound updates") {
-    assert((Rte.ref(_.int).inc(1) & Rte.ref(_.renamedStr).set("fooo")).toBson.toString ==
+    assert((Rte.ref(_.int).inc(1) && Rte.ref(_.renamedStr).set("fooo")).toBson.toString ==
       """{"$inc": {"int": 1}, "$set": {"str": "fooo"}}""")
   }
 }

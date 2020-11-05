@@ -83,12 +83,12 @@ object ObservableRPCTest {
 
   private implicit class ObservableOps[T](private val observable: Observable[T]) extends AnyVal {
     def asFutureSeq: Future[Seq[T]] = {
-      observable.foldLeftF(List.empty[T]) {
+      observable.foldLeft(List.empty[T]) {
         case (list, elem) => elem :: list
-      }.map(_.reverse).firstL.runAsync
+      }.map(_.reverse).firstL.runToFuture
     }
 
     def asExistingFuture: Future[T] =
-      observable.firstL.runAsync
+      observable.firstL.runToFuture
   }
 }
