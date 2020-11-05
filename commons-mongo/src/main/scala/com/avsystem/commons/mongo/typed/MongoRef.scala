@@ -143,7 +143,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     * The above produces a filter document that looks like this:
     *
     * {{{
-    *   {"number": {"$gte": 0, "$lt": 10}}
+    *   {"number": {"$$gte": 0, "$$lt": 10}}
     * }}}
     *
     * Note that the same can be usually achieved using logical operators, i.e.

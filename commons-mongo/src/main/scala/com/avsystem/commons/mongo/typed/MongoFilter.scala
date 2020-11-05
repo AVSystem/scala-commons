@@ -72,11 +72,11 @@ object MongoFilter {
 }
 
 /**
-  * Represents a filter that applies a set of query operators on a value (e.g. `$eq`, `$lte`, etc.)
+  * Represents a filter that applies a set of query operators on a value (e.g. `$$eq`, `$$lte`, etc.)
   * Every operator may be used at most once. Such filter usually translates into a BSON document that looks like this:
   *
   * {{{
-  *   {"$ne": 5, "$gte": 0, ...more operators}
+  *   {"$$ne": 5, "$$gte": 0, ...more operators}
   * }}}
   *
   * @tparam T type of the filtered value
@@ -112,8 +112,8 @@ final case class MongoOperatorsFilter[T](operators: Seq[MongoQueryOperator[T]]) 
   *     MyEntity.ref(_.id).is("ID") && MyEntity.ref(_.number) > 8
   * }}}
   *
-  * NOTE: even though you can combine filters using logical `$and` and `$or` operators,
-  * MongoDB does not allow using the `$not` operator on this level.
+  * NOTE: even though you can combine filters using logical `$$and` and `$$or` operators,
+  * MongoDB does not allow using the `$$not` operator on this level.
   * It may only be specified for field-level filters.
   *
   * @tparam E type of the filtered value (that must translate into a document)

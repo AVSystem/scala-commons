@@ -57,7 +57,7 @@ trait DataRefDsl[E, T] {
     *     Entity.ref(_.data.value)
     * }}}
     *
-    * When [[T]] is an `Option`, `Opt`, or similar `Option`-like type, the function may refer its `.get` method
+    * When `T` is an `Option`, `Opt`, or similar `Option`-like type, the function may refer its `.get` method
     * to return a reference to its inner value.
     *
     * {{{
@@ -65,7 +65,7 @@ trait DataRefDsl[E, T] {
     *     Entity.ref(_.dataOpt.get)
     * }}}
     *
-    * When [[T]] is a collection, the function may call its `apply` method to refer to an element at specific index.
+    * When `T` is a collection, the function may call its `apply` method to refer to an element at specific index.
     * Also, `.head` may be used as an alias for `.apply(0)`.
     *
     * {{{
@@ -75,7 +75,7 @@ trait DataRefDsl[E, T] {
     *     Entity.ref(_.dataList(1))
     * }}}
     *
-    * When [[T]] is a map, the function may call its `apply` method to refer to a value at specific key.
+    * When `T` is a map, the function may call its `apply` method to refer to a value at specific key.
     *
     * {{{
     *   val dataAtOneRef: MongoPropertyRef[Entity, Data] =

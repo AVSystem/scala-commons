@@ -9,7 +9,7 @@ import scala.annotation.tailrec
 /**
   * Determines document fields to include in results of a query.
   *
-  * Projection also defines how the (possibly partial) query result is deserialized into a final type [[T]].
+  * Projection also defines how the (possibly partial) query result is deserialized into a final type `T`.
   * This may include some application-level transformations.
   *
   * Some projections are associated with an *implied filter* which may limit the results only to some documents.
@@ -22,7 +22,7 @@ import scala.annotation.tailrec
   *
   * A projection may also be a [[MongoPropertyRef]] - reference to a single path inside a document.
   *
-  * Finally, you can create multi-field projections using one of the [[MongoProjection.zip]] overloads in order to
+  * Finally, you can create multi-field projections using one of the [[MongoProjection]]`.zip` overloads in order to
   * compose multiple projections into a single one that returns a tuple.
   *
   * Every projection may also be mapped with an application-level function that transforms the returned value
