@@ -57,40 +57,17 @@ trait DatabaseComponents extends Components {
     Component(new DeviceDao)
 }
 
-class ApplicationContext(val config: DynamicConfig) extends Components with DatabaseComponents {
-  val fullApplication: Component[FullApplication] = Component(new FullApplication)
+class ComponentsExample(val config: DynamicConfig) extends Components with DatabaseComponents {
+  val fullApplication: Component[FullApplication] =
+    Component(new FullApplication)
 }
-object ApplicationContext {
+object ComponentsExample {
 
   import ExecutionContext.Implicits.global
 
   def main(args: Array[String]): Unit = {
     val config = DynamicConfig("whatever", BulbulatorConfig(List("jeden", "drugi")))
-    val fut = new ApplicationContext(config).fullApplication.parallelInit()
+    val fut = new ComponentsExample(config).fullApplication.parallelInit()
     Await.result(fut, Duration.Inf)
-  }
-}
-
-
-object DotGen {
-  def main(args: Array[String]): Unit = {
-    val config = DynamicConfig("whatever", BulbulatorConfig(List("jeden", "drugi")))
-    val toplevelComponent = new ApplicationContext(config).fullApplication
-
-    val visited = new MHashSet[String]
-    val sb = new StringBuilder
-
-    def loop(comp: Component[_]): Unit =
-      if (!visited(comp.name)) {
-        visited += comp.name
-        comp.dependencies.foreach { dep =>
-          sb.append(s"${comp.name} -> ${dep.name};\n")
-        }
-        comp.dependencies.foreach(loop)
-      }
-
-    loop(toplevelComponent)
-
-    println(sb.result())
   }
 }
