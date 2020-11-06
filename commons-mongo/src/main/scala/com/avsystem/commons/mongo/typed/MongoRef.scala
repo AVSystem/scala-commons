@@ -294,7 +294,7 @@ object MongoRef {
   ) extends MongoPropertyRef[E, T] {
     require(index >= 0, "array index must be non-negative")
     def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
-      copy(prefix = this.prefix compose newPrefix)
+      copy(prefix = prefix compose newPrefix)
   }
 
   final case class GetFromOptional[E, O, T](
