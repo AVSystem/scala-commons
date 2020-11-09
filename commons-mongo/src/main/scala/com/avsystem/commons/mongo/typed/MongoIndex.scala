@@ -34,7 +34,7 @@ object MongoIndex {
     MongoIndex(fields.iterator.map(f => f -> MongoIndexType.Ascending).toVector)
 
   def descending[E](fields: MongoPropertyRef[E, _]*): MongoIndex[E] =
-    MongoIndex(fields.iterator.map(f => f -> MongoIndexType.Ascending).toVector)
+    MongoIndex(fields.iterator.map(f => f -> MongoIndexType.Descending).toVector)
 }
 
 final class MongoIndexType(implicit enumCtx: EnumCtx) extends AbstractValueEnum {

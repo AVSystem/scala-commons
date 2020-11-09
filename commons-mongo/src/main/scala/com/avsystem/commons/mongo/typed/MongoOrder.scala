@@ -7,10 +7,15 @@ sealed trait MongoOrder[T] {
   def toBson: BsonValue
 }
 object MongoOrder {
+  def empty[E]: MongoDocumentOrder[E] = MongoDocumentOrder.empty[E]
+
   def ascending[T]: MongoOrder[T] = Simple(true)
   def descending[T]: MongoOrder[T] = Simple(false)
 
   def simple[T](ascending: Boolean): MongoOrder[T] = Simple(ascending)
+
+  def apply[E](refs: (MongoPropertyRef[E, _], Boolean)*): MongoDocumentOrder[E] =
+    MongoDocumentOrder(refs: _*)
 
   final case class Simple[T](ascending: Boolean) extends MongoOrder[T] {
     def toBson: BsonValue = Bson.int(if (ascending) 1 else -1)
