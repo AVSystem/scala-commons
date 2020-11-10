@@ -14,7 +14,7 @@ class MongoOrderTest extends AnyFunSuite {
   }
 
   test("empty") {
-    assert(MongoDocumentOrder.empty[InnerRecord].toBson.toString == "{}")
+    assert(MongoDocumentOrder.unspecified[InnerRecord].toBson.toString == "{}")
   }
 
   test("single field") {

@@ -96,7 +96,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   def findOne[T](
     filter: MongoDocumentFilter[E] = MongoFilter.empty,
     projection: MongoProjection[E, T] = SelfRef,
-    sort: MongoDocumentOrder[E] = MongoDocumentOrder.empty,
+    sort: MongoDocumentOrder[E] = MongoDocumentOrder.unspecified,
     setupOptions: FindPublisher[Any] => FindPublisher[Any] = identity
   ): Task[Option[T]] =
     find(filter, projection, sort, o => setupOptions(o).limit(1)).firstOptionL
@@ -104,7 +104,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   def find[T](
     filter: MongoDocumentFilter[E] = MongoFilter.empty,
     projection: MongoProjection[E, T] = SelfRef,
-    sort: MongoDocumentOrder[E] = MongoDocumentOrder.empty,
+    sort: MongoDocumentOrder[E] = MongoDocumentOrder.unspecified,
     setupOptions: FindPublisher[Any] => FindPublisher[Any] = identity
   ): Observable[T] = {
 
@@ -132,7 +132,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     filter: MongoDocumentFilter[E],
     update: MongoDocumentUpdate[E],
     projection: MongoProjection[E, T] = SelfRef,
-    sort: MongoDocumentOrder[E] = MongoDocumentOrder.empty,
+    sort: MongoDocumentOrder[E] = MongoDocumentOrder.unspecified,
     upsert: Boolean = false, // extracted as separate param because it's very commonly used
     setupOptions: FindOneAndUpdateOptions => FindOneAndUpdateOptions = identity
   ): Task[Option[T]] = {
@@ -155,7 +155,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     filter: MongoDocumentFilter[E],
     replacement: E,
     projection: MongoProjection[E, T] = SelfRef,
-    sort: MongoDocumentOrder[E] = MongoDocumentOrder.empty,
+    sort: MongoDocumentOrder[E] = MongoDocumentOrder.unspecified,
     upsert: Boolean = false, // extracted as separate param because it's very commonly used
     setupOptions: FindOneAndReplaceOptions => FindOneAndReplaceOptions = identity
   ): Task[Option[T]] = {
@@ -174,7 +174,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   def findOneAndDelete[T](
     filter: MongoDocumentFilter[E],
     projection: MongoProjection[E, T] = SelfRef,
-    sort: MongoDocumentOrder[E] = MongoDocumentOrder.empty,
+    sort: MongoDocumentOrder[E] = MongoDocumentOrder.unspecified,
     setupOptions: FindOneAndDeleteOptions => FindOneAndDeleteOptions = identity
   ): Task[Option[T]] = {
     val filterBson = filter.toFilterBson(Opt.Empty, projection.projectionRefs)

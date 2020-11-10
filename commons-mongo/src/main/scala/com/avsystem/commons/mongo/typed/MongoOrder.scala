@@ -14,7 +14,7 @@ sealed trait MongoOrder[T] {
   def toBson: BsonValue
 }
 object MongoOrder {
-  def empty[E]: MongoDocumentOrder[E] = MongoDocumentOrder.empty[E]
+  def unspecified[E]: MongoDocumentOrder[E] = MongoDocumentOrder.unspecified[E]
 
   def ascending[T]: MongoOrder[T] = Simple(true)
   def descending[T]: MongoOrder[T] = Simple(false)
@@ -71,7 +71,7 @@ case class MongoDocumentOrder[E](refs: Vector[(MongoPropertyRef[E, _], Boolean)]
     Bson.document(refs.iterator.map { case (ref, asc) => (ref.filterPath, Bson.int(if (asc) 1 else -1)) })
 }
 object MongoDocumentOrder {
-  def empty[E]: MongoDocumentOrder[E] = MongoDocumentOrder(Vector.empty)
+  def unspecified[E]: MongoDocumentOrder[E] = MongoDocumentOrder(Vector.empty)
 
   def apply[E](refs: (MongoPropertyRef[E, _], Boolean)*): MongoDocumentOrder[E] =
     MongoDocumentOrder(refs.toVector)
