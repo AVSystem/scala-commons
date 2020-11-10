@@ -83,9 +83,9 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
 
   def exists(
     filter: MongoDocumentFilter[E],
-    setupOptions: FindPublisher[Any] => FindPublisher[Any] = identity
+    setupOptions: CountOptions => CountOptions = identity
   ): Task[Boolean] =
-    findOne(filter, projection = MongoProjection.empty, setupOptions = setupOptions).map(_.isDefined)
+    countDocuments(filter, options => setupOptions(options).limit(1)).map(_ > 0)
 
   def findById(
     id: ID,
@@ -196,7 +196,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
 
     val publisher = nativeCollection
       .distinct(property.filterPath, classOf[BsonValue])
-      .filter(filter.toBson)
+      .filter(filter.toFilterBson(Opt.Empty, property.projectionRefs))
 
     val publisherWithOptions =
       setupOptions(publisher.asInstanceOf[DistinctPublisher[Any]]).asInstanceOf[DistinctPublisher[BsonValue]]
