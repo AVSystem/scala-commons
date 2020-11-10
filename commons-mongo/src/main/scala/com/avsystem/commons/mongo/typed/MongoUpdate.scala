@@ -42,9 +42,9 @@ sealed trait MongoUpdate[T] {
       val path = pathOpt.getOrElse(throw new IllegalArgumentException("update document without prefix path"))
 
       val rawQualifier = uae.qualifier match {
-        case ArrayElementsQualifier.First() => "$"
+        case ArrayElementsQualifier.FirstMatching() => "$"
         case ArrayElementsQualifier.Each() => "$[]"
-        case ArrayElementsQualifier.Matching(filter) =>
+        case ArrayElementsQualifier.Filtered(filter) =>
           val name = s"filter${arrayFilters.size}"
           arrayFilters.add(Bson.document(name, filter.toBson))
           s"$$[$name]"
@@ -89,9 +89,9 @@ object MongoUpdate {
 
   sealed abstract class ArrayElementsQualifier[T]
   object ArrayElementsQualifier {
-    case class First[T]() extends ArrayElementsQualifier[T]
+    case class FirstMatching[T]() extends ArrayElementsQualifier[T]
     case class Each[T]() extends ArrayElementsQualifier[T]
-    case class Matching[T](filter: MongoFilter[T]) extends ArrayElementsQualifier[T]
+    case class Filtered[T](filter: MongoFilter[T]) extends ArrayElementsQualifier[T]
   }
 }
 
