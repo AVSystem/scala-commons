@@ -16,14 +16,29 @@ sealed trait MongoWrite[E] {
   def toWriteModel: WriteModel[E] = this match {
     case InsertOne(value) =>
       new InsertOneModel(value)
+
     case UpdateOne(filter, update, setupOptions) =>
-      new UpdateOneModel(filter.toBson, update.toBson, setupOptions(new UpdateOptions))
+      val options = setupOptions(new UpdateOptions)
+      val (updateBson, arrayFilters) = update.toBsonAndArrayFilters
+      if (!arrayFilters.isEmpty) {
+        options.arrayFilters(arrayFilters)
+      }
+      new UpdateOneModel(filter.toBson, updateBson, options)
+
     case UpdateMany(filter, update, setupOptions) =>
-      new UpdateManyModel(filter.toBson, update.toBson, setupOptions(new UpdateOptions))
+      val options = setupOptions(new UpdateOptions)
+      val (updateBson, arrayFilters) = update.toBsonAndArrayFilters
+      if (!arrayFilters.isEmpty) {
+        options.arrayFilters(arrayFilters)
+      }
+      new UpdateManyModel(filter.toBson, updateBson, options)
+
     case ReplaceOne(filter, replacement, setupOptions) =>
       new ReplaceOneModel(filter.toBson, replacement, setupOptions(new ReplaceOptions))
+
     case DeleteOne(filter, setupOptions) =>
       new DeleteOneModel(filter.toBson, setupOptions(new DeleteOptions))
+
     case DeleteMany(filter, setupOptions) =>
       new DeleteManyModel(filter.toBson, setupOptions(new DeleteOptions))
   }

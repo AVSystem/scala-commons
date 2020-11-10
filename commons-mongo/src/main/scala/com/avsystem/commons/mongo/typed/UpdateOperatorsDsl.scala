@@ -53,12 +53,18 @@ object UpdateOperatorsDsl {
 
     def updateFirst(update: MongoUpdate.Creator[T] => MongoUpdate[T]): R = {
       val up = update(new MongoUpdate.Creator(format))
-      dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.First))
+      dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.First()))
     }
 
     def updateEach(update: MongoUpdate.Creator[T] => MongoUpdate[T]): R = {
       val up = update(new MongoUpdate.Creator(format))
-      dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.Each))
+      dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.Each()))
+    }
+
+    def updateMatching(filter: MongoFilter.Creator[T] => MongoFilter[T], update: MongoUpdate.Creator[T] => MongoUpdate[T]): R = {
+      val fil = filter(new MongoFilter.Creator(format))
+      val up = update(new MongoUpdate.Creator(format))
+      dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.Matching(fil)))
     }
   }
 }

@@ -135,8 +135,11 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     setupOptions: FindOneAndUpdateOptions => FindOneAndUpdateOptions = identity
   ): Task[Option[T]] = {
     val filterBson = filter.toFilterBson(Opt.Empty, projection.projectionRefs)
-    val updateBson = update.toBson
     val options = setupOptions(new FindOneAndUpdateOptions).sort(sort.toBson)
+    val (updateBson, arrayFilters) = update.toBsonAndArrayFilters
+    if (!arrayFilters.isEmpty) {
+      options.arrayFilters(arrayFilters)
+    }
     projection match {
       case SelfRef =>
         singleOpt(nativeCollection.findOneAndUpdate(filterBson, updateBson, options).asInstanceOf[Publisher[T]])
@@ -226,15 +229,27 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     filter: MongoDocumentFilter[E],
     update: MongoDocumentUpdate[E],
     setupOptions: UpdateOptions => UpdateOptions = identity
-  ): Task[UpdateResult] =
-    single(nativeCollection.updateOne(filter.toBson, update.toBson, setupOptions(new UpdateOptions)))
+  ): Task[UpdateResult] = {
+    val options = setupOptions(new UpdateOptions)
+    val (updateBson, arrayFilters) = update.toBsonAndArrayFilters
+    if (!arrayFilters.isEmpty) {
+      options.arrayFilters(arrayFilters)
+    }
+    single(nativeCollection.updateOne(filter.toBson, updateBson, options))
+  }
 
   def updateMany(
     filter: MongoDocumentFilter[E],
     update: MongoDocumentUpdate[E],
     setupOptions: UpdateOptions => UpdateOptions = identity
-  ): Task[UpdateResult] =
-    single(nativeCollection.updateMany(filter.toBson, update.toBson, setupOptions(new UpdateOptions)))
+  ): Task[UpdateResult] = {
+    val options = setupOptions(new UpdateOptions)
+    val (updateBson, arrayFilters) = update.toBsonAndArrayFilters
+    if (!arrayFilters.isEmpty) {
+      options.arrayFilters(arrayFilters)
+    }
+    single(nativeCollection.updateMany(filter.toBson, updateBson, options))
+  }
 
   def replaceOne(
     filter: MongoDocumentFilter[E],

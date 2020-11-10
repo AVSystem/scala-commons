@@ -16,14 +16,14 @@ sealed trait MongoUpdate[T] {
   def on[E](property: MongoPropertyRef[E, T]): MongoDocumentUpdate[E] =
     PropertyUpdate(property, this)
 
-  protected def fillUpdateDoc(pathOpt: Opt[String], doc: BsonDocument): Unit = this match {
+  protected def fillUpdateDoc(pathOpt: Opt[String], doc: BsonDocument, arrayFilters: JList[BsonDocument]): Unit = this match {
     case MultiUpdate(updates) =>
-      updates.foreach(_.fillUpdateDoc(pathOpt, doc))
+      updates.foreach(_.fillUpdateDoc(pathOpt, doc, arrayFilters))
 
     case PropertyUpdate(property, update) =>
       val propPath = property.updatePath
       val newPath = pathOpt.fold(propPath)(_ + MongoPropertyRef.Separator + propPath)
-      update.fillUpdateDoc(newPath.opt, doc)
+      update.fillUpdateDoc(newPath.opt, doc, arrayFilters)
 
     case OperatorUpdate(op) =>
       // the way MongoDocumentUpdate uses fillUpdateDoc makes this safe
@@ -40,8 +40,18 @@ sealed trait MongoUpdate[T] {
 
     case uae: UpdateArrayElements[_, _] =>
       val path = pathOpt.getOrElse(throw new IllegalArgumentException("update document without prefix path"))
-      val newPath = path + MongoPropertyRef.Separator + uae.qualifier.raw
-      uae.update.fillUpdateDoc(newPath.opt, doc)
+
+      val rawQualifier = uae.qualifier match {
+        case ArrayElementsQualifier.First() => "$"
+        case ArrayElementsQualifier.Each() => "$[]"
+        case ArrayElementsQualifier.Matching(filter) =>
+          val name = s"filter${arrayFilters.size}"
+          arrayFilters.add(Bson.document(name, filter.toBson))
+          s"$$[$name]"
+      }
+
+      val newPath = path + MongoPropertyRef.Separator + rawQualifier
+      uae.update.fillUpdateDoc(newPath.opt, doc, arrayFilters)
   }
 }
 
@@ -74,14 +84,14 @@ object MongoUpdate {
 
   final case class UpdateArrayElements[C[X] <: Iterable[X], T](
     update: MongoUpdate[T],
-    qualifier: ArrayElementsQualifier
+    qualifier: ArrayElementsQualifier[T]
   ) extends MongoUpdate[C[T]]
 
-  sealed abstract class ArrayElementsQualifier(val raw: String)
+  sealed abstract class ArrayElementsQualifier[T]
   object ArrayElementsQualifier {
-    case object First extends ArrayElementsQualifier("$")
-    case object Each extends ArrayElementsQualifier("$[]")
-    //TODO: filter
+    case class First[T]() extends ArrayElementsQualifier[T]
+    case class Each[T]() extends ArrayElementsQualifier[T]
+    case class Matching[T](filter: MongoFilter[T]) extends ArrayElementsQualifier[T]
   }
 }
 
@@ -132,10 +142,11 @@ sealed trait MongoDocumentUpdate[E] extends MongoUpdate[E] {
 
   def &&(other: MongoDocumentUpdate[E]): MongoDocumentUpdate[E] = and(other)
 
-  def toBson: BsonDocument = {
+  def toBsonAndArrayFilters: (BsonDocument, JList[BsonDocument]) = {
     val updateDoc = new BsonDocument
-    fillUpdateDoc(Opt.Empty, updateDoc)
-    updateDoc
+    val arrayFilters = new JLinkedList[BsonDocument]
+    fillUpdateDoc(Opt.Empty, updateDoc, arrayFilters)
+    (updateDoc, arrayFilters)
   }
 }
 
