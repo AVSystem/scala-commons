@@ -4,6 +4,33 @@ The `commons-mongo` module contains various utilities that enhance standard Java
 This documentation focuses on the `com.avsystem.commons.mongo.typed` package that contains a Scala-idiomatic and
 typesafe layer over the Reactive Streams driver for MongoDB.
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [MongoDB API](#mongodb-api)
+  - [Quickstart](#quickstart)
+    - [Defining an entity](#defining-an-entity)
+    - [Setting up the client](#setting-up-the-client)
+    - [Inserting documents](#inserting-documents)
+    - [Finding documents by query](#finding-documents-by-query)
+  - [Modeling entities](#modeling-entities)
+    - [Field types](#field-types)
+    - [Embedded document types](#embedded-document-types)
+    - [Optional fields](#optional-fields)
+  - [Core types](#core-types)
+    - [`MongoPropertyRef`](#mongopropertyref)
+    - [`MongoDocumentFilter`](#mongodocumentfilter)
+    - [`MongoProjection`](#mongoprojection)
+    - [`MongoDocumentOrder`](#mongodocumentorder)
+    - [`MongoDocumentUpdate`](#mongodocumentupdate)
+    - [`MongoIndex`](#mongoindex)
+  - [Invoking database commands](#invoking-database-commands)
+    - [Monix `Task`](#monix-task)
+    - [Monix `Observable`](#monix-observable)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Quickstart
 
 ### Defining an entity
