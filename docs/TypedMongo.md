@@ -105,7 +105,7 @@ A type representing embedded document is very similar to an entity type, i.e. it
 * a sealed trait/class with `@flatten` annotation
 
 However, an embedded document is not a toplevel entity and does not need an ID. Therefore, it doesn't need to
-extend `MongoEntity` and its companion must extend `MongoDataCompanion` rather than `MongoEntityCompanion.
+extend `MongoEntity` and its companion must extend `MongoDataCompanion` rather than `MongoEntityCompanion`.
 
 ```scala
 case class MyEmbeddedDocument(
@@ -200,10 +200,13 @@ For more examples, see the Scaladoc of the `.ref` macro or
 an _implied filter_ that is automatically included into the query if this reference is used in a MongoDB query document
 or projection.
 
+`MongoPropertyRef` is a fundamental type that serves as an entry point for creating queries, projections, updates,
+sort orders, indices, etc.
+
 ### `MongoDocumentFilter`
 
-A `MongoDocumentFilter[E]` represents a MongoDB query document for an entity `E`. Usually, filters are created
-via `MognoPropertyRef`s, e.g. 
+A `MongoDocumentFilter[E]` represents a MongoDB query document for an entity type `E`. Usually, filters are created
+via `MongoPropertyRef`s, e.g. 
 
 ```scala
 val query: MongoDocumentFilter[MyEntity] = MyEntity.ref(_.int) > 10 && MyEntity.ref(_.data.flag).is(true)
@@ -249,7 +252,7 @@ val update: MongoDocumentUpdate[MyEntity] =
 For more examples, see the Scaladoc or
 [tests](https://github.com/AVSystem/scala-commons/blob/mongo-api/commons-mongo/src/test/scala/com/avsystem/commons/mongo/typed/MongoUpdateTest.scala).
 
-### `MongoIndex[E]`
+### `MongoIndex`
 
 A `MongoIndex[E]` represents a MongoDB index document for an entity of type `E`. Examples:
 
@@ -261,6 +264,104 @@ A `MongoIndex[E]` represents a MongoDB index document for an entity of type `E`.
   val index: MongoIndex[MyEntity] =
   MongoIndex(MyEntity.ref(_.str) -> Hashed, MyEntity.ref(_.int) -> Descending)
   ```
+  
+For more examples, see the Scaladoc or
+[tests](https://github.com/AVSystem/scala-commons/blob/mongo-api/commons-mongo/src/test/scala/com/avsystem/commons/mongo/typed/MongoIndexTest.scala).
 
 ## Invoking database commands
+
+In order to invoke database commands, create a `TypedMongoCollection` which is a wrapper over Reactive Streams
+driver's raw `MongoCollection`. 
+
+(assuming sample entity classes from the [previous section](#core-types))
+
+```scala
+import com.mongodb.reactivestreams.client.MongoClients
+
+val client = MongoClients.create() // connects to localhost by default
+val rawCollection = client.getDatabase("test").getCollection("myEntity")
+
+val collection: TypedMongoCollection[MyEntity] = new TypedMongoCollection(rawCollection)
+```
+
+Their API exposes mostly the same operations but typed differently - `TypedMongoCollection` is typed more precisely 
+and in a more Scala-idiomatic way.
+
+* instead of raw `Bson`s, `TypedMongoCollection` uses more precise `MongoDocumentFilter`, `MongoProjection`, 
+  `MongoDocumentUpdate`, etc. for expressing queries, projections, updates, sort orders, indices, etc.
+* instead of using raw Reactive Streams `Publisher`, `TypedMongoCollection` returns operation results either as
+  a [Monix `Task`](https://monix.io/docs/current/eval/task.html) (for single-element results) or as
+  an [Monix `Observable`](https://monix.io/docs/current/reactive/observable.html) (for multi-element results).
+
+For a proper and complete guide and documentation on Monix, refer to its [website](https://monix.io/).
+Here, we will outline the most important aspects that will let you quickly get started with the MongoDB API.
+
+The raw Reactive Streams driver is problematic to use because `org.reactivestreams.Publisher` returned by 
+`MongoCollection` lacks high-level, straightforward to use API. It also does not express very well the distinction
+between methods that return single result and methods that return multiple results.
+
+### [Monix `Task`](https://monix.io/docs/current/eval/task.html)
+
+A `Task[T]` represents an asynchronous computation that yields a result of type `T`. In this sense, it is somewhat
+similar to `Future[T]`. In particular, both share a lot of similar methods and can be used in Scala for comprehensions.
+
+However, there is a very fundamental, conceptual difference between a `Task` and a `Future`:
+
+* a `Future` represents a result of _already running or finished_ computation
+* a `Task` represents an _unexecuted_ program that needs to be run explicitly (e.g. by calling `.runToFuture`) 
+  and may be run multiple times or concurrently, each time repeating its side effects and potentially 
+  yielding different results
+  
+```scala
+import monix.execution.Scheduler.Implicits.global // note: Scheduler extends ExecutionContext
+
+val future: Future[Unit] = Future(pritnln("hello")) // "hello" is printed immediately
+
+val task: Task[Unit] = Task.eval(println("hello")) // nothing happens
+task.runToFuture // "hello" is printed
+task.runToFuture // "hello" is printed again, concurrently with the previous run
+```
+  
+One of the consequences of the above is that `Task` is 
+[referentially transparent](https://en.wikipedia.org/wiki/Referential_transparency) while `Future` is not.
+For people acknowledged with (pure) functional programming this will be a virtue by itself. Here we can outline some
+immediate practical benefits of that property.
+
+One of the consequences of `Task`'s referential transparency that makes it much easier to work with than with `Future` 
+is that we don't need an implicit `ExecutionContext` to invoke transformation methods like `map`, `flatMap`, etc. 
+Instead, a `Scheduler` (extended `ExecutionContext`) is necessary but only at the very point where `Task` is being
+executed and converted into a `Future` (among other options).
+
+This means that we can compose our asynchronous programs (represented as `Task`s) out of smaller programs without
+being bound to any particular `Scheduler`. This relieves us from constant dragging of an `ExecutionContext` via
+implicit parameters that we have to do when working with `Future`s.
+
+```scala
+val fetchValue: Task[Int] = ...
+def convertValue(int: Int): Task[String] = ...
+
+// no ExecutionContext/Scheduler necessary at this point
+val fullProgram: Task[Unit] = 
+  for {
+    value <- fetchValue
+    converted <- convertValue(value)
+  } yield {
+    println(converted)
+  }
+
+// only now we need a Scheduler
+import monix.execution.Scheduler.Implicits.global
+val future: Future[Unit] = fullProgram.runToFuture
+```
+
+### [Monix `Observable`](https://monix.io/docs/current/reactive/observable.html)
+
+An `Observable[T]` is conceptually the same thing as a Reactive Streams `Publisher[T]` (actually, it's fairly straightforward
+to convert between each other). That is, both represent an asynchronous stream of values of type `T` with backpressure
+(a consumer must explicitly request more elements from the producer). The difference is that `Observable` exposes a 
+rich, Scala-idiomatic API with a lot of high-level combinators.
+
+There are many ways to consume results of an `Observable[T]`. If you don't need the streaming nature of the `Observable`,
+you can simply "degrade" it onto a `Task[List[T]]` by calling `.toListL` on it. This is very often used in MongoDB API
+in order to fetch full results of a query into memory.
 
