@@ -3,6 +3,7 @@ package mongo.typed
 
 import com.avsystem.commons.annotation.macroPrivate
 import com.avsystem.commons.meta.OptionLike
+import com.avsystem.commons.mongo.typed.MongoPropertyRef.Separator
 import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import org.bson.{BsonDocument, BsonValue}
@@ -64,7 +65,7 @@ sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
   * A [[MongoPropertyRef]] is usually obtained using the [[DataRefDsl.ref]] macro -
   * see its documentation for more details.
   *
-  * [[MongoPropertyRef]] has a rich API so that it can be used for creating [[MongoDocumentFilter]]s, [[MongoUpdate]]s,
+  * [[MongoPropertyRef]] has a rich API so that it can be used for creating [[MongoDocumentFilter]]s, [[MongoDocumentUpdate]]s,
   * [[MongoDocumentOrder]]s and [[MongoIndex]]es.
   *
   * {{{
@@ -89,7 +90,7 @@ sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
   */
 sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   with QueryOperatorsDsl[T, MongoDocumentFilter[E]]
-  with UpdateOperatorsDsl[T, MongoUpdate[E]] {
+  with UpdateOperatorsDsl[T, MongoDocumentUpdate[E]] {
 
   type ThisRef[E0, T0] = MongoPropertyRef[E0, T0]
   def SelfRef: MongoPropertyRef[E, T] = this
@@ -102,8 +103,8 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   protected def wrapQueryOperator(operator: MongoQueryOperator[T]): MongoDocumentFilter[E] =
     satisfiesFilter(MongoOperatorsFilter(Seq(operator)))
 
-  protected def wrapUpdateOperator(operator: MongoUpdateOperator[T]): MongoUpdate[E] =
-    MongoUpdate.PropertyUpdate(this, operator)
+  protected def wrapUpdateOperator(operator: MongoUpdateOperator[T]): MongoDocumentUpdate[E] =
+    MongoUpdate.PropertyUpdate(this, MongoUpdate.OperatorsUpdate(Vector(operator)))
 
   private def satisfiesFilter(filter: MongoFilter[T]): MongoDocumentFilter[E] =
     MongoFilter.PropertyValueFilter(this, filter)
@@ -159,7 +160,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoDocumentFilter[E] =
     satisfies(_.satisfiesOperators(operators))
 
-  def rename(newRef: MongoPropertyRef[E, T]): MongoUpdate[E] = rename(newRef.filterPath)
+  def rename(newRef: MongoPropertyRef[E, T]): MongoDocumentUpdate[E] = rename(newRef.filterPath)
 
   def order(ascending: Boolean): MongoDocumentOrder[E] = MongoDocumentOrder(this -> ascending)
   def ascending: MongoDocumentOrder[E] = order(true)
@@ -198,10 +199,12 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   }
 
   lazy val filterPath: String =
-    computePath(onlyUpToArray = false, this, Nil).mkString(".")
+    computePath(onlyUpToArray = false, this, Nil).mkString(Separator)
 
   lazy val projectionPath: String =
-    computePath(onlyUpToArray = true, this, Nil).mkString(".")
+    computePath(onlyUpToArray = true, this, Nil).mkString(Separator)
+
+  def updatePath: String = filterPath
 
   private def notFound =
     throw new ReadFailure(s"path $filterPath absent in incoming document")
@@ -228,6 +231,8 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     format.readBson(extractBson(doc))
 }
 object MongoPropertyRef {
+  final val Separator = "."
+
   implicit class CollectionRefOps[E, C[X] <: Iterable[X], T](private val ref: MongoPropertyRef[E, C[T]]) extends AnyVal {
     def head: MongoPropertyRef[E, T] = apply(0)
 

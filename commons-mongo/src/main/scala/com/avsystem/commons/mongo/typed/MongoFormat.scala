@@ -10,6 +10,10 @@ import org.bson.{BsonNull, BsonValue}
 
 import scala.annotation.tailrec
 
+/**
+  * Typeclass that captures internal structure of a type that can be saved to MongoDB
+  * (directly as a toplevel entity or indirectly as an embedded value).
+  */
 sealed trait MongoFormat[T] {
   implicit def codec: GenCodec[T]
 

@@ -129,7 +129,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
 
   def findOneAndUpdate[T](
     filter: MongoDocumentFilter[E],
-    update: MongoUpdate[E],
+    update: MongoDocumentUpdate[E],
     projection: MongoProjection[E, T] = SelfRef,
     sort: MongoDocumentOrder[E] = MongoDocumentOrder.empty,
     setupOptions: FindOneAndUpdateOptions => FindOneAndUpdateOptions = identity
@@ -224,14 +224,14 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
 
   def updateOne(
     filter: MongoDocumentFilter[E],
-    update: MongoUpdate[E],
+    update: MongoDocumentUpdate[E],
     setupOptions: UpdateOptions => UpdateOptions = identity
   ): Task[UpdateResult] =
     single(nativeCollection.updateOne(filter.toBson, update.toBson, setupOptions(new UpdateOptions)))
 
   def updateMany(
     filter: MongoDocumentFilter[E],
-    update: MongoUpdate[E],
+    update: MongoDocumentUpdate[E],
     setupOptions: UpdateOptions => UpdateOptions = identity
   ): Task[UpdateResult] =
     single(nativeCollection.updateMany(filter.toBson, update.toBson, setupOptions(new UpdateOptions)))

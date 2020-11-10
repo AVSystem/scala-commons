@@ -1,15 +1,96 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
-import org.bson.{BsonDocument, BsonValue}
+import org.bson.BsonDocument
 
-sealed trait MongoUpdate[E] {
+/**
+  * Represents an update of a MongoDB value. Usually, this is a [[MongoDocumentUpdate]].
+  * The base `MongoUpdate` type is used in rare situations where the value being updated may not be a document.
+  *
+  * @tparam T type of the value being updated
+  */
+sealed trait MongoUpdate[T] {
+
+  import MongoUpdate._
+
+  protected def fillUpdateDoc(pathOpt: Opt[String], doc: BsonDocument): Unit = this match {
+    case MultiUpdate(updates) =>
+      updates.foreach(_.fillUpdateDoc(pathOpt, doc))
+
+    case PropertyUpdate(property, update) =>
+      val propPath = property.updatePath
+      val newPath = pathOpt.fold(propPath)(_ + MongoPropertyRef.Separator + propPath)
+      update.fillUpdateDoc(newPath.opt, doc)
+
+    case OperatorsUpdate(operators) =>
+      // the way MongoDocumentUpdate uses fillUpdateDoc makes this safe
+      val path = pathOpt.getOrElse(throw new IllegalArgumentException("update document without prefix path"))
+      operators.foreach { op =>
+        if (!doc.containsKey(op.rawOperator)) {
+          doc.put(op.rawOperator, new BsonDocument)
+        }
+        val opDoc = doc.get(op.rawOperator).asDocument
+        if (!opDoc.containsKey(path)) {
+          opDoc.put(path, op.toBson)
+        } else {
+          throw new IllegalArgumentException(s"duplicate update operator ${op.rawOperator} on field $path")
+        }
+      }
+  }
+}
+
+object MongoUpdate {
+  def empty[T]: MongoDocumentUpdate[T] = MongoDocumentUpdate.empty
+
+  final case class OperatorsUpdate[T](
+    operators: Vector[MongoUpdateOperator[T]]
+  ) extends MongoUpdate[T]
+
+  final case class MultiUpdate[E](
+    propUpdates: Vector[PropertyUpdate[E, _]]
+  ) extends MongoDocumentUpdate[E]
+
+  final case class PropertyUpdate[E, T](
+    property: MongoPropertyRef[E, T],
+    update: MongoUpdate[T]
+  ) extends MongoDocumentUpdate[E]
+}
+
+/**
+  * Represents a [[https://docs.mongodb.com/manual/tutorial/update-documents/ MongoDB update document]].
+  *
+  * Examples:
+  * {{{
+  *   case class MyEntity(
+  *     id: String,
+  *     int: Int,
+  *     str: String,
+  *     intList: List[Int]
+  *   ) extends MongoEntity[String]
+  *   object MyEntity extends MongoEntityCompanion[MyEntity]
+  *
+  *   // {"$$set": {"int": 0}}
+  *   MyEntity.ref(_.int).set(0)
+  *
+  *   // {"$$inc": {"int": 1}}
+  *   MyEntity.ref(_.int).inc(1)
+  *
+  *   // {"$$set": {"int": 0, "str": "foo"}}
+  *   MyEntity.ref(_.int).set(0) and MyEntity.ref(_.str).set("foo")
+  *
+  *   // {"$$inc": {"int": 1}, {"$$set": {"str": "foo"}}
+  *   MyEntity.ref(_.int).inc(1) and MyEntity.ref(_.str).set("foo")
+  *
+  * }}}
+  *
+  * @tparam E type of the document being updated
+  */
+sealed trait MongoDocumentUpdate[E] extends MongoUpdate[E] {
 
   import MongoUpdate._
 
   // distinction between MultiUpdate and PropertyUpdate is mostly to avoid creating too many Vectors
-  def and(other: MongoUpdate[E]): MongoUpdate[E] = (this, other) match {
+  def and(other: MongoDocumentUpdate[E]): MongoDocumentUpdate[E] = (this, other) match {
     case (MultiUpdate(propUpdates), propUpdate: PropertyUpdate[E, _]) =>
       MultiUpdate(propUpdates :+ propUpdate)
     case (propUpdate: PropertyUpdate[E, _], MultiUpdate(propUpdates)) =>
@@ -20,116 +101,15 @@ sealed trait MongoUpdate[E] {
       MultiUpdate(propUpdates1 ++ propUpdates2)
   }
 
-  def &&(other: MongoUpdate[E]): MongoUpdate[E] = and(other)
+  def &&(other: MongoDocumentUpdate[E]): MongoDocumentUpdate[E] = and(other)
 
-  def toBson: BsonDocument = this match {
-    case MultiUpdate(propertyUpdates) =>
-      val doc = new BsonDocument
-      propertyUpdates.foreach(_.updateBson(doc))
-      doc
-
-    case PropertyUpdate(property, operator) =>
-      Bson.document(operator.rawOperator, Bson.document(property.filterPath, operator.toBson))
+  def toBson: BsonDocument = {
+    val updateDoc = new BsonDocument
+    fillUpdateDoc(Opt.Empty, updateDoc)
+    updateDoc
   }
 }
 
-object MongoUpdate {
-  final case class MultiUpdate[E](
-    propertyUpdates: Vector[PropertyUpdate[E, _]]
-  ) extends MongoUpdate[E]
-
-  final case class PropertyUpdate[E, T](
-    property: MongoPropertyRef[E, T],
-    operator: MongoUpdateOperator[T]
-  ) extends MongoUpdate[E] {
-    def updateBson(updateDoc: BsonDocument): Unit = {
-      val rawOp = operator.rawOperator
-      val path = property.filterPath
-      if (!updateDoc.containsKey(rawOp)) {
-        updateDoc.put(rawOp, new BsonDocument)
-      }
-      val opDoc = updateDoc.getDocument(rawOp)
-      if (opDoc.containsKey(path)) {
-        throw new IllegalArgumentException(s"duplicate update operation $rawOp on $path")
-      }
-      opDoc.put(path, operator.toBson)
-    }
-  }
-}
-
-sealed trait MongoUpdateOperator[T] extends Product {
-
-  import MongoUpdateOperator._
-
-  def rawOperator: String = "$" + productPrefix.uncapitalize
-
-  def toBson: BsonValue = this match {
-    case Set(value, format) => format.writeBson(value)
-    case Inc(value, format) => format.writeBson(value)
-    case Min(value, format) => format.writeBson(value)
-    case Max(value, format) => format.writeBson(value)
-    case Mul(value, format) => format.writeBson(value)
-    case CurrentDate(tpe) =>
-      tpe.mapOr(Bson.boolean(true), dt => Bson.document("$type", Bson.string(dt.name.uncapitalize)))
-    case Rename(newPath) => Bson.string(newPath)
-    case SetOnInsert(value, format) => format.writeBson(value)
-    case Unset() => Bson.string("")
-
-    case push: Push[_, ct] =>
-      val doc = new BsonDocument
-      doc.put("$each", Bson.array(push.values.iterator.map(push.format.writeBson)))
-      push.position.foreach(v => doc.put("$position", Bson.int(v)))
-      push.slice.foreach(v => doc.put("$slice", Bson.int(v)))
-      push.sort.foreach(v => doc.put("$sort", v.toBson))
-      doc
-
-    case addToSet: AddToSet[_, ct] =>
-      Bson.document("$each", Bson.array(addToSet.values.iterator.map(addToSet.format.writeBson)))
-
-    case pop: Pop[_, _] =>
-      Bson.int(if (pop.first) -1 else 1)
-
-    case pull: Pull[_, _] =>
-      pull.filter.toBson
-
-    case pullAll: PullAll[_, ct] =>
-      Bson.array(pullAll.values.iterator.map(pullAll.format.writeBson))
-  }
-}
-object MongoUpdateOperator {
-  final class CurrentDateType(implicit enumCtx: EnumCtx) extends AbstractValueEnum
-  object CurrentDateType extends AbstractValueEnumCompanion[CurrentDateType] {
-    final val Timestamp, Date: Value = new CurrentDateType
-  }
-
-  final case class Set[T](value: T, format: MongoFormat[T]) extends MongoUpdateOperator[T]
-  final case class Inc[T](value: T, format: MongoFormat[T]) extends MongoUpdateOperator[T]
-  final case class Min[T](value: T, format: MongoFormat[T]) extends MongoUpdateOperator[T]
-  final case class Max[T](value: T, format: MongoFormat[T]) extends MongoUpdateOperator[T]
-  final case class Mul[T](value: T, format: MongoFormat[T]) extends MongoUpdateOperator[T]
-  final case class CurrentDate[T](tpe: Opt[CurrentDateType]) extends MongoUpdateOperator[T]
-  final case class Rename[T](newPath: String) extends MongoUpdateOperator[T]
-  final case class SetOnInsert[T](value: T, format: MongoFormat[T]) extends MongoUpdateOperator[T]
-  final case class Unset[T]() extends MongoUpdateOperator[T]
-
-  final case class Push[C[X] <: Iterable[X], T](
-    values: Iterable[T],
-    position: Opt[Int],
-    slice: Opt[Int],
-    sort: Opt[MongoOrder[T]],
-    format: MongoFormat[T]
-  ) extends MongoUpdateOperator[C[T]]
-
-  final case class AddToSet[C[X] <: Iterable[X], T](
-    values: Iterable[T],
-    format: MongoFormat[T]
-  ) extends MongoUpdateOperator[C[T]]
-
-  final case class Pop[C[X] <: Iterable[X], T](first: Boolean) extends MongoUpdateOperator[C[T]]
-
-  final case class Pull[C[X] <: Iterable[X], T](filter: MongoFilter[T]) extends MongoUpdateOperator[C[T]]
-
-  final case class PullAll[C[X] <: Iterable[X], T](
-    values: Iterable[T], format: MongoFormat[T]
-  ) extends MongoUpdateOperator[C[T]]
+object MongoDocumentUpdate {
+  def empty[T]: MongoDocumentUpdate[T] = MongoUpdate.MultiUpdate(Vector.empty)
 }
