@@ -104,7 +104,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     satisfiesFilter(MongoOperatorsFilter(Seq(operator)))
 
   protected def wrapUpdateOperator(operator: MongoUpdateOperator[T]): MongoDocumentUpdate[E] =
-    MongoUpdate.PropertyUpdate(this, MongoUpdate.OperatorsUpdate(Vector(operator)))
+    MongoUpdate.PropertyUpdate(this, MongoUpdate.OperatorUpdate(operator))
 
   private def satisfiesFilter(filter: MongoFilter[T]): MongoDocumentFilter[E] =
     MongoFilter.PropertyValueFilter(this, filter)
@@ -159,6 +159,9 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     */
   def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoDocumentFilter[E] =
     satisfies(_.satisfiesOperators(operators))
+
+  def updateWith(update: MongoUpdate.Creator[T] => MongoUpdate[T]): MongoDocumentUpdate[E] =
+    MongoUpdate.PropertyUpdate(this, update(new MongoUpdate.Creator(format)))
 
   def rename(newRef: MongoPropertyRef[E, T]): MongoDocumentUpdate[E] = rename(newRef.filterPath)
 

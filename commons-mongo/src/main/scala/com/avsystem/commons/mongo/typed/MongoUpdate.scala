@@ -13,6 +13,9 @@ sealed trait MongoUpdate[T] {
 
   import MongoUpdate._
 
+  def on[E](property: MongoPropertyRef[E, T]): MongoDocumentUpdate[E] =
+    PropertyUpdate(property, this)
+
   protected def fillUpdateDoc(pathOpt: Opt[String], doc: BsonDocument): Unit = this match {
     case MultiUpdate(updates) =>
       updates.foreach(_.fillUpdateDoc(pathOpt, doc))
@@ -22,28 +25,38 @@ sealed trait MongoUpdate[T] {
       val newPath = pathOpt.fold(propPath)(_ + MongoPropertyRef.Separator + propPath)
       update.fillUpdateDoc(newPath.opt, doc)
 
-    case OperatorsUpdate(operators) =>
+    case OperatorUpdate(op) =>
       // the way MongoDocumentUpdate uses fillUpdateDoc makes this safe
       val path = pathOpt.getOrElse(throw new IllegalArgumentException("update document without prefix path"))
-      operators.foreach { op =>
-        if (!doc.containsKey(op.rawOperator)) {
-          doc.put(op.rawOperator, new BsonDocument)
-        }
-        val opDoc = doc.get(op.rawOperator).asDocument
-        if (!opDoc.containsKey(path)) {
-          opDoc.put(path, op.toBson)
-        } else {
-          throw new IllegalArgumentException(s"duplicate update operator ${op.rawOperator} on field $path")
-        }
+      if (!doc.containsKey(op.rawOperator)) {
+        doc.put(op.rawOperator, new BsonDocument)
+      }
+      val opDoc = doc.get(op.rawOperator).asDocument
+      if (!opDoc.containsKey(path)) {
+        opDoc.put(path, op.toBson)
+      } else {
+        throw new IllegalArgumentException(s"duplicate update operator ${op.rawOperator} on field $path")
       }
   }
 }
 
 object MongoUpdate {
+  def creator[T: MongoFormat]: Creator[T] = new Creator(MongoFormat[T])
+
+  class Creator[T](val format: MongoFormat[T])
+    extends UpdateOperatorsDsl[T, MongoUpdate[T]] with DataTypeDsl[T] {
+
+    def SelfRef: MongoRef[T, T] =
+      MongoRef.RootRef(format.assumeAdt)
+
+    protected def wrapUpdateOperator(op: MongoUpdateOperator[T]): MongoUpdate[T] =
+      OperatorUpdate(op)
+  }
+
   def empty[T]: MongoDocumentUpdate[T] = MongoDocumentUpdate.empty
 
-  final case class OperatorsUpdate[T](
-    operators: Vector[MongoUpdateOperator[T]]
+  final case class OperatorUpdate[T](
+    operator: MongoUpdateOperator[T]
   ) extends MongoUpdate[T]
 
   final case class MultiUpdate[E](
