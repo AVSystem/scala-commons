@@ -304,8 +304,8 @@ program.runToFuture
 For more examples of database operations with `TypedMongoCollection`, see
 [tests](https://github.com/AVSystem/scala-commons/blob/mongo-api/commons-mongo/src/test/scala/com/avsystem/commons/mongo/typed/TypedMongoCollectionTest.scala).
 
-`TypedMongoCollection` exposes mostly the same operations as Reactive Streams `MongoCollection` but typed differently
-- more precisely and in a more Scala-idiomatic way:
+`TypedMongoCollection` exposes mostly the same operations as Reactive Streams `MongoCollection` but typed differently, 
+that is: more precisely and in a more Scala-idiomatic way:
 
 * instead of raw `Bson`s, `TypedMongoCollection` uses more precise `MongoDocumentFilter`, `MongoProjection`, 
   `MongoDocumentUpdate`, etc. for expressing queries, projections, updates, sort orders, indices, etc.
