@@ -11,12 +11,12 @@ typesafe layer over the Reactive Streams driver for MongoDB.
 ```scala
 import org.bson.types.ObjectId
 
-case class MyEntity(
+case class SimpleEntity(
   id: ObjectId,
   int: Int,
   str: String
 ) extends MongoEntity[ObjectId]
-object MyEntity extends MongoEntityCompanion[MyEntity]
+object SimpleEntity extends MongoEntityCompanion[SimpleEntity]
 ```
 
 ### Setting up the client
@@ -27,16 +27,16 @@ import com.mongodb.reactivestreams.client.MongoClients
 val client = MongoClients.create() // connects to localhost by default
 val rawCollection = client.getDatabase("test").getCollection("myEntity")
 
-val collection: TypedMongoCollection[MyEntity] = new TypedMongoCollection(rawCollection)
+val collection: TypedMongoCollection[SimpleEntity] = new TypedMongoCollection(rawCollection)
 ```
 
 ### Inserting documents
 
 ```scala
 val entities = Seq(
-  MyEntity(ObjectId.get(), 1, "first"),
-  MyEntity(ObjectId.get(), 2, "second"),
-  MyEntity(ObjectId.get(), 3, "third")
+  SimpleEntity(ObjectId.get(), 1, "first"),
+  SimpleEntity(ObjectId.get(), 2, "second"),
+  SimpleEntity(ObjectId.get(), 3, "third")
 )
 
 import monix.eval.Task
@@ -57,8 +57,8 @@ task.foreach(_ => println("insert successful"))
 import monix.eval.Task
 import monix.reactive.Observable
 
-val observable: Observable[MyEntity] =
-  collection.find(MyEntity.ref(_.int) > 1)
+val observable: Observable[SimpleEntity] =
+  collection.find(SimpleEntity.ref(_.int) > 1)
 
 // use whatever Scheduler is appropriate in your context (like ExecutionContext for Futures)
 import monix.execution.Scheduler.Implicits.global
@@ -66,7 +66,7 @@ import monix.execution.Scheduler.Implicits.global
 observable.foreach(entity => println(s"Found entity: $entity"))
 
 // alternatively, collect all found entities into a List
-val listTask: Task[List[MyEntity]] = observable.toListL
+val listTask: Task[List[SimpleEntity]] = observable.toListL
 listTask.foreach(foundEntities => println(s"Found entities: $foundEntities"))
 ```
 
@@ -149,7 +149,7 @@ case class MyEntity(
   int: Int,
   str: String,
   strOpt: Option[String],
-  intList: List[String],
+  intList: List[Int],
   strMap: Map[String, String],
   data: MyData
 ) extends MongoEntity[String]
@@ -282,10 +282,30 @@ val client = MongoClients.create() // connects to localhost by default
 val rawCollection = client.getDatabase("test").getCollection("myEntity")
 
 val collection: TypedMongoCollection[MyEntity] = new TypedMongoCollection(rawCollection)
+
+def createEntity(i: Int): MyEntity =
+  MyEntity(s"id$i", i, s"str$i", Some(s"optstr$i"), (i to 10).toList, Map.empty, MyData(i.toDouble, flag = true))
+
+val program: Task[Unit] = for {
+  _ <- collection.insertMany((0 until 10).map(createEntity))
+  _ <- collection.updateMany(
+    MyEntity.ref(_.int) > 5, 
+    MyEntity.ref(_.int).inc(10) && MyEntity.ref(_.str).set("modified")
+  )
+  modifiedEntities <- collection.find(MyEntity.ref(_.str).is("modified")).toListL
+} yield {
+  println(s"Found entities: $modifiedEntities")
+}
+
+import monix.execution.Scheduler.Implicits.global
+program.runToFuture
 ```
 
-Their API exposes mostly the same operations but typed differently - `TypedMongoCollection` is typed more precisely 
-and in a more Scala-idiomatic way.
+For more examples of database operations with `TypedMongoCollection`, see
+[tests](https://github.com/AVSystem/scala-commons/blob/mongo-api/commons-mongo/src/test/scala/com/avsystem/commons/mongo/typed/TypedMongoCollectionTest.scala).
+
+`TypedMongoCollection` exposes mostly the same operations as Reactive Streams `MongoCollection` but typed differently
+- more precisely and in a more Scala-idiomatic way:
 
 * instead of raw `Bson`s, `TypedMongoCollection` uses more precise `MongoDocumentFilter`, `MongoProjection`, 
   `MongoDocumentUpdate`, etc. for expressing queries, projections, updates, sort orders, indices, etc.
@@ -365,3 +385,4 @@ There are many ways to consume results of an `Observable[T]`. If you don't need 
 you can simply "degrade" it onto a `Task[List[T]]` by calling `.toListL` on it. This is very often used in MongoDB API
 in order to fetch full results of a query into memory.
 
+**NOTE**: You can think of `Observable` as an asynchronous version of `Iterable`.
