@@ -55,6 +55,10 @@ class MongoUpdateTest extends AnyFunSuite {
       """{"$pullAll": {"intList": [1, 2, 3]}}""")
     assert(Rte.ref(_.intList).pullAll(Seq(1, 2, 3)).toBson.toString ==
       """{"$pullAll": {"intList": [1, 2, 3]}}""")
+    assert(Rte.ref(_.intList).updateFirst(_.set(5)).toBson.toString ==
+      """{"$set": {"intList.$": 5}}""")
+    assert(Rte.ref(_.intList).updateEach(_.set(5)).toBson.toString ==
+      """{"$set": {"intList.$[]": 5}}""")
   }
 
   test("compound updates") {

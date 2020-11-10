@@ -6,7 +6,10 @@ trait UpdateOperatorsDsl[T, R] {
   import MongoUpdateOperator._
 
   def format: MongoFormat[T]
-  protected def wrapUpdateOperator(operator: MongoUpdateOperator[T]): R
+  protected def wrapUpdate(update: MongoUpdate[T]): R
+
+  protected def wrapUpdateOperator(operator: MongoUpdateOperator[T]): R =
+    wrapUpdate(MongoUpdate.OperatorUpdate(operator))
 
   def set(value: T): R = wrapUpdateOperator(Set(value, format))
   def inc(value: T): R = wrapUpdateOperator(Inc(value, format))
@@ -47,5 +50,15 @@ object UpdateOperatorsDsl {
 
     def pullAll(values: T*): R = pullAll(values)
     def pullAll(values: Iterable[T]): R = dsl.wrapUpdateOperator(PullAll(values, format))
+
+    def updateFirst(update: MongoUpdate.Creator[T] => MongoUpdate[T]): R = {
+      val up = update(new MongoUpdate.Creator(format))
+      dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.First))
+    }
+
+    def updateEach(update: MongoUpdate.Creator[T] => MongoUpdate[T]): R = {
+      val up = update(new MongoUpdate.Creator(format))
+      dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.Each))
+    }
   }
 }

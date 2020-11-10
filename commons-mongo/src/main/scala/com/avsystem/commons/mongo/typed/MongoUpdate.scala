@@ -37,6 +37,11 @@ sealed trait MongoUpdate[T] {
       } else {
         throw new IllegalArgumentException(s"duplicate update operator ${op.rawOperator} on field $path")
       }
+
+    case uae: UpdateArrayElements[_, _] =>
+      val path = pathOpt.getOrElse(throw new IllegalArgumentException("update document without prefix path"))
+      val newPath = path + MongoPropertyRef.Separator + uae.qualifier.raw
+      uae.update.fillUpdateDoc(newPath.opt, doc)
   }
 }
 
@@ -49,8 +54,7 @@ object MongoUpdate {
     def SelfRef: MongoRef[T, T] =
       MongoRef.RootRef(format.assumeAdt)
 
-    protected def wrapUpdateOperator(op: MongoUpdateOperator[T]): MongoUpdate[T] =
-      OperatorUpdate(op)
+    protected def wrapUpdate(update: MongoUpdate[T]): MongoUpdate[T] = update
   }
 
   def empty[T]: MongoDocumentUpdate[T] = MongoDocumentUpdate.empty
@@ -67,6 +71,18 @@ object MongoUpdate {
     property: MongoPropertyRef[E, T],
     update: MongoUpdate[T]
   ) extends MongoDocumentUpdate[E]
+
+  final case class UpdateArrayElements[C[X] <: Iterable[X], T](
+    update: MongoUpdate[T],
+    qualifier: ArrayElementsQualifier
+  ) extends MongoUpdate[C[T]]
+
+  sealed abstract class ArrayElementsQualifier(val raw: String)
+  object ArrayElementsQualifier {
+    case object First extends ArrayElementsQualifier("$")
+    case object Each extends ArrayElementsQualifier("$[]")
+    //TODO: filter
+  }
 }
 
 /**
