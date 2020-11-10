@@ -6,7 +6,7 @@ import org.bson.{BsonDocument, BsonValue}
 /**
   * Represents a MongoDB order used to sort values. In most situations what you want is [[MongoDocumentOrder]].
   * The base `MongoOrder` type is used only in rare situations where `T` is not guaranteed to be a document, e.g.
-  * in array `$$push` operator (see [[UpdateOperatorsDsl.ForCollection.push(T*)]]).
+  * in array `$$push` operator (see `UpdateOperatorsDsl.ForCollection.push`).
   *
   * @tparam T type of the value being sorted
   */
@@ -44,10 +44,10 @@ object MongoOrder {
   *   MyEntity.ref(_.int).ascending andThen MyEntity.ref(_.num).descending
   *
   *   // {"int": 1, "num": -1}
-  *   MongoIndex(MyEntity.ref(_.int) -> true, MyEntity.ref(_.num) -> false)
+  *   MongoDocumentOrder(MyEntity.ref(_.int) -> true, MyEntity.ref(_.num) -> false)
   *
   *   // {"int": 1, "num": 1}
-  *   MongoIndex.ascending(MyEntity.ref(_.int), MyEntity.ref(_.num))
+  *   MongoDocumentOrder.ascending(MyEntity.ref(_.int), MyEntity.ref(_.num))
   * }}}
   *
   * @tparam E type of the entity/document
