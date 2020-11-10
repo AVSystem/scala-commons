@@ -25,6 +25,7 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
 
   private val docCollection = rawCollection.withDocumentClass(classOf[BsonDocument])
 
+  /** The native (Reactive Streams driver) collection */
   val nativeCollection: MongoCollection[E] = {
     import format._
     val codecRegistry: CodecRegistry = GenCodecRegistry.create[E](rawCollection.getCodecRegistry)
@@ -132,10 +133,11 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     update: MongoDocumentUpdate[E],
     projection: MongoProjection[E, T] = SelfRef,
     sort: MongoDocumentOrder[E] = MongoDocumentOrder.empty,
+    upsert: Boolean = false, // extracted as separate param because it's very commonly used
     setupOptions: FindOneAndUpdateOptions => FindOneAndUpdateOptions = identity
   ): Task[Option[T]] = {
     val filterBson = filter.toFilterBson(Opt.Empty, projection.projectionRefs)
-    val options = setupOptions(new FindOneAndUpdateOptions).sort(sort.toBson)
+    val options = setupOptions(new FindOneAndUpdateOptions).sort(sort.toBson).upsert(upsert)
     val (updateBson, arrayFilters) = update.toBsonAndArrayFilters
     if (!arrayFilters.isEmpty) {
       options.arrayFilters(arrayFilters)
@@ -154,10 +156,11 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     replacement: E,
     projection: MongoProjection[E, T] = SelfRef,
     sort: MongoDocumentOrder[E] = MongoDocumentOrder.empty,
+    upsert: Boolean = false, // extracted as separate param because it's very commonly used
     setupOptions: FindOneAndReplaceOptions => FindOneAndReplaceOptions = identity
   ): Task[Option[T]] = {
     val filterBson = filter.toFilterBson(Opt.Empty, projection.projectionRefs)
-    val options = setupOptions(new FindOneAndReplaceOptions).sort(sort.toBson)
+    val options = setupOptions(new FindOneAndReplaceOptions).sort(sort.toBson).upsert(upsert)
     projection match {
       case SelfRef =>
         singleOpt(nativeCollection.findOneAndReplace(filterBson, replacement, options).asInstanceOf[Publisher[T]])
@@ -228,9 +231,10 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   def updateOne(
     filter: MongoDocumentFilter[E],
     update: MongoDocumentUpdate[E],
+    upsert: Boolean = false, // extracted as separate param because it's very commonly used
     setupOptions: UpdateOptions => UpdateOptions = identity
   ): Task[UpdateResult] = {
-    val options = setupOptions(new UpdateOptions)
+    val options = setupOptions(new UpdateOptions).upsert(upsert)
     val (updateBson, arrayFilters) = update.toBsonAndArrayFilters
     if (!arrayFilters.isEmpty) {
       options.arrayFilters(arrayFilters)
@@ -241,9 +245,10 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   def updateMany(
     filter: MongoDocumentFilter[E],
     update: MongoDocumentUpdate[E],
+    upsert: Boolean = false, // extracted as separate param because it's very commonly used
     setupOptions: UpdateOptions => UpdateOptions = identity
   ): Task[UpdateResult] = {
-    val options = setupOptions(new UpdateOptions)
+    val options = setupOptions(new UpdateOptions).upsert(upsert)
     val (updateBson, arrayFilters) = update.toBsonAndArrayFilters
     if (!arrayFilters.isEmpty) {
       options.arrayFilters(arrayFilters)
@@ -254,9 +259,12 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   def replaceOne(
     filter: MongoDocumentFilter[E],
     replacement: E,
+    upsert: Boolean = false, // extracted as separate param because it's very commonly used
     setupOptions: ReplaceOptions => ReplaceOptions = identity
-  ): Task[UpdateResult] =
-    single(nativeCollection.replaceOne(filter.toBson, replacement, setupOptions(new ReplaceOptions)))
+  ): Task[UpdateResult] = {
+    val options = setupOptions(new ReplaceOptions).upsert(upsert)
+    single(nativeCollection.replaceOne(filter.toBson, replacement, options))
+  }
 
   def bulkWrite(
     writes: Seq[MongoWrite[E]],
