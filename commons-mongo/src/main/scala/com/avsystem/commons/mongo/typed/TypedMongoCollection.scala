@@ -62,13 +62,13 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     new TypedMongoCollection(rawCollection.withReadPreference(readPreference))
 
   def drop(): Task[Unit] =
-    single(nativeCollection.drop()).map(_ => ())
+    single(nativeCollection.drop()).void
 
   def renameCollection(
     namespace: MongoNamespace,
     setupOptions: RenameCollectionOptions => RenameCollectionOptions = identity
   ): Task[Unit] =
-    single(nativeCollection.renameCollection(namespace, setupOptions(new RenameCollectionOptions))).map(_ => ())
+    single(nativeCollection.renameCollection(namespace, setupOptions(new RenameCollectionOptions))).void
 
   def countDocuments(
     filter: MongoDocumentFilter[E] = MongoFilter.empty,
@@ -208,13 +208,13 @@ final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     value: E,
     setupOptions: InsertOneOptions => InsertOneOptions = identity
   ): Task[Unit] =
-    single(nativeCollection.insertOne(value, setupOptions(new InsertOneOptions))).map(_ => ())
+    single(nativeCollection.insertOne(value, setupOptions(new InsertOneOptions))).void
 
   def insertMany(
     values: Seq[E],
     setupOptions: InsertManyOptions => InsertManyOptions = identity
   ): Task[Unit] =
-    single(nativeCollection.insertMany(values.asJava, setupOptions(new InsertManyOptions))).map(_ => ())
+    single(nativeCollection.insertMany(values.asJava, setupOptions(new InsertManyOptions))).void
 
   def deleteOne(
     filter: MongoDocumentFilter[E],
