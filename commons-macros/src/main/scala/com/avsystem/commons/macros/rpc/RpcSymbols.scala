@@ -122,9 +122,10 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   }
 
   trait RealParamOrTypeParamTarget extends ArityParam with TagMatchingSymbol {
+    def allowSingle: Boolean = true
+    def allowOptional: Boolean = true
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
-    def allowFail: Boolean = true
 
     def pathStr: String
 

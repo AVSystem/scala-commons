@@ -42,10 +42,16 @@ case class GenField[T](
 sealed trait GenCase[T] extends TypedMetadata[T] {
   def repr: String
   def info: GenCaseInfo[T]
+  def sealedParents: List[GenSealedParent[_]]
 }
+
+case class GenSealedParent[T](
+  @infer repr: TypeString[T]
+) extends TypedMetadata[T]
 
 @positioned(positioned.here) case class GenCustomCase[T](
   @composite info: GenCaseInfo[T],
+  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]],
   @checked @infer structure: GenStructure.Lazy[T]
 ) extends GenCase[T] {
   def repr: String = structure.value.repr
@@ -53,7 +59,8 @@ sealed trait GenCase[T] extends TypedMetadata[T] {
 
 @positioned(positioned.here) case class GenRecord[T](
   @composite info: GenCaseInfo[T],
-  @multi @adtParamMetadata fields: Map[String, GenField[_]]
+  @multi @adtParamMetadata fields: Map[String, GenField[_]],
+  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]]
 ) extends GenCase[T] with GenStructure[T] {
 
   def repr(indent: Int): String = fields.iterator.map {
@@ -65,7 +72,8 @@ sealed trait GenCase[T] extends TypedMetadata[T] {
 
 @positioned(positioned.here) case class GenSingleton[T](
   @composite info: GenCaseInfo[T],
-  @checked @infer valueOf: ValueOf[T]
+  @checked @infer valueOf: ValueOf[T],
+  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]]
 ) extends GenCase[T] with GenStructure[T] {
   def repr: String = valueOf.value.toString
 }
@@ -82,10 +90,12 @@ object GenUnorderedUnion extends AdtMetadataCompanion[GenUnorderedUnion] {
 sealed trait Being
 object Being extends HasGenCodecStructure[Being]
 
-case class Person(name: String, @name("raw_age") age: Int) extends Being
+sealed trait MaterialBeing extends Being
+
+case class Person(name: String, @name("raw_age") age: Int) extends MaterialBeing
 object Person extends HasGenCodecStructure[Person]
 
-case class Galaxy(name: String, distance: Long) extends Being
+case class Galaxy(name: String, distance: Long) extends MaterialBeing
 
 class Peculiarity extends Being
 object Peculiarity {
