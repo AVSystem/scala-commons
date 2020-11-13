@@ -413,3 +413,34 @@ you can simply "degrade" it onto a `Task[List[T]]` by calling `.toListL` on it. 
 in order to fetch full results of a query into memory.
 
 **NOTE**: You can think of `Observable` as an asynchronous version of `Iterable`.
+
+### Blocking
+
+It is recommended to use MongoDB API in a non-blocking way (by composing `Task`s and `Observables`s).
+However, sometimes this is not possible - some external API may force us into synchronous, blocking implementations.
+Then we have no choice but to wait for the database on the current JVM thread.
+
+In order to do this, use utilities provided by `com.avsystem.commons.concurrent.BlockingUtils` class. Your project should
+provide an implementation of this class (often a globally accessible object) where an appropriate Monix `Scheduler`s
+and other options (default timeout) will be configured, e.g.
+
+```scala
+import com.avsystem.commons.concurrent.BlockingUtils
+import monix.execution.Scheduler
+
+object Blocking extends BlockingUtils {
+  // some Scheduler usually reused throughout your application
+  def scheduler: Scheduler = ??? 
+  // some Scheduler usually reused throughout your application (unbounded, for blocking code)
+  def ioScheduler: Scheduler = ??? 
+}
+```
+
+Using this utility, you can:
+
+* Await a `Future[T]` and get a `T` using `Blocking.await`
+* Run and await a `Task[T]` and get a `T` using `Blocking.runAndAwait`
+* Turn an `Observable[T]` into a `CloseableIterator[T]` using `Blocking.toIterator`
+
+`BlockingUtils` was also designed to be easily invoked from Java. In particular, `CloseableIterator`
+implements both Java & Scala `Iterator`.
