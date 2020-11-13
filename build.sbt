@@ -269,6 +269,7 @@ lazy val `commons-core` = project
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
+      "io.monix" %% "monix" % monixVersion % Optional,
     ),
   )
 
