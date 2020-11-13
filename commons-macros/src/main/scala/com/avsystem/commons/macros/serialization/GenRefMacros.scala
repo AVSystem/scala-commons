@@ -3,6 +3,7 @@ package macros.serialization
 
 import java.util
 
+import scala.annotation.tailrec
 import scala.reflect.macros.blackbox
 
 class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
@@ -35,7 +36,7 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
   private def primaryConstructorParamFor(tpe: Type, accessor: Symbol): Symbol =
     alternatives(tpe.member(termNames.CONSTRUCTOR))
       .find(_.asMethod.isPrimaryConstructor)
-      .map(_.typeSignature.paramLists.head)
+      .map(_.typeSignatureIn(tpe).paramLists.head)
       .flatMap(_.find(_.name == accessor.name))
       .getOrElse(abort(s"Could not find primary constructor parameter ${accessor.name}"))
 
@@ -49,6 +50,7 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
     case Function(List(param), body) =>
       var refs = List.empty[Tree]
 
+      @tailrec
       def extract(body: Tree): Unit = body match {
         case Select(prefix, _) if TransparentGets.contains(body.symbol) =>
           extract(prefix)
