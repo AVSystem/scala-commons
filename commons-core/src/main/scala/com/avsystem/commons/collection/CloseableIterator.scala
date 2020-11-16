@@ -8,7 +8,7 @@ import com.github.ghik.silencer.silent
 import scala.annotation.unchecked.uncheckedVariance
 
 /**
-  * Abstraction over simple [[Iterator]] that allows one to close the resources associated with iterator without
+  * Abstraction over simple `Iterator` that allows one to close the resources associated with iterator without
   * iterating through the whole result set.
   *
   * Note: This is both Java and Scala `Iterator`.
@@ -21,14 +21,18 @@ trait CloseableIterator[+T] extends Iterator[T] with JIterator[T@uncheckedVarian
     CloseableIterator.apply(transform(this), this)
 }
 object CloseableIterator {
+  private object emptyCloseable extends AutoCloseable {
+    def close(): Unit = ()
+  }
+
   def empty[T]: CloseableIterator[T] =
     noop(Iterator.empty)
 
   def noop[T](iterator: Iterator[T]): CloseableIterator[T] =
-    apply(iterator, () => ()) // AutoCloseable implemented with zero-argument lambda that returns Unit
+    apply(iterator, emptyCloseable)
 
   def noop[T](iterator: JIterator[T]): CloseableIterator[T] =
-    apply(iterator, () => ()) // AutoCloseable implemented with zero-argument lambda that returns Unit
+    apply(iterator, emptyCloseable)
 
   def apply[T](iterator: JIterator[T] with AutoCloseable): CloseableIterator[T] =
     apply(iterator, iterator)

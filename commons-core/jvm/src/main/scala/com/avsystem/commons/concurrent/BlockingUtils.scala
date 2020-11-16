@@ -32,7 +32,7 @@ abstract class BlockingUtils {
     Future(blockingCode)(ioScheduler)
 
   /**
-    * Wraps blocking code into a [[Task]], making sure that blocking happens on an unbounded thread pool
+    * Wraps blocking code into a `Task`, making sure that blocking happens on an unbounded thread pool
     * meant specifically for that purpose.
     */
   def asTask[T](blockingCode: => T): Task[T] =
