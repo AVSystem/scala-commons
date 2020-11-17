@@ -67,12 +67,12 @@ val commonSettings = Seq(
     "-language:experimental.macros",
     "-language:higherKinds",
     "-Xfuture",
-    "-Xfatal-warnings",
     s"-Xlint:-missing-interpolator,-adapted-args,${if (scalaBinaryVersion.value == "2.12") "-unused," else ""}_",
     "-P:silencer:checkUnused",
   ),
   scalacOptions ++= {
-    if (scalaBinaryVersion.value == "2.12") Seq(
+    if (scalaBinaryVersion.value != "2.11") Seq(
+      "-Xfatal-warnings",
       "-Ycache-plugin-class-loader:last-modified",
       "-Ycache-macro-class-loader:last-modified",
     ) else Seq.empty
