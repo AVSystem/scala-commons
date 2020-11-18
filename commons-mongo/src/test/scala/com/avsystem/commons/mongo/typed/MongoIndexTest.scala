@@ -1,4 +1,5 @@
-package com.avsystem.commons.mongo.typed
+package com.avsystem.commons
+package mongo.typed
 
 import org.scalatest.funsuite.AnyFunSuite
 
