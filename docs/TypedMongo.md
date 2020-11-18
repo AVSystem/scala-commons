@@ -370,7 +370,8 @@ task.runToFuture // "hello" is printed again, concurrently with the previous run
 ```
   
 One of the consequences of the above is that `Task` is 
-[referentially transparent](https://en.wikipedia.org/wiki/Referential_transparency) while `Future` is not.
+[referentially transparent](https://en.wikipedia.org/wiki/Referential_transparency) while `Future` 
+[is not](https://stackoverflow.com/questions/44196088/why-future-has-side-effects).
 For people acknowledged with (pure) functional programming this will be a virtue by itself. Here we can outline some
 immediate practical benefits of that property.
 
