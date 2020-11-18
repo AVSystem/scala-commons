@@ -425,8 +425,8 @@ However, sometimes this is not possible - some external API may force us into sy
 Then we have no choice but to wait for the database on the current JVM thread.
 
 In order to do this, use utilities provided by `com.avsystem.commons.concurrent.BlockingUtils` class. Your project should
-provide an implementation of this class (often a globally accessible object) where an appropriate Monix `Scheduler`s
-and other options (default timeout) will be configured, e.g.
+provide an implementation of this class where an appropriate Monix `Scheduler`s and other options (default timeout) 
+will be configured, e.g.
 
 ```scala
 import com.avsystem.commons.concurrent.BlockingUtils
@@ -434,9 +434,9 @@ import monix.execution.Scheduler
 
 object Blocking extends BlockingUtils {
   // some Scheduler usually reused throughout your application
-  def scheduler: Scheduler = ??? 
+  def scheduler: Scheduler = Scheduler.global 
   // some Scheduler usually reused throughout your application (unbounded, for blocking code)
-  def ioScheduler: Scheduler = ??? 
+  def ioScheduler: Scheduler = Scheduler.io() 
 }
 ```
 
@@ -448,3 +448,23 @@ Using this utility, you can:
 
 `BlockingUtils` was also designed to be easily invoked from Java. In particular, `CloseableIterator`
 implements both Java & Scala `Iterator`.
+
+## Relationship with the previous `commons-mongo` API
+
+Before introducing `com.avsystem.commons.mongo.typed` package and `TypedMongoCollection`, the `commons-mongo` module
+already had a relatively thin layer over various native drivers (Java synchronous, Java asynchronous, Java reactive, Scala).
+
+This old API provides:
+
+* `GenCodec` based serialization - four variants of `GenCodecCollection` creators for different native drivers
+* `BsonRef` - references to document properties, superseded by `MongoPropertyRef` in the new API
+* extension methods for raw `Bson` type for creating queries, updates, etc. - explicit imports are required
+
+In comparison to the old API, the new one provides:
+
+* `TypedMongoCollection` wrapper over Reactive Streams collection - as opposed to native `MongoCollection`s
+  * other drivers are unsupported because they are deprecated, synchronous or redundant
+* integration with Monix (`Task`s and `Observable`s as opposed to raw `Publisher`s)
+* well typed query/projection/update/index documents in place of raw `Bson`
+* more high-level and user-friendly API for creating queries/updates/etc than raw `Bson` building
+* better support for sealed hierarchies
