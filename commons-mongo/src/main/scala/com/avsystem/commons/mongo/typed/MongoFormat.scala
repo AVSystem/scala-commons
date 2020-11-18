@@ -167,7 +167,7 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
         .getOrElse(throw new NoSuchElementException(s"unrecognized subclass: $subclass"))
     }
 
-    def subtypeRefFor[E >: T, T0 <: T](prefix: MongoDataRef[E, T], subclass: Class[T0]): MongoDataRef[E, T0] = {
+    def subtypeRefFor[E >: T, T0 <: T](prefix: MongoToplevelRef[E, T], subclass: Class[T0]): MongoToplevelRef[E, T0] = {
       val (caseNames, format) = subtypeInfo(subclass)
       MongoRef.RootSubtypeRef[E, T0](prefix.fullRef, flattenAnnot.caseFieldName, caseNames, format)
     }

@@ -13,7 +13,7 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.{BsonDocument, BsonValue}
 import org.reactivestreams.Publisher
 
-final class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
+class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   rawCollection: MongoCollection[_]
 ) extends DataTypeDsl[E] {
   type ID = E#IDType

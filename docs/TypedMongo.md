@@ -4,6 +4,9 @@ The `commons-mongo` module contains various utilities that enhance standard Java
 This documentation focuses on the `com.avsystem.commons.mongo.typed` package that contains a Scala-idiomatic and
 typesafe layer over the Reactive Streams driver for MongoDB.
 
+The core class of this typed API is [`TypedMongoCollection`](#invoking-database-commands) - 
+a wrapper over Reactive Streams driver `MongoCollection` with more precisely typed and Scala-idiomatic API.
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
@@ -284,7 +287,7 @@ For more examples, see the Scaladoc or
 A `MongoIndex[E]` represents a MongoDB index document for an entity of type `E`. Examples:
 
 * Single field index, e.g. `MyEntity.ref(_.int).ascendingIndex`
-* Multi-field index, e.g.
+* Compound (multi field) index, e.g.
 
   ```scala
   import MongoIndexType._

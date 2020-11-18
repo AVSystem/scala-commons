@@ -45,15 +45,24 @@ sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataRefDsl[E, T] 
   def on[E0](ref: MongoRef[E0, E]): MongoProjection[E0, T] = compose(ref)
 }
 
-sealed trait MongoDataRef[E, T <: E] extends MongoRef[E, T] {
-  // no need to expose this as MongoDataRef, MongoRef is enough
+/**
+  * A "reference" to a document type, possibly narrowed to some subtype.
+  * A `MongoToplevelRef` can be used as a [[MongoProjection]] to indicate that we want a query to return
+  * full documents. If the projection is narrowed to a subtype of the document, this implies an additional
+  * filter so that only a subset of documents matching the subtype is returned.
+  *
+  * @tparam E the document type
+  * @tparam T subtype of the document type, often equal to the document type
+  */
+sealed trait MongoToplevelRef[E, T <: E] extends MongoRef[E, T] {
+  // no need to expose this as MongoToplevelRef, MongoRef is enough
   type ThisRef[E0, T0] = MongoRef[E0, T0]
   def SelfRef: MongoRef[E, T] = this
 
   def fullRef: MongoRef.RootRef[E]
   def format: MongoAdtFormat[T]
 
-  @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoDataRef[E, C] =
+  @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoToplevelRef[E, C] =
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 
   def decodeFrom(doc: BsonDocument): T = BsonValueInput.read(doc)(format.codec)
@@ -184,7 +193,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     ref: MongoPropertyRef[E, T0],
     acc: List[String]
   ): List[String] = ref match {
-    case FieldRef(_: MongoDataRef[_, _], fieldName, _, _) =>
+    case FieldRef(_: MongoToplevelRef[_, _], fieldName, _, _) =>
       KeyEscaper.escape(fieldName) :: acc
 
     case FieldRef(prefix: MongoPropertyRef[E, _], fieldName, _, _) =>
@@ -213,7 +222,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     throw new ReadFailure(s"path $filterPath absent in incoming document")
 
   private def extractBson(doc: BsonDocument): BsonValue = this match {
-    case FieldRef(_: MongoDataRef[_, _], fieldName, _, fallback) =>
+    case FieldRef(_: MongoToplevelRef[_, _], fieldName, _, fallback) =>
       doc.get(KeyEscaper.escape(fieldName)).opt.orElse(fallback).getOrElse(notFound)
 
     case FieldRef(prefix: MongoPropertyRef[E, _], fieldName, _, fallback) =>
@@ -265,7 +274,7 @@ object MongoRef {
   // Deliberately not calling this IdentityRef so that it doesn't get confused with IdRef (for database ID field)
   final case class RootRef[T](
     format: MongoAdtFormat[T]
-  ) extends MongoDataRef[T, T] {
+  ) extends MongoToplevelRef[T, T] {
     def fullRef: RootRef[T] = this
     def compose[P](prefix: MongoRef[P, T]): MongoRef[P, T] = prefix
   }
@@ -275,9 +284,9 @@ object MongoRef {
     caseFieldName: String,
     caseNames: List[String],
     format: MongoAdtFormat[T]
-  ) extends MongoDataRef[E, T] {
+  ) extends MongoToplevelRef[E, T] {
     def compose[P](prefix: MongoRef[P, E]): MongoRef[P, T] = prefix match {
-      case _: MongoDataRef[P, E] =>
+      case _: MongoToplevelRef[P, E] =>
         // fullRef is guaranteed to be the same as prefix.fullRef
         // must cast because the compiler cannot infer the fact that E <: P in this case
         RootSubtypeRef(fullRef, caseFieldName, caseNames, format).asInstanceOf[MongoRef[P, T]]

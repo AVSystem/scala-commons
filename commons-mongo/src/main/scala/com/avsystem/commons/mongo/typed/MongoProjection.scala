@@ -76,7 +76,7 @@ trait MongoProjection[E, T] {
         case propRef: MongoPropertyRef[E, _] =>
           doc.put(propRef.projectionPath, Bson.int(1))
           loop(it)
-        case _: MongoDataRef[E, _] =>
+        case _: MongoToplevelRef[E, _] =>
           doc.clear()
       }
     loop(projectionRefs.iterator)
