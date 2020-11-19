@@ -274,19 +274,16 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     single(nativeCollection.bulkWrite(requests, setupOptions(new BulkWriteOptions)))
   }
 
-  def createIndex(
-    index: MongoIndex[E],
-    setupOptions: IndexOptions => IndexOptions = identity
-  ): Task[String] =
-    single(nativeCollection.createIndex(index.toBson, setupOptions(new IndexOptions)))
+  def createIndex(index: MongoIndex[E]): Task[String] =
+    single(nativeCollection.createIndex(index.toBson, index.setupOptions(new IndexOptions)))
 
   def createIndexes(
-    indexes: Seq[(MongoIndex[E], IndexOptions)],
+    indexes: Seq[MongoIndex[E]],
     setupOptions: CreateIndexOptions => CreateIndexOptions = identity
   ): Task[String] = {
-    val indexModels = indexes.iterator.map {
-      case (index, options) => new IndexModel(index.toBson, options)
-    }.to[JList]
+    val indexModels = indexes.iterator
+      .map(index => new IndexModel(index.toBson, index.setupOptions(new IndexOptions)))
+      .to[JList]
     single(nativeCollection.createIndexes(indexModels, setupOptions(new CreateIndexOptions)))
   }
 }

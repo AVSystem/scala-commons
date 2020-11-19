@@ -2,6 +2,7 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
+import com.mongodb.client.model.IndexOptions
 import org.bson.{BsonDocument, BsonValue}
 
 /**
@@ -34,14 +35,14 @@ import org.bson.{BsonDocument, BsonValue}
   *
   * @tparam E type of the MongoDB entity
   */
-case class MongoIndex[E](fields: Vector[(MongoPropertyRef[E, _], MongoIndexType)]) {
+case class MongoIndex[E](
+  fields: Vector[(MongoPropertyRef[E, _], MongoIndexType)],
+  setupOptions: IndexOptions => IndexOptions = identity
+) {
   require(fields.nonEmpty, "MongoDB index cannot be empty")
 
-  def concat(other: MongoIndex[E]): MongoIndex[E] =
-    MongoIndex(fields ++ other.fields)
-
-  def ++(other: MongoIndex[E]): MongoIndex[E] =
-    concat(other)
+  def withOptions(moreSetupOptions: IndexOptions => IndexOptions): MongoIndex[E] =
+    copy(setupOptions = setupOptions.andThen(moreSetupOptions))
 
   def toBson: BsonDocument = {
     val doc = new BsonDocument
