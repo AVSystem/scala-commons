@@ -308,7 +308,7 @@ A `MongoIndex[E]` represents a MongoDB index document for an entity of type `E`.
   ```scala
   import MongoIndexType._
   val index: MongoIndex[MyEntity] =
-  MongoIndex(MyEntity.ref(_.str) -> Hashed, MyEntity.ref(_.int) -> Descending)
+    MongoIndex(MyEntity.ref(_.str) -> Hashed, MyEntity.ref(_.int) -> Descending)
   ```
   
 For more examples, see the Scaladoc or
@@ -468,7 +468,7 @@ implements both Java & Scala `Iterator`.
 ### Unsupported operations
 
 `TypedMongoCollection` does not cover the entire API of Reactive Streams driver `MongoCollection`.
-For example, the [aggregation](https://docs.mongodb.com/manual/aggregation/) is currently not covered.
+For example, [aggregation](https://docs.mongodb.com/manual/aggregation/) is currently not covered.
 In order to use this missing API, you can fall back to using operations on native `MongoCollection`. 
 The easiest way to do this is via `singleResultNativeOp` or `multiResultNativeOp` which invoke some native command
 specified as lambda expression and translate the result (`Publisher`) into a `Task` or `Observable`.
@@ -482,7 +482,7 @@ import org.bson._
 import com.avsystem.commons._ // for JList
 import monix.reactive.Observable
 
-val pipeline = JList(/* aggregation pipeline `Bson` */)
+val pipeline: JList[Bson] = JList(/* aggregation pipeline */)
 val results: Observable[Document] = collection.multiResultNativeOp(_.aggregate(pipeline))
 ```
 
