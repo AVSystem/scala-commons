@@ -47,7 +47,7 @@ version in ThisBuild :=
 // for binary compatibility checking
 val previousCompatibleVersions = Set("1.39.14")
 
-val commonSettings = Seq(
+inThisBuild(Seq(
   organization := "com.avsystem.commons",
   crossScalaVersions := Seq("2.12.12", "2.13.3"),
   scalaVersion := crossScalaVersions.value.last,
@@ -73,12 +73,6 @@ val commonSettings = Seq(
       "-Ycache-macro-class-loader:last-modified",
     ) else Seq.empty
   },
-  sources in(Compile, doc) := Seq.empty, // relying on unidoc
-  apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
-  autoAPIMappings := true,
-
-  publishTo := sonatypePublishToBundle.value,
-  sonatypeProfileName := "com.avsystem",
 
   projectInfo := ModuleInfo(
     nameFormal = "AVSystem commons",
@@ -99,6 +93,17 @@ val commonSettings = Seq(
       Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
     ),
   ),
+
+  githubWorkflowJavaVersions := Seq("adopt@1.11"),
+))
+
+val commonSettings = Seq(
+  sources in(Compile, doc) := Seq.empty, // relying on unidoc
+  apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
+  autoAPIMappings := true,
+
+  publishTo := sonatypePublishToBundle.value,
+  sonatypeProfileName := "com.avsystem",
 
   publishMavenStyle := true,
   pomIncludeRepository := { _ => false },
