@@ -22,8 +22,8 @@ val typesafeConfigVersion = "1.4.0"
 val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.2"
 val akkaVersion = "2.6.8"
-val monixVersion = "3.2.1"
-val mockitoVersion = "3.6.0"
+val monixVersion = "3.3.0"
+val mockitoVersion = "3.5.15"
 val circeVersion = "0.13.0"
 val upickleVersion = "1.2.0"
 val scalajsBenchmarkVersion = "0.3.0"
@@ -235,6 +235,7 @@ lazy val `commons-core` = project
       "org.scala-lang.modules" %% "scala-collection-compat" % collectionCompatVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
+      "io.monix" %% "monix" % monixVersion % Optional,
     ),
   )
 
@@ -315,6 +316,7 @@ lazy val `commons-mongo` = project
       "io.monix" %% "monix" % monixVersion,
       "org.mongodb" % "mongodb-driver-core" % mongoVersion,
       "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
+      "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
       "org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional,
     ),
   )
