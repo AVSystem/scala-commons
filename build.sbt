@@ -24,7 +24,7 @@ val typesafeConfigVersion = "1.4.0"
 val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.2"
 val akkaVersion = "2.5.31"
-val monixVersion = "2.3.3"
+val monixVersion = "3.3.0"
 val mockitoVersion = "3.5.2"
 val circeVersion = "0.11.2"
 val upickleVersion = "0.7.4"
@@ -67,12 +67,12 @@ val commonSettings = Seq(
     "-language:experimental.macros",
     "-language:higherKinds",
     "-Xfuture",
-    "-Xfatal-warnings",
     s"-Xlint:-missing-interpolator,-adapted-args,${if (scalaBinaryVersion.value == "2.12") "-unused," else ""}_",
     "-P:silencer:checkUnused",
   ),
   scalacOptions ++= {
-    if (scalaBinaryVersion.value == "2.12") Seq(
+    if (scalaBinaryVersion.value != "2.11") Seq(
+      "-Xfatal-warnings",
       "-Ycache-plugin-class-loader:last-modified",
       "-Ycache-macro-class-loader:last-modified",
     ) else Seq.empty
@@ -269,6 +269,7 @@ lazy val `commons-core` = project
     libraryDependencies ++= Seq(
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
+      "io.monix" %% "monix" % monixVersion % Optional,
     ),
   )
 
