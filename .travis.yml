@@ -5,10 +5,12 @@ scala:
   - 2.13.3
 
 jdk:
-  - openjdk8
+  - openjdk11
 
 before_install:
   - ./install-redis.sh
+
+services: mongodb
 
 env:
   global:

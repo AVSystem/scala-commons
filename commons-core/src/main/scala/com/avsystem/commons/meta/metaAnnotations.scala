@@ -233,6 +233,17 @@ final class allowOptional extends RawParamAnnotation
 final class adtCaseMetadata extends MetadataParamStrategy
 
 /**
+  * May be used in metadata classes for case types in sealed hierarchies in order to reflect
+  * over all sealed parents of this case type. This is in order to gain access to information about
+  * intermediate sealed types between the root sealed type and the case type.
+  *
+  * The type of a metadata parameter annotated as `@adtCaseSealedParentsMetadata` must be a collection
+  * and metadata for sealed parents is materialized according to linearization,
+  * starting from the most specific supertype.
+  */
+final class adtCaseSealedParentMetadata extends MetadataParamStrategy
+
+/**
   * Metadata parameter annotated as `@reifyAnnot` is intended to hold annotation(s) that must or may be present on the real
   * RPC trait, method or parameter. `@reifyAnnot` parameters may have arity, which means that they may be annotated as
   * [[single]] (the default), [[optional]] or [[multi]]. Arity annotation determines what parameter type the macro
