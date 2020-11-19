@@ -2,11 +2,11 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.misc.Timestamp
-import com.mongodb.client.model.{Accumulators, Aggregates, Projections}
+import com.mongodb.client.model.Aggregates
 import com.mongodb.reactivestreams.client.MongoClients
 import monix.eval.Task
 import monix.execution.Scheduler
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
 
