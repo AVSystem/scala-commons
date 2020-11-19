@@ -23,6 +23,7 @@ a wrapper over Reactive Streams driver `MongoCollection` with more precisely typ
 - [Core types](#core-types)
   - [`MongoPropertyRef`](#mongopropertyref)
   - [`MongoDocumentFilter`](#mongodocumentfilter)
+    - [Unsupported operators](#unsupported-operators)
   - [`MongoProjection`](#mongoprojection)
   - [`MongoDocumentOrder`](#mongodocumentorder)
   - [`MongoDocumentUpdate`](#mongodocumentupdate)
@@ -31,6 +32,8 @@ a wrapper over Reactive Streams driver `MongoCollection` with more precisely typ
   - [Monix `Task`](#monix-task)
   - [Monix `Observable`](#monix-observable)
   - [Blocking](#blocking)
+  - [Unsupported operations](#unsupported-operations)
+- [Relationship with the previous `commons-mongo` API](#relationship-with-the-previous-commons-mongo-api)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
