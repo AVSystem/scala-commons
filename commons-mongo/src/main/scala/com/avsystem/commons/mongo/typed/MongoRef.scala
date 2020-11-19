@@ -172,7 +172,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   def updateWith(update: MongoUpdate.Creator[T] => MongoUpdate[T]): MongoDocumentUpdate[E] =
     MongoUpdate.PropertyUpdate(this, update(new MongoUpdate.Creator(format)))
 
-  def rename(newRef: MongoPropertyRef[E, T]): MongoDocumentUpdate[E] = rename(newRef.filterPath)
+  def rename(newRef: MongoPropertyRef[E, T]): MongoDocumentUpdate[E] = rename(newRef.rawPath)
 
   def order(ascending: Boolean): MongoDocumentOrder[E] = MongoDocumentOrder(this -> ascending)
   def ascending: MongoDocumentOrder[E] = order(true)
@@ -210,16 +210,14 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
       computePath(onlyUpToArray, prefix, acc)
   }
 
-  lazy val filterPath: String =
+  lazy val rawPath: String =
     computePath(onlyUpToArray = false, this, Nil).mkString(Separator)
 
   lazy val projectionPath: String =
     computePath(onlyUpToArray = true, this, Nil).mkString(Separator)
 
-  def updatePath: String = filterPath
-
   private def notFound =
-    throw new ReadFailure(s"path $filterPath absent in incoming document")
+    throw new ReadFailure(s"path $rawPath absent in incoming document")
 
   private def extractBson(doc: BsonDocument): BsonValue = this match {
     case FieldRef(_: MongoToplevelRef[_, _], fieldName, _, fallback) =>

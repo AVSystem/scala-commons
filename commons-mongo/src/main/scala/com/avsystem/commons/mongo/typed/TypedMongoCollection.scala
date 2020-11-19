@@ -61,6 +61,20 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   def withReadPreference(readPreference: ReadPreference): TypedMongoCollection[E] =
     new TypedMongoCollection(rawCollection.withReadPreference(readPreference))
 
+  /**
+    * Invokes some single-result operation directly on Reactive Streams collection. This method is supposed
+    * to be used for database operations not covered directly by [[TypedMongoCollection]].
+    */
+  def singleResultNativeOp[T](operation: MongoCollection[E] => Publisher[T]): Task[T] =
+    single(operation(nativeCollection))
+
+  /**
+    * Invokes some multiple-result operation directly on Reactive Streams collection. This method is supposed
+    * to be used for database operations not covered directly by [[TypedMongoCollection]].
+    */
+  def multiResultNativeOp[T](operation: MongoCollection[E] => Publisher[T]): Observable[T] =
+    Observable.fromReactivePublisher(operation(nativeCollection))
+
   def drop(): Task[Unit] =
     single(nativeCollection.drop()).void
 
@@ -195,7 +209,7 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   ): Observable[T] = {
 
     val publisher = nativeCollection
-      .distinct(property.filterPath, classOf[BsonValue])
+      .distinct(property.rawPath, classOf[BsonValue])
       .filter(filter.toFilterBson(Opt.Empty, property.projectionRefs))
 
     val publisherWithOptions =

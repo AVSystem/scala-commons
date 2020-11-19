@@ -23,7 +23,7 @@ private final class FilterDocBuilder(prefixPath: Opt[String], filterDocs: BsonAr
       addImpliedFilters(prefix)
 
     case MongoRef.GetFromOptional(prefix, _, optionLike) =>
-      appendToPrefix(prefix.filterPath).addOperator(MongoQueryOperator.Ne(optionLike.none, prefix.format))
+      appendToPrefix(prefix.rawPath).addOperator(MongoQueryOperator.Ne(optionLike.none, prefix.format))
       addImpliedFilters(prefix)
 
     case MongoRef.FieldRef(prefix, _, _, _) =>
@@ -69,7 +69,7 @@ private final class FilterDocBuilder(prefixPath: Opt[String], filterDocs: BsonAr
       filterDocs.add(Bson.document(Bson.Nor, Bson.array(filters.iterator.map(_.toFilterBson(prefixPath, Set.empty)))))
 
     case PropertyValueFilter(ref, filter) =>
-      appendToPrefix(ref.filterPath).addFilter(filter)
+      appendToPrefix(ref.rawPath).addFilter(filter)
       addImpliedFilters(ref)
 
     case MongoOperatorsFilter(operators) =>

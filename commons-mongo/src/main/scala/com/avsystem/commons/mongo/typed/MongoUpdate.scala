@@ -21,7 +21,7 @@ sealed trait MongoUpdate[T] {
       updates.foreach(_.fillUpdateDoc(pathOpt, doc, arrayFilters))
 
     case PropertyUpdate(property, update) =>
-      val propPath = property.updatePath
+      val propPath = property.rawPath
       val newPath = pathOpt.fold(propPath)(_ + MongoPropertyRef.Separator + propPath)
       update.fillUpdateDoc(newPath.opt, doc, arrayFilters)
 

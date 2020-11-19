@@ -47,7 +47,7 @@ case class MongoIndex[E](
   def toBson: BsonDocument = {
     val doc = new BsonDocument
     fields.foreach { case (ref, tpe) =>
-      val path = ref.filterPath
+      val path = ref.rawPath
       if (doc.containsKey(path)) {
         throw new IllegalArgumentException(s"duplicate field $path in MongoDB index")
       }

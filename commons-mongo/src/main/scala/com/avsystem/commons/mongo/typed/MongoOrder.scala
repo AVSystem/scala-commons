@@ -68,7 +68,7 @@ case class MongoDocumentOrder[E](refs: Vector[(MongoPropertyRef[E, _], Boolean)]
   //TODO: lambda-macro versions of andThenBy
 
   def toBson: BsonDocument =
-    Bson.document(refs.iterator.map { case (ref, asc) => (ref.filterPath, Bson.int(if (asc) 1 else -1)) })
+    Bson.document(refs.iterator.map { case (ref, asc) => (ref.rawPath, Bson.int(if (asc) 1 else -1)) })
 }
 object MongoDocumentOrder {
   def unspecified[E]: MongoDocumentOrder[E] = MongoDocumentOrder(Vector.empty)

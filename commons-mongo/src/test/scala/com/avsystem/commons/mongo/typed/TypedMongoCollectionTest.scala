@@ -2,17 +2,18 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.misc.Timestamp
+import com.mongodb.client.model.{Accumulators, Aggregates, Projections}
 import com.mongodb.reactivestreams.client.MongoClients
 import monix.eval.Task
 import monix.execution.Scheduler
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with BeforeAndAfterAll {
+class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with BeforeAndAfterEach {
   implicit val scheduler: Scheduler = Scheduler.fixedPool("test", 2)
 
   implicit class taskOps[T](task: Task[T]) {
@@ -40,7 +41,7 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
       Timestamp.Zero,
       Opt("stropt"),
       Opt(i % 10).filter(_ % 2 == 0),
-      List(1, 2, 3),
+      List.range(0, i),
       Map("one" -> 1, "two" -> 2),
       ir,
       Opt(ir),
@@ -64,8 +65,8 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
     res
   }
 
-  override protected def beforeAll(): Unit = {
-    super.beforeAll()
+  override protected def beforeEach(): Unit = {
+    super.beforeEach()
     Await.result(rteColl.drop().runToFuture, Duration.Inf)
     Await.result(rteColl.insertMany(entities).runToFuture, Duration.Inf)
   }
@@ -166,7 +167,7 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
     rteColl.insertOne(entity).value
     val update = Rte.ref(_.intList).updateFiltered(_ > 1, _.inc(1))
     assert(rteColl.updateOne(Rte.IdRef.is(entity.id), update).value.getModifiedCount == 1)
-    assert(rteColl.findById(entity.id).value.exists(_.intList == List(1, 3, 4)))
+    assert(rteColl.findById(entity.id).value.exists(_.intList == entity.intList.map(i => if (i > 1) i + 1 else i)))
   }
 
   test("update many") {
@@ -176,5 +177,11 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
     val filter = Rte.IdRef.in(entities.map(_.id))
     assert(rteColl.updateMany(filter, Rte.ref(_.int).inc(5)).value.getModifiedCount == entities.size)
     assert(rteColl.find(filter, sort = Rte.ref(_.int).ascending).toListL.value == entities.map(e => e.copy(int = e.int + 5)))
+  }
+
+  test("native operation") {
+    val fieldRef = "$" + Rte.ref(_.intList).rawPath
+    val pipeline = JList(Aggregates.project(Bson.document("intSum", Bson.document("$sum", Bson.string(fieldRef)))))
+    assert(rteColl.multiResultNativeOp(_.aggregate(pipeline)).map(_.getInteger("intSum", 0)).toListL.value == entities.map(_.intList.sum))
   }
 }

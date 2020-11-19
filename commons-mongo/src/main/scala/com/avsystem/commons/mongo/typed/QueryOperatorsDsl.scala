@@ -42,7 +42,7 @@ trait VanillaQueryOperatorsDsl[T, R] {
   def not(filter: MongoFilter.Creator[T] => MongoOperatorsFilter[T]): R =
     wrapQueryOperator(Not(filter(new MongoFilter.Creator(format))))
 
-  def raw(rawOperator: String, bson: BsonValue): R =
+  def rawQueryOp(rawOperator: String, bson: BsonValue): R =
     wrapQueryOperator(Raw(rawOperator, bson))
 }
 object VanillaQueryOperatorsDsl {

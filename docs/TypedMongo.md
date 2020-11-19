@@ -239,11 +239,24 @@ A `MongoDocumentFilter[E]` represents a MongoDB query document for an entity typ
 via `MongoPropertyRef`s, e.g. 
 
 ```scala
-val query: MongoDocumentFilter[MyEntity] = MyEntity.ref(_.int) > 10 && MyEntity.ref(_.data.flag).is(true)
+val query: MongoDocumentFilter[MyEntity] = 
+  MyEntity.ref(_.int) > 10 && MyEntity.ref(_.data.flag).is(true)
 ```
 
 For more examples, see the Scaladoc or 
 [tests](https://github.com/AVSystem/scala-commons/blob/mongo-api/commons-mongo/src/test/scala/com/avsystem/commons/mongo/typed/MongoFilterTest.scala).
+
+#### Unsupported operators
+
+Not all MongoDB query operators are directly supported by this API. If you want to use some unsupported query operator,
+you can use `.rawQueryOp`, e.g.
+
+```scala
+import org.bson._
+
+val query: MongoDocumentFilter[MyEntity] = 
+  MyEntity.ref(_.int).rawQueryOp("$bitsAllClear", new BsonInt32(0x3F))
+```
 
 ### `MongoProjection`
 
@@ -448,6 +461,27 @@ Using this utility, you can:
 
 `BlockingUtils` was also designed to be easily invoked from Java. In particular, `CloseableIterator`
 implements both Java & Scala `Iterator`.
+
+### Unsupported operations
+
+`TypedMongoCollection` does not cover the entire API of Reactive Streams driver `MongoCollection`.
+For example, the [aggregation](https://docs.mongodb.com/manual/aggregation/) is currently not covered.
+In order to use this missing API, you can fall back to using operations on native `MongoCollection`. 
+The easiest way to do this is via `singleResultNativeOp` or `multiResultNativeOp` which invoke some native command
+specified as lambda expression and translate the result (`Publisher`) into a `Task` or `Observable`.
+
+An example of how to invoke `aggregate`:
+
+```scala
+val collection: TypedMongoCollection[MyEntity] = ???
+
+import org.bson._
+import com.avsystem.commons._ // for JList
+import monix.reactive.Observable
+
+val pipeline = JList(/* aggregation pipeline `Bson` */)
+val results: Observable[Document] = collection.multiResultNativeOp(_.aggregate(pipeline))
+```
 
 ## Relationship with the previous `commons-mongo` API
 
