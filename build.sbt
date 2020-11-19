@@ -26,7 +26,7 @@ val monixVersion = "3.3.0"
 val mockitoVersion = "3.5.15"
 val circeVersion = "0.13.0"
 val upickleVersion = "1.2.0"
-val scalajsBenchmarkVersion = "0.3.0"
+val scalajsBenchmarkVersion = "0.8.0"
 val slf4jVersion = "1.7.30"
 
 useGpg := false // TODO: use sbt-ci-release
@@ -171,7 +171,7 @@ lazy val commons = project.in(file("."))
         `commons-macros`,
         `commons-core-js`,
         `commons-benchmark`,
-//        `commons-benchmark-js`,
+        `commons-benchmark-js`,
         `commons-comprof`,
       ),
   )
@@ -193,7 +193,7 @@ lazy val `commons-jvm` = project.in(file(".jvm"))
 lazy val `commons-js` = project.in(file(".js"))
   .aggregate(
     `commons-core-js`,
-//    `commons-benchmark-js`,
+    `commons-benchmark-js`,
   )
   .settings(aggregateProjectSettings)
 
@@ -283,29 +283,27 @@ lazy val `commons-benchmark` = project
     ideExcludedDirectories := (managedSourceDirectories in Jmh).value,
   )
 
-//https://github.com/japgolly/scalajs-benchmark/issues/57
-//
-//lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
-//  .enablePlugins(ScalaJSPlugin)
-//  .configure(p => if (forIdeaImport) p.dependsOn(`commons-benchmark`) else p)
-//  .dependsOn(`commons-core-js`)
-//  .settings(
-//    jsCommonSettings,
-//    noPublishSettings,
-//    sameNameAs(`commons-benchmark`),
-//    sourceDirsSettings(_.getParentFile),
-//    libraryDependencies ++= Seq(
-//      "io.circe" %%% "circe-core" % circeVersion,
-//      "io.circe" %%% "circe-generic" % circeVersion,
-//      "io.circe" %%% "circe-parser" % circeVersion,
-//      "com.lihaoyi" %%% "upickle" % upickleVersion,
-//      "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
-//    ),
-//    scalaJSUseMainModuleInitializer := true,
-//    test := {},
-//    testOnly := {},
-//    testQuick := {},
-//  )
+lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
+  .enablePlugins(ScalaJSPlugin)
+  .configure(p => if (forIdeaImport) p.dependsOn(`commons-benchmark`) else p)
+  .dependsOn(`commons-core-js`)
+  .settings(
+    jsCommonSettings,
+    noPublishSettings,
+    sameNameAs(`commons-benchmark`),
+    sourceDirsSettings(_.getParentFile),
+    libraryDependencies ++= Seq(
+      "io.circe" %%% "circe-core" % circeVersion,
+      "io.circe" %%% "circe-generic" % circeVersion,
+      "io.circe" %%% "circe-parser" % circeVersion,
+      "com.lihaoyi" %%% "upickle" % upickleVersion,
+      "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
+    ),
+    scalaJSUseMainModuleInitializer := true,
+    test := {},
+    testOnly := {},
+    testQuick := {},
+  )
 
 lazy val `commons-mongo` = project
   .dependsOn(`commons-core` % CompileAndTest)
