@@ -16,17 +16,17 @@ val scalatestVersion = "3.2.1"
 val scalatestplusScalacheckVersion = "3.2.2.0"
 val scalacheckVersion = "1.14.3"
 val jettyVersion = "9.4.31.v20200723"
-val mongoVersion = "4.1.0"
+val mongoVersion = "4.1.1"
 val springVersion = "4.3.26.RELEASE"
 val typesafeConfigVersion = "1.4.0"
 val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.2"
 val akkaVersion = "2.6.8"
-val monixVersion = "3.2.1"
-val mockitoVersion = "3.5.10"
+val monixVersion = "3.3.0"
+val mockitoVersion = "3.5.15"
 val circeVersion = "0.13.0"
-val upickleVersion = "1.2.2"
-val scalajsBenchmarkVersion = "0.3.0"
+val upickleVersion = "1.2.0"
+val scalajsBenchmarkVersion = "0.8.0"
 val slf4jVersion = "1.7.30"
 
 useGpg := false // TODO: use sbt-ci-release
@@ -171,7 +171,7 @@ lazy val commons = project.in(file("."))
         `commons-macros`,
         `commons-core-js`,
         `commons-benchmark`,
-//        `commons-benchmark-js`,
+        `commons-benchmark-js`,
         `commons-comprof`,
       ),
   )
@@ -193,7 +193,7 @@ lazy val `commons-jvm` = project.in(file(".jvm"))
 lazy val `commons-js` = project.in(file(".js"))
   .aggregate(
     `commons-core-js`,
-//    `commons-benchmark-js`,
+    `commons-benchmark-js`,
   )
   .settings(aggregateProjectSettings)
 
@@ -235,6 +235,7 @@ lazy val `commons-core` = project
       "org.scala-lang.modules" %% "scala-collection-compat" % collectionCompatVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
+      "io.monix" %% "monix" % monixVersion % Optional,
     ),
   )
 
@@ -282,29 +283,27 @@ lazy val `commons-benchmark` = project
     ideExcludedDirectories := (managedSourceDirectories in Jmh).value,
   )
 
-//https://github.com/japgolly/scalajs-benchmark/issues/57
-//
-//lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
-//  .enablePlugins(ScalaJSPlugin)
-//  .configure(p => if (forIdeaImport) p.dependsOn(`commons-benchmark`) else p)
-//  .dependsOn(`commons-core-js`)
-//  .settings(
-//    jsCommonSettings,
-//    noPublishSettings,
-//    sameNameAs(`commons-benchmark`),
-//    sourceDirsSettings(_.getParentFile),
-//    libraryDependencies ++= Seq(
-//      "io.circe" %%% "circe-core" % circeVersion,
-//      "io.circe" %%% "circe-generic" % circeVersion,
-//      "io.circe" %%% "circe-parser" % circeVersion,
-//      "com.lihaoyi" %%% "upickle" % upickleVersion,
-//      "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
-//    ),
-//    scalaJSUseMainModuleInitializer := true,
-//    test := {},
-//    testOnly := {},
-//    testQuick := {},
-//  )
+lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
+  .enablePlugins(ScalaJSPlugin)
+  .configure(p => if (forIdeaImport) p.dependsOn(`commons-benchmark`) else p)
+  .dependsOn(`commons-core-js`)
+  .settings(
+    jsCommonSettings,
+    noPublishSettings,
+    sameNameAs(`commons-benchmark`),
+    sourceDirsSettings(_.getParentFile),
+    libraryDependencies ++= Seq(
+      "io.circe" %%% "circe-core" % circeVersion,
+      "io.circe" %%% "circe-generic" % circeVersion,
+      "io.circe" %%% "circe-parser" % circeVersion,
+      "com.lihaoyi" %%% "upickle" % upickleVersion,
+      "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
+    ),
+    scalaJSUseMainModuleInitializer := true,
+    test := {},
+    testOnly := {},
+    testQuick := {},
+  )
 
 lazy val `commons-mongo` = project
   .dependsOn(`commons-core` % CompileAndTest)
@@ -315,6 +314,7 @@ lazy val `commons-mongo` = project
       "io.monix" %% "monix" % monixVersion,
       "org.mongodb" % "mongodb-driver-core" % mongoVersion,
       "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
+      "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
       "org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional,
     ),
   )
