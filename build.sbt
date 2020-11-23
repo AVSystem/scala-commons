@@ -222,7 +222,10 @@ lazy val `commons-analyzer` = project
   .dependsOn(`commons-core` % Test)
   .settings(
     jvmCommonSettings,
-    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+    libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      "io.monix" %% "monix" % monixVersion % Test,
+    ),
   )
 
 def mkSourceDirs(base: File, scalaBinary: String, conf: String): Seq[File] = Seq(
