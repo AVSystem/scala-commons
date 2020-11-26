@@ -108,7 +108,7 @@ costam {
   <17:13:HString[Multiline]("\nmoar\nmoar\n"):20:4>
  ):20:4>
  <22:1:HField(
-  <22:1:HPath(HKey(HString[Unquoted]("costam "))):22:8>
+  <22:1:HPath(HKey(HString[Unquoted]("costam"))):22:7>
   <22:8:HObject(<23:3:HField(
    <23:3:HPath(HKey(HString[Unquoted]("field"))):23:8>
    <23:11:HString[Unquoted]("value"):23:16>

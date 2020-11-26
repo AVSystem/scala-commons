@@ -74,7 +74,7 @@ object HTokenType extends SealedEnumCompanion[HTokenType] {
   case object Comment extends HTokenType {
     def pass(input: String, idx: Int): Int =
       if (idx >= input.length) idx
-      else if (input.charAt(idx) == '#' || input.substring(idx, idx + 2) == "//") {
+      else if (input.charAt(idx) == '#' || input.substring(idx, math.min(idx + 2, input.length)) == "//") {
         val nlIdx = input.indexOf('\n', idx)
         if (nlIdx == -1) input.length else nlIdx
       } else 0

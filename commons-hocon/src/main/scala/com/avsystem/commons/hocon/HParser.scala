@@ -274,7 +274,8 @@ class HParser(tokens: IndexedSeq[HToken]) {
         advance()
       }
       val keepLast = prev.tokenType != Whitespace ||
-        aheadAny(Dot, LBrace, LBracket, QuotedString, MultilineString, Splice)
+        (inKey && aheadAny(Dot, QuotedString, MultilineString)) ||
+        (!inKey && aheadAny(LBrace, LBracket, QuotedString, MultilineString, Splice))
       val end = if (keepLast) cur.idx else prev.idx
       val range = new HTokenRange(tokens, start, end)
       val value = range.iterator.map(_.text).mkString
