@@ -48,18 +48,18 @@ trait DatabaseComponents extends Components {
   def config: DynamicConfig
 
   implicit val database: Component[Database] =
-    Component(new Database(config.databaseUrl))
+    component(new Database(config.databaseUrl))
 
   implicit val bulbulatorDao: Component[BulbulatorDao] =
-    Component(new BulbulatorDao(config.bulbulator))
+    component(new BulbulatorDao(config.bulbulator))
 
   implicit val deviceDao: Component[DeviceDao] =
-    Component(new DeviceDao)
+    component(new DeviceDao)
 }
 
 class ComponentsExample(val config: DynamicConfig) extends Components with DatabaseComponents {
   val fullApplication: Component[FullApplication] =
-    Component(new FullApplication)
+    component(new FullApplication)
 }
 object ComponentsExample {
 

@@ -3,9 +3,12 @@ package di
 
 import java.util.concurrent.atomic.AtomicReference
 
+import com.avsystem.commons.concurrent.RunInQueueEC
 import com.avsystem.commons.macros.di.ComponentMacros
 
 import scala.annotation.compileTimeOnly
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 case class ComponentName(name: String) extends AnyVal {
   override def toString: String = name
@@ -22,22 +25,18 @@ abstract class Component[+T] {
   def name: String
 
   private[this] val savedFuture = new AtomicReference[Future[T]]
-  private[this] lazy val syncResult = create(dependencies.map(_.doInit()))
 
-  @compileTimeOnly(".ref can only be used inside argument to Component(...) macro")
+  @compileTimeOnly(".ref can only be used inside argument to component(...) macro")
   def ref: T = sys.error("stub")
 
   def dependsOn(deps: Component[_]*): Component[T] =
     new Component.WithAdditionalDeps(this, deps)
 
-  final def init(): T = {
-    detectCycles(Nil, new MHashSet)
-    doInit()
-  }
+  final def init(): T =
+    Await.result(parallelInit()(RunInQueueEC), Duration.Inf)
 
   final def parallelInit()(implicit ec: ExecutionContext): Future[T] = try {
-    detectCycles(Nil, new MHashSet)
-    doParallelInit()
+    doParallelInit(cycleCheck = true)
   } catch {
     case NonFatal(cause) => Future.failed(cause)
   }
@@ -53,12 +52,14 @@ abstract class Component[+T] {
       }
     }
 
-  private def doInit(): T = syncResult
-
-  private def doParallelInit()(implicit ec: ExecutionContext): Future[T] = {
+  private def doParallelInit(cycleCheck: Boolean)(implicit ec: ExecutionContext): Future[T] = {
     val promise = Promise[T]()
     if (savedFuture.compareAndSet(null, promise.future)) {
-      val resultFuture = Future.traverse(dependencies)(_.doParallelInit()).map(deps => create(deps.toIndexedSeq))
+      if (cycleCheck) {
+        detectCycles(Nil, new MHashSet)
+      }
+      val resultFuture =
+        Future.traverse(dependencies)(_.doParallelInit(cycleCheck = false)).map(deps => create(deps.toIndexedSeq))
       promise.completeWith(resultFuture)
     }
     savedFuture.get()
@@ -69,8 +70,6 @@ abstract class Component[+T] {
   protected def create(resolvedDeps: IndexedSeq[Any]): T
 }
 object Component {
-  def apply[T](definition: => T): Component[T] = macro ComponentMacros.componentApply[T]
-
   private class WithAdditionalDeps[T](wrapped: Component[T], deps: Seq[Component[_]]) extends Component[T] {
     def name: String = wrapped.name
     def dependencies: IndexedSeq[Component[_]] = wrapped.dependencies ++ deps
@@ -79,6 +78,8 @@ object Component {
 }
 
 trait Components {
-  @compileTimeOnly("implicit Component[T] => implicit T inference only works inside argument to Component(...) macro")
+  def component[T](definition: => T): Component[T] = macro ComponentMacros.componentCreate[T]
+
+  @compileTimeOnly("implicit Component[T] => implicit T inference only works inside argument to component(...) macro")
   implicit def inject[T](implicit component: Component[T]): T = sys.error("stub")
 }
