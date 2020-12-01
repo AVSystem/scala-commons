@@ -76,6 +76,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       val statements =
         if (typeParams.isEmpty) Nil
         else itDecl :: typeParams.map { tp =>
+          tp.validate()
           q"val ${tp.instanceName} = $RpcPackage.RpcMetadata.nextInstance[${typeClass(tp.symbol)}]($itName, ${tp.description})"
         }
       q"($funParamName: $paramType) => {..$statements; $tree}"
