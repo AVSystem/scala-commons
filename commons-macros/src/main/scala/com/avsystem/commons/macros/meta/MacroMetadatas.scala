@@ -17,11 +17,13 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   final lazy val ReifyAnnotAT: Type = staticType(tq"$MetaPackage.reifyAnnot")
   final lazy val IsAnnotatedAT: Type = staticType(tq"$MetaPackage.isAnnotated[_]")
   final lazy val ReifyNameAT: Type = staticType(tq"$MetaPackage.reifyName")
+  final lazy val ReifySourceAT: Type = staticType(tq"$MetaPackage.reifySource")
   final lazy val ReifyPositionAT: Type = staticType(tq"$MetaPackage.reifyPosition")
   final lazy val ReifyParamListCountAT: Type = staticType(tq"$MetaPackage.reifyParamListCount")
   final lazy val ReifyFlagsAT: Type = staticType(tq"$MetaPackage.reifyFlags")
   final lazy val CheckedAT: Type = staticType(tq"$MetaPackage.checked")
   final lazy val AllowIncompleteAT: Type = staticType(tq"$MetaPackage.allowIncomplete")
+  final lazy val SymbolSourceTpe: Type = staticType(tq"$MetaPackage.SymbolSource")
   final lazy val ParamPositionTpe: Type = staticType(tq"$MetaPackage.ParamPosition")
   final lazy val ParamFlagsTpe: Type = staticType(tq"$MetaPackage.ParamFlags")
   final lazy val MethodFlagsTpe: Type = staticType(tq"$MetaPackage.MethodFlags")
@@ -158,6 +160,8 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
         case t if t <:< ReifyNameAT =>
           val useRawName = annot.findArg[Boolean](ReifyNameAT.member(TermName("useRawName")), false)
           new ReifiedNameParam(ownerConstr, paramSym, useRawName)
+        case t if t <:< ReifySourceAT =>
+          new ReifiedSourceParam(ownerConstr, paramSym)
         case t if t <:< IsAnnotatedAT =>
           new IsAnnotatedParam(ownerConstr, paramSym, t.typeArgs.head)
         case t => reportProblem(s"metadata param strategy $t is not allowed here")
@@ -337,6 +341,36 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
 
     def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] =
       Ok(q"${if (useRawName) matchedSymbol.rawName else matchedSymbol.real.nameStr}")
+  }
+
+  class ReifiedSourceParam(owner: MetadataConstructor, symbol: Symbol)
+    extends DirectMetadataParam(owner, symbol) {
+
+    if (!(actualType =:= SymbolSourceTpe)) {
+      reportProblem(s"its type is not SymbolSource")
+    }
+
+    def tryMaterializeFor(matchedSymbol: MatchedSymbol): Res[Tree] = {
+      val sym = matchedSymbol.real.symbol
+      sym.pos match {
+        case NoPosition =>
+          FailMsg(s"source information not available for ${matchedSymbol.real.description}")
+        case pos => Ok {
+          val source = pos.source
+          val startPos = pos.withPoint(pos.start)
+          val endPos = pos.withPoint(pos.end)
+          q"""
+            $MetaPackage.SymbolSource(
+              ${source.path},
+              ${source.file.name},
+              $MetaPackage.SourceOffset(${startPos.point}, ${startPos.line}, ${startPos.column}),
+              $MetaPackage.SourceOffset(${endPos.point}, ${endPos.line}, ${endPos.column}),
+              ${new String(source.content, pos.start, pos.end - pos.start)}
+            )
+           """
+        }
+      }
+    }
   }
 
   class ParamPositionParam(owner: MetadataConstructor, symbol: Symbol)
