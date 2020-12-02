@@ -229,6 +229,20 @@ object SharedExtensionsUtils extends SharedExtensions {
           !Character.isWhitespace(str.charAt(m.start - 1)) && !Character.isWhitespace(str.charAt(m.end))
         if (insertSpace) " " else m.matched.substring(1)
       })
+
+    /**
+      * Adds a `|` character at the beginning of every line in this string except the first line.
+      * This is necessary when splicing multiline strings into multiline string interpolations.
+      */
+    def multilineSafe: String =
+      str.replace("\n", "\n|")
+
+    def stripCommonIndent: String =
+      if (str.isEmpty) str
+      else {
+        val commonIndentLength = str.linesIterator.map(_.indexWhere(_ != ' ')).min
+        str.linesIterator.map(_.substring(commonIndentLength)).mkString("\n")
+      }
   }
 
   class IntOps(private val int: Int) extends AnyVal {
