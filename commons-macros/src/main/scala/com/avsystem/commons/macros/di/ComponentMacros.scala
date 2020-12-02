@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package macros.di
 
-import com.avsystem.commons.macros.AbstractMacroCommons
+import macros.AbstractMacroCommons
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.blackbox
@@ -45,13 +45,19 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val depsBuf = new ListBuffer[Tree]
 
     def validateDep(tree: Tree): Tree = {
-      val innerSymbols = tree.collect({ case defTree: DefTree if defTree.symbol != null => defTree.symbol }).toSet
+      val innerSymbols = tree.collect({ case t@(_: DefTree | _: Function) if t.symbol != null => t.symbol }).toSet
       tree.foreach { t =>
         if (t.symbol != null && !innerSymbols.contains(t.symbol) && ownersOf(t.symbol).contains(enclosingSym)) {
-          errorAt(s"this symbol cannot be used here because of usage of .ref", t.pos)
+          errorAt(s"you cannot use local values or methods in an expression with .ref called on it", t.pos)
+        }
+        t match {
+          case ComponentRef(_) =>
+            errorAt("invalid nested component reference - " +
+              "you cannot use .ref inside an expression that itself has .ref called on it", t.pos)
+          case _ =>
         }
       }
-      if(innerSymbols.nonEmpty) c.untypecheck(tree) else tree
+      if (innerSymbols.nonEmpty) c.untypecheck(tree) else tree
     }
 
     object DependencyExtractor extends Transformer {
