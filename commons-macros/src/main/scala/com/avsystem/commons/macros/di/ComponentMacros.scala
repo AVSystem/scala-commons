@@ -23,7 +23,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     def unapply(tree: Tree): Option[Tree] = tree match {
       case Select(component, TermName("ref")) if tree.symbol == ComponentRefSym =>
         Some(component)
-      case Apply(conversion, List(component, _)) if conversion.symbol == InjectSym =>
+      case Apply(conversion, List(component)) if conversion.symbol == InjectSym =>
         Some(component)
       case _ => None
     }
