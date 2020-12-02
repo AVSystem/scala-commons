@@ -1,11 +1,10 @@
 package com.avsystem.commons
 package di
 
-import java.util.concurrent.atomic.AtomicReference
-
 import com.avsystem.commons.concurrent.RunInQueueEC
 import com.avsystem.commons.macros.di.ComponentMacros
 
+import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.compileTimeOnly
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -77,9 +76,21 @@ object Component {
   }
 }
 
+sealed trait NotComponent[T]
+object NotComponent {
+  implicit def notComponentAmbiguous1[T]: NotComponent[Component[T]] = null
+  implicit def notComponentAmbiguous2[T]: NotComponent[Component[T]] = null
+}
+trait NotComponentLowPrio { this: NotComponent.type =>
+  implicit def notComponent[T]: NotComponent[T] = null
+}
+
 trait Components {
   def component[T](definition: => T): Component[T] = macro ComponentMacros.componentCreate[T]
 
+  // NotComponent is used to avoid divergent implicit expansion and make error messages from scalac nicer
+  // Divergent implicit expansion is caused by the compiler trying to search for Component[Component[...T...]],
+  // nested ad infinitum
   @compileTimeOnly("implicit Component[T] => implicit T inference only works inside argument to component(...) macro")
-  implicit def inject[T](implicit component: Component[T]): T = sys.error("stub")
+  implicit def inject[T](implicit component: Component[T], notComponent: NotComponent[T]): T = sys.error("stub")
 }
