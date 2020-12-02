@@ -76,9 +76,16 @@ object Component {
   }
 }
 
-trait Components {
+trait Components extends ComponentsLowPrio {
   def component[T](definition: => T): Component[T] = macro ComponentMacros.componentCreate[T]
 
+  // avoids divergent implicit expansion involving `inject`
+  // this is not strictly necessary but makes compiler error messages nicer
+  // i.e. the compiler will emit "could not find implicit value" instead of "divergent implicit expansion"
+  implicit def ambiguousArbitraryComponent1[T]: Component[T] = null
+  implicit def ambiguousArbitraryComponent2[T]: Component[T] = null
+}
+trait ComponentsLowPrio {
   @compileTimeOnly("implicit Component[T] => implicit T inference only works inside argument to component(...) macro")
   implicit def inject[T](implicit component: Component[T]): T = sys.error("stub")
 }
