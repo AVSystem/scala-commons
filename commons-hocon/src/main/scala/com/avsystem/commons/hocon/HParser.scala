@@ -2,7 +2,6 @@ package com.avsystem.commons
 package hocon
 
 import java.io.EOFException
-
 import scala.annotation.tailrec
 
 object HParser {
@@ -30,7 +29,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
 
   private def prev: HToken = tokens(idx - 1)
 
-  private def eof: Boolean = idx >= tokens.size
+  private def eof: Boolean = cur.tokenType == HTokenType.Eof
 
   private def rangeFrom(start: Int): HTokenRange =
     new HTokenRange(tokens, start, idx)
@@ -79,14 +78,17 @@ class HParser(tokens: IndexedSeq[HToken]) {
 
   def parseSource(): HSource = {
     val start = idx
+    pass(HTokenType.Bof)
+    val afterBof = idx
     skipWs()
     val toplevel = cur.tokenType match {
       case LBrace => parseObject()
       case LBracket => parseArray()
       case _ =>
-        idx = 0 // take whitespaces and comments into the object
+        idx = afterBof // take whitespaces and comments into the object
         parseObject(braces = false)
     }
+    pass(HTokenType.Eof)
     HSource(toplevel)(rangeFrom(start))
   }
 
@@ -276,7 +278,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
       val keepLast = prev.tokenType != Whitespace ||
         (inKey && aheadAny(Dot, QuotedString, MultilineString)) ||
         (!inKey && aheadAny(LBrace, LBracket, QuotedString, MultilineString, Splice))
-      val end = if (keepLast) cur.idx else prev.idx
+      val end = if (keepLast) idx else prev.idx
       val range = new HTokenRange(tokens, start, end)
       val value = range.iterator.map(_.text).mkString
       val syntax =

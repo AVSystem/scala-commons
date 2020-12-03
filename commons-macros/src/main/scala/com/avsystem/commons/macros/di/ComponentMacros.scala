@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package macros.di
 
-import macros.AbstractMacroCommons
+import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.blackbox

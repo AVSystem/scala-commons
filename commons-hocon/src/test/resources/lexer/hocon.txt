@@ -23,6 +23,7 @@ costam {
   field = value
 }
 -----
+<1:1:Bof():1:1>
 <1:1:Unquoted(include):1:8>
 <1:8:Whitespace( ):1:9>
 <1:9:Unquoted(required):1:17>
@@ -197,3 +198,4 @@ moar
 <24:1:RBrace(}):24:2>
 <24:2:Whitespace(
 ):25:1>
+<25:1:Eof():25:1>
