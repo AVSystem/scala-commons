@@ -187,4 +187,16 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
     assert(strings == List("fds", "fasd", "d2s"))
     assert(numbers == List(1, 2, 3, 4, 5))
   }
+
+  test("stripCommonPrefix") {
+    val str =
+      """  abc
+        |    abc
+        |   abc""".stripMargin
+
+    assert(str.stripCommonIndent ==
+      """abc
+        |  abc
+        | abc""".stripMargin)
+  }
 }

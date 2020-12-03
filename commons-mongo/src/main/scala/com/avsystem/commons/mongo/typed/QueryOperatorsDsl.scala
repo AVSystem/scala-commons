@@ -2,9 +2,12 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.meta.OptionLike
+import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.mongo.text.TextSearchLanguage
 import org.bson.{BsonType, BsonValue}
 
+import java.util.regex.Pattern
+import scala.annotation.tailrec
 import scala.util.matching.{Regex => SRegex}
 
 trait VanillaQueryOperatorsDsl[T, R] {
@@ -13,23 +16,33 @@ trait VanillaQueryOperatorsDsl[T, R] {
 
   def format: MongoFormat[T]
 
-  protected def wrapQueryOperator(operators: MongoQueryOperator[T]): R
+  protected def wrapQueryOperators(operators: MongoQueryOperator[T]*): R
 
-  def is(value: T): R = wrapQueryOperator(Eq(value, format))
-  def isNot(value: T): R = wrapQueryOperator(Ne(value, format))
-  def gt(value: T): R = wrapQueryOperator(Gt(value, format))
-  def gte(value: T): R = wrapQueryOperator(Gte(value, format))
-  def lt(value: T): R = wrapQueryOperator(Lt(value, format))
-  def lte(value: T): R = wrapQueryOperator(Lte(value, format))
-  def in(values: Iterable[T]): R = wrapQueryOperator(In(values, format))
+  def is(value: T): R = wrapQueryOperators(Eq(value, format))
+  def isNot(value: T): R = wrapQueryOperators(Ne(value, format))
+  def gt(value: T): R = wrapQueryOperators(Gt(value, format))
+  def gte(value: T): R = wrapQueryOperators(Gte(value, format))
+  def lt(value: T): R = wrapQueryOperators(Lt(value, format))
+  def lte(value: T): R = wrapQueryOperators(Lte(value, format))
+  def in(values: Iterable[T]): R = wrapQueryOperators(In(values, format))
   def in(values: T*): R = in(values)
-  def nin(values: Iterable[T]): R = wrapQueryOperator(Nin(values, format))
+  def nin(values: Iterable[T]): R = wrapQueryOperators(Nin(values, format))
   def nin(values: T*): R = nin(values)
   def exists: R = exists(true)
-  def exists(exists: Boolean): R = wrapQueryOperator(Exists(exists))
-  def hasType(bsonType: BsonType): R = wrapQueryOperator(Type(bsonType))
-  def regex(pattern: String): R = wrapQueryOperator(Regex(pattern))
-  def mod(divisor: Long, remainder: Long): R = wrapQueryOperator(Mod(divisor, remainder))
+  def exists(exists: Boolean): R = wrapQueryOperators(Exists(exists))
+  def hasType(bsonType: BsonType): R = wrapQueryOperators(Type(bsonType))
+  def mod(divisor: Long, remainder: Long): R = wrapQueryOperators(Mod(divisor, remainder))
+
+  def regex(pattern: String, options: OptArg[String] = OptArg.Empty): R = options match {
+    case OptArg(options) => wrapQueryOperators(Regex(pattern), Options(options))
+    case OptArg.Empty => wrapQueryOperators(Regex(pattern))
+  }
+
+  def regex(pattern: Pattern): R =
+    regex(pattern.pattern, if(pattern.flags > 0) OptArg(RegexFlag.optionsAsString(pattern.flags)) else OptArg.Empty)
+
+  def regex(pattern: SRegex): R =
+    regex(pattern.pattern)
 
   def text(
     search: String,
@@ -37,13 +50,13 @@ trait VanillaQueryOperatorsDsl[T, R] {
     caseSensitive: OptArg[Boolean] = OptArg.Empty,
     diacriticSensitive: OptArg[Boolean] = OptArg.Empty
   ): R =
-    wrapQueryOperator(Text(search, language.toOpt, caseSensitive.toOpt, diacriticSensitive.toOpt))
+    wrapQueryOperators(Text(search, language.toOpt, caseSensitive.toOpt, diacriticSensitive.toOpt))
 
   def not(filter: MongoFilter.Creator[T] => MongoOperatorsFilter[T]): R =
-    wrapQueryOperator(Not(filter(new MongoFilter.Creator(format))))
+    wrapQueryOperators(Not(filter(new MongoFilter.Creator(format))))
 
   def rawQueryOp(rawOperator: String, bson: BsonValue): R =
-    wrapQueryOperator(Raw(rawOperator, bson))
+    wrapQueryOperators(Raw(rawOperator, bson))
 }
 object VanillaQueryOperatorsDsl {
   implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: VanillaQueryOperatorsDsl[C[T], R]) extends AnyVal {
@@ -52,13 +65,13 @@ object VanillaQueryOperatorsDsl {
 
     private def format: MongoFormat[T] = dsl.format.assumeCollection.elementFormat
 
-    def size(size: Int): R = dsl.wrapQueryOperator(Size(size))
+    def size(size: Int): R = dsl.wrapQueryOperators(Size(size))
 
     def elemMatch(filter: MongoFilter.Creator[T] => MongoFilter[T]): R =
-      dsl.wrapQueryOperator(ElemMatch(filter(new MongoFilter.Creator(format))))
+      dsl.wrapQueryOperators(ElemMatch(filter(new MongoFilter.Creator(format))))
 
     def all(values: T*): R = all(values)
-    def all(values: Iterable[T]): R = dsl.wrapQueryOperator(All(values, format))
+    def all(values: Iterable[T]): R = dsl.wrapQueryOperators(All(values, format))
   }
 }
 
@@ -74,8 +87,8 @@ trait QueryOperatorsDsl[T, R] extends VanillaQueryOperatorsDsl[T, R] {
   def startsWith(prefix: String): R =
     regex("^" + SRegex.quote(prefix))
 
-  def containsSubstring(infix: String): R =
-    regex(SRegex.quote(infix))
+  def containsSubstring(infix: String, caseInsensitive: Boolean = false): R =
+    regex(SRegex.quote(infix), if(caseInsensitive) OptArg("i") else OptArg.Empty)
 }
 object QueryOperatorsDsl {
   implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: QueryOperatorsDsl[C[T], R]) extends AnyVal {
@@ -95,5 +108,38 @@ object QueryOperatorsDsl {
 
     def isEmpty: R = dsl.is(optionLike.none)
     def isDefined: R = dsl.isNot(optionLike.none)
+  }
+}
+
+final class RegexFlag(val javaFlag: Int, val char: Char)(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+object RegexFlag extends AbstractValueEnumCompanion[RegexFlag] {
+  // code based on org.bson.codecs.PatternCodec
+
+  final val GlobalFlag = 256
+
+  final val CanonEq: Value = new RegexFlag(Pattern.CANON_EQ, 'c')
+  final val UnixLines: Value = new RegexFlag(Pattern.UNIX_LINES, 'd')
+  final val Global: Value = new RegexFlag(GlobalFlag, 'g')
+  final val CaseInsensitive: Value = new RegexFlag(Pattern.CASE_INSENSITIVE, 'i')
+  final val Multiline: Value = new RegexFlag(Pattern.MULTILINE, 'm')
+  final val Dotall: Value = new RegexFlag(Pattern.DOTALL, 's')
+  final val Literal: Value = new RegexFlag(Pattern.LITERAL, 't')
+  final val UnicodeCase: Value = new RegexFlag(Pattern.UNICODE_CASE, 'u')
+  final val Comments: Value = new RegexFlag(Pattern.COMMENTS, 'x')
+
+  def optionsAsString(javaOptions: Int): String = {
+    val sb = new JStringBuilder
+    @tailrec def loop(flags: Int, idx: Int): String =
+      if(idx >= values.size) sb.toString
+      else {
+        val flag = values(idx)
+        if((flags & flag.javaFlag) > 0) {
+          sb.append(flag.char)
+          loop(flags - flag.javaFlag, idx+1)
+        } else {
+          loop(flags, idx+1)
+        }
+      }
+    loop(javaOptions, 0)
   }
 }
