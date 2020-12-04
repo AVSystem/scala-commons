@@ -74,6 +74,11 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
 
     val transformedDefinition = DependencyExtractor.transform(definition)
+    val needsRetyping = transformedDefinition != definition ||
+      definition.exists {
+        case _: DefTree | _: Function => true
+        case _ => false
+      }
 
     q"""
        new $ComponentCls[$ttpe] {
@@ -83,7 +88,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
            $ScalaPkg.IndexedSeq(..${depsBuf.result()})
 
          protected def create($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]): $ttpe =
-           ${c.untypecheck(transformedDefinition)}
+           ${if (needsRetyping) c.untypecheck(transformedDefinition) else definition}
        }
        """
   }
