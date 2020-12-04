@@ -45,7 +45,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val depsBuf = new ListBuffer[Tree]
 
     def validateDep(tree: Tree): Tree = {
-      val innerSymbols = tree.collect({ case t@(_: DefTree | _: Function) if t.symbol != null => t.symbol }).toSet
+      val innerSymbols = tree.collect({ case t@(_: DefTree | _: Function | _: Bind) if t.symbol != null => t.symbol }).toSet
       tree.foreach { t =>
         if (t.symbol != null && !innerSymbols.contains(t.symbol) && ownersOf(t.symbol).contains(enclosingSym)) {
           errorAt(s"you cannot use local values or methods in an expression with .ref called on it", t.pos)
@@ -76,7 +76,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val transformedDefinition = DependencyExtractor.transform(definition)
     val needsRetyping = transformedDefinition != definition ||
       definition.exists {
-        case _: DefTree | _: Function => true
+        case _: DefTree | _: Function | _: Bind => true
         case _ => false
       }
 
