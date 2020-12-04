@@ -14,7 +14,7 @@ case class ComponentName(name: String) extends AnyVal {
   override def toString: String = name
 }
 object ComponentName {
-  @compileTimeOnly("implicit ComponentName is only available inside argument of Component(...) macro")
+  @compileTimeOnly("implicit ComponentName is only available inside code passed to component(...) macro")
   implicit def componentName: ComponentName = sys.error("stub")
 }
 
@@ -32,7 +32,7 @@ abstract class Component[+T] {
 
   private[this] val savedFuture = new AtomicReference[Future[T]]
 
-  @compileTimeOnly(".ref can only be used inside argument to component(...) macro")
+  @compileTimeOnly(".ref can only be used inside code passed to component(...) macro")
   def ref: T = sys.error("stub")
 
   def dependsOn(deps: Component[_]*): Component[T] =
@@ -95,6 +95,6 @@ trait Components extends ComponentsLowPrio {
   implicit def ambiguousArbitraryComponent2[T]: Component[T] = null
 }
 trait ComponentsLowPrio {
-  @compileTimeOnly("implicit Component[T] => implicit T inference only works inside argument to component(...) macro")
+  @compileTimeOnly("implicit Component[T] => implicit T inference only works inside code passed to component(...) macro")
   implicit def inject[T](implicit component: Component[T]): T = sys.error("stub")
 }
