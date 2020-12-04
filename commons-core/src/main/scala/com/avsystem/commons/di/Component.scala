@@ -3,6 +3,7 @@ package di
 
 import com.avsystem.commons.concurrent.RunInQueueEC
 import com.avsystem.commons.macros.di.ComponentMacros
+import com.avsystem.commons.misc.SourceInfo
 
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.compileTimeOnly
@@ -17,11 +18,17 @@ object ComponentName {
   implicit def componentName: ComponentName = sys.error("stub")
 }
 
+case class ComponentInitializationException(component: Component[_], cause: Throwable)
+  extends Exception(s"failed to initialize component ${component.info}", cause)
+
 case class DependencyCycleException(cyclePath: List[Component[_]])
-  extends Exception(s"component dependency cycle detected: ${cyclePath.map(_.name).mkString("", " -> ", " -> " + cyclePath.head.name)}")
+  extends Exception(s"component dependency cycle detected: ${cyclePath.map(_.info).mkString("", " -> ", " -> " + cyclePath.head.info)}")
 
 abstract class Component[+T] {
   def name: String
+  def sourceInfo: SourceInfo
+
+  def info: String = s"$name(${sourceInfo.fileName}:${sourceInfo.line})"
 
   private[this] val savedFuture = new AtomicReference[Future[T]]
 
@@ -34,11 +41,8 @@ abstract class Component[+T] {
   final def init(): T =
     Await.result(parallelInit()(RunInQueueEC), Duration.Inf)
 
-  final def parallelInit()(implicit ec: ExecutionContext): Future[T] = try {
-    doParallelInit(cycleCheck = true)
-  } catch {
-    case NonFatal(cause) => Future.failed(cause)
-  }
+  final def parallelInit()(implicit ec: ExecutionContext): Future[T] =
+    doParallelInit(cycleCheck = true).catchFailures
 
   private def detectCycles(stack: List[Component[_]], visited: MHashSet[Component[_]]): Unit =
     if (!visited.contains(this)) {
@@ -58,7 +62,11 @@ abstract class Component[+T] {
         detectCycles(Nil, new MHashSet)
       }
       val resultFuture =
-        Future.traverse(dependencies)(_.doParallelInit(cycleCheck = false)).map(deps => create(deps.toIndexedSeq))
+        Future.traverse(dependencies)(_.doParallelInit(cycleCheck = false))
+          .map(deps => create(deps.toIndexedSeq))
+          .recoverNow {
+            case NonFatal(cause) => throw ComponentInitializationException(this, cause)
+          }
       promise.completeWith(resultFuture)
     }
     savedFuture.get()
@@ -71,6 +79,7 @@ abstract class Component[+T] {
 object Component {
   private class WithAdditionalDeps[T](wrapped: Component[T], deps: Seq[Component[_]]) extends Component[T] {
     def name: String = wrapped.name
+    def sourceInfo: SourceInfo = wrapped.sourceInfo
     def dependencies: IndexedSeq[Component[_]] = wrapped.dependencies ++ deps
     protected def create(resolvedDeps: IndexedSeq[Any]): T = wrapped.create(resolvedDeps)
   }

@@ -83,6 +83,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     q"""
        new $ComponentCls[$ttpe] {
          def name: $PredefObj.String = $name
+         val sourceInfo: $MiscPkg.SourceInfo = $ImplicitsObj.infer[$MiscPkg.SourceInfo]
 
          lazy val dependencies: $CollectionPkg.IndexedSeq[$ComponentTpe] =
            $ScalaPkg.IndexedSeq(..${depsBuf.result()})
