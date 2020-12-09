@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class DiscardedMonixTask[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "macroPrivate") {
+class DiscardedMonixTask(g: Global) extends AnalyzerRule(g, "discardedMonixTask") {
 
   import global._
 
