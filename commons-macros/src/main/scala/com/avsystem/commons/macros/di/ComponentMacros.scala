@@ -29,6 +29,9 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
+  def cachedComponentCreate[T: c.WeakTypeTag](definition: Tree): Tree =
+    q"${c.prefix}.cacheComponent(${c.prefix}.component($definition))"
+
   def componentCreate[T: c.WeakTypeTag](definition: Tree): Tree = {
     val enclosingSym = {
       val sym = c.internal.enclosingOwner

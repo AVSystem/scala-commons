@@ -5,6 +5,7 @@ import com.avsystem.commons.concurrent.RunInQueueEC
 import com.avsystem.commons.macros.di.ComponentMacros
 import com.avsystem.commons.misc.SourceInfo
 
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.compileTimeOnly
 import scala.concurrent.Await
@@ -28,6 +29,7 @@ abstract class Component[+T] {
   def name: String
   def sourceInfo: SourceInfo
 
+  def cacheKey: String = s"${sourceInfo.filePath}:${sourceInfo.offset}"
   def info: String = s"$name(${sourceInfo.fileName}:${sourceInfo.line})"
 
   private[this] val savedFuture = new AtomicReference[Future[T]]
@@ -87,6 +89,12 @@ object Component {
 
 trait Components extends ComponentsLowPrio {
   def component[T](definition: => T): Component[T] = macro ComponentMacros.componentCreate[T]
+  def cachedComponent[T](definition: => T): Component[T] = macro ComponentMacros.cachedComponentCreate[T]
+
+  private val componentsCache = new ConcurrentHashMap[String, Component[_]]
+
+  protected def cacheComponent[T](component: Component[T]): Component[T] =
+    componentsCache.computeIfAbsent(component.cacheKey, _ => component).asInstanceOf[Component[T]]
 
   // avoids divergent implicit expansion involving `inject`
   // this is not strictly necessary but makes compiler error messages nicer
