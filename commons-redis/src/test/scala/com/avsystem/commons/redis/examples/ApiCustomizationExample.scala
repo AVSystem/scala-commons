@@ -6,8 +6,6 @@ import akka.util.ByteString
 import com.avsystem.commons.redis._
 import com.avsystem.commons.serialization.GenCodec
 
-import scala.concurrent.duration._
-
 /**
   * Example which shows how to customize your Redis API in order to use types different from the default ones used
   * to represent keys, hash keys and values in Redis commands.

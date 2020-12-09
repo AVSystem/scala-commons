@@ -7,12 +7,15 @@ import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 
+import scala.annotation.nowarn
+
 case class Something(
   name: String,
   year: Int,
   stuffs: List[Stuff],
   ints: Set[Int]
 )
+@nowarn
 object Something {
   implicit val codec: GenCodec[Something] = GenCodec.materialize
   implicit val encoder: Encoder[Something] = deriveEncoder[Something]
@@ -45,6 +48,7 @@ case class Primitives(
   l: Long,
   d: Double
 )
+@nowarn
 object Primitives {
   implicit val codec: GenCodec[Primitives] = GenCodec.materialize
   implicit val encoder: Encoder[Primitives] = deriveEncoder[Primitives]
@@ -58,6 +62,7 @@ object Primitives {
 }
 
 case class Stuff(map: Map[String, Boolean], factor: Double)
+@nowarn
 object Stuff {
   implicit val codec: GenCodec[Stuff] = GenCodec.materialize
   implicit val encoder: Encoder[Stuff] = deriveEncoder[Stuff]
@@ -95,6 +100,7 @@ case class Case7(i: Int) extends SealedStuff with FlatSealedStuff
 object Case7 {
   implicit val rw: upickle.default.ReadWriter[Case7] = upickle.default.macroRW
 }
+@nowarn
 object SealedStuff {
   implicit val codec: GenCodec[SealedStuff] = GenCodec.materialize
   implicit val encoder: Encoder[SealedStuff] = deriveEncoder[SealedStuff]
@@ -114,6 +120,7 @@ object FlatSealedStuff {
 }
 
 case class Foo(s: String, d: Double, i: Int, l: Long, bs: List[Boolean])
+@nowarn
 object Foo {
   implicit val circeEncodeFoo: Encoder[Foo] = deriveEncoder
   implicit val circeDecodeFoo: Decoder[Foo] = deriveDecoder

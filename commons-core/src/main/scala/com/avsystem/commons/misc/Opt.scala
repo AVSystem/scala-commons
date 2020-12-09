@@ -1,9 +1,5 @@
 package com.avsystem.commons.misc
 
-import com.avsystem.commons.misc.Opt.EmptyMarker
-
-import scala.language.implicitConversions
-
 object Opt {
   // Used as Opt's raw value to represent empty Opt. Unfortunately, null can't be used for that purpose
   // because https://github.com/scala/bug/issues/7396
@@ -39,7 +35,9 @@ object Opt {
   * If you need a value-class version of `Option` which differentiates between no value and `null` value,
   * use [[NOpt]].
   */
-final class Opt[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
+final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+  import Opt._
+
   private def value: A = rawValue.asInstanceOf[A]
 
   @inline def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker

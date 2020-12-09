@@ -1,6 +1,6 @@
-package com.avsystem.commons
-package misc
+package com.avsystem.commons.misc
 
+import com.avsystem.commons.SharedExtensions._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

@@ -6,8 +6,6 @@ import com.avsystem.commons.misc.TypeString
 import com.avsystem.commons.serialization.{GenCodec, transientDefault, whenAbsent}
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.annotation.StaticAnnotation
-
 class td extends transientDefault
 
 trait SomeBase {

@@ -82,7 +82,7 @@ class MongoFilterTest extends AnyFunSuite {
       """{"str": {"$text": {"$search": "szekely", "$language": "hu", "$caseSensitive": true, "$diacriticSensitive": false}}}""")
 
     assert(IntRef.mod(10, 0).toBson.toString ==
-      """{"int": {"$mod": [{"$numberLong": "10"}, {"$numberLong": "0"}]}}""")
+      """{"int": {"$mod": [10, 0]}}""")
   }
 
   test("subtype filter") {

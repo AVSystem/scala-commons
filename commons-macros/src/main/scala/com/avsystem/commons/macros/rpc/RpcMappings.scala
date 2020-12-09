@@ -251,7 +251,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
     case class NamedMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends Multi {
       def rawValueTree: Tree =
-        if (reals.isEmpty) q"$RpcUtils.createEmpty(${rawParam.canBuildFrom.reference(Nil)})" else {
+        if (reals.isEmpty) q"$RpcUtils.createEmpty(${rawParam.factory.reference(Nil)})" else {
           val builderName = c.freshName(TermName("builder"))
           val addStatements = reals.map { erp =>
             erp.realParam.optionLike match {
@@ -267,7 +267,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             }
           }
           q"""
-            val $builderName = $RpcUtils.createBuilder(${rawParam.canBuildFrom.reference(Nil)}, ${reals.size})
+            val $builderName = $RpcUtils.createBuilder(${rawParam.factory.reference(Nil)}, ${reals.size})
             ..$addStatements
             $builderName.result()
           """

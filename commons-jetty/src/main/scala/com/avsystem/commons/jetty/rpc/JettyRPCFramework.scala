@@ -3,7 +3,6 @@ package jetty.rpc
 
 import java.nio.charset.StandardCharsets
 
-import com.avsystem.commons.annotation.bincompat
 import com.avsystem.commons.rpc.StandardRPCFramework
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput, RawJson}
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
@@ -38,10 +37,6 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   object Call extends HasGenCodec[Call]
 
   class RPCClient(httpClient: HttpClient, uri: String, maxResponseLength: Int) {
-    @bincompat private[commons]
-    def this(httpClient: HttpClient, uri: String, maxResponseLength: Int, ec: ExecutionContext) =
-      this(httpClient, uri, maxResponseLength)
-
     private class RawRPCImpl(chain: List[RawInvocation]) extends RawRPC {
       override def fire(invocation: RawInvocation): Unit =
         put(Call(chain, invocation))
@@ -56,7 +51,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
     val rawRPC: RawRPC = new RawRPCImpl(List.empty)
 
     def request(method: HttpMethod, call: Call): Future[RawValue] = {
-      val promise = Promise[RawValue]
+      val promise = Promise[RawValue]()
 
       val listener = new BufferingResponseListener(maxResponseLength) {
         override def onComplete(result: Result): Unit = {
@@ -95,10 +90,6 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
   }
 
   class RPCHandler(rootRpc: RawRPC, contextTimeout: FiniteDuration) extends AbstractHandler {
-    @bincompat private[commons]
-    def this(rootRpc: RawRPC, contextTimeout: FiniteDuration, ec: ExecutionContext) =
-      this(rootRpc, contextTimeout)
-
     override def handle(target: String, baseRequest: Request, request: HttpServletRequest, response: HttpServletResponse): Unit = {
       baseRequest.setHandled(true)
 
@@ -143,15 +134,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
     implicit asRawRPC: AsRawRPC[T]): Handler =
     new RPCHandler(asRawRPC.asRaw(impl), contextTimeout)
 
-  @bincompat private[commons]
-  def newHandler[T: AsRawRPC](impl: T, contextTimeout: FiniteDuration, ec: ExecutionContext): Handler =
-    newHandler(impl, contextTimeout)
-
   def newClient[T](httpClient: HttpClient, uri: String, maxResponseLength: Int = 2 * 1024 * 1024)(
     implicit asRealRPC: AsRealRPC[T]): T =
     asRealRPC.asReal(new RPCClient(httpClient, uri, maxResponseLength).rawRPC)
-
-  @bincompat private[commons]
-  def newClient[T: AsRealRPC](httpClient: HttpClient, uri: String, maxResponseLength: Int, ec: ExecutionContext): T =
-    newClient[T](httpClient, uri, maxResponseLength)
 }

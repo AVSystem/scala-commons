@@ -1,7 +1,7 @@
 # AVSystem Commons Library for Scala
 
 [![Build Status](https://travis-ci.org/AVSystem/scala-commons.svg?branch=master)](https://travis-ci.org/AVSystem/scala-commons)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.11)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.12)
 
 **[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/index.html)**
 
@@ -14,7 +14,6 @@
     derivation for case classes and sealed hierarchies
   * **Typesafe** RPC/proxy framework used in particular by [Udash Framework](http://guide.udash.io/#/rpc) for
     client-server communication
-  * [REST framework](docs/REST.md) based on RPC framework
   * Better enumeration support for Scala -
     [`ValueEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/ValueEnum.html),
     [`SealedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/SealedEnumCompanion.html),
@@ -38,16 +37,14 @@
   * `MacroCommons` trait with several convenience functions for implementing macros
   * `TypeClassDerivation` - implements infrastructure for automatic type class derivation
 * [`commons-analyzer`](docs/Analyzer.md) - static analyzer for Scala code, i.e. a compiler plugin that enforces various (mostly unrelated) rules and conventions on source code
-* `commons-annotations` - contains annotations used by macros and static analyzer
 * `commons-jetty` - Jetty server utilities
 * [`commons-mongo`](docs/TypedMongo.md) - MongoDB utilities for Scala & Java MongoDB drivers, integration with `GenCodec`
-* `commons-kafka` - Kafka utilities
-* `commons-spring` - Spring framework utilities:
-  * `HoconBeanDefinitionReader` - an utility that allows you to define Spring application context using 
-  [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md) format
 * `commons-hocon` - Utilities for working with [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md)
   * `HoconInput` - an `Input` implementation for `GenCodec` that can read Lightbend Config (`com.typesafe.config.Config`)
   * An AST (`HTree`) and a lexer/parser for HOCON (`HLexer`, `HParser`)
+* `commons-spring` - Spring framework utilities:
+  * `HoconBeanDefinitionReader` - an utility that allows you to define Spring application context using 
+  [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md) format
 
 ## Development
 

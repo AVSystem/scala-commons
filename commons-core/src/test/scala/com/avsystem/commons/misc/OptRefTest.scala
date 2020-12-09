@@ -1,6 +1,6 @@
-package com.avsystem.commons
-package misc
+package com.avsystem.commons.misc
 
+import com.avsystem.commons.JInteger
 import org.scalatest.funsuite.AnyFunSuite
 
 class OptRefTest extends AnyFunSuite {

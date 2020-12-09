@@ -9,8 +9,6 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import com.typesafe.config._
 
-import scala.concurrent.duration.FiniteDuration
-
 object HoconInput {
   @explicitGenerics def read[T: GenCodec](value: ConfigValue): T =
     GenCodec.read[T](new HoconInput(value))
@@ -94,6 +92,8 @@ class HoconInput(value: ConfigValue) extends InputAndSimpleInput with BaseHoconI
 class HoconListInput(configList: ConfigList) extends ListInput with BaseHoconInput {
   private val elements = configList.iterator.asScala
 
+  override def knownSize: Int = configList.size
+
   def hasNext: Boolean = elements.hasNext
 
   def nextElement(): Input =
@@ -102,6 +102,8 @@ class HoconListInput(configList: ConfigList) extends ListInput with BaseHoconInp
 
 class HoconObjectInput(configObject: ConfigObject) extends ObjectInput with BaseHoconInput {
   private val keys = configObject.keySet.iterator.asScala
+
+  override def knownSize: Int = configObject.size
 
   def hasNext: Boolean = keys.hasNext
 

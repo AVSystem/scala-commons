@@ -16,7 +16,7 @@ import scala.concurrent.duration._
 trait UsesMasterSlaveServers extends BeforeAndAfterAll with RedisProcessUtils { this: Suite =>
 
   val masterSlavePath: String = "masterSlave/" + System.currentTimeMillis()
-  val masterSlaveDir: File = new File(masterSlavePath.replaceAllLiterally("/", File.separator))
+  val masterSlaveDir: File = new File(masterSlavePath.replace("/", File.separator))
 
   def masterName: String
   def ports: Seq[Int]

@@ -6,10 +6,11 @@ import java.nio.ByteBuffer
 import akka.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.Sam
 import com.avsystem.commons.redis.exception.{InvalidDataException, RedisException}
+import com.avsystem.commons.redis.util.SizedArraySeqBuilder
 
 import scala.annotation.tailrec
+import scala.collection.compat._
 import scala.collection.immutable.VectorBuilder
-import scala.collection.mutable.ArrayBuffer
 
 /**
   * Raw result of executing a single [[com.avsystem.commons.redis.RawCommandPack]].
@@ -138,13 +139,13 @@ object RedisMsg {
     builder.result()
   }
 
-  def encode(msgs: TraversableOnce[RedisMsg]): ByteString = {
+  def encode(msgs: IterableOnce[RedisMsg]): ByteString = {
     val builder = new ByteStringBuilder
-    msgs.foreach(encode(_, builder))
+    msgs.iterator.foreach(encode(_, builder))
     builder.result()
   }
 
-  def encodeInteger(value: Long, bsb: ByteStringBuilder): Unit = value match {
+  @tailrec def encodeInteger(value: Long, bsb: ByteStringBuilder): Unit = value match {
     case 0 => bsb.putByte('0')
     case Long.MinValue => bsb.append(LongMinValue)
     case v if v < 0 => bsb.putByte('-'); encodeInteger(-v, bsb)
@@ -187,7 +188,7 @@ object RedisMsg {
     encodeIn(msg)
   }
 
-  def encodeInteger(value: Long, bb: ByteBuffer): Unit = value match {
+  @tailrec def encodeInteger(value: Long, bb: ByteBuffer): Unit = value match {
     case 0 => bb.put('0': Byte)
     case Long.MinValue => LongMinValue.copyToBuffer(bb)
     case v if v < 0 => bb.put('-': Byte); encodeInteger(-v, bb)
@@ -258,10 +259,12 @@ object RedisMsg {
     private final val NineDigitByte: Byte = '9'
     private final val MinusByte: Byte = '-'
 
+    private class Digit(private val b: Byte) extends AnyVal {
+      def isEmpty: Boolean = b < ZeroDigitByte || b > NineDigitByte
+      def get: Long = b - ZeroDigitByte
+    }
     private object Digit {
-      def unapply(b: Byte): Opt[Long] =
-        if (b >= ZeroDigitByte && b <= NineDigitByte) Opt(b - ZeroDigitByte)
-        else Opt.Empty
+      def unapply(b: Byte): Digit = new Digit(b)
     }
   }
 
@@ -269,7 +272,7 @@ object RedisMsg {
 
     import Decoder._
 
-    private[this] var arrayStack: List[(Int, ArrayBuffer[RedisMsg])] = Nil
+    private[this] var arrayStack: List[SizedArraySeqBuilder[RedisMsg]] = Nil
     private[this] var state: Int = Initial
     private[this] var currentType: Byte = 0
     private[this] var readingLength: Boolean = false
@@ -280,19 +283,19 @@ object RedisMsg {
     def fail(msg: String) = throw new InvalidDataException(msg)
 
     def decodeMore(bytes: ByteString)(consumer: RedisMsg => Unit): Unit = {
-      def completed(msg: RedisMsg): Unit = {
+      @tailrec def completed(msg: RedisMsg): Unit = {
         arrayStack match {
           case Nil => consumer(msg)
-          case (expected, collected) :: tail =>
-            collected += msg
-            if (collected.size >= expected) {
+          case builder :: tail =>
+            builder += msg
+            if (builder.complete) {
               arrayStack = tail
-              completed(ArrayMsg(collected))
+              completed(ArrayMsg(builder.result()))
             }
         }
       }
 
-      def decode(idx: Int, prevDataStart: Int): Unit = if (idx < bytes.length) {
+      @tailrec def decode(idx: Int, prevDataStart: Int): Unit = if (idx < bytes.length) {
         val byte = bytes(idx)
         var dataStart = prevDataStart
         state match {
@@ -369,7 +372,7 @@ object RedisMsg {
                     case 0 => completed(ArrayMsg.Empty)
                     case size if size > 0 =>
                       val is = size.toInt
-                      arrayStack = (is, new ArrayBuffer[RedisMsg](is)) :: arrayStack
+                      arrayStack = new SizedArraySeqBuilder[RedisMsg](is) :: arrayStack
                     case _ => fail("Invalid array size")
                   }
                 case _ => fail("Length can be read only for bulk strings or arrays")

@@ -7,8 +7,6 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import com.avsystem.commons.serialization.json.{JsonReader, JsonStringInput, JsonStringOutput}
 
-import scala.collection.mutable.ArrayBuffer
-
 /**
   * Typeclass which expresses that values of some type are serializable to binary form (`ByteString`) and deserializable
   * from it in order to use them as keys, hash keys and values in Redis commands.
@@ -68,6 +66,7 @@ final class RedisDataOutput(consumer: ByteString => Unit) extends OutputAndSimpl
     private val sb = new JStringBuilder
     private val jlo = new JsonStringOutput(sb).writeList()
 
+    override def sizePolicy: SizePolicy = SizePolicy.Ignored
     def writeElement(): Output = jlo.writeElement()
     def finish(): Unit = {
       jlo.finish()
@@ -79,6 +78,7 @@ final class RedisDataOutput(consumer: ByteString => Unit) extends OutputAndSimpl
     private val sb = new JStringBuilder
     private val joo = new JsonStringOutput(sb).writeObject()
 
+    override def sizePolicy: SizePolicy = SizePolicy.Ignored
     def writeField(key: String): Output = joo.writeField(key)
     def finish(): Unit = {
       joo.finish()
@@ -87,10 +87,13 @@ final class RedisDataOutput(consumer: ByteString => Unit) extends OutputAndSimpl
   }
 }
 
-class RedisRecordOutput(buffer: ArrayBuffer[BulkStringMsg]) extends ObjectOutput {
+class RedisRecordOutput(builder: MBuilder[BulkStringMsg, _]) extends ObjectOutput {
+  override def declareSize(size: Int): Unit =
+    builder.sizeHint(size)
+
   def writeField(key: String): Output = {
-    buffer += BulkStringMsg(ByteString(key))
-    new RedisDataOutput(bs => buffer += BulkStringMsg(bs))
+    builder += BulkStringMsg(ByteString(key))
+    new RedisDataOutput(bs => builder += BulkStringMsg(bs))
   }
 
   def finish(): Unit = ()
@@ -133,9 +136,11 @@ class RedisFieldDataInput(val fieldName: String, bytes: ByteString)
 class RedisRecordInput(bulks: IndexedSeq[BulkStringMsg]) extends ObjectInput {
   private val it = bulks.iterator.map(_.string)
 
+  override def knownSize: Int = bulks.size
+
   def nextField(): FieldInput = {
-    val fieldName = it.next.utf8String
-    val bytes = it.next
+    val fieldName = it.next().utf8String
+    val bytes = it.next()
     new RedisFieldDataInput(fieldName, bytes)
   }
 

@@ -32,7 +32,7 @@ final class RedisMasterSlaveClient(
   // ensures that all operations fail fast after client is closed instead of being sent further
   @volatile private[this] var failure = Opt.empty[Throwable]
 
-  private val initPromise = Promise[Unit]
+  private val initPromise = Promise[Unit]()
   initPromise.future.foreachNow(_ => initSuccess = true)
 
   private def ifReady[T](code: => Future[T]): Future[T] = failure match {

@@ -7,7 +7,7 @@ import com.avsystem.commons.redis.commands.{Exec, Multi}
 import com.avsystem.commons.redis.exception.{OptimisticLockException, RedisException, UnexpectedReplyException}
 import com.avsystem.commons.redis.protocol._
 
-import scala.collection.mutable.ArrayBuffer
+import scala.annotation.tailrec
 
 final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
 
@@ -32,7 +32,7 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
 
   def createPreprocessor(replyCount: Int): ReplyPreprocessor = new ReplyPreprocessor {
     private var singleError: Opt[FailureReply] = Opt.Empty
-    private var errors: Opt[ArrayBuffer[ErrorMsg]] = Opt.Empty
+    private var errors: Opt[Array[ErrorMsg]] = Opt.Empty
     private var normalResult: Opt[IndexedSeq[RedisMsg]] = Opt.Empty
     private var ctr = 0
 
@@ -41,10 +41,12 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
         singleError = FailureReply(exception).opt
       }
 
-    private def errorsBuffer: ArrayBuffer[ErrorMsg] =
-      errors.getOrElse {
-        errors = ArrayBuffer.fill[ErrorMsg](replyCount - 2)(null).opt
-        errorsBuffer
+    @tailrec private def errorsBuffer: Array[ErrorMsg] =
+      errors match {
+        case Opt(arr) => arr
+        case Opt.Empty =>
+          errors = Array.fill[ErrorMsg](replyCount - 2)(null).opt
+          errorsBuffer
       }
 
     private def setDefaultError(fillWith: ErrorMsg): Unit = {
@@ -77,7 +79,9 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
             case errorMsg: ErrorMsg => setDefaultError(errorMsg)
             case _ => setSingleError(new UnexpectedReplyException(s"Unexpected reply for EXEC: $message"))
           }
-          singleError orElse errors.map(TransactionReply) orElse normalResult.map(TransactionReply)
+          singleError orElse
+            errors.map(a => TransactionReply(IArraySeq.unsafeWrapArray(a))) orElse
+            normalResult.map(TransactionReply)
         case i =>
           message match {
             case RedisMsg.Queued =>

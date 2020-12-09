@@ -6,6 +6,8 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 final class DefaultCaseObjectInput(firstField: FieldInput, actualInput: ObjectInput, caseFieldName: String)
   extends ObjectInput {
 
+  override def knownSize: Int = actualInput.knownSize
+
   private[this] var atFirstField = true
 
   def hasNext: Boolean = atFirstField || actualInput.hasNext

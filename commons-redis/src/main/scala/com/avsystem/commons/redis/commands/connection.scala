@@ -22,7 +22,7 @@ trait NodeConnectionApi extends ApiSubset {
     val encoded: Encoded = encoder("ECHO").data(message).result
   }
 
-  private object Ping extends AbstractRedisCommand[ByteString](simpleBinary) with NodeCommand {
+  private object Ping extends AbstractRedisCommand[ByteString](simpleAsBinary) with NodeCommand {
     val encoded: Encoded = encoder("PING").result
   }
 

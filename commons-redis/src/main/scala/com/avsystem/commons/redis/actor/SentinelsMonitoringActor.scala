@@ -42,7 +42,7 @@ final class SentinelsMonitoringActor(
     log.debug(s"Opening monitoring connection to sentinel $addr")
     val conn = actorOf(Props(new RedisConnectionActor(addr, config.sentinelConnectionConfigs(addr))))
     sentinels(addr) = conn
-    conn ! RedisConnectionActor.Open(seed, Promise[Unit])
+    conn ! RedisConnectionActor.Open(seed, Promise[Unit]())
     onReconnection(conn)
     conn
   }

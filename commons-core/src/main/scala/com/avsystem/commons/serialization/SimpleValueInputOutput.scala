@@ -63,12 +63,14 @@ class SimpleValueOutput(
 
   def writeList(): ListOutput = new ListOutput {
     private val buffer = newListRepr
+    override def declareSize(size: Int): Unit = buffer.sizeHint(size)
     def writeElement() = new SimpleValueOutput(buffer += _, newObjectRepr, newListRepr)
     def finish(): Unit = consumer(buffer.result())
   }
 
   def writeObject(): ObjectOutput = new ObjectOutput {
     private val result = newObjectRepr
+    override def declareSize(size: Int): Unit = result.sizeHint(size)
     def writeField(key: String) = new SimpleValueOutput(v => result += ((key, v)), newObjectRepr, newListRepr)
     def finish(): Unit = consumer(result)
   }
@@ -109,6 +111,7 @@ class SimpleValueInput(value: Any) extends InputAndSimpleInput {
       private val it = map.iterator.map {
         case (k, v) => new SimpleValueFieldInput(k, v)
       }
+      override def knownSize: Int = if(map.isEmpty) 0 else map.knownSize
       def nextField(): SimpleValueFieldInput = it.next()
       override def peekField(name: String): Opt[SimpleValueFieldInput] =
         map.get(name).map(new SimpleValueFieldInput(name, _)).toOpt // values may be null!
@@ -117,7 +120,9 @@ class SimpleValueInput(value: Any) extends InputAndSimpleInput {
 
   def readList(): ListInput =
     new ListInput {
-      private val it = doRead[BSeq[Any]].iterator.map(new SimpleValueInput(_))
+      private val inputSeq: BSeq[Any] = doRead[BSeq[Any]]
+      private val it = inputSeq.iterator.map(new SimpleValueInput(_))
+      override def knownSize: Int = if(inputSeq.isEmpty) 0 else inputSeq.knownSize
       def nextElement(): SimpleValueInput = it.next()
       def hasNext: Boolean = it.hasNext
     }

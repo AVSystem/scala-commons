@@ -5,8 +5,6 @@ import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.TypeString
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.annotation.StaticAnnotation
-
 class cool extends StaticAnnotation
 
 case class ApiInfo[T](

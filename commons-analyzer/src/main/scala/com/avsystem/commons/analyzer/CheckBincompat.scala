@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class CheckBincompat[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "bincompat") {
+class CheckBincompat(g: Global) extends AnalyzerRule(g, "bincompat") {
 
   import global._
 

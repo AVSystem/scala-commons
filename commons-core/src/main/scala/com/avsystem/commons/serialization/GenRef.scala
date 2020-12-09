@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import scala.language.implicitConversions
-
 sealed trait RawRef {
 
   import RawRef._

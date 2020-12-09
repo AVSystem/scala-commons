@@ -2,7 +2,6 @@ package com.avsystem.commons
 package misc
 
 import scala.annotation.implicitNotFound
-import scala.collection.mutable.ArrayBuffer
 
 /**
   * Base trait for `val`-based enums, i.e. enums implemented as a single class with companion object keeping
@@ -74,11 +73,6 @@ trait ValueEnum extends NamedEnum {
   */
 abstract class AbstractValueEnum(protected implicit val enumCtx: EnumCtx) extends ValueEnum
 
-object ValueEnum {
-  private[this] val reusableOrdering: Ordering[ValueEnum] = Ordering.by(_.ordinal)
-  implicit def ordering[T <: ValueEnum]: Ordering[T] = reusableOrdering.asInstanceOf[Ordering[T]]
-}
-
 @implicitNotFound("Value based enum must be assigned to a public, final, non-lazy val in its companion object " +
   "with explicit `Value` type ascribed, e.g. `final val Monday: Value = new Weekday")
 sealed trait EnumCtx extends Any {
@@ -110,6 +104,9 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
     finished = true
     registryBuilder.result()
   }
+
+  implicit final val ordering: Ordering[T] = Ordering.by(_.ordinal)
+  implicit final def ordered(value: T): Ordered[T] = Ordered.orderingToOrdered(value)
 
   private class Ctx(val valName: String, val ordinal: Int) extends EnumCtx {
     if (awaitingRegister) {

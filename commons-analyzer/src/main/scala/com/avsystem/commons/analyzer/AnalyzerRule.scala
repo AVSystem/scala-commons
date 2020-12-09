@@ -6,8 +6,7 @@ import java.io.{PrintWriter, StringWriter}
 import scala.tools.nsc.Global
 import scala.util.control.NonFatal
 
-abstract class AnalyzerRule[C <: Global with Singleton](
-  val global: C, val name: String, defaultLevel: Level = Level.Warn) {
+abstract class AnalyzerRule(val global: Global, val name: String, defaultLevel: Level = Level.Warn) {
 
   import global._
 
@@ -32,7 +31,7 @@ abstract class AnalyzerRule[C <: Global with Singleton](
   protected def report(pos: Position, message: String): Unit =
     level match {
       case Level.Off =>
-      case Level.Info => reporter.info(pos, adjustMsg(message), force = true)
+      case Level.Info => reporter.echo(pos, adjustMsg(message))
       case Level.Warn => reporter.warning(pos, adjustMsg(message))
       case Level.Error => reporter.error(pos, adjustMsg(message))
     }

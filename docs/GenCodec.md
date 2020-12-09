@@ -33,6 +33,7 @@ However, `GenCodec` is **not** a JSON library even though it has support for JSO
   - [Customizing sealed hierarchy codecs](#customizing-sealed-hierarchy-codecs)
   - [Nested vs flat format](#nested-vs-flat-format)
 - [Third party classes](#third-party-classes)
+  - [Injecting additional implicits into `GenCodec` materialization](#injecting-additional-implicits-into-gencodec-materialization)
 - [`GenObjectCodec`](#genobjectcodec)
 - [Summary](#summary)
   - [Codec dependencies](#codec-dependencies)
@@ -213,22 +214,25 @@ directly on `String` values, without intermediate JSON AST
 
 In order to serialize/deserialize value of some type, there needs to be an implicit value of type `GenCodec[T]` available.
 The library by default provides codecs for common Scala and Java types:
-* `Unit`, `Null`, `String`, `Symbol`, `Char`, `Boolean`, `Byte`, `Short`, `Int`, `Long`, `Float`, `Double`, `java.util.Date`, 
-  `Array[Byte]`, `BigInt`, `BigDecimal` and all their Java boxed counterparts (like `java.lang.Integer`).
+* `Unit`, `Null`, `String`, `Symbol`, `Char`, `Boolean`, `Byte`, `Short`, `Int`, `Long`, `Float`, `Double`,
+  `java.util.Date`, `Array[Byte]`, `BigInt`, `BigDecimal` and all their Java boxed counterparts 
+  (like `java.lang.Integer`).
 * Any Scala tuple, provided that every tuple element type can be serialized. Tuples are serialized into lists.
 * Any `Array[T]`, provided that `T` can be serialized
-* Any Scala collection extending `scala.collection.Seq[T]` or `scala.collection.Set[T]`, provided that `T` can be serialized
-  and there is an appropriate instance of `CanBuildFrom` (e.g. `GenCodec[List[T]]` requires `CanBuildFrom[Nothing, T, List[T]]`).
-  All standard library collections have this `CanBuildFrom` instance so you only have to worry about it when dealing with
+* Any Scala collection extending `scala.collection.Seq[T]` or `scala.collection.Set[T]`, provided that `T` can be 
+  serialized
+  and there is an appropriate instance of `Factory` (e.g. `GenCodec[List[T]]` requires `Factory[T, List[T]]`).
+  All standard library collections have this `Factory` instance so you only have to worry about it when dealing with
   custom collection implementations.
 * Any `java.util.Collection[T]`, provided that `T` can be serialized
 * Any `scala.collection.Map[K,V]` provided that `V` can be serialized and there is an implicit
-  [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html) available for `K`
-  so that it can be converted to a string and used as object key. There must also be an appropriate instance of `CanBuildFrom` for
-  particular `Map` implementation (e.g. `HashMap[K,V]` requires `CanBuildFrom[Nothing, (K, V), HashMap[K, V]]`).
-  All standard library map implementations have this `CanBuildFrom` instance so you only have to worry about it when dealing
-  with custom map implementations.
-* Any `java.util.Map[K,V]`, with the same restrictions as for Scala maps (there must be `GenCodec` for `V` and `GenKeyCodec` for `K`)
+  [`GenKeyCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html)
+   available for `K` so that it can be converted to a string and used as object key. 
+  There must also be an appropriate instance of `Factory` for particular `Map` implementation (e.g. `HashMap[K,V]` 
+  requires `Factory[(K, V), HashMap[K, V]]`). All standard library map implementations have this `Factory` instance
+  so you only have to worry about it when dealing with custom map implementations.
+* Any `java.util.Map[K,V]`, with the same restrictions as for Scala maps (there must be `GenCodec` for `V` and 
+  `GenKeyCodec` for `K`)
 * `Option[T]`, `Opt[T]`, `OptArg[T]`, `NOpt[T]`, `OptRef[T]`, provided that `T` can be serialized.
 * `Either[A,B]`, provided that `A` and `B` can be serialized.
 * [`NamedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnum.html)s 
@@ -296,9 +300,10 @@ JsonStringInput.read[(Int,String,Double)](raw) // (1, "sth", 2.0)
 In order to make your own (or third-party) classes and types serializable, you need to provide an instance of 
 [`GenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec.html) 
 for it. You can implement it manually, but in most cases you'll probably rely on one of the predefined
-codecs (primitive types, collections, standard library classes, etc.) or materialize it automatically
-by extending [`HasGenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/HasGenCodec.html)
-with companion object of your type or by using the
+codecs (primitive types, collections, standard library classes, etc.) or materialize it automatically by making
+the companion object of your type extend
+[`HasGenCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/HasGenCodec.html)
+or by using the
 [`GenCodec.materialize`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenCodec$.html#materialize[T]:com.avsystem.commons.serialization.GenCodec[T])
 macro directly.
 
@@ -322,19 +327,14 @@ case class Person(name: String, birthYear: Int)
 object Person extends HasGenCodec[Person]
 ```
 
-By extending `HasGenCodec[Person]` with companion object of `Person`, you're making the compiler automatically
-materialize an instance of `GenCodec[Person]`. This works for case classes, case class like types (i.e. ones that have
-appropriate `apply` and `unapply` methods in their companion object) and sealed hierarchies. Instead of using `HasGenCodec`,
-you may also declare the codec manually and materialize it with explicit call to `GenCodec.materialize` macro:
+By making companion object of `Person` extend `HasGenCodec[Person]` you're making the compiler automatically
+materialize an instance of `GenCodec[Person]` and inject it into the companion object. 
+The same works for case classes, case class like types (i.e. ones that have appropriate `apply` and `unapply` methods 
+in their companion object) and sealed hierarchies.
 
-```scala
-case class Person(name: String, birthYear: Int)
-object Person {
-  implicit val codec: GenCodec[Person] = GenCodec.materialize
-}
-```
-
-Using `GenCodec.materialize` instead of `HasGenCodec` is sometimes necessary, e.g. when some additional implicits need to be imported into macro-materialization.
+There are also other flavors of `HasGenCodec`. For example, `HasPolyGenCodec` handles parameterized (generic) data types
+and `HasGenCodecWithDeps` allows injecting additional implicits into macro materialization.
+Even if none of the available base companion classes fits your needs, it should be relatively painless to write your own.
 
 The macro-materialized codec for case class serializes it into an object where field names serve as keys and field 
 values as associated values. For example, `Person("Fred", 1990)` would be represented (using `JsonStringOutput`)
@@ -409,7 +409,7 @@ Following changes can be made to a case class while keeping it backwards compati
 
 ### Case class like types
 
-If, for whatever reason, your class can't be a case class, but you still want it to be serialized like a case class would be, you can make it look like a case class for the `GenCodec.materialize` macro. In order to do this, simply provide your own implementations of `apply` and `unapply` methods in the companion object of your trait/class. For case classes, these methods are generated automatically by the compiler.
+If, for whatever reason, your class can't be a case class, but you still want it to be serialized like a case class would be, you can make it look like a case class. In order to do this, simply provide your own implementations of `apply` and `unapply` methods in the companion object of your trait/class. For case classes, these methods are generated automatically by the compiler.
 
 ```scala
 class Person(val name: String, val birthYear: Int)
@@ -445,7 +445,12 @@ Singleton codecs may not seem very useful as standalone codes - they're primaril
 
 ## Sealed hierarchies
 
-`GenCodec.materialize` macro can also be used to derive a `GenCodec` for a sealed trait or class. There are two possible serialization formats for sealed hierarchies: *nested* (the default one) and *flat* (enabled using [`@flatten`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/flatten.html) annotation). The nested format is the default one for historical reasons - it is generally recommended to use the flat format as it's more robust and customizable. The advantage of nested format is that it does not depend on the order of object fields.
+`HasGenCodec` base companion class and all its variants can also be used to derive a `GenCodec` for a sealed trait or
+class. There are two possible serialization formats for sealed hierarchies: *nested* (the default one) and *flat* 
+(enabled using [`@flatten`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/flatten.html)
+annotation). The nested format is the default one for historical reasons - it is generally recommended to use the flat 
+format as it's more robust and customizable. The advantage of nested format is that it does not depend on the order of 
+object fields.
 
 ### Nested format
 
@@ -456,7 +461,10 @@ case object InfiniteTimeout extends Timeout
 object Timeout extends HasGenCodec[Timeout]
 ```
 
-In nested format, values of sealed traits or classes are serialized into objects with just one field. The name of that field is the name of actual class being serialized. The value of that field will be the serialized class itself, using its own codec. For example, `FiniteTimeout(60)` would be represented (using [`JsonStringOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringOutput.html)) as `{"FiniteTimeout":{"seconds":60}}`
+In nested format, values of sealed traits or classes are serialized into objects with just one field. The name of that 
+field is the name of actual class being serialized. The value of that field will be the serialized class itself, using 
+its own codec. For example, `FiniteTimeout(60)` would be represented (using [`JsonStringOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringOutput.html)) 
+as `{"FiniteTimeout":{"seconds":60}}`
 
 `GenCodec` for each case class/object may be provided explicitly or left for the macro to materialize. In other words, the `materialize` macro called for sealed trait *will* descend into its subtypes and materialize their codecs recursively. However, it will still *not* descend into any case class fields.
 
@@ -471,7 +479,7 @@ case object InfiniteTimeout extends Timeout
 object Timeout extends HasGenCodec[Timeout]
 ```
 
-Instead of creating a single-field object, now the `materialize` macro will assume that every case class/object serializes to an object (e.g. JSON object) and will use this object as a representation of the entire sealed type. In order to differentiate between case classes during deserialization, an additional marker field containing class name is added at the beginning of resulting object. For example, `FiniteTimeout(60)` would be represented (using [`JsonStringOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringOutput.html)) as `{"_case":"FiniteTimeout","seconds":60}`
+Instead of creating a single-field object, now the `materialize` macro will assume that every case class/object serializes to an object (e.g. JSON object) and will use this object as a representation of the entire sealed type. In order to differentiate between case classes during deserialization, an additional discriminator field containing class name is added at the beginning of resulting object. For example, `FiniteTimeout(60)` would be represented (using [`JsonStringOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringOutput.html)) as `{"_case":"FiniteTimeout","seconds":60}`
 
 ### Customizing sealed hierarchy codecs
 
@@ -487,7 +495,7 @@ the same [annotation processing](Annotations.md) rules.
    object Tree extends HasGenCodec[Tree]
    ```
 
-* When using flat format, name of the marker field (`_case` by default) may be customized by passing it as an argument to `@flatten` annotation, e.g. `@flatten("$case")`.
+* When using flat format, name of the marker field (`_case` by default) may be customized by passing it as an argument to `@flatten` annotation, e.g. `@flatten("type")`.
 
 * When using flat format, one of the case classes may be annotated as [`@defaultCase`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/defaultCase.html). When marker field is missing during deserialization, the codec will assume that it's deserializing the case class annotated as `@defaultCase`. This mechanism is useful to retain backwards compatibility when refactoring a case class into a sealed hierarchy with multiple case classes.
 
@@ -546,7 +554,35 @@ object JavaPersonFakeCompanion {
 
 ```
 
-Now, as long as you remember to `import JavaPersonFakeCompanion.javaPersonCodec`, `JavaPerson` instances will serialize just as if it was a regular Scala case class. The macro derives serialization format from signatures of `apply` and `unapply` methods and uses them to create and deconstruct `JavaPerson` instances.
+Now, as long as `JavaPersonFakeCompanion.javaPersonCodec` is in scope, `JavaPerson` instances will serialize just as if it was a regular Scala case class. The macro derives serialization format from signatures of `apply` and `unapply` methods and uses them to create and deconstruct `JavaPerson` instances.
+
+### Injecting additional implicits into `GenCodec` materialization
+
+When possible, you should keep all your `GenCodec` instances (and other implicits) in companion objects of your data types.
+This way they will be effectively globally visible and won't need to be imported. However, this is not always possible -
+a `GenCodec` instance for a third party class is the most common example of such situation.
+
+Of course, you can always import third party implicits explicitly into the scope. However, this is problematic because it 
+doesn't always work (presumably due to compiler bugs) and IDEs like IntelliJ IDEA tend to recognize such imports as unused.
+Because of this, `GenCodec` comes with a handy base companion class, similar to `HasGenCodec` but capable of injecting additional implicits. It is called `HasGenCodecWithDeps`.
+
+```scala
+object MyAdditionalImplicits {
+  implicit val javaPersonCodec: GenCodec[JavaPerson] = ...
+  ...
+}
+
+case class UsesJavaPerson(javaPerson: JavaPerson)
+object UsesJavaPerson extends HasGenCodecWithDeps[MyAdditionalImplicits.type, JavaPerson]
+```
+
+In order to reduce boilerplate, you can make your own base companion class which automatically injects desired implicits:
+
+```scala
+abstract class HasCustomizedGenCodec[T](
+  implicit macroCodec: MacroInstances[MyAdditionalImplicits.type, () => GenCodec[T]]
+) extends HasGenCodecWithDeps[MyAdditionalImplicits.type, T]
+```
 
 ## [`GenObjectCodec`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/GenKeyCodec.html)
 

@@ -4,7 +4,7 @@ package mongo.typed
 import com.avsystem.commons.mongo.core.GenCodecRegistry
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.client.model._
-import com.mongodb.client.result.{DeleteResult, UpdateResult}
+import com.mongodb.client.result._
 import com.mongodb.reactivestreams.client.{DistinctPublisher, FindPublisher, MongoCollection}
 import com.mongodb.{MongoNamespace, ReadConcern, ReadPreference, WriteConcern}
 import monix.eval.Task
@@ -32,6 +32,9 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     val documentClass = classTag.runtimeClass.asInstanceOf[Class[E]]
     rawCollection.withCodecRegistry(codecRegistry).withDocumentClass(documentClass)
   }
+
+  private def empty[T](publisher: Publisher[Void]): Task[Unit] =
+    Observable.fromReactivePublisher(publisher, 1).completedL
 
   private def single[T](publisher: Publisher[T]): Task[T] =
     Observable.fromReactivePublisher(publisher, 1).firstL
@@ -62,6 +65,13 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     new TypedMongoCollection(rawCollection.withReadPreference(readPreference))
 
   /**
+    * Invokes some empty-result operation directly on Reactive Streams collection. This method is supposed
+    * to be used for database operations not covered directly by [[TypedMongoCollection]].
+    */
+  def emptyResultNativeOp(operation: MongoCollection[E] => Publisher[Void]): Task[Unit] =
+    empty(operation(nativeCollection))
+
+  /**
     * Invokes some single-result operation directly on Reactive Streams collection. This method is supposed
     * to be used for database operations not covered directly by [[TypedMongoCollection]].
     */
@@ -76,13 +86,13 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     Observable.fromReactivePublisher(operation(nativeCollection))
 
   def drop(): Task[Unit] =
-    single(nativeCollection.drop()).void
+    empty(nativeCollection.drop())
 
   def renameCollection(
     namespace: MongoNamespace,
     setupOptions: RenameCollectionOptions => RenameCollectionOptions = identity
   ): Task[Unit] =
-    single(nativeCollection.renameCollection(namespace, setupOptions(new RenameCollectionOptions))).void
+    empty(nativeCollection.renameCollection(namespace, setupOptions(new RenameCollectionOptions)))
 
   def countDocuments(
     filter: MongoDocumentFilter[E] = MongoFilter.empty,
@@ -221,14 +231,14 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   def insertOne(
     value: E,
     setupOptions: InsertOneOptions => InsertOneOptions = identity
-  ): Task[Unit] =
-    single(nativeCollection.insertOne(value, setupOptions(new InsertOneOptions))).void
+  ): Task[InsertOneResult] =
+    single(nativeCollection.insertOne(value, setupOptions(new InsertOneOptions)))
 
   def insertMany(
     values: Seq[E],
     setupOptions: InsertManyOptions => InsertManyOptions = identity
-  ): Task[Unit] =
-    single(nativeCollection.insertMany(values.asJava, setupOptions(new InsertManyOptions))).void
+  ): Task[InsertManyResult] =
+    single(nativeCollection.insertMany(values.asJava, setupOptions(new InsertManyOptions)))
 
   def deleteOne(
     filter: MongoDocumentFilter[E],
@@ -284,7 +294,7 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     writes: Seq[MongoWrite[E]],
     setupOptions: BulkWriteOptions => BulkWriteOptions = identity
   ): Task[BulkWriteResult] = {
-    val requests = writes.iterator.map(_.toWriteModel).to[JList]
+    val requests = writes.iterator.map(_.toWriteModel).to(JList)
     single(nativeCollection.bulkWrite(requests, setupOptions(new BulkWriteOptions)))
   }
 
@@ -297,7 +307,7 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
   ): Task[String] = {
     val indexModels = indexes.iterator
       .map(index => new IndexModel(index.toBson, index.setupOptions(new IndexOptions)))
-      .to[JList]
+      .to(JList)
     single(nativeCollection.createIndexes(indexModels, setupOptions(new CreateIndexOptions)))
   }
 }

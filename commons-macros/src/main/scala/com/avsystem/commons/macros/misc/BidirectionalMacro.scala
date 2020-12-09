@@ -126,7 +126,7 @@ class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
   }
 
   def indent(str: String): String =
-    str.split("\n").toStream.map("  " + _).mkString("\n")
+    str.split("\n").iterator.map("  " + _).mkString("\n")
 
   def prettyPrint(v: Any): String = v match {
     case tt: TypeTree if tt.original != null =>

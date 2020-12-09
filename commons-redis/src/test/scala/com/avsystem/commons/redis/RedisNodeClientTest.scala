@@ -48,7 +48,7 @@ class RedisNodeClientTest extends AnyFunSuite
           |  return { ok = 'OK' }
           |end
         """.stripMargin
-      def decoder: ReplyDecoder[Unit] = ReplyDecoders.simpleOkUnit
+      def decoder: ReplyDecoder[Unit] = ReplyDecoders.simpleOkAsUnit
     }
 
     val eval = RedisApi.Batches.StringTyped.eval(FakeLoadingErrorScript, Seq.empty, Seq.empty)

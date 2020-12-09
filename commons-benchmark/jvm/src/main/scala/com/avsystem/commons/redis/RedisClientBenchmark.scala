@@ -8,7 +8,6 @@ import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, TimeUnit}
 
 import akka.actor.ActorSystem
 import akka.util.{ByteString, Timeout}
-import com.avsystem.commons.benchmark.CrossRedisBenchmark
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.redis.RedisClientBenchmark._
 import com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener
@@ -71,12 +70,12 @@ abstract class RedisBenchmark(useTls: Boolean) {
   }
 
   val connectionConfig: ConnectionConfig = ConnectionConfig(
-    tlsConfig = if(useTls) OptArg(TlsConfig(sslContext)) else OptArg.Empty,
+    sslEngineCreator = if(useTls) OptArg(() => sslContext.createSSLEngine()) else OptArg.Empty,
     initCommands = clientSetname("benchmark")
   )
 
   val monConnectionConfig: ConnectionConfig = ConnectionConfig(
-    tlsConfig = if(useTls) OptArg(TlsConfig(sslContext)) else OptArg.Empty,
+    sslEngineCreator = if(useTls) OptArg(() => sslContext.createSSLEngine()) else OptArg.Empty,
     initCommands = clientSetname("benchmarkMon")
   )
 
@@ -134,7 +133,7 @@ object RedisClientBenchmark {
 
 @OperationsPerInvocation(ConcurrentCommands)
 abstract class AbstractRedisClientBenchmark(useTls: Boolean)
-  extends RedisBenchmark(useTls) with CrossRedisBenchmark {
+  extends RedisBenchmark(useTls) {
 
   import RedisApi.Batches.StringTyped._
 

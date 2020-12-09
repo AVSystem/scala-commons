@@ -28,7 +28,7 @@ object IO {
   private final val ResourcesPath = NodeEnv.get("RESOURCES_DIR")
 
   private def nativePath(path: String): String =
-    ResourcesPath + path.replaceAllLiterally("/", NodePath.sep)
+    ResourcesPath + path.replace("/", NodePath.sep)
 
   def readTestResource(path: String): String =
     NodeFS.readFileSync(nativePath(path), "UTF-8")

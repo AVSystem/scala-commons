@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class ThrowableObjects[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "throwableObjects", Level.Warn) {
+class ThrowableObjects(g: Global) extends AnalyzerRule(g, "throwableObjects", Level.Warn) {
 
   import global._
 

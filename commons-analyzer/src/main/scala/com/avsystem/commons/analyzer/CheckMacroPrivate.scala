@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class CheckMacroPrivate[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "macroPrivate") {
+class CheckMacroPrivate(g: Global) extends AnalyzerRule(g, "macroPrivate") {
 
   import global._
 

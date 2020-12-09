@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 /**
@@ -46,8 +47,9 @@ trait Output extends Any {
 
   /**
     * Determines whether serialization format implemented by this `Output` preserves particular arbitrary
-    * "metadata" which is identified by [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] which is usually an object
-    * (e.g. companion object of metadata value type `T`).
+    * "metadata" which is identified by [[com.avsystem.commons.serialization.InputMetadata InputMetadata]]
+    * which is usually an object (e.g. companion object of metadata value type `T`).
+    *
     * An example of [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] is
     * [[com.avsystem.commons.serialization.json.JsonType JsonType]] supported by
     * [[com.avsystem.commons.serialization.json.JsonStringOutput JsonStringOutput]].
@@ -99,9 +101,53 @@ trait OutputAndSimpleOutput extends Any with Output with SimpleOutput {
 }
 
 /**
+  * Using `SizePolicy`, a [[SequentialOutput]] ([[ListOutput]] or [[ObjectOutput]]) may hint the codec whether it
+  * makes use or requires explicit list or object size to be declared with [[SequentialOutput.declareSize]].
+  */
+final class SizePolicy(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+object SizePolicy extends AbstractValueEnumCompanion[SizePolicy] {
+  /**
+    * Indicates that the [[SequentialOutput]] implementation does not utilize explicitly declared size in any way.
+    * This means that the codec may always omit the `declareSize` invocation.
+    */
+  final val Ignored: Value = new SizePolicy
+
+  /**
+    * Indicates that the [[SequentialOutput]] implementation is able to take advantage of explicitly declared size
+    * (e.g. in order to preallocate some buffers with accurate size or use more compact representation) but it is still
+    * able to work without size known upfront. With this policy, the codec may decide on its own whether it's worth
+    * computing the size upfront. Typically it will do it only when that computation is cheap, e.g. for a Scala `Vector`
+    * but omit it when it could degrade performance, e.g. for a Scala `List` which requires entire list traversal to
+    * compute its size.
+    */
+  final val Optional: Value = new SizePolicy
+
+  /**
+    * Indicates that the [[SequentialOutput]] implementation always requires the codec to declare list or object size
+    * explicitly. The codec is then obliged to call [[SequentialOutput.declareSize]] before writing any elements or
+    * fields, regardless of the cost of computing that size.
+    */
+  final val Required: Value = new SizePolicy
+}
+
+/**
   * Base trait for outputs which allow writing of multiple values in sequence, i.e. [[ListOutput]] and [[ObjectOutput]].
   */
 trait SequentialOutput extends Any {
+  /**
+    * Gives the output explicit information about the number of elements or fields that will be written to this
+    * output by the codec. This method must be called at most once, before any elements or fields have been written.
+    * The codec is then required to write exactly the declared number of elements or fields.
+    * Whether the codec should or must call this method depends on [[sizePolicy]] and the cost of computing the size.
+    */
+  def declareSize(size: Int): Unit = ()
+
+  /**
+    * Provides information about whether this output makes use of list or object size explicitly declared with
+    * [[declareSize]]. See [[SizePolicy]] for more details.
+    */
+  def sizePolicy: SizePolicy = SizePolicy.Optional
+
   /**
     * Indicates that all elements or fields in this [[com.avsystem.commons.serialization.SequentialOutput SequentialOutput]]
     * have been written. This method MUST always be called after list/object writing has been finished.
@@ -238,6 +284,12 @@ trait InputAndSimpleInput extends Any with Input with SimpleInput {
 }
 
 trait SequentialInput extends Any {
+  /**
+    * Returns total number of elements or fields in this input or -1 if it is unknown.
+    * This method can be used by codecs in order to optimize decoding of collections.
+    */
+  def knownSize: Int = -1
+
   def hasNext: Boolean
   def skipRemaining(): Unit
 }

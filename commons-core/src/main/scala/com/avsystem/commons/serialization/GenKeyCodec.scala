@@ -4,6 +4,7 @@ package serialization
 import java.util.UUID
 
 import com.avsystem.commons.annotation.explicitGenerics
+import com.avsystem.commons.misc.{Bytes, Timestamp}
 import com.avsystem.commons.serialization.GenCodec.{ReadFailure, WriteFailure}
 
 import scala.annotation.implicitNotFound
@@ -79,6 +80,9 @@ object GenKeyCodec {
   implicit lazy val StringKeyCodec: GenKeyCodec[String] = create(identity, identity)
   implicit lazy val SymbolKeyCodec: GenKeyCodec[Symbol] = create(Symbol(_), _.name)
   implicit lazy val UuidCodec: GenKeyCodec[UUID] = create(UUID.fromString, _.toString)
+
+  implicit lazy val TimestampKeyCodec: GenKeyCodec[Timestamp] = GenKeyCodec.create(Timestamp.parse, _.toString)
+  implicit lazy val BytesKeyCodec: GenKeyCodec[Bytes] = GenKeyCodec.create(Bytes.fromBase64(_), _.base64)
 
   implicit def jEnumKeyCodec[E <: Enum[E]](implicit ct: ClassTag[E]): GenKeyCodec[E] =
     GenKeyCodec.create(

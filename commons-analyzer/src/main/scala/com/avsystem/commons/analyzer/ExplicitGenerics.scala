@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class ExplicitGenerics[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "explicitGenerics") {
+class ExplicitGenerics(g: Global) extends AnalyzerRule(g, "explicitGenerics") {
 
   import global._
 

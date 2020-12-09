@@ -6,6 +6,7 @@ import com.mongodb.client.model.Aggregates
 import com.mongodb.reactivestreams.client.MongoClients
 import monix.eval.Task
 import monix.execution.Scheduler
+import org.bson.Document
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
@@ -182,6 +183,10 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
   test("native operation") {
     val fieldRef = "$" + Rte.ref(_.intList).rawPath
     val pipeline = JList(Aggregates.project(Bson.document("intSum", Bson.document("$sum", Bson.string(fieldRef)))))
-    assert(rteColl.multiResultNativeOp(_.aggregate(pipeline)).map(_.getInteger("intSum", 0)).toListL.value == entities.map(_.intList.sum))
+    assert(rteColl
+      .multiResultNativeOp(_.aggregate(pipeline, classOf[Document]))
+      .map(_.getInteger("intSum", 0)).toListL
+      .value == entities.map(_.intList.sum)
+    )
   }
 }

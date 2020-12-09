@@ -280,6 +280,7 @@ class StreamOutput(os: DataOutputStream) extends OutputAndSimpleOutput {
 }
 
 private class StreamListOutput(os: DataOutputStream, output: StreamOutput) extends ListOutput {
+  override def sizePolicy: SizePolicy = SizePolicy.Ignored
 
   def writeElement(): Output = output
 
@@ -289,6 +290,7 @@ private class StreamListOutput(os: DataOutputStream, output: StreamOutput) exten
 }
 
 private class StreamObjectOutput(os: DataOutputStream, output: StreamOutput) extends ObjectOutput {
+  override def sizePolicy: SizePolicy = SizePolicy.Ignored
 
   def writeField(key: String): Output = {
     output.writeString(key)

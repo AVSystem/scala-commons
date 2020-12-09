@@ -58,7 +58,7 @@ final class RedisClusterClient(
   // ensures that all operations fail fast after client is closed instead of being sent further
   @volatile private[this] var failure = Opt.empty[Throwable]
 
-  private val initPromise = Promise[Unit]
+  private val initPromise = Promise[Unit]()
   initPromise.future.foreachNow(_ => initSuccess = true)
 
   private def ifReady[T](code: => Future[T]): Future[T] = failure match {
@@ -288,9 +288,9 @@ final class RedisClusterClient(
   }
 
   private def executeClusteredPacks[A](packs: RawCommandPacks, currentState: ClusterState)(implicit timeout: Timeout) = {
-    val barrier = Promise[Unit]
-    val packsByNode = new mutable.OpenHashMap[RedisNodeClient, ArrayBuffer[RawCommandPack]]
-    val resultsByNode = new mutable.OpenHashMap[RedisNodeClient, Future[PacksResult]]
+    val barrier = Promise[Unit]()
+    val packsByNode = new mutable.HashMap[RedisNodeClient, ArrayBuffer[RawCommandPack]]
+    val resultsByNode = new mutable.HashMap[RedisNodeClient, Future[PacksResult]]
 
     def futureForPack(slot: Int, client: RedisNodeClient, pack: RawCommandPack): Future[RedisReply] = {
       val packBuffer = packsByNode.getOrElseUpdate(client, new ArrayBuffer)
@@ -317,7 +317,7 @@ final class RedisClusterClient(
     barrier.success(())
 
     // specialized Future.sequence which avoids creating new collection and doesn't need execution contexts
-    val finalPromise = Promise[Int => RedisReply]
+    val finalPromise = Promise[Int => RedisReply]()
     val finalResult = results.andThen(_.value.get.get)
     val counter = new AtomicInteger(results.size)
     for (i <- results.indices) {
@@ -342,7 +342,7 @@ final class RedisClusterClient(
 private object RedisClusterClient {
   final val GetClientTimeout = Timeout(1.seconds)
 
-  case class CollectionPacks(coll: IndexedSeq[RawCommandPack]) extends RawCommandPacks {
+  case class CollectionPacks(coll: BIndexedSeq[RawCommandPack]) extends RawCommandPacks {
     def emitCommandPacks(consumer: RawCommandPack => Unit): Unit = coll.foreach(consumer)
     def computeSize(limit: Int): Int = limit min coll.size
   }

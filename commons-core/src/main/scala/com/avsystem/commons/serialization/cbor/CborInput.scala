@@ -376,6 +376,8 @@ abstract class CborSequentialInput(reader: CborReader, private[this] var size: I
 
   private val indefDepth = reader.openIndefinites
 
+  override def knownSize: Int = size
+
   def hasNext: Boolean = {
     reader.closeIndefinites(indefDepth)
     size match {

@@ -27,7 +27,7 @@ object Unapplier {
 }
 
 class ProductUnapplier[T <: Product] extends Unapplier[T] {
-  def unapply(value: T): Seq[Any] = value.productIterator.toArray[Any]
+  def unapply(value: T): Seq[Any] = IArraySeq.unsafeWrapArray(value.productIterator.toArray)
 }
 abstract class ProductApplierUnapplier[T <: Product] extends ProductUnapplier[T] with ApplierUnapplier[T]
 

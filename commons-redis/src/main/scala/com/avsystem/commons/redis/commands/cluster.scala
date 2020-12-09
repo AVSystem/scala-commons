@@ -7,8 +7,8 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol.SimpleStringMsg
 
+import scala.collection.compat._
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
 trait KeyedClusterApi extends ApiSubset {
   def keySlot(key: Key): Int =
@@ -167,11 +167,11 @@ trait NodeClusterApi extends KeyedClusterApi {
     val encoded: Encoded = encoder("CLUSTER", "MEET").add(address.ip).add(address.port).result
   }
 
-  private final object ClusterMyid extends AbstractRedisCommand[NodeId](bulkNodeId) with NodeCommand {
+  private final object ClusterMyid extends AbstractRedisCommand[NodeId](bulkAsNodeId) with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "MYID").result
   }
 
-  private object ClusterNodes extends AbstractRedisCommand[Seq[NodeInfo]](bulkNodeInfos) with NodeCommand {
+  private object ClusterNodes extends AbstractRedisCommand[Seq[NodeInfo]](bulkAsNodeInfos) with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "NODES").result
   }
 
@@ -195,12 +195,12 @@ trait NodeClusterApi extends KeyedClusterApi {
     val encoded: Encoded = encoder("CLUSTER", "SETSLOT").add(slot).add(subcommand).result
   }
 
-  private final class ClusterSlaves(nodeId: NodeId) extends AbstractRedisCommand[Seq[NodeInfo]](multiBulkNodeInfos) with NodeCommand {
+  private final class ClusterSlaves(nodeId: NodeId) extends AbstractRedisCommand[Seq[NodeInfo]](multiBulkAsNodeInfos) with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "SLAVES").add(nodeId.raw).result
   }
 
   private object ClusterSlots
-    extends RedisSeqCommand[SlotRangeMapping](multiBulkSlotRangeMapping) with NodeCommand {
+    extends RedisSeqCommand[SlotRangeMapping](multiBulkAsSlotRangeMapping) with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "SLOTS").result
   }
 }
@@ -279,11 +279,11 @@ case class NodeInfo(infoLine: String) {
   val pongRecv: Long = splitLine(5).toLong
   val configEpoch: Long = splitLine(6).toLong
   val connected: Boolean = splitLine(7) == "connected"
-  val (slots: Seq[SlotRange], importingSlots: Seq[(Int, NodeId)], migratingSlots: Seq[(Int, NodeId)]) = {
 
-    val slots = new ArrayBuffer[SlotRange]
-    val importingSlots = new ArrayBuffer[(Int, NodeId)]
-    val migratingSlots = new ArrayBuffer[(Int, NodeId)]
+  val (slots: Seq[SlotRange], importingSlots: Seq[(Int, NodeId)], migratingSlots: Seq[(Int, NodeId)]) = {
+    val slots = mutable.ArrayBuilder.make[SlotRange]
+    val importingSlots = mutable.ArrayBuilder.make[(Int, NodeId)]
+    val migratingSlots = mutable.ArrayBuilder.make[(Int, NodeId)]
 
     splitLine.iterator.drop(8).foreach { str =>
       (str.indexOf("-<-"), str.indexOf("->-"), str.indexOf('-')) match {
@@ -299,7 +299,11 @@ case class NodeInfo(infoLine: String) {
         case _ =>
       }
     }
-    (slots, importingSlots, migratingSlots)
+
+    def res[T](b: mutable.ArrayBuilder[T]): IndexedSeq[T] =
+      IArraySeq.unsafeWrapArray(b.result())
+
+    (res(slots), res(importingSlots), res(migratingSlots))
   }
 
   override def toString: String = infoLine
@@ -350,7 +354,7 @@ object NodeFlags {
   )
 
   def apply(str: String): NodeFlags = {
-    val flagSet = str.split(',').to[mutable.HashSet]
+    val flagSet = str.split(',').to(mutable.HashSet)
     reprValuePairs.foldLeft(Noflags) {
       case (res, (s, flags)) => if (flagSet(s)) res | flags else res
     }

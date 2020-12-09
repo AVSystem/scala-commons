@@ -1,9 +1,5 @@
 package com.avsystem.commons.misc
 
-import com.avsystem.commons.misc.OptArg.EmptyMarker
-
-import scala.language.implicitConversions
-
 object OptArg {
   /**
     * This implicit conversion allows you to pass unwrapped values where `OptArg` is required.
@@ -47,7 +43,9 @@ object OptArg {
   * methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that [[OptArg]] is converted to [[Opt]],
   * [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption` methods).
   */
-final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
+final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+  import OptArg._
+
   private def value: A = rawValue.asInstanceOf[A]
 
   @inline def get: A = if (isEmpty) throw new NoSuchElementException("empty OptArg") else value

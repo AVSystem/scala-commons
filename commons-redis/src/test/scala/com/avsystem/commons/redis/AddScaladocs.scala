@@ -213,11 +213,6 @@ object AddScaladocs {
       case ch => ch.toUpper.toString
     }
 
-    def hyph(str: String) = str.flatMap {
-      case ch if ch.isUpper => s"-${ch.toLower}"
-      case ch => ch.toString
-    }
-
     val file = "commons-redis/src/main/scala/com/avsystem/commons/redis/commands/transactions.scala"
     Source.fromFile(file).getLines().foreach {
       case line@MethodRegex(methodName) =>

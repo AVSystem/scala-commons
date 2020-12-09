@@ -109,7 +109,7 @@ trait GeoApi extends ApiSubset {
   }
 
   private final class Geopos(key: Key, members: Iterable[Value])
-    extends RedisSeqCommand[Opt[GeoPoint]](nullMultiBulkOr(multiBulkGeoPoint)) with NodeCommand {
+    extends RedisSeqCommand[Opt[GeoPoint]](nullMultiBulkOr(multiBulkAsGeoPoint)) with NodeCommand {
     val encoded: Encoded = encoder("GEOPOS").key(key).datas(members).result
   }
 
@@ -136,22 +136,22 @@ trait GeoApi extends ApiSubset {
 
   private final class Georadius[A <: GeoradiusAttrs](key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
     attributes: A, count: Opt[Long], sortOrder: Opt[SortOrder], readOnly: Boolean)
-    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulkSeq(geoAttributed(attributes, bulk[Value])))(
+    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulkAsSeq(geoAttributed(attributes, bulkAs[Value])))(
       key, point.opt, Opt.Empty, radius, unit, attributes.encodeFlags, count, sortOrder, readOnly, Opt.Empty, storeDist = false)
 
   private final class GeoradiusStore(key: Key, point: GeoPoint, radius: Double, unit: GeoUnit,
     count: Opt[Long], sortOrder: Opt[SortOrder], storeKey: Key, storeDist: Boolean)
-    extends AbstractGeoradius[Opt[Long]](nullBulkOr(integerLong))(
+    extends AbstractGeoradius[Opt[Long]](nullBulkOr(integerAsLong))(
       key, point.opt, Opt.Empty, radius, unit, Nil, count, sortOrder, readOnly = false, storeKey.opt, storeDist)
 
   private final class Georadiusbymember[A <: GeoradiusAttrs](key: Key, member: Value, radius: Double, unit: GeoUnit,
     attributes: A, count: Opt[Long], sortOrder: Opt[SortOrder], readOnly: Boolean)
-    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulkSeq(geoAttributed(attributes, bulk[Value])))(
+    extends AbstractGeoradius[Seq[A#Attributed[Value]]](multiBulkAsSeq(geoAttributed(attributes, bulkAs[Value])))(
       key, Opt.Empty, member.opt, radius, unit, attributes.encodeFlags, count, sortOrder, readOnly, Opt.Empty, storeDist = false)
 
   private final class GeoradiusbymemberStore(key: Key, member: Value, radius: Double, unit: GeoUnit,
     count: Opt[Long], sortOrder: Opt[SortOrder], storeKey: Key, storeDist: Boolean)
-    extends AbstractGeoradius[Opt[Long]](nullBulkOr(integerLong))(
+    extends AbstractGeoradius[Opt[Long]](nullBulkOr(integerAsLong))(
       key, Opt.Empty, member.opt, radius, unit, Nil, count, sortOrder, readOnly = false, storeKey.opt, storeDist)
 }
 
@@ -231,7 +231,8 @@ object GeoradiusAttrs {
       element.elements(1 + offset(finalFlags, DistFlag) + offset(finalFlags, HashFlag)) match {
         case ArrayMsg(IndexedSeq(BulkStringMsg(rawLong), BulkStringMsg(rawLat))) =>
           Withcoord(GeoPoint(rawLong.utf8String.toDouble, rawLat.utf8String.toDouble), wrapped)
-        case msg => throw new UnexpectedReplyException(s"Expected two-element array of bulk strings for COORD, got $msg")
+        case msg => throw new UnexpectedReplyException(
+          s"Expected two-element array of bulk strings for COORD, got $msg")
       }
   }
 }

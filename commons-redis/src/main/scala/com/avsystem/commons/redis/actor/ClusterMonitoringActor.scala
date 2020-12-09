@@ -9,6 +9,7 @@ import com.avsystem.commons.redis.config.ClusterConfig
 import com.avsystem.commons.redis.exception.{ClusterInitializationException, ErrorReplyException}
 import com.avsystem.commons.redis.util.{ActorLazyLogging, SingletonSeq}
 
+import scala.collection.compat._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
@@ -35,7 +36,7 @@ final class ClusterMonitoringActor(
     })
 
   private def openConnection(addr: NodeAddress, seed: Boolean): Future[Unit] = {
-    val initPromise = Promise[Unit]
+    val initPromise = Promise[Unit]()
     val connection = connections.getOrElseUpdate(addr, createConnection(addr))
     connection ! RedisConnectionActor.Open(seed, initPromise)
     initPromise.future
@@ -68,12 +69,12 @@ final class ClusterMonitoringActor(
       pool(i) = node
       i += 1
     }
-    pool.slice(0, count)
+    IArraySeq.unsafeWrapArray(pool.slice(0, count))
   }
 
   def receive: Receive = {
     case Refresh(nodeOpt) =>
-      if (suspendUntil.isOverdue) {
+      if (suspendUntil.isOverdue()) {
         val addresses = nodeOpt.map(new SingletonSeq(_)).getOrElse {
           if (fallbackToSeedsAfter.isOverdue()) {
             if (state.isDefined) {
@@ -101,16 +102,16 @@ final class ClusterMonitoringActor(
             (srm.range, clients.getOrElseUpdate(srm.master, createClient(srm.master)))
           }.toArray
           java.util.Arrays.sort(res, MappingComparator)
-          res: IndexedSeq[(SlotRange, RedisNodeClient)]
+          IArraySeq.unsafeWrapArray(res)
         }
 
         masters = nodeInfos.iterator.filter(n => n.flags.master && !n.flags.fail)
-          .map(_.address).to[mutable.LinkedHashSet]
+          .map(_.address).to(mutable.LinkedHashSet)
         masters.foreach { addr =>
           openConnection(addr, seed = false)
         }
 
-        val mappedMasters = slotRangeMapping.iterator.map(_.master).to[mutable.LinkedHashSet]
+        val mappedMasters = slotRangeMapping.iterator.map(_.master).to(mutable.LinkedHashSet)
 
         if (state.forall(_.mapping != newMapping)) {
           log.info(s"New cluster slot mapping received:\n${slotRangeMapping.mkString("\n")}")
@@ -121,7 +122,8 @@ final class ClusterMonitoringActor(
 
         if (scheduledRefresh.isEmpty) {
           val refreshInterval = config.autoRefreshInterval
-          scheduledRefresh = system.scheduler.schedule(refreshInterval, refreshInterval, self, Refresh(Opt.Empty)).opt
+          scheduledRefresh = system.scheduler.scheduleWithFixedDelay(
+            refreshInterval, refreshInterval, self, Refresh(Opt.Empty)).opt
         }
         fallbackToSeedsAfter = config.refreshUsingSeedNodesAfter.fromNow
 

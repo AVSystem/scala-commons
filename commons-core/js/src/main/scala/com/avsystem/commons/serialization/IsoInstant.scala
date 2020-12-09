@@ -11,7 +11,7 @@ object IsoInstant {
     js.RegExp("""^(\+|-)?[0-9]+-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{3})?Z$""")
 
   def format(millis: Long): String =
-    new js.Date(millis.toDouble).toISOString
+    new js.Date(millis.toDouble).toISOString()
 
   def parse(string: String): Long = {
     def fail = throw new ReadFailure(s"invalid ISO instant: $string")

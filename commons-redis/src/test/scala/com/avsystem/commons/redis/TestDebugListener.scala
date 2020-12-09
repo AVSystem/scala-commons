@@ -23,7 +23,7 @@ class TestDebugListener extends DebugListener {
       builder.append("\n")
       receiving = false
     }
-    builder.append(RedisMsg.escape(data, quote = false).replaceAllLiterally("\\r\\n", "\\r\\n\n"))
+    builder.append(RedisMsg.escape(data, quote = false).replace("\\r\\n", "\\r\\n\n"))
   }
 
   def onReceive(data: ByteString) = synchronized {
@@ -31,7 +31,7 @@ class TestDebugListener extends DebugListener {
       builder.append("\n")
       receiving = true
     }
-    builder.append(RedisMsg.escape(data, quote = false).replaceAllLiterally("\\r\\n", "\\r\\n\n"))
+    builder.append(RedisMsg.escape(data, quote = false).replace("\\r\\n", "\\r\\n\n"))
   }
 
   def result(): String = synchronized {

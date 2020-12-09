@@ -268,7 +268,7 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
     case TypeRef(pre, sym, args) if pre != NoPrefix || isAllowedWithoutPrefix(sym) =>
       val dealiased = tpe.dealias
       if (dealiased.typeSymbol != sym && !isStaticPrefix(pre))
-        mkTypeString(dealiased)
+        mkTypeString(dealiased, parens = false)
       else {
         val argsReprs =
           if (args.isEmpty) Nil
@@ -305,7 +305,7 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
       val space = if (basesRepr.nonEmpty && scopeRepr.nonEmpty) " " else ""
       maybeParens(basesRepr ::: lit(space) :: scopeRepr, parens)
     case AnnotatedType(_, underlying) =>
-      mkTypeString(underlying)
+      mkTypeString(underlying, parens = false)
     case _ =>
       throw NonConcreteTypeException(tpe)
   }
@@ -507,13 +507,13 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
       val unapplyRes = q"$companion.${au.unapply}[..${tpe.typeArgs}]($valueName)"
       au.params match {
         case Nil => q"$ScalaPkg.Seq.empty[$ScalaPkg.Any]"
-        case List(_) => q"$ScalaPkg.Array($unapplyRes.get)"
+        case List(_) => q"$ScalaPkg.Seq($unapplyRes.get)"
         case _ =>
           val resName = c.freshName(TermName("res"))
           val elems = au.params.indices.map(i => q"$resName.${TermName(s"_${i + 1}")}")
           q"""
              val $resName = $unapplyRes.get
-             $ScalaPkg.Array[$ScalaPkg.Any](..$elems)
+             $CollectionPkg.compat.immutable.ArraySeq.unsafeWrapArray($ArrayObj[$ScalaPkg.Any](..$elems))
            """
       }
     }
@@ -601,7 +601,7 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
     val tpe = weakTypeOf[T]
     val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
     val annotTree = findAnnotation(sym, atpe)
-      .fold[Tree](q"$MiscPkg.Opt.Empty")(a => q"$MiscPkg.Opt(${safeAnnotTree(a)})")
+      .fold[Tree](q"$CommonsPkg.Opt.Empty")(a => q"$CommonsPkg.Opt(${safeAnnotTree(a)})")
     q"$MiscPkg.OptAnnotationOf($annotTree)"
   }
 
@@ -643,7 +643,7 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
     val atpe = weakTypeOf[A]
     val sym = classBeingConstructed
     val annotTree = findAnnotation(sym, atpe)
-      .fold[Tree](q"$MiscPkg.Opt.Empty")(a => q"$MiscPkg.Opt(${safeAnnotTree(a)})")
+      .fold[Tree](q"$CommonsPkg.Opt.Empty")(a => q"$CommonsPkg.Opt(${safeAnnotTree(a)})")
     q"$MiscPkg.SelfOptAnnotation($annotTree)"
   }
 
@@ -658,6 +658,22 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
     val TypeRef(pre, constrSym, _) = weakTypeOf[C].typeConstructor
     val instance = internal.typeRef(pre, constrSym, List(classBeingConstructed.asType.toType))
     q"$MiscPkg.SelfInstance($ImplicitsObj.infer[$instance])"
+  }
+
+  def aggregatedAnnots: Tree = {
+    val aggregatedMethod = c.internal.enclosingOwner
+    if (!aggregatedMethod.overrides.contains(AggregatedMethodSym)) {
+      abort("reifyAggregated macro must only be used to implement AnnotationAggregate.aggregated method")
+    }
+    if (aggregatedMethod.asMethod.isGetter || !aggregatedMethod.isFinal) {
+      abort("AnnotationAggregate.aggregated method implemented with reifyAggregated macro must be a final def")
+    }
+    val annotTrees = rawAnnotations(aggregatedMethod)
+      .filter(_.tree.tpe <:< StaticAnnotationTpe).map(a => c.untypecheck(a.tree))
+    if (annotTrees.isEmpty) {
+      warning("no aggregated annotations found on enclosing method")
+    }
+    q"$ListObj(..$annotTrees)"
   }
 
   def simpleClassName[T: WeakTypeTag]: Tree = instrument {
@@ -730,7 +746,7 @@ final class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(
           case TypeBounds(lo, hi) if lo =:= hi =>
             lo
           case ts =>
-            print(t.typeSymbol.name + show(ts))
+            print(t.typeSymbol.name.toString + show(ts))
             quantified += t.typeSymbol
             t
         }

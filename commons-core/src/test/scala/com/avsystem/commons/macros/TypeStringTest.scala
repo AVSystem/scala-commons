@@ -5,9 +5,6 @@ import com.avsystem.commons.misc.TypeString
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.language.experimental.macros
-import scala.language.higherKinds
-
 object TypeStringTest {
   val x = "x"
 
@@ -94,7 +91,7 @@ class TypeStringTest extends AnyFunSuite {
 
   def testTypeString[T: TypeString](expected: String)(implicit pos: Position): Unit =
     test(s"${pos.lineNumber}:$expected") {
-      assert(TypeString.of[T].replaceAllLiterally("com.avsystem.commons.macros.", "") == expected)
+      assert(TypeString.of[T].replace("com.avsystem.commons.macros.", "") == expected)
     }
 
   TypeStringTest.defineTests[Double](this)

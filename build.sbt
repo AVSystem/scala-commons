@@ -9,26 +9,24 @@ cancelable in Global := true
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
 val silencerVersion = "1.7.1"
+val collectionCompatVersion = "2.1.6"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.2.1"
-val scalatestplusScalacheckVersion = "3.2.1.0"
+val scalatestplusScalacheckVersion = "3.2.2.0"
 val scalacheckVersion = "1.14.3"
 val jettyVersion = "9.4.31.v20200723"
-val mongoVersion = "3.12.7"
-val mongoReactiveVersion = "1.13.1"
-val mongoScalaVersion = "2.9.0"
-val kafkaVersion = "2.6.0"
-val springVersion = "4.0.9.RELEASE"
+val mongoVersion = "4.1.1"
+val springVersion = "4.3.26.RELEASE"
 val typesafeConfigVersion = "1.4.0"
 val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.2"
-val akkaVersion = "2.5.31"
+val akkaVersion = "2.6.8"
 val monixVersion = "3.3.0"
-val mockitoVersion = "3.5.2"
-val circeVersion = "0.11.2"
-val upickleVersion = "0.7.4"
-val scalajsBenchmarkVersion = "0.2.6"
+val mockitoVersion = "3.5.15"
+val circeVersion = "0.13.0"
+val upickleVersion = "1.2.0"
+val scalajsBenchmarkVersion = "0.8.0"
 val slf4jVersion = "1.7.30"
 
 useGpg := false // TODO: use sbt-ci-release
@@ -43,15 +41,15 @@ credentials in Global += Credentials(
   sys.env.getOrElse("SONATYPE_PASSWORD", "")
 )
 
-version in ThisBuild := 
-  sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("1.0-SNAPSHOT")
+version in ThisBuild :=
+  sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("2.0.0-SNAPSHOT")
 
 // for binary compatibility checking
-val previousCompatibleVersions = Set("1.34.8")
+val previousCompatibleVersions = Set("1.39.14")
 
 val commonSettings = Seq(
   organization := "com.avsystem.commons",
-  crossScalaVersions := Seq("2.11.12", "2.12.12"),
+  crossScalaVersions := Seq("2.12.12", "2.13.3"),
   scalaVersion := crossScalaVersions.value.last,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
@@ -66,19 +64,15 @@ val commonSettings = Seq(
     "-language:dynamics",
     "-language:experimental.macros",
     "-language:higherKinds",
-    "-Xfuture",
-    s"-Xlint:-missing-interpolator,-adapted-args,${if (scalaBinaryVersion.value == "2.12") "-unused," else ""}_",
-    "-P:silencer:checkUnused",
+    "-Xfatal-warnings",
+    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
   ),
   scalacOptions ++= {
-    if (scalaBinaryVersion.value != "2.11") Seq(
-      "-Xfatal-warnings",
+    if (scalaBinaryVersion.value == "2.12") Seq(
       "-Ycache-plugin-class-loader:last-modified",
       "-Ycache-macro-class-loader:last-modified",
     ) else Seq.empty
   },
-  // some Java 8 related tests use Java interface static methods, Scala 2.11.12 requires JDK8 target for that
-  scalacOptions in Test ++= (if (scalaBinaryVersion.value == "2.11") Seq("-target:jvm-1.8") else Nil),
   sources in(Compile, doc) := Seq.empty, // relying on unidoc
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
@@ -117,7 +111,6 @@ val commonSettings = Seq(
     "org.scalatestplus" %%% "scalacheck-1-14" % scalatestplusScalacheckVersion % Test,
     "org.mockito" % "mockito-core" % mockitoVersion % Test,
   ),
-  dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
   ideBasePackages := Seq(organization.value),
   ideOutputDirectory in Compile := Some(target.value.getParentFile / "out/production"),
   ideOutputDirectory in Test := Some(target.value.getParentFile / "out/test"),
@@ -147,12 +140,7 @@ val jsCommonSettings = commonSettings ++ Seq(
 )
 
 val noPublishSettings = Seq(
-  publishArtifact := false,
-  publish := {},
-  publishLocal := {},
-  publishM2 := {},
-  PgpKeys.publishSigned := {},
-  PgpKeys.publishLocalSigned := {},
+  skip in publish := true,
   mimaPreviousArtifacts := Set.empty,
 )
 
@@ -181,10 +169,7 @@ lazy val commons = project.in(file("."))
       inAnyProject -- inProjects(
         `commons-analyzer`,
         `commons-macros`,
-        `commons-annotations-js`,
         `commons-core-js`,
-        `commons-rest`,
-        `commons-rest-js`,
         `commons-benchmark`,
         `commons-benchmark-js`,
         `commons-comprof`,
@@ -195,25 +180,19 @@ lazy val `commons-jvm` = project.in(file(".jvm"))
   .aggregate(
     `commons-analyzer`,
     `commons-macros`,
-    `commons-annotations`,
     `commons-core`,
-    `commons-rest`,
     `commons-jetty`,
     `commons-mongo`,
     `commons-hocon`,
     `commons-spring`,
     `commons-redis`,
-    `commons-akka`,
-    `commons-kafka`,
     `commons-benchmark`,
   )
   .settings(aggregateProjectSettings)
 
 lazy val `commons-js` = project.in(file(".js"))
   .aggregate(
-    `commons-annotations-js`,
     `commons-core-js`,
-    `commons-rest-js`,
     `commons-benchmark-js`,
   )
   .settings(aggregateProjectSettings)
@@ -245,31 +224,18 @@ def sameNameAs(proj: Project) =
   if (forIdeaImport) Seq.empty
   else Seq(name := (name in proj).value)
 
-lazy val `commons-annotations` = project
-  .dependsOn(`commons-macros`)
-  .settings(jvmCommonSettings)
-
-lazy val `commons-annotations-js` = project.in(`commons-annotations`.base / "js")
-  .enablePlugins(ScalaJSPlugin)
-  .configure(p => if (forIdeaImport) p.dependsOn(`commons-annotations`) else p)
-  .dependsOn(`commons-macros`)
-  .settings(
-    jsCommonSettings,
-    sameNameAs(`commons-annotations`),
-    sourceDirsSettings(_.getParentFile),
-  )
-
 lazy val `commons-macros` = project.settings(
   jvmCommonSettings,
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
 )
 
 lazy val `commons-core` = project
-  .dependsOn(`commons-macros`, `commons-annotations` % CompileAndTest)
+  .dependsOn(`commons-macros`)
   .settings(
     jvmCommonSettings,
     sourceDirsSettings(_ / "jvm"),
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % collectionCompatVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       "com.google.guava" % "guava" % guavaVersion % Optional,
       "io.monix" %% "monix" % monixVersion % Optional,
@@ -279,32 +245,18 @@ lazy val `commons-core` = project
 lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
   .enablePlugins(ScalaJSPlugin)
   .configure(p => if (forIdeaImport) p.dependsOn(`commons-core`) else p)
-  .dependsOn(`commons-macros`, `commons-annotations-js` % CompileAndTest)
+  .dependsOn(`commons-macros`)
   .settings(
     jsCommonSettings,
     sameNameAs(`commons-core`),
     sourceDirsSettings(_.getParentFile),
-  )
-
-lazy val `commons-rest` = project
-  .dependsOn(`commons-core` % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    sourceDirsSettings(_ / "jvm"),
-  )
-
-lazy val `commons-rest-js` = project.in(`commons-rest`.base / "js")
-  .enablePlugins(ScalaJSPlugin)
-  .configure(p => if (forIdeaImport) p.dependsOn(`commons-rest`) else p)
-  .dependsOn(`commons-core-js` % CompileAndTest)
-  .settings(
-    jsCommonSettings,
-    sameNameAs(`commons-rest`),
-    sourceDirsSettings(_.getParentFile),
+    libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %%% "scala-collection-compat" % collectionCompatVersion,
+    )
   )
 
 lazy val `commons-jetty` = project
-  .dependsOn(`commons-core` % CompileAndTest, `commons-rest` % OptionalCompileAndTest)
+  .dependsOn(`commons-core` % CompileAndTest)
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
@@ -318,19 +270,12 @@ lazy val `commons-jetty` = project
   )
 
 lazy val `commons-benchmark` = project
-  .dependsOn(`commons-rest`, `commons-akka`, `commons-redis`, `commons-mongo`)
+  .dependsOn(`commons-redis`, `commons-mongo`)
   .enablePlugins(JmhPlugin)
   .settings(
     jvmCommonSettings,
     noPublishSettings,
     sourceDirsSettings(_ / "jvm"),
-    libraryDependencies ++= {
-      if (scalaBinaryVersion.value != "2.12") Seq(
-        "com.github.etaty" %% "rediscala" % "1.6.0",
-        "com.livestream" %% "scredis" % "2.0.8",
-      )
-      else Seq.empty
-    },
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
@@ -344,7 +289,7 @@ lazy val `commons-benchmark` = project
 lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
   .enablePlugins(ScalaJSPlugin)
   .configure(p => if (forIdeaImport) p.dependsOn(`commons-benchmark`) else p)
-  .dependsOn(`commons-macros`, `commons-rest-js`)
+  .dependsOn(`commons-core-js`)
   .settings(
     jsCommonSettings,
     noPublishSettings,
@@ -371,19 +316,9 @@ lazy val `commons-mongo` = project
       "com.google.guava" % "guava" % guavaVersion,
       "io.monix" %% "monix" % monixVersion,
       "org.mongodb" % "mongodb-driver-core" % mongoVersion,
-      "org.mongodb" % "mongodb-driver" % mongoVersion % Optional,
-      "org.mongodb" % "mongodb-driver-async" % mongoVersion % Optional,
-      "org.mongodb" % "mongodb-driver-reactivestreams" % mongoReactiveVersion % Optional,
-      "org.mongodb.scala" %% "mongo-scala-driver" % mongoScalaVersion % Optional,
-    ),
-  )
-
-lazy val `commons-kafka` = project
-  .dependsOn(`commons-core` % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    libraryDependencies ++= Seq(
-      "org.apache.kafka" % "kafka-streams" % kafkaVersion,
+      "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
+      "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
+      "org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional,
     ),
   )
 
@@ -418,18 +353,6 @@ lazy val `commons-spring` = project
     ),
   )
 
-lazy val `commons-akka` = project
-  .dependsOn(`commons-core` % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-      "com.typesafe.akka" %% "akka-remote" % akkaVersion,
-      "io.monix" %% "monix" % monixVersion,
-      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
-    ),
-  )
-
 lazy val `commons-comprof` = project
   .dependsOn(`commons-core`)
   .settings(
@@ -450,7 +373,7 @@ lazy val `commons-comprof` = project
       val originalContent = IO.read(originalSrc)
       (0 until 100).map { i =>
         val pkg = f"oa$i%02d"
-        val newContent = originalContent.replaceAllLiterally("package rest", s"package rest\npackage $pkg")
+        val newContent = originalContent.replace("package rest", s"package rest\npackage $pkg")
         val newFile = (sourceManaged in Compile).value / pkg / "RestTestApi.scala"
         IO.write(newFile, newContent)
         newFile

@@ -71,9 +71,8 @@ object CodecTestData {
   }
 
   class mongoId extends AnnotationAggregate {
-    @outOfOrder
-    @name("_id")
-    type Implied
+    @outOfOrder @name("_id")
+    final def aggregated: List[StaticAnnotation] = reifyAggregated
   }
 
   @flatten sealed trait FlatSealedBase {

@@ -19,7 +19,7 @@ trait RedisInfo {
       .map(_.trim).filterNot(l => l.isEmpty || l.startsWith("#"))
       .map(l => l.split(":", 2)).map({ case Array(key, value) => (key, value) })
 
-  protected lazy val keysByPrefix: BMap[String, Seq[String]] = {
+  protected lazy val keysByPrefix: BMap[String, BSeq[String]] = {
     val result = new MHashMap[String, ListBuffer[String]]
     rawValues.keys.foreach { key =>
       indexedPrefixes.filter(key.startsWith).foreach { prefix =>
@@ -245,7 +245,7 @@ object ClusterInfo extends RedisInfoSection[ClusterInfo]("cluster")
 trait KeyspaceInfo extends RedisInfo {
   override protected def indexedPrefixes: List[String] = "db" :: super.indexedPrefixes
 
-  lazy val nonEmptyDbs: Seq[Int] = keysByPrefix.getOrElse("db", Nil).map(_.stripPrefix("db").toInt)
+  lazy val nonEmptyDbs: Seq[Int] = keysByPrefix.getOrElse("db", Nil).iterator.map(_.stripPrefix("db").toInt).toList
   def dbStat(dbId: Int): Opt[DbStat] = get(s"db$dbId").map(DbStat)
 }
 object KeyspaceInfo extends RedisInfoSection[KeyspaceInfo]("keyspace")

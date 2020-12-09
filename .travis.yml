@@ -1,8 +1,8 @@
 language: scala
 
 scala:
-  - 2.11.12
   - 2.12.12
+  - 2.13.3
 
 jdk:
   - openjdk11
@@ -19,6 +19,7 @@ env:
   matrix:
     - TASK="commons-jvm/test"
     - TASK="commons-js/test"
+    - TASK="commons/unidoc"
 
 script:
   - sbt -Dsbt.color=true ++$TRAVIS_SCALA_VERSION $TASK
@@ -26,16 +27,13 @@ script:
 jobs:
   include:
     - env:
-        - TASK="commons/unidoc"
+        - TASK="commons-js/test"
+        - SCALAJS_VERSION="0.6.33"
       scala: [2.12.12]
     - env:
         - TASK="commons-js/test"
-        - SCALAJS_VERSION="1.1.1"
-      scala: [2.11.12]
-    - env:
-        - TASK="commons-js/test"
-        - SCALAJS_VERSION="1.1.1"
-      scala: [2.12.12]
+        - SCALAJS_VERSION="0.6.33"
+      scala: [2.13.3]
     - stage: deploy
       script: if [ "$TRAVIS_PULL_REQUEST" = 'false' ]; then ./deploy.sh; fi
       if: tag =~ ^v
@@ -50,6 +48,7 @@ cache:
     - redis-$REDIS_VERSION
 
 before_cache:
+  - rm -fv $HOME/.ivy2/.sbt.ivy.lock
   - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
   - find $HOME/.sbt -name "*.lock" -delete
 

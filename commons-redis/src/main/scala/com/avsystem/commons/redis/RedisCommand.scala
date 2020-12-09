@@ -9,7 +9,8 @@ import com.avsystem.commons.redis.commands.{Cursor, ReplyDecoder}
 import com.avsystem.commons.redis.exception.{ErrorReplyException, UnexpectedReplyException}
 import com.avsystem.commons.redis.protocol._
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.compat._
+import scala.collection.mutable
 
 trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
   protected def decodeExpected: ReplyDecoder[A]
@@ -51,8 +52,8 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
     */
   def immediateResult: Opt[A] = Opt.Empty
 
-  protected[this] final def whenEmpty(args: TraversableOnce[Any], value: A): Opt[A] =
-    if (args.isEmpty) Opt(value) else Opt.Empty
+  protected[this] final def whenEmpty(args: IterableOnce[Any], value: A): Opt[A] =
+    if (args.iterator.isEmpty) Opt(value) else Opt.Empty
 
   final def batchOrFallback: RedisBatch[A] =
     immediateResult.fold(this: RedisBatch[A])(RedisBatch.success)
@@ -61,8 +62,8 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
 abstract class AbstractRedisCommand[A](protected val decodeExpected: ReplyDecoder[A])
   extends RedisCommand[A]
 
-final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) extends AnyVal {
-  def result: ArrayMsg[BulkStringMsg] = ArrayMsg(buffer)
+final class CommandEncoder(private val builder: mutable.ArrayBuilder[BulkStringMsg]) extends AnyVal {
+  def result: ArrayMsg[BulkStringMsg] = ArrayMsg(IArraySeq.unsafeWrapArray(builder.result()))
 
   private def fluent(code: => Unit): CommandEncoder = {
     code
@@ -70,13 +71,13 @@ final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) exten
   }
 
   def key[K: RedisDataCodec](k: K): CommandEncoder =
-    fluent(buffer += CommandKeyMsg(RedisDataCodec.write(k)))
-  def keys[K: RedisDataCodec](keys: TraversableOnce[K]): CommandEncoder =
-    fluent(keys.foreach(key[K]))
+    fluent(builder += CommandKeyMsg(RedisDataCodec.write(k)))
+  def keys[K: RedisDataCodec](keys: IterableOnce[K]): CommandEncoder =
+    fluent(keys.iterator.foreach(key[K]))
   def data[V: RedisDataCodec](v: V): CommandEncoder =
-    fluent(buffer += BulkStringMsg(RedisDataCodec.write(v)))
-  def datas[V: RedisDataCodec](values: TraversableOnce[V]): CommandEncoder =
-    fluent(values.foreach(data[V]))
+    fluent(builder += BulkStringMsg(RedisDataCodec.write(v)))
+  def datas[V: RedisDataCodec](values: IterableOnce[V]): CommandEncoder =
+    fluent(values.iterator.foreach(data[V]))
   def add[T: CommandArg](value: T): CommandEncoder =
     fluent(CommandArg.add(this, value))
   def addFlag(flag: String, value: Boolean): CommandEncoder =
@@ -91,14 +92,14 @@ final class CommandEncoder(private val buffer: ArrayBuffer[BulkStringMsg]) exten
     fluent(value.foreach(t => add(flag).key(t)))
   def optData[V: RedisDataCodec](flag: String, value: Opt[V]): CommandEncoder =
     fluent(value.foreach(t => add(flag).data(t)))
-  def keyDatas[K: RedisDataCodec, V: RedisDataCodec](keyDatas: TraversableOnce[(K, V)]): CommandEncoder =
-    fluent(keyDatas.foreach({ case (k, v) => key(k).data(v) }))
-  def dataPairs[K: RedisDataCodec, V: RedisDataCodec](dataPairs: TraversableOnce[(K, V)]): CommandEncoder =
-    fluent(dataPairs.foreach({ case (k, v) => data(k).data(v) }))
+  def keyDatas[K: RedisDataCodec, V: RedisDataCodec](keyDatas: IterableOnce[(K, V)]): CommandEncoder =
+    fluent(keyDatas.iterator.foreach({ case (k, v) => key(k).data(v) }))
+  def dataPairs[K: RedisDataCodec, V: RedisDataCodec](dataPairs: IterableOnce[(K, V)]): CommandEncoder =
+    fluent(dataPairs.iterator.foreach({ case (k, v) => data(k).data(v) }))
   def dataPairs[R: RedisRecordCodec](record: R): CommandEncoder =
-    fluent(buffer ++= RedisRecordCodec[R].write(record))
-  def argDataPairs[T: CommandArg, V: RedisDataCodec](argDataPairs: TraversableOnce[(T, V)]): CommandEncoder =
-    fluent(argDataPairs.foreach({ case (a, v) => add(a).data(v) }))
+    fluent(builder ++= RedisRecordCodec[R].write(record))
+  def argDataPairs[T: CommandArg, V: RedisDataCodec](argDataPairs: IterableOnce[(T, V)]): CommandEncoder =
+    fluent(argDataPairs.iterator.foreach({ case (a, v) => add(a).data(v) }))
 }
 
 object CommandEncoder {
@@ -107,15 +108,15 @@ object CommandEncoder {
     def add[T](ce: CommandEncoder, value: T)(implicit ca: CommandArg[T]): Unit =
       ca.add(ce, value)
 
-    implicit val ByteStringArg: CommandArg[ByteString] = CommandArg((ce, v) => ce.buffer += BulkStringMsg(v))
+    implicit val ByteStringArg: CommandArg[ByteString] = CommandArg((ce, v) => ce.builder += BulkStringMsg(v))
     implicit val BooleanArg: CommandArg[Boolean] = CommandArg((ce, v) => ce.add(if (v) 1 else 0))
     implicit val StringArg: CommandArg[String] = CommandArg((ce, v) => ce.add(ByteString(v)))
     implicit val IntArg: CommandArg[Int] = CommandArg((ce, v) => ce.add(v.toString))
     implicit val LongArg: CommandArg[Long] = CommandArg((ce, v) => ce.add(v.toString))
     implicit val DoubleArg: CommandArg[Double] = CommandArg((ce, v) => ce.add(v.toString))
     implicit val NamedEnumArg: CommandArg[NamedEnum] = CommandArg((ce, v) => ce.add(v.name))
-    implicit def CollArg[T: CommandArg]: CommandArg[TraversableOnce[T]] =
-      CommandArg((ce, v) => v.foreach(t => ce.add(t)))
+    implicit def CollArg[T: CommandArg]: CommandArg[IterableOnce[T]] =
+      CommandArg((ce, v) => v.iterator.foreach(t => ce.add(t)))
 
     implicit def PairArg[A: CommandArg, B: CommandArg]: CommandArg[(A, B)] =
       CommandArg {
@@ -129,19 +130,19 @@ object CommandEncoder {
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 abstract class RedisDataCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand(bulk[A])
+  extends AbstractRedisCommand(bulkAs[A])
 
 abstract class RedisOptDataCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand(nullBulkOr[A])
+  extends AbstractRedisCommand(nullBulkOrAs[A])
 
 abstract class RedisDataSeqCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[Seq[A]](multiBulkSeq[A])
+  extends AbstractRedisCommand[Seq[A]](multiBulkAsSeqOf[A])
 
 abstract class RedisDataSetCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[BSet[A]](multiBulkSet[A])
+  extends AbstractRedisCommand[BSet[A]](multiBulkAsSetOf[A])
 
 abstract class RedisOptDataSeqCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[Seq[Opt[A]]](multiBulkSeq(nullBulkOr[A]))
+  extends AbstractRedisCommand[Seq[Opt[A]]](multiBulkAsSeq(nullBulkOrAs[A]))
 
 abstract class RedisRawCommand
   extends AbstractRedisCommand[ValidRedisMsg](undecoded)
@@ -150,49 +151,49 @@ abstract class RedisNothingCommand
   extends AbstractRedisCommand(failing)
 
 abstract class RedisUnitCommand
-  extends AbstractRedisCommand[Unit](simpleOkUnit)
+  extends AbstractRedisCommand[Unit](simpleOkAsUnit)
 
 abstract class RedisLongCommand
-  extends AbstractRedisCommand[Long](integerLong)
+  extends AbstractRedisCommand[Long](integerAsLong)
 
 abstract class RedisIntCommand
-  extends AbstractRedisCommand[Int](integerInt)
+  extends AbstractRedisCommand[Int](integerAsInt)
 
 abstract class RedisOptLongCommand
-  extends AbstractRedisCommand[Opt[Long]](nullBulkOr(integerLong))
+  extends AbstractRedisCommand[Opt[Long]](nullBulkOr(integerAsLong))
 
 abstract class RedisPositiveLongCommand
-  extends AbstractRedisCommand[Opt[Long]](positiveIntegerLongOpt)
+  extends AbstractRedisCommand[Opt[Long]](positiveIntegerAsLongOpt)
 
 abstract class RedisOptDoubleCommand
-  extends AbstractRedisCommand[Opt[Double]](nullOrEmptyBulkOr(bulkDouble))
+  extends AbstractRedisCommand[Opt[Double]](nullOrEmptyBulkOr(bulkAsDouble))
 
 abstract class RedisOptStringCommand
-  extends AbstractRedisCommand[Opt[String]](nullBulkOr(bulkUTF8))
+  extends AbstractRedisCommand[Opt[String]](nullBulkOr(bulkAsUTF8))
 
 abstract class RedisBooleanCommand
-  extends AbstractRedisCommand[Boolean](integerBoolean)
+  extends AbstractRedisCommand[Boolean](integerAsBoolean)
 
 abstract class RedisSimpleStringCommand
-  extends AbstractRedisCommand[String](simpleUTF8)
+  extends AbstractRedisCommand[String](simpleAsUTF8)
 
 abstract class RedisBinaryCommand
-  extends AbstractRedisCommand[ByteString](bulkBinary)
+  extends AbstractRedisCommand[ByteString](bulkAsBinary)
 
 abstract class RedisDoubleCommand
-  extends AbstractRedisCommand[Double](bulkDouble)
+  extends AbstractRedisCommand[Double](bulkAsDouble)
 
 abstract class RedisScanCommand[T](decoder: ReplyDecoder[Seq[T]])
-  extends AbstractRedisCommand[(Cursor, Seq[T])](multiBulkPair(bulkCursor, decoder))
+  extends AbstractRedisCommand[(Cursor, Seq[T])](multiBulkAsPair(bulkAsCursor, decoder))
 
 abstract class RedisSeqCommand[T](elementDecoder: ReplyDecoder[T])
-  extends AbstractRedisCommand[Seq[T]](multiBulkSeq(elementDecoder))
+  extends AbstractRedisCommand[Seq[T]](multiBulkAsSeq(elementDecoder))
 
 abstract class RedisOptSeqCommand[T](elementDecoder: ReplyDecoder[T])
-  extends AbstractRedisCommand[Opt[Seq[T]]](nullMultiBulkOr(multiBulkSeq(elementDecoder)))
+  extends AbstractRedisCommand[Opt[Seq[T]]](nullMultiBulkOr(multiBulkAsSeq(elementDecoder)))
 
 abstract class RedisOptCommand[T](elementDecoder: ReplyDecoder[T])
   extends AbstractRedisCommand[Opt[T]](nullBulkOr(elementDecoder))
 
 abstract class RedisEnumCommand[E <: NamedEnum](companion: NamedEnumCompanion[E])
-  extends AbstractRedisCommand[E](bulkNamedEnum(companion))
+  extends AbstractRedisCommand[E](bulkAsNamedEnum(companion))

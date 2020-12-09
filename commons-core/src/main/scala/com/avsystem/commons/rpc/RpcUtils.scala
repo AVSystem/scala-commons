@@ -3,8 +3,7 @@ package rpc
 
 import com.avsystem.commons.macros.misc.MiscMacros
 
-import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable
+import scala.collection.compat._
 
 class InvalidRpcCall(msg: String, cause: Throwable = null)
   extends RuntimeException(msg, cause)
@@ -22,11 +21,11 @@ class MissingOptionalRpc(val rawMethodName: String)
   extends InvalidRpcCall(s"No matching RPC for optional raw method $rawMethodName")
 
 object RpcUtils {
-  def createEmpty[Coll](cbf: CanBuildFrom[Nothing, Nothing, Coll]): Coll =
-    createBuilder[Nothing, Coll](cbf, 0).result()
+  def createEmpty[Coll](fac: Factory[Nothing, Coll]): Coll =
+    createBuilder[Nothing, Coll](fac, 0).result()
 
-  def createBuilder[Elem, Coll](cbf: CanBuildFrom[Nothing, Elem, Coll], size: Int): mutable.Builder[Elem, Coll] = {
-    val b = cbf()
+  def createBuilder[Elem, Coll](fac: Factory[Elem, Coll], size: Int): MBuilder[Elem, Coll] = {
+    val b = fac.newBuilder
     b.sizeHint(size)
     b
   }
@@ -49,10 +48,10 @@ object RpcUtils {
     throw new MissingOptionalRpc(rawMethodName)
 
   def interceptEnc[NewRaw, Raw, Real](asRaw: AsRaw[NewRaw, Real], interceptor: EncodingInterceptor[NewRaw, Raw]): AsRaw[Raw, Real] =
-    AsRaw.create(real => interceptor.toOriginalRaw(asRaw.asRaw(real)))
+    real => interceptor.toOriginalRaw(asRaw.asRaw(real))
 
   def interceptDec[NewRaw, Raw, Real](asReal: AsReal[NewRaw, Real], interceptor: DecodingInterceptor[NewRaw, Raw]): AsReal[Raw, Real] =
-    AsReal.create(raw => asReal.asReal(interceptor.toNewRaw(raw)))
+    raw => asReal.asReal(interceptor.toNewRaw(raw))
 
   def compilationError(error: String): Nothing = macro MiscMacros.compilationError
 }

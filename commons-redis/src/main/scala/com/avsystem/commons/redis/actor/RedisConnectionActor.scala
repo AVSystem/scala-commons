@@ -4,9 +4,9 @@ package redis.actor
 import java.net.InetSocketAddress
 import java.nio.{Buffer, ByteBuffer}
 
-import akka.actor.{Actor, ActorRef, Status}
+import akka.actor.{Actor, ActorRef}
 import akka.stream.scaladsl._
-import akka.stream.{CompletionStrategy, Materializer, SystemMaterializer}
+import akka.stream.{CompletionStrategy, IgnoreComplete, Materializer, SystemMaterializer}
 import akka.util.ByteString
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.{PubSubCommand, PubSubEvent, ReplyDecoders}
@@ -16,8 +16,7 @@ import com.avsystem.commons.redis.protocol.{RedisMsg, RedisReply, ValidRedisMsg}
 import com.avsystem.commons.redis.util.ActorLazyLogging
 
 import scala.annotation.tailrec
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.{IndexedSeqOptimized, mutable}
+import scala.collection.mutable
 import scala.concurrent.duration.Duration
 
 final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
@@ -125,17 +124,25 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     // using Akka IO, this was implemented as:
     // IO(Tcp) ! Tcp.Connect(address.socketAddress,
     //   config.localAddress.toOption, config.socketOptions, config.connectTimeout.toOption)
-    val src = Source.actorRefWithAck[ByteString](ackMessage = WriteAck)
+    val src = Source.actorRefWithBackpressure[ByteString](
+      ackMessage = WriteAck,
+      completionMatcher = {
+        case CloseConnection(true) => CompletionStrategy.immediately
+        case CloseConnection(false) => CompletionStrategy.draining
+      },
+      failureMatcher = PartialFunction.empty
+    )
 
-    val conn = config.tlsConfig match {
-      case OptArg(tlsConfig) => Tcp().outgoingTlsConnection(
+    val conn = config.sslEngineCreator match {
+      case OptArg(creator) => Tcp().outgoingConnectionWithTls(
         address.socketAddress,
-        tlsConfig.sslContext,
-        tlsConfig.negotiateNewSession,
+        () => creator().setup(_.setUseClientMode(true)),
         config.localAddress.toOption,
         config.socketOptions,
         config.connectTimeout.getOrElse(Duration.Inf),
-        config.idleTimeout.getOrElse(Duration.Inf)
+        config.idleTimeout.getOrElse(Duration.Inf),
+        _ => Success(()),
+        IgnoreComplete
       )
       case OptArg.Empty => Tcp().outgoingConnection(
         address.socketAddress,
@@ -146,7 +153,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       )
     }
 
-    val sink = Sink.actorRefWithAck(
+    val sink = Sink.actorRefWithBackpressure(
       ref = self,
       onInitMessage = ReadInit,
       ackMessage = ReadAck,
@@ -200,7 +207,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     def become(receive: Receive): Unit =
       context.become(receive unless {
         case Connected(oldConnection, _, _) if oldConnection != connection =>
-          oldConnection ! Status.Success(CompletionStrategy.immediately)
+          oldConnection ! CloseConnection(immediate = true)
       })
 
     def initialize(retryStrategy: RetryStrategy): Unit = {
@@ -435,7 +442,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       failAlreadySent(cause)
       if (open) {
         open = false
-        connection ! Status.Success(CompletionStrategy.immediately)
+        connection ! CloseConnection()
       }
       actor.close(cause, stopSelf)
     }
@@ -456,12 +463,12 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     }
 
     def logReceived(data: ByteString): Unit = {
-      log.debug(s"$localAddr <<<< $remoteAddr\n${RedisMsg.escape(data, quote = false).replaceAllLiterally("\\n", "\\n\n")}")
+      log.debug(s"$localAddr <<<< $remoteAddr\n${RedisMsg.escape(data, quote = false).replace("\\n", "\\n\n")}")
       config.debugListener.onReceive(data)
     }
 
     def logWrite(data: ByteString): Unit = {
-      log.debug(s"$localAddr >>>> $remoteAddr\n${RedisMsg.escape(data, quote = false).replaceAllLiterally("\\n", "\\n\n")}")
+      log.debug(s"$localAddr >>>> $remoteAddr\n${RedisMsg.escape(data, quote = false).replace("\\n", "\\n\n")}")
       config.debugListener.onSend(data)
     }
   }
@@ -500,7 +507,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     case Release => // ignore
     case Connected(connection, _, _) if tcpConnecting =>
       // failure may have happened while connecting, simply close the connection
-      connection ! Status.Success(CompletionStrategy.immediately)
+      connection ! CloseConnection(immediate = true)
       become(closed(cause, tcpConnecting = false))
     case _: TcpEvent => // ignore
     case Close(_, true) =>
@@ -531,13 +538,15 @@ object RedisConnectionActor {
   private case class ConnectionFailed(cause: Throwable) extends TcpEvent
   private case class ConnectionClosed(error: Opt[Throwable]) extends TcpEvent
 
+  private case class CloseConnection(immediate: Boolean = false) extends TcpEvent
+
   private case class QueuedPacks(packs: RawCommandPacks, client: Opt[ActorRef], reserve: Boolean) {
     def reply(result: PacksResult)(implicit sender: ActorRef): Unit =
       client.foreach(_ ! result)
   }
 
   class ReplyCollector(packs: RawCommandPacks, writeBuffer: ByteBuffer, val callback: PacksResult => Unit) {
-    private[this] var replies: ArrayBuffer[RedisReply] = _
+    private[this] var replies: MColBuilder[RedisReply, Array] = _
     private[this] var preprocessors: Any = _
 
     packs.emitCommandPacks { pack =>
@@ -561,11 +570,11 @@ object RedisConnectionActor {
         case queue: mutable.Queue[ReplyPreprocessor@unchecked] =>
           queue.front.preprocess(message, state).flatMap { preprocessedMsg =>
             if (replies == null) {
-              replies = new ArrayBuffer(queue.length)
+              replies = mutable.ArrayBuilder.make[RedisReply]
             }
             queue.dequeue()
             replies += preprocessedMsg
-            if (queue.isEmpty) Opt(PacksResult.Multiple(replies)) else Opt.Empty
+            if (queue.isEmpty) Opt(PacksResult.Multiple(IArraySeq.unsafeWrapArray(replies.result()))) else Opt.Empty
           }
       }
       packsResultOpt match {
@@ -585,8 +594,7 @@ object RedisConnectionActor {
       }
   }
 
-  sealed abstract class PacksResult
-    extends IIndexedSeq[RedisReply] with IndexedSeqOptimized[RedisReply, IIndexedSeq[RedisReply]]
+  sealed abstract class PacksResult extends IIndexedSeq[RedisReply]
   object PacksResult {
     case object Empty extends PacksResult {
       def apply(idx: Int): RedisReply = throw new IndexOutOfBoundsException

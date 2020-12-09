@@ -1,7 +1,7 @@
-package com.avsystem.commons
-package misc
+package com.avsystem.commons.misc
 
 import org.scalatest.funsuite.AnyFunSuite
+import com.avsystem.commons.JInteger
 
 class NOptTest extends AnyFunSuite {
   test("nonempty test") {

@@ -2,7 +2,6 @@ package com.avsystem.commons
 package redis
 
 import akka.actor.ActorSystem
-import akka.util.Timeout
 import org.scalatest.concurrent.PatienceConfiguration
 import org.scalatest.time.{Milliseconds, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, Suite}

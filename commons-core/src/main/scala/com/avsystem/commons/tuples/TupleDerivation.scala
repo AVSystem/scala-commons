@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package tuples
 
-import scala.language.higherKinds
-
 /**
   * IntelliJ-friendly (no whitebox macros) boilerplate strapping layer for deriving tuple type classes (`C`)
   * based on instances of that typeclass for tuple element types.

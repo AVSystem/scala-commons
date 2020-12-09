@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class VarargsAtLeast[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "varargsAtLeast") {
+class VarargsAtLeast(g: Global) extends AnalyzerRule(g, "varargsAtLeast") {
 
   import global._
 

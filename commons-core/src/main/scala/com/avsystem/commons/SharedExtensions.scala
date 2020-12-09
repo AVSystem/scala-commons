@@ -1,16 +1,17 @@
 package com.avsystem.commons
 
-import com.avsystem.commons.SharedExtensions._
 import com.avsystem.commons.concurrent.RunNowEC
-import com.avsystem.commons.misc.{Boxing, Unboxing}
+import com.avsystem.commons.misc._
 import com.github.ghik.silencer.silent
 
 import scala.annotation.tailrec
-import scala.collection.generic.CanBuildFrom
+import scala.collection.compat._
 import scala.collection.{AbstractIterator, mutable}
-import scala.language.implicitConversions
 
-trait SharedExtensions extends CompatSharedExtensions {
+trait SharedExtensions {
+
+  import com.avsystem.commons.SharedExtensionsUtils._
+
   implicit def universalOps[A](a: A): UniversalOps[A] = new UniversalOps(a)
 
   implicit def lazyUniversalOps[A](a: => A): LazyUniversalOps[A] = new LazyUniversalOps(() => a)
@@ -40,13 +41,13 @@ trait SharedExtensions extends CompatSharedExtensions {
 
   implicit def setOps[A](set: BSet[A]): SetOps[A] = new SetOps(set)
 
-  implicit def traversableOnceOps[C[X] <: TraversableOnce[X], A](coll: C[A]): TraversableOnceOps[C, A] =
-    new TraversableOnceOps(coll)
+  implicit def iterableOnceOps[C[X] <: IterableOnce[X], A](coll: C[A]): IterableOnceOps[C, A] =
+    new IterableOnceOps(coll)
 
-  implicit def traversableOps[C[X] <: BTraversable[X], A](coll: C[A]): TraversableOps[C, A] = new TraversableOps(coll)
+  implicit def iterableOps[C[X] <: BIterable[X], A](coll: C[A]): IterableOps[C, A] = new IterableOps(coll)
 
-  implicit def pairTraversableOnceOps[C[X] <: TraversableOnce[X], K, V](coll: C[(K, V)]): PairTraversableOnceOps[C, K, V] =
-    new PairTraversableOnceOps(coll)
+  implicit def pairIterableOnceOps[C[X] <: IterableOnce[X], K, V](coll: C[(K, V)]): PairIterableOnceOps[C, K, V] =
+    new PairIterableOnceOps(coll)
 
   implicit def mapOps[M[X, Y] <: BMap[X, Y], K, V](map: M[K, V]): MapOps[M, K, V] = new MapOps(map)
 
@@ -56,8 +57,9 @@ trait SharedExtensions extends CompatSharedExtensions {
 
   implicit def orderingOps[A](ordering: Ordering[A]): OrderingOps[A] = new OrderingOps(ordering)
 }
+object SharedExtensions extends SharedExtensions
 
-object SharedExtensions extends SharedExtensions {
+object SharedExtensionsUtils extends SharedExtensions {
   class UniversalOps[A](private val a: A) extends AnyVal {
     /**
       * The "pipe" operator. Alternative syntax to apply a function on an argument.
@@ -209,7 +211,7 @@ object SharedExtensions extends SharedExtensions {
 
     def uncapitalize: String =
       if (str.isEmpty || str.charAt(0).isLower) str
-      else str.charAt(0).toLower + str.substring(1)
+      else str.substring(0, 1).toLowerCase + str.substring(1)
 
     /**
       * Removes a newline character from every sequence of consecutive newline characters. If the sequence contained
@@ -273,7 +275,7 @@ object SharedExtensions extends SharedExtensions {
       fut.transform(s, f)(RunNowEC)
 
     def transformNow[S](f: Try[A] => Try[S]): Future[S] =
-      fut.transformTry(f)(RunNowEC)
+      fut.transform(f)(RunNowEC)
 
     def transformWithNow[S](f: Try[A] => Future[S]): Future[S] =
       fut.transformWith(f)(RunNowEC)
@@ -356,22 +358,21 @@ object SharedExtensions extends SharedExtensions {
         case NonFatal(cause) => Future.failed(cause)
       }
 
-    /** Different version of `Future.traverse`. Transforms a `TraversableOnce[A]` into a `Future[TraversableOnce[B]]`,
+    /** Different version of `Future.traverse`. Transforms a `IterableOnce[A]` into a `Future[IterableOnce[B]]`,
       * which only completes after all `in` `Future`s are completed, using the provided function `A => Future[B]`.
       * This is useful for performing a parallel map. For example, to apply a function to all items of a list
       *
-      * @tparam A the type of the value inside the Futures in the `TraversableOnce`
+      * @tparam A the type of the value inside the Futures in the `IterableOnce`
       * @tparam B the type of the value of the returned `Future`
-      * @tparam M the type of the `TraversableOnce` of Futures
-      * @param in the `TraversableOnce` of Futures which will be sequenced
-      * @param fn the function to apply to the `TraversableOnce` of Futures to produce the results
-      * @return the `Future` of the `TraversableOnce` of results
+      * @tparam M the type of the `IterableOnce` of Futures
+      * @param in the `IterableOnce` of Futures which will be sequenced
+      * @param fn the function to apply to the `IterableOnce` of Futures to produce the results
+      * @return the `Future` of the `IterableOnce` of results
       */
-    def traverseCompleted[A, B, M[X] <: TraversableOnce[X]](in: M[A])(fn: A => Future[B])(
-      implicit cbf: CanBuildFrom[M[A], B, M[B]],
-      executor: ExecutionContext
+    def traverseCompleted[A, B, M[X] <: IterableOnce[X]](in: M[A])(fn: A => Future[B])(
+      implicit bf: BuildFrom[M[A], B, M[B]]
     ): Future[M[B]] = {
-      val (barrier, i) = in.foldLeft((Future.unit, Future.successful(cbf(in)))) {
+      val (barrier, i) = in.iterator.foldLeft((Future.unit, Future.successful(bf.newBuilder(in)))) {
         case ((priorFinished, fr), a) =>
           val transformed = fn(a)
           (transformed.thenReturn(priorFinished), fr.zipWithNow(transformed)(_ += _))
@@ -380,17 +381,16 @@ object SharedExtensions extends SharedExtensions {
     }
 
     /**
-      * Different version of `Future.sequence`. Transforms a `TraversableOnce[Future[A]]`
-      * into a `Future[TraversableOnce[A]`, which only completes after all `in` `Future`s are completed.
+      * Different version of `Future.sequence`. Transforms a `IterableOnce[Future[A]]`
+      * into a `Future[IterableOnce[A]`, which only completes after all `in` `Future`s are completed.
       *
       * @tparam A the type of the value inside the Futures
-      * @tparam M the type of the `TraversableOnce` of Futures
-      * @param in the `TraversableOnce` of Futures which will be sequenced
-      * @return the `Future` of the `TraversableOnce` of results
+      * @tparam M the type of the `IterableOnce` of Futures
+      * @param in the `IterableOnce` of Futures which will be sequenced
+      * @return the `Future` of the `IterableOnce` of results
       */
-    def sequenceCompleted[A, M[X] <: TraversableOnce[X]](in: M[Future[A]])(
-      implicit cbf: CanBuildFrom[M[Future[A]], A, M[A]],
-      executor: ExecutionContext
+    def sequenceCompleted[A, M[X] <: IterableOnce[X]](in: M[Future[A]])(
+      implicit bf: BuildFrom[M[Future[A]], A, M[A]]
     ): Future[M[A]] =
       traverseCompleted(in)(identity)
   }
@@ -477,27 +477,25 @@ object SharedExtensions extends SharedExtensions {
 
   object TryCompanionOps {
 
-    import scala.language.higherKinds
-
-    /** Simple version of `TryOps.traverse`. Transforms a `TraversableOnce[Try[A]]` into a `Try[TraversableOnce[A]]`.
+    /** Simple version of `TryOps.traverse`. Transforms a `IterableOnce[Try[A]]` into a `Try[IterableOnce[A]]`.
       * Useful for reducing many `Try`s into a single `Try`.
       */
-    def sequence[A, M[X] <: TraversableOnce[X]](in: M[Try[A]])(implicit cbf: CanBuildFrom[M[Try[A]], A, M[A]]): Try[M[A]] = {
-      in.foldLeft(Try(cbf(in))) {
+    def sequence[A, M[X] <: IterableOnce[X]](in: M[Try[A]])(implicit bf: BuildFrom[M[Try[A]], A, M[A]]): Try[M[A]] = {
+      in.iterator.foldLeft(Try(bf.newBuilder(in))) {
         case (f@Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
         case (tr, tb) => for (r <- tr; a <- tb) yield r += a
       }.map(_.result())
     }
 
-    /** Transforms a `TraversableOnce[A]` into a `Try[TraversableOnce[B]]` using the provided function `A => Try[B]`.
+    /** Transforms a `IterableOnce[A]` into a `Try[IterableOnce[B]]` using the provided function `A => Try[B]`.
       * For example, to apply a function to all items of a list:
       *
       * {{{
       *    val myTryList = TryOps.traverse(myList)(x => Try(myFunc(x)))
       * }}}
       */
-    def traverse[A, B, M[X] <: TraversableOnce[X]](in: M[A])(fn: A => Try[B])(implicit cbf: CanBuildFrom[M[A], B, M[B]]): Try[M[B]] =
-      in.map(fn).foldLeft(Try(cbf(in))) {
+    def traverse[A, B, M[X] <: IterableOnce[X]](in: M[A])(fn: A => Try[B])(implicit bf: BuildFrom[M[A], B, M[B]]): Try[M[B]] =
+      in.iterator.map(fn).foldLeft(Try(bf.newBuilder(in))) {
         case (f@Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
         case (tr, tb) => for (r <- tr; b <- tb) yield r += b
       }.map(_.result())
@@ -535,9 +533,24 @@ object SharedExtensions extends SharedExtensions {
     private final val NoValueMarkerFunc = (_: Any) => NoValueMarker
   }
 
-  class TraversableOnceOps[C[X] <: TraversableOnce[X], A](private val coll: C[A]) extends AnyVal {
-    def toSized[M[_]](sizeHint: Int)(implicit cbf: CanBuildFrom[Nothing, A, M[A]]): M[A] = {
-      val b = cbf()
+  class IterableOnceOps[C[X] <: IterableOnce[X], A](private val coll: C[A]) extends AnyVal {
+    private def it: Iterator[A] = coll.iterator
+
+    /**
+      * Provided as a Scala 2.12 "backport" of Scala 2.13 regular method.
+      * In Scala 2.13 this extension method is always be hidden by an actual method available on `IterableOnce`.
+      */
+    def knownSize: Int = coll match {
+      case c: BIterable[_] if c.isEmpty => 0
+      case is: BIndexedSeq[_] => is.size
+      case _: IListMap[_, _] => -1
+      case m: BMap[_, _] => m.size
+      case s: BSet[_] => s.size
+      case _ => -1
+    }
+
+    def toSized[To](fac: Factory[A, To], sizeHint: Int): To = {
+      val b = fac.newBuilder
       b.sizeHint(sizeHint)
       b ++= coll
       b.result()
@@ -548,72 +561,69 @@ object SharedExtensions extends SharedExtensions {
 
     def mkMap[K, V](keyFun: A => K, valueFun: A => V): Map[K, V] = {
       val res = Map.newBuilder[K, V]
-      coll.foreach { a =>
+      it.foreach { a =>
         res += ((keyFun(a), valueFun(a)))
       }
       res.result()
     }
 
-    def groupToMap[K, V, To](keyFun: A => K, valueFun: A => V)(implicit cbf: CanBuildFrom[C[A], V, To]): Map[K, To] = {
+    def groupToMap[K, V, To](keyFun: A => K, valueFun: A => V)(implicit bf: BuildFrom[C[A], V, To]): Map[K, To] = {
       val builders = mutable.Map[K, mutable.Builder[V, To]]()
-      coll.foreach { a =>
-        builders.getOrElseUpdate(keyFun(a), cbf(coll)) += valueFun(a)
+      it.foreach { a =>
+        builders.getOrElseUpdate(keyFun(a), bf.newBuilder(coll)) += valueFun(a)
       }
-      builders.map({ case (k, v) => (k, v.result()) })(scala.collection.breakOut)
+      builders.iterator.map({ case (k, v) => (k, v.result()) }).toMap
     }
 
-    def findOpt(p: A => Boolean): Opt[A] = coll.find(p).toOpt
+    def findOpt(p: A => Boolean): Opt[A] = it.find(p).toOpt
 
-    def flatCollect[B, That](f: PartialFunction[A, TraversableOnce[B]])(implicit cbf: CanBuildFrom[C[A], B, That]): That = {
-      val b = cbf(coll)
-      coll.foreach(f.runWith(_.foreach(b += _)))
-      b.result()
-    }
+    def flatCollect[B](f: PartialFunction[A, IterableOnce[B]])(implicit fac: Factory[B, C[B]]): C[B] =
+      coll.iterator.collect(f).flatten.to(fac)
 
-    def collectFirstOpt[B](pf: PartialFunction[A, B]): Opt[B] = coll.collectFirst(pf).toOpt
+    def collectFirstOpt[B](pf: PartialFunction[A, B]): Opt[B] = it.collectFirst(pf).toOpt
 
-    def reduceOpt[A1 >: A](op: (A1, A1) => A1): Opt[A1] = if (coll.isEmpty) Opt.Empty else coll.reduce(op).opt
+    def reduceOpt[A1 >: A](op: (A1, A1) => A1): Opt[A1] = if (it.isEmpty) Opt.Empty else it.reduce(op).opt
 
-    def reduceLeftOpt[B >: A](op: (B, A) => B): Opt[B] = if (coll.isEmpty) Opt.Empty else coll.reduceLeft(op).opt
+    def reduceLeftOpt[B >: A](op: (B, A) => B): Opt[B] = if (it.isEmpty) Opt.Empty else it.reduceLeft(op).opt
 
-    def reduceRightOpt[B >: A](op: (A, B) => B): Opt[B] = if (coll.isEmpty) Opt.Empty else coll.reduceRight(op).opt
+    def reduceRightOpt[B >: A](op: (A, B) => B): Opt[B] = if (it.isEmpty) Opt.Empty else it.reduceRight(op).opt
 
-    def maxOpt[B >: A : Ordering]: Opt[B] = if (coll.isEmpty) Opt.Empty else coll.max[B].opt
+    def maxOpt(implicit ord: Ordering[A]): Opt[A] = if (it.isEmpty) Opt.Empty else it.max.opt
 
-    def maxOptBy[B: Ordering](f: A => B): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.maxBy(f).opt
+    def maxOptBy[B: Ordering](f: A => B): Opt[A] = if (it.isEmpty) Opt.Empty else it.maxBy(f).opt
 
-    def minOpt[B >: A : Ordering]: Opt[B] = if (coll.isEmpty) Opt.Empty else coll.min[B].opt
+    def minOpt(implicit ord: Ordering[A]): Opt[A] = if (it.isEmpty) Opt.Empty else it.min.opt
 
-    def minOptBy[B: Ordering](f: A => B): Opt[A] = if (coll.isEmpty) Opt.Empty else coll.minBy(f).opt
+    def minOptBy[B: Ordering](f: A => B): Opt[A] = if (it.isEmpty) Opt.Empty else it.minBy(f).opt
 
-    def indexOfOpt(elem: A): Opt[Int] = coll.toIterator.indexOf(elem).opt.filter(_ != -1)
+    def indexOfOpt(elem: A): Opt[Int] = coll.iterator.indexOf(elem).opt.filter(_ != -1)
 
-    def indexWhereOpt(p: A => Boolean): Opt[Int] = coll.toIterator.indexWhere(p).opt.filter(_ != -1)
+    def indexWhereOpt(p: A => Boolean): Opt[Int] = coll.iterator.indexWhere(p).opt.filter(_ != -1)
 
     def mkStringOr(start: String, sep: String, end: String, default: String): String =
-      if (coll.nonEmpty) coll.mkString(start, sep, end) else default
+      if (it.nonEmpty) it.mkString(start, sep, end) else default
 
     def mkStringOr(sep: String, default: String): String =
-      if (coll.nonEmpty) coll.mkString(sep) else default
+      if (it.nonEmpty) it.mkString(sep) else default
 
     def mkStringOrEmpty(start: String, sep: String, end: String): String =
       mkStringOr(start, sep, end, "")
 
     def asyncFoldLeft[B](zero: Future[B])(fun: (B, A) => Future[B])(implicit ec: ExecutionContext): Future[B] =
-      coll.foldLeft(zero)((fb, a) => fb.flatMap(b => fun(b, a)))
+      it.foldLeft(zero)((fb, a) => fb.flatMap(b => fun(b, a)))
 
     def asyncFoldRight[B](zero: Future[B])(fun: (A, B) => Future[B])(implicit ec: ExecutionContext): Future[B] =
-      coll.foldRight(zero)((a, fb) => fb.flatMap(b => fun(a, b)))
+      it.foldRight(zero)((a, fb) => fb.flatMap(b => fun(a, b)))
 
     def asyncForeach(fun: A => Future[Unit])(implicit ec: ExecutionContext): Future[Unit] =
-      coll.foldLeft[Future[Unit]](Future.unit)((fu, a) => fu.flatMap(_ => fun(a)))
+      it.foldLeft[Future[Unit]](Future.unit)((fu, a) => fu.flatMap(_ => fun(a)))
 
     def partitionEither[L, R](
       fun: A => Either[L, R]
-    )(implicit cbfL: CanBuildFrom[Nothing, L, C[L]], cbfR: CanBuildFrom[Nothing, R, C[R]]): (C[L], C[R]) = {
-      val leftBuilder = cbfL()
-      val rightBuilder = cbfR()
-      coll.foreach(fun(_) match {
+    )(implicit facL: Factory[L, C[L]], facR: Factory[R, C[R]]): (C[L], C[R]) = {
+      val leftBuilder = facL.newBuilder
+      val rightBuilder = facR.newBuilder
+      coll.iterator.foreach(fun(_) match {
         case Left(l) => leftBuilder += l
         case Right(r) => rightBuilder += r
       })
@@ -621,21 +631,21 @@ object SharedExtensions extends SharedExtensions {
     }
   }
 
-  class PairTraversableOnceOps[C[X] <: TraversableOnce[X], K, V](private val coll: C[(K, V)]) extends AnyVal {
-    def intoMap[M[X, Y] <: BMap[X, Y]](implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]): M[K, V] = {
-      val builder = cbf()
-      coll.foreach(builder += _)
+  class PairIterableOnceOps[C[X] <: IterableOnce[X], K, V](private val coll: C[(K, V)]) extends AnyVal {
+    def intoMap[M[X, Y] <: BMap[X, Y]](implicit fac: Factory[(K, V), M[K, V]]): M[K, V] = {
+      val builder = fac.newBuilder
+      coll.iterator.foreach(builder += _)
       builder.result()
     }
   }
 
   class SetOps[A](private val set: BSet[A]) extends AnyVal {
-    def containsAny(other: BTraversable[A]): Boolean = other.exists(set.contains)
+    def containsAny(other: BIterable[A]): Boolean = other.exists(set.contains)
 
-    def containsAll(other: BTraversable[A]): Boolean = other.forall(set.contains)
+    def containsAll(other: BIterable[A]): Boolean = other.forall(set.contains)
   }
 
-  class TraversableOps[C[X] <: BTraversable[X], A](private val coll: C[A]) extends AnyVal {
+  class IterableOps[C[X] <: BIterable[X], A](private val coll: C[A]) extends AnyVal {
     def headOpt: Opt[A] = if (coll.isEmpty) Opt.Empty else Opt(coll.head)
 
     def lastOpt: Opt[A] = if (coll.isEmpty) Opt.Empty else Opt(coll.last)
@@ -675,8 +685,8 @@ object SharedExtensions extends SharedExtensions {
     def nextOpt: Opt[A] =
       if (it.hasNext) it.next().opt else Opt.Empty
 
-    def drainTo[C[_]](n: Int)(implicit cbf: CanBuildFrom[Nothing, A, C[A]]): C[A] = {
-      val builder = cbf()
+    def drainTo[C[_]](n: Int)(implicit fac: Factory[A, C[A]]): C[A] = {
+      val builder = fac.newBuilder
       var i = 0
       while (it.hasNext && i < n) {
         builder += it.next()
@@ -738,6 +748,9 @@ object SharedExtensions extends SharedExtensions {
       }
 
     def distinct: Iterator[A] = distinctBy(identity)
+
+    //overloaded to avoid eager iterator consumption in 2.12
+    def flatCollect[B](f: PartialFunction[A, IterableOnce[B]]): Iterator[B] = it.collect(f).flatten
   }
 
   object IteratorCompanionOps {
@@ -746,7 +759,7 @@ object SharedExtensions extends SharedExtensions {
         private[this] var fetched = false
         private[this] var value = Opt.empty[T]
 
-        def hasNext = {
+        def hasNext: Boolean = {
           if (!fetched) {
             value = elem
             fetched = true
@@ -754,7 +767,7 @@ object SharedExtensions extends SharedExtensions {
           value.isDefined
         }
 
-        def next = {
+        def next(): T = {
           if (!fetched) {
             value = elem
           }
@@ -773,7 +786,7 @@ object SharedExtensions extends SharedExtensions {
         private[this] var fetched = true
         private[this] var value = start
 
-        def hasNext = {
+        def hasNext: Boolean = {
           if (!fetched) {
             value = nextFun(value.get)
             fetched = true
@@ -781,7 +794,7 @@ object SharedExtensions extends SharedExtensions {
           value.isDefined
         }
 
-        def next = {
+        def next(): T = {
           if (!fetched) {
             value = nextFun(value.get)
           }
@@ -798,13 +811,12 @@ object SharedExtensions extends SharedExtensions {
 
   final class OrderingOps[A](private val ordering: Ordering[A]) extends AnyVal {
     def orElse(whenEqual: Ordering[A]): Ordering[A] =
-      new Ordering[A] {
-        override def compare(x: A, y: A): Int = ordering.compare(x, y) match {
-          case 0 => whenEqual.compare(x, y)
-          case res => res
-        }
+      (x, y) => ordering.compare(x, y) match {
+        case 0 => whenEqual.compare(x, y)
+        case res => res
       }
 
-    def orElseBy[B: Ordering](f: A => B): Ordering[A] = orElse(Ordering.by(f))
+    def orElseBy[B: Ordering](f: A => B): Ordering[A] =
+      orElse(Ordering.by(f))
   }
 }

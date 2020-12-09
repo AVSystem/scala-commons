@@ -1,8 +1,10 @@
-package com.avsystem.commons
-package misc
+package com.avsystem.commons.misc
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+
+import com.avsystem.commons.SharedExtensions._
+import com.avsystem.commons.CommonAliases._
 
 class SharedExtensionsTest extends AnyFunSuite with Matchers {
   test("mkMap") {
@@ -76,15 +78,6 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
 
     assert(completed.isCompleted)
     assert(completed.value == traverse.value)
-  }
-
-  test("Future.transformTry") {
-    import com.avsystem.commons.concurrent.RunNowEC.Implicits._
-    val ex = new Exception
-    assert(Future.successful(42).transformTry(t => Success(t.get - 1)).value.contains(Success(41)))
-    assert(Future.successful(42).transformTry(_ => Failure(ex)).value.contains(Failure(ex)))
-    assert(Future.failed[Int](ex).transformTry(t => Success(t.failed.get)).value.contains(Success(ex)))
-    assert(Future.failed[Int](ex).transformTry(_ => Failure(ex)).value.contains(Failure(ex)))
   }
 
   test("Future.transformWith") {
@@ -177,6 +170,15 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
 
   test("withSourceCode") {
     assert(123.withSourceCode == (123, "123"))
+  }
+
+  test("flatCollect") {
+    val it = Iterator(69, 42)
+    val fc = it.flatCollect { case i if i % 2 == 0 => Iterator(-i, i) }
+    assert(it.hasNext) //flatCollect should not consume eagerly
+    assert(fc.hasNext)
+    assert(!it.hasNext)
+    fc.toSeq should contain theSameElementsInOrderAs Seq(-42, 42)
   }
 
   test("partitionEither") {

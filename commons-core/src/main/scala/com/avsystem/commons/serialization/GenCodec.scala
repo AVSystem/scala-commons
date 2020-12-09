@@ -5,12 +5,12 @@ import java.util.UUID
 
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
-import com.avsystem.commons.jiop.JCanBuildFrom
+import com.avsystem.commons.jiop.JFactory
 import com.avsystem.commons.meta.Fallback
+import com.avsystem.commons.misc.{Bytes, Timestamp}
 
-import scala.annotation.implicitNotFound
-import scala.collection.generic.CanBuildFrom
-import scala.language.higherKinds
+import scala.annotation.{implicitNotFound, tailrec}
+import scala.collection.compat._
 
 /**
   * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized
@@ -301,10 +301,23 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   trait OOOFieldsObjectCodec[T] extends ObjectCodec[T] {
+    def size(value: T): Int
+
+    protected final def declareSizeFor(output: ObjectOutput, value: T): Unit =
+      if (output.sizePolicy != SizePolicy.Ignored) {
+        output.declareSize(size(value))
+      }
+
     def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T
+    def writeFields(output: ObjectOutput, value: T): Unit
 
     final def readObject(input: ObjectInput): T =
       readObject(input, FieldValues.Empty)
+
+    final def writeObject(output: ObjectOutput, value: T): Unit = {
+      declareSizeFor(output, value)
+      writeFields(output, value)
+    }
   }
 
   final class Transformed[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {
@@ -384,8 +397,26 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit lazy val UuidCodec: GenCodec[UUID] =
     nullableSimple(i => UUID.fromString(i.readString()), (o, v) => o.writeString(v.toString))
 
-  private implicit class TraversableOnceOps[A](private val coll: TraversableOnce[A]) extends AnyVal {
+  implicit lazy val TimestampCodec: GenCodec[Timestamp] =
+    GenCodec.nonNullSimple(i => Timestamp(i.readTimestamp()), (o, t) => o.writeTimestamp(t.millis))
+  implicit lazy val BytesCodec: GenCodec[Bytes] =
+    GenCodec.nullableSimple(i => Bytes(i.readBinary()), (o, b) => o.writeBinary(b.bytes))
+
+  private def declareSize(o: SequentialOutput, coll: BIterable[_]): Unit =
+    o.sizePolicy match {
+      case SizePolicy.Ignored =>
+      case SizePolicy.Optional =>
+        coll.knownSize match {
+          case -1 =>
+          case size => o.declareSize(size)
+        }
+      case SizePolicy.Required =>
+        o.declareSize(coll.size)
+    }
+
+  private implicit class IterableOps[A](private val coll: BIterable[A]) extends AnyVal {
     def writeToList(lo: ListOutput)(implicit writer: GenCodec[A]): Unit = {
+      declareSize(lo, coll)
       coll.foreach(new (A => Unit) {
         private var idx = 0
         def apply(a: A): Unit = {
@@ -398,9 +429,25 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     }
   }
 
+  private implicit class PairIterableOps[A, B](private val coll: BIterable[(A, B)]) extends AnyVal {
+    def writeToObject(oo: ObjectOutput)(implicit keyWriter: GenKeyCodec[A], writer: GenCodec[B]): Unit = {
+      declareSize(oo, coll)
+      coll.foreach { case (key, value) =>
+        val fieldName = keyWriter.write(key)
+        try writer.write(oo.writeField(fieldName), value) catch {
+          case NonFatal(e) => throw MapFieldWriteFailed(fieldName, e)
+        }
+      }
+    }
+  }
+
   private implicit class ListInputOps(private val li: ListInput) extends AnyVal {
-    def collectTo[A: GenCodec, C](implicit cbf: CanBuildFrom[Nothing, A, C]): C = {
-      val b = cbf()
+    def collectTo[A: GenCodec, C](implicit fac: Factory[A, C]): C = {
+      val b = fac.newBuilder
+      li.knownSize match {
+        case -1 =>
+        case size => b.sizeHint(size)
+      }
       var idx = 0
       while (li.hasNext) {
         val a = try read[A](li.nextElement()) catch {
@@ -414,8 +461,12 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   private implicit class ObjectInputOps(private val oi: ObjectInput) extends AnyVal {
-    def collectTo[K: GenKeyCodec, V: GenCodec, C](implicit cbf: CanBuildFrom[Nothing, (K, V), C]): C = {
-      val b = cbf()
+    def collectTo[K: GenKeyCodec, V: GenCodec, C](implicit fac: Factory[(K, V), C]): C = {
+      val b = fac.newBuilder
+      oi.knownSize match {
+        case -1 =>
+        case size => b.sizeHint(size)
+      }
       while (oi.hasNext) {
         val fi = oi.nextField()
         val entry = try ((GenKeyCodec.read[K](fi.fieldName), read[V](fi))) catch {
@@ -428,48 +479,66 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   implicit def arrayCodec[T: ClassTag : GenCodec]: GenCodec[Array[T]] =
-    nullableList[Array[T]](_.iterator(read[T]).toArray[T], (lo, arr) => arr.iterator.writeToList(lo))
+    nullableList[Array[T]](_.iterator(read[T]).toArray[T], (lo, arr) => {
+      lo.declareSize(arr.length)
+      @tailrec def loop(idx: Int): Unit =
+        if (idx < arr.length) {
+          GenCodec.write(lo.writeElement(), arr(idx))
+          loop(idx + 1)
+        }
+      loop(0)
+    })
+
+  // these are covered by the generic `seqCodec` and `setCodec` but making them explicit may be easier
+  // for the compiler and also make IntelliJ less confused
+  // also https://github.com/scala/bug/issues/11027 - only for Scala 2.12
+  implicit def bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] = seqCodec[BSeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
+  implicit def iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] = seqCodec[ISeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
+  implicit def mseqCodec[T: GenCodec]: GenCodec[MSeq[T]] = seqCodec[MSeq, T]
+  implicit def bindexedSeqCodec[T: GenCodec]: GenCodec[BIndexedSeq[T]] = seqCodec[BIndexedSeq, T]
+  implicit def iindexedSeqCodec[T: GenCodec]: GenCodec[IIndexedSeq[T]] = seqCodec[IIndexedSeq, T]
+  implicit def mindexedSeqCodec[T: GenCodec]: GenCodec[MIndexedSeq[T]] = seqCodec[MIndexedSeq, T]
+  implicit def listCodec[T: GenCodec]: GenCodec[List[T]] = seqCodec[List, T]
+  implicit def vectorCodec[T: GenCodec]: GenCodec[Vector[T]] = seqCodec[Vector, T]
+  implicit def bsetCodec[T: GenCodec]: GenCodec[BSet[T]] = setCodec[BSet, T]
+  implicit def isetCodec[T: GenCodec]: GenCodec[ISet[T]] = setCodec[ISet, T]
+  implicit def msetCodec[T: GenCodec]: GenCodec[MSet[T]] = setCodec[MSet, T]
+  implicit def ihashSetCodec[T: GenCodec]: GenCodec[IHashSet[T]] = setCodec[IHashSet, T]
+  implicit def mhashSetCodec[T: GenCodec]: GenCodec[MHashSet[T]] = setCodec[MHashSet, T]
 
   // seqCodec, setCodec, jCollectionCodec, mapCodec, jMapCodec, fallbackMapCodec and fallbackJMapCodec
   // have these weird return types (e.g. GenCodec[C[T] with BSeq[T]] instead of just GenCodec[C[T]]) because it's a
   // workaround for https://groups.google.com/forum/#!topic/scala-user/O_fkaChTtg4
 
   implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](
-    implicit cbf: CanBuildFrom[Nothing, T, C[T]]
+    implicit fac: Factory[T, C[T]]
   ): GenCodec[C[T] with BSeq[T]] =
     nullableList[C[T] with BSeq[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
   implicit def setCodec[C[X] <: BSet[X], T: GenCodec](
-    implicit cbf: CanBuildFrom[Nothing, T, C[T]]
+    implicit fac: Factory[T, C[T]]
   ): GenCodec[C[T] with BSet[T]] =
     nullableList[C[T] with BSet[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
   implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](
-    implicit cbf: JCanBuildFrom[T, C[T]]
-  ): GenCodec[C[T] with JCollection[T]] =
-    nullableList[C[T] with JCollection[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
-
-  private def writeMapEntry[K: GenKeyCodec, V: GenCodec](oo: ObjectOutput, key: K, value: V): Unit = {
-    val fieldName = GenKeyCodec.write(key)
-    try GenCodec.write(oo.writeField(fieldName), value) catch {
-      case NonFatal(e) => throw MapFieldWriteFailed(fieldName, e)
-    }
-  }
+    implicit cbf: JFactory[T, C[T]]
+  ): GenCodec[C[T]] =
+    nullableList[C[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
   implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit cbf: CanBuildFrom[Nothing, (K, V), M[K, V]]
+    implicit fac: Factory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V]] =
     nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
-      (oo, value) => value.foreach({ case (k, v) => writeMapEntry(oo, k, v) })
+      (oo, value) => value.writeToObject(oo)
     )
 
   implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit cbf: JCanBuildFrom[(K, V), M[K, V]]
+    implicit cbf: JFactory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V]] =
     nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
-      (oo, value) => value.entrySet.asScala.foreach(e => writeMapEntry(oo, e.getKey, e.getValue))
+      (oo, value) => value.asScala.writeToObject(oo)
     )
 
   implicit def optionCodec[T: GenCodec]: GenCodec[Option[T]] = create[Option[T]](

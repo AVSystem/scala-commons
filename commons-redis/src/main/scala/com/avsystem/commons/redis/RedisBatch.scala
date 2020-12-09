@@ -5,7 +5,7 @@ import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 import com.avsystem.commons.redis.protocol._
 import com.avsystem.commons.redis.util.FoldingBuilder
 
-import scala.collection.generic.CanBuildFrom
+import scala.collection.compat._
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -255,23 +255,23 @@ object RedisBatch extends HasFlatMap[RedisBatch] {
   def sequence[Ops, Res](ops: Ops)(implicit sequencer: Sequencer[Ops, Res]): RedisBatch[Res] =
     sequencer.sequence(ops)
 
-  def traverse[M[X] <: TraversableOnce[X], A, B, That](coll: M[A])(opFun: A => RedisBatch[B])
-    (implicit cbf: CanBuildFrom[M[A], B, That]): RedisBatch[That] = {
+  def traverse[M[X] <: IterableOnce[X], A, B, That](coll: M[A])(opFun: A => RedisBatch[B])
+    (implicit bf: BuildFrom[M[A], B, That]): RedisBatch[That] = {
     val batches = new ArrayBuffer[RedisBatch[B]]
-    coll.foreach(a => batches += opFun(a))
-    new CollectionBatch[B, That](batches, () => cbf(coll))
+    coll.iterator.foreach(a => batches += opFun(a))
+    new CollectionBatch[B, That](batches, () => bf.newBuilder(coll))
   }
 
-  def foldLeftMap[A, B, T](coll: TraversableOnce[A], zero: T)(opFun: A => RedisBatch[B])(fun: (T, B) => T): RedisBatch[T] = {
+  def foldLeftMap[A, B, T](coll: IterableOnce[A], zero: T)(opFun: A => RedisBatch[B])(fun: (T, B) => T): RedisBatch[T] = {
     val batches = new ArrayBuffer[RedisBatch[B]]
-    coll.foreach(a => batches += opFun(a))
+    coll.iterator.foreach(a => batches += opFun(a))
     new CollectionBatch[B, T](batches, () => new FoldingBuilder(zero, fun))
   }
 
-  def foldLeft[T, A](ops: TraversableOnce[RedisBatch[A]], zero: T)(fun: (T, A) => T): RedisBatch[T] =
+  def foldLeft[T, A](ops: IterableOnce[RedisBatch[A]], zero: T)(fun: (T, A) => T): RedisBatch[T] =
     foldLeftMap(ops, zero)(identity)(fun)
 
-  def foreach[A](ops: TraversableOnce[A])(opFun: A => RedisBatch[Any]): RedisBatch[Unit] =
+  def foreach[A](ops: IterableOnce[A])(opFun: A => RedisBatch[Any]): RedisBatch[Unit] =
     foldLeftMap(ops, ())(opFun)((_, _) => ())
 }
 

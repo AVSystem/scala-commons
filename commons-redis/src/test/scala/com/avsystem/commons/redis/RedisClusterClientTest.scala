@@ -5,9 +5,9 @@ import com.avsystem.commons.redis.commands.{FailoverOption, ShutdownModifier}
 import com.avsystem.commons.redis.config.{ClusterConfig, ConnectionConfig, ExecutionConfig, NodeConfig}
 import com.avsystem.commons.redis.exception.{ClusterInitializationException, CrossSlotException, ForbiddenCommandException, NoKeysException}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Seconds, Span}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.time.{Seconds, Span}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._

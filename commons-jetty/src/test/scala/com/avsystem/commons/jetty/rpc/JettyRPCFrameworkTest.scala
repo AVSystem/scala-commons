@@ -3,11 +3,11 @@ package jetty.rpc
 
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.server.Server
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{Milliseconds, Seconds, Span}
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.time.{Milliseconds, Seconds, Span}
 
 /**
   * @author MKej
@@ -49,14 +49,13 @@ class JettyRPCFrameworkTest extends AnyFunSuite with ScalaFutures with Matchers 
 
   val keksResult: Long = Long.MaxValue
   val topKeksResult: Int = Int.MaxValue
-  val errorMessage: String = "cannot into"
 
   val impl: SomeApi = new SomeApi {
     override def keks: Future[Long] = Future.successful(keksResult)
     override def isTop(keks: Long): Future[Boolean] = Future.successful(keks == Int.MaxValue)
     override val topper = new TopperImpl("%s", topKeksResult)
     override def differentTopper(helloPattern: String): Topper = new TopperImpl(helloPattern, topKeksResult)
-    override def erroneousKeks: Future[Int] = Future.failed(new RuntimeException(errorMessage))
+    override def erroneousKeks: Future[Int] = Future.failed(new RuntimeException("cannot into"))
   }
 
   val port: Int = 1337
@@ -70,7 +69,6 @@ class JettyRPCFrameworkTest extends AnyFunSuite with ScalaFutures with Matchers 
 
   test("paren -> unit") {
     noException should be thrownBy rpc.topper.initialize2().futureValue
-    noException should be thrownBy rpc.topper.initialize2.futureValue
   }
 
   test("empty-paren -> long") {
@@ -117,8 +115,6 @@ class JettyRPCFrameworkTest extends AnyFunSuite with ScalaFutures with Matchers 
     val failed = rpc.erroneousKeks.failed.futureValue
     failed shouldBe a[HttpException]
     val exception = failed.asInstanceOf[HttpException]
-    // looks like Jetty no longer forwards exception message, probably for security reasons
-    exception.reason shouldBe "Server Error"
     exception.status shouldBe 500
   }
 

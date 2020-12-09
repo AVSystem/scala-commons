@@ -189,7 +189,7 @@ trait SetsApi extends ApiSubset {
   }
 
   private final class Sscan(key: Key, cursor: Cursor, matchPattern: Opt[Value], count: Opt[Int])
-    extends RedisScanCommand[Value](multiBulkSeq[Value]) with NodeCommand {
+    extends RedisScanCommand[Value](multiBulkAsSeqOf[Value]) with NodeCommand {
     val encoded: Encoded = encoder("SSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 

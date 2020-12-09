@@ -2,6 +2,8 @@ package com.avsystem.commons
 package redis.protocol
 
 import akka.util.ByteString
+import com.github.ghik.silencer.silent
+import org.scalacheck.util.Buildable
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
 /**
@@ -9,6 +11,11 @@ import org.scalacheck.{Arbitrary, Gen, Shrink}
   * Created: 04/04/16.
   */
 object RedisMsgScalacheck {
+  implicit val byteStringBuildable: Buildable[Byte, ByteString] =
+    new Buildable[Byte, ByteString] {
+      def builder: MBuilder[Byte, ByteString] = ByteString.newBuilder
+    }
+
   implicit val shrinkSimpleString: Shrink[SimpleStringMsg] =
     Shrink(ss => Shrink.shrink(ss.string).map(SimpleStringMsg(_)))
 
@@ -21,6 +28,7 @@ object RedisMsgScalacheck {
   implicit val shrinkArray: Shrink[ArrayMsg[RedisMsg]] =
     Shrink(arr => Shrink.shrink(arr.elements).map(ArrayMsg(_)))
 
+  @silent("deprecated")
   implicit val shrinkRedisProtocolMsg: Shrink[RedisMsg] = Shrink {
     case ss: SimpleStringMsg => Shrink.shrink(ss)
     case er: ErrorMsg => Shrink.shrink(er)

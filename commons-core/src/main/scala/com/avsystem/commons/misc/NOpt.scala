@@ -1,9 +1,5 @@
 package com.avsystem.commons.misc
 
-import com.avsystem.commons.misc.NOpt.{EmptyMarker, NullMarker}
-
-import scala.language.implicitConversions
-
 object NOpt {
   // These two are used as NOpt's raw value to represent empty NOpt and NOpt(null).
   // Unfortunately, null itself can't be used for that purpose because https://github.com/scala/bug/issues/7396
@@ -43,7 +39,10 @@ object NOpt {
 /**
   * Like [[Opt]] but does have a counterpart for `Some(null)`. In other words, [[NOpt]] is a "nullable [[Opt]]".
   */
-final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with Serializable {
+final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+
+  import NOpt._
+
   private def value: A = (if (rawValue.asInstanceOf[AnyRef] eq NullMarker) null else rawValue).asInstanceOf[A]
 
   @inline def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker

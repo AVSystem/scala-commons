@@ -116,7 +116,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
     if (braces) {
       ensure(LBrace)
     }
-    val stats = parseElems(parseStat, if (braces) Opt(RBrace) else Opt.Empty)
+    val stats = parseElems(parseStat _, if (braces) Opt(RBrace) else Opt.Empty)
     if (braces) {
       ensure(RBrace)
     } else {
@@ -131,7 +131,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
   def parseArray(): HArray = {
     val start = skipWs()
     ensure(LBracket)
-    val elems = parseElems(parseValue, Opt(RBracket))
+    val elems = parseElems(parseValue _, Opt(RBracket))
     ensure(RBracket)
     HArray(elems)(rangeFrom(start))
   }

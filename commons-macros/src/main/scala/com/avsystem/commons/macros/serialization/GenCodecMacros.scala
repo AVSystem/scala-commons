@@ -20,6 +20,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         def readList(input: $SerializationPkg.ListInput) =
           (..${indices.map(i => q"${elementCodecs(i)}.read(input.nextElement())")})
         def writeList(output: $SerializationPkg.ListOutput, value: $tupleTpe) = {
+          output.declareSize(${elementCodecs.size})
           ..${indices.map(i => q"${elementCodecs(i)}.write(output.writeElement(), value.${tupleGet(i)})")}
         }
       }
@@ -118,7 +119,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       q"""
         new $SerializationPkg.SingletonCodec[$tpe](${tpe.toString}, $safeSingleValue) {
           ..${generated.map({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
-          override def writeObject(output: $SerializationPkg.ObjectOutput, value: $tpe): $UnitCls = {
+          override def size(value: $tpe): $IntCls = ${generated.size}
+          override def writeFields(output: $SerializationPkg.ObjectOutput, value: $tpe): $UnitCls = {
             ..${generated.map({ case (sym, _) => generatedWrite(sym) })}
           }
         }
@@ -189,7 +191,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
               unapplyFailed
             }
            """
-      case List(p) =>
+      case List(p: ApplyParam) =>
         if (canUseFields)
           writeField(p, q"value.${p.sym.name}")
         else
@@ -210,8 +212,41 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
     }
 
+    def mayBeTransient(p: ApplyParam): Boolean =
+      p.optionLike.nonEmpty || isTransientDefault(p)
+
+    def transientValue(p: ApplyParam): Tree = p.optionLike match {
+      case Some(optionLike) => q"${optionLike.reference(Nil)}.none"
+      case None => p.defaultValue
+    }
+
+    def countTransientFields: Tree =
+      if (canUseFields)
+        params.filter(mayBeTransient).foldLeft[Tree](q"0") {
+          (acc, p) => q"$acc + (if(value.${p.sym.name} == ${transientValue(p)}) 1 else 0)"
+        }
+      else if (!params.exists(mayBeTransient)) q"0"
+      else params match {
+        case List(p: ApplyParam) =>
+          q"""
+            val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
+            if(unapplyRes.isEmpty) unapplyFailed else if(unapplyRes.get == ${transientValue(p)}) 1 else 0
+          """
+        case _ =>
+          val res = params.filter(mayBeTransient).foldLeft[Tree](q"0") {
+            (acc, p) => q"$acc + (if(t.${tupleGet(p.idx)} == ${transientValue(p)}) 1 else 0)"
+          }
+          q"""
+            val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
+            if(unapplyRes.isEmpty) unapplyFailed else {
+              val t = unapplyRes.get
+              $res
+            }
+           """
+      }
+
     if (isTransparent(dtpe.typeSymbol)) params match {
-      case List(p) =>
+      case List(p: ApplyParam) =>
         if (generated.nonEmpty) {
           abort(s"class marked as @transparent cannot have @generated members")
         }
@@ -248,15 +283,23 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       def generatedWrite(sym: Symbol): Tree =
         q"writeField(${nameBySym(sym)}, output, ${mkParamLessCall(q"value", sym)}, ${genDepNames(sym)})"
 
-      val useProductCodec = canUseFields && generated.isEmpty &&
-        !params.exists(p => isTransientDefault(p) || p.optionLike.isDefined) &&
+      val useProductCodec = canUseFields && generated.isEmpty && !params.exists(mayBeTransient) &&
         (isScalaJs || !params.exists(isOptimizedPrimitive))
 
       val baseClass = TypeName(if (useProductCodec) "ProductCodec" else "ApplyUnapplyCodec")
 
+      def sizeMethod: List[Tree] = if (useProductCodec) Nil else {
+        val res =
+          q"""
+            def size(value: $dtpe): $IntCls =
+              ${params.size} + ${generated.size} - $countTransientFields
+          """
+        List(res)
+      }
+
       def writeMethod: Tree = if (useProductCodec) q"()" else
         q"""
-          def writeObject(output: $SerializationPkg.ObjectOutput, value: $dtpe) = {
+          def writeFields(output: $SerializationPkg.ObjectOutput, value: $dtpe) = {
             $writeFields
             ..${generated.map({ case (sym, _) => generatedWrite(sym) })}
           }
@@ -281,6 +324,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           ..${generated.collect({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
           def instantiate(fieldValues: $SerializationPkg.FieldValues) =
             ${applyUnapply.mkApply(params.map(p => p.asArgument(readField(p))))}
+          ..$sizeMethod
           $writeMethod
         }
        """

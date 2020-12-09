@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class Any2StringAdd[C <: Global with Singleton](g: C) extends AnalyzerRule(g, "any2stringadd", Level.Off) {
+class Any2StringAdd(g: Global) extends AnalyzerRule(g, "any2stringadd", Level.Off) {
 
   import global._
 

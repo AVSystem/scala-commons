@@ -7,6 +7,8 @@ package serialization
 final class PeekingObjectInput(original: ObjectInput) extends ObjectInput {
   private[this] var peekedField: FieldInput = _
 
+  override def knownSize: Int = original.knownSize
+
   def peekNextFieldName: Opt[String] = peekedField match {
     case null if original.hasNext =>
       peekedField = original.nextField()
