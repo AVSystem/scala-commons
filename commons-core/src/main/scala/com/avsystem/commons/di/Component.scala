@@ -23,9 +23,12 @@ case class ComponentInitializationException(component: Component[_], cause: Thro
   extends Exception(s"failed to initialize component ${component.info}", cause)
 
 case class DependencyCycleException(cyclePath: List[Component[_]])
-  extends Exception(s"component dependency cycle detected: ${cyclePath.map(_.info).mkString("", " -> ", " -> " + cyclePath.head.info)}")
+  extends Exception(s"component dependency cycle detected:\n${cyclePath.iterator.map(_.info).map("  " + _).mkString(" ->\n")}")
 
 abstract class Component[+T] {
+
+  import Component._
+
   def name: String
   def sourceInfo: SourceInfo
 
@@ -37,54 +40,59 @@ abstract class Component[+T] {
   @compileTimeOnly(".ref can only be used inside code passed to component(...) macro")
   def ref: T = sys.error("stub")
 
-  def dependsOn(deps: Component[_]*): Component[T] =
-    new Component.WithAdditionalDeps(this, deps)
+  final def get(implicit ec: ExecutionContext): T =
+    Await.result(init, Duration.Inf)
 
-  final def init(): T =
-    Await.result(parallelInit()(RunInQueueEC), Duration.Inf)
+  final def getNow: T =
+    get(RunInQueueEC)
 
-  final def parallelInit()(implicit ec: ExecutionContext): Future[T] =
-    doParallelInit(cycleCheck = true).catchFailures
+  final def init(implicit ec: ExecutionContext): Future[T] =
+    doInit(Nil).catchFailures
 
-  private def detectCycles(stack: List[Component[_]], visited: MHashSet[Component[_]]): Unit =
-    if (!visited.contains(this)) {
-      if (!stack.contains(this)) {
-        val newStack = this :: stack
-        dependencies.foreach(_.detectCycles(newStack, visited))
-        visited.add(this)
-      } else {
-        throw DependencyCycleException(this :: stack.takeWhile(_ != this))
-      }
+  private def doInit(stack: List[Component[_]])(implicit ec: ExecutionContext): Future[T] = {
+    if (stack.contains(this)) {
+      val cyclePath = this :: (this :: stack.takeWhile(_ != this)).reverse
+      throw DependencyCycleException(cyclePath)
     }
-
-  private def doParallelInit(cycleCheck: Boolean)(implicit ec: ExecutionContext): Future[T] = {
     val promise = Promise[T]()
     if (savedFuture.compareAndSet(null, promise.future)) {
-      if (cycleCheck) {
-        detectCycles(Nil, new MHashSet)
-      }
+      val newStack = this :: stack
       val resultFuture =
-        Future.traverse(dependencies)(_.doParallelInit(cycleCheck = false))
-          .map(deps => create(deps.toIndexedSeq))
+        Future.traverse(dependencies)(_.doInit(newStack))
+          .flatMapNow(deps => create(deps) match {
+            case CreateResult.Ready(value) =>
+              Future.successful(value)
+            case CreateResult.More(nextComponent) =>
+              nextComponent.doInit(newStack)
+          })
           .recoverNow {
-            case NonFatal(cause) => throw ComponentInitializationException(this, cause)
+            case NonFatal(cause) =>
+              throw ComponentInitializationException(this, cause)
           }
       promise.completeWith(resultFuture)
     }
     savedFuture.get()
   }
 
-  def dependencies: IndexedSeq[Component[_]]
-
-  protected def create(resolvedDeps: IndexedSeq[Any]): T
+  protected def dependencies: IndexedSeq[Component[_]]
+  protected def create(resolvedDeps: IndexedSeq[Any]): CreateResult[T]
 }
 object Component {
-  private class WithAdditionalDeps[T](wrapped: Component[T], deps: Seq[Component[_]]) extends Component[T] {
-    def name: String = wrapped.name
-    def sourceInfo: SourceInfo = wrapped.sourceInfo
-    def dependencies: IndexedSeq[Component[_]] = wrapped.dependencies ++ deps
-    protected def create(resolvedDeps: IndexedSeq[Any]): T = wrapped.create(resolvedDeps)
+  sealed abstract class CreateResult[+T]
+  object CreateResult {
+    final case class Ready[+T](value: T) extends CreateResult[T]
+    final case class More[+T](nextStep: Component[T]) extends CreateResult[T]
   }
+}
+
+final class ComponentImpl[T](
+  val name: String,
+  val sourceInfo: SourceInfo,
+  deps: => IndexedSeq[Component[_]],
+  createFun: IndexedSeq[Any] => Component.CreateResult[T]
+) extends Component[T] {
+  protected lazy val dependencies: IndexedSeq[Component[_]] = deps
+  protected def create(resolvedDeps: IndexedSeq[Any]): Component.CreateResult[T] = createFun(resolvedDeps)
 }
 
 trait Components extends ComponentsLowPrio {
@@ -93,7 +101,7 @@ trait Components extends ComponentsLowPrio {
 
   private val componentsCache = new ConcurrentHashMap[String, Component[_]]
 
-  protected def cacheComponent[T](component: Component[T]): Component[T] =
+  def cached[T](component: Component[T]): Component[T] =
     componentsCache.computeIfAbsent(component.cacheKey, _ => component).asInstanceOf[Component[T]]
 
   // avoids divergent implicit expansion involving `inject`

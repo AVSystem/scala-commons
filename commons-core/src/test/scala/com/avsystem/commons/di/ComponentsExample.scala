@@ -1,9 +1,6 @@
 package com.avsystem.commons
 package di
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-
 case class DynamicConfig(
   databaseUrl: String,
   bulbulator: BulbulatorConfig
@@ -14,10 +11,14 @@ case class BulbulatorConfig(
 )
 
 abstract class MyComponent(implicit name: ComponentName) {
-  println(s"starting $name initialization")
+  println(s"starting $name initialization on ${Thread.currentThread().getId}")
   Thread.sleep(100)
   println(s"finished $name initialization")
 }
+
+class DynamicDep(db: Database)(implicit
+  name: ComponentName,
+) extends MyComponent
 
 class Database(
   databaseUrl: String
@@ -37,7 +38,9 @@ class DeviceDao(implicit
   name: ComponentName
 ) extends MyComponent
 
-class FullApplication(implicit
+class FullApplication(
+  dynamicDep: DynamicDep
+)(implicit
   bulbulatorDao: BulbulatorDao,
   deviceDao: DeviceDao
 ) {
@@ -46,6 +49,9 @@ class FullApplication(implicit
 
 trait DatabaseComponents extends Components {
   def config: DynamicConfig
+
+  def dynamicDep(db: Database): Component[DynamicDep] =
+    component(new DynamicDep(db))
 
   implicit val database: Component[Database] =
     component(new Database(config.databaseUrl))
@@ -59,7 +65,7 @@ trait DatabaseComponents extends Components {
 
 class ComponentsExample(val config: DynamicConfig) extends Components with DatabaseComponents {
   val fullApplication: Component[FullApplication] =
-    component(new FullApplication)
+    component(new FullApplication(dynamicDep(database.ref).ref))
 }
 object ComponentsExample {
 
@@ -67,7 +73,6 @@ object ComponentsExample {
 
   def main(args: Array[String]): Unit = {
     val config = DynamicConfig("whatever", BulbulatorConfig(List("jeden", "drugi")))
-    val fut = new ComponentsExample(config).fullApplication.parallelInit()
-    Await.result(fut, Duration.Inf)
+    new ComponentsExample(config).fullApplication.get
   }
 }
