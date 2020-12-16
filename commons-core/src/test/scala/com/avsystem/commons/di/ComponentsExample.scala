@@ -10,32 +10,26 @@ case class BulbulatorConfig(
   types: List[String]
 )
 
-abstract class MyComponent(implicit name: ComponentName) {
-  println(s"starting $name initialization on ${Thread.currentThread().getId}")
+abstract class MyComponent {
+  println(s"starting $this initialization on ${Thread.currentThread().getId}")
   Thread.sleep(100)
-  println(s"finished $name initialization")
+  println(s"finished $this initialization")
 }
 
-class DynamicDep(db: Database)(implicit
-  name: ComponentName,
-) extends MyComponent
+class DynamicDep(db: Database) extends MyComponent
 
 class Database(
   databaseUrl: String
-)(implicit
-  name: ComponentName
 ) extends MyComponent
 
 class BulbulatorDao(
   config: BulbulatorConfig
 )(implicit
   db: Database,
-  name: ComponentName
 ) extends MyComponent
 
 class DeviceDao(implicit
   db: Database,
-  name: ComponentName
 ) extends MyComponent
 
 class FullApplication(
@@ -53,19 +47,19 @@ trait DatabaseComponents extends Components {
   def dynamicDep(db: Database): Component[DynamicDep] =
     component(new DynamicDep(db))
 
-  implicit val database: Component[Database] =
-    component(new Database(config.databaseUrl))
+  implicit def database: Component[Database] =
+    singleton(new Database(config.databaseUrl))
 
-  implicit val bulbulatorDao: Component[BulbulatorDao] =
-    component(new BulbulatorDao(config.bulbulator))
+  implicit def bulbulatorDao: Component[BulbulatorDao] =
+    singleton(new BulbulatorDao(config.bulbulator))
 
-  implicit val deviceDao: Component[DeviceDao] =
-    component(new DeviceDao)
+  implicit def deviceDao: Component[DeviceDao] =
+    singleton(new DeviceDao)
 }
 
 class ComponentsExample(val config: DynamicConfig) extends Components with DatabaseComponents {
-  val fullApplication: Component[FullApplication] =
-    component(new FullApplication(dynamicDep(database.ref).ref))
+  def fullApplication: Component[FullApplication] =
+    singleton(new FullApplication(dynamicDep(database.ref).ref))
 }
 object ComponentsExample {
 

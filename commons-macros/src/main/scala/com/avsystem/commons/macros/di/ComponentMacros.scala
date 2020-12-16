@@ -11,14 +11,12 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   import c.universe._
 
   def DiPkg = q"$CommonsPkg.di"
-  def ComponentNameObj: Tree = q"$DiPkg.ComponentName"
   def ComponentCls: Tree = tq"$DiPkg.Component"
   def ComponentObj: Tree = q"$DiPkg.Component"
 
   lazy val ComponentTpe: Type = getType(tq"$ComponentCls[_]")
   lazy val ComponentRefSym: Symbol = ComponentTpe.member(TermName("ref"))
   lazy val InjectSym: Symbol = getType(tq"$DiPkg.Components").member(TermName("inject"))
-  lazy val ComponentNameSym: Symbol = getType(tq"$DiPkg.ComponentName.type").member(TermName("componentName"))
 
   object ComponentRef {
     def unapply(tree: Tree): Option[Tree] = tree match {
@@ -30,28 +28,15 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
-  def cachedComponentCreate[T: c.WeakTypeTag](definition: Tree): Tree =
-    q"${c.prefix}.cached(${c.prefix}.component($definition))"
-
-  private def mkComponent(tpe: Type, definition: Tree, flatten: Boolean): Tree = {
-    val enclosingSym = {
-      val sym = c.internal.enclosingOwner
-      if (!sym.isTerm || !(sym.asTerm.isVal || sym.asTerm.isMethod)) {
-        abort("component(...) must be assigned to a val or def")
-      }
-      sym.asTerm.getter
-    }
-
-    val name = enclosingSym.name.decodedName.toString
-
+  private def mkComponent(tpe: Type, sourceInfo: Tree, definition: Tree, flatten: Boolean, singleton: Boolean): Tree = {
     val depArrayName = c.freshName(TermName("deps"))
     val depsBuf = new ListBuffer[Tree]
 
     def prepareDependency(tree: Tree, depTpe: Type): Tree = {
-      val dependencyTree = mkComponent(depTpe, tree, flatten = true)
+      val dependencyTree = mkComponent(depTpe, sourceInfo, tree, flatten = true, singleton = false)
       val innerSymbols = dependencyTree.collect({ case t@(_: DefTree | _: Function | _: Bind) if t.symbol != null => t.symbol }).toSet
       dependencyTree.foreach { t =>
-        if (t.symbol != null && !innerSymbols.contains(t.symbol) && ownersOf(t.symbol).contains(enclosingSym)) {
+        if (t.symbol != null && !innerSymbols.contains(t.symbol) && posIncludes(definition.pos, t.symbol.pos)) {
           errorAt(s"due to parallel initialization you cannot use local values or methods in an expression representing component dependency", t.pos)
         }
       }
@@ -64,8 +49,6 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           depsBuf += prepareDependency(component, tree.tpe)
           val depTpe = component.tpe.baseType(ComponentTpe.typeSymbol).typeArgs.head
           q"$depArrayName(${depsBuf.size - 1}).asInstanceOf[$depTpe]"
-        case Select(_, TermName("componentName")) if tree.symbol == ComponentNameSym =>
-          q"$ComponentNameObj($name)"
         case _ =>
           super.transform(tree)
       }
@@ -85,17 +68,35 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
       val resultCase = TermName(if (flatten) "More" else "Ready")
 
-      q"""
-       new $DiPkg.ComponentImpl[$tpe](
-         $name,
-         $ImplicitsObj.infer[$MiscPkg.SourceInfo],
-         $ScalaPkg.IndexedSeq(..${depsBuf.result()}),
-         ($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]) => $ComponentObj.CreateResult.$resultCase($finalDefinition)
-       )
-       """
+      val result =
+        q"""
+         new $DiPkg.ComponentImpl[$tpe](
+           $sourceInfo,
+           $ScalaPkg.IndexedSeq(..${depsBuf.result()}),
+           ($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]) =>
+             $ComponentObj.CreateResult.$resultCase($finalDefinition)
+         )
+         """
+
+      if (singleton)
+        q"${c.prefix}.cached($result)($sourceInfo)"
+      else
+        result
     }
   }
 
-  def componentCreate[T: c.WeakTypeTag](definition: Tree): Tree =
-    mkComponent(weakTypeOf[T], definition, flatten = false)
+  private def ensureRangePositions(): Unit =
+    if (!c.compilerSettings.contains("-Yrangepos")) {
+      abort("Component related macros require -Yrangepos")
+    }
+
+  def prototype[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
+    ensureRangePositions()
+    mkComponent(weakTypeOf[T], sourceInfo, definition, flatten = false, singleton = false)
+  }
+
+  def singleton[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
+    ensureRangePositions()
+    mkComponent(weakTypeOf[T], sourceInfo, definition, flatten = false, singleton = true)
+  }
 }

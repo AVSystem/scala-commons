@@ -3,7 +3,7 @@ package macros
 
 import com.avsystem.commons.macros.misc.{Ok, Res}
 
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.{TypecheckException, blackbox}
@@ -702,6 +702,9 @@ trait MacroCommons { bundle =>
 
   def posInfo(pos: Position): String =
     s"${pos.source.file.name}:${pos.line}:${pos.column}"
+
+  def posIncludes(outer: Position, inner: Position): Boolean =
+    inner != NoPosition && inner.start >= outer.start && inner.end <= outer.end
 
   def abortAt(message: String, pos: Position): Nothing =
     if (pos != NoPosition && pos != c.enclosingPosition) {
