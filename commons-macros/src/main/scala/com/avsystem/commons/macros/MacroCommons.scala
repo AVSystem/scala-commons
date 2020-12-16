@@ -3,7 +3,7 @@ package macros
 
 import com.avsystem.commons.macros.misc.{Ok, Res}
 
-import scala.annotation.{nowarn, tailrec}
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.reflect.macros.{TypecheckException, blackbox}
