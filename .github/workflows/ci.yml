@@ -24,6 +24,7 @@ jobs:
         os: [ubuntu-latest]
         scala: [2.12.12, 2.13.3]
         java: [adopt@1.11]
+        redis-version: [6.0.1]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
@@ -48,6 +49,12 @@ jobs:
             ~/Library/Caches/Coursier/v1
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
+      - name: Cache Redis
+        uses: actions/cache@v2
+        with:
+          path: ./redis-${{ matrix.redis-version }}
+          key: ${{ runner.os }}-redis-cache-v2-${{ matrix.redis-version }}
+
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
@@ -59,9 +66,9 @@ jobs:
           mongodb-version: 4.4
 
       - name: Setup Redis
-        env:
-          REDIS_VERSION: 6.0.1
-        run: ./install-redis.sh
+        run: |
+          ./install-redis.sh
+          ${{ matrix.redis-version }}
 
       - name: Check that workflows are up to date
         run: sbt ++${{ matrix.scala }} githubWorkflowCheck
