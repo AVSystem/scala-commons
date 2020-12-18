@@ -491,8 +491,9 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   // these are covered by the generic `seqCodec` and `setCodec` but making them explicit may be easier
   // for the compiler and also make IntelliJ less confused
-  implicit def bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] = seqCodec[BSeq, T]
-  implicit def iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] = seqCodec[ISeq, T]
+  // https://github.com/scala/bug/issues/11027 - only for Scala 2.12
+  implicit def bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] = seqCodec[BSeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
+  implicit def iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] = seqCodec[ISeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
   implicit def mseqCodec[T: GenCodec]: GenCodec[MSeq[T]] = seqCodec[MSeq, T]
   implicit def bindexedSeqCodec[T: GenCodec]: GenCodec[BIndexedSeq[T]] = seqCodec[BIndexedSeq, T]
   implicit def iindexedSeqCodec[T: GenCodec]: GenCodec[IIndexedSeq[T]] = seqCodec[IIndexedSeq, T]
@@ -508,14 +509,6 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   // seqCodec, setCodec, jCollectionCodec, mapCodec, jMapCodec, fallbackMapCodec and fallbackJMapCodec
   // have these weird return types (e.g. GenCodec[C[T] with BSeq[T]] instead of just GenCodec[C[T]]) because it's a
   // workaround for https://groups.google.com/forum/#!topic/scala-user/O_fkaChTtg4
-
-  // https://github.com/scala/bug/issues/11027 - only for Scala 2.12
-  implicit def forcedAsListSeqCodec[T: GenCodec]: GenCodec[BSeq[T]] =
-    seqCodec[BSeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
-
-  // https://github.com/scala/bug/issues/11027 - only for Scala 2.12
-  implicit def forcedAsListImmutableSeqCodec[T: GenCodec]: GenCodec[ISeq[T]] =
-    seqCodec[ISeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
 
   implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](
     implicit fac: Factory[T, C[T]]
