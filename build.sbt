@@ -95,6 +95,23 @@ inThisBuild(Seq(
   ),
 
   githubWorkflowJavaVersions := Seq("adopt@1.11"),
+  githubWorkflowBuildPreamble ++= Seq(
+    WorkflowStep.Use(
+      "actions", "setup-node", "v2",
+      name = Some("Setup Node.js"),
+      params = Map("node-version" -> "12")
+    ),
+    WorkflowStep.Use(
+      "supercharge", "mongodb-github-action", "1.3.0",
+      name = Some("Setup MongoDB"),
+      params = Map("mongodb-version" -> "4.4")
+    ),
+    WorkflowStep.Use(
+      "supercharge", "redis-github-action", "1.1.0",
+      name = Some("Setup Redis"),
+      params = Map("redis-version" -> "6")
+    )
+  ),
 ))
 
 val commonSettings = Seq(
