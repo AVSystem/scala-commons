@@ -1,6 +1,11 @@
 package com.avsystem.commons
 package di
 
+import com.avsystem.commons.concurrent.RunInQueueEC
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
 case class DynamicConfig(
   databaseUrl: String,
   bulbulator: BulbulatorConfig
@@ -67,6 +72,6 @@ object ComponentsExample {
 
   def main(args: Array[String]): Unit = {
     val config = DynamicConfig("whatever", BulbulatorConfig(List("jeden", "drugi")))
-    new ComponentsExample(config).fullApplication.get
+    Await.result(new ComponentsExample(config).fullApplication.init, Duration.Inf)
   }
 }

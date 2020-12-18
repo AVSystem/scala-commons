@@ -28,12 +28,12 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
-  private def mkComponent(tpe: Type, sourceInfo: Tree, definition: Tree, flatten: Boolean, singleton: Boolean): Tree = {
+  private def mkComponent(tpe: Type, sourceInfo: Tree, definition: Tree, dependsOn: Seq[Tree], flatten: Boolean, singleton: Boolean): Tree = {
     val depArrayName = c.freshName(TermName("deps"))
     val depsBuf = new ListBuffer[Tree]
 
     def prepareDependency(tree: Tree, depTpe: Type): Tree = {
-      val dependencyTree = mkComponent(depTpe, sourceInfo, tree, flatten = true, singleton = false)
+      val dependencyTree = mkComponent(depTpe, sourceInfo, tree, Nil, flatten = true, singleton = false)
       val innerSymbols = dependencyTree.collect({ case t@(_: DefTree | _: Function | _: Bind) if t.symbol != null => t.symbol }).toSet
       dependencyTree.foreach { t =>
         if (t.symbol != null && !innerSymbols.contains(t.symbol) && posIncludes(definition.pos, t.symbol.pos)) {
@@ -55,6 +55,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
 
     val transformedDefinition = DependencyExtractor.transform(definition)
+    depsBuf ++= dependsOn
 
     if (flatten && depsBuf.isEmpty) definition
     else {
@@ -90,13 +91,13 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       abort("Component related macros require -Yrangepos")
     }
 
-  def prototype[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
+  def prototype[T: c.WeakTypeTag](definition: Tree, dependsOn: Tree*)(sourceInfo: Tree): Tree = {
     ensureRangePositions()
-    mkComponent(weakTypeOf[T], sourceInfo, definition, flatten = false, singleton = false)
+    mkComponent(weakTypeOf[T], sourceInfo, definition, dependsOn, flatten = false, singleton = false)
   }
 
-  def singleton[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
+  def singleton[T: c.WeakTypeTag](definition: Tree, dependsOn: Tree*)(sourceInfo: Tree): Tree = {
     ensureRangePositions()
-    mkComponent(weakTypeOf[T], sourceInfo, definition, flatten = false, singleton = true)
+    mkComponent(weakTypeOf[T], sourceInfo, definition, dependsOn, flatten = false, singleton = true)
   }
 }

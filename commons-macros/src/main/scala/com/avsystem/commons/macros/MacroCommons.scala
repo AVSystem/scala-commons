@@ -704,7 +704,7 @@ trait MacroCommons { bundle =>
     s"${pos.source.file.name}:${pos.line}:${pos.column}"
 
   def posIncludes(outer: Position, inner: Position): Boolean =
-    inner != NoPosition && inner.start >= outer.start && inner.end <= outer.end
+    inner != NoPosition && outer.source == inner.source && inner.start >= outer.start && inner.end <= outer.end
 
   def abortAt(message: String, pos: Position): Nothing =
     if (pos != NoPosition && pos != c.enclosingPosition) {
