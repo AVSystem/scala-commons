@@ -59,9 +59,9 @@ jobs:
           mongodb-version: 4.4
 
       - name: Setup Redis
-        uses: supercharge/redis-github-action@1.1.0
-        with:
-          redis-version: 6
+        env:
+          REDIS_VERSION: 6.0.1
+        run: install-redis.sh
 
       - name: Check that workflows are up to date
         run: sbt ++${{ matrix.scala }} githubWorkflowCheck

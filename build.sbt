@@ -106,10 +106,10 @@ inThisBuild(Seq(
       name = Some("Setup MongoDB"),
       params = Map("mongodb-version" -> "4.4")
     ),
-    WorkflowStep.Use(
-      "supercharge", "redis-github-action", "1.1.0",
+    WorkflowStep.Run(
+      List("install-redis.sh"),
       name = Some("Setup Redis"),
-      params = Map("redis-version" -> "6")
+      env = Map("REDIS_VERSION" -> "6.0.1")
     )
   ),
 ))
