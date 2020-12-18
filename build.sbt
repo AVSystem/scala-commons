@@ -95,8 +95,7 @@ inThisBuild(Seq(
   ),
 
   githubWorkflowEnv ++= Map(
-    "REDIS_VERSION" -> "6.0.1",
-    "REDIS_HOME" -> "./redis-${{ env.REDIS_VERSION }}/src",
+    "REDIS_VERSION" -> "6.0.9",
   ),
   githubWorkflowJavaVersions := Seq("adopt@1.11"),
   githubWorkflowBuildPreamble ++= Seq(
