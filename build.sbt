@@ -94,17 +94,18 @@ inThisBuild(Seq(
     ),
   ),
 
-  githubWorkflowJavaVersions := Seq("adopt@1.11"),
-  githubWorkflowBuildMatrixAdditions ++= Map(
-    "redis-version" -> List("6.0.1")
+  githubWorkflowEnv ++= Map(
+    "REDIS_VERSION" -> "6.0.1",
+    "REDIS_HOME" -> "./redis-${{ env.REDIS_VERSION }}/src",
   ),
+  githubWorkflowJavaVersions := Seq("adopt@1.11"),
   githubWorkflowBuildPreamble ++= Seq(
     WorkflowStep.Use(
       "actions", "cache", "v2",
       name = Some("Cache Redis"),
       params = Map(
-        "path" -> "./redis-${{ matrix.redis-version }}",
-        "key" -> "${{ runner.os }}-redis-cache-v2-${{ matrix.redis-version }}"
+        "path" -> "./redis-${{ env.REDIS_VERSION }}",
+        "key" -> "${{ runner.os }}-redis-cache-v2-${{ env.REDIS_VERSION }}"
       )
     ),
     WorkflowStep.Use(
@@ -118,7 +119,7 @@ inThisBuild(Seq(
       params = Map("mongodb-version" -> "4.4")
     ),
     WorkflowStep.Run(
-      List("./install-redis.sh", "${{ matrix.redis-version }}"),
+      List("./install-redis.sh"),
       name = Some("Setup Redis"),
     )
   ),
