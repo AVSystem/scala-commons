@@ -107,7 +107,7 @@ inThisBuild(Seq(
       params = Map("mongodb-version" -> "4.4")
     ),
     WorkflowStep.Run(
-      List("install-redis.sh"),
+      List("./install-redis.sh"),
       name = Some("Setup Redis"),
       env = Map("REDIS_VERSION" -> "6.0.1")
     )
