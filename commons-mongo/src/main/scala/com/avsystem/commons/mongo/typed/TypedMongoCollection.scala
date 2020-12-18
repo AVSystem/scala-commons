@@ -33,6 +33,9 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     rawCollection.withCodecRegistry(codecRegistry).withDocumentClass(documentClass)
   }
 
+  private def empty[T](publisher: Publisher[Void]): Task[Unit] =
+    Observable.fromReactivePublisher(publisher, 1).completedL
+
   private def single[T](publisher: Publisher[T]): Task[T] =
     Observable.fromReactivePublisher(publisher, 1).firstL
 
@@ -62,6 +65,13 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     new TypedMongoCollection(rawCollection.withReadPreference(readPreference))
 
   /**
+    * Invokes some empty-result operation directly on Reactive Streams collection. This method is supposed
+    * to be used for database operations not covered directly by [[TypedMongoCollection]].
+    */
+  def emptyResultNativeOp(operation: MongoCollection[E] => Publisher[Void]): Task[Unit] =
+    empty(operation(nativeCollection))
+
+  /**
     * Invokes some single-result operation directly on Reactive Streams collection. This method is supposed
     * to be used for database operations not covered directly by [[TypedMongoCollection]].
     */
@@ -76,13 +86,13 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
     Observable.fromReactivePublisher(operation(nativeCollection))
 
   def drop(): Task[Unit] =
-    single(nativeCollection.drop()).void
+    empty(nativeCollection.drop())
 
   def renameCollection(
     namespace: MongoNamespace,
     setupOptions: RenameCollectionOptions => RenameCollectionOptions = identity
   ): Task[Unit] =
-    single(nativeCollection.renameCollection(namespace, setupOptions(new RenameCollectionOptions))).void
+    empty(nativeCollection.renameCollection(namespace, setupOptions(new RenameCollectionOptions)))
 
   def countDocuments(
     filter: MongoDocumentFilter[E] = MongoFilter.empty,
