@@ -80,8 +80,6 @@ inThisBuild(Seq(
   ),
 
   githubWorkflowTargetTags ++= Seq("v*"),
-  githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
-  githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("ci-release"))),
 
   githubWorkflowEnv ++= Map(
     "REDIS_VERSION" -> "6.0.9",
@@ -111,6 +109,21 @@ inThisBuild(Seq(
       name = Some("Setup Redis"),
     )
   ),
+
+  githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
+
+  githubWorkflowPublish := Seq(WorkflowStep.Sbt(
+    List("ci-release"),
+    env = Map(
+      "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+      "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
+      "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
+      "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
+    )
+  )),
+
+  githubWorkflowPublishPreamble +=
+    WorkflowStep.Use("olafurpg", "setup-gpg", "v3"),
 ))
 
 val commonSettings = Seq(
