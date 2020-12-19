@@ -335,9 +335,6 @@ lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
       "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
     ),
     scalaJSUseMainModuleInitializer := true,
-    test := {},
-    testOnly := {},
-    testQuick := {},
   )
 
 lazy val `commons-mongo` = project
@@ -386,6 +383,7 @@ lazy val `commons-spring` = project
   )
 
 lazy val `commons-comprof` = project
+  .disablePlugins(GenerativePlugin)
   .dependsOn(`commons-core`)
   .settings(
     jvmCommonSettings,
