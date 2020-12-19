@@ -29,21 +29,6 @@ val upickleVersion = "1.2.0"
 val scalajsBenchmarkVersion = "0.8.0"
 val slf4jVersion = "1.7.30"
 
-useGpg := false // TODO: use sbt-ci-release
-pgpPublicRing := file("./travis/local.pubring.asc")
-pgpSecretRing := file("./travis/local.secring.asc")
-pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toCharArray)
-
-credentials in Global += Credentials(
-  "Sonatype Nexus Repository Manager",
-  "oss.sonatype.org",
-  sys.env.getOrElse("SONATYPE_USERNAME", ""),
-  sys.env.getOrElse("SONATYPE_PASSWORD", "")
-)
-
-version in ThisBuild :=
-  sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("2.0.0-SNAPSHOT")
-
 // for binary compatibility checking
 val previousCompatibleVersions = Set("1.39.14")
 
@@ -94,6 +79,10 @@ inThisBuild(Seq(
     ),
   ),
 
+  githubWorkflowTargetTags ++= Seq("v*"),
+  githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
+  githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("ci-release"))),
+
   githubWorkflowEnv ++= Map(
     "REDIS_VERSION" -> "6.0.9",
   ),
@@ -129,10 +118,7 @@ val commonSettings = Seq(
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
 
-  publishTo := sonatypePublishToBundle.value,
   sonatypeProfileName := "com.avsystem",
-
-  publishMavenStyle := true,
   pomIncludeRepository := { _ => false },
 
   libraryDependencies ++= Seq(
