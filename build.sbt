@@ -121,9 +121,6 @@ inThisBuild(Seq(
       "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
     )
   )),
-
-  githubWorkflowPublishPreamble +=
-    WorkflowStep.Use("olafurpg", "setup-gpg", "v3"),
 ))
 
 val commonSettings = Seq(
