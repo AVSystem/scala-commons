@@ -1,6 +1,0 @@
-{
-  "repository.callsign" : "COM",
-  "conduit_uri" : "https://phabricator.avsystem.com/",
-  "base" : "git:merge-base(master)"
-}
-
