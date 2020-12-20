@@ -34,6 +34,23 @@ val previousCompatibleVersions = Set("1.39.14")
 
 inThisBuild(Seq(
   organization := "com.avsystem.commons",
+  homepage := Some(url("https://github.com/AVSystem/scala-commons")),
+  organizationName := "AVSystem",
+  organizationHomepage := Some(url("http://www.avsystem.com/")),
+  description := "AVSystem commons library for Scala",
+  startYear := Some(2015),
+  licenses := Vector(
+    "The MIT License" -> url("https://opensource.org/licenses/MIT"),
+  ),
+  scmInfo := Some(ScmInfo(
+    browseUrl = url("https://github.com/AVSystem/scala-commons.git"),
+    connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
+    devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
+  )),
+  developers := List(
+    Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
+  ),
+
   crossScalaVersions := Seq("2.12.12", "2.13.3"),
   scalaVersion := crossScalaVersions.value.last,
   compileOrder := CompileOrder.Mixed,
@@ -58,26 +75,6 @@ inThisBuild(Seq(
       "-Ycache-macro-class-loader:last-modified",
     ) else Seq.empty
   },
-
-  projectInfo := ModuleInfo(
-    nameFormal = "AVSystem commons",
-    description = "AVSystem commons library for Scala",
-    homepage = Some(url("https://github.com/AVSystem/scala-commons")),
-    startYear = Some(2015),
-    licenses = Vector(
-      "The MIT License" -> url("https://opensource.org/licenses/MIT"),
-    ),
-    organizationName = "AVSystem",
-    organizationHomepage = Some(url("http://www.avsystem.com/")),
-    scmInfo = Some(ScmInfo(
-      browseUrl = url("https://github.com/AVSystem/scala-commons.git"),
-      connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
-      devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
-    )),
-    developers = Vector(
-      Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
-    ),
-  ),
 
   githubWorkflowTargetTags ++= Seq("v*"),
 
