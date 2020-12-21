@@ -11,11 +11,20 @@ class BadSingletonComponent(g: Global) extends AnalyzerRule(g, "badSingletonComp
   lazy val componentsTpe: Type = classType("com.avsystem.commons.di.Components")
   lazy val cachedSym: Symbol = componentsTpe.member(TermName("cached"))
 
+  object UnwrapApply {
+    @tailrec def unapply(tree: Tree): Some[Tree] = tree match {
+      case Apply(fun, _) => unapply(fun)
+      case TypeApply(fun, _) => unapply(fun)
+      case t => Some(t)
+    }
+  }
+
   object Unwrap {
     @tailrec def unapply(t: Tree): Some[Tree] = t match {
       case Block(Nil, expr) => unapply(expr)
       case Typed(expr, _) => unapply(expr)
       case Annotated(_, expr) => unapply(expr)
+      case UnwrapApply(Select(prefix, _)) if prefix.tpe =:= t.tpe => unapply(prefix)
       case _ => Some(t)
     }
   }

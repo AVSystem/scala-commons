@@ -21,6 +21,7 @@ class BadSingletonComponentTest extends AnyFunSuite with AnalyzerTest {
         |
         |  def good: Component[Int] = singleton(123)
         |  def alsoGood: Component[Int] = { singleton(123) }
+        |  def goodAsWell: Component[Int] = singleton(123).dependsOn(good)
         |}
       """.stripMargin
     )

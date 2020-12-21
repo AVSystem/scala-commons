@@ -30,7 +30,7 @@ abstract class Component[+T] {
   def sourceInfo: SourceInfo
   def info: String = s"${sourceInfo.enclosingSymbols.head}(${sourceInfo.fileName}:${sourceInfo.line})"
 
-  private[this] val savedFuture = new AtomicReference[Future[T]]
+  protected[this] def storage: AtomicReference[Future[T]]
 
   /**
     * Phantom method that indicates an asynchronous reference to this component inside definition of some other component.
@@ -57,7 +57,13 @@ abstract class Component[+T] {
   def ref: T = sys.error("stub")
 
   def getIfReady: Opt[T] =
-    savedFuture.get.opt.flatMap(_.value.map(_.get).toOpt)
+    storage.get.opt.flatMap(_.value.map(_.get).toOpt)
+
+  def dependsOn(moreDeps: Component[_]*): Component[T] =
+    new ComponentImpl(sourceInfo, dependencies ++ moreDeps, create, storage)
+
+  private[di] def cached[T0 >: T](cacheStorage: AtomicReference[Future[T0]])(implicit sourceInfo: SourceInfo): Component[T0] =
+    new ComponentImpl(sourceInfo, dependencies, create, cacheStorage)
 
   /**
     * Forces initialization of this component and its dependencies (in parallel, using given `ExecutionContext`).
@@ -73,7 +79,7 @@ abstract class Component[+T] {
       throw DependencyCycleException(cyclePath)
     }
     val promise = Promise[T]()
-    if (savedFuture.compareAndSet(null, promise.future)) {
+    if (storage.compareAndSet(null, promise.future)) {
       val newStack = this :: stack
       val resultFuture =
         Future.traverse(dependencies)(_.doInit(newStack))
@@ -89,7 +95,7 @@ abstract class Component[+T] {
           }
       promise.completeWith(resultFuture)
     }
-    savedFuture.get()
+    storage.get()
   }
 
   protected def dependencies: IndexedSeq[Component[_]]
@@ -106,7 +112,8 @@ object Component {
 final class ComponentImpl[T](
   val sourceInfo: SourceInfo,
   deps: => IndexedSeq[Component[_]],
-  createFun: IndexedSeq[Any] => Component.CreateResult[T]
+  createFun: IndexedSeq[Any] => Component.CreateResult[T],
+  protected[this] val storage: AtomicReference[Future[T]] = new AtomicReference[Future[T]]
 ) extends Component[T] {
   protected lazy val dependencies: IndexedSeq[Component[_]] = deps
   protected def create(resolvedDeps: IndexedSeq[Any]): Component.CreateResult[T] = createFun(resolvedDeps)
@@ -118,7 +125,7 @@ trait Components extends ComponentsLowPrio {
     * other components as dependencies using `.ref`. This macro will transform the definition by extracting dependencies
     * in a way that allows them to be initialized in parallel, before initializing the current component itself.
     */
-  protected[this] def component[T](definition: => T, dependsOn: Component[_]*)(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.prototype[T]
+  protected[this] def component[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.prototype[T]
 
   /**
     * This is the same as [[component]] except that the created [[Component]] is cached inside an outer instance that
@@ -127,12 +134,16 @@ trait Components extends ComponentsLowPrio {
     * cached [[Component]] instance. The cache key is based on source position so overriding a method that returns
     * `singleton` will create separate [[Component]] with different cache key.
     */
-  protected[this] def singleton[T](definition: => T, dependsOn: Component[_]*)(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.singleton[T]
+  protected[this] def singleton[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.singleton[T]
 
-  private[this] val singletons = new ConcurrentHashMap[SourceInfo, Component[_]]
+  private[this] val singletons = new ConcurrentHashMap[SourceInfo, AtomicReference[Future[_]]]
 
-  protected[this] def cached[T](component: => Component[T])(implicit sourceInfo: SourceInfo): Component[T] =
-    singletons.computeIfAbsent(sourceInfo, _ => component).asInstanceOf[Component[T]]
+  protected[this] def cached[T](component: Component[T])(implicit sourceInfo: SourceInfo): Component[T] = {
+    val cacheStorage = singletons
+      .computeIfAbsent(sourceInfo, _ => new AtomicReference)
+      .asInstanceOf[AtomicReference[Future[T]]]
+    component.cached(cacheStorage)
+  }
 
   // avoids divergent implicit expansion involving `inject`
   // this is not strictly necessary but makes compiler error messages nicer
