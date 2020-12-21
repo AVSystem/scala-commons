@@ -521,7 +521,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     nullableList[C[T] with BSet[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
   implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](
-    implicit cbf: JFactory[T, C[T] with JCollection[T]]
+    implicit cbf: JFactory[T, C[T]]
   ): GenCodec[C[T] with JCollection[T]] =
     nullableList[C[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
