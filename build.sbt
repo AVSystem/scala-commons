@@ -29,26 +29,28 @@ val upickleVersion = "1.2.0"
 val scalajsBenchmarkVersion = "0.8.0"
 val slf4jVersion = "1.7.30"
 
-useGpg := false // TODO: use sbt-ci-release
-pgpPublicRing := file("./travis/local.pubring.asc")
-pgpSecretRing := file("./travis/local.secring.asc")
-pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toCharArray)
-
-credentials in Global += Credentials(
-  "Sonatype Nexus Repository Manager",
-  "oss.sonatype.org",
-  sys.env.getOrElse("SONATYPE_USERNAME", ""),
-  sys.env.getOrElse("SONATYPE_PASSWORD", "")
-)
-
-version in ThisBuild :=
-  sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("2.0.0-SNAPSHOT")
-
 // for binary compatibility checking
 val previousCompatibleVersions = Set("1.39.14")
 
-val commonSettings = Seq(
+inThisBuild(Seq(
   organization := "com.avsystem.commons",
+  homepage := Some(url("https://github.com/AVSystem/scala-commons")),
+  organizationName := "AVSystem",
+  organizationHomepage := Some(url("http://www.avsystem.com/")),
+  description := "AVSystem commons library for Scala",
+  startYear := Some(2015),
+  licenses := Vector(
+    "The MIT License" -> url("https://opensource.org/licenses/MIT"),
+  ),
+  scmInfo := Some(ScmInfo(
+    browseUrl = url("https://github.com/AVSystem/scala-commons.git"),
+    connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
+    devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
+  )),
+  developers := List(
+    Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
+  ),
+
   crossScalaVersions := Seq("2.12.12", "2.13.3"),
   scalaVersion := crossScalaVersions.value.last,
   compileOrder := CompileOrder.Mixed,
@@ -73,34 +75,57 @@ val commonSettings = Seq(
       "-Ycache-macro-class-loader:last-modified",
     ) else Seq.empty
   },
+
+  githubWorkflowTargetTags ++= Seq("v*"),
+
+  githubWorkflowEnv ++= Map(
+    "REDIS_VERSION" -> "6.0.9",
+  ),
+  githubWorkflowJavaVersions := Seq("adopt@1.11"),
+  githubWorkflowBuildPreamble ++= Seq(
+    WorkflowStep.Use(
+      "actions", "cache", "v2",
+      name = Some("Cache Redis"),
+      params = Map(
+        "path" -> "./redis-${{ env.REDIS_VERSION }}",
+        "key" -> "${{ runner.os }}-redis-cache-v2-${{ env.REDIS_VERSION }}"
+      )
+    ),
+    WorkflowStep.Use(
+      "actions", "setup-node", "v2",
+      name = Some("Setup Node.js"),
+      params = Map("node-version" -> "12")
+    ),
+    WorkflowStep.Use(
+      "supercharge", "mongodb-github-action", "1.3.0",
+      name = Some("Setup MongoDB"),
+      params = Map("mongodb-version" -> "4.4")
+    ),
+    WorkflowStep.Run(
+      List("./install-redis.sh"),
+      name = Some("Setup Redis"),
+    )
+  ),
+
+  githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
+
+  githubWorkflowPublish := Seq(WorkflowStep.Sbt(
+    List("ci-release"),
+    env = Map(
+      "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+      "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
+      "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
+      "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
+    )
+  )),
+))
+
+val commonSettings = Seq(
   sources in(Compile, doc) := Seq.empty, // relying on unidoc
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
 
-  publishTo := sonatypePublishToBundle.value,
   sonatypeProfileName := "com.avsystem",
-
-  projectInfo := ModuleInfo(
-    nameFormal = "AVSystem commons",
-    description = "AVSystem commons library for Scala",
-    homepage = Some(url("https://github.com/AVSystem/scala-commons")),
-    startYear = Some(2015),
-    licenses = Vector(
-      "The MIT License" -> url("https://opensource.org/licenses/MIT"),
-    ),
-    organizationName = "AVSystem",
-    organizationHomepage = Some(url("http://www.avsystem.com/")),
-    scmInfo = Some(ScmInfo(
-      browseUrl = url("https://github.com/AVSystem/scala-commons.git"),
-      connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
-      devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
-    )),
-    developers = Vector(
-      Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
-    ),
-  ),
-
-  publishMavenStyle := true,
   pomIncludeRepository := { _ => false },
 
   libraryDependencies ++= Seq(
@@ -303,9 +328,6 @@ lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
       "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
     ),
     scalaJSUseMainModuleInitializer := true,
-    test := {},
-    testOnly := {},
-    testQuick := {},
   )
 
 lazy val `commons-mongo` = project
@@ -354,6 +376,7 @@ lazy val `commons-spring` = project
   )
 
 lazy val `commons-comprof` = project
+  .disablePlugins(GenerativePlugin)
   .dependsOn(`commons-core`)
   .settings(
     jvmCommonSettings,
