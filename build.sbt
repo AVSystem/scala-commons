@@ -9,7 +9,7 @@ cancelable in Global := true
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
 val silencerVersion = "1.7.1"
-val collectionCompatVersion = "2.1.6"
+val collectionCompatVersion = "2.3.2"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.2.1"
