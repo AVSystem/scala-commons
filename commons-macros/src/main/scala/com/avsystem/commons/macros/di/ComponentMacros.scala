@@ -70,7 +70,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
       val result =
         q"""
-         new $DiPkg.ComponentImpl[$tpe](
+         new $DiPkg.Component[$tpe](
            $sourceInfo,
            $ScalaPkg.IndexedSeq(..${depsBuf.result()}),
            ($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]) =>
@@ -98,5 +98,28 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   def singleton[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
     ensureRangePositions()
     mkComponent(weakTypeOf[T], sourceInfo, definition, flatten = false, singleton = true)
+  }
+
+  def reifyAllSingletons: Tree = {
+    val prefixName = c.freshName(TermName("prefix"))
+    val bufName = c.freshName(TermName("buf"))
+
+    val componentMethods =
+      c.prefix.actualType.members.iterator
+        .filter(s => s.isMethod && !s.isSynthetic).map(_.asMethod)
+        .filter { m =>
+          m.typeParams.isEmpty && m.paramLists.isEmpty &&
+            m.typeSignatureIn(c.prefix.actualType).resultType <:< ComponentTpe
+        }
+        .toList
+
+    q"""
+       val $prefixName = ${c.prefix}
+       val $bufName = new $CollectionPkg.mutable.ListBuffer[$ComponentTpe]
+       def addIfCached(_c: $ComponentTpe): Unit =
+         if(_c.isCached) $bufName += _c
+       ..${componentMethods.map(m => q"addIfCached($prefixName.$m)")}
+       $bufName.result()
+       """
   }
 }

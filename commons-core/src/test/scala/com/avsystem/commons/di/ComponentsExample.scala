@@ -65,6 +65,8 @@ trait DatabaseComponents extends Components {
 class ComponentsExample(val config: DynamicConfig) extends Components with DatabaseComponents {
   def fullApplication: Component[FullApplication] =
     singleton(new FullApplication(dynamicDep(database.ref).ref))
+
+  val singletons: List[Component[_]] = reifyAllSingletons
 }
 object ComponentsExample {
 
