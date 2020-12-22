@@ -40,7 +40,7 @@ final class Component[+T](
     cachedStorage.getOrElse(new AtomicReference)
 
   private def sameStorage(otherStorage: AtomicReference[_]): Boolean =
-    storage == otherStorage
+    storage eq otherStorage
 
   // equality based on storage identity is important for cycle detection with cached components
   override def hashCode(): Int = storage.hashCode()
@@ -93,26 +93,27 @@ final class Component[+T](
   private def doInit(stack: List[Component[_]])(implicit ec: ExecutionContext): Future[T] = {
     if (stack.contains(this)) {
       val cyclePath = this :: (this :: stack.takeWhile(_ != this)).reverse
-      throw DependencyCycleException(cyclePath)
+      Future.failed(DependencyCycleException(cyclePath))
+    } else {
+      val promise = Promise[T]()
+      if (storage.compareAndSet(null, promise.future)) {
+        val newStack = this :: stack
+        val resultFuture =
+          Future.traverse(dependencies)(_.doInit(newStack))
+            .flatMapNow(deps => create(deps) match {
+              case CreateResult.Ready(value) =>
+                Future.successful(value)
+              case CreateResult.More(nextComponent) =>
+                nextComponent.doInit(newStack)
+            })
+            .recoverNow {
+              case NonFatal(cause) =>
+                throw ComponentInitializationException(this, cause)
+            }
+        promise.completeWith(resultFuture)
+      }
+      storage.get()
     }
-    val promise = Promise[T]()
-    if (storage.compareAndSet(null, promise.future)) {
-      val newStack = this :: stack
-      val resultFuture =
-        Future.traverse(dependencies)(_.doInit(newStack))
-          .flatMapNow(deps => create(deps) match {
-            case CreateResult.Ready(value) =>
-              Future.successful(value)
-            case CreateResult.More(nextComponent) =>
-              nextComponent.doInit(newStack)
-          })
-          .recoverNow {
-            case NonFatal(cause) =>
-              throw ComponentInitializationException(this, cause)
-          }
-      promise.completeWith(resultFuture)
-    }
-    storage.get()
   }
 }
 object Component {
