@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package di
 
-import com.avsystem.commons.concurrent.RunInQueueEC
-
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 

@@ -24,6 +24,7 @@ case class DependencyCycleException(cyclePath: List[Component[_]])
   * parallel initialization of dependencies, dependency cycle detection, source code awareness.
   */
 final class Component[+T](
+  val name: String,
   val sourceInfo: SourceInfo,
   dependencies: => IndexedSeq[Component[_]],
   create: IndexedSeq[Any] => Component.CreateResult[T],
@@ -32,7 +33,7 @@ final class Component[+T](
 
   import Component._
 
-  def info: String = s"${sourceInfo.enclosingSymbols.head}(${sourceInfo.fileName}:${sourceInfo.line})"
+  def info: String = s"$name(${sourceInfo.fileName}:${sourceInfo.line})"
   def isCached: Boolean = cachedStorage.isDefined
 
   private[this] val storage: AtomicReference[Future[T]] =
@@ -76,10 +77,10 @@ final class Component[+T](
     storage.get.opt.flatMap(_.value.map(_.get).toOpt)
 
   def dependsOn(moreDeps: Component[_]*): Component[T] =
-    new Component(sourceInfo, dependencies ++ moreDeps, create, cachedStorage)
+    new Component(name, sourceInfo, dependencies ++ moreDeps, create, cachedStorage)
 
   private[di] def cached[T0 >: T](cachedStorage: AtomicReference[Future[T0]])(implicit sourceInfo: SourceInfo): Component[T0] =
-    new Component(sourceInfo, dependencies, create, Opt(cachedStorage))
+    new Component(name, sourceInfo, dependencies, create, Opt(cachedStorage))
 
   /**
     * Forces initialization of this component and its dependencies (in parallel, using given `ExecutionContext`).
