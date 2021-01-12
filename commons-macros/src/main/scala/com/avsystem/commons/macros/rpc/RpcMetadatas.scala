@@ -11,9 +11,10 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
   class MethodMetadataParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with RealMethodTarget with ArityParam {
 
+    def allowSingle: Boolean = true
+    def allowOptional: Boolean = true
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
-    def allowFail: Boolean = false
 
     def baseTagSpecs: List[BaseTagSpec] = tagSpecs(MethodTagAT)
 

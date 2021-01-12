@@ -73,9 +73,9 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def apply(param: ArityParam): ParamArity = {
       val annot = param.annot(RpcArityAT)
       val at = annot.fold(SingleArityAT)(_.tpe)
-      if (at <:< SingleArityAT)
+      if (at <:< SingleArityAT && param.allowSingle)
         ParamArity.Single(param.actualType)
-      else if (at <:< OptionalArityAT)
+      else if (at <:< OptionalArityAT && param.allowOptional)
         ParamArity.Optional(optionLikeValueType(param.optionLike, param))
       else if ((param.allowListedMulti || param.allowNamedMulti) && at <:< MultiArityAT) {
         if (param.allowNamedMulti && param.actualType <:< StringPFTpe)
@@ -338,9 +338,10 @@ private[commons] trait MacroSymbols extends MacroCommons {
   }
 
   trait ArityParam extends MacroParam with AritySymbol {
+    def allowSingle: Boolean
+    def allowOptional: Boolean
     def allowNamedMulti: Boolean
     def allowListedMulti: Boolean
-    def allowFail: Boolean
 
     lazy val arity: ParamArity = ParamArity(this)
 

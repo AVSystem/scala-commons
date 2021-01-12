@@ -52,6 +52,12 @@ object GenObjectCodec {
     def writeObject(output: ObjectOutput, value: T): Unit = underlying.writeObject(output, value)
   }
 
+  // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
+  implicit def fromTransparentWrapping[R, T](implicit
+    tw: TransparentWrapping[R, T], wrappedCodec: GenObjectCodec[R]
+  ): GenObjectCodec[T] =
+    new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
+
   def transformed[T, R: GenObjectCodec](toRaw: T => R, fromRaw: R => T): GenObjectCodec[T] =
     new Transformed[T, R](GenObjectCodec[R], toRaw, fromRaw)
 

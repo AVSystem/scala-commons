@@ -19,6 +19,11 @@ case class Toplevel(middle: Opt[Middle], seal: Seal = Objekt)
 
 case class CodecRef[S, T](ref: GenRef[S, T])(implicit targetCodec: GenCodec[T])
 
+@flatten sealed trait GenericUnion[T] {
+  def thing: T
+}
+case class GenericCase[T](thing: T) extends GenericUnion[T]
+
 class GenRefTest extends AnyFunSuite {
   test("simple raw ref") {
     val path = RawRef.create[TransparentToplevel].ref(_.toplevel.middle.get.bottom.mapa("str")).normalize.toList
@@ -53,5 +58,10 @@ class GenRefTest extends AnyFunSuite {
   test("sealed trait common field test") {
     val ref = GenRef.create[Toplevel].ref(_.seal.id)
     assert(ref.rawRef.normalize.toList == List("seal", "_id").map(RawRef.Field))
+  }
+
+  test("generic sealed trait common field test") {
+    val ref = GenRef.create[GenericUnion[Int]].ref(_.thing)
+    assert(ref.rawRef.normalize.toList == List(RawRef.Field("thing")))
   }
 }
