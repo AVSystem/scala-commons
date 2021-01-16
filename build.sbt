@@ -76,6 +76,11 @@ inThisBuild(Seq(
     ) else Seq.empty
   },
 
+  libraryDependencies ++= Seq(
+    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
+    "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
+  ),
+
   githubWorkflowTargetTags ++= Seq("v*"),
 
   githubWorkflowEnv ++= Map(
@@ -129,8 +134,6 @@ val commonSettings = Seq(
   pomIncludeRepository := { _ => false },
 
   libraryDependencies ++= Seq(
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.scalatestplus" %%% "scalacheck-1-14" % scalatestplusScalacheckVersion % Test,
