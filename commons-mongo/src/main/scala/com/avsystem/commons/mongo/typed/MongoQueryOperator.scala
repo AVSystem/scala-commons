@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.avsystem.commons.mongo.text.TextSearchLanguage
+import mongo.text.TextSearchLanguage
+
 import org.bson.{BsonDocument, BsonType, BsonValue}
 
 sealed trait MongoQueryOperator[T] extends Product {
@@ -25,6 +26,7 @@ sealed trait MongoQueryOperator[T] extends Product {
     case Exists(exists) => Bson.boolean(exists)
     case Type(bsonType) => Bson.int(bsonType.getValue)
     case Regex(pattern) => Bson.string(pattern)
+    case Options(options) => Bson.string(options)
     case Mod(divisor, remainder) => Bson.array(Bson.long(divisor), Bson.long(remainder))
     case Text(search, language, caseSensitive, diacriticSensitive) =>
       val doc = new BsonDocument("$search", Bson.string(search))
@@ -44,9 +46,9 @@ object MongoQueryOperator {
   def creator[T: MongoFormat]: Creator[T] = new Creator(MongoFormat[T])
 
   final class Creator[T](val format: MongoFormat[T])
-    extends VanillaQueryOperatorsDsl[T, MongoQueryOperator[T]] {
+    extends VanillaQueryOperatorsDsl[T, Seq[MongoQueryOperator[T]]] {
 
-    protected def wrapQueryOperator(operator: MongoQueryOperator[T]): MongoQueryOperator[T] = operator
+    protected def wrapQueryOperators(ops: MongoQueryOperator[T]*): Seq[MongoQueryOperator[T]] = ops
   }
 
   final case class Eq[T](value: T, format: MongoFormat[T]) extends MongoQueryOperator[T]
@@ -59,7 +61,8 @@ object MongoQueryOperator {
   final case class Nin[T](values: Iterable[T], format: MongoFormat[T]) extends MongoQueryOperator[T]
   final case class Exists[T](exists: Boolean) extends MongoQueryOperator[T]
   final case class Type[T](bsonType: BsonType) extends MongoQueryOperator[T]
-  final case class Regex[T](pattern: String) extends MongoQueryOperator[T] //TODO: options
+  final case class Regex[T](pattern: String) extends MongoQueryOperator[T]
+  final case class Options[T](options: String) extends MongoQueryOperator[T]
   final case class Mod[T](divisor: Long, remainder: Long) extends MongoQueryOperator[T]
 
   final case class Text[T](

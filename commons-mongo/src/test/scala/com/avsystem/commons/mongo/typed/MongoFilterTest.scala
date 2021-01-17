@@ -5,6 +5,8 @@ import com.avsystem.commons.mongo.text.TextSearchLanguage
 import org.bson.BsonType
 import org.scalatest.funsuite.AnyFunSuite
 
+import java.util.regex.Pattern
+
 class MongoFilterTest extends AnyFunSuite {
   final val Rte = RecordTestEntity
   final val Ute = UnionTestEntity
@@ -60,15 +62,21 @@ class MongoFilterTest extends AnyFunSuite {
     assert((IntRef <= 0).toBson.toString ==
       """{"int": {"$lte": 0}}""")
 
-    assert(IntRef.satisfiesOperators(c => Seq(c.gte(0), c.lte(10))).toBson.toString ==
+    assert(IntRef.satisfiesOperators(c => c.gte(0) ++ c.lte(10)).toBson.toString ==
       """{"int": {"$gte": 0, "$lte": 10}}""")
 
     assert(StrRef.regex("abc.*def").toBson.toString ===
       """{"str": {"$regex": "abc.*def"}}""")
+    assert(StrRef.regex("abc.*def", "i").toBson.toString ===
+      """{"str": {"$regex": "abc.*def", "$options": "i"}}""")
+    assert(StrRef.regex(Pattern.compile("abc.*def", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE)).toBson.toString ===
+      """{"str": {"$regex": "abc.*def", "$options": "im"}}""")
     assert(StrRef.startsWith("prefix").toBson.toString ===
       """{"str": {"$regex": "^\\Qprefix\\E"}}""")
     assert(StrRef.containsSubstring("infix").toBson.toString ===
       """{"str": {"$regex": "\\Qinfix\\E"}}""")
+    assert(StrRef.containsSubstring("infix", caseInsensitive = true).toBson.toString ===
+      """{"str": {"$regex": "\\Qinfix\\E", "$options": "i"}}""")
 
     assert(StrRef.text("szekely", TextSearchLanguage.Hungarian, true, false).toBson.toString ==
       """{"str": {"$text": {"$search": "szekely", "$language": "hu", "$caseSensitive": true, "$diacriticSensitive": false}}}""")
@@ -104,7 +112,7 @@ class MongoFilterTest extends AnyFunSuite {
 
     assert(IntsRef.elemMatch(_ > 5).toBson.toString ==
       """{"intList": {"$elemMatch": {"$gt": 5}}}""")
-    assert(IntsRef.elemMatch(_.satisfiesOperators(c => Seq(c.gte(0), c.lte(10)))).toBson.toString ==
+    assert(IntsRef.elemMatch(_.satisfiesOperators(c => c.gte(0) ++ c.lte(10))).toBson.toString ==
       """{"intList": {"$elemMatch": {"$gte": 0, "$lte": 10}}}""")
   }
 

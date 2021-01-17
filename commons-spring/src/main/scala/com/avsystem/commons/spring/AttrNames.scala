@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package spring
 
-import com.github.ghik.silencer.silent
+import scala.annotation.nowarn
 import org.springframework.beans.factory.support.AbstractBeanDefinition
 
 /**
@@ -78,7 +78,7 @@ object AttrNames {
     "byName" -> AbstractBeanDefinition.AUTOWIRE_BY_NAME,
     "byType" -> AbstractBeanDefinition.AUTOWIRE_BY_TYPE,
     "constructor" -> AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR,
-    "autodetect" -> AbstractBeanDefinition.AUTOWIRE_AUTODETECT: @silent
+    "autodetect" -> AbstractBeanDefinition.AUTOWIRE_AUTODETECT: @nowarn
   )
 
   final val ReverseAutowireMapping = AutowireMapping.map(_.swap)

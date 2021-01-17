@@ -109,8 +109,8 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoPropertyRef[E, C] =
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 
-  protected def wrapQueryOperator(operator: MongoQueryOperator[T]): MongoDocumentFilter[E] =
-    satisfiesFilter(MongoOperatorsFilter(Seq(operator)))
+  protected def wrapQueryOperators(ops: MongoQueryOperator[T]*): MongoDocumentFilter[E] =
+    satisfiesFilter(MongoOperatorsFilter(ops))
 
   protected def wrapUpdate(update: MongoUpdate[T]): MongoDocumentUpdate[E] =
     MongoUpdate.PropertyUpdate(this, update)
@@ -140,14 +140,14 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   /**
     * Creates a filter that applies multiple query operators on this reference (which means that all the operators
     * must be satisfied). Note that every operator may be used only once and this is not validated statically
-    * (a runtime error is thrown when some operator is used twice).
+    * (a runtime error is thrown when some operator is duplicated).
     *
     * {{{
     *   case class MyEntity(id: String, number: Int) extends MongoEntity[MyEntity]
     *   object MyEntity extends MongoEntityCompanion[MyEntity]
     *
     *   val filter: MongoDocumentFilter[MyEntity] =
-    *     MyEntity.ref(_.number).satisfiesOperators(c => Seq(c.gte(0), c.lt(10)))
+    *     MyEntity.ref(_.number).satisfiesOperators(c => c.gte(0) ++ c.lt(10))
     * }}}
     *
     * The above produces a filter document that looks like this:

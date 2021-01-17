@@ -12,10 +12,10 @@ val silencerVersion = "1.7.1"
 val collectionCompatVersion = "2.1.6"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
-val scalatestVersion = "3.2.1"
+val scalatestVersion = "3.2.3"
 val scalatestplusScalacheckVersion = "3.2.2.0"
-val scalacheckVersion = "1.14.3"
-val jettyVersion = "9.4.35.v20201120"
+val scalacheckVersion = "1.15.2"
+val jettyVersion = "9.4.31.v20200723"
 val mongoVersion = "4.1.1"
 val springVersion = "4.3.26.RELEASE"
 val typesafeConfigVersion = "1.4.0"
@@ -23,36 +23,86 @@ val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.2"
 val akkaVersion = "2.6.8"
 val monixVersion = "3.3.0"
-val mockitoVersion = "3.5.15"
+val mockitoVersion = "3.7.0"
 val circeVersion = "0.13.0"
 val upickleVersion = "1.2.0"
 val scalajsBenchmarkVersion = "0.8.0"
 val slf4jVersion = "1.7.30"
 
-useGpg := false // TODO: use sbt-ci-release
-pgpPublicRing := file("./travis/local.pubring.asc")
-pgpSecretRing := file("./travis/local.secring.asc")
-pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toCharArray)
-
-credentials in Global += Credentials(
-  "Sonatype Nexus Repository Manager",
-  "oss.sonatype.org",
-  sys.env.getOrElse("SONATYPE_USERNAME", ""),
-  sys.env.getOrElse("SONATYPE_PASSWORD", "")
-)
-
-version in ThisBuild :=
-  sys.env.get("TRAVIS_TAG").filter(_.startsWith("v")).map(_.drop(1)).getOrElse("2.0.0-SNAPSHOT")
-
 // for binary compatibility checking
 val previousCompatibleVersions = Set("1.39.14")
 
-val commonSettings = Seq(
+Global / excludeLintKeys ++= Set(ideExcludedDirectories, ideOutputDirectory, ideBasePackages, ideSkipProject)
+
+inThisBuild(Seq(
   organization := "com.avsystem.commons",
-  crossScalaVersions := Seq("2.12.12", "2.13.3"),
-  scalaVersion := crossScalaVersions.value.last,
+  homepage := Some(url("https://github.com/AVSystem/scala-commons")),
+  organizationName := "AVSystem",
+  organizationHomepage := Some(url("http://www.avsystem.com/")),
+  description := "AVSystem commons library for Scala",
+  startYear := Some(2015),
+  licenses := Vector(
+    "The MIT License" -> url("https://opensource.org/licenses/MIT"),
+  ),
+  scmInfo := Some(ScmInfo(
+    browseUrl = url("https://github.com/AVSystem/scala-commons.git"),
+    connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
+    devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
+  )),
+  developers := List(
+    Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
+  ),
+
+  crossScalaVersions := Seq("2.13.4", "2.12.13"),
+  scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
-  scalacOptions ++= Seq(
+
+  githubWorkflowTargetTags ++= Seq("v*"),
+
+  githubWorkflowEnv ++= Map(
+    "REDIS_VERSION" -> "6.0.9",
+  ),
+  githubWorkflowJavaVersions := Seq("adopt@1.11"),
+  githubWorkflowBuildPreamble ++= Seq(
+    WorkflowStep.Use(
+      "actions", "cache", "v2",
+      name = Some("Cache Redis"),
+      params = Map(
+        "path" -> "./redis-${{ env.REDIS_VERSION }}",
+        "key" -> "${{ runner.os }}-redis-cache-v2-${{ env.REDIS_VERSION }}"
+      )
+    ),
+    WorkflowStep.Use(
+      "actions", "setup-node", "v2",
+      name = Some("Setup Node.js"),
+      params = Map("node-version" -> "12")
+    ),
+    WorkflowStep.Use(
+      "supercharge", "mongodb-github-action", "1.3.0",
+      name = Some("Setup MongoDB"),
+      params = Map("mongodb-version" -> "4.4")
+    ),
+    WorkflowStep.Run(
+      List("./install-redis.sh"),
+      name = Some("Setup Redis"),
+    )
+  ),
+
+  githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
+
+  githubWorkflowPublish := Seq(WorkflowStep.Sbt(
+    List("ci-release"),
+    env = Map(
+      "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+      "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
+      "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
+      "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
+    )
+  )),
+))
+
+val commonSettings = Seq(
+  Compile / scalacOptions ++= Seq(
     "-encoding", "utf-8",
     "-Yrangepos",
     "-explaintypes",
@@ -66,41 +116,24 @@ val commonSettings = Seq(
     "-language:higherKinds",
     "-Xfatal-warnings",
     "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
+    "-Ycache-plugin-class-loader:last-modified",
+    "-Ycache-macro-class-loader:last-modified",
   ),
-  scalacOptions ++= {
-    if (scalaBinaryVersion.value == "2.12") Seq(
-      "-Ycache-plugin-class-loader:last-modified",
-      "-Ycache-macro-class-loader:last-modified",
+
+  Compile / scalacOptions ++= {
+    if (scalaBinaryVersion.value == "2.13") Seq(
+      "-Xnon-strict-patmat-analysis",
+      "-Xlint:-strict-unsealed-patmat"
     ) else Seq.empty
   },
+
+  Test / scalacOptions := (Compile / scalacOptions).value,
+
   sources in(Compile, doc) := Seq.empty, // relying on unidoc
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
 
-  publishTo := sonatypePublishToBundle.value,
   sonatypeProfileName := "com.avsystem",
-
-  projectInfo := ModuleInfo(
-    nameFormal = "AVSystem commons",
-    description = "AVSystem commons library for Scala",
-    homepage = Some(url("https://github.com/AVSystem/scala-commons")),
-    startYear = Some(2015),
-    licenses = Vector(
-      "The MIT License" -> url("https://opensource.org/licenses/MIT"),
-    ),
-    organizationName = "AVSystem",
-    organizationHomepage = Some(url("http://www.avsystem.com/")),
-    scmInfo = Some(ScmInfo(
-      browseUrl = url("https://github.com/AVSystem/scala-commons.git"),
-      connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
-      devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
-    )),
-    developers = Vector(
-      Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
-    ),
-  ),
-
-  publishMavenStyle := true,
   pomIncludeRepository := { _ => false },
 
   libraryDependencies ++= Seq(
@@ -201,7 +234,10 @@ lazy val `commons-analyzer` = project
   .dependsOn(`commons-core` % Test)
   .settings(
     jvmCommonSettings,
-    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+    libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      "io.monix" %% "monix" % monixVersion % Test,
+    ),
   )
 
 def mkSourceDirs(base: File, scalaBinary: String, conf: String): Seq[File] = Seq(
@@ -300,9 +336,6 @@ lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
       "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
     ),
     scalaJSUseMainModuleInitializer := true,
-    test := {},
-    testOnly := {},
-    testQuick := {},
   )
 
 lazy val `commons-mongo` = project
@@ -351,6 +384,7 @@ lazy val `commons-spring` = project
   )
 
 lazy val `commons-comprof` = project
+  .disablePlugins(GenerativePlugin)
   .dependsOn(`commons-core`)
   .settings(
     jvmCommonSettings,

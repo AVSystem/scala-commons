@@ -3,7 +3,7 @@ package rpc
 
 import com.avsystem.commons.rpc.DummyRPC._
 import com.avsystem.commons.serialization.{HasGenCodec, optionalParam, transientDefault, whenAbsent}
-import com.github.ghik.silencer.silent
+import scala.annotation.nowarn
 
 class prepend(prefix: String) extends EncodingInterceptor[String, String] with DecodingInterceptor[String, String] {
   def toOriginalRaw(newRaw: String): String = prefix + newRaw
@@ -27,7 +27,7 @@ object InnerRPC extends RPCCompanion[InnerRPC]
 trait TestRPC {
   def defaultNum: Int = 42
 
-  @silent("side-effecting nullary methods")
+  @nowarn("msg=side-effecting nullary methods")
   def handle: Unit
 
   def handleMore(): Unit
@@ -55,7 +55,7 @@ trait TestRPC {
   def generallyDoStuff[T](list: List[T])(implicit @encodingDependency tag: Tag[T]): Future[Option[T]]
 }
 
-@silent("side-effecting nullary methods")
+@nowarn("msg=side-effecting nullary methods")
 object TestRPC extends RPCCompanion[TestRPC] {
 
   //  AsRaw.materialize[DummyRPC.RawRPC, TestRPC].showAst

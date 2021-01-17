@@ -34,8 +34,8 @@ object MongoFilter {
     def SelfRef: MongoRef[T, T] =
       MongoRef.RootRef(format.assumeAdt)
 
-    protected def wrapQueryOperator(op: MongoQueryOperator[T]): MongoOperatorsFilter[T] =
-      MongoOperatorsFilter(Seq(op))
+    protected def wrapQueryOperators(ops: MongoQueryOperator[T]*): MongoOperatorsFilter[T] =
+      MongoOperatorsFilter(ops)
 
     /** See [[MongoPropertyRef.satisfiesOperators]] */
     def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoOperatorsFilter[T] =

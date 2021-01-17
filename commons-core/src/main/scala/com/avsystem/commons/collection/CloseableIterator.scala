@@ -1,10 +1,9 @@
 package com.avsystem.commons
 package collection
 
-import java.util.function.Function
-
 import com.github.ghik.silencer.silent
 
+import java.util.function.Function
 import scala.annotation.unchecked.uncheckedVariance
 
 /**

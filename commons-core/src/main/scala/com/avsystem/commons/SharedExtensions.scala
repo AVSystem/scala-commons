@@ -2,7 +2,7 @@ package com.avsystem.commons
 
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc._
-import com.github.ghik.silencer.silent
+import scala.annotation.nowarn
 
 import scala.annotation.tailrec
 import scala.collection.compat._
@@ -77,7 +77,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * Explicit syntax to discard the value of a side-effecting expression.
       * Useful when `-Ywarn-value-discard` compiler option is enabled.
       */
-    @silent
+    @nowarn
     def discard: Unit = ()
 
     def thenReturn[T](value: T): T = value
@@ -229,6 +229,20 @@ object SharedExtensionsUtils extends SharedExtensions {
           !Character.isWhitespace(str.charAt(m.start - 1)) && !Character.isWhitespace(str.charAt(m.end))
         if (insertSpace) " " else m.matched.substring(1)
       })
+
+    /**
+      * Adds a `|` character at the beginning of every line in this string except the first line.
+      * This is necessary when splicing multiline strings into multiline string interpolations.
+      */
+    def multilineSafe: String =
+      str.replace("\n", "\n|")
+
+    def stripCommonIndent: String =
+      if (str.isEmpty) str
+      else {
+        val commonIndentLength = str.linesIterator.map(_.indexWhere(_ != ' ')).min
+        str.linesIterator.map(_.substring(commonIndentLength)).mkString("\n")
+      }
   }
 
   class IntOps(private val int: Int) extends AnyVal {
