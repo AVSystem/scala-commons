@@ -8,12 +8,13 @@ cancelable in Global := true
 // option in IntelliJ's SBT settings.
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-val collectionCompatVersion = "2.3.2"
+val silencerVersion = "1.7.1"
+val collectionCompatVersion = "2.1.6"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
-val scalatestVersion = "3.2.1"
+val scalatestVersion = "3.2.3"
 val scalatestplusScalacheckVersion = "3.2.2.0"
-val scalacheckVersion = "1.14.3"
+val scalacheckVersion = "1.15.2"
 val jettyVersion = "9.4.31.v20200723"
 val mongoVersion = "4.1.1"
 val springVersion = "4.3.26.RELEASE"
@@ -22,7 +23,7 @@ val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.2"
 val akkaVersion = "2.6.8"
 val monixVersion = "3.3.0"
-val mockitoVersion = "3.5.15"
+val mockitoVersion = "3.7.0"
 val circeVersion = "0.13.0"
 val upickleVersion = "1.2.0"
 val scalajsBenchmarkVersion = "0.8.0"
@@ -101,7 +102,7 @@ inThisBuild(Seq(
 ))
 
 val commonSettings = Seq(
-  scalacOptions ++= Seq(
+  Compile / scalacOptions ++= Seq(
     "-encoding", "utf-8",
     "-Yrangepos",
     "-explaintypes",
@@ -119,12 +120,14 @@ val commonSettings = Seq(
     "-Ycache-macro-class-loader:last-modified",
   ),
 
-  scalacOptions ++= {
+  Compile / scalacOptions ++= {
     if (scalaBinaryVersion.value == "2.13") Seq(
       "-Xnon-strict-patmat-analysis",
       "-Xlint:-strict-unsealed-patmat"
     ) else Seq.empty
   },
+
+  Test / scalacOptions := (Compile / scalacOptions).value,
 
   sources in(Compile, doc) := Seq.empty, // relying on unidoc
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
@@ -134,6 +137,8 @@ val commonSettings = Seq(
   pomIncludeRepository := { _ => false },
 
   libraryDependencies ++= Seq(
+    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
+    "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.scalatestplus" %%% "scalacheck-1-14" % scalatestplusScalacheckVersion % Test,
