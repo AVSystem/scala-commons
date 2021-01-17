@@ -31,6 +31,8 @@ val slf4jVersion = "1.7.30"
 // for binary compatibility checking
 val previousCompatibleVersions = Set("1.39.14")
 
+Global / excludeLintKeys ++= Set(ideExcludedDirectories, ideOutputDirectory, ideBasePackages, ideSkipProject)
+
 inThisBuild(Seq(
   organization := "com.avsystem.commons",
   homepage := Some(url("https://github.com/AVSystem/scala-commons")),
@@ -50,31 +52,9 @@ inThisBuild(Seq(
     Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
   ),
 
-  crossScalaVersions := Seq("2.12.13", "2.13.4"),
-  scalaVersion := crossScalaVersions.value.last,
+  crossScalaVersions := Seq("2.13.4", "2.12.13"),
+  scalaVersion := "2.13.4",
   compileOrder := CompileOrder.Mixed,
-  scalacOptions ++= Seq(
-    "-encoding", "utf-8",
-    "-Yrangepos",
-    "-explaintypes",
-    "-feature",
-    "-deprecation",
-    "-unchecked",
-    "-language:implicitConversions",
-    "-language:existentials",
-    "-language:dynamics",
-    "-language:experimental.macros",
-    "-language:higherKinds",
-    "-Xfatal-warnings",
-    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
-    "-Ycache-plugin-class-loader:last-modified",
-    "-Ycache-macro-class-loader:last-modified",
-  ),
-  scalacOptions ++= {
-    if (scalaBinaryVersion.value == "2.13") Seq(
-      "-Xnon-strict-patmat-analysis", // avoids false non-exhaustive match warnings on ValueEnum, Opt, etc.
-    ) else Nil
-  },
 
   githubWorkflowTargetTags ++= Seq("v*"),
 
@@ -121,6 +101,30 @@ inThisBuild(Seq(
 ))
 
 val commonSettings = Seq(
+  scalacOptions ++= Seq(
+    "-encoding", "utf-8",
+    "-Yrangepos",
+    "-explaintypes",
+    "-feature",
+    "-deprecation",
+    "-unchecked",
+    "-language:implicitConversions",
+    "-language:existentials",
+    "-language:dynamics",
+    "-language:experimental.macros",
+    "-language:higherKinds",
+    "-Xfatal-warnings",
+    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
+    "-Ycache-plugin-class-loader:last-modified",
+    "-Ycache-macro-class-loader:last-modified",
+  ),
+
+  scalacOptions ++= {
+    if (scalaBinaryVersion.value == "2.13") Seq(
+      "-Xnon-strict-patmat-analysis",
+    ) else Seq.empty
+  },
+
   sources in(Compile, doc) := Seq.empty, // relying on unidoc
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
