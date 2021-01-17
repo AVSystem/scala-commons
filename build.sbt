@@ -53,7 +53,7 @@ inThisBuild(Seq(
   ),
 
   crossScalaVersions := Seq("2.13.4", "2.12.13"),
-  scalaVersion := "2.13.4",
+  scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
 
   githubWorkflowTargetTags ++= Seq("v*"),
