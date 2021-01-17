@@ -1,10 +1,9 @@
 package com.avsystem.commons
 package collection
 
+import com.github.ghik.silencer.silent
+
 import java.util.function.Function
-
-import scala.annotation.nowarn
-
 import scala.annotation.unchecked.uncheckedVariance
 
 /**
@@ -40,7 +39,7 @@ object CloseableIterator {
   def apply[T](iterator: JIterator[T], closeable: AutoCloseable): CloseableIterator[T] =
     new CloseableIterator[T] {
       def close(): Unit = closeable.close()
-      @nowarn("msg=non-nullary method overrides nullary method")
+      @silent("non-nullary method overrides nullary method")
       def hasNext: Boolean = iterator.hasNext
       def next(): T = iterator.next()
     }
@@ -51,7 +50,7 @@ object CloseableIterator {
   def apply[T](iterator: Iterator[T], closeable: AutoCloseable): CloseableIterator[T] =
     new CloseableIterator[T] {
       def close(): Unit = closeable.close()
-      @nowarn("msg=non-nullary method overrides nullary method")
+      @silent("non-nullary method overrides nullary method")
       def hasNext: Boolean = iterator.hasNext
       def next(): T = iterator.next()
     }
