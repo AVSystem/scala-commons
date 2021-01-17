@@ -122,6 +122,7 @@ val commonSettings = Seq(
   scalacOptions ++= {
     if (scalaBinaryVersion.value == "2.13") Seq(
       "-Xnon-strict-patmat-analysis",
+      "-Xlint:-strict-unsealed-patmat"
     ) else Seq.empty
   },
 
