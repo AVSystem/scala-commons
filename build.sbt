@@ -8,7 +8,6 @@ cancelable in Global := true
 // option in IntelliJ's SBT settings.
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-val silencerVersion = "1.7.1"
 val collectionCompatVersion = "2.1.6"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
@@ -51,7 +50,7 @@ inThisBuild(Seq(
     Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
   ),
 
-  crossScalaVersions := Seq("2.12.12", "2.13.3"),
+  crossScalaVersions := Seq("2.12.13", "2.13.4"),
   scalaVersion := crossScalaVersions.value.last,
   compileOrder := CompileOrder.Mixed,
   scalacOptions ++= Seq(
@@ -67,19 +66,16 @@ inThisBuild(Seq(
     "-language:experimental.macros",
     "-language:higherKinds",
     "-Xfatal-warnings",
-    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
+    "-Xlint:-missing-interpolator,-adapted-args,-unused,-strict-unsealed-patmat,_",
+    "-Ycache-plugin-class-loader:last-modified",
+    "-Ycache-macro-class-loader:last-modified",
   ),
   scalacOptions ++= {
-    if (scalaBinaryVersion.value == "2.12") Seq(
-      "-Ycache-plugin-class-loader:last-modified",
-      "-Ycache-macro-class-loader:last-modified",
-    ) else Seq.empty
+    if (scalaBinaryVersion.value != "2.13") Nil
+    else Seq(
+      "-Xnon-strict-patmat-analysis", // avoids false non-exhaustive match warnings on ValueEnum, Opt, etc.
+    )
   },
-
-  libraryDependencies ++= Seq(
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
-  ),
 
   githubWorkflowTargetTags ++= Seq("v*"),
 

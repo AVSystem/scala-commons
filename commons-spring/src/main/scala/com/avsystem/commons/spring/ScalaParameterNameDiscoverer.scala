@@ -3,7 +3,7 @@ package spring
 
 import java.lang.reflect.{Constructor, Executable, Method, Modifier}
 
-import com.github.ghik.silencer.silent
+import scala.annotation.nowarn
 import org.springframework.core.{JdkVersion, ParameterNameDiscoverer}
 
 import scala.annotation.tailrec
@@ -15,7 +15,7 @@ object ScalaParameterNameDiscoverer {
   final val ScalaSignatureClasses =
     List(classOf[ScalaSignature], classOf[ScalaLongSignature])
 
-  @silent("deprecated")
+  @nowarn("msg=deprecated")
   final val JdkAtLeast8 =
     JdkVersion.getMajorJavaVersion >= JdkVersion.JAVA_18
 

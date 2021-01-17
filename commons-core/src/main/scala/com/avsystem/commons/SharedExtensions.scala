@@ -2,7 +2,7 @@ package com.avsystem.commons
 
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc._
-import com.github.ghik.silencer.silent
+import scala.annotation.nowarn
 
 import scala.annotation.tailrec
 import scala.collection.compat._
@@ -77,7 +77,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * Explicit syntax to discard the value of a side-effecting expression.
       * Useful when `-Ywarn-value-discard` compiler option is enabled.
       */
-    @silent
+    @nowarn
     def discard: Unit = ()
 
     def thenReturn[T](value: T): T = value
