@@ -71,10 +71,9 @@ inThisBuild(Seq(
     "-Ycache-macro-class-loader:last-modified",
   ),
   scalacOptions ++= {
-    if (scalaBinaryVersion.value != "2.13") Nil
-    else Seq(
+    if (scalaBinaryVersion.value == "2.13") Seq(
       "-Xnon-strict-patmat-analysis", // avoids false non-exhaustive match warnings on ValueEnum, Opt, etc.
-    )
+    ) else Nil
   },
 
   githubWorkflowTargetTags ++= Seq("v*"),
