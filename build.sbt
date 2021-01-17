@@ -8,8 +8,7 @@ cancelable in Global := true
 // option in IntelliJ's SBT settings.
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-val silencerVersion = "1.7.1"
-val collectionCompatVersion = "2.3.2"
+val collectionCompatVersion = "2.1.6"
 val guavaVersion = "23.0"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.2.1"
@@ -32,6 +31,8 @@ val slf4jVersion = "1.7.30"
 // for binary compatibility checking
 val previousCompatibleVersions = Set("1.39.14")
 
+Global / excludeLintKeys ++= Set(ideExcludedDirectories, ideOutputDirectory, ideBasePackages, ideSkipProject)
+
 inThisBuild(Seq(
   organization := "com.avsystem.commons",
   homepage := Some(url("https://github.com/AVSystem/scala-commons")),
@@ -51,30 +52,9 @@ inThisBuild(Seq(
     Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
   ),
 
-  crossScalaVersions := Seq("2.12.12", "2.13.3"),
-  scalaVersion := crossScalaVersions.value.last,
+  crossScalaVersions := Seq("2.13.4", "2.12.13"),
+  scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
-  scalacOptions ++= Seq(
-    "-encoding", "utf-8",
-    "-Yrangepos",
-    "-explaintypes",
-    "-feature",
-    "-deprecation",
-    "-unchecked",
-    "-language:implicitConversions",
-    "-language:existentials",
-    "-language:dynamics",
-    "-language:experimental.macros",
-    "-language:higherKinds",
-    "-Xfatal-warnings",
-    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
-  ),
-  scalacOptions ++= {
-    if (scalaBinaryVersion.value == "2.12") Seq(
-      "-Ycache-plugin-class-loader:last-modified",
-      "-Ycache-macro-class-loader:last-modified",
-    ) else Seq.empty
-  },
 
   githubWorkflowTargetTags ++= Seq("v*"),
 
@@ -121,6 +101,31 @@ inThisBuild(Seq(
 ))
 
 val commonSettings = Seq(
+  scalacOptions ++= Seq(
+    "-encoding", "utf-8",
+    "-Yrangepos",
+    "-explaintypes",
+    "-feature",
+    "-deprecation",
+    "-unchecked",
+    "-language:implicitConversions",
+    "-language:existentials",
+    "-language:dynamics",
+    "-language:experimental.macros",
+    "-language:higherKinds",
+    "-Xfatal-warnings",
+    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
+    "-Ycache-plugin-class-loader:last-modified",
+    "-Ycache-macro-class-loader:last-modified",
+  ),
+
+  scalacOptions ++= {
+    if (scalaBinaryVersion.value == "2.13") Seq(
+      "-Xnon-strict-patmat-analysis",
+      "-Xlint:-strict-unsealed-patmat"
+    ) else Seq.empty
+  },
+
   sources in(Compile, doc) := Seq.empty, // relying on unidoc
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
@@ -129,8 +134,6 @@ val commonSettings = Seq(
   pomIncludeRepository := { _ => false },
 
   libraryDependencies ++= Seq(
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full,
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
     "org.scalatestplus" %%% "scalacheck-1-14" % scalatestplusScalacheckVersion % Test,
