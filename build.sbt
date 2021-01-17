@@ -102,7 +102,7 @@ inThisBuild(Seq(
 ))
 
 val commonSettings = Seq(
-  scalacOptions ++= Seq(
+  Compile / scalacOptions ++= Seq(
     "-encoding", "utf-8",
     "-Yrangepos",
     "-explaintypes",
@@ -120,12 +120,14 @@ val commonSettings = Seq(
     "-Ycache-macro-class-loader:last-modified",
   ),
 
-  scalacOptions ++= {
+  Compile / scalacOptions ++= {
     if (scalaBinaryVersion.value == "2.13") Seq(
       "-Xnon-strict-patmat-analysis",
       "-Xlint:-strict-unsealed-patmat"
     ) else Seq.empty
   },
+
+  Test / scalacOptions := (Compile / scalacOptions).value,
 
   sources in(Compile, doc) := Seq.empty, // relying on unidoc
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
