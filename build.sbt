@@ -66,7 +66,7 @@ inThisBuild(Seq(
     "-language:experimental.macros",
     "-language:higherKinds",
     "-Xfatal-warnings",
-    "-Xlint:-missing-interpolator,-adapted-args,-unused,-strict-unsealed-patmat,_",
+    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
     "-Ycache-plugin-class-loader:last-modified",
     "-Ycache-macro-class-loader:last-modified",
   ),
