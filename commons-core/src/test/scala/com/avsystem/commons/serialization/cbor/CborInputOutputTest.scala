@@ -3,6 +3,7 @@ package serialization.cbor
 
 import java.io.{ByteArrayOutputStream, DataOutputStream}
 
+import com.avsystem.commons.misc.{Bytes, Timestamp}
 import com.avsystem.commons.serialization._
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite

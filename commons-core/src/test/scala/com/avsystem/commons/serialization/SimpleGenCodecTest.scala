@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.misc.TypedMap
-import com.github.ghik.silencer.silent
+import scala.annotation.nowarn
 
 import scala.collection.immutable.ListMap
 
@@ -20,7 +20,7 @@ trait SimpleIOCodecTest extends AbstractCodecTest {
 
 class SimpleGenCodecRoundtripTest extends GenCodecRoundtripTest with SimpleIOCodecTest
 
-@silent
+@nowarn
 class SimpleGenCodecTest extends SimpleIOCodecTest {
 
   import CodecTestData._
@@ -103,6 +103,12 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 
   test("case class with wildcard") {
     testWrite(CaseClassWithWildcard(Stuff("lol")), Map("stuff" -> "lol"))
+  }
+
+  test("case class with optional fields") {
+    testWrite(CaseClassWithOptionalFields("foo", Opt(42), Some(true)), Map("str" -> "foo", "int" -> 42, "bul" -> true))
+    testWrite(CaseClassWithOptionalFields("foo", Opt.Empty, Some(true)), Map("str" -> "foo", "bul" -> true))
+    testWrite(CaseClassWithOptionalFields("foo", Opt.Empty, None), Map("str" -> "foo"))
   }
 
   test("case class like") {

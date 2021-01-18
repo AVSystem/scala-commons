@@ -22,7 +22,7 @@ class TryCompanionOpsTest extends AnyFlatSpec with Matchers {
 
     val result = Try.sequence(list)
 
-    result.get should contain inOrderOnly(1, 2, 3, 4)
+    (result.get should contain).inOrderOnly(1, 2, 3, 4)
   }
 
   it should "find all exceptions" in {
@@ -51,7 +51,7 @@ class TryCompanionOpsTest extends AnyFlatSpec with Matchers {
 
     val result = Try.traverse(list)(Success(_))
 
-    result.get should contain inOrderOnly(1, 2, 3, 4)
+    (result.get should contain).inOrderOnly(1, 2, 3, 4)
   }
 
   it should "find all exceptions" in {

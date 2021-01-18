@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.meta.OptionLike
 import com.avsystem.commons.serialization.GenCodec._
 
 import scala.annotation.tailrec
@@ -33,6 +34,9 @@ abstract class ApplyUnapplyCodec[T](
     if (value != transient) {
       writeField(output, idx, value)
     }
+
+  protected final def writeOptField[A, O](output: ObjectOutput, idx: Int, value: O, optionLike: OptionLike.Aux[O, A]): Unit =
+    optionLike.foreach(value, writeField(output, idx, _))
 
   protected final def writeField(output: ObjectOutput, idx: Int, value: Boolean): Unit =
     deps(idx) match {
@@ -83,6 +87,9 @@ abstract class ApplyUnapplyCodec[T](
 
   protected final def getField[A](fieldValues: FieldValues, idx: Int): A =
     fieldValues.getOrElse[A](idx, fieldMissing(fieldNames(idx)))
+
+  protected final def getOptField[O, A](fieldValues: FieldValues, idx: Int, optionLike: OptionLike.Aux[O, A]): O =
+    fieldValues.getOpt(idx, optionLike)
 
   final def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T = {
     val fieldValues = new FieldValues(fieldNames, deps, typeRepr)

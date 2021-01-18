@@ -3,6 +3,8 @@ package misc
 
 import org.scalatest.funsuite.AnyFunSuite
 
+import scala.annotation.nowarn
+
 class SamTest extends AnyFunSuite {
 
   test("no arg lists by name") {
@@ -28,7 +30,7 @@ class SamTest extends AnyFunSuite {
     assert(sam.handle() == "42")
 
     val adhoc = Sam[NoArgSam](() => "42")
-    assert(adhoc.handle == "42")
+    assert(adhoc.handle() == "42")
   }
 
   test("no args by name") {
@@ -37,11 +39,13 @@ class SamTest extends AnyFunSuite {
     }
     object NoArgSam extends SamCompanion[NoArgSam, String]
 
+    @nowarn
     val sam = NoArgSam("42")
     assert(sam.handle() == "42")
 
+    @nowarn
     val adhoc = Sam[NoArgSam]("42")
-    assert(adhoc.handle == "42")
+    assert(adhoc.handle() == "42")
   }
 
   test("single arg") {

@@ -11,9 +11,10 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
   class MethodMetadataParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with RealMethodTarget with ArityParam {
 
+    def allowSingle: Boolean = true
+    def allowOptional: Boolean = true
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
-    def allowFail: Boolean = false
 
     def baseTagSpecs: List[BaseTagSpec] = tagSpecs(MethodTagAT)
 
@@ -92,7 +93,7 @@ private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommo
     private def metadataTree(matchedParam: MatchedParam, indexInRaw: Int): Res[Tree] = {
       val realParam = matchedParam.real
       val result = for {
-        mdType <- actualMetadataType(typeGivenInstances, realParam.actualType, "parameter type", verbatim)
+        mdType <- actualMetadataType(typeGivenInstances, realParam.nonOptionalType, "parameter type", verbatim)
         tree <- materializeOneOf(mdType) { t =>
           val constructor = new ParamMetadataConstructor(t, this, this, indexInRaw)
           for {

@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.annotation.positioned
+import com.avsystem.commons.annotation.{bincompat, positioned}
 import com.avsystem.commons.meta._
 
 sealed trait GenInfo[T] extends TypedMetadata[T] {
@@ -13,11 +13,17 @@ sealed trait GenInfo[T] extends TypedMetadata[T] {
 case class GenParamInfo[T](
   @reifyName sourceName: String,
   @optional @reifyAnnot annotName: Opt[name],
+  @isAnnotated[optionalParam] optional: Boolean,
   @isAnnotated[whenAbsent[T]] hasWhenAbsent: Boolean,
   @isAnnotated[transientDefault] transientDefault: Boolean,
   @isAnnotated[outOfOrder] outOfOrder: Boolean,
   @reifyFlags flags: ParamFlags
-) extends GenInfo[T]
+) extends GenInfo[T] {
+
+  @bincompat private[commons] def this(
+    sourceName: String, annotName: Opt[name], hasWhenAbsent: Boolean, transientDefault: Boolean, outOfOrder: Boolean, flags: ParamFlags
+  ) = this(sourceName, annotName, false, hasWhenAbsent, transientDefault, outOfOrder, flags)
+}
 
 sealed trait GenCodecStructure[T] extends GenInfo[T] {
   def flags: TypeFlags

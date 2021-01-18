@@ -51,7 +51,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
     val rawRPC: RawRPC = new RawRPCImpl(List.empty)
 
     def request(method: HttpMethod, call: Call): Future[RawValue] = {
-      val promise = Promise[RawValue]
+      val promise = Promise[RawValue]()
 
       val listener = new BufferingResponseListener(maxResponseLength) {
         override def onComplete(result: Result): Unit = {

@@ -205,7 +205,7 @@ trait DirectMetadataParamStrategy extends MetadataParamStrategy
   *   class valueWithCodec[T](value: T, @infer codec: GenCodec[T] = infer.value)
   *     extends scala.annotation.StaticAnnotation
   * }}}
-  **/
+  * */
 final class infer(val clue: String = "") extends DirectMetadataParamStrategy
 object infer {
   /**
@@ -217,14 +217,31 @@ object infer {
 /**
   * `@adtParamMetadata` applied on metadata parameter of metadata class for case class or object indicates that
   * this parameter holds metadata for ADT parameter(s) (one, some or all, depending on [[SymbolArity]], tagging, etc.).
-  **/
+  * */
 final class adtParamMetadata extends MetadataParamStrategy
+
+/**
+  * To be used along [[adtParamMetadata]] to indicate that optional parameters (annotated with
+  * [[com.avsystem.commons.serialization.optionalParam optionalParam]]) are allowed.
+  */
+final class allowOptional extends RawParamAnnotation
 
 /**
   * `@adtCaseMetadata` applied on metadata parameter of ADT hierarchy (sealed trait) metadata class indicates that
   * this parameter holds metadata for its case classes (one, some or all, depending on [[SymbolArity]], tagging, etc.).
-  **/
+  * */
 final class adtCaseMetadata extends MetadataParamStrategy
+
+/**
+  * May be used in metadata classes for case types in sealed hierarchies in order to reflect
+  * over all sealed parents of this case type. This is in order to gain access to information about
+  * intermediate sealed types between the root sealed type and the case type.
+  *
+  * The type of a metadata parameter annotated as `@adtCaseSealedParentsMetadata` must be a collection
+  * and metadata for sealed parents is materialized according to linearization,
+  * starting from the most specific supertype.
+  */
+final class adtCaseSealedParentMetadata extends MetadataParamStrategy
 
 /**
   * Metadata parameter annotated as `@reifyAnnot` is intended to hold annotation(s) that must or may be present on the real
@@ -317,3 +334,9 @@ final class allowIncomplete extends RawSymAnnotation
   * `AsRaw.materializeForApi` and when generating metadata using `RpcMetadata.materializeForApi`.
   */
 final class ignore extends RealSymAnnotation
+
+/**
+  * Annotate your ADT metadata class with this annotation if you don't care about the order of subclasses of
+  * sealed traits that this metadata will be materialized for.
+  */
+final class allowUnorderedSubtypes extends RawSymAnnotation

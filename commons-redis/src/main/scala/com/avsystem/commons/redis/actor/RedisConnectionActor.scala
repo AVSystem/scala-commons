@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis.actor
 
 import java.net.InetSocketAddress
-import java.nio.ByteBuffer
+import java.nio.{Buffer, ByteBuffer}
 
 import akka.actor.{Actor, ActorRef}
 import akka.stream.scaladsl._
@@ -193,6 +193,17 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     private var open = true
     private var unwatch = false
 
+    // make sure bytecode contains reference to methods on Buffer and not ByteBuffer
+    // JDK 11 overrides them in ByteBuffer which can lead to NoSuchMethodError when run on JDK 8
+
+    private def flip(buf: Buffer): Unit = {
+      buf.flip()
+    }
+
+    private def clear(buf: Buffer): Unit = {
+      buf.clear()
+    }
+
     def become(receive: Receive): Unit =
       context.become(receive unless {
         case Connected(oldConnection, _, _) if oldConnection != connection =>
@@ -205,7 +216,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       val initBuffer = ByteBuffer.allocate(initBatch.rawCommandPacks.encodedSize)
       new ReplyCollector(initBatch.rawCommandPacks, initBuffer, onInitResult(_, retryStrategy))
         .sendEmptyReplyOr { collector =>
-          initBuffer.flip()
+          flip(initBuffer)
           val data = ByteString(initBuffer)
           logWrite(data)
           connection ! data
@@ -419,11 +430,11 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
             // executed on a single Redis network connection).
             reservationIncarnation = incarnation.opt
           }
-          writeBuffer.flip()
+          flip(writeBuffer)
           val data = ByteString(writeBuffer)
           logWrite(data)
           connection ! data
-          writeBuffer.clear()
+          clear(writeBuffer)
         }
       }
 
@@ -452,12 +463,12 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     }
 
     def logReceived(data: ByteString): Unit = {
-      log.debug(s"$localAddr <<<< $remoteAddr\n${RedisMsg.escape(data, quote = false).replaceAllLiterally("\\n", "\\n\n")}")
+      log.debug(s"$localAddr <<<< $remoteAddr\n${RedisMsg.escape(data, quote = false).replace("\\n", "\\n\n")}")
       config.debugListener.onReceive(data)
     }
 
     def logWrite(data: ByteString): Unit = {
-      log.debug(s"$localAddr >>>> $remoteAddr\n${RedisMsg.escape(data, quote = false).replaceAllLiterally("\\n", "\\n\n")}")
+      log.debug(s"$localAddr >>>> $remoteAddr\n${RedisMsg.escape(data, quote = false).replace("\\n", "\\n\n")}")
       config.debugListener.onSend(data)
     }
   }

@@ -58,6 +58,8 @@ trait TypeClassDerivation extends MacroCommons {
     */
   def implementDeferredInstance(tpe: Type): Tree
 
+  def allowOptionalParams: Boolean = false
+
   /**
     * Contains metadata extracted from `apply` method of companion object of some record (case-class like) type.
     *
@@ -65,8 +67,9 @@ trait TypeClassDerivation extends MacroCommons {
     *                     (if `apply` is auto-generated for case class companion object)
     * @param defaultValue tree that evaluates to default value of the `apply` parameter or `EmptyTree`
     * @param instance     tree that evaluates to type class instance for type of this parameter
+    * @param optionLike   if the parameter is annotated as optional, an instance of `OptionLike` for its type
     */
-  case class ApplyParam(idx: Int, sym: TermSymbol, defaultValue: Tree, instance: Tree) {
+  case class ApplyParam(idx: Int, sym: TermSymbol, defaultValue: Tree, instance: Tree, optionLike: Option[CachedImplicit]) {
     val repeated: Boolean = isRepeated(sym)
     def valueType: Type = actualParamType(sym)
     def asArgument(tree: Tree): Tree = if (repeated) q"$tree: _*" else tree
@@ -118,10 +121,35 @@ trait TypeClassDerivation extends MacroCommons {
   def typeClassInstance(tpe: Type): Type
   def dependencyType(tpe: Type): Type = typeClassInstance(tpe)
 
+  def getOptionLike(sym: Symbol, tpe: Type): Option[CachedImplicit] =
+    if (allowOptionalParams && findAnnotation(sym, OptionalParamAT).isDefined)
+      Some(inferCachedImplicit(getType(tq"$CommonsPkg.meta.OptionLike[$tpe]"), ErrorCtx("not an option-like type", sym.pos)))
+    else
+      None
+
+  def getNonOptionalType(sym: Symbol, tpe: Type, optionLike: Option[CachedImplicit]): Type =
+    optionLike.fold(tpe) { ol =>
+      val optionLikeType = ol.actualType
+      val valueMember = optionLikeType.member(TypeName("Value"))
+      if (valueMember.isAbstract)
+        abortAt("could not determine actual value of optional parameter type;" +
+          "optional parameters must be typed as Option/Opt/OptArg etc.", sym.pos)
+      else
+        valueMember.typeSignatureIn(optionLikeType)
+    }
+
   def dependency(depTpe: Type, tcTpe: Type, param: Symbol): Tree = {
     val clue = s"Cannot materialize $tcTpe because of problem with parameter ${param.name}:\n"
     val depTcTpe = dependencyType(depTpe)
     q"""$ImplicitsObj.infer[$depTcTpe](${internal.setPos(StringLiteral(clue), param.pos)})"""
+  }
+
+  def applyParams(au: ApplyUnapply, tcTpe: Type): List[ApplyParam] = au.params.zipWithIndex.map { case (s, idx) =>
+    val defaultValue = au.defaultValueFor(s, idx)
+    val paramType = actualParamType(s)
+    val optionLike = getOptionLike(s, paramType)
+    val nonOptionalType = getNonOptionalType(s, paramType, optionLike)
+    ApplyParam(idx, s, defaultValue, dependency(nonOptionalType, tcTpe, s), optionLike)
   }
 
   def materializeFor(tpe: Type): Tree = {
@@ -132,11 +160,7 @@ trait TypeClassDerivation extends MacroCommons {
       singleValueFor(dtpe).map(tree => forSingleton(dtpe, tree))
 
     def applyUnapplyTc: Option[Tree] = applyUnapplyFor(dtpe).map { au =>
-      val dependencies = au.params.zipWithIndex.map { case (s, idx) =>
-        val defaultValue = au.defaultValueFor(s, idx)
-        ApplyParam(idx, s, defaultValue, dependency(actualParamType(s), tcTpe, s))
-      }
-      forApplyUnapply(au, dependencies)
+      forApplyUnapply(au, applyParams(au, tcTpe))
     }
 
     def sealedHierarchyTc: Option[Tree] = knownSubtypes(dtpe).map { subtypes =>

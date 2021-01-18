@@ -122,9 +122,10 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   }
 
   trait RealParamOrTypeParamTarget extends ArityParam with TagMatchingSymbol {
+    def allowSingle: Boolean = true
+    def allowOptional: Boolean = true
     def allowNamedMulti: Boolean = true
     def allowListedMulti: Boolean = true
-    def allowFail: Boolean = true
 
     def pathStr: String
 
@@ -240,6 +241,14 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
 
     val tparamReferences: List[RealTypeParam] =
       owner.typeParams.filter(tp => actualType.contains(tp.symbol))
+
+    lazy val optionLike: Option[CachedImplicit] =
+      annot(OptionalParamAT).map(_ => infer(tq"$OptionLikeCls[$actualType]"))
+
+    lazy val nonOptionalType: Type =
+      optionLike.fold(actualType)(optionLikeValueType(_, this))
+
+    def optional: Boolean = optionLike.isDefined
   }
 
   case class RawMethod(ownerTrait: RawRpcTrait, symbol: Symbol)

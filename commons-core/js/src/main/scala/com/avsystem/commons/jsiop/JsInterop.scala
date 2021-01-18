@@ -9,7 +9,7 @@ import scala.scalajs.js.UndefOr
 
 trait JsInterop {
   implicit def jsDateTimestampConversions(jsDate: js.Date): TimestampConversions =
-    new TimestampConversions(jsDate.getTime.toLong)
+    new TimestampConversions(jsDate.getTime().toLong)
 
   implicit def undefOrOps[A](undefOr: UndefOr[A]): UndefOrOps[A] =
     new UndefOrOps(undefOr)

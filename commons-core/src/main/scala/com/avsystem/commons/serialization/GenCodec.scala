@@ -7,6 +7,7 @@ import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.JFactory
 import com.avsystem.commons.meta.Fallback
+import com.avsystem.commons.misc.{Bytes, Timestamp}
 
 import scala.annotation.{implicitNotFound, tailrec}
 import scala.collection.compat._
@@ -121,6 +122,12 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   def nonNull[T](readFun: Input => T, writeFun: (Output, T) => Any): GenCodec[T] =
     nullSafe(readFun, writeFun, allowNull = false)
+
+  def nonNullString[T](readFun: String => T, writeFun: T => String): GenCodec[T] =
+    nonNullSimple(i => readFun(i.readString()), (o, v) => o.writeString(writeFun(v)))
+
+  def nullableString[T <: AnyRef](readFun: String => T, writeFun: T => String): GenCodec[T] =
+    nullableSimple(i => readFun(i.readString()), (o, v) => o.writeString(writeFun(v)))
 
   def createSimple[T](readFun: SimpleInput => T, writeFun: (SimpleOutput, T) => Any, allowNull: Boolean): GenCodec[T] =
     new SimpleCodec[T] {
@@ -482,17 +489,26 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
       loop(0)
     })
 
+  // these are covered by the generic `seqCodec` and `setCodec` but making them explicit may be easier
+  // for the compiler and also make IntelliJ less confused
+  // https://github.com/scala/bug/issues/11027 - only for Scala 2.12
+  implicit def bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] = seqCodec[BSeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
+  implicit def iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] = seqCodec[ISeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
+  implicit def mseqCodec[T: GenCodec]: GenCodec[MSeq[T]] = seqCodec[MSeq, T]
+  implicit def bindexedSeqCodec[T: GenCodec]: GenCodec[BIndexedSeq[T]] = seqCodec[BIndexedSeq, T]
+  implicit def iindexedSeqCodec[T: GenCodec]: GenCodec[IIndexedSeq[T]] = seqCodec[IIndexedSeq, T]
+  implicit def mindexedSeqCodec[T: GenCodec]: GenCodec[MIndexedSeq[T]] = seqCodec[MIndexedSeq, T]
+  implicit def listCodec[T: GenCodec]: GenCodec[List[T]] = seqCodec[List, T]
+  implicit def vectorCodec[T: GenCodec]: GenCodec[Vector[T]] = seqCodec[Vector, T]
+  implicit def bsetCodec[T: GenCodec]: GenCodec[BSet[T]] = setCodec[BSet, T]
+  implicit def isetCodec[T: GenCodec]: GenCodec[ISet[T]] = setCodec[ISet, T]
+  implicit def msetCodec[T: GenCodec]: GenCodec[MSet[T]] = setCodec[MSet, T]
+  implicit def ihashSetCodec[T: GenCodec]: GenCodec[IHashSet[T]] = setCodec[IHashSet, T]
+  implicit def mhashSetCodec[T: GenCodec]: GenCodec[MHashSet[T]] = setCodec[MHashSet, T]
+
   // seqCodec, setCodec, jCollectionCodec, mapCodec, jMapCodec, fallbackMapCodec and fallbackJMapCodec
   // have these weird return types (e.g. GenCodec[C[T] with BSeq[T]] instead of just GenCodec[C[T]]) because it's a
   // workaround for https://groups.google.com/forum/#!topic/scala-user/O_fkaChTtg4
-
-  // https://github.com/scala/bug/issues/11027 - only for Scala 2.12
-  implicit def forcedAsListSeqCodec[T: GenCodec]: GenCodec[BSeq[T]] =
-    seqCodec[BSeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
-
-  // https://github.com/scala/bug/issues/11027 - only for Scala 2.12
-  implicit def forcedAsListImmutableSeqCodec[T: GenCodec]: GenCodec[ISeq[T]] =
-    seqCodec[ISeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
 
   implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](
     implicit fac: Factory[T, C[T]]
@@ -507,20 +523,20 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](
     implicit cbf: JFactory[T, C[T]]
   ): GenCodec[C[T] with JCollection[T]] =
-    nullableList[C[T] with JCollection[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
+    nullableList[C[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
   implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
     implicit fac: Factory[(K, V), M[K, V]]
-  ): GenObjectCodec[M[K, V] with BMap[K, V]] =
-    nullableObject[M[K, V] with BMap[K, V]](
+  ): GenObjectCodec[M[K, V]] =
+    nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.writeToObject(oo)
     )
 
   implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
     implicit cbf: JFactory[(K, V), M[K, V]]
-  ): GenObjectCodec[M[K, V] with JMap[K, V]] =
-    nullableObject[M[K, V] with JMap[K, V]](
+  ): GenObjectCodec[M[K, V]] =
+    nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.asScala.writeToObject(oo)
     )

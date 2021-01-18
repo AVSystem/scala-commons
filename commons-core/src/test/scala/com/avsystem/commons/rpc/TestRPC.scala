@@ -2,8 +2,8 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.rpc.DummyRPC._
-import com.avsystem.commons.serialization.{HasGenCodec, transientDefault, whenAbsent}
-import com.github.ghik.silencer.silent
+import com.avsystem.commons.serialization.{HasGenCodec, optionalParam, transientDefault, whenAbsent}
+import scala.annotation.nowarn
 
 class prepend(prefix: String) extends EncodingInterceptor[String, String] with DecodingInterceptor[String, String] {
   def toOriginalRaw(newRaw: String): String = prefix + newRaw
@@ -27,7 +27,7 @@ object InnerRPC extends RPCCompanion[InnerRPC]
 trait TestRPC {
   def defaultNum: Int = 42
 
-  @silent("side-effecting nullary methods")
+  @nowarn("msg=side-effecting nullary methods")
   def handle: Unit
 
   def handleMore(): Unit
@@ -43,6 +43,9 @@ trait TestRPC {
   @namedArgs
   def doStuffNamed(@transientDefault @rawWhenAbsent("42") int: Int): Unit
 
+  @namedArgs
+  def doStuffOptional(@optionalParam thing: Opt[Int]): Unit
+
   def takeCC(r: Record = Record(-1, "_")): Unit
 
   def srslyDude(): Unit
@@ -52,8 +55,12 @@ trait TestRPC {
   def generallyDoStuff[T](list: List[T])(implicit @encodingDependency tag: Tag[T]): Future[Option[T]]
 }
 
-@silent("side-effecting nullary methods")
+@nowarn("msg=side-effecting nullary methods")
 object TestRPC extends RPCCompanion[TestRPC] {
+
+  //  AsRaw.materialize[DummyRPC.RawRPC, TestRPC].showAst
+  //  AsReal.materialize[DummyRPC.RawRPC, TestRPC].showAst
+
   def rpcImpl(onInvocation: (RawInvocation, Option[Any]) => Any): TestRPC = new TestRPC { outer =>
     private def onProcedure(methodName: String, args: List[String]): Unit =
       onInvocation(RawInvocation(methodName, args), None)
@@ -82,6 +89,9 @@ object TestRPC extends RPCCompanion[TestRPC] {
 
     def doStuffNamed(int: Int): Unit =
       onProcedure("doStuffNamed", List(write(int)))
+
+    def doStuffOptional(@optionalParam thing: Opt[Int]): Unit =
+      onProcedure("doStuffOptional", thing.map(_.toString).toList)
 
     def handle: Unit =
       onProcedure("handle", Nil)

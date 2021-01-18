@@ -23,6 +23,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final lazy val MultiArityAT: Type = staticType(tq"$MetaPackage.multi")
   final lazy val CompositeAT: Type = staticType(tq"$MetaPackage.composite")
   final lazy val AuxiliaryAT: Type = staticType(tq"$MetaPackage.auxiliary")
+  final lazy val AllowOptionalAT: Type = staticType(tq"$MetaPackage.allowOptional")
   final lazy val AnnotatedAT: Type = staticType(tq"$MetaPackage.annotated[_]")
   final lazy val NotAnnotatedAT: Type = staticType(tq"$MetaPackage.notAnnotated[_]")
   final lazy val IgnoreAT: Type = staticType(tq"$MetaPackage.ignore")
@@ -38,6 +39,16 @@ private[commons] trait MacroSymbols extends MacroCommons {
 
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
     primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}:\n"))
+
+  def optionLikeValueType(optionLike: CachedImplicit, subject: MacroSymbol): Type = {
+    val optionLikeType = optionLike.actualType
+    val valueMember = optionLikeType.member(TypeName("Value"))
+    if (valueMember.isAbstract)
+      subject.reportProblem("could not determine actual value of optional parameter type;" +
+        "optional parameters must be typed as Option/Opt/OptArg etc.")
+    else
+      valueMember.typeSignatureIn(optionLikeType)
+  }
 
   sealed trait Arity {
     def annotStr: String
@@ -62,15 +73,10 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def apply(param: ArityParam): ParamArity = {
       val annot = param.annot(RpcArityAT)
       val at = annot.fold(SingleArityAT)(_.tpe)
-      if (at <:< SingleArityAT) ParamArity.Single(param.actualType)
-      else if (at <:< OptionalArityAT) {
-        val optionLikeType = param.optionLike.actualType
-        val valueMember = optionLikeType.member(TypeName("Value"))
-        if (valueMember.isAbstract)
-          param.reportProblem("could not determine actual value of optional parameter type")
-        else
-          ParamArity.Optional(valueMember.typeSignatureIn(optionLikeType))
-      }
+      if (at <:< SingleArityAT && param.allowSingle)
+        ParamArity.Single(param.actualType)
+      else if (at <:< OptionalArityAT && param.allowOptional)
+        ParamArity.Optional(optionLikeValueType(param.optionLike, param))
       else if ((param.allowListedMulti || param.allowNamedMulti) && at <:< MultiArityAT) {
         if (param.allowNamedMulti && param.actualType <:< StringPFTpe)
           Multi(param.actualType.baseType(PartialFunctionClass).typeArgs(1), named = true)
@@ -332,9 +338,10 @@ private[commons] trait MacroSymbols extends MacroCommons {
   }
 
   trait ArityParam extends MacroParam with AritySymbol {
+    def allowSingle: Boolean
+    def allowOptional: Boolean
     def allowNamedMulti: Boolean
     def allowListedMulti: Boolean
-    def allowFail: Boolean
 
     lazy val arity: ParamArity = ParamArity(this)
 

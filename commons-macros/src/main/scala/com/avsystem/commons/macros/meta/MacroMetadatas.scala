@@ -109,9 +109,10 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   class CompositeParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with ArityParam {
 
+    def allowSingle: Boolean = true
+    def allowOptional: Boolean = true
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = false
-    def allowFail: Boolean = false
 
     val constructor: MetadataConstructor = owner.compositeConstructor(this)
     override def description: String = s"${super.description} at ${owner.description}"
@@ -215,9 +216,10 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   class ImplicitParam(owner: MetadataConstructor, symbol: Symbol, clue: String)
     extends DirectMetadataParam(owner, symbol) with ArityParam {
 
+    def allowSingle: Boolean = true
+    def allowOptional: Boolean = true
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = false
-    def allowFail: Boolean = false
 
     val checked: Boolean = annot(CheckedAT).nonEmpty
 
@@ -264,9 +266,10 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
   class ReifiedAnnotParam(owner: MetadataConstructor, symbol: Symbol)
     extends DirectMetadataParam(owner, symbol) with ArityParam {
 
+    def allowSingle: Boolean = true
+    def allowOptional: Boolean = true
     def allowNamedMulti: Boolean = false
     def allowListedMulti: Boolean = true
-    def allowFail: Boolean = false
 
     if (!(typeGivenInstances <:< typeOf[StaticAnnotation])) {
       reportProblem(s"$typeGivenInstances is not a subtype of StaticAnnotation")
@@ -276,7 +279,6 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       val annotTpe = typeGivenInstances
       val annotConstr = new ReifiedAnnotConstructor(annotTpe, this)
       val tparams = matchedSymbol.typeParamsInContext
-      val tparamSymbols = tparams.map(_.symbol)
 
       def materializeAnnotParam(param: Symbol): Option[Res[Tree]] =
         if (findAnnotation(param, CompositeAT).nonEmpty)

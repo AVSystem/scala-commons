@@ -36,7 +36,7 @@ final class ClusterMonitoringActor(
     })
 
   private def openConnection(addr: NodeAddress, seed: Boolean): Future[Unit] = {
-    val initPromise = Promise[Unit]
+    val initPromise = Promise[Unit]()
     val connection = connections.getOrElseUpdate(addr, createConnection(addr))
     connection ! RedisConnectionActor.Open(seed, initPromise)
     initPromise.future
@@ -74,7 +74,7 @@ final class ClusterMonitoringActor(
 
   def receive: Receive = {
     case Refresh(nodeOpt) =>
-      if (suspendUntil.isOverdue) {
+      if (suspendUntil.isOverdue()) {
         val addresses = nodeOpt.map(new SingletonSeq(_)).getOrElse {
           if (fallbackToSeedsAfter.isOverdue()) {
             if (state.isDefined) {
