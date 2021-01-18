@@ -2,7 +2,6 @@ package com.avsystem.commons
 package concurrent
 
 import java.util.concurrent.ArrayBlockingQueue
-
 import com.avsystem.commons.collection.CloseableIterator
 import com.github.ghik.silencer.silent
 import monix.execution.{Ack, Scheduler}

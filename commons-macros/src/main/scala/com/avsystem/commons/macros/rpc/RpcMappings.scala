@@ -333,7 +333,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         case Nil => (Nil, rawType)
         case head :: tail =>
           val (filteredTail, tailNewRawType) = filter(tail)
-          val List(newRawType, oldRawType) = head.tpe.baseType(baseIcSym).typeArgs
+          val List(newRawType, oldRawType) = head.tpe.baseType(baseIcSym).typeArgs: @unchecked
           if (oldRawType =:= tailNewRawType)
             (head :: filteredTail, newRawType)
           else
