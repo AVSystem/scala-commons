@@ -695,7 +695,7 @@ All annotations are governed by [annotation processing](Annotations.md) rules.
 1. Adding classes or objects to sealed hierarchy is always safe.
 1. Changing name of an object or class in sealed hierarchy is safe as long as you annotate that class/object with `@name` 
    annotation to retain the old name in serialized format.
-1. Lifting a case class into a sealed hierarchy is safe as long as the flat format is used for the sealed 
+1. Lifting a case class into a sealed hierarchy is safe as long as the [flat format](#flat-format) is used for the sealed 
    hierarchy and existing case class remains one of the cases in the sealed hierarchy, annotated as `@defaultCase`.
 
 Of course, the above rules are guaranteed to work only for macro-materialized codecs.
