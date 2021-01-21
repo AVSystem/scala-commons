@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package di
 
-import com.avsystem.commons.di.Component.DfsPtr
 import com.avsystem.commons.macros.di.ComponentMacros
 import com.avsystem.commons.misc.SourceInfo
 
@@ -91,31 +90,8 @@ final class Component[+T](
     * Validates this component by checking its dependency graph for cycles.
     * A [[DependencyCycleException]] is thrown when a cycle is detected.
     */
-  def validate(): Unit = {
-    val visited = new MHashMap[Component[_], Boolean]
-    visited(this) = false
-    detectCycles(List(DfsPtr(this, dependencies.toList)), visited)
-  }
-
-  @tailrec // DFS
-  private def detectCycles(stack: List[DfsPtr], visited: MHashMap[Component[_], Boolean]): Unit =
-    stack match {
-      case DfsPtr(component, deps) :: stackTail => deps match {
-        case Nil =>
-          visited(component) = true
-          detectCycles(stackTail, visited)
-        case nextDep :: depsTail => visited.get(nextDep) match {
-          case None =>
-            visited(nextDep) = false
-            detectCycles(DfsPtr(nextDep, nextDep.dependencies.toList) :: DfsPtr(component, depsTail) :: stackTail, visited)
-          case Some(true) => // already visited, do nothing
-          case Some(false) => // cycle
-            val cyclePath = nextDep :: (nextDep :: stack.map(_.component).takeWhile(_ != nextDep)).reverse
-            throw DependencyCycleException(cyclePath)
-        }
-      }
-      case Nil =>
-    }
+  def validate(): Unit =
+    Component.validateAll(List(this))
 
   /**
     * Forces initialization of this component and its dependencies (in parallel, using given `ExecutionContext`).
@@ -152,6 +128,36 @@ object Component {
   }
 
   private case class DfsPtr(component: Component[_], deps: List[Component[_]])
+
+  def validateAll(components: Seq[Component[_]]): Unit = {
+    val visited = new MHashMap[Component[_], Boolean]
+    components.foreach { component =>
+      if (!visited.contains(component)) {
+        visited(component) = false
+        detectCycles(List(DfsPtr(component, component.dependencies.toList)), visited)
+      }
+    }
+  }
+
+  @tailrec // DFS
+  private def detectCycles(stack: List[DfsPtr], visited: MHashMap[Component[_], Boolean]): Unit =
+    stack match {
+      case DfsPtr(component, deps) :: stackTail => deps match {
+        case Nil =>
+          visited(component) = true
+          detectCycles(stackTail, visited)
+        case nextDep :: depsTail => visited.get(nextDep) match {
+          case None =>
+            visited(nextDep) = false
+            detectCycles(DfsPtr(nextDep, nextDep.dependencies.toList) :: DfsPtr(component, depsTail) :: stackTail, visited)
+          case Some(true) => // already visited, do nothing
+          case Some(false) => // cycle
+            val cyclePath = nextDep :: (nextDep :: stack.map(_.component).takeWhile(_ != nextDep)).reverse
+            throw DependencyCycleException(cyclePath)
+        }
+      }
+      case Nil =>
+    }
 }
 
 trait Components extends ComponentsLowPrio {
