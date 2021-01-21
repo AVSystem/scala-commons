@@ -24,17 +24,19 @@ case class DependencyCycleException(cyclePath: List[Component[_]])
   * parallel initialization of dependencies, dependency cycle detection, source code awareness.
   */
 final class Component[+T](
-  val name: String,
   val sourceInfo: SourceInfo,
-  dependencies: => IndexedSeq[Component[_]],
-  create: IndexedSeq[Any] => Component.CreateResult[T],
+  deps: => IndexedSeq[Component[_]],
+  create: IndexedSeq[Any] => T,
   cachedStorage: Opt[AtomicReference[Future[T]]] = Opt.Empty,
 ) {
 
   import Component._
 
+  def name: String = sourceInfo.enclosingSymbols.head
   def info: String = s"$name(${sourceInfo.fileName}:${sourceInfo.line})"
   def isCached: Boolean = cachedStorage.isDefined
+
+  lazy val dependencies: IndexedSeq[Component[_]] = deps
 
   private[this] val storage: AtomicReference[Future[T]] =
     cachedStorage.getOrElse(new AtomicReference)
@@ -77,10 +79,10 @@ final class Component[+T](
     storage.get.opt.flatMap(_.value.map(_.get).toOpt)
 
   def dependsOn(moreDeps: Component[_]*): Component[T] =
-    new Component(name, sourceInfo, dependencies ++ moreDeps, create, cachedStorage)
+    new Component(sourceInfo, deps ++ moreDeps, create, cachedStorage)
 
   private[di] def cached[T0 >: T](cachedStorage: AtomicReference[Future[T0]])(implicit sourceInfo: SourceInfo): Component[T0] =
-    new Component(name, sourceInfo, dependencies, create, Opt(cachedStorage))
+    new Component(sourceInfo, deps, create, Opt(cachedStorage))
 
   /**
     * Forces initialization of this component and its dependencies (in parallel, using given `ExecutionContext`).
@@ -100,12 +102,7 @@ final class Component[+T](
         val newStack = this :: stack
         val resultFuture =
           Future.traverse(dependencies)(_.doInit(newStack))
-            .flatMapNow(deps => create(deps) match {
-              case CreateResult.Ready(value) =>
-                Future.successful(value)
-              case CreateResult.More(nextComponent) =>
-                nextComponent.doInit(newStack)
-            })
+            .mapNow(create)
             .recoverNow {
               case NonFatal(cause) =>
                 throw ComponentInitializationException(this, cause)

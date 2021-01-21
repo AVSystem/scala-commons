@@ -47,8 +47,8 @@ class FullApplication(
 trait DatabaseComponents extends Components {
   def config: DynamicConfig
 
-  def dynamicDep(db: Database): Component[DynamicDep] =
-    component(new DynamicDep(db))
+  def dynamicDep(db: Component[Database]): Component[DynamicDep] =
+    component(new DynamicDep(db.ref))
 
   implicit def database: Component[Database] =
     singleton(new Database(config.databaseUrl))
@@ -62,7 +62,7 @@ trait DatabaseComponents extends Components {
 
 class ComponentsExample(val config: DynamicConfig) extends Components with DatabaseComponents {
   def fullApplication: Component[FullApplication] =
-    singleton(new FullApplication(dynamicDep(database.ref).ref))
+    singleton(new FullApplication(dynamicDep(database).ref))
 
   val singletons: List[Component[_]] = reifyAllSingletons
 }

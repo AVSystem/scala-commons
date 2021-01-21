@@ -28,26 +28,30 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
-  private def mkComponent(tpe: Type, sourceInfo: Tree, definition: Tree, inner: Boolean, singleton: Boolean): Tree = {
+  private def mkComponent(tpe: Type, sourceInfo: Tree, definition: Tree, singleton: Boolean): Tree = {
     val depArrayName = c.freshName(TermName("deps"))
     val depsBuf = new ListBuffer[Tree]
 
-    def prepareDependency(tree: Tree, depTpe: Type): Tree = {
-      val innerSourceInfo = internal.setPos(q"$MiscPkg.SourceInfo.here", tree.pos)
-      val dependencyTree = mkComponent(depTpe, innerSourceInfo, tree, inner = true, singleton = false)
-      val innerSymbols = dependencyTree.collect({ case t@(_: DefTree | _: Function | _: Bind) if t.symbol != null => t.symbol }).toSet
-      dependencyTree.foreach { t =>
-        if (t.symbol != null && !innerSymbols.contains(t.symbol) && posIncludes(definition.pos, t.symbol.pos)) {
-          errorAt(s"due to parallel initialization you cannot use local values or methods in an expression representing component dependency", t.pos)
-        }
+    def validateDependency(tree: Tree): Tree = {
+      val innerSymbols = tree.collect({ case t@(_: DefTree | _: Function | _: Bind) if t.symbol != null => t.symbol }).toSet
+      val needsRetyping = innerSymbols.nonEmpty || tree.exists {
+        case _: DefTree | _: Function | _: Bind => true
+        case _ => false
       }
-      if (innerSymbols.nonEmpty) c.untypecheck(dependencyTree) else dependencyTree
+      tree.foreach {
+        case t@ComponentRef(_) =>
+          errorAt(s"illegal nested component reference inside expression representing component dependency", t.pos)
+        case t if t.symbol != null && !innerSymbols.contains(t.symbol) && posIncludes(definition.pos, t.symbol.pos) =>
+          errorAt(s"illegal local value or method reference inside expression representing component dependency", t.pos)
+        case _ =>
+      }
+      if (needsRetyping) c.untypecheck(tree) else tree
     }
 
     object DependencyExtractor extends Transformer {
       override def transform(tree: Tree): Tree = tree match {
         case ComponentRef(component) =>
-          depsBuf += prepareDependency(component, tree.tpe)
+          depsBuf += validateDependency(component)
           val depTpe = component.tpe.baseType(ComponentTpe.typeSymbol).typeArgs.head
           q"$depArrayName(${depsBuf.size - 1}).asInstanceOf[$depTpe]"
         case _ =>
@@ -57,37 +61,29 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     val transformedDefinition = DependencyExtractor.transform(definition)
 
-    if (inner && depsBuf.isEmpty) definition
-    else {
-      val needsRetyping = transformedDefinition != definition ||
-        definition.exists {
-          case _: DefTree | _: Function | _: Bind => true
-          case _ => false
-        }
-      val finalDefinition =
-        if (needsRetyping) c.untypecheck(transformedDefinition) else definition
+    val needsRetyping = transformedDefinition != definition ||
+      definition.exists {
+        case _: DefTree | _: Function | _: Bind => true
+        case _ => false
+      }
+    val finalDefinition =
+      if (needsRetyping) c.untypecheck(transformedDefinition) else definition
 
-      val resultCase = TermName(if (inner) "More" else "Ready")
-      val srcInfoName = c.freshName(TermName("srcInfo"))
-      val componentName = if(inner) q"${"<anonymous>"}" else q"$srcInfoName.enclosingSymbols.head"
-
-      val result =
-        q"""
+    val srcInfoName = c.freshName(TermName("srcInfo"))
+    val result =
+      q"""
          val $srcInfoName = $sourceInfo
          new $DiPkg.Component[$tpe](
-           $componentName,
            $srcInfoName,
            $ScalaPkg.IndexedSeq(..${depsBuf.result()}),
-           ($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]) =>
-             $ComponentObj.CreateResult.$resultCase($finalDefinition)
+           ($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]) => $finalDefinition
          )
          """
 
-      if (singleton)
-        q"${c.prefix}.cached($result)($sourceInfo)"
-      else
-        result
-    }
+    if (singleton)
+      q"${c.prefix}.cached($result)($sourceInfo)"
+    else
+      result
   }
 
   private def ensureRangePositions(): Unit =
@@ -97,12 +93,12 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   def prototype[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
     ensureRangePositions()
-    mkComponent(weakTypeOf[T], sourceInfo, definition, inner = false, singleton = false)
+    mkComponent(weakTypeOf[T], sourceInfo, definition, singleton = false)
   }
 
   def singleton[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
     ensureRangePositions()
-    mkComponent(weakTypeOf[T], sourceInfo, definition, inner = false, singleton = true)
+    mkComponent(weakTypeOf[T], sourceInfo, definition, singleton = true)
   }
 
   def reifyAllSingletons: Tree = {
