@@ -1,12 +1,13 @@
 package com.avsystem.commons
 package di
 
+import com.avsystem.commons.di.Component.DfsPtr
 import com.avsystem.commons.macros.di.ComponentMacros
 import com.avsystem.commons.misc.SourceInfo
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
-import scala.annotation.compileTimeOnly
+import java.util.concurrent.atomic.AtomicReference
+import scala.annotation.{compileTimeOnly, tailrec}
 
 case class ComponentInitializationException(component: Component[_], cause: Throwable)
   extends Exception(s"failed to initialize component ${component.info}", cause)
@@ -42,9 +43,6 @@ final class Component[+T](
 
   private[this] val storage: AtomicReference[Future[T]] =
     cachedStorage.getOrElse(new AtomicReference)
-
-  // effectively caches validation result
-  private[this] val validationStarted = new AtomicBoolean(false)
 
   private def sameStorage(otherStorage: AtomicReference[_]): Boolean =
     storage eq otherStorage
@@ -93,19 +91,31 @@ final class Component[+T](
     * Validates this component by checking its dependency graph for cycles.
     * A [[DependencyCycleException]] is thrown when a cycle is detected.
     */
-  def validate(): Unit =
-    detectCycles(Nil)
-
-  private def detectCycles(stack: List[Component[_]]): Unit = {
-    val alreadyValidating = validationStarted.getAndSet(true)
-    if (!alreadyValidating) {
-      val newStack = this :: stack
-      dependencies.foreach(_.detectCycles(newStack))
-    } else if (stack.contains(this)) {
-      val cyclePath = this :: (this :: stack.takeWhile(_ != this)).reverse
-      throw DependencyCycleException(cyclePath)
-    }
+  def validate(): Unit = {
+    val visited = new MHashMap[Component[_], Boolean]
+    visited(this) = false
+    detectCycles(List(DfsPtr(this, dependencies.toList)), visited)
   }
+
+  @tailrec // DFS
+  private def detectCycles(stack: List[DfsPtr], visited: MHashMap[Component[_], Boolean]): Unit =
+    stack match {
+      case DfsPtr(component, deps) :: stackTail => deps match {
+        case Nil =>
+          visited(component) = true
+          detectCycles(stackTail, visited)
+        case nextDep :: depsTail => visited.get(nextDep) match {
+          case None =>
+            visited(nextDep) = false
+            detectCycles(DfsPtr(nextDep, nextDep.dependencies.toList) :: DfsPtr(component, depsTail) :: stackTail, visited)
+          case Some(true) => // already visited, do nothing
+          case Some(false) => // cycle
+            val cyclePath = nextDep :: (nextDep :: stack.map(_.component).takeWhile(_ != nextDep)).reverse
+            throw DependencyCycleException(cyclePath)
+        }
+      }
+      case Nil =>
+    }
 
   /**
     * Forces initialization of this component and its dependencies (in parallel, using given `ExecutionContext`).
@@ -139,6 +149,8 @@ object Component {
     final case class Ready[+T](value: T) extends CreateResult[T]
     final case class More[+T](nextStep: Component[T]) extends CreateResult[T]
   }
+
+  private case class DfsPtr(component: Component[_], deps: List[Component[_]])
 }
 
 trait Components extends ComponentsLowPrio {
