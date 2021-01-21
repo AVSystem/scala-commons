@@ -5,7 +5,7 @@ import com.avsystem.commons.macros.di.ComponentMacros
 import com.avsystem.commons.misc.SourceInfo
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.annotation.compileTimeOnly
 
 case class ComponentInitializationException(component: Component[_], cause: Throwable)
@@ -30,16 +30,21 @@ final class Component[+T](
   cachedStorage: Opt[AtomicReference[Future[T]]] = Opt.Empty,
 ) {
 
-  import Component._
-
   def name: String = sourceInfo.enclosingSymbols.head
   def info: String = s"$name(${sourceInfo.fileName}:${sourceInfo.line})"
   def isCached: Boolean = cachedStorage.isDefined
 
+  /**
+    * Returns dependencies of this component extracted from the component definition.
+    * You can use this to inspect the dependency graph without initializing any components.
+    */
   lazy val dependencies: IndexedSeq[Component[_]] = deps
 
   private[this] val storage: AtomicReference[Future[T]] =
     cachedStorage.getOrElse(new AtomicReference)
+
+  // effectively caches validation result
+  private[this] val validationStarted = new AtomicBoolean(false)
 
   private def sameStorage(otherStorage: AtomicReference[_]): Boolean =
     storage eq otherStorage
@@ -85,32 +90,47 @@ final class Component[+T](
     new Component(sourceInfo, deps, create, Opt(cachedStorage))
 
   /**
+    * Validates this component by checking its dependency graph for cycles.
+    * A [[DependencyCycleException]] is thrown when a cycle is detected.
+    */
+  def validate(): Unit =
+    detectCycles(Nil)
+
+  private def detectCycles(stack: List[Component[_]]): Unit = {
+    val alreadyValidating = validationStarted.getAndSet(true)
+    if (!alreadyValidating) {
+      val newStack = this :: stack
+      dependencies.foreach(_.detectCycles(newStack))
+    } else if (stack.contains(this)) {
+      val cyclePath = this :: (this :: stack.takeWhile(_ != this)).reverse
+      throw DependencyCycleException(cyclePath)
+    }
+  }
+
+  /**
     * Forces initialization of this component and its dependencies (in parallel, using given `ExecutionContext`).
     * Returns a `Future` containing the initialized component value.
     * NOTE: the component is initialized only once and its value is cached.
     */
-  def init(implicit ec: ExecutionContext): Future[T] =
-    doInit(Nil).catchFailures
+  def init(implicit ec: ExecutionContext): Future[T] = {
+    validate()
+    doInit(Nil)
+  }
 
   private def doInit(stack: List[Component[_]])(implicit ec: ExecutionContext): Future[T] = {
-    if (stack.contains(this)) {
-      val cyclePath = this :: (this :: stack.takeWhile(_ != this)).reverse
-      Future.failed(DependencyCycleException(cyclePath))
-    } else {
-      val promise = Promise[T]()
-      if (storage.compareAndSet(null, promise.future)) {
-        val newStack = this :: stack
-        val resultFuture =
-          Future.traverse(dependencies)(_.doInit(newStack))
-            .mapNow(create)
-            .recoverNow {
-              case NonFatal(cause) =>
-                throw ComponentInitializationException(this, cause)
-            }
-        promise.completeWith(resultFuture)
-      }
-      storage.get()
+    val promise = Promise[T]()
+    if (storage.compareAndSet(null, promise.future)) {
+      val newStack = this :: stack
+      val resultFuture =
+        Future.traverse(dependencies)(_.doInit(newStack))
+          .mapNow(create)
+          .recoverNow {
+            case NonFatal(cause) =>
+              throw ComponentInitializationException(this, cause)
+          }
+      promise.completeWith(resultFuture)
     }
+    storage.get()
   }
 }
 object Component {
