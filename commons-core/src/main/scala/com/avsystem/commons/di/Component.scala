@@ -122,17 +122,18 @@ final class Component[+T](
     * Returns a `Future` containing the initialized component value.
     * NOTE: the component is initialized only once and its value is cached.
     */
-  def init(implicit ec: ExecutionContext): Future[T] = {
-    validate()
-    doInit(Nil)
-  }
+  def init(implicit ec: ExecutionContext): Future[T] =
+    doInit(Nil, starting = true)
 
-  private def doInit(stack: List[Component[_]])(implicit ec: ExecutionContext): Future[T] = {
+  private def doInit(stack: List[Component[_]], starting: Boolean)(implicit ec: ExecutionContext): Future[T] = {
     val promise = Promise[T]()
     if (storage.compareAndSet(null, promise.future)) {
+      if (starting) {
+        validate()
+      }
       val newStack = this :: stack
       val resultFuture =
-        Future.traverse(dependencies)(_.doInit(newStack))
+        Future.traverse(dependencies)(_.doInit(newStack, starting = false))
           .mapNow(create)
           .recoverNow {
             case NonFatal(cause) =>
