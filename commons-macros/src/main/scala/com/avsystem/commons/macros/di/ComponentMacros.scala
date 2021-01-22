@@ -101,6 +101,12 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     mkComponent(weakTypeOf[T], sourceInfo, definition, singleton = true)
   }
 
+  def autoComponent[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
+    ensureRangePositions()
+    val component = mkComponent(weakTypeOf[T], sourceInfo, definition, singleton = false)
+    q"$DiPkg.AutoComponent($component)"
+  }
+
   def reifyAllSingletons: Tree = {
     val prefixName = c.freshName(TermName("prefix"))
     val bufName = c.freshName(TermName("buf"))

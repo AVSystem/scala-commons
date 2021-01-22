@@ -160,6 +160,19 @@ object Component {
     }
 }
 
+/**
+  * A wrapper over [[Component]] that has an implicit conversion from arbitrary expression
+  * of type T to [[AutoComponent]]. This is used when you need to accept a parameter that may contain other
+  * component references.
+  *
+  * Using [[AutoComponent]] avoids explicit wrapping of expressions passed as that parameter
+  * into [[Component]] (using `component` macro).
+  */
+case class AutoComponent[+T](component: Component[T]) extends AnyVal
+object AutoComponent {
+  implicit def autoComponent[T](definition: => T)(implicit sourceInfo: SourceInfo): AutoComponent[T] = macro ComponentMacros.autoComponent[T]
+}
+
 trait Components extends ComponentsLowPrio {
   /**
     * Creates a [[Component]] based on a definition (i.e. a constructor invocation). The definition may refer to
