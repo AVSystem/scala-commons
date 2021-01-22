@@ -150,7 +150,8 @@ object Component {
           case None =>
             visited(nextDep) = false
             detectCycles(DfsPtr(nextDep, nextDep.dependencies.toList) :: DfsPtr(component, depsTail) :: stackTail, visited)
-          case Some(true) => // already visited, do nothing
+          case Some(true) =>
+            detectCycles(DfsPtr(component, depsTail) :: stackTail, visited)
           case Some(false) => // cycle
             val cyclePath = nextDep :: (nextDep :: stack.map(_.component).takeWhile(_ != nextDep)).reverse
             throw DependencyCycleException(cyclePath)
