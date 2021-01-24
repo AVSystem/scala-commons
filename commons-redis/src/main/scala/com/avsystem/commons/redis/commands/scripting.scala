@@ -9,7 +9,7 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.exception.ErrorReplyException
 import com.avsystem.commons.redis.protocol.ValidRedisMsg
-import com.github.ghik.silencer.silent
+import scala.annotation.nowarn
 import com.google.common.hash.Hashing
 
 trait KeyedScriptingApi extends ApiSubset {
@@ -124,7 +124,7 @@ case class Sha1(raw: String) extends AnyVal {
   override def toString: String = raw
 }
 object Sha1 {
-  @silent
+  @nowarn
   def hashString(input: CharSequence): Sha1 =
     Sha1(Hashing.sha1.hashString(input, StandardCharsets.UTF_8).toString)
 

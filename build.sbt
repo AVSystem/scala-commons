@@ -9,13 +9,13 @@ cancelable in Global := true
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
 val silencerVersion = "1.7.1"
-val collectionCompatVersion = "2.1.6"
-val guavaVersion = "23.0"
+val collectionCompatVersion = "2.3.2"
+val guavaVersion = "23.6.1-jre"
 val jsr305Version = "3.0.2"
-val scalatestVersion = "3.2.1"
+val scalatestVersion = "3.2.3"
 val scalatestplusScalacheckVersion = "3.2.2.0"
-val scalacheckVersion = "1.14.3"
-val jettyVersion = "9.4.31.v20200723"
+val scalacheckVersion = "1.15.2"
+val jettyVersion = "9.4.35.v20201120"
 val mongoVersion = "4.1.1"
 val springVersion = "4.3.26.RELEASE"
 val typesafeConfigVersion = "1.4.0"
@@ -23,14 +23,16 @@ val commonsIoVersion = "1.3.2"
 val scalaLoggingVersion = "3.9.2"
 val akkaVersion = "2.6.8"
 val monixVersion = "3.3.0"
-val mockitoVersion = "3.5.15"
+val mockitoVersion = "3.7.0"
 val circeVersion = "0.13.0"
-val upickleVersion = "1.2.0"
+val upickleVersion = "1.2.2"
 val scalajsBenchmarkVersion = "0.8.0"
 val slf4jVersion = "1.7.30"
 
 // for binary compatibility checking
 val previousCompatibleVersions = Set("1.39.14")
+
+Global / excludeLintKeys ++= Set(ideExcludedDirectories, ideOutputDirectory, ideBasePackages, ideSkipProject)
 
 inThisBuild(Seq(
   organization := "com.avsystem.commons",
@@ -51,30 +53,9 @@ inThisBuild(Seq(
     Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
   ),
 
-  crossScalaVersions := Seq("2.12.12", "2.13.3"),
-  scalaVersion := crossScalaVersions.value.last,
+  crossScalaVersions := Seq("2.13.4", "2.12.13"),
+  scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
-  scalacOptions ++= Seq(
-    "-encoding", "utf-8",
-    "-Yrangepos",
-    "-explaintypes",
-    "-feature",
-    "-deprecation",
-    "-unchecked",
-    "-language:implicitConversions",
-    "-language:existentials",
-    "-language:dynamics",
-    "-language:experimental.macros",
-    "-language:higherKinds",
-    "-Xfatal-warnings",
-    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
-  ),
-  scalacOptions ++= {
-    if (scalaBinaryVersion.value == "2.12") Seq(
-      "-Ycache-plugin-class-loader:last-modified",
-      "-Ycache-macro-class-loader:last-modified",
-    ) else Seq.empty
-  },
 
   githubWorkflowTargetTags ++= Seq("v*"),
 
@@ -121,6 +102,33 @@ inThisBuild(Seq(
 ))
 
 val commonSettings = Seq(
+  Compile / scalacOptions ++= Seq(
+    "-encoding", "utf-8",
+    "-Yrangepos",
+    "-explaintypes",
+    "-feature",
+    "-deprecation",
+    "-unchecked",
+    "-language:implicitConversions",
+    "-language:existentials",
+    "-language:dynamics",
+    "-language:experimental.macros",
+    "-language:higherKinds",
+    "-Xfatal-warnings",
+    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
+    "-Ycache-plugin-class-loader:last-modified",
+    "-Ycache-macro-class-loader:last-modified",
+  ),
+
+  Compile / scalacOptions ++= {
+    if (scalaBinaryVersion.value == "2.13") Seq(
+      "-Xnon-strict-patmat-analysis",
+      "-Xlint:-strict-unsealed-patmat"
+    ) else Seq.empty
+  },
+
+  Test / scalacOptions := (Compile / scalacOptions).value,
+
   sources in(Compile, doc) := Seq.empty, // relying on unidoc
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,

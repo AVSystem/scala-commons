@@ -2,7 +2,7 @@ package com.avsystem.commons
 package redis
 
 import com.avsystem.commons.redis.commands.Encoding
-import com.github.ghik.silencer.silent
+import scala.annotation.nowarn
 
 object ApiTypecheckingTest {
 

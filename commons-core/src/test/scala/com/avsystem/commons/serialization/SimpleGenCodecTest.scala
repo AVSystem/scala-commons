@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.misc.TypedMap
-import com.github.ghik.silencer.silent
+import scala.annotation.nowarn
 
 import scala.collection.immutable.ListMap
 
@@ -20,7 +20,7 @@ trait SimpleIOCodecTest extends AbstractCodecTest {
 
 class SimpleGenCodecRoundtripTest extends GenCodecRoundtripTest with SimpleIOCodecTest
 
-@silent
+@nowarn
 class SimpleGenCodecTest extends SimpleIOCodecTest {
 
   import CodecTestData._
