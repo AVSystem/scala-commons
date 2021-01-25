@@ -110,7 +110,7 @@ final class Component[+T](
       val newStack = this :: stack
       val resultFuture =
         Future.traverse(dependencies)(_.doInit(newStack, starting = false))
-          .mapNow(create)
+          .map(create)
           .recoverNow {
             case NonFatal(cause) =>
               throw ComponentInitializationException(this, cause)
@@ -121,12 +121,6 @@ final class Component[+T](
   }
 }
 object Component {
-  sealed abstract class CreateResult[+T]
-  object CreateResult {
-    final case class Ready[+T](value: T) extends CreateResult[T]
-    final case class More[+T](nextStep: Component[T]) extends CreateResult[T]
-  }
-
   private case class DfsPtr(component: Component[_], deps: List[Component[_]])
 
   def validateAll(components: Seq[Component[_]]): Unit = {
