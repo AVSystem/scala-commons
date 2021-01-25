@@ -77,8 +77,8 @@ final class Component[+T](
   @compileTimeOnly(".ref can only be used inside code passed to component/singleton(...) macro")
   def ref: T = sys.error("stub")
 
-  def getIfReady: Opt[T] =
-    storage.get.opt.flatMap(_.value.map(_.get).toOpt)
+  def getIfReady: Option[T] =
+    storage.get.option.flatMap(_.value.map(_.get))
 
   def dependsOn(moreDeps: Component[_]*): Component[T] =
     new Component(sourceInfo, deps ++ moreDeps, create, cachedStorage)
