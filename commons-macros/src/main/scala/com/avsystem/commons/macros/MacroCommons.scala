@@ -49,6 +49,7 @@ trait MacroCommons { bundle =>
   final def TryObj: Tree = q"$ScalaPkg.util.Try"
   final def ImplicitsObj: Tree = q"$MiscPkg.Implicits"
   final def ImplicitNotFoundCls: Tree = tq"$MiscPkg.ImplicitNotFound"
+  final def ConcurrentPkg: Tree = q"$ScalaPkg.concurrent"
   final lazy val MapSym = typeOf[scala.collection.immutable.Map[_, _]].typeSymbol
   final lazy val FutureSym = typeOf[scala.concurrent.Future[_]].typeSymbol
   final lazy val OptionClass = definitions.OptionClass
@@ -702,6 +703,9 @@ trait MacroCommons { bundle =>
 
   def posInfo(pos: Position): String =
     s"${pos.source.file.name}:${pos.line}:${pos.column}"
+
+  def posIncludes(outer: Position, inner: Position): Boolean =
+    inner != NoPosition && outer.source == inner.source && inner.start >= outer.start && inner.end <= outer.end
 
   def abortAt(message: String, pos: Position): Nothing =
     if (pos != NoPosition && pos != c.enclosingPosition) {

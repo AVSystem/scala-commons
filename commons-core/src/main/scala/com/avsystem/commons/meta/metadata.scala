@@ -99,6 +99,22 @@ final case class MethodPosition(
 )
 object MethodPosition extends HasGenCodec[MethodPosition]
 
+final case class SourceOffset(
+  offset: Int,
+  line: Int,
+  column: Int
+)
+object SourceOffset extends HasGenCodec[SourceOffset]
+
+final case class SymbolSource(
+  filePath: String,
+  fileName: String,
+  start: SourceOffset,
+  end: SourceOffset,
+  text: String
+)
+object SymbolSource extends HasGenCodec[SymbolSource]
+
 /**
   * Information about class or trait flags and modifiers as defined in Scala code.
   */

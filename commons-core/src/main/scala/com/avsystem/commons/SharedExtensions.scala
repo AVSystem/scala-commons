@@ -240,8 +240,14 @@ object SharedExtensionsUtils extends SharedExtensions {
     def stripCommonIndent: String =
       if (str.isEmpty) str
       else {
-        val commonIndentLength = str.linesIterator.map(_.indexWhere(_ != ' ')).min
-        str.linesIterator.map(_.substring(commonIndentLength)).mkString("\n")
+        val commonIndentLength = str.linesIterator
+          .map(l => l.indexWhere(_ != ' '))
+          .map(i => if (i < 0) Int.MaxValue else i)
+          .min
+
+        str.linesIterator
+          .map(l => l.substring(math.min(commonIndentLength, l.length)))
+          .mkString("\n")
       }
   }
 

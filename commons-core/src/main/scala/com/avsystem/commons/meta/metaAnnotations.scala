@@ -279,8 +279,16 @@ final class isAnnotated[T <: StaticAnnotation] extends DirectMetadataParamStrate
 final class reifyName(val useRawName: Boolean = false) extends DirectMetadataParamStrategy
 
 /**
-  * Metadata parameter annotated with this annotation must be of type `ParamPosition` - a class that holds
-  * parameter index information - see scaladoc for `ParamPosition` for more details.
+  * Metadata parameter annotated with this annotation must be of type `SymbolSource` -
+  * class that holds symbol source information - start & end offsets of symbol definition as well as actual
+  * source text.
+  */
+final class reifySource extends DirectMetadataParamStrategy
+
+/**
+  * Metadata parameter annotated with this annotation must be of type `ParamPosition` or `MethodPosition` -
+  * a class that holds parameter/method index information - see scaladoc for `ParamPosition` & `MethodPosition`
+  * for more details.
   */
 final class reifyPosition extends DirectMetadataParamStrategy
 

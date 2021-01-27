@@ -207,6 +207,8 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def typeParamDecl: Tree
 
     val instanceName: TermName = safeName.toTermName
+
+    def validate(): Unit
   }
 
   abstract class MacroParam extends MacroTermSymbol {

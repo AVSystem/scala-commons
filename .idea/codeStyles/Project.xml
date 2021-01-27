@@ -19,6 +19,7 @@
       </option>
     </JetCodeStyleSettings>
     <ScalaCodeStyleSettings>
+      <option name="addImportsRelativeToBasePackage" value="false" />
       <option name="importsWithPrefix">
         <array>
           <option value="exclude:scala.collection.mutable.ArrayBuffer" />

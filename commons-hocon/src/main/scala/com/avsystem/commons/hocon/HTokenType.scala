@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package hocon
 
-import java.io.EOFException
-
 import com.avsystem.commons.misc.{CharSubSequence, SealedEnumCompanion}
 import com.avsystem.commons.serialization.json.JsonReader
 
@@ -74,7 +72,7 @@ object HTokenType extends SealedEnumCompanion[HTokenType] {
   case object Comment extends HTokenType {
     def pass(input: String, idx: Int): Int =
       if (idx >= input.length) idx
-      else if (input.charAt(idx) == '#' || input.substring(idx, idx + 2) == "//") {
+      else if (input.charAt(idx) == '#' || input.substring(idx, math.min(idx + 2, input.length)) == "//") {
         val nlIdx = input.indexOf('\n', idx)
         if (nlIdx == -1) input.length else nlIdx
       } else 0
@@ -83,6 +81,13 @@ object HTokenType extends SealedEnumCompanion[HTokenType] {
   sealed abstract class Delimiter(val text: String) extends HTokenType {
     def pass(input: String, idx: Int): Int =
       if (input.substring(idx, idx + text.length) == text) idx + text.length else 0
+  }
+
+  case object Bof extends HTokenType {
+    def pass(input: String, idx: Int): Int = idx
+  }
+  case object Eof extends HTokenType {
+    def pass(input: String, idx: Int): Int = idx
   }
 
   case object LBrace extends Delimiter("{")
@@ -131,25 +136,36 @@ object HTokenType extends SealedEnumCompanion[HTokenType] {
 class HLexer(input: SourceFile) {
   private[this] val chars = input.contents
   private[this] var tokenIdx = 0
-  private[this] var off = 0
+  private[this] var off = -1
 
   def next(): HToken =
-    if (off >= chars.length) throw new EOFException
-    else HTokenType.values.iterator.flatMap { tt =>
-      val nextOff = tt.pass(chars, off)
-      if (nextOff <= off) Opt.Empty else Opt {
-        val token = HToken(tt, tokenIdx, input.pos(off, nextOff))
-        off = nextOff
-        tokenIdx += 1
-        token
+    if (off == -1) {
+      off = 0
+      tokenIdx += 1
+      HToken(HTokenType.Bof, tokenIdx, input.pos(off, off))
+    }
+    else if (off == chars.length) {
+      val pos = input.pos(off, off)
+      off += 1
+      HToken(HTokenType.Eof, tokenIdx, pos)
+    }
+    else {
+      HTokenType.values.iterator.flatMap { tt =>
+        val nextOff = tt.pass(chars, off)
+        if (nextOff <= off) Opt.Empty else Opt {
+          val token = HToken(tt, tokenIdx, input.pos(off, nextOff))
+          off = nextOff
+          tokenIdx += 1
+          token
+        }
+      }.nextOpt.getOrElse {
+        throw new Exception(s"Unexpected character ${chars.charAt(off)} at ${input.pos(off, off)}")
       }
-    }.nextOpt.getOrElse {
-      throw new Exception(s"Unexpected character ${chars.charAt(off)} at ${input.pos(off, off)}")
     }
 
   def tokenize(): IndexedSeq[HToken] = {
     val res = IArraySeq.newBuilder[HToken]
-    while (off < chars.length) {
+    while (off <= chars.length) {
       res += next()
     }
     res.result()

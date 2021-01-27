@@ -11,6 +11,7 @@ import scala.tools.nsc.{Global, Settings}
 trait AnalyzerTest { this: Assertions =>
   val settings = new Settings
   settings.usejavacp.value = true
+  settings.Yrangepos.value = true
   settings.pluginOptions.value ++= List("AVSystemAnalyzer:+_")
 
   val compiler: Global = new Global(settings) { global =>

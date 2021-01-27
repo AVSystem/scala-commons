@@ -215,11 +215,13 @@ private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =
   case class RealTypeParam(owner: RealRpcSymbol, index: Int, symbol: Symbol)
     extends MacroTypeParam with RealRpcSymbol {
 
-    if (symbol.typeSignature.takesTypeArgs) {
-      reportProblem(s"real RPC type parameters must not be higher-kinded")
-    }
-    if (!(symbol.typeSignature =:= EmptyTypeBounds)) {
-      reportProblem(s"real RPC type parameters must not have bounds")
+    def validate(): Unit = {
+      if (symbol.typeSignature.takesTypeArgs) {
+        reportProblem(s"real RPC type parameters must not be higher-kinded")
+      }
+      if (!(symbol.typeSignature =:= EmptyTypeBounds)) {
+        reportProblem(s"real RPC type parameters must not have bounds")
+      }
     }
 
     def seenFrom: Type = owner.seenFrom
