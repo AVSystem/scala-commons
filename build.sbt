@@ -53,7 +53,7 @@ inThisBuild(Seq(
     Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
   ),
 
-  crossScalaVersions := Seq("2.13.4", "2.12.13"),
+  crossScalaVersions := Seq("2.13.4", "2.12.12"),
   scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
 
