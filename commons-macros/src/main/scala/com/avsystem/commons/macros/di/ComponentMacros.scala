@@ -69,19 +69,17 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val finalDefinition =
       if (needsRetyping) c.untypecheck(transformedDefinition) else definition
 
-    val srcInfoName = c.freshName(TermName("srcInfo"))
     val result =
       q"""
-         val $srcInfoName = $sourceInfo
-         new $DiPkg.Component[$tpe](
-           $srcInfoName,
-           $ScalaPkg.IndexedSeq(..${depsBuf.result()}),
-           ($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]) => $finalDefinition
-         )
-         """
+        new $DiPkg.Component[$tpe](
+          ${c.prefix}.componentInfo($sourceInfo),
+          $ScalaPkg.IndexedSeq(..${depsBuf.result()}),
+          ($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]) => $finalDefinition
+        )
+       """
 
     if (singleton)
-      q"${c.prefix}.cached($result)($sourceInfo)"
+      q"${c.prefix}.cached($result, ${c.prefix}.componentInfo($sourceInfo))"
     else
       result
   }

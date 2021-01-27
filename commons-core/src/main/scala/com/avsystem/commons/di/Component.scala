@@ -14,6 +14,19 @@ case class ComponentInitializationException(component: Component[_], cause: Thro
 case class DependencyCycleException(cyclePath: List[Component[_]])
   extends Exception(s"component dependency cycle detected:\n${cyclePath.iterator.map(_.info).map("  " + _).mkString(" ->\n")}")
 
+case class ComponentInfo(
+  name: String,
+  filePath: String,
+  fileName: String,
+  lineNumber: Int
+) {
+  override def toString: String = s"$name($fileName:$lineNumber)"
+}
+object ComponentInfo {
+  def apply(namePrefix: String, sourceInfo: SourceInfo): ComponentInfo =
+    new ComponentInfo(namePrefix + sourceInfo.enclosingSymbols.head, sourceInfo.filePath, sourceInfo.fileName, sourceInfo.line)
+}
+
 /**
   * Represents a lazily initialized component in a dependency injection setting. The name "component" indicates
   * that the value is often an application building block like a database service, data access object, HTTP server etc.
@@ -24,14 +37,13 @@ case class DependencyCycleException(cyclePath: List[Component[_]])
   * parallel initialization of dependencies, dependency cycle detection, source code awareness.
   */
 final class Component[+T](
-  val sourceInfo: SourceInfo,
+  val info: ComponentInfo,
   deps: => IndexedSeq[Component[_]],
   create: IndexedSeq[Any] => T,
   cachedStorage: Opt[AtomicReference[Future[T]]] = Opt.Empty,
 ) {
 
-  def name: String = sourceInfo.enclosingSymbols.head
-  def info: String = s"$name(${sourceInfo.fileName}:${sourceInfo.line})"
+  def name: String = info.name
   def isCached: Boolean = cachedStorage.isDefined
 
   /**
@@ -81,10 +93,10 @@ final class Component[+T](
     storage.get.option.flatMap(_.value.map(_.get))
 
   def dependsOn(moreDeps: Component[_]*): Component[T] =
-    new Component(sourceInfo, deps ++ moreDeps, create, cachedStorage)
+    new Component(info, deps ++ moreDeps, create, cachedStorage)
 
-  private[di] def cached[T0 >: T](cachedStorage: AtomicReference[Future[T0]])(implicit sourceInfo: SourceInfo): Component[T0] =
-    new Component(sourceInfo, deps, create, Opt(cachedStorage))
+  private[di] def cached[T0 >: T](cachedStorage: AtomicReference[Future[T0]], info: ComponentInfo): Component[T0] =
+    new Component(info, deps, create, Opt(cachedStorage))
 
   /**
     * Validates this component by checking its dependency graph for cycles.
@@ -164,11 +176,13 @@ object Component {
   * into [[Component]] (using `component` macro).
   */
 case class AutoComponent[+T](component: Component[T]) extends AnyVal
-object AutoComponent {
-  implicit def autoComponent[T](definition: => T)(implicit sourceInfo: SourceInfo): AutoComponent[T] = macro ComponentMacros.autoComponent[T]
-}
 
 trait Components extends ComponentsLowPrio {
+  protected def componentNamePrefix: String = ""
+
+  protected[this] def componentInfo(sourceInfo: SourceInfo): ComponentInfo =
+    ComponentInfo(componentNamePrefix, sourceInfo)
+
   /**
     * Creates a [[Component]] based on a definition (i.e. a constructor invocation). The definition may refer to
     * other components as dependencies using `.ref`. This macro will transform the definition by extracting dependencies
@@ -185,13 +199,13 @@ trait Components extends ComponentsLowPrio {
     */
   protected[this] def singleton[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.singleton[T]
 
-  private[this] val singletonsCache = new ConcurrentHashMap[SourceInfo, AtomicReference[Future[_]]]
+  private[this] val singletonsCache = new ConcurrentHashMap[ComponentInfo, AtomicReference[Future[_]]]
 
-  protected[this] def cached[T](component: Component[T])(implicit sourceInfo: SourceInfo): Component[T] = {
+  protected[this] def cached[T](component: Component[T], freshInfo: ComponentInfo): Component[T] = {
     val cacheStorage = singletonsCache
-      .computeIfAbsent(sourceInfo, _ => new AtomicReference)
+      .computeIfAbsent(freshInfo, _ => new AtomicReference)
       .asInstanceOf[AtomicReference[Future[T]]]
-    component.cached(cacheStorage)
+    component.cached(cacheStorage, freshInfo)
   }
 
   protected[this] def reifyAllSingletons: List[Component[_]] = macro ComponentMacros.reifyAllSingletons
@@ -201,6 +215,8 @@ trait Components extends ComponentsLowPrio {
   // i.e. the compiler will emit "could not find implicit value" instead of "divergent implicit expansion"
   implicit def ambiguousArbitraryComponent1[T]: Component[T] = null
   implicit def ambiguousArbitraryComponent2[T]: Component[T] = null
+
+  implicit def autoComponent[T](definition: => T)(implicit sourceInfo: SourceInfo): AutoComponent[T] = macro ComponentMacros.autoComponent[T]
 }
 trait ComponentsLowPrio {
   @compileTimeOnly("implicit Component[T] => implicit T inference only works inside code passed to component/singleton macro")
