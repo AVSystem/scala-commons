@@ -17,6 +17,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   lazy val ComponentTpe: Type = getType(tq"$ComponentCls[_]")
   lazy val ComponentRefSym: Symbol = ComponentTpe.member(TermName("ref"))
   lazy val InjectSym: Symbol = getType(tq"$DiPkg.Components").member(TermName("inject"))
+  lazy val ComponentInfoSym: Symbol = getType(tq"$DiPkg.ComponentInfo.type").member(TermName("info"))
 
   object ComponentRef {
     def unapply(tree: Tree): Option[Tree] = tree match {
@@ -30,6 +31,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   private def mkComponent(tpe: Type, sourceInfo: Tree, definition: Tree, singleton: Boolean, async: Boolean): Tree = {
     val depArrayName = c.freshName(TermName("deps"))
+    val infoName = c.freshName(TermName("info"))
     val depsBuf = new ListBuffer[Tree]
 
     def validateDependency(tree: Tree): Tree = {
@@ -54,6 +56,8 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
           depsBuf += validateDependency(component)
           val depTpe = component.tpe.baseType(ComponentTpe.typeSymbol).typeArgs.head
           q"$depArrayName(${depsBuf.size - 1}).asInstanceOf[$depTpe]"
+        case t if t.symbol == ComponentInfoSym =>
+          q"$infoName"
         case _ =>
           super.transform(tree)
       }
@@ -75,13 +79,15 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     val result =
       q"""
+        val $infoName = ${c.prefix}.componentInfo($sourceInfo)
         new $DiPkg.Component[$tpe](
-          ${c.prefix}.componentInfo($sourceInfo),
+          $infoName,
           $ScalaPkg.IndexedSeq(..${depsBuf.result()}),
           ($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]) => $asyncDefinition
         )
        """
 
+    //TODO: can I avoid recreating ComponentInfo?
     if (singleton)
       q"${c.prefix}.cached($result, ${c.prefix}.componentInfo($sourceInfo))"
     else

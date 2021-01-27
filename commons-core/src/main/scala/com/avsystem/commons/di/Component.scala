@@ -25,6 +25,9 @@ case class ComponentInfo(
 object ComponentInfo {
   def apply(namePrefix: String, sourceInfo: SourceInfo): ComponentInfo =
     new ComponentInfo(namePrefix + sourceInfo.enclosingSymbols.head, sourceInfo.filePath, sourceInfo.fileName, sourceInfo.line)
+
+  @compileTimeOnly("implicit ComponentInfo is only available inside code passed to component/singleton macro")
+  implicit def info: ComponentInfo = sys.error("stub")
 }
 
 /**
@@ -212,7 +215,7 @@ trait Components extends ComponentsLowPrio {
     */
   protected[this] def asyncSingleton[T](definition: ExecutionContext => Future[T])(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.asyncSingleton[T]
 
-  private[this] val singletonsCache = new ConcurrentHashMap[ComponentInfo, AtomicReference[Future[_]]]
+  private[this] lazy val singletonsCache = new ConcurrentHashMap[ComponentInfo, AtomicReference[Future[_]]]
 
   protected[this] def cached[T](component: Component[T], freshInfo: ComponentInfo): Component[T] = {
     val cacheStorage = singletonsCache
