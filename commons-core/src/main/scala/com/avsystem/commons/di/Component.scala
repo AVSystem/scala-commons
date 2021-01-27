@@ -186,7 +186,7 @@ case class AutoComponent[+T](component: Component[T]) extends AnyVal
 trait Components extends ComponentsLowPrio {
   protected def componentNamePrefix: String = ""
 
-  protected[this] def componentInfo(sourceInfo: SourceInfo): ComponentInfo =
+  protected def componentInfo(sourceInfo: SourceInfo): ComponentInfo =
     ComponentInfo(componentNamePrefix, sourceInfo)
 
   /**
@@ -194,12 +194,12 @@ trait Components extends ComponentsLowPrio {
     * other components as dependencies using `.ref`. This macro will transform the definition by extracting dependencies
     * in a way that allows them to be initialized in parallel, before initializing the current component itself.
     */
-  protected[this] def component[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.component[T]
+  protected def component[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.component[T]
 
   /**
     * Asynchronous version of [[component]] macro.
     */
-  protected[this] def asyncComponent[T](definition: ExecutionContext => Future[T])(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.asyncComponent[T]
+  protected def asyncComponent[T](definition: ExecutionContext => Future[T])(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.asyncComponent[T]
 
   /**
     * This is the same as [[component]] except that the created [[Component]] is cached inside an outer instance that
@@ -208,23 +208,23 @@ trait Components extends ComponentsLowPrio {
     * cached [[Component]] instance. The cache key is based on source position so overriding a method that returns
     * `singleton` will create separate [[Component]] with different cache key.
     */
-  protected[this] def singleton[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.singleton[T]
+  protected def singleton[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.singleton[T]
 
   /**
     * Asynchronous version of [[singleton]] macro.
     */
-  protected[this] def asyncSingleton[T](definition: ExecutionContext => Future[T])(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.asyncSingleton[T]
+  protected def asyncSingleton[T](definition: ExecutionContext => Future[T])(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.asyncSingleton[T]
 
-  private[this] lazy val singletonsCache = new ConcurrentHashMap[ComponentInfo, AtomicReference[Future[_]]]
+  private lazy val singletonsCache = new ConcurrentHashMap[ComponentInfo, AtomicReference[Future[_]]]
 
-  protected[this] def cached[T](component: Component[T], freshInfo: ComponentInfo): Component[T] = {
+  protected def cached[T](component: Component[T], freshInfo: ComponentInfo): Component[T] = {
     val cacheStorage = singletonsCache
       .computeIfAbsent(freshInfo, _ => new AtomicReference)
       .asInstanceOf[AtomicReference[Future[T]]]
     component.cached(cacheStorage, freshInfo)
   }
 
-  protected[this] def reifyAllSingletons: List[Component[_]] = macro ComponentMacros.reifyAllSingletons
+  protected def reifyAllSingletons: List[Component[_]] = macro ComponentMacros.reifyAllSingletons
 
   // avoids divergent implicit expansion involving `inject`
   // this is not strictly necessary but makes compiler error messages nicer
