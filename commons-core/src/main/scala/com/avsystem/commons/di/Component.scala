@@ -39,7 +39,7 @@ object ComponentInfo {
 final class Component[+T](
   val info: ComponentInfo,
   deps: => IndexedSeq[Component[_]],
-  create: IndexedSeq[Any] => T,
+  create: IndexedSeq[Any] => ExecutionContext => Future[T],
   cachedStorage: Opt[AtomicReference[Future[T]]] = Opt.Empty,
 ) {
 
@@ -122,7 +122,7 @@ final class Component[+T](
       val newStack = this :: stack
       val resultFuture =
         Future.traverse(dependencies)(_.doInit(newStack, starting = false))
-          .map(create)
+          .flatMap(resolvedDeps => create(resolvedDeps)(ec))
           .recoverNow {
             case NonFatal(cause) =>
               throw ComponentInitializationException(this, cause)
@@ -133,6 +133,9 @@ final class Component[+T](
   }
 }
 object Component {
+  def async[T](definition: => T): ExecutionContext => Future[T] =
+    _ => Future.eval(definition)
+
   private case class DfsPtr(component: Component[_], deps: List[Component[_]])
 
   def validateAll(components: Seq[Component[_]]): Unit = {
@@ -188,7 +191,12 @@ trait Components extends ComponentsLowPrio {
     * other components as dependencies using `.ref`. This macro will transform the definition by extracting dependencies
     * in a way that allows them to be initialized in parallel, before initializing the current component itself.
     */
-  protected[this] def component[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.prototype[T]
+  protected[this] def component[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.component[T]
+
+  /**
+    * Asynchronous version of [[component]] macro.
+    */
+  protected[this] def asyncComponent[T](definition: ExecutionContext => Future[T])(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.asyncComponent[T]
 
   /**
     * This is the same as [[component]] except that the created [[Component]] is cached inside an outer instance that
@@ -198,6 +206,11 @@ trait Components extends ComponentsLowPrio {
     * `singleton` will create separate [[Component]] with different cache key.
     */
   protected[this] def singleton[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.singleton[T]
+
+  /**
+    * Asynchronous version of [[singleton]] macro.
+    */
+  protected[this] def asyncSingleton[T](definition: ExecutionContext => Future[T])(implicit sourceInfo: SourceInfo): Component[T] = macro ComponentMacros.asyncSingleton[T]
 
   private[this] val singletonsCache = new ConcurrentHashMap[ComponentInfo, AtomicReference[Future[_]]]
 

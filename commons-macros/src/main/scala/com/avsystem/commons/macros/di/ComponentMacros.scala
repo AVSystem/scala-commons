@@ -28,7 +28,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     }
   }
 
-  private def mkComponent(tpe: Type, sourceInfo: Tree, definition: Tree, singleton: Boolean): Tree = {
+  private def mkComponent(tpe: Type, sourceInfo: Tree, definition: Tree, singleton: Boolean, async: Boolean): Tree = {
     val depArrayName = c.freshName(TermName("deps"))
     val depsBuf = new ListBuffer[Tree]
 
@@ -69,12 +69,16 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val finalDefinition =
       if (needsRetyping) c.untypecheck(transformedDefinition) else definition
 
+    val asyncDefinition =
+      if(async) finalDefinition
+      else q"$DiPkg.Component.async($finalDefinition)"
+
     val result =
       q"""
         new $DiPkg.Component[$tpe](
           ${c.prefix}.componentInfo($sourceInfo),
           $ScalaPkg.IndexedSeq(..${depsBuf.result()}),
-          ($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]) => $finalDefinition
+          ($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]) => $asyncDefinition
         )
        """
 
@@ -89,19 +93,29 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       abort("Component related macros require -Yrangepos")
     }
 
-  def prototype[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
+  def component[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
     ensureRangePositions()
-    mkComponent(weakTypeOf[T], sourceInfo, definition, singleton = false)
+    mkComponent(weakTypeOf[T], sourceInfo, definition, singleton = false, async = false)
   }
 
   def singleton[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
     ensureRangePositions()
-    mkComponent(weakTypeOf[T], sourceInfo, definition, singleton = true)
+    mkComponent(weakTypeOf[T], sourceInfo, definition, singleton = true, async = false)
+  }
+
+  def asyncComponent[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
+    ensureRangePositions()
+    mkComponent(weakTypeOf[T], sourceInfo, definition, singleton = false, async = true)
+  }
+
+  def asyncSingleton[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
+    ensureRangePositions()
+    mkComponent(weakTypeOf[T], sourceInfo, definition, singleton = true, async = true)
   }
 
   def autoComponent[T: c.WeakTypeTag](definition: Tree)(sourceInfo: Tree): Tree = {
     ensureRangePositions()
-    val component = mkComponent(weakTypeOf[T], sourceInfo, definition, singleton = false)
+    val component = mkComponent(weakTypeOf[T], sourceInfo, definition, singleton = false, async = false)
     q"$DiPkg.AutoComponent($component)"
   }
 
