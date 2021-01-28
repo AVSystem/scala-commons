@@ -114,26 +114,29 @@ final class Component[+T](
     * NOTE: the component is initialized only once and its value is cached.
     */
   def init(implicit ec: ExecutionContext): Future[T] =
-    doInit(Nil, starting = true)
+    doInit(starting = true)
 
-  private def doInit(stack: List[Component[_]], starting: Boolean)(implicit ec: ExecutionContext): Future[T] = {
-    val promise = Promise[T]()
-    if (storage.compareAndSet(null, promise.future)) {
-      if (starting) {
-        validate()
-      }
-      val newStack = this :: stack
-      val resultFuture =
-        Future.traverse(dependencies)(_.doInit(newStack, starting = false))
-          .flatMap(resolvedDeps => create(resolvedDeps)(ec))
-          .recoverNow {
-            case NonFatal(cause) =>
-              throw ComponentInitializationException(this, cause)
+  private def doInit(starting: Boolean)(implicit ec: ExecutionContext): Future[T] =
+    storage.getPlain match {
+      case null =>
+        val promise = Promise[T]()
+        if (storage.compareAndSet(null, promise.future)) {
+          if (starting) {
+            validate()
           }
-      promise.completeWith(resultFuture)
+          val resultFuture =
+            Future.traverse(dependencies)(_.doInit(starting = false))
+              .flatMap(resolvedDeps => create(resolvedDeps)(ec))
+              .recoverNow {
+                case NonFatal(cause) =>
+                  throw ComponentInitializationException(this, cause)
+              }
+          promise.completeWith(resultFuture)
+        }
+        storage.get()
+      case future =>
+        future
     }
-    storage.get()
-  }
 }
 object Component {
   def async[T](definition: => T): ExecutionContext => Future[T] =
