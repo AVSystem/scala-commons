@@ -226,6 +226,7 @@ lazy val `commons-jvm` = project.in(file(".jvm"))
 lazy val `commons-js` = project.in(file(".js"))
   .aggregate(
     `commons-core-js`,
+    `commons-mongo-js`,
     `commons-benchmark-js`,
   )
   .settings(aggregateProjectSettings)
@@ -288,6 +289,63 @@ lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
     )
   )
 
+lazy val `commons-mongo` = project
+  .dependsOn(`commons-core` % CompileAndTest)
+  .settings(
+    jvmCommonSettings,
+    sourceDirsSettings(_ / "jvm"),
+    libraryDependencies ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion,
+      "io.monix" %% "monix" % monixVersion,
+      "org.mongodb" % "mongodb-driver-core" % mongoVersion,
+      "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
+      "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
+      "org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional,
+    ),
+  )
+
+// only to allow @mongoId & MongoEntity to be used in JS/JVM cross-compiled code
+lazy val `commons-mongo-js` = project.in(`commons-mongo`.base / "js")
+  .enablePlugins(ScalaJSPlugin)
+  .configure(p => if (forIdeaImport) p.dependsOn(`commons-mongo`) else p)
+  .dependsOn(`commons-core-js`)
+  .settings(
+    jsCommonSettings,
+    sameNameAs(`commons-mongo`),
+    sourceDirsSettings(_.getParentFile),
+  )
+
+lazy val `commons-redis` = project
+  .dependsOn(`commons-core` % CompileAndTest)
+  .settings(
+    jvmCommonSettings,
+    libraryDependencies ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion,
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
+    ),
+    parallelExecution in Test := false,
+  )
+
+lazy val `commons-hocon` = project
+  .dependsOn(`commons-core` % CompileAndTest)
+  .settings(
+    jvmCommonSettings,
+    libraryDependencies ++= Seq(
+      "com.typesafe" % "config" % typesafeConfigVersion,
+    ),
+  )
+
+lazy val `commons-spring` = project
+  .dependsOn(`commons-hocon` % CompileAndTest)
+  .settings(
+    jvmCommonSettings,
+    libraryDependencies ++= Seq(
+      "org.springframework" % "spring-context" % springVersion,
+    ),
+  )
+
 lazy val `commons-jetty` = project
   .dependsOn(`commons-core` % CompileAndTest)
   .settings(
@@ -336,51 +394,6 @@ lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
       "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
     ),
     scalaJSUseMainModuleInitializer := true,
-  )
-
-lazy val `commons-mongo` = project
-  .dependsOn(`commons-core` % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion,
-      "io.monix" %% "monix" % monixVersion,
-      "org.mongodb" % "mongodb-driver-core" % mongoVersion,
-      "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
-      "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
-      "org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional,
-    ),
-  )
-
-lazy val `commons-redis` = project
-  .dependsOn(`commons-core` % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion,
-      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-      "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
-    ),
-    parallelExecution in Test := false,
-  )
-
-lazy val `commons-hocon` = project
-  .dependsOn(`commons-core` % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    libraryDependencies ++= Seq(
-      "com.typesafe" % "config" % typesafeConfigVersion,
-    ),
-  )
-
-lazy val `commons-spring` = project
-  .dependsOn(`commons-hocon` % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    libraryDependencies ++= Seq(
-      "org.springframework" % "spring-context" % springVersion,
-    ),
   )
 
 lazy val `commons-comprof` = project
