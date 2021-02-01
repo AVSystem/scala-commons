@@ -27,31 +27,31 @@ object CloseableIterator {
   def empty[T]: CloseableIterator[T] =
     noop(Iterator.empty)
 
-  def noop[T](iterator: Iterator[T]): CloseableIterator[T] =
-    apply(iterator, emptyCloseable)
+  def noop[T](it: Iterator[T]): CloseableIterator[T] =
+    apply(it, emptyCloseable)
 
-  def noop[T](iterator: JIterator[T]): CloseableIterator[T] =
-    apply(iterator, emptyCloseable)
+  def noop[T](it: JIterator[T]): CloseableIterator[T] =
+    apply(it, emptyCloseable)
 
-  def apply[T](iterator: JIterator[T] with AutoCloseable): CloseableIterator[T] =
-    apply(iterator, iterator)
+  def apply[T](it: JIterator[T] with AutoCloseable): CloseableIterator[T] =
+    apply(it, it)
 
-  def apply[T](iterator: JIterator[T], closeable: AutoCloseable): CloseableIterator[T] =
+  def apply[T](it: JIterator[T], closeable: AutoCloseable): CloseableIterator[T] =
     new CloseableIterator[T] {
       def close(): Unit = closeable.close()
       @silent("non-nullary method overrides nullary method")
-      def hasNext: Boolean = iterator.hasNext
-      def next(): T = iterator.next()
+      def hasNext: Boolean = it.hasNext
+      def next(): T = it.next()
     }
 
-  def apply[T](iterator: Iterator[T] with AutoCloseable): CloseableIterator[T] =
-    apply(iterator, iterator)
+  def apply[T](it: Iterator[T] with AutoCloseable): CloseableIterator[T] =
+    apply(it, it)
 
-  def apply[T](iterator: Iterator[T], closeable: AutoCloseable): CloseableIterator[T] =
+  def apply[T](it: Iterator[T], closeable: AutoCloseable): CloseableIterator[T] =
     new CloseableIterator[T] {
       def close(): Unit = closeable.close()
       @silent("non-nullary method overrides nullary method")
-      def hasNext: Boolean = iterator.hasNext
-      def next(): T = iterator.next()
+      def hasNext: Boolean = it.hasNext
+      def next(): T = it.next()
     }
 }
