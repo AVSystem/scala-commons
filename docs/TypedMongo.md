@@ -227,7 +227,7 @@ Using the `.ref` macro, you can:
 
 You can freely combine all the above constructs into more deeply nested references.
 For more examples, see the Scaladoc of the `.ref` macro or 
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/src/test/scala/com/avsystem/commons/mongo/typed/MongoRefTest.scala).
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoRefTest.scala).
 
 **NOTE**: some of the above references (e.g. unwrapping optional fields or narrowing sealed hierarchies) introduce
 an _implied filter_ that is automatically included into the query if this reference is used in a MongoDB query document
@@ -247,7 +247,7 @@ val query: MongoDocumentFilter[MyEntity] =
 ```
 
 For more examples, see the Scaladoc or 
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/src/test/scala/com/avsystem/commons/mongo/typed/MongoFilterTest.scala).
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoFilterTest.scala).
 
 #### Unsupported operators
 
@@ -273,7 +273,7 @@ in the response of a query. It is usually one of:
 * An arbitrary combination of projections into a tuple, e.g. `MongoProjection.zip(MyEntity.ref(_.int), MyEntity.ref(_.data))`
 
 For more examples, see the Scaladoc or
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/src/test/scala/com/avsystem/commons/mongo/typed/MongoProjectionTest.scala).
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoProjectionTest.scala).
 
 ### `MongoDocumentOrder`
 
@@ -284,7 +284,7 @@ A `MongoDocumentOrder[E]` represents a sort order for a document of type `E`. It
 * Multi-field order, e.g. `MongoDocumentOrder(MyEntity.ref(_.int) -> true, MyEntity.ref(_.data.number) -> false)`
 
 For more examples, see the Scaladoc or
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/src/test/scala/com/avsystem/commons/mongo/typed/MongoOrderTest.scala).
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoOrderTest.scala).
 
 ### `MongoDocumentUpdate`
 
@@ -296,7 +296,7 @@ val update: MongoDocumentUpdate[MyEntity] =
 ```
 
 For more examples, see the Scaladoc or
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/src/test/scala/com/avsystem/commons/mongo/typed/MongoUpdateTest.scala).
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoUpdateTest.scala).
 
 ### `MongoIndex`
 
@@ -312,7 +312,7 @@ A `MongoIndex[E]` represents a MongoDB index document for an entity of type `E`.
   ```
   
 For more examples, see the Scaladoc or
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/src/test/scala/com/avsystem/commons/mongo/typed/MongoIndexTest.scala).
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoIndexTest.scala).
 
 ## Invoking database commands
 
@@ -348,7 +348,7 @@ program.runToFuture
 ```
 
 For more examples of database operations with `TypedMongoCollection`, see
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/src/test/scala/com/avsystem/commons/mongo/typed/TypedMongoCollectionTest.scala).
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/TypedMongoCollectionTest.scala).
 
 `TypedMongoCollection` exposes mostly the same operations as Reactive Streams `MongoCollection` but typed differently, 
 that is: more precisely and in a more Scala-idiomatic way:
