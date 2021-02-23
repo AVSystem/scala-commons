@@ -1,6 +1,5 @@
 package com.avsystem.commons
-
-import com.avsystem.commons.di._
+package di
 
 package lazyVals {
 
