@@ -10,12 +10,16 @@ import org.bson.Document
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.time.{Millisecond, Second, Span}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with BeforeAndAfterEach {
   implicit val scheduler: Scheduler = Scheduler.fixedPool("test", 2)
+
+  override implicit def patienceConfig: PatienceConfig =
+    PatienceConfig(timeout = Span(10, Second), interval = Span(100, Millisecond))
 
   implicit class taskOps[T](task: Task[T]) {
     def value: T = task.runToFuture.futureValue
