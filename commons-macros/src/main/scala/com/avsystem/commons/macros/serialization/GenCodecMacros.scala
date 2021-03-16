@@ -553,7 +553,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           val errorCtx = ErrorCtx(s"Cannot materialize GenCodec for $ttpe because of problem with property $propName:\n", getter.pos)
           fieldNames += propName
           deps += inferCachedImplicit(getType(tq"$GenCodecCls[$propType]"), errorCtx).reference(Nil)
-          getters += q"(v: $ttpe) => v.$getter"
+          getters += q"(v: $ttpe) => v.$getter()"
           setters += q"(b: $btpe, v: $ScalaPkg.Any) => b.$setter(v.asInstanceOf[$propType])"
         }
       }
