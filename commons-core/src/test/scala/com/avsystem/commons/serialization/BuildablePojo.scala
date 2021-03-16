@@ -54,7 +54,7 @@ final class BuildablePojo private(
     case _ => false
   }
 
-  override def hashCode: Int = Objects.hash(str, num, flags, cool)
+  override def hashCode: Int = (str, num, flags, cool).hashCode
 
   override def toString: String =
     s"BuildablePojo($str, $num, $flags, $cool)"
