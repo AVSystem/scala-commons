@@ -335,3 +335,52 @@ abstract class ErrorReportingCodec[T] extends GenCodec[T] {
   protected final def unapplyFailed =
     throw UnapplyFailed(typeRepr)
 }
+
+abstract class JavaBuilderBasedCodec[T, B](
+  protected val typeRepr: String,
+  val nullable: Boolean,
+  newBuilder: => B,
+  build: B => T,
+  fieldNames: Array[String],
+  fieldGetters: Array[T => Any],
+  fieldSetters: Array[(B, Any) => B],
+) extends ErrorReportingCodec[T] with GenCodec.ObjectCodec[T] {
+
+  protected def dependencies: Array[GenCodec[_]]
+
+  private lazy val deps = dependencies
+
+  private lazy val defaults: Array[Any] = {
+    val defaultObj = build(newBuilder)
+    fieldGetters.map(getter => getter(defaultObj))
+  }
+
+  @tailrec private def fieldIndex(fieldName: String, idx: Int = 0): Int =
+    if (idx >= fieldNames.length) -1
+    else if (fieldNames(idx) == fieldName) idx
+    else fieldIndex(fieldName, idx + 1)
+
+  def readObject(input: ObjectInput): T = {
+    var builder = newBuilder
+    while (input.hasNext) {
+      val nextField = input.nextField()
+      val fieldIdx = fieldIndex(nextField.fieldName)
+      if (fieldIdx >= 0) {
+        val fieldValue = readField(nextField, deps(fieldIdx).asInstanceOf[GenCodec[Any]])
+        builder = fieldSetters(fieldIdx).apply(builder, fieldValue)
+      }
+    }
+    build(builder)
+  }
+
+  def writeObject(output: ObjectOutput, value: T): Unit = {
+    var i = 0
+    while (i < fieldNames.length) {
+      val fieldValue = fieldGetters(i).apply(value)
+      if (fieldValue != defaults(i)) {
+        writeField(fieldNames(i), output, fieldValue, deps(i).asInstanceOf[GenCodec[Any]])
+      }
+      i += 1
+    }
+  }
+}

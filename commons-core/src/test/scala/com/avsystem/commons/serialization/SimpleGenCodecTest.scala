@@ -5,6 +5,7 @@ import com.avsystem.commons.misc.TypedMap
 import scala.annotation.nowarn
 
 import scala.collection.immutable.ListMap
+import JavaCodecs._
 
 trait SimpleIOCodecTest extends AbstractCodecTest {
   type Raw = Any
@@ -356,5 +357,14 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 
   test("auto materialized key codec") {
     testWrite[Map[ThingId, ThingId]](Map(ThingId("a") -> ThingId("b")), Map("a" -> "b"))
+  }
+
+  test("Java builder based codec") {
+    testWrite[BuildablePojo](BuildablePojo.builder().build(),
+      Map())
+    testWrite[BuildablePojo](BuildablePojo.builder().setStr("foo").build(),
+      Map("str" -> "foo"))
+    testWrite[BuildablePojo](BuildablePojo.builder().setStr("foo").setFlags(JList(true, false)).setCool(false).build(),
+      Map("str" -> "foo", "flags" -> List(true, false), "cool" -> false))
   }
 }

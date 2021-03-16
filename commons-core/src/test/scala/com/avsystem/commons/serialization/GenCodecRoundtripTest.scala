@@ -3,6 +3,7 @@ package serialization
 
 import com.avsystem.commons.misc.TypedMap
 import com.avsystem.commons.serialization.CodecTestData._
+import com.avsystem.commons.serialization.JavaCodecs._
 
 abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   test("java collections") {
@@ -234,5 +235,11 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
 
   test("auto materialized key codec") {
     testRoundtrip[Map[ThingId, ThingId]](Map(ThingId("a") -> ThingId("b")))
+  }
+
+  test("Java builder based codec") {
+    testRoundtrip[BuildablePojo](BuildablePojo.builder().build())
+    testRoundtrip[BuildablePojo](BuildablePojo.builder().setStr("foo").build())
+    testRoundtrip[BuildablePojo](BuildablePojo.builder().setStr("foo").setFlags(JList(true, false)).setCool(false).build())
   }
 }

@@ -3,6 +3,7 @@ package macros.serialization
 
 import com.avsystem.commons.macros.TypeClassDerivation
 
+import scala.collection.mutable
 import scala.reflect.macros.blackbox
 
 class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with TypeClassDerivation {
@@ -511,5 +512,69 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   def forSealedEnum[T: WeakTypeTag]: Tree = instrument {
     val tpe = weakTypeOf[T].dealias
     q"$GenCodecObj.fromKeyCodec($SerializationPkg.GenKeyCodec.forSealedEnum[$tpe])"
+  }
+
+  private def isJavaGetter(ms: MethodSymbol): Boolean =
+    ms.typeParams.isEmpty && ms.paramLists == List(Nil) && {
+      val expectedPrefix = if (ms.typeSignature.finalResultType =:= typeOf[Boolean]) "is" else "get"
+      val nameStr = ms.name.decodedName.toString
+      nameStr.startsWith(expectedPrefix) &&
+        nameStr.length > expectedPrefix.length &&
+        nameStr.charAt(expectedPrefix.length).isUpper
+    }
+
+  private def isJavaSetter(ms: MethodSymbol): Boolean =
+    ms.typeParams.isEmpty && ms.paramLists.map(_.length) == List(1) && {
+      val nameStr = ms.name.decodedName.toString
+      nameStr.startsWith("set") && nameStr.length > 3 && nameStr.charAt(3).isUpper
+    }
+
+  def fromJavaBuilder[T: WeakTypeTag, B: WeakTypeTag](newBuilder: Tree)(build: Tree): Tree = {
+    val ttpe = weakTypeOf[T].dealias
+    val btpe = weakTypeOf[B].dealias
+
+    val fieldNames = new mutable.ListBuffer[String]
+    val getters = new mutable.ListBuffer[Tree]
+    val setters = new mutable.ListBuffer[Tree]
+    val deps = new mutable.ListBuffer[Tree]
+
+    ttpe.members.iterator.foreach { getter =>
+      if(getter.isMethod && isJavaGetter(getter.asMethod)) {
+        val propType = getter.typeSignatureIn(ttpe).finalResultType
+        val getterName = getter.name.decodedName.toString
+        val setterName = getterName.replaceFirst("^(get|is)", "set")
+
+        val setterOpt = btpe.member(TermName(setterName)).alternatives.find { s =>
+          s.isMethod && isJavaSetter(s.asMethod) &&
+            s.typeSignatureIn(btpe).paramLists.head.head.typeSignature =:= propType
+        }
+        setterOpt.foreach { setter =>
+          val propName = setterName.charAt(3).toLower.toString + setterName.drop(4)
+          val errorCtx = ErrorCtx(s"Cannot materialize GenCodec for $ttpe because of problem with property $propName:\n", getter.pos)
+          fieldNames += propName
+          deps += inferCachedImplicit(getType(tq"$GenCodecCls[$propType]"), errorCtx).reference(Nil)
+          getters += q"(v: $ttpe) => v.$getter"
+          setters += q"(b: $btpe, v: $ScalaPkg.Any) => b.$setter(v.asInstanceOf[$propType])"
+        }
+      }
+    }
+
+    q"""
+       new $SerializationPkg.JavaBuilderBasedCodec[$ttpe, $btpe](
+         ${ttpe.toString},
+         ${typeOf[Null] <:< ttpe},
+         $newBuilder,
+         $build,
+         ${mkArray(StringCls, fieldNames.result())},
+         ${mkArray(tq"$ttpe => $ScalaPkg.Any", getters.result())},
+         ${mkArray(tq"($btpe, $ScalaPkg.Any) => $btpe", setters.result())},
+       ) {
+         def dependencies = {
+           ..${cachedImplicitDeclarations(ci => q"val ${ci.name} = ${ci.body}")}
+           ${mkArray(tq"$GenCodecCls[_]", deps.result())}
+         }
+       }
+       """
+
   }
 }

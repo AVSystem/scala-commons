@@ -88,6 +88,18 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] =
   macro macros.serialization.GenCodecMacros.applyUnapplyCodec[T]
 
+  /**
+    * Materializes a [[GenCodec]] for a POJO that has a fluent builder. The fluent builder must have setters
+    * corresponding to the POJO's getters. Each setter must return the builder itself (because it's fluent).
+    * The builder is assumed to have default value for each field. These values are considered "transient", i.e.
+    * the codec will omit them during serialization, similarly to [[transientDefault]] annotation in case classes.
+    *
+    * @param newBuilder an expression that creates a fresh builder
+    * @param build      a function that builds the final value (typically `_.build()` or `_.get()`)
+    */
+  def fromJavaBuilder[T, B](newBuilder: => B)(build: B => T): GenCodec[T] =
+  macro macros.serialization.GenCodecMacros.fromJavaBuilder[T, B]
+
   @explicitGenerics
   def read[T: GenCodec](input: Input): T =
     apply[T].read(input)
