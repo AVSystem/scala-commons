@@ -25,7 +25,7 @@ val akkaVersion = "2.6.13"
 val monixVersion = "3.3.0"
 val mockitoVersion = "3.8.0"
 val circeVersion = "0.13.0"
-val upickleVersion = "1.3.7"
+val upickleVersion = "1.3.9"
 val scalajsBenchmarkVersion = "0.9.0"
 val slf4jVersion = "1.7.30"
 
