@@ -1,6 +1,6 @@
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 
-cancelable in Global := true
+Global / cancelable := true
 
 // We need to generate slightly different structure for IntelliJ in order to better support ScalaJS cross projects.
 // idea.managed property is set by IntelliJ when running SBT (shell or import), idea.runid is set only for IntelliJ's
@@ -129,7 +129,7 @@ val commonSettings = Seq(
 
   Test / scalacOptions := (Compile / scalacOptions).value,
 
-  sources in(Compile, doc) := Seq.empty, // relying on unidoc
+  Compile / doc / sources := Seq.empty, // relying on unidoc
   apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
   autoAPIMappings := true,
 
@@ -145,9 +145,9 @@ val commonSettings = Seq(
     "org.mockito" % "mockito-core" % mockitoVersion % Test,
   ),
   ideBasePackages := Seq(organization.value),
-  ideOutputDirectory in Compile := Some(target.value.getParentFile / "out/production"),
-  ideOutputDirectory in Test := Some(target.value.getParentFile / "out/test"),
-  fork in Test := true,
+  Compile / ideOutputDirectory := Some(target.value.getParentFile / "out/production"),
+  Test / ideOutputDirectory := Some(target.value.getParentFile / "out/test"),
+  Test / fork := true,
 )
 
 val jvmCommonSettings = commonSettings ++ Seq(
@@ -164,16 +164,16 @@ val jvmCommonSettings = commonSettings ++ Seq(
 
 val jsCommonSettings = commonSettings ++ Seq(
   scalacOptions += {
-    val localDir = (baseDirectory in ThisBuild).value.toURI.toString
+    val localDir = (ThisBuild / baseDirectory).value.toURI.toString
     val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
     s"-P:scalajs:mapSourceURI:$localDir->$githubDir/v${version.value}/"
   },
   jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
-  fork in Test := false,
+  Test / fork := false,
 )
 
 val noPublishSettings = Seq(
-  skip in publish := true,
+  publish / skip := true,
   mimaPreviousArtifacts := Set.empty,
 )
 
@@ -197,8 +197,8 @@ lazy val commons = project.in(file("."))
     noPublishSettings,
     name := "commons",
     ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
-    scalacOptions in ScalaUnidoc in unidoc += "-Ymacro-expand:none",
-    unidocProjectFilter in ScalaUnidoc in unidoc :=
+    ScalaUnidoc / unidoc / scalacOptions += "-Ymacro-expand:none",
+    ScalaUnidoc / unidoc / unidocProjectFilter :=
       inAnyProject -- inProjects(
         `commons-analyzer`,
         `commons-macros`,
@@ -248,15 +248,15 @@ def mkSourceDirs(base: File, scalaBinary: String, conf: String): Seq[File] = Seq
 )
 
 def sourceDirsSettings(baseMapper: File => File) = Seq(
-  unmanagedSourceDirectories in Compile ++=
+  Compile / unmanagedSourceDirectories ++=
     mkSourceDirs(baseMapper(baseDirectory.value), scalaBinaryVersion.value, "main"),
-  unmanagedSourceDirectories in Test ++=
+  Test / unmanagedSourceDirectories ++=
     mkSourceDirs(baseMapper(baseDirectory.value), scalaBinaryVersion.value, "test"),
 )
 
 def sameNameAs(proj: Project) =
   if (forIdeaImport) Seq.empty
-  else Seq(name := (name in proj).value)
+  else Seq(name := (proj / name).value)
 
 lazy val `commons-macros` = project.settings(
   jvmCommonSettings,
@@ -304,7 +304,7 @@ lazy val `commons-mongo` = project
     ),
   )
 
-// only to allow @mongoId & MongoEntity to be used in JS/JVM cross-compiled code
+// only to allow @mongoId & MongoEntity to be usedJS/JVM cross-compiled code
 lazy val `commons-mongo-js` = project.in(`commons-mongo`.base / "js")
   .enablePlugins(ScalaJSPlugin)
   .configure(p => if (forIdeaImport) p.dependsOn(`commons-mongo`) else p)
@@ -325,7 +325,7 @@ lazy val `commons-redis` = project
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
     ),
-    parallelExecution in Test := false,
+    Test / parallelExecution := false,
   )
 
 lazy val `commons-hocon` = project
@@ -374,7 +374,7 @@ lazy val `commons-benchmark` = project
       "io.circe" %% "circe-parser" % circeVersion,
       "com.lihaoyi" %% "upickle" % upickleVersion,
     ),
-    ideExcludedDirectories := (managedSourceDirectories in Jmh).value,
+    ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
   )
 
 lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
@@ -411,14 +411,14 @@ lazy val `commons-comprof` = project
       "-Xmacro-settings:statsEnabled",
       "-Ystatistics:typer",
     ),
-    sourceGenerators in Compile += Def.task {
-      val originalSrc = (sourceDirectory in `commons-core`).value /
+    Compile / sourceGenerators += Def.task {
+      val originalSrc = (`commons-core` / sourceDirectory).value /
         "test/scala/com/avsystem/commons/rest/RestTestApi.scala"
       val originalContent = IO.read(originalSrc)
       (0 until 100).map { i =>
         val pkg = f"oa$i%02d"
         val newContent = originalContent.replace("package rest", s"package rest\npackage $pkg")
-        val newFile = (sourceManaged in Compile).value / pkg / "RestTestApi.scala"
+        val newFile = (Compile / sourceManaged).value / pkg / "RestTestApi.scala"
         IO.write(newFile, newContent)
         newFile
       }
