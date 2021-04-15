@@ -1,12 +1,11 @@
 package com.avsystem.commons
 package serialization.cbor
 
-import java.io.{ObjectInput => _, _}
-import java.nio.charset.StandardCharsets
-
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 
+import java.io.{ObjectInput => _, _}
+import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
 
 final class CborReader(val data: RawCbor) {
@@ -148,9 +147,8 @@ final class CborReader(val data: RawCbor) {
 }
 
 object CborInput {
-  def read[T: GenCodec](bytes: Array[Byte], fieldLabels: FieldLabels = FieldLabels.NoLabels): T = {
+  def read[T: GenCodec](bytes: Array[Byte], fieldLabels: FieldLabels = FieldLabels.NoLabels): T =
     GenCodec.read[T](RawCbor(bytes).createInput(fieldLabels))
-  }
 
   private final val Two64 = BigInt(1) << 64
 }
