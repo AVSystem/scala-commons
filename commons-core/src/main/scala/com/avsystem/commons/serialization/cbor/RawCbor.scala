@@ -7,7 +7,7 @@ final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
   require(offset >= 0 && length >= 0 && offset + length <= bytes.length)
 
   def apply(idx: Int): Byte =
-    if (idx < 0 || idx >= length) throw new IndexOutOfBoundsException(idx)
+    if (idx < 0 || idx >= length) throw new IndexOutOfBoundsException
     else bytes(offset + idx)
 
   def createInput(fieldLabels: FieldLabels): CborInput =
