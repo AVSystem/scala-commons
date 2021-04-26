@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization.json
 
+import com.avsystem.commons.serialization.CodecTestData.FlatSealedBase
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import org.scalacheck.Arbitrary.arbitrary
@@ -383,5 +384,30 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
 
   test("read escaped slash") {
     assert(JsonStringInput.read[String](""""a\/b"""") == "a/b")
+  }
+
+  test("peeking fields - empty object") {
+    val json = """{}"""
+    val oi = new JsonStringInput(new JsonReader(json)).readObject()
+    assert(oi.peekField("x").isEmpty)
+    assert(!oi.hasNext)
+  }
+
+  test("peeking fields - non empty object") {
+    val json = """{"a": 25, "b": true, "c": [1,2,3], "d": {}}"""
+    val oi = new JsonStringInput(new JsonReader(json)).readObject()
+    assert(oi.peekField("a").map(GenCodec.read[Int]).contains(25))
+    assert(oi.peekField("b").map(GenCodec.read[Boolean]).contains(true))
+    assert(oi.nextField().fieldName == "a") // peeking should not affect `nextField`
+    assert(oi.peekField("d").map(GenCodec.read[Map[String, String]]).contains(Map.empty))
+    assert(oi.peekField("c").map(GenCodec.read[List[Int]]).contains(List(1, 2, 3)))
+    assert(oi.peekField("x").isEmpty)
+    assert(oi.peekField("a").map(GenCodec.read[Int]).contains(25))
+    assert(oi.nextField().fieldName == "b") // peeking should not affect `nextField`
+  }
+
+  test("reading flat sealed hierarchy with changed field order") {
+    val json = """{"_id": "foo", "int": 31, "_case": "FirstCase"}"""
+    assert(JsonStringInput.read[FlatSealedBase](json) == FlatSealedBase.FirstCase("foo", 31))
   }
 }
