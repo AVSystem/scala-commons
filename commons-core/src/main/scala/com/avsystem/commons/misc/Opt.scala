@@ -34,6 +34,9 @@ object Opt {
   *
   * If you need a value-class version of `Option` which differentiates between no value and `null` value,
   * use [[NOpt]].
+  *
+  * WARNING: Unfortunately, using `Opt` in pattern matches turns of exhaustivity checking.
+  * Please be aware of that tradeoff.
   */
 final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
   import Opt._
