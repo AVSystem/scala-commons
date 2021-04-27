@@ -2,6 +2,7 @@ package com.avsystem.commons
 package serialization.json
 
 import com.avsystem.commons.annotation.explicitGenerics
+import com.avsystem.commons.misc.CrossUtils
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import com.avsystem.commons.serialization.json.JsonStringInput._
@@ -225,7 +226,7 @@ final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: 
   prepareForNext(first = true)
 
   private[this] var peekIdx = if (end) -1 else reader.index
-  private[this] var peekedFields: MMap[String, Int] = _
+  private[this] var peekedFields: CrossUtils.NativeDict[Int] = _
 
   private def prepareForNext(first: Boolean): Unit = {
     reader.skipWs()
@@ -286,7 +287,7 @@ final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: 
               Opt(peekFieldInput(foundName, valueIndex))
             } else {
               if (peekedFields == null) {
-                peekedFields = new MHashMap
+                peekedFields = CrossUtils.newNativeDict[Int]
               }
               peekedFields(foundName) = valueIndex
               peekIdx = skipToNextFieldName()

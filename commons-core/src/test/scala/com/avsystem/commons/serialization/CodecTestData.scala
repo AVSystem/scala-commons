@@ -296,6 +296,7 @@ object CodecTestData {
 
   @flatten("kejs") sealed trait CustomizedSeal
   @defaultCase(transient = true) case class CustomizedCase(str: String) extends CustomizedSeal
+  case class OtherCustomCase(value: Int, flag: Boolean) extends CustomizedSeal
   case object CustomizedObjekt extends CustomizedSeal
   object CustomizedSeal extends HasGenCodec[CustomizedSeal]
 
