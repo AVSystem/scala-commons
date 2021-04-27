@@ -281,6 +281,8 @@ final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: 
             val foundName = nextFieldName()
             val valueIndex = reader.index
             if (foundName == name) {
+              // intentionally not saving this field into `peekedFields` as a performance optimization for the
+              // situation where peeked field is very likely to be the first field (flat sealed hierarchies)
               Opt(peekFieldInput(foundName, valueIndex))
             } else {
               if (peekedFields == null) {
