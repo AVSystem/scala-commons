@@ -2,6 +2,7 @@ package com.avsystem.commons
 package serialization.json
 
 import com.avsystem.commons.annotation.explicitGenerics
+import com.avsystem.commons.misc.CrossUtils
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import com.avsystem.commons.serialization.json.JsonStringInput._
@@ -191,8 +192,8 @@ class JsonStringInput(
 }
 
 final class JsonStringFieldInput(
-  val fieldName: String, reader: JsonReader, options: JsonOptions, objectInput: JsonObjectInput
-) extends JsonStringInput(reader, options, objectInput) with FieldInput
+  val fieldName: String, reader: JsonReader, options: JsonOptions, callback: AfterElement
+) extends JsonStringInput(reader, options, callback) with FieldInput
 
 final class JsonListInput(reader: JsonReader, options: JsonOptions, callback: AfterElement)
   extends ListInput with AfterElement {
@@ -224,6 +225,9 @@ final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: 
 
   prepareForNext(first = true)
 
+  private[this] var peekIdx = if (end) -1 else reader.index
+  private[this] var peekedFields: CrossUtils.NativeDict[Int] = _
+
   private def prepareForNext(first: Boolean): Unit = {
     reader.skipWs()
     end = reader.isNext('}')
@@ -237,16 +241,65 @@ final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: 
 
   def hasNext: Boolean = !end
 
-  def nextField(): JsonStringFieldInput = {
+  private def nextFieldName(): String = {
     reader.skipWs()
     val fieldName = reader.parseString()
     reader.skipWs()
     reader.pass(':')
-    new JsonStringFieldInput(fieldName, reader, options, this)
+    fieldName
   }
+
+  def nextField(): JsonStringFieldInput =
+    new JsonStringFieldInput(nextFieldName(), reader, options, this)
 
   def afterElement(): Unit =
     prepareForNext(first = false)
+
+  override def peekField(name: String): Opt[FieldInput] = {
+    def peekFieldInput(name: String, idx: Int): JsonStringFieldInput = {
+      val forkedReader = new JsonReader(reader.json).setup(_.reset(idx))
+      new JsonStringFieldInput(name, forkedReader, options, AfterElementNothing)
+    }
+
+    def skipToNextFieldName(): Int = {
+      new JsonStringInput(reader).skip()
+      reader.skipWs()
+      if (reader.isNext('}')) -1
+      else {
+        reader.pass(',')
+        reader.index
+      }
+    }
+
+    val alreadyPeeked = peekedFields.opt.flatMap(_.get(name).toOpt.map(idx => peekFieldInput(name, idx)))
+    alreadyPeeked orElse {
+      val savedIdx = reader.index
+      try {
+        reader.reset(peekIdx)
+        @tailrec def peekRemainingFields(): Opt[FieldInput] =
+          if (peekIdx < 0) Opt.Empty
+          else {
+            val foundName = nextFieldName()
+            val valueIndex = reader.index
+            if (foundName == name) {
+              // intentionally not saving this field into `peekedFields` as a performance optimization for the
+              // situation where peeked field is very likely to be the first field (flat sealed hierarchies)
+              Opt(peekFieldInput(foundName, valueIndex))
+            } else {
+              if (peekedFields == null) {
+                peekedFields = CrossUtils.newNativeDict[Int]
+              }
+              peekedFields(foundName) = valueIndex
+              peekIdx = skipToNextFieldName()
+              peekRemainingFields()
+            }
+          }
+        peekRemainingFields()
+      } finally {
+        reader.reset(savedIdx)
+      }
+    }
+  }
 }
 
 final class JsonReader(val json: String) {
@@ -257,6 +310,10 @@ final class JsonReader(val json: String) {
   def index: Int = i
   def currentValue: Any = value
   def jsonType: JsonType = tpe
+
+  def reset(idx: Int): Unit = {
+    i = idx
+  }
 
   def posInfo(offset: Int): String = {
     @tailrec def loop(idx: Int, line: Int, column: Int): String =
