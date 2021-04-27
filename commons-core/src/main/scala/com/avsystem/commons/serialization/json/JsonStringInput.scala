@@ -271,7 +271,7 @@ final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: 
       }
     }
 
-    val alreadyPeeked = peekedFields.opt.flatMap(_.getOpt(name).map(idx => peekFieldInput(name, idx)))
+    val alreadyPeeked = peekedFields.opt.flatMap(_.get(name).toOpt.map(idx => peekFieldInput(name, idx)))
     alreadyPeeked orElse {
       val savedIdx = reader.index
       try {
