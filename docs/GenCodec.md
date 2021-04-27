@@ -167,7 +167,7 @@ were written to `JsonObjectOutput`. For these formats it is required that an `Ob
 a corresponding `ObjectOutput`. This normally includes all serialization formats backed by strings, byte sequences, streams, etc.
 
 > :bulb: It is generally recommended reading data with particular `Input` only when it was written using its 
-> corresponding `Output`. > However, some intputs offer additional guarantees. For example `JsonStringInput` will accept 
+> corresponding `Output`. However, some intputs offer additional guarantees. For example `JsonStringInput` will accept 
 > fields in any order even though `JsonStringOutput` retains field order in the resulting JSON string. This way it's 
 > possible to use `JsonStringInput` to read JSON that was written by other tools or humans that may mix up field order.
 
