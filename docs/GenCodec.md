@@ -166,12 +166,17 @@ For most serialization formats, it's completely natural to retain object field o
 were written to `JsonObjectOutput`. For these formats it is required that an `ObjectInput` returns object fields in exactly the same order as they were written to
 a corresponding `ObjectOutput`. This normally includes all serialization formats backed by strings, byte sequences, streams, etc.
 
+> :bulb: It is generally recommended reading data with particular `Input` only when it was written using its 
+> corresponding `Output`. > However, some intputs offer additional guarantees. For example `JsonStringInput` will accept 
+> fields in any order even though `JsonStringOutput` retains field order in the resulting JSON string. This way it's 
+> possible to use `JsonStringInput` to read JSON that was written by other tools or humans that may mix up field order.
+
 However, there are also serialization formats that use memory representation where an object is usually backed by a hashtable. Such representations cannot retain field order.
 `GenCodec` can still work with these but as an alternative to preserving field order, they must implement random field access (field-by-name access). This is done by
 overriding [`peekField`](avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/ObjectInput.html#peekField(name:String):com.avsystem.commons.misc.Opt[com.avsystem.commons.serialization.FieldInput]) on `ObjectInput`.
 
 To summarize, an `ObjectInput` is generally **not** guaranteed to retain order of fields as they were written to an `ObjectOutput` but if it doesn't then it must
-provide random field access by field name. Also, note that out of all the default and macro-generated codecs provided, only [flat sealed hierarchy codecs](#flat-format) actually depend
+provide random field access by field name. Also, note that out of all the default and macro-generated codecs provided, only [flat sealed hierarchy codecs](#flat-format) actually depends
 on this requirement. All the other (non-custom) codecs ignore field order during deserialization so you can e.g. freely
 reorder fields in your case classes if they use macro generated codecs.
 
