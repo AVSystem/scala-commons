@@ -31,6 +31,8 @@ trait BsonGenCodecs {
 }
 
 object BsonGenCodecs {
+  // needed so that ObjectId can be used as ID type in AutoIdMongoEntity
+  // (TransparentWrapping is used in EntityIdMode)
   implicit val objectIdIdentityWrapping: TransparentWrapping[ObjectId, ObjectId] =
     TransparentWrapping.identity
 
