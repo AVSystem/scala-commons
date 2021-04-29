@@ -17,6 +17,9 @@ a wrapper over Reactive Streams driver `MongoCollection` with more precisely typ
   - [Inserting documents](#inserting-documents)
   - [Finding documents by query](#finding-documents-by-query)
 - [Modeling entities](#modeling-entities)
+  - [ID management](#id-management)
+    - [Explicit ID management](#explicit-id-management)
+    - [Automatic ID management](#automatic-id-management)
   - [Field types](#field-types)
   - [Embedded document types](#embedded-document-types)
   - [Optional fields](#optional-fields)
@@ -115,7 +118,7 @@ Also, every MongoDB entity must have a companion object that extends `MongoEntit
 of `MongoEntityMeta` to be materialized for the entity class. This typeclass internally materializes a `GenObjectCodec`
 (for serialization) and captures the structure of the entity into metadata available in runtime.
 
-### Entity management
+### ID management
 
 There are two flavors of MongoDB entity representations. They differ in how they manage document IDs (the `_id` field).
 
