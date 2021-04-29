@@ -27,8 +27,7 @@ class ObservableBlockingIterator[T](
 
   import ObservableBlockingIterator._
 
-  private[this] var last: Any = Empty
-
+  @volatile private[this] var last: Any = Empty
   @volatile private[this] var ackPromise: Promise[Ack] = _
   private val queue = new ArrayBlockingQueue[Any](bufferSize)
   private val cancelable = observable.subscribe(this)
