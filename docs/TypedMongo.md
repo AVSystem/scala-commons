@@ -133,8 +133,8 @@ Because the ID must be always explicit, it can be of any serializable type (any 
 
 ```scala
 case class User(
-        id: String,
-        displayName: String
+  id: String,
+  displayName: String
 ) extends MongoEntity[String]
 object User extends MongoEntityCompanion[User]
 ```
