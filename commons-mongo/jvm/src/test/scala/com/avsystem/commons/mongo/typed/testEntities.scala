@@ -68,3 +68,9 @@ case class RecordTestAutoIdEntity(
   int: Int
 ) extends AutoIdMongoEntity[TestAutoId]
 object RecordTestAutoIdEntity extends MongoEntityCompanion[RecordTestAutoIdEntity]
+
+case class AutoObjectIdEntity(
+  str: String,
+  int: Int
+) extends AutoIdMongoEntity[ObjectId]
+object AutoObjectIdEntity extends MongoEntityCompanion[AutoObjectIdEntity]

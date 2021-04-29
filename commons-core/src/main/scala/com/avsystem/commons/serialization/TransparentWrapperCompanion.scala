@@ -11,6 +11,16 @@ trait TransparentWrapping[R, T] {
   def wrap(r: R): T
   def unwrap(t: T): R
 }
+object TransparentWrapping {
+  private val reusableIdentity = new TransparentWrapping[Any, Any] {
+    def wrap(r: Any): Any = r
+    def unwrap(t: Any): Any = t
+  }
+
+  // unfortunately can't make this implicit, the compiler is not good enough and gets lost in implicit divergence
+  def identity[T]: TransparentWrapping[T, T] =
+    reusableIdentity.asInstanceOf[TransparentWrapping[T, T]]
+}
 
 /**
   * Base class for companion objects of case classes which are transparent wrappers ("newtypes") over their only field.
