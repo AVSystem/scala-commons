@@ -27,9 +27,9 @@ object EntityIdMode {
   case class Explicit[E, ID]() extends EntityIdMode[E, ID]
   case class Auto[E, ID](idWrapping: TransparentWrapping[ObjectId, ID]) extends EntityIdMode[E, ID]
 
-  implicit def manualIdRef[E <: MongoEntity[ID], ID]: EntityIdMode[E, ID] = Explicit()
+  implicit def explicitIdMode[E <: MongoEntity[ID], ID]: EntityIdMode[E, ID] = Explicit()
 
-  implicit def autoIdRef[E <: AutoIdMongoEntity[ID], ID](
+  implicit def autoIdMode[E <: AutoIdMongoEntity[ID], ID](
     implicit idWrapping: TransparentWrapping[ObjectId, ID]
   ): EntityIdMode[E, ID] = Auto(idWrapping)
 }
