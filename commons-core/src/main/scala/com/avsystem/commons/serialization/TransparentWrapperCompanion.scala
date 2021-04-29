@@ -13,9 +13,9 @@ trait TransparentWrapping[R, T] {
 }
 
 /**
-  * Base class for companion objects of case classes which are transparent wrappers over their only field.
+  * Base class for companion objects of case classes which are transparent wrappers ("newtypes") over their only field.
   * This is the usual way of providing [[TransparentWrapping]] for some type and is intended as a replacement for
-  * [[transparent]] annotation.
+  * [[transparent]] annotation where possible.
   */
 abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, T] with (R => T) {
   implicit def self: TransparentWrapping[R, T] = this

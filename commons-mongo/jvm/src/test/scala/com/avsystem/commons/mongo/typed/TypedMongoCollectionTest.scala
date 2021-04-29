@@ -2,6 +2,7 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.misc.Timestamp
+import com.avsystem.commons.mongo.BsonValueInput
 import com.mongodb.client.model.Aggregates
 import com.mongodb.reactivestreams.client.MongoClients
 import monix.eval.Task
@@ -26,12 +27,14 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
   }
 
   final val Rte = RecordTestEntity
+  final val Rtaie = RecordTestAutoIdEntity
 
   import UnionTestEntity._
 
   private val client = MongoClients.create()
   private val db = client.getDatabase("test")
   private val rteColl = new TypedMongoCollection[RecordTestEntity](db.getCollection("rte"))
+  private val rtaieColl = new TypedMongoCollection[RecordTestAutoIdEntity](db.getCollection("rtaie"))
 
   private def innerRecord(i: Int): InnerRecord =
     InnerRecord(i, "istr", Opt("istropt"), Opt.Empty, List(3, 4, 5), Map("ione" -> 1, "ithree" -> 3))
@@ -73,6 +76,7 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
   override protected def beforeEach(): Unit = {
     super.beforeEach()
     Await.result(rteColl.drop().runToFuture, Duration.Inf)
+    Await.result(rtaieColl.drop().runToFuture, Duration.Inf)
     Await.result(rteColl.insertMany(entities).runToFuture, Duration.Inf)
   }
 
@@ -192,5 +196,33 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
       .map(_.getInteger("intSum", 0)).toListL
       .value == entities.map(_.intList.sum)
     )
+  }
+
+  test("insert auto id entity") {
+    val entity = RecordTestAutoIdEntity("foo", 42)
+    rtaieColl.insertOne(entity).value
+    assert(rtaieColl.findOne(Rtaie.ref(_.str).is("foo")).value.contains(entity))
+  }
+
+  test("replace-upsert auto id entity") {
+    val entity = RecordTestAutoIdEntity("foo", 42)
+    val entity2 = RecordTestAutoIdEntity("bar", 43)
+    val strIsFoo = Rtaie.ref(_.str).is("foo")
+    val strIsBar = Rtaie.ref(_.str).is("bar")
+
+    assert(rtaieColl.replaceOne(strIsFoo, entity, upsert = true).value.getMatchedCount == 0)
+    assert(rtaieColl.findOne(strIsFoo).value.contains(entity))
+    assert(rtaieColl.findOne(strIsBar).value.isEmpty)
+
+    assert(rtaieColl.replaceOne(strIsFoo, entity2, upsert = true).value.getMatchedCount == 1)
+    assert(rtaieColl.findOne(strIsFoo).value.isEmpty)
+    assert(rtaieColl.findOne(strIsBar).value.contains(entity2))
+  }
+
+  test("read auto-id entity with id") {
+    val entity = RecordTestAutoIdEntity("foo", 42)
+    val id = BsonValueInput.read[TestAutoId](rtaieColl.insertOne(entity).value.getInsertedId)
+    val filter = Rtaie.ref(_.str).is("foo")
+    assert(rtaieColl.findOne(filter, Rtaie.IdRef zip Rtaie.SelfRef).value.contains((id, entity)))
   }
 }

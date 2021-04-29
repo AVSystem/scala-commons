@@ -6,7 +6,8 @@ package serialization
   * class is a "transparent wrapper" and should be serialized to the same representation as the value of its sole
   * field.
   *
-  * NOTE: `TransparentWrapperCompanion` is another and even better way of achieving the same thing.
-  * (`@transparent` annotation will probably become deprecated).
+  * Whenever possible, it's better to use [[TransparentWrapperCompanion]] rather than this annotation.
+  * [[TransparentWrapperCompanion]] will give you more typeclass instances for free (e.g. `GenKeyCodec` in addition to
+  * just `GenCodec`) while this annotation requires special macro support from every typeclass.
   */
 class transparent extends StaticAnnotation
