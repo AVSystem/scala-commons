@@ -9,4 +9,9 @@ trait BoundedAdtMetadataCompanion[Hi, Lo <: Hi, M[_ >: Lo <: Hi]] extends Bounde
   def fromApplyUnapplyProvider[T >: Lo <: Hi](applyUnapplyProvider: Any): M[T] = macro AdtMetadataMacros.fromApplyUnapplyProvider[T]
 }
 
-trait AdtMetadataCompanion[M[_]] extends BoundedAdtMetadataCompanion[Any, Nothing, M]
+// cannot extend BoundedAdtMetadataCompanion because of binary compatibility problems, must copy
+trait AdtMetadataCompanion[M[_]] extends MetadataCompanion[M] {
+  def materialize[T]: M[T] = macro AdtMetadataMacros.materialize[T]
+
+  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): M[T] = macro AdtMetadataMacros.fromApplyUnapplyProvider[T]
+}
