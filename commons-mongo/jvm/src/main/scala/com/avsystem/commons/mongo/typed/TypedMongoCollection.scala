@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
+import com.avsystem.commons.annotation.bincompat
 import com.avsystem.commons.mongo.core.GenCodecRegistry
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.client.model._
@@ -13,15 +14,18 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.{BsonDocument, BsonValue}
 import org.reactivestreams.Publisher
 
-class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
+class TypedMongoCollection[E <: BaseMongoEntity](
   rawCollection: MongoCollection[_]
+)(
+  implicit meta: MongoEntityMeta[E]
 ) extends DataTypeDsl[E] {
+
   type ID = E#IDType
 
-  val format: MongoAdtFormat[E] = MongoAdtFormat[E]
+  val format: MongoAdtFormat[E] = meta.format
 
   val SelfRef: MongoRef[E, E] = MongoRef.RootRef(format)
-  val IdRef: MongoPropertyRef[E, ID] = format.fieldRefFor(SelfRef, MongoEntity.Id)
+  val IdRef: MongoPropertyRef[E, ID] = meta.idRef
 
   private val docCollection = rawCollection.withDocumentClass(classOf[BsonDocument])
 
@@ -310,4 +314,7 @@ class TypedMongoCollection[E <: BaseMongoEntity : MongoAdtFormat](
       .to(JList)
     single(nativeCollection.createIndexes(indexModels, setupOptions(new CreateIndexOptions)))
   }
+
+  @bincompat private[typed] def this(rawCollection: MongoCollection[_], format: MongoAdtFormat[E]) =
+    this(rawCollection)(MongoEntityMeta.bincompatMeta(format))
 }

@@ -285,3 +285,14 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     @infer val classTag: ClassTag[T]
   ) extends TypedMetadata[T]
 }
+
+final class MongoEntityMeta[E <: BaseMongoEntity](
+  @infer val format: MongoAdtFormat[E],
+  @infer val idMode: EntityIdMode[E, E#IDType]
+) {
+  def idRef: MongoPropertyRef[E, E#IDType] = idMode.idRef(format)
+}
+object MongoEntityMeta extends BoundedAdtMetadataCompanion[BaseMongoEntity, Nothing, MongoEntityMeta] {
+  private[typed] def bincompatMeta[E <: BaseMongoEntity](format: MongoAdtFormat[E]): MongoEntityMeta[E] =
+    new MongoEntityMeta(format, EntityIdMode.Explicit())
+}

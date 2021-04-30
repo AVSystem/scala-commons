@@ -3,6 +3,7 @@ package mongo.typed
 
 import com.avsystem.commons.misc.Timestamp
 import com.avsystem.commons.serialization._
+import org.bson.types.ObjectId
 
 case class RecordId(id: String) extends AnyVal
 object RecordId extends StringWrapperCompanion[RecordId]
@@ -58,3 +59,18 @@ case class CaseOne(id: String, str: String, data: Boolean) extends UnionTestEnti
 case class CaseTwo(id: String, str: String, data: Int, inner: RecordTestEntity) extends HasInner
 case class CaseThree(id: String, str: String, data: String, inner: RecordTestEntity) extends HasInner
 object UnionTestEntity extends MongoEntityCompanion[UnionTestEntity]
+
+case class TestAutoId(id: ObjectId) extends AnyVal
+object TestAutoId extends ObjectIdWrapperCompanion[TestAutoId]
+
+case class RecordTestAutoIdEntity(
+  str: String,
+  int: Int
+) extends AutoIdMongoEntity[TestAutoId]
+object RecordTestAutoIdEntity extends MongoEntityCompanion[RecordTestAutoIdEntity]
+
+case class AutoObjectIdEntity(
+  str: String,
+  int: Int
+) extends AutoIdMongoEntity[ObjectId]
+object AutoObjectIdEntity extends MongoEntityCompanion[AutoObjectIdEntity]

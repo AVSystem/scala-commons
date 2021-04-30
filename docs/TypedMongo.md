@@ -17,6 +17,9 @@ a wrapper over Reactive Streams driver `MongoCollection` with more precisely typ
   - [Inserting documents](#inserting-documents)
   - [Finding documents by query](#finding-documents-by-query)
 - [Modeling entities](#modeling-entities)
+  - [ID management](#id-management)
+    - [Explicit ID management](#explicit-id-management)
+    - [Automatic ID management](#automatic-id-management)
   - [Field types](#field-types)
   - [Embedded document types](#embedded-document-types)
   - [Optional fields](#optional-fields)
@@ -106,21 +109,62 @@ listTask.foreach(foundEntities => println(s"Found entities: $foundEntities"))
 ## Modeling entities
 
 A MongoDB entity may be:
+
 * a case class
-* a sealed trait/class with `@flatten` annotation (see `GenCodec`'s [flat format](GenCodec.md#flat-format) for more details)
+* a sealed trait/class with `@flatten` annotation (see `GenCodec`'s [flat format](GenCodec.md#flat-format) for more
+  details)
 
-Also, every MongoDB entity must extend `MongoEntity` in order to specify the ID field and type. 
-Its companion must also extend `MongoEntityCompanion`. This causes two typeclass instances (implicits) 
-to be materialized for the entity type:
+Also, every MongoDB entity must have a companion object that extends `MongoEntityCompanion`. This causes an instance
+of `MongoEntityMeta` to be materialized for the entity class. This typeclass internally materializes a `GenObjectCodec`
+(for serialization) and captures the structure of the entity into metadata available in runtime.
 
-* `GenCodec` - used for serialization of the entity into BSON. See [`GenCodec`](GenCodec.md) for more details.
-* `MongoAdtFormat` - captures the internal structure of the entity, making it possible to refer to properties of this
-  entity in order to build queries, updates, sort orders, etc.
+### ID management
+
+There are two flavors of MongoDB entity representations. They differ in how they manage document IDs (the `_id` field).
+
+#### Explicit ID management
+
+MongoDB entity classes that extend `MongoEntity` must declare an explicit `id` field. This means it's impossible to
+insert or replace (`TypedMongoCollection.insertOne/insertMany/replaceOne/replaceMany`) instances of that entity without
+specifying the ID explicitly. There is no way to let the server autogenerate the ID, although `ObjectId.get()`
+can be used to safely generate unique IDs on client-side.
+
+Because the ID must be always explicit, it can be of any serializable type (any type that has `GenCodec`).
+
+```scala
+case class User(
+  id: String,
+  displayName: String
+) extends MongoEntity[String]
+object User extends MongoEntityCompanion[User]
+```
+
+#### Automatic ID management
+
+Sometimes it's more convenient to let the server handle generation of IDs. This is usually the case when we want an ID
+that serves only to be unique and immutable but otherwise has no meaning. In this case, we omit the `id` field from the
+entity class and use `AutoIdMongoEntity` as its base.
+
+This way we can perform insert and replace operations without specifying `_id` so that MongoDB generates it
+automatically. However, this ID can still be used in [filters](#mongodocumentfilter) and [projections](#mongoprojection)
+and therefore we are required to declare its type explicitly. Since MongoDB always generates values
+of `org.bson.types.ObjectId`, the ID type must be either raw `ObjectId` or a _transparent wrapper_ over `ObjectId`.
+
+```scala
+case class UserId(id: ObjectId) extends AnyVal
+object UserId extends ObjectIdWrapperCompanion[UserId]
+
+case class User(
+  username: String, // not an ID
+  displayName: String
+) extends AutoIdMongoEntity[UserId]
+object User extends MongoEntityCompanion[User]
+```
 
 ### Field types
 
-Any type that has a `GenCodec` instance will be accepted as a field type in MongoDB entity.
-However, the MongoDB API is aware of internal structure of some types, including:
+Any type that has a `GenCodec` instance will be accepted as a field type in MongoDB entity. However, the MongoDB API is
+additionally aware of internal structure of some types, including:
 
 * [embedded documents](#embedded-document-types) - serialized into BSON documents
 * collections, i.e. any subtype of `scala.collection.Seq` or `scala.collection.Set` - serialized into BSON arrays

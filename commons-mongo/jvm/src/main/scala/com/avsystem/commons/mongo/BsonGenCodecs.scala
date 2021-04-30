@@ -2,9 +2,8 @@ package com.avsystem.commons
 package mongo
 
 import java.nio.ByteBuffer
-
 import com.avsystem.commons.serialization.GenCodec.{ReadFailure, WriteFailure}
-import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
+import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, TransparentWrapping}
 import org.bson.codecs.{BsonValueCodec, DecoderContext, EncoderContext}
 import org.bson.io.BasicOutputBuffer
 import org.bson.types.{Decimal128, ObjectId}
@@ -32,6 +31,11 @@ trait BsonGenCodecs {
 }
 
 object BsonGenCodecs {
+  // needed so that ObjectId can be used as ID type in AutoIdMongoEntity
+  // (TransparentWrapping is used in EntityIdMode)
+  implicit val objectIdIdentityWrapping: TransparentWrapping[ObjectId, ObjectId] =
+    TransparentWrapping.identity
+
   implicit val objectIdCodec: GenCodec[ObjectId] = GenCodec.nullable(
     i => i.readCustom(ObjectIdMarker).getOrElse(new ObjectId(i.readSimple().readString())),
     (o, v) => if (!o.writeCustom(ObjectIdMarker, v)) o.writeSimple().writeString(v.toHexString)
