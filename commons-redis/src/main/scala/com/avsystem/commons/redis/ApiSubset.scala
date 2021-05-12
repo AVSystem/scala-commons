@@ -6,6 +6,7 @@ import com.avsystem.commons.redis.ApiSubset.{HeadOps, IterableTailOps, IteratorT
 import com.avsystem.commons.redis.commands._
 import com.avsystem.commons.redis.config.ExecutionConfig
 import com.avsystem.commons.redis.util.{HeadIterable, HeadIterator, SingletonSeq}
+import monix.eval.Task
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -153,6 +154,17 @@ trait RedisAsyncApi extends RedisExecutedApi {
   def execute[A](command: RedisCommand[A]): Future[A] = executeAsync(command)
   def recoverWith[A](executed: => Future[A])(fun: PartialFunction[Throwable, Future[A]]): Future[A] =
     executed.recoverWith(fun)(executor.executionContext)
+}
+
+trait RedisMonixApi extends RedisExecutedApi {
+  type Result[A] = Task[A]
+
+  def execute[A](command: RedisCommand[A]): Task[A] = Task.deferFutureAction { scheduler =>
+    executor.executeBatch(command, execConfig.copy(decodeOn = scheduler))
+  }
+
+  def recoverWith[A](executed: => Task[A])(fun: PartialFunction[Throwable, Task[A]]): Task[A] =
+    executed.onErrorRecoverWith(fun)
 }
 
 trait RedisBlockingApi extends RedisExecutedApi {

@@ -324,6 +324,7 @@ lazy val `commons-redis` = project
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
+      "io.monix" %% "monix" % monixVersion,
     ),
     Test / parallelExecution := false,
   )

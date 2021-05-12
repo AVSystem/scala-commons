@@ -121,6 +121,13 @@ object RedisApi {
     ) extends BaseAsync[S] with RedisRecoverableKeyedApi
     object Async extends VariantCompanion[Async]
 
+    case class Monix[S <: RedisSerialization](
+      serialization: S,
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig
+    ) extends BaseMonix[S] with RedisRecoverableKeyedApi
+    object Monix extends VariantCompanion[Monix]
+
     case class Blocking[S <: RedisSerialization](
       serialization: S,
       executor: RequiredExecutor,
@@ -143,6 +150,13 @@ object RedisApi {
     ) extends BaseAsync[S] with RedisRecoverableNodeApi
     object Async extends VariantCompanion[Async]
 
+    case class Monix[S <: RedisSerialization](
+      serialization: S,
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig
+    ) extends BaseMonix[S] with RedisRecoverableNodeApi
+    object Monix extends VariantCompanion[Monix]
+
     case class Blocking[S <: RedisSerialization](
       serialization: S,
       executor: RequiredExecutor,
@@ -164,6 +178,13 @@ object RedisApi {
       execConfig: ExecutionConfig
     ) extends BaseAsync[S] with RedisRecoverableConnectionApi
     object Async extends VariantCompanion[Async]
+
+    case class Monix[S <: RedisSerialization](
+      serialization: S,
+      executor: RequiredExecutor,
+      execConfig: ExecutionConfig
+    ) extends BaseMonix[S] with RedisRecoverableConnectionApi
+    object Monix extends VariantCompanion[Monix]
 
     case class Blocking[S <: RedisSerialization](
       serialization: S,
@@ -202,6 +223,9 @@ abstract class ExecutedApis {
   type Async[S <: RedisSerialization] <: BaseAsync[S]
   val Async: VariantCompanion[Async]
 
+  type Monix[S <: RedisSerialization] <: BaseMonix[S]
+  val Monix: VariantCompanion[Monix]
+
   type Blocking[S <: RedisSerialization] <: BaseBlocking[S]
   val Blocking: VariantCompanion[Blocking]
 
@@ -236,6 +260,14 @@ abstract class ExecutedApis {
 
     type Self[S0 <: RedisSerialization] = Async[S0]
     def withSerialization[S0 <: RedisSerialization](ser: S0): Self[S0] = Async(ser, executor, execConfig)
+  }
+
+  protected abstract class BaseMonix[S <: RedisSerialization] extends AbstractRedisApi[S] with RedisMonixApi {
+    def executor: RequiredExecutor
+    def execConfig: ExecutionConfig
+
+    type Self[S0 <: RedisSerialization] = Monix[S0]
+    def withSerialization[S0 <: RedisSerialization](ser: S0): Self[S0] = Monix(ser, executor, execConfig)
   }
 
   protected abstract class BaseBlocking[S <: RedisSerialization] extends AbstractRedisApi[S] with RedisBlockingApi {
