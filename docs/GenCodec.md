@@ -688,23 +688,23 @@ All annotations are governed by [annotation processing](Annotations.md) rules.
 
 ### Safely introducing changes to serialized classes (retaining backwards compatibility)
 
-1. Changing order of fields in case class is always safe - case class decoding is field order agnostic.
-1. Adding a field to case class is safe as long as you provide default value for that field (Scala-level or with `@whenAbsent`).
-   Deserializer will use that value if field is missing in the serialized data.
-1. Removing a field from case class is always safe - case class codecs simply skip unknown fields.
-1. Changing name of case class field is safe as long as you annotate that field with `@name` annotation to retain the old name in serialized format.
-1. Changing the type of case class field is safe as long as you ensure that both old and new type have the same representation. 
-   The `@transparent` annotation may be useful when changing a type into some type that wraps the original type.
-1. Changing default value of case class field is always safe (i.e. will not crash), but already serialized data will still 
-   contain old default value (unless you use `@transientDefault` annotation).
-1. Adding classes or objects to sealed hierarchy is always safe.
+1. Changing order of fields in case class is **compatible** - case class codecs can read fields in any order.
+1. Changing the name of a case class is **compatible** for codecs generated for the case class *itself*. If the codec is generated for a sealed hierarchy that the
+   case class is a part of then renaming is **not compatible** unless the class/object is annotated with `@name` annotation that retains the old name.
+1. Adding a field to a case class is **not compatible** unless a default value for that field is defined (Scala-level default value or `@whenAbsent` annotation).
+1. Removing a field from case class is **compatible** - case class codecs simply skip unknown fields.
+1. Changing the name of a case class field is **not compatible** unless the field is annotated with `@name` annotation that retains the old name.
+1. Changing the type of a case class field is **compatible assuming that** serialized formats of the old and new type are compatible.
+1. Changing default value of case class field is **compatible**. However, remember that the data serialized before this change will 
+   contain the old default value (unless `@transientDefault` was used).
+1. Introducing new case classes or object to a sealed hierarchy is **compatible**.
 1. Changing name of an object or class in sealed hierarchy is safe as long as you annotate that class/object with `@name` 
    annotation to retain the old name in serialized format.
 1. Lifting a case class into a sealed hierarchy is safe as long as the [flat format](#flat-format) is used for the sealed 
    hierarchy and existing case class remains one of the cases in the sealed hierarchy, annotated as `@defaultCase`.
 
-Of course, the above rules are guaranteed to work only for macro-materialized codecs.
-If you implement your codecs manually, you're on your own.
+Remember that the rules listed above only apply to automatically materialized codecs.
+If you implement your codecs manually then you need to ensure compatibility also manually.
 
 ## Performance
 
