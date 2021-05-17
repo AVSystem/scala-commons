@@ -701,7 +701,7 @@ object Data extends HasGenCodec[Data]
 A summary of safe and unsafe changes to this class definition:
 
 ```scala
-// OK - renaming a case class is fine because its name is not serialized
+// OK - renaming a case class is fine because its name is not serialized (but NOT OK if the case class is a part of a sealed hierarchy - see later)
 case class RenamedData(num: Int, str: String)
 
 // OK - reordering fields is fine because the codec can read fields in any order
