@@ -1,14 +1,13 @@
 package com.avsystem.commons
 package serialization
 
-import java.util.UUID
-
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import com.avsystem.commons.jiop.JFactory
 import com.avsystem.commons.meta.Fallback
 import com.avsystem.commons.misc.{Bytes, Timestamp}
 
+import java.util.UUID
 import scala.annotation.{implicitNotFound, tailrec}
 import scala.collection.compat._
 
@@ -330,6 +329,25 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
       declareSizeFor(output, value)
       writeFields(output, value)
     }
+  }
+
+  object OOOFieldsObjectCodec {
+    // this was introduced so that transparent wrapper cases are possible in flat sealed hierarchies
+    final class Transformed[A, B](val wrapped: OOOFieldsObjectCodec[B], onWrite: A => B, onRead: B => A) extends OOOFieldsObjectCodec[A] {
+      def size(value: A): Int =
+        wrapped.size(onWrite(value))
+
+      def readObject(input: ObjectInput, outOfOrderFields: FieldValues): A =
+        onRead(wrapped.readObject(input, outOfOrderFields))
+
+      def writeFields(output: ObjectOutput, value: A): Unit =
+        wrapped.writeFields(output, onWrite(value))
+
+      def nullable: Boolean = wrapped.nullable
+    }
+
+    implicit def fromTransparentWrapping[R, T](implicit tw: TransparentWrapping[R, T], wrapped: OOOFieldsObjectCodec[R]): OOOFieldsObjectCodec[T] =
+      new Transformed(wrapped, tw.unwrap, tw.wrap)
   }
 
   final class Transformed[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {

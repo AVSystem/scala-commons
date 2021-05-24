@@ -389,8 +389,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   }
 
   case class CaseClassInfo(idx: Int, subtype: Type, applyParams: List[Symbol]) extends CaseInfo {
-    def depInstance: Tree =
-      q"$GenCodecObj.applyUnapplyCodec[$subtype]"
+    def depInstance: Tree = c.inferImplicitValue(getType(tq"$GenCodecObj.OOOFieldsObjectCodec[$subtype]")) match {
+      case EmptyTree => q"$GenCodecObj.applyUnapplyCodec[$subtype]"
+      case tree => tree
+    }
   }
 
   case class CaseObjectInfo(idx: Int, subtype: Type, singleton: Tree) extends CaseInfo {

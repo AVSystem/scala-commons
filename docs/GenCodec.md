@@ -486,6 +486,33 @@ object Timeout extends HasGenCodec[Timeout]
 
 Instead of creating a single-field object, now the `materialize` macro will assume that every case class/object serializes to an object (e.g. JSON object) and will use this object as a representation of the entire sealed type. In order to differentiate between case classes during deserialization, an additional discriminator field containing class name is added at the beginning of resulting object. For example, `FiniteTimeout(60)` would be represented (using [`JsonStringOutput`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/serialization/json/JsonStringOutput.html)) as `{"_case":"FiniteTimeout","seconds":60}`
 
+#### Transparent wrappers in flat sealed hierarchies
+
+It is possible for a case class in a flat sealed hierarchy to be a _transparent wrapper_. To do this, the wrapped
+type must have an implicit `ApplyUnapplyCodec` (a subtype of `GenCodec` specific for case classes and case class like types).
+The wrapping case itself must have a companion that extends `TransparentWrapperCompanion`.
+
+```scala
+case class NumericalData(num: Int)
+object NumericalData extends HasApplyUnapplyCodec[NumericalData]
+case class TextualData(text: String)
+object TextualData extends HasApplyUnapplyCodec[TextualData]
+
+@flat sealed trait DataUnion
+case class NumericalCase(data: NumericalData) extends DataUnion
+object NumericalCase extends TransparentWrapperCompanion[NumericalData, NumericalCase]
+case class TextualCase(data: TextualData) extends DataUnion
+object TextualCase extends TransparentWrapperCompanion[TextualData, TextualCase]
+object DataUnion extends HasGenCodec[DataUnion]
+```
+
+Serializing `NumericalCase(NumericalData(42))` using `JsonStringOutput` would yield 
+JSON string `{"_case": "NumericalCase", "num": 42}`.
+
+`NumericalData` and `TextualData` would typically be defined in a different file than the sealed hierarchy itself.
+That's the typical motivation for using transparent wrappers in a sealed hierarchy - you can't have these types
+in the same compilation unit as the sealed trait.
+
 ### Customizing sealed hierarchy codecs
 
 Similarly to case classes, sealed hierarchy codecs may be customized with annotations. All annotations are governed by

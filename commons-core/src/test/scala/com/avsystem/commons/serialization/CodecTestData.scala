@@ -87,10 +87,17 @@ object CodecTestData {
     }
     case class RecursiveCase(id: String, sub: Opt[FlatSealedBase]) extends FlatSealedBase
     case class LocallyRecursiveCase(id: String, sub: Opt[LocallyRecursiveCase]) extends FlatSealedBase
-
     // for Scala 2.11
     implicit val codec: GenCodec[FlatSealedBase] = GenCodec.materialize
   }
+
+  @flatten sealed trait TransparentFlatSealedBase
+  case class TransparentCaseWrap(thing: TransparentFlatThing) extends TransparentFlatSealedBase
+  object TransparentCaseWrap extends TransparentWrapperCompanion[TransparentFlatThing, TransparentCaseWrap]
+  object TransparentFlatSealedBase extends HasGenCodec[TransparentFlatSealedBase]
+
+  case class TransparentFlatThing(num: Int, text: String)
+  object TransparentFlatThing extends HasApplyUnapplyCodec[TransparentFlatThing]
 
   abstract class Wrapper[Self <: Wrapper[Self] : ClassTag](private val args: Any*) { this: Self =>
     override def equals(obj: Any): Boolean = obj match {

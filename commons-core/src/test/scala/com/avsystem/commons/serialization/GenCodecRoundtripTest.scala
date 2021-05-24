@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.misc.TypedMap
-import com.avsystem.commons.serialization.CodecTestData._
+import com.avsystem.commons.serialization.CodecTestData.{TransparentFlatSealedBase, _}
 import com.avsystem.commons.serialization.JavaCodecs._
 
 abstract class GenCodecRoundtripTest extends AbstractCodecTest {
@@ -149,6 +149,10 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip[FlatSealedBase](FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0))
     testRoundtrip[FlatSealedBase](FlatSealedBase.ThirdCase)
     testRoundtrip[FlatSealedBase](FlatSealedBase.RecursiveCase("rec", Opt(FlatSealedBase.ThirdCase)))
+  }
+
+  test("flat sealed hierarchy with transparent cases") {
+    testRoundtrip[TransparentFlatSealedBase](TransparentCaseWrap(TransparentFlatThing(42, "fuu")))
   }
 
   test("GADT") {
