@@ -34,16 +34,32 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
     val infoName = c.freshName(TermName("info"))
     val depsBuf = new ListBuffer[Tree]
 
+    object LocalSymbolsCollector extends Traverser {
+      private val symsBuilder = Set.newBuilder[Symbol]
+      def symbolsFound: Set[Symbol] = symsBuilder.result()
+
+      override def traverse(tree: Tree): Unit = tree match {
+        case ComponentRef(_) => // stop
+        case t@(_: DefTree | _: Function | _: Bind) if t.symbol != null =>
+          symsBuilder += t.symbol
+          super.traverse(tree)
+        case _ =>
+          super.traverse(tree)
+      }
+    }
+
+    LocalSymbolsCollector.traverse(definition)
+    val componentDefLocals = LocalSymbolsCollector.symbolsFound
+
     def validateDependency(tree: Tree): Tree = {
-      val innerSymbols = tree.collect({ case t@(_: DefTree | _: Function | _: Bind) if t.symbol != null => t.symbol }).toSet
-      val needsRetyping = innerSymbols.nonEmpty || tree.exists {
+      val needsRetyping = tree.exists {
         case _: DefTree | _: Function | _: Bind => true
         case _ => false
       }
       tree.foreach {
         case t@ComponentRef(_) =>
           errorAt(s"illegal nested component reference inside expression representing component dependency", t.pos)
-        case t if t.symbol != null && !innerSymbols.contains(t.symbol) && posIncludes(definition.pos, t.symbol.pos) =>
+        case t if t.symbol != null && componentDefLocals.contains(t.symbol) =>
           errorAt(s"illegal local value or method reference inside expression representing component dependency", t.pos)
         case _ =>
       }
