@@ -303,6 +303,8 @@ final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: 
 }
 
 final class JsonReader(val json: String) {
+  json.checkNotNull("null JSON string")
+
   private[this] var i: Int = 0
   private[this] var value: Any = _
   private[this] var tpe: JsonType = _
