@@ -410,6 +410,24 @@ class CborObjectInput(reader: CborReader, size: Int, fieldLabels: FieldLabels)
 
   import reader._
 
+  /**
+    * Returns a [[CborOutput]] for reading a raw CBOR field key. This is an extension over standard
+    * [[ObjectOutput]] which only allows string-typed keys. If this method is used to read the key then value
+    * MUST be read with [[nextValue()]] and [[nextField()]] MUST NOT be used.
+    */
+  def nextKey(): CborInput = {
+    prepareForNext()
+    new CborInput(reader, fieldLabels)
+  }
+
+  /**
+    * Returns a [[CborOutput]] for reading the value of a CBOR field whose key was previously read with [[nextKey()]].
+    * This method MUST ONLY be used after the key was fully read using [[nextKey()]]. If this method is used to
+    * read the field value then [[nextField()]] MUST NOT be used.
+    */
+  def nextValue(): CborInput =
+    new CborInput(reader, fieldLabels)
+
   def nextField(): CborFieldInput = {
     prepareForNext()
     val fieldName = nextInitial() match {
