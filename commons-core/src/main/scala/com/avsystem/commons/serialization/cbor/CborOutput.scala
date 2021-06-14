@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package serialization.cbor
 
-import java.io.{ByteArrayOutputStream, DataOutput, DataOutputStream}
-import java.nio.charset.StandardCharsets
-
 import com.avsystem.commons.serialization.GenCodec.WriteFailure
 import com.avsystem.commons.serialization._
+
+import java.io.{ByteArrayOutputStream, DataOutput, DataOutputStream}
+import java.nio.charset.StandardCharsets
 
 /**
   * Defines translation between textual object field names and corresponding numeric labels. May be used to reduce
@@ -149,10 +149,10 @@ class CborOutput(out: DataOutput, fieldLabels: FieldLabels, sizePolicy: SizePoli
       writeDouble(millis.toDouble / 1000)
   }
 
-  def writeList(): ListOutput =
+  def writeList(): CborListOutput =
     new CborListOutput(out, fieldLabels, sizePolicy)
 
-  def writeObject(): ObjectOutput =
+  def writeObject(): CborObjectOutput =
     new CborObjectOutput(out, fieldLabels, sizePolicy)
 
   def writeRawCbor(raw: RawCbor): Unit =
@@ -207,7 +207,7 @@ class CborListOutput(
   sizePolicy: SizePolicy
 ) extends CborSequentialOutput(out, sizePolicy) with ListOutput {
 
-  def writeElement(): Output = {
+  def writeElement(): CborOutput = {
     writeInitial(MajorType.Array)
     if (size > 0) {
       size -= 1
@@ -233,18 +233,37 @@ class CborObjectOutput(
   sizePolicy: SizePolicy
 ) extends CborSequentialOutput(out, sizePolicy) with ObjectOutput {
 
-  def writeField(key: String): Output = {
+  /**
+    * Returns a [[CborOutput]] for writing an arbitrary CBOR map key.
+    * This method is an extension of standard [[Output]] which only allows string-typed keys.
+    * If a key is written using this method then its corresponding value MUST be written using [[writeValue]]
+    * and [[writeField]] MUST NOT be used.
+    */
+  def writeKey(): CborOutput = {
     writeInitial(MajorType.Map)
     if (size > 0) {
       size -= 1
     } else if (size == 0) {
       throw new WriteFailure("explicit size was given and all the fields have already been written")
     }
-    fieldLabels.label(key) match {
-      case Opt(label) => writeSigned(label)
-      case Opt.Empty => writeText(key)
-    }
     new CborOutput(out, fieldLabels, sizePolicy)
+  }
+
+  /**
+    * Returns a [[CborOutput]] for writing a value of a CBOR map field whose key was previously written
+    * using [[writeKey]]. This method MUST ONLY be used after the key has been fully written with [[writeKey]].
+    * If [[writeKey]] and [[writeValue]] is used then [[writeField]] MUST NOT be used.
+    */
+  def writeValue(): CborOutput =
+    new CborOutput(out, fieldLabels, sizePolicy)
+
+  def writeField(key: String): CborOutput = {
+    val kvOutput = writeKey()
+    fieldLabels.label(key) match {
+      case Opt(label) => kvOutput.writeSigned(label)
+      case Opt.Empty => kvOutput.writeString(key)
+    }
+    kvOutput
   }
 
   def finish(): Unit = {
