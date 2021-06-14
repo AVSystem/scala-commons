@@ -12,7 +12,7 @@ import scala.util.matching.Regex
 
 abstract class AbstractMacroCommons(val c: blackbox.Context) extends MacroCommons
 
-trait MacroCommons { bundle =>
+trait MacroCommons extends CompatMacroCommons { bundle =>
   val c: blackbox.Context
 
   import c.universe._
@@ -607,7 +607,7 @@ trait MacroCommons { bundle =>
       .map(_.tree.children.tail.head)
       .collect {
         case StringLiteral(error) => error
-        case NamedArg(_, StringLiteral(error)) => error
+        case NamedArgTree(_, StringLiteral(error)) => error
       }
       .map { error =>
         val tpNames = tparams.map(_.name.decodedName.toString)
