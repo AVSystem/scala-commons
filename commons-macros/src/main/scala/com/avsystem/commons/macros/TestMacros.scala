@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package macros
 
-import scala.reflect.macros.blackbox
+import scala.reflect.macros.{TypecheckException, blackbox}
 
 private[commons]
 class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
@@ -99,5 +99,21 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
          def unapply(t: $ttpe): $ftpe = $unapplyResult
        }
      """
+  }
+
+  private def stringLiteral(tree: Tree): String = tree match {
+    case StringLiteral(str) => str
+    case Select(StringLiteral(str), TermName("stripMargin")) => str.stripMargin
+    case _ => abort(s"expected string literal, got $tree")
+  }
+
+  def typeErrorImpl(code: Tree): Tree = {
+    val codeTree = c.parse(stringLiteral(code))
+    try {
+      c.typecheck(codeTree)
+      abort("expected typechecking error, none was raised")
+    } catch {
+      case TypecheckException(_, msg) => q"$msg"
+    }
   }
 }

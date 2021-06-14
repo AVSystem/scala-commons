@@ -604,7 +604,11 @@ trait MacroCommons { bundle =>
 
   private def symbolImplicitNotFoundMsg(tpe: Type, sym: Symbol, tparams: List[Symbol], typeArgs: List[Type]): String =
     rawAnnotations(sym).find(_.tree.tpe <:< ImplicitNotFoundAT)
-      .map(_.tree.children.tail.head).collect { case StringLiteral(error) => error }
+      .map(_.tree.children.tail.head)
+      .collect {
+        case StringLiteral(error) => error
+        case NamedArg(_, StringLiteral(error)) => error
+      }
       .map { error =>
         val tpNames = tparams.map(_.name.decodedName.toString)
         (tpNames zip typeArgs).foldLeft(error) {
