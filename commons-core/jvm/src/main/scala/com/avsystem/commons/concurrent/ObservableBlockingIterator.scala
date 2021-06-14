@@ -3,11 +3,11 @@ package concurrent
 
 import java.util.concurrent.ArrayBlockingQueue
 import com.avsystem.commons.collection.CloseableIterator
-import com.github.ghik.silencer.silent
 import monix.execution.{Ack, Scheduler}
 import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
 
+import scala.annotation.nowarn
 import scala.concurrent.blocking
 import scala.concurrent.duration.TimeUnit
 
@@ -71,7 +71,7 @@ class ObservableBlockingIterator[T](
       nonEmpty
   }
 
-  @silent("non-nullary method overrides nullary method")
+  @nowarn("msg=non-nullary method overrides nullary method")
   def hasNext: Boolean = fetchNext() match {
     case Complete => false
     case Failed(cause) => throw cause
