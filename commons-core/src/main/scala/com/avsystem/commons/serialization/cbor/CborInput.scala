@@ -3,6 +3,7 @@ package serialization.cbor
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.cbor.InitialByte.IndefiniteLength
 
 import java.io.{ObjectInput => _, _}
 import java.nio.charset.StandardCharsets
@@ -188,6 +189,11 @@ class CborInput(reader: CborReader, fieldLabels: FieldLabels) extends InputAndSi
       unexpected(ib, "text string")
   }
 
+  def readChunkedString(): CborChunkedStringInput = nextInitial() match {
+    case IndefiniteLength(MajorType.TextString) => new CborChunkedStringInput(reader)
+    case ib => unexpected(ib, "indefinite length text string")
+  }
+
   def readBoolean(): Boolean = nextInitial() match {
     case InitialByte.True => true
     case InitialByte.False => false
@@ -264,6 +270,11 @@ class CborInput(reader: CborReader, fieldLabels: FieldLabels) extends InputAndSi
       unexpected(ib, "byte string")
   }
 
+  def readChunkedBinary(): CborChunkedBinaryInput = nextInitial() match {
+    case IndefiniteLength(MajorType.ByteString) => new CborChunkedBinaryInput(reader)
+    case ib => unexpected(ib, "indefinite length byte string")
+  }
+
   override def readTimestamp(): Long = {
     requireTag(_ == Tag.EpochDateTime, "expected value tagged as epoch date time (tag value 1)")
     val ib = peekInitial()
@@ -300,6 +311,9 @@ class CborInput(reader: CborReader, fieldLabels: FieldLabels) extends InputAndSi
     RawCbor(data.bytes, data.offset + startIdx, index - startIdx)
   }
 
+  def readInitialByte(): InitialByte =
+    peekInitial()
+
   def readTags(): List[Tag] = {
     val buf = new MListBuffer[Tag]
     val startIdx = index
@@ -323,7 +337,7 @@ class CborInput(reader: CborReader, fieldLabels: FieldLabels) extends InputAndSi
   }
 
   override def readMetadata[T](metadata: InputMetadata[T]): Opt[T] = metadata match {
-    case InitialByte => Opt(peekInitial())
+    case InitialByte => Opt(readInitialByte())
     case Tags => Opt(readTags())
     case _ => super.readMetadata(metadata)
   }
@@ -441,4 +455,42 @@ class CborObjectInput(reader: CborReader, size: Int, fieldLabels: FieldLabels)
     }
     new CborFieldInput(fieldName, reader, fieldLabels)
   }
+}
+
+abstract class CborChunkedInput(reader: CborReader) {
+  type Chunk
+
+  protected def majorType: MajorType
+  protected def doReadChunk(info: Int): Chunk
+
+  import reader._
+
+  private def byteOrText: String = majorType match {
+    case MajorType.ByteString => "byte"
+    case MajorType.TextString => "text"
+  }
+
+  def hasNext: Boolean = peekInitial() match {
+    case InitialByte.Break => false
+    case InitialByte(m, _) if m == majorType => true
+    case ib => unexpected(ib, s"definite length $byteOrText string or break")
+  }
+
+  def readChunk(): Chunk = nextInitial() match {
+    case InitialByte.Break => throw new NoSuchElementException
+    case InitialByte(m, info) if m == majorType => doReadChunk(info)
+    case ib => unexpected(ib, s"definite length $byteOrText string or break")
+  }
+}
+
+class CborChunkedStringInput(reader: CborReader) extends CborChunkedInput(reader) {
+  type Chunk = String
+  protected def majorType: MajorType = MajorType.TextString
+  protected def doReadChunk(info: Int): String = reader.readSizedText(info)
+}
+
+class CborChunkedBinaryInput(reader: CborReader) extends CborChunkedInput(reader) {
+  type Chunk = Array[Byte]
+  protected def majorType: MajorType = MajorType.ByteString
+  protected def doReadChunk(info: Int): Array[Byte] = reader.readSizedBytes(info)
 }

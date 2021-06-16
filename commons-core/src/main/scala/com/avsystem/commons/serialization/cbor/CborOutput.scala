@@ -3,6 +3,7 @@ package serialization.cbor
 
 import com.avsystem.commons.serialization.GenCodec.WriteFailure
 import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.cbor.InitialByte.IndefiniteLength
 
 import java.io.{ByteArrayOutputStream, DataOutput, DataOutputStream}
 import java.nio.charset.StandardCharsets
@@ -46,7 +47,7 @@ abstract class BaseCborOutput(out: DataOutput) {
     }
   }
 
-  def writeSigned(value: Long): Unit =
+  protected def writeSigned(value: Long): Unit =
     if (value >= 0) writeValue(MajorType.Unsigned, value)
     else writeValue(MajorType.Negative, -(value + 1))
 
@@ -56,6 +57,11 @@ abstract class BaseCborOutput(out: DataOutput) {
   protected final def writeText(str: String): Unit = {
     val bytes = str.getBytes(StandardCharsets.UTF_8)
     writeValue(MajorType.TextString, bytes.length)
+    out.write(bytes)
+  }
+
+  protected final def writeBytes(bytes: Array[Byte]): Unit = {
+    writeValue(MajorType.ByteString, bytes.length)
     out.write(bytes)
   }
 }
@@ -87,6 +93,12 @@ class CborOutput(out: DataOutput, fieldLabels: FieldLabels, sizePolicy: SizePoli
 
   def writeString(str: String): Unit =
     writeText(str)
+
+  def writeChunkedString(): CborChunkedStringOutput =
+    new CborChunkedStringOutput(out)
+
+  override def writeSigned(value: Long): Unit =
+    super.writeSigned(value)
 
   def writeInt(int: Int): Unit =
     writeLong(int)
@@ -136,10 +148,11 @@ class CborOutput(out: DataOutput, fieldLabels: FieldLabels, sizePolicy: SizePoli
     writeBigInt(bigDecimal.bigDecimal.unscaledValue)
   }
 
-  def writeBinary(binary: Array[Byte]): Unit = {
-    writeValue(MajorType.ByteString, binary.length)
-    out.write(binary)
-  }
+  def writeBinary(binary: Array[Byte]): Unit =
+    writeBytes(binary)
+
+  def writeChunkedBinary(): CborChunkedBinaryOutput =
+    new CborChunkedBinaryOutput(out)
 
   override def writeTimestamp(millis: Long): Unit = {
     writeTag(Tag.EpochDateTime)
@@ -181,7 +194,7 @@ abstract class CborSequentialOutput(
   protected[this] var size: Int = -1
   protected[this] var fresh: Boolean = true
 
-  protected final def writeInitial(major: MajorType): Unit =
+  protected final def ensureInitialWritten(major: MajorType): Unit =
     if (fresh) {
       fresh = false
       if (size >= 0) {
@@ -208,7 +221,7 @@ class CborListOutput(
 ) extends CborSequentialOutput(out, sizePolicy) with ListOutput {
 
   def writeElement(): CborOutput = {
-    writeInitial(MajorType.Array)
+    ensureInitialWritten(MajorType.Array)
     if (size > 0) {
       size -= 1
     } else if (size == 0) {
@@ -218,7 +231,7 @@ class CborListOutput(
   }
 
   def finish(): Unit = {
-    writeInitial(MajorType.Array)
+    ensureInitialWritten(MajorType.Array)
     if (size < 0) {
       write(InitialByte.Break)
     } else if (size > 0) {
@@ -240,7 +253,7 @@ class CborObjectOutput(
     * and [[writeField]] MUST NOT be used.
     */
   def writeKey(): CborOutput = {
-    writeInitial(MajorType.Map)
+    ensureInitialWritten(MajorType.Map)
     if (size > 0) {
       size -= 1
     } else if (size == 0) {
@@ -267,11 +280,50 @@ class CborObjectOutput(
   }
 
   def finish(): Unit = {
-    writeInitial(MajorType.Map)
+    ensureInitialWritten(MajorType.Map)
     if (size < 0) {
       write(InitialByte.Break)
     } else if (size > 0) {
       throw new WriteFailure("explicit size was given but not enough fields were written")
     }
   }
+}
+
+abstract class CborChunkedOutput(out: DataOutput) extends BaseCborOutput(out) {
+  protected type Chunk
+
+  protected def major: MajorType
+  protected def doWriteChunk(chunk: Chunk): Unit
+
+  protected[this] var fresh = true
+
+  private def ensureInitialWritten(): Unit =
+    if (fresh) {
+      fresh = false
+      write(IndefiniteLength(major))
+    }
+
+  def writeChunk(chunk: Chunk): Unit = {
+    ensureInitialWritten()
+    doWriteChunk(chunk)
+  }
+
+  def finish(): Unit = {
+    ensureInitialWritten()
+    write(InitialByte.Break)
+  }
+}
+
+class CborChunkedStringOutput(out: DataOutput) extends CborChunkedOutput(out) {
+  type Chunk = String
+
+  protected def major: MajorType = MajorType.TextString
+  protected def doWriteChunk(chunk: String): Unit = writeText(chunk)
+}
+
+class CborChunkedBinaryOutput(out: DataOutput) extends CborChunkedOutput(out) {
+  type Chunk = Array[Byte]
+
+  protected def major: MajorType = MajorType.ByteString
+  protected def doWriteChunk(chunk: Array[Byte]): Unit = writeBytes(chunk)
 }
