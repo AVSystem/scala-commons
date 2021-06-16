@@ -32,6 +32,32 @@ abstract class SimpleInputWrapper extends SimpleInput {
   override def readFloat(): Float = wrapped.readFloat()
 }
 
+abstract class FieldInputWrapper extends InputWrapper with FieldInput {
+  protected def wrapped: FieldInput
+
+  def fieldName: String = wrapped.fieldName
+}
+
+abstract class SequentialInputWrapper extends SequentialInput {
+  protected def wrapped: SequentialInput
+
+  override def knownSize: Int = wrapped.knownSize
+  def hasNext: Boolean = wrapped.hasNext
+}
+
+abstract class ListInputWrapper extends SequentialInputWrapper with ListInput {
+  protected def wrapped: ListInput
+
+  def nextElement(): Input = wrapped.nextElement()
+}
+
+abstract class ObjectInputWrapper extends SequentialInputWrapper with ObjectInput {
+  protected def wrapped: ObjectInput
+
+  override def peekField(name: String): Opt[FieldInput] = wrapped.peekField(name)
+  def nextField(): FieldInput = wrapped.nextField()
+}
+
 abstract class OutputWrapper extends Output {
   protected def wrapped: Output
 
@@ -60,4 +86,25 @@ abstract class SimpleOutputWrapper extends SimpleOutput {
   override def writeShort(short: Short): Unit = wrapped.writeShort(short)
   override def writeTimestamp(millis: Long): Unit = wrapped.writeTimestamp(millis)
   override def writeFloat(float: Float): Unit = wrapped.writeFloat(float)
+}
+
+abstract class SequentialOutputWrapper extends SequentialOutput {
+  protected def wrapped: SequentialOutput
+
+  override def declareSize(size: Int): Unit = wrapped.declareSize(size)
+  override def sizePolicy: SizePolicy = wrapped.sizePolicy
+
+  def finish(): Unit = wrapped.finish()
+}
+
+abstract class ListOutputWrapper extends SequentialOutputWrapper with ListOutput {
+  protected def wrapped: ListOutput
+
+  def writeElement(): Output = wrapped.writeElement()
+}
+
+abstract class ObjectOutputWrapper extends SequentialOutputWrapper with ObjectOutput {
+  protected def wrapped: ObjectOutput
+
+  def writeField(key: String): Output = wrapped.writeField(key)
 }
