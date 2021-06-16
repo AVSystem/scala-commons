@@ -3,10 +3,9 @@ package serialization.cbor
 
 import com.avsystem.commons.misc.Bytes
 import com.avsystem.commons.serialization.SizePolicy
-import org.apache.commons.io.output.ByteArrayOutputStream
 import org.scalatest.funsuite.AnyFunSuite
 
-import java.io.DataOutputStream
+import java.io.{ByteArrayOutputStream, DataOutputStream}
 
 class CborNonStringKeysTest extends AnyFunSuite {
   test("writing and reading CBOR map with non-string keys") {
