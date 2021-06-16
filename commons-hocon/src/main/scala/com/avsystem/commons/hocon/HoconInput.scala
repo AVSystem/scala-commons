@@ -46,8 +46,8 @@ class HoconInput(value: ConfigValue) extends InputAndSimpleInput with BaseHoconI
     ConfigFactory.empty.withValue(FakePath, value)
 
   def readNull(): Boolean = handleFailures(config.getIsNull(FakePath))
-  def readList(): ListInput = handleFailures(new HoconListInput(config.getList(FakePath)))
-  def readObject(): ObjectInput = handleFailures(new HoconObjectInput(config.getObject(FakePath)))
+  def readList(): HoconListInput = handleFailures(new HoconListInput(config.getList(FakePath)))
+  def readObject(): HoconObjectInput = handleFailures(new HoconObjectInput(config.getObject(FakePath)))
   def skip(): Unit = ()
 
   def readString(): String = handleFailures(config.getString(FakePath))
@@ -96,7 +96,7 @@ class HoconListInput(configList: ConfigList) extends ListInput with BaseHoconInp
 
   def hasNext: Boolean = elements.hasNext
 
-  def nextElement(): Input =
+  def nextElement(): HoconInput =
     handleFailures(new HoconInput(elements.next()))
 }
 
@@ -107,12 +107,12 @@ class HoconObjectInput(configObject: ConfigObject) extends ObjectInput with Base
 
   def hasNext: Boolean = keys.hasNext
 
-  def nextField(): FieldInput = handleFailures {
+  def nextField(): HoconFieldInput = handleFailures {
     val nextKey = keys.next()
     new HoconFieldInput(nextKey, configObject.get(nextKey))
   }
 
-  override def peekField(name: String): Opt[FieldInput] =
+  override def peekField(name: String): Opt[HoconFieldInput] =
     if (configObject.containsKey(name))
       new HoconFieldInput(name, configObject.get(name)).opt
     else Opt.Empty
