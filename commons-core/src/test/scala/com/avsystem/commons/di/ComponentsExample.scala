@@ -50,21 +50,19 @@ trait DatabaseComponents extends Components {
   def dynamicDep(db: Component[Database]): Component[DynamicDep] =
     component(new DynamicDep(db.ref))
 
-  implicit def database: Component[Database] =
-    singleton(new Database(config.databaseUrl))
+  implicit val database: Component[Database] =
+    component(new Database(config.databaseUrl))
 
-  implicit def bulbulatorDao: Component[BulbulatorDao] =
-    singleton(new BulbulatorDao(config.bulbulator))
+  implicit val bulbulatorDao: Component[BulbulatorDao] =
+    component(new BulbulatorDao(config.bulbulator))
 
-  implicit def deviceDao: Component[DeviceDao] =
-    singleton(new DeviceDao)
+  implicit val deviceDao: Component[DeviceDao] =
+    component(new DeviceDao)
 }
 
 class ComponentsExample(val config: DynamicConfig) extends Components with DatabaseComponents {
-  def fullApplication: Component[FullApplication] =
-    singleton(new FullApplication(dynamicDep(database).ref))
-
-  val singletons: List[Component[_]] = reifyAllSingletons
+  val fullApplication: Component[FullApplication] =
+    component(new FullApplication(dynamicDep(database).ref))
 }
 object ComponentsExample {
 
