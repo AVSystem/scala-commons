@@ -160,3 +160,7 @@ object MyApp extends Components {
   val server: Component[Server] = component(new Server))
 }
 ```
+
+## Complete example
+
+See [ComponentsExample.scala](https://github.com/AVSystem/scala-commons/blob/master/commons-core/src/test/scala/com/avsystem/commons/di/ComponentsExample.scala)
