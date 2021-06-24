@@ -311,14 +311,16 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     }
   }
 
-  trait OOOFieldsObjectCodec[T] extends ObjectCodec[T] {
+  trait SizedCodec[T] extends GenCodec[T] {
     def size(value: T): Int
 
-    protected final def declareSizeFor(output: ObjectOutput, value: T): Unit =
+    protected final def declareSizeFor(output: SequentialOutput, value: T): Unit =
       if (output.sizePolicy != SizePolicy.Ignored) {
         output.declareSize(size(value))
       }
+  }
 
+  trait OOOFieldsObjectCodec[T] extends ObjectCodec[T] with SizedCodec[T] {
     def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T
     def writeFields(output: ObjectOutput, value: T): Unit
 
