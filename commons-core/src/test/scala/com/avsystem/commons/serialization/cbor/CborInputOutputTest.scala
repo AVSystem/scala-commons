@@ -1,12 +1,13 @@
 package com.avsystem.commons
 package serialization.cbor
 
-import java.io.{ByteArrayOutputStream, DataOutputStream}
-
 import com.avsystem.commons.misc.{Bytes, Timestamp}
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
+
+import java.io.{ByteArrayOutputStream, DataOutputStream}
 
 case class Record(
   b: Boolean,
@@ -21,15 +22,15 @@ class CborInputOutputTest extends AnyFunSuite {
   private def roundtrip[T: GenCodec](
     value: T,
     binary: String,
-    labels: FieldLabels = FieldLabels.NoLabels
+    keyCodec: CborKeyCodec = CborKeyCodec.Default
   )(implicit pos: Position): Unit =
     test(s"${pos.lineNumber}: $value") {
       val baos = new ByteArrayOutputStream
-      val output = new CborOutput(new DataOutputStream(baos), labels, SizePolicy.Optional)
+      val output = new CborOutput(new DataOutputStream(baos), keyCodec, SizePolicy.Optional)
       GenCodec.write[T](output, value)
       val bytes = baos.toByteArray
       assert(Bytes(bytes).toString == binary)
-      assert(CborInput.read[T](bytes, labels) == value)
+      assert(CborInput.read[T](bytes, keyCodec) == value)
     }
 
   // binary representation from cbor.me
@@ -118,19 +119,23 @@ class CborInputOutputTest extends AnyFunSuite {
   roundtrip(IListMap("a" -> 1, "b" -> 2, "c" -> 3), "BF616101616202616303FF")
   roundtrip(Map("a" -> 1, "b" -> 2, "c" -> 3), "A3616101616202616303")
 
-  val labels: FieldLabels = new FieldLabels {
-    def label(field: String): Opt[Int] = field match {
-      case "a" => Opt(-1)
-      case "b" => Opt(0)
-      case _ => Opt.Empty
+  val keyCodec: CborKeyCodec = new CborKeyCodec {
+    def writeFieldKey(fieldName: String, output: CborOutput): Unit = fieldName match {
+      case "a" => output.writeInt(-1)
+      case "b" => output.writeInt(0)
+      case n => output.writeString(n)
     }
-    def field(label: Int): Opt[String] = label match {
-      case -1 => Opt("a")
-      case 0 => Opt("b")
-      case _ => Opt.Empty
+    def readFieldKey(input: CborInput): String = input.readInitialByte().majorType match {
+      case MajorType.Unsigned | MajorType.Negative => input.readInt() match {
+        case -1 => "a"
+        case 0 => "b"
+        case n => throw new ReadFailure(s"unknown CBOR field label: $n")
+      }
+      case _ =>
+        input.readString()
     }
   }
-  roundtrip(Map("a" -> 1, "b" -> 2, "c" -> 3), "A320010002616303", labels)
+  roundtrip(Map("a" -> 1, "b" -> 2, "c" -> 3), "A320010002616303", keyCodec)
 
   roundtrip(
     Record(b = true, 42, List("a", "ajskd", "kek"), 3.14, "fuuuu"),
@@ -155,10 +160,10 @@ class CborGenCodecRoundtripTest extends GenCodecRoundtripTest {
 
   def writeToOutput(write: Output => Unit): RawCbor = {
     val baos = new ByteArrayOutputStream
-    write(new CborOutput(new DataOutputStream(baos), FieldLabels.NoLabels, SizePolicy.Optional))
+    write(new CborOutput(new DataOutputStream(baos), CborKeyCodec.Default, SizePolicy.Optional))
     RawCbor(baos.toByteArray)
   }
 
   def createInput(raw: RawCbor): Input =
-    new CborInput(new CborReader(raw), FieldLabels.NoLabels)
+    new CborInput(new CborReader(raw), CborKeyCodec.Default)
 }

@@ -10,8 +10,8 @@ final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
     if (idx < 0 || idx >= length) throw new IndexOutOfBoundsException
     else bytes(offset + idx)
 
-  def createInput(fieldLabels: FieldLabels): CborInput =
-    new CborInput(new CborReader(this), fieldLabels)
+  def createInput(keyCodec: CborKeyCodec = CborKeyCodec.Default): CborInput =
+    new CborInput(new CborReader(this), keyCodec)
 
   def safeCopy: RawCbor = {
     val newBytes = new Array[Byte](length)
