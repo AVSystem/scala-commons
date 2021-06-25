@@ -17,6 +17,12 @@ abstract class MyComponent {
   println(s"starting $this initialization on ${Thread.currentThread().getId}")
   Thread.sleep(100)
   println(s"finished $this initialization")
+
+  def destroy(): Unit = {
+    println(s"starting teardown of $this")
+    Thread.sleep(100)
+    println(s"finished teardown of $this")
+  }
 }
 
 class DynamicDep(db: Database) extends MyComponent
@@ -48,16 +54,16 @@ trait DatabaseComponents extends Components {
   def config: DynamicConfig
 
   def dynamicDep(db: Component[Database]): Component[DynamicDep] =
-    component(new DynamicDep(db.ref))
+    component(new DynamicDep(db.ref)).destroyWith(_.destroy())
 
   implicit val database: Component[Database] =
-    component(new Database(config.databaseUrl))
+    component(new Database(config.databaseUrl)).destroyWith(_.destroy())
 
   implicit val bulbulatorDao: Component[BulbulatorDao] =
-    component(new BulbulatorDao(config.bulbulator))
+    component(new BulbulatorDao(config.bulbulator)).destroyWith(_.destroy())
 
   implicit val deviceDao: Component[DeviceDao] =
-    component(new DeviceDao)
+    component(new DeviceDao).destroyWith(_.destroy())
 }
 
 class ComponentsExample(val config: DynamicConfig) extends Components with DatabaseComponents {
@@ -70,6 +76,8 @@ object ComponentsExample {
 
   def main(args: Array[String]): Unit = {
     val config = DynamicConfig("whatever", BulbulatorConfig(List("jeden", "drugi")))
-    Await.result(new ComponentsExample(config).fullApplication.init, Duration.Inf)
+    val comps = new ComponentsExample(config)
+    Await.result(comps.fullApplication.init, Duration.Inf)
+    Await.result(comps.fullApplication.destroy, Duration.Inf)
   }
 }

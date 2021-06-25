@@ -1,12 +1,14 @@
 package com.avsystem.commons
 package di
 
+import com.avsystem.commons.di.Component.DestroyFunction
 import com.avsystem.commons.macros.di.ComponentMacros
-import com.avsystem.commons.misc.SourceInfo
+import com.avsystem.commons.misc.{GraphUtils, SourceInfo}
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
-import scala.annotation.{compileTimeOnly, tailrec}
+import scala.annotation.compileTimeOnly
+import scala.annotation.unchecked.uncheckedVariance
 
 case class ComponentInitializationException(component: Component[_], cause: Throwable)
   extends Exception(s"failed to initialize component ${component.info}", cause)
@@ -42,7 +44,8 @@ object ComponentInfo {
 final class Component[+T](
   val info: ComponentInfo,
   deps: => IndexedSeq[Component[_]],
-  create: IndexedSeq[Any] => ExecutionContext => Future[T],
+  creator: IndexedSeq[Any] => ExecutionContext => Future[T],
+  destroyer: DestroyFunction[T] = Component.emptyDestroy,
   cachedStorage: Opt[AtomicReference[Future[T]]] = Opt.Empty,
 ) {
 
@@ -96,10 +99,19 @@ final class Component[+T](
     storage.get.option.flatMap(_.value.map(_.get))
 
   def dependsOn(moreDeps: Component[_]*): Component[T] =
-    new Component(info, deps ++ moreDeps, create, cachedStorage)
+    new Component(info, deps ++ moreDeps, creator, destroyer, cachedStorage)
 
-  private[di] def cached[T0 >: T](cachedStorage: AtomicReference[Future[T0]], info: ComponentInfo): Component[T0] =
-    new Component(info, deps, create, Opt(cachedStorage))
+  def asyncDestroyWith(destroyFun: DestroyFunction[T]): Component[T] = {
+    val newDestroyer: DestroyFunction[T] =
+      implicit ctx => t => destroyer(ctx)(t).flatMap(_ => destroyFun(ctx)(t))
+    new Component(info, deps, creator, newDestroyer, cachedStorage)
+  }
+
+  def destroyWith(destroyFun: T => Unit): Component[T] =
+    asyncDestroyWith(implicit ctx => t => Future(destroyFun(t)))
+
+  private[di] def cached(cachedStorage: AtomicReference[Future[T@uncheckedVariance]], info: ComponentInfo): Component[T] =
+    new Component(info, deps, creator, destroyer, Opt(cachedStorage))
 
   /**
     * Validates this component by checking its dependency graph for cycles.
@@ -116,6 +128,22 @@ final class Component[+T](
   def init(implicit ec: ExecutionContext): Future[T] =
     doInit(starting = true)
 
+  /**
+    * Destroys this component and all its dependencies (in reverse initialization order, i.e. first the component
+    * and then its dependencies. Destroying calls the function that was registered with [[destroyWith]] or
+    * [[asyncDestroyWith]] and clears the cached component instance so that it is created anew if [[init]] is called
+    * again.
+    * If possible, independent components are destroyed in parallel, using given `ExecutionContext`.
+    */
+  def destroy(implicit ec: ExecutionContext): Future[Unit] =
+    Component.destroyAll(List(this))
+
+  private def doDestroy(implicit ec: ExecutionContext): Future[Unit] =
+    getIfReady.fold(Future.unit) { value =>
+      storage.set(null)
+      destroyer(ec)(value)
+    }
+
   private def doInit(starting: Boolean)(implicit ec: ExecutionContext): Future[T] =
     storage.getPlain match {
       case null =>
@@ -126,7 +154,7 @@ final class Component[+T](
           }
           val resultFuture =
             Future.traverse(dependencies)(_.doInit(starting = false))
-              .flatMap(resolvedDeps => create(resolvedDeps)(ec))
+              .flatMap(resolvedDeps => creator(resolvedDeps)(ec))
               .recoverNow {
                 case NonFatal(cause) =>
                   throw ComponentInitializationException(this, cause)
@@ -139,41 +167,57 @@ final class Component[+T](
     }
 }
 object Component {
+  type DestroyFunction[-T] = ExecutionContext => T => Future[Unit]
+
+  def emptyDestroy[T]: DestroyFunction[T] =
+    reusableEmptyDestroy.asInstanceOf[DestroyFunction[T]]
+
+  private[this] val reusableEmptyDestroy: DestroyFunction[Any] =
+    _ => _ => Future.unit
+
   def async[T](definition: => T): ExecutionContext => Future[T] =
-    _ => Future.eval(definition)
+    implicit ctx => Future(definition)
 
   private case class DfsPtr(component: Component[_], deps: List[Component[_]])
 
-  def validateAll(components: Seq[Component[_]]): Unit = {
-    val visited = new MHashMap[Component[_], Boolean]
-    components.foreach { component =>
-      if (!visited.contains(component)) {
-        visited(component) = false
-        detectCycles(List(DfsPtr(component, component.dependencies.toList)), visited)
+  def validateAll(components: Seq[Component[_]]): Unit =
+    GraphUtils.dfs(components)(
+      _.dependencies.toList,
+      onCycle = (node, stack) => {
+        val cyclePath = node :: (node :: stack.map(_.node).takeWhile(_ != node)).reverse
+        throw DependencyCycleException(cyclePath)
       }
-    }
-  }
+    )
 
-  @tailrec // DFS
-  private def detectCycles(stack: List[DfsPtr], visited: MHashMap[Component[_], Boolean]): Unit =
-    stack match {
-      case DfsPtr(component, deps) :: stackTail => deps match {
-        case Nil =>
-          visited(component) = true
-          detectCycles(stackTail, visited)
-        case nextDep :: depsTail => visited.get(nextDep) match {
-          case None =>
-            visited(nextDep) = false
-            detectCycles(DfsPtr(nextDep, nextDep.dependencies.toList) :: DfsPtr(component, depsTail) :: stackTail, visited)
-          case Some(true) =>
-            detectCycles(DfsPtr(component, depsTail) :: stackTail, visited)
-          case Some(false) => // cycle
-            val cyclePath = nextDep :: (nextDep :: stack.map(_.component).takeWhile(_ != nextDep)).reverse
-            throw DependencyCycleException(cyclePath)
-        }
+  /**
+    * Destroys all given components and their dependencies by calling their destroy function (registered with
+    * [[Component.destroyWith()]] or [[Component.asyncDestroyWith()]]) and clearing up cached component instances.
+    * It is ensured that a component is only destroyed after all components that depend on it are destroyed
+    * (reverse initialization order).
+    * Independent components are destroyed in parallel, using given `ExecutionContext`.
+    */
+  def destroyAll(components: Seq[Component[_]])(implicit ec: ExecutionContext): Future[Unit] = {
+    val reverseGraph = new MHashMap[Component[_], MListBuffer[Component[_]]]
+    val terminals = new MHashSet[Component[_]]
+    GraphUtils.dfs(components)(
+      _.dependencies.toList,
+      onEnter = { (c, _) =>
+        reverseGraph.getOrElseUpdate(c, new MListBuffer) // make sure there is entry for all nodes
+        if (c.dependencies.nonEmpty)
+          c.dependencies.foreach { dep =>
+            reverseGraph.getOrElseUpdate(dep, new MListBuffer) += c
+          }
+        else
+          terminals += c
       }
-      case Nil =>
-    }
+    )
+    val destroyFutures = new MHashMap[Component[_], Future[Unit]]
+
+    def doDestroy(c: Component[_]): Future[Unit] =
+      destroyFutures.getOrElseUpdate(c, Future.traverse(reverseGraph(c))(doDestroy).flatMap(_ => c.doDestroy))
+
+    Future.traverse(reverseGraph.keys)(doDestroy).toUnit
+  }
 }
 
 /**
@@ -186,6 +230,9 @@ object Component {
   */
 case class AutoComponent[+T](component: Component[T]) extends AnyVal
 
+/**
+  * Base trait for classes that define collections of interdependent [[Component]]s.
+  */
 trait Components extends ComponentsLowPrio {
   protected def componentNamePrefix: String = ""
 
