@@ -30,7 +30,7 @@ class CborInputOutputTest extends AnyFunSuite {
       GenCodec.write[T](output, value)
       val bytes = baos.toByteArray
       assert(Bytes(bytes).toString == binary)
-      assert(CborInput.read[T](bytes, keyCodec) == value)
+      assert(RawCbor(bytes).readAs[T](keyCodec) == value)
     }
 
   // binary representation from cbor.me
@@ -147,11 +147,11 @@ class CborInputOutputTest extends AnyFunSuite {
   )
 
   test("chunked text string") {
-    assert(CborInput.read[String](Bytes.fromHex("7F626162626162626162FF").bytes) == "ababab")
+    assert(CborInput.read[String](RawCbor.fromHex("7F626162626162626162FF")) == "ababab")
   }
 
   test("chunked byte string") {
-    assert(CborInput.read[Bytes](Bytes.fromHex("5F426162426162426162FF").bytes) == Bytes("ababab"))
+    assert(CborInput.read[Bytes](RawCbor.fromHex("5F426162426162426162FF")) == Bytes("ababab"))
   }
 }
 

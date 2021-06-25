@@ -3,8 +3,28 @@ package serialization.cbor
 
 import com.avsystem.commons.serialization.{GenCodec, TypeMarker}
 
+import scala.annotation.tailrec
+
 final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
   require(offset >= 0 && length >= 0 && offset + length <= bytes.length)
+
+  override def equals(other: Any): Boolean = other match {
+    case RawCbor(otherBytes, otherOffset, otherLength) =>
+      java.util.Arrays.equals(
+        bytes, offset, offset + length,
+        otherBytes, otherOffset, otherOffset + otherLength
+      )
+  }
+
+  override lazy val hashCode: Int = {
+    @tailrec def loop(i: Int, acc: Int): Int =
+      if (i >= offset + length) acc
+      else loop(i + 1, acc * 31 + bytes(i))
+    loop(offset, 1)
+  }
+
+  override def toString: String =
+    bytes.iterator.map(b => f"${b & 0xFF}%02X").mkString
 
   def apply(idx: Int): Byte =
     if (idx < 0 || idx >= length) throw new IndexOutOfBoundsException
@@ -12,6 +32,9 @@ final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
 
   def createInput(keyCodec: CborKeyCodec = CborKeyCodec.Default): CborInput =
     new CborInput(new CborReader(this), keyCodec)
+
+  def readAs[T: CborCodec](keyCodec: CborKeyCodec = CborKeyCodec.Default): T =
+    CborCodec.read[T](createInput(keyCodec))
 
   def safeCopy: RawCbor = {
     val newBytes = new Array[Byte](length)
@@ -28,6 +51,9 @@ object RawCbor extends TypeMarker[RawCbor] {
 
   def apply(bytes: Array[Byte]): RawCbor =
     RawCbor(bytes, 0, bytes.length)
+
+  def fromHex(hex: String): RawCbor =
+    RawCbor(hex.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray)
 
   implicit val codec: GenCodec[RawCbor] =
     GenCodec.nonNull(

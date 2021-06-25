@@ -52,14 +52,14 @@ abstract class BaseCborOutput(out: DataOutput) {
 }
 
 object CborOutput {
-  def write[T: GenCodec](
+  def write[T: CborCodec](
     value: T,
     keyCodec: CborKeyCodec = CborKeyCodec.Default,
     sizePolicy: SizePolicy = SizePolicy.Optional
-  ): Array[Byte] = {
+  ): RawCbor = {
     val baos = new ByteArrayOutputStream
-    GenCodec.write[T](new CborOutput(new DataOutputStream(baos), keyCodec, sizePolicy), value)
-    baos.toByteArray
+    CborCodec.write[T](new CborOutput(new DataOutputStream(baos), keyCodec, sizePolicy), value)
+    RawCbor(baos.toByteArray)
   }
 }
 
