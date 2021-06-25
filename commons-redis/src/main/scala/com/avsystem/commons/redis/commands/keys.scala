@@ -292,8 +292,13 @@ trait NodeKeysApi extends KeyedKeysApi with ApiSubset {
   def keys(pattern: Key): Result[BSet[Key]] =
     execute(new Keys(pattern))
   /** Executes [[http://redis.io/commands/scan SCAN]] */
-  def scan(cursor: Cursor, matchPattern: OptArg[Key] = OptArg.Empty, count: OptArg[Long] = OptArg.Empty): Result[(Cursor, Seq[Key])] =
-    execute(new Scan(cursor, matchPattern.toOpt, count.toOpt))
+  def scan(
+    cursor: Cursor,
+    matchPattern: OptArg[Key] = OptArg.Empty,
+    count: OptArg[Long] = OptArg.Empty,
+    keyType: OptArg[RedisType] = OptArg.Empty
+  ): Result[(Cursor, Seq[Key])] =
+    execute(new Scan(cursor, matchPattern.toOpt, count.toOpt, keyType.toOpt))
   /** Executes [[http://redis.io/commands/randomkey RANDOMKEY]] */
   def randomkey: Result[Opt[Key]] =
     execute(Randomkey)
@@ -309,9 +314,10 @@ trait NodeKeysApi extends KeyedKeysApi with ApiSubset {
     val encoded: Encoded = encoder("KEYS").data(pattern).result
   }
 
-  private final class Scan(cursor: Cursor, matchPattern: Opt[Key], count: Opt[Long])
+  private final class Scan(cursor: Cursor, matchPattern: Opt[Key], count: Opt[Long], keyType: Opt[RedisType])
     extends RedisScanCommand[Key](multiBulkAsSeqOf[Key]) with NodeCommand {
-    val encoded: Encoded = encoder("SCAN").add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
+    val encoded: Encoded =
+      encoder("SCAN").add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).optAdd("TYPE", keyType).result
   }
 
   private object Randomkey extends RedisOptDataCommand[Key] with NodeCommand {
