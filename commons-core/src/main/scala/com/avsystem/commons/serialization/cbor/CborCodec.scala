@@ -5,7 +5,7 @@ import com.avsystem.commons.jiop.JFactory
 import com.avsystem.commons.meta.Fallback
 import com.avsystem.commons.serialization.{GenCodec, TransparentWrapping}
 
-import scala.collection.compat.Factory
+import scala.collection.compat._
 
 /**
   * Similar to `GenCodec` but assumes usage of `CborOutput` and `CborInput` rather than generic `Output` and `Input`.
@@ -43,6 +43,10 @@ object CborCodec extends LowPriorityCborCodecs {
     def read(input: CborInput): M[K, V] = {
       val oi = input.readObject()
       val b = factory.newBuilder
+      oi.knownSize match {
+        case -1 =>
+        case size => b.sizeHint(size)
+      }
       while (oi.hasNext) {
         val key = CborCodec[K].read(oi.nextKey())
         val value = CborCodec[V].read(oi.nextValue())
