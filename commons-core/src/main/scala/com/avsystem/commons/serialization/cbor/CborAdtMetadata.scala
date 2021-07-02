@@ -8,6 +8,21 @@ import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
 import com.avsystem.commons.serialization._
 
 /**
+  * Like [[HasGenCodec]] but generates a codec optimized for writing and reading CBOR via [[CborOutput]] and
+  * [[CborInput]]. The differences between this codec and regular codec are:
+  * <ul>
+  * <li>case class fields that are `Map`s are serialized with [[CborOptimizedCodecs.cborMapCodec]] so that
+  * map keys are not required to be strings - they can be of arbitrary type that has [[GenCodec]]</li>
+  * <li>you can optimize CBOR for your case classes and sealed hierarchies with annotations:
+  * [[cborKey]] and [[cborDiscriminator]], again taking advantage of the fact that CBOR map keys can be of
+  * arbitrary type and not just strings</li>
+  * </ul>
+  */
+abstract class HasCborCodec[T](implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtInstances[T]]) {
+  implicit lazy val codec: GenObjectCodec[T] = instances(CborOptimizedCodecs, this).cborCodec
+}
+
+/**
   * Apply this annotation on a sealed trait/class whose companion extends [[HasCborCodec]] in order to customize
   * the CBOR field key used for discriminator field. Note: this annotation automatically applies [[flatten]] annotation
   * on the sealed trait/class.
@@ -33,6 +48,11 @@ class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] =
   * {{{
   *   case class Stuff(@cborKey(0) value: Int)
   *   object Stuff extends HasCborCodec[Stuff]
+  *
+  *   @cborDiscriminator(0) sealed trait Base
+  *   @cborKey(1) case class IntCase(int: Int) extends Base
+  *   @cborKey(2) case class StrCase(str: String) extends Base
+  *   object Base extends HasCborCodec[Base]
   * }}}
   */
 class cborKey[T](key: T, @infer codec: GenCodec[T] = infer.value) extends StaticAnnotation {
@@ -222,8 +242,4 @@ trait CborAdtInstances[T] {
 
   def cborCodec: GenObjectCodec[T] =
     metadata.setup(_.validate()).adjustCodec(stdCodec)
-}
-
-abstract class HasCborCodec[T](implicit instances: MacroInstances[CborCustomCodecs, CborAdtInstances[T]]) {
-  implicit lazy val codec: GenObjectCodec[T] = instances(CborCustomCodecs, this).cborCodec
 }

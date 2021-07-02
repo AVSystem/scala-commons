@@ -7,7 +7,7 @@ import com.avsystem.commons.serialization._
 
 import scala.collection.compat._
 
-trait CborCustomCodecs {
+trait CborOptimizedCodecs {
   /**
     * Creates a `GenCodec` for map type that leverages CBOR's ability to write object keys of arbitrary type.
     * Map keys are not written as strings but are serialized into raw CBOR.
@@ -43,7 +43,7 @@ trait CborCustomCodecs {
     new CborRawKeysCodec(stdObjectCodec, cborKeyCodec)
   }
 }
-object CborCustomCodecs extends CborCustomCodecs
+object CborOptimizedCodecs extends CborOptimizedCodecs
 
 class CborRawKeysCodec[T](stdObjectCodec: GenObjectCodec[T], keyCodec: CborKeyCodec) extends GenObjectCodec[T] {
   def readObject(input: ObjectInput): T = {

@@ -8,7 +8,7 @@ import com.avsystem.commons.serialization.cbor.InitialByte.IndefiniteLength
 import java.io.{ByteArrayOutputStream, DataOutput, DataOutputStream}
 import java.nio.charset.StandardCharsets
 
-abstract class BaseCborOutput(out: DataOutput) {
+sealed abstract class BaseCborOutput(out: DataOutput) {
   protected final def write(byte: InitialByte): Unit =
     out.write(byte.value)
 
@@ -180,7 +180,7 @@ class CborOutput(out: DataOutput, keyCodec: CborKeyCodec, sizePolicy: SizePolicy
   }
 }
 
-abstract class CborSequentialOutput(
+sealed abstract class CborSequentialOutput(
   out: DataOutput,
   override val sizePolicy: SizePolicy
 ) extends BaseCborOutput(out) with SequentialOutput {
@@ -291,7 +291,7 @@ class CborObjectOutput(
   }
 }
 
-abstract class CborChunkedOutput(out: DataOutput) extends BaseCborOutput(out) {
+sealed abstract class CborChunkedOutput(out: DataOutput) extends BaseCborOutput(out) {
   protected type Chunk
 
   protected def major: MajorType
