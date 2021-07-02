@@ -10,8 +10,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.compat._
-import scala.collection.generic.{CanBuildFrom, MapFactory}
-import scala.collection.mutable
 
 class ObservableExtensionsTest extends AnyFunSuite with Matchers
   with ScalaCheckDrivenPropertyChecks with ObservableExtensions with ScalaFutures {
@@ -50,16 +48,6 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
     forAll { ints: List[(Int, Int)] =>
       def testFactory[T](factory: Factory[(Int, Int), T])(implicit position: Position) =
         Observable.fromIterable(ints).toL(factory).runToFuture.futureValue shouldBe factory.fromSpecific(ints)
-
-      //workaround for compat issues in 2.12
-      implicit def mutableMapFactoryToCBF[K, V, CC[A, B] <: MMap[A, B] with mutable.MapLike[A, B, CC[A, B]]](
-        fact: MapFactory[CC]
-      ): CanBuildFrom[Any, (K, V), CC[K, V]] = {
-        new CanBuildFrom[Any, (K, V), CC[K, V]] {
-          def apply(from: Any): mutable.Builder[(K, V), CC[K, V]] = apply()
-          def apply(): mutable.Builder[(K, V), CC[K, V]] = fact.newBuilder[K, V]
-        }
-      }
 
       testFactory(List)
       testFactory(Vector)
