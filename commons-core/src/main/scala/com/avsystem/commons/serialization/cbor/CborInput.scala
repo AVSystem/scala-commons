@@ -148,7 +148,10 @@ final class CborReader(val data: RawCbor) {
 }
 
 object CborInput {
-  def read[T: GenCodec](cbor: RawCbor, keyCodec: CborKeyCodec = CborKeyCodec.Default): T =
+  def read[T: GenCodec](bytes: Array[Byte], keyCodec: CborKeyCodec = CborKeyCodec.Default): T =
+    RawCbor(bytes).readAs[T](keyCodec)
+
+  def readRawCbor[T: GenCodec](cbor: RawCbor, keyCodec: CborKeyCodec = CborKeyCodec.Default): T =
     cbor.readAs[T](keyCodec)
 
   private final val Two64 = BigInt(1) << 64

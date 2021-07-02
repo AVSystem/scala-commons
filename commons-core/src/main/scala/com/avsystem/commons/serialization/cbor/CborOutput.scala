@@ -56,11 +56,17 @@ object CborOutput {
     value: T,
     keyCodec: CborKeyCodec = CborKeyCodec.Default,
     sizePolicy: SizePolicy = SizePolicy.Optional
-  ): RawCbor = {
+  ): Array[Byte] = {
     val baos = new ByteArrayOutputStream
     GenCodec.write[T](new CborOutput(new DataOutputStream(baos), keyCodec, sizePolicy), value)
-    RawCbor(baos.toByteArray)
+    baos.toByteArray
   }
+
+  def writeRawCbor[T: GenCodec](
+    value: T,
+    keyCodec: CborKeyCodec = CborKeyCodec.Default,
+    sizePolicy: SizePolicy = SizePolicy.Optional
+  ): RawCbor = RawCbor(write(value, keyCodec, sizePolicy))
 }
 
 /**

@@ -13,7 +13,7 @@ import com.avsystem.commons.serialization._
   * on the sealed trait/class.
   */
 class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] = infer.value) extends AnnotationAggregate {
-  val rawKey: RawCbor = CborOutput.write(discriminatorFieldKey)(codec)
+  val rawKey: RawCbor = CborOutput.writeRawCbor(discriminatorFieldKey)(codec)
 
   @flatten
   final def aggregated: List[StaticAnnotation] = reifyAggregated
@@ -36,7 +36,7 @@ class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] =
   * }}}
   */
 class cborKey[T](key: T, @infer codec: GenCodec[T] = infer.value) extends StaticAnnotation {
-  val rawKey: RawCbor = CborOutput.write(key)(codec)
+  val rawKey: RawCbor = CborOutput.writeRawCbor(key)(codec)
 }
 
 sealed trait CborAdtMetadata[T] extends TypedMetadata[T] {
@@ -51,7 +51,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
     @optional @reifyAnnot val cborKey: Opt[cborKey[_]]
   ) {
     val stringKey: String = nameAnnot.fold(sourceName)(_.name)
-    val rawKey: RawCbor = cborKey.fold(CborOutput.write(stringKey))(_.rawKey)
+    val rawKey: RawCbor = cborKey.fold(CborOutput.writeRawCbor(stringKey))(_.rawKey)
   }
 
   @positioned(positioned.here)
@@ -87,7 +87,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
                 }
                 .toArray
           }
-        CborCustomCodecs.cborRawKeysCodec(caseNamesKeyCodec)(codecWithAdjustedCaseCodecs)
+        new CborRawKeysCodec(codecWithAdjustedCaseCodecs, caseNamesKeyCodec)
 
       case flatCodec: FlatSealedHierarchyCodec[T] =>
         val codecWithAdjustedCaseCodecs =
@@ -124,7 +124,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
           }
 
         discriminatorKeyCodec
-          .map(CborCustomCodecs.cborRawKeysCodec(_)(codecWithAdjustedCaseCodecs))
+          .map(new CborRawKeysCodec(codecWithAdjustedCaseCodecs, _))
           .getOrElse(codecWithAdjustedCaseCodecs)
 
       case _ =>
@@ -155,7 +155,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
     private val keyCodec = new MappingCborKeyCodec(fields.map(_.keyInfo))
 
     def adjustCodec(codec: GenObjectCodec[T]): GenObjectCodec[T] =
-      CborCustomCodecs.cborRawKeysCodec(keyCodec)(codec)
+      new CborRawKeysCodec(codec, keyCodec)
 
     def adjustFlatCaseCodec(codec: OOOFieldsObjectCodec[T]): OOOFieldsObjectCodec[T] =
       new OOOFieldCborRawKeysCodec[T](codec, keyCodec)

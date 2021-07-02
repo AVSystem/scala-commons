@@ -54,4 +54,8 @@ object FieldLabels {
   }
 }
 
+/**
+  * Use this with `ObjectOutput.customEvent`/`ObjectInput.customEvent` in order to set custom CBOR key codec
+  * for some particular object output or input.
+  */
 object ForceCborKeyCodec extends CustomEventMarker[CborKeyCodec]

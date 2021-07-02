@@ -198,11 +198,11 @@ class CborInputOutputTest extends AnyFunSuite {
   )
 
   test("chunked text string") {
-    assert(CborInput.read[String](RawCbor.fromHex("7F626162626162626162FF")) == "ababab")
+    assert(CborInput.readRawCbor[String](RawCbor.fromHex("7F626162626162626162FF")) == "ababab")
   }
 
   test("chunked byte string") {
-    assert(CborInput.read[Bytes](RawCbor.fromHex("5F426162426162426162FF")) == Bytes("ababab"))
+    assert(CborInput.readRawCbor[Bytes](RawCbor.fromHex("5F426162426162426162FF")) == Bytes("ababab"))
   }
 }
 

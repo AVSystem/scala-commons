@@ -27,8 +27,8 @@ trait CborCustomCodecs {
     implicit fac: Factory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V]] = {
     implicit val genKeyCodec: GenKeyCodec[K] = new GenKeyCodec[K] {
-      def read(key: String): K = CborInput.read[K](RawCbor.fromHex(key))
-      def write(value: K): String = CborOutput.write[K](value).toString
+      def read(key: String): K = CborInput.readRawCbor[K](RawCbor.fromHex(key))
+      def write(value: K): String = CborOutput.writeRawCbor[K](value).toString
     }
 
     implicit val stdObjectCodec: GenObjectCodec[M[K, V]] = mkStdCodec(genKeyCodec)
@@ -40,11 +40,8 @@ trait CborCustomCodecs {
         input.readRawCbor().toString
     }
 
-    cborRawKeysCodec[M[K, V]](cborKeyCodec)
+    new CborRawKeysCodec(stdObjectCodec, cborKeyCodec)
   }
-
-  def cborRawKeysCodec[T: GenObjectCodec](keyCodec: CborKeyCodec): GenObjectCodec[T] =
-    new CborRawKeysCodec[T](GenObjectCodec[T], keyCodec)
 }
 object CborCustomCodecs extends CborCustomCodecs
 

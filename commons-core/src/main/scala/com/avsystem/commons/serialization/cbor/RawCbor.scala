@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization.cbor
 
-import com.avsystem.commons.serialization.{GenCodec, TypeMarker}
+import com.avsystem.commons.serialization.{GenCodec, SizePolicy, TypeMarker}
 
 import scala.annotation.tailrec
 
@@ -54,6 +54,13 @@ object RawCbor extends TypeMarker[RawCbor] {
 
   def fromHex(hex: String): RawCbor =
     RawCbor(hex.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray)
+
+  def write[T: GenCodec](
+    value: T,
+    keyCodec: CborKeyCodec = CborKeyCodec.Default,
+    sizePolicy: SizePolicy = SizePolicy.Optional
+  ): RawCbor =
+    RawCbor(CborOutput.write(value, keyCodec, sizePolicy))
 
   implicit val codec: GenCodec[RawCbor] =
     GenCodec.nonNull(
