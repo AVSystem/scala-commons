@@ -24,7 +24,7 @@ final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
   }
 
   override def toString: String =
-    bytes.iterator.map(b => f"${b & 0xFF}%02X").mkString
+    (offset until offset + length).map(i => f"${bytes(i) & 0xFF}%02X").mkString
 
   def apply(idx: Int): Byte =
     if (idx < 0 || idx >= length) throw new IndexOutOfBoundsException
@@ -33,8 +33,8 @@ final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
   def createInput(keyCodec: CborKeyCodec = CborKeyCodec.Default): CborInput =
     new CborInput(new CborReader(this), keyCodec)
 
-  def readAs[T: CborCodec](keyCodec: CborKeyCodec = CborKeyCodec.Default): T =
-    CborCodec.read[T](createInput(keyCodec))
+  def readAs[T: GenCodec](keyCodec: CborKeyCodec = CborKeyCodec.Default): T =
+    GenCodec.read[T](createInput(keyCodec))
 
   def safeCopy: RawCbor = {
     val newBytes = new Array[Byte](length)

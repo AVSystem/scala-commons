@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization.cbor
 
-import com.avsystem.commons.serialization.GenCodec.{ReadFailure, WriteFailure}
+import com.avsystem.commons.serialization.GenCodec.WriteFailure
 import com.avsystem.commons.serialization._
 import com.avsystem.commons.serialization.cbor.InitialByte.IndefiniteLength
 
@@ -52,13 +52,13 @@ abstract class BaseCborOutput(out: DataOutput) {
 }
 
 object CborOutput {
-  def write[T: CborCodec](
+  def write[T: GenCodec](
     value: T,
     keyCodec: CborKeyCodec = CborKeyCodec.Default,
     sizePolicy: SizePolicy = SizePolicy.Optional
   ): RawCbor = {
     val baos = new ByteArrayOutputStream
-    CborCodec.write[T](new CborOutput(new DataOutputStream(baos), keyCodec, sizePolicy), value)
+    GenCodec.write[T](new CborOutput(new DataOutputStream(baos), keyCodec, sizePolicy), value)
     RawCbor(baos.toByteArray)
   }
 }
@@ -234,6 +234,9 @@ class CborObjectOutput(
   sizePolicy: SizePolicy
 ) extends CborSequentialOutput(out, sizePolicy) with ObjectOutput {
 
+  private[this] var forcedKeyCodec: CborKeyCodec = _
+  private[this] def currentKeyCodec = if(forcedKeyCodec != null) forcedKeyCodec else keyCodec
+
   /**
     * Returns a [[CborOutput]] for writing an arbitrary CBOR map key.
     * This method is an extension of standard [[Output]] which only allows string-typed keys.
@@ -260,7 +263,7 @@ class CborObjectOutput(
 
   def writeField(key: String): CborOutput = {
     val kvOutput = writeKey()
-    keyCodec.writeFieldKey(key, kvOutput)
+    currentKeyCodec.writeFieldKey(key, kvOutput)
     kvOutput
   }
 
@@ -271,6 +274,14 @@ class CborObjectOutput(
     } else if (size > 0) {
       throw new WriteFailure("explicit size was given but not enough fields were written")
     }
+  }
+
+  override def customEvent[T](marker: CustomEventMarker[T], event: T): Boolean = marker match {
+    case ForceCborKeyCodec =>
+      forcedKeyCodec = event
+      true
+    case _ =>
+      false
   }
 }
 

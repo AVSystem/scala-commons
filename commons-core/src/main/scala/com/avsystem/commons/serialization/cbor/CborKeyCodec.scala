@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization.cbor
 
+import com.avsystem.commons.serialization.CustomEventMarker
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 /**
@@ -52,3 +53,5 @@ object FieldLabels {
     def field(label: Int): Opt[String] = Opt.Empty
   }
 }
+
+object ForceCborKeyCodec extends CustomEventMarker[CborKeyCodec]

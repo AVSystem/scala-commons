@@ -148,7 +148,7 @@ final class CborReader(val data: RawCbor) {
 }
 
 object CborInput {
-  def read[T: CborCodec](cbor: RawCbor, keyCodec: CborKeyCodec = CborKeyCodec.Default): T =
+  def read[T: GenCodec](cbor: RawCbor, keyCodec: CborKeyCodec = CborKeyCodec.Default): T =
     cbor.readAs[T](keyCodec)
 
   private final val Two64 = BigInt(1) << 64
@@ -325,7 +325,7 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
   def readTags(): List[Tag] = {
     val buf = new MListBuffer[Tag]
     val startIdx = index
-    def loop(): Unit = peekInitial() match {
+    @tailrec def loop(): Unit = peekInitial() match {
       case InitialByte(MajorType.Tag, info) =>
         nextInitial()
         buf += Tag(readUnsigned(info).toInt)
@@ -430,6 +430,9 @@ class CborListInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
 class CborObjectInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
   extends CborSequentialInput(reader, size) with ObjectInput {
 
+  private[this] var forcedKeyCodec: CborKeyCodec = _
+  private[this] def currentKeyCodec = if(forcedKeyCodec != null) forcedKeyCodec else keyCodec
+
   /**
     * Returns a [[CborOutput]] for reading a raw CBOR field key. This is an extension over standard
     * [[ObjectOutput]] which only allows string-typed keys. If this method is used to read the key then value
@@ -449,8 +452,16 @@ class CborObjectInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
     new CborInput(reader, keyCodec)
 
   def nextField(): CborFieldInput = {
-    val fieldName = keyCodec.readFieldKey(nextKey())
+    val fieldName = currentKeyCodec.readFieldKey(nextKey())
     new CborFieldInput(fieldName, reader, keyCodec)
+  }
+
+  override def customEvent[T](marker: CustomEventMarker[T], event: T): Boolean = marker match {
+    case ForceCborKeyCodec =>
+      forcedKeyCodec = event
+      true
+    case _ =>
+      false
   }
 }
 

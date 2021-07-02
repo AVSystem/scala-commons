@@ -6,16 +6,39 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 /**
   * Base trait for type markers identifying custom native types that particular `Input` and `Output`
-  * implementations might want to support.
+  * implementations might want to support. Custom type markers are passed to
+  * `Output.writeCustom` and `Input.readCustom`.
   */
 trait TypeMarker[T]
 
 /**
   * Base trait for metadata markers identifying custom native metadata information that particular `Input` and
   * `Output` implementations might want to support.
+  * Input metadata markers are passed into `Output.keepsMetadata` and `Input.readMetadata`.
+  *
   * Example: [[com.avsystem.commons.serialization.json.JsonType JsonType]]
   */
 trait InputMetadata[T]
+
+/**
+  * Base trait for event markers identifying custom events that may be emitted into
+  * `Input`s and `Output`s. See [[AcceptsCustomEvents.customEvent]] for more details.
+  */
+trait CustomEventMarker[T]
+
+trait AcceptsCustomEvents extends Any {
+  /**
+    * Emits a custom "event" into an `Input` or `Output`. This event may be literally
+    * anything - its meaning depends purely on particular event and is usually bound to
+    * some particular `Input`/`Output` implementation. In other words, this is a hacky
+    * solution that allows codecs to do custom logic tailored for some particular
+    * `Input`/`Output` implementations.
+    *
+    * @return `true` when an event was understood and processed, `false` if it was
+    *         not understood and ignored
+    */
+  def customEvent[T](marker: CustomEventMarker[T], event: T): Boolean = false
+}
 
 /**
   * Represents an abstract sink to which a value may be serialized (written).
@@ -23,7 +46,7 @@ trait InputMetadata[T]
   * reused. This means that `Output` instance can be used only to write a single value. However, if the value
   * to write is complex, one can use `writeList`/`writeSet` or `writeObject`/`writeMap`.
   */
-trait Output extends Any {
+trait Output extends Any with AcceptsCustomEvents {
   def writeNull(): Unit
   def writeSimple(): SimpleOutput
   def writeList(): ListOutput
@@ -76,7 +99,7 @@ trait Output extends Any {
   * method call (as opposed to lists and objects). Simple values must NEVER be `null`. `Output.writeNull` must
   * be used instead to handle `null` values.
   */
-trait SimpleOutput extends Any {
+trait SimpleOutput extends Any with AcceptsCustomEvents {
   /** Value written MUST NOT be `null` */
   def writeString(str: String): Unit
   def writeChar(char: Char): Unit = writeString(char.toString)
@@ -133,7 +156,7 @@ object SizePolicy extends AbstractValueEnumCompanion[SizePolicy] {
 /**
   * Base trait for outputs which allow writing of multiple values in sequence, i.e. [[ListOutput]] and [[ObjectOutput]].
   */
-trait SequentialOutput extends Any {
+trait SequentialOutput extends Any with AcceptsCustomEvents {
   /**
     * Gives the output explicit information about the number of elements or fields that will be written to this
     * output by the codec. This method must be called at most once, before any elements or fields have been written.
@@ -200,7 +223,7 @@ trait ObjectOutput extends Any with SequentialOutput {
   * successful value or by calling `skip()`. Also, [[ListInput]] and [[ObjectInput]] instances returned from this
   * `Input` must also be fully exhausted on their own.
   */
-trait Input extends Any {
+trait Input extends Any with AcceptsCustomEvents {
   /**
     * Attempts to read `null` value from an `Input`. Returning `true` means that input instance contained a
     * `null` value. Its state should then be changed so that input can be considered "consumed"
@@ -283,7 +306,7 @@ trait InputAndSimpleInput extends Any with Input with SimpleInput {
   override final def readSimple(): SimpleInput = this
 }
 
-trait SequentialInput extends Any {
+trait SequentialInput extends Any with AcceptsCustomEvents {
   /**
     * Returns total number of elements or fields in this input or -1 if it is unknown.
     * This method can be used by codecs in order to optimize decoding of collections.

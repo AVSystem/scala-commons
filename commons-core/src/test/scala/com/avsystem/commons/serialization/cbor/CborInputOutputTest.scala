@@ -18,6 +18,29 @@ case class Record(
 )
 object Record extends HasGenCodec[Record]
 
+case class CustomKeysRecord(
+  @cborKey(1) first: Int,
+  @cborKey(true) second: Boolean,
+  @cborKey(Vector(1, 2, 3)) third: String,
+  map: Map[Int, String]
+)
+object CustomKeysRecord extends HasCborCodec[CustomKeysRecord]
+
+@flatten @cborDiscriminator(0)
+sealed trait CustomKeysFlatUnion extends Product with Serializable
+object CustomKeysFlatUnion extends HasCborCodec[CustomKeysFlatUnion] {
+  @cborKey(1) case class IntCase(@cborKey(1) int: Int) extends CustomKeysFlatUnion
+  @cborKey(2) case class StrCase(@cborKey(1) str: String) extends CustomKeysFlatUnion
+  case class BoolCase(bool: Boolean) extends CustomKeysFlatUnion
+}
+
+sealed trait CustomKeysNestedUnion extends Product with Serializable
+object CustomKeysNestedUnion extends HasCborCodec[CustomKeysNestedUnion] {
+  @cborKey(1) case class IntCase(@cborKey(1) int: Int) extends CustomKeysNestedUnion
+  @cborKey(2) case class StrCase(@cborKey(1) str: String) extends CustomKeysNestedUnion
+  case class BoolCase(bool: Boolean) extends CustomKeysNestedUnion
+}
+
 class CborInputOutputTest extends AnyFunSuite {
   private def roundtrip[T: GenCodec](
     value: T,
@@ -141,9 +164,25 @@ class CborInputOutputTest extends AnyFunSuite {
     Record(b = true, 42, List("a", "ajskd", "kek"), 3.14, "fuuuu"),
     "A56162F56169182A616C9F616165616A736B64636B656BFF6164FB40091EB851EB851F6173656675757575"
   )
+
   roundtrip(
     Record(b = true, 42, List("a", "ajskd", "kek"), 3.14),
     "A46162F56169182A616C9F616165616A736B64636B656BFF6164FB40091EB851EB851F"
+  )
+
+  roundtrip(
+    CustomKeysRecord(42, second = false, "foo", Map(0 -> "bar")),
+    "A401182AF5F48301020363666F6F636D6170A10063626172"
+  )
+
+  roundtrip(
+    List(CustomKeysFlatUnion.IntCase(42), CustomKeysFlatUnion.StrCase("foo"), CustomKeysFlatUnion.BoolCase(true)),
+    "9FA2000101182AA200020163666F6FA20068426F6F6C4361736564626F6F6CF5FF"
+  )
+
+  roundtrip(
+    List(CustomKeysNestedUnion.IntCase(42), CustomKeysNestedUnion.StrCase("foo"), CustomKeysNestedUnion.BoolCase(true)),
+    "9FA101A101182AA102A10163666F6FA168426F6F6C43617365A164626F6F6CF5FF"
   )
 
   test("chunked text string") {
