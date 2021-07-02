@@ -23,7 +23,8 @@ final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
     loop(offset, 1)
   }
 
-  def hex: String = (offset until offset + length).map(i => f"${bytes(i) & 0xFF}%02X").mkString
+  def hex: String =
+    Iterator.range(offset, offset + length).map(i => f"${bytes(i) & 0xFF}%02X").mkString
 
   override def toString: String = hex
 
