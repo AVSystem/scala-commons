@@ -8,7 +8,7 @@ Global / cancelable := true
 // option in IntelliJ's SBT settings.
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-val collectionCompatVersion = "2.3.2"
+val collectionCompatVersion = "2.4.4"
 val guavaVersion = "30.1.1-jre"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.2.7"
@@ -283,6 +283,7 @@ lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
     sourceDirsSettings(_.getParentFile),
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-collection-compat" % collectionCompatVersion,
+      "io.monix" %%% "monix" % monixVersion % Optional,
     )
   )
 
