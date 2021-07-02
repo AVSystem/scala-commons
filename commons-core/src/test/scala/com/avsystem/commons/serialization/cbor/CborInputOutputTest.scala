@@ -26,11 +26,12 @@ case class CustomKeysRecord(
 )
 object CustomKeysRecord extends HasCborCodec[CustomKeysRecord]
 
-@flatten @cborDiscriminator(0)
+@cborDiscriminator(0)
 sealed trait CustomKeysFlatUnion extends Product with Serializable
 object CustomKeysFlatUnion extends HasCborCodec[CustomKeysFlatUnion] {
   @cborKey(1) case class IntCase(@cborKey(1) int: Int) extends CustomKeysFlatUnion
   @cborKey(2) case class StrCase(@cborKey(1) str: String) extends CustomKeysFlatUnion
+  @cborKey(3) case object EmptyCase extends CustomKeysFlatUnion
   case class BoolCase(bool: Boolean) extends CustomKeysFlatUnion
 }
 
@@ -38,6 +39,7 @@ sealed trait CustomKeysNestedUnion extends Product with Serializable
 object CustomKeysNestedUnion extends HasCborCodec[CustomKeysNestedUnion] {
   @cborKey(1) case class IntCase(@cborKey(1) int: Int) extends CustomKeysNestedUnion
   @cborKey(2) case class StrCase(@cborKey(1) str: String) extends CustomKeysNestedUnion
+  @cborKey(3) case object EmptyCase extends CustomKeysNestedUnion
   case class BoolCase(bool: Boolean) extends CustomKeysNestedUnion
 }
 
@@ -176,13 +178,23 @@ class CborInputOutputTest extends AnyFunSuite {
   )
 
   roundtrip(
-    List(CustomKeysFlatUnion.IntCase(42), CustomKeysFlatUnion.StrCase("foo"), CustomKeysFlatUnion.BoolCase(true)),
-    "9FA2000101182AA200020163666F6FA20068426F6F6C4361736564626F6F6CF5FF"
+    List(
+      CustomKeysFlatUnion.IntCase(42),
+      CustomKeysFlatUnion.StrCase("foo"),
+      CustomKeysFlatUnion.BoolCase(true),
+      CustomKeysFlatUnion.EmptyCase
+    ),
+    "9FA2000101182AA200020163666F6FA20068426F6F6C4361736564626F6F6CF5A10003FF"
   )
 
   roundtrip(
-    List(CustomKeysNestedUnion.IntCase(42), CustomKeysNestedUnion.StrCase("foo"), CustomKeysNestedUnion.BoolCase(true)),
-    "9FA101A101182AA102A10163666F6FA168426F6F6C43617365A164626F6F6CF5FF"
+    List(
+      CustomKeysNestedUnion.IntCase(42),
+      CustomKeysNestedUnion.StrCase("foo"),
+      CustomKeysNestedUnion.BoolCase(true),
+      CustomKeysNestedUnion.EmptyCase
+    ),
+    "9FA101A101182AA102A10163666F6FA168426F6F6C43617365A164626F6F6CF5A103A0FF"
   )
 
   test("chunked text string") {
