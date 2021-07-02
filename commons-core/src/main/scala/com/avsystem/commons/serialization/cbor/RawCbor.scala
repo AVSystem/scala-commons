@@ -23,8 +23,9 @@ final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
     loop(offset, 1)
   }
 
-  override def toString: String =
-    (offset until offset + length).map(i => f"${bytes(i) & 0xFF}%02X").mkString
+  def hex: String = (offset until offset + length).map(i => f"${bytes(i) & 0xFF}%02X").mkString
+
+  override def toString: String = hex
 
   def apply(idx: Int): Byte =
     if (idx < 0 || idx >= length) throw new IndexOutOfBoundsException
