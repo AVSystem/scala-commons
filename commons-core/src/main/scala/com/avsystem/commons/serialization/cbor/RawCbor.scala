@@ -10,10 +10,10 @@ final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
 
   override def equals(other: Any): Boolean = other match {
     case RawCbor(otherBytes, otherOffset, otherLength) =>
-      java.util.Arrays.equals(
-        bytes, offset, offset + length,
-        otherBytes, otherOffset, otherOffset + otherLength
-      )
+      @tailrec def loop(i: Int): Boolean =
+        i >= length || bytes(offset + i) == otherBytes(otherOffset + i) && loop(i + 1)
+      length == otherLength && loop(0)
+    case _ => false
   }
 
   override lazy val hashCode: Int = {
