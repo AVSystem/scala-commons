@@ -219,9 +219,9 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
       keyInfos.mkMap(_.rawKey, _.stringKey)
 
     def writeFieldKey(fieldName: String, output: CborOutput): Unit =
-      output.writeRawCbor(rawKeys(fieldName))
+      rawKeys.getOpt(fieldName).fold(output.writeString(fieldName))(output.writeRawCbor)
     def readFieldKey(input: CborInput): String =
-      strKeys(input.readRawCbor())
+      input.readRawCbor() |> (cbor => strKeys.getOrElse(cbor, s"unknown_cbor_key:$cbor")) // unknown key will be ignored
   }
 
   private class DiscriminatorCborKeyCodec(strKey: String, rawDisc: RawCbor) extends CborKeyCodec {
