@@ -1,6 +1,6 @@
 # CBOR support
 
-`commons-core` module comes with built-in implementation of [Compact Binary Object Representation](https://cbor.io/) via
+`commons-core` module comes with built-in implementation of [Concise Binary Object Representation](https://cbor.io/) via
 `CborInput` and `CborOutput`. They can be used to serialize and deserialize any type that has a `GenCodec` instance.
 
 However, plain `GenCodec` cannot use all the power of CBOR, requiring some additional support.
