@@ -12,6 +12,7 @@
 * `commons-core` - basic language utilities and generic features not associated with any particular library of framework:
   * [`GenCodec`](docs/GenCodec.md): format-agnostic, typeclass based serialization framework with automatic typeclass
     derivation for case classes and sealed hierarchies
+    * built-in serialization formats include JSON (raw string), [CBOR](docs/CBOR.md) and BSON (in `commons-mongo`).
   * **Typesafe** RPC/proxy framework used in particular by [Udash Framework](http://guide.udash.io/#/rpc) for
     client-server communication
   * Better enumeration support for Scala -
