@@ -8,22 +8,7 @@ import com.avsystem.commons.serialization.cbor.InitialByte.IndefiniteLength
 import java.io.{ByteArrayOutputStream, DataOutput, DataOutputStream}
 import java.nio.charset.StandardCharsets
 
-/**
-  * Defines translation between textual object field names and corresponding numeric labels. May be used to reduce
-  * size of CBOR representation of objects.
-  */
-trait FieldLabels {
-  def label(field: String): Opt[Int]
-  def field(label: Int): Opt[String]
-}
-object FieldLabels {
-  final val NoLabels: FieldLabels = new FieldLabels {
-    def label(field: String): Opt[Int] = Opt.Empty
-    def field(label: Int): Opt[String] = Opt.Empty
-  }
-}
-
-abstract class BaseCborOutput(out: DataOutput) {
+sealed abstract class BaseCborOutput(out: DataOutput) {
   protected final def write(byte: InitialByte): Unit =
     out.write(byte.value)
 
@@ -69,24 +54,33 @@ abstract class BaseCborOutput(out: DataOutput) {
 object CborOutput {
   def write[T: GenCodec](
     value: T,
-    fieldLabels: FieldLabels = FieldLabels.NoLabels,
+    keyCodec: CborKeyCodec = CborKeyCodec.Default,
     sizePolicy: SizePolicy = SizePolicy.Optional
   ): Array[Byte] = {
     val baos = new ByteArrayOutputStream
-    GenCodec.write[T](new CborOutput(new DataOutputStream(baos), fieldLabels, sizePolicy), value)
+    GenCodec.write[T](new CborOutput(new DataOutputStream(baos), keyCodec, sizePolicy), value)
     baos.toByteArray
   }
+
+  def writeRawCbor[T: GenCodec](
+    value: T,
+    keyCodec: CborKeyCodec = CborKeyCodec.Default,
+    sizePolicy: SizePolicy = SizePolicy.Optional
+  ): RawCbor = RawCbor(write(value, keyCodec, sizePolicy))
 }
 
 /**
   * An [[com.avsystem.commons.serialization.Output Output]] implementation that serializes into
   * [[https://tools.ietf.org/html/rfc7049 CBOR]].
   */
-class CborOutput(out: DataOutput, fieldLabels: FieldLabels, sizePolicy: SizePolicy)
+class CborOutput(out: DataOutput, keyCodec: CborKeyCodec, sizePolicy: SizePolicy)
   extends BaseCborOutput(out) with OutputAndSimpleOutput {
 
   def writeNull(): Unit =
     write(InitialByte.Null)
+
+  def writeUndefined(): Unit =
+    write(InitialByte.Undefined)
 
   def writeBoolean(boolean: Boolean): Unit =
     write(if (boolean) InitialByte.True else InitialByte.False)
@@ -163,10 +157,10 @@ class CborOutput(out: DataOutput, fieldLabels: FieldLabels, sizePolicy: SizePoli
   }
 
   def writeList(): CborListOutput =
-    new CborListOutput(out, fieldLabels, sizePolicy)
+    new CborListOutput(out, keyCodec, sizePolicy)
 
   def writeObject(): CborObjectOutput =
-    new CborObjectOutput(out, fieldLabels, sizePolicy)
+    new CborObjectOutput(out, keyCodec, sizePolicy)
 
   def writeRawCbor(raw: RawCbor): Unit =
     out.write(raw.bytes, raw.offset, raw.length)
@@ -186,7 +180,7 @@ class CborOutput(out: DataOutput, fieldLabels: FieldLabels, sizePolicy: SizePoli
   }
 }
 
-abstract class CborSequentialOutput(
+sealed abstract class CborSequentialOutput(
   out: DataOutput,
   override val sizePolicy: SizePolicy
 ) extends BaseCborOutput(out) with SequentialOutput {
@@ -216,7 +210,7 @@ abstract class CborSequentialOutput(
 
 class CborListOutput(
   out: DataOutput,
-  fieldLabels: FieldLabels,
+  keyCodec: CborKeyCodec,
   sizePolicy: SizePolicy
 ) extends CborSequentialOutput(out, sizePolicy) with ListOutput {
 
@@ -227,7 +221,7 @@ class CborListOutput(
     } else if (size == 0) {
       throw new WriteFailure("explicit size was given and all the elements have already been written")
     }
-    new CborOutput(out, fieldLabels, sizePolicy)
+    new CborOutput(out, keyCodec, sizePolicy)
   }
 
   def finish(): Unit = {
@@ -242,9 +236,12 @@ class CborListOutput(
 
 class CborObjectOutput(
   out: DataOutput,
-  fieldLabels: FieldLabels,
+  keyCodec: CborKeyCodec,
   sizePolicy: SizePolicy
 ) extends CborSequentialOutput(out, sizePolicy) with ObjectOutput {
+
+  private[this] var forcedKeyCodec: CborKeyCodec = _
+  private[this] def currentKeyCodec = if(forcedKeyCodec != null) forcedKeyCodec else keyCodec
 
   /**
     * Returns a [[CborOutput]] for writing an arbitrary CBOR map key.
@@ -259,7 +256,7 @@ class CborObjectOutput(
     } else if (size == 0) {
       throw new WriteFailure("explicit size was given and all the fields have already been written")
     }
-    new CborOutput(out, fieldLabels, sizePolicy)
+    new CborOutput(out, keyCodec, sizePolicy)
   }
 
   /**
@@ -268,14 +265,11 @@ class CborObjectOutput(
     * If [[writeKey]] and [[writeValue]] is used then [[writeField]] MUST NOT be used.
     */
   def writeValue(): CborOutput =
-    new CborOutput(out, fieldLabels, sizePolicy)
+    new CborOutput(out, keyCodec, sizePolicy)
 
   def writeField(key: String): CborOutput = {
     val kvOutput = writeKey()
-    fieldLabels.label(key) match {
-      case Opt(label) => kvOutput.writeSigned(label)
-      case Opt.Empty => kvOutput.writeString(key)
-    }
+    currentKeyCodec.writeFieldKey(key, kvOutput)
     kvOutput
   }
 
@@ -287,9 +281,17 @@ class CborObjectOutput(
       throw new WriteFailure("explicit size was given but not enough fields were written")
     }
   }
+
+  override def customEvent[T](marker: CustomEventMarker[T], event: T): Boolean = marker match {
+    case ForceCborKeyCodec =>
+      forcedKeyCodec = event
+      true
+    case _ =>
+      false
+  }
 }
 
-abstract class CborChunkedOutput(out: DataOutput) extends BaseCborOutput(out) {
+sealed abstract class CborChunkedOutput(out: DataOutput) extends BaseCborOutput(out) {
   protected type Chunk
 
   protected def major: MajorType
