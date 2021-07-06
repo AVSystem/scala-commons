@@ -42,7 +42,7 @@ object ObservableExtensions extends ObservableExtensions {
         .collect { case (_, Opt(elem)) => elem }
 
     /** Creates a [[monix.eval.Task Task]] that upon evaluation will collect all items from the source in a sorted order
-      * as a immutable sequence.
+      * as an immutable sequence.
       *
       * WARNING: this requires unbounded buffering.
       */
@@ -65,6 +65,7 @@ object ObservableExtensions extends ObservableExtensions {
 
     /** Given a collection factory `factory`, returns a [[monix.eval.Task Task]] that upon evaluation
       * will collect all items from the source in the appropriate representation for the current element type `T`.
+      *
       * Example uses for obs: Observable[(Int, String)]:
       * {{{
       *      obs.toL(List) // Task[List[(Int, String)]]
