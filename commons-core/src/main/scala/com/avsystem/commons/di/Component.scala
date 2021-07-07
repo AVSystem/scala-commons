@@ -49,7 +49,11 @@ final class Component[+T](
   cachedStorage: Opt[AtomicReference[Future[T]]] = Opt.Empty,
 ) {
 
+  /**
+    * Name of the component. Usually this name is inferred from the method name that this component is defined by.
+    */
   def name: String = info.name
+
   def isCached: Boolean = cachedStorage.isDefined
 
   /**
@@ -95,18 +99,32 @@ final class Component[+T](
   @compileTimeOnly(".ref can only be used inside code passed to component/singleton(...) macro")
   def ref: T = sys.error("stub")
 
+  /**
+    * Returns the initialized instance of this component, if it was already initialized.
+    */
   def getIfReady: Option[T] =
     storage.get.option.flatMap(_.value.map(_.get))
 
+  /**
+    * Forces a dependency on another component or components.
+    */
   def dependsOn(moreDeps: Component[_]*): Component[T] =
     new Component(info, deps ++ moreDeps, creator, destroyer, cachedStorage)
 
+  /**
+    * Specifies an asynchronous function that will be used to destroy this component, i.e.
+    * free up any resources that this component allocated (threads, network connections, etc). See [[destroy]].
+    */
   def asyncDestroyWith(destroyFun: DestroyFunction[T]): Component[T] = {
     val newDestroyer: DestroyFunction[T] =
       implicit ctx => t => destroyer(ctx)(t).flatMap(_ => destroyFun(ctx)(t))
     new Component(info, deps, creator, newDestroyer, cachedStorage)
   }
 
+  /**
+    * Specifies a function that will be used to destroy this component, i.e. free up any resources that this
+    * component allocated (threads, network connections, etc). See [[destroy]].
+    */
   def destroyWith(destroyFun: T => Unit): Component[T] =
     asyncDestroyWith(implicit ctx => t => Future(destroyFun(t)))
 
@@ -177,8 +195,6 @@ object Component {
 
   def async[T](definition: => T): ExecutionContext => Future[T] =
     implicit ctx => Future(definition)
-
-  private case class DfsPtr(component: Component[_], deps: List[Component[_]])
 
   def validateAll(components: Seq[Component[_]]): Unit =
     GraphUtils.dfs(components)(
