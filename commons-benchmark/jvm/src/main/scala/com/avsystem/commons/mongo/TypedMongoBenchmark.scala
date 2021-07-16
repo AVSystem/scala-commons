@@ -3,15 +3,15 @@ package mongo
 
 import com.avsystem.commons.mongo.TypedMongoBenchmark.BatchSize
 import com.avsystem.commons.mongo.typed.{MongoEntity, MongoEntityCompanion, TypedMongoCollection}
-import com.mongodb.{ConnectionString, MongoClientSettings}
-import com.mongodb.connection.{AsynchronousSocketChannelStreamFactoryFactory, ConnectionPoolSettings}
+import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
 import com.mongodb.reactivestreams.client.{MongoClient, MongoClients}
+import com.mongodb.{ConnectionString, MongoClientSettings}
 import monix.eval.Task
 import monix.execution.Scheduler
 import org.openjdk.jmh.annotations._
 
 import java.nio.channels.AsynchronousChannelGroup
-import java.util.concurrent.{ExecutorService, Executors, ForkJoinPool}
+import java.util.concurrent.{ExecutorService, Executors}
 
 case class BenchEntity(
   id: String,
@@ -31,14 +31,15 @@ object TypedMongoBenchmark {
 @BenchmarkMode(Array(Mode.Throughput))
 @State(Scope.Thread)
 class TypedMongoBenchmark {
-  val threadPool: ExecutorService = Executors.newWorkStealingPool()
+  val threadPool: ExecutorService = Executors.newWorkStealingPool(2 * Runtime.getRuntime.availableProcessors)
   implicit val scheduler: Scheduler = Scheduler(threadPool)
 
-  val channelGroup: AsynchronousChannelGroup = AsynchronousChannelGroup.withThreadPool(threadPool)
   val mongoClientSettings: MongoClientSettings =
     MongoClientSettings.builder
       .applyConnectionString(new ConnectionString("mongodb://ghikomp/test"))
-      .streamFactoryFactory(AsynchronousSocketChannelStreamFactoryFactory.builder.group(channelGroup).build)
+      .applyToConnectionPoolSettings(_.maxSize(1))
+      .streamFactoryFactory(AsynchronousSocketChannelStreamFactoryFactory.builder
+        .group(AsynchronousChannelGroup.withThreadPool(threadPool)).build)
       .build
 
   val mongoClient: MongoClient = MongoClients.create(mongoClientSettings)
