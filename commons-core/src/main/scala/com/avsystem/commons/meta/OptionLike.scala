@@ -52,3 +52,24 @@ object OptionLike {
   implicit def nOptOptionLike[A]: BaseOptionLike[NOpt[A], A] =
     new OptionLikeImpl(NOpt.Empty, NOpt.some, _.isDefined, _.get)
 }
+
+/**
+  * If there is an instance of [[AutoOptionalParam]] for some type `T` then all case class &
+  * RPC parameters of type `T` will be treated as if they were annotated with
+  * [[com.avsystem.commons.serialization.optionalParam @optionalParam]].
+  *
+  * As with `@optionalParam` annotation, independently there must be also
+  * an instance of [[OptionLike]] for `T` for the entire mechanism to work. See the scaladoc of
+  * [[com.avsystem.commons.serialization.optionalParam optionalParam]] for more information.
+  */
+sealed trait AutoOptionalParam[T]
+object AutoOptionalParam {
+  def apply[T]: AutoOptionalParam[T] = null
+}
+
+trait AutoOptionalParams {
+  implicit def allAutoOptionalParams[T](
+    implicit optionLike: OptionLike[T]
+  ): AutoOptionalParam[T] = AutoOptionalParam[T]
+}
+object AutoOptionalParams extends AutoOptionalParams

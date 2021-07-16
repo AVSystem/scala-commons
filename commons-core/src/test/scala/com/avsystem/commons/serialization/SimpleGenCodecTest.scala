@@ -112,6 +112,12 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
     testWrite(CaseClassWithOptionalFields("foo", Opt.Empty, None), Map("str" -> "foo"))
   }
 
+  test("case class with auto optional fields") {
+    testWrite(CaseClassWithAutoOptionalFields("foo", Opt(42), Some(true)), Map("str" -> "foo", "int" -> 42, "bul" -> true))
+    testWrite(CaseClassWithAutoOptionalFields("foo", Opt.Empty, Some(true)), Map("str" -> "foo", "bul" -> true))
+    testWrite(CaseClassWithAutoOptionalFields("foo", Opt.Empty, None), Map("str" -> "foo"))
+  }
+
   test("case class like") {
     testWrite(CaseClassLike("dafuq", List(1, 2, 3)),
       Map("some.str" -> "dafuq", "intList" -> List(1, 2, 3))

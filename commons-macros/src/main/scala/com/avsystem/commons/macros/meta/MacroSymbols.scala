@@ -16,6 +16,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final def MetaPackage = q"$CommonsPkg.meta"
   final def RpcUtils = q"$RpcPackage.RpcUtils"
   final def OptionLikeCls = tq"$MetaPackage.OptionLike"
+  final def AutoOptionalParamCls = tq"$MetaPackage.AutoOptionalParam"
   final def FactoryCls = tq"$CollectionPkg.compat.Factory"
   final lazy val RpcArityAT: Type = staticType(tq"$MetaPackage.SymbolArity")
   final lazy val SingleArityAT: Type = staticType(tq"$MetaPackage.single")
@@ -36,6 +37,9 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final lazy val WhenUntaggedArg: Symbol = TaggedAT.member(TermName("whenUntagged"))
   final lazy val UnmatchedErrorArg: Symbol = UnmatchedAT.member(TermName("error"))
   final lazy val UnmatchedParamErrorArg: Symbol = UnmatchedParamAT.member(TermName("error"))
+
+  def isOptionalParam(param: Symbol, tpe: Type): Boolean =
+    findAnnotation(param, OptionalParamAT).isDefined || inferImplicitValue(getType(tq"$AutoOptionalParamCls[$tpe]")) != EmptyTree
 
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
     primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}:\n"))

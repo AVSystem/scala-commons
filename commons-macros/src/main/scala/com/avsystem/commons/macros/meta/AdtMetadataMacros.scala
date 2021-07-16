@@ -89,7 +89,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     def description: String = s"$shortDescription $nameStr of ${owner.description}"
 
     lazy val optionLike: Option[CachedImplicit] =
-      annot(OptionalParamAT).map(_ => infer(tq"$OptionLikeCls[$actualType]"))
+      if (isOptionalParam(symbol, actualType)) Some(infer(tq"$OptionLikeCls[$actualType]")) else None
 
     lazy val nonOptionalType: Type =
       optionLike.fold(actualType)(optionLikeValueType(_, this))
