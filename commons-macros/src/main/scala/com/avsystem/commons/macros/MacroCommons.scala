@@ -1234,7 +1234,16 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
     val result = tpe match {
       case TypeRef(pre, sym, _) if sym.companion != NoSymbol =>
         singleValueFor(pre).map(Select(_, sym.companion)) orElse singleValueFor(tpe.companion)
-      case _ => singleValueFor(tpe.companion)
+      case TypeRef(NoPrefix, sym, _) =>
+        // apparently, sym.companion returns NoSymbol for local classes, so we have to find the companion manually
+        val companionRef = Ident(sym.name.toTermName)
+        typecheck(companionRef, silent = true) match {
+          case EmptyTree => None
+          case tree if tree.symbol.isModule => Some(tree)
+          case _ => None
+        }
+      case _ =>
+        singleValueFor(tpe.companion)
     }
     result.map(typecheck(_))
   }
