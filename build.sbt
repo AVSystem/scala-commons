@@ -29,7 +29,7 @@ val scalajsBenchmarkVersion = "0.9.0"
 val slf4jVersion = "1.7.30"
 
 // for binary compatibility checking
-val previousCompatibleVersions = Set("1.39.14")
+val previousCompatibleVersions = Set("2.2.4")
 
 Global / excludeLintKeys ++= Set(ideExcludedDirectories, ideOutputDirectory, ideBasePackages, ideSkipProject)
 

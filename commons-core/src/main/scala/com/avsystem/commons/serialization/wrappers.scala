@@ -10,6 +10,7 @@ abstract class InputWrapper extends Input {
   def readObject(): ObjectInput = wrapped.readObject()
   override def readMetadata[T](metadata: InputMetadata[T]): Opt[T] = wrapped.readMetadata(metadata)
   override def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] = wrapped.readCustom(typeMarker)
+  override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean = wrapped.customEvent(marker, value)
   override def legacyOptionEncoding: Boolean = wrapped.legacyOptionEncoding
   def skip(): Unit = wrapped.skip()
 }
@@ -42,6 +43,7 @@ abstract class SequentialInputWrapper extends SequentialInput {
   protected def wrapped: SequentialInput
 
   override def knownSize: Int = wrapped.knownSize
+  override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean = wrapped.customEvent(marker, value)
   def hasNext: Boolean = wrapped.hasNext
 }
 
@@ -67,6 +69,7 @@ abstract class OutputWrapper extends Output {
   def writeObject(): ObjectOutput = wrapped.writeObject()
   override def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean = wrapped.writeCustom(typeMarker, value)
   override def keepsMetadata(metadata: InputMetadata[_]): Boolean = wrapped.keepsMetadata(metadata)
+  override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean = wrapped.customEvent(marker, value)
   override def legacyOptionEncoding: Boolean = wrapped.legacyOptionEncoding
 }
 
@@ -93,6 +96,7 @@ abstract class SequentialOutputWrapper extends SequentialOutput {
 
   override def declareSize(size: Int): Unit = wrapped.declareSize(size)
   override def sizePolicy: SizePolicy = wrapped.sizePolicy
+  override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean = wrapped.customEvent(marker, value)
 
   def finish(): Unit = wrapped.finish()
 }

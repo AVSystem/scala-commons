@@ -123,10 +123,10 @@ abstract class ProductCodec[T <: Product](
 }
 
 abstract class SealedHierarchyCodec[T](
-  protected val typeRepr: String,
+  val typeRepr: String,
   val nullable: Boolean,
-  caseNames: Array[String],
-  cases: Array[Class[_]]
+  val caseNames: Array[String],
+  val cases: Array[Class[_]]
 ) extends ErrorReportingCodec[T] with ObjectCodec[T] {
 
   @tailrec protected final def caseIndexByValue(value: T, idx: Int = 0): Int =
@@ -147,7 +147,7 @@ abstract class NestedSealedHierarchyCodec[T](
   cases: Array[Class[_]]
 ) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
 
-  protected def caseDependencies: Array[GenCodec[_]]
+  def caseDependencies: Array[GenCodec[_]]
 
   private[this] lazy val caseDeps = caseDependencies
 
@@ -174,15 +174,15 @@ abstract class FlatSealedHierarchyCodec[T](
   nullable: Boolean,
   caseNames: Array[String],
   cases: Array[Class[_]],
-  oooFieldNames: Array[String],
-  caseDependentFieldNames: Set[String],
-  override protected val caseFieldName: String,
-  defaultCaseIdx: Int,
-  defaultCaseTransient: Boolean
+  val oooFieldNames: Array[String],
+  val caseDependentFieldNames: Set[String],
+  override val caseFieldName: String,
+  val defaultCaseIdx: Int,
+  val defaultCaseTransient: Boolean
 ) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
 
-  protected def oooDependencies: Array[GenCodec[_]]
-  protected def caseDependencies: Array[OOOFieldsObjectCodec[_]]
+  def oooDependencies: Array[GenCodec[_]]
+  def caseDependencies: Array[OOOFieldsObjectCodec[_]]
 
   private[this] lazy val oooDeps = oooDependencies
   private[this] lazy val caseDeps = caseDependencies
@@ -248,13 +248,21 @@ abstract class ErrorReportingCodec[T] extends GenCodec[T] {
   protected def typeRepr: String
   protected def caseFieldName: String = DefaultCaseField
 
+  // overridable by codecs that want to encode case name as non-string, e.g. in CBOR
+  protected def doWriteCaseName(output: Output, caseName: String): Unit =
+    output.writeSimple().writeString(caseName)
+
+  // overridable by codecs that want to encode case name as non-string, e.g. in CBOR
+  protected def doReadCaseName(input: Input): String =
+    input.readSimple().readString()
+
   protected final def readField[A](fieldInput: FieldInput, codec: GenCodec[A]): A =
     try codec.read(fieldInput) catch {
       case NonFatal(e) => throw FieldReadFailed(typeRepr, fieldInput.fieldName, e)
     }
 
   protected final def readCaseName(fi: FieldInput): String =
-    try fi.readSimple().readString() catch {
+    try doReadCaseName(fi) catch {
       case NonFatal(e) => throw FieldReadFailed(typeRepr, fi.fieldName, e)
     }
 
@@ -307,7 +315,7 @@ abstract class ErrorReportingCodec[T] extends GenCodec[T] {
     caseName: String, transient: Boolean, output: ObjectOutput, value: A, codec: OOOFieldsObjectCodec[A]
   ): Unit = try {
     if (!transient) {
-      output.writeField(caseFieldName).writeSimple().writeString(caseName)
+      doWriteCaseName(output.writeField(caseFieldName), caseName)
     }
     codec.writeFields(output, value)
   } catch {

@@ -148,8 +148,11 @@ final class CborReader(val data: RawCbor) {
 }
 
 object CborInput {
-  def read[T: GenCodec](bytes: Array[Byte], fieldLabels: FieldLabels = FieldLabels.NoLabels): T =
-    GenCodec.read[T](RawCbor(bytes).createInput(fieldLabels))
+  def read[T: GenCodec](bytes: Array[Byte], keyCodec: CborKeyCodec = CborKeyCodec.Default): T =
+    RawCbor(bytes).readAs[T](keyCodec)
+
+  def readRawCbor[T: GenCodec](cbor: RawCbor, keyCodec: CborKeyCodec = CborKeyCodec.Default): T =
+    cbor.readAs[T](keyCodec)
 
   private final val Two64 = BigInt(1) << 64
 }
@@ -158,12 +161,20 @@ object CborInput {
   * An [[com.avsystem.commons.serialization.Input Input]] implementation that deserializes from
   * [[https://tools.ietf.org/html/rfc7049 CBOR]].
   */
-class CborInput(reader: CborReader, fieldLabels: FieldLabels) extends InputAndSimpleInput {
+class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimpleInput {
 
   import reader._
 
   def readNull(): Boolean = peekInitial() match {
     case InitialByte.Null =>
+      advance(1)
+      true
+    case _ =>
+      false
+  }
+
+  def readUndefined(): Boolean = peekInitial() match {
+    case InitialByte.Undefined =>
       advance(1)
       true
     case _ =>
@@ -289,18 +300,18 @@ class CborInput(reader: CborReader, fieldLabels: FieldLabels) extends InputAndSi
 
   def readList(): CborListInput = nextInitial() match {
     case InitialByte.IndefiniteLength(MajorType.Array) =>
-      new CborListInput(reader, -1, fieldLabels)
+      new CborListInput(reader, -1, keyCodec)
     case InitialByte(MajorType.Array, info) =>
-      new CborListInput(reader, validateSize(readUnsigned(info), "array size"), fieldLabels)
+      new CborListInput(reader, validateSize(readUnsigned(info), "array size"), keyCodec)
     case ib =>
       unexpected(ib, "array")
   }
 
   def readObject(): CborObjectInput = nextInitial() match {
     case InitialByte.IndefiniteLength(MajorType.Map) =>
-      new CborObjectInput(reader, -1, fieldLabels)
+      new CborObjectInput(reader, -1, keyCodec)
     case InitialByte(MajorType.Map, info) =>
-      new CborObjectInput(reader, validateSize(readUnsigned(info), "map size"), fieldLabels)
+      new CborObjectInput(reader, validateSize(readUnsigned(info), "map size"), keyCodec)
     case ib =>
       unexpected(ib, "map")
   }
@@ -317,7 +328,7 @@ class CborInput(reader: CborReader, fieldLabels: FieldLabels) extends InputAndSi
   def readTags(): List[Tag] = {
     val buf = new MListBuffer[Tag]
     val startIdx = index
-    def loop(): Unit = peekInitial() match {
+    @tailrec def loop(): Unit = peekInitial() match {
       case InitialByte(MajorType.Tag, info) =>
         nextInitial()
         buf += Tag(readUnsigned(info).toInt)
@@ -381,8 +392,8 @@ class CborInput(reader: CborReader, fieldLabels: FieldLabels) extends InputAndSi
     skip(nextInitial())
 }
 
-class CborFieldInput(val fieldName: String, reader: CborReader, fieldLabels: FieldLabels)
-  extends CborInput(reader, fieldLabels) with FieldInput
+class CborFieldInput(val fieldName: String, reader: CborReader, keyCodec: CborKeyCodec)
+  extends CborInput(reader, keyCodec) with FieldInput
 
 abstract class CborSequentialInput(reader: CborReader, private[this] var size: Int) extends SequentialInput {
 
@@ -410,19 +421,20 @@ abstract class CborSequentialInput(reader: CborReader, private[this] var size: I
     }
 }
 
-class CborListInput(reader: CborReader, size: Int, fieldLabels: FieldLabels)
+class CborListInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
   extends CborSequentialInput(reader, size) with ListInput {
 
   def nextElement(): CborInput = {
     prepareForNext()
-    new CborInput(reader, fieldLabels)
+    new CborInput(reader, keyCodec)
   }
 }
 
-class CborObjectInput(reader: CborReader, size: Int, fieldLabels: FieldLabels)
+class CborObjectInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
   extends CborSequentialInput(reader, size) with ObjectInput {
 
-  import reader._
+  private[this] var forcedKeyCodec: CborKeyCodec = _
+  private[this] def currentKeyCodec = if(forcedKeyCodec != null) forcedKeyCodec else keyCodec
 
   /**
     * Returns a [[CborOutput]] for reading a raw CBOR field key. This is an extension over standard
@@ -431,7 +443,7 @@ class CborObjectInput(reader: CborReader, size: Int, fieldLabels: FieldLabels)
     */
   def nextKey(): CborInput = {
     prepareForNext()
-    new CborInput(reader, fieldLabels)
+    new CborInput(reader, keyCodec)
   }
 
   /**
@@ -440,20 +452,19 @@ class CborObjectInput(reader: CborReader, size: Int, fieldLabels: FieldLabels)
     * read the field value then [[nextField()]] MUST NOT be used.
     */
   def nextValue(): CborInput =
-    new CborInput(reader, fieldLabels)
+    new CborInput(reader, keyCodec)
 
   def nextField(): CborFieldInput = {
-    prepareForNext()
-    val fieldName = nextInitial() match {
-      case InitialByte(major@(MajorType.Unsigned | MajorType.Negative), info) =>
-        val label = readSigned(major, info).toInt
-        fieldLabels.field(label).getOrElse(throw new ReadFailure(s"unknown field label $label"))
-      case InitialByte(MajorType.TextString, info) =>
-        readSizedText(info)
-      case ib =>
-        unexpected(ib, "integer or text string")
-    }
-    new CborFieldInput(fieldName, reader, fieldLabels)
+    val fieldName = currentKeyCodec.readFieldKey(nextKey())
+    new CborFieldInput(fieldName, reader, keyCodec)
+  }
+
+  override def customEvent[T](marker: CustomEventMarker[T], event: T): Boolean = marker match {
+    case ForceCborKeyCodec =>
+      forcedKeyCodec = event
+      true
+    case _ =>
+      false
   }
 }
 
