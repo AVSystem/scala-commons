@@ -366,7 +366,7 @@ object CodecTestData {
   object ThingId extends StringWrapperCompanion[ThingId]
 
   locally {
-    case class LocalStuff()
+    case class LocalStuff(int: Int)
     object LocalStuff extends HasGenCodec[LocalStuff]()(MacroInstances.materialize)
   }
 }
