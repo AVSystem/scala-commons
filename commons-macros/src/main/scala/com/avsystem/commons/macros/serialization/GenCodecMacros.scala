@@ -172,14 +172,14 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       }
     }
 
-    def writeField(p: ApplyParam, value: Tree): Tree = p.optionLike match {
-      case Some(optionLike) =>
-        q"writeOptField(output, ${p.idx}, $value, ${optionLike.reference(Nil)})"
-      case None =>
-        val writeArgs = q"output" :: q"${p.idx}" :: value ::
-          (if (isTransientDefault(p)) List(p.defaultValue) else Nil)
-        val writeTargs = if (isOptimizedPrimitive(p)) Nil else List(p.valueType)
-        q"writeField[..$writeTargs](..$writeArgs)"
+    def writeField(p: ApplyParam, value: Tree): Tree = {
+      val transientValue =
+        if (isTransientDefault(p)) Some(p.defaultValue)
+        else p.optionLike.map(ol => q"${ol.reference(Nil)}.none")
+
+      val writeArgs = q"output" :: q"${p.idx}" :: value :: transientValue.toList
+      val writeTargs = if (isOptimizedPrimitive(p)) Nil else List(p.valueType)
+      q"writeField[..$writeTargs](..$writeArgs)"
     }
 
     def writeFields: Tree = params match {
@@ -272,12 +272,12 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
     } else {
 
-      def readField(param: ApplyParam): Tree = param.optionLike match {
-        case Some(optionLike) =>
-          q"getOptField(fieldValues, ${param.idx}, ${optionLike.reference(Nil)})"
-        case None => param.defaultValue match {
-          case EmptyTree => q"getField[${param.valueType}](fieldValues, ${param.idx})"
-          case tree => q"getField[${param.valueType}](fieldValues, ${param.idx}, $tree)"
+      def readField(param: ApplyParam): Tree = {
+        val defValue = Option(param.defaultValue).filter(_ != EmptyTree) orElse
+          param.optionLike.map(ol => q"${ol.reference(Nil)}.none")
+        defValue match {
+          case None => q"getField[${param.valueType}](fieldValues, ${param.idx})"
+          case Some(tree) => q"getField[${param.valueType}](fieldValues, ${param.idx}, $tree)"
         }
       }
 
@@ -311,6 +311,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         case ii: InferredImplicit => mkPrivateLazyValOrDef(ii)
       }
 
+      def fieldCodec(param: ApplyParam): Tree =
+        param.optionLike.fold(param.instance) { ol =>
+          q"new $SerializationPkg.OptionalFieldValueCodec(${ol.reference(Nil)}, ${param.instance})"
+        }
+
       q"""
         new $SerializationPkg.$baseClass[$dtpe](
           ${dtpe.toString},
@@ -319,8 +324,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         ) {
           ..$optionLikeDecls
           def dependencies = {
-            ..${cachedImplicitDeclarations(ci => if(!allOptionLikes.contains(ci)) q"val ${ci.name} = ${ci.body}" else q"()")}
-            ${mkArray(tq"$GenCodecCls[_]", params.map(_.instance))}
+            ..${cachedImplicitDeclarations(ci => if (!allOptionLikes.contains(ci)) q"val ${ci.name} = ${ci.body}" else q"()")}
+            ${mkArray(tq"$GenCodecCls[_]", params.map(fieldCodec))}
           }
           ..${generated.collect({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
           def instantiate(fieldValues: $SerializationPkg.FieldValues) =

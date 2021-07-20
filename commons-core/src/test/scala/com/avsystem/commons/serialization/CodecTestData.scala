@@ -174,7 +174,8 @@ object CodecTestData {
   case class CaseClassWithAutoOptionalFields(
     str: String,
     int: Opt[Int],
-    bul: Option[Boolean]
+    bul: Option[Boolean],
+    nint: NOpt[Opt[Int]],
   )
   object CaseClassWithAutoOptionalFields extends HasGenCodecWithDeps[AutoOptionalParams.type, CaseClassWithAutoOptionalFields]
 

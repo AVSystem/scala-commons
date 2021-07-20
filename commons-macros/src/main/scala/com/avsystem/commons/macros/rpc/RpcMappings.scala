@@ -278,7 +278,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         val realValueTree = erp.realParam.optionLike match {
           case Some(realOptionLike) =>
             def optionLike = realOptionLike.reference(Nil)
-            q"$mappedPf.andThen($optionLike.some(_)).applyOrElse(${erp.rpcName}, (_: $StringCls) => $optionLike.none)"
+            q"$mappedPf.andThen($optionLike.apply(_)).applyOrElse(${erp.rpcName}, (_: $StringCls) => $optionLike.none)"
           case None =>
             q"$mappedPf.applyOrElse(${erp.rpcName}, (_: $StringCls) => ${erp.fallbackValueTree})"
         }
