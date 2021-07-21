@@ -1,9 +1,11 @@
 package com.avsystem.commons
 package macros
 
+import com.avsystem.commons.macros.meta.MacroSymbols
+
 import scala.reflect.macros.blackbox
 
-trait TypeClassDerivation extends MacroCommons {
+trait TypeClassDerivation extends MacroSymbols {
 
   import c.universe._
 
@@ -122,7 +124,7 @@ trait TypeClassDerivation extends MacroCommons {
   def dependencyType(tpe: Type): Type = typeClassInstance(tpe)
 
   def getOptionLike(sym: Symbol, tpe: Type): Option[CachedImplicit] =
-    if (allowOptionalParams && findAnnotation(sym, OptionalParamAT).isDefined)
+    if (allowOptionalParams && isOptionalParam(sym, tpe))
       Some(inferCachedImplicit(getType(tq"$CommonsPkg.meta.OptionLike[$tpe]"), ErrorCtx("not an option-like type", sym.pos)))
     else
       None
