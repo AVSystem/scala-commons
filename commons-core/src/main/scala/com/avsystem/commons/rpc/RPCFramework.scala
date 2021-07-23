@@ -117,7 +117,7 @@ trait RPCFramework {
     * @example
     * {{{
     *   object SomeRPCFramework extends StandardRPCFramework { ... }
-    *   @RPC trait SomeRPC {
+    *   trait SomeRPC {
     *     def doSomething(str: String): Unit
     *     def callSomething(int: Int): Future[String]
     *   }

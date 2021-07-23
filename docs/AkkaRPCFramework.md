@@ -19,13 +19,13 @@
 
 Note: For examples purpose, let's assume that we have defined rpc:
 ```scala
-@RPC trait UserService {
+trait UserService {
   def fireAndForget: Unit
   def callMeMaybe(phoneNumber: String): Future[Boolean]
   def producer: ProducerService
 }
 
-@RPC trait ProducerService {
+trait ProducerService {
   def streamData: Observable[Int]
 }
 
