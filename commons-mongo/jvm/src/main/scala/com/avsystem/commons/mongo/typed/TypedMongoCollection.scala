@@ -127,7 +127,7 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     sort: MongoDocumentOrder[E] = MongoDocumentOrder.unspecified,
     setupOptions: FindPublisher[Any] => FindPublisher[Any] = identity
   ): Task[Option[T]] =
-    find(filter, projection, sort, o => setupOptions(o).limit(1)).firstOptionL
+    find(filter, projection, sort, o => setupOptions(o).limit(1)).toListL.map(_.headOption)
 
   def find[T](
     filter: MongoDocumentFilter[E] = MongoFilter.empty,
