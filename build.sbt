@@ -61,7 +61,7 @@ inThisBuild(Seq(
   githubWorkflowEnv ++= Map(
     "REDIS_VERSION" -> "6.0.9",
   ),
-  githubWorkflowJavaVersions := Seq("graalvm@21.2.0"),
+  githubWorkflowJavaVersions := Seq("graalvm-ce-java11@21.1.0"),
   githubWorkflowBuildPreamble ++= Seq(
     WorkflowStep.Use(
       "actions", "cache", "v2",
