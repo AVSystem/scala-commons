@@ -25,7 +25,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         scala: [2.13.6, 2.12.14]
-        java: [adopt@1.11]
+        java: [graalvm@21.2.0]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
@@ -92,7 +92,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         scala: [2.13.6]
-        java: [adopt@1.11]
+        java: [graalvm@21.2.0]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
