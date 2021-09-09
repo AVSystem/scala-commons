@@ -8,20 +8,20 @@ Global / cancelable := true
 // option in IntelliJ's SBT settings.
 val forIdeaImport = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-val collectionCompatVersion = "2.4.4"
+val collectionCompatVersion = "2.5.0"
 val guavaVersion = "30.1.1-jre"
 val jsr305Version = "3.0.2"
-val scalatestVersion = "3.2.7"
-val scalatestplusScalacheckVersion = "3.2.2.0"
-val scalacheckVersion = "1.15.2"
-val jettyVersion = "9.4.39.v20210325"
-val mongoVersion = "4.3.0"
+val scalatestVersion = "3.2.9"
+val scalatestplusScalacheckVersion = "3.2.9.0"
+val scalacheckVersion = "1.15.4"
+val jettyVersion = "9.4.43.v20210629"
+val mongoVersion = "4.3.1"
 val springVersion = "4.3.26.RELEASE"
-val typesafeConfigVersion = "1.4.0"
+val typesafeConfigVersion = "1.4.1"
 val commonsIoVersion = "1.3.2"
-val scalaLoggingVersion = "3.9.3"
+val scalaLoggingVersion = "3.9.4"
 val akkaVersion = "2.6.14"
-val monixVersion = "3.3.0"
+val monixVersion = "3.4.0"
 val mockitoVersion = "3.9.0"
 val circeVersion = "0.13.0"
 val upickleVersion = "1.3.11"
@@ -138,7 +138,7 @@ val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
     "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
-    "org.scalatestplus" %%% "scalacheck-1-14" % scalatestplusScalacheckVersion % Test,
+    "org.scalatestplus" %%% "scalacheck-1-15" % scalatestplusScalacheckVersion % Test,
     "org.mockito" % "mockito-core" % mockitoVersion % Test,
   ),
   ideBasePackages := Seq(organization.value),
