@@ -73,11 +73,11 @@ object MacroInstances {
     *
     * {{{
     *   new MacroInstances[SomeImplicits, SomeInstances[SomeRealRpc]] {
-    *     def apply(implicits: SomeImplicits): SomeInstances[SomeRealRpc] = {
+    *     def apply(implicits: SomeImplicits, companion: Any): SomeInstances[SomeRealRpc] = {
     *       import implicits._
     *       new SomeInstances[SomeRealRpc] {
     *         def asReal: AsReal[SomeRawRpc, SomeRealRpc] = AsReal.materialize
-    *         def metadata: SomeMetadata[Real] = RpcMetadata.materialize
+    *         def metadata: SomeMetadata[Real] = SomeMetadata.materialize
     *       }
     *     }
     *   }

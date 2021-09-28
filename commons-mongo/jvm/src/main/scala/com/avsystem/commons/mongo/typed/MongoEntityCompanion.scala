@@ -2,7 +2,7 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.annotation.explicitGenerics
-import com.avsystem.commons.meta.{BoundedAdtMetadataCompanion, MacroInstances, infer}
+import com.avsystem.commons.meta.MacroInstances
 import com.avsystem.commons.mongo.BsonGenCodecs
 import com.avsystem.commons.serialization.GenObjectCodec
 
