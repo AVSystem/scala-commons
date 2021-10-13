@@ -27,11 +27,18 @@ trait CborOptimizedCodecs {
     implicit fac: JFactory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V]] = mkMapCodec(implicit keyCodec => GenCodec.jMapCodec[M, K, V])
 
-  private def mkMapCodec[M[X, Y] <: AnyRef, K: GenCodec : OptGenKeyCodec, V: GenCodec](mkStdCodec: GenKeyCodec[K] => GenObjectCodec[M[K, V]])(
-    implicit fac: Factory[(K, V), M[K, V]]
+  private def mkMapCodec[M[X, Y] <: AnyRef, K: GenCodec : OptGenKeyCodec, V: GenCodec](
+    mkStdCodec: GenKeyCodec[K] => GenObjectCodec[M[K, V]]
+  )(implicit
+    fac: Factory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V]] = {
-    implicit val stdObjectCodec: GenObjectCodec[M[K, V]] =
-      mkStdCodec(OptGenKeyCodec[K].keyCodecOrFallback)
+    val hexKeysStdCodec = mkStdCodec(new GenKeyCodec[K] {
+      def read(key: String): K = CborInput.readRawCbor[K](RawCbor.fromHex(key))
+      def write(value: K): String = CborOutput.writeRawCbor[K](value).toString
+    })
+
+    val regularStdCodec =
+      OptGenKeyCodec[K].keyCodec.map(mkStdCodec).getOrElse(hexKeysStdCodec)
 
     val cborKeyCodec = new CborKeyCodec {
       def writeFieldKey(fieldName: String, output: CborOutput): Unit =
@@ -40,7 +47,19 @@ trait CborOptimizedCodecs {
         input.readRawCbor().toString
     }
 
-    new CborRawKeysCodec(stdObjectCodec, cborKeyCodec)
+    new GenObjectCodec[M[K, V]] {
+      override def readObject(input: ObjectInput): M[K, V] =
+        if (input.customEvent(ForceCborKeyCodec, cborKeyCodec))
+          hexKeysStdCodec.readObject(input)
+        else
+          regularStdCodec.readObject(input)
+
+      override def writeObject(output: ObjectOutput, value: M[K, V]): Unit =
+        if (output.customEvent(ForceCborKeyCodec, cborKeyCodec))
+          hexKeysStdCodec.writeObject(output, value)
+        else
+          regularStdCodec.writeObject(output, value)
+    }
   }
 }
 object CborOptimizedCodecs extends CborOptimizedCodecs
@@ -78,13 +97,7 @@ class OOOFieldCborRawKeysCodec[T](stdObjectCodec: OOOFieldsObjectCodec[T], keyCo
   * type, [[CborRawKeysCodec]] can still work with non-CBOR inputs/outputs by serializing keys into CBOR and taking
   * their HEX representation as standard string keys.
   */
-case class OptGenKeyCodec[K](keyCodec: Opt[GenKeyCodec[K]]) {
-  def keyCodecOrFallback(implicit codec: GenCodec[K]): GenKeyCodec[K] =
-    keyCodec.getOrElse(new GenKeyCodec[K] {
-      def read(key: String): K = CborInput.readRawCbor[K](RawCbor.fromHex(key))
-      def write(value: K): String = CborOutput.writeRawCbor[K](value).toString
-    })
-}
+case class OptGenKeyCodec[K](keyCodec: Opt[GenKeyCodec[K]])
 object OptGenKeyCodec extends OptGenKeyCodecLowPriority {
   def apply[K](implicit optGenKeyCodec: OptGenKeyCodec[K]): OptGenKeyCodec[K] = optGenKeyCodec
 

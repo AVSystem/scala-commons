@@ -4,6 +4,7 @@ package serialization.cbor
 import com.avsystem.commons.misc.{Bytes, Timestamp}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.json.JsonStringOutput
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -22,7 +23,8 @@ case class CustomKeysRecord(
   @cborKey(1) first: Int,
   @cborKey(true) second: Boolean,
   @cborKey(Vector(1, 2, 3)) third: String,
-  map: Map[Int, String]
+  strMap: Map[String, Int],
+  intMap: Map[Int, String],
 )
 object CustomKeysRecord extends HasCborCodec[CustomKeysRecord]
 
@@ -173,8 +175,8 @@ class CborInputOutputTest extends AnyFunSuite {
   )
 
   roundtrip(
-    CustomKeysRecord(42, second = false, "foo", Map(0 -> "bar")),
-    "A401182AF5F48301020363666F6F636D6170A10063626172"
+    CustomKeysRecord(42, second = false, "foo", Map("bar" -> 0), Map(0 -> "bar")),
+    "A501182AF5F48301020363666F6F667374724D6170A1636261720066696E744D6170A10063626172"
   )
 
   roundtrip(
@@ -196,6 +198,11 @@ class CborInputOutputTest extends AnyFunSuite {
     ),
     "9FA101A101182AA102A10163666F6FA168426F6F6C43617365A164626F6F6CF5A103A0FF"
   )
+
+  test("writing with CBOR optimized codec to non-CBOR output") {
+    assert(JsonStringOutput.write(CustomKeysRecord(42, second = true, "foo", Map("foo" -> 1), Map(1 -> "foo"))) ==
+      """{"first":42,"second":true,"third":"foo","strMap":{"foo":1},"intMap":{"1":"foo"}}""")
+  }
 
   test("chunked text string") {
     assert(CborInput.readRawCbor[String](RawCbor.fromHex("7F626162626162626162FF")) == "ababab")
