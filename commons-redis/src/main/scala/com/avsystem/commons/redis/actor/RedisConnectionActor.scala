@@ -1,20 +1,20 @@
 package com.avsystem.commons
 package redis.actor
 
-import java.net.InetSocketAddress
-import java.nio.{Buffer, ByteBuffer}
-
 import akka.actor.{Actor, ActorRef}
 import akka.stream.scaladsl._
 import akka.stream.{CompletionStrategy, IgnoreComplete, Materializer, SystemMaterializer}
 import akka.util.ByteString
+import com.avsystem.commons.concurrent.RetryStrategy
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.{PubSubCommand, PubSubEvent, ReplyDecoders}
-import com.avsystem.commons.redis.config.{ConnectionConfig, RetryStrategy}
+import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.protocol.{RedisMsg, RedisReply, ValidRedisMsg}
 import com.avsystem.commons.redis.util.ActorLazyLogging
 
+import java.net.InetSocketAddress
+import java.nio.{Buffer, ByteBuffer}
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.concurrent.duration.Duration

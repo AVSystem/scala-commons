@@ -1,22 +1,22 @@
 package com.avsystem.commons
 package redis
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import com.avsystem.commons.concurrent.RetryStrategy
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.RedisClusterClient.{AskingPack, CollectionPacks}
 import com.avsystem.commons.redis.actor.ClusterMonitoringActor
 import com.avsystem.commons.redis.actor.ClusterMonitoringActor.{GetClient, GetClientResponse, Refresh}
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{Asking, SlotRange}
-import com.avsystem.commons.redis.config.{ClusterConfig, ExecutionConfig, RetryStrategy}
+import com.avsystem.commons.redis.config.{ClusterConfig, ExecutionConfig}
 import com.avsystem.commons.redis.exception._
 import com.avsystem.commons.redis.protocol._
 import com.avsystem.commons.redis.util.DelayedFuture
 
+import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

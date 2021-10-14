@@ -3,11 +3,12 @@ package redis
 
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
+import com.avsystem.commons.concurrent.RetryStrategy
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{RedisConnectionActor, RedisOperationActor}
-import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, ExecutionConfig, RetryStrategy}
+import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, ExecutionConfig}
 import com.avsystem.commons.redis.exception.ClientStoppedException
 
 /**

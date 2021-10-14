@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package redis.config
+package concurrent
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
@@ -90,8 +90,4 @@ object RetryStrategy {
     }
     Opt((firstDelay, nextStrat))
   }
-}
-
-object ConfigDefaults {
-  val Dispatcher = "redis.pinned-dispatcher"
 }

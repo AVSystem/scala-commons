@@ -2,14 +2,14 @@ package com.avsystem.commons
 package redis.config
 
 import java.net.InetSocketAddress
-
 import akka.io.Inet
 import akka.util.Timeout
+import com.avsystem.commons.concurrent.RetryStrategy
+import com.avsystem.commons.concurrent.RetryStrategy._
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{DebugListener, DevNullListener}
-import com.avsystem.commons.redis.config.RetryStrategy._
 import com.avsystem.commons.redis.{NodeAddress, RedisBatch, RedisOp}
-import javax.net.ssl.SSLEngine
 
+import javax.net.ssl.SSLEngine
 import scala.concurrent.duration._
 
 /**
@@ -172,3 +172,7 @@ case class ConnectionConfig(
   reconnectionStrategy: RetryStrategy = immediately.andThen(exponentially(1.seconds)).maxDelay(8.seconds),
   debugListener: DebugListener = DevNullListener
 )
+
+object ConfigDefaults {
+  val Dispatcher = "redis.pinned-dispatcher"
+}

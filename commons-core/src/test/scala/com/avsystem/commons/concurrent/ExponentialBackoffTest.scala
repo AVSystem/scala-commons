@@ -1,5 +1,5 @@
 package com.avsystem.commons
-package redis.config
+package concurrent
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers

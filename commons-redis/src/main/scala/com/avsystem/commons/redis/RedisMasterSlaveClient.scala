@@ -3,9 +3,10 @@ package redis
 
 import akka.actor.{ActorSystem, Props}
 import akka.util.Timeout
+import com.avsystem.commons.concurrent.RetryStrategy
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.SentinelsMonitoringActor
-import com.avsystem.commons.redis.config.{ExecutionConfig, MasterSlaveConfig, RetryStrategy}
+import com.avsystem.commons.redis.config.{ExecutionConfig, MasterSlaveConfig}
 import com.avsystem.commons.redis.exception.{ClientStoppedException, NoMasterException, NodeRemovedException}
 import com.avsystem.commons.redis.protocol.{ErrorMsg, RedisReply, TransactionReply}
 import com.avsystem.commons.redis.util.DelayedFuture
