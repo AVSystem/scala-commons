@@ -2,7 +2,6 @@ package com.avsystem.commons
 package macros.serialization
 
 import java.util
-
 import scala.annotation.tailrec
 import scala.reflect.macros.blackbox
 
@@ -39,6 +38,18 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
       .map(_.typeSignatureIn(tpe).paramLists.head)
       .flatMap(_.find(_.name == accessor.name))
       .getOrElse(abort(s"Could not find primary constructor parameter ${accessor.name}"))
+
+  private def isTransparentWrapper(prefixTpe: Type, fieldSym: Symbol): Boolean = {
+    val sym = prefixTpe.typeSymbol
+    sym.isClass && sym.asClass.isCaseClass && (primaryConstructorOf(prefixTpe).asMethod.paramLists match {
+      case List(`fieldSym`) :: _ => isTransparent(sym) || {
+        val paramTpe = fieldSym.typeSignatureIn(prefixTpe).finalResultType
+        val wrappingTpe = getType(tq"$SerializationPkg.TransparentWrapping[$paramTpe, $prefixTpe]")
+        inferImplicitValue(wrappingTpe) != EmptyTree
+      }
+      case _ => false
+    })
+  }
 
   def rawRef(fun: Tree): Tree = fun match {
     case genRef if genRef.tpe <:< GenRefTpe => q"${genRef.duplicate}.rawRef"
@@ -96,7 +107,7 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
             case _ =>
               val fieldSym = fieldMemberFor(prefixTpe, selSym)
-              if (!isTransparent(prefixTpeSym)) {
+              if (!isTransparentWrapper(prefixTpe, fieldSym)) {
                 refs ::= q"$SerializationPkg.RawRef.Field(${targetName(fieldSym)})"
               }
           }

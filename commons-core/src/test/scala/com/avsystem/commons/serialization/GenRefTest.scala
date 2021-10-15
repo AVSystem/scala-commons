@@ -12,10 +12,13 @@ case object Objekt extends Seal {
   @name("_id") def id: String = "O"
 }
 
-case class Bottom(mapa: Map[String, Int])
+case class Bottom(mapa: Map[String, Int], wrappy: Wrappy)
 case class Middle(@name("bot") bottom: Bottom)
 case class Toplevel(middle: Opt[Middle], seal: Seal = Objekt)
 @transparent case class TransparentToplevel(toplevel: Toplevel)
+
+case class Wrappy(value: String) extends AnyVal
+object Wrappy extends StringWrapperCompanion[Wrappy]
 
 case class CodecRef[S, T](ref: GenRef[S, T])(implicit targetCodec: GenCodec[T])
 
@@ -30,9 +33,16 @@ class GenRefTest extends AnyFunSuite {
     assert(path == List("middle", "bot", "mapa", "str").map(RawRef.Field))
   }
 
+  test("transparent wrapper field ref") {
+    val path1 = RawRef.create[Toplevel].ref(_.middle.get.bottom.wrappy).normalize.toList
+    val path2 = RawRef.create[Toplevel].ref(_.middle.get.bottom.wrappy.value).normalize.toList
+    assert(path1 == List("middle", "bot", "wrappy").map(RawRef.Field))
+    assert(path2 == path1)
+  }
+
   test("simple gen ref") {
     val ref = GenRef.create[TransparentToplevel].ref(_.toplevel.middle.get.bottom.mapa("str"))
-    val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42))).opt))
+    val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42), Wrappy("oof"))).opt))
     assert(ref(obj) == 42)
   }
 
@@ -40,7 +50,7 @@ class GenRefTest extends AnyFunSuite {
     val subRef = GenRef.create[TransparentToplevel].ref(_.toplevel.middle.get)
     val ref1 = subRef andThen GenRef.create[Middle].ref(_.bottom.mapa("str"))
     val ref2 = subRef andThen GenRef.create[Middle].ref(_.bottom.mapa("str"))
-    val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42))).opt))
+    val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42), Wrappy("oof"))).opt))
     assert(ref1(obj) == 42)
     assert(ref1.rawRef.normalize.toList == List("middle", "bot", "mapa", "str").map(RawRef.Field))
     assert(ref2(obj) == 42)
@@ -51,7 +61,7 @@ class GenRefTest extends AnyFunSuite {
     import GenRef.Implicits._
 
     val codecRef = CodecRef((_: TransparentToplevel).toplevel.middle.get.bottom.mapa("str"))
-    val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42))).opt))
+    val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42), Wrappy("oof"))).opt))
     assert(codecRef.ref(obj) == 42)
   }
 
