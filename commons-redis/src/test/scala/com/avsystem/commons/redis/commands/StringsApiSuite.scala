@@ -2,7 +2,10 @@ package com.avsystem.commons
 package redis.commands
 
 import akka.util.ByteString
+import com.avsystem.commons.misc.Timestamp
 import com.avsystem.commons.redis._
+
+import scala.concurrent.duration._
 
 /**
   * Author: ghik
@@ -178,8 +181,11 @@ trait StringsApiSuite extends CommandsSuite {
     set("key", "value").assertEquals(true)
     set("key", "value", Expiration.Ex(100)).assertEquals(true)
     set("key", "value", Expiration.Px(100000)).assertEquals(true)
+    set("key", "value", Expiration.ExAt((Timestamp.now() + 5.seconds).millis / 1000)).assertEquals(true)
+    set("key", "value", Expiration.PxAt((Timestamp.now() + 5.seconds).millis)).assertEquals(true)
     set("key", "value", existence = true).assertEquals(true)
     set("key", "value", existence = false).assertEquals(false)
+    setGet("key", "value2").assertEquals(Opt("value"))
   }
 
   apiTest("SETBIT") {

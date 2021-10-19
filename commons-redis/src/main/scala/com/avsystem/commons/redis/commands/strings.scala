@@ -115,8 +115,22 @@ trait StringsApi extends ApiSubset {
     execute(new Psetex(key, milliseconds, value))
 
   /** Executes [[http://redis.io/commands/set SET]] */
-  def set(key: Key, value: Value, expiration: OptArg[Expiration] = OptArg.Empty, existence: OptArg[Boolean] = OptArg.Empty): Result[Boolean] =
+  def set(
+    key: Key,
+    value: Value,
+    expiration: OptArg[Expiration] = OptArg.Empty,
+    existence: OptArg[Boolean] = OptArg.Empty
+  ): Result[Boolean] =
     execute(new Set(key, value, expiration.toOpt, existence.toOpt))
+
+  /** Executes [[http://redis.io/commands/set SET]] with `GET` option */
+  def setGet(
+    key: Key,
+    value: Value,
+    expiration: OptArg[Expiration] = OptArg.Empty,
+    existence: OptArg[Boolean] = OptArg.Empty
+  ): Result[Opt[Value]] =
+    execute(new SetGet(key, value, expiration.toOpt, existence.toOpt))
 
   /** Executes [[http://redis.io/commands/setbit SETBIT]] */
   def setbit(key: Key, offset: Long, value: Boolean): Result[Boolean] =
@@ -241,12 +255,19 @@ trait StringsApi extends ApiSubset {
     val encoded: Encoded = encoder("PSETEX").key(key).add(milliseconds).data(value).result
   }
 
-  private final class Set(key: Key, value: Value, expiration: Opt[Expiration], existence: Opt[Boolean])
-    extends AbstractRedisCommand[Boolean](nullBulkOrSimpleOkAsBoolean) with NodeCommand {
+  private abstract class AbstractSet[T](decoder: ReplyDecoder[T])(
+    key: Key, value: Value, expiration: Opt[Expiration], existence: Opt[Boolean], get: Boolean
+  ) extends AbstractRedisCommand[T](decoder) with NodeCommand {
 
     val encoded: Encoded = encoder("SET").key(key).data(value).optAdd(expiration)
-      .optAdd(existence.map(v => if (v) "XX" else "NX")).result
+      .optAdd(existence.map(v => if (v) "XX" else "NX")).addFlag("GET", get).result
   }
+
+  private final class Set(key: Key, value: Value, expiration: Opt[Expiration], existence: Opt[Boolean])
+    extends AbstractSet[Boolean](nullBulkOrSimpleOkAsBoolean)(key, value, expiration, existence, get = false)
+
+  private final class SetGet(key: Key, value: Value, expiration: Opt[Expiration], existence: Opt[Boolean])
+    extends AbstractSet[Opt[Value]](nullBulkOrAs[Value])(key, value, expiration, existence, get = true)
 
   private final class Setbit(key: Key, offset: Long, value: Boolean) extends RedisBooleanCommand with NodeCommand {
     val encoded: Encoded = encoder("SETBIT").key(key).add(offset).add(value).result
@@ -346,9 +367,15 @@ sealed trait Expiration
 object Expiration {
   case class Ex(seconds: Long) extends Expiration
   case class Px(milliseconds: Long) extends Expiration
+  case class ExAt(secondsTimestamp: Long) extends Expiration
+  case class PxAt(millisecondsTimestamp: Long) extends Expiration
+  case object KeepTtl extends Expiration
 
   implicit val SetExpirationArg: CommandArg[Expiration] = CommandArg {
     case (ce, Ex(seconds)) => ce.add("EX").add(seconds)
     case (ce, Px(milliseconds)) => ce.add("PX").add(milliseconds)
+    case (ce, ExAt(timestmap)) => ce.add("EXAT").add(timestmap)
+    case (ce, PxAt(timestmap)) => ce.add("PXAT").add(timestmap)
+    case (ce, KeepTtl) => ce.add("KEEPTTL")
   }
 }
