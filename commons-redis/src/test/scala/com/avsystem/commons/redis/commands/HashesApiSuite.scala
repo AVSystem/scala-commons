@@ -89,6 +89,16 @@ trait HashesApiSuite extends CommandsSuite {
     hmsetRecord("key", HashRecord("fuu", 42)).get
   }
 
+  apiTest("HRANDFIELD") {
+    setup(hmset("key", "k1" -> "v1", "k2" -> "v2", "k3" -> "v3"))
+    hrandfield("key").assert(_.isDefined)
+    hrandfield("keyy").assertEquals(Opt.Empty)
+    hrandfield("key", 3).map(_.sorted).assertEquals(Seq("k1", "k2", "k3"))
+    hrandfield("key", 5, distinct = false).assert(_.size == 5)
+    hrandfield("keyy", 3).assertEquals(Seq.empty)
+    hrandfieldWithvalues("key", 3).assertEquals(Map("k1" -> "v1", "k2" -> "v2", "k3" -> "v3"))
+  }
+
   apiTest("HSCAN") {
     val scanFields = (0 until 256).map(i => (s"toscan$i", s"value$i")).toMap
     setup(hmset("key", scanFields))

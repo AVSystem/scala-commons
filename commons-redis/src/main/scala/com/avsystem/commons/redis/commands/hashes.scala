@@ -73,6 +73,18 @@ trait HashesApi extends ApiSubset {
   def hmsetRecord(key: Key, data: Record): Result[Unit] =
     execute(new HmsetRecord(key, data))
 
+  /** Executes [[http://redis.io/commands/hrandfield HRANDFIELD]] */
+  def hrandfield(key: Key): Result[Opt[Field]] =
+    execute(new Hrandfield(key))
+
+  /** Executes [[http://redis.io/commands/hrandfield HRANDFIELD]] */
+  def hrandfield(key: Key, count: Int, distinct: Boolean = true): Result[Seq[Field]] =
+    execute(new HrandfieldCount(key, if (distinct) count else -count))
+
+  /** Executes [[http://redis.io/commands/hrandfield HRANDFIELD]] */
+  def hrandfieldWithvalues(key: Key, count: Int, distinct: Boolean = true): Result[BMap[Field, Value]] =
+    execute(new HrandfieldWithvalues(key, if (distinct) count else -count))
+
   /** Executes [[http://redis.io/commands/hscan HSCAN]] */
   def hscan(key: Key, cursor: Cursor, matchPattern: OptArg[Field] = OptArg.Empty, count: OptArg[Int] = OptArg.Empty): Result[(Cursor, Seq[(Field, Value)])] =
     execute(new Hscan(key, cursor, matchPattern.toOpt, count.toOpt))
@@ -161,6 +173,21 @@ trait HashesApi extends ApiSubset {
   private final class HmsetRecord(key: Key, data: Record) extends RedisUnitCommand with NodeCommand {
     val encoded: Encoded = encoder("HMSET").key(key).dataPairs(data).result
     override def immediateResult: Opt[Unit] = if (encoded.elements.size <= 2) Opt(()) else Opt.Empty
+  }
+
+  private final class Hrandfield(key: Key)
+    extends RedisOptDataCommand[Field] with NodeCommand {
+    val encoded: Encoded = encoder("HRANDFIELD").key(key).result
+  }
+
+  private final class HrandfieldCount(key: Key, count: Int)
+    extends RedisDataSeqCommand[Field] with NodeCommand {
+    val encoded: Encoded = encoder("HRANDFIELD").key(key).add(count).result
+  }
+
+  private final class HrandfieldWithvalues(key: Key, count: Int)
+    extends AbstractRedisCommand[BMap[Field, Value]](flatMultiBulkAsMapOf[Field, Value]) with NodeCommand {
+    val encoded: Encoded = encoder("HRANDFIELD").key(key).add(count).add("WITHVALUES").result
   }
 
   private final class Hscan(key: Key, cursor: Cursor, matchPattern: Opt[Field], count: Opt[Int])
