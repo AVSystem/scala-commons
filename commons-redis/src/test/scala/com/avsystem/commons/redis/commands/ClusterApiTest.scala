@@ -48,6 +48,11 @@ class ClusterApiTest extends RedisClusterCommandsSuite {
     clusterNodes.assert(_.size == ports.size)
   }
 
+  test("CLUSTER REPLICAS") {
+    clusterReplicas(NodeId("b714a8032b9c1d74a7adc7da75fdbde0517bdf1b"))
+      .map(_.map(_.id)).assertEquals(Seq(NodeId("cc8228f6e849ba1ee5abfc8f1ebde238e08c1d27")))
+  }
+
   test("CLUSTER SLOTS") {
     clusterSlots.map(_.sortBy(_.master.port)).assertEquals(Seq(
       SlotRangeMapping(SlotRange(0, 5460), NodeAddress(port = 9000), NodeId("b714a8032b9c1d74a7adc7da75fdbde0517bdf1b").opt,

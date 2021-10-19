@@ -89,6 +89,10 @@ trait NodeClusterApi extends KeyedClusterApi {
   def clusterNodes: Result[Seq[NodeInfo]] =
     execute(ClusterNodes)
 
+  /** Executes [[http://redis.io/commands/cluster-replicas CLUSTER REPLICAS]] */
+  def clusterReplicas(nodeId: NodeId): Result[Seq[NodeInfo]] =
+    execute(new ClusterReplicas(nodeId))
+
   /** Executes [[http://redis.io/commands/cluster-replicate CLUSTER REPLICATE]] */
   def clusterReplicate(nodeId: NodeId): Result[Unit] =
     execute(new ClusterReplicate(nodeId))
@@ -173,6 +177,10 @@ trait NodeClusterApi extends KeyedClusterApi {
 
   private object ClusterNodes extends AbstractRedisCommand[Seq[NodeInfo]](bulkAsNodeInfos) with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "NODES").result
+  }
+
+  private final class ClusterReplicas(nodeId: NodeId) extends AbstractRedisCommand[Seq[NodeInfo]](multiBulkAsNodeInfos) with NodeCommand {
+    val encoded: Encoded = encoder("CLUSTER", "REPLICAS").add(nodeId.raw).result
   }
 
   private final class ClusterReplicate(nodeId: NodeId) extends RedisUnitCommand with NodeCommand {
