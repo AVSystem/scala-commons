@@ -92,10 +92,10 @@ trait HashesApiSuite extends CommandsSuite {
   apiTest("HRANDFIELD") {
     setup(hmset("key", "k1" -> "v1", "k2" -> "v2", "k3" -> "v3"))
     hrandfield("key").assert(_.isDefined)
-    hrandfield("keyy").assertEquals(Opt.Empty)
+    hrandfield("???").assertEquals(Opt.Empty)
     hrandfield("key", 3).map(_.sorted).assertEquals(Seq("k1", "k2", "k3"))
     hrandfield("key", 5, distinct = false).assert(_.size == 5)
-    hrandfield("keyy", 3).assertEquals(Seq.empty)
+    hrandfield("???", 3).assertEquals(Seq.empty)
     hrandfieldWithvalues("key", 3).assertEquals(Map("k1" -> "v1", "k2" -> "v2", "k3" -> "v3"))
   }
 
