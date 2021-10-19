@@ -113,6 +113,19 @@ trait StringsApiSuite extends CommandsSuite {
     getbit("key", 6).assertEquals(true)
   }
 
+  apiTest("GETDEL") {
+    setup(set("key", "value"))
+    getdel("key").assertEquals(Opt("value"))
+    getdel("key2").assertEquals(Opt.Empty)
+  }
+
+  apiTest("GETEX") {
+    setup(set("key", "value"))
+    getex("key", Expiration.Ex(10)).assertEquals(Opt("value"))
+    getex("key2", Expiration.Ex(10)).assertEquals(Opt.Empty)
+    getex("key", Expiration.Persist).assertEquals(Opt("value"))
+  }
+
   apiTest("GETRANGE") {
     setup(set("key", "lolvalue"))
     getrange("key", 0, 2).assertEquals("lol")

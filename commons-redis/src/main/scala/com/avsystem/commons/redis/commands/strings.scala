@@ -63,6 +63,14 @@ trait StringsApi extends ApiSubset {
   def getbit(key: Key, offset: Int): Result[Boolean] =
     execute(new Getbit(key, offset))
 
+  /** Executes [[http://redis.io/commands/getdel GETDEL]] */
+  def getdel(key: Key): Result[Opt[Value]] =
+    execute(new Getdel(key))
+
+  /** Executes [[http://redis.io/commands/getex GETEX]] */
+  def getex(key: Key, expiration: GetExpiration): Result[Opt[Value]] =
+    execute(new Getex(key, expiration))
+
   /** Executes [[http://redis.io/commands/getrange GETRANGE]] */
   def getrange(key: Key, start: Int = 0, end: Int = -1): Result[Value] =
     execute(new Getrange(key, start, end))
@@ -118,7 +126,7 @@ trait StringsApi extends ApiSubset {
   def set(
     key: Key,
     value: Value,
-    expiration: OptArg[Expiration] = OptArg.Empty,
+    expiration: OptArg[SetExpiration] = OptArg.Empty,
     existence: OptArg[Boolean] = OptArg.Empty
   ): Result[Boolean] =
     execute(new Set(key, value, expiration.toOpt, existence.toOpt))
@@ -127,7 +135,7 @@ trait StringsApi extends ApiSubset {
   def setGet(
     key: Key,
     value: Value,
-    expiration: OptArg[Expiration] = OptArg.Empty,
+    expiration: OptArg[SetExpiration] = OptArg.Empty,
     existence: OptArg[Boolean] = OptArg.Empty
   ): Result[Opt[Value]] =
     execute(new SetGet(key, value, expiration.toOpt, existence.toOpt))
@@ -216,6 +224,14 @@ trait StringsApi extends ApiSubset {
     val encoded: Encoded = encoder("GETBIT").key(key).add(offset).result
   }
 
+  private final class Getdel(key: Key) extends RedisOptDataCommand[Value] with NodeCommand {
+    val encoded: Encoded = encoder("GETDEL").key(key).result
+  }
+
+  private final class Getex(key: Key, expiration: GetExpiration) extends RedisOptDataCommand[Value] with NodeCommand {
+    val encoded: Encoded = encoder("GETEX").key(key).add(expiration).result
+  }
+
   private final class Getrange(key: Key, start: Int, end: Int) extends RedisDataCommand[Value] with NodeCommand {
     val encoded: Encoded = encoder("GETRANGE").key(key).add(start).add(end).result
   }
@@ -256,17 +272,17 @@ trait StringsApi extends ApiSubset {
   }
 
   private abstract class AbstractSet[T](decoder: ReplyDecoder[T])(
-    key: Key, value: Value, expiration: Opt[Expiration], existence: Opt[Boolean], get: Boolean
+    key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Boolean], get: Boolean
   ) extends AbstractRedisCommand[T](decoder) with NodeCommand {
 
     val encoded: Encoded = encoder("SET").key(key).data(value).optAdd(expiration)
       .optAdd(existence.map(v => if (v) "XX" else "NX")).addFlag("GET", get).result
   }
 
-  private final class Set(key: Key, value: Value, expiration: Opt[Expiration], existence: Opt[Boolean])
+  private final class Set(key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Boolean])
     extends AbstractSet[Boolean](nullBulkOrSimpleOkAsBoolean)(key, value, expiration, existence, get = false)
 
-  private final class SetGet(key: Key, value: Value, expiration: Opt[Expiration], existence: Opt[Boolean])
+  private final class SetGet(key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Boolean])
     extends AbstractSet[Opt[Value]](nullBulkOrAs[Value])(key, value, expiration, existence, get = true)
 
   private final class Setbit(key: Key, offset: Long, value: Boolean) extends RedisBooleanCommand with NodeCommand {
@@ -363,19 +379,23 @@ object SemiRange {
     CommandArg((enc, sa) => enc.add(sa.start).optAdd(sa.end))
 }
 
-sealed trait Expiration
+sealed trait Expiration extends Product with Serializable
+sealed trait SetExpiration extends Expiration
+sealed trait GetExpiration extends Expiration
 object Expiration {
-  case class Ex(seconds: Long) extends Expiration
-  case class Px(milliseconds: Long) extends Expiration
-  case class ExAt(secondsTimestamp: Long) extends Expiration
-  case class PxAt(millisecondsTimestamp: Long) extends Expiration
-  case object KeepTtl extends Expiration
+  case class Ex(seconds: Long) extends SetExpiration with GetExpiration
+  case class Px(milliseconds: Long) extends SetExpiration with GetExpiration
+  case class ExAt(secondsTimestamp: Long) extends SetExpiration with GetExpiration
+  case class PxAt(millisecondsTimestamp: Long) extends SetExpiration with GetExpiration
+  case object KeepTtl extends SetExpiration
+  case object Persist extends GetExpiration
 
-  implicit val SetExpirationArg: CommandArg[Expiration] = CommandArg {
+  implicit val ExpirationArg: CommandArg[Expiration] = CommandArg {
     case (ce, Ex(seconds)) => ce.add("EX").add(seconds)
     case (ce, Px(milliseconds)) => ce.add("PX").add(milliseconds)
     case (ce, ExAt(timestmap)) => ce.add("EXAT").add(timestmap)
     case (ce, PxAt(timestmap)) => ce.add("PXAT").add(timestmap)
     case (ce, KeepTtl) => ce.add("KEEPTTL")
+    case (ce, Persist) => ce.add("PERSIST")
   }
 }
