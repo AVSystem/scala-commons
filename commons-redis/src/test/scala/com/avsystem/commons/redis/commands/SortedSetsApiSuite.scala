@@ -12,17 +12,17 @@ trait SortedSetsApiSuite extends CommandsSuite {
     zadd("lex", 0.0, "a", "b", "c", "d").assertEquals(4)
     zadd("key", "lol" -> 1.0, "fuu" -> 2.0).assertEquals(2)
     zrangeWithscores("key").assertEquals(Seq("lol" -> 1.0, "fuu" -> 2.0))
-    zadd("key", Seq("lol" -> 3.0, "bar" -> 1.0), existence = true).assertEquals(0)
+    zadd("key", Seq("lol" -> 3.0, "bar" -> 1.0), existence = Existence.XX).assertEquals(0)
     zrangeWithscores("key").assertEquals(Seq("fuu" -> 2.0, "lol" -> 3.0))
-    zadd("key", Seq("lol" -> 2.0, "bar" -> 1.0, "omg" -> 4.0), existence = false).assertEquals(2)
+    zadd("key", Seq("lol" -> 2.0, "bar" -> 1.0, "omg" -> 4.0), existence = Existence.NX).assertEquals(2)
     zrangeWithscores("key").assertEquals(Seq("bar" -> 1.0, "fuu" -> 2.0, "lol" -> 3.0, "omg" -> 4.0))
     zadd("key", Seq("bar" -> 1.0, "fuu" -> 1.0), changed = true).assertEquals(1)
   }
 
   apiTest("ZADD with INCR") {
-    zaddIncr("key", "value", 1.0, existence = true).assertEquals(Opt.Empty)
-    zaddIncr("key", "value", 1.0, existence = false).assertEquals(1.0.opt)
-    zaddIncr("key", "value", 1.0, existence = true).assertEquals(2.0.opt)
+    zaddIncr("key", "value", 1.0, existence = Existence.XX).assertEquals(Opt.Empty)
+    zaddIncr("key", "value", 1.0, existence = Existence.NX).assertEquals(1.0.opt)
+    zaddIncr("key", "value", 1.0, existence = Existence.XX).assertEquals(2.0.opt)
     zaddIncr("key", "value", 1.0).assertEquals(3.0.opt)
   }
 

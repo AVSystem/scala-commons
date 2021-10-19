@@ -30,11 +30,11 @@ trait SortedSetsApi extends ApiSubset {
 
   /** Executes [[http://redis.io/commands/zadd ZADD]]
     * or simply returns 0 when `memberScores` is empty */
-  def zadd(key: Key, memberScores: Iterable[(Value, Double)], existence: OptArg[Boolean] = OptArg.Empty, changed: Boolean = false): Result[Int] =
+  def zadd(key: Key, memberScores: Iterable[(Value, Double)], existence: OptArg[Existence] = OptArg.Empty, changed: Boolean = false): Result[Int] =
     execute(new Zadd(key, memberScores, memberScores.isEmpty, existence.toOpt, changed))
 
   /** Executes [[http://redis.io/commands/zadd ZADD]] */
-  def zaddIncr(key: Key, member: Value, score: Double, existence: OptArg[Boolean] = OptArg.Empty): Result[Opt[Double]] =
+  def zaddIncr(key: Key, member: Value, score: Double, existence: OptArg[Existence] = OptArg.Empty): Result[Opt[Double]] =
     execute(new ZaddIncr(key, member, score, existence.toOpt))
 
   /** Executes [[http://redis.io/commands/zcard ZCARD]] */
@@ -201,19 +201,19 @@ trait SortedSetsApi extends ApiSubset {
     execute(new Bzpopmin(keys, timeout))
 
   private abstract class AbstractZadd[T](decoder: ReplyDecoder[T])
-    (key: Key, memberScores: IterableOnce[(Value, Double)], existence: Opt[Boolean], changed: Boolean, incr: Boolean)
+    (key: Key, memberScores: IterableOnce[(Value, Double)], existence: Opt[Existence], changed: Boolean, incr: Boolean)
     extends AbstractRedisCommand[T](decoder) with NodeCommand {
 
-    val encoded: Encoded = encoder("ZADD").key(key).optAdd(existence.map(e => if (e) "XX" else "NX"))
+    val encoded: Encoded = encoder("ZADD").key(key).optAdd(existence)
       .addFlag("CH", changed).addFlag("INCR", incr).argDataPairs(memberScores.iterator.map(_.swap)).result
   }
 
-  private final class Zadd(key: Key, memberScores: IterableOnce[(Value, Double)], emptyData: Boolean, existence: Opt[Boolean], changed: Boolean)
+  private final class Zadd(key: Key, memberScores: IterableOnce[(Value, Double)], emptyData: Boolean, existence: Opt[Existence], changed: Boolean)
     extends AbstractZadd[Int](integerAsInt)(key, memberScores, existence, changed, incr = false) {
     override def immediateResult: Opt[Int] = if (emptyData) Opt(0) else Opt.Empty
   }
 
-  private final class ZaddIncr(key: Key, member: Value, score: Double, existence: Opt[Boolean])
+  private final class ZaddIncr(key: Key, member: Value, score: Double, existence: Opt[Existence])
     extends AbstractZadd[Opt[Double]](nullBulkOr(bulkAsDouble))(key, (member, score).single, existence, changed = false, incr = true)
 
   private final class Zcard(key: Key) extends RedisLongCommand with NodeCommand {

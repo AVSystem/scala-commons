@@ -196,8 +196,8 @@ trait StringsApiSuite extends CommandsSuite {
     set("key", "value", Expiration.Px(100000)).assertEquals(true)
     set("key", "value", Expiration.ExAt((Timestamp.now() + 5.seconds).millis / 1000)).assertEquals(true)
     set("key", "value", Expiration.PxAt((Timestamp.now() + 5.seconds).millis)).assertEquals(true)
-    set("key", "value", existence = true).assertEquals(true)
-    set("key", "value", existence = false).assertEquals(false)
+    set("key", "value", existence = Existence.XX).assertEquals(true)
+    set("key", "value", existence = Existence.NX).assertEquals(false)
     setGet("key", "value2").assertEquals(Opt("value"))
   }
 

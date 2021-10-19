@@ -127,7 +127,7 @@ trait StringsApi extends ApiSubset {
     key: Key,
     value: Value,
     expiration: OptArg[SetExpiration] = OptArg.Empty,
-    existence: OptArg[Boolean] = OptArg.Empty
+    existence: OptArg[Existence] = OptArg.Empty
   ): Result[Boolean] =
     execute(new Set(key, value, expiration.toOpt, existence.toOpt))
 
@@ -136,7 +136,7 @@ trait StringsApi extends ApiSubset {
     key: Key,
     value: Value,
     expiration: OptArg[SetExpiration] = OptArg.Empty,
-    existence: OptArg[Boolean] = OptArg.Empty
+    existence: OptArg[Existence] = OptArg.Empty
   ): Result[Opt[Value]] =
     execute(new SetGet(key, value, expiration.toOpt, existence.toOpt))
 
@@ -272,17 +272,17 @@ trait StringsApi extends ApiSubset {
   }
 
   private abstract class AbstractSet[T](decoder: ReplyDecoder[T])(
-    key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Boolean], get: Boolean
+    key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Existence], get: Boolean
   ) extends AbstractRedisCommand[T](decoder) with NodeCommand {
 
     val encoded: Encoded = encoder("SET").key(key).data(value).optAdd(expiration)
-      .optAdd(existence.map(v => if (v) "XX" else "NX")).addFlag("GET", get).result
+      .optAdd(existence).addFlag("GET", get).result
   }
 
-  private final class Set(key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Boolean])
+  private final class Set(key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Existence])
     extends AbstractSet[Boolean](nullBulkOrSimpleOkAsBoolean)(key, value, expiration, existence, get = false)
 
-  private final class SetGet(key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Boolean])
+  private final class SetGet(key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Existence])
     extends AbstractSet[Opt[Value]](nullBulkOrAs[Value])(key, value, expiration, existence, get = true)
 
   private final class Setbit(key: Key, offset: Long, value: Boolean) extends RedisBooleanCommand with NodeCommand {
@@ -377,6 +377,15 @@ case class SemiRange(start: Int, end: Opt[Int] = Opt.Empty)
 object SemiRange {
   implicit val SemiRangeArg: CommandArg[SemiRange] =
     CommandArg((enc, sa) => enc.add(sa.start).optAdd(sa.end))
+}
+
+sealed trait Existence extends Product with Serializable
+object Existence {
+  case object XX extends Existence
+  case object NX extends Existence
+
+  implicit val ExistenceArg: CommandArg[Existence] =
+    CommandArg((ce, ex) => ce.add(ex.productPrefix))
 }
 
 sealed trait Expiration extends Product with Serializable
