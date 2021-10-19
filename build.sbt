@@ -59,7 +59,7 @@ inThisBuild(Seq(
   githubWorkflowTargetTags ++= Seq("v*"),
 
   githubWorkflowEnv ++= Map(
-    "REDIS_VERSION" -> "6.0.9",
+    "REDIS_VERSION" -> "6.2.6",
   ),
   githubWorkflowJavaVersions := Seq("graalvm-ce-java11@21.1.0"),
   githubWorkflowBuildPreamble ++= Seq(
