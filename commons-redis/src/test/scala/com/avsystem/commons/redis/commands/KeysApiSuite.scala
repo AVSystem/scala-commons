@@ -13,6 +13,14 @@ trait KeyedKeysApiSuite extends CommandsSuite {
 
   import RedisApi.Batches.StringTyped._
 
+  apiTest("COPY") {
+    setup(set("{key}1", "value"))
+    copy("{key}1", "{key}2").assertEquals(true)
+    copy("{key}1", "{key}2").assertEquals(false)
+    copy("{key}1", "{key}2", replace = true).assertEquals(true)
+    copy("{key}?", "{key}2").assertEquals(false)
+  }
+
   apiTest("DEL") {
     setup(mset("{key}1" -> "value", "{key}2" -> "value"))
     del(Nil).assertEquals(0)

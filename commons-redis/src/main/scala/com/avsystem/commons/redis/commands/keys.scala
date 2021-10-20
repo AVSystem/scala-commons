@@ -13,6 +13,15 @@ import com.avsystem.commons.redis.protocol._
   * Created: 06/04/16.
   */
 trait KeyedKeysApi extends ApiSubset {
+  /** Executes [[http://redis.io/commands/copy COPY]] */
+  def copy(
+    source: Key,
+    destination: Key,
+    destinationDb: OptArg[Int] = OptArg.Empty,
+    replace: Boolean = false
+  ): Result[Boolean] =
+    execute(new Copy(source, destination, destinationDb.toOpt, replace))
+
   /** Executes [[http://redis.io/commands/del DEL]] */
   def del(key: Key): Result[Boolean] =
     execute(new Del(key.single).map(_ > 0))
@@ -54,7 +63,8 @@ trait KeyedKeysApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/migrate MIGRATE]]
     * or simply returns `true` when `keys` is empty, without sending the command to Redis */
   def migrate(keys: Iterable[Key], address: NodeAddress, destinationDb: Int,
-    timeout: Long, copy: Boolean = false, replace: Boolean = false): Result[Boolean] =
+    timeout: Long, copy: Boolean = false, replace: Boolean = false
+  ): Result[Boolean] =
     execute(new Migrate(keys, address, destinationDb, timeout, copy, replace))
 
   /** Executes [[http://redis.io/commands/object OBJECT]] */
@@ -102,17 +112,20 @@ trait KeyedKeysApi extends ApiSubset {
 
   /** Executes [[http://redis.io/commands/sort SORT]] */
   def sort(key: Key, by: OptArg[SortPattern[Key, Field]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
-    sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Seq[Value]] =
+    sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false
+  ): Result[Seq[Value]] =
     execute(new Sort(key, by.toOpt, limit.toOpt, sortOrder.toOpt, alpha))
 
   /** Executes [[http://redis.io/commands/sort SORT]] */
   def sortGet(key: Key, gets: Seq[SortPattern[Key, Field]], by: OptArg[SortPattern[Key, Field]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
-    sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Seq[Seq[Opt[Value]]]] =
+    sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false
+  ): Result[Seq[Seq[Opt[Value]]]] =
     execute(new SortGet(key, gets, by.toOpt, limit.toOpt, sortOrder.toOpt, alpha))
 
   /** Executes [[http://redis.io/commands/sort SORT]] */
   def sortStore(key: Key, destination: Key, by: OptArg[SortPattern[Key, Field]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
-    gets: Seq[SortPattern[Key, Field]] = Nil, sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false): Result[Long] =
+    gets: Seq[SortPattern[Key, Field]] = Nil, sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false
+  ): Result[Long] =
     execute(new SortStore(key, destination, by.toOpt, limit.toOpt, gets, sortOrder.toOpt, alpha))
 
   /** Executes [[http://redis.io/commands/touch TOUCH]] */
@@ -149,6 +162,12 @@ trait KeyedKeysApi extends ApiSubset {
   def unlink(keys: Iterable[Key]): Result[Int] =
     execute(new Unlink(keys))
 
+  private final class Copy(source: Key, destination: Key, destinationDb: Opt[Int], replace: Boolean)
+    extends RedisBooleanCommand with NodeCommand {
+    val encoded: Encoded = encoder("COPY").key(source).key(destination)
+      .optAdd("DB", destinationDb).addFlag("REPLACE", replace).result
+  }
+
   private final class Del(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
     val encoded: Encoded = encoder("DEL").keys(keys).result
     override def immediateResult: Opt[Int] = whenEmpty(keys, 0)
@@ -172,7 +191,8 @@ trait KeyedKeysApi extends ApiSubset {
   }
 
   private final class Migrate(keys: Iterable[Key], address: NodeAddress, destinationDb: Int,
-    timeout: Long, copy: Boolean, replace: Boolean) extends RedisCommand[Boolean] with NodeCommand {
+    timeout: Long, copy: Boolean, replace: Boolean
+  ) extends RedisCommand[Boolean] with NodeCommand {
 
     private val multiKey = keys.size != 1
 
@@ -241,13 +261,19 @@ trait KeyedKeysApi extends ApiSubset {
 
   private final class Restore(key: Key, ttl: Long, dumpedValue: Dumped, replace: Boolean)
     extends RedisUnitCommand with NodeCommand {
-    val encoded: Encoded = encoder("RESTORE").key(key).add(ttl).add(dumpedValue.raw).addFlag("REPLACE", replace).result
+    val encoded: Encoded = encoder("RESTORE").key(key).add(ttl)
+      .add(dumpedValue.raw).addFlag("REPLACE", replace).result
   }
 
-  private abstract class AbstractSort[T](decoder: ReplyDecoder[T])
-    (key: Key, by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit],
-      gets: Seq[SortPattern[Key, Field]], sortOrder: Opt[SortOrder], alpha: Boolean, destination: Opt[Key])
-    extends AbstractRedisCommand[T](decoder) with NodeCommand {
+  private abstract class AbstractSort[T](decoder: ReplyDecoder[T])(
+    key: Key,
+    by: Opt[SortPattern[Key, Field]],
+    limit: Opt[SortLimit],
+    gets: Seq[SortPattern[Key, Field]],
+    sortOrder: Opt[SortOrder],
+    alpha: Boolean,
+    destination: Opt[Key]
+  ) extends AbstractRedisCommand[T](decoder) with NodeCommand {
     val encoded: Encoded = {
       val enc = encoder("SORT").key(key).optAdd("BY", by).optAdd("LIMIT", limit)
       gets.foreach(sp => enc.add("GET").add(sp))
