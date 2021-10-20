@@ -136,6 +136,13 @@ trait SortedSetsApiSuite extends CommandsSuite {
     zpopmin("key", 2).assertEquals(Seq("fuu" -> 2.0, "bar" -> 3.0))
   }
 
+  apiTest("ZRANDMEMBER") {
+    setup(zadd("key", "lol" -> 1.0, "fuu" -> 2.0, "bar" -> 3.0, "fag" -> 4.0))
+    zrandmember("key").assert(_.isDefined)
+    zrandmember("key", count = 2).assert(_.size == 2)
+    zrandmemberWithscores("key", count = 2).assert(_.size == 2)
+  }
+
   apiTest("ZRANGE") {
     setup(zadd("key", "lol" -> 1.0, "fuu" -> 2.0))
     zrange("???").assertEquals(Seq.empty)

@@ -151,6 +151,18 @@ trait SortedSetsApi extends ApiSubset {
   def zpopmin(key: Key, count: Long): Result[Seq[(Value, Double)]] =
     execute(new Zpopmin(key, Opt(count)))
 
+  /** Executes [[http://redis.io/commands/zrandmember ZRANDMEMBER]] */
+  def zrandmember(key: Key): Result[Opt[Value]] =
+    execute(new Zrandmember(key))
+
+  /** Executes [[http://redis.io/commands/zrandmember ZRANDMEMBER]] */
+  def zrandmember(key: Key, count: Int, distinct: Boolean = true): Result[Seq[Value]] =
+    execute(new ZrandmemberCount(key, if (distinct) count else -count))
+
+  /** Executes [[http://redis.io/commands/zrandmember ZRANDMEMBER]] */
+  def zrandmemberWithscores(key: Key, count: Int, distinct: Boolean = true): Result[Seq[(Value, Double)]] =
+    execute(new ZrandmemberWithscores(key, if (distinct) count else -count))
+
   /** Executes [[http://redis.io/commands/zrange ZRANGE]] */
   def zrange(key: Key, start: Long = 0, stop: Long = -1): Result[Seq[Value]] =
     execute(new Zrange(key, start, stop))
@@ -382,6 +394,21 @@ trait SortedSetsApi extends ApiSubset {
   private final class Zpopmax(key: Key, count: Opt[Long])
     extends AbstractValuesWithScoresCommand with NodeCommand {
     val encoded: Encoded = encoder("ZPOPMAX").key(key).optAdd(count).result
+  }
+
+  private final class Zrandmember(key: Key)
+    extends RedisOptDataCommand[Value] with NodeCommand {
+    val encoded: Encoded = encoder("ZRANDMEMBER").key(key).result
+  }
+
+  private final class ZrandmemberCount(key: Key, count: Int)
+    extends RedisDataSeqCommand[Value] with NodeCommand {
+    val encoded: Encoded = encoder("ZRANDMEMBER").key(key).add(count).result
+  }
+
+  private final class ZrandmemberWithscores(key: Key, count: Int)
+    extends AbstractValuesWithScoresCommand with NodeCommand {
+    val encoded: Encoded = encoder("ZRANDMEMBER").key(key).add(count).add("WITHSCORES").result
   }
 
   private final class Zrange(key: Key, start: Long, stop: Long)
