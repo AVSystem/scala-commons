@@ -189,6 +189,9 @@ abstract class RedisScanCommand[T](decoder: ReplyDecoder[Seq[T]])
 abstract class RedisSeqCommand[T](elementDecoder: ReplyDecoder[T])
   extends AbstractRedisCommand[Seq[T]](multiBulkAsSeq(elementDecoder))
 
+abstract class RedisSeqOptCommand[T](elementDecoder: ReplyDecoder[T])
+  extends AbstractRedisCommand[Seq[Opt[T]]](multiBulkAsSeq(nullBulkOr(elementDecoder)))
+
 abstract class RedisOptSeqCommand[T](elementDecoder: ReplyDecoder[T])
   extends AbstractRedisCommand[Opt[Seq[T]]](nullMultiBulkOr(multiBulkAsSeq(elementDecoder)))
 

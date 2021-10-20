@@ -127,6 +127,14 @@ trait SortedSetsApi extends ApiSubset {
   def zlexcount(key: Key, min: LexLimit[Value] = LexLimit.MinusInf, max: LexLimit[Value] = LexLimit.PlusInf): Result[Long] =
     execute(new Zlexcount(key, min, max))
 
+  /** Executes [[http://redis.io/commands/zmscore ZMSCORE]] */
+  def zmscore(key: Key, members: Value*): Result[Seq[Opt[Double]]] =
+    execute(new Zmscore(key, members))
+
+  /** Executes [[http://redis.io/commands/zmscore ZMSCORE]] */
+  def zmscore(key: Key, members: Iterable[Value]): Result[Seq[Opt[Double]]] =
+    execute(new Zmscore(key, members))
+
   /** Executes [[http://redis.io/commands/zpopmax ZPOPMAX]] */
   def zpopmax(key: Key): Result[Opt[(Value, Double)]] =
     execute(new Zpopmax(key, Opt.Empty).map(_.headOpt))
@@ -364,6 +372,11 @@ trait SortedSetsApi extends ApiSubset {
   private final class Zpopmin(key: Key, count: Opt[Long])
     extends AbstractValuesWithScoresCommand with NodeCommand {
     val encoded: Encoded = encoder("ZPOPMIN").key(key).optAdd(count).result
+  }
+
+  private final class Zmscore(key: Key, members: Iterable[Value])
+    extends RedisSeqOptCommand[Double](bulkAsDouble) with NodeCommand {
+    val encoded: Encoded = encoder("ZMSCORE").key(key).datas(members).result
   }
 
   private final class Zpopmax(key: Key, count: Opt[Long])

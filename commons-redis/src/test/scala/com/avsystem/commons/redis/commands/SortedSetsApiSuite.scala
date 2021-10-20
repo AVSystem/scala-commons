@@ -115,6 +115,11 @@ trait SortedSetsApiSuite extends CommandsSuite {
     zlexcount("key", LexLimit.incl("a"), LexLimit.excl("c")).assertEquals(2)
   }
 
+  apiTest("ZMSCORE") {
+    setup(zadd("key", "a" -> 1.0, "b" -> 2.0, "c" -> 3.0, "d" -> 4.0))
+    zmscore("key", "a", "b", "e").assertEquals(Seq(Opt(1.0), Opt(2.0), Opt.Empty))
+  }
+
   apiTest("ZPOPMAX") {
     setup(zadd("key", "lol" -> 1.0, "fuu" -> 2.0, "bar" -> 3.0, "fag" -> 4.0))
     zpopmax("???").assertEquals(Opt.Empty)
