@@ -26,6 +26,25 @@ trait ListsApi extends ApiSubset {
   def lpop(key: Key): Result[Opt[Value]] =
     execute(new Lpop(key))
 
+  /** Executes [[http://redis.io/commands/lpos LPOS]] */
+  def lpos(
+    key: Key,
+    element: Value,
+    rank: OptArg[Long] = OptArg.Empty,
+    maxlen: OptArg[Long] = OptArg.Empty
+  ): Result[Opt[Long]] =
+    execute(new Lpos(key, element, rank.toOpt, maxlen.toOpt))
+
+  /** Executes [[http://redis.io/commands/lpos LPOS]] */
+  def lposCount(
+    key: Key,
+    element: Value,
+    count: Long,
+    rank: OptArg[Long] = OptArg.Empty,
+    maxlen: OptArg[Long] = OptArg.Empty
+  ): Result[Seq[Long]] =
+    execute(new LposCount(key, element, count, rank.toOpt, maxlen.toOpt))
+
   /** Executes [[http://redis.io/commands/lpush LPUSH]] */
   def lpush(key: Key, value: Value, values: Value*): Result[Long] =
     execute(new Lpush(key, value +:: values))
@@ -144,6 +163,18 @@ trait ListsApi extends ApiSubset {
 
   private final class Lpop(key: Key) extends RedisOptDataCommand[Value] with NodeCommand {
     val encoded: Encoded = encoder("LPOP").key(key).result
+  }
+
+  private final class Lpos(key: Key, element: Value, rank: Opt[Long], maxlen: Opt[Long])
+    extends RedisOptLongCommand with NodeCommand {
+    val encoded: Encoded = encoder("LPOS").key(key).data(element)
+      .optAdd("RANK", rank).optAdd("MAXLEN", maxlen).result
+  }
+
+  private final class LposCount(key: Key, element: Value, count: Long, rank: Opt[Long], maxlen: Opt[Long])
+    extends RedisSeqCommand[Long](integerAsLong) with NodeCommand {
+    val encoded: Encoded = encoder("LPOS").key(key).data(element)
+      .add("COUNT").add(count).optAdd("RANK", rank).optAdd("MAXLEN", maxlen).result
   }
 
   private final class Lpush(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {

@@ -48,6 +48,20 @@ trait ListsApiSuite extends CommandsSuite {
     lpop("key").assertEquals("a".opt)
   }
 
+  apiTest("LPOS") {
+    setup(rpush("key", "a", "b", "b", "c", "b", "a", "b"))
+    lpos("key", "a").assertEquals(Opt(0))
+    lpos("key", "?").assertEquals(Opt.Empty)
+    lpos("key", "b").assertEquals(Opt(1))
+    lpos("key", "b", rank = 1).assertEquals(Opt(1))
+    lpos("key", "b", rank = 2).assertEquals(Opt(2))
+    lpos("key", "b", rank = 3).assertEquals(Opt(4))
+    lpos("key", "b", rank = 3, maxlen = 3).assertEquals(Opt.Empty)
+    lposCount("key", "b", 2).assertEquals(Seq(1, 2))
+    lposCount("key", "b", 2, rank = 2).assertEquals(Seq(2, 4))
+    lposCount("key", "?", 2).assertEquals(Seq.empty)
+  }
+
   apiTest("LPUSH") {
     lpush("key", "a", "b").assertEquals(2)
     lpush("key", "c", "d").assertEquals(4)
