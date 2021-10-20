@@ -40,9 +40,11 @@ trait SortedSetsApiSuite extends CommandsSuite {
   }
 
   apiTest("ZDIFF") {
-    setup(zadd("{key}1", "lol" -> 1.0, "fuu" -> 2.0, "oof" -> 3.0))
-    setup(zadd("{key}2", "lol" -> 1.0, "fag" -> 2.0))
-    setup(zadd("{key}3", "fuu" -> 1.0, "fag" -> 2.0))
+    setup(
+      zadd("{key}1", "lol" -> 1.0, "fuu" -> 2.0, "oof" -> 3.0),
+      zadd("{key}2", "lol" -> 1.0, "fag" -> 2.0),
+      zadd("{key}3", "fuu" -> 1.0, "fag" -> 2.0)
+    )
     zdiff("{key}1", "{key}2").assertEquals(Seq("fuu", "oof"))
     zdiff("{key}1", "{key}2", "{key}3").assertEquals(Seq("oof"))
     zdiffWithscores("{key}1", "{key}2").assertEquals(Seq("fuu" -> 2.0, "oof" -> 3.0))
@@ -58,6 +60,27 @@ trait SortedSetsApiSuite extends CommandsSuite {
   apiTest("ZINCRBY") {
     zincrby("key", 1.0, "value").assertEquals(1.0)
     zincrby("key", 1.0, "value").assertEquals(2.0)
+  }
+
+  apiTest("ZINTER") {
+    setup(
+      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
+      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
+    )
+    zinter( "{key}1", "{key}2").assertEquals(Seq("bar"))
+    zinterWithscores( "{key}1", "{key}2").assertEquals(Seq("bar" -> 5.0))
+    zinterWithscores( Seq("{key}1", "{key}2"), Aggregation.Sum).assertEquals(Seq("bar" -> 5.0))
+    zinterWithscores( Seq("{key}1", "{key}2"), Aggregation.Min).assertEquals(Seq("bar" -> 2.0))
+    zinterWithscores( Seq("{key}1", "{key}2"), Aggregation.Max).assertEquals(Seq("bar" -> 3.0))
+  }
+
+  apiTest("ZINTER with WEIGHTS") {
+    setup(
+      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
+      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
+    )
+    zinterWeights("{key}1" -> 1.0, "{key}2" -> 2.0).assertEquals(Seq("bar"))
+    zinterWeightsWithscores("{key}1" -> 1.0, "{key}2" -> 2.0).assertEquals(Seq("bar" -> 8.0))
   }
 
   apiTest("ZINTERSTORE") {

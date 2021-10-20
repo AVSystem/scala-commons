@@ -73,8 +73,41 @@ trait SortedSetsApi extends ApiSubset {
   def zincrby(key: Key, increment: Double, member: Value): Result[Double] =
     execute(new Zincrby(key, increment, member))
 
+  /** Executes [[http://redis.io/commands/zinter ZINTER]] */
+  def zinter(key: Key, keys: Key*): Result[Seq[Value]] =
+    zinter(key +:: keys)
+
+  /** Executes [[http://redis.io/commands/zinter ZINTER]] */
+  def zinter(keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[Value]] =
+    execute(new Zinter(keys, Opt.Empty, aggregation.toOpt))
+
+  /** Executes [[http://redis.io/commands/zinter ZINTER]] */
+  def zinterWeights(keyWeight: (Key, Double), keysWeights: (Key, Double)*): Result[Seq[Value]] =
+    zinterWeights(keyWeight +:: keysWeights)
+
+  /** Executes [[http://redis.io/commands/zinter ZINTER]] */
+  def zinterWeights(keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[Value]] =
+    execute(new Zinter(keysWeights.map(_._1), keysWeights.map(_._2).opt, aggregation.toOpt))
+
+  /** Executes [[http://redis.io/commands/zinter ZINTER]] */
+  def zinterWithscores(key: Key, keys: Key*): Result[Seq[(Value, Double)]] =
+    zinterWithscores(key +:: keys)
+
+  /** Executes [[http://redis.io/commands/zinter ZINTER]] */
+  def zinterWithscores(keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[(Value, Double)]] =
+    execute(new ZinterWithscores(keys, Opt.Empty, aggregation.toOpt))
+
+  /** Executes [[http://redis.io/commands/zinter ZINTER]] */
+  def zinterWeightsWithscores(keyWeight: (Key, Double), keysWeights: (Key, Double)*): Result[Seq[(Value, Double)]] =
+    zinterWeightsWithscores(keyWeight +:: keysWeights)
+
+  /** Executes [[http://redis.io/commands/zinter ZINTER]] */
+  def zinterWeightsWithscores(keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[(Value, Double)]] =
+    execute(new ZinterWithscores(keysWeights.map(_._1), keysWeights.map(_._2).opt, aggregation.toOpt))
+
   /** Executes [[http://redis.io/commands/zinterstore ZINTERSTORE]] */
-  def zinterstore(destination: Key, key: Key, keys: Key*): Result[Long] = zinterstore(destination, key +:: keys)
+  def zinterstore(destination: Key, key: Key, keys: Key*): Result[Long] =
+    zinterstore(destination, key +:: keys)
 
   /** Executes [[http://redis.io/commands/zinterstore ZINTERSTORE]]
     * NOTE: `keys` MUST NOT be empty */
@@ -265,10 +298,22 @@ trait SortedSetsApi extends ApiSubset {
     val encoded: Encoded = encoder("ZINCRBY").key(key).add(increment).data(member).result
   }
 
+  private final class Zinter(keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
+    extends RedisDataSeqCommand[Value] with NodeCommand {
+    val encoded: Encoded = encoder("ZINTER").add(keys.size).keys(keys)
+      .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
+  }
+
   private final class Zinterstore(destination: Key, keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
     extends RedisLongCommand with NodeCommand {
     val encoded: Encoded = encoder("ZINTERSTORE").key(destination).add(keys.size).keys(keys)
       .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
+  }
+
+  private final class ZinterWithscores(keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
+    extends AbstractRedisCommand[Seq[(Value, Double)]](flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble)) with NodeCommand {
+    val encoded: Encoded = encoder("ZINTER").add(keys.size).keys(keys)
+      .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).add("WITHSCORES").result
   }
 
   private final class Zlexcount(key: Key, min: LexLimit[Value], max: LexLimit[Value])
@@ -306,8 +351,8 @@ trait SortedSetsApi extends ApiSubset {
   }
 
   private abstract class AbstractZrangebyscore[T](cmd: String, decoder: ReplyDecoder[Seq[T]])(
-    key: Key, firstLimit: ScoreLimit, secondLimit: ScoreLimit, withscores: Boolean, limit: Opt[Limit])
-    extends AbstractRedisCommand[Seq[T]](decoder) with NodeCommand {
+    key: Key, firstLimit: ScoreLimit, secondLimit: ScoreLimit, withscores: Boolean, limit: Opt[Limit]
+  ) extends AbstractRedisCommand[Seq[T]](decoder) with NodeCommand {
     val encoded: Encoded =
       encoder(cmd).key(key).add(firstLimit.repr).add(secondLimit.repr)
         .addFlag("WITHSCORES", withscores).optAdd("LIMIT", limit).result
