@@ -39,6 +39,22 @@ trait SortedSetsApiSuite extends CommandsSuite {
     zcount("key", ScoreLimit.incl(1.0), ScoreLimit.excl(2.0)).assertEquals(1)
   }
 
+  apiTest("ZDIFF") {
+    setup(zadd("{key}1", "lol" -> 1.0, "fuu" -> 2.0, "oof" -> 3.0))
+    setup(zadd("{key}2", "lol" -> 1.0, "fag" -> 2.0))
+    setup(zadd("{key}3", "fuu" -> 1.0, "fag" -> 2.0))
+    zdiff("{key}1", "{key}2").assertEquals(Seq("fuu", "oof"))
+    zdiff("{key}1", "{key}2", "{key}3").assertEquals(Seq("oof"))
+    zdiffWithscores("{key}1", "{key}2").assertEquals(Seq("fuu" -> 2.0, "oof" -> 3.0))
+  }
+
+  apiTest("ZDIFFSTORE") {
+    setup(zadd("{key}1", "lol" -> 1.0, "fuu" -> 2.0, "oof" -> 3.0))
+    setup(zadd("{key}2", "lol" -> 1.0, "fag" -> 2.0))
+    setup(zadd("{key}3", "fuu" -> 1.0, "fag" -> 2.0))
+    zdiffstore("{key}3", "{key}1", "{key}2").assertEquals(2)
+  }
+
   apiTest("ZINCRBY") {
     zincrby("key", 1.0, "value").assertEquals(1.0)
     zincrby("key", 1.0, "value").assertEquals(2.0)

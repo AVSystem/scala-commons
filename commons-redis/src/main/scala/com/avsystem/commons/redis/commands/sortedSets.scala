@@ -45,6 +45,30 @@ trait SortedSetsApi extends ApiSubset {
   def zcount(key: Key, min: ScoreLimit = ScoreLimit.MinusInf, max: ScoreLimit = ScoreLimit.PlusInf): Result[Long] =
     execute(new Zcount(key, min, max))
 
+  /** Executes [[http://redis.io/commands/zdiff ZDIFF]] */
+  def zdiff(key: Key, keys: Key*): Result[Seq[Value]] =
+    execute(new Zdiff(key +:: keys))
+
+  /** Executes [[http://redis.io/commands/zdiff ZDIFF]] */
+  def zdiff(key: Key, keys: Iterable[Key]): Result[Seq[Value]] =
+    execute(new Zdiff(key +:: keys))
+
+  /** Executes [[http://redis.io/commands/zdiff ZDIFF]] */
+  def zdiffWithscores(key: Key, keys: Key*): Result[Seq[(Value, Double)]] =
+    execute(new ZdiffWithscores(key +:: keys))
+
+  /** Executes [[http://redis.io/commands/zdiff ZDIFF]] */
+  def zdiffWithscores(key: Key, keys: Iterable[Key]): Result[Seq[(Value, Double)]] =
+    execute(new ZdiffWithscores(key +:: keys))
+
+  /** Executes [[http://redis.io/commands/zdiffstore ZDIFFSTORE]] */
+  def zdiffstore(destination: Key, key: Key, keys: Key*): Result[Long] =
+    execute(new Zdiffstore(destination, key +:: keys))
+
+  /** Executes [[http://redis.io/commands/zdiffstore ZDIFFSTORE]] */
+  def zdiffstore(destination: Key, key: Key, keys: Iterable[Key]): Result[Long] =
+    execute(new Zdiffstore(destination, key +:: keys))
+
   /** Executes [[http://redis.io/commands/zincrby ZINCRBY]] */
   def zincrby(key: Key, increment: Double, member: Value): Result[Double] =
     execute(new Zincrby(key, increment, member))
@@ -222,6 +246,19 @@ trait SortedSetsApi extends ApiSubset {
 
   private final class Zcount(key: Key, min: ScoreLimit, max: ScoreLimit) extends RedisLongCommand with NodeCommand {
     val encoded: Encoded = encoder("ZCOUNT").key(key).add(min.repr).add(max.repr).result
+  }
+
+  private final class Zdiff(keys: Iterable[Key]) extends RedisDataSeqCommand[Value] with NodeCommand {
+    val encoded: Encoded = encoder("ZDIFF").add(keys.size).keys(keys).result
+  }
+
+  private final class Zdiffstore(destination: Key, keys: Iterable[Key]) extends RedisLongCommand with NodeCommand {
+    val encoded: Encoded = encoder("ZDIFFSTORE").key(destination).add(keys.size).keys(keys).result
+  }
+
+  private final class ZdiffWithscores(keys: Iterable[Key])
+    extends AbstractRedisCommand[Seq[(Value, Double)]](flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble)) with NodeCommand {
+    val encoded: Encoded = encoder("ZDIFF").add(keys.size).keys(keys).add("WITHSCORES").result
   }
 
   private final class Zincrby(key: Key, increment: Double, member: Value) extends RedisDoubleCommand with NodeCommand {
