@@ -388,6 +388,15 @@ object Existence {
     CommandArg((ce, ex) => ce.add(ex.productPrefix))
 }
 
+sealed trait Comparison extends Product with Serializable
+object Comparison {
+  case object GT extends Comparison
+  case object LT extends Comparison
+
+  implicit val ComparisonArg: CommandArg[Comparison] =
+    CommandArg((ce, ex) => ce.add(ex.productPrefix))
+}
+
 sealed trait Expiration extends Product with Serializable
 sealed trait SetExpiration extends Expiration
 sealed trait GetExpiration extends Expiration
