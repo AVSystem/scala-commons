@@ -72,6 +72,14 @@ trait SetsApiSuite extends CommandsSuite {
     smembers("key").assertEquals(Set("a", "b", "c"))
   }
 
+  apiTest("SMISMEMBER") {
+    setup(sadd("key", "a", "b", "c"))
+    smismember("???", "a").assertEquals(Seq(false))
+    smismember("key", "a").assertEquals(Seq(true))
+    smismember("key", "a", "c").assertEquals(Seq(true, true))
+    smismember("key", "a", "d").assertEquals(Seq(true, false))
+  }
+
   apiTest("SMOVE") {
     setup(
       sadd("{key}1", "a", "b"),

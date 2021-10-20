@@ -64,6 +64,14 @@ trait SetsApi extends ApiSubset {
   def smembers(key: Key): Result[BSet[Value]] =
     execute(new Smembers(key))
 
+  /** Executes [[http://redis.io/commands/smismember SMISMEMBER]] */
+  def smismember(key: Key, member: Value, members: Value*): Result[Seq[Boolean]] =
+    execute(new Smismember(key, member +:: members))
+
+  /** Executes [[http://redis.io/commands/smismember SMISMEMBER]] */
+  def smismember(key: Key, members: Iterable[Value]): Result[Seq[Boolean]] =
+    execute(new Smismember(key, members))
+
   /** Executes [[http://redis.io/commands/smove SMOVE]] */
   def smove(source: Key, destination: Key, member: Value): Result[Boolean] =
     execute(new Smove(source, destination, member))
@@ -155,6 +163,10 @@ trait SetsApi extends ApiSubset {
 
   private final class Smembers(key: Key) extends RedisDataSetCommand[Value] with NodeCommand {
     val encoded: Encoded = encoder("SMEMBERS").key(key).result
+  }
+
+  private final class Smismember(key: Key, members: Iterable[Value]) extends RedisSeqCommand[Boolean](integerAsBoolean) with NodeCommand {
+    val encoded: Encoded = encoder("SMISMEMBER").key(key).datas(members).result
   }
 
   private final class Smove(source: Key, destination: Key, member: Value) extends RedisBooleanCommand with NodeCommand {
