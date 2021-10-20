@@ -34,6 +34,14 @@ trait ListsApiSuite extends CommandsSuite {
     llen("key").assertEquals(3)
   }
 
+  apiTest("LMOVE") {
+    setup(rpush("{key}1", "a", "b", "c"))
+    setup(rpush("{key}2", "d", "e", "f"))
+    lmove("{key}1", "{key}2", ListEnd.Right, ListEnd.Left).assertEquals(Opt("c"))
+    lmove("{key}2", "{key}1", ListEnd.Left, ListEnd.Right).assertEquals(Opt("c"))
+    lmove("{key}?", "{key}1", ListEnd.Left, ListEnd.Right).assertEquals(Opt.Empty)
+  }
+
   apiTest("LPOP") {
     setup(rpush("key", "a", "b", "c"))
     lpop("???").assertEquals(Opt.Empty)

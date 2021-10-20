@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package redis.commands
 
+import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
@@ -16,6 +17,10 @@ trait ListsApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/llen LLEN]] */
   def llen(key: Key): Result[Long] =
     execute(new Llen(key))
+
+  /** Executes [[http://redis.io/commands/lmove LMOVE]] */
+  def lmove(source: Key, destination: Key, whereFrom: ListEnd, whereTo: ListEnd): Result[Opt[Value]] =
+    execute(new Lmove(source, destination, whereFrom, whereTo))
 
   /** Executes [[http://redis.io/commands/lpop LPOP]] */
   def lpop(key: Key): Result[Opt[Value]] =
@@ -132,6 +137,11 @@ trait ListsApi extends ApiSubset {
     val encoded: Encoded = encoder("LLEN").key(key).result
   }
 
+  private final class Lmove(source: Key, destination: Key, whereFrom: ListEnd, whereTo: ListEnd)
+    extends RedisOptDataCommand[Value] with NodeCommand {
+    val encoded: Encoded = encoder("LMOVE").key(source).key(destination).add(whereFrom).add(whereTo).result
+  }
+
   private final class Lpop(key: Key) extends RedisOptDataCommand[Value] with NodeCommand {
     val encoded: Encoded = encoder("LPOP").key(key).result
   }
@@ -212,4 +222,15 @@ object RemCount {
   final val All = new RemCount(0)
   def fromHead(count: Long) = RemCount(count, fromHead = true)
   def fromTail(count: Long) = RemCount(count, fromHead = false)
+}
+
+sealed trait ListEnd extends Product with Serializable
+object ListEnd {
+  case object Left extends ListEnd
+  case object Right extends ListEnd
+
+  implicit val cmdArg: CommandArg[ListEnd] = CommandArg {
+    case (ce, Left) => ce.add("LEFT")
+    case (ce, Right) => ce.add("RIGHT")
+  }
 }
