@@ -62,10 +62,16 @@ trait KeyedKeysApi extends ApiSubset {
 
   /** Executes [[http://redis.io/commands/migrate MIGRATE]]
     * or simply returns `true` when `keys` is empty, without sending the command to Redis */
-  def migrate(keys: Iterable[Key], address: NodeAddress, destinationDb: Int,
-    timeout: Long, copy: Boolean = false, replace: Boolean = false
+  def migrate(
+    keys: Iterable[Key],
+    address: NodeAddress,
+    destinationDb: Int,
+    timeout: Long,
+    copy: Boolean = false,
+    replace: Boolean = false,
+    auth: OptArg[MigrateAuth] = OptArg.Empty,
   ): Result[Boolean] =
-    execute(new Migrate(keys, address, destinationDb, timeout, copy, replace))
+    execute(new Migrate(keys, address, destinationDb, timeout, copy, replace, auth.toOpt))
 
   /** Executes [[http://redis.io/commands/object OBJECT]] */
   def objectRefcount(key: Key): Result[Opt[Long]] =
@@ -190,10 +196,15 @@ trait KeyedKeysApi extends ApiSubset {
     val encoded: Encoded = encoder("EXPIREAT").key(key).add(timestamp).result
   }
 
-  private final class Migrate(keys: Iterable[Key], address: NodeAddress, destinationDb: Int,
-    timeout: Long, copy: Boolean, replace: Boolean
+  private final class Migrate(
+    keys: Iterable[Key],
+    address: NodeAddress,
+    destinationDb: Int,
+    timeout: Long,
+    copy: Boolean,
+    replace: Boolean,
+    auth: Opt[MigrateAuth],
   ) extends RedisCommand[Boolean] with NodeCommand {
-
     private val multiKey = keys.size != 1
 
     val encoded: Encoded = {
@@ -204,6 +215,13 @@ trait KeyedKeysApi extends ApiSubset {
         enc.key(keys.head)
       }
       enc.add(destinationDb).add(timeout).addFlag("COPY", copy).addFlag("REPLACE", replace)
+      auth match {
+        case Opt(MigrateAuth(Opt.Empty, password)) =>
+          enc.add("AUTH").add(password)
+        case Opt(MigrateAuth(Opt(username), password)) =>
+          enc.add("AUTH2").add(username).add(password)
+        case _ =>
+      }
       if (multiKey) {
         enc.add("KEYS").keys(keys)
       }
@@ -411,4 +429,10 @@ object RedisType extends NamedEnumCompanion[RedisType] {
   case object Hash extends RedisType("hash")
 
   val values: List[RedisType] = caseObjects
+}
+
+case class MigrateAuth(username: Opt[String], password: String)
+object MigrateAuth {
+  def apply(username: String, password: String): MigrateAuth = MigrateAuth(username.opt, password)
+  def apply(password: String): MigrateAuth = MigrateAuth(Opt.Empty, password)
 }
