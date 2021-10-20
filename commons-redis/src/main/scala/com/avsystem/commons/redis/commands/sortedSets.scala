@@ -224,6 +224,38 @@ trait SortedSetsApi extends ApiSubset {
   def zscore(key: Key, member: Value): Result[Opt[Double]] =
     execute(new Zscore(key, member))
 
+  /** Executes [[http://redis.io/commands/zunion ZUNION]] */
+  def zunion(key: Key, keys: Key*): Result[Seq[Value]] =
+    zunion(key +:: keys)
+
+  /** Executes [[http://redis.io/commands/zunion ZUNION]] */
+  def zunion(keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[Value]] =
+    execute(new Zunion(keys, Opt.Empty, aggregation.toOpt))
+
+  /** Executes [[http://redis.io/commands/zunion ZUNION]] */
+  def zunionWeights(keyWeight: (Key, Double), keysWeights: (Key, Double)*): Result[Seq[Value]] =
+    zunionWeights(keyWeight +:: keysWeights)
+
+  /** Executes [[http://redis.io/commands/zunion ZUNION]] */
+  def zunionWeights(keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[Value]] =
+    execute(new Zunion(keysWeights.map(_._1), keysWeights.map(_._2).opt, aggregation.toOpt))
+
+  /** Executes [[http://redis.io/commands/zunion ZUNION]] */
+  def zunionWithscores(key: Key, keys: Key*): Result[Seq[(Value, Double)]] =
+    zunionWithscores(key +:: keys)
+
+  /** Executes [[http://redis.io/commands/zunion ZUNION]] */
+  def zunionWithscores(keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[(Value, Double)]] =
+    execute(new ZunionWithscores(keys, Opt.Empty, aggregation.toOpt))
+
+  /** Executes [[http://redis.io/commands/zunion ZUNION]] */
+  def zunionWeightsWithscores(keyWeight: (Key, Double), keysWeights: (Key, Double)*): Result[Seq[(Value, Double)]] =
+    zunionWeightsWithscores(keyWeight +:: keysWeights)
+
+  /** Executes [[http://redis.io/commands/zunion ZUNION]] */
+  def zunionWeightsWithscores(keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[(Value, Double)]] =
+    execute(new ZunionWithscores(keysWeights.map(_._1), keysWeights.map(_._2).opt, aggregation.toOpt))
+
   /** Executes [[http://redis.io/commands/zunionstore ZUNIONSTORE]] */
   def zunionstore(destination: Key, key: Key, keys: Key*): Result[Long] = zunionstore(destination, key +:: keys)
 
@@ -257,6 +289,9 @@ trait SortedSetsApi extends ApiSubset {
   def bzpopmin(keys: Iterable[Key], timeout: Int): Result[Opt[(Key, Value, Double)]] =
     execute(new Bzpopmin(keys, timeout))
 
+  private abstract class AbstractValuesWithScoresCommand
+    extends AbstractRedisCommand[Seq[(Value, Double)]](flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble))
+
   private abstract class AbstractZadd[T](decoder: ReplyDecoder[T])
     (key: Key, memberScores: IterableOnce[(Value, Double)], existence: Opt[Existence], changed: Boolean, incr: Boolean)
     extends AbstractRedisCommand[T](decoder) with NodeCommand {
@@ -289,8 +324,7 @@ trait SortedSetsApi extends ApiSubset {
     val encoded: Encoded = encoder("ZDIFFSTORE").key(destination).add(keys.size).keys(keys).result
   }
 
-  private final class ZdiffWithscores(keys: Iterable[Key])
-    extends AbstractRedisCommand[Seq[(Value, Double)]](flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble)) with NodeCommand {
+  private final class ZdiffWithscores(keys: Iterable[Key]) extends AbstractValuesWithScoresCommand with NodeCommand {
     val encoded: Encoded = encoder("ZDIFF").add(keys.size).keys(keys).add("WITHSCORES").result
   }
 
@@ -311,7 +345,7 @@ trait SortedSetsApi extends ApiSubset {
   }
 
   private final class ZinterWithscores(keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
-    extends AbstractRedisCommand[Seq[(Value, Double)]](flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble)) with NodeCommand {
+    extends AbstractValuesWithScoresCommand with NodeCommand {
     val encoded: Encoded = encoder("ZINTER").add(keys.size).keys(keys)
       .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).add("WITHSCORES").result
   }
@@ -328,12 +362,12 @@ trait SortedSetsApi extends ApiSubset {
   }
 
   private final class Zpopmin(key: Key, count: Opt[Long])
-    extends AbstractRedisCommand[Seq[(Value, Double)]](flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble)) with NodeCommand {
+    extends AbstractValuesWithScoresCommand with NodeCommand {
     val encoded: Encoded = encoder("ZPOPMIN").key(key).optAdd(count).result
   }
 
   private final class Zpopmax(key: Key, count: Opt[Long])
-    extends AbstractRedisCommand[Seq[(Value, Double)]](flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble)) with NodeCommand {
+    extends AbstractValuesWithScoresCommand with NodeCommand {
     val encoded: Encoded = encoder("ZPOPMAX").key(key).optAdd(count).result
   }
 
@@ -420,10 +454,22 @@ trait SortedSetsApi extends ApiSubset {
     val encoded: Encoded = encoder("ZSCORE").key(key).data(member).result
   }
 
+  private final class Zunion(keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
+    extends RedisDataSeqCommand[Value] with NodeCommand {
+    val encoded: Encoded = encoder("ZUNION").add(keys.size).keys(keys)
+      .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
+  }
+
   private final class Zunionstore(destination: Key, keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
     extends RedisLongCommand with NodeCommand {
     val encoded: Encoded = encoder("ZUNIONSTORE").key(destination).add(keys.size).keys(keys)
       .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
+  }
+
+  private final class ZunionWithscores(keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
+    extends AbstractValuesWithScoresCommand with NodeCommand {
+    val encoded: Encoded = encoder("ZUNION").add(keys.size).keys(keys)
+      .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).add("WITHSCORES").result
   }
 
   private final class Bzpopmax(keys: Iterable[Key], timeout: Int)

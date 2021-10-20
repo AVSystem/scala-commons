@@ -67,11 +67,11 @@ trait SortedSetsApiSuite extends CommandsSuite {
       zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
       zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
     )
-    zinter( "{key}1", "{key}2").assertEquals(Seq("bar"))
-    zinterWithscores( "{key}1", "{key}2").assertEquals(Seq("bar" -> 5.0))
-    zinterWithscores( Seq("{key}1", "{key}2"), Aggregation.Sum).assertEquals(Seq("bar" -> 5.0))
-    zinterWithscores( Seq("{key}1", "{key}2"), Aggregation.Min).assertEquals(Seq("bar" -> 2.0))
-    zinterWithscores( Seq("{key}1", "{key}2"), Aggregation.Max).assertEquals(Seq("bar" -> 3.0))
+    zinter("{key}1", "{key}2").assertEquals(Seq("bar"))
+    zinterWithscores("{key}1", "{key}2").assertEquals(Seq("bar" -> 5.0))
+    zinterWithscores(Seq("{key}1", "{key}2"), Aggregation.Sum).assertEquals(Seq("bar" -> 5.0))
+    zinterWithscores(Seq("{key}1", "{key}2"), Aggregation.Min).assertEquals(Seq("bar" -> 2.0))
+    zinterWithscores(Seq("{key}1", "{key}2"), Aggregation.Max).assertEquals(Seq("bar" -> 3.0))
   }
 
   apiTest("ZINTER with WEIGHTS") {
@@ -273,6 +273,32 @@ trait SortedSetsApiSuite extends CommandsSuite {
     zscore("???", "a").assertEquals(Opt.Empty)
     zscore("key", "???").assertEquals(Opt.Empty)
     zscore("key", "b").assertEquals(2.0.opt)
+  }
+
+  apiTest("ZUNION") {
+    setup(
+      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
+      zadd("{key}2", "bar" -> 3.0, "lol" -> 6.0)
+    )
+    zunion("{key}1", "{key}2").assertEquals(Seq("foo", "bar", "lol"))
+    zunionWithscores("{key}1", "{key}2")
+      .assertEquals(Seq("foo" -> 1.0, "bar" -> 5.0, "lol" -> 6.0))
+    zunionWithscores(Seq("{key}1", "{key}2"), Aggregation.Sum)
+      .assertEquals(Seq("foo" -> 1.0, "bar" -> 5.0, "lol" -> 6.0))
+    zunionWithscores(Seq("{key}1", "{key}2"), Aggregation.Min)
+      .assertEquals(Seq("foo" -> 1.0, "bar" -> 2.0, "lol" -> 6.0))
+    zunionWithscores(Seq("{key}1", "{key}2"), Aggregation.Max)
+      .assertEquals(Seq("foo" -> 1.0, "bar" -> 3.0, "lol" -> 6.0))
+  }
+
+  apiTest("ZUNION with WEIGHTS") {
+    setup(
+      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
+      zadd("{key}2", "bar" -> 3.0, "lol" -> 5.0)
+    )
+    zunionWeights("{key}1" -> 1.0, "{key}2" -> 2.0).assertEquals(Seq("foo", "bar", "lol"))
+    zunionWeightsWithscores("{key}1" -> 1.0, "{key}2" -> 2.0)
+      .assertEquals(Seq("foo" -> 1.0, "bar" -> 8.0, "lol" -> 10.0))
   }
 
   apiTest("ZUNIONSTORE") {
