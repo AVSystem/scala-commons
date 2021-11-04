@@ -622,9 +622,12 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
         case name => throw new ReadFailure(s"Expected field 'Left' or 'Right', got $name")
       }
     },
-    (oo, v) => v match {
-      case Left(a) => write[A](oo.writeField("Left"), a)
-      case Right(b) => write[B](oo.writeField("Right"), b)
+    (oo, v) => {
+      oo.declareSize(1)
+      v match {
+        case Left(a) => write[A](oo.writeField("Left"), a)
+        case Right(b) => write[B](oo.writeField("Right"), b)
+      }
     }
   )
 
