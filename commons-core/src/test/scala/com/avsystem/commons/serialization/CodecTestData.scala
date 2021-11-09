@@ -301,7 +301,6 @@ object CodecTestData {
 
   sealed abstract class SealedKey[T](implicit val valueCodec: GenCodec[T]) extends TypedKey[T] with AutoNamedEnum
   object SealedKey extends NamedEnumCompanion[SealedKey[_]] {
-    @name("StrKey")
     case object StringKey extends SealedKey[String]
     case object IntKey extends SealedKey[Int]
     case object BooleanKey extends SealedKey[Boolean]
