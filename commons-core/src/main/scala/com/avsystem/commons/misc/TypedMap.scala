@@ -2,14 +2,29 @@ package com.avsystem.commons
 package misc
 
 import com.avsystem.commons.misc.TypedMap.GenCodecMapping
-import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, ObjectInput, ObjectOutput}
+import com.avsystem.commons.serialization._
 
 class TypedMap[K[_]](val raw: Map[K[_], Any]) extends AnyVal {
-  def apply[T](key: K[T]): Option[T] =
-    raw.get(key).map(_.asInstanceOf[T])
+  def apply[T](key: K[T]): T =
+    raw(key).asInstanceOf[T]
+
+  def get[T](key: K[T]): Option[T] =
+    raw.get(key).asInstanceOf[Option[T]]
+
+  def getOrElse[T](key: K[T], defaultValue: => T): T =
+    get(key).getOrElse(defaultValue)
 
   def updated[T](key: K[T], value: T): TypedMap[K] =
     new TypedMap[K](raw.updated(key, value))
+
+  def ++(other: TypedMap[K]): TypedMap[K] =
+    new TypedMap[K](raw ++ other.raw)
+
+  def keys: Iterable[K[_]] = raw.keys
+  def keysIterator: Iterator[K[_]] = raw.keysIterator
+  def keySet: Set[K[_]] = raw.keySet
+
+  def size: Int = raw.size
 
   override def toString = s"TypedMap($raw)"
 }
@@ -33,11 +48,18 @@ object TypedMap {
     def valueCodec[T](key: K[T]): GenCodec[T]
   }
 
-  implicit def typedMapCodec[K[_]](implicit keyCodec: GenKeyCodec[K[_]], codecMapping: GenCodecMapping[K]): GenCodec[TypedMap[K]] =
+  implicit def typedMapCodec[K[_]](implicit
+    keyCodec: GenKeyCodec[K[_]],
+    codecMapping: GenCodecMapping[K]
+  ): GenObjectCodec[TypedMap[K]] =
     new GenCodec.ObjectCodec[TypedMap[K]] {
       def nullable = false
       def readObject(input: ObjectInput): TypedMap[K] = {
         val rawBuilder = Map.newBuilder[K[_], Any]
+        input.knownSize match {
+          case -1 =>
+          case size => rawBuilder.sizeHint(size)
+        }
         while (input.hasNext) {
           val fieldInput = input.nextField()
           val key = keyCodec.read(fieldInput.fieldName)
@@ -45,27 +67,27 @@ object TypedMap {
         }
         new TypedMap[K](rawBuilder.result())
       }
-      def writeObject(output: ObjectOutput, typedMap: TypedMap[K]): Unit =
+      def writeObject(output: ObjectOutput, typedMap: TypedMap[K]): Unit = {
+        output.declareSizeOf(typedMap.raw)
         typedMap.raw.foreach { case (key, value) =>
-          codecMapping.valueCodec(key.asInstanceOf[K[Any]]).write(output.writeField(keyCodec.write(key)), value)
+          val valueCodec = codecMapping.valueCodec(key.asInstanceOf[K[Any]])
+          valueCodec.write(output.writeField(keyCodec.write(key)), value)
         }
+      }
     }
 }
 
 /**
-  * Base class for sealed enums which can be used as key type for a [[TypedMap]]. It also ensures that
-  * the [[TypedMap]] using [[TypedKey]] as a key type will always have a `GenCodec`.
+  * Base class for key types of [[TypedMap]] (typically enums parameterized by value type).
+  * Provides an instance of [[GenCodecMapping]] which is necessary for [[GenCodec]] instance for [[TypedMap]] that
+  * uses this key type.
   */
-abstract class TypedKey[T](implicit val valueCodec: GenCodec[T])
-trait TypedKeyCompanion[K[X] <: TypedKey[X]] extends SealedEnumCompanion[K[_]] {
-  /**
-    * `GenKeyCodec` for typed key `K`.
-    * You can implement this with `GenKeyCodec.forSealedEnum` macro
-    */
-  implicit def keyCodec: GenKeyCodec[K[_]]
-
-  implicit val codecMapping: GenCodecMapping[K] =
+trait TypedKey[T] {
+  def valueCodec: GenCodec[T]
+}
+object TypedKey {
+  implicit def codecMapping[K[X] <: TypedKey[X]]: GenCodecMapping[K] =
     new GenCodecMapping[K] {
-      def valueCodec[T](key: K[T]) = key.valueCodec
+      def valueCodec[T](key: K[T]): GenCodec[T] = key.valueCodec
     }
 }

@@ -3,6 +3,7 @@ package mongo.typed
 
 import com.avsystem.commons.annotation.macroPrivate
 import com.avsystem.commons.meta.OptionLike
+import com.avsystem.commons.misc.TypedMap
 import com.avsystem.commons.mongo.typed.MongoPropertyRef.Separator
 import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
@@ -254,6 +255,13 @@ object MongoPropertyRef {
     def apply(key: K): MongoPropertyRef[E, V] = {
       val dictFormat = ref.format.assumeDictionary
       MongoRef.FieldRef(ref, dictFormat.keyCodec.write(key), dictFormat.valueFormat, Opt.Empty)
+    }
+  }
+
+  implicit class TypedMapRefOps[E, K[_]](private val ref: MongoPropertyRef[E, TypedMap[K]]) extends AnyVal {
+    def apply[T](key: K[T]): MongoPropertyRef[E, T] = {
+      val tmFormat = ref.format.assumeTypedMap
+      MongoRef.FieldRef(ref, tmFormat.keyCodec.write(key), tmFormat.valueFormats.valueFormat(key), Opt.Empty)
     }
   }
 

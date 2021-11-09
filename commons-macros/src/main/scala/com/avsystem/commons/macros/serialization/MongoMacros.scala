@@ -12,6 +12,7 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
   lazy val SeqApplySym: Symbol = typeOf[scala.collection.Seq[Any]].member(TermName("apply"))
   lazy val SeqHeadRef: Symbol = typeOf[scala.collection.Seq[Any]].member(TermName("head"))
   lazy val MapApplySym: Symbol = typeOf[scala.collection.Map[Any, Any]].member(TermName("apply"))
+  lazy val TypedMapApplySym: Symbol = getType(tq"$MiscPkg.TypedMap[$ScalaPkg.Any]").member(TermName("apply"))
   lazy val AdtAsSym: Symbol = getType(tq"$MongoTypedPkg.AbstractMongoDataCompanion[Any, Any]#macroDslExtensions").member(TermName("as"))
 
   // check if some symbol is an abstract method of a sealed trait/class implemented in every case class
@@ -73,6 +74,11 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
           if overridesAnyOf(body.symbol, SeqApplySym, MapApplySym) =>
 
           q"${extractRefStep(prefix)}.apply($argument)"
+
+        case Apply(TypeApply(Select(prefix, TermName("apply")), List(valueTpeTree)), List(argument))
+          if overridesAnyOf(body.symbol, TypedMapApplySym) =>
+
+          q"${extractRefStep(prefix)}.apply[$valueTpeTree]($argument)"
 
         case _ =>
           invalid(body)

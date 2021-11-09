@@ -2,9 +2,8 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.annotation.AnnotationAggregate
-import com.avsystem.commons.meta.MacroInstances
-import com.avsystem.commons.meta.AutoOptionalParams
-import com.avsystem.commons.misc.{TypedKey, TypedKeyCompanion}
+import com.avsystem.commons.meta.{AutoOptionalParams, MacroInstances}
+import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, TypedKey}
 
 object CodecTestData {
   def col[T <: JCollection[Int]](col: T): T = {
@@ -300,15 +299,14 @@ object CodecTestData {
     implicit val codec: GenCodec[KeyEnumz] = GenCodec.forSealedEnum[KeyEnumz]
   }
 
-  sealed abstract class SealedKey[T: GenCodec] extends TypedKey[T]
-  object SealedKey extends TypedKeyCompanion[SealedKey] {
+  sealed abstract class SealedKey[T](implicit val valueCodec: GenCodec[T]) extends TypedKey[T] with AutoNamedEnum
+  object SealedKey extends NamedEnumCompanion[SealedKey[_]] {
     @name("StrKey")
     case object StringKey extends SealedKey[String]
     case object IntKey extends SealedKey[Int]
     case object BooleanKey extends SealedKey[Boolean]
 
     val values: List[SealedKey[_]] = caseObjects
-    implicit def keyCodec: GenKeyCodec[SealedKey[_]] = GenKeyCodec.forSealedEnum[SealedKey[_]]
   }
 
   @flatten("kejs") sealed trait CustomizedSeal
