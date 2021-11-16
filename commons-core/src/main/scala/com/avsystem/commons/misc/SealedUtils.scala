@@ -95,6 +95,13 @@ trait AutoNamedEnum extends NamedEnum with Product {
 }
 
 /**
+  * Like [[AutoNamedEnum]] but derived names are uncapitalized (first letter lowercased).
+  */
+trait LowerCaseAutoNamedEnum extends AutoNamedEnum {
+  override def name: String = super.name.uncapitalize
+}
+
+/**
   * Base trait for companion objects of sealed traits that serve as named enums. `NamedEnumCompanion` is an
   * extension of [[SealedEnumCompanion]] which additionally requires that every enum value has distinct string
   * representation. Values can then be looked up by that representation using [[NamedEnumCompanion.byName]]
