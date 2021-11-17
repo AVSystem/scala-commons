@@ -43,3 +43,6 @@ abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, 
 abstract class StringWrapperCompanion[T] extends TransparentWrapperCompanion[String, T]
 abstract class IntWrapperCompanion[T] extends TransparentWrapperCompanion[Int, T]
 abstract class LongWrapperCompanion[T] extends TransparentWrapperCompanion[Long, T]
+abstract class FloatWrapperCompanion[T] extends TransparentWrapperCompanion[Float, T]
+abstract class DoubleWrapperCompanion[T] extends TransparentWrapperCompanion[Double, T]
+abstract class BooleanWrapperCompanion[T] extends TransparentWrapperCompanion[Boolean, T]
