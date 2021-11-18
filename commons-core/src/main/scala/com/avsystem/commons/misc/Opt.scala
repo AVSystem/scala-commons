@@ -1,5 +1,7 @@
 package com.avsystem.commons.misc
 
+import com.avsystem.commons.IIterable
+
 object Opt {
   // Used as Opt's raw value to represent empty Opt. Unfortunately, null can't be used for that purpose
   // because https://github.com/scala/bug/issues/7396
@@ -12,7 +14,7 @@ object Opt {
     if (value != null) new Opt[A](value)
     else throw new NullPointerException
 
-  implicit def opt2Iterable[A](xo: Opt[A]): Iterable[A] = xo.toList
+  implicit def opt2Iterable[A](xo: Opt[A]): IIterable[A] = xo.toList
 
   final val Empty: Opt[Nothing] = new Opt(EmptyMarker)
 
