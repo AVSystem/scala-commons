@@ -434,21 +434,9 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit lazy val BytesCodec: GenCodec[Bytes] =
     GenCodec.nullableSimple(i => Bytes(i.readBinary()), (o, b) => o.writeBinary(b.bytes))
 
-  private def declareSize(o: SequentialOutput, coll: BIterable[_]): Unit =
-    o.sizePolicy match {
-      case SizePolicy.Ignored =>
-      case SizePolicy.Optional =>
-        coll.knownSize match {
-          case -1 =>
-          case size => o.declareSize(size)
-        }
-      case SizePolicy.Required =>
-        o.declareSize(coll.size)
-    }
-
   private implicit class IterableOps[A](private val coll: BIterable[A]) extends AnyVal {
     def writeToList(lo: ListOutput)(implicit writer: GenCodec[A]): Unit = {
-      declareSize(lo, coll)
+      lo.declareSizeOf(coll)
       coll.foreach(new (A => Unit) {
         private var idx = 0
         def apply(a: A): Unit = {
@@ -463,7 +451,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   private implicit class PairIterableOps[A, B](private val coll: BIterable[(A, B)]) extends AnyVal {
     def writeToObject(oo: ObjectOutput)(implicit keyWriter: GenKeyCodec[A], writer: GenCodec[B]): Unit = {
-      declareSize(oo, coll)
+      oo.declareSizeOf(coll)
       coll.foreach { case (key, value) =>
         val fieldName = keyWriter.write(key)
         try writer.write(oo.writeField(fieldName), value) catch {

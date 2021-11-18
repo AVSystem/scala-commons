@@ -3,7 +3,7 @@ package mongo.typed
 
 import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta._
-import com.avsystem.commons.misc.ValueOf
+import com.avsystem.commons.misc.{TypedMap, ValueOf}
 import com.avsystem.commons.mongo.{BsonValueInput, BsonValueOutput}
 import com.avsystem.commons.serialization._
 import org.bson.{BsonNull, BsonValue}
@@ -61,6 +61,12 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
     valueFormat: MongoFormat[V]
   ) extends MongoFormat[M[K, V]]
 
+  final case class TypedMapFormat[K[_]](
+    codec: GenCodec[TypedMap[K]],
+    keyCodec: GenKeyCodec[K[_]],
+    valueFormats: MongoFormatMapping[K]
+  ) extends MongoFormat[TypedMap[K]]
+
   final case class OptionalFormat[O, T](
     codec: GenCodec[O],
     optionLike: OptionLike.Aux[O, T],
@@ -74,6 +80,10 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
   implicit def dictionaryFormat[M[X, Y] <: BMap[X, Y], K, V](
     implicit mapCodec: GenCodec[M[K, V]], keyCodec: GenKeyCodec[K], valueFormat: MongoFormat[V]
   ): MongoFormat[M[K, V]] = DictionaryFormat(mapCodec, keyCodec, valueFormat)
+
+  implicit def typedMapFormat[K[_]](
+    implicit keyCodec: GenKeyCodec[K[_]], valueFormats: MongoFormatMapping[K]
+  ): MongoFormat[TypedMap[K]] = TypedMapFormat[K](TypedMap.typedMapCodec, keyCodec, valueFormats)
 
   implicit def optionalFormat[O, T](
     implicit optionLike: OptionLike.Aux[O, T], optionCodec: GenCodec[O], wrappedFormat: MongoFormat[T]
@@ -93,6 +103,15 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
       case dict: DictionaryFormat[M, K, V] => dict
       case _ => throw new IllegalArgumentException(
         "Encountered a non-dictionary MongoFormat for a dictionary type - " +
+          "do you have a custom implicit MongoFormat for that type?")
+    }
+  }
+
+  implicit class typedMapFormatOps[K[_]](private val format: MongoFormat[TypedMap[K]]) extends AnyVal {
+    def assumeTypedMap: TypedMapFormat[K] = format match {
+      case typedMap: TypedMapFormat[K] => typedMap
+      case _ => throw new IllegalArgumentException(
+        "Encountered a non-typed-map MongoFormat for a TypedMap type - " +
           "do you have a custom implicit MongoFormat for that type?")
     }
   }

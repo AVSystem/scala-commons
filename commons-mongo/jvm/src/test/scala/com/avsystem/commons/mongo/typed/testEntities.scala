@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.avsystem.commons.misc.Timestamp
+import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, Timestamp, TypedMap}
 import com.avsystem.commons.serialization._
 import org.bson.types.ObjectId
 
@@ -10,6 +10,15 @@ object RecordId extends StringWrapperCompanion[RecordId]
 
 case class InnerId(id: String) extends AnyVal
 object InnerId extends StringWrapperCompanion[InnerId]
+
+sealed abstract class PKey[T](implicit val valueFormat: MongoFormat[T]) extends MongoTypedKey[T] with AutoNamedEnum
+object PKey extends NamedEnumCompanion[PKey[_]] {
+  case object IntKey extends PKey[Int]
+  case object StringKey extends PKey[String]
+  case object InnerKey extends PKey[InnerRecord]
+
+  val values: List[PKey[_]] = caseObjects
+}
 
 case class InnerRecord(
   int: Int,
@@ -33,6 +42,7 @@ case class RecordTestEntity(
   @optionalParam intOpt: Opt[Int],
   intList: List[Int],
   intMap: Map[String, Int],
+  typedMap: TypedMap[PKey],
   inner: InnerRecord,
   innerOpt: Opt[InnerRecord],
   innerList: List[InnerRecord],
@@ -43,9 +53,9 @@ case class RecordTestEntity(
 object RecordTestEntity extends MongoEntityCompanion[RecordTestEntity] {
   final val Example = RecordTestEntity(
     "rid", 42, "str", Timestamp.Zero, Opt("stropt"), Opt.Empty,
-    List(1, 2, 3), Map("one" -> 1, "two" -> 2), InnerRecord.Example,
-    Opt(InnerRecord.Example), List(InnerRecord.Example), Map(InnerId("iid") -> InnerRecord.Example),
-    Opt(Map(InnerId("iid") -> List(InnerRecord.Example)))
+    List(1, 2, 3), Map("one" -> 1, "two" -> 2), TypedMap(PKey.IntKey -> 42, PKey.InnerKey -> InnerRecord.Example),
+    InnerRecord.Example, Opt(InnerRecord.Example), List(InnerRecord.Example),
+    Map(InnerId("iid") -> InnerRecord.Example), Opt(Map(InnerId("iid") -> List(InnerRecord.Example)))
   )
 }
 

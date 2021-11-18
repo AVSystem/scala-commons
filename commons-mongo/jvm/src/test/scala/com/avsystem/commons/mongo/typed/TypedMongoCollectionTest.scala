@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.avsystem.commons.misc.Timestamp
+import com.avsystem.commons.misc.{Timestamp, TypedMap}
 import com.avsystem.commons.mongo.BsonValueInput
 import com.mongodb.client.model.Aggregates
 import com.mongodb.reactivestreams.client.MongoClients
@@ -51,6 +51,7 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
       Opt(i % 10).filter(_ % 2 == 0),
       List.range(0, i),
       Map("one" -> 1, "two" -> 2),
+      TypedMap(PKey.IntKey -> i, PKey.InnerKey -> ir),
       ir,
       Opt(ir),
       List(ir),

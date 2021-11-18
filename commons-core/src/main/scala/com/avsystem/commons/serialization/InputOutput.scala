@@ -176,6 +176,21 @@ trait SequentialOutput extends Any with AcceptsCustomEvents {
     * have been written. This method MUST always be called after list/object writing has been finished.
     */
   def finish(): Unit
+
+  /**
+    * Based on given collection's `knownSize` and [[sizePolicy]], declares the size
+    * of this output as size of this collection if it is either cheap or required to do so.
+    */
+  final def declareSizeOf(coll: BIterable[_]): Unit = sizePolicy match {
+    case SizePolicy.Ignored =>
+    case SizePolicy.Optional =>
+      coll.knownSize match {
+        case -1 =>
+        case size => declareSize(size)
+      }
+    case SizePolicy.Required =>
+      declareSize(coll.size)
+  }
 }
 /**
   * Represents an abstract sink for serialization of sequences of values. Any [[ListOutput]] instance

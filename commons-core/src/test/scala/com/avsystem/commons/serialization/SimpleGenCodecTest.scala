@@ -322,7 +322,7 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 
     testWrite(
       TypedMap(StringKey -> "lol", IntKey -> 42, BooleanKey -> true),
-      Map[String, Any]("StrKey" -> "lol", "IntKey" -> 42, "BooleanKey" -> true)
+      Map[String, Any]("StringKey" -> "lol", "IntKey" -> 42, "BooleanKey" -> true)
     )
   }
 
