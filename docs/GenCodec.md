@@ -1,3 +1,36 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [`GenCodec`](#gencodec)
+  - [The `GenCodec` typeclass](#the-gencodec-typeclass)
+    - [Formats supported by default](#formats-supported-by-default)
+    - [`GenKeyCodec`](#genkeycodec)
+    - [`GenObjectCodec`](#genobjectcodec)
+  - [Writing and reading](#writing-and-reading)
+  - [`GenCodec` instances available by default](#gencodec-instances-available-by-default)
+  - [Deriving codecs](#deriving-codecs)
+    - [Deriving codecs for generic types](#deriving-codecs-for-generic-types)
+    - [Depending on external implicits](#depending-on-external-implicits)
+  - [Serializing case classes](#serializing-case-classes)
+    - [Field name customization](#field-name-customization)
+    - [Default field values](#default-field-values)
+      - [Transient default field values](#transient-default-field-values)
+    - [Optional and nullable fields](#optional-and-nullable-fields)
+    - [Case class like types](#case-class-like-types)
+  - [Serializing sealed hierarchies](#serializing-sealed-hierarchies)
+    - [Nested sealed hierarchy format](#nested-sealed-hierarchy-format)
+    - [Flat sealed hierarchy format](#flat-sealed-hierarchy-format)
+      - [Sealed hierarchy default case](#sealed-hierarchy-default-case)
+    - [Case name customization](#case-name-customization)
+  - [Transparent wrappers](#transparent-wrappers)
+  - [Writing codecs for third party types](#writing-codecs-for-third-party-types)
+    - [Derive the codec from a "fake companion"](#derive-the-codec-from-a-fake-companion)
+    - [Transform the codec of another type](#transform-the-codec-of-another-type)
+    - [Implement the codec manually](#implement-the-codec-manually)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # `GenCodec`
 
 `GenCodec` is a **serialization library** within AVSystem's `scala-commons` library.
