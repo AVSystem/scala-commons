@@ -1,5 +1,7 @@
 package com.avsystem.commons.misc
 
+import com.avsystem.commons.IIterable
+
 object NOpt {
   // These two are used as NOpt's raw value to represent empty NOpt and NOpt(null).
   // Unfortunately, null itself can't be used for that purpose because https://github.com/scala/bug/issues/7396
@@ -20,7 +22,7 @@ object NOpt {
   def some[A](value: A): NOpt[A] =
     new NOpt(if (value == null) NullMarker else value)
 
-  implicit def opt2Iterable[A](xo: NOpt[A]): Iterable[A] = xo.toList
+  implicit def opt2Iterable[A](xo: NOpt[A]): IIterable[A] = xo.toList
 
   final val Empty: NOpt[Nothing] = new NOpt(EmptyMarker)
 

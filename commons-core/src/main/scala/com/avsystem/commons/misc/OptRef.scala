@@ -1,5 +1,7 @@
 package com.avsystem.commons.misc
 
+import com.avsystem.commons.IIterable
+
 object OptRef {
   def apply[A >: Null](value: A): OptRef[A] = new OptRef[A](value)
   def unapply[A >: Null](opt: OptRef[A]): OptRef[A] = opt //name-based extractor
@@ -13,7 +15,7 @@ object OptRef {
       if (optRef.isEmpty) Opt.Empty else Opt(unboxing.fun(optRef.get))
   }
 
-  implicit def opt2Iterable[A >: Null](xo: OptRef[A]): Iterable[A] = xo.toList
+  implicit def opt2Iterable[A >: Null](xo: OptRef[A]): IIterable[A] = xo.toList
 
   final val Empty: OptRef[Null] = new OptRef[Null](null)
 
