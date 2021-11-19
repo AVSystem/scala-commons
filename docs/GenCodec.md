@@ -10,7 +10,7 @@ boilerplate and does not require any usage of runtime reflection, which has seve
 * platform independence - `GenCodec` works in Scala-JVM as well as Scaja.js (and possibly Scala Native in the future)
 * performance - statically generated code is faster than runtime reflection
 * precision - codec generation can access full type information, not limited by type erasure
-* type safety - codec generation thoroughly validates types and issues compilation error when something is wrong (e.g.
+* type safety - codec generation thoroughly validates types and issues compilation errors when something is wrong (e.g.
   when a codec instance is missing for some case class field type)
 
 ## The `GenCodec` typeclass
@@ -35,16 +35,17 @@ However, `Input` and `Output` define a common denominator that must be supported
 Namely, they must all have a JSON-like structure, i.e.
 
 * they must support writing and reading primitive types like `String`, `Boolean`, `Int`, `Double`, `BigInteger`,
-  `BigDecimal`, `Array[Byte]`, `Timestamp`. \ Note that **not** all these types must have a native, unambiguous
+  `BigDecimal`, `Array[Byte]`, `Timestamp`. \ 
+  Note that **not** all these types must have a native, unambiguous
   representation in the target format. For example, a `Timestamp` can be represented as an ISO string or a raw number of
   milliseconds.
 * they must support writing a `null` value and checking for `null` when reading
-* they must support writing and reading _lists_/_arrays_ - sequences of arbitrary values
+* they must support writing and reading _lists_ - sequences of arbitrary values
 * they must support writing and reading _objects_ - mappings of string keys to arbitrary values
 
 ### Formats supported by default
 
-Within `scala-commons` you can find `Input` and `Output` implementation for the following serialization formats:
+Within `scala-commons` you can find `Input` and `Output` implementations for the following serialization formats:
 
 * [JSON](https://www.json.org/json-en.html) represented as raw strings - `JsonStringInput` & `JsonStringOutput`
 * [CBOR](https://cbor.io/) represented as raw byte arrays - `CborInput` & `CborOutput`
@@ -53,11 +54,11 @@ Within `scala-commons` you can find `Input` and `Output` implementation for the 
     * using Java intermediate `BsonValue` representation - `BsonValueInput` & `BsonValueOutput`
     * using Java stream-like `BsonReader` and `BsonWriter` - `BsonReaderInput` & `BsonWriterOutput`
 * [HOCON](https://github.com/lightbend/config/blob/main/HOCON.md) using
-  [Lightbend Config](https://github.com/lightbend/config) representation, available in `commons-hocon` module
-    - `HoconInput` & `HoconOutput`
+  [Lightbend Config](https://github.com/lightbend/config) representation, available in `commons-hocon` module - 
+  `HoconInput` & `HoconOutput`
 
-It should be relatively easy to implement `Input` and `Output` for various intermediate representations found in third
-party libraries, e.g. JSON ASTs implemented by all the JSON serialization libraries.
+Also, in principle it should be relatively easy to implement `Input` and `Output` for various intermediate representations 
+found in third party libraries, e.g. JSON ASTs implemented by all the JSON serialization libraries.
 
 ### `GenKeyCodec`
 
@@ -110,12 +111,13 @@ val ints: List[Int] = JsonStringInput.read[List[Int]]("[1, 2, 3]")
       is not possible to unambiguously serialize `Some(null)` and `NOpt(null)` - they will collapse to `None`
       and `NOpt.Empty` upon deserialization (note that `Opt(null)` and `OptArg(null)` already collapse to empty values
       in runtime, independent of serialization).
+* `Either[A, B]` - assuming availability of `GenCodec[A]` and `GenCodec[B]`
 
 All collections are serialized into lists (arrays) while all maps are serialized into objects.
 
 ## Deriving codecs
 
-In order to serialize your own types, you must provide a `GenCodec` instances independently. Fortunately, most of the
+In order to serialize your own types, you must provide `GenCodec` instances independently. Fortunately, most of the
 time serialized types are algebraic data types (case classes and sealed hierarchies) for which there are convenient
 macros for codec generation.
 
@@ -129,7 +131,7 @@ case class Data(int: Int, string: String)
 object Data extends HasGenCodec[Data]
 ```
 
-This is a shorter version of a more general method:
+This is a shorter version of a more general way:
 
 ```scala
 case class Data(int: Int, string: String)
@@ -171,10 +173,10 @@ case class StrExpr(str: String) extends Expr[String]
 object Expr extends HasGadtCodec[Expr]
 ```
 
-There is infinitely many ways (_kinds_) in which your data types may be generic. You may have two, three or more type
+There are infinitely many ways (_kinds_) by which your data types may be generic. You may have two, three or more type
 parameters, they may have additional bounds, require additional implicits, etc. It is impossible to cover all these
 possibilities with a finite set of base companion classes like `HasGenCodec`. However, you can always fall back to
-declaring the codec explicitly and using `GenCodec.materialize` to derive the implementation. It is also relatively easy
+declaring the codec explicitly and using `GenCodec.materialize`. It is also relatively easy
 to make your own base companion class, similar to `HasGenCodec` that can cover your particular generic scenario.
 
 ### Depending on external implicits
@@ -187,7 +189,7 @@ For example:
 ```scala
 import com.avsystem.commons.serialization._
 
-trait ThirdPartyType
+type ThirdPartyType // defined in a library
 
 object AdditionalImplicits {
   implicit val thirdPartyTypeCodec: GenCodec[ThirdPartyType] = ???
@@ -209,7 +211,7 @@ object Data {
 }
 ```
 
-In order to further reduce boilerplate, it may be worth introducing your own version of `HasGenCodec` that hase these
+In order to further reduce boilerplate, it may be worth introducing your own version of `HasGenCodec` that has these
 implicits baked in:
 
 ```scala
@@ -243,7 +245,7 @@ order. This allows you to freely change the order of case class fields without b
 
 ### Field name customization
 
-Using the `@name` annotation, it is also possible to change the serialized field names:
+Using the `@name` annotation, it is possible to change serialized field names:
 
 ```scala
 import com.avsystem.commons.serialization._
@@ -268,14 +270,14 @@ object Data extends HasGenCodec[Data]
 println(JsonStringInput.read[Data]("""{"int":42}""")) // Data(42, "default")
 ```
 
-You can achieve the same with `@whenAbsent` annotation if you don't want the default value to be used **only** during
+You can achieve the same with `@whenAbsent` annotation if you want the default value to be used **only** during
 deserialization (i.e. you don't want a language-level default value):
 
 ```scala
 case class Data(int: Int, @whenAbsent("default") string: String)
 ```
 
-Default field values allow you to evolve your case class by adding fields, without breaking serialization compatibility.
+Default field values allow you to evolve your case classes by adding fields, without breaking serialization compatibility.
 
 #### Transient default field values
 
@@ -325,8 +327,8 @@ case class Data(int: Int, @transientDefault str: Option[String] = None)
 
 However, `@optionalParam` is the recommended, more "native" way to do this.
 
-When using `@optionalParam` with `Option`/`Opt`/`OptArg`, `null`-valued fields are equivalent to missing fields. If you
-need to distinguish between missing fields and a `null`-valued fields, this can be achieved with the help of `NOpt` (a
+When using `@optionalParam` with `Option`/`Opt`/`OptArg`, `null`-valued fields are treated equivalently to missing fields. If you
+need to distinguish between missing fields and `null`-valued fields, this can be achieved with the help of `NOpt` (a
 nullable `Opt`):
 
 ```scala
@@ -421,9 +423,9 @@ printJson(NullExpr)       // {"NullExpr":{}}
 
 ### Flat sealed hierarchy format
 
-Flat sealed hierarchy format does not generate nested objects. It uses a _discriminator_ field instead.
-In order to enable flat format, use `@flatten` annotation on the sealed trait.
-As an argument to this annotation, you can pass the discriminator field name (the default is `"_case"`).
+Flat sealed hierarchy format uses _discriminator_ field instead of nested objects.
+In order to enable the flat format, use `@flatten` annotation on the sealed trait.
+As an argument it accepts optional discriminator field name (the default is `"_case"`).
 
 ```scala
 import com.avsystem.commons.serialization._
@@ -445,7 +447,7 @@ printJson(NullExpr)       // {"type":"NullExpr"}
 Flat sealed hierarchy format is cleaner but requires that all case classes and objects serialize into objects.
 It may also be sensitive to object field order because the discriminator field must be read before any other fields
 (this is only a problem with `Input` implementations that do not support random field access by name -
-`JsonStringInput` is **not** one of them).
+`JsonStringInput` does not have this problem).
 
 #### Sealed hierarchy default case
 
@@ -544,7 +546,7 @@ println(JsonStringOutput.write(Duration.ofSeconds(5).withNanos(500))) // {"secon
 
 This method is limited to situations where you want to serialize a third party type into an object.
 
-### Transform a codec of another type
+### Transform the codec of another type
 
 Another relatively easy way of getting a codec for a third party type is by providing a bidirectional conversion
 between that type and some type that already has a codec.
