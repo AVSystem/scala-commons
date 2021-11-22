@@ -1,15 +1,15 @@
 package com.avsystem.commons
 package concurrent
 
-import java.util.concurrent.ArrayBlockingQueue
 import com.avsystem.commons.collection.CloseableIterator
 import monix.execution.{Ack, Scheduler}
 import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
 
+import java.util.concurrent.ArrayBlockingQueue
 import scala.annotation.nowarn
-import scala.concurrent.blocking
-import scala.concurrent.duration.TimeUnit
+import scala.concurrent.duration.{FiniteDuration, TimeUnit}
+import scala.concurrent.{TimeoutException, blocking}
 
 /**
   * An `Iterator` backed by a `BlockingQueue` backed by an `Observable`.
@@ -33,18 +33,19 @@ class ObservableBlockingIterator[T](
   private val cancelable = observable.subscribe(this)
 
   def onNext(elem: T): Future[Ack] = {
+    val safeElem = if (elem.asInstanceOf[AnyRef] eq null) Null else elem
     // checking size is safe because only `onNext/onError/onComplete` add to the queue
     // and they are guaranteed to be invoked sequentially
     if (queue.remainingCapacity > 1) {
       // there's more than one spot in the queue, add this element and acknowledge immediately
-      queue.add(elem)
+      queue.add(safeElem)
       Ack.Continue
     } else {
       // not sure if there's more than one spot in the queue - add the element but return a Promise-backed Future of acknowledgement
       // NOTE: the Observable protocol guarantees that `onNext/onError/onComplete` is never called when the queue is full
       val promise = Promise[Ack]()
       ackPromise = promise
-      queue.add(elem)
+      queue.add(safeElem)
       // must use promise from local val because `fetchNext()` may have already erased `ackPromise`
       promise.future
     }
@@ -58,7 +59,10 @@ class ObservableBlockingIterator[T](
 
   private def fetchNext(): Any = last match {
     case Empty =>
-      last = blocking(queue.poll(timeout, unit))
+      blocking(queue.poll(timeout, unit)) match {
+        case null => throw new TimeoutException(s"timed out after ${FiniteDuration(timeout, unit)}")
+        case elem => last = elem
+      }
       val promise = ackPromise
       // after the queue got full, wait until at least half of its capacity is free before letting
       // the Observable produce more elements
@@ -81,6 +85,9 @@ class ObservableBlockingIterator[T](
   def next(): T = fetchNext() match {
     case Complete => throw new NoSuchElementException
     case Failed(cause) => throw cause
+    case Null =>
+      last = Empty
+      null.asInstanceOf[T]
     case value: T@unchecked =>
       last = Empty
       value
@@ -91,6 +98,7 @@ class ObservableBlockingIterator[T](
 }
 object ObservableBlockingIterator {
   private object Empty
+  private object Null
   private object Complete
   private case class Failed(ex: Throwable)
 }
