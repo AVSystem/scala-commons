@@ -1,3 +1,7 @@
+# `GenCodec`
+
+`GenCodec` is a **serialization library** within AVSystem's `scala-commons` library.
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
@@ -30,10 +34,6 @@
     - [Implement the codec manually](#implement-the-codec-manually)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# `GenCodec`
-
-`GenCodec` is a **serialization library** within AVSystem's `scala-commons` library.
 
 Like most Scala serialization libraries, `GenCodec`
 leverages [typeclasses](https://scalac.io/blog/typeclasses-in-scala/). Typeclass instances can be automatically
