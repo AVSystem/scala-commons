@@ -46,6 +46,8 @@ boilerplate and does not require any usage of runtime reflection, which has seve
 * type safety - codec generation thoroughly validates types and issues compilation errors when something is wrong (e.g.
   when a codec instance is missing for some case class field type)
 
+[Old Documentation](GenCodecOld.md) (with more internals)
+
 ## The `GenCodec` typeclass
 
 The `GenCodec` typeclass itself is defined as:
@@ -68,7 +70,7 @@ However, `Input` and `Output` define a common denominator that must be supported
 Namely, they must all have a JSON-like structure, i.e.
 
 * they must support writing and reading primitive types like `String`, `Boolean`, `Int`, `Double`, `BigInteger`,
-  `BigDecimal`, `Array[Byte]`, `Timestamp`. \ 
+  `BigDecimal`, `Array[Byte]`, `Timestamp`.
   Note that **not** all these types must have a native, unambiguous
   representation in the target format. For example, a `Timestamp` can be represented as an ISO string or a raw number of
   milliseconds.
