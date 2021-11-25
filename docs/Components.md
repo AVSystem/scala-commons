@@ -20,7 +20,9 @@ An application is made of _components_. In this tutorial, a _component_ is an ob
 that usually has at least one of the following properties:
 
 * it represents a "service" within your system, e.g. HTTP server, database access layer, etc.
-* it has some initialization logic with side effects
+* it has a lifecycle: initialization and destruction logic (with side effects)
+* it acquires and releases resources
+* it is stateful
 * it depends on other components
 
 
@@ -134,9 +136,9 @@ object MyApp extends Components {
 
 `.ref` is not a real method. It exists only during compilation and is interpreted by the `component` or `singleton` macro.
 A dependency reference is extracted by the macro out of the component initialization expression. 
-This way the macro separates initialization initialization of every component from initialization of its dependencies.
-This technique makes it possible to inspect the dependency graph before any components are initialized.
-This allows early cycle detection and lets us initialize independent components in parallel.
+This way the macro separates initialization of a component from initialization of its dependencies.
+This technique makes it possible to inspect the dependency graph before initializing any components.
+This allows early cycle detection and lets us parallelize component initialization.
 
 **NOTE**: If you're familiar with `sbt`, then `.ref` works somewhat similarly to `.value` in `sbt` settings & task definitions.
 
