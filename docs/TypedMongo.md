@@ -113,12 +113,14 @@ listTask.foreach(foundEntities => println(s"Found entities: $foundEntities"))
 A MongoDB entity may be:
 
 * a case class
-* a sealed trait/class with `@flatten` annotation (see `GenCodec`'s [flat format](GenCodec.md#flat-format) for more
+* a sealed trait/class with `@flatten` annotation (see `GenCodec`'s [flat format](GenCodec.md#flat-sealed-hierarchy-format) for more
   details)
 
 Also, every MongoDB entity must have a companion object that extends `MongoEntityCompanion`. This causes an instance
 of `MongoEntityMeta` to be materialized for the entity class. This typeclass internally materializes a `GenObjectCodec`
 (for serialization) and captures the structure of the entity into metadata available in runtime.
+
+See [`GenCodec`](GenCodec.md) for more details on serialization used by typed MongoDB API.
 
 ### ID management
 
@@ -165,7 +167,7 @@ object User extends MongoEntityCompanion[User]
 
 ### Field types
 
-Any type that has a `GenCodec` instance will be accepted as a field type in MongoDB entity. However, the MongoDB API is
+Any type that has a [`GenCodec`](GenCodec.md) instance will be accepted as a field type in MongoDB entity. However, the MongoDB API is
 additionally aware of internal structure of some types, including:
 
 * [embedded documents](#embedded-document-types) - serialized into BSON documents
