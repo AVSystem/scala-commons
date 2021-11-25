@@ -45,6 +45,7 @@ a wrapper over Reactive Streams driver `MongoCollection` with more precisely typ
 ### Defining an entity
 
 ```scala
+import com.avsystem.commons.mongo.typed._
 import org.bson.types.ObjectId
 
 case class SimpleEntity(
@@ -58,6 +59,7 @@ object SimpleEntity extends MongoEntityCompanion[SimpleEntity]
 ### Setting up the client
 
 ```scala
+import com.avsystem.commons.mongo.typed._
 import com.mongodb.reactivestreams.client.MongoClients
 
 val client = MongoClients.create() // connects to localhost by default
