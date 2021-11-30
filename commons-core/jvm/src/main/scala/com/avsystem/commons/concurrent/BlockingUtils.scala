@@ -55,7 +55,7 @@ abstract class BlockingUtils {
     runAndAwait(task, FiniteDuration(timeout, unit))
 
   def runAndAwait[T](task: Task[T], timeout: Duration): T =
-    task.runSyncUnsafe(timeout)
+    task.executeAsync.runSyncUnsafe(timeout)
 
   // overloading instead of using default value so that it's usable from Java
   def toIterator[T](observable: Observable[T]): CloseableIterator[T] =
