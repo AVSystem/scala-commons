@@ -39,7 +39,7 @@ sealed trait MongoFormat[T] {
   }
 
   def assumeOptional[W]: MongoFormat.OptionalFormat[T, W] = this match {
-    case optional: MongoFormat.OptionalFormat[T, W@unchecked] => optional
+    case optional: MongoFormat.OptionalFormat[T@unchecked, W@unchecked] => optional
     case _ => throw new IllegalArgumentException(
       "Encountered a non-optional MongoFormat for an Option-like type - " +
         "do you have a custom implicit MongoFormat for that type?")
@@ -91,7 +91,7 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
 
   implicit class collectionFormatOps[C[X] <: Iterable[X], T](private val format: MongoFormat[C[T]]) extends AnyVal {
     def assumeCollection: CollectionFormat[C, T] = format match {
-      case coll: CollectionFormat[C, T] => coll
+      case coll: CollectionFormat[C@unchecked, T@unchecked] => coll
       case _ => throw new IllegalArgumentException(
         "Encountered a non-collection MongoFormat for a collection type - " +
           "do you have a custom implicit MongoFormat for that type?")
@@ -100,7 +100,7 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
 
   implicit class dictionaryFormatOps[M[X, Y] <: BMap[X, Y], K, V](private val format: MongoFormat[M[K, V]]) extends AnyVal {
     def assumeDictionary: DictionaryFormat[M, K, V] = format match {
-      case dict: DictionaryFormat[M, K, V] => dict
+      case dict: DictionaryFormat[M@unchecked, K@unchecked, V@unchecked] => dict
       case _ => throw new IllegalArgumentException(
         "Encountered a non-dictionary MongoFormat for a dictionary type - " +
           "do you have a custom implicit MongoFormat for that type?")
