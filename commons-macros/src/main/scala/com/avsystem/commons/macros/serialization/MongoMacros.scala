@@ -14,6 +14,7 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
   lazy val MapApplySym: Symbol = typeOf[scala.collection.Map[Any, Any]].member(TermName("apply"))
   lazy val TypedMapApplySym: Symbol = getType(tq"$MiscPkg.TypedMap[$ScalaPkg.Any]").member(TermName("apply"))
   lazy val AdtAsSym: Symbol = getType(tq"$MongoTypedPkg.AbstractMongoDataCompanion[Any, Any]#macroDslExtensions").member(TermName("as"))
+  lazy val PolyAdtAsSym: Symbol = getType(tq"$MongoTypedPkg.AbstractMongoPolyDataCompanion[Any, Any]#macroDslExtensions").member(TermName("as"))
 
   // check if some symbol is an abstract method of a sealed trait/class implemented in every case class
   // by a field with exactly the same type
@@ -52,7 +53,8 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
         case body: Ident if body.symbol == param.symbol =>
           c.prefix.tree
 
-        case TypeApply(Select(Apply(_, List(prefix)), TermName("as")), List(subtpe)) if body.symbol == AdtAsSym =>
+        case TypeApply(Select(Apply(_, List(prefix)), TermName("as")), List(subtpe))
+          if body.symbol == AdtAsSym || body.symbol == PolyAdtAsSym =>
           q"${extractRefStep(prefix)}.as[$subtpe]"
 
         case Select(prefix, name: TermName) =>

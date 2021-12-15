@@ -70,6 +70,16 @@ case class CaseTwo(id: String, str: String, data: Int, inner: RecordTestEntity) 
 case class CaseThree(id: String, str: String, data: String, inner: RecordTestEntity) extends HasInner
 object UnionTestEntity extends MongoEntityCompanion[UnionTestEntity]
 
+@flatten sealed trait PolyMongoUnion[+T]
+object PolyMongoUnion extends MongoPolyDataCompanion[PolyMongoUnion] {
+  case class CaseOne[+T](value: T, str: String) extends PolyMongoUnion[T]
+  case class CaseTwo[+T](foo: T, int: Int) extends PolyMongoUnion[T]
+  case object CaseThree extends PolyMongoUnion[Nothing]
+}
+
+case class PolyMongoRecord[+T](value: T, meta: String)
+object PolyMongoRecord extends MongoPolyDataCompanion[PolyMongoRecord]
+
 case class TestAutoId(id: ObjectId) extends AnyVal
 object TestAutoId extends ObjectIdWrapperCompanion[TestAutoId]
 
