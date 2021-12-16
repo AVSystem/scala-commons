@@ -44,7 +44,7 @@ abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](implicits: Implic
   *   case class Point[+T](x: T, y: T)
   *   object Point extends MongoPolyDataCompanion[Point] {
   *     def XRef[T: MongoFormat]: MongoPropertyRef[Point[T], T] =
-  *       Point[T].ref(_.x)
+  *       Point.dsl[T].ref(_.x)
   *   }
   * }}}
   */
