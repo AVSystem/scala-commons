@@ -5,6 +5,6 @@ package mongo.typed
 // This serves only to avoid writing macro code cross-compiled for Scala 2.12
 private trait AbstractMongoPolyDataCompanion {
   trait macroDslExtensions {
-    def as[C <: D[T]]: C = sys.error("stub")
+    def as[C]: C = sys.error("stub")
   }
 }
