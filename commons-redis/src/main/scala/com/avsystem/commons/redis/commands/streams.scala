@@ -447,12 +447,12 @@ case class XConsumerInfo(raw: BMap[String, ValidRedisMsg]) {
   def idle: Long = integerAsLong(raw("idle"))
 }
 
-case class XStreamInfo[Record: RedisRecordCodec](raw: BMap[String, ValidRedisMsg]) {
+case class XStreamInfo[Rec: RedisRecordCodec](raw: BMap[String, ValidRedisMsg]) {
   def length: Long = integerAsLong(raw("length"))
   def radixTreeKeys: Int = integerAsInt(raw("radis-tree-keys"))
   def radixTreeNodes: Int = integerAsInt(raw("radis-tree-nodes"))
   def groups: Int = integerAsInt(raw("groups"))
   def lastGeneratedId: XEntryId = bulkAsXEntryId(raw("last-generated-id"))
-  def firstEntry: XEntry[Record] = multiBulkAsXEntryOf[Record].apply(raw("first-entry"))
-  def lastEntry: XEntry[Record] = multiBulkAsXEntryOf[Record].apply(raw("last-entry"))
+  def firstEntry: XEntry[Rec] = multiBulkAsXEntryOf[Rec].apply(raw("first-entry"))
+  def lastEntry: XEntry[Rec] = multiBulkAsXEntryOf[Rec].apply(raw("last-entry"))
 }
