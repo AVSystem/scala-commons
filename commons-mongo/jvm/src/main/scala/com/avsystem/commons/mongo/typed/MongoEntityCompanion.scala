@@ -72,6 +72,9 @@ abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](implicits: Implic
   def apply[T: MongoFormat]: DataTypeDsl[D[T]] = new DataTypeDsl[D[T]] {
     def SelfRef: MongoRef[D[T], D[T]] = MongoRef.RootRef(format[T])
   }
+
+  // for Scala 2.12 which has some problems with overloaded apply
+  def refs[T: MongoFormat]: DataTypeDsl[D[T]] = apply[T]
 }
 
 abstract class AbstractMongoEntityCompanion[Implicits, E <: BaseMongoEntity](implicits: Implicits)(
