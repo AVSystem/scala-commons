@@ -7,8 +7,6 @@ class MongoRefTest extends AnyFunSuite {
   final val Rte = RecordTestEntity
   final val Ute = UnionTestEntity
   final val Ir = InnerRecord
-  final val Pmr = PolyMongoRecord
-  final val Pmu = PolyMongoUnion
 
   test("filterPath") {
     assert(Rte.IdRef.rawPath == "_id")
@@ -32,19 +30,11 @@ class MongoRefTest extends AnyFunSuite {
     assert(Rte.ref(_.union.as[CaseOne].data).rawPath == "union.data")
     assert(Rte.ref(_.union.as[HasInner].inner).rawPath == "union.inner")
     assert(Rte.ref(_.union).as[HasInner].ref(_.inner).rawPath == "union.inner")
-    assert(Pmr.refs[Int].ref(_.value).rawPath == "value")
     assert(Ute.ref(_.as[HasInner].inner).rawPath == "inner")
     assert(Ute.as[HasInner].ref(_.inner).rawPath == "inner")
     assert(Ute.ref(_.as[HasInner].inner.union.as[HasInner].inner).rawPath == "inner.union.inner")
     assert((Ute.ref(_.as[HasInner].inner) andThen Rte.ref(_.union.as[HasInner].inner)).rawPath == "inner.union.inner")
     assert((Rte.ref(_.union.as[HasInner].inner) compose Ute.ref(_.as[HasInner].inner)).rawPath == "inner.union.inner")
-    assert(Pmu[Int].ref(_.as[PolyMongoUnion.CaseOne[Int]].value).rawPath == "value")
-    assert(Pmu[Int].as[PolyMongoUnion.CaseOne[Int]].ref(_.value).rawPath == "value")
-    assert(Pmu[Int].ref(_.as[PolyMongoUnion.CaseOne[Int]].str).rawPath == "str")
-    assert(Pmu[PolyMongoUnion[Int]].ref(x =>
-      x.as[PolyMongoUnion.CaseOne[PolyMongoUnion[Int]]].value
-        .as[PolyMongoUnion.CaseOne[Int]].str
-    ).rawPath == "value.str")
   }
 
   test("projectionPath") {
