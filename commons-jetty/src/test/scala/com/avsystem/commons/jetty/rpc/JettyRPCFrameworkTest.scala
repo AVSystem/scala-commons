@@ -93,7 +93,7 @@ class JettyRPCFrameworkTest extends AnyFunSuite with ScalaFutures with Matchers 
   }
 
   test("inner rpc + string arg -> string") {
-    val world = "world"
+    val world = "gżegżółka"
     rpc.topper.hello(world).futureValue shouldBe world
     val anonymous = ""
     rpc.topper.hello(anonymous).futureValue shouldBe anonymous

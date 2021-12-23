@@ -104,6 +104,8 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
           val async = request.startAsync().setup(_.setTimeout(contextTimeout.toMillis))
           handlePost(call).andThenNow {
             case Success(responseContent) =>
+              response.setContentType(MimeTypes.Type.APPLICATION_JSON.asString())
+              response.setCharacterEncoding(StandardCharsets.UTF_8.name())
               response.getWriter.write(responseContent.s)
             case Failure(t) =>
               response.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, t.getMessage)
