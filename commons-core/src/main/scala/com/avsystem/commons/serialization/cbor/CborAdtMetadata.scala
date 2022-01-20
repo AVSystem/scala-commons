@@ -23,6 +23,16 @@ abstract class HasCborCodec[T](implicit instances: MacroInstances[CborOptimizedC
 }
 
 /**
+  * Like [[HasCborCodec]] but allows injecting additional implicits - like [[HasGenCodecWithDeps]].
+  */
+abstract class HasCborCodecWithDeps[D, T](implicit
+  deps: ValueOf[D],
+  instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]]
+) {
+  implicit lazy val codec: GenObjectCodec[T] = instances((CborOptimizedCodecs, deps.value), this).cborCodec
+}
+
+/**
   * Apply this annotation on a sealed trait/class whose companion extends [[HasCborCodec]] in order to customize
   * the CBOR field key used for discriminator field. Note: this annotation automatically applies [[flatten]] annotation
   * on the sealed trait/class.
