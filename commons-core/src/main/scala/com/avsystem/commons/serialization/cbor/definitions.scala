@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization.cbor
 
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
-import com.avsystem.commons.serialization.InputMetadata
+import com.avsystem.commons.serialization.{InputMetadata, IntWrapperCompanion}
 
 /** [[https://tools.ietf.org/html/rfc7049#section-2.1]] */
 final class MajorType(implicit enumCtx: EnumCtx) extends AbstractValueEnum {
@@ -70,7 +70,7 @@ object InitialByte extends InputMetadata[InitialByte] {
   * [[https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml]]
   */
 case class Tag(value: Int) extends AnyVal
-object Tag {
+object Tag extends IntWrapperCompanion[Tag] {
   final val StandardDateTime = Tag(0)
   final val EpochDateTime = Tag(1)
   final val PositiveBignum = Tag(2)
