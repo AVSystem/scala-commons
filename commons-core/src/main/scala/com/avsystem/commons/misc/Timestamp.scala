@@ -1,10 +1,9 @@
 package com.avsystem.commons.misc
 
-import java.util.concurrent.TimeUnit
-
 import com.avsystem.commons.serialization.IsoInstant
 
-import scala.concurrent.duration.{FiniteDuration, TimeUnit}
+import java.util.concurrent.TimeUnit
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * Millisecond-precision, general purpose, cross compiled timestamp representation.
@@ -25,8 +24,23 @@ class Timestamp(val millis: Long) extends AnyVal with Comparable[Timestamp] {
   def +(duration: FiniteDuration): Timestamp = Timestamp(millis + duration.toMillis)
   def -(duration: FiniteDuration): Timestamp = Timestamp(millis - duration.toMillis)
 
-  def until(other: Timestamp): FiniteDuration =
-    FiniteDuration(other.millis - millis, TimeUnit.MILLISECONDS)
+  /**
+    * Computes a [[FiniteDuration]] between this timestamp and some other timestamp later in time.
+    */
+  def until(end: Timestamp): FiniteDuration =
+    FiniteDuration(end.millis - millis, TimeUnit.MILLISECONDS)
+
+  /**
+    * Computes a [[FiniteDuration]] between some timestamp earlier in time and this timestamp.
+    */
+  def since(start: Timestamp): FiniteDuration =
+    start.until(this)
+
+  /**
+    * Computes a difference between two timestamps, expressed as [[FiniteDuration]]. Alias for [[since]].
+    */
+  def -(start: Timestamp): FiniteDuration =
+    since(start)
 
   override def toString: String = IsoInstant.format(millis)
 }
