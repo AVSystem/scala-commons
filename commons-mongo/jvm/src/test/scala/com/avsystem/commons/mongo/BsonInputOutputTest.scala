@@ -68,6 +68,12 @@ class BsonValueGenCodecRoundtripTest extends GenCodecRoundtripTest {
 
   def createInput(raw: BsonValue): Input =
     new BsonValueInput(raw, legacyOptionEncoding)
+
+  test("Int32 to Long decoding") {
+    val input = createInput(new BsonInt32(42))
+    val result = input.readSimple().readLong()
+    assert(result == 42L)
+  }
 }
 
 class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
@@ -129,6 +135,14 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
 
   test("Value encoding of random objects + legacy Option encoding") {
     forAll(SomethingComplex.gen)(valueEncoding(_, legacyOptionEncoding = true))
+  }
+
+  test("Int32 to Long decoding") {
+    val doc = new BsonDocument("value", new BsonInt32(42))
+    val reader = new BsonDocumentReader(doc)
+    val input = new BsonReaderInput(reader, false)
+    val sth = SomethingLong.codec.read(input)
+    assert(sth == SomethingLong(42))
   }
 
   test("All encoding schemes with problematic map keys") {

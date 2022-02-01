@@ -80,3 +80,8 @@ object SomethingComplex {
 
   implicit val codec: GenCodec[SomethingComplex] = GenCodec.materialize
 }
+
+case class SomethingLong(value: Long)
+object SomethingLong {
+  implicit val codec: GenCodec[SomethingLong] = GenCodec.materialize
+}

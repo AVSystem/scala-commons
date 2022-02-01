@@ -22,7 +22,10 @@ class BsonValueInput(bsonValue: BsonValue, override val legacyOptionEncoding: Bo
   def readString(): String = handleFailures(bsonValue.asString().getValue)
   def readBoolean(): Boolean = handleFailures(bsonValue.asBoolean().getValue)
   def readInt(): Int = handleFailures(bsonValue.asInt32().getValue)
-  def readLong(): Long = handleFailures(bsonValue.asInt64().getValue)
+  def readLong(): Long = {
+    if (bsonType == BsonType.INT32) handleFailures(bsonValue.asInt32().getValue.toLong) // allow to treat INT32 as Long
+    else handleFailures(bsonValue.asInt64().getValue)
+  }
   override def readTimestamp(): Long = handleFailures(bsonValue.asDateTime().getValue)
   def readDouble(): Double = handleFailures(bsonValue.asDouble().getValue)
   def readBigInt(): BigInt = handleFailures(BigInt(bsonValue.asBinary().getData))
