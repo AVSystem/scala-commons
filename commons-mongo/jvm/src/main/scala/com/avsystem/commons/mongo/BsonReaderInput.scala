@@ -16,9 +16,9 @@ class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean
   override def readString(): String = br.readString()
   override def readBoolean(): Boolean = br.readBoolean()
   override def readInt(): Int = br.readInt32()
-  override def readLong(): Long = {
-    if (bsonType == BsonType.INT32) br.readInt32().toLong // allow converting INT32 to Long
-    else br.readInt64()
+  override def readLong(): Long = bsonType match {
+    case BsonType.INT32 => br.readInt32().toLong // allow converting INT32 to Long
+    case _ => br.readInt64()
   }
   override def readTimestamp(): Long = br.readDateTime()
   override def readDouble(): Double = br.readDouble()
