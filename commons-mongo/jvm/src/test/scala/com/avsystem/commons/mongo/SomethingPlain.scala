@@ -2,7 +2,7 @@ package com.avsystem.commons
 package mongo
 
 import com.avsystem.commons.misc.Bytes
-import com.avsystem.commons.serialization.GenCodec
+import com.avsystem.commons.serialization.HasGenCodec
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 
@@ -17,7 +17,7 @@ case class SomethingPlain(
   list: List[String],
   map: Map[String, String]
 )
-object SomethingPlain {
+object SomethingPlain extends HasGenCodec[SomethingPlain] {
   def sizedListOf[T](maxSize: Int, gen: => Gen[T]): Gen[List[T]] = {
     Gen.resize(maxSize, Gen.listOf(gen))
   }
@@ -50,8 +50,6 @@ object SomethingPlain {
     list,
     map
   )
-
-  implicit val codec: GenCodec[SomethingPlain] = GenCodec.materialize
 }
 
 case class SomethingComplex(
@@ -61,7 +59,7 @@ case class SomethingComplex(
   nestedComplexList: List[List[SomethingPlain]],
   option: Option[Int]
 )
-object SomethingComplex {
+object SomethingComplex extends HasGenCodec[SomethingComplex] {
   val sthListGen: Gen[List[SomethingPlain]] = SomethingPlain.sizedListOf(8, SomethingPlain.gen)
 
   val gen: Gen[SomethingComplex] = for {
@@ -77,6 +75,7 @@ object SomethingComplex {
     nestedComplexList,
     option
   )
-
-  implicit val codec: GenCodec[SomethingComplex] = GenCodec.materialize
 }
+
+case class SomethingLong(value: Long)
+object SomethingLong extends HasGenCodec[SomethingLong]
