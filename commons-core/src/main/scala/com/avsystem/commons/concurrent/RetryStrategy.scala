@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package concurrent
 
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration._
 
 /**
   * A `RetryStrategy` is conceptually a lazy sequence of delays, possibly infinite.
@@ -84,10 +84,10 @@ object RetryStrategy {
     apply(Opt((delay, continually(delay))))
 
   def exponentially(firstDelay: FiniteDuration, factor: Double = 2): RetryStrategy = apply {
-    val nextStrat = firstDelay * factor match {
-      case fd: FiniteDuration => exponentially(fd, factor)
-      case _ => never
-    }
+    val nextNanos = firstDelay.toNanos * factor
+    val nextStrat =
+      if (nextNanos > Long.MaxValue) continually(Long.MaxValue.nanos)
+      else exponentially(nextNanos.nanos, factor)
     Opt((firstDelay, nextStrat))
   }
 }
