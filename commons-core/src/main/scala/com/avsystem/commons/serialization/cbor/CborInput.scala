@@ -434,7 +434,7 @@ class CborObjectInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
   extends CborSequentialInput(reader, size) with ObjectInput {
 
   private[this] var forcedKeyCodec: CborKeyCodec = _
-  private[this] def currentKeyCodec = if(forcedKeyCodec != null) forcedKeyCodec else keyCodec
+  private[this] def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec else keyCodec
 
   /**
     * Returns a [[CborOutput]] for reading a raw CBOR field key. This is an extension over standard
@@ -448,8 +448,10 @@ class CborObjectInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
 
   /**
     * Returns a [[CborOutput]] for reading the value of a CBOR field whose key was previously read with [[nextKey()]].
-    * This method MUST ONLY be used after the key was fully read using [[nextKey()]]. If this method is used to
-    * read the field value then [[nextField()]] MUST NOT be used.
+    * This method MUST ONLY be used after the key was fully read using [[nextKey()]]. Fully reading the input means
+    * that all its bytes must be consumed. For example, if the key is an array or object then all its elements/fields
+    * must be consumed.
+    * If this method is used to read the field value then [[nextField()]] MUST NOT be used.
     */
   def nextValue(): CborInput =
     new CborInput(reader, keyCodec)
