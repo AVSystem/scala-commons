@@ -67,8 +67,10 @@ class ObservableBlockingIterator[T](
       // after the queue got full, wait until at least half of its capacity is free before letting
       // the Observable produce more elements
       if (promise != null && queue.remainingCapacity >= bufferSize / 2) {
-        promise.success(Ack.Continue)
+        // unsetting promise must happen before completing the promise or otherwise we risk throwing away
+        // some other promise set by `onNext` before it could be completed
         ackPromise = null
+        promise.success(Ack.Continue)
       }
       last
     case nonEmpty =>
