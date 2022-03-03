@@ -6,39 +6,62 @@ import com.google.common.collect.AbstractIterator
 import org.bson.types.{Decimal128, ObjectId}
 import org.bson.{BsonReader, BsonType}
 
-class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean = false) extends BsonInput {
+class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean = false)
+  extends BsonInput {
+
   override def readNull(): Boolean =
-    br.getCurrentBsonType == BsonType.NULL && {
+    bsonType == BsonType.NULL && {
       br.readNull()
       true
     }
 
-  override def readString(): String = br.readString()
-  override def readBoolean(): Boolean = br.readBoolean()
-  override def readInt(): Int = br.readInt32()
+  override def readString(): String =
+    expect(BsonType.STRING, br.readString())
+
+  override def readBoolean(): Boolean =
+    expect(BsonType.BOOLEAN, br.readBoolean())
+
+  override def readInt(): Int =
+    expect(BsonType.INT32, br.readInt32())
+
   override def readLong(): Long = bsonType match {
-    case BsonType.INT32 => br.readInt32().toLong // allow converting INT32 to Long
-    case _ => br.readInt64()
+    case BsonType.INT32 => br.readInt32().toLong
+    case BsonType.INT64 => br.readInt64()
+    case _ => wrongType(BsonType.INT32, BsonType.INT64)
   }
-  override def readTimestamp(): Long = br.readDateTime()
-  override def readDouble(): Double = br.readDouble()
-  override def readBigInt(): BigInt = BigInt(br.readBinaryData().getData)
-  override def readBigDecimal(): BigDecimal = BsonInput.bigDecimalFromBytes(br.readBinaryData().getData)
-  override def readBinary(): Array[Byte] = br.readBinaryData().getData
+
+  override def readTimestamp(): Long =
+    expect(BsonType.DATE_TIME, br.readDateTime())
+
+  override def readDouble(): Double =
+    expect(BsonType.DOUBLE, br.readDouble())
+
+  override def readBinary(): Array[Byte] =
+    expect(BsonType.BINARY, br.readBinaryData().getData)
+
   override def readList(): BsonReaderListInput = {
     br.readStartArray()
     new BsonReaderListInput(new BsonReaderIterator(br, _.readEndArray(), new BsonReaderInput(_, legacyOptionEncoding)))
   }
+
   override def readObject(): BsonReaderObjectInput = {
     br.readStartDocument()
     new BsonReaderObjectInput(new BsonReaderIterator(br, _.readEndDocument(),
       br => new BsonReaderFieldInput(KeyEscaper.unescape(br.readName()), br, legacyOptionEncoding)
     ))
   }
-  override def readObjectId(): ObjectId = br.readObjectId()
-  override def readDecimal128(): Decimal128 = br.readDecimal128()
-  override def skip(): Unit = br.skipValue()
-  override protected def bsonType: BsonType = br.getCurrentBsonType
+
+  override def readObjectId(): ObjectId =
+    expect(BsonType.OBJECT_ID, br.readObjectId())
+
+  override def readDecimal128(): Decimal128 =
+    expect(BsonType.DECIMAL128, br.readDecimal128())
+
+  override def skip(): Unit =
+    br.skipValue()
+
+  override protected final def bsonType: BsonType =
+    br.getCurrentBsonType
 }
 
 final class BsonReaderFieldInput(name: String, br: BsonReader, legacyOptionEncoding: Boolean)

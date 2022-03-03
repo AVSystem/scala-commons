@@ -13,8 +13,10 @@ object BsonValueOutput {
   }
 }
 
-final class BsonValueOutput(receiver: BsonValue => Unit = _ => (), override val legacyOptionEncoding: Boolean = false)
-  extends BsonOutput {
+final class BsonValueOutput(
+  receiver: BsonValue => Unit = _ => (),
+  override val legacyOptionEncoding: Boolean = false
+) extends BsonOutput {
 
   private var _value: Opt[BsonValue] = Opt.empty
 
@@ -28,20 +30,42 @@ final class BsonValueOutput(receiver: BsonValue => Unit = _ => (), override val 
     }
   }
 
-  override def writeNull(): Unit = setValue(BsonNull.VALUE)
-  override def writeString(str: String): Unit = setValue(new BsonString(str))
-  override def writeBoolean(boolean: Boolean): Unit = setValue(BsonBoolean.valueOf(boolean))
-  override def writeInt(int: Int): Unit = setValue(new BsonInt32(int))
-  override def writeLong(long: Long): Unit = setValue(new BsonInt64(long))
-  override def writeTimestamp(millis: Long): Unit = setValue(new BsonDateTime(millis))
-  override def writeDouble(double: Double): Unit = setValue(new BsonDouble(double))
-  override def writeBigInt(bigInt: BigInt): Unit = setValue(new BsonBinary(bigInt.toByteArray))
-  override def writeBigDecimal(bigDecimal: BigDecimal): Unit = setValue(new BsonBinary(BsonOutput.bigDecimalBytes(bigDecimal)))
-  override def writeBinary(binary: Array[Byte]): Unit = setValue(new BsonBinary(binary))
-  override def writeList(): ListOutput = new BsonValueListOutput(setValue, legacyOptionEncoding)
-  override def writeObject(): ObjectOutput = new BsonValueObjectOutput(setValue, legacyOptionEncoding)
-  override def writeObjectId(objectId: ObjectId): Unit = setValue(new BsonObjectId(objectId))
-  override def writeDecimal128(decimal128: Decimal128): Unit = setValue(new BsonDecimal128(decimal128))
+  override def writeNull(): Unit =
+    setValue(BsonNull.VALUE)
+
+  override def writeString(str: String): Unit =
+    setValue(new BsonString(str))
+
+  override def writeBoolean(boolean: Boolean): Unit =
+    setValue(BsonBoolean.valueOf(boolean))
+
+  override def writeInt(int: Int): Unit =
+    setValue(new BsonInt32(int))
+
+  override def writeLong(long: Long): Unit =
+    if (long.isValidInt) writeInt(long.toInt)
+    else setValue(new BsonInt64(long))
+
+  override def writeTimestamp(millis: Long): Unit =
+    setValue(new BsonDateTime(millis))
+
+  override def writeDouble(double: Double): Unit =
+    setValue(new BsonDouble(double))
+
+  override def writeBinary(binary: Array[Byte]): Unit =
+    setValue(new BsonBinary(binary))
+
+  override def writeList(): ListOutput =
+    new BsonValueListOutput(setValue, legacyOptionEncoding)
+
+  override def writeObject(): ObjectOutput =
+    new BsonValueObjectOutput(setValue, legacyOptionEncoding)
+
+  override def writeObjectId(objectId: ObjectId): Unit =
+    setValue(new BsonObjectId(objectId))
+
+  override def writeDecimal128(decimal128: Decimal128): Unit =
+    setValue(new BsonDecimal128(decimal128))
 }
 
 final class BsonValueListOutput(receiver: BsonArray => Unit, legacyOptionEncoding: Boolean)

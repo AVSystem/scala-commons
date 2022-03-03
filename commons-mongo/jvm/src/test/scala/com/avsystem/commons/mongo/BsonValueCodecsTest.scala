@@ -4,7 +4,7 @@ package mongo
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodecWithDeps}
 import org.bson.json.JsonReader
 import org.bson.types.{Decimal128, ObjectId}
-import org.bson.{BsonArray, BsonBinary, BsonBoolean, BsonDateTime, BsonDecimal128, BsonDocument, BsonDouble, BsonElement, BsonInt32, BsonInt64, BsonNull, BsonObjectId, BsonString, BsonValue}
+import org.bson._
 import org.scalatest.funsuite.AnyFunSuite
 
 case class AllTypesInABag(
@@ -26,7 +26,7 @@ object AllTypesInABag extends HasGenCodecWithDeps[BsonGenCodecs.type, AllTypesIn
 class BsonValueCodecsTest extends AnyFunSuite {
   test("codec roundtrip") {
     val doc = new BsonDocument(JList(
-      new BsonElement("someInt64", new BsonInt64(64)),
+      new BsonElement("someInt64", new BsonInt64(Int.MaxValue + 1L)),
       new BsonElement("someString", new BsonString("some"))
     ))
 
@@ -39,7 +39,7 @@ class BsonValueCodecsTest extends AnyFunSuite {
       new BsonDecimal128(new Decimal128(1331)),
       new BsonDouble(1.31),
       new BsonInt32(132),
-      new BsonInt64(164),
+      new BsonInt64(Int.MaxValue + 1L),
       new BsonObjectId(new ObjectId("12345678901234567890ABCD")),
       new BsonString("sss"),
       doc

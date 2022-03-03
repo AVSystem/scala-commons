@@ -33,7 +33,10 @@ object SomethingPlain extends HasGenCodec[SomethingPlain] {
     string <- arbitrary[String]
     boolean <- arbitrary[Boolean]
     int <- arbitrary[Int]
-    long <- arbitrary[Long]
+    long <- Gen.oneOf(
+      Gen.choose(Long.MinValue, Int.MinValue - 1L),
+      Gen.choose(Int.MaxValue + 1L, Long.MaxValue),
+    )
     timestamp <- arbitrary[JDate]
     double <- arbitrary[Double]
     binary <- Gen.buildableOf[Array[Byte], Byte](arbitrary[Byte]).map(new Bytes(_))
