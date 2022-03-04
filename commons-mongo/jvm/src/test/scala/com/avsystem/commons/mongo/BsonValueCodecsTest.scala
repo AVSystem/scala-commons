@@ -26,7 +26,7 @@ object AllTypesInABag extends HasGenCodecWithDeps[BsonGenCodecs.type, AllTypesIn
 class BsonValueCodecsTest extends AnyFunSuite {
   test("codec roundtrip") {
     val doc = new BsonDocument(JList(
-      new BsonElement("someInt64", new BsonInt64(Int.MaxValue + 1L)),
+      new BsonElement("someInt64", new BsonInt64(64)),
       new BsonElement("someString", new BsonString("some"))
     ))
 
@@ -39,7 +39,7 @@ class BsonValueCodecsTest extends AnyFunSuite {
       new BsonDecimal128(new Decimal128(1331)),
       new BsonDouble(1.31),
       new BsonInt32(132),
-      new BsonInt64(Int.MaxValue + 1L),
+      new BsonInt64(164),
       new BsonObjectId(new ObjectId("12345678901234567890ABCD")),
       new BsonString("sss"),
       doc

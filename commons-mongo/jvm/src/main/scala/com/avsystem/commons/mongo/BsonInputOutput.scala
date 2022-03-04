@@ -3,19 +3,21 @@ package mongo
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{InputAndSimpleInput, InputMetadata, OutputAndSimpleOutput, TypeMarker}
-import org.bson.{BsonInvalidOperationException, BsonType}
+import org.bson.{BsonInvalidOperationException, BsonType, BsonValue}
 import org.bson.types.{Decimal128, ObjectId}
 
 import java.nio.ByteBuffer
 
 object ObjectIdMarker extends TypeMarker[ObjectId]
 object Decimal128Marker extends TypeMarker[Decimal128]
+object BsonValueMarker extends TypeMarker[BsonValue]
 
 object BsonTypeMetadata extends InputMetadata[BsonType]
 
 trait BsonInput extends Any with InputAndSimpleInput {
   def readObjectId(): ObjectId
   def readDecimal128(): Decimal128
+  def readBsonValue(): BsonValue
 
   protected def bsonType: BsonType
 
@@ -71,6 +73,7 @@ trait BsonInput extends Any with InputAndSimpleInput {
     typeMarker match {
       case ObjectIdMarker => readObjectId().opt
       case Decimal128Marker => readDecimal128().opt
+      case BsonValueMarker => readBsonValue().opt
       case _ => Opt.Empty
     }
 }
@@ -89,6 +92,7 @@ object BsonInput {
 trait BsonOutput extends Any with OutputAndSimpleOutput {
   def writeObjectId(objectId: ObjectId): Unit
   def writeDecimal128(decimal128: Decimal128): Unit
+  def writeBsonValue(bsonValue: BsonValue): Unit
 
   override def writeBigInt(bigInt: BigInt): Unit =
     if (bigInt.isValidLong) writeLong(bigInt.longValue)
@@ -110,6 +114,7 @@ trait BsonOutput extends Any with OutputAndSimpleOutput {
     typeMarker match {
       case ObjectIdMarker => writeObjectId(value); true
       case Decimal128Marker => writeDecimal128(value); true
+      case BsonValueMarker => writeBsonValue(value); true
       case _ => false
     }
 }

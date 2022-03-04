@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization._
 import org.bson._
 import org.bson.types.{Decimal128, ObjectId}
@@ -45,6 +44,9 @@ class BsonValueInput(bsonValue: BsonValue, override val legacyOptionEncoding: Bo
 
   def readDecimal128(): Decimal128 =
     expect(BsonType.DECIMAL128, bsonValue.asDecimal128().getValue)
+
+  def readBsonValue(): BsonValue =
+    bsonValue
 
   def readNull(): Boolean =
     bsonValue == BsonNull.VALUE

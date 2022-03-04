@@ -4,7 +4,7 @@ package mongo
 import com.avsystem.commons.serialization.{FieldInput, ListInput, ObjectInput}
 import com.google.common.collect.AbstractIterator
 import org.bson.types.{Decimal128, ObjectId}
-import org.bson.{BsonReader, BsonType}
+import org.bson.{BsonReader, BsonType, BsonValue}
 
 class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean = false)
   extends BsonInput {
@@ -57,11 +57,16 @@ class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean
   override def readDecimal128(): Decimal128 =
     expect(BsonType.DECIMAL128, br.readDecimal128())
 
+  override def readBsonValue(): BsonValue =
+    BsonValueUtils.decode(br)
+
   override def skip(): Unit =
     br.skipValue()
 
-  override protected final def bsonType: BsonType =
-    br.getCurrentBsonType
+  override protected final def bsonType: BsonType = br.getCurrentBsonType match {
+    case null => br.readBsonType() // reader may be in a state where the type hasn't been read yet
+    case bsonType => bsonType
+  }
 }
 
 final class BsonReaderFieldInput(name: String, br: BsonReader, legacyOptionEncoding: Boolean)

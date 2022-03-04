@@ -167,7 +167,7 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
       fieldInput.skip()
     }
 
-    assert(input.readMetadata(BsonTypeMetadata).isEmpty)
+    assert(input.readMetadata(BsonTypeMetadata).contains(BsonType.DOCUMENT))
 
     val objectInput = input.readObject()
     assert(input.readMetadata(BsonTypeMetadata).contains(BsonType.DOCUMENT))

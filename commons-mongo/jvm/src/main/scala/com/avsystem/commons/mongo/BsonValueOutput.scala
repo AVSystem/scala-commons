@@ -66,6 +66,9 @@ final class BsonValueOutput(
 
   override def writeDecimal128(decimal128: Decimal128): Unit =
     setValue(new BsonDecimal128(decimal128))
+
+  override def writeBsonValue(bsonValue: BsonValue): Unit =
+    setValue(bsonValue)
 }
 
 final class BsonValueListOutput(receiver: BsonArray => Unit, legacyOptionEncoding: Boolean)
