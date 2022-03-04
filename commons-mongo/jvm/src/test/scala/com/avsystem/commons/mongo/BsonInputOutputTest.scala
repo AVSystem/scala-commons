@@ -1,15 +1,16 @@
 package com.avsystem.commons
 package mongo
 
-import java.nio.ByteBuffer
-
-import com.avsystem.commons.serialization.{GenCodecRoundtripTest, Input, ObjectInput, Output}
+import com.avsystem.commons.serialization._
 import org.bson._
 import org.bson.io.BasicOutputBuffer
 import org.bson.json.{JsonMode, JsonWriterSettings}
+import org.bson.types.Decimal128
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+
+import java.nio.ByteBuffer
 
 class BinaryBsonGenCodecRoundtripTest extends GenCodecRoundtripTest {
   type Raw = Array[Byte]
@@ -137,12 +138,44 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     forAll(SomethingComplex.gen)(valueEncoding(_, legacyOptionEncoding = true))
   }
 
-  test("Int32 to Long decoding") {
-    val doc = new BsonDocument("value", new BsonInt32(42))
-    val reader = new BsonDocumentReader(doc)
-    val input = new BsonReaderInput(reader, false)
-    val sth = SomethingLong.codec.read(input)
-    assert(sth == SomethingLong(42))
+  private case class Wrap[+T](v: T)
+  private object Wrap extends HasPolyGenCodec[Wrap]
+
+  def testRoundtripAndRepr[T: GenCodec](value: T, expectedRepr: BsonValue)(implicit pos: Position): Unit = {
+    val repr = BsonValueOutput.write(value)
+    assert(repr == expectedRepr)
+    assert(BsonValueInput.read[T](repr) == value)
+
+    val output = new BasicOutputBuffer
+    val writer = new BsonBinaryWriter(output)
+    GenCodec.write(new BsonWriterOutput(writer), Wrap(value))
+    writer.flush()
+    writer.close()
+
+    val bytes = output.toByteArray
+    val reprFromBinary = BsonValueUtils.decode(new BsonBinaryReader(ByteBuffer.wrap(bytes))).asDocument().get("v")
+    assert(reprFromBinary == expectedRepr)
+    assert(GenCodec.read[Wrap[T]](new BsonReaderInput(new BsonBinaryReader(ByteBuffer.wrap(bytes)))).v == value)
+  }
+
+  test("Long encoding") {
+    testRoundtripAndRepr[Long](1, new BsonInt32(1))
+    testRoundtripAndRepr[Long](Int.MaxValue + 1L, new BsonInt64(Int.MaxValue + 1L))
+  }
+
+  test("BigInt encoding") {
+    testRoundtripAndRepr[BigInt](1, new BsonInt32(1))
+    testRoundtripAndRepr[BigInt](BigInt("1"), new BsonInt32(1))
+    testRoundtripAndRepr[BigInt](Int.MaxValue + 1L, new BsonInt64(Int.MaxValue + 1L))
+    testRoundtripAndRepr[BigInt](BigInt("123123123123123123123"), new BsonDecimal128(Decimal128.parse("123123123123123123123")))
+    testRoundtripAndRepr[BigInt](BigInt("123123123123123123123123123123123123123123"), new BsonBinary(Base64.decode("AWnTiveIuE7XC8Q4zzH4T/Oz")))
+  }
+
+  test("BigDecimal encoding") {
+    testRoundtripAndRepr[BigDecimal](1, new BsonDecimal128(new Decimal128(1)))
+    testRoundtripAndRepr[BigDecimal](BigDecimal("0.00001"), new BsonDecimal128(Decimal128.parse("0.00001")))
+    testRoundtripAndRepr[BigDecimal](BigDecimal("123123123123.123123123"), new BsonDecimal128(Decimal128.parse("123123123123.123123123")))
+    testRoundtripAndRepr[BigDecimal](BigDecimal("123123123123123123.123123123123123123123123"), new BsonBinary(Base64.decode("AWnTiveIuE7XC8Q4zzH4T/OzAAAAGA==")))
   }
 
   test("All encoding schemes with problematic map keys") {

@@ -3,8 +3,8 @@ package mongo
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{InputAndSimpleInput, InputMetadata, OutputAndSimpleOutput, TypeMarker}
-import org.bson.{BsonInvalidOperationException, BsonType, BsonValue}
 import org.bson.types.{Decimal128, ObjectId}
+import org.bson.{BsonInvalidOperationException, BsonType, BsonValue}
 
 import java.nio.ByteBuffer
 
