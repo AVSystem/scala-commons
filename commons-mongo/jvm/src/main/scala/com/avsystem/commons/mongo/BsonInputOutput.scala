@@ -2,7 +2,7 @@ package com.avsystem.commons
 package mongo
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization.{InputAndSimpleInput, InputMetadata, OutputAndSimpleOutput, TypeMarker}
+import com.avsystem.commons.serialization.{FieldInput, InputAndSimpleInput, InputMetadata, OutputAndSimpleOutput, TypeMarker}
 import org.bson.types.{Decimal128, ObjectId}
 import org.bson.{BsonInvalidOperationException, BsonType, BsonValue}
 
@@ -88,6 +88,8 @@ object BsonInput {
     BigDecimal(unscaled, scale)
   }
 }
+
+trait BsonFieldInput extends BsonInput with FieldInput
 
 trait BsonOutput extends Any with OutputAndSimpleOutput {
   def writeObjectId(objectId: ObjectId): Unit

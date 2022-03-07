@@ -61,7 +61,7 @@ class BsonValueInput(bsonValue: BsonValue, override val legacyOptionEncoding: Bo
 }
 
 class BsonValueFieldInput(val fieldName: String, bsonValue: BsonValue, legacyOptionEncoding: Boolean)
-  extends BsonValueInput(bsonValue, legacyOptionEncoding) with FieldInput
+  extends BsonValueInput(bsonValue, legacyOptionEncoding) with BsonFieldInput
 
 class BsonValueListInput(bsonArray: BsonArray, legacyOptionEncoding: Boolean) extends ListInput {
   private val it = bsonArray.iterator

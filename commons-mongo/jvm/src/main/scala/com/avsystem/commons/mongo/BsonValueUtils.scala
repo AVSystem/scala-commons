@@ -13,7 +13,9 @@ object BsonValueUtils {
     bsonValueCodec.encode(bw, bv, encoderContext)
 
   def decode(br: BsonReader): BsonValue = {
-    br.readBsonType() // without this, `br.getCurrentBsonType` may return null (why?)
+    if (br.getCurrentBsonType eq null) {
+      br.readBsonType()
+    }
     bsonValueCodec.decode(br, decoderContext)
   }
 }

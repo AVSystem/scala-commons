@@ -244,6 +244,54 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     }
   }
 
+  test("BsonBinaryReader peekField") {
+    val doc = new BsonDocument()
+      .append("str", new BsonString("str"))
+      .append("int", new BsonInt32(32))
+      .append("boo", new BsonBoolean(false))
+      .append("arr", new BsonArray(JList(new BsonInt32(42), new BsonString("foo"))))
+      .append("dbl", new BsonDouble(3.14))
+
+    val bof = new BasicOutputBuffer
+    val bw = new BsonBinaryWriter(bof)
+    BsonValueUtils.encode(bw, doc)
+    bw.flush()
+    bw.close()
+
+    val br = new BsonBinaryReader(ByteBuffer.wrap(bof.toByteArray))
+    val input = new BsonReaderInput(br).readObject()
+
+    locally {
+      val pf = input.peekField("str")
+      assert(pf.exists(fi => fi.fieldName == "str" && fi.readBsonValue() == new BsonString("str")))
+    }
+    locally {
+      val fi = input.nextField()
+      assert(fi.fieldName == "str")
+      fi.skip()
+    }
+    locally {
+      val pf = input.peekField("boo")
+      assert(pf.exists(fi => fi.fieldName == "boo" && fi.readBsonValue() == new BsonBoolean(false)))
+    }
+    locally {
+      assert(input.peekField("not").isEmpty)
+    }
+    locally {
+      val pf = input.peekField("dbl")
+      assert(pf.exists(fi => fi.fieldName == "dbl" && fi.readBsonValue() == new BsonDouble(3.14)))
+    }
+    locally {
+      val fi = input.nextField()
+      assert(fi.fieldName == "int")
+      fi.skip()
+    }
+    locally {
+      val pf = input.peekField("str")
+      assert(pf.exists(fi => fi.fieldName == "str" && fi.readBsonValue() == new BsonString("str")))
+    }
+  }
+
   def listToBson[T](list: List[T])(converter: T => BsonValue) = new BsonArray(list.map(converter).asJava)
 
   def mapToBson[T](map: Map[String, T])(valueConverter: T => BsonValue): BsonDocument = {
