@@ -302,12 +302,15 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     doc
   }
 
+  def longBson(l: Long): BsonValue =
+    if(l.isValidInt) new BsonInt32(l.toInt) else new BsonInt64(l)
+
   def somethingToBson(s: SomethingPlain): BsonDocument = {
     new BsonDocument()
       .append("string", new BsonString(s.string))
       .append("boolean", new BsonBoolean(s.boolean))
       .append("int", new BsonInt32(s.int))
-      .append("long", new BsonInt64(s.long))
+      .append("long", longBson(s.long))
       .append("timestamp", new BsonDateTime(s.timestamp.getTime))
       .append("double", new BsonDouble(s.double))
       .append("binary", new BsonBinary(s.binary.bytes))
