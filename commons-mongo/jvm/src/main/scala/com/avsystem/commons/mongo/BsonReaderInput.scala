@@ -26,10 +26,12 @@ class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean
   override def readInt(): Int =
     expect(BsonType.INT32, br.readInt32())
 
-  override def readLong(): Long = bsonType match {
-    case BsonType.INT32 => br.readInt32().toLong
-    case BsonType.INT64 => br.readInt64()
-    case _ => wrongType(BsonType.INT32, BsonType.INT64)
+  override def readLong(): Long = handleFailures {
+    bsonType match {
+      case BsonType.INT32 => br.readInt32().toLong
+      case BsonType.INT64 => br.readInt64()
+      case _ => wrongType(BsonType.INT32, BsonType.INT64)
+    }
   }
 
   override def readTimestamp(): Long =
@@ -41,12 +43,12 @@ class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean
   override def readBinary(): Array[Byte] =
     expect(BsonType.BINARY, br.readBinaryData().getData)
 
-  override def readList(): BsonReaderListInput = {
+  override def readList(): BsonReaderListInput = handleFailures {
     br.readStartArray()
     new BsonReaderListInput(new BsonReaderIterator(br, _.readEndArray(), new BsonReaderInput(_, legacyOptionEncoding)))
   }
 
-  override def readObject(): BsonReaderObjectInput = {
+  override def readObject(): BsonReaderObjectInput = handleFailures {
     br.readStartDocument()
     new BsonReaderObjectInput(br, legacyOptionEncoding)
   }
