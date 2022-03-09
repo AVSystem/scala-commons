@@ -8,13 +8,11 @@ import org.bson.{BsonReader, BsonWriter}
 class GenCodecBasedBsonCodec[T](legacyOptionEncoding: Boolean)(
   implicit ct: ClassTag[T], genCodec: GenCodec[T]
 ) extends Codec[T] {
-  override def getEncoderClass = ct.runtimeClass.asInstanceOf[Class[T]]
+  override def getEncoderClass: Class[T] = ct.runtimeClass.asInstanceOf[Class[T]]
 
-  override def decode(reader: BsonReader, decoderContext: DecoderContext) = {
+  override def decode(reader: BsonReader, decoderContext: DecoderContext): T =
     genCodec.read(new BsonReaderInput(reader, legacyOptionEncoding))
-  }
 
-  override def encode(writer: BsonWriter, value: T, encoderContext: EncoderContext) = {
+  override def encode(writer: BsonWriter, value: T, encoderContext: EncoderContext): Unit =
     genCodec.write(new BsonWriterOutput(writer, legacyOptionEncoding), value)
-  }
 }

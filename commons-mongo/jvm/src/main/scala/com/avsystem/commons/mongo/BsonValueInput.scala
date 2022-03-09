@@ -1,8 +1,7 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization.{FieldInput, GenCodec, Input, ListInput, ObjectInput}
+import com.avsystem.commons.serialization._
 import org.bson._
 import org.bson.types.{Decimal128, ObjectId}
 
@@ -14,36 +13,55 @@ object BsonValueInput {
 class BsonValueInput(bsonValue: BsonValue, override val legacyOptionEncoding: Boolean = false) extends BsonInput {
   protected def bsonType: BsonType = bsonValue.getBsonType
 
-  private def handleFailures[T](expr: => T): T =
-    try expr catch {
-      case e: BsonInvalidOperationException => throw new ReadFailure(e.getMessage, e)
-    }
+  def readString(): String =
+    expect(BsonType.STRING, bsonValue.asString().getValue)
 
-  def readString(): String = handleFailures(bsonValue.asString().getValue)
-  def readBoolean(): Boolean = handleFailures(bsonValue.asBoolean().getValue)
-  def readInt(): Int = handleFailures(bsonValue.asInt32().getValue)
+  def readBoolean(): Boolean =
+    expect(BsonType.BOOLEAN, bsonValue.asBoolean().getValue)
+
+  def readInt(): Int =
+    expect(BsonType.INT32, bsonValue.asInt32().getValue)
+
   def readLong(): Long = handleFailures {
     bsonType match {
-      case BsonType.INT32 => bsonValue.asInt32().getValue.toLong // allow converting INT32 to Long
-      case _ => bsonValue.asInt64().getValue
+      case BsonType.INT32 => readInt().toLong
+      case BsonType.INT64 => bsonValue.asInt64().getValue
+      case _ => wrongType(BsonType.INT32, BsonType.INT64)
     }
   }
-  override def readTimestamp(): Long = handleFailures(bsonValue.asDateTime().getValue)
-  def readDouble(): Double = handleFailures(bsonValue.asDouble().getValue)
-  def readBigInt(): BigInt = handleFailures(BigInt(bsonValue.asBinary().getData))
-  def readBigDecimal(): BigDecimal = handleFailures(BsonInput.bigDecimalFromBytes(bsonValue.asBinary().getData))
-  def readBinary(): Array[Byte] = handleFailures(bsonValue.asBinary().getData)
-  def readObjectId(): ObjectId = handleFailures(bsonValue.asObjectId().getValue)
-  def readDecimal128(): Decimal128 = handleFailures(bsonValue.asDecimal128().getValue)
 
-  def readNull(): Boolean = bsonValue == BsonNull.VALUE
-  def readList(): ListInput = new BsonValueListInput(handleFailures(bsonValue.asArray()), legacyOptionEncoding)
-  def readObject(): ObjectInput = new BsonValueObjectInput(handleFailures(bsonValue.asDocument()), legacyOptionEncoding)
+  override def readTimestamp(): Long =
+    expect(BsonType.DATE_TIME, bsonValue.asDateTime().getValue)
+
+  def readDouble(): Double =
+    expect(BsonType.DOUBLE, bsonValue.asDouble().getValue)
+
+  def readBinary(): Array[Byte] =
+    expect(BsonType.BINARY, bsonValue.asBinary().getData)
+
+  def readObjectId(): ObjectId =
+    expect(BsonType.OBJECT_ID, bsonValue.asObjectId().getValue)
+
+  def readDecimal128(): Decimal128 =
+    expect(BsonType.DECIMAL128, bsonValue.asDecimal128().getValue)
+
+  def readBsonValue(): BsonValue =
+    bsonValue
+
+  def readNull(): Boolean =
+    bsonValue == BsonNull.VALUE
+
+  def readList(): ListInput =
+    new BsonValueListInput(expect(BsonType.ARRAY, bsonValue.asArray()), legacyOptionEncoding)
+
+  def readObject(): ObjectInput =
+    new BsonValueObjectInput(expect(BsonType.DOCUMENT, bsonValue.asDocument()), legacyOptionEncoding)
+
   def skip(): Unit = ()
 }
 
 class BsonValueFieldInput(val fieldName: String, bsonValue: BsonValue, legacyOptionEncoding: Boolean)
-  extends BsonValueInput(bsonValue, legacyOptionEncoding) with FieldInput
+  extends BsonValueInput(bsonValue, legacyOptionEncoding) with BsonFieldInput
 
 class BsonValueListInput(bsonArray: BsonArray, legacyOptionEncoding: Boolean) extends ListInput {
   private val it = bsonArray.iterator

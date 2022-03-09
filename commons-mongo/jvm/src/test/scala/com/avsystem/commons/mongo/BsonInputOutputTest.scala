@@ -1,15 +1,16 @@
 package com.avsystem.commons
 package mongo
 
-import java.nio.ByteBuffer
-
-import com.avsystem.commons.serialization.{GenCodecRoundtripTest, Input, ObjectInput, Output}
+import com.avsystem.commons.serialization._
 import org.bson._
 import org.bson.io.BasicOutputBuffer
 import org.bson.json.{JsonMode, JsonWriterSettings}
+import org.bson.types.Decimal128
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+
+import java.nio.ByteBuffer
 
 class BinaryBsonGenCodecRoundtripTest extends GenCodecRoundtripTest {
   type Raw = Array[Byte]
@@ -137,12 +138,44 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     forAll(SomethingComplex.gen)(valueEncoding(_, legacyOptionEncoding = true))
   }
 
-  test("Int32 to Long decoding") {
-    val doc = new BsonDocument("value", new BsonInt32(42))
-    val reader = new BsonDocumentReader(doc)
-    val input = new BsonReaderInput(reader, false)
-    val sth = SomethingLong.codec.read(input)
-    assert(sth == SomethingLong(42))
+  private case class Wrap[+T](v: T)
+  private object Wrap extends HasPolyGenCodec[Wrap]
+
+  def testRoundtripAndRepr[T: GenCodec](value: T, expectedRepr: BsonValue)(implicit pos: Position): Unit = {
+    val repr = BsonValueOutput.write(value)
+    assert(repr == expectedRepr)
+    assert(BsonValueInput.read[T](repr) == value)
+
+    val output = new BasicOutputBuffer
+    val writer = new BsonBinaryWriter(output)
+    GenCodec.write(new BsonWriterOutput(writer), Wrap(value))
+    writer.flush()
+    writer.close()
+
+    val bytes = output.toByteArray
+    val reprFromBinary = BsonValueUtils.decode(new BsonBinaryReader(ByteBuffer.wrap(bytes))).asDocument().get("v")
+    assert(reprFromBinary == expectedRepr)
+    assert(GenCodec.read[Wrap[T]](new BsonReaderInput(new BsonBinaryReader(ByteBuffer.wrap(bytes)))).v == value)
+  }
+
+  test("Long encoding") {
+    testRoundtripAndRepr[Long](1, new BsonInt32(1))
+    testRoundtripAndRepr[Long](Int.MaxValue + 1L, new BsonInt64(Int.MaxValue + 1L))
+  }
+
+  test("BigInt encoding") {
+    testRoundtripAndRepr[BigInt](1, new BsonInt32(1))
+    testRoundtripAndRepr[BigInt](BigInt("1"), new BsonInt32(1))
+    testRoundtripAndRepr[BigInt](Int.MaxValue + 1L, new BsonInt64(Int.MaxValue + 1L))
+    testRoundtripAndRepr[BigInt](BigInt("123123123123123123123"), new BsonDecimal128(Decimal128.parse("123123123123123123123")))
+    testRoundtripAndRepr[BigInt](BigInt("123123123123123123123123123123123123123123"), new BsonBinary(Base64.decode("AWnTiveIuE7XC8Q4zzH4T/Oz")))
+  }
+
+  test("BigDecimal encoding") {
+    testRoundtripAndRepr[BigDecimal](1, new BsonDecimal128(new Decimal128(1)))
+    testRoundtripAndRepr[BigDecimal](BigDecimal("0.00001"), new BsonDecimal128(Decimal128.parse("0.00001")))
+    testRoundtripAndRepr[BigDecimal](BigDecimal("123123123123.123123123"), new BsonDecimal128(Decimal128.parse("123123123123.123123123")))
+    testRoundtripAndRepr[BigDecimal](BigDecimal("123123123123123123.123123123123123123123123"), new BsonBinary(Base64.decode("AWnTiveIuE7XC8Q4zzH4T/OzAAAAGA==")))
   }
 
   test("All encoding schemes with problematic map keys") {
@@ -161,13 +194,13 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
 
 
   def testMetadata(input: BsonInput)(implicit position: Position): Unit = {
-    def testFieldType(input: ObjectInput)(tpe: BsonType): Unit = {
+    def testFieldType(input: ObjectInput)(tpes: BsonType*): Unit = {
       val fieldInput = input.nextField()
-      assert(fieldInput.readMetadata(BsonTypeMetadata).contains(tpe))
+      assert(fieldInput.readMetadata(BsonTypeMetadata).exists(tpes.contains))
       fieldInput.skip()
     }
 
-    assert(input.readMetadata(BsonTypeMetadata).isEmpty)
+    assert(input.readMetadata(BsonTypeMetadata).contains(BsonType.DOCUMENT))
 
     val objectInput = input.readObject()
     assert(input.readMetadata(BsonTypeMetadata).contains(BsonType.DOCUMENT))
@@ -184,7 +217,7 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     testFieldType(objectInput)(BsonType.STRING)
     testFieldType(objectInput)(BsonType.BOOLEAN)
     testFieldType(objectInput)(BsonType.INT32)
-    testFieldType(objectInput)(BsonType.INT64)
+    testFieldType(objectInput)(BsonType.INT32, BsonType.INT64)
     testFieldType(objectInput)(BsonType.DATE_TIME)
     testFieldType(objectInput)(BsonType.DOUBLE)
     testFieldType(objectInput)(BsonType.BINARY)
@@ -211,6 +244,54 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     }
   }
 
+  test("BsonBinaryReader peekField") {
+    val doc = new BsonDocument()
+      .append("str", new BsonString("str"))
+      .append("int", new BsonInt32(32))
+      .append("boo", new BsonBoolean(false))
+      .append("arr", new BsonArray(JList(new BsonInt32(42), new BsonString("foo"))))
+      .append("dbl", new BsonDouble(3.14))
+
+    val bof = new BasicOutputBuffer
+    val bw = new BsonBinaryWriter(bof)
+    BsonValueUtils.encode(bw, doc)
+    bw.flush()
+    bw.close()
+
+    val br = new BsonBinaryReader(ByteBuffer.wrap(bof.toByteArray))
+    val input = new BsonReaderInput(br).readObject()
+
+    locally {
+      val pf = input.peekField("str")
+      assert(pf.exists(fi => fi.fieldName == "str" && fi.readBsonValue() == new BsonString("str")))
+    }
+    locally {
+      val fi = input.nextField()
+      assert(fi.fieldName == "str")
+      fi.skip()
+    }
+    locally {
+      val pf = input.peekField("boo")
+      assert(pf.exists(fi => fi.fieldName == "boo" && fi.readBsonValue() == new BsonBoolean(false)))
+    }
+    locally {
+      assert(input.peekField("not").isEmpty)
+    }
+    locally {
+      val pf = input.peekField("dbl")
+      assert(pf.exists(fi => fi.fieldName == "dbl" && fi.readBsonValue() == new BsonDouble(3.14)))
+    }
+    locally {
+      val fi = input.nextField()
+      assert(fi.fieldName == "int")
+      fi.skip()
+    }
+    locally {
+      val pf = input.peekField("str")
+      assert(pf.exists(fi => fi.fieldName == "str" && fi.readBsonValue() == new BsonString("str")))
+    }
+  }
+
   def listToBson[T](list: List[T])(converter: T => BsonValue) = new BsonArray(list.map(converter).asJava)
 
   def mapToBson[T](map: Map[String, T])(valueConverter: T => BsonValue): BsonDocument = {
@@ -221,12 +302,15 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     doc
   }
 
+  def longBson(l: Long): BsonValue =
+    if(l.isValidInt) new BsonInt32(l.toInt) else new BsonInt64(l)
+
   def somethingToBson(s: SomethingPlain): BsonDocument = {
     new BsonDocument()
       .append("string", new BsonString(s.string))
       .append("boolean", new BsonBoolean(s.boolean))
       .append("int", new BsonInt32(s.int))
-      .append("long", new BsonInt64(s.long))
+      .append("long", longBson(s.long))
       .append("timestamp", new BsonDateTime(s.timestamp.getTime))
       .append("double", new BsonDouble(s.double))
       .append("binary", new BsonBinary(s.binary.bytes))

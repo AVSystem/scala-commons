@@ -4,7 +4,7 @@ package mongo
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodecWithDeps}
 import org.bson.json.JsonReader
 import org.bson.types.{Decimal128, ObjectId}
-import org.bson.{BsonArray, BsonBinary, BsonBoolean, BsonDateTime, BsonDecimal128, BsonDocument, BsonDouble, BsonElement, BsonInt32, BsonInt64, BsonNull, BsonObjectId, BsonString, BsonValue}
+import org.bson._
 import org.scalatest.funsuite.AnyFunSuite
 
 case class AllTypesInABag(
