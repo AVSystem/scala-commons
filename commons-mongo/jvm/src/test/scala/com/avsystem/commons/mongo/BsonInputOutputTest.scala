@@ -194,9 +194,9 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
 
 
   def testMetadata(input: BsonInput)(implicit position: Position): Unit = {
-    def testFieldType(input: ObjectInput)(tpe: BsonType): Unit = {
+    def testFieldType(input: ObjectInput)(tpes: BsonType*): Unit = {
       val fieldInput = input.nextField()
-      assert(fieldInput.readMetadata(BsonTypeMetadata).contains(tpe))
+      assert(fieldInput.readMetadata(BsonTypeMetadata).exists(tpes.contains))
       fieldInput.skip()
     }
 
@@ -217,7 +217,7 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     testFieldType(objectInput)(BsonType.STRING)
     testFieldType(objectInput)(BsonType.BOOLEAN)
     testFieldType(objectInput)(BsonType.INT32)
-    testFieldType(objectInput)(BsonType.INT64)
+    testFieldType(objectInput)(BsonType.INT32, BsonType.INT64)
     testFieldType(objectInput)(BsonType.DATE_TIME)
     testFieldType(objectInput)(BsonType.DOUBLE)
     testFieldType(objectInput)(BsonType.BINARY)
