@@ -1,10 +1,12 @@
 package com.avsystem.commons
 package mongo
 
+import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodecWithDeps}
+import org.bson._
 import org.bson.json.JsonReader
 import org.bson.types.{Decimal128, ObjectId}
-import org.bson._
+import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 
 case class AllTypesInABag(
@@ -23,7 +25,7 @@ case class AllTypesInABag(
 )
 object AllTypesInABag extends HasGenCodecWithDeps[BsonGenCodecs.type, AllTypesInABag]
 
-class BsonValueCodecsTest extends AnyFunSuite {
+class BsonValueCodecsTest extends AnyFunSuite with BsonGenCodecs {
   test("codec roundtrip") {
     val doc = new BsonDocument(JList(
       new BsonElement("someInt64", new BsonInt64(64)),
@@ -69,8 +71,6 @@ class BsonValueCodecsTest extends AnyFunSuite {
   }
 
   test("null handling") {
-    import BsonGenCodecs.bsonDocumentCodec
-
     val reader = new JsonReader("""{"key": null}""")
     val input = new BsonReaderInput(reader)
     val document = GenCodec.read[BsonDocument](input)
@@ -83,11 +83,22 @@ class BsonValueCodecsTest extends AnyFunSuite {
   }
 
   test("null in doc in array") {
-    import BsonGenCodecs.bsonArrayCodec
-
     val reader = new JsonReader("""[{"key": null}]""")
     val input = new BsonReaderInput(reader)
     val array = GenCodec.read[BsonArray](input)
     assert(array === new BsonArray(JList(new BsonDocument("key", BsonNull.VALUE))))
+  }
+
+  def testJsonRoundtrip[T: GenCodec](value: T)(implicit pos: Position): Unit = {
+    val json = JsonStringOutput.write(value)
+    val readValue = JsonStringInput.read[T](json)
+    assert(value == readValue)
+  }
+
+  test("JSON string roundtrip for BsonValue") {
+    testJsonRoundtrip(new BsonBoolean(true))
+    testJsonRoundtrip(new BsonInt32(42))
+    testJsonRoundtrip(new BsonInt64(42))
+    testJsonRoundtrip(new BsonDocument("v", new BsonInt32(42)))
   }
 }

@@ -50,12 +50,12 @@ object BsonGenCodecs {
   implicit val bsonValueCodec: GenCodec[BsonValue] = GenCodec.create(
     i => i.readCustom(BsonValueMarker).getOrElse {
       val reader = new BsonBinaryReader(ByteBuffer.wrap(i.readSimple().readBinary()))
-      BsonValueUtils.decode(reader)
+      BsonValueUtils.decode(reader).asDocument().get("v")
     },
     (o, bv) => if (!o.writeCustom(BsonValueMarker, bv)) {
       val buffer = new BasicOutputBuffer()
       val writer = new BsonBinaryWriter(buffer)
-      BsonValueUtils.encode(writer, bv)
+      BsonValueUtils.encode(writer, new BsonDocument("v", bv))
       writer.flush()
       writer.close()
       o.writeSimple().writeBinary(buffer.toByteArray)
