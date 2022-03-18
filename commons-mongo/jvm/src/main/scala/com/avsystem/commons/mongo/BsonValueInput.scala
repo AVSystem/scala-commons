@@ -33,8 +33,14 @@ class BsonValueInput(bsonValue: BsonValue, override val legacyOptionEncoding: Bo
   override def readTimestamp(): Long =
     expect(BsonType.DATE_TIME, bsonValue.asDateTime().getValue)
 
-  def readDouble(): Double =
-    expect(BsonType.DOUBLE, bsonValue.asDouble().getValue)
+  override def readDouble(): Double = handleFailures {
+    bsonType match {
+      case BsonType.DOUBLE => bsonValue.asDouble().getValue
+      case BsonType.INT32 => readInt().toDouble
+      case BsonType.INT64 => bsonValue.asInt64().getValue.toDouble
+      case _ => wrongType(BsonType.DOUBLE, BsonType.INT32, BsonType.INT64)
+    }
+  }
 
   def readBinary(): Array[Byte] =
     expect(BsonType.BINARY, bsonValue.asBinary().getData)

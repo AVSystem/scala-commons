@@ -75,6 +75,18 @@ class BsonValueGenCodecRoundtripTest extends GenCodecRoundtripTest {
     val result = input.readSimple().readLong()
     assert(result == 42L)
   }
+
+  test("Int32 to Double decoding") {
+    val input = createInput(new BsonInt32(43))
+    val result = input.readSimple().readDouble()
+    assert(result == 43D)
+  }
+
+  test("Int64 to Double decoding") {
+    val input = createInput(new BsonInt64(44))
+    val result = input.readSimple().readDouble()
+    assert(result == 44D)
+  }
 }
 
 class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
