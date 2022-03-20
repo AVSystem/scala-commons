@@ -9,8 +9,9 @@ import org.bson.types.Decimal128
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-
 import java.nio.ByteBuffer
+
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 class BinaryBsonGenCodecRoundtripTest extends GenCodecRoundtripTest {
   type Raw = Array[Byte]
@@ -82,10 +83,10 @@ class BsonValueGenCodecRoundtripTest extends GenCodecRoundtripTest {
     assert(result == 43D)
   }
 
-  test("Int64 to Double decoding") {
+  test("Int64 to Double decoding exception") {
     val input = createInput(new BsonInt64(44))
-    val result = input.readSimple().readDouble()
-    assert(result == 44D)
+
+    assertThrows[ReadFailure](input.readSimple().readDouble())
   }
 }
 
@@ -244,6 +245,26 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
 
       testMetadata(input)
     }
+  }
+
+  test("BsonBinaryReader Int types to Double decoding") {
+    val document = new BsonDocument()
+      .append("int", new BsonInt32(42))
+      .append("long", new BsonInt64(42L))
+
+      val rawJson = document.toJson(JsonWriterSettings.builder.outputMode(JsonMode.EXTENDED).build)
+      val input = new BsonReaderInput(new BsonBinaryReader(RawBsonDocument.parse(rawJson).getByteBuffer.asNIO()))
+
+      val objectInput = input.readObject()
+
+      val intField = objectInput.peekField("int")
+      assert(intField.nonEmpty)
+      assert(intField.get.readDouble() == 42D)
+
+
+      val longField = objectInput.peekField("long")
+      assert(longField.nonEmpty)
+      assertThrows[ReadFailure](longField.get.readDouble())
   }
 
   test("BsonBinaryReader type metadata") {

@@ -41,8 +41,7 @@ class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean
     bsonType match {
       case BsonType.DOUBLE => br.readDouble()
       case BsonType.INT32 => br.readInt32().toDouble
-      case BsonType.INT64 => br.readInt64().toDouble
-      case _ => wrongType(BsonType.DOUBLE, BsonType.INT32, BsonType.INT64)
+      case _ => wrongType(BsonType.DOUBLE, BsonType.INT32)
     }
   }
 

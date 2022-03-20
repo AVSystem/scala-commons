@@ -37,8 +37,7 @@ class BsonValueInput(bsonValue: BsonValue, override val legacyOptionEncoding: Bo
     bsonType match {
       case BsonType.DOUBLE => bsonValue.asDouble().getValue
       case BsonType.INT32 => readInt().toDouble
-      case BsonType.INT64 => bsonValue.asInt64().getValue.toDouble
-      case _ => wrongType(BsonType.DOUBLE, BsonType.INT32, BsonType.INT64)
+      case _ => wrongType(BsonType.DOUBLE, BsonType.INT32)
     }
   }
 
