@@ -14,10 +14,10 @@ val jsr305Version = "3.0.2"
 val scalatestVersion = "3.2.9"
 val scalatestplusScalacheckVersion = "3.2.9.0"
 val scalacheckVersion = "1.15.4"
-val jettyVersion = "9.4.44.v20210927"
+val jettyVersion = "9.4.45.v20220203"
 val mongoVersion = "4.5.0"
 val springVersion = "4.3.26.RELEASE"
-val typesafeConfigVersion = "1.4.1"
+val typesafeConfigVersion = "1.4.2"
 val commonsIoVersion = "1.3.2" // test only
 val scalaLoggingVersion = "3.9.4"
 val akkaVersion = "2.6.14"
@@ -26,7 +26,7 @@ val mockitoVersion = "3.9.0"
 val circeVersion = "0.13.0" // benchmark only
 val upickleVersion = "1.3.11" // benchmark only
 val scalajsBenchmarkVersion = "0.9.0"
-val slf4jVersion = "1.7.30"
+val slf4jVersion = "1.7.32"
 
 // for binary compatibility checking
 val previousCompatibleVersions = Set("2.2.4")
@@ -52,7 +52,7 @@ inThisBuild(Seq(
     Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
   ),
 
-  crossScalaVersions := Seq("2.13.7", "2.12.15"),
+  crossScalaVersions := Seq("2.13.8", "2.12.15"),
   scalaVersion := crossScalaVersions.value.head,
   compileOrder := CompileOrder.Mixed,
 
