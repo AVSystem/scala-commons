@@ -299,6 +299,18 @@ trait Components extends ComponentsLowPrio {
   implicit def ambiguousArbitraryComponent2[T]: Component[T] = null
 
   implicit def autoComponent[T](definition: => T)(implicit sourceInfo: SourceInfo): AutoComponent[T] = macro ComponentMacros.autoComponent[T]
+
+  protected def optEmptyComponent: Component[Opt[Nothing]] =
+    singleton(Opt.Empty)
+
+  protected def noneComponent: Component[Option[Nothing]] =
+    singleton(None)
+
+  protected def sequenceOpt[T](componentOpt: Opt[Component[T]]): Component[Opt[T]] =
+    componentOpt.mapOr(optEmptyComponent, c => component(c.ref.opt))
+
+  protected def sequenceOption[T](componentOpt: Option[Component[T]]): Component[Option[T]] =
+    componentOpt.mapOr(noneComponent, c => component(c.ref.option))
 }
 trait ComponentsLowPrio {
   @compileTimeOnly("implicit Component[T] => implicit T inference only works inside code passed to component/singleton macro")
