@@ -17,7 +17,7 @@ case class BenchEntity(
   id: String,
   str: String,
   int: Int,
-  list: List[String]
+  list: List[String],
 ) extends MongoEntity[String]
 object BenchEntity extends MongoEntityCompanion[BenchEntity]
 
@@ -29,15 +29,14 @@ object TypedMongoBenchmark {
 @Measurement(iterations = 5)
 @Fork(1)
 @BenchmarkMode(Array(Mode.Throughput))
-@State(Scope.Thread)
+@State(Scope.Benchmark)
 class TypedMongoBenchmark {
-  val threadPool: ExecutorService = Executors.newWorkStealingPool(2 * Runtime.getRuntime.availableProcessors)
+  val threadPool: ExecutorService = Executors.newWorkStealingPool(2)
   implicit val scheduler: Scheduler = Scheduler(threadPool)
 
   val mongoClientSettings: MongoClientSettings =
     MongoClientSettings.builder
-      .applyConnectionString(new ConnectionString("mongodb://ghikomp/test"))
-      .applyToConnectionPoolSettings(_.maxSize(1))
+      .applyConnectionString(new ConnectionString("mongodb://xpseth/test"))
       .streamFactoryFactory(AsynchronousSocketChannelStreamFactoryFactory.builder
         .group(AsynchronousChannelGroup.withThreadPool(threadPool)).build)
       .build
@@ -46,7 +45,7 @@ class TypedMongoBenchmark {
   val coll = new TypedMongoCollection[BenchEntity](mongoClient.getDatabase("bench").getCollection("BenchEntity"))
 
   val task: Task[List[Option[BenchEntity]]] =
-    Task.parSequence(List.fill(BatchSize)(coll.findById("foo")))
+    Task.parSequence(List.tabulate(BatchSize)(i => coll.findById(s"foo$i")))
 
   @Benchmark
   @OperationsPerInvocation(BatchSize)
