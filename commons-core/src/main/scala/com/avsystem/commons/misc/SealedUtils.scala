@@ -131,9 +131,13 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
     */
   lazy val byName: Map[String, T] = values.toMapBy(_.name)
 
-  implicit lazy val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(byName, _.name)
+  private def decode(str: String): T =
+    byName.getOrElse(str, throw new NoSuchElementException(
+      s"Invalid value: $str, expected one of: ${values.iterator.map(_.name).mkString(",")}"))
+
+  implicit lazy val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(decode, _.name)
   implicit lazy val codec: GenCodec[T] = GenCodec.nullableSimple[T](
-    input => byName(input.readString()),
+    input => decode(input.readString()),
     (output, value) => output.writeString(value.name)
   )
 }
