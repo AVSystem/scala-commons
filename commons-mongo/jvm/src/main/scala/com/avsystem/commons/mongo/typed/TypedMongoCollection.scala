@@ -37,7 +37,7 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     rawCollection.withCodecRegistry(codecRegistry).withDocumentClass(documentClass)
   }
 
-  private def empty[T](publisher: Publisher[Void]): Task[Unit] =
+  private def empty(publisher: Publisher[Void]): Task[Unit] =
     Observable.fromReactivePublisher(publisher, 1).completedL
 
   private def single[T](publisher: Publisher[T]): Task[T] =
