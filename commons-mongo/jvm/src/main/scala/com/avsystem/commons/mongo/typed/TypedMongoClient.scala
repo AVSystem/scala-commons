@@ -3,9 +3,9 @@ package mongo.typed
 
 import com.avsystem.commons.mongo.BsonValueInput
 import com.avsystem.commons.serialization.GenCodec
+import com.mongodb._
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.reactivestreams.client.{MongoClient, MongoClients}
-import com.mongodb.{ClientSessionOptions, ConnectionString, MongoClientSettings, MongoDriverInformation}
 import monix.eval.Task
 import monix.reactive.Observable
 import org.bson.Document
@@ -69,6 +69,21 @@ class TypedMongoClient(
     options: ClientSessionOptions = ClientSessionOptions.builder().build()
   ): Task[TypedClientSession] =
     single(nativeClient.startSession(options)).map(new TypedClientSession(_))
+
+  def inSession[T](
+    options: ClientSessionOptions = ClientSessionOptions.builder().build()
+  )(
+    task: TypedClientSession => Task[T]
+  ): Task[T] =
+    startSession(options).bracket(task)(s => Task(s.close()))
+
+  def inTransaction[T](
+    sessionOptions: ClientSessionOptions = ClientSessionOptions.builder().build(),
+    transactionOptions: TransactionOptions = TransactionOptions.builder().build(),
+  )(
+    task: TypedClientSession => Task[T]
+  ): Task[T] =
+    inSession(sessionOptions)(s => s.inTransaction(transactionOptions)(task(s)))
 
   def clusterDescription(): ClusterDescription =
     nativeClient.getClusterDescription

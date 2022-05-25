@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
+import cats.effect.ExitCase
 import com.mongodb.reactivestreams.client.ClientSession
 import com.mongodb.session.ServerSession
 import com.mongodb.{ClientSessionOptions, ServerAddress, TransactionOptions}
@@ -28,6 +29,18 @@ class TypedClientSession(val nativeSession: ClientSession)
 
   def abortTransaction: Task[Unit] =
     single(nativeSession.abortTransaction()).void
+
+  def inTransaction[T](
+    transactionOptions: TransactionOptions = TransactionOptions.builder().build()
+  )(
+    task: Task[T]
+  ): Task[T] = Task.defer {
+    startTransaction(transactionOptions)
+    task.guaranteeCase {
+      case ExitCase.Completed => commitTransaction
+      case _ => abortTransaction
+    }
+  }
 
   def pinnedServerAddress: Option[ServerAddress] =
     Option(nativeSession.getPinnedServerAddress)
