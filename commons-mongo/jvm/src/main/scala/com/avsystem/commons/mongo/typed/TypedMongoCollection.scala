@@ -14,11 +14,25 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.{BsonDocument, BsonValue}
 import org.reactivestreams.Publisher
 
-class TypedMongoCollection[E <: BaseMongoEntity](
-  rawCollection: MongoCollection[_]
+class TypedMongoCollection[E <: BaseMongoEntity] private(
+  /** The native (Reactive Streams driver) collection */
+  val nativeCollection: MongoCollection[E],
+  docCollection: MongoCollection[BsonDocument],
+  val clientSession: Opt[TypedClientSession],
 )(
   implicit meta: MongoEntityMeta[E]
-) extends DataTypeDsl[E] {
+) extends DataTypeDsl[E] with TypedMongoUtils {
+
+  def this(
+    rawCollection: MongoCollection[_],
+    clientSession: OptArg[TypedClientSession] = OptArg.Empty
+  )(implicit
+    meta: MongoEntityMeta[E]
+  ) = this(
+    TypedMongoCollection.mkNativeCollection[E](rawCollection),
+    rawCollection.withDocumentClass(classOf[BsonDocument]),
+    clientSession.toOpt
+  )
 
   type ID = E#IDType
 
@@ -27,46 +41,36 @@ class TypedMongoCollection[E <: BaseMongoEntity](
   val SelfRef: MongoRef[E, E] = MongoRef.RootRef(format)
   val IdRef: MongoPropertyRef[E, ID] = meta.idRef
 
-  private val docCollection = rawCollection.withDocumentClass(classOf[BsonDocument])
+  private val sessionOrNull = clientSession.map(_.nativeSession).orNull
 
-  /** The native (Reactive Streams driver) collection */
-  val nativeCollection: MongoCollection[E] = {
-    import format._
-    val codecRegistry: CodecRegistry = GenCodecRegistry.create[E](rawCollection.getCodecRegistry)
-    val documentClass = classTag.runtimeClass.asInstanceOf[Class[E]]
-    rawCollection.withCodecRegistry(codecRegistry).withDocumentClass(documentClass)
-  }
+  def withSession(session: TypedClientSession): TypedMongoCollection[E] =
+    new TypedMongoCollection(nativeCollection, docCollection, session.opt)
 
-  private def empty(publisher: Publisher[Void]): Task[Unit] =
-    Observable.fromReactivePublisher(publisher, 1).completedL
-
-  private def single[T](publisher: Publisher[T]): Task[T] =
-    Observable.fromReactivePublisher(publisher, 1).firstL
-
-  // handles both an empty Publisher and and a single null item
-  private def singleOpt[T](publisher: Publisher[T]): Task[Option[T]] =
-    Observable.fromReactivePublisher(publisher, 1).filter(_ != null).firstOptionL
-
-  def namespace: MongoNamespace =
-    nativeCollection.getNamespace
-
-  def writeConcern: WriteConcern =
-    nativeCollection.getWriteConcern
+  def namespace: MongoNamespace = nativeCollection.getNamespace
+  def writeConcern: WriteConcern = nativeCollection.getWriteConcern
+  def readConcern: ReadConcern = nativeCollection.getReadConcern
+  def readPreference: ReadPreference = nativeCollection.getReadPreference
 
   def withWriteConcern(writeConcern: WriteConcern): TypedMongoCollection[E] =
-    new TypedMongoCollection(rawCollection.withWriteConcern(writeConcern))
-
-  def readConcern: ReadConcern =
-    nativeCollection.getReadConcern
+    new TypedMongoCollection(
+      nativeCollection.withWriteConcern(writeConcern),
+      docCollection.withWriteConcern(writeConcern),
+      clientSession,
+    )
 
   def withReadConcern(readConcern: ReadConcern): TypedMongoCollection[E] =
-    new TypedMongoCollection(rawCollection.withReadConcern(readConcern))
-
-  def readPreference: ReadPreference =
-    nativeCollection.getReadPreference
+    new TypedMongoCollection(
+      nativeCollection.withReadConcern(readConcern),
+      docCollection.withReadConcern(readConcern),
+      clientSession,
+    )
 
   def withReadPreference(readPreference: ReadPreference): TypedMongoCollection[E] =
-    new TypedMongoCollection(rawCollection.withReadPreference(readPreference))
+    new TypedMongoCollection(
+      nativeCollection.withReadPreference(readPreference),
+      docCollection.withReadPreference(readPreference),
+      clientSession,
+    )
 
   /**
     * Invokes some empty-result operation directly on Reactive Streams collection. This method is supposed
@@ -90,24 +94,29 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     Observable.fromReactivePublisher(operation(nativeCollection))
 
   def drop(): Task[Unit] =
-    empty(nativeCollection.drop())
+    empty(optionalizeFirstArg(nativeCollection.drop(sessionOrNull)))
 
   def renameCollection(
     namespace: MongoNamespace,
     setupOptions: RenameCollectionOptions => RenameCollectionOptions = identity
   ): Task[Unit] =
-    empty(nativeCollection.renameCollection(namespace, setupOptions(new RenameCollectionOptions)))
+    empty(optionalizeFirstArg(
+      nativeCollection.renameCollection(sessionOrNull, namespace, setupOptions(new RenameCollectionOptions))))
 
   def countDocuments(
     filter: MongoDocumentFilter[E] = MongoFilter.empty,
     setupOptions: CountOptions => CountOptions = identity
   ): Task[Long] =
-    single(nativeCollection.countDocuments(filter.toBson, setupOptions(new CountOptions))).asInstanceOf[Task[Long]]
+    single(optionalizeFirstArg(
+      nativeCollection.countDocuments(sessionOrNull, filter.toBson, setupOptions(new CountOptions))
+    )).asInstanceOf[Task[Long]]
 
   def estimatedDocumentCount(
     setupOptions: EstimatedDocumentCountOptions => EstimatedDocumentCountOptions = identity
   ): Task[Long] =
-    single(nativeCollection.estimatedDocumentCount(setupOptions(new EstimatedDocumentCountOptions))).asInstanceOf[Task[Long]]
+    single(optionalizeFirstArg(
+      nativeCollection.estimatedDocumentCount(setupOptions(new EstimatedDocumentCountOptions))
+    )).asInstanceOf[Task[Long]]
 
   def exists(
     filter: MongoDocumentFilter[E],
@@ -150,9 +159,9 @@ class TypedMongoCollection[E <: BaseMongoEntity](
 
     projection match {
       case SelfRef =>
-        toObservable(nativeCollection.find()).asInstanceOf[Observable[T]]
+        toObservable(optionalizeFirstArg(nativeCollection.find(sessionOrNull))).asInstanceOf[Observable[T]]
       case proj =>
-        toObservable(docCollection.find()).map(proj.decodeFrom)
+        toObservable(optionalizeFirstArg(docCollection.find(sessionOrNull))).map(proj.decodeFrom)
     }
   }
 
@@ -172,10 +181,13 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     }
     projection match {
       case SelfRef =>
-        singleOpt(nativeCollection.findOneAndUpdate(filterBson, updateBson, options).asInstanceOf[Publisher[T]])
+        singleOpt(optionalizeFirstArg(
+          nativeCollection.findOneAndUpdate(sessionOrNull, filterBson, updateBson, options)).asInstanceOf[Publisher[T]])
       case proj =>
         val optionsWithProj = options.projection(proj.toProjectionBson)
-        singleOpt(docCollection.findOneAndUpdate(filterBson, updateBson, optionsWithProj)).map(_.map(proj.decodeFrom))
+        singleOpt(optionalizeFirstArg(
+          docCollection.findOneAndUpdate(sessionOrNull, filterBson, updateBson, optionsWithProj)
+        )).map(_.map(proj.decodeFrom))
     }
   }
 
@@ -191,11 +203,15 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     val options = setupOptions(new FindOneAndReplaceOptions).sort(sort.toBson).upsert(upsert)
     projection match {
       case SelfRef =>
-        singleOpt(nativeCollection.findOneAndReplace(filterBson, replacement, options).asInstanceOf[Publisher[T]])
+        singleOpt(optionalizeFirstArg(
+          nativeCollection.findOneAndReplace(sessionOrNull, filterBson, replacement, options)
+        ).asInstanceOf[Publisher[T]])
       case proj =>
         val replaceDoc = format.writeBson(replacement).asDocument
         val optionsWithProj = options.projection(proj.toProjectionBson)
-        singleOpt(docCollection.findOneAndReplace(filterBson, replaceDoc, optionsWithProj)).map(_.map(proj.decodeFrom))
+        singleOpt(optionalizeFirstArg(
+          docCollection.findOneAndReplace(sessionOrNull, filterBson, replaceDoc, optionsWithProj)
+        )).map(_.map(proj.decodeFrom))
     }
   }
 
@@ -209,10 +225,12 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     val options = setupOptions(new FindOneAndDeleteOptions).sort(sort.toBson)
     projection match {
       case SelfRef =>
-        singleOpt(nativeCollection.findOneAndDelete(filterBson, options).asInstanceOf[Publisher[T]])
+        singleOpt(optionalizeFirstArg(
+          nativeCollection.findOneAndDelete(sessionOrNull, filterBson, options)).asInstanceOf[Publisher[T]])
       case proj =>
         val optionsWithProj = options.projection(proj.toProjectionBson)
-        singleOpt(docCollection.findOneAndDelete(filterBson, optionsWithProj)).map(_.map(proj.decodeFrom))
+        singleOpt(optionalizeFirstArg(
+          docCollection.findOneAndDelete(sessionOrNull, filterBson, optionsWithProj))).map(_.map(proj.decodeFrom))
     }
   }
 
@@ -222,9 +240,9 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     setupOptions: DistinctPublisher[Any] => DistinctPublisher[Any] = identity
   ): Observable[T] = {
 
-    val publisher = nativeCollection
-      .distinct(property.rawPath, classOf[BsonValue])
-      .filter(filter.toFilterBson(Opt.Empty, property.projectionRefs))
+    val publisher =
+      optionalizeFirstArg(nativeCollection.distinct(sessionOrNull, property.rawPath, classOf[BsonValue]))
+        .filter(filter.toFilterBson(Opt.Empty, property.projectionRefs))
 
     val publisherWithOptions =
       setupOptions(publisher.asInstanceOf[DistinctPublisher[Any]]).asInstanceOf[DistinctPublisher[BsonValue]]
@@ -236,25 +254,29 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     value: E,
     setupOptions: InsertOneOptions => InsertOneOptions = identity
   ): Task[InsertOneResult] =
-    single(nativeCollection.insertOne(value, setupOptions(new InsertOneOptions)))
+    single(optionalizeFirstArg(
+      nativeCollection.insertOne(sessionOrNull, value, setupOptions(new InsertOneOptions))))
 
   def insertMany(
     values: Seq[E],
     setupOptions: InsertManyOptions => InsertManyOptions = identity
   ): Task[InsertManyResult] =
-    single(nativeCollection.insertMany(values.asJava, setupOptions(new InsertManyOptions)))
+    single(optionalizeFirstArg(
+      nativeCollection.insertMany(sessionOrNull, values.asJava, setupOptions(new InsertManyOptions))))
 
   def deleteOne(
     filter: MongoDocumentFilter[E],
     setupOptions: DeleteOptions => DeleteOptions = identity
   ): Task[DeleteResult] =
-    single(nativeCollection.deleteOne(filter.toBson, setupOptions(new DeleteOptions)))
+    single(optionalizeFirstArg(
+      nativeCollection.deleteOne(sessionOrNull, filter.toBson, setupOptions(new DeleteOptions))))
 
   def deleteMany(
     filter: MongoDocumentFilter[E],
     setupOptions: DeleteOptions => DeleteOptions = identity
   ): Task[DeleteResult] =
-    single(nativeCollection.deleteMany(filter.toBson, setupOptions(new DeleteOptions)))
+    single(optionalizeFirstArg(
+      nativeCollection.deleteMany(sessionOrNull, filter.toBson, setupOptions(new DeleteOptions))))
 
   def updateOne(
     filter: MongoDocumentFilter[E],
@@ -267,7 +289,8 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     if (!arrayFilters.isEmpty) {
       options.arrayFilters(arrayFilters)
     }
-    single(nativeCollection.updateOne(filter.toBson, updateBson, options))
+    single(optionalizeFirstArg(
+      nativeCollection.updateOne(sessionOrNull, filter.toBson, updateBson, options)))
   }
 
   def updateMany(
@@ -281,7 +304,8 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     if (!arrayFilters.isEmpty) {
       options.arrayFilters(arrayFilters)
     }
-    single(nativeCollection.updateMany(filter.toBson, updateBson, options))
+    single(optionalizeFirstArg(
+      nativeCollection.updateMany(sessionOrNull, filter.toBson, updateBson, options)))
   }
 
   def replaceOne(
@@ -291,7 +315,8 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     setupOptions: ReplaceOptions => ReplaceOptions = identity
   ): Task[UpdateResult] = {
     val options = setupOptions(new ReplaceOptions).upsert(upsert)
-    single(nativeCollection.replaceOne(filter.toBson, replacement, options))
+    single(optionalizeFirstArg(
+      nativeCollection.replaceOne(sessionOrNull, filter.toBson, replacement, options)))
   }
 
   def bulkWrite(
@@ -299,11 +324,13 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     setupOptions: BulkWriteOptions => BulkWriteOptions = identity
   ): Task[BulkWriteResult] = {
     val requests = writes.iterator.map(_.toWriteModel).to(JList)
-    single(nativeCollection.bulkWrite(requests, setupOptions(new BulkWriteOptions)))
+    single(optionalizeFirstArg(
+      nativeCollection.bulkWrite(sessionOrNull, requests, setupOptions(new BulkWriteOptions))))
   }
 
   def createIndex(index: MongoIndex[E]): Task[String] =
-    single(nativeCollection.createIndex(index.toBson, index.setupOptions(new IndexOptions)))
+    single(optionalizeFirstArg(
+      nativeCollection.createIndex(sessionOrNull, index.toBson, index.setupOptions(new IndexOptions))))
 
   def createIndexes(
     indexes: Seq[MongoIndex[E]],
@@ -312,9 +339,23 @@ class TypedMongoCollection[E <: BaseMongoEntity](
     val indexModels = indexes.iterator
       .map(index => new IndexModel(index.toBson, index.setupOptions(new IndexOptions)))
       .to(JList)
-    single(nativeCollection.createIndexes(indexModels, setupOptions(new CreateIndexOptions)))
+    single(optionalizeFirstArg(
+      nativeCollection.createIndexes(sessionOrNull, indexModels, setupOptions(new CreateIndexOptions))))
   }
 
   @bincompat private[typed] def this(rawCollection: MongoCollection[_], format: MongoAdtFormat[E]) =
     this(rawCollection)(MongoEntityMeta.bincompatMeta(format))
+}
+
+object TypedMongoCollection {
+  private def mkNativeCollection[E <: BaseMongoEntity : MongoEntityMeta](
+    rawCollection: MongoCollection[_]
+  )(implicit
+    meta: MongoEntityMeta[E]
+  ): MongoCollection[E] = {
+    import meta.format._
+    val codecRegistry: CodecRegistry = GenCodecRegistry.create[E](rawCollection.getCodecRegistry)
+    val documentClass = classTag.runtimeClass.asInstanceOf[Class[E]]
+    rawCollection.withCodecRegistry(codecRegistry).withDocumentClass(documentClass)
+  }
 }
