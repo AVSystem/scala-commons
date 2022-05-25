@@ -25,10 +25,10 @@ class TypedClientSession(val nativeSession: ClientSession)
     nativeSession.startTransaction(transactionOptions)
 
   def commitTransaction: Task[Unit] =
-    single(nativeSession.commitTransaction()).void
+    empty(nativeSession.commitTransaction())
 
   def abortTransaction: Task[Unit] =
-    single(nativeSession.abortTransaction()).void
+    empty(nativeSession.abortTransaction())
 
   def inTransaction[T](
     transactionOptions: TransactionOptions = TransactionOptions.builder().build()

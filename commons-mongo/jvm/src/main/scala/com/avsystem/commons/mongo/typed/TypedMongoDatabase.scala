@@ -39,7 +39,7 @@ class TypedMongoDatabase(
   //TODO: `runCommand`
 
   def drop: Task[Unit] =
-    single(optionalizeFirstArg(nativeDatabase.drop(sessionOrNull))).void
+    empty(optionalizeFirstArg(nativeDatabase.drop(sessionOrNull)))
 
   def listCollectionNames: Observable[String] =
     multi(optionalizeFirstArg(nativeDatabase.listCollectionNames(sessionOrNull)))
@@ -54,9 +54,9 @@ class TypedMongoDatabase(
     name: String,
     setupOptions: CreateCollectionOptions => CreateCollectionOptions = identity,
   ): Task[Unit] =
-    single(optionalizeFirstArg(
+    empty(optionalizeFirstArg(
       nativeDatabase.createCollection(sessionOrNull, name, setupOptions(new CreateCollectionOptions))
-    )).void
+    ))
 
   //TODO: `createView`, `watch`, `aggregate`
 }
